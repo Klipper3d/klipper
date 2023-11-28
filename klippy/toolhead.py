@@ -189,6 +189,8 @@ class MoveQueue:
 BUFFER_TIME_LOW = 1.0
 BUFFER_TIME_HIGH = 2.0
 BUFFER_TIME_START = 0.250
+BGFLUSH_LOW_TIME = 0.200
+BGFLUSH_BATCH_TIME = 0.200
 MIN_KIN_TIME = 0.100
 MOVE_BATCH_TIME = 0.500
 STEPCOMPRESS_FLUSH_TIME = 0.050
@@ -230,11 +232,12 @@ class ToolHead:
         self.need_check_pause = -1.
         # Print time tracking
         self.print_time = 0.
-        self.special_queuing_state = "Flushed"
+        self.special_queuing_state = "NeedPrime"
         self.priming_timer = None
         self.drip_completion = None
         # Flush tracking
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
+        self.do_kick_flush_timer = True
         self.last_flush_time = self.need_flush_time = 0.
         # Kinematic step generation scan window time tracking
         self.kin_flush_delay = SDS_CHECK_TIME
@@ -315,10 +318,9 @@ class ToolHead:
         # Resync print_time if necessary
         if self.special_queuing_state:
             if self.special_queuing_state != "Drip":
-                # Transition from "Flushed"/"Priming" state to main state
+                # Transition from "NeedPrime"/"Priming" state to main state
                 self.special_queuing_state = ""
                 self.need_check_pause = -1.
-                self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
             self._calc_print_time()
         # Queue moves into trapezoid motion queue (trapq)
         next_move_time = self.print_time
@@ -341,24 +343,22 @@ class ToolHead:
             self._update_drip_move_time(next_move_time)
         self.note_kinematic_activity(next_move_time + self.kin_flush_delay)
         self._advance_move_time(next_move_time)
-    def flush_step_generation(self):
-        # Transition from "Flushed"/"Priming"/main state to "Flushed" state
+    def _flush_lookahead(self):
+        # Transit from "NeedPrime"/"Priming"/"Drip"/main state to "NeedPrime"
         self.move_queue.flush()
-        self.special_queuing_state = "Flushed"
+        self.special_queuing_state = "NeedPrime"
         self.need_check_pause = -1.
-        self.reactor.update_timer(self.flush_timer, self.reactor.NEVER)
         self.move_queue.set_flush_time(BUFFER_TIME_HIGH)
         self.check_stall_time = 0.
-        # Flush all queues
-        self._advance_flush_time(self.need_flush_time)
-    def _flush_lookahead(self):
-        if self.special_queuing_state:
-            return self.flush_step_generation()
-        self.move_queue.flush()
-    def get_last_move_time(self):
+    def flush_step_generation(self):
         self._flush_lookahead()
+        self._advance_flush_time(self.need_flush_time)
+    def get_last_move_time(self):
         if self.special_queuing_state:
+            self._flush_lookahead()
             self._calc_print_time()
+        else:
+            self.move_queue.flush()
         return self.print_time
     def _check_pause(self):
         eventtime = self.reactor.monotonic()
@@ -366,11 +366,11 @@ class ToolHead:
         buffer_time = self.print_time - est_print_time
         if self.special_queuing_state:
             if self.check_stall_time:
-                # Was in "Flushed" state and got there from idle input
+                # Was in "NeedPrime" state and got there from idle input
                 if est_print_time < self.check_stall_time:
                     self.print_stall += 1
                 self.check_stall_time = 0.
-            # Transition from "Flushed"/"Priming" state to "Priming" state
+            # Transition from "NeedPrime"/"Priming" state to "Priming" state
             self.special_queuing_state = "Priming"
             self.need_check_pause = -1.
             if self.priming_timer is None:
@@ -397,7 +397,7 @@ class ToolHead:
         self.priming_timer = None
         try:
             if self.special_queuing_state == "Priming":
-                self.flush_step_generation()
+                self._flush_lookahead()
                 self.check_stall_time = self.print_time
         except:
             logging.exception("Exception in priming_handler")
@@ -405,15 +405,28 @@ class ToolHead:
         return self.reactor.NEVER
     def _flush_handler(self, eventtime):
         try:
-            print_time = self.print_time
-            buffer_time = print_time - self.mcu.estimated_print_time(eventtime)
-            if buffer_time > BUFFER_TIME_LOW:
-                # Running normally - reschedule check
-                return eventtime + buffer_time - BUFFER_TIME_LOW
-            # Under ran low buffer mark - flush lookahead queue
-            self.flush_step_generation()
-            if print_time != self.print_time:
-                self.check_stall_time = self.print_time
+            est_print_time = self.mcu.estimated_print_time(eventtime)
+            if not self.special_queuing_state:
+                # In "main" state - flush lookahead if buffer runs low
+                print_time = self.print_time
+                buffer_time = print_time - est_print_time
+                if buffer_time > BUFFER_TIME_LOW:
+                    # Running normally - reschedule check
+                    return eventtime + buffer_time - BUFFER_TIME_LOW
+                # Under ran low buffer mark - flush lookahead queue
+                self._flush_lookahead()
+                if print_time != self.print_time:
+                    self.check_stall_time = self.print_time
+            # In "NeedPrime"/"Priming" state - flush queues if needed
+            while 1:
+                if self.last_flush_time >= self.need_flush_time:
+                    self.do_kick_flush_timer = True
+                    return self.reactor.NEVER
+                buffer_time = self.last_flush_time - est_print_time
+                if buffer_time > BGFLUSH_LOW_TIME:
+                    return eventtime + buffer_time - BGFLUSH_LOW_TIME
+                ftime = est_print_time + BGFLUSH_LOW_TIME + BGFLUSH_BATCH_TIME
+                self._advance_flush_time(min(self.need_flush_time, ftime))
         except:
             logging.exception("Exception in flush_handler")
             self.printer.invoke_shutdown("Exception in flush_handler")
@@ -483,11 +496,12 @@ class ToolHead:
             self._advance_move_time(npt)
     def drip_move(self, newpos, speed, drip_completion):
         self.dwell(self.kin_flush_delay)
-        # Transition from "Flushed"/"Priming"/main state to "Drip" state
+        # Transition from "NeedPrime"/"Priming"/main state to "Drip" state
         self.move_queue.flush()
         self.special_queuing_state = "Drip"
         self.need_check_pause = self.reactor.NEVER
         self.reactor.update_timer(self.flush_timer, self.reactor.NEVER)
+        self.do_kick_flush_timer = False
         self.move_queue.set_flush_time(BUFFER_TIME_HIGH)
         self.check_stall_time = 0.
         self.drip_completion = drip_completion
@@ -495,6 +509,7 @@ class ToolHead:
         try:
             self.move(newpos, speed)
         except self.printer.command_error as e:
+            self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
             self.flush_step_generation()
             raise
         # Transmit move in "drip" mode
@@ -504,6 +519,7 @@ class ToolHead:
             self.move_queue.reset()
             self.trapq_finalize_moves(self.trapq, self.reactor.NEVER)
         # Exit "Drip" state
+        self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
         self.flush_step_generation()
     # Misc commands
     def stats(self, eventtime):
@@ -560,6 +576,9 @@ class ToolHead:
         last_move.timing_callbacks.append(callback)
     def note_kinematic_activity(self, kin_time):
         self.need_flush_time = max(self.need_flush_time, kin_time)
+        if self.do_kick_flush_timer:
+            self.do_kick_flush_timer = False
+            self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
     def get_max_velocity(self):
         return self.max_velocity, self.max_accel
     def _calc_junction_deviation(self):
