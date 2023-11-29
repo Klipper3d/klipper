@@ -49,6 +49,7 @@ class PrinterMotionQueuing:
         if self.mcu.is_fileoutput():
             self.can_pause = False
         # Kinematic step generation scan window time tracking
+        self.need_calc_kin_flush_delay = True
         self.kin_flush_delay = SDS_CHECK_TIME
         # Register handlers
         printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
@@ -118,8 +119,6 @@ class PrinterMotionQueuing:
     def lookup_trapq_append(self):
         ffi_main, ffi_lib = chelper.get_ffi()
         return ffi_lib.trapq_append
-    def set_step_generate_scan_time(self, delay):
-        self.kin_flush_delay = delay
     def stats(self, eventtime):
         # Hack to globally invoke mcu check_active()
         for m in self.all_mcus:
@@ -128,6 +127,24 @@ class PrinterMotionQueuing:
         est_print_time = self.mcu.estimated_print_time(eventtime)
         self.clear_history_time = est_print_time - MOVE_HISTORY_EXPIRE
         return False, ""
+    # Kinematic step generation scan window time tracking
+    def get_kin_flush_delay(self):
+        return self.kin_flush_delay
+    def _calc_kin_flush_delay(self):
+        self.need_calc_kin_flush_delay = False
+        ffi_main, ffi_lib = chelper.get_ffi()
+        kin_flush_delay = SDS_CHECK_TIME
+        for mcu, sc in self.stepcompress:
+            sk = ffi_lib.stepcompress_get_stepper_kinematics(sc)
+            if sk == ffi_main.NULL:
+                continue
+            trapq = ffi_lib.itersolve_get_trapq(sk)
+            if trapq == ffi_main.NULL:
+                continue
+            pre_active = ffi_lib.itersolve_get_gen_steps_pre_active(sk)
+            post_active = ffi_lib.itersolve_get_gen_steps_post_active(sk)
+            kin_flush_delay = max(kin_flush_delay, pre_active, post_active)
+        self.kin_flush_delay = kin_flush_delay
     # Flush tracking
     def _handle_shutdown(self):
         self.can_pause = False
@@ -137,6 +154,7 @@ class PrinterMotionQueuing:
         if target_time is None:
             # This is a full flush
             target_time = self.need_step_gen_time
+            self.need_calc_kin_flush_delay = True
         want_flush_time = want_step_gen_time = target_time
         if lazy_target:
             # Account for step gen scan windows and optimize step compression
@@ -162,6 +180,8 @@ class PrinterMotionQueuing:
             if flush_time >= want_flush_time:
                 break
     def calc_step_gen_restart(self, est_print_time):
+        if self.need_calc_kin_flush_delay:
+            self._calc_kin_flush_delay()
         kin_time = max(est_print_time + MIN_KIN_TIME, self.last_step_gen_time)
         return kin_time + self.kin_flush_delay
     def _flush_handler(self, eventtime):
