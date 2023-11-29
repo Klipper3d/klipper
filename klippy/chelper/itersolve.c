@@ -248,6 +248,12 @@ itersolve_set_trapq(struct stepper_kinematics *sk, struct trapq *tq
     sk->step_dist = step_dist;
 }
 
+struct trapq * __visible
+itersolve_get_trapq(struct stepper_kinematics *sk)
+{
+    return sk->tq;
+}
+
 double __visible
 itersolve_calc_position_from_coord(struct stepper_kinematics *sk
                                    , double x, double y, double z)
@@ -272,4 +278,16 @@ double __visible
 itersolve_get_commanded_pos(struct stepper_kinematics *sk)
 {
     return sk->commanded_pos;
+}
+
+double __visible
+itersolve_get_gen_steps_pre_active(struct stepper_kinematics *sk)
+{
+    return sk->gen_steps_pre_active;
+}
+
+double __visible
+itersolve_get_gen_steps_post_active(struct stepper_kinematics *sk)
+{
+    return sk->gen_steps_post_active;
 }

@@ -41,6 +41,8 @@ int stepcompress_extract_old(struct stepcompress *sc
 struct stepper_kinematics;
 void stepcompress_set_stepper_kinematics(struct stepcompress *sc
                                          , struct stepper_kinematics *sk);
+struct stepper_kinematics *stepcompress_get_stepper_kinematics(
+    struct stepcompress *sc);
 int32_t stepcompress_generate_steps(struct stepcompress *sc
                                     , double gen_steps_time
                                     , uint64_t flush_clock);

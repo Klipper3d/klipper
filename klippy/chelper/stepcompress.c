@@ -674,6 +674,13 @@ stepcompress_set_stepper_kinematics(struct stepcompress *sc
     sc->sk = sk;
 }
 
+// Report current stepper_kinematics
+struct stepper_kinematics * __visible
+stepcompress_get_stepper_kinematics(struct stepcompress *sc)
+{
+    return sc->sk;
+}
+
 // Generate steps (via itersolve) and flush
 int32_t
 stepcompress_generate_steps(struct stepcompress *sc, double gen_steps_time
