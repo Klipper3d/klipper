@@ -69,14 +69,16 @@ class ExtruderStepper:
         if not pressure_advance:
             new_smooth_time = 0.
         toolhead = self.printer.lookup_object("toolhead")
-        if new_smooth_time != old_smooth_time:
-            toolhead.note_step_generation_scan_time(
-                    new_smooth_time * .5, old_delay=old_smooth_time * .5)
         ffi_main, ffi_lib = chelper.get_ffi()
         espa = ffi_lib.extruder_set_pressure_advance
-        toolhead.register_lookahead_callback(
-            lambda print_time: espa(self.sk_extruder, print_time,
-                                    pressure_advance, new_smooth_time))
+        if new_smooth_time != old_smooth_time:
+            # Need full kinematic flush to change the smooth time
+            toolhead.flush_step_generation()
+            espa(self.sk_extruder, 0., pressure_advance, new_smooth_time)
+        else:
+            toolhead.register_lookahead_callback(
+                lambda print_time: espa(self.sk_extruder, print_time,
+                                        pressure_advance, new_smooth_time))
         self.pressure_advance = pressure_advance
         self.pressure_advance_smooth_time = smooth_time
     cmd_SET_PRESSURE_ADVANCE_help = "Set pressure advance parameters"

@@ -193,7 +193,6 @@ class LookAheadQueue:
 BUFFER_TIME_LOW = 1.0
 BUFFER_TIME_HIGH = 2.0
 BUFFER_TIME_START = 0.250
-SDS_CHECK_TIME = 0.001 # step+dir+step filter in stepcompress.c
 
 # Main code to track events (and their timing) on the printer toolhead
 class ToolHead:
@@ -225,9 +224,6 @@ class ToolHead:
         self.print_time = 0.
         self.special_queuing_state = "NeedPrime"
         self.priming_timer = None
-        # Kinematic step generation scan window time tracking
-        self.kin_flush_delay = SDS_CHECK_TIME
-        self.kin_flush_times = []
         # Setup for generating moves
         self.motion_queuing = self.printer.load_object(config, 'motion_queuing')
         self.motion_queuing.setup_lookahead_flush_callback(
@@ -469,7 +465,8 @@ class ToolHead:
         if move.move_d:
             self.kin.check_move(move)
         # Make sure stepper movement doesn't start before nominal start time
-        self.dwell(self.kin_flush_delay)
+        kin_flush_delay = self.motion_queuing.get_kin_flush_delay()
+        self.dwell(kin_flush_delay)
         # Transmit move in "drip" mode
         self._process_lookahead()
         start_time, end_time = self._drip_load_trapq(move)
@@ -510,15 +507,6 @@ class ToolHead:
         return self.kin
     def get_trapq(self):
         return self.trapq
-    def note_step_generation_scan_time(self, delay, old_delay=0.):
-        self.flush_step_generation()
-        if old_delay:
-            self.kin_flush_times.pop(self.kin_flush_times.index(old_delay))
-        if delay:
-            self.kin_flush_times.append(delay)
-        new_delay = max(self.kin_flush_times + [SDS_CHECK_TIME])
-        self.kin_flush_delay = new_delay
-        self.motion_queuing.set_step_generate_scan_time(new_delay)
     def register_lookahead_callback(self, callback):
         last_move = self.lookahead.get_last()
         if last_move is None:
