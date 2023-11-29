@@ -17,6 +17,7 @@ class PRTouchCFG:
         self.max_hold = config.getint('max_hold', default=50000, minval=100, maxval=100000)
         self.sensor_x = config.getfloat('sensor_x', minval=0, maxval=300)
         self.sensor_y = config.getfloat('sensor_y', minval=0, maxval=300)
+        self.random_offset = config.getfloat('sensor_random_offset', default=5, minval=0, maxval=10)
         self.hot_min_temp = config.getfloat('s_hot_min_temp', default=140, minval=80, maxval=200)
         self.hot_max_temp = config.getfloat('s_hot_max_temp', default=200, minval=180, maxval=300)
         self.bed_max_temp = config.getfloat('s_bed_max_temp', default=60, minval=45, maxval=100)
@@ -281,9 +282,9 @@ class PRTouchZOffsetWrapper:
         self.obj.gcode.run_script_from_command('G28 Z')
         pass
 
-    def probe_z_offset(self):
+    def probe_z_offset(self, x, y):
         self._ck_g28ed()
-        z_offset = self._probe_times(3, [self.cfg.sensor_x, self.cfg.sensor_y, self.cfg.bed_max_err + 1.], self.cfg.g29_speed, 10, self.cfg.check_bed_mesh_max_err, self.cfg.min_hold, self.cfg.max_hold)
+        z_offset = self._probe_times(3, [x, y, self.cfg.bed_max_err + 1.], self.cfg.g29_speed, 10, self.cfg.check_bed_mesh_max_err, self.cfg.min_hold, self.cfg.max_hold)
         return z_offset
 
     def _cal_min_z(self, start_z, hx711_vals):
@@ -383,16 +384,18 @@ class PRTouchZOffsetWrapper:
             self.clear_nozzle(self.cfg.hot_min_temp, self.cfg.hot_max_temp, self.cfg.bed_max_temp,
                             self.cfg.min_hold, self.cfg.max_hold)
 
+        x = self.cfg.sensor_x + random.uniform(-self.cfg.random_offset, self.cfg.random_offset)
+        y = self.cfg.sensor_y + random.uniform(-self.cfg.random_offset, self.cfg.random_offset)
         probe_x_offset, probe_y_offset = self.obj.probe.get_offsets()[:2]
-        probe_x = self.cfg.sensor_x - probe_x_offset
-        probe_y = self.cfg.sensor_y - probe_y_offset
+        probe_x = x - probe_x_offset
+        probe_y = y - probe_y_offset
         self.pnt_msg("Checking z-position of probe (%.2f, %.2f)" % (probe_x, probe_y))
         self._move([probe_x, probe_y, self.cfg.bed_max_err + 1.], self.cfg.g29_xy_speed)
         probe_gcmd = self.obj.gcode.create_gcode_command("PROBE", "PROBE", {'SAMPLES': '2'})
         z_probe = self.obj.probe.run_probe(probe_gcmd)
         self.pnt_msg('Probe at sensor: %.3f' % z_probe[2])
 
-        nozzle_z_offset = self.probe_z_offset()
+        nozzle_z_offset = self.probe_z_offset(x, y)
         self.pnt_msg('Nozzle z_offset: %.3f' % nozzle_z_offset)
 
         z_offset = nozzle_z_offset - z_probe[2]
