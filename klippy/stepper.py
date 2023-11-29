@@ -250,7 +250,7 @@ def PrinterStepper(config, units_in_radians=False):
     mcu_stepper = MCU_stepper(name, step_pin_params, dir_pin_params,
                               rotation_dist, steps_per_rotation,
                               step_pulse_duration, units_in_radians)
-    if 'stepper' in name:
+    if not name.startswith('stepper'):
         printer.add_object(name, mcu_stepper)
     # Register with helper modules
     for mname in ['stepper_enable', 'force_move', 'motion_report']:
