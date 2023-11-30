@@ -3149,6 +3149,7 @@ pin:
 #   The pin to configure as an output. This parameter must be provided.
 #value:
 #shutdown_value:
+#maximum_mcu_duration:
 #cycle_time: 0.100
 #hardware_pwm: False
 #scale:
