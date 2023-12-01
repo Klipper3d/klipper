@@ -10,7 +10,7 @@ class DirZCtl:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.toolhead = None
-        self.mcu = mcu.get_printer_mcu(self.printer, config.get('use_mcu'))
+        self.mcu = mcu.get_printer_mcu(self.printer, config.get('use_mcu', 'mcu'))
         self.oid = self.mcu.create_oid()
         self.steppers = []
         self.mcu.register_config_callback(self._build_config)
