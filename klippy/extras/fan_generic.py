@@ -18,6 +18,8 @@ class PrinterFanGeneric:
                                    self.cmd_SET_FAN_SPEED,
                                    desc=self.cmd_SET_FAN_SPEED_help)
 
+    def stats(self, eventtime):
+        return self.fan.stats(eventtime)
     def get_status(self, eventtime):
         return self.fan.get_status(eventtime)
     def cmd_SET_FAN_SPEED(self, gcmd):

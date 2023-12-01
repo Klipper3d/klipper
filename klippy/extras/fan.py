@@ -9,6 +9,7 @@ FAN_MIN_TIME = 0.100
 
 class Fan:
     def __init__(self, config, default_shutdown_speed=0.):
+        self.name = config.get_name().split()[-1]
         self.printer = config.get_printer()
         self.last_fan_value = 0.
         self.last_fan_time = 0.
@@ -71,6 +72,9 @@ class Fan:
                                               self.set_speed(pt, value)))
     def _handle_request_restart(self, print_time):
         self.set_speed(print_time, 0.)
+
+    def stats(self, eventtime):
+        return False, '%s: fan_speed=%.3f' % (self.name, self.last_fan_value)
 
     def get_status(self, eventtime):
         tachometer_status = self.tachometer.get_status(eventtime)

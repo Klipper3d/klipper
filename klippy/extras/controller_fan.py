@@ -43,6 +43,8 @@ class ControllerFan:
     def handle_ready(self):
         reactor = self.printer.get_reactor()
         reactor.register_timer(self.callback, reactor.monotonic()+PIN_MIN_TIME)
+    def stats(self, eventtime):
+        return self.fan.stats(eventtime)
     def get_status(self, eventtime):
         return self.fan.get_status(eventtime)
     def callback(self, eventtime):
