@@ -21,7 +21,7 @@ class PRTouchCFG:
         self.hot_min_temp = config.getfloat('s_hot_min_temp', default=140, minval=80, maxval=200)
         self.hot_max_temp = config.getfloat('s_hot_max_temp', default=200, minval=180, maxval=300)
         self.bed_max_temp = config.getfloat('s_bed_max_temp', default=60, minval=45, maxval=100)
-        self.pa_clr_dis_mm = config.getint('pa_clr_dis_mm', default=20, minval=2, maxval=100)
+        self.pa_clr_dis_mm = config.getint('pa_clr_dis_mm', default=5, minval=2, maxval=100)
         self.pa_clr_down_mm = config.getfloat('pa_clr_down_mm', default=-0.1, minval=-1, maxval=1)
         self.clr_noz_start_x = config.getfloat('clr_noz_start_x', default=0, minval=0, maxval=1000)
         self.clr_noz_start_y = config.getfloat('clr_noz_start_y', default=0, minval=0, maxval=1000)
@@ -260,11 +260,11 @@ class PRTouchZOffsetWrapper:
                    min_y + random.uniform(0, self.cfg.clr_noz_len_y), self.cfg.bed_max_err + 1, cur_pos[3]]
         end_pos = [src_pos[0], src_pos[1] + self.cfg.pa_clr_dis_mm, src_pos[2], src_pos[3]]
         self._set_hot_temps(temp=hot_min_temp, fan_spd=0, wait=True, err=10)   
-        src_pos[2] = self._probe_times(3, [src_pos[0], src_pos[1], src_pos[2]], self.cfg.g29_speed, 10, 0.2, min_hold * 2, max_hold)
+        src_pos[2] = self._probe_times(3, [src_pos[0], src_pos[1], src_pos[2]], self.cfg.g29_speed, 10, 0.2, min_hold, max_hold)
         self._set_hot_temps(temp=hot_min_temp + 40, fan_spd=0, wait=False, err=10)
-        end_pos[2] = self._probe_times(3, [end_pos[0], end_pos[1], end_pos[2]], self.cfg.g29_speed, 10, 0.2, min_hold * 2, max_hold)     
+        end_pos[2] = self._probe_times(3, [end_pos[0], end_pos[1], end_pos[2]], self.cfg.g29_speed, 10, 0.2, min_hold, max_hold)     
         self._move(src_pos[:2] + [self.cfg.bed_max_err + 1], self.cfg.g29_xy_speed) 
-        self._move(src_pos[:2] + [src_pos[2] + 0.2], self.cfg.g29_rdy_speed) 
+        self._move(src_pos[:2] + [src_pos[2] + 0.1], self.cfg.g29_rdy_speed) 
         self._set_hot_temps(temp=hot_max_temp, fan_spd=0, wait=True, err=10)
         self._set_hot_temps(temp=hot_min_temp, fan_spd=0, wait=False)
         # retract filament
