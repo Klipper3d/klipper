@@ -97,11 +97,6 @@ class PRTouchZOffsetWrapper:
         self.obj.find_objs()
         min_x, min_y = self.obj.bed_mesh.bmc.mesh_min
         max_x, max_y = self.obj.bed_mesh.bmc.mesh_max
-        if self.cfg.clr_noz_start_x <= 0 or self.cfg.clr_noz_start_y <= 0 or self.cfg.clr_noz_len_x <= 0 or self.cfg.clr_noz_len_y <= 0:
-            self.cfg.clr_noz_start_x = self.cfg.sensor_x - 10.
-            self.cfg.clr_noz_start_y = self.cfg.sensor_y - 10.
-            self.cfg.clr_noz_len_x = 0
-            self.cfg.clr_noz_len_y = self.cfg.pa_clr_dis_mm + 5.
         self.val.home_xy = [(max_x - min_x) / 2 + min_x, (max_y - min_y) / 2 + min_y]
         pass
 
@@ -256,9 +251,8 @@ class PRTouchZOffsetWrapper:
         self._ck_g28ed(False)
         random.seed(time.time())  
         cur_pos = self.obj.toolhead.get_position()
-        src_pos = [min_x + random.uniform(0, self.cfg.clr_noz_len_x), 
-                   min_y + random.uniform(0, self.cfg.clr_noz_len_y), self.cfg.bed_max_err + 1, cur_pos[3]]
-        end_pos = [src_pos[0], src_pos[1] + self.cfg.pa_clr_dis_mm, src_pos[2], src_pos[3]]
+        src_pos = [min_x, min_y, self.cfg.bed_max_err + 1, cur_pos[3]]
+        end_pos = [max_x, max_y, src_pos[2], src_pos[3]]
         self._set_hot_temps(temp=hot_min_temp, fan_spd=0, wait=True, err=10)   
         src_pos[2] = self._probe_times(3, [src_pos[0], src_pos[1], src_pos[2]], self.cfg.g29_speed, 10, 0.2, min_hold, max_hold)
         self._set_hot_temps(temp=hot_min_temp + 40, fan_spd=0, wait=False, err=10)
