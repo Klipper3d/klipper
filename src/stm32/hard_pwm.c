@@ -42,7 +42,7 @@ static const struct gpio_pwm_info pwm_regs[] = {
     {TIM3, GPIO('C', 6), 1, GPIO_FUNCTION(0)},
     {TIM3, GPIO('C', 7), 2, GPIO_FUNCTION(0)},
     {TIM3, GPIO('C', 8), 3, GPIO_FUNCTION(0)},
-    {TIM3, GPIO('C', 9), 4, GPIO_FUNCTION(0)},
+    {TIM3, GPIO('C', 9), 4, GPIO_FUNCTION(0)}
   #endif
   #if CONFIG_MACH_STM32F072
     {TIM2, GPIO('A', 1), 2, GPIO_FUNCTION(2)},
@@ -81,7 +81,7 @@ static const struct gpio_pwm_info pwm_regs[] = {
     {TIM1, GPIO('E', 13), 3, GPIO_FUNCTION(0)},
     {TIM1, GPIO('E', 14), 4, GPIO_FUNCTION(0)},
     {TIM15, GPIO('F', 9), 1, GPIO_FUNCTION(0)},
-    {TIM15, GPIO('F', 10), 2, GPIO_FUNCTION(0)},
+    {TIM15, GPIO('F', 10), 2, GPIO_FUNCTION(0)}
   #endif
 #elif CONFIG_MACH_STM32F1
     {TIM2, GPIO('A', 0),  1, GPIO_FUNCTION(2)},
