@@ -25,7 +25,7 @@ class HX711S:
         for i in range(self.s_count):
             self.s_clk_pin.append(config.get('sensor%d_clk_pin' % i, None if i == 0 else self.s_clk_pin[i - 1]))
             self.s_sdo_pin.append(config.get('sensor%d_sdo_pin' % i, None if i == 0 else self.s_sdo_pin[i - 1]))
-        self.mcu = mcu.get_printer_mcu(self.printer, config.get('use_mcu'))
+        self.mcu = mcu.get_printer_mcu(self.printer, config.get('use_mcu', 'mcu'))
         self.oid = self.mcu.create_oid()
         self.mcu.register_config_callback(self._build_config)
         self.mcu.register_response(self._handle_debug_hx711s, "debug_hx711s", self.oid)
