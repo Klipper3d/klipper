@@ -27,7 +27,7 @@ class PRTouchCFG:
         self.clr_noz_start_y = config.getfloat('clr_noz_start_y', default=0, minval=0, maxval=1000)
         self.clr_noz_len_x = config.getfloat('clr_noz_len_x', default=0, minval=0, maxval=1000)
         self.clr_noz_len_y = config.getfloat('clr_noz_len_y', default=0, minval=self.pa_clr_dis_mm + 5, maxval=1000)
-        self.bed_max_err = config.getint('bed_max_err', default=2, minval=2, maxval=10)
+        self.bed_max_err = config.getint('bed_max_err', default=4, minval=2, maxval=10)
         self.max_z = config.getsection('stepper_z').getfloat('position_max', default=300, minval=100, maxval=500)
         self.g29_xy_speed = config.getfloat('g29_xy_speed', default=150, minval=10, maxval=1000)
         self.g29_rdy_speed = config.getfloat('g29_rdy_speed', default=2.5, minval=0.1, maxval=10)
