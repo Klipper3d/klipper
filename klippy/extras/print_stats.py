@@ -4,6 +4,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
+import os, json, logging
+
 class PrintStats:
     def __init__(self, config):
         printer = config.get_printer()
@@ -15,6 +17,20 @@ class PrintStats:
         self.gcode.register_command(
             "SET_PRINT_STATS_INFO", self.cmd_SET_PRINT_STATS_INFO,
             desc=self.cmd_SET_PRINT_STATS_INFO_help)
+        # G28 down 12mm flag
+        self.power_loss = 0
+        self.print_duration = 0
+        self.z_pos_filepath = "/home/biqu/printer_data/config/z_pos.json"
+        self.z_pos = self.get_z_pos()
+    def get_z_pos(self):
+        z_pos = 0
+        if os.path.exists(self.z_pos_filepath):
+            try:
+                with open(self.z_pos_filepath, "r") as f:
+                    z_pos = float(json.loads(f.read()).get("z_pos", 0))
+            except Exception as err:
+                logging.error(err)
+        return z_pos
     def _update_filament_usage(self, eventtime):
         gc_status = self.gcode_move.get_status(eventtime)
         cur_epos = gc_status['position'].e
@@ -113,7 +129,8 @@ class PrintStats:
             'state': self.state,
             'message': self.error_message,
             'info': {'total_layer': self.info_total_layer,
-                     'current_layer': self.info_current_layer}
+                     'current_layer': self.info_current_layer},
+            'z_pos': self.z_pos,
         }
 
 def load_config(config):

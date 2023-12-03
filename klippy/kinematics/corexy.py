@@ -46,6 +46,31 @@ class CoreXYKinematics:
     def note_z_not_homed(self):
         # Helper for Safe Z Home
         self.limits[2] = (1.0, -1.0)
+    def note_xy_not_homed(self):
+        self.limits[0] = (1.0, -1.0)
+        self.limits[1] = (1.0, -1.0)
+    def home_z_with_sensorless(self, homing_state, top):
+        # Each axis is homed independently and in order
+        # for axis in homing_state.get_axes():
+        rail = self.rails[2]
+        # Determine movement
+        # position_min, position_max = rail.get_range()
+        position_min = top
+        hi = rail.get_homing_info()
+        homepos = [None, None, None, None]
+        homepos[2] = hi.position_endstop + position_min
+        forcepos = list(homepos)
+        forcepos[2] -= position_min
+        # forcepos[2] += 1.5 * (position_max - hi.position_endstop)
+        # if hi.positive_dir:
+        #     forcepos[axis] -= 1.5 * (hi.position_endstop - position_min)
+        # else:
+        #     forcepos[axis] += 1.5 * (position_max - hi.position_endstop)
+        # Perform homing
+        rail.homing_retract_dist = 0
+        homing_state.stepper_z_sensorless_flag = True
+        homing_state.home_rails([rail], forcepos, homepos)
+        homing_state.stepper_z_sensorless_flag = False
     def home(self, homing_state):
         # Each axis is homed independently and in order
         for axis in homing_state.get_axes():

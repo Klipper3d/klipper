@@ -262,8 +262,7 @@ class TMCCommandHelper:
                                    desc=self.cmd_SET_TMC_CURRENT_help)
     def _init_registers(self, print_time=None):
         # Send registers
-        for reg_name in list(self.fields.registers.keys()):
-            val = self.fields.registers[reg_name] # Val may change during loop
+        for reg_name, val in self.fields.registers.items():
             self.mcu_tmc.set_register(reg_name, val, print_time)
     cmd_INIT_TMC_help = "Initialize TMC stepper driver registers"
     def cmd_INIT_TMC(self, gcmd):

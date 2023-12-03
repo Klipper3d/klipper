@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import math, logging, importlib
+import math, logging, importlib, os, json
 import mcu, chelper, kinematics.extruder
 
 # Common suffixes: _d is distance (in mm), _v is velocity (in
@@ -57,7 +57,17 @@ class Move:
         self.smooth_delta_v2 = min(self.smooth_delta_v2, self.delta_v2)
     def move_error(self, msg="Move out of range"):
         ep = self.end_pos
-        m = "%s: %.3f %.3f %.3f [%.3f]" % (msg, ep[0], ep[1], ep[2], ep[3])
+        # m = "%s: %.3f %.3f %.3f [%.3f]" % (msg, ep[0], ep[1], ep[2], ep[3])
+        if msg == "Must home axis first":
+            code_key = "key95"
+        elif msg == "Must home first":
+            code_key = "key242"
+        elif msg == "Extrude when no extruder present":
+            code_key = "key114"
+        else:
+            code_key = "key243"
+        m = """{"code":"%s","msg":"%s: %.3f %.3f %.3f [%.3f]", "values":[%.3f, %.3f, %.3f, %.3f]}""" % (
+            code_key, msg, ep[0], ep[1], ep[2], ep[3], ep[0], ep[1], ep[2], ep[3])
         return self.toolhead.printer.command_error(m)
     def calc_junction(self, prev_move):
         if not self.is_kinematic_move or not prev_move.is_kinematic_move:
@@ -275,6 +285,17 @@ class ToolHead:
                    "manual_probe", "tuning_tower"]
         for module_name in modules:
             self.printer.load_object(config, module_name)
+        self.z_pos_filepath = "/home/biqu/printer_data/config/z_pos.json"
+        self.z_pos = self.get_z_pos()
+    def get_z_pos(self):
+        z_pos = 0
+        if os.path.exists(self.z_pos_filepath):
+            try:
+                with open(self.z_pos_filepath, "r") as f:
+                    z_pos = float(json.loads(f.read()).get("z_pos", 0))
+            except Exception as err:
+                logging.error(err)
+        return z_pos
     # Print time tracking
     def _update_move_time(self, next_print_time):
         batch_time = MOVE_BATCH_TIME
@@ -414,7 +435,23 @@ class ToolHead:
         self.commanded_pos[:] = newpos
         self.kin.set_position(newpos, homing_axes)
         self.printer.send_event("toolhead:set_position")
+    def record_z_pos(self, commanded_pos_z):
+        curtime = self.printer.get_reactor().monotonic()
+        kin_status = self.kin.get_status(curtime)
+        if ('z' in kin_status['homed_axes']):
+            try:
+                if abs(commanded_pos_z-self.z_pos) > 5:
+                    self.z_pos = commanded_pos_z
+                    with open(self.z_pos_filepath, "w") as f:
+                        f.write(json.dumps({"z_pos": commanded_pos_z}))
+                        f.flush()
+                    print_stats = self.printer.lookup_object('print_stats', None)
+                    print_stats.z_pos = self.z_pos
+                    logging.info("record_z_pos:%s" % commanded_pos_z)
+            except Exception as err:
+                logging.error(err)
     def move(self, newpos, speed):
+        self.record_z_pos(newpos[2])
         move = Move(self, self.commanded_pos, newpos, speed)
         if not move.move_d:
             return
