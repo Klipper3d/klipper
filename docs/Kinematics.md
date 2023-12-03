@@ -96,7 +96,7 @@ Key formula for look-ahead:
 end_velocity^2 = start_velocity^2 + 2*accel*move_distance
 ```
 
-### Smoothed look-ahead
+### Minimum cruise ratio
 
 Klipper also implements a mechanism for smoothing out the motions of
 short "zigzag" moves. Consider the following moves:
@@ -105,21 +105,27 @@ short "zigzag" moves. Consider the following moves:
 
 In the above, the frequent changes from acceleration to deceleration
 can cause the machine to vibrate which causes stress on the machine
-and increases the noise. To reduce this, Klipper tracks both regular
-move acceleration as well as a virtual "acceleration to deceleration"
-rate. Using this system, the top speed of these short "zigzag" moves
-are limited to smooth out the printer motion:
+and increases the noise. Klipper implements a mechanism to ensure
+there is always some movement at a cruising speed between acceleration
+and deceleration. This is done by reducing the top speed of some moves
+(or sequence of moves) to ensure there is a minimum distance traveled
+at cruising speed relative to the distance traveled during
+acceleration and deceleration.
+
+Klipper implements this feature by tracking both a regular move
+acceleration as well as a virtual "acceleration to deceleration" rate:
 
 ![smoothed](img/smoothed.svg.png)
 
 Specifically, the code calculates what the velocity of each move would
 be if it were limited to this virtual "acceleration to deceleration"
-rate (half the normal acceleration rate by default). In the above
-picture the dashed gray lines represent this virtual acceleration rate
-for the first move. If a move can not reach its full cruising speed
-using this virtual acceleration rate then its top speed is reduced to
-the maximum speed it could obtain at this virtual acceleration
-rate. For most moves the limit will be at or above the move's existing
+rate. In the above picture the dashed gray lines represent this
+virtual acceleration rate for the first move. If a move can not reach
+its full cruising speed using this virtual acceleration rate then its
+top speed is reduced to the maximum speed it could obtain at this
+virtual acceleration rate.
+
+For most moves the limit will be at or above the move's existing
 limits and no change in behavior is induced. For short zigzag moves,
 however, this limit reduces the top speed. Note that it does not
 change the actual acceleration within the move - the move continues to
