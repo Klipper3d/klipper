@@ -1392,7 +1392,7 @@
 <h1 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h1>
 <p>These instructions assume the software will run on a Raspberry Pi
 computer in conjunction with OctoPrint. It is recommended that a
-Raspberry Pi 2, 3, or 4 computer be used as the host machine (see the
+Raspberry Pi 2 (or later) be used as the host machine (see the
 <a href="FAQ.html#can-i-run-klipper-on-something-other-than-a-raspberry-pi-3">FAQ</a>
 for other machines).</p>
 <h2 id="obtain-a-klipper-configuration-file">Obtain a Klipper Configuration File<a class="headerlink" href="#obtain-a-klipper-configuration-file" title="Permanent link">&para;</a></h2>
@@ -1432,7 +1432,7 @@ using a Linux or MacOS desktop, then the "ssh" software should already
 be installed on the desktop. There are free ssh clients available for
 other desktops (eg,
 <a href="https://www.chiark.greenend.org.uk/~sgtatham/putty/">PuTTY</a>). Use the
-ssh utility to connect to the Raspberry Pi (ssh pi@octopi -- password
+ssh utility to connect to the Raspberry Pi (<code>ssh pi@octopi</code> -- password
 is "raspberry") and run the following commands:</p>
 <div class="highlight"><pre><span></span><code>git clone https://github.com/Klipper3d/klipper
 ./klipper/scripts/install-octopi.sh
@@ -1497,15 +1497,15 @@ the Klipper host software. Using a web browser, login to the OctoPrint
 web page and then configure the following items:</p>
 <p>Navigate to the Settings tab (the wrench icon at the top of the
 page). Under "Serial Connection" in "Additional serial ports" add
-"/tmp/printer". Then click "Save".</p>
+<code>/tmp/printer</code>. Then click "Save".</p>
 <p>Enter the Settings tab again and under "Serial Connection" change the
-"Serial Port" setting to "/tmp/printer".</p>
+"Serial Port" setting to <code>/tmp/printer</code>.</p>
 <p>In the Settings tab, navigate to the "Behavior" sub-tab and select the
 "Cancel any ongoing prints but stay connected to the printer"
 option. Click "Save".</p>
 <p>From the main page, under the "Connection" section (at the top left of
-the page) make sure the "Serial Port" is set to "/tmp/printer" and
-click "Connect". (If "/tmp/printer" is not an available selection then
+the page) make sure the "Serial Port" is set to <code>/tmp/printer</code> and
+click "Connect". (If <code>/tmp/printer</code> is not an available selection then
 try reloading the page.)</p>
 <p>Once connected, navigate to the "Terminal" tab and type "status"
 (without the quotes) into the command entry box and click "Send". The
@@ -1520,8 +1520,8 @@ the Raspberry Pi.</p>
 use a desktop editor that supports editing files over the "scp" and/or
 "sftp" protocols. There are freely available tools that support this
 (eg, Notepad++, WinSCP, and Cyberduck). Load the printer config file
-in the editor and then save it as a file named "printer.cfg" in the
-home directory of the pi user (ie, /home/pi/printer.cfg).</p>
+in the editor and then save it as a file named <code>printer.cfg</code> in the
+home directory of the pi user (ie, <code>/home/pi/printer.cfg</code>).</p>
 <p>Alternatively, one can also copy and edit the file directly on the
 Raspberry Pi via ssh. That may look something like the following (be
 sure to update the command to use the appropriate printer config
