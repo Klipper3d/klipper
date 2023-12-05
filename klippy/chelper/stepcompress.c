@@ -213,6 +213,17 @@ check_line(struct stepcompress *sc, struct step_move move)
         || move.interval >= 0x80000000) {
         errorf("stepcompress o=%d i=%d c=%d a=%d: Invalid sequence"
                , sc->oid, move.interval, move.count, move.add);
+        errorf("stepcompress queue[%p]=%u queue_end[%p]=%u queue_pos[%p]=%u queue_next[%p]=%u last_step_clock=%llu max_error=%u : lxc check_line"
+               , sc->queue, *(sc->queue), sc->queue_end, *(sc->queue_end), sc->queue_pos, *(sc->queue_pos),
+               sc->queue_next, *(sc->queue_next), sc->last_step_clock, sc->max_error);
+        uint16_t i;
+        uint32_t intervals = move.interval, ps = 0;
+        for (i=0; i<move.count; i++) {
+            ps += intervals;
+            struct points points = minmax_point(sc, sc->queue_pos + i);
+            errorf("stepcompress queue_pos+i=%u ps=%u minp=%u maxp=%u : lxc Invalid sequence 2"
+               , *(sc->queue_pos + i), ps, points.minp, points.maxp);
+        }
         return ERROR_RET;
     }
     uint32_t interval = move.interval, p = 0;
