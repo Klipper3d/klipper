@@ -32,6 +32,10 @@ class ClockSync:
         self.mcu_freq = serial.msgparser.get_constant_float('CLOCK_FREQ')
         # Load initial clock and frequency
         params = serial.send_with_response('get_uptime', 'uptime')
+        self.time_avg = params['#sent_time']
+        if not self.time_avg:
+            params = serial.send_with_response('get_uptime', 'uptime')
+            self.time_avg = params['#sent_time']
         self.last_clock = (params['high'] << 32) | params['clock']
         self.clock_avg = self.last_clock
         self.time_avg = params['#sent_time']
