@@ -86,15 +86,25 @@ class Move:
         R_jd = sin_theta_d2 / (1. - sin_theta_d2)
         # Approximated circle must contact moves no further away than mid-move
         tan_theta_d2 = sin_theta_d2 / math.sqrt(0.5 * (1.0 + junction_cos_theta))
-        move_centripetal_v2 = .5 * self.move_d * tan_theta_d2 * (self.accel / 2 + self.decel / 2)
 
-        prev_move_centripetal_v2 = (.5 * prev_move.move_d * tan_theta_d2
+        # 1/1 = 0.5
+        # accel/accel+deccel
+        circle_shift_factor = self.accel / (self.accel + self.decel)
+        move_centripetal_v2 = circle_shift_factor * self.move_d * tan_theta_d2 * (self.accel / 2 + self.decel / 2)
+
+        #prev_move_centripetal_v2 = (.5 * prev_move.move_d * tan_theta_d2
+        #                    * (prev_move.accel / 2 + prev_move.decel / 2))
+
+        prev_circle_shift_factor = prev_move.accel / (prev_move.accel + prev_move.decel)
+        prev_move_centripetal_v2 = (prev_circle_shift_factor * prev_move.move_d * tan_theta_d2
                                     * (prev_move.accel / 2 + prev_move.decel / 2))
 
         # Apply limits
         self.max_start_v2 = min(
             R_jd * self.junction_deviation * (self.accel / 2 + self.decel / 2),
+            R_jd * self.junction_deviation * (self.accel / 2 + prev_move.decel / 2), #does this help?
             R_jd * prev_move.junction_deviation * (prev_move.accel / 2 + prev_move.decel / 2),
+            R_jd * prev_move.junction_deviation * (self.accel / 2 + prev_move.decel / 2), #does this help?
             move_centripetal_v2, prev_move_centripetal_v2,
             extruder_v2, self.max_cruise_v2, prev_move.max_cruise_v2,
             prev_move.max_start_v2 + prev_move.delta_v2)

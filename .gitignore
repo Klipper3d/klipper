@@ -4,3 +4,9 @@ out
 .config
 .config.old
 klippy/.version
+klippy/.idea/aws.xml
+klippy/.idea/inspectionProfiles/profiles_settings.xml
+klippy/.idea/klippy.iml
+klippy/.idea/misc.xml
+klippy/.idea/modules.xml
+klippy/.idea/vcs.xml
