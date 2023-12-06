@@ -55,17 +55,16 @@ class PrinterHeaterFan:
             for heater in self.heaters:
                 current_temp, target_temp = heater.get_temp(eventtime)
                 if current_temp > self.heater_temp and rpm < self.min_rpm:
-                    has_err = True
-        if has_err:
-            self.num_err += 1
-            if self.num_err > self.max_err:
-                msg = "'%s' spinning below minimum safe speed of %d rev/min" % (
-                    self.name, self.min_rpm)
-                logging.error(msg)
-                self.printer.invoke_shutdown(msg)
-                return self.printer.get_reactor().NEVER
-        else:
-            self.num_err = 0
+                    self.num_err += 1
+                    break
+            else:
+                self.num_err = 0
+        if self.num_err > self.max_err:
+            msg = "'%s' spinning below minimum safe speed of %d rev/min" % (
+                self.name, self.min_rpm)
+            logging.error(msg)
+            self.printer.invoke_shutdown(msg)
+            return self.printer.get_reactor().NEVER
         return eventtime + 1.5
 
 def load_config_prefix(config):
