@@ -143,6 +143,8 @@ class PrinterOutputPin:
         self.mcu_pin.set_pwm(print_time, value)
         self.last_value = value
         self.last_print_time = print_time
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.note_kinematic_activity(print_time)
     cmd_SET_PIN_help = "Set the value of an output pin"
     def cmd_SET_PIN(self, gcmd):
         # Read requested value
