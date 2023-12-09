@@ -88,16 +88,22 @@ kinematics:
 #   deltesian, polar, winch, or none. This parameter must be specified.
 max_velocity:
 #   Maximum velocity (in mm/s) of the toolhead (relative to the
-#   print). This parameter must be specified.
+#   print). This value may be changed at runtime using the
+#   SET_VELOCITY_LIMIT command. This parameter must be specified.
 max_accel:
 #   Maximum acceleration (in mm/s^2) of the toolhead (relative to the
-#   print). This parameter must be specified.
+#   print). Although this parameter is described as a "maximum"
+#   acceleration, in practice most moves that accelerate or decelerate
+#   will do so at the rate specified here. The value specified here
+#   may be changed at runtime using the SET_VELOCITY_LIMIT command.
+#   This parameter must be specified.
 #max_accel_to_decel:
 #   A pseudo acceleration (in mm/s^2) controlling how fast the
 #   toolhead may go from acceleration to deceleration. It is used to
 #   reduce the top speed of short zig-zag moves (and thus reduce
-#   printer vibration from these moves). The default is half of
-#   max_accel.
+#   printer vibration from these moves). The value specified here may
+#   be changed at runtime using the SET_VELOCITY_LIMIT command. The
+#   default is half of max_accel.
 #square_corner_velocity: 5.0
 #   The maximum velocity (in mm/s) that the toolhead may travel a 90
 #   degree corner at. A non-zero value can reduce changes in extruder
@@ -107,7 +113,9 @@ max_accel:
 #   larger than 90 degrees will have a higher cornering velocity while
 #   corners with angles less than 90 degrees will have a lower
 #   cornering velocity. If this is set to zero then the toolhead will
-#   decelerate to zero at each corner. The default is 5mm/s.
+#   decelerate to zero at each corner. The value specified here may be
+#   changed at runtime using the SET_VELOCITY_LIMIT command. The
+#   default is 5mm/s.
 ```
 
 ### [stepper]
@@ -2440,9 +2448,9 @@ sensor_pin:
 #   name in the above list.
 ```
 
-### BMP280/BME280/BME680 temperature sensor
+### BMP180/BMP280/BME280/BME680 temperature sensor
 
-BMP280/BME280/BME680 two wire interface (I2C) environmental sensors.
+BMP180/BMP280/BME280/BME680 two wire interface (I2C) environmental sensors.
 Note that these sensors are not intended for use with extruders and
 heater beds, but rather for monitoring ambient temperature (C),
 pressure (hPa), relative humidity and in case of the BME680 gas level.
@@ -2453,7 +2461,7 @@ temperature.
 ```
 sensor_type: BME280
 #i2c_address:
-#   Default is 118 (0x76). Some BME280 sensors have an address of 119
+#   Default is 118 (0x76). The BMP180 and some BME280 sensors have an address of 119
 #   (0x77).
 #i2c_mcu:
 #i2c_bus:
@@ -3125,6 +3133,26 @@ pin:
 #   then the 'value' parameter can be specified using the desired
 #   amperage for the stepper. The default is to not scale the 'value'
 #   parameter.
+```
+
+### [pwm_tool]
+
+Pulse width modulation digital output pins capable of high speed
+updates (one may define any number of sections with an "output_pin"
+prefix). Pins configured here will be setup as output pins and one may
+modify them at run-time using "SET_PIN PIN=my_pin VALUE=.1" type
+extended [g-code commands](G-Codes.md#output_pin).
+
+```
+[pwm_tool my_tool]
+pin:
+#   The pin to configure as an output. This parameter must be provided.
+#value:
+#shutdown_value:
+#cycle_time: 0.100
+#hardware_pwm: False
+#scale:
+#   See the "output_pin" section for the definition of these parameters.
 ```
 
 ### [static_digital_output]
