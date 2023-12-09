@@ -18,7 +18,7 @@ LD=$(CROSS_PREFIX)ld
 OBJCOPY=$(CROSS_PREFIX)objcopy
 OBJDUMP=$(CROSS_PREFIX)objdump
 STRIP=$(CROSS_PREFIX)strip
-CPP=cpp
+CPP=$(CROSS_PREFIX)cpp
 PYTHON=python3
 
 # Source files
