@@ -85,9 +85,9 @@ class AngleCalibration:
             cal2 = calibration[bucket + 1]
             adj = (angle & interp_mask) * (cal2 - cal1)
             adj = cal1 + ((adj + interp_round) >> interp_bits)
-            angle_diff = (angle - adj) & 0xffff
+            angle_diff = (adj - angle) & 0xffff
             angle_diff -= (angle_diff & 0x8000) << 1
-            new_angle = angle - angle_diff
+            new_angle = angle + angle_diff
             if calibration_reversed:
                 new_angle = -new_angle
             samples[i] = (samp_time, new_angle)
@@ -375,9 +375,9 @@ class HelperTLE5012B:
         mcu_clock, chip_clock = self._query_clock()
         mdiff = mcu_clock - self.last_chip_mcu_clock
         chip_mclock = self.last_chip_clock + int(mdiff * self.chip_freq + .5)
-        cdiff = (chip_mclock - chip_clock) & 0xffff
+        cdiff = (chip_clock - chip_mclock) & 0xffff
         cdiff -= (cdiff & 0x8000) << 1
-        new_chip_clock = chip_mclock - cdiff
+        new_chip_clock = chip_mclock + cdiff
         self.chip_freq = float(new_chip_clock - self.last_chip_clock) / mdiff
         self.last_chip_clock = new_chip_clock
         self.last_chip_mcu_clock = mcu_clock
@@ -489,21 +489,19 @@ class Angle:
         count = error_count = 0
         samples = [None] * (len(raw_samples) * 16)
         for params in raw_samples:
-            seq = (last_sequence & ~0xffff) | params['sequence']
-            if seq < last_sequence:
-                seq += 0x10000
-            last_sequence = seq
+            seq_diff = (params['sequence'] - last_sequence) & 0xffff
+            last_sequence += seq_diff
             d = bytearray(params['data'])
-            msg_mclock = start_clock + seq*16*sample_ticks
+            msg_mclock = start_clock + last_sequence*16*sample_ticks
             for i in range(len(d) // 3):
                 tcode = d[i*3]
                 if tcode == TCODE_ERROR:
                     error_count += 1
                     continue
                 raw_angle = d[i*3 + 1] | (d[i*3 + 2] << 8)
-                angle_diff = (last_angle - raw_angle) & 0xffff
+                angle_diff = (raw_angle - last_angle) & 0xffff
                 angle_diff -= (angle_diff & 0x8000) << 1
-                last_angle -= angle_diff
+                last_angle += angle_diff
                 mclock = msg_mclock + i*sample_ticks
                 if is_tcode_absolute:
                     # tcode is tle5012b frame counter
