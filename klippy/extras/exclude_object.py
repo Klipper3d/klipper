@@ -234,7 +234,7 @@ class ExcludeObject:
 
         elif current:
             if not self.current_object:
-                gcmd.respond_error('There is no current object to cancel')
+                raise self.gcode.error('There is no current object to cancel')
 
             else:
                 self._exclude_object(self.current_object)

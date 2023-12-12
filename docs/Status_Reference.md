@@ -168,6 +168,12 @@ The following information is available in the
   module. These settings may differ from the config file if a
   `SET_RETRACTION` command alters them.
 
+## gcode
+
+The following information is available in the `gcode` object:
+- `commands`: Returns a list of all currently available commands. For each
+  command, if a help string is defined it will also be provided.
+
 ## gcode_button
 
 The following information is available in
@@ -318,7 +324,8 @@ is defined):
 ## output_pin
 
 The following information is available in
-[output_pin some_name](Config_Reference.md#output_pin) objects:
+[output_pin some_name](Config_Reference.md#output_pin) and
+[pwm_tool some_name](Config_Reference.md#pwm_tool) objects:
 - `value`: The "value" of the pin, as set by a `SET_PIN` command.
 
 ## palette2

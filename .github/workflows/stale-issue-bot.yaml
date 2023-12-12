@@ -62,54 +62,54 @@ jobs:
                 state: 'closed'
               });
             }
-  # Close tickets marked with "reviewer needed" label for 2+ weeks
-  close_reviewer_needed:
-    if: github.repository == 'Klipper3d/klipper'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/github-script@v6
-        with:
-          script: |
-            const issues = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: 'reviewer needed',
-              assignee: 'none',
-              per_page: 100,
-              page: 1
-            });
-            msg = "Unfortunately a reviewer has not assigned themselves to"
-                + " this GitHub Pull Request and it is therefore being"
-                + " closed. It is a good idea to move"
-                + " further discussion to the [Klipper Discourse]"
-                + "(https://www.klipper3d.org/Contact.html#discourse-forum)"
-                + " server. Reviewers can reach out on that forum to let you"
-                + " know if they are interested and when they are available."
-                + "\n\n"
-                + "Best regards,\n"
-                + "~ Your friendly GitIssueBot"
-                + "\n\n"
-                + "PS: I'm just an automated script, not a human being.";
-            const expireMillis = 1000 * 60 * 60 * 24 * 14;
-            const curtime = new Date().getTime();
-            for (const issue of issues.data.values()) {
-              const updatetime = new Date(issue.updated_at).getTime();
-              if (curtime < updatetime + expireMillis)
-                continue;
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issue.number,
-                body: msg
-              });
-              await github.rest.issues.update({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issue.number,
-                state: 'closed'
-              });
-            }
+#  # Close tickets marked with "reviewer needed" label for 2+ weeks
+#  close_reviewer_needed:
+#    if: github.repository == 'Klipper3d/klipper'
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/github-script@v6
+#        with:
+#          script: |
+#            const issues = await github.rest.issues.listForRepo({
+#              owner: context.repo.owner,
+#              repo: context.repo.repo,
+#              state: 'open',
+#              labels: 'reviewer needed',
+#              assignee: 'none',
+#              per_page: 100,
+#              page: 1
+#            });
+#            msg = "Unfortunately a reviewer has not assigned themselves to"
+#                + " this GitHub Pull Request and it is therefore being"
+#                + " closed. It is a good idea to move"
+#                + " further discussion to the [Klipper Discourse]"
+#                + "(https://www.klipper3d.org/Contact.html#discourse-forum)"
+#                + " server. Reviewers can reach out on that forum to let you"
+#                + " know if they are interested and when they are available."
+#                + "\n\n"
+#                + "Best regards,\n"
+#                + "~ Your friendly GitIssueBot"
+#                + "\n\n"
+#                + "PS: I'm just an automated script, not a human being.";
+#            const expireMillis = 1000 * 60 * 60 * 24 * 14;
+#            const curtime = new Date().getTime();
+#            for (const issue of issues.data.values()) {
+#              const updatetime = new Date(issue.updated_at).getTime();
+#              if (curtime < updatetime + expireMillis)
+#                continue;
+#              await github.rest.issues.createComment({
+#                owner: context.repo.owner,
+#                repo: context.repo.repo,
+#                issue_number: issue.number,
+#                body: msg
+#              });
+#              await github.rest.issues.update({
+#                owner: context.repo.owner,
+#                repo: context.repo.repo,
+#                issue_number: issue.number,
+#                state: 'closed'
+#              });
+#            }
   # Mark unassigned PRs that are idle for 2 weeks
   mark_reviewer_needed:
     if: github.repository == 'Klipper3d/klipper'
