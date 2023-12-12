@@ -66,6 +66,7 @@ class GCodeCommand:
 
     class sentinel:
         """Parameter parsing helpers."""
+
         pass
 
     def get(
@@ -91,7 +92,9 @@ class GCodeCommand:
             value = parser(value)
         except Exception:
             raise self.error(
-                "Error on '{}': unable to parse {}".format(self._commandline, value)
+                "Error on '{}': unable to parse {}".format(
+                    self._commandline, value
+                )
             )
         if minval is not None and value < minval:
             raise self.error(
@@ -123,7 +126,13 @@ class GCodeCommand:
         return self.get(name, default, parser=int, minval=minval, maxval=maxval)
 
     def get_float(
-        self, name, default=sentinel, minval=None, maxval=None, above=None, below=None
+        self,
+        name,
+        default=sentinel,
+        minval=None,
+        maxval=None,
+        above=None,
+        below=None,
     ):
         return self.get(
             name,
@@ -146,7 +155,9 @@ class GCodeDispatch:
         self.is_fileinput = not not printer.get_start_args().get("debuginput")
         printer.register_event_handler("klippy:ready", self._handle_ready)
         printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
-        printer.register_event_handler("klippy:disconnect", self._handle_disconnect)
+        printer.register_event_handler(
+            "klippy:disconnect", self._handle_disconnect
+        )
         # Command handling
         self.is_printer_ready = False
         self.mutex = printer.get_reactor().mutex()
@@ -240,13 +251,13 @@ class GCodeDispatch:
         return dict(self.gcode_help)
 
     def get_status(self, eventtime):
-        return {'commands': self.status_commands}
+        return {"commands": self.status_commands}
 
     def _build_status_commands(self):
         commands = {cmd: {} for cmd in self.gcode_handlers}
         for cmd in self.gcode_help:
             if cmd in commands:
-                commands[cmd]['help'] = self.gcode_help[cmd]
+                commands[cmd]["help"] = self.gcode_help[cmd]
         self.status_commands = commands
 
     def register_output_handler(self, cb):
@@ -289,7 +300,9 @@ class GCodeDispatch:
                 # Skip line number at start of command
                 cmd = parts[3] + parts[4].strip()
             # Build gcode "params" dictionary
-            params = {parts[i]: parts[i + 1].strip() for i in range(1, numparts, 2)}
+            params = {
+                parts[i]: parts[i + 1].strip() for i in range(1, numparts, 2)
+            }
             gcmd = GCodeCommand(self, cmd, origline, params, need_ack)
             # Invoke handler for command
             handler = self.gcode_handlers.get(cmd, self.cmd_default)
@@ -356,7 +369,9 @@ class GCodeDispatch:
     def _get_extended_params(self, gcmd):
         m = self.extended_r.match(gcmd.get_commandline())
         if m is None:
-            raise self.error("Malformed command '{}'".format(gcmd.get_commandline()))
+            raise self.error(
+                "Malformed command '{}'".format(gcmd.get_commandline())
+            )
         eargs = m.group("args")
         try:
             eparams = [earg.split("=", 1) for earg in shlex.split(eargs)]
@@ -365,7 +380,9 @@ class GCodeDispatch:
             gcmd._params.update(eparams)
             return gcmd
         except ValueError:
-            raise self.error("Malformed command '{}'".format(gcmd.get_commandline()))
+            raise self.error(
+                "Malformed command '{}'".format(gcmd.get_commandline())
+            )
 
     # G-Code special command handlers
     def cmd_default(self, gcmd):
@@ -395,7 +412,8 @@ class GCodeDispatch:
             # Don't warn about requests to turn off heaters when not present
             return
         elif cmd == "M107" or (
-            cmd == "M106" and (not gcmd.get_float("S", 1.0) or self.is_fileinput)
+            cmd == "M106"
+            and (not gcmd.get_float("S", 1.0) or self.is_fileinput)
         ):
             # Don't warn about requests to turn off fan when fan not present
             return
@@ -495,7 +513,9 @@ class GCodeIO:
         self.fd_handle = None
         if not self.is_fileinput:
             self.gcode.register_output_handler(self._respond_raw)
-            self.fd_handle = self.reactor.register_fd(self.fd, self._process_data)
+            self.fd_handle = self.reactor.register_fd(
+                self.fd, self._process_data
+            )
         self.partial_input = ""
         self.pending_commands = []
         self.bytes_read = 0
@@ -504,7 +524,9 @@ class GCodeIO:
     def _handle_ready(self):
         self.is_printer_ready = True
         if self.is_fileinput and self.fd_handle is None:
-            self.fd_handle = self.reactor.register_fd(self.fd, self._process_data)
+            self.fd_handle = self.reactor.register_fd(
+                self.fd, self._process_data
+            )
 
     def _dump_debug(self):
         out = []
@@ -567,7 +589,9 @@ class GCodeIO:
             pending_commands = self.pending_commands
         self.is_processing_data = False
         if self.fd_handle is None:
-            self.fd_handle = self.reactor.register_fd(self.fd, self._process_data)
+            self.fd_handle = self.reactor.register_fd(
+                self.fd, self._process_data
+            )
 
     def _respond_raw(self, msg):
         if self.pipe_is_active:

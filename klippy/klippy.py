@@ -106,26 +106,33 @@ class Printer:
     def _set_state(self, msg):
         if self.state_message in (message_ready, message_startup):
             self.state_message = msg
-        if msg != message_ready and self.start_args.get("debuginput") is not None:
+        if (
+            msg != message_ready
+            and self.start_args.get("debuginput") is not None
+        ):
             self.request_exit("error_exit")
 
     def add_object(self, name, obj):
         if name in self.objects:
-            raise self.config_error("Printer object '%s' already created" % (name,))
+            raise self.config_error(
+                "Printer object '{}' already created".format(name)
+            )
         self.objects[name] = obj
 
     def lookup_object(self, name, default=configfile.sentinel):
         if name in self.objects:
             return self.objects[name]
         if default is configfile.sentinel:
-            raise self.config_error("Unknown config object '%s'" % (name,))
+            raise self.config_error("Unknown config object '{}'".format(name))
         return default
 
     def lookup_objects(self, module=None):
         if module is None:
             return list(self.objects.items())
         prefix = module + " "
-        objs = [(n, self.objects[n]) for n in self.objects if n.startswith(prefix)]
+        objs = [
+            (n, self.objects[n]) for n in self.objects if n.startswith(prefix)
+        ]
         if module in self.objects:
             return [(module, self.objects[module])] + objs
         return objs
@@ -135,14 +142,18 @@ class Printer:
             return self.objects[section]
         module_parts = section.split()
         module_name = module_parts[0]
-        py_name = os.path.join(os.path.dirname(__file__), "extras", module_name + ".py")
+        py_name = os.path.join(
+            os.path.dirname(__file__), "extras", module_name + ".py"
+        )
         py_dirname = os.path.join(
             os.path.dirname(__file__), "extras", module_name, "__init__.py"
         )
         if not os.path.exists(py_name) and not os.path.exists(py_dirname):
             if default is not configfile.sentinel:
                 return default
-            raise self.config_error("Unable to load module '%s'" % (section,))
+            raise self.config_error(
+                "Unable to load module '{}'".format(section)
+            )
         mod = importlib.import_module("extras." + module_name)
         init_func = "load_config"
         if len(module_parts) > 1:
@@ -151,7 +162,9 @@ class Printer:
         if init_func is None:
             if default is not configfile.sentinel:
                 return default
-            raise self.config_error("Unable to load module '%s'" % (section,))
+            raise self.config_error(
+                "Unable to load module '{}'".format(section)
+            )
         self.objects[section] = init_func(config.getsection(section))
         return self.objects[section]
 
@@ -182,11 +195,15 @@ class Printer:
                 continue
             if mcu_version != host_version:
                 msg_update.append(
-                    "%s: Current version %s" % (mcu_name.split()[-1], mcu_version)
+                    "{}: Current version {}".format(
+                        mcu_name.split()[-1], mcu_version
+                    )
                 )
             else:
                 msg_updated.append(
-                    "%s: Current version %s" % (mcu_name.split()[-1], mcu_version)
+                    "{}: Current version {}".format(
+                        mcu_name.split()[-1], mcu_version
+                    )
                 )
         if not msg_update:
             msg_update.append("<none>")
@@ -195,7 +212,7 @@ class Printer:
         msg = [
             "MCU Protocol error",
             message_protocol_error1,
-            "Your Klipper version is: %s" % (host_version,),
+            "Your Klipper version is: {}".format(host_version),
             "MCU(s) which should be updated:",
         ]
         msg += msg_update + ["Up-to-date MCU(s):"] + msg_updated
@@ -212,7 +229,7 @@ class Printer:
                 cb()
         except (self.config_error, pins.error) as e:
             logging.exception("Config error")
-            self._set_state("%s\n%s" % (str(e), message_restart))
+            self._set_state("{}\n{}".format(str(e), message_restart))
             return
         except msgproto.error as e:
             logging.exception("Protocol error")
@@ -221,14 +238,13 @@ class Printer:
             return
         except mcu.error as e:
             logging.exception("MCU error during connect")
-            self._set_state("%s%s" % (str(e), message_mcu_connect_error))
+            self._set_state("{}{}".format(str(e), message_mcu_connect_error))
             util.dump_mcu_build()
             return
         except Exception as e:
             logging.exception("Unhandled exception during connect")
             self._set_state(
-                "Internal error during connect: %s\n%s"
-                % (
+                "Internal error during connect: {}\n{}".format(
                     str(e),
                     message_restart,
                 )
@@ -242,7 +258,9 @@ class Printer:
                 cb()
         except Exception as e:
             logging.exception("Unhandled exception during ready callback")
-            self.invoke_shutdown("Internal error during ready callback: %s" % (str(e),))
+            self.invoke_shutdown(
+                "Internal error during ready callback: {}".format(str(e))
+            )
 
     def run(self):
         systime = time.time()
@@ -261,7 +279,9 @@ class Printer:
             logging.exception(msg)
             # Exception from a reactor callback - try to shutdown
             try:
-                self.reactor.register_callback((lambda e: self.invoke_shutdown(msg)))
+                self.reactor.register_callback(
+                    (lambda e: self.invoke_shutdown(msg))
+                )
                 self.reactor.run()
             except Exception:
                 logging.exception("Repeat unhandled exception during run")
@@ -288,16 +308,20 @@ class Printer:
             return
         logging.error("Transition to shutdown state: %s", msg)
         self.in_shutdown_state = True
-        self._set_state("%s%s" % (msg, message_shutdown))
+        self._set_state("{}{}".format(msg, message_shutdown))
         for cb in self.event_handlers.get("klippy:shutdown", []):
             try:
                 cb()
             except Exception:
                 logging.exception("Exception during shutdown handler")
-        logging.info("Reactor garbage collection: %s", self.reactor.get_gc_stats())
+        logging.info(
+            "Reactor garbage collection: %s", self.reactor.get_gc_stats()
+        )
 
     def invoke_async_shutdown(self, msg):
-        self.reactor.register_async_callback((lambda e: self.invoke_shutdown(msg)))
+        self.reactor.register_async_callback(
+            (lambda e: self.invoke_shutdown(msg))
+        )
 
     def register_event_handler(self, event, callback):
         self.event_handlers.setdefault(event, []).append(callback)
@@ -365,7 +389,10 @@ def main():
         help="api server unix domain socket filename",
     )
     opts.add_option(
-        "-l", "--logfile", dest="logfile", help="write log to file instead of stderr"
+        "-l",
+        "--logfile",
+        dest="logfile",
+        help="write log to file instead of stderr",
     )
     opts.add_option(
         "-v", action="store_true", dest="verbose", help="enable debug messages"
@@ -386,7 +413,9 @@ def main():
         help="file to read for mcu protocol dictionary",
     )
     opts.add_option(
-        "--import-test", action="store_true", help="perform an import module test"
+        "--import-test",
+        action="store_true",
+        help="perform an import module test",
     )
     options, args = opts.parse_args()
     if options.import_test:
@@ -432,37 +461,46 @@ def main():
             )
         )
     ]
-    modified_files = [fname for code, fname in git_info["file_status"] if code == "M"]
+    modified_files = [
+        fname for code, fname in git_info["file_status"] if code == "M"
+    ]
     extra_git_desc = ""
     if extra_files:
         if not git_vers.endswith("-dirty"):
             git_vers = git_vers + "-dirty"
         if len(extra_files) > 10:
-            extra_files[10:] = ["(+%d files)" % (len(extra_files) - 10,)]
-        extra_git_desc += "\nUntracked files: %s" % (", ".join(extra_files),)
+            extra_files[10:] = ["(+{:d} files)".format(len(extra_files) - 10)]
+        extra_git_desc += "\nUntracked files: {}".format(", ".join(extra_files))
     if modified_files:
         if len(modified_files) > 10:
-            modified_files[10:] = ["(+%d files)" % (len(modified_files) - 10,)]
-        extra_git_desc += "\nModified files: %s" % (", ".join(modified_files),)
-    extra_git_desc += "\nBranch: %s" % (git_info["branch"])
-    extra_git_desc += "\nRemote: %s" % (git_info["remote"])
-    extra_git_desc += "\nTracked URL: %s" % (git_info["url"])
+            modified_files[10:] = [
+                "(+{:d} files)".format(len(modified_files) - 10)
+            ]
+        extra_git_desc += "\nModified files: {}".format(
+            ", ".join(modified_files)
+        )
+    extra_git_desc += "\nBranch: {}".format(git_info["branch"])
+    extra_git_desc += "\nRemote: {}".format(git_info["remote"])
+    extra_git_desc += "\nTracked URL: {}".format(git_info["url"])
     start_args["software_version"] = git_vers
     start_args["cpu_info"] = util.get_cpu_info()
     versions = []
     if bglogger is not None:
         versions = "\n".join(
             [
-                "Args: %s" % (sys.argv,),
-                "Git version: %s%s"
-                % (repr(start_args["software_version"]), extra_git_desc),
-                "CPU: %s" % (start_args["cpu_info"],),
-                "Python: %s" % (repr(sys.version),),
+                "Args: {}".format(sys.argv),
+                "Git version: {}{}".format(
+                    repr(start_args["software_version"]), extra_git_desc
+                ),
+                "CPU: {}".format(start_args["cpu_info"]),
+                "Python: {}".format(repr(sys.version)),
             ]
         )
         logging.info(versions)
     elif not options.debugoutput:
-        logging.warning("No log file specified!" " Severe timing issues may result!")
+        logging.warning(
+            "No log file specified!" " Severe timing issues may result!"
+        )
     gc.disable()
 
     # Start Printer() class
