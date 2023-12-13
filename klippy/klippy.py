@@ -14,6 +14,7 @@ import os
 import sys
 import time
 
+import util
 import configfile
 import gcode
 import mcu
@@ -22,7 +23,6 @@ import pins
 import queuelogger
 import reactor
 import toolhead
-import util
 import webhooks
 
 message_ready = "Printer is ready"
