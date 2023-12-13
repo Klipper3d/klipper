@@ -2559,7 +2559,7 @@ sensor_type: LM75
 
 ### Builtin micro-controller temperature sensor
 
-The atsam, atsamd, and stm32 micro-controllers contain an internal
+The atsam, atsamd, stm32 and rp2040 micro-controllers contain an internal
 temperature sensor. One can use the "temperature_mcu" sensor to
 monitor these temperatures.
 
