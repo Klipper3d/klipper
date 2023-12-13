@@ -91,6 +91,7 @@ class PRTouchZOffsetWrapper:
         self.obj.printer.register_event_handler('klippy:mcu_identify', self._handle_mcu_identify)
         self.obj.gcode.register_command('PRTOUCH_PROBE_ZOFFSET', self.cmd_PRTOUCH_PROBE_ZOFFSET, desc=self.cmd_PRTOUCH_PROBE_ZOFFSET_help)
         self.obj.gcode.register_command('NOZZLE_CLEAR', self.cmd_NOZZLE_CLEAR, desc=self.cmd_NOZZLE_CLEAR_help)
+        self.obj.gcode.register_command('PRTOUCH_ACCURACY', self.cmd_PRTOUCH_ACCURACY, desc=self.cmd_PRTOUCH_ACCURACY_help)
         pass
 
     def _handle_mcu_identify(self):
@@ -208,6 +209,19 @@ class PRTouchZOffsetWrapper:
             while self.ck_sys_sta() and abs(self.obj.heater_bed.target_temp - self.obj.heater_bed.smoothed_temp) > err and self.obj.heater_bed.target_temp > 0:
                 self.obj.hx711s.delay_s(0.100)          
         pass
+
+    def _calc_mean(self, positions):
+        count = float(len(positions))
+        return sum(positions) / count
+
+    def _calc_median(self, positions):
+        z_sorted = sorted(positions)
+        middle = len(positions) // 2
+        if (len(positions) & 1) == 1:
+            # odd number of samples
+            return z_sorted[middle]
+        # even number of samples
+        return self._calc_mean(z_sorted[middle-1:middle+1])
 
     def pnt_msg(self, msg):
         logging.info(msg)
@@ -402,6 +416,44 @@ class PRTouchZOffsetWrapper:
 
         z_probe[2] = homing_origin[2] + z_adjust - start_z_offset
         self.obj.probe.probe_calibrate_finalize(z_probe)
+
+    cmd_PRTOUCH_ACCURACY_help = "Probe Z-height accuracy at sensoor position"
+    def cmd_PRTOUCH_ACCURACY(self, gcmd):
+        self._ck_g28ed()
+        speed = gcmd.get_float("PROBE_SPEED", self.cfg.probe_speed, above=0.)
+        sample_count = gcmd.get_int("SAMPLES", 10, minval=1)
+        gcmd.respond_info("PRTOUCH_ACCURACY at X:%.3f Y:%.3f"
+                          " (samples=%d speed=%.1f)\n"
+                          % (self.cfg.sensor_x, self.cfg.sensor_y,
+                             sample_count, speed))
+        sensor_pos = [self.cfg.sensor_x, self.cfg.sensor_y, self.cfg.bed_max_err]
+        # Move to sensor location
+        self._move(sensor_pos, self.cfg.g29_xy_speed)
+        # Probe bed sample_count times
+        positions = []
+        while len(positions) < sample_count:
+            # Probe position
+            _index1, pos, _sta = self.probe_by_step(sensor_pos, speed, 10, self.cfg.min_hold, self.cfg.max_hold, True)
+            positions.append(pos)
+            gcmd.respond_info(
+                "probe #%d at (%.3f, %.3f): %.3f\n"
+                % (len(positions), sensor_pos[0], sensor_pos[1], pos))
+        # Calculate maximum, minimum and average values
+        max_value = max(positions)
+        min_value = min(positions)
+        range_value = max_value - min_value
+        avg_value = self._calc_mean(positions)
+        median = self._calc_median(positions)
+        # calculate the standard deviation
+        deviation_sum = 0
+        for i in range(len(positions)):
+            deviation_sum += pow(positions[i] - avg_value, 2.)
+        sigma = (deviation_sum / len(positions)) ** 0.5
+        # Show information
+        gcmd.respond_info(
+            "probe accuracy results: maximum %.6f, minimum %.6f, range %.6f, "
+            "average %.6f, median %.6f, standard deviation %.6f" % (
+            max_value, min_value, range_value, avg_value, median, sigma))
 
 
 def load_config(config):
