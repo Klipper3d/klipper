@@ -54,6 +54,8 @@ class MCU_stepper:
                                                        self._query_mcu_position)
     def get_mcu(self):
         return self._mcu
+    def get_pin_info(self):
+        return self._dir_pin, self._step_pin, self._invert_dir, self._invert_step
     def get_name(self, short=False):
         if short and self._name.startswith('stepper_'):
             return self._name[8:]
