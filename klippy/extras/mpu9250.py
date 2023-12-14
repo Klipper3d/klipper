@@ -132,9 +132,9 @@ class MPU9250:
         count = seq = 0
         samples = [None] * (len(raw_samples) * SAMPLES_PER_BLOCK)
         for params in raw_samples:
-            seq_diff = (last_sequence - params['sequence']) & 0xffff
+            seq_diff = (params['sequence'] - last_sequence) & 0xffff
             seq_diff -= (seq_diff & 0x8000) << 1
-            seq = last_sequence - seq_diff
+            seq = last_sequence + seq_diff
             d = bytearray(params['data'])
             msg_cdiff = seq * SAMPLES_PER_BLOCK - chip_base
 
@@ -168,15 +168,11 @@ class MPU9250:
         else:
             raise self.printer.command_error("Unable to query mpu9250 fifo")
         mcu_clock = self.mcu.clock32_to_clock64(params['clock'])
-        sequence = (self.last_sequence & ~0xffff) | params['next_sequence']
-        if sequence < self.last_sequence:
-            sequence += 0x10000
-        self.last_sequence = sequence
+        seq_diff = (params['next_sequence'] - self.last_sequence) & 0xffff
+        self.last_sequence += seq_diff
         buffered = params['buffered']
-        limit_count = (self.last_limit_count & ~0xffff) | params['limit_count']
-        if limit_count < self.last_limit_count:
-            limit_count += 0x10000
-        self.last_limit_count = limit_count
+        lc_diff = (params['limit_count'] - self.last_limit_count) & 0xffff
+        self.last_limit_count += lc_diff
         duration = params['query_ticks']
         if duration > self.max_query_duration:
             # Skip measurement as a high query time could skew clock tracking
@@ -184,7 +180,7 @@ class MPU9250:
                                           self.mcu.seconds_to_clock(.000005))
             return
         self.max_query_duration = 2 * duration
-        msg_count = (sequence * SAMPLES_PER_BLOCK
+        msg_count = (self.last_sequence * SAMPLES_PER_BLOCK
                      + buffered // BYTES_PER_SAMPLE + fifo)
         # The "chip clock" is the message counter plus .5 for average
         # inaccuracy of query responses and plus .5 for assumed offset

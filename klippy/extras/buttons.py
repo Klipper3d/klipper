@@ -57,10 +57,9 @@ class MCU_buttons:
     def handle_buttons_state(self, params):
         # Expand the message ack_count from 8-bit
         ack_count = self.ack_count
-        ack_diff = (ack_count - params['ack_count']) & 0xff
-        if ack_diff & 0x80:
-            ack_diff -= 0x100
-        msg_ack_count = ack_count - ack_diff
+        ack_diff = (params['ack_count'] - ack_count) & 0xff
+        ack_diff -= (ack_diff & 0x80) << 1
+        msg_ack_count = ack_count + ack_diff
         # Determine new buttons
         buttons = bytearray(params['state'])
         new_count = msg_ack_count + len(buttons) - self.ack_count
