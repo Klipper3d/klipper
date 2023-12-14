@@ -343,7 +343,7 @@ class TMC2240:
     def __init__(self, config):
         # Setup mcu communication
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
-        if config.get("uart_pin", None) is not None:
+        if config.get('uart_pin', None) is not None:
             # use UART for communication
             self.mcu_tmc = tmc_uart.MCU_TMC_uart(config, Registers, self.fields,
                                                  3, TMC_FREQUENCY)
