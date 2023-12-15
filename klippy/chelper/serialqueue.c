@@ -222,12 +222,11 @@ handle_message(struct serialqueue *sq, double eventtime, int len)
     pthread_mutex_lock(&sq->lock);
 
     // Calculate receive sequence number
-    uint64_t rseq = ((sq->receive_seq & ~MESSAGE_SEQ_MASK)
-                     | (sq->input_buf[MESSAGE_POS_SEQ] & MESSAGE_SEQ_MASK));
+    uint32_t rseq_delta = ((sq->input_buf[MESSAGE_POS_SEQ] - sq->receive_seq)
+                           & MESSAGE_SEQ_MASK);
+    uint64_t rseq = sq->receive_seq + rseq_delta;
     if (rseq != sq->receive_seq) {
         // New sequence number
-        if (rseq < sq->receive_seq)
-            rseq += MESSAGE_SEQ_MASK+1;
         if (rseq > sq->send_seq && sq->receive_seq != 1) {
             // An ack for a message not sent?  Out of order message?
             sq->bytes_invalid += len;
