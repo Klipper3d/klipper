@@ -238,7 +238,7 @@ class ToolHead:
         # Flush tracking
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
         self.do_kick_flush_timer = True
-        self.last_flush_time = self.need_flush_time = 0.
+        self.last_flush_time = self.need_flush_time = self.step_gen_time = 0.
         # Kinematic step generation scan window time tracking
         self.kin_flush_delay = SDS_CHECK_TIME
         self.kin_flush_times = []
@@ -341,7 +341,8 @@ class ToolHead:
         # Generate steps for moves
         if self.special_queuing_state:
             self._update_drip_move_time(next_move_time)
-        self.note_kinematic_activity(next_move_time + self.kin_flush_delay)
+        self.note_kinematic_activity(next_move_time + self.kin_flush_delay,
+                                     set_step_gen_time=True)
         self._advance_move_time(next_move_time)
     def _flush_lookahead(self):
         # Transit from "NeedPrime"/"Priming"/"Drip"/main state to "NeedPrime"
@@ -352,7 +353,7 @@ class ToolHead:
         self.check_stall_time = 0.
     def flush_step_generation(self):
         self._flush_lookahead()
-        self._advance_flush_time(self.need_flush_time)
+        self._advance_flush_time(self.step_gen_time)
     def get_last_move_time(self):
         if self.special_queuing_state:
             self._flush_lookahead()
@@ -492,7 +493,8 @@ class ToolHead:
                 self.drip_completion.wait(curtime + wait_time)
                 continue
             npt = min(self.print_time + DRIP_SEGMENT_TIME, next_print_time)
-            self.note_kinematic_activity(npt + self.kin_flush_delay)
+            self.note_kinematic_activity(npt + self.kin_flush_delay,
+                                         set_step_gen_time=True)
             self._advance_move_time(npt)
     def drip_move(self, newpos, speed, drip_completion):
         self.dwell(self.kin_flush_delay)
@@ -574,8 +576,10 @@ class ToolHead:
             callback(self.get_last_move_time())
             return
         last_move.timing_callbacks.append(callback)
-    def note_kinematic_activity(self, kin_time):
+    def note_kinematic_activity(self, kin_time, set_step_gen_time=False):
         self.need_flush_time = max(self.need_flush_time, kin_time)
+        if set_step_gen_time:
+            self.step_gen_time = max(self.step_gen_time, kin_time)
         if self.do_kick_flush_timer:
             self.do_kick_flush_timer = False
             self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
