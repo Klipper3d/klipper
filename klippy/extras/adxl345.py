@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, time, collections, multiprocessing, os
-from . import bus, motion_report, bulk_sensor
+from . import bus, bulk_sensor
 
 # ADXL345 registers
 REG_DEVID = 0x00
@@ -217,7 +217,7 @@ class ADXL345:
                                                           BYTES_PER_SAMPLE)
         self.last_error_count = 0
         # API server endpoints
-        self.api_dump = motion_report.APIDumpHelper(
+        self.api_dump = bulk_sensor.APIDumpHelper(
             self.printer, self._api_update, self._api_startstop, API_UPDATES)
         self.name = config.get_name().split()[-1]
         wh = self.printer.lookup_object('webhooks')
