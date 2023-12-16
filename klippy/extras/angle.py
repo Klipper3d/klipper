@@ -3,8 +3,8 @@
 # Copyright (C) 2021,2022  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, math, threading
-from . import bus, motion_report
+import logging, math
+from . import bus, motion_report, bulk_sensor
 
 MIN_MSG_TIME = 0.100
 TCODE_ERROR = 0xff
@@ -417,9 +417,6 @@ class Angle:
         # Measurement conversion
         self.start_clock = self.time_shift = self.sample_ticks = 0
         self.last_sequence = self.last_angle = 0
-        # Measurement storage (accessed from background thread)
-        self.lock = threading.Lock()
-        self.raw_samples = []
         # Sensor type
         sensors = { "a1333": HelperA1333, "as5047d": HelperAS5047D,
                     "tle5012b": HelperTLE5012B }
@@ -439,8 +436,7 @@ class Angle:
             "query_spi_angle oid=%d clock=0 rest_ticks=0 time_shift=0"
             % (oid,), on_restart=True)
         mcu.register_config_callback(self._build_config)
-        mcu.register_response(self._handle_spi_angle_data,
-                              "spi_angle_data", oid)
+        self.bulk_queue = bulk_sensor.BulkDataQueue(mcu, "spi_angle_data", oid)
         # API server endpoints
         self.api_dump = motion_report.APIDumpHelper(
             self.printer, self._api_update, self._api_startstop, 0.100)
@@ -464,9 +460,6 @@ class Angle:
     # Measurement collection
     def is_measuring(self):
         return self.start_clock != 0
-    def _handle_spi_angle_data(self, params):
-        with self.lock:
-            self.raw_samples.append(params)
     def _extract_samples(self, raw_samples):
         # Load variables to optimize inner loop below
         sample_ticks = self.sample_ticks
@@ -524,9 +517,7 @@ class Angle:
     def _api_update(self, eventtime):
         if self.sensor_helper.is_tcode_absolute:
             self.sensor_helper.update_clock()
-        with self.lock:
-            raw_samples = self.raw_samples
-            self.raw_samples = []
+        raw_samples = self.bulk_queue.pull_samples()
         if not raw_samples:
             return {}
         samples, error_count = self._extract_samples(raw_samples)
@@ -541,8 +532,7 @@ class Angle:
         logging.info("Starting angle '%s' measurements", self.name)
         self.sensor_helper.start()
         # Start bulk reading
-        with self.lock:
-            self.raw_samples = []
+        self.bulk_queue.clear_samples()
         self.last_sequence = 0
         systime = self.printer.get_reactor().monotonic()
         print_time = self.mcu.estimated_print_time(systime) + MIN_MSG_TIME
@@ -557,8 +547,7 @@ class Angle:
         # Halt bulk reading
         params = self.query_spi_angle_end_cmd.send([self.oid, 0, 0, 0])
         self.start_clock = 0
-        with self.lock:
-            self.raw_samples = []
+        self.bulk_queue.clear_samples()
         self.sensor_helper.last_temperature = None
         logging.info("Stopped angle '%s' measurements", self.name)
     def _api_startstop(self, is_start):
