@@ -63,10 +63,11 @@ class LIS2DW:
         mcu.register_config_callback(self._build_config)
         self.bulk_queue = bulk_sensor.BulkDataQueue(mcu, "lis2dw_data", oid)
         # Clock tracking
-        self.last_sequence = self.max_query_duration = 0
-        self.last_limit_count = self.last_error_count = 0
         chip_smooth = self.data_rate * API_UPDATES * 2
         self.clock_sync = bulk_sensor.ClockSyncRegression(mcu, chip_smooth)
+        self.clock_updater = bulk_sensor.ChipClockUpdater(self.clock_sync,
+                                                          BYTES_PER_SAMPLE)
+        self.last_error_count = 0
         # API server endpoints
         self.api_dump = motion_report.APIDumpHelper(
             self.printer, self._api_update, self._api_startstop, API_UPDATES)
@@ -106,7 +107,7 @@ class LIS2DW:
     def _extract_samples(self, raw_samples):
         # Load variables to optimize inner loop below
         (x_pos, x_scale), (y_pos, y_scale), (z_pos, z_scale) = self.axes_map
-        last_sequence = self.last_sequence
+        last_sequence = self.clock_updater.get_last_sequence()
         time_base, chip_base, inv_freq = self.clock_sync.get_time_translation()
         # Process every message in raw_samples
         count = seq = 0
@@ -140,35 +141,9 @@ class LIS2DW:
         del samples[count:]
         return samples
     def _update_clock(self, minclock=0):
-        # Query current state
-        for retry in range(5):
-            params = self.query_lis2dw_status_cmd.send([self.oid],
-                                                        minclock=minclock)
-            fifo = params['fifo'] & 0x1f
-            if fifo <= 32:
-                break
-        else:
-            raise self.printer.command_error("Unable to query lis2dw fifo")
-        mcu_clock = self.mcu.clock32_to_clock64(params['clock'])
-        seq_diff = (params['next_sequence'] - self.last_sequence) & 0xffff
-        self.last_sequence += seq_diff
-        buffered = params['buffered']
-        lc_diff = (params['limit_count'] - self.last_limit_count) & 0xffff
-        self.last_limit_count += lc_diff
-        duration = params['query_ticks']
-        if duration > self.max_query_duration:
-            # Skip measurement as a high query time could skew clock tracking
-            self.max_query_duration = max(2 * self.max_query_duration,
-                                          self.mcu.seconds_to_clock(.000005))
-            return
-        self.max_query_duration = 2 * duration
-        msg_count = (self.last_sequence * SAMPLES_PER_BLOCK
-                     + buffered // BYTES_PER_SAMPLE + fifo)
-        # The "chip clock" is the message counter plus .5 for average
-        # inaccuracy of query responses and plus .5 for assumed offset
-        # of lis2dw hw processing time.
-        chip_clock = msg_count + 1
-        self.clock_sync.update(mcu_clock + duration // 2, chip_clock)
+        params = self.query_lis2dw_status_cmd.send([self.oid],
+                                                   minclock=minclock)
+        self.clock_updater.update_clock(params)
     def _start_measurements(self):
         if self.is_measuring():
             return
@@ -203,12 +178,10 @@ class LIS2DW:
                                     reqclock=reqclock)
         logging.info("LIS2DW starting '%s' measurements", self.name)
         # Initialize clock tracking
-        self.last_sequence = 0
-        self.last_limit_count = self.last_error_count = 0
-        self.clock_sync.reset(reqclock, 0)
-        self.max_query_duration = 1 << 31
+        self.clock_updater.note_start(reqclock)
         self._update_clock(minclock=reqclock)
-        self.max_query_duration = 1 << 31
+        self.clock_updater.clear_duration_filter()
+        self.last_error_count = 0
     def _finish_measurements(self):
         if not self.is_measuring():
             return
@@ -228,7 +201,7 @@ class LIS2DW:
         if not samples:
             return {}
         return {'data': samples, 'errors': self.last_error_count,
-                'overflows': self.last_limit_count}
+                'overflows': self.clock_updater.get_last_limit_count()}
     def _api_startstop(self, is_start):
         if is_start:
             self._start_measurements()
