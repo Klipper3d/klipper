@@ -153,6 +153,7 @@ class Homing:
         self.changed_axes = []
         self.trigger_mcu_pos = {}
         self.adjust_pos = {}
+        self.stepper_z_sensorless_flag = False
     def set_axes(self, axes):
         self.changed_axes = axes
     def get_axes(self):
