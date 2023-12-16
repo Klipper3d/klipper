@@ -3,6 +3,26 @@
 # Copyright (C) 2020-2023  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import threading
+
+# Helper class to store incoming messages in a queue
+class BulkDataQueue:
+    def __init__(self, mcu, msg_name, oid):
+        # Measurement storage (accessed from background thread)
+        self.lock = threading.Lock()
+        self.raw_samples = []
+        # Register callback with mcu
+        mcu.register_response(self._handle_data, msg_name, oid)
+    def _handle_data(self, params):
+        with self.lock:
+            self.raw_samples.append(params)
+    def pull_samples(self):
+        with self.lock:
+            raw_samples = self.raw_samples
+            self.raw_samples = []
+        return raw_samples
+    def clear_samples(self):
+        self.pull_samples()
 
 # Helper class for chip clock synchronization via linear regression
 class ClockSyncRegression:

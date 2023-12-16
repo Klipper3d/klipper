@@ -4,7 +4,7 @@
 # Copyright (C) 2020-2021 Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, time, threading, multiprocessing, os
+import logging, time
 from . import bus, motion_report, adxl345, bulk_sensor
 
 MPU9250_ADDR =      0x68
@@ -69,9 +69,6 @@ class MPU9250:
         self.data_rate = config.getint('rate', 4000)
         if self.data_rate not in SAMPLE_RATE_DIVS:
             raise config.error("Invalid rate parameter: %d" % (self.data_rate,))
-        # Measurement storage (accessed from background thread)
-        self.lock = threading.Lock()
-        self.raw_samples = []
         # Setup mcu sensor_mpu9250 bulk query code
         self.i2c = bus.MCU_I2C_from_config(config,
                                            default_addr=MPU9250_ADDR,
@@ -81,7 +78,7 @@ class MPU9250:
         self.query_mpu9250_cmd = self.query_mpu9250_end_cmd = None
         self.query_mpu9250_status_cmd = None
         mcu.register_config_callback(self._build_config)
-        mcu.register_response(self._handle_mpu9250_data, "mpu9250_data", oid)
+        self.bulk_queue = bulk_sensor.BulkDataQueue(mcu, "mpu9250_data", oid)
         # Clock tracking
         self.last_sequence = self.max_query_duration = 0
         self.last_limit_count = self.last_error_count = 0
@@ -120,9 +117,6 @@ class MPU9250:
     # Measurement collection
     def is_measuring(self):
         return self.query_rate > 0
-    def _handle_mpu9250_data(self, params):
-        with self.lock:
-            self.raw_samples.append(params)
     def _extract_samples(self, raw_samples):
         # Load variables to optimize inner loop below
         (x_pos, x_scale), (y_pos, y_scale), (z_pos, z_scale) = self.axes_map
@@ -210,10 +204,8 @@ class MPU9250:
         self.set_reg(REG_ACCEL_CONFIG, SET_ACCEL_CONFIG)
         self.set_reg(REG_ACCEL_CONFIG2, SET_ACCEL_CONFIG2)
 
-        # Setup samples
-        with self.lock:
-            self.raw_samples = []
         # Start bulk reading
+        self.bulk_queue.clear_samples()
         systime = self.printer.get_reactor().monotonic()
         print_time = self.mcu.estimated_print_time(systime) + MIN_MSG_TIME
         reqclock = self.mcu.print_time_to_clock(print_time)
@@ -235,8 +227,7 @@ class MPU9250:
         # Halt bulk reading
         params = self.query_mpu9250_end_cmd.send([self.oid, 0, 0])
         self.query_rate = 0
-        with self.lock:
-            self.raw_samples = []
+        self.bulk_queue.clear_samples()
         logging.info("MPU9250 finished '%s' measurements", self.name)
         self.set_reg(REG_PWR_MGMT_1, SET_PWR_MGMT_1_SLEEP)
         self.set_reg(REG_PWR_MGMT_2, SET_PWR_MGMT_2_OFF)
@@ -244,9 +235,7 @@ class MPU9250:
     # API interface
     def _api_update(self, eventtime):
         self._update_clock()
-        with self.lock:
-            raw_samples = self.raw_samples
-            self.raw_samples = []
+        raw_samples = self.bulk_queue.pull_samples()
         if not raw_samples:
             return {}
         samples = self._extract_samples(raw_samples)

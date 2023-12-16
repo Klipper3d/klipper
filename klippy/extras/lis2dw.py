@@ -4,7 +4,7 @@
 # Copyright (C) 2020-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, time, threading, multiprocessing, os
+import logging
 from . import bus, motion_report, adxl345, bulk_sensor
 
 # LIS2DW registers
@@ -50,9 +50,6 @@ class LIS2DW:
             raise config.error("Invalid lis2dw axes_map parameter")
         self.axes_map = [am[a.strip()] for a in axes_map]
         self.data_rate = 1600
-        # Measurement storage (accessed from background thread)
-        self.lock = threading.Lock()
-        self.raw_samples = []
         # Setup mcu sensor_lis2dw bulk query code
         self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=5000000)
         self.mcu = mcu = self.spi.get_mcu()
@@ -64,7 +61,7 @@ class LIS2DW:
         mcu.add_config_cmd("query_lis2dw oid=%d clock=0 rest_ticks=0"
                            % (oid,), on_restart=True)
         mcu.register_config_callback(self._build_config)
-        mcu.register_response(self._handle_lis2dw_data, "lis2dw_data", oid)
+        self.bulk_queue = bulk_sensor.BulkDataQueue(mcu, "lis2dw_data", oid)
         # Clock tracking
         self.last_sequence = self.max_query_duration = 0
         self.last_limit_count = self.last_error_count = 0
@@ -106,9 +103,6 @@ class LIS2DW:
     # Measurement collection
     def is_measuring(self):
         return self.query_rate > 0
-    def _handle_lis2dw_data(self, params):
-        with self.lock:
-            self.raw_samples.append(params)
     def _extract_samples(self, raw_samples):
         # Load variables to optimize inner loop below
         (x_pos, x_scale), (y_pos, y_scale), (z_pos, z_scale) = self.axes_map
@@ -198,10 +192,8 @@ class LIS2DW:
         # High-Performance Mode (14-bit resolution)
         self.set_reg(REG_LIS2DW_CTRL_REG1_ADDR, 0x94)
 
-        # Setup samples
-        with self.lock:
-            self.raw_samples = []
         # Start bulk reading
+        self.bulk_queue.clear_samples()
         systime = self.printer.get_reactor().monotonic()
         print_time = self.mcu.estimated_print_time(systime) + MIN_MSG_TIME
         reqclock = self.mcu.print_time_to_clock(print_time)
@@ -223,16 +215,13 @@ class LIS2DW:
         # Halt bulk reading
         params = self.query_lis2dw_end_cmd.send([self.oid, 0, 0])
         self.query_rate = 0
-        with self.lock:
-            self.raw_samples = []
+        self.bulk_queue.clear_samples()
         logging.info("LIS2DW finished '%s' measurements", self.name)
         self.set_reg(REG_LIS2DW_FIFO_CTRL, 0x00)
     # API interface
     def _api_update(self, eventtime):
         self._update_clock()
-        with self.lock:
-            raw_samples = self.raw_samples
-            self.raw_samples = []
+        raw_samples = self.bulk_queue.pull_samples()
         if not raw_samples:
             return {}
         samples = self._extract_samples(raw_samples)
