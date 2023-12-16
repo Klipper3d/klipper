@@ -444,9 +444,9 @@ class Angle:
         self.api_dump = bulk_sensor.APIDumpHelper(
             self.printer, self._api_update, self._api_startstop, 0.100)
         self.name = config.get_name().split()[1]
-        wh = self.printer.lookup_object('webhooks')
-        wh.register_mux_endpoint("angle/dump_angle", "sensor", self.name,
-                                 self._handle_dump_angle)
+        api_resp = {'header': ('time', 'angle')}
+        self.api_dump.add_mux_endpoint("angle/dump_angle", "sensor", self.name,
+                                       api_resp)
     def _build_config(self):
         freq = self.mcu.seconds_to_clock(1.)
         while float(TCODE_ERROR << self.time_shift) / freq < 0.002:
@@ -553,10 +553,6 @@ class Angle:
             self._start_measurements()
         else:
             self._finish_measurements()
-    def _handle_dump_angle(self, web_request):
-        self.api_dump.add_client(web_request)
-        hdr = ('time', 'angle')
-        web_request.send({'header': hdr})
     def start_internal_client(self):
         return self.api_dump.add_internal_client()
 

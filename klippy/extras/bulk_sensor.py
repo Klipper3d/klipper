@@ -20,6 +20,8 @@ class APIDumpHelper:
         self.update_interval = update_interval
         self.update_timer = None
         self.clients = {}
+        self.webhooks_start_resp = {}
+    # Periodic batch processing
     def _stop(self):
         self.clients.clear()
         reactor = self.printer.get_reactor()
@@ -52,16 +54,6 @@ class APIDumpHelper:
         systime = reactor.monotonic()
         waketime = systime + self.update_interval
         self.update_timer = reactor.register_timer(self._update, waketime)
-    def add_client(self, web_request):
-        cconn = web_request.get_client_connection()
-        template = web_request.get_dict('response_template', {})
-        self.clients[cconn] = template
-        self._start()
-    def add_internal_client(self):
-        cconn = InternalDumpClient()
-        self.clients[cconn] = {}
-        self._start()
-        return cconn
     def _update(self, eventtime):
         try:
             msg = self.data_cb(eventtime)
@@ -80,6 +72,23 @@ class APIDumpHelper:
             tmp['params'] = msg
             cconn.send(tmp)
         return eventtime + self.update_interval
+    # Internal clients
+    def add_internal_client(self):
+        cconn = InternalDumpClient()
+        self.clients[cconn] = {}
+        self._start()
+        return cconn
+    # Webhooks registration
+    def _add_api_client(self, web_request):
+        cconn = web_request.get_client_connection()
+        template = web_request.get_dict('response_template', {})
+        self.clients[cconn] = template
+        self._start()
+        web_request.send(self.webhooks_start_resp)
+    def add_mux_endpoint(self, path, key, value, webhooks_start_resp):
+        self.webhooks_start_resp = webhooks_start_resp
+        wh = self.printer.lookup_object('webhooks')
+        wh.register_mux_endpoint(path, key, value, self._add_api_client)
 
 # An "internal webhooks" wrapper for using APIDumpHelper internally
 class InternalDumpClient:

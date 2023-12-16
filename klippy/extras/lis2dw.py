@@ -66,9 +66,9 @@ class LIS2DW:
         self.api_dump = bulk_sensor.APIDumpHelper(
             self.printer, self._api_update, self._api_startstop, API_UPDATES)
         self.name = config.get_name().split()[-1]
-        wh = self.printer.lookup_object('webhooks')
-        wh.register_mux_endpoint("lis2dw/dump_lis2dw", "sensor", self.name,
-                                 self._handle_dump_lis2dw)
+        hdr = ('time', 'x_acceleration', 'y_acceleration', 'z_acceleration')
+        self.api_dump.add_mux_endpoint("lis2dw/dump_lis2dw", "sensor",
+                                       self.name, {'header': hdr})
 
     def _build_config(self):
         cmdqueue = self.spi.get_command_queue()
@@ -193,10 +193,6 @@ class LIS2DW:
             self._start_measurements()
         else:
             self._finish_measurements()
-    def _handle_dump_lis2dw(self, web_request):
-        self.api_dump.add_client(web_request)
-        hdr = ('time', 'x_acceleration', 'y_acceleration', 'z_acceleration')
-        web_request.send({'header': hdr})
     def start_internal_client(self):
         cconn = self.api_dump.add_internal_client()
         return adxl345.AccelQueryHelper(self.printer, cconn)

@@ -14,9 +14,9 @@ class DumpStepper:
         self.mcu_stepper = mcu_stepper
         self.last_api_clock = 0
         self.api_dump = bulk_sensor.APIDumpHelper(printer, self._api_update)
-        wh = self.printer.lookup_object('webhooks')
-        wh.register_mux_endpoint("motion_report/dump_stepper", "name",
-                                 mcu_stepper.get_name(), self._add_api_client)
+        api_resp = {'header': ('interval', 'count', 'add')}
+        self.api_dump.add_mux_endpoint("motion_report/dump_stepper", "name",
+                                       mcu_stepper.get_name(), api_resp)
     def get_step_queue(self, start_clock, end_clock):
         mcu_stepper = self.mcu_stepper
         res = []
@@ -62,10 +62,6 @@ class DumpStepper:
                 "start_mcu_position": mcu_pos, "step_distance": step_dist,
                 "first_clock": first_clock, "first_step_time": first_time,
                 "last_clock": last_clock, "last_step_time": last_time}
-    def _add_api_client(self, web_request):
-        self.api_dump.add_client(web_request)
-        hdr = ('interval', 'count', 'add')
-        web_request.send({'header': hdr})
 
 NEVER_TIME = 9999999999999999.
 
@@ -77,9 +73,10 @@ class DumpTrapQ:
         self.trapq = trapq
         self.last_api_msg = (0., 0.)
         self.api_dump = bulk_sensor.APIDumpHelper(printer, self._api_update)
-        wh = self.printer.lookup_object('webhooks')
-        wh.register_mux_endpoint("motion_report/dump_trapq", "name", name,
-                                 self._add_api_client)
+        api_resp = {'header': ('time', 'duration', 'start_velocity',
+                               'acceleration', 'start_position', 'direction')}
+        self.api_dump.add_mux_endpoint("motion_report/dump_trapq", "name", name,
+                                       api_resp)
     def extract_trapq(self, start_time, end_time):
         ffi_main, ffi_lib = chelper.get_ffi()
         res = []
@@ -130,11 +127,6 @@ class DumpTrapQ:
             return {}
         self.last_api_msg = d[-1]
         return {"data": d}
-    def _add_api_client(self, web_request):
-        self.api_dump.add_client(web_request)
-        hdr = ('time', 'duration', 'start_velocity', 'acceleration',
-               'start_position', 'direction')
-        web_request.send({'header': hdr})
 
 STATUS_REFRESH_TIME = 0.250
 
