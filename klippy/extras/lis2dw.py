@@ -4,8 +4,8 @@
 # Copyright (C) 2020-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, time, collections, threading, multiprocessing, os
-from . import bus, motion_report, adxl345
+import logging, time, threading, multiprocessing, os
+from . import bus, motion_report, adxl345, bulk_sensor
 
 # LIS2DW registers
 REG_LIS2DW_WHO_AM_I_ADDR = 0x0F
@@ -30,13 +30,12 @@ LIS2DW_DEV_ID = 0x44
 FREEFALL_ACCEL = 9.80665
 SCALE = FREEFALL_ACCEL * 1.952 / 4
 
-Accel_Measurement = collections.namedtuple(
-    'Accel_Measurement', ('time', 'accel_x', 'accel_y', 'accel_z'))
-
 MIN_MSG_TIME = 0.100
 
 BYTES_PER_SAMPLE = 6
 SAMPLES_PER_BLOCK = 8
+
+API_UPDATES = 0.100
 
 # Printer class that controls LIS2DW chip
 class LIS2DW:
@@ -69,10 +68,11 @@ class LIS2DW:
         # Clock tracking
         self.last_sequence = self.max_query_duration = 0
         self.last_limit_count = self.last_error_count = 0
-        self.clock_sync = adxl345.ClockSyncRegression(self.mcu, 640)
+        chip_smooth = self.data_rate * API_UPDATES * 2
+        self.clock_sync = bulk_sensor.ClockSyncRegression(mcu, chip_smooth)
         # API server endpoints
         self.api_dump = motion_report.APIDumpHelper(
-            self.printer, self._api_update, self._api_startstop, 0.100)
+            self.printer, self._api_update, self._api_startstop, API_UPDATES)
         self.name = config.get_name().split()[-1]
         wh = self.printer.lookup_object('webhooks')
         wh.register_mux_endpoint("lis2dw/dump_lis2dw", "sensor", self.name,
