@@ -606,6 +606,7 @@ class MCU:
         self._reserved_move_slots = 0
         self._stepqueues = []
         self._steppersync = None
+        self._flush_callbacks = []
         # Stats
         self._get_status_info = {}
         self._stats_sumsq_base = 0.
@@ -854,10 +855,6 @@ class MCU:
         slot = self.seconds_to_clock(oid * .01)
         t = int(self.estimated_print_time(self._reactor.monotonic()) + 1.5)
         return self.print_time_to_clock(t) + slot
-    def register_stepqueue(self, stepqueue):
-        self._stepqueues.append(stepqueue)
-    def request_move_queue_slot(self):
-        self._reserved_move_slots += 1
     def seconds_to_clock(self, time):
         return int(time * self._mcu_freq)
     def get_max_stepper_error(self):
@@ -951,19 +948,21 @@ class MCU:
             self._restart_arduino()
     def _firmware_restart_bridge(self):
         self._firmware_restart(True)
-    # Misc external commands
-    def is_fileoutput(self):
-        return self._printer.get_start_args().get('debugoutput') is not None
-    def is_shutdown(self):
-        return self._is_shutdown
-    def get_shutdown_clock(self):
-        return self._shutdown_clock
+    # Move queue tracking
+    def register_stepqueue(self, stepqueue):
+        self._stepqueues.append(stepqueue)
+    def request_move_queue_slot(self):
+        self._reserved_move_slots += 1
+    def register_flush_callback(self, callback):
+        self._flush_callbacks.append(callback)
     def flush_moves(self, print_time):
         if self._steppersync is None:
             return
         clock = self.print_time_to_clock(print_time)
         if clock < 0:
             return
+        for cb in self._flush_callbacks:
+            cb(print_time, clock)
         ret = self._ffi_lib.steppersync_flush(self._steppersync, clock)
         if ret:
             raise error("Internal error in MCU '%s' stepcompress"
@@ -981,6 +980,13 @@ class MCU:
                      self._name, eventtime)
         self._printer.invoke_shutdown("Lost communication with MCU '%s'" % (
             self._name,))
+    # Misc external commands
+    def is_fileoutput(self):
+        return self._printer.get_start_args().get('debugoutput') is not None
+    def is_shutdown(self):
+        return self._is_shutdown
+    def get_shutdown_clock(self):
+        return self._shutdown_clock
     def get_status(self, eventtime=None):
         return dict(self._get_status_info)
     def stats(self, eventtime):
