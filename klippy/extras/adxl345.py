@@ -32,26 +32,29 @@ Accel_Measurement = collections.namedtuple(
 
 # Helper class to obtain measurements
 class AccelQueryHelper:
-    def __init__(self, printer, cconn):
+    def __init__(self, printer):
         self.printer = printer
-        self.cconn = cconn
+        self.is_finished = False
         print_time = printer.lookup_object('toolhead').get_last_move_time()
         self.request_start_time = self.request_end_time = print_time
-        self.samples = self.raw_samples = []
+        self.msgs = []
+        self.samples = []
     def finish_measurements(self):
         toolhead = self.printer.lookup_object('toolhead')
         self.request_end_time = toolhead.get_last_move_time()
         toolhead.wait_moves()
-        self.cconn.finalize()
-    def _get_raw_samples(self):
-        raw_samples = self.cconn.get_messages()
-        if raw_samples:
-            self.raw_samples = raw_samples
-        return self.raw_samples
+        self.is_finished = True
+    def handle_batch(self, msg):
+        if self.is_finished:
+            return False
+        if len(self.msgs) >= 10000:
+            # Avoid filling up memory with too many samples
+            return False
+        self.msgs.append(msg)
+        return True
     def has_valid_samples(self):
-        raw_samples = self._get_raw_samples()
-        for msg in raw_samples:
-            data = msg['params']['data']
+        for msg in self.msgs:
+            data = msg['data']
             first_sample_time = data[0][0]
             last_sample_time = data[-1][0]
             if (first_sample_time > self.request_end_time
@@ -60,21 +63,20 @@ class AccelQueryHelper:
             # The time intervals [first_sample_time, last_sample_time]
             # and [request_start_time, request_end_time] have non-zero
             # intersection. It is still theoretically possible that none
-            # of the samples from raw_samples fall into the time interval
+            # of the samples from msgs fall into the time interval
             # [request_start_time, request_end_time] if it is too narrow
             # or on very heavy data losses. In practice, that interval
             # is at least 1 second, so this possibility is negligible.
             return True
         return False
     def get_samples(self):
-        raw_samples = self._get_raw_samples()
-        if not raw_samples:
+        if not self.msgs:
             return self.samples
-        total = sum([len(m['params']['data']) for m in raw_samples])
+        total = sum([len(m['data']) for m in self.msgs])
         count = 0
         self.samples = samples = [None] * total
-        for msg in raw_samples:
-            for samp_time, x, y, z in msg['params']['data']:
+        for msg in self.msgs:
+            for samp_time, x, y, z in msg['data']:
                 if samp_time < self.request_start_time:
                     continue
                 if samp_time > self.request_end_time:
@@ -250,8 +252,9 @@ class ADXL345:
                     "(e.g. faulty wiring) or a faulty adxl345 chip." % (
                         reg, val, stored_val))
     def start_internal_client(self):
-        cconn = self.batch_bulk.add_internal_client()
-        return AccelQueryHelper(self.printer, cconn)
+        aqh = AccelQueryHelper(self.printer)
+        self.batch_bulk.add_client(aqh.handle_batch)
+        return aqh
     # Measurement decoding
     def _extract_samples(self, raw_samples):
         # Load variables to optimize inner loop below

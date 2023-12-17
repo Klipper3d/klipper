@@ -157,8 +157,14 @@ class AngleCalibration:
     def do_calibration_moves(self):
         move = self.printer.lookup_object('force_move').manual_move
         # Start data collection
-        angle_sensor = self.printer.lookup_object(self.name)
-        cconn = angle_sensor.start_internal_client()
+        msgs = []
+        is_finished = False
+        def handle_batch(msg):
+            if is_finished:
+                return False
+            msgs.append(msg)
+            return True
+        self.printer.lookup_object(self.name).add_client(handle_batch)
         # Move stepper several turns (to allow internal sensor calibration)
         microsteps, full_steps = self.get_microsteps()
         mcu_stepper = self.mcu_stepper
@@ -190,13 +196,12 @@ class AngleCalibration:
         move(mcu_stepper, .5*rotation_dist + align_dist, move_speed)
         toolhead.wait_moves()
         # Finish data collection
-        cconn.finalize()
-        msgs = cconn.get_messages()
+        is_finished = True
         # Correlate query responses
         cal = {}
         step = 0
         for msg in msgs:
-            for query_time, pos in msg['params']['data']:
+            for query_time, pos in msg['data']:
                 # Add to step tracking
                 while step < len(times) and query_time > times[step][1]:
                     step += 1
@@ -462,8 +467,8 @@ class Angle:
             "spi_angle_end oid=%c sequence=%hu", oid=self.oid, cq=cmdqueue)
     def get_status(self, eventtime=None):
         return {'temperature': self.sensor_helper.last_temperature}
-    def start_internal_client(self):
-        return self.batch_bulk.add_internal_client()
+    def add_client(self, client_cb):
+        self.batch_bulk.add_client(client_cb)
     # Measurement decoding
     def _extract_samples(self, raw_samples):
         # Load variables to optimize inner loop below
