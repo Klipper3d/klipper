@@ -109,8 +109,9 @@ class MPU9250:
     def set_reg(self, reg, val, minclock=0):
         self.i2c.i2c_write([reg, val & 0xFF], minclock=minclock)
     def start_internal_client(self):
-        cconn = self.batch_bulk.add_internal_client()
-        return adxl345.AccelQueryHelper(self.printer, cconn)
+        aqh = adxl345.AccelQueryHelper(self.printer)
+        self.batch_bulk.add_client(aqh.handle_batch)
+        return aqh
     # Measurement decoding
     def _extract_samples(self, raw_samples):
         # Load variables to optimize inner loop below

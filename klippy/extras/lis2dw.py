@@ -97,8 +97,9 @@ class LIS2DW:
                     "(e.g. faulty wiring) or a faulty lis2dw chip." % (
                         reg, val, stored_val))
     def start_internal_client(self):
-        cconn = self.bulk_batch.add_internal_client()
-        return adxl345.AccelQueryHelper(self.printer, cconn)
+        aqh = adxl345.AccelQueryHelper(self.printer)
+        self.batch_bulk.add_client(aqh.handle_batch)
+        return aqh
     # Measurement decoding
     def _extract_samples(self, raw_samples):
         # Load variables to optimize inner loop below
