@@ -65,10 +65,10 @@ get_fifo_status (struct mpu9250 *mp)
     uint8_t reg[] = {AR_FIFO_COUNT_H};
     uint8_t msg[2];
     i2c_read(mp->i2c->i2c_config, sizeof(reg), reg, sizeof(msg), msg);
-    msg[0] = 0x1F & msg[0]; // discard 3 MSB per datasheet
-    uint16_t bytes_to_read = ((uint16_t)msg[0]) << 8 | msg[1];
-    if (bytes_to_read > mp->fifo_max) mp->fifo_max = bytes_to_read;
-    return bytes_to_read;
+    uint16_t fifo_bytes = ((msg[0] & 0x1f) << 8) | msg[1];
+    if (fifo_bytes > mp->fifo_max)
+        mp->fifo_max = fifo_bytes;
+    return fifo_bytes;
 }
 
 // Event handler that wakes mpu9250_task() periodically
@@ -249,14 +249,15 @@ void
 command_query_mpu9250_status(uint32_t *args)
 {
     struct mpu9250 *mp = oid_lookup(args[0], command_config_mpu9250);
-    uint8_t msg[2];
-    uint32_t time1 = timer_read_time();
     uint8_t reg[] = {AR_FIFO_COUNT_H};
+    uint8_t msg[2];
+
+    uint32_t time1 = timer_read_time();
     i2c_read(mp->i2c->i2c_config, sizeof(reg), reg, sizeof(msg), msg);
     uint32_t time2 = timer_read_time();
-    msg[0] = 0x1F & msg[0]; // discard 3 MSB
-    mp9250_status(mp, args[0], time1, time2, mp->fifo_pkts_bytes
-                  / BYTES_PER_FIFO_ENTRY);
+
+    uint16_t fifo_bytes = ((msg[0] & 0x1f) << 8) | msg[1];
+    mp9250_status(mp, args[0], time1, time2, fifo_bytes / BYTES_PER_FIFO_ENTRY);
 }
 DECL_COMMAND(command_query_mpu9250_status, "query_mpu9250_status oid=%c");
 
