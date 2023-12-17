@@ -52,7 +52,7 @@ MIN_MSG_TIME = 0.100
 BYTES_PER_SAMPLE = 6
 SAMPLES_PER_BLOCK = 8
 
-API_UPDATES = 0.100
+BATCH_UPDATES = 0.100
 
 # Printer class that controls MPU9250 chip
 class MPU9250:
@@ -74,18 +74,19 @@ class MPU9250:
         mcu.register_config_callback(self._build_config)
         self.bulk_queue = bulk_sensor.BulkDataQueue(mcu, "mpu9250_data", oid)
         # Clock tracking
-        chip_smooth = self.data_rate * API_UPDATES * 2
+        chip_smooth = self.data_rate * BATCH_UPDATES * 2
         self.clock_sync = bulk_sensor.ClockSyncRegression(mcu, chip_smooth)
         self.clock_updater = bulk_sensor.ChipClockUpdater(self.clock_sync,
                                                           BYTES_PER_SAMPLE)
         self.last_error_count = 0
-        # API server endpoints
-        self.api_dump = bulk_sensor.APIDumpHelper(
-            self.printer, self._api_update, self._api_startstop, API_UPDATES)
+        # Process messages in batches
+        self.batch_bulk = bulk_sensor.BatchBulkHelper(
+            self.printer, self._process_batch,
+            self._start_measurements, self._finish_measurements, BATCH_UPDATES)
         self.name = config.get_name().split()[-1]
         hdr = ('time', 'x_acceleration', 'y_acceleration', 'z_acceleration')
-        self.api_dump.add_mux_endpoint("mpu9250/dump_mpu9250", "sensor",
-                                       self.name, {'header': hdr})
+        self.batch_bulk.add_mux_endpoint("mpu9250/dump_mpu9250", "sensor",
+                                         self.name, {'header': hdr})
     def _build_config(self):
         cmdqueue = self.i2c.get_command_queue()
         self.mcu.add_config_cmd("config_mpu9250 oid=%d i2c_oid=%d"
@@ -105,11 +106,12 @@ class MPU9250:
     def read_reg(self, reg):
         params = self.i2c.i2c_read([reg], 1)
         return bytearray(params['response'])[0]
-
     def set_reg(self, reg, val, minclock=0):
         self.i2c.i2c_write([reg, val & 0xFF], minclock=minclock)
-
-    # Measurement collection
+    def start_internal_client(self):
+        cconn = self.batch_bulk.add_internal_client()
+        return adxl345.AccelQueryHelper(self.printer, cconn)
+    # Measurement decoding
     def _extract_samples(self, raw_samples):
         # Load variables to optimize inner loop below
         (x_pos, x_scale), (y_pos, y_scale), (z_pos, z_scale) = self.axes_map
@@ -148,6 +150,7 @@ class MPU9250:
         params = self.query_mpu9250_status_cmd.send([self.oid],
                                                     minclock=minclock)
         self.clock_updater.update_clock(params)
+    # Start, stop, and process message batches
     def _start_measurements(self):
         # In case of miswiring, testing MPU9250 device ID prevents treating
         # noise or wrong signal as a correctly initialized device
@@ -190,9 +193,7 @@ class MPU9250:
         logging.info("MPU9250 finished '%s' measurements", self.name)
         self.set_reg(REG_PWR_MGMT_1, SET_PWR_MGMT_1_SLEEP)
         self.set_reg(REG_PWR_MGMT_2, SET_PWR_MGMT_2_OFF)
-
-    # API interface
-    def _api_update(self, eventtime):
+    def _process_batch(self, eventtime):
         self._update_clock()
         raw_samples = self.bulk_queue.pull_samples()
         if not raw_samples:
@@ -202,14 +203,6 @@ class MPU9250:
             return {}
         return {'data': samples, 'errors': self.last_error_count,
                 'overflows': self.clock_updater.get_last_limit_count()}
-    def _api_startstop(self, is_start):
-        if is_start:
-            self._start_measurements()
-        else:
-            self._finish_measurements()
-    def start_internal_client(self):
-        cconn = self.api_dump.add_internal_client()
-        return adxl345.AccelQueryHelper(self.printer, cconn)
 
 def load_config(config):
     return MPU9250(config)

@@ -410,6 +410,7 @@ BYTES_PER_SAMPLE = 3
 SAMPLES_PER_BLOCK = 16
 
 SAMPLE_PERIOD = 0.000400
+BATCH_UPDATES = 0.100
 
 class Angle:
     def __init__(self, config):
@@ -440,13 +441,14 @@ class Angle:
             % (oid,), on_restart=True)
         mcu.register_config_callback(self._build_config)
         self.bulk_queue = bulk_sensor.BulkDataQueue(mcu, "spi_angle_data", oid)
-        # API server endpoints
-        self.api_dump = bulk_sensor.APIDumpHelper(
-            self.printer, self._api_update, self._api_startstop, 0.100)
+        # Process messages in batches
+        self.batch_bulk = bulk_sensor.BatchBulkHelper(
+            self.printer, self._process_batch,
+            self._start_measurements, self._finish_measurements, BATCH_UPDATES)
         self.name = config.get_name().split()[1]
         api_resp = {'header': ('time', 'angle')}
-        self.api_dump.add_mux_endpoint("angle/dump_angle", "sensor", self.name,
-                                       api_resp)
+        self.batch_bulk.add_mux_endpoint("angle/dump_angle",
+                                         "sensor", self.name, api_resp)
     def _build_config(self):
         freq = self.mcu.seconds_to_clock(1.)
         while float(TCODE_ERROR << self.time_shift) / freq < 0.002:
@@ -460,7 +462,9 @@ class Angle:
             "spi_angle_end oid=%c sequence=%hu", oid=self.oid, cq=cmdqueue)
     def get_status(self, eventtime=None):
         return {'temperature': self.sensor_helper.last_temperature}
-    # Measurement collection
+    def start_internal_client(self):
+        return self.batch_bulk.add_internal_client()
+    # Measurement decoding
     def _extract_samples(self, raw_samples):
         # Load variables to optimize inner loop below
         sample_ticks = self.sample_ticks
@@ -516,19 +520,9 @@ class Angle:
         self.last_angle = last_angle
         del samples[count:]
         return samples, error_count
-    # API interface
-    def _api_update(self, eventtime):
-        if self.sensor_helper.is_tcode_absolute:
-            self.sensor_helper.update_clock()
-        raw_samples = self.bulk_queue.pull_samples()
-        if not raw_samples:
-            return {}
-        samples, error_count = self._extract_samples(raw_samples)
-        if not samples:
-            return {}
-        offset = self.calibration.apply_calibration(samples)
-        return {'data': samples, 'errors': error_count,
-                'position_offset': offset}
+    # Start, stop, and process message batches
+    def _is_measuring(self):
+        return self.start_clock != 0
     def _start_measurements(self):
         logging.info("Starting angle '%s' measurements", self.name)
         self.sensor_helper.start()
@@ -548,13 +542,18 @@ class Angle:
         self.bulk_queue.clear_samples()
         self.sensor_helper.last_temperature = None
         logging.info("Stopped angle '%s' measurements", self.name)
-    def _api_startstop(self, is_start):
-        if is_start:
-            self._start_measurements()
-        else:
-            self._finish_measurements()
-    def start_internal_client(self):
-        return self.api_dump.add_internal_client()
+    def _process_batch(self, eventtime):
+        if self.sensor_helper.is_tcode_absolute:
+            self.sensor_helper.update_clock()
+        raw_samples = self.bulk_queue.pull_samples()
+        if not raw_samples:
+            return {}
+        samples, error_count = self._extract_samples(raw_samples)
+        if not samples:
+            return {}
+        offset = self.calibration.apply_calibration(samples)
+        return {'data': samples, 'errors': error_count,
+                'position_offset': offset}
 
 def load_config_prefix(config):
     return Angle(config)

@@ -12,11 +12,12 @@ class DumpStepper:
     def __init__(self, printer, mcu_stepper):
         self.printer = printer
         self.mcu_stepper = mcu_stepper
-        self.last_api_clock = 0
-        self.api_dump = bulk_sensor.APIDumpHelper(printer, self._api_update)
+        self.last_batch_clock = 0
+        self.batch_bulk = bulk_sensor.BatchBulkHelper(printer,
+                                                      self._process_batch)
         api_resp = {'header': ('interval', 'count', 'add')}
-        self.api_dump.add_mux_endpoint("motion_report/dump_stepper", "name",
-                                       mcu_stepper.get_name(), api_resp)
+        self.batch_bulk.add_mux_endpoint("motion_report/dump_stepper", "name",
+                                         mcu_stepper.get_name(), api_resp)
     def get_step_queue(self, start_clock, end_clock):
         mcu_stepper = self.mcu_stepper
         res = []
@@ -42,15 +43,15 @@ class DumpStepper:
                        % (i, s.first_clock, s.start_position, s.interval,
                           s.step_count, s.add))
         logging.info('\n'.join(out))
-    def _api_update(self, eventtime):
-        data, cdata = self.get_step_queue(self.last_api_clock, 1<<63)
+    def _process_batch(self, eventtime):
+        data, cdata = self.get_step_queue(self.last_batch_clock, 1<<63)
         if not data:
             return {}
         clock_to_print_time = self.mcu_stepper.get_mcu().clock_to_print_time
         first = data[0]
         first_clock = first.first_clock
         first_time = clock_to_print_time(first_clock)
-        self.last_api_clock = last_clock = data[-1].last_clock
+        self.last_batch_clock = last_clock = data[-1].last_clock
         last_time = clock_to_print_time(last_clock)
         mcu_pos = first.start_position
         start_position = self.mcu_stepper.mcu_to_commanded_position(mcu_pos)
@@ -71,12 +72,13 @@ class DumpTrapQ:
         self.printer = printer
         self.name = name
         self.trapq = trapq
-        self.last_api_msg = (0., 0.)
-        self.api_dump = bulk_sensor.APIDumpHelper(printer, self._api_update)
+        self.last_batch_msg = (0., 0.)
+        self.batch_bulk = bulk_sensor.BatchBulkHelper(printer,
+                                                      self._process_batch)
         api_resp = {'header': ('time', 'duration', 'start_velocity',
                                'acceleration', 'start_position', 'direction')}
-        self.api_dump.add_mux_endpoint("motion_report/dump_trapq", "name", name,
-                                       api_resp)
+        self.batch_bulk.add_mux_endpoint("motion_report/dump_trapq",
+                                         "name", name, api_resp)
     def extract_trapq(self, start_time, end_time):
         ffi_main, ffi_lib = chelper.get_ffi()
         res = []
@@ -115,17 +117,17 @@ class DumpTrapQ:
                move.start_z + move.z_r * dist)
         velocity = move.start_v + move.accel * move_time
         return pos, velocity
-    def _api_update(self, eventtime):
-        qtime = self.last_api_msg[0] + min(self.last_api_msg[1], 0.100)
+    def _process_batch(self, eventtime):
+        qtime = self.last_batch_msg[0] + min(self.last_batch_msg[1], 0.100)
         data, cdata = self.extract_trapq(qtime, NEVER_TIME)
         d = [(m.print_time, m.move_t, m.start_v, m.accel,
               (m.start_x, m.start_y, m.start_z), (m.x_r, m.y_r, m.z_r))
              for m in data]
-        if d and d[0] == self.last_api_msg:
+        if d and d[0] == self.last_batch_msg:
             d.pop(0)
         if not d:
             return {}
-        self.last_api_msg = d[-1]
+        self.last_batch_msg = d[-1]
         return {"data": d}
 
 STATUS_REFRESH_TIME = 0.250
