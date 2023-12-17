@@ -59,7 +59,6 @@ class MPU9250:
     def __init__(self, config):
         self.printer = config.get_printer()
         adxl345.AccelCommandHelper(config, self)
-        self.query_rate = 0
         am = {'x': (0, SCALE), 'y': (1, SCALE), 'z': (2, SCALE),
               '-x': (0, -SCALE), '-y': (1, -SCALE), '-z': (2, -SCALE)}
         axes_map = config.getlist('axes_map', ('x','y','z'), count=3)
@@ -116,8 +115,6 @@ class MPU9250:
         self.i2c.i2c_write([reg, val & 0xFF], minclock=minclock)
 
     # Measurement collection
-    def is_measuring(self):
-        return self.query_rate > 0
     def _extract_samples(self, raw_samples):
         # Load variables to optimize inner loop below
         (x_pos, x_scale), (y_pos, y_scale), (z_pos, z_scale) = self.axes_map
@@ -157,8 +154,6 @@ class MPU9250:
                                                     minclock=minclock)
         self.clock_updater.update_clock(params)
     def _start_measurements(self):
-        if self.is_measuring():
-            return
         # In case of miswiring, testing MPU9250 device ID prevents treating
         # noise or wrong signal as a correctly initialized device
         dev_id = self.read_reg(REG_DEVID)
@@ -185,7 +180,6 @@ class MPU9250:
         print_time = self.mcu.estimated_print_time(systime) + MIN_MSG_TIME
         reqclock = self.mcu.print_time_to_clock(print_time)
         rest_ticks = self.mcu.seconds_to_clock(4. / self.data_rate)
-        self.query_rate = self.data_rate
         self.query_mpu9250_cmd.send([self.oid, reqclock, rest_ticks],
                                     reqclock=reqclock)
         logging.info("MPU9250 starting '%s' measurements", self.name)
@@ -195,11 +189,8 @@ class MPU9250:
         self.clock_updater.clear_duration_filter()
         self.last_error_count = 0
     def _finish_measurements(self):
-        if not self.is_measuring():
-            return
         # Halt bulk reading
         params = self.query_mpu9250_end_cmd.send([self.oid, 0, 0])
-        self.query_rate = 0
         self.bulk_queue.clear_samples()
         logging.info("MPU9250 finished '%s' measurements", self.name)
         self.set_reg(REG_PWR_MGMT_1, SET_PWR_MGMT_1_SLEEP)

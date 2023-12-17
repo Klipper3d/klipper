@@ -185,7 +185,6 @@ class ADXL345:
     def __init__(self, config):
         self.printer = config.get_printer()
         AccelCommandHelper(config, self)
-        self.query_rate = 0
         am = {'x': (0, SCALE_XY), 'y': (1, SCALE_XY), 'z': (2, SCALE_Z),
               '-x': (0, -SCALE_XY), '-y': (1, -SCALE_XY), '-z': (2, -SCALE_Z)}
         axes_map = config.getlist('axes_map', ('x','y','z'), count=3)
@@ -246,8 +245,6 @@ class ADXL345:
                     "(e.g. faulty wiring) or a faulty adxl345 chip." % (
                         reg, val, stored_val))
     # Measurement collection
-    def is_measuring(self):
-        return self.query_rate > 0
     def _extract_samples(self, raw_samples):
         # Load variables to optimize inner loop below
         (x_pos, x_scale), (y_pos, y_scale), (z_pos, z_scale) = self.axes_map
@@ -294,8 +291,6 @@ class ADXL345:
             raise self.printer.command_error("Unable to query adxl345 fifo")
         self.clock_updater.update_clock(params)
     def _start_measurements(self):
-        if self.is_measuring():
-            return
         # In case of miswiring, testing ADXL345 device ID prevents treating
         # noise or wrong signal as a correctly initialized device
         dev_id = self.read_reg(REG_DEVID)
@@ -317,7 +312,6 @@ class ADXL345:
         print_time = self.mcu.estimated_print_time(systime) + MIN_MSG_TIME
         reqclock = self.mcu.print_time_to_clock(print_time)
         rest_ticks = self.mcu.seconds_to_clock(4. / self.data_rate)
-        self.query_rate = self.data_rate
         self.query_adxl345_cmd.send([self.oid, reqclock, rest_ticks],
                                     reqclock=reqclock)
         logging.info("ADXL345 starting '%s' measurements", self.name)
@@ -327,11 +321,8 @@ class ADXL345:
         self.clock_updater.clear_duration_filter()
         self.last_error_count = 0
     def _finish_measurements(self):
-        if not self.is_measuring():
-            return
         # Halt bulk reading
         params = self.query_adxl345_end_cmd.send([self.oid, 0, 0])
-        self.query_rate = 0
         self.bulk_queue.clear_samples()
         logging.info("ADXL345 finished '%s' measurements", self.name)
     # API interface
