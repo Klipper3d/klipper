@@ -48,7 +48,7 @@ class LIS2DW:
         self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=5000000)
         self.mcu = mcu = self.spi.get_mcu()
         self.oid = oid = mcu.create_oid()
-        self.query_lis2dw_cmd = self.query_lis2dw_end_cmd = None
+        self.query_lis2dw_cmd = None
         self.query_lis2dw_status_cmd = None
         mcu.add_config_cmd("config_lis2dw oid=%d spi_oid=%d"
                            % (oid, self.spi.get_oid()))
@@ -75,10 +75,6 @@ class LIS2DW:
         cmdqueue = self.spi.get_command_queue()
         self.query_lis2dw_cmd = self.mcu.lookup_command(
             "query_lis2dw oid=%c clock=%u rest_ticks=%u", cq=cmdqueue)
-        self.query_lis2dw_end_cmd = self.mcu.lookup_query_command(
-            "query_lis2dw oid=%c clock=%u rest_ticks=%u",
-            "lis2dw_status oid=%c clock=%u query_ticks=%u next_sequence=%hu"
-            " buffered=%c fifo=%c limit_count=%hu", oid=self.oid, cq=cmdqueue)
         self.query_lis2dw_status_cmd = self.mcu.lookup_query_command(
             "query_lis2dw_status oid=%c",
             "lis2dw_status oid=%c clock=%u query_ticks=%u next_sequence=%hu"
@@ -179,7 +175,7 @@ class LIS2DW:
         self.last_error_count = 0
     def _finish_measurements(self):
         # Halt bulk reading
-        params = self.query_lis2dw_end_cmd.send([self.oid, 0, 0])
+        self.query_lis2dw_cmd.send_wait_ack([self.oid, 0, 0])
         self.bulk_queue.clear_samples()
         logging.info("LIS2DW finished '%s' measurements", self.name)
         self.set_reg(REG_LIS2DW_FIFO_CTRL, 0x00)

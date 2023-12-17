@@ -23,7 +23,7 @@ struct lis2dw {
     uint32_t rest_ticks;
     struct spidev_s *spi;
     uint16_t sequence, limit_count;
-    uint8_t flags, data_count, fifo_disable;
+    uint8_t flags, data_count;
     uint8_t data[48];
 };
 
@@ -117,7 +117,7 @@ lis2dw_query(struct lis2dw *ax, uint8_t oid)
         ax->limit_count++;
 
     // check if we need to run the task again (more packets in fifo?)
-    if (!fifo_empty&&!(ax->fifo_disable)) {
+    if (!fifo_empty) {
         // More data in fifo - wake this task again
         sched_wake_task(&lis2dw_wake);
     } else if (ax->flags & LIS_RUNNING) {
@@ -134,7 +134,6 @@ lis2dw_start(struct lis2dw *ax, uint8_t oid)
 {
     sched_del_timer(&ax->timer);
     ax->flags = LIS_RUNNING;
-    ax->fifo_disable = 0;
     uint8_t ctrl[2] = {LIS_FIFO_CTRL , 0xC0};
     spidev_transfer(ax->spi, 0, sizeof(ctrl), ctrl);
     lis2dw_reschedule_timer(ax);
@@ -147,23 +146,8 @@ lis2dw_stop(struct lis2dw *ax, uint8_t oid)
     // Disable measurements
     sched_del_timer(&ax->timer);
     ax->flags = 0;
-    // Drain any measurements still in fifo
-    ax->fifo_disable = 1;
-    lis2dw_query(ax, oid);
-
     uint8_t ctrl[2] = {LIS_FIFO_CTRL , 0};
-    uint32_t end1_time = timer_read_time();
     spidev_transfer(ax->spi, 0, sizeof(ctrl), ctrl);
-    uint32_t end2_time = timer_read_time();
-
-    uint8_t msg[2] = { LIS_FIFO_SAMPLES | LIS_AM_READ , 0};
-    spidev_transfer(ax->spi, 1, sizeof(msg), msg);
-    uint8_t fifo_status = msg[1]&0x1f;
-
-    //Report final data
-    if (ax->data_count)
-        lis2dw_report(ax, oid);
-    lis2dw_status(ax, oid, end1_time, end2_time, fifo_status);
 }
 
 void
@@ -183,7 +167,6 @@ command_query_lis2dw(uint32_t *args)
     ax->flags = LIS_HAVE_START;
     ax->sequence = ax->limit_count = 0;
     ax->data_count = 0;
-    ax->fifo_disable = 0;
     sched_add_timer(&ax->timer);
 }
 DECL_COMMAND(command_query_lis2dw,
