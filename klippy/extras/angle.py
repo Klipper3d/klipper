@@ -406,6 +406,9 @@ class HelperTLE5012B:
                        parser=lambda x: int(x, 0))
         self._write_reg(reg, val)
 
+BYTES_PER_SAMPLE = 3
+SAMPLES_PER_BLOCK = 16
+
 SAMPLE_PERIOD = 0.000400
 
 class Angle:
@@ -478,18 +481,20 @@ class Angle:
             static_delay = self.sensor_helper.get_static_delay()
         # Process every message in raw_samples
         count = error_count = 0
-        samples = [None] * (len(raw_samples) * 16)
+        samples = [None] * (len(raw_samples) * SAMPLES_PER_BLOCK)
         for params in raw_samples:
             seq_diff = (params['sequence'] - last_sequence) & 0xffff
             last_sequence += seq_diff
+            samp_count = last_sequence * SAMPLES_PER_BLOCK
+            msg_mclock = start_clock + samp_count*sample_ticks
             d = bytearray(params['data'])
-            msg_mclock = start_clock + last_sequence*16*sample_ticks
-            for i in range(len(d) // 3):
-                tcode = d[i*3]
+            for i in range(len(d) // BYTES_PER_SAMPLE):
+                d_ta = d[i*BYTES_PER_SAMPLE:(i+1)*BYTES_PER_SAMPLE]
+                tcode = d_ta[0]
                 if tcode == TCODE_ERROR:
                     error_count += 1
                     continue
-                raw_angle = d[i*3 + 1] | (d[i*3 + 2] << 8)
+                raw_angle = d_ta[1] | (d_ta[2] << 8)
                 angle_diff = (raw_angle - last_angle) & 0xffff
                 angle_diff -= (angle_diff & 0x8000) << 1
                 last_angle += angle_diff
