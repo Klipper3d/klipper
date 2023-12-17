@@ -148,25 +148,7 @@ adxl_stop(struct adxl345 *ax, uint8_t oid)
     sched_del_timer(&ax->timer);
     ax->flags = 0;
     uint8_t msg[2] = { AR_POWER_CTL, 0x00 };
-    uint32_t end1_time = timer_read_time();
     spidev_transfer(ax->spi, 0, sizeof(msg), msg);
-    uint32_t end2_time = timer_read_time();
-    // Drain any measurements still in fifo
-    uint_fast8_t i;
-    for (i=0; i<33; i++) {
-        msg[0] = AR_FIFO_STATUS | AM_READ;
-        msg[1] = 0x00;
-        spidev_transfer(ax->spi, 1, sizeof(msg), msg);
-        uint_fast8_t fifo_status = msg[1] & ~0x80;
-        if (!fifo_status)
-            break;
-        if (fifo_status <= 32)
-            adxl_query(ax, oid);
-    }
-    // Report final data
-    if (ax->data_count)
-        adxl_report(ax, oid);
-    adxl_status(ax, oid, end1_time, end2_time, msg[1]);
 }
 
 void
