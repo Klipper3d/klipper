@@ -35,7 +35,7 @@ MIN_MSG_TIME = 0.100
 BYTES_PER_SAMPLE = 6
 SAMPLES_PER_BLOCK = 8
 
-API_UPDATES = 0.100
+BATCH_UPDATES = 0.100
 
 # Printer class that controls LIS2DW chip
 class LIS2DW:
@@ -57,18 +57,19 @@ class LIS2DW:
         mcu.register_config_callback(self._build_config)
         self.bulk_queue = bulk_sensor.BulkDataQueue(mcu, "lis2dw_data", oid)
         # Clock tracking
-        chip_smooth = self.data_rate * API_UPDATES * 2
+        chip_smooth = self.data_rate * BATCH_UPDATES * 2
         self.clock_sync = bulk_sensor.ClockSyncRegression(mcu, chip_smooth)
         self.clock_updater = bulk_sensor.ChipClockUpdater(self.clock_sync,
                                                           BYTES_PER_SAMPLE)
         self.last_error_count = 0
-        # API server endpoints
-        self.api_dump = bulk_sensor.APIDumpHelper(
-            self.printer, self._api_update, self._api_startstop, API_UPDATES)
+        # Process messages in batches
+        self.batch_bulk = bulk_sensor.BatchBulkHelper(
+            self.printer, self._process_batch,
+            self._start_measurements, self._finish_measurements, BATCH_UPDATES)
         self.name = config.get_name().split()[-1]
         hdr = ('time', 'x_acceleration', 'y_acceleration', 'z_acceleration')
-        self.api_dump.add_mux_endpoint("lis2dw/dump_lis2dw", "sensor",
-                                       self.name, {'header': hdr})
+        self.batch_bulk.add_mux_endpoint("lis2dw/dump_lis2dw", "sensor",
+                                         self.name, {'header': hdr})
 
     def _build_config(self):
         cmdqueue = self.spi.get_command_queue()
@@ -95,7 +96,10 @@ class LIS2DW:
                     "This is generally indicative of connection problems "
                     "(e.g. faulty wiring) or a faulty lis2dw chip." % (
                         reg, val, stored_val))
-    # Measurement collection
+    def start_internal_client(self):
+        cconn = self.bulk_batch.add_internal_client()
+        return adxl345.AccelQueryHelper(self.printer, cconn)
+    # Measurement decoding
     def _extract_samples(self, raw_samples):
         # Load variables to optimize inner loop below
         (x_pos, x_scale), (y_pos, y_scale), (z_pos, z_scale) = self.axes_map
@@ -136,6 +140,7 @@ class LIS2DW:
         params = self.query_lis2dw_status_cmd.send([self.oid],
                                                    minclock=minclock)
         self.clock_updater.update_clock(params)
+    # Start, stop, and process message batches
     def _start_measurements(self):
         # In case of miswiring, testing LIS2DW device ID prevents treating
         # noise or wrong signal as a correctly initialized device
@@ -177,8 +182,7 @@ class LIS2DW:
         self.bulk_queue.clear_samples()
         logging.info("LIS2DW finished '%s' measurements", self.name)
         self.set_reg(REG_LIS2DW_FIFO_CTRL, 0x00)
-    # API interface
-    def _api_update(self, eventtime):
+    def _process_batch(self, eventtime):
         self._update_clock()
         raw_samples = self.bulk_queue.pull_samples()
         if not raw_samples:
@@ -188,15 +192,6 @@ class LIS2DW:
             return {}
         return {'data': samples, 'errors': self.last_error_count,
                 'overflows': self.clock_updater.get_last_limit_count()}
-    def _api_startstop(self, is_start):
-        if is_start:
-            self._start_measurements()
-        else:
-            self._finish_measurements()
-    def start_internal_client(self):
-        cconn = self.api_dump.add_internal_client()
-        return adxl345.AccelQueryHelper(self.printer, cconn)
-
 
 def load_config(config):
     return LIS2DW(config)
