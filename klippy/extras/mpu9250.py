@@ -69,7 +69,7 @@ class MPU9250:
                                            default_speed=400000)
         self.mcu = mcu = self.i2c.get_mcu()
         self.oid = oid = mcu.create_oid()
-        self.query_mpu9250_cmd = self.query_mpu9250_end_cmd = None
+        self.query_mpu9250_cmd = None
         self.query_mpu9250_status_cmd = None
         mcu.register_config_callback(self._build_config)
         self.bulk_queue = bulk_sensor.BulkDataQueue(mcu, "mpu9250_data", oid)
@@ -95,10 +95,6 @@ class MPU9250:
                            % (self.oid,), on_restart=True)
         self.query_mpu9250_cmd = self.mcu.lookup_command(
             "query_mpu9250 oid=%c clock=%u rest_ticks=%u", cq=cmdqueue)
-        self.query_mpu9250_end_cmd = self.mcu.lookup_query_command(
-            "query_mpu9250 oid=%c clock=%u rest_ticks=%u",
-            "mpu9250_status oid=%c clock=%u query_ticks=%u next_sequence=%hu"
-            " buffered=%c fifo=%u limit_count=%hu", oid=self.oid, cq=cmdqueue)
         self.query_mpu9250_status_cmd = self.mcu.lookup_query_command(
             "query_mpu9250_status oid=%c",
             "mpu9250_status oid=%c clock=%u query_ticks=%u next_sequence=%hu"
@@ -193,7 +189,7 @@ class MPU9250:
         self.last_error_count = 0
     def _finish_measurements(self):
         # Halt bulk reading
-        params = self.query_mpu9250_end_cmd.send([self.oid, 0, 0])
+        self.query_mpu9250_cmd.send_wait_ack([self.oid, 0, 0])
         self.bulk_queue.clear_samples()
         logging.info("MPU9250 finished '%s' measurements", self.name)
         self.set_reg(REG_PWR_MGMT_1, SET_PWR_MGMT_1_SLEEP)

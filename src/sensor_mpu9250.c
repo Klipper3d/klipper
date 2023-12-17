@@ -192,16 +192,7 @@ mp9250_stop(struct mpu9250 *mp, uint8_t oid)
 
     // disable accel FIFO
     uint8_t msg[2] = { AR_FIFO_EN, SET_DISABLE_FIFO };
-    uint32_t end1_time = timer_read_time();
     i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
-    uint32_t end2_time = timer_read_time();
-
-    // Report final data
-    if (mp->data_count > 0)
-        mp9250_report(mp, oid);
-    uint16_t bytes_to_read = get_fifo_status(mp);
-    mp9250_status(mp, oid, end1_time, end2_time,
-                    bytes_to_read / BYTES_PER_FIFO_ENTRY);
 
     // Uncomment and rebuilt to check for FIFO overruns when tuning
     //output("mpu9240 limit_count=%u fifo_max=%u",
