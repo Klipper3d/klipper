@@ -5,6 +5,18 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import threading
 
+# This "bulk sensor" module facilitates the processing of sensor chip
+# measurements that do not require the host to respond with low
+# latency.  This module helps collect these measurements into batches
+# that are then processed periodically by the host code (as specified
+# by BatchBulkHelper.batch_interval).  It supports the collection of
+# thousands of sensor measurements per second.
+#
+# Processing measurements in batches reduces load on the mcu, reduces
+# bandwidth to/from the mcu, and reduces load on the host.  It also
+# makes it easier to export the raw measurements via the webhooks
+# system (aka API Server).
+
 BATCH_INTERVAL = 0.500
 
 # Helper to process accumulated messages in periodic batches
@@ -118,6 +130,25 @@ class BulkDataQueue:
         return raw_samples
     def clear_samples(self):
         self.pull_samples()
+
+
+######################################################################
+# Clock synchronization
+######################################################################
+
+# It is common for sensors to produce measurements at a fixed
+# frequency.  If the mcu can reliably obtain all of these
+# measurements, then the code here can calculate a precision timestamp
+# for them.  That is, it can determine the actual sensor measurement
+# frequency, the time of the first measurement, and thus a precise
+# time for all measurements.
+#
+# This system works by having the mcu periodically report a precision
+# timestamp along with the total number of measurements the sensor has
+# taken as of that time.  In brief, knowing the total number of
+# measurements taken over an extended period provides an accurate
+# estimate of measurement frequency, which can then also be utilized
+# to determine the time of the first measurement.
 
 # Helper class for chip clock synchronization via linear regression
 class ClockSyncRegression:
