@@ -40,6 +40,7 @@
 #define FIFO_OVERFLOW_INT 0x10
 
 #define BYTES_PER_FIFO_ENTRY 6
+#define BYTES_PER_BLOCK 48
 
 struct mpu9250 {
     struct timer timer;
@@ -49,7 +50,7 @@ struct mpu9250 {
     uint8_t flags, data_count;
     // msg size must be <= 255 due to Klipper api
     // = SAMPLES_PER_BLOCK (from mpu9250.py) * BYTES_PER_FIFO_ENTRY + 1
-    uint8_t data[48];
+    uint8_t data[BYTES_PER_BLOCK];
 };
 
 enum {
@@ -126,28 +127,23 @@ mp9250_reschedule_timer(struct mpu9250 *mp)
 static void
 mp9250_query(struct mpu9250 *mp, uint8_t oid)
 {
-    // Find remaining space in report buffer
-    uint8_t data_space = sizeof(mp->data) - mp->data_count;
-
     // If not enough bytes to fill report read MPU FIFO's fill
-    if (mp->fifo_pkts_bytes < data_space) {
-        mp->fifo_pkts_bytes = get_fifo_status(mp) / BYTES_PER_FIFO_ENTRY
-                                * BYTES_PER_FIFO_ENTRY;
-    }
+    if (mp->fifo_pkts_bytes < BYTES_PER_BLOCK)
+        mp->fifo_pkts_bytes = get_fifo_status(mp);
 
     // If we have enough bytes to fill the buffer do it and send report
-    if (mp->fifo_pkts_bytes >= data_space) {
+    if (mp->fifo_pkts_bytes >= BYTES_PER_BLOCK) {
         uint8_t reg = AR_FIFO;
-        i2c_read(mp->i2c->i2c_config, sizeof(reg), &reg,
-                 data_space, &mp->data[mp->data_count]);
-        mp->data_count += data_space;
-        mp->fifo_pkts_bytes -= data_space;
+        i2c_read(mp->i2c->i2c_config, sizeof(reg), &reg
+                 , BYTES_PER_BLOCK, &mp->data[0]);
+        mp->data_count = BYTES_PER_BLOCK;
+        mp->fifo_pkts_bytes -= BYTES_PER_BLOCK;
         mp9250_report(mp, oid);
     }
 
     // If we have enough bytes remaining to fill another report wake again
     //  otherwise schedule timed wakeup
-    if (mp->fifo_pkts_bytes > data_space) {
+    if (mp->fifo_pkts_bytes >= BYTES_PER_BLOCK) {
         sched_wake_task(&mpu9250_wake);
     } else if (mp->flags & AX_RUNNING) {
         sched_del_timer(&mp->timer);
