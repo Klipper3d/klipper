@@ -458,8 +458,6 @@ class Angle:
     def get_status(self, eventtime=None):
         return {'temperature': self.sensor_helper.last_temperature}
     # Measurement collection
-    def is_measuring(self):
-        return self.start_clock != 0
     def _extract_samples(self, raw_samples):
         # Load variables to optimize inner loop below
         sample_ticks = self.sample_ticks
@@ -527,8 +525,6 @@ class Angle:
         return {'data': samples, 'errors': error_count,
                 'position_offset': offset}
     def _start_measurements(self):
-        if self.is_measuring():
-            return
         logging.info("Starting angle '%s' measurements", self.name)
         self.sensor_helper.start()
         # Start bulk reading
@@ -542,11 +538,8 @@ class Angle:
         self.query_spi_angle_cmd.send([self.oid, reqclock, rest_ticks,
                                        self.time_shift], reqclock=reqclock)
     def _finish_measurements(self):
-        if not self.is_measuring():
-            return
         # Halt bulk reading
         params = self.query_spi_angle_end_cmd.send([self.oid, 0, 0, 0])
-        self.start_clock = 0
         self.bulk_queue.clear_samples()
         self.sensor_helper.last_temperature = None
         logging.info("Stopped angle '%s' measurements", self.name)
