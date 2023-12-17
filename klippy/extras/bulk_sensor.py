@@ -22,23 +22,6 @@ class APIDumpHelper:
         self.clients = {}
         self.webhooks_start_resp = {}
     # Periodic batch processing
-    def _stop(self):
-        self.clients.clear()
-        reactor = self.printer.get_reactor()
-        reactor.unregister_timer(self.update_timer)
-        self.update_timer = None
-        if not self.is_started:
-            return reactor.NEVER
-        try:
-            self.startstop_cb(False)
-        except self.printer.command_error as e:
-            logging.exception("API Dump Helper stop callback error")
-            self.clients.clear()
-        self.is_started = False
-        if self.clients:
-            # New client started while in process of stopping
-            self._start()
-        return reactor.NEVER
     def _start(self):
         if self.is_started:
             return
@@ -54,19 +37,36 @@ class APIDumpHelper:
         systime = reactor.monotonic()
         waketime = systime + self.update_interval
         self.update_timer = reactor.register_timer(self._update, waketime)
+    def _stop(self):
+        self.clients.clear()
+        self.printer.get_reactor().unregister_timer(self.update_timer)
+        self.update_timer = None
+        if not self.is_started:
+            return
+        try:
+            self.startstop_cb(False)
+        except self.printer.command_error as e:
+            logging.exception("API Dump Helper stop callback error")
+            self.clients.clear()
+        self.is_started = False
+        if self.clients:
+            # New client started while in process of stopping
+            self._start()
     def _update(self, eventtime):
         try:
             msg = self.data_cb(eventtime)
         except self.printer.command_error as e:
             logging.exception("API Dump Helper data callback error")
-            return self._stop()
+            self._stop()
+            return self.printer.get_reactor().NEVER
         if not msg:
             return eventtime + self.update_interval
         for cconn, template in list(self.clients.items()):
             if cconn.is_closed():
                 del self.clients[cconn]
                 if not self.clients:
-                    return self._stop()
+                    self._stop()
+                    return self.printer.get_reactor().NEVER
                 continue
             tmp = dict(template)
             tmp['params'] = msg
