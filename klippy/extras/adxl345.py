@@ -173,6 +173,15 @@ class AccelCommandHelper:
         val = gcmd.get("VAL", minval=0, maxval=255, parser=lambda x: int(x, 0))
         self.chip.set_reg(reg, val)
 
+# Helper to read the axes_map parameter from the config
+def read_axes_map(config):
+    am = {'x': (0, SCALE_XY), 'y': (1, SCALE_XY), 'z': (2, SCALE_Z),
+          '-x': (0, -SCALE_XY), '-y': (1, -SCALE_XY), '-z': (2, -SCALE_Z)}
+    axes_map = config.getlist('axes_map', ('x','y','z'), count=3)
+    if any([a not in am for a in axes_map]):
+        raise config.error("Invalid axes_map parameter")
+    return [am[a.strip()] for a in axes_map]
+
 MIN_MSG_TIME = 0.100
 
 BYTES_PER_SAMPLE = 5
@@ -185,12 +194,7 @@ class ADXL345:
     def __init__(self, config):
         self.printer = config.get_printer()
         AccelCommandHelper(config, self)
-        am = {'x': (0, SCALE_XY), 'y': (1, SCALE_XY), 'z': (2, SCALE_Z),
-              '-x': (0, -SCALE_XY), '-y': (1, -SCALE_XY), '-z': (2, -SCALE_Z)}
-        axes_map = config.getlist('axes_map', ('x','y','z'), count=3)
-        if any([a not in am for a in axes_map]):
-            raise config.error("Invalid adxl345 axes_map parameter")
-        self.axes_map = [am[a.strip()] for a in axes_map]
+        self.axes_map = read_axes_map(config)
         self.data_rate = config.getint('rate', 3200)
         if self.data_rate not in QUERY_RATES:
             raise config.error("Invalid rate parameter: %d" % (self.data_rate,))

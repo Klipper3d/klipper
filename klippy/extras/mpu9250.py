@@ -59,12 +59,7 @@ class MPU9250:
     def __init__(self, config):
         self.printer = config.get_printer()
         adxl345.AccelCommandHelper(config, self)
-        am = {'x': (0, SCALE), 'y': (1, SCALE), 'z': (2, SCALE),
-              '-x': (0, -SCALE), '-y': (1, -SCALE), '-z': (2, -SCALE)}
-        axes_map = config.getlist('axes_map', ('x','y','z'), count=3)
-        if any([a not in am for a in axes_map]):
-            raise config.error("Invalid mpu9250 axes_map parameter")
-        self.axes_map = [am[a.strip()] for a in axes_map]
+        self.axes_map = adxl345.read_axes_map(config)
         self.data_rate = config.getint('rate', 4000)
         if self.data_rate not in SAMPLE_RATE_DIVS:
             raise config.error("Invalid rate parameter: %d" % (self.data_rate,))
