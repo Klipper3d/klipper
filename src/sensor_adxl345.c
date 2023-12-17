@@ -10,15 +10,15 @@
 #include "basecmd.h" // oid_alloc
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // DECL_TASK
+#include "sensor_bulk.h" // sensor_bulk_report
 #include "spicmds.h" // spidev_transfer
 
 struct adxl345 {
     struct timer timer;
     uint32_t rest_ticks;
     struct spidev_s *spi;
-    uint16_t sequence, limit_count;
-    uint8_t flags, data_count;
-    uint8_t data[50];
+    uint8_t flags;
+    struct sensor_bulk sb;
 };
 
 enum {
@@ -47,27 +47,6 @@ command_config_adxl345(uint32_t *args)
 }
 DECL_COMMAND(command_config_adxl345, "config_adxl345 oid=%c spi_oid=%c");
 
-// Report local measurement buffer
-static void
-adxl_report(struct adxl345 *ax, uint8_t oid)
-{
-    sendf("adxl345_data oid=%c sequence=%hu data=%*s"
-          , oid, ax->sequence, ax->data_count, ax->data);
-    ax->data_count = 0;
-    ax->sequence++;
-}
-
-// Report buffer and fifo status
-static void
-adxl_status(struct adxl345 *ax, uint_fast8_t oid
-            , uint32_t time1, uint32_t time2, uint_fast8_t fifo)
-{
-    sendf("adxl345_status oid=%c clock=%u query_ticks=%u next_sequence=%hu"
-          " buffered=%c fifo=%c limit_count=%hu"
-          , oid, time1, time2-time1, ax->sequence
-          , ax->data_count, fifo, ax->limit_count);
-}
-
 // Helper code to reschedule the adxl345_event() timer
 static void
 adxl_reschedule_timer(struct adxl345 *ax)
@@ -87,6 +66,8 @@ adxl_reschedule_timer(struct adxl345 *ax)
 
 #define SET_FIFO_CTL 0x90
 
+#define BYTES_PER_SAMPLE 5
+
 // Query accelerometer data
 static void
 adxl_query(struct adxl345 *ax, uint8_t oid)
@@ -96,7 +77,7 @@ adxl_query(struct adxl345 *ax, uint8_t oid)
     spidev_transfer(ax->spi, 1, sizeof(msg), msg);
     // Extract x, y, z measurements
     uint_fast8_t fifo_status = msg[8] & ~0x80; // Ignore trigger bit
-    uint8_t *d = &ax->data[ax->data_count];
+    uint8_t *d = &ax->sb.data[ax->sb.data_count];
     if (((msg[2] & 0xf0) && (msg[2] & 0xf0) != 0xf0)
         || ((msg[4] & 0xf0) && (msg[4] & 0xf0) != 0xf0)
         || ((msg[6] & 0xf0) && (msg[6] & 0xf0) != 0xf0)
@@ -112,12 +93,12 @@ adxl_query(struct adxl345 *ax, uint8_t oid)
         d[3] = (msg[2] & 0x1f) | (msg[6] << 5); // x high bits and z high bits
         d[4] = (msg[4] & 0x1f) | ((msg[6] << 2) & 0x60); // y high and z high
     }
-    ax->data_count += 5;
-    if (ax->data_count + 5 > ARRAY_SIZE(ax->data))
-        adxl_report(ax, oid);
+    ax->sb.data_count += BYTES_PER_SAMPLE;
+    if (ax->sb.data_count + BYTES_PER_SAMPLE > ARRAY_SIZE(ax->sb.data))
+        sensor_bulk_report(&ax->sb, oid);
     // Check fifo status
     if (fifo_status >= 31)
-        ax->limit_count++;
+        ax->sb.possible_overflows++;
     if (fifo_status > 1 && fifo_status <= 32) {
         // More data in fifo - wake this task again
         sched_wake_task(&adxl345_wake);
@@ -166,8 +147,7 @@ command_query_adxl345(uint32_t *args)
     ax->timer.waketime = args[1];
     ax->rest_ticks = args[2];
     ax->flags = AX_HAVE_START;
-    ax->sequence = ax->limit_count = 0;
-    ax->data_count = 0;
+    sensor_bulk_reset(&ax->sb);
     sched_add_timer(&ax->timer);
 }
 DECL_COMMAND(command_query_adxl345,
@@ -178,10 +158,17 @@ command_query_adxl345_status(uint32_t *args)
 {
     struct adxl345 *ax = oid_lookup(args[0], command_config_adxl345);
     uint8_t msg[2] = { AR_FIFO_STATUS | AM_READ, 0x00 };
+
     uint32_t time1 = timer_read_time();
     spidev_transfer(ax->spi, 1, sizeof(msg), msg);
     uint32_t time2 = timer_read_time();
-    adxl_status(ax, args[0], time1, time2, msg[1]);
+
+    uint_fast8_t fifo_status = msg[1] & ~0x80; // Ignore trigger bit
+    if (fifo_status > 32)
+        // Query error - don't send response - host will retry
+        return;
+    sensor_bulk_status(&ax->sb, args[0], time1, time2-time1
+                       , fifo_status * BYTES_PER_SAMPLE);
 }
 DECL_COMMAND(command_query_adxl345_status, "query_adxl345_status oid=%c");
 

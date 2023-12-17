@@ -412,7 +412,7 @@ class HelperTLE5012B:
         self._write_reg(reg, val)
 
 BYTES_PER_SAMPLE = 3
-SAMPLES_PER_BLOCK = 16
+SAMPLES_PER_BLOCK = bulk_sensor.MAX_BULK_MSG_SIZE // BYTES_PER_SAMPLE
 
 SAMPLE_PERIOD = 0.000400
 BATCH_UPDATES = 0.100
@@ -445,7 +445,7 @@ class Angle:
             "query_spi_angle oid=%d clock=0 rest_ticks=0 time_shift=0"
             % (oid,), on_restart=True)
         mcu.register_config_callback(self._build_config)
-        self.bulk_queue = bulk_sensor.BulkDataQueue(mcu, "spi_angle_data", oid)
+        self.bulk_queue = bulk_sensor.BulkDataQueue(mcu, oid=oid)
         # Process messages in batches
         self.batch_bulk = bulk_sensor.BatchBulkHelper(
             self.printer, self._process_batch,
