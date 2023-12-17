@@ -112,6 +112,10 @@ config WANT_SOFTWARE_SPI
     bool
     depends on HAVE_GPIO && HAVE_GPIO_SPI
     default y
+config NEED_SENSOR_BULK
+    bool
+    depends on WANT_SENSORS || WANT_LIS2DW
+    default y
 menu "Optional features (to reduce code size)"
     depends on HAVE_LIMITED_CODE_SIZE
 config WANT_GPIO_BITBANGING
