@@ -91,6 +91,9 @@ class CommandWrapper:
     def send(self, data=(), minclock=0, reqclock=0):
         cmd = self._cmd.encode(data)
         self._serial.raw_send(cmd, minclock, reqclock, self._cmd_queue)
+    def send_wait_ack(self, data=(), minclock=0, reqclock=0):
+        cmd = self._cmd.encode(data)
+        self._serial.raw_send_wait_ack(cmd, minclock, reqclock, self._cmd_queue)
     def get_command_tag(self):
         return self._msgtag
 
