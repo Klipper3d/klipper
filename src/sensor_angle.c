@@ -230,13 +230,10 @@ command_query_spi_angle(uint32_t *args)
 
     sched_del_timer(&sa->timer);
     sa->flags = 0;
-    if (!args[2]) {
+    if (!args[2])
         // End measurements
-        if (sa->data_count)
-            angle_report(sa, oid);
-        sendf("spi_angle_end oid=%c sequence=%hu", oid, sa->sequence);
         return;
-    }
+
     // Start new measurements query
     sa->timer.waketime = args[1];
     sa->rest_ticks = args[2];
