@@ -50,19 +50,20 @@ class MCU_queued_pwm:
         self._start_value = max(0., min(1., start_value))
         self._shutdown_value = max(0., min(1., shutdown_value))
     def _build_config(self):
+        config_error = self._mcu.get_printer().config_error
         if self._max_duration and self._start_value != self._shutdown_value:
-            raise pins.error("Pin with max duration must have start"
-                             " value equal to shutdown value")
+            raise config_error("Pin with max duration must have start"
+                               " value equal to shutdown value")
         cmd_queue = self._mcu.alloc_command_queue()
         curtime = self._mcu.get_printer().get_reactor().monotonic()
         printtime = self._mcu.estimated_print_time(curtime)
         self._last_clock = self._mcu.print_time_to_clock(printtime + 0.200)
         cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
         if cycle_ticks >= 1<<31:
-            raise pins.error("PWM pin cycle time too large")
+            raise config_error("PWM pin cycle time too large")
         self._duration_ticks = self._mcu.seconds_to_clock(self._max_duration)
         if self._duration_ticks >= 1<<31:
-            raise pins.error("PWM pin max duration too large")
+            raise config_error("PWM pin max duration too large")
         if self._duration_ticks:
             self._mcu.register_flush_callback(self._flush_notification)
         if self._hardware_pwm:
@@ -85,7 +86,7 @@ class MCU_queued_pwm:
             return
         # Software PWM
         if self._shutdown_value not in [0., 1.]:
-            raise pins.error("shutdown value must be 0.0 or 1.0 on soft pwm")
+            raise config_error("shutdown value must be 0.0 or 1.0 on soft pwm")
         self._mcu.add_config_cmd(
             "config_digital_out oid=%d pin=%s value=%d"
             " default_value=%d max_duration=%d"
