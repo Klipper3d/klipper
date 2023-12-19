@@ -2474,18 +2474,18 @@ Recommended shaper_type_y = mzv, shaper_freq_y = 36.8 Hz
 <p><strong>Warning!</strong> It is not advisable to run the shaper auto-calibration very frequently (e.g. before every print, or every day). In order to determine resonance frequencies, auto-calibration creates intensive vibrations on each of the axes. Generally, 3D printers are not designed to withstand a prolonged exposure to vibrations near the resonance frequencies. Doing so may increase wear of the printer components and reduce their lifespan. There is also an increased risk of some parts unscrewing or becoming loose. Always check that all parts of the printer (including the ones that may normally not move) are securely fixed in place after each auto-tuning.</p>
 <p>此外，由于测量中的一些噪音，每次校准得到的调谐结果会略有不同。不过，这些噪音一般不会对打印质量产生太大影响。然而，我们仍然建议仔细检查建议的参数，并在使用前打印一些测试件以确认它们是正确的。</p>
 <h2 id="_14">离线处理加速计数据<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h2>
-<p>It is possible to generate the raw accelerometer data and process it offline (e.g. on a host machine), for example to find resonances. In order to do so, run the following commands via Octoprint terminal:</p>
+<p>可以生成原始的加速度计数据并离线处理（例如在一台电脑上），以查找共振频率为例，在Octoprint的终端内运行如下命令：</p>
 <div class="highlight"><pre><span></span><code>SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0
 TEST_RESONANCES AXIS=X OUTPUT=raw_data
 </code></pre></div>
 
-<p>ignoring any errors for <code>SET_INPUT_SHAPER</code> command. For <code>TEST_RESONANCES</code> command, specify the desired test axis. The raw data will be written into <code>/tmp</code> directory on the RPi.</p>
+<p>忽略<code>SET_INPUT_SHAPER</code>命令的任何错误。对<code>TEST_RESONANCES</code>指定测试的方向。原始数据保存至<code>/tmp</code>目录内。</p>
 <p>在一些正常的打印机活动中，也可以通过运行命令 <code>ACCELEROMETER_MEASURE</code>两次来获得原始数据——首先是开始测量，然后是停止测量并写入输出文件。有关更多详细信息，请参阅<a href="G-Codes.html#adxl345">G-Codes</a>。</p>
-<p>The data can be processed later by the following scripts: <code>scripts/graph_accelerometer.py</code> and <code>scripts/calibrate_shaper.py</code>. Both of them accept one or several raw csv files as the input depending on the mode. The graph_accelerometer.py script supports several modes of operation:</p>
+<p>这些数据可在以后通过<code>scripts/graph_accelerometer.py</code>和scripts/calibrate_shaper.py`脚本进行处理，在不同的工作模式下，两种脚本支持一个或多个原始数据csv文件作为输入。graph_accelerometer.py支持以下几种模式：</p>
 <ul>
-<li>plotting raw accelerometer data (use <code>-r</code> parameter), only 1 input is supported;</li>
-<li>plotting a frequency response (no extra parameters required), if multiple inputs are specified, the average frequency response is computed;</li>
-<li>comparison of the frequency response between several inputs (use <code>-c</code> parameter); you can additionally specify which accelerometer axis to consider via <code>-a x</code>, <code>-a y</code> or <code>-a z</code> parameter (if none specified, the sum of vibrations for all axes is used);</li>
+<li>绘制原始加速度数据图（使用<code>-r</code>参数），仅支持一个输入；</li>
+<li>绘制频率响应图（无需额外参数），如果指定了多个输入文件，将计算他们的平均值；</li>
+<li>在多个输入之间比较频率响应曲线（使用<code>-c</code>参数）；通过<code>-ax，</code>-ay<code>或</code>-az`参数，可以额外指定哪个轴参与比较（在未指定时将计算所有轴振动的总和）;</li>
 <li>plotting the spectrogram (use <code>-s</code> parameter), only 1 input is supported; you can additionally specify which accelerometer axis to consider via <code>-a x</code>, <code>-a y</code> or <code>-a z</code> parameter (if none specified, the sum of vibrations for all axes is used).</li>
 </ul>
 <p>Note that graph_accelerometer.py script supports only the raw_data*.csv files and not resonances*.csv or calibration_data*.csv files.</p>

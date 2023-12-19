@@ -722,7 +722,7 @@
   
     <li class="md-nav__item">
       <a href="Axis_Twist_Compensation.html" class="md-nav__link">
-        Axis Twist Compensation
+        Compensation de torsion de l'axe
       </a>
     </li>
   
@@ -1255,7 +1255,7 @@
   
     <li class="md-nav__item">
       <a href="Bootloader_Entry.html" class="md-nav__link">
-        Bootloader Entry
+        Entrée du bootloader
       </a>
     </li>
   
@@ -1269,7 +1269,7 @@
   
     <li class="md-nav__item">
       <a href="CANBUS.html" class="md-nav__link">
-        CANBUS
+        BUS CAN
       </a>
     </li>
   
@@ -1283,7 +1283,7 @@
   
     <li class="md-nav__item">
       <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
-        CANBUS Troubleshooting
+        Dépannage du CANBUS
       </a>
     </li>
   
@@ -1449,9 +1449,9 @@
 <p>Ce document fournit une liste des étapes permettant de vérifier les affectations des broches dans le fichier printer.cfg de Klipper. Il est conseillé d'exécuter ces étapes après avoir suivi les étapes du <a href="Installation.html">document d'installation</a>.</p>
 <p>Pendant ce guide, il peut être nécessaire d'apporter des modifications au fichier de configuration de Klipper. Veillez à émettre une commande RESTART après chaque modification du fichier de configuration pour vous assurer que la modification prend effet (tapez "restart" dans l'onglet du terminal Octoprint et cliquez ensuite sur "Send"). C'est aussi une bonne idée d'envoyer une commande STATUS après chaque RESTART pour vérifier que le fichier de configuration a été chargé avec succès.</p>
 <h2 id="verifier-la-temperature">Vérifier la température<a class="headerlink" href="#verifier-la-temperature" title="Permanent link">&para;</a></h2>
-<p>Start by verifying that temperatures are being properly reported. Navigate to the temperature graph section in the user interface. Verify that the temperature of the nozzle and bed (if applicable) are present and not increasing. If it is increasing, remove power from the printer. If the temperatures are not accurate, review the "sensor_type" and "sensor_pin" settings for the nozzle and/or bed.</p>
+<p>Commencez par vérifier que les températures sont correctes. Accédez à la section du graphique de température de l'interface utilisateur. Vérifier que la température de la buse et du lit (le cas échéant) est affichée et n'augmente pas. Si elle augmente, éteignez l'imprimante. Si les températures ne sont pas exactes, consultez les paramètres "sensor_type" et "sensor_pin" pour la buse et/ou le lit.</p>
 <h2 id="verifier-m112">Vérifier M112<a class="headerlink" href="#verifier-m112" title="Permanent link">&para;</a></h2>
-<p>Navigate to the command console and issue an M112 command in the terminal box. This command requests Klipper to go into a "shutdown" state. It will cause an error to show, which can be cleared with a FIRMWARE_RESTART command in the command console. Octoprint will also require a reconnect. Then navigate to the temperature graph section and verify that temperatures continue to update and the temperatures are not increasing. If temperatures are increasing, remove power from the printer.</p>
+<p>Dans la console du terminal, tapez une commande M112. Cette commande demande à Klipper de passer dans l'état 'arrêté'. Cela va provoquer l'affichage d'un erreur, qui peut être effacée avec une commande FIRMWARE_RESTART dans la console du terminal. Octoprint nécessitera également une reconnexion. Retournez ensuite vers les graphiques de température et vérifiez que les températures continuent de se mettre à jour et qu'elles n'augmentent pas. Si les températures augmentent, éteignez l'imprimante.</p>
 <h2 id="verifier-la-cartouche-chauffante">Vérifier la cartouche chauffante<a class="headerlink" href="#verifier-la-cartouche-chauffante" title="Permanent link">&para;</a></h2>
 <p>Navigate to the temperature graph section and type in 50 followed by enter in the extruder/tool temperature box. The extruder temperature in the graph should start to increase (within about 30 seconds or so). Then go to the extruder temperature drop-down box and select "Off". After several minutes the temperature should start to return to its initial room temperature value. If the temperature does not increase then verify the "heater_pin" setting in the config.</p>
 <p>Si l'imprimante est équipée d'un plateau chauffant, effectuez à nouveau le test ci-dessus avec le plateau.</p>

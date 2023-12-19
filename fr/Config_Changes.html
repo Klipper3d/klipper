@@ -664,7 +664,7 @@
   
     <li class="md-nav__item">
       <a href="Axis_Twist_Compensation.html" class="md-nav__link">
-        Axis Twist Compensation
+        Compensation de torsion de l'axe
       </a>
     </li>
   
@@ -1197,7 +1197,7 @@
   
     <li class="md-nav__item">
       <a href="Bootloader_Entry.html" class="md-nav__link">
-        Bootloader Entry
+        Entrée du bootloader
       </a>
     </li>
   
@@ -1211,7 +1211,7 @@
   
     <li class="md-nav__item">
       <a href="CANBUS.html" class="md-nav__link">
-        CANBUS
+        BUS CAN
       </a>
     </li>
   
@@ -1225,7 +1225,7 @@
   
     <li class="md-nav__item">
       <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
-        CANBUS Troubleshooting
+        Dépannage du CANBUS
       </a>
     </li>
   
@@ -1381,7 +1381,7 @@ document</a> for examples.</p>
 <p>20210227 : Les pilotes de moteur pas à pas TMC en mode UART ou SPI sont désormais interrogés une fois par seconde si ils sont activés - si le pilote ne peut pas être contacté ou si le pilote signale une erreur, alors Klipper passera à un état d'arrêt.</p>
 <p>20210219 : Le module <code>rpi_temperature</code> a été renommé en <code>temperature_host</code>. Remplacez toutes les occurrences de <code>sensor_type : rpi_temperature</code> par <code>sensor_type : temperature_host</code>. Le chemin vers le fichier de température peut être spécifié dans la variable de configuration <code>sensor_path</code>. Le nom <code>rpi_temperature</code> est obsolète et sera supprimé dans les prochaines versions.</p>
 <p>20210201: La commande <code>TEST_RESONANCES</code> va maintenant désactiver la mise en forme des entrées si elle était précédemment activée (et la réactiver après le test). Afin d'outrepasser ce comportement et de garder la mise en forme de l'entrée activée, on peut passer un paramètre supplémentaire <code>INPUT_SHAPING=1</code> à la commande.</p>
-<p>20210201 : La commande <code>ACCELEROMETER_MEASURE</code> ajoutera désormais le nom de la puce accéléromètre au nom du fichier de sortie si un nom a été donné à la puce dans la section adxl345 correspondante du printer.cfg.</p>
+<p>20210201 : La commande <code>ACCELEROMETER_MEASURE</code> ajoute désormais le nom de l'accéléromètre au nom du fichier de sortie si un nom a été donné à la puce dans la section adxl345 correspondante du fichier printer.cfg.</p>
 <p>20201222 : Le paramètre <code>step_distance</code> dans les sections de configuration de moteur est obsolète. Il est conseillé de mettre à jour la configuration pour utiliser le paramètre <a href="Rotation_Distance.html"><code>rotation_distance</code></a>. Le support de <code>step_distance</code> sera supprimé dans un futur proche.</p>
 <p>20201218 : Le paramètre <code>endstop_phase</code> du module endstop_phase a été remplacé par <code>trigger_phase</code>. Si vous utilisez le module endstop phases, il sera nécessaire de convertir en <a href="Rotation_Distance.html"><code>rotation_distance</code></a> et de recalibrer les phases endstop en exécutant la commande ENDSTOP_PHASE_CALIBRATE.</p>
 <p>20201218 : Les imprimantes rotatives delta et polaires doivent maintenant spécifier un <code>gear_ratio</code> pour leurs moteurs rotatifs, et elles ne peuvent plus spécifier un paramètre <code>step_distance</code>. Voir la <a href="Config_Reference.html#stepper">référence de configuration</a> pour le format du nouveau paramètre gear_ratio.</p>
