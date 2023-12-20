@@ -196,14 +196,6 @@ mp9250_stop(struct mpu9250 *mp, uint8_t oid)
     i2c_write(mp->i2c->i2c_config, sizeof(msg), msg);
     uint32_t end2_time = timer_read_time();
 
-    // Detect if a FIFO overrun occured
-    uint8_t int_reg[] = {AR_INT_STATUS};
-    uint8_t int_msg;
-    i2c_read(mp->i2c->i2c_config, sizeof(int_reg), int_reg, sizeof(int_msg),
-                &int_msg);
-    if (int_msg & FIFO_OVERFLOW_INT)
-        mp->limit_count++;
-
     // Report final data
     if (mp->data_count > 0)
         mp9250_report(mp, oid);
@@ -245,14 +237,24 @@ void
 command_query_mpu9250_status(uint32_t *args)
 {
     struct mpu9250 *mp = oid_lookup(args[0], command_config_mpu9250);
+
+    // Detect if a FIFO overrun occurred
+    uint8_t int_reg[] = {AR_INT_STATUS};
+    uint8_t int_msg;
+    i2c_read(mp->i2c->i2c_config, sizeof(int_reg), int_reg, sizeof(int_msg),
+             &int_msg);
+    if (int_msg & FIFO_OVERFLOW_INT)
+        mp->limit_count++;
+
+    // Read latest FIFO count (with precise timing)
     uint8_t reg[] = {AR_FIFO_COUNT_H};
     uint8_t msg[2];
-
     uint32_t time1 = timer_read_time();
     i2c_read(mp->i2c->i2c_config, sizeof(reg), reg, sizeof(msg), msg);
     uint32_t time2 = timer_read_time();
-
     uint16_t fifo_bytes = ((msg[0] & 0x1f) << 8) | msg[1];
+
+    // Report status
     mp9250_status(mp, args[0], time1, time2, fifo_bytes / BYTES_PER_FIFO_ENTRY);
 }
 DECL_COMMAND(command_query_mpu9250_status, "query_mpu9250_status oid=%c");
