@@ -74,20 +74,33 @@ class RunoutHelper:
         is_printing = idle_timeout.get_status(eventtime)["state"] == "Printing"
         # Perform filament action associated with status change (if any)
         if is_filament_present:
+            # insert detected
+            self.min_event_systime = self.reactor.NEVER
+            logging.info(
+                "Filament Sensor %s: insert event detected, Time %.2f" %
+                (self.name, eventtime))
+            self.printer.send_event("filament:insert", eventtime, self.name)
+
             if not is_printing and self.insert_gcode is not None:
-                # insert detected
-                self.min_event_systime = self.reactor.NEVER
-                logging.info(
-                    "Filament Sensor %s: insert event detected, Time %.2f" %
-                    (self.name, eventtime))
+                # min_event_systime will be set in the callback
                 self.reactor.register_callback(self._insert_event_handler)
-        elif is_printing and self.runout_gcode is not None:
+            else:
+                self.min_event_systime = (self.reactor.monotonic() +
+                                          self.event_delay)
+        else:
             # runout detected
             self.min_event_systime = self.reactor.NEVER
             logging.info(
                 "Filament Sensor %s: runout event detected, Time %.2f" %
                 (self.name, eventtime))
-            self.reactor.register_callback(self._runout_event_handler)
+            self.printer.send_event("filament:runout", eventtime, self.name)
+
+            if is_printing and self.runout_gcode is not None:
+                # min_event_systime will be set in the callback
+                self.reactor.register_callback(self._runout_event_handler)
+            else:
+                self.min_event_systime = (self.reactor.monotonic() +
+                                          self.event_delay)
     def get_status(self, eventtime):
         return {
             "filament_detected": bool(self.filament_present),
@@ -113,6 +126,7 @@ class SwitchSensor:
         self.get_status = self.runout_helper.get_status
     def _button_handler(self, eventtime, state):
         self.runout_helper.note_filament_present(state)
+
 
 def load_config_prefix(config):
     return SwitchSensor(config)
