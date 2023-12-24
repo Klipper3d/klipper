@@ -15,7 +15,7 @@
 #include "internal.h" // GPIO
 #include "sched.h" // DECL_INIT
 
-#if CONFIG_MACH_STM32F1 || CONFIG_MACH_STM32G4
+#if CONFIG_MACH_STM32F1
   // Transfer memory is accessed with 32bits, but contains only 16bits of data
   typedef volatile uint32_t epmword_t;
   #define WSIZE 2
@@ -25,6 +25,11 @@
   typedef volatile uint16_t epmword_t;
   #define WSIZE 2
   #define USBx_IRQn USB_IRQn
+#elif CONFIG_MACH_STM32G4
+  // Transfer memory is accessed with 16bits and contains 16bits of data
+  typedef volatile uint16_t epmword_t;
+  #define WSIZE 2
+  #define USBx_IRQn USB_LP_IRQn
 #elif CONFIG_MACH_STM32G0
   // Transfer memory is accessed with 32bits and contains 32bits of data
   typedef volatile uint32_t epmword_t;
