@@ -283,8 +283,9 @@ class ToolHead:
     def _advance_flush_time(self, flush_time):
         flush_time = max(flush_time, self.last_flush_time)
         # Generate steps via itersolve
-        sg_flush_ceil = max(flush_time, self.print_time - self.kin_flush_delay)
-        sg_flush_time = min(flush_time + STEPCOMPRESS_FLUSH_TIME, sg_flush_ceil)
+        sg_flush_want = min(flush_time + STEPCOMPRESS_FLUSH_TIME,
+                            self.print_time - self.kin_flush_delay)
+        sg_flush_time = max(sg_flush_want, flush_time)
         for sg in self.step_generators:
             sg(sg_flush_time)
         self.last_sg_flush_time = sg_flush_time
