@@ -238,7 +238,8 @@ class ToolHead:
         # Flush tracking
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
         self.do_kick_flush_timer = True
-        self.last_flush_time = self.need_flush_time = self.step_gen_time = 0.
+        self.last_flush_time = self.last_sg_flush_time = 0.
+        self.need_flush_time = self.step_gen_time = 0.
         # Kinematic step generation scan window time tracking
         self.kin_flush_delay = SDS_CHECK_TIME
         self.kin_flush_times = []
@@ -282,10 +283,12 @@ class ToolHead:
     def _advance_flush_time(self, flush_time):
         flush_time = max(flush_time, self.last_flush_time)
         # Generate steps via itersolve
-        sg_flush_ceil = max(flush_time, self.print_time - self.kin_flush_delay)
-        sg_flush_time = min(flush_time + STEPCOMPRESS_FLUSH_TIME, sg_flush_ceil)
+        sg_flush_want = min(flush_time + STEPCOMPRESS_FLUSH_TIME,
+                            self.print_time - self.kin_flush_delay)
+        sg_flush_time = max(sg_flush_want, flush_time)
         for sg in self.step_generators:
             sg(sg_flush_time)
+        self.last_sg_flush_time = sg_flush_time
         # Free trapq entries that are no longer needed
         free_time = sg_flush_time - self.kin_flush_delay
         self.trapq_finalize_moves(self.trapq, free_time)
@@ -307,7 +310,7 @@ class ToolHead:
     def _calc_print_time(self):
         curtime = self.reactor.monotonic()
         est_print_time = self.mcu.estimated_print_time(curtime)
-        kin_time = max(est_print_time + MIN_KIN_TIME, self.last_flush_time)
+        kin_time = max(est_print_time + MIN_KIN_TIME, self.last_sg_flush_time)
         kin_time += self.kin_flush_delay
         min_print_time = max(est_print_time + BUFFER_TIME_START, kin_time)
         if min_print_time > self.print_time:
