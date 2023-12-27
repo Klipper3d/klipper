@@ -30,6 +30,7 @@ REG_ACCEL_CONFIG2 = 0x1D
 REG_USER_CTRL =     0x6A
 REG_PWR_MGMT_1 =    0x6B
 REG_PWR_MGMT_2 =    0x6C
+REG_INT_STATUS =    0x3A
 
 SAMPLE_RATE_DIVS = { 4000:0x00 }
 
@@ -40,14 +41,16 @@ SET_PWR_MGMT_1_WAKE =     0x00
 SET_PWR_MGMT_1_SLEEP=     0x40
 SET_PWR_MGMT_2_ACCEL_ON = 0x07
 SET_PWR_MGMT_2_OFF  =     0x3F
+SET_USER_FIFO_RESET = 0x04
+SET_USER_FIFO_EN    = 0x40
+SET_ENABLE_FIFO  = 0x08
+SET_DISABLE_FIFO = 0x00
 
 FREEFALL_ACCEL = 9.80665 * 1000.
 # SCALE = 1/4096 g/LSB @8g scale * Earth gravity in mm/s**2
 SCALE = 0.000244140625 * FREEFALL_ACCEL
 
 FIFO_SIZE = 512
-
-MIN_MSG_TIME = 0.100
 
 BYTES_PER_SAMPLE = 6
 SAMPLES_PER_BLOCK = bulk_sensor.MAX_BULK_MSG_SIZE // BYTES_PER_SAMPLE
@@ -90,10 +93,10 @@ class MPU9250:
         cmdqueue = self.i2c.get_command_queue()
         self.mcu.add_config_cmd("config_mpu9250 oid=%d i2c_oid=%d"
                            % (self.oid, self.i2c.get_oid()))
-        self.mcu.add_config_cmd("query_mpu9250 oid=%d clock=0 rest_ticks=0"
+        self.mcu.add_config_cmd("query_mpu9250 oid=%d rest_ticks=0"
                            % (self.oid,), on_restart=True)
         self.query_mpu9250_cmd = self.mcu.lookup_command(
-            "query_mpu9250 oid=%c clock=%u rest_ticks=%u", cq=cmdqueue)
+            "query_mpu9250 oid=%c rest_ticks=%u", cq=cmdqueue)
         self.clock_updater.setup_query_command(
             self.mcu, "query_mpu9250_status oid=%c", oid=self.oid, cq=cmdqueue)
     def read_reg(self, reg):
@@ -164,22 +167,25 @@ class MPU9250:
         self.set_reg(REG_CONFIG, SET_CONFIG)
         self.set_reg(REG_ACCEL_CONFIG, SET_ACCEL_CONFIG)
         self.set_reg(REG_ACCEL_CONFIG2, SET_ACCEL_CONFIG2)
+        # Reset fifo
+        self.set_reg(REG_FIFO_EN, SET_DISABLE_FIFO)
+        self.set_reg(REG_USER_CTRL, SET_USER_FIFO_RESET)
+        self.set_reg(REG_USER_CTRL, SET_USER_FIFO_EN)
+        self.read_reg(REG_INT_STATUS) # clear FIFO overflow flag
 
         # Start bulk reading
         self.bulk_queue.clear_samples()
-        systime = self.printer.get_reactor().monotonic()
-        print_time = self.mcu.estimated_print_time(systime) + MIN_MSG_TIME
-        reqclock = self.mcu.print_time_to_clock(print_time)
         rest_ticks = self.mcu.seconds_to_clock(4. / self.data_rate)
-        self.query_mpu9250_cmd.send([self.oid, reqclock, rest_ticks],
-                                    reqclock=reqclock)
+        self.query_mpu9250_cmd.send([self.oid, rest_ticks])
+        self.set_reg(REG_FIFO_EN, SET_ENABLE_FIFO)
         logging.info("MPU9250 starting '%s' measurements", self.name)
         # Initialize clock tracking
         self.clock_updater.note_start()
         self.last_error_count = 0
     def _finish_measurements(self):
         # Halt bulk reading
-        self.query_mpu9250_cmd.send_wait_ack([self.oid, 0, 0])
+        self.set_reg(REG_FIFO_EN, SET_DISABLE_FIFO)
+        self.query_mpu9250_cmd.send_wait_ack([self.oid, 0])
         self.bulk_queue.clear_samples()
         logging.info("MPU9250 finished '%s' measurements", self.name)
         self.set_reg(REG_PWR_MGMT_1, SET_PWR_MGMT_1_SLEEP)
