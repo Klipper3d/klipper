@@ -1,7 +1,7 @@
 // Support for gathering acceleration data from LIS2DW chip
 //
 // Copyright (C) 2023  Zhou.XianMing <zhouxm@biqu3d.com>
-// Copyright (C) 2020  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2020-2023  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -16,7 +16,6 @@
 
 #define LIS_AR_DATAX0 0x28
 #define LIS_AM_READ   0x80
-#define LIS_FIFO_CTRL    0x2E
 #define LIS_FIFO_SAMPLES 0x2F
 
 #define BYTES_PER_SAMPLE 6
@@ -30,7 +29,7 @@ struct lis2dw {
 };
 
 enum {
-    LIS_HAVE_START = 1<<0, LIS_RUNNING = 1<<1, LIS_PENDING = 1<<2,
+    LIS_PENDING = 1<<0,
 };
 
 static struct task_wake lis2dw_wake;
@@ -101,34 +100,11 @@ lis2dw_query(struct lis2dw *ax, uint8_t oid)
     if (!fifo_empty) {
         // More data in fifo - wake this task again
         sched_wake_task(&lis2dw_wake);
-    } else if (ax->flags & LIS_RUNNING) {
+    } else {
         // Sleep until next check time
-        sched_del_timer(&ax->timer);
         ax->flags &= ~LIS_PENDING;
         lis2dw_reschedule_timer(ax);
     }
-}
-
-// Startup measurements
-static void
-lis2dw_start(struct lis2dw *ax, uint8_t oid)
-{
-    sched_del_timer(&ax->timer);
-    ax->flags = LIS_RUNNING;
-    uint8_t ctrl[2] = {LIS_FIFO_CTRL , 0xC0};
-    spidev_transfer(ax->spi, 0, sizeof(ctrl), ctrl);
-    lis2dw_reschedule_timer(ax);
-}
-
-// End measurements
-static void
-lis2dw_stop(struct lis2dw *ax, uint8_t oid)
-{
-    // Disable measurements
-    sched_del_timer(&ax->timer);
-    ax->flags = 0;
-    uint8_t ctrl[2] = {LIS_FIFO_CTRL , 0};
-    spidev_transfer(ax->spi, 0, sizeof(ctrl), ctrl);
 }
 
 void
@@ -136,21 +112,18 @@ command_query_lis2dw(uint32_t *args)
 {
     struct lis2dw *ax = oid_lookup(args[0], command_config_lis2dw);
 
-    if (!args[2]) {
-        // End measurements
-        lis2dw_stop(ax, args[0]);
-        return;
-    }
-    // Start new measurements query
     sched_del_timer(&ax->timer);
-    ax->timer.waketime = args[1];
-    ax->rest_ticks = args[2];
-    ax->flags = LIS_HAVE_START;
+    ax->flags = 0;
+    if (!args[1])
+        // End measurements
+        return;
+
+    // Start new measurements query
+    ax->rest_ticks = args[1];
     sensor_bulk_reset(&ax->sb);
-    sched_add_timer(&ax->timer);
+    lis2dw_reschedule_timer(ax);
 }
-DECL_COMMAND(command_query_lis2dw,
-             "query_lis2dw oid=%c clock=%u rest_ticks=%u");
+DECL_COMMAND(command_query_lis2dw, "query_lis2dw oid=%c rest_ticks=%u");
 
 void
 command_query_lis2dw_status(uint32_t *args)
@@ -174,11 +147,7 @@ lis2dw_task(void)
     struct lis2dw *ax;
     foreach_oid(oid, ax, command_config_lis2dw) {
         uint_fast8_t flags = ax->flags;
-        if (!(flags & LIS_PENDING))
-            continue;
-        if (flags & LIS_HAVE_START)
-            lis2dw_start(ax, oid);
-        else
+        if (flags & LIS_PENDING)
             lis2dw_query(ax, oid);
     }
 }
