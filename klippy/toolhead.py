@@ -290,7 +290,8 @@ class ToolHead:
         for sg in self.step_generators:
             sg(sg_flush_time)
         self.last_sg_flush_time = sg_flush_time
-        clear_history_time = self.reactor.monotonic() - MOVE_HISTORY_EXPIRE
+        clear_history_time = self.mcu.estimated_print_time(
+            self.reactor.monotonic() - MOVE_HISTORY_EXPIRE)
         # Free trapq entries that are no longer needed
         free_time = sg_flush_time - self.kin_flush_delay
         self.trapq_finalize_moves(self.trapq, free_time, clear_history_time)
