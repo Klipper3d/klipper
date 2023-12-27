@@ -162,7 +162,7 @@ class LIS2DW:
                                     reqclock=reqclock)
         logging.info("LIS2DW starting '%s' measurements", self.name)
         # Initialize clock tracking
-        self.clock_updater.note_start(reqclock)
+        self.clock_updater.note_start()
         self.last_error_count = 0
     def _finish_measurements(self):
         # Halt bulk reading
