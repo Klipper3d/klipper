@@ -310,7 +310,7 @@ class ADXL345:
                                     reqclock=reqclock)
         logging.info("ADXL345 starting '%s' measurements", self.name)
         # Initialize clock tracking
-        self.clock_updater.note_start(reqclock)
+        self.clock_updater.note_start()
         self.last_error_count = 0
     def _finish_measurements(self):
         # Halt bulk reading

@@ -222,15 +222,15 @@ class ChipClockUpdater:
         return self.last_overflows
     def clear_duration_filter(self):
         self.max_query_duration = 1 << 31
-    def note_start(self, reqclock):
+    def note_start(self):
         self.last_sequence = 0
         self.last_overflows = 0
-        self.clock_sync.reset(reqclock, 0)
+        # Set initial clock
         self.clear_duration_filter()
-        self.update_clock(minclock=reqclock)
+        self.update_clock(is_reset=True)
         self.clear_duration_filter()
-    def update_clock(self, minclock=0):
-        params = self.query_status_cmd.send([self.oid], minclock=minclock)
+    def update_clock(self, is_reset=False):
+        params = self.query_status_cmd.send([self.oid])
         mcu_clock = self.mcu.clock32_to_clock64(params['clock'])
         seq_diff = (params['next_sequence'] - self.last_sequence) & 0xffff
         self.last_sequence += seq_diff
@@ -250,4 +250,8 @@ class ChipClockUpdater:
         # inaccuracy of query responses and plus .5 for assumed offset
         # of hardware processing time.
         chip_clock = msg_count + 1
-        self.clock_sync.update(mcu_clock + duration // 2, chip_clock)
+        avg_mcu_clock = mcu_clock + duration // 2
+        if is_reset:
+            self.clock_sync.reset(avg_mcu_clock, chip_clock)
+        else:
+            self.clock_sync.update(avg_mcu_clock, chip_clock)
