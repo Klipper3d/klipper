@@ -204,7 +204,7 @@ trapq_set_position(struct trapq *tq, double print_time
                    , double pos_x, double pos_y, double pos_z)
 {
     // Flush all moves from trapq
-    trapq_finalize_moves(tq, NEVER_TIME, 0);
+    trapq_finalize_moves(tq, NEVER_TIME, NEVER_TIME);
 
     // Prune any moves in the trapq history that were interrupted
     while (!list_empty(&tq->history)) {
