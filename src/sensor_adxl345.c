@@ -1,6 +1,6 @@
 // Support for gathering acceleration data from ADXL345 chip
 //
-// Copyright (C) 2020  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2020-2023  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -22,7 +22,7 @@ struct adxl345 {
 };
 
 enum {
-    AX_HAVE_START = 1<<0, AX_RUNNING = 1<<1, AX_PENDING = 1<<2,
+    AX_PENDING = 1<<0,
 };
 
 static struct task_wake adxl345_wake;
@@ -58,7 +58,6 @@ adxl_reschedule_timer(struct adxl345 *ax)
 }
 
 // Chip registers
-#define AR_POWER_CTL   0x2D
 #define AR_DATAX0      0x32
 #define AR_FIFO_STATUS 0x39
 #define AM_READ  0x80
@@ -99,37 +98,14 @@ adxl_query(struct adxl345 *ax, uint8_t oid)
     // Check fifo status
     if (fifo_status >= 31)
         ax->sb.possible_overflows++;
-    if (fifo_status > 1 && fifo_status <= 32) {
+    if (fifo_status > 1) {
         // More data in fifo - wake this task again
         sched_wake_task(&adxl345_wake);
-    } else if (ax->flags & AX_RUNNING) {
+    } else {
         // Sleep until next check time
-        sched_del_timer(&ax->timer);
         ax->flags &= ~AX_PENDING;
         adxl_reschedule_timer(ax);
     }
-}
-
-// Startup measurements
-static void
-adxl_start(struct adxl345 *ax, uint8_t oid)
-{
-    sched_del_timer(&ax->timer);
-    ax->flags = AX_RUNNING;
-    uint8_t msg[2] = { AR_POWER_CTL, 0x08 };
-    spidev_transfer(ax->spi, 0, sizeof(msg), msg);
-    adxl_reschedule_timer(ax);
-}
-
-// End measurements
-static void
-adxl_stop(struct adxl345 *ax, uint8_t oid)
-{
-    // Disable measurements
-    sched_del_timer(&ax->timer);
-    ax->flags = 0;
-    uint8_t msg[2] = { AR_POWER_CTL, 0x00 };
-    spidev_transfer(ax->spi, 0, sizeof(msg), msg);
 }
 
 void
@@ -137,21 +113,18 @@ command_query_adxl345(uint32_t *args)
 {
     struct adxl345 *ax = oid_lookup(args[0], command_config_adxl345);
 
-    if (!args[2]) {
-        // End measurements
-        adxl_stop(ax, args[0]);
-        return;
-    }
-    // Start new measurements query
     sched_del_timer(&ax->timer);
-    ax->timer.waketime = args[1];
-    ax->rest_ticks = args[2];
-    ax->flags = AX_HAVE_START;
+    ax->flags = 0;
+    if (!args[1])
+        // End measurements
+        return;
+
+    // Start new measurements query
+    ax->rest_ticks = args[1];
     sensor_bulk_reset(&ax->sb);
-    sched_add_timer(&ax->timer);
+    adxl_reschedule_timer(ax);
 }
-DECL_COMMAND(command_query_adxl345,
-             "query_adxl345 oid=%c clock=%u rest_ticks=%u");
+DECL_COMMAND(command_query_adxl345, "query_adxl345 oid=%c rest_ticks=%u");
 
 void
 command_query_adxl345_status(uint32_t *args)
@@ -181,11 +154,7 @@ adxl345_task(void)
     struct adxl345 *ax;
     foreach_oid(oid, ax, command_config_adxl345) {
         uint_fast8_t flags = ax->flags;
-        if (!(flags & AX_PENDING))
-            continue;
-        if (flags & AX_HAVE_START)
-            adxl_start(ax, oid);
-        else
+        if (flags & AX_PENDING)
             adxl_query(ax, oid);
     }
 }

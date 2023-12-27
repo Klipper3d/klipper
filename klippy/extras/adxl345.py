@@ -184,8 +184,6 @@ def read_axes_map(config):
         raise config.error("Invalid axes_map parameter")
     return [am[a.strip()] for a in axes_map]
 
-MIN_MSG_TIME = 0.100
-
 BYTES_PER_SAMPLE = 5
 SAMPLES_PER_BLOCK = bulk_sensor.MAX_BULK_MSG_SIZE // BYTES_PER_SAMPLE
 
@@ -207,7 +205,7 @@ class ADXL345:
         self.query_adxl345_cmd = None
         mcu.add_config_cmd("config_adxl345 oid=%d spi_oid=%d"
                            % (oid, self.spi.get_oid()))
-        mcu.add_config_cmd("query_adxl345 oid=%d clock=0 rest_ticks=0"
+        mcu.add_config_cmd("query_adxl345 oid=%d rest_ticks=0"
                            % (oid,), on_restart=True)
         mcu.register_config_callback(self._build_config)
         self.bulk_queue = bulk_sensor.BulkDataQueue(mcu, oid=oid)
@@ -228,7 +226,7 @@ class ADXL345:
     def _build_config(self):
         cmdqueue = self.spi.get_command_queue()
         self.query_adxl345_cmd = self.mcu.lookup_command(
-            "query_adxl345 oid=%c clock=%u rest_ticks=%u", cq=cmdqueue)
+            "query_adxl345 oid=%c rest_ticks=%u", cq=cmdqueue)
         self.clock_updater.setup_query_command(
             self.mcu, "query_adxl345_status oid=%c", oid=self.oid, cq=cmdqueue)
     def read_reg(self, reg):
@@ -302,19 +300,17 @@ class ADXL345:
         self.set_reg(REG_FIFO_CTL, SET_FIFO_CTL)
         # Start bulk reading
         self.bulk_queue.clear_samples()
-        systime = self.printer.get_reactor().monotonic()
-        print_time = self.mcu.estimated_print_time(systime) + MIN_MSG_TIME
-        reqclock = self.mcu.print_time_to_clock(print_time)
         rest_ticks = self.mcu.seconds_to_clock(4. / self.data_rate)
-        self.query_adxl345_cmd.send([self.oid, reqclock, rest_ticks],
-                                    reqclock=reqclock)
+        self.query_adxl345_cmd.send([self.oid, rest_ticks])
+        self.set_reg(REG_POWER_CTL, 0x08)
         logging.info("ADXL345 starting '%s' measurements", self.name)
         # Initialize clock tracking
         self.clock_updater.note_start()
         self.last_error_count = 0
     def _finish_measurements(self):
         # Halt bulk reading
-        self.query_adxl345_cmd.send_wait_ack([self.oid, 0, 0])
+        self.set_reg(REG_POWER_CTL, 0x00)
+        self.query_adxl345_cmd.send_wait_ack([self.oid, 0])
         self.bulk_queue.clear_samples()
         logging.info("ADXL345 finished '%s' measurements", self.name)
     def _process_batch(self, eventtime):
