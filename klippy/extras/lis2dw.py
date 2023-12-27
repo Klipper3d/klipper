@@ -1,7 +1,7 @@
 # Support for reading acceleration data from an LIS2DW chip
 #
 # Copyright (C) 2023  Zhou.XianMing <zhouxm@biqu3d.com>
-# Copyright (C) 2020-2021  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2020-2023  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
@@ -30,8 +30,6 @@ LIS2DW_DEV_ID = 0x44
 FREEFALL_ACCEL = 9.80665
 SCALE = FREEFALL_ACCEL * 1.952 / 4
 
-MIN_MSG_TIME = 0.100
-
 BYTES_PER_SAMPLE = 6
 SAMPLES_PER_BLOCK = bulk_sensor.MAX_BULK_MSG_SIZE // BYTES_PER_SAMPLE
 
@@ -51,7 +49,7 @@ class LIS2DW:
         self.query_lis2dw_cmd = None
         mcu.add_config_cmd("config_lis2dw oid=%d spi_oid=%d"
                            % (oid, self.spi.get_oid()))
-        mcu.add_config_cmd("query_lis2dw oid=%d clock=0 rest_ticks=0"
+        mcu.add_config_cmd("query_lis2dw oid=%d rest_ticks=0"
                            % (oid,), on_restart=True)
         mcu.register_config_callback(self._build_config)
         self.bulk_queue = bulk_sensor.BulkDataQueue(mcu, oid=oid)
@@ -73,7 +71,7 @@ class LIS2DW:
     def _build_config(self):
         cmdqueue = self.spi.get_command_queue()
         self.query_lis2dw_cmd = self.mcu.lookup_command(
-            "query_lis2dw oid=%c clock=%u rest_ticks=%u", cq=cmdqueue)
+            "query_lis2dw oid=%c rest_ticks=%u", cq=cmdqueue)
         self.clock_updater.setup_query_command(
             self.mcu, "query_lis2dw_status oid=%c", oid=self.oid, cq=cmdqueue)
     def read_reg(self, reg):
@@ -154,19 +152,17 @@ class LIS2DW:
 
         # Start bulk reading
         self.bulk_queue.clear_samples()
-        systime = self.printer.get_reactor().monotonic()
-        print_time = self.mcu.estimated_print_time(systime) + MIN_MSG_TIME
-        reqclock = self.mcu.print_time_to_clock(print_time)
         rest_ticks = self.mcu.seconds_to_clock(4. / self.data_rate)
-        self.query_lis2dw_cmd.send([self.oid, reqclock, rest_ticks],
-                                    reqclock=reqclock)
+        self.query_lis2dw_cmd.send([self.oid, rest_ticks])
+        self.set_reg(REG_LIS2DW_FIFO_CTRL, 0xC0)
         logging.info("LIS2DW starting '%s' measurements", self.name)
         # Initialize clock tracking
         self.clock_updater.note_start()
         self.last_error_count = 0
     def _finish_measurements(self):
         # Halt bulk reading
-        self.query_lis2dw_cmd.send_wait_ack([self.oid, 0, 0])
+        self.set_reg(REG_LIS2DW_FIFO_CTRL, 0x00)
+        self.query_lis2dw_cmd.send_wait_ack([self.oid, 0])
         self.bulk_queue.clear_samples()
         logging.info("LIS2DW finished '%s' measurements", self.name)
         self.set_reg(REG_LIS2DW_FIFO_CTRL, 0x00)
