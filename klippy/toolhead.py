@@ -195,6 +195,7 @@ MIN_KIN_TIME = 0.100
 MOVE_BATCH_TIME = 0.500
 STEPCOMPRESS_FLUSH_TIME = 0.050
 SDS_CHECK_TIME = 0.001 # step+dir+step filter in stepcompress.c
+MOVE_HISTORY_EXPIRE = 30.
 
 DRIP_SEGMENT_TIME = 0.050
 DRIP_TIME = 0.100
@@ -289,13 +290,14 @@ class ToolHead:
         for sg in self.step_generators:
             sg(sg_flush_time)
         self.last_sg_flush_time = sg_flush_time
+        clear_history_time = self.reactor.monotonic() - MOVE_HISTORY_EXPIRE
         # Free trapq entries that are no longer needed
         free_time = sg_flush_time - self.kin_flush_delay
-        self.trapq_finalize_moves(self.trapq, free_time)
-        self.extruder.update_move_time(free_time)
+        self.trapq_finalize_moves(self.trapq, free_time, clear_history_time)
+        self.extruder.update_move_time(free_time, clear_history_time)
         # Flush stepcompress and mcu steppersync
         for m in self.all_mcus:
-            m.flush_moves(flush_time)
+            m.flush_moves(flush_time, clear_history_time)
         self.last_flush_time = flush_time
     def _advance_move_time(self, next_print_time):
         pt_delay = self.kin_flush_delay + STEPCOMPRESS_FLUSH_TIME
@@ -522,7 +524,9 @@ class ToolHead:
             self.move_queue.flush()
         except DripModeEndSignal as e:
             self.move_queue.reset()
-            self.trapq_finalize_moves(self.trapq, self.reactor.NEVER)
+            clear_history_time = self.reactor.monotonic() - MOVE_HISTORY_EXPIRE
+            self.trapq_finalize_moves(self.trapq, self.reactor.NEVER,
+                                      clear_history_time)
         # Exit "Drip" state
         self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
         self.flush_step_generation()
