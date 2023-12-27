@@ -734,7 +734,7 @@ steppersync_set_time(struct steppersync *ss, double time_offset
 }
 
 // Expire the stepcompress history before the given clock time
-void __visible
+static void
 steppersync_history_expire(struct steppersync *ss, uint64_t end_clock)
 {
     int i;
