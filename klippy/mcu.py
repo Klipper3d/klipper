@@ -280,9 +280,9 @@ class MCU_endstop:
         self._rest_ticks = rest_ticks
         reactor = self._mcu.get_printer().get_reactor()
         self._trigger_completion = reactor.completion()
-        expire_timeout = TRSYNC_TIMEOUT
+        expire_timeout = self._mcu.get_homing_trsync_timeout()
         if len(self._trsyncs) == 1:
-            expire_timeout = TRSYNC_SINGLE_MCU_TIMEOUT
+            expire_timeout = self._mcu.get_homing_trsync_single_mcu_timeout()
         for trsync in self._trsyncs:
             trsync.start(print_time, self._trigger_completion, expire_timeout)
         etrsync = self._trsyncs[0]
@@ -603,6 +603,11 @@ class MCU:
         ffi_main, self._ffi_lib = chelper.get_ffi()
         self._max_stepper_error = config.getfloat('max_stepper_error', 0.000025,
                                                   minval=0.)
+        self._homing_trsync_timeout = \
+            config.getfloat('homing_trsync_timeout', TRSYNC_TIMEOUT, minval=0.)
+        self._homing_trsync_single_mcu_timeout = \
+            config.getfloat('homing_trsync_single_mcu_timeout',
+                            TRSYNC_SINGLE_MCU_TIMEOUT, minval=0.)
         self._reserved_move_slots = 0
         self._stepqueues = []
         self._steppersync = None
@@ -859,6 +864,10 @@ class MCU:
         return int(time * self._mcu_freq)
     def get_max_stepper_error(self):
         return self._max_stepper_error
+    def get_homing_trsync_timeout(self):
+        return self._homing_trsync_timeout
+    def get_homing_trsync_single_mcu_timeout(self):
+        return self._homing_trsync_single_mcu_timeout
     # Wrapper functions
     def get_printer(self):
         return self._printer
