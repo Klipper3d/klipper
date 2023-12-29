@@ -525,9 +525,8 @@ class ToolHead:
             self.move_queue.flush()
         except DripModeEndSignal as e:
             self.move_queue.reset()
-            clear_history_time = self.reactor.monotonic() - MOVE_HISTORY_EXPIRE
             self.trapq_finalize_moves(self.trapq, self.reactor.NEVER,
-                                      clear_history_time)
+                                      self.reactor.NEVER)
         # Exit "Drip" state
         self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
         self.flush_step_generation()
