@@ -240,7 +240,7 @@ class ToolHead:
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
         self.do_kick_flush_timer = True
         self.last_flush_time = self.last_sg_flush_time = 0.
-        self.need_flush_time = self.step_gen_time = 0.
+        self.need_flush_time = self.step_gen_time = self.clear_history_time = 0.
         # Kinematic step generation scan window time tracking
         self.kin_flush_delay = SDS_CHECK_TIME
         self.kin_flush_times = []
@@ -281,7 +281,7 @@ class ToolHead:
         for module_name in modules:
             self.printer.load_object(config, module_name)
     # Print time and flush tracking
-    def _advance_flush_time(self, flush_time, clear_history_time):
+    def _advance_flush_time(self, flush_time):
         flush_time = max(flush_time, self.last_flush_time)
         # Generate steps via itersolve
         sg_flush_want = min(flush_time + STEPCOMPRESS_FLUSH_TIME,
@@ -291,6 +291,9 @@ class ToolHead:
             sg(sg_flush_time)
         self.last_sg_flush_time = sg_flush_time
         # Free trapq entries that are no longer needed
+        clear_history_time = self.clear_history_time
+        if not self.can_pause:
+            clear_history_time = flush_time - MOVE_HISTORY_EXPIRE
         free_time = sg_flush_time - self.kin_flush_delay
         self.trapq_finalize_moves(self.trapq, free_time, clear_history_time)
         self.extruder.update_move_time(free_time, clear_history_time)
@@ -303,11 +306,9 @@ class ToolHead:
         flush_time = max(self.last_flush_time, self.print_time - pt_delay)
         self.print_time = max(self.print_time, next_print_time)
         want_flush_time = max(flush_time, self.print_time - pt_delay)
-        clear_history_time = self.mcu.estimated_print_time(
-            self.reactor.monotonic()) - MOVE_HISTORY_EXPIRE
         while 1:
             flush_time = min(flush_time + MOVE_BATCH_TIME, want_flush_time)
-            self._advance_flush_time(flush_time, clear_history_time)
+            self._advance_flush_time(flush_time)
             if flush_time >= want_flush_time:
                 break
     def _calc_print_time(self):
@@ -359,7 +360,7 @@ class ToolHead:
         self.check_stall_time = 0.
     def flush_step_generation(self):
         self._flush_lookahead()
-        self._advance_flush_time(self.step_gen_time, 0.)
+        self._advance_flush_time(self.step_gen_time)
     def get_last_move_time(self):
         if self.special_queuing_state:
             self._flush_lookahead()
@@ -433,8 +434,7 @@ class ToolHead:
                 if buffer_time > BGFLUSH_LOW_TIME:
                     return eventtime + buffer_time - BGFLUSH_LOW_TIME
                 ftime = est_print_time + BGFLUSH_LOW_TIME + BGFLUSH_BATCH_TIME
-                self._advance_flush_time(min(self.need_flush_time, ftime),
-                                         est_print_time - MOVE_HISTORY_EXPIRE)
+                self._advance_flush_time(min(self.need_flush_time, ftime))
         except:
             logging.exception("Exception in flush_handler")
             self.printer.invoke_shutdown("Exception in flush_handler")
@@ -535,7 +535,9 @@ class ToolHead:
         max_queue_time = max(self.print_time, self.last_flush_time)
         for m in self.all_mcus:
             m.check_active(max_queue_time, eventtime)
-        buffer_time = self.print_time - self.mcu.estimated_print_time(eventtime)
+        est_print_time = self.mcu.estimated_print_time(eventtime)
+        self.clear_history_time = est_print_time - MOVE_HISTORY_EXPIRE
+        buffer_time = self.print_time - est_print_time
         is_active = buffer_time > -60. or not self.special_queuing_state
         if self.special_queuing_state == "Drip":
             buffer_time = 0.
