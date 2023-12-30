@@ -281,7 +281,7 @@ class ToolHead:
         for module_name in modules:
             self.printer.load_object(config, module_name)
     # Print time and flush tracking
-    def _advance_flush_time(self, flush_time):
+    def _advance_flush_time(self, flush_time, clear_history_time):
         flush_time = max(flush_time, self.last_flush_time)
         # Generate steps via itersolve
         sg_flush_want = min(flush_time + STEPCOMPRESS_FLUSH_TIME,
@@ -290,8 +290,6 @@ class ToolHead:
         for sg in self.step_generators:
             sg(sg_flush_time)
         self.last_sg_flush_time = sg_flush_time
-        clear_history_time = self.mcu.estimated_print_time(
-            self.reactor.monotonic() - MOVE_HISTORY_EXPIRE)
         # Free trapq entries that are no longer needed
         free_time = sg_flush_time - self.kin_flush_delay
         self.trapq_finalize_moves(self.trapq, free_time, clear_history_time)
@@ -305,9 +303,11 @@ class ToolHead:
         flush_time = max(self.last_flush_time, self.print_time - pt_delay)
         self.print_time = max(self.print_time, next_print_time)
         want_flush_time = max(flush_time, self.print_time - pt_delay)
+        clear_history_time = self.mcu.estimated_print_time(
+            self.reactor.monotonic()) - MOVE_HISTORY_EXPIRE
         while 1:
             flush_time = min(flush_time + MOVE_BATCH_TIME, want_flush_time)
-            self._advance_flush_time(flush_time)
+            self._advance_flush_time(flush_time, clear_history_time)
             if flush_time >= want_flush_time:
                 break
     def _calc_print_time(self):
@@ -359,7 +359,7 @@ class ToolHead:
         self.check_stall_time = 0.
     def flush_step_generation(self):
         self._flush_lookahead()
-        self._advance_flush_time(self.step_gen_time)
+        self._advance_flush_time(self.step_gen_time, 0.)
     def get_last_move_time(self):
         if self.special_queuing_state:
             self._flush_lookahead()
@@ -433,7 +433,8 @@ class ToolHead:
                 if buffer_time > BGFLUSH_LOW_TIME:
                     return eventtime + buffer_time - BGFLUSH_LOW_TIME
                 ftime = est_print_time + BGFLUSH_LOW_TIME + BGFLUSH_BATCH_TIME
-                self._advance_flush_time(min(self.need_flush_time, ftime))
+                self._advance_flush_time(min(self.need_flush_time, ftime),
+                                         est_print_time - MOVE_HISTORY_EXPIRE)
         except:
             logging.exception("Exception in flush_handler")
             self.printer.invoke_shutdown("Exception in flush_handler")
