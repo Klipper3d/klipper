@@ -77,8 +77,9 @@ class DriveCurrentCalibrate:
 
 # Interface class to LDC1612 mcu support
 class LDC1612:
-    def __init__(self, config):
+    def __init__(self, config, calibration=None):
         self.printer = config.get_printer()
+        self.calibration = calibration
         self.dccal = DriveCurrentCalibrate(config, self)
         self.data_rate = 250
         # Setup mcu sensor_ldc1612 bulk query code
@@ -105,7 +106,7 @@ class LDC1612:
             self.printer, self._process_batch,
             self._start_measurements, self._finish_measurements, BATCH_UPDATES)
         self.name = config.get_name().split()[-1]
-        hdr = ('time', 'frequency')
+        hdr = ('time', 'frequency', 'z')
         self.batch_bulk.add_mux_endpoint("ldc1612/dump_ldc1612", "sensor",
                                          self.name, {'header': hdr})
     def _build_config(self):
@@ -114,6 +115,8 @@ class LDC1612:
             "query_ldc1612 oid=%c rest_ticks=%u", cq=cmdqueue)
         self.clock_updater.setup_query_command(
             self.mcu, "query_ldc1612_status oid=%c", oid=self.oid, cq=cmdqueue)
+    def get_mcu(self):
+        return self.i2c.get_mcu()
     def read_reg(self, reg):
         params = self.i2c.i2c_read([reg], 2)
         response = bytearray(params['response'])
@@ -144,7 +147,7 @@ class LDC1612:
                     self.last_error_count += 1
                 val = ((v[0] & 0x0f) << 24) | (v[1] << 16) | (v[2] << 8) | v[3]
                 ptime = round(time_base + (msg_cdiff + i) * inv_freq, 6)
-                samples[count] = (ptime, round(freq_conv * val, 3))
+                samples[count] = (ptime, round(freq_conv * val, 3), 999.9)
                 count += 1
         self.clock_sync.set_last_chip_clock(seq * SAMPLES_PER_BLOCK + i)
         del samples[count:]
@@ -192,5 +195,7 @@ class LDC1612:
         samples = self._extract_samples(raw_samples)
         if not samples:
             return {}
+        if self.calibration is not None:
+            self.calibration.apply_calibration(samples)
         return {'data': samples, 'errors': self.last_error_count,
                 'overflows': self.clock_updater.get_last_overflows()}
