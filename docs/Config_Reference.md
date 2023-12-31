@@ -4301,6 +4301,24 @@ information on menu attributes available during template rendering.
 #   mode start or end.
 ```
 
+### [neptune screen]
+Support for the Elegoo screen for the Neptune 3/3 Plus/3 Max.
+A [serial bridge](#serial_bridge) must be setup for communciation to
+take place. Communication is based on versions (1.4.2) and earlier.
+
+```
+[neptune_screen]
+#serial_bridge:
+#   Name of the serial_bridge to be used for communication
+#variant:
+#   The device variant to report to the screen. Possible values are
+#   3Pro: Neptune 3 Pro
+#   3Max: Neptune 3 Max
+#   3Plus: Neptune 3 Plus
+#   The default value is 3Pro
+#logging:
+#   Boolean used to enable/disable verbose logging. Default is False.
+```
 ## Filament sensors
 
 ### [filament_switch_sensor]
@@ -4734,4 +4752,35 @@ via the `i2c_speed` parameter. All other Klipper micro-controllers use a
 #   The Klipper implementation on most micro-controllers is hard-coded
 #   to 100000 and changing this value has no effect. The default is
 #   100000. Linux, RP2040 and ATmega support 400000.
+```
+
+### [serial_bridge]
+Communication between the mcu and devices connected to its UART ports
+such as third-party screens can be bridged with this module. This feature
+must be enabled with the low-level configuration options when compiling the
+firmware specifying which ports should be available for the bridge to use.
+Currently only STM32 devices are supported.
+
+See the [command reference](G-Codes.md#serial_bridge) for the different
+options and configurations available.
+
+```
+[serial_bridge bridge_screen]
+#eol:
+#   The character or string of characters to be sent at the end of each
+#   call. Defaults to \n
+#baud
+#   The baud rate for communication. Default is 115200
+#config:
+#   The serial configuration to use. These define the port and pins.
+#   List them  using the [command reference](G-Codes.md#serial_bridge)
+#   SERIAL_BRIDGE_LIST_CONFIGS
+#tx_pin:
+#   Pin used for Tx. This is used to reserve the pin and to look up
+#   the appropriate MCU
+#rx_pin
+#   Pin used for Rx. This is used to reserve the pin and to look up
+#   the appropriate MCU
+#logging
+#   Boolean to turn logging of or on for debugging communication
 ```

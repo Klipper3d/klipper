@@ -1099,6 +1099,25 @@ loaded into the `printer.save_variables.variables` dict at startup and
 can be used in gcode macros. The provided VALUE is parsed as a Python
 literal.
 
+### [serial_bridge]
+The following command is enabled if a
+[serial_bridge config section](Config_Reference.md#serial_bridge)
+has been enabled.
+
+#### SERIAL_BRIDGE_SEND
+`SERIAL_BRIDGE_SEND [TEXT=<value>] [BRIDGE=<value>]`: This command will
+send a serial message (TEXT) to the bridge specificed (BRIDGE).
+
+#### SERIAL_BRIDGE_LIST_CONFIGS
+`SERIAL_BRIDGE_LIST_CONFIGS`: This command will list the available
+configurations reported by the MCU for use. This config should be used
+when setting up a new [serial_bridge](Config_Reference.md#serial_bridge).
+
+#### SERIAL_BRIDGE_LIST_BRIDGES
+`SERIAL_BRIDGE_LIST_BRIDGES`: This command will list the available
+bridges ready for use from the printer configuration
+[serial_bridge](Config_Reference.md#serial_bridge).
+
 ### [screws_tilt_adjust]
 
 The following commands are available when the
