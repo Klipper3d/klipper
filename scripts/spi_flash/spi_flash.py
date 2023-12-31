@@ -98,6 +98,7 @@ SPI_OID = 0
 SDIO_OID = 0
 SPI_MODE = 0
 SD_SPI_SPEED = 400000
+FAST_SD_SPI_SPEED = 4000000
 # MCU Command Constants
 RESET_CMD = "reset"
 GET_CFG_CMD = "get_config"
@@ -1303,6 +1304,9 @@ class MCUConnection:
     def _configure_mcu_spibus(self, printfunc=logging.info):
         # TODO: add commands for buttons?  Or perhaps an endstop?  We
         # just need to be able to query the status of the detect pin
+        fast_spi = self.board_config['fast_spi']
+        spi_speed = FAST_SD_SPI_SPEED if fast_spi else SD_SPI_SPEED
+        output_line("Requested SPI Clock Frequency: %d" % (spi_speed,))
         cs_pin = self.board_config['cs_pin'].upper()
         bus = self.board_config['spi_bus']
         bus_enums = self.enumerations.get(
@@ -1310,7 +1314,7 @@ class MCUConnection:
         pin_enums = self.enumerations.get('pin')
         if bus == "swspi":
             mcu_freq = self.clocksync.print_time_to_clock(1)
-            pulse_ticks = mcu_freq//SD_SPI_SPEED
+            pulse_ticks = mcu_freq//spi_speed
             cfgpins = self.board_config['spi_pins']
             pins = [p.strip().upper() for p in cfgpins.split(',') if p.strip()]
             pin_err_msg = "Invalid Software SPI Pins: %s" % (cfgpins,)
@@ -1323,13 +1327,13 @@ class MCUConnection:
                 SW_SPI_BUS_CMDS[0] % (SPI_OID, pins[0], pins[1], pins[2],
                                       SPI_MODE, pulse_ticks),
                 SW_SPI_BUS_CMDS[1] % (SPI_OID, pins[0], pins[1], pins[2],
-                                      SPI_MODE, SD_SPI_SPEED)
+                                      SPI_MODE, spi_speed)
             ]
         else:
             if bus not in bus_enums:
                 raise SPIFlashError("Invalid SPI Bus: %s" % (bus,))
             bus_cmds = [
-                SPI_BUS_CMD % (SPI_OID, bus, SPI_MODE, SD_SPI_SPEED),
+                SPI_BUS_CMD % (SPI_OID, bus, SPI_MODE, spi_speed),
             ]
         if cs_pin not in pin_enums:
             raise SPIFlashError("Invalid CS Pin: %s" % (cs_pin,))
@@ -1683,6 +1687,10 @@ def main():
         "-c","--check", action="store_true",
         help="Perform flash check/verify only")
     parser.add_argument(
+        "-s", "--fast-spi", action="store_true",
+        help="Use fast SPI speed (4MHz)"
+    )
+    parser.add_argument(
         "device", metavar="<device>", help="Device Serial Port")
     parser.add_argument(
         "board", metavar="<board>", help="Board Type")
@@ -1701,6 +1709,7 @@ def main():
     flash_args['klipper_bin_path'] = args.klipper_bin_path
     flash_args['klipper_dict_path'] = args.dict_path
     flash_args['verify_only'] = args.check
+    flash_args['fast_spi'] = args.fast_spi
     if args.check:
         # override board_defs setting when doing verify-only:
         flash_args['skip_verify'] = False
