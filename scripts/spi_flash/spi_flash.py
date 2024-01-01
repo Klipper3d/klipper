@@ -17,7 +17,6 @@ import traceback
 import json
 import board_defs
 import fatfs_lib
-import util
 import reactor
 import serialhdl
 import clocksync
@@ -981,7 +980,7 @@ class SDCardSDIO:
     def _send_command(self, cmd, args, wait=0):
         cmd_code = SD_COMMANDS[cmd]
         argument = 0
-        if isinstance(args, int) or isinstance(args, long):
+        if isinstance(args, int):
             argument = args & 0xFFFFFFFF
         elif isinstance(args, list) and len(args) == 4:
             argument = ((args[0] << 24) & 0xFF000000) | \
