@@ -227,6 +227,8 @@ CONFIG ../../config/generic-prusa-buddy.cfg
 CONFIG ../../config/generic-th3d-ezboard-v2.0.cfg
 CONFIG ../../config/printer-biqu-b1-se-plus-2022.cfg
 CONFIG ../../config/printer-prusa-mini-plus-2020.cfg
+CONFIG ../../config/generic-I3DBEEZ9.cfg
+
 
 # Printers using the stm32f429
 DICTIONARY stm32f429.dict
