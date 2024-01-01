@@ -3016,22 +3016,27 @@ PCA9632 LED support. The PCA9632 is used on the FlashForge Dreamer.
 #initial_WHITE: 0.0
 #   See the "led" section for information on these parameters.
 ```
+
 ### [led_group]
+
 Groups LEDs together into LED groups, which then can be used like any LED
 chain.
+
 ```
 [led_group my_group]
 #leds:
 #   A list of LEDs to put in the group. Every chain in a new line with the chain
 #   name, optionally followed by the index range in brackets. Ranges can be
 #   combined by separating them with a comma. Example:
-#   neopixel:my_neopixel (2-4,6-7,10)
+#   my_neopixel (2-4,6-7,10)
 #   combined by separating them with a comma. LEDs are indexed in the order they
 #   are configured. Example:
 #   my_neopixelw (2-4,6-7,10)
 #   my_neopixel
 #   my_dotstar
+#   for use, simply add led_group:my_neopixel when you use it
 ```
+
 ## Additional servos, buttons, and other pins
 
 ### [servo]
