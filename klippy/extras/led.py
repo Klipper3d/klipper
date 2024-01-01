@@ -94,8 +94,14 @@ class PrinterLED:
     def setup_helper(self, config, update_func, led_count=1):
         led_helper = LEDHelper(config, update_func, led_count)
         name = config.get_name().split()[-1]
+        if name in self.led_helpers:
+            raise config.error("LED name '%s' is not unique." % (name,))
         self.led_helpers[name] = led_helper
         return led_helper
+    def lookup_led_helper(self, name):
+        if name in self.led_helpers:
+            return self.led_helpers[name]
+        raise config.error("Unknown LED '%s'" % (name,))
     def _activate_timer(self):
         if self.render_timer is not None or not self.active_templates:
             return
