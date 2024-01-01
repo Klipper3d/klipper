@@ -162,10 +162,10 @@ canhw_set_filter(uint32_t id)
     can_filter(1, id);
     can_filter(2, id + 1);
 
-#if CONFIG_MACH_STM32G0
+#if CONFIG_MACH_STM32G0 || CONFIG_MACH_STM32G4
     SOC_CAN->RXGFC = ((id ? 3 : 1) << FDCAN_RXGFC_LSS_Pos
                       | 0x02 << FDCAN_RXGFC_ANFS_Pos);
-#elif CONFIG_MACH_STM32H7 || CONFIG_MAC_STM32G4
+#elif CONFIG_MACH_STM32H7
     uint32_t flssa = (uint32_t)MSG_RAM.FLS - SRAMCAN_BASE;
     SOC_CAN->SIDFC = flssa | ((id ? 3 : 1) << FDCAN_SIDFC_LSS_Pos);
     SOC_CAN->GFC = 0x02 << FDCAN_GFC_ANFS_Pos;
@@ -293,7 +293,7 @@ can_init(void)
 
     SOC_CAN->NBTP = btr;
 
-#if CONFIG_MACH_STM32H7 || CONFIG_MAC_STM32G4
+#if CONFIG_MACH_STM32H7
     /* Setup message RAM addresses */
     uint32_t f0sa = (uint32_t)MSG_RAM.RXF0 - SRAMCAN_BASE;
     SOC_CAN->RXF0C = f0sa | (ARRAY_SIZE(MSG_RAM.RXF0) << FDCAN_RXF0C_F0S_Pos);

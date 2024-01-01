@@ -240,9 +240,10 @@ gpio_adc_setup(uint32_t pin)
         // Enable ADC
         adc->ISR = ADC_ISR_ADRDY;
         adc->ISR; // Dummy read to make sure write is flushed
-        adc->CR |= ADC_CR_ADEN;
+        while (!(adc->CR & ADC_CR_ADEN))
+            adc->CR |= ADC_CR_ADEN;
         while (!(adc->ISR & ADC_ISR_ADRDY))
-           ;
+            ;
 
         // Set ADC clock cycles sample time for every channel
         uint32_t av = (aticks           | (aticks << 3)  | (aticks << 6)
