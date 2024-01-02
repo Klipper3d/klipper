@@ -10,7 +10,6 @@ config ATSAMD_SELECT
     select HAVE_GPIO_I2C
     select HAVE_GPIO_SPI
     select HAVE_GPIO_HARD_PWM if MACH_SAMX2
-    select HAVE_GPIO_BITBANGING
     select HAVE_STRICT_TIMING
     select HAVE_CHIPID
     select HAVE_STEPPER_BOTH_EDGE
@@ -35,6 +34,9 @@ choice
         select MACH_SAMD21
     config MACH_SAMD21E18
         bool "SAMD21E18 (Adafruit Trinket M0)"
+        select MACH_SAMD21
+    config MACH_SAMD21J18
+        bool "SAMD21J18 (ReprapWorld Minitronics v2)"
         select MACH_SAMD21
     config MACH_SAMD21E15
         bool "SAMD21E15"
@@ -91,6 +93,7 @@ config MCU
     default "samc21g18a" if MACH_SAMC21G18
     default "samd21g18a" if MACH_SAMD21G18
     default "samd21e18a" if MACH_SAMD21E18
+    default "samd21j18a" if MACH_SAMD21J18
     default "samd21e15a" if MACH_SAMD21E15
     default "samd51g19a" if MACH_SAMD51G19
     default "samd51j19a" if MACH_SAMD51J19
@@ -102,7 +105,7 @@ config MCU
 config FLASH_SIZE
     hex
     default 0x8000 if MACH_SAMD21E15
-    default 0x40000 if MACH_SAMC21G18 || MACH_SAMD21G18 || MACH_SAMD21E18
+    default 0x40000 if MACH_SAMC21G18 || MACH_SAMD21G18 || MACH_SAMD21E18 || MACH_SAMD21J18
     default 0x80000 if MACH_SAMD51G19 || MACH_SAMD51J19 || MACH_SAMD51N19 || MACH_SAME51J19
     default 0x100000 if MACH_SAMD51P20 || MACH_SAME54P20
 
@@ -117,7 +120,7 @@ config RAM_START
 config RAM_SIZE
     hex
     default 0x1000 if MACH_SAMD21E15
-    default 0x8000 if MACH_SAMC21G18 ||  MACH_SAMD21G18 || MACH_SAMD21E18
+    default 0x8000 if MACH_SAMC21G18 ||  MACH_SAMD21G18 || MACH_SAMD21E18 || MACH_SAMD21J18
     default 0x30000 if MACH_SAMD51G19 || MACH_SAMD51J19 || MACH_SAMD51N19 || MACH_SAME51J19
     default 0x40000 if MACH_SAMD51P20 || MACH_SAME54P20
 

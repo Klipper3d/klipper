@@ -25,14 +25,16 @@ class RetryAsyncCommand:
         self.reactor = serial.get_reactor()
         self.completion = self.reactor.completion()
         self.min_query_time = self.reactor.monotonic()
+        self.need_response = True
         self.serial.register_response(self.handle_callback, name, oid)
     def handle_callback(self, params):
-        if params['#sent_time'] >= self.min_query_time:
-            self.min_query_time = self.reactor.NEVER
+        if self.need_response and params['#sent_time'] >= self.min_query_time:
+            self.need_response = False
             self.reactor.async_complete(self.completion, params)
     def get_response(self, cmds, cmd_queue, minclock=0, reqclock=0):
         cmd, = cmds
         self.serial.raw_send_wait_ack(cmd, minclock, reqclock, cmd_queue)
+        self.min_query_time = 0.
         first_query_time = query_time = self.reactor.monotonic()
         while 1:
             params = self.completion.wait(query_time + self.RETRY_TIME)
@@ -604,6 +606,7 @@ class MCU:
         self._reserved_move_slots = 0
         self._stepqueues = []
         self._steppersync = None
+        self._flush_callbacks = []
         # Stats
         self._get_status_info = {}
         self._stats_sumsq_base = 0.
@@ -852,10 +855,6 @@ class MCU:
         slot = self.seconds_to_clock(oid * .01)
         t = int(self.estimated_print_time(self._reactor.monotonic()) + 1.5)
         return self.print_time_to_clock(t) + slot
-    def register_stepqueue(self, stepqueue):
-        self._stepqueues.append(stepqueue)
-    def request_move_queue_slot(self):
-        self._reserved_move_slots += 1
     def seconds_to_clock(self, time):
         return int(time * self._mcu_freq)
     def get_max_stepper_error(self):
@@ -949,20 +948,25 @@ class MCU:
             self._restart_arduino()
     def _firmware_restart_bridge(self):
         self._firmware_restart(True)
-    # Misc external commands
-    def is_fileoutput(self):
-        return self._printer.get_start_args().get('debugoutput') is not None
-    def is_shutdown(self):
-        return self._is_shutdown
-    def get_shutdown_clock(self):
-        return self._shutdown_clock
-    def flush_moves(self, print_time):
+    # Move queue tracking
+    def register_stepqueue(self, stepqueue):
+        self._stepqueues.append(stepqueue)
+    def request_move_queue_slot(self):
+        self._reserved_move_slots += 1
+    def register_flush_callback(self, callback):
+        self._flush_callbacks.append(callback)
+    def flush_moves(self, print_time, clear_history_time):
         if self._steppersync is None:
             return
         clock = self.print_time_to_clock(print_time)
         if clock < 0:
             return
-        ret = self._ffi_lib.steppersync_flush(self._steppersync, clock)
+        for cb in self._flush_callbacks:
+            cb(print_time, clock)
+        clear_history_clock = \
+            max(0, self.print_time_to_clock(clear_history_time))
+        ret = self._ffi_lib.steppersync_flush(self._steppersync, clock,
+                                              clear_history_clock)
         if ret:
             raise error("Internal error in MCU '%s' stepcompress"
                         % (self._name,))
@@ -979,6 +983,13 @@ class MCU:
                      self._name, eventtime)
         self._printer.invoke_shutdown("Lost communication with MCU '%s'" % (
             self._name,))
+    # Misc external commands
+    def is_fileoutput(self):
+        return self._printer.get_start_args().get('debugoutput') is not None
+    def is_shutdown(self):
+        return self._is_shutdown
+    def get_shutdown_clock(self):
+        return self._shutdown_clock
     def get_status(self, eventtime=None):
         return dict(self._get_status_info)
     def stats(self, eventtime):

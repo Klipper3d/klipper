@@ -34,6 +34,7 @@ CONFIG ../../config/printer-bq-hephestos-2014.cfg
 CONFIG ../../config/printer-creality-cr5pro-ht-2022.cfg
 CONFIG ../../config/printer-creality-cr10-v3-2020.cfg
 CONFIG ../../config/printer-creality-cr10s-2017.cfg
+CONFIG ../../config/printer-creality-cr10s-pro-v2-2020.cfg
 CONFIG ../../config/printer-creality-cr20-2018.cfg
 CONFIG ../../config/printer-creality-cr20-pro-2019.cfg
 CONFIG ../../config/printer-creality-ender5plus-2019.cfg
@@ -156,6 +157,7 @@ CONFIG ../../config/printer-anycubic-vyper-2021.cfg
 CONFIG ../../config/printer-monoprice-select-mini-v1-2016.cfg
 CONFIG ../../config/printer-sovol-sv05-2022.cfg
 CONFIG ../../config/printer-sovol-sv06-2022.cfg
+CONFIG ../../config/printer-sovol-sv06-plus-2023.cfg
 CONFIG ../../config/printer-sunlu-t3-2022.cfg
 
 # Printers using the stm32f103 via serial
@@ -219,24 +221,31 @@ CONFIG ../../config/generic-bigtreetech-skr-2.cfg
 CONFIG ../../config/generic-flyboard.cfg
 CONFIG ../../config/generic-mellow-fly-cdy-v3.cfg
 CONFIG ../../config/generic-mellow-super-infinty-hv.cfg
+CONFIG ../../config/generic-mks-monster8.cfg
 CONFIG ../../config/generic-mks-robin-nano-v3.cfg
 CONFIG ../../config/generic-prusa-buddy.cfg
 CONFIG ../../config/generic-th3d-ezboard-v2.0.cfg
 CONFIG ../../config/printer-biqu-b1-se-plus-2022.cfg
 CONFIG ../../config/printer-prusa-mini-plus-2020.cfg
 
+# Printers using the stm32f429
+DICTIONARY stm32f429.dict
+CONFIG ../../config/generic-bigtreetech-octopus-v1.1.cfg
+
 # Printers using the stm32f446
 DICTIONARY stm32f446.dict
-CONFIG ../../config/generic-bigtreetech-octopus.cfg
+CONFIG ../../config/generic-bigtreetech-octopus-pro-v1.0.cfg
 CONFIG ../../config/generic-fysetc-s6.cfg
 CONFIG ../../config/generic-fysetc-s6-v2.cfg
 CONFIG ../../config/generic-fysetc-spider.cfg
+CONFIG ../../config/generic-ldo-leviathan-v1.2.cfg
 CONFIG ../../config/generic-mks-rumba32-v1.0.cfg
 CONFIG ../../config/printer-ratrig-v-minion-2021.cfg
 
 # Printers using the stm32h723
 DICTIONARY stm32h723.dict
 CONFIG ../../config/generic-bigtreetech-octopus-max-ez.cfg
+CONFIG ../../config/generic-bigtreetech-octopus-pro-v1.1.cfg
 
 # Printers using the stm32h743
 DICTIONARY stm32h743.dict
@@ -256,10 +265,14 @@ CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v3.0.cfg
 DICTIONARY rp2040.dict
 CONFIG ../../config/generic-bigtreetech-skr-pico-v1.0.cfg
 
-# Anycubic Printers using trigorilla board with the hc32f460
+# Printers using the hc32f460 with serial on PA3 PA2
 DICTIONARY hc32f460-serial-PA3PA2.dict
 CONFIG ../../config/printer-anycubic-kobra-go-2022.cfg
 CONFIG ../../config/printer-anycubic-kobra-plus-2022.cfg
+
+# Printers using the hc32f460 with serial on PA7 PA8
+DICTIONARY hc32f460-serial-PA7PA8.dict
+CONFIG ../../config/printer-creality-ender2pro-hc32-2022.cfg
 
 # Printers using the PRU
 DICTIONARY pru.dict host=linuxprocess.dict

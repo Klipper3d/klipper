@@ -105,6 +105,9 @@ enable_clock_stm32g4(void)
         enable_pclock(CRS_BASE);
         CRS->CR |= CRS_CR_AUTOTRIMEN | CRS_CR_CEN;
     }
+
+    // Use PCLK for FDCAN
+    RCC->CCIPR = 2 << RCC_CCIPR_FDCANSEL_Pos;
 }
 
 // Main clock setup called at chip startup

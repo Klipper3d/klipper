@@ -62,6 +62,7 @@ struct serialqueue {
     int ready_bytes, upcoming_bytes, need_ack_bytes, last_ack_bytes;
     uint64_t need_kick_clock;
     struct list_head notify_queue;
+    double last_write_fail_time;
     // Received messages
     struct list_head receive_queue;
     // Fastreader support
@@ -221,12 +222,11 @@ handle_message(struct serialqueue *sq, double eventtime, int len)
     pthread_mutex_lock(&sq->lock);
 
     // Calculate receive sequence number
-    uint64_t rseq = ((sq->receive_seq & ~MESSAGE_SEQ_MASK)
-                     | (sq->input_buf[MESSAGE_POS_SEQ] & MESSAGE_SEQ_MASK));
+    uint32_t rseq_delta = ((sq->input_buf[MESSAGE_POS_SEQ] - sq->receive_seq)
+                           & MESSAGE_SEQ_MASK);
+    uint64_t rseq = sq->receive_seq + rseq_delta;
     if (rseq != sq->receive_seq) {
         // New sequence number
-        if (rseq < sq->receive_seq)
-            rseq += MESSAGE_SEQ_MASK+1;
         if (rseq > sq->send_seq && sq->receive_seq != 1) {
             // An ack for a message not sent?  Out of order message?
             sq->bytes_invalid += len;
@@ -376,8 +376,16 @@ do_write(struct serialqueue *sq, void *buf, int buflen)
         int ret = write(sq->serial_fd, &cf, sizeof(cf));
         if (ret < 0) {
             report_errno("can write", ret);
+            double curtime = get_monotonic();
+            if (!sq->last_write_fail_time) {
+                sq->last_write_fail_time = curtime;
+            } else if (curtime > sq->last_write_fail_time + 10.0) {
+                errorf("Halting reads due to CAN write errors.");
+                pollreactor_do_exit(sq->pr);
+            }
             return;
         }
+        sq->last_write_fail_time = 0.0;
         buf += size;
         buflen -= size;
     }

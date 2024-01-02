@@ -35,6 +35,8 @@ communication with the Klipper developers.
     locations.
   - [Endstop phase](Endstop_Phase.md): Stepper assisted Z endstop
     positioning.
+  - [Axis Twist Compensation](Axis_Twist_Compensation.md): A tool to compensate
+    for inaccurate probe readings due to twist in X gantry.
 - [Resonance compensation](Resonance_Compensation.md): A tool to
   reduce ringing in prints.
   - [Measuring resonances](Measuring_Resonances.md): Information on
@@ -91,6 +93,9 @@ communication with the Klipper developers.
   Beaglebone PRU.
 - [Bootloaders](Bootloaders.md): Developer information on
   micro-controller flashing.
+- [Bootloader Entry](Bootloader_Entry.md): Requesting the bootloader.
 - [CAN bus](CANBUS.md): Information on using CAN bus with Klipper.
+  - [CAN bus troubleshooting](CANBUS_Troubleshooting.md): Tips for
+    troubleshooting CAN bus.
 - [TSL1401CL filament width sensor](TSL1401CL_Filament_Width_Sensor.md)
 - [Hall filament width sensor](Hall_Filament_Width_Sensor.md)

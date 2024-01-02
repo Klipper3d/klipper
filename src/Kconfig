@@ -87,6 +87,53 @@ config USB_SERIAL_NUMBER
     string "USB serial number" if !USB_SERIAL_NUMBER_CHIPID
 endmenu
 
+# Optional features that can be disabled (for devices with small flash sizes)
+config WANT_GPIO_BITBANGING
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_DISPLAYS
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_SENSORS
+    bool
+    depends on HAVE_GPIO_I2C || HAVE_GPIO_SPI
+    default y
+config WANT_LIS2DW
+    bool
+    depends on HAVE_GPIO_SPI
+    default y
+config WANT_SOFTWARE_I2C
+    bool
+    depends on HAVE_GPIO && HAVE_GPIO_I2C
+    default y
+config WANT_SOFTWARE_SPI
+    bool
+    depends on HAVE_GPIO && HAVE_GPIO_SPI
+    default y
+menu "Optional features (to reduce code size)"
+    depends on HAVE_LIMITED_CODE_SIZE
+config WANT_GPIO_BITBANGING
+    bool "Support GPIO \"bit-banging\" devices"
+    depends on HAVE_GPIO
+config WANT_DISPLAYS
+    bool "Support LCD devices"
+    depends on HAVE_GPIO
+config WANT_SENSORS
+    bool "Support external sensor devices"
+    depends on HAVE_GPIO_I2C || HAVE_GPIO_SPI
+config WANT_LIS2DW
+    bool "Support lis2dw 3-axis accelerometer"
+    depends on HAVE_GPIO_SPI
+config WANT_SOFTWARE_I2C
+    bool "Support software based I2C \"bit-banging\""
+    depends on HAVE_GPIO && HAVE_GPIO_I2C
+config WANT_SOFTWARE_SPI
+    bool "Support software based SPI \"bit-banging\""
+    depends on HAVE_GPIO && HAVE_GPIO_SPI
+endmenu
+
 # Generic configuration options for CANbus
 config CANSERIAL
     bool
@@ -95,7 +142,7 @@ config CANBUS
     default y if CANSERIAL || USBCANBUS
 config CANBUS_FREQUENCY
     int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANBUS
-    default 500000
+    default 1000000
 config CANBUS_FILTER
     bool
     default y if CANSERIAL
@@ -124,8 +171,6 @@ config HAVE_GPIO_I2C
     bool
 config HAVE_GPIO_HARD_PWM
     bool
-config HAVE_GPIO_BITBANGING
-    bool
 config HAVE_STRICT_TIMING
     bool
 config HAVE_CHIPID
@@ -133,6 +178,8 @@ config HAVE_CHIPID
 config HAVE_STEPPER_BOTH_EDGE
     bool
 config HAVE_BOOTLOADER_REQUEST
+    bool
+config HAVE_LIMITED_CODE_SIZE
     bool
 
 config INLINE_STEPPER_HACK

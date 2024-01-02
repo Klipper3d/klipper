@@ -24,7 +24,9 @@ version 1.0.56 (extracted on 20181220).
 The samc21 directory contains code from the
 Atmel.SAMC21_DFP.1.2.176.atpack zip file found at:
   http://packs.download.atmel.com/
-version 1.2.176 (extracted on 20230115).
+version 1.2.176 (extracted on 20230115). It has been modified to fix
+an incorrect base address for the CAN message ram. See samc21.patch
+for the modifications.
 
 The samd21 directory contains code from the
 Atmel.SAMD21_DFP.1.3.304.atpack zip file found at:
@@ -165,7 +167,7 @@ used to upload firmware to devices flashed with the CanBoot bootloader.
 
 The can2040 directory contains code from:
   https://github.com/KevinOConnor/can2040
-revision d1190afcaa6245c20da28199d06e453d2e743099.
+version v1.6.0 (af3d21e5d61b8408c63fbdfb0aceb21d69d91693)
 
 The Huada HC32F460 directory contains code from:
   https://www.hdsc.com.cn/Category83-1490

@@ -125,6 +125,9 @@ class TMCErrorCheck:
         # Setup for temperature query
         self.adc_temp = None
         self.adc_temp_reg = self.fields.lookup_register("adc_temp")
+        if self.adc_temp_reg is not None:
+            pheaters = self.printer.load_object(config, 'heaters')
+            pheaters.register_monitor(config)
     def _query_register(self, reg_info, try_clear=False):
         last_value, reg_name, mask, err_mask, cs_actual_mask = reg_info
         cleared_flags = 0
@@ -259,7 +262,8 @@ class TMCCommandHelper:
                                    desc=self.cmd_SET_TMC_CURRENT_help)
     def _init_registers(self, print_time=None):
         # Send registers
-        for reg_name, val in self.fields.registers.items():
+        for reg_name in list(self.fields.registers.keys()):
+            val = self.fields.registers[reg_name] # Val may change during loop
             self.mcu_tmc.set_register(reg_name, val, print_time)
     cmd_INIT_TMC_help = "Initialize TMC stepper driver registers"
     def cmd_INIT_TMC(self, gcmd):
