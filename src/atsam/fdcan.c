@@ -1,4 +1,4 @@
-// FDCAN support on stm32 chips
+// CANbus support on atsame70 chips
 //
 // Copyright (C) 2021-2022  Kevin O'Connor <kevin@koconnor.net>
 // Copyright (C) 2019 Eug Krashtan <eug.krashtan@gmail.com>
@@ -18,59 +18,34 @@
  * Pin configuration
  ****************************************************************/
 
-#if CONFIG_STM32_CANBUS_PA11_PA12
- DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PA11,PA12");
- #define GPIO_Rx GPIO('A', 11)
- #define GPIO_Tx GPIO('A', 12)
-#elif CONFIG_STM32_CANBUS_PA11_PB9
- DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PA11,PB9");
- #define GPIO_Rx GPIO('A', 11)
- #define GPIO_Tx GPIO('B', 9)
-#elif CONFIG_STM32_CANBUS_PB8_PB9
- DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PB8,PB9");
- #define GPIO_Rx GPIO('B', 8)
- #define GPIO_Tx GPIO('B', 9)
-#elif CONFIG_STM32_CANBUS_PD0_PD1
- DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PD0,PD1");
- #define GPIO_Rx GPIO('D', 0)
- #define GPIO_Tx GPIO('D', 1)
-#elif CONFIG_STM32_CANBUS_PD12_PD13
- DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PD12,PD13");
- #define GPIO_Rx GPIO('D', 12)
- #define GPIO_Tx GPIO('D', 13)
-#elif CONFIG_STM32_CANBUS_PB0_PB1
- DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PB0,PB1");
- #define GPIO_Rx GPIO('B', 0)
- #define GPIO_Tx GPIO('B', 1)
-#elif CONFIG_STM32_CANBUS_PC2_PC3
- DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PC2,PC3");
- #define GPIO_Rx GPIO('C', 2)
- #define GPIO_Tx GPIO('C', 3)
-#elif CONFIG_STM32_CANBUS_PB5_PB6
- DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PB5,PB6");
- #define GPIO_Rx GPIO('B', 5)
- #define GPIO_Tx GPIO('B', 6)
-#elif CONFIG_STM32_CANBUS_PB12_PB13
- DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PB12,PB13");
- #define GPIO_Rx GPIO('B', 12)
- #define GPIO_Tx GPIO('B', 13)
+#if CONFIG_ATSAM_CANBUS_PB3_PB2
+ DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PB3,PB2");
+ #define GPIO_Rx GPIO('B', 3)
+ #define GPIO_Tx GPIO('B', 2)
+ #define CANx_GCLK_ID MCAN0_CLOCK_ID
+#elif CONFIG_ATSAM_CANBUS_PC12_PD12
+ DECL_CONSTANT_STR("RESERVE_PINS_CAN", "PC12,PD12");
+ #define GPIO_Rx GPIO('C', 12)
+ #define GPIO_Tx GPIO('D', 12)
+ #define CANx_GCLK_ID MCAN1_CLOCK_ID
 #endif
 
-#if !(CONFIG_STM32_CANBUS_PB0_PB1 || CONFIG_STM32_CANBUS_PC2_PC3 \
-     || CONFIG_STM32_CANBUS_PB5_PB6 ||CONFIG_STM32_CANBUS_PB12_PB13)
- #define SOC_CAN FDCAN1
- #define MSG_RAM (((struct fdcan_ram_layout*)SRAMCAN_BASE)->fdcan1)
+#if CANx_GCLK_ID == MCAN0_CLOCK_ID
+ #define CAN_FUNCTION_Rx 'A'
+ #define CAN_FUNCTION_Tx 'A'
+ #define CANx MCAN0
+ #define CANx_IRQn MCAN0_INT0_IRQn
+ #define CCFG_CANxDMABA MATRIX->CCFG_CAN0
+ #define CCFG_CANxDMABA_Msk CCFG_CAN0_CAN0DMABA_Msk
+ #define CCFG_CANxDMABA_Pos CCFG_CAN0_CAN0DMABA_Pos
 #else
- #define SOC_CAN FDCAN2
- #define MSG_RAM (((struct fdcan_ram_layout*)SRAMCAN_BASE)->fdcan2)
-#endif
-
-#if CONFIG_MACH_STM32G0
- #define CAN_IT0_IRQn  TIM16_FDCAN_IT0_IRQn
- #define CAN_FUNCTION  GPIO_FUNCTION(3) // Alternative function mapping number
-#elif CONFIG_MACH_STM32H7 || CONFIG_MACH_STM32G4
- #define CAN_IT0_IRQn  FDCAN1_IT0_IRQn
- #define CAN_FUNCTION  GPIO_FUNCTION(9) // Alternative function mapping number
+ #define CAN_FUNCTION_Rx 'C'
+ #define CAN_FUNCTION_Tx 'B'
+ #define CANx MCAN1
+ #define CANx_IRQn MCAN1_INT0_IRQn
+ #define CCFG_CANxDMABA MATRIX->CCFG_SYSIO
+ #define CCFG_CANxDMABA_Msk CCFG_SYSIO_CAN1DMABA_Msk
+ #define CCFG_CANxDMABA_Pos CCFG_SYSIO_CAN1DMABA_Pos
 #endif
 
 
@@ -96,28 +71,26 @@ struct fdcan_msg_ram {
     struct fdcan_fifo TXFIFO[3];
 };
 
-struct fdcan_ram_layout {
-    struct fdcan_msg_ram fdcan1;
-    struct fdcan_msg_ram fdcan2;
-};
+// Message ram is in regular memory
+static struct fdcan_msg_ram MSG_RAM;
 
 
 /****************************************************************
  * CANbus code
  ****************************************************************/
 
-#define FDCAN_IE_TC        (FDCAN_IE_TCE | FDCAN_IE_TCFE | FDCAN_IE_TFEE)
+#define FDCAN_IE_TC        (MCAN_IE_TCE | MCAN_IE_TCFE | MCAN_IE_TFEE)
 
 // Transmit a packet
 int
 canhw_send(struct canbus_msg *msg)
 {
-    uint32_t txfqs = SOC_CAN->TXFQS;
-    if (txfqs & FDCAN_TXFQS_TFQF)
+    uint32_t txfqs = CANx->MCAN_TXFQS;
+    if (txfqs & MCAN_TXFQS_TFQF)
         // No space in transmit fifo - wait for irq
         return -1;
 
-    uint32_t w_index = ((txfqs & FDCAN_TXFQS_TFQPI) >> FDCAN_TXFQS_TFQPI_Pos);
+    uint32_t w_index = ((txfqs & MCAN_TXFQS_TFQPI_Msk) >> MCAN_TXFQS_TFQPI_Pos);
     struct fdcan_fifo *txfifo = &MSG_RAM.TXFIFO[w_index];
     uint32_t ids;
     if (msg->id & CANMSG_ID_EFF)
@@ -129,8 +102,9 @@ canhw_send(struct canbus_msg *msg)
     txfifo->dlc_section = (msg->dlc & 0x0f) << 16;
     txfifo->data[0] = msg->data32[0];
     txfifo->data[1] = msg->data32[1];
-    barrier();
-    SOC_CAN->TXBAR = ((uint32_t)1 << w_index);
+    __DMB();
+    CANx->MCAN_TXBAR;
+    CANx->MCAN_TXBAR = ((uint32_t)1 << w_index);
     return CANMSG_DATA_LEN(msg);
 }
 
@@ -150,46 +124,42 @@ canhw_set_filter(uint32_t id)
     if (!CONFIG_CANBUS_FILTER)
         return;
     /* Request initialisation */
-    SOC_CAN->CCCR |= FDCAN_CCCR_INIT;
+    CANx->MCAN_CCCR |= MCAN_CCCR_INIT;
     /* Wait the acknowledge */
-    while (!(SOC_CAN->CCCR & FDCAN_CCCR_INIT))
+    while (!(CANx->MCAN_CCCR & MCAN_CCCR_INIT))
         ;
     /* Enable configuration change */
-    SOC_CAN->CCCR |= FDCAN_CCCR_CCE;
+    CANx->MCAN_CCCR |= MCAN_CCCR_CCE;
 
     // Load filter
     can_filter(0, CANBUS_ID_ADMIN);
     can_filter(1, id);
     can_filter(2, id + 1);
 
-#if CONFIG_MACH_STM32G0 || CONFIG_MACH_STM32G4
-    SOC_CAN->RXGFC = ((id ? 3 : 1) << FDCAN_RXGFC_LSS_Pos
-                      | 0x02 << FDCAN_RXGFC_ANFS_Pos);
-#elif CONFIG_MACH_STM32H7
-    uint32_t flssa = (uint32_t)MSG_RAM.FLS - SRAMCAN_BASE;
-    SOC_CAN->SIDFC = flssa | ((id ? 3 : 1) << FDCAN_SIDFC_LSS_Pos);
-    SOC_CAN->GFC = 0x02 << FDCAN_GFC_ANFS_Pos;
-#endif
+    uint32_t flssa = (uint32_t)MSG_RAM.FLS
+        - (CCFG_CANxDMABA_Msk & CCFG_CANxDMABA);
+    CANx->MCAN_SIDFC = flssa | ((id ? 3 : 1) << MCAN_SIDFC_LSS_Pos);
+    CANx->MCAN_GFC = 0x02 << MCAN_GFC_ANFS_Pos;
 
     /* Leave the initialisation mode for the filter */
     barrier();
-    SOC_CAN->CCCR &= ~FDCAN_CCCR_CCE;
-    SOC_CAN->CCCR &= ~FDCAN_CCCR_INIT;
+    CANx->MCAN_CCCR &= ~MCAN_CCCR_CCE;
+    CANx->MCAN_CCCR &= ~MCAN_CCCR_INIT;
 }
 
 // This function handles CAN global interrupts
 void
 CAN_IRQHandler(void)
 {
-    uint32_t ir = SOC_CAN->IR;
+    uint32_t ir = CANx->MCAN_IR;
 
-    if (ir & FDCAN_IE_RF0NE) {
-        SOC_CAN->IR = FDCAN_IE_RF0NE;
+    if (ir & MCAN_IE_RF0NE) {
+        CANx->MCAN_IR = MCAN_IE_RF0NE;
 
-        uint32_t rxf0s = SOC_CAN->RXF0S;
-        if (rxf0s & FDCAN_RXF0S_F0FL) {
+        uint32_t rxf0s = CANx->MCAN_RXF0S;
+        if (rxf0s & MCAN_RXF0S_F0FL_Msk) {
             // Read and ack data packet
-            uint32_t idx = (rxf0s & FDCAN_RXF0S_F0GI) >> FDCAN_RXF0S_F0GI_Pos;
+            uint32_t idx = (rxf0s & MCAN_RXF0S_F0GI_Msk) >> MCAN_RXF0S_F0GI_Pos;
             struct fdcan_fifo *rxf0 = &MSG_RAM.RXF0[idx];
             uint32_t ids = rxf0->id_section;
             struct canbus_msg msg;
@@ -202,7 +172,7 @@ CAN_IRQHandler(void)
             msg.data32[0] = rxf0->data[0];
             msg.data32[1] = rxf0->data[1];
             barrier();
-            SOC_CAN->RXF0A = idx;
+            CANx->MCAN_RXF0A = idx;
 
             // Process packet
             canbus_process_data(&msg);
@@ -210,7 +180,7 @@ CAN_IRQHandler(void)
     }
     if (ir & FDCAN_IE_TC) {
         // Tx
-        SOC_CAN->IR = FDCAN_IE_TC;
+        CANx->MCAN_IR = FDCAN_IE_TC;
         canbus_notify_tx();
     }
 }
@@ -221,10 +191,10 @@ make_btr(uint32_t sjw,       // Sync jump width, ... hmm
          uint32_t time_seg2, // time segment after sample point, 1 .. 8
          uint32_t brp)       // Baud rate prescaler, 1 .. 1024
 {
-    return (((uint32_t)(sjw-1)) << FDCAN_NBTP_NSJW_Pos
-            | ((uint32_t)(time_seg1-1)) << FDCAN_NBTP_NTSEG1_Pos
-            | ((uint32_t)(time_seg2-1)) << FDCAN_NBTP_NTSEG2_Pos
-            | ((uint32_t)(brp - 1)) << FDCAN_NBTP_NBRP_Pos);
+    return (((uint32_t)(sjw-1)) << MCAN_NBTP_NSJW_Pos
+            | ((uint32_t)(time_seg1-1)) << MCAN_NBTP_NTSEG1_Pos
+            | ((uint32_t)(time_seg2-1)) << MCAN_NBTP_NTSEG2_Pos
+            | ((uint32_t)(brp - 1)) << MCAN_NBTP_NBRP_Pos);
 }
 
 static inline const uint32_t
@@ -264,55 +234,74 @@ compute_btr(uint32_t pclock, uint32_t bitrate)
 void
 can_init(void)
 {
-    enable_pclock((uint32_t)SOC_CAN);
+    if (!CONFIG_USBCANBUS) {
+        // Configure UPLL for USB and CAN
+        PMC->CKGR_UCKR = CKGR_UCKR_UPLLCOUNT(3) | CKGR_UCKR_UPLLEN;
+        while (!(PMC->PMC_SR & PMC_SR_LOCKU))
+            ;
+    }
 
-    gpio_peripheral(GPIO_Rx, CAN_FUNCTION, 1);
-    gpio_peripheral(GPIO_Tx, CAN_FUNCTION, 0);
+    // Configure PCK5 for CAN use
+    PMC->PMC_PCK[5] = PMC_PCK_CSS_UPLL_CLK | PMC_PCK_PRES(5);
+    while (!(PMC->PMC_SR & PMC_SR_PCKRDY5))
+        ;
+    PMC->PMC_SCER |= PMC_SCER_PCK5;
 
-    uint32_t pclock = get_pclock_frequency((uint32_t)SOC_CAN);
+    enable_pclock(CANx_GCLK_ID);
+
+    gpio_peripheral(GPIO_Rx, CAN_FUNCTION_Rx, 1);
+    gpio_peripheral(GPIO_Tx, CAN_FUNCTION_Tx, 0);
+
+    uint32_t pclock = get_pclock_frequency(CANx_GCLK_ID);
 
     uint32_t btr = compute_btr(pclock, CONFIG_CANBUS_FREQUENCY);
 
     /*##-1- Configure the CAN #######################################*/
 
     /* Exit from sleep mode */
-    SOC_CAN->CCCR &= ~FDCAN_CCCR_CSR;
+    CANx->MCAN_CCCR &= ~MCAN_CCCR_CSR;
     /* Wait the acknowledge */
-    while (SOC_CAN->CCCR & FDCAN_CCCR_CSA)
+    while (CANx->MCAN_CCCR & MCAN_CCCR_CSA)
         ;
-    /* Request initialisation */
-    SOC_CAN->CCCR |= FDCAN_CCCR_INIT;
+    /* Request initialization */
+    CANx->MCAN_CCCR |= MCAN_CCCR_INIT;
     /* Wait the acknowledge */
-    while (!(SOC_CAN->CCCR & FDCAN_CCCR_INIT))
+    while (!(CANx->MCAN_CCCR & MCAN_CCCR_INIT))
         ;
     /* Enable configuration change */
-    SOC_CAN->CCCR |= FDCAN_CCCR_CCE;
+    CANx->MCAN_CCCR |= MCAN_CCCR_CCE;
 
     /* Disable protocol exception handling */
-    SOC_CAN->CCCR |= FDCAN_CCCR_PXHD;
+    CANx->MCAN_CCCR |= MCAN_CCCR_PXHD;
 
-    SOC_CAN->NBTP = btr;
+    CANx->MCAN_NBTP = btr;
 
-#if CONFIG_MACH_STM32H7
     /* Setup message RAM addresses */
-    uint32_t f0sa = (uint32_t)MSG_RAM.RXF0 - SRAMCAN_BASE;
-    SOC_CAN->RXF0C = f0sa | (ARRAY_SIZE(MSG_RAM.RXF0) << FDCAN_RXF0C_F0S_Pos);
-    SOC_CAN->RXESC = (7 << FDCAN_RXESC_F1DS_Pos) | (7 << FDCAN_RXESC_F0DS_Pos);
-    uint32_t tbsa = (uint32_t)MSG_RAM.TXFIFO - SRAMCAN_BASE;
-    SOC_CAN->TXBC = tbsa | (ARRAY_SIZE(MSG_RAM.TXFIFO) << FDCAN_TXBC_TFQS_Pos);
-    SOC_CAN->TXESC = 7 << FDCAN_TXESC_TBDS_Pos;
-#endif
+    uint32_t ccfg = (CCFG_CANxDMABA & ~CCFG_CANxDMABA_Msk);
+    CCFG_CANxDMABA = (ccfg | (((uint32_t)&MSG_RAM)
+        & CCFG_CANxDMABA_Msk));
+    uint32_t f0sa = (uint32_t)MSG_RAM.RXF0
+        - (CCFG_CANxDMABA_Msk & CCFG_CANxDMABA);
+    CANx->MCAN_RXF0C = f0sa
+        | (ARRAY_SIZE(MSG_RAM.RXF0) << MCAN_RXF0C_F0S_Pos);
+    CANx->MCAN_RXESC = (7 << MCAN_RXESC_F1DS_Pos)
+        | (7 << MCAN_RXESC_F0DS_Pos);
+    uint32_t tbsa = (uint32_t)MSG_RAM.TXFIFO
+        - (CCFG_CANxDMABA_Msk & CCFG_CANxDMABA);
+    CANx->MCAN_TXBC = tbsa
+        | (ARRAY_SIZE(MSG_RAM.TXFIFO) << MCAN_TXBC_TFQS_Pos);
+    CANx->MCAN_TXESC = 7 << MCAN_TXESC_TBDS_Pos;
 
     /* Leave the initialisation mode */
-    SOC_CAN->CCCR &= ~FDCAN_CCCR_CCE;
-    SOC_CAN->CCCR &= ~FDCAN_CCCR_INIT;
+    CANx->MCAN_CCCR &= ~MCAN_CCCR_CCE;
+    CANx->MCAN_CCCR &= ~MCAN_CCCR_INIT;
 
     /*##-2- Configure the CAN Filter #######################################*/
     canhw_set_filter(0);
 
     /*##-3- Configure Interrupts #################################*/
-    armcm_enable_irq(CAN_IRQHandler, CAN_IT0_IRQn, 1);
-    SOC_CAN->ILE = FDCAN_ILE_EINT0;
-    SOC_CAN->IE = FDCAN_IE_RF0NE | FDCAN_IE_TC;
+    armcm_enable_irq(CAN_IRQHandler, CANx_IRQn, 1);
+    CANx->MCAN_ILE = MCAN_ILE_EINT0;
+    CANx->MCAN_IE = MCAN_IE_RF0NE | FDCAN_IE_TC;
 }
 DECL_INIT(can_init);

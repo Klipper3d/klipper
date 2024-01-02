@@ -1,6 +1,6 @@
 // Software CANbus implementation for rp2040
 //
-// Copyright (C) 2022  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2022,2023  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -316,6 +316,14 @@ pio_irq_set(struct can2040 *cd, uint32_t sm_irqs)
 {
     pio_hw_t *pio_hw = cd->pio_hw;
     pio_hw->inte0 = sm_irqs | SI_RX_DATA;
+}
+
+// Completely disable host irqs
+static void
+pio_irq_disable(struct can2040 *cd)
+{
+    pio_hw_t *pio_hw = cd->pio_hw;
+    pio_hw->inte0 = 0;
 }
 
 // Return current host irq mask
@@ -662,6 +670,7 @@ tx_schedule_transmit(struct can2040 *cd)
         pio_signal_set_txpending(cd);
     }
     cd->tx_state = TS_QUEUED;
+    cd->stats.tx_attempt++;
     struct can2040_transmit *qt = &cd->tx_queue[tx_qpos(cd, tx_pull_pos)];
     pio_tx_send(cd, qt->stuffed_data, qt->stuffed_words);
     return 0;
@@ -721,6 +730,7 @@ report_callback_error(struct can2040 *cd, uint32_t error_code)
 static void
 report_callback_rx_msg(struct can2040 *cd)
 {
+    cd->stats.rx_total++;
     cd->rx_cb(cd, CAN2040_NOTIFY_RX, &cd->parse_msg);
 }
 
@@ -729,6 +739,7 @@ static void
 report_callback_tx_msg(struct can2040 *cd)
 {
     writel(&cd->tx_pull_pos, cd->tx_pull_pos + 1);
+    cd->stats.tx_total++;
     cd->rx_cb(cd, CAN2040_NOTIFY_TX, &cd->parse_msg);
 }
 
@@ -748,11 +759,11 @@ report_handle_eof(struct can2040 *cd)
     pio_match_clear(cd);
 }
 
-// Check if in an rx message is being processed
+// Check if message being processed is an rx message (not self feedback from tx)
 static int
-report_is_rx_eof_pending(struct can2040 *cd)
+report_is_not_in_tx(struct can2040 *cd)
 {
-    return cd->report_state == RS_NEED_RX_EOF;
+    return !(cd->report_state & RS_NEED_TX_ACK);
 }
 
 // Parser found a new message start
@@ -817,7 +828,7 @@ report_note_eof_success(struct can2040 *cd)
 
 // Parser found unexpected data on input
 static void
-report_note_parse_error(struct can2040 *cd)
+report_note_discarding(struct can2040 *cd)
 {
     if (cd->report_state != RS_IDLE) {
         cd->report_state = RS_IDLE;
@@ -880,7 +891,7 @@ report_line_txpending(struct can2040 *cd)
         return;
     }
     // Tx request from can2040_transmit(), report_note_eof_success(),
-    // or report_note_parse_error().
+    // or report_note_discarding().
     uint32_t check_txpending = tx_schedule_transmit(cd);
     pio_irq_set(cd, (pio_irqs & ~SI_TXPENDING) | check_txpending);
 }
@@ -896,6 +907,13 @@ enum {
     MS_CRC, MS_ACK, MS_EOF0, MS_EOF1, MS_DISCARD
 };
 
+// Reset any bits in the incoming parsing state
+static void
+data_state_clear_bits(struct can2040 *cd)
+{
+    cd->raw_bit_count = cd->unstuf.stuffed_bits = cd->unstuf.count_stuff = 0;
+}
+
 // Transition to the next parsing state
 static void
 data_state_go_next(struct can2040 *cd, uint32_t state, uint32_t num_bits)
@@ -908,23 +926,35 @@ data_state_go_next(struct can2040 *cd, uint32_t state, uint32_t num_bits)
 static void
 data_state_go_discard(struct can2040 *cd)
 {
-    report_note_parse_error(cd);
-
     if (pio_rx_check_stall(cd)) {
         // CPU couldn't keep up for some read data - must reset pio state
-        cd->raw_bit_count = cd->unstuf.count_stuff = 0;
+        data_state_clear_bits(cd);
         pio_sm_setup(cd);
         report_callback_error(cd, 0);
     }
 
     data_state_go_next(cd, MS_DISCARD, 32);
+
+    // Clear report state and update hw irqs after transition to MS_DISCARD
+    report_note_discarding(cd);
+}
+
+// Note a data parse error and transition to discard state
+static void
+data_state_go_error(struct can2040 *cd)
+{
+    cd->stats.parse_error++;
+    data_state_go_discard(cd);
 }
 
 // Received six dominant bits on the line
 static void
 data_state_line_error(struct can2040 *cd)
 {
-    data_state_go_discard(cd);
+    if (cd->parse_state == MS_DISCARD)
+        data_state_go_discard(cd);
+    else
+        data_state_go_error(cd);
 }
 
 // Received six unexpected passive bits on the line
@@ -933,7 +963,7 @@ data_state_line_passive(struct can2040 *cd)
 {
     if (cd->parse_state != MS_DISCARD && cd->parse_state != MS_START) {
         // Bitstuff error
-        data_state_go_discard(cd);
+        data_state_go_error(cd);
         return;
     }
 
@@ -941,8 +971,7 @@ data_state_line_passive(struct can2040 *cd)
     uint32_t dom_bits = ~stuffed_bits;
     if (!dom_bits) {
         // Counter overflow in "sync" state machine - reset it
-        cd->unstuf.stuffed_bits = 0;
-        cd->raw_bit_count = cd->unstuf.count_stuff = 0;
+        data_state_clear_bits(cd);
         pio_sm_setup(cd);
         data_state_go_discard(cd);
         return;
@@ -972,7 +1001,7 @@ data_state_go_crc(struct can2040 *cd)
 
     int ret = report_note_crc_start(cd);
     if (ret) {
-        data_state_go_discard(cd);
+        data_state_go_error(cd);
         return;
     }
     data_state_go_next(cd, MS_CRC, 16);
@@ -1065,7 +1094,7 @@ static void
 data_state_update_crc(struct can2040 *cd, uint32_t data)
 {
     if (((cd->parse_crc << 1) | 1) != data) {
-        data_state_go_discard(cd);
+        data_state_go_error(cd);
         return;
     }
 
@@ -1083,7 +1112,7 @@ data_state_update_ack(struct can2040 *cd, uint32_t data)
         // data_state_line_passive()
         unstuf_restore_state(&cd->unstuf, (cd->parse_crc_bits << 2) | data);
 
-        data_state_go_discard(cd);
+        data_state_go_error(cd);
         return;
     }
     report_note_ack_success(cd);
@@ -1095,7 +1124,7 @@ static void
 data_state_update_eof0(struct can2040 *cd, uint32_t data)
 {
     if (data != 0x0f || pio_rx_check_stall(cd)) {
-        data_state_go_discard(cd);
+        data_state_go_error(cd);
         return;
     }
     unstuf_clear_state(&cd->unstuf);
@@ -1106,14 +1135,17 @@ data_state_update_eof0(struct can2040 *cd, uint32_t data)
 static void
 data_state_update_eof1(struct can2040 *cd, uint32_t data)
 {
-    if (data >= 0x1c || (data >= 0x18 && report_is_rx_eof_pending(cd)))
-        // Message is considered fully transmitted
+    if (data == 0x1f) {
+        // Success
         report_note_eof_success(cd);
-
-    if (data == 0x1f)
         data_state_go_next(cd, MS_START, 1);
-    else
+    } else if (data >= 0x1c || (data >= 0x18 && report_is_not_in_tx(cd))) {
+        // Message fully transmitted - followed by "overload frame"
+        report_note_eof_success(cd);
         data_state_go_discard(cd);
+    } else {
+        data_state_go_error(cd);
+    }
 }
 
 // Handle data received while in MS_DISCARD state
@@ -1310,13 +1342,28 @@ can2040_start(struct can2040 *cd, uint32_t sys_clock, uint32_t bitrate
 {
     cd->gpio_rx = gpio_rx;
     cd->gpio_tx = gpio_tx;
+    data_state_clear_bits(cd);
     pio_setup(cd, sys_clock, bitrate);
     data_state_go_discard(cd);
 }
 
-// API function to stop and uninitialize can2040 code
+// API function to stop can2040 code
 void
-can2040_shutdown(struct can2040 *cd)
+can2040_stop(struct can2040 *cd)
 {
-    // XXX
+    pio_irq_disable(cd);
+    pio_sm_setup(cd);
+}
+
+// API function to access can2040 statistics
+void
+can2040_get_statistics(struct can2040 *cd, struct can2040_stats *stats)
+{
+    for (;;) {
+        memcpy(stats, &cd->stats, sizeof(*stats));
+        if (memcmp(stats, &cd->stats, sizeof(*stats)) == 0)
+            // Successfully copied data
+            return;
+        // Raced with irq handler update - retry copy
+    }
 }

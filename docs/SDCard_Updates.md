@@ -170,7 +170,7 @@ BOARD_ALIASES = {
 
 If you need a new board definition and you are uncomfortable with the
 procedure outlined above it is recommended that you request one in
-the [Klipper Community Discord](Contact.md#discord).
+the [Klipper Discord](Contact.md).
 
 ## Flashing Boards that use SDIO
 

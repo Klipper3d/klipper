@@ -33,7 +33,8 @@ class Thermistor:
                    / (ln3_r12 - ln3_r13 * ln_r12 / ln_r13))
         if self.c3 <= 0.:
             beta = ln_r13 / inv_t13
-            logging.warn("Using thermistor beta %.3f in heater %s", beta, name)
+            logging.warning("Using thermistor beta %.3f in heater %s",
+                            beta, name)
             self.setup_coefficients_beta(t1, r1, beta)
             return
         self.c2 = (inv_t12 - self.c3 * ln3_r12) / ln_r12

@@ -50,6 +50,9 @@ config MACH_SAM4E
     select MACH_SAM4
 config MACH_SAME70
     bool
+config HAVE_SAM_CANBUS
+    bool
+    default y if MACH_SAME70
 
 config MCU
     string
@@ -101,6 +104,32 @@ choice
     config ATSAM_SERIAL
         bool "Serial"
         select SERIAL
+    config ATSAM_MMENU_CANBUS_PC12_PD12
+        bool "CAN bus (on PC12/PD12)"
+        depends on HAVE_SAM_CANBUS
+        select CANSERIAL
+    config ATSAM_MMENU_CANBUS_PB3_PB2
+        bool "CAN bus (on PB3/PB2)"
+        depends on HAVE_SAM_CANBUS
+        select CANSERIAL
+    config ATSAM_USBCANBUS
+        bool "USB to CAN bus bridge"
+        depends on HAVE_SAM_CANBUS
+        select USBCANBUS
 endchoice
+choice
+    prompt "CAN bus interface" if USBCANBUS
+    config ATSAM_CMENU_CANBUS_PC12_PD12
+        bool "CAN bus (on PC12/PD12)"
+    config ATSAM_CMENU_CANBUS_PB3_PB2
+        bool "CAN bus (on PB3/PB2)"
+endchoice
+
+config ATSAM_CANBUS_PC12_PD12
+    bool
+    default y if ATSAM_MMENU_CANBUS_PC12_PD12 || ATSAM_CMENU_CANBUS_PC12_PD12
+config ATSAM_CANBUS_PB3_PB2
+    bool
+    default y if ATSAM_MMENU_CANBUS_PB3_PB2 || ATSAM_CMENU_CANBUS_PB3_PB2
 
 endif
