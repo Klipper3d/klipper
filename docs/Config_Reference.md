@@ -2693,6 +2693,8 @@ pin:
 #tachometer_pin:
 #   Tachometer input pin for monitoring fan speed. A pullup is generally
 #   required. This parameter is optional.
+#   If tachometer is configured but no speed signal received,
+#   klipper will shutdown to avoid any hardware damage
 #tachometer_ppr: 2
 #   When tachometer_pin is specified, this is the number of pulses per
 #   revolution of the tachometer signal. For a BLDC fan this is

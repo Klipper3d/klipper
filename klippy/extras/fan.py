@@ -4,14 +4,17 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from . import pulse_counter
+import logging
 
 FAN_MIN_TIME = 0.100
+FAN_ERROR_TIMEOUT = 3.0
 
 class Fan:
     def __init__(self, config, default_shutdown_speed=0.):
         self.printer = config.get_printer()
         self.last_fan_value = 0.
         self.last_fan_time = 0.
+        self.speed_error_timer = 0.
         # Read config
         self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
         self.kick_start_time = config.getfloat('kick_start_time', 0.1,
@@ -42,6 +45,10 @@ class Fan:
         # Register callbacks
         self.printer.register_event_handler("gcode:request_restart",
                                             self._handle_request_restart)
+        self.printer.register_event_handler("klippy:connect",
+                                            self._handle_connect)
+        self.printer.register_event_handler("klippy:shutdown",
+                                            self._handle_shutdown)
 
     def get_mcu(self):
         return self.mcu_fan.get_mcu()
@@ -71,6 +78,28 @@ class Fan:
                                               self.set_speed(pt, value)))
     def _handle_request_restart(self, print_time):
         self.set_speed(print_time, 0.)
+    def _handle_connect(self):
+        reactor = self.printer.get_reactor()
+        rpm = self.tachometer.get_status(reactor.NOW)['rpm']
+        if rpm is not None:
+            self.check_timer = reactor.register_timer(self.check_event,
+                                                      reactor.NOW)
+    def _handle_shutdown(self):
+        if self.check_timer is not None:
+            reactor = self.printer.get_reactor()
+            reactor.update_timer(self.check_timer,reactor.NEVER)
+    def check_event(self,eventtime):
+        status = self.get_status(eventtime)
+        if status['speed'] != 0 and status['rpm'] == 0:
+            self.speed_error_timer += 1.
+        else:
+            self.speed_error_timer = 0.
+        if self.speed_error_timer >= FAN_ERROR_TIMEOUT:
+            msg = "Lost fan speed feedback signal"
+            logging.error(msg)
+            self.printer.invoke_shutdown(msg)
+            return self.printer.get_reactor().NEVER
+        return eventtime + 1.
 
     def get_status(self, eventtime):
         tachometer_status = self.tachometer.get_status(eventtime)

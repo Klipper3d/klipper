@@ -8,6 +8,9 @@ All dates in this document are approximate.
 
 ## Changes
 
+20240102: If any fan tachometer is configured but no speed signal is received,
+now Klipper will shutdown to avoid any hardware damage.
+
 20231216: The `[hall_filament_width_sensor]` is changed to trigger filament runout
 when the thickness of the filament exceeds `max_diameter`. The maximum diameter
 defaults to `default_nominal_filament_diameter + max_difference`. See
