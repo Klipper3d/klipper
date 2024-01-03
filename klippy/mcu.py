@@ -192,9 +192,9 @@ class MCU_trsync:
         clock = self._mcu.print_time_to_clock(print_time)
         expire_ticks = self._mcu.seconds_to_clock(expire_timeout)
         expire_clock = clock + expire_ticks
-        report_ticks = self._mcu.seconds_to_clock(expire_timeout * .4)
+        report_ticks = self._mcu.seconds_to_clock(expire_timeout * .3)
         report_clock = clock + int(report_ticks * report_offset + .5)
-        min_extend_ticks = self._mcu.seconds_to_clock(expire_timeout * .4 * .8)
+        min_extend_ticks = int(report_ticks * .8 + .5)
         ffi_main, ffi_lib = chelper.get_ffi()
         ffi_lib.trdispatch_mcu_setup(self._trdispatch_mcu, clock, expire_clock,
                                      expire_ticks, min_extend_ticks)
