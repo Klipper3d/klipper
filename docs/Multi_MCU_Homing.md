@@ -31,9 +31,15 @@ overshoot and account for it in its calculations. However, it is
 important that the hardware design is capable of handling overshoot
 without causing damage to the machine.
 
-Should Klipper detect a communication issue between micro-controllers
-during multi-mcu homing then it will raise a "Communication timeout
-during homing" error.
+In order to use this "multi-mcu homing" capability the hardware must
+have predictably low latency between the host computer and all of the
+micro-controllers. Typically the round-trip time must be consistently
+less than 10ms. High latency (even for short periods) is likely to
+result in homing failures.
+
+Should high latency result in a failure (or if some other
+communication issue is detected) then Klipper will raise a
+"Communication timeout during homing" error.
 
 Note that an axis with multiple steppers (eg, `stepper_z` and
 `stepper_z1`) need to be on the same micro-controller in order to use
