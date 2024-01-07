@@ -34,10 +34,52 @@ REG_DRIVE_CURRENT0 = 0x1e
 REG_MANUFACTURER_ID = 0x7e
 REG_DEVICE_ID = 0x7f
 
+# Tool for determining appropriate DRIVE_CURRENT register
+class DriveCurrentCalibrate:
+    def __init__(self, config, sensor):
+        self.printer = config.get_printer()
+        self.sensor = sensor
+        self.drive_cur = config.getint("reg_drive_current", DRIVECUR,
+                                       minval=0, maxval=31)
+        self.name = config.get_name()
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_mux_command("LDC_CALIBRATE_DRIVE_CURRENT",
+                                   "CHIP", self.name.split()[-1],
+                                   self.cmd_LDC_CALIBRATE,
+                                   desc=self.cmd_LDC_CALIBRATE_help)
+    def get_drive_current(self):
+        return self.drive_cur
+    cmd_LDC_CALIBRATE_help = "Calibrate LDC1612 DRIVE_CURRENT register"
+    def cmd_LDC_CALIBRATE(self, gcmd):
+        is_in_progress = True
+        def handle_batch(msg):
+            return is_in_progress
+        self.sensor.add_client(handle_batch)
+        toolhead = self.printer.lookup_object("toolhead")
+        toolhead.dwell(0.100)
+        toolhead.wait_moves()
+        old_config = self.sensor.read_reg(REG_CONFIG)
+        self.sensor.set_reg(REG_CONFIG, 0x001 | (1<<9))
+        toolhead.wait_moves()
+        toolhead.dwell(0.100)
+        toolhead.wait_moves()
+        reg_drive_current0 = self.sensor.read_reg(REG_DRIVE_CURRENT0)
+        self.sensor.set_reg(REG_CONFIG, old_config)
+        is_in_progress = False
+        # Report found value to user
+        drive_cur = (reg_drive_current0 >> 6) & 0x1f
+        gcmd.respond_info(
+            "%s: reg_drive_current: %d\n"
+            "The SAVE_CONFIG command will update the printer config file\n"
+            "with the above and restart the printer." % (self.name, drive_cur))
+        configfile = self.printer.lookup_object('configfile')
+        configfile.set(self.name, 'reg_drive_current', "%d" % (drive_cur,))
+
 # Interface class to LDC1612 mcu support
 class LDC1612:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.dccal = DriveCurrentCalibrate(config, self)
         self.data_rate = 250
         # Setup mcu sensor_ldc1612 bulk query code
         self.i2c = bus.MCU_I2C_from_config(config,
@@ -79,6 +121,8 @@ class LDC1612:
     def set_reg(self, reg, val, minclock=0):
         self.i2c.i2c_write([reg, (val >> 8) & 0xff, val & 0xff],
                            minclock=minclock)
+    def add_client(self, cb):
+        self.batch_bulk.add_client(cb)
     # Measurement decoding
     def _extract_samples(self, raw_samples):
         # Load variables to optimize inner loop below
@@ -126,9 +170,7 @@ class LDC1612:
         self.set_reg(REG_ERROR_CONFIG, (0x1f << 11) | 1)
         self.set_reg(REG_MUX_CONFIG, 0x0208 | DEGLITCH)
         self.set_reg(REG_CONFIG, 0x001 | (1<<12) | (1<<10) | (1<<9))
-        self.set_reg(REG_DRIVE_CURRENT0, DRIVECUR << 11)
-        #self.set_reg(REG_CONFIG, 0x001 | (1<<9))
-        #self.set_reg(REG_DRIVE_CURRENT0, DRIVECUR << 11)
+        self.set_reg(REG_DRIVE_CURRENT0, self.dccal.get_drive_current() << 11)
         # Start bulk reading
         self.bulk_queue.clear_samples()
         rest_ticks = self.mcu.seconds_to_clock(0.5 / self.data_rate)
