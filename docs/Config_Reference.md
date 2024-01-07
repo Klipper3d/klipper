@@ -4328,6 +4328,10 @@ more information.
 #   detected. See docs/Command_Templates.md for G-Code format. The
 #   default is not to run any G-Code commands, which disables insert
 #   detection.
+#run_always: False
+#  When false, runout_gcode is executed only during print, and
+#  insert_gcode only when out of print. Set to true to execute
+#  gcode handlers regardless of printing status. Default is False.
 #event_delay: 3.0
 #   The minimum amount of time in seconds to delay between events.
 #   Events triggered during this time period will be silently
