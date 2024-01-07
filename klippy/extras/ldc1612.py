@@ -89,6 +89,7 @@ class LDC1612:
         self.mcu = mcu = self.i2c.get_mcu()
         self.oid = oid = mcu.create_oid()
         self.query_ldc1612_cmd = None
+        self.ldc1612_setup_home_cmd = self.query_ldc1612_home_state_cmd = None
         mcu.add_config_cmd("config_ldc1612 oid=%d i2c_oid=%d"
                            % (oid, self.i2c.get_oid()))
         mcu.add_config_cmd("query_ldc1612 oid=%d rest_ticks=0"
@@ -115,6 +116,13 @@ class LDC1612:
             "query_ldc1612 oid=%c rest_ticks=%u", cq=cmdqueue)
         self.clock_updater.setup_query_command(
             self.mcu, "query_ldc1612_status oid=%c", oid=self.oid, cq=cmdqueue)
+        self.ldc1612_setup_home_cmd = self.mcu.lookup_command(
+            "ldc1612_setup_home oid=%c clock=%u threshold=%u"
+            " trsync_oid=%c trigger_reason=%c", cq=cmdqueue)
+        self.query_ldc1612_home_state_cmd = self.mcu.lookup_query_command(
+            "query_ldc1612_home_state oid=%c",
+            "ldc1612_home_state oid=%c homing=%c trigger_clock=%u",
+            oid=self.oid, cq=cmdqueue)
     def get_mcu(self):
         return self.i2c.get_mcu()
     def read_reg(self, reg):
@@ -126,6 +134,19 @@ class LDC1612:
                            minclock=minclock)
     def add_client(self, cb):
         self.batch_bulk.add_client(cb)
+    # Homing
+    def setup_home(self, print_time, trigger_freq, trsync_oid, reason):
+        clock = self.mcu.print_time_to_clock(print_time)
+        tfreq = int(trigger_freq * (1<<28) / float(LDC1612_FREQ) + 0.5)
+        self.ldc1612_setup_home_cmd.send(
+            [self.oid, clock, tfreq, trsync_oid, reason])
+    def clear_home(self):
+        self.ldc1612_setup_home_cmd.send([self.oid, 0, 0, 0, 0])
+        if self.mcu.is_fileoutput():
+            return 0.
+        params = self.query_ldc1612_home_state_cmd.send([self.oid])
+        tclock = self.mcu.clock32_to_clock64(params['trigger_clock'])
+        return self.mcu.clock_to_print_time(tclock)
     # Measurement decoding
     def _extract_samples(self, raw_samples):
         # Load variables to optimize inner loop below

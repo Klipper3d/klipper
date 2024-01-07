@@ -28,6 +28,8 @@ class EddyCalibration:
         gcode.register_mux_command("PROBE_EDDY_CURRENT_CALIBRATE", "CHIP",
                                    cname, self.cmd_EDDY_CALIBRATE,
                                    desc=self.cmd_EDDY_CALIBRATE_help)
+    def is_calibrated(self):
+        return len(self.cal_freqs) > 2
     def load_calibration(self, cal):
         cal = sorted([(c[1], c[0]) for c in cal])
         self.cal_freqs = [c[0] for c in cal]
@@ -40,7 +42,7 @@ class EddyCalibration:
             elif pos == 0:
                 zpos = 99.9
             else:
-                # XXX - optimize and avoid div by zero
+                # XXX - could further optimize and avoid div by zero
                 this_freq = self.cal_freqs[pos]
                 prev_freq = self.cal_freqs[pos - 1]
                 this_zpos = self.cal_zpos[pos]
@@ -49,6 +51,21 @@ class EddyCalibration:
                 offset = prev_zpos - prev_freq * gain
                 zpos = freq * gain + offset
             samples[i] = (samp_time, freq, round(zpos, 6))
+    def height_to_freq(self, height):
+        # XXX - could optimize lookup
+        rev_zpos = list(reversed(self.cal_zpos))
+        rev_freqs = list(reversed(self.cal_freqs))
+        pos = bisect.bisect(rev_zpos, height)
+        if pos == 0 or pos >= len(rev_zpos):
+            raise self.printer.command_error(
+                "Invalid probe_eddy_current height")
+        this_freq = rev_freqs[pos]
+        prev_freq = rev_freqs[pos - 1]
+        this_zpos = rev_zpos[pos]
+        prev_zpos = rev_zpos[pos - 1]
+        gain = (this_freq - prev_freq) / (this_zpos - prev_zpos)
+        offset = prev_freq - prev_zpos * gain
+        return height * gain + offset
     def do_calibration_moves(self, move_speed):
         toolhead = self.printer.lookup_object('toolhead')
         kin = toolhead.get_kinematics()
@@ -166,6 +183,88 @@ class EddyCalibration:
         manual_probe.ManualProbeHelper(self.printer, gcmd,
                                        self.post_manual_probe)
 
+# Helper for implementing PROBE style commands
+class EddyEndstopWrapper:
+    def __init__(self, config, sensor_helper, calibration):
+        self._printer = config.get_printer()
+        self._sensor_helper = sensor_helper
+        self._mcu = sensor_helper.get_mcu()
+        self._calibration = calibration
+        self._z_offset = config.getfloat('z_offset', minval=0.)
+        self._dispatch = mcu.TriggerDispatch(self._mcu)
+        self._samples = []
+        self._is_sampling = self._start_from_home = self._need_stop = False
+        self._printer.register_event_handler('klippy:mcu_identify',
+                                             self._handle_mcu_identify)
+    def _handle_mcu_identify(self):
+        kin = self._printer.lookup_object('toolhead').get_kinematics()
+        for stepper in kin.get_steppers():
+            if stepper.is_active_axis('z'):
+                self.add_stepper(stepper)
+    # Measurement gathering
+    def _start_measurements(self, is_home=False):
+        self._need_stop = False
+        if self._is_sampling:
+            return
+        self._is_sampling = True
+        self._is_from_home = is_home
+        self._sensor_helper.add_client(self._add_measurement)
+    def _stop_measurements(self, is_home=False):
+        if not self._is_sampling or (is_home and not self._start_from_home):
+            return
+        self._need_stop = True
+    def _add_measurement(self, msg):
+        if self._need_stop:
+            del self._samples[:]
+            self._is_sampling = self._need_stop = False
+            return False
+        self._samples.append(msg)
+        return True
+    # Interface for MCU_endstop
+    def get_mcu(self):
+        return self._mcu
+    def add_stepper(self, stepper):
+        self._dispatch.add_stepper(stepper)
+    def get_steppers(self):
+        return self._dispatch.get_steppers()
+    def home_start(self, print_time, sample_time, sample_count, rest_time,
+                   triggered=True):
+        self._start_measurements(is_home=True)
+        trigger_freq = self._calibration.height_to_freq(self._z_offset)
+        trigger_completion = self._dispatch.start(print_time)
+        self._sensor_helper.setup_home(
+            print_time, trigger_freq, self._dispatch.get_oid(),
+            mcu.MCU_trsync.REASON_ENDSTOP_HIT)
+        return trigger_completion
+    def home_wait(self, home_end_time):
+        self._dispatch.wait_end(home_end_time)
+        trigger_time = self._sensor_helper.clear_home()
+        self._stop_measurements(is_home=True)
+        res = self._dispatch.stop()
+        if res == mcu.MCU_trsync.REASON_COMMS_TIMEOUT:
+            return -1.
+        if res != mcu.MCU_trsync.REASON_ENDSTOP_HIT:
+            return 0.
+        if self._mcu.is_fileoutput():
+            return home_end_time
+        return trigger_time
+    def query_endstop(self, print_time):
+        return False # XXX
+    # Interface for ProbeEndstopWrapper
+    def multi_probe_begin(self):
+        if not self._calibration.is_calibrated():
+            raise self._printer.command_error(
+                "Must calibrate probe_eddy_current first")
+        self._start_measurements()
+    def multi_probe_end(self):
+        self._stop_measurements()
+    def probe_prepare(self, hmove):
+        pass
+    def probe_finish(self, hmove):
+        pass
+    def get_position_endstop(self):
+        return self._z_offset
+
 # Main "printer object"
 class PrinterEddyProbe:
     def __init__(self, config):
@@ -175,6 +274,10 @@ class PrinterEddyProbe:
         sensors = { "ldc1612": ldc1612.LDC1612 }
         sensor_type = config.getchoice('sensor_type', {s: s for s in sensors})
         self.sensor_helper = sensors[sensor_type](config, self.calibration)
+        # Probe interface
+        self.probe = EddyEndstopWrapper(config, self.sensor_helper,
+                                        self.calibration)
+        self.printer.add_object('probe', probe.PrinterProbe(config, self.probe))
     def add_client(self, cb):
         self.sensor_helper.add_client(cb)
 
