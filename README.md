@@ -3,12 +3,10 @@
 This fork adds support for Makerbot Replicator 2/2X
 (Mightyboard Rev G and H) and some clones.
 
-**STATUS -** I would consider master to be at a late beta stage.
+**STATUS -** I would consider master to be production ready.
 Everything that can be supported is at this point and all
-features are working.  This has been tested on a small number
+features are working.  This has been tested on a number
 of printers and more wide spread testing would be appreciated.
-The example config file will be updated to incorporate
-setting hold currents while pre-heating.
 
 **Supported Clones -**
 Currently, no clones have example config files or instructions
@@ -23,7 +21,7 @@ include them in this repo.
 - FlashForge Dreamer
 - FlashForge Inventor
 - Dremel 3D20
-- Dremel 3D40
+- Dremel 3D40 (known to work)
 - PowerSpec Ultra 3D
 - Monoprice Inventor 1
 
@@ -310,7 +308,7 @@ should work but needs to be tested to confirm.
 * The `generic-mightyboard.cfg` in the main repo should NOT be use
 for these printers.  That config file is for the original
 Makerbot Replicator and clones and does not work with printers
-that have ADS1118 ADC and thermocouples.
+that have ADS1118 ADC and thermocouples (Rep2 and Rep2X).
 
 * There is no specific error for a disconnected thermocouple, however
 the printer will shut down if a thermocouple is not attached (this
