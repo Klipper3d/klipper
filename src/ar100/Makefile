@@ -19,7 +19,7 @@ src-y += ar100/main.c ar100/gpio.c ar100/serial.c
 src-y += ar100/util.c ar100/timer.c
 src-y += generic/crc16_ccitt.c generic/timer_irq.c
 
-sendors-src-y := $(filter-out ads1118.c,$(sensors-src-y))
+sensors-src-y := $(filter-out ads1118.c,$(sensors-src-y))
 
 OBJS_klipper.elf += $(OUT)lib/ar100/start.o
 OBJS_klipper.elf += $(OUT)lib/ar100/runtime.o
