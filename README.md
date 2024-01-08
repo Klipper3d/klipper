@@ -282,10 +282,14 @@ Click Save and Restart.
 Following the normal installation steps, run `make menuconfig`.  Choose 
 an atmega1280, 16mhz, and uart0.  (see [below for note about atmega2560](#notes)).
 
-Run `make flash`.  This should flash your mightyboard.  If not, I have
-found times where I needed to power the mightyboard off and back on
-or attempt to connect and disconnect with Klipper (i.e. connect at a baud rate
-other than 57600 first) before it would flash.
+Edit src/svr/Makefile and change the line that sets FLASH_DEVICE to
+point to your mcu (the same /dev/serial/by-id that you changed in
+printer.cfg).  Save your changes.
+
+Run make flash.  This should flash your mightyboard.  If not, I have
+found times where I needed to power the mightboard off and back on
+or attempt to connect and disconnect with Klipper (i.e. connect at a
+speed other than 57600 first) before it would flash.
 
 At this point you should have Klipper running on your Replicator.
 

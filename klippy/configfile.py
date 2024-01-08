@@ -172,16 +172,16 @@ class PrinterConfig:
             autosave_data = data[pos + len(AUTOSAVE_HEADER):].strip()
         # Check for errors and strip line prefixes
         if "\n#*# " in regular_data:
-            logging.warn("Can't read autosave from config file"
-                         " - autosave state corrupted")
+            logging.warning("Can't read autosave from config file"
+                            " - autosave state corrupted")
             return data, ""
         out = [""]
         for line in autosave_data.split('\n'):
             if ((not line.startswith("#*#")
                  or (len(line) >= 4 and not line.startswith("#*# ")))
                 and autosave_data):
-                logging.warn("Can't read autosave from config file"
-                             " - modifications after header")
+                logging.warning("Can't read autosave from config file"
+                                " - modifications after header")
                 return data, ""
             out.append(line[4:])
         out.append("")
@@ -217,7 +217,10 @@ class PrinterConfig:
         data = '\n'.join(buffer)
         del buffer[:]
         sbuffer = io.StringIO(data)
-        fileconfig.readfp(sbuffer, filename)
+        if sys.version_info.major >= 3:
+            fileconfig.read_file(sbuffer, filename)
+        else:
+            fileconfig.readfp(sbuffer, filename)
     def _resolve_include(self, source_filename, include_spec, fileconfig,
                          visited):
         dirname = os.path.dirname(source_filename)

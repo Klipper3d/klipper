@@ -3,7 +3,7 @@
 # Setup the toolchain
 CROSS_PREFIX=arm-none-eabi-
 
-dirs-y += src/atsam src/generic
+dirs-y += src/atsam src/generic lib/fast-hash
 dirs-$(CONFIG_MACH_SAM3X) += lib/sam3x/gcc
 dirs-$(CONFIG_MACH_SAM4S) += lib/sam4s/gcc
 dirs-$(CONFIG_MACH_SAM4E) += lib/sam4e/gcc
@@ -18,7 +18,7 @@ CFLAGS-$(CONFIG_MACH_SAM3X) += -Ilib/sam3x/include
 CFLAGS-$(CONFIG_MACH_SAM4S) += -Ilib/sam4s/include
 CFLAGS-$(CONFIG_MACH_SAM4E) += -Ilib/sam4e/include
 CFLAGS-$(CONFIG_MACH_SAME70) += -Ilib/same70b/include
-CFLAGS += $(CFLAGS-y) -D__$(MCU)__ -mthumb -Ilib/cmsis-core
+CFLAGS += $(CFLAGS-y) -D__$(MCU)__ -mthumb -Ilib/cmsis-core -Ilib/fast-hash
 
 CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
 CFLAGS_klipper.elf += -T $(OUT)src/generic/armcm_link.ld
@@ -33,6 +33,10 @@ usb-src-$(CONFIG_MACH_SAM4) := atsam/sam4_usb.c
 usb-src-$(CONFIG_MACH_SAME70) := atsam/sam3_usb.c
 src-$(CONFIG_USBSERIAL) += $(usb-src-y) atsam/chipid.c generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += atsam/serial.c generic/serial_irq.c
+canbus-src-y := generic/canserial.c ../lib/fast-hash/fasthash.c
+canbus-src-y += atsam/fdcan.c atsam/chipid.c
+src-$(CONFIG_USBCANBUS) += $(canbus-src-y) $(usb-src-y) generic/usb_canbus.c
+src-$(CONFIG_CANSERIAL) += $(canbus-src-y) generic/canbus.c
 src-$(CONFIG_MACH_SAM3X) += atsam/adc.c atsam/hard_pwm.c
 src-$(CONFIG_MACH_SAM4)  += atsam/hard_pwm.c
 src-$(CONFIG_MACH_SAM4S) += atsam/adc.c
