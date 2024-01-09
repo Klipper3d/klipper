@@ -101,7 +101,7 @@ class QuadBedLevel:
         z_adjust = []
         for z in z_height:
             z_adjust.append(z_ave - z)
-			
+
         adjustinfo = zip(["z","z1","z2","z3"], z_adjust[0:4])
         adjustpos = " ".join(["%s: %06f" % (x) for x in adjustinfo])
 
@@ -133,4 +133,3 @@ class QuadBedLevel:
 
 def load_config(config):
     return QuadBedLevel(config)
-
