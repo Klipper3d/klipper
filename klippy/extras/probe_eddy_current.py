@@ -194,6 +194,7 @@ class EddyEndstopWrapper:
         self._dispatch = mcu.TriggerDispatch(self._mcu)
         self._samples = []
         self._is_sampling = self._start_from_home = self._need_stop = False
+        self._trigger_time = 0.
         self._printer.register_event_handler('klippy:mcu_identify',
                                              self._handle_mcu_identify)
     def _handle_mcu_identify(self):
@@ -229,6 +230,7 @@ class EddyEndstopWrapper:
         return self._dispatch.get_steppers()
     def home_start(self, print_time, sample_time, sample_count, rest_time,
                    triggered=True):
+        self._trigger_time = 0.
         self._start_measurements(is_home=True)
         trigger_freq = self._calibration.height_to_freq(self._z_offset)
         trigger_completion = self._dispatch.start(print_time)
@@ -247,10 +249,52 @@ class EddyEndstopWrapper:
             return 0.
         if self._mcu.is_fileoutput():
             return home_end_time
+        self._trigger_time = trigger_time
         return trigger_time
     def query_endstop(self, print_time):
         return False # XXX
     # Interface for ProbeEndstopWrapper
+    def probing_move(self, pos, speed):
+        # Perform probing move
+        phoming = self._printer.lookup_object('homing')
+        trig_pos = phoming.probing_move(self, pos, speed)
+        if not self._trigger_time:
+            return trig_pos
+        # Wait for 200ms to elapse since trigger time
+        reactor = self._printer.get_reactor()
+        while 1:
+            systime = reactor.monotonic()
+            est_print_time = self._mcu.estimated_print_time(systime)
+            need_delay = self._trigger_time + 0.200 - est_print_time
+            if need_delay <= 0.:
+                break
+            reactor.pause(systime + need_delay)
+        # Find position since trigger
+        samples = self._samples
+        self._samples = []
+        start_time = self._trigger_time + 0.050
+        end_time = start_time + 0.100
+        samp_sum = 0.
+        samp_count = 0
+        for msg in samples:
+            data = msg['data']
+            if data[0][0] > end_time:
+                break
+            if data[-1][0] < start_time:
+                continue
+            for time, freq, z in data:
+                if time >= start_time and time <= end_time:
+                    samp_sum += z
+                    samp_count += 1
+        if not samp_count:
+            raise self._printer.command_error(
+                "Unable to obtain probe_eddy_current sensor readings")
+        halt_z = samp_sum / samp_count
+        # Calculate reported "trigger" position
+        toolhead = self._printer.lookup_object("toolhead")
+        new_pos = toolhead.get_position()
+        new_pos[2] += self._z_offset - halt_z
+        return new_pos
     def multi_probe_begin(self):
         if not self._calibration.is_calibrated():
             raise self._printer.command_error(
