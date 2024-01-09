@@ -83,7 +83,7 @@ class QuadBedLevel:
         slope_y_s32 = self.linefit(b1, b2)
         logging.info("quad_bed_level af: %s, bf: %s"
                      % (slope_y_s01, slope_y_s32))
-		# Calculate z height of each stepper
+        # Calculate z height of each stepper
         z_height = [0,0,0,0]
         z_height[0] = (1) * self.plot(slope_y_s01, self.bed_corners[0][1])
         z_height[1] = (1) * self.plot(slope_y_s01, self.bed_corners[1][1])
