@@ -34,6 +34,10 @@ enum {
     TS_PENDING = 1,
 };
 
+#define ADS1118_COLD_JUNCTION_HIGH_FAULT 0x01
+#define ADS1118_COLD_JUNCTION_LOW_FAULT 0x02
+#define ADS1118_CONFIG_READ_ERROR 0x04
+
 static struct task_wake thermocouple_wake;
 
 static uint_fast8_t thermocouple_event(struct timer *timer) {
@@ -86,9 +90,6 @@ DECL_COMMAND(command_config_ads1118_channel,
              "config_ads1118_channel oid=%c pin_number=%c min_sample_value=%hi "
              " max_sample_value=%hi parent_oid=%c");
 
-#define ADS1118_COLD_JUNCTION_HIGH_FAULT 0x01;
-#define ADS1118_COLD_JUNCTION_LOW_FAULT 0x02;
-
 static void
 ads1118_respond(struct thermocouple_spi *spi, uint32_t next_begin_time
                      , int16_t adc_mv, int16_t cj_temp, uint8_t fault
@@ -105,13 +106,13 @@ ads1118_respond(struct thermocouple_spi *spi, uint32_t next_begin_time
     if (fault || adc_mv < min_value || adc_mv > max_value) {
         //output fault data as a warning?
         spi->invalid_count++;
-        if (spi->invalid_count < spi->max_invalid)
+        if (spi->invalid_count < spi->max_invalid
+            && !(fault & ADS1118_CONFIG_READ_ERROR))
             return;
         try_shutdown("Thermocouple reader fault");
     }
-    //todo - need to track faults per channel, we don't want to reset
-    //       fault count for pin 2 just because a good reading came
-    //       from pin 1
+    
+    // no fault - so reset invalid_count
     spi->invalid_count = 0;
 }
 
@@ -122,6 +123,7 @@ thermocouple_handle_ads1118(struct thermocouple_spi *spi
     uint8_t msg[4];
     uint8_t cur_state = spi->state;
     uint8_t next_state;
+    uint8_t fault = 0;
 
     //todo check if conversion is available, if not set fault
     next_state = cur_state + 1;
@@ -172,6 +174,19 @@ thermocouple_handle_ads1118(struct thermocouple_spi *spi
     spidev_transfer(spi->spi, 1, sizeof(msg), msg);
     uint32_t value;
     memcpy(&value, msg, sizeof(value));
+
+    // check that the config bytes returned match our config
+    if (msg[2] != (int16_t)be32_to_cpu(value) >> 8 || 
+        msg[3] != (int8_t)be32_to_cpu(value)) {
+        fault |= ADS1118_CONFIG_READ_ERROR;
+        output("ads1118_value msg1=%hi msg2=%hi b1=%hi b2=%hi", 
+           (int16_t)msg[2],
+           (int16_t)msg[3],
+           (int16_t)be32_to_cpu(value) >> 8,
+           (int8_t)be32_to_cpu(value) );
+    }
+
+    // discard the config bytes
     value = be32_to_cpu(value) >> 16;
 
     // value read will be for the cur_state
@@ -184,11 +199,13 @@ thermocouple_handle_ads1118(struct thermocouple_spi *spi
     } else if (cur_state == 2) {
         spi->adc_chan_a_mv = (int16_t)value;
         ads1118_respond(spi, next_begin_time, spi->adc_chan_a_mv, spi->cj_temp,
-            0, spi->chan_a_oid, spi->chan_a_min_value, spi->chan_a_max_value);
+            fault, spi->chan_a_oid, spi->chan_a_min_value,
+            spi->chan_a_max_value);
     } else if (cur_state == 3) {
         spi->adc_chan_b_mv = (int16_t)value;
         ads1118_respond(spi, next_begin_time, spi->adc_chan_b_mv, spi->cj_temp,
-            0, spi->chan_b_oid, spi->chan_b_min_value, spi->chan_b_max_value);
+            fault, spi->chan_b_oid, spi->chan_b_min_value,
+            spi->chan_b_max_value);
     }
     spi->state = next_state;
 }
