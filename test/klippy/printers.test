@@ -207,7 +207,6 @@ CONFIG ../../config/printer-artillery-sidewinder-x2-2022.cfg
 CONFIG ../../config/printer-creality-ender5-s1-2023.cfg
 CONFIG ../../config/printer-elegoo-neptune3-pro-2023.cfg
 
-
 # Printers using the stm32f405
 DICTIONARY stm32f405.dict
 CONFIG ../../config/generic-mellow-fly-gemini-v1.cfg
