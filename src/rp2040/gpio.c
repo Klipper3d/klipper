@@ -20,6 +20,9 @@
  ****************************************************************/
 
 DECL_ENUMERATION_RANGE("pin", "gpio0", 0, 30);
+#ifdef GPIO_EXTENSION
+DECL_ENUMERATION_RANGE("pin", "gpio_ext", 31, 31 + GPIO_EXTENSION_NUM * 8);
+#endif
 
 // Set the mode and extended function of a pin
 void

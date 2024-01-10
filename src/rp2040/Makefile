@@ -5,8 +5,12 @@ CROSS_PREFIX=arm-none-eabi-
 
 dirs-y += src/rp2040 src/generic lib/rp2040/elf2uf2 lib/fast-hash lib/can2040
 
+CFLAGS-$(CONFIG_GPIO_EXTENSION) = -DGPIO_EXTENSION -DGPIO_EXTENSION_NUM=$(CONFIG_GPIO_EXTENSION_NUM)
+CFLAGS-$(CONFIG_GPIO_EXTENSION) += -DGPIO_EXTENSION_CS=$(CONFIG_GPIO_EXTENSION_CS) -DGPIO_EXTENSION_SPI=$(CONFIG_GPIO_EXTENSION_SPI)
+
+
 CFLAGS += -mcpu=cortex-m0plus -mthumb -Ilib/cmsis-core
-CFLAGS += -Ilib/rp2040 -Ilib/rp2040/cmsis_include -Ilib/fast-hash -Ilib/can2040
+CFLAGS += -Ilib/rp2040 -Ilib/rp2040/cmsis_include -Ilib/fast-hash -Ilib/can2040 $(CFLAGS-y)
 
 # Add source files
 src-y += rp2040/main.c rp2040/watchdog.c rp2040/gpio.c
