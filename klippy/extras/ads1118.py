@@ -14,7 +14,7 @@ MAX_INVALID_COUNT = 3
 # ADS1118
 # This class implements the primary device that is reponsible
 # for registering a chip with two pins (channels) and the
-# loop that queries the cold junction temperatre and up to two
+# loop that queries the cold junction temperature and up to two
 # thermocouple voltages
 ######################################################################
 
