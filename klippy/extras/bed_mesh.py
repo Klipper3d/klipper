@@ -323,7 +323,7 @@ class BedMeshCalibrate:
         self.gcode.register_command(
             'BED_MESH_CALIBRATE', self.cmd_BED_MESH_CALIBRATE,
             desc=self.cmd_BED_MESH_CALIBRATE_help)
-    def _generate_points(self, error):
+    def _generate_points(self, error, probe_method="automatic"):
         x_cnt = self.mesh_config['x_count']
         y_cnt = self.mesh_config['y_count']
         min_x, min_y = self.mesh_min
@@ -372,7 +372,7 @@ class BedMeshCalibrate:
             if rri >= len(self.points):
                 raise error("bed_mesh: relative reference index out of range")
             self.zero_ref_pos = points[rri]
-        if self.zero_ref_pos is None:
+        if self.zero_ref_pos is None or probe_method == "manual":
             # Zero Reference Disabled
             self.zero_reference_mode = ZrefMode.DISABLED
         elif within(self.zero_ref_pos, self.mesh_min, self.mesh_max):
@@ -398,6 +398,8 @@ class BedMeshCalibrate:
                         % (self.zero_ref_pos[0], self.zero_ref_pos[1], opt,)
                     )
         # Check to see if any points fall within faulty regions
+        if probe_method == "manual":
+            return
         last_y = self.points[0][1]
         is_reversed = False
         for i, coord in enumerate(self.points):
@@ -724,10 +726,11 @@ class BedMeshCalibrate:
             need_cfg_update = True
 
         need_cfg_update |= self.set_adaptive_mesh(gcmd)
+        probe_method = gcmd.get("METHOD", "automatic")
 
         if need_cfg_update:
             self._verify_algorithm(gcmd.error)
-            self._generate_points(gcmd.error)
+            self._generate_points(gcmd.error, probe_method)
             gcmd.respond_info("Generating new points...")
             self.print_generated_points(gcmd.respond_info)
             pts = self._get_adjusted_points()
@@ -738,7 +741,7 @@ class BedMeshCalibrate:
                               in self.mesh_config.items()])
             logging.info("Updated Mesh Configuration:\n" + msg)
         else:
-            self._generate_points(gcmd.error)
+            self._generate_points(gcmd.error, probe_method)
             pts = self._get_adjusted_points()
             self.probe_helper.update_probe_points(pts, 3)
     def _get_adjusted_points(self):
@@ -769,7 +772,7 @@ class BedMeshCalibrate:
         x_offset, y_offset, z_offset = offsets
         positions = [[round(p[0], 2), round(p[1], 2), p[2]]
                      for p in positions]
-        if self.zero_reference_mode == ZrefMode.PROBE :
+        if self.zero_reference_mode == ZrefMode.PROBE:
             ref_pos = positions.pop()
             logging.info(
                 "bed_mesh: z-offset replaced with probed z value at "
