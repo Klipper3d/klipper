@@ -71,7 +71,7 @@ class ADS1118_Thermocouple(object):
         if fault & ADS1118_COLD_JUNCTION_LOW_FAULT:
             self.report_fault("ADS1118: Cold Junction Low Fault")
         if fault & ADS1118_CONFIG_READ_ERROR:
-            self.report_fault("ADS1118: Config register readback is incorect")
+            self.report_fault("ADS1118: Config register readback is incorrect")
     def calc_temp(self, adc_mv, cj_temp, fault):
         try:
             adc_mv = adc_mv * ADS1118_MULT
