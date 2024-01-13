@@ -36,6 +36,7 @@ class PrinterOutputPin:
                                            maxval=MAX_SCHEDULE_TIME)
         self.mcu_pin.setup_max_duration(max_mcu_duration)
         if max_mcu_duration:
+            config.deprecate('maximum_mcu_duration')
             self.resend_interval = max_mcu_duration - RESEND_HOST_TIME
         # Determine start and shutdown values
         static_value = config.getfloat('static_value', None,

@@ -8,6 +8,10 @@ All dates in this document are approximate.
 
 ## Changes
 
+20240123: The output_pin `maximum_mcu_duration` parameter is
+deprecated. Use a [pwm_tool config section](Config_Reference.md#pwm_tool)
+instead. The option will be removed in the near future.
+
 20240123: The output_pin `static_value` parameter is deprecated.
 Replace with `value` and `shutdown_value` parameters.  The option will
 be removed in the near future.
