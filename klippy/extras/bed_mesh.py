@@ -301,19 +301,6 @@ class BedMeshCalibrate:
         self.zero_ref_pos = config.getfloatlist(
             "zero_reference_position", None, count=2
         )
-        self.relative_reference_index = config.getint(
-            'relative_reference_index', None, minval=0)
-        config.deprecate('relative_reference_index')
-        if (
-            self.zero_ref_pos is not None and
-            self.relative_reference_index is not None
-        ):
-            self.relative_reference_index = None
-            logging.info(
-                "bed_mesh: both 'zero_reference_postion' and "
-                "'relative_reference_index' options are specified, "
-                "the 'zero_reference_position' value will be used."
-            )
         self.zero_reference_mode = ZrefMode.DISABLED
         self.faulty_regions = []
         self.substituted_indices = collections.OrderedDict()
@@ -373,12 +360,6 @@ class BedMeshCalibrate:
                             (self.origin[0] + pos_x, self.origin[1] + pos_y))
             pos_y += y_dist
         self.points = points
-        rri = self.relative_reference_index
-        if self.zero_ref_pos is None and rri is not None:
-            # Zero ref position needs to be initialized
-            if rri >= len(self.points):
-                raise error("bed_mesh: relative reference index out of range")
-            self.zero_ref_pos = points[rri]
         if self.zero_ref_pos is None or probe_method == "manual":
             # Zero Reference Disabled
             self.zero_reference_mode = ZrefMode.DISABLED
@@ -396,8 +377,6 @@ class BedMeshCalibrate:
             for min_c, max_c in self.faulty_regions:
                 if within(self.zero_ref_pos, min_c, max_c):
                     opt = "zero_reference_position"
-                    if self.relative_reference_index is not None:
-                        opt = "relative_reference_index"
                     raise error(
                         "bed_mesh: Cannot probe zero reference position at "
                         "(%.2f, %.2f) as it is located within a faulty region."
@@ -456,17 +435,10 @@ class BedMeshCalibrate:
             print_func(
                 "  %-4d| %-16s| %s" % (i, adj_pt, mesh_pt))
         if self.zero_ref_pos is not None:
-            rri = self.relative_reference_index
-            if rri is not None:
-                print_func(
-                    "bed_mesh: relative_reference_index %d is (%.2f, %.2f)"
-                    % (rri, self.zero_ref_pos[0], self.zero_ref_pos[1])
-                )
-            else:
-                print_func(
-                    "bed_mesh: zero_reference_position is (%.2f, %.2f)"
-                    % (self.zero_ref_pos[0], self.zero_ref_pos[1])
-                )
+            print_func(
+                "bed_mesh: zero_reference_position is (%.2f, %.2f)"
+                % (self.zero_ref_pos[0], self.zero_ref_pos[1])
+            )
         if self.substituted_indices:
             print_func("bed_mesh: faulty region points")
             for i, v in self.substituted_indices.items():
@@ -742,10 +714,8 @@ class BedMeshCalibrate:
             self.print_generated_points(gcmd.respond_info)
             pts = self._get_adjusted_points()
             self.probe_helper.update_probe_points(pts, 3)
-            msg = "relative_reference_index: %s\n" % \
-                (self.relative_reference_index)
-            msg += "\n".join(["%s: %s" % (k, v) for k, v
-                              in self.mesh_config.items()])
+            msg = "\n".join(["%s: %s" % (k, v)
+                             for k, v in self.mesh_config.items()])
             logging.info("Updated Mesh Configuration:\n" + msg)
         else:
             self._generate_points(gcmd.error, probe_method)
