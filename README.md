@@ -1,8 +1,11 @@
-Welcome to the Klipper project!
+# Ender 3 V3 KE Klipper (Rebased Source Tree)
 
-[![Klipper](docs/img/klipper-logo-small.png)](https://www.klipper3d.org/)
+Creality released the source code for Ender 3 V3 KE on [Jan. 10, 2024](https://www.reddit.com/r/Creality/comments/193615t).
+Because they decided to do it the horrible way, i.e., uploaded a simple dump of their current version _without_ the Git history
+nor the list of changes they've made, digging to find when they have started working on their version is close to impossible.
 
-https://www.klipper3d.org/
+This repository attempts to fill that gap, by manually rebasing Creality's releases to the Klipper Git Tree.
+(Wasn't this supposed to be _your_ job, Creality?)
 
 The Klipper firmware controls 3d-Printers. It combines the power of a
 general purpose computer with one or more micro-controllers. See the
