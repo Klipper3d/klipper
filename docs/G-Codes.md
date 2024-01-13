@@ -449,12 +449,6 @@ MOTION_QUEUE (as defined in an [extruder](Config_Reference.md#extruder)
 config section). If MOTION_QUEUE is an empty string then the stepper
 will be desynchronized from all extruder movement.
 
-#### SET_EXTRUDER_STEP_DISTANCE
-This command is deprecated and will be removed in the near future.
-
-#### SYNC_STEPPER_TO_EXTRUDER
-This command is deprecated and will be removed in the near future.
-
 ### [fan_generic]
 
 The following command is available when a
