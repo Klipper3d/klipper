@@ -16,6 +16,5 @@ def load_config_prefix(config):
     name = config.get_name().split()[-1]
     if name == "display":
         raise config.error(
-            "Section name [display display] is not valid. "
-            "Please choose a different postfix.")
+            """{"code":"key193", "msg": "Section name [display display] is not valid. Please choose a different postfix.", "values": []}""")
     return display.load_config(config)

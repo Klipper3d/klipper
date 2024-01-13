@@ -293,6 +293,10 @@ static const struct gpio_pwm_info pwm_regs[] = {
     {TIM16, GPIO('B', 8),  1, GPIO_FUNCTION(1)},
     {TIM17, GPIO('F', 7),  1, GPIO_FUNCTION(1)},
     {TIM17, GPIO('B', 9),  1, GPIO_FUNCTION(1)}
+#elif CONFIG_MACH_STM32G071
+	{TIM1, GPIO('C',11), 4, GPIO_FUNCTION(1)},
+	{TIM3, GPIO('B',0), 3, GPIO_FUNCTION(1)},
+	{TIM3, GPIO('B',1), 4, GPIO_FUNCTION(1)},
 #endif
 };
 

@@ -61,7 +61,7 @@ class WebRequest:
         self.method = base_request.get('method')
         self.params = base_request.get('params', {})
         if type(self.method) != str or type(self.params) != dict:
-            raise ValueError("Invalid request type")
+            raise ValueError("""{"code":"key178", "msg": "Invalid request type", "values": []}""")
         self.response = None
         self.is_error = False
 
@@ -71,10 +71,10 @@ class WebRequest:
     def get(self, item, default=Sentinel, types=None):
         value = self.params.get(item, default)
         if value is Sentinel:
-            raise WebRequestError("Missing Argument [%s]" % (item,))
+            raise WebRequestError("""{"code":"key179", "msg": "Missing Argument [%s]", "values": ["%s"]}""" % (item, item))
         if (types is not None and type(value) not in types
             and item in self.params):
-            raise WebRequestError("Invalid Argument Type [%s]" % (item,))
+            raise WebRequestError("""{"code":"key180", "msg": "Invalid Argument Type [%s]", "values": ["%s"]}""" % (item, item))
         return value
 
     def get_str(self, item, default=Sentinel):
@@ -240,11 +240,15 @@ class ClientConnection:
         except socket.error as e:
             # If bad file descriptor allow connection to be
             # closed by the data check
+            logging.error("process_received 1 e:%s" % str(e))
             if e.errno == errno.EBADF:
+                logging.error("process_received 2 e:%s" % str(e))
                 data = b""
             else:
+                logging.error("process_received 3 %s" % str(e.errno))
                 return
         if not data:
+            logging.error("process_received 4 not data Socket Closed")
             # Socket Closed
             self.close()
             return
@@ -318,6 +322,7 @@ class WebHooks:
         self._endpoints = {"list_endpoints": self._handle_list_endpoints}
         self._remote_methods = {}
         self._mux_endpoints = {}
+        self.register_endpoint("shakehands", self._handle_shakehands_request)
         self.register_endpoint("info", self._handle_info_request)
         self.register_endpoint("emergency_stop", self._handle_estop_request)
         self.register_endpoint("register_remote_method",
@@ -337,12 +342,12 @@ class WebHooks:
         prev_key, prev_values = prev
         if prev_key != key:
             raise self.printer.config_error(
-                "mux endpoint %s %s %s may have only one key (%s)"
-                % (path, key, value, prev_key))
+                """{"code":"key182", "msg": "mux endpoint %s %s %s may have only one key (%s)", "values": ["%s", "%s", "%s", "%s"]}"""
+                % (path, key, value, prev_key, path, key, value, prev_key))
         if value in prev_values:
             raise self.printer.config_error(
-                "mux endpoint %s %s %s already registered (%s)"
-                % (path, key, value, prev_values))
+                """{"code":"key182", "msg": "mux endpoint %s %s %s already registered (%s)", "values": ["%s", "%s", "%s", "%s"]}"""
+                % (path, key, value, prev_values, path, key, value, prev_values))
         prev_values[value] = callback
 
     def _handle_mux(self, web_request):
@@ -352,12 +357,25 @@ class WebHooks:
         else:
             key_param = web_request.get(key)
         if key_param not in values:
-            raise web_request.error("The value '%s' is not valid for %s"
-                                    % (key_param, key))
+            raise web_request.error("""{"code":"key183", "msg": "The value '%s' is not valid for %s", "values": ["%s", "%s"]}"""
+                                    % (key_param, key, key_param, key))
         values[key_param](web_request)
 
     def _handle_list_endpoints(self, web_request):
         web_request.send({'endpoints': list(self._endpoints.keys())})
+
+    def _handle_shakehands_request(self, web_request):
+        try:
+            state_message, state = self.printer.get_state_message()
+            response = {"state": state, "state_message": state_message}
+            curtime = self.printer.get_reactor().monotonic()
+            web_request_id = web_request.id
+            response["shakehands_id"] = web_request_id
+            response["curtime"] = curtime
+            web_request.send(response)
+        except Exception as err:
+            err_msg = "_handle_shakehands_request err " + str(err)
+            logging.error(err_msg)
 
     def _handle_info_request(self, web_request):
         client_info = web_request.get_dict('client_info', None)
@@ -396,7 +414,7 @@ class WebHooks:
     def get_callback(self, path):
         cb = self._endpoints.get(path, None)
         if cb is None:
-            msg = "webhooks: No registered callback for path '%s'" % (path)
+            msg = """{"code":"key184", "msg": "webhooks: No registered callback for path '%s'", "values": ["%s"]}""" % (path, path)
             logging.info(msg)
             raise WebRequestError(msg)
         return cb
@@ -411,7 +429,7 @@ class WebHooks:
     def call_remote_method(self, method, **kwargs):
         if method not in self._remote_methods:
             raise self.printer.command_error(
-                "Remote method '%s' not registered" % (method))
+                """{"code":"key185", "msg": "Remote method '%s' not registered", "values": ["%s"]}""" % (method, method))
         conn_map = self._remote_methods[method]
         valid_conns = {}
         for conn, template in conn_map.items():
@@ -423,7 +441,7 @@ class WebHooks:
         if not valid_conns:
             del self._remote_methods[method]
             raise self.printer.command_error(
-                "No active connections for method '%s'" % (method))
+                """{"code":"key186", "msg": "No active connections for method '%s'", "values": ["%s"]}""" % (method, method))
         self._remote_methods[method] = valid_conns
 
 class GCodeHelper:
@@ -530,16 +548,17 @@ class QueryStatusHelper:
             self.query_timer = None
             return reactor.NEVER
         return eventtime + SUBSCRIPTION_REFRESH_TIME
-    def _handle_query(self, web_request, is_subscribe=False):
+    def _handle_query(self, web_request, is_subscribe=False, handle_subscribe=False):
         objects = web_request.get_dict('objects')
+        logging.info("_handle_query objects/subscribe:%s" % str(objects)) if handle_subscribe else None
         # Validate subscription format
         for k, v in objects.items():
             if type(k) != str or (v is not None and type(v) != list):
-                raise web_request.error("Invalid argument")
+                raise web_request.error("""{"code":"key187", "msg": "Invalid argument", "values": []}""")
             if v is not None:
                 for ri in v:
                     if type(ri) != str:
-                        raise web_request.error("Invalid argument")
+                        raise web_request.error("""{"code":"key187", "msg": "Invalid argument", "values": []}""")
         # Add to pending queries
         cconn = web_request.get_client_connection()
         template = web_request.get_dict('response_template', {})
@@ -553,12 +572,14 @@ class QueryStatusHelper:
             qt = reactor.register_timer(self._do_query, reactor.NOW)
             self.query_timer = qt
         # Wait for data to be queried
+        logging.info("_handle_query before complete.wait") if handle_subscribe else None
         msg = complete.wait()
+        logging.info("_handle_query after complete.wait:%s" % str(msg['params'])) if handle_subscribe else None
         web_request.send(msg['params'])
         if is_subscribe:
             self.clients[cconn] = (cconn, objects, cconn.send, template)
     def _handle_subscribe(self, web_request):
-        self._handle_query(web_request, is_subscribe=True)
+        self._handle_query(web_request, is_subscribe=True, handle_subscribe=True)
 
 def add_early_printer_objects(printer):
     printer.add_object('webhooks', WebHooks(printer))

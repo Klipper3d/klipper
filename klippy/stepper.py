@@ -54,6 +54,10 @@ class MCU_stepper:
                                        self._query_mcu_position)
     def get_mcu(self):
         return self._mcu
+
+    def get_pin_info(self):
+        return self._dir_pin, self._step_pin, self._invert_dir, self._invert_step
+
     def get_name(self, short=False):
         if short and self._name.startswith('stepper'):
             # Skip an extra symbol after 'stepper'
@@ -372,8 +376,8 @@ class GenericPrinterRail:
                 self.homing_positive_dir = True
             else:
                 raise config.error(
-                    "Unable to infer homing_positive_dir in section '%s'"
-                    % (config.get_name(),))
+                   """{"code":"key75", "msg": "Unable to infer homing_positive_dir in section '%s'", "values": ["%s"]"""
+                    % (config.get_name(),config.get_name()))
             config.getboolean('homing_positive_dir', self.homing_positive_dir)
         elif ((self.homing_positive_dir
                and self.position_endstop == self.position_min)

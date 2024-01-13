@@ -64,6 +64,7 @@ struct history_steps {
     int step_count, interval, add;
 };
 
+// uint32_t pre_interval;
 
 /****************************************************************
  * Step compression
@@ -210,10 +211,31 @@ check_line(struct stepcompress *sc, struct step_move move)
 {
     if (!CHECK_LINES)
         return 0;
+    if(move.interval >= 0x80000000) {
+        errorf("stepcompress o=%d i=%d c=%d a=%d: lxc Invalid sequence"
+               , sc->oid, move.interval, move.count, move.add);
+        move.interval = 0xffffffff - move.interval + 1;
+    }
+    if(move.count >= 0x8000) {
+        errorf("stepcompress o=%d i=%d c=%d a=%d: lxc Invalid sequence"
+               , sc->oid, move.interval, move.count, move.add);
+        move.count = 0xffff - move.count + 1;
+    }
+
     if (!move.count || (!move.interval && !move.add && move.count > 1)
         || move.interval >= 0x80000000) {
         errorf("stepcompress o=%d i=%d c=%d a=%d: Invalid sequence"
                , sc->oid, move.interval, move.count, move.add);
+        errorf("stepcompress queue=%u queue_end=%u queue_pos=%u queue_next=%u last_step_clock=%llu max_error=%u : lxc check_line"
+               , *(sc->queue), *(sc->queue_end), *(sc->queue_pos), *(sc->queue_next), sc->last_step_clock, sc->max_error);
+        uint16_t i;
+        uint32_t intervals = move.interval, ps = 0;
+        for (i=0; i<move.count; i++) {
+            ps += intervals;
+            struct points points = minmax_point(sc, sc->queue_pos + i);
+            errorf("stepcompress queue_pos+i=%u ps=%u minp=%u maxp=%u : lxc Invalid sequence 2"
+               , *(sc->queue_pos + i), ps, points.minp, points.maxp);
+        }
         return ERROR_RET;
     }
     uint32_t interval = move.interval, p = 0;
@@ -221,11 +243,19 @@ check_line(struct stepcompress *sc, struct step_move move)
     for (i=0; i<move.count; i++) {
         struct points point = minmax_point(sc, sc->queue_pos + i);
         p += interval;
+        if (point.minp < 0) {
+            int32_t itemp = -point.minp;
+            point.minp = -point.maxp;
+            point.maxp = itemp;
+            errorf("lxc stepcompress o=%d i=%d c=%d a=%d: Point %d: %d not in %d:%d"
+                   , sc->oid, move.interval, move.count, move.add
+                   , i+1, p, -point.maxp, -point.minp);
+        }        
         if (p < point.minp || p > point.maxp) {
             errorf("stepcompress o=%d i=%d c=%d a=%d: Point %d: %d not in %d:%d"
                    , sc->oid, move.interval, move.count, move.add
                    , i+1, p, point.minp, point.maxp);
-            return ERROR_RET;
+            // return ERROR_RET;
         }
         if (interval >= 0x80000000) {
             errorf("stepcompress o=%d i=%d c=%d a=%d:"
@@ -363,6 +393,7 @@ add_move(struct stepcompress *sc, uint64_t first_clock, struct step_move *move)
     list_add_tail(&qm->node, &sc->msg_queue);
     sc->last_step_clock = last_clock;
 
+    // pre_interval = move->interval;
     // Create and store move in history tracking
     struct history_steps *hs = malloc(sizeof(*hs));
     hs->first_clock = first_clock;

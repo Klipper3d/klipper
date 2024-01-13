@@ -262,7 +262,7 @@ class PrinterExtruder:
             if extruder is None:
                 if temp <= 0.:
                     return
-                raise gcmd.error("Extruder not configured")
+                raise gcmd.error("""{"code":"key113", "msg": "Extruder not configured", "values": []}""")
         else:
             extruder = self.printer.lookup_object('toolhead').get_extruder()
         pheaters = self.printer.lookup_object('heaters')

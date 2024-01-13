@@ -161,8 +161,9 @@ class TMCErrorCheck:
             count += 1
             if count >= 3:
                 fmt = self.fields.pretty_format(reg_name, val)
-                raise self.printer.command_error("TMC '%s' reports error: %s"
-                                                 % (self.stepper_name, fmt))
+                code_key = "key505"
+                m = """{"code":"%s","msg":"TMC '%s' reports error: %s"}""" % (code_key, self.stepper_name, fmt)
+                raise self.printer.command_error(m)
             if try_clear and val & err_mask:
                 try_clear = False
                 cleared_flags |= val & err_mask

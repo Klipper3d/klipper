@@ -34,29 +34,36 @@ class ConfigWrapper:
                     acc_id = (self.section.lower(), option.lower())
                     self.access_tracking[acc_id] = default
                 return default
-            raise error("Option '%s' in section '%s' must be specified"
-                        % (option, self.section))
+            raise error(
+                """{"code":"key335", "msg":"Option '%s' in section '%s' must be specified", "values":["%s", "%s"]}"""
+                % (option, self.section, option, self.section))
         try:
             v = parser(self.section, option)
         except self.error as e:
             raise
         except:
-            raise error("Unable to parse option '%s' in section '%s'"
-                        % (option, self.section))
+            raise error(
+                """{"code": "key282", "msg": "Unable to parse option '%s' in section '%s'", "values":["%s", "%s"]}"""
+                % (option, self.section, option, self.section))
         if note_valid:
             self.access_tracking[(self.section.lower(), option.lower())] = v
         if minval is not None and v < minval:
-            raise error("Option '%s' in section '%s' must have minimum of %s"
-                        % (option, self.section, minval))
+            if option == "z_offset" and self.section == "bltouch":
+                raise error("""{"code":"key281", "msg":"Error on 'z_offset': 'touch' must have minimum of %s", "values":["%s"]}""" % (
+                    minval, minval
+                ))
+            else:
+                raise error("""{"code":"key252", "msg":"Error on '%s': %s must have minimum of %s", "values":["%s","%s","%s"]}"""
+                            % (option, self.section, minval, option, self.section, minval))
         if maxval is not None and v > maxval:
-            raise error("Option '%s' in section '%s' must have maximum of %s"
-                        % (option, self.section, maxval))
+            raise error("""{"code":"key253", "msg":"Error on '%s': %s must have maximumof %s", "values":["%s","%s","%s"]}"""
+                        % (option, self.section, maxval, option, self.section, maxval))
         if above is not None and v <= above:
-            raise error("Option '%s' in section '%s' must be above %s"
-                        % (option, self.section, above))
+            raise error("""{"code":"key254", "msg":"Error on '%s': %s must be above %s", "values":["%s","%s","%s"]}"""
+                        % (option, self.section, above, option, self.section, above))
         if below is not None and v >= below:
-            raise self.error("Option '%s' in section '%s' must be below %s"
-                             % (option, self.section, below))
+            raise self.error("""{"code":"key255", "msg":"Error on '%s': %s must be below %s", "values":["%s","%s","%s"]}"""
+                             % (option, self.section, below, option, self.section, below))
         return v
     def get(self, option, default=sentinel, note_valid=True):
         return self._get_wrapper(self.fileconfig.get, option, default,

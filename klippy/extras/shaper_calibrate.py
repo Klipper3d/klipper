@@ -3,7 +3,9 @@
 # Copyright (C) 2020-2024  Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import collections, importlib, logging, math, multiprocessing, traceback
+import collections, importlib, logging, math, multiprocessing, traceback, os
+import time, subprocess, shlex
+from multiprocessing import shared_memory
 shaper_defs = importlib.import_module('.shaper_defs', 'extras')
 
 MIN_FREQ = 5.
@@ -18,6 +20,27 @@ AUTOTUNE_SHAPERS = ['zv', 'mzv', 'ei', '2hump_ei', '3hump_ei']
 ######################################################################
 # Frequency response calculation and shaper auto-tuning
 ######################################################################
+
+def exec_cmd(conn, method):
+    try:
+        val = os.nice(10)
+    except:
+        pass
+
+    try:
+        process = subprocess.Popen(shlex.split(method), stdout=subprocess.PIPE)
+        output = process.communicate()[0]
+        retcode = process.poll()
+    except:
+        retcode = -1
+        conn.send((True, retcode))
+        conn.close()
+        return
+    if retcode is 0:
+        conn.send((False, retcode))
+    else:
+        conn.send((True, retcode))
+    conn.close()
 
 class CalibrationData:
     def __init__(self, freq_bins, psd_sum, psd_x, psd_y, psd_z):
@@ -63,6 +86,17 @@ class ShaperCalibrate:
     def __init__(self, printer):
         self.printer = printer
         self.error = printer.command_error if printer else Exception
+        self.autotune_shapers = ['zv', 'mzv', 'ei', '2hump_ei', '3hump_ei']
+        configfile = self.printer.lookup_object('configfile')
+        gcode_macro_path = '/usr/data/printer_data/config/gcode_macro.cfg'
+        gconfig = None
+        try:
+            gconfig = configfile.read_config(gcode_macro_path)
+            if gconfig and gconfig.has_section('gcode_macro AUTOTUNE_SHAPERS'):
+                AUTOTUNE_SHAPERS = gconfig.getsection('gcode_macro AUTOTUNE_SHAPERS')
+                self.autotune_shapers = list(map(lambda x: x.replace("'", "") , AUTOTUNE_SHAPERS.getlist('variable_autotune_shapers', ['zv', 'mzv', 'ei', '2hump_ei', '3hump_ei'])))
+        except Exception as err:
+            logging.error("gcode_macro_path: %s, configfile.read_config error:%s" % (gcode_macro_path, err))
         try:
             self.numpy = importlib.import_module('numpy')
         except ImportError:
@@ -77,6 +111,14 @@ class ShaperCalibrate:
         import queuelogger
         parent_conn, child_conn = multiprocessing.Pipe()
         def wrapper():
+            try:
+                gcode = self.printer.lookup_object("gcode")
+                gcode.respond_info("current nice: %d" % os.nice(0), log=False)
+                val = os.nice(10)
+                gcode.respond_info("process id: %d, current nice: %d" % (os.getpid(), val), log=False)
+            except:
+                gcode.respond_info("nice process failed", log=False)
+                pass
             queuelogger.clear_bg_logging()
             try:
                 res = method(*args)
@@ -102,7 +144,7 @@ class ShaperCalibrate:
         # Return results
         is_err, res = parent_conn.recv()
         if is_err:
-            raise self.error("Error in remote calculation: %s" % (res,))
+            raise self.error("""{"code": "key312", "msg": "Error in remote calculation: %s", "values":["%s"]}""" % (res,res))
         calc_proc.join()
         parent_conn.close()
         return res
@@ -179,7 +221,77 @@ class ShaperCalibrate:
                 self.calc_freq_response, (data,))
         if calibration_data is None:
             raise self.error(
-                    "Internal error processing accelerometer data %s" % (data,))
+                    """{"code": "key313", "msg": "Internal error processing accelerometer data %s", "values":["%s"]}""" % (data,data))
+        calibration_data.set_numpy(self.numpy)
+        return calibration_data
+
+    def lowmem_background_process_exec(self, method):
+        if self.printer is None:
+            return None
+
+        ctx = multiprocessing.get_context('spawn')
+        parent_conn, child_conn = multiprocessing.Pipe()
+
+        # Start a process to perform the calculation
+        calc_proc = ctx.Process(target=exec_cmd, args=(child_conn, method))
+        calc_proc.daemon = True
+        calc_proc.start()
+        # Wait for the process to finish
+        reactor = self.printer.get_reactor()
+        gcode = self.printer.lookup_object("gcode")
+        eventtime = last_report_time = reactor.monotonic()
+        while calc_proc.is_alive():
+            if eventtime > last_report_time + 5.:
+                last_report_time = eventtime
+                gcode.respond_info("Wait for calculations..")
+            eventtime = reactor.pause(eventtime + .1)
+        # Return results
+        is_err, res = parent_conn.recv()
+        if is_err:
+            raise self.error("""{"code": "key312", "msg": "Error in remote calculation: %s", "values":["%s"]}""" % (res,res))
+        calc_proc.join()
+        parent_conn.close()
+        return res
+
+    def copy_samples_to_shared_memory(self, data):
+        data.get_samples_to_shared_mem()
+
+    def read_results_from_shared_memory(self, name):
+        gcode = self.printer.lookup_object("gcode")
+        try:
+            shm = shared_memory.SharedMemory(name)
+        except:
+            gcode.respond_info("open shared memory %s fail!" % (name))
+            return None
+
+        np = self.numpy
+        array = np.ndarray((shm.size // 8, ), dtype = np.float64, buffer = shm.buf, offset = 0)
+        shm.unlink()
+
+        return array.copy()
+
+    def lowmem_process_accelerometer_data(self, data):
+        gcode = self.printer.lookup_object("gcode")
+
+        self.copy_samples_to_shared_memory(data)
+
+        # call c++ program and return result by shared memory
+        ret = self.lowmem_background_process_exec("/usr/bin/calc_psd")
+        gcode.respond_info("calc_freq_response return (%d)" % (ret))
+
+        if ret is 0:
+            fx = self.read_results_from_shared_memory("psm_freq")
+            px = self.read_results_from_shared_memory("psm_px")
+            py = self.read_results_from_shared_memory("psm_py")
+            pz = self.read_results_from_shared_memory("psm_pz")
+
+            calibration_data = CalibrationData(fx, px+py+pz, px, py, pz)
+        else:
+            calibration_data = None
+
+        if calibration_data is None:
+            raise self.error(
+                    """{"code": "key313", "msg": "Internal error processing accelerometer data %s", "values":["%s"]}""" % (data,data))
         calibration_data.set_numpy(self.numpy)
         return calibration_data
 
@@ -395,4 +507,4 @@ class ShaperCalibrate:
                             csvfile.write(",%.3f" % (shaper.vals[i],))
                     csvfile.write("\n")
         except IOError as e:
-            raise self.error("Error writing to file '%s': %s", output, str(e))
+            raise self.error({"code": "key314", "msg": "Error writing to file '%s': %s", "values":["%s", "%s"]}, output, str(e), output, str(e))

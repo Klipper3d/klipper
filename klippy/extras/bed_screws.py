@@ -81,7 +81,7 @@ class BedScrews:
     cmd_BED_SCREWS_ADJUST_help = "Tool to help adjust bed leveling screws"
     def cmd_BED_SCREWS_ADJUST(self, gcmd):
         if self.state is not None:
-            raise gcmd.error("Already in bed_screws helper; use ABORT to exit")
+            raise gcmd.error("""{"code":"key101", "msg": "Already in bed_screws helper; use ABORT to exit", "values": []}""")
         # reset accepted screws
         self.accepted_screws = 0
         self.move((None, None, self.horizontal_move_z), self.speed)

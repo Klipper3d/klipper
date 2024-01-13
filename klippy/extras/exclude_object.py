@@ -34,6 +34,12 @@ class ExcludeObject:
         self.gcode.register_command(
             'EXCLUDE_OBJECT_DEFINE', self.cmd_EXCLUDE_OBJECT_DEFINE,
             desc=self.cmd_EXCLUDE_OBJECT_DEFINE_help)
+        self.gcode.register_command('EXCLUDE_OBJECT_RESET', self.cmd_EXCLUDE_OBJECT_RESET)
+    def cmd_EXCLUDE_OBJECT_RESET(self, gcmd):
+        if self.objects:
+            self.gcode.run_script_from_command("M400")
+            self.gcode.run_script_from_command("EXCLUDE_OBJECT_DEFINE RESET=1")
+            self.gcode.run_script_from_command("M400")
 
     def _register_transform(self):
         if self.next_transform is None:
@@ -222,6 +228,9 @@ class ExcludeObject:
         reset = gcmd.get('RESET', None)
         current = gcmd.get('CURRENT', None)
         name = gcmd.get('NAME', '').upper()
+        if name == self.current_object:
+            self.gcode.respond_info("Forbidden EXCLUDE_OBJECT current_print_object:%s" % self.current_object)
+            return
 
         if reset:
             if name:

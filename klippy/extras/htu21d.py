@@ -98,8 +98,8 @@ class HTU21D:
         self.resolution = config.get('htu21d_resolution','TEMP12_HUM08')
         self.report_time = config.getint('htu21d_report_time',30,minval=5)
         if self.resolution not in HTU21D_RESOLUTIONS:
-            raise config.error("Invalid HTU21D Resolution. Valid are %s"
-                % '|'.join(HTU21D_RESOLUTIONS.keys()))
+            raise config.error("""{"code":"key275": "msg":"Invalid HTU21D Resolution. Valid are %s", "values":["%s"]}"""
+                % ('|'.join(HTU21D_RESOLUTIONS.keys()), '|'.join(HTU21D_RESOLUTIONS.keys())))
         self.deviceId = config.get('sensor_type')
         self.temp = self.min_temp = self.max_temp = self.humidity = 0.
         self.sample_timer = self.reactor.register_timer(self._sample_htu21d)
@@ -225,8 +225,8 @@ class HTU21D:
 
         if self.temp < self.min_temp or self.temp > self.max_temp:
             self.printer.invoke_shutdown(
-                "HTU21D temperature %0.1f outside range of %0.1f:%.01f"
-                % (self.temp, self.min_temp, self.max_temp))
+                """{"code":"key195", "msg": "HTU21D temperature %0.1f outside range of %0.1f:%.01f", "values": [%0.1f, %.01f, %.01f]}"""
+                % (self.temp, self.min_temp, self.max_temp, self.temp, self.min_temp, self.max_temp))
 
         measured_time = self.reactor.monotonic()
         print_time = self.i2c.get_mcu().estimated_print_time(measured_time)

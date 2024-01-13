@@ -29,7 +29,19 @@ class PrinterADCtoTemperature:
     def get_report_time_delta(self):
         return REPORT_TIME
     def adc_callback(self, read_time, read_value):
-        temp = self.adc_convert.calc_temp(read_value)
+        if self.temp_offset_flag == True:
+            vpt = [40, 52, 84.4,118.4]
+            temp1 = self.adc_convert.calc_temp(read_value)
+            if (temp1 > vpt[0]) & (temp1 < vpt[1]):
+                temp = (temp1 - vpt[0]) * (10/(vpt[1] - vpt[0])) + vpt[0]
+            elif (temp1 >= vpt[1]) & (temp1 < vpt[2]):
+                temp = (temp1 - vpt[1]) * (30/(vpt[2] - vpt[1])) + 50
+            elif temp1 >= vpt[2]:
+                temp = (temp1 - vpt[2]) * (30/(vpt[3] - vpt[2])) + 80
+            elif temp1 < vpt[0]:
+                temp = self.adc_convert.calc_temp(read_value)
+        else:
+            temp = self.adc_convert.calc_temp(read_value)
         self.temperature_callback(read_time + SAMPLE_COUNT * SAMPLE_TIME, temp)
     def setup_minmax(self, min_temp, max_temp):
         arange = [self.adc_convert.calc_adc(t) for t in [min_temp, max_temp]]
@@ -88,7 +100,7 @@ class LinearInterpolate:
                 last_value = value
                 continue
             if key <= last_key:
-                raise ValueError("duplicate value")
+                raise ValueError("""{"code":"key26", "msg":"duplicate value", "values": []}""")
             gain = (value - last_value) / (key - last_key)
             offset = last_value - last_key * gain
             if self.slopes and self.slopes[-1] == (gain, offset):
@@ -98,7 +110,7 @@ class LinearInterpolate:
             self.keys.append(key)
             self.slopes.append((gain, offset))
         if not self.keys:
-            raise ValueError("need at least two samples")
+            raise ValueError("""{"code":"key27", "msg":"need at least two samples", "values": []}""")
         self.keys.append(9999999999999.)
         self.slopes.append(self.slopes[-1])
     def interpolate(self, key):
@@ -136,8 +148,8 @@ class LinearVoltage:
         try:
             li = LinearInterpolate(samples)
         except ValueError as e:
-            raise config.error("adc_temperature %s in heater %s" % (
-                str(e), config.get_name()))
+            raise config.error("""{"code":"key28", "msg":"adc_temperature %s in heater %s", "values": ["%s", "%s"]}""" % (
+                str(e), config.get_name(), str(e), config.get_name()))
         self.calc_temp = li.interpolate
         self.calc_adc = li.reverse_interpolate
 
@@ -168,8 +180,8 @@ class LinearResistance:
         try:
             self.li = LinearInterpolate([(r, t) for t, r in samples])
         except ValueError as e:
-            raise config.error("adc_temperature %s in heater %s" % (
-                str(e), config.get_name()))
+            raise config.error("""{"code":"key28", "msg":"adc_temperature %s in heater %s", "values": ["%s", "%s"]}""" % (
+                str(e), config.get_name(), str(e), config.get_name()))
     def calc_temp(self, adc):
         # Calculate temperature from adc
         adc = max(.00001, min(.99999, adc))

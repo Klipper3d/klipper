@@ -21,7 +21,7 @@ class PrinterMultiPin:
         pin = self.printer.lookup_object('multi_pin ' + pin_name, None)
         if pin is not self:
             if pin is None:
-                raise ppins.error("multi_pin %s not configured" % (pin_name,))
+                raise ppins.error("""{"code":"key40", "msg":"multi_pin %s not configured", "values": ["%s"]}""" % (pin_name, pin_name))
             return pin.setup_pin(pin_type, pin_params)
         if self.pin_type is not None:
             raise ppins.error("Can't setup multi_pin %s twice" % (pin_name,))

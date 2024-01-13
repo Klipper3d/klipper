@@ -102,6 +102,10 @@
 #endif
 
 #if CONFIG_MACH_STM32G0
+  // The stm32g0 has slightly different register names
+#ifndef CONFIG_MACH_STM32G071
+  #define USART2_IRQn USART2_LPUART2_IRQn
+#endif
   // Some of the stm32g0 MCUs have slightly different register names
   #if CONFIG_MACH_STM32G0B1
     #define USART2_IRQn USART2_LPUART2_IRQn

@@ -32,14 +32,14 @@ class QuadGantryLevel:
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
         if len(self.probe_helper.probe_points) != 4:
             raise config.error(
-                "Need exactly 4 probe points for quad_gantry_level")
+                """{"code":"key213", "msg": "Need exactly 4 probe points for quad_gantry_level" "values": []}""")
         self.z_status = z_tilt.ZAdjustStatus(self.printer)
         self.z_helper = z_tilt.ZAdjustHelper(config, 4)
         self.gantry_corners = config.getlists('gantry_corners', parser=float,
                                               seps=(',', '\n'), count=2)
         if len(self.gantry_corners) < 2:
             raise config.error(
-                "quad_gantry_level requires at least two gantry_corners")
+                """{"code":"key214", "msg": "quad_gantry_level requires at least two gantry_corners" "values": []}""")
         # Register QUAD_GANTRY_LEVEL command
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
@@ -102,10 +102,8 @@ class QuadGantryLevel:
 
         adjust_max = max(z_adjust)
         if adjust_max > self.max_adjust:
-            raise self.gcode.error("Aborting quad_gantry_level"
-                                   " required adjustment %0.6f"
-                                   " is greater than max_adjust %0.6f"
-                                   % (adjust_max, self.max_adjust))
+            raise self.gcode.error("""{"code":"key215", "msg": "Aborting quad_gantry_level required adjustment %0.6f is greater than max_adjust %0.6f" "values": [%0.6f,%0.6f]}"""
+                                   % (adjust_max, self.max_adjust, adjust_max, self.max_adjust))
 
         speed = self.probe_helper.get_lift_speed()
         self.z_helper.adjust_steppers(z_adjust, speed)

@@ -42,6 +42,12 @@ class SerialReader:
         name_short = ("serialhdl %s" % (self.mcu_name))[:15]
         self.ffi_lib.set_thread_name(name_short.encode('utf-8'))
         response = self.ffi_main.new('struct pull_queue_message *')
+        try:
+            val = os.nice(-20)
+            logging.info("%scurrent nice = %d" ,self.warn_prefix, val)
+        except:
+            logging.info("%snice process failed", self.warn_prefix)
+            pass
         while 1:
             self.ffi_lib.serialqueue_pull(self.serialqueue, response)
             count = response.len

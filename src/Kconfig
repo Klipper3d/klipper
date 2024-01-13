@@ -2,6 +2,8 @@
 
 mainmenu "Klipper Firmware Configuration"
 
+source "src/configs/Kconfig"
+
 config LOW_LEVEL_OPTIONS
     bool "Enable extra low-level configuration options"
     help
@@ -41,10 +43,16 @@ source "src/lpc176x/Kconfig"
 source "src/stm32/Kconfig"
 source "src/hc32f460/Kconfig"
 source "src/rp2040/Kconfig"
+source "src/gd32/Kconfig"
 source "src/pru/Kconfig"
 source "src/ar100/Kconfig"
 source "src/linux/Kconfig"
 source "src/simulator/Kconfig"
+
+config MCU_MENU
+	string 
+	default "S" if MACH_STM32
+	default "G" if MACH_GD32
 
 # Generic configuration options for serial ports
 config SERIAL
@@ -295,14 +303,38 @@ config WANT_STEPPER_OPTIMIZED_BOTH_EDGE
         step pin).
 
 # Support setting gpio state at startup
+
+choice
+    prompt "Creality machine type"
+    config MACH_CREALITY_OTHERS
+        bool "CRELITY others"
+    config MACH_CREALITY_CR_10_SMART
+        bool "CRELITY CR-10 SMART"
+    config INITIAL_PINS
+	    depends on MACH_CREALITY_CR_10_SMART
+        string 
+	    default "PA0"
+endchoice
+
 config INITIAL_PINS
     string "GPIO pins to set at micro-controller startup"
-    depends on LOW_LEVEL_OPTIONS
+	depends on LOW_LEVEL_OPTIONS && !MACH_CREALITY_CR_10_SMART
+	default "PA0" if MACH_CREALITY_CR_10_SMART
     help
         One may specify a comma separated list of gpio pins to set
         during the micro-controller startup sequence. By default the
         pins will be set to output high - preface a pin with a '!'
         character to set that pin to output low.
+        "PA0" is default value for CREALITY CR-10 SMART, and MUST NOT
+        MODIFIY! For the other machine types you should add pin name with
+        your hardware configurations.
+
+config BUILD_MACHINE_UID
+	string "Custom your machine firmware name as unique ID"
+	depends on LOW_LEVEL_OPTIONS
+	help
+		It is for klipper host making a distinction between each 
+		printer when one host controls more than one machine. 
 
 # The HAVE_x options allow boards to disable support for some commands
 # if the hardware does not support the feature.

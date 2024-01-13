@@ -88,8 +88,8 @@ class enumeration_error(error):
     def __init__(self, enum_name, value):
         self.enum_name = enum_name
         self.value = value
-        error.__init__(self, "Unknown value '%s' in enumeration '%s'"
-                       % (value, enum_name))
+        error.__init__(self, """{"code":"key115", "msg": "Unknown value '%s' in enumeration '%s'", "values": ["%s", "%s"]}"""
+                       % (value, enum_name, value, enum_name))
     def get_enum_params(self):
         return self.enum_name, self.value
 
@@ -149,7 +149,7 @@ def lookup_output_params(msgformat):
                     param_types.append(t)
                     break
             else:
-                raise error("Invalid output format for '%s'" % (msgformat,))
+                raise error("""{"code":"key116", "msg": "Invalid output format for '%s'", "values": ["%s"]}""" % (msgformat,msgformat))
         args = args[pos+1:]
     return param_types
 
@@ -286,7 +286,7 @@ class MessageParser:
         mid = self.messages_by_id.get(msgid, self.unknown)
         params, pos = mid.parse(s, MESSAGE_HEADER_SIZE)
         if pos != len(s)-MESSAGE_TRAILER_SIZE:
-            self._error("Extra data at end of message")
+            self._error("""{"code":"key117", "msg": "Extra data at end of message", "values": []}""")
         params['#name'] = mid.name
         return params
     def encode_msgblock(self, seq, cmd):

@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import math, logging, importlib
+import math, logging, importlib, os, json
 import mcu, chelper, kinematics.extruder
 
 # Common suffixes: _d is distance (in mm), _v is velocity (in
@@ -60,7 +60,17 @@ class Move:
         self.next_junction_v2 = min(self.next_junction_v2, speed**2)
     def move_error(self, msg="Move out of range"):
         ep = self.end_pos
-        m = "%s: %.3f %.3f %.3f [%.3f]" % (msg, ep[0], ep[1], ep[2], ep[3])
+        # m = "%s: %.3f %.3f %.3f [%.3f]" % (msg, ep[0], ep[1], ep[2], ep[3])
+        if msg == "Must home axis first":
+            code_key = "key95"
+        elif msg == "Must home first":
+            code_key = "key242"
+        elif msg == "Extrude when no extruder present":
+            code_key = "key114"
+        else:
+            code_key = "key243"
+        m = """{"code":"%s","msg":"%s: %.3f %.3f %.3f [%.3f]", "values":[%.3f, %.3f, %.3f, %.3f]}""" % (
+            code_key, msg, ep[0], ep[1], ep[2], ep[3], ep[0], ep[1], ep[2], ep[3])
         return self.toolhead.printer.command_error(m)
     def calc_junction(self, prev_move):
         if not self.is_kinematic_move or not prev_move.is_kinematic_move:
@@ -436,6 +446,7 @@ class ToolHead:
         if last_move is not None:
             last_move.limit_next_junction_speed(speed)
     def move(self, newpos, speed):
+        self.record_z_pos(newpos[2])
         move = Move(self, self.commanded_pos, newpos, speed)
         if not move.move_d:
             return
@@ -668,15 +679,21 @@ class ToolHeadCommandHelper:
             and square_corner_velocity is None and min_cruise_ratio is None):
             gcmd.respond_info(msg, log=False)
     def cmd_M204(self, gcmd):
+        accel_S = int(float(gcmd.get('S', -1)))
+        if accel_S != -1 and accel_S <= 100:
+            accel = 100
+        else:
+            accel = gcmd.get_float('S', None, above=0.)
         # Use S for accel
-        accel = gcmd.get_float('S', None, above=0.)
+        # accel = gcmd.get_float('S', None, above=0.)
+        cmd = "M204 S%s" % accel
         if accel is None:
             # Use minimum of P and T for accel
             p = gcmd.get_float('P', None, above=0.)
             t = gcmd.get_float('T', None, above=0.)
             if p is None or t is None:
-                gcmd.respond_info('Invalid M204 command "%s"'
-                                  % (gcmd.get_commandline(),))
+                gcmd.respond_info("""{"code":"key73", "msg": "Invalid M204 command "%s"", "values": ["%s"]}"""
+                                  % (gcmd.get_commandline(),gcmd.get_commandline()))
                 return
             accel = min(p, t)
         self.toolhead.set_max_velocities(None, accel, None, None)

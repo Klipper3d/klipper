@@ -25,15 +25,15 @@ class SDCardLoop:
     def cmd_SDCARD_LOOP_BEGIN(self, gcmd):
         count = gcmd.get_int("COUNT", minval=0)
         if not self.loop_begin(count):
-            raise gcmd.error("Only permitted in SD file.")
+            raise gcmd.error("""{"code":"key176", "msg": "Only permitted in SD file.", "values": []}""")
     cmd_SDCARD_LOOP_END_help = "Ends a looped section in the SD file."
     def cmd_SDCARD_LOOP_END(self, gcmd):
         if not self.loop_end():
-            raise gcmd.error("Only permitted in SD file.")
+            raise gcmd.error("""{"code":"key176", "msg": "Only permitted in SD file.", "values": []}""")
     cmd_SDCARD_LOOP_DESIST_help = "Stops iterating the current loop stack."
     def cmd_SDCARD_LOOP_DESIST(self, gcmd):
         if not self.loop_desist():
-            raise gcmd.error("Only permitted outside of a SD file.")
+            raise gcmd.error("""{"code":"key177", "msg": "Only permitted outside of a SD file..", "values": []}""")
     def loop_begin(self, count):
         if not self.sdcard.is_cmd_from_sd():
             # Can only run inside of an SD file

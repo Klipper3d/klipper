@@ -3,7 +3,7 @@
 # Copyright (C) 2020  Eric Callahan <arksine.code@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-
+import os, json, logging
 class PrintStats:
     def __init__(self, config):
         printer = config.get_printer()
@@ -29,17 +29,35 @@ class PrintStats:
     def set_current_file(self, filename):
         self.reset()
         self.filename = filename
-    def note_start(self):
+    def note_start(self, info_path=""):
         curtime = self.reactor.monotonic()
+        # if self.print_start_time is None:
+        #     self.print_start_time = curtime
+        # elif self.last_pause_time is not None:
+        #     # Update pause time duration
+        #     pause_duration = curtime - self.last_pause_time
+        #     self.prev_pause_duration += pause_duration
+        #     self.last_pause_time = None
+        # Reset last e-position
+        gc_status = self.gcode_move.get_status(curtime)
+        ret = {}
+        if info_path and os.path.exists(info_path):
+            try:
+                with open(info_path, "r") as f:
+                    ret = json.loads(f.read())
+                    self.filament_used = ret.get("filament_used", 0)
+            except Exception as err:
+                pass
         if self.print_start_time is None:
-            self.print_start_time = curtime
+            if info_path and ret and ret.get("last_print_duration"):
+                self.print_start_time = curtime - int(ret.get("last_print_duration", 0))
+            else:
+                self.print_start_time = curtime
         elif self.last_pause_time is not None:
             # Update pause time duration
             pause_duration = curtime - self.last_pause_time
             self.prev_pause_duration += pause_duration
             self.last_pause_time = None
-        # Reset last e-position
-        gc_status = self.gcode_move.get_status(curtime)
         self.last_epos = gc_status['position'].e
         self.state = "printing"
         self.error_message = ""
@@ -110,6 +128,7 @@ class PrintStats:
                 # Track duration prior to extrusion
                 self.init_duration = self.total_duration - time_paused
         print_duration = self.total_duration - self.init_duration - time_paused
+        self.print_duration = print_duration
         return {
             'filename': self.filename,
             'total_duration': self.total_duration,
@@ -118,7 +137,9 @@ class PrintStats:
             'state': self.state,
             'message': self.error_message,
             'info': {'total_layer': self.info_total_layer,
-                     'current_layer': self.info_current_layer}
+                     'current_layer': self.info_current_layer},
+            'power_loss': self.power_loss,
+            'z_pos': self.z_pos,
         }
 
 def load_config(config):

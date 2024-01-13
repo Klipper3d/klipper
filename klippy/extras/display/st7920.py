@@ -147,7 +147,7 @@ class ST7920(DisplayBase):
         mcu = None
         for pin_params in pins:
             if mcu is not None and pin_params['chip'] != mcu:
-                raise ppins.error("st7920 all pins must be on same mcu")
+                raise ppins.error("""{"code":"key105", "msg": "st7920 all pins must be on same mcu", "values": []}""")
             mcu = pin_params['chip']
         self.pins = [pin_params['pin'] for pin_params in pins]
         # prepare send functions
@@ -217,8 +217,8 @@ class EmulatedST7920(DisplayBase):
         mcu = None
         for pin_params in sw_pin_params:
             if mcu is not None and pin_params['chip'] != mcu:
-                raise ppins.error("%s: spi pins must be on same mcu" % (
-                    config.get_name(),))
+                raise ppins.error("""{"code":"key231", "msg":"%s spi pins must be on same mcu", "values": ["%s"]}""" % (
+                    config.get_name(), config.get_name()))
             mcu = pin_params['chip']
         sw_pins = tuple([pin_params['pin'] for pin_params in sw_pin_params])
         speed = config.getint('spi_speed', 1000000, minval=100000)

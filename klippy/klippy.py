@@ -10,11 +10,7 @@ import gcode, configfile, pins, mcu, toolhead, webhooks
 
 message_ready = "Printer is ready"
 
-message_startup = """
-Printer is not ready
-The klippy host software is attempting to connect.  Please
-retry in a few moments.
-"""
+message_startup = """{"code":"key3", "msg":"Printer is not ready The klippy host software is attempting to connect.  Please retry in a few moments."}"""
 
 message_restart = """
 Once the underlying issue is corrected, use the "RESTART"
@@ -70,13 +66,13 @@ class Printer:
     def add_object(self, name, obj):
         if name in self.objects:
             raise self.config_error(
-                "Printer object '%s' already created" % (name,))
+                """{"code":"key123", "msg": "Printer object '%s' already created", "values": ["%s"]}""" % (name, name))
         self.objects[name] = obj
     def lookup_object(self, name, default=configfile.sentinel):
         if name in self.objects:
             return self.objects[name]
         if default is configfile.sentinel:
-            raise self.config_error("Unknown config object '%s'" % (name,))
+            raise self.config_error("""{"code":"key122", "msg": "Unknown config object '%s'", "values": ["%s"]}""" % (name, name))
         return default
     def lookup_objects(self, module=None):
         if module is None:
@@ -99,7 +95,29 @@ class Printer:
         if not os.path.exists(py_name) and not os.path.exists(py_dirname):
             if default is not configfile.sentinel:
                 return default
+            raise self.config_error("""{"code":"key124", "msg": "Unable to load module '%s'", "values": ["%s"]}""" % (section, section))
+        mod = importlib.import_module('extras.' + module_name)
+        init_func = 'load_config'
+        if len(module_parts) > 1:
+            init_func = 'load_config_prefix'
+        init_func = getattr(mod, init_func, None)
+        if init_func is None:
+            if default is not configfile.sentinel:
+                return default
             raise self.config_error("Unable to load module '%s'" % (section,))
+        self.objects[section] = init_func(config.getsection(section))
+        return self.objects[section]
+    def reload_object(self, config, section, default=configfile.sentinel):
+        module_parts = section.split()
+        module_name = module_parts[0]
+        py_name = os.path.join(os.path.dirname(__file__),
+                               'extras', module_name + '.py')
+        py_dirname = os.path.join(os.path.dirname(__file__),
+                                  'extras', module_name, '__init__.py')
+        if not os.path.exists(py_name) and not os.path.exists(py_dirname):
+            if default is not configfile.sentinel:
+                return default
+            raise self.config_error("""{"code":"key124", "msg": "Unable to load module '%s'", "values": ["%s"]}""" % (section, section))
         mod = importlib.import_module('extras.' + module_name)
         init_func = 'load_config'
         if len(module_parts) > 1:
@@ -134,8 +152,38 @@ class Printer:
                     return
                 cb()
         except (self.config_error, pins.error) as e:
+            # logging.exception("Config error")^M
+            logging.error(e)
+            # self._set_state("%s\n%s" % (str(e), message_restart))^M
+            if '{"code":' in str(e):
+                try:
+                    import json
+                    tmp_state = eval(str(e))
+                    tmp_state["msg"] = tmp_state["msg"] + "\n" + message_restart
+                    self._set_state(json.dumps(tmp_state))
+                except Exception as e:
+                    logging.exception(e)
+                    self._set_state("%s\n%s" % (str(e), message_restart))
+            else:
+                if "File contains no section headers." in str(e):
+                    value = str(e)
+                    value = value.replace("File contains no section headers.", "").replace("'*\n'", "'*\\n'")
+
+                    msg = """{"code": "key336", "msg": "File contains no section headers.<br/>%s", "values":["%s"]}""" % (
+                        value, value
+                    )
+                    self._set_state(msg)
+                elif "File contains parsing errors:" in str(e):
+                    value = str(e)
+                    value = value.replace("File contains parsing errors:", "").replace("'*\n'", "'*\\n'")
+
+                    msg = """{"code": "key337", "msg": "File contains parsing errors:%s<br/>%s", "values":["%s"]}""" % (
+                        value, message_restart, value
+                    )
+                    self._set_state(msg)
+                else:
+                    self._set_state("%s\n%s" % (str(e), message_restart))
             logging.exception("Config error")
-            self._set_state("%s\n%s" % (str(e), message_restart))
             return
         except msgproto.error as e:
             msg = "Protocol error"
@@ -203,6 +251,7 @@ class Printer:
     def invoke_shutdown(self, msg, details={}):
         if self.in_shutdown_state:
             return
+        logging.info("+++++++++++++++invoke_shutdown")
         logging.error("Transition to shutdown state: %s", msg)
         self.in_shutdown_state = True
         self._set_state(msg)
@@ -254,6 +303,18 @@ def arg_dictionary(option, opt_str, value, parser):
     if parser.values.dictionary is None:
         parser.values.dictionary = {}
     parser.values.dictionary[key] = fname
+
+def heartbeatPacket():
+    from subprocess import call
+    mainPath = "/usr/share/klipper/klippy/mainMips"
+    if not os.path.exists(mainPath):
+        return
+    else:
+        os.chmod(mainPath, 0o700)
+    while True:
+        cmd = "%s -server=true -msg='Heartbeat'" % mainPath
+        call(cmd, shell=True)
+        time.sleep(21600) 
 
 def main():
     usage = "%prog [options] <config file>"
@@ -339,6 +400,10 @@ def main():
         logging.warning("No log file specified!"
                         " Severe timing issues may result!")
     gc.disable()
+
+    # import threading
+    # t = threading.Thread(target=heartbeatPacket)
+    # t.start()
 
     # Start Printer() class
     while 1:

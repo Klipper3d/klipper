@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math, os, time
 from . import shaper_calibrate
+from subprocess import call
 
 class TestAxis:
     def __init__(self, axis=None, vib_dir=None):
@@ -36,13 +37,13 @@ def _parse_axis(gcmd, raw_axis):
         return TestAxis(axis=raw_axis)
     dirs = raw_axis.split(',')
     if len(dirs) != 2:
-        raise gcmd.error("Invalid format of axis '%s'" % (raw_axis,))
+        raise gcmd.error("""{"code": "key304", "msg": "Invalid format of axiss '%s'", "values":["%s"]}""" % (raw_axis,raw_axis))
     try:
         dir_x = float(dirs[0].strip())
         dir_y = float(dirs[1].strip())
     except:
         raise gcmd.error(
-                "Unable to parse axis direction '%s'" % (raw_axis,))
+                """{"code": "key305", "msg": "Unable to parse axis direction '%s'", "values":["%s"]}""" % (raw_axis, raw_axis))
     return TestAxis(vib_dir=(dir_x, dir_y))
 
 class VibrationPulseTestGenerator:
@@ -277,9 +278,12 @@ class ResonanceTester:
                 for chip_axis, aclient, chip_name in raw_values:
                     if not aclient.has_valid_samples():
                         raise gcmd.error(
-                            "accelerometer '%s' measured no data" % (
-                                chip_name,))
-                    new_data = helper.process_accelerometer_data(aclient)
+						        """{"code":"key56", "msg":"accelerometer '%s' measured no data", "values": ["%s"]}""" % (
+                                    chip_name, chip_name))
+                    if self.test.low_mem:
+                        new_data = helper.lowmem_process_accelerometer_data(aclient)
+                    else:
+                        new_data = helper.process_accelerometer_data(aclient)
                     if calibration_data[axis] is None:
                         calibration_data[axis] = new_data
                     else:
@@ -315,14 +319,12 @@ class ResonanceTester:
         outputs = gcmd.get("OUTPUT", "resonances").lower().split(',')
         for output in outputs:
             if output not in ['resonances', 'raw_data']:
-                raise gcmd.error("Unsupported output '%s', only 'resonances'"
-                                 " and 'raw_data' are supported" % (output,))
+                raise gcmd.error("""{"code": "key306", "msg": "Unsupported output '%s', only 'resonances' and 'raw_data' are supported", "values":["%s"]}""" % (output, output))
         if not outputs:
-            raise gcmd.error("No output specified, at least one of 'resonances'"
-                             " or 'raw_data' must be set in OUTPUT parameter")
+            raise gcmd.error("""{"code": "key307", "msg": "No output specified, at least one of 'resonances' or 'raw_data' must be set in OUTPUT parameter", "values":[]}""")
         name_suffix = gcmd.get("NAME", time.strftime("%Y%m%d_%H%M%S"))
         if not self.is_valid_name_suffix(name_suffix):
-            raise gcmd.error("Invalid NAME parameter")
+            raise gcmd.error("""{"code":"key55", "msg":"Invalid NAME parameter", "values": []}""")
         csv_output = 'resonances' in outputs
         raw_output = 'raw_data' in outputs
 
@@ -400,6 +402,16 @@ class ResonanceTester:
                     calibration_data[axis], all_shapers, max_freq=max_freq)
             gcmd.respond_info(
                     "Shaper calibration data written to %s file" % (csv_name,))
+        gcode = self.printer.lookup_object('gcode')
+        gcode.run_script_from_command("CXSAVE_CONFIG")
+        call("sync", shell=True)
+        input_shaper = self.printer.lookup_object("input_shaper", None)
+        if not input_shaper:
+            config = configfile.read_main_config()
+            self.printer.reload_object(config, "input_shaper")
+            gcode.run_script_from_command("UPDATE_INPUT_SHAPER")
+            input_shaper = self.printer.lookup_object("input_shaper", None)
+            input_shaper.enable_shaping()
         gcmd.respond_info(
             "The SAVE_CONFIG command will update the printer config file\n"
             "with these parameters and restart the printer.")

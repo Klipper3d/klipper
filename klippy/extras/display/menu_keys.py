@@ -23,7 +23,7 @@ class MenuKeys:
             try:
                 pin1, pin2 = encoder_pins.split(',')
             except:
-                raise config.error("Unable to parse encoder_pins")
+                raise config.error("""{"code":"key230", "msg":"Unable to parse encoder_pins", "values": []}""")
             buttons.register_rotary_encoder(pin1.strip(), pin2.strip(),
                                             self.encoder_cw_callback,
                                             self.encoder_ccw_callback,
@@ -105,4 +105,4 @@ class MenuKeys:
         self.callback('down', eventtime)
 
     def kill_callback(self, eventtime):
-        self.printer.invoke_shutdown("Shutdown due to kill button!")
+        self.printer.invoke_shutdown("""{"code":"key190", "msg": "Shutdown due to kill button!", "values": []}""")

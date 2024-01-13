@@ -28,8 +28,8 @@ class HomingHeaters:
         else:
             if not all(x in all_heaters for x in self.disable_heaters):
                 raise self.printer.config_error(
-                    "One or more of these heaters are unknown: %s"
-                    % (self.disable_heaters,))
+                    """{"code":"key68", "msg": "One or more of these heaters are unknown: %s", "values": ["%s"]}"""
+                    % (self.disable_heaters,self.disable_heaters,))
         # steppers valid?
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         all_steppers = [s.get_name() for s in kin.get_steppers()]
@@ -37,8 +37,8 @@ class HomingHeaters:
             return
         if not all(x in all_steppers for x in self.flaky_steppers):
             raise self.printer.config_error(
-                "One or more of these steppers are unknown: %s"
-                % (self.flaky_steppers,))
+                """{"code":"key67", "msg":"One or more of these steppers are unknown: %s", "values": ["%s"]}"""
+                % (self.flaky_steppers, self.flaky_steppers,))
     def check_eligible(self, endstops):
         if self.flaky_steppers is None:
             return True

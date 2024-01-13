@@ -37,9 +37,8 @@ class ControllerFan:
             return
         if not all(x in all_steppers for x in self.stepper_names):
             raise self.printer.config_error(
-                "One or more of these steppers are unknown: "
-                 "%s (valid steppers are: %s)"
-                % (self.stepper_names, ", ".join(all_steppers)))
+                """{"code":"key66", "msg":"One or more of these steppers are unknown: %s (valid steppers are: %s)", "values": ["%s", "%s"]}"""
+                % (self.stepper_names, ", ".join(all_steppers), self.stepper_names, ", ".join(all_steppers)))
     def handle_ready(self):
         reactor = self.printer.get_reactor()
         reactor.register_timer(self.callback, reactor.monotonic()+PIN_MIN_TIME)

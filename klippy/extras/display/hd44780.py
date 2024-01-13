@@ -28,7 +28,7 @@ class HD44780:
         mcu = None
         for pin_params in pins:
             if mcu is not None and pin_params['chip'] != mcu:
-                raise ppins.error("hd44780 all pins must be on same mcu")
+                raise ppins.error("""{"code":"key224", "msg":"hd44780 all pins must be on same mcu'", "values": []}""")
             mcu = pin_params['chip']
         self.pins = [pin_params['pin'] for pin_params in pins]
         self.mcu = mcu

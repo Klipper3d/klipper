@@ -36,8 +36,12 @@ class DisplayTemplate:
                 self.params[option] = ast.literal_eval(config.get(option))
             except ValueError as e:
                 raise config.error(
-                    "Option '%s' in section '%s' is not a valid literal" % (
-                        option, config.get_name()))
+                    # "Option '%s' in section '%s' is not a valid literal" % (
+                    #     option, config.get_name())
+                    """{"code":"key168", "msg": "Option '%s' in section '%s' is not a valid literal", "values": ["%s", "%s"]}""" % (
+                        option, config.get_name(), option, config.get_name()
+                    )
+                )
         gcode_macro = self.printer.load_object(config, 'gcode_macro')
         self.template = gcode_macro.load_template(config, 'text')
     def get_params(self):
@@ -47,7 +51,7 @@ class DisplayTemplate:
         params.update(**kwargs)
         if len(params) != len(self.params):
             raise self.printer.command_error(
-                "Invalid parameter to display_template %s" % (self.name,))
+                """{"code":"key219", "msg":"Invalid parameter to display_template %s", "values": ["%s"]}""" % (self.name, self.name))
         context = dict(context)
         context.update(params)
         return self.template.render(context)
@@ -62,8 +66,8 @@ class DisplayGroup:
             try:
                 row, col = [int(v.strip()) for v in pos.split(',')]
             except:
-                raise config.error("Unable to parse 'position' in section '%s'"
-                                   % (c.get_name(),))
+                raise config.error("""{"code":"key41", "msg":"Unable to parse 'position' in section '%s'", "values": ["%s"]}"""
+                                   % (c.get_name(), c.get_name()))
             items.append((row, col, c.get_name()))
         # Load all templates and store sorted by display position
         configs_by_name = {c.get_name(): c for c in data_configs}
@@ -265,7 +269,7 @@ class PrinterLCD:
         group = gcmd.get('GROUP')
         new_dg = self.display_data_groups.get(group)
         if new_dg is None:
-            raise gcmd.error("Unknown display_data group '%s'" % (group,))
+            raise gcmd.error("""{"code":"key220", "msg":"Unknown display_data group '%s'", "values": ["%s"]}""" % (group,group))
         self.show_data_group = new_dg
 
 def load_config(config):

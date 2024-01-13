@@ -13,6 +13,24 @@
 #include "command.h" // output_P
 #include "sched.h" // sched_is_shutdown
 
+/*
+ *********************************************************************
+		The format of frimware version string is Xy.y.y. This X 
+		stands for MCU menufacturer, S is for STMicroelectornics 
+		and A is for Artery. y.y.y is building sequence number that  
+	   	starts at 0.0.1.	
+ **********************************************************************
+*/
+#include "autoconf.h"
+#define BUILD_MACHINE_UID   CONFIG_BUILD_MACHINE_UID __DATE__ __TIME__
+DECL_CONSTANT_STR("build_machine_uid", BUILD_MACHINE_UID);
+
+#if CONFIG_BOARD_INFO_CONFIGURE
+#define FIRMWARE_VERSION BOARD_FW_VERSION
+//DECL_CONSTANT_STR("firmware_version", FIRMWARE_VERSION);
+static const char software_version[32] __attribute__ ((section("SV_SECTION"))) __attribute__((used)) = FIRMWARE_VERSION;
+#endif
+
 static uint8_t next_sequence = MESSAGE_DEST;
 
 static uint32_t
