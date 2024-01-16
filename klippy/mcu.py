@@ -185,21 +185,24 @@ class MCU_trsync:
                 self._home_end_clock = None
                 self._trsync_trigger_cmd.send([self._oid,
                                                self.REASON_PAST_END_TIME])
-    def start(self, print_time, trigger_completion, expire_timeout):
+    def start(self, print_time, report_offset,
+              trigger_completion, expire_timeout):
         self._trigger_completion = trigger_completion
         self._home_end_clock = None
         clock = self._mcu.print_time_to_clock(print_time)
         expire_ticks = self._mcu.seconds_to_clock(expire_timeout)
         expire_clock = clock + expire_ticks
-        report_ticks = self._mcu.seconds_to_clock(expire_timeout * .4)
-        min_extend_ticks = self._mcu.seconds_to_clock(expire_timeout * .4 * .8)
+        report_ticks = self._mcu.seconds_to_clock(expire_timeout * .3)
+        report_clock = clock + int(report_ticks * report_offset + .5)
+        min_extend_ticks = int(report_ticks * .8 + .5)
         ffi_main, ffi_lib = chelper.get_ffi()
         ffi_lib.trdispatch_mcu_setup(self._trdispatch_mcu, clock, expire_clock,
                                      expire_ticks, min_extend_ticks)
         self._mcu.register_response(self._handle_trsync_state,
                                     "trsync_state", self._oid)
-        self._trsync_start_cmd.send([self._oid, clock, report_ticks,
-                                     self.REASON_COMMS_TIMEOUT], reqclock=clock)
+        self._trsync_start_cmd.send([self._oid, report_clock, report_ticks,
+                                     self.REASON_COMMS_TIMEOUT],
+                                    reqclock=report_clock)
         for s in self._steppers:
             self._stepper_stop_cmd.send([s.get_oid(), self._oid])
         self._trsync_set_timeout_cmd.send([self._oid, expire_clock],
@@ -283,8 +286,10 @@ class MCU_endstop:
         expire_timeout = TRSYNC_TIMEOUT
         if len(self._trsyncs) == 1:
             expire_timeout = TRSYNC_SINGLE_MCU_TIMEOUT
-        for trsync in self._trsyncs:
-            trsync.start(print_time, self._trigger_completion, expire_timeout)
+        for i, trsync in enumerate(self._trsyncs):
+            report_offset = float(i) / len(self._trsyncs)
+            trsync.start(print_time, report_offset,
+                         self._trigger_completion, expire_timeout)
         etrsync = self._trsyncs[0]
         ffi_main, ffi_lib = chelper.get_ffi()
         ffi_lib.trdispatch_start(self._trdispatch, etrsync.REASON_HOST_REQUEST)
