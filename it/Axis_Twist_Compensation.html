@@ -13,7 +13,7 @@
     
     
       
-        <title>Axis Twist Compensation - Documentazione Klipper</title>
+        <title>Compensazione torsione assi - Documentazione Klipper</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#axis-twist-compensation" class="md-skip">
+        <a href="#compensazione-torsione-assi" class="md-skip">
           Vai al contenuto
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Axis Twist Compensation
+              Compensazione torsione assi
             
           </span>
         </div>
@@ -636,12 +636,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Axis Twist Compensation
+          Compensazione torsione assi
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="Axis_Twist_Compensation.html" class="md-nav__link md-nav__link--active">
-        Axis Twist Compensation
+        Compensazione torsione assi
       </a>
       
         
@@ -1236,7 +1236,7 @@
   
     <li class="md-nav__item">
       <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
-        CANBUS Troubleshooting
+        Risoluzione dei problemi CANBUS
       </a>
     </li>
   
@@ -1349,11 +1349,11 @@
 </a>
 
 
-<h1 id="axis-twist-compensation">Axis Twist Compensation<a class="headerlink" href="#axis-twist-compensation" title="Permanent link">&para;</a></h1>
-<p>This document describes the [axis_twist_compensation] module.</p>
+<h1 id="compensazione-torsione-assi">Compensazione torsione assi<a class="headerlink" href="#compensazione-torsione-assi" title="Permanent link">&para;</a></h1>
+<p>Questo documento descrive il modulo [axis_twist_compensation].</p>
 <p>Some printers may have a small twist in their X rail which can skew the results of a probe attached to the X carriage. This is common in printers with designs like the Prusa MK3, Sovol SV06 etc and is further described under <a href="Probe_Calibrate.html#location-bias-check">probe location
 bias</a>. It may result in probe operations such as <a href="Bed_Mesh.html">Bed Mesh</a>, <a href="G-Codes.html#screws_tilt_adjust">Screws Tilt Adjust</a>, <a href="G-Codes.html#z_tilt_adjust">Z Tilt Adjust</a> etc returning inaccurate representations of the bed.</p>
-<p>This module uses manual measurements by the user to correct the probe's results. Note that if your axis is significantly twisted it is strongly recommended to first use mechanical means to fix it prior to applying software corrections.</p>
+<p>Questo modulo utilizza misurazioni manuali da parte dell'utente per correggere i risultati della sonda. Tieni presente che se l'asse è notevolmente distorto, ti consigliamo vivamente di utilizzare mezzi meccanici per ripararlo prima di applicare le correzioni del software.</p>
 <p><strong>Warning</strong>: This module is not compatible with dockable probes yet and will try to probe the bed without attaching the probe if you use it.</p>
 <h2 id="overview-of-compensation-usage">Overview of compensation usage<a class="headerlink" href="#overview-of-compensation-usage" title="Permanent link">&para;</a></h2>
 <blockquote>
