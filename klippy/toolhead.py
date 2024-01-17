@@ -1,6 +1,6 @@
 # Code for coordinating events on the printer toolhead
 #
-# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2024  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, importlib
@@ -191,6 +191,7 @@ BUFFER_TIME_HIGH = 2.0
 BUFFER_TIME_START = 0.250
 BGFLUSH_LOW_TIME = 0.200
 BGFLUSH_BATCH_TIME = 0.200
+BGFLUSH_EXTRA_TIME = 0.250
 MIN_KIN_TIME = 0.100
 MOVE_BATCH_TIME = 0.500
 STEPCOMPRESS_FLUSH_TIME = 0.050
@@ -428,14 +429,15 @@ class ToolHead:
                     self.check_stall_time = self.print_time
             # In "NeedPrime"/"Priming" state - flush queues if needed
             while 1:
-                if self.last_flush_time >= self.need_flush_time:
+                end_flush = self.need_flush_time + BGFLUSH_EXTRA_TIME
+                if self.last_flush_time >= end_flush:
                     self.do_kick_flush_timer = True
                     return self.reactor.NEVER
                 buffer_time = self.last_flush_time - est_print_time
                 if buffer_time > BGFLUSH_LOW_TIME:
                     return eventtime + buffer_time - BGFLUSH_LOW_TIME
                 ftime = est_print_time + BGFLUSH_LOW_TIME + BGFLUSH_BATCH_TIME
-                self._advance_flush_time(min(self.need_flush_time, ftime))
+                self._advance_flush_time(min(end_flush, ftime))
         except:
             logging.exception("Exception in flush_handler")
             self.printer.invoke_shutdown("Exception in flush_handler")
