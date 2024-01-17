@@ -239,7 +239,7 @@ class ToolHead:
         # Flush tracking
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
         self.do_kick_flush_timer = True
-        self.last_flush_time = self.last_sg_flush_time = 0.
+        self.last_flush_time = self.min_restart_time = 0.
         self.need_flush_time = self.step_gen_time = self.clear_history_time = 0.
         # Kinematic step generation scan window time tracking
         self.kin_flush_delay = SDS_CHECK_TIME
@@ -289,7 +289,7 @@ class ToolHead:
         sg_flush_time = max(sg_flush_want, flush_time)
         for sg in self.step_generators:
             sg(sg_flush_time)
-        self.last_sg_flush_time = sg_flush_time
+        self.min_restart_time = max(self.min_restart_time, sg_flush_time)
         # Free trapq entries that are no longer needed
         clear_history_time = self.clear_history_time
         if not self.can_pause:
@@ -314,7 +314,7 @@ class ToolHead:
     def _calc_print_time(self):
         curtime = self.reactor.monotonic()
         est_print_time = self.mcu.estimated_print_time(curtime)
-        kin_time = max(est_print_time + MIN_KIN_TIME, self.last_sg_flush_time)
+        kin_time = max(est_print_time + MIN_KIN_TIME, self.min_restart_time)
         kin_time += self.kin_flush_delay
         min_print_time = max(est_print_time + BUFFER_TIME_START, kin_time)
         if min_print_time > self.print_time:
@@ -361,6 +361,7 @@ class ToolHead:
     def flush_step_generation(self):
         self._flush_lookahead()
         self._advance_flush_time(self.step_gen_time)
+        self.min_restart_time = max(self.min_restart_time, self.print_time)
     def get_last_move_time(self):
         if self.special_queuing_state:
             self._flush_lookahead()
