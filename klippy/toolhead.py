@@ -349,8 +349,8 @@ class ToolHead:
         # Generate steps for moves
         if self.special_queuing_state:
             self._update_drip_move_time(next_move_time)
-        self.note_kinematic_activity(next_move_time + self.kin_flush_delay,
-                                     set_step_gen_time=True)
+        self.note_mcu_movequeue_activity(next_move_time + self.kin_flush_delay,
+                                         set_step_gen_time=True)
         self._advance_move_time(next_move_time)
     def _flush_lookahead(self):
         # Transit from "NeedPrime"/"Priming"/"Drip"/main state to "NeedPrime"
@@ -503,8 +503,8 @@ class ToolHead:
                 self.drip_completion.wait(curtime + wait_time)
                 continue
             npt = min(self.print_time + DRIP_SEGMENT_TIME, next_print_time)
-            self.note_kinematic_activity(npt + self.kin_flush_delay,
-                                         set_step_gen_time=True)
+            self.note_mcu_movequeue_activity(npt + self.kin_flush_delay,
+                                             set_step_gen_time=True)
             self._advance_move_time(npt)
     def drip_move(self, newpos, speed, drip_completion):
         self.dwell(self.kin_flush_delay)
@@ -588,10 +588,10 @@ class ToolHead:
             callback(self.get_last_move_time())
             return
         last_move.timing_callbacks.append(callback)
-    def note_kinematic_activity(self, kin_time, set_step_gen_time=False):
-        self.need_flush_time = max(self.need_flush_time, kin_time)
+    def note_mcu_movequeue_activity(self, mq_time, set_step_gen_time=False):
+        self.need_flush_time = max(self.need_flush_time, mq_time)
         if set_step_gen_time:
-            self.step_gen_time = max(self.step_gen_time, kin_time)
+            self.step_gen_time = max(self.step_gen_time, mq_time)
         if self.do_kick_flush_timer:
             self.do_kick_flush_timer = False
             self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
