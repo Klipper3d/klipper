@@ -1562,8 +1562,9 @@ provides further information on the mechanics of moves.</p>
 <ul>
 <li>The ToolHead class (in toolhead.py) handles "look-ahead" and tracks
   the timing of printing actions. The main codepath for a move is:
-  <code>ToolHead.move() -&gt; MoveQueue.add_move() -&gt; MoveQueue.flush() -&gt;
-  Move.set_junction() -&gt; ToolHead._process_moves()</code>.<ul>
+  <code>ToolHead.move() -&gt; LookAheadQueue.add_move() -&gt;
+  LookAheadQueue.flush() -&gt; Move.set_junction() -&gt;
+  ToolHead._process_moves()</code>.<ul>
 <li>ToolHead.move() creates a Move() object with the parameters of the
 move (in cartesian space and in units of seconds and millimeters).</li>
 <li>The kinematics class is given the opportunity to audit each move
@@ -1572,10 +1573,10 @@ located in the klippy/kinematics/ directory. The check_move() code
 may raise an error if the move is not valid. If check_move()
 completes successfully then the underlying kinematics must be able
 to handle the move.</li>
-<li>MoveQueue.add_move() places the move object on the "look-ahead"
-queue.</li>
-<li>MoveQueue.flush() determines the start and end velocities of each
-move.</li>
+<li>LookAheadQueue.add_move() places the move object on the
+"look-ahead" queue.</li>
+<li>LookAheadQueue.flush() determines the start and end velocities of
+each move.</li>
 <li>Move.set_junction() implements the "trapezoid generator" on a
 move. The "trapezoid generator" breaks every move into three parts:
 a constant acceleration phase, followed by a constant velocity
@@ -1599,17 +1600,18 @@ millimeters and seconds.</li>
   placed on a "trapezoid motion queue": <code>ToolHead._process_moves() -&gt;
   trapq_append()</code> (in klippy/chelper/trapq.c). The step times are then
   generated: <code>ToolHead._process_moves() -&gt;
-  ToolHead._update_move_time() -&gt; MCU_Stepper.generate_steps() -&gt;
-  itersolve_generate_steps() -&gt; itersolve_gen_steps_range()</code> (in
-  klippy/chelper/itersolve.c). The goal of the iterative solver is to
-  find step times given a function that calculates a stepper position
-  from a time. This is done by repeatedly "guessing" various times
-  until the stepper position formula returns the desired position of
-  the next step on the stepper. The feedback produced from each guess
-  is used to improve future guesses so that the process rapidly
-  converges to the desired time. The kinematic stepper position
-  formulas are located in the klippy/chelper/ directory (eg,
-  kin_cart.c, kin_corexy.c, kin_delta.c, kin_extruder.c).</li>
+  ToolHead._advance_move_time() -&gt; ToolHead._advance_flush_time() -&gt;
+  MCU_Stepper.generate_steps() -&gt; itersolve_generate_steps() -&gt;
+  itersolve_gen_steps_range()</code> (in klippy/chelper/itersolve.c). The
+  goal of the iterative solver is to find step times given a function
+  that calculates a stepper position from a time. This is done by
+  repeatedly "guessing" various times until the stepper position
+  formula returns the desired position of the next step on the
+  stepper. The feedback produced from each guess is used to improve
+  future guesses so that the process rapidly converges to the desired
+  time. The kinematic stepper position formulas are located in the
+  klippy/chelper/ directory (eg, kin_cart.c, kin_corexy.c,
+  kin_delta.c, kin_extruder.c).</li>
 </ul>
 <ul>
 <li>Note that the extruder is handled in its own kinematic class:
