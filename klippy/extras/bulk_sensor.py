@@ -114,7 +114,7 @@ class BatchWebhooksClient:
 
 # Helper class to store incoming messages in a queue
 class BulkDataQueue:
-    def __init__(self, mcu, msg_name, oid):
+    def __init__(self, mcu, msg_name="sensor_bulk_data", oid=None):
         # Measurement storage (accessed from background thread)
         self.lock = threading.Lock()
         self.raw_samples = []
@@ -206,31 +206,37 @@ class ChipClockUpdater:
         self.clock_sync = clock_sync
         self.bytes_per_sample = bytes_per_sample
         self.samples_per_block = MAX_BULK_MSG_SIZE // bytes_per_sample
-        self.mcu = clock_sync.mcu
         self.last_sequence = self.max_query_duration = 0
-        self.last_limit_count = 0
+        self.last_overflows = 0
+        self.mcu = self.oid = self.query_status_cmd = None
+    def setup_query_command(self, mcu, msgformat, oid, cq):
+        self.mcu = mcu
+        self.oid = oid
+        self.query_status_cmd = self.mcu.lookup_query_command(
+            msgformat, "sensor_bulk_status oid=%c clock=%u query_ticks=%u"
+            " next_sequence=%hu buffered=%u possible_overflows=%hu",
+            oid=oid, cq=cq)
     def get_last_sequence(self):
         return self.last_sequence
-    def get_last_limit_count(self):
-        return self.last_limit_count
+    def get_last_overflows(self):
+        return self.last_overflows
     def clear_duration_filter(self):
         self.max_query_duration = 1 << 31
-    def note_start(self, reqclock):
+    def note_start(self):
         self.last_sequence = 0
-        self.last_limit_count = 0
-        self.clock_sync.reset(reqclock, 0)
+        self.last_overflows = 0
+        # Set initial clock
         self.clear_duration_filter()
-    def update_clock(self, params):
-        # Handle a status response message of the form:
-        #   adxl345_status oid=x clock=x query_ticks=x next_sequence=x
-        #     buffered=x fifo=x limit_count=x
-        fifo = params['fifo']
+        self.update_clock(is_reset=True)
+        self.clear_duration_filter()
+    def update_clock(self, is_reset=False):
+        params = self.query_status_cmd.send([self.oid])
         mcu_clock = self.mcu.clock32_to_clock64(params['clock'])
         seq_diff = (params['next_sequence'] - self.last_sequence) & 0xffff
         self.last_sequence += seq_diff
         buffered = params['buffered']
-        lc_diff = (params['limit_count'] - self.last_limit_count) & 0xffff
-        self.last_limit_count += lc_diff
+        po_diff = (params['possible_overflows'] - self.last_overflows) & 0xffff
+        self.last_overflows += po_diff
         duration = params['query_ticks']
         if duration > self.max_query_duration:
             # Skip measurement as a high query time could skew clock tracking
@@ -239,9 +245,13 @@ class ChipClockUpdater:
             return
         self.max_query_duration = 2 * duration
         msg_count = (self.last_sequence * self.samples_per_block
-                     + buffered // self.bytes_per_sample + fifo)
+                     + buffered // self.bytes_per_sample)
         # The "chip clock" is the message counter plus .5 for average
         # inaccuracy of query responses and plus .5 for assumed offset
         # of hardware processing time.
         chip_clock = msg_count + 1
-        self.clock_sync.update(mcu_clock + duration // 2, chip_clock)
+        avg_mcu_clock = mcu_clock + duration // 2
+        if is_reset:
+            self.clock_sync.reset(avg_mcu_clock, chip_clock)
+        else:
+            self.clock_sync.update(avg_mcu_clock, chip_clock)
