@@ -166,8 +166,8 @@ class Printer:
         msg = ["MCU Protocol error",
                message_protocol_error1,
                "Your Klipper version is: %s" % (host_version,),
-               "MCU(s) which should be updated:"]
-        msg += msg_update + ["Up-to-date MCU(s):"] + msg_updated
+               "MCU(s) reporting a different version:"]
+        msg += msg_update + ["MCU(s) reporting the same version:"] + msg_updated
         msg += [message_protocol_error2, str(e)]
         return "\n".join(msg)
     def _connect(self, eventtime):
