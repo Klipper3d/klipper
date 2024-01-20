@@ -412,7 +412,7 @@ class HelperTLE5012B:
         self._write_reg(reg, val)
 
 BYTES_PER_SAMPLE = 3
-SAMPLES_PER_BLOCK = 16
+SAMPLES_PER_BLOCK = bulk_sensor.MAX_BULK_MSG_SIZE // BYTES_PER_SAMPLE
 
 SAMPLE_PERIOD = 0.000400
 BATCH_UPDATES = 0.100
@@ -437,7 +437,7 @@ class Angle:
         self.oid = oid = mcu.create_oid()
         self.sensor_helper = sensor_class(config, self.spi, oid)
         # Setup mcu sensor_spi_angle bulk query code
-        self.query_spi_angle_cmd = self.query_spi_angle_end_cmd = None
+        self.query_spi_angle_cmd = None
         mcu.add_config_cmd(
             "config_spi_angle oid=%d spi_oid=%d spi_angle_type=%s"
             % (oid, self.spi.get_oid(), sensor_type))
@@ -445,7 +445,7 @@ class Angle:
             "query_spi_angle oid=%d clock=0 rest_ticks=0 time_shift=0"
             % (oid,), on_restart=True)
         mcu.register_config_callback(self._build_config)
-        self.bulk_queue = bulk_sensor.BulkDataQueue(mcu, "spi_angle_data", oid)
+        self.bulk_queue = bulk_sensor.BulkDataQueue(mcu, oid=oid)
         # Process messages in batches
         self.batch_bulk = bulk_sensor.BatchBulkHelper(
             self.printer, self._process_batch,
@@ -462,9 +462,6 @@ class Angle:
         self.query_spi_angle_cmd = self.mcu.lookup_command(
             "query_spi_angle oid=%c clock=%u rest_ticks=%u time_shift=%c",
             cq=cmdqueue)
-        self.query_spi_angle_end_cmd = self.mcu.lookup_query_command(
-            "query_spi_angle oid=%c clock=%u rest_ticks=%u time_shift=%c",
-            "spi_angle_end oid=%c sequence=%hu", oid=self.oid, cq=cmdqueue)
     def get_status(self, eventtime=None):
         return {'temperature': self.sensor_helper.last_temperature}
     def add_client(self, client_cb):
@@ -543,7 +540,7 @@ class Angle:
                                        self.time_shift], reqclock=reqclock)
     def _finish_measurements(self):
         # Halt bulk reading
-        params = self.query_spi_angle_end_cmd.send([self.oid, 0, 0, 0])
+        self.query_spi_angle_cmd.send_wait_ack([self.oid, 0, 0, 0])
         self.bulk_queue.clear_samples()
         self.sensor_helper.last_temperature = None
         logging.info("Stopped angle '%s' measurements", self.name)
