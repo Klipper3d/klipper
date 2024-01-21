@@ -31,8 +31,7 @@ SECTIONS
         _text_vectortable_start = .;
         KEEP(*(.vector_table))
         _text_vectortable_end = .;
-        *(.text .text.*)
-        *(.rodata .rodata*)
+        *(.text.armcm_boot*)
     } > rom
 
     . = ALIGN(4);
@@ -42,7 +41,9 @@ SECTIONS
     {
         . = ALIGN(4);
         _data_start = .;
+        *(.text .text.*)
         *(.ramfunc .ramfunc.*);
+        *(.rodata .rodata*)
         *(.data .data.*);
         . = ALIGN(4);
         _data_end = .;
