@@ -25,8 +25,47 @@ application.  This document is not an authoritative reference; it is
 intended as a collection of useful information that the Klipper
 developers have accumulated.
 
-## AVR micro-controllers
+## katapult bootloader (LPC176x, STM32, RP2040)
 
+The [katapult](https://github.com/Arksine/katapult) (formerly known as CANBoot)
+bootloader provides an option for uploading Klipper firmware over the CANBUS,
+Serial and USB. The bootloader itself is derived from Klipper's source code.
+Currently katapult supports the LPC176x, STM32, and RP2040.
+
+It is recommended to use a ST-Link Programmer to flash katapult, however it
+should be possible to flash using `stm32flash` on STM32F103 devices, and
+`dfu-util` on STM32F042/STM32F072 devices.  See the
+[STM32](#stm32f103-micro-controllers-blue-pill-devices) sections in this
+document for instructions on these flashing methods, substituting `katapult.bin`
+for the file name where appropriate. The linked katapult repository provides
+instructions for building the bootloader.
+
+The first time katapult has been flashed it should detect that no application
+is present and enter the bootloader.  If this doesn't occur it is possible to
+enter the bootloader by pressing the reset button twice in succession.
+
+The `flash_can.py` utility supplied in the `lib/canboot` folder may be used to
+upload Klipper firmware.  The device UUID is necessary to flash.  If you do not
+have a UUID it is possible to query nodes currently running the bootloader:
+``` shell
+python3 flash_can.py -q
+```
+
+This will return UUIDs for all connected nodes not currently assigned a UUID.
+This should include all nodes currently in the bootloader.
+
+Once you have a UUID, you may upload firmware with following command:
+``` shell
+python3 flash_can.py -i can0 -f ../../out/klipper.bin -u aabbccddeeff
+```
+
+Where `aabbccddeeff` is replaced by your UUID.  Note that the `-i` and `-f`
+options may be omitted, they default to `can0` and `../../out/klipper.bin`
+respectively.
+
+When building Klipper for use with katapult, select the 8 KiB Bootloader option.
+
+## AVR micro-controllers
 
 In general, the Arduino project is a good reference for bootloaders
 and flashing procedures on the 8-bit Atmel Atmega micro-controllers.
@@ -450,44 +489,6 @@ This bootloader uses 8KiB or 16KiB of flash space, see description of the bootlo
 The bootloader can be activated by pressing the reset button of the board twice.
 As soon as the bootloader is activated, the board appears as a USB flash drive
 onto which the klipper.bin file can be copied.
-
-### STM32F103/STM32F0x2 with CanBoot bootloader
-
-The [CanBoot](https://github.com/Arksine/CanBoot) bootloader provides an option
-for uploading Klipper firmware over the CANBUS.  The bootloader itself is
-derived from Klipper's source code.  Currently CanBoot supports the STM32F103,
-STM32F042, and STM32F072 models.
-
-It is recommended to use a ST-Link Programmer to flash CanBoot, however it
-should be possible to flash using `stm32flash` on STM32F103 devices, and
-`dfu-util` on STM32F042/STM32F072 devices.  See the previous sections in this
-document for instructions on these flashing methods, substituting `canboot.bin`
-for the file name where appropriate.  The CanBoot repository linked above provides
-instructions for building the bootloader.
-
-The first time CanBoot has been flashed it should detect that no application
-is present and enter the bootloader.  If this doesn't occur it is possible to
-enter the bootloader by pressing the reset button twice in succession.
-
-The `flash_can.py` utility supplied in the `lib/canboot` folder may be used to
-upload Klipper firmware.  The device UUID is necessary to flash.  If you do not
-have a UUID it is possible to query nodes currently running the bootloader:
-```
-python3 flash_can.py -q
-```
-This will return UUIDs for all connected nodes not currently assigned a UUID.
-This should include all nodes currently in the bootloader.
-
-Once you have a UUID, you may upload firmware with following command:
-```
-python3 flash_can.py -i can0 -f out/klipper.bin -u aabbccddeeff
-```
-
-Where `aabbccddeeff` is replaced by your UUID.  Note that the `-i` and `-f`
-options may be omitted, they default to `can0` and `out/klipper.bin`
-respectively.
-
-When building Klipper for use with CanBoot, select the 8 KiB Bootloader option.
 
 ## STM32F4 micro-controllers
 

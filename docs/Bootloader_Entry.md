@@ -83,7 +83,7 @@ This method also applies to devices operating in
 #### Katapult's flashtool.py
 
 ```shell
-python3 ./katapult/scripts/flashtool.py -i <CAN_IFACE> -u <UUID> -r
+python3 ~/katapult/scripts/flashtool.py -i <CAN_IFACE> -u <UUID> -r
 ```
 
 Where `<CAN_IFACE>` is the can interface to use. If using `can0`, both the `-i`
@@ -99,13 +99,12 @@ for information on finding the CAN UUID of your devices.
 
 When klipper receives one of the above bootloader requests:
 
-If Katapult (formerly known as CANBoot) is available, klipper will request that
-Katapult stay active on the next boot, then reset the MCU (therefore entering
-Katapult).
+If [Katapult (formerly known as CANBoot)](Bootloaders.md#katapult-bootloader-lpc176x-stm32-rp2040)
+is available, klipper will request that Katapult stay active on the next boot,
+then reset the MCU (therefore entering Katapult).
 
-If Katapult is not available, klipper will then try to enter a
-platform-specific bootloader, such as STM32's DFU
-mode([see note](#stm32-dfu-warning)).
+If Katapult is not available, klipper will then try to enter a platform-specific
+bootloader, such as STM32's DFU mode ([see note](#stm32-dfu-warning)).
 
 In short, Klipper will reboot to Katapult if installed, then a hardware specific
 bootloader if available.
