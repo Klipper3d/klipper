@@ -490,14 +490,27 @@ respectively.
 
 When building Klipper for use with CanBoot, select the 8 KiB Bootloader option.
 
-## STM32F4 micro-controllers (SKR Pro 1.1)
+## STM32F4 micro-controllers
 
 STM32F4 micro-controllers come equipped with a built-in system bootloader
 capable of flashing over USB (via DFU), 3.3V Serial, and various other
-methods (see STM Document AN2606 for more information).  Some
-STM32F4 boards, such as the SKR Pro 1.1, are not able to enter the DFU
+methods (see STM Document AN2606 for more information).
+
+As with the STM32F1, the STM32F4 uses the hid-flash tool to upload binaries to
+the MCU. See the [instructions above](#stm32f103-with-hid-bootloader) for details
+on how to build and use hid-flash.
+
+It may be necessary to manually enter the bootloader, this can be done by
+setting "boot 0" low, "boot 1" high and plugging in the device.  After
+programming is complete unplug the device and set "boot 1" back to low
+so the application will be loaded.
+
+### STM32F405/407 (SKR Pro 1.1)
+
+Some STM32F4 boards, such as the SKR Pro 1.1, are not able to enter the DFU
 bootloader.  The HID bootloader is available for STM32F405/407
 based boards should the user prefer flashing over USB over using the sdcard.
+
 Note that you may need to configure and build a version specific to your
 board, a [build for the SKR Pro 1.1 is available here](
   https://github.com/Arksine/STM32_HID_Bootloader/releases/latest).
@@ -505,24 +518,16 @@ board, a [build for the SKR Pro 1.1 is available here](
 Unless your board is DFU capable the most accessible flashing method
 is likely via 3.3V serial, which follows the same procedure as
 [flashing the STM32F103 using stm32flash](#stm32f103-micro-controllers-blue-pill-devices).
+
 For example:
 ```
-wget https://github.com/Arksine/STM32_HID_Bootloader/releases/download/v0.5-beta/hid_bootloader_SKR_PRO.bin
+wget https://github.com/Arksine/STM32_HID_Bootloader/releases/download/v0.7/hid_bootloader_SKR_PRO.bin
 
 stm32flash -w hid_bootloader_SKR_PRO.bin -v -g 0 /dev/ttyAMA0
 ```
 
 This bootloader requires 16Kib of flash space on the STM32F4 (the application
 must be compiled with a start address of 16KiB).
-
-As with the STM32F1, the STM32F4 uses the hid-flash tool to upload binaries to
-the MCU. See the instructions above for details on how to build and use
-hid-flash.
-
-It may be necessary to manually enter the bootloader, this can be done by
-setting "boot 0" low, "boot 1" high and plugging in the device.  After
-programming is complete unplug the device and set "boot 1" back to low
-so the application will be loaded.
 
 ## LPC176x micro-controllers (Smoothieboards)
 
