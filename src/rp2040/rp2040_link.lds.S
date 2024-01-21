@@ -37,6 +37,12 @@ SECTIONS
     . = ALIGN(4);
     _data_flash = .;
 
+    .ram_vectortable (NOLOAD) : {
+        _ram_vectortable_start = .;
+        . = . + ( _text_vectortable_end - _text_vectortable_start ) ;
+        _ram_vectortable_end = .;
+    } > ram
+
     .data : AT (_data_flash)
     {
         . = ALIGN(4);
