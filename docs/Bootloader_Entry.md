@@ -115,11 +115,16 @@ bootloader if available.
 For details about the specific bootloaders on various platforms see
 [Bootloaders](Bootloaders.md)
 
+---
+
 ## Notes
 
 ### STM32 DFU Warning
 
-Note that on some boards, like the Octopus Pro v1, entering DFU mode can cause
-undesired actions (such as powering the heater while in DFU mode). It is
-recommended to disconnect heaters, and otherwise prevent undesired operations
-when using DFU mode. Consult the documentation for your board for more details.
+!!! danger "STM32 DFU Warning"
+
+    Note that on some boards, like the Octopus Pro v1 or EBB36/42 v1.1, entering
+    DFU mode can cause undesired actions (such as powering the heater while in
+    DFU mode). It is recommended to disconnect heaters, and otherwise prevent
+    undesired operations when using DFU mode. Consult the documentation for your
+    board for more details.
