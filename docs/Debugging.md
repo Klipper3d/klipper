@@ -105,8 +105,8 @@ The resulting files can be read and graphed using the `motan_graph.py`
 tool. To generate graphs on a Raspberry Pi, a one time step is
 necessary to install the "matplotlib" package:
 ```
-sudo apt-get update
-sudo apt-get install python-matplotlib
+sudo apt update
+sudo apt install python-matplotlib
 ```
 However, it may be more convenient to copy the data files to a desktop
 class machine along with the Python code in the `scripts/motan/`
@@ -159,8 +159,8 @@ To generate a graph, a one time step is necessary to install the
 "matplotlib" package:
 
 ```
-sudo apt-get update
-sudo apt-get install python-matplotlib
+sudo apt update
+sudo apt install python-matplotlib
 ```
 
 Then graphs can be produced with:

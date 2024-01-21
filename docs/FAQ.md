@@ -196,8 +196,8 @@ the desired movement to the "custom g-code" section of your slicer.
 
 If the printer requires some additional movement as part of the homing
 process itself (or fundamentally does not have a homing process) then
-consider using a [safe_z_home](Config_Reference.html#safe_z_home) or
-[homing_override](Config_Reference.html#homing_override) section in the
+consider using a [safe_z_home](Config_Reference.md#safe_z_home) or
+[homing_override](Config_Reference.md#homing_override) section in the
 config file. If you need to move a stepper for diagnostic or debugging
 purposes then consider adding a force_move section to the config
 file. See [config reference](Config_Reference.md#customized_homing)

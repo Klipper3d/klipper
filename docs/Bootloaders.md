@@ -277,7 +277,8 @@ the following chip config:
 source [find target/atsame5x.cfg]
 ```
 Obtain a bootloader - several bootloaders are available from
-[https://github.com/adafruit/uf2-samdx1/releases/latest](https://github.com/adafruit/uf2-samdx1/releases/latest). For example:
+[https://github.com/adafruit/uf2-samdx1/releases/latest](https://github.com/adafruit/uf2-samdx1/releases/latest).
+For example:
 ```
 wget 'https://github.com/adafruit/uf2-samdx1/releases/download/v3.7.0/bootloader-itsybitsy_m4-v3.7.0.bin'
 ```
@@ -344,9 +345,8 @@ while it is running). Alternatively, set the "boot 0" pin to low and
 ### STM32F103 with HID bootloader
 
 The [HID bootloader](https://github.com/Serasidis/STM32_HID_Bootloader) is a
-compact, driverless bootloader capable of flashing over USB. Also available
-is a [fork with builds specific to the SKR Mini E3 1.2](
-  https://github.com/Arksine/STM32_HID_Bootloader/releases/latest).
+compact, driverless bootloader capable of flashing over USB. Also available is a
+[fork with builds specific to the SKR Mini E3 1.2](https://github.com/Arksine/STM32_HID_Bootloader/releases/latest).
 
 For generic STM32F103 boards such as the blue pill it is possible to flash
 the bootloader via 3.3V serial using stm32flash as noted in the stm32duino
@@ -355,11 +355,10 @@ section above, substituting the file name for the desired hid bootloader binary
 
 It is not possible to use stm32flash for the SKR Mini E3 as the boot0 pin is
 tied directly to ground and not broken out via header pins.  It is recommended
-to use a STLink V2 with STM32Cubeprogrammer to flash the bootloader.   If you
+to use a STLink V2 with STM32Cubeprogrammer to flash the bootloader.  If you
 don't have access to a STLink it is also possible to use a
 [Raspberry Pi and OpenOCD](#running-openocd-on-the-raspberry-pi) with
 the following chip config:
-
 ```
 source [find target/stm32f1x.cfg]
 ```
@@ -412,7 +411,7 @@ make
 
 If the bootloader is running you can flash with something like:
 ```
-~/klipper/lib/hidflash/hid-flash ~/klipper/out/klipper.bin
+~/klipper/lib/hidflash/hid-flash out/klipper.bin
 ```
 alternatively, you can use `make flash` to flash klipper directly:
 ```
@@ -427,22 +426,22 @@ It may be necessary to manually enter the bootloader, this can be done by
 setting "boot 0" low and "boot 1" high.  On the SKR Mini E3 "Boot 1" is
 not available, so it may be done by setting pin PA2 low if you flashed
 "hid_btt_skr_mini_e3.bin".  This pin is labeled "TX0" on the TFT header in
-the SKR Mini E3's "PIN" document. There is a ground pin next to PA2
+the SKR Mini E3's "PIN" document.  There is a ground pin next to PA2
 which you can use to pull PA2 low.
 
 ### STM32F103/STM32F072 with MSC bootloader
 
-The [MSC bootloader](https://github.com/Telekatz/MSC-stm32f103-bootloader) is a driverless bootloader capable of flashing over USB.
+The [MSC bootloader](https://github.com/Telekatz/MSC-stm32f103-bootloader)
+is a driverless bootloader capable of flashing over USB.
 
 It is possible to flash the bootloader via 3.3V serial using stm32flash as noted
 in the stm32duino section above, substituting the file name for the desired
 MSC bootloader binary (ie: MSCboot-Bluepill.bin for the blue pill).
 
-For STM32F072 boards it is also possible to flash the bootloader over USB (via DFU)
-with something like:
-
+For STM32F072 boards it is also possible to flash the bootloader over USB
+(via DFU) with something like:
 ```
- dfu-util -d 0483:df11 -a 0 -R -D  MSCboot-STM32F072.bin -s0x08000000:leave
+dfu-util -d 0483:df11 -a 0 -R -D  MSCboot-STM32F072.bin -s 0x08000000:leave
 ```
 
 This bootloader uses 8KiB or 16KiB of flash space, see description of the bootloader
@@ -481,11 +480,11 @@ This should include all nodes currently in the bootloader.
 
 Once you have a UUID, you may upload firmware with following command:
 ```
-python3 flash_can.py -i can0 -f ~/klipper/out/klipper.bin -u aabbccddeeff
+python3 flash_can.py -i can0 -f out/klipper.bin -u aabbccddeeff
 ```
 
 Where `aabbccddeeff` is replaced by your UUID.  Note that the `-i` and `-f`
-options may be omitted, they default to `can0` and `~/klipper/out/klipper.bin`
+options may be omitted, they default to `can0` and `out/klipper.bin`
 respectively.
 
 When building Klipper for use with CanBoot, select the 8 KiB Bootloader option.
@@ -558,8 +557,8 @@ Begin by downloading and compiling the software (each step may take
 several minutes and the "make" step may take 30+ minutes):
 
 ```
-sudo apt-get update
-sudo apt-get install autoconf libtool telnet
+sudo apt update
+sudo apt install autoconf libtool telnet
 mkdir ~/openocd
 cd ~/openocd/
 git clone http://openocd.zylin.com/openocd
