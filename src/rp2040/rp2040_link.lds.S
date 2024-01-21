@@ -1,6 +1,6 @@
 // rp2040 linker script (based on armcm_link.lds.S and customized for stage2)
 //
-// Copyright (C) 2019-2021  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2019-2024  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -9,9 +9,15 @@
 OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
 OUTPUT_ARCH(arm)
 
+#if CONFIG_RP2040_HAVE_STAGE2
+  #define ROM_ORIGIN 0x10000000
+#else
+  #define ROM_ORIGIN CONFIG_FLASH_APPLICATION_ADDRESS
+#endif
+
 MEMORY
 {
-  rom (rx) : ORIGIN = 0x10000000 , LENGTH = CONFIG_FLASH_SIZE
+  rom (rx) : ORIGIN = ROM_ORIGIN , LENGTH = CONFIG_FLASH_SIZE
   ram (rwx) : ORIGIN = CONFIG_RAM_START , LENGTH = CONFIG_RAM_SIZE
 }
 
@@ -19,7 +25,9 @@ SECTIONS
 {
     .text : {
         . = ALIGN(4);
+#if CONFIG_RP2040_HAVE_STAGE2
         KEEP(*(.boot2))
+#endif
         _text_vectortable_start = .;
         KEEP(*(.vector_table))
         _text_vectortable_end = .;

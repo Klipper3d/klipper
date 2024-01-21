@@ -55,7 +55,7 @@ $(OUT)klipper.bin: $(OUT)klipper.elf
 	$(Q)$(OBJCOPY) -O binary $< $@
 
 rptarget-$(CONFIG_RP2040_HAVE_BOOTLOADER) := $(OUT)klipper.bin
-rplink-$(CONFIG_RP2040_HAVE_BOOTLOADER) := $(OUT)src/generic/armcm_link.ld
+rplink-$(CONFIG_RP2040_HAVE_BOOTLOADER) := $(OUT)src/rp2040/rp2040_link.ld
 
 # Set klipper.elf linker rules
 target-y += $(rptarget-y)
