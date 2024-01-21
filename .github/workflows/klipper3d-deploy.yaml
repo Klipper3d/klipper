@@ -1,4 +1,5 @@
 name: klipper3d deploy
+
 on:
   schedule:
     - cron: "0 0 * * *"
@@ -8,11 +9,25 @@ on:
     paths:
       - docs/**
       - .github/workflows/klipper3d-deploy.yaml
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Documentation page deployment source branch (eg: "pr-docs")'
+        required: true
+        default: master
+
+# Required for the deployment to be able to upload to the "gh-pages" branch
+# (since the repo settings for default actions permission defaults to read only)
+permissions:
+  contents: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
       - name: Setup python
         uses: actions/setup-python@v5
         with:
