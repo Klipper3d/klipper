@@ -70,7 +70,7 @@ class ManualStepper:
         self.trapq_finalize_moves(self.trapq, self.next_cmd_time + 99999.9,
                                   self.next_cmd_time + 99999.9)
         toolhead = self.printer.lookup_object('toolhead')
-        toolhead.note_kinematic_activity(self.next_cmd_time)
+        toolhead.note_mcu_movequeue_activity(self.next_cmd_time)
         if sync:
             self.sync_print_time()
     def do_homing_move(self, movepos, speed, accel, triggered, check_trigger):
