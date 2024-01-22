@@ -186,14 +186,6 @@ class LookAheadQueue:
             # Enough moves have been queued to reach the target flush time.
             self.flush(lazy=True)
 
-class MoveQueue:
-    def __init__(self):
-        self.lookahead_queue = LookAheadQueue()
-
-    def move_queue(self):
-        # Redirect the old move_queue method to the new lookahead method
-        return self.lookahead_queue.lookahead()
-
 BUFFER_TIME_LOW = 1.0
 BUFFER_TIME_HIGH = 2.0
 BUFFER_TIME_START = 0.250
@@ -220,6 +212,7 @@ class ToolHead:
             m for n, m in self.printer.lookup_objects(module='mcu')]
         self.mcu = self.all_mcus[0]
         self.lookahead = LookAheadQueue(self)
+        self.move_queue = self.lookahead
         self.lookahead.set_flush_time(BUFFER_TIME_HIGH)
         self.commanded_pos = [0., 0., 0., 0.]
         # Velocity and acceleration control
