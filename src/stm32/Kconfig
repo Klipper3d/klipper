@@ -285,6 +285,8 @@ choice
         bool "34KiB bootloader (Chitu v6 Bootloader)" if MACH_STM32F103
     config STM32_FLASH_START_20200
         bool "128KiB bootloader with 512 byte offset (Prusa Buddy)" if MACH_STM32F4x5
+    config STM32_FLASH_START_9000
+        bool "36KiB bootloader (Anycubic Kobra 2 Neo)" if MACH_STM32F1
     config STM32_FLASH_START_C000
         bool "48KiB bootloader (MKS Robin Nano V3)" if MACH_STM32F4x5
     config STM32_FLASH_START_10000
@@ -312,6 +314,7 @@ config FLASH_APPLICATION_ADDRESS
     default 0x8007000 if STM32_FLASH_START_7000
     default 0x8008000 if STM32_FLASH_START_8000
     default 0x8008800 if STM32_FLASH_START_8800
+    default 0x8009000 if STM32_FLASH_START_9000
     default 0x800C000 if STM32_FLASH_START_C000
     default 0x8010000 if STM32_FLASH_START_10000
     default 0x8020000 if STM32_FLASH_START_20000
