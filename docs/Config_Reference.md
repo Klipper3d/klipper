@@ -3096,24 +3096,12 @@ pin:
 #   If this is true, the value fields should be between 0 and 1; if it
 #   is false the value fields should be either 0 or 1. The default is
 #   False.
-#static_value:
-#   If this is set, then the pin is assigned to this value at startup
-#   and the pin can not be changed during runtime. A static pin uses
-#   slightly less ram in the micro-controller. The default is to use
-#   runtime configuration of pins.
 #value:
 #   The value to initially set the pin to during MCU configuration.
 #   The default is 0 (for low voltage).
 #shutdown_value:
 #   The value to set the pin to on an MCU shutdown event. The default
 #   is 0 (for low voltage).
-#maximum_mcu_duration:
-#   The maximum duration a non-shutdown value may be driven by the MCU
-#   without an acknowledge from the host.
-#   If host can not keep up with an update, the MCU will shutdown
-#   and set all pins to their respective shutdown values.
-#   Default: 0 (disabled)
-#   Usual values are around 5 seconds.
 #cycle_time: 0.100
 #   The amount of time (in seconds) per PWM cycle. It is recommended
 #   this be 10 milliseconds or greater when using software based PWM.
@@ -3133,6 +3121,9 @@ pin:
 #   then the 'value' parameter can be specified using the desired
 #   amperage for the stepper. The default is to not scale the 'value'
 #   parameter.
+#maximum_mcu_duration:
+#static_value:
+#   These options are deprecated and should no longer be specified.
 ```
 
 ### [pwm_tool]
@@ -3147,13 +3138,37 @@ extended [g-code commands](G-Codes.md#output_pin).
 [pwm_tool my_tool]
 pin:
 #   The pin to configure as an output. This parameter must be provided.
+#maximum_mcu_duration:
+#   The maximum duration a non-shutdown value may be driven by the MCU
+#   without an acknowledge from the host.
+#   If host can not keep up with an update, the MCU will shutdown
+#   and set all pins to their respective shutdown values.
+#   Default: 0 (disabled)
+#   Usual values are around 5 seconds.
 #value:
 #shutdown_value:
-#maximum_mcu_duration:
 #cycle_time: 0.100
 #hardware_pwm: False
 #scale:
 #   See the "output_pin" section for the definition of these parameters.
+```
+
+### [pwm_cycle_time]
+
+Run-time configurable output pins with dynamic pwm cycle timing (one
+may define any number of sections with an "pwm_cycle_time" prefix).
+Pins configured here will be setup as output pins and one may modify
+them at run-time using "SET_PIN PIN=my_pin VALUE=.1 CYCLE_TIME=0.100"
+type extended [g-code commands](G-Codes.md#pwm_cycle_time).
+
+```
+[pwm_cycle_time my_pin]
+pin:
+#value:
+#shutdown_value:
+#cycle_time: 0.100
+#scale:
+#   See the "output_pin" section for information on these parameters.
 ```
 
 ### [static_digital_output]
