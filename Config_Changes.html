@@ -1337,6 +1337,16 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<p>20240123: The output_pin SET_PIN CYCLE_TIME parameter has been
+removed. Use the new
+<a href="Config_Reference.html#pwm_cycle_time">pwm_cycle_time</a> module if it is
+necessary to dynamically change a pwm pin's cycle time.</p>
+<p>20240123: The output_pin <code>maximum_mcu_duration</code> parameter is
+deprecated. Use a <a href="Config_Reference.html#pwm_tool">pwm_tool config section</a>
+instead. The option will be removed in the near future.</p>
+<p>20240123: The output_pin <code>static_value</code> parameter is deprecated.
+Replace with <code>value</code> and <code>shutdown_value</code> parameters.  The option will
+be removed in the near future.</p>
 <p>20231216: The <code>[hall_filament_width_sensor]</code> is changed to trigger filament runout
 when the thickness of the filament exceeds <code>max_diameter</code>. The maximum diameter
 defaults to <code>default_nominal_filament_diameter + max_difference</code>. See

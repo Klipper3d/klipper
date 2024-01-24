@@ -1861,6 +1861,26 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pwm_cycle_time" class="md-nav__link">
+    [pwm_cycle_time]
+  </a>
+  
+    <nav class="md-nav" aria-label="[pwm_cycle_time]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_pin_1" class="md-nav__link">
+    SET_PIN
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#query_adc" class="md-nav__link">
     [query_adc]
   </a>
@@ -3986,6 +4006,26 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pwm_cycle_time" class="md-nav__link">
+    [pwm_cycle_time]
+  </a>
+  
+    <nav class="md-nav" aria-label="[pwm_cycle_time]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_pin_1" class="md-nav__link">
+    SET_PIN
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#query_adc" class="md-nav__link">
     [query_adc]
   </a>
@@ -5176,16 +5216,10 @@ commands to manage the LED's color settings).</p>
 <a href="Config_Reference.html#pwm_tool">pwm_tool config section</a> is
 enabled.</p>
 <h4 id="set_pin">SET_PIN<a class="headerlink" href="#set_pin" title="Permanent link">&para;</a></h4>
-<p><code>SET_PIN PIN=config_name VALUE=&lt;value&gt; [CYCLE_TIME=&lt;cycle_time&gt;]</code>: Set
-the pin to the given output <code>VALUE</code>. VALUE should be 0 or 1 for
-"digital" output pins. For PWM pins, set to a value between 0.0 and
-1.0, or between 0.0 and <code>scale</code> if a scale is configured in the
-output_pin config section.</p>
-<p>Some pins (currently only "soft PWM" pins) support setting an explicit
-cycle time using the CYCLE_TIME parameter (specified in seconds). Note
-that the CYCLE_TIME parameter is not stored between SET_PIN commands
-(any SET_PIN command without an explicit CYCLE_TIME parameter will use
-the <code>cycle_time</code> specified in the output_pin config section).</p>
+<p><code>SET_PIN PIN=config_name VALUE=&lt;value&gt;</code>: Set the pin to the given
+output <code>VALUE</code>. VALUE should be 0 or 1 for "digital" output pins. For
+PWM pins, set to a value between 0.0 and 1.0, or between 0.0 and
+<code>scale</code> if a scale is configured in the output_pin config section.</p>
 <h3 id="palette2">[palette2]<a class="headerlink" href="#palette2" title="Permanent link">&para;</a></h3>
 <p>The following commands are available when the
 <a href="Config_Reference.html#palette2">palette2 config section</a> is enabled.</p>
@@ -5287,6 +5321,18 @@ direction as well as Z.</p>
 babystepping), and subtract if from the probe's z_offset.  This acts
 to take a frequently used babystepping value, and "make it permanent".
 Requires a <code>SAVE_CONFIG</code> to take effect.</p>
+<h3 id="pwm_cycle_time">[pwm_cycle_time]<a class="headerlink" href="#pwm_cycle_time" title="Permanent link">&para;</a></h3>
+<p>The following command is available when a
+<a href="Config_Reference.html#pwm_cycle_time">pwm_cycle_time config section</a>
+is enabled.</p>
+<h4 id="set_pin_1">SET_PIN<a class="headerlink" href="#set_pin_1" title="Permanent link">&para;</a></h4>
+<p><code>SET_PIN PIN=config_name VALUE=&lt;value&gt; [CYCLE_TIME=&lt;cycle_time&gt;]</code>:
+This command works similarly to <a href="#output_pin">output_pin</a> SET_PIN
+commands. The command here supports setting an explicit cycle time
+using the CYCLE_TIME parameter (specified in seconds). Note that the
+CYCLE_TIME parameter is not stored between SET_PIN commands (any
+SET_PIN command without an explicit CYCLE_TIME parameter will use the
+<code>cycle_time</code> specified in the pwm_cycle_time config section).</p>
 <h3 id="query_adc">[query_adc]<a class="headerlink" href="#query_adc" title="Permanent link">&para;</a></h3>
 <p>The query_adc module is automatically loaded.</p>
 <h4 id="query_adc_1">QUERY_ADC<a class="headerlink" href="#query_adc_1" title="Permanent link">&para;</a></h4>
