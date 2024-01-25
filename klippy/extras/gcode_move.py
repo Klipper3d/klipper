@@ -232,7 +232,7 @@ class GCodeMove:
         if not state_name in self.saved_states:
             raise gcmd.error("Unknown g-code state: %s" % (state_name,))
         if len(self.saved_states[state_name]) == 0:
-            raise gcmd.error("No saved states for state '%s' to restore" 
+            raise gcmd.error("No saved states for state '%s' to restore"
                               % (state_name,))
         state = self.saved_states.get(state_name).pop()
         # Restore state
