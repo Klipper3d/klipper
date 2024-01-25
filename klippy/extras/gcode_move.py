@@ -214,7 +214,8 @@ class GCodeMove:
         if not state_name in  self.saved_states:
             self.saved_states[state_name] = []
         if len(self.saved_states[state_name]) >= MAX_STACKED_SAVES_FOR_STATE:
-            raise gcmd.error("Too many saved states for state '%s' (max limit is %d)" % (state_name, MAX_STACKED_SAVES_FOR_STATE))
+            raise gcmd.error("Too many saved states for state '%s' (max limit is
+                              %d)" % (state_name, MAX_STACKED_SAVES_FOR_STATE))
         self.saved_states[state_name].append({
             'absolute_coord': self.absolute_coord,
             'absolute_extrude': self.absolute_extrude,
@@ -231,7 +232,8 @@ class GCodeMove:
         if not state_name in self.saved_states:
             raise gcmd.error("Unknown g-code state: %s" % (state_name,))
         if len(self.saved_states[state_name]) == 0:
-            raise gcmd.error("No saved states for state '%s' to restore" % (state_name,))
+            raise gcmd.error("No saved states for state '%s' to restore" 
+                              % (state_name,))
         state = self.saved_states.get(state_name).pop()
         # Restore state
         self.absolute_coord = state['absolute_coord']
