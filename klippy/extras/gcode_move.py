@@ -214,8 +214,9 @@ class GCodeMove:
         if not state_name in  self.saved_states:
             self.saved_states[state_name] = []
         if len(self.saved_states[state_name]) >= MAX_STACKED_SAVES_FOR_STATE:
-            raise gcmd.error("Too many saved states for state '%s' (max limit is\
-                              %d)" % (state_name, MAX_STACKED_SAVES_FOR_STATE))
+            raise gcmd.error("Too many saved states for state '%s' (max limit\
+                              is %d)" % (state_name,
+                              MAX_STACKED_SAVES_FOR_STATE))
         self.saved_states[state_name].append({
             'absolute_coord': self.absolute_coord,
             'absolute_extrude': self.absolute_extrude,
