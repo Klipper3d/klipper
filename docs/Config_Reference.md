@@ -1465,6 +1465,10 @@ path:
 #   be provided.
 #on_error_gcode:
 #   A list of G-Code commands to execute when an error is reported.
+#recent_first: False
+#   Set to True to sort the files with modified date in reverse, so the
+#   most recently uploaded one is at the top. Otherwise they are
+#   sorted alphabetically. The default is False.
 
 ```
 
