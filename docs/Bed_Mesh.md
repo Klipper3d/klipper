@@ -370,14 +370,68 @@ are identified in green.
 
 ![bedmesh_interpolated](img/bedmesh_faulty_regions.svg)
 
+### Adaptive Meshes
+
+Adaptive bed meshing is a way to speed up the bed mesh generation by only probing
+the area of the bed used by the objects being printed. When used, the method will
+automatically adjust the mesh parameters based on the area occupied by the defined
+print objects.
+
+The adapted mesh area will be computed from the area defined by the boundaries of all
+the defined print objects so it covers every object, including any margins defined in
+the configuration. After the area is computed, the number of probe points will be
+scaled down based on the ratio of the default mesh area and the adapted mesh area. To
+illustrate this consider the following example:
+
+For a 150mmx150mm bed with `mesh_min` set to `25,25` and `mesh_max` set to `125,125`,
+the default mesh area is a 100mmx100mm square. An adapted mesh area of `50,50`
+means a ratio of `0.5x0.5` between the adapted area and default mesh area.
+
+If the `bed_mesh` configuration specified `probe_count` as `7x7`, the adapted bed
+mesh will use 4x4 probe points (7 * 0.5 rounded up).
+
+![adaptive_bedmesh](img/adaptive_bed_mesh.svg)
+
+```
+[bed_mesh]
+speed: 120
+horizontal_move_z: 5
+mesh_min: 35, 6
+mesh_max: 240, 198
+probe_count: 5, 3
+adaptive_margin: 5
+```
+
+- `adaptive_margin` \
+  _Default Value: 0_ \
+  Margin (in mm) to add around the area of the bed used by the defined objects. The diagram
+  below shows the adapted bed mesh area with an `adaptive_margin` of 5mm. The adapted mesh
+  area (area in green) is computed as the used bed area (area in blue) plus the defined margin.
+
+  ![adaptive_bedmesh_margin](img/adaptive_bed_mesh_margin.svg)
+
+By nature, adaptive bed meshes use the objects defined by the Gcode file being printed.
+Therefore, it is expected that each Gcode file will generate a mesh that probes a different
+area of the print bed. Therefore, adapted bed meshes should not be re-used. The expectation
+is that a new mesh will be generated for each print if adaptive meshing is used.
+
+It is also important to consider that adaptive bed meshing is best used on machines that can
+normally probe the entire bed and achieve a maximum variance less than or equal to 1 layer
+height. Machines with mechanical issues that a full bed mesh normally compensates for may
+have undesirable results when attempting print moves **outside** of the probed area. If a
+full bed mesh has a variance greater than 1 layer height, caution must be taken when using
+adaptive bed meshes and attempting print moves outside of the meshed area.
+
 ## Bed Mesh Gcodes
 
 ### Calibration
 
 `BED_MESH_CALIBRATE PROFILE=<name> METHOD=[manual | automatic] [<probe_parameter>=<value>]
- [<mesh_parameter>=<value>]`\
+ [<mesh_parameter>=<value>] [ADAPTIVE=[0|1] [ADAPTIVE_MARGIN=<value>]`\
 _Default Profile:  default_\
-_Default Method:  automatic if a probe is detected, otherwise manual_
+_Default Method:  automatic if a probe is detected, otherwise manual_ \
+_Default Adaptive: 0_ \
+_Default Adaptive Margin: 0_
 
 Initiates the probing procedure for Bed Mesh Calibration.
 
@@ -399,6 +453,8 @@ following parameters are available:
   - `ROUND_PROBE_COUNT`
 - All beds:
   - `ALGORITHM`
+  - `ADAPTIVE`
+  - `ADAPTIVE_MARGIN`
 
 See the configuration documentation above for details on how each parameter
 applies to the mesh.
