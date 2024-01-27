@@ -233,7 +233,7 @@ class BedMesh:
             mesh_max = (params['max_x'], params['max_y'])
             probed_matrix = self.z_mesh.get_probed_matrix()
             mesh_matrix = self.z_mesh.get_mesh_matrix()
-            self.status['profile_name'] = self.pmgr.get_current_profile()
+            self.status['profile_name'] = self.z_mesh.get_profile_name()
             self.status['mesh_min'] = mesh_min
             self.status['mesh_max'] = mesh_max
             self.status['probed_matrix'] = probed_matrix
@@ -314,7 +314,7 @@ class BedMeshCalibrate:
         self.mesh_config = collections.OrderedDict()
         self._init_mesh_config(config)
         self._generate_points(config.error)
-        self._profile_name = None
+        self._profile_name = "default"
         self.probe_helper = probe.ProbePointsHelper(
             config, self.probe_finalize, self._get_adjusted_points())
         self.probe_helper.minimum_points(3)
@@ -881,7 +881,7 @@ class BedMeshCalibrate:
                         "Probed table length: %d Probed Table:\n%s") %
                     (len(probed_matrix), str(probed_matrix)))
 
-        z_mesh = ZMesh(params)
+        z_mesh = ZMesh(params, self._profile_name)
         try:
             z_mesh.build_mesh(probed_matrix)
         except BedMeshError as e:
@@ -980,7 +980,8 @@ class MoveSplitter:
 
 
 class ZMesh:
-    def __init__(self, params):
+    def __init__(self, params, name):
+        self.profile_name = name or "adaptive-%X" % (id(self),)
         self.probed_matrix = self.mesh_matrix = None
         self.mesh_params = params
         self.mesh_offsets = [0., 0.]
@@ -1029,6 +1030,8 @@ class ZMesh:
         return [[]]
     def get_mesh_params(self):
         return self.mesh_params
+    def get_profile_name(self):
+        return self.profile_name
     def print_probed_matrix(self, print_func):
         if self.probed_matrix is not None:
             msg = "Mesh Leveling Probed Z positions:\n"
@@ -1289,7 +1292,6 @@ class ProfileManager:
         self.gcode = self.printer.lookup_object('gcode')
         self.bedmesh = bedmesh
         self.profiles = {}
-        self.current_profile = ""
         self.incompatible_profiles = []
         # Fetch stored profiles from Config
         stored_profs = config.get_prefix_sections(self.name)
@@ -1323,8 +1325,6 @@ class ProfileManager:
             desc=self.cmd_BED_MESH_PROFILE_help)
     def get_profiles(self):
         return self.profiles
-    def get_current_profile(self):
-        return self.current_profile
     def _check_incompatible_profiles(self):
         if self.incompatible_profiles:
             configfile = self.printer.lookup_object('configfile')
@@ -1365,7 +1365,6 @@ class ProfileManager:
         profile['points'] = probed_matrix
         profile['mesh_params'] = collections.OrderedDict(mesh_params)
         self.profiles = profiles
-        self.current_profile = prof_name
         self.bedmesh.update_status()
         self.gcode.respond_info(
             "Bed Mesh state has been saved to profile [%s]\n"
@@ -1379,12 +1378,11 @@ class ProfileManager:
                 "bed_mesh: Unknown profile [%s]" % prof_name)
         probed_matrix = profile['points']
         mesh_params = profile['mesh_params']
-        z_mesh = ZMesh(mesh_params)
+        z_mesh = ZMesh(mesh_params, prof_name)
         try:
             z_mesh.build_mesh(probed_matrix)
         except BedMeshError as e:
             raise self.gcode.error(str(e))
-        self.current_profile = prof_name
         self.bedmesh.set_mesh(z_mesh)
     def remove_profile(self, prof_name):
         if prof_name in self.profiles:
