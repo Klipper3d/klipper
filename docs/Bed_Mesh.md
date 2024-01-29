@@ -372,14 +372,15 @@ are identified in green.
 
 ### Adaptive Meshes
 
-Adaptive bed meshing is a way to speed up the bed mesh generation by only probing
-the area of the bed used by the objects being printed. When used, the method will
-automatically adjust the mesh parameters based on the area occupied by the defined
-print objects.
+Adaptive bed meshing is a way to speed up the bed meshing process as well as waste less mesh information by only probing
+the area of the bed that will be used for printing. When used, this method will
+automatically adjust the mesh parameters based on the area occupied by objects defined by the `EXCLUDE_OBJECT` command. See the [exclude objects guide](Exclude_Object.md) and
+[command reference](G-Codes.md#excludeobject)
+for additional information.
 
 The adapted mesh area will be computed from the area defined by the boundaries of all
 the defined print objects so it covers every object, including any margins defined in
-the configuration. After the area is computed, the number of probe points will be
+the [configuration](Config_Reference.md#bed_mesh). After the area is computed, the number of probe points will be
 scaled down based on the ratio of the default mesh area and the adapted mesh area. To
 illustrate this consider the following example:
 
@@ -410,17 +411,16 @@ adaptive_margin: 5
 
   ![adaptive_bedmesh_margin](img/adaptive_bed_mesh_margin.svg)
 
-By nature, adaptive bed meshes use the objects defined by the Gcode file being printed.
-Therefore, it is expected that each Gcode file will generate a mesh that probes a different
-area of the print bed. Therefore, adapted bed meshes should not be re-used. The expectation
+By nature, adaptive bed meshes use the objects defined by the [exclude_object](Exclude_Object.md) module in the Gcode file being printed, and it is expected that each Gcode file will generate a mesh that probes a different
+area of the print bed. Therefore, adapted bed meshes should **not** be re-used. The expectation
 is that a new mesh will be generated for each print if adaptive meshing is used.
 
-It is also important to consider that adaptive bed meshing is best used on machines that can
+It is important to consider that adaptive bed meshing is best used on machines that can
 normally probe the entire bed and achieve a maximum variance less than or equal to 1 layer
 height. Machines with mechanical issues that a full bed mesh normally compensates for may
-have undesirable results when attempting print moves **outside** of the probed area. If a
-full bed mesh has a variance greater than 1 layer height, caution must be taken when using
-adaptive bed meshes and attempting print moves outside of the meshed area.
+have undesirable results when attempting print moves **outside** of the probed area. If you normally have a variance greater than 1 layer height when generating a full bed mesh, greater caution must be taken when attempting print moves outside of the adapted mesh area.
+
+If there are no objects defined by the [exclude_object](Exclude_Object.md) module before the adaptive bed mesh is requested, the default method will be used instead. If you are requesting an adaptive bed mesh and the default method is still being used, check that you have [exclude_object](Exclude_Object.md) set up correctly, and that the objects are being defined before the adaptive bed mesh command is executed in your Gcode file.
 
 ## Bed Mesh Gcodes
 
