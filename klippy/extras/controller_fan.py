@@ -48,18 +48,23 @@ class ControllerFan:
         self.idle_timeout = config.getint("idle_timeout", default=30, minval=0)
         self.heater_names = config.getlist("heater", ("extruder",))
         self.last_on = self.idle_timeout
-        self.last_speed = 0.0
+        self.last_speed = -1
 
         # get configured temperature_sensors as
         # ((str, str), (str, str)) => (("pi", "55"), ("spider", "77"))
         temperature_sensors_config = config.getlists(
-            "temperature_sensors", seps=(":", "\n"), count=2, default=[]
+            "temperature_sensors",
+            seps=(":", "\n"),
+            count=2,
+            default=[],
         )
+
         # parse given thresholds to floats
         self.temperature_sensors_config = [
             (
                 sensor[0],
                 float(sensor[1]),
+                # 12.4,
             )
             for sensor in temperature_sensors_config
         ]
@@ -161,7 +166,7 @@ class ControllerFan:
         return eventtime + 1.0
 
     def __check_fan_active(self, eventtime):
-        for sensor, threshold in self.temperature_sensors.items():
+        for _, (sensor, threshold) in self.temperature_sensors.items():
             current_temp, _ = sensor.get_temp(eventtime)
             if current_temp > threshold:
                 return True
