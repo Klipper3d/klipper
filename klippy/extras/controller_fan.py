@@ -57,13 +57,18 @@ class ControllerFan:
         )
         # parse given thresholds to floats
         self.temperature_sensors_config = [
-            (sensor[0], float(sensor[1])) for sensor in temperature_sensors_config
+            (
+                sensor[0],
+                float(sensor[1]),
+            )
+            for sensor in temperature_sensors_config
         ]
         self.temperature_sensors = dict()
         self.temperature_sensors_only = config.getboolean(
             "temperature_sensors_only", False
         )
-        if self.temperature_sensors_only and len(self.temperature_sensors_config) <= 0:
+        if (self.temperature_sensors_only and
+            len(self.temperature_sensors_config) <= 0):
             raise self.printer.config_error(
                 "If temperature_sensors_only is True, "
                 "there have to have temperature_sensors been configured!"
@@ -94,13 +99,18 @@ class ControllerFan:
     def __handle_connect_temperature_sensors(self):
         all_temperature_sensor_module_names = [
             sensor[0]
-            for sensor in self.printer.lookup_objects(module="temperature_sensor")
+            for sensor in self.printer.lookup_objects(
+                module="temperature_sensor",
+            )
         ]
         all_temperature_sensor_names = [
-            sensor.split(" ")[1] for sensor in all_temperature_sensor_module_names
+            sensor.split(" ")[1]
+            for sensor in all_temperature_sensor_module_names
         ]
 
-        for sensor_name, temperature_threshold in self.temperature_sensors_config:
+        # copy to local variable since the line would be to long =/
+        temperature_sensors_config = self.temperature_sensors_config
+        for sensor_name, temperature_threshold in temperature_sensors_config:
             actual_configured_sensor = None
             try:
                 actual_configured_sensor = self.printer.lookup_object(
@@ -123,7 +133,10 @@ class ControllerFan:
 
     def handle_ready(self):
         reactor = self.printer.get_reactor()
-        reactor.register_timer(self.callback, reactor.monotonic() + PIN_MIN_TIME)
+        reactor.register_timer(
+            self.callback,
+            reactor.monotonic() + PIN_MIN_TIME,
+        )
 
     def get_status(self, eventtime):
         return self.fan.get_status(eventtime)
