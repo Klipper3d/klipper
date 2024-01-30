@@ -37,7 +37,10 @@ class ControllerFan:
         )
         # parse given thresholds to floats
         self.temperature_sensors_config = [
-            (sensor[0], float(sensor[1])) for sensor in temperature_sensors_config
+            (
+                sensor[0],
+                float(sensor[1])
+            ) for sensor in temperature_sensors_config
         ]
         self.temperature_sensors = dict()
         self.temperature_sensors_only = config.getboolean(
@@ -111,7 +114,7 @@ class ControllerFan:
 
     def callback(self, eventtime):
         speed = 0.
-        active = self.__check_fan_active()
+        active = self.__check_fan_active(eventtime)
 
         if active:
             self.last_on = 0
@@ -128,7 +131,7 @@ class ControllerFan:
 
         return eventtime + 1.
 
-    def __check_fan_active():
+    def __check_fan_active(eventtime):
         for sensor, threshold in self.temperature_sensors.items():
             current_temp, _ = sensor.get_temp(eventtime)
             if current_temp > threshold:
