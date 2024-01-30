@@ -48,7 +48,7 @@ class ControllerFan:
         self.idle_timeout = config.getint("idle_timeout", default=30, minval=0)
         self.heater_names = config.getlist("heater", ("extruder",))
         self.last_on = self.idle_timeout
-        self.last_speed = -1
+        self.last_speed = 0.0
 
         # get configured temperature_sensors as
         # ((str, str), (str, str)) => (("pi", "55"), ("spider", "77"))
