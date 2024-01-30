@@ -2791,6 +2791,19 @@ watched component.
 #   is provided here, then the fan will be enabled when any of the given
 #   heaters/steppers are enabled. The default heater is "extruder", the
 #   default stepper is all of them.
+#temperature_sensors:
+#   A list of "temperature_sensor:target_temperature" pairs.
+#   When any of the defined temperature_sensors reaches it threshold, the
+#   fan will be enabled.
+#   For Example, "pi: 60" would enable the fan when the temperature_sensor
+#   "pi" reaches 60 degrees.
+#   The given exmaple would look like this:
+#   temperature_sensors:
+#     pi:60
+#     aanotherone:70
+#temperature_sensors_only:
+#   If set to True, this controller_fan will ONLY watch the given temperature_sensors
+#   and ignore any given heater/extruder. The default is False.
 ```
 
 ### [temperature_fan]
