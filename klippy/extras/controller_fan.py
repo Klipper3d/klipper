@@ -27,7 +27,8 @@ class ControllerFan:
         self.last_on = self.idle_timeout
         self.last_speed = 0.
 
-        # get configured temperature_sensors as ((str, str), (str, str)) => (("pi", "55"), ("spider", "77"))
+        # get configured temperature_sensors as
+        # ((str, str), (str, str)) => (("pi", "55"), ("spider", "77"))
         temperature_sensors_config = config.getlists(
             "temperature_sensors",
             seps=(':', '\n'),
@@ -35,12 +36,18 @@ class ControllerFan:
             default=[]
         )
         # parse given thresholds to floats
-        self.temperature_sensors_config = [(sensor[0], float(sensor[1])) for sensor in temperature_sensors_config]
+        self.temperature_sensors_config = [
+            (sensor[0], float(sensor[1])) for sensor in temperature_sensors_config
+        ]
         self.temperature_sensors = dict()
-        self.temperature_sensors_only = config.getboolean("temperature_sensors_only", False)
+        self.temperature_sensors_only = config.getboolean(
+            "temperature_sensors_only",
+            False
+        )
         if self.temperature_sensors_only and len(self.temperature_sensors_config) <= 0:
             raise self.printer.config_error(
-                "If temperature_sensors_only is True, there have to have temperature_sensors been configured!"
+                "If temperature_sensors_only is True, "
+                "there have to have temperature_sensors been configured!"
             )
 
     def handle_connect(self):
@@ -66,8 +73,14 @@ class ControllerFan:
             )
 
     def __handle_connect_temperature_sensors():
-        all_temperature_sensor_module_names = [sensor[0] for sensor in self.printer.lookup_objects(module='temperature_sensor')]
-        all_temperature_sensor_names = [sensor.split(' ')[1] for sensor in all_temperature_sensor_module_names]
+        all_temperature_sensor_module_names = [
+            sensor[0] for sensor in self.printer.lookup_objects(
+                module='temperature_sensor'
+            )
+        ]
+        all_temperature_sensor_names = [
+            sensor.split(' ')[1] for sensor in all_temperature_sensor_module_names
+        ]
 
         for sensor_name, temperature_threshold in self.temperature_sensors_config:
             actual_configured_sensor = None
