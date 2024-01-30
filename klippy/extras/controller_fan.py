@@ -11,18 +11,39 @@ PIN_MIN_TIME = 0.100
 class ControllerFan:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.register_event_handler("klippy:ready", self.handle_ready)
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
-        self.stepper_names = config.getlist("stepper", None)
-        self.stepper_enable = self.printer.load_object(config, "stepper_enable")
-        self.printer.load_object(config, "heaters")
+        self.printer.register_event_handler(
+            "klippy:ready",
+            self.handle_ready,
+        )
+        self.printer.register_event_handler(
+            "klippy:connect",
+            self.handle_connect,
+        )
+        self.stepper_names = config.getlist(
+            "stepper",
+            None,
+        )
+        self.stepper_enable = self.printer.load_object(
+            config,
+            "stepper_enable",
+        )
+        self.printer.load_object(
+            config,
+            "heaters",
+        )
         self.heaters = []
         self.fan = fan.Fan(config)
         self.fan_speed = config.getfloat(
-            "fan_speed", default=1.0, minval=0.0, maxval=1.0
+            "fan_speed",
+            default=1.0,
+            minval=0.0,
+            maxval=1.0,
         )
         self.idle_speed = config.getfloat(
-            "idle_speed", default=self.fan_speed, minval=0.0, maxval=1.0
+            "idle_speed",
+            default=self.fan_speed,
+            minval=0.0,
+            maxval=1.0,
         )
         self.idle_timeout = config.getint("idle_timeout", default=30, minval=0)
         self.heater_names = config.getlist("heater", ("extruder",))
