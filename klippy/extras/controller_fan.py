@@ -64,7 +64,6 @@ class ControllerFan:
             (
                 sensor[0],
                 float(sensor[1]),
-                # 12.4,
             )
             for sensor in temperature_sensors_config
         ]
