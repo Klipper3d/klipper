@@ -15,6 +15,14 @@ config BOARD_DIRECTORY
     string
     default "hc32f460"
 
+choice "MCU Package"
+    prompt "Number of pins"
+    config HC32F460_PINS_64
+        bool "64"
+    config HC32F460_PINS_100
+        bool "100"
+endchoice
+
 
 ######################################################################
 # Communication interface
