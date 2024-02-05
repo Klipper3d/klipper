@@ -3020,6 +3020,40 @@ PCA9632 LED support. The PCA9632 is used on the FlashForge Dreamer.
 #   See the "led" section for information on these parameters.
 ```
 
+### [ws2801]
+
+ws2801 LED support (one may define any number of
+sections with a "ws2801" prefix). See the
+[command reference](G-Codes.md#led) for more information.
+
+```
+[ws2801 my_ws2801]
+#cs_pin: <mcu-name>:None
+#   Required when setting up SPI
+#spi_speed: 1000000
+#   The SPI speed (in hz) to use when communicating with the chip.
+#   The default is 1000000.
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the "common SPI settings" section for a description of the
+#   above parameters.
+#   spi_software_miso_pin must be set to a pin even though it is not
+#   used.
+#   cs_pin can be set to <mcu-name>:None, it is not in use.
+#chain_count:
+#   See the "neopixel" section for information on this parameter.
+#color_order: RGB
+#   Set the pixel order of the LED (using a string containing the
+#   letters R, G, B). The default is RGB.
+#initial_RED: 0.0
+#initial_GREEN: 0.0
+#initial_BLUE: 0.0
+#   See the "led" section for information on these parameters.
+```
+
+
 ## Additional servos, buttons, and other pins
 
 ### [servo]
