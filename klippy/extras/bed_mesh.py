@@ -102,6 +102,7 @@ class BedMesh:
         self.log_fade_complete = False
         self.base_fade_target = config.getfloat('fade_target', None)
         self.fade_target = 0.
+        self.tool_offset = 0.
         self.gcode = self.printer.lookup_object('gcode')
         self.splitter = MoveSplitter(config, self.gcode)
         # setup persistent storage
@@ -157,6 +158,7 @@ class BedMesh:
                     "mesh max: %.4f" % (self.fade_dist, min_z, max_z))
         else:
             self.fade_target = 0.
+        self.tool_offset = 0.
         self.z_mesh = mesh
         self.splitter.initialize(mesh, self.fade_target)
         # cache the current position before a transform takes place
@@ -164,6 +166,7 @@ class BedMesh:
         gcode_move.reset_last_position()
         self.update_status()
     def get_z_factor(self, z_pos):
+        z_pos += self.tool_offset
         if z_pos >= self.fade_end:
             return 0.
         elif z_pos >= self.fade_start:
@@ -182,14 +185,15 @@ class BedMesh:
             max_adj = self.z_mesh.calc_z(x, y)
             factor = 1.
             z_adj = max_adj - self.fade_target
-            if min(z, (z - max_adj)) >= self.fade_end:
+            fade_z_pos = z + self.tool_offset
+            if min(fade_z_pos, (fade_z_pos - max_adj)) >= self.fade_end:
                 # Fade out is complete, no factor
                 factor = 0.
-            elif max(z, (z - max_adj)) >= self.fade_start:
+            elif max(fade_z_pos, (fade_z_pos - max_adj)) >= self.fade_start:
                 # Likely in the process of fading out adjustment.
                 # Because we don't yet know the gcode z position, use
                 # algebra to calculate the factor from the toolhead pos
-                factor = ((self.fade_end + self.fade_target - z) /
+                factor = ((self.fade_end + self.fade_target - fade_z_pos) /
                           (self.fade_dist - z_adj))
                 factor = constrain(factor, 0., 1.)
             final_z_adj = factor * z_adj + self.fade_target
@@ -271,6 +275,9 @@ class BedMesh:
             for i, axis in enumerate(['X', 'Y']):
                 offsets[i] = gcmd.get_float(axis, None)
             self.z_mesh.set_mesh_offsets(offsets)
+            tool_offset = gcmd.get_float("ZFADE", None)
+            if tool_offset is not None:
+                self.tool_offset = tool_offset
             gcode_move = self.printer.lookup_object('gcode_move')
             gcode_move.reset_last_position()
         else:
