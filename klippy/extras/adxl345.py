@@ -1,10 +1,14 @@
 # Support for reading acceleration data from an adxl345 chip
 #
 # Copyright (C) 2020-2023  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2024       Endrik Einberg <endrik@endrik.dev>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, time, collections, multiprocessing, os
 from . import bus, bulk_sensor
+
+# I2C address
+ADXL345_I2C_ADDR = 0x53
 
 # ADXL345 registers
 REG_DEVID = 0x00
@@ -198,15 +202,34 @@ class ADXL345:
         self.data_rate = config.getint('rate', 3200)
         if self.data_rate not in QUERY_RATES:
             raise config.error("Invalid rate parameter: %d" % (self.data_rate,))
-        # Setup mcu sensor_adxl345 bulk query code
-        self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=5000000)
-        self.mcu = mcu = self.spi.get_mcu()
-        self.oid = oid = mcu.create_oid()
-        self.query_adxl345_cmd = None
-        mcu.add_config_cmd("config_adxl345 oid=%d spi_oid=%d"
+        
+        # Check if i2c or spi is used
+        if (config.get('i2c_bus', None) is None and 
+            config.get('i2c_software_scl_pin', None) is None):
+            self.bus_type = 'spi'
+            self.spi = bus.MCU_SPI_from_config(config, 
+                                               3, 
+                                               default_speed=5000000)
+            self.mcu = mcu = self.spi.get_mcu()
+            self.oid = oid = mcu.create_oid()
+            mcu.add_config_cmd("config_adxl345 oid=%d spi_oid=%d"
                            % (oid, self.spi.get_oid()))
-        mcu.add_config_cmd("query_adxl345 oid=%d rest_ticks=0"
-                           % (oid,), on_restart=True)
+            mcu.add_config_cmd("query_adxl345 oid=%d rest_ticks=0"
+                            % (oid,), on_restart=True)
+        else:
+            self.bus_type = 'i2c'
+            self.i2c = bus.MCU_I2C_from_config(config,
+                                               default_addr=ADXL345_I2C_ADDR,
+                                               default_speed=400000)
+            self.mcu = mcu = self.i2c.get_mcu()
+            self.oid = oid = mcu.create_oid()
+            self.mcu.add_config_cmd("config_adxl345_i2c oid=%d i2c_oid=%d"
+                           % (self.oid, self.i2c.get_oid()))
+            self.mcu.add_config_cmd("query_adxl345_i2c oid=%d rest_ticks=0"
+                            % (self.oid,), on_restart=True)
+            
+        # Setup mcu sensor_adxl345 bulk query code
+        self.query_adxl345_cmd = None
         mcu.register_config_callback(self._build_config)
         self.bulk_queue = bulk_sensor.BulkDataQueue(mcu, oid=oid)
         # Clock tracking
@@ -224,17 +247,31 @@ class ADXL345:
         self.batch_bulk.add_mux_endpoint("adxl345/dump_adxl345", "sensor",
                                          self.name, {'header': hdr})
     def _build_config(self):
-        cmdqueue = self.spi.get_command_queue()
-        self.query_adxl345_cmd = self.mcu.lookup_command(
-            "query_adxl345 oid=%c rest_ticks=%u", cq=cmdqueue)
-        self.clock_updater.setup_query_command(
-            self.mcu, "query_adxl345_status oid=%c", oid=self.oid, cq=cmdqueue)
+        if self.bus_type == 'spi':
+            cmdqueue = self.spi.get_command_queue()
+            self.query_adxl345_cmd = self.mcu.lookup_command(
+                "query_adxl345 oid=%c rest_ticks=%u", cq=cmdqueue)
+            self.clock_updater.setup_query_command(
+                self.mcu, "query_adxl345_status oid=%c", oid=self.oid, cq=cmdqueue)
+        else:
+            cmdqueue = self.i2c.get_command_queue()
+            self.query_adxl345_cmd = self.mcu.lookup_command(
+                "query_adxl345_i2c oid=%c rest_ticks=%u", cq=cmdqueue)
+            self.clock_updater.setup_query_command(
+                self.mcu, "query_adxl345_i2c_status oid=%c", oid=self.oid, cq=cmdqueue)
     def read_reg(self, reg):
-        params = self.spi.spi_transfer([reg | REG_MOD_READ, 0x00])
-        response = bytearray(params['response'])
-        return response[1]
+        if self.bus_type == 'spi':
+            params = self.spi.spi_transfer([reg | REG_MOD_READ, 0x00])
+            response = bytearray(params['response'])[1]
+        else:
+            params = self.i2c.i2c_read([reg], 1)
+            response = bytearray(params['response'])[0]
+        return response
     def set_reg(self, reg, val, minclock=0):
-        self.spi.spi_send([reg, val & 0xFF], minclock=minclock)
+        if self.bus_type == 'spi':
+            self.spi.spi_send([reg, val & 0xFF], minclock=minclock)
+        else:
+            self.i2c.i2c_write([reg, val & 0xFF], minclock=minclock)
         stored_val = self.read_reg(reg)
         if stored_val != val:
             raise self.printer.command_error(
