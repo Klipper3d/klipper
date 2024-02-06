@@ -184,10 +184,12 @@ SAVE_CONFIG gcode must be run to make the changes to persistent memory
 permanent.
 
 #### BED_MESH_OFFSET
-`BED_MESH_OFFSET [X=<value>] [Y=<value>]`: Applies X and/or Y offsets
-to the mesh lookup. This is useful for printers with independent
-extruders, as an offset is necessary to produce correct Z adjustment
-after a tool change.
+`BED_MESH_OFFSET [X=<value>] [Y=<value>] [ZFADE=<value]`: Applies X, Y,
+and/or ZFADE offsets to the mesh lookup. This is useful for printers with
+independent extruders, as an offset is necessary to produce correct Z
+adjustment after a tool change.  Note that a ZFADE offset does not apply
+additional z-adjustment directly, it is used to correct the `fade`
+calculation when a `gcode offset` has been applied to the Z axis.
 
 ### [bed_screws]
 
