@@ -42,7 +42,12 @@ class DualCarriages:
                    desc=self.cmd_RESTORE_DUAL_CARRIAGE_STATE_help)
     def get_rails(self):
         return self.dc
-    def toggle_active_dc_rail(self, index, override_rail=False):
+    def get_primary_rail(self):
+        for rail in self.dc:
+            if rail.mode == PRIMARY:
+                return rail
+        return None
+    def toggle_active_dc_rail(self, index):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.flush_step_generation()
         pos = toolhead.get_position()
@@ -52,15 +57,11 @@ class DualCarriages:
             if i != index:
                 if dc.is_active():
                     dc.inactivate(pos)
-                if override_rail:
-                    kin.override_rail(3, dc_rail)
         target_dc = self.dc[index]
         if target_dc.mode != PRIMARY:
             newpos = pos[:self.axis] + [target_dc.get_axis_position(pos)] \
                         + pos[self.axis+1:]
             target_dc.activate(PRIMARY, newpos, old_position=pos)
-            if override_rail:
-                kin.override_rail(self.axis, target_dc.get_rail())
             toolhead.set_position(newpos)
         kin.update_limits(self.axis, target_dc.get_rail().get_range())
     def home(self, homing_state):
@@ -72,10 +73,10 @@ class DualCarriages:
             # the same direction and the first carriage homes on the second one
             enumerated_dcs.reverse()
         for i, dc_rail in enumerated_dcs:
-            self.toggle_active_dc_rail(i, override_rail=True)
+            self.toggle_active_dc_rail(i)
             kin.home_axis(homing_state, self.axis, dc_rail.get_rail())
         # Restore the original rails ordering
-        self.toggle_active_dc_rail(0, override_rail=True)
+        self.toggle_active_dc_rail(0)
     def get_status(self, eventtime=None):
         return {('carriage_%d' % (i,)) : dc.mode
                 for (i, dc) in enumerate(self.dc)}
