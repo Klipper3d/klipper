@@ -1,6 +1,6 @@
 # A utility class to test resonances of the printer
 #
-# Copyright (C) 2020  Dmitry Butyugin <dmbutyugin@google.com>
+# Copyright (C) 2020-2024  Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math, os, time
@@ -114,6 +114,8 @@ class VibrationPulseTest:
         if input_shaper is not None:
             input_shaper.enable_shaping()
             gcmd.respond_info("Re-enabled [input_shaper]")
+    def get_max_freq(self):
+        return self.freq_end
 
 class ResonanceTester:
     def __init__(self, config):
@@ -302,8 +304,14 @@ class ResonanceTester:
                     "Calculating the best input shaper parameters for %s axis"
                     % (axis_name,))
             calibration_data[axis].normalize_to_frequencies()
+            systime = self.printer.get_reactor().monotonic()
+            toolhead = self.printer.lookup_object('toolhead')
+            toolhead_info = toolhead.get_status(systime)
+            scv = toolhead_info['square_corner_velocity']
             best_shaper, all_shapers = helper.find_best_shaper(
-                    calibration_data[axis], max_smoothing, gcmd.respond_info)
+                    calibration_data[axis], max_smoothing=max_smoothing,
+                    scv=scv, max_freq=1.5*self.test.get_max_freq(),
+                    logging=gcmd.respond_info)
             gcmd.respond_info(
                     "Recommended shaper_type_%s = %s, shaper_freq_%s = %.1f Hz"
                     % (axis_name, best_shaper.name,
