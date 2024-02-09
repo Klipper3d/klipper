@@ -439,7 +439,7 @@ that the objects are being defined before the adaptive bed mesh command is execu
 - You must have the [exclude_object](Exclude_Object.md) module enabled by adding `[exclude_object]` to your `printer.cfg` file.
 - You must enable object labeling in your slicer.
   - Certain slicers may do this by default, or do not provide an option because it is an "always-on" feature.
-  - More modern slicers provide a "Firmware-Specific" option for labeling object. If you enable this, you'll need to verify that your slicer supports the `klipper` gcode flavor, and is generating `EXCLUDE_OBJECT_DEFINE` commands at the beginning of the sliced gcode file.
+  - More modern slicers provide a "Firmware-Specific" option for labeling objects. If you enable this, you'll need to verify that your slicer supports the `klipper` gcode flavor, and is generating `EXCLUDE_OBJECT_DEFINE` commands at the beginning of the sliced gcode file.
 - If your slicer does not support firmware-specific object labeling, or does not support the `klipper` gcode flavor, you will need to [configure Moonraker's file manager module](https://moonraker.readthedocs.io/en/latest/configuration/#file_manager) to enable object processing.
 - Finally, to generate an adaptive bed mesh, you must append the `ADAPTIVE=1` flag to `BED_MESH_CALIBRATE` wherever you normally call for a bed mesh to be generated.
   - The command should be `BED_MESH_CALIBRATE ADAPTIVE=1` wherever you normally request it.
