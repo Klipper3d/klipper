@@ -1631,8 +1631,15 @@ specify an explicit name (eg, [adxl345 my_chip_name]).
 
 ```
 [adxl345]
+#i2c_mcu:
+#i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#i2c_speed: 400000
+#   See the "common I2C settings" section for a description of the
+#   above parameters. The default "i2c_speed" is 400000.
 cs_pin:
-#   The SPI enable pin for the sensor. This parameter must be provided.
+#   The SPI enable pin for the sensor. This parameter must be provided if using SPI communication.
 #spi_speed: 5000000
 #   The SPI speed (in hz) to use when communicating with the chip.
 #   The default is 5000000.
