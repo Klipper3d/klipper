@@ -202,13 +202,13 @@ class ADXL345:
         self.data_rate = config.getint('rate', 3200)
         if self.data_rate not in QUERY_RATES:
             raise config.error("Invalid rate parameter: %d" % (self.data_rate,))
-        
+
         # Check if i2c or spi is used
-        if (config.get('i2c_bus', None) is None and 
+        if (config.get('i2c_bus', None) is None and
             config.get('i2c_software_scl_pin', None) is None):
             self.bus_type = 'spi'
-            self.spi = bus.MCU_SPI_from_config(config, 
-                                               3, 
+            self.spi = bus.MCU_SPI_from_config(config,
+                                               3,
                                                default_speed=5000000)
             self.mcu = mcu = self.spi.get_mcu()
             self.oid = oid = mcu.create_oid()
@@ -227,7 +227,7 @@ class ADXL345:
                            % (self.oid, self.i2c.get_oid()))
             self.mcu.add_config_cmd("query_adxl345_i2c oid=%d rest_ticks=0"
                             % (self.oid,), on_restart=True)
-            
+
         # Setup mcu sensor_adxl345 bulk query code
         self.query_adxl345_cmd = None
         mcu.register_config_callback(self._build_config)
@@ -252,13 +252,15 @@ class ADXL345:
             self.query_adxl345_cmd = self.mcu.lookup_command(
                 "query_adxl345 oid=%c rest_ticks=%u", cq=cmdqueue)
             self.clock_updater.setup_query_command(
-                self.mcu, "query_adxl345_status oid=%c", oid=self.oid, cq=cmdqueue)
+                self.mcu, "query_adxl345_status oid=%c",
+                oid=self.oid, cq=cmdqueue)
         else:
             cmdqueue = self.i2c.get_command_queue()
             self.query_adxl345_cmd = self.mcu.lookup_command(
                 "query_adxl345_i2c oid=%c rest_ticks=%u", cq=cmdqueue)
             self.clock_updater.setup_query_command(
-                self.mcu, "query_adxl345_i2c_status oid=%c", oid=self.oid, cq=cmdqueue)
+                self.mcu, "query_adxl345_i2c_status oid=%c",
+                oid=self.oid, cq=cmdqueue)
     def read_reg(self, reg):
         if self.bus_type == 'spi':
             params = self.spi.spi_transfer([reg | REG_MOD_READ, 0x00])

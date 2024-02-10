@@ -48,11 +48,13 @@ static uint_fast8_t adxl345_i2c_event(struct timer *timer) {
 
 // Initialize ADXL345 sensor configuration
 void command_config_adxl345_i2c(uint32_t *args) {
-    struct adxl345_i2c *ax2 = oid_alloc(args[0], command_config_adxl345_i2c, sizeof(*ax2));
+    struct adxl345_i2c *ax2 = oid_alloc(args[0],
+        command_config_adxl345_i2c, sizeof(*ax2));
     ax2->timer.func = adxl345_i2c_event;
     ax2->i2c = i2cdev_oid_lookup(args[1]);
 }
-DECL_COMMAND(command_config_adxl345_i2c, "config_adxl345_i2c oid=%c i2c_oid=%c");
+DECL_COMMAND(command_config_adxl345_i2c,
+             "config_adxl345_i2c oid=%c i2c_oid=%c");
 
 // Reschedules the timer for the next data read
 static void adxl_i2c_reschedule_timer(struct adxl345_i2c *ax2) {
@@ -67,17 +69,17 @@ static void adxl_i2c_query(struct adxl345_i2c *ax2, uint8_t oid) {
     uint8_t reg = AR_DATAX0; // Start register for accelerometer data
     uint8_t data[8]; // Buffer for reading data
     i2c_read(ax2->i2c->i2c_config, 1, &reg, sizeof(data), data);
-    ax2->fifo_entries = data[7] & ~0x80; // Mask off trigger bit from FIFO status
+    ax2->fifo_entries = data[7] & ~0x80; // Mask off trigger bit
 
     uint8_t *d = &ax2->sb.data[ax2->sb.data_count];
-    
+
     // Check for data errors before processing
     if (((data[1] & 0xf0) && (data[1] & 0xf0) != 0xf0)
         || ((data[3] & 0xf0) && (data[3] & 0xf0) != 0xf0)
         || ((data[5] & 0xf0) && (data[5] & 0xf0) != 0xf0)
         || (data[6] != SET_FIFO_CTL) || (ax2->fifo_entries > 32)) {
         // Fill with error code and reset FIFO entries
-        memset(d, 0xff, BYTES_PER_SAMPLE); 
+        memset(d, 0xff, BYTES_PER_SAMPLE);
         ax2->fifo_entries = 0;
     } else {
         // Process and store valid X, Y, Z readings
@@ -91,7 +93,7 @@ static void adxl_i2c_query(struct adxl345_i2c *ax2, uint8_t oid) {
     ax2->sb.data_count += BYTES_PER_SAMPLE;
     if (ax2->sb.data_count + BYTES_PER_SAMPLE > ARRAY_SIZE(ax2->sb.data))
         sensor_bulk_report(&ax2->sb, oid);
-    
+
     // Manage FIFO data and reschedule as needed
     if (ax2->fifo_entries >= 31)
         ax2->sb.possible_overflows++;
@@ -117,7 +119,8 @@ void command_query_adxl345_i2c(uint32_t *args) {
     sensor_bulk_reset(&ax2->sb);
     adxl_i2c_reschedule_timer(ax2);
 }
-DECL_COMMAND(command_query_adxl345_i2c, "query_adxl345_i2c oid=%c rest_ticks=%u");
+DECL_COMMAND(command_query_adxl345_i2c,
+             "query_adxl345_i2c oid=%c rest_ticks=%u");
 
 // Query the status of the ADXL345 sensor
 void command_query_adxl345_i2c_status(uint32_t *args) {
@@ -132,10 +135,15 @@ void command_query_adxl345_i2c_status(uint32_t *args) {
     uint_fast8_t fifo_status = fifo_status_msg & ~0x80; // Mask off trigger bit
     if (fifo_status > 32)
         return; // Error in query, no response sent
-    
-    sensor_bulk_status(&ax2->sb, args[0], time1, time2 - time1, fifo_status * BYTES_PER_SAMPLE);
+
+    sensor_bulk_status(&ax2->sb,
+                       args[0],
+                       time1,
+                       time2 - time1,
+                       fifo_status * BYTES_PER_SAMPLE);
 }
-DECL_COMMAND(command_query_adxl345_i2c_status, "query_adxl345_i2c_status oid=%c");
+DECL_COMMAND(command_query_adxl345_i2c_status,
+             "query_adxl345_i2c_status oid=%c");
 
 // Task to handle ADXL345 data queries
 void adxl345_i2c_task(void) {
