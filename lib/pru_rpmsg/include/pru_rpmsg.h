@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2016-2018 Texas Instruments Incorporated - http://www.ti.com/
  *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -84,6 +84,10 @@
 #define RPMSG_NAME_SIZE 			32
 /* The maximum size of the buffer (including the header) */
 #define RPMSG_BUF_SIZE				512
+/* The size of the buffer header */
+#define RPMSG_HEADER_SIZE			16
+/* The maximum size of the buffer message */
+#define RPMSG_MESSAGE_SIZE			496
 
 enum pru_rpmsg_ns_flags {
     RPMSG_NS_CREATE = 0,

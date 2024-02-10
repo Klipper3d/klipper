@@ -41,10 +41,10 @@
  */
 #include <pru_virtqueue.h>
 
-#ifndef __GNUC__
-volatile register uint32_t __R31;
-#else
+#ifdef __GNUC__
 #include <pru/io.h>
+#else
+volatile register uint32_t __R31;
 #endif
 
 /* bit 5 is the valid strobe to generate system events with __R31 */
@@ -131,19 +131,12 @@ int16_t pru_virtqueue_kick(
     struct pru_virtqueue	*vq
 )
 {
-	unsigned int r31;
-
 	/* If requested, do not kick the ARM host */
 	if (vq->vring.avail->flags & VRING_AVAIL_F_NO_INTERRUPT)
 		return PRU_VIRTQUEUE_NO_KICK;
 
 	/* Generate a system event to kick the ARM */
-	r31 = (INT_ENABLE | (vq->to_arm_event - INT_OFFSET)); 
-#ifdef __GNUC__
-	write_r31(r31);
-#else
-	__R31 = r31;
-#endif
+	__R31 = (INT_ENABLE | (vq->to_arm_event - INT_OFFSET)); 
 
 	return PRU_VIRTQUEUE_SUCCESS;
 }
