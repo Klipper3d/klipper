@@ -64,7 +64,7 @@ automatic probe point, then `ABORT` the manual probe tool and perform
 the XY probe offset calibration described above.
 
 Once the manual probe tool starts, follow the steps described at
-["the paper test"](Bed_Level.md#the-paper-test)) to determine the
+["the paper test"](Bed_Level.md#the-paper-test) to determine the
 actual distance between the nozzle and bed at the given location. Once
 those steps are complete one can `ACCEPT` the position and save the
 results to the config file with:
