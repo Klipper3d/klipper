@@ -20,3 +20,4 @@ sensors-src-$(CONFIG_HAVE_GPIO_I2C) += sensor_mpu9250.c
 src-$(CONFIG_WANT_SENSORS) += $(sensors-src-y)
 src-$(CONFIG_WANT_LIS2DW) += sensor_lis2dw.c
 src-$(CONFIG_NEED_SENSOR_BULK) += sensor_bulk.c
+src-y += BD_sensor.c
