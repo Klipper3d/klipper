@@ -309,6 +309,19 @@ The following information is available in
 - `last_stats.<statistics_name>`: Statistics information on the
   micro-controller connection.
 
+## mixing_extruder
+
+The following information is available in the `mixing_extruder` object
+(this object is automatically available if any stepper config section
+is defined):
+
+The following information is available in
+[mixing_extruder](Config_Reference.md#mixing_extruder) objects:
+- `<mixing>`: The current mixing weights in percent for the configured
+  extruders separated by comma
+- `<ticks>`: A comma separated list of the current mcu position for the
+  configured extruders
+
 ## motion_report
 
 The following information is available in the `motion_report` object

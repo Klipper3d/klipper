@@ -69,6 +69,13 @@ class ExtruderStepper:
         self.stepper.set_position([extruder.last_position, 0., 0.])
         self.stepper.set_trapq(extruder.get_trapq())
         self.motion_queue = extruder_name
+    def set_rotation_distance(self, rotation_dist):
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.flush_step_generation()
+        self.stepper.set_rotation_distance(rotation_dist)
+    def get_rotation_distance(self):
+        rotation_dist, spr = self.stepper.get_rotation_distance()
+        return rotation_dist
     def _set_pressure_advance(self, pressure_advance, smooth_time):
         old_smooth_time = self.pressure_advance_smooth_time
         if not self.pressure_advance:
@@ -116,12 +123,10 @@ class ExtruderStepper:
             if rotation_dist < 0.:
                 next_invert_dir = not orig_invert_dir
                 rotation_dist = -rotation_dist
-            toolhead = self.printer.lookup_object('toolhead')
-            toolhead.flush_step_generation()
-            self.stepper.set_rotation_distance(rotation_dist)
+            self.set_rotation_distance(rotation_dist)
             self.stepper.set_dir_inverted(next_invert_dir)
         else:
-            rotation_dist, spr = self.stepper.get_rotation_distance()
+            rotation_dist = self.get_rotation_distance()
         invert_dir, orig_invert_dir = self.stepper.get_dir_inverted()
         if invert_dir != orig_invert_dir:
             rotation_dist = -rotation_dist
@@ -137,10 +142,8 @@ class ExtruderStepper:
     def cmd_SET_E_STEP_DISTANCE(self, gcmd):
         step_dist = gcmd.get_float('DISTANCE', None, above=0.)
         if step_dist is not None:
-            toolhead = self.printer.lookup_object('toolhead')
-            toolhead.flush_step_generation()
             rd, steps_per_rotation = self.stepper.get_rotation_distance()
-            self.stepper.set_rotation_distance(step_dist * steps_per_rotation)
+            self.set_rotation_distance(step_dist * steps_per_rotation)
         else:
             step_dist = self.stepper.get_step_dist()
         gcmd.respond_info("Extruder '%s' step distance set to %0.6f"
