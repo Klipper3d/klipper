@@ -26,15 +26,6 @@
 /* Definition for unused interrupts */
 #define HOST_UNUSED             255
 
-/* Mapping sysevts to a channel. Each pair contains a sysevt, channel. */
-/*static struct ch_map pru_intc_map[] = {
-    {IEP_EVENT, WAKE_PRU1_IRQ},
-    {KICK_ARM_EVENT, WAKE_ARM_IRQ},
-    {KICK_PRU0_FROM_ARM_EVENT, WAKE_PRU0_IRQ},
-    {KICK_PRU0_EVENT, WAKE_PRU0_IRQ},
-    {KICK_PRU1_EVENT, WAKE_PRU1_IRQ},
-};
-*/
 struct my_resource_table {
     struct resource_table base;
 
