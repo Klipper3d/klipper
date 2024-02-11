@@ -6,7 +6,7 @@ src-$(CONFIG_HAVE_GPIO) += initial_pins.c gpiocmds.c stepper.c endstop.c \
 src-$(CONFIG_HAVE_GPIO_ADC) += adccmds.c
 src-$(CONFIG_HAVE_GPIO_SPI) += spicmds.c
 src-$(CONFIG_HAVE_GPIO_SDIO) += sdiocmds.c
-src-$(CONFIG_HAVE_GPIO_I2C) += i2ccmds.c
+src-$(CONFIG_HAVE_GPIO_I2C) += i2ccmds.c BD_sensor.c
 src-$(CONFIG_HAVE_GPIO_HARD_PWM) += pwmcmds.c
 
 src-$(CONFIG_WANT_GPIO_BITBANGING) += buttons.c tmcuart.c neopixel.c \
@@ -20,4 +20,3 @@ sensors-src-$(CONFIG_HAVE_GPIO_I2C) += sensor_mpu9250.c
 src-$(CONFIG_WANT_SENSORS) += $(sensors-src-y)
 src-$(CONFIG_WANT_LIS2DW) += sensor_lis2dw.c
 src-$(CONFIG_NEED_SENSOR_BULK) += sensor_bulk.c
-src-y += BD_sensor.c
