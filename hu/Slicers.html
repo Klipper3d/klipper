@@ -761,7 +761,7 @@
   
     <li class="md-nav__item">
       <a href="Command_Templates.html" class="md-nav__link">
-        Parancssablonok
+        Parancs sablonok
       </a>
     </li>
   
@@ -1461,7 +1461,7 @@
 </code></pre></div>
 
 <p>A slic3r származékokban, mint például a PrusaSlicer és a SuperSlicer, a következőket kell használni:</p>
-<div class="highlight"><pre><span></span><code>START_PRINT EXTRUDER_TEMP=[first_layer_temperature] BED_TEMP=[first_layer_bed_temperature]
+<div class="highlight"><pre><span></span><code>START_PRINT EXTRUDER_TEMP=[első_réteg_hőmérséklet] BED_TEMP=[első_réteg_ágyhőmérséklet]
 </code></pre></div>
 
 <p>Vedd figyelembe azt is, hogy ezek a szeletelők saját fűtési kódokat adnak meg, ha bizonyos feltételek nem teljesülnek. A Curában a <code>{material_bed_temperature_layer_0}</code> és a <code>{material_print_temperature_layer_0}</code> változók létezése elegendő ennek enyhítésére. A slic3r származékokban a következőket használhatod:</p>
