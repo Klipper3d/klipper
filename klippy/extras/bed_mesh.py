@@ -294,23 +294,23 @@ class BedMeshCalibrate:
     ALGOS = ['lagrange', 'bicubic']
     def __init__(self, config, bedmesh):
         self.printer = config.get_printer()
-        self.orig_config = {'radius': None, 'origin': None}
+        self.orig_config = og_cfg = {'radius': None, 'origin': None}
         self.radius = self.origin = None
         self.mesh_min = self.mesh_max = (0., 0.)
         self.adaptive_margin = config.getfloat('adaptive_margin', 0.0)
-        self.zero_ref_pos = config.getfloatlist(
+        self.zero_ref_pos = zrpos = config.getfloatlist(
             "zero_reference_position", None, count=2
         )
         self.zero_reference_mode = ZrefMode.DISABLED
-        self.faulty_regions = []
-        self.substituted_indices = collections.OrderedDict()
         self.bedmesh = bedmesh
         self.mesh_config = collections.OrderedDict()
         self._init_mesh_config(config)
+        self.path_generator = PathGenerator(config, og_cfg, zrpos)
         self._generate_points(config.error)
         self._profile_name = "default"
         self.probe_helper = probe.ProbePointsHelper(
-            config, self.probe_finalize, self._get_adjusted_points())
+            config, self.probe_finalize, self.path_generator
+        )
         self.probe_helper.minimum_points(3)
         self.probe_helper.use_xy_offsets(True)
         self.gcode = self.printer.lookup_object('gcode')
@@ -369,59 +369,14 @@ class BedMeshCalibrate:
         else:
             # Zero Reference position outside of mesh
             self.zero_reference_mode = ZrefMode.PROBE
-        if not self.faulty_regions:
-            return
-        self.substituted_indices.clear()
-        if self.zero_reference_mode == ZrefMode.PROBE:
-            # Cannot probe a reference within a faulty region
-            for min_c, max_c in self.faulty_regions:
-                if within(self.zero_ref_pos, min_c, max_c):
-                    opt = "zero_reference_position"
-                    raise error(
-                        "bed_mesh: Cannot probe zero reference position at "
-                        "(%.2f, %.2f) as it is located within a faulty region."
-                        " Check the value for option '%s'"
-                        % (self.zero_ref_pos[0], self.zero_ref_pos[1], opt,)
-                    )
-        # Check to see if any points fall within faulty regions
-        if probe_method == "manual":
-            return
-        last_y = self.points[0][1]
-        is_reversed = False
-        for i, coord in enumerate(self.points):
-            if not isclose(coord[1], last_y):
-                is_reversed = not is_reversed
-            last_y = coord[1]
-            adj_coords = []
-            for min_c, max_c in self.faulty_regions:
-                if within(coord, min_c, max_c, tol=.00001):
-                    # Point lies within a faulty region
-                    adj_coords = [
-                        (min_c[0], coord[1]), (coord[0], min_c[1]),
-                        (coord[0], max_c[1]), (max_c[0], coord[1])]
-                    if is_reversed:
-                        # Swap first and last points for zig-zag pattern
-                        first = adj_coords[0]
-                        adj_coords[0] = adj_coords[-1]
-                        adj_coords[-1] = first
-                    break
-            if not adj_coords:
-                # coord is not located within a faulty region
-                continue
-            valid_coords = []
-            for ac in adj_coords:
-                # make sure that coordinates are within the mesh boundary
-                if self.radius is None:
-                    if within(ac, (min_x, min_y), (max_x, max_y), .000001):
-                        valid_coords.append(ac)
-                else:
-                    dist_from_origin = math.sqrt(ac[0]*ac[0] + ac[1]*ac[1])
-                    if dist_from_origin <= self.radius:
-                        valid_coords.append(ac)
-            if not valid_coords:
-                raise error("bed_mesh: Unable to generate coordinates"
-                            " for faulty region at index: %d" % (i))
-            self.substituted_indices[i] = valid_coords
+        zrf_mode = self.zero_reference_mode
+        min_pt, max_pt = (min_x, min_y), (max_x, max_y)
+        try:
+            self.path_generator.update(
+                points, zrf_mode, min_pt, max_pt, self.radius
+            )
+        except BedMeshError as e:
+            raise error(str(e))
     def print_generated_points(self, print_func):
         x_offset = y_offset = 0.
         probe = self.printer.lookup_object('probe', None)
@@ -439,9 +394,10 @@ class BedMeshCalibrate:
                 "bed_mesh: zero_reference_position is (%.2f, %.2f)"
                 % (self.zero_ref_pos[0], self.zero_ref_pos[1])
             )
-        if self.substituted_indices:
+        substitutes = self.path_generator.get_substitutes()
+        if substitutes:
             print_func("bed_mesh: faulty region points")
-            for i, v in self.substituted_indices.items():
+            for i, v in substitutes.items():
                 pt = self.points[i]
                 print_func("%d (%.2f, %.2f), substituted points: %s"
                            % (i, pt[0], pt[1], repr(v)))
@@ -481,42 +437,6 @@ class BedMeshCalibrate:
             config.get('algorithm', 'lagrange').strip().lower()
         orig_cfg['tension'] = mesh_cfg['tension'] = config.getfloat(
             'bicubic_tension', .2, minval=0., maxval=2.)
-        for i in list(range(1, 100, 1)):
-            start = config.getfloatlist("faulty_region_%d_min" % (i,), None,
-                                        count=2)
-            if start is None:
-                break
-            end = config.getfloatlist("faulty_region_%d_max" % (i,), count=2)
-            # Validate the corners.  If necessary reorganize them.
-            # c1 = min point, c3 = max point
-            #  c4 ---- c3
-            #  |        |
-            #  c1 ---- c2
-            c1 = [min([s, e]) for s, e in zip(start, end)]
-            c3 = [max([s, e]) for s, e in zip(start, end)]
-            c2 = [c1[0], c3[1]]
-            c4 = [c3[0], c1[1]]
-            # Check for overlapping regions
-            for j, (prev_c1, prev_c3) in enumerate(self.faulty_regions):
-                prev_c2 = [prev_c1[0], prev_c3[1]]
-                prev_c4 = [prev_c3[0], prev_c1[1]]
-                # Validate that no existing corner is within the new region
-                for coord in [prev_c1, prev_c2, prev_c3, prev_c4]:
-                    if within(coord, c1, c3):
-                        raise config.error(
-                            "bed_mesh: Existing faulty_region_%d %s overlaps "
-                            "added faulty_region_%d %s"
-                            % (j+1, repr([prev_c1, prev_c3]),
-                               i, repr([c1, c3])))
-                # Validate that no new corner is within an existing region
-                for coord in [c1, c2, c3, c4]:
-                    if within(coord, prev_c1, prev_c3):
-                        raise config.error(
-                            "bed_mesh: Added faulty_region_%d %s overlaps "
-                            "existing faulty_region_%d %s"
-                            % (i, repr([c1, c3]),
-                               j+1, repr([prev_c1, prev_c3])))
-            self.faulty_regions.append((c1, c3))
         self._verify_algorithm(config.error)
     def _verify_algorithm(self, error):
         params = self.mesh_config
@@ -712,31 +632,11 @@ class BedMeshCalibrate:
             self._generate_points(gcmd.error, probe_method)
             gcmd.respond_info("Generating new points...")
             self.print_generated_points(gcmd.respond_info)
-            pts = self._get_adjusted_points()
-            self.probe_helper.update_probe_points(pts, 3)
             msg = "\n".join(["%s: %s" % (k, v)
                              for k, v in self.mesh_config.items()])
             logging.info("Updated Mesh Configuration:\n" + msg)
         else:
             self._generate_points(gcmd.error, probe_method)
-            pts = self._get_adjusted_points()
-            self.probe_helper.update_probe_points(pts, 3)
-    def _get_adjusted_points(self):
-        adj_pts = []
-        if self.substituted_indices:
-            last_index = 0
-            for i, pts in self.substituted_indices.items():
-                adj_pts.extend(self.points[last_index:i])
-                adj_pts.extend(pts)
-                # Add one to the last index to skip the point
-                # we are replacing
-                last_index = i + 1
-            adj_pts.extend(self.points[last_index:])
-        else:
-            adj_pts = list(self.points)
-        if self.zero_reference_mode == ZrefMode.PROBE:
-            adj_pts.append(self.zero_ref_pos)
-        return adj_pts
     cmd_BED_MESH_CALIBRATE_help = "Perform Mesh Bed Leveling"
     def cmd_BED_MESH_CALIBRATE(self, gcmd):
         self._profile_name = gcmd.get('PROFILE', "default")
@@ -765,14 +665,15 @@ class BedMeshCalibrate:
         x_cnt = params['x_count']
         y_cnt = params['y_count']
 
-        if self.substituted_indices:
+        substitutes = self.path_generator.get_substitutes()
+        if substitutes:
             # Replace substituted points with the original generated
             # point.  Its Z Value is the average probed Z of the
             # substituted points.
             corrected_pts = []
             idx_offset = 0
             start_idx = 0
-            for i, pts in self.substituted_indices.items():
+            for i, pts in substitutes.items():
                 fpt = [p - o for p, o in zip(self.points[i], offsets[:2])]
                 # offset the index to account for additional samples
                 idx = i + idx_offset
@@ -891,6 +792,305 @@ class BedMeshCalibrate:
             logging.info(
                 "  %-4d| %-17s| %-25s| %s" % (i, gen_pt, probed_pt, corr_pt))
 
+class PathGenerator:
+    def __init__(self, config, orig_config, zrp):
+        self.cfg_overshoot = config.getfloat("scan_overshoot", 0, minval=1.)
+        self.orig_config = orig_config
+        self.faulty_regions = []
+        self.overshoot = self.cfg_overshoot
+        self.zero_ref_pt = zrp
+        self.zref_mode = ZrefMode.DISABLED
+        self.base_points = []
+        self.substitutes = collections.OrderedDict()
+        self.path_cache = []
+        self.is_round = orig_config["radius"] is not None
+        self._init_faulty_regions(config)
+
+    def _init_faulty_regions(self, config):
+        for i in list(range(1, 100, 1)):
+            start = config.getfloatlist("faulty_region_%d_min" % (i,), None,
+                                        count=2)
+            if start is None:
+                break
+            end = config.getfloatlist("faulty_region_%d_max" % (i,), count=2)
+            # Validate the corners.  If necessary reorganize them.
+            # c1 = min point, c3 = max point
+            #  c4 ---- c3
+            #  |        |
+            #  c1 ---- c2
+            c1 = [min([s, e]) for s, e in zip(start, end)]
+            c3 = [max([s, e]) for s, e in zip(start, end)]
+            c2 = [c1[0], c3[1]]
+            c4 = [c3[0], c1[1]]
+            # Check for overlapping regions
+            for j, (prev_c1, prev_c3) in enumerate(self.faulty_regions):
+                prev_c2 = [prev_c1[0], prev_c3[1]]
+                prev_c4 = [prev_c3[0], prev_c1[1]]
+                # Validate that no existing corner is within the new region
+                for coord in [prev_c1, prev_c2, prev_c3, prev_c4]:
+                    if within(coord, c1, c3):
+                        raise config.error(
+                            "bed_mesh: Existing faulty_region_%d %s overlaps "
+                            "added faulty_region_%d %s"
+                            % (j+1, repr([prev_c1, prev_c3]),
+                               i, repr([c1, c3])))
+                # Validate that no new corner is within an existing region
+                for coord in [c1, c2, c3, c4]:
+                    if within(coord, prev_c1, prev_c3):
+                        raise config.error(
+                            "bed_mesh: Added faulty_region_%d %s overlaps "
+                            "existing faulty_region_%d %s"
+                            % (i, repr([c1, c3]),
+                               j+1, repr([prev_c1, prev_c3])))
+            self.faulty_regions.append((c1, c3))
+
+    def get_substitutes(self):
+        return self.substitutes
+
+    def update(self, points, zref_mode, min_pt, max_pt, radius):
+        self.base_points = points
+        self.substitutes.clear()
+        self.zref_mode = zref_mode
+        self.path_cache = []
+        # adjust overshoot
+        min_x, max_x = min_pt[0], max_pt[0]
+        og_min_x = self.orig_config["mesh_min"][0]
+        og_max_x = self.orig_config["mesh_max"][0]
+        add_ovs = min(max(0, min_x - og_min_x), max(0, og_max_x - max_x))
+        self.overshoot = self.cfg_overshoot + math.floor(add_ovs)
+        self._process_faulty_regions(min_pt, max_pt, radius)
+
+    def _process_faulty_regions(self, min_pt, max_pt, radius):
+        if not self.faulty_regions:
+            return
+        # Cannot probe a reference within a faulty region
+        if self.zref_mode == ZrefMode.PROBE:
+            for min_c, max_c in self.faulty_regions:
+                if within(self.zero_ref_pt, min_c, max_c):
+                    opt = "zero_reference_position"
+                    raise BedMeshError(
+                        "bed_mesh: Cannot probe zero reference position at "
+                        "(%.2f, %.2f) as it is located within a faulty region."
+                        " Check the value for option '%s'"
+                        % (self.zero_ref_pt[0], self.zero_ref_pt[1], opt,)
+                    )
+        # Check to see if any points fall within faulty regions
+        last_y = self.base_points[0][1]
+        is_reversed = False
+        for i, coord in enumerate(self.base_points):
+            if not isclose(coord[1], last_y):
+                is_reversed = not is_reversed
+            last_y = coord[1]
+            adj_coords = []
+            for min_c, max_c in self.faulty_regions:
+                if within(coord, min_c, max_c, tol=.00001):
+                    # Point lies within a faulty region
+                    adj_coords = [
+                        (min_c[0], coord[1]), (coord[0], min_c[1]),
+                        (coord[0], max_c[1]), (max_c[0], coord[1])]
+                    if is_reversed:
+                        # Swap first and last points for zig-zag pattern
+                        first = adj_coords[0]
+                        adj_coords[0] = adj_coords[-1]
+                        adj_coords[-1] = first
+                    break
+            if not adj_coords:
+                # coord is not located within a faulty region
+                continue
+            valid_coords = []
+            for ac in adj_coords:
+                # make sure that coordinates are within the mesh boundary
+                if radius is None:
+                    if within(ac, min_pt, max_pt, .000001):
+                        valid_coords.append(ac)
+                else:
+                    dist_from_origin = math.sqrt(ac[0]*ac[0] + ac[1]*ac[1])
+                    if dist_from_origin <= radius:
+                        valid_coords.append(ac)
+            if not valid_coords:
+                raise BedMeshError(
+                    "bed_mesh: Unable to generate coordinates"
+                    " for faulty region at index: %d" % (i)
+                )
+            self.substitutes[i] = valid_coords
+
+    def __getitem__(self, index):
+        # Keep compatibility with ProbePointsHelper standard probing
+        if not self.path_cache:
+            self.path_cache = list(self)
+        return self.path_cache[index]
+
+    def __len__(self):
+        if self.path_cache:
+            return len(self.path_cache)
+        path_len = len(self.base_points)
+        path_len += sum([len(pts) - 1 for pts in self.substitutes.values()])
+        if self.zref_mode == ZrefMode.PROBE:
+            path_len += 1
+        return path_len
+
+    def __iter__(self):
+        for idx, pt in enumerate(self.base_points):
+            if idx in self.substitutes:
+                for sub_pt in self.substitutes[idx]:
+                    yield sub_pt
+            else:
+                yield pt
+        if self.zref_mode == ZrefMode.PROBE:
+            yield self.zero_ref_pt
+
+    def iter_rapid(self):
+        ascnd_x = True
+        last_base_pt = last_mv_pt = self.base_points[0]
+        # Generate initial move point
+        if self.overshoot:
+            overshoot = min(8, self.overshoot)
+            last_mv_pt = (last_base_pt[0] - overshoot, last_base_pt[1])
+            yield last_mv_pt, False
+        for idx, pt in enumerate(self.base_points):
+            # increasing Y indicates direction change
+            dir_change = not isclose(pt[1], last_base_pt[1], abs_tol=1e-6)
+            if idx in self.substitutes:
+                fp_gen = self._gen_faulty_path(
+                    last_mv_pt, idx, ascnd_x, dir_change
+                )
+                for sub_pt, is_smp in fp_gen:
+                    yield sub_pt, is_smp
+                    last_mv_pt = sub_pt
+            else:
+                if dir_change:
+                    for dpt in self._gen_dir_change(last_mv_pt, pt, ascnd_x):
+                        yield dpt, False
+                yield pt, True
+                last_mv_pt = pt
+            last_base_pt = pt
+            ascnd_x ^= dir_change
+        if self.zref_mode == ZrefMode.PROBE:
+            if self.overshoot:
+                ovs = min(4, self.overshoot)
+                ovs = overshoot if ascnd_x else -overshoot
+                yield (last_mv_pt[0] + ovs, last_mv_pt[1]), False
+            yield self.zero_ref_pt, True
+
+    def _gen_faulty_path(self, last_pt, idx, ascnd_x, dir_change):
+        subs = self.substitutes[idx]
+        sub_cnt = len(subs)
+        if dir_change:
+            for dpt in self._gen_dir_change(last_pt, subs[0], ascnd_x):
+                yield dpt, False
+        if self.is_round:
+            # No faulty region path handling for round beds
+            for pt in subs:
+                yield pt, True
+            return
+        # Check to see if this is the first corner
+        first_corner = False
+        sorted_sub_idx = sorted(self.substitutes.keys())
+        if sub_cnt == 2 and idx < len(sorted_sub_idx):
+            first_corner = sorted_sub_idx[idx] == idx
+        yield subs[0], True
+        if sub_cnt == 1:
+            return
+        last_pt, next_pt = subs[:2]
+        if sub_cnt == 2:
+            if first_corner or dir_change:
+                # horizontal move first
+                yield (next_pt[0], last_pt[1]), False
+            else:
+                yield (last_pt[0], next_pt[1]), False
+            yield next_pt, True
+        elif sub_cnt >= 3:
+            if dir_change:
+                # first move should be a vertical switch up.  If overshoot
+                # is available, simulate another direction change.  Otherwise
+                # move inward 2 mm, then up through the faulty region.
+                if self.overshoot:
+                    for dpt in self._gen_dir_change(last_pt, next_pt, ascnd_x):
+                        yield dpt, False
+                else:
+                    shift = -2 if ascnd_x else 2
+                    yield (last_pt[0] + shift, last_pt[1]), False
+                    yield (last_pt[0] + shift, next_pt[1]), False
+                yield next_pt, True
+                last_pt, next_pt = subs[1:3]
+            else:
+                # vertical move
+                yield (last_pt[0], next_pt[1]), False
+                yield next_pt, True
+                last_pt, next_pt = subs[1:3]
+                if sub_cnt == 4:
+                    # Vertical switch up within faulty region
+                    shift = 2 if ascnd_x else -2
+                    yield (last_pt[0] + shift, last_pt[1]), False
+                    yield (next_pt[0] - shift, next_pt[1]), False
+                    yield next_pt, True
+                    last_pt, next_pt = subs[2:4]
+            # horizontal move before final point
+            yield (next_pt[0], last_pt[1]), False
+            yield next_pt, True
+
+    def _gen_dir_change(self, last_pt, next_pt, ascnd_x):
+        if not self.overshoot:
+            return
+        # overshoot X beyond the outer point
+        xdir = 1 if ascnd_x else -1
+        overshoot = 2. if self.overshoot >= 3. else self.overshoot
+        ovr_pt = (last_pt[0] + overshoot * xdir, last_pt[1])
+        yield ovr_pt
+        if self.overshoot < 3.:
+            # No room to generate an arc, move up to next y
+            yield (next_pt[0] + overshoot * xdir, next_pt[1])
+        else:
+            # generate arc
+            STEP_ANGLE = 3
+            START_ANGLE = 270
+            ydiff = abs(next_pt[1] - last_pt[1])
+            xdiff = abs(next_pt[0] - last_pt[0])
+            max_radius = min(self.overshoot - 2, 8)
+            radius = min(ydiff / 2, max_radius)
+            origin = [ovr_pt[0], last_pt[1] + radius]
+            next_origin_y = next_pt[1] - radius
+            # determine angle
+            if xdiff < .01:
+                # Move is aligned on the x-axis
+                angle = 90
+                if next_origin_y - origin[1] < .05:
+                    # The move can be completed in a single arc
+                    angle = 180
+            else:
+                angle = int(math.degrees(math.atan(ydiff / xdiff)))
+                if (
+                    (ascnd_x and next_pt[0] < last_pt[0]) or
+                    (not ascnd_x and next_pt[0] > last_pt[0])
+                ):
+                    angle = 180 - angle
+            count = int(angle // STEP_ANGLE)
+            # Gen first arc
+            step = STEP_ANGLE * xdir
+            start = START_ANGLE + step
+            for arc_pt in self._gen_arc(origin, radius, start, step, count):
+                yield arc_pt
+            if angle == 180:
+                # arc complete
+                return
+            # generate next arc
+            origin = [next_pt[0] + overshoot * xdir, next_origin_y]
+            # start at the angle where the last arc finished
+            start = START_ANGLE + count * step
+            # recalculate the count to make sure we generate a full 180
+            # degrees.  Add a step for the repeated connecting angle
+            count = 61 - count
+            for arc_pt in self._gen_arc(origin, radius, start, step, count):
+                yield arc_pt
+
+    def _gen_arc(self, origin, radius, start, step, count):
+        end = start + step * count
+        # create a segent for every 3 degress of travel
+        for angle in range(start, end, step):
+            rad = math.radians(angle % 360)
+            opp = math.sin(rad) * radius
+            adj = math.cos(rad) * radius
+            yield (origin[0] + adj, origin[1] + opp)
 
 class MoveSplitter:
     def __init__(self, config, gcode):
