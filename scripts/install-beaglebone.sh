@@ -1,5 +1,5 @@
 #!/bin/bash
-# This script installs Klipper on a Beaglebone running Debian Jessie
+# This script installs Klipper on a Beaglebone running Debian Bullseye
 # for use with its PRU micro-controller.
 
 # Step 1: Do main install
@@ -13,6 +13,12 @@ install_main()
 # Step 2: Install additional system packages
 install_packages()
 {
+    # Remove conflicting AVR packages
+    PKGLIST_REMOVE="avrdude gcc-avr binutils-avr avr-libc"
+
+    report_status "Removing ARM packages because of conflicts with PRU packages"
+    sudo apt-get remove --yes ${PKGLIST_REMOVE}
+
     # Install desired packages
     PKGLIST="gcc-pru"
 
@@ -25,7 +31,7 @@ install_script()
 {
     report_status "Installing pru start script..."
     sudo cp "${SRCDIR}/scripts/klipper-pru-start.sh" /etc/init.d/klipper_pru
-    sudo update-rc.d klipper_pru defaults
+    sudo update-rc.d klipper_pru defaults-disabled
 }
 
 # Step 4: Install pru udev rule
@@ -33,6 +39,7 @@ install_udev()
 {
     report_status "Installing pru udev rule..."
     sudo /bin/sh -c "cat > /etc/udev/rules.d/pru.rules" <<EOF
+SUBSYSTEM=="remoteproc", ENV{REMOTEPROC_NAME}!="", TAG+="systemd", ENV{SYSTEMD_WANTS}="klipper_pru.service"
 KERNEL=="rpmsg_pru30", GROUP="tty", MODE="0660"
 EOF
 }

@@ -21,8 +21,8 @@ You should check that output contains successful "remoteproc" drivers loading an
 in Kernel 5.10 they should be "remoteproc1" and "remoteproc2" (4a334000.pru, 4a338000.pru)
 Also check that many GPIOs are loaded they will look like "Allocated GPIO id=0 name='P8_03'" 
 Usually everything is fine and no hardware configuration is required. 
-If something is missing - try to play with "uboot overlay" options or with cape-overlays
-Just for reference some output of working configuration with CRAMPS board:
+If something is missing - try to play with "uboot overlays" options or with cape-overlays
+Just for reference some output of working BeagleBone Black configuration with CRAMPS board:
 ```
 model:[TI_AM335x_BeagleBone_Black]
 UBOOT: Booted Device-Tree:[am335x-boneblack-uboot-univ.dts]
@@ -87,8 +87,8 @@ Make sure the OctoPrint web server is accessible - it should be at:
 ## Building the micro-controller code
 
 To compile the Klipper micro-controller code, start by configuring it
-for the "Beaglebone PRU", additionally disable options "Support GPIO Bit-banging devices" 
-and disable "Support LCD devices", they exit and save config:
+for the "Beaglebone PRU", for "BeagleBone Black" additionally disable options "Support GPIO Bit-banging devices" 
+and disable "Support LCD devices" because they will not fit in 8Kb PRU, then exit and save config:
 ```
 cd ~/klipper/
 make menuconfig
@@ -97,7 +97,7 @@ make menuconfig
 To build and install the new micro-controller code, run:
 ```
 sudo service klipper stop
-make flash
+make clean flash
 sudo service klipper start
 ```
 
@@ -110,7 +110,7 @@ make menuconfig
 Then install this micro-controller code as well:
 ```
 sudo service klipper stop
-make flash
+make clean flash
 sudo service klipper start
 ```
 
@@ -135,3 +135,15 @@ commands). If this occurs, consider using the "virtual_sdcard" feature
 (see [Config Reference](Config_Reference.md#virtual_sdcard) for
 details) to print directly from Klipper 
 and disable any DEBUG or VERBOSE logging options if you did enable them.
+
+
+## AVR micro-controller code build 
+This environment have everything to build necessary micro-controller code except AVR,
+AVR packages was removed because of conflict with PRU packages.
+if you still want to build AVR micro-controller code in this environment you need to remove
+PRU packages and install AVR packages by executing following commands
+
+```
+sudo apt-get remove gcc-pru
+sudo apt-get install avrdude gcc-avr binutils-avr avr-libc
+```
