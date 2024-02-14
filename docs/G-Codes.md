@@ -453,6 +453,17 @@ This command is deprecated and will be removed in the near future.
 #### SYNC_STEPPER_TO_EXTRUDER
 This command is deprecated and will be removed in the near future.
 
+### [fan]
+
+The following command is available when a
+[fan config section](Config_Reference.md#fan is enabled.
+
+#### ACTIVATE_FAN
+
+`ACTIVATE_FAN FAN=fan_name[,second_fan]` Selects the active printer fan that
+reacts to M106/M107 gcodes. Multiple fans can be selected simultaneously by
+a comma separated list. Current fan speed is transferred over to the new fan(s).
+
 ### [fan_generic]
 
 The following command is available when a

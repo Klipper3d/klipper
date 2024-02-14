@@ -2645,7 +2645,10 @@ sensor_type: temperature_combined
 
 ### [fan]
 
-Print cooling fan.
+Print cooling fan (one may define any number of sections with a
+"fan" prefix). Print cooling fan is controlled by M106/M107 gcodes.
+When multiple fans are defined, ACTIVATE_FAN [gcode command](G-Codes.md#fan)
+selects which fan is used for cooling.
 
 ```
 [fan]

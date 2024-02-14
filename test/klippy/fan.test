@@ -1,0 +1,14 @@
+# Test case for fan
+CONFIG fan.cfg
+DICTIONARY atmega2560.dict
+
+M106 S255
+M107
+
+ACTIVATE_FAN FAN=fan
+M106 S255
+ACTIVATE_FAN FAN=fan2
+M106 S128
+ACTIVATE_FAN FAN="fan,fan fan2"
+ACTIVATE_FAN FAN="fan, fan fan2"
+ACTIVATE_FAN FAN=fan

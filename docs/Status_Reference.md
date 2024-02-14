@@ -134,12 +134,17 @@ The following information is available for extruder_stepper objects (as well as
 
 The following information is available in
 [fan](Config_Reference.md#fan),
+[fan_generic](Config_Reference.md#fan_generic),
 [heater_fan some_name](Config_Reference.md#heater_fan) and
 [controller_fan some_name](Config_Reference.md#controller_fan)
 objects:
 - `speed`: The fan speed as a float between 0.0 and 1.0.
 - `rpm`: The measured fan speed in rotations per minute if the fan has
   a tachometer_pin defined.
+
+Additionally, [fan](Config_Reference.md#fan) also has:
+- `active`: If the fan is selected as the active fan via
+  [ACTIVATE_FAN](G-Codes.md#fan).
 
 ## filament_switch_sensor
 
