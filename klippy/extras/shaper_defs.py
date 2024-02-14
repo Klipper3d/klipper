@@ -46,50 +46,62 @@ def get_mzv_shaper(shaper_freq, damping_ratio):
 def get_ei_shaper(shaper_freq, damping_ratio):
     v_tol = 1. / SHAPER_VIBRATION_REDUCTION # vibration tolerance
     df = math.sqrt(1. - damping_ratio**2)
-    K = math.exp(-damping_ratio * math.pi / df)
     t_d = 1. / (shaper_freq * df)
+    dr = damping_ratio
 
-    a1 = .25 * (1. + v_tol)
-    a2 = .5 * (1. - v_tol) * K
-    a3 = a1 * K * K
+    a1 = (0.24968 + 0.24961 * v_tol) + (( 0.80008 + 1.23328 * v_tol) +
+                                        ( 0.49599 + 3.17316 * v_tol) * dr) * dr
+    a3 = (0.25149 + 0.21474 * v_tol) + ((-0.83249 + 1.41498 * v_tol) +
+                                        ( 0.85181 - 4.90094 * v_tol) * dr) * dr
+    a2 = 1. - a1 - a3
+
+    t2 = 0.4999 + ((( 0.46159 + 8.57843 * v_tol) * v_tol) +
+                   (((4.26169 - 108.644 * v_tol) * v_tol) +
+                    ((1.75601 + 336.989 * v_tol) * v_tol) * dr) * dr) * dr
 
     A = [a1, a2, a3]
-    T = [0., .5*t_d, t_d]
+    T = [0., t2 * t_d, t_d]
+    return (A, T)
+
+def _get_shaper_from_expansion_coeffs(shaper_freq, damping_ratio, t, a):
+    tau = 1. / shaper_freq
+    T = []
+    A = []
+    n = len(a)
+    k = len(a[0])
+    for i in range(n):
+        u = t[i][k-1]
+        v = a[i][k-1]
+        for j in range(k-1):
+            u = u * damping_ratio + t[i][k-j-2]
+            v = v * damping_ratio + a[i][k-j-2]
+        T.append(u * tau)
+        A.append(v)
     return (A, T)
 
 def get_2hump_ei_shaper(shaper_freq, damping_ratio):
-    v_tol = 1. / SHAPER_VIBRATION_REDUCTION # vibration tolerance
-    df = math.sqrt(1. - damping_ratio**2)
-    K = math.exp(-damping_ratio * math.pi / df)
-    t_d = 1. / (shaper_freq * df)
-
-    V2 = v_tol**2
-    X = pow(V2 * (math.sqrt(1. - V2) + 1.), 1./3.)
-    a1 = (3.*X*X + 2.*X + 3.*V2) / (16.*X)
-    a2 = (.5 - a1) * K
-    a3 = a2 * K
-    a4 = a1 * K * K * K
-
-    A = [a1, a2, a3, a4]
-    T = [0., .5*t_d, t_d, 1.5*t_d]
-    return (A, T)
+    t = [[0., 0., 0., 0.],
+         [0.49890,  0.16270, -0.54262, 6.16180],
+         [0.99748,  0.18382, -1.58270, 8.17120],
+         [1.49920, -0.09297, -0.28338, 1.85710]]
+    a = [[0.16054,  0.76699,  2.26560, -1.22750],
+         [0.33911,  0.45081, -2.58080,  1.73650],
+         [0.34089, -0.61533, -0.68765,  0.42261],
+         [0.15997, -0.60246,  1.00280, -0.93145]]
+    return _get_shaper_from_expansion_coeffs(shaper_freq, damping_ratio, t, a)
 
 def get_3hump_ei_shaper(shaper_freq, damping_ratio):
-    v_tol = 1. / SHAPER_VIBRATION_REDUCTION # vibration tolerance
-    df = math.sqrt(1. - damping_ratio**2)
-    K = math.exp(-damping_ratio * math.pi / df)
-    t_d = 1. / (shaper_freq * df)
-
-    K2 = K*K
-    a1 = 0.0625 * (1. + 3. * v_tol + 2. * math.sqrt(2. * (v_tol + 1.) * v_tol))
-    a2 = 0.25 * (1. - v_tol) * K
-    a3 = (0.5 * (1. + v_tol) - 2. * a1) * K2
-    a4 = a2 * K2
-    a5 = a1 * K2 * K2
-
-    A = [a1, a2, a3, a4, a5]
-    T = [0., .5*t_d, t_d, 1.5*t_d, 2.*t_d]
-    return (A, T)
+    t = [[0., 0., 0., 0.],
+         [0.49974,  0.23834,  0.44559, 12.4720],
+         [0.99849,  0.29808, -2.36460, 23.3990],
+         [1.49870,  0.10306, -2.01390, 17.0320],
+         [1.99960, -0.28231,  0.61536, 5.40450]]
+    a = [[0.11275,  0.76632,  3.29160 -1.44380],
+         [0.23698,  0.61164, -2.57850,  4.85220],
+         [0.30008, -0.19062, -2.14560,  0.13744],
+         [0.23775, -0.73297,  0.46885, -2.08650],
+         [0.11244, -0.45439,  0.96382, -1.46000]]
+    return _get_shaper_from_expansion_coeffs(shaper_freq, damping_ratio, t, a)
 
 # min_freq for each shaper is chosen to have projected max_accel ~= 1500
 INPUT_SHAPERS = [
