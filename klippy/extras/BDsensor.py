@@ -201,11 +201,12 @@ class BDPrinterProbe:
         b_value=self.mcu_probe.BD_Sensor_Read(2)
         pos_new = toolhead.get_position()
         epos[2] = epos[2]-b_value + self.mcu_probe.endstop_bdsensor_offset
-        toolhead.set_position(pos_new)
+       # toolhead.set_position(pos_new)
         self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
-                                "bd%.3f  pos_new:%.6f"
+                                "  (pos:%.6f - bd:%.3f) "
                                 % (epos[0], epos[1], epos[2],
-                                   b_value, pos_new[2]))
+                                   pos_new[2],b_value))
+        self.mcu_probe.homeing=0
         return epos[:3]
     def _move(self, coord, speed):
         self.printer.lookup_object('toolhead').manual_move(coord, speed)
@@ -636,6 +637,8 @@ class BDsensorEndstopWrapper:
         self.printer.register_event_handler('klippy:mcu_identify',
                                             self._handle_mcu_identify)
         # Create an "endstop" object to handle the probe pin
+        self.collision_homing = config.getint('collision_homing', 0)
+        self.switch_mode = 0
         ppins = self.printer.lookup_object('pins')
         #self.mcu_pwm = ppins.setup_pin('pwm', config.get('scl_pin'))
         self.bdversion = ''
@@ -868,12 +871,29 @@ class BDsensorEndstopWrapper:
                 self.bd_sensor.I2C_BD_send("1018")#1018// finish reading
                 res = ''.join(map(chr, x))
                 self.bdversion = res
-                self.gcode.respond_info(self.bdversion)
+                #self.gcode.respond_info('BDsensor version:'+self.bdversion)
                 break
         self.bd_sensor.I2C_BD_send("1018")#1018// finish reading
         self.bd_sensor.I2C_BD_send("1018")
+        if "V1.1b" in self.bdversion or "V1.2b" in self.bdversion \
+                             or "V1.2c" in self.bdversion:#switch mode
+            self.switch_mode = 1
+        if "andapi" in self.bdversion:
+            self.gcode.respond_info("BDsensorVer:%s,switch_mode=%d,"
+                                    "collision_homing=%d"
+                                    %(self.bdversion,self.switch_mode,
+                                      self.collision_homing))
+        else:
+            self.gcode.respond_info("No data from BDsensor,"
+                                    "please check connection")
 
     def BD_calibrate(self, gcmd):
+        if "V1." not in self.bdversion:
+            self.BD_version(self.gcode)
+        if self.switch_mode == 1 and self.collision_homing == 1:
+            gcmd.respond_info("Homing")
+            self.gcode.run_script_from_command("G28")
+            self.gcode.run_script_from_command("G1 Z0")
         gcmd.respond_info("Calibrating, don't power off the printer")
         self.toolhead = self.printer.lookup_object('toolhead')
         kin = self.toolhead.get_kinematics()
@@ -1042,6 +1062,9 @@ class BDsensorEndstopWrapper:
            self.BD_version(gcmd)
         elif  CMD_BD == -2:# gcode M102 S-2 read distance data
             self.BD_distance(gcmd)
+        elif  CMD_BD ==-7:
+            self.bd_sensor.I2C_BD_send("1020") #read raw data
+            return;
         elif  CMD_BD ==-8:
             self.bd_sensor.I2C_BD_send("1022") #reboot sensor
         elif  CMD_BD ==-9:
@@ -1131,12 +1154,14 @@ class BDsensorEndstopWrapper:
         ffi_lib.trdispatch_start(self._trdispatch,
             self.etrsync.REASON_HOST_REQUEST)
         self.homeing=1
-        if "V1.1b" in self.bdversion or "V1.2b" in self.bdversion \
-                          or "V1.2c" in self.bdversion:#switch mode
+        if self.switch_mode == 1:
             self.bd_sensor.I2C_BD_send("1023")
             sample_time =.005
             sample_count =2
-            self.bd_sensor.I2C_BD_send(str(int(self.position_endstop*100)))
+            if self.collision_homing == 1:
+                self.bd_sensor.I2C_BD_send(str(1))
+            else:
+                self.bd_sensor.I2C_BD_send(str(int(self.position_endstop*100)))
         else:
             sample_time =.03
             sample_count =1
@@ -1182,13 +1207,32 @@ class BDsensorEndstopWrapper:
         self.multi = 'FIRST'
 
     def multi_probe_end(self):
-        self.bd_sensor.I2C_BD_send("1018")
         self.toolhead = self.printer.lookup_object('toolhead')
-        if self.homeing==1:
-            self.toolhead = self.printer.lookup_object('toolhead')
+        homepos = self.toolhead.get_position()
+        if self.switch_mode==1 and self.homeing==1 \
+                     and self.collision_homing == 1:
+            self.bd_sensor.I2C_BD_send("1020")
+            pr = self.I2C_BD_receive_cmd.send([self.oid, "32".encode('utf-8')])
+            intr = int(pr['response'])
+            self.gcode.respond_info("Z axis triggered at 0 %d mm " %(intr))
+            while 1:
+                homepos[2] +=0.04
+                self.toolhead.manual_move([None, None, homepos[2]],50)
+                self.toolhead.wait_moves()
+                pr = self.I2C_BD_receive_cmd.send([self.oid,
+                                                  "32".encode('utf-8')])
+                raw_d = int(pr['response'])
+                self.gcode.respond_info("auto adjust Z axis %.2f  %.1f mm "
+                                        %(homepos[2],raw_d))
+                if (raw_d - intr)>5:
+                    homepos[2]=0
+                    self.toolhead.set_position(homepos)
+                    break;
+                intr = raw_d
+            self.bd_sensor.I2C_BD_send("1018")
+        elif self.homeing==1:
             self.bd_sensor.I2C_BD_send("1018")
             time.sleep(0.1)
-            homepos = self.toolhead.get_position()
             self.bd_value=self.BD_Sensor_Read(2)
             if self.bd_value > (self.position_endstop + 2):
                 self.gcode.respond_info("triggered at %.3f mm !"
@@ -1216,7 +1260,6 @@ class BDsensorEndstopWrapper:
             #time.sleep(0.1)
             self.gcode.respond_info("Z axis triggered at %.3f mm "
                 %(self.bd_value))
-
         self.homeing=0
         if self.stow_on_each_sample:
             return

@@ -2,9 +2,8 @@
 // Mark yue<niujl123@sina.com>
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include<string.h>
+#include <string.h>
 #include <stdlib.h>
-#include "autoconf.h"
 #include "board/gpio.h"
 #include "board/irq.h"
 #include "board/misc.h"
@@ -17,7 +16,6 @@
 #include "board/misc.h" // timer_is_before
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // struct timer
-#include "stepper.h" // stepper_event
 #include "trsync.h" // trsync_add_signal
 
 
@@ -26,23 +24,6 @@
 #define BD_setLow(x)  gpio_out_write(x,0)
 #define BD_setHigh(x) gpio_out_write(x,1)
 
-
-uint32_t delay_m = 20, homing_pose = 0;
-int sda_pin = -1, scl_pin = -1, z_ofset = 0;
-uint16_t BD_Data;
-//extern uint32_t timer_period_time;
-uint16_t BD_read_flag=1018,BD_read_lock=0;
-int switch_mode = 0; //1:in switch mode
-struct gpio_out sda_gpio, scl_gpio;
-struct gpio_in sda_gpio_in;
-uint8_t oid_g,etrsync_oid,endstop_reason=0;
-uint8_t z_oid[4];
-uint32_t endtime_debug=0;
-uint32_t timer_period_endstop=100;
-
-///////////BDsensor as endstop
-struct timer time_bd;
-#include "autoconf.h"
 struct endstop {
     struct timer time;
     uint32_t rest_time, sample_time, nextwake,pin_num;
@@ -52,71 +33,16 @@ struct endstop {
 };
 
 enum { ESF_PIN_HIGH=1<<0, ESF_HOMING=1<<1 };
+
+uint32_t delay_m = 20, homing_pose = 0;
+int sda_pin = -1, scl_pin = -1, z_ofset = 0;
+uint16_t BD_Data;
+uint16_t BD_read_flag=1018,BD_read_lock=0;
+int switch_mode = 0; //1:in switch mode
+struct gpio_out sda_gpio, scl_gpio;
+struct gpio_in sda_gpio_in;
 static uint_fast8_t endstop_oversample_event(struct timer *t);
 static struct endstop e ;
-///////////////
-
-int z_index=0;
-
-enum { POSITION_BIAS=0x40000000 };
-
-struct stepper_move {
-    struct move_node node;
-    uint32_t interval;
-    int16_t add;
-    uint16_t count;
-    uint8_t flags;
-};
-
-struct stepper {
-    struct timer time;
-    uint32_t interval;
-    int16_t add;
-    uint32_t count;
-    uint32_t next_step_time, step_pulse_ticks;
-    struct gpio_out step_pin, dir_pin;
-    uint32_t position;
-    struct move_queue_head mq;
-    struct trsync_signal stop_signal;
-    // gcc (pre v6) does better optimization when uint8_t are bitfields
-    uint8_t flags : 8;
-};
-
-struct step_adjust{
-    uint32_t cur_z;
-    int adj_z_range;
-    int invert_dir;
-    int steps_per_mm;
-    int step_time;
-    int zoid;//oid for all the z stepper
-};
-
-#define NUM_Z_MOTOR  6
-struct step_adjust step_adj[NUM_Z_MOTOR];//x,y,z
-
-struct _step_probe{
-    int min_x;
-    int max_x;
-    int points;
-    int steps_at_zero;
-    int steps_per_mm;
-    int xoid;//oid for x stepper
-    int x_count;
-    int x_dir;
-    int y_dir;
-    int kinematics;//0:cartesian,1:corexy,2:delta
-    ////for y
-    int min_y;
-    int max_y;
-    int y_steps_at_zero;
-    int y_steps_per_mm;
-    int y_oid;//oid for y stepper
-    ////
-    int x_data[64];
-};
-
-struct _step_probe stepx_probe;
-
 
 void BD_i2c_write(unsigned int addr);
 uint16_t BD_i2c_read(void);
@@ -124,7 +50,6 @@ uint16_t BD_i2c_read(void);
 int BD_i2c_init(uint32_t _sda,uint32_t _scl,
     uint32_t delays,uint32_t h_pose,int z_adjust)
 {
-    int i=0;
     sda_pin=_sda;
     scl_pin =_scl;
     homing_pose = h_pose;
@@ -138,13 +63,6 @@ int BD_i2c_init(uint32_t _sda,uint32_t _scl,
 
     gpio_out_write(sda_gpio, 1);
     gpio_out_write(scl_gpio, 1);
-    for (i=0;i<NUM_Z_MOTOR;i++){
-        step_adj[i].cur_z=0;
-        step_adj[i].zoid=0;
-        step_adj[i].adj_z_range=0;
-    }
-    stepx_probe.xoid=0;
-    stepx_probe.y_oid=0;
     BD_i2c_write(1022); //reset BDsensor
     return 1;
 }
@@ -154,7 +72,6 @@ uint32_t nsecs_to_ticks_bd(uint32_t ns)
     return ns * (CONFIG_CLOCK_FREQ / 1000000);
 }
 
-
 void ndelay_bd_c(uint32_t nsecs)
 {
     if (CONFIG_MACH_AVR)
@@ -163,6 +80,7 @@ void ndelay_bd_c(uint32_t nsecs)
     while (timer_is_before(timer_read_time(), end))
         irq_poll();
 }
+
 void ndelay_bd(uint32_t nsecs)
 {
     int i=1;
@@ -170,52 +88,44 @@ void ndelay_bd(uint32_t nsecs)
         ndelay_bd_c(nsecs);
 }
 
-unsigned short BD_Add_OddEven(unsigned short byte)
+unsigned short BD_Add_OddEven(unsigned short send_data)
 {
     unsigned char i;
     unsigned char n;
-    unsigned short r;
+    unsigned short out_data;
     n =0;
-    for(i=0;i<10;i++)
-    {
-        if(((byte >>i)&0x01) == 0x01)
-        {
+    for(i=0;i<10;i++){
+        if(((send_data >>i)&0x01) == 0x01){
             n++;
         }
     }
-    if((n&0x01) == 0x01)
-    {
-        r = byte | 0x400;
+    if((n&0x01) == 0x01){
+        out_data = send_data | 0x400;
     }
-    else
-    {
-        r = byte | 0x00;
+    else{
+        out_data = send_data | 0x00;
     }
-    return r;
+    return out_data;
 }
 
-unsigned short BD_Check_OddEven(unsigned short byte)
+unsigned short BD_Check_OddEven(unsigned short rec_data)
 {
     unsigned char i;
     unsigned char n;
-    unsigned char r;
+    unsigned char ret;
     n =0;
-    for(i=0;i<10;i++)
-    {
-        if(((byte >>i)&0x01) == 0x01)
-        {
+    for(i=0;i<10;i++){
+        if(((rec_data >>i)&0x01) == 0x01){
            n++;
         }
     }
-    if((byte>>10) == (n&0x01))
-    {
-        r = BYTE_CHECK_OK;
+    if((rec_data>>10) == (n&0x01)){
+        ret = BYTE_CHECK_OK;
     }
-    else
-    {
-        r = BYTE_CHECK_ERR;
+    else{
+        ret = BYTE_CHECK_ERR;
     }
-    return r;
+    return ret;
 }
 
 void BD_I2C_start(void)
@@ -230,6 +140,7 @@ void BD_I2C_start(void)
     BD_setLow(scl_gpio);
     ndelay_bd(delay_m);
 }
+
 void  BD_i2c_stop(void)
 {
     ndelay_bd(delay_m);
@@ -247,8 +158,6 @@ void  BD_i2c_stop(void)
 uint16_t BD_i2c_read(void)
 {
     uint16_t b = 1024;
-   // if(BD_read_flag==1014)
-
     BD_read_lock=1;
     BD_I2C_start();
 
@@ -282,12 +191,6 @@ uint16_t BD_i2c_read(void)
     }
     else
         b=1024;
-
-#if 0
-    sda_gpio_in=gpio_in_setup(sda_pin, 1);
-    b=0;
-    b=gpio_in_read(sda_gpio_in)*300+1;
-#endif
     BD_read_lock=0;
     return b;
 }
@@ -305,8 +208,7 @@ void BD_i2c_write(unsigned int addr)
     ndelay_bd(delay_m);
     for (int i=10; i >=0; i--)
     {
-        if ((addr>>i)&0x01)
-        {
+        if ((addr>>i)&0x01){
             BD_setHigh(sda_gpio);
         }
         else
@@ -365,16 +267,12 @@ command_I2C_BD_receive(uint32_t *args)
     uint8_t oid = args[0];
     uint8_t data[8];
     uint16_t BD_z;
-
-    //if(BD_read_flag==1018)
-    //    BD_z=BD_Data;
-    //else
     BD_z=BD_i2c_read();//BD_Data;
     BD_Data=BD_z;
     memset(data,0,8);
     uint32_t len=0,j=0;
 
-///////////same as function itoa()
+    //same as function itoa()
     if(BD_z>=1000)
     {
         j=BD_z/1000;
@@ -437,7 +335,6 @@ DECL_COMMAND(command_I2C_BD_send, "I2C_BD_send oid=%c data=%*s");
 void
 command_config_I2C_BD(uint32_t *args)
 {
-    oid_g = args[0];
     BD_i2c_init(args[1],args[2],args[3],args[4],args[5]);
 }
 DECL_COMMAND(command_config_I2C_BD,
@@ -502,7 +399,6 @@ endstop_oversample_event(struct timer *t)
     uint8_t count = e.trigger_count - 1;
     if (!count) {
         trsync_do_trigger(e.ts, e.trigger_reason);
-        step_adj[0].adj_z_range=0;
         return SF_DONE;
     }
     e.trigger_count = count;
