@@ -121,6 +121,11 @@ class BedMesh:
         self.gcode.register_command(
             'BED_MESH_OFFSET', self.cmd_BED_MESH_OFFSET,
             desc=self.cmd_BED_MESH_OFFSET_help)
+        # Register dump webhooks
+        webhooks = self.printer.lookup_object('webhooks')
+        webhooks.register_endpoint(
+            "bed_mesh/dump_mesh", self._handle_dump_request
+        )
         # Register transform
         gcode_move = self.printer.load_object(config, 'gcode_move')
         gcode_move.set_move_transform(self)
@@ -282,6 +287,31 @@ class BedMesh:
             gcode_move.reset_last_position()
         else:
             gcmd.respond_info("No mesh loaded to offset")
+    def _handle_dump_request(self, web_request):
+        eventtime = self.printer.get_reactor().monotonic()
+        prb = self.printer.lookup_object("probe", None)
+        th_sts = self.printer.lookup_object("toolhead").get_status(eventtime)
+        result = {"current_mesh": {}, "profiles": self.pmgr.get_profiles()}
+        if self.z_mesh is not None:
+            result["current_mesh"] = {
+                "name": self.z_mesh.get_profile_name(),
+                "probed_matrix": self.z_mesh.get_probed_matrix(),
+                "mesh_matrix": self.z_mesh.get_mesh_matrix(),
+                "mesh_params": self.z_mesh.get_mesh_params()
+            }
+        mesh_args = web_request.get_dict("mesh_args", {})
+        gcmd = None
+        if mesh_args:
+            gcmd = self.gcode.create_gcode_command("", "", mesh_args)
+            with self.gcode.get_mutex():
+                result["calibration"] = self.bmc.dump_calibration(gcmd)
+        else:
+            result["calibration"] = self.bmc.dump_calibration()
+        offsets = [0, 0, 0] if prb is None else prb.get_offsets()
+        result["probe_offsets"] = offsets
+        result["axis_minimum"] = th_sts["axis_minimum"]
+        result["axis_maximum"] = th_sts["axis_maximum"]
+        web_request.send(result)
 
 
 class ZrefMode:
@@ -587,6 +617,20 @@ class BedMeshCalibrate:
                 self.mesh_config, self.mesh_min, self.mesh_max,
                 self.radius, self.origin, probe_method
             )
+    def dump_calibration(self, gcmd=None):
+        if gcmd is not None and gcmd.get_command_parameters():
+            self.update_config(gcmd)
+        cfg = dict(self.mesh_config)
+        cfg["mesh_min"] = self.mesh_min
+        cfg["mesh_max"] = self.mesh_max
+        cfg["origin"] = self.origin
+        cfg["radius"] = self.radius
+        return {
+            "points": self.probe_mgr.get_base_points(),
+            "config": cfg,
+            "probe_path": self.probe_mgr.get_std_path(),
+            "rapid_path": list(self.probe_mgr.iter_rapid_path())
+        }
     cmd_BED_MESH_CALIBRATE_help = "Perform Mesh Bed Leveling"
     def cmd_BED_MESH_CALIBRATE(self, gcmd):
         self._profile_name = gcmd.get('PROFILE', "default")
