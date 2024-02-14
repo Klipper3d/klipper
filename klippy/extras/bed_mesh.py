@@ -3,7 +3,7 @@
 # Copyright (C) 2018-2019 Eric Callahan <arksine.code@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, math, json, collections
+import logging, math, json, collections, time, os
 from . import probe
 
 PROFILE_VERSION = 1
@@ -121,6 +121,9 @@ class BedMesh:
         self.gcode.register_command(
             'BED_MESH_OFFSET', self.cmd_BED_MESH_OFFSET,
             desc=self.cmd_BED_MESH_OFFSET_help)
+        self.gcode.register_command(
+            'BED_MESH_DUMP', self.cmd_BED_MESH_DUMP,
+            desc=self.cmd_BED_MESH_DUMP_help)
         # Register transform
         gcode_move = self.printer.load_object(config, 'gcode_move')
         gcode_move.set_move_transform(self)
@@ -282,6 +285,39 @@ class BedMesh:
             gcode_move.reset_last_position()
         else:
             gcmd.respond_info("No mesh loaded to offset")
+    cmd_BED_MESH_DUMP_help = "Dump mesh data to file for analysis"
+    def cmd_BED_MESH_DUMP(self, gcmd):
+        cmd_params = gcmd.get_command_parameters()
+        fname = cmd_params.pop("FILENAME", None)
+        eventtime = self.printer.get_reactor().monotonic()
+        prb = self.printer.lookup_object("probe", None)
+        th_sts = self.printer.lookup_object("toolhead").get_status(eventtime)
+        mdmp = {"current_mesh": {}, "profiles": self.pmgr.get_profiles()}
+        if self.z_mesh is not None:
+            mdmp["current_mesh"] = {
+                "name": self.z_mesh.get_profile_name(),
+                "probed_matrix": self.z_mesh.get_probed_matrix(),
+                "mesh_matrix": self.z_mesh.get_mesh_matrix(),
+                "mesh_params": self.z_mesh.get_mesh_params()
+            }
+        mdmp["calibration"] = self.bmc.dump_calibration(gcmd)
+        mdmp["probe_offsets"] = [0, 0, 0] if prb is None else prb.get_offsets()
+        mdmp["axis_minimum"] = th_sts["axis_minimum"]
+        mdmp["axis_maximum"] = th_sts["axis_maximum"]
+        # dump the file to the configuration folder's parent, as the config
+        # file is guaranteed to be available.
+        start_args = self.printer.get_start_args()
+        cfgfile = start_args["config_file"]
+        parent = os.path.dirname(cfgfile)
+        if fname is None:
+            postfix = time.strftime("%Y%m%d_%H%M%S")
+            fname = "klipper-bedmesh-%s.json" % (postfix,)
+        else:
+            fname = os.path.normpath(os.path.expanduser(fname))
+        out_path = os.path.join(parent, fname)
+        with open(out_path, "w") as f:
+            json.dump(mdmp, f, indent=2)
+        gcmd.respond_info("Current mesh data dumped to %s" % (out_path,))
 
 
 class ZrefMode:
@@ -641,6 +677,20 @@ class BedMeshCalibrate:
             logging.info("Updated Mesh Configuration:\n" + msg)
         else:
             self._generate_points(gcmd.error, probe_method)
+    def dump_calibration(self, gcmd=None):
+        if gcmd is not None and gcmd.get_command_parameters():
+            self.update_config(gcmd)
+        cfg = dict(self.mesh_config)
+        cfg["mesh_min"] = self.mesh_min
+        cfg["mesh_max"] = self.mesh_max
+        cfg["origin"] = self.origin
+        cfg["radius"] = self.radius
+        return {
+            "points": self.points,
+            "config": cfg,
+            "probe_path": list(self.path_generator),
+            "rapid_path": list(self.path_generator.iter_rapid())
+        }
     cmd_BED_MESH_CALIBRATE_help = "Perform Mesh Bed Leveling"
     def cmd_BED_MESH_CALIBRATE(self, gcmd):
         self._profile_name = gcmd.get('PROFILE', "default")
