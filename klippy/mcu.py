@@ -335,7 +335,6 @@ class MCU_digital_out:
         self._pin = pin_params['pin']
         self._invert = pin_params['invert']
         self._start_value = self._shutdown_value = self._invert
-        self._is_static = False
         self._max_duration = 2.
         self._last_clock = 0
         self._set_cmd = None
@@ -343,17 +342,10 @@ class MCU_digital_out:
         return self._mcu
     def setup_max_duration(self, max_duration):
         self._max_duration = max_duration
-    def setup_start_value(self, start_value, shutdown_value, is_static=False):
-        if is_static and start_value != shutdown_value:
-            raise pins.error("Static pin can not have shutdown value")
+    def setup_start_value(self, start_value, shutdown_value):
         self._start_value = (not not start_value) ^ self._invert
         self._shutdown_value = (not not shutdown_value) ^ self._invert
-        self._is_static = is_static
     def _build_config(self):
-        if self._is_static:
-            self._mcu.add_config_cmd("set_digital_out pin=%s value=%d"
-                                     % (self._pin, self._start_value))
-            return
         if self._max_duration and self._start_value != self._shutdown_value:
             raise pins.error("Pin with max duration must have start"
                              " value equal to shutdown value")
@@ -389,10 +381,9 @@ class MCU_pwm:
         self._pin = pin_params['pin']
         self._invert = pin_params['invert']
         self._start_value = self._shutdown_value = float(self._invert)
-        self._is_static = False
-        self._last_clock = self._last_cycle_ticks = 0
+        self._last_clock = 0
         self._pwm_max = 0.
-        self._set_cmd = self._set_cycle_ticks = None
+        self._set_cmd = None
     def get_mcu(self):
         return self._mcu
     def setup_max_duration(self, max_duration):
@@ -400,15 +391,12 @@ class MCU_pwm:
     def setup_cycle_time(self, cycle_time, hardware_pwm=False):
         self._cycle_time = cycle_time
         self._hardware_pwm = hardware_pwm
-    def setup_start_value(self, start_value, shutdown_value, is_static=False):
-        if is_static and start_value != shutdown_value:
-            raise pins.error("Static pin can not have shutdown value")
+    def setup_start_value(self, start_value, shutdown_value):
         if self._invert:
             start_value = 1. - start_value
             shutdown_value = 1. - shutdown_value
         self._start_value = max(0., min(1., start_value))
         self._shutdown_value = max(0., min(1., shutdown_value))
-        self._is_static = is_static
     def _build_config(self):
         if self._max_duration and self._start_value != self._shutdown_value:
             raise pins.error("Pin with max duration must have start"
@@ -423,12 +411,6 @@ class MCU_pwm:
             raise pins.error("PWM pin max duration too large")
         if self._hardware_pwm:
             self._pwm_max = self._mcu.get_constant_float("PWM_MAX")
-            if self._is_static:
-                self._mcu.add_config_cmd(
-                    "set_pwm_out pin=%s cycle_ticks=%d value=%d"
-                    % (self._pin, cycle_ticks,
-                       self._start_value * self._pwm_max))
-                return
             self._mcu.request_move_queue_slot()
             self._oid = self._mcu.create_oid()
             self._mcu.add_config_cmd(
@@ -447,10 +429,6 @@ class MCU_pwm:
         # Software PWM
         if self._shutdown_value not in [0., 1.]:
             raise pins.error("shutdown value must be 0.0 or 1.0 on soft pwm")
-        if self._is_static:
-            self._mcu.add_config_cmd("set_digital_out pin=%s value=%d"
-                                     % (self._pin, self._start_value >= 0.5))
-            return
         if cycle_ticks >= 1<<31:
             raise pins.error("PWM pin cycle time too large")
         self._mcu.request_move_queue_slot()
@@ -463,40 +441,21 @@ class MCU_pwm:
         self._mcu.add_config_cmd(
             "set_digital_out_pwm_cycle oid=%d cycle_ticks=%d"
             % (self._oid, cycle_ticks))
-        self._last_cycle_ticks = cycle_ticks
+        self._pwm_max = float(cycle_ticks)
         svalue = int(self._start_value * cycle_ticks + 0.5)
         self._mcu.add_config_cmd(
             "queue_digital_out oid=%d clock=%d on_ticks=%d"
             % (self._oid, self._last_clock, svalue), is_init=True)
         self._set_cmd = self._mcu.lookup_command(
             "queue_digital_out oid=%c clock=%u on_ticks=%u", cq=cmd_queue)
-        self._set_cycle_ticks = self._mcu.lookup_command(
-            "set_digital_out_pwm_cycle oid=%c cycle_ticks=%u", cq=cmd_queue)
-    def set_pwm(self, print_time, value, cycle_time=None):
-        clock = self._mcu.print_time_to_clock(print_time)
-        minclock = self._last_clock
-        self._last_clock = clock
+    def set_pwm(self, print_time, value):
         if self._invert:
             value = 1. - value
-        if self._hardware_pwm:
-            v = int(max(0., min(1., value)) * self._pwm_max + 0.5)
-            self._set_cmd.send([self._oid, clock, v],
-                               minclock=minclock, reqclock=clock)
-            return
-        # Soft pwm update
-        if cycle_time is None:
-            cycle_time = self._cycle_time
-        cycle_ticks = self._mcu.seconds_to_clock(cycle_time)
-        if cycle_ticks != self._last_cycle_ticks:
-            if cycle_ticks >= 1<<31:
-                raise self._mcu.get_printer().command_error(
-                    "PWM cycle time too large")
-            self._set_cycle_ticks.send([self._oid, cycle_ticks],
-                                       minclock=minclock, reqclock=clock)
-            self._last_cycle_ticks = cycle_ticks
-        on_ticks = int(max(0., min(1., value)) * float(cycle_ticks) + 0.5)
-        self._set_cmd.send([self._oid, clock, on_ticks],
-                           minclock=minclock, reqclock=clock)
+        v = int(max(0., min(1., value)) * self._pwm_max + 0.5)
+        clock = self._mcu.print_time_to_clock(print_time)
+        self._set_cmd.send([self._oid, clock, v],
+                           minclock=self._last_clock, reqclock=clock)
+        self._last_clock = clock
 
 class MCU_adc:
     def __init__(self, mcu, pin_params):

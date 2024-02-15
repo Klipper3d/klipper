@@ -374,6 +374,13 @@ is defined):
   template expansion, the PROBE (or similar) command must be run prior
   to the macro containing this reference.
 
+## pwm_cycle_time
+
+The following information is available in
+[pwm_cycle_time some_name](Config_Reference.md#pwm_cycle_time)
+objects:
+- `value`: The "value" of the pin, as set by a `SET_PIN` command.
+
 ## quad_gantry_level
 
 The following information is available in the `quad_gantry_level` object
