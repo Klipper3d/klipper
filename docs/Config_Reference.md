@@ -1031,6 +1031,9 @@ information.
 #horizontal_move_z: 5
 #   The height (in mm) that the head should be commanded to move to
 #   just prior to starting a probe operation. The default is 5.
+#probe_lift_speed: 5
+#   The speed (in mm/s) when moving from a horizontal_move_z position
+#   to a probe_height position. The default is 5.
 ```
 
 ### [bed_screws]
