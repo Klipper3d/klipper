@@ -2124,13 +2124,20 @@ probing the "Probe" points will refer to both the tool and nozzle locations.</p>
 <p><code>BED_MESH_CLEAR</code></p>
 <p>This gcode may be used to clear the internal mesh state.</p>
 <h3 id="apply-xy-offsets">Apply X/Y offsets<a class="headerlink" href="#apply-xy-offsets" title="Permanent link">&para;</a></h3>
-<p><code>BED_MESH_OFFSET [X=&lt;value&gt;] [Y=&lt;value&gt;]</code></p>
+<p><code>BED_MESH_OFFSET [X=&lt;value&gt;] [Y=&lt;value&gt;] [ZFADE=&lt;value&gt;]</code></p>
 <p>This is useful for printers with multiple independent extruders, as an offset
 is necessary to produce correct Z adjustment after a tool change.  Offsets
 should be specified relative to the primary extruder.  That is, a positive
 X offset should be specified if the secondary extruder is mounted to the
-right of the primary extruder, and a positive Y offset should be specified
-if the secondary extruder is mounted "behind" the primary extruder.</p>
+right of the primary extruder, a positive Y offset should be specified
+if the secondary extruder is mounted "behind" the primary extruder, and
+a positive ZFADE offset should be specified if the secondary extruder's
+nozzle is above the primary extruder's.</p>
+<p>Note that a ZFADE offset does <em>NOT</em> directly apply additional adjustment.  It
+is intended to compensate for a <code>gcode offset</code> when <a href="#mesh-fade">mesh fade</a>
+is enabled.  For example, if a secondary extruder is higher than the primary
+and needs a negative gcode offset, ie: <code>SET_GCODE_OFFSET Z=-.2</code>, it can be
+accounted for in <code>bed_mesh</code> with <code>BED_MESH_OFFSET ZFADE=.2</code>.</p>
 
               
             </article>

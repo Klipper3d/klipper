@@ -4677,10 +4677,12 @@ memory. Note that after SAVE or REMOVE operations have been run the
 SAVE_CONFIG gcode must be run to make the changes to persistent memory
 permanent.</p>
 <h4 id="bed_mesh_offset">BED_MESH_OFFSET<a class="headerlink" href="#bed_mesh_offset" title="Permanent link">&para;</a></h4>
-<p><code>BED_MESH_OFFSET [X=&lt;value&gt;] [Y=&lt;value&gt;]</code>: Applies X and/or Y offsets
-to the mesh lookup. This is useful for printers with independent
-extruders, as an offset is necessary to produce correct Z adjustment
-after a tool change.</p>
+<p><code>BED_MESH_OFFSET [X=&lt;value&gt;] [Y=&lt;value&gt;] [ZFADE=&lt;value]</code>: Applies X, Y,
+and/or ZFADE offsets to the mesh lookup. This is useful for printers with
+independent extruders, as an offset is necessary to produce correct Z
+adjustment after a tool change.  Note that a ZFADE offset does not apply
+additional z-adjustment directly, it is used to correct the <code>fade</code>
+calculation when a <code>gcode offset</code> has been applied to the Z axis.</p>
 <h3 id="bed_screws">[bed_screws]<a class="headerlink" href="#bed_screws" title="Permanent link">&para;</a></h3>
 <p>The following commands are available when the
 <a href="Config_Reference.html#bed_screws">bed_screws config section</a> is enabled
