@@ -52,8 +52,8 @@ class BedScrews:
         # Move up, over, and then down
         self.move((None, None, self.horizontal_move_z), self.lift_speed)
         coord, name = self.states[state][screw]
-        self.move((coord[0], coord[1], self.horizontal_move_z), self.speed)
-        self.move((coord[0], coord[1], self.probe_z), self.lift_speed)
+        self.move((coord[0], coord[1], None), self.speed)
+        self.move((None, None, self.probe_z), self.lift_speed)
         # Update state
         self.state = state
         self.current_screw = screw
@@ -84,7 +84,7 @@ class BedScrews:
             raise gcmd.error("Already in bed_screws helper; use ABORT to exit")
         # reset accepted screws
         self.accepted_screws = 0
-        self.move((None, None, self.horizontal_move_z), self.speed)
+        self.move((None, None, self.horizontal_move_z), self.lift_speed)
         self.move_to_screw('adjust', 0)
     cmd_ACCEPT_help = "Accept bed screw position"
     def cmd_ACCEPT(self, gcmd):
