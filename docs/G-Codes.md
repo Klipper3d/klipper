@@ -240,21 +240,21 @@ The following command is available when a
 BDsensor config section is enabled (also
 see the [BDsensor guide](BDsensor.md)).
 
-#### BDSENSOR_VERSION                   
-Read the version of BDsensor,it is usually used to 
+#### BDSENSOR_VERSION
+Read the version of BDsensor,it is usually used to
 check the connection, equals `M102 S-1`
 
-#### BDSENSOR_CALIBRATE                 
-Calibrate the BDsensor, equals `M102 S-6` 
+#### BDSENSOR_CALIBRATE
+Calibrate the BDsensor, equals `M102 S-6`
 
-#### BDSENSOR_READ_CALIBRATION          
-Read raw calibration data from BDsensor and check whether the installation 
+#### BDSENSOR_READ_CALIBRATION
+Read raw calibration data from BDsensor and check whether the installation
 is properly or the calibration is successful, equals `M102 S-5`
 
-#### BDSENSOR_DISTANCE                  
+#### BDSENSOR_DISTANCE
 Read the current distance value measured by BDsensor,equals `M102 S-2`
 
-#### BDSENSOR_SET                       
+#### BDSENSOR_SET
 Set value, now only for setting z_adjust, e.g. BDSENSOR_SET z_adjust=0.1
 
 ### [configfile]
