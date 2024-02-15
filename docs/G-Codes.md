@@ -245,7 +245,7 @@ Read the version of BDsensor,it is usually used to
 check the connection, equals `M102 S-1`
 
 #### BDSENSOR_CALIBRATE                 
-Calibrate the BDsensor,equals `M102 S-6` 
+Calibrate the BDsensor, equals `M102 S-6` 
 
 #### BDSENSOR_READ_CALIBRATION          
 Read raw calibration data from BDsensor and check whether the installation 
