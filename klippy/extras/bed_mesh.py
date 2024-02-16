@@ -594,6 +594,12 @@ class BedMeshCalibrate:
                 self.mesh_config['y_count'] = y_cnt
                 need_cfg_update = True
 
+        if "MESH_PPS" in params:
+            xpps, ypps = parse_gcmd_pair(gcmd, 'MESH_PPS', minval=0)
+            self.mesh_config['mesh_x_pps'] = xpps
+            self.mesh_config['mesh_y_pps'] = ypps
+            need_cfg_update = True
+
         if "ALGORITHM" in params:
             self.mesh_config['algo'] = gcmd.get('ALGORITHM').strip().lower()
             need_cfg_update = True
