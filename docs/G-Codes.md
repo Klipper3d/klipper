@@ -146,15 +146,21 @@ The following commands are available when the
 (also see the [bed mesh guide](Bed_Mesh.md)).
 
 #### BED_MESH_CALIBRATE
-`BED_MESH_CALIBRATE [METHOD=manual] [HORIZONTAL_MOVE_Z=<value>]
-[<probe_parameter>=<value>] [<mesh_parameter>=<value>]`: This command probes
-the bed using generated points specified by the parameters in the config. After
-probing, a mesh is generated and z-movement is adjusted according to the mesh.
+`BED_MESH_CALIBRATE [PROFILE=<name>] [METHOD=manual] [HORIZONTAL_MOVE_Z=<value>]
+[<probe_parameter>=<value>] [<mesh_parameter>=<value>] [ADAPTIVE=1]
+[ADAPTIVE_MARGIN=<value>]`: This command probes the bed using generated points
+specified by the parameters in the config. After probing, a mesh is generated
+and z-movement is adjusted according to the mesh.
+The mesh will be saved into a profile specified by the `PROFILE` parameter,
+or `default` if unspecified.
 See the PROBE command for details on the optional probe parameters. If
 METHOD=manual is specified then the manual probing tool is activated - see the
 MANUAL_PROBE command above for details on the additional commands available
 while this tool is active. The optional `HORIZONTAL_MOVE_Z` value overrides the
-`horizontal_move_z` option specified in the config file.
+`horizontal_move_z` option specified in the config file. If ADAPTIVE=1 is
+specified then the objects defined by the Gcode file being printed will be used
+to define the probed area. The optional `ADAPTIVE_MARGIN` value overrides the
+`adaptive_margin` option specified in the config file.
 
 #### BED_MESH_OUTPUT
 `BED_MESH_OUTPUT PGP=[<0:1>]`: This command outputs the current probed
