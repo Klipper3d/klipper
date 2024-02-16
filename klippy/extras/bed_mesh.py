@@ -620,6 +620,12 @@ class BedMeshCalibrate:
                 self.mesh_config['y_count'] = y_cnt
                 need_cfg_update = True
 
+        if "MESH_PPS" in params:
+            xpps, ypps = parse_gcmd_pair(gcmd, 'MESH_PPS', minval=0)
+            self.mesh_config['mesh_x_pps'] = xpps
+            self.mesh_config['mesh_y_pps'] = ypps
+            need_cfg_update = True
+
         if "ALGORITHM" in params:
             self.mesh_config['algo'] = gcmd.get('ALGORITHM').strip().lower()
             need_cfg_update = True
@@ -630,8 +636,6 @@ class BedMeshCalibrate:
         if need_cfg_update:
             self._verify_algorithm(gcmd.error)
             self._generate_points(gcmd.error, probe_method)
-            gcmd.respond_info("Generating new points...")
-            self.print_generated_points(gcmd.respond_info)
             msg = "\n".join(["%s: %s" % (k, v)
                              for k, v in self.mesh_config.items()])
             logging.info("Updated Mesh Configuration:\n" + msg)
