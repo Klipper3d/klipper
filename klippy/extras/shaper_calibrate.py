@@ -368,8 +368,10 @@ class ShaperCalibrate:
                     "SHAPER_TYPE_" + axis: shaper_name,
                     "SHAPER_FREQ_" + axis: shaper_freq}))
 
-    def save_calibration_data(self, output, calibration_data, shapers=None):
+    def save_calibration_data(self, output, calibration_data, shapers=None,
+                              max_freq=None):
         try:
+            max_freq = max_freq or MAX_FREQ
             with open(output, "w") as csvfile:
                 csvfile.write("freq,psd_x,psd_y,psd_z,psd_xyz")
                 if shapers:
@@ -378,7 +380,7 @@ class ShaperCalibrate:
                 csvfile.write("\n")
                 num_freqs = calibration_data.freq_bins.shape[0]
                 for i in range(num_freqs):
-                    if calibration_data.freq_bins[i] >= MAX_FREQ:
+                    if calibration_data.freq_bins[i] >= max_freq:
                         break
                     csvfile.write("%.1f,%.3e,%.3e,%.3e,%.3e" % (
                         calibration_data.freq_bins[i],
