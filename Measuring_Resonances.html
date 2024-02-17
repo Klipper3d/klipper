@@ -2566,6 +2566,18 @@ parameter experimentally.</p>
 <code>SHAPER_CALIBRATE</code> command: it is still necessary to choose the right
 <code>max_accel</code> value after the auto-calibration, and the suggested acceleration
 limits will not be applied automatically.</p>
+<p>Keep in mind that the maximum acceleration without too much smoothing depends
+on the <code>square_corner_velocity</code>. The general recommendation is not to change
+it from its default value 5.0, and this is the value used by default by the
+<code>calibrate_shaper.py</code> script. If you did change it though, you should inform
+the script about it by passing <code>--square_corner_velocity=...</code> parameter, e.g.</p>
+<div class="highlight"><pre><span></span><code>~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png --square_corner_velocity=10.0
+</code></pre></div>
+
+<p>so that it can calculate the maximum acceleration recommendations correctly.
+Note that the <code>SHAPER_CALIBRATE</code> command already takes the configured
+<code>square_corner_velocity</code> parameter into account, and there is no need
+to specify it explicitly.</p>
 <p>If you are doing a shaper re-calibration and the reported smoothing for the
 suggested shaper configuration is almost the same as what you got during the
 previous calibration, this step can be skipped.</p>
