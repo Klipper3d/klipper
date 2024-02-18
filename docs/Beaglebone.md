@@ -100,8 +100,7 @@ Then start the Octoprint service:
 ```
 sudo systemctl start octoprint
 ```
-
-Make sure the OctoPrint web server is accessible - it should be at:
+Wait 1-2 minutes and make sure the OctoPrint web server is accessible - it should be at:
 [http://beaglebone:5000/](http://beaglebone:5000/)
 
 ## Building the micro-controller code
@@ -114,12 +113,37 @@ cd ~/klipper/
 make menuconfig
 ```
 
-To build and install the new micro-controller code, run:
+To build and install the new PRU micro-controller code, run:
 ```
 sudo service klipper stop
 make clean flash
 sudo service klipper start
 ```
+After previous commands was executed your PRU firmware should be ready and started
+to check if everything was fine you can execute following command 
+```
+dmesg
+```
+and compare last messages with sample one which indicate that everything started properly:
+```
+[   71.105499] remoteproc remoteproc1: 4a334000.pru is available
+[   71.157155] remoteproc remoteproc2: 4a338000.pru is available
+[   73.256287] remoteproc remoteproc1: powering up 4a334000.pru
+[   73.279246] remoteproc remoteproc1: Booting fw image am335x-pru0-fw, size 97112
+[   73.285807]  remoteproc1#vdev0buffer: registered virtio0 (type 7)
+[   73.285836] remoteproc remoteproc1: remote processor 4a334000.pru is now up
+[   73.286322] remoteproc remoteproc2: powering up 4a338000.pru
+[   73.313717] remoteproc remoteproc2: Booting fw image am335x-pru1-fw, size 188560
+[   73.313753] remoteproc remoteproc2: header-less resource table
+[   73.329964] remoteproc remoteproc2: header-less resource table
+[   73.348321] remoteproc remoteproc2: remote processor 4a338000.pru is now up
+[   73.443355] virtio_rpmsg_bus virtio0: creating channel rpmsg-pru addr 0x1e
+[   73.443727] virtio_rpmsg_bus virtio0: msg received with no recipient
+[   73.444352] virtio_rpmsg_bus virtio0: rpmsg host is online
+[   73.540993] rpmsg_pru virtio0.rpmsg-pru.-1.30: new rpmsg_pru device: /dev/rpmsg_pru30
+```
+take a note about "/dev/rpmsg_pru30" - it's your future serial device for main mcu configuration 
+this device is required to be present, if it's absent - your PRU cores did not start properly.
 
 It is also necessary to compile and install the micro-controller code
 for a Linux host process. Configure it a second time for a "Linux process":
@@ -133,14 +157,18 @@ sudo service klipper stop
 make clean flash
 sudo service klipper start
 ```
+take a note about "/tmp/klipper_host_mcu" - it will be your future serial device for "mcu host"
+if that file don't exist - refer to "scripts/klipper-mcu.service" file, it was installed by 
+previous commands, and it's responsible for it.
 
 ## Remaining configuration
 
 Take a note about following: when you will define printer configuration you should always
-use temperature sensors from "mcu host" because ADCs not present in default "mcu" (PRU cores)
-sample configuration of "sensor_pin" for extruder and heated bed are available in "generic-cramps.cfg"
+use temperature sensors from "mcu host" because ADCs not present in default "mcu" (PRU cores).
+Sample configuration of "sensor_pin" for extruder and heated bed are available in "generic-cramps.cfg"
 You can use any other GPIO directly from "mcu host" by referencing them this way "host:gpiochip1/gpio17"
-but that should be avoided because it will be creating additional load on main CPU
+but that should be avoided because it will be creating additional load on main CPU and most probably
+you can't use them for stepper control.
 
 Complete the installation by configuring Klipper and Octoprint
 following the instructions in
