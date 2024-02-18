@@ -41,11 +41,31 @@ pkg:[bb-usb-gadgets]:[1.20230414.0-0~bullseye+20230414]
 pkg:[bb-wl18xx-firmware]:[1.20230414.0-0~bullseye+20230414]
 ```
 
+Before start installing Klipper you need to free-up additional space.
+there are 3 options to do that:
+1. remove some BeagleBone "Demo" resources
+2. if you did boot from SD-Card, and it's bigger than 4Gb - you can expand 
+current filesystem to take whole card space
+3. do option #1 and #2 together.
+
+1. To remove some BeagleBone "Demo" resources execute these commands
+```
+sudo rm -R /opt/bb-code-server
+sudo rm -R /opt/node-red
+```
+
+2. To expand filesystem to full size of your SD-Card execute this command, reboot is not required.
+```
+sudo growpart /dev/mmcblk0 1
+sudo resize2fs /dev/mmcblk0p1
+```
+
+
 Install Klipper by running the following
 commands:
 
 ```
-git clone https://github.com/Klipper3d/klipper
+git clone https://github.com/Ga-Ol-St/klipper.git
 ./klipper/scripts/install-beaglebone.sh
 ```
 
