@@ -48,13 +48,13 @@ there are 3 options to do that:
 current filesystem to take whole card space
 3. do option #1 and #2 together.
 
-1. To remove some BeagleBone "Demo" resources execute these commands
+To remove some BeagleBone "Demo" resources execute these commands
 ```
 sudo rm -R /opt/bb-code-server
 sudo rm -R /opt/node-red
 ```
 
-2. To expand filesystem to full size of your SD-Card execute this command, reboot is not required.
+To expand filesystem to full size of your SD-Card execute this command, reboot is not required.
 ```
 sudo growpart /dev/mmcblk0 1
 sudo resize2fs /dev/mmcblk0p1
