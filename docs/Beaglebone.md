@@ -117,7 +117,7 @@ make menuconfig
 To build and install the new PRU micro-controller code, run:
 ```
 sudo service klipper stop
-make clean flash
+make flash
 sudo service klipper start
 ```
 After previous commands was executed your PRU firmware should be ready and started
@@ -155,7 +155,7 @@ make menuconfig
 Then install this micro-controller code as well:
 ```
 sudo service klipper stop
-make clean flash
+make flash
 sudo service klipper start
 ```
 take a note about "/tmp/klipper_host_mcu" - it will be your future serial device for "mcu host"
