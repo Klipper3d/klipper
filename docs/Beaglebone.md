@@ -103,6 +103,7 @@ sudo systemctl start octoprint
 Wait 1-2 minutes and make sure the OctoPrint web server is accessible - it should be at:
 [http://beaglebone:5000/](http://beaglebone:5000/)
 
+
 ## Building the micro-controller code
 
 To compile the Klipper micro-controller code, start by configuring it
@@ -172,7 +173,7 @@ you can't use them for stepper control.
 
 Complete the installation by configuring Klipper and Octoprint
 following the instructions in
-the main [Installation](Installation.md#configuring-klipper) document.
+the main [Installation](Installation.md#configuring-octoprint-to-use-klipper) document.
 
 ## Printing on the Beaglebone
 
