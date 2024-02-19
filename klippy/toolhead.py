@@ -602,10 +602,19 @@ class ToolHead:
         self.junction_deviation = scv2 * (math.sqrt(2.) - 1.) / self.max_accel
         self.max_accel_to_decel = min(self.requested_accel_to_decel,
                                       self.max_accel)
+
     def cmd_G4(self, gcmd):
         # Dwell
-        delay = gcmd.get_float('P', 0., minval=0.) / 1000.
+        delay_in_seconds = gcmd.get_float('S', None, minval=0.)
+        delay_in_milliseconds = gcmd.get_float('P', None, minval=0.)
+
+        if delay_in_seconds is None and delay_in_milliseconds is None:
+            logging.warning("neither S nor P argument given")
+            return
+
+        delay = (delay_in_seconds or 0) + (delay_in_milliseconds or 0) / 1000.
         self.dwell(delay)
+
     def cmd_M400(self, gcmd):
         # Wait for current moves to finish
         self.wait_moves()
