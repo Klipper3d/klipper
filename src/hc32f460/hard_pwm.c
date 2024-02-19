@@ -1,8 +1,6 @@
 // Hardware PWM support on HC32F460
 //
 // Copyright (C) 2022  Steven Gotthardt <gotthardt@gmail.com>
-// Modified by @audiobrian (https://github.com/audiobrian/tld3pro_klipper)
-// and Guillaume Giraudon to add 100 pin package.
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
