@@ -313,13 +313,15 @@ class TMC2240CurrentHelper:
         irun = self._calc_current_bits(run_current, gscaler)
         ihold = self._calc_current_bits(min(hold_current, run_current), gscaler)
         return gscaler, irun, ihold
-    def _calc_current_from_field(self, field_name):
+    def _calc_current_from_field_value(self, value):
         ifs_rms = self._get_ifs_rms()
         globalscaler = self.fields.get_field("globalscaler")
         if not globalscaler:
             globalscaler = 256
+        return globalscaler * (value + 1) * ifs_rms / (256. * 32.)
+    def _calc_current_from_field(self, field_name):
         bits = self.fields.get_field(field_name)
-        return globalscaler * (bits + 1) * ifs_rms / (256. * 32.)
+        return self._calc_current_from_field_value(bits)
     def get_current(self):
         ifs_rms = self._get_ifs_rms()
         run_current = self._calc_current_from_field("irun")
@@ -342,7 +344,8 @@ class TMC2240CurrentHelper:
 class TMC2240:
     def __init__(self, config):
         # Setup mcu communication
-        self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
+        self.fields = tmc.FieldHelper(Fields, SignedFields,
+                                      FieldFormatters.copy())
         if config.get("uart_pin", None) is not None:
             # use UART for communication
             self.mcu_tmc = tmc_uart.MCU_TMC_uart(config, Registers, self.fields,
@@ -355,6 +358,14 @@ class TMC2240:
         tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
         current_helper = TMC2240CurrentHelper(config, self.mcu_tmc)
+        self.fields.field_formatters.update({
+            "current_range": (lambda v: "%d (%.2fA RMS)"
+                              % (v, current_helper._get_ifs_rms(v))),
+            "ihold": (lambda v: "%d (%.2fA RMS)"
+                      % (v, current_helper._calc_current_from_field_value(v))),
+            "irun": (lambda v: "%d (%.2fA RMS)"
+                     % (v, current_helper._calc_current_from_field_value(v))),
+        })
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
         cmdhelper.setup_register_dump(ReadRegisters)
         self.get_phase_offset = cmdhelper.get_phase_offset
