@@ -4616,15 +4616,21 @@ available for tle5012b chips.</p>
 <a href="Config_Reference.html#bed_mesh">bed_mesh config section</a> is enabled
 (also see the <a href="Bed_Mesh.html">bed mesh guide</a>).</p>
 <h4 id="bed_mesh_calibrate">BED_MESH_CALIBRATE<a class="headerlink" href="#bed_mesh_calibrate" title="Permanent link">&para;</a></h4>
-<p><code>BED_MESH_CALIBRATE [METHOD=manual] [HORIZONTAL_MOVE_Z=&lt;value&gt;]
-[&lt;probe_parameter&gt;=&lt;value&gt;] [&lt;mesh_parameter&gt;=&lt;value&gt;]</code>: This command probes
-the bed using generated points specified by the parameters in the config. After
-probing, a mesh is generated and z-movement is adjusted according to the mesh.
+<p><code>BED_MESH_CALIBRATE [PROFILE=&lt;name&gt;] [METHOD=manual] [HORIZONTAL_MOVE_Z=&lt;value&gt;]
+[&lt;probe_parameter&gt;=&lt;value&gt;] [&lt;mesh_parameter&gt;=&lt;value&gt;] [ADAPTIVE=1]
+[ADAPTIVE_MARGIN=&lt;value&gt;]</code>: This command probes the bed using generated points
+specified by the parameters in the config. After probing, a mesh is generated
+and z-movement is adjusted according to the mesh.
+The mesh will be saved into a profile specified by the <code>PROFILE</code> parameter,
+or <code>default</code> if unspecified.
 See the PROBE command for details on the optional probe parameters. If
 METHOD=manual is specified then the manual probing tool is activated - see the
 MANUAL_PROBE command above for details on the additional commands available
 while this tool is active. The optional <code>HORIZONTAL_MOVE_Z</code> value overrides the
-<code>horizontal_move_z</code> option specified in the config file.</p>
+<code>horizontal_move_z</code> option specified in the config file. If ADAPTIVE=1 is
+specified then the objects defined by the Gcode file being printed will be used
+to define the probed area. The optional <code>ADAPTIVE_MARGIN</code> value overrides the
+<code>adaptive_margin</code> option specified in the config file.</p>
 <h4 id="bed_mesh_output">BED_MESH_OUTPUT<a class="headerlink" href="#bed_mesh_output" title="Permanent link">&para;</a></h4>
 <p><code>BED_MESH_OUTPUT PGP=[&lt;0:1&gt;]</code>: This command outputs the current probed
 z values and current mesh values to the terminal.  If PGP=1 is
