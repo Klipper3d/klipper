@@ -111,7 +111,7 @@ ads1118_respond(struct thermocouple_spi *spi, uint32_t next_begin_time
             return;
         try_shutdown("Thermocouple reader fault");
     }
-    
+
     // no fault - so reset invalid_count
     spi->invalid_count = 0;
 }
@@ -176,10 +176,10 @@ thermocouple_handle_ads1118(struct thermocouple_spi *spi
     memcpy(&value, msg, sizeof(value));
 
     // check that the config bytes returned match our config
-    if (msg[2] != (int16_t)be32_to_cpu(value) >> 8 || 
+    if (msg[2] != (int16_t)be32_to_cpu(value) >> 8 ||
         msg[3] != (int8_t)be32_to_cpu(value)) {
         fault |= ADS1118_CONFIG_READ_ERROR;
-        output("ads1118_value msg1=%hi msg2=%hi b1=%hi b2=%hi", 
+        output("ads1118_value msg1=%hi msg2=%hi b1=%hi b2=%hi",
            (int16_t)msg[2],
            (int16_t)msg[3],
            (int16_t)be32_to_cpu(value) >> 8,
