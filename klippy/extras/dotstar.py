@@ -10,7 +10,6 @@ BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 class PrinterDotstar:
     def __init__(self, config):
         self.printer = printer = config.get_printer()
-        name = config.get_name().split()[1]
         # Configure a software spi bus
         ppins = printer.lookup_object('pins')
         data_pin_params = ppins.lookup_pin(config.get('data_pin'))
