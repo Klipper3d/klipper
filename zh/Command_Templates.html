@@ -625,7 +625,7 @@
   
     <li class="md-nav__item">
       <a href="Axis_Twist_Compensation.html" class="md-nav__link">
-        Axis Twist Compensation
+        轴扭曲补偿
       </a>
     </li>
   
@@ -839,8 +839,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#the-rawparams-variable" class="md-nav__link">
-    The "rawparams" variable
+  <a href="#rawparams" class="md-nav__link">
+    “rawparams”变量
   </a>
   
 </li>
@@ -1291,7 +1291,7 @@
   
     <li class="md-nav__item">
       <a href="Bootloader_Entry.html" class="md-nav__link">
-        Bootloader Entry
+        引导加载程序条目
       </a>
     </li>
   
@@ -1319,7 +1319,7 @@
   
     <li class="md-nav__item">
       <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
-        CANBUS Troubleshooting
+        CanBus故障排除
       </a>
     </li>
   
@@ -1445,8 +1445,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#the-rawparams-variable" class="md-nav__link">
-    The "rawparams" variable
+  <a href="#rawparams" class="md-nav__link">
+    “rawparams”变量
   </a>
   
 </li>
@@ -1539,7 +1539,7 @@ gcode:
   SET_PIN PIN=my_led VALUE=0 #关灯
 </code></pre></div>
 
-<p>The terminal will display the description when you use the <code>HELP</code> command or the autocomplete function.</p>
+<p>当您使用<code>HELP</code>命令或自动补全功能时，终端会显示说明。</p>
 <h2 id="g-code">保存/恢复 G-Code 移动的状态<a class="headerlink" href="#g-code" title="Permanent link">&para;</a></h2>
 <p>不幸的是，G-Code 命令语言在使用上有些难度。移动工具头的标准机制是通过 <code>G1</code> 命令（<code>G0</code> 命令是 <code>G1</code> 的别名，它们互换使用）。然而，这个命令依赖于由<code>M82</code>、<code>M83</code>、<code>G90</code>、<code>G91</code>、<code>G92</code>, 以及先前的<code>G1</code>命令所设置的"G-Code解析状态"。在创建 G-Code 宏时，最好在发出<code>G1</code>命令之前，先明确 G-Code 解析状态。(否则，<code>G1</code> 命令就有可能提出一个不符合预期的请求。）</p>
 <p>实现这一目标的常见方法是将 <code>G1</code> 移动包装在 <code>SAVE_GCODE_STATE</code>、<code>G91</code>和<code>RESTORE_GCODE_STATE</code>中。例如：</p>
@@ -1584,10 +1584,10 @@ gcode:
   M140 S{bed_temp} # 设置热床温度为bed_temp
 </code></pre></div>
 
-<h3 id="the-rawparams-variable">The "rawparams" variable<a class="headerlink" href="#the-rawparams-variable" title="Permanent link">&para;</a></h3>
-<p>The full unparsed parameters for the running macro can be access via the <code>rawparams</code> pseudo-variable.</p>
-<p>Note that this will include any comments that were part of the original command.</p>
-<p>See the <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> file for an example showing how to override the <code>M117</code> command using <code>rawparams</code>.</p>
+<h3 id="rawparams">“rawparams”变量<a class="headerlink" href="#rawparams" title="Permanent link">&para;</a></h3>
+<p>可以通过<code>rawpars</code>伪变量访问正在运行的宏的完整未解析参数。</p>
+<p>请注意，这将包括原始命令中的任何注释。</p>
+<p>有关如何使用<code>rawpars</code>覆盖<code>M117</code>命令的示例，请参阅<a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a>文件。</p>
 <h3 id="printer">"printer"变量<a class="headerlink" href="#printer" title="Permanent link">&para;</a></h3>
 <p>可以通过<code>printer</code> 的pseudo-variable来检查（和变更）打印机的当前状态。比如说：</p>
 <div class="highlight"><pre><span></span><code>[gcode_macro slow_fan] # 降低风速
@@ -1661,7 +1661,7 @@ gcode:
 
 <p>延迟G代码可以通过在G代码选项中更新自己来重复自生：</p>
 <div class="highlight"><pre><span></span><code>[delayed_gcode report_temp]
-initial_duration: 2.
+初始_持续时间： 2.
 gcode:
   {action_respond_info(&quot;Extruder Temp: %.1f&quot; % (printer.extruder0.temperature))}
   UPDATE_DELAYED_GCODE ID=report_temp DURATION=2

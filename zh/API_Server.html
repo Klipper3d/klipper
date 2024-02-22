@@ -623,7 +623,7 @@
   
     <li class="md-nav__item">
       <a href="Axis_Twist_Compensation.html" class="md-nav__link">
-        Axis Twist Compensation
+        轴扭曲补偿
       </a>
     </li>
   
@@ -1095,8 +1095,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#gcodesubscribe_output" class="md-nav__link">
-    gcode/subscribe_output
+  <a href="#gcode" class="md-nav__link">
+    GCODE/订阅输出
   </a>
   
 </li>
@@ -1109,8 +1109,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#motion_reportdump_trapq" class="md-nav__link">
-    motion_report/dump_trapq
+  <a href="#__" class="md-nav__link">
+    运动_报告/转储_陷阱
   </a>
   
 </li>
@@ -1123,36 +1123,36 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#angledump_angle" class="md-nav__link">
-    angle/dump_angle
+  <a href="#_2" class="md-nav__link">
+    角/转储角
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#pause_resumecancel" class="md-nav__link">
-    pause_resume/cancel
+  <a href="#_" class="md-nav__link">
+    暂停_继续/取消
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#pause_resumepause" class="md-nav__link">
-    pause_resume/pause
+  <a href="#__1" class="md-nav__link">
+    暂停_恢复/暂停
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#pause_resumeresume" class="md-nav__link">
-    pause_resume/resume
+  <a href="#__2" class="md-nav__link">
+    暂停_恢复/恢复
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#query_endstopsstatus" class="md-nav__link">
-    query_endstops/status
+  <a href="#__3" class="md-nav__link">
+    查询_结束停止/状态
   </a>
   
 </li>
@@ -1366,7 +1366,7 @@
   
     <li class="md-nav__item">
       <a href="Bootloader_Entry.html" class="md-nav__link">
-        Bootloader Entry
+        引导加载程序条目
       </a>
     </li>
   
@@ -1394,7 +1394,7 @@
   
     <li class="md-nav__item">
       <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
-        CANBUS Troubleshooting
+        CanBus故障排除
       </a>
     </li>
   
@@ -1583,8 +1583,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#gcodesubscribe_output" class="md-nav__link">
-    gcode/subscribe_output
+  <a href="#gcode" class="md-nav__link">
+    GCODE/订阅输出
   </a>
   
 </li>
@@ -1597,8 +1597,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#motion_reportdump_trapq" class="md-nav__link">
-    motion_report/dump_trapq
+  <a href="#__" class="md-nav__link">
+    运动_报告/转储_陷阱
   </a>
   
 </li>
@@ -1611,36 +1611,36 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#angledump_angle" class="md-nav__link">
-    angle/dump_angle
+  <a href="#_2" class="md-nav__link">
+    角/转储角
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#pause_resumecancel" class="md-nav__link">
-    pause_resume/cancel
+  <a href="#_" class="md-nav__link">
+    暂停_继续/取消
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#pause_resumepause" class="md-nav__link">
-    pause_resume/pause
+  <a href="#__1" class="md-nav__link">
+    暂停_恢复/暂停
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#pause_resumeresume" class="md-nav__link">
-    pause_resume/resume
+  <a href="#__2" class="md-nav__link">
+    暂停_恢复/恢复
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#query_endstopsstatus" class="md-nav__link">
-    query_endstops/status
+  <a href="#__3" class="md-nav__link">
+    查询_结束停止/状态
   </a>
   
 </li>
@@ -1740,42 +1740,42 @@ gcode:
 <p>如果提供的G-Code脚本产生了错误，那么就会产生一个错误响应。然而，如果G-Code命令产生了终端输出，则该终端输出不会在响应中提供。(使用 "gcode/subscribe_output " endpoint 来获取G-Code终端输出。）</p>
 <p>如果在收到这个请求时有一个G-Code命令正在处理，那么所提供的脚本将被排队。这个延迟可能很严重（例如，如果一个G-Code等待温度的命令正在运行）。当脚本的处理完全完成时，将发送JSON响应信息。</p>
 <h3 id="gcoderestart">gcode/restart<a class="headerlink" href="#gcoderestart" title="Permanent link">&para;</a></h3>
-<p>This endpoint allows one to request a restart - it is similar to running the G-Code "RESTART" command. For example: <code>{"id": 123, "method": "gcode/restart"}</code></p>
-<p>As with the "gcode/script" endpoint, this endpoint only completes after any pending G-Code commands complete.</p>
+<p>该端点允许用户请求重新启动-它类似于运行G-Code“重新启动”命令。例如：<code>{“id”：123，“方法”：“gcode/Restart”}</code></p>
+<p>与“gcode/脚本”终结点一样，该终结点只有在所有挂起的G-Code命令完成后才会完成。</p>
 <h3 id="gcodefirmware_restart">gcode/firmware_restart<a class="headerlink" href="#gcodefirmware_restart" title="Permanent link">&para;</a></h3>
-<p>This is similar to the "gcode/restart" endpoint - it implements the G-Code "FIRMWARE_RESTART" command. For example: <code>{"id": 123, "method": "gcode/firmware_restart"}</code></p>
-<p>As with the "gcode/script" endpoint, this endpoint only completes after any pending G-Code commands complete.</p>
-<h3 id="gcodesubscribe_output">gcode/subscribe_output<a class="headerlink" href="#gcodesubscribe_output" title="Permanent link">&para;</a></h3>
-<p>This endpoint is used to subscribe to G-Code terminal messages that are generated by Klipper. For example: <code>{"id": 123, "method": "gcode/subscribe_output", "params": {"response_template":{}}}</code> might later produce asynchronous messages such as: <code>{"params": {"response": "// Klipper state: Shutdown"}}</code></p>
-<p>This endpoint is intended to support human interaction via a "terminal window" interface. Parsing content from the G-Code terminal output is discouraged. Use the "objects/subscribe" endpoint to obtain updates on Klipper's state.</p>
+<p>这类似于“GCODE/RESTART”端点-它实现G-Code“Firmware_Restart”命令。例如：<code>{“id”：123，“方法”：“gcode/Firmware_Restart”}</code></p>
+<p>与“gcode/脚本”终结点一样，该终结点只有在所有挂起的G-Code命令完成后才会完成。</p>
+<h3 id="gcode">GCODE/订阅输出<a class="headerlink" href="#gcode" title="Permanent link">&para;</a></h3>
+<p>此端点用于订阅由Klipper生成的G-Code终端消息。例如：<code>{“id”：123，“Method”：“gcode/SUBSCRIBE_OUTPUT”，“PARAMS”：{“RESPONSE_TEMPLATE”：{}</code>以后可能会产生异步消息，如：<code>{“PARAMS”：{“RESPONSE”：“//Klipper STATE：Shutdown”}}</code></p>
+<p>该端点旨在通过“终端窗口”界面支持人类交互。不鼓励解析来自G-Code终端输出的内容。使用“对象/订阅”终结点获取Klipper状态的更新。</p>
 <h3 id="motion_reportdump_stepper">motion_report/dump_stepper<a class="headerlink" href="#motion_reportdump_stepper" title="Permanent link">&para;</a></h3>
-<p>This endpoint is used to subscribe to Klipper's internal stepper queue_step command stream for a stepper. Obtaining these low-level motion updates may be useful for diagnostic and debugging purposes. Using this endpoint may increase Klipper's system load.</p>
-<p>A request may look like: <code>{"id": 123, "method":"motion_report/dump_stepper", "params": {"name": "stepper_x", "response_template": {}}}</code> and might return: <code>{"id": 123, "result": {"header": ["interval", "count", "add"]}}</code> and might later produce asynchronous messages such as: <code>{"params": {"first_clock": 179601081, "first_time": 8.98, "first_position": 0, "last_clock": 219686097, "last_time": 10.984, "data": [[179601081, 1, 0], [29573, 2, -8685], [16230, 4, -1525], [10559, 6, -160], [10000, 976, 0], [10000, 1000, 0], [10000, 1000, 0], [10000, 1000, 0], [9855, 5, 187], [11632, 4, 1534], [20756, 2, 9442]]}}</code></p>
-<p>The "header" field in the initial query response is used to describe the fields found in later "data" responses.</p>
-<h3 id="motion_reportdump_trapq">motion_report/dump_trapq<a class="headerlink" href="#motion_reportdump_trapq" title="Permanent link">&para;</a></h3>
-<p>This endpoint is used to subscribe to Klipper's internal "trapezoid motion queue". Obtaining these low-level motion updates may be useful for diagnostic and debugging purposes. Using this endpoint may increase Klipper's system load.</p>
-<p>A request may look like: <code>{"id": 123, "method": "motion_report/dump_trapq", "params": {"name": "toolhead", "response_template":{}}}</code> and might return: <code>{"id": 1, "result": {"header": ["time", "duration", "start_velocity", "acceleration", "start_position", "direction"]}}</code> and might later produce asynchronous messages such as: <code>{"params": {"data": [[4.05, 1.0, 0.0, 0.0, [300.0, 0.0, 0.0], [0.0, 0.0, 0.0]], [5.054, 0.001, 0.0, 3000.0, [300.0, 0.0, 0.0], [-1.0, 0.0, 0.0]]]}}</code></p>
-<p>The "header" field in the initial query response is used to describe the fields found in later "data" responses.</p>
+<p>此终结点用于订阅Klipper的内部Steper Queue_Step命令流以获取Steper。获取这些低级运动更新对于诊断和调试目的可能有用。使用此终结点可能会增加Klipper的系统负载。</p>
+<p>请求可以看起来类似于：<code>{“id”：123，“method”：“Motion_report/Dump_Steper”，“pars”{“name”：“Steper_x”，“Response_Template”：{}</code>，并且可以返回：<code>{“id”：123，“Result”：{“Header”[“Interval”，“count”，“Add”]}}</code>，并且可以稍后产生诸如：<code>{“paras”：{“first_lock”：179601081，“First_Time”：8.98，“First_Position”：0，“Last_Clock”：219686097，“Last_Time”：10.984，“DATA”：[[179601081，1，0]，[29573，2，-8685]，[16230，4-1525]，[10559，6，-160]，[10000,976，0]，[10000,1000，0]，[10000,1000，0]，[10000,1000，0]，[10.984,1000，0]，[9855，5，187]，[11632，4,1534]，[20756，2,9442]}}</code></p>
+<p>初始查询响应中的“Header”字段用于描述在随后的“数据”响应中找到的字段。</p>
+<h3 id="__">运动_报告/转储_陷阱<a class="headerlink" href="#__" title="Permanent link">&para;</a></h3>
+<p>该端点用于订阅Klipper内部的“梯形运动队列”。获取这些低级运动更新对于诊断和调试目的可能有用。使用此终结点可能会增加Klipper的系统负载。</p>
+<p>请求可能类似于：<code>{“id”：123，“method”：“Motion_report/ump_trapq”，“pars”：{“name”：“工具头”，“Response_Template”：{}</code>，并可能返回：<code _参数_：_数据_：_4.05.0，1.0，0.0，0.0，_300.0，0.0，0.0_，_0.0，0.0_3000.0_，_5.054，0.001，0.0_3000.0，_300.0，0.0，0.0_，_-1.0，0.0，0.0_="“参数”：{“数据”：[[4.05.0，1.0，0.0，0.0，[300.0，0.0，0.0]，[0.0，0.0,3000.0]，[5.054，0.001，0.0,3000.0，[300.0，0.0，0.0]，[-1.0，0.0，0.0]]">{“id”：1，“Result”：{“Header”：[“time”，“时长”，“Start_Velace”，“Acceleration”，“Start_Position”，并可能在以后产生异步消息，如：</code>}`</p>
+<p>初始查询响应中的“Header”字段用于描述在随后的“数据”响应中找到的字段。</p>
 <h3 id="adxl345dump_adxl345">adxl345/dump_adxl345<a class="headerlink" href="#adxl345dump_adxl345" title="Permanent link">&para;</a></h3>
-<p>This endpoint is used to subscribe to ADXL345 accelerometer data. Obtaining these low-level motion updates may be useful for diagnostic and debugging purposes. Using this endpoint may increase Klipper's system load.</p>
-<p>A request may look like: <code>{"id": 123, "method":"adxl345/dump_adxl345", "params": {"sensor": "adxl345", "response_template": {}}}</code> and might return: <code>{"id": 123,"result":{"header":["time","x_acceleration","y_acceleration", "z_acceleration"]}}</code> and might later produce asynchronous messages such as: <code>{"params":{"overflows":0,"data":[[3292.432935,-535.44309,-1529.8374,9561.4], [3292.433256,-382.45935,-1606.32927,9561.48375]]}}</code></p>
-<p>The "header" field in the initial query response is used to describe the fields found in later "data" responses.</p>
-<h3 id="angledump_angle">angle/dump_angle<a class="headerlink" href="#angledump_angle" title="Permanent link">&para;</a></h3>
-<p>This endpoint is used to subscribe to <a href="Config_Reference.html#angle">angle sensor data</a>. Obtaining these low-level motion updates may be useful for diagnostic and debugging purposes. Using this endpoint may increase Klipper's system load.</p>
-<p>A request may look like: <code>{"id": 123, "method":"angle/dump_angle", "params": {"sensor": "my_angle_sensor", "response_template": {}}}</code> and might return: <code>{"id": 123,"result":{"header":["time","angle"]}}</code> and might later produce asynchronous messages such as: <code>{"params":{"position_offset":3.151562,"errors":0, "data":[[1290.951905,-5063],[1290.952321,-5065]]}}</code></p>
-<p>The "header" field in the initial query response is used to describe the fields found in later "data" responses.</p>
-<h3 id="pause_resumecancel">pause_resume/cancel<a class="headerlink" href="#pause_resumecancel" title="Permanent link">&para;</a></h3>
-<p>This endpoint is similar to running the "PRINT_CANCEL" G-Code command. For example: <code>{"id": 123, "method": "pause_resume/cancel"}</code></p>
-<p>As with the "gcode/script" endpoint, this endpoint only completes after any pending G-Code commands complete.</p>
-<h3 id="pause_resumepause">pause_resume/pause<a class="headerlink" href="#pause_resumepause" title="Permanent link">&para;</a></h3>
-<p>This endpoint is similar to running the "PAUSE" G-Code command. For example: <code>{"id": 123, "method": "pause_resume/pause"}</code></p>
-<p>As with the "gcode/script" endpoint, this endpoint only completes after any pending G-Code commands complete.</p>
-<h3 id="pause_resumeresume">pause_resume/resume<a class="headerlink" href="#pause_resumeresume" title="Permanent link">&para;</a></h3>
-<p>This endpoint is similar to running the "RESUME" G-Code command. For example: <code>{"id": 123, "method": "pause_resume/resume"}</code></p>
-<p>As with the "gcode/script" endpoint, this endpoint only completes after any pending G-Code commands complete.</p>
-<h3 id="query_endstopsstatus">query_endstops/status<a class="headerlink" href="#query_endstopsstatus" title="Permanent link">&para;</a></h3>
-<p>This endpoint will query the active endpoints and return their status. For example: <code>{"id": 123, "method": "query_endstops/status"}</code> might return: <code>{"id": 123, "result": {"y": "open", "x": "open", "z": "TRIGGERED"}}</code></p>
-<p>As with the "gcode/script" endpoint, this endpoint only completes after any pending G-Code commands complete.</p>
+<p>该端点用于订阅ADXL345加速度计数据。获取这些低级运动更新对于诊断和调试目的可能有用。使用此终结点可能会增加Klipper的系统负载。</p>
+<p>请求可以看起来类似于：<code>{“id”：123，“method”：“adxl345/ump_adxl345”，“params”：{“ensor”：“adxl345”，“Response_Template”：{}</code>，并且可以返回：<code>{“id”：123，“Result”：{“Header”：[“time”，“x_acceleration”，“y_acceleration”，“z_acceleration”]}}</code>，并且稍后可能产生诸如：<code>{“params”：{“overflow”：0，“数据”：[[3292.432935，-535.44309，-1529.8374,9561.4]，[3292.433256，-382.45935，-1606.32927,9561.48375]]}}</code></p>
+<p>初始查询响应中的“Header”字段用于描述在随后的“数据”响应中找到的字段。</p>
+<h3 id="_2">角/转储角<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
+<p>该端点用于订阅<a href="Config_Reference.html#Angel">角度传感器数据</a>。获取这些低级运动更新对于诊断和调试目的可能有用。使用此终结点可能会增加Klipper的系统负载。</p>
+<p>请求可能类似于：<code>{“id”：123，“方法”：“角度/转储_角度”，“参数”：{“传感器”：“我的角度_传感器”，“响应模板”：{}</code>，并且可能返回：<code>{“id”：123，“结果”：{“标题”：[“时间”，“角度”]}}</code>，并且可能稍后产生诸如：<code>{“参数”：{“位置偏移量”：3.151562，“错误”：0,“data”：[[1290.951905，-5063]，[1290.952321，-5065]}}</code></p>
+<p>初始查询响应中的“Header”字段用于描述在随后的“数据”响应中找到的字段。</p>
+<h3 id="_">暂停_继续/取消<a class="headerlink" href="#_" title="Permanent link">&para;</a></h3>
+<p>该端点类似于运行“PRINT_CANCEL”G-Code命令。例如：<code>{“id”：123，“方法”：“PAUSE_RESUME/Cancel”}</code></p>
+<p>与“gcode/脚本”终结点一样，该终结点只有在所有挂起的G-Code命令完成后才会完成。</p>
+<h3 id="__1">暂停_恢复/暂停<a class="headerlink" href="#__1" title="Permanent link">&para;</a></h3>
+<p>此终结点类似于运行“暂停”G-Code命令。例如：<code>{“id”：123，“方法”：“PAUSE_RESUME/PAUSE”}</code></p>
+<p>与“gcode/脚本”终结点一样，该终结点只有在所有挂起的G-Code命令完成后才会完成。</p>
+<h3 id="__2">暂停_恢复/恢复<a class="headerlink" href="#__2" title="Permanent link">&para;</a></h3>
+<p>此终结点类似于运行“Resume”G-Code命令。例如：<code>{“id”：123，“方法”：“PAUSE_RESUME/RESUME”}</code></p>
+<p>与“gcode/脚本”终结点一样，该终结点只有在所有挂起的G-Code命令完成后才会完成。</p>
+<h3 id="__3">查询_结束停止/状态<a class="headerlink" href="#__3" title="Permanent link">&para;</a></h3>
+<p>此终结点将查询活动终结点并返回其状态。例如：<code>{“id”：123，“Method”：“Query_endstopks/Status”}</code>可能返回：<code>{“id”：123，“Result”：{“y”：“Open”，“x”：“Open”，“z”：“Trigated”}</code></p>
+<p>与“gcode/脚本”终结点一样，该终结点只有在所有挂起的G-Code命令完成后才会完成。</p>
 
               
             </article>

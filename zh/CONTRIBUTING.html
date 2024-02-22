@@ -623,7 +623,7 @@
   
     <li class="md-nav__item">
       <a href="Axis_Twist_Compensation.html" class="md-nav__link">
-        Axis Twist Compensation
+        轴扭曲补偿
       </a>
     </li>
   
@@ -1074,15 +1074,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#helping-with-reviews" class="md-nav__link">
-    Helping with reviews
+  <a href="#_3" class="md-nav__link">
+    帮助撰写评论
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#reviewers" class="md-nav__link">
-    Reviewers
+  <a href="#_4" class="md-nav__link">
+    审稿人
   </a>
   
 </li>
@@ -1240,7 +1240,7 @@
   
     <li class="md-nav__item">
       <a href="Bootloader_Entry.html" class="md-nav__link">
-        Bootloader Entry
+        引导加载程序条目
       </a>
     </li>
   
@@ -1268,7 +1268,7 @@
   
     <li class="md-nav__item">
       <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
-        CANBUS Troubleshooting
+        CanBus故障排除
       </a>
     </li>
   
@@ -1366,15 +1366,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#helping-with-reviews" class="md-nav__link">
-    Helping with reviews
+  <a href="#_3" class="md-nav__link">
+    帮助撰写评论
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#reviewers" class="md-nav__link">
-    Reviewers
+  <a href="#_4" class="md-nav__link">
+    审稿人
   </a>
   
 </li>
@@ -1446,7 +1446,7 @@
 <p>提交到Klipper主分支的代码应该有足够的目标受众。作为一般的经验法则，提交的内容应该针对至少100个用户的用户群体。</p>
 <p>如果审稿人询问有关提交可以带来的“好处”的细节，请不要将其视为批评。能够理解更改带来的实际好处是审查的一个自然部分。</p>
 <p>When discussing benefits it is preferable to discuss "facts and measurements". In general, reviewers are not looking for responses of the form "someone may find option X useful", nor are they looking for responses of the form "this submission adds a feature that firmware X implements". Instead, it is generally preferable to discuss details on how the quality improvement was measured and what were the results of those measurements - for example, "tests on Acme X1000 printers show improved corners as seen in picture ...", or for example "print time of real-world object X on a Foomatic X900 printer went from 4 hours to 3.5 hours". It is understood that testing of this type can take significant time and effort. Some of Klipper's most notable features took months of discussion, rework, testing, and documentation prior to being merged into the master branch.</p>
-<p>All new modules, config options, commands, command parameters, and documents should have "high impact". We do not want to burden users with options that they can not reasonably configure nor do we want to burden them with options that don't provide a notable benefit.</p>
+<p>所有新的模块、配置选项、命令、命令参数和文档都应该具有“高影响力”。我们不想让用户负担他们不能合理配置的选项，也不想让他们负担不能提供显著好处的选项。</p>
 <p>评审员可能会要求解释用户该如何配置一个选项，一个理想的答复将包含过程的细节，例如："MegaX500的用户应将选项 X 设置为99.3，而Elite100Y的用户应使用程序校准选项X..." 。</p>
 <p>如果一个选项的目标是使代码更加模块化，那么最好使用代码常量而不是向用户开放的配置选项。</p>
 <p>新模块、新选项和新参数不应提供与现有模块类似的功能——如果差异是任意的，那么最好利用现有系统或重构现有代码。</p>
@@ -1481,31 +1481,31 @@
 </ol>
 <p>Klipper没有实现严格的“编码风格指南”，但对现有代码的修改应该遵循高级代码流、代码缩进风格和现有代码的格式。新模块和系统的提交在编码风格上具有更大的灵活性，但新代码最好遵循内部一致的风格，并通常遵循行业范围的编码规范。</p>
 <p>讨论“更好的实现”并不是审查的目标。然而，如果审查人员很难理解提交的实现，那么他们可能会要求进行更改，以使实现更加透明。特别是，如果评审员不能说服自己提交的文件没有缺陷，那么可能需要进行更改。</p>
-<p>As part of a review, a reviewer may create an alternate Pull Request for a topic. This may be done to avoid excessive "back and forth" on minor procedural items and thus streamline the submission process. It may also be done because the discussion inspires a reviewer to build an alternative implementation. Both situations are a normal result of a review and should not be considered criticism of the original submission.</p>
-<h3 id="helping-with-reviews">Helping with reviews<a class="headerlink" href="#helping-with-reviews" title="Permanent link">&para;</a></h3>
-<p>We appreciate help with reviews! It is not necessary to be a <a href="#reviewers">listed reviewer</a> to perform a review. Submitters of GitHub Pull Requests are also encouraged to review their own submissions.</p>
-<p>To help with a review, follow the steps outlined in <a href="#what-to-expect-in-a-review">what to expect in a review</a> to verify the submission. After completing the review, add a comment to the GitHub Pull Request with your findings. If the submission passes the review then please state that explicitly in the comment - for example something like "I reviewed this change according to the steps in the CONTRIBUTING document and everything looks good to me". If unable to complete some steps in the review then please explicitly state which steps were reviewed and which steps were not reviewed - for example something like "I didn't check the code for defects, but I reviewed everything else in the CONTRIBUTING document and it looks good".</p>
-<p>We also appreciate testing of submissions. If the code was tested then please add a comment to the GitHub Pull Request with the results of your test - success or failure. Please explicitly state that the code was tested and the results - for example something like "I tested this code on my Acme900Z printer with a vase print and the results were good".</p>
-<h3 id="reviewers">Reviewers<a class="headerlink" href="#reviewers" title="Permanent link">&para;</a></h3>
-<p>The Klipper "reviewers" are:</p>
+<p>作为审阅的一部分，审阅人可以为主题创建替代拉取请求。可以这样做，以避免在次要程序项目上过度“来回”，从而简化提交程序。这也可能是因为讨论激发了评审者构建替代实现的灵感。这两种情况都是审查的正常结果，不应被视为对原始划界案的批评。</p>
+<h3 id="_3">帮助撰写评论<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<p>我们非常感谢评论方面的帮助！不一定要是<a href="#reviewers">列出的审查者</a>才能执行审查。GitHub Pull请求的提交者也被鼓励审查他们自己的提交。</p>
+<p>为了帮助审查，请遵循<a href="#what-to-expect-in-a-review">审查中预期的内容</a>中概述的步骤来核实提交。完成审核后，请在GitHub拉取请求中添加您的调查结果。如果提交的文件通过了审查，请在评论中明确说明--例如，“我按照提交文件中的步骤审查了这项更改，我认为一切都很好”。如果无法完成评审中的某些步骤，请明确说明哪些步骤已审核，哪些步骤未审核--例如，类似于“我没有检查代码中的缺陷，但我审核了贡献文档中的所有其他内容，它看起来很好”。</p>
+<p>我们也感谢对提交材料的测试。如果代码经过测试，请在GitHub Pull请求中添加注释，并附上测试结果--成功或失败。请明确说明代码已经过测试并得到了结果--例如，“我用花瓶打印在我的Acme900Z打印机上测试了这段代码，结果很好”。</p>
+<h3 id="_4">审稿人<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<p>Klipper的“评论者”是：</p>
 <table>
 <thead>
 <tr>
-<th>Name</th>
+<th>名称</th>
 <th>GitHub Id</th>
-<th>Areas of interest</th>
+<th>感兴趣的领域</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Dmitry Butyugin</td>
 <td>@dmbutyugin</td>
-<td>Input shaping, resonance testing, kinematics</td>
+<td>输入整形、共振测试、运动学</td>
 </tr>
 <tr>
 <td>Eric Callahan</td>
 <td>@Arksine</td>
-<td>Bed leveling, MCU flashing</td>
+<td>床位调平，MCU闪烁</td>
 </tr>
 <tr>
 <td>James Hartley</td>
@@ -1515,16 +1515,16 @@
 <tr>
 <td>Kevin O'Connor</td>
 <td>@KevinOConnor</td>
-<td>Core motion system, Micro-controller code</td>
+<td>核心运动系统，微控制器代码</td>
 </tr>
 </tbody>
 </table>
-<p>Please do not "ping" any of the reviewers and please do not direct submissions at them. All of the reviewers monitor the forums and PRs, and will take on reviews when they have time to.</p>
+<p>请不要“ping”任何一位评审员，也不要直接向他们投稿。所有的评论者都会监督论坛和公关，并在有时间的时候进行评论。</p>
 <p>The Klipper "maintainers" are:</p>
 <table>
 <thead>
 <tr>
-<th>Name</th>
+<th>名称</th>
 <th>GitHub name</th>
 </tr>
 </thead>

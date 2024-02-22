@@ -664,7 +664,7 @@
   
     <li class="md-nav__item">
       <a href="Axis_Twist_Compensation.html" class="md-nav__link">
-        Axis Twist Compensation
+        轴扭曲补偿
       </a>
     </li>
   
@@ -1197,7 +1197,7 @@
   
     <li class="md-nav__item">
       <a href="Bootloader_Entry.html" class="md-nav__link">
-        Bootloader Entry
+        引导加载程序条目
       </a>
     </li>
   
@@ -1225,7 +1225,7 @@
   
     <li class="md-nav__item">
       <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
-        CANBUS Troubleshooting
+        CanBus故障排除
       </a>
     </li>
   
@@ -1335,14 +1335,14 @@
 <p>本文档涵盖了软件更新中对配置文件不向后兼容的部分。在升级 Klipper 时，最好也查看一下这份文档。</p>
 <p>文档的所有日期都是大概时间。</p>
 <h2 id="_2">变更<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
-<p>20230826: If <code>safe_distance</code> is set or calculated to be 0 in <code>[dual_carriage]</code>, the carriages proximity checks will be disabled as per documentation. A user may wish to configure <code>safe_distance</code> explicitly to prevent accidental crashes of the carriages with each other. Additionally, the homing order of the primary and the dual carriage is changed in some configurations (certain configurations when both carriages home in the same direction, see <a href="Config_Reference.html#dual_carriage">[dual_carriage] configuration reference</a> for more details).</p>
-<p>20230810: The flash-sdcard.sh script now supports both variants of the Bigtreetech SKR-3, STM32H743 and STM32H723. For this, the original tag of btt-skr-3 now has changed to be either btt-skr-3-h743 or btt-skr-3-h723.</p>
-<p>20230729: The exported status for <code>dual_carriage</code> is changed. Instead of exporting <code>mode</code> and <code>active_carriage</code>, the individual modes for each carriage are exported as <code>printer.dual_carriage.carriage_0</code> and <code>printer.dual_carriage.carriage_1</code>.</p>
-<p>20230619: The <code>relative_reference_index</code> option has been deprecated and superceded by the <code>zero_reference_position</code> option. Refer to the <a href="Bed_Mesh.html#the-deprecated-relative_reference_index">Bed Mesh Documentation</a> for details on how to update the configuration. With this deprecation the <code>RELATIVE_REFERENCE_INDEX</code> is no longer available as a parameter for the <code>BED_MESH_CALIBRATE</code> gcode command.</p>
-<p>20230530: The default canbus frequency in "make menuconfig" is now 1000000. If using canbus and using canbus with some other frequency is required, then be sure to select "Enable extra low-level configuration options" and specify the desired "CAN bus speed" in "make menuconfig" when compiling and flashing the micro-controller.</p>
-<p>20230525: <code>SHAPER_CALIBRATE</code> command immediately applies input shaper parameters if <code>[input_shaper]</code> was enabled already.</p>
-<p>20230407: The <code>stalled_bytes</code> counter in the log and in the <code>printer.mcu.last_stats</code> field has been renamed to <code>upcoming_bytes</code>.</p>
-<p>20230323: On tmc5160 drivers <code>multistep_filt</code> is now enabled by default. Set <code>driver_MULTISTEP_FILT: False</code> in the tmc5160 config for the previous behavior.</p>
+<p>20230826：如果在 <code>[dual_carriage]</code>中将“safe_distance”设置或计算为0，则将根据文档禁用车厢接近检查。用户可能希望明确配置“safe_distance”，以防止车厢彼此意外碰撞。此外，主滑架和双滑架的归位顺序在某些配置中会发生变化（当两个滑架都在同一方向上归位时的某些配置，请参阅<a href="Config_Reference.html#dual_carriage">[dual_carriage] 配置参考</a>了解更多详细信息）。</p>
+<p>20230810：Flash-sdcard.sh脚本现在支持Bigtreetech SKR-3的两个变体：STM32H743和STM32H723。为此，btt-skr-3的原始标签现在已更改为btt-skr-3-h743或btt-skr-3-h723。</p>
+<p>20230729:<code>dual_carriage</code>的导出状态已更改。不是导出 <code>mode</code>和<code>active_carriage</code>，而是将每个车厢的各个模式导出为 <code>printer.dual_carriage.carriage_0</code>和 <code>printer.dual_carriage.carriage_1</code>.</p>
+<p>20230619：<code>Relative_Reference_Index</code>选项已弃用，取而代之的是<code>ZERO_REFERENCE_Position</code>选项。有关如何更新配置的详细信息请参阅<a href="Bed_Mesh.html#the-deprecated-relative_reference_index">Bed Mesh Documentation</a>。在此情况下，<code>Relative_Reference_INDEX</code>不再可用作<code>BED_MESH_CALIBRATE</code>gcode命令的参数。</p>
+<p>20230530：“make menuconfig”中的默认CANBUS频率现在为1000000。如果需要使用CANBUS和使用其他频率的CANBUS，则在编译和刷新微控制器时，请务必选择“启用额外的低级配置选项”，并在“Make menuconfig”中指定所需的“CAN Bus速度”。</p>
+<p>20230525：如果<code>[INPUT_SHAPPER]</code>已启用，则<code>SHAPER_CALIBRATE</code>命令立即应用输入形成器参数。</p>
+<p>20230407：日志和<code>printer.mcu.last_stats</code>字段中的<code>stalled_bytes</code>计数器已重命名为<code>income_bytes</code>。</p>
+<p>20230323：在tmc5160驱动上，现在默认开启<code>MultiStep_filt</code>。对于之前的行为，在tmc5160配置中设置<code>DRIVER_MULTSTEP_FILT：False</code>。</p>
 <p>20230304:<code>SET_TMC_CURRENT</code> 命令现在可以正确地调整有globalscalar的驱动的globalscalar。这消除了一个限制，即在 tmc5160 上，使用<code>SET_TMC_CURRENT</code> 所提高的电流不能高于配置文件中设置的<code>run_current</code> 值。然而，这有一个副作用：如果使用StealthChop2，在运行<code>SET_TMC_CURRENT</code> 之后，步进电机必须保持在静止状态至少130ms，这样AT#1校准才会被驱动执行。</p>
 <p>20230202：<code>printer.screw_tilt_adjust</code> 状态信息的格式已经改变。该信息现在是以screws的字典形式存储的，并附有测量结果。详情见<a href="Status_Reference.html#screws_tilt_adjust">状态参考文档</a>。</p>
 <p>20230201：<code>[bed_mesh]</code> 模块在启动时不再加载<code>default</code> 配置文件。建议使用<code>default</code> 配置的用户将<code>BED_MESH_PROFILE LOAD=default</code> 添加到他们的<code>START_PRINT</code> 宏中（或者在适用时添加到他们的切片软件的 "启动G代码 "配置中）。</p>

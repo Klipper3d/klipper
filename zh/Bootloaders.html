@@ -623,7 +623,7 @@
   
     <li class="md-nav__item">
       <a href="Axis_Twist_Compensation.html" class="md-nav__link">
-        Axis Twist Compensation
+        轴扭曲补偿
       </a>
     </li>
   
@@ -1239,8 +1239,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#samdc21-micro-controllers-duet3d-toolboard-1lc" class="md-nav__link">
-    SAMDC21 micro-controllers (Duet3D Toolboard 1LC)
+  <a href="#samdc21duet3d1lc" class="md-nav__link">
+    SAMDC21微控制器(Duet3D工具板1LC)
   </a>
   
 </li>
@@ -1371,7 +1371,7 @@
   
     <li class="md-nav__item">
       <a href="Bootloader_Entry.html" class="md-nav__link">
-        Bootloader Entry
+        引导加载程序条目
       </a>
     </li>
   
@@ -1399,7 +1399,7 @@
   
     <li class="md-nav__item">
       <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
-        CANBUS Troubleshooting
+        CanBus故障排除
       </a>
     </li>
   
@@ -1544,8 +1544,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#samdc21-micro-controllers-duet3d-toolboard-1lc" class="md-nav__link">
-    SAMDC21 micro-controllers (Duet3D Toolboard 1LC)
+  <a href="#samdc21duet3d1lc" class="md-nav__link">
+    SAMDC21微控制器(Duet3D工具板1LC)
   </a>
   
 </li>
@@ -1768,9 +1768,9 @@ bossac -U -p /dev/ttyACM0 -R
 <div class="highlight"><pre><span></span><code>bossac --port=/dev/ttyACM0 -b -U -e -w -v -R out/klipper.bin
 </code></pre></div>
 
-<h2 id="samdc21-micro-controllers-duet3d-toolboard-1lc">SAMDC21 micro-controllers (Duet3D Toolboard 1LC)<a class="headerlink" href="#samdc21-micro-controllers-duet3d-toolboard-1lc" title="Permanent link">&para;</a></h2>
-<p>The SAMC21 is flashed via the ARM Serial Wire Debug (SWD) interface. This is commonly done with a dedicated SWD hardware dongle. Alternatively, one can use a <a href="#running-openocd-on-the-raspberry-pi">Raspberry Pi with OpenOCD</a>.</p>
-<p>When using OpenOCD with the SAMC21, extra steps must be taken to first put the chip into Cold Plugging mode if the board makes use of the SWD pins for other purposes. If using OpenOCD on a Rasberry Pi, this can be done by running the following commands before invoking OpenOCD.</p>
+<h2 id="samdc21duet3d1lc">SAMDC21微控制器(Duet3D工具板1LC)<a class="headerlink" href="#samdc21duet3d1lc" title="Permanent link">&para;</a></h2>
+<p>SAMC21通过ARM串行线调试(SWD)接口进行刷新。这通常是通过专用的社署硬件加密狗来完成的。或者，人们可以使用带有<a href="#running-openocd-on-the-raspberry-pi">Raspberry Pi的 OpenOCD</a>.</p>
+<p>当将OpenOCD与SAMC21一起使用时，如果主板将SWD引脚用于其他目的，则必须采取额外步骤，首先将芯片置于冷插拔模式。如果在Rasberry PI上使用OpenOCD，可以通过在调用OpenOCD之前运行以下命令来完成。</p>
 <div class="highlight"><pre><span></span><code>SWCLK=25
 SWDIO=24
 SRST=18
@@ -1791,14 +1791,14 @@ echo $SWCLK &gt; /sys/class/gpio/unexport
 echo $SRST &gt; /sys/class/gpio/unexport
 </code></pre></div>
 
-<p>To flash a program with OpenOCD use the following chip config:</p>
+<p>要使用OpenOCD刷新程序，请使用以下芯片配置：</p>
 <div class="highlight"><pre><span></span><code>source [find target/at91samdXX.cfg]
 </code></pre></div>
 
-<p>Obtain a program; for instance, klipper can be built for this chip. Flash with OpenOCD commands similar to:</p>
-<div class="highlight"><pre><span></span><code>at91samd chip-erase
-at91samd bootloader 0
-program out/klipper.elf verify
+<p>获取一个程序；例如，可以为该芯片构建Klipper。带有OpenOCD命令的闪存，类似于：</p>
+<div class="highlight"><pre><span></span><code>AT91samd芯片擦除。
+AT91samd引导加载程序%0。
+程序输出/klipper.self验证
 </code></pre></div>
 
 <h2 id="samd21arduino-zero">SAMD21微控制器（Arduino Zero）<a class="headerlink" href="#samd21arduino-zero" title="Permanent link">&para;</a></h2>
@@ -2069,13 +2069,13 @@ gdb out/klipper.elf
       
       
         
-        <a href="Bootloader_Entry.html" class="md-footer__link md-footer__link--next" aria-label="下一页: Bootloader Entry" rel="next">
+        <a href="Bootloader_Entry.html" class="md-footer__link md-footer__link--next" aria-label="下一页: 引导加载程序条目" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 下一页
               </span>
-              Bootloader Entry
+              引导加载程序条目
             </div>
           </div>
           <div class="md-footer__button md-icon">
