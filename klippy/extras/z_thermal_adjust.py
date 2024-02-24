@@ -42,7 +42,8 @@ class ZThermalAdjuster:
         pheaters.register_sensor(config, self)
 
         self.last_temp = 0.
-        self.measured_min = self.measured_max = 0.
+        self.measured_min = 99999999.
+        self.measured_max = 0.
         self.smoothed_temp = 0.
         self.last_temp_time = 0.
         self.ref_temperature = 0.
