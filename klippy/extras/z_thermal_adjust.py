@@ -136,15 +136,16 @@ class ZThermalAdjuster:
 
     def temperature_callback(self, read_time, temp):
         'Called everytime the Z adjust thermistor is read'
-        with self.lock:
-            time_diff = read_time - self.last_temp_time
-            self.last_temp = temp
-            self.last_temp_time = read_time
-            temp_diff = temp - self.smoothed_temp
-            adj_time = min(time_diff * self.inv_smooth_time, 1.)
-            self.smoothed_temp += temp_diff * adj_time
-            self.measured_min = min(self.measured_min, self.smoothed_temp)
-            self.measured_max = max(self.measured_max, self.smoothed_temp)
+        if temp:
+            with self.lock:
+                time_diff = read_time - self.last_temp_time
+                self.last_temp = temp
+                self.last_temp_time = read_time
+                temp_diff = temp - self.smoothed_temp
+                adj_time = min(time_diff * self.inv_smooth_time, 1.)
+                self.smoothed_temp += temp_diff * adj_time
+                self.measured_min = min(self.measured_min, self.smoothed_temp)
+                self.measured_max = max(self.measured_max, self.smoothed_temp)
 
     def get_temp(self, eventtime):
         return self.smoothed_temp, 0.
