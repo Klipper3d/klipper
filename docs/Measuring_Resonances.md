@@ -450,7 +450,7 @@ TEST_RESONANCES AXIS=Y
 ```
 This will generate 2 CSV files (`/tmp/resonances_x_*.csv` and
 `/tmp/resonances_y_*.csv`). These files can be processed with the stand-alone
-script on a Raspberry Pi. To do that, run the following commands:
+script on a Raspberry Pi. To do that, run the following commands (WARNING: Do not run these commands when there is more than one .csv file in your tmp folder. This will result in ALL files being used for the charted results):
 ```
 ~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png
 ~/klipper/scripts/calibrate_shaper.py /tmp/resonances_y_*.csv -o /tmp/shaper_calibrate_y.png
