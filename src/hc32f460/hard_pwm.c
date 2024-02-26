@@ -75,7 +75,6 @@ static const struct gpio_pwm_info pwm_mapping[] = {
     {GPIO('C',14), 4, TimeraCh5},
     {GPIO('C',15), 4, TimeraCh6},
     {GPIO('D', 2), 2, TimeraCh4},
-#if CONFIG_HC32F460_PINS_100
     {GPIO('D',12), 4, TimeraCh1},
     {GPIO('D',13), 4, TimeraCh2},
     {GPIO('D',14), 4, TimeraCh3},
@@ -92,7 +91,6 @@ static const struct gpio_pwm_info pwm_mapping[] = {
     {GPIO('E',13), 1, TimeraCh3},
     {GPIO('E',14), 1, TimeraCh4},
     {GPIO('E',15), 1, TimeraCh8},
-#endif
 };
 
 
