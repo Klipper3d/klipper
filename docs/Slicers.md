@@ -118,8 +118,11 @@ M140 S0
 M104 S0
 ```
 
-before the macro call. Also note that SuperSlicer has a
-"custom gcode only" button option, which achieves the same outcome.
+before the macro call. 
+
+Also note that SuperSlicer has a "custom gcode only" button option, which achieves the same outcome. 
+
+Since v1.6.0 PrusaSlicer has an option for this under the "Start G-Code options" group of the "Custom G-code" section called "Emit temperature commands automatically". It is checked by default, uncheck it to supress the heating codes in the final output.
 
 An example of a START_PRINT macro using these paramaters can
 be found in config/sample-macros.cfg
