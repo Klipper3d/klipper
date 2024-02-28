@@ -4,8 +4,8 @@
 # Copyright (C) 2020-2021 Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, time, collections, threading, multiprocessing, os
-from . import bus, motion_report, adxl345
+import logging
+from . import bus, adxl345, bulk_sensor
 
 MPU9250_ADDR =      0x68
 
@@ -30,6 +30,7 @@ REG_ACCEL_CONFIG2 = 0x1D
 REG_USER_CTRL =     0x6A
 REG_PWR_MGMT_1 =    0x6B
 REG_PWR_MGMT_2 =    0x6C
+REG_INT_STATUS =    0x3A
 
 SAMPLE_RATE_DIVS = { 4000:0x00 }
 
@@ -40,6 +41,10 @@ SET_PWR_MGMT_1_WAKE =     0x00
 SET_PWR_MGMT_1_SLEEP=     0x40
 SET_PWR_MGMT_2_ACCEL_ON = 0x07
 SET_PWR_MGMT_2_OFF  =     0x3F
+SET_USER_FIFO_RESET = 0x04
+SET_USER_FIFO_EN    = 0x40
+SET_ENABLE_FIFO  = 0x08
+SET_DISABLE_FIFO = 0x00
 
 FREEFALL_ACCEL = 9.80665 * 1000.
 # SCALE = 1/4096 g/LSB @8g scale * Earth gravity in mm/s**2
@@ -47,86 +52,67 @@ SCALE = 0.000244140625 * FREEFALL_ACCEL
 
 FIFO_SIZE = 512
 
-Accel_Measurement = collections.namedtuple(
-    'Accel_Measurement', ('time', 'accel_x', 'accel_y', 'accel_z'))
-
-MIN_MSG_TIME = 0.100
-
 BYTES_PER_SAMPLE = 6
-SAMPLES_PER_BLOCK = 8
+SAMPLES_PER_BLOCK = bulk_sensor.MAX_BULK_MSG_SIZE // BYTES_PER_SAMPLE
+
+BATCH_UPDATES = 0.100
 
 # Printer class that controls MPU9250 chip
 class MPU9250:
     def __init__(self, config):
         self.printer = config.get_printer()
         adxl345.AccelCommandHelper(config, self)
-        self.query_rate = 0
-        am = {'x': (0, SCALE), 'y': (1, SCALE), 'z': (2, SCALE),
-              '-x': (0, -SCALE), '-y': (1, -SCALE), '-z': (2, -SCALE)}
-        axes_map = config.getlist('axes_map', ('x','y','z'), count=3)
-        if any([a not in am for a in axes_map]):
-            raise config.error("Invalid mpu9250 axes_map parameter")
-        self.axes_map = [am[a.strip()] for a in axes_map]
+        self.axes_map = adxl345.read_axes_map(config)
         self.data_rate = config.getint('rate', 4000)
         if self.data_rate not in SAMPLE_RATE_DIVS:
             raise config.error("Invalid rate parameter: %d" % (self.data_rate,))
-        # Measurement storage (accessed from background thread)
-        self.lock = threading.Lock()
-        self.raw_samples = []
         # Setup mcu sensor_mpu9250 bulk query code
         self.i2c = bus.MCU_I2C_from_config(config,
                                            default_addr=MPU9250_ADDR,
                                            default_speed=400000)
         self.mcu = mcu = self.i2c.get_mcu()
         self.oid = oid = mcu.create_oid()
-        self.query_mpu9250_cmd = self.query_mpu9250_end_cmd = None
-        self.query_mpu9250_status_cmd = None
+        self.query_mpu9250_cmd = None
         mcu.register_config_callback(self._build_config)
-        mcu.register_response(self._handle_mpu9250_data, "mpu9250_data", oid)
+        self.bulk_queue = bulk_sensor.BulkDataQueue(mcu, oid=oid)
         # Clock tracking
-        self.last_sequence = self.max_query_duration = 0
-        self.last_limit_count = self.last_error_count = 0
-        self.clock_sync = adxl345.ClockSyncRegression(self.mcu, 640)
-        # API server endpoints
-        self.api_dump = motion_report.APIDumpHelper(
-            self.printer, self._api_update, self._api_startstop, 0.100)
+        chip_smooth = self.data_rate * BATCH_UPDATES * 2
+        self.clock_sync = bulk_sensor.ClockSyncRegression(mcu, chip_smooth)
+        self.clock_updater = bulk_sensor.ChipClockUpdater(self.clock_sync,
+                                                          BYTES_PER_SAMPLE)
+        self.last_error_count = 0
+        # Process messages in batches
+        self.batch_bulk = bulk_sensor.BatchBulkHelper(
+            self.printer, self._process_batch,
+            self._start_measurements, self._finish_measurements, BATCH_UPDATES)
         self.name = config.get_name().split()[-1]
-        wh = self.printer.lookup_object('webhooks')
-        wh.register_mux_endpoint("mpu9250/dump_mpu9250", "sensor", self.name,
-                                 self._handle_dump_mpu9250)
+        hdr = ('time', 'x_acceleration', 'y_acceleration', 'z_acceleration')
+        self.batch_bulk.add_mux_endpoint("mpu9250/dump_mpu9250", "sensor",
+                                         self.name, {'header': hdr})
     def _build_config(self):
         cmdqueue = self.i2c.get_command_queue()
         self.mcu.add_config_cmd("config_mpu9250 oid=%d i2c_oid=%d"
                            % (self.oid, self.i2c.get_oid()))
-        self.mcu.add_config_cmd("query_mpu9250 oid=%d clock=0 rest_ticks=0"
+        self.mcu.add_config_cmd("query_mpu9250 oid=%d rest_ticks=0"
                            % (self.oid,), on_restart=True)
         self.query_mpu9250_cmd = self.mcu.lookup_command(
-            "query_mpu9250 oid=%c clock=%u rest_ticks=%u", cq=cmdqueue)
-        self.query_mpu9250_end_cmd = self.mcu.lookup_query_command(
-            "query_mpu9250 oid=%c clock=%u rest_ticks=%u",
-            "mpu9250_status oid=%c clock=%u query_ticks=%u next_sequence=%hu"
-            " buffered=%c fifo=%u limit_count=%hu", oid=self.oid, cq=cmdqueue)
-        self.query_mpu9250_status_cmd = self.mcu.lookup_query_command(
-            "query_mpu9250_status oid=%c",
-            "mpu9250_status oid=%c clock=%u query_ticks=%u next_sequence=%hu"
-            " buffered=%c fifo=%u limit_count=%hu", oid=self.oid, cq=cmdqueue)
+            "query_mpu9250 oid=%c rest_ticks=%u", cq=cmdqueue)
+        self.clock_updater.setup_query_command(
+            self.mcu, "query_mpu9250_status oid=%c", oid=self.oid, cq=cmdqueue)
     def read_reg(self, reg):
         params = self.i2c.i2c_read([reg], 1)
         return bytearray(params['response'])[0]
-
     def set_reg(self, reg, val, minclock=0):
         self.i2c.i2c_write([reg, val & 0xFF], minclock=minclock)
-
-    # Measurement collection
-    def is_measuring(self):
-        return self.query_rate > 0
-    def _handle_mpu9250_data(self, params):
-        with self.lock:
-            self.raw_samples.append(params)
+    def start_internal_client(self):
+        aqh = adxl345.AccelQueryHelper(self.printer)
+        self.batch_bulk.add_client(aqh.handle_batch)
+        return aqh
+    # Measurement decoding
     def _extract_samples(self, raw_samples):
         # Load variables to optimize inner loop below
         (x_pos, x_scale), (y_pos, y_scale), (z_pos, z_scale) = self.axes_map
-        last_sequence = self.last_sequence
+        last_sequence = self.clock_updater.get_last_sequence()
         time_base, chip_base, inv_freq = self.clock_sync.get_time_translation()
         # Process every message in raw_samples
         count = seq = 0
@@ -156,40 +142,8 @@ class MPU9250:
         self.clock_sync.set_last_chip_clock(seq * SAMPLES_PER_BLOCK + i)
         del samples[count:]
         return samples
-
-    def _update_clock(self, minclock=0):
-        # Query current state
-        for retry in range(5):
-            params = self.query_mpu9250_status_cmd.send([self.oid],
-                                                        minclock=minclock)
-            fifo = params['fifo'] & 0x1fff
-            if fifo <= FIFO_SIZE:
-                break
-        else:
-            raise self.printer.command_error("Unable to query mpu9250 fifo")
-        mcu_clock = self.mcu.clock32_to_clock64(params['clock'])
-        seq_diff = (params['next_sequence'] - self.last_sequence) & 0xffff
-        self.last_sequence += seq_diff
-        buffered = params['buffered']
-        lc_diff = (params['limit_count'] - self.last_limit_count) & 0xffff
-        self.last_limit_count += lc_diff
-        duration = params['query_ticks']
-        if duration > self.max_query_duration:
-            # Skip measurement as a high query time could skew clock tracking
-            self.max_query_duration = max(2 * self.max_query_duration,
-                                          self.mcu.seconds_to_clock(.000005))
-            return
-        self.max_query_duration = 2 * duration
-        msg_count = (self.last_sequence * SAMPLES_PER_BLOCK
-                     + buffered // BYTES_PER_SAMPLE + fifo)
-        # The "chip clock" is the message counter plus .5 for average
-        # inaccuracy of query responses and plus .5 for assumed offset
-        # of mpu9250 hw processing time.
-        chip_clock = msg_count + 1
-        self.clock_sync.update(mcu_clock + duration // 2, chip_clock)
+    # Start, stop, and process message batches
     def _start_measurements(self):
-        if self.is_measuring():
-            return
         # In case of miswiring, testing MPU9250 device ID prevents treating
         # noise or wrong signal as a correctly initialized device
         dev_id = self.read_reg(REG_DEVID)
@@ -204,68 +158,48 @@ class MPU9250:
         # Setup chip in requested query rate
         self.set_reg(REG_PWR_MGMT_1, SET_PWR_MGMT_1_WAKE)
         self.set_reg(REG_PWR_MGMT_2, SET_PWR_MGMT_2_ACCEL_ON)
-        time.sleep(20. / 1000) # wait for accelerometer chip wake up
-        self.set_reg(REG_SMPLRT_DIV, SAMPLE_RATE_DIVS[self.data_rate])
+        # Add 20ms pause for accelerometer chip wake up
+        self.read_reg(REG_DEVID) # Dummy read to ensure queues flushed
+        systime = self.printer.get_reactor().monotonic()
+        next_time = self.mcu.estimated_print_time(systime) + 0.020
+        self.set_reg(REG_SMPLRT_DIV, SAMPLE_RATE_DIVS[self.data_rate],
+                     minclock=self.mcu.print_time_to_clock(next_time))
         self.set_reg(REG_CONFIG, SET_CONFIG)
         self.set_reg(REG_ACCEL_CONFIG, SET_ACCEL_CONFIG)
         self.set_reg(REG_ACCEL_CONFIG2, SET_ACCEL_CONFIG2)
+        # Reset fifo
+        self.set_reg(REG_FIFO_EN, SET_DISABLE_FIFO)
+        self.set_reg(REG_USER_CTRL, SET_USER_FIFO_RESET)
+        self.set_reg(REG_USER_CTRL, SET_USER_FIFO_EN)
+        self.read_reg(REG_INT_STATUS) # clear FIFO overflow flag
 
-        # Setup samples
-        with self.lock:
-            self.raw_samples = []
         # Start bulk reading
-        systime = self.printer.get_reactor().monotonic()
-        print_time = self.mcu.estimated_print_time(systime) + MIN_MSG_TIME
-        reqclock = self.mcu.print_time_to_clock(print_time)
+        self.bulk_queue.clear_samples()
         rest_ticks = self.mcu.seconds_to_clock(4. / self.data_rate)
-        self.query_rate = self.data_rate
-        self.query_mpu9250_cmd.send([self.oid, reqclock, rest_ticks],
-                                    reqclock=reqclock)
+        self.query_mpu9250_cmd.send([self.oid, rest_ticks])
+        self.set_reg(REG_FIFO_EN, SET_ENABLE_FIFO)
         logging.info("MPU9250 starting '%s' measurements", self.name)
         # Initialize clock tracking
-        self.last_sequence = 0
-        self.last_limit_count = self.last_error_count = 0
-        self.clock_sync.reset(reqclock, 0)
-        self.max_query_duration = 1 << 31
-        self._update_clock(minclock=reqclock)
-        self.max_query_duration = 1 << 31
+        self.clock_updater.note_start()
+        self.last_error_count = 0
     def _finish_measurements(self):
-        if not self.is_measuring():
-            return
         # Halt bulk reading
-        params = self.query_mpu9250_end_cmd.send([self.oid, 0, 0])
-        self.query_rate = 0
-        with self.lock:
-            self.raw_samples = []
+        self.set_reg(REG_FIFO_EN, SET_DISABLE_FIFO)
+        self.query_mpu9250_cmd.send_wait_ack([self.oid, 0])
+        self.bulk_queue.clear_samples()
         logging.info("MPU9250 finished '%s' measurements", self.name)
         self.set_reg(REG_PWR_MGMT_1, SET_PWR_MGMT_1_SLEEP)
         self.set_reg(REG_PWR_MGMT_2, SET_PWR_MGMT_2_OFF)
-
-    # API interface
-    def _api_update(self, eventtime):
-        self._update_clock()
-        with self.lock:
-            raw_samples = self.raw_samples
-            self.raw_samples = []
+    def _process_batch(self, eventtime):
+        self.clock_updater.update_clock()
+        raw_samples = self.bulk_queue.pull_samples()
         if not raw_samples:
             return {}
         samples = self._extract_samples(raw_samples)
         if not samples:
             return {}
         return {'data': samples, 'errors': self.last_error_count,
-                'overflows': self.last_limit_count}
-    def _api_startstop(self, is_start):
-        if is_start:
-            self._start_measurements()
-        else:
-            self._finish_measurements()
-    def _handle_dump_mpu9250(self, web_request):
-        self.api_dump.add_client(web_request)
-        hdr = ('time', 'x_acceleration', 'y_acceleration', 'z_acceleration')
-        web_request.send({'header': hdr})
-    def start_internal_client(self):
-        cconn = self.api_dump.add_internal_client()
-        return adxl345.AccelQueryHelper(self.printer, cconn)
+                'overflows': self.clock_updater.get_last_overflows()}
 
 def load_config(config):
     return MPU9250(config)

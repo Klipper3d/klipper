@@ -8,6 +8,33 @@ All dates in this document are approximate.
 
 ## Changes
 
+20240215: Several deprecated features have been removed. Using "NTC
+100K beta 3950" as a thermistor name has been removed (deprecated on
+20211110). The `SYNC_STEPPER_TO_EXTRUDER` and
+`SET_EXTRUDER_STEP_DISTANCE` commands have been removed, and the
+extruder `shared_heater` config option has been removed (deprecated on
+20220210). The bed_mesh `relative_reference_index` option has been
+removed (deprecated on 20230619).
+
+20240123: The output_pin SET_PIN CYCLE_TIME parameter has been
+removed. Use the new
+[pwm_cycle_time](Config_Reference.md#pwm_cycle_time) module if it is
+necessary to dynamically change a pwm pin's cycle time.
+
+20240123: The output_pin `maximum_mcu_duration` parameter is
+deprecated. Use a [pwm_tool config section](Config_Reference.md#pwm_tool)
+instead. The option will be removed in the near future.
+
+20240123: The output_pin `static_value` parameter is deprecated.
+Replace with `value` and `shutdown_value` parameters.  The option will
+be removed in the near future.
+
+20231216: The `[hall_filament_width_sensor]` is changed to trigger filament runout
+when the thickness of the filament exceeds `max_diameter`. The maximum diameter
+defaults to `default_nominal_filament_diameter + max_difference`. See
+[[hall_filament_width_sensor] configuration
+reference](./Config_Reference.md#hall_filament_width_sensor) for more details.
+
 20231207: Several undocumented config parameters in the `[printer]`
 config section have been removed (the buffer_time_low,
 buffer_time_high, buffer_time_start, and move_flush_time parameters).
