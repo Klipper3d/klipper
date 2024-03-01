@@ -979,13 +979,6 @@ Visual Examples:
 #   where Z = 0.  When this option is specified the mesh will be offset
 #   so that zero Z adjustment occurs at this location.  The default is
 #   no zero reference.
-#relative_reference_index:
-#   **DEPRECATED, use the "zero_reference_position" option**
-#   The legacy option superceded by the "zero reference position".
-#   Rather than a coordinate this option takes an integer "index" that
-#   refers to the location of one of the generated points. It is recommended
-#   to use the "zero_reference_position" instead of this option for new
-#   configurations. The default is no relative reference index.
 #faulty_region_1_min:
 #faulty_region_1_max:
 #   Optional points that define a faulty region.  See docs/Bed_Mesh.md
