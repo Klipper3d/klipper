@@ -62,6 +62,12 @@ position_endstop: 0.8
 #   distance is below this value(mm) while homing z,recommend value is 0.5~1.0
 #speed:0.8
 #   this speed only works for the z tilt and PROBE_ACCURACY command.
+collision_homing:0 
+#  set it 1 to enable homing with nozzle collision sensing.
+collision_calibrate:0 
+# set it 1 to enable auto calibrate BDsensor with nozzle collision sensing.
+# that means we do not need to manual move the nozzle on the bed and
+# do paper test before sending calibrate command M102 S-6.
 ```
 
 * Modify the endstop_pin in section `[stepper_z]`, and disable
