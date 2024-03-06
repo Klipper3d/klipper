@@ -811,8 +811,10 @@ class MCU:
         mcu_freq_mhz = int(mcu_freq / 1000000. + 0.5)
         calc_freq_mhz = int(calc_freq / 1000000. + 0.5)
         if mcu_freq_mhz != calc_freq_mhz:
-            logging.warn("MCU '%s' configured for %dMhz but running at %dMhz!",
-                         self._name, mcu_freq_mhz, calc_freq_mhz)
+            pconfig = self._printer.lookup_object('configfile')
+            msg = ("MCU '%s' configured for %dMhz but running at %dMhz!"
+                    % (self._name, mcu_freq_mhz, calc_freq_mhz))
+            pconfig.runtime_warning(msg)
     # Config creation helpers
     def setup_pin(self, pin_type, pin_params):
         pcs = {'endstop': MCU_endstop,
