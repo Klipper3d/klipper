@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # Script to handle build time requests embedded in C code.
 #
-# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2024  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, subprocess, optparse, logging, shlex, socket, time, traceback
@@ -518,6 +518,8 @@ class HandleVersions:
     def update_data_dictionary(self, data):
         data['version'] = self.version
         data['build_versions'] = self.toolstr
+        data['app'] = 'Klipper'
+        data['license'] = 'GNU GPLv3'
     def generate_code(self, options):
         cleanbuild, self.toolstr = tool_versions(options.tools)
         self.version = build_version(options.extra, cleanbuild)
