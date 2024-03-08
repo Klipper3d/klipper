@@ -101,6 +101,13 @@ BOARD_DEFS = {
         'cs_pin': 'PC11',
         'skip_verify': True
     },
+    'btt-kraken-v1.0': {
+        'mcu': 'stm32h723xx',
+        'spi_bus': 'swspi',
+        'spi_pins': 'PB14,PB15,PB13',
+        'cs_pin': 'PB12',
+        'skip_verify': True
+    },
     'creality-v4.2.2': {
         'mcu': "stm32f103xe",
         'spi_bus': "swspi",
