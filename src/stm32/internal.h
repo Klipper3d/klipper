@@ -22,6 +22,24 @@
 #include "stm32h7xx.h"
 #elif CONFIG_MACH_STM32L4
 #include "stm32l4xx.h"
+#elif CONFIG_MACH_STM32MP151A
+#include "stm32mp151axx_cm4.h"
+#elif CONFIG_MACH_STM32MP151C
+#include "stm32mp151cxx_cm4.h"
+#elif CONFIG_MACH_STM32MP151F
+#include "stm32mp151fxx_cm4.h"
+#elif CONFIG_MACH_STM32MP153A
+#include "stm32mp153axx_cm4.h"
+#elif CONFIG_MACH_STM32MP153C
+#include "stm32mp153cxx_cm4.h"
+#elif CONFIG_MACH_STM32MP153F
+#include "stm32mp153fxx_cm4.h"
+#elif CONFIG_MACH_STM32MP157A
+#include "stm32mp157axx_cm4.h"
+#elif CONFIG_MACH_STM32MP157C
+#include "stm32mp157cxx_cm4.h"
+#elif CONFIG_MACH_STM32MP157F
+#include "stm32mp157fxx_cm4.h"
 #endif
 
 // gpio.c
