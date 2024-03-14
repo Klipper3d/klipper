@@ -1291,7 +1291,7 @@ The toolhead module is automatically loaded.
 
 #### SET_VELOCITY_LIMIT
 `SET_VELOCITY_LIMIT [VELOCITY=<value>] [ACCEL=<value>]
-[ACCEL_TO_DECEL=<value>] [SQUARE_CORNER_VELOCITY=<value>]`: This
+[MINIMUM_CRUISE_RATIO=<value>] [SQUARE_CORNER_VELOCITY=<value>]`: This
 command can alter the velocity limits that were specified in the
 printer config file. See the
 [printer config section](Config_Reference.md#printer) for a

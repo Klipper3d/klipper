@@ -588,6 +588,7 @@ class MCU:
         printer.register_event_handler("klippy:connect", self._connect)
         printer.register_event_handler("klippy:shutdown", self._shutdown)
         printer.register_event_handler("klippy:disconnect", self._disconnect)
+        printer.register_event_handler("klippy:ready", self._ready)
     # Serial callbacks
     def _handle_mcu_stats(self, params):
         count = params['count']
@@ -799,6 +800,21 @@ class MCU:
         self.register_response(self._handle_shutdown, 'shutdown')
         self.register_response(self._handle_shutdown, 'is_shutdown')
         self.register_response(self._handle_mcu_stats, 'stats')
+    def _ready(self):
+        if self.is_fileoutput():
+            return
+        # Check that reported mcu frequency is in range
+        mcu_freq = self._mcu_freq
+        systime = self._reactor.monotonic()
+        get_clock = self._clocksync.get_clock
+        calc_freq = get_clock(systime + 1) - get_clock(systime)
+        mcu_freq_mhz = int(mcu_freq / 1000000. + 0.5)
+        calc_freq_mhz = int(calc_freq / 1000000. + 0.5)
+        if mcu_freq_mhz != calc_freq_mhz:
+            pconfig = self._printer.lookup_object('configfile')
+            msg = ("MCU '%s' configured for %dMhz but running at %dMhz!"
+                    % (self._name, mcu_freq_mhz, calc_freq_mhz))
+            pconfig.runtime_warning(msg)
     # Config creation helpers
     def setup_pin(self, pin_type, pin_params):
         pcs = {'endstop': MCU_endstop,

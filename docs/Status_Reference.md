@@ -511,7 +511,7 @@ The following information is available in the `toolhead` object
   limit value (eg, `axis_minimum.x`, `axis_maximum.z`).
 - For Delta printers the `cone_start_z` is the max z height at
   maximum radius (`printer.toolhead.cone_start_z`).
-- `max_velocity`, `max_accel`, `max_accel_to_decel`,
+- `max_velocity`, `max_accel`, `minimum_cruise_ratio`,
   `square_corner_velocity`: The current printing limits that are in
   effect. This may differ from the config file settings if a
   `SET_VELOCITY_LIMIT` (or `M204`) command alters them at run-time.
