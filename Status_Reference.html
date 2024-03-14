@@ -2478,7 +2478,7 @@ objects (eg, <code>[tmc2208 stepper_x]</code>):</p>
   limit value (eg, <code>axis_minimum.x</code>, <code>axis_maximum.z</code>).</li>
 <li>For Delta printers the <code>cone_start_z</code> is the max z height at
   maximum radius (<code>printer.toolhead.cone_start_z</code>).</li>
-<li><code>max_velocity</code>, <code>max_accel</code>, <code>max_accel_to_decel</code>,
+<li><code>max_velocity</code>, <code>max_accel</code>, <code>minimum_cruise_ratio</code>,
   <code>square_corner_velocity</code>: The current printing limits that are in
   effect. This may differ from the config file settings if a
   <code>SET_VELOCITY_LIMIT</code> (or <code>M204</code>) command alters them at run-time.</li>

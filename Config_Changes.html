@@ -1337,6 +1337,13 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<p>20240313: The <code>max_accel_to_decel</code> parameter in the <code>[printer]</code> config
+section has been deprecated. The <code>ACCEL_TO_DECEL</code> parameter of the
+<code>SET_VELOCITY_LIMIT</code> command has been deprecated. The
+<code>printer.toolhead.max_accel_to_decel</code> status has been removed. Use the
+<a href="Config_Reference.html#printer">minimum_cruise_ratio parameter</a>
+instead. The deprecated features will be removed in the near future,
+and using them in the interim may result in subtly different behavior.</p>
 <p>20240215: Several deprecated features have been removed. Using "NTC
 100K beta 3950" as a thermistor name has been removed (deprecated on
 20211110). The <code>SYNC_STEPPER_TO_EXTRUDER</code> and
