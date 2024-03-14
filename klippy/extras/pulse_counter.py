@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
+#this might be useful
 class MCU_counter:
     def __init__(self, printer, pin, sample_time, poll_time):
         ppins = printer.lookup_object('pins')

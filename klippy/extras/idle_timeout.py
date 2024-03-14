@@ -6,10 +6,7 @@
 import logging
 
 DEFAULT_IDLE_GCODE = """
-{% if 'heaters' in printer %}
-   TURN_OFF_HEATERS
-{% endif %}
-M84
+G28
 """
 
 PIN_MIN_TIME = 0.100

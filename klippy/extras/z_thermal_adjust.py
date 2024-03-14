@@ -35,11 +35,8 @@ class ZThermalAdjuster:
         self.inv_smooth_time = 1. / self.smooth_time
         self.min_temp = config.getfloat('min_temp', minval=KELVIN_TO_CELSIUS)
         self.max_temp = config.getfloat('max_temp', above=self.min_temp)
-        pheaters = self.printer.load_object(config, 'heaters')
-        self.sensor = pheaters.setup_sensor(config)
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
         self.sensor.setup_callback(self.temperature_callback)
-        pheaters.register_sensor(config, self)
 
         self.last_temp = 0.
         self.measured_min = self.measured_max = 0.
