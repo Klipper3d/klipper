@@ -2737,6 +2737,33 @@ sensor_type: temperature_host
 #   system file on a Raspberry Pi computer.
 ```
 
+### ADS Analog to Digital Converter as temperature sensor
+
+The sensors ADS1013, ADS1014, ADS1015, ADS1113, ADS1114 and ADS1115 are i2c based Analog to Digital Converters to which are thermistor can be connected in a voltage divider setup.
+Needs an [ads1x1x] section to configure the chip. Afterwards chip specific sensor_pins can be used.
+
+```
+sensor_type: ads1x1x
+#   A section for ads1s1x has to specified before the sensor can be used.
+#   Look at the ads1x1x below in this documentation.
+probe_type: Generic 3950
+#   The probe type indicates the calculation profile to use for the raw data
+#   from the ADC device. Check the thermistors list for possible values.
+sensor_pin: my_ads1x1x:AIN0
+#   A combination of the name of the ads1x1x chip that has been defined and
+#   the pin. Possible pin values are AIN0, AIN1, AIN2 and AIN3 for single ended
+#   lines and DIFF01, DIFF03, DIFF13 and DIFF23 for differential between their
+#   correspoding lines. For example
+#   DIFF03 measures the differential between line 0 and 3. Only specific
+#   combinations for the differentials are allowed.
+#pullup_resistor: 4700
+#   A setting that defines the physical wiring method of the sensor.
+#   Default is 4700.
+#voltage_offset: -0.295
+#   The differential voltage from the supplied voltage to the maximum pull-up
+#   voltage that the device under test (thermistor) sees.
+```
+
 ### DS18B20 temperature sensor
 
 DS18B20 is a 1-wire (w1) digital temperature sensor. Note that this sensor is not intended for use with extruders and heater beds, but rather for monitoring ambient temperature (C). These sensors have range up to 125 C, so are usable for e.g. chamber temperature monitoring. They can also function as simple fan/heater controllers. DS18B20 sensors are only supported on the "host mcu", e.g. the Raspberry Pi. The w1-gpio Linux kernel module must be installed.
@@ -4822,6 +4849,41 @@ vssa_pin:
 #   A time value (in seconds) over which the vref and vssa
 #   measurements will be smoothed to reduce the impact of measurement
 #   noise. The default is 2 seconds.
+```
+
+### [ads1x1x]
+
+ADS1013, ADS1014, ADS1015, ADS1113, ADS1114 and ADS1115 are I2C based Analog to
+Digital Converters that can be used for temperature sensors. They provide 4
+analog input pins either as single line or as differential input.
+
+```
+[ads1x1x my_name]
+chip: ADS1115
+#pga: 6.144V
+#   Default value is 4.096V. The maximum voltage range used for the input. This
+#   scales all values read from the ADC. Options are: 6.144V, 4.096V, 2.048V,
+#   1.024V, 0.512V, 0.256V
+#mode: single
+#    Default value is single. Turn off the chip after a single reading or keep
+#    it running. Turning off saves power but turning it back on will be slower.
+#    Options are single and continous.
+#samples_per_second: 128
+#    Default value is 128. The amount of samples that the ADC can provide per
+#    second. A lower value makes the samples more accurate, but it takes longer
+#    until a new value is available.
+#    ADS101X's support 128, 250, 490, 920, 1600, 2400, 3300.
+#    ADS111X's support 8, 16, 32, 64, 128, 250, 475, 860.
+i2c_mcu: host
+i2c_bus: i2c.1
+#adc_voltage: 5
+#   The suppy voltage for the device.
+#   Sensor is reading this amount different from external measuring device.
+#address_pin: GND
+#   Default value is GND.  There can be up to four addressed devices depending
+#   upon wiring of the device. Check the datasheet for details. The i2_address
+#   can be specified directly instead of using the address_pin.
+
 ```
 
 ### [replicape]
