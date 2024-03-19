@@ -75,6 +75,22 @@ static const struct gpio_pwm_info pwm_mapping[] = {
     {GPIO('C',14), 4, TimeraCh5},
     {GPIO('C',15), 4, TimeraCh6},
     {GPIO('D', 2), 2, TimeraCh4},
+    {GPIO('D',12), 4, TimeraCh1},
+    {GPIO('D',13), 4, TimeraCh2},
+    {GPIO('D',14), 4, TimeraCh3},
+    {GPIO('D',15), 4, TimeraCh4},
+    {GPIO('E', 2), 3, TimeraCh5},
+    {GPIO('E', 3), 3, TimeraCh6},
+    {GPIO('E', 4), 3, TimeraCh7},
+    {GPIO('E', 5), 3, TimeraCh8},
+    {GPIO('E', 8), 1, TimeraCh5},
+    {GPIO('E', 9), 1, TimeraCh1},
+    {GPIO('E',10), 1, TimeraCh6},
+    {GPIO('E',11), 1, TimeraCh2},
+    {GPIO('E',12), 1, TimeraCh7},
+    {GPIO('E',13), 1, TimeraCh3},
+    {GPIO('E',14), 1, TimeraCh4},
+    {GPIO('E',15), 1, TimeraCh8},
 };
 
 
