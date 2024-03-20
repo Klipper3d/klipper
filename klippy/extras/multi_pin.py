@@ -7,6 +7,7 @@
 class PrinterMultiPin:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.config = config
         ppins = self.printer.lookup_object('pins')
         try:
             ppins.register_chip('multi_pin', self)
@@ -49,6 +50,14 @@ class PrinterMultiPin:
     def set_pwm(self, print_time, value):
         for mcu_pin in self.mcu_pins:
             mcu_pin.set_pwm(print_time, value)
+    def raw_pin_string(self):
+        return self.config.get_name()
+    def is_initial_pin(self):
+        # every child pin must be an initial pin
+        for mcu_pin in self.mcu_pins:
+           if not mcu_pin.is_initial_pin():
+               return False
+        return True
 
 def load_config_prefix(config):
     return PrinterMultiPin(config)
