@@ -844,6 +844,26 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#axis_twist_compensation" class="md-nav__link">
+    [axis_twist_compensation]
+  </a>
+  
+    <nav class="md-nav" aria-label="[axis_twist_compensation]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#axis_twist_compensation_calibrate" class="md-nav__link">
+    AXIS_TWIST_COMPENSATION_CALIBRATE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bed_mesh" class="md-nav__link">
     [bed_mesh]
   </a>
@@ -2261,26 +2281,6 @@
           <li class="md-nav__item">
   <a href="#sdcard_reset_file" class="md-nav__link">
     SDCARD_RESET_FILE
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#axis_twist_compensation" class="md-nav__link">
-    [axis_twist_compensation]
-  </a>
-  
-    <nav class="md-nav" aria-label="[axis_twist_compensation]">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#axis_twist_compensation_calibrate" class="md-nav__link">
-    AXIS_TWIST_COMPENSATION_CALIBRATE
   </a>
   
 </li>
@@ -2975,6 +2975,26 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#axis_twist_compensation" class="md-nav__link">
+    [axis_twist_compensation]
+  </a>
+  
+    <nav class="md-nav" aria-label="[axis_twist_compensation]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#axis_twist_compensation_calibrate" class="md-nav__link">
+    AXIS_TWIST_COMPENSATION_CALIBRATE
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bed_mesh" class="md-nav__link">
     [bed_mesh]
   </a>
@@ -4402,26 +4422,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#axis_twist_compensation" class="md-nav__link">
-    [axis_twist_compensation]
-  </a>
-  
-    <nav class="md-nav" aria-label="[axis_twist_compensation]">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#axis_twist_compensation_calibrate" class="md-nav__link">
-    AXIS_TWIST_COMPENSATION_CALIBRATE
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#z_thermal_adjust" class="md-nav__link">
     [z_thermal_adjust]
   </a>
@@ -4611,6 +4611,14 @@ Writes raw "value" into register "register". Both "value" and
 "register" can be a decimal or a hexadecimal integer. Use with care,
 and refer to sensor data sheet for the reference. This is only
 available for tle5012b chips.</p>
+<h3 id="axis_twist_compensation">[axis_twist_compensation]<a class="headerlink" href="#axis_twist_compensation" title="Permanent link">&para;</a></h3>
+<p>The following commands are available when the
+<a href="Config_Reference.html#axis_twist_compensation">axis_twist_compensation config
+section</a> is enabled.</p>
+<h4 id="axis_twist_compensation_calibrate">AXIS_TWIST_COMPENSATION_CALIBRATE<a class="headerlink" href="#axis_twist_compensation_calibrate" title="Permanent link">&para;</a></h4>
+<p><code>AXIS_TWIST_COMPENSATION_CALIBRATE [SAMPLE_COUNT=&lt;value&gt;]</code>: Initiates the X
+twist calibration wizard. <code>SAMPLE_COUNT</code> specifies the number of points along
+the X axis to calibrate at and defaults to 3.</p>
 <h3 id="bed_mesh">[bed_mesh]<a class="headerlink" href="#bed_mesh" title="Permanent link">&para;</a></h3>
 <p>The following commands are available when the
 <a href="Config_Reference.html#bed_mesh">bed_mesh config section</a> is enabled
@@ -5622,14 +5630,6 @@ enabled:</p>
 print.</p>
 <h4 id="sdcard_reset_file">SDCARD_RESET_FILE<a class="headerlink" href="#sdcard_reset_file" title="Permanent link">&para;</a></h4>
 <p><code>SDCARD_RESET_FILE</code>: Unload file and clear SD state.</p>
-<h3 id="axis_twist_compensation">[axis_twist_compensation]<a class="headerlink" href="#axis_twist_compensation" title="Permanent link">&para;</a></h3>
-<p>The following commands are available when the
-<a href="Config_Reference.html#axis_twist_compensation">axis_twist_compensation config
-section</a> is enabled.</p>
-<h4 id="axis_twist_compensation_calibrate">AXIS_TWIST_COMPENSATION_CALIBRATE<a class="headerlink" href="#axis_twist_compensation_calibrate" title="Permanent link">&para;</a></h4>
-<p><code>AXIS_TWIST_COMPENSATION_CALIBRATE [SAMPLE_COUNT=&lt;value&gt;]</code>: Initiates the X
-twist calibration wizard. <code>SAMPLE_COUNT</code> specifies the number of points along
-the X axis to calibrate at and defaults to 3.</p>
 <h3 id="z_thermal_adjust">[z_thermal_adjust]<a class="headerlink" href="#z_thermal_adjust" title="Permanent link">&para;</a></h3>
 <p>The following commands are available when the
 <a href="Config_Reference.html#z_thermal_adjust">z_thermal_adjust config section</a>
