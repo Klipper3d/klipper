@@ -208,6 +208,24 @@ adjustment after a tool change.  Note that a ZFADE offset does not apply
 additional z-adjustment directly, it is used to correct the `fade`
 calculation when a `gcode offset` has been applied to the Z axis.
 
+#### BED_MESH_DUMP
+`BED_MESH_DUMP [FILENAME=<name>] [<mesh_parameter>=<value>]`:
+Dumps the current mesh configuration and state in json format for
+[visualization and analysis](./Bed_Mesh.md#visualization-and-analysis).
+The `FILENAME` parameter is optional and should be a relative name, when
+not specified the file's name will be in the format of
+`klipper-bedmesh-{year}{month}{day}{hour}{minute}{second}.json`. The
+file will be saved in a location relative to the parent of
+klipper's configuration file, this is commonly at
+`~/printer_data/config` or the user's home directory.
+
+In addition, one may specify `mesh parameters` available to
+[BED_MESH_CALIBRATE](#bed_mesh_calibrate).  This will result in a dump
+containing a mesh configuration and probe points using the
+supplied parameters.   It is recommended to omit Mesh parameters
+unless it is desired to visualize the probe points and/or travel
+path before performing `BED_MESH_CALIBRATE`.
+
 ### [bed_screws]
 
 The following commands are available when the

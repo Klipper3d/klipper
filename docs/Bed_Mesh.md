@@ -422,12 +422,95 @@ have undesirable results when attempting print moves **outside** of the probed a
 full bed mesh has a variance greater than 1 layer height, caution must be taken when using
 adaptive bed meshes and attempting print moves outside of the meshed area.
 
+## Surface Scans
+
+Some probes, such as the [Eddy Current Probe](./Eddy_Probe.md), are capable of
+"scanning" the surface of the bed.  That is, these probes can sample a mesh
+without lifting the tool between samples.  To activate scanning mode, the
+`METHOD=scan` probe parameter should be passed in the `BED_MESH_CALIBRATE`
+gcode command.
+
+To accommodate these probes the following additional `probe_parameters` are
+available to `BED_MESH_CALIBRATE`:
+
+- `SCAN_MODE=[detailed | rapid]`:  Choses the scan mode.  The `detailed` mode
+  will pause and collect samples at each probe point.  The `rapid` mode will
+  travel on a continuous path with no pauses, collecting samples near each probe
+  point.
+- `SCAN_SPEED=[speed] `: The maximum X/Y travel velocity of the tool when
+  performing a scan.  The default is the value of the `speed` option in the
+  configuration.
+- `SAMPLE_TIME=[time]`:  The time, in seconds, the tool pauses for sample
+  collection in `detailed` scan mode.  The default is .1 seconds.
+- `SAMPLES_RESULT=[option]`: The type of averaging to perform on collected
+  samples.  Available options are:
+  - `standard`: All collected samples are averaged.
+  - `centered`: Samples are sorted by value.  The first and last quarters
+    are discarded and the remaining samples are averaged.
+  - `weighted`: Samples closer to the desired probe location are assigned
+    more weight in the average than samples farther from the location.
+
+### Scan Height
+
+The scan height is set by the `horizontal_move_z` option in `[bed_mesh]`.  In
+addition it can be supplied with the `BED_MESH_CALIBRATE` gcode command via the
+`HORIZONTAL_MOVE_Z` parameter.
+
+The scan height must be sufficiently low to avoid scanning errors.  Typically
+a height of 2mm (ie: `HORIZONTAL_MOVE_Z=2`) should work well, presuming that the
+probe is mounted correctly.
+
+It should be noted that if the probe is more than 4mm above the surface then the
+results will be invalid.  Thus, scanning is not possible on beds with severe
+surface deviation or beds with extreme tilt that hasn't been corrected.
+
+### Rapid (Continuous) Scanning
+
+When performing a `rapid` scan one should keep in mind that the results will
+have some amount of error.  This error should be low enough to be useful on
+large print areas with reasonably thick layer heights.  Some probes may be
+more prone to error than others.
+
+It is not recommended that rapid mode be used to scan a "dense" mesh.  Some of
+the error introduced during a rapid scan may be gaussian noise from the sensor,
+and a dense mesh will reflect this noise (ie: there will be peaks and valleys).
+
+Bed Mesh will attempt to optimize the travel path to provide the best possible
+result based on the the configuration.  This includes avoiding faulty regions
+when collecting samples and "overshooting" the mesh when changing direction.
+This overshoot improves sampling at the edges of a mesh, however it requires
+that the mesh be configured in a way that allows the tool to travel outside
+of the mesh.
+
+```
+[bed_mesh]
+speed: 120
+horizontal_move_z: 5
+mesh_min: 35, 6
+mesh_max: 240, 198
+probe_count: 5
+scan_overshoot: 8
+```
+
+- `scan_overshoot`
+  _Default Value: 0 (disabled)_\
+  The maximum amount of travel (in mm) available outside of the mesh.
+  For rectangular beds this applies to travel on the X axis, and for round beds
+  it applies to the entire radius.  The tool must be able to travel the amount
+  specified outside of the mesh.  This value is used to optimize the travel
+  path when performing a "rapid scan".  The minimum value that may be specified
+  is 1.  The default is no overshoot.
+
+If no scan overshoot is configured then travel path optimization will not
+be applied to changes in direction.
+
 ## Bed Mesh Gcodes
 
 ### Calibration
 
-`BED_MESH_CALIBRATE PROFILE=<name> METHOD=[manual | automatic] [<probe_parameter>=<value>]
- [<mesh_parameter>=<value>] [ADAPTIVE=[0|1] [ADAPTIVE_MARGIN=<value>]`\
+`BED_MESH_CALIBRATE PROFILE=<name> METHOD=[manual | automatic | scan] \
+[<probe_parameter>=<value>] [<mesh_parameter>=<value>] [ADAPTIVE=[0|1] \
+[ADAPTIVE_MARGIN=<value>]`\
 _Default Profile:  default_\
 _Default Method:  automatic if a probe is detected, otherwise manual_ \
 _Default Adaptive: 0_ \
@@ -437,8 +520,9 @@ Initiates the probing procedure for Bed Mesh Calibration.
 
 The mesh will be saved into a profile specified by the `PROFILE` parameter,
 or `default` if unspecified. If `METHOD=manual` is selected then manual probing
-will occur.  When switching between automatic and manual probing the generated
-mesh points will automatically be adjusted.
+will occur.  If `METHOD=scan` is supplied with a supported probe then surface
+scanning will occur. When switching between probing methods the generated probe
+points will automatically be adjusted.
 
 It is possible to specify mesh parameters to modify the probed area.  The
 following parameters are available:
@@ -452,6 +536,7 @@ following parameters are available:
   - `MESH_ORIGIN`
   - `ROUND_PROBE_COUNT`
 - All beds:
+  - `MESH_PPS`
   - `ALGORITHM`
   - `ADAPTIVE`
   - `ADAPTIVE_MARGIN`
@@ -558,3 +643,155 @@ is intended to compensate for a `gcode offset` when [mesh fade](#mesh-fade)
 is enabled.  For example, if a secondary extruder is higher than the primary
 and needs a negative gcode offset, ie: `SET_GCODE_OFFSET Z=-.2`, it can be
 accounted for in `bed_mesh` with `BED_MESH_OFFSET ZFADE=.2`.
+
+### Dumping mesh data
+
+`BED_MESH_DUMP [FILENAME=<name>] [<mesh_parameter>=<value>]`
+
+Dumps the current mesh configuration and state in json format for
+[visualization and analysis](#visualization-and-analysis).  The
+`FILENAME` parameter is optional and should be a relative name, when
+not specified the file's name will be in the format of
+`klipper-bedmesh-{year}{month}{day}{hour}{minute}{second}.json`. The
+file will be saved in a location relative to the parent of
+klipper's configuration file, this is commonly at
+`~/printer_data/config` or the user's home directory.
+
+In addition, one may specify `mesh parameters` available to
+[BED_MESH_CALIBRATE](#calibration).  This will result in a dump
+containing a mesh configuration and probe points using the
+supplied parameters.  It is recommended to omit Mesh parameters
+unless it is desired to visualize the probe points and/or travel
+path before performing `BED_MESH_CALIBRATE`.
+
+## Visualization and analysis
+
+Most users will likely find that the visualizers included with
+applications such as Mainsail, Fluidd, and Octoprint are sufficient
+for basic analysis.  However, Klipper's `scripts` folder contains
+`graph-mesh.py` script that may be used to perform additional
+visualizations and more detailed analysis, particularly useful
+for debugging hardware or the results produced by `bed_mesh`:
+
+```
+usage: graph-mesh.py [-h] {list,plot,analyze} ...
+
+Graph Bed Mesh Data
+
+positional arguments:
+  {list,plot,analyze}
+    list               List available plot types
+    plot               Plot a specified type
+    analyze            Perform analysis on mesh data
+
+options:
+  -h, --help           show this help message and exit
+```
+
+### Pre-requisites
+
+Like most graphing tools provided by Klipper, `graph-mesh.py` requires
+the `matplotlib` and `numpy` python dependencies.  While all visualizations
+can be output to an `svg` file, most of the visualizations offered by
+`graph-mesh.py` are better viewed in live preview mode on a desktop class PC.
+For example, the 3D visualizations may be rotated and zoomed in preview
+mode, and the path visualizations can optionally be animated in preview
+mode.
+
+### Plotting Mesh data
+
+The `graph_mesh.py` tool can plot several types of visualizations.
+Available types can be shown by running `graph-mesh.py list`:
+
+```
+graph-mesh.py list
+points    Plot original generated points
+path      Plot probe travel path
+rapid     Plot rapid scan travel path
+probedz   Plot probed Z values
+meshz     Plot mesh Z values
+overlay   Plots the current probed mesh overlaid with a profile
+delta     Plots the delta between current probed mesh and a profile
+```
+
+In addition, several options are available when plotting visualizations:
+
+```
+usage: graph-mesh.py plot [-h] [-a] [-s] [-p PROFILE_NAME] [-o OUTPUT] <plot type> <input file>
+
+positional arguments:
+  <plot type>           Type of data to graph
+  <input file>          Path to file containing mesh dump
+
+options:
+  -h, --help            show this help message and exit
+  -a, --animate         Animate paths in live preview
+  -s, --scale-plot      Use axis limits reported by Klipper to scale plot X/Y
+  -p PROFILE_NAME, --profile-name PROFILE_NAME
+                        Optional name of a profile to plot for 'probedz'
+  -o OUTPUT, --output OUTPUT
+                        Output file path
+```
+
+Below is a description of each argument:
+
+- `plot type`: A required positional argument designating the type of
+  visualization to generate.  Must be one of the types output by the
+  `graph-mesh.py list` command.
+- `input file`: A required positional argument indicating the path
+  to a json file generated by [BED_MESH_DUMP](#dumping-mesh-data).
+- `-a`:  Optional animation for the `path` and `rapid` visualization types.
+  Animations only apply to a live preview.
+- `-s`:  Optionally scales a plot using the `axis_minimum` and `axis_maximum`
+  values reported by Klipper's `toolhead` object when the dump file was
+  generated.
+- `-p`: A profile name that may be specified when generating the
+  `probedz` 3D mesh visualization.  When generating an `overlay` or
+  `delta` visualization this argument must be provided.
+- `-o`: An optional file path indicating that the script should save the
+  visualization to this location rather than run in preview mode.  Images
+  are saved in `svg` format.
+
+### Bed Mesh Analysis
+
+The `graph-mesh.py` tool may also be used to perform an analysis on the
+data provided by [BED_MESH_DUMP](#dumping-mesh-data):
+
+```
+graph-mesh.py analyze /path/to/bed-mesh-dump.json
+```
+
+To begin, the analysis will perform various checks on the points and
+probe paths generated by `bed_mesh` at the time of the dump.  This
+includes the following:
+
+- The number of probe points generated, without any additions
+- The number of probe points generated including any points generated
+  as the result faulty regions and/or a configured zero reference position.
+- The number of probe points generated when performing a rapid scan.
+- The total number of moves generated for a rapid scan.
+- A validation that the probe points generated for a rapid scan are
+  identical to the probe points generated for a standard probing procedure.
+- A "backtracking" check for both the standard probe path and a rapid scan
+  path.  Backtracking can be defined as moving to the same position more than
+  once during the probing procedure.  Backtracking should never occur during a
+  standard probe.  Faulty regions *can* result in backtracking during a rapid
+  scan in an attempt to avoid entering a faulty region when approaching or
+  leaving a probe location, however should never occur otherwise.
+
+Next each probed mesh present in the dump will by analyzed, beginning with
+the mesh loaded at the time of the dump (if present) and followed by any
+saved profiles.  The following data is extracted:
+
+- Mesh shape (Min X,Y, Max X,Y Probe Count)
+- Mesh Z range, (Minimum Z, Maximum Z)
+- Mean Z value in the mesh
+- Standard Deviation of the Z values in the Mesh
+
+In addition to the above, a delta analysis is performed between meshes
+with the same shape, reporting the following:
+- The range of the delta between to meshes (Minimum and Maximum)
+- The mean delta
+- Standard Deviation of the delta
+- The absolute maximum difference
+- The absolute mean
