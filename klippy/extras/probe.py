@@ -110,8 +110,16 @@ class PrinterProbe:
         if gcmd is not None:
             return gcmd.get_float("LIFT_SPEED", self.lift_speed, above=0.)
         return self.lift_speed
+    def get_probe_speed(self, gcmd=None):
+        if gcmd is not None:
+            return gcmd.get_float("PROBE_SPEED", self.speed, above=0.)
+        return self.speed
     def get_offsets(self):
         return self.x_offset, self.y_offset, self.z_offset
+    def get_probe_name(self):
+        return self.name
+    def is_scanning_probe(self):
+        return getattr(self.mcu_probe, "HAS_SCANNING", False)
     def _probe(self, speed):
         toolhead = self.printer.lookup_object('toolhead')
         curtime = self.printer.get_reactor().monotonic()
@@ -424,11 +432,20 @@ class ProbePointsHelper:
         def_move_z = self.default_horizontal_move_z
         self.horizontal_move_z = gcmd.get_float('HORIZONTAL_MOVE_Z',
                                                 def_move_z)
-        if probe is None or method != 'automatic':
+        if probe is None or method not in ["automatic", "scan"]:
             # Manual probe
             self.lift_speed = self.speed
             self.probe_offsets = (0., 0., 0.)
             self._manual_probe_start()
+            return
+        if method == "scan" and probe.is_scanning_probe():
+            # Perform surface scan
+            from . import probe_eddy_current
+            scan_helper = probe_eddy_current.ProbeScanHelper(
+                self.printer, self.probe_points, self.use_offsets,
+                self.speed, self.horizontal_move_z, self.finalize_callback
+            )
+            scan_helper.perform_scan(gcmd)
             return
         # Perform automatic probing
         self.lift_speed = probe.get_lift_speed(gcmd)
