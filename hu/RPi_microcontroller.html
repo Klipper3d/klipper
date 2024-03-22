@@ -1561,19 +1561,19 @@ gpiochip1 - 8 lines:
 dtoverlay=pwm,pin=12,func=4
 </code></pre></div>
 
-<p>This example enables only PWM0 and routes it to gpio12. If both PWM channels need to be enabled you can use <code>pwm-2chan</code>:</p>
-<div class="highlight"><pre><span></span><code># Enable pwmchip sysfs interface
+<p>Ez a példa csak a PWM0-t engedélyezi, és a gpio12-re irányítja. Ha mindkét PWM csatornát engedélyezni kell, használhatod a <code>pwm-2chan</code> parancsot:</p>
+<div class="highlight"><pre><span></span><code># Enable pwmchip sysfs interfész engedélyezése
 dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4
 </code></pre></div>
 
-<p>This example additionally enables PWM1 and routes it to gpio13.</p>
-<p>The overlay does not expose the pwm line on sysfs on boot and needs to be exported by echo'ing the number of the pwm channel to <code>/sys/class/pwm/pwmchip0/export</code>. This will create device <code>/sys/class/pwm/pwmchip0/pwm0</code> in the filesystem. The easiest way to do this is by adding this to <code>/etc/rc.local</code> before the <code>exit 0</code> line:</p>
-<div class="highlight"><pre><span></span><code># Enable pwmchip sysfs interface
+<p>Ez a példa ráadásul engedélyezi a PWM1-et, és a gpio13-ra irányítja.</p>
+<p>Az overlay nem jeleníti meg a sysfs-en a PWM vonalat a rendszerindításkor, és a PWM csatorna számát a <code>/sys/class/pwm/pwmchip0/export</code> címre küldött echo'ing segítségével kell exportálni. Ez létrehozza a <code>/sys/class/pwm/pwmchip0/pwm0</code> eszközt a fájlrendszerben. A legegyszerűbb, ha ezt a <code>/etc/rc.local</code> állományba írjuk be a <code>exit 0</code> sor előtt:</p>
+<div class="highlight"><pre><span></span><code># Enable pwmchip sysfs interfész engedélyezése
 echo 0 &gt; /sys/class/pwm/pwmchip0/export
 </code></pre></div>
 
-<p>When using both PWM channels, the number of the second channel needs to be echo'd as well:</p>
-<div class="highlight"><pre><span></span><code># Enable pwmchip sysfs interface
+<p>Ha mindkét PWM-csatornát használod, akkor a második csatorna számát is meg kell echózni:</p>
+<div class="highlight"><pre><span></span><code># Enable pwmchip sysfs interfész engedélyezése
 echo 0 &gt; /sys/class/pwm/pwmchip0/export
 echo 1 &gt; /sys/class/pwm/pwmchip0/export
 </code></pre></div>
@@ -1594,7 +1594,7 @@ shutdown_value: 0
 cycle_time: 0.0005
 </code></pre></div>
 
-<p>This will add hardware pwm control to gpio12 and gpio13 on the Pi (because the overlay was configured to route pwm0 to pin=12 and pwm1 to pin=13).</p>
+<p>Ez hozzáadja a hardveres PWM vezérlést a gpio12 és gpio13-hoz a Pi-n (mivel az overlay úgy volt konfigurálva, hogy a pwm0-t a pin=12-re és a pwm1-et a pin=13-ra irányítsa).</p>
 <p>A PWM0 a GPIO12 és a GPIO18 a PWM1 a GPIO13 és a GPIO19 felé irányítható:</p>
 <table>
 <thead>

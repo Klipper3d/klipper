@@ -339,7 +339,7 @@
   
     <li class="md-nav__item">
       <a href="Releases.html" class="md-nav__link">
-        版本发布
+        发行说明
       </a>
     </li>
   
@@ -1470,7 +1470,7 @@
 <p>为了测试挤出机电机，有必要将挤出机加热到打印温度。导航到温度图部分，并从温度下拉框中选择目标温度（或手动输入适当的温度）。等待打印机达到所需温度。然后导航到命令控制台并单击“挤出”按钮。确认挤出机电机的转动方向正确。如果没有，请参阅上一节中的故障排除提示，以确认挤出机的“enable_pin”、“step_pin”和“dir_pin”设置。</p>
 <h2 id="pid">校准 PID 设置<a class="headerlink" href="#pid" title="Permanent link">&para;</a></h2>
 <p>Klipper支持挤出机和热床加热器的<a href="https://en.wikipedia.org/wiki/PID_controller">PID控制</a>。为了使用这种控制机制，必须对每台打印机的 PID 参数进行校准（在其他固件或示例配置文件中找到的 PID 设置往往效果不佳）。</p>
-<p>要校准挤出机，请导航到命令控制台并运行PID_calibrate命令。例如：<code>PID_CALIBRATE HEATER=挤出机TARGET=170</code></p>
+<p>要校准挤出机，需要在控制台并使用PID_calibrate命令。例如：<code>PID_CALIBRATE HEATER=extruder TARGET=170</code></p>
 <p>调整测试完成后，运行 <code>SAVE_CONFIG</code> 以保存新PID设置到printer.cfg文件。</p>
 <p>如果打印机有加热床，并且支持PWM（脉宽调制）驱动，那么建议对加热床使用PID控制。 （当使用 PID 算法控制床加热器时，它可能每秒打开和关闭十次，这可能不适用于使用机械开关的加热器。）一般的热床 PID 校准命令是：<code>PID_CALIBRATE HEATER=heater_bed TARGET=60</code></p>
 <h2 id="_7">下一步<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h2>

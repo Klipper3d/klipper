@@ -660,15 +660,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview-of-compensation-usage" class="md-nav__link">
-    Overview of compensation usage
+  <a href="#a-kompenzacios-hasznalat-attekintese" class="md-nav__link">
+    A kompenzációs használat áttekintése
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#axis_twist_compensation-setup-and-commands" class="md-nav__link">
-    [axis_twist_compensation] setup and commands
+  <a href="#axis_twist_compensation-beallitasok-es-parancsok" class="md-nav__link">
+    [axis_twist_compensation] beállítások és parancsok
   </a>
   
 </li>
@@ -1319,15 +1319,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview-of-compensation-usage" class="md-nav__link">
-    Overview of compensation usage
+  <a href="#a-kompenzacios-hasznalat-attekintese" class="md-nav__link">
+    A kompenzációs használat áttekintése
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#axis_twist_compensation-setup-and-commands" class="md-nav__link">
-    [axis_twist_compensation] setup and commands
+  <a href="#axis_twist_compensation-beallitasok-es-parancsok" class="md-nav__link">
+    [axis_twist_compensation] beállítások és parancsok
   </a>
   
 </li>
@@ -1355,29 +1355,29 @@
 bias</a>. It may result in probe operations such as <a href="Bed_Mesh.html">Bed Mesh</a>, <a href="G-Codes.html#screws_tilt_adjust">Screws Tilt Adjust</a>, <a href="G-Codes.html#z_tilt_adjust">Z Tilt Adjust</a> etc returning inaccurate representations of the bed.</p>
 <p>Ez a modul kézi méréseket használ a felhasználó számára, hogy korrigálja a szonda eredményeit. Vedd figyelembe, hogy ha a tengely jelentősen csavart, akkor határozottan ajánlott először mechanikai eszközöket használni a szoftveres korrekciók alkalmazása előtt.</p>
 <p><strong>Figyelem</strong>: Ez a modul még nem kompatibilis a dokkolható szondákkal, és a szonda csatlakoztatása nélkül próbáld meg megmérni az ágyat, mielőtt használod.</p>
-<h2 id="overview-of-compensation-usage">Overview of compensation usage<a class="headerlink" href="#overview-of-compensation-usage" title="Permanent link">&para;</a></h2>
+<h2 id="a-kompenzacios-hasznalat-attekintese">A kompenzációs használat áttekintése<a class="headerlink" href="#a-kompenzacios-hasznalat-attekintese" title="Permanent link">&para;</a></h2>
 <blockquote>
-<p><strong>Tip:</strong> Make sure the <a href="Config_Reference.html#probe">probe X and Y offsets</a> are correctly set as they greatly influence calibration.</p>
+<p><strong>Tip:</strong> Győződj meg róla, hogy az <a href="Config_Reference.html#probe"> X és Y eltolás</a> megfelelően van beállítva, mivel nagymértékben befolyásolják a kalibrálást.</p>
 </blockquote>
 <ol>
-<li>After setting up the [axis_twist_compensation] module, perform <code>AXIS_TWIST_COMPENSATION_CALIBRATE</code></li>
+<li>Az [axis_twist_compensation] modul beállítása után hajtsd végre az alábbi parancsot <code>AXIS_TWIST_COMPENSATION_CALIBRATE</code></li>
 </ol>
 <ul>
-<li>The calibration wizard will prompt you to measure the probe Z offset at a few points along the bed</li>
-<li>The calibration defaults to 3 points but you can use the option <code>SAMPLE_COUNT=</code> to use a different number.</li>
+<li>A kalibrációs varázsló felszólít Téged, hogy mérd meg a szonda Z eltolását az ágy mentén néhány ponton</li>
+<li>A kalibrálás alapértelmezett értéke 3 pont, de a <code>SAMPLE_COUNT=</code> opcióval más számot is használhatsz.</li>
 </ul>
 <ol>
-<li><a href="Probe_Calibrate.html#calibrating-probe-z-offset">Adjust your Z offset</a></li>
-<li>Perform automatic/probe-based bed tramming operations, such as <a href="G-Codes.html#screws_tilt_adjust">Screws Tilt Adjust</a>, <a href="G-Codes.html#z_tilt_adjust">Z Tilt Adjust</a> etc</li>
-<li>Home all axis, then perform a <a href="Bed_Mesh.html">Bed Mesh</a> if required</li>
-<li>Perform a test print, followed by any <a href="Axis_Twist_Compensation.html#fine-tuning">fine-tuning</a> as desired</li>
+<li><a href="Probe_Calibrate.html#calibrating-probe-z-offset">Z eltolás beállítása</a></li>
+<li>Automatikus/szondás szintezési műveletek végrehajtása, például <a href="G-Codes.html#screws_tilt_adjust">Orsók dőlésbeállítása</a>, <a href="G-Codes.html#z_tilt_adjust">Z dőlésbeállítása</a> stb</li>
+<li>Kezdőpont minden tengelyen, majd szükség esetén végezzünk egy <a href="Bed_Mesh.html"> Ágyháló</a> műveletet</li>
+<li>Végezz el egy próbanyomtatást, majd a kívánt <a href="Axis_Twist_Compensation.html#fine-tuning">finomhangolást</a></li>
 </ol>
 <blockquote>
-<p><strong>Tip:</strong> Bed temperature and nozzle temperature and size do not seem to have an influence to the calibration process.</p>
+<p><strong>Tipp:</strong> Úgy tűnik, hogy az ágy hőmérséklete és a fúvóka hőmérséklete és mértéke nem befolyásolja a kalibrálási folyamatot.</p>
 </blockquote>
-<h2 id="axis_twist_compensation-setup-and-commands">[axis_twist_compensation] setup and commands<a class="headerlink" href="#axis_twist_compensation-setup-and-commands" title="Permanent link">&para;</a></h2>
-<p>Configuration options for [axis_twist_compensation] can be found in the <a href="Config_Reference.html#axis_twist_compensation">Configuration Reference</a>.</p>
-<p>Commands for [axis_twist_compensation] can be found in the <a href="G-Codes.html#axis_twist_compensation">G-Codes Reference</a></p>
+<h2 id="axis_twist_compensation-beallitasok-es-parancsok">[axis_twist_compensation] beállítások és parancsok<a class="headerlink" href="#axis_twist_compensation-beallitasok-es-parancsok" title="Permanent link">&para;</a></h2>
+<p>Az [axis_twist_compensation] konfigurációs beállításai a <a href="Config_Reference.html#axis_twist_compensation">Konfigurációs referenciában</a> találhatóak.</p>
+<p>Az [axis_twist_compensation] parancsok megtalálhatók a <a href="G-Codes.html#axis_twist_compensation">G-Kódok referencia</a> című dokumentumban</p>
 
               
             </article>

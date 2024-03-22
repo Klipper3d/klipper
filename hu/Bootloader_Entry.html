@@ -1226,16 +1226,16 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#physical-serial" class="md-nav__link">
-    Physical serial
+  <a href="#fizikai-sorszam" class="md-nav__link">
+    Fizikai sorszám
   </a>
   
-    <nav class="md-nav" aria-label="Physical serial">
+    <nav class="md-nav" aria-label="Fizikai sorszám">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#shell" class="md-nav__link">
-    Shell
+  <a href="#parancsertelmezo" class="md-nav__link">
+    Parancsértelmező
   </a>
   
 </li>
@@ -1254,8 +1254,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#katapults-flashtoolpy" class="md-nav__link">
-    Katapult's flashtool.py
+  <a href="#katapult-flashtoolpy" class="md-nav__link">
+    Katapult flashtool.py
   </a>
   
 </li>
@@ -1271,23 +1271,23 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#entering-the-bootloader" class="md-nav__link">
-    Entering the bootloader
+  <a href="#belepes-a-bootloaderbe" class="md-nav__link">
+    Belépés a bootloaderbe
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#notes" class="md-nav__link">
-    Notes
+  <a href="#megjegyzesek" class="md-nav__link">
+    Megjegyzések
   </a>
   
-    <nav class="md-nav" aria-label="Notes">
+    <nav class="md-nav" aria-label="Megjegyzések">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#stm32-dfu-warning" class="md-nav__link">
-    STM32 DFU Warning
+  <a href="#stm32-dfu-figyelmeztetes" class="md-nav__link">
+    STM32 DFU Figyelmeztetés
   </a>
   
 </li>
@@ -1445,16 +1445,16 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#physical-serial" class="md-nav__link">
-    Physical serial
+  <a href="#fizikai-sorszam" class="md-nav__link">
+    Fizikai sorszám
   </a>
   
-    <nav class="md-nav" aria-label="Physical serial">
+    <nav class="md-nav" aria-label="Fizikai sorszám">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#shell" class="md-nav__link">
-    Shell
+  <a href="#parancsertelmezo" class="md-nav__link">
+    Parancsértelmező
   </a>
   
 </li>
@@ -1473,8 +1473,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#katapults-flashtoolpy" class="md-nav__link">
-    Katapult's flashtool.py
+  <a href="#katapult-flashtoolpy" class="md-nav__link">
+    Katapult flashtool.py
   </a>
   
 </li>
@@ -1490,23 +1490,23 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#entering-the-bootloader" class="md-nav__link">
-    Entering the bootloader
+  <a href="#belepes-a-bootloaderbe" class="md-nav__link">
+    Belépés a bootloaderbe
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#notes" class="md-nav__link">
-    Notes
+  <a href="#megjegyzesek" class="md-nav__link">
+    Megjegyzések
   </a>
   
-    <nav class="md-nav" aria-label="Notes">
+    <nav class="md-nav" aria-label="Megjegyzések">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#stm32-dfu-warning" class="md-nav__link">
-    STM32 DFU Warning
+  <a href="#stm32-dfu-figyelmeztetes" class="md-nav__link">
+    STM32 DFU Figyelmeztetés
   </a>
   
 </li>
@@ -1539,53 +1539,53 @@
 <h3 id="virtualis-sorozat">Virtuális sorozat<a class="headerlink" href="#virtualis-sorozat" title="Permanent link">&para;</a></h3>
 <p>Ha virtuális (USB-ACM) soros port van használatban, a DTR pulzálása 1200 baud mellett kéri a rendszerbetöltőt.</p>
 <h4 id="python-with-flash_usb">Python (with <code>flash_usb</code>)<a class="headerlink" href="#python-with-flash_usb" title="Permanent link">&para;</a></h4>
-<p>To enter the bootloader using python (using <code>flash_usb</code>):</p>
+<p>Belépés a bootloader-be python segítségével (using <code>flash_usb</code>):</p>
 <div class="highlight"><pre><span></span><code>&gt;<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>klipper/scripts
 &gt;<span class="w"> </span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;import flash_usb as u; u.enter_bootloader(&quot;&lt;DEVICE&gt;&quot;)&#39;</span>
-Entering<span class="w"> </span>bootloader<span class="w"> </span>on<span class="w"> </span>&lt;DEVICE&gt;
+Bootloader<span class="w"> </span>belépése<span class="w"> </span>a<span class="w"> </span>&lt;DEVICE&gt;<span class="w"> </span>rendszeren
 </code></pre></div>
 
-<p>Where <code>&lt;DEVICE&gt;</code> is your serial device, such as <code>/dev/serial.by-id/usb-Klipper[...]</code> or <code>/dev/ttyACM0</code></p>
-<p>Note that if this fails, no output will be printed, success is indicated by printing <code>Entering bootloader on &lt;DEVICE&gt;</code>.</p>
+<p>Ahol <code>&lt;DEVICE&gt;</code> a soros eszköz, például <code>/dev/serial.by-id/usb-Klipper[...]</code> vagy <code>/dev/ttyACM0</code></p>
+<p>Vedd figyelembe, hogy ha ez nem sikerül, nem jelenik meg a kimenet, a sikert az <code>Entering bootloader on &lt;DEVICE&gt;</code> kiírása jelzi.</p>
 <h4 id="picocom">Picocom<a class="headerlink" href="#picocom" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code>picocom<span class="w"> </span>-b<span class="w"> </span><span class="m">1200</span><span class="w"> </span>&lt;DEVICE&gt;
 &lt;Ctrl-A&gt;&lt;Ctrl-P&gt;
 </code></pre></div>
 
-<p>Where <code>&lt;DEVICE&gt;</code> is your serial device, such as <code>/dev/serial.by-id/usb-Klipper[...]</code> or <code>/dev/ttyACM0</code></p>
-<p><code>&lt;Ctrl-A&gt;&lt;Ctrl-P&gt;</code> means holding <code>Ctrl</code>, pressing and releasing <code>a</code>, pressing and releasing <code>p</code>, then releasing <code>Ctrl</code></p>
-<h3 id="physical-serial">Physical serial<a class="headerlink" href="#physical-serial" title="Permanent link">&para;</a></h3>
-<p>If a physical serial port is being used on the MCU (even if a USB serial adapter is being used to connect to it), sending the string <code>&lt;SPACE&gt;&lt;FS&gt;&lt;SPACE&gt;Request Serial Bootloader!!&lt;SPACE&gt;~</code>.</p>
-<p><code>&lt;SPACE&gt;</code> is an ASCII literal space, 0x20.</p>
-<p><code>&lt;FS&gt;</code> is the ASCII File Separator, 0x1c.</p>
-<p>Note that this is not a valid message as per the <a href="Protocol.html#micro-controller-interface">MCU Protocol</a>, but sync characters(<code>~</code>) are still respected.</p>
-<p>Because this message must be the only thing in the "block" it is received in, prefixing an extra sync character can increase reliability if other tools were previously accessing the serial port.</p>
-<h4 id="shell">Shell<a class="headerlink" href="#shell" title="Permanent link">&para;</a></h4>
+<p>Ahol <code>&lt;DEVICE&gt;</code> a soros eszköz, például <code>/dev/serial.by-id/usb-Klipper[...]</code> vagy <code>/dev/ttyACM0</code></p>
+<p><code>&lt;Ctrl-A&gt;&lt;Ctrl-P&gt;</code> azt jelenti, hogy lenyomva tartjuk a "Ctrl"-t, megnyomjuk és elengedjük az "a"-t, megnyomjuk és elengedjük a "p"-t, majd elengedjük a "Ctrl"-t</p>
+<h3 id="fizikai-sorszam">Fizikai sorszám<a class="headerlink" href="#fizikai-sorszam" title="Permanent link">&para;</a></h3>
+<p>Ha az MCU-n fizikai soros portot használunk (még akkor is, ha USB soros adaptert használunk a csatlakozáshoz), akkor a <code>&lt;SPACE&gt;&lt;FS&gt;&lt;SPACE&gt;Request Serial Bootloader!!&lt;SPACE&gt;~</code> karakterlánc elküldése szükséges.</p>
+<p>A <code>&lt;SPACE&gt;</code> egy ASCII szóköz, 0x20.</p>
+<p>A <code>&lt;FS&gt;</code> az ASCII fájlelválasztó, 0x1c.</p>
+<p>Vedd figyelembe, hogy ez nem érvényes üzenet az <a href="Protocol.html#micro-controller-interface">MCU protokoll</a> szerint, de a szinkronizáló karaktereket (<code>~</code>) továbbra is tiszteletben kell tartani.</p>
+<p>Mivel ennek az üzenetnek kell lennie az egyetlen dolognak abban a "blokkban", amelyben érkezik, egy extra szinkronizáló karakter előtaggal növelheted a megbízhatóságot, ha korábban más eszközök is hozzáfértek a soros porthoz.</p>
+<h4 id="parancsertelmezo">Parancsértelmező<a class="headerlink" href="#parancsertelmezo" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code>stty<span class="w"> </span>&lt;BAUD&gt;<span class="w"> </span>&lt;<span class="w"> </span>/dev/&lt;DEVICE&gt;
 <span class="nb">echo</span><span class="w"> </span><span class="s1">$&#39;~ \x1c Request Serial Bootloader!! ~&#39;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>/dev/&lt;DEVICE&gt;
 </code></pre></div>
 
-<p>Where <code>&lt;DEVICE&gt;</code> is your serial port, such as <code>/dev/ttyS0</code>, or <code>/dev/serial/by-id/gpio-serial2</code>, and</p>
-<p><code>&lt;BAUD&gt;</code> is the baud rate of the serial port, such as <code>115200</code>.</p>
+<p>Ahol <code>&lt;DEVICE&gt;</code> a Te soros portod, például <code>/dev/ttyS0</code>, vagy <code>/dev/serial/by-id/gpio-serial2</code> és</p>
+<p><code>&lt;BAUD&gt;</code> a soros port buszsebessége, például <code>115200</code>.</p>
 <h3 id="canbus">CANBUS<a class="headerlink" href="#canbus" title="Permanent link">&para;</a></h3>
-<p>If CANBUS is in use, a special <a href="CANBUS_protocol.html#admin-messages">admin message</a> will request the bootloader. This message will be respected even if the device already has a nodeid, and will also be processed if the mcu is shutdown.</p>
-<p>This method also applies to devices operating in <a href="CANBUS.html#usb-to-can-bus-bridge-mode">CANBridge</a> mode.</p>
-<h4 id="katapults-flashtoolpy">Katapult's flashtool.py<a class="headerlink" href="#katapults-flashtoolpy" title="Permanent link">&para;</a></h4>
+<p>Ha a CANBUS használatban van, egy speciális <a href="CANBUS_protocol.html#admin-messages">admin üzenet</a> kéri a bootloadert. Ezt az üzenetet akkor is figyelembe veszi, ha az eszköznek már van nodeid-ja, és akkor is feldolgozza, ha az MCU le van kapcsolva.</p>
+<p>Ez a módszer a <a href="CANBUS.html#usb-to-can-bus-bridge-mode">CANBridge</a> üzemmódban működő eszközökre is vonatkozik.</p>
+<h4 id="katapult-flashtoolpy">Katapult flashtool.py<a class="headerlink" href="#katapult-flashtoolpy" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code>python3<span class="w"> </span>./katapult/scripts/flashtool.py<span class="w"> </span>-i<span class="w"> </span>&lt;CAN_IFACE&gt;<span class="w"> </span>-u<span class="w"> </span>&lt;UUID&gt;<span class="w"> </span>-r
 </code></pre></div>
 
-<p>Where <code>&lt;CAN_IFACE&gt;</code> is the can interface to use. If using <code>can0</code>, both the <code>-i</code> and <code>&lt;CAN_IFACE&gt;</code> may be omitted.</p>
-<p><code>&lt;UUID&gt;</code> is the UUID of your CAN device.</p>
-<p>See the <a href="CANBUS.html#finding-the-canbus_uuid-for-new-micro-controllers">CANBUS Documentation</a> for information on finding the CAN UUID of your devices.</p>
-<h2 id="entering-the-bootloader">Entering the bootloader<a class="headerlink" href="#entering-the-bootloader" title="Permanent link">&para;</a></h2>
-<p>When klipper receives one of the above bootloader requests:</p>
-<p>If Katapult (formerly known as CANBoot) is available, klipper will request that Katapult stay active on the next boot, then reset the MCU (therefore entering Katapult).</p>
-<p>If Katapult is not available, klipper will then try to enter a platform-specific bootloader, such as STM32's DFU mode(<a href="#stm32-dfu-warning">see note</a>).</p>
-<p>In short, Klipper will reboot to Katapult if installed, then a hardware specific bootloader if available.</p>
-<p>For details about the specific bootloaders on various platforms see <a href="Bootloaders.html">Bootloaders</a></p>
-<h2 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">&para;</a></h2>
-<h3 id="stm32-dfu-warning">STM32 DFU Warning<a class="headerlink" href="#stm32-dfu-warning" title="Permanent link">&para;</a></h3>
-<p>Note that on some boards, like the Octopus Pro v1, entering DFU mode can cause undesired actions (such as powering the heater while in DFU mode). It is recommended to disconnect heaters, and otherwise prevent undesired operations when using DFU mode. Consult the documentation for your board for more details.</p>
+<p>Ahol <code>&lt;CAN_IFACE&gt;</code> a használni kívánt can-interfész. Ha a <code>can0</code>-t használjuk, az <code>-i</code> és a <code>&lt;CAN_IFACE&gt;</code> is elhagyható.</p>
+<p>A <code>&lt;UUID&gt;</code> a CAN-eszköz UUID-je.</p>
+<p>Lásd a <a href="CANBUS.html#finding-the-canbus_uuid-for-new-micro-controllers">CANBUS dokumentáció</a> című dokumentumot az eszközök CAN UUID-jének megtalálására vonatkozó információkért.</p>
+<h2 id="belepes-a-bootloaderbe">Belépés a bootloaderbe<a class="headerlink" href="#belepes-a-bootloaderbe" title="Permanent link">&para;</a></h2>
+<p>Amikor a klipper megkapja a fenti bootloader kérések egyikét:</p>
+<p>Ha a Katapult (korábbi nevén CANBoot) elérhető, a klipper kérni fogja, hogy a Katapult maradjon aktív a következő indításkor, majd visszaállítja az MCU-t (ezért belép a Katapultba).</p>
+<p>Ha a Katapult nem elérhető, akkor a klipper megpróbál egy platform-specifikus bootloaderbe belépni, például az STM32 DFU módjába(<a href="#stm32-dfu-warning">lásd megjegyzés</a>).</p>
+<p>Röviden, a Klipper újraindítja a Katapultot, ha telepítve van, majd egy hardver-specifikus bootloadert, ha rendelkezésre áll.</p>
+<p>A különböző platformok speciális bootloadereiről részletesen lásd <a href="Bootloaders.html">Bootloaderek</a></p>
+<h2 id="megjegyzesek">Megjegyzések<a class="headerlink" href="#megjegyzesek" title="Permanent link">&para;</a></h2>
+<h3 id="stm32-dfu-figyelmeztetes">STM32 DFU Figyelmeztetés<a class="headerlink" href="#stm32-dfu-figyelmeztetes" title="Permanent link">&para;</a></h3>
+<p>Ne feledd, hogy néhány lapon, mint például az Octopus Pro v1, a DFU módba való belépés nem kívánt műveleteket okozhat (például a fűtőberendezés bekapcsolása DFU módban). Javasoljuk, hogy a DFU mód használatakor a fűtőberendezéseket kapcsold ki, és más módon akadályozd meg a nemkívánatos műveleteket. További részletekért olvasd el az alaplap dokumentációját.</p>
 
               
             </article>

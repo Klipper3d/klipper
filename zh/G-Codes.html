@@ -339,7 +339,7 @@
   
     <li class="md-nav__item">
       <a href="Releases.html" class="md-nav__link">
-        版本发布
+        发行说明
       </a>
     </li>
   
@@ -4546,11 +4546,11 @@
 <h4 id="bed_mesh_offset">BED_MESH_OFFSET<a class="headerlink" href="#bed_mesh_offset" title="Permanent link">&para;</a></h4>
 <p><code>BED_MESH_OFFSET [X=&lt;value&gt;] [Y=&lt;value&gt;]</code>。将X和/或Y的偏移量应用于网格查找。这对具有多个独立挤出头的打印机很有用，因为偏移量对切换工具头后产生正确的 Z 值调整是至关重要的。</p>
 <h3 id="bed_screws">[bed_screws]<a class="headerlink" href="#bed_screws" title="Permanent link">&para;</a></h3>
-<p>The following commands are available when the <a href="Config_Reference.html#bed_screws">bed_screws config section</a> is enabled (also see the <a href="Manual_Level.html#adjusting-bed-leveling-screws">manual level guide</a>).</p>
+<p>以下命令当 <a href="Config_Reference.html#bed_screws">bed_screws 配置段</a> 使能的时候可用 (也可参考 <a href="Manual_Level.html#adjusting-bed-leveling-screws">手动调平指南</a>)。</p>
 <h4 id="bed_screws_adjust">BED_SCREWS_ADJUST<a class="headerlink" href="#bed_screws_adjust" title="Permanent link">&para;</a></h4>
 <p><code>BED_SCREWS_ADJUST</code>：该命令将调用打印床螺丝调整工具。它将命令喷嘴移动到不同的位置（在配置文件中定义），并允许对打印床螺丝进行手动调整，使打印床与喷嘴的距离保持不变。</p>
 <h3 id="bed_tilt">[bed_tilt]<a class="headerlink" href="#bed_tilt" title="Permanent link">&para;</a></h3>
-<p>The following commands are available when the <a href="Config_Reference.html#bed_tilt">bed_tilt config section</a> is enabled.</p>
+<p>当 <a href="Config_Reference.html#bed_tilt">bed_tilt 配置部分</a> 被启用时，以下命令可用：</p>
 <h4 id="bed_tilt_calibrate">BED_TILT_CALIBRATE<a class="headerlink" href="#bed_tilt_calibrate" title="Permanent link">&para;</a></h4>
 <p><code>BED_TILT_CALIBRATE [METHOD=manual] [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command will probe the points specified in the config and then recommend updated x and y tilt adjustments. See the PROBE command for details on the optional probe parameters. If METHOD=manual is specified then the manual probing tool is activated - see the MANUAL_PROBE command above for details on the additional commands available while this tool is active. The optional <code>HORIZONTAL_MOVE_Z</code> value overrides the <code>horizontal_move_z</code> option specified in the config file.</p>
 <h3 id="bltouch">[bltouch]<a class="headerlink" href="#bltouch" title="Permanent link">&para;</a></h3>
@@ -4676,8 +4676,8 @@
 <h3 id="gcode_arcs">[gcode_arcs]<a class="headerlink" href="#gcode_arcs" title="Permanent link">&para;</a></h3>
 <p>如果启用了<a href="Config_Reference.html#gcode_arcs">gcode_arcs 配置分段</a>，下列标准G代码命令可用：</p>
 <ul>
-<li>Arc Move Clockwise (G2), Arc Move Counter-clockwise (G3): <code>G2|G3 [X&lt;pos&gt;] [Y&lt;pos&gt;] [Z&lt;pos&gt;] [E&lt;pos&gt;] [F&lt;speed&gt;] I&lt;value&gt; J&lt;value&gt;|I&lt;value&gt; K&lt;value&gt;|J&lt;value&gt; K&lt;value&gt;</code></li>
-<li>Arc Plane Select: G17 (XY plane), G18 (XZ plane), G19 (YZ plane)</li>
+<li>顺时针圆弧运动 (G2), 逆时针圆弧运动 (G3): <code>G2|G3 [X&lt;pos&gt;] [Y&lt;pos&gt;] [Z&lt;pos&gt;] [E&lt;pos&gt;] [F&lt;speed&gt;] I&lt;value&gt; J&lt;value&gt;|I&lt;value&gt; K&lt;value&gt;|J&lt;value&gt; K&lt;value&gt;</code></li>
+<li>选择圆弧运动参考面: G17 (XY 平面), G18 (XZ 平面), G19 (YZ 平面)</li>
 </ul>
 <h3 id="gcode_macro">[gcode_macro]<a class="headerlink" href="#gcode_macro" title="Permanent link">&para;</a></h3>
 <p>当<a href="Config_Reference.html#gcode_macro">gcode_macro配置分段</a>被启用时，以下命令可用（也可参见<a href="Command_Templates.html">命令模板指南</a>）：</p>
@@ -4758,7 +4758,7 @@
 <p><code>SET_PIN PIN=config_name VALUE=&lt;value&gt; [CYCLE_TIME=&lt;cycle_time&gt;]</code>: Set the pin to the given output <code>VALUE</code>. VALUE should be 0 or 1 for "digital" output pins. For PWM pins, set to a value between 0.0 and 1.0, or between 0.0 and <code>scale</code> if a scale is configured in the output_pin config section.</p>
 <p>Some pins (currently only "soft PWM" pins) support setting an explicit cycle time using the CYCLE_TIME parameter (specified in seconds). Note that the CYCLE_TIME parameter is not stored between SET_PIN commands (any SET_PIN command without an explicit CYCLE_TIME parameter will use the <code>cycle_time</code> specified in the output_pin config section).</p>
 <h3 id="palette2">[palette2]<a class="headerlink" href="#palette2" title="Permanent link">&para;</a></h3>
-<p>The following commands are available when the <a href="Config_Reference.html#palette2">palette2 config section</a> is enabled.</p>
+<p>当<a href="Config_Reference.html#palette2">palette2 配置分段</a>被启用时，以下命令可用：</p>
 <p>Palette打印通过在GCode文件中嵌入特殊的OCodes（Omega Codes）来工作。</p>
 <ul>
 <li><code>O1</code>...<code>O32</code>：这些代码从G-Code流中读出并且传递给Palette 2设备进行处理。</li>
@@ -4925,7 +4925,7 @@
 <p>The following commands are available when the <a href="Config_Reference.html#axis_twist_compensation">axis_twist_compensation config
 section</a> is enabled.</p>
 <h4 id="axis_twist_compensation_calibrate">AXIS_TWIST_COMPENSATION_CALIBRATE<a class="headerlink" href="#axis_twist_compensation_calibrate" title="Permanent link">&para;</a></h4>
-<p><code>AXIS_TWIST_COMPENSATION_CALIBRATE [SAMPLE_COUNT=&lt;value&gt;]</code>: Initiates the X twist calibration wizard. <code>SAMPLE_COUNT</code> specifies the number of points along the X axis to calibrate at and defaults to 3.</p>
+<p><code>AXIS_TWIST_COMPENSATION_CALIBRATE [SAMPLE_COUNT=&lt;value&gt;]</code>: 启动X轴扭转校准向导。 <code>SAMPLE_COUNT</code> 指定沿着X轴进行校准的点数，默认为3个。</p>
 <h3 id="z_thermal_adjust">[z_thermal_adjust]<a class="headerlink" href="#z_thermal_adjust" title="Permanent link">&para;</a></h3>
 <p>The following commands are available when the <a href="Config_Reference.html#z_thermal_adjust">z_thermal_adjust config section</a> is enabled.</p>
 <h4 id="set_z_thermal_adjust">SET_Z_THERMAL_ADJUST<a class="headerlink" href="#set_z_thermal_adjust" title="Permanent link">&para;</a></h4>

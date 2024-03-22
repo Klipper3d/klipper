@@ -2045,9 +2045,9 @@
 <li><code>retract_length</code>, <code>retract_speed</code>, <code>unretract_extra_length</code>, <code>unretract_speed</code>: A firmware_retraction modul aktuális beállításai. Ezek a beállítások eltérhetnek a konfigurációs állománytól, ha a <code>SET_RETRACTION</code> parancs megváltoztatja őket.</li>
 </ul>
 <h2 id="gcode_button">gcode_button<a class="headerlink" href="#gcode_button" title="Permanent link">&para;</a></h2>
-<p>The following information is available in <a href="Config_Reference.html#gcode_button">gcode_button some_name</a> objects:</p>
+<p>A következő információk a <a href="Config_Reference.html#gcode_button">gcode_button some_name</a> objektumokban érhetők el:</p>
 <ul>
-<li><code>state</code>: The current button state returned as "PRESSED" or "RELEASED"</li>
+<li><code>állapot</code>: A gomb aktuális állapota, amely "PRESSED" vagy "RELEASED" formában érkezik vissza</li>
 </ul>
 <h2 id="gcode_macro">gcode_macro<a class="headerlink" href="#gcode_macro" title="Permanent link">&para;</a></h2>
 <p>A következő információk a <a href="Config_Reference.html#gcode_macro">gcode_macro some_name</a> objektumokban érhetők el:</p>
@@ -2086,7 +2086,7 @@
 <ul>
 <li><code>available_heaters</code>: Visszaadja az összes jelenleg elérhető fűtőberendezés listáját a teljes config szekció nevével, pl. <code>["extruder", "heater_bed", "heater_generic my_custom_heater"]</code>.</li>
 <li><code>available_sensors</code>: Visszaadja az összes jelenleg elérhető hőmérséklet érzékelő listáját a teljes config szekció nevével, pl. <code>["extruder", "heater_bed", "heater_generic my_custom_heater", "temperature_sensor electronics_temp"]</code>.</li>
-<li><code>available_monitors</code>: Returns a list of all currently available temperature monitors by their full config section names, e.g. <code>["tmc2240 stepper_x"]</code>. While a temperature sensor is always available to read, a temperature monitor may not be available and will return null in such case.</li>
+<li><code>available_monitors</code>: A jelenleg elérhető összes hőmérséklet-monitor listáját adja vissza a teljes konfigurációs szakasz nevével, pl. <code>["tmc2240 stepper_x"]</code>. Míg egy hőmérséklet-érzékelő mindig olvasható, előfordulhat, hogy egy hőmérséklet-érzékelő nem elérhető, és ilyen esetben null értéket ad vissza.</li>
 </ul>
 <h2 id="idle_timeout">idle_timeout<a class="headerlink" href="#idle_timeout" title="Permanent link">&para;</a></h2>
 <p>A következő információk az <a href="Config_Reference.html#idle_timeout">idle_timeout</a> objektumban érhetők el (ez az objektum mindig elérhető):</p>
@@ -2167,7 +2167,7 @@
 <p>A következő információk a <code>screws_tilt_adjust</code> objektumban találhatók:</p>
 <ul>
 <li><code>error</code>: True értéket ad vissza, ha a legutóbbi <code>SCREWS_TILT_CALCULATE</code> parancs tartalmazta a <code>MAX_DEVIATION</code> paramétert, és bármelyik vizsgált csavarpont meghaladta a megadott <code>MAX_DEVIATION</code> értéket.</li>
-<li><code>max_deviation</code>: Return the last <code>MAX_DEVIATION</code> value of the most recent <code>SCREWS_TILT_CALCULATE</code> command.</li>
+<li><code>max_deviation</code>: A legutóbbi <code>SCREWS_TILT_CALCULATE</code> parancs utolsó <code>MAX_DEVIATION</code> értékét adja vissza.</li>
 <li><code>results["&lt;screw&gt;"]</code>: A következő kulcsokat tartalmazó szótár:<ul>
 <li><code>z</code>: A csavar helyének mért Z magassága.</li>
 <li><code>sign</code>: Egy karakterlánc, amely megadja, hogy a szükséges beállításhoz milyen irányba kell elfordítani a csavart. Vagy "CW" az óramutató járásával megegyező irányban, vagy "CCW" az óramutató járásával ellentétes irányban.</li>
@@ -2193,7 +2193,7 @@
 </ul>
 <h2 id="homerseklet-erzekelok">hőmérséklet érzékelők<a class="headerlink" href="#homerseklet-erzekelok" title="Permanent link">&para;</a></h2>
 <p>A következő információk a következő dokumentumban találhatók</p>
-<p><a href="Config_Reference.html#bmp280bme280bme680-temperature-sensor">bme280 config_section_name</a>, <a href="Config_Reference.html#htu21d-sensor">htu21d config_section_name</a>, <a href="Config_Reference.html#lm75-temperature-sensor">lm75 config_section_name</a>, <a href="Config_Reference.html#host-temperature-sensor">temperature_host config_section_name</a> and <a href="Config_Reference.html#combined-temperature-sensor">temperature_combined config_section_name</a> objects:</p>
+<p><a href="Config_Reference.html#bmp280bme280bme680-temperature-sensor">bme280 config_section_name</a>, <a href="Config_Reference.html#htu21d-sensor">htu21d config_section_name</a>, <a href="Config_Reference.html#lm75-temperature-sensor">lm75 config_section_name</a>, <a href="Config_Reference.html#host-temperature-sensor">temperature_host config_section_name</a> and <a href="Config_Reference.html#combined-temperature-sensor">temperature_combined config_section_name</a> objektumok:</p>
 <ul>
 <li><code>temperature</code>: Az érzékelőtől utoljára kapott hőmérséklet.</li>
 <li><code>humidity</code>, <code>pressure</code>, <code>gas</code>: Az érzékelőtől utoljára kapott értékek (csak a bme280, htu21d és lm75 érzékelők esetében).</li>
@@ -2216,7 +2216,7 @@
 <li><code>mcu_phase_offset</code>: A mikrokontroller léptető pozíciója, amely megfelel a meghajtó "nulla" fázisának. Ez a mező lehet nulla, ha a fáziseltolás nem ismert.</li>
 <li><code>phase_offset_position</code>: A vezető "nulladik" fázisának megfelelő "parancsolt pozíció". Ez a mező lehet nulla, ha a fáziseltolás nem ismert.</li>
 <li><code>drv_status</code>: A legutóbbi motorvezérlő állapotlekérdezés eredményei. (Csak a nem nulla mezők kerülnek jelentésre.) Ez a mező nulla lesz, ha a motorvezérlő nincs engedélyezve (és így nem kerül rendszeresen lekérdezésre).</li>
-<li><code>temperature</code>: The internal temperature reported by the driver. This field will be null if the driver is not enabled or if the driver does not support temperature reporting.</li>
+<li><code>hőmérséklet</code>: Az illesztőprogram által jelentett belső hőmérséklet. Ez a mező nulla lesz, ha az illesztőprogram nincs engedélyezve, vagy ha az illesztőprogram nem támogatja a hőmérséklet jelentést.</li>
 <li><code>run_current</code>: Az aktuálisan beállított működési áram.</li>
 <li><code>hold_current</code>: Az aktuálisan beállított tartóáram.</li>
 </ul>
@@ -2232,10 +2232,10 @@
 <li><code>stalls</code>: Az összes alkalom száma (az utolsó újraindítás óta), amikor a nyomtatót szüneteltetni kellett, mert a nyomtatófej gyorsabban mozgott, mint ahány mozdulatot a G-kód bemenetről be lehetett olvasni.</li>
 </ul>
 <h2 id="dual_carriage">dual_carriage<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h2>
-<p>The following information is available in <a href="Config_Reference.html#dual_carriage">dual_carriage</a> on a cartesian, hybrid_corexy or hybrid_corexz robot</p>
+<p>A következő információk a <a href="Config_Reference.html#dual_carriage">dual_carriage</a> menüpontban érhetőek el egy cartesian, hybrid_corexy vagy hybrid_corexz géphez</p>
 <ul>
-<li><code>carriage_0</code>: The mode of the carriage 0. Possible values are: "INACTIVE" and "PRIMARY".</li>
-<li><code>carriage_1</code>: The mode of the carriage 1. Possible values are: "INACTIVE", "PRIMARY", "COPY", and "MIRROR".</li>
+<li><code>carriage_0</code>: A kocsi 0. A lehetséges értékek a következők: "INACTIVE" és "PRIMARY".</li>
+<li><code>carriage_1</code>: A kocsi 1 üzemmódja. A lehetséges értékek a következők: "INACTIVE", "PRIMARY", "COPY" és "MIRROR".</li>
 </ul>
 <h2 id="virtual_sdcard">virtual_sdcard<a class="headerlink" href="#virtual_sdcard" title="Permanent link">&para;</a></h2>
 <p>A következő információk a <a href="Config_Reference.html#virtual_sdcard">virtual_sdcard</a> objektumban érhetők el:</p>

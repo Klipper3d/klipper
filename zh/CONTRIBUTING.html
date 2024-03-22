@@ -339,7 +339,7 @@
   
     <li class="md-nav__item">
       <a href="Releases.html" class="md-nav__link">
-        版本发布
+        发行说明
       </a>
     </li>
   
@@ -1093,8 +1093,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#format-of-commit-messages" class="md-nav__link">
-    Format of commit messages
+  <a href="#_5" class="md-nav__link">
+    提交消息的格式
   </a>
   
 </li>
@@ -1385,8 +1385,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#format-of-commit-messages" class="md-nav__link">
-    Format of commit messages
+  <a href="#_5" class="md-nav__link">
+    提交消息的格式
   </a>
   
 </li>
@@ -1436,7 +1436,7 @@
 <p>提交是否没有缺陷，是否准备好广泛部署？提交者应在提交之前测试其更改。审核员会查找提交中的错误，但通常不会测试提交的实际内容。接受的提交通常会在被接受后的几周内部署到数千台打印机。因此，提交的质量极为重要。</p>
 <p>主<a href="https://github.com/Klipper3d/klipper">Klipper3d/klipper</a> GitHub仓库不接受实验性代码。提交者应该在他们自己的仓库中进行实验、调试和测试。<a href="Contact.html">Klipper Discourse</a>论坛可以帮助你找到其他有兴趣的开发者和可以提供真实世界反馈的用户，或者让更多人了解你的工作。</p>
 <p>提交必须通过所有<a href="Debugging.html">回归测试用例</a>。</p>
-<p>When fixing a defect in the code, submitters should have a general understanding of the root cause of that defect, and the fix should target that root cause.</p>
+<p>在修复代码中的缺陷时，提交者应该对该缺陷的根本原因有一个大致的了解，并且修复应该针对该根本原因。</p>
 <p>代码提交不应包含过多的调试代码、调试选项，也不应包含运行时调试日志。</p>
 <p>代码提交中的注释应侧重于增强代码的可维护性。提交不应包含"注释掉的代码"，不应包含描述过去实现的过多注释，也不应包含过多的"待办事项"。</p>
 <p>对文件的更新不应该声明它们是一项正在进行的工作。</p>
@@ -1445,7 +1445,7 @@
 <p>提交的文件是否为执行真实世界任务的用户提供了 "高影响力"的改进？评审员需要确定，至少在他们自己的脑海中，大致的"目标受众"，"受众的规模"，受众将获得的"利益"，“如何衡量利益"，以及”这些测试的结果“。在大多数情况下，这对提交者和评审者来说都是显而易见的，而且在评审过程不需要明确的说明。</p>
 <p>提交到Klipper主分支的代码应该有足够的目标受众。作为一般的经验法则，提交的内容应该针对至少100个用户的用户群体。</p>
 <p>如果审稿人询问有关提交可以带来的“好处”的细节，请不要将其视为批评。能够理解更改带来的实际好处是审查的一个自然部分。</p>
-<p>When discussing benefits it is preferable to discuss "facts and measurements". In general, reviewers are not looking for responses of the form "someone may find option X useful", nor are they looking for responses of the form "this submission adds a feature that firmware X implements". Instead, it is generally preferable to discuss details on how the quality improvement was measured and what were the results of those measurements - for example, "tests on Acme X1000 printers show improved corners as seen in picture ...", or for example "print time of real-world object X on a Foomatic X900 printer went from 4 hours to 3.5 hours". It is understood that testing of this type can take significant time and effort. Some of Klipper's most notable features took months of discussion, rework, testing, and documentation prior to being merged into the master branch.</p>
+<p>在讨论利益时，最好是讨论“事实和衡量标准”。一般而言，审查者不是在寻找“某人可能会发现选项X有用”形式的答复，也不是在寻找形式为“此提交增加了固件X实现的功能”的答复。相反，通常更可取的是讨论如何测量质量改进的细节以及这些测量的结果是什么--例如，“在Acme X1000打印机上的测试显示如图片所示的改善的角落……”，或者例如，“在Foom X900打印机上打印现实世界中的对象X的时间从4小时缩短到3.5小时”。可以理解，这种类型的测试可能会花费大量的时间和精力。Klipper的一些最重要的功能在合并到主分支之前，花了几个月的讨论、返工、测试和文档。</p>
 <p>所有新的模块、配置选项、命令、命令参数和文档都应该具有“高影响力”。我们不想让用户负担他们不能合理配置的选项，也不想让他们负担不能提供显著好处的选项。</p>
 <p>评审员可能会要求解释用户该如何配置一个选项，一个理想的答复将包含过程的细节，例如："MegaX500的用户应将选项 X 设置为99.3，而Elite100Y的用户应使用程序校准选项X..." 。</p>
 <p>如果一个选项的目标是使代码更加模块化，那么最好使用代码常量而不是向用户开放的配置选项。</p>
@@ -1510,7 +1510,7 @@
 <tr>
 <td>James Hartley</td>
 <td>@JamesH1978</td>
-<td>Configuration files</td>
+<td>配置文件</td>
 </tr>
 <tr>
 <td>Kevin O'Connor</td>
@@ -1520,12 +1520,12 @@
 </tbody>
 </table>
 <p>请不要“ping”任何一位评审员，也不要直接向他们投稿。所有的评论者都会监督论坛和公关，并在有时间的时候进行评论。</p>
-<p>The Klipper "maintainers" are:</p>
+<p>Klipper的“维护者”是：</p>
 <table>
 <thead>
 <tr>
 <th>名称</th>
-<th>GitHub name</th>
+<th>GitHub名称</th>
 </tr>
 </thead>
 <tbody>
@@ -1535,8 +1535,8 @@
 </tr>
 </tbody>
 </table>
-<h2 id="format-of-commit-messages">Format of commit messages<a class="headerlink" href="#format-of-commit-messages" title="Permanent link">&para;</a></h2>
-<p>Each commit should have a commit message formatted similar to the following:</p>
+<h2 id="_5">提交消息的格式<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<p>每个提交都应具有格式类似于以下内容的提交消息：</p>
 <div class="highlight"><pre><span></span><code>模块名: 大写、简短的摘要（50个字符或更少）
 
 在必要情况下提供更详细的解释性文本。 分割行为
@@ -1551,26 +1551,26 @@
 Signed-off-by: 姓名&lt; myemail@example.org &gt;
 </code></pre></div>
 
-<p>In the above example, <code>module</code> should be the name of a file or directory in the repository (without a file extension). For example, <code>clocksync: Fix typo in pause() call at connect time</code>. The purpose of specifying a module name in the commit message is to help provide context for the commit comments.</p>
+<p>在上面的示例中，<code>mode</code>应该是仓库中的文件或目录的名称(不带文件扩展名)。例如，<code>clocksync：修复连接时puse()调用中的拼写错误</code>。在提交消息中指定模块名称的目的是帮助为提交注释提供上下文。</p>
 <p>在每个提交上必须有一个 "Signed-off-by "行--它证明你同意<a href="developer-certificate-of-origin">开发者起源证书</a>。它必须包含你的真实姓名（对不起，没有假名或匿名的贡献）和一个可用的电子邮件地址。</p>
 <h2 id="klipper_1">为 Klipper 翻译做出贡献<a class="headerlink" href="#klipper_1" title="Permanent link">&para;</a></h2>
-<p><a href="https://github.com/Klipper3d/klipper-translations">Klipper-translations Project</a> is a project dedicated to translating Klipper to different languages. <a href="https://hosted.weblate.org/projects/klipper/">Weblate</a> hosts all the Gettext strings for translating and reviewing. Locales can be displayed on <a href="https://www.klipper3d.org">klipper3d.org</a> once they satisfy the following requirements:</p>
+<p><a href="https://github.com/Klipper3d/klipper-translations">Klipper-Translations Project</a>是一个致力于将Klipper翻译成不同语言的项目。<a href="https://hosted.weblate.org/projects/klipper/">Weblate</a>托管所有用于翻译和审阅的GetText字符串。只要满足以下要求，就可以在<a href="https://www.klipper3d.org">klipper3d.org</a>)上显示区域设置：</p>
 <ul>
 <li><input disabled="disabled" type="checkbox" /> 75% 总覆盖率</li>
-<li><input disabled="disabled" type="checkbox" /> All titles (H1) are translated</li>
+<li><input disabled="disabled" type="checkbox" /> 所有标题(H1)均已翻译</li>
 <li><input disabled="disabled" type="checkbox" /> klipper-translations 中提供一个更新导航层次的 PR。</li>
 </ul>
 <p>为了减少翻译特定领域术语的疑惑，并让更多人了解正在进行的翻译，你可以提交一个修改<a href="https://github.com/Klipper3d/klipper-translations">Klipper-translations 项目</a> <code>readme.md</code> 文件的PR。一旦翻译完成，也可以对 Klipper 项目进行相应的修改。</p>
 <p>如果一个已经存在于 Klipper 代码库中的翻译不再符合上述的检查清单，那么在一个月没有更新后，它将被标记为过期。</p>
-<p>Once the requirements are met, you need to:</p>
+<p>满足要求后，您需要：</p>
 <ol>
-<li>update klipper-tranlations repository <a href="https://github.com/Klipper3d/klipper-translations/blob/translations/active_translations">active_translations</a></li>
-<li>Optional: add a manual-index.md file in klipper-translations repository's <code>docs\locals\&lt;lang&gt;</code> folder to replace the language specific index.md (generated index.md does not render correctly).</li>
+<li>更新KLIPPER-翻译库<a href="https://github.com/Klipper3d/klipper-translations/blob/translations/active_translations">active_translations</a></li>
+<li>可选：在Klipper-Translations存储库的<code>docs\Locals\&lt;lang&gt;</code>文件夹中添加手动index.md文件，以替换特定语言的index.md(生成的index.md无法正确呈现)。</li>
 </ol>
-<p>Known Issues:</p>
+<p>已知问题：</p>
 <ol>
-<li>Currently, there isn't a method for correctly translating pictures in the documentation</li>
-<li>It is impossible to translate titles in mkdocs.yml.</li>
+<li>目前，没有一种方法可以正确翻译文档中的图片</li>
+<li>不可能翻译mkdocs.yml中的标题。</li>
 </ol>
 
               

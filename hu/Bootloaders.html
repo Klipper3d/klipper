@@ -1239,8 +1239,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#samdc21-micro-controllers-duet3d-toolboard-1lc" class="md-nav__link">
-    SAMDC21 micro-controllers (Duet3D Toolboard 1LC)
+  <a href="#samdc21-mikrovezerlok-duet3d-toolboard-1lc" class="md-nav__link">
+    SAMDC21 mikrovezérlők (Duet3D Toolboard 1LC)
   </a>
   
 </li>
@@ -1544,8 +1544,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#samdc21-micro-controllers-duet3d-toolboard-1lc" class="md-nav__link">
-    SAMDC21 micro-controllers (Duet3D Toolboard 1LC)
+  <a href="#samdc21-mikrovezerlok-duet3d-toolboard-1lc" class="md-nav__link">
+    SAMDC21 mikrovezérlők (Duet3D Toolboard 1LC)
   </a>
   
 </li>
@@ -1768,9 +1768,9 @@ bossac -U -p /dev/ttyACM0 -R
 <div class="highlight"><pre><span></span><code>bossac --port=/dev/ttyACM0 -b -U -e -w -v -R out/klipper.bin
 </code></pre></div>
 
-<h2 id="samdc21-micro-controllers-duet3d-toolboard-1lc">SAMDC21 micro-controllers (Duet3D Toolboard 1LC)<a class="headerlink" href="#samdc21-micro-controllers-duet3d-toolboard-1lc" title="Permanent link">&para;</a></h2>
-<p>The SAMC21 is flashed via the ARM Serial Wire Debug (SWD) interface. This is commonly done with a dedicated SWD hardware dongle. Alternatively, one can use a <a href="#running-openocd-on-the-raspberry-pi">Raspberry Pi with OpenOCD</a>.</p>
-<p>When using OpenOCD with the SAMC21, extra steps must be taken to first put the chip into Cold Plugging mode if the board makes use of the SWD pins for other purposes. If using OpenOCD on a Rasberry Pi, this can be done by running the following commands before invoking OpenOCD.</p>
+<h2 id="samdc21-mikrovezerlok-duet3d-toolboard-1lc">SAMDC21 mikrovezérlők (Duet3D Toolboard 1LC)<a class="headerlink" href="#samdc21-mikrovezerlok-duet3d-toolboard-1lc" title="Permanent link">&para;</a></h2>
+<p>A SAMC21 égetése az ARM Serial Wire Debug (SWD) interfészen keresztül történik. Ez általában egy dedikált SWD hardver dongle segítségével történik. Alternatívaként használhatunk egy <a href="#running-openocd-on-the-raspberry-pi">Raspberry Pi-t az OpenOCD-vel</a>.</p>
+<p>Ha az OpenOCD-t a SAMC21-gyel együtt használjuk, extra lépéseket kell tenni, hogy a chipet először Cold Plugging üzemmódba helyezzük, ha a kártya az SWD-tüskéket más célokra használja. Ha az OpenOCD-t Rasberry Pi-n használjuk, akkor ezt az OpenOCD meghívása előtt a következő parancsok futtatásával tehetjük meg.</p>
 <div class="highlight"><pre><span></span><code>SWCLK=25
 SWDIO=24
 SRST=18
@@ -1791,11 +1791,11 @@ echo $SWCLK &gt; /sys/class/gpio/unexport
 echo $SRST &gt; /sys/class/gpio/unexport
 </code></pre></div>
 
-<p>To flash a program with OpenOCD use the following chip config:</p>
+<p>Egy program OpenOCD-vel történő égetéséhez használd a következő chipkonfigurációt:</p>
 <div class="highlight"><pre><span></span><code>forrás [find target/at91samdXX.cfg]
 </code></pre></div>
 
-<p>Obtain a program; for instance, klipper can be built for this chip. Flash with OpenOCD commands similar to:</p>
+<p>Szerezz be egy programot; például klippert lehet telepíteni erre a chipre. Égetés az OpenOCD parancsokhoz hasonló parancsokkal:</p>
 <div class="highlight"><pre><span></span><code>at91samd chip-erase
 at91samd bootloader 0
 program out/klipper.elf verify
