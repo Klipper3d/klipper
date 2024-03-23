@@ -314,8 +314,11 @@ Restart Klipper via the `RESTART` command.
 serial: /dev/serial/by-id/usb-Klipper_rp2040_<mySerial>
 
 [lis2dw]
-cs_pin: lis:gpio1
-spi_bus: spi0a
+cs_pin: lis:gpio9
+#spi_bus: spi0a
+spi_software_sclk_pin: lis:gpio10
+spi_software_mosi_pin: lis:gpio11
+spi_software_miso_pin: lis:gpio8
 axes_map: x,z,y
 
 [resonance_tester]
