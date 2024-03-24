@@ -47,6 +47,21 @@ config STACK_SIZE
     int
     default 512
 
+config GPIO_EXTENSION
+    bool "expend GPIO via 74HC595 chip"
+    default false
+
+config GPIO_EXTENSION_NUM
+    int "Number of 74HC595 chips" if GPIO_EXTENSION
+    default 1
+
+config GPIO_EXTENSION_SPI
+    int "GPIO Extension SPI port" if GPIO_EXTENSION
+    default 0
+
+config GPIO_EXTENSION_CS
+    int "GPIO Extension GPIO Pin" if GPIO_EXTENSION
+    default 21
 
 ######################################################################
 # Bootloader options
