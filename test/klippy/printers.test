@@ -273,6 +273,7 @@ CONFIG ../../config/generic-bigtreetech-skr-pico-v1.0.cfg
 DICTIONARY hc32f460-serial-PA3PA2.dict
 CONFIG ../../config/printer-anycubic-kobra-go-2022.cfg
 CONFIG ../../config/printer-anycubic-kobra-plus-2022.cfg
+CONFIG ../../config/printer-tenlog-d3-32bit.cfg
 
 # Printers using the hc32f460 with serial on PA7 PA8
 DICTIONARY hc32f460-serial-PA7PA8.dict
