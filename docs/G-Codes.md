@@ -253,6 +253,29 @@ V3.0 or V3.1 may also support `set_5V_output_mode`,
 `BLTOUCH_STORE MODE=<output_mode>`: This stores an output mode in the
 EEPROM of a BLTouch V3.1 Available output_modes are: `5V`, `OD`
 
+### [BDsensor]
+
+The following command is available when a
+BDsensor config section is enabled (also
+see the [BDsensor guide](BDsensor.md)).
+
+#### BDSENSOR_VERSION
+Read the version of BDsensor,it is usually used to
+check the connection, equals `M102 S-1`
+
+#### BDSENSOR_CALIBRATE
+Calibrate the BDsensor, equals `M102 S-6`
+
+#### BDSENSOR_READ_CALIBRATION
+Read raw calibration data from BDsensor and check whether the installation
+is properly or the calibration is successful, equals `M102 S-5`
+
+#### BDSENSOR_DISTANCE
+Read the current distance value measured by BDsensor,equals `M102 S-2`
+
+#### BDSENSOR_SET
+Set value, now only for setting z_adjust, e.g. BDSENSOR_SET z_adjust=0.1
+
 ### [configfile]
 
 The configfile module is automatically loaded.
