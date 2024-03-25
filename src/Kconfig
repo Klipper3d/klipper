@@ -104,6 +104,10 @@ config WANT_LIS2DW
     bool
     depends on HAVE_GPIO_SPI
     default y
+config WANT_LDC1612
+    bool
+    depends on HAVE_GPIO_I2C
+    default y
 config WANT_SOFTWARE_I2C
     bool
     depends on HAVE_GPIO && HAVE_GPIO_I2C
@@ -114,7 +118,7 @@ config WANT_SOFTWARE_SPI
     default y
 config NEED_SENSOR_BULK
     bool
-    depends on WANT_SENSORS || WANT_LIS2DW
+    depends on WANT_SENSORS || WANT_LIS2DW || WANT_LDC1612
     default y
 menu "Optional features (to reduce code size)"
     depends on HAVE_LIMITED_CODE_SIZE
@@ -130,6 +134,9 @@ config WANT_SENSORS
 config WANT_LIS2DW
     bool "Support lis2dw 3-axis accelerometer"
     depends on HAVE_GPIO_SPI
+config WANT_LDC1612
+    bool "Support ldc1612 eddy current sensor"
+    depends on HAVE_GPIO_I2C
 config WANT_SOFTWARE_I2C
     bool "Support software based I2C \"bit-banging\""
     depends on HAVE_GPIO && HAVE_GPIO_I2C
