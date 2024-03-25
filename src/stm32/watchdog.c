@@ -10,6 +10,8 @@
 
 #if CONFIG_MACH_STM32H7 // stm32h7 libraries only define IWDG1 and IWDG2
 #define IWDG IWDG1
+#elif CONFIG_MACH_STM32MP1 // on stm32mp1 only IWDG2 is usable
+#define IWDG IWDG2
 #endif
 
 void
