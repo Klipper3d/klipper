@@ -1,9 +1,9 @@
 # Virtual sdcard support (print files directly from a host g-code file)
 #
-# Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2024  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, logging, io
+import os, sys, logging, io
 
 VALID_GCODE_EXTS = ['gcode', 'g', 'gco']
 
@@ -258,7 +258,10 @@ class VirtualSD:
             # Dispatch command
             self.cmd_from_sd = True
             line = lines.pop()
-            next_file_position = self.file_position + len(line.encode()) + 1
+            if sys.version_info.major >= 3:
+                next_file_position = self.file_position + len(line.encode()) + 1
+            else:
+                next_file_position = self.file_position + len(line) + 1
             self.next_file_position = next_file_position
             try:
                 self.gcode.run_script(line)
