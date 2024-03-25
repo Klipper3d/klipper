@@ -33,7 +33,7 @@ class PIDCalibrate:
         heater.set_control(old_control)
         if write_file:
             calibrate.write_file('/tmp/heattest.txt')
-        if calibrate.check_busy(0., 0., 0.):
+        if calibrate.check_busy(0., 0.):
             raise gcmd.error("pid_calibrate interrupted")
         # Log and report results
         Kp, Ki, Kd = calibrate.calc_final_pid()
@@ -97,7 +97,7 @@ class ControlAutoTune:
             if temp > self.peak:
                 self.peak = temp
                 self.peak_time = read_time
-    def check_busy(self, eventtime, smoothed_temp, target_temp):
+    def check_busy(self, smoothed_temp, target_temp):
         if self.heating or len(self.peaks) < 12:
             return True
         return False

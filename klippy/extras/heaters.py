@@ -114,10 +114,10 @@ class Heater:
             if self.last_temp_time < print_time:
                 return 0., self.target_temp
             return self.smoothed_temp, self.target_temp
-    def check_busy(self, eventtime):
+    def check_busy(self):
         with self.lock:
             return self.control.check_busy(
-                eventtime, self.smoothed_temp, self.target_temp)
+                self.smoothed_temp, self.target_temp)
     def set_control(self, control):
         with self.lock:
             old_control = self.control
@@ -169,7 +169,7 @@ class ControlBangBang:
             self.heater.set_pwm(read_time, self.heater_max_power)
         else:
             self.heater.set_pwm(read_time, 0.)
-    def check_busy(self, eventtime, smoothed_temp, target_temp):
+    def check_busy(self, smoothed_temp, target_temp):
         return smoothed_temp < target_temp-self.max_delta
 
 
@@ -220,7 +220,7 @@ class ControlPID:
         self.prev_temp_deriv = temp_deriv
         if co == bounded_co:
             self.prev_temp_integ = temp_integ
-    def check_busy(self, eventtime, smoothed_temp, target_temp):
+    def check_busy(self, smoothed_temp, target_temp):
         temp_diff = target_temp - smoothed_temp
         return (abs(temp_diff) > PID_SETTLE_DELTA
                 or abs(self.prev_temp_deriv) > PID_SETTLE_SLOPE)
@@ -336,12 +336,10 @@ class PrinterHeaters:
         # Helper to wait on heater.check_busy() and report M105 temperatures
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
-        toolhead = self.printer.lookup_object("toolhead")
         gcode = self.printer.lookup_object("gcode")
         reactor = self.printer.get_reactor()
         eventtime = reactor.monotonic()
-        while not self.printer.is_shutdown() and heater.check_busy(eventtime):
-            print_time = toolhead.get_last_move_time()
+        while not self.printer.is_shutdown() and heater.check_busy():
             gcode.respond_raw(self._get_temp(eventtime))
             eventtime = reactor.pause(eventtime + 1.)
     def set_temperature(self, heater, temp, wait=False):
@@ -366,14 +364,12 @@ class PrinterHeaters:
             sensor = self.heaters[sensor_name]
         else:
             sensor = self.printer.lookup_object(sensor_name)
-        toolhead = self.printer.lookup_object("toolhead")
         reactor = self.printer.get_reactor()
         eventtime = reactor.monotonic()
         while not self.printer.is_shutdown():
             temp, target = sensor.get_temp(eventtime)
             if temp >= min_temp and temp <= max_temp:
                 return
-            print_time = toolhead.get_last_move_time()
             gcmd.respond_raw(self._get_temp(eventtime))
             eventtime = reactor.pause(eventtime + 1.)
 

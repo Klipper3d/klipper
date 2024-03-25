@@ -191,7 +191,6 @@ class PrinterConfig:
     comment_r = re.compile('[#;].*$')
     value_r = re.compile('[^A-Za-z0-9_].*$')
     def _strip_duplicates(self, data, config):
-        fileconfig = config.fileconfig
         # Comment out fields in 'data' that are defined in 'config'
         lines = data.split('\n')
         section = None
