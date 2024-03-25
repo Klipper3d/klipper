@@ -8,6 +8,12 @@ All dates in this document are approximate.
 
 ## Changes
 
+20240415: The `on_error_gcode` parameter in the `[virtual_sdcard]`
+config section now has a default. If this parameter is not specified
+it now defaults to `TURN_OFF_HEATERS`. If the previous behavior is
+desired (take no default action on an error during a virtual_sdcard
+print) then define `on_error_gcode` with an empty value.
+
 20240313: The `max_accel_to_decel` parameter in the `[printer]` config
 section has been deprecated. The `ACCEL_TO_DECEL` parameter of the
 `SET_VELOCITY_LIMIT` command has been deprecated. The
