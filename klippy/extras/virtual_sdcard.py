@@ -17,6 +17,7 @@ class VirtualSD:
         self.sdcard_dirname = os.path.normpath(os.path.expanduser(sd))
         self.current_file = None
         self.file_position = self.file_size = 0
+        self.recent_first = config.get("recent_first", False)
         # Print Stat Tracking
         self.print_stats = self.printer.load_object(config, 'print_stats')
         # Work timer
@@ -76,8 +77,14 @@ class VirtualSD:
             dname = self.sdcard_dirname
             try:
                 filenames = os.listdir(self.sdcard_dirname)
+                if self.recent_first:
+                    filenames.sort(
+                        key=lambda f: os.path.getmtime(os.path.join(dname, f)),
+                        reverse=True)
+                else:
+                    filenames.sort(key=str.lower)
                 return [(fname, os.path.getsize(os.path.join(dname, fname)))
-                        for fname in sorted(filenames, key=str.lower)
+                        for fname in filenames
                         if not fname.startswith('.')
                         and os.path.isfile((os.path.join(dname, fname)))]
             except:
