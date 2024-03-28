@@ -17,10 +17,13 @@ markdown_extensions:
   - toc:
       permalink: True
       toc_depth: 6
+  - admonition
   - attr_list
   - mdx_partial_gfm
   - mdx_truly_sane_lists
   - mdx_breakless_lists
+  - pymdownx.details
+  - pymdownx.superfences
 plugins:
   search:
     lang: en
@@ -54,14 +57,14 @@ theme:
     repo: fontawesome/brands/github
     alternate: material/web
   features:
-      #- navigation.tabs
-      #- navigation.expand
-      - navigation.top
-      # if enabled, the TOC doesn't work for some pages
-      # - toc.integrate
-      - search.suggest
-      - search.highlight
-      - search.share
+    #- navigation.tabs
+    #- navigation.expand
+    - navigation.top
+    # if enabled, the TOC doesn't work for some pages
+    # - toc.integrate
+    - search.suggest
+    - search.highlight
+    - search.share
   language: en
 extra_css:
   - _klipper3d/css/extra.css
