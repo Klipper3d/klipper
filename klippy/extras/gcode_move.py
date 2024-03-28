@@ -5,6 +5,8 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 
+MAX_STACKED_SAVES_FOR_STATE = 10
+
 class GCodeMove:
     def __init__(self, config):
         self.printer = printer = config.get_printer()
@@ -209,7 +211,13 @@ class GCodeMove:
     cmd_SAVE_GCODE_STATE_help = "Save G-Code coordinate state"
     def cmd_SAVE_GCODE_STATE(self, gcmd):
         state_name = gcmd.get('NAME', 'default')
-        self.saved_states[state_name] = {
+        if not state_name in  self.saved_states:
+            self.saved_states[state_name] = []
+        if len(self.saved_states[state_name]) >= MAX_STACKED_SAVES_FOR_STATE:
+            raise gcmd.error("Too many saved states for state '%s' (max limit\
+                              is %d)" % (state_name,
+                              MAX_STACKED_SAVES_FOR_STATE))
+        self.saved_states[state_name].append({
             'absolute_coord': self.absolute_coord,
             'absolute_extrude': self.absolute_extrude,
             'base_position': list(self.base_position),
@@ -217,13 +225,17 @@ class GCodeMove:
             'homing_position': list(self.homing_position),
             'speed': self.speed, 'speed_factor': self.speed_factor,
             'extrude_factor': self.extrude_factor,
-        }
+        })
+
     cmd_RESTORE_GCODE_STATE_help = "Restore a previously saved G-Code state"
     def cmd_RESTORE_GCODE_STATE(self, gcmd):
         state_name = gcmd.get('NAME', 'default')
-        state = self.saved_states.get(state_name)
-        if state is None:
+        if not state_name in self.saved_states:
             raise gcmd.error("Unknown g-code state: %s" % (state_name,))
+        if len(self.saved_states[state_name]) == 0:
+            raise gcmd.error("No saved states for state '%s' to restore"
+                              % (state_name,))
+        state = self.saved_states.get(state_name).pop()
         # Restore state
         self.absolute_coord = state['absolute_coord']
         self.absolute_extrude = state['absolute_extrude']
