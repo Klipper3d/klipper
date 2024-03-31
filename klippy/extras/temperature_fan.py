@@ -31,6 +31,7 @@ class TemperatureFan:
             'target_temp', 40. if self.max_temp > 40. else self.max_temp,
             minval=self.min_temp, maxval=self.max_temp)
         self.target_temp = self.target_temp_conf
+        self.max_delta = config.getfloat('max_delta', 2.0, above=0.)
         algos = {'watermark': ControlBangBang, 'pid': ControlPID}
         algo = config.getchoice('control', algos)
         self.control = algo(self, config)
@@ -65,6 +66,8 @@ class TemperatureFan:
         return self.min_speed
     def get_max_speed(self):
         return self.max_speed
+    def get_max_delta(self):
+        return self.max_delta
     def get_status(self, eventtime):
         status = self.fan.get_status(eventtime)
         status["temperature"] = self.last_temp
@@ -86,17 +89,16 @@ class TemperatureFan:
 ######################################################################
 
 class ControlBangBang:
-    def __init__(self, temperature_fan, config):
+    def __init__(self, temperature_fan):
         self.temperature_fan = temperature_fan
-        self.max_delta = config.getfloat('max_delta', 2.0, above=0.)
         self.heating = False
     def temperature_callback(self, read_time, temp):
         current_temp, target_temp = self.temperature_fan.get_temp(read_time)
         if (self.heating
-            and temp >= target_temp+self.max_delta):
+            and temp >= target_temp+self.temperature_fan.get_max_delta()):
             self.heating = False
         elif (not self.heating
-              and temp <= target_temp-self.max_delta):
+              and temp <= target_temp-self.temperature_fan.get_max_delta()):
             self.heating = True
         if self.heating:
             self.temperature_fan.set_speed(read_time, 0.)
@@ -141,15 +143,14 @@ class ControlPID:
         temp_integ = max(0., min(self.temp_integ_max, temp_integ))
         # Calculate output
         co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
-        bounded_co = max(0., min(self.temperature_fan.get_max_speed(), co))
-        
-        if temp_err>0:  # stop the fan if the temp is lower than the target temp
-            spd = 0.
-        else:
-            if temp_err<-1: #enable the fan when the temp diff. is >1°C
-                spd = max(self.temperature_fan.get_min_speed(),bounded_co)
-            
-        self.temperature_fan.set_speed(read_time, spd)
+        bounded_co = max(self.temperature_fan.get_min_speed(),
+                         min(self.temperature_fan.get_max_speed(), co))
+        # stop and go conditions for the fan
+        if temp_err > self.temperature_fan.get_max_delta():
+            fanspd = 0
+        if -temp_err > self.temperature_fan.get_max_delta():
+            fanspd = bounded_co
+        self.temperature_fan.set_speed(read_time, fanspd)
         # Store state for next measurement
         self.prev_temp = temp
         self.prev_temp_time = read_time
