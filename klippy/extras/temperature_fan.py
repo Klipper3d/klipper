@@ -142,9 +142,14 @@ class ControlPID:
         # Calculate output
         co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
         bounded_co = max(0., min(self.temperature_fan.get_max_speed(), co))
-        self.temperature_fan.set_speed(
-            read_time, max(self.temperature_fan.get_min_speed(),
-                           self.temperature_fan.get_max_speed() - bounded_co))
+        
+        if temp_err>0:  # stop the fan if the temp is lower than the target temp
+            spd = 0.
+        else:
+            if temp_err<-1: #enable the fan when the temp diff. is >1°C
+                spd = max(self.temperature_fan.get_min_speed(),bounded_co)
+            
+        self.temperature_fan.set_speed(read_time, spd)
         # Store state for next measurement
         self.prev_temp = temp
         self.prev_temp_time = read_time
