@@ -141,27 +141,52 @@ class HomingMove:
                           for sp in self.stepper_positions}
             trig_steps = {sp.stepper_name: sp.trig_pos - sp.start_pos
                           for sp in self.stepper_positions}
-            difference = {key: trig_steps[key] - halt_steps[key]for key in halt_steps}
-            steppers = {stepper.get_name(): stepper for stepper in kin.get_steppers()}
-            step_dists = {stepper.get_name(): stepper.get_step_dist() for stepper in kin.get_steppers()}
+            difference = {
+                key: trig_steps[key] - halt_steps[key]
+                for key in halt_steps
+            }
+
+            steppers = {
+                stepper.get_name(): stepper
+                for stepper in kin.get_steppers()
+            }
+
+            step_dists = {
+                stepper.get_name(): stepper.get_step_dist()
+                for stepper in kin.get_steppers()
+            }
 
             for z_diff in difference:
-                self.stepper_adjust_move(steppers[z_diff], (step_dists[z_diff] * difference[z_diff]))
+                adjustment = step_dists[z_diff] * difference[z_diff]
+                self.stepper_adjust_move(steppers[z_diff], adjustment)
+
             haltpos = trigpos = self.calc_toolhead_pos(kin_spos, trig_steps)
 
+            # Handling the 'else' block
         else:
             haltpos = trigpos = movepos
-            over_steps = {sp.stepper_name: sp.halt_pos - sp.trig_pos
-                          for sp in self.stepper_positions}
+            over_steps = {
+                sp.stepper_name: sp.halt_pos - sp.trig_pos
+                for sp in self.stepper_positions
+            }
             if any(over_steps.values()):
                 self.toolhead.set_position(movepos)
-                halt_kin_spos = {s.get_name(): s.get_commanded_position()
-                                 for s in kin.get_steppers()}
-                steppers = {stepper.get_name(): stepper for stepper in kin.get_steppers()}
-                step_dists = {stepper.get_name(): stepper.get_step_dist() for stepper in kin.get_steppers()}
+                halt_kin_spos = {
+                    s.get_name(): s.get_commanded_position()
+                    for s in kin.get_steppers()
+                }
+                steppers = {
+                    stepper.get_name(): stepper
+                    for stepper in kin.get_steppers()
+                }
+                step_dists = {
+                    stepper.get_name(): stepper.get_step_dist()
+                    for stepper in kin.get_steppers()
+                }
 
                 for z_diff in over_steps:
-                    self.stepper_adjust_move(steppers[z_diff], (step_dists[z_diff] * over_steps[z_diff]))
+                    adjustment = step_dists[z_diff] * over_steps[z_diff]
+                    self.stepper_adjust_move(steppers[z_diff], adjustment)
                 haltpos = self.calc_toolhead_pos(halt_kin_spos, over_steps)
         self.toolhead.set_position(haltpos)
         # Signal homing/probing move complete
