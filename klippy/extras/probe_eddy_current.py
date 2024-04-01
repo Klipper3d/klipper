@@ -6,6 +6,7 @@
 import logging, math, bisect
 import mcu
 from . import ldc1612, probe, manual_probe
+from mathutil import Polynomial2d
 
 OUT_OF_RANGE = 99.9
 
@@ -14,9 +15,11 @@ class EddyCalibration:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name()
+        self.drift_comp = EddyDriftCompensation(config)
         # Current calibration data
         self.cal_freqs = []
         self.cal_zpos = []
+        self.cal_temp = config.getfloat('calibration_temp', 0)
         cal = config.get('calibrate', None)
         if cal is not None:
             cal = [list(map(float, d.strip().split(':', 1)))
@@ -38,7 +41,8 @@ class EddyCalibration:
         self.cal_zpos = [c[1] for c in cal]
     def apply_calibration(self, samples):
         for i, (samp_time, freq, dummy_z) in enumerate(samples):
-            pos = bisect.bisect(self.cal_freqs, freq)
+            adj_freq = self.drift_comp.adjust_freq(freq, self.cal_temp)
+            pos = bisect.bisect(self.cal_freqs, adj_freq)
             if pos >= len(self.cal_zpos):
                 zpos = -OUT_OF_RANGE
             elif pos == 0:
@@ -51,7 +55,7 @@ class EddyCalibration:
                 prev_zpos = self.cal_zpos[pos - 1]
                 gain = (this_zpos - prev_zpos) / (this_freq - prev_freq)
                 offset = prev_zpos - prev_freq * gain
-                zpos = freq * gain + offset
+                zpos = adj_freq * gain + offset
             samples[i] = (samp_time, freq, round(zpos, 6))
     def freq_to_height(self, freq):
         dummy_sample = [(0., freq, 0.)]
@@ -71,7 +75,8 @@ class EddyCalibration:
         prev_zpos = rev_zpos[pos - 1]
         gain = (this_freq - prev_freq) / (this_zpos - prev_zpos)
         offset = prev_freq - prev_zpos * gain
-        return height * gain + offset
+        freq = height * gain + offset
+        return self.drift_comp.lookup_freq(freq, self.cal_temp)
     def do_calibration_moves(self, move_speed):
         toolhead = self.printer.lookup_object('toolhead')
         kin = toolhead.get_kinematics()
@@ -86,6 +91,7 @@ class EddyCalibration:
             return True
         self.printer.lookup_object(self.name).add_client(handle_batch)
         toolhead.dwell(1.)
+        temp = self.drift_comp.get_temperature()
         # Move to each 40um position
         max_z = 4.0
         samp_dist = 0.040
@@ -112,6 +118,7 @@ class EddyCalibration:
             times.append((start_query_time, end_query_time, kin_pos[2]))
         toolhead.dwell(1.0)
         toolhead.wait_moves()
+        temp = (temp + self.drift_comp.get_temperature()) / 2.
         # Finish data collection
         is_finished = True
         # Correlate query responses
@@ -127,7 +134,7 @@ class EddyCalibration:
         if len(cal) != len(times):
             raise self.printer.command_error(
                 "Failed calibration - incomplete sensor data")
-        return cal
+        return cal, temp
     def calc_freqs(self, meas):
         total_count = total_variance = 0
         positions = {}
@@ -158,7 +165,7 @@ class EddyCalibration:
         curpos[2] -= 5. - 0.050
         move(curpos, self.probe_speed)
         # Perform calibration movement and capture
-        cal = self.do_calibration_moves(self.probe_speed)
+        cal, temp = self.do_calibration_moves(self.probe_speed)
         # Calculate each sample position average and variance
         positions, std, total = self.calc_freqs(cal)
         last_freq = 0.
@@ -182,6 +189,7 @@ class EddyCalibration:
         cal_contents.pop()
         configfile = self.printer.lookup_object('configfile')
         configfile.set(self.name, 'calibrate', ''.join(cal_contents))
+        configfile.set(self.name, 'calibration_temp', "%.6f" % (temp,))
     cmd_EDDY_CALIBRATE_help = "Calibrate eddy current probe"
     def cmd_EDDY_CALIBRATE(self, gcmd):
         self.probe_speed = gcmd.get_float("PROBE_SPEED", 5., above=0.)
@@ -435,6 +443,253 @@ class PrinterEddyProbe:
             return EddyScanningProbe(self.printer, self.sensor_helper,
                                      self.calibration, z_offset, gcmd)
         return self.probe_session.start_probe_session(gcmd)
+
+
+DRIFT_SAMPLE_COUNT = 9
+
+class EddyDriftCompensation:
+    def __init__(self, config):
+        self.printer = config.get_printer()
+        self.name = config.get_name()
+        self.drift_calibration = None
+        self.calibration_samples = None
+        self.scale = config.getfloat("drift_adjust_factor", 1., minval=0.)
+        self.dc_min_temp = config.getfloat("drift_calibration_min_temp", 0.)
+        dc = config.getlists(
+            "drift_calibration", None, seps=(',', '\n'), parser=float
+        )
+        self.min_freq = 999999999999.
+        if dc is not None:
+            for coefs in dc:
+                if len(coefs) != 3:
+                    raise config.error(
+                        "Invalid polynomial in drift calibration"
+                    )
+            self.drift_calibration = [Polynomial2d(*coefs) for coefs in dc]
+            cal = self.drift_calibration
+            self._check_calibration(cal, self.dc_min_temp, config.error)
+            low_poly = self.drift_calibration[-1]
+            self.min_freq = min([low_poly(temp) for temp in range(121)])
+            cal_str = "\n".join([repr(p) for p in cal])
+            logging.info(
+                "%s: loaded temperature drift calibration. Min Temp: %.2f,"
+                " Min Freq: %.6f\n%s"
+                % (self.name, self.dc_min_temp, self.min_freq, cal_str)
+            )
+        else:
+            logging.info(
+                "%s: No drift calibration configured, disabling temperature "
+                "compensation"
+                % (self.name,)
+            )
+        self.enabled = has_dc = self.drift_calibration is not None
+        cal_temp = config.getfloat('calibration_temp', 0)
+        if cal_temp < 1e-6 and has_dc:
+            self.enabled = False
+            logging.info(
+                "%s: No temperature saved for eddy probe calibration, "
+                "disabling temperature compensation."
+                % (self.name,)
+            )
+
+        short_name = self.name.split(maxsplit=1)[-1]
+        temp_section = "temperature_probe " + short_name
+        self.temp_sensor = None
+        if config.has_section(temp_section):
+            self.temp_sensor = self.printer.load_object(
+                config, temp_section
+            )
+            self.temp_sensor.register_calibration_helper(self)
+        if self.temp_sensor is None and has_dc:
+            self.enabled = False
+            logging.info(
+                "%s: Temperature Sensor [%s] not configured, "
+                "disabling temperature compensation"
+                % (self.name, temp_section)
+            )
+
+        # Register Gcode Command
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_mux_command(
+            "SET_PROBE_DRIFT_ADJ_FACTOR", "PROBE",
+            short_name, self.cmd_SET_DRIFT_FACTOR,
+            desc=self.cmd_SET_DRIFT_FACTOR_help
+        )
+
+    def is_enabled(self):
+        return self.enabled
+
+    def collect_sample(self, kin_pos, tool_zero_z, speeds):
+        if self.calibration_samples is None:
+            self.calibration_samples = [[] for _ in range(DRIFT_SAMPLE_COUNT)]
+        move_times = []
+        temps = [0. for _ in range(DRIFT_SAMPLE_COUNT)]
+        probe_samples = [[] for _ in range(DRIFT_SAMPLE_COUNT)]
+        toolhead = self.printer.lookup_object("toolhead")
+        cur_pos = toolhead.get_position()
+        lift_speed, probe_speed, _ = speeds
+
+        def _on_bulk_data_recd(msg):
+            if move_times:
+                idx, start_time, end_time = move_times[0]
+                cur_temp = self.get_temperature()
+                for sample in msg["data"]:
+                    ptime = sample[0]
+                    while ptime > end_time:
+                        move_times.pop(0)
+                        if not move_times:
+                            return idx >= DRIFT_SAMPLE_COUNT - 1
+                        idx, start_time, end_time = move_times[0]
+                    if ptime < start_time:
+                        continue
+                    temps[idx] = cur_temp
+                    probe_samples[idx].append(sample)
+            return True
+        self.printer.lookup_object(self.name).add_client(_on_bulk_data_recd)
+        for i in range(DRIFT_SAMPLE_COUNT):
+            if i == 0:
+                # Move down to first sample location
+                cur_pos[2] = tool_zero_z + .05
+            else:
+                # Sample each .5mm in z
+                cur_pos[2] += 1.
+                toolhead.manual_move(cur_pos, lift_speed)
+                cur_pos[2] -= .5
+            toolhead.manual_move(cur_pos, probe_speed)
+            start = toolhead.get_last_move_time() + .05
+            end = start + .1
+            move_times.append((i, start, end))
+            toolhead.dwell(.2)
+        toolhead.wait_moves()
+        # Wait for sample collection to finish
+        reactor = self.printer.get_reactor()
+        evttime = reactor.monotonic()
+        while move_times:
+            evttime = reactor.pause(evttime + .1)
+        sample_temp = sum(temps) / len(temps)
+        for i, data in enumerate(probe_samples):
+            freqs = [d[1] for d in data]
+            zvals = [d[2] for d in data]
+            avg_freq = sum(freqs) / len(freqs)
+            avg_z = sum(zvals) / len(zvals)
+            kin_z = i * .5 + .05 + kin_pos[2]
+            logging.info(
+                "Probe Values at Temp %.2fC, Z %.4fmm: Avg Freq = %.6f, "
+                "Avg Measured Z = %.6f"
+                % (sample_temp, kin_z, avg_freq, avg_z)
+            )
+            self.calibration_samples[i].append((sample_temp, avg_freq))
+        return sample_temp
+
+    def start_calibration(self):
+        self.enabled = False
+        self.calibration_samples = [[] for _ in range(DRIFT_SAMPLE_COUNT)]
+
+    def finish_calibration(self, success):
+        cal_samples = self.calibration_samples
+        self.calibration_samples = None
+        if not success:
+            return
+        gcode = self.printer.lookup_object("gcode")
+        if len(cal_samples) < 3:
+            raise gcode.error(
+                "calbration error, not enough samples"
+            )
+        min_temp, _ = cal_samples[0][0]
+        polynomials = []
+        for i, coords in enumerate(cal_samples):
+            height = .05 + i * .5
+            poly = Polynomial2d.fit(coords)
+            polynomials.append(poly)
+            logging.info("Polynomial at Z=%.2f: %s" % (height, repr(poly)))
+        self._check_calibration(polynomials, min_temp)
+        coef_cfg = "\n" + "\n".join([str(p) for p in polynomials])
+        configfile = self.printer.lookup_object('configfile')
+        configfile.set(self.name, "drift_calibration", coef_cfg)
+        configfile.set(self.name, "drift_calibration_min_temp", min_temp)
+        gcode.respond_info(
+            "%s: generated %d 2D polynomials\n"
+            "The SAVE_CONFIG command will update the printer config "
+            "file and restart the printer."
+            % (self.name, len(polynomials))
+        )
+        try:
+            # Dump collected data to temporary file
+            import json
+            ctime = int(self.printer.get_reactor().monotonic())
+            tmpfname = "/tmp/eddy-probe-drift-%d.json" % (ctime)
+            out = {
+                "polynomial_coefs": [c.get_coefs() for c in polynomials],
+                "legend": ["temperature", "frequency"],
+                "data": cal_samples,
+                "start_z": .05,
+                "sample_z_dist": .5
+            }
+            with open(tmpfname, "w") as f:
+                f.write(json.dumps(out))
+        except Exception:
+            logging.exception("Failed to write %s" % (tmpfname))
+
+    def _check_calibration(self, calibration, start_temp, error=None):
+        error = error or self.printer.command_error
+        start = int(start_temp)
+        for temp in range(start, 121, 1):
+            last_freq = calibration[0](temp)
+            for i, poly in enumerate(calibration[1:]):
+                next_freq = poly(temp)
+                if next_freq >= last_freq:
+                    # invalid polynomial
+                    raise error(
+                        "%s: invalid calibration detected, curve at index "
+                        "%d overlaps previous curve at temp %dC."
+                        % (self.name, i + 1, temp)
+                    )
+                last_freq = next_freq
+
+    def adjust_freq(self, freq, dest_temp):
+        # Adjusts frequency from current temperature toward
+        # destination temperature
+        if not self.enabled or freq < self.min_freq:
+            return freq
+        cur_temp = self.temp_sensor.get_temp()[0]
+        return self._calc_freq(freq, cur_temp, dest_temp)
+
+    def lookup_freq(self, freq, origin_temp):
+        # Given a frequency and its orignal sampled temp, find the
+        # offset frequency based on the current temp
+        if not self.enabled or freq < self.min_freq:
+            return freq
+        cur_temp = self.temp_sensor.get_temp()[0]
+        return self._calc_freq(freq, origin_temp, cur_temp)
+
+    def _calc_freq(self, freq, origin_temp, dest_temp):
+        high_freq = low_freq = None
+        dc = self.drift_calibration
+        for pos, poly in enumerate(dc):
+            high_freq = low_freq
+            low_freq = poly(origin_temp)
+            if freq >= low_freq:
+                if high_freq is None:
+                    # Freqency above max calibration value
+                    return freq + ((dc[0](dest_temp) - freq) * self.scale)
+                t = min(1., max(0., (freq - low_freq) / (high_freq - low_freq)))
+                low_tgt_freq = poly(dest_temp)
+                high_tgt_freq = dc[pos-1](dest_temp)
+                err = ((1 - t) * low_tgt_freq + t * high_tgt_freq) - freq
+                return freq + err * self.scale
+        # Frequency below minimum, no correction
+        return freq
+
+    def get_temperature(self):
+        if self.temp_sensor is not None:
+            return self.temp_sensor.get_temp()[0]
+        return 0.
+
+    cmd_SET_DRIFT_FACTOR_help = (
+        "Set adjustment factor applied to drift correction"
+    )
+    def cmd_SET_DRIFT_FACTOR(self, gcmd):
+        self.scale = gcmd.get_float("FACTOR", minval=0.)
 
 def load_config_prefix(config):
     return PrinterEddyProbe(config)
