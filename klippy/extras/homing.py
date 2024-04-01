@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math
+import chelper
 
 HOMING_START_DELAY = 0.001
 ENDSTOP_SAMPLE_TIME = .000015
@@ -43,8 +44,31 @@ class HomingMove:
             toolhead = printer.lookup_object('toolhead')
         self.toolhead = toolhead
         self.stepper_positions = []
+        ffi_main, ffi_lib = chelper.get_ffi()
+        self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
+        self.trapq_append = ffi_lib.trapq_append
+        self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
+        self.stepper_kinematics = ffi_main.gc(
+            ffi_lib.cartesian_stepper_alloc(b'x'), ffi_lib.free)
+
     def get_mcu_endstops(self):
         return [es for es, name in self.endstops]
+
+    def calc_move_time(self, dist, speed, accel):
+        axis_r = 1.
+        if dist < 0.:
+            axis_r = -1.
+            dist = -dist
+        if not accel or not dist:
+            return axis_r, 0., dist / speed, speed
+        max_cruise_v2 = dist * accel
+        if max_cruise_v2 < speed ** 2:
+            speed = math.sqrt(max_cruise_v2)
+        accel_t = speed / accel
+        accel_decel_d = accel_t * speed
+        cruise_t = (dist - accel_decel_d) / speed
+        return axis_r, accel_t, cruise_t, speed
+
     def _calc_endstop_rate(self, mcu_endstop, movepos, speed):
         startpos = self.toolhead.get_position()
         axes_d = [mp - sp for mp, sp in zip(movepos, startpos)]
@@ -107,6 +131,8 @@ class HomingMove:
                 error = "No trigger on %s after full movement" % (name,)
         # Determine stepper halt positions
         self.toolhead.flush_step_generation()
+
+
         for sp in self.stepper_positions:
             tt = trigger_times.get(sp.endstop_name, move_end_print_time)
             sp.note_home_end(tt)
@@ -115,9 +141,14 @@ class HomingMove:
                           for sp in self.stepper_positions}
             trig_steps = {sp.stepper_name: sp.trig_pos - sp.start_pos
                           for sp in self.stepper_positions}
+            difference = {key: trig_steps[key] - halt_steps[key]for key in halt_steps}
+            steppers = {stepper.get_name(): stepper for stepper in kin.get_steppers()}
+            step_dists = {stepper.get_name(): stepper.get_step_dist() for stepper in kin.get_steppers()}
+
+            for z_diff in difference:
+                self.stepper_adjust_move(steppers[z_diff], (step_dists[z_diff] * difference[z_diff]))
             haltpos = trigpos = self.calc_toolhead_pos(kin_spos, trig_steps)
-            if trig_steps != halt_steps:
-                haltpos = self.calc_toolhead_pos(kin_spos, halt_steps)
+
         else:
             haltpos = trigpos = movepos
             over_steps = {sp.stepper_name: sp.halt_pos - sp.trig_pos
@@ -126,6 +157,11 @@ class HomingMove:
                 self.toolhead.set_position(movepos)
                 halt_kin_spos = {s.get_name(): s.get_commanded_position()
                                  for s in kin.get_steppers()}
+                steppers = {stepper.get_name(): stepper for stepper in kin.get_steppers()}
+                step_dists = {stepper.get_name(): stepper.get_step_dist() for stepper in kin.get_steppers()}
+
+                for z_diff in over_steps:
+                    self.stepper_adjust_move(steppers[z_diff], (step_dists[z_diff] * over_steps[z_diff]))
                 haltpos = self.calc_toolhead_pos(halt_kin_spos, over_steps)
         self.toolhead.set_position(haltpos)
         # Signal homing/probing move complete
@@ -144,6 +180,26 @@ class HomingMove:
             if sp.start_pos == sp.trig_pos:
                 return sp.endstop_name
         return None
+
+    def stepper_adjust_move(self, stepper, dist):
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.flush_step_generation()
+        prev_sk = stepper.set_stepper_kinematics(self.stepper_kinematics)
+        prev_trapq = stepper.set_trapq(self.trapq)
+        stepper.set_position((0., 0., 0.))
+        axis_r, accel_t, cruise_t, cruise_v = self.calc_move_time(dist, 3, 0)
+        print_time = toolhead.get_last_move_time()
+        self.trapq_append(self.trapq, print_time, accel_t, cruise_t, accel_t,
+                          0., 0., 0., axis_r, 0., 0., 0., cruise_v, 0)
+        print_time = print_time + accel_t + cruise_t + accel_t
+        stepper.generate_steps(print_time)
+        self.trapq_finalize_moves(self.trapq, print_time + 99999.9,
+                                  print_time + 99999.9)
+        stepper.set_trapq(prev_trapq)
+        stepper.set_stepper_kinematics(prev_sk)
+        toolhead.note_mcu_movequeue_activity(print_time)
+        toolhead.dwell(accel_t + cruise_t + accel_t)
+        toolhead.flush_step_generation()
 
 # State tracking of homing requests
 class Homing:
