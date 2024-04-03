@@ -143,10 +143,10 @@ class HomingMove:
                 self.toolhead.set_position(movepos)
                 halt_kin_spos = {steppers[s].get_name():
                     steppers[s].get_commanded_position() for s in steppers}
-                for z_diff in over_steps:
-                    adjustments = (steppers[z_diff].get_step_dist()
-                               * over_steps[z_diff])
-                    self.stepper_adjust_move(steppers[z_diff], adjustments)
+                for step_diff in over_steps:
+                    adjustments = (steppers[step_diff].get_step_dist()
+                               * over_steps[step_diff])
+                    self.stepper_adjust_move(steppers[step_diff], adjustments)
                 haltpos = self.calc_toolhead_pos(halt_kin_spos, over_steps)
         self.toolhead.set_position(haltpos)
         # Signal homing/probing move complete
