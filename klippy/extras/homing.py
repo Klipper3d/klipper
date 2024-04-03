@@ -131,8 +131,9 @@ class HomingMove:
             difference = {key: trig_steps[key] - halt_steps[key]
                 for key in halt_steps}
             for z_diff in difference:
-                adjustment = steppers[z_diff].get_step_dist() * difference[z_diff]
-                self.stepper_adjust_move(steppers[z_diff], adjustment)
+                adjustments = (steppers[z_diff].get_step_dist()
+                           * difference[z_diff])
+                self.stepper_adjust_move(steppers[z_diff], adjustments)
             haltpos = trigpos = self.calc_toolhead_pos(kin_spos, trig_steps)
         else:
             haltpos = trigpos = movepos
@@ -140,11 +141,12 @@ class HomingMove:
                 for sp in self.stepper_positions}
             if any(over_steps.values()):
                 self.toolhead.set_position(movepos)
-                halt_kin_spos = {steppers[s].get_name(): steppers[s].get_commanded_position()
-                    for s in steppers}
+                halt_kin_spos = {steppers[s].get_name():
+                    steppers[s].get_commanded_position() for s in steppers}
                 for z_diff in over_steps:
-                    adjustment = steppers[z_diff].get_step_dist() * over_steps[z_diff]
-                    self.stepper_adjust_move(steppers[z_diff], adjustment)
+                    adjustments = (steppers[z_diff].get_step_dist()
+                               * over_steps[z_diff])
+                    self.stepper_adjust_move(steppers[z_diff], adjustments)
                 haltpos = self.calc_toolhead_pos(halt_kin_spos, over_steps)
         self.toolhead.set_position(haltpos)
         # Signal homing/probing move complete
@@ -170,7 +172,8 @@ class HomingMove:
         prev_sk = stepper.set_stepper_kinematics(self.stepper_kinematics)
         prev_trapq = stepper.set_trapq(self.trapq)
         stepper.set_position((0., 0., 0.))
-        axis_r, accel_t, cruise_t, cruise_v = force_move.calc_move_time(dist, STEPPER_ADJUST_SPEED, 0)
+        axis_r, accel_t, cruise_t, cruise_v = (
+            force_move.calc_move_time(dist, STEPPER_ADJUST_SPEED, 0))
         print_time = toolhead.get_last_move_time()
         self.trapq_append(self.trapq, print_time, accel_t, cruise_t, accel_t,
                           0., 0., 0., axis_r, 0., 0., 0., cruise_v, 0)
