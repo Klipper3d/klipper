@@ -128,12 +128,12 @@ class HomingMove:
                           for sp in self.stepper_positions}
             trig_steps = {sp.stepper_name: sp.trig_pos - sp.start_pos
                           for sp in self.stepper_positions}
-            difference = {key: trig_steps[key] - halt_steps[key]
-                for key in halt_steps}
-            for z_diff in difference:
-                adjustments = (steppers[z_diff].get_step_dist()
-                           * difference[z_diff])
-                self.stepper_adjust_move(steppers[z_diff], adjustments)
+            difference = {stepper: trig_steps[stepper] - halt_steps[stepper]
+                for stepper in halt_steps}
+            for step_diff in difference:
+                adjustments = (steppers[step_diff].get_step_dist()
+                           * difference[step_diff])
+                self.stepper_adjust_move(steppers[step_diff], adjustments)
             haltpos = trigpos = self.calc_toolhead_pos(kin_spos, trig_steps)
         else:
             haltpos = trigpos = movepos
