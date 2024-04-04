@@ -3,21 +3,58 @@
 // Copyright (C) 2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
+//Modified 04/04/2024 by Amken3d (info@amken.us) to dynamically select all possible UART combinations for RP2040
 
 #include <stdint.h> // uint32_t
-#include "autoconf.h" // CONFIG_SERIAL
+#include "autoconf.h" // Include configuration header
 #include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/irq.h" // irq_save
 #include "board/serial_irq.h" // serial_rx_data
-#include "hardware/structs/resets.h" // RESETS_RESET_UART0_BITS
-#include "hardware/structs/uart.h" // UART0_BASE
-#include "internal.h" // UART0_IRQn
+#include "hardware/structs/resets.h" // RESETS_RESET_UART0_BITS, RESETS_RESET_UART1_BITS
+#include "hardware/structs/uart.h" // uart0_hw, uart1_hw
+#include "internal.h" // UART0_IRQn, UART1_IRQn
 #include "sched.h" // DECL_INIT
 
+// Dynamically select UART and IRQ based on configuration
+#if CONFIG_RP2040_SERIAL_UART0
 #define UARTx uart0_hw
-#define UARTx_IRQn UART0_IRQ_IRQn
-#define GPIO_Rx 1
-#define GPIO_Tx 0
+    #define UARTx_IRQn UART0_IRQ_IRQn
+    #if CONFIG_RP2040_SERIAL_UART0_PINS_0_1
+        #define GPIO_Rx 1
+        #define GPIO_Tx 0
+    #elif CONFIG_RP2040_SERIAL_UART0_PINS_12_13
+        #define GPIO_Rx 13
+        #define GPIO_Tx 12
+    #elif CONFIG_RP2040_SERIAL_UART0_PINS_16_17
+        #define GPIO_Rx 17
+        #define GPIO_Tx 16
+    #elif CONFIG_RP2040_SERIAL_UART0_PINS_28_29
+        #define GPIO_Rx 29
+        #define GPIO_Tx 28
+    #else
+        #error "UART0 pin configuration not specified"
+    #endif
+#elif CONFIG_RP2040_SERIAL_UART1
+#define UARTx uart1_hw
+    #define UARTx_IRQn UART1_IRQ_IRQn
+    #if CONFIG_RP2040_SERIAL_UART1_PINS_4_5
+        #define GPIO_Rx 5
+        #define GPIO_Tx 4
+    #elif CONFIG_RP2040_SERIAL_UART1_PINS_8_9
+        #define GPIO_Rx 9
+        #define GPIO_Tx 8
+    #elif CONFIG_RP2040_SERIAL_UART1_PINS_20_21
+        #define GPIO_Rx 20
+        #define GPIO_Tx 21
+    #elif CONFIG_RP2040_SERIAL_UART1_PINS_24_25
+       #define GPIO_Rx 24
+       #define GPIO_Tx 25
+    #else
+        #error "UART1 pin configuration not specified"
+    #endif
+#else
+#error "No UART selected"
+#endif
 
 // Write tx bytes to the serial port
 static void
@@ -67,10 +104,17 @@ serial_enable_tx_irq(void)
 void
 serial_init(void)
 {
+
+#if CONFIG_RP2040_SERIAL_UART0
     enable_pclock(RESETS_RESET_UART0_BITS);
+    uint32_t pclk = get_pclock_frequency(RESETS_RESET_UART0_BITS);
+#elif CONFIG_RP2040_SERIAL_UART1
+    enable_pclock(RESETS_RESET_UART1_BITS);
+    uint32_t pclk = get_pclock_frequency(RESETS_RESET_UART1_BITS);
+#endif
 
     // Setup baud
-    uint32_t pclk = get_pclock_frequency(RESETS_RESET_UART0_BITS);
+
     uint32_t div = DIV_ROUND_CLOSEST(pclk * 4, CONFIG_SERIAL_BAUD);
     UARTx->ibrd = div >> 6;
     UARTx->fbrd = div & 0x3f;
