@@ -85,8 +85,8 @@ class HomingMove:
         steppers = {stepper.get_name(): stepper
                     for stepper in kin.get_steppers()}
 
-        kin_spos = {steppers[s].get_name(): steppers[s].get_commanded_position()
-                    for s in steppers}
+        kin_spos = {steppers[s].get_name():
+                    steppers[s].get_commanded_position() for s in steppers}
         self.stepper_positions = [ StepperPosition(s, name)
                                    for es, name in self.endstops
                                    for s in es.get_steppers() ]
@@ -130,6 +130,7 @@ class HomingMove:
                           for sp in self.stepper_positions}
             difference = {stepper: trig_steps[stepper] - halt_steps[stepper]
                 for stepper in halt_steps}
+            #Adjust the steppers back to the trigger position
             for step_diff in difference:
                 adjustments = (steppers[step_diff].get_step_dist()
                            * difference[step_diff])
@@ -143,6 +144,7 @@ class HomingMove:
                 self.toolhead.set_position(movepos)
                 halt_kin_spos = {steppers[s].get_name():
                     steppers[s].get_commanded_position() for s in steppers}
+                #Adjust the steppers back to the trigger position
                 for step_diff in over_steps:
                     adjustments = (steppers[step_diff].get_step_dist()
                                * over_steps[step_diff])
