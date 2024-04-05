@@ -293,6 +293,13 @@ understands it).
 - `z_position_lower`: Last probe attempt just lower than the current height.
 - `z_position_upper`: Last probe attempt just greater than the current height.
 
+## manual_stepper
+
+The following information is available in the
+`manual_stepper` object:
+- `enabled`: Returns True if the stepper is currently enabled.
+- `position`: The requested position.
+
 ## mcu
 
 The following information is available in
