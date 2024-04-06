@@ -655,7 +655,6 @@ class MCU:
         self._config_cmds.insert(0, "allocate_oids count=%d"
                                  % (self._oid_count,))
         # Resolve pin names
-        mcu_type = self._serial.get_msgparser().get_constant('MCU')
         ppins = self._printer.lookup_object('pins')
         pin_resolver = ppins.get_pin_resolver(self._name)
         for cmdlist in (self._config_cmds, self._restart_cmds, self._init_cmds):
