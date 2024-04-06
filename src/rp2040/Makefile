@@ -28,13 +28,17 @@ src-$(CONFIG_HAVE_GPIO_I2C) += rp2040/i2c.c
 
 # rp2040 stage2 building
 STAGE2_FILE := $(shell echo $(CONFIG_RP2040_STAGE2_FILE))
-$(OUT)stage2.o: lib/rp2040/boot_stage2/$(STAGE2_FILE) $(OUT)autoconf.h
+#$(OUT)stage2.o: lib/rp2040/boot_stage2/$(STAGE2_FILE) $(OUT)autoconf.h
+#	@echo "  Building rp2040 stage2 $@"
+#	$(Q)$(CC) $(CFLAGS) -Ilib/rp2040/boot_stage2 -Ilib/rp2040/boot_stage2/asminclude -DPICO_FLASH_SPI_CLKDIV=$(CONFIG_RP2040_STAGE2_CLKDIV) -c $< -o $(OUT)stage2raw1.o
+#	$(Q)$(LD) $(OUT)stage2raw1.o --script=lib/rp2040/boot_stage2/boot_stage2.ld -o $(OUT)stage2raw.o
+#	$(Q)$(OBJCOPY) -O binary $(OUT)stage2raw.o $(OUT)stage2raw.bin
+#	$(Q)lib/rp2040/boot_stage2/pad_checksum -s 0xffffffff $(OUT)stage2raw.bin $(OUT)stage2.S
+#	$(Q)$(CC) $(CFLAGS) -c $(OUT)stage2.S -o $(OUT)stage2.o
+
+$(OUT)stage2.o: lib/rp2040/boot_stage2/boot2/$(STAGE2_FILE)
 	@echo "  Building rp2040 stage2 $@"
-	$(Q)$(CC) $(CFLAGS) -Ilib/rp2040/boot_stage2 -Ilib/rp2040/boot_stage2/asminclude -DPICO_FLASH_SPI_CLKDIV=$(CONFIG_RP2040_STAGE2_CLKDIV) -c $< -o $(OUT)stage2raw1.o
-	$(Q)$(LD) $(OUT)stage2raw1.o --script=lib/rp2040/boot_stage2/boot_stage2.ld -o $(OUT)stage2raw.o
-	$(Q)$(OBJCOPY) -O binary $(OUT)stage2raw.o $(OUT)stage2raw.bin
-	$(Q)lib/rp2040/boot_stage2/pad_checksum -s 0xffffffff $(OUT)stage2raw.bin $(OUT)stage2.S
-	$(Q)$(CC) $(CFLAGS) -c $(OUT)stage2.S -o $(OUT)stage2.o
+	$(Q)$(CC) $(CFLAGS) -Ilib/rp2040/boot_stage2 -Ilib/rp2040/boot_stage2/asminclude -c $< -o $@
 
 # Binary output file rules when using stage2
 $(OUT)lib/rp2040/elf2uf2/elf2uf2: lib/rp2040/elf2uf2/main.cpp
