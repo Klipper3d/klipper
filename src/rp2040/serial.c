@@ -3,14 +3,14 @@
 // Copyright (C) 2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
-//Modified 04/04/2024 by Amken3d (info@amken.us) to dynamically select all possible UART combinations for RP2040
+//Modified 04/04/2024 by Amken3d (info@amken.us) to add all UART pin combos
 
 #include <stdint.h> // uint32_t
 #include "autoconf.h" // Include configuration header
 #include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/irq.h" // irq_save
 #include "board/serial_irq.h" // serial_rx_data
-#include "hardware/structs/resets.h" // RESETS_RESET_UART0_BITS, RESETS_RESET_UART1_BITS
+#include "hardware/structs/resets.h" // RESETS_RESET_UART0/1_BITS
 #include "hardware/structs/uart.h" // uart0_hw, uart1_hw
 #include "internal.h" // UART0_IRQn, UART1_IRQn
 #include "sched.h" // DECL_INIT
