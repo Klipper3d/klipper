@@ -59,7 +59,6 @@ class AxisInputShaper:
         return self.n, self.A, self.T
     def update(self, gcmd):
         self.params.update(gcmd)
-        old_n, old_A, old_T = self.n, self.A, self.T
         self.n, self.A, self.T = self.params.get_shaper()
     def set_shaper_kinematics(self, sk):
         ffi_main, ffi_lib = chelper.get_ffi()

@@ -207,7 +207,7 @@ software dependencies not installed by default. First, run on your Raspberry Pi
 the following commands:
 ```
 sudo apt update
-sudo apt install python3-numpy python3-matplotlib libatlas-base-dev libopenblas-base
+sudo apt install python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev
 ```
 
 Next, in order to install NumPy in the Klipper environment, run the command:
