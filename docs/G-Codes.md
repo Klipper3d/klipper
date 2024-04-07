@@ -139,6 +139,17 @@ Writes raw "value" into register "register". Both "value" and
 and refer to sensor data sheet for the reference. This is only
 available for tle5012b chips.
 
+### [axis_twist_compensation]
+
+The following commands are available when the
+[axis_twist_compensation config
+section](Config_Reference.md#axis_twist_compensation) is enabled.
+
+#### AXIS_TWIST_COMPENSATION_CALIBRATE
+`AXIS_TWIST_COMPENSATION_CALIBRATE [SAMPLE_COUNT=<value>]`: Initiates the X
+twist calibration wizard. `SAMPLE_COUNT` specifies the number of points along
+the X axis to calibrate at and defaults to 3.
+
 ### [bed_mesh]
 
 The following commands are available when the
@@ -1291,7 +1302,7 @@ The toolhead module is automatically loaded.
 
 #### SET_VELOCITY_LIMIT
 `SET_VELOCITY_LIMIT [VELOCITY=<value>] [ACCEL=<value>]
-[ACCEL_TO_DECEL=<value>] [SQUARE_CORNER_VELOCITY=<value>]`: This
+[MINIMUM_CRUISE_RATIO=<value>] [SQUARE_CORNER_VELOCITY=<value>]`: This
 command can alter the velocity limits that were specified in the
 printer config file. See the
 [printer config section](Config_Reference.md#printer) for a
@@ -1352,17 +1363,6 @@ print.
 
 #### SDCARD_RESET_FILE
 `SDCARD_RESET_FILE`: Unload file and clear SD state.
-
-### [axis_twist_compensation]
-
-The following commands are available when the
-[axis_twist_compensation config
-section](Config_Reference.md#axis_twist_compensation) is enabled.
-
-#### AXIS_TWIST_COMPENSATION_CALIBRATE
-`AXIS_TWIST_COMPENSATION_CALIBRATE [SAMPLE_COUNT=<value>]`: Initiates the X
-twist calibration wizard. `SAMPLE_COUNT` specifies the number of points along
-the X axis to calibrate at and defaults to 3.
 
 ### [z_thermal_adjust]
 
