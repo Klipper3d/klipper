@@ -68,7 +68,7 @@ git clone https://github.com/KevinOConnor/klipper
 Use:
 
 ```
-git clone https://github.com/keenzkustoms/klippermini
+git clone https://github.com/Pravv/klipper
 ```
 
 Then follow the instructions in `config/printer-prusa-mini-plus-2020.cfg`,
