@@ -4,7 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include </usr/include/sched.h> // sched_setscheduler sched_get_priority_max
+#include <sched.h> // sched_setscheduler sched_get_priority_max
 #include <stdio.h> // fprintf
 #include <string.h> // memset
 #include <unistd.h> // getopt
