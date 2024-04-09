@@ -1006,6 +1006,13 @@ appropriate DRIVE_CURRENT for the sensor. After running this command
 use the SAVE_CONFIG command to store that new setting in the
 printer.cfg config file.
 
+#### SET_PROBE_DRIFT_ADJ_FACTOR
+`SET_PROBE_DRIFT_ADJ_FACTOR PROBE=<config_name> FACTOR=<new_factor>`:
+When thermal drift compensation is calibrated this command may be
+used to set the `drift_adj_factor` during runtime.  This value
+is a multiplier applied to the calculated drift compensation and may be
+used to fine tune the result.
+
 ### [pwm_cycle_time]
 
 The following command is available when a
@@ -1415,3 +1422,34 @@ command will probe the points specified in the config and then make independent
 adjustments to each Z stepper to compensate for tilt. See the PROBE command for
 details on the optional probe parameters. The optional `HORIZONTAL_MOVE_Z`
 value overrides the `horizontal_move_z` option specified in the config file.
+
+### [temperature_probe]
+
+The following commands are available when a
+[temperature_probe config section](Config_Reference.md#temperature_probe)
+is enabled.
+
+#### PROBE_DRIFT_CALIBRATE
+`PROBE_DRIFT_CALIBRATE [PROBE=<probe name>] [TARGET=<value>] [STEP=<value>]`:
+Initiates probe drift calibration for eddy current based probes.  The `TARGET`
+is a target temperature for the last sample.  When the temperature recorded
+during a sample exceeds the `TARGET` calibration will complete.  The `STEP`
+parameter sets temperature delta (in C) between samples. After a sample has
+been taken, this delta is used to schedule a call to `PROBE_DRIFT_NEXT`.  The
+default `STEP` is 2.
+
+#### PROBE_DRIFT_NEXT
+`PROBE_DRIFT_NEXT`: After calibration has started this command is run to take
+the next sample.  It is automatically scheduled to run when the delta specified
+by `STEP` has been reached, however its also possible to manually run this
+command to force a new sample.  This command is only available during
+calibration.
+
+#### PROBE_DRIFT_COMPLETE:
+`PROBE_DRIFT_COMPLETE`:  Can be used to end calibration and save the
+current result before the `TARGET` temperature is reached.  This command
+is only available during calibration.
+
+#### ABORT
+`ABORT`:  Aborts the calibration process, discarding the current results.
+This command is only available during drift calibration.
