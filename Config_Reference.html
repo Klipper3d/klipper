@@ -976,6 +976,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#probe_eddy_current" class="md-nav__link">
+    [probe_eddy_current]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#axis_twist_compensation" class="md-nav__link">
     [axis_twist_compensation]
   </a>
@@ -2451,6 +2458,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Eddy_Probe.html" class="md-nav__link">
+        Eddy Current Inductive probe
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -2983,6 +3004,13 @@
           <li class="md-nav__item">
   <a href="#smart_effector" class="md-nav__link">
     [smart_effector]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#probe_eddy_current" class="md-nav__link">
+    [probe_eddy_current]
   </a>
   
 </li>
@@ -5508,6 +5536,37 @@ z_offset:
 #deactivate_gcode:
 #deactivate_on_each_sample:
 #   See the &quot;probe&quot; section for more information on the parameters above.
+</code></pre></div>
+
+<h3 id="probe_eddy_current">[probe_eddy_current]<a class="headerlink" href="#probe_eddy_current" title="Permanent link">&para;</a></h3>
+<p>Support for eddy current inductive probes. One may define this section
+(instead of a probe section) to enable this probe. See the
+<a href="G-Codes.html#probe_eddy_current">command reference</a> for further information.</p>
+<div class="highlight"><pre><span></span><code>[probe_eddy_current my_eddy_probe]
+sensor_type: ldc1612
+#   The sensor chip used to perform eddy current measurements. This
+#   parameter must be provided and must be set to ldc1612.
+#z_offset:
+#   The nominal distance (in mm) between the nozzle and bed that a
+#   probing attempt should stop at. This parameter must be provided.
+#i2c_address:
+#i2c_mcu:
+#i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#i2c_speed:
+#   The i2c settings for the sensor chip. See the &quot;common I2C
+#   settings&quot; section for a description of the above parameters.
+#x_offset:
+#y_offset:
+#speed:
+#lift_speed:
+#samples:
+#sample_retract_dist:
+#samples_result:
+#samples_tolerance:
+#samples_tolerance_retries:
+#   See the &quot;probe&quot; section for information on these parameters.
 </code></pre></div>
 
 <h3 id="axis_twist_compensation">[axis_twist_compensation]<a class="headerlink" href="#axis_twist_compensation" title="Permanent link">&para;</a></h3>
