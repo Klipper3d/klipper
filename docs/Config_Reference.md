@@ -2869,11 +2869,17 @@ information.
 #   The proportional (pid_Kp), integral (pid_Ki), and derivative
 #   (pid_Kd) settings for the PID feedback control system. Klipper
 #   evaluates the PID settings with the following general formula:
-#     fan_pwm = max_power - (Kp*e + Ki*integral(e) - Kd*derivative(e)) / 255
+#     fan_pwm = (Kp*e + Ki*integral(e) - Kd*derivative(e)) / 255
 #   Where "e" is "target_temperature - measured_temperature" and
 #   "fan_pwm" is the requested fan rate with 0.0 being full off and
 #   1.0 being full on. The pid_Kp, pid_Ki, and pid_Kd parameters must
-#   be provided when the PID control algorithm is enabled.
+#   be provided when the PID control algorithm is enabled and must be
+#   negative as "e" < 0 when the fan must be powered on.
+#   fan_pwm is bounded to stay within min_speed <-> max_speed range.
+#   fans stops if fan_pwm is below min_speed and e is >= 0, meaning
+#   that the target_temperature has been reached.
+#   fan starts when measured_temperature is greater than target_
+#   temperature + max_delta
 #pid_deriv_time: 2.0
 #   A time value (in seconds) over which temperature measurements will
 #   be smoothed when using the PID control algorithm. This may reduce
