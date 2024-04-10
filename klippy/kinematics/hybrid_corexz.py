@@ -11,7 +11,6 @@ from . import idex_modes
 class HybridCoreXZKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
-        printer_config = config.getsection('printer')
         # itersolve parameters
         self.rails = [ stepper.PrinterRail(config.getsection('stepper_x')),
                        stepper.LookupMultiRail(config.getsection('stepper_y')),
