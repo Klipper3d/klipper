@@ -1,6 +1,6 @@
 // ADC functions on STM32
 //
-// Copyright (C) 2019-2020  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -15,24 +15,12 @@
 
 DECL_CONSTANT("ADC_MAX", 4095);
 
-#define ADC_TEMPERATURE_PIN 0xfe
-DECL_ENUMERATION("pin", "ADC_TEMPERATURE", ADC_TEMPERATURE_PIN);
-
 static const uint8_t adc_pins[] = {
     GPIO('A', 0), GPIO('A', 1), GPIO('A', 2), GPIO('A', 3),
     GPIO('A', 4), GPIO('A', 5), GPIO('A', 6), GPIO('A', 7),
     GPIO('B', 0), GPIO('B', 1), GPIO('C', 0), GPIO('C', 1),
     GPIO('C', 2), GPIO('C', 3), GPIO('C', 4), GPIO('C', 5),
-
-#if CONFIG_MACH_STM32F1
-    ADC_TEMPERATURE_PIN,
-#elif CONFIG_MACH_STM32F2 || CONFIG_MACH_STM32F4x5
-    ADC_TEMPERATURE_PIN, 0x00, 0x00,
-#elif CONFIG_MACH_STM32F401 || CONFIG_MACH_STM32F446
-    0x00, 0x00, ADC_TEMPERATURE_PIN,
-#endif
-
-#if CONFIG_MACH_STM32F4x5 || CONFIG_MACH_STM32F446
+#if CONFIG_MACH_STM32F4
     0x00, 0x00, 0x00, 0x00,
     GPIO('F', 6), GPIO('F', 7), GPIO('F', 8), GPIO('F', 9),
     GPIO('F', 10), GPIO('F', 3), 0x00, 0x00,
@@ -41,32 +29,15 @@ static const uint8_t adc_pins[] = {
 };
 
 #if CONFIG_MACH_STM32F1
-#define CR2_FLAGS (ADC_CR2_ADON | (7 << ADC_CR2_EXTSEL_Pos) | ADC_CR2_EXTTRIG \
-                   | ADC_CR2_TSVREFE)
+#define CR2_FLAGS (ADC_CR2_ADON | (7 << ADC_CR2_EXTSEL_Pos) | ADC_CR2_EXTTRIG)
 #else
 #define CR2_FLAGS ADC_CR2_ADON
 #endif
 
 // ADC timing:
-// stm32f103: ADC clock=4.5Mhz, Tconv=12.5, Tsamp=41.5, total=12.000us
-// stm32f407: ADC clock=21Mhz, Tconv=12, Tsamp=84, total=4.571us
-// stm32f446: ADC clock=22.5Mhz, Tconv=12, Tsamp=84, total=4.267us
-
-// Perform calibration on stm32f103
-static void
-adc_calibrate(ADC_TypeDef *adc)
-{
-#if CONFIG_MACH_STM32F1
-    adc->CR2 = ADC_CR2_ADON;
-    udelay(10);
-    adc->CR2 = ADC_CR2_ADON | ADC_CR2_RSTCAL;
-    while (adc->CR2 & ADC_CR2_RSTCAL)
-        ;
-    adc->CR2 = ADC_CR2_ADON | ADC_CR2_CAL;
-    while (adc->CR2 & ADC_CR2_CAL)
-        ;
-#endif
-}
+// stm32f103: ADC clock=9Mhz, Tconv=12.5, Tsamp=28.5, total=4.556us
+// stm32f407: ADC clock=21Mhz, Tconv=12, Tsamp=56, total=3.238us
+// stm32f446: ADC clock=22.5Mhz, Tconv=12, Tsamp=56, total=3.022us
 
 struct gpio_adc
 gpio_adc_setup(uint32_t pin)
@@ -83,20 +54,19 @@ gpio_adc_setup(uint32_t pin)
     // Determine which ADC block to use
     ADC_TypeDef *adc = ADC1;
     uint32_t adc_base = ADC1_BASE;
-#if CONFIG_MACH_STM32F4x5 || CONFIG_MACH_STM32F446
-    if (chan >= 19) {
+#if CONFIG_MACH_STM32F4
+    if (chan >= 16) {
         // On the STM32F4, some ADC channels are only available from ADC3
         adc = ADC3;
         adc_base += 0x800;
-        chan -= 19;
+        chan -= 16;
     }
 #endif
 
     // Enable the ADC
     if (!is_enabled_pclock(adc_base)) {
         enable_pclock(adc_base);
-        adc_calibrate(adc);
-        uint32_t aticks = 4; // 4-12us sample time (depending on stm32 chip)
+        uint32_t aticks = 3; // 2.5-3.2us (depending on stm32 chip)
         adc->SMPR1 = (aticks | (aticks << 3) | (aticks << 6) | (aticks << 9)
                       | (aticks << 12) | (aticks << 15) | (aticks << 18)
                       | (aticks << 21)
@@ -105,17 +75,17 @@ gpio_adc_setup(uint32_t pin)
                       | (aticks << 12) | (aticks << 15) | (aticks << 18)
                       | (aticks << 21) | (aticks << 24) | (aticks << 27));
         adc->CR2 = CR2_FLAGS;
+
+#if CONFIG_MACH_STM32F1
+        // Perform calibration
+        udelay(10);
+        adc->CR2 = ADC_CR2_CAL | CR2_FLAGS;
+        while (adc->CR2 & ADC_CR2_CAL)
+            ;
+#endif
     }
 
-    if (pin == ADC_TEMPERATURE_PIN) {
-#if CONFIG_MACH_STM32F401
-        ADC1_COMMON->CCR = ADC_CCR_TSVREFE;
-#elif !CONFIG_MACH_STM32F1
-        ADC123_COMMON->CCR = ADC_CCR_TSVREFE;
-#endif
-    } else {
-        gpio_peripheral(pin, GPIO_ANALOG, 0);
-    }
+    gpio_peripheral(pin, GPIO_ANALOG, 0);
 
     return (struct gpio_adc){ .adc = adc, .chan = chan };
 }
@@ -140,7 +110,7 @@ gpio_adc_sample(struct gpio_adc g)
     adc->CR2 = ADC_CR2_SWSTART | CR2_FLAGS;
 
 need_delay:
-    return timer_from_us(20);
+    return timer_from_us(10);
 }
 
 // Read a value; use only after gpio_adc_sample() returns zero

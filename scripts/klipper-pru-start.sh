@@ -17,8 +17,6 @@ NAME="klipper_pru"
 KLIPPER_HOST_MCU=/usr/local/bin/klipper_mcu
 KLIPPER_HOST_ARGS="-w -r"
 PIDFILE=/var/run/klipper_mcu.pid
-RPROC0=/sys/class/remoteproc/remoteproc1
-RPROC1=/sys/class/remoteproc/remoteproc2
 
 . /lib/lsb/init-functions
 
@@ -37,8 +35,8 @@ pru_stop()
     fi
 
     log_daemon_msg "Stopping pru"
-        echo 'stop' > $RPROC0/state
-        echo 'stop' > $RPROC1/state
+    echo 4a334000.pru0 > /sys/bus/platform/drivers/pru-rproc/unbind
+    echo 4a338000.pru1 > /sys/bus/platform/drivers/pru-rproc/unbind
 }
 
 pru_start()
@@ -46,17 +44,17 @@ pru_start()
     if [ -c /dev/rpmsg_pru30 ]; then
         pru_stop
     else
-        echo 'stop' > $RPROC0/state
-        echo 'stop' > $RPROC1/state
+        echo 4a334000.pru0 > /sys/bus/platform/drivers/pru-rproc/unbind
+        echo 4a338000.pru1 > /sys/bus/platform/drivers/pru-rproc/unbind
     fi
     sleep 1
 
     log_daemon_msg "Starting pru"
-        echo 'start' > $RPROC0/state
-        echo 'start' > $RPROC1/state
+    echo 4a334000.pru0 > /sys/bus/platform/drivers/pru-rproc/bind
+    echo 4a338000.pru1 > /sys/bus/platform/drivers/pru-rproc/bind
 
-    # log_daemon_msg "Loading ADC module"
-    # echo 'BB-ADC' > /sys/devices/platform/bone_capemgr/slots
+    log_daemon_msg "Loading ADC module"
+    echo 'BB-ADC' > /sys/devices/platform/bone_capemgr/slots
 }
 
 mcu_host_stop()

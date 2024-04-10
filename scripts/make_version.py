@@ -23,7 +23,7 @@ def main(argv):
         help='Name of distro this package is intended for'
     )
     args = p.parse_args()
-    print(util.get_git_version(from_file=False)["version"],
+    print(util.get_git_version(from_file=False),
           args.distroname.replace(' ', ''), sep='-')
 
 

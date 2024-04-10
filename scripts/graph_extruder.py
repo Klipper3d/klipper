@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # Generate extruder pressure advance motion graphs
 #
-# Copyright (C) 2019-2021  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, optparse, datetime
@@ -17,7 +17,7 @@ INV_SEG_TIME = 1. / SEG_TIME
 
 # List of moves: [(start_v, end_v, move_t), ...]
 Moves = [
-    (0., 0., .100),
+    (0., 0., .200),
     (0., 100., None), (100., 100., .200), (100., 60., None),
     (60., 100., None), (100., 100., .200), (100., 0., None),
     (0., 0., .300)
@@ -47,111 +47,63 @@ def gen_positions():
         start_t = end_t
     return out
 
-
-######################################################################
-# List helper functions
-######################################################################
-
-MARGIN_TIME = 0.050
-
-def time_to_index(t):
-    return int(t * INV_SEG_TIME + .5)
-
-def indexes(positions):
-    drop = time_to_index(MARGIN_TIME)
-    return range(drop, len(positions)-drop)
-
-def trim_lists(*lists):
-    keep = len(lists[0]) - time_to_index(2. * MARGIN_TIME)
-    for l in lists:
-        del l[keep:]
-
-
-######################################################################
-# Common data filters
-######################################################################
-
-# Generate estimated first order derivative
 def gen_deriv(data):
     return [0.] + [(data[i+1] - data[i]) * INV_SEG_TIME
                    for i in range(len(data)-1)]
 
-# Simple average between two points smooth_time away
-def calc_average(positions, smooth_time):
-    offset = time_to_index(smooth_time * .5)
-    out = [0.] * len(positions)
-    for i in indexes(positions):
-        out[i] = .5 * (positions[i-offset] + positions[i+offset])
-    return out
-
-# Average (via integration) of smooth_time range
-def calc_smooth(positions, smooth_time):
-    offset = time_to_index(smooth_time * .5)
-    weight = 1. / (2*offset - 1)
-    out = [0.] * len(positions)
-    for i in indexes(positions):
-        out[i] = sum(positions[i-offset+1:i+offset]) * weight
-    return out
-
-# Time weighted average (via integration) of smooth_time range
-def calc_weighted(positions, smooth_time):
-    offset = time_to_index(smooth_time * .5)
-    weight = 1. / offset**2
-    out = [0.] * len(positions)
-    for i in indexes(positions):
-        weighted_data = [positions[j] * (offset - abs(j-i))
-                         for j in range(i-offset, i+offset)]
-        out[i] = sum(weighted_data) * weight
-    return out
+def time_to_index(t):
+    return int(t * INV_SEG_TIME + .5)
 
 
 ######################################################################
 # Pressure advance
 ######################################################################
 
-SMOOTH_TIME = .040
+PA_HALF_SMOOTH_T = .040 / 2.
 PRESSURE_ADVANCE = .045
 
-# Calculate raw pressure advance positions
-def calc_pa_raw(positions):
+def calc_pa_raw(t, positions):
     pa = PRESSURE_ADVANCE * INV_SEG_TIME
-    out = [0.] * len(positions)
-    for i in indexes(positions):
-        out[i] = positions[i] + pa * (positions[i+1] - positions[i])
-    return out
+    i = time_to_index(t)
+    return positions[i] + pa * (positions[i+1] - positions[i])
 
-# Pressure advance after smoothing
-def calc_pa(positions):
-    return calc_weighted(calc_pa_raw(positions), SMOOTH_TIME)
+def calc_pa_smooth(t, positions):
+    start_index = time_to_index(t - PA_HALF_SMOOTH_T) + 1
+    end_index = time_to_index(t + PA_HALF_SMOOTH_T)
+    pa = PRESSURE_ADVANCE * INV_SEG_TIME
+    pa_data = [positions[i] + pa * (positions[i+1] - positions[i])
+               for i in range(start_index, end_index)]
+    return sum(pa_data) / (end_index - start_index)
 
 
 ######################################################################
 # Plotting and startup
 ######################################################################
 
+MARGIN_TIME = 0.100
+
 def plot_motion():
     # Nominal motion
     positions = gen_positions()
-    velocities = gen_deriv(positions)
-    accels = gen_deriv(velocities)
+    drop = int(MARGIN_TIME * INV_SEG_TIME)
+    times = [SEG_TIME * t for t in range(len(positions))][drop:-drop]
+    velocities = gen_deriv(positions[drop:-drop])
     # Motion with pressure advance
-    pa_positions = calc_pa_raw(positions)
+    pa_positions = [calc_pa_raw(t, positions) for t in times]
     pa_velocities = gen_deriv(pa_positions)
     # Smoothed motion
-    sm_positions = calc_pa(positions)
+    sm_positions = [calc_pa_smooth(t, positions) for t in times]
     sm_velocities = gen_deriv(sm_positions)
     # Build plot
-    times = [SEG_TIME * i for i in range(len(positions))]
-    trim_lists(times, velocities, accels,
-               pa_positions, pa_velocities,
-               sm_positions, sm_velocities)
+    shift_times = [t - MARGIN_TIME for t in times]
     fig, ax1 = matplotlib.pyplot.subplots(nrows=1, sharex=True)
     ax1.set_title("Extruder Velocity")
     ax1.set_ylabel('Velocity (mm/s)')
-    pa_plot, = ax1.plot(times, pa_velocities, 'r',
+    pa_plot, = ax1.plot(shift_times, pa_velocities, 'r',
                         label='Pressure Advance', alpha=0.3)
-    nom_plot, = ax1.plot(times, velocities, 'black', label='Nominal')
-    sm_plot, = ax1.plot(times, sm_velocities, 'g', label='Smooth PA', alpha=0.9)
+    nom_plot, = ax1.plot(shift_times, velocities, 'black', label='Nominal')
+    sm_plot, = ax1.plot(shift_times, sm_velocities, 'g', label='Smooth PA',
+                        alpha=0.9)
     fontP = matplotlib.font_manager.FontProperties()
     fontP.set_size('x-small')
     ax1.legend(handles=[nom_plot, pa_plot, sm_plot], loc='best', prop=fontP)

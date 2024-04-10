@@ -1,0 +1,4 @@
+# This is a Jekyll config file that is used by "github pages" to
+# produce the https://www.klipper3d.org/ website.
+include: CONTRIBUTING.md
+google_analytics: UA-138371409-1

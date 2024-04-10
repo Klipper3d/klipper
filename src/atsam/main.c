@@ -6,15 +6,11 @@
 
 #include "board/armcm_boot.h" // armcm_main
 #include "board/irq.h" // irq_disable
-#include "board/misc.h" // bootloader_request
+#include "board/usb_cdc.h" // usb_request_bootloader
 #include "command.h" // DECL_COMMAND_FLAGS
 #include "internal.h" // WDT
 #include "sched.h" // sched_main
 
-#define FREQ_PERIPH_DIV (CONFIG_MACH_SAME70 ? 2 : 1)
-#define FREQ_PERIPH (CONFIG_CLOCK_FREQ / FREQ_PERIPH_DIV)
-
-#define FREQ_SAME70_CAN 80000000
 
 /****************************************************************
  * watchdog handler
@@ -60,34 +56,17 @@ enable_pclock(uint32_t id)
         PMC->PMC_PCER1 = 1 << (id - 32);
 }
 
-// Return the frequency of the given peripheral clock
-uint32_t
-get_pclock_frequency(uint32_t id)
-{
-#if CONFIG_MACH_SAME70
-    if (id == MCAN0_CLOCK_ID || id == MCAN1_CLOCK_ID)
-        return FREQ_SAME70_CAN;
-#endif
-    return FREQ_PERIPH;
-}
-
 
 /****************************************************************
  * Resets
  ****************************************************************/
 
-#if CONFIG_MACH_SAME70
-#define RST_PARAMS ((0xA5 << RSTC_CR_KEY_Pos) | RSTC_CR_PROCRST)
-#else
-#define RST_PARAMS ((0xA5 << RSTC_CR_KEY_Pos) | RSTC_CR_PROCRST \
-                    | RSTC_CR_PERRST)
-#endif
-
 void
 command_reset(uint32_t *args)
 {
     irq_disable();
-    RSTC->RSTC_CR = RST_PARAMS;
+    RSTC->RSTC_CR = ((0xA5 << RSTC_CR_KEY_Pos) | RSTC_CR_PROCRST
+                     | RSTC_CR_PERRST);
     for (;;)
         ;
 }
@@ -95,12 +74,12 @@ DECL_COMMAND_FLAGS(command_reset, HF_IN_SHUTDOWN, "reset");
 
 #if CONFIG_MACH_SAM3X || CONFIG_MACH_SAM4S
 #define EFC_HW EFC0
-#elif CONFIG_MACH_SAM4E || CONFIG_MACH_SAME70
+#elif CONFIG_MACH_SAM4E
 #define EFC_HW EFC
 #endif
 
 void noinline __aligned(16) // align for predictable flash code access
-bootloader_request(void)
+usb_request_bootloader(void)
 {
     irq_disable();
     // Request boot from ROM (instead of boot from flash)
@@ -111,7 +90,8 @@ bootloader_request(void)
     while ((EFC_HW->EEFC_FSR & EEFC_FSR_FRDY) == 0)
         ;
     // Reboot
-    RSTC->RSTC_CR = RST_PARAMS;
+    RSTC->RSTC_CR = ((0xA5 << RSTC_CR_KEY_Pos) | RSTC_CR_PROCRST
+                     | RSTC_CR_PERRST);
     for (;;)
         ;
 }

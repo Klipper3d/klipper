@@ -5,7 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // memcpy
-#include "autoconf.h" // CONFIG_WANT_SOFTWARE_SPI
+#include "autoconf.h" // CONFIG_HAVE_GPIO_BITBANGING
 #include "board/gpio.h" // gpio_out_write
 #include "basecmd.h" // oid_alloc
 #include "command.h" // DECL_COMMAND
@@ -23,18 +23,17 @@ struct spidev_s {
 };
 
 enum {
-    SF_HAVE_PIN = 1, SF_SOFTWARE = 2, SF_HARDWARE = 4, SF_CS_ACTIVE_HIGH = 8
+    SF_HAVE_PIN = 1, SF_SOFTWARE = 2, SF_HARDWARE = 4,
 };
 
 void
 command_config_spi(uint32_t *args)
 {
     struct spidev_s *spi = oid_alloc(args[0], command_config_spi, sizeof(*spi));
-    uint_fast8_t cs_active_high = args[2];
-    spi->pin = gpio_out_setup(args[1], !cs_active_high);
-    spi->flags |= SF_HAVE_PIN | (cs_active_high ? SF_CS_ACTIVE_HIGH : 0);
+    spi->pin = gpio_out_setup(args[1], 1);
+    spi->flags |= SF_HAVE_PIN;
 }
-DECL_COMMAND(command_config_spi, "config_spi oid=%c pin=%u cs_active_high=%c");
+DECL_COMMAND(command_config_spi, "config_spi oid=%c pin=%u");
 
 void
 command_config_spi_without_cs(uint32_t *args)
@@ -71,42 +70,29 @@ spidev_set_software_bus(struct spidev_s *spi, struct spi_software *ss)
     spi->flags |= SF_SOFTWARE;
 }
 
-int
-spidev_have_cs_pin(struct spidev_s *spi)
-{
-    return spi->flags & SF_HAVE_PIN;
-}
-
-struct gpio_out
-spidev_get_cs_pin(struct spidev_s *spi)
-{
-    return spi->pin;
-}
-
 void
 spidev_transfer(struct spidev_s *spi, uint8_t receive_data
                 , uint8_t data_len, uint8_t *data)
 {
-    uint_fast8_t flags = spi->flags;
-    if (!(flags & (SF_SOFTWARE|SF_HARDWARE)))
+    if (!(spi->flags & (SF_SOFTWARE|SF_HARDWARE)))
         // Not yet initialized
         return;
 
-    if (CONFIG_WANT_SOFTWARE_SPI && flags & SF_SOFTWARE)
+    if (CONFIG_HAVE_GPIO_BITBANGING && spi->flags & SF_SOFTWARE)
         spi_software_prepare(spi->spi_software);
     else
         spi_prepare(spi->spi_config);
 
-    if (flags & SF_HAVE_PIN)
-        gpio_out_write(spi->pin, !!(flags & SF_CS_ACTIVE_HIGH));
+    if (spi->flags & SF_HAVE_PIN)
+        gpio_out_write(spi->pin, 0);
 
-    if (CONFIG_WANT_SOFTWARE_SPI && flags & SF_SOFTWARE)
+    if (CONFIG_HAVE_GPIO_BITBANGING && spi->flags & SF_SOFTWARE)
         spi_software_transfer(spi->spi_software, receive_data, data_len, data);
     else
         spi_transfer(spi->spi_config, receive_data, data_len, data);
 
-    if (flags & SF_HAVE_PIN)
-        gpio_out_write(spi->pin, !(flags & SF_CS_ACTIVE_HIGH));
+    if (spi->flags & SF_HAVE_PIN)
+        gpio_out_write(spi->pin, 1);
 }
 
 void
@@ -115,7 +101,7 @@ command_spi_transfer(uint32_t *args)
     uint8_t oid = args[0];
     struct spidev_s *spi = spidev_oid_lookup(oid);
     uint8_t data_len = args[1];
-    uint8_t *data = command_decode_ptr(args[2]);
+    uint8_t *data = (void*)(size_t)args[2];
     spidev_transfer(spi, 1, data_len, data);
     sendf("spi_transfer_response oid=%c response=%*s", oid, data_len, data);
 }
@@ -126,7 +112,7 @@ command_spi_send(uint32_t *args)
 {
     struct spidev_s *spi = spidev_oid_lookup(args[0]);
     uint8_t data_len = args[1];
-    uint8_t *data = command_decode_ptr(args[2]);
+    uint8_t *data = (void*)(size_t)args[2];
     spidev_transfer(spi, 0, data_len, data);
 }
 DECL_COMMAND(command_spi_send, "spi_send oid=%c data=%*s");
@@ -151,7 +137,7 @@ command_config_spi_shutdown(uint32_t *args)
         args[0], command_config_spi_shutdown, sizeof(*sd) + shutdown_msg_len);
     sd->spi = spi;
     sd->shutdown_msg_len = shutdown_msg_len;
-    uint8_t *shutdown_msg = command_decode_ptr(args[3]);
+    uint8_t *shutdown_msg = (void*)(size_t)args[3];
     memcpy(sd->shutdown_msg, shutdown_msg, shutdown_msg_len);
 }
 DECL_COMMAND(command_config_spi_shutdown,
@@ -165,7 +151,7 @@ spidev_shutdown(void)
     struct spidev_s *spi;
     foreach_oid(oid, spi, command_config_spi) {
         if (spi->flags & SF_HAVE_PIN)
-            gpio_out_write(spi->pin, !(spi->flags & SF_CS_ACTIVE_HIGH));
+            gpio_out_write(spi->pin, 1);
     }
 
     // Send shutdown messages

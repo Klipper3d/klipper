@@ -101,28 +101,24 @@ class FilamentWidthSensor:
         else:
             self.gcode.run_script("M221 S100")
             self.filament_array = []
+        return eventtime + 1
 
-        if self.is_active:
-            return eventtime + 1
-        else:
-            return self.reactor.NEVER
-
-    def cmd_M407(self, gcmd):
+    def cmd_M407(self, params):
         response = ""
         if self.lastFilamentWidthReading > 0:
             response += ("Filament dia (measured mm): "
                          + str(self.lastFilamentWidthReading))
         else:
             response += "Filament NOT present"
-        gcmd.respond_info(response)
+        self.gcode.respond(response)
 
-    def cmd_ClearFilamentArray(self, gcmd):
+    def cmd_ClearFilamentArray(self, params):
         self.filament_array = []
-        gcmd.respond_info("Filament width measurements cleared!")
+        self.gcode.respond("Filament width measurements cleared!")
         # Set extrude multiplier to 100%
         self.gcode.run_script_from_command("M221 S100")
 
-    def cmd_M405(self, gcmd):
+    def cmd_M405(self, params):
         response = "Filament width sensor Turned On"
         if self.is_active:
             response = "Filament width sensor is already On"
@@ -131,9 +127,9 @@ class FilamentWidthSensor:
             # Start extrude factor update timer
             self.reactor.update_timer(self.extrude_factor_update_timer,
                                       self.reactor.NOW)
-        gcmd.respond_info(response)
+        self.gcode.respond(response)
 
-    def cmd_M406(self, gcmd):
+    def cmd_M406(self, params):
         response = "Filament width sensor Turned Off"
         if not self.is_active:
             response = "Filament width sensor is already Off"
@@ -146,7 +142,7 @@ class FilamentWidthSensor:
             self.filament_array = []
             # Set extrude multiplier to 100%
             self.gcode.run_script_from_command("M221 S100")
-        gcmd.respond_info(response)
+        self.gcode.respond(response)
 
 def load_config(config):
     return FilamentWidthSensor(config)

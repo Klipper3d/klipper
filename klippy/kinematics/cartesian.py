@@ -1,11 +1,10 @@
 # Code for handling the kinematics of cartesian robots
 #
-# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import stepper
-from . import idex_modes
+import stepper, homing
 
 class CartKinematics:
     def __init__(self, toolhead, config):
@@ -16,27 +15,7 @@ class CartKinematics:
         self.rails = [stepper.LookupMultiRail(config.getsection('stepper_' + n))
                       for n in 'xyz']
         for rail, axis in zip(self.rails, 'xyz'):
-            rail.setup_itersolve('cartesian_stepper_alloc', axis.encode())
-        ranges = [r.get_range() for r in self.rails]
-        self.axes_min = toolhead.Coord(*[r[0] for r in ranges], e=0.)
-        self.axes_max = toolhead.Coord(*[r[1] for r in ranges], e=0.)
-        self.dc_module = None
-        if config.has_section('dual_carriage'):
-            dc_config = config.getsection('dual_carriage')
-            dc_axis = dc_config.getchoice('axis', {'x': 'x', 'y': 'y'})
-            self.dual_carriage_axis = {'x': 0, 'y': 1}[dc_axis]
-            # setup second dual carriage rail
-            self.rails.append(stepper.LookupMultiRail(dc_config))
-            self.rails[3].setup_itersolve('cartesian_stepper_alloc',
-                                          dc_axis.encode())
-            dc_rail_0 = idex_modes.DualCarriagesRail(
-                    self.rails[self.dual_carriage_axis],
-                    axis=self.dual_carriage_axis, active=True)
-            dc_rail_1 = idex_modes.DualCarriagesRail(
-                    self.rails[3], axis=self.dual_carriage_axis, active=False)
-            self.dc_module = idex_modes.DualCarriages(
-                    dc_config, dc_rail_0, dc_rail_1,
-                    axis=self.dual_carriage_axis)
+            rail.setup_itersolve('cartesian_stepper_alloc', axis)
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
@@ -44,32 +23,48 @@ class CartKinematics:
                                             self._motor_off)
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
-        self.max_z_velocity = config.getfloat('max_z_velocity', max_velocity,
-                                              above=0., maxval=max_velocity)
-        self.max_z_accel = config.getfloat('max_z_accel', max_accel,
-                                           above=0., maxval=max_accel)
+        self.max_z_velocity = config.getfloat(
+            'max_z_velocity', max_velocity, above=0., maxval=max_velocity)
+        self.max_z_accel = config.getfloat(
+            'max_z_accel', max_accel, above=0., maxval=max_accel)
         self.limits = [(1.0, -1.0)] * 3
-    def get_steppers(self):
-        return [s for rail in self.rails for s in rail.get_steppers()]
-    def calc_position(self, stepper_positions):
-        return [stepper_positions[rail.get_name()] for rail in self.rails]
-    def update_limits(self, i, range):
-        l, h = self.limits[i]
-        # Only update limits if this axis was already homed,
-        # otherwise leave in un-homed state.
-        if l <= h:
-            self.limits[i] = range
-    def override_rail(self, i, rail):
-        self.rails[i] = rail
+        # Setup stepper max halt velocity
+        max_halt_velocity = toolhead.get_max_axis_halt()
+        self.rails[0].set_max_jerk(max_halt_velocity, max_accel)
+        self.rails[1].set_max_jerk(max_halt_velocity, max_accel)
+        self.rails[2].set_max_jerk(
+            min(max_halt_velocity, self.max_z_velocity), max_accel)
+        # Check for dual carriage support
+        if config.has_section('dual_carriage'):
+            dc_config = config.getsection('dual_carriage')
+            dc_axis = dc_config.getchoice('axis', {'x': 'x', 'y': 'y'})
+            self.dual_carriage_axis = {'x': 0, 'y': 1}[dc_axis]
+            dc_rail = stepper.LookupMultiRail(dc_config)
+            dc_rail.setup_itersolve('cartesian_stepper_alloc', dc_axis)
+            for s in dc_rail.get_steppers():
+                toolhead.register_step_generator(s.generate_steps)
+            dc_rail.set_max_jerk(max_halt_velocity, max_accel)
+            self.dual_carriage_rails = [
+                self.rails[self.dual_carriage_axis], dc_rail]
+            self.printer.lookup_object('gcode').register_command(
+                'SET_DUAL_CARRIAGE', self.cmd_SET_DUAL_CARRIAGE,
+                desc=self.cmd_SET_DUAL_CARRIAGE_help)
+    def get_steppers(self, flags=""):
+        if flags == "Z":
+            return self.rails[2].get_steppers()
+        rails = self.rails
+        if self.dual_carriage_axis is not None:
+            dca = self.dual_carriage_axis
+            rails = rails[:dca] + self.dual_carriage_rails + rails[dca+1:]
+        return [s for rail in rails for s in rail.get_steppers()]
+    def calc_tag_position(self):
+        return [rail.get_tag_position() for rail in self.rails]
     def set_position(self, newpos, homing_axes):
         for i, rail in enumerate(self.rails):
             rail.set_position(newpos)
             if i in homing_axes:
                 self.limits[i] = rail.get_range()
-    def note_z_not_homed(self):
-        # Helper for Safe Z Home
-        self.limits[2] = (1.0, -1.0)
-    def home_axis(self, homing_state, axis, rail):
+    def _home_axis(self, homing_state, axis, rail):
         # Determine movement
         position_min, position_max = rail.get_range()
         hi = rail.get_homing_info()
@@ -85,10 +80,16 @@ class CartKinematics:
     def home(self, homing_state):
         # Each axis is homed independently and in order
         for axis in homing_state.get_axes():
-            if self.dc_module is not None and axis == self.dual_carriage_axis:
-                self.dc_module.home(homing_state)
+            if axis == self.dual_carriage_axis:
+                dc1, dc2 = self.dual_carriage_rails
+                altc = self.rails[axis] == dc2
+                self._activate_carriage(0)
+                self._home_axis(homing_state, axis, dc1)
+                self._activate_carriage(1)
+                self._home_axis(homing_state, axis, dc2)
+                self._activate_carriage(altc)
             else:
-                self.home_axis(homing_state, axis, self.rails[axis])
+                self._home_axis(homing_state, axis, self.rails[axis])
     def _motor_off(self, print_time):
         self.limits = [(1.0, -1.0)] * 3
     def _check_endstops(self, move):
@@ -98,8 +99,9 @@ class CartKinematics:
                 and (end_pos[i] < self.limits[i][0]
                      or end_pos[i] > self.limits[i][1])):
                 if self.limits[i][0] > self.limits[i][1]:
-                    raise move.move_error("Must home axis first")
-                raise move.move_error()
+                    raise homing.EndstopMoveError(
+                        end_pos, "Must home axis first")
+                raise homing.EndstopMoveError(end_pos)
     def check_move(self, move):
         limits = self.limits
         xpos, ypos = move.end_pos[:2]
@@ -116,11 +118,27 @@ class CartKinematics:
             self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
     def get_status(self, eventtime):
         axes = [a for a, (l, h) in zip("xyz", self.limits) if l <= h]
-        return {
-            'homed_axes': "".join(axes),
-            'axis_minimum': self.axes_min,
-            'axis_maximum': self.axes_max,
-        }
+        return { 'homed_axes': "".join(axes) }
+    # Dual carriage support
+    def _activate_carriage(self, carriage):
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.flush_step_generation()
+        dc_rail = self.dual_carriage_rails[carriage]
+        dc_axis = self.dual_carriage_axis
+        self.rails[dc_axis].set_trapq(None)
+        dc_rail.set_trapq(toolhead.get_trapq())
+        self.rails[dc_axis] = dc_rail
+        pos = toolhead.get_position()
+        pos[dc_axis] = dc_rail.get_commanded_position()
+        toolhead.set_position(pos)
+        if self.limits[dc_axis][0] <= self.limits[dc_axis][1]:
+            self.limits[dc_axis] = dc_rail.get_range()
+    cmd_SET_DUAL_CARRIAGE_help = "Set which carriage is active"
+    def cmd_SET_DUAL_CARRIAGE(self, params):
+        gcode = self.printer.lookup_object('gcode')
+        carriage = gcode.get_int('CARRIAGE', params, minval=0, maxval=1)
+        self._activate_carriage(carriage)
+        gcode.reset_last_position()
 
 def load_kinematics(toolhead, config):
     return CartKinematics(toolhead, config)

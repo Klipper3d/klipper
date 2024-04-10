@@ -37,7 +37,7 @@ class TestCase:
         config_fname = gcode_fname = dict_fnames = None
         should_fail = multi_tests = False
         gcode = []
-        f = open(self.fname, 'r')
+        f = open(self.fname, 'rb')
         for line in f:
             cpos = line.find('#')
             if cpos >= 0:
@@ -78,7 +78,7 @@ class TestCase:
         if gcode_fname is None:
             gcode_fname = self.relpath(TEMP_GCODE_FILE, 'temp')
             gcode_is_temp = True
-            f = open(gcode_fname, 'w')
+            f = open(gcode_fname, 'wb')
             f.write('\n'.join(gcode + ['']))
             f.close()
         elif gcode:
@@ -126,7 +126,7 @@ class TestCase:
             return "internal error"
         return "success"
     def show_log(self):
-        f = open(TEMP_LOG_FILE, 'r')
+        f = open(TEMP_LOG_FILE, 'rb')
         data = f.read()
         f.close()
         sys.stdout.write(data)

@@ -4,7 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "autoconf.h" // CONFIG_MACH_AVR
+#include "autoconf.h" // CONFIG_CLOCK_FREQ
 #include "basecmd.h" // oid_alloc
 #include "board/gpio.h" // gpio_out_write
 #include "board/irq.h" // irq_disable
@@ -32,7 +32,7 @@ nsecs_to_ticks(uint32_t ns)
 static inline void
 ndelay(uint32_t nsecs)
 {
-    if (CONFIG_MACH_AVR)
+    if (CONFIG_CLOCK_FREQ <= 48000000)
         // Slower MCUs don't require a delay
         return;
     uint32_t end = timer_read_time() + nsecs_to_ticks(nsecs);
@@ -100,11 +100,6 @@ command_config_hd44780(uint32_t *args)
     h->d6 = gpio_out_setup(args[5], 0);
     h->d7 = gpio_out_setup(args[6], 0);
 
-    if (!CONFIG_HAVE_STRICT_TIMING) {
-        h->cmd_wait_ticks = args[7];
-        return;
-    }
-
     // Calibrate cmd_wait_ticks
     irq_disable();
     uint32_t start = timer_read_time();
@@ -124,7 +119,7 @@ command_hd44780_send_cmds(uint32_t *args)
 {
     struct hd44780 *h = oid_lookup(args[0], command_config_hd44780);
     gpio_out_write(h->rs, 0);
-    uint8_t len = args[1], *cmds = command_decode_ptr(args[2]);
+    uint8_t len = args[1], *cmds = (void*)(size_t)args[2];
     hd44780_xmit(h, len, cmds);
 }
 DECL_COMMAND(command_hd44780_send_cmds, "hd44780_send_cmds oid=%c cmds=%*s");
@@ -134,7 +129,7 @@ command_hd44780_send_data(uint32_t *args)
 {
     struct hd44780 *h = oid_lookup(args[0], command_config_hd44780);
     gpio_out_write(h->rs, 1);
-    uint8_t len = args[1], *data = command_decode_ptr(args[2]);
+    uint8_t len = args[1], *data = (void*)(size_t)args[2];
     hd44780_xmit(h, len, data);
 }
 DECL_COMMAND(command_hd44780_send_data, "hd44780_send_data oid=%c data=%*s");

@@ -1,12 +1,11 @@
-# Kinematics
-
 This document provides an overview of how Klipper implements robot
 motion (its [kinematics](https://en.wikipedia.org/wiki/Kinematics)).
 The contents may be of interest to both developers interested in
 working on the Klipper software as well as users interested in better
 understanding the mechanics of their machines.
 
-## Acceleration
+Acceleration
+============
 
 Klipper implements a constant acceleration scheme whenever the print
 head changes velocity - the velocity is gradually changed to the new
@@ -32,7 +31,8 @@ acceleration is:
 velocity(time) = start_velocity + accel*time
 ```
 
-## Trapezoid generator
+Trapezoid generator
+===================
 
 Klipper uses a traditional "trapezoid generator" to model the motion
 of each move - each move has a start speed, it accelerates to a
@@ -54,7 +54,8 @@ of zero duration (if the end speed is equal to the cruising speed).
 
 ![trapezoids](img/trapezoids.svg.png)
 
-## Look-ahead
+Look-ahead
+==========
 
 The "look-ahead" system is used to determine cornering speeds between
 moves.
@@ -96,7 +97,8 @@ Key formula for look-ahead:
 end_velocity^2 = start_velocity^2 + 2*accel*move_distance
 ```
 
-### Minimum cruise ratio
+Smoothed look-ahead
+-------------------
 
 Klipper also implements a mechanism for smoothing out the motions of
 short "zigzag" moves. Consider the following moves:
@@ -105,33 +107,28 @@ short "zigzag" moves. Consider the following moves:
 
 In the above, the frequent changes from acceleration to deceleration
 can cause the machine to vibrate which causes stress on the machine
-and increases the noise. Klipper implements a mechanism to ensure
-there is always some movement at a cruising speed between acceleration
-and deceleration. This is done by reducing the top speed of some moves
-(or sequence of moves) to ensure there is a minimum distance traveled
-at cruising speed relative to the distance traveled during
-acceleration and deceleration.
-
-Klipper implements this feature by tracking both a regular move
-acceleration as well as a virtual "acceleration to deceleration" rate:
+and increases the noise. To reduce this, Klipper tracks both regular
+move acceleration as well as a virtual "acceleration to deceleration"
+rate. Using this system, the top speed of these short "zigzag" moves
+are limited to smooth out the printer motion:
 
 ![smoothed](img/smoothed.svg.png)
 
 Specifically, the code calculates what the velocity of each move would
 be if it were limited to this virtual "acceleration to deceleration"
-rate. In the above picture the dashed gray lines represent this
-virtual acceleration rate for the first move. If a move can not reach
-its full cruising speed using this virtual acceleration rate then its
-top speed is reduced to the maximum speed it could obtain at this
-virtual acceleration rate.
-
-For most moves the limit will be at or above the move's existing
+rate (half the normal acceleration rate by default). In the above
+picture the dashed gray lines represent this virtual acceleration rate
+for the first move. If a move can not reach its full cruising speed
+using this virtual acceleration rate then its top speed is reduced to
+the maximum speed it could obtain at this virtual acceleration
+rate. For most moves the limit will be at or above the move's existing
 limits and no change in behavior is induced. For short zigzag moves,
 however, this limit reduces the top speed. Note that it does not
 change the actual acceleration within the move - the move continues to
 use the normal acceleration scheme up to its adjusted top-speed.
 
-## Generating steps
+Generating steps
+================
 
 Once the look-ahead process completes, the print head movement for the
 given move is fully known (time, start position, end position,
@@ -170,7 +167,8 @@ cartesian_y_position = start_y + move_distance * total_y_movement / total_moveme
 cartesian_z_position = start_z + move_distance * total_z_movement / total_movement
 ```
 
-### Cartesian Robots
+Cartesian Robots
+----------------
 
 Generating steps for cartesian printers is the simplest case. The
 movement on each axis is directly related to the movement in cartesian
@@ -183,7 +181,8 @@ stepper_y_position = cartesian_y_position
 stepper_z_position = cartesian_z_position
 ```
 
-### CoreXY Robots
+CoreXY Robots
+----------------
 
 Generating steps on a CoreXY machine is only a little more complex
 than basic cartesian robots. The key formulas are:
@@ -193,7 +192,8 @@ stepper_b_position = cartesian_x_position - cartesian_y_position
 stepper_z_position = cartesian_z_position
 ```
 
-### Delta Robots
+Delta Robots
+------------
 
 Step generation on a delta robot is based on Pythagoras's theorem:
 ```
@@ -203,7 +203,7 @@ stepper_position = (sqrt(arm_length^2
                     + cartesian_z_position)
 ```
 
-### Stepper motor acceleration limits
+### Stepper motor acceleration limits ###
 
 With delta kinematics it is possible for a move that is accelerating
 in cartesian space to require an acceleration on a particular stepper
@@ -224,7 +224,8 @@ this limit, moves at the extreme edge of the build envelope (where a
 stepper arm may be nearly horizontal) will have a lower maximum
 acceleration and velocity.
 
-### Extruder kinematics
+Extruder kinematics
+-------------------
 
 Klipper implements extruder motion in its own kinematic class. Since
 the timing and speed of each print head movement is fully known for
@@ -238,7 +239,7 @@ generation uses the same formulas that cartesian robots use:
 stepper_position = requested_e_position
 ```
 
-### Pressure advance
+### Pressure advance ###
 
 Experimentation has shown that it's possible to improve the modeling
 of the extruder beyond the basic extruder formula. In the ideal case,
@@ -283,8 +284,8 @@ rate, the more filament must be pushed in during acceleration to
 account for pressure. During head deceleration the extra filament is
 retracted (the extruder will have a negative velocity).
 
-The "smoothing" is implemented using a weighted average of the
-extruder position over a small time period (as specified by the
+The "smoothing" is implemented by averaging the extruder position over
+a small time period (as specified by the
 `pressure_advance_smooth_time` config parameter). This averaging can
 span multiple g-code moves. Note how the extruder motor will start
 moving prior to the nominal start of the first extrusion move and will
@@ -293,7 +294,6 @@ continue to move after the nominal end of the last extrusion move.
 Key formula for "smoothed pressure advance":
 ```
 smooth_pa_position(t) =
-    ( definitive_integral(pa_position(x) * (smooth_time/2 - abs(t - x)) * dx,
-                          from=t-smooth_time/2, to=t+smooth_time/2)
-     / (smooth_time/2)^2 )
+    ( definitive_integral(pa_position, from=t-smooth_time/2, to=t+smooth_time/2)
+     / smooth_time )
 ```

@@ -13,64 +13,34 @@ class TuningTower:
         self.normal_transform = None
         self.last_position = [0., 0., 0., 0.]
         self.last_z = self.start = self.factor = self.band = 0.
-        self.last_command_value = None
-        self.command_fmt = ""
-        self.gcode_move = self.printer.load_object(config, "gcode_move")
+        self.command = self.parameter = ""
         # Register command
-        self.gcode = self.printer.lookup_object("gcode")
-        self.gcode.register_command("TUNING_TOWER", self.cmd_TUNING_TOWER,
-                                    desc=self.cmd_TUNING_TOWER_help)
+        gcode = self.printer.lookup_object("gcode")
+        gcode.register_command("TUNING_TOWER", self.cmd_TUNING_TOWER,
+                               desc=self.cmd_TUNING_TOWER_help)
     cmd_TUNING_TOWER_help = "Tool to adjust a parameter at each Z height"
-    def cmd_TUNING_TOWER(self, gcmd):
+    def cmd_TUNING_TOWER(self, params):
         if self.normal_transform is not None:
             self.end_test()
         # Get parameters
-        command = gcmd.get('COMMAND')
-        parameter = gcmd.get('PARAMETER')
-        self.start = gcmd.get_float('START', 0.)
-        self.factor = gcmd.get_float('FACTOR', 0.)
-        self.band = gcmd.get_float('BAND', 0., minval=0.)
-        self.step_delta = gcmd.get_float('STEP_DELTA', 0.)
-        self.step_height = gcmd.get_float('STEP_HEIGHT', 0., minval=0.)
-        self.skip = gcmd.get_float('SKIP', 0., minval=0.)
-        if self.factor and (self.step_height or self.step_delta):
-            raise gcmd.error(
-                "Cannot specify both FACTOR and STEP_DELTA/STEP_HEIGHT")
-        if (self.step_delta != 0.) != (self.step_height != 0.):
-            raise gcmd.error("Must specify both STEP_DELTA and STEP_HEIGHT")
+        gcode = self.printer.lookup_object("gcode")
+        self.command = gcode.get_str('COMMAND', params)
+        self.parameter = gcode.get_str('PARAMETER', params)
+        self.start = gcode.get_float('START', params, 0.)
+        self.factor = gcode.get_float('FACTOR', params)
+        self.band = gcode.get_float('BAND', params, 0., minval=0.)
         # Enable test mode
-        if self.gcode.is_traditional_gcode(command):
-            self.command_fmt = "%s %s%%.9f" % (command, parameter)
-        else:
-            self.command_fmt = "%s %s=%%.9f" % (command, parameter)
-        nt = self.gcode_move.set_move_transform(self, force=True)
-        self.normal_transform = nt
+        self.normal_transform = gcode.set_move_transform(self, force=True)
         self.last_z = -99999999.9
-        self.last_command_value = None
+        gcode.reset_last_position()
         self.get_position()
-        message_parts = []
-        message_parts.append("start=%.6f" % (self.start,))
-        if self.factor:
-            message_parts.append("factor=%.6f" % (self.factor,))
-            if self.band:
-                message_parts.append("band=%.6f" % (self.band,))
-        else:
-            message_parts.append("step_delta=%.6f" % (self.step_delta,))
-            message_parts.append("step_height=%.6f" % (self.step_height,))
-        if self.skip:
-            message_parts.append("skip=%.6f" % (self.skip,))
-        gcmd.respond_info(
-            "Starting tuning test (" + " ".join(message_parts) + ")")
+        gcode.respond_info("Starting tuning test (start=%.6f factor=%.6f)"
+                           % (self.start, self.factor))
     def get_position(self):
         pos = self.normal_transform.get_position()
         self.last_position = list(pos)
         return pos
     def calc_value(self, z):
-        if self.skip:
-            z = max(0., z - self.skip)
-        if self.step_height:
-            return self.start + \
-                   self.step_delta * math.floor(z / self.step_height)
         if self.band:
             z = (math.floor(z / self.band) + .5) * self.band
         return self.start + z * self.factor
@@ -85,22 +55,21 @@ class TuningTower:
                 self.end_test()
             else:
                 # Process update
-                gcode_z = self.gcode_move.get_status()['gcode_position'].z
-                newval = self.calc_value(gcode_z)
+                oldval = self.calc_value(self.last_z)
+                newval = self.calc_value(z)
                 self.last_z = z
-                if newval != self.last_command_value:
-                    self.last_command_value = newval
-                    self.gcode.run_script_from_command(self.command_fmt
-                                                       % (newval,))
+                if newval != oldval:
+                    gcode = self.printer.lookup_object("gcode")
+                    gcode.run_script_from_command("%s %s=%.9f" % (
+                        self.command, self.parameter, newval))
         # Forward move to actual handler
         self.last_position[:] = newpos
         normal_transform.move(newpos, speed)
     def end_test(self):
-        self.gcode.respond_info("Ending tuning test mode")
-        self.gcode_move.set_move_transform(self.normal_transform, force=True)
+        gcode = self.printer.lookup_object("gcode")
+        gcode.respond_info("Ending tuning test mode")
+        gcode.set_move_transform(self.normal_transform, force=True)
         self.normal_transform = None
-    def is_active(self):
-        return self.normal_transform is not None
 
 def load_config(config):
     return TuningTower(config)

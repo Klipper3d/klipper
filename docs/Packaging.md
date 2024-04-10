@@ -1,4 +1,4 @@
-# Packaging Klipper
+# Packaging klipper
 
 Klipper is somewhat of a packaging anomaly among python programs, as it doesn't
 use setuptools to build and install. Some notes regarding how best to package it
@@ -27,4 +27,5 @@ follows: `python2 scripts/make_version.py YOURDISTRONAME > klippy/.version`.
 ## Sample packaging script
 
 klipper-git is packaged for Arch Linux, and has a PKGBUILD (package build
-script) available at [Arch User Repository](https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=klipper-git).
+script) available at
+https://aur.archlinux.org/cgit/aur.git/tree/PKGBUILD?h=klipper-git.

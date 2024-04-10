@@ -1,17 +1,7 @@
-# Commands templates
-
 This document provides information on implementing G-Code command
 sequences in gcode_macro (and similar) config sections.
 
-## G-Code Macro Naming
-
-Case is not important for the G-Code macro name - MY_MACRO and
-my_macro will evaluate the same and may be called in either upper or
-lower case. If any numbers are used in the macro name then they must
-all be at the end of the name (eg, TEST_MACRO25 is valid, but
-MACRO25_TEST3 is not).
-
-## Formatting of G-Code in the config
+### Formatting of G-Code in the config
 
 Indentation is important when defining a macro in the config file. To
 specify a multi-line G-Code sequence it is important for each line to
@@ -29,25 +19,7 @@ Note how the `gcode:` config option always starts at the beginning of
 the line and subsequent lines in the G-Code macro never start at the
 beginning.
 
-## Add a description to your macro
-
-To help identify the functionality a short description can be added.
-Add `description:` with a short text to describe the functionality.
-Default is "G-Code macro" if not specified.
-For example:
-
-```
-[gcode_macro blink_led]
-description: Blink my_led one time
-gcode:
-  SET_PIN PIN=my_led VALUE=1
-  G4 P2000
-  SET_PIN PIN=my_led VALUE=0
-```
-
-The terminal will display the description when you use the `HELP` command or the autocomplete function.
-
-## Save/Restore state for G-Code moves
+### Save/Restore state for G-Code moves
 
 Unfortunately, the G-Code command language can be challenging to use.
 The standard mechanism to move the toolhead is via the `G1` command
@@ -76,7 +48,8 @@ mode" and the `RESTORE_GCODE_STATE` command restores the state to what
 it was prior to entering the macro. Be sure to specify an explicit
 speed (via the `F` parameter) on the first `G1` command.
 
-## Template expansion
+### Template expansion
+<!-- {% raw %} -->
 
 The gcode_macro `gcode:` config section is evaluated using the Jinja2
 template language. One can evaluate expressions at run-time by
@@ -85,25 +58,7 @@ wrapped in `{% %}`. See the
 [Jinja2 documentation](http://jinja.pocoo.org/docs/2.10/templates/)
 for further information on the syntax.
 
-An example of a complex macro:
-```
-[gcode_macro clean_nozzle]
-gcode:
-  {% set wipe_count = 8 %}
-  SAVE_GCODE_STATE NAME=clean_nozzle_state
-  G90
-  G0 Z15 F300
-  {% for wipe in range(wipe_count) %}
-    {% for coordinate in [(275, 4),(235, 4)] %}
-      G0 X{coordinate[0]} Y{coordinate[1] + 0.25 * wipe} Z9.7 F12000
-    {% endfor %}
-  {% endfor %}
-  RESTORE_GCODE_STATE NAME=clean_nozzle_state
-```
-
-### Macro parameters
-
-It is often useful to inspect parameters passed to the macro when
+This is most often used to inspect parameters passed to the macro when
 it is called. These parameters are available via the `params`
 pseudo-variable. For example, if the macro:
 
@@ -118,27 +73,23 @@ at 20%`. Note that parameter names are always in upper-case when
 evaluated in the macro and are always passed as strings. If performing
 math then they must be explicitly converted to integers or floats.
 
-It's common to use the Jinja2 `set` directive to use a default
-parameter and assign the result to a local name. For example:
-
+An example of a complex macro:
 ```
-[gcode_macro SET_BED_TEMPERATURE]
+[gcode_macro clean_nozzle]
 gcode:
-  {% set bed_temp = params.TEMPERATURE|default(40)|float %}
-  M140 S{bed_temp}
+  SAVE_GCODE_STATE NAME=clean_nozzle_state
+  G90
+  G0 Z15 F300
+  {% for wipe in range(8) %}
+    {% for coordinate in [(275,4),(235,4)] %}
+      G0 X{coordinate[0]} Y{coordinate[1] + 0.25 * wipe} Z9.7 F12000
+    {% endfor %}
+  {% endfor %}
+  RESTORE_GCODE_STATE NAME=clean_nozzle_state
 ```
+<!-- {% endraw %} -->
 
-### The "rawparams" variable
-
-The full unparsed parameters for the running macro can be access via the
-`rawparams` pseudo-variable.
-
-Note that this will include any comments that were part of the original command.
-
-See the [sample-macros.cfg](../config/sample-macros.cfg) file for an example
-showing how to override the `M117` command using `rawparams`.
-
-### The "printer" Variable
+#### The "printer" Variable
 
 It is possible to inspect (and alter) the current state of the printer
 via the `printer` pseudo-variable. For example:
@@ -148,9 +99,6 @@ via the `printer` pseudo-variable. For example:
 gcode:
   M106 S{ printer.fan.speed * 0.9 * 255}
 ```
-
-Available fields are defined in the
-[Status Reference](Status_Reference.md) document.
 
 Important! Macros are first evaluated in entirety and only then are
 the resulting commands executed. If a macro issues a command that
@@ -163,50 +111,74 @@ other macros, as the called macro is evaluated when it is invoked
 By convention, the name immediately following `printer` is the name of
 a config section. So, for example, `printer.fan` refers to the fan
 object created by the `[fan]` config section. There are some
-exceptions to this rule - notably the `gcode_move` and `toolhead`
-objects. If the config section contains spaces in it, then one can
-access it via the `[ ]` accessor - for example:
+exceptions to this rule - notably the `gcode` and `toolhead` objects.
+If the config section contains spaces in it, then one can access it
+via the `[ ]` accessor - for example:
 `printer["generic_heater my_chamber_heater"].temperature`.
 
-Note that the Jinja2 `set` directive can assign a local name to an
-object in the `printer` hierarchy. This can make macros more readable
-and reduce typing. For example:
-```
-[gcode_macro QUERY_HTU21D]
-gcode:
-    {% set sensor = printer["htu21d my_sensor"] %}
-    M117 Temp:{sensor.temperature} Humidity:{sensor.humidity}
-```
+Some printer objects allow one to alter the state of the printer. By
+convention, these objects use an `action_` prefix. For example,
+`printer.gcode.action_emergency_stop()` would cause the printer to go
+into a shutdown state. These actions are taken at the time that the
+macro is evaluated, which may be a significant amount of time before
+the generated commands are executed.
 
-## Actions
+The following are common printer attributes:
+- `printer.fan.speed`: The fan speed as a float between 0.0 and 1.0.
+- `printer.gcode.action_respond_info(msg)`: Write the given `msg` to
+  the /tmp/printer pseudo-terminal. Each line of `msg` will be sent
+  with a "// " prefix.
+- `printer.gcode.action_respond_error(msg)`: Write the given `msg` to
+  the /tmp/printer pseudo-terminal. The first line of `msg` will be
+  sent with a "!! " prefix and subsequent lines will have a "// "
+  prefix.
+- `printer.gcode.action_emergency_stop(msg)`: Transition the printer
+  to a shutdown state. The `msg` parameter is optional, it may be
+  useful to describe the reason for the shutdown.
+- `printer.gcode.gcode_position`: The current position of the toolhead
+  relative to the current G-Code origin. It is possible to access the
+  x, y, z, and e components of this position (eg,
+  `printer.gcode.gcode_position.x`).
+- `printer["gcode_macro <macro_name>"].<variable>`: The current value
+  of a gcode_macro variable.
+- `printer.<heater>.temperature`: The last reported temperature (in
+  Celsius as a float) for the given heater. Example heaters are:
+  `extruder`, `extruder1`, `heater_bed`, `heater_generic
+  <config_name>`.
+- `printer.<heater>.target`: The current target temperature (in
+  Celsius as a float) for the given heater.
+- `printer.pause_resume.is_paused`: Returns true if a PAUSE command
+  has been executed without a corresponding RESUME.
+- `printer.toolhead.position`: The last commanded position of the
+  toolhead relative to the coordinate system specified in the config
+  file. It is possible to access the x, y, z, and e components of this
+  position (eg, `printer.toolhead.position.x`).
+- `printer.toolhead.extruder`: The name of the currently active
+  extruder. For example, one could use
+  `printer[printer.toolhead.extruder].target` to get the target
+  temperature of the current extruder.
+- `printer.toolhead.homed_axes`: The current cartesian axes considered
+  to be in a "homed" state. This is a string containing one or more of
+  "x", "y", "z".
+- `printer.heater.available_heaters`: Returns a list of all currently
+  available heaters by their full config section names,
+  e.g. `["extruder", "heater_bed", "heater_generic my_custom_heater"]`.
+- `printer.heater.available_sensors`: Returns a list of all currently
+  available temperature sensors by their full config section names,
+  e.g. `["extruder", "heater_bed", "heater_generic my_custom_heater",
+  "temperature_sensor electronics_temp"]`.
 
-There are some commands available that can alter the state of the
-printer. For example, `{ action_emergency_stop() }` would cause the
-printer to go into a shutdown state. Note that these actions are taken
-at the time that the macro is evaluated, which may be a significant
-amount of time before the generated g-code commands are executed.
+The above list is subject to change - if using an attribute be sure to
+review the [Config Changes document](Config_Changes.md) when upgrading
+the Klipper software. The above list is not exhaustive.  Other
+attributes may be available (via `get_status()` methods defined in the
+software). However, undocumented attributes may change without notice
+in future Klipper releases.
 
-Available "action" commands:
-- `action_respond_info(msg)`: Write the given `msg` to the
-  /tmp/printer pseudo-terminal. Each line of `msg` will be sent with a
-  "// " prefix.
-- `action_raise_error(msg)`: Abort the current macro (and any calling
-  macros) and write the given `msg` to the /tmp/printer
-  pseudo-terminal. The first line of `msg` will be sent with a "!! "
-  prefix and subsequent lines will have a "// " prefix.
-- `action_emergency_stop(msg)`: Transition the printer to a shutdown
-  state. The `msg` parameter is optional, it may be useful to describe
-  the reason for the shutdown.
-- `action_call_remote_method(method_name)`: Calls a method registered
-  by a remote client.  If the method takes parameters they should
-  be provided via keyword arguments, ie:
-  `action_call_remote_method("print_stuff", my_arg="hello_world")`
-
-## Variables
+### Variables
 
 The SET_GCODE_VARIABLE command may be useful for saving state between
-macro calls. Variable names may not contain any upper case characters.
-For example:
+macro calls. For example:
 
 ```
 [gcode_macro start_probe]
@@ -230,7 +202,7 @@ gcode:
 Be sure to take the timing of macro evaluation and command execution
 into account when using SET_GCODE_VARIABLE.
 
-## Delayed Gcodes
+### Delayed Gcodes
 
 The [delayed_gcode] configuration option can be used to execute a delayed
 gcode sequence:
@@ -275,8 +247,11 @@ the gcode option:
 [delayed_gcode report_temp]
 initial_duration: 2.
 gcode:
-  {action_respond_info("Extruder Temp: %.1f" % (printer.extruder0.temperature))}
+  {printer.gcode.action_respond_info(
+    "Extruder Temp: %.1f" %
+    (printer.extruder0.temperature))}
   UPDATE_DELAYED_GCODE ID=report_temp DURATION=2
+
 ```
 
 The above delayed_gcode will send "// Extruder Temp: [ex0_temp]" to
@@ -286,63 +261,4 @@ gcode:
 
 ```
 UPDATE_DELAYED_GCODE ID=report_temp DURATION=0
-```
-
-## Menu templates
-
-If a [display config section](Config_Reference.md#display) is enabled,
-then it is possible to customize the menu with
-[menu](Config_Reference.md#menu) config sections.
-
-The following read-only attributes are available in menu templates:
-* `menu.width` - element width (number of display columns)
-* `menu.ns` - element namespace
-* `menu.event` - name of the event that triggered the script
-* `menu.input` - input value, only available in input script context
-
-The following actions are available in menu templates:
-* `menu.back(force, update)`: will execute menu back command, optional
-  boolean parameters `<force>` and `<update>`.
-  * When `<force>` is set True then it will also stop editing. Default
-    value is False.
-  * When `<update>` is set False then parent container items are not
-    updated. Default value is True.
-* `menu.exit(force)` - will execute menu exit command, optional
-  boolean parameter `<force>` default value False.
-  * When `<force>` is set True then it will also stop editing. Default
-    value is False.
-
-## Save Variables to disk
-
-If a
-[save_variables config section](Config_Reference.md#save_variables)
-has been enabled, `SAVE_VARIABLE VARIABLE=<name> VALUE=<value>` can be
-used to save the variable to disk so that it can be used across
-restarts. All stored variables are loaded into the
-`printer.save_variables.variables` dict at startup and can be used in
-gcode macros. to avoid overly long lines you can add the following at
-the top of the macro:
-```
-{% set svv = printer.save_variables.variables %}
-```
-
-As an example, it could be used to save the state of 2-in-1-out hotend
-and when starting a print ensure that the active extruder is used,
-instead of T0:
-
-```
-[gcode_macro T1]
-gcode:
-  ACTIVATE_EXTRUDER extruder=extruder1
-  SAVE_VARIABLE VARIABLE=currentextruder VALUE='"extruder1"'
-
-[gcode_macro T0]
-gcode:
-  ACTIVATE_EXTRUDER extruder=extruder
-  SAVE_VARIABLE VARIABLE=currentextruder VALUE='"extruder"'
-
-[gcode_macro START_GCODE]
-gcode:
-  {% set svv = printer.save_variables.variables %}
-  ACTIVATE_EXTRUDER extruder={svv.currentextruder}
 ```
