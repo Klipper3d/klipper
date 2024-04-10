@@ -10,19 +10,41 @@
 #include "gpio.h" // i2c_setup
 #include "internal.h" // GPIO
 #include "sched.h" // sched_shutdown
+#include "board/irq.h" //irq_disable
 
 struct i2c_info {
     I2C_TypeDef *i2c;
     uint8_t scl_pin, sda_pin;
 };
 
-DECL_ENUMERATION_RANGE("i2c_bus", "i2c1", 0, 2);
+DECL_ENUMERATION("i2c_bus", "i2c1", 0);
 DECL_CONSTANT_STR("BUS_PINS_i2c1", "PB6,PB7");
+DECL_ENUMERATION("i2c_bus", "i2c1a", 1);
+DECL_CONSTANT_STR("BUS_PINS_i2c1a", "PB8,PB9");
+DECL_ENUMERATION("i2c_bus", "i2c2", 2);
 DECL_CONSTANT_STR("BUS_PINS_i2c2", "PB10,PB11");
+#if CONFIG_MACH_STM32F2 || CONFIG_MACH_STM32F4
+DECL_ENUMERATION("i2c_bus", "i2c3", 3);
+DECL_CONSTANT_STR("BUS_PINS_i2c3", "PA8,PC9");
+  #if CONFIG_MACH_STM32F2 || CONFIG_MACH_STM32F4x5
+DECL_ENUMERATION("i2c_bus", "i2c2a", 4);
+DECL_CONSTANT_STR("BUS_PINS_i2c2a", "PH4,PH5");
+DECL_ENUMERATION("i2c_bus", "i2c3a", 5);
+DECL_CONSTANT_STR("BUS_PINS_i2c3a", "PH7,PH8");
+  #endif
+#endif
 
 static const struct i2c_info i2c_bus[] = {
     { I2C1, GPIO('B', 6), GPIO('B', 7) },
+    { I2C1, GPIO('B', 8), GPIO('B', 9) },
     { I2C2, GPIO('B', 10), GPIO('B', 11) },
+#if CONFIG_MACH_STM32F2 || CONFIG_MACH_STM32F4
+    { I2C3, GPIO('A', 8), GPIO('C', 9) },
+  #if CONFIG_MACH_STM32F2 || CONFIG_MACH_STM32F4x5
+    { I2C2, GPIO('H', 4), GPIO('H', 5) },
+    { I2C3, GPIO('H', 7), GPIO('H', 8) },
+  #endif
+#endif
 };
 
 // Work around stm32 errata causing busy bit to be stuck
@@ -81,13 +103,20 @@ i2c_wait(I2C_TypeDef *i2c, uint32_t set, uint32_t clear, uint32_t timeout)
 }
 
 static void
-i2c_start(I2C_TypeDef *i2c, uint8_t addr, uint32_t timeout)
+i2c_start(I2C_TypeDef *i2c, uint8_t addr, uint8_t xfer_len,
+          uint32_t timeout)
 {
     i2c->CR1 = I2C_CR1_START | I2C_CR1_PE;
     i2c_wait(i2c, I2C_SR1_SB, 0, timeout);
     i2c->DR = addr;
+    if (addr & 0x01)
+        i2c->CR1 |= I2C_CR1_ACK;
     i2c_wait(i2c, I2C_SR1_ADDR, 0, timeout);
+    irqstatus_t flag = irq_save();
     uint32_t sr2 = i2c->SR2;
+    if (addr & 0x01 && xfer_len == 1)
+        i2c->CR1 = I2C_CR1_STOP | I2C_CR1_PE;
+    irq_restore(flag);
     if (!(sr2 & I2C_SR2_MSL))
         shutdown("Failed to send i2c addr");
 }
@@ -97,6 +126,18 @@ i2c_send_byte(I2C_TypeDef *i2c, uint8_t b, uint32_t timeout)
 {
     i2c->DR = b;
     i2c_wait(i2c, I2C_SR1_TXE, 0, timeout);
+}
+
+static uint8_t
+i2c_read_byte(I2C_TypeDef *i2c, uint32_t timeout, uint8_t remaining)
+{
+    i2c_wait(i2c, I2C_SR1_RXNE, 0, timeout);
+    irqstatus_t flag = irq_save();
+    uint8_t b = i2c->DR;
+    if (remaining == 1)
+        i2c->CR1 = I2C_CR1_STOP | I2C_CR1_PE;
+    irq_restore(flag);
+    return b;
 }
 
 static void
@@ -112,7 +153,7 @@ i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
     I2C_TypeDef *i2c = config.i2c;
     uint32_t timeout = timer_read_time() + timer_from_us(5000);
 
-    i2c_start(i2c, config.addr, timeout);
+    i2c_start(i2c, config.addr, write_len, timeout);
     while (write_len--)
         i2c_send_byte(i2c, *write++, timeout);
     i2c_stop(i2c, timeout);
@@ -122,5 +163,21 @@ void
 i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *read)
 {
-    shutdown("i2c_read not supported on stm32");
+    I2C_TypeDef *i2c = config.i2c;
+    uint32_t timeout = timer_read_time() + timer_from_us(5000);
+    uint8_t addr = config.addr | 0x01;
+
+    if (reg_len) {
+        // write the register
+        i2c_start(i2c, config.addr, reg_len, timeout);
+        while(reg_len--)
+            i2c_send_byte(i2c, *reg++, timeout);
+    }
+    // start/re-start and read data
+    i2c_start(i2c, addr, read_len, timeout);
+    while(read_len--) {
+        *read = i2c_read_byte(i2c, timeout, read_len);
+        read++;
+    }
+    i2c_wait(i2c, 0, I2C_SR1_RXNE, timeout);
 }

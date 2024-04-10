@@ -1,9 +1,9 @@
 # File descriptor and timer event helper
 #
-# Copyright (C) 2016-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, select, math, time, Queue
+import os, gc, select, math, time, logging, queue
 import greenlet
 import chelper, util
 
@@ -20,18 +20,19 @@ class ReactorCompletion:
     def __init__(self, reactor):
         self.reactor = reactor
         self.result = self.sentinel
-        self.waiting = None
+        self.waiting = []
     def test(self):
         return self.result is not self.sentinel
     def complete(self, result):
         self.result = result
-        if self.waiting is not None:
-            self.reactor.update_timer(self.waiting.timer, self.reactor.NOW)
+        for wait in self.waiting:
+            self.reactor.update_timer(wait.timer, self.reactor.NOW)
     def wait(self, waketime=_NEVER, waketime_result=None):
         if self.result is self.sentinel:
-            self.waiting = greenlet.getcurrent()
+            wait = greenlet.getcurrent()
+            self.waiting.append(wait)
             self.reactor.pause(waketime)
-            self.waiting = None
+            self.waiting.remove(wait)
             if self.result is self.sentinel:
                 return waketime_result
         return self.result
@@ -49,9 +50,10 @@ class ReactorCallback:
         return self.reactor.NEVER
 
 class ReactorFileHandler:
-    def __init__(self, fd, callback):
+    def __init__(self, fd, read_callback, write_callback):
         self.fd = fd
-        self.callback = callback
+        self.read_callback = read_callback
+        self.write_callback = write_callback
     def fileno(self):
         return self.fd
 
@@ -92,21 +94,28 @@ class ReactorMutex:
 class SelectReactor:
     NOW = _NOW
     NEVER = _NEVER
-    def __init__(self):
+    def __init__(self, gc_checking=False):
         # Main code
         self._process = False
         self.monotonic = chelper.get_ffi()[1].get_monotonic
+        # Python garbage collection
+        self._check_gc = gc_checking
+        self._last_gc_times = [0., 0., 0.]
         # Timers
         self._timers = []
         self._next_timer = self.NEVER
         # Callbacks
         self._pipe_fds = None
-        self._async_queue = Queue.Queue()
+        self._async_queue = queue.Queue()
         # File descriptors
-        self._fds = []
+        self._read_fds = []
+        self._write_fds = []
         # Greenlets
         self._g_dispatch = None
         self._greenlets = []
+        self._all_greenlets = []
+    def get_gc_stats(self):
+        return tuple(self._last_gc_times)
     # Timers
     def update_timer(self, timer_handler, waketime):
         timer_handler.waketime = waketime
@@ -123,8 +132,22 @@ class SelectReactor:
         timers = list(self._timers)
         timers.pop(timers.index(timer_handler))
         self._timers = timers
-    def _check_timers(self, eventtime):
+    def _check_timers(self, eventtime, busy):
         if eventtime < self._next_timer:
+            if busy:
+                return 0.
+            if self._check_gc:
+                gi = gc.get_count()
+                if gi[0] >= 700:
+                    # Reactor looks idle and gc is due - run it
+                    gc_level = 0
+                    if gi[1] >= 10:
+                        gc_level = 1
+                        if gi[2] >= 10:
+                            gc_level = 2
+                    self._last_gc_times[gc_level] = eventtime
+                    gc.collect(gc_level)
+                    return 0.
             return min(1., max(.001, self._next_timer - eventtime))
         self._next_timer = self.NEVER
         g_dispatch = self._g_dispatch
@@ -138,9 +161,7 @@ class SelectReactor:
                     self._end_greenlet(g_dispatch)
                     return 0.
             self._next_timer = min(self._next_timer, waketime)
-        if eventtime >= self._next_timer:
-            return 0.
-        return min(1., max(.001, self._next_timer - self.monotonic()))
+        return 0.
     # Callbacks and Completions
     def completion(self):
         return ReactorCompletion(self)
@@ -152,13 +173,13 @@ class SelectReactor:
         self._async_queue.put_nowait(
             (ReactorCallback, (self, callback, waketime)))
         try:
-            os.write(self._pipe_fds[1], '.')
+            os.write(self._pipe_fds[1], b'.')
         except os.error:
             pass
     def async_complete(self, completion, result):
         self._async_queue.put_nowait((completion.complete, (result,)))
         try:
-            os.write(self._pipe_fds[1], '.')
+            os.write(self._pipe_fds[1], b'.')
         except os.error:
             pass
     def _got_pipe_signal(self, eventtime):
@@ -169,7 +190,7 @@ class SelectReactor:
         while 1:
             try:
                 func, args = self._async_queue.get_nowait()
-            except Queue.Empty:
+            except queue.Empty:
                 break
             func(*args)
     def _setup_async_callbacks(self):
@@ -177,11 +198,6 @@ class SelectReactor:
         util.set_nonblock(self._pipe_fds[0])
         util.set_nonblock(self._pipe_fds[1])
         self.register_fd(self._pipe_fds[0], self._got_pipe_signal)
-    def __del__(self):
-        if self._pipe_fds is not None:
-            os.close(self._pipe_fds[0])
-            os.close(self._pipe_fds[1])
-            self._pipe_fds = None
     # Greenlets
     def _sys_pause(self, waketime):
         # Pause using system sleep for when reactor not running
@@ -201,6 +217,7 @@ class SelectReactor:
             g_next = self._greenlets.pop()
         else:
             g_next = ReactorGreenlet(run=self._dispatch_loop)
+            self._all_greenlets.append(g_next)
         g_next.parent = g.parent
         g.timer = self.register_timer(g.switch, waketime)
         self._next_timer = self.NOW
@@ -221,22 +238,46 @@ class SelectReactor:
     def mutex(self, is_locked=False):
         return ReactorMutex(self, is_locked)
     # File descriptors
-    def register_fd(self, fd, callback):
-        file_handler = ReactorFileHandler(fd, callback)
-        self._fds.append(file_handler)
+    def register_fd(self, fd, read_callback, write_callback=None):
+        file_handler = ReactorFileHandler(fd, read_callback, write_callback)
+        self.set_fd_wake(file_handler, True, False)
         return file_handler
     def unregister_fd(self, file_handler):
-        self._fds.pop(self._fds.index(file_handler))
+        if file_handler in self._read_fds:
+            self._read_fds.pop(self._read_fds.index(file_handler))
+        if file_handler in self._write_fds:
+            self._write_fds.pop(self._write_fds.index(file_handler))
+    def set_fd_wake(self, file_handler, is_readable=True, is_writeable=False):
+        if file_handler in self._read_fds:
+            if not is_readable:
+                self._read_fds.pop(self._read_fds.index(file_handler))
+        elif is_readable:
+            self._read_fds.append(file_handler)
+        if file_handler in self._write_fds:
+            if not is_writeable:
+                self._write_fds.pop(self._write_fds.index(file_handler))
+        elif is_writeable:
+            self._write_fds.append(file_handler)
     # Main loop
     def _dispatch_loop(self):
         self._g_dispatch = g_dispatch = greenlet.getcurrent()
+        busy = True
         eventtime = self.monotonic()
         while self._process:
-            timeout = self._check_timers(eventtime)
-            res = select.select(self._fds, [], [], timeout)
+            timeout = self._check_timers(eventtime, busy)
+            busy = False
+            res = select.select(self._read_fds, self.write_fds, [], timeout)
             eventtime = self.monotonic()
             for fd in res[0]:
-                fd.callback(eventtime)
+                busy = True
+                fd.read_callback(eventtime)
+                if g_dispatch is not self._g_dispatch:
+                    self._end_greenlet(g_dispatch)
+                    eventtime = self.monotonic()
+                    break
+            for fd in res[1]:
+                busy = True
+                fd.write_callback(eventtime)
                 if g_dispatch is not self._g_dispatch:
                     self._end_greenlet(g_dispatch)
                     eventtime = self.monotonic()
@@ -247,20 +288,34 @@ class SelectReactor:
             self._setup_async_callbacks()
         self._process = True
         g_next = ReactorGreenlet(run=self._dispatch_loop)
+        self._all_greenlets.append(g_next)
         g_next.switch()
     def end(self):
         self._process = False
+    def finalize(self):
+        self._g_dispatch = None
+        self._greenlets = []
+        for g in self._all_greenlets:
+            try:
+                g.throw()
+            except:
+                logging.exception("reactor finalize greenlet terminate")
+        self._all_greenlets = []
+        if self._pipe_fds is not None:
+            os.close(self._pipe_fds[0])
+            os.close(self._pipe_fds[1])
+            self._pipe_fds = None
 
 class PollReactor(SelectReactor):
-    def __init__(self):
-        SelectReactor.__init__(self)
+    def __init__(self, gc_checking=False):
+        SelectReactor.__init__(self, gc_checking)
         self._poll = select.poll()
         self._fds = {}
     # File descriptors
-    def register_fd(self, fd, callback):
-        file_handler = ReactorFileHandler(fd, callback)
+    def register_fd(self, fd, read_callback, write_callback=None):
+        file_handler = ReactorFileHandler(fd, read_callback, write_callback)
         fds = self._fds.copy()
-        fds[fd] = callback
+        fds[fd] = file_handler
         self._fds = fds
         self._poll.register(file_handler, select.POLLIN | select.POLLHUP)
         return file_handler
@@ -269,32 +324,49 @@ class PollReactor(SelectReactor):
         fds = self._fds.copy()
         del fds[file_handler.fd]
         self._fds = fds
+    def set_fd_wake(self, file_handler, is_readable=True, is_writeable=False):
+        flags = select.POLLHUP
+        if is_readable:
+            flags |= select.POLLIN
+        if is_writeable:
+            flags |= select.POLLOUT
+        self._poll.modify(file_handler, flags)
     # Main loop
     def _dispatch_loop(self):
         self._g_dispatch = g_dispatch = greenlet.getcurrent()
+        busy = True
         eventtime = self.monotonic()
         while self._process:
-            timeout = self._check_timers(eventtime)
+            timeout = self._check_timers(eventtime, busy)
+            busy = False
             res = self._poll.poll(int(math.ceil(timeout * 1000.)))
             eventtime = self.monotonic()
             for fd, event in res:
-                self._fds[fd](eventtime)
-                if g_dispatch is not self._g_dispatch:
-                    self._end_greenlet(g_dispatch)
-                    eventtime = self.monotonic()
-                    break
+                busy = True
+                if event & (select.POLLIN | select.POLLHUP):
+                    self._fds[fd].read_callback(eventtime)
+                    if g_dispatch is not self._g_dispatch:
+                        self._end_greenlet(g_dispatch)
+                        eventtime = self.monotonic()
+                        break
+                if event & select.POLLOUT:
+                    self._fds[fd].write_callback(eventtime)
+                    if g_dispatch is not self._g_dispatch:
+                        self._end_greenlet(g_dispatch)
+                        eventtime = self.monotonic()
+                        break
         self._g_dispatch = None
 
 class EPollReactor(SelectReactor):
-    def __init__(self):
-        SelectReactor.__init__(self)
+    def __init__(self, gc_checking=False):
+        SelectReactor.__init__(self, gc_checking)
         self._epoll = select.epoll()
         self._fds = {}
     # File descriptors
-    def register_fd(self, fd, callback):
-        file_handler = ReactorFileHandler(fd, callback)
+    def register_fd(self, fd, read_callback, write_callback=None):
+        file_handler = ReactorFileHandler(fd, read_callback, write_callback)
         fds = self._fds.copy()
-        fds[fd] = callback
+        fds[fd] = read_callback
         self._fds = fds
         self._epoll.register(fd, select.EPOLLIN | select.EPOLLHUP)
         return file_handler
@@ -303,20 +375,37 @@ class EPollReactor(SelectReactor):
         fds = self._fds.copy()
         del fds[file_handler.fd]
         self._fds = fds
+    def set_fd_wake(self, file_handler, is_readable=True, is_writeable=False):
+        flags = select.POLLHUP
+        if is_readable:
+            flags |= select.EPOLLIN
+        if is_writeable:
+            flags |= select.EPOLLOUT
+        self._epoll.modify(file_handler, flags)
     # Main loop
     def _dispatch_loop(self):
         self._g_dispatch = g_dispatch = greenlet.getcurrent()
+        busy = True
         eventtime = self.monotonic()
         while self._process:
-            timeout = self._check_timers(eventtime)
+            timeout = self._check_timers(eventtime, busy)
+            busy = False
             res = self._epoll.poll(timeout)
             eventtime = self.monotonic()
             for fd, event in res:
-                self._fds[fd](eventtime)
-                if g_dispatch is not self._g_dispatch:
-                    self._end_greenlet(g_dispatch)
-                    eventtime = self.monotonic()
-                    break
+                busy = True
+                if event & (select.EPOLLIN | select.EPOLLHUP):
+                    self._fds[fd].read_callback(eventtime)
+                    if g_dispatch is not self._g_dispatch:
+                        self._end_greenlet(g_dispatch)
+                        eventtime = self.monotonic()
+                        break
+                if event & select.EPOLLOUT:
+                    self._fds[fd].write_callback(eventtime)
+                    if g_dispatch is not self._g_dispatch:
+                        self._end_greenlet(g_dispatch)
+                        eventtime = self.monotonic()
+                        break
         self._g_dispatch = None
 
 # Use the poll based reactor if it is available

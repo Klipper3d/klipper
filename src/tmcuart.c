@@ -195,7 +195,7 @@ command_tmcuart_send(uint32_t *args)
         // Uart is busy - silently drop this request (host should retransmit)
         return;
     uint8_t write_len = args[1];
-    uint8_t *write = (void*)(size_t)args[2];
+    uint8_t *write = command_decode_ptr(args[2]);
     uint8_t read_len = args[3];
     if (write_len > sizeof(t->data) || read_len > sizeof(t->data))
         shutdown("tmcuart data too large");

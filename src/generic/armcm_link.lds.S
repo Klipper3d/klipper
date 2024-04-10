@@ -4,14 +4,14 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "autoconf.h" // CONFIG_FLASH_START
+#include "autoconf.h" // CONFIG_FLASH_APPLICATION_ADDRESS
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
 OUTPUT_ARCH(arm)
 
 MEMORY
 {
-  rom (rx) : ORIGIN = CONFIG_FLASH_START , LENGTH = CONFIG_FLASH_SIZE
+  rom (rx) : ORIGIN = CONFIG_FLASH_APPLICATION_ADDRESS , LENGTH = CONFIG_FLASH_SIZE
   ram (rwx) : ORIGIN = CONFIG_RAM_START , LENGTH = CONFIG_RAM_SIZE
 }
 
@@ -19,13 +19,23 @@ SECTIONS
 {
     .text : {
         . = ALIGN(4);
+        _text_vectortable_start = .;
         KEEP(*(.vector_table))
+        _text_vectortable_end = .;
         *(.text .text.*)
         *(.rodata .rodata*)
     } > rom
 
     . = ALIGN(4);
     _data_flash = .;
+
+#if CONFIG_ARMCM_RAM_VECTORTABLE
+    .ram_vectortable (NOLOAD) : {
+        _ram_vectortable_start = .;
+        . = . + ( _text_vectortable_end - _text_vectortable_start ) ;
+        _ram_vectortable_end = .;
+    } > ram
+#endif
 
     .data : AT (_data_flash)
     {

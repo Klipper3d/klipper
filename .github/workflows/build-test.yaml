@@ -1,0 +1,27 @@
+# Perform continuous integration tests on updates and pull requests
+name: Build test
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup cache
+      uses: actions/cache@v3
+      with:
+        path: ci_cache
+        key: ${{ runner.os }}-build-${{ hashFiles('scripts/ci-install.sh') }}
+
+    - name: Prepare tests
+      run: ./scripts/ci-install.sh
+
+    - name: Test
+      run: ./scripts/ci-build.sh 2>&1
+
+    - name: Upload micro-controller data dictionaries
+      uses: actions/upload-artifact@v3
+      with:
+        name: data-dict
+        path: ci_build/dict

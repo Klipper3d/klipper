@@ -4,7 +4,6 @@ mainmenu "Klipper Firmware Configuration"
 
 config LOW_LEVEL_OPTIONS
     bool "Enable extra low-level configuration options"
-    default n
     help
         Enable low-level configuration options that (if modified) may
         result in a build that does not function correctly.
@@ -14,17 +13,21 @@ choice
     config MACH_AVR
         bool "Atmega AVR"
     config MACH_ATSAM
-        bool "SAM3/SAM4 (Due and Duet)"
+        bool "SAM3/SAM4/SAM E70 (Due and Duet)"
     config MACH_ATSAMD
-        bool "SAMD21/SAMD51"
+        bool "SAMC21/SAMD21/SAMD51/SAME5x"
     config MACH_LPC176X
         bool "LPC176x (Smoothieboard)"
     config MACH_STM32
         bool "STMicroelectronics STM32"
-    config MACH_STM32F0_HAL
-        bool "STMicroelectronics STM32F042 (with CAN)"
+    config MACH_HC32F460
+        bool "Huada Semiconductor HC32F460"
+    config MACH_RP2040
+        bool "Raspberry Pi RP2040"
     config MACH_PRU
         bool "Beaglebone PRU"
+    config MACH_AR100
+        bool "Allwinner A64 AR100"
     config MACH_LINUX
         bool "Linux process"
     config MACH_SIMU
@@ -36,12 +39,16 @@ source "src/atsam/Kconfig"
 source "src/atsamd/Kconfig"
 source "src/lpc176x/Kconfig"
 source "src/stm32/Kconfig"
-source "src/stm32f0/Kconfig"
+source "src/hc32f460/Kconfig"
+source "src/rp2040/Kconfig"
 source "src/pru/Kconfig"
+source "src/ar100/Kconfig"
 source "src/linux/Kconfig"
 source "src/simulator/Kconfig"
 
 # Generic configuration options for serial ports
+config SERIAL
+    bool
 config SERIAL_BAUD
     depends on SERIAL
     int "Baud rate for serial port" if LOW_LEVEL_OPTIONS
@@ -51,50 +58,107 @@ config SERIAL_BAUD
         to 250000. Read the FAQ before changing this value.
 
 # Generic configuration options for USB
-menu "USB ids"
-    depends on USBSERIAL
-
+config USBSERIAL
+    bool
+config USBCANBUS
+    bool
+config USB
+    bool
+    default y if USBSERIAL || USBCANBUS
 config USB_VENDOR_ID
-    hex "USB vendor ID"
-    default 0x2341
+    default 0x1d50
 config USB_DEVICE_ID
-    hex "USB device ID"
-    default 0xabcd
+    default 0x614e
 config USB_SERIAL_NUMBER_CHIPID
-    depends on HAVE_CHIPID
-    bool "USB serial number from CHIPID"
+    depends on USB && HAVE_CHIPID
     default y
 config USB_SERIAL_NUMBER
-    string "USB serial number" if !USB_SERIAL_NUMBER_CHIPID
     default "12345"
 
+menu "USB ids"
+    depends on USB && LOW_LEVEL_OPTIONS
+config USB_VENDOR_ID
+    hex "USB vendor ID" if USBSERIAL
+config USB_DEVICE_ID
+    hex "USB device ID" if USBSERIAL
+config USB_SERIAL_NUMBER_CHIPID
+    bool "USB serial number from CHIPID" if HAVE_CHIPID
+config USB_SERIAL_NUMBER
+    string "USB serial number" if !USB_SERIAL_NUMBER_CHIPID
 endmenu
 
-# Step timing customization
-config CUSTOM_STEP_DELAY
-    bool "Specify a custom step pulse duration"
-    depends on LOW_LEVEL_OPTIONS
-config STEP_DELAY
-    int
-    default 2
-config STEP_DELAY
-    int "Step pulse duration (in microseconds)"
-    depends on CUSTOM_STEP_DELAY
-    help
-        Specify the duration of the stepper step pulse time. This
-        setting applies to all stepper drivers controlled by the
-        micro-controller. If this value is set to zero (or less) then
-        the code will "step" and "unstep" in the same C function.
+# Optional features that can be disabled (for devices with small flash sizes)
+config WANT_GPIO_BITBANGING
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_DISPLAYS
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_SENSORS
+    bool
+    depends on HAVE_GPIO_I2C || HAVE_GPIO_SPI
+    default y
+config WANT_LIS2DW
+    bool
+    depends on HAVE_GPIO_SPI
+    default y
+config WANT_LDC1612
+    bool
+    depends on HAVE_GPIO_I2C
+    default y
+config WANT_SOFTWARE_I2C
+    bool
+    depends on HAVE_GPIO && HAVE_GPIO_I2C
+    default y
+config WANT_SOFTWARE_SPI
+    bool
+    depends on HAVE_GPIO && HAVE_GPIO_SPI
+    default y
+config NEED_SENSOR_BULK
+    bool
+    depends on WANT_SENSORS || WANT_LIS2DW || WANT_LDC1612
+    default y
+menu "Optional features (to reduce code size)"
+    depends on HAVE_LIMITED_CODE_SIZE
+config WANT_GPIO_BITBANGING
+    bool "Support GPIO \"bit-banging\" devices"
+    depends on HAVE_GPIO
+config WANT_DISPLAYS
+    bool "Support LCD devices"
+    depends on HAVE_GPIO
+config WANT_SENSORS
+    bool "Support external sensor devices"
+    depends on HAVE_GPIO_I2C || HAVE_GPIO_SPI
+config WANT_LIS2DW
+    bool "Support lis2dw 3-axis accelerometer"
+    depends on HAVE_GPIO_SPI
+config WANT_LDC1612
+    bool "Support ldc1612 eddy current sensor"
+    depends on HAVE_GPIO_I2C
+config WANT_SOFTWARE_I2C
+    bool "Support software based I2C \"bit-banging\""
+    depends on HAVE_GPIO && HAVE_GPIO_I2C
+config WANT_SOFTWARE_SPI
+    bool "Support software based SPI \"bit-banging\""
+    depends on HAVE_GPIO && HAVE_GPIO_SPI
+endmenu
 
-        A setting of zero (or less) on 8-bit AVR micro-controllers
-        results in a minimum step pulse time a little over 2us.
+# Generic configuration options for CANbus
+config CANSERIAL
+    bool
+config CANBUS
+    bool
+    default y if CANSERIAL || USBCANBUS
+config CANBUS_FREQUENCY
+    int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANBUS
+    default 1000000
+config CANBUS_FILTER
+    bool
+    default y if CANSERIAL
 
-        A setting of zero on ARM micro-controllers typically results
-        in a minimum step pulse time of 20 cpu cycles.
-
-        The default for AVR is -1, for all other micro-controllers it
-        is 2us.
-
+# Support setting gpio state at startup
 config INITIAL_PINS
     string "GPIO pins to set at micro-controller startup"
     depends on LOW_LEVEL_OPTIONS
@@ -108,25 +172,26 @@ config INITIAL_PINS
 # if the hardware does not support the feature.
 config HAVE_GPIO
     bool
-    default n
 config HAVE_GPIO_ADC
     bool
-    default n
 config HAVE_GPIO_SPI
     bool
-    default n
+config HAVE_GPIO_SDIO
+    bool
 config HAVE_GPIO_I2C
     bool
-    default n
 config HAVE_GPIO_HARD_PWM
     bool
-    default n
-config HAVE_GPIO_BITBANGING
+config HAVE_STRICT_TIMING
     bool
-    default n
 config HAVE_CHIPID
     bool
-    default n
+config HAVE_STEPPER_BOTH_EDGE
+    bool
+config HAVE_BOOTLOADER_REQUEST
+    bool
+config HAVE_LIMITED_CODE_SIZE
+    bool
 
 config INLINE_STEPPER_HACK
     # Enables gcc to inline stepper_event() into the main timer irq handler

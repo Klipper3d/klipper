@@ -1,21 +1,22 @@
 #!/usr/bin/env python2
 # Script to implement a test console with firmware over serial port
 #
-# Copyright (C) 2016,2017  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, optparse, os, re, logging
-import reactor, serialhdl, pins, util, msgproto, clocksync
+import util, reactor, serialhdl, msgproto, clocksync
 
 help_txt = """
   This is a debugging console for the Klipper micro-controller.
   In addition to mcu commands, the following artificial commands are
   available:
-    PINS  : Load pin name aliases (eg, "PINS arduino")
     DELAY : Send a command at a clock time (eg, "DELAY 9999 get_uptime")
     FLOOD : Send a command many times (eg, "FLOOD 22 .01 get_uptime")
     SUPPRESS : Suppress a response message (eg, "SUPPRESS analog_in_state 4")
     SET   : Create a local variable (eg, "SET myvar 123.4")
+    DUMP  : Dump memory (eg, "DUMP 0x12345678 100 32")
+    FILEDUMP : Dump to file (eg, "FILEDUMP data.bin 0x12345678 100 32")
     STATS : Report serial statistics
     LIST  : List available mcu commands, local commands, and local variables
     HELP  : Show this text
@@ -30,20 +31,24 @@ help_txt = """
 re_eval = re.compile(r'\{(?P<eval>[^}]*)\}')
 
 class KeyboardReader:
-    def __init__(self, ser, reactor):
-        self.ser = ser
+    def __init__(self, reactor, serialport, baud, canbus_iface, canbus_nodeid):
+        self.serialport = serialport
+        self.baud = baud
+        self.canbus_iface = canbus_iface
+        self.canbus_nodeid = canbus_nodeid
+        self.ser = serialhdl.SerialReader(reactor)
         self.reactor = reactor
         self.start_time = reactor.monotonic()
         self.clocksync = clocksync.ClockSync(self.reactor)
         self.fd = sys.stdin.fileno()
         util.set_nonblock(self.fd)
         self.mcu_freq = 0
-        self.pins = pins.PinResolver(validate_aliases=False)
         self.data = ""
         reactor.register_fd(self.fd, self.process_kbd)
         reactor.register_callback(self.connect)
         self.local_commands = {
-            "PINS": self.command_PINS, "SET": self.command_SET,
+            "SET": self.command_SET,
+            "DUMP": self.command_DUMP, "FILEDUMP": self.command_FILEDUMP,
             "DELAY": self.command_DELAY, "FLOOD": self.command_FLOOD,
             "SUPPRESS": self.command_SUPPRESS, "STATS": self.command_STATS,
             "LIST": self.command_LIST, "HELP": self.command_HELP,
@@ -52,13 +57,20 @@ class KeyboardReader:
     def connect(self, eventtime):
         self.output(help_txt)
         self.output("="*20 + " attempting to connect " + "="*20)
-        self.ser.connect()
+        if self.canbus_iface is not None:
+            self.ser.connect_canbus(self.serialport, self.canbus_nodeid,
+                                    self.canbus_iface)
+        elif self.baud:
+            self.ser.connect_uart(self.serialport, self.baud)
+        else:
+            self.ser.connect_pipe(self.serialport)
         msgparser = self.ser.get_msgparser()
-        self.output("Loaded %d commands (%s / %s)" % (
-            len(msgparser.messages_by_id),
-            msgparser.version, msgparser.build_versions))
+        message_count = len(msgparser.get_messages())
+        version, build_versions = msgparser.get_version_info()
+        self.output("Loaded %d commands (%s / %s)"
+                    % (message_count, version, build_versions))
         self.output("MCU config: %s" % (" ".join(
-            ["%s=%s" % (k, v) for k, v in msgparser.config.items()])))
+            ["%s=%s" % (k, v) for k, v in msgparser.get_constants().items()])))
         self.clocksync.connect(self.ser)
         self.ser.handle_default = self.handle_default
         self.ser.register_response(self.handle_output, '#output')
@@ -80,9 +92,6 @@ class KeyboardReader:
     def update_evals(self, eventtime):
         self.eval_globals['freq'] = self.mcu_freq
         self.eval_globals['clock'] = self.clocksync.get_clock(eventtime)
-    def command_PINS(self, parts):
-        mcu_type = self.ser.get_msgparser().get_constant('MCU')
-        self.pins.add_pin_mapping(mcu_type, parts[1])
     def command_SET(self, parts):
         val = parts[2]
         try:
@@ -90,6 +99,55 @@ class KeyboardReader:
         except ValueError:
             pass
         self.eval_globals[parts[1]] = val
+    def command_DUMP(self, parts, filename=None):
+        # Extract command args
+        try:
+            addr = int(parts[1], 0)
+            count = int(parts[2], 0)
+            order = [2, 0, 1, 0][(addr | count) & 3]
+            if len(parts) > 3:
+                order = {'32': 2, '16': 1, '8': 0}[parts[3]]
+        except ValueError as e:
+            self.output("Error: %s" % (str(e),))
+            return
+        bsize = 1 << order
+        # Query data from mcu
+        vals = []
+        for i in range((count + bsize - 1) >> order):
+            caddr = addr + (i << order)
+            cmd = "debug_read order=%d addr=%d" % (order, caddr)
+            params = self.ser.send_with_response(cmd, "debug_result")
+            vals.append(params['val'])
+        # Report data
+        if filename is None and order == 2:
+            # Common 32bit hex dump
+            for i in range((len(vals) + 3) // 4):
+                p = i * 4
+                hexvals = " ".join(["%08x" % (v,) for v in vals[p:p+4]])
+                self.output("%08x  %s" % (addr + p * 4, hexvals))
+            return
+        # Convert to byte format
+        data = bytearray()
+        for val in vals:
+            for b in range(bsize):
+                data.append((val >> (8 * b)) & 0xff)
+        data = data[:count]
+        if filename is not None:
+            f = open(filename, 'wb')
+            f.write(data)
+            f.close()
+            self.output("Wrote %d bytes to '%s'" % (len(data), filename))
+            return
+        for i in range((count + 15) // 16):
+            p = i * 16
+            paddr = addr + p
+            d = data[p:p+16]
+            hexbytes = " ".join(["%02x" % (v,) for v in d])
+            pb = "".join([chr(v) if v >= 0x20 and v < 0x7f else '.' for v in d])
+            o = "%08x  %-47s  |%s|" % (paddr, hexbytes, pb)
+            self.output("%s %s" % (o[:34], o[34:]))
+    def command_FILEDUMP(self, parts):
+        self.command_DUMP(parts[1:], filename=parts[1])
     def command_DELAY(self, parts):
         try:
             val = int(parts[1])
@@ -137,9 +195,10 @@ class KeyboardReader:
     def command_LIST(self, parts):
         self.update_evals(self.reactor.monotonic())
         mp = self.ser.get_msgparser()
+        cmds = [msgformat for msgtag, msgtype, msgformat in mp.get_messages()
+                if msgtype == 'command']
         out = "Available mcu commands:"
-        out += "\n  ".join([""] + sorted([
-            mp.messages_by_id[i].msgformat for i in mp.command_ids]))
+        out += "\n  ".join([""] + sorted(cmds))
         out += "\nAvailable artificial commands:"
         out += "\n  ".join([""] + [n for n in sorted(self.local_commands)])
         out += "\nAvailable local variables:"
@@ -163,11 +222,7 @@ class KeyboardReader:
                 return None
             line = ''.join(evalparts)
             self.output("Eval: %s" % (line,))
-        try:
-            line = self.pins.update_command(line).strip()
-        except:
-            self.output("Unable to map pin: %s" % (line,))
-            return None
+        line = line.strip()
         if line:
             parts = line.split()
             if parts[0] in self.local_commands:
@@ -175,7 +230,7 @@ class KeyboardReader:
                 return None
         return line
     def process_kbd(self, eventtime):
-        self.data += os.read(self.fd, 4096)
+        self.data += str(os.read(self.fd, 4096).decode())
 
         kbdlines = self.data.split('\n')
         for line in kbdlines[:-1]:
@@ -195,16 +250,33 @@ class KeyboardReader:
         self.data = kbdlines[-1]
 
 def main():
-    usage = "%prog [options] <serialdevice> <baud>"
+    usage = "%prog [options] <serialdevice>"
     opts = optparse.OptionParser(usage)
+    opts.add_option("-v", action="store_true", dest="verbose",
+                    help="enable debug messages")
+    opts.add_option("-b", "--baud", type="int", dest="baud", help="baud rate")
+    opts.add_option("-c", "--canbus_iface", dest="canbus_iface",
+                    help="Use CAN bus interface; serialdevice is the chip UUID")
+    opts.add_option("-i", "--canbus_nodeid", type="int", dest="canbus_nodeid",
+                    default=64, help="The CAN nodeid to use (default 64)")
     options, args = opts.parse_args()
-    serialport, baud = args
-    baud = int(baud)
+    if len(args) != 1:
+        opts.error("Incorrect number of arguments")
+    serialport = args[0]
 
-    logging.basicConfig(level=logging.DEBUG)
+    baud = options.baud
+    if baud is None and not (serialport.startswith("/dev/rpmsg_")
+                             or serialport.startswith("/tmp/")):
+        baud = 250000
+
+    debuglevel = logging.INFO
+    if options.verbose:
+        debuglevel = logging.DEBUG
+    logging.basicConfig(level=debuglevel)
+
     r = reactor.Reactor()
-    ser = serialhdl.SerialReader(r, serialport, baud)
-    kbd = KeyboardReader(ser, r)
+    kbd = KeyboardReader(r, serialport, baud, options.canbus_iface,
+                         options.canbus_nodeid)
     try:
         r.run()
     except KeyboardInterrupt:

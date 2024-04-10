@@ -1,0 +1,43 @@
+# Add a comment to github issues marked with the "not on github" label
+name: "Add comment to issues marked 'not on github'"
+on:
+  issues:
+      types: [labeled]
+jobs:
+  comment:
+    if: github.repository == 'Klipper3d/klipper'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            if (context.payload.label.name != "not on github")
+              return;
+            msg = "It looks like this ticket is a request for help"
+                + " (or similar)."
+                + " Many helpful people will not see your message here and you"
+                + " are unlikely to get a useful response."
+                + " Instead, see the contact directions at:"
+                + " https://www.klipper3d.org/Contact.html"
+                + "\n\n"
+                + "We use github to share the results of work done to"
+                + " improve Klipper. We don't use github for requests."
+                + " (In particular, we don't use github for feature"
+                + " requests, to answer questions, nor to help diagnose"
+                + " problems with a printer.)"
+                + "\n\n"
+                + "Please follow the directions at:"
+                + " https://www.klipper3d.org/Contact.html"
+                + "\n\n"
+                + "This ticket will be automatically closed."
+                + "\n\n"
+                + "Best regards,\n"
+                + "~ Your friendly GitIssueBot"
+                + "\n\n"
+                + "PS: I'm just an automated script, not a human being.";
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: msg
+            })

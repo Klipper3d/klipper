@@ -71,11 +71,9 @@ enum {
 };
 
 // command.c
+void *command_decode_ptr(uint32_t v);
 uint8_t *command_parsef(uint8_t *p, uint8_t *maxend
                         , const struct command_parser *cp, uint32_t *args);
-uint_fast8_t command_encodef(uint8_t *buf, const struct command_encoder *ce
-                             , va_list args);
-void command_add_frame(uint8_t *buf, uint_fast8_t msglen);
 uint_fast8_t command_encode_and_frame(
     uint8_t *buf, const struct command_encoder *ce, va_list args);
 void command_sendf(const struct command_encoder *ce, ...);

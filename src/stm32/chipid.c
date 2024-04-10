@@ -4,6 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "generic/canserial.h" // canserial_set_uuid
 #include "generic/usb_cdc.h" // usb_fill_serial
 #include "generic/usbstd.h" // usb_string_descriptor
 #include "internal.h" // UID_BASE
@@ -25,9 +26,10 @@ usbserial_get_serialid(void)
 void
 chipid_init(void)
 {
-    if (!CONFIG_USB_SERIAL_NUMBER_CHIPID)
-        return;
-    usb_fill_serial(&cdc_chipid.desc, ARRAY_SIZE(cdc_chipid.data)
-                    , (void*)UID_BASE);
+    if (CONFIG_USB_SERIAL_NUMBER_CHIPID)
+        usb_fill_serial(&cdc_chipid.desc, ARRAY_SIZE(cdc_chipid.data)
+                        , (void*)UID_BASE);
+    if (CONFIG_CANBUS)
+        canserial_set_uuid((void*)UID_BASE, CHIP_UID_LEN);
 }
 DECL_INIT(chipid_init);

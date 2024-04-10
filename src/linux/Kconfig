@@ -6,8 +6,10 @@ if MACH_LINUX
 config LINUX_SELECT
     bool
     default y
+    select HAVE_GPIO
     select HAVE_GPIO_ADC
     select HAVE_GPIO_SPI
+    select HAVE_GPIO_I2C
     select HAVE_GPIO_HARD_PWM
 
 config BOARD_DIRECTORY
@@ -16,6 +18,6 @@ config BOARD_DIRECTORY
 
 config CLOCK_FREQ
     int
-    default 20000000
+    default 50000000
 
 endif

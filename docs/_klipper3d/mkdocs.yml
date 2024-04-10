@@ -1,0 +1,142 @@
+# Main configuration file for mkdocs generation of klipper3d.org website
+
+# Note that the build-translations.sh script expects a certain file
+# layout.  See that script and the README file for more details.
+
+# Site and directory configuration
+site_name: Klipper documentation
+repo_url: https://github.com/Klipper3d/klipper
+repo_name: Klipper3d/klipper
+edit_uri: blob/master/docs/
+use_directory_urls: False
+docs_dir: '../'
+site_dir: '../../site/'
+
+# Custom markdown dialect settings
+markdown_extensions:
+  - toc:
+      permalink: True
+      toc_depth: 6
+  - attr_list
+  - mdx_partial_gfm
+  - mdx_truly_sane_lists
+  - mdx_breakless_lists
+plugins:
+  search:
+    lang: en
+  mkdocs-simple-hooks:
+    hooks:
+      on_page_markdown: "docs._klipper3d.mkdocs_hooks:transform"
+  exclude:
+    glob: "README.md"
+
+# Website layout configuration (using mkdocs-material theme)
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: white
+      accent: blue
+      toggle:
+        icon: material/lightbulb
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: grey
+      accent: light blue
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to light mode
+  logo: img/klipper.svg
+  favicon: img/favicon.ico
+  icon:
+    repo: fontawesome/brands/github
+    alternate: material/web
+  features:
+      #- navigation.tabs
+      #- navigation.expand
+      - navigation.top
+      # if enabled, the TOC doesn't work for some pages
+      # - toc.integrate
+      - search.suggest
+      - search.highlight
+      - search.share
+  language: en
+extra_css:
+  - _klipper3d/css/extra.css
+
+# Site usage statistics
+extra:
+  # https://squidfunk.github.io/mkdocs-material/setup/setting-up-site-analytics/#site-search-tracking
+  analytics:
+    provider: google
+    property: UA-138371409-1
+  # Language Selection
+  alternate:
+    - name: English
+      link: /
+      lang: en
+    # Alternate language links automatically added here
+
+# Navigation hierarchy (this should mimic the layout of Overview.md)
+nav:
+  - Overview.md
+  - Features.md
+  - FAQ.md
+  - Releases.md
+  - Config_Changes.md
+  - Contact.md
+  - Installation and Configuration:
+    - Installation.md
+    - Configuration Reference:
+      - Config_Reference.md
+      - Rotation_Distance.md
+    - Config_checks.md
+    - Bed Level:
+      - Bed_Level.md
+      - Delta_Calibrate.md
+      - Probe_Calibrate.md
+      - BLTouch.md
+      - Manual_Level.md
+      - Bed_Mesh.md
+      - Endstop_Phase.md
+      - Axis_Twist_Compensation.md
+    - Resonance Compensation:
+      - Resonance_Compensation.md
+      - Measuring_Resonances.md
+    - Pressure_Advance.md
+    - G-Codes.md
+    - Command templates:
+      - Command_Templates.md
+      - Status_Reference.md
+    - TMC_Drivers.md
+    - Multi_MCU_Homing.md
+    - Slicers.md
+    - Skew_Correction.md
+    - Exclude_Object.md
+    - Using_PWM_Tools.md
+  - Developer Documentation:
+    - Code_Overview.md
+    - Kinematics.md
+    - Protocol.md
+    - API_Server.md
+    - MCU_Commands.md
+    - CANBUS_protocol.md
+    - Debugging.md
+    - Benchmarks.md
+    - CONTRIBUTING.md
+    - Packaging.md
+  - Device Specific Documents:
+    - Example_Configs.md
+    - SDCard_Updates.md
+    - RPi_microcontroller.md
+    - Beaglebone.md
+    - Bootloaders.md
+    - Bootloader_Entry.md
+    - CANBUS.md
+    - CANBUS_Troubleshooting.md
+    - TSL1401CL_Filament_Width_Sensor.md
+    - Hall_Filament_Width_Sensor.md
+    - Eddy_Probe.md
+  - Sponsors.md

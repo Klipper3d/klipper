@@ -18,7 +18,11 @@ DECL_TASK(watchdog_reset);
 void
 watchdog_init(void)
 {
+#if CONFIG_MACH_SAMC21
+    WDT->CONFIG.reg = WDT_CONFIG_PER_CYC512; // 500ms timeout
+#elif CONFIG_MACH_SAMX5
     WDT->CONFIG.reg = WDT_CONFIG_PER(6); // 500ms timeout
+#endif
     WDT->CTRLA.reg = WDT_CTRLA_ENABLE;
 }
 DECL_INIT(watchdog_init);

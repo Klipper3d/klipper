@@ -1,10 +1,14 @@
 // Main starting point for LPC176x boards.
 //
-// Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "autoconf.h" // CONFIG_CLOCK_FREQ
 #include "board/armcm_boot.h" // armcm_main
+#include "board/armcm_reset.h" // try_request_canboot
+#include "board/irq.h" // irq_disable
+#include "board/misc.h" // bootloader_request
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
 
@@ -36,6 +40,23 @@ DECL_INIT(watchdog_init);
  * misc functions
  ****************************************************************/
 
+// Try to reboot into bootloader
+void
+bootloader_request(void)
+{
+    if (!CONFIG_FLASH_APPLICATION_ADDRESS)
+        return;
+    try_request_canboot();
+    // Disable USB and pause for 5ms so host recognizes a disconnect
+    irq_disable();
+    if (CONFIG_USB)
+        usb_disconnect();
+    // The "LPC17xx-DFU-Bootloader" will enter the bootloader if the
+    // watchdog timeout flag is set.
+    LPC_WDT->WDMOD = 0x07;
+    NVIC_SystemReset();
+}
+
 // Check if a peripheral clock has been enabled
 int
 is_enabled_pclock(uint32_t pclk)
@@ -48,13 +69,13 @@ void
 enable_pclock(uint32_t pclk)
 {
     LPC_SC->PCONP |= 1<<pclk;
-    if (pclk < 16) {
-        uint32_t shift = pclk * 2;
-        LPC_SC->PCLKSEL0 = (LPC_SC->PCLKSEL0 & ~(0x3<<shift)) | (0x1<<shift);
-    } else {
-        uint32_t shift = (pclk - 16) * 2;
-        LPC_SC->PCLKSEL1 = (LPC_SC->PCLKSEL1 & ~(0x3<<shift)) | (0x1<<shift);
-    }
+}
+
+// Return the frequency of the given peripheral clock
+uint32_t
+get_pclock_frequency(uint32_t pclk)
+{
+    return CONFIG_CLOCK_FREQ;
 }
 
 // Main entry point - called from armcm_boot.c:ResetHandler()

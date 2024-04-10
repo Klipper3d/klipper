@@ -11,6 +11,11 @@
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // sched_shutdown
 
+struct gpio_info {
+    void *dev;
+    uint8_t dev_id;
+};
+
 DECL_ENUMERATION_RANGE("pin", "PA0", GPIO('A', 0), 32);
 DECL_ENUMERATION_RANGE("pin", "PB0", GPIO('B', 0), 32);
 #ifdef PIOC
@@ -23,16 +28,17 @@ DECL_ENUMERATION_RANGE("pin", "PD0", GPIO('D', 0), 32);
 DECL_ENUMERATION_RANGE("pin", "PE0", GPIO('E', 0), 32);
 #endif
 
-static Pio * const digital_regs[] = {
-    PIOA, PIOB,
+static const struct gpio_info digital_regs[] = {
+    { PIOA, ID_PIOA },
+    { PIOB, ID_PIOB },
 #ifdef PIOC
-    PIOC,
+    { PIOC, ID_PIOC },
 #endif
 #ifdef PIOD
-    PIOD,
+    { PIOD, ID_PIOD },
 #endif
 #ifdef PIOE
-    PIOE,
+    { PIOE, ID_PIOE },
 #endif
 };
 
@@ -65,6 +71,9 @@ set_pull_up(Pio *regs, uint32_t bit, int32_t pull_up)
     // Check if this pin is a "system IO pin" and disable if so
     if (regs == PIOB && (bit & 0x1cf0))
         MATRIX->CCFG_SYSIO |= bit;
+#elif CONFIG_MACH_SAME70
+    if (regs == PIOB && (bit & 0x10f0))
+        MATRIX->CCFG_SYSIO |= bit;
 #endif
 }
 
@@ -72,7 +81,7 @@ void
 gpio_peripheral(uint32_t gpio, char ptype, int32_t pull_up)
 {
     uint32_t bank = GPIO2PORT(gpio), bit = GPIO2BIT(gpio), pt = ptype - 'A';
-    Pio *regs = digital_regs[bank];
+    Pio *regs = digital_regs[bank].dev;
 
 #if CONFIG_MACH_SAM3X
     regs->PIO_ABSR = (regs->PIO_ABSR & ~bit) | (pt & 0x01 ? bit : 0);
@@ -94,7 +103,7 @@ gpio_out_setup(uint8_t pin, uint8_t val)
 {
     if (GPIO2PORT(pin) >= ARRAY_SIZE(digital_regs))
         goto fail;
-    Pio *regs = digital_regs[GPIO2PORT(pin)];
+    Pio *regs = digital_regs[GPIO2PORT(pin)].dev;
     struct gpio_out g = { .regs=regs, .bit=GPIO2BIT(pin) };
     gpio_out_reset(g, val);
     return g;
@@ -152,8 +161,8 @@ gpio_in_setup(uint8_t pin, int8_t pull_up)
     if (CONFIG_MACH_SAM3X && pull_up < 0)
         goto fail;
     uint32_t port = GPIO2PORT(pin);
-    enable_pclock(ID_PIOA + port);
-    struct gpio_in g = { .regs=digital_regs[port], .bit=GPIO2BIT(pin) };
+    enable_pclock(digital_regs[port].dev_id);
+    struct gpio_in g = { .regs=digital_regs[port].dev, .bit=GPIO2BIT(pin) };
     gpio_in_reset(g, pull_up);
     return g;
 fail:

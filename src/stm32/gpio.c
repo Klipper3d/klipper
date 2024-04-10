@@ -66,20 +66,24 @@ regs_to_pin(GPIO_TypeDef *regs, uint32_t bit)
     return 0;
 }
 
+// Verify that a gpio is a valid pin
+static int
+gpio_valid(uint32_t pin)
+{
+    uint32_t port = GPIO2PORT(pin);
+    return port < ARRAY_SIZE(digital_regs) && digital_regs[port];
+}
+
 struct gpio_out
 gpio_out_setup(uint32_t pin, uint32_t val)
 {
-    if (GPIO2PORT(pin) >= ARRAY_SIZE(digital_regs))
-        goto fail;
+    if (!gpio_valid(pin))
+        shutdown("Not an output pin");
     GPIO_TypeDef *regs = digital_regs[GPIO2PORT(pin)];
-    if (! regs)
-        goto fail;
     gpio_clock_enable(regs);
     struct gpio_out g = { .regs=regs, .bit=GPIO2BIT(pin) };
     gpio_out_reset(g, val);
     return g;
-fail:
-    shutdown("Not an output pin");
 }
 
 void
@@ -125,16 +129,12 @@ gpio_out_write(struct gpio_out g, uint32_t val)
 struct gpio_in
 gpio_in_setup(uint32_t pin, int32_t pull_up)
 {
-    if (GPIO2PORT(pin) >= ARRAY_SIZE(digital_regs))
-        goto fail;
+    if (!gpio_valid(pin))
+        shutdown("Not a valid input pin");
     GPIO_TypeDef *regs = digital_regs[GPIO2PORT(pin)];
-    if (! regs)
-        goto fail;
     struct gpio_in g = { .regs=regs, .bit=GPIO2BIT(pin) };
     gpio_in_reset(g, pull_up);
     return g;
-fail:
-    shutdown("Not a valid input pin");
 }
 
 void

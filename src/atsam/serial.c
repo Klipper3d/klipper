@@ -17,19 +17,29 @@
 static Uart * const Port = UART;
 static const uint32_t Pmc_id = ID_UART;
 static const uint32_t rx_pin = GPIO('A', 8), tx_pin = GPIO('A', 9);
+static const char uart_periph = 'A';
 DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA8,PA9");
 #elif CONFIG_MACH_SAM4S
 #define UARTx_IRQn UART1_IRQn
 static Uart * const Port = UART1;
 static const uint32_t Pmc_id = ID_UART1;
 static const uint32_t rx_pin = GPIO('B', 2), tx_pin = GPIO('B', 3);
+static const char uart_periph = 'A';
 DECL_CONSTANT_STR("RESERVE_PINS_serial", "PB2,PB3");
 #elif CONFIG_MACH_SAM4E
 #define UARTx_IRQn UART0_IRQn
 static Uart * const Port = UART0;
 static const uint32_t Pmc_id = ID_UART0;
 static const uint32_t rx_pin = GPIO('A', 9), tx_pin = GPIO('A', 10);
+static const char uart_periph = 'A';
 DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA9,PA10");
+#elif CONFIG_MACH_SAME70
+#define UARTx_IRQn UART2_IRQn
+static Uart * const Port = UART2;
+static const uint32_t Pmc_id = ID_UART2;
+static const uint32_t rx_pin = GPIO('D', 25), tx_pin = GPIO('D', 26);
+static const char uart_periph = 'C';
+DECL_CONSTANT_STR("RESERVE_PINS_serial", "PD25,PD26");
 #endif
 
 void
@@ -57,20 +67,18 @@ serial_enable_tx_irq(void)
 void
 serial_init(void)
 {
-    gpio_peripheral(rx_pin, 'A', 1);
-    gpio_peripheral(tx_pin, 'A', 0);
+    gpio_peripheral(rx_pin, uart_periph, 1);
+    gpio_peripheral(tx_pin, uart_periph, 0);
 
     // Reset uart
     enable_pclock(Pmc_id);
-    Port->UART_PTCR = UART_PTCR_RXTDIS | UART_PTCR_TXTDIS;
     Port->UART_CR = (UART_CR_RSTRX | UART_CR_RSTTX
                      | UART_CR_RXDIS | UART_CR_TXDIS);
     Port->UART_IDR = 0xFFFFFFFF;
 
     // Enable uart
-    Port->UART_MR = (US_MR_CHRL_8_BIT | US_MR_NBSTOP_1_BIT | UART_MR_PAR_NO
-                     | UART_MR_CHMODE_NORMAL);
-    Port->UART_BRGR = SystemCoreClock / (16 * CONFIG_SERIAL_BAUD);
+    Port->UART_MR = (UART_MR_PAR_NO | UART_MR_CHMODE_NORMAL);
+    Port->UART_BRGR = get_pclock_frequency(Pmc_id) / (16 * CONFIG_SERIAL_BAUD);
     Port->UART_IER = UART_IER_RXRDY;
     armcm_enable_irq(UARTx_Handler, UARTx_IRQn, 0);
     Port->UART_CR = UART_CR_RXEN | UART_CR_TXEN;

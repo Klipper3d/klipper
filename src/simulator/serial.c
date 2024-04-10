@@ -19,6 +19,12 @@ serial_init(void)
 }
 DECL_INIT(serial_init);
 
+void *
+console_receive_buffer(void)
+{
+    return NULL;
+}
+
 static void
 do_uart(void)
 {

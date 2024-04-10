@@ -1,0 +1,123 @@
+# Kconfig settings for RP2040 processors
+
+if MACH_RP2040
+
+config RP2040_SELECT
+    bool
+    default y
+    select HAVE_GPIO
+    select HAVE_GPIO_ADC
+    select HAVE_GPIO_SPI
+    select HAVE_GPIO_I2C
+    select HAVE_STRICT_TIMING
+    select HAVE_CHIPID
+    select HAVE_GPIO_HARD_PWM
+    select HAVE_STEPPER_BOTH_EDGE
+    select HAVE_BOOTLOADER_REQUEST
+
+config BOARD_DIRECTORY
+    string
+    default "rp2040"
+
+config MCU
+    string
+    default "rp2040"
+
+config CLOCK_FREQ
+    int
+    default 12000000
+
+config FLASH_SIZE
+    hex
+    default 0x200000
+
+config FLASH_BOOT_ADDRESS
+    hex
+    default 0x10000100 # Stage2 binary starts at 0x10000000
+
+config RAM_START
+    hex
+    default 0x20000000
+
+config RAM_SIZE
+    hex
+    default 0x42000
+
+config STACK_SIZE
+    int
+    default 512
+
+
+######################################################################
+# Bootloader options
+######################################################################
+
+config RP2040_HAVE_STAGE2
+    bool
+config RP2040_HAVE_BOOTLOADER
+    bool
+    default y if !RP2040_HAVE_STAGE2
+
+choice
+    prompt "Bootloader offset"
+    config RP2040_FLASH_START_0100
+        bool "No bootloader"
+        select RP2040_HAVE_STAGE2
+    config RP2040_FLASH_START_4000
+        bool "16KiB bootloader"
+endchoice
+config FLASH_APPLICATION_ADDRESS
+    hex
+    default 0x10004000 if RP2040_FLASH_START_4000
+    default 0x10000100
+
+choice
+    prompt "Flash chip" if LOW_LEVEL_OPTIONS && RP2040_HAVE_STAGE2
+    config RP2040_FLASH_W25Q080
+        bool "W25Q080 with CLKDIV 2"
+    config RP2040_FLASH_GENERIC_03
+        bool "GENERIC_03H with CLKDIV 4"
+endchoice
+
+config RP2040_STAGE2_FILE
+    string
+    default "boot2_generic_03h.S" if RP2040_FLASH_GENERIC_03
+    default "boot2_w25q080.S"
+
+config RP2040_STAGE2_CLKDIV
+    int
+    default 4 if RP2040_FLASH_GENERIC_03
+    default 2
+
+
+######################################################################
+# Communication inteface
+######################################################################
+
+choice
+    prompt "Communication interface"
+    config RP2040_USB
+        bool "USB"
+        select USBSERIAL
+    config RP2040_SERIAL_UART0
+        bool "Serial (on UART0 GPIO1/GPIO0)"
+        select SERIAL
+    config RP2040_CANBUS
+        bool "CAN bus"
+        select CANSERIAL
+    config RP2040_USBCANBUS
+        bool "USB to CAN bus bridge"
+        select USBCANBUS
+endchoice
+
+config RP2040_CANBUS_GPIO_RX
+    int "CAN RX gpio number" if CANBUS
+    default 4
+    range 0 29
+
+config RP2040_CANBUS_GPIO_TX
+    int "CAN TX gpio number" if CANBUS
+    default 5
+    range 0 29
+
+endif

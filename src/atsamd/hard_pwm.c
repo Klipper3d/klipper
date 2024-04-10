@@ -92,7 +92,13 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val)
     }
 
     // Set initial value
-    struct gpio_pwm g = (struct gpio_pwm) { (void*)&tcc->CCB[p->channel].reg };
+    struct gpio_pwm g = (struct gpio_pwm) {
+#if CONFIG_MACH_SAMD21
+        (void*)&tcc->CCB[p->channel].reg
+#elif CONFIG_MACH_SAMC21
+        (void*)&tcc->CCBUF[p->channel].reg
+#endif
+    };
     gpio_pwm_write(g, val);
 
     // Route output to pin

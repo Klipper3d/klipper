@@ -1,3 +1,5 @@
+# Endstop phase
+
 This document describes Klipper's stepper phase adjusted endstop
 system. This functionality can improve the accuracy of traditional
 endstop switches. It is most useful when using a Trinamic stepper
@@ -13,16 +15,16 @@ precision.
 
 The stepper phase adjusted endstop mechanism can use the precision of
 the stepper motors to improve the precision of the endstop switches.
-When a stepper motor moves it cycles through a series of phases until
-in completes four "full steps". So, a stepper motor using 16
-micro-steps would have 64 phases and when moving in a positive
-direction it would cycle through phases: 0, 1, 2, ... 61, 62, 63, 0,
-1, 2, etc. Crucially, when the stepper motor is at a particular
-position on a linear rail it should always be at the same stepper
-phase. Thus, when a carriage triggers the endstop switch the stepper
-controlling that carriage should always be at the same stepper motor
-phase. Klipper's endstop phase system combines the stepper phase with
-the endstop trigger to improve the accuracy of the endstop.
+A stepper motor moves by cycling through a series of phases until in
+completes four "full steps". So, a stepper motor using 16 micro-steps
+would have 64 phases and when moving in a positive direction it would
+cycle through phases: 0, 1, 2, ... 61, 62, 63, 0, 1, 2, etc.
+Crucially, when the stepper motor is at a particular position on a
+linear rail it should always be at the same stepper phase. Thus, when
+a carriage triggers the endstop switch the stepper controlling that
+carriage should always be at the same stepper motor phase. Klipper's
+endstop phase system combines the stepper phase with the endstop
+trigger to improve the accuracy of the endstop.
 
 In order to use this functionality it is necessary to be able to
 identify the phase of the stepper motor. If one is using Trinamic
@@ -32,8 +34,7 @@ phase from the driver. (It is also possible to use this system on
 traditional stepper drivers if one can reliably reset the stepper
 drivers - see below for details.)
 
-Calibrating endstop phases
-==========================
+## Calibrating endstop phases
 
 If using Trinamic stepper motor drivers with run-time configuration
 then one can calibrate the endstop phases using the
@@ -70,8 +71,7 @@ the following to update the configuration file with the data:
 SAVE_CONFIG
 ```
 
-Additional notes
-----------------
+### Additional notes
 
 * This feature is most useful on delta printers and on the Z endstop
   of cartesian/corexy printers. It is possible to use this feature on
@@ -105,8 +105,8 @@ Additional notes
   enable this feature be sure the G-Code slicer is configured with a
   layer height that is a multiple of a "full step", manually enable
   the endstop_align_zero option in the endstop_phase config section
-  (see config/example-extras.cfg for further details), and then
-  re-level the bed screws.
+  (see [config reference](Config_Reference.md#endstop_phase) for
+  further details), and then re-level the bed screws.
 
 * It is possible to use this system with traditional (non-Trinamic)
   stepper motor drivers. However, doing this requires making sure that
@@ -121,5 +121,6 @@ Additional notes
   will arrange for the micro-controller to always be reset via a USB
   power reset, which would arrange for both the micro-controller and
   stepper motor drivers to be reset together. If using this mechanism,
-  one would then need to manually configure the "endstop_phase" config
-  sections (see config/example-extras.cfg for the details).
+  one would then need to manually configure the "trigger_phase" config
+  sections (see [config reference](Config_Reference.md#endstop_phase)
+  for the details).

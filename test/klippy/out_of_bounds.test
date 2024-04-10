@@ -1,5 +1,5 @@
 # Test that basic bounds checks work
-CONFIG ../../config/example.cfg
+CONFIG ../../config/example-cartesian.cfg
 DICTIONARY atmega2560.dict
 SHOULD_FAIL
 

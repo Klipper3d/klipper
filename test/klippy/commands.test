@@ -1,6 +1,6 @@
 # Tests for miscellaneous g-code commands
 DICTIONARY atmega2560.dict
-CONFIG ../../config/example.cfg
+CONFIG ../../config/example-cartesian.cfg
 
 # Simple status commands
 GET_POSITION
@@ -13,9 +13,6 @@ HELP
 QUERY_ENDSTOPS
 
 M115
-
-# Restart command
-RESTART
 
 M18
 
@@ -44,3 +41,6 @@ M204 S500
 
 SET_PRESSURE_ADVANCE EXTRUDER=extruder ADVANCE=.001
 SET_PRESSURE_ADVANCE ADVANCE=.002 ADVANCE_LOOKAHEAD_TIME=.001
+
+# Restart command (must be last in test)
+RESTART

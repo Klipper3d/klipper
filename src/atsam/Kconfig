@@ -9,9 +9,11 @@ config ATSAM_SELECT
     select HAVE_GPIO_ADC
     select HAVE_GPIO_I2C
     select HAVE_GPIO_SPI
-    select HAVE_GPIO_HARD_PWM
-    select HAVE_GPIO_BITBANGING
+    select HAVE_GPIO_HARD_PWM if !MACH_SAME70
+    select HAVE_STRICT_TIMING
     select HAVE_CHIPID
+    select HAVE_STEPPER_BOTH_EDGE
+    select HAVE_BOOTLOADER_REQUEST
 
 config BOARD_DIRECTORY
     string
@@ -31,6 +33,9 @@ choice
     config MACH_SAM4E8E
         bool "SAM4e8e (Duet Wifi/Eth)"
         select MACH_SAM4E
+    config MACH_SAME70Q20B
+        bool "SAME70Q20B (Duet 3 6HC)"
+        select MACH_SAME70
 endchoice
 
 config MACH_SAM3X
@@ -43,6 +48,11 @@ config MACH_SAM4S
 config MACH_SAM4E
     bool
     select MACH_SAM4
+config MACH_SAME70
+    bool
+config HAVE_SAM_CANBUS
+    bool
+    default y if MACH_SAME70
 
 config MCU
     string
@@ -50,40 +60,76 @@ config MCU
     default "sam3x8c" if MACH_SAM3X8C
     default "sam4s8c" if MACH_SAM4S8C
     default "sam4e8e" if MACH_SAM4E8E
+    default "same70q20b" if MACH_SAME70Q20B
 
 config CLOCK_FREQ
     int
     default 84000000 if MACH_SAM3X
     default 120000000 if MACH_SAM4
-
-config FLASH_START
-    hex
-    default 0x400000 if MACH_SAM4
-    default 0x80000
+    default 300000000 if MACH_SAME70
 
 config FLASH_SIZE
     hex
     default 0x80000
 
+config FLASH_BOOT_ADDRESS
+    hex
+    default 0x0
+
 config RAM_START
     hex
+    default 0x20400000 if MACH_SAME70
     default 0x20000000
 
 config RAM_SIZE
     hex
     default 0x18000 if MACH_SAM3X
     default 0x20000 if MACH_SAM4
+    default 0x40000 if MACH_SAME70
 
 config STACK_SIZE
     int
     default 512
 
-config USBSERIAL
-    bool "Use USB for communication (instead of serial)"
-    default y
-config SERIAL
-    depends on !USBSERIAL
+config FLASH_APPLICATION_ADDRESS
+    hex
+    default 0x400000 if MACH_SAM4 || MACH_SAME70
+    default 0x80000
+
+choice
+    prompt "Communication interface"
+    config ATSAM_USB
+        bool "USB"
+        select USBSERIAL
+    config ATSAM_SERIAL
+        bool "Serial"
+        select SERIAL
+    config ATSAM_MMENU_CANBUS_PC12_PD12
+        bool "CAN bus (on PC12/PD12)"
+        depends on HAVE_SAM_CANBUS
+        select CANSERIAL
+    config ATSAM_MMENU_CANBUS_PB3_PB2
+        bool "CAN bus (on PB3/PB2)"
+        depends on HAVE_SAM_CANBUS
+        select CANSERIAL
+    config ATSAM_USBCANBUS
+        bool "USB to CAN bus bridge"
+        depends on HAVE_SAM_CANBUS
+        select USBCANBUS
+endchoice
+choice
+    prompt "CAN bus interface" if USBCANBUS
+    config ATSAM_CMENU_CANBUS_PC12_PD12
+        bool "CAN bus (on PC12/PD12)"
+    config ATSAM_CMENU_CANBUS_PB3_PB2
+        bool "CAN bus (on PB3/PB2)"
+endchoice
+
+config ATSAM_CANBUS_PC12_PD12
     bool
-    default y
+    default y if ATSAM_MMENU_CANBUS_PC12_PD12 || ATSAM_CMENU_CANBUS_PC12_PD12
+config ATSAM_CANBUS_PB3_PB2
+    bool
+    default y if ATSAM_MMENU_CANBUS_PB3_PB2 || ATSAM_CMENU_CANBUS_PB3_PB2
 
 endif

@@ -178,11 +178,6 @@ usb_set_configure(void)
     UEIENX = 1<<TXINE;
 }
 
-void
-usb_request_bootloader(void)
-{
-}
-
 #if CONFIG_MACH_at90usb1286
 #define UHWCON_Init ((1<<UIMOD) | (1<<UVREGE))
 #define PLLCSR_Init ((1<<PLLP2) | (1<<PLLP0) | (1<<PLLE))

@@ -1,0 +1,9 @@
+; Virtual SD card unit tests
+
+DICTIONARY atmega2560.dict
+CONFIG sdcard_loop.cfg
+
+G28
+SDCARD_LOOP_DESIST
+; Verify long-name functions
+SDCARD_PRINT_FILE FILENAME=big.gcode

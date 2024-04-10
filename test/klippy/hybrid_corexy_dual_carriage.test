@@ -1,0 +1,44 @@
+# Test cases on hybrid corexy printers with dual carriage and multiple extruders
+CONFIG hybrid_corexy_dual_carriage.cfg
+DICTIONARY atmega2560.dict
+
+# First home the printer
+G90
+G28
+
+# Perform a dummy move
+G1 X10 F6000
+
+# Activate alternate carriage
+SET_DUAL_CARRIAGE CARRIAGE=1
+G1 X190 F6000
+
+# Go back to main carriage
+SET_DUAL_CARRIAGE CARRIAGE=0
+G1 X20 F6000
+
+# Enable Input Shaper
+SET_DUAL_CARRIAGE CARRIAGE=1
+SET_INPUT_SHAPER SHAPER_TYPE_X=MZV SHAPER_FREQ_X=70
+SET_INPUT_SHAPER SHAPER_TYPE_Y=2HUMP_EI SHAPER_FREQ_Y=50
+SET_DUAL_CARRIAGE CARRIAGE=0
+SET_INPUT_SHAPER SHAPER_TYPE_X=EI SHAPER_FREQ_X=60
+SET_INPUT_SHAPER SHAPER_TYPE_Y=2HUMP_EI SHAPER_FREQ_Y=50
+
+
+# Test changing extruders
+G1 X5
+T1
+G91
+G1 X-10 E.2
+T0
+G91
+G1 X20 E.2
+G90
+
+QUERY_ENDSTOPS
+
+# Verify STEPPER_BUZZ
+STEPPER_BUZZ STEPPER=dual_carriage
+STEPPER_BUZZ STEPPER=extruder
+STEPPER_BUZZ STEPPER=extruder1

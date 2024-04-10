@@ -1,6 +1,6 @@
 # Support for button detection and callbacks
 #
-# Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2023  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
@@ -57,12 +57,11 @@ class MCU_buttons:
     def handle_buttons_state(self, params):
         # Expand the message ack_count from 8-bit
         ack_count = self.ack_count
-        ack_diff = (ack_count - params['ack_count']) & 0xff
-        if ack_diff & 0x80:
-            ack_diff -= 0x100
-        msg_ack_count = ack_count - ack_diff
+        ack_diff = (params['ack_count'] - ack_count) & 0xff
+        ack_diff -= (ack_diff & 0x80) << 1
+        msg_ack_count = ack_count + ack_diff
         # Determine new buttons
-        buttons = params['state']
+        buttons = bytearray(params['state'])
         new_count = msg_ack_count + len(buttons) - self.ack_count
         if new_count <= 0:
             return
@@ -70,17 +69,17 @@ class MCU_buttons:
         # Send ack to MCU
         self.ack_cmd.send([self.oid, new_count])
         self.ack_count += new_count
-        # Call self.handle_button() with this event in main thread
-        for b in new_buttons:
-            self.reactor.register_async_callback(
-                (lambda e, s=self, b=ord(b): s.handle_button(e, b)))
-    def handle_button(self, eventtime, button):
-        button ^= self.invert
-        changed = button ^ self.last_button
-        for mask, shift, callback in self.callbacks:
-            if changed & mask:
-                callback(eventtime, (button & mask) >> shift)
-        self.last_button = button
+        # Invoke callbacks with this event in main thread
+        btime = params['#receive_time']
+        for button in new_buttons:
+            button ^= self.invert
+            changed = button ^ self.last_button
+            self.last_button = button
+            for mask, shift, callback in self.callbacks:
+                if changed & mask:
+                    state = (button & mask) >> shift
+                    self.reactor.register_async_callback(
+                        (lambda et, c=callback, bt=btime, s=state: c(bt, s)))
 
 
 ######################################################################
@@ -158,46 +157,92 @@ class MCU_ADC_buttons:
 # Rotary encoder handler https://github.com/brianlow/Rotary
 # Copyright 2011 Ben Buxton (bb@cactii.net).
 # Licenced under the GNU GPL Version 3.
-R_START     = 0x0
-R_CW_FINAL  = 0x1
-R_CW_BEGIN  = 0x2
-R_CW_NEXT   = 0x3
-R_CCW_BEGIN = 0x4
-R_CCW_FINAL = 0x5
-R_CCW_NEXT  = 0x6
-R_DIR_CW    = 0x10
-R_DIR_CCW   = 0x20
-R_DIR_MSK   = 0x30
-# Use the full-step state table (emits a code at 00 only)
-ENCODER_STATES = (
-  # R_START
-  (R_START,    R_CW_BEGIN,  R_CCW_BEGIN, R_START),
-  # R_CW_FINAL
-  (R_CW_NEXT,  R_START,     R_CW_FINAL,  R_START | R_DIR_CW),
-  # R_CW_BEGIN
-  (R_CW_NEXT,  R_CW_BEGIN,  R_START,     R_START),
-  # R_CW_NEXT
-  (R_CW_NEXT,  R_CW_BEGIN,  R_CW_FINAL,  R_START),
-  # R_CCW_BEGIN
-  (R_CCW_NEXT, R_START,     R_CCW_BEGIN, R_START),
-  # R_CCW_FINAL
-  (R_CCW_NEXT, R_CCW_FINAL, R_START,     R_START | R_DIR_CCW),
-  # R_CCW_NEXT
-  (R_CCW_NEXT, R_CCW_FINAL, R_CCW_BEGIN, R_START)
-)
+class BaseRotaryEncoder:
+    R_START     = 0x0
+    R_DIR_CW    = 0x10
+    R_DIR_CCW   = 0x20
+    R_DIR_MSK   = 0x30
 
-class RotaryEncoder:
     def __init__(self, cw_callback, ccw_callback):
         self.cw_callback = cw_callback
         self.ccw_callback = ccw_callback
-        self.encoder_state = R_START
+        self.encoder_state = self.R_START
     def encoder_callback(self, eventtime, state):
-        es = ENCODER_STATES[self.encoder_state & 0xf][state & 0x3]
+        es = self.ENCODER_STATES[self.encoder_state & 0xf][state & 0x3]
         self.encoder_state = es
-        if es & R_DIR_MSK == R_DIR_CW:
+        if es & self.R_DIR_MSK == self.R_DIR_CW:
             self.cw_callback(eventtime)
-        elif es & R_DIR_MSK == R_DIR_CCW:
+        elif es & self.R_DIR_MSK == self.R_DIR_CCW:
             self.ccw_callback(eventtime)
+
+class FullStepRotaryEncoder(BaseRotaryEncoder):
+    R_CW_FINAL  = 0x1
+    R_CW_BEGIN  = 0x2
+    R_CW_NEXT   = 0x3
+    R_CCW_BEGIN = 0x4
+    R_CCW_FINAL = 0x5
+    R_CCW_NEXT  = 0x6
+
+    # Use the full-step state table (emits a code at 00 only)
+    ENCODER_STATES = (
+        # R_START
+        (BaseRotaryEncoder.R_START, R_CW_BEGIN, R_CCW_BEGIN,
+         BaseRotaryEncoder.R_START),
+
+        # R_CW_FINAL
+        (R_CW_NEXT, BaseRotaryEncoder.R_START, R_CW_FINAL,
+         BaseRotaryEncoder.R_START | BaseRotaryEncoder.R_DIR_CW),
+
+        # R_CW_BEGIN
+        (R_CW_NEXT, R_CW_BEGIN, BaseRotaryEncoder.R_START,
+         BaseRotaryEncoder.R_START),
+
+        # R_CW_NEXT
+        (R_CW_NEXT, R_CW_BEGIN, R_CW_FINAL, BaseRotaryEncoder.R_START),
+
+        # R_CCW_BEGIN
+        (R_CCW_NEXT, BaseRotaryEncoder.R_START, R_CCW_BEGIN,
+         BaseRotaryEncoder.R_START),
+
+        # R_CCW_FINAL
+        (R_CCW_NEXT, R_CCW_FINAL, BaseRotaryEncoder.R_START,
+         BaseRotaryEncoder.R_START | BaseRotaryEncoder.R_DIR_CCW),
+
+        # R_CCW_NEXT
+        (R_CCW_NEXT, R_CCW_FINAL, R_CCW_BEGIN, BaseRotaryEncoder.R_START)
+    )
+
+class HalfStepRotaryEncoder(BaseRotaryEncoder):
+    # Use the half-step state table (emits a code at 00 and 11)
+    R_CCW_BEGIN   = 0x1
+    R_CW_BEGIN    = 0x2
+    R_START_M     = 0x3
+    R_CW_BEGIN_M  = 0x4
+    R_CCW_BEGIN_M = 0x5
+
+    ENCODER_STATES = (
+        # R_START (00)
+        (R_START_M, R_CW_BEGIN, R_CCW_BEGIN, BaseRotaryEncoder.R_START),
+
+        # R_CCW_BEGIN
+        (R_START_M | BaseRotaryEncoder.R_DIR_CCW, BaseRotaryEncoder.R_START,
+         R_CCW_BEGIN, BaseRotaryEncoder.R_START),
+
+        # R_CW_BEGIN
+        (R_START_M | BaseRotaryEncoder.R_DIR_CW,  R_CW_BEGIN,
+         BaseRotaryEncoder.R_START, BaseRotaryEncoder.R_START),
+
+        # R_START_M (11)
+        (R_START_M, R_CCW_BEGIN_M, R_CW_BEGIN_M,  BaseRotaryEncoder.R_START),
+
+        # R_CW_BEGIN_M
+        (R_START_M, R_START_M, R_CW_BEGIN_M,
+         BaseRotaryEncoder.R_START | BaseRotaryEncoder.R_DIR_CW),
+
+        # R_CCW_BEGIN_M
+        (R_START_M, R_CCW_BEGIN_M, R_START_M,
+         BaseRotaryEncoder.R_START | BaseRotaryEncoder.R_DIR_CCW),
+    )
 
 
 ######################################################################
@@ -207,7 +252,7 @@ class RotaryEncoder:
 class PrinterButtons:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.try_load_module(config, 'query_adc')
+        self.printer.load_object(config, 'query_adc')
         self.mcu_buttons = {}
         self.adc_buttons = {}
     def register_adc_button(self, pin, min_val, max_val, pullup, callback):
@@ -240,8 +285,15 @@ class PrinterButtons:
             self.mcu_buttons[mcu_name] = mcu_buttons = MCU_buttons(
                 self.printer, mcu)
         mcu_buttons.setup_buttons(pin_params_list, callback)
-    def register_rotary_encoder(self, pin1, pin2, cw_callback, ccw_callback):
-        re = RotaryEncoder(cw_callback, ccw_callback)
+    def register_rotary_encoder(self, pin1, pin2, cw_callback, ccw_callback,
+                                steps_per_detent):
+        if steps_per_detent == 2:
+            re = HalfStepRotaryEncoder(cw_callback, ccw_callback)
+        elif steps_per_detent == 4:
+            re = FullStepRotaryEncoder(cw_callback, ccw_callback)
+        else:
+            raise self.printer.config_error(
+                "%d steps per detent not supported" % steps_per_detent)
         self.register_buttons([pin1, pin2], re.encoder_callback)
     def register_button_push(self, pin, callback):
         def helper(eventtime, state, callback=callback):
