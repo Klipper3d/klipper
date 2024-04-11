@@ -91,7 +91,7 @@ endchoice
 
 config RP2040_STAGE2_FILE
     string
-    default "boot2_generic_03h.S" if RP2040_FLASH_GENERIC_03
+    default "boot2_generic_03h_4_padded_checksum.S" if RP2040_FLASH_GENERIC_03
     default "boot2_w25q080_4_padded_checksum.S" if RP2040_FLASH_W25Q080
     default "boot2_w25q16jvxq_4_padded_checksum.S" if RP2040_FLASH_W25Q16
     default "boot2_W25Q32JVxQ_4_padded_checksum.S" if RP2040_FLASH_W25Q16
