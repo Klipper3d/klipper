@@ -2772,6 +2772,25 @@ sensor_type: temperature_combined
 #   to combine (e.g. 5 degrees). To disable it, use a large value (e.g. 999.9)
 ```
 
+
+### ADS1118 connected thermocouples
+
+A type K - thermocouple connected to an ADS1118 ADC. The ADS1118 is a dedicated
+chip and requires its own prefixed section. Use the section name as
+the sensor_type. Refer to the ADS1118 data sheet for the correct values.
+
+```
+sensor_type: my_ads1118
+#  The section name of the ADS1118
+ads1118_mux: 3
+#   Must be provided. The multiplexer configuration (pin configuration) for
+#   this sensor.
+ads1118_pga: 7
+#   Must be provided. The programmabale gain amplifier setting.
+ads1118_dr: 4
+#   Must be provided. The data rate setting or sampling frequency.
+```
+
 ## Fans
 
 ### [fan]
@@ -4905,6 +4924,43 @@ host_mcu:
 #stepper_h_chopper_blank_time_high:
 #   This parameter controls the CFG5 pin of the stepper motor driver
 #   (True sets CFG5 high, False sets it low). The default is True.
+```
+
+### [ads1118]
+
+Texas Instruments ADS1118 support. The ADS1118 is an multi-channel ADC chip with
+an integrated thermometer and connectivity via a SPI interface. Can be used
+for reading thermocouples. This section configures the chip itself, which can be
+referenced by sensor configurations in other sections. Type K-thermocouples and
+the internal temperature sensor are supported.
+
+See the
+[printer-flashforgce-creator-pro2.cfg](../config/printer-flashforge-creator-pro2.cfg.cfg) file
+for an example.
+
+```
+[ads1118 my_ads1118]
+#cs_pin:
+#spi_speed:
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the "common SPI settings" section for a description of the
+#   above parameters.
+#data_rate:
+#   Date rate for the interal temperature sensor. Range 0 - 9. Defaults to 4.
+#report_time:
+#    Update interval in seconds for each sensor. Defaults to 0.3s. Should match
+#   the sensor count and their data rates.
+```
+
+Additionally the internal thermometer can be accessed by declaring a sensor_type
+with the suffix "_temp" appended to the section name of the ADS1118 chip.
+
+```
+[temperature_sensor mainboard]
+sensor_type: my_ads1118_temp
 ```
 
 ## Other Custom Modules
