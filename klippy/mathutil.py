@@ -135,3 +135,76 @@ def matrix_sub(m1, m2):
 
 def matrix_mul(m1, s):
     return [m1[0]*s, m1[1]*s, m1[2]*s]
+
+######################################################################
+# Polynomial Helper Classes and Functions
+######################################################################
+
+def calc_determinant(matrix):
+    m = matrix
+    aei = m[0][0] * m[1][1] * m[2][2]
+    bfg = m[1][0] * m[2][1] * m[0][2]
+    cdh = m[2][0] * m[0][1] * m[1][2]
+    ceg = m[2][0] * m[1][1] * m[0][2]
+    bdi = m[1][0] * m[0][1] * m[2][2]
+    afh = m[0][0] * m[2][1] * m[1][2]
+    return aei + bfg + cdh - ceg - bdi - afh
+
+class Polynomial2d:
+    def __init__(self, a, b, c):
+        self.a = a
+        self.b = b
+        self.c = c
+
+    def __call__(self, xval):
+        return self.c * xval * xval + self.b * xval + self.a
+
+    def get_coefs(self):
+        return (self.a, self.b, self.c)
+
+    def __str__(self):
+        return "%f, %f, %f" % (self.a, self.b, self.c)
+
+    def __repr__(self):
+        parts = ["y(x) ="]
+        deg = 2
+        for i, coef in enumerate((self.c, self.b, self.a)):
+            if round(coef, 8) == int(coef):
+                coef == int(coef)
+            if abs(coef) < 1e-10:
+                continue
+            cur_deg = deg - i
+            x_str = "x^%d" % (cur_deg,) if cur_deg > 1 else "x" * cur_deg
+            if len(parts) == 1:
+                parts.append("%f%s" % (coef, x_str))
+            else:
+                sym = "-" if coef < 0 else "+"
+                parts.append("%s %f%s" % (sym, abs(coef), x_str))
+        return " ".join(parts)
+
+    @classmethod
+    def fit(cls, coords):
+        xlist = [c[0] for c in coords]
+        ylist = [c[1] for c in coords]
+        count = len(coords)
+        sum_x = sum(xlist)
+        sum_y = sum(ylist)
+        sum_x2 = sum([x**2 for x in xlist])
+        sum_x3 = sum([x**3 for x in xlist])
+        sum_x4 = sum([x**4 for x in xlist])
+        sum_xy = sum([x * y for x, y in coords])
+        sum_x2y = sum([y*x**2 for x, y in coords])
+        vector_b = [sum_y, sum_xy, sum_x2y]
+        m = [
+            [count, sum_x, sum_x2],
+            [sum_x, sum_x2, sum_x3],
+            [sum_x2, sum_x3, sum_x4]
+        ]
+        m0 = [vector_b, m[1], m[2]]
+        m1 = [m[0], vector_b, m[2]]
+        m2 = [m[0], m[1], vector_b]
+        det_m = calc_determinant(m)
+        a0 = calc_determinant(m0) / det_m
+        a1 = calc_determinant(m1) / det_m
+        a2 = calc_determinant(m2) / det_m
+        return cls(a0, a1, a2)
