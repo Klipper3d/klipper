@@ -238,17 +238,21 @@ class VirtualSD:
                 except:
                     logging.exception("virtual_sdcard read")
                     break
-                if not data:
+                if data:
+                    lines = data.split('\n')
+                    lines[0] = partial_input + lines[0]
+                    partial_input = lines.pop()
+                    lines.reverse()
+                elif partial_input:
+                    lines = [partial_input]
+                    partial_input = ""
+                else:
                     # End of file
                     self.current_file.close()
                     self.current_file = None
                     logging.info("Finished SD card print")
                     self.gcode.respond_raw("Done printing file")
                     break
-                lines = data.split('\n')
-                lines[0] = partial_input + lines[0]
-                partial_input = lines.pop()
-                lines.reverse()
                 self.reactor.pause(self.reactor.NOW)
                 continue
             # Pause if any other request is pending in the gcode class
@@ -262,6 +266,8 @@ class VirtualSD:
                 next_file_position = self.file_position + len(line.encode()) + 1
             else:
                 next_file_position = self.file_position + len(line) + 1
+            if self.file_size:
+                next_file_position = min(next_file_position, self.file_size)
             self.next_file_position = next_file_position
             try:
                 self.gcode.run_script(line)
