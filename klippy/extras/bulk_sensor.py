@@ -123,13 +123,13 @@ class BulkDataQueue:
     def _handle_data(self, params):
         with self.lock:
             self.raw_samples.append(params)
-    def pull_samples(self):
+    def pull_queue(self):
         with self.lock:
             raw_samples = self.raw_samples
             self.raw_samples = []
         return raw_samples
-    def clear_samples(self):
-        self.pull_samples()
+    def clear_queue(self):
+        self.pull_queue()
 
 
 ######################################################################
@@ -230,14 +230,14 @@ class FixedFreqReader:
         self.last_sequence = 0
         self.last_overflows = 0
         # Clear local queue (clear any stale samples from previous session)
-        self.bulk_queue.clear_samples()
+        self.bulk_queue.clear_queue()
         # Set initial clock
         self._clear_duration_filter()
         self._update_clock(is_reset=True)
         self._clear_duration_filter()
     def note_end(self):
         # Clear local queue (free no longer needed memory)
-        self.bulk_queue.clear_samples()
+        self.bulk_queue.clear_queue()
     def _update_clock(self, is_reset=False):
         params = self.query_status_cmd.send([self.oid])
         mcu_clock = self.mcu.clock32_to_clock64(params['clock'])
@@ -269,7 +269,7 @@ class FixedFreqReader:
         # Query MCU for sample timing and update clock synchronization
         self._update_clock()
         # Pull sensor_bulk_data messages from local queue
-        raw_samples = self.bulk_queue.pull_samples()
+        raw_samples = self.bulk_queue.pull_queue()
         if not raw_samples:
             return []
         # Load variables to optimize inner loop below
