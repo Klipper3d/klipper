@@ -149,29 +149,17 @@ class LDC1612:
         return self.mcu.clock_to_print_time(tclock)
     # Measurement decoding
     def _extract_samples(self, raw_samples):
-        # Load variables to optimize inner loop below
-        last_sequence = self.clock_updater.get_last_sequence()
-        time_base, chip_base, inv_freq = self.clock_sync.get_time_translation()
+        # Convert messages to samples
+        samples = self.clock_updater.extract_samples(">I", raw_samples)
+        # Convert samples
         freq_conv = float(LDC1612_FREQ) / (1<<28)
-        # Process every message in raw_samples
-        count = seq = 0
-        samples = [None] * (len(raw_samples) * SAMPLES_PER_BLOCK)
-        for params in raw_samples:
-            seq_diff = (params['sequence'] - last_sequence) & 0xffff
-            seq_diff -= (seq_diff & 0x8000) << 1
-            seq = last_sequence + seq_diff
-            d = bytearray(params['data'])
-            msg_cdiff = seq * SAMPLES_PER_BLOCK - chip_base
-            for i in range(len(d) // BYTES_PER_SAMPLE):
-                v = d[i*BYTES_PER_SAMPLE:(i+1)*BYTES_PER_SAMPLE]
-                if v[0] & 0xf0:
-                    self.last_error_count += 1
-                val = ((v[0] & 0x0f) << 24) | (v[1] << 16) | (v[2] << 8) | v[3]
-                ptime = round(time_base + (msg_cdiff + i) * inv_freq, 6)
-                samples[count] = (ptime, round(freq_conv * val, 3), 999.9)
-                count += 1
-        self.clock_sync.set_last_chip_clock(seq * SAMPLES_PER_BLOCK + i)
-        del samples[count:]
+        count = 0
+        for ptime, val in samples:
+            mv = val & 0x0fffffff
+            if mv != val:
+                self.last_error_count += 1
+            samples[count] = (round(ptime, 6), round(freq_conv * mv, 3), 999.9)
+            count += 1
         return samples
     # Start, stop, and process message batches
     def _start_measurements(self):
