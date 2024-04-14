@@ -71,11 +71,9 @@ class MPU9250:
         self.oid = oid = mcu.create_oid()
         self.query_mpu9250_cmd = None
         mcu.register_config_callback(self._build_config)
-        self.bulk_queue = bulk_sensor.BulkDataQueue(mcu, oid=oid)
-        # Clock tracking
+        # Bulk sample message reading
         chip_smooth = self.data_rate * BATCH_UPDATES * 2
-        self.clock_updater = bulk_sensor.ChipClockUpdater(mcu, chip_smooth,
-                                                          ">hhh")
+        self.ffreader = bulk_sensor.FixedFreqReader(mcu, chip_smooth, ">hhh")
         self.last_error_count = 0
         # Process messages in batches
         self.batch_bulk = bulk_sensor.BatchBulkHelper(
@@ -93,8 +91,8 @@ class MPU9250:
                            % (self.oid,), on_restart=True)
         self.query_mpu9250_cmd = self.mcu.lookup_command(
             "query_mpu9250 oid=%c rest_ticks=%u", cq=cmdqueue)
-        self.clock_updater.setup_query_command("query_mpu9250_status oid=%c",
-                                               oid=self.oid, cq=cmdqueue)
+        self.ffreader.setup_query_command("query_mpu9250_status oid=%c",
+                                          oid=self.oid, cq=cmdqueue)
     def read_reg(self, reg):
         params = self.i2c.i2c_read([reg], 1)
         return bytearray(params['response'])[0]
@@ -105,10 +103,7 @@ class MPU9250:
         self.batch_bulk.add_client(aqh.handle_batch)
         return aqh
     # Measurement decoding
-    def _extract_samples(self, raw_samples):
-        # Convert messages to samples
-        samples = self.clock_updater.extract_samples(raw_samples)
-        # Convert samples
+    def _convert_samples(self, samples):
         (x_pos, x_scale), (y_pos, y_scale), (z_pos, z_scale) = self.axes_map
         count = 0
         for ptime, rx, ry, rz in samples:
@@ -118,7 +113,6 @@ class MPU9250:
             z = round(raw_xyz[z_pos] * z_scale, 6)
             samples[count] = (round(ptime, 6), x, y, z)
             count += 1
-        return samples
     # Start, stop, and process message batches
     def _start_measurements(self):
         # In case of miswiring, testing MPU9250 device ID prevents treating
@@ -151,32 +145,28 @@ class MPU9250:
         self.read_reg(REG_INT_STATUS) # clear FIFO overflow flag
 
         # Start bulk reading
-        self.bulk_queue.clear_samples()
         rest_ticks = self.mcu.seconds_to_clock(4. / self.data_rate)
         self.query_mpu9250_cmd.send([self.oid, rest_ticks])
         self.set_reg(REG_FIFO_EN, SET_ENABLE_FIFO)
         logging.info("MPU9250 starting '%s' measurements", self.name)
         # Initialize clock tracking
-        self.clock_updater.note_start()
+        self.ffreader.note_start()
         self.last_error_count = 0
     def _finish_measurements(self):
         # Halt bulk reading
         self.set_reg(REG_FIFO_EN, SET_DISABLE_FIFO)
         self.query_mpu9250_cmd.send_wait_ack([self.oid, 0])
-        self.bulk_queue.clear_samples()
+        self.ffreader.note_end()
         logging.info("MPU9250 finished '%s' measurements", self.name)
         self.set_reg(REG_PWR_MGMT_1, SET_PWR_MGMT_1_SLEEP)
         self.set_reg(REG_PWR_MGMT_2, SET_PWR_MGMT_2_OFF)
     def _process_batch(self, eventtime):
-        self.clock_updater.update_clock()
-        raw_samples = self.bulk_queue.pull_samples()
-        if not raw_samples:
-            return {}
-        samples = self._extract_samples(raw_samples)
+        samples = self.ffreader.pull_samples()
+        self._convert_samples(samples)
         if not samples:
             return {}
         return {'data': samples, 'errors': self.last_error_count,
-                'overflows': self.clock_updater.get_last_overflows()}
+                'overflows': self.ffreader.get_last_overflows()}
 
 def load_config(config):
     return MPU9250(config)

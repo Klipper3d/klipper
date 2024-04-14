@@ -92,11 +92,9 @@ class LDC1612:
         mcu.add_config_cmd("query_ldc1612 oid=%d rest_ticks=0"
                            % (oid,), on_restart=True)
         mcu.register_config_callback(self._build_config)
-        self.bulk_queue = bulk_sensor.BulkDataQueue(mcu, oid=oid)
-        # Clock tracking
+        # Bulk sample message reading
         chip_smooth = self.data_rate * BATCH_UPDATES * 2
-        self.clock_updater = bulk_sensor.ChipClockUpdater(mcu, chip_smooth,
-                                                          ">I")
+        self.ffreader = bulk_sensor.FixedFreqReader(mcu, chip_smooth, ">I")
         self.last_error_count = 0
         # Process messages in batches
         self.batch_bulk = bulk_sensor.BatchBulkHelper(
@@ -110,8 +108,8 @@ class LDC1612:
         cmdqueue = self.i2c.get_command_queue()
         self.query_ldc1612_cmd = self.mcu.lookup_command(
             "query_ldc1612 oid=%c rest_ticks=%u", cq=cmdqueue)
-        self.clock_updater.setup_query_command("query_ldc1612_status oid=%c",
-                                               oid=self.oid, cq=cmdqueue)
+        self.ffreader.setup_query_command("query_ldc1612_status oid=%c",
+                                          oid=self.oid, cq=cmdqueue)
         self.ldc1612_setup_home_cmd = self.mcu.lookup_command(
             "ldc1612_setup_home oid=%c clock=%u threshold=%u"
             " trsync_oid=%c trigger_reason=%c", cq=cmdqueue)
@@ -144,10 +142,7 @@ class LDC1612:
         tclock = self.mcu.clock32_to_clock64(params['trigger_clock'])
         return self.mcu.clock_to_print_time(tclock)
     # Measurement decoding
-    def _extract_samples(self, raw_samples):
-        # Convert messages to samples
-        samples = self.clock_updater.extract_samples(raw_samples)
-        # Convert samples
+    def _convert_samples(self, samples):
         freq_conv = float(LDC1612_FREQ) / (1<<28)
         count = 0
         for ptime, val in samples:
@@ -156,7 +151,6 @@ class LDC1612:
                 self.last_error_count += 1
             samples[count] = (round(ptime, 6), round(freq_conv * mv, 3), 999.9)
             count += 1
-        return samples
     # Start, stop, and process message batches
     def _start_measurements(self):
         # In case of miswiring, testing LDC1612 device ID prevents treating
@@ -180,27 +174,23 @@ class LDC1612:
         self.set_reg(REG_CONFIG, 0x001 | (1<<12) | (1<<10) | (1<<9))
         self.set_reg(REG_DRIVE_CURRENT0, self.dccal.get_drive_current() << 11)
         # Start bulk reading
-        self.bulk_queue.clear_samples()
         rest_ticks = self.mcu.seconds_to_clock(0.5 / self.data_rate)
         self.query_ldc1612_cmd.send([self.oid, rest_ticks])
         logging.info("LDC1612 starting '%s' measurements", self.name)
         # Initialize clock tracking
-        self.clock_updater.note_start()
+        self.ffreader.note_start()
         self.last_error_count = 0
     def _finish_measurements(self):
         # Halt bulk reading
         self.query_ldc1612_cmd.send_wait_ack([self.oid, 0])
-        self.bulk_queue.clear_samples()
+        self.ffreader.note_end()
         logging.info("LDC1612 finished '%s' measurements", self.name)
     def _process_batch(self, eventtime):
-        self.clock_updater.update_clock()
-        raw_samples = self.bulk_queue.pull_samples()
-        if not raw_samples:
-            return {}
-        samples = self._extract_samples(raw_samples)
+        samples = self.ffreader.pull_samples()
+        self._convert_samples(samples)
         if not samples:
             return {}
         if self.calibration is not None:
             self.calibration.apply_calibration(samples)
         return {'data': samples, 'errors': self.last_error_count,
-                'overflows': self.clock_updater.get_last_overflows()}
+                'overflows': self.ffreader.get_last_overflows()}
