@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2023  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, threading
+import logging, threading, struct
 
 # This "bulk sensor" module facilitates the processing of sensor chip
 # measurements that do not require the host to respond with low
@@ -255,3 +255,28 @@ class ChipClockUpdater:
             self.clock_sync.reset(avg_mcu_clock, chip_clock)
         else:
             self.clock_sync.update(avg_mcu_clock, chip_clock)
+    # Convert a list of sensor_bulk_data responses into list of samples
+    def extract_samples(self, unpack_fmt, raw_samples):
+        unpack_from = struct.Struct(unpack_fmt).unpack_from
+        # Load variables to optimize inner loop below
+        last_sequence = self.get_last_sequence()
+        time_base, chip_base, inv_freq = self.clock_sync.get_time_translation()
+        bytes_per_sample = self.bytes_per_sample
+        samples_per_block = self.samples_per_block
+        # Process every message in raw_samples
+        count = seq = 0
+        samples = [None] * (len(raw_samples) * samples_per_block)
+        for params in raw_samples:
+            seq_diff = (params['sequence'] - last_sequence) & 0xffff
+            seq_diff -= (seq_diff & 0x8000) << 1
+            seq = last_sequence + seq_diff
+            msg_cdiff = seq * samples_per_block - chip_base
+            data = params['data']
+            for i in range(len(data) // bytes_per_sample):
+                ptime = time_base + (msg_cdiff + i) * inv_freq
+                udata = unpack_from(data, i * bytes_per_sample)
+                samples[count] = (ptime,) + udata
+                count += 1
+        self.clock_sync.set_last_chip_clock(seq * samples_per_block + i)
+        del samples[count:]
+        return samples
