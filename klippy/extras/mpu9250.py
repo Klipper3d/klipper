@@ -110,37 +110,18 @@ class MPU9250:
         return aqh
     # Measurement decoding
     def _extract_samples(self, raw_samples):
-        # Load variables to optimize inner loop below
+        # Convert messages to samples
+        samples = self.clock_updater.extract_samples(">hhh", raw_samples)
+        # Convert samples
         (x_pos, x_scale), (y_pos, y_scale), (z_pos, z_scale) = self.axes_map
-        last_sequence = self.clock_updater.get_last_sequence()
-        time_base, chip_base, inv_freq = self.clock_sync.get_time_translation()
-        # Process every message in raw_samples
-        count = seq = 0
-        samples = [None] * (len(raw_samples) * SAMPLES_PER_BLOCK)
-        for params in raw_samples:
-            seq_diff = (params['sequence'] - last_sequence) & 0xffff
-            seq_diff -= (seq_diff & 0x8000) << 1
-            seq = last_sequence + seq_diff
-            d = bytearray(params['data'])
-            msg_cdiff = seq * SAMPLES_PER_BLOCK - chip_base
-
-            for i in range(len(d) // BYTES_PER_SAMPLE):
-                d_xyz = d[i*BYTES_PER_SAMPLE:(i+1)*BYTES_PER_SAMPLE]
-                xhigh, xlow, yhigh, ylow, zhigh, zlow = d_xyz
-                # Merge and perform twos-complement
-                rx = ((xhigh << 8) | xlow) - ((xhigh & 0x80) << 9)
-                ry = ((yhigh << 8) | ylow) - ((yhigh & 0x80) << 9)
-                rz = ((zhigh << 8) | zlow) - ((zhigh & 0x80) << 9)
-
-                raw_xyz = (rx, ry, rz)
-                x = round(raw_xyz[x_pos] * x_scale, 6)
-                y = round(raw_xyz[y_pos] * y_scale, 6)
-                z = round(raw_xyz[z_pos] * z_scale, 6)
-                ptime = round(time_base + (msg_cdiff + i) * inv_freq, 6)
-                samples[count] = (ptime, x, y, z)
-                count += 1
-        self.clock_sync.set_last_chip_clock(seq * SAMPLES_PER_BLOCK + i)
-        del samples[count:]
+        count = 0
+        for ptime, rx, ry, rz in samples:
+            raw_xyz = (rx, ry, rz)
+            x = round(raw_xyz[x_pos] * x_scale, 6)
+            y = round(raw_xyz[y_pos] * y_scale, 6)
+            z = round(raw_xyz[z_pos] * z_scale, 6)
+            samples[count] = (round(ptime, 6), x, y, z)
+            count += 1
         return samples
     # Start, stop, and process message batches
     def _start_measurements(self):
