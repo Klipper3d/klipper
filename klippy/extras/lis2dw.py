@@ -30,9 +30,6 @@ LIS2DW_DEV_ID = 0x44
 FREEFALL_ACCEL = 9.80665
 SCALE = FREEFALL_ACCEL * 1.952 / 4
 
-BYTES_PER_SAMPLE = 6
-SAMPLES_PER_BLOCK = bulk_sensor.MAX_BULK_MSG_SIZE // BYTES_PER_SAMPLE
-
 BATCH_UPDATES = 0.100
 
 # Printer class that controls LIS2DW chip
@@ -55,9 +52,8 @@ class LIS2DW:
         self.bulk_queue = bulk_sensor.BulkDataQueue(mcu, oid=oid)
         # Clock tracking
         chip_smooth = self.data_rate * BATCH_UPDATES * 2
-        self.clock_sync = bulk_sensor.ClockSyncRegression(mcu, chip_smooth)
-        self.clock_updater = bulk_sensor.ChipClockUpdater(self.clock_sync,
-                                                          BYTES_PER_SAMPLE)
+        self.clock_updater = bulk_sensor.ChipClockUpdater(mcu, chip_smooth,
+                                                          "<hhh")
         self.last_error_count = 0
         # Process messages in batches
         self.batch_bulk = bulk_sensor.BatchBulkHelper(
@@ -72,8 +68,8 @@ class LIS2DW:
         cmdqueue = self.spi.get_command_queue()
         self.query_lis2dw_cmd = self.mcu.lookup_command(
             "query_lis2dw oid=%c rest_ticks=%u", cq=cmdqueue)
-        self.clock_updater.setup_query_command(
-            self.mcu, "query_lis2dw_status oid=%c", oid=self.oid, cq=cmdqueue)
+        self.clock_updater.setup_query_command("query_lis2dw_status oid=%c",
+                                               oid=self.oid, cq=cmdqueue)
     def read_reg(self, reg):
         params = self.spi.spi_transfer([reg | REG_MOD_READ, 0x00])
         response = bytearray(params['response'])
@@ -94,7 +90,7 @@ class LIS2DW:
     # Measurement decoding
     def _extract_samples(self, raw_samples):
         # Convert messages to samples
-        samples = self.clock_updater.extract_samples("<hhh", raw_samples)
+        samples = self.clock_updater.extract_samples(raw_samples)
         # Convert samples
         (x_pos, x_scale), (y_pos, y_scale), (z_pos, z_scale) = self.axes_map
         count = 0

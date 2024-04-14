@@ -202,15 +202,17 @@ MAX_BULK_MSG_SIZE = 52
 
 # Handle common periodic chip status query responses
 class ChipClockUpdater:
-    def __init__(self, clock_sync, bytes_per_sample):
-        self.clock_sync = clock_sync
-        self.bytes_per_sample = bytes_per_sample
-        self.samples_per_block = MAX_BULK_MSG_SIZE // bytes_per_sample
+    def __init__(self, mcu, chip_clock_smooth, unpack_fmt):
+        self.mcu = mcu
+        self.clock_sync = ClockSyncRegression(mcu, chip_clock_smooth)
+        unpack = struct.Struct(unpack_fmt)
+        self.unpack_from = unpack.unpack_from
+        self.bytes_per_sample = unpack.size
+        self.samples_per_block = MAX_BULK_MSG_SIZE // self.bytes_per_sample
         self.last_sequence = self.max_query_duration = 0
         self.last_overflows = 0
-        self.mcu = self.oid = self.query_status_cmd = None
-    def setup_query_command(self, mcu, msgformat, oid, cq):
-        self.mcu = mcu
+        self.oid = self.query_status_cmd = None
+    def setup_query_command(self, msgformat, oid, cq):
         self.oid = oid
         self.query_status_cmd = self.mcu.lookup_query_command(
             msgformat, "sensor_bulk_status oid=%c clock=%u query_ticks=%u"
@@ -256,11 +258,11 @@ class ChipClockUpdater:
         else:
             self.clock_sync.update(avg_mcu_clock, chip_clock)
     # Convert a list of sensor_bulk_data responses into list of samples
-    def extract_samples(self, unpack_fmt, raw_samples):
-        unpack_from = struct.Struct(unpack_fmt).unpack_from
+    def extract_samples(self, raw_samples):
         # Load variables to optimize inner loop below
         last_sequence = self.get_last_sequence()
         time_base, chip_base, inv_freq = self.clock_sync.get_time_translation()
+        unpack_from = self.unpack_from
         bytes_per_sample = self.bytes_per_sample
         samples_per_block = self.samples_per_block
         # Process every message in raw_samples

@@ -184,9 +184,6 @@ def read_axes_map(config):
         raise config.error("Invalid axes_map parameter")
     return [am[a.strip()] for a in axes_map]
 
-BYTES_PER_SAMPLE = 5
-SAMPLES_PER_BLOCK = bulk_sensor.MAX_BULK_MSG_SIZE // BYTES_PER_SAMPLE
-
 BATCH_UPDATES = 0.100
 
 # Printer class that controls ADXL345 chip
@@ -211,9 +208,8 @@ class ADXL345:
         self.bulk_queue = bulk_sensor.BulkDataQueue(mcu, oid=oid)
         # Clock tracking
         chip_smooth = self.data_rate * BATCH_UPDATES * 2
-        self.clock_sync = bulk_sensor.ClockSyncRegression(mcu, chip_smooth)
-        self.clock_updater = bulk_sensor.ChipClockUpdater(self.clock_sync,
-                                                          BYTES_PER_SAMPLE)
+        self.clock_updater = bulk_sensor.ChipClockUpdater(mcu, chip_smooth,
+                                                          "BBBBB")
         self.last_error_count = 0
         # Process messages in batches
         self.batch_bulk = bulk_sensor.BatchBulkHelper(
@@ -227,8 +223,8 @@ class ADXL345:
         cmdqueue = self.spi.get_command_queue()
         self.query_adxl345_cmd = self.mcu.lookup_command(
             "query_adxl345 oid=%c rest_ticks=%u", cq=cmdqueue)
-        self.clock_updater.setup_query_command(
-            self.mcu, "query_adxl345_status oid=%c", oid=self.oid, cq=cmdqueue)
+        self.clock_updater.setup_query_command("query_adxl345_status oid=%c",
+                                               oid=self.oid, cq=cmdqueue)
     def read_reg(self, reg):
         params = self.spi.spi_transfer([reg | REG_MOD_READ, 0x00])
         response = bytearray(params['response'])
@@ -249,7 +245,7 @@ class ADXL345:
     # Measurement decoding
     def _extract_samples(self, raw_samples):
         # Convert messages to samples
-        samples = self.clock_updater.extract_samples("BBBBB", raw_samples)
+        samples = self.clock_updater.extract_samples(raw_samples)
         # Convert samples
         (x_pos, x_scale), (y_pos, y_scale), (z_pos, z_scale) = self.axes_map
         count = 0

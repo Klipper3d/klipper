@@ -52,9 +52,6 @@ SCALE = 0.000244140625 * FREEFALL_ACCEL
 
 FIFO_SIZE = 512
 
-BYTES_PER_SAMPLE = 6
-SAMPLES_PER_BLOCK = bulk_sensor.MAX_BULK_MSG_SIZE // BYTES_PER_SAMPLE
-
 BATCH_UPDATES = 0.100
 
 # Printer class that controls MPU9250 chip
@@ -77,9 +74,8 @@ class MPU9250:
         self.bulk_queue = bulk_sensor.BulkDataQueue(mcu, oid=oid)
         # Clock tracking
         chip_smooth = self.data_rate * BATCH_UPDATES * 2
-        self.clock_sync = bulk_sensor.ClockSyncRegression(mcu, chip_smooth)
-        self.clock_updater = bulk_sensor.ChipClockUpdater(self.clock_sync,
-                                                          BYTES_PER_SAMPLE)
+        self.clock_updater = bulk_sensor.ChipClockUpdater(mcu, chip_smooth,
+                                                          ">hhh")
         self.last_error_count = 0
         # Process messages in batches
         self.batch_bulk = bulk_sensor.BatchBulkHelper(
@@ -97,8 +93,8 @@ class MPU9250:
                            % (self.oid,), on_restart=True)
         self.query_mpu9250_cmd = self.mcu.lookup_command(
             "query_mpu9250 oid=%c rest_ticks=%u", cq=cmdqueue)
-        self.clock_updater.setup_query_command(
-            self.mcu, "query_mpu9250_status oid=%c", oid=self.oid, cq=cmdqueue)
+        self.clock_updater.setup_query_command("query_mpu9250_status oid=%c",
+                                               oid=self.oid, cq=cmdqueue)
     def read_reg(self, reg):
         params = self.i2c.i2c_read([reg], 1)
         return bytearray(params['response'])[0]
@@ -111,7 +107,7 @@ class MPU9250:
     # Measurement decoding
     def _extract_samples(self, raw_samples):
         # Convert messages to samples
-        samples = self.clock_updater.extract_samples(">hhh", raw_samples)
+        samples = self.clock_updater.extract_samples(raw_samples)
         # Convert samples
         (x_pos, x_scale), (y_pos, y_scale), (z_pos, z_scale) = self.axes_map
         count = 0
