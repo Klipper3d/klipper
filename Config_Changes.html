@@ -1351,6 +1351,11 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<p>20240415: The <code>on_error_gcode</code> parameter in the <code>[virtual_sdcard]</code>
+config section now has a default. If this parameter is not specified
+it now defaults to <code>TURN_OFF_HEATERS</code>. If the previous behavior is
+desired (take no default action on an error during a virtual_sdcard
+print) then define <code>on_error_gcode</code> with an empty value.</p>
 <p>20240313: The <code>max_accel_to_decel</code> parameter in the <code>[printer]</code> config
 section has been deprecated. The <code>ACCEL_TO_DECEL</code> parameter of the
 <code>SET_VELOCITY_LIMIT</code> command has been deprecated. The
