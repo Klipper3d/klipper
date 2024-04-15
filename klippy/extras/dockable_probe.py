@@ -628,6 +628,10 @@ class DockableProbe:
     def get_position_endstop(self):
         return self.position_endstop
 
+    def probing_move(self, pos, speed):
+        phoming = self.printer.lookup_object('homing')
+        return phoming.probing_move(self, pos, speed)
+
 def load_config(config):
     msp = DockableProbe(config)
     config.get_printer().add_object('probe', probe.PrinterProbe(config, msp))
