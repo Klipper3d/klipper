@@ -48,7 +48,7 @@ First, measure the **ringing frequency**.
    to 5.0. It is not advised to increase it when using input shaper
    because it can cause more smoothing in parts - it is better to use
    higher acceleration value instead.
-2. Disable the `miminum_cruise_ratio` feature by issuing the following
+2. Disable the `minimum_cruise_ratio` feature by issuing the following
    command: `SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0`
 3. Disable Pressure Advance: `SET_PRESSURE_ADVANCE ADVANCE=0`
 4. If you have already added `[input_shaper]` section to the printer.cfg,
