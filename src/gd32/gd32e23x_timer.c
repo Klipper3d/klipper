@@ -14,24 +14,14 @@
 #include "command.h" // DECL_SHUTDOWN
 #include "board/timer_irq.h" // timer_dispatch_many
 
+DECL_CONSTANT("CLOCK_FREQ", CONFIG_CLOCK_FREQ);
 
 /****************************************************************
  * Low level timer code
  ****************************************************************/
-
-// Use 32bit TIM2 timer if available (otherwise use 16bit TIM3 timer)
-#if defined(TIMER2)
-  #define TIMx TIMER2
-  #define TIMx_CLK RCU_TIMER2
-  #define TIMx_IRQn TIMER2_IRQn
-  #define HAVE_TIMER_32BIT	0 
-#elif defined(TIMER3)
-  #define TIMx TIMER3
-  #define TIMx_CLK RCU_TIMER3
-  #define TIMx_IRQn TIMER3_IRQn
-  #define HAVE_TIMER_32BIT 0
-#endif
-
+#define TIMx TIMER2
+#define TIMx_CLK RCU_TIMER2
+#define TIMx_IRQn TIMER2_IRQn
 
 static inline uint32_t
 timer_get(void)
@@ -42,7 +32,7 @@ timer_get(void)
 static inline void
 timer_set(uint32_t next)
 {
-	TIMER_CAR(TIMx) = (uint32_t)next;	
+    TIMER_CH0CV(TIMx) = (uint32_t)next;
 }
 
 // Activate timer dispatch as soon as possible
@@ -64,8 +54,6 @@ static uint32_t timer_high;
 uint32_t __always_inline
 timer_read_time(void)
 {
-    if (HAVE_TIMER_32BIT)
-        return timer_get();
     uint32_t th = readl(&timer_high);
     uint32_t cur = timer_get();
     // Combine timer_high (high 17 bits) and current time (low 16
@@ -77,7 +65,8 @@ timer_read_time(void)
 static uint_fast8_t
 timer_event(struct timer *t)
 {
-    timer_high += 0x8000;
+    uint32_t th = readl(&timer_high);
+    writel(&timer_high, th + 0x8000);
     t->waketime = timer_high + 0x8000;
     return SF_RESCHEDULE;
 }
@@ -89,8 +78,7 @@ static struct timer wrap_timer = {
 void
 timer_reset(void)
 {
-    if (!HAVE_TIMER_32BIT)
-        sched_add_timer(&wrap_timer);
+    sched_add_timer(&wrap_timer);
 }
 DECL_SHUTDOWN(timer_reset);
 
@@ -102,38 +90,65 @@ DECL_SHUTDOWN(timer_reset);
 void __aligned(16)
 TIMx_IRQHandler(void)
 {
-	TIMER_INTF(TIMx) = (~(uint32_t)TIMER_INT_FLAG_UP);	
     irq_disable();
+    TIMER_INTF(TIMx) = (~(uint32_t)TIMER_INTF_CH0IF);
     uint32_t next = timer_dispatch_many();
     timer_set(next);
     irq_enable();
 }
 
 void
-timer_Init(void)
+timer_init_task(void)
 {
     irqstatus_t flag = irq_save();
+
     enable_pclock((uint32_t)TIMx_CLK);
-	
-	TIMER_CNT(TIMx) = (uint32_t)0;
-	TIMER_CTL0(TIMx) &= ~(uint32_t)(TIMER_CTL0_DIR|TIMER_CTL0_CAM);
-	TIMER_CTL0(TIMx) |= (uint32_t)TIMER_COUNTER_EDGE;
-	TIMER_CTL0(TIMx) |= (uint32_t)TIMER_COUNTER_UP;
-	TIMER_PSC(TIMx) = (uint32_t)1;
-    
-	TIMER_CTL0(TIMx) &= ~(uint32_t)TIMER_CTL0_CKDIV;
+    // timer_init
+    /* configure the counter prescaler value */
+    // initpara->prescaler
+    TIMER_PSC(TIMx) = (uint16_t)0U;
+
+    /* configure the counter direction and aligned mode */
+    TIMER_CTL0(TIMx) &= ~(uint32_t)(TIMER_CTL0_DIR|TIMER_CTL0_CAM);
+    // initpara->alignedmode
+    TIMER_CTL0(TIMx) |= (uint32_t)TIMER_COUNTER_EDGE;
+    // initpara->counterdirection
+    TIMER_CTL0(TIMx) |= (uint32_t)TIMER_COUNTER_UP;
+
+    /* configure the autoreload value */
+    // initpara->period
+    TIMER_CAR(TIMx) = (uint32_t)65535U;
+
+    /* reset the CKDIV bit */
+    TIMER_CTL0(TIMx) &= ~(uint32_t)TIMER_CTL0_CKDIV;
+    // initpara->clockdivision
     TIMER_CTL0(TIMx) |= (uint32_t)TIMER_CKDIV_DIV1;
-	
-	TIMER_SWEVG(TIMx) |= (uint32_t)TIMER_SWEVG_UPG;	
-	
-	TIMER_DMAINTEN(TIMx) |= (uint32_t)TIMER_INT_UP;
-	
-	armcm_enable_irq(TIMx_IRQHandler, TIMx_IRQn, 2);
+
+    /* configure the repetition counter value */
+    // initpara->repetitioncounter
+    TIMER_CREP(TIMx) = (uint32_t)0U;
+
+    /* generate an update event */
+    TIMER_SWEVG(TIMx) |= (uint32_t)TIMER_SWEVG_UPG;
+
+    // enable channel capture/compare control shadow register
+    TIMER_CTL1(TIMx) |= (uint32_t)TIMER_CTL1_CCSE;
+
+    // timer_interrupt_flag_clear
+	TIMER_INTF(TIMx) = (~(uint32_t)TIMER_INTF_CH0IF);
+
+    // timer_interrupt_enable
+    TIMER_DMAINTEN(TIMx) |= (uint32_t)TIMER_DMAINTEN_CH0IE;
+
+    armcm_enable_irq(TIMx_IRQHandler, TIMx_IRQn, 2);
     timer_kick();
     timer_reset();
-	TIMER_CTL0(TIMx) |= (uint32_t)TIMER_CTL0_CEN;
-   	
-	irq_restore(flag);
+
+    //timer_enable
+    TIMER_CTL0(TIMx) |= (uint32_t)TIMER_CTL0_CEN;
+
+    irq_restore(flag);
 }
-DECL_INIT(timer_Init);
+DECL_INIT(timer_init_task);
+
 
