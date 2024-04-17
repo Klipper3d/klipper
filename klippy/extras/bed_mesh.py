@@ -934,7 +934,9 @@ class MoveSplitter:
             if self.axis_move[0] or self.axis_move[1]:
                 # X and/or Y axis move, traverse if necessary
                 while self.distance_checked + self.move_check_distance \
-                        < self.total_move_length:
+                        < self.total_move_length \
+                        and self.z_mesh.mesh_x_max >= self.current_pos[0] \
+                        and self.z_mesh.mesh_y_max >= self.current_pos[1]:
                     self.distance_checked += self.move_check_distance
                     self._set_next_move(self.distance_checked)
                     next_z = self._calc_z_offset(self.current_pos)
