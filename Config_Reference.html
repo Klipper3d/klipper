@@ -1155,6 +1155,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#sht3x-sensor" class="md-nav__link">
+    SHT3X sensor
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#lm75-temperature-sensor" class="md-nav__link">
     LM75 temperature sensor
   </a>
@@ -3183,6 +3190,13 @@
           <li class="md-nav__item">
   <a href="#htu21d-sensor" class="md-nav__link">
     HTU21D sensor
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sht3x-sensor" class="md-nav__link">
+    SHT3X sensor
   </a>
   
 </li>
@@ -6049,6 +6063,22 @@ temperature.</p>
 #   Default is: &quot;TEMP11_HUM11&quot;
 #htu21d_report_time:
 #   Interval in seconds between readings. Default is 30
+</code></pre></div>
+
+<h3 id="sht3x-sensor">SHT3X sensor<a class="headerlink" href="#sht3x-sensor" title="Permanent link">&para;</a></h3>
+<p>SHT3X family two wire interface (I2C) environmental sensor. These sensors
+have a range of -55~125 C, so are usable for e.g. chamber temperature
+monitoring. They can also function as simple fan/heater controllers.</p>
+<div class="highlight"><pre><span></span><code>sensor_type: SHT3X
+#i2c_address:
+#   Default is 68 (0x44).
+#i2c_mcu:
+#i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#i2c_speed:
+#   See the &quot;common I2C settings&quot; section for a description of the
+#   above parameters.
 </code></pre></div>
 
 <h3 id="lm75-temperature-sensor">LM75 temperature sensor<a class="headerlink" href="#lm75-temperature-sensor" title="Permanent link">&para;</a></h3>
