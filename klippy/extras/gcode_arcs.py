@@ -21,7 +21,8 @@ ARC_PLANE_Y_Z = 2
 X_AXIS = 0
 Y_AXIS = 1
 Z_AXIS = 2
-E_AXIS = 3
+A_AXIS = 3
+E_AXIS = 4
 
 
 class ArcSupport:
@@ -69,6 +70,7 @@ class ArcSupport:
         asTarget = self.Coord(x=gcmd.get_float("X", currentPos[0]),
                               y=gcmd.get_float("Y", currentPos[1]),
                               z=gcmd.get_float("Z", currentPos[2]),
+                              a=gcmd.get_float("A", currentPos[3]),
                               e=None)
 
         if gcmd.get_float("R", None) is not None:
@@ -76,13 +78,13 @@ class ArcSupport:
 
         # determine the plane coordinates and the helical axis
         asPlanar = [ gcmd.get_float(a, 0.) for i,a in enumerate('IJ') ]
-        axes = (X_AXIS, Y_AXIS, Z_AXIS)
+        axes = (X_AXIS, Y_AXIS, Z_AXIS, A_AXIS)
         if self.plane == ARC_PLANE_X_Z:
             asPlanar = [ gcmd.get_float(a, 0.) for i,a in enumerate('IK') ]
-            axes = (X_AXIS, Z_AXIS, Y_AXIS)
+            axes = (X_AXIS, Z_AXIS, Y_AXIS, A_AXIS)
         elif self.plane == ARC_PLANE_Y_Z:
             asPlanar = [ gcmd.get_float(a, 0.) for i,a in enumerate('JK') ]
-            axes = (Y_AXIS, Z_AXIS, X_AXIS)
+            axes = (Y_AXIS, Z_AXIS, X_AXIS, A_AXIS)
 
         if not (asPlanar[0] or asPlanar[1]):
             raise gcmd.error("G2/G3 requires IJ, IK or JK parameters")
@@ -96,12 +98,12 @@ class ArcSupport:
         e_per_move = e_base = 0.
         if asE is not None:
             if gcodestatus['absolute_extrude']:
-                e_base = currentPos[3]
+                e_base = currentPos[4]
             e_per_move = (asE - e_base) / len(coords)
 
         # Convert coords into G1 commands
         for coord in coords:
-            g1_params = {'X': coord[0], 'Y': coord[1], 'Z': coord[2]}
+            g1_params = {'X': coord[0], 'Y': coord[1], 'Z': coord[2], 'A': coord[3]}
             if e_per_move:
                 g1_params['E'] = e_base + e_per_move
                 if gcodestatus['absolute_extrude']:

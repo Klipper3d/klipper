@@ -125,7 +125,7 @@ trapq_append(struct trapq *tq, double print_time
              , double start_v, double cruise_v, double accel)
 {
     struct coord start_pos = { .x=start_pos_x, .y=start_pos_y, .z=start_pos_z, .a=start_pos_a };
-    struct coord axes_r = { .x=axes_r_x, .y=axes_r_y, .z=axes_r_z, .a=axes_r_z };
+    struct coord axes_r = { .x=axes_r_x, .y=axes_r_y, .z=axes_r_z, .a=axes_r_a };
     if (accel_t) {
         struct move *m = move_alloc();
         m->print_time = print_time;
