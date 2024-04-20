@@ -81,15 +81,15 @@ link show can0`. It should report a bunch of text including the
 snippet `qlen 128`. If one sees something like `qlen 10` then it
 indicates the CAN device has not been properly configured.
 
-It is not recommended to use a `txqueuelen` significantly larger than
-128. A CAN bus running at a frequency of 1000000 will typically take
-around 120us to transmit a CAN packet. Thus a queue of 128 packets is
-likely to take around 15-20ms to drain. A substantially larger queue
-could cause excessive spikes in message round-trip-time which could
-lead to unrecoverable errors. Said another way, Klipper's application
-retransmit system is more robust if it does not have to wait for Linux
-to drain an excessively large queue of possibly stale data. This is
-analogous to the problem of
+It is not recommended to use a `txqueuelen` significantly larger
+than 128. A CAN bus running at a frequency of 1000000 will typically
+take around 120us to transmit a CAN packet. Thus a queue of 128
+packets is likely to take around 15-20ms to drain. A substantially
+larger queue could cause excessive spikes in message round-trip-time
+which could lead to unrecoverable errors. Said another way, Klipper's
+application retransmit system is more robust if it does not have to
+wait for Linux to drain an excessively large queue of possibly stale
+data. This is analogous to the problem of
 [bufferbloat](https://en.wikipedia.org/wiki/Bufferbloat) on internet
 routers.
 
