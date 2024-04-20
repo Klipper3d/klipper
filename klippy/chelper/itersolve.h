@@ -4,7 +4,7 @@
 #include <stdint.h> // int32_t
 
 enum {
-    AF_X = 1 << 0, AF_Y = 1 << 1, AF_Z = 1 << 2,
+    AF_X = 1 << 0, AF_Y = 1 << 1, AF_Z = 1 << 2, AF_A = 1 << 3,
 };
 
 struct stepper_kinematics;
@@ -33,9 +33,9 @@ void itersolve_set_trapq(struct stepper_kinematics *sk, struct trapq *tq);
 void itersolve_set_stepcompress(struct stepper_kinematics *sk
                                 , struct stepcompress *sc, double step_dist);
 double itersolve_calc_position_from_coord(struct stepper_kinematics *sk
-                                          , double x, double y, double z);
+                                          , double x, double y, double z, double a);
 void itersolve_set_position(struct stepper_kinematics *sk
-                            , double x, double y, double z);
+                            , double x, double y, double z, double a);
 double itersolve_get_commanded_pos(struct stepper_kinematics *sk);
 
 #endif // itersolve.h
