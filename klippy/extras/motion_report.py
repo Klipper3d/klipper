@@ -98,9 +98,9 @@ class DumpTrapQ:
         out = ["Dumping trapq '%s' %d moves:" % (self.name, len(data))]
         for i, m in enumerate(data):
             out.append("move %d: pt=%.6f mt=%.6f sv=%.6f a=%.6f"
-                       " sp=(%.6f,%.6f,%.6f) ar=(%.6f,%.6f,%.6f)"
+                       " sp=(%.6f,%.6f,%.6f,%.6f) ar=(%.6f,%.6f,%.6f,%.6f)"
                        % (i, m.print_time, m.move_t, m.start_v, m.accel,
-                          m.start_x, m.start_y, m.start_z, m.x_r, m.y_r, m.z_r))
+                          m.start_x, m.start_y, m.start_z, m.start_a, m.x_r, m.y_r, m.z_r, m.a_r))
         logging.info('\n'.join(out))
     def get_trapq_position(self, print_time):
         ffi_main, ffi_lib = chelper.get_ffi()
@@ -119,7 +119,7 @@ class DumpTrapQ:
         qtime = self.last_batch_msg[0] + min(self.last_batch_msg[1], 0.100)
         data, cdata = self.extract_trapq(qtime, NEVER_TIME)
         d = [(m.print_time, m.move_t, m.start_v, m.accel,
-              (m.start_x, m.start_y, m.start_z), (m.x_r, m.y_r, m.z_r))
+              (m.start_x, m.start_y, m.start_z, m.start_a), (m.x_r, m.y_r, m.z_r, m.a_r))
              for m in data]
         if d and d[0] == self.last_batch_msg:
             d.pop(0)
@@ -204,7 +204,7 @@ class PrinterMotionReport:
         if eventtime < self.next_status_time or not self.trapqs:
             return self.last_status
         self.next_status_time = eventtime + STATUS_REFRESH_TIME
-        xyzpos = (0., 0., 0.)
+        xyzpos = (0., 0., 0., 0.)
         epos = (0.,)
         xyzvelocity = evelocity = 0.
         # Calculate current requested toolhead position
@@ -212,7 +212,7 @@ class PrinterMotionReport:
         print_time = mcu.estimated_print_time(eventtime)
         pos, velocity = self.trapqs['toolhead'].get_trapq_position(print_time)
         if pos is not None:
-            xyzpos = pos[:3]
+            xyzpos = pos[:4]
             xyzvelocity = velocity
         # Calculate requested position of currently active extruder
         toolhead = self.printer.lookup_object('toolhead')

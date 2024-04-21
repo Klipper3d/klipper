@@ -121,7 +121,7 @@ class HallFilamentWidthSensor:
     def extrude_factor_update_event(self, eventtime):
         # Update extrude factor
         pos = self.toolhead.get_position()
-        last_epos = pos[3]
+        last_epos = pos[4]
         # Update filament array for lastFilamentWidthReading
         self.update_filament_array(last_epos)
         # Check runout

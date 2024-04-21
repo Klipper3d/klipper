@@ -180,7 +180,7 @@ class Replicape:
         # Setup stepper config
         self.stepper_dacs = {}
         shift_registers = [1, 0, 0, 1, 1]
-        for port, name in enumerate('xyzeh'):
+        for port, name in enumerate('xyzaeh'):
             prefix = 'stepper_%s_' % (name,)
             sc = config.getchoice(
                 prefix + 'microstep_mode', ReplicapeStepConfig, 'disable')
@@ -201,10 +201,10 @@ class Replicape:
             self.pins[prefix + 'enable'] = (ReplicapeDACEnable, channel)
         self.enabled_channels = {ch: False for cl, ch in self.pins.values()}
         self.sr_disabled = list(reversed(shift_registers))
-        if [i for i in [0, 1, 2] if 11+i in self.stepper_dacs]:
+        if [i for i in [0, 1, 2, 3] if 11+i in self.stepper_dacs]:
             # Enable xyz steppers
             shift_registers[0] &= ~1
-        if [i for i in [3, 4] if 11+i in self.stepper_dacs]:
+        if [i for i in [4, 5] if 11+i in self.stepper_dacs]:
             # Enable eh steppers
             shift_registers[3] &= ~1
         if (config.getboolean('standstill_power_down', False)

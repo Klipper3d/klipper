@@ -40,7 +40,7 @@ cart_stepper_a_calc_position(struct stepper_kinematics *sk, struct move *m
 }
 
 struct stepper_kinematics * __visible
-cartesian_stepper_alloc(char axis)
+cartesian_xyza_stepper_alloc(char axis)
 {
     struct stepper_kinematics *sk = malloc(sizeof(*sk));
     memset(sk, 0, sizeof(*sk));

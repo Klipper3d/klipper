@@ -168,8 +168,8 @@ class ManualProbeHelper:
         try:
             z_bob_pos = z_pos + Z_BOB_MINIMUM
             if curpos[2] < z_bob_pos:
-                self.toolhead.manual_move([None, None, z_bob_pos], self.speed)
-            self.toolhead.manual_move([None, None, z_pos], self.speed)
+                self.toolhead.manual_move([None, None, z_bob_pos, None], self.speed)
+            self.toolhead.manual_move([None, None, z_pos, None], self.speed)
         except self.printer.command_error as e:
             self.finalize(False)
             raise

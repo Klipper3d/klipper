@@ -38,20 +38,20 @@ class SafeZHoming:
                 # Always perform the z_hop if the Z axis is not homed
                 pos[2] = 0
                 toolhead.set_position(pos, homing_axes=[2])
-                toolhead.manual_move([None, None, self.z_hop],
+                toolhead.manual_move([None, None, self.z_hop, None],
                                      self.z_hop_speed)
                 if hasattr(toolhead.get_kinematics(), "note_z_not_homed"):
                     toolhead.get_kinematics().note_z_not_homed()
             elif pos[2] < self.z_hop:
                 # If the Z axis is homed, and below z_hop, lift it to z_hop
-                toolhead.manual_move([None, None, self.z_hop],
+                toolhead.manual_move([None, None, self.z_hop, None],
                                      self.z_hop_speed)
 
         # Determine which axes we need to home
-        need_x, need_y, need_z = [gcmd.get(axis, None) is not None
-                                  for axis in "XYZ"]
-        if not need_x and not need_y and not need_z:
-            need_x = need_y = need_z = True
+        need_x, need_y, need_z, need_a = [gcmd.get(axis, None) is not None
+                                  for axis in "XYZA"]
+        if not need_x and not need_y and not need_z and not need_a:
+            need_x = need_y = need_z = need_a = True
 
         # Home XY axes if necessary
         new_params = {}
@@ -59,6 +59,8 @@ class SafeZHoming:
             new_params['X'] = '0'
         if need_y:
             new_params['Y'] = '0'
+        if need_a:
+            new_params['A'] = '0'
         if new_params:
             g28_gcmd = self.gcode.create_gcode_command("G28", "G28", new_params)
             self.prev_G28(g28_gcmd)
@@ -81,7 +83,7 @@ class SafeZHoming:
             if self.z_hop:
                 pos = toolhead.get_position()
                 if pos[2] < self.z_hop:
-                    toolhead.manual_move([None, None, self.z_hop],
+                    toolhead.manual_move([None, None, self.z_hop, None],
                                          self.z_hop_speed)
             # Move XY back to previous positions
             if self.move_to_previous:
