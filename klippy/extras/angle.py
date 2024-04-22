@@ -529,7 +529,7 @@ class Angle:
         logging.info("Starting angle '%s' measurements", self.name)
         self.sensor_helper.start()
         # Start bulk reading
-        self.bulk_queue.clear_samples()
+        self.bulk_queue.clear_queue()
         self.last_sequence = 0
         systime = self.printer.get_reactor().monotonic()
         print_time = self.mcu.estimated_print_time(systime) + MIN_MSG_TIME
@@ -541,13 +541,13 @@ class Angle:
     def _finish_measurements(self):
         # Halt bulk reading
         self.query_spi_angle_cmd.send_wait_ack([self.oid, 0, 0, 0])
-        self.bulk_queue.clear_samples()
+        self.bulk_queue.clear_queue()
         self.sensor_helper.last_temperature = None
         logging.info("Stopped angle '%s' measurements", self.name)
     def _process_batch(self, eventtime):
         if self.sensor_helper.is_tcode_absolute:
             self.sensor_helper.update_clock()
-        raw_samples = self.bulk_queue.pull_samples()
+        raw_samples = self.bulk_queue.pull_queue()
         if not raw_samples:
             return {}
         samples, error_count = self._extract_samples(raw_samples)

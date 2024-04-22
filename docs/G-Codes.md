@@ -139,6 +139,17 @@ Writes raw "value" into register "register". Both "value" and
 and refer to sensor data sheet for the reference. This is only
 available for tle5012b chips.
 
+### [axis_twist_compensation]
+
+The following commands are available when the
+[axis_twist_compensation config
+section](Config_Reference.md#axis_twist_compensation) is enabled.
+
+#### AXIS_TWIST_COMPENSATION_CALIBRATE
+`AXIS_TWIST_COMPENSATION_CALIBRATE [SAMPLE_COUNT=<value>]`: Initiates the X
+twist calibration wizard. `SAMPLE_COUNT` specifies the number of points along
+the X axis to calibrate at and defaults to 3.
+
 ### [bed_mesh]
 
 The following commands are available when the
@@ -973,6 +984,28 @@ babystepping), and subtract if from the probe's z_offset.  This acts
 to take a frequently used babystepping value, and "make it permanent".
 Requires a `SAVE_CONFIG` to take effect.
 
+### [probe_eddy_current]
+
+The following commands are available when a
+[probe_eddy_current config section](Config_Reference.md#probe_eddy_current)
+is enabled.
+
+#### PROBE_EDDY_CURRENT_CALIBRATE
+`PROBE_EDDY_CURRENT_CALIBRATE CHIP=<config_name>`: This starts a tool
+that calibrates the sensor resonance frequencies to corresponding Z
+heights. The tool will take a couple of minutes to complete. After
+completion, use the SAVE_CONFIG command to store the results in the
+printer.cfg file.
+
+#### LDC_CALIBRATE_DRIVE_CURRENT
+`LDC_CALIBRATE_DRIVE_CURRENT CHIP=<config_name>` This tool will
+calibrate the ldc1612 DRIVE_CURRENT0 register. Prior to using this
+tool, move the sensor so that it is near the center of the bed and
+about 20mm above the bed surface. Run this command to determine an
+appropriate DRIVE_CURRENT for the sensor. After running this command
+use the SAVE_CONFIG command to store that new setting in the
+printer.cfg config file.
+
 ### [pwm_cycle_time]
 
 The following command is available when a
@@ -1352,17 +1385,6 @@ print.
 
 #### SDCARD_RESET_FILE
 `SDCARD_RESET_FILE`: Unload file and clear SD state.
-
-### [axis_twist_compensation]
-
-The following commands are available when the
-[axis_twist_compensation config
-section](Config_Reference.md#axis_twist_compensation) is enabled.
-
-#### AXIS_TWIST_COMPENSATION_CALIBRATE
-`AXIS_TWIST_COMPENSATION_CALIBRATE [SAMPLE_COUNT=<value>]`: Initiates the X
-twist calibration wizard. `SAMPLE_COUNT` specifies the number of points along
-the X axis to calibrate at and defaults to 3.
 
 ### [z_thermal_adjust]
 
