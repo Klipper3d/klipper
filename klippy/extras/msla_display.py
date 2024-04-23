@@ -39,7 +39,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
                             msg = ("The current cache count of %d requires %.2f MB of RAM, currently have %.2f MB of "
                                    "free memory. It requires at least a margin of %.2f MB of free RAM.\n"
                                    "Please reduce the cache count.") % (
-                                  self.buffer_cache_count, buffer_max_size, free_memory_mb, CACHE_MIN_FREE_RAM)
+                                      self.buffer_cache_count, buffer_max_size, free_memory_mb, CACHE_MIN_FREE_RAM)
                             logging.exception(msg)
                             raise config.error(msg)
                         break
@@ -57,13 +57,17 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
 
         # Register commands
         gcode = self.printer.lookup_object('gcode')
-        gcode.register_command("MSLA_DISPLAY_CLEAR", self.cmd_MSLA_DISPLAY_CLEAR,
-                               desc=self.cmd_MSLA_DISPLAY_CLEAR_help)
-        gcode.register_command("MSLA_DISPLAY_IMAGE", self.cmd_MSLA_DISPLAY_IMAGE,
-                               desc=self.cmd_MSLA_DISPLAY_IMAGE_help)
+        gcode.register_command("MSLA_DISPLAY_VALIDATE", self.cmd_MSLA_DISPLAY_VALIDATE,
+                               desc=self.cmd_MSLA_DISPLAY_VALIDATE_help)
         gcode.register_command("MSLA_DISPLAY_RESPONSE_TIME", self.cmd_MSLA_DISPLAY_RESPONSE_TIME,
                                desc=self.cmd_MSLA_DISPLAY_RESPONSE_TIME_help)
 
+        #gcode.register_command("MSLA_DISPLAY_CLEAR", self.cmd_MSLA_DISPLAY_CLEAR,
+        #                       desc=self.cmd_MSLA_DISPLAY_CLEAR_help)
+        #gcode.register_command("MSLA_DISPLAY_IMAGE", self.cmd_MSLA_DISPLAY_IMAGE,
+        #                       desc=self.cmd_MSLA_DISPLAY_IMAGE_help)
+
+        gcode.register_command('M6054', self.cmd_M6054, desc=self.cmd_M6054_help)
         gcode.register_command('M1400', self.cmd_M1400, desc=self.cmd_M1400_help)
 
     def get_status(self, eventtime):
@@ -140,7 +144,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         if current_filepath is not None and path[0] != '/':
             path = os.path.join(os.path.dirname(current_filepath), path)
             if not os.path.isfile(path):
-                raise gcmd.error(f"M1400: The file '{path}' does not exists.")
+                raise gcmd.error(f"M6054: The file '{path}' does not exists.")
 
             if self.buffer_cache_count > 0:
                 self._wait_cache_thread()  # May be worth to wait if streaming images
@@ -158,7 +162,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
                     return cache.buffer
 
         if not os.path.isfile(path):
-            raise gcmd.error(f"M1400: The file '{path}' does not exists.")
+            raise gcmd.error(f"M6054: The file '{path}' does not exists.")
 
         buffer = self.get_image_buffer(path)
         if self._can_cache():
@@ -168,25 +172,57 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
 
         return buffer
 
-    cmd_MSLA_DISPLAY_CLEAR_help = "Clears the display by send a full buffer of zeros."
+    cmd_MSLA_DISPLAY_VALIDATE_help = "Validate the display against resolution and pixel parameters. Throw error if out of parameters."
 
-    def cmd_MSLA_DISPLAY_CLEAR(self, gcmd):
-        wait_thread = gcmd.get_int('WAIT', 0, 0, 1)
-        self.clear_framebuffer_threaded(wait_thread)
+    def cmd_MSLA_DISPLAY_VALIDATE(self, gcmd):
+        """
+        Layer images are universal within same resolution and pixel pitch. Other printers with same resolution and pixel
+        pitch can print same file. This command ensure print only continue if requirements are meet.
+        @param gcmd:
+        @return:
+        """
+        resolution = gcmd.get('RESOLUTION')
+        pixel_size = gcmd.get('PIXEL')
 
-    cmd_MSLA_DISPLAY_IMAGE_help = "Sends a image from a path and display it on the main display."
+        resolution_split = resolution.split(',', 1)
+        if len(resolution_split) < 2:
+            raise gcmd.error(f"The resolution of {resolution} is malformed, format: RESOLUTION_X,RESOLUTION_Y.")
 
-    def cmd_MSLA_DISPLAY_IMAGE(self, gcmd):
-        path = gcmd.get('PATH')
-        clear_first = gcmd.get_int('CLEAR', 0, 0, 1)
-        offset = gcmd.get_int('OFFSET', 0, 0)
-        wait_thread = gcmd.get_int('WAIT', 0, 0, 1)
-        path = os.path.normpath(os.path.expanduser(path))
+        try:
+            resolution_x = int(resolution_split[0])
+        except:
+            raise gcmd.error(f"The resolution x must be an integer number.")
 
-        times = time.time()
-        buffer = self._get_image_buffercache(gcmd, path)
-        self.send_buffer_threaded(buffer, clear_first, offset, wait_thread)
-        gcmd.respond_raw("Get/cache buffer: %.2f ms" % ((time.time() - times) * 1000.,))
+        try:
+            resolution_y = int(resolution_split[1])
+        except:
+            raise gcmd.error(f"The resolution y must be an integer.")
+
+        if resolution_x != self.resolution_x:
+            raise gcmd.error(f"The resolution X of {resolution_x} is invalid. Should be {self.resolution_x}.")
+
+        if resolution_y != self.resolution_y:
+            raise gcmd.error(f"The resolution Y of {resolution_y} is invalid. Should be {self.resolution_y}.")
+
+        pixel_size_split = pixel_size.split(',', 1)
+        if len(pixel_size_split) < 2:
+            raise gcmd.error(f"The pixel size of {pixel_size} is malformed, format: PIXEL_WIDTH,PIXEL_HEIGHT.")
+
+        try:
+            pixel_width = float(pixel_size_split[0])
+        except:
+            raise gcmd.error(f"The pixel width must be an floating point number.")
+
+        try:
+            pixel_height = float(pixel_size_split[1])
+        except:
+            raise gcmd.error(f"The pixel height must be an floating point number.")
+
+        if pixel_width != self.pixel_width:
+            raise gcmd.error(f"The pixel width of {pixel_width} is invalid. Should be {self.pixel_width}.")
+
+        if pixel_height != self.pixel_height:
+            raise gcmd.error(f"The pixel height of {pixel_height} is invalid. Should be {self.pixel_height}.")
 
     cmd_MSLA_DISPLAY_RESPONSE_TIME_help = "Send a buffer to display and test it response time to fill that buffer."
 
@@ -221,6 +257,47 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
             self.clear_framebuffer()
             time_sum += time.time() - timems
         gcmd.respond_raw('Clear time: %fms (%d samples)' % (round(time_sum * 1000 / avg, 6), avg))
+
+    # Merged both into M6054
+    #    cmd_MSLA_DISPLAY_CLEAR_help = "Clears the display by send a full buffer of zeros."
+    #
+    #    def cmd_MSLA_DISPLAY_CLEAR(self, gcmd):
+    #        wait_thread = gcmd.get_int('WAIT', 0, 0, 1)
+    #        self.clear_framebuffer_threaded(wait_thread)
+    #
+    #    cmd_MSLA_DISPLAY_IMAGE_help = "Sends a image from a path and display it on the main display."
+    #
+    #    def cmd_MSLA_DISPLAY_IMAGE(self, gcmd):
+    #        path = gcmd.get('PATH')
+    #        clear_first = gcmd.get_int('CLEAR', 0, 0, 1)
+    #        offset = gcmd.get_int('OFFSET', 0, 0)
+    #        wait_thread = gcmd.get_int('WAIT', 0, 0, 1)
+    #        path = os.path.normpath(os.path.expanduser(path))
+    #
+    #        #times = time.time()
+    #        buffer = self._get_image_buffercache(gcmd, path)
+    #        self.send_buffer_threaded(buffer, clear_first, offset, wait_thread)
+    #        #gcmd.respond_raw("Get/cache buffer: %.2f ms" % ((time.time() - times) * 1000.,))
+
+    cmd_M6054_help = "Sends a image from a path and display it on the main display. If no parameter it will clear the display"
+
+    def cmd_M6054(self, gcmd):
+        clear_first = gcmd.get_int('C', 0, 0, 1)
+        offset = gcmd.get_int('O', 0, 0)
+        wait_thread = gcmd.get_int('W', 0, 0, 1)
+
+        params = gcmd.get_raw_command_parameters().strip()
+
+        match = re.search(r'F?(.+[.](png|jpg|jpeg|bmp|gif))', params)
+        if match:
+            path = match.group(1).strip(' "')
+            path = os.path.normpath(os.path.expanduser(path))
+            buffer = self._get_image_buffercache(gcmd, path)
+            self.send_buffer_threaded(buffer, clear_first, offset, wait_thread)
+        else:
+            if 'F' in params:
+                raise gcmd.error(f"M6054: The F parameter is malformed. Use a proper image file.")
+            self.clear_framebuffer_threaded(wait_thread)
 
     cmd_M1400_help = "Turn the main UV LED to cure the pixels."
 
