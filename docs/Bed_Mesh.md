@@ -44,10 +44,9 @@ probe_count: 5, 3
 
 - `mesh_max: 240, 198`\
   _Required_\
-  The probed coordinate farthest farthest from the origin.  This is not
-  necessarily the last point probed, as the probing process occurs in a
-  zig-zag fashion.  As with `mesh_min`, this coordinate is relative to
-  the probe's location.
+  The probed coordinate farthest from the origin.  This is not necessarily
+  the last point probed, as the probing process occurs in a zig-zag fashion.
+  As with `mesh_min`, this coordinate is relative to the probe's location.
 
 - `probe_count: 5, 3`\
   _Default Value: 3, 3_\

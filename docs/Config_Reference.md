@@ -2575,6 +2575,25 @@ sensor_type:
 #   Interval in seconds between readings. Default is 30
 ```
 
+### SHT3X sensor
+
+SHT3X family two wire interface (I2C) environmental sensor. These sensors
+have a range of -55~125 C, so are usable for e.g. chamber temperature
+monitoring. They can also function as simple fan/heater controllers.
+
+```
+sensor_type: SHT3X
+#i2c_address:
+#   Default is 68 (0x44).
+#i2c_mcu:
+#i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#i2c_speed:
+#   See the "common I2C settings" section for a description of the
+#   above parameters.
+```
+
 ### LM75 temperature sensor
 
 LM75/LM75A two wire (I2C) connected temperature sensors. These sensors
