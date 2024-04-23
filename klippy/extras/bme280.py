@@ -91,7 +91,8 @@ MEASURE_DONE = 1 << 5
 RESET_CHIP_VALUE = 0xB6
 
 BME_CHIPS = {
-    0x58: 'BMP280', 0x60: 'BME280', 0x61: 'BME680', 0x55: 'BMP180', 0x50: 'BMP388'
+    0x58: 'BMP280', 0x60: 'BME280', 0x61: 'BME680', 0x55: 'BMP180',
+    0x50: 'BMP388'
 }
 BME_CHIP_ID_REG = 0xD0
 BMP3_CHIP_ID_REG = 0x00
@@ -186,24 +187,28 @@ class BME280:
             dig['P8'] = get_signed_short(calib_data_1[20:22])
             dig['P9'] = get_signed_short(calib_data_1[22:24])
             return dig
-        
+
         def read_calibration_data_bmp388(calib_data_1):
             dig = {}
             dig["T1"] = get_unsigned_short(calib_data_1[0:2]) / 0.00390625
             dig["T2"] = get_unsigned_short(calib_data_1[2:4]) / 1073741824.0
             dig["T3"] = get_signed_byte(calib_data_1[4]) / 281474976710656.0
 
-            dig["P1"] = (get_signed_short(calib_data_1[5:7]) - 16384) / 1048576.0
-            dig["P2"] = (get_signed_short(calib_data_1[7:9]) - 16384) / 536870912.0
+            dig["P1"] = get_signed_short(calib_data_1[5:7]) - 16384
+            dig["P1"] /= 1048576.0
+            dig["P2"] = get_signed_short(calib_data_1[7:9]) - 16384
+            dig["P2"] /= 536870912.0
             dig["P3"] = get_signed_byte(calib_data_1[9]) / 4294967296.0
             dig["P4"] = get_signed_byte(calib_data_1[10]) / 137438953472.0
             dig["P5"] = get_unsigned_short(calib_data_1[11:13]) / 0.125
             dig["P6"] = get_unsigned_short(calib_data_1[13:15]) / 64.0
             dig["P7"] = get_signed_byte(calib_data_1[15]) / 256.0
             dig["P8"] = get_signed_byte(calib_data_1[16]) / 32768.0
-            dig["P9"] = get_signed_short(calib_data_1[17:19]) / 281474976710656.0
+            dig["P9"] = get_signed_short(calib_data_1[17:19])
+            dig["P9"] /= 281474976710656.0
             dig["P10"] = get_signed_byte(calib_data_1[19]) / 281474976710656.0
-            dig["P11"] = get_signed_byte(calib_data_1[20]) / 36893488147419103232.0
+            dig["P11"] = get_signed_byte(calib_data_1[20])
+            dig["P11"] /= 36893488147419103232.0
             return dig
 
         def read_calibration_data_bme280(calib_data_1, calib_data_2):
@@ -409,7 +414,8 @@ class BME280:
         partial_data1 = adc_T - self.dig["T1"]
         partial_data2 = self.dig["T2"] * partial_data1
 
-        self.t_fine = partial_data2 + (partial_data1 * partial_data1) * self.dig["T3"]
+        self.t_fine = partial_data2
+        self.t_fine += (partial_data1 * partial_data1) * self.dig["T3"]
 
         if self.t_fine < -40.0:
             self.t_fine = -40.0
@@ -427,12 +433,15 @@ class BME280:
 
         partial_data1 = self.dig["P6"] * self.t_fine
         partial_data2 = self.dig["P7"] * (self.t_fine * self.t_fine)
-        partial_data3 = self.dig["P8"] * (self.t_fine * self.t_fine * self.t_fine)
-        partial_out1 = self.dig["P5"] + partial_data1 + partial_data2 + partial_data3
+        partial_data3 = self.dig["P8"]
+        partial_data3 *= self.t_fine * self.t_fine * self.t_fine
+        partial_out1 = self.dig["P5"]
+        partial_out1 += partial_data1 + partial_data2 + partial_data3
 
         partial_data1 = self.dig["P2"] * self.t_fine
         partial_data2 = self.dig["P3"] * (self.t_fine * self.t_fine)
-        partial_data3 = self.dig["P4"] * (self.t_fine * self.t_fine * self.t_fine)
+        partial_data3 = self.dig["P4"]
+        partial_data3 *= (self.t_fine * self.t_fine * self.t_fine)
         partial_out2 = adc_P * (
             self.dig["P1"] + partial_data1 + partial_data2 + partial_data3
         )
