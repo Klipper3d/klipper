@@ -105,6 +105,8 @@ class FramebufferDisplay():
         self._framebuffer_thread = None
         self.is_busy = False
 
+        self.clear_framebuffer_threaded()
+
     def get_framebuffer_path(self) -> str:
         """
         Gets the framebuffer device path associated with this object.
