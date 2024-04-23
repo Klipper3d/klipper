@@ -219,7 +219,7 @@ class ToolHead:
         self.manufacturing_process = config.getchoice('manufacturing_process', atypes, default='FDM')
 
         if self.manufacturing_process in ('mSLA', 'DLP'):
-            for s in ('output_pin msla_uvled', 'msla_display'):
+            for s in ('msla_display',):
                 section = self.printer.lookup_object(s, None)
                 if section is None:
                     msg = "Error: A section with [%s] is required for mSLA/DLP printers." % (s,)
