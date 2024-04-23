@@ -31,7 +31,7 @@ adapter. This is typically done by creating a new file named
 allow-hotplug can0
 iface can0 can static
     bitrate 1000000
-    up ifconfig $IFACE txqueuelen 128
+    up ip link set $IFACE txqueuelen 128
 ```
 
 ## Terminating Resistors
@@ -113,7 +113,7 @@ Some important notes when using this mode:
 allow-hotplug can0
 iface can0 can static
     bitrate 1000000
-    up ifconfig $IFACE txqueuelen 128
+    up ip link set $IFACE txqueuelen 128
 ```
 
 * The "bridge mcu" is not actually on the CAN bus. Messages to and
