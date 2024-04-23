@@ -178,6 +178,11 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         """
         Layer images are universal within same resolution and pixel pitch. Other printers with same resolution and pixel
         pitch can print same file. This command ensure print only continue if requirements are meet.
+
+        Syntax: MSLA_DISPLAY_VALIDATE RESOLUTION=<x,y> PIXEL=<x,y>
+
+        RESOLUTION: Machine LCD resolution
+        PIXEL: Machine LCD pixel pitch
         @param gcmd:
         @return:
         """
@@ -227,6 +232,15 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
     cmd_MSLA_DISPLAY_RESPONSE_TIME_help = "Send a buffer to display and test it response time to fill that buffer."
 
     def cmd_MSLA_DISPLAY_RESPONSE_TIME(self, gcmd):
+        """
+        Tests the display response time
+
+        Syntax: MSLA_DISPLAY_RESPONSE_TIME AVG=[x]
+
+        AVG: Number of samples to average (int)
+        @param gcmd:
+        @return:
+        """
         avg = gcmd.get_int('AVG', 1, 1, 20)
 
         gcmd.respond_raw(
@@ -282,6 +296,16 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
     cmd_M6054_help = "Sends a image from a path and display it on the main display. If no parameter it will clear the display"
 
     def cmd_M6054(self, gcmd):
+        """
+        Display an image from a path and display it on the main display. If no parameter it will clear the display
+
+        Syntax: M6054 F<"file.png"> C[0/1] O[x] W[0/1]
+        F: File path eg: "1.png". quotes are optional. (str)
+        C: Clear the image before display the new image. (int)
+        W: Wait for buffer to complete the transfer. (int)
+        @param gcmd:
+        @return:
+        """
         clear_first = gcmd.get_int('C', 0, 0, 1)
         offset = gcmd.get_int('O', 0, 0)
         wait_thread = gcmd.get_int('W', 0, 0, 1)
@@ -290,7 +314,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
 
         match = re.search(r'F?(.+[.](png|jpg|jpeg|bmp|gif))', params)
         if match:
-            path = match.group(1).strip(' "')
+            path = match.group(1).strip(' "\'')
             path = os.path.normpath(os.path.expanduser(path))
             buffer = self._get_image_buffercache(gcmd, path)
             self.send_buffer_threaded(buffer, clear_first, offset, wait_thread)
@@ -306,9 +330,15 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         Turn the main UV LED to cure the pixels.
         M1400 comes from the wavelength of UV radiation (UVR) lies in the range of 100–400 nm,
         and is further subdivided into UVA (315–400 nm), UVB (280–315 nm), and UVC (100–280 nm).
+
+        Syntax: M1400 S<0-255> P[milliseconds]
+        S: LED Power (Non PWM LEDs will turn on from 1 to 255). (int)
+        P: Time to wait in milliseconds when (S>0) to turn off. (int)
         @param gcmd:
         """
         value = gcmd.get_float('S', minval=0., maxval=255.)
+        delay = gcmd.get_float('P', 0, above=0.) / 1000.
+
         if self.uvled.is_pwm:
             value /= 255.0
         else:
@@ -320,6 +350,10 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
 
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.register_lookahead_callback(lambda print_time: self.uvled._set_pin(print_time, value))
+
+        if value > 0 and delay > 0:
+            toolhead.dwell(delay)
+            toolhead.register_lookahead_callback(lambda print_time: self.uvled._set_pin(print_time, 0))
 
 
 class BufferCache():
