@@ -266,9 +266,9 @@ class ToolHead:
         self.Coord = gcode.Coord
         self.extruder = kinematics.extruder.DummyExtruder(self.printer)
         kin_name = config.get('kinematics')
-        mod = importlib.import_module('kinematics.' + kin_name)
+        
         try:
-            
+            mod = importlib.import_module('kinematics.' + kin_name)
             self.kin = mod.load_kinematics(self, config)
         except config.error as e:
             raise
