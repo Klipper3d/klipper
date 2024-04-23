@@ -10,7 +10,6 @@ import math
 import re
 import os
 import mmap
-import time
 
 from PIL import Image
 import threading
