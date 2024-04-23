@@ -165,7 +165,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
             raise gcmd.error(f"M6054: The file '{path}' does not exists.")
 
         buffer = self.get_image_buffer(path)
-        if self._can_cache():
+        if current_filepath and self._can_cache():
             cache = BufferCache(path, buffer)
             self._cache_thread = threading.Thread(target=self._process_cache, args=(cache,))
             self._cache_thread.start()
