@@ -130,7 +130,7 @@ class GCodeMove:
                     self.last_position[4] += v
                 else:
                     # value relative to base coordinate position
-                    self.last_position[4] = v + self.base_position[3]
+                    self.last_position[4] = v + self.base_position[4]
             if 'F' in params:
                 gcode_speed = float(params['F'])
                 if gcode_speed <= 0.:

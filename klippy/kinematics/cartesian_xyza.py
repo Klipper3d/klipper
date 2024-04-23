@@ -27,13 +27,13 @@ class CartKinematics:
             self.dual_carriage_axis = {'x': 0, 'y': 1}[dc_axis]
             # setup second dual carriage rail
             self.rails.append(stepper.LookupMultiRail(dc_config))
-            self.rails[3].setup_itersolve('cartesian_xyza_stepper_alloc',
+            self.rails[4].setup_itersolve('cartesian_xyza_stepper_alloc',
                                           dc_axis.encode())
             dc_rail_0 = idex_modes.DualCarriagesRail(
                     self.rails[self.dual_carriage_axis],
                     axis=self.dual_carriage_axis, active=True)
             dc_rail_1 = idex_modes.DualCarriagesRail(
-                    self.rails[3], axis=self.dual_carriage_axis, active=False)
+                    self.rails[4], axis=self.dual_carriage_axis, active=False)
             self.dc_module = idex_modes.DualCarriages(
                     dc_config, dc_rail_0, dc_rail_1,
                     axis=self.dual_carriage_axis)
