@@ -16,45 +16,52 @@
 #include "sched.h" // DECL_INIT
 
 // Dynamically select UART and IRQ based on configuration
-#if CONFIG_RP2040_SERIAL_UART0
-#define UARTx uart0_hw
-    #define UARTx_IRQn UART0_IRQ_IRQn
+
+
     #if CONFIG_RP2040_SERIAL_UART0_PINS_0_1
         #define GPIO_Rx 1
         #define GPIO_Tx 0
+        #define UARTx uart0_hw
+        #define UARTx_IRQn UART0_IRQ_IRQn
     #elif CONFIG_RP2040_SERIAL_UART0_PINS_12_13
         #define GPIO_Rx 13
         #define GPIO_Tx 12
+        #define UARTx uart0_hw
+        #define UARTx_IRQn UART0_IRQ_IRQn
     #elif CONFIG_RP2040_SERIAL_UART0_PINS_16_17
         #define GPIO_Rx 17
         #define GPIO_Tx 16
+        #define UARTx uart0_hw
+        #define UARTx_IRQn UART0_IRQ_IRQn
     #elif CONFIG_RP2040_SERIAL_UART0_PINS_28_29
         #define GPIO_Rx 29
         #define GPIO_Tx 28
-    #else
-        #error "UART0 pin configuration not specified"
-    #endif
-#elif CONFIG_RP2040_SERIAL_UART1
-#define UARTx uart1_hw
-    #define UARTx_IRQn UART1_IRQ_IRQn
-    #if CONFIG_RP2040_SERIAL_UART1_PINS_4_5
+        #define UARTx uart1_hw
+        #define UARTx_IRQn UART1_IRQ_IRQn
+        #define UARTx uart0_hw
+        #define UARTx_IRQn UART0_IRQ_IRQn
+    #elif CONFIG_RP2040_SERIAL_UART1_PINS_4_5
         #define GPIO_Rx 5
         #define GPIO_Tx 4
+        #define UARTx uart1_hw
+        #define UARTx_IRQn UART1_IRQ_IRQn
     #elif CONFIG_RP2040_SERIAL_UART1_PINS_8_9
         #define GPIO_Rx 9
         #define GPIO_Tx 8
+        #define UARTx uart1_hw
+        #define UARTx_IRQn UART1_IRQ_IRQn
     #elif CONFIG_RP2040_SERIAL_UART1_PINS_20_21
         #define GPIO_Rx 20
         #define GPIO_Tx 21
+        #define UARTx uart1_hw
+        #define UARTx_IRQn UART1_IRQ_IRQn
     #elif CONFIG_RP2040_SERIAL_UART1_PINS_24_25
-       #define GPIO_Rx 24
-       #define GPIO_Tx 25
-    #else
-        #error "UART1 pin configuration not specified"
+        #define GPIO_Rx 24
+        #define GPIO_Tx 25
+        #define UARTx uart1_hw
+        #define UARTx_IRQn UART1_IRQ_IRQn
     #endif
-#else
-#error "No UART selected"
-#endif
+
 
 // Write tx bytes to the serial port
 static void
@@ -105,13 +112,15 @@ void
 serial_init(void)
 {
 
-#if CONFIG_RP2040_SERIAL_UART0
-    enable_pclock(RESETS_RESET_UART0_BITS);
-    uint32_t pclk = get_pclock_frequency(RESETS_RESET_UART0_BITS);
-#elif CONFIG_RP2040_SERIAL_UART1
-    enable_pclock(RESETS_RESET_UART1_BITS);
-    uint32_t pclk = get_pclock_frequency(RESETS_RESET_UART1_BITS);
-#endif
+    uint32_t pclk= 0x00;
+    if (UARTx == uart0_hw){
+        enable_pclock(RESETS_RESET_UART0_BITS);
+        pclk= get_pclock_frequency(RESETS_RESET_UART0_BITS);
+    } else {
+        enable_pclock(RESETS_RESET_UART1_BITS);
+        pclk = get_pclock_frequency(RESETS_RESET_UART1_BITS);
+    }
+
 
     // Setup baud
 
