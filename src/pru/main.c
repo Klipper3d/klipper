@@ -8,7 +8,6 @@
 #include <pru/io.h> // read_r31
 #include <pru_iep.h> // CT_IEP
 
-//#include <pru_intc.h> // PRU_INTC
 #include <rsc_types.h> // resource_table
 #include "board/misc.h" // dynmem_start
 #include "board/io.h" // readl
@@ -86,7 +85,6 @@ _irq_poll(void)
 {
     uint32_t secr0 = PRU_INTC.SECR0;
     if (secr0 & (1 << KICK_PRU1_EVENT)) {
-    //bit 19 was active
         PRU_INTC.SECR0 = 1 << KICK_PRU1_EVENT;
         sched_wake_tasks();
     }
