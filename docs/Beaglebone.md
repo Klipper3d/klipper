@@ -17,7 +17,7 @@ password is `temppwd`).
 Before start installing Klipper you need to free-up additional space.
 there are 3 options to do that:
 1. remove some BeagleBone "Demo" resources
-2. if you did boot from SD-Card, and it's bigger than 4Gb - you can expand 
+2. if you did boot from SD-Card, and it's bigger than 4Gb - you can expand
 current filesystem to take whole card space
 3. do option #1 and #2 together.
 
@@ -47,17 +47,17 @@ but take a note that BeagleBone is 3.3v based hardware and in most cases you can
 directly connect pins to 5v or 12v based hardware without conversion boards.
 
 As Klipper have multimodule architecture on BeagleBone you can achieve many different use cases,
-but general ones are following:    
+but general ones are following:
 
-Use case 1: Use BeagleBone only as a host system to run Klipper and additional software 
-like Oktoprint/Fluidd + Moonraker/...  and this configuration will be driving 
-external micro-controllers via serial/usb/canbus connections. 
+Use case 1: Use BeagleBone only as a host system to run Klipper and additional software
+like Oktoprint/Fluidd + Moonraker/...  and this configuration will be driving
+external micro-controllers via serial/usb/canbus connections.
 
 Use case 2: Use BeagleBone with extension board (cape) like CRAMPS board.
-in this configuration BeagleBone will host Klipper + additional software, and 
-it will drive extension board with BeagleBone PRU cores (2 additional cores 200Mh, 32Bit). 
+in this configuration BeagleBone will host Klipper + additional software, and
+it will drive extension board with BeagleBone PRU cores (2 additional cores 200Mh, 32Bit).
 
-Use case 3: It's same as "Use case 1" but additionally you want to drive 
+Use case 3: It's same as "Use case 1" but additionally you want to drive
 BeagleBone GPIOs with high speed by utilizing PRU cores to offload main CPU.
 
 
@@ -97,8 +97,8 @@ Wait 1-2 minutes and make sure the OctoPrint web server is accessible - it shoul
 
 
 ## Building the BeagleBone PRU micro-controller code (PRU firmware)
-This section is required for "Use case 2" and "Use case 3" mentioned above, 
-you should skip it for "Use case 1". 
+This section is required for "Use case 2" and "Use case 3" mentioned above,
+you should skip it for "Use case 1".
 
 Check that required devices are present
 
@@ -132,7 +132,7 @@ pkg:[bb-wl18xx-firmware]:[1.20230414.0-0~bullseye+20230414]
 
 ```
 
-To compile the Klipper micro-controller code, start by configuring it for the "Beaglebone PRU", 
+To compile the Klipper micro-controller code, start by configuring it for the "Beaglebone PRU",
 for "BeagleBone Black" additionally disable options "Support GPIO Bit-banging devices" and disable "Support LCD devices"
 inside the "Optional features" because they will not fit in 8Kb PRU firmware memory,
 then exit and save config:
@@ -148,7 +148,7 @@ make flash
 sudo service klipper start
 ```
 After previous commands was executed your PRU firmware should be ready and started
-to check if everything was fine you can execute following command 
+to check if everything was fine you can execute following command
 ```
 dmesg
 ```
@@ -170,7 +170,7 @@ and compare last messages with sample one which indicate that everything started
 [   73.444352] virtio_rpmsg_bus virtio0: rpmsg host is online
 [   73.540993] rpmsg_pru virtio0.rpmsg-pru.-1.30: new rpmsg_pru device: /dev/rpmsg_pru30
 ```
-take a note about "/dev/rpmsg_pru30" - it's your future serial device for main mcu configuration 
+take a note about "/dev/rpmsg_pru30" - it's your future serial device for main mcu configuration
 this device is required to be present, if it's absent - your PRU cores did not start properly.
 
 ## Building and installing Linux host micro-controller code
@@ -189,7 +189,7 @@ make flash
 sudo service klipper start
 ```
 take a note about "/tmp/klipper_host_mcu" - it will be your future serial device for "mcu host"
-if that file don't exist - refer to "scripts/klipper-mcu.service" file, it was installed by 
+if that file don't exist - refer to "scripts/klipper-mcu.service" file, it was installed by
 previous commands, and it's responsible for it.
 
 
@@ -214,11 +214,11 @@ OctoPrint well. Print stalls have been known to occur on complex
 prints (the printer may move faster than OctoPrint can send movement
 commands). If this occurs, consider using the "virtual_sdcard" feature
 (see [Config Reference](Config_Reference.md#virtual_sdcard) for
-details) to print directly from Klipper 
+details) to print directly from Klipper
 and disable any DEBUG or VERBOSE logging options if you did enable them.
 
 
-## AVR micro-controller code build 
+## AVR micro-controller code build
 This environment have everything to build necessary micro-controller code except AVR,
 AVR packages was removed because of conflict with PRU packages.
 if you still want to build AVR micro-controller code in this environment you need to remove
@@ -238,7 +238,7 @@ sudo apt-get install gcc-pru
 ## Hardware Pin designation
 BeagleBone is very flexible in terms of pin designation, same pin can be configured for different function
 but always single function for single pin, same function can be present on different pins.
-So you can't have multiple functions on single pin or have same function on multiple pins. 
+So you can't have multiple functions on single pin or have same function on multiple pins.
 Example:
 P9_20 - i2c2_sda/can0_tx/spi1_cs0/gpio0_12/uart1_ctsn
 P9_19 - i2c2_scl/can0_rx/spi1_cs1/gpio0_13/uart1_rtsn
@@ -264,7 +264,7 @@ or search info in BeagleBone forums.
 ## Enabling hardware SPI
 BeagleBone usually have multiple hardware SPI buses, for example BeagleBone Black can have 2 of them,
 they can work up to 48Mhz, but usually they are limited to 16Mhz by Kernel Device-tree.
-By default, in BeagleBone Black some of SPI1 pins are configured for HDMI-Audio output, 
+By default, in BeagleBone Black some of SPI1 pins are configured for HDMI-Audio output,
 to fully enable 4-wire SPI1 you need to disable HDMI Audio and enable SPI1
 To do that edit file /boot/uEnv.txt with elevated permissions
 ```
@@ -284,13 +284,13 @@ Now you have SPI1 Enabled, to verify its presence execute command
 ```
 ls /dev/spidev1.*
 ```
-Take a note that BeagleBone usually is 3.3v based hardware and to use 5V SPI devices 
+Take a note that BeagleBone usually is 3.3v based hardware and to use 5V SPI devices
 you need to add Level-Shifting chip, for example SN74CBTD3861, SN74LVC1G34 or similar.
-If you are using CRAMPS board - it already contains Level-Shifting chip and SPI1 pins 
-will become available on P503 port, and they can accept 5v hardware, 
+If you are using CRAMPS board - it already contains Level-Shifting chip and SPI1 pins
+will become available on P503 port, and they can accept 5v hardware,
 check CRAMPS board Schematics for pin references.
 
-## Enabling hardware I2C 
+## Enabling hardware I2C
 BeagleBone usually have multiple hardware I2C buses, for example BeagleBone Black can have 3 of them,
 they support speed up-to 400Kbit Fast mode.
 By default, in BeagleBone Black there are two of them (i2c-1 and i2c-2) usually both are already configured and
@@ -305,7 +305,7 @@ I2C2(100Kbit): BB-I2C2-00A0.dtbo
 I2C2(400Kbit): BB-I2C2-FAST-00A0.dtbo
 
 ## Enabling hardware UART(Serial)/CAN
-BeagleBone have up to 6 hardware UART(Serial) buses (up to 3Mbit) 
+BeagleBone have up to 6 hardware UART(Serial) buses (up to 3Mbit)
 and up to 2 hardware CAN(1Mbit) buses.
 UART1(RX,TX) and CAN1(TX,RX) and I2C2(SDA,SCL) are using same pins - so you need to chose what to use
 UART1(CTSN,RTSN) and CAN0(TX,RX) and I2C1(SDA,SCL) are using same pins - so you need to chose what to use
@@ -322,5 +322,3 @@ UART2(RX,TX): BB-UART2-00A0.dtbo
 UART3(RX,TX): BB-UART3-00A0.dtbo
 UART4(RS-485): BB-UART4-RS485-00A0.dtbo
 UART5(RX,TX): BB-UART5-00A0.dtbo
-
-

@@ -5,8 +5,8 @@
  * ======== PRU INTC Map ========
  *
  * Define the INTC mapping for interrupts going to the ICSS / ICSSG:
- * 	ICSS Host interrupts 0, 1
- * 	ICSSG Host interrupts 0, 1, 10-19
+ *  ICSS Host interrupts 0, 1
+ *  ICSSG Host interrupts 0, 1, 10-19
  *
  * Note that INTC interrupts going to the ARM Linux host should not be defined
  * in this file (ICSS/ICSSG Host interrupts 2-9).
@@ -19,9 +19,9 @@
  * For example, on ICSSG:
  *
  * &client_driver0 {
- * 	interrupt-parent = <&icssg0_intc>;
- * 	interrupts = <21 2 2>, <22 3 3>;
- * 	interrupt-names = "interrupt_name1", "interrupt_name2";
+ *  interrupt-parent = <&icssg0_intc>;
+ *  interrupts = <21 2 2>, <22 3 3>;
+ *  interrupt-names = "interrupt_name1", "interrupt_name2";
  * };
  *
  */
@@ -37,24 +37,26 @@
 #if !defined(__GNUC__)
   #pragma DATA_SECTION(my_irq_rsc, ".pru_irq_map")
   #pragma RETAIN(my_irq_rsc)
-  #define __pru_irq_map		/* */
+  #define __pru_irq_map
 #else
-  #define __pru_irq_map __attribute__((section(".pru_irq_map"),unavailable("pru_irq_map is for usage by the host only")))
+  #define __pru_irq_map __attribute__((section(".pru_irq_map"), \
+          unavailable("pru_irq_map is for usage by the host only")))
 #endif
 
 struct pru_irq_rsc my_irq_rsc __pru_irq_map = {
-	0,			/* type = 0 */
-	4,			/* number of system events being mapped */
-	{
+    0, /* type = 0 */
+    4, /* number of system events being mapped */
+    {
 // this item (sysevt=16) is obsolete in Linux 5.10
-//		{16, 2, 2},	/* {sysevt, channel, host interrupt} */
-		{17, 0, 0},	/* {sysevt, channel, host interrupt} */
-		{18, 0, 0},	/* {sysevt, channel, host interrupt} */
-		{19, 1, 1},	/* {sysevt, channel, host interrupt} */
+//      {16, 2, 2}, /* {sysevt, channel, host interrupt} */
+        {17, 0, 0}, /* {sysevt, channel, host interrupt} */
+        {18, 0, 0}, /* {sysevt, channel, host interrupt} */
+        {19, 1, 1}, /* {sysevt, channel, host interrupt} */
 // next item is responsible for timer to function,
-// it should be kept last in Linux 5.10 (if it will be first - gpios will not work)
-		{7, 1, 1},	/* {sysevt, channel, host interrupt} */
-	},
+// it should be kept last in Linux 5.10
+// (if it will be first - gpios will not work)
+        {7, 1, 1}, /* {sysevt, channel, host interrupt} */
+    },
 };
 
 #endif /* _INTC_MAP_0_H_ */

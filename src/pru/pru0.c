@@ -261,17 +261,17 @@ main(void)
 {
     // allow access to external memory
 #if defined(__AM335X__)
-	/* AM335x must enable OCP master port access in order for the PRU to
-	 * read external memories.
-	 */
-	CT_CFG.SYSCFG_bit.STANDBY_INIT = 0;
+    /* AM335x must enable OCP master port access in order for the PRU to
+     * read external memories.*/
+    CT_CFG.SYSCFG_bit.STANDBY_INIT = 0;
 #endif
 
-	/* Clear the status of the PRU-ICSS system event that the ARM will use to 'kick' us */
+    /* Clear the status of the PRU-ICSS system event that the ARM
+    will use to 'kick' us */
 #if defined(__AM335X__)
-	PRU_INTC.SICR_bit.STS_CLR_IDX = KICK_PRU0_FROM_ARM_EVENT;
+    PRU_INTC.SICR_bit.STS_CLR_IDX = KICK_PRU0_FROM_ARM_EVENT;
 #elif defined(__TDA4VM__) || defined(__AM62X__)
-	PRU_INTC.STATUS_CLR_INDEX_REG_bit.STATUS_CLR_INDEX = KICK_PRU0_FROM_ARM_EVENT;
+    PRU_INTC.STATUS_CLR_INDEX_REG_bit.STATUS_CLR_INDEX = KICK_PRU0_FROM_ARM_EVENT;
 #else
   #error "Unsupported SoC."
 #endif
