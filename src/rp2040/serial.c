@@ -2,8 +2,7 @@
 //
 // Copyright (C) 2021  Kevin O'Connor <kevin@koconnor.net>
 //
-// This file may be distributed under the terms of the GNU GPLv3 license.
-//Modified 04/04/2024 by Amken3d (info@amken.us) to add all UART pin combos
+
 
 #include <stdint.h> // uint32_t
 #include "autoconf.h" // Include configuration header
