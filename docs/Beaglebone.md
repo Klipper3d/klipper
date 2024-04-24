@@ -50,7 +50,7 @@ As Klipper have multimodule architecture on BeagleBone you can achieve many diff
 but general ones are following:
 
 Use case 1: Use BeagleBone only as a host system to run Klipper and additional software
-like Oktoprint/Fluidd + Moonraker/...  and this configuration will be driving
+like OctoPrint/Fluidd + Moonraker/...  and this configuration will be driving
 external micro-controllers via serial/usb/canbus connections.
 
 Use case 2: Use BeagleBone with extension board (cape) like CRAMPS board.
