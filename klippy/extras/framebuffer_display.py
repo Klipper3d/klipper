@@ -1,6 +1,6 @@
 # mSLA and DLP display properties
 #
-# Copyright (C) 2024  Tiago Conceição <tiago_caza@hotmail.com>
+# Copyright (C) 2024  Tiago Conceicao <tiago_caza@hotmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 #
