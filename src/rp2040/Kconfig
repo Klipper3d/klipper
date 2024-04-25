@@ -95,19 +95,40 @@ config RP2040_STAGE2_CLKDIV
 ######################################################################
 
 choice
-    prompt "Communication interface"
-    config RP2040_USB
-        bool "USB"
-        select USBSERIAL
-    config RP2040_SERIAL_UART0
-        bool "Serial (on UART0 GPIO1/GPIO0)"
-        select SERIAL
-    config RP2040_CANBUS
-        bool "CAN bus"
-        select CANSERIAL
-    config RP2040_USBCANBUS
-        bool "USB to CAN bus bridge"
-        select USBCANBUS
+ prompt "Communication Interface"
+ config RP2040_USB
+     bool "USBSERIAL"
+     select USBSERIAL
+ config RP2040_SERIAL_UART0_PINS_0_1
+      bool "UART0 on GPIO0/GPIO1"
+      select SERIAL
+ config RP2040_SERIAL_UART0_PINS_12_13
+      bool "UART0 on GPIO12/GPIO13" if LOW_LEVEL_OPTIONS
+      select SERIAL
+ config RP2040_SERIAL_UART0_PINS_16_17
+      bool "UART0 on GPIO16/GPIO17" if LOW_LEVEL_OPTIONS
+      select SERIAL
+  config RP2040_SERIAL_UART0_PINS_28_29
+      bool "UART0 on GPIO28/GPIO29" if LOW_LEVEL_OPTIONS
+      select SERIAL
+ config RP2040_SERIAL_UART1_PINS_4_5
+      bool "UART1 on GPIO4/GPIO5" if LOW_LEVEL_OPTIONS
+      select SERIAL
+ config RP2040_SERIAL_UART1_PINS_8_9
+      bool "UART1 on  GPIO8/GPIO9" if LOW_LEVEL_OPTIONS
+      select SERIAL
+ config RP2040_SERIAL_UART1_PINS_20_21
+      bool "UART1 on  GPIO20/GPIO21" if LOW_LEVEL_OPTIONS
+      select SERIAL
+ config RP2040_SERIAL_UART1_PINS_24_25
+      bool "UART1 on GPIO24/GPIO25"  if LOW_LEVEL_OPTIONS
+      select SERIAL
+ config RP2040_CANBUS
+       bool "CAN bus"
+       select CANSERIAL
+ config RP2040_USBCANBUS
+       bool "USB to CAN bus bridge"
+       select USBCANBUS
 endchoice
 
 config RP2040_CANBUS_GPIO_RX
