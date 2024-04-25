@@ -216,13 +216,15 @@ class ToolHead:
         self.commanded_pos = [0., 0., 0., 0.]
         # The manufacturing process type
         atypes = {'FDM': 'FDM', 'SLA': 'SLA', 'mSLA': 'mSLA', 'DLP': 'DLP'}
-        self.manufacturing_process = config.getchoice('manufacturing_process', atypes, default='FDM')
+        self.manufacturing_process = config.getchoice('manufacturing_process',
+                                                      atypes, default='FDM')
 
         if self.manufacturing_process in ('mSLA', 'DLP'):
             for s in ('msla_display',):
                 section = self.printer.lookup_object(s, None)
                 if section is None:
-                    msg = "Error: A section with [%s] is required for mSLA/DLP printers." % (s,)
+                    msg = ("Error: A section with [%s] is required "
+                           "for mSLA/DLP printers.") % s
                     logging.exception(msg)
                     raise config.error(msg)
 
@@ -295,7 +297,8 @@ class ToolHead:
                                desc=self.cmd_SET_VELOCITY_LIMIT_help)
         gcode.register_command('M204', self.cmd_M204)
 
-        gcode.register_command('QUERY_MANUFACTORING_PROCESS', self.cmd_QUERY_MANUFACTORING_PROCESS,
+        gcode.register_command('QUERY_MANUFACTORING_PROCESS',
+                               self.cmd_QUERY_MANUFACTORING_PROCESS,
                                desc="Query manufacturing process")
 
 

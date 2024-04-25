@@ -98,8 +98,8 @@ class FramebufferDisplay:
 
         # get bits per pixel
         with open(
-                f"/sys/class/graphics/fb{self.framebuffer_index}/bits_per_pixel",
-                "r") as f:
+                f"/sys/class/graphics/fb{self.framebuffer_index}/bits_per_pixel"
+                , "r") as f:
             self.fb_bits_per_pixel = int(f.read())
 
         # Check if configured resolutions match framebuffer information

@@ -58,20 +58,14 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
                                                 'msla_uvled')
         self.uvled_response_delay = config.getfloat('uvled_response_delay', 0,
                                                     minval=0., maxval=1000.)
-        self.uvled = None
 
-        try:
-            self.uvled = self.printer.lookup_object("output_pin %s" %
-                                                    self.uvled_output_pin_name)
-        except:
-            pass
-
-        try:
+        self.uvled = self.printer.lookup_object("output_pin %s"
+                                                % self.uvled_output_pin_name,
+                                                None)
+        if self.uvled is None:
             self.uvled = self.printer.lookup_object("pwm_tool %s" %
-                                                    self.uvled_output_pin_name)
-        except:
-            pass
-
+                                                    self.uvled_output_pin_name,
+                                                    None)
         if self.uvled is None:
             msg = (f"The [output_pin %s] or [pwm_tool %s] was not found." %
                    (self.uvled_output_pin_name, self.uvled_output_pin_name))

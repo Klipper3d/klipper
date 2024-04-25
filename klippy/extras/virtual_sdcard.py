@@ -28,12 +28,17 @@ class VirtualSD:
         sd = config.get('path')
         self.sdcard_dirname = os.path.normpath(os.path.expanduser(sd))
 
-        archive_temp_path = os.path.join(os.sep, 'tmp', 'klipper-archive-print-contents')
+        archive_temp_path = os.path.join(os.sep,
+                                         'tmp',
+                                         'klipper-archive-print-contents')
         if self.sdcard_dirname.count(os.sep) >= 3:
-            archive_temp_path = os.path.normpath(os.path.expanduser(os.path.join(self.sdcard_dirname, '..', 'tmparchive')))
+            archive_temp_path = os.path.normpath(
+                os.path.expanduser(
+                    os.path.join(self.sdcard_dirname, '..', 'tmparchive')))
 
         archive_temp_path = config.get('archive_temp_path', archive_temp_path)
-        self.sdcard_archive_temp_dirname = os.path.normpath(os.path.expanduser(archive_temp_path))
+        self.sdcard_archive_temp_dirname = os.path.normpath(
+            os.path.expanduser(archive_temp_path))
         self.current_file = None
         self.file_position = self.file_size = 0
         # Print Stat Tracking
@@ -107,7 +112,8 @@ class VirtualSD:
                     if ext in VALID_ARCHIVE_EXTS:
                         entries = self.get_archive_files(full_path)
 
-                        # Support only 1 gcode file as if theres more we unable to guess what to print
+                        # Support only 1 gcode file as if there's more we are
+                        # unable to guess which to print
                         count = 0
                         for entry in entries:
                             entry_ext = entry[entry.rfind('.') + 1:]
@@ -227,7 +233,8 @@ class VirtualSD:
             ext = fname[fname.rfind('.') + 1:]
             if ext in VALID_ARCHIVE_EXTS:
                 need_extract = True
-                hashfile = os.path.join(self.sdcard_archive_temp_dirname, DEFAULT_ARCHIVE_HASH_FILENAME)
+                hashfile = os.path.join(self.sdcard_archive_temp_dirname,
+                                        DEFAULT_ARCHIVE_HASH_FILENAME)
 
                 gcmd.respond_raw(f"Calculating {fname} hash")
                 hash = self._file_hash(os.path.join(self.sdcard_dirname, fname))
@@ -240,15 +247,18 @@ class VirtualSD:
                                 need_extract = False
 
                 if ext == 'zip':
-                    with zipfile.ZipFile(os.path.join(self.sdcard_dirname, fname), "r") as zip_file:
+                    with zipfile.ZipFile(os.path.join(
+                            self.sdcard_dirname, fname),"r") as zip_file:
                         if need_extract:
                             if os.path.isdir(self.sdcard_archive_temp_dirname):
                                 shutil.rmtree(self.sdcard_archive_temp_dirname)
                             gcmd.respond_raw(f"Decompressing {fname}...")
                             timenow = time.time()
-                            zip_file.extractall(self.sdcard_archive_temp_dirname)
+                            zip_file.extractall(
+                                self.sdcard_archive_temp_dirname)
                             timenow = time.time() - timenow
-                            gcmd.respond_raw(f"Decompress done in {timenow:.2f} seconds")
+                            gcmd.respond_raw(f"Decompress done in {timenow:.2f}"
+                                             f" seconds")
                             with open(hashfile, 'w') as f:
                                 f.write(hash)
 
@@ -256,18 +266,22 @@ class VirtualSD:
                         for entry in entries:
                             entry_ext = entry[entry.rfind('.') + 1:]
                             if entry_ext in VALID_GCODE_EXTS:
-                                fname = os.path.join(os.path.join(self.sdcard_archive_temp_dirname, entry))
+                                fname = os.path.join(os.path.join(
+                                    self.sdcard_archive_temp_dirname, entry))
                                 break
                 elif ext == 'tar':
-                    with tarfile.open(os.path.join(self.sdcard_dirname, fname), "r") as tar_file:
+                    with tarfile.open(os.path.join(self.sdcard_dirname, fname),
+                                      "r") as tar_file:
                         if need_extract:
                             if os.path.isdir(self.sdcard_archive_temp_dirname):
                                 shutil.rmtree(self.sdcard_archive_temp_dirname)
                             gcmd.respond_raw(f"Decompressing {fname}...")
                             timenow = time.time()
-                            tar_file.extractall(self.sdcard_archive_temp_dirname)
+                            tar_file.extractall(
+                                self.sdcard_archive_temp_dirname)
                             timenow = time.time() - timenow
-                            gcmd.respond_raw(f"Decompress done in {timenow:.2f} seconds")
+                            gcmd.respond_raw(f"Decompress done in {timenow:.2f}"
+                                             f" seconds")
                             with open(hashfile, 'w') as f:
                                 f.write(hash)
 
@@ -275,7 +289,8 @@ class VirtualSD:
                         for entry in entries:
                             entry_ext = entry[entry.rfind('.') + 1:]
                             if entry_ext in VALID_GCODE_EXTS:
-                                fname = os.path.join(os.path.join(self.sdcard_archive_temp_dirname, entry))
+                                fname = os.path.join(os.path.join(
+                                    self.sdcard_archive_temp_dirname, entry))
                                 break
             else:
                 fname = os.path.join(self.sdcard_dirname, fname)
@@ -321,7 +336,8 @@ class VirtualSD:
         return self.cmd_from_sd
     # Background work timer
     def work_handler(self, eventtime):
-        logging.info("Starting SD card print (position %d)", self.file_position)
+        logging.info("Starting SD card print (position %d)",
+                     self.file_position)
         self.reactor.unregister_timer(self.work_timer)
         try:
             self.current_file.seek(self.file_position)
@@ -391,7 +407,8 @@ class VirtualSD:
                     return self.reactor.NEVER
                 lines = []
                 partial_input = ""
-        logging.info("Exiting SD card print (position %d)", self.file_position)
+        logging.info("Exiting SD card print (position %d)",
+                     self.file_position)
         self.work_timer = None
         self.cmd_from_sd = False
         if error_message is not None:
