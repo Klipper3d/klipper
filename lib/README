@@ -132,7 +132,7 @@ details. See changes.diff for the modifications.
 
 The pru_rpmsg directory contains code from:
   https://github.com/dinuxbg/pru-gcc-examples
-revision 425a42d82006cf0aa24be27b483d2f6a41607489. The code is taken
+revision e2bd170d4d61b3e642da65e0f0d487e10872fe22. The code is taken
 from the repo's hc-sr04-range-sensor directory. It has been modified
 so that the IEP definitions compile correctly. See pru_rpmsg.patch for
 the modifications.
