@@ -912,7 +912,7 @@ class MoveSplitter:
         self.z_offset = self._calc_z_offset(prev_pos)
         self.traverse_complete = False
         self.distance_checked = 0.
-        axes_d = [self.next_pos[i] - self.prev_pos[i] for i in range(4)]
+        axes_d = [self.next_pos[i] - self.prev_pos[i] for i in range(5)]
         self.total_move_length = math.sqrt(sum([d*d for d in axes_d[:3]]))
         self.axis_move = [not isclose(d, 0., abs_tol=1e-10) for d in axes_d]
     def _calc_z_offset(self, pos):
@@ -925,7 +925,7 @@ class MoveSplitter:
             raise self.gcode.error(
                 "bed_mesh: Slice distance is negative "
                 "or greater than entire move length")
-        for i in range(4):
+        for i in range(5):
             if self.axis_move[i]:
                 self.current_pos[i] = lerp(
                     t, self.prev_pos[i], self.next_pos[i])
