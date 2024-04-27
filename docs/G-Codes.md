@@ -322,6 +322,47 @@ Also provided is the following extended G-Code command:
   setting the supplied `MSG` as the current display message.  If
   `MSG` is omitted the display will be cleared.
 
+### [framebuffer_display]
+
+The following commands are available when a
+[framebuffer_display config section](Config_Reference.md#framebuffer_display) 
+is enabled.
+
+- Clear the framebuffer (fill with zeros):
+  `FRAMEBUFFER_CLEAR DEVICE=<name> WAIT=[0/1]`
+- Send image: `FRAMEBUFFER_SEND_IMAGE DEVICE=<name> PATH=<path> CLEAR=[0/1]
+               OFFSET=[n] WAIT=[0/1]`  
+  - `DEVICE`: Configured device name in [framebuffer_display name]
+  - `PATH`: Absolute image path
+  - `CLEAR`: Clear the buffer before send the image
+  - `OFFSET`: Offset from buffer start to write the image
+  - `WAIT`: Wait for the render to complete
+
+### [msla_display]
+
+The following commands are available when a
+[msla_display config section](Config_Reference.md#msla_display) 
+is enabled.
+
+- Validate the display information:
+  `MSLA_DISPLAY_VALIDATE RESOLUTION=<x,y> PIXEL=<width,height>`
+- Tests the display response time: `MSLA_DISPLAY_RESPONSE_TIME AVG=[1]`
+  - `AVG`: Number of samples to average the results
+- Display image: `M6054 F<"file"> C[0/1] W[0/1]`
+  - `F`: Image file to display, when printing this file is relative to the 
+         base path of the print gcode
+  - `C`: Clear the buffer before send the image
+  - `W`: Wait for the render to complete
+- Tests the UV LED response time: 
+  `MSLA_UVLED_RESPONSE_TIME TIME=[ms] OFFSET=[ms] TYPE=[0/1]`
+  - `TIME`: Exposure time in milliseconds
+  - `OFFSET`: Offset time from exposure time
+  - `TYPE`: <0> when using M1400 Sx and Px. (Faster response time).  
+            <1> when using M1400 Sx, G4 Px, M1400 S0 (Slower response time)
+- Set the UV LED power: `M1400 S<0-255> P[ms]`
+  - `S`: The LED Power (Non PWM LEDs will turn on from 1 to 255).
+  - `P`: Time to wait in milliseconds when (S>0) before turn off.
+
 ### [dual_carriage]
 
 The following command is available when the
