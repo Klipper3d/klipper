@@ -315,7 +315,6 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
     cmd_MSLA_DISPLAY_RESPONSE_TIME_help = ("Sends a buffer to display and test "
                                            "it response time to complete the "
                                            "render.")
-
     def cmd_MSLA_DISPLAY_RESPONSE_TIME(self, gcmd):
         """
         Sends a buffer to display and test it response time
@@ -326,6 +325,10 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         @param gcmd:
         @return:
         """
+        if self._sd.current_file is not None:
+            gcmd.respond_raw("MSLA_DISPLAY_RESPONSE_TIME: Can not run this "
+                             "command while printing.")
+
         avg = gcmd.get_int('AVG', 1, 1, 20)
 
         fb_maxsize_mb = round(self.fb_maxsize / 1024.0 / 1024.0, 2)
@@ -392,14 +395,20 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
             if self.is_exposure():
                 # LED is ON, sync to prevent image change while exposure
                 toolhead.wait_moves()
-            self.send_buffer_threaded(buffer, clear_first, offset, wait_thread)
+                self.send_buffer_threaded(buffer, clear_first,
+                                          offset, True)
+            else:
+                self.send_buffer_threaded(buffer, clear_first,
+                                          offset, wait_thread)
         else:
             if 'F' in params:
                 raise gcmd.error('M6054: The F parameter is malformed.'
                                  'Use a proper image file.')
             if self.is_exposure():
                 toolhead.wait_moves()
-            self.clear_buffer_threaded(wait_thread)
+                self.clear_buffer_threaded(True)
+            else:
+                self.clear_buffer_threaded(wait_thread)
 
     def is_exposure(self) -> bool:
         """
@@ -476,6 +485,10 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         @param gcmd:
         @return:
         """
+        if self._sd.current_file is not None:
+            gcmd.respond_raw("MSLA_UVLED_RESPONSE_TIME: Can not run this "
+                             "command while printing.")
+
         self.set_uvled(0)
         self.clear_buffer()
 

@@ -4391,7 +4391,7 @@ model: LS055R1SX04
 #   The display model, informative only.
 pixel_format: RGB
 #   The display pixel format, possible values:
-#   Mono, RGB, BGR, RGBA, BGRA
+#   Mono, RGB, BGR
 #   Default: RGB
 framebuffer_index: 0
 #   The framebuffer index, this maps to /dev/fb<index>

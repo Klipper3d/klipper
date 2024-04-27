@@ -21,9 +21,7 @@ class FramebufferDisplay:
         self.model = config.get('model', None)
         atypes = {'Mono': 'Mono',
                   'RGB': 'RGB',
-                  'RGBA': 'RGBA',
                   'BGR': 'BGR',
-                  'BGRA': 'BGRA'
                   }
         self.pixel_format = config.getchoice('pixel_format', atypes,
                                              default='RGB')
@@ -48,8 +46,6 @@ class FramebufferDisplay:
             self.bit_depth = 8
         if self.pixel_format == 'RGB' or self.pixel_format == 'BGR':
             self.bit_depth = 24
-        if self.pixel_format == 'RGBA' or self.pixel_format == 'BGRA':
-            self.bit_depth = 32
         else:
             self.bit_depth = len(self.pixel_format) * 8
 
