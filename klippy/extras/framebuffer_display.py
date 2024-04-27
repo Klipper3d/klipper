@@ -19,8 +19,14 @@ class FramebufferDisplay:
         self.printer = config.get_printer()
 
         self.model = config.get('model', None)
-        atypes = {'Mono': 'Mono', 'RGB': 'RGB', 'RGBA': 'RGBA'}
-        self.type = config.getchoice('type', atypes, default='Mono')
+        atypes = {'Mono': 'Mono',
+                  'RGB': 'RGB',
+                  'RGBA': 'RGBA',
+                  'BGR': 'BGR',
+                  'BGRA': 'BGRA'
+                  }
+        self.pixel_format = config.getchoice('pixel_format', atypes,
+                                             default='RGB')
         self.framebuffer_index = config.getint('framebuffer_index', minval=0)
         if not os.path.exists(self.get_framebuffer_path()):
             msg = ("The frame buffer device %s does not exists."
@@ -30,39 +36,23 @@ class FramebufferDisplay:
 
         self.resolution_x = config.getint('resolution_x', minval=1)  # In pixels
         self.resolution_y = config.getint('resolution_y', minval=1)  # In pixels
-        self.display_width = config.getfloat('display_width', 0.,
-                                             above=0.)  # In millimeters
-        self.display_height = config.getfloat('display_height', 0.,
-                                              above=0.)  # In millimeters
         self.pixel_width = config.getfloat('pixel_width', 0.,
                                            above=0.)  # In millimeters
         self.pixel_height = config.getfloat('pixel_height', 0.,
                                             above=0.)  # In millimeters
 
-        if self.display_width == 0. and self.pixel_width == 0.:
-            msg = "Either display_width or pixel_width must be provided."
-            logging.exception(msg)
-            raise config.error(msg)
+        self.display_width = round(self.resolution_x * self.pixel_width, 4)
+        self.display_height = round(self.resolution_y * self.pixel_height, 4)
 
-        if self.display_height == 0. and self.pixel_height == 0.:
-            msg = "Either display_height or pixel_height must be provided."
-            logging.exception(msg)
-            raise config.error(msg)
+        if self.pixel_format == 'Mono':
+            self.bit_depth = 8
+        if self.pixel_format == 'RGB' or self.pixel_format == 'BGR':
+            self.bit_depth = 24
+        if self.pixel_format == 'RGBA' or self.pixel_format == 'BGRA':
+            self.bit_depth = 32
+        else:
+            self.bit_depth = len(self.pixel_format) * 8
 
-        if self.display_width == 0.:
-            self.display_width = round(self.resolution_x * self.pixel_width, 4)
-        elif self.pixel_width == 0.:
-            self.pixel_width = round(self.display_width / self.resolution_x, 5)
-
-        if self.display_height == 0.:
-            self.display_height = round(self.resolution_y * self.pixel_height,
-                                        4)
-        elif self.pixel_height == 0.:
-            self.pixel_height = round(self.display_height / self.resolution_y,
-                                      5)
-
-        # Calculated values
-        self.bit_depth = 8 if self.type == 'Mono' else 24
         self.is_landscape = self.resolution_x >= self.resolution_y
         self.is_portrait = not self.is_landscape
         self.diagonal_inch = round(math.sqrt(
@@ -321,8 +311,8 @@ class FramebufferDisplayWrapper(FramebufferDisplay):
 
     def cmd_FRAMEBUFFER_SEND_IMAGE(self, gcmd):
         path = gcmd.get('PATH')
-        offset = gcmd.get_int('OFFSET', 0, 0)
         clear_first = gcmd.get_int('CLEAR', 0, 0, 1)
+        offset = gcmd.get_int('OFFSET', 0, 0)
         wait_thread = gcmd.get_int('WAIT', 0, 0, 1)
 
         if not os.path.isfile(path):

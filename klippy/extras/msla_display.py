@@ -475,7 +475,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
 
         Syntax: M1400 S<0-255> P[ms]
         S: LED Power (Non PWM LEDs will turn on from 1 to 255). (int)
-        P: Time to wait in milliseconds when (S>0) to turn off. (int)
+        P: Time to wait in milliseconds when (S>0) before turn off. (int)
         @param gcmd:
         """
         value = gcmd.get_float('S', minval=0., maxval=255.)
