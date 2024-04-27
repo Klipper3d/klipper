@@ -111,7 +111,7 @@ class FramebufferDisplay:
 
         # Defines the current thread that hold the display session to the fb
         self._framebuffer_thread = None
-        self.is_busy = False
+        self._framebuffer_lock = threading.Lock()
 
         # Keeps device open to spare transfer times
         self._fb_device = open(self.get_framebuffer_path(), mode='r+b')
@@ -120,7 +120,16 @@ class FramebufferDisplay:
                                        mmap.MAP_SHARED,
                                        mmap.PROT_WRITE | mmap.PROT_READ)
 
-        self.clear_framebuffer_threaded()
+        self.clear_buffer_threaded()
+
+    def is_busy(self) -> bool:
+        """
+        Checks if the device is busy.
+        @return: True if the device is busy, false otherwise.
+        """
+        return (self._framebuffer_lock.locked() or
+                (self._framebuffer_thread is not None
+                and self._framebuffer_thread.is_alive()))
 
     def get_framebuffer_path(self) -> str:
         """
@@ -153,26 +162,53 @@ class FramebufferDisplay:
         with Image.open(path) as img:
             return img.tobytes()
 
-    def clear_framebuffer(self):
+    def clear_buffer(self):
         """
         Clears the display with zeros (black background).
         """
-        self.is_busy = True
-        color = 0
-        self.fb_memory_map.write(color.to_bytes(1, byteorder='little')
-                                 * self.fb_maxsize)
-        self.fb_memory_map.seek(0)
-        self.is_busy = False
+        self.fill_buffer(0)
 
-    def clear_framebuffer_threaded(self, wait_thread=False):
+    def clear_buffer_threaded(self, wait_thread=False):
         """
-        Wait for the framebuffer thread to terminate (Finish writes).
+        Clears the display with zeros (black background).
         @param wait_thread: Wait for the framebuffer thread to terminate.
         """
         self.wait_framebuffer_thread()
         self._framebuffer_thread = threading.Thread(
-            target=self.clear_framebuffer,
+            target=self.clear_buffer,
             name=f"Clears the fb{self.framebuffer_index}")
+        self._framebuffer_thread.start()
+        if wait_thread:
+            self._framebuffer_thread.join()
+
+    def fill_buffer(self, color):
+        """
+        Fills the framebuffer with the given color.
+        @param color: From 0 to 255
+        """
+        if not isinstance(color, int):
+            msg = "The color must be an int number from 0 to 255."
+            logging.exception(msg)
+            raise Exception(msg)
+
+        if color < 0 or color > 255:
+            msg = "The color must be an int number from 0 to 255."
+            logging.exception(msg)
+            raise Exception(msg)
+
+        self.send_buffer(color.to_bytes(1, byteorder='little')
+                         * self.fb_maxsize)
+
+    def fill_buffer_threaded(self, color, wait_thread=False):
+        """
+        Fills the framebuffer with the given color.
+        @param color: From 0 to 255
+        @param wait_thread: Wait for the framebuffer thread to terminate.
+        """
+        self.wait_framebuffer_thread()
+        self._framebuffer_thread = threading.Thread(
+            target=self.fill_buffer, args=(color,),
+            name=f"Fill the fb{self.framebuffer_index} with {color}")
         self._framebuffer_thread.start()
         if wait_thread:
             self._framebuffer_thread.join()
@@ -199,27 +235,24 @@ class FramebufferDisplay:
             logging.exception(msg)
             raise Exception(msg)
 
-        # open framebuffer and map it onto a python bytearray
-        self.is_busy = True
+        with self._framebuffer_lock:
+            if clear_first:
+                color = 0
+                self.fb_memory_map.seek(0)
+                self.fb_memory_map.write(
+                    color.to_bytes(1, byteorder='little')
+                    * self.fb_maxsize)
 
-        if clear_first:
-            color = 0
-            self.fb_memory_map.write(
-                color.to_bytes(1, byteorder='little') * self.fb_maxsize)
+            buffer_size = len(buffer)
+            if buffer_size + offset > self.fb_maxsize:
+                msg = (f"The buffer size of {buffer_size} + {offset} is larger "
+                       f"than actual framebuffer size of {self.fb_maxsize}.")
+                logging.exception(msg)
+                raise Exception(msg)
 
-        buffer_size = len(buffer)
-        if buffer_size + offset > self.fb_maxsize:
-            msg = (f"The buffer size of {buffer_size} + {offset} is larger "
-                   f"than actual framebuffer size of {self.fb_maxsize}.")
-            logging.exception(msg)
-            raise Exception(msg)
-
-        if offset > 0:
             self.fb_memory_map.seek(offset)
-
-        self.fb_memory_map.write(buffer)
-        self.fb_memory_map.seek(0)
-        self.is_busy = False
+            self.fb_memory_map.write(buffer)
+            self.fb_memory_map.seek(0)
 
     def send_buffer_threaded(self, buffer, clear_first=False, offset=0,
                              wait_thread=False):
@@ -262,7 +295,6 @@ class FramebufferDisplay:
             logging.exception(msg)
             raise Exception(msg)
 
-        self.is_busy = True
         buffer = self.get_image_buffer(path)
         self.send_buffer(buffer, clear_first, offset)
 
@@ -298,13 +330,16 @@ class FramebufferDisplayWrapper(FramebufferDisplay):
                                    device_name, self.cmd_FRAMEBUFFER_SEND_IMAGE,
                                    desc=self.cmd_FRAMEBUFFER_SEND_IMAGE_help)
 
+    def get_status(self, eventtime):
+        return {'is_busy': self.is_busy()}
+
     cmd_FRAMEBUFFER_CLEAR_help = ("Clears the display with zeros "
                                   "(black background)")
 
     def cmd_FRAMEBUFFER_CLEAR(self, gcmd):
         wait_thread = gcmd.get_int('WAIT', 0, 0, 1)
 
-        self.clear_framebuffer_threaded(wait_thread)
+        self.clear_buffer_threaded(wait_thread)
 
     cmd_FRAMEBUFFER_SEND_IMAGE_help = ("Send a image from a path "
                                        "and render it on the framebuffer.")

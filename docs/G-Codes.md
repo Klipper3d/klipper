@@ -346,14 +346,20 @@ is enabled.
 
 - Validate the display information:
   `MSLA_DISPLAY_VALIDATE RESOLUTION=<x,y> PIXEL=<width,height>`
+  - `RESOLUTION:` Resolution size in pixels
+  - `PIXEL`: Pixel size in millimeters
 - Tests the display response time: `MSLA_DISPLAY_RESPONSE_TIME AVG=[1]`
   - `AVG`: Number of samples to average the results
-- Display image: `M6054 F<"file"> C[0/1] W[0/1]`
+- Test the display by showing full white and grey shades: `MSLA_DISPLAY_TEST 
+     DELAY=[ms]`
+  - `DELAY`: Time in milliseconds between tests 
+- Display image: `M6054 F<"image.png"> C[0/1] W[0/1]`
   - `F`: Image file to display, when printing this file is relative to the 
          base path of the print gcode
   - `C`: Clear the buffer before send the image
   - `W`: Wait for the render to complete
-- Tests the UV LED response time: 
+- Display clear: `M6054`
+- Tests the UV LED response time:
   `MSLA_UVLED_RESPONSE_TIME TIME=[ms] OFFSET=[ms] TYPE=[0/1]`
   - `TIME`: Exposure time in milliseconds
   - `OFFSET`: Offset time from exposure time

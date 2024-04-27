@@ -74,6 +74,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
 
         # Variables
         self._sd = self.printer.lookup_object("virtual_sdcard")
+        self._m6054_file_regex = re.compile(r'F(.+[.](png|jpg|jpeg|bmp|gif))')
 
         # Events
         self.printer.register_event_handler("virtual_sdcard:reset_file",
@@ -84,6 +85,9 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         gcode.register_command("MSLA_DISPLAY_VALIDATE",
                                self.cmd_MSLA_DISPLAY_VALIDATE,
                                desc=self.cmd_MSLA_DISPLAY_VALIDATE_help)
+        gcode.register_command("MSLA_DISPLAY_TEST",
+                               self.cmd_MSLA_DISPLAY_TEST,
+                               desc=self.cmd_MSLA_DISPLAY_TEST_help)
         gcode.register_command("MSLA_DISPLAY_RESPONSE_TIME",
                                self.cmd_MSLA_DISPLAY_RESPONSE_TIME,
                                desc=self.cmd_MSLA_DISPLAY_RESPONSE_TIME_help)
@@ -97,7 +101,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
                                desc=self.cmd_M1400_help)
 
     def get_status(self, eventtime):
-        return {'display_busy': self.is_busy,
+        return {'display_busy': self.is_busy(),
                 'is_exposure': self.is_exposure(),
                 'uvled_value': self.uvled.last_value * 255.}
 
@@ -270,6 +274,44 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
             raise gcmd.error(f"The pixel height of {pixel_height} is invalid. "
                              f"Should be {self.pixel_height}.")
 
+    cmd_MSLA_DISPLAY_TEST_help = ("Test the display by showing full white image"
+                                  " and grey shades. Use a white paper on top "
+                                  "of display and confirm if the pixels are "
+                                  "healthy.")
+
+    def cmd_MSLA_DISPLAY_TEST(self, gcmd):
+        """
+        Test the display by showing full white and grey shades.
+        Use a white paper on top of display and confirm if the pixels
+        are healthy.
+
+        Syntax: MSLA_DISPLAY_TEST DELAY=[3000]
+        DELAY: Time in milliseconds between tests (int)
+        @param gcmd:
+        @return:
+        """
+        if self._sd.current_file is not None:
+            gcmd.respond_raw("MSLA_DISPLAY_TEST: Can not run this command while"
+                             " printing.")
+            return
+
+        delay = gcmd.get_int('DELAY', 3000, 1000, 5000) / 1000.
+
+        toolhead = self.printer.lookup_object('toolhead')
+        color = 255
+        decrement = 45
+
+        self.set_uvled_on()
+        while color > 0:
+            gcmd.respond_raw(f"Fill color: {color}")
+            self.fill_buffer(color)
+            color -= decrement
+            toolhead.dwell(delay)
+        self.set_uvled_off()
+        self.clear_buffer()
+        gcmd.respond_raw(f"Test finished.")
+
+
     cmd_MSLA_DISPLAY_RESPONSE_TIME_help = ("Sends a buffer to display and test "
                                            "it response time to complete the "
                                            "render.")
@@ -280,7 +322,6 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         to complete the render.
 
         Syntax: MSLA_DISPLAY_RESPONSE_TIME AVG=[x]
-
         AVG: Number of samples to average (int)
         @param gcmd:
         @return:
@@ -317,7 +358,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         time_sum = 0
         for _ in range(avg):
             timems = time.time()
-            self.clear_framebuffer()
+            self.clear_buffer()
             time_sum += time.time() - timems
         gcmd.respond_raw('Clear time: %fms (%d samples)' %
                          (round(time_sum * 1000 / avg, 6), avg))
@@ -343,7 +384,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
 
         toolhead = self.printer.lookup_object('toolhead')
         params = gcmd.get_raw_command_parameters().strip()
-        match = re.search(r'F(.+[.](png|jpg|jpeg|bmp|gif))', params)
+        match = self._m6054_file_regex.search(params)
         if match:
             path = match.group(1).strip(' "\'')
             path = os.path.normpath(os.path.expanduser(path))
@@ -351,14 +392,14 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
             if self.is_exposure():
                 # LED is ON, sync to prevent image change while exposure
                 toolhead.wait_moves()
-            self.send_buffer(buffer, clear_first, offset)
+            self.send_buffer_threaded(buffer, clear_first, offset, wait_thread)
         else:
             if 'F' in params:
                 raise gcmd.error('M6054: The F parameter is malformed.'
                                  'Use a proper image file.')
             if self.is_exposure():
                 toolhead.wait_moves()
-            self.clear_framebuffer_threaded(wait_thread)
+            self.clear_buffer_threaded(wait_thread)
 
     def is_exposure(self) -> bool:
         """
@@ -403,6 +444,23 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
                 lambda print_time: self.uvled._set_pin(print_time, 0))
         toolhead.wait_moves()
 
+    def set_uvled_on(self, delay=0):
+        """
+        Turns the UV LED on with max power
+        @param delay: If set, it will switch off from on state after specified
+                      delay. This also ensures that the UV LED is in sync with
+                      the display.
+        @return:
+        """
+        self.set_uvled(255, delay)
+
+    def set_uvled_off(self):
+        """
+        Turns the UV LED off
+        @return:
+        """
+        self.set_uvled(0)
+
     cmd_MSLA_UVLED_RESPONSE_TIME_help = ("Tests the response time for the "
                                          "UV LED shutter.")
 
@@ -419,7 +477,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         @return:
         """
         self.set_uvled(0)
-        self.clear_framebuffer()
+        self.clear_buffer()
 
         delay = gcmd.get_int('TIME', 3000, minval=500, maxval=5000) / 1000.
         offset = gcmd.get_int('OFFSET', 0, minval=-1000, maxval=0) / 1000.
