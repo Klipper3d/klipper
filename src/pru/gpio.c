@@ -20,7 +20,7 @@
 #define GPIO2BIT(PIN) (1<<((PIN) % 32))
 
 struct gpio_regs {
-    uint32_t pad_0[77];
+    uint32_t pad_0[77]; // 77*4=308=134h
     volatile uint32_t oe;
     volatile uint32_t datain;
     volatile uint32_t dataout;
