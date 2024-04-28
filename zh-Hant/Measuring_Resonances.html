@@ -2144,7 +2144,7 @@ GND+SCL
 <h3 id="_5">軟體設定<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
 <p>Note that resonance measurements and shaper auto-calibration require additional software dependencies not installed by default. First, run on your Raspberry Pi the following commands:</p>
 <div class="highlight"><pre><span></span><code>sudo apt update
-sudo apt install python3-numpy python3-matplotlib libatlas-base-dev
+sudo apt install python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev
 </code></pre></div>
 
 <p>Next, in order to install NumPy in the Klipper environment, run the command:</p>
@@ -2429,6 +2429,11 @@ max_smoothing: 0.25  # an example
 <p>由於輸入整形器可以在零件中創建一些平滑，尤其是在高加速度時，您仍然需要選擇不會在打印零件中創建太多平滑的“max_accel”值。校準腳本提供了“max_accel”參數的估計值，該參數不應產生過多的平滑。請注意，校準腳本顯示的“max_accel”只是理論上的最大值，在該最大值時，各個整形器仍然能夠工作而不會產生過多的平滑。絕對不建議為打印設置此加速。您的打印機能夠承受的最大加速度取決於其機械性能和所用步進電機的最大扭矩。因此，建議在 <code>[printer]</code> 部分設置不超過 X 和 Y 軸的估計值的 <code>max_accel</code>，可能有一些保守的安全餘量。</p>
 <p>或者，按照輸入整形器調整指南的 <a href="Resonance_Compensation.html#selecting-max_accel">this</a> 部分並打印測試模型以實驗性地選擇“max_accel”參數。</p>
 <p>相同的注意事項適用於使用 <code>SHAPER_CALIBRATE</code> 命令的輸入整形器 <a href="#input-shaper-auto-calibration">auto-calibration</a>：自動校准後仍然需要選擇正確的 <code>max_accel</code> 值，建議加速度限制不會自動應用。</p>
+<p>Keep in mind that the maximum acceleration without too much smoothing depends on the <code>square_corner_velocity</code>. The general recommendation is not to change it from its default value 5.0, and this is the value used by default by the <code>calibrate_shaper.py</code> script. If you did change it though, you should inform the script about it by passing <code>--square_corner_velocity=...</code> parameter, e.g.</p>
+<div class="highlight"><pre><span></span><code>~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png --square_corner_velocity=10.0
+</code></pre></div>
+
+<p>so that it can calculate the maximum acceleration recommendations correctly. Note that the <code>SHAPER_CALIBRATE</code> command already takes the configured <code>square_corner_velocity</code> parameter into account, and there is no need to specify it explicitly.</p>
 <p>如果您正在重新校準整形器，並且建議的整形器配置報告的平滑度與您在之前校準期間得到的幾乎相同，則可以跳過此步驟。</p>
 <h3 id="_10">測試自定義軸<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h3>
 <p><code>TEST_RESONANCES</code> 命令支持自定義軸。雖然這對於輸入整形器校準並不是很有用，但它可用於深入研究打印機共振並檢查皮帶張力等。</p>

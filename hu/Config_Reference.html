@@ -1313,6 +1313,20 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pwm_tool" class="md-nav__link">
+    [pwm_tool]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pwm_cycle_time" class="md-nav__link">
+    [pwm_cycle_time]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#static_digital_output" class="md-nav__link">
     [static_digital_output]
   </a>
@@ -3325,6 +3339,20 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pwm_tool" class="md-nav__link">
+    [pwm_tool]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pwm_cycle_time" class="md-nav__link">
+    [pwm_cycle_time]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#static_digital_output" class="md-nav__link">
     [static_digital_output]
   </a>
@@ -3748,32 +3776,49 @@ serial:
 <p>A nyomtató szakasz a nyomtató magas szintű beállításait vezérli.</p>
 <div class="highlight"><pre><span></span><code>[printer]
 kinematics:
-#   A használt nyomtató típusa. Ez az opció a következők egyike lehet:
-#   cartesian, corexy, corexz, hybrid_corexy, hybrid_corexz, rotary_delta,
-#   delta, delta, polar, csörlő, vagy egyik sem.
-#   Ezt a paramétert meg kell adni.
+# A használt nyomtató típusa. Ez a lehetőség a következők egyike lehet: derékszögű,
+# corexy, corexz, hibrid_corexy, hibrid_corexz, rotary_delta, delta,
+# deltézi, sarki, csörlős vagy egyik sem. Ezt a paramétert meg kell adni.
 max_velocity:
-#   A nyomtatófej maximális sebessége (mm/s-ban)
-#   (a nyomathoz viszonyítva). Ezt a paramétert meg kell adni.
+# A nyomtatófej maximális sebessége (mm/s-ban) (a
+# nyomtatás alatt). Ezt a paramétert meg kell adni.
 max_accel:
-#   A nyomtatófej maximális gyorsulása (mm/s^2-ben)
-#   (a nyomtatóhoz viszonyítva). Ezt a paramétert meg kell adni.
-#max_accel_to_decel:
-#   Álgyorsulás (mm/s^2-ben), amely azt szabályozza, hogy a nyomtatófej
-#   milyen gyorsan haladjon gyorsulásról a lassításra. A rövid cikk-cakk
-#   mozgások maximális sebességének csökkentésére szolgál
-#   (és ezáltal csökkenti a nyomtató rezgését ezekből a lépésekből).
-#   Az alapértelmezett érték a max_accel fele.
+# A nyomtatófej maximális gyorsulása (mm/s^2-ben) (a
+# nyomtatás alatt). Bár ez a paraméter &quot;maximális&quot;
+# gyorsulás, a gyakorlatban a legtöbb mozdulat, amely gyorsul vagy lassul
+# ezt az itt megadott sebességgel teszi meg. Az itt megadott érték
+# futás közben módosítható a SET_VELOCITY_LIMIT paranccsal.
+# Ezt a paramétert meg kell adni.
+#minimum_cruise_ratio: 0,5
+# A legtöbb mozdulat utazósebességre gyorsul, ezt használja az
+# utazósebesség, majd lassul. Néhányan azonban ezt használják
+# rövid távolságok megtételére részben felgyorsulhat, majd
+# azonnal lelassulhat. Ez az opció csökkenti a fej végsebességét
+# mozdulatoknál, hogy mindig legyen egy minimális megtett távolság a pontok
+# közt utazósebességen. Vagyis egy minimális megtett távolságot érvényesít
+# utazósebességgel a teljes megtett távolsághoz képest. Ennek
+# célja a rövid cikk-cakk mozgások végsebességének csökkentése (és így
+# csökkenti a nyomtató rezgését ezekből a lépésekből). Például a
+# A 0,5-ös minimum_cruise_ratio biztosítaná, hogy egy önálló 1,5 mm-es
+# mozdulat minimális utazótávolsága 0,75 mm. Add meg a
+# 0,0 arány a funkció letiltásához (nem lenne minimum
+# a gyorsítás és a lassítás között érvényesített utazótávolság).
+# Az itt megadott érték futás közben módosítható a
+# SET_VELOCITY_LIMIT paranccsal. Az alapértelmezett érték 0,5.
 #square_corner_velocity: 5.0
-#   Az a maximális sebesség (mm/s-ban), amellyel a nyomtatófej egy
-#   90 fokos sarokban haladhat. A nullától eltérő érték csökkentheti az
-#   extruder áramlási sebességének változásait azáltal, hogy lehetővé teszi
-#   a nyomtatófej azonnali sebességváltozását kanyarodás közben.
-#   Ez az érték konfigurálja a belső centripetális sebesség
-#   kanyarodási algoritmusát; a 90 foknál nagyobb szögű sarkok
-#   kanyarodási sebessége nagyobb, míg a 90 foknál kisebb szögű sarkok
-#   kanyarsebessége kisebb. Ha ez nullára van állítva, akkor a nyomtatófej
-#   minden sarkánál nullára lassul. Az alapértelmezett érték 5 mm/s.
+# Az a maximális sebesség (mm/s-ban), amellyel a nyomtatófej megközelíthet egy 90
+# fokos sarkot. A nullától eltérő érték csökkentheti az extruder változásait
+# áramlási sebességet azáltal, hogy lehetővé teszi a pillanatnyi sebességváltozást
+# a nyomtatófej kanyarodása közben. Ez az érték konfigurálja a belső
+# centripetális sebességű kanyarodási algoritmust; sarkokban a szögek
+# 90 foknál nagyobb kanyarsebessége nagyobb lesz
+# 90 foknál kisebb szögű sarok esetében kevesebb lesz a
+# kanyarsebesség. Ha ez nullára van állítva, akkor a nyomtatófej
+# minden sarkon lassít nullára. Az itt megadott értéket lehet
+# futás közben módosítani a SET_VELOCITY_LIMIT paranccsal. Az
+# alapértelmezett érték 5 mm/s.
+#max_accel_to_decel:
+# Ez a paraméter elavult, ezért nem szabad többé használni.
 </code></pre></div>
 
 <h3 id="stepper">[stepper]<a class="headerlink" href="#stepper" title="Permanent link">&para;</a></h3>
@@ -4417,108 +4462,90 @@ max_temp:
 
 <div class="highlight"><pre><span></span><code>[bed_mesh]
 #speed: 50
-#       A nem tapintó mozgás sebessége (mm/s-ban) a kalibrálás során.
-#       Az alapértelmezett 50.
+# A nem tapintó mozgás sebessége (mm/s-ban) a kalibrálás során.
+# Az alapértelmezett érték 50.
 #horizontal_move_z: 5
-#       Az a magasság (mm-ben), ameddig a fejnek utasítani kell,
-#       hogy mozogjon közvetlenül a tapintóművelet megkezdése előtt.
-#       Az alapértelmezett az 5.
+# Az a magasság (mm-ben), ameddig a fejnek el kell mozdulnia
+# közvetlenül a vizsgálóművelet megkezdése előtt. Az alapértelmezett az 5.
 #mesh_radius:
-#       Meghatározza a háló sugarát a kerek ágyakhoz.
-#       Vedd figyelembe, hogy a sugár a mesh_origin paraméter által megadott
-#       koordinátához viszonyított. Ezt a paramétert kerek ágyaknál kell megadni,
-#       téglalap alakú ágyaknál pedig elhagyni.
+# Meghatározza a háló sugarát a kerek ágyakhoz. Vedd figyelembe, hogy
+# a sugár által megadott koordinátához viszonyítva
+# mesh_origin opció. Ezt a paramétert kerek ágyakhoz kell megadni
+# és kihagyjuk a téglalap alakú ágyaknál.
 #mesh_origin:
-#       Meghatározza a háló középső X, Y koordinátáját kerek ágyakhoz.
-#       Ez a koordináta a szonda helyéhez viszonyított. Hasznos lehet a
-# mesh_origin beállítása a háló sugarának maximalizálása érdekében.
-#       Az alapértelmezett érték 0, 0.
-#       Ezt a paramétert ki kell hagyni téglalap alakú ágyak esetén.
+# Meghatározza a háló középső X, Y koordinátáját kerek ágyaknál. Ez a
+# koordináta a szonda helyéhez viszonyítva. Hasznos lehet
+# a mesh_origin beállításához, hogy maximalizálja a háló
+# sugarának méretét. Az alapértelmezett érték 0, 0. Ezt a paramétert ki kell hagyni
+# téglalap alakú ágyaknál.
 #mesh_min:
-#       Meghatározza a háló minimális X, Y koordinátáját téglalap alakú ágyakhoz.
-#       Ez a koordináta a szonda helyéhez viszonyított. Ez lesz az origóhoz
-#       legközelebbi első vizsgált pont.
-#       Ezt a paramétert a téglalap alakú ágyakhoz kell megadni.
+# Meghatározza a háló minimális X, Y koordinátáját téglalap alakú ágyaknál
+# Ez a koordináta a szonda helyéhez viszonyított. Ez
+# lesz az origóhoz legközelebbi első vizsgált pont. Ezt a
+# paramétert meg kell adni a téglalap alakú ágyaknál.
 #mesh_max:
-#       Meghatározza a háló maximális X, Y koordinátáját téglalap alakú ágyakhoz.
-#       Ugyanaz az elv, mint a mesh_min, de ez lesz a legtávolabbi pont az ágy
-#       eredetétől. Ezt a paramétert a téglalap alakú ágyakhoz kell megadni.
+# Meghatározza a háló maximális X, Y koordinátáját téglalap alakú ágyak esetén.
+# Ugyanazt az elvet követi, mint a mesh_min, bárhogyan is
+# legyen a legtávolabbi pont az ágy eredetétől. Ezt a paramétert
+# meg kell adni a téglalap alakú ágyaknál.
 #probe_count: 3, 3
-#       Téglalap alakú ágyak esetén ez egy vesszővel elválasztott X, Y egész
-#       értékpár, amely meghatározza az egyes tengelyek mentén vizsgálandó
-#       pontok számát. Egyetlen érték is érvényes, ebben az esetben ez az érték
-#       mindkét tengelyre vonatkozik.
-#       Az alapértelmezett 3, 3.
+# Téglalap alakú ágyak esetén ez egy vesszővel elválasztott egész számpár
+# értéke X, Y, amely meghatározza a vizsgálandó pontok számát mindegyik tengely
+# mentén. Egyetlen érték is érvényes, ebben az esetben ez az érték
+# mindkét tengelyre alkalmazva lesz. Az alapértelmezett 3, 3.
 #round_probe_count: 5
-#       Kerek ágyak esetén ez az egész érték határozza meg az egyes tengelyek
-#       mentén vizsgálandó pontok maximális számát.
-#       Ennek az értéknek páratlan számnak kell lennie.
-#       Az alapértelmezett az 5.
+# Kerek ágyak esetén ez az egész érték határozza meg a maximális számot amely alapján
+# vizsgálni kell minden pontot a tengely mentén. Ennek az értéknek páratlan számnak kell lennie.
+# Az alapértelmezett érték az 5.
 #fade_start: 1.0
-#       A G-kód Z pozíciója, ahol elkezdődik a Z-beállítás fokozatos
-#       megszüntetése, ha a fade engedélyezve van.
-#       Az alapértelmezett 1.0.
+# A G-Kód Z pozíciója, ahol elkezdődik a Z-beállítás fokozatos megszüntetése
+# ha a fade engedélyezve van. Az alapértelmezett érték az 1.0.
 #fade_end: 0.0
-#       A G-kód Z pozíciója, amelyben a fokozatos kivonás befejeződik.
-#       Ha a fade_start alatti értékre van állítva, a fade le van tiltva.
-#       Meg kell jegyezni, hogy a fakulás nem kívánt méretezést okozhat
-#       a nyomat Z tengelye mentén. Ha a felhasználó engedélyezni
-#       szeretné a fade-ot, a 10.0 érték ajánlott.
-#       Az alapértelmezett 0.0, ami letiltja a fakulást.
+# A G-Kód Z pozíciója, amelyben a fokozatos kivonás befejeződik. Ha az
+# érték a fade_start alatt van akkor, a fade le van tiltva. Megjegyzendő, hogy a
+# fade nemkívánatos méretezést okozhat a nyomat Z tengelye mentén. Ha egy
+# felhasználó szeretné engedélyezni a fade-et, a 10.0 érték ajánlott.
+# Az alapértelmezett érték a 0.0, ami letiltja az elhalványulást.
 #fade_target:
-#       A Z pozíció, amelyben a fade-nek konvergálnia kell.
-#       Ha ez az érték nem nulla értékre van állítva, akkor a háló
-#       Z-értékeinek tartományán belül kell lennie.
-#       Azoknak a felhasználóknak, akik a Z kezdőpont pozícióba
-#       szeretnének konvergálni, ezt 0-ra kell állítaniuk.
-#       Az alapértelmezett a háló átlagos Z értéke.
+# A Z pozíció, amelyben a fade-nek konvergálnia kell. Amikor ez az érték
+# nullától eltérő értékre van állítva a Z-értékek tartományán belül kell lennie
+# a hálónak. Azok a felhasználók, akik a Z kezdőponthoz szeretnének konvergálni
+# az értéket 0-ra kell állítania. Az alapértelmezett a háló átlagos Z értéke.
 #split_delta_z: .025
-#       A Z különbség mértéke (mm-ben) egy elmozdulás
-#       mentén, amely felosztást vált ki.
-#       Az alapértelmezett érték .025.
+# A Z eltérés mértéke (mm-ben) a kiváltó mozgás mentén való felosztáshoz.
+# Az alapértelmezett érték a .025.
 #move_check_distance: 5.0
-#       A távolság (mm-ben) egy mozgás mentén a split_delta_z
-#       ellenőrzéséhez. Ez egyben az a minimális hossz, amely
-#       alatt egy lépést el lehet osztani.
-#       Az alapértelmezett 5.0.
+# A távolság (mm-ben) egy mozgás mentén a split_delta_z ellenőrzéséhez.
+# Ez egyben az a minimális hossz, amely alatt egy lépést el lehet osztani.
+# Az alapértelmezett érték az 5.0.
 #mesh_pps: 2, 2
-#       Egy vesszővel elválasztott X, Y egész számpár, amely az
-#       egyes tengelyek mentén interpolálandó pontok
-#       szegmensenkénti számát határozza meg.
-#       A &quot;szegmens&quot; az egyes tapintási pontok közötti térként definiálható.
-#       A felhasználó megadhat egyetlen értéket,
-#       amely mindkét tengelyre vonatkozik
-#       Az alapértelmezett 2, 2.
+# Egy vesszővel elválasztott X, Y egész számpár, amely meghatározza a számok számát
+# Szegmensenként # pont interpolálható a hálóban az egyes tengelyek mentén. A
+# &quot;szegmens&quot; az egyes vizsgált pontok közötti térként definiálható.
+# A felhasználó megadhat egyetlen értéket, amely mindkét tengelyre vonatkozik.
+# Az alapértelmezett érték a 2, 2.
 #algorithm: lagrange
-#       A használandó interpolációs algoritmus.
-#       Lehet &quot;lagrange&quot; vagy &quot;bicubic&quot;. Ez az opció nem érinti a 3x3-as
-#       rácsokat, amelyek lagrange mintavételezésre kényszerülnek.
-#       Az alapértelmezett a lagrange.
+# A használandó interpolációs algoritmus. Lehet &quot;lagrange&quot; vagy
+# &quot;bicubic&quot;. Ez az opció nem érinti a 3x3-as rácsokat, amelyek kényszerítettek
+# a lagrange mintavétel használatához. Az alapértelmezett a lagrange.
 #bicubic_tension: .2
-#       A bikubikus algoritmus használatakor a fenti feszítési paraméter
-#       alkalmazható az interpolált meredekség mértékének megváltoztatására.
-#       Nagyobb számok növelik a lejtés mértékét, ami nagyobb
-#       görbületet eredményez a hálóban.
-#       Az alapértelmezett érték .2.
+# A bikubik algoritmus használatakor a fenti feszítési paraméter lehet
+# használható az interpolált meredekség mértékének módosításához. Nagyobb
+# szám növeli a lejtés mértékét, ami nagyobb görbületet eredményez
+# a hálóban. Az alapértelmezett érték a .2.
 #zero_reference_position:
-#       Egy opcionális X,Y koordináta, amely meghatározza azt a helyet
-#       az ágyon, ahol Z = 0. Ha ez az opció meg van adva, a háló eltolódik,
-#       így ezen a helyen nulla Z-beállítás történik.
-#       Az alapértelmezés szerint nincs nulla referencia.
-#relative_reference_index:
-#       **DEPRECATED, használja a „zero_reference_position” opciót**
-#       Az örökölt opciót a &quot;nulla referenciapozíció&quot; váltja fel.
-#       Koordináta helyett ez az opció egy egész &quot;indexet&quot; vesz fel,
-#       amely az egyik generált pont helyére utal. Javasoljuk, hogy a
-#       &quot;zero_reference_position&quot; helyett ezt az opciót használja az
-#       új konfigurációkhoz.
-#       Az alapértelmezett érték nem relatív referenciaindex.
+# Egy opcionális X,Y koordináta, amely meghatározza a helyet az ágyon
+# ahol Z = 0. Ha ez az opció meg van adva, a háló eltolódik
+# úgy, hogy ezen a helyen nulla Z-beállítás történjen. Az alapértelmezett
+# az, hogy nincs nulla hivatkozás.
 #faulty_region_1_min:
 #faulty_region_1_max:
-#       Opcionális pontok, amelyek egy hibás régiót határoznak meg.
-#       Lásd a docs/Bed_Mesh.md fájlt a hibás régiók részleteiért.
-#       Legfeljebb 99 hibás régió adható hozzá.
-#       Alapértelmezés szerint nincs beállítva hibás régió.
+# Opcionális pontok, amelyek egy hibás régiót határoznak meg. Lásd: docs/Bed_Mesh.md
+# a hibás régiók részleteiért. Legfeljebb 99 hibás régió adható hozzá.
+# Alapértelmezés szerint nincs beállítva hibás régió.
+#adaptive_margin:
+# Opcionális margó (mm-ben), amelyet az általa használt ágyterület köré kell hozzáadni
+# a meghatározott nyomtatási objektumok adaptív háló generálásakor.
 </code></pre></div>
 
 <h3 id="bed_tilt">[bed_tilt]<a class="headerlink" href="#bed_tilt" title="Permanent link">&para;</a></h3>
@@ -5858,10 +5885,9 @@ pin:
 #   sebességet kérnek, a ventilátor ehelyett kikapcsol. Ez a beállítás használható
 #   a ventilátor leállásának megelőzésére és annak biztosítására, hogy az indítások
 #   hatékonyak legyenek. Az alapértelmezett érték 0.0.
-#
 #   Ezt a beállítást újra kell kalibrálni a max_power beállításakor. A beállítás
 #   kalibrálásához kezd az off_below értékét 0,0-ra állítva, és a ventilátor forog.
-#   Fokozatosan csökkentse a ventilátor fordulatszámát, hogy meghatározza a
+#   Fokozatosan csökkentsd a ventilátor fordulatszámát, hogy meghatározd a
 #   legalacsonyabb bemeneti sebességet, amely megbízhatóan hajtja a ventilátort
 #   leállás nélkül. Állítsd az off_below-ot az ennek az értéknek megfelelő
 #   (például 12% -&gt; 0,12) vagy valamivel magasabb munkaciklusra.
@@ -6197,47 +6223,69 @@ pin:
 <p>Futtatási időben konfigurálható kimeneti tűk (tetszőleges számú szekciót lehet definiálni "output_pin" előtaggal). Az itt konfigurált tűk kimeneti tűkként lesznek beállítva, és futtatási időben a "SET_PIN PIN=my_pin VALUE=.1" típusú kiterjesztett <a href="G-Codes.html#output_pin">G-kód parancsok</a> segítségével módosíthatjuk őket.</p>
 <div class="highlight"><pre><span></span><code>[output_pin my_pin]
 pin:
-#   A kimenetként konfigurálandó tű. Ezt a paramétert meg kell adni.
+# A kimenetként konfigurálandó tű. Ennek a paraméternek biztosítva kell lennie.
 #pwm: False
-#   Állítsd be, hogy a kimeneti lábnak képesnek kell lennie
-#   impulzusszélesség-modulációra. Ha ez True, az értékmezőknek 0 és 1
-#   között kell lenniük. Ha False, az értékmezők értéke 0 vagy 1 legyen.
-#   Az alapértelmezett érték False.
-#static_value:
-#   Ha ez be van állítva, akkor a tű ehhez az értékhez lesz rendelve indításkor,
-#   és a tű nem módosítható működés közben. Egy statikus tű valamivel
-#   kevesebb RAM-ot használ a mikrokontrollerben.
-#   Az alapértelmezett a lábak futásidejű konfigurációja.
+# Állítsd be, hogy a kimeneti láb képes legyen impulzusszélesség-modulációra.
+# Ha ez True, az értékmezőknek 0 és 1 között kell lenniük; ha ez
+# False, az értékmezők 0 vagy 1 értéket kell, hogy jelöljenek.
 #value:
-#   Az az érték, amelyre az MCU konfigurálása során először be kell állítani a tűt.
-#   Az alapértelmezett érték 0 (alacsony feszültség esetén).
+# Az az érték, amelyre az MCU konfigurálása során először be kell állítani a tűt.
+# Az alapértelmezett érték 0 (alacsony feszültség esetén).
 #shutdown_value:
-#   Az az érték, amelyre a tűt be kell állítani egy MCU leállási eseménynél.
-#   Az alapértelmezett érték 0 (alacsony feszültség esetén).
-#maximum_mcu_duration:
-#   A nem-leállítási érték maximális időtartama az MCU által a gazdagéptől
-#   érkező nyugtázás nélkül hajtható végre. Ha a gazdagép nem tud lépést
-#   tartani a frissítéssel, az MCU leáll, és az összes érintkezőt a megfelelő
-#   leállítási értékre állítja. Az alapértelmezett érték: 0 (letiltva)
-#   A szokásos értékek 5 másodperc körüliek.
-#cycle_time: 0.100
-#   Az idő (másodpercben) PWM ciklusonként. Szoftver alapú PWM használata
-#   esetén ajánlott 10 ezredmásodperc vagy több.
-#   Az alapértelmezett érték 0,100 másodperc a PWM lábak esetén.
+# Az az érték, amelyre a PIN-kódot be kell állítani egy MCU leállítási eseménynél.
+# Az alapértelmezett érték 0 (alacsony feszültség esetén).
+#cycle_time: 0,100
+# Az idő (másodpercben) PWM ciklusonként. Ajánlott
+# a 10 ezredmásodperc de több is lehet szoftver alapú PWM használata esetén.
+# Az alapértelmezett 0,100 másodperc a PWM lábak esetén.
 #hardware_pwm: False
-#   Engedélyezd ezt a hardveres PWM használatához a szoftveres PWM helyett.
-#   Hardveres PWM használatakor a tényleges ciklusidőt a megvalósítás
-#   korlátozza, és jelentősen eltérhet a kért ciklusidőtől.
-#   Az alapértelmezett érték False.
+# Engedélyezd ezt a hardveres PWM használatához a szoftveres PWM helyett. Amikor
+# hardveres PWM-et használ a tényleges ciklusidő végrehajtása jelentősen eltérhet a
+# kért ciklusidőtől. Az alapértelmezett érték False.
 #scale:
-#   Ezzel a paraméterrel módosítható a &#39;value&#39; és &#39;shutdown_value&#39; paraméterek
-#   értelmezése a PWM lábak esetében. Ha meg van adva, akkor az &#39;value&#39;
-#   paraméternek 0,0 és &#39;scale&#39; között kell lennie. Ez hasznos lehet olyan PWM
-#   láb konfigurálásakor, amely a léptető feszültség referenciaértékét vezérli.
-#   A &#39;scale&#39; beállítható az egyenértékű léptető áramerősségre, ha a PWM teljesen
-#   engedélyezett volt, majd az &#39;value&#39; paraméter megadható a léptető kívánt
-#   áramerősségével.
-#   Az alapértelmezés szerint nem skálázzuk a &#39;value&#39; paramétert.
+# Ezzel a paraméterrel módosítható a &#39;value&#39; és
+# A &#39;shutdown_value&#39; paraméterek a PWM lábakra vannak értelmezve. Ha meg
+# van adva, akkor a &#39;value&#39; paraméternek 0,0 és a &#39;scale&#39; között kell lennie.
+# Ez hasznos lehet egy olyan PWM tű konfigurálásakor ahol
+# a léptető feszültség referenciaértékét vezérli. A „scale” értéket a következőre lehet
+# állítani az egyenértékű léptető áramerősség, és a PWM teljesen engedélyezett,
+# akkor a &#39;value&#39; paraméter a kívánt érték segítségével megadható
+# áramerőssége a léptetőnek. Az alapértelmezett az, hogy nem skálázzuk az „value”
+# paramétert.
+#maximum_mcu_duration:
+#static_value:
+# Ezek a beállítások elavultak, és többé nem szabad megadni őket.
+</code></pre></div>
+
+<h3 id="pwm_tool">[pwm_tool]<a class="headerlink" href="#pwm_tool" title="Permanent link">&para;</a></h3>
+<p>Impulzusszélesség-modulációs digitális kimeneti tűk, amelyek nagy sebességű frissítésre képesek (tetszőleges számú szakasz definiálható "output_pin" előtaggal). Az itt konfigurált tűk kimeneti tűkként lesznek beállítva, és futás közben a "SET_PIN PIN=my_pin VALUE=.1" típusú kiterjesztett <a href="G-Codes.html#output_pin">g-kód parancsok</a> segítségével módosíthatók.</p>
+<div class="highlight"><pre><span></span><code>[pwm_tool my_tool]
+pin:
+# A kimenetként konfigurálandó tű. Ezt a paramétert meg kell adni.
+#maximum_mcu_duration:
+# A nem-leállítási érték maximális időtartamát az MCU vezérelheti
+# a fogadó visszaigazolása nélkül.
+# Ha a gazdagép nem tud lépést tartani a frissítéssel, az MCU leáll
+# és beállítja az összes érintkezőt a megfelelő leállítási értékre.
+# Az alapértelmezett érték a: 0 (letiltva)
+# A szokásos érték körülbelül 5 másodperc.
+#value:
+#shutdown_value:
+#cycle_time: 0,100
+#hardware_pwm: False
+#scale:
+# A paraméterek meghatározásához lásd az &quot;output_pin&quot; részt.
+</code></pre></div>
+
+<h3 id="pwm_cycle_time">[pwm_cycle_time]<a class="headerlink" href="#pwm_cycle_time" title="Permanent link">&para;</a></h3>
+<p>Futásidőben konfigurálható kimeneti tűk dinamikus pwm-ciklus időzítéssel (tetszőleges számú szakasz definiálható "pwm_cycle_time" előtaggal). Az itt konfigurált tűk kimeneti tűkként lesznek beállítva, és futásidőben a "SET_PIN PIN=my_pin VALUE=.1 CYCLE_TIME=0.100" típusú kiterjesztett <a href="G-Codes.html#pwm_cycle_time">g-kód parancsok</a> segítségével módosíthatók.</p>
+<div class="highlight"><pre><span></span><code>[pwm_cycle_time my_pin]
+pin:
+#value:
+#shutdown_value:
+#cycle_time: 0,100
+#scale:
+# Lásd az &quot;output_pin&quot; részt ezekről a paraméterekről.
 </code></pre></div>
 
 <h3 id="static_digital_output">[static_digital_output]<a class="headerlink" href="#static_digital_output" title="Permanent link">&para;</a></h3>

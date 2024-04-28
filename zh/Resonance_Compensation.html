@@ -1616,7 +1616,7 @@
 <p>首先，测量<strong>振纹频率</strong>。</p>
 <ol>
 <li>如果<code>square_corner_velocity</code>参数已更改，请将其恢复到5.0。当使用输入整形器时，不建议增加它，因为它会导致零件更加平滑——最好使用更高的加速度值。</li>
-<li>Increase <code>max_accel_to_decel</code> by issuing the following command: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Disable the <code>miminum_cruise_ratio</code> feature by issuing the following command: <code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
 <li>Disable Pressure Advance: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>如果你已经将<code>[input_shaper]</code>分段添加到print.cfg中，执行<code>SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0</code>命令。如果你得到"未知命令"错误，此时你可以安全地忽略它，继续进行测量。</li>
 <li>Execute the command: <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code> Basically, we try to make ringing more pronounced by setting different large values for acceleration. This command will increase the acceleration every 5 mm starting from 1500 mm/sec^2: 1500 mm/sec^2, 2000 mm/sec^2, 2500 mm/sec^2 and so forth up until 7000 mm/sec^2 at the last band.</li>
@@ -1657,7 +1657,7 @@ shaper_freq_y: ...  # frequency for the Y mark of the test model
 <p>Print the ringing test model as follows:</p>
 <ol>
 <li>Restart the firmware: <code>RESTART</code></li>
-<li>Prepare for test: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Prepare for test: <code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
 <li>Disable Pressure Advance: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>Execute: <code>SET_INPUT_SHAPER SHAPER_TYPE=MZV</code></li>
 <li>Execute the command: <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
@@ -1695,7 +1695,7 @@ shaper_type: mzv
 <p>请注意，使用共振测试模型进行的共振频率测量的精度通常足够用于大多数目的，因此不建议进一步调整。如果您仍然想尝试再次检查您的结果（例如，如果您在打印与您之前测量的频率相同的输入整形器的测试模型后仍然看到某些振纹），您可以按照本节中的步骤操作。请注意，如果您在启用[input_shaper]后看到不同频率的振纹，本节将无法解决这个问题。</p>
 <p>Assuming that you have sliced the ringing model with suggested parameters, complete the following steps for each of the axes X and Y:</p>
 <ol>
-<li>Prepare for test: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Prepare for test: <code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
 <li>Make sure Pressure Advance is disabled: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>Execute: <code>SET_INPUT_SHAPER SHAPER_TYPE=ZV</code></li>
 <li>From the existing ringing test model with your chosen input shaper select the acceleration that shows ringing sufficiently well, and set it with: <code>SET_VELOCITY_LIMIT ACCEL=...</code></li>
@@ -1717,7 +1717,7 @@ shaper_type: mzv
 <p>For tuning, add empty <code>[input_shaper]</code> section to your <code>printer.cfg</code>. Then, assuming that you have sliced the ringing model with suggested parameters, print the test model 3 times as follows. First time, prior to printing, run</p>
 <ol>
 <li><code>RESTART</code></li>
-<li><code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li><code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
 <li><code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li><code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI SHAPER_FREQ_X=60 SHAPER_FREQ_Y=60</code></li>
 <li><code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>

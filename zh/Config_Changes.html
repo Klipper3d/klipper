@@ -1349,6 +1349,15 @@
 <p>本文档涵盖了软件更新中对配置文件不向后兼容的部分。在升级 Klipper 时，最好也查看一下这份文档。</p>
 <p>文档的所有日期都是大概时间。</p>
 <h2 id="_2">变更<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>20240313: The <code>max_accel_to_decel</code> parameter in the <code>[printer]</code> config section has been deprecated. The <code>ACCEL_TO_DECEL</code> parameter of the <code>SET_VELOCITY_LIMIT</code> command has been deprecated. The <code>printer.toolhead.max_accel_to_decel</code> status has been removed. Use the <a href="Config_Reference.html#printer">minimum_cruise_ratio parameter</a> instead. The deprecated features will be removed in the near future, and using them in the interim may result in subtly different behavior.</p>
+<p>20240215: Several deprecated features have been removed. Using "NTC 100K beta 3950" as a thermistor name has been removed (deprecated on 20211110). The <code>SYNC_STEPPER_TO_EXTRUDER</code> and <code>SET_EXTRUDER_STEP_DISTANCE</code> commands have been removed, and the extruder <code>shared_heater</code> config option has been removed (deprecated on 20220210). The bed_mesh <code>relative_reference_index</code> option has been removed (deprecated on 20230619).</p>
+<p>20240123: The output_pin SET_PIN CYCLE_TIME parameter has been removed. Use the new <a href="Config_Reference.html#pwm_cycle_time">pwm_cycle_time</a> module if it is necessary to dynamically change a pwm pin's cycle time.</p>
+<p>20240123: The output_pin <code>maximum_mcu_duration</code> parameter is deprecated. Use a <a href="Config_Reference.html#pwm_tool">pwm_tool config section</a> instead. The option will be removed in the near future.</p>
+<p>20240123: The output_pin <code>static_value</code> parameter is deprecated. Replace with <code>value</code> and <code>shutdown_value</code> parameters. The option will be removed in the near future.</p>
+<p>20231216: The <code>[hall_filament_width_sensor]</code> is changed to trigger filament runout when the thickness of the filament exceeds <code>max_diameter</code>. The maximum diameter defaults to <code>default_nominal_filament_diameter + max_difference</code>. See <a href="Config_Reference.html#hall_filament_width_sensor">[hall_filament_width_sensor] configuration
+reference</a> for more details.</p>
+<p>20231207: Several undocumented config parameters in the <code>[printer]</code> config section have been removed (the buffer_time_low, buffer_time_high, buffer_time_start, and move_flush_time parameters).</p>
+<p>20231110: Klipper v0.12.0 released.</p>
 <p>20230826：如果在 <code>[dual_carriage]</code>中将“safe_distance”设置或计算为0，则将根据文档禁用车厢接近检查。用户可能希望明确配置“safe_distance”，以防止车厢彼此意外碰撞。此外，主滑架和双滑架的归位顺序在某些配置中会发生变化（当两个滑架都在同一方向上归位时的某些配置，请参阅<a href="Config_Reference.html#dual_carriage">[dual_carriage] 配置参考</a>了解更多详细信息）。</p>
 <p>20230810：Flash-sdcard.sh脚本现在支持Bigtreetech SKR-3的两个变体：STM32H743和STM32H723。为此，btt-skr-3的原始标签现在已更改为btt-skr-3-h743或btt-skr-3-h723。</p>
 <p>20230729:<code>dual_carriage</code>的导出状态已更改。不是导出 <code>mode</code>和<code>active_carriage</code>，而是将每个车厢的各个模式导出为 <code>printer.dual_carriage.carriage_0</code>和 <code>printer.dual_carriage.carriage_1</code>.</p>

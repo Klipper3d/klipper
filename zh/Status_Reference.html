@@ -1006,6 +1006,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pwm_cycle_time" class="md-nav__link">
+    pwm_cycle_time
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#quad_gantry_level" class="md-nav__link">
     quad_gantry_level
   </a>
@@ -1823,6 +1830,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pwm_cycle_time" class="md-nav__link">
+    pwm_cycle_time
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#quad_gantry_level" class="md-nav__link">
     quad_gantry_level
   </a>
@@ -2167,6 +2181,11 @@
 <li><code>last_query</code>：如果探针在上一个 QUERY_PROBE 命令期间报告为"已触发"，则返回 True。请注意，如果在宏中使用它，根据模板展开的顺序，必须在包含此引用的宏之前运行 QUERY_PROBE 命令。</li>
 <li><code>last_z_result</code>：返回上一次 PROBE 命令的结果 Z 值。请注意，由于模板展开的顺序，在宏中使用时必须在包含此引用的宏之前运行 PROBE（或类似）命令。</li>
 </ul>
+<h2 id="pwm_cycle_time">pwm_cycle_time<a class="headerlink" href="#pwm_cycle_time" title="Permanent link">&para;</a></h2>
+<p>The following information is available in <a href="Config_Reference.html#pwm_cycle_time">pwm_cycle_time some_name</a> objects:</p>
+<ul>
+<li><code>value</code>：由<code>SET_PIN</code>指令设置的引脚“值”。</li>
+</ul>
 <h2 id="quad_gantry_level">quad_gantry_level<a class="headerlink" href="#quad_gantry_level" title="Permanent link">&para;</a></h2>
 <p><code>quad_gantry_level</code> 对象提供了以下信息（如果定义了 quad_gantry_level，则该对象可用）：</p>
 <ul>
@@ -2242,7 +2261,7 @@
 <li><code>homed_axes</code>：当前被认为处于“已归位”状态的车轴。这是一个包含一个或多个"x"、"y"、"z"的字符串。</li>
 <li><code>axis_minimum</code>、<code>axis_maximum</code>：归位后的轴的行程限制（毫米）。可以访问此极限值的 x、y、z 分量（例如，<code>axis_minimum.x</code>、<code>axis_maximum.z</code>）。</li>
 <li>对于三角洲打印机，<code>cone_start_z</code> 是最大半径时的最大z高度(<code>printer.toolhead.cone_start_z</code>)。</li>
-<li><code>max_velocity</code>、<code>max_accel</code>、<code>max_accel_to_decel</code>和<code>square_corner_velocity</code>：当前生效的打印机限制。如果 <code>SET_VELOCITY_LIMIT</code>（或 <code>M204</code>）命令在运行时改变它们，这些值可能与配置文件设置不同。</li>
+<li><code>max_velocity</code>, <code>max_accel</code>, <code>minimum_cruise_ratio</code>, <code>square_corner_velocity</code>: The current printing limits that are in effect. This may differ from the config file settings if a <code>SET_VELOCITY_LIMIT</code> (or <code>M204</code>) command alters them at run-time.</li>
 <li><code>stalls</code>：由于工具头移动速度快于从 G 代码输入读取的移动速度，因此打印机必须暂停的总次数（自上次重新启动以来）。</li>
 </ul>
 <h2 id="dual_carriage">dual_carriage<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h2>

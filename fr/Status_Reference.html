@@ -1006,6 +1006,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pwm_cycle_time" class="md-nav__link">
+    pwm_cycle_time
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#quad_gantry_level" class="md-nav__link">
     quad_gantry_level
   </a>
@@ -1823,6 +1830,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pwm_cycle_time" class="md-nav__link">
+    pwm_cycle_time
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#quad_gantry_level" class="md-nav__link">
     quad_gantry_level
   </a>
@@ -2167,6 +2181,11 @@
 <li><code>last_query</code> : renvoie True si la sonde a été signalée comme "déclenchée" lors de la dernière commande QUERY_PROBE. Notez que si cela est utilisé dans une macro, en raison de l'ordre de développement du modèle, la commande QUERY_PROBE doit être exécutée avant la macro contenant cette demande.</li>
 <li><code>last_z_result</code> : Renvoie la valeur du Z de la dernière commande PROBE. Notez que si cela est utilisé dans une macro, en raison de l'ordre d'expansion du modèle, la commande PROBE (ou similaire) doit être exécutée avant la macro contenant cette demande.</li>
 </ul>
+<h2 id="pwm_cycle_time">pwm_cycle_time<a class="headerlink" href="#pwm_cycle_time" title="Permanent link">&para;</a></h2>
+<p>The following information is available in <a href="Config_Reference.html#pwm_cycle_time">pwm_cycle_time some_name</a> objects:</p>
+<ul>
+<li><code>value</code> : la "valeur" de la broche, telle que définie par une commande <code>SET_PIN</code>.</li>
+</ul>
 <h2 id="quad_gantry_level">quad_gantry_level<a class="headerlink" href="#quad_gantry_level" title="Permanent link">&para;</a></h2>
 <p>Les informations suivantes sont disponibles dans l'objet <code>quad_gantry_level</code> (cet objet est disponible si quad_gantry_level est défini) :</p>
 <ul>
@@ -2242,7 +2261,7 @@
 <li><code>homed_axes</code> : les axes considérés comme étant dans un état "à l'origine". Il s'agit d'une chaîne contenant un ou plusieurs "x", "y", "z".</li>
 <li><code>axis_minimum</code>, <code>axis_maximum</code> : les limites de déplacement de l'axe (mm) après la mise à l'origine. Il est possible d'accéder aux composantes x, y, z de cette valeur limite (par exemple, <code>axis_minimum.x</code>, <code>axis_maximum.z</code>).</li>
 <li>Pour les imprimantes Delta, le <code>cone_start_z</code> est la hauteur z maximale au rayon maximal (<code>printer.toolhead.cone_start_z</code>).</li>
-<li><code>max_velocity</code>, <code>max_accel</code>, <code>max_accel_to_decel</code>, <code>square_corner_velocity</code> : les limites d'impression actuelles en vigueur. Cela peut différer des paramètres du fichier de configuration si une commande <code>SET_VELOCITY_LIMIT</code> (ou <code>M204</code>) les a modifiées au moment de l'exécution.</li>
+<li><code>max_velocity</code>, <code>max_accel</code>, <code>minimum_cruise_ratio</code>, <code>square_corner_velocity</code>: The current printing limits that are in effect. This may differ from the config file settings if a <code>SET_VELOCITY_LIMIT</code> (or <code>M204</code>) command alters them at run-time.</li>
 <li><code>stalls</code> : Le nombre total de fois (depuis le dernier redémarrage) où l'imprimante a dû être mise en pause parce que la tête d'outil s'est déplacée plus vite que les mouvements ne pouvaient être lus à partir de l'entrée G-Code.</li>
 </ul>
 <h2 id="dual_carriage">dual_carriage<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h2>

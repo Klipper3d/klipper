@@ -1616,7 +1616,7 @@
 <p>Innanzitutto, misura la <strong>frequenza di ringing</strong>.</p>
 <ol>
 <li>Se il parametro <code>square_corner_velocity</code> è stato modificato, ripristinalo a 5.0 . Non è consigliabile aumentarlo quando si utilizza l'input shaper perché può causare un maggiore smussamento smoothing delle parti: è invece meglio utilizzare un valore di accelerazione più elevato.</li>
-<li>Aumenta <code>max_accel_to_decel</code> inserendo il seguente comando: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Disable the <code>miminum_cruise_ratio</code> feature by issuing the following command: <code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
 <li>Disabilita la Pressure Advance: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>Se hai già aggiunto la sezione <code>[input_shaper]</code> a printer.cfg, esegui il comando <code>SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0</code>. Se ricevi l'errore "Comando sconosciuto- Unknown command", puoi tranquillamente ignorarlo a questo punto e continuare con le misurazioni.</li>
 <li>Eseguire il comando: <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code> Fondamentalmente, cerchiamo di rendere più pronunciato il ringing impostando diversi valori elevati per l'accelerazione. Questo comando aumenterà l'accelerazione ogni 5 mm a partire da 1500 mm/sec^2: 1500 mm/sec^2, 2000 mm/sec^2, 2500 mm/sec^2 e così via fino a 7000 mm/sec^2 per l'ultima fascia.</li>
@@ -1657,7 +1657,7 @@ shaper_freq_y: ...  # frequenza per il segno Y del modello di prova
 <p>Stampare il modello di prova di ringing come segue:</p>
 <ol>
 <li>Riavviare il firmware: <code>RESTART</code></li>
-<li>Prepararsi per il test: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Prepare for test: <code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
 <li>Disabilita la Pressure Advance: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>Eseguire: <code>SET_INPUT_SHAPER SHAPER_TYPE=MZV</code></li>
 <li>Eseguire il comando: <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
@@ -1695,7 +1695,7 @@ shaper_type: mzv
 <p>Si noti che la precisione delle misurazioni delle frequenze di risonanza utilizzando il modello di test di ringing è sufficiente per la maggior parte degli scopi, quindi si sconsiglia un'ulteriore messa a punto. Se vuoi ancora provare a ricontrollare i tuoi risultati (ad esempio se vedi ancora del ringing dopo aver stampato un modello di prova con un input shaper a tua scelta con le stesse frequenze che hai misurato in precedenza), puoi seguire i passaggi in questo sezione. Nota che se vedi ringing a frequenze diverse dopo aver abilitato [input_shaper], questa sezione non ti aiuterà.</p>
 <p>Supponendo di aver suddiviso il modello di ringing con i parametri suggeriti, completare i seguenti passaggi per ciascuno degli assi X e Y:</p>
 <ol>
-<li>Prepararsi per il test: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Prepare for test: <code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
 <li>Assicurati che Pressure Advance sia disabilitato: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>Eseguire: <code>SET_INPUT_SHAPER SHAPER_TYPE=ZV</code></li>
 <li>Dal modello di prova di ringing esistente con lo shaper di input scelto, seleziona l'accelerazione che mostra sufficientemente bene il ringing e impostala con: <code>SET_VELOCITY_LIMIT ACCEL=...</code></li>
@@ -1716,7 +1716,7 @@ shaper_type: mzv
 <p>Per l'ottimizzazione, aggiungi la sezione <code>[input_shaper]</code> vuota al tuo <code>printer.cfg</code>. Quindi, supponendo di aver fattolo slicing il modello di ringing con i parametri suggeriti, stampare il modello di prova 3 volte come segue. La prima volta, prima della stampa, eseguire</p>
 <ol>
 <li><code>RESTART</code></li>
-<li><code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li><code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
 <li><code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li><code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI SHAPER_FREQ_X=60 SHAPER_FREQ_Y=60</code></li>
 <li><code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>

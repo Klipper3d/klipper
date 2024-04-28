@@ -1616,7 +1616,7 @@
 <p>Először is mérd meg a <strong>gyűrődési frekvenciát</strong>.</p>
 <ol>
 <li>Ha a <code>square_corner_velocity</code> paramétert megváltoztattuk, állítsuk vissza az 5.0-ra. Nem tanácsos növelni, ha bemeneti alakítót használsz, mert ez nagyobb simítást okozhat az alkatrészeken - helyette jobb, ha nagyobb gyorsulási értéket használsz.</li>
-<li>Növeld a <code>max_accel_to_decel</code> értéket a következő parancs kiadásával: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Kapcsold ki a <code>miminum_cruise_ratio</code> funkciót a következő parancs kiadásával: <code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
 <li>Nyomás előtolás kikapcsolása: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>Ha már hozzáadtad az <code>[input_shaper]</code> részt a printer.cfg fájlhoz, akkor hajtsd végre a <code>SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0</code> parancsot. Ha "Unknown command" hibát kapsz, nyugodtan figyelmen kívül hagyhatod ezen a ponton, és folytathatod a méréseket.</li>
 <li>Végezd el a parancsot: <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code> Alapvetően a gyorsulás különböző nagy értékeinek beállításával próbáljuk a gyűrődést hangsúlyosabbá tenni. Ez a parancs 1500 mm/sec^2-től kezdve 5 mm-enként növeli a gyorsulást: 1500 mm/sec^2, 2000 mm/sec^2, 2500 mm/sec^2 és így tovább, egészen 7000 mm/sec^2-ig az utolsó sávra.</li>
@@ -1657,7 +1657,7 @@ shaper_freq_y: ...  # a tesztmodell Y jelének frekvenciája
 <p>Nyomtasd ki a gyűrődési tesztmodellt az alábbiak szerint:</p>
 <ol>
 <li>Indítsd újra a firmware-t: <code>RESTART</code></li>
-<li>Készülj fel a tesztre: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Tesztre való felkészülés: <code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
 <li>Nyomás előtolás kikapcsolása: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>Add ki a parancsot: <code>SET_INPUT_SHAPER SHAPER_TYPE=MZV</code></li>
 <li>Add ki a parancsot: <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
@@ -1695,7 +1695,7 @@ shaper_type: mzv
 <p>Megjegyzendő, hogy a rezonanciafrekvenciák mérésének pontossága a gyűrődési tesztmodell segítségével a legtöbb célra elegendő, így további hangolás nem javasolt. Ha mégis meg akarod próbálni kétszeresen ellenőrizni az eredményeid (például ha még mindig látsz némi gyűrődést, miután kinyomtattál egy tesztmodellt egy tetszőleges bemeneti alakítóval, ugyanazokkal a frekvenciákkal, mint amiket korábban mértél), akkor kövesd az ebben a szakaszban leírt lépéseket. Vedd figyelembe, hogy ha az [input_shaper] engedélyezése után különböző frekvenciákon látsz gyűrődést, ez a szakasz nem fog segíteni.</p>
 <p>Feltételezve, hogy szeletelted a gyűrődési modellt a javasolt paraméterekkel, hajtsd végre a következő lépéseket az X és Y tengelyek mindegyikén:</p>
 <ol>
-<li>Készülj fel a tesztre: <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Tesztre való felkészülés: <code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
 <li>Győződj meg róla, hogy a nyomás előtolás ki van kapcsolva: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>Add ki a parancsot: <code>SET_INPUT_SHAPER SHAPER_TYPE=ZV</code></li>
 <li>A meglévő gyűrődési tesztmodellből a kiválasztott bemeneti alakítóval válaszd ki azt a gyorsulást, amely kellően jól mutatja a gyűrődést, és állítsd be a következővel: <code>SET_VELOCITY_LIMIT ACCEL=...</code></li>
@@ -1716,7 +1716,7 @@ shaper_type: mzv
 <p>A hangoláshoz adjunk hozzá üres <code>[input_shaper]</code> szakaszt a <code>printer.cfg</code> fájlhoz. Ezután, feltételezve, hogy a javasolt paraméterekkel felszeletelt gyűrődési modellt, nyomtasd ki 3-szor az alábbiak szerint. Első alkalommal, a nyomtatás előtt futtasd le a</p>
 <ol>
 <li><code>RESTART</code></li>
-<li><code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li><code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
 <li><code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li><code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI SHAPER_FREQ_X=60 SHAPER_FREQ_Y=60</code></li>
 <li><code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>

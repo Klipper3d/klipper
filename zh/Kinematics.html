@@ -983,8 +983,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    预计算结果平滑
+  <a href="#minimum-cruise-ratio" class="md-nav__link">
+    Minimum cruise ratio
   </a>
   
 </li>
@@ -1003,7 +1003,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
+  <a href="#_4" class="md-nav__link">
     笛卡尔机器
   </a>
   
@@ -1017,28 +1017,28 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_6" class="md-nav__link">
+  <a href="#_5" class="md-nav__link">
     三角洲机器
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_7" class="md-nav__link">
+  <a href="#_6" class="md-nav__link">
     步进电机加速限制
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_8" class="md-nav__link">
+  <a href="#_7" class="md-nav__link">
     挤出机运动学
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_9" class="md-nav__link">
+  <a href="#_8" class="md-nav__link">
     压力提前
   </a>
   
@@ -1428,8 +1428,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    预计算结果平滑
+  <a href="#minimum-cruise-ratio" class="md-nav__link">
+    Minimum cruise ratio
   </a>
   
 </li>
@@ -1448,7 +1448,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
+  <a href="#_4" class="md-nav__link">
     笛卡尔机器
   </a>
   
@@ -1462,28 +1462,28 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_6" class="md-nav__link">
+  <a href="#_5" class="md-nav__link">
     三角洲机器
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_7" class="md-nav__link">
+  <a href="#_6" class="md-nav__link">
     步进电机加速限制
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_8" class="md-nav__link">
+  <a href="#_7" class="md-nav__link">
     挤出机运动学
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_9" class="md-nav__link">
+  <a href="#_8" class="md-nav__link">
     压力提前
   </a>
   
@@ -1540,12 +1540,14 @@
 <div class="highlight"><pre><span></span><code>end_velocity^2 = start_velocity^2 + 2*accel*move_distance
 </code></pre></div>
 
-<h3 id="_4">预计算结果平滑<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<h3 id="minimum-cruise-ratio">Minimum cruise ratio<a class="headerlink" href="#minimum-cruise-ratio" title="Permanent link">&para;</a></h3>
 <p>Klipper 实现了一种用于平滑短距离之字形移动的机制。参考以下移动：</p>
 <p><img alt="zigzag" src="img/zigzag.svg.png" /></p>
-<p>在上述情况下，从加速到减速的频繁变化会导致机器振动并且会对机器造成压力和加噪音。为了减少这种情况，Klipper既跟踪常规的移动加速度并且也跟踪虚拟的"加减速率"。利用这个系统，这些短的"zigzag"移动的最高速度被限制以使得打印机的运动可以更加平滑：</p>
+<p>In the above, the frequent changes from acceleration to deceleration can cause the machine to vibrate which causes stress on the machine and increases the noise. Klipper implements a mechanism to ensure there is always some movement at a cruising speed between acceleration and deceleration. This is done by reducing the top speed of some moves (or sequence of moves) to ensure there is a minimum distance traveled at cruising speed relative to the distance traveled during acceleration and deceleration.</p>
+<p>Klipper implements this feature by tracking both a regular move acceleration as well as a virtual "acceleration to deceleration" rate:</p>
 <p><img alt="smoothed" src="img/smoothed.svg.png" /></p>
-<p>具体来说，代码计算的是限制在这个虚拟的“加速到减速”率下时（默认为正常加速率的一半），每个动作的速度是多少。在上图中，灰色虚线代表了第一段移动时的虚拟加速率。如果一段移动使用这个虚拟加速度不能达到目标巡航速度，那么这段移动的最高速度将被降低到它在这个虚拟加速率下所能获得的最大速度。对于大多数移动来说，该限制将处于或高于该移动的现有限制，并且不会改变移动的行为。然而，对于短的 "之 "字形移动，这个限制会降低最高速度。请注意，它不会改变移动中的实际加速度--移动会继续使用正常的加速，直到其调整后的最高速度。</p>
+<p>Specifically, the code calculates what the velocity of each move would be if it were limited to this virtual "acceleration to deceleration" rate. In the above picture the dashed gray lines represent this virtual acceleration rate for the first move. If a move can not reach its full cruising speed using this virtual acceleration rate then its top speed is reduced to the maximum speed it could obtain at this virtual acceleration rate.</p>
+<p>For most moves the limit will be at or above the move's existing limits and no change in behavior is induced. For short zigzag moves, however, this limit reduces the top speed. Note that it does not change the actual acceleration within the move - the move continues to use the normal acceleration scheme up to its adjusted top-speed.</p>
 <h2 id="generating-steps">生成步数（Generating steps）<a class="headerlink" href="#generating-steps" title="Permanent link">&para;</a></h2>
 <p>前瞻过程完成后给定移动的打印头运动已被确定（时间、开始位置、结束位置、每一点的速度），可以被用于生成移动的步进时间。这个过程是在Klipper代码的运动学类中完成的。在这些运动学类之外，所有的东西都是以毫米、秒为单位，在笛卡尔坐标空间进行跟踪。运动学类负责将这个通用坐标系统转换为符合打印机硬件特性的坐标系。</p>
 <p>Klipper使用一个<a href="https://zh.wikipedia.org/wiki/%E6%B1%82%E6%A0%B9%E7%AE%97%E6%B3%95">迭代求解器</a>来生成每个步进的步进时间。该代码包含了计算打印头在每个时间点上的理想笛卡尔坐标的公式，它还有运动学公式来计算基于这些笛卡尔坐标的理想步进位置。通过这些公式，Klipper可以确定步进电机在每个步进位置时的理想步进时间。然后在这些计算出的时间内安排给定的步进。</p>
@@ -1563,7 +1565,7 @@ cartesian_y_position = start_y + move_distance * total_y_movement / total_moveme
 cartesian_z_position = start_z + move_distance * total_z_movement / total_movement
 </code></pre></div>
 
-<h3 id="_5">笛卡尔机器<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
+<h3 id="_4">笛卡尔机器<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <p>为笛卡尔坐标的打印机生成步进是最简单的情况。每个轴上的运动与笛卡尔空间中的运动直接相关。</p>
 <p>关键公式：</p>
 <div class="highlight"><pre><span></span><code>stepper_x_position = cartesian_x_position
@@ -1578,7 +1580,7 @@ stepper_b_position = cartesian_x_position - cartesian_y_position
 stepper_z_position = cartesian_z_position
 </code></pre></div>
 
-<h3 id="_6">三角洲机器<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
+<h3 id="_5">三角洲机器<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
 <p>三角洲结构机器人上的步进生成基于勾股定理：</p>
 <div class="highlight"><pre><span></span><code>stepper_position = (sqrt(arm_length^2
 
@@ -1587,16 +1589,16 @@ stepper_z_position = cartesian_z_position
                     + cartesian_z_position)
 </code></pre></div>
 
-<h3 id="_7">步进电机加速限制<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
+<h3 id="_6">步进电机加速限制<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
 <p>在三角洲机器运动时，打印头在笛卡尔空间中运动进行一定加速度的加速运动，其对应轴的步进电机需要高于前述加速度的加速度。这种状况在一打印壁需提供的水平运动幅度大于垂直运动幅度，并且，运动直线靠近某一垂柱时发生。尽管这些运动会要求步进电机的加速度超过打印机的加速度设置限额，但单个步进电机需要承担的有效质量是相对较小的。因此，增加的步进电机加速度不会显著增加步进电机的扭矩需求，可认为这种现象是无害的。</p>
 <p>然而，为了避免极端状况，Klipper强制将步进电机的加速度上限设置为打印机加速度上限的3倍。（同样，步进电机的速度上限也设置为打印机速度上限的3倍。）为了实现上述设置，在打印区域水平边沿的（存在打印臂接近水平的）位置，打印头的速度和加速度上限将相应降低。</p>
-<h3 id="_8">挤出机运动学<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<h3 id="_7">挤出机运动学<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
 <p>Klipper 在自身的运动学类中实现了挤出机的运动。由于每个打印头运动的时间和速度是完全已知的，因此可以独立于打印头运动的步长计算来计算挤出机的步长。</p>
 <p>基本的挤出机运动计算起来很简单。步进时间的生成使用和笛卡尔结构相同的公式：</p>
 <div class="highlight"><pre><span></span><code>stepper_position = requested_e_position
 </code></pre></div>
 
-<h3 id="_9">压力提前<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
+<h3 id="_8">压力提前<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
 <p>实验表明，在基本的挤出机方程之上可以改进挤出机的模型。在理想情况下，随着挤出移动的进行，沿移动的每个点应寄出相同体积的耗材，并且在移动后不应挤出任何耗材。不幸的是，在实际情况下，基本的挤出机方程会导致在挤出运动开始时挤出过少的耗材，并且在挤出结束后挤出过多的耗材。这通常被称为“溢料”。</p>
 <p><img alt="溢料" src="img/ooze.svg.png" /></p>
 <p>"压力推进"系统试图通过使用一个不同的挤出机模型来解决这个问题。它不理想的假设送入挤出机的每mm^3耗材将导致该体积的mm^3立即被挤出，而是使用基于压力的模型。当耗材被推入挤出机时，压力会增加（如<a href="https://en.wikipedia.org/wiki/Hooke%27s_law">胡克定律</a>），而挤出所需的压力则由通过喷嘴孔口的流速决定（如<a href="https://en.wikipedia.org/wiki/Poiseuille_law">泊伊维尔定律</a>）。关键的想法是，耗材、压力和流速之间的关系可以用一个线性系数来建模：</p>

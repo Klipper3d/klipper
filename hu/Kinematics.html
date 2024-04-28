@@ -983,8 +983,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#simitott-eloretekintes" class="md-nav__link">
-    Simított előretekintés
+  <a href="#minimalis-utazasi-arany" class="md-nav__link">
+    Minimális utazási arány
   </a>
   
 </li>
@@ -1428,8 +1428,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#simitott-eloretekintes" class="md-nav__link">
-    Simított előretekintés
+  <a href="#minimalis-utazasi-arany" class="md-nav__link">
+    Minimális utazási arány
   </a>
   
 </li>
@@ -1540,12 +1540,14 @@
 <div class="highlight"><pre><span></span><code>end_velocity^2 = start_velocity^2 + 2*accel*move_distance
 </code></pre></div>
 
-<h3 id="simitott-eloretekintes">Simított előretekintés<a class="headerlink" href="#simitott-eloretekintes" title="Permanent link">&para;</a></h3>
+<h3 id="minimalis-utazasi-arany">Minimális utazási arány<a class="headerlink" href="#minimalis-utazasi-arany" title="Permanent link">&para;</a></h3>
 <p>A Klipper egy olyan mechanizmust is megvalósít, amely kisimítja a rövid "cikkcakk" mozgásokat. Nézzük a következő mozgásokat:</p>
 <p><img alt="zigzag" src="img/zigzag.svg.png" /></p>
-<p>A fentiekben a gyorsításról lassításra történő gyakori váltás a gép rezgését okozhatja, ami a gépet terheli, és növeli a zajt. Ennek csökkentése érdekében a Klipper mind a rendszeres mozgási gyorsulást, mind pedig a virtuális "gyorsításról lassításra" sebességet követi. Ezzel a rendszerrel a nyomtató mozgásának kiegyenlítése érdekében a rövid "cikkcakkos" mozgások csúcssebessége korlátozott:</p>
+<p>A fentiekben a gyorsításról lassításra történő gyakori váltás a gép rezgését okozhatja, ami a gépet terheli, és növeli a zajt. A Klipper egy olyan mechanizmust valósít meg, amely biztosítja, hogy a gyorsítás és lassítás között mindig van némi mozgás utazósebességen. Ez úgy történik, hogy egyes mozgások (vagy mozgássorozatok) végsebességét csökkenti, hogy a gyorsítás és lassítás során megtett távolsághoz képest minimális távolságot tegyen meg utazósebességen.</p>
+<p>A Klipper ezt a funkciót úgy valósítja meg, hogy mind a normál mozgásgyorsulást, mind a virtuális "gyorsulás-lassulás" sebességet követi:</p>
 <p><img alt="smoothed" src="img/smoothed.svg.png" /></p>
-<p>Konkrétan, a kód kiszámítja, hogy mi lenne az egyes mozgások sebessége, ha az adott virtuális "gyorsulás-lassulás" sebességre korlátozódna (alapértelmezés szerint a normál gyorsulási sebesség fele). A fenti képen a szaggatott szürke vonalak ezt a virtuális gyorsulási sebességet jelölik az első mozdulatnál. Ha egy mozgás nem tudja elérni a teljes utazósebességét ezzel a virtuális gyorsulási sebességgel, akkor a végsebessége arra a maximális sebességre csökken, amelyet ezzel a virtuális gyorsulási sebességgel elérhetne. A legtöbb mozgás esetében ez a határérték a mozgás meglévő határértékeinél vagy azok felett lesz, és nem változik a viselkedés. Rövid cikk-cakk mozgások esetén azonban ez a határ csökkenti a csúcssebességet. Vedd figyelembe, hogy ez nem változtatja meg a tényleges gyorsulást a mozgáson belül. A mozgás továbbra is a normál gyorsulási sémát használja a beállított csúcssebességig.</p>
+<p>Konkrétan a kód kiszámítja, hogy mekkora lenne az egyes mozgások sebessége, ha az adott virtuális "gyorsulás-lassulás" sebességre korlátozódna. A fenti képen a szaggatott szürke vonalak ezt a virtuális gyorsulási sebességet jelölik az első lépésnél. Ha egy mozgás nem tudja elérni a teljes utazósebességét ezzel a virtuális gyorsulási sebességgel, akkor a csúcssebessége arra a maximális sebességre csökken, amelyet ezzel a virtuális gyorsulási sebességgel elérhetne.</p>
+<p>A legtöbb mozgás esetében a határérték a mozgás meglévő határértékeinél vagy azok felett lesz, és nem változik a viselkedés. Rövid cikk-cakk mozgások esetén azonban ez a határ csökkenti a csúcssebességet. Vedd figyelembe, hogy ez nem változtatja meg a tényleges gyorsulást a mozgáson belül - a mozgás továbbra is a normál gyorsulási sémát használja a beállított csúcssebességig.</p>
 <h2 id="lepesek-generalasa">Lépések generálása<a class="headerlink" href="#lepesek-generalasa" title="Permanent link">&para;</a></h2>
 <p>Miután a look-ahead folyamat befejeződött, a nyomtatófej mozgása az adott mozgáshoz teljes mértékben ismert (idő, kezdő pozíció, végpozíció, sebesség minden egyes ponton), és lehetséges a lépésidők generálása a mozgáshoz. Ez a folyamat a Klipper kódban a "kinematikai osztályokon" belül történik. Ezeken a kinematikai osztályokon kívül minden milliméterben, másodpercben és cartesian koordináta térben követhető. A kinematikai osztályok feladata, hogy ebből az általános koordináta-rendszerből az adott nyomtató hardveres sajátosságaihoz igazítsák.</p>
 <p>A Klipper egy <a href="https://en.wikipedia.org/wiki/Root-finding_algorithm">iteratív megoldót</a> használ az egyes léptetők lépésidejének létrehozásához. A kód tartalmazza a képleteket a fej ideális cartesian koordinátáinak kiszámításához minden egyes időpontban, és rendelkezik a kinematikai képletekkel az ideális stepper pozíciók kiszámításához ezen cartesian koordináták alapján. Ezekkel a képletekkel a Klipper meg tudja határozni azt az ideális időt, amikor a stepper-nek az egyes lépéshelyzetekben kell lennie. Az adott lépéseket ezután ezekre a kiszámított időpontokra ütemezi.</p>

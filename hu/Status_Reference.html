@@ -1006,6 +1006,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pwm_cycle_time" class="md-nav__link">
+    pwm_cycle_time
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#quad_gantry_level" class="md-nav__link">
     quad_gantry_level
   </a>
@@ -1823,6 +1830,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pwm_cycle_time" class="md-nav__link">
+    pwm_cycle_time
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#quad_gantry_level" class="md-nav__link">
     quad_gantry_level
   </a>
@@ -2167,6 +2181,11 @@
 <li><code>last_query</code>: True értéket ad vissza, ha a szondát az utolsó QUERY_PROBE parancs során "triggered" -ként jelentették. Megjegyzés: ha ezt egy makróban használjuk, a sablon bővítési sorrendje miatt a QUERY_PROBE parancsot akkor ezt a hivatkozást tartalmazó makró előtt kell lefuttatni.</li>
 <li><code>last_z_result</code>: Az utolsó PROBE parancs Z eredményének értékét adja vissza. Figyelem, ha ezt egy makróban használjuk, a sablon bővítési sorrendje miatt a PROBE (vagy hasonló) parancsot akkor ezt a hivatkozást tartalmazó makró előtt kell lefuttatni.</li>
 </ul>
+<h2 id="pwm_cycle_time">pwm_cycle_time<a class="headerlink" href="#pwm_cycle_time" title="Permanent link">&para;</a></h2>
+<p>A következő információk a <a href="Config_Reference.html#pwm_cycle_time">pwm_cycle_time some_name</a> objektumban érhetők el:</p>
+<ul>
+<li><code>value</code>: A <code>SET_PIN</code> paranccsal beállított "value" a tű értéke.</li>
+</ul>
 <h2 id="quad_gantry_level">quad_gantry_level<a class="headerlink" href="#quad_gantry_level" title="Permanent link">&para;</a></h2>
 <p>A következő információk a <code>quad_gantry_level</code> objektumban érhetők el (ez az objektum akkor érhető el, ha a quad_gantry_level definiálva van):</p>
 <ul>
@@ -2242,7 +2261,7 @@
 <li><code>homed_axes</code>: Az aktuálisan "homed" állapotban lévőnek tekintett cartesian tengelyek. Ez egy karakterlánc, amely egy vagy több "X", "Y", "Z" értéket tartalmaz.</li>
 <li><code>axis_minimum</code>, <code>axis_maximum</code>: A tengely mozgásának határai (mm) a kezdőpont felvétel után. Lehetőség van e határérték X, Y, Z összetevőinek elérésére (pl. <code>axis_minimum.x</code>, <code>axis_maximum.z</code>).</li>
 <li>A Delta nyomtatók esetében a <code>cone_start_z</code> a maximális sugaraknál mért maximális Z magasság (<code>printer.toolhead.cone_start_z</code>).</li>
-<li><code>max_velocity</code>, <code>max_accel</code>, <code>max_accel_to_decel</code>, <code>square_corner_velocity</code>: Az aktuálisan érvényben lévő nyomtatási korlátok. Ez eltérhet a konfigurációs fájl beállításaiból, ha a <code>SET_VELOCITY_LIMIT</code> (vagy <code>M204</code>) parancs megváltoztatja azokat használat közben.</li>
+<li><code>max_velocity</code>, <code>max_accel</code>, <code>minimum_cruise_ratio</code>, <code>square_corner_velocity</code>: Az aktuálisan érvényben lévő nyomtatási korlátok. Ez eltérhet a konfigurációs fájl beállításaitól, ha a <code>SET_VELOCITY_LIMIT</code> (vagy az <code>M204</code>) parancs futás közben módosítja azokat.</li>
 <li><code>stalls</code>: Az összes alkalom száma (az utolsó újraindítás óta), amikor a nyomtatót szüneteltetni kellett, mert a nyomtatófej gyorsabban mozgott, mint ahány mozdulatot a G-kód bemenetről be lehetett olvasni.</li>
 </ul>
 <h2 id="dual_carriage">dual_carriage<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h2>

@@ -1006,6 +1006,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pwm_cycle_time" class="md-nav__link">
+    pwm_cycle_time
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#quad_gantry_level" class="md-nav__link">
     quad_gantry_level
   </a>
@@ -1823,6 +1830,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pwm_cycle_time" class="md-nav__link">
+    pwm_cycle_time
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#quad_gantry_level" class="md-nav__link">
     quad_gantry_level
   </a>
@@ -2167,6 +2181,11 @@
 <li><code>last_query</code>：如果探針在上一個 QUERY_PROBE 命令期間報告為"已觸發"，則返回 True。請注意，如果在宏中使用它，根據模板展開的順序，必須在包含此引用的宏之前執行 QUERY_PROBE 命令。</li>
 <li><code>last_z_result</code>：返回上一次 PROBE 命令的結果 Z 值。請注意，由於模板展開的順序，在宏中使用時必須在包含此引用的宏之前執行 PROBE（或類似）命令。</li>
 </ul>
+<h2 id="pwm_cycle_time">pwm_cycle_time<a class="headerlink" href="#pwm_cycle_time" title="Permanent link">&para;</a></h2>
+<p>The following information is available in <a href="Config_Reference.html#pwm_cycle_time">pwm_cycle_time some_name</a> objects:</p>
+<ul>
+<li><code>value</code>：由<code>SET_PIN</code>指令設定的引腳「值」。</li>
+</ul>
 <h2 id="quad_gantry_level">quad_gantry_level<a class="headerlink" href="#quad_gantry_level" title="Permanent link">&para;</a></h2>
 <p><code>quad_gantry_level</code> 對像提供了以下資訊（如果定義了 quad_gantry_level，則該對象可用）：</p>
 <ul>
@@ -2242,7 +2261,7 @@
 <li><code>homed_axes</code>：目前被認為處於「已歸位」狀態的車軸。這是一個包含一個或多個"x"、"y"、"z"的字串。</li>
 <li><code>axis_minimum</code>、<code>axis_maximum</code>：歸位后的軸的行程限制（毫米）。可以訪問此極限值的 x、y、z 份量（例如，<code>axis_minimum.x</code>、<code>axis_maximum.z</code>）。</li>
 <li>For Delta printers the <code>cone_start_z</code> is the max z height at maximum radius (<code>printer.toolhead.cone_start_z</code>).</li>
-<li><code>max_velocity</code>、<code>max_accel</code>、<code>max_accel_to_decel</code>和<code>square_corner_velocity</code>：目前生效的印表機限制。如果 <code>SET_VELOCITY_LIMIT</code>（或 <code>M204</code>）命令在執行時改變它們，這些值可能與配置檔案設定不同。</li>
+<li><code>max_velocity</code>, <code>max_accel</code>, <code>minimum_cruise_ratio</code>, <code>square_corner_velocity</code>: The current printing limits that are in effect. This may differ from the config file settings if a <code>SET_VELOCITY_LIMIT</code> (or <code>M204</code>) command alters them at run-time.</li>
 <li><code>stalls</code>：由於工具頭移動速度快于從 G 程式碼輸入讀取的移動速度，因此印表機必須暫停的總次數（自上次重新啟動以來）。</li>
 </ul>
 <h2 id="dual_carriage">dual_carriage<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h2>

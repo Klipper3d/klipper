@@ -1313,6 +1313,20 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pwm_tool" class="md-nav__link">
+    [pwm_tool]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pwm_cycle_time" class="md-nav__link">
+    [pwm_cycle_time]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#static_digital_output" class="md-nav__link">
     [static_digital_output]
   </a>
@@ -3325,6 +3339,20 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pwm_tool" class="md-nav__link">
+    [pwm_tool]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pwm_cycle_time" class="md-nav__link">
+    [pwm_cycle_time]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#static_digital_output" class="md-nav__link">
     [static_digital_output]
   </a>
@@ -3745,29 +3773,49 @@ serial :
 <p>La section imprimante contrôle les paramètres de haut niveau de l'imprimante.</p>
 <div class="highlight"><pre><span></span><code>[printer]
 kinematics:
-#    Le type d&#39;imprimante utilisée. Cette option peut être l&#39;une des suivantes : cartésienne,
-#    corexy, corexz, hybrid_corexy, hybrid_corexz, rotary_delta, delta, deltesian, polar, winch,
-#    ou none. Ce paramètre doit être spécifié.
+#   The type of printer in use. This option may be one of: cartesian,
+#   corexy, corexz, hybrid_corexy, hybrid_corexz, rotary_delta, delta,
+#   deltesian, polar, winch, or none. This parameter must be specified.
 max_velocity:
-#    Vitesse maximale (en mm/s) de la tête d&#39;outil (par rapport à l&#39;impression).
-#    Ce paramètre doit être spécifié.
+#   Maximum velocity (in mm/s) of the toolhead (relative to the
+#   print). This parameter must be specified.
 max_accel:
-#    Accélération maximale (en mm/s^2) de la tête de l&#39;outil (par rapport à l&#39;impression).
-#    Ce paramètre doit être spécifié.
-#max_accel_to_decel:
-#    Une pseudo-accélération (en mm/s^2) contrôlant la vitesse à laquelle la tête de l&#39;outil peut
-#    passer de l&#39;accélération à la décélération. Elle est utilisée pour réduire la vitesse maximale
-#    des courts mouvements en zigzag (et donc réduire les vibrations de l&#39;imprimante dues à ces
-#    mouvements). La valeur par défaut est la moitié de max_accel.
+#   Maximum acceleration (in mm/s^2) of the toolhead (relative to the
+#   print). Although this parameter is described as a &quot;maximum&quot;
+#   acceleration, in practice most moves that accelerate or decelerate
+#   will do so at the rate specified here. The value specified here
+#   may be changed at runtime using the SET_VELOCITY_LIMIT command.
+#   This parameter must be specified.
+#minimum_cruise_ratio: 0.5
+#   Most moves will accelerate to a cruising speed, travel at that
+#   cruising speed, and then decelerate. However, some moves that
+#   travel a short distance could nominally accelerate and then
+#   immediately decelerate. This option reduces the top speed of these
+#   moves to ensure there is always a minimum distance traveled at a
+#   cruising speed. That is, it enforces a minimum distance traveled
+#   at cruising speed relative to the total distance traveled. It is
+#   intended to reduce the top speed of short zigzag moves (and thus
+#   reduce printer vibration from these moves). For example, a
+#   minimum_cruise_ratio of 0.5 would ensure that a standalone 1.5mm
+#   move would have a minimum cruising distance of 0.75mm. Specify a
+#   ratio of 0.0 to disable this feature (there would be no minimum
+#   cruising distance enforced between acceleration and deceleration).
+#   The value specified here may be changed at runtime using the
+#   SET_VELOCITY_LIMIT command. The default is 0.5.
 #square_corner_velocity: 5.0
-#    La vitesse maximale (en mm/s) à laquelle la tête d&#39;outil peut parcourir un angle de 90 degrés.
-#    Une valeur non nulle peut réduire les changements dans les débits de l&#39;extrudeuse en
-#    permettant des changements de vitesse instantanés de la tête d&#39;outil pendant les virages.
-#    Cette valeur configure l&#39;algorithme interne de prise de virage à vitesse centripète ; les virages
-#    dont l&#39;angle est supérieur à 90 degrés auront une vitesse de prise de virage plus élevée tandis
-#    que ceux d&#39;angles inférieurs à 90 degrés auront une vitesse de virage plus faible.
-#    Si ce paramètre est défini sur zéro, la tête d&#39;outil décélérera jusqu&#39;à zéro à chaque coin.
-#    La valeur par défaut est 5mm/s.
+#   The maximum velocity (in mm/s) that the toolhead may travel a 90
+#   degree corner at. A non-zero value can reduce changes in extruder
+#   flow rates by enabling instantaneous velocity changes of the
+#   toolhead during cornering. This value configures the internal
+#   centripetal velocity cornering algorithm; corners with angles
+#   larger than 90 degrees will have a higher cornering velocity while
+#   corners with angles less than 90 degrees will have a lower
+#   cornering velocity. If this is set to zero then the toolhead will
+#   decelerate to zero at each corner. The value specified here may be
+#   changed at runtime using the SET_VELOCITY_LIMIT command. The
+#   default is 5mm/s.
+#max_accel_to_decel:
+#   This parameter is deprecated and should no longer be used.
 </code></pre></div>
 
 <h3 id="stepper">[stepper]<a class="headerlink" href="#stepper" title="Permanent link">&para;</a></h3>
@@ -4481,18 +4529,14 @@ max_temp:
 #   where Z = 0.  When this option is specified the mesh will be offset
 #   so that zero Z adjustment occurs at this location.  The default is
 #   no zero reference.
-#relative_reference_index:
-#   **DEPRECATED, use the &quot;zero_reference_position&quot; option**
-#   The legacy option superceded by the &quot;zero reference position&quot;.
-#   Rather than a coordinate this option takes an integer &quot;index&quot; that
-#   refers to the location of one of the generated points. It is recommended
-#   to use the &quot;zero_reference_position&quot; instead of this option for new
-#   configurations. The default is no relative reference index.
 #faulty_region_1_min:
 #faulty_region_1_max:
 #   Optional points that define a faulty region.  See docs/Bed_Mesh.md
 #   for details on faulty regions.  Up to 99 faulty regions may be added.
 #   By default no faulty regions are set.
+#adaptive_margin:
+#   An optional margin (in mm) to be added around the bed area used by
+#   the defined print objects when generating an adaptive mesh.
 </code></pre></div>
 
 <h3 id="bed_tilt">[bed_tilt]<a class="headerlink" href="#bed_tilt" title="Permanent link">&para;</a></h3>
@@ -6108,48 +6152,72 @@ pin:
 <p>Broches de sortie configurables à l'exécution (on peut définir un nombre quelconque de sections avec un préfixe "output_pin"). Les broches configurées ici seront paramétrées comme des broches de sortie modifiables au moment de l'exécution en utilisant des <a href="G-Codes.html#output_pin">commandes g-code étendues</a> de type "SET_PIN PIN=my_pin VALUE=.1"</p>
 <div class="highlight"><pre><span></span><code>[output_pin my_pin]
 pin:
-#    La broche à configurer comme une sortie. Ce paramètre doit être
-#    fourni.
+#   The pin to configure as an output. This parameter must be
+#   provided.
 #pwm: False
-#    Définit si la broche de sortie doit être capable de modulation de largeur d&#39;impulsion.
-#    Si ce paramètre est vrai, les champs de valeur doivent être compris entre 0 et 1.
-#    La valeur par défaut est False.
-#static_value:
-#    Si cette valeur est définie, la broche est affectée à cette valeur au démarrage et
-#    la broche ne peut pas être modifiée pendant l&#39;exécution. Une broche statique utilise
-#    légèrement moins de RAM dans le micro-contrôleur. Le défaut est d&#39;utiliser
-#    la configuration des broches paramétrées lors du démarrage.
+#   Set if the output pin should be capable of pulse-width-modulation.
+#   If this is true, the value fields should be between 0 and 1; if it
+#   is false the value fields should be either 0 or 1. The default is
+#   False.
 #value:
-#    La valeur à donner initialement à la broche pendant la configuration du MCU.
-#    La valeur par défaut est 0 (pour une tension basse).
+#   The value to initially set the pin to during MCU configuration.
+#   The default is 0 (for low voltage).
 #shutdown_value:
-#    La valeur à donner à la broche lors d&#39;un événement d&#39;arrêt du MCU. La valeur par
-#    défaut est 0 (pour une tension basse).
-#maximum_mcu_duration:
-#    La durée maximale pendant laquelle une valeur de non-arrêt peut être pilotée par
-#    le MCUsans un accusé de réception de l&#39;hôte.
-#    Si l&#39;hôte ne peut pas suivre une mise à jour, le MCU s&#39;éteindra et mettra
-#    toutes les broches à leurs valeurs d&#39;arrêt respectives.
-#    Défaut : 0 (désactivé)
-#    Les valeurs habituelles sont d&#39;environ 5 secondes.
+#   The value to set the pin to on an MCU shutdown event. The default
+#   is 0 (for low voltage).
 #cycle_time: 0.100
-#    La durée (en secondes) par cycle PWM. Il est recommandé que ce soit
-#    10 millisecondes ou plus lorsque vous utilisez un PWM logiciel.
-#    La valeur par défaut est de 0.100 secondes pour les broches PWM.
+#   The amount of time (in seconds) per PWM cycle. It is recommended
+#   this be 10 milliseconds or greater when using software based PWM.
+#   The default is 0.100 seconds for pwm pins.
 #hardware_pwm: False
-#    Activez pour utiliser le PWM matériel au lieu du PWM logiciel. Lors de
-#    l&#39;utilisation d&#39;un PWM matériel, le temps de cycle réel est limité par
-#    l&#39;implémentation et peut être significativement différent du
-#    cycle_time demandé. La valeur par défaut est False.
-#scale :
-#    Ce paramètre peut être utilisé pour modifier la façon dont les paramètres &#39;value&#39;
-#    et &#39;shutdown_value&#39; sont interprétés pour les broches pwm. Si fourni, alors
-#    le paramètre &#39;value&#39; doit être compris entre 0.0 et &#39;scale&#39;. Cela peut être utile
-#    lors de la configuration d&#39;une broche PWM contrôlant une référence de tension
-#    d&#39;un moteur pas à pas. L&#39;&#39;échelle&#39; peut être définie sur l&#39;intensité du moteur pas
-#    à pas équivalent si le PWM était entièrement activé, et puis le paramètre &#39;value&#39;
-#    peut être spécifié en utilisant l&#39;intensité souhaitée pour le moteur pas à pas. La
-#    valeur par défaut est de ne pas mettre à l&#39;échelle le paramètre &#39;value&#39;.
+#   Enable this to use hardware PWM instead of software PWM. When
+#   using hardware PWM the actual cycle time is constrained by the
+#   implementation and may be significantly different than the
+#   requested cycle_time. The default is False.
+#scale:
+#   This parameter can be used to alter how the &#39;value&#39; and
+#   &#39;shutdown_value&#39; parameters are interpreted for pwm pins. If
+#   provided, then the &#39;value&#39; parameter should be between 0.0 and
+#   &#39;scale&#39;. This may be useful when configuring a PWM pin that
+#   controls a stepper voltage reference. The &#39;scale&#39; can be set to
+#   the equivalent stepper amperage if the PWM were fully enabled, and
+#   then the &#39;value&#39; parameter can be specified using the desired
+#   amperage for the stepper. The default is to not scale the &#39;value&#39;
+#   parameter.
+#maximum_mcu_duration:
+#static_value:
+#   These options are deprecated and should no longer be specified.
+</code></pre></div>
+
+<h3 id="pwm_tool">[pwm_tool]<a class="headerlink" href="#pwm_tool" title="Permanent link">&para;</a></h3>
+<p>Pulse width modulation digital output pins capable of high speed updates (one may define any number of sections with an "output_pin" prefix). Pins configured here will be setup as output pins and one may modify them at run-time using "SET_PIN PIN=my_pin VALUE=.1" type extended <a href="G-Codes.html#output_pin">g-code commands</a>.</p>
+<div class="highlight"><pre><span></span><code>[pwm_tool my_tool]
+pin:
+#   The pin to configure as an output. This parameter must be provided.
+#maximum_mcu_duration:
+#   The maximum duration a non-shutdown value may be driven by the MCU
+#   without an acknowledge from the host.
+#   If host can not keep up with an update, the MCU will shutdown
+#   and set all pins to their respective shutdown values.
+#   Default: 0 (disabled)
+#   Usual values are around 5 seconds.
+#value:
+#shutdown_value:
+#cycle_time: 0.100
+#hardware_pwm: False
+#scale:
+#   See the &quot;output_pin&quot; section for the definition of these parameters.
+</code></pre></div>
+
+<h3 id="pwm_cycle_time">[pwm_cycle_time]<a class="headerlink" href="#pwm_cycle_time" title="Permanent link">&para;</a></h3>
+<p>Run-time configurable output pins with dynamic pwm cycle timing (one may define any number of sections with an "pwm_cycle_time" prefix). Pins configured here will be setup as output pins and one may modify them at run-time using "SET_PIN PIN=my_pin VALUE=.1 CYCLE_TIME=0.100" type extended <a href="G-Codes.html#pwm_cycle_time">g-code commands</a>.</p>
+<div class="highlight"><pre><span></span><code>[pwm_cycle_time my_pin]
+pin:
+#value:
+#shutdown_value:
+#cycle_time: 0.100
+#scale:
+#   See the &quot;output_pin&quot; section for information on these parameters.
 </code></pre></div>
 
 <h3 id="static_digital_output">[static_digital_output]<a class="headerlink" href="#static_digital_output" title="Permanent link">&para;</a></h3>

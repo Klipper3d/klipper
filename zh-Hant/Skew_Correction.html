@@ -1409,7 +1409,7 @@
 <p>糾正偏斜的第一步是沿著你要糾正的平面列印一個<a href="https://www.thingiverse.com/thing:2563185/files">校準物件</a>。還有一個<a href="https://www.thingiverse.com/thing:2972743">校準物件</a>包括了一個模型中的所有平面。你需要旋轉這個物件，使角A朝向平面的原點。</p>
 <p>不要在這次列印中應用傾斜校正。你可以通過從printer.cfg中刪除<code>[skew_correction]</code>模組或發送 <code>SET_SKEW CLEAR=1</code>G-Code 來實現。</p>
 <h2 id="_3">進行測量<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
-<p><code>[skew_correcton]</code> 模組需要三次對校準平面的測量值；從角 A 到角 C 的距離，從角 B 到角 D 的距離，以及從角 A 到角 D 的距離。當測量距離 AD 時，不包括一些測試物件的角上的平面。</p>
+<p>The <code>[skew_correction]</code> module requires 3 measurements for each plane you want to correct; the length from Corner A to Corner C, the length from Corner B to Corner D, and the length from Corner A to Corner D. When measuring length AD do not include the flats on the corners that some test objects provide.</p>
 <p><img alt="skew_lengths" src="img/skew_lengths.png" /></p>
 <h2 id="_4">配置偏斜<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <p>確保 <code>[skew_correction]</code> 已經在 printer.cfg 中。現在可以使用<code>SET_SKEW</code> G-Code 來配置 skew_correcton。例如，如果對 XY 平面測量的距離結果如下：</p>

@@ -714,6 +714,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#adaptive-meshes" class="md-nav__link">
+    Adaptive Meshes
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1550,6 +1557,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#adaptive-meshes" class="md-nav__link">
+    Adaptive Meshes
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1782,9 +1796,29 @@ faulty_region_4_max: 45.0, 210.0
 </ul>
 <p>下面的图片说明了当一个生成的探测点位于一个故障区域内时，如何生成替代探测点。所显示的区域与上述样本配置中的区域一致。替代点和它们的坐标以绿色标识。</p>
 <p><img alt="bedmesh_interpolated" src="img/bedmesh_faulty_regions.svg" /></p>
+<h3 id="adaptive-meshes">Adaptive Meshes<a class="headerlink" href="#adaptive-meshes" title="Permanent link">&para;</a></h3>
+<p>Adaptive bed meshing is a way to speed up the bed mesh generation by only probing the area of the bed used by the objects being printed. When used, the method will automatically adjust the mesh parameters based on the area occupied by the defined print objects.</p>
+<p>The adapted mesh area will be computed from the area defined by the boundaries of all the defined print objects so it covers every object, including any margins defined in the configuration. After the area is computed, the number of probe points will be scaled down based on the ratio of the default mesh area and the adapted mesh area. To illustrate this consider the following example:</p>
+<p>For a 150mmx150mm bed with <code>mesh_min</code> set to <code>25,25</code> and <code>mesh_max</code> set to <code>125,125</code>, the default mesh area is a 100mmx100mm square. An adapted mesh area of <code>50,50</code> means a ratio of <code>0.5x0.5</code> between the adapted area and default mesh area.</p>
+<p>If the <code>bed_mesh</code> configuration specified <code>probe_count</code> as <code>7x7</code>, the adapted bed mesh will use 4x4 probe points (7 * 0.5 rounded up).</p>
+<p><img alt="adaptive_bedmesh" src="img/adaptive_bed_mesh.svg" /></p>
+<div class="highlight"><pre><span></span><code>[bed_mesh]
+speed: 120
+horizontal_move_z: 5
+mesh_min: 35, 6
+mesh_max: 240, 198
+probe_count: 5, 3
+adaptive_margin: 5
+</code></pre></div>
+
+<ul>
+<li><code>adaptive_margin</code>  <em>Default Value: 0</em>  Margin (in mm) to add around the area of the bed used by the defined objects. The diagram below shows the adapted bed mesh area with an <code>adaptive_margin</code> of 5mm. The adapted mesh area (area in green) is computed as the used bed area (area in blue) plus the defined margin.<img alt="adaptive_bedmesh_margin" src="img/adaptive_bed_mesh_margin.svg" /></li>
+</ul>
+<p>By nature, adaptive bed meshes use the objects defined by the Gcode file being printed. Therefore, it is expected that each Gcode file will generate a mesh that probes a different area of the print bed. Therefore, adapted bed meshes should not be re-used. The expectation is that a new mesh will be generated for each print if adaptive meshing is used.</p>
+<p>It is also important to consider that adaptive bed meshing is best used on machines that can normally probe the entire bed and achieve a maximum variance less than or equal to 1 layer height. Machines with mechanical issues that a full bed mesh normally compensates for may have undesirable results when attempting print moves <strong>outside</strong> of the probed area. If a full bed mesh has a variance greater than 1 layer height, caution must be taken when using adaptive bed meshes and attempting print moves outside of the meshed area.</p>
 <h2 id="g">床网 G代码<a class="headerlink" href="#g" title="Permanent link">&para;</a></h2>
 <h3 id="_11">校准<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
-<p><code>BED_MESH_CALIBRATE PROFILE=&lt;名称&gt; METHOD=[manual | automatic] [&lt;probe_parameter&gt;=&lt;值&gt;] [&lt;mesh_parameter&gt;=&lt;值&gt;]</code> <em>默认配置：default</em> <em>默认方法：如果检测到探针则自动，否则手动</em></p>
+<p><code>BED_MESH_CALIBRATE PROFILE=&lt;name&gt; METHOD=[manual | automatic] [&lt;probe_parameter&gt;=&lt;value&gt;] [&lt;mesh_parameter&gt;=&lt;value&gt;] [ADAPTIVE=[0|1] [ADAPTIVE_MARGIN=&lt;value&gt;]</code> <em>Default Profile: default</em> <em>Default Method: automatic if a probe is detected, otherwise manual</em>  <em>Default Adaptive: 0</em>  <em>Default Adaptive Margin: 0</em></p>
 <p>启动床网校准的探测程序。</p>
 <p>网格将被保存到由 <code>PROFILE</code> 参数指定的配置中，如果没有指定，则使用 <code>default</code>。如果选择了 <code>METHOD=manual</code> ，那么将进行手动探测。在自动和手动探测之间切换时，生成的网格点会自动调整。</p>
 <p>可以通过指定网格参数来修改探测区域。以下参数可用：</p>
@@ -1803,6 +1837,8 @@ faulty_region_4_max: 45.0, 210.0
 </li>
 <li>全部打印床：<ul>
 <li><code>ALGORITHM</code></li>
+<li><code>ADAPTIVE</code></li>
+<li><code>ADAPTIVE_MARGIN</code></li>
 </ul>
 </li>
 </ul>
@@ -1851,8 +1887,9 @@ faulty_region_4_max: 45.0, 210.0
 <p><code>BED_MESH_CLEAR</code></p>
 <p>此 gcode 可用于清除内部网格状态。</p>
 <h3 id="xy">应用X/Y偏移量<a class="headerlink" href="#xy" title="Permanent link">&para;</a></h3>
-<p><code>BED_MESH_OFFSET [X=&lt;value&gt;] [Y=&lt;value&gt;]</code></p>
-<p>这对有多个独立挤出头的打印机很有用，因为偏移量是必要的，以便在更换工具后产生正确的Z调整。应指定它们相对于主挤出头的偏移量。也就是说，如果第二个挤出头安装在第一个挤出头的右边，应指定一个正的X偏移量，如果第二个挤出头安装在第一个挤出头的 "后面"，应指定一个正的Y偏移量。</p>
+<p><code>BED_MESH_OFFSET [X=&lt;value&gt;] [Y=&lt;value&gt;] [ZFADE=&lt;value&gt;]</code></p>
+<p>This is useful for printers with multiple independent extruders, as an offset is necessary to produce correct Z adjustment after a tool change. Offsets should be specified relative to the primary extruder. That is, a positive X offset should be specified if the secondary extruder is mounted to the right of the primary extruder, a positive Y offset should be specified if the secondary extruder is mounted "behind" the primary extruder, and a positive ZFADE offset should be specified if the secondary extruder's nozzle is above the primary extruder's.</p>
+<p>Note that a ZFADE offset does <em>NOT</em> directly apply additional adjustment. It is intended to compensate for a <code>gcode offset</code> when <a href="#mesh-fade">mesh fade</a> is enabled. For example, if a secondary extruder is higher than the primary and needs a negative gcode offset, ie: <code>SET_GCODE_OFFSET Z=-.2</code>, it can be accounted for in <code>bed_mesh</code> with <code>BED_MESH_OFFSET ZFADE=.2</code>.</p>
 
               
             </article>

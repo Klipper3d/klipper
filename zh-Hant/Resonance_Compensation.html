@@ -1616,7 +1616,7 @@
 <p>首先，測量<strong>振紋頻率</strong>。</p>
 <ol>
 <li>如果 <code>square_corner_velocity</code> 參數已更改，請將其恢復為 5.0。使用input shaper時不建議增加它，因為它會導致零件更平滑 - 最好使用更高的加速度值。</li>
-<li>通過發出以下命令增加 <code>max_accel_to_decel</code>：<code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Disable the <code>miminum_cruise_ratio</code> feature by issuing the following command: <code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
 <li>禁用Pressure Advance：<code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>如果你已經將<code>[input_shaper]</code>分段新增到print.cfg中，執行<code>SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0</code>命令。如果你得到"未知命令"錯誤，此時你可以安全地忽略它，繼續進行測量。</li>
 <li>執行命令： <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code> 基本上，我們嘗試通過設置不同的大加速度值來使環紋更加明顯。此命令將從 1500 mm/sec^2 開始每 5 mm 增加加速度：1500 mm/sec^2、2000 mm/sec^2、2500 mm/sec^2 等等，直到 7000 mm/sec^2最後一個區域。</li>
@@ -1657,7 +1657,7 @@ shaper_freq_y: ...  # frequency for the Y mark of the test model
 <p>打印環形測試模型如下：</p>
 <ol>
 <li>重啟固件：<code>RESTART</code></li>
-<li>準備測試：<code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Prepare for test: <code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
 <li>禁用Pressure Advance：<code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>執行：<code>SET_INPUT_SHAPER SHAPER_TYPE=MZV</code></li>
 <li>執行命令：<code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
@@ -1695,7 +1695,7 @@ shaper_type: mzv
 <p>請注意，使用環紋測試模型的諧振頻率測量精度足以滿足大多數目的，因此不建議進一步調整。如果您仍想嘗試仔細檢查您的結果（例如，如果您在使用您選擇的input shaper打印一個測試模型後仍然看到一些環紋，您選擇的input shaper與您之前測量的頻率相同），您可以按照本文中的步驟操作部分。請注意，如果您在啟用 [input_shaper] 後看到不同頻率的環紋，則本節將無濟於事。</p>
 <p>假設您已使用建議的參數對環紋模型進行切片，請針對 X 軸和 Y 軸中的每一個完成以下步驟：</p>
 <ol>
-<li>準備測試：<code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Prepare for test: <code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
 <li>確保Pressure Advance被禁用：<code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>執行：<code>SET_INPUT_SHAPER SHAPER_TYPE=ZV</code></li>
 <li>從具有您選擇的 input shaper的現有環紋測試模型中選擇顯示環紋足夠好的加速度，並將其設置為：<code>SET_VELOCITY_LIMIT ACCEL=...</code></li>
@@ -1716,7 +1716,7 @@ shaper_type: mzv
 <p>要進行調整，請將空的 <code>[input_shaper]</code> 部分添加到您的 <code>printer.cfg</code>。然後，假設您已使用建議的參數對環紋模型進行切片，按如下方式打印測試模型 3 次。第一次，在打印之前，運行</p>
 <ol>
 <li><code>RESTART</code></li>
-<li><code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li><code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
 <li><code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li><code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI SHAPER_FREQ_X=60 SHAPER_FREQ_Y=60</code></li>
 <li><code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>

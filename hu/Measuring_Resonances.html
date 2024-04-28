@@ -2144,7 +2144,7 @@ GND+SCL
 <h3 id="szoftver-telepitese">Szoftver telepítése<a class="headerlink" href="#szoftver-telepitese" title="Permanent link">&para;</a></h3>
 <p>Vedd figyelembe, hogy a rezonanciamérések és a shaper automatikus kalibrálása további, alapértelmezés szerint nem telepített szoftverfüggőségeket igényel. Először futtasd a Raspberry Pi számítógépen a következő parancsokat:</p>
 <div class="highlight"><pre><span></span><code>sudo apt update
-sudo apt install python3-numpy python3-matplotlib libatlas-base-dev
+sudo apt install python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev
 </code></pre></div>
 
 <p>Ezután a NumPy telepítéséhez a Klipper környezetbe futtassuk a parancsot:</p>
@@ -2429,6 +2429,11 @@ max_smoothing: 0.25  # egy példa
 <p>Mivel a bemeneti alakító némi simítást okozhat az elemekben, különösen nagy gyorsulásoknál, továbbra is meg kell választani a <code>max_accel</code> értéket, amely nem okoz túl nagy simítást a nyomtatott alkatrészekben. Egy kalibrációs szkript becslést ad a <code>max_accel</code> paraméterre, amely nem okozhat túl nagy simítást. Vedd figyelembe, hogy a kalibrációs szkript által megjelenített <code>max_accel</code> csak egy elméleti maximum, amelynél az adott alakító még képes úgy dolgozni, hogy nem okoz túl nagy simítást. Semmiképpen sem ajánlott ezt a gyorsulást beállítani a nyomtatáshoz. A nyomtatód által elviselhető maximális gyorsulás a nyomtató mechanikai tulajdonságaitól és a használt léptetőmotorok maximális nyomatékától függ. Ezért javasolt a <code>max_accel</code> beállítása a <code>[nyomtató]</code> szakaszban, amely nem haladja meg az X és Y tengelyek becsült értékeit, valószínűleg némi konzervatív biztonsági tartalékkal.</p>
 <p>Alternatívaként kövesd <a href="Resonance_Compensation.html#selecting-max_accel">ezt</a> a részt a bemeneti alakító hangolási útmutatójában, és nyomtasd ki a tesztmodellt a <code>max_accel</code> paraméter kísérleti kiválasztásához.</p>
 <p>Ugyanez a figyelmeztetés vonatkozik a bemeneti alakító <a href="#bemeneti-formazo-automatikus-kalibralasa">automatikus kalibrálás</a> <code>SHAPER_CALIBRATE</code> paranccsal történő használatára is: az automatikus kalibrálás után továbbra is szükséges a megfelelő <code>max_accel</code> érték kiválasztása, és a javasolt gyorsulási korlátok nem lesznek automatikusan alkalmazva.</p>
+<p>Ne feledd, hogy a maximális gyorsulás túl nagy simítás nélkül a <code>square_corner_velocity</code> értéktől függ. Az általános ajánlás az, hogy ne változtassuk meg az alapértelmezett 5.0 értéktől, és ezt az értéket használja alapértelmezés szerint a <code>calibrate_shaper.py</code> szkript. Ha mégis megváltoztattad, akkor a <code>--square_corner_velocity=...</code> paraméter átadásával tájékoztatnod kell erről a szkriptet, például.</p>
+<div class="highlight"><pre><span></span><code>~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png --square_corner_velocity=10.0
+</code></pre></div>
+
+<p>hogy helyesen tudd kiszámítani a maximális gyorsulási ajánlásokat. Vedd figyelembe, hogy a <code>SHAPER_CALIBRATE</code> parancs már figyelembe veszi a konfigurált <code>square_corner_velocity</code> paramétert, és nincs szükség annak explicit megadására.</p>
 <p>Ha a formázó újrakalibrálását végzi, és a javasolt formázó konfigurációhoz tartozó simítás majdnem megegyezik az előző kalibrálás során kapott értékkel, ez a lépés kihagyható.</p>
 <h3 id="egyeni-tengelyek-tesztelese">Egyéni tengelyek tesztelése<a class="headerlink" href="#egyeni-tengelyek-tesztelese" title="Permanent link">&para;</a></h3>
 <p><code>TEST_RESONANCES</code> parancs támogatja az egyéni tengelyeket. Bár ez nem igazán hasznos a bemeneti alakító kalibrálásához, a nyomtató rezonanciáinak alapos tanulmányozására és például a szíjfeszítés ellenőrzésére használható.</p>

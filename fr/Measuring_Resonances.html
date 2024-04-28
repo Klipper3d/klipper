@@ -2144,7 +2144,7 @@ GND+SCL
 <h3 id="installation-logicielle">Installation logicielle<a class="headerlink" href="#installation-logicielle" title="Permanent link">&para;</a></h3>
 <p>Notez que les mesures de résonance et l’auto-étalonnage de l'input shaper nécessitent des dépendances logicielles supplémentaires non installées par défaut. Tout d’abord, exécutez sur votre Raspberry Pi les commandes suivantes :</p>
 <div class="highlight"><pre><span></span><code>sudo apt update
-sudo apt install python3-numpy python3-matplotlib libatlas-base-dev
+sudo apt install python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev
 </code></pre></div>
 
 <p>Ensuite, pour installer NumPy dans l’environnement Klipper, exécutez la commande :</p>
@@ -2429,6 +2429,11 @@ max_smoothing: 0.25  # valeur exemple
 <p>Étant donné que le formateur d'entrée peut créer un certain lissage dans les pièces, en particulier avec des accélérations élevées, vous devrez toujours choisir une valeur <code>max_accel</code> ne créant pas trop de lissage dans les pièces imprimées. Un script d'étalonnage fournit une estimation du paramètre <code>max_accel</code> qui ne devrait pas créer trop de lissage. Notez que le <code>max_accel</code> tel qu'affiché par le script de calibrage n'est qu'un maximum théorique auquel le formateur d'entrée est encore capable de travailler sans produire trop de lissage. Il ne s'agit en aucun cas d'une recommandation pour définir cette accélération sur vos impressions. L'accélération maximale supportée par votre imprimante dépend de ses propriétés mécaniques et du couple maximal des moteurs pas à pas utilisés. Par conséquent, il est suggéré de définir un <code>max_accel</code> dans la section <code>[printer]</code> qui ne dépasse pas les valeurs estimées pour les axes X et Y, probablement avec une marge de sécurité.</p>
 <p>Vous pouvez également suivre <a href="Resonance_Compensation.html#selecting-max_accel">cette partie</a> du guide de réglage du formateur d'entrée et imprimer un modèle de test pour choisir le paramètre <code>max_accel</code> de manière expérimentale.</p>
 <p>Même remarque pour l'<a href="#input-shaper-auto-calibration">auto-calibration</a> du formateur d'entrée avec la commande <code>SHAPER_CALIBRATE</code> : il faut encore choisir la bonne valeur <code>max_accel</code> après l'auto-calibrage, notez que les limites d'accélérations suggérées ne sont pas appliquées automatiquement.</p>
+<p>Keep in mind that the maximum acceleration without too much smoothing depends on the <code>square_corner_velocity</code>. The general recommendation is not to change it from its default value 5.0, and this is the value used by default by the <code>calibrate_shaper.py</code> script. If you did change it though, you should inform the script about it by passing <code>--square_corner_velocity=...</code> parameter, e.g.</p>
+<div class="highlight"><pre><span></span><code>~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png --square_corner_velocity=10.0
+</code></pre></div>
+
+<p>so that it can calculate the maximum acceleration recommendations correctly. Note that the <code>SHAPER_CALIBRATE</code> command already takes the configured <code>square_corner_velocity</code> parameter into account, and there is no need to specify it explicitly.</p>
 <p>Si vous effectuez un ré-étalonnage du formateur d'entrée et que le lissage indiqué pour la configuration de formateur suggérée est pratiquement le même que celui obtenu lors du calibrage précédent, cette étape peut être ignorée.</p>
 <h3 id="test-des-axes-personnalises">Test des axes personnalisés<a class="headerlink" href="#test-des-axes-personnalises" title="Permanent link">&para;</a></h3>
 <p>la commande <code>TEST_RESONANCES</code> prend en charge les axes personnalisés. Bien que cela ne soit pas vraiment utile pour l’étalonnage des input shaper, cela peut être utilisé pour étudier en profondeur les résonances de l’imprimante et vérifier, par exemple, la tension de la courroie.</p>

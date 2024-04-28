@@ -1307,7 +1307,8 @@
 <p>過度運動的可能成因是，控制步進電機運動的微控制器 和 監控限位開關的微控制器之間的資訊傳遞存在延時。Klipper在設計上將延時壓縮到25ms以下。（在使用複數微控制器時，各個微控制器會通過週期性發送狀態資訊確定與上位機的延時不超過25ms。）</p>
 <p>例如，如果歸零速度為10 mm/s則可能的過運動的量為0.25mm（10mm/s * .025s == 0.250mm）。在進行復數微控制器的歸零配置時應充分考慮過運動的影響。使用低速歸零可以有效減少過運動。</p>
 <p>步進電機的過運動不太可能對歸零和探高的精度產生很大的影響。Klippe程式碼上會考慮通訊延時校正歸零的結果。但是，過運動對硬體穩固性有要求，因為過運動發生時有可能會損壞硬體。</p>
-<p>對配置有複數微控制器歸零的Klipper，如在進行歸零時遭遇通訊錯誤，軟體將會拋出"Communication timeout during homing"（歸零時，控制器通訊超時）錯誤資訊。</p>
+<p>In order to use this "multi-mcu homing" capability the hardware must have predictably low latency between the host computer and all of the micro-controllers. Typically the round-trip time must be consistently less than 10ms. High latency (even for short periods) is likely to result in homing failures.</p>
+<p>Should high latency result in a failure (or if some other communication issue is detected) then Klipper will raise a "Communication timeout during homing" error.</p>
 <p>要注意，當一個軸由多個步進電機控制（如<code>stepper_z</code>和<code>stepper_z1</code>），這些電機必須連線到同一微控制器上以實現複數微控制器歸零。詳細來說，即Z限位開關位於微控制器1， <code>stepper_z</code>連線到微控制器2，則<code>stepper_z1</code>必須連線到微控制器2。</p>
 
               

@@ -1616,7 +1616,7 @@
 <p>En premier lieu, mesurez la <strong>fréquence de résonance</strong>.</p>
 <ol>
 <li>Si le paramètre <code>square_corner_velocity</code> a été modifié, remettez-le à 5.0. Il n'est pas conseillé de l'augmenter lors de l'utilisation de l'input shaper car cela peut provoquer plus de lissage dans les pièces - il est préférable d'utiliser une valeur d'accélération plus élevée à la place.</li>
-<li>Augmentez <code>max_accel_to_decel</code> en lançant la commande suivante : <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Disable the <code>miminum_cruise_ratio</code> feature by issuing the following command: <code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
 <li>Désactivez l'avance de pression : <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>Si vous avez déjà ajouté la section <code>[input_shaper]</code> au fichier printer.cfg, exécutez la commande <code>SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0</code>. Si vous obtenez l'erreur "Unknown command", vous pouvez l'ignorer - pour le moment - et continuer les mesures.</li>
 <li>Exécutez la commande : <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code> Dans la pratique, nous essayons de rendre la résonance plus prononcée en définissant différentes valeurs élevées pour l'accélération. Cette commande augmentera l'accélération tous les 5 mm à partir de 1500 mm/sec² : 1500 mm/sec², 2000 mm/sec², 2500 mm/sec² et ainsi de suite jusqu'à 7000 mm/sec² pour la dernière bande.</li>
@@ -1657,7 +1657,7 @@ shaper_freq_y: ...    # frequence pour la marque Y sur le modèle de test
 <p>Imprimez le modèle de test de résonance comme suit :</p>
 <ol>
 <li>Redémarrez le micrologiciel : <code>RESTART</code></li>
-<li>Préparez-vous pour le test : <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Prepare for test: <code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
 <li>Désactivez l'avance de pression : <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>Exécutez : <code>SET_INPUT_SHAPER SHAPER_TYPE=MZV</code></li>
 <li>Exécutez la commande : <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
@@ -1695,7 +1695,7 @@ shaper_type: mzv
 <p>Notez que la précision des mesures des fréquences de résonance à l'aide du modèle de test de résonance est suffisante dans la plupart des cas, donc un réglage supplémentaire n'est pas utile. Si vous voulez toujours essayer de revérifier vos résultats (par exemple, si vous voyez toujours une résonance après avoir imprimé un modèle de test avec un input shaper de votre choix avec les fréquences mesurées précédemment), vous pouvez suivre les étapes de cette section. Notez que si vous voyez une résonance à différentes fréquences après avoir activé [input_shaper], cette section ne vous aidera pas.</p>
 <p>En considérant que vous avez tranché le modèle de résonance avec les paramètres suggérés, effectuez les étapes suivantes pour chacun des axes X et Y :</p>
 <ol>
-<li>Préparez-vous pour le test : <code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li>Prepare for test: <code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
 <li>Assurez-vous que l'avance de pression est désactivée : <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>Exécutez : <code>SET_INPUT_SHAPER SHAPER_TYPE=ZV</code></li>
 <li>À partir du modèle de test de résonance imprimé avec l'input shaper choisi, sélectionnez l'accélération montrant suffisamment bien la résonance et définissez-la avec : <code>SET_VELOCITY_LIMIT ACCEL=...</code></li>
@@ -1716,7 +1716,7 @@ shaper_type: mzv
 <p>Pour le réglage, ajoutez une section <code>[input_shaper]</code> vide à votre <code>printer.cfg</code>. Ensuite, en supposant que vous avez tranché le modèle de résonance avec les paramètres suggérés, imprimez le modèle de test 3 fois comme suit. Première fois, avant l'impression, exécutez</p>
 <ol>
 <li><code>RESTART</code></li>
-<li><code>SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000</code></li>
+<li><code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
 <li><code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li><code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI SHAPER_FREQ_X=60 SHAPER_FREQ_Y=60</code></li>
 <li><code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>

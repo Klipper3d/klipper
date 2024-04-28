@@ -2144,7 +2144,7 @@ GND+SCL
 <h3 id="_5">软件设置<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
 <p>请注意，共振测量和整形器自动校准需要默认情况下不安装的其他软件依赖项。首先，在你的树莓派上运行以下命令：</p>
 <div class="highlight"><pre><span></span><code>sudo apt update
-sudo apt install python3-numpy python3-matplotlib libatlas-base-dev
+sudo apt install python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev
 </code></pre></div>
 
 <p>接下来，为了在Klipper环境中安装NumPy，运行命令：</p>
@@ -2429,6 +2429,11 @@ max_smoothing: 0.25  # an example
 <p>由于输入整形器会在打印件中产生一些平滑，特别是在高加速时，选择一个不会产生过多平滑的<code>max_accel</code> 依然很重要校准脚本为<code>max_accel</code> 参数提供了一个不应该产生过多平滑的估计值。请注意，由校准脚本显示的<code>max_accel</code> 只是一个理论上的最大值，在这个值上，各自的整形器仍然能够工作而不产生过多的平滑。这决不是建议设置的打印加速度。你的打印机能够承受的最大加速度取决于它的机械性能和所用步进电机的最大扭矩。因此，建议在<code>[printer]</code> 部分设置<code>max_accel</code> 时不要超过X轴和Y轴的估计值，并保守一些。</p>
 <p>或者，按照<a href="Resonance_Compensation.html#selecting-max_accel">这个</a>章节的输入整形器调整指南，打印测试模型，通过实验选择<code>max_accel</code> 参数。</p>
 <p>同样的通知也适用于带有<code>SHAPER_CALIBRATE</code> 命令的输入整形器<a href="#input-shaper-auto-calibration">自动校准</a>：在自动校准后仍需选择正确的<code>max_accel</code> 值，建议的加速度限制将不会被自动应用。</p>
+<p>Keep in mind that the maximum acceleration without too much smoothing depends on the <code>square_corner_velocity</code>. The general recommendation is not to change it from its default value 5.0, and this is the value used by default by the <code>calibrate_shaper.py</code> script. If you did change it though, you should inform the script about it by passing <code>--square_corner_velocity=...</code> parameter, e.g.</p>
+<div class="highlight"><pre><span></span><code>~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png --square_corner_velocity=10.0
+</code></pre></div>
+
+<p>so that it can calculate the maximum acceleration recommendations correctly. Note that the <code>SHAPER_CALIBRATE</code> command already takes the configured <code>square_corner_velocity</code> parameter into account, and there is no need to specify it explicitly.</p>
 <p>如果重新校准一个整形器，并且建议的整形器配置的报告平滑度与你在以前的校准中得到的几乎相同，这个步骤可以被跳过。</p>
 <h3 id="_11">自定义测试轴<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
 <p><code>TEST_RESONANCES</code>命令支持自定义轴。虽然这对输入整形器校准并不真正有用，但它可用于深入研究打印机共振，并检查皮带张力等。</p>

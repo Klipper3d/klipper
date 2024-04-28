@@ -983,8 +983,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    預計算結果平滑
+  <a href="#minimum-cruise-ratio" class="md-nav__link">
+    Minimum cruise ratio
   </a>
   
 </li>
@@ -995,7 +995,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
+  <a href="#_4" class="md-nav__link">
     生成步驟
   </a>
   
@@ -1017,21 +1017,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_6" class="md-nav__link">
+  <a href="#_5" class="md-nav__link">
     三角洲機型
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_7" class="md-nav__link">
+  <a href="#_6" class="md-nav__link">
     步進電機加速度限制
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_8" class="md-nav__link">
+  <a href="#_7" class="md-nav__link">
     擠出機動作
   </a>
   
@@ -1428,8 +1428,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#_4" class="md-nav__link">
-    預計算結果平滑
+  <a href="#minimum-cruise-ratio" class="md-nav__link">
+    Minimum cruise ratio
   </a>
   
 </li>
@@ -1440,7 +1440,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#_5" class="md-nav__link">
+  <a href="#_4" class="md-nav__link">
     生成步驟
   </a>
   
@@ -1462,21 +1462,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#_6" class="md-nav__link">
+  <a href="#_5" class="md-nav__link">
     三角洲機型
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_7" class="md-nav__link">
+  <a href="#_6" class="md-nav__link">
     步進電機加速度限制
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#_8" class="md-nav__link">
+  <a href="#_7" class="md-nav__link">
     擠出機動作
   </a>
   
@@ -1540,13 +1540,15 @@
 <div class="highlight"><pre><span></span><code>end_velocity^2 = start_velocity^2 + 2*accel*move_distance
 </code></pre></div>
 
-<h3 id="_4">預計算結果平滑<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<h3 id="minimum-cruise-ratio">Minimum cruise ratio<a class="headerlink" href="#minimum-cruise-ratio" title="Permanent link">&para;</a></h3>
 <p>Klipper 實現了一種用於平滑短距離之字形移動的機制。參考以下移動：</p>
 <p><img alt="zigzag" src="img/zigzag.svg.png" /></p>
-<p>在上述情況下，從加速到減速的頻繁變化會導致機器振動，從而對機器造成壓力並增加噪音。為了減少這種情況，Klipper 跟踪常規移動加速度以及虛擬“加速到減速”率。使用這個系統，這些短的“之字形”移動的最高速度被限制為平滑打印機運動：</p>
+<p>In the above, the frequent changes from acceleration to deceleration can cause the machine to vibrate which causes stress on the machine and increases the noise. Klipper implements a mechanism to ensure there is always some movement at a cruising speed between acceleration and deceleration. This is done by reducing the top speed of some moves (or sequence of moves) to ensure there is a minimum distance traveled at cruising speed relative to the distance traveled during acceleration and deceleration.</p>
+<p>Klipper implements this feature by tracking both a regular move acceleration as well as a virtual "acceleration to deceleration" rate:</p>
 <p><img alt="smoothed" src="img/smoothed.svg.png" /></p>
-<p>具體來說，代碼計算每次移動的速度，如果它被限制在這個虛擬的“加速到減速”率（默認情況下為正常加速率的一半）。在上圖中，灰色虛線表示第一步的虛擬加速度。如果使用此虛擬加速度無法達到其全巡航速度，則其最高速度將降低到在此虛擬加速度下可以達到的最大速度。對於大多數移動，限制將等於或高於移動的現有限制，並且不會引起行為變化。然而，對於短的之字形移動，這個限制會降低最高速度。請注意，它不會改變移動中的實際加速度 - 移動將繼續使用正常加速方案，直至其調整後的最高速度。</p>
-<h2 id="_5">生成步驟<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
+<p>Specifically, the code calculates what the velocity of each move would be if it were limited to this virtual "acceleration to deceleration" rate. In the above picture the dashed gray lines represent this virtual acceleration rate for the first move. If a move can not reach its full cruising speed using this virtual acceleration rate then its top speed is reduced to the maximum speed it could obtain at this virtual acceleration rate.</p>
+<p>For most moves the limit will be at or above the move's existing limits and no change in behavior is induced. For short zigzag moves, however, this limit reduces the top speed. Note that it does not change the actual acceleration within the move - the move continues to use the normal acceleration scheme up to its adjusted top-speed.</p>
+<h2 id="_4">生成步驟<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <p>一旦前瞻過程完成，給定移動的打印頭移動是完全已知的（時間、開始位置、結束位置、每個點的速度），並且可以生成移動的步進時間。此過程在 Klipper 代碼中的“運動學類”中完成。在這些運動學類之外，一切都以毫米、秒和笛卡爾坐標空間為單位進行跟踪。運動學類的任務是將通用坐標系轉換為特定打印機的硬件細節。</p>
 <p>Klipper 使用 <a href="https://en.wikipedia.org/wiki/Root-finding_algorithm">iterative solver</a> 為每個步進器生成步進時間。該代碼包含計算每個時刻頭部理想XYZ坐標的公式，並且它具有根據這些XYZ坐標計算理想步進器位置的動作公式。通過這些公式，Klipper 可以確定步進器應該在每個步進位置的理想時間。然後在這些計算的時間安排給定的步驟。</p>
 <p>確定在恆定加速度下移動應該行進多遠的關鍵公式是：</p>
@@ -1578,7 +1580,7 @@ stepper_b_position = cartesian_x_position - cartesian_y_position
 stepper_z_position = cartesian_z_position
 </code></pre></div>
 
-<h3 id="_6">三角洲機型<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
+<h3 id="_5">三角洲機型<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h3>
 <p>三角洲機型的動作生成基於畢達哥拉斯定理：</p>
 <div class="highlight"><pre><span></span><code>stepper_position = (sqrt(arm_length^2
 
@@ -1587,10 +1589,10 @@ stepper_z_position = cartesian_z_position
                     + cartesian_z_position)
 </code></pre></div>
 
-<h3 id="_7">步進電機加速度限制<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
+<h3 id="_6">步進電機加速度限制<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h3>
 <p>使用三角洲機型時，在XYZ空間中加速的動作可能需要特定步進電機上的加速度大於運動的加速度。當步進臂比垂直更水平並且運動線通過步進器塔附近時，可能會發生這種情況。儘管這些移動可能需要一個大於打印機配置的最大移動加速度的步進電機加速度，但該步進電機移動的有效質量會更小。因此，更高的步進加速度不會導致顯著更高的步進扭矩，因此被認為是無害的。</p>
 <p>但是，為避免極端情況，Klipper 將步進加速度的最大上限設置為打印機配置的最大移動加速度的三倍。 （類似地，步進器的最大速度被限制為最大移動速度的三倍。）為了強制執行此限制，在構建包絡的最邊緣（步進器臂可能幾乎水平）的移動將具有較低的最大加速度和速度。</p>
-<h3 id="_8">擠出機動作<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h3>
+<h3 id="_7">擠出機動作<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>
 <p>Klipper 在其自己的動作類別中實現了擠出機動作。由於每個打印頭移動的時間和速度對於每次移動都是完全已知的，因此可以獨立於打印頭移動的步進時間計算來計算擠出機的步進時間。</p>
 <p>基本的擠出機運動很容易計算。步時間生成使用與笛卡爾機器人相同的公式：</p>
 <div class="highlight"><pre><span></span><code>stepper_position = requested_e_position
