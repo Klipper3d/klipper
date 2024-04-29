@@ -192,6 +192,9 @@ class GCodeDispatch:
             cpos = line.find(';')
             if cpos >= 0:
                 line = line[:cpos]
+            # log current line
+            if len(line) > 0:
+                logging.info(line)
             # Break line into parts and determine command
             parts = self.args_r.split(line.upper())
             numparts = len(parts)
