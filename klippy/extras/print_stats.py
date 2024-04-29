@@ -8,22 +8,23 @@ class PrintStats:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.gcode_move = self.printer.load_object(config, 'gcode_move')
+        self.toolhead = None
         self.reactor = self.printer.get_reactor()
         self.material_type = ''
-        self.material_name = ''
         self.material_unit = ''
         self.reset()
 
         # Register events
         self.printer.register_event_handler("klippy:mcu_identify",
-                                            self._init_stats)
+                                            self._init_delayed_stats)
         # Register commands
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
             "SET_PRINT_STATS_INFO", self.cmd_SET_PRINT_STATS_INFO,
             desc=self.cmd_SET_PRINT_STATS_INFO_help)
-    def _init_stats(self):
-        self.toolhead = self.printer.lookup_object('toolhead')
+    def _init_delayed_stats(self):
+        if self.toolhead is None:
+            self.toolhead = self.printer.lookup_object('toolhead')
         if self.toolhead:
             if self.toolhead.manufacturing_process == 'FDM':
                 self.material_type = 'filament'
@@ -127,10 +128,14 @@ class PrintStats:
         self.prev_pause_duration = self.last_epos = 0.
         self.material_used = self.total_duration = 0.
         self.material_total = self.last_material_used = 0.
+        self.material_name = ''
         self.print_start_time = self.last_pause_time = None
         self.init_duration = 0.
         self.info_total_layer = None
         self.info_current_layer = None
+
+        if self.toolhead is not None:
+            self._init_delayed_stats()
 
     def get_status(self, eventtime):
         time_paused = self.prev_pause_duration
