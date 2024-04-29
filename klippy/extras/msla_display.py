@@ -99,6 +99,8 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
                                desc=self.cmd_MSLA_UVLED_RESPONSE_TIME_help)
         gcode.register_command('M1400', self.cmd_M1400,
                                desc=self.cmd_M1400_help)
+        gcode.register_command('M1401', self.cmd_M1401,
+                               desc=self.cmd_M1401_help)
 
     def get_status(self, eventtime):
         return {'display_busy': self.is_busy(),
@@ -151,8 +153,8 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
             layer_index += 1
             new_path = last_cache.new_path_layerindex(layer_index)
             if os.path.isfile(new_path):
-                buffer = self.get_image_buffer(new_path)
-                self._cache.append(BufferCache(new_path, buffer))
+                di = self.get_image_buffer(new_path)
+                self._cache.append(BufferCache(new_path, di))
 
     def _get_cache_index(self, path) -> int:
         """
@@ -165,7 +167,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
                 return i
         return -1
 
-    def _get_image_buffercache(self, gcmd, path) -> bytes:
+    def _get_image_buffercache(self, gcmd, path):
         """
         Gets a image buffer from cache if available, otherwise it creates the
         buffer from the path image
@@ -193,19 +195,19 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
                             target=self._process_cache, args=(cache,))
                         self._cache_thread.start()
 
-                    return cache.buffer
+                    return cache.data
 
         if not os.path.isfile(path):
             raise gcmd.error(f"M6054: The file '{path}' does not exists.")
 
-        buffer = self.get_image_buffer(path)
+        di = self.get_image_buffer(path)
         if current_filepath and self._can_cache():
-            cache = BufferCache(path, buffer)
+            cache = BufferCache(path, di)
             self._cache_thread = threading.Thread(target=self._process_cache,
                                                   args=(cache,))
             self._cache_thread.start()
 
-        return buffer
+        return di
 
     cmd_MSLA_DISPLAY_VALIDATE_help = ("Validate the display against resolution "
                                       "and pixel parameters. Throw error if out"
@@ -344,7 +346,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
                 image.save(path, "PNG")
             for _ in range(avg):
                 timems = time.time()
-                self.send_image(path)
+                self.draw_image(path)
                 time_sum += time.time() - timems
         gcmd.respond_raw('Read image from disk + send time: %fms (%d samples)'
                          % (round(time_sum * 1000 / avg, 6), avg))
@@ -353,7 +355,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         buffer = bytes(os.urandom(self.fb_maxsize))
         for _ in range(avg):
             timems = time.time()
-            self.send_buffer(buffer)
+            self.write_buffer(buffer)
             time_sum += time.time() - timems
         gcmd.respond_raw('Send cached buffer: %fms (%d samples)'
                          % (round(time_sum * 1000 / avg, 6), avg))
@@ -374,15 +376,16 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         Display an image from a path and display it on the main display.
         No parameter clears the display.
 
-        Syntax: M6054 F<"file.png"> C[0/1] O[x] W[0/1]
+        Syntax: M6054 F<"file.png"> O[x] C[0/1/3] W[0/1]
         F: File path eg: "1.png". quotes are optional. (str)
-        C: Clear the image before display the new image. (int)
+        O: Sets a positive offset from start position of the buffer. (int)
+        C: Clear the remaining buffer, 0=No, 1=Yes, 2=Auto. (int) Default: 2
         W: Wait for buffer to complete the transfer. (int)
         @param gcmd:
         @return:
         """
-        clear_first = gcmd.get_int('C', 0, 0, 1)
-        offset = gcmd.get_int('O', 0, 0)
+        clear_flag = gcmd.get_int('C', framebuffer_display.CLEAR_AUTO_FLAG, 0,
+                                  framebuffer_display.CLEAR_AUTO_FLAG)
         wait_thread = gcmd.get_int('W', 0, 0, 1)
 
         toolhead = self.printer.lookup_object('toolhead')
@@ -391,15 +394,19 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         if match:
             path = match.group(1).strip(' "\'')
             path = os.path.normpath(os.path.expanduser(path))
-            buffer = self._get_image_buffercache(gcmd, path)
+            di = self._get_image_buffercache(gcmd, path)
+
+            max_offset = self.get_max_offset(
+                di['size'], di['stride'], di['height'])
+            offset = gcmd.get_int('O', 0, 0, max_offset)
             if self.is_exposure():
                 # LED is ON, sync to prevent image change while exposure
                 toolhead.wait_moves()
-                self.send_buffer_threaded(buffer, clear_first,
-                                          offset, True)
+                self.write_buffer_threaded(di['buffer'], di['stride'], offset,
+                                           clear_flag)
             else:
-                self.send_buffer_threaded(buffer, clear_first,
-                                          offset, wait_thread)
+                self.write_buffer_threaded(di['buffer'], di['stride'], offset,
+                                           clear_flag)
         else:
             if 'F' in params:
                 raise gcmd.error('M6054: The F parameter is malformed.'
@@ -553,11 +560,21 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         delay = gcmd.get_float('P', 0, above=0.) / 1000.
         self.set_uvled(value, delay)
 
+    cmd_M1401_help = "Turn the main UV LED off."
 
-class BufferCache():
-    def __init__(self, path, buffer):
+    def cmd_M1401(self, gcmd):
+        """
+        Turn the main UV LED off
+
+        Syntax: M1401
+        @param gcmd:
+        """
+        self.set_uvled(0)
+
+class BufferCache:
+    def __init__(self, path, data):
         self.path = path
-        self.buffer = buffer
+        self.data = data
         self.pathinfo = Path(path)
 
     def new_path_layerindex(self, n) -> str:

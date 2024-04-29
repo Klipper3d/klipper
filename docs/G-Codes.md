@@ -330,12 +330,12 @@ is enabled.
 
 - Clear the framebuffer (fill with zeros):
   `FRAMEBUFFER_CLEAR DEVICE=<name> WAIT=[0/1]`
-- Send image: `FRAMEBUFFER_SEND_IMAGE DEVICE=<name> PATH=<path> CLEAR=[0/1]
+- Send image: `FRAMEBUFFER_DRAW_IMAGE DEVICE=<name> PATH=<path> CLEAR=[0/1/2]
                OFFSET=[n] WAIT=[0/1]`  
   - `DEVICE`: Configured device name in [framebuffer_display name]
   - `PATH`: Absolute image path
-  - `CLEAR`: Clear the buffer before send the image
   - `OFFSET`: Offset from buffer start to write the image
+  - `CLEAR`: Clear the remaining buffer, 0=No, 1=Yes, 2=Auto. (int) Default: 2
   - `WAIT`: Wait for the render to complete
 
 ### [msla_display]
@@ -356,7 +356,8 @@ is enabled.
 - Display image: `M6054 F<"image.png"> C[0/1] W[0/1]`
   - `F`: Image file to display, when printing this file is relative to the 
          base path of the print gcode
-  - `C`: Clear the buffer before send the image
+  - `O`: Positive offset from start position of the buffer
+  - `C`: Clear the remaining buffer, 0=No, 1=Yes, 2=Auto. (int) Default: 2
   - `W`: Wait for the render to complete
 - Display clear: `M6054`
 - Tests the UV LED response time:
@@ -368,6 +369,7 @@ is enabled.
 - Set the UV LED power: `M1400 S<0-255> P[ms]`
   - `S`: The LED Power (Non PWM LEDs will turn on from 1 to 255).
   - `P`: Time to wait in milliseconds when (S>0) before turn off.
+- Turn off the UV LED: `M1401`
 
 ### [dual_carriage]
 

@@ -1,4 +1,4 @@
-# mSLA and DLP display properties
+# Write to framebuffer devices (HDMI and DSI) display
 #
 # Copyright (C) 2024  Tiago Conceicao <tiago_caza@hotmail.com>
 #
@@ -13,10 +13,14 @@ import mmap
 from PIL import Image
 import threading
 
+CLEAR_NO_FLAG = 0
+CLEAR_YES_FLAG = 1
+CLEAR_AUTO_FLAG = 2
 
 class FramebufferDisplay:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.gcode = self.printer.lookup_object('gcode')
 
         self.model = config.get('model', None)
         atypes = {'Mono': 'Mono',
@@ -43,11 +47,14 @@ class FramebufferDisplay:
         self.display_height = round(self.resolution_y * self.pixel_height, 4)
 
         if self.pixel_format == 'Mono':
+            self.channels = 1
             self.bit_depth = 8
         if self.pixel_format == 'RGB' or self.pixel_format == 'BGR':
+            self.channels = 3
             self.bit_depth = 24
         else:
-            self.bit_depth = len(self.pixel_format) * 8
+            self.channels = len(self.pixel_format)
+            self.bit_depth = self.channels * 8
 
         self.is_landscape = self.resolution_x >= self.resolution_y
         self.is_portrait = not self.is_landscape
@@ -127,13 +134,6 @@ class FramebufferDisplay:
                 (self._framebuffer_thread is not None
                 and self._framebuffer_thread.is_alive()))
 
-    def get_framebuffer_path(self) -> str:
-        """
-        Gets the framebuffer device path associated with this object.
-        @return: /dev/fb[i]
-        """
-        return f"/dev/fb{self.framebuffer_index}"
-
     def wait_framebuffer_thread(self, timeout=None) -> bool:
         """
         Wait for the framebuffer thread to terminate (Finish writes).
@@ -147,16 +147,98 @@ class FramebufferDisplay:
             return True
         return False
 
-    def get_image_buffer(self, path) -> bytes:
+    def get_framebuffer_path(self) -> str:
         """
-        Reads an image from disk and return it buffer, ready to send.
+        Gets the framebuffer device path associated with this object.
+        @return: /dev/fb[i]
+        """
+        return f"/dev/fb{self.framebuffer_index}"
+
+    def get_max_offset(self, buffer_size, stride, height=-1):
+        """
+        Gets the maximum possible offset of the framebuffer device given a
+        buffer and it stride.
+        @param buffer_size: The total buffer size
+        @param stride: The buffer stride, how many bytes per row
+        @param height: The buffer height
+        @return:
+        """
+        if height < 0:
+            height = buffer_size // stride
+        return max(self.fb_maxsize - self.fb_stride * (height - 1) - stride, 0)
+
+    def get_position_from_xy(self, x, y) -> int:
+        """
+        Gets the starting point in the buffer given an x and y coordinate
+        @param x: X coordinate
+        @param y: Y coordinate
+        @return: Buffer position
+        """
+        if x < 0:
+            msg = "The x value can not be negative."
+            logging.exception(msg)
+            raise self.gcode.error(msg)
+
+        if x >= self.resolution_x:
+            msg = f"The x value must be less than {self.resolution_x}"
+            logging.exception(msg)
+            raise self.gcode.error(msg)
+
+        if y < 0:
+            msg = "The y value can not be negative."
+            logging.exception(msg)
+            raise self.gcode.error(msg)
+
+        if y >= self.resolution_y:
+            msg = f"The y value must be less than {self.resolution_y}"
+            logging.exception(msg)
+            raise self.gcode.error(msg)
+
+        return y * self.fb_stride + x * self.channels
+
+    def get_image_buffer(self, path, strip_alpha=True) -> dict:
+        """
+        Reads an image from disk and return it buffer, ready to send to fb.
         Note that it does not do any file check,
         it will always try to open an image file.
         @param path: Image path
-        @return: bytes buffer
+        @param strip_alpha: Strip the alpha channel of the image if present
+        @return: dict with image data
         """
         with Image.open(path) as img:
-            return img.tobytes()
+            depth = 3
+            if img.mode in ("L", "P"):
+                depth = 1
+            elif img.mode in ("RGBA", "CMYK"):
+                depth = 4
+
+            if img.mode == "RGBA" and strip_alpha:
+                depth = 3
+                # Strip alpha
+                with Image.new('RGB', img.size) as img2:
+                    img2.paste(img, (0, 0), img)
+                    buffer = img2.tobytes()
+                    width = img.width
+                    height = img.height
+            else:
+                buffer = img.tobytes()
+                width = img.width
+                height = img.height
+
+            buffer_size = len(buffer)
+            #logging.exception(f"buffer: {buffer_size}, "
+            #                  f"stride: {width * depth}, "
+            #                  f"width: {width}, "
+            #                  f"height: {height}, "
+            #                  f"depth: {depth}, "
+            #                  f"bpp: {depth * 8}")
+            return {'buffer': buffer,
+                    'stride': img.width * depth,
+                    'width': width,
+                    'height': height,
+                    'depth': depth,
+                    'bpp': depth * 8,
+                    'size': buffer_size}
 
     def clear_buffer(self):
         """
@@ -177,28 +259,155 @@ class FramebufferDisplay:
         if wait_thread:
             self._framebuffer_thread.join()
 
+    def write_buffer(self, buffer, buffer_stride=0, offset=0,
+                     clear_flag=CLEAR_NO_FLAG):
+        """
+        Write a byte array into the framebuffer device.
+        @param buffer: A 1D byte array with data to send
+        @param offset: Sets a positive offset from start position of the buffer.
+        @param buffer_stride: The stride/row of the buffer, set if buffer is a
+                              cropped region.
+        @param clear_flag: Clear the remaining buffer, 0=No, 1=Yes, 2=Auto
+        """
+        if buffer is None or len(buffer) == 0:
+            return
+
+        if not isinstance(buffer, (list, bytes)):
+            msg = (f"The buffer must be a 1D byte array. "
+                   f"{type(buffer)} was passed")
+            logging.exception(msg)
+            raise self.gcode.error(msg)
+
+        if offset < 0:
+            msg = f"The offset {offset} can not be negative value."
+            logging.exception(msg)
+            raise self.gcode.error(msg)
+
+        if clear_flag < 0 or clear_flag > CLEAR_AUTO_FLAG:
+            msg = f"The clear flag must be between 0 and {CLEAR_AUTO_FLAG}."
+            raise self.gcode.error(msg)
+
+        clear = clear_flag
+
+        buffer_size = len(buffer)
+        if buffer_size + offset > self.fb_maxsize:
+            msg = (f"The buffer size of {buffer_size} + {offset} is greater "
+                   f"than actual framebuffer size of {self.fb_maxsize}.")
+            logging.exception(msg)
+            raise self.gcode.error(msg)
+
+        # Auto clear, clears if buffer is smaller than framebuffer device
+        if clear_flag == CLEAR_AUTO_FLAG and buffer_size != self.fb_maxsize:
+            clear = CLEAR_YES_FLAG
+
+        is_region = False
+        if buffer_stride > 0 and buffer_stride < self.fb_stride:
+            is_region = True
+            if buffer_size % buffer_stride != 0:
+                msg = (f"The buffer stride of {buffer_stride} must be an exact"
+                       f" multiple of the buffer size {buffer_size}.")
+                logging.exception(msg)
+                raise self.gcode.error(msg)
+
+            max_offset = self.get_max_offset(buffer_size, buffer_stride)
+            if offset > max_offset:
+                msg = ("The offset of %d can not be greater than %d in order "
+                       "to fit the a buffer of %d." %
+                       (offset, max_offset, buffer_size))
+                logging.exception(msg)
+                raise self.gcode.error(msg)
+
+        with self._framebuffer_lock:
+            if offset > 0:
+                if clear:
+                    self.fb_memory_map.write(
+                        (0).to_bytes(1, byteorder='little') * offset)
+                else:
+                    self.fb_memory_map.seek(offset)
+
+            if is_region:
+                stride_offset = self.fb_stride - buffer_stride
+                if clear:
+                    stride_cleaner = (0).to_bytes(1, byteorder='little'
+                                                  ) * stride_offset
+                for i in range(0, buffer_size, buffer_stride):
+                    if i > 0:
+                        if clear:
+                            self.fb_memory_map.write(stride_cleaner)
+                        else:
+                            self.fb_memory_map.seek(stride_offset, os.SEEK_CUR)
+                    self.fb_memory_map.write(buffer[i:i + buffer_stride])
+            else:
+                self.fb_memory_map.write(buffer)
+
+            pos = self.fb_memory_map.tell()
+            self.gcode.error(f"pos: {pos}")
+            if clear and pos < self.fb_maxsize:
+                self.fb_memory_map.write(
+                    (0).to_bytes(1, byteorder='little')
+                    * (self.fb_maxsize - pos))
+
+            self.fb_memory_map.seek(0)
+
+    def write_buffer_threaded(self, buffer, buffer_stride=0, offset=0,
+                              clear_flag=CLEAR_NO_FLAG, wait_thread=False):
+        """
+        Write a byte array into the framebuffer device in a separate thread.
+        @param buffer: A 1D byte array with data to send
+        @param buffer_stride: The stride/row of the buffer, set if buffer is a
+                              cropped region.
+        @param offset: Sets a positive offset from start position of the buffer.
+        @param clear_flag: Clear the remaining buffer, 0=No, 1=Yes, 2=Auto
+        @param wait_thread: If true wait for the framebuffer thread to terminate
+
+        """
+        self.wait_framebuffer_thread()
+        self._framebuffer_thread = threading.Thread(
+            target=lambda: self.write_buffer(buffer, buffer_stride, offset,
+                                             clear_flag),
+            name=f"Sends an buffer to fb{self.framebuffer_index}")
+        self._framebuffer_thread.start()
+        if wait_thread:
+            self._framebuffer_thread.join()
+
     def fill_buffer(self, color):
         """
         Fills the framebuffer with the given color.
-        @param color: From 0 to 255
+        @param color: From 0 to 255 or a tuple/list of RGB
         """
-        if not isinstance(color, int):
-            msg = "The color must be an int number from 0 to 255."
-            logging.exception(msg)
-            raise Exception(msg)
+        if isinstance(color, int):
+            if color < 0 or color > 255:
+                msg = "The color must be an int number from 0 to 255."
+                logging.exception(msg)
+                raise self.gcode.error(msg)
 
-        if color < 0 or color > 255:
-            msg = "The color must be an int number from 0 to 255."
+            buffer = color.to_bytes(1, byteorder='little')
+        elif isinstance(color, (tuple, list)):
+            for x in color:
+                if x < 0 or x > 255:
+                    msg = "The color must be an int number from 0 to 255."
+                    logging.exception(msg)
+                    raise self.gcode.error(msg)
+            buffer = bytes(color)
+        else:
+            msg = ("The color must be an int number from 0 to 255 "
+                   "or a tuple/list of RGB.")
             logging.exception(msg)
-            raise Exception(msg)
+            raise self.gcode.error(msg)
 
-        self.send_buffer(color.to_bytes(1, byteorder='little')
-                         * self.fb_maxsize)
+        buffer_size = len(buffer)
+        if self.fb_maxsize % buffer_size != 0:
+            msg = (
+                f"The buffer size of {buffer_size} must be an exact"
+                f" multiple of the framebuffer size {self.fb_maxsize}.")
+            logging.exception(msg)
+            raise self.gcode.error(msg)
+        self.write_buffer(buffer * (self.fb_maxsize // buffer_size))
 
     def fill_buffer_threaded(self, color, wait_thread=False):
         """
         Fills the framebuffer with the given color.
-        @param color: From 0 to 255
+        @param color: From 0 to 255 or a tuple/list of RGB
         @param wait_thread: Wait for the framebuffer thread to terminate.
         """
         self.wait_framebuffer_thread()
@@ -209,104 +418,44 @@ class FramebufferDisplay:
         if wait_thread:
             self._framebuffer_thread.join()
 
-    def send_buffer(self, buffer, clear_first=False, offset=0):
+    def draw_image(self, path, offset=0, clear_flag=CLEAR_NO_FLAG):
         """
-        Send a byte array to the framebuffer device.
-        @param buffer: A 1D byte array with data to send
-        @param clear_first: If true first clears the display and then,
-                            renders the image.
-        @param offset: Sets a positive offset from start position of the buffer.
-        """
-        if buffer is None or len(buffer) == 0:
-            return
-
-        if not isinstance(buffer, (list, bytes)):
-            msg = (f"The buffer must be a 1D byte array. "
-                   f"{type(buffer)} was passed")
-            logging.exception(msg)
-            raise Exception(msg)
-
-        if offset < 0:
-            msg = f"The offset {offset} can not be negative value."
-            logging.exception(msg)
-            raise Exception(msg)
-
-        with self._framebuffer_lock:
-            if clear_first:
-                color = 0
-                self.fb_memory_map.seek(0)
-                self.fb_memory_map.write(
-                    color.to_bytes(1, byteorder='little')
-                    * self.fb_maxsize)
-
-            buffer_size = len(buffer)
-            if buffer_size + offset > self.fb_maxsize:
-                msg = (f"The buffer size of {buffer_size} + {offset} is larger "
-                       f"than actual framebuffer size of {self.fb_maxsize}.")
-                logging.exception(msg)
-                raise Exception(msg)
-
-            self.fb_memory_map.seek(offset)
-            self.fb_memory_map.write(buffer)
-            self.fb_memory_map.seek(0)
-
-    def send_buffer_threaded(self, buffer, clear_first=False, offset=0,
-                             wait_thread=False):
-        """
-        Send a byte array to the framebuffer device in a separate thread.
-        @param buffer: A 1D byte array with data to send
-        @param clear_first: If true first clears the display
-                            and then renders the image.
-        @param offset: Sets a positive offset from start position of the buffer.
-        @param wait_thread: If true wait for the framebuffer thread to terminate
-        """
-        self.wait_framebuffer_thread()
-        self._framebuffer_thread = threading.Thread(
-            target=lambda: self.send_buffer(buffer, clear_first, offset),
-            name=f"Sends an buffer to fb{self.framebuffer_index}")
-        self._framebuffer_thread.start()
-        if wait_thread:
-            self._framebuffer_thread.join()
-
-    def send_image(self, path, clear_first=False, offset=0):
-        """
-        Reads an image from a path and sends the bitmap to the fb device.
+        Reads an image from a path and draw the bitmap to the fb device.
         @param path: Image file path to be read.
-        @param clear_first: If true first clears the display and
-                            then renders the image.
         @param offset: Sets a positive offset from start position of the buffer.
+        @param clear_flag: Clear the remaining buffer, 0=No, 1=Yes, 2=Auto
         """
+        gcode = self.printer.lookup_object('gcode')
         if offset < 0:
             msg = f"The offset {offset} can not be negative value."
             logging.exception(msg)
-            raise Exception(msg)
+            raise gcode.error(msg)
 
         if not isinstance(path, str):
             msg = f"Path must be a string."
             logging.exception(msg)
-            raise Exception(msg)
+            raise gcode.error(msg)
 
         if not os.path.isfile(path):
             msg = f"The file '{path}' does not exists."
             logging.exception(msg)
-            raise Exception(msg)
+            raise gcode.error(msg)
 
-        buffer = self.get_image_buffer(path)
-        self.send_buffer(buffer, clear_first, offset)
+        di = self.get_image_buffer(path)
+        self.write_buffer(di['buffer'], di['stride'], offset, clear_flag)
 
-    def send_image_threaded(self, path, clear_first=False, offset=0,
+    def draw_image_threaded(self, path, offset=0, clear_flag=CLEAR_NO_FLAG,
                             wait_thread=False):
         """
-        Reads an image from a path and sends the bitmap to the fb device.
+        Reads an image from a path and draw the bitmap to the fb device.
         @param path: Image file path to be read.
-        @param clear_first: If true first clears the display
-                            and then renders the image.
         @param offset: Sets a positive offset from start position of the buffer.
+        @param clear_flag: Clear the remaining buffer, 0=No, 1=Yes, 2=Auto
         @param wait_thread: If true wait for the framebuffer thread to terminate
         """
         self.wait_framebuffer_thread()
         self._framebuffer_thread = threading.Thread(
-            target=lambda: self.send_image(path, clear_first, offset),
+            target=lambda: self.draw_image(path, offset, clear_flag),
             name=f"Render an image to fb{self.framebuffer_index}")
         self._framebuffer_thread.start()
         if wait_thread:
@@ -318,13 +467,12 @@ class FramebufferDisplayWrapper(FramebufferDisplay):
         super().__init__(config)
 
         device_name = config.get_name().split()[1]
-        gcode = self.printer.lookup_object('gcode')
-        gcode.register_mux_command("FRAMEBUFFER_CLEAR", "DEVICE", device_name,
+        self.gcode.register_mux_command("FRAMEBUFFER_CLEAR", "DEVICE", device_name,
                                    self.cmd_FRAMEBUFFER_CLEAR,
                                    desc=self.cmd_FRAMEBUFFER_CLEAR_help)
-        gcode.register_mux_command("FRAMEBUFFER_SEND_IMAGE", "DEVICE",
-                                   device_name, self.cmd_FRAMEBUFFER_SEND_IMAGE,
-                                   desc=self.cmd_FRAMEBUFFER_SEND_IMAGE_help)
+        self.gcode.register_mux_command("FRAMEBUFFER_SEND_IMAGE", "DEVICE",
+                                   device_name, self.cmd_FRAMEBUFFER_DRAW_IMAGE,
+                                   desc=self.cmd_FRAMEBUFFER_DRAW_IMAGE_help)
 
     def get_status(self, eventtime):
         return {'is_busy': self.is_busy()}
@@ -337,19 +485,19 @@ class FramebufferDisplayWrapper(FramebufferDisplay):
 
         self.clear_buffer_threaded(wait_thread)
 
-    cmd_FRAMEBUFFER_SEND_IMAGE_help = ("Send a image from a path "
+    cmd_FRAMEBUFFER_DRAW_IMAGE_help = ("Reads a image from a path "
                                        "and render it on the framebuffer.")
 
-    def cmd_FRAMEBUFFER_SEND_IMAGE(self, gcmd):
+    def cmd_FRAMEBUFFER_DRAW_IMAGE(self, gcmd):
         path = gcmd.get('PATH')
-        clear_first = gcmd.get_int('CLEAR', 0, 0, 1)
         offset = gcmd.get_int('OFFSET', 0, 0)
+        clear_flag = gcmd.get_int('CLEAR', CLEAR_AUTO_FLAG, 0, CLEAR_AUTO_FLAG)
         wait_thread = gcmd.get_int('WAIT', 0, 0, 1)
 
         if not os.path.isfile(path):
             raise gcmd.error(f"The file '{path}' does not exists.")
 
-        self.send_image_threaded(path, clear_first, offset, wait_thread)
+        self.draw_image_threaded(path, offset, clear_flag, wait_thread)
 
 
 def load_config_prefix(config):
