@@ -37,7 +37,7 @@ class LIS2DW:
     def __init__(self, config):
         self.printer = config.get_printer()
         adxl345.AccelCommandHelper(config, self)
-        self.axes_map = adxl345.read_axes_map(config)
+        self.axes_map = adxl345.read_axes_map(config, SCALE, SCALE, SCALE)
         self.data_rate = 1600
         # Setup mcu sensor_lis2dw bulk query code
         self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=5000000)
