@@ -80,19 +80,19 @@ class EddyCalibration:
             return True
         self.printer.lookup_object(self.name).add_client(handle_batch)
         toolhead.dwell(1.)
-        # Move to each 50um position
-        max_z = 4
-        samp_dist = 0.050
-        num_steps = int(max_z / samp_dist + .5) + 1
+        # Move to each 40um position
+        max_z = 4.0
+        samp_dist = 0.040
+        req_zpos = [i*samp_dist for i in range(int(max_z / samp_dist) + 1)]
         start_pos = toolhead.get_position()
         times = []
-        for i in range(num_steps):
+        for zpos in req_zpos:
             # Move to next position (always descending to reduce backlash)
             hop_pos = list(start_pos)
-            hop_pos[2] += i * samp_dist + 0.500
+            hop_pos[2] += zpos + 0.500
             move(hop_pos, move_speed)
             next_pos = list(start_pos)
-            next_pos[2] += i * samp_dist
+            next_pos[2] += zpos
             move(next_pos, move_speed)
             # Note sample timing
             start_query_time = toolhead.get_last_move_time() + 0.050
