@@ -60,16 +60,23 @@
      || CONFIG_STM32_CANBUS_PB5_PB6 ||CONFIG_STM32_CANBUS_PB12_PB13)
  #define SOC_CAN FDCAN1
  #define MSG_RAM (((struct fdcan_ram_layout*)SRAMCAN_BASE)->fdcan1)
+ #if CONFIG_MACH_STM32H7 || CONFIG_MACH_STM32G4
+  #define CAN_IT0_IRQn  FDCAN1_IT0_IRQn
+ #endif
 #else
  #define SOC_CAN FDCAN2
  #define MSG_RAM (((struct fdcan_ram_layout*)SRAMCAN_BASE)->fdcan2)
+ #if CONFIG_MACH_STM32H7 || CONFIG_MACH_STM32G4
+  #define CAN_IT0_IRQn  FDCAN2_IT0_IRQn
+ #endif
 #endif
 
 #if CONFIG_MACH_STM32G0
  #define CAN_IT0_IRQn  TIM16_FDCAN_IT0_IRQn
  #define CAN_FUNCTION  GPIO_FUNCTION(3) // Alternative function mapping number
-#elif CONFIG_MACH_STM32H7 || CONFIG_MACH_STM32G4
- #define CAN_IT0_IRQn  FDCAN1_IT0_IRQn
+#endif
+
+#if CONFIG_MACH_STM32H7 || CONFIG_MACH_STM32G4
  #define CAN_FUNCTION  GPIO_FUNCTION(9) // Alternative function mapping number
 #endif
 
