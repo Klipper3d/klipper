@@ -121,7 +121,7 @@ class LDC1612:
                                           oid=self.oid, cq=cmdqueue)
         self.ldc1612_setup_home_cmd = self.mcu.lookup_command(
             "ldc1612_setup_home oid=%c clock=%u threshold=%u"
-            " trsync_oid=%c trigger_reason=%c", cq=cmdqueue)
+            " trsync_oid=%c trigger_reason=%c error_reason=%c", cq=cmdqueue)
         self.query_ldc1612_home_state_cmd = self.mcu.lookup_query_command(
             "query_ldc1612_home_state oid=%c",
             "ldc1612_home_state oid=%c homing=%c trigger_clock=%u",
@@ -138,13 +138,14 @@ class LDC1612:
     def add_client(self, cb):
         self.batch_bulk.add_client(cb)
     # Homing
-    def setup_home(self, print_time, trigger_freq, trsync_oid, reason):
+    def setup_home(self, print_time, trigger_freq,
+                   trsync_oid, hit_reason, err_reason):
         clock = self.mcu.print_time_to_clock(print_time)
         tfreq = int(trigger_freq * (1<<28) / float(LDC1612_FREQ) + 0.5)
         self.ldc1612_setup_home_cmd.send(
-            [self.oid, clock, tfreq, trsync_oid, reason])
+            [self.oid, clock, tfreq, trsync_oid, hit_reason, err_reason])
     def clear_home(self):
-        self.ldc1612_setup_home_cmd.send([self.oid, 0, 0, 0, 0])
+        self.ldc1612_setup_home_cmd.send([self.oid, 0, 0, 0, 0, 0])
         if self.mcu.is_fileoutput():
             return 0.
         params = self.query_ldc1612_home_state_cmd.send([self.oid])

@@ -185,6 +185,7 @@ class EddyCalibration:
 
 # Helper for implementing PROBE style commands
 class EddyEndstopWrapper:
+    REASON_SENSOR_ERROR = mcu.MCU_trsync.REASON_COMMS_TIMEOUT + 1
     def __init__(self, config, sensor_helper, calibration):
         self._printer = config.get_printer()
         self._sensor_helper = sensor_helper
@@ -236,7 +237,7 @@ class EddyEndstopWrapper:
         trigger_completion = self._dispatch.start(print_time)
         self._sensor_helper.setup_home(
             print_time, trigger_freq, self._dispatch.get_oid(),
-            mcu.MCU_trsync.REASON_ENDSTOP_HIT)
+            mcu.MCU_trsync.REASON_ENDSTOP_HIT, self.REASON_SENSOR_ERROR)
         return trigger_completion
     def home_wait(self, home_end_time):
         self._dispatch.wait_end(home_end_time)
@@ -244,8 +245,10 @@ class EddyEndstopWrapper:
         self._stop_measurements(is_home=True)
         res = self._dispatch.stop()
         if res >= mcu.MCU_trsync.REASON_COMMS_TIMEOUT:
-            raise self._printer.command_error(
-                "Communication timeout during homing")
+            if res == mcu.MCU_trsync.REASON_COMMS_TIMEOUT:
+                raise self._printer.command_error(
+                    "Communication timeout during homing")
+            raise self._printer.command_error("Eddy current sensor error")
         if res != mcu.MCU_trsync.REASON_ENDSTOP_HIT:
             return 0.
         if self._mcu.is_fileoutput():

@@ -31,7 +31,7 @@ struct ldc1612 {
     // homing
     struct trsync *ts;
     uint8_t homing_flags;
-    uint8_t trigger_reason;
+    uint8_t trigger_reason, error_reason;
     uint32_t trigger_threshold;
     uint32_t homing_clock;
 };
@@ -95,11 +95,12 @@ command_ldc1612_setup_home(uint32_t *args)
     ld->homing_clock = args[1];
     ld->ts = trsync_oid_lookup(args[3]);
     ld->trigger_reason = args[4];
+    ld->error_reason = args[5];
     ld->homing_flags = LH_AWAIT_HOMING | LH_CAN_TRIGGER;
 }
 DECL_COMMAND(command_ldc1612_setup_home,
              "ldc1612_setup_home oid=%c clock=%u threshold=%u"
-             " trsync_oid=%c trigger_reason=%c");
+             " trsync_oid=%c trigger_reason=%c error_reason=%c");
 
 void
 command_query_ldc1612_home_state(uint32_t *args)
@@ -118,6 +119,12 @@ check_home(struct ldc1612 *ld, uint32_t data)
     uint8_t homing_flags = ld->homing_flags;
     if (!(homing_flags & LH_CAN_TRIGGER))
         return;
+    if (data > 0x0fffffff) {
+        // Sensor reports an issue - cancel homing
+        ld->homing_flags = 0;
+        trsync_do_trigger(ld->ts, ld->error_reason);
+        return;
+    }
     uint32_t time = timer_read_time();
     if ((homing_flags & LH_AWAIT_HOMING)
         && timer_is_before(time, ld->homing_clock))
