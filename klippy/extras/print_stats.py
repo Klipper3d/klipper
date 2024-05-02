@@ -85,6 +85,25 @@ class PrintStats:
     cmd_SET_PRINT_STATS_INFO_help = "Pass slicer info like layer act and " \
                                     "total to klipper"
     def cmd_SET_PRINT_STATS_INFO(self, gcmd):
+        """
+        Sets print stats info
+
+        Syntax: SET_PRINT_STATS_INFO TOTAL_LAYER=[count]
+                                     CURRENT_LAYER=[number]
+                                     MATERIAL_NAME=["name"]
+                                     MATERIAL_UNIT=[unit]
+                                     MATERIAL_TOTAL=[total]
+                                     CONSUME_MATERIAL=[amount]
+
+        TOTAL_LAYER: Total layer count
+        CURRENT_LAYER: Current printing layer number
+        MATERIAL_NAME: Name of the material being used
+        MATERIAL_UNIT: Material unit
+        MATERIAL_TOTAL: Total material this print will consume
+        CONSUME_MATERIAL: Consume material and increment the used material
+        @param gcmd:
+        @return:
+        """
         total_layer = gcmd.get_int("TOTAL_LAYER", self.info_total_layer, \
                                    minval=0)
         current_layer = gcmd.get_int("CURRENT_LAYER", self.info_current_layer, \

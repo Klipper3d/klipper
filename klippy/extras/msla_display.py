@@ -13,7 +13,7 @@ import time
 import tempfile
 from pathlib import Path
 from PIL import Image
-from . import framebuffer_display, pwm_tool, output_pin
+from . import framebuffer_display, pwm_tool, pwm_cycle_time, output_pin
 
 CACHE_MIN_RAM = 256  # 256 MB
 
@@ -105,6 +105,8 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
     def get_status(self, eventtime):
         return {'display_busy': self.is_busy(),
                 'is_exposure': self.is_exposure(),
+                'uvled_is_pwm': self.is_uvled_pwm(),
+                'uvled_value_raw': self.uvled.last_value,
                 'uvled_value': self.uvled.last_value * 255.}
 
     def clear_cache(self):
@@ -212,21 +214,28 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
     cmd_MSLA_DISPLAY_VALIDATE_help = ("Validate the display against resolution "
                                       "and pixel parameters. Throw error if out"
                                       " of parameters.")
+
     def cmd_MSLA_DISPLAY_VALIDATE(self, gcmd):
         """
-        Layer images are universal within same resolution and pixel pitch.
-        Other printers with same resolution and pixel pitch can print same file.
+        Layer images are universal within same pixel pitch, but it also must fit
+        within the LCD area.
+        Other printers with same or higher resolution and same pixel pitch can
+        print same file.
         This command ensure print only continue if requirements are meet.
 
         Syntax: MSLA_DISPLAY_VALIDATE RESOLUTION=<x,y> PIXEL=<width,height>
+                                      STRICT=[0/1]
 
         RESOLUTION: Machine LCD resolution
         PIXEL: Machine LCD pixel pitch
+        STRICT: 0 = Prints if same or lower resolutions
+                1 = Prints if same resolutions
         @param gcmd:
         @return:
         """
         resolution = gcmd.get('RESOLUTION')
         pixel_size = gcmd.get('PIXEL')
+        strict = gcmd.get_int('STRICT', 0, 0, 1)
 
         resolution_split = resolution.split(',', 1)
         if len(resolution_split) < 2:
@@ -243,13 +252,26 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         except:
             raise gcmd.error(f"The resolution y must be an integer.")
 
-        if resolution_x != self.resolution_x:
-            raise gcmd.error(f"The resolution X of {resolution_x} is invalid. "
-                             f"Should be {self.resolution_x}.")
+        if strict:
+            if resolution_x > self.resolution_x:
+                raise gcmd.error(
+                    f"The resolution X of {resolution_x} is invalid. "
+                    f"Should be equal to {self.resolution_x}.")
 
-        if resolution_y != self.resolution_y:
-            raise gcmd.error(f"The resolution Y of {resolution_y} is invalid. "
-                             f"Should be {self.resolution_y}.")
+            if resolution_y > self.resolution_y:
+                raise gcmd.error(
+                    f"The resolution Y of {resolution_y} is invalid. "
+                    f"Should be equal to {self.resolution_y}.")
+        else:
+            if resolution_x > self.resolution_x:
+                raise gcmd.error(f"The resolution X of {resolution_x} is "
+                                 f"invalid. Should be less or equal to "
+                                 f"{self.resolution_x}.")
+
+            if resolution_y > self.resolution_y:
+                raise gcmd.error(f"The resolution Y of {resolution_y} is "
+                                 f"invalid. Should be less or equal to "
+                                 f"{self.resolution_y}.")
 
         pixel_size_split = pixel_size.split(',', 1)
         if len(pixel_size_split) < 2:
@@ -313,10 +335,10 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         self.clear_buffer()
         gcmd.respond_raw(f"Test finished.")
 
-
     cmd_MSLA_DISPLAY_RESPONSE_TIME_help = ("Sends a buffer to display and test "
                                            "it response time to complete the "
                                            "render.")
+
     def cmd_MSLA_DISPLAY_RESPONSE_TIME(self, gcmd):
         """
         Sends a buffer to display and test it response time
@@ -433,9 +455,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
                       the display.
         @return:
         """
-        if (self.uvled is pwm_tool.PrinterOutputPin or (
-                self.uvled is output_pin.PrinterOutputPin
-                and self.uvled.is_pwm)):
+        if self.is_uvled_pwm():
             value /= 255.0
         else:
             value = 1 if value else 0
@@ -459,6 +479,12 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
             toolhead.register_lookahead_callback(
                 lambda print_time: self.uvled._set_pin(print_time, 0))
         toolhead.wait_moves()
+
+    def is_uvled_pwm(self):
+        return (isinstance(self.uvled, (pwm_tool.PrinterOutputPin,
+                                        pwm_cycle_time.PrinterOutputPWMCycle))
+                or (isinstance(self.uvled, output_pin.PrinterOutputPin)
+                    and self.uvled.is_pwm))
 
     def set_uvled_on(self, delay=0):
         """
@@ -570,6 +596,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         @param gcmd:
         """
         self.set_uvled(0)
+
 
 class BufferCache:
     def __init__(self, path, data):

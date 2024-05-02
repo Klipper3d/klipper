@@ -344,10 +344,12 @@ The following commands are available when a
 [msla_display config section](Config_Reference.md#msla_display) 
 is enabled.
 
-- Validate the display information:
-  `MSLA_DISPLAY_VALIDATE RESOLUTION=<x,y> PIXEL=<width,height>`
+- Validate print resolution and pixel size against the display information:
+  `MSLA_DISPLAY_VALIDATE RESOLUTION=<x,y> PIXEL=<width,height> STRICT=[0/1]`
   - `RESOLUTION:` Resolution size in pixels
   - `PIXEL`: Pixel size in millimeters
+  - `STRICT`: 0 = Prints if same or lower resolutions and same pixel size
+              1 = Prints if same resolutions and pixel size
 - Tests the display response time: `MSLA_DISPLAY_RESPONSE_TIME AVG=[1]`
   - `AVG`: Number of samples to average the results
 - Test the display by showing full white and grey shades: `MSLA_DISPLAY_TEST 
@@ -364,8 +366,8 @@ is enabled.
   `MSLA_UVLED_RESPONSE_TIME TIME=[ms] OFFSET=[ms] TYPE=[0/1]`
   - `TIME`: Exposure time in milliseconds
   - `OFFSET`: Offset time from exposure time
-  - `TYPE`: <0> when using M1400 Sx and Px. (Faster response time).  
-            <1> when using M1400 Sx, G4 Px, M1400 S0 (Slower response time)
+  - `TYPE`: 0 = When using M1400 Sx and Px. (Faster response time).  
+            1 = When using M1400 Sx, G4 Px, M1400 S0 (Slower response time)
 - Set the UV LED power: `M1400 S<0-255> P[ms]`
   - `S`: The LED Power (Non PWM LEDs will turn on from 1 to 255).
   - `P`: Time to wait in milliseconds when (S>0) before turn off.

@@ -82,7 +82,7 @@ class VirtualSD:
         if self.work_timer is None:
             return False, ""
         return True, "sd_pos=%d" % (self.file_position,)
-    def get_archive_files(self, path):
+    def get_archive_entries(self, path):
         if path.endswith('.zip'):
             try:
                 with zipfile.ZipFile(path, "r") as file:
@@ -110,7 +110,7 @@ class VirtualSD:
                     r_path = full_path[len(self.sdcard_dirname) + 1:]
 
                     if ext in VALID_ARCHIVE_EXTS:
-                        entries = self.get_archive_files(full_path)
+                        entries = self.get_archive_entries(full_path)
 
                         # Support only 1 gcode file as if there's more we are
                         # unable to guess which to print
