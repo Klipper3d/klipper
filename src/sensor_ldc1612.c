@@ -111,6 +111,26 @@ command_query_ldc1612_home_state(uint32_t *args)
 DECL_COMMAND(command_query_ldc1612_home_state,
              "query_ldc1612_home_state oid=%c");
 
+// Check if a sample should trigger a homing event
+static void
+check_home(struct ldc1612 *ld, uint32_t data)
+{
+    uint8_t homing_flags = ld->homing_flags;
+    if (!(homing_flags & LH_CAN_TRIGGER))
+        return;
+    uint32_t time = timer_read_time();
+    if ((homing_flags & LH_AWAIT_HOMING)
+        && timer_is_before(time, ld->homing_clock))
+        return;
+    homing_flags &= ~LH_AWAIT_HOMING;
+    if (data > ld->trigger_threshold) {
+        homing_flags = 0;
+        ld->homing_clock = time;
+        trsync_do_trigger(ld->ts, ld->trigger_reason);
+    }
+    ld->homing_flags = homing_flags;
+}
+
 // Chip registers
 #define REG_DATA0_MSB 0x00
 #define REG_DATA0_LSB 0x01
@@ -153,21 +173,8 @@ ldc1612_query(struct ldc1612 *ld, uint8_t oid)
     ld->sb.data_count += BYTES_PER_SAMPLE;
 
     // Check for endstop trigger
-    uint8_t homing_flags = ld->homing_flags;
-    if (homing_flags & LH_CAN_TRIGGER) {
-        uint32_t time = timer_read_time();
-        if (!(homing_flags & LH_AWAIT_HOMING)
-            || !timer_is_before(time, ld->homing_clock)) {
-            homing_flags &= ~LH_AWAIT_HOMING;
-            uint32_t data = (d[0] << 24L) | (d[1] << 16L) | (d[2] << 8) | d[3];
-            if (data > ld->trigger_threshold) {
-                homing_flags = 0;
-                ld->homing_clock = time;
-                trsync_do_trigger(ld->ts, ld->trigger_reason);
-            }
-            ld->homing_flags = homing_flags;
-        }
-    }
+    uint32_t data = (d[0] << 24L) | (d[1] << 16L) | (d[2] << 8) | d[3];
+    check_home(ld, data);
 
     // Flush local buffer if needed
     if (ld->sb.data_count + BYTES_PER_SAMPLE > ARRAY_SIZE(ld->sb.data))
