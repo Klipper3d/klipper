@@ -124,7 +124,7 @@ ldc1612_query(struct ldc1612 *ld, uint8_t oid)
 
     // Check if data available
     uint16_t status = read_reg_status(ld);
-    if (status != 0x48)
+    if (!(status & 0x08))
         return;
 
     // Read coil0 frequency
@@ -185,7 +185,7 @@ command_query_ldc1612_status(uint32_t *args)
     uint16_t status = read_reg_status(ld);
     uint32_t time2 = timer_read_time();
 
-    uint32_t fifo = status == 0x48 ? BYTES_PER_SAMPLE : 0;
+    uint32_t fifo = status & 0x08 ? BYTES_PER_SAMPLE : 0;
     sensor_bulk_status(&ld->sb, args[0], time1, time2-time1, fifo);
 }
 DECL_COMMAND(command_query_ldc1612_status, "query_ldc1612_status oid=%c");
