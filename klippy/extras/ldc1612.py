@@ -87,8 +87,17 @@ class LDC1612:
         self.oid = oid = mcu.create_oid()
         self.query_ldc1612_cmd = None
         self.ldc1612_setup_home_cmd = self.query_ldc1612_home_state_cmd = None
-        mcu.add_config_cmd("config_ldc1612 oid=%d i2c_oid=%d"
-                           % (oid, self.i2c.get_oid()))
+        if config.get('intb_pin', None) is not None:
+            ppins = config.get_printer().lookup_object("pins")
+            pin_params = ppins.lookup_pin(config.get('intb_pin'))
+            if pin_params['chip'] != mcu:
+                raise config.error("ldc1612 intb_pin must be on same mcu")
+            mcu.add_config_cmd(
+                "config_ldc1612_with_intb oid=%d i2c_oid=%d intb_pin=%s"
+                % (oid, self.i2c.get_oid(), pin_params['pin']))
+        else:
+            mcu.add_config_cmd("config_ldc1612 oid=%d i2c_oid=%d"
+                               % (oid, self.i2c.get_oid()))
         mcu.add_config_cmd("query_ldc1612 oid=%d rest_ticks=0"
                            % (oid,), on_restart=True)
         mcu.register_config_callback(self._build_config)

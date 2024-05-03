@@ -17,7 +17,7 @@
 #include "trsync.h" // trsync_do_trigger
 
 enum {
-    LDC_PENDING = 1<<0,
+    LDC_PENDING = 1<<0, LDC_HAVE_INTB = 1<<1,
     LH_AWAIT_HOMING = 1<<1, LH_CAN_TRIGGER = 1<<2
 };
 
@@ -27,6 +27,7 @@ struct ldc1612 {
     struct i2cdev_s *i2c;
     uint8_t flags;
     struct sensor_bulk sb;
+    struct gpio_in intb_pin;
     // homing
     struct trsync *ts;
     uint8_t homing_flags;
@@ -37,6 +38,13 @@ struct ldc1612 {
 
 static struct task_wake ldc1612_wake;
 
+// Check if the intb line is "asserted"
+static int
+check_intb_asserted(struct ldc1612 *ld)
+{
+    return !gpio_in_read(ld->intb_pin);
+}
+
 // Query ldc1612 data
 static uint_fast8_t
 ldc1612_event(struct timer *timer)
@@ -44,8 +52,10 @@ ldc1612_event(struct timer *timer)
     struct ldc1612 *ld = container_of(timer, struct ldc1612, timer);
     if (ld->flags & LDC_PENDING)
         ld->sb.possible_overflows++;
-    ld->flags |= LDC_PENDING;
-    sched_wake_task(&ldc1612_wake);
+    if (!(ld->flags & LDC_HAVE_INTB) || check_intb_asserted(ld)) {
+        ld->flags |= LDC_PENDING;
+        sched_wake_task(&ldc1612_wake);
+    }
     ld->timer.waketime += ld->rest_ticks;
     return SF_RESCHEDULE;
 }
@@ -59,6 +69,17 @@ command_config_ldc1612(uint32_t *args)
     ld->i2c = i2cdev_oid_lookup(args[1]);
 }
 DECL_COMMAND(command_config_ldc1612, "config_ldc1612 oid=%c i2c_oid=%c");
+
+void
+command_config_ldc1612_with_intb(uint32_t *args)
+{
+    command_config_ldc1612(args);
+    struct ldc1612 *ld = oid_lookup(args[0], command_config_ldc1612);
+    ld->intb_pin = gpio_in_setup(args[2], 1);
+    ld->flags = LDC_HAVE_INTB;
+}
+DECL_COMMAND(command_config_ldc1612_with_intb,
+             "config_ldc1612_with_intb oid=%c i2c_oid=%c intb_pin=%c");
 
 void
 command_ldc1612_setup_home(uint32_t *args)
@@ -117,13 +138,11 @@ read_reg_status(struct ldc1612 *ld)
 static void
 ldc1612_query(struct ldc1612 *ld, uint8_t oid)
 {
-    // Clear pending flag
+    // Check if data available (and clear INTB line)
+    uint16_t status = read_reg_status(ld);
     irq_disable();
     ld->flags &= ~LDC_PENDING;
     irq_enable();
-
-    // Check if data available
-    uint16_t status = read_reg_status(ld);
     if (!(status & 0x08))
         return;
 
@@ -161,7 +180,7 @@ command_query_ldc1612(uint32_t *args)
     struct ldc1612 *ld = oid_lookup(args[0], command_config_ldc1612);
 
     sched_del_timer(&ld->timer);
-    ld->flags = 0;
+    ld->flags &= ~LDC_PENDING;
     if (!args[1])
         // End measurements
         return;
@@ -181,6 +200,17 @@ command_query_ldc1612_status(uint32_t *args)
 {
     struct ldc1612 *ld = oid_lookup(args[0], command_config_ldc1612);
 
+    if (ld->flags & LDC_HAVE_INTB) {
+        // Check if a sample is pending in the chip via the intb line
+        irq_disable();
+        uint32_t time = timer_read_time();
+        int p = check_intb_asserted(ld);
+        irq_enable();
+        sensor_bulk_status(&ld->sb, args[0], time, 0, p ? BYTES_PER_SAMPLE : 0);
+        return;
+    }
+
+    // Query sensor to see if a sample is pending
     uint32_t time1 = timer_read_time();
     uint16_t status = read_reg_status(ld);
     uint32_t time2 = timer_read_time();
