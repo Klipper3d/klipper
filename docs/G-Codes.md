@@ -355,22 +355,22 @@ is enabled.
 - Test the display by showing full white and grey shades: `MSLA_DISPLAY_TEST 
      DELAY=[ms]`
   - `DELAY`: Time in milliseconds between tests 
-- Display image: `M6054 F<"image.png"> C[0/1] W[0/1]`
+- Display clear: `M1450`
+- Display image: `M1451 F<"image.png"> O[n] C[0/1] W[0/1]`
   - `F`: Image file to display, when printing this file is relative to the 
          base path of the print gcode
-  - `O`: Positive offset from start position of the buffer
-  - `C`: Clear the remaining buffer, 0=No, 1=Yes, 2=Auto. (int) Default: 2
-  - `W`: Wait for the render to complete
-- Display clear: `M6054`
+  - `O`: Positive offset from start position of the buffer. Default: 0
+  - `C`: Clear the remaining buffer, 0=No, 1=Yes, 2=Auto. Default: 2
+  - `W`: Wait for the render to complete. Default: 0
 - Tests the UV LED response time:
   `MSLA_UVLED_RESPONSE_TIME TIME=[ms] OFFSET=[ms] TYPE=[0/1]`
   - `TIME`: Exposure time in milliseconds
-  - `OFFSET`: Offset time from exposure time
-  - `TYPE`: 0 = When using M1400 Sx and Px. (Faster response time).  
+  - `OFFSET`: Offset time from exposure time. Default: 0
+  - `TYPE`: 0 = When using M1400 Sx and Px. (Faster response time). (Default)
             1 = When using M1400 Sx, G4 Px, M1400 S0 (Slower response time)
-- Set the UV LED power: `M1400 S<0-255> P[ms]`
-  - `S`: The LED Power (Non PWM LEDs will turn on from 1 to 255).
-  - `P`: Time to wait in milliseconds when (S>0) before turn off.
+- Set the UV LED power: `M1400 S[0-255] P[ms]`
+  - `S`: The LED Power (Non PWM LEDs will turn on from 1 to 255). Default: 255
+  - `P`: Time to wait in milliseconds when (S>0) before turn off. Default: 0
 - Turn off the UV LED: `M1401`
 
 ### [dual_carriage]

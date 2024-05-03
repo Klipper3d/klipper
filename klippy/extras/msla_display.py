@@ -74,7 +74,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
 
         # Variables
         self._sd = self.printer.lookup_object("virtual_sdcard")
-        self._m6054_file_regex = re.compile(r'F(.+[.](png|jpg|jpeg|bmp|gif))')
+        self._M1451_file_regex = re.compile(r'F(.+[.](png|jpg|jpeg|bmp|gif))')
 
         # Events
         self.printer.register_event_handler("virtual_sdcard:reset_file",
@@ -91,15 +91,17 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         gcode.register_command("MSLA_DISPLAY_RESPONSE_TIME",
                                self.cmd_MSLA_DISPLAY_RESPONSE_TIME,
                                desc=self.cmd_MSLA_DISPLAY_RESPONSE_TIME_help)
-        gcode.register_command('M6054', self.cmd_M6054,
-                               desc=self.cmd_M6054_help)
+        gcode.register_command('M1450', self.cmd_M1450,  # Display clear
+                               desc=self.cmd_M1451_help)
+        gcode.register_command('M1451', self.cmd_M1451,  # Display image
+                               desc=self.cmd_M1451_help)
 
         gcode.register_command("MSLA_UVLED_RESPONSE_TIME",
                                self.cmd_MSLA_UVLED_RESPONSE_TIME,
                                desc=self.cmd_MSLA_UVLED_RESPONSE_TIME_help)
-        gcode.register_command('M1400', self.cmd_M1400,
+        gcode.register_command('M1400', self.cmd_M1400,  # UVLED SET
                                desc=self.cmd_M1400_help)
-        gcode.register_command('M1401', self.cmd_M1401,
+        gcode.register_command('M1401', self.cmd_M1401,  # UVLED OFF
                                desc=self.cmd_M1401_help)
 
     def get_status(self, eventtime):
@@ -160,7 +162,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
 
     def _get_cache_index(self, path) -> int:
         """
-        Gets the index of the cache position on the list given an path
+        Gets the index of the cache position on the list given a path
         @param path: Path to seek
         @return: Index of the cache on the list, otherwise -1
         """
@@ -171,7 +173,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
 
     def _get_image_buffercache(self, gcmd, path):
         """
-        Gets a image buffer from cache if available, otherwise it creates the
+        Gets an image buffer from cache if available, otherwise it creates the
         buffer from the path image
         @param gcmd:
         @param path: Image path
@@ -182,7 +184,8 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         if current_filepath is not None and path[0] != '/':
             path = os.path.join(os.path.dirname(current_filepath), path)
             if not os.path.isfile(path):
-                raise gcmd.error(f"M6054: The file '{path}' does not exists.")
+                raise (gcmd.error("%s: The file '%s' does not exists.") %
+                       (gcmd.get_command(), path))
 
             if self.buffer_cache_count > 0:
                 self._wait_cache_thread()  # May be worth to wait if streaming
@@ -200,7 +203,8 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
                     return cache.data
 
         if not os.path.isfile(path):
-            raise gcmd.error(f"M6054: The file '{path}' does not exists.")
+            raise (gcmd.error("%s: The file '%s' does not exists.") %
+                   (gcmd.get_command(), path))
 
         di = self.get_image_buffer(path)
         if current_filepath and self._can_cache():
@@ -390,15 +394,34 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         gcmd.respond_raw('Clear time: %fms (%d samples)' %
                          (round(time_sum * 1000 / avg, 6), avg))
 
-    cmd_M6054_help = ("Reads an image from a path and display it on "
-                      "the display. No parameter clears the display.")
+    cmd_M1450_help = ("Clears the display with all black pixels "
+                      "(Fill with zeros)")
 
-    def cmd_M6054(self, gcmd):
+    def cmd_M1450(self, gcmd):
+        """
+        Clears the display with all black pixels (Fill with zeros)
+
+        Syntax: M1450 W[0/1]
+        W: Wait for buffer to complete the transfer. (int)
+        @param gcmd:
+        """
+        wait_thread = gcmd.get_int('W', 0, 0, 1)
+
+        toolhead = self.printer.lookup_object('toolhead')
+        if self.is_exposure():
+            toolhead.wait_moves()
+            self.clear_buffer_threaded(True)
+        else:
+            self.clear_buffer_threaded(wait_thread)
+
+    cmd_M1451_help = ("Reads an image from a path and display it on "
+                      "the display.")
+
+    def cmd_M1451(self, gcmd):
         """
         Display an image from a path and display it on the main display.
-        No parameter clears the display.
 
-        Syntax: M6054 F<"file.png"> O[x] C[0/1/3] W[0/1]
+        Syntax: M1451 F<"file.png"> O[x] C[0/1/3] W[0/1]
         F: File path eg: "1.png". quotes are optional. (str)
         O: Sets a positive offset from start position of the buffer. (int)
         C: Clear the remaining buffer, 0=No, 1=Yes, 2=Auto. (int) Default: 2
@@ -410,34 +433,31 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
                                   framebuffer_display.CLEAR_AUTO_FLAG)
         wait_thread = gcmd.get_int('W', 0, 0, 1)
 
-        toolhead = self.printer.lookup_object('toolhead')
         params = gcmd.get_raw_command_parameters().strip()
-        match = self._m6054_file_regex.search(params)
-        if match:
-            path = match.group(1).strip(' "\'')
-            path = os.path.normpath(os.path.expanduser(path))
-            di = self._get_image_buffercache(gcmd, path)
 
-            max_offset = self.get_max_offset(
-                di['size'], di['stride'], di['height'])
-            offset = gcmd.get_int('O', 0, 0, max_offset)
-            if self.is_exposure():
-                # LED is ON, sync to prevent image change while exposure
-                toolhead.wait_moves()
-                self.write_buffer_threaded(di['buffer'], di['stride'], offset,
-                                           clear_flag)
-            else:
-                self.write_buffer_threaded(di['buffer'], di['stride'], offset,
-                                           clear_flag)
+        if 'F' not in params:
+            raise gcmd.error(f"Error on '{gcmd.get_command()}': missing F")
+
+        toolhead = self.printer.lookup_object('toolhead')
+        match = self._M1451_file_regex.search(params)
+        if not match:
+            raise gcmd.error(f"Error on '{gcmd.get_command()}': The F parameter"
+                             f" is malformed. Use a proper image file.")
+
+        path = match.group(1).strip(' "\'')
+        path = os.path.normpath(os.path.expanduser(path))
+        di = self._get_image_buffercache(gcmd, path)
+
+        max_offset = self.get_max_offset(di['size'], di['stride'], di['height'])
+        offset = gcmd.get_int('O', 0, 0, max_offset)
+        if self.is_exposure():
+            # LED is ON, sync to prevent image change while exposure
+            toolhead.wait_moves()
+            self.write_buffer_threaded(di['buffer'], di['stride'], offset,
+                                       clear_flag, True)
         else:
-            if 'F' in params:
-                raise gcmd.error('M6054: The F parameter is malformed.'
-                                 'Use a proper image file.')
-            if self.is_exposure():
-                toolhead.wait_moves()
-                self.clear_buffer_threaded(True)
-            else:
-                self.clear_buffer_threaded(wait_thread)
+            self.write_buffer_threaded(di['buffer'], di['stride'], offset,
+                                       clear_flag, wait_thread)
 
     def is_exposure(self) -> bool:
         """
@@ -445,6 +465,15 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         @return:
         """
         return self.uvled.last_value > 0
+
+    def is_uvled_pwm(self) -> bool:
+        """
+        True if UV LED is configured as PWM pin, otherwise False
+        """
+        return (isinstance(self.uvled, (pwm_tool.PrinterOutputPin,
+                                        pwm_cycle_time.PrinterOutputPWMCycle))
+                or (isinstance(self.uvled, output_pin.PrinterOutputPin)
+                    and self.uvled.is_pwm))
 
     def set_uvled(self, value, delay=0):
         """
@@ -480,12 +509,6 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
                 lambda print_time: self.uvled._set_pin(print_time, 0))
         toolhead.wait_moves()
 
-    def is_uvled_pwm(self):
-        return (isinstance(self.uvled, (pwm_tool.PrinterOutputPin,
-                                        pwm_cycle_time.PrinterOutputPWMCycle))
-                or (isinstance(self.uvled, output_pin.PrinterOutputPin)
-                    and self.uvled.is_pwm))
-
     def set_uvled_on(self, delay=0):
         """
         Turns the UV LED on with max power
@@ -499,7 +522,6 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
     def set_uvled_off(self):
         """
         Turns the UV LED off
-        @return:
         """
         self.set_uvled(0)
 
@@ -527,9 +549,9 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
 
         delay = gcmd.get_int('TIME', 3000, minval=500, maxval=5000) / 1000.
         offset = gcmd.get_int('OFFSET', 0, minval=-1000, maxval=0) / 1000.
-        type = gcmd.get_int('TYPE', 0, minval=0, maxval=1)
+        etype = gcmd.get_int('TYPE', 0, minval=0, maxval=1)
 
-        if type == 0:
+        if etype == 0:
             offset -= 0.2
 
         toolhead = self.printer.lookup_object('toolhead')
@@ -552,7 +574,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         exposure_time = round(final_time - exposure_time, 4)
         time_total = round(final_time - time_total, 4)
 
-        if type == 0:
+        if etype == 0:
             offset += 0.2
         calculated_offset = max(0,
                                 round((exposure_time - delay + offset)
@@ -577,12 +599,12 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         lies in the range of 100–400 nm, and is further subdivided into
         UVA (315–400 nm), UVB (280–315 nm), and UVC (100–280 nm).
 
-        Syntax: M1400 S<0-255> P[ms]
-        S: LED Power (Non PWM LEDs will turn on from 1 to 255). (int)
+        Syntax: M1400 S[0-255] P[ms]
+        S: LED Power (Non PWM LEDs will turn on from 1 to 255). (float)
         P: Time to wait in milliseconds when (S>0) before turn off. (int)
         @param gcmd:
         """
-        value = gcmd.get_float('S', minval=0., maxval=255.)
+        value = gcmd.get_float('S', 255., minval=0., maxval=255.)
         delay = gcmd.get_float('P', 0, above=0.) / 1000.
         self.set_uvled(value, delay)
 
