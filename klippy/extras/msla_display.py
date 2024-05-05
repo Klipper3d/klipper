@@ -67,8 +67,8 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
                                                     self.uvled_output_pin_name,
                                                     None)
         if self.uvled is None:
-            msg = (f"The [output_pin %s] or [pwm_tool %s] was not found." %
-                   (self.uvled_output_pin_name, self.uvled_output_pin_name))
+            msg = f"The [output_pin %s] or [pwm_tool %s] was not found." % (
+                    self.uvled_output_pin_name, self.uvled_output_pin_name)
             logging.exception(msg)
             raise config.error(msg)
 
