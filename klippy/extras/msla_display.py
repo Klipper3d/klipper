@@ -11,7 +11,6 @@ import threading
 import re
 import time
 import tempfile
-from pathlib import Path
 from PIL import Image
 from . import framebuffer_display, pwm_tool, pwm_cycle_time, output_pin
 
@@ -629,7 +628,6 @@ class BufferCache:
     def __init__(self, path, data):
         self.path = path
         self.data = data
-        self.pathinfo = Path(path)
 
     def new_path_layerindex(self, n):
         """
@@ -637,8 +635,9 @@ class BufferCache:
         @param n:
         @return:
         """
-        return re.sub(r"\d+%s$" % re.escape(self.pathinfo.suffix),
-                      "%d%s" % (n, self.pathinfo.suffix),
+        extension = self.path[self.path.rfind('.'):]
+        return re.sub(r"\d+%s$" % re.escape(extension),
+                      "%d%s" % (n, extension),
                       self.path)
 
     def get_layer_index(self):
@@ -646,8 +645,8 @@ class BufferCache:
         Gets the layer index from a path
         @return: New layer index. -1 if not founded.
         """
-        match = re.search(r"(\d+)%s$" % re.escape(self.pathinfo.suffix),
-                          self.path)
+        extension = self.path[self.path.rfind('.'):]
+        match = re.search(r"(\d+)%s$" % re.escape(extension), self.path)
         if match is None:
             return -1
 
