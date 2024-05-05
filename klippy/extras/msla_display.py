@@ -601,8 +601,8 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         """
         Turn the main UV LED to cure the pixels.
         M1400 comes from the wavelength of UV radiation (UVR)
-        lies in the range of 100–400 nm, and is further subdivided into
-        UVA (315–400 nm), UVB (280–315 nm), and UVC (100–280 nm).
+        lies in the range of 100-400 nm, and is further subdivided into
+        UVA (315-400 nm), UVB (280-315 nm), and UVC (100-280 nm).
 
         Syntax: M1400 S[0-255] P[ms]
         S: LED Power (Non PWM LEDs will turn on from 1 to 255). (float)
