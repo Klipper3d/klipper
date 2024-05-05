@@ -4395,21 +4395,21 @@ pixel_format: RGB
 #   Default: RGB
 framebuffer_index: 0
 #   The framebuffer index, this maps to /dev/fb<index>
-resolution_x: 1440 
+resolution_x: 1440
 resolution_y: 2560
 #   The display resolution, these values are compared and validated against the
 #   the framebuffer device information.
 pixel_width: 0.01575
 pixel_height: 0.04725
-#   The pixel pitch/size in millimeters, these values are used to calculate 
+#   The pixel pitch/size in millimeters, these values are used to calculate
 #   the display size accordingly.
 ```
 
 ### [msla_display]
 
-Support for a mSLA display that will be used to display images and cure resin 
-by lit a UV LED under the display pixels.  
-For the complete configuration follow the 
+Support for a mSLA display that will be used to display images and cure resin
+by lit a UV LED under the display pixels.
+For the complete configuration follow the
 [framebuffer_display](Config_Reference.md#framebuffer_display)
 
 See the [command reference](G-Codes.md#msla_display) for more information.
@@ -4421,11 +4421,11 @@ buffer_cache_count: 1
 #   Number of images to cache while printing, cached buffers cut the processing
 #   time and render the image faster into the display. Default: 1
 uvled_output_pin_name: msla_uvled
-#   The configurated UV LED [output_pin msla_uvled] or [pwm_tool msla_uvled], 
-#   either section must exist and be configured to attach a UV LED to this 
+#   The configurated UV LED [output_pin msla_uvled] or [pwm_tool msla_uvled],
+#   either section must exist and be configured to attach a UV LED to this
 #   display. Default: msla_uvled
 uvled_response_delay: 0
-#   The UV LED response delay in milliseconds, often this is the time the 
+#   The UV LED response delay in milliseconds, often this is the time the
 #   micro-controller takes to switch the UV LED pin. This offset will subtract
 #   to a defined exposure time when issue the M1400 Sx Px command. Default: 0
 ```

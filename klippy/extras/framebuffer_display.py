@@ -467,9 +467,9 @@ class FramebufferDisplayWrapper(FramebufferDisplay):
         super().__init__(config)
 
         device_name = config.get_name().split()[1]
-        self.gcode.register_mux_command("FRAMEBUFFER_CLEAR", "DEVICE", device_name,
-                                   self.cmd_FRAMEBUFFER_CLEAR,
-                                   desc=self.cmd_FRAMEBUFFER_CLEAR_help)
+        self.gcode.register_mux_command("FRAMEBUFFER_CLEAR", "DEVICE",
+                                        device_name, self.cmd_FRAMEBUFFER_CLEAR,
+                                        desc=self.cmd_FRAMEBUFFER_CLEAR_help)
         self.gcode.register_mux_command("FRAMEBUFFER_SEND_IMAGE", "DEVICE",
                                    device_name, self.cmd_FRAMEBUFFER_DRAW_IMAGE,
                                    desc=self.cmd_FRAMEBUFFER_DRAW_IMAGE_help)
