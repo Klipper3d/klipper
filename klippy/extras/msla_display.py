@@ -24,7 +24,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
     """
 
     def __init__(self, config):
-        super().__init__(config)
+        super(mSLADisplay, self).__init__(config)
 
         # CACHE CONFIG
         self.buffer_cache_count = config.getint('cache', 0, 0, 100)
@@ -67,7 +67,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
                                                     self.uvled_output_pin_name,
                                                     None)
         if self.uvled is None:
-            msg = f"The [output_pin %s] or [pwm_tool %s] was not found." % (
+            msg = "The [output_pin %s] or [pwm_tool %s] was not found." % (
                     self.uvled_output_pin_name, self.uvled_output_pin_name)
             logging.exception(msg)
             raise config.error(msg)
@@ -81,27 +81,27 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
                                             self.clear_cache)
 
         # Register commands
-        gcode = self.printer.lookup_object('gcode')
-        gcode.register_command("MSLA_DISPLAY_VALIDATE",
+        self.gcode = self.printer.lookup_object('gcode')
+        self.gcode.register_command("MSLA_DISPLAY_VALIDATE",
                                self.cmd_MSLA_DISPLAY_VALIDATE,
                                desc=self.cmd_MSLA_DISPLAY_VALIDATE_help)
-        gcode.register_command("MSLA_DISPLAY_TEST",
+        self.gcode.register_command("MSLA_DISPLAY_TEST",
                                self.cmd_MSLA_DISPLAY_TEST,
                                desc=self.cmd_MSLA_DISPLAY_TEST_help)
-        gcode.register_command("MSLA_DISPLAY_RESPONSE_TIME",
+        self.gcode.register_command("MSLA_DISPLAY_RESPONSE_TIME",
                                self.cmd_MSLA_DISPLAY_RESPONSE_TIME,
                                desc=self.cmd_MSLA_DISPLAY_RESPONSE_TIME_help)
-        gcode.register_command('M1450', self.cmd_M1450,  # Display clear
+        self.gcode.register_command('M1450', self.cmd_M1450,  # Display clear
                                desc=self.cmd_M1451_help)
-        gcode.register_command('M1451', self.cmd_M1451,  # Display image
+        self.gcode.register_command('M1451', self.cmd_M1451,  # Display image
                                desc=self.cmd_M1451_help)
 
-        gcode.register_command("MSLA_UVLED_RESPONSE_TIME",
+        self.gcode.register_command("MSLA_UVLED_RESPONSE_TIME",
                                self.cmd_MSLA_UVLED_RESPONSE_TIME,
                                desc=self.cmd_MSLA_UVLED_RESPONSE_TIME_help)
-        gcode.register_command('M1400', self.cmd_M1400,  # UVLED SET
+        self.gcode.register_command('M1400', self.cmd_M1400,  # UVLED SET
                                desc=self.cmd_M1400_help)
-        gcode.register_command('M1401', self.cmd_M1401,  # UVLED OFF
+        self.gcode.register_command('M1401', self.cmd_M1401,  # UVLED OFF
                                desc=self.cmd_M1401_help)
 
     def get_status(self, eventtime):
@@ -115,9 +115,9 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         """
         Clear all cached buffers
         """
-        self._cache.clear()
+        self._cache = []
 
-    def _can_cache(self) -> bool:
+    def _can_cache(self):
         """
         Returns true if is ready to cache
         @rtype: bool
@@ -126,7 +126,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
                 and (self._cache_thread is None
                      or not self._cache_thread.is_alive()))
 
-    def _wait_cache_thread(self) -> bool:
+    def _wait_cache_thread(self):
         """
         Waits for cache thread completion
         @rtype: bool
@@ -160,7 +160,7 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
                 di = self.get_image_buffer(new_path)
                 self._cache.append(BufferCache(new_path, di))
 
-    def _get_cache_index(self, path) -> int:
+    def _get_cache_index(self, path):
         """
         Gets the index of the cache position on the list given a path
         @param path: Path to seek
@@ -189,11 +189,11 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
 
             if self.buffer_cache_count > 0:
                 self._wait_cache_thread()  # May be worth to wait if streaming
-                i = self._get_cache_index(path)
-                if i >= 0:
-                    cache = self._cache[i]
+                index = self._get_cache_index(path)
+                if index >= 0:
+                    cache = self._cache[index]
                     # RTrim up to cache
-                    self._cache = self._cache[i + 1:]
+                    self._cache = self._cache[index+1:]
 
                     if self._can_cache():
                         self._cache_thread = threading.Thread(
@@ -243,64 +243,68 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
 
         resolution_split = resolution.split(',', 1)
         if len(resolution_split) < 2:
-            raise gcmd.error(f"The resolution of {resolution} is malformed. "
-                             f"Format: RESOLUTION_X,RESOLUTION_Y.")
+            raise gcmd.error("The resolution of %d is malformed. "
+                             "Format: RESOLUTION_X,RESOLUTION_Y." % resolution)
 
         try:
             resolution_x = int(resolution_split[0])
         except:
-            raise gcmd.error(f"The resolution x must be an integer number.")
+            raise gcmd.error("The resolution x must be an integer number.")
 
         try:
             resolution_y = int(resolution_split[1])
         except:
-            raise gcmd.error(f"The resolution y must be an integer.")
+            raise gcmd.error("The resolution y must be an integer.")
 
         if strict:
             if resolution_x > self.resolution_x:
                 raise gcmd.error(
-                    f"The resolution X of {resolution_x} is invalid. "
-                    f"Should be equal to {self.resolution_x}.")
+                    "The resolution X of %d is invalid. "
+                    "Should be equal to %d."
+                    % (resolution_x, self.resolution_x))
 
             if resolution_y > self.resolution_y:
                 raise gcmd.error(
-                    f"The resolution Y of {resolution_y} is invalid. "
-                    f"Should be equal to {self.resolution_y}.")
+                    "The resolution Y of %d is invalid. "
+                    "Should be equal to %d."
+                    % (resolution_y, self.resolution_y))
         else:
             if resolution_x > self.resolution_x:
-                raise gcmd.error(f"The resolution X of {resolution_x} is "
-                                 f"invalid. Should be less or equal to "
-                                 f"{self.resolution_x}.")
+                raise gcmd.error("The resolution X of %d is "
+                                 "invalid. Should be less or equal to %d."
+                                 % (resolution_x, self.resolution_x))
 
             if resolution_y > self.resolution_y:
-                raise gcmd.error(f"The resolution Y of {resolution_y} is "
-                                 f"invalid. Should be less or equal to "
-                                 f"{self.resolution_y}.")
+                raise gcmd.error("The resolution Y of %d is "
+                                 "invalid. Should be less or equal to %d."
+                                 % (resolution_y, self.resolution_y))
 
         pixel_size_split = pixel_size.split(',', 1)
         if len(pixel_size_split) < 2:
-            raise gcmd.error(f"The pixel size of {pixel_size} is malformed. "
-                             f"Format: PIXEL_WIDTH,PIXEL_HEIGHT.")
+            raise gcmd.error("The pixel size of %f is malformed. "
+                             "Format: PIXEL_WIDTH,PIXEL_HEIGHT." % pixel_size)
 
         try:
             pixel_width = float(pixel_size_split[0])
         except:
-            raise gcmd.error(f"The pixel width must be an floating point "
-                             f"number.")
+            raise gcmd.error("The pixel width must be an floating point "
+                             "number.")
 
         try:
             pixel_height = float(pixel_size_split[1])
         except:
-            raise gcmd.error(f"The pixel height must be an floating point "
-                             f"number.")
+            raise gcmd.error("The pixel height must be an floating point "
+                             "number.")
 
         if pixel_width != self.pixel_width:
-            raise gcmd.error(f"The pixel width of {pixel_width} is invalid. "
-                             f"Should be {self.pixel_width}.")
+            raise gcmd.error("The pixel width of %f is invalid. "
+                             "Should be %f."
+                             % (pixel_width, self.pixel_width))
 
         if pixel_height != self.pixel_height:
-            raise gcmd.error(f"The pixel height of {pixel_height} is invalid. "
-                             f"Should be {self.pixel_height}.")
+            raise gcmd.error("The pixel height of %f is invalid. "
+                             "Should be %f."
+                             % (pixel_height, self.pixel_height))
 
     cmd_MSLA_DISPLAY_TEST_help = ("Test the display by showing full white image"
                                   " and grey shades. Use a white paper on top "
@@ -331,13 +335,13 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
 
         self.set_uvled_on()
         while color > 0:
-            gcmd.respond_raw(f"Fill color: {color}")
+            gcmd.respond_raw("Fill color: %d" % color)
             self.fill_buffer(color)
             color -= decrement
             toolhead.dwell(delay)
         self.set_uvled_off()
         self.clear_buffer()
-        gcmd.respond_raw(f"Test finished.")
+        gcmd.respond_raw("Test finished.")
 
     cmd_MSLA_DISPLAY_RESPONSE_TIME_help = ("Sends a buffer to display and test "
                                            "it response time to complete the "
@@ -436,13 +440,14 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         params = gcmd.get_raw_command_parameters().strip()
 
         if 'F' not in params:
-            raise gcmd.error(f"Error on '{gcmd.get_command()}': missing F")
+            raise gcmd.error("Error on '%s': missing F" % gcmd.get_command())
 
         toolhead = self.printer.lookup_object('toolhead')
         match = self._M1451_file_regex.search(params)
         if not match:
-            raise gcmd.error(f"Error on '{gcmd.get_command()}': The F parameter"
-                             f" is malformed. Use a proper image file.")
+            raise gcmd.error("Error on '%s': The F parameter"
+                             " is malformed. Use a proper image file."
+                             % gcmd.get_command())
 
         path = match.group(1).strip(' "\'')
         path = os.path.normpath(os.path.expanduser(path))
@@ -459,14 +464,14 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
             self.write_buffer_threaded(di['buffer'], di['stride'], offset,
                                        clear_flag, wait_thread)
 
-    def is_exposure(self) -> bool:
+    def is_exposure(self):
         """
         True if the UV LED is on, exposure a layer, otherwise False
         @return:
         """
         return self.uvled.last_value > 0
 
-    def is_uvled_pwm(self) -> bool:
+    def is_uvled_pwm(self):
         """
         True if UV LED is configured as PWM pin, otherwise False
         """
@@ -577,18 +582,18 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
         if etype == 0:
             offset += 0.2
         calculated_offset = max(0,
-                                round((exposure_time - delay + offset)
-                                      * 1000))
+                                round((exposure_time - delay + offset) * 1000))
 
         exposure_factor = round(exposure_time / delay, 2)
 
-        gcmd.respond_raw(f"UV LED RESPONSE TIME TEST ({delay}s):\n"
-                         f"Switch time: {round(enable_time * 1000)} ms\n"
-                         f"Exposure time: {exposure_time} s\n"
-                         f"Total time: {time_total} s\n"
-                         f"Exposure time factor: {exposure_factor} x\n"
-                         f"Calculated delay offset: {calculated_offset} ms\n"
-                         )
+        gcmd.respond_raw("UV LED RESPONSE TIME TEST (%fs):\n"
+                         "Switch time: %d ms\n"
+                         "Exposure time: %f s\n"
+                         "Total time: %f s\n"
+                         "Exposure time factor: %f x\n"
+                         "Calculated delay offset: %d ms\n"
+                         % (delay, round(enable_time * 1000), exposure_time,
+                            time_total, exposure_factor, calculated_offset))
 
     cmd_M1400_help = "Turn the main UV LED to cure the pixels."
 
@@ -626,21 +631,23 @@ class BufferCache:
         self.data = data
         self.pathinfo = Path(path)
 
-    def new_path_layerindex(self, n) -> str:
+    def new_path_layerindex(self, n):
         """
         Return a new path with same base directory but new layer index
         @param n:
         @return:
         """
-        return re.sub(rf"\d+\{self.pathinfo.suffix}$",
-                      f"{n}{self.pathinfo.suffix}", self.path)
+        return re.sub(r"\d+%s$" % re.escape(self.pathinfo.suffix),
+                      "%d%s" % (n, self.pathinfo.suffix),
+                      self.path)
 
-    def get_layer_index(self) -> int:
+    def get_layer_index(self):
         """
         Gets the layer index from a path
         @return: New layer index. -1 if not founded.
         """
-        match = re.search(rf"(\d+)\{self.pathinfo.suffix}$", self.path)
+        match = re.search(r"(\d+)%s$" % re.escape(self.pathinfo.suffix),
+                          self.path)
         if match is None:
             return -1
 

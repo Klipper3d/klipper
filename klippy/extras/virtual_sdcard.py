@@ -236,7 +236,7 @@ class VirtualSD:
                 hashfile = os.path.join(self.sdcard_archive_temp_dirname,
                                         DEFAULT_ARCHIVE_HASH_FILENAME)
 
-                gcmd.respond_raw(f"Calculating {fname} hash")
+                gcmd.respond_raw("Calculating %s hash" % fname)
                 hash = self._file_hash(os.path.join(self.sdcard_dirname, fname))
 
                 if os.path.isfile(hashfile):
@@ -252,13 +252,13 @@ class VirtualSD:
                         if need_extract:
                             if os.path.isdir(self.sdcard_archive_temp_dirname):
                                 shutil.rmtree(self.sdcard_archive_temp_dirname)
-                            gcmd.respond_raw(f"Decompressing {fname}...")
+                            gcmd.respond_raw("Decompressing %s..." % fname)
                             timenow = time.time()
                             zip_file.extractall(
                                 self.sdcard_archive_temp_dirname)
                             timenow = time.time() - timenow
-                            gcmd.respond_raw(f"Decompress done in {timenow:.2f}"
-                                             f" seconds")
+                            gcmd.respond_raw("Decompress done in %.2f seconds"
+                                             % timenow)
                             with open(hashfile, 'w') as f:
                                 f.write(hash)
 
@@ -275,13 +275,13 @@ class VirtualSD:
                         if need_extract:
                             if os.path.isdir(self.sdcard_archive_temp_dirname):
                                 shutil.rmtree(self.sdcard_archive_temp_dirname)
-                            gcmd.respond_raw(f"Decompressing {fname}...")
+                            gcmd.respond_raw("Decompressing %s..." % fname)
                             timenow = time.time()
                             tar_file.extractall(
                                 self.sdcard_archive_temp_dirname)
                             timenow = time.time() - timenow
-                            gcmd.respond_raw(f"Decompress done in {timenow:.2f}"
-                                             f" seconds")
+                            gcmd.respond_raw("Decompress done in %.2f seconds"
+                                             % timenow)
                             with open(hashfile, 'w') as f:
                                 f.write(hash)
 
@@ -418,7 +418,7 @@ class VirtualSD:
         else:
             self.print_stats.note_complete()
         return self.reactor.NEVER
-    def _file_hash(self, filepath, block_size=2**20) -> str:
+    def _file_hash(self, filepath, block_size=2**20):
         md5 = hashlib.md5()
         with open(filepath, "rb") as f:
             while True:

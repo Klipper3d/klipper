@@ -9,6 +9,7 @@ import math
 import re
 import os
 import mmap
+import struct
 
 from PIL import Image
 import threading
@@ -62,7 +63,7 @@ class FramebufferDisplay:
             self.display_width ** 2 + self.display_height ** 2) / 25.4, 2)
 
         # get modes width and height
-        with open(f"/sys/class/graphics/fb{self.framebuffer_index}/modes",
+        with open("/sys/class/graphics/fb%d/modes" % self.framebuffer_index,
                   "r") as f:
             modes = f.read()
             match = re.search(r"(\d+)x(\d+)", modes)
@@ -71,42 +72,41 @@ class FramebufferDisplay:
                 self.fb_modes_height = int(match.group(2))
             else:
                 msg = ('Unable to extract "modes" information from famebuffer '
-                       f"device fb{self.framebuffer_index}.")
+                       "device fb%d." % self.framebuffer_index)
                 logging.exception(msg)
                 raise config.error(msg)
 
         # get virtual width and height
         with open(
-                f"/sys/class/graphics/fb{self.framebuffer_index}/virtual_size",
-                "r") as f:
+                "/sys/class/graphics/fb%d/virtual_size"
+                % self.framebuffer_index, "r") as f:
             virtual_size = f.read()
             width_string, height_string = virtual_size.split(',')
             self.fb_virtual_width = int(width_string)  # width
             self.fb_virtual_height = int(height_string)  # height
 
         # get stride
-        with open(f"/sys/class/graphics/fb{self.framebuffer_index}/stride",
+        with open("/sys/class/graphics/fb%d/stride" % self.framebuffer_index,
                   "r") as f:
             self.fb_stride = int(f.read())
 
         # get bits per pixel
         with open(
-                f"/sys/class/graphics/fb{self.framebuffer_index}/bits_per_pixel"
-                , "r") as f:
+                "/sys/class/graphics/fb%d/bits_per_pixel"
+                % self.framebuffer_index, "r") as f:
             self.fb_bits_per_pixel = int(f.read())
 
         # Check if configured resolutions match framebuffer information
         if self.resolution_x not in (self.fb_stride, self.fb_modes_width):
-            msg = (f"The configured resolution_x of {self.resolution_x} "
-                   f"does not match any of the framebuffer stride "
-                   f"of ({self.fb_stride}) nor "
-                   f"the modes of ({self.fb_modes_width}).")
+            msg = ("The configured resolution_x of %d does not match any of "
+                   "the framebuffer stride of (%d) nor the modes of (%d)."
+                   % (self.resolution_x, self.fb_stride, self.fb_modes_width))
             logging.exception(msg)
             raise config.error(msg)
         if self.resolution_y != self.fb_modes_height:
-            msg = (f"The configured resolution_y of {self.resolution_y} does "
-                   f"not match the framebuffer "
-                   f"modes of ({self.fb_modes_height}).")
+            msg = ("The configured resolution_y of %d does not match the "
+                   "framebuffer modes of (%d)."
+                   % (self.resolution_y, self.fb_modes_height))
             logging.exception(msg)
             raise config.error(msg)
 
@@ -125,7 +125,7 @@ class FramebufferDisplay:
 
         self.clear_buffer_threaded()
 
-    def is_busy(self) -> bool:
+    def is_busy(self):
         """
         Checks if the device is busy.
         @return: True if the device is busy, false otherwise.
@@ -134,7 +134,7 @@ class FramebufferDisplay:
                 (self._framebuffer_thread is not None
                 and self._framebuffer_thread.is_alive()))
 
-    def wait_framebuffer_thread(self, timeout=None) -> bool:
+    def wait_framebuffer_thread(self, timeout=None):
         """
         Wait for the framebuffer thread to terminate (Finish writes).
         @param timeout: Timeout time to wait for framebuffer thread to terminate
@@ -147,12 +147,12 @@ class FramebufferDisplay:
             return True
         return False
 
-    def get_framebuffer_path(self) -> str:
+    def get_framebuffer_path(self):
         """
         Gets the framebuffer device path associated with this object.
         @return: /dev/fb[i]
         """
-        return f"/dev/fb{self.framebuffer_index}"
+        return "/dev/fb%d" % self.framebuffer_index
 
     def get_max_offset(self, buffer_size, stride, height=-1):
         """
@@ -167,7 +167,7 @@ class FramebufferDisplay:
             height = buffer_size // stride
         return max(self.fb_maxsize - self.fb_stride * (height - 1) - stride, 0)
 
-    def get_position_from_xy(self, x, y) -> int:
+    def get_position_from_xy(self, x, y):
         """
         Gets the starting point in the buffer given an x and y coordinate
         @param x: X coordinate
@@ -180,7 +180,7 @@ class FramebufferDisplay:
             raise self.gcode.error(msg)
 
         if x >= self.resolution_x:
-            msg = f"The x value must be less than {self.resolution_x}"
+            msg = "The x value must be less than %d" % self.resolution_x
             logging.exception(msg)
             raise self.gcode.error(msg)
 
@@ -190,13 +190,13 @@ class FramebufferDisplay:
             raise self.gcode.error(msg)
 
         if y >= self.resolution_y:
-            msg = f"The y value must be less than {self.resolution_y}"
+            msg = "The y value must be less than %d" % self.resolution_y
             logging.exception(msg)
             raise self.gcode.error(msg)
 
         return y * self.fb_stride + x * self.channels
 
-    def get_image_buffer(self, path, strip_alpha=True) -> dict:
+    def get_image_buffer(self, path, strip_alpha=True):
         """
         Reads an image from disk and return it buffer, ready to send to fb.
         Note that it does not do any file check,
@@ -254,7 +254,7 @@ class FramebufferDisplay:
         self.wait_framebuffer_thread()
         self._framebuffer_thread = threading.Thread(
             target=self.clear_buffer,
-            name=f"Clears the fb{self.framebuffer_index}")
+            name="Clears the fb%d" % self.framebuffer_index)
         self._framebuffer_thread.start()
         if wait_thread:
             self._framebuffer_thread.join()
@@ -273,26 +273,27 @@ class FramebufferDisplay:
             return
 
         if not isinstance(buffer, (list, bytes)):
-            msg = (f"The buffer must be a 1D byte array. "
-                   f"{type(buffer)} was passed")
+            msg = ("The buffer must be a 1D byte array. %s was passed"
+                   % type(buffer))
             logging.exception(msg)
             raise self.gcode.error(msg)
 
         if offset < 0:
-            msg = f"The offset {offset} can not be negative value."
+            msg = "The offset %d can not be negative value." % offset
             logging.exception(msg)
             raise self.gcode.error(msg)
 
         if clear_flag < 0 or clear_flag > CLEAR_AUTO_FLAG:
-            msg = f"The clear flag must be between 0 and {CLEAR_AUTO_FLAG}."
+            msg = "The clear flag must be between 0 and %d." % CLEAR_AUTO_FLAG
             raise self.gcode.error(msg)
 
         clear = clear_flag
 
         buffer_size = len(buffer)
         if buffer_size + offset > self.fb_maxsize:
-            msg = (f"The buffer size of {buffer_size} + {offset} is greater "
-                   f"than actual framebuffer size of {self.fb_maxsize}.")
+            msg = ("The buffer size of %d + %d is greater "
+                   "than actual framebuffer size of %d."
+                   % (buffer_size, offset, self.fb_maxsize))
             logging.exception(msg)
             raise self.gcode.error(msg)
 
@@ -304,8 +305,9 @@ class FramebufferDisplay:
         if buffer_stride > 0 and buffer_stride < self.fb_stride:
             is_region = True
             if buffer_size % buffer_stride != 0:
-                msg = (f"The buffer stride of {buffer_stride} must be an exact"
-                       f" multiple of the buffer size {buffer_size}.")
+                msg = ("The buffer stride of %d must be an exact"
+                       " multiple of the buffer size %d."
+                       % (buffer_stride, buffer_size))
                 logging.exception(msg)
                 raise self.gcode.error(msg)
 
@@ -317,19 +319,18 @@ class FramebufferDisplay:
                 logging.exception(msg)
                 raise self.gcode.error(msg)
 
-        with self._framebuffer_lock:
+        with (self._framebuffer_lock):
             if offset > 0:
                 if clear:
                     self.fb_memory_map.write(
-                        (0).to_bytes(1, byteorder='little') * offset)
+                        struct.pack('<B', 0) * offset)
                 else:
                     self.fb_memory_map.seek(offset)
 
             if is_region:
                 stride_offset = self.fb_stride - buffer_stride
                 if clear:
-                    stride_cleaner = (0).to_bytes(1, byteorder='little'
-                                                  ) * stride_offset
+                    stride_cleaner = struct.pack('<B', 0) * stride_offset
                 for i in range(0, buffer_size, buffer_stride):
                     if i > 0:
                         if clear:
@@ -341,11 +342,9 @@ class FramebufferDisplay:
                 self.fb_memory_map.write(buffer)
 
             pos = self.fb_memory_map.tell()
-            self.gcode.error(f"pos: {pos}")
             if clear and pos < self.fb_maxsize:
                 self.fb_memory_map.write(
-                    (0).to_bytes(1, byteorder='little')
-                    * (self.fb_maxsize - pos))
+                    struct.pack('<B', 0) * (self.fb_maxsize - pos))
 
             self.fb_memory_map.seek(0)
 
@@ -365,7 +364,7 @@ class FramebufferDisplay:
         self._framebuffer_thread = threading.Thread(
             target=lambda: self.write_buffer(buffer, buffer_stride, offset,
                                              clear_flag),
-            name=f"Sends an buffer to fb{self.framebuffer_index}")
+            name="Sends an buffer to fb%d" % self.framebuffer_index)
         self._framebuffer_thread.start()
         if wait_thread:
             self._framebuffer_thread.join()
@@ -381,7 +380,7 @@ class FramebufferDisplay:
                 logging.exception(msg)
                 raise self.gcode.error(msg)
 
-            buffer = color.to_bytes(1, byteorder='little')
+            buffer = struct.pack('<B', color)
         elif isinstance(color, (tuple, list)):
             for x in color:
                 if x < 0 or x > 255:
@@ -398,8 +397,9 @@ class FramebufferDisplay:
         buffer_size = len(buffer)
         if self.fb_maxsize % buffer_size != 0:
             msg = (
-                f"The buffer size of {buffer_size} must be an exact"
-                f" multiple of the framebuffer size {self.fb_maxsize}.")
+                "The buffer size of %d must be an exact"
+                " multiple of the framebuffer size %d."
+                % (buffer_size, self.fb_maxsize))
             logging.exception(msg)
             raise self.gcode.error(msg)
         self.write_buffer(buffer * (self.fb_maxsize // buffer_size))
@@ -413,7 +413,7 @@ class FramebufferDisplay:
         self.wait_framebuffer_thread()
         self._framebuffer_thread = threading.Thread(
             target=self.fill_buffer, args=(color,),
-            name=f"Fill the fb{self.framebuffer_index} with {color}")
+            name="Fill the fb%d with %d" % (self.framebuffer_index, color))
         self._framebuffer_thread.start()
         if wait_thread:
             self._framebuffer_thread.join()
@@ -427,17 +427,17 @@ class FramebufferDisplay:
         """
         gcode = self.printer.lookup_object('gcode')
         if offset < 0:
-            msg = f"The offset {offset} can not be negative value."
+            msg = "The offset %d can not be negative value." % offset
             logging.exception(msg)
             raise gcode.error(msg)
 
         if not isinstance(path, str):
-            msg = f"Path must be a string."
+            msg = "Path must be a string."
             logging.exception(msg)
             raise gcode.error(msg)
 
         if not os.path.isfile(path):
-            msg = f"The file '{path}' does not exists."
+            msg = "The file '%s' does not exists." % path
             logging.exception(msg)
             raise gcode.error(msg)
 
@@ -456,7 +456,7 @@ class FramebufferDisplay:
         self.wait_framebuffer_thread()
         self._framebuffer_thread = threading.Thread(
             target=lambda: self.draw_image(path, offset, clear_flag),
-            name=f"Render an image to fb{self.framebuffer_index}")
+            name="Render an image to fb%d" % self.framebuffer_index)
         self._framebuffer_thread.start()
         if wait_thread:
             self._framebuffer_thread.join()
@@ -464,7 +464,7 @@ class FramebufferDisplay:
 
 class FramebufferDisplayWrapper(FramebufferDisplay):
     def __init__(self, config):
-        super().__init__(config)
+        super(FramebufferDisplayWrapper, self).__init__(config)
 
         device_name = config.get_name().split()[1]
         self.gcode.register_mux_command("FRAMEBUFFER_CLEAR", "DEVICE",
@@ -495,7 +495,7 @@ class FramebufferDisplayWrapper(FramebufferDisplay):
         wait_thread = gcmd.get_int('WAIT', 0, 0, 1)
 
         if not os.path.isfile(path):
-            raise gcmd.error(f"The file '{path}' does not exists.")
+            raise gcmd.error("The file '%s' does not exists." % path)
 
         self.draw_image_threaded(path, offset, clear_flag, wait_thread)
 
