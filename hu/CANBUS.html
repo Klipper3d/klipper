@@ -1481,13 +1481,14 @@ iface can0 can static
 </code></pre></div>
 
 <ul>
+<li>A "bridge mcu" valójában nem a CAN-buszon van. A híd mcu-nak küldött és onnan érkező üzeneteket a CAN-buszon lévő más adapterek nem látják.</li>
 <li>
-<p>A "bridge mcu" valójában nem a CAN-buszon van. A híd mcu-nak küldött és onnan érkező üzeneteket a CAN-buszon lévő más adapterek nem látják.</p>
-<ul>
-<li>A rendelkezésre álló sávszélességet mind a "híd mcu", mind a CAN-buszon lévő összes eszköz számára a CAN-busz frekvenciája korlátozza. Ennek eredményeképpen az "USB és CAN-busz közötti híd üzemmód" használatakor ajánlott 1000000-es CAN-busz frekvenciát használni.Még 1000000-es CAN-busz frekvencia esetén sem biztos, hogy elegendő sávszélesség áll rendelkezésre a <code>SHAPER_CALIBRATE</code> teszt futtatásához, ha mind az XY-léptetők, mind a gyorsulásmérő egyetlen "USB és CAN-busz" interfészen keresztül kommunikálnak.</li>
-<li>Az USB-CAN hídlap nem jelenik meg USB soros eszközként, nem jelenik meg az <code>ls /dev/serial/by-id</code> futtatásakor, és nem konfigurálható a Klipper printer.cfg fájljában a <code>serial:</code> paraméterrel. A hídlap "USB CAN adapter"-ként jelenik meg, és a printer.cfg fájlban <a href="#configuring-klipper">CAN node-ként</a> van konfigurálva .</li>
-</ul>
+<p>A rendelkezésre álló sávszélességet mind a "híd mcu", mind a CAN-buszon lévő összes eszköz számára a CAN-busz frekvenciája korlátozza. Ennek eredményeképpen az "USB és CAN-busz közötti híd üzemmód" használatakor ajánlott 1000000-es CAN-busz frekvenciát használni.</p>
+<p>Még 1000000-es CAN-busz frekvencia esetén sem biztos, hogy elegendő sávszélesség áll rendelkezésre a <code>SHAPER_CALIBRATE</code> teszt futtatásához, ha mind az XY-léptetők, mind a gyorsulásmérő egyetlen "USB és CAN-busz" interfészen keresztül kommunikálnak.</p>
 </li>
+</ul>
+<ul>
+<li>Az USB-CAN hídlap nem jelenik meg USB soros eszközként, nem jelenik meg az <code>ls /dev/serial/by-id</code> futtatásakor, és nem konfigurálható a Klipper printer.cfg fájljában a <code>serial:</code> paraméterrel. A hídlap "USB CAN adapter"-ként jelenik meg, és a printer.cfg fájlban <a href="#configuring-klipper">CAN node-ként</a> van konfigurálva .</li>
 </ul>
 <h2 id="tippek-a-hibaelharitashoz">Tippek a hibaelhárításhoz<a class="headerlink" href="#tippek-a-hibaelharitashoz" title="Permanent link">&para;</a></h2>
 <p>Lásd a <a href="CANBUS_Troubleshooting.html">CAN-busz hibaelhárítás</a> dokumentumot.</p>

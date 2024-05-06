@@ -1621,15 +1621,16 @@
 <li>Se hai già aggiunto la sezione <code>[input_shaper]</code> a printer.cfg, esegui il comando <code>SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0</code>. Se ricevi l'errore "Comando sconosciuto- Unknown command", puoi tranquillamente ignorarlo a questo punto e continuare con le misurazioni.</li>
 <li>Eseguire il comando: <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code> Fondamentalmente, cerchiamo di rendere più pronunciato il ringing impostando diversi valori elevati per l'accelerazione. Questo comando aumenterà l'accelerazione ogni 5 mm a partire da 1500 mm/sec^2: 1500 mm/sec^2, 2000 mm/sec^2, 2500 mm/sec^2 e così via fino a 7000 mm/sec^2 per l'ultima fascia.</li>
 <li>Stampa il modello di test sliced con i parametri suggeriti.</li>
+<li>Puoi interrompere la stampa prima se il ringing è chiaramente visibile e vedi che l'accelerazione diventa troppo alta per la tua stampante (ad es. la stampante trema troppo o inizia a saltare i passaggi).</li>
 <li>
-<p>Puoi interrompere la stampa prima se il ringing è chiaramente visibile e vedi che l'accelerazione diventa troppo alta per la tua stampante (ad es. la stampante trema troppo o inizia a saltare i passaggi).</p>
-<ol>
-<li>Utilizzare i segni X e Y sul retro del modello come riferimento. Le misurazioni dal lato con il contrassegno X devono essere utilizzate per la <em>configurazione</em> dell'asse X e il contrassegno Y - per la configurazione dell'asse Y. Misurare la distanza <em>D</em> (in mm) tra più oscillazioni sulla parte con il segno X, in prossimità delle tacche, preferibilmente saltando la prima o due oscillazioni. Per misurare più facilmente la distanza tra le oscillazioni, contrassegnare prima le oscillazioni, quindi misurare la distanza tra i segni con un righello o un calibro:|<img alt="Mark ringing" src="img/ringing-mark.jpg" />|<img alt="Measure ringing" src="img/ringing-measure.jpg" />|</li>
-<li>Contare a quante oscillazioni <em>N</em> corrisponde la distanza misurata <em>D</em>. Se non sei sicuro di come contare le oscillazioni, fai riferimento all'immagine sopra, che mostra <em>N</em> = 6 oscillazioni.</li>
+<p>Utilizzare i segni X e Y sul retro del modello come riferimento. Le misurazioni dal lato con il contrassegno X devono essere utilizzate per la <em>configurazione</em> dell'asse X e il contrassegno Y - per la configurazione dell'asse Y. Misurare la distanza <em>D</em> (in mm) tra più oscillazioni sulla parte con il segno X, in prossimità delle tacche, preferibilmente saltando la prima o due oscillazioni. Per misurare più facilmente la distanza tra le oscillazioni, contrassegnare prima le oscillazioni, quindi misurare la distanza tra i segni con un righello o un calibro:</p>
+<p>|<img alt="Mark ringing" src="img/ringing-mark.jpg" />|<img alt="Measure ringing" src="img/ringing-measure.jpg" />|</p>
+</li>
+<li>
+<p>Contare a quante oscillazioni <em>N</em> corrisponde la distanza misurata <em>D</em>. Se non sei sicuro di come contare le oscillazioni, fai riferimento all'immagine sopra, che mostra <em>N</em> = 6 oscillazioni.</p>
+</li>
 <li>Calcola la frequenza di squillo dell'asse X come <em>V</em> &middot; <em>N</em> / <em>D</em> (Hz), dove <em>V</em> è la velocità per i perimetri esterni (mm/sec). Per l'esempio sopra, abbiamo contrassegnato 6 oscillazioni e il test è stato stampato a una velocità di 100 mm/sec, quindi la frequenza è 100 * 6 / 12,14 ≈ 49,4 Hz.</li>
 <li>Esegui (8) - (10) anche per il segno Y.</li>
-</ol>
-</li>
 </ol>
 <p>Si noti che il ringing sulla stampa di prova dovrebbe seguire lo schema delle tacche curve, come nell'immagine sopra. In caso contrario, questo difetto non è in realtà un ringing e ha un'origine diversa: un problema meccanico o dell'estrusore. Dovrebbe essere risolto prima di abilitare e regolare gli shaper di input.</p>
 <p>Se le misurazioni non sono affidabili perché, ad esempio, la distanza tra le oscillazioni non è stabile, potrebbe significare che la stampante ha più frequenze di risonanza sullo stesso asse. Si può invece provare a seguire il processo di sintonizzazione descritto nella sezione <a href="#unreliable-measurements-of-ringing-frequencies">Misurazioni inaffidabili delle frequenze di ringing</a> e ottenere comunque qualcosa dalla tecnica di input shaping .</p>

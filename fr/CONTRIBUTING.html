@@ -1447,7 +1447,8 @@
 <p>Ce que le relecteur recherche le plus souvent :</p>
 <ol>
 <li>
-<p>La soumission est-elle exempte de défauts et est-elle prête à être déployée à grande échelle ?Les soumissionnaires sont censés tester leurs modifications avant de les soumettre. Les relecteurs recherchent les erreurs, mais ne testent pas, en général, les soumissions. Une soumission acceptée est souvent déployée sur des milliers d'imprimantes dans les quelques semaines qui suivent son acceptation. La qualité des soumissions est donc considérée comme une priorité.</p>
+<p>La soumission est-elle exempte de défauts et est-elle prête à être déployée à grande échelle ?</p>
+<p>Les soumissionnaires sont censés tester leurs modifications avant de les soumettre. Les relecteurs recherchent les erreurs, mais ne testent pas, en général, les soumissions. Une soumission acceptée est souvent déployée sur des milliers d'imprimantes dans les quelques semaines qui suivent son acceptation. La qualité des soumissions est donc considérée comme une priorité.</p>
 <p>Le dépôt GitHub principal de <a href="https://github.com/Klipper3d/klipper">Klipper3d/klipper</a> n'accepte pas les travaux expérimentaux. Les auteurs doivent effectuer les expérimentations, le débogage et les tests dans leurs propres dépôts. Le serveur <a href="Contact.html">Klipper Discourse</a> est un bon endroit pour faire connaître les nouveaux travaux et trouver des utilisateurs désireux de fournir des commentaires concrets.</p>
 <p>Les soumissions doivent réussir tous les <a href="Debugging.html">tests de régression</a>.</p>
 <p>Lorsqu'ils corrigent un défaut dans le code, les soumissionnaires doivent avoir une compréhension générale de la cause fondamentale de ce défaut, et la correction doit cibler cette seule cause fondamentale.</p>
@@ -1456,7 +1457,8 @@
 <p>Les mises à jour de la documentation ne doivent pas indiquer qu'il s'agit d'un "travail en cours".</p>
 </li>
 <li>
-<p>La demande apporte-t-elle un avantage "à fort impact" à des utilisateurs du monde réel effectuant des tâches du monde réel ?Les relecteurs doivent identifier, au moins dans leur propre esprit, à peu près "qui est le public cible", une échelle approximative de "la taille de ce public", le "bénéfice" qu'ils obtiendront, comment le "bénéfice est mesuré", et les "résultats de ces tests de mesure". Dans la plupart des cas, ces éléments sont évidents pour l'auteur et l'examinateur, et ne sont pas explicitement mentionnés lors d'un examen.</p>
+<p>La demande apporte-t-elle un avantage "à fort impact" à des utilisateurs du monde réel effectuant des tâches du monde réel ?</p>
+<p>Les relecteurs doivent identifier, au moins dans leur propre esprit, à peu près "qui est le public cible", une échelle approximative de "la taille de ce public", le "bénéfice" qu'ils obtiendront, comment le "bénéfice est mesuré", et les "résultats de ces tests de mesure". Dans la plupart des cas, ces éléments sont évidents pour l'auteur et l'examinateur, et ne sont pas explicitement mentionnés lors d'un examen.</p>
 <p>Les soumissions à la branche principale de Klipper doivent avoir un public cible important. En règle générale, les soumissions doivent cibler une base d'au moins 100 utilisateurs du monde réel.</p>
 <p>Si un relecteur demande des détails sur les "avantages" d'une proposition, ne considérez pas cela comme une critique. Être capable de comprendre les avantages concrets d'un changement est une partie naturelle d'un examen.</p>
 <p>Lorsque l'on discute des avantages, il est préférable de parler de "faits et de mesures". En général, les évaluateurs ne cherchent pas des réponses du type "quelqu'un pourrait trouver l'option X utile", ni des réponses du type "cette soumission ajoute une fonctionnalité que le micrologiciel X met en œuvre". Au lieu de cela, il est généralement préférable de discuter des détails sur la façon dont l'amélioration de la qualité a été mesurée et quels étaient les résultats de ces mesures - par exemple, "les tests sur les imprimantes Acme X1000 montrent des coins améliorés comme on le voit sur l'image ...", ou par exemple "le temps d'impression de l'objet X du monde réel sur une imprimante Foomatic X900 est passé de 4 heures à 3,5 heures". Il est entendu que les tests de ce type peuvent prendre beaucoup de temps et d'efforts. Certaines des fonctionnalités les plus remarquables de Klipper ont nécessité des mois de discussion, de re-travail, de tests et de documentation avant d'être intégrées dans la branche principale.</p>
@@ -1466,17 +1468,18 @@
 <p>Les nouveaux modules, les nouvelles options et les nouveaux paramètres ne doivent pas offrir des fonctionnalités similaires à celles des modules existants - si les différences sont arbitraires, il est préférable d'utiliser le système existant ou de remanier le code existant.</p>
 </li>
 <li>
-<p>Le droit d'auteur de la soumission est-il clair, non gracieux et compatible ?Les nouveaux fichiers C et Python doivent comporter une déclaration de copyright sans ambiguïté. Voir les fichiers existants pour le format préféré. Il est déconseillé de déclarer un droit d'auteur sur un fichier existant lorsque l'on apporte des modifications mineures à ce fichier.</p>
+<p>Le droit d'auteur de la soumission est-il clair, non gracieux et compatible ?</p>
+<p>Les nouveaux fichiers C et Python doivent comporter une déclaration de copyright sans ambiguïté. Voir les fichiers existants pour le format préféré. Il est déconseillé de déclarer un droit d'auteur sur un fichier existant lorsque l'on apporte des modifications mineures à ce fichier.</p>
 <p>Le code provenant de sources tierces doit être compatible avec la licence Klipper (GNU GPLv3). Les ajouts importants de code tiers doivent être ajoutés au répertoire <code>lib/</code> (et suivre le format décrit dans <a href="https://github.com/Klipper3d/klipper/blob/master/lib/README">lib/README</a>).</p>
 <p>Les soumissionnaires doivent fournir une <a href="#format-of-commit-messages">ligne Signed-off-by</a> en utilisant leur nom réel complet. Elle indique que le soumissionnaire est d'accord avec le <a href="developer-certificate-of-origin">certificat d'origine du développeur</a>.</p>
 </li>
 <li>
-<p>La soumission suit-elle les directives spécifiées dans la documentation de Klipper ?En particulier, le code doit suivre les directives de <Code_Overview.md> et les fichiers de configuration doivent suivre les directives de <Example_Configs.md>.</p>
+<p>La soumission suit-elle les directives spécifiées dans la documentation de Klipper ?</p>
+<p>En particulier, le code doit suivre les directives de <Code_Overview.md> et les fichiers de configuration doivent suivre les directives de <Example_Configs.md>.</p>
 </li>
 <li>
-<p>La documentation de Klipper est-elle mise à jour pour refléter les nouveaux changements ?Au minimum, la documentation de référence doit être mise à jour avec les modifications correspondantes du code :</p>
-</li>
-</ol>
+<p>La documentation de Klipper est-elle mise à jour pour refléter les nouveaux changements ?</p>
+<p>Au minimum, la documentation de référence doit être mise à jour avec les modifications correspondantes du code :</p>
 <ul>
 <li>Toutes les commandes et tous les paramètres de commande doivent être documentés dans <G-Codes.md>.</li>
 <li>Tous les modules destinés aux utilisateurs et leurs paramètres de configuration doivent être documentés dans <Config_Reference.md>.</li>
@@ -1484,10 +1487,13 @@
 <li>Tous les nouveaux "webhooks" et leurs paramètres doivent être documentés dans <API_Server.md>.</li>
 <li>Toute modification qui apporte un changement non rétrocompatible à une commande ou à un paramètre du fichier de configuration doit être documentée dans <Config_Changes.md>.</li>
 </ul>
+</li>
+</ol>
 <p>Les nouveaux documents doivent être ajoutés à <Overview.md> et être ajoutés à l'index du site web <a href="https://github.com/Klipper3d/klipper/blob/master/docs/_klipper3d/mkdocs.yml">docs/_klipper3d/mkdocs.yml</a>.</p>
 <ol>
 <li>
-<p>Les commits sont-ils bien formés, abordent-ils un seul sujet par commit, et sont-ils indépendants ?Les messages de validation doivent suivre le <a href="#format-of-commit-messages">format préféré</a>.</p>
+<p>Les commits sont-ils bien formés, abordent-ils un seul sujet par commit, et sont-ils indépendants ?</p>
+<p>Les messages de validation doivent suivre le <a href="#format-of-commit-messages">format préféré</a>.</p>
 <p>Les commits ne doivent pas avoir de conflit de fusion. Les nouveaux ajouts à la branche maîtresse de Klipper sont toujours effectués via un "rebase" ou un "squash and rebase". Il n'est généralement pas nécessaire pour les soumissionnaires de fusionner à nouveau leur soumission à chaque mise à jour du dépôt maître de Klipper. Cependant, s'il y a un conflit de fusion, il est recommandé aux soumissionnaires d'utiliser <code>git rebase</code> pour résoudre le conflit.</p>
 <p>Chaque validation doit porter sur un seul changement de haut niveau. Les changements importants doivent être décomposés en plusieurs commits indépendants. Chaque livraison doit se suffire à elle-même pour que des outils comme <code>git bisect</code> et <code>git revert</code> fonctionnent de manière fiable.</p>
 <p>Les modifications des espaces blancs ne doivent pas être mélangées avec les modifications fonctionnelles. En général, les changements gratuits d'espace blanc ne sont pas acceptés, sauf s'ils proviennent du "propriétaire" établi du code en cours de modification.</p>

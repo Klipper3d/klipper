@@ -1499,15 +1499,16 @@ z_hop_speed: 5
 <h2 id="mode-de-sortie-du-bl-touch">Mode de sortie du BL-Touch<a class="headerlink" href="#mode-de-sortie-du-bl-touch" title="Permanent link">&para;</a></h2>
 <ul>
 <li>
-<p>Un BL-Touch V3.0 accepte le réglage d'un mode de sortie 5V ou OPEN-DRAIN, un BL-Touch V3.1 le supporte aussi et peut également le stocker dans son EEPROM interne. Si votre carte contrôleur a besoin du niveau logique haut de 5V du mode 5V, vous pouvez régler le paramètre 'set_output_mode' dans la section [bltouch] du fichier de configuration de l'imprimante sur "5V".<strong><em>N'utilisez le mode 5V que si la ligne d'entrée de votre carte contrôleur est tolérante à cette tension (5V). C'est pourquoi la configuration par défaut de ces versions de BL-Touch est le mode OPEN-DRAIN. Vous pourriez potentiellement endommager le CPU de votre carte contrôleur</em></strong></p>
+<p>Un BL-Touch V3.0 accepte le réglage d'un mode de sortie 5V ou OPEN-DRAIN, un BL-Touch V3.1 le supporte aussi et peut également le stocker dans son EEPROM interne. Si votre carte contrôleur a besoin du niveau logique haut de 5V du mode 5V, vous pouvez régler le paramètre 'set_output_mode' dans la section [bltouch] du fichier de configuration de l'imprimante sur "5V".</p>
+<p><strong><em>N'utilisez le mode 5V que si la ligne d'entrée de votre carte contrôleur est tolérante à cette tension (5V). C'est pourquoi la configuration par défaut de ces versions de BL-Touch est le mode OPEN-DRAIN. Vous pourriez potentiellement endommager le CPU de votre carte contrôleur</em></strong></p>
 <p>En résumé : Si une carte contrôleur a besoin d'un mode 5V ET qu'elle est tolérante à 5V sur sa ligne de signal d'entrée ET si</p>
-</li>
-</ul>
 <ul>
 <li>vous avez un BL-Touch Smart V3.0, vous devez utiliser le paramètre 'set_output_mode : 5V' pour assurer ce réglage à chaque démarrage, puisque la sonde ne peut pas se souvenir du réglage nécessaire.</li>
 <li>vous avez un BL-Touch Smart V3.1, vous avez le choix d'utiliser 'set_output_mode : 5V' ou de mémoriser le mode une fois pour toutes en utilisant une commande 'BLTOUCH_STORE MODE=5V' manuellement et sans plus utiliser le paramètre 'set_output_mode:'.</li>
 <li>vous avez une autre sonde : Certaines sondes ont une trace sur la carte de circuit imprimé à couper ou un cavalier à régler afin de définir (de façon permanente) le mode de sortie. Dans ce cas, omettez complètement le paramètre 'set_output_mode'.
 Si vous avez une version V3.1, n'automatisez pas ou ne répétez pas la mémorisation du mode de sortie afin d'éviter d'user l'EEPROM de la sonde. L'EEPROM du BLTouch permet environ 100.000 mises à jour. 100 mises à jour par jour représentent environ 3 ans de fonctionnement avant l'usure de la mémoire. Ainsi, le stockage du mode de sortie dans la V3.1 est conçu par le vendeur pour être une opération compliquée (le défaut d'usine étant un mode sûr OPEN DRAIN) et n'est pas adapté pour être émis de manière répétée par un trancheur, une macro ou autre, il est préférable de ne l'utiliser que lors de la première intégration de la sonde dans l'électronique de l'imprimante.</li>
+</ul>
+</li>
 </ul>
 
               

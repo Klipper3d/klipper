@@ -1499,15 +1499,16 @@ z_hop_speed: 5
 <h2 id="bl-touch-kimeneti-mod">BL-Touch kimeneti mód<a class="headerlink" href="#bl-touch-kimeneti-mod" title="Permanent link">&para;</a></h2>
 <ul>
 <li>
-<p>A BL-Touch V3.0 támogatja az 5V vagy OPEN-DRAIN kimeneti mód beállítását, a BL-Touch V3.1 szintén támogatja ezt, de ezt a belső EEPROM-jában is el tudja tárolni. Ha az alaplapodnak szüksége van az 5V-os üzemmód fix 5V magas logikai szintjére, akkor a nyomtató konfigurációs fájl [bltouch] szakaszában a 'set_output_mode' paramétert "5V" értékre állíthatod.<strong><em> Csak akkor használd az 5V-os üzemmódot, ha az alaplapnak a bemeneti vonala 5V-os toleráns. Ezért ezeknek a BL-Touch verzióknak az alapértelmezett konfigurációja a OPEN-DRAIN üzemmód. Ezzel potenciálisan károsíthatod az alaplap CPU-ját </em></strong></p>
+<p>A BL-Touch V3.0 támogatja az 5V vagy OPEN-DRAIN kimeneti mód beállítását, a BL-Touch V3.1 szintén támogatja ezt, de ezt a belső EEPROM-jában is el tudja tárolni. Ha az alaplapodnak szüksége van az 5V-os üzemmód fix 5V magas logikai szintjére, akkor a nyomtató konfigurációs fájl [bltouch] szakaszában a 'set_output_mode' paramétert "5V" értékre állíthatod.</p>
+<p><strong><em> Csak akkor használd az 5V-os üzemmódot, ha az alaplapnak a bemeneti vonala 5V-os toleráns. Ezért ezeknek a BL-Touch verzióknak az alapértelmezett konfigurációja a OPEN-DRAIN üzemmód. Ezzel potenciálisan károsíthatod az alaplap CPU-ját </em></strong></p>
 <p>Ezért tehát: Ha egy alaplapnak 5V-os üzemmódra van szüksége ÉS 5V-os toleráns a bemeneti jelvonalon ÉS ha</p>
-</li>
-</ul>
 <ul>
 <li>ha neked BL-Touch Smart V3.0 van, akkor a 'set_output_mode-ot: 5V' paramétert kell megadni, hogy minden egyes indításkor biztosítsd ezt a beállítást, mivel a szonda nem tudja megjegyezni a szükséges beállítást.</li>
 <li>ha neked BL-Touch Smart V3.1 van, akkor választhatsz a 'set_output_mode: 5V' vagy az üzemmód egyszeri tárolása a 'BLTOUCH_STORE MODE=5V' parancsok közül, kézzel és NEM a 'set_output_mode:' paraméter használatával.</li>
 <li>ha van más szondád is: A kimeneti üzemmód (végleges) beállításához néhány szondának van egy bekötése az alaplapon, amelyet el kell vágni, vagy egy jumperrel kell beállítani. Ebben az esetben hagyd ki teljesen a 'set_output_mode' paramétert.
 Ha V3.1 szondával rendelkezel, ne automatizáld vagy ismételd a kimeneti üzemmód tárolását, hogy elkerüld a szonda EEPROM-jának elhasználódását. A BLTouch EEPROM körülbelül 100.000 frissítésre alkalmas. A napi 100 tárolás körülbelül 3 évnyi működést jelentene, mielőtt elhasználódna. Így a kimeneti üzemmód tárolását a V3.1-ben a gyártó bonyolult műveletnek tervezte (a gyári alapértelmezett egy biztonságos OPEN DRAIN üzemmód), és nem alkalmas arra, hogy bármilyen szeletelő, makró vagy bármi más által ismételten kiadja, lehetőleg csak akkor használható, amikor először integrálják a szondát egy nyomtató alaplapjára.</li>
+</ul>
+</li>
 </ul>
 
               

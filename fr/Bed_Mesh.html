@@ -1812,7 +1812,10 @@ adaptive_margin: 5
 </code></pre></div>
 
 <ul>
-<li><code>adaptive_margin</code>  <em>Default Value: 0</em>  Margin (in mm) to add around the area of the bed used by the defined objects. The diagram below shows the adapted bed mesh area with an <code>adaptive_margin</code> of 5mm. The adapted mesh area (area in green) is computed as the used bed area (area in blue) plus the defined margin.<img alt="adaptive_bedmesh_margin" src="img/adaptive_bed_mesh_margin.svg" /></li>
+<li>
+<p><code>adaptive_margin</code>  <em>Default Value: 0</em>  Margin (in mm) to add around the area of the bed used by the defined objects. The diagram below shows the adapted bed mesh area with an <code>adaptive_margin</code> of 5mm. The adapted mesh area (area in green) is computed as the used bed area (area in blue) plus the defined margin.</p>
+<p><img alt="adaptive_bedmesh_margin" src="img/adaptive_bed_mesh_margin.svg" /></p>
+</li>
 </ul>
 <p>By nature, adaptive bed meshes use the objects defined by the Gcode file being printed. Therefore, it is expected that each Gcode file will generate a mesh that probes a different area of the print bed. Therefore, adapted bed meshes should not be re-used. The expectation is that a new mesh will be generated for each print if adaptive meshing is used.</p>
 <p>It is also important to consider that adaptive bed meshing is best used on machines that can normally probe the entire bed and achieve a maximum variance less than or equal to 1 layer height. Machines with mechanical issues that a full bed mesh normally compensates for may have undesirable results when attempting print moves <strong>outside</strong> of the probed area. If a full bed mesh has a variance greater than 1 layer height, caution must be taken when using adaptive bed meshes and attempting print moves outside of the meshed area.</p>

@@ -1447,7 +1447,8 @@
 <p>Cose comuni che un revisore cercherà:</p>
 <ol>
 <li>
-<p>L'invio è privo di difetti ed è pronto per essere diffuso?I realizzatori dei contributi sono tenuti a testare le loro modifiche prima dell'invio. I revisori cercano gli errori, ma in generale non testano gli invii. Un invio accettato viene spesso distribuito a migliaia di stampanti entro poche settimane dall'accettazione. La qualità degli invii è quindi considerata una priorità.</p>
+<p>L'invio è privo di difetti ed è pronto per essere diffuso?</p>
+<p>I realizzatori dei contributi sono tenuti a testare le loro modifiche prima dell'invio. I revisori cercano gli errori, ma in generale non testano gli invii. Un invio accettato viene spesso distribuito a migliaia di stampanti entro poche settimane dall'accettazione. La qualità degli invii è quindi considerata una priorità.</p>
 <p>Il repository GitHub principale <a href="https://github.com/Klipper3d/klipper">Klipper3d/klipper</a> non accetta lavori sperimentali. I realizzatori di contributi devono eseguire la sperimentazione, il debug e il test nei propri repository. Il server <a href="Contact.html">Klipper Discourse</a> è un buon posto per aumentare la consapevolezza del nuovo lavoro e per trovare utenti interessati a fornire feedback nel mondo reale.</p>
 <p>Gli invii devono superare tutti i <a href="Debugging.html">test di regressione</a>.</p>
 <p>Quando si corregge un difetto nel codice, i submitters dovrebbero avere una comprensione generale della causa principale di tale difetto e la correzione dovrebbe mirare a tale causa principale.</p>
@@ -1456,7 +1457,8 @@
 <p>Gli aggiornamenti alla documentazione non devono dichiarare che si tratta di un "work in progress".</p>
 </li>
 <li>
-<p>L'invio fornisce un vantaggio "ad alto impatto" per gli utenti del mondo reale che svolgono attività nel mondo reale?I revisori devono identificare, almeno nella loro mente, approssimativamente "chi è il pubblico di destinazione", una scala approssimativa delle "dimensioni di quel pubblico", il "beneficio" che otterranno, come "il beneficio viene misurato" e i "risultati di tali prove di misurazione". Nella maggior parte dei casi questo sarà ovvio sia per il mittente che per il revisore e non è esplicitamente dichiarato durante una revisione.</p>
+<p>L'invio fornisce un vantaggio "ad alto impatto" per gli utenti del mondo reale che svolgono attività nel mondo reale?</p>
+<p>I revisori devono identificare, almeno nella loro mente, approssimativamente "chi è il pubblico di destinazione", una scala approssimativa delle "dimensioni di quel pubblico", il "beneficio" che otterranno, come "il beneficio viene misurato" e i "risultati di tali prove di misurazione". Nella maggior parte dei casi questo sarà ovvio sia per il mittente che per il revisore e non è esplicitamente dichiarato durante una revisione.</p>
 <p>Le proposte al ramo principale di Klipper dovrebbero avere un pubblico di destinazione degno di nota. Come "regola pratica" generale, gli invii dovrebbero avere come target una base di utenti di almeno 100 utenti del mondo reale.</p>
 <p>Se un revisore chiede dettagli sul "beneficio" di un invio, non considerarlo una critica. Essere in grado di comprendere i vantaggi reali di un cambiamento è una parte naturale di una revisione.</p>
 <p>Quando si discute dei benefici è preferibile discutere di "fatti e misurazioni". In generale, i revisori non cercano risposte del modulo "qualcuno potrebbe trovare utile l'opzione X", né cercano risposte del modulo "questo invio aggiunge una funzionalità implementata dal firmware X". Invece, è generalmente preferibile discutere i dettagli su come è stato misurato il miglioramento della qualità e quali sono stati i risultati di tali misurazioni, ad esempio "i test sulle stampanti Acme X1000 mostrano angoli migliorati come si vede in figura...", o ad esempio " il tempo di stampa dell'oggetto reale X su una stampante Foomatic X900 è passato da 4 ore a 3,5 ore". Resta inteso che i test di questo tipo possono richiedere molto tempo e sforzi. Alcune delle caratteristiche più importanti di Klipper hanno richiesto mesi di discussioni, rielaborazioni, test e documentazione prima di essere fuse nel ramo principale.</p>
@@ -1466,17 +1468,18 @@
 <p>Nuovi moduli, nuove opzioni e nuovi parametri non dovrebbero fornire funzionalità simili ai moduli esistenti: se le differenze sono arbitrarie, è preferibile utilizzare il sistema esistente o effettuare refactoring del codice esistente.</p>
 </li>
 <li>
-<p>Il copyright dell'invio è chiaro, non gratuito e compatibile?I nuovi file C e Python dovrebbero avere una dichiarazione di copyright univoca. Vedere i file esistenti per il formato preferito. È sconsigliato dichiarare un copyright su un file esistente quando si apportano modifiche minori a quel file.</p>
+<p>Il copyright dell'invio è chiaro, non gratuito e compatibile?</p>
+<p>I nuovi file C e Python dovrebbero avere una dichiarazione di copyright univoca. Vedere i file esistenti per il formato preferito. È sconsigliato dichiarare un copyright su un file esistente quando si apportano modifiche minori a quel file.</p>
 <p>Il codice prelevato da fonti di terze parti deve essere compatibile con la licenza Klipper (GNU GPLv3). Grandi aggiunte di codice di terze parti dovrebbero essere aggiunte alla directory <code>lib/</code> (e seguire il formato descritto in <a href="https://github.com/Klipper3d/klipper/blob/master/lib/README">lib/README</a>).</p>
 <p>I mittenti devono fornire una <a href="#format-of-commit-messages">Signed-off-line</a> utilizzando il loro vero nome completo. Indica che il mittente è d'accordo con il <a href="developer-certificate-of-origin">developer certificate of origin</a>.</p>
 </li>
 <li>
-<p>L'invio segue le linee guida specificate nella documentazione di Klipper?In particolare, il codice deve seguire le linee guida in <Code_Overview.md> e i file di configurazione devono seguire le linee guida in <Example_Configs.md>.</p>
+<p>L'invio segue le linee guida specificate nella documentazione di Klipper?</p>
+<p>In particolare, il codice deve seguire le linee guida in <Code_Overview.md> e i file di configurazione devono seguire le linee guida in <Example_Configs.md>.</p>
 </li>
 <li>
-<p>La documentazione di Klipper è aggiornata per riflettere le nuove modifiche?Come minimo, la documentazione di riferimento deve essere aggiornata con le relative modifiche al codice:</p>
-</li>
-</ol>
+<p>La documentazione di Klipper è aggiornata per riflettere le nuove modifiche?</p>
+<p>Come minimo, la documentazione di riferimento deve essere aggiornata con le relative modifiche al codice:</p>
 <ul>
 <li>Tutti i comandi e i relativi parametri devono essere documentati in <G-Codes.md>.</li>
 <li>Tutti i moduli rivolti all'utente e i relativi parametri di configurazione devono essere documentati in <Config_Reference.md>.</li>
@@ -1484,10 +1487,13 @@
 <li>Tutti i nuovi "webhook" e i relativi parametri devono essere documentati in <API_Server.md>.</li>
 <li>Qualsiasi modifica che apporti una modifica non compatibile con le versioni precedenti a un comando o a un'impostazione del file di configurazione deve essere documentata in <Config_Changes.md>.</li>
 </ul>
+</li>
+</ol>
 <p>I nuovi documenti dovrebbero essere aggiunti a <Overview.md> e all'indice del sito web <a href="https://github.com/Klipper3d/klipper/blob/master/docs/_klipper3d/mkdocs.yml">docs/_klipper3d/mkdocs.yml</a>.</p>
 <ol>
 <li>
-<p>I commit sono ben formati, affrontano un singolo argomento per commit e sono indipendenti?I messaggi di commit devono seguire il <a href="#format-of-commit-messages">formato preferito</a>.</p>
+<p>I commit sono ben formati, affrontano un singolo argomento per commit e sono indipendenti?</p>
+<p>I messaggi di commit devono seguire il <a href="#format-of-commit-messages">formato preferito</a>.</p>
 <p>I commit non devono avere un conflitto in fase di merge. Le nuove aggiunte al ramo principale di Klipper vengono sempre eseguite tramite un "rebase" o "squash and rebase". In genere non è necessario che i propositori uniscano nuovamente il loro invio ad ogni aggiornamento al repository principale di Klipper. Tuttavia, se c'è un conflitto in fase di merge, si consiglia ai mittenti di usare <code>git rebase</code> per risolvere il conflitto.</p>
 <p>Ogni commit dovrebbe affrontare una singola modifica di alto livello. Le modifiche di grandi dimensioni dovrebbero essere suddivise in più commit indipendenti. Ogni commit dovrebbe "stare in piedi da solo" in modo che strumenti come <code>git bisect</code> e <code>git revert</code> funzionino in modo affidabile.</p>
 <p>Le modifiche agli spazi bianchi non devono essere mescolate con le modifiche funzionali. In generale, le modifiche agli spazi bianchi gratuite non sono accettate a meno che non provengano dal "proprietario" stabilito del codice da modificare.</p>

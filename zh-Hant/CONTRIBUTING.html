@@ -1447,7 +1447,8 @@
 <p>審覈員通常會檢查這些：</p>
 <ol>
 <li>
-<p>提交是否沒有缺陷，是否準備好廣泛部署？提交者應在提交之前測試其更改。審覈員會查詢提交中的錯誤，但通常不會測試提交的實際內容。接受的提交通常會在被接受后的幾周內部署到數千臺印表機。因此，提交的質量極為重要。</p>
+<p>提交是否沒有缺陷，是否準備好廣泛部署？</p>
+<p>提交者應在提交之前測試其更改。審覈員會查詢提交中的錯誤，但通常不會測試提交的實際內容。接受的提交通常會在被接受后的幾周內部署到數千臺印表機。因此，提交的質量極為重要。</p>
 <p>主<a href="https://github.com/Klipper3d/klipper">Klipper3d/klipper</a> GitHub倉庫不接受實驗性程式碼。提交者應該在他們自己的倉庫中進行實驗、除錯和測試。<a href="Contact.html">Klipper Discourse</a>論壇可以幫助你找到其他有興趣的開發者和可以提供真實世界反饋的使用者，或者讓更多人瞭解你的工作。</p>
 <p>提交必須通過所有<a href="Debugging.html">迴歸測試用例</a>。</p>
 <p>When fixing a defect in the code, submitters should have a general understanding of the root cause of that defect, and the fix should target that root cause.</p>
@@ -1456,7 +1457,8 @@
 <p>對檔案的更新不應該聲明它們是一項正在進行的工作。</p>
 </li>
 <li>
-<p>提交的檔案是否為執行真實世界任務的真實世界使用者提供了 "高度影響"的好處？審閱人仕需要至少在自己的腦海中確定大致的“目標受眾是誰”、“受眾規模”的粗略尺度、他們將獲得的“好處”、“好處是如何衡量的”，以及“這些測量測試的結果”。在大多數情況下，這對於提交者和審閱者來說都是顯而易見的，並且在審閱期間沒有明確說明。</p>
+<p>提交的檔案是否為執行真實世界任務的真實世界使用者提供了 "高度影響"的好處？</p>
+<p>審閱人仕需要至少在自己的腦海中確定大致的“目標受眾是誰”、“受眾規模”的粗略尺度、他們將獲得的“好處”、“好處是如何衡量的”，以及“這些測量測試的結果”。在大多數情況下，這對於提交者和審閱者來說都是顯而易見的，並且在審閱期間沒有明確說明。</p>
 <p>向 Klipper 主分支提交的內容預計會有值得注意的目標受眾。作為一般的“經驗法則”，提交內容應針對至少 100 個真實用戶的用戶群。</p>
 <p>If a reviewer asks for details on the "benefit" of a submission, please don't consider it criticism. Being able to understand the real-world benefits of a change is a natural part of a review.</p>
 <p>When discussing benefits it is preferable to discuss "facts and measurements". In general, reviewers are not looking for responses of the form "someone may find option X useful", nor are they looking for responses of the form "this submission adds a feature that firmware X implements". Instead, it is generally preferable to discuss details on how the quality improvement was measured and what were the results of those measurements - for example, "tests on Acme X1000 printers show improved corners as seen in picture ...", or for example "print time of real-world object X on a Foomatic X900 printer went from 4 hours to 3.5 hours". It is understood that testing of this type can take significant time and effort. Some of Klipper's most notable features took months of discussion, rework, testing, and documentation prior to being merged into the master branch.</p>
@@ -1466,17 +1468,18 @@
 <p>新模塊、新選項和新參數不應提供與現有模塊類似的功能 - 如果差異是任意的，則最好利用現有系統或重構現有代碼。</p>
 </li>
 <li>
-<p>提交的版權是否清晰、無償、相容？新的 C 檔案和 Python 檔案應該有一個明確的版權聲明。請看現有檔案以瞭解推薦格式。不推薦在對現有檔案進行小的修改時對該檔案進行版權聲明。</p>
+<p>提交的版權是否清晰、無償、相容？</p>
+<p>新的 C 檔案和 Python 檔案應該有一個明確的版權聲明。請看現有檔案以瞭解推薦格式。不推薦在對現有檔案進行小的修改時對該檔案進行版權聲明。</p>
 <p>從第三方來源獲取的程式碼必須與 Klipper 的許可證（GNU GPLv3）相容。大型的第三方程式碼新增應被新增到<code>lib/</code>目錄中（並遵循<a href="https://github.com/Klipper3d/klipper/blob/master/lib/README">../lib/README</a>中描述的格式）。</p>
 <p>提交者必須提供一個<a href="#format-of-commit-messages">Signed-off-by 行</a>，使用他們的真實全名。它表明提交者同意<a href="developer-certificate-of-origin">開發者源頭證書</a>。</p>
 </li>
 <li>
-<p>提交的檔案是否遵循 Klipper 檔案中規定的準則？特別是，程式碼應遵循 <Code_Overview.md> 中的準則，配置檔案應遵循 <Example_Configs.md> 中的準則。</p>
+<p>提交的檔案是否遵循 Klipper 檔案中規定的準則？</p>
+<p>特別是，程式碼應遵循 <Code_Overview.md> 中的準則，配置檔案應遵循 <Example_Configs.md> 中的準則。</p>
 </li>
 <li>
-<p>Klipper 文件是否已更新以反映新的更改？至少，參考檔案必須隨著程式碼的相應變化而更新：</p>
-</li>
-</ol>
+<p>Klipper 文件是否已更新以反映新的更改？</p>
+<p>至少，參考檔案必須隨著程式碼的相應變化而更新：</p>
 <ul>
 <li>所有命令和命令參數必須在 <G-Code.md> 中被描述。</li>
 <li>所有面向用戶的模組及其配置參數必須在<Config_Reference.md>中記錄。</li>
@@ -1484,10 +1487,13 @@
 <li>所有新的 "webhooks "及其參數必須在<API_Server.md>中描述。</li>
 <li>任何對命令或配置檔案設定導致無法向後相容的改變，都必須在<Config_Changes.md>中進行說明。</li>
 </ul>
+</li>
+</ol>
 <p>新的檔案應該被新增到<Overview.md>中，並被新增到網站索引<a href="https://github.com/Klipper3d/klipper/blob/master/docs/_klipper3d/mkdocs.yml">docs/_klipper3d/mkdocs.yml</a>。</p>
 <ol>
 <li>
-<p>提交的內容是否完整，每次提交只涉及一個主題，並且是獨立的？提交資訊應遵循<a href="#format-of-commit-messages">首選格式</a>。</p>
+<p>提交的內容是否完整，每次提交只涉及一個主題，並且是獨立的？</p>
+<p>提交資訊應遵循<a href="#format-of-commit-messages">首選格式</a>。</p>
 <p>提交的內容不能有合併衝突。對 Klipper 主分支的新新增總是通過 "rebase "或 "squash and rebase "完成。一般來說，提交者沒有必要在每次更新Klipper主庫的時候重新合併他們的提交。然而，如果有合併衝突，建議提交者使用<code>git rebase</code>來解決衝突。</p>
 <p>每一次提交都應該解決一個高層的變化。大的改動應該被分解成多個獨立的提交。每個提交都應該 "自成一體"，這樣才能讓<code>git bisect</code>和<code>git revert</code>等工具可靠地工作。</p>
 <p>空格的修改不應該與功能修改混在一起。一般來說，無意義的空格修改是不被接受的，除非是來自被修改程式碼的既定 "所有者"。</p>

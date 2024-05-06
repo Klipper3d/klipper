@@ -1481,13 +1481,14 @@ iface can0 can static
 </code></pre></div>
 
 <ul>
+<li>Le « pont mcu » n'est pas en fait sur le bus CAN. Les messages entrant et sortant du bridge mcu ne seront pas vus par les autres adaptateurs présents sur le bus CAN.</li>
 <li>
-<p>Le « pont mcu » n'est pas en fait sur le bus CAN. Les messages entrant et sortant du bridge mcu ne seront pas vus par les autres adaptateurs présents sur le bus CAN.</p>
-<ul>
-<li>La bande passante disponible pour tous les appareils du bus CAN (et du bridge mcu) est limitée par la fréquence de bus CAN. Par conséquent, il est recommandé d'utiliser une fréquence de bus CAN de 1000000 lors de l'utilisation du mode "USB to CAN bus bridge".Même à une fréquence de bus CAN de 1000000, il peut ne pas y avoir assez de bande passante pour exécuter un test <code>SHAPER_CALIBRATE</code> si les deux steppers XY et l'accéléromètre communiquent tous par une seule interface "USB to CAN bus".</li>
-<li>Une carte de pont USB à CAN n'apparaîtra pas en tant que périphérique série USB, elle ne s'affichera pas lors de l'execution de la commande <code>ls /dev/serial/by-id</code>, et elle ne peut pas être configurée dans le fichier Klipper avec un paramètre <code>serial:</code>. La carte pont apparaît comme un « adaptateur CAN USB » et est configuré dans le printer.cfg en tant que <a href="#configuring-klipper">Nœud CAN</a>.</li>
-</ul>
+<p>La bande passante disponible pour tous les appareils du bus CAN (et du bridge mcu) est limitée par la fréquence de bus CAN. Par conséquent, il est recommandé d'utiliser une fréquence de bus CAN de 1000000 lors de l'utilisation du mode "USB to CAN bus bridge".</p>
+<p>Même à une fréquence de bus CAN de 1000000, il peut ne pas y avoir assez de bande passante pour exécuter un test <code>SHAPER_CALIBRATE</code> si les deux steppers XY et l'accéléromètre communiquent tous par une seule interface "USB to CAN bus".</p>
 </li>
+</ul>
+<ul>
+<li>Une carte de pont USB à CAN n'apparaîtra pas en tant que périphérique série USB, elle ne s'affichera pas lors de l'execution de la commande <code>ls /dev/serial/by-id</code>, et elle ne peut pas être configurée dans le fichier Klipper avec un paramètre <code>serial:</code>. La carte pont apparaît comme un « adaptateur CAN USB » et est configuré dans le printer.cfg en tant que <a href="#configuring-klipper">Nœud CAN</a>.</li>
 </ul>
 <h2 id="conseils-pour-le-depannage">Conseils pour le dépannage<a class="headerlink" href="#conseils-pour-le-depannage" title="Permanent link">&para;</a></h2>
 <p>Voir le document <a href="CANBUS_Troubleshooting.html">Dépannage du Bus CAN</a>.</p>

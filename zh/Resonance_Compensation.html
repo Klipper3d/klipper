@@ -1621,15 +1621,16 @@
 <li>如果你已经将<code>[input_shaper]</code>分段添加到print.cfg中，执行<code>SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0</code>命令。如果你得到"未知命令"错误，此时你可以安全地忽略它，继续进行测量。</li>
 <li>Execute the command: <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code> Basically, we try to make ringing more pronounced by setting different large values for acceleration. This command will increase the acceleration every 5 mm starting from 1500 mm/sec^2: 1500 mm/sec^2, 2000 mm/sec^2, 2500 mm/sec^2 and so forth up until 7000 mm/sec^2 at the last band.</li>
 <li>打印用建议的参数切片的测试模型。</li>
+<li>如果振纹清晰可见，并且发现加速度对你的打印机来说太高了（如打印机抖动太厉害或开始丢步），你可以提前停止打印。</li>
 <li>
-<p>如果振纹清晰可见，并且发现加速度对你的打印机来说太高了（如打印机抖动太厉害或开始丢步），你可以提前停止打印。</p>
-<ol>
-<li>使用模型后侧的XY标志作为校准的参考。X标志所在一侧的测量结果用于X轴的<em>配置</em>，而Y标志所在一侧则作为Y轴的配置。以X轴为例，测量X标志所在一侧的数个振纹周期的长度<em>D</em>（单位mm）：首先确定凹槽的位置，为了测量准确可以忽略最靠近凹槽的数个纹路，用记号笔标记起始和结束的数个振纹，然后用尺子或卡尺进行测量：|<img alt="标记振纹（Mark ringing）" src="img/ringing-mark.jpg" />|<img alt="Measure ringing" src="img/ringing-measure.jpg" />|</li>
-<li>数一数测量的距离<em>D</em>中有多少个振荡<em>D</em>。如果你不确定如何计算振荡，请参考上图，其中显示<em>N</em>=6次振荡。</li>
+<p>使用模型后侧的XY标志作为校准的参考。X标志所在一侧的测量结果用于X轴的<em>配置</em>，而Y标志所在一侧则作为Y轴的配置。以X轴为例，测量X标志所在一侧的数个振纹周期的长度<em>D</em>（单位mm）：首先确定凹槽的位置，为了测量准确可以忽略最靠近凹槽的数个纹路，用记号笔标记起始和结束的数个振纹，然后用尺子或卡尺进行测量：</p>
+<p>|<img alt="标记振纹（Mark ringing）" src="img/ringing-mark.jpg" />|<img alt="Measure ringing" src="img/ringing-measure.jpg" />|</p>
+</li>
+<li>
+<p>数一数测量的距离<em>D</em>中有多少个振荡<em>D</em>。如果你不确定如何计算振荡，请参考上图，其中显示<em>N</em>=6次振荡。</p>
+</li>
 <li>通过 <em>V</em> &middot; <em>N</em> / <em>D</em> (Hz) 计算振铃的频率，其中<em>V</em> 是外壁的加速度（mm/秒）。在上述例子中，我们标记了6个振纹，同时测试件是以100 mm/秒的速度进行印制，因此振动频率为100 * 6 / 12.14 ≈ 49.4 Hz。</li>
 <li>Do (8) - (10) for Y mark as well.</li>
-</ol>
-</li>
 </ol>
 <p>请注意，测试打印件上的振纹应遵循弧形凹槽的模式，如上图所示。如果不是这样，那么这个缺陷就不是真正的振纹，而是有不同的原因--要么是机械问题，要么是挤出机问题。在启用和调整输入整形器之前，应该先解决这个问题。</p>
 <p>如果打印机存在多个共振频率，那么测量的结果将变得不可靠，表现为振纹之间的距离不恒定。我们可以通过 <a href="#unreliable-measurements-of-ringing-frequencies">修正不可靠的共振频率测量（Unreliable measurements of ringing frequencies）</a>章节的步骤进行修正，以发挥输入整形的效用。</p>

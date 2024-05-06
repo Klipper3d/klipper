@@ -1499,15 +1499,16 @@ z_hop_speed: 5
 <h2 id="bl-touch_4">BL-Touch 输出模式<a class="headerlink" href="#bl-touch_4" title="Permanent link">&para;</a></h2>
 <ul>
 <li>
-<p>BL-Touch V3.0支持设置 5V 或 OPEN-DRAIN 输出模式，BL-TOUCH V3.1也支持，但它也可以在其内部 EEPROM 中存储这个设置。如果你的控制主板需要 5V 模式的固定 5V 高逻辑电平，你可以把打印机配置文件[bltouch]部分的 'set_output_mode' 参数设置为 "5V"。<strong><em> 只在你的控制主板的输入线路可以容忍5V时使用 5V 模式。这就是为什么这些 BL-Touch 版本的默认配置是OPEN-DRAIN模式。你有可能损坏你的控制主板上的MCU </em></strong></p>
+<p>BL-Touch V3.0支持设置 5V 或 OPEN-DRAIN 输出模式，BL-TOUCH V3.1也支持，但它也可以在其内部 EEPROM 中存储这个设置。如果你的控制主板需要 5V 模式的固定 5V 高逻辑电平，你可以把打印机配置文件[bltouch]部分的 'set_output_mode' 参数设置为 "5V"。</p>
+<p><strong><em> 只在你的控制主板的输入线路可以容忍5V时使用 5V 模式。这就是为什么这些 BL-Touch 版本的默认配置是OPEN-DRAIN模式。你有可能损坏你的控制主板上的MCU </em></strong></p>
 <p>因此。如果一个控制主板需要 5V 模式，并且它的输入信号线是 5V 的，并且如果</p>
-</li>
-</ul>
 <ul>
 <li>你有一个 BL-TOUCH Smart V3.0，你需要使用 'set_output_mode:5V' 参数，以确保每次启动时的应用这一设置，因为探针不能记住所需的设置。</li>
 <li>如果你有一个 BL-Touch Smart V3.1，你可以选择使用 'set_output_mode:5V " 或者通过手动使用 "BLTOUCH_STORE MODE=5V "命令，而不是使用参数 "set_output_mode: "来存储模式。</li>
 <li>如果你有一些其他的探针。有些探针在电路板上有一个需要切除的线路或者需要设置的一个跳线，以便（永久）设置输出模式。在这种情况下，完全省略 "set_output_mode "参数。
 如果你有一个 V3.1，不要自动或重复存储输出模式，以避免磨损探针的 EEPROM。BLTouch 的 EEPROM可用于约100.000次更新。每天存储100次，在磨损之前，加起来大约可以运行3年。因此，在 V3.1 中存储输出模式被供应商设计成一个复杂的操作（出厂默认值是一个 safe OPEN DRAIN 模式），不适合由任何切片软件、宏或其他东西重复发出，最好仅在首次将探针添加到到打印机电子设备时使用。</li>
+</ul>
+</li>
 </ul>
 
               

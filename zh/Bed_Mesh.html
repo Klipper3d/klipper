@@ -1746,13 +1746,13 @@ fade_target: 0
 </ul>
 <h3 id="_9">配置零点参考位置<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
 <p>许多探头容易出现“漂移”，即：由于热或干扰而引起的探头不准确。这使得计算探测器的z偏移量具有挑战性，特别是在不同床温的情况下。因此，一些打印机使用端止器来定位Z轴，并使用探头来校准网格。在这种配置中，可以对网格进行偏移，从而使(X，Y)<code>参考位置‘应用零点调整。‘参考位置’应该是床上进行[Z_ENDSTOP_CALIBRATE](./Manual_Level#calibrating-a-z-endstop)试纸测试的位置。Bed_Mesh模块提供了</code>ZERO_REFERENCE_Position`选项来指定该坐标：</p>
-<div class="highlight"><pre><span></span><code>[床_网格]。
-速度：120。
-水平移动z：5。
-网格最小值：35，6。
-Mesh_max：240,198。
-Zero_Reference_Position：125,110。
-探测计数：5，3
+<div class="highlight"><pre><span></span><code>[bed_mesh]
+speed: 120
+horizontal_move_z: 5
+mesh_min: 35, 6
+mesh_max: 240, 198
+zero_reference_position: 125, 110
+probe_count: 5, 3
 </code></pre></div>
 
 <ul>
@@ -1760,14 +1760,14 @@ Zero_Reference_Position：125,110。
 </ul>
 <h4 id="relative_reference_index">不推荐使用的Relative_Reference_Index<a class="headerlink" href="#relative_reference_index" title="Permanent link">&para;</a></h4>
 <p>使用<code>Relative_Reference_index</code>选项的现有配置必须更新为使用<code>ZERO_REFERENCE_Position</code>。对<a href="#output">BED_MESH_OUTPUT PGP=1</a>GCODE命令的响应将包括与索引相关的(X，Y)坐标；该位置可用<code>ZERO_REFERENCE_POSITION</code>的值。输出将如下所示：</p>
-<div class="highlight"><pre><span></span><code>//Bed_Mesh：生成点。
-//索引|调整工具|探测。
-//0|(1.0，1.0)|(24.0，6.0)。
-//1|(36.7，1.0)|(59.7，6.0)。
-//2|(72.3，1.0)|(95.3，6.0)。
-//3|(108.0，1.0)|(131.0，6.0)。
-..。(其他生成点)。
-//BED_MESH：Relative_Reference_Index 24为(131.5,108.0)
+<div class="highlight"><pre><span></span><code>// bed_mesh: generated points
+// Index | Tool Adjusted | Probe
+// 0 | (1.0, 1.0) | (24.0, 6.0)
+// 1 | (36.7, 1.0) | (59.7, 6.0)
+// 2 | (72.3, 1.0) | (95.3, 6.0)
+// 3 | (108.0, 1.0) | (131.0, 6.0)
+... (additional generated points)
+// bed_mesh: relative_reference_index 24 is (131.5, 108.0)
 </code></pre></div>
 
 <p><em>注意：上述输出在初始化时也会打印在<code>klippy.log</code>中。</em></p>
@@ -1812,7 +1812,10 @@ adaptive_margin: 5
 </code></pre></div>
 
 <ul>
-<li><code>adaptive_margin</code>  <em>Default Value: 0</em>  Margin (in mm) to add around the area of the bed used by the defined objects. The diagram below shows the adapted bed mesh area with an <code>adaptive_margin</code> of 5mm. The adapted mesh area (area in green) is computed as the used bed area (area in blue) plus the defined margin.<img alt="adaptive_bedmesh_margin" src="img/adaptive_bed_mesh_margin.svg" /></li>
+<li>
+<p><code>adaptive_margin</code>  <em>Default Value: 0</em>  Margin (in mm) to add around the area of the bed used by the defined objects. The diagram below shows the adapted bed mesh area with an <code>adaptive_margin</code> of 5mm. The adapted mesh area (area in green) is computed as the used bed area (area in blue) plus the defined margin.</p>
+<p><img alt="adaptive_bedmesh_margin" src="img/adaptive_bed_mesh_margin.svg" /></p>
+</li>
 </ul>
 <p>By nature, adaptive bed meshes use the objects defined by the Gcode file being printed. Therefore, it is expected that each Gcode file will generate a mesh that probes a different area of the print bed. Therefore, adapted bed meshes should not be re-used. The expectation is that a new mesh will be generated for each print if adaptive meshing is used.</p>
 <p>It is also important to consider that adaptive bed meshing is best used on machines that can normally probe the entire bed and achieve a maximum variance less than or equal to 1 layer height. Machines with mechanical issues that a full bed mesh normally compensates for may have undesirable results when attempting print moves <strong>outside</strong> of the probed area. If a full bed mesh has a variance greater than 1 layer height, caution must be taken when using adaptive bed meshes and attempting print moves outside of the meshed area.</p>

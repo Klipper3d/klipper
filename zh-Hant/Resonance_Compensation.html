@@ -1621,15 +1621,16 @@
 <li>如果你已經將<code>[input_shaper]</code>分段新增到print.cfg中，執行<code>SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0</code>命令。如果你得到"未知命令"錯誤，此時你可以安全地忽略它，繼續進行測量。</li>
 <li>執行命令： <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code> 基本上，我們嘗試通過設置不同的大加速度值來使環紋更加明顯。此命令將從 1500 mm/sec^2 開始每 5 mm 增加加速度：1500 mm/sec^2、2000 mm/sec^2、2500 mm/sec^2 等等，直到 7000 mm/sec^2最後一個區域。</li>
 <li>列印用建議的參數切片的測試模型。</li>
+<li>如果振紋清晰可見，並且發現加速度對你的印表機來說太高了（如印表機抖動太厲害或開始丟步），你可以提前停止列印。</li>
 <li>
-<p>如果振紋清晰可見，並且發現加速度對你的印表機來說太高了（如印表機抖動太厲害或開始丟步），你可以提前停止列印。</p>
-<ol>
-<li>使用模型背面的 X 和 Y 標記作為參考。帶有 X 標記的一側的測量值應用於 X 軸<em>配置</em>，而 Y 標記 - 用於 Y 軸配置。在帶有 X 標記的零件上，在槽口附近測量幾次振動之間的距離 <em>D</em>（以毫米為單位），最好跳過第一次或兩次振動。為了更容易地測量振蕩之間的距離，請先標記振盪，然後用尺子或卡尺測量標記之間的距離：|<img alt="Mark ringing" src="img/ringing-mark.jpg" />|<img alt="Measure ringing" src="img/ringing-measure.jpg" />|</li>
-<li>計算測量距離 <em>D</em> 對應的振盪次數 <em>N</em>。如果您不確定如何計算振盪次數，請參考上圖，其中顯示 <em>N</em> = 6 次振盪。</li>
+<p>使用模型背面的 X 和 Y 標記作為參考。帶有 X 標記的一側的測量值應用於 X 軸<em>配置</em>，而 Y 標記 - 用於 Y 軸配置。在帶有 X 標記的零件上，在槽口附近測量幾次振動之間的距離 <em>D</em>（以毫米為單位），最好跳過第一次或兩次振動。為了更容易地測量振蕩之間的距離，請先標記振盪，然後用尺子或卡尺測量標記之間的距離：</p>
+<p>|<img alt="Mark ringing" src="img/ringing-mark.jpg" />|<img alt="Measure ringing" src="img/ringing-measure.jpg" />|</p>
+</li>
+<li>
+<p>計算測量距離 <em>D</em> 對應的振盪次數 <em>N</em>。如果您不確定如何計算振盪次數，請參考上圖，其中顯示 <em>N</em> = 6 次振盪。</p>
+</li>
 <li>計算X軸環紋頻率為<em>V</em> &middot; <em>N</em> / <em>D</em> (Hz)，其中 <em>V</em> 是外周的速度 (mm/sec)。對於上面的示例，我們標記了 6 個振盪，並且測試以 100 毫米/秒的速度打印，因此頻率為 100 * 6 / 12.14 ≈ 49.4 Hz。</li>
 <li>對 Y 標記也執行 (8) - (10)。</li>
-</ol>
-</li>
 </ol>
 <p>請注意，測試打印上的環紋應遵循彎曲凹槽的圖案，如上圖所示。如果不是，那麼這個缺陷並不是真正的環紋，而是有不同的起源——機械問題或擠出機問題。在啟用和input shapers之前，應該先修復它。</p>
 <p>如果測量結果不可靠，例如，振蕩之間的距離不穩定，則可能意味著打印機在同一軸上有多個共振頻率。可以嘗試遵循 <a href="#unreliable-measurements-of-ringing-frequencies">不可靠的環紋頻率測量</a> 部分中描述的調整過程，但仍然可以從input shaper技術中獲得一些東西。</p>

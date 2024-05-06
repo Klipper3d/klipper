@@ -1812,7 +1812,10 @@ adaptive_margin: 5
 </code></pre></div>
 
 <ul>
-<li><code>adaptive_margin</code> <em>Alapértelmezett érték: 0</em> Az ágy meghatározott objektumok által használt területe köré hozzáadandó margó (mm-ben). Az alábbi ábra az adaptív ágy hálóterületét mutatja, ha az <code>adaptive_margin</code> értéke 5 mm. Az adaptív hálóterület (zöld színű terület) a használt ágyterület (kék színű terület) és a meghatározott margó összegeként kerül kiszámításra.<img alt="adaptive_bedmesh_margin" src="img/adaptive_bed_mesh_margin.svg" /></li>
+<li>
+<p><code>adaptive_margin</code> <em>Alapértelmezett érték: 0</em> Az ágy meghatározott objektumok által használt területe köré hozzáadandó margó (mm-ben). Az alábbi ábra az adaptív ágy hálóterületét mutatja, ha az <code>adaptive_margin</code> értéke 5 mm. Az adaptív hálóterület (zöld színű terület) a használt ágyterület (kék színű terület) és a meghatározott margó összegeként kerül kiszámításra.</p>
+<p><img alt="adaptive_bedmesh_margin" src="img/adaptive_bed_mesh_margin.svg" /></p>
+</li>
 </ul>
 <p>Az adaptív ágyrácsok természetüknél fogva a nyomtatás alatt álló G-Kód fájlban meghatározott objektumokat használják. Ezért várható, hogy minden egyes G-Kód fájl olyan hálót generál, amely a nyomtatóágy különböző területét vizsgálja. Ezért az adaptív ágyhálót nem szabad újra felhasználni. Az adaptív hálózás használata esetén elvárás, hogy minden egyes nyomtatáshoz új hálót generáljon.</p>
 <p>Azt is fontos figyelembe venni, hogy az adaptív ágyhálózást olyan gépeken lehet a legjobban alkalmazni, amelyek általában a teljes ágyat meg tudják tapogatni, és 1 rétegmagasságnál kisebb vagy azzal egyenlő maximális eltérést érnek el. Az olyan mechanikai problémákkal küzdő gépek, amelyeket a teljes ágyháló általában kompenzál, nemkívánatos eredményeket hozhatnak, amikor a nyomtatási mozgásokat a szondázott területen <strong>kívül</strong> próbálják végrehajtani. Ha a teljes ágyháló eltérése nagyobb, mint 1 rétegmagasság, akkor óvatosan kell eljárni, amikor adaptív ágyhálót használunk, és a hálózott területen kívüli nyomtatási mozgásokat kísérelünk meg.</p>

@@ -1481,13 +1481,14 @@ iface can0 can static
 </code></pre></div>
 
 <ul>
+<li>The "bridge mcu" is not actually on the CAN bus. Messages to and from the bridge mcu will not be seen by other adapters that may be on the CAN bus.</li>
 <li>
-<p>The "bridge mcu" is not actually on the CAN bus. Messages to and from the bridge mcu will not be seen by other adapters that may be on the CAN bus.</p>
-<ul>
-<li>The available bandwidth to both the "bridge mcu" itself and all devices on the CAN bus is effectively limited by the CAN bus frequency. As a result, it is recommended to use a CAN bus frequency of 1000000 when using "USB to CAN bus bridge mode".Even at a CAN bus frequency of 1000000, there may not be sufficient bandwidth to run a <code>SHAPER_CALIBRATE</code> test if both the XY steppers and the accelerometer all communicate via a single "USB to CAN bus" interface.</li>
-<li>A USB to CAN bridge board will not appear as a USB serial device, it will not show up when running <code>ls /dev/serial/by-id</code>, and it can not be configured in Klipper's printer.cfg file with a <code>serial:</code> parameter. The bridge board appears as a "USB CAN adapter" and it is configured in the printer.cfg as a <a href="#configuring-klipper">CAN node</a>.</li>
-</ul>
+<p>The available bandwidth to both the "bridge mcu" itself and all devices on the CAN bus is effectively limited by the CAN bus frequency. As a result, it is recommended to use a CAN bus frequency of 1000000 when using "USB to CAN bus bridge mode".</p>
+<p>Even at a CAN bus frequency of 1000000, there may not be sufficient bandwidth to run a <code>SHAPER_CALIBRATE</code> test if both the XY steppers and the accelerometer all communicate via a single "USB to CAN bus" interface.</p>
 </li>
+</ul>
+<ul>
+<li>A USB to CAN bridge board will not appear as a USB serial device, it will not show up when running <code>ls /dev/serial/by-id</code>, and it can not be configured in Klipper's printer.cfg file with a <code>serial:</code> parameter. The bridge board appears as a "USB CAN adapter" and it is configured in the printer.cfg as a <a href="#configuring-klipper">CAN node</a>.</li>
 </ul>
 <h2 id="tips-for-troubleshooting">Tips for troubleshooting<a class="headerlink" href="#tips-for-troubleshooting" title="Permanent link">&para;</a></h2>
 <p>See the <a href="CANBUS_Troubleshooting.html">CAN bus troubleshooting</a> document.</p>
