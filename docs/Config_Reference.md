@@ -1472,7 +1472,8 @@ path:
 #   be provided.
 #on_error_gcode:
 #   A list of G-Code commands to execute when an error is reported.
-
+#   See docs/Command_Templates.md for G-Code format. The default is to
+#   run TURN_OFF_HEATERS.
 ```
 
 ### [sdcard_loop]
@@ -1995,6 +1996,40 @@ z_offset:
 #   See the "probe" section for more information on the parameters above.
 ```
 
+### [probe_eddy_current]
+
+Support for eddy current inductive probes. One may define this section
+(instead of a probe section) to enable this probe. See the
+[command reference](G-Codes.md#probe_eddy_current) for further information.
+
+```
+[probe_eddy_current my_eddy_probe]
+sensor_type: ldc1612
+#   The sensor chip used to perform eddy current measurements. This
+#   parameter must be provided and must be set to ldc1612.
+#z_offset:
+#   The nominal distance (in mm) between the nozzle and bed that a
+#   probing attempt should stop at. This parameter must be provided.
+#i2c_address:
+#i2c_mcu:
+#i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#i2c_speed:
+#   The i2c settings for the sensor chip. See the "common I2C
+#   settings" section for a description of the above parameters.
+#x_offset:
+#y_offset:
+#speed:
+#lift_speed:
+#samples:
+#sample_retract_dist:
+#samples_result:
+#samples_tolerance:
+#samples_tolerance_retries:
+#   See the "probe" section for information on these parameters.
+```
+
 ### [axis_twist_compensation]
 
 A tool to compensate for inaccurate probe readings due to twist in X gantry. See
@@ -2455,9 +2490,9 @@ sensor_pin:
 #   name in the above list.
 ```
 
-### BMP180/BMP280/BME280/BME680 temperature sensor
+### BMP180/BMP280/BME280/BMP388/BME680 temperature sensor
 
-BMP180/BMP280/BME280/BME680 two wire interface (I2C) environmental sensors.
+BMP180/BMP280/BME280/BMP388/BME680 two wire interface (I2C) environmental sensors.
 Note that these sensors are not intended for use with extruders and
 heater beds, but rather for monitoring ambient temperature (C),
 pressure (hPa), relative humidity and in case of the BME680 gas level.
@@ -2468,8 +2503,8 @@ temperature.
 ```
 sensor_type: BME280
 #i2c_address:
-#   Default is 118 (0x76). The BMP180 and some BME280 sensors have an address of 119
-#   (0x77).
+#   Default is 118 (0x76). The BMP180, BMP388 and some BME280 sensors
+#   have an address of 119 (0x77).
 #i2c_mcu:
 #i2c_bus:
 #i2c_software_scl_pin:
@@ -2538,6 +2573,25 @@ sensor_type:
 #   Default is: "TEMP11_HUM11"
 #htu21d_report_time:
 #   Interval in seconds between readings. Default is 30
+```
+
+### SHT3X sensor
+
+SHT3X family two wire interface (I2C) environmental sensor. These sensors
+have a range of -55~125 C, so are usable for e.g. chamber temperature
+monitoring. They can also function as simple fan/heater controllers.
+
+```
+sensor_type: SHT3X
+#i2c_address:
+#   Default is 68 (0x44).
+#i2c_mcu:
+#i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#i2c_speed:
+#   See the "common I2C settings" section for a description of the
+#   above parameters.
 ```
 
 ### LM75 temperature sensor
