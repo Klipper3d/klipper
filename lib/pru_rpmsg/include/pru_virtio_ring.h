@@ -109,25 +109,25 @@ struct vring {
  *	struct vring_desc desc[num];
  *
  *	// A ring of available descriptor heads with free-running index.
- *	__u16 avail_flags;
- *	__u16 avail_idx;
- *	__u16 available[num];
- *	__u16 used_event_idx;
+ *	uint16_t avail_flags;
+ *	uint16_t avail_idx;
+ *	uint16_t available[num];
+ *	uint16_t used_event_idx;
  *
  *	// Padding to the next align boundary.
  *	char pad[];
  *
  *	// A ring of used descriptor heads with free-running index.
- *	__u16 used_flags;
- *	__u16 used_idx;
+ *	uint16_t used_flags;
+ *	uint16_t used_idx;
  *	struct vring_used_elem used[num];
- *	__u16 avail_event_idx;
+ *	uint16_t avail_event_idx;
  * };
  */
 /* We publish the used event index at the end of the available ring, and vice
  * versa. They are at the end for backwards compatibility. */
 #define vring_used_event(vr) ((vr)->avail->ring[(vr)->num])
-#define vring_avail_event(vr) (*(__u16 *)&(vr)->used->ring[(vr)->num])
+#define vring_avail_event(vr) (*(uint16_t *)&(vr)->used->ring[(vr)->num])
 
 static inline void vring_init(struct vring *vr, uint32_t num, void *p,
                               uint64_t align)

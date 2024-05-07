@@ -52,6 +52,56 @@ Reordered messages is a severe problem that must be fixed. It will
 result in unstable behavior and can lead to confusing errors at any
 part of a print.
 
+## Use an appropriate txqueuelen setting
+
+The Klipper code uses the Linux kernel to manage CAN bus traffic. By
+default, the kernel will only queue 10 CAN transmit packets. It is
+recommended to [configure the can0 device](CANBUS.md#host-hardware)
+with a `txqueuelen 128` to increase that size.
+
+If Klipper transmits a packet and Linux has filled all of its transmit
+queue space then Linux will drop that packet and messages like the
+following will appear in the Klipper log:
+```
+Got error -1 in can write: (105)No buffer space available
+```
+Klipper will automatically retransmit the lost messages as part of its
+normal application level message retransmit system. Thus, this log
+message is a warning and it does not indicate an unrecoverable error.
+
+If a complete CAN bus failure occurs (such as a CAN wire break) then
+Linux will not be able to transmit any messages on the CAN bus and it
+is common to find the above message in the Klipper log. In this case,
+the log message is a symptom of a larger problem (the inability to
+transmit any messages) and is not directly related to Linux
+`txqueuelen`.
+
+One may check the current queue size by running the Linux command `ip
+link show can0`. It should report a bunch of text including the
+snippet `qlen 128`. If one sees something like `qlen 10` then it
+indicates the CAN device has not been properly configured.
+
+It is not recommended to use a `txqueuelen` significantly larger
+than 128. A CAN bus running at a frequency of 1000000 will typically
+take around 120us to transmit a CAN packet. Thus a queue of 128
+packets is likely to take around 15-20ms to drain. A substantially
+larger queue could cause excessive spikes in message round-trip-time
+which could lead to unrecoverable errors. Said another way, Klipper's
+application retransmit system is more robust if it does not have to
+wait for Linux to drain an excessively large queue of possibly stale
+data. This is analogous to the problem of
+[bufferbloat](https://en.wikipedia.org/wiki/Bufferbloat) on internet
+routers.
+
+Under normal circumstances Klipper may utilize ~25 queue slots per
+MCU - typically only utilizing more slots during retransmits.
+(Specifically, the Klipper host may transmit up to 192 bytes to each
+Klipper MCU before receiving an acknowledgment from that MCU.) If a
+single CAN bus has 5 or more Klipper MCUs on it, then it might be
+necessary to increase the `txqueuelen` above the recommended value
+of 128. However, as above, care should be taken when selecting a new
+value to avoid excessive round-trip-time latency.
+
 ## Obtaining candump logs
 
 The CAN bus messages sent to and from the micro-controller are handled
