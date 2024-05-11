@@ -27,6 +27,13 @@ move_get_distance(struct move *m, double move_time)
     return (m->start_v + m->half_accel * move_time) * move_time;
 }
 
+// Return the velocity at a given time in a move
+inline double
+move_get_velocity(struct move *m, double move_time)
+{
+    return m->start_v + 2. * m->half_accel * move_time;
+}
+
 // Return the XYZ coordinates given a time in a move
 inline struct coord
 move_get_coord(struct move *m, double move_time)

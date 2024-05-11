@@ -4,6 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include <math.h>  // sqrt
 #include <stddef.h> // offsetof
 #include <stdlib.h> // malloc
 #include <string.h> // memset
@@ -30,7 +31,24 @@ dual_carriage_calc_position(struct stepper_kinematics *sk, struct move *m
     dc->m.start_pos.x = pos.x * dc->x_scale + dc->x_offs;
     dc->m.start_pos.y = pos.y * dc->y_scale + dc->y_offs;
     dc->m.start_pos.z = pos.z;
+    dc->m.start_v = 0.;
     return dc->orig_sk->calc_position_cb(dc->orig_sk, &dc->m, DUMMY_T);
+}
+
+double
+dual_carriage_calc_velocity(struct stepper_kinematics *sk, struct move *m
+                            , double move_time)
+{
+    struct dual_carriage_stepper *dc = container_of(
+            sk, struct dual_carriage_stepper, sk);
+    dc->m.axes_r.x = m->axes_r.x * dc->x_scale;
+    dc->m.axes_r.y = m->axes_r.y * dc->y_scale;
+    dc->m.axes_r.y = m->axes_r.z;
+    dc->m.start_v = move_get_velocity(m, move_time) * sqrt(
+            dc->m.axes_r.x * dc->m.axes_r.x +
+            dc->m.axes_r.y * dc->m.axes_r.y +
+            dc->m.axes_r.z * dc->m.axes_r.z);
+    return dc->orig_sk->calc_velocity_cb(dc->orig_sk, &dc->m, DUMMY_T);
 }
 
 void __visible
@@ -40,6 +58,8 @@ dual_carriage_set_sk(struct stepper_kinematics *sk
     struct dual_carriage_stepper *dc = container_of(
             sk, struct dual_carriage_stepper, sk);
     dc->sk.calc_position_cb = dual_carriage_calc_position;
+    if (orig_sk->calc_velocity_cb)
+        dc->sk.calc_velocity_cb = dual_carriage_calc_velocity;
     dc->sk.active_flags = orig_sk->active_flags;
     dc->orig_sk = orig_sk;
 }
@@ -77,6 +97,8 @@ dual_carriage_alloc(void)
     struct dual_carriage_stepper *dc = malloc(sizeof(*dc));
     memset(dc, 0, sizeof(*dc));
     dc->m.move_t = 2. * DUMMY_T;
+    dc->m.axes_r.x = 1.;
+    dc->m.axes_r.y = 1.;
     dc->x_scale = dc->y_scale = 1.0;
     return &dc->sk;
 }

@@ -22,6 +22,7 @@ struct stepper_kinematics {
     double gen_steps_pre_active, gen_steps_post_active;
 
     sk_calc_callback calc_position_cb;
+    sk_calc_callback calc_velocity_cb;
     sk_post_callback post_cb;
 };
 

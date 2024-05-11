@@ -19,10 +19,24 @@ cart_stepper_x_calc_position(struct stepper_kinematics *sk, struct move *m
 }
 
 static double
+cart_stepper_x_calc_velocity(struct stepper_kinematics *sk, struct move *m
+                             , double move_time)
+{
+    return move_get_velocity(m, move_time) * m->axes_r.x;
+}
+
+static double
 cart_stepper_y_calc_position(struct stepper_kinematics *sk, struct move *m
                              , double move_time)
 {
     return move_get_coord(m, move_time).y;
+}
+
+static double
+cart_stepper_y_calc_velocity(struct stepper_kinematics *sk, struct move *m
+                             , double move_time)
+{
+    return move_get_velocity(m, move_time) * m->axes_r.y;
 }
 
 static double
@@ -32,6 +46,13 @@ cart_stepper_z_calc_position(struct stepper_kinematics *sk, struct move *m
     return move_get_coord(m, move_time).z;
 }
 
+static double
+cart_stepper_z_calc_velocity(struct stepper_kinematics *sk, struct move *m
+                             , double move_time)
+{
+    return move_get_velocity(m, move_time) * m->axes_r.z;
+}
+
 struct stepper_kinematics * __visible
 cartesian_stepper_alloc(char axis)
 {
@@ -39,12 +60,15 @@ cartesian_stepper_alloc(char axis)
     memset(sk, 0, sizeof(*sk));
     if (axis == 'x') {
         sk->calc_position_cb = cart_stepper_x_calc_position;
+        sk->calc_velocity_cb = cart_stepper_x_calc_velocity;
         sk->active_flags = AF_X;
     } else if (axis == 'y') {
         sk->calc_position_cb = cart_stepper_y_calc_position;
+        sk->calc_velocity_cb = cart_stepper_y_calc_velocity;
         sk->active_flags = AF_Y;
     } else if (axis == 'z') {
         sk->calc_position_cb = cart_stepper_z_calc_position;
+        sk->calc_velocity_cb = cart_stepper_z_calc_velocity;
         sk->active_flags = AF_Z;
     }
     return sk;

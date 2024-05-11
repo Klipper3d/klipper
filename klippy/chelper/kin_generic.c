@@ -26,6 +26,17 @@ generic_cartesian_stepper_calc_position(struct stepper_kinematics *sk
     return cs->a.x * c.x + cs->a.y * c.y + cs->a.z * c.z;
 }
 
+static double
+generic_cartesian_stepper_calc_velocity(struct stepper_kinematics *sk
+                                        , struct move *m, double move_time)
+{
+    struct generic_cartesian_stepper *cs = container_of(
+            sk, struct generic_cartesian_stepper, sk);
+    double velocity = move_get_velocity(m, move_time);
+    return (cs->a.x * m->axes_r.x + cs->a.y * m->axes_r.y
+            + cs->a.z * m->axes_r.z) * velocity;
+}
+
 void __visible
 generic_cartesian_stepper_set_coeffs(struct stepper_kinematics *sk
                                      , double a_x, double a_y, double a_z)
@@ -47,6 +58,7 @@ generic_cartesian_stepper_alloc(double a_x, double a_y, double a_z)
     struct generic_cartesian_stepper *cs = malloc(sizeof(*cs));
     memset(cs, 0, sizeof(*cs));
     cs->sk.calc_position_cb = generic_cartesian_stepper_calc_position;
+    cs->sk.calc_velocity_cb = generic_cartesian_stepper_calc_velocity;
     generic_cartesian_stepper_set_coeffs(&cs->sk, a_x, a_y, a_z);
     return &cs->sk;
 }
