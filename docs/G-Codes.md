@@ -785,7 +785,8 @@ endstop does not trigger, use -1 or -2 to stop when the endstop
 reports not triggered). Normally future G-Code commands will be
 scheduled to run after the stepper move completes, however if a manual
 stepper move uses SYNC=0 then future G-Code movement commands may run
-in parallel with the stepper movement.
+in parallel with the stepper movement. If STOP_ON_ENDSTOP is specified,
+SYNC is ignored, and future movements will not run parallel with this one.
 
 ### [mcp4018]
 
