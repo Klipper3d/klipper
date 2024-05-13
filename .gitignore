@@ -4,3 +4,7 @@ out
 .config
 .config.old
 klippy/.version
+*.swp
+.project
+.cproject
+*.settings

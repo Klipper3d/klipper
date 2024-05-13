@@ -6,11 +6,11 @@ config STM32_SELECT
     bool
     default y
     select HAVE_GPIO
-    select HAVE_GPIO_ADC
-    select HAVE_GPIO_I2C if !MACH_STM32F031
-    select HAVE_GPIO_SPI if !MACH_STM32F031
+    select HAVE_GPIO_ADC if !MACH_STM32MP1
+    select HAVE_GPIO_I2C if !MACH_STM32F031 && !MACH_STM32MP1
+    select HAVE_GPIO_SPI if !MACH_STM32F031 && !MACH_STM32MP1
     select HAVE_GPIO_SDIO if MACH_STM32F4
-    select HAVE_GPIO_HARD_PWM if MACH_STM32F070 || MACH_STM32F072 || MACH_STM32F1 || MACH_STM32F4 || MACH_STM32F7 || MACH_STM32G0 || MACH_STM32H7
+    select HAVE_GPIO_HARD_PWM if MACH_STM32F070 || MACH_STM32F072 || MACH_STM32F1 || MACH_STM32F4 || MACH_STM32F7 || MACH_STM32G0 || MACH_STM32H7 || MACH_STM32MP1
     select HAVE_STRICT_TIMING
     select HAVE_CHIPID
     select HAVE_STEPPER_BOTH_EDGE
@@ -108,6 +108,42 @@ choice
         bool "Nation N32G455"
         select MACH_N32G45x
         select MACH_STM32F1
+    config MACH_STM32MP151A
+        bool "STM32MP151A"
+        select MACH_STM32MP1
+    config MACH_STM32MP151C
+        bool "STM32MP151C"
+        select MACH_STM32MP1
+    config MACH_STM32MP151D
+        bool "STM32MP151D"
+        select MACH_STM32MP1
+    config MACH_STM32MP151F
+        bool "STM32MP151F"
+        select MACH_STM32MP1
+    config MACH_STM32MP153A
+        bool "STM32MP153A"
+        select MACH_STM32MP1
+    config MACH_STM32MP153C
+        bool "STM32MP153C"
+        select MACH_STM32MP1
+    config MACH_STM32MP153D
+        bool "STM32MP153D"
+        select MACH_STM32MP1
+    config MACH_STM32MP153F
+        bool "STM32MP153F"
+        select MACH_STM32MP1
+    config MACH_STM32MP157A
+        bool "STM32MP157A"
+        select MACH_STM32MP1
+    config MACH_STM32MP157C
+        bool "STM32MP157C"
+        select MACH_STM32MP1
+    config MACH_STM32MP157D
+        bool "STM32MP157D"
+        select MACH_STM32MP1
+    config MACH_STM32MP157F
+        bool "STM32MP157F"
+        select MACH_STM32MP1
 endchoice
 
 config MACH_STM32F103x6
@@ -142,24 +178,30 @@ config MACH_STM32L4
     bool
 config MACH_N32G45x
     bool
+config MACH_STM32MP1
+    bool
 config HAVE_STM32_USBFS
     bool
     default y if MACH_STM32F0x2 || MACH_STM32G0Bx || MACH_STM32L4 || MACH_STM32G4
     default y if (MACH_STM32F1 || MACH_STM32F070) && !STM32_CLOCK_REF_INTERNAL
+    depends on !MACH_STM32MP1
 config HAVE_STM32_USBOTG
     bool
     default y if MACH_STM32F2 || MACH_STM32F4 || MACH_STM32F7 || MACH_STM32H7
+    depends on !MACH_STM32MP1
 config HAVE_STM32_CANBUS
     bool
     default y if MACH_STM32F1 || MACH_STM32F2 || MACH_STM32F4x5 || MACH_STM32F446 || MACH_STM32F0x2
+    depends on !MACH_STM32MP1
 config HAVE_STM32_FDCANBUS
     bool
     default y if MACH_STM32G0B1 || MACH_STM32H7 || MACH_STM32G4
+    depends on !MACH_STM32MP1
 config HAVE_STM32_USBCANBUS
     bool
     depends on HAVE_STM32_USBFS || HAVE_STM32_USBOTG
     depends on HAVE_STM32_CANBUS || HAVE_STM32_FDCANBUS
-    depends on !MACH_STM32F1
+    depends on !MACH_STM32F1 && !MACH_STM32MP1
     default y
 
 config MCU
@@ -186,6 +228,7 @@ config MCU
     default "stm32h750xx" if MACH_STM32H750
     default "stm32l412xx" if MACH_STM32L412
     default "stm32f103xe" if MACH_N32G45x
+    default "stm32mp1xx"  if MACH_STM32MP1
 
 config CLOCK_FREQ
     int
@@ -203,6 +246,7 @@ config CLOCK_FREQ
     default 80000000 if MACH_STM32L412
     default 64000000 if MACH_N32G45x && STM32_CLOCK_REF_INTERNAL
     default 128000000 if MACH_N32G45x
+    default 208877930 if MACH_STM32MP1
 
 config FLASH_SIZE
     hex
@@ -212,18 +256,20 @@ config FLASH_SIZE
     default 0x10000 if MACH_STM32F103 || MACH_STM32L412 # Flash size of stm32f103x8 (64KiB)
     default 0x40000 if MACH_STM32F2 || MACH_STM32F401 || MACH_STM32H723
     default 0x80000 if MACH_STM32F4x5 || MACH_STM32F446
-    default 0x20000 if MACH_STM32G0 || MACH_STM32G431
+    default 0x20000 if MACH_STM32G0 || MACH_STM32G431 || MACH_STM32MP1
     default 0x20000 if MACH_STM32H750
     default 0x200000 if MACH_STM32H743 || MACH_STM32F765
     default 0x20000 if MACH_N32G45x
 
 config FLASH_BOOT_ADDRESS
     hex
-    default 0x8000000
+    default 0x8000000 if !MACH_STM32MP1
+    default 0x10000000 if MACH_STM32MP1
 
 config RAM_START
     hex
-    default 0x20000000
+    default 0x20000000 if !MACH_STM32MP1
+    default 0x10020000 if MACH_STM32MP1
 
 config RAM_SIZE
     hex
@@ -242,6 +288,7 @@ config RAM_SIZE
     default 0x24000 if MACH_STM32G0Bx
     default 0x20000 if MACH_STM32H7
     default 0x10000 if MACH_N32G45x
+    default 0x20000 if MACH_STM32MP1
 
 config STACK_SIZE
     int
@@ -302,7 +349,7 @@ choice
         bool "128KiB bootloader" if MACH_STM32H743 || MACH_STM32H723 || MACH_STM32F7
 
     config STM32_FLASH_START_0000
-        bool "No bootloader"
+        bool "No bootloader" if MACH_STM32MP1
 endchoice
 config FLASH_APPLICATION_ADDRESS
     hex
@@ -386,12 +433,13 @@ choice
         select USBSERIAL
     config STM32_SERIAL_USART1
         bool "Serial (on USART1 PA10/PA9)"
+        depends on !MACH_STM32MP1
         select SERIAL
     config STM32_SERIAL_USART1_ALT_PB7_PB6
-        bool "Serial (on USART1 PB7/PB6)" if LOW_LEVEL_OPTIONS
+        bool "Serial (on USART1 PB7/PB6)" if LOW_LEVEL_OPTIONS && !MACH_STM32MP1
         select SERIAL
     config STM32_SERIAL_USART2
-        bool "Serial (on USART2 PA3/PA2)" if LOW_LEVEL_OPTIONS
+        bool "Serial (on USART2 PA3/PA2)" if LOW_LEVEL_OPTIONS && !MACH_STM32MP1
         select SERIAL
     config STM32_SERIAL_USART2_ALT_PA15_PA14
         bool "Serial (on USART2 PA15/PA14)" if LOW_LEVEL_OPTIONS && (MACH_STM32F0 || MACH_STM32G4)
@@ -400,15 +448,15 @@ choice
         bool "Serial (on USART2 PB4/PB3)" if LOW_LEVEL_OPTIONS && MACH_STM32G4
         select SERIAL
     config STM32_SERIAL_USART2_ALT_PD6_PD5
-        bool "Serial (on USART2 PD6/PD5)" if LOW_LEVEL_OPTIONS && !MACH_STM32F0
+        bool "Serial (on USART2 PD6/PD5)" if LOW_LEVEL_OPTIONS && !MACH_STM32F0 && !MACH_STM32MP1
         select SERIAL
     config STM32_SERIAL_USART3
-        bool "Serial (on USART3 PB11/PB10)" if LOW_LEVEL_OPTIONS
+        bool "Serial (on USART3 PB11/PB10)" if LOW_LEVEL_OPTIONS && !MACH_STM32MP1
         depends on !MACH_STM32F0 && !MACH_STM32F401
         select SERIAL
     config STM32_SERIAL_USART3_ALT_PD9_PD8
         bool "Serial (on USART3 PD9/PD8)" if LOW_LEVEL_OPTIONS
-        depends on !MACH_STM32F0 && !MACH_STM32F401
+        depends on !MACH_STM32F0 && !MACH_STM32F401  && !MACH_STM32MP1
         select SERIAL
     config STM32_SERIAL_UART4
         bool "Serial (on UART4 PA0/PA1)"
@@ -466,6 +514,9 @@ choice
         bool "USB to CAN bus bridge (USB on PA11/PA12)"
         depends on HAVE_STM32_USBCANBUS
         select USBCANBUS
+    config STM32_RPMSG
+        bool "Virtual UART (RPMSG)"
+        depends on MACH_STM32MP1
 endchoice
 choice
     prompt "CAN bus interface" if USBCANBUS

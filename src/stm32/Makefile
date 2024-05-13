@@ -14,6 +14,7 @@ dirs-$(CONFIG_MACH_STM32G0) += lib/stm32g0
 dirs-$(CONFIG_MACH_STM32G4) += lib/stm32g4
 dirs-$(CONFIG_MACH_STM32H7) += lib/stm32h7
 dirs-$(CONFIG_MACH_STM32L4) += lib/stm32l4
+dirs-$(CONFIG_MACH_STM32MP1) += lib/stm32mp1
 
 MCU := $(shell echo $(CONFIG_MCU))
 MCU_UPPER := $(shell echo $(CONFIG_MCU) | tr a-z A-Z | tr X x)
@@ -29,11 +30,28 @@ CFLAGS-$(CONFIG_MACH_STM32G0) += -mcpu=cortex-m0plus -Ilib/stm32g0/include
 CFLAGS-$(CONFIG_MACH_STM32G4) += -mcpu=cortex-m4 -Ilib/stm32g4/include
 CFLAGS-$(CONFIG_MACH_STM32H7) += -mcpu=cortex-m7 -Ilib/stm32h7/include
 CFLAGS-$(CONFIG_MACH_STM32L4) += -mcpu=cortex-m4 -Ilib/stm32l4/include
+CFLAGS-$(CONFIG_MACH_STM32MP1) += -mcpu=cortex-m4 -Ilib/stm32mp1/include -DCORE_CM4=1 -DHSE_VALUE=$(CONFIG_CLOCK_REF_FREQ)U -DHSI_VALUE=64000000U -DCSI_VALUE=4000000U -mfpu=fpv4-sp-d16 -mfloat-abi=hard
+CFLAGS-$(CONFIG_MACH_STM32MP151A) += -DSTM32MP151Axx
+CFLAGS-$(CONFIG_MACH_STM32MP151C) += -DSTM32MP151Cxx
+CFLAGS-$(CONFIG_MACH_STM32MP151F) += -DSTM32MP151Fxx
+CFLAGS-$(CONFIG_MACH_STM32MP153A) += -DSTM32MP153Axx
+CFLAGS-$(CONFIG_MACH_STM32MP153C) += -DSTM32MP153Cxx
+CFLAGS-$(CONFIG_MACH_STM32MP153F) += -DSTM32MP153Fxx
+CFLAGS-$(CONFIG_MACH_STM32MP157A) += -DSTM32MP157Axx
+CFLAGS-$(CONFIG_MACH_STM32MP157C) += -DSTM32MP157Cxx
+CFLAGS-$(CONFIG_MACH_STM32MP157F) += -DSTM32MP157Fxx
+
 CFLAGS += $(CFLAGS-y) -D$(MCU_UPPER) -mthumb -Ilib/cmsis-core -Ilib/fast-hash
 
 CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
-CFLAGS_klipper.elf += -T $(OUT)src/generic/armcm_link.ld
-$(OUT)klipper.elf: $(OUT)src/generic/armcm_link.ld
+ifeq ($(MCU),stm32mp1xx)
+	LINK_SCRIPT=$(OUT)src/stm32/stm32mp1.ld
+else
+	LINK_SCRIPT=$(OUT)src/generic/armcm_link.ld
+endif
+
+CFLAGS_klipper.elf += -T $(LINK_SCRIPT)
+$(OUT)klipper.elf: $(LINK_SCRIPT)
 
 # Add source files
 src-y += stm32/watchdog.c stm32/gpio.c stm32/clockline.c stm32/dfu_reboot.c
@@ -72,6 +90,11 @@ src-$(CONFIG_MACH_STM32L4) += ../lib/stm32l4/system_stm32l4xx.c
 src-$(CONFIG_MACH_STM32L4) += stm32/stm32l4.c generic/armcm_timer.c
 src-$(CONFIG_MACH_STM32L4) += stm32/gpioperiph.c
 src-$(CONFIG_MACH_STM32L4) += stm32/stm32h7_adc.c stm32/stm32f0_i2c.c
+
+src-$(CONFIG_MACH_STM32MP1) += stm32/stm32mp1.c generic/armcm_timer.c stm32/gpioperiph.c
+src-$(CONFIG_MACH_STM32MP1) += ../lib/stm32mp1/system_stm32mp1xx.c
+src-$(CONFIG_STM32_RPMSG) += stm32/rpmsg.c
+
 spi-src-y := stm32/spi.c
 spi-src-$(CONFIG_MACH_STM32H7) := stm32/stm32h7_spi.c
 src-$(CONFIG_HAVE_GPIO_SPI) += $(spi-src-y)
@@ -93,6 +116,7 @@ src-$(CONFIG_CANSERIAL) += $(canbus-src-y) generic/canbus.c stm32/chipid.c
 src-$(CONFIG_USBCANBUS) += $(usb-src-y) $(canbus-src-y)
 src-$(CONFIG_USBCANBUS) += stm32/chipid.c generic/usb_canbus.c
 src-$(CONFIG_HAVE_GPIO_HARD_PWM) += stm32/hard_pwm.c
+
 
 # Binary output file rules
 target-y += $(OUT)klipper.bin
