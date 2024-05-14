@@ -592,7 +592,7 @@ def TMCtstepHelper(step_dist, mres, tmc_freq, velocity):
         return 0xfffff
 
 # Helper to configure stealthChop-spreadCycle transition velocity
-def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
+def TMCStealthchopHelper(config, mcu_tmc):
     fields = mcu_tmc.get_fields()
     en_pwm_mode = False
     velocity = config.getfloat('stealthchop_threshold', None, minval=0.)
@@ -606,7 +606,8 @@ def TMCStealthchopHelper(config, mcu_tmc, tmc_freq):
         rotation_dist, steps_per_rotation = stepper.parse_step_distance(sconfig)
         step_dist = rotation_dist / steps_per_rotation
         mres = fields.get_field("mres")
-        tpwmthrs = TMCtstepHelper(step_dist, mres, tmc_freq, velocity)
+        tpwmthrs = TMCtstepHelper(step_dist, mres, mcu_tmc.get_tmc_frequency(),
+                                  velocity)
     fields.set_field("tpwmthrs", tpwmthrs)
 
     reg = fields.lookup_register("en_pwm_mode", None)
