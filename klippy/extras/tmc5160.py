@@ -242,6 +242,9 @@ Fields["TCOOLTHRS"] = {
 Fields["TSTEP"] = {
     "tstep":                    0xfffff << 0
 }
+Fields["THIGH"] = {
+    "thigh":                    0xfffff << 0
+}
 
 SignedFields = ["cur_a", "cur_b", "sgt", "xactual", "vactual", "pwm_scale_auto"]
 
@@ -337,6 +340,7 @@ class TMC5160:
         tmc.TMCWaveTableHelper(config, self.mcu_tmc)
         tmc.TMCStealthchopHelper(config, self.mcu_tmc)
         tmc.TMCVcoolthrsHelper(config, self.mcu_tmc)
+        tmc.TMCVhighHelper(config, self.mcu_tmc)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
         #   GCONF
