@@ -3319,7 +3319,7 @@ run_current:
 #   "stealthChop" mode.
 #coolstep_threshold:
 #   The velocity (in mm/s) to set the TMC driver internal "CoolStep"
-#   threshold to. When set, the coolstep feature will be enabled if
+#   threshold to. If set, the coolstep feature will be enabled when
 #   the stepper motor velocity is near or above this value. Important
 #   - if coolstep_threshold is set and "sensorless homing" is used,
 #   then one must ensure that the homing speed is above the coolstep
@@ -3473,7 +3473,7 @@ run_current:
 #   See the "tmc2208" section for the definition of these parameters.
 #coolstep_threshold:
 #   The velocity (in mm/s) to set the TMC driver internal "CoolStep"
-#   threshold to. When set, the coolstep feature will be enabled if
+#   threshold to. If set, the coolstep feature will be enabled when
 #   the stepper motor velocity is near or above this value. Important
 #   - if coolstep_threshold is set and "sensorless homing" is used,
 #   then one must ensure that the homing speed is above the coolstep
@@ -3638,7 +3638,7 @@ run_current:
 #   "stealthChop" mode.
 #coolstep_threshold:
 #   The velocity (in mm/s) to set the TMC driver internal "CoolStep"
-#   threshold to. When set, the coolstep feature will be enabled if
+#   threshold to. If set, the coolstep feature will be enabled when
 #   the stepper motor velocity is near or above this value. Important
 #   - if coolstep_threshold is set and "sensorless homing" is used,
 #   then one must ensure that the homing speed is above the coolstep
@@ -3774,7 +3774,7 @@ run_current:
 #   "stealthChop" mode.
 #coolstep_threshold:
 #   The velocity (in mm/s) to set the TMC driver internal "CoolStep"
-#   threshold to. When set, the coolstep feature will be enabled if
+#   threshold to. If set, the coolstep feature will be enabled when
 #   the stepper motor velocity is near or above this value. Important
 #   - if coolstep_threshold is set and "sensorless homing" is used,
 #   then one must ensure that the homing speed is above the coolstep
