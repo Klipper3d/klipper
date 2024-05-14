@@ -278,16 +278,14 @@ class TMCCommandHelper:
             raise gcmd.error("Unknown field name '%s'" % (field_name,))
         value = gcmd.get_int('VALUE', None)
         velocity = gcmd.get_float('VELOCITY', None, minval=0.)
-        tmc_frequency = self.mcu_tmc.get_tmc_frequency()
-        if tmc_frequency is None and velocity is not None:
-            raise gcmd.error("VELOCITY parameter not supported by this driver")
         if (value is None) == (velocity is None):
             raise gcmd.error("Specify either VALUE or VELOCITY")
         if velocity is not None:
-            step_dist = self.stepper.get_step_dist()
-            mres = self.fields.get_field("mres")
-            value = TMCtstepHelper(step_dist, mres, tmc_frequency,
-                                   velocity)
+            if self.mcu_tmc.get_tmc_frequency() is None:
+                raise gcmd.error(
+                    "VELOCITY parameter not supported by this driver")
+            value = TMCtstepHelper(self.mcu_tmc, velocity,
+                                   pstepper=self.stepper)
         reg_val = self.fields.set_field(field_name, value)
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         self.mcu_tmc.set_register(reg_name, reg_val, print_time)
@@ -583,13 +581,21 @@ def TMCMicrostepHelper(config, mcu_tmc):
     fields.set_field("intpol", config.getboolean("interpolate", True))
 
 # Helper for calculating TSTEP based values from velocity
-def TMCtstepHelper(step_dist, mres, tmc_freq, velocity):
-    if velocity > 0.:
-        step_dist_256 = step_dist / (1 << mres)
-        threshold = int(tmc_freq * step_dist_256 / velocity + .5)
-        return max(0, min(0xfffff, threshold))
-    else:
+def TMCtstepHelper(mcu_tmc, velocity, pstepper=None, config=None):
+    if velocity <= 0.:
         return 0xfffff
+    if pstepper is not None:
+        step_dist = pstepper.get_step_dist()
+    else:
+        stepper_name = " ".join(config.get_name().split()[1:])
+        sconfig = config.getsection(stepper_name)
+        rotation_dist, steps_per_rotation = stepper.parse_step_distance(sconfig)
+        step_dist = rotation_dist / steps_per_rotation
+    mres = mcu_tmc.get_fields().get_field("mres")
+    step_dist_256 = step_dist / (1 << mres)
+    tmc_freq = mcu_tmc.get_tmc_frequency()
+    threshold = int(tmc_freq * step_dist_256 / velocity + .5)
+    return max(0, min(0xfffff, threshold))
 
 # Helper to configure stealthChop-spreadCycle transition velocity
 def TMCStealthchopHelper(config, mcu_tmc):
@@ -600,14 +606,7 @@ def TMCStealthchopHelper(config, mcu_tmc):
 
     if velocity is not None:
         en_pwm_mode = True
-
-        stepper_name = " ".join(config.get_name().split()[1:])
-        sconfig = config.getsection(stepper_name)
-        rotation_dist, steps_per_rotation = stepper.parse_step_distance(sconfig)
-        step_dist = rotation_dist / steps_per_rotation
-        mres = fields.get_field("mres")
-        tpwmthrs = TMCtstepHelper(step_dist, mres, mcu_tmc.get_tmc_frequency(),
-                                  velocity)
+        tpwmthrs = TMCtstepHelper(mcu_tmc, velocity, config=config)
     fields.set_field("tpwmthrs", tpwmthrs)
 
     reg = fields.lookup_register("en_pwm_mode", None)
@@ -622,15 +621,8 @@ def TMCVcoolthrsHelper(config, mcu_tmc):
     fields = mcu_tmc.get_fields()
     velocity = config.getfloat('coolstep_threshold', None, minval=0.)
     tcoolthrs = 0
-
     if velocity is not None:
-        stepper_name = " ".join(config.get_name().split()[1:])
-        sconfig = config.getsection(stepper_name)
-        rotation_dist, steps_per_rotation = stepper.parse_step_distance(sconfig)
-        step_dist = rotation_dist / steps_per_rotation
-        mres = fields.get_field("mres")
-        tcoolthrs = TMCtstepHelper(step_dist, mres,
-                                   mcu_tmc.get_tmc_frequency(), velocity)
+        tcoolthrs = TMCtstepHelper(mcu_tmc, velocity, config=config)
     fields.set_field("tcoolthrs", tcoolthrs)
 
 # Helper to configure StallGuard and CoolStep maximum velocity and
@@ -639,13 +631,6 @@ def TMCVhighHelper(config, mcu_tmc):
     fields = mcu_tmc.get_fields()
     velocity = config.getfloat('high_velocity_threshold', None, minval=0.)
     thigh = 0
-
     if velocity is not None:
-        stepper_name = " ".join(config.get_name().split()[1:])
-        sconfig = config.getsection(stepper_name)
-        rotation_dist, steps_per_rotation = stepper.parse_step_distance(sconfig)
-        step_dist = rotation_dist / steps_per_rotation
-        mres = fields.get_field("mres")
-        thigh = TMCtstepHelper(step_dist, mres,
-                                   mcu_tmc.get_tmc_frequency(), velocity)
+        thigh = TMCtstepHelper(mcu_tmc, velocity, config=config)
     fields.set_field("thigh", thigh)
