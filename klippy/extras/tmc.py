@@ -479,7 +479,7 @@ class TMCVirtualPinHelper:
             self.diag_pin_field = None
         self.mcu_endstop = None
         self.en_pwm = False
-        self.pwmthrs = self.coolthrs = 0
+        self.pwmthrs = self.coolthrs = self.thigh = 0
         # Register virtual_endstop pin
         name_parts = config.get_name().split()
         ppins = self.printer.lookup_object("pins")
@@ -503,8 +503,8 @@ class TMCVirtualPinHelper:
     def handle_homing_move_begin(self, hmove):
         if self.mcu_endstop not in hmove.get_mcu_endstops():
             return
+        # Enable/disable stealthchop
         self.pwmthrs = self.fields.get_field("tpwmthrs")
-        self.coolthrs = self.fields.get_field("tcoolthrs")
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
             # On "stallguard4" drivers, "stealthchop" must be enabled
@@ -518,12 +518,21 @@ class TMCVirtualPinHelper:
             self.fields.set_field("en_pwm_mode", 0)
             val = self.fields.set_field(self.diag_pin_field, 1)
         self.mcu_tmc.set_register("GCONF", val)
+        # Enable tcoolthrs (if not already)
+        self.coolthrs = self.fields.get_field("tcoolthrs")
         if self.coolthrs == 0:
             tc_val = self.fields.set_field("tcoolthrs", 0xfffff)
             self.mcu_tmc.set_register("TCOOLTHRS", tc_val)
+        # Disable thigh
+        reg = self.fields.lookup_register("thigh", None)
+        if reg is not None:
+            self.thigh = self.fields.get_field("thigh")
+            th_val = self.fields.set_field("thigh", 0)
+            self.mcu_tmc.set_register(reg, th_val)
     def handle_homing_move_end(self, hmove):
         if self.mcu_endstop not in hmove.get_mcu_endstops():
             return
+        # Restore stealthchop/spreadcycle
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
             tp_val = self.fields.set_field("tpwmthrs", self.pwmthrs)
@@ -533,8 +542,14 @@ class TMCVirtualPinHelper:
             self.fields.set_field("en_pwm_mode", self.en_pwm)
             val = self.fields.set_field(self.diag_pin_field, 0)
         self.mcu_tmc.set_register("GCONF", val)
+        # Restore tcoolthrs
         tc_val = self.fields.set_field("tcoolthrs", self.coolthrs)
         self.mcu_tmc.set_register("TCOOLTHRS", tc_val)
+        # Restore thigh
+        reg = self.fields.lookup_register("thigh", None)
+        if reg is not None:
+            th_val = self.fields.set_field("thigh", self.thigh)
+            self.mcu_tmc.set_register(reg, th_val)
 
 
 ######################################################################
