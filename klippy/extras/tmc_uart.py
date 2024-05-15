@@ -187,6 +187,8 @@ class MCU_TMC_uart_bitbang:
             self.analog_mux.activate(instance_id)
         msg = self._encode_write(0xf5, addr, reg | 0x80, val)
         self.tmcuart_send_cmd.send([self.oid, msg, 0], minclock=minclock)
+    def get_mcu(self):
+        return self.mcu
 
 # Lookup a (possibly shared) tmc uart
 def lookup_tmc_uart_bitbang(config, max_addr):
@@ -261,3 +263,5 @@ class MCU_TMC_uart:
             "Unable to write tmc uart '%s' register %s" % (self.name, reg_name))
     def get_tmc_frequency(self):
         return self.tmc_frequency
+    def get_mcu(self):
+        return self.mcu_uart.get_mcu()
