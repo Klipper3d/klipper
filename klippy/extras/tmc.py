@@ -577,7 +577,7 @@ def TMCWaveTableHelper(config, mcu_tmc):
     set_config_field(config, "start_sin", 0)
     set_config_field(config, "start_sin90", 247)
 
-# Helper to configure and query the microstep settings
+# Helper to configure the microstep settings
 def TMCMicrostepHelper(config, mcu_tmc):
     fields = mcu_tmc.get_fields()
     stepper_name = " ".join(config.get_name().split()[1:])
@@ -585,13 +585,9 @@ def TMCMicrostepHelper(config, mcu_tmc):
         raise config.error(
             "Could not find config section '[%s]' required by tmc driver"
             % (stepper_name,))
-    stepper_config = ms_config = config.getsection(stepper_name)
-    if (stepper_config.get('microsteps', None, note_valid=False) is None
-        and config.get('microsteps', None, note_valid=False) is not None):
-        # Older config format with microsteps in tmc config section
-        ms_config = config
+    sconfig = config.getsection(stepper_name)
     steps = {256: 0, 128: 1, 64: 2, 32: 3, 16: 4, 8: 5, 4: 6, 2: 7, 1: 8}
-    mres = ms_config.getchoice('microsteps', steps)
+    mres = sconfig.getchoice('microsteps', steps)
     fields.set_field("mres", mres)
     fields.set_field("intpol", config.getboolean("interpolate", True))
 

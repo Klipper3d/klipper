@@ -265,6 +265,7 @@ def parse_gear_ratio(config, note_valid):
 
 # Obtain "step distance" information from a config section
 def parse_step_distance(config, units_in_radians=None, note_valid=False):
+    # Check rotation_distance and gear_ratio
     if units_in_radians is None:
         # Caller doesn't know if units are in radians - infer it
         rd = config.get('rotation_distance', None, note_valid=False)
@@ -276,7 +277,7 @@ def parse_step_distance(config, units_in_radians=None, note_valid=False):
     else:
         rotation_dist = config.getfloat('rotation_distance', above=0.,
                                         note_valid=note_valid)
-    # Newer config format with rotation_distance
+    # Check microsteps and full_steps_per_rotation
     microsteps = config.getint('microsteps', minval=1, note_valid=note_valid)
     full_steps = config.getint('full_steps_per_rotation', 200, minval=1,
                                note_valid=note_valid)
