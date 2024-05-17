@@ -260,20 +260,22 @@ class EddyEndstopWrapper:
         trig_pos = phoming.probing_move(self, pos, speed)
         if not self._trigger_time:
             return trig_pos
-        # Wait for 200ms to elapse since trigger time
+        # Wait for samples to arrive
+        start_time = self._trigger_time + 0.050
+        end_time = start_time + 0.100
         reactor = self._printer.get_reactor()
         while 1:
+            if self._samples and self._samples[-1]['data'][-1][0] >= end_time:
+                break
             systime = reactor.monotonic()
             est_print_time = self._mcu.estimated_print_time(systime)
-            need_delay = self._trigger_time + 0.200 - est_print_time
-            if need_delay <= 0.:
-                break
-            reactor.pause(systime + need_delay)
+            if est_print_time > self._trigger_time + 1.0:
+                raise self._printer.command_error(
+                    "probe_eddy_current sensor outage")
+            reactor.pause(systime + 0.010)
         # Find position since trigger
         samples = self._samples
         self._samples = []
-        start_time = self._trigger_time + 0.050
-        end_time = start_time + 0.100
         samp_sum = 0.
         samp_count = 0
         for msg in samples:
