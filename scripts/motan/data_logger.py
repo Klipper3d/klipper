@@ -162,6 +162,10 @@ class DataLogger:
                     lname = "%s:%s" % (st, aname)
                     qcmd = "%s/dump_%s" % (st, st)
                     self.send_subscribe(lname, qcmd, {"sensor": aname})
+            if cfgname.startswith("tmc"):
+                driver = ' '.join(cfgname.split()[1:])
+                self.send_subscribe("stallguard:" + driver,
+                                    "tmc/stallguard_dump", {"name": driver})
     def handle_dump(self, msg, raw_msg):
         msg_id = msg["id"]
         if "result" not in msg:
