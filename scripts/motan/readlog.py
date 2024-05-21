@@ -234,6 +234,64 @@ class HandleStepQ:
                 step_data.append((step_time, step_halfpos, step_pos))
 LogHandlers["stepq"] = HandleStepQ
 
+# Extract tmc currect and stallguard data from the log
+class HandleStallguard:
+    SubscriptionIdParts = 2
+    ParametersMin = 2
+    ParametersMax = 2
+    DataSets = [
+        ('stallguard(<stepper>,sg_result)',
+         'Stallguard result of the given stepper driver'),
+        ('stallguard(<stepper>,cs_actual)',
+         'Current level result of the given stepper driver'),
+    ]
+    def __init__(self, lmanager, name, name_parts):
+        self.name = name
+        self.stepper_name = name_parts[1]
+        self.filter = name_parts[2]
+        self.jdispatch = lmanager.get_jdispatch()
+        self.data = []
+        self.ret = None
+        self.driver_name = ""
+        for k in lmanager.get_initial_status()['configfile']['settings']:
+            if not k.startswith("tmc"):
+                continue
+            if k.endswith(self.stepper_name):
+                self.driver_name = k
+                break
+        # Current decode
+        self.status_tracker = lmanager.get_status_tracker()
+        self.next_status_time = 0.
+        self.irun = 0
+    def get_label(self):
+        label = '%s %s %s' % (self.driver_name, self.stepper_name,
+                              self.filter)
+        if self.filter == "sg_result":
+            return {'label': label, 'units': 'Stallguard'}
+        elif self.filter == "cs_actual":
+            return {'label': label, 'units': 'CS Actual'}
+    # Search datapoint in dataset extrapolate in between
+    def pull_data(self, req_time):
+        while 1:
+            if len(self.data) == 0:
+                jmsg = self.jdispatch.pull_msg(req_time, self.name)
+                if jmsg is None:
+                    return
+                self.data = jmsg["data"]
+            if self.ret is None and len(self.data) > 0:
+                time, sg_result, cs_actual = self.data.pop(0)
+                self.ret = {
+                    "time": time,
+                    "sg_result": sg_result,
+                    "cs_actual": cs_actual,
+                }
+            if self.ret:
+                time = self.ret["time"]
+                if req_time <= time:
+                    return self.ret[self.filter]
+                self.ret = None
+LogHandlers["stallguard"] = HandleStallguard
+
 # Extract stepper motor phase position
 class HandleStepPhase:
     SubscriptionIdParts = 0
