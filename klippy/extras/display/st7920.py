@@ -223,6 +223,7 @@ class EmulatedST7920(DisplayBase):
         sw_pins = tuple([pin_params['pin'] for pin_params in sw_pin_params])
         speed = config.getint('spi_speed', 1000000, minval=100000)
         self.spi = bus.MCU_SPI(mcu, None, None, 0, speed, sw_pins)
+        self.mcu = mcu
         # create enable helper
         self.en_helper = EnableHelper(config.get("en_pin"), self.spi)
         self.en_set = False

@@ -223,6 +223,13 @@ class ADXL345:
             "query_adxl345 oid=%c rest_ticks=%u", cq=cmdqueue)
         self.ffreader.setup_query_command("query_adxl345_status oid=%c",
                                           oid=self.oid, cq=cmdqueue)
+
+    def check_connected(self):
+        if self.mcu.non_critical_disconnected:
+            raise self.printer.command_error(
+                f"ADXL: {self.name} could not connect because mcu: {self.mcu.get_name()} is non_critical_disconnected!"
+            )
+
     def read_reg(self, reg):
         params = self.spi.spi_transfer([reg | REG_MOD_READ, 0x00])
         response = bytearray(params['response'])
@@ -237,6 +244,7 @@ class ADXL345:
                     "(e.g. faulty wiring) or a faulty adxl345 chip." % (
                         reg, val, stored_val))
     def start_internal_client(self):
+        self.check_connected()
         aqh = AccelQueryHelper(self.printer)
         self.batch_bulk.add_client(aqh.handle_batch)
         return aqh

@@ -196,6 +196,8 @@ class MCU_TMC2660_SPI:
         self.spi = bus.MCU_SPI_from_config(config, 0, default_speed=4000000)
         self.name_to_reg = name_to_reg
         self.fields = fields
+        self.mcu = self.spi.get_mcu()
+
     def get_fields(self):
         return self.fields
     def get_register(self, reg_name):
