@@ -80,19 +80,19 @@ class EddyCalibration:
             return True
         self.printer.lookup_object(self.name).add_client(handle_batch)
         toolhead.dwell(1.)
-        # Move to each 50um position
-        max_z = 4
-        samp_dist = 0.050
-        num_steps = int(max_z / samp_dist + .5) + 1
+        # Move to each 40um position
+        max_z = 4.0
+        samp_dist = 0.040
+        req_zpos = [i*samp_dist for i in range(int(max_z / samp_dist) + 1)]
         start_pos = toolhead.get_position()
         times = []
-        for i in range(num_steps):
+        for zpos in req_zpos:
             # Move to next position (always descending to reduce backlash)
             hop_pos = list(start_pos)
-            hop_pos[2] += i * samp_dist + 0.500
+            hop_pos[2] += zpos + 0.500
             move(hop_pos, move_speed)
             next_pos = list(start_pos)
-            next_pos[2] += i * samp_dist
+            next_pos[2] += zpos
             move(next_pos, move_speed)
             # Note sample timing
             start_query_time = toolhead.get_last_move_time() + 0.050
@@ -185,6 +185,7 @@ class EddyCalibration:
 
 # Helper for implementing PROBE style commands
 class EddyEndstopWrapper:
+    REASON_SENSOR_ERROR = mcu.MCU_trsync.REASON_COMMS_TIMEOUT + 1
     def __init__(self, config, sensor_helper, calibration):
         self._printer = config.get_printer()
         self._sensor_helper = sensor_helper
@@ -208,7 +209,7 @@ class EddyEndstopWrapper:
         if self._is_sampling:
             return
         self._is_sampling = True
-        self._is_from_home = is_home
+        self._start_from_home = is_home
         self._sensor_helper.add_client(self._add_measurement)
     def _stop_measurements(self, is_home=False):
         if not self._is_sampling or (is_home and not self._start_from_home):
@@ -236,15 +237,18 @@ class EddyEndstopWrapper:
         trigger_completion = self._dispatch.start(print_time)
         self._sensor_helper.setup_home(
             print_time, trigger_freq, self._dispatch.get_oid(),
-            mcu.MCU_trsync.REASON_ENDSTOP_HIT)
+            mcu.MCU_trsync.REASON_ENDSTOP_HIT, self.REASON_SENSOR_ERROR)
         return trigger_completion
     def home_wait(self, home_end_time):
         self._dispatch.wait_end(home_end_time)
         trigger_time = self._sensor_helper.clear_home()
         self._stop_measurements(is_home=True)
         res = self._dispatch.stop()
-        if res == mcu.MCU_trsync.REASON_COMMS_TIMEOUT:
-            return -1.
+        if res >= mcu.MCU_trsync.REASON_COMMS_TIMEOUT:
+            if res == mcu.MCU_trsync.REASON_COMMS_TIMEOUT:
+                raise self._printer.command_error(
+                    "Communication timeout during homing")
+            raise self._printer.command_error("Eddy current sensor error")
         if res != mcu.MCU_trsync.REASON_ENDSTOP_HIT:
             return 0.
         if self._mcu.is_fileoutput():
@@ -260,20 +264,22 @@ class EddyEndstopWrapper:
         trig_pos = phoming.probing_move(self, pos, speed)
         if not self._trigger_time:
             return trig_pos
-        # Wait for 200ms to elapse since trigger time
+        # Wait for samples to arrive
+        start_time = self._trigger_time + 0.050
+        end_time = start_time + 0.100
         reactor = self._printer.get_reactor()
         while 1:
+            if self._samples and self._samples[-1]['data'][-1][0] >= end_time:
+                break
             systime = reactor.monotonic()
             est_print_time = self._mcu.estimated_print_time(systime)
-            need_delay = self._trigger_time + 0.200 - est_print_time
-            if need_delay <= 0.:
-                break
-            reactor.pause(systime + need_delay)
+            if est_print_time > self._trigger_time + 1.0:
+                raise self._printer.command_error(
+                    "probe_eddy_current sensor outage")
+            reactor.pause(systime + 0.010)
         # Find position since trigger
         samples = self._samples
         self._samples = []
-        start_time = self._trigger_time + 0.050
-        end_time = start_time + 0.100
         samp_sum = 0.
         samp_count = 0
         for msg in samples:
