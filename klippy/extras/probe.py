@@ -176,11 +176,6 @@ class ProbeSessionHelper:
     def __init__(self, config, mcu_probe):
         self.printer = config.get_printer()
         self.mcu_probe = mcu_probe
-        self.speed = config.getfloat('speed', 5.0, above=0.)
-        self.lift_speed = config.getfloat('lift_speed', self.speed, above=0.)
-        self.x_offset = config.getfloat('x_offset', 0.)
-        self.y_offset = config.getfloat('y_offset', 0.)
-        self.z_offset = config.getfloat('z_offset')
         self.multi_probe_pending = False
         gcode = self.printer.lookup_object('gcode')
         self.dummy_gcode_cmd = gcode.create_gcode_command("", "", {})
@@ -193,6 +188,9 @@ class ProbeSessionHelper:
             pconfig = config.getsection('printer')
             self.z_position = pconfig.getfloat('minimum_z_position', 0.,
                                                note_valid=False)
+        # Configurable probing speeds
+        self.speed = config.getfloat('speed', 5.0, above=0.)
+        self.lift_speed = config.getfloat('lift_speed', self.speed, above=0.)
         # Multi-sample support (for improved accuracy)
         self.sample_count = config.getint('samples', 1, minval=1)
         self.sample_retract_dist = config.getfloat('sample_retract_dist', 2.,
@@ -269,8 +267,6 @@ class ProbeSessionHelper:
                 'samples_tolerance': samples_tolerance,
                 'samples_tolerance_retries': samples_retries,
                 'samples_result': samples_result}
-    def get_offsets(self):
-        return self.x_offset, self.y_offset, self.z_offset
     def _probe(self, speed):
         toolhead = self.printer.lookup_object('toolhead')
         curtime = self.printer.get_reactor().monotonic()
@@ -329,6 +325,15 @@ class ProbeSessionHelper:
             self.multi_probe_end()
         # Calculate and return result
         return calc_probe_z_average(positions, params['samples_result'])
+
+# Helper to read the xyz probe offsets from the config
+class ProbeOffsetsHelper:
+    def __init__(self, config):
+        self.x_offset = config.getfloat('x_offset', 0.)
+        self.y_offset = config.getfloat('y_offset', 0.)
+        self.z_offset = config.getfloat('z_offset')
+    def get_offsets(self):
+        return self.x_offset, self.y_offset, self.z_offset
 
 
 ######################################################################
@@ -519,11 +524,12 @@ class PrinterProbe:
         self.printer = config.get_printer()
         self.cmd_helper = ProbeCommandHelper(config, self,
                                              mcu_probe.query_endstop)
+        self.probe_offsets = ProbeOffsetsHelper(config)
         self.probe_session = ProbeSessionHelper(config, mcu_probe)
     def get_probe_params(self, gcmd=None):
         return self.probe_session.get_probe_params(gcmd)
     def get_offsets(self):
-        return self.probe_session.get_offsets()
+        return self.probe_offsets.get_offsets()
     def get_status(self, eventtime):
         return self.cmd_helper.get_status(eventtime)
     def start_probe_session(self, gcmd):
