@@ -13,6 +13,22 @@ consider reducing the Z axis minimum position so the probe
 can travel further (the Z minimum position can be negative).
 """
 
+# Calculate the average Z from a set of positions
+def calc_probe_z_average(positions, method='average'):
+    if method != 'median':
+        # Use mean average
+        count = float(len(positions))
+        return [sum([pos[i] for pos in positions]) / count
+                for i in range(3)]
+    # Use median
+    z_sorted = sorted(positions, key=(lambda p: p[2]))
+    middle = len(positions) // 2
+    if (len(positions) & 1) == 1:
+        # odd number of samples
+        return z_sorted[middle]
+    # even number of samples
+    return calc_probe_z_average(z_sorted[middle-1:middle+1], 'average')
+
 
 ######################################################################
 # Probe device implementation helpers
@@ -39,6 +55,8 @@ class ProbeCommandHelper:
         gcode.register_command('PROBE_CALIBRATE', self.cmd_PROBE_CALIBRATE,
                                desc=self.cmd_PROBE_CALIBRATE_help)
         # Other commands
+        gcode.register_command('PROBE_ACCURACY', self.cmd_PROBE_ACCURACY,
+                               desc=self.cmd_PROBE_ACCURACY_help)
         gcode.register_command('Z_OFFSET_APPLY_PROBE',
                                self.cmd_Z_OFFSET_APPLY_PROBE,
                                desc=self.cmd_Z_OFFSET_APPLY_PROBE_help)
@@ -91,6 +109,51 @@ class ProbeCommandHelper:
         # Start manual probe
         manual_probe.ManualProbeHelper(self.printer, gcmd,
                                        self.probe_calibrate_finalize)
+    cmd_PROBE_ACCURACY_help = "Probe Z-height accuracy at current XY position"
+    def cmd_PROBE_ACCURACY(self, gcmd):
+        params = self.probe.get_probe_params(gcmd)
+        sample_count = gcmd.get_int("SAMPLES", 10, minval=1)
+        toolhead = self.printer.lookup_object('toolhead')
+        pos = toolhead.get_position()
+        gcmd.respond_info("PROBE_ACCURACY at X:%.3f Y:%.3f Z:%.3f"
+                          " (samples=%d retract=%.3f"
+                          " speed=%.1f lift_speed=%.1f)\n"
+                          % (pos[0], pos[1], pos[2],
+                             sample_count, params['sample_retract_dist'],
+                             params['probe_speed'], params['lift_speed']))
+        # Create dummy gcmd with SAMPLES=1
+        fo_params = dict(gcmd.get_command_parameters())
+        fo_params['SAMPLES'] = '1'
+        gcode = self.printer.lookup_object('gcode')
+        fo_gcmd = gcode.create_gcode_command("", "", fo_params)
+        # Probe bed sample_count times
+        probe_session = self.probe.start_probe_session(fo_gcmd)
+        probe_session.multi_probe_begin()
+        positions = []
+        while len(positions) < sample_count:
+            # Probe position
+            pos = probe_session.run_probe(fo_gcmd)
+            positions.append(pos)
+            # Retract
+            liftpos = [None, None, pos[2] + params['sample_retract_dist']]
+            self._move(liftpos, params['lift_speed'])
+        probe_session.multi_probe_end()
+        # Calculate maximum, minimum and average values
+        max_value = max([p[2] for p in positions])
+        min_value = min([p[2] for p in positions])
+        range_value = max_value - min_value
+        avg_value = calc_probe_z_average(positions, 'average')[2]
+        median = calc_probe_z_average(positions, 'median')[2]
+        # calculate the standard deviation
+        deviation_sum = 0
+        for i in range(len(positions)):
+            deviation_sum += pow(positions[i][2] - avg_value, 2.)
+        sigma = (deviation_sum / len(positions)) ** 0.5
+        # Show information
+        gcmd.respond_info(
+            "probe accuracy results: maximum %.6f, minimum %.6f, range %.6f, "
+            "average %.6f, median %.6f, standard deviation %.6f" % (
+            max_value, min_value, range_value, avg_value, median, sigma))
     cmd_Z_OFFSET_APPLY_PROBE_help = "Adjust the probe's z_offset"
     def cmd_Z_OFFSET_APPLY_PROBE(self, gcmd):
         gcode_move = self.printer.lookup_object("gcode_move")
@@ -119,6 +182,8 @@ class ProbeSessionHelper:
         self.y_offset = config.getfloat('y_offset', 0.)
         self.z_offset = config.getfloat('z_offset')
         self.multi_probe_pending = False
+        gcode = self.printer.lookup_object('gcode')
+        self.dummy_gcode_cmd = gcode.create_gcode_command("", "", {})
         # Infer Z position to move to during a probe
         if config.has_section('stepper_z'):
             zconfig = config.getsection('stepper_z')
@@ -152,11 +217,6 @@ class ProbeSessionHelper:
                                             self._handle_home_rails_end)
         self.printer.register_event_handler("gcode:command_error",
                                             self._handle_command_error)
-        # Register PROBE/QUERY_PROBE commands
-        self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_command('PROBE_ACCURACY', self.cmd_PROBE_ACCURACY,
-                                    desc=self.cmd_PROBE_ACCURACY_help)
-        self.dummy_gcode_cmd = self.gcode.create_gcode_command("", "", {})
     def _handle_homing_move_begin(self, hmove):
         if self.mcu_probe in hmove.get_mcu_endstops():
             self.mcu_probe.probe_prepare(hmove)
@@ -234,29 +294,17 @@ class ProbeSessionHelper:
                 axis_twist_compensation.get_z_compensation_value(pos))
         # add z compensation to probe position
         epos[2] += z_compensation
-        self.gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
-                                % (epos[0], epos[1], epos[2]))
+        gcode = self.printer.lookup_object('gcode')
+        gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
+                           % (epos[0], epos[1], epos[2]))
         return epos[:3]
-    def _move(self, coord, speed):
-        self.printer.lookup_object('toolhead').manual_move(coord, speed)
-    def _calc_mean(self, positions):
-        count = float(len(positions))
-        return [sum([pos[i] for pos in positions]) / count
-                for i in range(3)]
-    def _calc_median(self, positions):
-        z_sorted = sorted(positions, key=(lambda p: p[2]))
-        middle = len(positions) // 2
-        if (len(positions) & 1) == 1:
-            # odd number of samples
-            return z_sorted[middle]
-        # even number of samples
-        return self._calc_mean(z_sorted[middle-1:middle+1])
     def run_probe(self, gcmd):
         params = self.get_probe_params(gcmd)
         must_notify_multi_probe = not self.multi_probe_pending
         if must_notify_multi_probe:
             self.multi_probe_begin()
-        probexy = self.printer.lookup_object('toolhead').get_position()[:2]
+        toolhead = self.printer.lookup_object('toolhead')
+        probexy = toolhead.get_position()[:2]
         retries = 0
         positions = []
         sample_count = params['samples']
@@ -274,53 +322,13 @@ class ProbeSessionHelper:
                 positions = []
             # Retract
             if len(positions) < sample_count:
-                self._move(probexy + [pos[2] + params['sample_retract_dist']],
-                           params['lift_speed'])
+                toolhead.manual_move(
+                    probexy + [pos[2] + params['sample_retract_dist']],
+                    params['lift_speed'])
         if must_notify_multi_probe:
             self.multi_probe_end()
         # Calculate and return result
-        if params['samples_result'] == 'median':
-            return self._calc_median(positions)
-        return self._calc_mean(positions)
-    cmd_PROBE_ACCURACY_help = "Probe Z-height accuracy at current XY position"
-    def cmd_PROBE_ACCURACY(self, gcmd):
-        params = self.get_probe_params(gcmd)
-        sample_count = gcmd.get_int("SAMPLES", 10, minval=1)
-        toolhead = self.printer.lookup_object('toolhead')
-        pos = toolhead.get_position()
-        gcmd.respond_info("PROBE_ACCURACY at X:%.3f Y:%.3f Z:%.3f"
-                          " (samples=%d retract=%.3f"
-                          " speed=%.1f lift_speed=%.1f)\n"
-                          % (pos[0], pos[1], pos[2],
-                             sample_count, params['sample_retract_dist'],
-                             params['probe_speed'], params['lift_speed']))
-        # Probe bed sample_count times
-        self.multi_probe_begin()
-        positions = []
-        while len(positions) < sample_count:
-            # Probe position
-            pos = self._probe(params['probe_speed'])
-            positions.append(pos)
-            # Retract
-            liftpos = [None, None, pos[2] + params['sample_retract_dist']]
-            self._move(liftpos, params['lift_speed'])
-        self.multi_probe_end()
-        # Calculate maximum, minimum and average values
-        max_value = max([p[2] for p in positions])
-        min_value = min([p[2] for p in positions])
-        range_value = max_value - min_value
-        avg_value = self._calc_mean(positions)[2]
-        median = self._calc_median(positions)[2]
-        # calculate the standard deviation
-        deviation_sum = 0
-        for i in range(len(positions)):
-            deviation_sum += pow(positions[i][2] - avg_value, 2.)
-        sigma = (deviation_sum / len(positions)) ** 0.5
-        # Show information
-        gcmd.respond_info(
-            "probe accuracy results: maximum %.6f, minimum %.6f, range %.6f, "
-            "average %.6f, median %.6f, standard deviation %.6f" % (
-            max_value, min_value, range_value, avg_value, median, sigma))
+        return calc_probe_z_average(positions, params['samples_result'])
 
 
 ######################################################################
