@@ -18,6 +18,41 @@ can travel further (the Z minimum position can be negative).
 # Probe device implementation helpers
 ######################################################################
 
+# Helper to implement common probing commands
+class ProbeCommandHelper:
+    def __init__(self, config, probe, query_endstop=None):
+        self.printer = config.get_printer()
+        self.probe = probe
+        self.query_endstop = query_endstop
+        self.name = config.get_name()
+        gcode = self.printer.lookup_object('gcode')
+        # QUERY_PROBE command
+        self.last_state = False
+        gcode.register_command('QUERY_PROBE', self.cmd_QUERY_PROBE,
+                               desc=self.cmd_QUERY_PROBE_help)
+        # PROBE command
+        self.last_z_result = 0.
+        gcode.register_command('PROBE', self.cmd_PROBE,
+                               desc=self.cmd_PROBE_help)
+    def get_status(self, eventtime):
+        return {'name': self.name,
+                'last_query': self.last_state,
+                'last_z_result': self.last_z_result}
+    cmd_QUERY_PROBE_help = "Return the status of the z-probe"
+    def cmd_QUERY_PROBE(self, gcmd):
+        if self.query_endstop is None:
+            raise gcmd.error("Probe does not support QUERY_PROBE")
+        toolhead = self.printer.lookup_object('toolhead')
+        print_time = toolhead.get_last_move_time()
+        res = self.query_endstop(print_time)
+        self.last_state = res
+        gcmd.respond_info("probe: %s" % (["open", "TRIGGERED"][not not res],))
+    cmd_PROBE_help = "Probe Z-height at current XY position"
+    def cmd_PROBE(self, gcmd):
+        pos = run_single_probe(self.probe, gcmd)
+        gcmd.respond_info("Result is z=%.6f" % (pos[2],))
+        self.last_z_result = pos[2]
+
 # Helper to track multiple probe attempts in a single command
 class ProbeSessionHelper:
     def __init__(self, config, mcu_probe):
@@ -31,8 +66,6 @@ class ProbeSessionHelper:
         self.z_offset = config.getfloat('z_offset')
         self.probe_calibrate_z = 0.
         self.multi_probe_pending = False
-        self.last_state = False
-        self.last_z_result = 0.
         self.gcode_move = self.printer.load_object(config, "gcode_move")
         # Infer Z position to move to during a probe
         if config.has_section('stepper_z'):
@@ -69,10 +102,6 @@ class ProbeSessionHelper:
                                             self._handle_command_error)
         # Register PROBE/QUERY_PROBE commands
         self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_command('PROBE', self.cmd_PROBE,
-                                    desc=self.cmd_PROBE_help)
-        self.gcode.register_command('QUERY_PROBE', self.cmd_QUERY_PROBE,
-                                    desc=self.cmd_QUERY_PROBE_help)
         self.gcode.register_command('PROBE_CALIBRATE', self.cmd_PROBE_CALIBRATE,
                                     desc=self.cmd_PROBE_CALIBRATE_help)
         self.gcode.register_command('PROBE_ACCURACY', self.cmd_PROBE_ACCURACY,
@@ -196,22 +225,6 @@ class ProbeSessionHelper:
         if samples_result == 'median':
             return self._calc_median(positions)
         return self._calc_mean(positions)
-    cmd_PROBE_help = "Probe Z-height at current XY position"
-    def cmd_PROBE(self, gcmd):
-        pos = self.run_probe(gcmd)
-        gcmd.respond_info("Result is z=%.6f" % (pos[2],))
-        self.last_z_result = pos[2]
-    cmd_QUERY_PROBE_help = "Return the status of the z-probe"
-    def cmd_QUERY_PROBE(self, gcmd):
-        toolhead = self.printer.lookup_object('toolhead')
-        print_time = toolhead.get_last_move_time()
-        res = self.mcu_probe.query_endstop(print_time)
-        self.last_state = res
-        gcmd.respond_info("probe: %s" % (["open", "TRIGGERED"][not not res],))
-    def get_status(self, eventtime):
-        return {'name': self.name,
-                'last_query': self.last_state,
-                'last_z_result': self.last_z_result}
     cmd_PROBE_ACCURACY_help = "Probe Z-height accuracy at current XY position"
     def cmd_PROBE_ACCURACY(self, gcmd):
         speed = gcmd.get_float("PROBE_SPEED", self.speed, above=0.)
@@ -483,13 +496,15 @@ class ProbeEndstopWrapper:
 class PrinterProbe:
     def __init__(self, config, mcu_probe):
         self.printer = config.get_printer()
+        self.cmd_helper = ProbeCommandHelper(config, self,
+                                             mcu_probe.query_endstop)
         self.probe_session = ProbeSessionHelper(config, mcu_probe)
     def get_lift_speed(self, gcmd=None):
         return self.probe_session.get_lift_speed(gcmd)
     def get_offsets(self):
         return self.probe_session.get_offsets()
     def get_status(self, eventtime):
-        return self.probe_session.get_status(eventtime)
+        return self.cmd_helper.get_status(eventtime)
     def start_probe_session(self, gcmd):
         return self.probe_session
 
