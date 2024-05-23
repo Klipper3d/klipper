@@ -34,10 +34,16 @@ class ProbeCommandHelper:
         self.last_z_result = 0.
         gcode.register_command('PROBE', self.cmd_PROBE,
                                desc=self.cmd_PROBE_help)
+        # PROBE_CALIBRATE command
+        self.probe_calibrate_z = 0.
+        gcode.register_command('PROBE_CALIBRATE', self.cmd_PROBE_CALIBRATE,
+                               desc=self.cmd_PROBE_CALIBRATE_help)
         # Other commands
         gcode.register_command('Z_OFFSET_APPLY_PROBE',
                                self.cmd_Z_OFFSET_APPLY_PROBE,
                                desc=self.cmd_Z_OFFSET_APPLY_PROBE_help)
+    def _move(self, coord, speed):
+        self.printer.lookup_object('toolhead').manual_move(coord, speed)
     def get_status(self, eventtime):
         return {'name': self.name,
                 'last_query': self.last_state,
@@ -56,6 +62,35 @@ class ProbeCommandHelper:
         pos = run_single_probe(self.probe, gcmd)
         gcmd.respond_info("Result is z=%.6f" % (pos[2],))
         self.last_z_result = pos[2]
+    def probe_calibrate_finalize(self, kin_pos):
+        if kin_pos is None:
+            return
+        z_offset = self.probe_calibrate_z - kin_pos[2]
+        gcode = self.printer.lookup_object('gcode')
+        gcode.respond_info(
+            "%s: z_offset: %.3f\n"
+            "The SAVE_CONFIG command will update the printer config file\n"
+            "with the above and restart the printer." % (self.name, z_offset))
+        configfile = self.printer.lookup_object('configfile')
+        configfile.set(self.name, 'z_offset', "%.3f" % (z_offset,))
+    cmd_PROBE_CALIBRATE_help = "Calibrate the probe's z_offset"
+    def cmd_PROBE_CALIBRATE(self, gcmd):
+        manual_probe.verify_no_manual_probe(self.printer)
+        params = self.probe.get_probe_params(gcmd)
+        # Perform initial probe
+        curpos = run_single_probe(self.probe, gcmd)
+        # Move away from the bed
+        self.probe_calibrate_z = curpos[2]
+        curpos[2] += 5.
+        self._move(curpos, params['lift_speed'])
+        # Move the nozzle over the probe point
+        x_offset, y_offset, z_offset = self.probe.get_offsets()
+        curpos[0] += x_offset
+        curpos[1] += y_offset
+        self._move(curpos, params['probe_speed'])
+        # Start manual probe
+        manual_probe.ManualProbeHelper(self.printer, gcmd,
+                                       self.probe_calibrate_finalize)
     cmd_Z_OFFSET_APPLY_PROBE_help = "Adjust the probe's z_offset"
     def cmd_Z_OFFSET_APPLY_PROBE(self, gcmd):
         gcode_move = self.printer.lookup_object("gcode_move")
@@ -77,14 +112,12 @@ class ProbeCommandHelper:
 class ProbeSessionHelper:
     def __init__(self, config, mcu_probe):
         self.printer = config.get_printer()
-        self.name = config.get_name()
         self.mcu_probe = mcu_probe
         self.speed = config.getfloat('speed', 5.0, above=0.)
         self.lift_speed = config.getfloat('lift_speed', self.speed, above=0.)
         self.x_offset = config.getfloat('x_offset', 0.)
         self.y_offset = config.getfloat('y_offset', 0.)
         self.z_offset = config.getfloat('z_offset')
-        self.probe_calibrate_z = 0.
         self.multi_probe_pending = False
         # Infer Z position to move to during a probe
         if config.has_section('stepper_z'):
@@ -121,8 +154,6 @@ class ProbeSessionHelper:
                                             self._handle_command_error)
         # Register PROBE/QUERY_PROBE commands
         self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_command('PROBE_CALIBRATE', self.cmd_PROBE_CALIBRATE,
-                                    desc=self.cmd_PROBE_CALIBRATE_help)
         self.gcode.register_command('PROBE_ACCURACY', self.cmd_PROBE_ACCURACY,
                                     desc=self.cmd_PROBE_ACCURACY_help)
         self.dummy_gcode_cmd = self.gcode.create_gcode_command("", "", {})
@@ -290,33 +321,6 @@ class ProbeSessionHelper:
             "probe accuracy results: maximum %.6f, minimum %.6f, range %.6f, "
             "average %.6f, median %.6f, standard deviation %.6f" % (
             max_value, min_value, range_value, avg_value, median, sigma))
-    def probe_calibrate_finalize(self, kin_pos):
-        if kin_pos is None:
-            return
-        z_offset = self.probe_calibrate_z - kin_pos[2]
-        self.gcode.respond_info(
-            "%s: z_offset: %.3f\n"
-            "The SAVE_CONFIG command will update the printer config file\n"
-            "with the above and restart the printer." % (self.name, z_offset))
-        configfile = self.printer.lookup_object('configfile')
-        configfile.set(self.name, 'z_offset', "%.3f" % (z_offset,))
-    cmd_PROBE_CALIBRATE_help = "Calibrate the probe's z_offset"
-    def cmd_PROBE_CALIBRATE(self, gcmd):
-        manual_probe.verify_no_manual_probe(self.printer)
-        # Perform initial probe
-        params = self.get_probe_params(gcmd)
-        curpos = self.run_probe(gcmd)
-        # Move away from the bed
-        self.probe_calibrate_z = curpos[2]
-        curpos[2] += 5.
-        self._move(curpos, params['lift_speed'])
-        # Move the nozzle over the probe point
-        curpos[0] += self.x_offset
-        curpos[1] += self.y_offset
-        self._move(curpos, self.speed)
-        # Start manual probe
-        manual_probe.ManualProbeHelper(self.printer, gcmd,
-                                       self.probe_calibrate_finalize)
 
 
 ######################################################################
