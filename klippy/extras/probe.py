@@ -18,7 +18,8 @@ can travel further (the Z minimum position can be negative).
 # Probe device implementation helpers
 ######################################################################
 
-class PrinterProbe:
+# Helper to track multiple probe attempts in a single command
+class ProbeSessionHelper:
     def __init__(self, config, mcu_probe):
         self.printer = config.get_printer()
         self.name = config.get_name()
@@ -375,14 +376,15 @@ class ProbePointsHelper:
         if self.horizontal_move_z < self.probe_offsets[2]:
             raise gcmd.error("horizontal_move_z can't be less than"
                              " probe's z_offset")
-        probe.multi_probe_begin()
+        probe_session = probe.start_probe_session(gcmd)
+        probe_session.multi_probe_begin()
         while 1:
             done = self._move_next()
             if done:
                 break
-            pos = probe.run_probe(gcmd)
+            pos = probe_session.run_probe(gcmd)
             self.results.append(pos)
-        probe.multi_probe_end()
+        probe_session.multi_probe_end()
     def _manual_probe_start(self):
         done = self._move_next()
         if not done:
@@ -394,6 +396,12 @@ class ProbePointsHelper:
             return
         self.results.append(kin_pos)
         self._manual_probe_start()
+
+# Helper to obtain a single probe measurement
+def run_single_probe(probe, gcmd):
+    probe_session = probe.start_probe_session(gcmd)
+    pos = probe_session.run_probe(gcmd)
+    return pos
 
 
 ######################################################################
@@ -470,6 +478,20 @@ class ProbeEndstopWrapper:
             self._raise_probe()
     def get_position_endstop(self):
         return self.position_endstop
+
+# Main external probe interface
+class PrinterProbe:
+    def __init__(self, config, mcu_probe):
+        self.printer = config.get_printer()
+        self.probe_session = ProbeSessionHelper(config, mcu_probe)
+    def get_lift_speed(self, gcmd=None):
+        return self.probe_session.get_lift_speed(gcmd)
+    def get_offsets(self):
+        return self.probe_session.get_offsets()
+    def get_status(self, eventtime):
+        return self.probe_session.get_status(eventtime)
+    def start_probe_session(self, gcmd):
+        return self.probe_session
 
 def load_config(config):
     return PrinterProbe(config, ProbeEndstopWrapper(config))
