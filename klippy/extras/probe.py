@@ -171,40 +171,15 @@ class ProbeCommandHelper:
         configfile = self.printer.lookup_object('configfile')
         configfile.set(self.name, 'z_offset', "%.3f" % (new_calibrate,))
 
-# Helper to track multiple probe attempts in a single command
-class ProbeSessionHelper:
+# Homing via probe:z_virtual_endstop
+class HomingViaProbeHelper:
     def __init__(self, config, mcu_probe):
         self.printer = config.get_printer()
         self.mcu_probe = mcu_probe
         self.multi_probe_pending = False
-        gcode = self.printer.lookup_object('gcode')
-        self.dummy_gcode_cmd = gcode.create_gcode_command("", "", {})
-        # Infer Z position to move to during a probe
-        if config.has_section('stepper_z'):
-            zconfig = config.getsection('stepper_z')
-            self.z_position = zconfig.getfloat('position_min', 0.,
-                                               note_valid=False)
-        else:
-            pconfig = config.getsection('printer')
-            self.z_position = pconfig.getfloat('minimum_z_position', 0.,
-                                               note_valid=False)
-        # Configurable probing speeds
-        self.speed = config.getfloat('speed', 5.0, above=0.)
-        self.lift_speed = config.getfloat('lift_speed', self.speed, above=0.)
-        # Multi-sample support (for improved accuracy)
-        self.sample_count = config.getint('samples', 1, minval=1)
-        self.sample_retract_dist = config.getfloat('sample_retract_dist', 2.,
-                                                   above=0.)
-        atypes = {'median': 'median', 'average': 'average'}
-        self.samples_result = config.getchoice('samples_result', atypes,
-                                               'average')
-        self.samples_tolerance = config.getfloat('samples_tolerance', 0.100,
-                                                 minval=0.)
-        self.samples_retries = config.getint('samples_tolerance_retries', 0,
-                                             minval=0)
         # Register z_virtual_endstop pin
         self.printer.lookup_object('pins').register_chip('probe', self)
-        # Register homing event handlers
+        # Register event handlers
         self.printer.register_event_handler("homing:homing_move_begin",
                                             self._handle_homing_move_begin)
         self.printer.register_event_handler("homing:homing_move_end",
@@ -224,11 +199,62 @@ class ProbeSessionHelper:
     def _handle_home_rails_begin(self, homing_state, rails):
         endstops = [es for rail in rails for es, name in rail.get_endstops()]
         if self.mcu_probe in endstops:
-            self.multi_probe_begin()
+            self.mcu_probe.multi_probe_begin()
+            self.multi_probe_pending = True
     def _handle_home_rails_end(self, homing_state, rails):
         endstops = [es for rail in rails for es, name in rail.get_endstops()]
-        if self.mcu_probe in endstops:
-            self.multi_probe_end()
+        if self.multi_probe_pending and self.mcu_probe in endstops:
+            self.multi_probe_pending = False
+            self.mcu_probe.multi_probe_end()
+    def _handle_command_error(self):
+        if self.multi_probe_pending:
+            self.multi_probe_pending = False
+            try:
+                self.mcu_probe.multi_probe_end()
+            except:
+                logging.exception("Homing multi-probe end")
+    def setup_pin(self, pin_type, pin_params):
+        if pin_type != 'endstop' or pin_params['pin'] != 'z_virtual_endstop':
+            raise pins.error("Probe virtual endstop only useful as endstop pin")
+        if pin_params['invert'] or pin_params['pullup']:
+            raise pins.error("Can not pullup/invert probe virtual endstop")
+        return self.mcu_probe
+
+# Helper to track multiple probe attempts in a single command
+class ProbeSessionHelper:
+    def __init__(self, config, mcu_probe):
+        self.printer = config.get_printer()
+        self.mcu_probe = mcu_probe
+        self.multi_probe_pending = False
+        gcode = self.printer.lookup_object('gcode')
+        self.dummy_gcode_cmd = gcode.create_gcode_command("", "", {})
+        # Infer Z position to move to during a probe
+        if config.has_section('stepper_z'):
+            zconfig = config.getsection('stepper_z')
+            self.z_position = zconfig.getfloat('position_min', 0.,
+                                               note_valid=False)
+        else:
+            pconfig = config.getsection('printer')
+            self.z_position = pconfig.getfloat('minimum_z_position', 0.,
+                                               note_valid=False)
+        self.homing_helper = HomingViaProbeHelper(config, mcu_probe)
+        # Configurable probing speeds
+        self.speed = config.getfloat('speed', 5.0, above=0.)
+        self.lift_speed = config.getfloat('lift_speed', self.speed, above=0.)
+        # Multi-sample support (for improved accuracy)
+        self.sample_count = config.getint('samples', 1, minval=1)
+        self.sample_retract_dist = config.getfloat('sample_retract_dist', 2.,
+                                                   above=0.)
+        atypes = {'median': 'median', 'average': 'average'}
+        self.samples_result = config.getchoice('samples_result', atypes,
+                                               'average')
+        self.samples_tolerance = config.getfloat('samples_tolerance', 0.100,
+                                                 minval=0.)
+        self.samples_retries = config.getint('samples_tolerance_retries', 0,
+                                             minval=0)
+        # Register event handlers
+        self.printer.register_event_handler("gcode:command_error",
+                                            self._handle_command_error)
     def _handle_command_error(self):
         try:
             self.multi_probe_end()
@@ -241,12 +267,6 @@ class ProbeSessionHelper:
         if self.multi_probe_pending:
             self.multi_probe_pending = False
             self.mcu_probe.multi_probe_end()
-    def setup_pin(self, pin_type, pin_params):
-        if pin_type != 'endstop' or pin_params['pin'] != 'z_virtual_endstop':
-            raise pins.error("Probe virtual endstop only useful as endstop pin")
-        if pin_params['invert'] or pin_params['pullup']:
-            raise pins.error("Can not pullup/invert probe virtual endstop")
-        return self.mcu_probe
     def get_probe_params(self, gcmd=None):
         if gcmd is None:
             gcmd = self.dummy_gcode_cmd
