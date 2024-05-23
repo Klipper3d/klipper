@@ -95,7 +95,7 @@ class Calibrater:
             config = self.printer.lookup_object('configfile')
             raise config.error(
                 "AXIS_TWIST_COMPENSATION requires [probe] to be defined")
-        self.lift_speed = self.probe.get_lift_speed()
+        self.lift_speed = self.probe.get_probe_params()['lift_speed']
         self.probe_x_offset, self.probe_y_offset, _ = \
             self.probe.get_offsets()
 

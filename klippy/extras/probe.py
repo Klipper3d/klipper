@@ -125,6 +125,7 @@ class ProbeSessionHelper:
                                     desc=self.cmd_PROBE_CALIBRATE_help)
         self.gcode.register_command('PROBE_ACCURACY', self.cmd_PROBE_ACCURACY,
                                     desc=self.cmd_PROBE_ACCURACY_help)
+        self.dummy_gcode_cmd = self.gcode.create_gcode_command("", "", {})
     def _handle_homing_move_begin(self, hmove):
         if self.mcu_probe in hmove.get_mcu_endstops():
             self.mcu_probe.probe_prepare(hmove)
@@ -157,10 +158,26 @@ class ProbeSessionHelper:
         if pin_params['invert'] or pin_params['pullup']:
             raise pins.error("Can not pullup/invert probe virtual endstop")
         return self.mcu_probe
-    def get_lift_speed(self, gcmd=None):
-        if gcmd is not None:
-            return gcmd.get_float("LIFT_SPEED", self.lift_speed, above=0.)
-        return self.lift_speed
+    def get_probe_params(self, gcmd=None):
+        if gcmd is None:
+            gcmd = self.dummy_gcode_cmd
+        probe_speed = gcmd.get_float("PROBE_SPEED", self.speed, above=0.)
+        lift_speed = gcmd.get_float("LIFT_SPEED", self.lift_speed, above=0.)
+        samples = gcmd.get_int("SAMPLES", self.sample_count, minval=1)
+        sample_retract_dist = gcmd.get_float("SAMPLE_RETRACT_DIST",
+                                             self.sample_retract_dist, above=0.)
+        samples_tolerance = gcmd.get_float("SAMPLES_TOLERANCE",
+                                           self.samples_tolerance, minval=0.)
+        samples_retries = gcmd.get_int("SAMPLES_TOLERANCE_RETRIES",
+                                       self.samples_retries, minval=0)
+        samples_result = gcmd.get("SAMPLES_RESULT", self.samples_result)
+        return {'probe_speed': probe_speed,
+                'lift_speed': lift_speed,
+                'samples': samples,
+                'sample_retract_dist': sample_retract_dist,
+                'samples_tolerance': samples_tolerance,
+                'samples_tolerance_retries': samples_retries,
+                'samples_result': samples_result}
     def get_offsets(self):
         return self.x_offset, self.y_offset, self.z_offset
     def _probe(self, speed):
@@ -204,68 +221,58 @@ class ProbeSessionHelper:
         # even number of samples
         return self._calc_mean(z_sorted[middle-1:middle+1])
     def run_probe(self, gcmd):
-        speed = gcmd.get_float("PROBE_SPEED", self.speed, above=0.)
-        lift_speed = self.get_lift_speed(gcmd)
-        sample_count = gcmd.get_int("SAMPLES", self.sample_count, minval=1)
-        sample_retract_dist = gcmd.get_float("SAMPLE_RETRACT_DIST",
-                                             self.sample_retract_dist, above=0.)
-        samples_tolerance = gcmd.get_float("SAMPLES_TOLERANCE",
-                                           self.samples_tolerance, minval=0.)
-        samples_retries = gcmd.get_int("SAMPLES_TOLERANCE_RETRIES",
-                                       self.samples_retries, minval=0)
-        samples_result = gcmd.get("SAMPLES_RESULT", self.samples_result)
+        params = self.get_probe_params(gcmd)
         must_notify_multi_probe = not self.multi_probe_pending
         if must_notify_multi_probe:
             self.multi_probe_begin()
         probexy = self.printer.lookup_object('toolhead').get_position()[:2]
         retries = 0
         positions = []
+        sample_count = params['samples']
         while len(positions) < sample_count:
             # Probe position
-            pos = self._probe(speed)
+            pos = self._probe(params['probe_speed'])
             positions.append(pos)
             # Check samples tolerance
             z_positions = [p[2] for p in positions]
-            if max(z_positions) - min(z_positions) > samples_tolerance:
-                if retries >= samples_retries:
+            if max(z_positions)-min(z_positions) > params['samples_tolerance']:
+                if retries >= params['samples_tolerance_retries']:
                     raise gcmd.error("Probe samples exceed samples_tolerance")
                 gcmd.respond_info("Probe samples exceed tolerance. Retrying...")
                 retries += 1
                 positions = []
             # Retract
             if len(positions) < sample_count:
-                self._move(probexy + [pos[2] + sample_retract_dist], lift_speed)
+                self._move(probexy + [pos[2] + params['sample_retract_dist']],
+                           params['lift_speed'])
         if must_notify_multi_probe:
             self.multi_probe_end()
         # Calculate and return result
-        if samples_result == 'median':
+        if params['samples_result'] == 'median':
             return self._calc_median(positions)
         return self._calc_mean(positions)
     cmd_PROBE_ACCURACY_help = "Probe Z-height accuracy at current XY position"
     def cmd_PROBE_ACCURACY(self, gcmd):
-        speed = gcmd.get_float("PROBE_SPEED", self.speed, above=0.)
-        lift_speed = self.get_lift_speed(gcmd)
+        params = self.get_probe_params(gcmd)
         sample_count = gcmd.get_int("SAMPLES", 10, minval=1)
-        sample_retract_dist = gcmd.get_float("SAMPLE_RETRACT_DIST",
-                                             self.sample_retract_dist, above=0.)
         toolhead = self.printer.lookup_object('toolhead')
         pos = toolhead.get_position()
         gcmd.respond_info("PROBE_ACCURACY at X:%.3f Y:%.3f Z:%.3f"
                           " (samples=%d retract=%.3f"
                           " speed=%.1f lift_speed=%.1f)\n"
                           % (pos[0], pos[1], pos[2],
-                             sample_count, sample_retract_dist,
-                             speed, lift_speed))
+                             sample_count, params['sample_retract_dist'],
+                             params['probe_speed'], params['lift_speed']))
         # Probe bed sample_count times
         self.multi_probe_begin()
         positions = []
         while len(positions) < sample_count:
             # Probe position
-            pos = self._probe(speed)
+            pos = self._probe(params['probe_speed'])
             positions.append(pos)
             # Retract
-            liftpos = [None, None, pos[2] + sample_retract_dist]
-            self._move(liftpos, lift_speed)
+            liftpos = [None, None, pos[2] + params['sample_retract_dist']]
+            self._move(liftpos, params['lift_speed'])
         self.multi_probe_end()
         # Calculate maximum, minimum and average values
         max_value = max([p[2] for p in positions])
@@ -297,12 +304,12 @@ class ProbeSessionHelper:
     def cmd_PROBE_CALIBRATE(self, gcmd):
         manual_probe.verify_no_manual_probe(self.printer)
         # Perform initial probe
-        lift_speed = self.get_lift_speed(gcmd)
+        params = self.get_probe_params(gcmd)
         curpos = self.run_probe(gcmd)
         # Move away from the bed
         self.probe_calibrate_z = curpos[2]
         curpos[2] += 5.
-        self._move(curpos, lift_speed)
+        self._move(curpos, params['lift_speed'])
         # Move the nozzle over the probe point
         curpos[0] += self.x_offset
         curpos[1] += self.y_offset
@@ -386,7 +393,7 @@ class ProbePointsHelper:
             self._manual_probe_start()
             return
         # Perform automatic probing
-        self.lift_speed = probe.get_lift_speed(gcmd)
+        self.lift_speed = probe.get_probe_params(gcmd)['lift_speed']
         self.probe_offsets = probe.get_offsets()
         if self.horizontal_move_z < self.probe_offsets[2]:
             raise gcmd.error("horizontal_move_z can't be less than"
@@ -501,8 +508,8 @@ class PrinterProbe:
         self.cmd_helper = ProbeCommandHelper(config, self,
                                              mcu_probe.query_endstop)
         self.probe_session = ProbeSessionHelper(config, mcu_probe)
-    def get_lift_speed(self, gcmd=None):
-        return self.probe_session.get_lift_speed(gcmd)
+    def get_probe_params(self, gcmd=None):
+        return self.probe_session.get_probe_params(gcmd)
     def get_offsets(self):
         return self.probe_session.get_offsets()
     def get_status(self, eventtime):
