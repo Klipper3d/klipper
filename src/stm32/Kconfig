@@ -211,8 +211,7 @@ config CLOCK_FREQ
 
 config FLASH_SIZE
     hex
-    default 0x4000 if MACH_STM32F031
-    default 0x8000 if MACH_STM32F042
+    default 0x8000 if MACH_STM32F031 || MACH_STM32F042
     default 0x20000 if MACH_STM32F070 || MACH_STM32F072
     default 0x10000 if MACH_STM32F103 || MACH_STM32L412 # Flash size of stm32f103x8 (64KiB)
     default 0x40000 if MACH_STM32F2 || MACH_STM32F401 || MACH_STM32H723
