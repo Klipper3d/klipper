@@ -38,10 +38,13 @@ class AxisTwistCompensation:
 
         # setup calibrater
         self.calibrater = Calibrater(self, config)
+        # register events
+        self.printer.register_event_handler("probe:update_results",
+                                            self._update_z_compensation_value)
 
-    def get_z_compensation_value(self, pos):
+    def _update_z_compensation_value(self, pos):
         if not self.z_compensations:
-            return 0
+            return
 
         x_coord = pos[0]
         z_compensations = self.z_compensations
@@ -55,7 +58,7 @@ class AxisTwistCompensation:
         interpolated_z_compensation = BedMesh.lerp(
             interpolate_t, z_compensations[interpolate_i],
             z_compensations[interpolate_i + 1])
-        return interpolated_z_compensation
+        pos[2] += interpolated_z_compensation
 
     def clear_compensations(self):
         self.z_compensations = []
