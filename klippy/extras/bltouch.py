@@ -44,10 +44,7 @@ class BLTouchEndstopWrapper:
         self.next_cmd_time = self.action_end_time = 0.
         self.finish_home_complete = self.wait_trigger_complete = None
         # Create an "endstop" object to handle the sensor pin
-        pin = config.get('sensor_pin')
-        pin_params = ppins.lookup_pin(pin, can_invert=True, can_pullup=True)
-        mcu = pin_params['chip']
-        self.mcu_endstop = mcu.setup_pin('endstop', pin_params)
+        self.mcu_endstop = ppins.setup_pin('endstop', config.get('sensor_pin'))
         # output mode
         omodes = {'5V': '5V', 'OD': 'OD', None: None}
         self.output_mode = config.getchoice('set_output_mode', omodes, None)
