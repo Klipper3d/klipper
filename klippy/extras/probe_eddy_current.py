@@ -196,13 +196,6 @@ class EddyEndstopWrapper:
         self._samples = []
         self._is_sampling = self._start_from_home = self._need_stop = False
         self._trigger_time = 0.
-        self._printer.register_event_handler('klippy:mcu_identify',
-                                             self._handle_mcu_identify)
-    def _handle_mcu_identify(self):
-        kin = self._printer.lookup_object('toolhead').get_kinematics()
-        for stepper in kin.get_steppers():
-            if stepper.is_active_axis('z'):
-                self.add_stepper(stepper)
     # Measurement gathering
     def _start_measurements(self, is_home=False):
         self._need_stop = False

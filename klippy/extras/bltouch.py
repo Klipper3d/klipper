@@ -28,8 +28,6 @@ class BLTouchEndstopWrapper:
         self.printer = config.get_printer()
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
-        self.printer.register_event_handler('klippy:mcu_identify',
-                                            self.handle_mcu_identify)
         self.position_endstop = config.getfloat('z_offset', minval=0.)
         self.stow_on_each_sample = config.getboolean('stow_on_each_sample',
                                                      True)
@@ -70,11 +68,6 @@ class BLTouchEndstopWrapper:
                                     desc=self.cmd_BLTOUCH_STORE_help)
         # multi probes state
         self.multi = 'OFF'
-    def handle_mcu_identify(self):
-        kin = self.printer.lookup_object('toolhead').get_kinematics()
-        for stepper in kin.get_steppers():
-            if stepper.is_active_axis('z'):
-                self.add_stepper(stepper)
     def handle_connect(self):
         self.sync_mcu_print_time()
         self.next_cmd_time += 0.200
