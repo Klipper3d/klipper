@@ -480,10 +480,7 @@ class ProbeEndstopWrapper:
             config, 'deactivate_gcode', '')
         # Create an "endstop" object to handle the probe pin
         ppins = self.printer.lookup_object('pins')
-        pin = config.get('pin')
-        pin_params = ppins.lookup_pin(pin, can_invert=True, can_pullup=True)
-        mcu = pin_params['chip']
-        self.mcu_endstop = mcu.setup_pin('endstop', pin_params)
+        self.mcu_endstop = ppins.setup_pin('endstop', config.get('pin'))
         self.printer.register_event_handler('klippy:mcu_identify',
                                             self._handle_mcu_identify)
         # Wrappers
