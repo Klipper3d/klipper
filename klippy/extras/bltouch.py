@@ -1,6 +1,6 @@
 # BLTouch support
 #
-# Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2024  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
@@ -23,11 +23,9 @@ Commands = {
 }
 
 # BLTouch "endstop" wrapper
-class BLTouchEndstopWrapper:
+class BLTouchProbe:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.printer.register_event_handler("klippy:connect",
-                                            self.handle_connect)
         self.position_endstop = config.getfloat('z_offset', minval=0.)
         self.stow_on_each_sample = config.getboolean('stow_on_each_sample',
                                                      True)
@@ -60,14 +58,30 @@ class BLTouchEndstopWrapper:
         self.get_steppers = self.mcu_endstop.get_steppers
         self.home_wait = self.mcu_endstop.home_wait
         self.query_endstop = self.mcu_endstop.query_endstop
+        # multi probes state
+        self.multi = 'OFF'
+        # Common probe implementation helpers
+        self.cmd_helper = probe.ProbeCommandHelper(
+            config, self, self.mcu_endstop.query_endstop)
+        self.probe_offsets = probe.ProbeOffsetsHelper(config)
+        self.probe_session = probe.ProbeSessionHelper(config, self)
         # Register BLTOUCH_DEBUG command
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("BLTOUCH_DEBUG", self.cmd_BLTOUCH_DEBUG,
                                     desc=self.cmd_BLTOUCH_DEBUG_help)
         self.gcode.register_command("BLTOUCH_STORE", self.cmd_BLTOUCH_STORE,
                                     desc=self.cmd_BLTOUCH_STORE_help)
-        # multi probes state
-        self.multi = 'OFF'
+        # Register events
+        self.printer.register_event_handler("klippy:connect",
+                                            self.handle_connect)
+    def get_probe_params(self, gcmd=None):
+        return self.probe_session.get_probe_params(gcmd)
+    def get_offsets(self):
+        return self.probe_offsets.get_offsets()
+    def get_status(self, eventtime):
+        return self.cmd_helper.get_status(eventtime)
+    def start_probe_session(self, gcmd):
+        return self.probe_session.start_probe_session(gcmd)
     def handle_connect(self):
         self.sync_mcu_print_time()
         self.next_cmd_time += 0.200
@@ -268,6 +282,6 @@ class BLTouchEndstopWrapper:
         self.sync_print_time()
 
 def load_config(config):
-    blt = BLTouchEndstopWrapper(config)
-    config.get_printer().add_object('probe', probe.PrinterProbe(config, blt))
+    blt = BLTouchProbe(config)
+    config.get_printer().add_object('probe', blt)
     return blt
