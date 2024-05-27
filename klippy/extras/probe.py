@@ -13,6 +13,11 @@ consider reducing the Z axis minimum position so the probe
 can travel further (the Z minimum position can be negative).
 """
 
+
+######################################################################
+# Probe device implementation helpers
+######################################################################
+
 class PrinterProbe:
     def __init__(self, config, mcu_probe):
         self.printer = config.get_printer()
@@ -290,76 +295,10 @@ class PrinterProbe:
             configfile.set(self.name, 'z_offset', "%.3f" % (new_calibrate,))
     cmd_Z_OFFSET_APPLY_PROBE_help = "Adjust the probe's z_offset"
 
-# Endstop wrapper that enables probe specific features
-class ProbeEndstopWrapper:
-    def __init__(self, config):
-        self.printer = config.get_printer()
-        self.position_endstop = config.getfloat('z_offset')
-        self.stow_on_each_sample = config.getboolean(
-            'deactivate_on_each_sample', True)
-        gcode_macro = self.printer.load_object(config, 'gcode_macro')
-        self.activate_gcode = gcode_macro.load_template(
-            config, 'activate_gcode', '')
-        self.deactivate_gcode = gcode_macro.load_template(
-            config, 'deactivate_gcode', '')
-        # Create an "endstop" object to handle the probe pin
-        ppins = self.printer.lookup_object('pins')
-        pin = config.get('pin')
-        pin_params = ppins.lookup_pin(pin, can_invert=True, can_pullup=True)
-        mcu = pin_params['chip']
-        self.mcu_endstop = mcu.setup_pin('endstop', pin_params)
-        self.printer.register_event_handler('klippy:mcu_identify',
-                                            self._handle_mcu_identify)
-        # Wrappers
-        self.get_mcu = self.mcu_endstop.get_mcu
-        self.add_stepper = self.mcu_endstop.add_stepper
-        self.get_steppers = self.mcu_endstop.get_steppers
-        self.home_start = self.mcu_endstop.home_start
-        self.home_wait = self.mcu_endstop.home_wait
-        self.query_endstop = self.mcu_endstop.query_endstop
-        # multi probes state
-        self.multi = 'OFF'
-    def _handle_mcu_identify(self):
-        kin = self.printer.lookup_object('toolhead').get_kinematics()
-        for stepper in kin.get_steppers():
-            if stepper.is_active_axis('z'):
-                self.add_stepper(stepper)
-    def _raise_probe(self):
-        toolhead = self.printer.lookup_object('toolhead')
-        start_pos = toolhead.get_position()
-        self.deactivate_gcode.run_gcode_from_command()
-        if toolhead.get_position()[:3] != start_pos[:3]:
-            raise self.printer.command_error(
-                "Toolhead moved during probe deactivate_gcode script")
-    def _lower_probe(self):
-        toolhead = self.printer.lookup_object('toolhead')
-        start_pos = toolhead.get_position()
-        self.activate_gcode.run_gcode_from_command()
-        if toolhead.get_position()[:3] != start_pos[:3]:
-            raise self.printer.command_error(
-                "Toolhead moved during probe activate_gcode script")
-    def multi_probe_begin(self):
-        if self.stow_on_each_sample:
-            return
-        self.multi = 'FIRST'
-    def multi_probe_end(self):
-        if self.stow_on_each_sample:
-            return
-        self._raise_probe()
-        self.multi = 'OFF'
-    def probing_move(self, pos, speed):
-        phoming = self.printer.lookup_object('homing')
-        return phoming.probing_move(self, pos, speed)
-    def probe_prepare(self, hmove):
-        if self.multi == 'OFF' or self.multi == 'FIRST':
-            self._lower_probe()
-            if self.multi == 'FIRST':
-                self.multi = 'ON'
-    def probe_finish(self, hmove):
-        if self.multi == 'OFF':
-            self._raise_probe()
-    def get_position_endstop(self):
-        return self.position_endstop
+
+######################################################################
+# Tools for utilizing the probe
+######################################################################
 
 # Helper code that can probe a series of points and report the
 # position at each point.
@@ -455,6 +394,82 @@ class ProbePointsHelper:
             return
         self.results.append(kin_pos)
         self._manual_probe_start()
+
+
+######################################################################
+# Handle [probe] config
+######################################################################
+
+# Endstop wrapper that enables probe specific features
+class ProbeEndstopWrapper:
+    def __init__(self, config):
+        self.printer = config.get_printer()
+        self.position_endstop = config.getfloat('z_offset')
+        self.stow_on_each_sample = config.getboolean(
+            'deactivate_on_each_sample', True)
+        gcode_macro = self.printer.load_object(config, 'gcode_macro')
+        self.activate_gcode = gcode_macro.load_template(
+            config, 'activate_gcode', '')
+        self.deactivate_gcode = gcode_macro.load_template(
+            config, 'deactivate_gcode', '')
+        # Create an "endstop" object to handle the probe pin
+        ppins = self.printer.lookup_object('pins')
+        pin = config.get('pin')
+        pin_params = ppins.lookup_pin(pin, can_invert=True, can_pullup=True)
+        mcu = pin_params['chip']
+        self.mcu_endstop = mcu.setup_pin('endstop', pin_params)
+        self.printer.register_event_handler('klippy:mcu_identify',
+                                            self._handle_mcu_identify)
+        # Wrappers
+        self.get_mcu = self.mcu_endstop.get_mcu
+        self.add_stepper = self.mcu_endstop.add_stepper
+        self.get_steppers = self.mcu_endstop.get_steppers
+        self.home_start = self.mcu_endstop.home_start
+        self.home_wait = self.mcu_endstop.home_wait
+        self.query_endstop = self.mcu_endstop.query_endstop
+        # multi probes state
+        self.multi = 'OFF'
+    def _handle_mcu_identify(self):
+        kin = self.printer.lookup_object('toolhead').get_kinematics()
+        for stepper in kin.get_steppers():
+            if stepper.is_active_axis('z'):
+                self.add_stepper(stepper)
+    def _raise_probe(self):
+        toolhead = self.printer.lookup_object('toolhead')
+        start_pos = toolhead.get_position()
+        self.deactivate_gcode.run_gcode_from_command()
+        if toolhead.get_position()[:3] != start_pos[:3]:
+            raise self.printer.command_error(
+                "Toolhead moved during probe deactivate_gcode script")
+    def _lower_probe(self):
+        toolhead = self.printer.lookup_object('toolhead')
+        start_pos = toolhead.get_position()
+        self.activate_gcode.run_gcode_from_command()
+        if toolhead.get_position()[:3] != start_pos[:3]:
+            raise self.printer.command_error(
+                "Toolhead moved during probe activate_gcode script")
+    def multi_probe_begin(self):
+        if self.stow_on_each_sample:
+            return
+        self.multi = 'FIRST'
+    def multi_probe_end(self):
+        if self.stow_on_each_sample:
+            return
+        self._raise_probe()
+        self.multi = 'OFF'
+    def probing_move(self, pos, speed):
+        phoming = self.printer.lookup_object('homing')
+        return phoming.probing_move(self, pos, speed)
+    def probe_prepare(self, hmove):
+        if self.multi == 'OFF' or self.multi == 'FIRST':
+            self._lower_probe()
+            if self.multi == 'FIRST':
+                self.multi = 'ON'
+    def probe_finish(self, hmove):
+        if self.multi == 'OFF':
+            self._raise_probe()
+    def get_position_endstop(self):
+        return self.position_endstop
 
 def load_config(config):
     return PrinterProbe(config, ProbeEndstopWrapper(config))
