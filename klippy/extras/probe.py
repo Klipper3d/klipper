@@ -536,12 +536,13 @@ class ProbeEndstopWrapper:
 
 # Main external probe interface
 class PrinterProbe:
-    def __init__(self, config, mcu_probe):
+    def __init__(self, config):
         self.printer = config.get_printer()
+        self.mcu_probe = ProbeEndstopWrapper(config)
         self.cmd_helper = ProbeCommandHelper(config, self,
-                                             mcu_probe.query_endstop)
+                                             self.mcu_probe.query_endstop)
         self.probe_offsets = ProbeOffsetsHelper(config)
-        self.probe_session = ProbeSessionHelper(config, mcu_probe)
+        self.probe_session = ProbeSessionHelper(config, self.mcu_probe)
     def get_probe_params(self, gcmd=None):
         return self.probe_session.get_probe_params(gcmd)
     def get_offsets(self):
@@ -552,4 +553,4 @@ class PrinterProbe:
         return self.probe_session.start_probe_session(gcmd)
 
 def load_config(config):
-    return PrinterProbe(config, ProbeEndstopWrapper(config))
+    return PrinterProbe(config)
