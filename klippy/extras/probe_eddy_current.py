@@ -318,11 +318,23 @@ class PrinterEddyProbe:
         sensor_type = config.getchoice('sensor_type', {s: s for s in sensors})
         self.sensor_helper = sensors[sensor_type](config, self.calibration)
         # Probe interface
-        self.probe = EddyEndstopWrapper(config, self.sensor_helper,
-                                        self.calibration)
-        self.printer.add_object('probe', probe.PrinterProbe(config, self.probe))
+        self.mcu_probe = EddyEndstopWrapper(config, self.sensor_helper,
+                                            self.calibration)
+        self.cmd_helper = probe.ProbeCommandHelper(
+            config, self, self.mcu_probe.query_endstop)
+        self.probe_offsets = probe.ProbeOffsetsHelper(config)
+        self.probe_session = probe.ProbeSessionHelper(config, self.mcu_probe)
+        self.printer.add_object('probe', self)
     def add_client(self, cb):
         self.sensor_helper.add_client(cb)
+    def get_probe_params(self, gcmd=None):
+        return self.probe_session.get_probe_params(gcmd)
+    def get_offsets(self):
+        return self.probe_offsets.get_offsets()
+    def get_status(self, eventtime):
+        return self.cmd_helper.get_status(eventtime)
+    def start_probe_session(self, gcmd):
+        return self.probe_session.start_probe_session(gcmd)
 
 def load_config_prefix(config):
     return PrinterEddyProbe(config)
