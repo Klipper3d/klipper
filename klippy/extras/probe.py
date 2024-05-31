@@ -128,14 +128,16 @@ class ProbeCommandHelper:
         fo_gcmd = gcode.create_gcode_command("", "", fo_params)
         # Probe bed sample_count times
         probe_session = self.probe.start_probe_session(fo_gcmd)
-        positions = []
-        while len(positions) < sample_count:
+        probe_num = 0
+        while probe_num < sample_count:
             # Probe position
-            pos = probe_session.run_probe(fo_gcmd)
-            positions.append(pos)
+            probe_session.run_probe(fo_gcmd)
+            probe_num += 1
             # Retract
+            pos = toolhead.get_position()
             liftpos = [None, None, pos[2] + params['sample_retract_dist']]
             self._move(liftpos, params['lift_speed'])
+        positions = probe_session.pull_probed_results()
         probe_session.end_probe_session()
         # Calculate maximum, minimum and average values
         max_value = max([p[2] for p in positions])
@@ -259,6 +261,7 @@ class ProbeSessionHelper:
                                              minval=0)
         # Session state
         self.multi_probe_pending = False
+        self.results = []
         # Register event handlers
         self.printer.register_event_handler("gcode:command_error",
                                             self._handle_command_error)
@@ -276,10 +279,12 @@ class ProbeSessionHelper:
             self._probe_state_error()
         self.mcu_probe.multi_probe_begin()
         self.multi_probe_pending = True
+        self.results = []
         return self
     def end_probe_session(self):
         if not self.multi_probe_pending:
             self._probe_state_error()
+        self.results = []
         self.multi_probe_pending = False
         self.mcu_probe.multi_probe_end()
     def get_probe_params(self, gcmd=None):
@@ -349,8 +354,13 @@ class ProbeSessionHelper:
                 toolhead.manual_move(
                     probexy + [pos[2] + params['sample_retract_dist']],
                     params['lift_speed'])
-        # Calculate and return result
-        return calc_probe_z_average(positions, params['samples_result'])
+        # Calculate result
+        epos = calc_probe_z_average(positions, params['samples_result'])
+        self.results.append(epos)
+    def pull_probed_results(self):
+        res = self.results
+        self.results = []
+        return res
 
 # Helper to read the xyz probe offsets from the config
 class ProbeOffsetsHelper:
@@ -441,19 +451,20 @@ class ProbePointsHelper:
         if self.horizontal_move_z < self.probe_offsets[2]:
             raise gcmd.error("horizontal_move_z can't be less than"
                              " probe's z_offset")
-        results = []
         probe_session = probe.start_probe_session(gcmd)
+        probe_num = 0
         while 1:
-            self._raise_tool(not results)
-            if len(results) >= len(self.probe_points):
+            self._raise_tool(not probe_num)
+            if probe_num >= len(self.probe_points):
+                results = probe_session.pull_probed_results()
                 done = self._invoke_callback(results)
                 if done:
                     break
-                # Caller wants a "retry" - clear results and restart probing
-                results = []
-            self._move_next(len(results))
-            pos = probe_session.run_probe(gcmd)
-            results.append(pos)
+                # Caller wants a "retry" - restart probing
+                probe_num = 0
+            self._move_next(probe_num)
+            probe_session.run_probe(gcmd)
+            probe_num += 1
         probe_session.end_probe_session()
     def _manual_probe_start(self):
         self._raise_tool(not self.manual_results)
@@ -476,7 +487,8 @@ class ProbePointsHelper:
 # Helper to obtain a single probe measurement
 def run_single_probe(probe, gcmd):
     probe_session = probe.start_probe_session(gcmd)
-    pos = probe_session.run_probe(gcmd)
+    probe_session.run_probe(gcmd)
+    pos = probe_session.pull_probed_results()[0]
     probe_session.end_probe_session()
     return pos
 
