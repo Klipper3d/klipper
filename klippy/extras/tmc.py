@@ -237,6 +237,8 @@ class TMCCommandHelper:
         self.read_registers = self.read_translate = None
         self.toff = None
         self.mcu_phase_offset = None
+        self.tmc_mscnt = None
+        self.mcu_phas_offset_pos = None
         self.stepper = None
         self.stepper_enable = self.printer.load_object(config, "stepper_enable")
         self.printer.register_event_handler("stepper:sync_mcu_position",
@@ -328,6 +330,7 @@ class TMCCommandHelper:
             return
         try:
             driver_phase = self._query_phase()
+            self.tmc_mscnt = driver_phase
         except self.printer.command_error as e:
             logging.info("Unable to obtain tmc %s phase", self.stepper_name)
             self.mcu_phase_offset = None
@@ -339,7 +342,9 @@ class TMCCommandHelper:
             driver_phase = 1023 - driver_phase
         phases = self._get_phases()
         phase = int(float(driver_phase) / 1024 * phases + .5) % phases
-        moff = (phase - stepper.get_mcu_position()) % phases
+        mcu_pos = stepper.get_mcu_position()
+        self.mcu_phas_offset_pos = mcu_pos
+        moff = (phase - mcu_pos) % phases
         if self.mcu_phase_offset is not None and self.mcu_phase_offset != moff:
             logging.warning("Stepper %s phase change (was %d now %d)",
                             self.stepper_name, self.mcu_phase_offset, moff)
@@ -414,6 +419,8 @@ class TMCCommandHelper:
         current = self.current_helper.get_current()
         res = {'mcu_phase_offset': self.mcu_phase_offset,
                'phase_offset_position': cpos,
+               'mscnt': self.tmc_mscnt,
+               'mcu_phase_offset_pos': self.mcu_phas_offset_pos,
                'run_current': current[0],
                'hold_current': current[1]}
         res.update(self.echeck_helper.get_status(eventtime))

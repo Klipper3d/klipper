@@ -242,6 +242,7 @@ class HandleStepPhase:
     DataSets = [
         ('step_phase(<driver>)', 'Stepper motor phase of the given stepper'),
         ('step_phase(<driver>,microstep)', 'Microstep position for stepper'),
+        ('step_phase(<driver>,mscnt)', 'Microstep table position for stepper'),
     ]
     def __init__(self, lmanager, name, name_parts):
         self.name = name
@@ -251,11 +252,18 @@ class HandleStepPhase:
         if self.driver_name not in config or self.stepper_name not in config:
             raise error("Unable to find stepper driver '%s' config"
                         % (self.driver_name,))
-        if len(name_parts) == 3 and name_parts[2] != "microstep":
+        self.args = len(name_parts) == 3
+        if self.args and name_parts[2] not in ("microstep", "mscnt"):
             raise error("Unknown step_phase selection '%s'" % (name_parts[2],))
-        self.report_microsteps = len(name_parts) == 3
+        self.report_microsteps = False
+        self.report_mscnt = False
         sconfig = config[self.stepper_name]
-        self.phases = sconfig["microsteps"]
+        self.microsteps = sconfig["microsteps"]
+        self.phases = self.microsteps
+        if self.args and name_parts[2] == "microsteps":
+            self.report_microsteps = True
+        if self.args and name_parts[2] == "mscnt":
+            self.report_mscnt = True
         if not self.report_microsteps:
             self.phases *= 4
         self.jdispatch = lmanager.get_jdispatch()
@@ -267,10 +275,18 @@ class HandleStepPhase:
         self.status_tracker = lmanager.get_status_tracker()
         self.next_status_time = 0.
         self.mcu_phase_offset = 0
+        self.mscnt = 0
+        # Will only work if all motors use the same microstepping
+        # Otherwise mcu will use the highest one for internal counting
+        self.step_size = 256 / self.microsteps
+        self.mcu_phase_offset_pos = 0
     def get_label(self):
         if self.report_microsteps:
             return {'label': '%s microstep' % (self.stepper_name,),
                     'units': 'Microstep'}
+        if self.report_mscnt:
+            return {'label': '%s mscnt' % (self.stepper_name,),
+                    'units': 'mscnt'}
         return {'label': '%s phase' % (self.stepper_name,), 'units': 'Phase'}
     def _pull_phase_offset(self, req_time):
         db, self.next_status_time = self.status_tracker.pull_status(req_time)
@@ -278,9 +294,23 @@ class HandleStepPhase:
         if mcu_phase_offset is None:
             mcu_phase_offset = 0
         self.mcu_phase_offset = mcu_phase_offset
+    def _pull_mscnt(self, req_time):
+        db, self.next_status_time = self.status_tracker.pull_status(req_time)
+        mscnt = db.get(self.driver_name, {}).get('mscnt')
+        if mscnt is None:
+            mscnt = 0
+        self.mscnt = mscnt
+    def _pull_phase_offset_pos(self, req_time):
+        db, self.next_status_time = self.status_tracker.pull_status(req_time)
+        mcu_pos = db.get(self.driver_name, {}).get('mcu_phase_offset_pos')
+        if mcu_pos is None:
+            mcu_pos = 0
+        self.mcu_phase_offset_pos = mcu_pos
     def pull_data(self, req_time):
         if req_time >= self.next_status_time:
             self._pull_phase_offset(req_time)
+            self._pull_mscnt(req_time)
+            self._pull_phase_offset_pos(req_time)
         while 1:
             data_pos = self.data_pos
             step_data = self.step_data
@@ -293,6 +323,9 @@ class HandleStepPhase:
                 self._pull_block(req_time)
                 continue
             step_pos = step_data[data_pos][1]
+            if self.report_mscnt:
+                offset = step_pos - self.mcu_phase_offset_pos
+                return (self.mscnt - offset * self.step_size) % 1024
             return (step_pos - self.mcu_phase_offset) % self.phases
     def _pull_block(self, req_time):
         step_data = self.step_data
