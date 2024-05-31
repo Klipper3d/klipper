@@ -363,6 +363,34 @@ class EddyEndstopWrapper:
     def get_position_endstop(self):
         return self._z_offset
 
+# Implementing probing with "METHOD=scan"
+class EddyScanningProbe:
+    def __init__(self, printer, sensor_helper, calibration, z_offset, gcmd):
+        self._printer = printer
+        self._sensor_helper = sensor_helper
+        self._calibration = calibration
+        self._z_offset = z_offset
+        self._gather = EddyGatherSamples(printer, sensor_helper,
+                                         calibration, z_offset)
+        self._sample_time_delay = 0.050
+        self._sample_time = 0.100
+    def run_probe(self, gcmd):
+        toolhead = self._printer.lookup_object("toolhead")
+        printtime = toolhead.get_last_move_time()
+        toolhead.dwell(self._sample_time_delay + self._sample_time)
+        start_time = printtime + self._sample_time_delay
+        self._gather.note_probe_and_position(
+            start_time, start_time + self._sample_time, start_time)
+    def pull_probed_results(self):
+        results = self._gather.pull_probed()
+        # Allow axis_twist_compensation to update results
+        for epos in results:
+            self._printer.send_event("probe:update_results", epos)
+        return results
+    def end_probe_session(self):
+        self._gather.finish()
+        self._gather = None
+
 # Main "printer object"
 class PrinterEddyProbe:
     def __init__(self, config):
@@ -389,6 +417,11 @@ class PrinterEddyProbe:
     def get_status(self, eventtime):
         return self.cmd_helper.get_status(eventtime)
     def start_probe_session(self, gcmd):
+        method = gcmd.get('METHOD', 'automatic').lower()
+        if method == 'scan':
+            z_offset = self.get_offsets()[2]
+            return EddyScanningProbe(self.printer, self.sensor_helper,
+                                     self.calibration, z_offset, gcmd)
         return self.probe_session.start_probe_session(gcmd)
 
 def load_config_prefix(config):

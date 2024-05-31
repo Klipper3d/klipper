@@ -438,7 +438,7 @@ class ProbePointsHelper:
         def_move_z = self.default_horizontal_move_z
         self.horizontal_move_z = gcmd.get_float('HORIZONTAL_MOVE_Z',
                                                 def_move_z)
-        if probe is None or method != 'automatic':
+        if probe is None or method == 'manual':
             # Manual probe
             self.lift_speed = self.speed
             self.probe_offsets = (0., 0., 0.)
