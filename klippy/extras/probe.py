@@ -386,7 +386,7 @@ class ProbePointsHelper:
         # Internal probing state
         self.lift_speed = self.speed
         self.probe_offsets = (0., 0., 0.)
-        self.results = []
+        self.manual_results = []
     def minimum_points(self,n):
         if len(self.probe_points) < n:
             raise self.printer.config_error(
@@ -398,34 +398,33 @@ class ProbePointsHelper:
         self.use_offsets = use_offsets
     def get_lift_speed(self):
         return self.lift_speed
-    def _move_next(self):
-        toolhead = self.printer.lookup_object('toolhead')
-        # Lift toolhead
+    def _move(self, coord, speed):
+        self.printer.lookup_object('toolhead').manual_move(coord, speed)
+    def _raise_tool(self, is_first=False):
         speed = self.lift_speed
-        if not self.results:
+        if is_first:
             # Use full speed to first probe position
             speed = self.speed
-        toolhead.manual_move([None, None, self.horizontal_move_z], speed)
-        # Check if done probing
-        if len(self.results) >= len(self.probe_points):
-            toolhead.get_last_move_time()
-            res = self.finalize_callback(self.probe_offsets, self.results)
-            if res != "retry":
-                return True
-            self.results = []
+        self._move([None, None, self.horizontal_move_z], speed)
+    def _invoke_callback(self, results):
+        # Flush lookahead queue
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.get_last_move_time()
+        # Invoke callback
+        res = self.finalize_callback(self.probe_offsets, results)
+        return res != "retry"
+    def _move_next(self, probe_num):
         # Move to next XY probe point
-        nextpos = list(self.probe_points[len(self.results)])
+        nextpos = list(self.probe_points[probe_num])
         if self.use_offsets:
             nextpos[0] -= self.probe_offsets[0]
             nextpos[1] -= self.probe_offsets[1]
-        toolhead.manual_move(nextpos, self.speed)
-        return False
+        self._move(nextpos, self.speed)
     def start_probe(self, gcmd):
         manual_probe.verify_no_manual_probe(self.printer)
         # Lookup objects
         probe = self.printer.lookup_object('probe', None)
         method = gcmd.get('METHOD', 'automatic').lower()
-        self.results = []
         def_move_z = self.default_horizontal_move_z
         self.horizontal_move_z = gcmd.get_float('HORIZONTAL_MOVE_Z',
                                                 def_move_z)
@@ -433,6 +432,7 @@ class ProbePointsHelper:
             # Manual probe
             self.lift_speed = self.speed
             self.probe_offsets = (0., 0., 0.)
+            self.manual_results = []
             self._manual_probe_start()
             return
         # Perform automatic probing
@@ -441,24 +441,36 @@ class ProbePointsHelper:
         if self.horizontal_move_z < self.probe_offsets[2]:
             raise gcmd.error("horizontal_move_z can't be less than"
                              " probe's z_offset")
+        results = []
         probe_session = probe.start_probe_session(gcmd)
         while 1:
-            done = self._move_next()
-            if done:
-                break
+            self._raise_tool(not results)
+            if len(results) >= len(self.probe_points):
+                done = self._invoke_callback(results)
+                if done:
+                    break
+                # Caller wants a "retry" - clear results and restart probing
+                results = []
+            self._move_next(len(results))
             pos = probe_session.run_probe(gcmd)
-            self.results.append(pos)
+            results.append(pos)
         probe_session.end_probe_session()
     def _manual_probe_start(self):
-        done = self._move_next()
-        if not done:
-            gcmd = self.gcode.create_gcode_command("", "", {})
-            manual_probe.ManualProbeHelper(self.printer, gcmd,
-                                           self._manual_probe_finalize)
+        self._raise_tool(not self.manual_results)
+        if len(self.manual_results) >= len(self.probe_points):
+            done = self._invoke_callback(self.manual_results)
+            if done:
+                return
+            # Caller wants a "retry" - clear results and restart probing
+            self.manual_results = []
+        self._move_next(len(self.manual_results))
+        gcmd = self.gcode.create_gcode_command("", "", {})
+        manual_probe.ManualProbeHelper(self.printer, gcmd,
+                                       self._manual_probe_finalize)
     def _manual_probe_finalize(self, kin_pos):
         if kin_pos is None:
             return
-        self.results.append(kin_pos)
+        self.manual_results.append(kin_pos)
         self._manual_probe_start()
 
 # Helper to obtain a single probe measurement
