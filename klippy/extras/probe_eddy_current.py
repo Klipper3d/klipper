@@ -183,7 +183,81 @@ class EddyCalibration:
         manual_probe.ManualProbeHelper(self.printer, gcmd,
                                        self.post_manual_probe)
 
-# Helper for implementing PROBE style commands
+# Tool to gather samples and convert them to probe positions
+class EddyGatherSamples:
+    def __init__(self, printer, sensor_helper, calibration, z_offset):
+        self._printer = printer
+        self._sensor_helper = sensor_helper
+        self._calibration = calibration
+        self._z_offset = z_offset
+        # Results storage
+        self._samples = []
+        self._probe_times = []
+        self._need_stop = False
+        # Start samples
+        if not self._calibration.is_calibrated():
+            raise self._printer.command_error(
+                "Must calibrate probe_eddy_current first")
+        sensor_helper.add_client(self._add_measurement)
+    def _add_measurement(self, msg):
+        if self._need_stop:
+            del self._samples[:]
+            return False
+        self._samples.append(msg)
+        return True
+    def finish(self):
+        self._need_stop = True
+    def _await_samples(self, end_time):
+        # Make sure enough samples have been collected
+        reactor = self._printer.get_reactor()
+        mcu = self._sensor_helper.get_mcu()
+        while 1:
+            if self._samples and self._samples[-1]['data'][-1][0] >= end_time:
+                break
+            systime = reactor.monotonic()
+            est_print_time = mcu.estimated_print_time(systime)
+            if est_print_time > end_time + 1.0:
+                raise self._printer.command_error(
+                    "probe_eddy_current sensor outage")
+            reactor.pause(systime + 0.010)
+    def _pull_position(self, start_time, end_time):
+        # Find average sensor position between time range
+        msg_num = discard_msgs = 0
+        samp_sum = 0.
+        samp_count = 0
+        while msg_num < len(self._samples):
+            msg = self._samples[msg_num]
+            msg_num += 1
+            data = msg['data']
+            if data[0][0] > end_time:
+                break
+            if data[-1][0] < start_time:
+                discard_msgs = msg_num
+                continue
+            for time, freq, z in data:
+                if time >= start_time and time <= end_time:
+                    samp_sum += z
+                    samp_count += 1
+        del self._samples[:discard_msgs]
+        if not samp_count:
+            raise self._printer.command_error(
+                "Unable to obtain probe_eddy_current sensor readings")
+        return samp_sum / samp_count
+    def pull_probed(self):
+        results = []
+        for start_time, end_time, toolhead_pos in self._probe_times:
+            self._await_samples(end_time)
+            sensor_z = self._pull_position(start_time, end_time)
+            # Callers expect position relative to z_offset, so recalculate
+            bed_deviation = toolhead_pos[2] - sensor_z
+            toolhead_pos[2] = self._z_offset + bed_deviation
+            results.append(toolhead_pos)
+        del self._probe_times[:]
+        return results
+    def note_probe(self, start_time, end_time, toolhead_pos):
+        self._probe_times.append((start_time, end_time, toolhead_pos))
+
+# Helper for implementing PROBE style commands (descend until trigger)
 class EddyEndstopWrapper:
     REASON_SENSOR_ERROR = mcu.MCU_trsync.REASON_COMMS_TIMEOUT + 1
     def __init__(self, config, sensor_helper, calibration):
@@ -193,28 +267,8 @@ class EddyEndstopWrapper:
         self._calibration = calibration
         self._z_offset = config.getfloat('z_offset', minval=0.)
         self._dispatch = mcu.TriggerDispatch(self._mcu)
-        self._samples = []
-        self._is_sampling = self._start_from_home = self._need_stop = False
         self._trigger_time = 0.
-    # Measurement gathering
-    def _start_measurements(self, is_home=False):
-        self._need_stop = False
-        if self._is_sampling:
-            return
-        self._is_sampling = True
-        self._start_from_home = is_home
-        self._sensor_helper.add_client(self._add_measurement)
-    def _stop_measurements(self, is_home=False):
-        if not self._is_sampling or (is_home and not self._start_from_home):
-            return
-        self._need_stop = True
-    def _add_measurement(self, msg):
-        if self._need_stop:
-            del self._samples[:]
-            self._is_sampling = self._need_stop = False
-            return False
-        self._samples.append(msg)
-        return True
+        self._gather = None
     # Interface for MCU_endstop
     def get_mcu(self):
         return self._mcu
@@ -225,7 +279,6 @@ class EddyEndstopWrapper:
     def home_start(self, print_time, sample_time, sample_count, rest_time,
                    triggered=True):
         self._trigger_time = 0.
-        self._start_measurements(is_home=True)
         trigger_freq = self._calibration.height_to_freq(self._z_offset)
         trigger_completion = self._dispatch.start(print_time)
         self._sensor_helper.setup_home(
@@ -235,7 +288,6 @@ class EddyEndstopWrapper:
     def home_wait(self, home_end_time):
         self._dispatch.wait_end(home_end_time)
         trigger_time = self._sensor_helper.clear_home()
-        self._stop_measurements(is_home=True)
         res = self._dispatch.stop()
         if res >= mcu.MCU_trsync.REASON_COMMS_TIMEOUT:
             if res == mcu.MCU_trsync.REASON_COMMS_TIMEOUT:
@@ -257,50 +309,19 @@ class EddyEndstopWrapper:
         trig_pos = phoming.probing_move(self, pos, speed)
         if not self._trigger_time:
             return trig_pos
-        # Wait for samples to arrive
+        # Extract samples
         start_time = self._trigger_time + 0.050
         end_time = start_time + 0.100
-        reactor = self._printer.get_reactor()
-        while 1:
-            if self._samples and self._samples[-1]['data'][-1][0] >= end_time:
-                break
-            systime = reactor.monotonic()
-            est_print_time = self._mcu.estimated_print_time(systime)
-            if est_print_time > self._trigger_time + 1.0:
-                raise self._printer.command_error(
-                    "probe_eddy_current sensor outage")
-            reactor.pause(systime + 0.010)
-        # Find position since trigger
-        samples = self._samples
-        self._samples = []
-        samp_sum = 0.
-        samp_count = 0
-        for msg in samples:
-            data = msg['data']
-            if data[0][0] > end_time:
-                break
-            if data[-1][0] < start_time:
-                continue
-            for time, freq, z in data:
-                if time >= start_time and time <= end_time:
-                    samp_sum += z
-                    samp_count += 1
-        if not samp_count:
-            raise self._printer.command_error(
-                "Unable to obtain probe_eddy_current sensor readings")
-        halt_z = samp_sum / samp_count
-        # Calculate reported "trigger" position
         toolhead = self._printer.lookup_object("toolhead")
-        new_pos = toolhead.get_position()
-        new_pos[2] += self._z_offset - halt_z
-        return new_pos
+        toolhead_pos = toolhead.get_position()
+        self._gather.note_probe(start_time, end_time, toolhead_pos)
+        return self._gather.pull_probed()[0]
     def multi_probe_begin(self):
-        if not self._calibration.is_calibrated():
-            raise self._printer.command_error(
-                "Must calibrate probe_eddy_current first")
-        self._start_measurements()
+        self._gather = EddyGatherSamples(self._printer, self._sensor_helper,
+                                         self._calibration, self._z_offset)
     def multi_probe_end(self):
-        self._stop_measurements()
+        self._gather.finish()
+        self._gather = None
     def probe_prepare(self, hmove):
         pass
     def probe_finish(self, hmove):
