@@ -7,6 +7,8 @@ import logging, math, bisect
 import mcu
 from . import ldc1612, probe, manual_probe
 
+OUT_OF_RANGE = 99.9
+
 # Tool for calibrating the sensor Z detection and applying that calibration
 class EddyCalibration:
     def __init__(self, config):
@@ -38,9 +40,9 @@ class EddyCalibration:
         for i, (samp_time, freq, dummy_z) in enumerate(samples):
             pos = bisect.bisect(self.cal_freqs, freq)
             if pos >= len(self.cal_zpos):
-                zpos = -99.9
+                zpos = -OUT_OF_RANGE
             elif pos == 0:
-                zpos = 99.9
+                zpos = OUT_OF_RANGE
             else:
                 # XXX - could further optimize and avoid div by zero
                 this_freq = self.cal_freqs[pos]
@@ -51,6 +53,10 @@ class EddyCalibration:
                 offset = prev_zpos - prev_freq * gain
                 zpos = freq * gain + offset
             samples[i] = (samp_time, freq, round(zpos, 6))
+    def freq_to_height(self, freq):
+        dummy_sample = [(0., freq, 0.)]
+        self.apply_calibration(dummy_sample)
+        return dummy_sample[0][2]
     def height_to_freq(self, height):
         # XXX - could optimize lookup
         rev_zpos = list(reversed(self.cal_zpos))
@@ -220,8 +226,8 @@ class EddyGatherSamples:
                 raise self._printer.command_error(
                     "probe_eddy_current sensor outage")
             reactor.pause(systime + 0.010)
-    def _pull_position(self, start_time, end_time):
-        # Find average sensor position between time range
+    def _pull_freq(self, start_time, end_time):
+        # Find average sensor frequency between time range
         msg_num = discard_msgs = 0
         samp_sum = 0.
         samp_count = 0
@@ -236,7 +242,7 @@ class EddyGatherSamples:
                 continue
             for time, freq, z in data:
                 if time >= start_time and time <= end_time:
-                    samp_sum += z
+                    samp_sum += freq
                     samp_count += 1
         del self._samples[:discard_msgs]
         if not samp_count:
@@ -247,7 +253,11 @@ class EddyGatherSamples:
         results = []
         for start_time, end_time, toolhead_pos in self._probe_times:
             self._await_samples(end_time)
-            sensor_z = self._pull_position(start_time, end_time)
+            freq = self._pull_freq(start_time, end_time)
+            sensor_z = self._calibration.freq_to_height(freq)
+            if sensor_z <= -OUT_OF_RANGE or sensor_z >= OUT_OF_RANGE:
+                raise self._printer.command_error(
+                    "probe_eddy_current sensor not in valid range")
             # Callers expect position relative to z_offset, so recalculate
             bed_deviation = toolhead_pos[2] - sensor_z
             toolhead_pos[2] = self._z_offset + bed_deviation
