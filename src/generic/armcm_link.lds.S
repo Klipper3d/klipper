@@ -22,6 +22,10 @@ SECTIONS
         _text_vectortable_start = .;
         KEEP(*(.vector_table))
         _text_vectortable_end = .;
+#if CONFIG_BOARD_INFO_CONFIGURE
+        . = _text_vectortable_start + 0x200;
+        KEEP(*(SV_SECTION))
+#endif
         *(.text .text.*)
         *(.rodata .rodata*)
     } > rom

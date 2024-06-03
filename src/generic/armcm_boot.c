@@ -59,9 +59,14 @@ reset_handler_stage_two(void)
     }
 
     // Reset all user interrupt priorities
-    for (i = 0; i < ARRAY_SIZE(NVIC->IP); i++)
-        NVIC->IP[i] = 0;
-
+    #if __CORTEX_M >= 7
+        for (i = 0; i < ARRAY_SIZE(NVIC->IPR); i++)
+            NVIC->IPR[i] = 0;
+    #else
+        for (i = 0; i < ARRAY_SIZE(NVIC->IP); i++)
+            NVIC->IP[i] = 0;
+    #endif
+    
     // Disable SysTick interrupt
     SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk;
     __DSB();

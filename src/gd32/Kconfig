@@ -1,0 +1,228 @@
+# Kconfig settings for GD32F30X processors
+
+if MACH_GD32
+
+config GD32_SELECT 
+    bool
+    default y
+    select HAVE_GPIO
+    select HAVE_GPIO_ADC
+#    select HAVE_GPIO_I2C
+    select HAVE_GPIO_SPI
+    select HAVE_GPIO_BITBANGING
+    select HAVE_STRICT_TIMING
+    select HAVE_CHIPID
+#	select HAVE_GPIO_HARD_PWM
+    select HAVE_STEPPER_BOTH_EDGE
+
+config BOARD_DIRECTORY
+    string
+    default "gd32"
+
+choice
+    prompt "Processor model"
+    config MACH_GD32F303XB
+        bool "gd32f303xb"
+		select MACH_GD32F30X_HD
+		select MACH_GD32F30X
+		select MACH_GD32F303XX
+    config MACH_GD32F303XC
+        bool "gd32f303xc"
+		select MACH_GD32F30X_HD
+		select MACH_GD32F30X
+		select MACH_GD32F303XX
+    config MACH_GD32F303XE
+        bool "gd32f303xe"
+		select MACH_GD32F30X_HD
+		select MACH_GD32F30X
+		select MACH_GD32F303XX
+    config MACH_GD32F303XG
+        bool "gd32f303xg"
+		select MACH_GD32F30X_XD
+		select MACH_GD32F30X
+		select MACH_GD32F303XX
+    config MACH_GD32F303XI
+        bool "gd32f303xi"
+		select MACH_GD32F30X_XD
+		select MACH_GD32F30X
+		select MACH_GD32F303XX
+    config MACH_GD32F303XK
+        bool "gd32f303xk"
+		select MACH_GD32F30X_XD
+		select MACH_GD32F30X
+		select MACH_GD32F303XX
+    config MACH_GD32F305XB
+        bool "gd32f305xb"
+		select MACH_GD32F30X_CL
+		select MACH_GD32F30X
+		select MACH_GD32F305XX
+    config MACH_GD32F305XC
+        bool "gd32f305xc"
+		select MACH_GD32F30X_CL
+		select MACH_GD32F30X
+		select MACH_GD32F305XX
+    config MACH_GD32F305XE
+        bool "gd32f305xe"
+		select MACH_GD32F30X_CL
+		select MACH_GD32F30X
+		select MACH_GD32F305XX
+    config MACH_GD32F305XG
+        bool "gd32f305xg"
+		select MACH_GD32F30X_CL
+		select MACH_GD32F30X
+		select MACH_GD32F305XX
+    config MACH_GD32F307XC
+        bool "gd32f307xc"
+		select MACH_GD32F30X_CL
+		select MACH_GD32F30X
+		select MACH_GD32F307XX
+    config MACH_GD32F307XE
+        bool "gd32f307xe"
+		select MACH_GD32F30X_CL
+		select MACH_GD32F30X
+		select MACH_GD32F307XX
+    config MACH_GD32F307XG
+        bool "gd32f307xg"
+		select MACH_GD32F30X_CL
+		select MACH_GD32F30X
+		select MACH_GD32F307XX
+	config MACH_GD32E230X6
+        bool "gd32e230x6"
+		select MACH_GD32E23X
+	config MACH_GD32E230X8
+        bool "gd32e230x8"
+		select MACH_GD32E23X
+endchoice
+
+config MCU_TYPE
+    string
+	default "30" if MACH_GD32F303XB
+	default "31" if MACH_GD32F303XC
+	default "32" if MACH_GD32F303XE
+	default "33" if MACH_GD32F303XG
+	default "34" if MACH_GD32F303XI
+	default "35" if MACH_GD32F303XK
+	default "36" if MACH_GD32F305XB
+	default "37" if MACH_GD32F305XC
+	default "38" if MACH_GD32F305XE
+	default "39" if MACH_GD32F305XG
+	default "3a" if MACH_GD32F307XC
+	default "3b" if MACH_GD32F307XE
+	default "3c" if MACH_GD32F307XG
+	default "20" if MACH_GD32E230X6
+	default "21" if MACH_GD32E230X8
+
+config MACH_GD32F30X_HD
+	bool
+config MACH_GD32F30X_XD
+	bool
+config MACH_GD32F30X_CL
+	bool
+config MACH_GD32F303XX
+	bool
+config MACH_GD32F305XX
+	bool
+config MACH_GD32F307XX
+	bool
+config MACH_GD32F30X
+	bool
+config MACH_GD32E23X
+	bool
+
+config MCU
+    string
+    default "gd32f303xb" if MACH_GD32F303XB
+    default "gd32f303xc" if MACH_GD32F303XC
+    default "gd32f303xe" if MACH_GD32F303XE
+    default "gd32f303xg" if MACH_GD32F303XG
+    default "gd32f303xi" if MACH_GD32F303XI
+    default "gd32f303xk" if MACH_GD32F303XK
+    default "gd32f305xb" if MACH_GD32F305XB
+    default "gd32f305xc" if MACH_GD32F305XC
+    default "gd32f305xe" if MACH_GD32F305XE
+    default "gd32f305xg" if MACH_GD32F305XG
+    default "gd32f307xc" if MACH_GD32F307XC
+    default "gd32f307xe" if MACH_GD32F307XE
+    default "gd32f307xg" if MACH_GD32F307XG
+    default "gd32e230x6" if MACH_GD32E230X6
+    default "gd32e230x8" if MACH_GD32E230X8
+
+config CLOCK_FREQ
+    int
+    default 120000000 if MACH_GD32F30X
+    default 72000000 if MACH_GD32E23X
+	
+#config FLASH_START
+#    hex
+#    default 0x08000000
+
+config FLASH_SIZE
+    hex
+    default 0x00008000 if MACH_GD32E230X6
+    default 0x00010000 if MACH_GD32E230X8
+    default 0x00020000 if (MACH_GD32F303XB || MACH_GD32F305XB)
+    default 0x00040000 if (MACH_GD32F303XC || MACH_GD32F305XC || MACH_GD32F307XC)
+    default 0x00080000 if (MACH_GD32F303XE || MACH_GD32F305XE || MACH_GD32F307XE)
+    default 0x00100000 if (MACH_GD32F303XG || MACH_GD32F305XG || MACH_GD32F307XG)
+    default 0x00200000 if MACH_GD32F303XI
+    default 0x00300000 if MACH_GD32F303XK
+	
+
+config FLASH_BOOT_ADDRESS
+    hex
+    default 0x8000000
+
+config RAM_START
+    hex
+    default 0x20000000
+
+config RAM_SIZE
+    hex
+    default 0x1800 if MACH_GD32E230X6
+    default 0x2000 if MACH_GD32E230X8
+    default 0x8000 if (MACH_GD32F303XB || MACH_GD32F305XB)
+    default 0xC000 if (MACH_GD32F303XC || MACH_GD32F305XC || MACH_GDF307XC)
+    default 0x10000 if (MACH_GD32F303XE || MACH_GD32F305XE || MACH_GD32F307XE)
+    default 0x18000 if (MACH_GD32F303XG || MACH_GD32F303XI || MACH_GD32F303XK)
+
+config STACK_SIZE
+    int
+    default 512
+
+
+######################################################################
+# Bootloader
+######################################################################
+
+choice
+    prompt "Bootloader offset"
+    config GD32_FLASH_START_0000
+        bool "No bootloader"
+    config GD32_FLASH_START_3000
+        bool "12KiB bootloader"
+endchoice
+
+config FLASH_APPLICATION_ADDRESS
+    hex
+    default 0x8003000 if GD32_FLASH_START_3000
+    default 0x8000000
+
+config USBSERIAL
+    bool
+config SERIAL
+    bool
+
+choice
+    prompt "Communication interface"
+    config GD32_SERIAL_USART0_PA9_PA10
+        bool "Serial (on USART0 PA9/PA10)"
+        select SERIAL
+    config GD32_SERIAL_USART1_PA2_PA3
+        bool "Serial (on USART1 PA2/PA3)"
+        select SERIAL
+    config GD32_USB
+        bool "USB"
+        select USBSERIAL
+endchoice
+
+endif
