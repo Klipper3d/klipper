@@ -4702,6 +4702,40 @@ dout_pin:
 #   This must match the wiring of the chip. The sample rate cannot be changed
 #   in software.
 ```
+
+### ADS1220
+The ADS1220 is a 24 bit ADC supporting up to a 2Khz sample rate configurable in
+software.
+```
+sensor_type: ads1220
+cs_pin:
+#   The pin connected to the ADS1220 chip select line. This parameter must
+#   be provided.
+#spi_speed: 512000
+#   This chip supports 2 speeds: 256000 or 512000. The faster speed is only
+#   enabled when one of the Turbo sample rates is used. The correct spi_speed
+#   is selected based on the sample rate.
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the "common SPI settings" section for a description of the
+#   above parameters.
+data_ready_pin:
+#   Pin connected to the ADS1220 data ready line. This parameter must be
+#   provided.
+#gain: 128
+#   Valid gain values are 128, 64, 32, 16, 8, 4, 2, 1
+#   The default is 128
+#sample_rate: 660
+#   This chip supports two ranges of sample rates, Normal and Turbo. In turbo
+#   mode the chips c internal clock runs twice as fast and the SPI communication
+#   speed is also doubled.
+#   Normal sample rates: 20, 45, 90, 175, 330, 600, 1000
+#   Turbo sample rates: 40, 90, 180, 350, 660, 1200, 2000
+#   The default is 660
+```
+
 ## Board specific hardware support
 
 ### [sx1509]
