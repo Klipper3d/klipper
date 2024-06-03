@@ -1,0 +1,37 @@
+config BOARD_INFO_CONFIGURE
+    bool "Board info configure"
+    depends on MACH_GD32
+    default n
+    help
+        Enable board info configure, we can update mcu firmware
+        by Linux with uart port.
+
+menu "Board Configure"
+    depends on BOARD_INFO_CONFIGURE
+    choice
+    prompt "Board Type"
+        config MAIN_MCU_BOARD
+            bool "Main MCU"
+        config NOZZLE_MCU_BOARD
+            bool "Nozzle MCU"
+        config BED_MCU_BOARD
+            bool "Bed MCU"
+    endchoice
+
+    config MCU_BOARD_ID
+        int "MCU Board ID"
+        default 0
+
+    config MCU_BOARD_HW_VER
+        int "HW Version"
+        default 000
+
+    config MCU_BOARD_FW_VER
+        int "FW Version"
+        default 000
+
+    config MCU_BOARD_FW_RESERVED
+        int "FW Reserved"
+        default 000
+
+endmenu
