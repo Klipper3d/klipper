@@ -379,6 +379,21 @@ and might return:
 and might later produce asynchronous messages such as:
 `{"params":{"data":[[3292.432935, 562534], [3292.4394937, 5625322]]}}`
 
+### ads1220/dump_ads1220
+
+This endpoint is used to subscribe to raw ADS1220 ADC data.
+Obtaining these low-level ADC updates may be useful for diagnostic
+and debugging purposes. Using this endpoint may increase Klipper's
+system load.
+
+A request may look like:
+`{"id": 123, "method":"ads1220/dump_ads1220",
+"params": {"sensor": "load_cell", "response_template": {}}}`
+and might return:
+`{"id": 123,"result":{"header":["time","counts"]}}`
+and might later produce asynchronous messages such as:
+`{"params":{"data":[[3292.432935, 562534], [3292.4394937, 5625322]]}}`
+
 ### pause_resume/cancel
 
 This endpoint is similar to running the "PRINT_CANCEL" G-Code command.
