@@ -112,6 +112,10 @@ config WANT_HX71X
     bool
     depends on WANT_GPIO_BITBANGING
     default y
+config WANT_ADS1220
+    bool
+    depends on HAVE_GPIO_SPI
+    default y
 config WANT_SOFTWARE_I2C
     bool
     depends on HAVE_GPIO && HAVE_GPIO_I2C
@@ -122,7 +126,8 @@ config WANT_SOFTWARE_SPI
     default y
 config NEED_SENSOR_BULK
     bool
-    depends on WANT_SENSORS || WANT_LIS2DW || WANT_LDC1612 || WANT_HX71X
+    depends on WANT_SENSORS || WANT_LIS2DW || WANT_LDC1612 || WANT_HX71X \
+        || WANT_ADS1220
     default y
 menu "Optional features (to reduce code size)"
     depends on HAVE_LIMITED_CODE_SIZE
@@ -144,6 +149,9 @@ config WANT_LDC1612
 config WANT_HX71X
     bool "Support HX711 and HX717 ADC chips"
     depends on WANT_GPIO_BITBANGING
+config WANT_ADS1220
+    bool "Support ADS 1220 ADC chip"
+    depends on HAVE_GPIO_SPI
 config WANT_SOFTWARE_I2C
     bool "Support software based I2C \"bit-banging\""
     depends on HAVE_GPIO && HAVE_GPIO_I2C
