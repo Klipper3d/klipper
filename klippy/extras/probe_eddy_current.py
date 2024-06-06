@@ -373,15 +373,27 @@ class EddyScanningProbe:
         self._gather = EddyGatherSamples(printer, sensor_helper,
                                          calibration, z_offset)
         self._sample_time_delay = 0.050
-        self._sample_time = 0.100
+        self._sample_time = gcmd.get_float("SAMPLE_TIME", 0.100, above=0.0)
+        self._is_rapid = gcmd.get("METHOD", "scan") == 'rapid_scan'
+    def _rapid_lookahead_cb(self, printtime):
+        start_time = printtime - self._sample_time / 2
+        self._gather.note_probe_and_position(
+            start_time, start_time + self._sample_time, printtime)
     def run_probe(self, gcmd):
         toolhead = self._printer.lookup_object("toolhead")
+        if self._is_rapid:
+            toolhead.register_lookahead_callback(self._rapid_lookahead_cb)
+            return
         printtime = toolhead.get_last_move_time()
         toolhead.dwell(self._sample_time_delay + self._sample_time)
         start_time = printtime + self._sample_time_delay
         self._gather.note_probe_and_position(
             start_time, start_time + self._sample_time, start_time)
     def pull_probed_results(self):
+        if self._is_rapid:
+            # Flush lookahead (so all lookahead callbacks are invoked)
+            toolhead = self._printer.lookup_object("toolhead")
+            toolhead.get_last_move_time()
         results = self._gather.pull_probed()
         # Allow axis_twist_compensation to update results
         for epos in results:
@@ -418,7 +430,7 @@ class PrinterEddyProbe:
         return self.cmd_helper.get_status(eventtime)
     def start_probe_session(self, gcmd):
         method = gcmd.get('METHOD', 'automatic').lower()
-        if method == 'scan':
+        if method in ('scan', 'rapid_scan'):
             z_offset = self.get_offsets()[2]
             return EddyScanningProbe(self.printer, self.sensor_helper,
                                      self.calibration, z_offset, gcmd)
