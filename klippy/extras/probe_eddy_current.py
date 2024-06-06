@@ -220,7 +220,7 @@ class EddyGatherSamples:
         reactor = self._printer.get_reactor()
         mcu = self._sensor_helper.get_mcu()
         while self._probe_times:
-            start_time, end_time, toolhead_pos = self._probe_times[0]
+            start_time, end_time, pos_time, toolhead_pos = self._probe_times[0]
             systime = reactor.monotonic()
             est_print_time = mcu.estimated_print_time(systime)
             if est_print_time > end_time + 1.0:
@@ -250,12 +250,21 @@ class EddyGatherSamples:
             # No sensor readings - raise error in pull_probed()
             return 0.
         return samp_sum / samp_count
+    def _lookup_toolhead_pos(self, pos_time):
+        toolhead = self._printer.lookup_object('toolhead')
+        kin = toolhead.get_kinematics()
+        kin_spos = {s.get_name(): s.mcu_to_commanded_position(
+                                      s.get_past_mcu_position(pos_time))
+                    for s in kin.get_steppers()}
+        return kin.calc_position(kin_spos)
     def _check_samples(self):
         while self._samples and self._probe_times:
-            start_time, end_time, toolhead_pos = self._probe_times[0]
+            start_time, end_time, pos_time, toolhead_pos = self._probe_times[0]
             if self._samples[-1]['data'][-1][0] < end_time:
                 break
             freq = self._pull_freq(start_time, end_time)
+            if pos_time is not None:
+                toolhead_pos = self._lookup_toolhead_pos(pos_time)
             self._probe_results.append((freq, toolhead_pos))
             self._probe_times.pop(0)
     def pull_probed(self):
@@ -276,7 +285,10 @@ class EddyGatherSamples:
         del self._probe_results[:]
         return results
     def note_probe(self, start_time, end_time, toolhead_pos):
-        self._probe_times.append((start_time, end_time, toolhead_pos))
+        self._probe_times.append((start_time, end_time, None, toolhead_pos))
+        self._check_samples()
+    def note_probe_and_position(self, start_time, end_time, pos_time):
+        self._probe_times.append((start_time, end_time, pos_time, None))
         self._check_samples()
 
 # Helper for implementing PROBE style commands (descend until trigger)
