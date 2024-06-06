@@ -199,6 +199,7 @@ class EddyGatherSamples:
         # Results storage
         self._samples = []
         self._probe_times = []
+        self._probe_results = []
         self._need_stop = False
         # Start samples
         if not self._calibration.is_calibrated():
@@ -210,16 +211,16 @@ class EddyGatherSamples:
             del self._samples[:]
             return False
         self._samples.append(msg)
+        self._check_samples()
         return True
     def finish(self):
         self._need_stop = True
-    def _await_samples(self, end_time):
+    def _await_samples(self):
         # Make sure enough samples have been collected
         reactor = self._printer.get_reactor()
         mcu = self._sensor_helper.get_mcu()
-        while 1:
-            if self._samples and self._samples[-1]['data'][-1][0] >= end_time:
-                break
+        while self._probe_times:
+            start_time, end_time, toolhead_pos = self._probe_times[0]
             systime = reactor.monotonic()
             est_print_time = mcu.estimated_print_time(systime)
             if est_print_time > end_time + 1.0:
@@ -246,14 +247,24 @@ class EddyGatherSamples:
                     samp_count += 1
         del self._samples[:discard_msgs]
         if not samp_count:
-            raise self._printer.command_error(
-                "Unable to obtain probe_eddy_current sensor readings")
+            # No sensor readings - raise error in pull_probed()
+            return 0.
         return samp_sum / samp_count
-    def pull_probed(self):
-        results = []
-        for start_time, end_time, toolhead_pos in self._probe_times:
-            self._await_samples(end_time)
+    def _check_samples(self):
+        while self._samples and self._probe_times:
+            start_time, end_time, toolhead_pos = self._probe_times[0]
+            if self._samples[-1]['data'][-1][0] < end_time:
+                break
             freq = self._pull_freq(start_time, end_time)
+            self._probe_results.append((freq, toolhead_pos))
+            self._probe_times.pop(0)
+    def pull_probed(self):
+        self._await_samples()
+        results = []
+        for freq, toolhead_pos in self._probe_results:
+            if not freq:
+                raise self._printer.command_error(
+                    "Unable to obtain probe_eddy_current sensor readings")
             sensor_z = self._calibration.freq_to_height(freq)
             if sensor_z <= -OUT_OF_RANGE or sensor_z >= OUT_OF_RANGE:
                 raise self._printer.command_error(
@@ -262,10 +273,11 @@ class EddyGatherSamples:
             bed_deviation = toolhead_pos[2] - sensor_z
             toolhead_pos[2] = self._z_offset + bed_deviation
             results.append(toolhead_pos)
-        del self._probe_times[:]
+        del self._probe_results[:]
         return results
     def note_probe(self, start_time, end_time, toolhead_pos):
         self._probe_times.append((start_time, end_time, toolhead_pos))
+        self._check_samples()
 
 # Helper for implementing PROBE style commands (descend until trigger)
 class EddyEndstopWrapper:
