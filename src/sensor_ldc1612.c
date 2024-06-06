@@ -210,7 +210,7 @@ command_query_ldc1612(uint32_t *args)
 DECL_COMMAND(command_query_ldc1612, "query_ldc1612 oid=%c rest_ticks=%u");
 
 void
-command_query_ldc1612_status(uint32_t *args)
+command_query_status_ldc1612(uint32_t *args)
 {
     struct ldc1612 *ld = oid_lookup(args[0], command_config_ldc1612);
 
@@ -232,7 +232,7 @@ command_query_ldc1612_status(uint32_t *args)
     uint32_t fifo = status & 0x08 ? BYTES_PER_SAMPLE : 0;
     sensor_bulk_status(&ld->sb, args[0], time1, time2-time1, fifo);
 }
-DECL_COMMAND(command_query_ldc1612_status, "query_ldc1612_status oid=%c");
+DECL_COMMAND(command_query_status_ldc1612, "query_status_ldc1612 oid=%c");
 
 void
 ldc1612_task(void)
