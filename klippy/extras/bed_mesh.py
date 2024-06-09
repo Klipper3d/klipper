@@ -643,7 +643,7 @@ class BedMeshCalibrate:
             raise gcmd.error(str(e))
         self.probe_mgr.start_probe(gcmd)
     def probe_finalize(self, offsets, positions):
-        x_offset, y_offset, z_offset = offsets
+        z_offset = offsets[2]
         positions = [[round(p[0], 2), round(p[1], 2), p[2]]
                      for p in positions]
         if self.probe_mgr.get_zero_ref_mode() == ZrefMode.PROBE:
@@ -654,16 +654,17 @@ class BedMeshCalibrate:
                 % (ref_pos[0], ref_pos[1], ref_pos[2])
             )
             z_offset = ref_pos[2]
+        base_points = self.probe_mgr.get_base_points()
         params = dict(self.mesh_config)
-        params['min_x'] = min(positions, key=lambda p: p[0])[0] + x_offset
-        params['max_x'] = max(positions, key=lambda p: p[0])[0] + x_offset
-        params['min_y'] = min(positions, key=lambda p: p[1])[1] + y_offset
-        params['max_y'] = max(positions, key=lambda p: p[1])[1] + y_offset
+        params['min_x'] = min(base_points, key=lambda p: p[0])[0]
+        params['max_x'] = max(base_points, key=lambda p: p[0])[0]
+        params['min_y'] = min(base_points, key=lambda p: p[1])[1]
+        params['max_y'] = max(base_points, key=lambda p: p[1])[1]
         x_cnt = params['x_count']
         y_cnt = params['y_count']
 
         substitutes = self.probe_mgr.get_substitutes()
-        base_points = self.probe_mgr.get_base_points()
+        probed_pts = positions
         if substitutes:
             # Replace substituted points with the original generated
             # point.  Its Z Value is the average probed Z of the
@@ -688,38 +689,42 @@ class BedMeshCalibrate:
                     % (i, fpt[0], fpt[1], avg_z, avg_z - z_offset))
                 corrected_pts.append(fpt)
             corrected_pts.extend(positions[start_idx:])
-            # validate corrected positions
-            if len(base_points) != len(corrected_pts):
-                self._dump_points(positions, corrected_pts, offsets)
-                raise self.gcode.error(
-                    "bed_mesh: invalid position list size, "
-                    "generated count: %d, probed count: %d"
-                    % (len(base_points), len(corrected_pts)))
-            for gen_pt, probed in zip(base_points, corrected_pts):
-                off_pt = [p - o for p, o in zip(gen_pt, offsets[:2])]
-                if not isclose(off_pt[0], probed[0], abs_tol=.1) or \
-                        not isclose(off_pt[1], probed[1], abs_tol=.1):
-                    self._dump_points(positions, corrected_pts, offsets)
-                    raise self.gcode.error(
-                        "bed_mesh: point mismatch, orig = (%.2f, %.2f)"
-                        ", probed = (%.2f, %.2f)"
-                        % (off_pt[0], off_pt[1], probed[0], probed[1]))
             positions = corrected_pts
+
+        # validate length of result
+        if len(base_points) != len(positions):
+            self._dump_points(probed_pts, positions, offsets)
+            raise self.gcode.error(
+                "bed_mesh: invalid position list size, "
+                "generated count: %d, probed count: %d"
+                % (len(base_points), len(positions))
+            )
 
         probed_matrix = []
         row = []
-        prev_pos = positions[0]
-        for pos in positions:
+        prev_pos = base_points[0]
+        for pos, result in zip(base_points, positions):
+            offset_pos = [p - o for p, o in zip(pos, offsets[:2])]
+            if (
+                not isclose(offset_pos[0], result[0], abs_tol=.5) or
+                not isclose(offset_pos[1], result[1], abs_tol=.5)
+            ):
+                logging.info(
+                    "bed_mesh: point deviation > .5mm: orig pt = (%.2f, %.2f)"
+                    ", probed pt = (%.2f, %.2f)"
+                    % (offset_pos[0], offset_pos[1], result[0], result[1])
+                )
+            z_pos = result[2] - z_offset
             if not isclose(pos[1], prev_pos[1], abs_tol=.1):
                 # y has changed, append row and start new
                 probed_matrix.append(row)
                 row = []
             if pos[0] > prev_pos[0]:
                 # probed in the positive direction
-                row.append(pos[2] - z_offset)
+                row.append(z_pos)
             else:
                 # probed in the negative direction
-                row.insert(0, pos[2] - z_offset)
+                row.insert(0, z_pos)
             prev_pos = pos
         # append last row
         probed_matrix.append(row)
