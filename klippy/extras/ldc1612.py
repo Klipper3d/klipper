@@ -117,7 +117,7 @@ class LDC1612:
         cmdqueue = self.i2c.get_command_queue()
         self.query_ldc1612_cmd = self.mcu.lookup_command(
             "query_ldc1612 oid=%c rest_ticks=%u", cq=cmdqueue)
-        self.ffreader.setup_query_command("query_ldc1612_status oid=%c",
+        self.ffreader.setup_query_command("query_status_ldc1612 oid=%c",
                                           oid=self.oid, cq=cmdqueue)
         self.ldc1612_setup_home_cmd = self.mcu.lookup_command(
             "ldc1612_setup_home oid=%c clock=%u threshold=%u"

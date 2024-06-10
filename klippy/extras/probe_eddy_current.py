@@ -196,13 +196,6 @@ class EddyEndstopWrapper:
         self._samples = []
         self._is_sampling = self._start_from_home = self._need_stop = False
         self._trigger_time = 0.
-        self._printer.register_event_handler('klippy:mcu_identify',
-                                             self._handle_mcu_identify)
-    def _handle_mcu_identify(self):
-        kin = self._printer.lookup_object('toolhead').get_kinematics()
-        for stepper in kin.get_steppers():
-            if stepper.is_active_axis('z'):
-                self.add_stepper(stepper)
     # Measurement gathering
     def _start_measurements(self, is_home=False):
         self._need_stop = False
@@ -325,11 +318,23 @@ class PrinterEddyProbe:
         sensor_type = config.getchoice('sensor_type', {s: s for s in sensors})
         self.sensor_helper = sensors[sensor_type](config, self.calibration)
         # Probe interface
-        self.probe = EddyEndstopWrapper(config, self.sensor_helper,
-                                        self.calibration)
-        self.printer.add_object('probe', probe.PrinterProbe(config, self.probe))
+        self.mcu_probe = EddyEndstopWrapper(config, self.sensor_helper,
+                                            self.calibration)
+        self.cmd_helper = probe.ProbeCommandHelper(
+            config, self, self.mcu_probe.query_endstop)
+        self.probe_offsets = probe.ProbeOffsetsHelper(config)
+        self.probe_session = probe.ProbeSessionHelper(config, self.mcu_probe)
+        self.printer.add_object('probe', self)
     def add_client(self, cb):
         self.sensor_helper.add_client(cb)
+    def get_probe_params(self, gcmd=None):
+        return self.probe_session.get_probe_params(gcmd)
+    def get_offsets(self):
+        return self.probe_offsets.get_offsets()
+    def get_status(self, eventtime):
+        return self.cmd_helper.get_status(eventtime)
+    def start_probe_session(self, gcmd):
+        return self.probe_session.start_probe_session(gcmd)
 
 def load_config_prefix(config):
     return PrinterEddyProbe(config)
