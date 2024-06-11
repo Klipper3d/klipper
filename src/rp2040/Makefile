@@ -46,7 +46,6 @@ $(OUT)klipper.uf2: $(OUT)klipper.elf $(OUT)lib/rp2040/elf2uf2/elf2uf2
 	$(Q)$(OUT)lib/rp2040/elf2uf2/elf2uf2 $< $@
 
 rptarget-$(CONFIG_RP2040_HAVE_STAGE2) := $(OUT)klipper.uf2
-rplink-$(CONFIG_RP2040_HAVE_STAGE2) := $(OUT)src/rp2040/rp2040_link.ld
 stage2-$(CONFIG_RP2040_HAVE_STAGE2) := $(OUT)stage2.o
 
 # rp2040 building when using a bootloader
@@ -55,13 +54,13 @@ $(OUT)klipper.bin: $(OUT)klipper.elf
 	$(Q)$(OBJCOPY) -O binary $< $@
 
 rptarget-$(CONFIG_RP2040_HAVE_BOOTLOADER) := $(OUT)klipper.bin
-rplink-$(CONFIG_RP2040_HAVE_BOOTLOADER) := $(OUT)src/rp2040/rp2040_link.ld
 
 # Set klipper.elf linker rules
 target-y += $(rptarget-y)
-CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs -T $(rplink-y)
+CFLAGS_klipper.elf += -nostdlib -lgcc -lc_nano
+CFLAGS_klipper.elf += -T $(OUT)src/rp2040/rp2040_link.ld
 OBJS_klipper.elf += $(stage2-y)
-$(OUT)klipper.elf: $(stage2-y) $(rplink-y)
+$(OUT)klipper.elf: $(stage2-y) $(OUT)src/rp2040/rp2040_link.ld
 
 # Flash rules
 lib/rp2040_flash/rp2040_flash:
