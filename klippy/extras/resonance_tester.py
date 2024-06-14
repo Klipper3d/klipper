@@ -87,6 +87,46 @@ class VibrationPulseTestGenerator:
     def get_max_freq(self):
         return self.freq_end
 
+class VibrationsWithMotionTestGenerator:
+    def __init__(self, config):
+        self.vibration_generator = VibrationPulseTestGenerator(config)
+        self.motion_accel = config.getfloat('motion_accel', 400., above=0.)
+        self.motion_period = config.getfloat('motion_period', 1.2, above=0.)
+    def prepare_test(self, gcmd):
+        self.vibration_generator.prepare_test(gcmd)
+        self.motion_accel = gcmd.get_float("MOTION_ACCEL",
+                                           self.motion_accel, above=0.)
+        self.motion_period = gcmd.get_float("MOTION_PERIOD",
+                                            self.motion_period, above=0.)
+    def gen_test(self):
+        test_seq = self.vibration_generator.gen_test()
+        accel_fraction = 0.125
+        t_rem = self.motion_period * accel_fraction
+        res = []
+        last_t = 0.
+        sig = 1.
+        accel_fraction = 0.375
+        for next_t, accel in test_seq:
+            t_seg = next_t - last_t
+            while t_rem <= t_seg:
+                last_t += t_rem
+                res.append((last_t, accel + self.motion_accel * sig))
+                t_seg -= t_rem
+                t_rem = self.motion_period * accel_fraction
+                accel_fraction = 0.5
+                sig = -sig
+            t_rem -= t_seg
+            res.append((next_t, accel + self.motion_accel * sig))
+            last_t = next_t
+        return res
+    def get_params(self):
+        params = self.vibration_generator.get_params()
+        params.update({'motion_accel': self.motion_accel,
+                       'motion_period': self.motion_period})
+        return params
+    def get_max_freq(self):
+        return self.vibration_generator.get_max_freq()
+
 class ResonanceTestExecutor:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -165,7 +205,11 @@ class ResonanceTester:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.move_speed = config.getfloat('move_speed', 50., above=0.)
-        self.generator = VibrationPulseTestGenerator(config)
+        test_methods = {
+                'vibrations': VibrationPulseTestGenerator,
+                'sweeping_vibrations': VibrationsWithMotionTestGenerator}
+        test_method = config.getchoice('method', test_methods, 'vibrations')
+        self.generator = test_method(config)
         self.executor = ResonanceTestExecutor(config)
         if not config.get('accel_chip_x', None):
             self.accel_chip_names = [('xy', config.get('accel_chip').strip())]
