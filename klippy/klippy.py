@@ -22,17 +22,6 @@ command to reload the config and restart the host software.
 Printer is halted
 """
 
-message_protocol_error1 = """
-This is frequently caused by running an older version of the
-firmware on the MCU(s). Fix by recompiling and flashing the
-firmware.
-"""
-
-message_protocol_error2 = """
-Once the underlying issue is corrected, use the "RESTART"
-command to reload the config and restart the host software.
-"""
-
 message_mcu_connect_error = """
 Once the underlying issue is corrected, use the
 "FIRMWARE_RESTART" command to reset the firmware, reload the
@@ -143,33 +132,6 @@ class Printer:
             m.add_printer_objects(config)
         # Validate that there are no undefined parameters in the config file
         pconfig.check_unused_options(config)
-    def _build_protocol_error_message(self, e):
-        host_version = self.start_args['software_version']
-        msg_update = []
-        msg_updated = []
-        for mcu_name, mcu in self.lookup_objects('mcu'):
-            try:
-                mcu_version = mcu.get_status()['mcu_version']
-            except:
-                logging.exception("Unable to retrieve mcu_version from mcu")
-                continue
-            if mcu_version != host_version:
-                msg_update.append("%s: Current version %s"
-                                  % (mcu_name.split()[-1], mcu_version))
-            else:
-                msg_updated.append("%s: Current version %s"
-                                   % (mcu_name.split()[-1], mcu_version))
-        if not msg_update:
-            msg_update.append("<none>")
-        if not msg_updated:
-            msg_updated.append("<none>")
-        msg = ["MCU Protocol error",
-               message_protocol_error1,
-               "Your Klipper version is: %s" % (host_version,),
-               "MCU(s) which should be updated:"]
-        msg += msg_update + ["Up-to-date MCU(s):"] + msg_updated
-        msg += [message_protocol_error2, str(e)]
-        return "\n".join(msg)
     def _connect(self, eventtime):
         try:
             self._read_config()
@@ -183,8 +145,10 @@ class Printer:
             self._set_state("%s\n%s" % (str(e), message_restart))
             return
         except msgproto.error as e:
-            logging.exception("Protocol error")
-            self._set_state(self._build_protocol_error_message(e))
+            msg = "Protocol error"
+            logging.exception(msg)
+            self._set_state(msg)
+            self.send_event("klippy:notify_mcu_error", msg, {"error": str(e)})
             util.dump_mcu_build()
             return
         except mcu.error as e:

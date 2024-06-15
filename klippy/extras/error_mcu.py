@@ -12,6 +12,17 @@ config, and restart the host software.
 Printer is shutdown
 """
 
+message_protocol_error1 = """
+This is frequently caused by running an older version of the
+firmware on the MCU(s). Fix by recompiling and flashing the
+firmware.
+"""
+
+message_protocol_error2 = """
+Once the underlying issue is corrected, use the "RESTART"
+command to reload the config and restart the host software.
+"""
+
 Common_MCU_errors = {
     ("Timer too close",): """
 This often indicates the host computer is overloaded. Check
@@ -45,6 +56,8 @@ class PrinterMCUError:
         self.printer = config.get_printer()
         self.printer.register_event_handler("klippy:notify_mcu_shutdown",
                                             self._handle_notify_mcu_shutdown)
+        self.printer.register_event_handler("klippy:notify_mcu_error",
+                                            self._handle_notify_mcu_error)
     def _check_mcu_shutdown(self, msg, details):
         mcu_name = details['mcu']
         mcu_msg = details['reason']
@@ -62,6 +75,36 @@ class PrinterMCUError:
             self._check_mcu_shutdown(msg, details)
         else:
             self.printer.update_error_msg(msg, "%s%s" % (msg, message_shutdown))
+    def _check_protocol_error(self, msg, details):
+        host_version = self.printer.start_args['software_version']
+        msg_update = []
+        msg_updated = []
+        for mcu_name, mcu in self.printer.lookup_objects('mcu'):
+            try:
+                mcu_version = mcu.get_status()['mcu_version']
+            except:
+                logging.exception("Unable to retrieve mcu_version from mcu")
+                continue
+            if mcu_version != host_version:
+                msg_update.append("%s: Current version %s"
+                                  % (mcu_name.split()[-1], mcu_version))
+            else:
+                msg_updated.append("%s: Current version %s"
+                                   % (mcu_name.split()[-1], mcu_version))
+        if not msg_update:
+            msg_update.append("<none>")
+        if not msg_updated:
+            msg_updated.append("<none>")
+        newmsg = ["MCU Protocol error",
+                  message_protocol_error1,
+                  "Your Klipper version is: %s" % (host_version,),
+                  "MCU(s) which should be updated:"]
+        newmsg += msg_update + ["Up-to-date MCU(s):"] + msg_updated
+        newmsg += [message_protocol_error2, details['error']]
+        self.printer.update_error_msg(msg, "\n".join(newmsg))
+    def _handle_notify_mcu_error(self, msg, details):
+        if msg == "Protocol error":
+            self._check_protocol_error(msg, details)
 
 def load_config(config):
     return PrinterMCUError(config)
