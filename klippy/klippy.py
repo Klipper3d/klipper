@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # Main code for host side printer firmware
 #
-# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2024  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, gc, optparse, logging, time, collections, importlib
@@ -38,13 +38,6 @@ Once the underlying issue is corrected, use the
 "FIRMWARE_RESTART" command to reset the firmware, reload the
 config, and restart the host software.
 Error configuring printer
-"""
-
-message_shutdown = """
-Once the underlying issue is corrected, use the
-"FIRMWARE_RESTART" command to reset the firmware, reload the
-config, and restart the host software.
-Printer is shutdown
 """
 
 class Printer:
@@ -85,6 +78,13 @@ class Printer:
         if (msg != message_ready
             and self.start_args.get('debuginput') is not None):
             self.request_exit('error_exit')
+    def update_error_msg(self, oldmsg, newmsg):
+        if (self.state_message != oldmsg
+            or self.state_message in (message_ready, message_startup)
+            or newmsg in (message_ready, message_startup)):
+            return
+        self.state_message = newmsg
+        logging.error(newmsg)
     def add_object(self, name, obj):
         if name in self.objects:
             raise self.config_error(
@@ -241,12 +241,12 @@ class Printer:
             logging.info(info)
         if self.bglogger is not None:
             self.bglogger.set_rollover_info(name, info)
-    def invoke_shutdown(self, msg):
+    def invoke_shutdown(self, msg, details={}):
         if self.in_shutdown_state:
             return
         logging.error("Transition to shutdown state: %s", msg)
         self.in_shutdown_state = True
-        self._set_state("%s%s" % (msg, message_shutdown))
+        self._set_state(msg)
         for cb in self.event_handlers.get("klippy:shutdown", []):
             try:
                 cb()
@@ -254,9 +254,10 @@ class Printer:
                 logging.exception("Exception during shutdown handler")
         logging.info("Reactor garbage collection: %s",
                      self.reactor.get_gc_stats())
-    def invoke_async_shutdown(self, msg):
+        self.send_event("klippy:notify_mcu_shutdown", msg, details)
+    def invoke_async_shutdown(self, msg, details):
         self.reactor.register_async_callback(
-            (lambda e: self.invoke_shutdown(msg)))
+            (lambda e: self.invoke_shutdown(msg, details)))
     def register_event_handler(self, event, callback):
         self.event_handlers.setdefault(event, []).append(callback)
     def send_event(self, event, *params):
