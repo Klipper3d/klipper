@@ -23,6 +23,13 @@ Once the underlying issue is corrected, use the "RESTART"
 command to reload the config and restart the host software.
 """
 
+message_mcu_connect_error = """
+Once the underlying issue is corrected, use the
+"FIRMWARE_RESTART" command to reset the firmware, reload the
+config, and restart the host software.
+Error configuring printer
+"""
+
 Common_MCU_errors = {
     ("Timer too close",): """
 This often indicates the host computer is overloaded. Check
@@ -102,9 +109,14 @@ class PrinterMCUError:
         newmsg += msg_update + ["Up-to-date MCU(s):"] + msg_updated
         newmsg += [message_protocol_error2, details['error']]
         self.printer.update_error_msg(msg, "\n".join(newmsg))
+    def _check_mcu_connect_error(self, msg, details):
+        newmsg = "%s%s" % (details['error'], message_mcu_connect_error)
+        self.printer.update_error_msg(msg, newmsg)
     def _handle_notify_mcu_error(self, msg, details):
         if msg == "Protocol error":
             self._check_protocol_error(msg, details)
+        elif msg == "MCU error during connect":
+            self._check_mcu_connect_error(msg, details)
 
 def load_config(config):
     return PrinterMCUError(config)

@@ -22,13 +22,6 @@ command to reload the config and restart the host software.
 Printer is halted
 """
 
-message_mcu_connect_error = """
-Once the underlying issue is corrected, use the
-"FIRMWARE_RESTART" command to reset the firmware, reload the
-config, and restart the host software.
-Error configuring printer
-"""
-
 class Printer:
     config_error = configfile.error
     command_error = gcode.CommandError
@@ -152,8 +145,10 @@ class Printer:
             util.dump_mcu_build()
             return
         except mcu.error as e:
-            logging.exception("MCU error during connect")
-            self._set_state("%s%s" % (str(e), message_mcu_connect_error))
+            msg = "MCU error during connect"
+            logging.exception(msg)
+            self._set_state(msg)
+            self.send_event("klippy:notify_mcu_error", msg, {"error": str(e)})
             util.dump_mcu_build()
             return
         except Exception as e:
