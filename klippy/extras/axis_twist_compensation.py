@@ -5,7 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 import math
-from . import manual_probe as ManualProbe, bed_mesh as BedMesh
+from . import manual_probe, bed_mesh, probe
 
 
 DEFAULT_SAMPLE_COUNT = 3
@@ -53,9 +53,9 @@ class AxisTwistCompensation:
                    / (sample_count - 1))
         interpolate_t = (x_coord - self.calibrate_start_x) / spacing
         interpolate_i = int(math.floor(interpolate_t))
-        interpolate_i = BedMesh.constrain(interpolate_i, 0, sample_count - 2)
+        interpolate_i = bed_mesh.constrain(interpolate_i, 0, sample_count - 2)
         interpolate_t -= interpolate_i
-        interpolated_z_compensation = BedMesh.lerp(
+        interpolated_z_compensation = bed_mesh.lerp(
             interpolate_t, z_compensations[interpolate_i],
             z_compensations[interpolate_i + 1])
         pos[2] += interpolated_z_compensation
@@ -137,7 +137,7 @@ class Calibrater:
             nozzle_points, self.probe_x_offset, self.probe_y_offset)
 
         # verify no other manual probe is in progress
-        ManualProbe.verify_no_manual_probe(self.printer)
+        manual_probe.verify_no_manual_probe(self.printer)
 
         # begin calibration
         self.current_point_index = 0
@@ -199,7 +199,7 @@ class Calibrater:
         self._move_helper((nozzle_points[self.current_point_index]))
 
         # start the manual (nozzle) probe
-        ManualProbe.ManualProbeHelper(
+        manual_probe.ManualProbeHelper(
             self.printer, self.gcmd,
             self._manual_probe_callback_factory(
                 probe_points, nozzle_points, interval))
