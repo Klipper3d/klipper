@@ -11,6 +11,7 @@
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // sched_add_timer
 #include "sensor_bulk.h" // sensor_bulk_report
+#include "load_cell_endstop.h" // load_cell_endstop_report_sample
 #include "spicmds.h" // spidev_transfer
 #include <stdint.h>
 
@@ -21,6 +22,7 @@ struct ads1220_adc {
     struct spidev_s *spi;
     uint8_t pending_flag, data_count;
     struct sensor_bulk sb;
+    struct load_cell_endstop *lce;
 };
 
 // Flag types
@@ -80,6 +82,7 @@ add_sample(struct ads1220_adc *ads1220, uint8_t oid, uint_fast32_t counts)
 void
 ads1220_read_adc(struct ads1220_adc *ads1220, uint8_t oid)
 {
+    uint32_t start = timer_read_time();
     uint8_t msg[3] = {0, 0, 0};
     spidev_transfer(ads1220->spi, 1, sizeof(msg), msg);
     ads1220->pending_flag = 0;
@@ -95,6 +98,11 @@ ads1220_read_adc(struct ads1220_adc *ads1220, uint8_t oid)
         counts |= 0xFF000000;
 
     add_sample(ads1220, oid, counts);
+
+    // endstop is optional, report if enabled and no errors
+    if (ads1220->lce) {
+        load_cell_endstop_report_sample(ads1220->lce, counts, start);
+    }
 }
 
 // Create an ads1220 sensor
@@ -110,6 +118,15 @@ command_config_ads1220(uint32_t *args)
 }
 DECL_COMMAND(command_config_ads1220, "config_ads1220 oid=%c"
     " spi_oid=%c data_ready_pin=%u");
+
+void
+command_attach_endstop_ads1220(uint32_t *args) {
+    uint8_t oid = args[0];
+    struct ads1220_adc *ads1220 = oid_lookup(oid, command_config_ads1220);
+    ads1220->lce = load_cell_endstop_oid_lookup(args[1]);
+}
+DECL_COMMAND(command_attach_endstop_ads1220, "attach_endstop_ads1220 oid=%c"
+    " load_cell_endstop_oid=%c");
 
 // start/stop capturing ADC data
 void
