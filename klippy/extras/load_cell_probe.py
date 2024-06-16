@@ -255,6 +255,12 @@ class LoadCellProbeConfigHelper:
             default=75, minval=10, maxval=250)
         self._force_safety_limit_param = intParamHelper(config,
             'force_safety_limit', minval=100, maxval=5000, default=2000)
+        # pullback move
+        self._pullback_distance_param = floatParamHelper(config,
+            'pullback_distance', minval=0.01, maxval=2.0, default=0.2)
+        sps = self._sensor.get_samples_per_second()
+        self._pullback_speed_param = floatParamHelper(config, 'pullback_speed',
+            minval=0.1, maxval=1.0, default=sps * 0.001)
 
     def get_tare_samples(self, gcmd=None):
         tare_time = self._tare_time_param.get(gcmd)
@@ -266,6 +272,12 @@ class LoadCellProbeConfigHelper:
 
     def get_safety_limit_grams(self, gcmd=None):
         return self._force_safety_limit_param.get(gcmd)
+
+    def get_pullback_speed(self, gcmd=None):
+        return self._pullback_speed_param.get(gcmd)
+
+    def get_pullback_distance(self, gcmd=None):
+        return self._pullback_distance_param.get(gcmd)
 
     def get_rest_time(self):
         return self._rest_time
@@ -519,15 +531,25 @@ class TappingMove:
         self._clients.add_mux_endpoint("load_cell_probe/dump_taps",
             "load_cell_probe", name, header)
 
+    # Perform the pullback move and returns the time when the move will end
+    def pullback_move(self, gcmd):
+        toolhead = self._printer.lookup_object('toolhead')
+        pullback_pos = toolhead.get_position()
+        pullback_pos[2] += self._config_helper.get_pullback_distance(gcmd)
+        pos = [None, None, pullback_pos[2]]
+        toolhead.manual_move(pos, self._config_helper.get_pullback_speed(gcmd))
+        toolhead.flush_step_generation()
+        pullback_end = toolhead.get_last_move_time()
+        return pullback_end
+
     # perform a probing move and a pullback move
     def run_tap(self, gcmd):
-        # do the descending move
+        # do the probing/homing move
         epos, collector = self._load_cell_probing_move.probing_move(gcmd)
+        # do the pullback move
+        pullback_end_time = self.pullback_move(gcmd)
         # collect samples from the tap
-        toolhead = self._printer.lookup_object('toolhead')
-        toolhead.flush_step_generation()
-        move_end = toolhead.get_last_move_time()
-        results = collector.collect_until(move_end)
+        results = collector.collect_until(pullback_end_time)
         samples = check_sensor_errors(results, self._printer)
         # Analyze the tap data
         ppa = TapAnalysis(samples)
