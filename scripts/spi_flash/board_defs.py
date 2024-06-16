@@ -128,6 +128,15 @@ BOARD_DEFS = {
         'mcu': "stm32g0b1xx",
         'spi_bus': "spi1",
         "cs_pin": "PB8"
+    },
+    'kingroon-kp3-v1.3-board': {
+        'mcu': "stm32f103xe",
+        'spi_bus': "swspi",
+        'spi_pins': "PC8,PD2,PC12",
+        "cs_pin": "PC11",
+        "firmware_path": "Robin_nano.bin",
+        "current_firmware_path": "Robin_nano.cur",
+        'skip_verify': True
     }
 }
 
