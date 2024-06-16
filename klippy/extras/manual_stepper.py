@@ -104,6 +104,13 @@ class ManualStepper:
             self.do_move(movepos, speed, accel, sync)
         elif gcmd.get_int('SYNC', 0):
             self.sync_print_time()
+
+    def get_status(self, eventtime):
+        stepper_enable = self.printer.lookup_object('stepper_enable')
+        enable = stepper_enable.lookup_enable(self.steppers[0].get_name())
+        return {'position': self.rail.get_commanded_position(),
+                'enabled': enable.is_motor_enabled()}
+
     # Toolhead wrappers to support homing
     def flush_step_generation(self):
         self.sync_print_time()
