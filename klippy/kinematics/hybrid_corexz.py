@@ -27,7 +27,7 @@ class HybridCoreXZKinematics:
         if config.has_section('dual_carriage'):
             dc_config = config.getsection('dual_carriage')
             # dummy for cartesian config users
-            dc_config.getchoice('axis', {'x': 'x'}, default='x')
+            dc_config.getchoice('axis', ['x'], default='x')
             # setup second dual carriage rail
             self.rails.append(stepper.PrinterRail(dc_config))
             self.rails[2].get_endstops()[0][0].add_stepper(

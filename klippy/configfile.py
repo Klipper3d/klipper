@@ -69,6 +69,8 @@ class ConfigWrapper:
         return self._get_wrapper(self.fileconfig.getboolean, option, default,
                                  note_valid=note_valid)
     def getchoice(self, option, choices, default=sentinel, note_valid=True):
+        if type(choices) == type([]):
+            choices = {i: i for i in choices}
         if choices and type(list(choices.keys())[0]) == int:
             c = self.getint(option, default, note_valid=note_valid)
         else:
