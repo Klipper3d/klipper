@@ -207,7 +207,7 @@ software dependencies not installed by default. First, run on your Raspberry Pi
 the following commands:
 ```
 sudo apt update
-sudo apt install python3-numpy python3-matplotlib libatlas-base-dev libopenblas-base
+sudo apt install python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev
 ```
 
 Next, in order to install NumPy in the Klipper environment, run the command:
@@ -450,7 +450,11 @@ TEST_RESONANCES AXIS=Y
 ```
 This will generate 2 CSV files (`/tmp/resonances_x_*.csv` and
 `/tmp/resonances_y_*.csv`). These files can be processed with the stand-alone
-script on a Raspberry Pi. To do that, run the following commands:
+script on a Raspberry Pi. This script is intended to be run with a single CSV
+file for each axis measured, although it can be used with multiple CSV files
+if you desire to average the results. Averaging results can be useful, for
+example, if resonance tests were done at multiple test points. Delete the extra
+CSV files if you do not desire to average them.
 ```
 ~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png
 ~/klipper/scripts/calibrate_shaper.py /tmp/resonances_y_*.csv -o /tmp/shaper_calibrate_y.png

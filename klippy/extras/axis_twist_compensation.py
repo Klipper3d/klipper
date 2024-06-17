@@ -5,7 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 import math
-from . import manual_probe as ManualProbe, bed_mesh as BedMesh
+from . import manual_probe, bed_mesh, probe
 
 
 DEFAULT_SAMPLE_COUNT = 3
@@ -38,10 +38,13 @@ class AxisTwistCompensation:
 
         # setup calibrater
         self.calibrater = Calibrater(self, config)
+        # register events
+        self.printer.register_event_handler("probe:update_results",
+                                            self._update_z_compensation_value)
 
-    def get_z_compensation_value(self, pos):
+    def _update_z_compensation_value(self, pos):
         if not self.z_compensations:
-            return 0
+            return
 
         x_coord = pos[0]
         z_compensations = self.z_compensations
@@ -50,12 +53,12 @@ class AxisTwistCompensation:
                    / (sample_count - 1))
         interpolate_t = (x_coord - self.calibrate_start_x) / spacing
         interpolate_i = int(math.floor(interpolate_t))
-        interpolate_i = BedMesh.constrain(interpolate_i, 0, sample_count - 2)
+        interpolate_i = bed_mesh.constrain(interpolate_i, 0, sample_count - 2)
         interpolate_t -= interpolate_i
-        interpolated_z_compensation = BedMesh.lerp(
+        interpolated_z_compensation = bed_mesh.lerp(
             interpolate_t, z_compensations[interpolate_i],
             z_compensations[interpolate_i + 1])
-        return interpolated_z_compensation
+        pos[2] += interpolated_z_compensation
 
     def clear_compensations(self):
         self.z_compensations = []
@@ -95,7 +98,7 @@ class Calibrater:
             config = self.printer.lookup_object('configfile')
             raise config.error(
                 "AXIS_TWIST_COMPENSATION requires [probe] to be defined")
-        self.lift_speed = self.probe.get_lift_speed()
+        self.lift_speed = self.probe.get_probe_params()['lift_speed']
         self.probe_x_offset, self.probe_y_offset, _ = \
             self.probe.get_offsets()
 
@@ -134,7 +137,7 @@ class Calibrater:
             nozzle_points, self.probe_x_offset, self.probe_y_offset)
 
         # verify no other manual probe is in progress
-        ManualProbe.verify_no_manual_probe(self.printer)
+        manual_probe.verify_no_manual_probe(self.printer)
 
         # begin calibration
         self.current_point_index = 0
@@ -186,7 +189,8 @@ class Calibrater:
                            probe_points[self.current_point_index][1], None))
 
         # probe the point
-        self.current_measured_z = self.probe.run_probe(self.gcmd)[2]
+        pos = probe.run_single_probe(self.probe, self.gcmd)
+        self.current_measured_z = pos[2]
 
         # horizontal_move_z (to prevent probe trigger or hitting bed)
         self._move_helper((None, None, self.horizontal_move_z))
@@ -195,7 +199,7 @@ class Calibrater:
         self._move_helper((nozzle_points[self.current_point_index]))
 
         # start the manual (nozzle) probe
-        ManualProbe.ManualProbeHelper(
+        manual_probe.ManualProbeHelper(
             self.printer, self.gcmd,
             self._manual_probe_callback_factory(
                 probe_points, nozzle_points, interval))

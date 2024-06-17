@@ -189,7 +189,11 @@ gpio_adc_setup(uint32_t pin)
     if (chan >= 2 * ADCIN_BANK_SIZE) {
         chan -= 2 * ADCIN_BANK_SIZE;
         adc = ADC3;
+#if CONFIG_MACH_STM32G4
+        adc_common = ADC345_COMMON;
+#else
         adc_common = ADC3_COMMON;
+#endif
     } else
 #endif
 #ifdef ADC2

@@ -204,7 +204,9 @@ CONFIG ../../config/printer-voxelab-aquila-2021.cfg
 # Printers using the stm32f401
 DICTIONARY stm32f401.dict
 CONFIG ../../config/generic-fysetc-cheetah-v2.0.cfg
+CONFIG ../../config/printer-artillery-genius-pro-2022.cfg
 CONFIG ../../config/printer-artillery-sidewinder-x2-2022.cfg
+CONFIG ../../config/printer-artillery-sidewinder-x3-plus-2024.cfg
 CONFIG ../../config/printer-creality-ender5-s1-2023.cfg
 CONFIG ../../config/printer-elegoo-neptune3-pro-2023.cfg
 

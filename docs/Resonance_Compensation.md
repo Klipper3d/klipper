@@ -48,8 +48,8 @@ First, measure the **ringing frequency**.
    to 5.0. It is not advised to increase it when using input shaper
    because it can cause more smoothing in parts - it is better to use
    higher acceleration value instead.
-2. Increase `max_accel_to_decel` by issuing the following command:
-   `SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000`
+2. Disable the `minimum_cruise_ratio` feature by issuing the following
+   command: `SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0`
 3. Disable Pressure Advance: `SET_PRESSURE_ADVANCE ADVANCE=0`
 4. If you have already added `[input_shaper]` section to the printer.cfg,
    execute `SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0` command. If you
@@ -149,7 +149,7 @@ a few other related parameters.
 Print the ringing test model as follows:
 
 1. Restart the firmware: `RESTART`
-2. Prepare for test: `SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000`
+2. Prepare for test: `SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0`
 3. Disable Pressure Advance: `SET_PRESSURE_ADVANCE ADVANCE=0`
 4. Execute: `SET_INPUT_SHAPER SHAPER_TYPE=MZV`
 5. Execute the command:
@@ -270,7 +270,7 @@ frequencies after enabling [input_shaper], this section will not help with that.
 Assuming that you have sliced the ringing model with suggested
 parameters, complete the following steps for each of the axes X and Y:
 
-1. Prepare for test: `SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000`
+1. Prepare for test: `SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0`
 2. Make sure Pressure Advance is disabled: `SET_PRESSURE_ADVANCE ADVANCE=0`
 3. Execute: `SET_INPUT_SHAPER SHAPER_TYPE=ZV`
 4. From the existing ringing test model with your chosen input shaper select
@@ -331,7 +331,7 @@ with suggested parameters, print the test model 3 times as
 follows. First time, prior to printing, run
 
 1. `RESTART`
-2. `SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000`
+2. `SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0`
 3. `SET_PRESSURE_ADVANCE ADVANCE=0`
 4. `SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI SHAPER_FREQ_X=60 SHAPER_FREQ_Y=60`
 5. `TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5`
