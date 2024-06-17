@@ -574,9 +574,8 @@ class MCU:
         restart_methods = [None, 'arduino', 'cheetah', 'command', 'rpi_usb']
         self._restart_method = 'command'
         if self._baud:
-            rmethods = {m: m for m in restart_methods}
             self._restart_method = config.getchoice('restart_method',
-                                                    rmethods, None)
+                                                    restart_methods, None)
         self._reset_cmd = self._config_reset_cmd = None
         self._is_mcu_bridge = False
         self._emergency_stop_cmd = None
