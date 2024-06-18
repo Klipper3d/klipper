@@ -61,10 +61,13 @@ def error_hint(msg):
 class PrinterMCUError:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.clarify_callbacks = {}
         self.printer.register_event_handler("klippy:notify_mcu_shutdown",
                                             self._handle_notify_mcu_shutdown)
         self.printer.register_event_handler("klippy:notify_mcu_error",
                                             self._handle_notify_mcu_error)
+    def add_clarify(self, msg, callback):
+        self.clarify_callbacks.setdefault(msg, []).append(callback)
     def _check_mcu_shutdown(self, msg, details):
         mcu_name = details['mcu']
         mcu_msg = details['reason']
@@ -73,9 +76,17 @@ class PrinterMCUError:
         if event_type == 'is_shutdown':
             prefix = "Previous MCU '%s' shutdown: " % (mcu_name,)
         # Lookup generic hint
-        hint = error_hint(msg)
+        hint = error_hint(mcu_msg)
+        # Add per instance help
+        clarify = [cb(msg, details)
+                   for cb in self.clarify_callbacks.get(mcu_msg, [])]
+        clarify = [cm for cm in clarify if cm is not None]
+        clarify_msg = ""
+        if clarify:
+            clarify_msg = "\n".join(["", ""] + clarify + [""])
         # Update error message
-        newmsg = "%s%s%s%s" % (prefix, mcu_msg, hint, message_shutdown)
+        newmsg = "%s%s%s%s%s" % (prefix, mcu_msg, clarify_msg,
+                                 hint, message_shutdown)
         self.printer.update_error_msg(msg, newmsg)
     def _handle_notify_mcu_shutdown(self, msg, details):
         if msg == "MCU shutdown":
