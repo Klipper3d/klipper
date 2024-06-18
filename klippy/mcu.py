@@ -496,8 +496,8 @@ class MCU_adc:
         self._inv_max_adc = 0.
     def get_mcu(self):
         return self._mcu
-    def setup_minmax(self, sample_time, sample_count,
-                     minval=0., maxval=1., range_check_count=0):
+    def setup_adc_sample(self, sample_time, sample_count,
+                         minval=0., maxval=1., range_check_count=0):
         self._sample_time = sample_time
         self._sample_count = sample_count
         self._min_sample = minval

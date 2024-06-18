@@ -32,10 +32,10 @@ class PrinterADCtoTemperature:
         temp = self.adc_convert.calc_temp(read_value)
         self.temperature_callback(read_time + SAMPLE_COUNT * SAMPLE_TIME, temp)
     def setup_minmax(self, min_temp, max_temp):
-        adc_range = [self.adc_convert.calc_adc(t) for t in [min_temp, max_temp]]
-        self.mcu_adc.setup_minmax(SAMPLE_TIME, SAMPLE_COUNT,
-                                  minval=min(adc_range), maxval=max(adc_range),
-                                  range_check_count=RANGE_CHECK_COUNT)
+        arange = [self.adc_convert.calc_adc(t) for t in [min_temp, max_temp]]
+        self.mcu_adc.setup_adc_sample(SAMPLE_TIME, SAMPLE_COUNT,
+                                      minval=min(arange), maxval=max(arange),
+                                      range_check_count=RANGE_CHECK_COUNT)
 
 
 ######################################################################

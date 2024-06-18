@@ -35,26 +35,27 @@ class PrinterTemperatureMCU:
         query_adc.register_adc(config.get_name(), self.mcu_adc)
         # Register callbacks
         if self.printer.get_start_args().get('debugoutput') is not None:
-            self.mcu_adc.setup_minmax(SAMPLE_TIME, SAMPLE_COUNT,
-                                      range_check_count=RANGE_CHECK_COUNT)
+            self.mcu_adc.setup_adc_sample(SAMPLE_TIME, SAMPLE_COUNT)
             return
         self.printer.register_event_handler("klippy:mcu_identify",
-                                            self._mcu_identify)
+                                            self.handle_mcu_identify)
+    # Temperature interface
     def setup_callback(self, temperature_callback):
         self.temperature_callback = temperature_callback
     def get_report_time_delta(self):
         return REPORT_TIME
-    def adc_callback(self, read_time, read_value):
-        temp = self.base_temperature + read_value * self.slope
-        self.temperature_callback(read_time + SAMPLE_COUNT * SAMPLE_TIME, temp)
     def setup_minmax(self, min_temp, max_temp):
         self.min_temp = min_temp
         self.max_temp = max_temp
+    # Internal code
+    def adc_callback(self, read_time, read_value):
+        temp = self.base_temperature + read_value * self.slope
+        self.temperature_callback(read_time + SAMPLE_COUNT * SAMPLE_TIME, temp)
     def calc_adc(self, temp):
         return (temp - self.base_temperature) / self.slope
     def calc_base(self, temp, adc):
         return temp - adc * self.slope
-    def _mcu_identify(self):
+    def handle_mcu_identify(self):
         # Obtain mcu information
         mcu = self.mcu_adc.get_mcu()
         self.debug_read_cmd = mcu.lookup_query_command(
@@ -89,10 +90,10 @@ class PrinterTemperatureMCU:
                 self.slope = (self.temp2 - self.temp1) / (self.adc2 - self.adc1)
             self.base_temperature = self.calc_base(self.temp1, self.adc1)
         # Setup min/max checks
-        adc_range = [self.calc_adc(t) for t in [self.min_temp, self.max_temp]]
-        self.mcu_adc.setup_minmax(SAMPLE_TIME, SAMPLE_COUNT,
-                                  minval=min(adc_range), maxval=max(adc_range),
-                                  range_check_count=RANGE_CHECK_COUNT)
+        arange = [self.calc_adc(t) for t in [self.min_temp, self.max_temp]]
+        self.mcu_adc.setup_adc_sample(SAMPLE_TIME, SAMPLE_COUNT,
+                                      minval=min(arange), maxval=max(arange),
+                                      range_check_count=RANGE_CHECK_COUNT)
     def config_unknown(self):
         raise self.printer.config_error("MCU temperature not supported on %s"
                                         % (self.mcu_type,))
