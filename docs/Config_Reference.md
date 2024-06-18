@@ -3267,6 +3267,44 @@ pins:
 #   parameter must be provided.
 ```
 
+## MKS "Servo" closed-loop stepper driver configuration
+
+### [servo42d]
+
+Configure a Servo42D driver via CANBUS. To use this feature, define
+a config section with a "servo42d" prefix followed by the name of
+corresponding stepper config section (for example, "[servo42d
+stepper_x]").
+
+```
+[servo42d stepper_x]
+canbus_nodeid:
+#   Specifies the CAN ID for this driver, as set in the "CanID" menu
+#   option on the driver itself.
+#canbus_interface:
+#   Specifies the CAN interface to be used for this stepper, the
+#   Servo42D driver has static CAN ID, thefore using the same
+#   interface for both Klipper MCU(s) and Servo42D drivers is not
+#   recommended.
+#   The default is 'can0'.
+run_current:
+#   The amount of current, in amps to configure the driver to use
+#   when actively moving the stepper around.
+#hold_ratio:
+#   The amount of current, in percentage of run_current to configure the
+#   driver to use when not moving the stepper. This option is not supported
+#   in combination with 'vfoc' operating mode. The valid values are:
+#   '10%', '20%', '30%', '40%', '50%', '60%', '70%', '80%' and '90%'.
+#interpolate:
+#   Sets the internal microstepping of the driver to 256.
+operating_mode:
+#   Sets the operating mode of the driver.
+#   Valid values are:
+#    'open' -> Open-loop control of the stepper
+#    'close' -> Closed-loop control of the stepper
+#    'vfoc' -> FOC-based control of the stepper
+```
+
 ## TMC stepper driver configuration
 
 Configuration of Trinamic stepper motor drivers in UART/SPI mode.
