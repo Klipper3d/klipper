@@ -1157,6 +1157,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#bed_meshdump_mesh" class="md-nav__link">
+    bed_mesh/dump_mesh
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1659,6 +1666,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#bed_meshdump_mesh" class="md-nav__link">
+    bed_mesh/dump_mesh
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1990,6 +2004,127 @@ might return:
 <code>{"id": 123, "result": {"y": "open", "x": "open", "z": "TRIGGERED"}}</code></p>
 <p>As with the "gcode/script" endpoint, this endpoint only completes
 after any pending G-Code commands complete.</p>
+<h3 id="bed_meshdump_mesh">bed_mesh/dump_mesh<a class="headerlink" href="#bed_meshdump_mesh" title="Permanent link">&para;</a></h3>
+<p>Dumps the configuration and state for the current mesh and all
+saved profiles.</p>
+<p>For example:
+<code>{"id": 123, "method": "bed_mesh/dump_mesh"}</code></p>
+<p>might return:</p>
+<div class="highlight"><pre><span></span><code>{
+    &quot;current_mesh&quot;: {
+        &quot;name&quot;: &quot;eddy-scan-test&quot;,
+        &quot;probed_matrix&quot;: [...],
+        &quot;mesh_matrix&quot;: [...],
+        &quot;mesh_params&quot;: {
+            &quot;x_count&quot;: 9,
+            &quot;y_count&quot;: 9,
+            &quot;mesh_x_pps&quot;: 2,
+            &quot;mesh_y_pps&quot;: 2,
+            &quot;algo&quot;: &quot;bicubic&quot;,
+            &quot;tension&quot;: 0.5,
+            &quot;min_x&quot;: 20,
+            &quot;max_x&quot;: 330,
+            &quot;min_y&quot;: 30,
+            &quot;max_y&quot;: 320
+        }
+    },
+    &quot;profiles&quot;: {
+        &quot;default&quot;: {
+            &quot;points&quot;: [...],
+            &quot;mesh_params&quot;: {
+                &quot;min_x&quot;: 20,
+                &quot;max_x&quot;: 330,
+                &quot;min_y&quot;: 30,
+                &quot;max_y&quot;: 320,
+                &quot;x_count&quot;: 9,
+                &quot;y_count&quot;: 9,
+                &quot;mesh_x_pps&quot;: 2,
+                &quot;mesh_y_pps&quot;: 2,
+                &quot;algo&quot;: &quot;bicubic&quot;,
+                &quot;tension&quot;: 0.5
+            }
+        },
+        &quot;eddy-scan-test&quot;: {
+            &quot;points&quot;: [...],
+            &quot;mesh_params&quot;: {
+                &quot;x_count&quot;: 9,
+                &quot;y_count&quot;: 9,
+                &quot;mesh_x_pps&quot;: 2,
+                &quot;mesh_y_pps&quot;: 2,
+                &quot;algo&quot;: &quot;bicubic&quot;,
+                &quot;tension&quot;: 0.5,
+                &quot;min_x&quot;: 20,
+                &quot;max_x&quot;: 330,
+                &quot;min_y&quot;: 30,
+                &quot;max_y&quot;: 320
+            }
+        },
+        &quot;eddy-rapid-test&quot;: {
+            &quot;points&quot;: [...],
+            &quot;mesh_params&quot;: {
+                &quot;x_count&quot;: 9,
+                &quot;y_count&quot;: 9,
+                &quot;mesh_x_pps&quot;: 2,
+                &quot;mesh_y_pps&quot;: 2,
+                &quot;algo&quot;: &quot;bicubic&quot;,
+                &quot;tension&quot;: 0.5,
+                &quot;min_x&quot;: 20,
+                &quot;max_x&quot;: 330,
+                &quot;min_y&quot;: 30,
+                &quot;max_y&quot;: 320
+            }
+        }
+    },
+    &quot;calibration&quot;: {
+        &quot;points&quot;: [...],
+        &quot;config&quot;: {
+            &quot;x_count&quot;: 9,
+            &quot;y_count&quot;: 9,
+            &quot;mesh_x_pps&quot;: 2,
+            &quot;mesh_y_pps&quot;: 2,
+            &quot;algo&quot;: &quot;bicubic&quot;,
+            &quot;tension&quot;: 0.5,
+            &quot;mesh_min&quot;: [
+                20,
+                30
+            ],
+            &quot;mesh_max&quot;: [
+                330,
+                320
+            ],
+            &quot;origin&quot;: null,
+            &quot;radius&quot;: null
+        },
+        &quot;probe_path&quot;: [...],
+        &quot;rapid_path&quot;: [...]
+    },
+    &quot;probe_offsets&quot;: [
+        0,
+        25,
+        0.5
+    ],
+    &quot;axis_minimum&quot;: [
+        0,
+        0,
+        -5,
+        0
+    ],
+    &quot;axis_maximum&quot;: [
+        351,
+        358,
+        330,
+        0
+    ]
+}
+</code></pre></div>
+
+<p>The <code>dump_mesh</code> endpoint takes one optional parameter, <code>mesh_args</code>.
+This parameter must be an object, where the keys and values are
+parameters available to <a href="#bed_mesh_calibrate">BED_MESH_CALIBRATE</a>.
+This will update the mesh configuration and probe points using the
+supplied parameters prior to returning the result.   It is recommended
+to omit mesh parameters unless it is desired to visualize the probe points
+and/or travel path before performing <code>BED_MESH_CALIBRATE</code>.</p>
 
               
             </article>
