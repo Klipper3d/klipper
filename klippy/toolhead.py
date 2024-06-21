@@ -453,13 +453,14 @@ class ToolHead:
     # Movement commands
     def get_position(self):
         return list(self.commanded_pos)
-    def set_position(self, newpos, homing_axes=()):
+    def set_position(self, newpos, homing_axes=(), clear_axes=()):
         self.flush_step_generation()
         ffi_main, ffi_lib = chelper.get_ffi()
         ffi_lib.trapq_set_position(self.trapq, self.print_time,
                                    newpos[0], newpos[1], newpos[2])
         self.commanded_pos[:] = newpos
         self.kin.set_position(newpos, homing_axes)
+        self.kin.clear_homing_state(clear_axes)
         self.printer.send_event("toolhead:set_position")
     def move(self, newpos, speed):
         move = Move(self, self.commanded_pos, newpos, speed)
