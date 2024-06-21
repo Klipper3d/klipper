@@ -2020,6 +2020,10 @@ sensor_type: ldc1612
 #z_offset:
 #   The nominal distance (in mm) between the nozzle and bed that a
 #   probing attempt should stop at. This parameter must be provided.
+#position_endstop:
+#   The nominal distance (in mm) between the nozzle and bed that a
+#   homing attempt should stop at. The recommended parameter is 1.0
+#   This parameter must be provided.
 #i2c_address:
 #i2c_mcu:
 #i2c_bus:
