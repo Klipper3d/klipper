@@ -104,6 +104,13 @@ pll_setup(pll_hw_t *pll, uint32_t mul, uint32_t postdiv)
     pll->prim = ((postdiv1 << PLL_PRIM_POSTDIV1_LSB)
                  | (postdiv2 << PLL_PRIM_POSTDIV2_LSB));
     pll->pwr = PLL_PWR_DSMPD_BITS;
+
+    // Extra wait here. TwoTrees SK1 toolhead board cannot boot normally without
+    // these waits.
+    // TODO: find a more elegant way for this waiting loop, maybe wait for some
+    // bit (waiting for pll->cs like the loop above does not seem to work)
+    for(volatile int i=0; i<1000; i++)
+        ;
 }
 
 static void
