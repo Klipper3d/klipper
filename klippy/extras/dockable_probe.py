@@ -85,11 +85,7 @@ class ProbeState:
         # can be polled at specific times
         ppins = self.printer.lookup_object('pins')
         def configEndstop(pin):
-            pin_params = ppins.lookup_pin(pin,
-                                            can_invert=True,
-                                            can_pullup=True)
-            mcu = pin_params['chip']
-            mcu_endstop = mcu.setup_pin('endstop', pin_params)
+            mcu_endstop = ppins.setup_pin('endstop', pin)
             helper = PinPollingHelper(config, mcu_endstop.query_endstop)
             return helper
 
@@ -199,11 +195,10 @@ class DockableProbe:
 
         # Pins
         ppins = self.printer.lookup_object('pins')
-        pin = config.get('pin')
-        pin_params = ppins.lookup_pin(pin, can_invert=True, can_pullup=True)
-        mcu = pin_params['chip']
-        mcu.register_config_callback(self._build_config)
-        self.mcu_endstop = mcu.setup_pin('endstop', pin_params)
+        self.mcu_endstop = ppins.setup_pin('endstop', config.get('pin'))
+        # github.com/protoloft/klipper_z_calibration expects any probe
+        # implementation to have the below variable:
+        self.mcu_probe = self.mcu_endstop
 
         # Wrappers
         self.get_mcu              = self.mcu_endstop.get_mcu
@@ -212,6 +207,12 @@ class DockableProbe:
         self.home_wait            = self.mcu_endstop.home_wait
         self.query_endstop        = self.mcu_endstop.query_endstop
         self.finish_home_complete = self.wait_trigger_complete = None
+
+        # Common probe implementation helpers
+        self.cmd_helper = probe.ProbeCommandHelper(
+            config, self, self.mcu_endstop.query_endstop)
+        self.probe_offsets = probe.ProbeOffsetsHelper(config)
+        self.probe_session = probe.ProbeSessionHelper(config, self)
 
         # State
         self.last_z = -9999
@@ -284,11 +285,14 @@ class DockableProbe:
         p[:supplied_dims] = vals
         return p
 
-    def _build_config(self):
-        kin = self.printer.lookup_object('toolhead').get_kinematics()
-        for stepper in kin.get_steppers():
-            if stepper.is_active_axis('z'):
-                self.add_stepper(stepper)
+    def get_probe_params(self, gcmd=None):
+        return self.probe_session.get_probe_params(gcmd)
+    def get_offsets(self):
+        return self.probe_offsets.get_offsets()
+    def get_status(self, eventtime):
+        return self.cmd_helper.get_status(eventtime)
+    def start_probe_session(self, gcmd):
+        return self.probe_session.start_probe_session(gcmd)
 
     def _handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
@@ -633,6 +637,6 @@ class DockableProbe:
         return phoming.probing_move(self, pos, speed)
 
 def load_config(config):
-    msp = DockableProbe(config)
-    config.get_printer().add_object('probe', probe.PrinterProbe(config, msp))
-    return msp
+    dockable_probe = DockableProbe(config)
+    config.get_printer().add_object('probe', dockable_probe)
+    return dockable_probe
