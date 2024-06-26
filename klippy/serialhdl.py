@@ -35,6 +35,12 @@ class SerialReader:
         self.pending_notifications = {}
     def _bg_thread(self):
         response = self.ffi_main.new('struct pull_queue_message *')
+        try:
+            val = os.nice(-20)
+            logging.info("%scurrent nice = %d" ,self.warn_prefix, val)
+        except:
+            logging.info("%snice process failed", self.warn_prefix)
+            pass
         while 1:
             self.ffi_lib.serialqueue_pull(self.serialqueue, response)
             count = response.len
