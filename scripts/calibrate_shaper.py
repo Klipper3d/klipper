@@ -168,6 +168,10 @@ def main():
                     dest="test_damping_ratios", default=None,
                     help="a comma-separated liat of damping ratios to test " +
                     "input shaper for")
+    opts.add_option("-w", "--width", type="float", dest="width",
+                    default=8, help="width (inches) of the graph(s)")
+    opts.add_option("-l", "--height", type="float", dest="height",
+                    default=6, help="height (inches) of the graph(s)")
     options, args = opts.parse_args()
     if len(args) < 1:
         opts.error("Incorrect number of arguments")
@@ -244,7 +248,7 @@ def main():
         if options.output is None:
             matplotlib.pyplot.show()
         else:
-            fig.set_size_inches(8, 6)
+            fig.set_size_inches(options.width, options.height)
             fig.savefig(options.output)
 
 if __name__ == '__main__':
