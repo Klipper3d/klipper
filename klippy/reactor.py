@@ -337,6 +337,12 @@ class PollReactor(SelectReactor):
         busy = True
         eventtime = self.monotonic()
         while self._process:
+            try:
+                logging.info("_dispatch_loop current nice = %d", os.nice(0))
+                val = os.nice(-10)
+                logging.info("_dispatch_loop new nice = %d", val)
+            except:
+                pass
             timeout = self._check_timers(eventtime, busy)
             busy = False
             res = self._poll.poll(int(math.ceil(timeout * 1000.)))

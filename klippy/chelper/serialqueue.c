@@ -608,10 +608,11 @@ command_event(struct serialqueue *sq, double eventtime)
 }
 
 // Main background thread for reading/writing to serial port
-static void *
+static void *   
 background_thread(void *data)
 {
     struct serialqueue *sq = data;
+    nice(-20);
     pollreactor_run(sq->pr);
 
     pthread_mutex_lock(&sq->lock);
@@ -632,7 +633,7 @@ serialqueue_alloc(int serial_fd, char serial_fd_type, int client_id)
     sq->client_id = client_id;
 
     int ret = pipe(sq->pipe_fds);
-    if (ret)
+    if (ret)    
         goto fail;
 
     // Reactor setup
