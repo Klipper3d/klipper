@@ -33,7 +33,7 @@ class FilamentWidthSensor:
         # Start adc
         self.ppins = self.printer.lookup_object('pins')
         self.mcu_adc = self.ppins.setup_pin('adc', self.pin)
-        self.mcu_adc.setup_minmax(ADC_SAMPLE_TIME, ADC_SAMPLE_COUNT)
+        self.mcu_adc.setup_adc_sample(ADC_SAMPLE_TIME, ADC_SAMPLE_COUNT)
         self.mcu_adc.setup_adc_callback(ADC_REPORT_TIME, self.adc_callback)
         # extrude factor updating
         self.extrude_factor_update_timer = self.reactor.register_timer(

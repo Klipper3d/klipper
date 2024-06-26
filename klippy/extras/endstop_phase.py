@@ -6,7 +6,8 @@
 import math, logging
 import stepper
 
-TRINAMIC_DRIVERS = ["tmc2130", "tmc2208", "tmc2209", "tmc2660", "tmc5160"]
+TRINAMIC_DRIVERS = ["tmc2130", "tmc2208", "tmc2209", "tmc2240", "tmc2660",
+    "tmc5160"]
 
 # Calculate the trigger phase of a stepper motor
 class PhaseCalc:
@@ -190,7 +191,6 @@ class EndstopPhases:
     def generate_stats(self, stepper_name, phase_calc):
         phase_history = phase_calc.phase_history
         wph = phase_history + phase_history
-        count = sum(phase_history)
         phases = len(phase_history)
         half_phases = phases // 2
         res = []

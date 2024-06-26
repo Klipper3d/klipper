@@ -12,6 +12,8 @@
 #include "stm32f2xx.h"
 #elif CONFIG_MACH_STM32F4
 #include "stm32f4xx.h"
+#elif CONFIG_MACH_STM32F7
+#include "stm32f7xx.h"
 #elif CONFIG_MACH_STM32G0
 #include "stm32g0xx.h"
 #elif CONFIG_MACH_STM32G4

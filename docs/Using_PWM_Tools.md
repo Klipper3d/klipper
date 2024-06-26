@@ -1,7 +1,7 @@
 # Using PWM tools
 
 This document describes how to setup a PWM-controlled laser or spindle
-using `output_pin` and some macros.
+using `pwm_tool` and some macros.
 
 ## How does it work?
 
@@ -25,14 +25,6 @@ Also, you should configure a safety timeout,
 so that when your host or MCU encounters an error, the tool will stop.
 
 For an example configuration, see [config/sample-pwm-tool.cfg](/config/sample-pwm-tool.cfg).
-
-## Current Limitations
-
-There is a limitation of how frequent PWM updates may occur.
-While being very precise, a PWM update may only occur every 0.1 seconds,
-rendering it almost useless for raster engraving.
-However, there exists an [experimental branch](https://github.com/Cirromulus/klipper/tree/laser_tool) with its own tradeoffs.
-In long term, it is planned to add this functionality to main-line klipper.
 
 ## Commands
 

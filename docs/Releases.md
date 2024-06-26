@@ -3,6 +3,24 @@
 History of Klipper releases. Please see
 [installation](Installation.md) for information on installing Klipper.
 
+## Klipper 0.12.0
+
+Available on 20231110. Major changes in this release:
+* Support for COPY and MIRROR modes on IDEX printers.
+* Several micro-controller improvements:
+  * Support for new ar100 and hc32f460 architectures.
+  * Support for stm32f7, stm32g0b0, stm32g07x, stm32g4, stm32h723,
+    n32g45x, samc21, and samd21j18 chip variants.
+  * Improved DFU and Katapult reboot handling.
+  * Improved performance on USB to CANbus bridge mode.
+  * Improved performance on "linux mcu".
+  * New support for software based i2c.
+* New hardware support for tmc2240 stepper motor drivers, lis2dw12
+  accelerometers, and aht10 temperature sensors.
+* New axis_twist_compensation and temperature_combined modules added.
+* New support for gcode arcs in XY, XZ, and YZ planes.
+* Several bug fixes and code cleanups.
+
 ## Klipper 0.11.0
 
 Available on 20221128. Major changes in this release:

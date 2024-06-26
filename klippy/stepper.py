@@ -89,12 +89,12 @@ class MCU_stepper:
                                       invert_step, step_pulse_ticks))
         self._mcu.add_config_cmd("reset_step_clock oid=%d clock=0"
                                  % (self._oid,), on_restart=True)
-        step_cmd_tag = self._mcu.lookup_command_tag(
-            "queue_step oid=%c interval=%u count=%hu add=%hi")
-        dir_cmd_tag = self._mcu.lookup_command_tag(
-            "set_next_step_dir oid=%c dir=%c")
-        self._reset_cmd_tag = self._mcu.lookup_command_tag(
-            "reset_step_clock oid=%c clock=%u")
+        step_cmd_tag = self._mcu.lookup_command(
+            "queue_step oid=%c interval=%u count=%hu add=%hi").get_command_tag()
+        dir_cmd_tag = self._mcu.lookup_command(
+            "set_next_step_dir oid=%c dir=%c").get_command_tag()
+        self._reset_cmd_tag = self._mcu.lookup_command(
+            "reset_step_clock oid=%c clock=%u").get_command_tag()
         self._get_position_cmd = self._mcu.lookup_query_command(
             "stepper_get_position oid=%c",
             "stepper_position oid=%c pos=%i", oid=self._oid)
@@ -160,6 +160,8 @@ class MCU_stepper:
         count = ffi_lib.stepcompress_extract_old(self._stepqueue, data, count,
                                                  start_clock, end_clock)
         return (data, count)
+    def get_stepper_kinematics(self):
+        return self._stepper_kinematics
     def set_stepper_kinematics(self, sk):
         old_sk = self._stepper_kinematics
         mcu_pos = 0
@@ -263,6 +265,7 @@ def parse_gear_ratio(config, note_valid):
 
 # Obtain "step distance" information from a config section
 def parse_step_distance(config, units_in_radians=None, note_valid=False):
+    # Check rotation_distance and gear_ratio
     if units_in_radians is None:
         # Caller doesn't know if units are in radians - infer it
         rd = config.get('rotation_distance', None, note_valid=False)
@@ -274,7 +277,7 @@ def parse_step_distance(config, units_in_radians=None, note_valid=False):
     else:
         rotation_dist = config.getfloat('rotation_distance', above=0.,
                                         note_valid=note_valid)
-    # Newer config format with rotation_distance
+    # Check microsteps and full_steps_per_rotation
     microsteps = config.getint('microsteps', minval=1, note_valid=note_valid)
     full_steps = config.getint('full_steps_per_rotation', 200, minval=1,
                                note_valid=note_valid)

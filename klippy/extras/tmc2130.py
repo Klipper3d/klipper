@@ -248,13 +248,14 @@ def lookup_tmc_spi_chain(config):
 
 # Helper code for working with TMC devices via SPI
 class MCU_TMC_SPI:
-    def __init__(self, config, name_to_reg, fields):
+    def __init__(self, config, name_to_reg, fields, tmc_frequency):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.tmc_spi, self.chain_pos = lookup_tmc_spi_chain(config)
         self.mutex = self.tmc_spi.mutex
         self.name_to_reg = name_to_reg
         self.fields = fields
+        self.tmc_frequency = tmc_frequency
     def get_fields(self):
         return self.fields
     def get_register(self, reg_name):
@@ -271,6 +272,8 @@ class MCU_TMC_SPI:
                     return
         raise self.printer.command_error(
             "Unable to write tmc spi '%s' register %s" % (self.name, reg_name))
+    def get_tmc_frequency(self):
+        return self.tmc_frequency
 
 
 ######################################################################
@@ -281,7 +284,8 @@ class TMC2130:
     def __init__(self, config):
         # Setup mcu communication
         self.fields = tmc.FieldHelper(Fields, SignedFields, FieldFormatters)
-        self.mcu_tmc = MCU_TMC_SPI(config, Registers, self.fields)
+        self.mcu_tmc = MCU_TMC_SPI(config, Registers, self.fields,
+                                   TMC_FREQUENCY)
         # Allow virtual pins to be created
         tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
@@ -292,20 +296,35 @@ class TMC2130:
         self.get_status = cmdhelper.get_status
         # Setup basic register values
         tmc.TMCWaveTableHelper(config, self.mcu_tmc)
-        tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
+        tmc.TMCStealthchopHelper(config, self.mcu_tmc)
+        tmc.TMCVcoolthrsHelper(config, self.mcu_tmc)
+        tmc.TMCVhighHelper(config, self.mcu_tmc)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
+        # CHOPCONF
         set_config_field(config, "toff", 4)
         set_config_field(config, "hstrt", 0)
         set_config_field(config, "hend", 7)
         set_config_field(config, "tbl", 1)
+        set_config_field(config, "vhighfs", 0)
+        set_config_field(config, "vhighchm", 0)
+        # COOLCONF
+        set_config_field(config, "semin", 0)
+        set_config_field(config, "seup", 0)
+        set_config_field(config, "semax", 0)
+        set_config_field(config, "sedn", 0)
+        set_config_field(config, "seimin", 0)
+        set_config_field(config, "sgt", 0)
+        set_config_field(config, "sfilt", 0)
+        # IHOLDIRUN
         set_config_field(config, "iholddelay", 8)
-        set_config_field(config, "tpowerdown", 0)
+        # PWMCONF
         set_config_field(config, "pwm_ampl", 128)
         set_config_field(config, "pwm_grad", 4)
         set_config_field(config, "pwm_freq", 1)
         set_config_field(config, "pwm_autoscale", True)
-        set_config_field(config, "sgt", 0)
+        # TPOWERDOWN
+        set_config_field(config, "tpowerdown", 0)
 
 def load_config_prefix(config):
     return TMC2130(config)

@@ -210,7 +210,7 @@ def lookup_tmc_uart_bitbang(config, max_addr):
 
 # Helper code for communicating via TMC uart
 class MCU_TMC_uart:
-    def __init__(self, config, name_to_reg, fields, max_addr=0):
+    def __init__(self, config, name_to_reg, fields, max_addr, tmc_frequency):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.name_to_reg = name_to_reg
@@ -219,6 +219,7 @@ class MCU_TMC_uart:
         self.instance_id, self.addr, self.mcu_uart = lookup_tmc_uart_bitbang(
             config, max_addr)
         self.mutex = self.mcu_uart.mutex
+        self.tmc_frequency = tmc_frequency
     def get_fields(self):
         return self.fields
     def _do_get_register(self, reg_name):
@@ -250,3 +251,5 @@ class MCU_TMC_uart:
                     return
         raise self.printer.command_error(
             "Unable to write tmc uart '%s' register %s" % (self.name, reg_name))
+    def get_tmc_frequency(self):
+        return self.tmc_frequency

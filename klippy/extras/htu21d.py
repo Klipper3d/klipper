@@ -126,7 +126,7 @@ class HTU21D:
         rdevId |= response[1]
         checksum = response[2]
         if self._chekCRC8(rdevId) != checksum:
-            logging.warn("htu21d: Reading deviceId !Checksum error!")
+            logging.warning("htu21d: Reading deviceId !Checksum error!")
         rdevId = rdevId >> 8
         deviceId_list = list(
             filter(
@@ -135,10 +135,10 @@ class HTU21D:
         if len(deviceId_list) != 0:
             logging.info("htu21d: Found Device Type %s" % deviceId_list[0])
         else:
-            logging.warn("htu21d: Unknown Device ID %#x " % rdevId)
+            logging.warning("htu21d: Unknown Device ID %#x " % rdevId)
 
-        if(self.deviceId != deviceId_list[0]):
-            logging.warn(
+        if self.deviceId != deviceId_list[0]:
+            logging.warning(
                 "htu21d: Found device %s. Forcing to type %s as config.",
                  deviceId_list[0],self.deviceId)
 
@@ -169,7 +169,9 @@ class HTU21D:
             rtemp  = response[0] << 8
             rtemp |= response[1]
             if self._chekCRC8(rtemp) != response[2]:
-                logging.warn("htu21d: Checksum error on Temperature reading!")
+                logging.warning(
+                    "htu21d: Checksum error on Temperature reading!"
+                )
             else:
                 self.temp = (0.002681 * float(rtemp) - 46.85)
                 logging.debug("htu21d: Temperature %.2f " % self.temp)
@@ -190,7 +192,7 @@ class HTU21D:
             rhumid = response[0] << 8
             rhumid|= response[1]
             if self._chekCRC8(rhumid) != response[2]:
-                logging.warn("htu21d: Checksum error on Humidity reading!")
+                logging.warning("htu21d: Checksum error on Humidity reading!")
             else:
                 #clear status bits,
                 # humidity always returns xxxxxx10 in the LSB field

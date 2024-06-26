@@ -48,8 +48,8 @@ First, measure the **ringing frequency**.
    to 5.0. It is not advised to increase it when using input shaper
    because it can cause more smoothing in parts - it is better to use
    higher acceleration value instead.
-2. Increase `max_accel_to_decel` by issuing the following command:
-   `SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000`
+2. Disable the `minimum_cruise_ratio` feature by issuing the following
+   command: `SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0`
 3. Disable Pressure Advance: `SET_PRESSURE_ADVANCE ADVANCE=0`
 4. If you have already added `[input_shaper]` section to the printer.cfg,
    execute `SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0` command. If you
@@ -149,7 +149,7 @@ a few other related parameters.
 Print the ringing test model as follows:
 
 1. Restart the firmware: `RESTART`
-2. Prepare for test: `SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000`
+2. Prepare for test: `SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0`
 3. Disable Pressure Advance: `SET_PRESSURE_ADVANCE ADVANCE=0`
 4. Execute: `SET_INPUT_SHAPER SHAPER_TYPE=MZV`
 5. Execute the command:
@@ -270,7 +270,7 @@ frequencies after enabling [input_shaper], this section will not help with that.
 Assuming that you have sliced the ringing model with suggested
 parameters, complete the following steps for each of the axes X and Y:
 
-1. Prepare for test: `SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000`
+1. Prepare for test: `SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0`
 2. Make sure Pressure Advance is disabled: `SET_PRESSURE_ADVANCE ADVANCE=0`
 3. Execute: `SET_INPUT_SHAPER SHAPER_TYPE=ZV`
 4. From the existing ringing test model with your chosen input shaper select
@@ -331,7 +331,7 @@ with suggested parameters, print the test model 3 times as
 follows. First time, prior to printing, run
 
 1. `RESTART`
-2. `SET_VELOCITY_LIMIT ACCEL_TO_DECEL=7000`
+2. `SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0`
 3. `SET_PRESSURE_ADVANCE ADVANCE=0`
 4. `SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI SHAPER_FREQ_X=60 SHAPER_FREQ_Y=60`
 5. `TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5`
@@ -418,18 +418,34 @@ if necessary.
 
 ### Is dual carriage setup supported with input shapers?
 
-There is no dedicated support for dual carriages with input shapers, but it does
-not mean this setup will not work. One should run the tuning twice for each
-of the carriages, and calculate the ringing frequencies for X and Y axes for
-each of the carriages independently. Then put the values for carriage 0 into
-[input_shaper] section, and change the values on the fly when changing
-carriages, e.g. as a part of some macro:
+Yes. In this case, one should measure the resonances twice for each carriage.
+For example, if the second (dual) carriage is installed on X axis, it is
+possible to set different input shapers for X axis for the primary and dual
+carriages. However, the input shaper for Y axis should be the same for both
+carriages (as ultimately this axis is driven by one or more stepper motors each
+commanded to perform exactly the same steps). One possibility to configure
+the input shaper for such setups is to keep `[input_shaper]` section empty and
+additionally define a `[delayed_gcode]` section in the `printer.cfg` as follows:
 ```
-SET_DUAL_CARRIAGE CARRIAGE=1
-SET_INPUT_SHAPER SHAPER_FREQ_X=... SHAPER_FREQ_Y=...
-```
+[input_shaper]
+# Intentionally empty
 
-And similarly when switching back to carriage 0.
+[delayed_gcode init_shaper]
+initial_duration: 0.1
+gcode:
+  SET_DUAL_CARRIAGE CARRIAGE=1
+  SET_INPUT_SHAPER SHAPER_TYPE_X=<dual_carriage_shaper> SHAPER_FREQ_X=<dual_carriage_freq> SHAPER_TYPE_Y=<y_shaper> SHAPER_FREQ_Y=<y_freq>
+  SET_DUAL_CARRIAGE CARRIAGE=0
+  SET_INPUT_SHAPER SHAPER_TYPE_X=<primary_carriage_shaper> SHAPER_FREQ_X=<primary_carriage_freq> SHAPER_TYPE_Y=<y_shaper> SHAPER_FREQ_Y=<y_freq>
+```
+Note that `SHAPER_TYPE_Y` and `SHAPER_FREQ_Y` should be the same in both
+commands. It is also possible to put a similar snippet into the start g-code
+in the slicer, however then the shaper will not be enabled until any print
+is started.
+
+Note that the input shaper only needs to be configured once. Subsequent changes
+of the carriages or their modes via `SET_DUAL_CARRIAGE` command will preserve
+the configured input shaper parameters.
 
 ### Does input_shaper affect print time?
 

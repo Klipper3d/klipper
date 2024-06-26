@@ -9,7 +9,7 @@
 // canserial.c
 void canserial_notify_tx(void);
 struct canbus_msg;
-int canserial_process_data(struct canbus_msg *msg);
+void canserial_process_data(struct canbus_msg *msg);
 void canserial_set_uuid(uint8_t *raw_uuid, uint32_t raw_uuid_len);
 
 #endif // canserial.h

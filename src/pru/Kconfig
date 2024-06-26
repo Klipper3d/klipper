@@ -8,6 +8,7 @@ config PRU_SELECT
     select HAVE_GPIO
     #select HAVE_GPIO_ADC
     select HAVE_STRICT_TIMING
+    select HAVE_LIMITED_CODE_SIZE
 
 config BOARD_DIRECTORY
     string

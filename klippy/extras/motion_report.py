@@ -5,110 +5,19 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 import chelper
-
-API_UPDATE_INTERVAL = 0.500
-
-# Helper to periodically transmit data to a set of API clients
-class APIDumpHelper:
-    def __init__(self, printer, data_cb, startstop_cb=None,
-                 update_interval=API_UPDATE_INTERVAL):
-        self.printer = printer
-        self.data_cb = data_cb
-        if startstop_cb is None:
-            startstop_cb = (lambda is_start: None)
-        self.startstop_cb = startstop_cb
-        self.is_started = False
-        self.update_interval = update_interval
-        self.update_timer = None
-        self.clients = {}
-    def _stop(self):
-        self.clients.clear()
-        reactor = self.printer.get_reactor()
-        reactor.unregister_timer(self.update_timer)
-        self.update_timer = None
-        if not self.is_started:
-            return reactor.NEVER
-        try:
-            self.startstop_cb(False)
-        except self.printer.command_error as e:
-            logging.exception("API Dump Helper stop callback error")
-            self.clients.clear()
-        self.is_started = False
-        if self.clients:
-            # New client started while in process of stopping
-            self._start()
-        return reactor.NEVER
-    def _start(self):
-        if self.is_started:
-            return
-        self.is_started = True
-        try:
-            self.startstop_cb(True)
-        except self.printer.command_error as e:
-            logging.exception("API Dump Helper start callback error")
-            self.is_started = False
-            self.clients.clear()
-            raise
-        reactor = self.printer.get_reactor()
-        systime = reactor.monotonic()
-        waketime = systime + self.update_interval
-        self.update_timer = reactor.register_timer(self._update, waketime)
-    def add_client(self, web_request):
-        cconn = web_request.get_client_connection()
-        template = web_request.get_dict('response_template', {})
-        self.clients[cconn] = template
-        self._start()
-    def add_internal_client(self):
-        cconn = InternalDumpClient()
-        self.clients[cconn] = {}
-        self._start()
-        return cconn
-    def _update(self, eventtime):
-        try:
-            msg = self.data_cb(eventtime)
-        except self.printer.command_error as e:
-            logging.exception("API Dump Helper data callback error")
-            return self._stop()
-        if not msg:
-            return eventtime + self.update_interval
-        for cconn, template in list(self.clients.items()):
-            if cconn.is_closed():
-                del self.clients[cconn]
-                if not self.clients:
-                    return self._stop()
-                continue
-            tmp = dict(template)
-            tmp['params'] = msg
-            cconn.send(tmp)
-        return eventtime + self.update_interval
-
-# An "internal webhooks" wrapper for using APIDumpHelper internally
-class InternalDumpClient:
-    def __init__(self):
-        self.msgs = []
-        self.is_done = False
-    def get_messages(self):
-        return self.msgs
-    def finalize(self):
-        self.is_done = True
-    def is_closed(self):
-        return self.is_done
-    def send(self, msg):
-        self.msgs.append(msg)
-        if len(self.msgs) >= 10000:
-            # Avoid filling up memory with too many samples
-            self.finalize()
+from . import bulk_sensor
 
 # Extract stepper queue_step messages
 class DumpStepper:
     def __init__(self, printer, mcu_stepper):
         self.printer = printer
         self.mcu_stepper = mcu_stepper
-        self.last_api_clock = 0
-        self.api_dump = APIDumpHelper(printer, self._api_update)
-        wh = self.printer.lookup_object('webhooks')
-        wh.register_mux_endpoint("motion_report/dump_stepper", "name",
-                                 mcu_stepper.get_name(), self._add_api_client)
+        self.last_batch_clock = 0
+        self.batch_bulk = bulk_sensor.BatchBulkHelper(printer,
+                                                      self._process_batch)
+        api_resp = {'header': ('interval', 'count', 'add')}
+        self.batch_bulk.add_mux_endpoint("motion_report/dump_stepper", "name",
+                                         mcu_stepper.get_name(), api_resp)
     def get_step_queue(self, start_clock, end_clock):
         mcu_stepper = self.mcu_stepper
         res = []
@@ -134,30 +43,24 @@ class DumpStepper:
                        % (i, s.first_clock, s.start_position, s.interval,
                           s.step_count, s.add))
         logging.info('\n'.join(out))
-    def _api_update(self, eventtime):
-        data, cdata = self.get_step_queue(self.last_api_clock, 1<<63)
+    def _process_batch(self, eventtime):
+        data, cdata = self.get_step_queue(self.last_batch_clock, 1<<63)
         if not data:
             return {}
         clock_to_print_time = self.mcu_stepper.get_mcu().clock_to_print_time
         first = data[0]
         first_clock = first.first_clock
         first_time = clock_to_print_time(first_clock)
-        self.last_api_clock = last_clock = data[-1].last_clock
+        self.last_batch_clock = last_clock = data[-1].last_clock
         last_time = clock_to_print_time(last_clock)
         mcu_pos = first.start_position
         start_position = self.mcu_stepper.mcu_to_commanded_position(mcu_pos)
         step_dist = self.mcu_stepper.get_step_dist()
-        if self.mcu_stepper.get_dir_inverted()[0]:
-            step_dist = -step_dist
         d = [(s.interval, s.step_count, s.add) for s in data]
         return {"data": d, "start_position": start_position,
                 "start_mcu_position": mcu_pos, "step_distance": step_dist,
                 "first_clock": first_clock, "first_step_time": first_time,
                 "last_clock": last_clock, "last_step_time": last_time}
-    def _add_api_client(self, web_request):
-        self.api_dump.add_client(web_request)
-        hdr = ('interval', 'count', 'add')
-        web_request.send({'header': hdr})
 
 NEVER_TIME = 9999999999999999.
 
@@ -167,11 +70,13 @@ class DumpTrapQ:
         self.printer = printer
         self.name = name
         self.trapq = trapq
-        self.last_api_msg = (0., 0.)
-        self.api_dump = APIDumpHelper(printer, self._api_update)
-        wh = self.printer.lookup_object('webhooks')
-        wh.register_mux_endpoint("motion_report/dump_trapq", "name", name,
-                                 self._add_api_client)
+        self.last_batch_msg = (0., 0.)
+        self.batch_bulk = bulk_sensor.BatchBulkHelper(printer,
+                                                      self._process_batch)
+        api_resp = {'header': ('time', 'duration', 'start_velocity',
+                               'acceleration', 'start_position', 'direction')}
+        self.batch_bulk.add_mux_endpoint("motion_report/dump_trapq",
+                                         "name", name, api_resp)
     def extract_trapq(self, start_time, end_time):
         ffi_main, ffi_lib = chelper.get_ffi()
         res = []
@@ -210,23 +115,18 @@ class DumpTrapQ:
                move.start_z + move.z_r * dist)
         velocity = move.start_v + move.accel * move_time
         return pos, velocity
-    def _api_update(self, eventtime):
-        qtime = self.last_api_msg[0] + min(self.last_api_msg[1], 0.100)
+    def _process_batch(self, eventtime):
+        qtime = self.last_batch_msg[0] + min(self.last_batch_msg[1], 0.100)
         data, cdata = self.extract_trapq(qtime, NEVER_TIME)
         d = [(m.print_time, m.move_t, m.start_v, m.accel,
               (m.start_x, m.start_y, m.start_z), (m.x_r, m.y_r, m.z_r))
              for m in data]
-        if d and d[0] == self.last_api_msg:
+        if d and d[0] == self.last_batch_msg:
             d.pop(0)
         if not d:
             return {}
-        self.last_api_msg = d[-1]
+        self.last_batch_msg = d[-1]
         return {"data": d}
-    def _add_api_client(self, web_request):
-        self.api_dump.add_client(web_request)
-        hdr = ('time', 'duration', 'start_velocity', 'acceleration',
-               'start_position', 'direction')
-        web_request.send({'header': hdr})
 
 STATUS_REFRESH_TIME = 0.250
 

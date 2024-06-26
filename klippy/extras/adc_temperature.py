@@ -1,6 +1,6 @@
 # Obtain temperature using linear interpolation of ADC values
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2024  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, bisect
@@ -22,8 +22,8 @@ class PrinterADCtoTemperature:
         ppins = config.get_printer().lookup_object('pins')
         self.mcu_adc = ppins.setup_pin('adc', config.get('sensor_pin'))
         self.mcu_adc.setup_adc_callback(REPORT_TIME, self.adc_callback)
-        query_adc = config.get_printer().load_object(config, 'query_adc')
-        query_adc.register_adc(config.get_name(), self.mcu_adc)
+        self.diag_helper = HelperTemperatureDiagnostics(
+            config, self.mcu_adc, adc_convert.calc_temp)
     def setup_callback(self, temperature_callback):
         self.temperature_callback = temperature_callback
     def get_report_time_delta(self):
@@ -32,10 +32,44 @@ class PrinterADCtoTemperature:
         temp = self.adc_convert.calc_temp(read_value)
         self.temperature_callback(read_time + SAMPLE_COUNT * SAMPLE_TIME, temp)
     def setup_minmax(self, min_temp, max_temp):
-        adc_range = [self.adc_convert.calc_adc(t) for t in [min_temp, max_temp]]
-        self.mcu_adc.setup_minmax(SAMPLE_TIME, SAMPLE_COUNT,
-                                  minval=min(adc_range), maxval=max(adc_range),
-                                  range_check_count=RANGE_CHECK_COUNT)
+        arange = [self.adc_convert.calc_adc(t) for t in [min_temp, max_temp]]
+        min_adc, max_adc = sorted(arange)
+        self.mcu_adc.setup_adc_sample(SAMPLE_TIME, SAMPLE_COUNT,
+                                      minval=min_adc, maxval=max_adc,
+                                      range_check_count=RANGE_CHECK_COUNT)
+        self.diag_helper.setup_diag_minmax(min_temp, max_temp, min_adc, max_adc)
+
+# Tool to register with query_adc and report extra info on ADC range errors
+class HelperTemperatureDiagnostics:
+    def __init__(self, config, mcu_adc, calc_temp_cb):
+        self.printer = config.get_printer()
+        self.name = config.get_name()
+        self.mcu_adc = mcu_adc
+        self.calc_temp_cb = calc_temp_cb
+        self.min_temp = self.max_temp = self.min_adc = self.max_adc = None
+        query_adc = self.printer.load_object(config, 'query_adc')
+        query_adc.register_adc(self.name, self.mcu_adc)
+        error_mcu = self.printer.load_object(config, 'error_mcu')
+        error_mcu.add_clarify("ADC out of range", self._clarify_adc_range)
+    def setup_diag_minmax(self, min_temp, max_temp, min_adc, max_adc):
+        self.min_temp, self.max_temp = min_temp, max_temp
+        self.min_adc, self.max_adc = min_adc, max_adc
+    def _clarify_adc_range(self, msg, details):
+        if self.min_temp is None:
+            return None
+        last_value, last_read_time = self.mcu_adc.get_last_value()
+        if not last_read_time:
+            return None
+        if last_value >= self.min_adc and last_value <= self.max_adc:
+            return None
+        tempstr = "?"
+        try:
+            last_temp = self.calc_temp_cb(last_value)
+            tempstr = "%.3f" % (last_temp,)
+        except e:
+            logging.exception("Error in calc_temp callback")
+        return ("Sensor '%s' temperature %s not in range %.3f:%.3f"
+                % (self.name, tempstr, self.min_temp, self.max_temp))
 
 
 ######################################################################
@@ -95,8 +129,8 @@ class LinearVoltage:
         for temp, volt in params:
             adc = (volt - voltage_offset) / adc_voltage
             if adc < 0. or adc > 1.:
-                logging.warn("Ignoring adc sample %.3f/%.3f in heater %s",
-                             temp, volt, config.get_name())
+                logging.warning("Ignoring adc sample %.3f/%.3f in heater %s",
+                                temp, volt, config.get_name())
                 continue
             samples.append((adc, temp))
         try:

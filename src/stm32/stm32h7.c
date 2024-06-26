@@ -234,6 +234,12 @@ armcm_main(void)
     RCC->D2CCIP1R = 0x00000000;
     RCC->D2CCIP2R = 0x00000000;
     RCC->D3CCIPR = 0x00000000;
+    RCC->APB1LENR = 0x00000000;
+    RCC->APB1HENR = 0x00000000;
+    RCC->APB2ENR = 0x00000000;
+    RCC->APB3ENR = 0x00000000;
+    RCC->APB4ENR = 0x00000000;
+
     SCB->VTOR = (uint32_t)VectorTable;
 
     dfu_reboot_check();

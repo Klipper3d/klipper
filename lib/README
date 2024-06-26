@@ -21,6 +21,13 @@ Atmel.SAM4S_DFP.1.0.56.atpack zip file found at:
   http://packs.download.atmel.com/
 version 1.0.56 (extracted on 20181220).
 
+The samc21 directory contains code from the
+Atmel.SAMC21_DFP.1.2.176.atpack zip file found at:
+  http://packs.download.atmel.com/
+version 1.2.176 (extracted on 20230115). It has been modified to fix
+an incorrect base address for the CAN message ram. See samc21.patch
+for the modifications.
+
 The samd21 directory contains code from the
 Atmel.SAMD21_DFP.1.3.304.atpack zip file found at:
   http://packs.download.atmel.com/
@@ -73,6 +80,11 @@ The stm32f4 directory contains code from:
 version v1.24.1 (b5abca20c9676b04f8d2885a668a9b653ee65705). Contents
 taken from the Drivers/CMSIS/Device/ST/STM32F4xx/ directory.
 
+The stm32f7 directory contains code from:
+  https://github.com/STMicroelectronics/STM32CubeF7
+version v1.15.0 (3600603267ebc7da619f50542e99bbdfd7e35f4a). Contents
+taken from the Drivers/CMSIS/Device/ST/STM32F7xx/ directory.
+
 The stm32g0 directory contains code from:
   https://github.com/STMicroelectronics/STM32CubeG0
 version v1.4.1 (5cb06333a6a43cefbe145f10a5aa98d3cc4cffee). Contents
@@ -120,7 +132,7 @@ details. See changes.diff for the modifications.
 
 The pru_rpmsg directory contains code from:
   https://github.com/dinuxbg/pru-gcc-examples
-revision 425a42d82006cf0aa24be27b483d2f6a41607489. The code is taken
+revision e2bd170d4d61b3e642da65e0f0d487e10872fe22. The code is taken
 from the repo's hc-sr04-range-sensor directory. It has been modified
 so that the IEP definitions compile correctly. See pru_rpmsg.patch for
 the modifications.
@@ -155,8 +167,12 @@ used to upload firmware to devices flashed with the CanBoot bootloader.
 
 The can2040 directory contains code from:
   https://github.com/KevinOConnor/can2040
-revision 177b0073fe6f19281ee7f7fdbe9599e32d1b4b8b.
+version v1.6.0 (af3d21e5d61b8408c63fbdfb0aceb21d69d91693)
 
 The Huada HC32F460 directory contains code from:
   https://www.hdsc.com.cn/Category83-1490
 version 2.2 DDL minus example directory, empty/extra files
+
+The n32g45x directory contains parts of code from:
+  https://github.com/RT-Thread/rt-thread/tree/master/bsp/n32g452xx/Libraries/N32_Std_Driver
+version v1.0.1 (77638c17877c4b6b0b81e189a36bb08b3384923b)

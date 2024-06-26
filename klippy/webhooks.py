@@ -268,8 +268,14 @@ class ClientConnection:
         self.send(result)
 
     def send(self, data):
-        jmsg = json.dumps(data, separators=(',', ':'))
-        self.send_buffer += jmsg.encode() + b"\x03"
+        try:
+            jmsg = json.dumps(data, separators=(',', ':'))
+            self.send_buffer += jmsg.encode() + b"\x03"
+        except (TypeError, ValueError) as e:
+            msg = ("json encoding error: %s" % (str(e),))
+            logging.exception(msg)
+            self.printer.invoke_shutdown(msg)
+            return
         if not self.is_blocking:
             self._do_send()
 
@@ -348,9 +354,14 @@ class WebHooks:
         state_message, state = self.printer.get_state_message()
         src_path = os.path.dirname(__file__)
         klipper_path = os.path.normpath(os.path.join(src_path, ".."))
-        response = {'state': state, 'state_message': state_message,
+        response = {'state': state,
+                    'state_message': state_message,
                     'hostname': socket.gethostname(),
-                    'klipper_path': klipper_path, 'python_path': sys.executable}
+                    'klipper_path': klipper_path,
+                    'python_path': sys.executable,
+                    'process_id': os.getpid(),
+                    'user_id': os.getuid(),
+                    'group_id': os.getgid()}
         start_args = self.printer.get_start_args()
         for sa in ['log_file', 'config_file', 'software_version', 'cpu_info']:
             response[sa] = start_args.get(sa)

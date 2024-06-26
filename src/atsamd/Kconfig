@@ -9,8 +9,7 @@ config ATSAMD_SELECT
     select HAVE_GPIO_ADC
     select HAVE_GPIO_I2C
     select HAVE_GPIO_SPI
-    select HAVE_GPIO_HARD_PWM if MACH_SAMD21
-    select HAVE_GPIO_BITBANGING
+    select HAVE_GPIO_HARD_PWM if MACH_SAMX2
     select HAVE_STRICT_TIMING
     select HAVE_CHIPID
     select HAVE_STEPPER_BOTH_EDGE
@@ -27,11 +26,17 @@ config BOARD_DIRECTORY
 
 choice
     prompt "Processor model"
+    config MACH_SAMC21G18
+        bool "SAMC21G18 (Duet 3 Toolboard 1LC)"
+        select MACH_SAMC21
     config MACH_SAMD21G18
         bool "SAMD21G18 (Arduino Zero)"
         select MACH_SAMD21
     config MACH_SAMD21E18
         bool "SAMD21E18 (Adafruit Trinket M0)"
+        select MACH_SAMD21
+    config MACH_SAMD21J18
+        bool "SAMD21J18 (ReprapWorld Minitronics v2)"
         select MACH_SAMD21
     config MACH_SAMD21E15
         bool "SAMD21E15"
@@ -56,8 +61,14 @@ choice
         select MACH_SAME54
 endchoice
 
+config MACH_SAMX2
+    bool
+config MACH_SAMC21
+    bool
+    select MACH_SAMX2
 config MACH_SAMD21
     bool
+    select MACH_SAMX2
 config MACH_SAMX5
     bool
 config MACH_SAMD51
@@ -71,12 +82,18 @@ config MACH_SAME54
     select MACH_SAMX5
 config HAVE_SAMD_CANBUS
     bool
-    default y if MACH_SAME51 || MACH_SAME54
+    default y if MACH_SAMC21 || MACH_SAME51 || MACH_SAME54
+config HAVE_SAMD_USB
+    bool
+    default n if MACH_SAMC21G18
+    default y
 
 config MCU
     string
+    default "samc21g18a" if MACH_SAMC21G18
     default "samd21g18a" if MACH_SAMD21G18
     default "samd21e18a" if MACH_SAMD21E18
+    default "samd21j18a" if MACH_SAMD21J18
     default "samd21e15a" if MACH_SAMD21E15
     default "samd51g19a" if MACH_SAMD51G19
     default "samd51j19a" if MACH_SAMD51J19
@@ -88,7 +105,7 @@ config MCU
 config FLASH_SIZE
     hex
     default 0x8000 if MACH_SAMD21E15
-    default 0x40000 if MACH_SAMD21G18 || MACH_SAMD21E18
+    default 0x40000 if MACH_SAMC21G18 || MACH_SAMD21G18 || MACH_SAMD21E18 || MACH_SAMD21J18
     default 0x80000 if MACH_SAMD51G19 || MACH_SAMD51J19 || MACH_SAMD51N19 || MACH_SAME51J19
     default 0x100000 if MACH_SAMD51P20 || MACH_SAME54P20
 
@@ -103,7 +120,7 @@ config RAM_START
 config RAM_SIZE
     hex
     default 0x1000 if MACH_SAMD21E15
-    default 0x8000 if MACH_SAMD21G18 || MACH_SAMD21E18
+    default 0x8000 if MACH_SAMC21G18 ||  MACH_SAMD21G18 || MACH_SAMD21E18 || MACH_SAMD21J18
     default 0x30000 if MACH_SAMD51G19 || MACH_SAMD51J19 || MACH_SAMD51N19 || MACH_SAME51J19
     default 0x40000 if MACH_SAMD51P20 || MACH_SAME54P20
 
@@ -122,7 +139,7 @@ choice
         depends on MACH_SAMD21
         bool "8KiB bootloader (Arduino Zero)"
     config SAMD_FLASH_START_4000
-        bool "16KiB bootloader (Arduino M0)"
+        bool "16KiB bootloader (Arduino M0, Duet 3 Bootloader)"
     config SAMD_FLASH_START_0000
         bool "No bootloader"
 endchoice
@@ -140,11 +157,13 @@ config FLASH_APPLICATION_ADDRESS
 choice
     prompt "Clock Reference"
     config CLOCK_REF_X32K
-        bool "32.768Khz crystal"
+        bool "32.768Khz crystal" if !MACH_SAMC21
+    config CLOCK_REF_X12M
+        bool "12Mhz crystal" if MACH_SAMC21
     config CLOCK_REF_X25M
-        bool "25Mhz crystal" if MACH_SAMX5
+        bool "25Mhz crystal" if MACH_SAMC21 || MACH_SAMX5
     config CLOCK_REF_INTERNAL
-        bool "Internal clock"
+        bool "Internal clock" if !MACH_SAMC21
 endchoice
 
 choice
@@ -162,7 +181,7 @@ endchoice
 
 config CLOCK_FREQ
     int
-    default 48000000 if MACH_SAMD21
+    default 48000000 if MACH_SAMX2
     default 150000000 if SAMD51_FREQ_150
     default 180000000 if SAMD51_FREQ_180
     default 200000000 if SAMD51_FREQ_200
@@ -177,9 +196,11 @@ choice
     prompt "Communication interface"
     config ATSAMD_USB
         bool "USB"
+        depends on HAVE_SAMD_USB
         select USBSERIAL
     config ATSAMD_SERIAL
         bool "Serial"
+        depends on !MACH_SAMC21
         select SERIAL
     config ATSAMD_MMENU_CANBUS_PA23_PA22
         bool "CAN bus (on PA23/PA22)"
@@ -189,9 +210,13 @@ choice
         bool "CAN bus (on PA25/PA24)"
         depends on HAVE_SAMD_CANBUS
         select CANSERIAL
+    config ATSAMD_MMENU_CANBUS_PB11_PB10
+        bool "CAN bus (on PB11/PB10)"
+        depends on HAVE_SAMD_CANBUS && MACH_SAMC21
+        select CANSERIAL
     config ATSAMD_MMENU_CANBUS_PB13_PB12
         bool "CAN bus (on PB13/PB12)"
-        depends on HAVE_SAMD_CANBUS
+        depends on HAVE_SAMD_CANBUS && !MACH_SAMC21
         select CANSERIAL
     config ATSAMD_MMENU_CANBUS_PB15_PB14
         bool "CAN bus (on PB15/PB14)"
@@ -199,7 +224,7 @@ choice
         select CANSERIAL
     config ATSAMD_USBCANBUS
         bool "USB to CAN bus bridge"
-        depends on HAVE_SAMD_CANBUS
+        depends on HAVE_SAMD_CANBUS && HAVE_SAMD_USB
         select USBCANBUS
 endchoice
 choice
@@ -218,6 +243,9 @@ config ATSAMD_CANBUS_PA23_PA22
 config ATSAMD_CANBUS_PA25_PA24
     bool
     default y if ATSAMD_MMENU_CANBUS_PA25_PA24
+config ATSAMD_CANBUS_PB11_PB10
+    bool
+    default y if ATSAMD_MMENU_CANBUS_PB11_PB10
 config ATSAMD_CANBUS_PB13_PB12
     bool
     default y if ATSAMD_MMENU_CANBUS_PB13_PB12 || ATSAMD_CMENU_CANBUS_PB13_PB12

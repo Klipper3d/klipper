@@ -2,7 +2,7 @@
 
 These instructions assume the software will run on a Raspberry Pi
 computer in conjunction with OctoPrint. It is recommended that a
-Raspberry Pi 2, 3, or 4 computer be used as the host machine (see the
+Raspberry Pi 2 (or later) be used as the host machine (see the
 [FAQ](FAQ.md#can-i-run-klipper-on-something-other-than-a-raspberry-pi-3)
 for other machines).
 
@@ -50,7 +50,7 @@ using a Linux or MacOS desktop, then the "ssh" software should already
 be installed on the desktop. There are free ssh clients available for
 other desktops (eg,
 [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/)). Use the
-ssh utility to connect to the Raspberry Pi (ssh pi@octopi -- password
+ssh utility to connect to the Raspberry Pi (`ssh pi@octopi` -- password
 is "raspberry") and run the following commands:
 
 ```
@@ -135,18 +135,18 @@ web page and then configure the following items:
 
 Navigate to the Settings tab (the wrench icon at the top of the
 page). Under "Serial Connection" in "Additional serial ports" add
-"/tmp/printer". Then click "Save".
+`/tmp/printer`. Then click "Save".
 
 Enter the Settings tab again and under "Serial Connection" change the
-"Serial Port" setting to "/tmp/printer".
+"Serial Port" setting to `/tmp/printer`.
 
 In the Settings tab, navigate to the "Behavior" sub-tab and select the
 "Cancel any ongoing prints but stay connected to the printer"
 option. Click "Save".
 
 From the main page, under the "Connection" section (at the top left of
-the page) make sure the "Serial Port" is set to "/tmp/printer" and
-click "Connect". (If "/tmp/printer" is not an available selection then
+the page) make sure the "Serial Port" is set to `/tmp/printer` and
+click "Connect". (If `/tmp/printer` is not an available selection then
 try reloading the page.)
 
 Once connected, navigate to the "Terminal" tab and type "status"
@@ -165,8 +165,8 @@ Arguably the easiest way to set the Klipper configuration file is to
 use a desktop editor that supports editing files over the "scp" and/or
 "sftp" protocols. There are freely available tools that support this
 (eg, Notepad++, WinSCP, and Cyberduck). Load the printer config file
-in the editor and then save it as a file named "printer.cfg" in the
-home directory of the pi user (ie, /home/pi/printer.cfg).
+in the editor and then save it as a file named `printer.cfg` in the
+home directory of the pi user (ie, `/home/pi/printer.cfg`).
 
 Alternatively, one can also copy and edit the file directly on the
 Raspberry Pi via ssh. That may look something like the following (be

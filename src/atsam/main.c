@@ -14,6 +14,8 @@
 #define FREQ_PERIPH_DIV (CONFIG_MACH_SAME70 ? 2 : 1)
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / FREQ_PERIPH_DIV)
 
+#define FREQ_SAME70_CAN 80000000
+
 /****************************************************************
  * watchdog handler
  ****************************************************************/
@@ -62,6 +64,10 @@ enable_pclock(uint32_t id)
 uint32_t
 get_pclock_frequency(uint32_t id)
 {
+#if CONFIG_MACH_SAME70
+    if (id == MCAN0_CLOCK_ID || id == MCAN1_CLOCK_ID)
+        return FREQ_SAME70_CAN;
+#endif
     return FREQ_PERIPH;
 }
 

@@ -30,7 +30,8 @@ class HallFilamentWidthSensor:
                              - self.measurement_max_difference)
         self.diameter =self.nominal_filament_dia
         self.is_active =config.getboolean('enable', False)
-        self.runout_dia=config.getfloat('min_diameter', 1.0)
+        self.runout_dia_min=config.getfloat('min_diameter', 1.0)
+        self.runout_dia_max=config.getfloat('max_diameter', self.max_diameter)
         self.is_log =config.getboolean('logging', False)
         # Use the current diameter instead of nominal while the first
         # measurement isn't in place
@@ -48,10 +49,10 @@ class HallFilamentWidthSensor:
         # Start adc
         self.ppins = self.printer.lookup_object('pins')
         self.mcu_adc = self.ppins.setup_pin('adc', self.pin1)
-        self.mcu_adc.setup_minmax(ADC_SAMPLE_TIME, ADC_SAMPLE_COUNT)
+        self.mcu_adc.setup_adc_sample(ADC_SAMPLE_TIME, ADC_SAMPLE_COUNT)
         self.mcu_adc.setup_adc_callback(ADC_REPORT_TIME, self.adc_callback)
         self.mcu_adc2 = self.ppins.setup_pin('adc', self.pin2)
-        self.mcu_adc2.setup_minmax(ADC_SAMPLE_TIME, ADC_SAMPLE_COUNT)
+        self.mcu_adc2.setup_adc_sample(ADC_SAMPLE_TIME, ADC_SAMPLE_COUNT)
         self.mcu_adc2.setup_adc_callback(ADC_REPORT_TIME, self.adc2_callback)
         # extrude factor updating
         self.extrude_factor_update_timer = self.reactor.register_timer(
@@ -125,7 +126,7 @@ class HallFilamentWidthSensor:
         self.update_filament_array(last_epos)
         # Check runout
         self.runout_helper.note_filament_present(
-            self.diameter > self.runout_dia)
+            self.runout_dia_min <= self.diameter <= self.runout_dia_max)
         # Does filament exists
         if self.diameter > 0.5:
             if len(self.filament_array) > 0:

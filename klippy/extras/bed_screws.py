@@ -42,7 +42,12 @@ class BedScrews:
         self.current_screw = 0
         self.accepted_screws = 0
     def move(self, coord, speed):
-        self.printer.lookup_object('toolhead').manual_move(coord, speed)
+        try:
+            self.printer.lookup_object('toolhead').manual_move(coord, speed)
+        except self.printer.command_error as e:
+            self.unregister_commands()
+            self.reset()
+            raise
     def move_to_screw(self, state, screw):
         # Move up, over, and then down
         self.move((None, None, self.horizontal_move_z), self.lift_speed)

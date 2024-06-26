@@ -8,6 +8,101 @@ All dates in this document are approximate.
 
 ## Changes
 
+20240415: The `on_error_gcode` parameter in the `[virtual_sdcard]`
+config section now has a default. If this parameter is not specified
+it now defaults to `TURN_OFF_HEATERS`. If the previous behavior is
+desired (take no default action on an error during a virtual_sdcard
+print) then define `on_error_gcode` with an empty value.
+
+20240313: The `max_accel_to_decel` parameter in the `[printer]` config
+section has been deprecated. The `ACCEL_TO_DECEL` parameter of the
+`SET_VELOCITY_LIMIT` command has been deprecated. The
+`printer.toolhead.max_accel_to_decel` status has been removed. Use the
+[minimum_cruise_ratio parameter](./Config_Reference.md#printer)
+instead. The deprecated features will be removed in the near future,
+and using them in the interim may result in subtly different behavior.
+
+20240215: Several deprecated features have been removed. Using "NTC
+100K beta 3950" as a thermistor name has been removed (deprecated on
+20211110). The `SYNC_STEPPER_TO_EXTRUDER` and
+`SET_EXTRUDER_STEP_DISTANCE` commands have been removed, and the
+extruder `shared_heater` config option has been removed (deprecated on
+20220210). The bed_mesh `relative_reference_index` option has been
+removed (deprecated on 20230619).
+
+20240123: The output_pin SET_PIN CYCLE_TIME parameter has been
+removed. Use the new
+[pwm_cycle_time](Config_Reference.md#pwm_cycle_time) module if it is
+necessary to dynamically change a pwm pin's cycle time.
+
+20240123: The output_pin `maximum_mcu_duration` parameter is
+deprecated. Use a [pwm_tool config section](Config_Reference.md#pwm_tool)
+instead. The option will be removed in the near future.
+
+20240123: The output_pin `static_value` parameter is deprecated.
+Replace with `value` and `shutdown_value` parameters.  The option will
+be removed in the near future.
+
+20231216: The `[hall_filament_width_sensor]` is changed to trigger filament runout
+when the thickness of the filament exceeds `max_diameter`. The maximum diameter
+defaults to `default_nominal_filament_diameter + max_difference`. See
+[[hall_filament_width_sensor] configuration
+reference](./Config_Reference.md#hall_filament_width_sensor) for more details.
+
+20231207: Several undocumented config parameters in the `[printer]`
+config section have been removed (the buffer_time_low,
+buffer_time_high, buffer_time_start, and move_flush_time parameters).
+
+20231110: Klipper v0.12.0 released.
+
+20230826: If `safe_distance` is set or calculated to be 0 in `[dual_carriage]`,
+the carriages proximity checks will be disabled as per documentation. A user
+may wish to configure `safe_distance` explicitly to prevent accidental crashes
+of the carriages with each other. Additionally, the homing order of the primary
+and the dual carriage is changed in some configurations (certain configurations
+when both carriages home in the same direction, see
+[[dual_carriage] configuration reference](./Config_Reference.md#dual_carriage)
+for more details).
+
+20230810: The flash-sdcard.sh script now supports both variants of the
+Bigtreetech SKR-3, STM32H743 and STM32H723. For this, the original tag
+of btt-skr-3 now has changed to be either btt-skr-3-h743 or btt-skr-3-h723.
+
+20230729: The exported status for `dual_carriage` is changed. Instead of
+exporting `mode` and `active_carriage`, the individual modes for each
+carriage are exported as `printer.dual_carriage.carriage_0` and
+`printer.dual_carriage.carriage_1`.
+
+20230619: The `relative_reference_index` option has been deprecated
+and superceded by the `zero_reference_position` option.  Refer to the
+[Bed Mesh Documentation](./Bed_Mesh.md#the-deprecated-relative_reference_index)
+for details on how to update the configuration.  With this deprecation
+the `RELATIVE_REFERENCE_INDEX` is no longer available as a parameter
+for the `BED_MESH_CALIBRATE` gcode command.
+
+20230530: The default canbus frequency in "make menuconfig" is
+now 1000000. If using canbus and using canbus with some other
+frequency is required, then be sure to select "Enable extra low-level
+configuration options" and specify the desired "CAN bus speed" in
+"make menuconfig" when compiling and flashing the micro-controller.
+
+20230525: `SHAPER_CALIBRATE` command immediately applies input shaper
+parameters if `[input_shaper]` was enabled already.
+
+20230407: The `stalled_bytes` counter in the log and in the
+`printer.mcu.last_stats` field has been renamed to `upcoming_bytes`.
+
+20230323: On tmc5160 drivers `multistep_filt` is now enabled by default. Set
+`driver_MULTISTEP_FILT: False` in the tmc5160 config for the previous behavior.
+
+20230304: The `SET_TMC_CURRENT` command now properly adjusts the globalscaler
+register for drivers that have it. This removes a limitation where on tmc5160,
+the currents could not be raised higher with `SET_TMC_CURRENT` than the
+`run_current` value set in the config file.
+However, this has a side effect: After running `SET_TMC_CURRENT`, the stepper
+must be held at standstill for >130ms in case StealthChop2 is used so that the
+AT#1 calibration gets executed by the driver.
+
 20230202: The format of the `printer.screws_tilt_adjust` status
 information has changed. The information is now stored as a dictionary of
 screws with the resulting measurements. See the

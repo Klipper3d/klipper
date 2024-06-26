@@ -7,7 +7,7 @@
 #include <stdint.h> // uint32_t
 #include <pru/io.h> // read_r31
 #include <pru_iep.h> // CT_IEP
-#include <pru_intc.h> // CT_INTC
+
 #include <rsc_types.h> // resource_table
 #include "board/misc.h" // dynmem_start
 #include "board/io.h" // readl
@@ -75,7 +75,7 @@ timer_kick(void)
     timer_set(timer_read_time() + 50);
     CT_IEP.TMR_CMP_STS = 0xff;
     __delay_cycles(4);
-    CT_INTC.SECR0 = 1 << IEP_EVENT;
+    PRU_INTC.SECR0 = 1 << IEP_EVENT;
 }
 
 static uint32_t in_timer_dispatch;
@@ -83,9 +83,9 @@ static uint32_t in_timer_dispatch;
 static void
 _irq_poll(void)
 {
-    uint32_t secr0 = CT_INTC.SECR0;
+    uint32_t secr0 = PRU_INTC.SECR0;
     if (secr0 & (1 << KICK_PRU1_EVENT)) {
-        CT_INTC.SECR0 = 1 << KICK_PRU1_EVENT;
+        PRU_INTC.SECR0 = 1 << KICK_PRU1_EVENT;
         sched_wake_tasks();
     }
     if (secr0 & (1 << IEP_EVENT)) {
@@ -93,7 +93,7 @@ _irq_poll(void)
         in_timer_dispatch = 1;
         uint32_t next = timer_dispatch_many();
         timer_set(next);
-        CT_INTC.SECR0 = 1 << IEP_EVENT;
+        PRU_INTC.SECR0 = 1 << IEP_EVENT;
         in_timer_dispatch = 0;
     }
 }
@@ -148,7 +148,7 @@ console_sendf(const struct command_encoder *ce, va_list args)
     SHARED_MEM->next_encoder_args = args;
     writel(&SHARED_MEM->next_encoder, (uint32_t)ce);
 
-    // Signal PRU0 to transmit message
+    // Signal PRU0 to transmit message - 20 | (18-16)  = 22 = 0010 0010
     write_r31(R31_WRITE_IRQ_SELECT | (KICK_PRU0_EVENT - R31_WRITE_IRQ_OFFSET));
     uint32_t itd = in_timer_dispatch;
     while (readl(&SHARED_MEM->next_encoder))
@@ -196,25 +196,6 @@ dynmem_end(void)
 {
     return (void*)(8*1024 - STACK_SIZE);
 }
-
-
-/****************************************************************
- * Resource table
- ****************************************************************/
-
-struct my_resource_table {
-    struct resource_table base;
-
-    uint32_t offset[1]; /* Should match 'num' in actual definition */
-} resourceTable __visible __section(".resource_table") = {
-    {
-        1,              /* Resource table version: only version 1 is
-                         * supported by the current driver */
-        0,              /* number of entries in the table */
-        { 0, 0 },       /* reserved, must be zero */
-    },
-};
-
 
 /****************************************************************
  * Startup

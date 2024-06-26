@@ -70,5 +70,8 @@ void SystemInit( void )
 
     // Configure PCK6 for TC use
     PMC->PMC_PCK[6] = PMC_PCK_CSS_MCK | PMC_PCK_PRES(2);
-    PMC->PMC_SCER = PMC_SCER_PCK6;
+    while ( !(PMC->PMC_SR & PMC_SR_PCKRDY6) )
+    {
+    }
+    PMC->PMC_SCER |= PMC_SCER_PCK6;
 }

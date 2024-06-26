@@ -69,6 +69,8 @@ class ConfigWrapper:
         return self._get_wrapper(self.fileconfig.getboolean, option, default,
                                  note_valid=note_valid)
     def getchoice(self, option, choices, default=sentinel, note_valid=True):
+        if type(choices) == type([]):
+            choices = {i: i for i in choices}
         if choices and type(list(choices.keys())[0]) == int:
             c = self.getint(option, default, note_valid=note_valid)
         else:
@@ -143,6 +145,8 @@ class PrinterConfig:
         self.printer = printer
         self.autosave = None
         self.deprecated = {}
+        self.runtime_warnings = []
+        self.deprecate_warnings = []
         self.status_raw_config = {}
         self.status_save_pending = {}
         self.status_settings = {}
@@ -172,16 +176,16 @@ class PrinterConfig:
             autosave_data = data[pos + len(AUTOSAVE_HEADER):].strip()
         # Check for errors and strip line prefixes
         if "\n#*# " in regular_data:
-            logging.warn("Can't read autosave from config file"
-                         " - autosave state corrupted")
+            logging.warning("Can't read autosave from config file"
+                            " - autosave state corrupted")
             return data, ""
         out = [""]
         for line in autosave_data.split('\n'):
             if ((not line.startswith("#*#")
                  or (len(line) >= 4 and not line.startswith("#*# ")))
                 and autosave_data):
-                logging.warn("Can't read autosave from config file"
-                             " - modifications after header")
+                logging.warning("Can't read autosave from config file"
+                                " - modifications after header")
                 return data, ""
             out.append(line[4:])
         out.append("")
@@ -189,7 +193,6 @@ class PrinterConfig:
     comment_r = re.compile('[#;].*$')
     value_r = re.compile('[^A-Za-z0-9_].*$')
     def _strip_duplicates(self, data, config):
-        fileconfig = config.fileconfig
         # Comment out fields in 'data' that are defined in 'config'
         lines = data.split('\n')
         section = None
@@ -217,7 +220,10 @@ class PrinterConfig:
         data = '\n'.join(buffer)
         del buffer[:]
         sbuffer = io.StringIO(data)
-        fileconfig.readfp(sbuffer, filename)
+        if sys.version_info.major >= 3:
+            fileconfig.read_file(sbuffer, filename)
+        else:
+            fileconfig.readfp(sbuffer, filename)
     def _resolve_include(self, source_filename, include_spec, fileconfig,
                          visited):
         dirname = os.path.dirname(source_filename)
@@ -311,6 +317,11 @@ class PrinterConfig:
                  "======================="]
         self.printer.set_rollover_info("config", "\n".join(lines))
     # Status reporting
+    def runtime_warning(self, msg):
+        logging.warning(msg)
+        res = {'type': 'runtime_warning', 'message': msg}
+        self.runtime_warnings.append(res)
+        self.status_warnings = self.runtime_warnings + self.deprecate_warnings
     def deprecate(self, section, option, value=None, msg=None):
         self.deprecated[(section, option, value)] = msg
     def _build_status(self, config):
@@ -322,7 +333,7 @@ class PrinterConfig:
         self.status_settings = {}
         for (section, option), value in config.access_tracking.items():
             self.status_settings.setdefault(section, {})[option] = value
-        self.status_warnings = []
+        self.deprecate_warnings = []
         for (section, option, value), msg in self.deprecated.items():
             if value is None:
                 res = {'type': 'deprecated_option'}
@@ -331,7 +342,8 @@ class PrinterConfig:
             res['message'] = msg
             res['section'] = section
             res['option'] = option
-            self.status_warnings.append(res)
+            self.deprecate_warnings.append(res)
+        self.status_warnings = self.runtime_warnings + self.deprecate_warnings
     def get_status(self, eventtime):
         return {'config': self.status_raw_config,
                 'settings': self.status_settings,
