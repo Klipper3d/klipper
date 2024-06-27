@@ -179,6 +179,8 @@ class SerialReader:
         logging.info("%sStarting serial connect", self.warn_prefix)
         start_time = self.reactor.monotonic()
         while 1:
+            if self.serialqueue is not None: # if we're already connected, don't recon
+                break
             if self.reactor.monotonic() > start_time + 90.:
                 self._error("Unable to connect")
             try:
@@ -196,6 +198,17 @@ class SerialReader:
             ret = self._start_session(serial_dev)
             if ret:
                 break
+    def check_connect(self, serialport, baud, rts=True):
+        serial_dev = serial.Serial(baudrate=baud, timeout=0, exclusive=False)
+        serial_dev.port = serialport
+        serial_dev.rts = rts
+        try:
+            serial_dev.open()
+        except Exception:
+            return False
+        serial_dev.close()
+        return True
+
     def connect_file(self, debugoutput, dictionary, pace=False):
         self.serial_dev = debugoutput
         self.msgparser.process_identify(dictionary, decompress=False)
@@ -240,9 +253,15 @@ class SerialReader:
                 self.handlers[name, oid] = callback
     # Command sending
     def raw_send(self, cmd, minclock, reqclock, cmd_queue):
+        if self.serialqueue is None:
+            logging.info("%sSerial connection closed, cmd: %s", self.warn_prefix, repr(cmd))
+            return
         self.ffi_lib.serialqueue_send(self.serialqueue, cmd_queue,
                                       cmd, len(cmd), minclock, reqclock, 0)
     def raw_send_wait_ack(self, cmd, minclock, reqclock, cmd_queue):
+        if self.serialqueue is None:
+            logging.info("%sSerial connection closed, in wait ack, cmd: %s", self.warn_prefix, repr(cmd))
+            return
         self.last_notify_id += 1
         nid = self.last_notify_id
         completion = self.reactor.completion()
