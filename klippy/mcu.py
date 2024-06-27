@@ -548,6 +548,7 @@ class MCU_adc:
 class MCU:
     error = error
     def __init__(self, config, clocksync):
+        self._config = config
         self._printer = printer = config.get_printer()
         self._clocksync = clocksync
         self._reactor = printer.get_reactor()
@@ -679,12 +680,14 @@ class MCU:
             cb()
         self._config_cmds.insert(0, "allocate_oids count=%d"
                                  % (self._oid_count,))
+
         # Resolve pin names
         ppins = self._printer.lookup_object('pins')
         pin_resolver = ppins.get_pin_resolver(self._name)
         for cmdlist in (self._config_cmds, self._restart_cmds, self._init_cmds):
             for i, cmd in enumerate(cmdlist):
                 cmdlist[i] = pin_resolver.update_command(cmd)
+                logging.info("command: %s", cmdlist[i])
         # Calculate config CRC
         encoded_config = '\n'.join(self._config_cmds).encode()
         config_crc = zlib.crc32(encoded_config) & 0xffffffff
@@ -738,6 +741,28 @@ class MCU:
             "MCU '%s' config: %s" % (self._name, " ".join(
                 ["%s=%s" % (k, v) for k, v in self.get_constants().items()]))]
         return "\n".join(log_info)
+
+    def recon_mcu(self):
+        res = self._mcu_identify()
+        if not res:
+            return
+        self.reset_to_initial_state()
+        self._connect()
+        self._reactor.update_timer(
+            self.non_critical_recon_timer, self._reactor.NEVER
+        )
+        self._reactor.unregister_timer(self.non_critical_recon_timer)
+        self.last_noncrit_recon_eventtime = None
+        logging.info("mcu: %s reconnected", self._name)
+
+    def reset_to_initial_state(self):
+        self._oid_count = 0
+        self._config_cmds = []
+        self._restart_cmds = []
+        self._init_cmds = []
+        self._reserved_move_slots = 0
+        self._stepqueues = []
+        self._steppersync = None
     def _connect(self):
         config_params = self._send_get_config()
         if not config_params['is_config']:
