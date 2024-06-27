@@ -8,4 +8,3 @@ rm -rf outfw
 ./_build.sh bed || exit $?
 ./_build.sh noz || exit $?
 ./_build.sh mcu || exit $?
-./_build.sh host || exit $?
