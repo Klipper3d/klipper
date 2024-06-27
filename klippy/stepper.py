@@ -186,7 +186,7 @@ class MCU_stepper:
             raise error("Internal error in stepcompress")
         self._query_mcu_position()
     def _query_mcu_position(self):
-        if self._mcu.is_fileoutput():
+        if self._mcu.is_fileoutput() or self._mcu.non_critical_disconnected:
             return
         params = self._get_position_cmd.send([self._oid])
         last_pos = params['pos']

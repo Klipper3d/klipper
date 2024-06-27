@@ -200,6 +200,10 @@ class PrinterLCD:
             raise config.error("Unknown display_data group '%s'" % (dgroup,))
         # Screen updating
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
+        self.printer.register_event_handler(
+            self.lcd_chip.mcu.get_non_critical_reconnect_event_name(),
+            self.handle_reconnect,
+        )
         self.screen_update_timer = self.reactor.register_timer(
             self.screen_update_event)
         self.redraw_request_pending = False
@@ -214,6 +218,10 @@ class PrinterLCD:
                                        self.cmd_SET_DISPLAY_GROUP)
     def get_dimensions(self):
         return self.lcd_chip.get_dimensions()
+
+    def handle_reconnect(self):
+        self.lcd_chip.init()
+
     def handle_ready(self):
         self.lcd_chip.init()
         # Start screen update timer

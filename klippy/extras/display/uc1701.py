@@ -167,6 +167,7 @@ class ResetHelper:
 class UC1701(DisplayBase):
     def __init__(self, config):
         io = SPI4wire(config, "a0_pin")
+        self.mcu = io.spi.get_mcu()
         DisplayBase.__init__(self, io)
         self.contrast = config.getint('contrast', 40, minval=0, maxval=63)
         self.reset = ResetHelper(config.get("rst_pin", None), io.spi)
@@ -204,6 +205,7 @@ class SSD1306(DisplayBase):
         else:
             io = SPI4wire(config, "dc_pin")
             io_bus = io.spi
+        self.mcu = io_bus.get_mcu()
         self.reset = ResetHelper(config.get("reset_pin", None), io_bus)
         DisplayBase.__init__(self, io, columns, x_offset)
         self.contrast = config.getint('contrast', 239, minval=0, maxval=255)

@@ -101,6 +101,13 @@ class LIS2DW:
             "query_lis2dw oid=%c rest_ticks=%u", cq=cmdqueue)
         self.ffreader.setup_query_command("query_lis2dw_status oid=%c",
                                           oid=self.oid, cq=cmdqueue)
+
+    def check_connected(self):
+        if self.mcu.non_critical_disconnected:
+            raise self.printer.command_error(
+                f"LIS2DW: {self.name} could not connect because mcu: {self.mcu.get_name()} is non_critical_disconnected!"
+            )
+
     def read_reg(self, reg):
         if self.bus_type == SPI_SERIAL_TYPE:
             params = self.bus.spi_transfer([reg | REG_MOD_READ, 0x00])
@@ -121,6 +128,7 @@ class LIS2DW:
                     "(e.g. faulty wiring) or a faulty lis2dw chip." % (
                         reg, val, stored_val))
     def start_internal_client(self):
+        self.check_connected()
         aqh = adxl345.AccelQueryHelper(self.printer)
         self.batch_bulk.add_client(aqh.handle_batch)
         return aqh

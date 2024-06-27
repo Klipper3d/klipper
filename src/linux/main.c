@@ -51,8 +51,8 @@ static char **orig_argv;
 void
 command_config_reset(uint32_t *args)
 {
-    if (! sched_is_shutdown())
-        shutdown("config_reset only available when shutdown");
+    // if (! sched_is_shutdown())
+    //     shutdown("config_reset only available when shutdown");
     int ret = execv(orig_argv[0], orig_argv);
     report_errno("execv", ret);
 }
