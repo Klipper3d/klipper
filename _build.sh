@@ -5,7 +5,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd -P)"
 cd $SCRIPT_DIR
 
 cp .config.$1 .config
-mkdir -p outfw
+mkdir -p outfw/
 make clean
 make 
 mv out/${1}*.bin outfw/
