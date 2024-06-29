@@ -44,7 +44,9 @@ class DelayedGcode:
         self.duration = gcmd.get_float('DURATION', minval=0.)
         if self.inside_timer:
             self.repeat = (self.duration != 0.)
-        else:
+        elif self.timer_handler is not None:
+            # Update the timer if it has already been created. A klippy:ready
+            # handler might call this method before that happened.
             waketime = self.reactor.NEVER
             if self.duration:
                 waketime = self.reactor.monotonic() + self.duration
