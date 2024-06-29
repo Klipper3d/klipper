@@ -42,6 +42,14 @@ points along the bed
 > **Tip:** Bed temperature and nozzle temperature and size do not seem to have
 > an influence to the calibration process.
 
+## New Command: AXIS_TWIST_COMPENSATION_AUTOCALIBRATE
+
+The ``AXIS_TWIST_COMPENSATION_AUTOCALIBRATE`` command performs automatic calibration to calculate the twist of the X and Y axes without manual measurement.
+
+ * Recommendation: Ensure the bed is completely flat and aligned (without tilt) as much as possible before performing the autocalibration. The autocalibration will take probes and automatically calculate the twist of the X and Y axes.
+
+User Recommendation: It is recommended to use a glass bed for calibration.
+
 ## [axis_twist_compensation] setup and commands
 
 Configuration options for [axis_twist_compensation] can be found in the
