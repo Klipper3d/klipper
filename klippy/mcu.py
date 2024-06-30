@@ -409,6 +409,17 @@ class MCU_pwm:
         self._last_clock = 0
         self._pwm_max = 0.
         self._set_cmd = None
+    def raw_pin_string(self):
+        ppins = self._mcu._printer.lookup_object('pins')
+        pin_resolver = ppins.get_pin_resolver(self._mcu._name)
+        pin_real_name = pin_resolver.aliases.get(self._pin, self._pin)
+        if self._invert:
+            return '!'+pin_real_name
+        else:
+            return pin_real_name
+    def is_initial_pin(self):
+        initial_pins = self._mcu.get_constants().get('INITIAL_PINS', '')
+        return (self.raw_pin_string() in initial_pins.split(','))
     def get_mcu(self):
         return self._mcu
     def setup_max_duration(self, max_duration):
