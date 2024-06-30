@@ -30,6 +30,7 @@ perform `AXIS_TWIST_COMPENSATION_CALIBRATE`
 points along the bed
 * The calibration defaults to 3 points but you can use the option
 `SAMPLE_COUNT=` to use a different number.
+* For Y-axis calibration, use `AXIS_TWIST_COMPENSATION_CALIBRATE AXIS=Y` instead.
 2. [Adjust your Z offset](Probe_Calibrate.md#calibrating-probe-z-offset)
 3. Perform automatic/probe-based bed tramming operations, such as
 [Screws Tilt Adjust](G-Codes.md#screws_tilt_adjust),
@@ -40,6 +41,14 @@ points along the bed
 
 > **Tip:** Bed temperature and nozzle temperature and size do not seem to have
 > an influence to the calibration process.
+
+## New Command: AXIS_TWIST_COMPENSATION_AUTOCALIBRATE
+
+The ``AXIS_TWIST_COMPENSATION_AUTOCALIBRATE`` command performs automatic calibration to calculate the twist of the X and Y axes without manual measurement.
+
+ * Recommendation: Ensure the bed is completely flat and aligned (without tilt) as much as possible before performing the autocalibration. The autocalibration will take probes and automatically calculate the twist of the X and Y axes.
+
+User Recommendation: It is recommended to use a glass bed for calibration.
 
 ## [axis_twist_compensation] setup and commands
 
