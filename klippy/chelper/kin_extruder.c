@@ -67,8 +67,15 @@ pa_move_integrate(struct move *m, struct list_head *pa_list
         end = m->move_t;
     // Calculate base position and velocity with pressure advance
     struct pa_params *pa = list_last_entry(pa_list, struct pa_params, node);
-    while (unlikely(pa->active_print_time - m->print_time >= end))
+    while (unlikely(pa->active_print_time - m->print_time >= end)) {
+        if (unlikely(list_is_first(&pa->node, pa_list))) {
+            errorf("Could not find matching pa params for print_time = %.9f, "
+                    "first active_print_time = %.9f",
+                    m->print_time + end, pa->active_print_time);
+            return 0.;
+        }
         pa = list_prev_entry(pa, node);
+    }
     if (unlikely(pa->active_print_time - m->print_time > start)) {
         double split_time = pa->active_print_time - m->print_time;
         return
@@ -145,9 +152,28 @@ extruder_set_pressure_advance(struct stepper_kinematics *sk, double print_time
     double hst = smooth_time * .5, old_hst = es->half_smooth_time;
     es->half_smooth_time = hst;
     es->sk.gen_steps_pre_active = es->sk.gen_steps_post_active = hst;
+
+    // Cleanup old pressure advance parameters
+    double cleanup_time = sk->last_flush_time - (old_hst > hst ? old_hst : hst);
+    struct pa_params *first_pa = list_first_entry(
+            &es->pa_list, struct pa_params, node);
+    while (!list_is_last(&first_pa->node, &es->pa_list)) {
+        struct pa_params *next_pa = list_next_entry(first_pa, node);
+        if (next_pa->active_print_time > cleanup_time) break;
+        list_del(&first_pa->node);
+        first_pa = next_pa;
+    }
+
     if (! hst)
         return;
     es->inv_half_smooth_time2 = 1. / (hst * hst);
+
+    if (list_last_entry(&es->pa_list, struct pa_params, node)->pressure_advance
+            == pressure_advance) {
+        // Retain old pa_params
+        return;
+    }
+    // Add new pressure advance parameters
     struct pa_params *pa = malloc(sizeof(*pa));
     memset(pa, 0, sizeof(*pa));
     pa->pressure_advance = pressure_advance;
