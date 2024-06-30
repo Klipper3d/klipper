@@ -110,6 +110,8 @@ class SmartEffectorProbe:
             self.gcode.run_script_from_command(
                     "M204 S%.3f" % (self.old_max_accel,))
         self.probe_wrapper.probe_finish(hmove)
+    def get_position_endstop(self):
+        return self.probe_wrapper.get_position_endstop()
     def _send_command(self, buf):
         # Each byte is sent to the SmartEffector as
         # [0 0 1 0 b7 b6 b5 b4 !b4 b3 b2 b1 b0 !b0]
