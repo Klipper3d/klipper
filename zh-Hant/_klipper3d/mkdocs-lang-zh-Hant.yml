@@ -71,7 +71,7 @@ extra:
   # https://squidfunk.github.io/mkdocs-material/setup/setting-up-site-analytics/#site-search-tracking
   analytics:
     provider: google
-    property: UA-138371409-1
+    property: G-VEN1PGNQL4
   # Language Selection
   alternate:
     - name: English
