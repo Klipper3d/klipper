@@ -273,16 +273,18 @@ class EddyGatherSamples:
             freq = self._pull_freq(start_time, end_time)
             if pos_time is not None:
                 toolhead_pos = self._lookup_toolhead_pos(pos_time)
-            self._probe_results.append((freq, toolhead_pos))
+            sensor_z = None
+            if freq:
+                sensor_z = self._calibration.freq_to_height(freq)
+            self._probe_results.append((sensor_z, toolhead_pos))
             self._probe_times.pop(0)
     def pull_probed(self):
         self._await_samples()
         results = []
-        for freq, toolhead_pos in self._probe_results:
-            if not freq:
+        for sensor_z, toolhead_pos in self._probe_results:
+            if sensor_z is None:
                 raise self._printer.command_error(
                     "Unable to obtain probe_eddy_current sensor readings")
-            sensor_z = self._calibration.freq_to_height(freq)
             if sensor_z <= -OUT_OF_RANGE or sensor_z >= OUT_OF_RANGE:
                 raise self._printer.command_error(
                     "probe_eddy_current sensor not in valid range")
