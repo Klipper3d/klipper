@@ -3,8 +3,12 @@
 # Copyright (C) 2018-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import os
+import time
+import multiprocessing
 import logging, collections
 import stepper
+from . import bulk_sensor
 
 
 ######################################################################
@@ -220,6 +224,90 @@ class TMCErrorCheck:
             self.last_drv_fields = {n: v for n, v in fields.items() if v}
         return {'drv_status': self.last_drv_fields, 'temperature': temp}
 
+######################################################################
+# Record driver status
+######################################################################
+
+class TMCStallguardDump:
+    def __init__(self, config, mcu_tmc):
+        self.printer = config.get_printer()
+        self.batch_interval = 0.025
+        self.stepper_name = ' '.join(config.get_name().split()[1:])
+        self.name = config.get_name().split()[-1]
+        self.mcu_tmc = mcu_tmc
+        self.mcu = self.mcu_tmc.get_mcu()
+        self.reactor = self.printer.get_reactor()
+        fields = self.mcu_tmc.get_fields()
+        # It is possible to support TMC2660, just disable it for now
+        if not fields.all_fields.get("DRV_STATUS", None):
+            return
+        # Collect driver capabilities
+        self.SG2 = fields.all_fields["DRV_STATUS"].get("sg_result", 0)
+        # New drivers have separate register for SG_RESULT
+        self.SG4 = self.mcu_tmc.name_to_reg.get("SG_RESULT", 0)
+        # 2240 supports both SG2 & SG4
+        if not self.SG4:
+            self.SG4  = self.mcu_tmc.name_to_reg.get("SG4_RESULT", 0)
+        self.TPWMTHRS = 0xfffff
+        # Precompute "static" values from config
+        sc = config.getsection(self.stepper_name)
+        rotation_dist, steps_per_rotation = stepper.parse_step_distance(sc)
+        self.step_dist = rotation_dist / steps_per_rotation
+        self.step_dist_256 = 0
+        # No mask for SG4
+        self.sg_result_mask = 0
+        if self.SG2:
+            self.sg_result_mask = fields.all_fields["DRV_STATUS"]["sg_result"]
+        self.cs_actual_mask = fields.all_fields["DRV_STATUS"]["cs_actual"]
+        self.samples = []
+        self.record_data = False
+        self.batch_bulk = bulk_sensor.BatchBulkHelper(
+            self.printer, self._query_tmc, self._update_static,
+            batch_interval = self.batch_interval)
+        api_resp = {'header': ('time', 'velocity', 'sg_result', 'cs_actual')}
+        self.batch_bulk.add_mux_endpoint("tmc/stallguard_dump", "name",
+                                         self.stepper_name, api_resp)
+    # To ignore initialization ordering
+    # Query values once upon a time
+    def _update_static(self):
+        fields = self.mcu_tmc.get_fields()
+        mres = fields.get_field("mres")
+        self.step_dist_256 = self.step_dist / (1 << mres)
+        self.TPWMTHRS = fields.get_field("tpwmthrs")
+    def _query_tmc(self, eventtime):
+        # est_print_time is in the past
+        est_print_time = self.mcu.estimated_print_time(eventtime)
+        try:
+            # Can be zero somehow, must be set to some safe value or ignored
+            tstep = max(1, self.mcu_tmc.get_register("TSTEP"))
+            # TSTEP = 0xfffff means standstill
+            # In standstill SG_RESULT shows the chopper on-time.
+            # A comparison of the chopper on-time
+            # can help to get a rough estimation of motor temperature.
+            if tstep == 0xFFFFF:
+                return {}
+            status = self.mcu_tmc.get_register("DRV_STATUS")
+            if self.SG4 and not self.SG2:
+                # sg mask is 0
+                sg_result = self.mcu_tmc.get_register("SG_RESULT")
+            elif self.SG4 and self.SG2 and tstep >= self.TPWMTHRS:
+                sg_result = self.mcu_tmc.get_register("SG4_RESULT")
+            else:
+                m = self.sg_result_mask
+                sg_result = (status & m) >> ffs(m)
+            m = self.cs_actual_mask
+            cs_actual = (status & m) >> ffs(m)
+            tmc_freq = self.mcu_tmc.get_tmc_frequency()
+            # Trying to support motors with reduction by higher resolution
+            velocity = round(tmc_freq * self.step_dist_256 / tstep, 1)
+            curtime = self.reactor.monotonic()
+            used_time = curtime - eventtime
+            print_time = est_print_time + used_time
+            d = [(print_time, velocity, sg_result, cs_actual)]
+            return {"data": d}
+        except self.printer.command_error as e:
+            self.printer.invoke_shutdown(str(e))
+
 
 ######################################################################
 # G-Code command helpers
@@ -233,6 +321,7 @@ class TMCCommandHelper:
         self.mcu_tmc = mcu_tmc
         self.current_helper = current_helper
         self.echeck_helper = TMCErrorCheck(config, mcu_tmc)
+        self.record_helper = TMCStallguardDump(config, mcu_tmc)
         self.fields = mcu_tmc.get_fields()
         self.read_registers = self.read_translate = None
         self.toff = None
