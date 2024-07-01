@@ -326,7 +326,7 @@ contacting the end of the rail. Note the found value as
 
 After finding *maximum_sensitivity* and *minimum_sensitivity*, use a
 calculator to obtain the recommend sensitivity as
-*minimum_sensitivity + (maximum_sensitivity - minimum_sensitivity)/3*.
+*minimum_sensitivity + ((maximum_sensitivity - minimum_sensitivity)/3)*.
 The recommended sensitivity should be in the range between the minimum
 and maximum, but slightly closer to the minimum. Round the final value
 to the nearest integer value.
