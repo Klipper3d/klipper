@@ -48,7 +48,11 @@ class DelayedGcode:
             waketime = self.reactor.NEVER
             if self.duration:
                 waketime = self.reactor.monotonic() + self.duration
-            self.reactor.update_timer(self.timer_handler, waketime)
+
+            # Update the timer if it has already been created. A klippy:ready
+            # handler might call this method before that happened.
+            if self.timer_handler is not None:
+              self.reactor.update_timer(self.timer_handler, waketime)
 
 def load_config_prefix(config):
     return DelayedGcode(config)
