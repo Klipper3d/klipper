@@ -57,6 +57,20 @@ extruder_integrate_time(double base, double start_v, double half_accel
 }
 
 // Calculate the definitive integral of extruder for a given move
+static inline double
+extruder_integrate_move(struct move *m, double pressure_advance, double base
+                        , double start, double end, double time_offset)
+{
+    base += pressure_advance * m->start_v;
+    double start_v = m->start_v + pressure_advance * 2. * m->half_accel;
+    // Calculate definitive integral
+    double ha = m->half_accel;
+    double iext = extruder_integrate(base, start_v, ha, start, end);
+    double wgt_ext = extruder_integrate_time(base, start_v, ha, start, end);
+    return wgt_ext - time_offset * iext;
+}
+
+// Calculate the definitive integral of extruder for a given move
 static double
 pa_move_integrate(struct move *m, struct list_head *pa_list
                   , double base, double start, double end, double time_offset)
@@ -65,34 +79,37 @@ pa_move_integrate(struct move *m, struct list_head *pa_list
         start = 0.;
     if (end > m->move_t)
         end = m->move_t;
+    int can_pressure_advance = m->axes_r.y != 0.;
+    if (!can_pressure_advance)
+        return extruder_integrate_move(m, 0., base, start, end, time_offset);
     // Calculate base position and velocity with pressure advance
     struct pa_params *pa = list_last_entry(pa_list, struct pa_params, node);
     while (unlikely(pa->active_print_time - m->print_time >= end)) {
         if (unlikely(list_is_first(&pa->node, pa_list))) {
             errorf("Could not find matching pa params for print_time = %.9f, "
-                    "first active_print_time = %.9f",
-                    m->print_time + end, pa->active_print_time);
+                    "first active_print_time = %.9f, start = %.9f, end = %.9f",
+                    m->print_time, pa->active_print_time, start, end);
             return 0.;
         }
         pa = list_prev_entry(pa, node);
     }
-    if (unlikely(pa->active_print_time - m->print_time > start)) {
+    double result = 0.;
+    while (unlikely(pa->active_print_time - m->print_time > start)) {
         double split_time = pa->active_print_time - m->print_time;
-        return
-            pa_move_integrate(m, pa_list, base, start, split_time, time_offset)
-            + pa_move_integrate(m, pa_list, base, split_time, end, time_offset);
+        result += extruder_integrate_move(
+                m, pa->pressure_advance, base, split_time, end, time_offset);
+        end = split_time;
+        if (unlikely(list_is_first(&pa->node, pa_list))) {
+            errorf("Could not find matching pa params for print_time = %.9f, "
+                    "first active_print_time = %.9f, start = %.9f, end = %.9f",
+                    m->print_time, pa->active_print_time, start, end);
+            return 0.;
+        }
+        pa = list_prev_entry(pa, node);
     }
-    double pressure_advance = pa->pressure_advance;
-    int can_pressure_advance = m->axes_r.y != 0.;
-    if (!can_pressure_advance)
-        pressure_advance = 0.;
-    base += pressure_advance * m->start_v;
-    double start_v = m->start_v + pressure_advance * 2. * m->half_accel;
-    // Calculate definitive integral
-    double ha = m->half_accel;
-    double iext = extruder_integrate(base, start_v, ha, start, end);
-    double wgt_ext = extruder_integrate_time(base, start_v, ha, start, end);
-    return wgt_ext - time_offset * iext;
+    result += extruder_integrate_move(
+            m, pa->pressure_advance, base, start, end, time_offset);
+    return result;
 }
 
 // Calculate the definitive integral of the extruder over a range of moves
