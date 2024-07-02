@@ -240,6 +240,10 @@ class ProbeSessionHelper:
             zconfig = config.getsection('stepper_z')
             self.z_position = zconfig.getfloat('position_min', 0.,
                                                note_valid=False)
+        elif config.has_section('rail_z'):
+            zconfig = config.getsection('rail_z')
+            self.z_position = zconfig.getfloat('position_min', 0.,
+                                               note_valid=False)
         else:
             pconfig = config.getsection('printer')
             self.z_position = pconfig.getfloat('minimum_z_position', 0.,

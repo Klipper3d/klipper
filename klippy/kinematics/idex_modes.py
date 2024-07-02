@@ -40,6 +40,8 @@ class DualCarriages:
                    'RESTORE_DUAL_CARRIAGE_STATE',
                    self.cmd_RESTORE_DUAL_CARRIAGE_STATE,
                    desc=self.cmd_RESTORE_DUAL_CARRIAGE_STATE_help)
+    def get_axis(self):
+        return self.axis
     def get_rails(self):
         return self.dc
     def get_primary_rail(self):
@@ -233,7 +235,7 @@ class DualCarriages:
 
 class DualCarriagesRail:
     ENC_AXES = [b'x', b'y']
-    def __init__(self, rail, axis, active):
+    def __init__(self, rail, steppers, axis, active):
         self.rail = rail
         self.axis = axis
         self.mode = (INACTIVE, PRIMARY)[active]
@@ -242,7 +244,7 @@ class DualCarriagesRail:
         ffi_main, ffi_lib = chelper.get_ffi()
         self.dc_stepper_kinematics = []
         self.orig_stepper_kinematics = []
-        for s in rail.get_steppers():
+        for s in steppers:
             sk = ffi_main.gc(ffi_lib.dual_carriage_alloc(), ffi_lib.free)
             orig_sk = s.get_stepper_kinematics()
             ffi_lib.dual_carriage_set_sk(sk, orig_sk)

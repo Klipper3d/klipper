@@ -34,9 +34,11 @@ class HybridCoreXYKinematics:
                 self.rails[3].get_steppers()[0])
             self.rails[3].setup_itersolve('corexy_stepper_alloc', b'+')
             dc_rail_0 = idex_modes.DualCarriagesRail(
-                    self.rails[0], axis=0, active=True)
+                    self.rails[0], self.rails[0].get_steppers(),
+                    axis=0, active=True)
             dc_rail_1 = idex_modes.DualCarriagesRail(
-                    self.rails[3], axis=0, active=False)
+                    self.rails[3], self.rails[3].get_steppers(),
+                    axis=0, active=False)
             self.dc_module = idex_modes.DualCarriages(
                     dc_config, dc_rail_0, dc_rail_1, axis=0)
         for s in self.get_steppers():
