@@ -11,7 +11,6 @@ class CartKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
         # Setup axis rails
-        self.dual_carriage_axis = None
         self.dual_carriage_rails = []
         self.rails = [stepper.LookupMultiRail(config.getsection('stepper_' + n))
                       for n in 'xyz']
@@ -24,19 +23,20 @@ class CartKinematics:
         if config.has_section('dual_carriage'):
             dc_config = config.getsection('dual_carriage')
             dc_axis = dc_config.getchoice('axis', ['x', 'y'])
-            self.dual_carriage_axis = {'x': 0, 'y': 1}[dc_axis]
+            dual_carriage_axis = {'x': 0, 'y': 1}[dc_axis]
             # setup second dual carriage rail
             self.rails.append(stepper.LookupMultiRail(dc_config))
             self.rails[3].setup_itersolve('cartesian_stepper_alloc',
                                           dc_axis.encode())
             dc_rail_0 = idex_modes.DualCarriagesRail(
-                    self.rails[self.dual_carriage_axis],
-                    axis=self.dual_carriage_axis, active=True)
+                    self.rails[dual_carriage_axis],
+                    self.rails[dual_carriage_axis].get_steppers(),
+                    axis=dual_carriage_axis, active=True)
             dc_rail_1 = idex_modes.DualCarriagesRail(
-                    self.rails[3], axis=self.dual_carriage_axis, active=False)
+                    self.rails[3], self.rails[3].get_steppers(),
+                    axis=dual_carriage_axis, active=False)
             self.dc_module = idex_modes.DualCarriages(
-                    dc_config, dc_rail_0, dc_rail_1,
-                    axis=self.dual_carriage_axis)
+                    dc_config, dc_rail_0, dc_rail_1, axis=dual_carriage_axis)
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
@@ -53,8 +53,8 @@ class CartKinematics:
         rails = self.rails
         if self.dc_module:
             primary_rail = self.dc_module.get_primary_rail().get_rail()
-            rails = (rails[:self.dc_module.axis] +
-                     [primary_rail] + rails[self.dc_module.axis+1:])
+            rails = (rails[:self.dc_module.get_axis()] +
+                     [primary_rail] + rails[self.dc_module.get_axis()+1:])
         return [stepper_positions[rail.get_name()] for rail in rails]
     def update_limits(self, i, range):
         l, h = self.limits[i]
@@ -67,7 +67,7 @@ class CartKinematics:
             rail.set_position(newpos)
         for axis_name in homing_axes:
             axis = "xyz".index(axis_name)
-            if self.dc_module and axis == self.dc_module.axis:
+            if self.dc_module and axis == self.dc_module.get_axis():
                 rail = self.dc_module.get_primary_rail().get_rail()
             else:
                 rail = self.rails[axis]
@@ -92,7 +92,7 @@ class CartKinematics:
     def home(self, homing_state):
         # Each axis is homed independently and in order
         for axis in homing_state.get_axes():
-            if self.dc_module is not None and axis == self.dual_carriage_axis:
+            if self.dc_module is not None and axis == self.dc_module.get_axis():
                 self.dc_module.home(homing_state)
             else:
                 self.home_axis(homing_state, axis, self.rails[axis])
