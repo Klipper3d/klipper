@@ -23,7 +23,13 @@ class Move:
         velocity = min(speed, toolhead.max_velocity)
         self.is_kinematic_move = True
         self.axes_d = axes_d = [end_pos[i] - start_pos[i] for i in (0, 1, 2, 3, 4)]
-        self.move_d = move_d = math.sqrt(sum([d*d for d in axes_d[:3]]) + axes_d[3]*axes_d[3]/(20*20)) 
+        #self.move_d = move_d = math.sqrt(sum([d*d for d in axes_d[:3]]) + axes_d[3]*axes_d[3]/(20*20)) 
+        if math.sqrt(sum([d*d for d in axes_d[:3]])) >= .000000001:
+            self.move_d = move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
+        else:
+            self.move_d = move_d = math.sqrt(axes_d[3]*axes_d[3]/(20*20)) ### Als Faktor anstelle von 20 soll noch hin max_velocity_A_axis/cruse_velocity * 0,9 oder so
+                                                                            ### Beim Check, ob die Velocity von der A-Achse über dem erlaubten ist aufpassen
+            
         if move_d < .000000001:
             # Extrude only move
             self.end_pos = (start_pos[0], start_pos[1], start_pos[2], start_pos[3],
