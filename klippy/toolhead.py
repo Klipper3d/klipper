@@ -31,7 +31,6 @@ class Move:
         if math.sqrt(sum([d*d for d in axes_d[:3]])) >= .000000001:
             self.move_d = move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
         else:
-            
             a_speed_ratio =   velocity / toolhead.max_a_velocity * 0.9
             self.move_d = move_d = math.sqrt(axes_d[3]*axes_d[3]*(a_speed_ratio * a_speed_ratio)) 
                                                                             

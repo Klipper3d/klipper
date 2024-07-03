@@ -119,7 +119,7 @@ class CartKinematics:
         elif min_speed_a > self.max_a_velocity:
             self._check_endstops(move)
             a_speed_ratio =   self.max_a_velocity / min_speed_a * 0.9
-            move.limit_speed(move.max_cruise_v2 * a_speed_ratio, move.accel)
+            move.limit_speed(move.max_cruise_v2 * a_speed_ratio, move.accel * a_speed_ratio)
                 
         if not move.axes_d[2]:
             # Normal XY move - use defaults
