@@ -48,6 +48,8 @@ class CartKinematics:
                                               above=0., maxval=max_velocity)
         self.max_z_accel = config.getfloat('max_z_accel', max_accel,
                                            above=0., maxval=max_accel)
+        self.max_a_velocity = config.getfloat('max_a_velocity', max_velocity,
+                                              above=0., maxval=max_velocity)
         self.limits = [(1.0, -1.0)] * 4
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
