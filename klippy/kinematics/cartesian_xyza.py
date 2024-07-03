@@ -108,14 +108,24 @@ class CartKinematics:
         if (xpos < limits[0][0] or xpos > limits[0][1]
             or ypos < limits[1][0] or ypos > limits[1][1]):
             self._check_endstops(move)
+            
+        min_speed_a = move.axes_d[3]/move.min_move_t
+        
+        if move.axes_d[2]:
+            self._check_endstops(move)
+            z_ratio = move.move_d / abs(move.axes_d[2])
+            move.limit_speed(
+                self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
+        elif min_speed_a > self.max_a_velocity:
+            self._check_endstops(move)
+            a_speed_ratio =   self.max_a_velocity / min_speed_a * 0.9
+            move.limit_speed(move.max_cruise_v2 * a_speed_ratio, move.accel)
+                
         if not move.axes_d[2]:
             # Normal XY move - use defaults
             return
         # Move with Z - update velocity and accel for slower Z axis
-        self._check_endstops(move)
-        z_ratio = move.move_d / abs(move.axes_d[2])
-        move.limit_speed(
-            self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
+        
     def get_status(self, eventtime):
         axes = [a for a, (l, h) in zip("xyza", self.limits) if l <= h]
         return {

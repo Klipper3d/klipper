@@ -31,8 +31,10 @@ class Move:
         if math.sqrt(sum([d*d for d in axes_d[:3]])) >= .000000001:
             self.move_d = move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
         else:
-            self.move_d = move_d = math.sqrt(axes_d[3]*axes_d[3]/(20*20)) ### Als Faktor anstelle von 20 soll noch hin max_velocity_A_axis/cruse_velocity * 0,9 oder so
-                                                                            ### Beim Check, ob die Velocity von der A-Achse über dem erlaubten ist aufpassen
+            
+            a_speed_ratio =   velocity / toolhead.max_a_velocity * 0.9
+            self.move_d = move_d = math.sqrt(axes_d[3]*axes_d[3](a_speed_ratio * a_speed_ratio)) 
+                                                                            
         #End of the inserted
         
         if move_d < .000000001:
@@ -230,6 +232,7 @@ class ToolHead:
         # Velocity and acceleration control
         self.max_velocity = config.getfloat('max_velocity', above=0.)
         self.max_accel = config.getfloat('max_accel', above=0.)
+        self.max_a_velocity = config.getfloat('max_a_velocity',above=0.)
         min_cruise_ratio = 0.5
         if config.getfloat('minimum_cruise_ratio', None) is None:
             req_accel_to_decel = config.getfloat('max_accel_to_decel', None,
