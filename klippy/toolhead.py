@@ -23,7 +23,7 @@ class Move:
         velocity = min(speed, toolhead.max_velocity)
         self.is_kinematic_move = True
         self.axes_d = axes_d = [end_pos[i] - start_pos[i] for i in (0, 1, 2, 3, 4)]
-        self.move_d = move_d = math.sqrt(sum([d*d for d in axes_d[:3]] + axes_d[3]*axes_d[3]/20)) 
+        self.move_d = move_d = math.sqrt(sum([d*d for d in axes_d[:3]]) + axes_d[3]*axes_d[3]/20) 
         if move_d < .000000001:
             # Extrude only move
             self.end_pos = (start_pos[0], start_pos[1], start_pos[2], start_pos[3],
