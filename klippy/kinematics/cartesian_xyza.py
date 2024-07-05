@@ -114,10 +114,12 @@ class CartKinematics:
         logging.info("### Minimum Speed A: %f & Maximum Speed A: %f" % (min_speed_a, self.max_a_velocity))
         
         if move.axes_d[2]:
+            
             self._check_endstops(move)
             z_ratio = move.move_d / abs(move.axes_d[2])
             move.limit_speed(
                 self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
+            logging.info("In Z limit section | z new speed%f" % (self.max_z_velocity * z_ratio))
             return
         
         if min_speed_a > self.max_a_velocity:
