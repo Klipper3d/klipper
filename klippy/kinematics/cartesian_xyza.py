@@ -110,7 +110,8 @@ class CartKinematics:
             or ypos < limits[1][0] or ypos > limits[1][1]):
             self._check_endstops(move)
             
-        min_speed_a = move.axes_d[3]/move.min_move_t
+        min_speed_a = move.axes_d[3] / move.min_move_t
+        logging.info("### Minimum Speed A: %f" % min_speed_a)
         
         if move.axes_d[2]:
             self._check_endstops(move)
@@ -120,7 +121,10 @@ class CartKinematics:
         elif min_speed_a > self.max_a_velocity:
             self._check_endstops(move)
             a_speed_ratio =   self.max_a_velocity / min_speed_a * 0.9
-            move.limit_speed(math.sqrt(move.max_cruise_v2) * a_speed_ratio, move.accel * a_speed_ratio)
+            new_speed = math.sqrt(move.max_cruise_v2) * a_speed_ratio
+            new_accel = move.accel * a_speed_ratio
+            logging.info("Min Speed A > Max Velocity| Speed_Ratio: %f | New Speed: %f | New Acceleration: %f" % (a_speed_ratio, new_speed, new_accel))
+            move.limit_speed(new_speed, new_accel)
                 
         if not move.axes_d[2]:
             # Normal XY move - use defaults
