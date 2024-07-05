@@ -118,17 +118,20 @@ class CartKinematics:
             z_ratio = move.move_d / abs(move.axes_d[2])
             move.limit_speed(
                 self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
-        elif min_speed_a > self.max_a_velocity:
+            return
+        
+        if min_speed_a > self.max_a_velocity:
             self._check_endstops(move)
             a_speed_ratio =   self.max_a_velocity / min_speed_a * 0.9
             new_speed = math.sqrt(move.max_cruise_v2) * a_speed_ratio
             new_accel = move.accel * a_speed_ratio
             logging.info("Min Speed A > Max Velocity| Speed_Ratio: %f | New Speed: %f | New Acceleration: %f" % (a_speed_ratio, new_speed, new_accel))
             move.limit_speed(new_speed, new_accel)
-                
-        if not move.axes_d[2]:
-            # Normal XY move - use defaults
             return
+                
+        #if not move.axes_d[2]:
+            # Normal XY move - use defaults
+        #    return
         # Move with Z - update velocity and accel for slower Z axis
         
     def get_status(self, eventtime):
