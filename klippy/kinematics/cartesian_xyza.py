@@ -126,7 +126,9 @@ class CartKinematics:
             new_speed = math.sqrt(move.max_cruise_v2) * a_speed_ratio
             new_accel = move.accel * a_speed_ratio
             logging.info("Min Speed A > Max Velocity")
-            logging.info("Speed_Ratio: %f | New Speed: %f | New Acceleration: %f" % (a_speed_ratio, new_speed, new_accel))
+            logging.info("Speed_Ratio: %f" % a_speed_ratio)
+            logging.info("New Speed: %f" % new_speed)
+            logging.info("New Acceleration: %f" % new_accel)
             move.limit_speed(new_speed, new_accel)
             return
                 
