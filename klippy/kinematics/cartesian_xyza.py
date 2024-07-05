@@ -145,11 +145,6 @@ class CartKinematics:
             logging.info("# A Axis is Moving | Limit Speed: %f | Limit Accel: %f" % (a_limit_speed,a_limit_accel))
         
         logging.info("### Check Move End ###")
-                
-        #if not move.axes_d[2]:
-            # Normal XY move - use defaults
-        #    return
-        # Move with Z - update velocity and accel for slower Z axis
         
     def get_status(self, eventtime):
         axes = [a for a, (l, h) in zip("xyza", self.limits) if l <= h]
