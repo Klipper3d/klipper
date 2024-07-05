@@ -111,7 +111,7 @@ class CartKinematics:
             self._check_endstops(move)
             
         min_speed_a = math.sqrt(math.pow(move.axes_d[3] / move.min_move_t,2))
-        logging.info("### Minimum Speed A: %f & Maximum Speed A: %f" % (min_speed_a, self.max_a_velocity))
+        logging.info("### Check Move Start ### \nMinimum Speed A: %f " % (min_speed_a))
         
         if move.axes_d[2] and (min_speed_a > self.max_a_velocity):
             self._check_endstops(move)
@@ -124,27 +124,27 @@ class CartKinematics:
             
             limit_speed = a_limit_speed if z_limit_speed > a_limit_speed else z_limit_speed
             limit_accel = a_limit_accel if z_limit_accel > a_limit_accel else z_limit_accel
-            logging.info("Both are correct | Limit Speed: %f | Limit Accel: %f" % (limit_speed, limit_accel))
+            
             move.limit_speed(limit_speed, limit_accel)
-            return
+            logging.info("# A and Z Axis are Moving | Limit Speed: %f | Limit Accel: %f" % (limit_speed, limit_accel))
+            
         elif move.axes_d[2]: 
             self._check_endstops(move)
             z_ratio = move.move_d / abs(move.axes_d[2])
-            move.limit_speed(
-                self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
-            logging.info("In Z limit section | z new speed%f" % (self.max_z_velocity * z_ratio))
-            return
+            z_limit_speed = self.max_z_velocity * z_ratio
+            z_limit_accel = self.max_z_accel * z_ratio
+            move.limit_speed(z_limit_speed, z_limit_accel)
+            logging.info("# Z Axis is Moving | Limit Speed: %f | Limit Accel: %f" % (z_limit_speed,z_limit_accel))
+            
         elif min_speed_a > self.max_a_velocity:
             self._check_endstops(move)
             a_speed_ratio =   self.max_a_velocity / min_speed_a * 0.9
             a_limit_speed = math.sqrt(move.max_cruise_v2) * a_speed_ratio
             a_limit_accel = move.accel * a_speed_ratio
-            logging.info("Min Speed A > Max Velocity")
-            logging.info("Speed_Ratio: %f" % a_speed_ratio)
-            logging.info("New Speed: %f" % a_limit_speed)
-            logging.info("New Acceleration: %f" % a_limit_accel)
             move.limit_speed(a_limit_speed, a_limit_accel)
-            return
+            logging.info("# A Axis is Moving | Limit Speed: %f | Limit Accel: %f" % (a_limit_speed,a_limit_accel))
+        
+        logging.info("### Check Move End ###")
                 
         #if not move.axes_d[2]:
             # Normal XY move - use defaults
