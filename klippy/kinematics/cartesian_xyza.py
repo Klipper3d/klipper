@@ -111,7 +111,7 @@ class CartKinematics:
             self._check_endstops(move)
             
         min_speed_a = move.axes_d[3] / move.min_move_t
-        logging.info("### Minimum Speed A: %f" % min_speed_a)
+        logging.info("### Minimum Speed A: %f & Maximum Speed A: %f" % (min_speed_a, self.max_a_velocity))
         
         if move.axes_d[2]:
             self._check_endstops(move)
