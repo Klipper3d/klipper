@@ -8,6 +8,10 @@ All dates in this document are approximate.
 
 ## Changes
 
+20240709: The `z_compensations` parameter in the `[axis_twist_compensation]`
+config section has been renamed to `zx_compensations`. If you don't want
+to recalibrate your x_axis_twist_compensation, simply rename the parameter.
+
 20240415: The `on_error_gcode` parameter in the `[virtual_sdcard]`
 config section now has a default. If this parameter is not specified
 it now defaults to `TURN_OFF_HEATERS`. If the previous behavior is
