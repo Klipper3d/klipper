@@ -29,7 +29,7 @@ struct lis2dw {
     struct spidev_s *spi;
     uint8_t flags;
     struct sensor_bulk sb;
-    uint8_t model;  
+    uint8_t model;
 };
 
 enum {
@@ -57,7 +57,8 @@ command_config_lis2dw(uint32_t *args)
     ax->spi = spidev_oid_lookup(args[1]);
     ax->model = args[2];
 }
-DECL_COMMAND(command_config_lis2dw, "config_lis2dw oid=%c spi_oid=%c lis3dh=%c");
+DECL_COMMAND(command_config_lis2dw, "config_lis2dw oid=%c spi_oid=%c"
+                                    " lis3dh=%c");
 
 // Helper code to reschedule the lis2dw_event() timer
 static void
@@ -85,18 +86,14 @@ lis2dw_query(struct lis2dw *ax, uint8_t oid)
     fifo_ovrn = fifo[1]&0x40;
 
     if(ax->model == LIS2DW_MODEL){
-        
         spidev_transfer(ax->spi, 1, sizeof(msg), msg);
-        
         d[0] = msg[1]; // x low bits
         d[1] = msg[2]; // x high bits
         d[2] = msg[3]; // y low bits
         d[3] = msg[4]; // y high bits
         d[4] = msg[5]; // z low bits
         d[5] = msg[6]; // z high bits
-
     }else{
-
         msg[0] = 0x28 | LIS_AM_READ ;
         spidev_transfer(ax->spi, 1, sizeof(msg), msg);
         d[0] = msg[1]; // x low bits
@@ -115,7 +112,6 @@ lis2dw_query(struct lis2dw *ax, uint8_t oid)
         msg[0] = 0x2D | LIS_AM_READ ;
         spidev_transfer(ax->spi, 1, sizeof(msg), msg);
         d[5] = msg[1]; // z high bits
-
     }
 
 

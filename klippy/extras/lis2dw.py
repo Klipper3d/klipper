@@ -44,10 +44,10 @@ class LIS2DW:
         self.is_lis3dh = config.getboolean('is_lis3dh', False)
         self.axes_map = None
         if self.is_lis3dh:
-            self.axes_map = adxl345.read_axes_map(config, SCALE_IIS3DH, SCALE_IIS3DH, SCALE_IIS3DH)
+            self.axes_map = adxl345.read_axes_map(config, SCALE_IIS3DH,
+                                                   SCALE_IIS3DH, SCALE_IIS3DH)
         else:
             self.axes_map = adxl345.read_axes_map(config, SCALE, SCALE, SCALE)
-        
         self.data_rate = 1600
         self.data_rate_lis3dh = 1344
 
@@ -57,7 +57,6 @@ class LIS2DW:
         self.oid = oid = mcu.create_oid()
         self.query_lis2dw_cmd = None
                 # Read config
-        
         mcu.add_config_cmd("config_lis2dw oid=%d spi_oid=%d lis3dh=%d"
                            % (oid, self.spi.get_oid(), self.is_lis3dh))
         mcu.add_config_cmd("query_lis2dw oid=%d rest_ticks=0"
@@ -90,7 +89,7 @@ class LIS2DW:
         params = self.spi.spi_transfer([reg | REG_MOD_READ, 0x00])
         response = bytearray(params['response'])
         return response[1]
-    
+
     def set_reg(self, reg, val, minclock=0):
         self.spi.spi_send([reg, val & 0xFF], minclock=minclock)
         stored_val = self.read_reg(reg)
