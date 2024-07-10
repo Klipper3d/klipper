@@ -50,8 +50,11 @@ class Heater:
         self.control = algo(self, config)
         # Setup output heater pin
         heater_pin = config.get('heater_pin')
+        cool_mode_pin = config.get('cool_mode_pin', None)
         ppins = self.printer.lookup_object('pins')
         self.mcu_pwm = ppins.setup_pin('pwm', heater_pin)
+        self.cool_mode = ppins.setup_pin('digital_out', cool_mode_pin)
+
         pwm_cycle_time = config.getfloat('pwm_cycle_time', 0.100, above=0.,
                                          maxval=self.pwm_delay)
         self.mcu_pwm.setup_cycle_time(pwm_cycle_time)
@@ -224,6 +227,94 @@ class ControlPID:
         temp_diff = target_temp - smoothed_temp
         return (abs(temp_diff) > PID_SETTLE_DELTA
                 or abs(self.prev_temp_deriv) > PID_SETTLE_SLOPE)
+    
+######################################################################
+# Heat Pump (like a heater but can run in reverse)
+######################################################################
+
+class HeatPump(Heater):
+    def __init__(self, config, sensor):
+        super().__init__(config, sensor)
+        # Setup control algorithm sub-class
+        self.control = ControlPIDDirectional(self, config)
+        # Setup output heater pin
+        cool_mode_pin = config.get('cool_mode_pin')
+        ppins = self.printer.lookup_object('pins')
+        self.cool_mode = ppins.setup_pin('digital_out', cool_mode_pin)
+
+    def set_pwm(self, read_time, value):
+        self.cool_mode.set_digital(1 if value < 0 else 0, read_time)
+        value = abs(value)
+        if self.target_temp <= 0. or self.is_shutdown:
+            value = 0.
+        if ((read_time < self.next_pwm_time or not self.last_pwm_value)
+            and abs(value - self.last_pwm_value) < 0.05):
+            # No significant change in value - can suppress update
+            return
+        pwm_time = read_time + self.pwm_delay
+        self.next_pwm_time = pwm_time + 0.75 * MAX_HEAT_TIME
+        self.last_pwm_value = value
+        self.mcu_pwm.set_pwm(pwm_time, value)
+        #logging.debug("%s: pwm=%.3f@%.3f (from %.3f@%.3f [%.3f])",
+        #              self.name, value, pwm_time,
+        #              self.last_temp, self.last_temp_time, self.target_temp)
+   
+
+
+######################################################################
+# Proportional Integral Derivative (PID) control algo where the commanded output can be negative
+######################################################################
+
+PID_SETTLE_DELTA = 1.
+PID_SETTLE_SLOPE = .1
+
+class ControlPIDDirectional:
+    def __init__(self, heater, config):
+        self.heater = heater
+        self.heater_max_power = heater.get_max_power()
+        self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
+        self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
+        self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
+        self.min_deriv_time = heater.get_smooth_time()
+        self.temp_integ_max = 0.
+        if self.Ki:
+            self.temp_integ_max = self.heater_max_power / self.Ki
+        self.prev_temp = AMBIENT_TEMP
+        self.prev_temp_time = 0.
+        self.prev_temp_deriv = 0.
+        self.prev_temp_integ = 0.
+
+    def temperature_update(self, read_time, temp, target_temp):
+        time_diff = read_time - self.prev_temp_time
+        # Calculate change of temperature
+        temp_diff = temp - self.prev_temp
+        if time_diff >= self.min_deriv_time:
+            temp_deriv = temp_diff / time_diff
+        else:
+            temp_deriv = (self.prev_temp_deriv * (self.min_deriv_time-time_diff)
+                          + temp_diff) / self.min_deriv_time
+        # Calculate accumulated temperature "error"
+        temp_err = target_temp - temp
+        temp_integ = self.prev_temp_integ + temp_err * time_diff
+        temp_integ = max(-self.temp_integ_max, min(self.temp_integ_max, temp_integ))
+        # Calculate output
+        co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
+        #logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d",
+        #    temp, read_time, temp_diff, temp_deriv, temp_err, temp_integ, co)
+        bounded_co = max(-self.heater_max_power, min(self.heater_max_power, co))
+        self.heater.set_pwm(read_time, abs(bounded_co))
+        # Store state for next measurement
+        self.prev_temp = temp
+        self.prev_temp_time = read_time
+        self.prev_temp_deriv = temp_deriv
+        if co == bounded_co:
+            self.prev_temp_integ = temp_integ
+
+    def check_busy(self, eventtime, smoothed_temp, target_temp):
+        temp_diff = target_temp - smoothed_temp
+        return (abs(temp_diff) > PID_SETTLE_DELTA
+                or abs(self.prev_temp_deriv) > PID_SETTLE_SLOPE)
+
 
 
 ######################################################################
@@ -271,7 +362,10 @@ class PrinterHeaters:
         # Setup sensor
         sensor = self.setup_sensor(config)
         # Create heater
-        self.heaters[heater_name] = heater = Heater(config, sensor)
+        if config.get("cool_mode_pin", None):
+            self.heaters[heater_name] = heater = HeatPump(config, sensor)
+        else:
+            self.heaters[heater_name] = heater = Heater(config, sensor)
         self.register_sensor(config, heater, gcode_id)
         self.available_heaters.append(config.get_name())
         return heater
