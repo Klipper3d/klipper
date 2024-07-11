@@ -4,20 +4,24 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-import re
+import logging, re
 import stepper, chelper
 
-def parse_kinematic_string(s, error):
+def parse_kinematic_string(config, carriages):
+    kinematics_str = config.get('kinematics')
     nxt = 0
     pat = re.compile('[+-]')
-    res = [0.] * 3
-    while nxt < len(s):
-        match = pat.search(s, nxt+1)
-        end = len(s) if match is None else match.start()
-        term = s[nxt:end].strip()
+    coeffs = [0.] * 3
+    ref_carriages = []
+    while nxt < len(kinematics_str):
+        match = pat.search(kinematics_str, nxt+1)
+        end = len(kinematics_str) if match is None else match.start()
+        term = kinematics_str[nxt:end].strip()
         term_lst = term.split("*")
         if len(term_lst) not in [1, 2]:
-            raise error("Invalid term '%s' in kinematics '%s'" % (term, s))
+            raise config.error(
+                    "Invalid term '%s' in kinematics '%s'" % (term,
+                                                              kinematics_str))
         if len(term_lst) == 2:
             try:
                 coeff = float(term_lst[0])
@@ -25,36 +29,33 @@ def parse_kinematic_string(s, error):
                 raise error("Invalid float '%s'" % term_lst[0])
         else:
             coeff = -1. if term_lst[0].startswith('-') else 1.
-        jj = [i for i, a in enumerate("xyz")
-              if term_lst[-1] in ['-' + a, '+' + a, a]]
-        if len(jj) != 1:
-            raise error("Invalid term '%s' in kinematics '%s'" % (term, s))
-        if res[jj[0]]:
-            raise error("Axis '%s' was specified multiple times in "
-                        "kinematics '%s'" % ("xyz"[i], s))
-        res[jj[0]] = coeff
+            if term_lst[0].startswith('-') or term_lst[0].startswith('+'):
+                term_lst[0] = term_lst[0][1:]
+        if term_lst[-1] not in carriages:
+            raise config.error(
+                    "Invalid '%s' carriage referenced in kinematics '%s'" % (
+                        term_lst[-1], kinematics_str))
+        carriage = carriages[term_lst[-1]]
+        j = carriage.get_axis()
+        if coeffs[j]:
+            raise error("Axis '%s' was referenced multiple times in "
+                        "kinematics '%s'" % ("xyz"[i], kinematics_str))
+        coeffs[j] = coeff
+        ref_carriages.append(carriage)
         nxt = end
-    return res
+    return coeffs, ref_carriages
 
 class KinematicStepper:
-    def __init__(self, config):
+    def __init__(self, config, carriages):
         self.printer = config.get_printer()
         self.config = config
         self.stepper = stepper.PrinterStepper(config)
-        kinematics_str = config.get('kinematics')
-        self.kin_coeffs = parse_kinematic_string(kinematics_str, config.error)
+        self.kin_coeffs, self.carriages = parse_kinematic_string(config,
+                                                                 carriages)
         if not any(self.kin_coeffs):
             raise config.error(
                     "'%s' must provide a valid 'kinematics' configuration" %
                     self.stepper.get_name())
-        self.carriage = self.config.get('carriage', None)
-        self.endstop_pin = self.config.get('endstop_pin', None)
-        if self.endstop_pin is not None and self.carriage is None and \
-                len(self.get_active_axes()) > 1:
-                    raise config.error(
-                            "kinematics '%s' for '%s' requires that 'carriage' "
-                            "is set in order to use 'endstop_pin'" % (
-                                kinematics_str, self.stepper.get_name()))
         # TODO: Add shortcuts for some typical optimized kinematics
         self.stepper.setup_itersolve(
                 'generic_cartesian_stepper_alloc',
@@ -84,20 +85,17 @@ class KinematicStepper:
         self.generate_steps = self.stepper.generate_steps
         self.add_active_callback = self.stepper.add_active_callback
         self.is_active_axis = self.stepper.is_active_axis
+        # Add stepper to the carriages it references
+        for sc in self.carriages:
+            sc.add_stepper(self)
     def get_kin_coeffs(self):
         return tuple(self.kin_coeffs)
     def get_active_axes(self):
         return [i for i, c in enumerate(self.kin_coeffs) if c]
-    def get_carriage(self):
-        return self.carriage
-    def add_to_rail(self, i, rail):
-        active_axes = self.get_active_axes()
-        endstop_pin = None
-        if rail.get_name() == self.get_carriage() or active_axes == [i]:
-            endstop_pin = self.config.get('endstop_pin', None)
-        rail.add_stepper(self, endstop_pin)
+    def get_carriages(self):
+        return self.carriages
 
 
-def LoadKinematicSteppers(config):
-    return [KinematicStepper(c)
+def LoadKinematicSteppers(config, carriages):
+    return [KinematicStepper(c, carriages)
             for c in config.get_prefix_sections('kinematic_stepper')]
