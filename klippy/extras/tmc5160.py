@@ -268,12 +268,13 @@ class TMC5160CurrentHelper(tmc.BaseTMCCurrentHelper):
         self.fields.set_field("globalscaler", gscaler)
         self.fields.set_field("ihold", ihold)
         self.fields.set_field("irun", irun)
-        
+
 
     def _calc_globalscaler(self, current):
-        cs = self._calc_current_bits(current, self.cs) #execute to find cs
+        cs = self._calc_current_bits(current, self.cs)
         globalscaler = int(
-            (current * 256.0 * math.sqrt(2.0) * self.sense_resistor * 32 / (VREF * (1 + cs))) #implement the correct calc using cs
+            (current * 256.0 * math.sqrt(2.0) * self.sense_resistor * 32 / (
+                VREF * (1 + cs)))
             + 0.5
         )
         globalscaler = max(32, globalscaler)
@@ -283,8 +284,9 @@ class TMC5160CurrentHelper(tmc.BaseTMCCurrentHelper):
 
     def _calc_current_bits(self, current, cs):
         if not cs:
-            globalscaler = 31
-        cs = int(100 * (current * math.sqrt(2)) * self.sense_resistor) - int(1 - 2 * (current * math.sqrt(2))) #cs from tuning spreadsheet allows useage of high amp drivers with low Rs
+            cs = 31
+        cs = int(100 * (current * math.sqrt(2)) * self.sense_resistor) - (
+            int(1 - 2 * (current * math.sqrt(2))))
         self.cs = cs
         return max(16, min(31, cs))
 
