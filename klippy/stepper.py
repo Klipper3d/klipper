@@ -294,20 +294,26 @@ def parse_step_distance(config, units_in_radians=None, note_valid=False):
 # Stepper controlled rails
 ######################################################################
 
-# A motor control "rail" with one (or more) steppers and one (or more)
+# A motor control carriage with one (or more) steppers and one (or more)
 # endstops.
-class GenericPrinterRail:
+class GenericPrinterCarriage:
     def __init__(self, config, need_position_minmax=True,
                  default_position_endstop=None):
         self.config = config
-        self.name = config.get_name()
+        self.name = config.get_name().split()[-1]
         self.steppers = []
         self.endstops = []
-        self.steppers_pending_endstops = []
         self.endstop_map = {}
-        self.position_endstop = config.getfloat(
-            'position_endstop', default_position_endstop)
-        self.rail_endstop_pin = config.get('endstop_pin', None)
+        self.endstop_pin = config.get('endstop_pin')
+        # Primary endstop position
+        mcu_endstop = self.lookup_endstop(self.endstop_pin, self.name)
+        if hasattr(mcu_endstop, "get_position_endstop"):
+            self.position_endstop = mcu_endstop.get_position_endstop()
+        elif default_position_endstop is None:
+            self.position_endstop = config.getfloat('position_endstop')
+        else:
+            self.position_endstop = config.getfloat(
+                'position_endstop', default_position_endstop)
         # Axis range
         if need_position_minmax:
             self.position_min = config.getfloat('position_min', 0.)
@@ -316,6 +322,11 @@ class GenericPrinterRail:
         else:
             self.position_min = 0.
             self.position_max = self.position_endstop
+        if (self.position_endstop < self.position_min
+            or self.position_endstop > self.position_max):
+            raise config.error(
+                "position_endstop in section '%s' must be between"
+                " position_min and position_max" % config.get_name())
         # Homing mechanics
         self.homing_speed = config.getfloat('homing_speed', 5.0, above=0.)
         self.second_homing_speed = config.getfloat(
@@ -326,26 +337,6 @@ class GenericPrinterRail:
             'homing_retract_dist', 5., minval=0.)
         self.homing_positive_dir = config.getboolean(
             'homing_positive_dir', None)
-    def get_name(self):
-        return self.name
-    def _determine_position_endstop(self):
-        # Primary endstop position
-        mcu_endstop = self.endstops[0][0]
-        if hasattr(mcu_endstop, "get_position_endstop"):
-            if self.position_endstop is not None:
-                raise self.config.error(
-                        "position_endstop is specified in section "
-                        "'%s', but it should not be" % self.name)
-            self.position_endstop = mcu_endstop.get_position_endstop()
-        elif self.position_endstop is None:
-            raise self.config.error(
-                    "position_endstop must be specified in section "
-                    "'%s'" % self.name)
-        if (self.position_endstop < self.position_min
-            or self.position_endstop > self.position_max):
-            raise self.config.error(
-                "position_endstop in section '%s' must be between"
-                " position_min and position_max" % self.name)
         if self.homing_positive_dir is None:
             axis_len = self.position_max - self.position_min
             if self.position_endstop <= self.position_min + axis_len / 4.:
@@ -353,16 +344,19 @@ class GenericPrinterRail:
             elif self.position_endstop >= self.position_max - axis_len / 4.:
                 self.homing_positive_dir = True
             else:
-                raise config_error(
+                raise config.error(
                     "Unable to infer homing_positive_dir in section '%s'"
-                    % (self.name,))
+                    % (config.get_name(),))
+            config.getboolean('homing_positive_dir', self.homing_positive_dir)
         elif ((self.homing_positive_dir
                and self.position_endstop == self.position_min)
               or (not self.homing_positive_dir
                   and self.position_endstop == self.position_max)):
-            raise self.config.error(
+            raise config.error(
                 "Invalid homing_positive_dir / position_endstop in '%s'"
-                % (self.name,))
+                % (config.get_name(),))
+    def get_name(self):
+        return self.name
     def get_range(self):
         return self.position_min, self.position_max
     def get_homing_info(self):
@@ -404,34 +398,20 @@ class GenericPrinterRail:
                         "must specify the same pullup/invert settings" % (
                             self.get_name(), pin_name))
         return mcu_endstop
-    def add_stepper(self, stepper, endstop_pin=None):
+    def add_stepper(self, stepper, endstop_pin=None, endstop_name=None):
         self.steppers.append(stepper)
-        first_stepper_with_endstop = not self.endstops
         if endstop_pin is not None:
-            mcu_endstop = self.lookup_endstop(endstop_pin,
-                                              stepper.get_name(short=True))
-        elif self.rail_endstop_pin is not None:
-            mcu_endstop = self.lookup_endstop(self.rail_endstop_pin, self.name)
+            mcu_endstop = self.lookup_endstop(
+                    endstop_pin, endstop_name or stepper.get_name(short=True))
         else:
-            self.steppers_pending_endstops.append(stepper)
-            return
+            mcu_endstop = self.lookup_endstop(self.endstop_pin, self.name)
         mcu_endstop.add_stepper(stepper)
-        # Primary endstop position
-        if first_stepper_with_endstop:
-            self._determine_position_endstop()
-    def add_steppers_to_endstops(self):
-        if not self.endstops:
-            raise self.config.error(
-                    "endstop_pin must be specfied in section '%s'" % self.name)
-        for s in self.steppers_pending_endstops:
-            self.endstops[0][0].add_stepper(s)
-        del self.steppers_pending_endstops[:]
 
-class PrinterRail(GenericPrinterRail):
+class PrinterRail(GenericPrinterCarriage):
     def __init__(self, config, need_position_minmax=True,
                  default_position_endstop=None, units_in_radians=False):
-        GenericPrinterRail.__init__(self, config, need_position_minmax,
-                                    default_position_endstop)
+        GenericPrinterCarriage.__init__(self, config, need_position_minmax,
+                                        default_position_endstop)
         self.stepper_units_in_radians = units_in_radians
         self.add_extra_stepper(config)
         mcu_stepper = self.steppers[0]
