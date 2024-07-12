@@ -287,7 +287,6 @@ class TMC5160CurrentHelper:
             cs = 31
         cs = int(100 * (current * math.sqrt(2)) * self.sense_resistor) - int(
             1 - 2 * (current * math.sqrt(2)))
-        self.cs = cs
         return max(16, min(31, cs))
     def _calc_current(self, run_current, hold_current):
         gscaler = self._calc_globalscaler(run_current)
