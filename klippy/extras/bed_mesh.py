@@ -121,6 +121,14 @@ class BedMesh:
         self.gcode.register_command(
             'BED_MESH_OFFSET', self.cmd_BED_MESH_OFFSET,
             desc=self.cmd_BED_MESH_OFFSET_help)
+        #Added by Lazycoder to make BED_MESH_SAVE work on Ender-3 V3 KE Vanilla Klipper
+        self.gcode.register_command(
+            'BED_MESH_SAVE', self.cmd_BED_MESH_SAVE,
+            desc=self.cmd_BED_MESH_SAVE_help)
+        self.gcode.register_command(
+            'BED_MESH_RESTORE', self.cmd_BED_MESH_RESTORE,
+            desc=self.cmd_BED_MESH_RESTORE_help)
+
         # Register dump webhooks
         webhooks = self.printer.lookup_object('webhooks')
         webhooks.register_endpoint(
@@ -287,6 +295,14 @@ class BedMesh:
             gcode_move.reset_last_position()
         else:
             gcmd.respond_info("No mesh loaded to offset")
+    #Added by Lazycoder to make BED_MESH_SAVE work on Ender-3 V3 KE Vanilla Klipper
+    cmd_BED_MESH_SAVE_help = "Save the Mesh to bak"
+    def cmd_BED_MESH_SAVE(self, gcmd):
+        if self.z_mesh is not None:
+            self.z_mesh_bak = self.z_mesh
+    cmd_BED_MESH_RESTORE_help = "Restore the bak Mesh to Mesh"
+    def cmd_BED_MESH_RESTORE(self, gcmd):
+        self.set_mesh(self.z_mesh_bak)
     def _handle_dump_request(self, web_request):
         eventtime = self.printer.get_reactor().monotonic()
         prb = self.printer.lookup_object("probe", None)
