@@ -83,6 +83,7 @@ BMP180_REGS = {
 STATUS_MEASURING = 1 << 3
 STATUS_IM_UPDATE = 1
 MODE = 1
+MODE_PERIODIC = 3
 RUN_GAS = 1 << 4
 NB_CONV_0 = 0
 EAS_NEW_DATA = 1 << 7
@@ -282,7 +283,7 @@ class BME280:
                 self.chip_type, self.i2c.i2c_address))
 
         # Reset chip
-        self.write_register('RESET', [RESET_CHIP_VALUE])
+        self.write_register('RESET', [RESET_CHIP_VALUE], wait=True)
         self.reactor.pause(self.reactor.monotonic() + .5)
 
         # Make sure non-volatile memory has been copied to registers
@@ -317,14 +318,20 @@ class BME280:
             self.write_register("INT_CTRL", [BMP388_REG_VAL_DRDY_EN])
 
             self.sample_timer = self.reactor.register_timer(self._sample_bmp388)
-        else:
+        elif self.chip_type == 'BME280':
             self.max_sample_time = \
                 (1.25 + (2.3 * self.os_temp) + ((2.3 * self.os_pres) + .575)
                  + ((2.3 * self.os_hum) + .575)) / 1000
             self.sample_timer = self.reactor.register_timer(self._sample_bme280)
             self.chip_registers = BME280_REGS
+        else:
+            self.max_sample_time = \
+                (1.25 + (2.3 * self.os_temp)
+                + ((2.3 * self.os_pres) + .575)) / 1000
+            self.sample_timer = self.reactor.register_timer(self._sample_bme280)
+            self.chip_registers = BME280_REGS
 
-        if self.chip_type in ('BME680', 'BME280'):
+        if self.chip_type == 'BME680':
             self.write_register('CONFIG', self.iir_filter << 2)
 
         # Read out and calculate the trimming parameters
@@ -346,21 +353,53 @@ class BME280:
         elif self.chip_type == 'BMP388':
             self.dig = read_calibration_data_bmp388(cal_1)
 
+        if self.chip_type in ('BME280', 'BMP280'):
+            max_standby_time = REPORT_TIME - self.max_sample_time
+            # 0.5 ms
+            t_sb = 0
+            if self.chip_type == 'BME280':
+                if max_standby_time > 1:
+                    t_sb = 5
+                elif max_standby_time > 0.5:
+                    t_sb = 4
+                elif max_standby_time > 0.25:
+                    t_sb = 3
+                elif max_standby_time > 0.125:
+                    t_sb = 2
+                elif max_standby_time > 0.0625:
+                    t_sb = 1
+                elif max_standby_time > 0.020:
+                    t_sb = 7
+                elif max_standby_time > 0.010:
+                    t_sb = 6
+            else:
+                if max_standby_time > 4:
+                    t_sb = 7
+                elif max_standby_time > 2:
+                    t_sb = 6
+                elif max_standby_time > 1:
+                    t_sb = 5
+                elif max_standby_time > 0.5:
+                    t_sb = 4
+                elif max_standby_time > 0.25:
+                    t_sb = 3
+                elif max_standby_time > 0.125:
+                    t_sb = 2
+                elif max_standby_time > 0.0625:
+                    t_sb = 1
+
+            cfg = t_sb << 5 | self.iir_filter << 2
+            self.write_register('CONFIG', cfg)
+            if self.chip_type == 'BME280':
+                self.write_register('CTRL_HUM', self.os_hum)
+            # Enter normal (periodic) mode
+            meas = self.os_temp << 5 | self.os_pres << 2 | MODE_PERIODIC
+            self.write_register('CTRL_MEAS', meas, wait=True)
+
     def _sample_bme280(self, eventtime):
-        # Enter forced mode
-        if self.chip_type == 'BME280':
-            self.write_register('CTRL_HUM', self.os_hum)
-        meas = self.os_temp << 5 | self.os_pres << 2 | MODE
-        self.write_register('CTRL_MEAS', meas)
-
+        # In normal mode data shadowing is performed
+        # So reading can be done while measurements are in process
         try:
-            # wait until results are ready
-            status = self.read_register('STATUS', 1)[0]
-            while status & STATUS_MEASURING:
-                self.reactor.pause(
-                    self.reactor.monotonic() + self.max_sample_time)
-                status = self.read_register('STATUS', 1)[0]
-
             if self.chip_type == 'BME280':
                 data = self.read_register('PRESSURE_MSB', 8)
             elif self.chip_type == 'BMP280':
@@ -718,12 +757,15 @@ class BME280:
         params = self.i2c.i2c_read(regs, read_len)
         return bytearray(params['response'])
 
-    def write_register(self, reg_name, data):
+    def write_register(self, reg_name, data, wait = False):
         if type(data) is not list:
             data = [data]
         reg = self.chip_registers[reg_name]
         data.insert(0, reg)
-        self.i2c.i2c_write(data)
+        if not wait:
+            self.i2c.i2c_write(data)
+        else:
+            self.i2c.i2c_write_wait_ack(data)
 
     def get_status(self, eventtime):
         data = {
