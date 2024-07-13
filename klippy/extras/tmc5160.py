@@ -2,6 +2,8 @@
 #
 # Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 #
+# Modified by Honest Brothers (C) 2024
+#
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
 from . import bus, tmc, tmc2130
@@ -260,7 +262,7 @@ FieldFormatters.update({
 ######################################################################
 
 VREF = 0.325
-MAX_CURRENT = 10.000 # Maximum dependent on board, but 10 is safe sanity check
+MAX_CURRENT = 10.000  # Maximum dependent on board, but 10 is a safe sanity check
 
 class TMC5160CurrentHelper:
     def __init__(self, config, mcu_tmc):
@@ -279,23 +281,24 @@ class TMC5160CurrentHelper:
         self.fields.set_field("ihold", ihold)
         self.fields.set_field("irun", irun)
     def _calc_globalscaler(self, current):
-        globalscaler = int((current * 256. * math.sqrt(2.)
-                            * self.sense_resistor / VREF) + .5)
+        cs = self._calc_current_bits(current)
+        globalscaler = int(
+            (current * 256.0 * math.sqrt(2.0) * self.sense_resistor * 32 / (
+                VREF * (1 + cs)))
+            + 0.5
+        )
         globalscaler = max(32, globalscaler)
         if globalscaler >= 256:
             globalscaler = 0
         return globalscaler
-    def _calc_current_bits(self, current, globalscaler):
-        if not globalscaler:
-            globalscaler = 256
-        cs = int((current * 256. * 32. * math.sqrt(2.) * self.sense_resistor)
-                 / (globalscaler * VREF)
-                 - 1. + .5)
-        return max(0, min(31, cs))
+    def _calc_current_bits(self, current):
+        cs = int(100 * (current * math.sqrt(2)) * self.sense_resistor) - int(
+            1 - 2 * (current * math.sqrt(2)))
+        return max(16, min(31, cs))
     def _calc_current(self, run_current, hold_current):
         gscaler = self._calc_globalscaler(run_current)
-        irun = self._calc_current_bits(run_current, gscaler)
-        ihold = self._calc_current_bits(min(hold_current, run_current), gscaler)
+        irun = self._calc_current_bits(run_current)
+        ihold = self._calc_current_bits(min(hold_current, run_current))
         return gscaler, irun, ihold
     def _calc_current_from_field(self, field_name):
         globalscaler = self.fields.get_field("globalscaler")
