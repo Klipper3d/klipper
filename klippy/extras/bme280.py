@@ -143,6 +143,7 @@ class BME280:
             pow(2, self.os_temp - 1), pow(2, self.os_hum - 1),
             pow(2, self.os_pres - 1)))
         logging.info("BMxx80: IIR: %dx" % (pow(2, self.iir_filter) - 1))
+        self.iir_filter = self.iir_filter & 0x07
 
         self.temp = self.pressure = self.humidity = self.gas = self.t_fine = 0.
         self.min_temp = self.max_temp = self.range_switching_error = 0.
@@ -326,7 +327,7 @@ class BME280:
             self.chip_registers = BME280_REGS
 
         if self.chip_type in ('BME680', 'BME280'):
-            self.write_register('CONFIG', (self.iir_filter & 0x07) << 2)
+            self.write_register('CONFIG', self.iir_filter << 2)
 
         # Read out and calculate the trimming parameters
         if self.chip_type == 'BMP180':
