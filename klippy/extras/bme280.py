@@ -298,11 +298,9 @@ class BME280:
             self.sample_timer = self.reactor.register_timer(self._sample_bme680)
             self.chip_registers = BME680_REGS
         elif self.chip_type == 'BMP180':
-            self.max_sample_time = (1.25 + ((2.3 * self.os_pres) + .575)) / 1000
             self.sample_timer = self.reactor.register_timer(self._sample_bmp180)
             self.chip_registers = BMP180_REGS
         elif self.chip_type == 'BMP388':
-            self.max_sample_time = 0.5
             self.chip_registers = BMP388_REGS
             self.write_register(
                 "PWR_CTRL",
