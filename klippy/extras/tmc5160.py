@@ -262,7 +262,7 @@ FieldFormatters.update({
 ######################################################################
 
 VREF = 0.325
-MAX_CURRENT = 10.000  # Maximum dependent on board, but 10 is a safe sanity check
+MAX_CURRENT = 10.000  # Maximum dependent on board, but 10 is safe sanity check
 
 class TMC5160CurrentHelper:
     def __init__(self, config, mcu_tmc):
@@ -284,9 +284,7 @@ class TMC5160CurrentHelper:
         cs = self._calc_current_bits(current)
         globalscaler = int(
             (current * 256.0 * math.sqrt(2.0) * self.sense_resistor * 32 / (
-                VREF * (1 + cs)))
-            + 0.5
-        )
+            VREF * (1 + cs))) + 0.5)
         globalscaler = max(32, globalscaler)
         if globalscaler >= 256:
             globalscaler = 0
