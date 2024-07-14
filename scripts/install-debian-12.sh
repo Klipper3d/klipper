@@ -3,15 +3,12 @@
 
 # This script installs Klipper3D on an Debian 12
 
-set -e # Exit on false return
-
-
 srcDir="$(git rev-parse --show-toplevel)"
 
 # Exit trap
 die() { printf "FATAL: %s\n" "$2"; exit "$1" ;}
 
-# Check for bare repo
+# Check for bare repo, note that the used command outputs boolean in a form of a string
 [ "$(git rev-parse --is-bare-repository)" != "true" ] || die 1 "This script is NOT designed to run outside of the Klipper3D repository" 
 
 pythonDir="$HOME/klippy-env"
@@ -54,10 +51,10 @@ create_virtualenv() {
     report_status "Updating python virtual environment..."
 
     # Create virtualenv if it doesn't already exist
-    [ ! -d "$pythonDir" ] && virtualenv -p python3 "$pythonDir"
+    [ -d "$pythonDir" ] || { virtualenv -p python3 "$pythonDir" || die 1 "Failed to set up python environment" ;}
 
     # Install/update dependencies
-    "$pythonDir/bin/pip" install -r "$srcDir/scripts/klippy-requirements.txt"
+    "$pythonDir/bin/pip" install -r "$srcDir/scripts/klippy-requirements.txt" || die 1 "Failed to install/Update dependencies"
 }
 
 # Step 3: Install startup script
