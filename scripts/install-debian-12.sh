@@ -9,10 +9,10 @@ srcDir="$(git rev-parse --show-toplevel)"
 die() { printf "FATAL: %s\n" "$2"; exit "$1" ;}
 
 # Check for bare repo, note that the used command outputs boolean in a form of a string
-[ "$(git rev-parse --is-bare-repository)" != "true" ] || die 1 "This script is NOT designed to run outside of the Klipper3D repository" 
+[ "$(git rev-parse --is-bare-repository)" != "true" ] || die 1 'This script is NOT designed to run outside of the Klipper3D repository'
 
 pythonDir="$HOME/klippy-env"
-systemDir="/etc/systemd/system"
+systemDir='/etc/systemd/system'
 klipperUser="$USER"
 # shellcheck disable=SC2034 # Keep this available in case it's ever needed
 klipperGroup="$klipperUser"
@@ -36,11 +36,11 @@ install_packages() {
         gcc-arm-none-eabi binutils-arm-none-eabi libusb-1.0 pkg-config
 
     # Update system package info
-    report_status "Running apt-get update..."
+    report_status 'Running apt-get update...'
     sudo apt-get update
 
     # Install desired packages
-    report_status "Installing packages..."
+    report_status 'Installing packages...'
 
     # shellcheck disable=SC2086 # We expect the word splitting
     sudo apt-get install --yes "$@"
@@ -48,13 +48,13 @@ install_packages() {
 
 # Step 2: Create python virtual environment
 create_virtualenv() {
-    report_status "Updating python virtual environment..."
+    report_status 'Updating python virtual environment...'
 
     # Create virtualenv if it doesn't already exist
-    [ -d "$pythonDir" ] || { virtualenv -p python3 "$pythonDir" || die 1 "Failed to set up python environment" ;}
+    [ -d "$pythonDir" ] || { virtualenv -p python3 "$pythonDir" || die 1 'Failed to set up python environment' ;}
 
     # Install/update dependencies
-    "$pythonDir/bin/pip" install -r "$srcDir/scripts/klippy-requirements.txt" || die 1 "Failed to install/Update dependencies"
+    "$pythonDir/bin/pip" install -r "$srcDir/scripts/klippy-requirements.txt" || die 1 'Failed to install/Update dependencies'
 }
 
 # Step 3: Install startup script
@@ -85,7 +85,7 @@ EOF
 
 # Step 4: Start host software
 start_software() {
-    report_status "Launching Klipper host software..."
+    report_status 'Launching Klipper host software...'
     sudo systemctl start klipper
 }
 
@@ -95,7 +95,7 @@ report_status() {
 }
 
 verify_ready() {
-    [ "$(id -u)" != 0 ] || die 3 "This script must NOT run as root"
+    [ "$(id -u)" != 0 ] || die 3 'This script must NOT run as root'
 }
 
 # Run installation steps defined above
