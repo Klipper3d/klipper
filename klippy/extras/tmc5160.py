@@ -247,9 +247,7 @@ Fields["TSTEP"] = {
 Fields["THIGH"] = {
     "thigh":                    0xfffff << 0
 }
-Fields["TMC_CS"] = {
-    "tmc_cs":                    0x1F << 0
-}
+
 
 SignedFields = ["cur_a", "cur_b", "sgt", "xactual", "vactual", "pwm_scale_auto"]
 
@@ -265,7 +263,7 @@ FieldFormatters.update({
 ######################################################################
 
 VREF = 0.325
-MAX_CURRENT = 10.000  # Maximum dependent on board, but 10 is safe sanity check
+MAX_CURRENT = 10.000  # Maximum dependent on board; 10 is safe sanity check
 
 class TMC5160CurrentHelper:
     def __init__(self, config, mcu_tmc):
@@ -277,6 +275,7 @@ class TMC5160CurrentHelper:
                                       above=0., maxval=MAX_CURRENT)
         hold_current = config.getfloat('hold_current', MAX_CURRENT,
                                        above=0., maxval=MAX_CURRENT)
+        self.cs = config.getint('tmc_cs', 31, 0)
         self.req_hold_current = hold_current
         self.sense_resistor = config.getfloat('sense_resistor', 0.075, above=0.)
         gscaler, irun, ihold = self._calc_current(run_current, hold_current)
@@ -293,8 +292,7 @@ class TMC5160CurrentHelper:
             globalscaler = 0
         return globalscaler
     def _calc_current_bits(self, current):
-        cs = 32 * ((self.sense_resistor/.32)*(current*math.sqrt(2))) - 1 #check math
-        #cs = self.fields.get_field("tmc_cs")
+        cs = self.cs
         return max(16, min(31, cs))
     def _calc_current(self, run_current, hold_current):
         gscaler = self._calc_globalscaler(run_current)
@@ -362,7 +360,6 @@ class TMC5160:
         set_config_field(config, "tpfd", 4)
         set_config_field(config, "diss2g", 0)
         set_config_field(config, "diss2vs", 0)
-        set_config_field(config, "tmc_cs", 31)
         #   COOLCONF
         set_config_field(config, "semin", 0)    # page 52
         set_config_field(config, "seup", 0)
