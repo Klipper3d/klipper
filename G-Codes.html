@@ -2357,6 +2357,54 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#temperature_probe" class="md-nav__link">
+    [temperature_probe]
+  </a>
+  
+    <nav class="md-nav" aria-label="[temperature_probe]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#temperature_probe_calibrate" class="md-nav__link">
+    TEMPERATURE_PROBE_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temperature_probe_next" class="md-nav__link">
+    TEMPERATURE_PROBE_NEXT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temperature_probe_complete" class="md-nav__link">
+    TEMPERATURE_PROBE_COMPLETE:
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#abort" class="md-nav__link">
+    ABORT
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temperature_probe_enable" class="md-nav__link">
+    TEMPERATURE_PROBE_ENABLE
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4529,6 +4577,54 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#temperature_probe" class="md-nav__link">
+    [temperature_probe]
+  </a>
+  
+    <nav class="md-nav" aria-label="[temperature_probe]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#temperature_probe_calibrate" class="md-nav__link">
+    TEMPERATURE_PROBE_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temperature_probe_next" class="md-nav__link">
+    TEMPERATURE_PROBE_NEXT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temperature_probe_complete" class="md-nav__link">
+    TEMPERATURE_PROBE_COMPLETE:
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#abort" class="md-nav__link">
+    ABORT
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temperature_probe_enable" class="md-nav__link">
+    TEMPERATURE_PROBE_ENABLE
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -5740,6 +5836,35 @@ command will probe the points specified in the config and then make independent
 adjustments to each Z stepper to compensate for tilt. See the PROBE command for
 details on the optional probe parameters. The optional <code>HORIZONTAL_MOVE_Z</code>
 value overrides the <code>horizontal_move_z</code> option specified in the config file.</p>
+<h3 id="temperature_probe">[temperature_probe]<a class="headerlink" href="#temperature_probe" title="Permanent link">&para;</a></h3>
+<p>The following commands are available when a
+<a href="Config_Reference.html#temperature_probe">temperature_probe config section</a>
+is enabled.</p>
+<h4 id="temperature_probe_calibrate">TEMPERATURE_PROBE_CALIBRATE<a class="headerlink" href="#temperature_probe_calibrate" title="Permanent link">&para;</a></h4>
+<p><code>TEMPERATURE_PROBE_CALIBRATE [PROBE=&lt;probe name&gt;] [TARGET=&lt;value&gt;] [STEP=&lt;value&gt;]</code>:
+Initiates probe drift calibration for eddy current based probes.  The <code>TARGET</code>
+is a target temperature for the last sample.  When the temperature recorded
+during a sample exceeds the <code>TARGET</code> calibration will complete.  The <code>STEP</code>
+parameter sets temperature delta (in C) between samples. After a sample has
+been taken, this delta is used to schedule a call to <code>TEMPERATURE_PROBE_NEXT</code>.
+The default <code>STEP</code> is 2.</p>
+<h4 id="temperature_probe_next">TEMPERATURE_PROBE_NEXT<a class="headerlink" href="#temperature_probe_next" title="Permanent link">&para;</a></h4>
+<p><code>TEMPERATURE_PROBE_NEXT</code>: After calibration has started this command is run to
+take the next sample.  It is automatically scheduled to run when the delta
+specified by <code>STEP</code> has been reached, however its also possible to manually run
+this command to force a new sample.  This command is only available during
+calibration.</p>
+<h4 id="temperature_probe_complete">TEMPERATURE_PROBE_COMPLETE:<a class="headerlink" href="#temperature_probe_complete" title="Permanent link">&para;</a></h4>
+<p><code>TEMPERATURE_PROBE_COMPLETE</code>:  Can be used to end calibration and save the
+current result before the <code>TARGET</code> temperature is reached.  This command
+is only available during calibration.</p>
+<h4 id="abort">ABORT<a class="headerlink" href="#abort" title="Permanent link">&para;</a></h4>
+<p><code>ABORT</code>:  Aborts the calibration process, discarding the current results.
+This command is only available during drift calibration.</p>
+<h3 id="temperature_probe_enable">TEMPERATURE_PROBE_ENABLE<a class="headerlink" href="#temperature_probe_enable" title="Permanent link">&para;</a></h3>
+<p><code>TEMPERATURE_PROBE_ENABLE ENABLE=[0|1]</code>: Sets temperature drift
+compensation on or off. If ENABLE is set to 0, drift compensation
+will be disabled, if set to 1 it is enabled.</p>
 
               
             </article>

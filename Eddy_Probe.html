@@ -1236,9 +1236,40 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Eddy Current Inductive probe
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="Eddy_Probe.html" class="md-nav__link md-nav__link--active">
         Eddy Current Inductive probe
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#thermal-drift-calibration" class="md-nav__link">
+    Thermal Drift Calibration
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1285,6 +1316,21 @@
   
     
   
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#thermal-drift-calibration" class="md-nav__link">
+    Thermal Drift Calibration
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -1349,6 +1395,91 @@ result in changes in reported Z height. Changes in either the bed
 surface temperature or sensor hardware temperature can skew the
 results. It is important that calibration and probing is only done
 when the printer is at a stable temperature.</p>
+<h2 id="thermal-drift-calibration">Thermal Drift Calibration<a class="headerlink" href="#thermal-drift-calibration" title="Permanent link">&para;</a></h2>
+<p>As with all inductive probes, eddy current probes are subject to
+significant thermal drift.  If the eddy probe has a temperature
+sensor on the coil it is possible to configure a <code>[temperature_probe]</code>
+to report coil temperature and enable software drift compensation. To
+link a temperature probe to an eddy current probe the
+<code>[temperature_probe]</code> section must share a name with the
+<code>[probe_eddy_current]</code> section.  For example:</p>
+<div class="highlight"><pre><span></span><code>[probe_eddy_current my_probe]
+# eddy probe configuration...
+
+[temperature_probe my_probe]
+# temperature probe configuration...
+</code></pre></div>
+
+<p>See the <a href="Config_Reference.html#temperature_probe">configuration reference</a>
+for further details on how to configure a <code>temperature_probe</code>.  It is
+advised to configure the <code>calibration_position</code>,
+<code>calibration_extruder_temp</code>, <code>extruder_heating_z</code>, and
+<code>calibration_bed_temp</code> options, as doing so will automate some of the
+steps outlined below.</p>
+<p>Eddy probe manufacturers may offer a stock drift calibration that can be
+manually added to <code>drift_calibration</code> option of the <code>[probe_eddy_current]</code>
+section. If they do not, or if the stock calibration does not perform well on
+your system, the <code>temperature_probe</code> module offers a manual calibration
+procedure via the <code>TEMPERATURE_PROBE_CALIBRATE</code> gcode command.</p>
+<p>Prior to performing calibration the user should have an idea of what the
+maximum attainable temperature probe coil temperature is.  This temperature
+should be used to set the <code>TARGET</code> parameter of the
+<code>TEMPERATURE_PROBE_CALIBRATE</code> command.  The goal is to calibrate across the
+widest temperature range possible, thus its desirable to start with the printer
+cold and finish with the coil at the maximum temperature it can reach.</p>
+<p>Once a <code>[temperature_probe]</code> is configured, the following steps may be taken
+to perform thermal drift calibration:</p>
+<ul>
+<li>The probe must be calibrated using <code>PROBE_EDDY_CURRENT_CALIBRATE</code>
+  when a <code>[temperature_probe]</code> is configured and linked.  This captures
+  the temperature during calibration which is necessary to perform
+  thermal drift compensation.</li>
+<li>Make sure the nozzle is free of debris and filament.</li>
+<li>The bed, nozzle, and probe coil should be cold prior to calibration.</li>
+<li>The following steps are required if the <code>calibration_position</code>,
+  <code>calibration_extruder_temp</code>, and <code>extruder_heating_z</code> options in
+  <code>[temperature_probe]</code> are <strong>NOT</strong> configured:<ul>
+<li>Move the tool to the center of the bed.  Z should be 30mm+ above the bed.</li>
+<li>Heat the extruder to a temperature above the maximum safe bed temperature.
+  150-170C should be sufficient for most configurations.  The purpose of
+  heating the extruder is to avoid nozzle expansion during calibration.</li>
+<li>When the extruder temperature has settled, move the Z axis down to about 1mm
+  above the bed.</li>
+</ul>
+</li>
+<li>Start drift calibration.  If the probe's name is <code>my_probe</code> and the maximum
+  probe temperature we can achieve is 80C, the appropriate gcode command is
+  <code>TEMPERATURE_PROBE_CALIBRATE PROBE=my_probe TARGET=80</code>.  If configured, the
+  tool will move to the X,Y coordinate specified by the <code>calibration_position</code>
+  and the Z value specified by <code>extruder_heating_z</code>.  After heating the extruder
+  to the specified temperature the tool will move to the Z value specified
+  by the<code>calibration_position</code>.</li>
+<li>The procedure will request a manual probe.  Perform the manual probe with
+  the paper test and <code>ACCEPT</code>.  The calibration procedure will take the first
+  set of samples with the probe then park the probe in the heating position.</li>
+<li>If the <code>calibration_bed_temp</code> is <strong>NOT</strong> configured turn on the bed heat
+  to the maximum safe temperature.  Otherwise this step will be performed
+  automatically.</li>
+<li>By default the calibration procedure will request a manual probe every
+  2C between samples until the <code>TARGET</code> is reached.  The temperature delta
+  between samples can be customized by setting the <code>STEP</code> parameter in
+  <code>TEMPERATURE_PROBE_CALIBRATE</code>.  Care should be taken when setting a custom
+  <code>STEP</code> value, a value too high may request too few samples resulting in
+  a poor calibration.</li>
+<li>The following additional gcode commands are available during drift
+  calibration:<ul>
+<li><code>TEMPERATURE_PROBE_NEXT</code> may be used to force a new sample before the step
+  delta has been reached.</li>
+<li><code>TEMPERATURE_PROBE_COMPLETE</code> may be used to complete calibration before the
+  <code>TARGET</code> has been reached.</li>
+<li><code>ABORT</code> may be used to end calibration and discard results.</li>
+</ul>
+</li>
+<li>When calibration is finished use <code>SAVE_CONFIG</code> to store the drift
+  calibration.</li>
+</ul>
+<p>As one may conclude, the calibration process outlined above is more challenging
+and time consuming than most other procedures.  It may require practice and several attempts to achieve an optimal calibration.</p>
 
               
             </article>
