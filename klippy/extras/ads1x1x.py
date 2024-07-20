@@ -59,14 +59,11 @@ ADS1X1X_REG_CONFIG = {
     'COMPARATOR_QUEUE_MASK': 0x0003
 }
 
-# Config register bits
-#   Read: bit = 1 when device is not performing a conversion
-ADS1X1X_REG_CONFIG_OS_IDLE=0x8000
-
 #
 # The following enums are to be used with the configuration functions.
 #
 ADS1X1X_OS = {
+    'OS_IDLE': 0x8000,  # Device is not performing a conversion
     'OS_SINGLE': 0x8000 # Single-conversion
 }
 
@@ -133,6 +130,9 @@ ADS111X_SAMPLES_PER_SECOND = {
     '860': 0x00e0  # 860 samples per second
 }
 
+ADS101X_CONVERSION_DELAY = 0.002
+ADS111X_CONVERSION_DELAY = 0.008
+
 ADS1X1X_COMPARATOR_MODE = {
     'TRADITIONAL': 0x0000,  # Traditional comparator with hysteresis
     'WINDOW': 0x0010  # Window comparator
@@ -160,8 +160,6 @@ ADS1X1_OPERATIONS = {
     'SET_MUX': 0,
     'READ_CONVERSION': 1
 }
-
-ADS1X1_MAX_COMMAND_QUEUE_SIZE = 1000
 
 class ADS1X1X_chip:
 
@@ -212,7 +210,7 @@ class ADS1X1X_chip:
                                             self.reset_all_devices)
 
         self._pins = {}
-        self._command_queue = []
+        self._mutex = self._reactor.mutex()
 
     def setup_pin(self, pin_type, pin_params):
         if pin_type == 'adc':
@@ -228,40 +226,31 @@ class ADS1X1X_chip:
 
     def _handle_ready(self):
         self.reset_all_devices()
-        self.sample_timer = \
-                self._reactor.register_timer(self._sample)
-        self._reactor.update_timer(self.sample_timer, self._reactor.NOW)
 
-    def request_sample(self, sensor, callback):
-        if len(self._command_queue) <= ADS1X1_MAX_COMMAND_QUEUE_SIZE:
-            self._command_queue.append({
-                'sensor': sensor,
-                'callback': callback
-            })
-        else:
-            logging.warning(
-                'ADS1X1X: command queue is overflowing, dropping requests')
+    def is_ready(self):
+        config = self._read_register(ADS1X1X_REG_POINTER['CONFIG'])
+        return bool((config & ADS1X1X_REG_CONFIG['OS_MASK']) == ADS1X1X_OS['OS_IDLE'])
 
-    def _sample(self, eventtime):
-        if self._command_queue:
-            command = self._command_queue.pop()
-            pin_object = self._pins[command['sensor'].pin]
+    def sample(self, sensor):
+        with self._mutex:
+            pin_object = self._pins[sensor.pin]
             sample = 0
             try:
                 self._write_register(ADS1X1X_REG_POINTER['CONFIG'],
                                      pin_object.config)
-
-                self._reactor.pause(self._reactor.monotonic() + 1.0 /
-                                    (self.samples_per_second_numeric + 1))
-
+                delay = 0
+                if isADS101X(self.chip):
+                    delay = ADS101X_CONVERSION_DELAY
+                else:
+                    delay = ADS111X_CONVERSION_DELAY
+                while not self.is_ready():
+                    self._reactor.pause(self._reactor.monotonic() + delay)
                 sample = self._read_register(ADS1X1X_REG_POINTER['CONVERSION'])
             except Exception:
                 logging.exception("ADS1X1X: error while sampling")
-                return self._reactor.NEVER
+                return None
 
-            command['callback'](sample)
-
-        return self._reactor.monotonic() + 1.0 / self.samples_per_second_numeric
+            return sample
 
     def _read_register(self, reg):
         # read a single register
@@ -352,7 +341,10 @@ class ADS1X1X_sensor:
         self._callback = cb
 
     def _timer(self, eventtime):
-        self.chip.request_sample(self, self._process_sample)
+        sample = self.chip.sample(self)
+        if sample is not None:
+            self._process_sample(sample)
+
         return self._reactor.monotonic() + self.report_time
 
     def _process_sample(self, sample):
@@ -376,8 +368,6 @@ class ADS1X1X_sensor:
         measured_time = self._reactor.monotonic()
         self._callback(self.chip.mcu.estimated_print_time(measured_time),
                        self.temp)
-
-        return measured_time + self.report_time
 
     def get_report_time_delta(self):
         return self.report_time
