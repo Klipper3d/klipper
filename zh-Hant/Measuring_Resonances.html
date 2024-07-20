@@ -1945,7 +1945,7 @@ SCLK+CS
 <td align="center">地（GND）</td>
 </tr>
 <tr>
-<td align="center">CS（晶片選定）</td>
+<td align="center">CS</td>
 <td align="center">24</td>
 <td align="center">GPIO08 (SPI0_CE0_N)</td>
 </tr>
@@ -1991,7 +1991,7 @@ SCLK+CS
 <td align="center">地（GND）</td>
 </tr>
 <tr>
-<td align="center">CS（晶片選定）</td>
+<td align="center">CS</td>
 <td align="center">2</td>
 <td align="center">GP1 (SPI0_CSn)</td>
 </tr>
@@ -2313,7 +2313,7 @@ probe_points: ...
 </code></pre></div>
 
 <p>該腳本將生成帶有頻率響應的圖表<code>/tmp/shaper_calibrate_x.png</code>和<code>/tmp/shaper_calibrate_y.png</code>。您還將獲得每個輸入整形器的建議頻率，以及為您的設置推薦的輸入整形器。例如：</p>
-<p><img alt="Resonances" src="img/calibrate-y.png" /></p>
+<p><img alt="共振" src="img/calibrate-y.png" /></p>
 <div class="highlight"><pre><span></span><code>Fitted shaper &#39;zv&#39; frequency = 34.4 Hz (vibrations = 4.0%, smoothing ~= 0.132)
 To avoid too much smoothing with &#39;zv&#39;, suggested max_accel &lt;= 4500 mm/sec^2
 Fitted shaper &#39;mzv&#39; frequency = 34.6 Hz (vibrations = 0.0%, smoothing ~= 0.170)
@@ -2381,7 +2381,7 @@ probe_points: ...
 <h3 id="_9">最大平滑度<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
 <p>請記住，輸入整形器可以在部分中創建一些平滑。由 <code>calibrate_shaper.py</code> 腳本或 <code>SHAPER_CALIBRATE</code> 命令執行的輸入整形器的自動調整試圖不加劇平滑，但同時它們試圖最小化產生的振動。有時他們可以對整形器頻率做出次優選擇，或者您可能只是希望以較大的剩余振動為代價來減少零件的平滑度。在這些情況下，您可以請求限制輸入整形器的最大平滑。</p>
 <p>讓我們考慮以下自動調整的結果：</p>
-<p><img alt="Resonances" src="img/calibrate-x.png" /></p>
+<p><img alt="共振" src="img/calibrate-x.png" /></p>
 <div class="highlight"><pre><span></span><code>Fitted shaper &#39;zv&#39; frequency = 57.8 Hz (vibrations = 20.3%, smoothing ~= 0.053)
 To avoid too much smoothing with &#39;zv&#39;, suggested max_accel &lt;= 13000 mm/sec^2
 Fitted shaper &#39;mzv&#39; frequency = 34.8 Hz (vibrations = 3.6%, smoothing ~= 0.168)
@@ -2401,7 +2401,7 @@ Recommended shaper is 2hump_ei @ 45.2 Hz
 </code></pre></div>
 
 <p>這將平滑限制為 0.2 分。現在您可以得到以下結果：</p>
-<p><img alt="Resonances" src="img/calibrate-x-max-smoothing.png" /></p>
+<p><img alt="共振" src="img/calibrate-x-max-smoothing.png" /></p>
 <div class="highlight"><pre><span></span><code>Fitted shaper &#39;zv&#39; frequency = 55.4 Hz (vibrations = 19.7%, smoothing ~= 0.057)
 To avoid too much smoothing with &#39;zv&#39;, suggested max_accel &lt;= 12000 mm/sec^2
 Fitted shaper &#39;mzv&#39; frequency = 34.6 Hz (vibrations = 3.6%, smoothing ~= 0.170)
@@ -2427,7 +2427,7 @@ max_smoothing: 0.25  # an example
 <p>然後，如果您將來使用 <code>SHAPER_CALIBRATE</code> Klipper 命令 <a href="#input-shaper-re-calibration">重新運行</a> 輸入整形器自動調整，它將使用存儲的 <code>max_smoothing</code> 值作為參考。</p>
 <h3 id="max_accel">選擇 max_accel<a class="headerlink" href="#max_accel" title="Permanent link">&para;</a></h3>
 <p>由於輸入整形器可以在零件中創建一些平滑，尤其是在高加速度時，您仍然需要選擇不會在打印零件中創建太多平滑的“max_accel”值。校準腳本提供了“max_accel”參數的估計值，該參數不應產生過多的平滑。請注意，校準腳本顯示的“max_accel”只是理論上的最大值，在該最大值時，各個整形器仍然能夠工作而不會產生過多的平滑。絕對不建議為打印設置此加速。您的打印機能夠承受的最大加速度取決於其機械性能和所用步進電機的最大扭矩。因此，建議在 <code>[printer]</code> 部分設置不超過 X 和 Y 軸的估計值的 <code>max_accel</code>，可能有一些保守的安全餘量。</p>
-<p>或者，按照輸入整形器調整指南的 <a href="Resonance_Compensation.html#selecting-max_accel">this</a> 部分並打印測試模型以實驗性地選擇“max_accel”參數。</p>
+<p>或者，按照輸入整形器調整指南的<a href="Resonance_Compensation.html#selecting-max_accel">此</a>部分並打印測試模型以實驗性地選擇 <code>max_accel</code> 參數。</p>
 <p>相同的注意事項適用於使用 <code>SHAPER_CALIBRATE</code> 命令的輸入整形器 <a href="#input-shaper-auto-calibration">auto-calibration</a>：自動校准後仍然需要選擇正確的 <code>max_accel</code> 值，建議加速度限制不會自動應用。</p>
 <p>Keep in mind that the maximum acceleration without too much smoothing depends on the <code>square_corner_velocity</code>. The general recommendation is not to change it from its default value 5.0, and this is the value used by default by the <code>calibrate_shaper.py</code> script. If you did change it though, you should inform the script about it by passing <code>--square_corner_velocity=...</code> parameter, e.g.</p>
 <div class="highlight"><pre><span></span><code>~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png --square_corner_velocity=10.0
@@ -2483,8 +2483,8 @@ Recommended shaper_type_y = mzv, shaper_freq_y = 36.8 Hz # 建議shaper_type_y =
 <div class="highlight"><pre><span></span><code>SHAPER_CALIBRATE AXIS=Y
 </code></pre></div>
 
-<p>您可以在校準每個軸之後執行兩次“SAVE_CONFIG”。</p>
-<p>但是，如果您同時連接兩個加速度計，您只需運行“SHAPER_CALIBRATE”，而無需指定一個軸來一次性校準兩個軸的輸入整形器。</p>
+<p>您可以在校準每個軸之後執行兩次 <code>SAVE_CONFIG</code>。</p>
+<p>但是，如果您同時連接兩個加速度計，您只需運行 <code>SHAPER_CALIBRATE</code>，而無需指定一個軸來一次性校準兩個軸的輸入整形器。</p>
 <h3 id="_12">輸入整形器重新校準<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h3>
 <p><code>SHAPER_CALIBRATE</code> 命令也可用於將來重新校準輸入整形器，尤其是在對打印機進行一些可能影響其運動學的更改時。可以使用“SHAPER_CALIBRATE”命令重新運行完整校準，或者通過提供“AXIS=”參數將自動校準限制在單個軸上，例如</p>
 <div class="highlight"><pre><span></span><code>SHAPER_CALIBRATE AXIS=X
@@ -2504,11 +2504,11 @@ TEST_RESONANCES AXIS=X OUTPUT=raw_data
 <ul>
 <li>繪製原始加速度計數據（使用 <code>-r</code> 參數），僅支持 1 個輸入;</li>
 <li>繪製頻率響應（不需要額外的參數），如果指定了多個輸入，則計算平均頻率響應；</li>
-<li>比較幾個輸入之間的頻率響應（使用“-c”參數）；您還可以通過“-a x”、“-a y”或“-a z”參數指定要考慮的加速度計軸（如果未指定，則使用所有軸的振動總和）；</li>
+<li>比較幾個輸入之間的頻率響應（使用 <code>-c</code> 參數）；您還可以通過 <code>-a x</code>、<code>-a y</code> 或 <code>-a z</code> 參數指定要考慮的加速度計軸（如果未指定，則使用所有軸的振動總和）；</li>
 <li>繪製頻譜圖（使用 <code>-s</code> 參數），僅支持 1 個輸入；您還可以通過“-a x”、“-a y”或“-a z”參數指定要考慮的加速度計軸（如果未指定，則使用所有軸的振動總和）。</li>
 </ul>
 <p>請注意，graph_accelerometer.py 腳本僅支持 raw_data*.csv 文件，而不支持 resions*.csv 或calibration_data*.csv 文件。</p>
-<p>例如:</p>
+<p>例如，</p>
 <div class="highlight"><pre><span></span><code>~/klipper/scripts/graph_accelerometer.py /tmp/raw_data_x_*.csv -o /tmp/resonances_x.png -c -a z
 </code></pre></div>
 
@@ -2517,7 +2517,7 @@ TEST_RESONANCES AXIS=X OUTPUT=raw_data
 <p>如果運行輸入整形器的一些高級調整，為 shaper_calibrate.py 腳本提供幾個輸入可能很有用，例如：</p>
 <ul>
 <li>在第一次將加速度計連接到工具頭上，第二次將加速度計按順序連接到床身的情況下，在床吊具打印機上為單個軸運行兩次“TEST_RESONANCES AXIS=X OUTPUT=raw_data”（和“Y”軸）檢測軸交叉共振並嘗試使用輸入整形器消除它們。</li>
-<li>在帶有玻璃床和磁性表面（更輕）的床吊具上運行兩次“TEST_RESONANCES AXIS=Y OUTPUT=raw_data”，以找到適用於任何打印表面配置的輸入整形器參數。</li>
+<li>在帶有玻璃床和磁性表面（更輕）的床吊具上運行兩次 <code>TEST_RESONANCES AXIS=Y OUTPUT=raw_data</code>，以找到適用於任何打印表面配置的輸入整形器參數。</li>
 <li>結合來自多個測試點的共振數據。</li>
 <li>結合來自 2 軸的共振數據（例如，在床拋投打印機上配置 X 軸 input_shaper 從 X 軸和 Y 軸共振以消除<em>床</em>的振動，以防噴嘴在 X 軸方向移動時“捕捉”打印）。</li>
 </ul>
