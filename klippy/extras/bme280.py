@@ -157,6 +157,7 @@ class BME280:
             return
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
+        self.last_gas_time = 0
 
     def handle_connect(self):
         self._init_bmxx80()
@@ -297,8 +298,7 @@ class BME280:
         if self.chip_type == 'BME680':
             self.max_sample_time = \
                     (1.25 + (2.3 * self.os_temp) + ((2.3 * self.os_pres) + .575)
-                     + ((2.3 * self.os_hum) + .575)
-                     + self.gas_heat_duration) / 1000
+                     + ((2.3 * self.os_hum) + .575)) / 1000
             self.sample_timer = self.reactor.register_timer(self._sample_bme680)
             self.chip_registers = BME680_REGS
         elif self.chip_type == 'BMP180':
@@ -404,8 +404,6 @@ class BME280:
             self.write_register('GAS_WAIT_0', [gas_wait_0])
             res_heat_0 = self._calc_gas_heater_resistance(self.gas_heat_temp)
             self.write_register('RES_HEAT_0', [res_heat_0])
-            gas_config = RUN_GAS | NB_CONV_0
-            self.write_register('CTRL_GAS_1', [gas_config])
             # Set initial heater current to reach Gas heater target on start
             self.write_register('IDAC_HEAT_0', 96)
 
@@ -513,26 +511,40 @@ class BME280:
         return comp_press
 
     def _sample_bme680(self, eventtime):
-        def data_ready(stat):
+        def data_ready(stat, run_gas):
             new_data = (stat & EAS_NEW_DATA)
             gas_done = not (stat & GAS_DONE)
             meas_done = not (stat & MEASURE_DONE)
+            if not run_gas:
+                gas_done = True
             return new_data and gas_done and meas_done
+
+        run_gas = False
+        # Check VOC once a while
+        if self.reactor.monotonic() - self.last_gas_time > 3:
+            gas_config = RUN_GAS | NB_CONV_0
+            self.write_register('CTRL_GAS_1', [gas_config])
+            run_gas = True
 
         # Enter forced mode
         meas = self.os_temp << 5 | self.os_pres << 2 | MODE
         self.write_register('CTRL_MEAS', meas, wait=True)
-        self.reactor.pause(self.reactor.monotonic() + self.max_sample_time)
+        max_sample_time = self.max_sample_time
+        if run_gas:
+            max_sample_time += self.gas_heat_duration / 1000
+        self.reactor.pause(self.reactor.monotonic() + max_sample_time)
         try:
             # wait until results are ready
             status = self.read_register('EAS_STATUS_0', 1)[0]
-            while not data_ready(status):
+            while not data_ready(status, run_gas):
                 self.reactor.pause(
                     self.reactor.monotonic() + self.max_sample_time)
                 status = self.read_register('EAS_STATUS_0', 1)[0]
 
             data = self.read_register('PRESSURE_MSB', 8)
-            gas_data = self.read_register('GAS_R_MSB', 2)
+            gas_data = [0, 0]
+            if run_gas:
+                gas_data = self.read_register('GAS_R_MSB', 2)
         except Exception:
             logging.exception("BME680: Error reading data")
             self.temp = self.pressure = self.humidity = self.gas = .0
@@ -556,6 +568,10 @@ class BME280:
             gas_raw = (gas_data[0] << 2) | ((gas_data[1] & 0xC0) >> 6)
             gas_range = (gas_data[1] & 0x0F)
             self.gas = self._compensate_gas(gas_raw, gas_range)
+            # Disable gas measurement on success
+            gas_config = NB_CONV_0
+            self.write_register('CTRL_GAS_1', [gas_config])
+            self.last_gas_time = self.reactor.monotonic()
 
         if self.temp < self.min_temp or self.temp > self.max_temp:
             self.printer.invoke_shutdown(
