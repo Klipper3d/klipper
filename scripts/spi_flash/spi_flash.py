@@ -74,7 +74,7 @@ def translate_serial_to_tty(device):
     return ttyname, ttyname
 
 def check_need_convert(board_name, config):
-    if board_name.lower().startswith('mks-robin-e3'):
+    if board_name.lower().startswith('mks-robin-e3') or board_name.lower().startswith('kingroon-kp3-v1.3'):
         # we need to convert this file
         robin_util = os.path.join(
             fatfs_lib.KLIPPER_DIR, "scripts/update_mks_robin.py")
