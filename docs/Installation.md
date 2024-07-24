@@ -46,8 +46,8 @@ Klipper is a 3d printer firmware, so it needs some way for the user to
 interact with it.
 
 Currently the best choices are front ends that retrieve information through
-the Moonraker web API and there is also the option to use Octoprint to control
-Klipper.
+the [Moonraker web API](https://moonraker.readthedocs.io/) and there is also
+the option to use [Octoprint](https://octoprint.org/) to control Klipper.
 
 The choice is up to the user on what to use, but the underlying Klipper is the
 same in all cases. We encourage users to research the options available and
@@ -59,10 +59,10 @@ There are many ways to obtain an OS image for Klipper for SBC use, most depend o
 what front end you wish to use. Some manafactures of these SBC boards also provide
 their own Klipper-centric images.
 
-The two main Moonraker based front ends are Fluidd and Mainsail, the latter of
-which has a premade install image "MainsailOS", this has the option for
-Raspberry Pi and some OrangePi varianta. Details can be found at
-http://docs.mainsailOS.xyz
+The two main Moonraker based front ends are [Fluidd](https://docs.fluidd.xyz/)
+and [Mainsail](https://docs.mainsail.xyz/), the latter of which has a premade install
+image ["MainsailOS"](http://docs.mainsailOS.xyz), this has the option for Raspberry Pi
+and some OrangePi varianta.
 
 Fluidd can be installed via KIAUH(Klipper Install And Update Helper), which
 is explained below and is a 3rd party installer for all things Klipper.
