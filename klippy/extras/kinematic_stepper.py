@@ -94,8 +94,3 @@ class KinematicStepper:
         return [i for i, c in enumerate(self.kin_coeffs) if c]
     def get_carriages(self):
         return self.carriages
-
-
-def LoadKinematicSteppers(config, carriages):
-    return [KinematicStepper(c, carriages)
-            for c in config.get_prefix_sections('kinematic_stepper')]
