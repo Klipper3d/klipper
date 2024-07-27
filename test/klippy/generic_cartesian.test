@@ -46,6 +46,6 @@ SET_SERVO servo=my_servo angle=160
 SET_SERVO servo=my_servo angle=130
 
 # Verify STEPPER_BUZZ
-STEPPER_BUZZ STEPPER='kinematic_stepper dual_carriage'
+STEPPER_BUZZ STEPPER='stepper dual_carriage'
 STEPPER_BUZZ STEPPER=extruder
 STEPPER_BUZZ STEPPER=extruder1

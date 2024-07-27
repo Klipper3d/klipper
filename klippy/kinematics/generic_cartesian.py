@@ -139,14 +139,17 @@ class GenericCartesianKinematics:
                 raise config.error(
                         "Redefinition of carriage %s" % ec.get_name())
             carriages[name] = ec
-        self.steppers = ks.LoadKinematicSteppers(config, carriages)
+        self.steppers = self._load_steppers(config, carriages)
         for s in self.steppers:
             for c in s.get_carriages():
                 carriages.pop(c.get_name(), None)
         if carriages:
             raise config.error(
                     "Carriage(s) %s must be referenced by some "
-                    "kinematic_stepper(s) kinematics" % (", ".join(carriages),))
+                    "stepper(s) kinematics" % (", ".join(carriages),))
+    def _load_steppers(self, config, carriages):
+        return [ks.KinematicStepper(c, carriages)
+                for c in config.get_prefix_sections('stepper')]
     def get_steppers(self):
         return self.steppers
     def get_primary_carriages(self):
@@ -178,9 +181,9 @@ class GenericCartesianKinematics:
         det = mathutil.matrix_det(mat_mul(mat_transp(matr), matr))
         if abs(det) < 0.00001:
             raise self.printer.config_error(
-                    "Verify configured 'kinematic_stepper'(s) and their "
-                    "'kinematics' specifications, the current configuration "
-                    "does not allow independent movements of all printer axes.")
+                    "Verify configured stepper(s) and their 'kinematics' "
+                    "specifications, the current configuration does not "
+                    "allow independent movements of all printer axes.")
     def calc_position(self, stepper_positions):
         matr, offs = self._get_kinematics_coeffs()
         inv = mathutil.matrix_inv(mat_mul(mat_transp(matr), matr))
