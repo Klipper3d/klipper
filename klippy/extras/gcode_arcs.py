@@ -89,29 +89,9 @@ class ArcSupport:
         if not (asPlanar[0] or asPlanar[1]):
             raise gcmd.error("G2/G3 requires IJ, IK or JK parameters")
 
-        asE = gcmd.get_float("E", None)
-        asF = gcmd.get_float("F", None)
-
-        # Build list of linear coordinates to move
-        segments, coords = self.planArc(currentPos, asTarget, asPlanar,
-                                        clockwise, *axes)
-        e_per_move = e_base = 0.
-        if asE is not None:
-            if absolut_extrude:
-                e_base = currentPos[3]
-            e_per_move = (asE - e_base) / segments
-
-        # Convert coords into G1 commands
-        for coord in coords:
-            g1_params = {'X': coord[0], 'Y': coord[1], 'Z': coord[2]}
-            if e_per_move:
-                g1_params['E'] = e_base + e_per_move
-                if absolut_extrude:
-                    e_base += e_per_move
-            if asF is not None:
-                g1_params['F'] = asF
-            g1_gcmd = self.gcode.create_gcode_command("G1", "G1", g1_params)
-            self.gcode_move.cmd_G1(g1_gcmd)
+        # Build linear coordinates to move
+        self.planArc(currentPos, asTarget, asPlanar, clockwise,
+                     gcmd, absolut_extrude, *axes)
 
     # function planArc() originates from marlin plan_arc()
     # https://github.com/MarlinFirmware/Marlin
@@ -122,6 +102,7 @@ class ArcSupport:
     #
     # alpha and beta axes are the current plane, helical axis is linear travel
     def planArc(self, currentPos, targetPos, offset, clockwise,
+                gcmd, absolut_extrude,
                 alpha_axis, beta_axis, helical_axis):
         # todo: sometimes produces full circles
 
@@ -161,8 +142,17 @@ class ArcSupport:
         # Generate coordinates
         theta_per_segment = angular_travel / segments
         linear_per_segment = linear_travel / segments
-        coords = []
-        for i in range(1, int(segments)):
+
+        asE = gcmd.get_float("E", None)
+        asF = gcmd.get_float("F", None)
+
+        e_per_move = e_base = 0.
+        if asE is not None:
+            if absolut_extrude:
+                e_base = currentPos[3]
+            e_per_move = (asE - e_base) / segments
+
+        for i in range(1, int(segments) + 1):
             dist_Helical = i * linear_per_segment
             c_theta = i * theta_per_segment
             cos_Ti = math.cos(c_theta)
@@ -174,10 +164,20 @@ class ArcSupport:
             c[alpha_axis] = center_P + r_P
             c[beta_axis] = center_Q + r_Q
             c[helical_axis] = currentPos[helical_axis] + dist_Helical
-            coords.append(c)
 
-        coords.append(targetPos)
-        return segments, coords
+
+            if i == segments:
+                c = targetPos
+            # Convert coords into G1 commands
+            g1_params = {'X': c[0], 'Y': c[1], 'Z': c[2]}
+            if e_per_move:
+                g1_params['E'] = e_base + e_per_move
+                if absolut_extrude:
+                    e_base += e_per_move
+            if asF is not None:
+                g1_params['F'] = asF
+            g1_gcmd = self.gcode.create_gcode_command("G1", "G1", g1_params)
+            self.gcode_move.cmd_G1(g1_gcmd)
 
 def load_config(config):
     return ArcSupport(config)
