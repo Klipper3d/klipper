@@ -1607,6 +1607,53 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#load-cells" class="md-nav__link">
+    Load Cells
+  </a>
+  
+    <nav class="md-nav" aria-label="Load Cells">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#load_cell" class="md-nav__link">
+    [load_cell]
+  </a>
+  
+    <nav class="md-nav" aria-label="[load_cell]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#xh711" class="md-nav__link">
+    XH711
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hx717" class="md-nav__link">
+    HX717
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ads1220" class="md-nav__link">
+    ADS1220
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#board-specific-hardware-support" class="md-nav__link">
     Board specific hardware support
   </a>
@@ -3645,6 +3692,53 @@
   <a href="#hall_filament_width_sensor" class="md-nav__link">
     [hall_filament_width_sensor]
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#load-cells" class="md-nav__link">
+    Load Cells
+  </a>
+  
+    <nav class="md-nav" aria-label="Load Cells">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#load_cell" class="md-nav__link">
+    [load_cell]
+  </a>
+  
+    <nav class="md-nav" aria-label="[load_cell]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#xh711" class="md-nav__link">
+    XH711
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hx717" class="md-nav__link">
+    HX717
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ads1220" class="md-nav__link">
+    ADS1220
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -7979,6 +8073,89 @@ adc2:
 #pause_delay:
 #   See the &quot;filament_switch_sensor&quot; section for a description of the
 #   above parameters.
+</code></pre></div>
+
+<h2 id="load-cells">Load Cells<a class="headerlink" href="#load-cells" title="Permanent link">&para;</a></h2>
+<h3 id="load_cell">[load_cell]<a class="headerlink" href="#load_cell" title="Permanent link">&para;</a></h3>
+<p>Load Cell. Uses an ADC sensor attached to a load cell to create a digital
+scale.</p>
+<div class="highlight"><pre><span></span><code>[load_cell]
+sensor_type:
+#   This must be one of the supported sensor types, see below.
+</code></pre></div>
+
+<h4 id="xh711">XH711<a class="headerlink" href="#xh711" title="Permanent link">&para;</a></h4>
+<p>This is a 24 bit low sample rate chip using "bit-bang" communications. It is
+suitable for filament scales.</p>
+<div class="highlight"><pre><span></span><code>[load_cell]
+sensor_type: hx711
+sclk_pin:
+#   The pin connected to the HX711 clock line. This parameter must be provided.
+dout_pin:
+#   The pin connected to the HX711 data output line. This parameter must be
+#   provided.
+#gain: A-128
+#   Valid values for gain are: A-128, A-64, B-32. The default is A-128.
+#   &#39;A&#39; denotes the input channel and the number denotes the gain. Only the 3
+#   listed combinations are supported by the chip. Note that changing the gain
+#   setting also selects the channel being read.
+#sample_rate: 80
+#   Valid values for sample_rate are 80 or 10. The default value is 80.
+#   This must match the wiring of the chip. The sample rate cannot be changed
+#   in software.
+</code></pre></div>
+
+<h4 id="hx717">HX717<a class="headerlink" href="#hx717" title="Permanent link">&para;</a></h4>
+<p>This is the 4x higher sample rate version of the HX711, suitable for probing.</p>
+<div class="highlight"><pre><span></span><code>[load_cell]
+sensor_type: hx717
+sclk_pin:
+#   The pin connected to the HX717 clock line. This parameter must be provided.
+dout_pin:
+#   The pin connected to the HX717 data output line. This parameter must be
+#   provided.
+#gain: A-128
+#   Valid values for gain are A-128, B-64, A-64, B-8.
+#   &#39;A&#39; denotes the input channel and the number denotes the gain setting.
+#   Only the 4 listed combinations are supported by the chip. Note that
+#   changing the gain setting also selects the channel being read.
+#sample_rate: 320
+#   Valid values for sample_rate are: 10, 20, 80, 320. The default is 320.
+#   This must match the wiring of the chip. The sample rate cannot be changed
+#   in software.
+</code></pre></div>
+
+<h4 id="ads1220">ADS1220<a class="headerlink" href="#ads1220" title="Permanent link">&para;</a></h4>
+<p>The ADS1220 is a 24 bit ADC supporting up to a 2Khz sample rate configurable in
+software.</p>
+<div class="highlight"><pre><span></span><code>[load_cell]
+sensor_type: ads1220
+cs_pin:
+#   The pin connected to the ADS1220 chip select line. This parameter must
+#   be provided.
+#spi_speed: 512000
+#   This chip supports 2 speeds: 256000 or 512000. The faster speed is only
+#   enabled when one of the Turbo sample rates is used. The correct spi_speed
+#   is selected based on the sample rate.
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the &quot;common SPI settings&quot; section for a description of the
+#   above parameters.
+data_ready_pin:
+#   Pin connected to the ADS1220 data ready line. This parameter must be
+#   provided.
+#gain: 128
+#   Valid gain values are 128, 64, 32, 16, 8, 4, 2, 1
+#   The default is 128
+#sample_rate: 660
+#   This chip supports two ranges of sample rates, Normal and Turbo. In turbo
+#   mode the chips c internal clock runs twice as fast and the SPI communication
+#   speed is also doubled.
+#   Normal sample rates: 20, 45, 90, 175, 330, 600, 1000
+#   Turbo sample rates: 40, 90, 180, 350, 660, 1200, 2000
+#   The default is 660
 </code></pre></div>
 
 <h2 id="board-specific-hardware-support">Board specific hardware support<a class="headerlink" href="#board-specific-hardware-support" title="Permanent link">&para;</a></h2>

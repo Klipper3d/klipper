@@ -1130,6 +1130,20 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#hx71xdump_hx71x" class="md-nav__link">
+    hx71x/dump_hx71x
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ads1220dump_ads1220" class="md-nav__link">
+    ads1220/dump_ads1220
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pause_resumecancel" class="md-nav__link">
     pause_resume/cancel
   </a>
@@ -1639,6 +1653,20 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#hx71xdump_hx71x" class="md-nav__link">
+    hx71x/dump_hx71x
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ads1220dump_ads1220" class="md-nav__link">
+    ads1220/dump_ads1220
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pause_resumecancel" class="md-nav__link">
     pause_resume/cancel
   </a>
@@ -1978,6 +2006,30 @@ and might later produce asynchronous messages such as:
 "data":[[1290.951905,-5063],[1290.952321,-5065]]}}</code></p>
 <p>The "header" field in the initial query response is used to describe
 the fields found in later "data" responses.</p>
+<h3 id="hx71xdump_hx71x">hx71x/dump_hx71x<a class="headerlink" href="#hx71xdump_hx71x" title="Permanent link">&para;</a></h3>
+<p>This endpoint is used to subscribe to raw HX711 and HX717 ADC data.
+Obtaining these low-level ADC updates may be useful for diagnostic
+and debugging purposes. Using this endpoint may increase Klipper's
+system load.</p>
+<p>A request may look like:
+<code>{"id": 123, "method":"hx71x/dump_hx71x",
+"params": {"sensor": "load_cell", "response_template": {}}}</code>
+and might return:
+<code>{"id": 123,"result":{"header":["time","counts"]}}</code>
+and might later produce asynchronous messages such as:
+<code>{"params":{"data":[[3292.432935, 562534], [3292.4394937, 5625322]]}}</code></p>
+<h3 id="ads1220dump_ads1220">ads1220/dump_ads1220<a class="headerlink" href="#ads1220dump_ads1220" title="Permanent link">&para;</a></h3>
+<p>This endpoint is used to subscribe to raw ADS1220 ADC data.
+Obtaining these low-level ADC updates may be useful for diagnostic
+and debugging purposes. Using this endpoint may increase Klipper's
+system load.</p>
+<p>A request may look like:
+<code>{"id": 123, "method":"ads1220/dump_ads1220",
+"params": {"sensor": "load_cell", "response_template": {}}}</code>
+and might return:
+<code>{"id": 123,"result":{"header":["time","counts"]}}</code>
+and might later produce asynchronous messages such as:
+<code>{"params":{"data":[[3292.432935, 562534], [3292.4394937, 5625322]]}}</code></p>
 <h3 id="pause_resumecancel">pause_resume/cancel<a class="headerlink" href="#pause_resumecancel" title="Permanent link">&para;</a></h3>
 <p>This endpoint is similar to running the "PRINT_CANCEL" G-Code command.
 For example:
