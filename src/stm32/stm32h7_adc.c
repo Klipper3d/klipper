@@ -92,7 +92,7 @@ static const uint8_t adc_pins[] = {
   #endif
     0,             //             VREFINT
 #elif CONFIG_MACH_STM32G4
-    0,                      // [0] vssa
+    0xFF,                   // [0] vssa
     GPIO('A', 0),           // [1]
     GPIO('A', 1),           // [2]
     GPIO('A', 2),           // [3]
