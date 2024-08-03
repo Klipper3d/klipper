@@ -8,7 +8,10 @@ rm -rf outfw/
 ./_build.sh bed || exit $?
 ./_build.sh noz || exit $?
 ./_build.sh mcu || exit $?
+./_build.sh btteddy || exit $?
 
 rm -rf fw/K1/*.bin
+rm -rf fw/K1/*.uf2
 mv outfw/*.bin fw/K1/
+mv outfw/*.uf2 fw/K1/
 rm -rf outfw/

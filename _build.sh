@@ -8,4 +8,8 @@ cp .config.$1 .config
 mkdir -p outfw/
 make clean
 make 
-mv out/${1}*.bin outfw/
+if [ "$1" = "btteddy" ]; then
+    mv out/klipper.uf2 outfw/btteddy.uf2
+else
+    mv out/${1}*.bin outfw/
+fi
