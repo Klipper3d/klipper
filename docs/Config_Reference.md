@@ -4974,6 +4974,13 @@ SPI bus.
 #spi_software_sclk_pin:
 #spi_software_mosi_pin:
 #spi_software_miso_pin:
+#spi_software_bus_width: number of bits from `5` to `64` to send/receive per
+#                        transaction on the software SPI bus (default 8 bits).
+#spi_software_is_little_endian: `True`/`False` - if `True` and width above `8`
+#    bits, the least significant byte will be sent first, otherwise last
+#    (default `False`).
+#spi_software_is_lsb_first: `True`/`False` - if `True` then the least
+#    significant bit will be sent first (default `False`).
 #   Specify the above parameters to use "software based SPI". This
 #   mode does not require micro-controller hardware support (typically
 #   any general purpose pins may be used). The default is to not use

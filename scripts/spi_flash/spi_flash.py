@@ -114,7 +114,7 @@ SPI_CFG_CMDS = (
 )
 SPI_BUS_CMD = "spi_set_bus oid=%d spi_bus=%s mode=%d rate=%d"
 SW_SPI_BUS_CMD = "spi_set_software_bus oid=%d " \
-    "miso_pin=%s mosi_pin=%s sclk_pin=%s mode=%d rate=%d"
+    "miso_pin=%s mosi_pin=%s sclk_pin=%s mode=%d rate=%d width=%d"
 SPI_SEND_CMD = "spi_send oid=%c data=%*s"
 SPI_XFER_CMD = "spi_transfer oid=%c data=%*s"
 SPI_XFER_RESPONSE = "spi_transfer_response oid=%c response=%*s"
@@ -1289,7 +1289,7 @@ class MCUConnection:
                 if p not in pin_enums:
                     raise SPIFlashError(pin_err_msg)
             bus_cmd = SW_SPI_BUS_CMD % (SPI_OID, pins[0], pins[1], pins[2],
-                                        SPI_MODE, SD_SPI_SPEED)
+                                        SPI_MODE, SD_SPI_SPEED, 8)
         else:
             if bus not in bus_enums:
                 raise SPIFlashError("Invalid SPI Bus: %s" % (bus,))
