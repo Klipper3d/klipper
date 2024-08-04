@@ -7,8 +7,7 @@
 import logging, re
 import stepper, chelper
 
-def parse_kinematic_string(config, carriages):
-    kinematics_str = config.get('kinematics')
+def parse_kinematic_string(kinematics_str, carriages, parse_error):
     nxt = 0
     pat = re.compile('[+-]')
     coeffs = [0.] * 3
@@ -17,9 +16,14 @@ def parse_kinematic_string(config, carriages):
         match = pat.search(kinematics_str, nxt+1)
         end = len(kinematics_str) if match is None else match.start()
         term = kinematics_str[nxt:end].strip()
-        term_lst = term.split("*")
+        if '*' in term:
+            term_lst = term.split('*')
+        else:
+            term_lst = re.split(r"^([-+]?(?:\d*\.*\d+))", term)
+            if not term_lst[0]:
+                del term_lst[0]
         if len(term_lst) not in [1, 2]:
-            raise config.error(
+            raise parse_error(
                     "Invalid term '%s' in kinematics '%s'" % (term,
                                                               kinematics_str))
         if len(term_lst) == 2:
@@ -31,11 +35,12 @@ def parse_kinematic_string(config, carriages):
             coeff = -1. if term_lst[0].startswith('-') else 1.
             if term_lst[0].startswith('-') or term_lst[0].startswith('+'):
                 term_lst[0] = term_lst[0][1:]
-        if term_lst[-1] not in carriages:
-            raise config.error(
+        c = term_lst[-1]
+        if c not in carriages:
+            raise parse_error(
                     "Invalid '%s' carriage referenced in kinematics '%s'" % (
-                        term_lst[-1], kinematics_str))
-        carriage = carriages[term_lst[-1]]
+                        c, kinematics_str))
+        carriage = carriages[c]
         j = carriage.get_axis()
         if coeffs[j]:
             raise error("Axis '%s' was referenced multiple times in "
@@ -50,8 +55,8 @@ class KinematicStepper:
         self.printer = config.get_printer()
         self.config = config
         self.stepper = stepper.PrinterStepper(config)
-        self.kin_coeffs, self.carriages = parse_kinematic_string(config,
-                                                                 carriages)
+        self.kin_coeffs, self.carriages = parse_kinematic_string(
+                config.get('kinematics'), carriages, config.error)
         if not any(self.kin_coeffs):
             raise config.error(
                     "'%s' must provide a valid 'kinematics' configuration" %
@@ -60,6 +65,8 @@ class KinematicStepper:
         self.stepper.setup_itersolve(
                 'generic_cartesian_stepper_alloc',
                 self.kin_coeffs[0], self.kin_coeffs[1], self.kin_coeffs[2])
+        self.stepper_sk = self.stepper.get_stepper_kinematics()
+        # Add stepper methods
         self.get_name = self.stepper.get_name
         self.get_step_dist = self.stepper.get_step_dist
         self.units_in_radians = self.stepper.units_in_radians
@@ -94,3 +101,16 @@ class KinematicStepper:
         return [i for i, c in enumerate(self.kin_coeffs) if c]
     def get_carriages(self):
         return self.carriages
+    def update_kinematics(self, kinematics_str, carriages, report_error=None):
+        kin_coeffs, carriages = parse_kinematic_string(
+                kinematics_str, carriages,
+                report_error or self.printer.command_error)
+        if report_error is not None and not any(kin_coeffs):
+            raise report_error(
+                    "A valid 'kinematics' that references at least one carriage"
+                    " must be provided for '%s'" % self.stepper.get_name())
+        self.kin_coeffs = kin_coeffs
+        self.carriages = carriages
+        ffi_main, ffi_lib = chelper.get_ffi()
+        ffi_lib.generic_cartesian_stepper_set_coeffs(
+                self.stepper_sk, kin_coeffs[0], kin_coeffs[1], kin_coeffs[2])

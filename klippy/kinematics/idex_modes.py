@@ -216,8 +216,10 @@ class DualCarriages:
             "Save dual carriages modes and positions"
     def cmd_SAVE_DUAL_CARRIAGE_STATE(self, gcmd):
         state_name = gcmd.get('NAME', 'default')
+        self.saved_states[state_name] = self.save_dual_carriage_state()
+    def save_dual_carriage_state(self):
         pos = self.printer.lookup_object('toolhead').get_position()
-        self.saved_states[state_name] = {
+        return {
             'carriage_modes': [tuple(dc.mode) for dc in self.dc],
             'axes_positions': {axis : [dc.get_axis_position(axis, pos)
                                        for dc in self.dc]
@@ -231,9 +233,12 @@ class DualCarriages:
         if saved_state is None:
             raise gcmd.error("Unknown DUAL_CARRIAGE state: %s" % (state_name,))
         move_speed = gcmd.get_float('MOVE_SPEED', 0., above=0.)
+        move = gcmd.get_int('MOVE', 1)
+        self.restore_dual_carriage_state(saved_state, move, move_speed)
+    def restore_dual_carriage_state(self, saved_state, move, move_speed=0.):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.flush_step_generation()
-        if gcmd.get_int('MOVE', 1):
+        if move:
             homing_speed = 99999999.
             cur_pos = []
             dst_pos = []

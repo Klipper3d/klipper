@@ -109,6 +109,8 @@ defs_kin_cartesian = """
 defs_kin_generic_cartesian = """
     struct stepper_kinematics *generic_cartesian_stepper_alloc(double a_x
         , double a_y, double a_z);
+    void generic_cartesian_stepper_set_coeffs(struct stepper_kinematics *sk
+        , double a_x, double a_y, double a_z);
 """
 
 defs_kin_corexy = """

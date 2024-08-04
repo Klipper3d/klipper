@@ -26,18 +26,27 @@ generic_cartesian_stepper_calc_position(struct stepper_kinematics *sk
     return cs->a.x * c.x + cs->a.y * c.y + cs->a.z * c.z;
 }
 
+void __visible
+generic_cartesian_stepper_set_coeffs(struct stepper_kinematics *sk
+                                     , double a_x, double a_y, double a_z)
+{
+    struct generic_cartesian_stepper *cs = container_of(
+            sk, struct generic_cartesian_stepper, sk);
+    cs->a.x = a_x;
+    cs->a.y = a_y;
+    cs->a.z = a_z;
+    cs->sk.active_flags = 0;
+    if (a_x) cs->sk.active_flags |= AF_X;
+    if (a_y) cs->sk.active_flags |= AF_Y;
+    if (a_z) cs->sk.active_flags |= AF_Z;
+}
+
 struct stepper_kinematics * __visible
 generic_cartesian_stepper_alloc(double a_x, double a_y, double a_z)
 {
     struct generic_cartesian_stepper *cs = malloc(sizeof(*cs));
     memset(cs, 0, sizeof(*cs));
-    cs->a.x = a_x;
-    cs->a.y = a_y;
-    cs->a.z = a_z;
     cs->sk.calc_position_cb = generic_cartesian_stepper_calc_position;
-    cs->sk.active_flags = 0;
-    if (a_x) cs->sk.active_flags |= AF_X;
-    if (a_y) cs->sk.active_flags |= AF_Y;
-    if (a_z) cs->sk.active_flags |= AF_Z;
+    generic_cartesian_stepper_set_coeffs(&cs->sk, a_x, a_y, a_z);
     return &cs->sk;
 }

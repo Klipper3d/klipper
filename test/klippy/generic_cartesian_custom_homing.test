@@ -1,0 +1,24 @@
+# Test cases on printers with generic cartesian kinematics and custom homing
+CONFIG generic_cartesian_custom_homing.cfg
+DICTIONARY atmega2560.dict
+
+# First home the printer
+G90
+G28
+
+# Perform a dummy move
+G1 X10 F6000
+
+G1 X190 F6000
+
+G1 X100 F6000
+
+G28
+
+G1 X50 F6000
+
+QUERY_ENDSTOPS
+
+# Verify STEPPER_BUZZ
+STEPPER_BUZZ STEPPER='stepper z'
+STEPPER_BUZZ STEPPER=extruder
