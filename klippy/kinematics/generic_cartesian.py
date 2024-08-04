@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-import copy, itertools, logging
+import copy, itertools, logging, math
 import gcode, mathutil, stepper
 import extras.kinematic_stepper as ks
 from . import idex_modes
@@ -24,6 +24,77 @@ def mat_transp(a):
     for i in range(len(a[0])):
         res.append([a[j][i] for j in range(len(a))])
     return res
+
+def find_eigenvectors(m, ek):
+    res = []
+    for i in range(3):
+        if abs(m[i][i]) < 1e-8:
+            for j in range(i+1, 3):
+                if abs(m[j][i]) > 1e-8:
+                    m[i], m[j] = m[j], m[i]
+                    break
+        if abs(m[i][i]) < 1e-8:
+            vr = [-m[k][i] for k in range(3)]
+            vr[i] = 1.
+            nrm_recipr = 1. / math.sqrt(mathutil.matrix_magsq(vr))
+            res.append([x * nrm_recipr for x in vr])
+            if len(res) == ek:
+                return res
+            continue
+        recipr = 1. / m[i][i]
+        for j in range(i+1, 3):
+            m[i][j] *= recipr
+        m[i][i] = 1.
+        for j in range(3):
+            if i != j:
+                c = m[j][i]
+                for k in range(i, 3):
+                    m[j][k] -= c * m[i][k]
+
+def mat_eigen(mtm):
+    a, d, f = mtm[0]
+    b, e = mtm[1][1:]
+    c = mtm[2][2]
+    x1 = a**2 + b**2 + c**2 - a*b - a*c - b*c + 3. * (d**2 + f**2 + e**2)
+    x2 = -(2. * a - b - c) * (2. * b - a - c) * (2. * c - a - b) \
+            + 9. * ((2. * c - a - b) * d**2 + (2. * b - a - c) * f**2 \
+            + (2. * a - b - c) * e**2) - 54. * d * e * f
+    phi = math.atan2(math.sqrt(4. * x1**3 - x2**2), x2)
+    sqrt_x1 = math.sqrt(x1)
+    # Closed-form expressions for eigenvalues of a symmetric matrix
+    l = [li / 3. if abs(li) > 1e-8 else 0. for li in
+         [a + b + c - 2. * sqrt_x1 * math.cos(phi / 3.),
+          a + b + c + 2. * sqrt_x1 * math.cos((phi - math.pi) / 3.),
+          a + b + c + 2. * sqrt_x1 * math.cos((phi + math.pi) / 3.)]]
+    l.sort(reverse=True)
+    # Count different eigenvalues
+    lc = {l[0]: 1}
+    j = 0
+    for i in range(1, 3):
+        if abs(l[i]-l[j]) < 1e-8:
+            lc[l[j]] += 1
+        else:
+            j = i
+            lc[l[j]] = 1
+    v = []
+    # Find eigenvector(s) for each eigenvalue and its multiplicity
+    for li in sorted(lc.keys(), reverse=True):
+        mc = copy.deepcopy(mtm)
+        for j in range(3):
+            mc[j][j] -= li
+        v.extend(find_eigenvectors(mc, lc[li]))
+    return l, mat_transp(v)
+
+def mat_pseudo_inverse(m):
+    mtm = mat_mul(mat_transp(m), m)
+    l, v = mat_eigen(mtm)
+    # Compute matrix SVD and S pseudo-inverse
+    s = [[0.]*3 for i in range(3)]
+    for i in range(3):
+        s[i][i] = 1. / math.sqrt(l[i]) if l[i] else 0.
+    u = mat_mul(m, mat_mul(v, s))
+    pinv = mat_mul(v, mat_mul(s, mat_transp(u)))
+    return pinv
 
 class MainCarriage(stepper.GenericPrinterCarriage):
     def __init__(self, config, axis):
@@ -55,6 +126,8 @@ class ExtraCarriage:
         return self.primary_carriage.get_axis()
     def add_stepper(self, stepper):
         self.primary_carriage.add_stepper(stepper, self.endstop_pin, self.name)
+    def del_stepper(self, stepper):
+        self.primary_carriage.del_stepper(stepper)
 
 class DualCarriage(stepper.GenericPrinterCarriage):
     def __init__(self, config, carriages):
@@ -102,13 +175,13 @@ class GenericCartesianKinematics:
                     dcs = self.dc_module.get_dc()
                     dcs[active_dc].activate(axis, idex_modes.PRIMARY, zero_pos)
                     dcs[1-active_dc].inactivate(axis, zero_pos)
-                self._check_kinematics()
+                self._check_kinematics(config.error)
             for axis in axes:
                 self.dc_module.get_dc()[0].activate(axis, idex_modes.PRIMARY,
                                                     zero_pos)
                 self.dc_module.get_dc()[1].inactivate(axis, zero_pos)
         else:
-            self._check_kinematics()
+            self._check_kinematics(config.error)
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat('max_z_velocity', max_velocity,
@@ -116,6 +189,11 @@ class GenericCartesianKinematics:
         self.max_z_accel = config.getfloat('max_z_accel', max_accel,
                                            above=0., maxval=max_accel)
         self.limits = [(1.0, -1.0)] * 3
+        # Register gcode commands
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_command("SET_STEPPER_KINEMATICS",
+                               self.cmd_SET_STEPPER_KINEMATICS,
+                               desc=self.cmd_SET_STEPPER_KINEMATICS_help)
     def _load_kinematics(self, config):
         carriages = {a : MainCarriage(config.getsection('carriage ' + a), a)
                      for a in 'xyz'}
@@ -140,11 +218,15 @@ class GenericCartesianKinematics:
                         "Redefinition of carriage %s" % ec.get_name())
             carriages[name] = ec
         self.steppers = self._load_steppers(config, carriages)
+        self.all_carriages = carriages
+        self._check_carriages_references(config.error)
+    def _check_carriages_references(self, report_error):
+        carriages = dict(self.all_carriages)
         for s in self.steppers:
             for c in s.get_carriages():
                 carriages.pop(c.get_name(), None)
         if carriages:
-            raise config.error(
+            raise report_error(
                     "Carriage(s) %s must be referenced by some "
                     "stepper(s) kinematics" % (", ".join(carriages),))
     def _load_steppers(self, config, carriages):
@@ -176,20 +258,22 @@ class GenericCartesianKinematics:
         return [matr[s.get_name()] for s in self.steppers], \
                 [mathutil.matrix_dot(orig_matr[s.get_name()],
                                      offs[s.get_name()]) for s in self.steppers]
-    def _check_kinematics(self):
+    def _check_kinematics(self, report_error):
         matr, _ = self._get_kinematics_coeffs()
         det = mathutil.matrix_det(mat_mul(mat_transp(matr), matr))
         if abs(det) < 0.00001:
-            raise self.printer.config_error(
+            raise report_error(
                     "Verify configured stepper(s) and their 'kinematics' "
                     "specifications, the current configuration does not "
                     "allow independent movements of all printer axes.")
     def calc_position(self, stepper_positions):
         matr, offs = self._get_kinematics_coeffs()
-        inv = mathutil.matrix_inv(mat_mul(mat_transp(matr), matr))
-        proj = mat_mul(matr, inv)
         spos = [stepper_positions[s.get_name()] for s in self.steppers]
-        pos = mat_mul([[sp-o for sp, o in zip(spos, offs)]], proj)
+        pinv = mat_pseudo_inverse(matr)
+        pos = mat_mul([[sp-o for sp, o in zip(spos, offs)]], mat_transp(pinv))
+        for i in range(3):
+            if not any(pinv[i]):
+                pos[0][i] = None
         return pos[0]
     def update_limits(self, i, range):
         l, h = self.limits[i]
@@ -260,7 +344,7 @@ class GenericCartesianKinematics:
         axes_min = gcode.Coord(*[r[0] for r in ranges], e=0.)
         axes_max = gcode.Coord(*[r[1] for r in ranges], e=0.)
         A = self._get_kinematics_coeffs()[0]
-        P = mat_mul(A, mathutil.matrix_inv(mat_mul(mat_transp(A), A)))
+        P = mat_transp(mat_pseudo_inverse(A))
         return {
             'homed_axes': "".join(axes),
             'axis_minimum': axes_min,
@@ -270,6 +354,51 @@ class GenericCartesianKinematics:
             'toolhead_kinematics': {s.get_name() : P[i]
                                     for i, s in enumerate(self.steppers)},
         }
+    cmd_SET_STEPPER_KINEMATICS_help = "Set stepper kinematics"
+    def cmd_SET_STEPPER_KINEMATICS(self, gcmd):
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.flush_step_generation()
+        stepper_name = gcmd.get("STEPPER")
+        steppers = [stepper for stepper in self.steppers
+                    if stepper.get_name() == stepper_name]
+        if len(steppers) == 0:
+            raise gcmd.error("Invalid STEPPER '%s' specified" % stepper_name)
+        stepper = steppers[0]
+        kinematics_str = gcmd.get("KINEMATICS").lower()
+        validate = not gcmd.get_int("DISABLE_CHECKS", 0)
+        old_carriages = stepper.get_carriages()
+        stepper.update_kinematics(kinematics_str, self.all_carriages,
+                                  report_error=gcmd.error if validate else None)
+        new_carriages = stepper.get_carriages()
+        for c in old_carriages:
+            if c not in new_carriages:
+                c.del_stepper(stepper)
+        for c in new_carriages:
+            if c not in old_carriages:
+                c.add_stepper(stepper)
+        if not new_carriages:
+            stepper.set_trapq(None)
+        elif not old_carriages:
+            stepper.set_trapq(toolhead.get_trapq())
+        pos = toolhead.get_position()
+        stepper.set_position(pos)
+        if not validate:
+            return
+        self._check_carriages_references(gcmd.error)
+        if self.dc_module:
+            dc_state = self.dc_module.save_dual_carriage_state()
+            axes = [dc.get_axis() for dc in self.dc_carriages]
+            for active_dc_per_axis in itertools.product(*[(0, 1)]*len(axes)):
+                pos = toolhead.get_position()
+                for i, axis in enumerate(axes):
+                    active_dc = active_dc_per_axis[i]
+                    dcs = self.dc_module.get_dc()
+                    dcs[active_dc].activate(axis, idex_modes.PRIMARY, pos)
+                    dcs[1-active_dc].inactivate(axis, pos)
+                self._check_kinematics(gcmd.error)
+            self.dc_module.restore_dual_carriage_state(dc_state, move=0)
+        else:
+            self._check_kinematics(gcmd.error)
 
 def load_kinematics(toolhead, config):
     return GenericCartesianKinematics(toolhead, config)

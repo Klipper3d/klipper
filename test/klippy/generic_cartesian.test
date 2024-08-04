@@ -39,6 +39,13 @@ G91
 G1 X20 E.2
 G90
 
+# Test changing the stepper kinematics
+SET_STEPPER_KINEMATICS STEPPER='stepper stepper_z1' KINEMATICS=z
+SET_STEPPER_KINEMATICS STEPPER='stepper stepper_z' KINEMATICS= DISABLE_CHECKS=1
+
+G1 X30 E.2
+G1 Z3
+
 QUERY_ENDSTOPS
 
 # Servo tests
