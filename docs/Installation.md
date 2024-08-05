@@ -126,8 +126,8 @@ It should report something similar to the following:
 It's common for each printer to have its own unique serial port name.
 This unique name will be used when flashing the micro-controller. It's
 possible there may be multiple lines in the above output - if so,
-choose the line corresponding to the micro-controller If many
-items are listed and the choice is ambigous, unplug the board and
+choose the line corresponding to the micro-controller. If many
+items are listed and the choice is ambiguous, unplug the board and
 run the command again, the missing item will be your print board(see the
 [FAQ](FAQ.md#wheres-my-serial-port) for more information).
 
