@@ -89,7 +89,7 @@ nav:
   - Contact.md
   - Installation and Configuration:
     - Installation:
-      - Installation.md 
+      - Installation.md
       - OctoPrint.md
     - Configuration Reference:
       - Config_Reference.md
