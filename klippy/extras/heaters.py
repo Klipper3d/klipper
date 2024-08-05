@@ -239,6 +239,7 @@ class PrinterHeaters:
         self.available_heaters = []
         self.available_sensors = []
         self.available_monitors = []
+        self.in_temperature_wait = None
         self.has_started = self.have_load_sensors = False
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
         self.printer.register_event_handler("gcode:request_restart",
@@ -305,7 +306,8 @@ class PrinterHeaters:
     def get_status(self, eventtime):
         return {'available_heaters': self.available_heaters,
                 'available_sensors': self.available_sensors,
-                'available_monitors': self.available_monitors}
+                'available_monitors': self.available_monitors,
+                'temperature_wait': self.in_temperature_wait}
     def turn_off_all_heaters(self, print_time=0.):
         for heater in self.heaters.values():
             heater.set_temp(0.)
@@ -336,14 +338,17 @@ class PrinterHeaters:
         # Helper to wait on heater.check_busy() and report M105 temperatures
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
+        full_name = heater.get_name()
         toolhead = self.printer.lookup_object("toolhead")
         gcode = self.printer.lookup_object("gcode")
         reactor = self.printer.get_reactor()
         eventtime = reactor.monotonic()
         while not self.printer.is_shutdown() and heater.check_busy(eventtime):
+            self.in_temperature_wait = full_name
             print_time = toolhead.get_last_move_time()
             gcode.respond_raw(self._get_temp(eventtime))
             eventtime = reactor.pause(eventtime + 1.)
+        self.in_temperature_wait = None
     def set_temperature(self, heater, temp, wait=False):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.register_lookahead_callback((lambda pt: None))
@@ -362,8 +367,10 @@ class PrinterHeaters:
                 "Error on 'TEMPERATURE_WAIT': missing MINIMUM or MAXIMUM.")
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
+        full_name = sensor_name
         if sensor_name in self.heaters:
             sensor = self.heaters[sensor_name]
+            full_name = sensor.get_name()
         else:
             sensor = self.printer.lookup_object(sensor_name)
         toolhead = self.printer.lookup_object("toolhead")
@@ -372,10 +379,12 @@ class PrinterHeaters:
         while not self.printer.is_shutdown():
             temp, target = sensor.get_temp(eventtime)
             if temp >= min_temp and temp <= max_temp:
-                return
+                break
+            self.in_temperature_wait = full_name
             print_time = toolhead.get_last_move_time()
             gcmd.respond_raw(self._get_temp(eventtime))
             eventtime = reactor.pause(eventtime + 1.)
+        self.in_temperature_wait = None
 
 def load_config(config):
     return PrinterHeaters(config)
