@@ -17,6 +17,7 @@ communication with the Klipper developers.
 ## Installation and Configuration
 
 - [Installation](Installation.md): Guide to installing Klipper.
+  - [Octoprint](OctoPrint.md): Guide to installing Octoprint with Klipper.
 - [Config Reference](Config_Reference.md): Description of config
   parameters.
   - [Rotation Distance](Rotation_Distance.md): Calculating the
