@@ -118,10 +118,13 @@ class ControlAutoTune:
         amplitude = .5 * abs(temp_diff)
         Ku = 4. * self.heater_max_power / (math.pi * amplitude)
         Tu = time_diff
-        # Use Ziegler-Nichols method to generate PID parameters
-        Ti = 0.5 * Tu
-        Td = 0.125 * Tu
-        Kp = 0.6 * Ku * heaters.PID_PARAM_BASE
+        # Use Tyreus-Luyben variant of Ziegler-Nichols method to generate PID
+        # parameters. Ziegler-Nichols produces very aggressive gain, which
+        # tends to cause significant initial overshoot of large heater beds,
+        # and unneeded oscillation of hotends.
+        Ti = 2.2 * Tu
+        Td = Tu / 6.3
+        Kp = (Ku / 2.2) * heaters.PID_PARAM_BASE
         Ki = Kp / Ti
         Kd = Kp * Td
         logging.info("Autotune: raw=%f/%f Ku=%f Tu=%f  Kp=%f Ki=%f Kd=%f",
