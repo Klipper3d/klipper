@@ -18,12 +18,16 @@
 struct hx71x_adc {
     struct timer timer;
     uint8_t gain_channel;   // the gain+channel selection (1-4)
-    uint8_t pending_flag;
+    uint8_t flags;
     uint32_t rest_ticks;
     uint32_t last_error;
     struct gpio_in dout; // pin used to receive data from the hx71x
     struct gpio_out sclk; // pin used to generate clock for the hx71x
     struct sensor_bulk sb;
+};
+
+enum {
+    HX_PENDING = 1<<0, HX_OVERFLOW = 1<<1,
 };
 
 #define BYTES_PER_SAMPLE 4
@@ -107,12 +111,14 @@ hx71x_event(struct timer *timer)
 {
     struct hx71x_adc *hx71x = container_of(timer, struct hx71x_adc, timer);
     uint32_t rest_ticks = hx71x->rest_ticks;
-    if (hx71x->pending_flag) {
+    uint8_t flags = hx71x->flags;
+    if (flags & HX_PENDING) {
         hx71x->sb.possible_overflows++;
+        hx71x->flags = HX_PENDING | HX_OVERFLOW;
         rest_ticks *= 4;
     } else if (hx71x_is_data_ready(hx71x)) {
         // New sample pending
-        hx71x->pending_flag = 1;
+        hx71x->flags = HX_PENDING;
         sched_wake_task(&wake_hx71x);
         rest_ticks *= 8;
     }
@@ -139,12 +145,15 @@ add_sample(struct hx71x_adc *hx71x, uint8_t oid, uint32_t counts,
 static void
 hx71x_read_adc(struct hx71x_adc *hx71x, uint8_t oid)
 {
-    uint32_t start = timer_read_time();
     // Read from sensor
     uint_fast8_t gain_channel = hx71x->gain_channel;
     uint32_t adc = hx71x_raw_read(hx71x->dout, hx71x->sclk, 24 + gain_channel);
-    hx71x->pending_flag = 0;
-    barrier();
+
+    // Clear pending flag (and note if an overflow occurred)
+    irq_disable();
+    uint8_t flags = hx71x->flags;
+    hx71x->flags = 0;
+    irq_enable();
 
     // Extract report from raw data
     uint32_t counts = adc >> gain_channel;
@@ -156,7 +165,7 @@ hx71x_read_adc(struct hx71x_adc *hx71x, uint8_t oid)
     if ((adc & extras_mask) != extras_mask) {
         // Transfer did not complete correctly
         hx71x->last_error = SAMPLE_ERROR_DESYNC;
-    } else if ((timer_read_time() - start) > (hx71x->rest_ticks * 8)) {
+    } else if (flags & HX_OVERFLOW) {
         // Transfer took too long
         hx71x->last_error = SAMPLE_ERROR_READ_TOO_LONG;
     }
@@ -177,7 +186,6 @@ command_config_hx71x(uint32_t *args)
     struct hx71x_adc *hx71x = oid_alloc(args[0]
                 , command_config_hx71x, sizeof(*hx71x));
     hx71x->timer.func = hx71x_event;
-    hx71x->pending_flag = 0;
     uint8_t gain_channel = args[1];
     if (gain_channel < 1 || gain_channel > 4) {
         shutdown("HX71x gain/channel out of range 1-4");
@@ -197,7 +205,7 @@ command_query_hx71x(uint32_t *args)
     uint8_t oid = args[0];
     struct hx71x_adc *hx71x = oid_lookup(oid, command_config_hx71x);
     sched_del_timer(&hx71x->timer);
-    hx71x->pending_flag = 0;
+    hx71x->flags = 0;
     hx71x->last_error = 0;
     hx71x->rest_ticks = args[1];
     if (!hx71x->rest_ticks) {
@@ -238,7 +246,7 @@ hx71x_capture_task(void)
     uint8_t oid;
     struct hx71x_adc *hx71x;
     foreach_oid(oid, hx71x, command_config_hx71x) {
-        if (hx71x->pending_flag)
+        if (hx71x->flags)
             hx71x_read_adc(hx71x, oid);
     }
 }
