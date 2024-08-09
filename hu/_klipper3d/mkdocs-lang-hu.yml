@@ -103,7 +103,9 @@ nav:
   - Config_Changes.md
   - Contact.md
   - Telepítés és Konfiguráció:
-    - Installation.md
+    - Installation:
+      - Installation.md
+      - OctoPrint.md
     - Konfigurációs Hivatkozás:
       - Config_Reference.md
       - Rotation_Distance.md
