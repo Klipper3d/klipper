@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2023  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, threading
+import logging, threading, struct
 
 # This "bulk sensor" module facilitates the processing of sensor chip
 # measurements that do not require the host to respond with low
@@ -114,7 +114,7 @@ class BatchWebhooksClient:
 
 # Helper class to store incoming messages in a queue
 class BulkDataQueue:
-    def __init__(self, mcu, msg_name, oid):
+    def __init__(self, mcu, msg_name="sensor_bulk_data", oid=None):
         # Measurement storage (accessed from background thread)
         self.lock = threading.Lock()
         self.raw_samples = []
@@ -123,13 +123,13 @@ class BulkDataQueue:
     def _handle_data(self, params):
         with self.lock:
             self.raw_samples.append(params)
-    def pull_samples(self):
+    def pull_queue(self):
         with self.lock:
             raw_samples = self.raw_samples
             self.raw_samples = []
         return raw_samples
-    def clear_samples(self):
-        self.pull_samples()
+    def clear_queue(self):
+        self.pull_queue()
 
 
 ######################################################################
@@ -198,39 +198,54 @@ class ClockSyncRegression:
         inv_freq = clock_to_print_time(base_mcu + inv_cfreq) - base_time
         return base_time, base_chip, inv_freq
 
-MAX_BULK_MSG_SIZE = 52
+MAX_BULK_MSG_SIZE = 51
 
-# Handle common periodic chip status query responses
-class ChipClockUpdater:
-    def __init__(self, clock_sync, bytes_per_sample):
-        self.clock_sync = clock_sync
-        self.bytes_per_sample = bytes_per_sample
-        self.samples_per_block = MAX_BULK_MSG_SIZE // bytes_per_sample
-        self.mcu = clock_sync.mcu
+# Read sensor_bulk_data and calculate timestamps for devices that take
+# samples at a fixed frequency (and produce fixed data size samples).
+class FixedFreqReader:
+    def __init__(self, mcu, chip_clock_smooth, unpack_fmt):
+        self.mcu = mcu
+        self.clock_sync = ClockSyncRegression(mcu, chip_clock_smooth)
+        unpack = struct.Struct(unpack_fmt)
+        self.unpack_from = unpack.unpack_from
+        self.bytes_per_sample = unpack.size
+        self.samples_per_block = MAX_BULK_MSG_SIZE // self.bytes_per_sample
         self.last_sequence = self.max_query_duration = 0
-        self.last_limit_count = 0
-    def get_last_sequence(self):
-        return self.last_sequence
-    def get_last_limit_count(self):
-        return self.last_limit_count
-    def clear_duration_filter(self):
+        self.last_overflows = 0
+        self.bulk_queue = self.oid = self.query_status_cmd = None
+    def setup_query_command(self, msgformat, oid, cq):
+        # Lookup sensor query command (that responds with sensor_bulk_status)
+        self.oid = oid
+        self.query_status_cmd = self.mcu.lookup_query_command(
+            msgformat, "sensor_bulk_status oid=%c clock=%u query_ticks=%u"
+            " next_sequence=%hu buffered=%u possible_overflows=%hu",
+            oid=oid, cq=cq)
+        # Read sensor_bulk_data messages and store in a queue
+        self.bulk_queue = BulkDataQueue(self.mcu, oid=oid)
+    def get_last_overflows(self):
+        return self.last_overflows
+    def _clear_duration_filter(self):
         self.max_query_duration = 1 << 31
-    def note_start(self, reqclock):
+    def note_start(self):
         self.last_sequence = 0
-        self.last_limit_count = 0
-        self.clock_sync.reset(reqclock, 0)
-        self.clear_duration_filter()
-    def update_clock(self, params):
-        # Handle a status response message of the form:
-        #   adxl345_status oid=x clock=x query_ticks=x next_sequence=x
-        #     buffered=x fifo=x limit_count=x
-        fifo = params['fifo']
+        self.last_overflows = 0
+        # Clear local queue (clear any stale samples from previous session)
+        self.bulk_queue.clear_queue()
+        # Set initial clock
+        self._clear_duration_filter()
+        self._update_clock(is_reset=True)
+        self._clear_duration_filter()
+    def note_end(self):
+        # Clear local queue (free no longer needed memory)
+        self.bulk_queue.clear_queue()
+    def _update_clock(self, is_reset=False):
+        params = self.query_status_cmd.send([self.oid])
         mcu_clock = self.mcu.clock32_to_clock64(params['clock'])
         seq_diff = (params['next_sequence'] - self.last_sequence) & 0xffff
         self.last_sequence += seq_diff
         buffered = params['buffered']
-        lc_diff = (params['limit_count'] - self.last_limit_count) & 0xffff
-        self.last_limit_count += lc_diff
+        po_diff = (params['possible_overflows'] - self.last_overflows) & 0xffff
+        self.last_overflows += po_diff
         duration = params['query_ticks']
         if duration > self.max_query_duration:
             # Skip measurement as a high query time could skew clock tracking
@@ -239,9 +254,44 @@ class ChipClockUpdater:
             return
         self.max_query_duration = 2 * duration
         msg_count = (self.last_sequence * self.samples_per_block
-                     + buffered // self.bytes_per_sample + fifo)
+                     + buffered // self.bytes_per_sample)
         # The "chip clock" is the message counter plus .5 for average
         # inaccuracy of query responses and plus .5 for assumed offset
         # of hardware processing time.
         chip_clock = msg_count + 1
-        self.clock_sync.update(mcu_clock + duration // 2, chip_clock)
+        avg_mcu_clock = mcu_clock + duration // 2
+        if is_reset:
+            self.clock_sync.reset(avg_mcu_clock, chip_clock)
+        else:
+            self.clock_sync.update(avg_mcu_clock, chip_clock)
+    # Convert sensor_bulk_data responses into list of samples
+    def pull_samples(self):
+        # Query MCU for sample timing and update clock synchronization
+        self._update_clock()
+        # Pull sensor_bulk_data messages from local queue
+        raw_samples = self.bulk_queue.pull_queue()
+        if not raw_samples:
+            return []
+        # Load variables to optimize inner loop below
+        last_sequence = self.last_sequence
+        time_base, chip_base, inv_freq = self.clock_sync.get_time_translation()
+        unpack_from = self.unpack_from
+        bytes_per_sample = self.bytes_per_sample
+        samples_per_block = self.samples_per_block
+        # Process every message in raw_samples
+        count = seq = 0
+        samples = [None] * (len(raw_samples) * samples_per_block)
+        for params in raw_samples:
+            seq_diff = (params['sequence'] - last_sequence) & 0xffff
+            seq_diff -= (seq_diff & 0x8000) << 1
+            seq = last_sequence + seq_diff
+            msg_cdiff = seq * samples_per_block - chip_base
+            data = params['data']
+            for i in range(len(data) // bytes_per_sample):
+                ptime = time_base + (msg_cdiff + i) * inv_freq
+                udata = unpack_from(data, i * bytes_per_sample)
+                samples[count] = (ptime,) + udata
+                count += 1
+        self.clock_sync.set_last_chip_clock(seq * samples_per_block + i)
+        del samples[count:]
+        return samples

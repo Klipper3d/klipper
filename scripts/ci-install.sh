@@ -35,7 +35,7 @@ if [ ! -f ${PRU_FILE} ]; then
     cd ${BUILD_DIR}
     git config --global user.email "you@example.com"
     git config --global user.name "Your Name"
-    git clone https://github.com/dinuxbg/gnupru -b 2023.01 --depth 1
+    git clone https://github.com/dinuxbg/gnupru -b 2024.05 --depth 1
     cd gnupru
     export PREFIX=${PRU_DIR}
     ./download-and-prepare.sh 2>&1 | pv -nli 30 > ${BUILD_DIR}/gnupru-build.log

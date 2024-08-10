@@ -89,8 +89,12 @@ void
 spi_prepare(struct spi_config config)
 {
     spi_hw_t *spi = config.spi;
+    if (spi->cr0 == config.cr0 && spi->cpsr == config.cpsr)
+        return;
+    spi->cr1 = 0;
     spi->cr0 = config.cr0;
     spi->cpsr = config.cpsr;
+    spi->cr1 = SPI_SSPCR1_SSE_BITS;
 }
 
 void

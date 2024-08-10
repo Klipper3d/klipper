@@ -151,16 +151,17 @@ class DataLogger:
             self.send_subscribe("stepq:" + stepper,
                                 "motion_report/dump_stepper", {"name": stepper})
         # Subscribe to additional sensor data
+        stypes = ["adxl345", "lis2dw", "mpu9250", "angle"]
+        stypes = {st:st for st in stypes}
+        stypes['probe_eddy_current'] = 'ldc1612'
         config = status["configfile"]["settings"]
         for cfgname in config.keys():
-            if cfgname == "adxl345" or cfgname.startswith("adxl345 "):
-                aname = cfgname.split()[-1]
-                self.send_subscribe("adxl345:" + aname, "adxl345/dump_adxl345",
-                                    {"sensor": aname})
-            if cfgname.startswith("angle "):
-                aname = cfgname.split()[1]
-                self.send_subscribe("angle:" + aname, "angle/dump_angle",
-                                    {"sensor": aname})
+            for capprefix, st in sorted(stypes.items()):
+                if cfgname == capprefix or cfgname.startswith(capprefix + " "):
+                    aname = cfgname.split()[-1]
+                    lname = "%s:%s" % (st, aname)
+                    qcmd = "%s/dump_%s" % (st, st)
+                    self.send_subscribe(lname, qcmd, {"sensor": aname})
     def handle_dump(self, msg, raw_msg):
         msg_id = msg["id"]
         if "result" not in msg:

@@ -6,7 +6,6 @@
 import chelper
 
 MAX_SCHEDULE_TIME = 5.0
-CLOCK_SYNC_EXTRA_TIME = 0.050
 
 class error(Exception):
     pass
@@ -118,8 +117,7 @@ class MCU_queued_pwm:
             # Continue flushing to resend time
             wakeclock += self._duration_ticks
         wake_print_time = self._mcu.clock_to_print_time(wakeclock)
-        self._toolhead.note_kinematic_activity(wake_print_time
-                                               + CLOCK_SYNC_EXTRA_TIME)
+        self._toolhead.note_mcu_movequeue_activity(wake_print_time)
     def set_pwm(self, print_time, value):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._invert:

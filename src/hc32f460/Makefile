@@ -7,7 +7,7 @@ dirs-y += src/hc32f460 src/generic lib/hc32f460/driver/src lib/hc32f460/mcu/comm
 
 CFLAGS += -mthumb -mcpu=cortex-m4 -Isrc/hc32f460 -Ilib/hc32f460/driver/inc -Ilib/hc32f460/mcu/common -Ilib/cmsis-core -DHC32F460
 
-CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
+CFLAGS_klipper.elf += -nostdlib -lgcc -lc_nano
 CFLAGS_klipper.elf += -T $(OUT)src/generic/armcm_link.ld
 $(OUT)klipper.elf: $(OUT)src/generic/armcm_link.ld
 

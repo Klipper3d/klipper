@@ -27,7 +27,11 @@ target-y += $(OUT)pru0.elf $(OUT)pru1.elf
 $(OUT)pru0.elf: $(patsubst %.c, $(OUT)src/%.o,$(pru0-y))
 	@echo "  Linking $@"
 	$(Q)$(CC) $(CFLAGS_klipper.elf) $^ -o $(OUT)pru0.o
+	# dumping info about INTC
+	$(Q)$(OBJCOPY) --dump-section '.pru_irq_map'=$(OUT)pru0.pru_irq_map.bin $(OUT)src/pru/pru0.o $(OUT)pru0.o.discard
 	$(Q)$(CC) $(CFLAGS_pru0.elf) $(OUT)pru0.o -o $@
+	# in previous step linker did loose info about INTC during optimization, restoring it here (P.S. pru.lds is not helping)
+	$(Q)$(OBJCOPY) --add-section '.pru_irq_map'=$(OUT)pru0.pru_irq_map.bin $@
 
 $(OUT)pru1.elf: $(OUT)klipper.elf
 	@echo "  Linking $@"

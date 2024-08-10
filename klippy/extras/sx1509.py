@@ -104,7 +104,6 @@ class SX1509_digital_out(object):
         self._invert = pin_params['invert']
         self._mcu.register_config_callback(self._build_config)
         self._start_value = self._shutdown_value = self._invert
-        self._is_static = False
         self._max_duration = 2.
         self._set_cmd = self._clear_cmd = None
         # Set direction to output
@@ -116,12 +115,9 @@ class SX1509_digital_out(object):
         return self._mcu
     def setup_max_duration(self, max_duration):
         self._max_duration = max_duration
-    def setup_start_value(self, start_value, shutdown_value, is_static=False):
-        if is_static and start_value != shutdown_value:
-            raise pins.error("Static pin can not have shutdown value")
+    def setup_start_value(self, start_value, shutdown_value):
         self._start_value = (not not start_value) ^ self._invert
         self._shutdown_value = self._invert
-        self._is_static = is_static
         # We need to set the start value here so the register is
         # updated before the SX1509 class writes it.
         if self._start_value:
@@ -148,7 +144,6 @@ class SX1509_pwm(object):
         self._invert = pin_params['invert']
         self._mcu.register_config_callback(self._build_config)
         self._start_value = self._shutdown_value = float(self._invert)
-        self._is_static = False
         self._max_duration = 2.
         self._hardware_pwm = False
         self._pwm_max = 0.
@@ -182,16 +177,13 @@ class SX1509_pwm(object):
     def setup_cycle_time(self, cycle_time, hardware_pwm=False):
         self._cycle_time = cycle_time
         self._hardware_pwm = hardware_pwm
-    def setup_start_value(self, start_value, shutdown_value, is_static=False):
-        if is_static and start_value != shutdown_value:
-            raise pins.error("Static pin can not have shutdown value")
+    def setup_start_value(self, start_value, shutdown_value):
         if self._invert:
             start_value = 1. - start_value
             shutdown_value = 1. - shutdown_value
         self._start_value = max(0., min(1., start_value))
         self._shutdown_value = max(0., min(1., shutdown_value))
-        self._is_static = is_static
-    def set_pwm(self, print_time, value, cycle_time=None):
+    def set_pwm(self, print_time, value):
         self._sx1509.set_register(self._i_on_reg, ~int(255 * value)
                                   if not self._invert
                                   else int(255 * value) & 0xFF)

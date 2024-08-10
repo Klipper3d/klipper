@@ -22,7 +22,31 @@ extern uint32_t _stack_end;
  * Basic interrupt handlers
  ****************************************************************/
 
-static void __noreturn
+// Inlined version of memset (to avoid function calls during intial boot code)
+static void __always_inline
+boot_memset(void *s, int c, size_t n)
+{
+    volatile uint32_t *p = s;
+    while (n) {
+        *p++ = c;
+        n -= sizeof(*p);
+    }
+}
+
+// Inlined version of memcpy (to avoid function calls during intial boot code)
+static void __always_inline
+boot_memcpy(void *dest, const void *src, size_t n)
+{
+    const uint32_t *s = src;
+    volatile uint32_t *d = dest;
+    while (n) {
+        *d++ = *s++;
+        n -= sizeof(*d);
+    }
+}
+
+// Main initialization code (called from ResetHandler below)
+static void __noreturn __section(".text.armcm_boot.stage_two")
 reset_handler_stage_two(void)
 {
     int i;
@@ -60,10 +84,10 @@ reset_handler_stage_two(void)
 
     // Copy global variables from flash to ram
     uint32_t count = (&_data_end - &_data_start) * 4;
-    __builtin_memcpy(&_data_start, &_data_flash, count);
+    boot_memcpy(&_data_start, &_data_flash, count);
 
     // Clear the bss segment
-    __builtin_memset(&_bss_start, 0, (&_bss_end - &_bss_start) * 4);
+    boot_memset(&_bss_start, 0, (&_bss_end - &_bss_start) * 4);
 
     barrier();
 
@@ -80,7 +104,7 @@ reset_handler_stage_two(void)
 
 // Initial code entry point - invoked by the processor after a reset
 // Reset interrupts and stack to take control from bootloaders
-void
+void __section(".text.armcm_boot.stage_one")
 ResetHandler(void)
 {
     __disable_irq();

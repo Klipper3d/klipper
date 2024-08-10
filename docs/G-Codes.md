@@ -139,6 +139,17 @@ Writes raw "value" into register "register". Both "value" and
 and refer to sensor data sheet for the reference. This is only
 available for tle5012b chips.
 
+### [axis_twist_compensation]
+
+The following commands are available when the
+[axis_twist_compensation config
+section](Config_Reference.md#axis_twist_compensation) is enabled.
+
+#### AXIS_TWIST_COMPENSATION_CALIBRATE
+`AXIS_TWIST_COMPENSATION_CALIBRATE [SAMPLE_COUNT=<value>]`: Initiates the X
+twist calibration wizard. `SAMPLE_COUNT` specifies the number of points along
+the X axis to calibrate at and defaults to 3.
+
 ### [bed_mesh]
 
 The following commands are available when the
@@ -146,15 +157,21 @@ The following commands are available when the
 (also see the [bed mesh guide](Bed_Mesh.md)).
 
 #### BED_MESH_CALIBRATE
-`BED_MESH_CALIBRATE [METHOD=manual] [HORIZONTAL_MOVE_Z=<value>]
-[<probe_parameter>=<value>] [<mesh_parameter>=<value>]`: This command probes
-the bed using generated points specified by the parameters in the config. After
-probing, a mesh is generated and z-movement is adjusted according to the mesh.
+`BED_MESH_CALIBRATE [PROFILE=<name>] [METHOD=manual] [HORIZONTAL_MOVE_Z=<value>]
+[<probe_parameter>=<value>] [<mesh_parameter>=<value>] [ADAPTIVE=1]
+[ADAPTIVE_MARGIN=<value>]`: This command probes the bed using generated points
+specified by the parameters in the config. After probing, a mesh is generated
+and z-movement is adjusted according to the mesh.
+The mesh will be saved into a profile specified by the `PROFILE` parameter,
+or `default` if unspecified.
 See the PROBE command for details on the optional probe parameters. If
 METHOD=manual is specified then the manual probing tool is activated - see the
 MANUAL_PROBE command above for details on the additional commands available
 while this tool is active. The optional `HORIZONTAL_MOVE_Z` value overrides the
-`horizontal_move_z` option specified in the config file.
+`horizontal_move_z` option specified in the config file. If ADAPTIVE=1 is
+specified then the objects defined by the Gcode file being printed will be used
+to define the probed area. The optional `ADAPTIVE_MARGIN` value overrides the
+`adaptive_margin` option specified in the config file.
 
 #### BED_MESH_OUTPUT
 `BED_MESH_OUTPUT PGP=[<0:1>]`: This command outputs the current probed
@@ -184,10 +201,12 @@ SAVE_CONFIG gcode must be run to make the changes to persistent memory
 permanent.
 
 #### BED_MESH_OFFSET
-`BED_MESH_OFFSET [X=<value>] [Y=<value>]`: Applies X and/or Y offsets
-to the mesh lookup. This is useful for printers with independent
-extruders, as an offset is necessary to produce correct Z adjustment
-after a tool change.
+`BED_MESH_OFFSET [X=<value>] [Y=<value>] [ZFADE=<value]`: Applies X, Y,
+and/or ZFADE offsets to the mesh lookup. This is useful for printers with
+independent extruders, as an offset is necessary to produce correct Z
+adjustment after a tool change.  Note that a ZFADE offset does not apply
+additional z-adjustment directly, it is used to correct the `fade`
+calculation when a `gcode offset` has been applied to the Z axis.
 
 ### [bed_screws]
 
@@ -446,12 +465,6 @@ to become synchronized to the movement of an extruder specified by
 MOTION_QUEUE (as defined in an [extruder](Config_Reference.md#extruder)
 config section). If MOTION_QUEUE is an empty string then the stepper
 will be desynchronized from all extruder movement.
-
-#### SET_EXTRUDER_STEP_DISTANCE
-This command is deprecated and will be removed in the near future.
-
-#### SYNC_STEPPER_TO_EXTRUDER
-This command is deprecated and will be removed in the near future.
 
 ### [fan_generic]
 
@@ -839,17 +852,10 @@ The following command is available when an
 enabled.
 
 #### SET_PIN
-`SET_PIN PIN=config_name VALUE=<value> [CYCLE_TIME=<cycle_time>]`: Set
-the pin to the given output `VALUE`. VALUE should be 0 or 1 for
-"digital" output pins. For PWM pins, set to a value between 0.0 and
-1.0, or between 0.0 and `scale` if a scale is configured in the
-output_pin config section.
-
-Some pins (currently only "soft PWM" pins) support setting an explicit
-cycle time using the CYCLE_TIME parameter (specified in seconds). Note
-that the CYCLE_TIME parameter is not stored between SET_PIN commands
-(any SET_PIN command without an explicit CYCLE_TIME parameter will use
-the `cycle_time` specified in the output_pin config section).
+`SET_PIN PIN=config_name VALUE=<value>`: Set the pin to the given
+output `VALUE`. VALUE should be 0 or 1 for "digital" output pins. For
+PWM pins, set to a value between 0.0 and 1.0, or between 0.0 and
+`scale` if a scale is configured in the output_pin config section.
 
 ### [palette2]
 
@@ -977,6 +983,43 @@ direction as well as Z.
 babystepping), and subtract if from the probe's z_offset.  This acts
 to take a frequently used babystepping value, and "make it permanent".
 Requires a `SAVE_CONFIG` to take effect.
+
+### [probe_eddy_current]
+
+The following commands are available when a
+[probe_eddy_current config section](Config_Reference.md#probe_eddy_current)
+is enabled.
+
+#### PROBE_EDDY_CURRENT_CALIBRATE
+`PROBE_EDDY_CURRENT_CALIBRATE CHIP=<config_name>`: This starts a tool
+that calibrates the sensor resonance frequencies to corresponding Z
+heights. The tool will take a couple of minutes to complete. After
+completion, use the SAVE_CONFIG command to store the results in the
+printer.cfg file.
+
+#### LDC_CALIBRATE_DRIVE_CURRENT
+`LDC_CALIBRATE_DRIVE_CURRENT CHIP=<config_name>` This tool will
+calibrate the ldc1612 DRIVE_CURRENT0 register. Prior to using this
+tool, move the sensor so that it is near the center of the bed and
+about 20mm above the bed surface. Run this command to determine an
+appropriate DRIVE_CURRENT for the sensor. After running this command
+use the SAVE_CONFIG command to store that new setting in the
+printer.cfg config file.
+
+### [pwm_cycle_time]
+
+The following command is available when a
+[pwm_cycle_time config section](Config_Reference.md#pwm_cycle_time)
+is enabled.
+
+#### SET_PIN
+`SET_PIN PIN=config_name VALUE=<value> [CYCLE_TIME=<cycle_time>]`:
+This command works similarly to [output_pin](#output_pin) SET_PIN
+commands. The command here supports setting an explicit cycle time
+using the CYCLE_TIME parameter (specified in seconds). Note that the
+CYCLE_TIME parameter is not stored between SET_PIN commands (any
+SET_PIN command without an explicit CYCLE_TIME parameter will use the
+`cycle_time` specified in the pwm_cycle_time config section).
 
 ### [query_adc]
 
@@ -1281,7 +1324,7 @@ The toolhead module is automatically loaded.
 
 #### SET_VELOCITY_LIMIT
 `SET_VELOCITY_LIMIT [VELOCITY=<value>] [ACCEL=<value>]
-[ACCEL_TO_DECEL=<value>] [SQUARE_CORNER_VELOCITY=<value>]`: This
+[MINIMUM_CRUISE_RATIO=<value>] [SQUARE_CORNER_VELOCITY=<value>]`: This
 command can alter the velocity limits that were specified in the
 printer config file. See the
 [printer config section](Config_Reference.md#printer) for a
@@ -1343,17 +1386,6 @@ print.
 #### SDCARD_RESET_FILE
 `SDCARD_RESET_FILE`: Unload file and clear SD state.
 
-### [axis_twist_compensation]
-
-The following commands are available when the
-[axis_twist_compensation config
-section](Config_Reference.md#axis_twist_compensation) is enabled.
-
-#### AXIS_TWIST_COMPENSATION_CALIBRATE
-`AXIS_TWIST_COMPENSATION_CALIBRATE [SAMPLE_COUNT=<value>]`: Initiates the X
-twist calibration wizard. `SAMPLE_COUNT` specifies the number of points along
-the X axis to calibrate at and defaults to 3.
-
 ### [z_thermal_adjust]
 
 The following commands are available when the
@@ -1383,3 +1415,39 @@ command will probe the points specified in the config and then make independent
 adjustments to each Z stepper to compensate for tilt. See the PROBE command for
 details on the optional probe parameters. The optional `HORIZONTAL_MOVE_Z`
 value overrides the `horizontal_move_z` option specified in the config file.
+
+### [temperature_probe]
+
+The following commands are available when a
+[temperature_probe config section](Config_Reference.md#temperature_probe)
+is enabled.
+
+#### TEMPERATURE_PROBE_CALIBRATE
+`TEMPERATURE_PROBE_CALIBRATE [PROBE=<probe name>] [TARGET=<value>] [STEP=<value>]`:
+Initiates probe drift calibration for eddy current based probes.  The `TARGET`
+is a target temperature for the last sample.  When the temperature recorded
+during a sample exceeds the `TARGET` calibration will complete.  The `STEP`
+parameter sets temperature delta (in C) between samples. After a sample has
+been taken, this delta is used to schedule a call to `TEMPERATURE_PROBE_NEXT`.
+The default `STEP` is 2.
+
+#### TEMPERATURE_PROBE_NEXT
+`TEMPERATURE_PROBE_NEXT`: After calibration has started this command is run to
+take the next sample.  It is automatically scheduled to run when the delta
+specified by `STEP` has been reached, however its also possible to manually run
+this command to force a new sample.  This command is only available during
+calibration.
+
+#### TEMPERATURE_PROBE_COMPLETE:
+`TEMPERATURE_PROBE_COMPLETE`:  Can be used to end calibration and save the
+current result before the `TARGET` temperature is reached.  This command
+is only available during calibration.
+
+#### ABORT
+`ABORT`:  Aborts the calibration process, discarding the current results.
+This command is only available during drift calibration.
+
+### TEMPERATURE_PROBE_ENABLE
+`TEMPERATURE_PROBE_ENABLE ENABLE=[0|1]`: Sets temperature drift
+compensation on or off. If ENABLE is set to 0, drift compensation
+will be disabled, if set to 1 it is enabled.

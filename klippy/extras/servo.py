@@ -58,13 +58,15 @@ class PrinterServo:
         return width * self.width_to_value
     cmd_SET_SERVO_help = "Set servo angle"
     def cmd_SET_SERVO(self, gcmd):
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         width = gcmd.get_float('WIDTH', None)
         if width is not None:
-            self._set_pwm(print_time, self._get_pwm_from_pulse_width(width))
+            value = self._get_pwm_from_pulse_width(width)
         else:
             angle = gcmd.get_float('ANGLE')
-            self._set_pwm(print_time, self._get_pwm_from_angle(angle))
+            value = self._get_pwm_from_angle(angle)
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.register_lookahead_callback((lambda pt:
+                                              self._set_pwm(pt, value)))
 
 def load_config_prefix(config):
     return PrinterServo(config)

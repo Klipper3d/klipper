@@ -69,5 +69,8 @@ SECTIONS
         // that isn't needed so no need to include them in the binary.
         *(.init)
         *(.fini)
+        // Don't include exception tables
+        *(.ARM.extab)
+        *(.ARM.exidx)
     }
 }
