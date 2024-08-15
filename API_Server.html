@@ -2062,9 +2062,10 @@ system load.</p>
 <code>{"id": 123, "method":"hx71x/dump_hx71x",
 "params": {"sensor": "load_cell", "response_template": {}}}</code>
 and might return:
-<code>{"id": 123,"result":{"header":["time","counts"]}}</code>
+<code>{"id": 123,"result":{"header":["time","counts","value"]}}</code>
 and might later produce asynchronous messages such as:
-<code>{"params":{"data":[[3292.432935, 562534], [3292.4394937, 5625322]]}}</code></p>
+<code>{"params":{"data":[[3292.432935, 562534, 0.067059278],
+[3292.4394937, 5625322, 0.670590639]]}}</code></p>
 <h3 id="ads1220dump_ads1220">ads1220/dump_ads1220<a class="headerlink" href="#ads1220dump_ads1220" title="Permanent link">&para;</a></h3>
 <p>This endpoint is used to subscribe to raw ADS1220 ADC data.
 Obtaining these low-level ADC updates may be useful for diagnostic
@@ -2074,9 +2075,10 @@ system load.</p>
 <code>{"id": 123, "method":"ads1220/dump_ads1220",
 "params": {"sensor": "load_cell", "response_template": {}}}</code>
 and might return:
-<code>{"id": 123,"result":{"header":["time","counts"]}}</code>
+<code>{"id": 123,"result":{"header":["time","counts","value"]}}</code>
 and might later produce asynchronous messages such as:
-<code>{"params":{"data":[[3292.432935, 562534], [3292.4394937, 5625322]]}}</code></p>
+<code>{"params":{"data":[[3292.432935, 562534, 0.067059278],
+[3292.4394937, 5625322, 0.670590639]]}}</code></p>
 <h3 id="pause_resumecancel">pause_resume/cancel<a class="headerlink" href="#pause_resumecancel" title="Permanent link">&para;</a></h3>
 <p>This endpoint is similar to running the "PRINT_CANCEL" G-Code command.
 For example:
