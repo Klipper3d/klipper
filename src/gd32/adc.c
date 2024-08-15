@@ -11,10 +11,21 @@ DECL_CONSTANT("ADC_MAX",4095);
 #define ADC_TEMPERATURE_PIN 0xfe
 DECL_ENUMERATION("pin", "ADC_TEMPERATURE", ADC_TEMPERATURE_PIN);
 #if CONFIG_MACH_GD32E230X8
+/* 
 static const uint8_t adc_pin[] = {
 	GPIO('A',0),GPIO('A',1),GPIO('A',2),GPIO('A',3),
 	GPIO('A',4),GPIO('A',5),GPIO('A',6),GPIO('A',7),
 	0xff,GPIO('B',1)};
+*/
+
+static const uint8_t adc_pin[] = {
+    GPIO('A',0),GPIO('A',1),GPIO('A',2),GPIO('A',3),
+    GPIO('A',4),GPIO('A',5),GPIO('A',6),GPIO('A',7),
+    GPIO('B',0),GPIO('B',1),GPIO('C',0),GPIO('C',1),
+    GPIO('C',2),GPIO('C',3),GPIO('C',4),GPIO('C',5),
+    ADC_TEMPERATURE_PIN
+};
+
 
 #define _ADC_STAT 	ADC_STAT
 #define _ADC_CTL0	ADC_CTL0
