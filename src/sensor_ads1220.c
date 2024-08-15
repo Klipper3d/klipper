@@ -86,7 +86,9 @@ ads1220_read_adc(struct ads1220_adc *ads1220, uint8_t oid)
     barrier();
 
     // create 24 bit int from bytes
-    int32_t counts = (msg[0] << 16) | (msg[1] << 8) | msg[2];
+    uint32_t counts = ((uint32_t)msg[0] << 16)
+                    | ((uint32_t)msg[1] << 8)
+                    | ((uint32_t)msg[2]);
 
     // extend 2's complement 24 bits to 32bits
     if (counts & 0x800000)
