@@ -8,6 +8,10 @@ All dates in this document are approximate.
 
 ## Changes
 
+20240912: Support for `maximum_mcu_duration` and `static_value`
+parameters in `[output_pin]` config sections have been removed. These
+options have been deprecated since 20240123.
+
 20240415: The `on_error_gcode` parameter in the `[virtual_sdcard]`
 config section now has a default. If this parameter is not specified
 it now defaults to `TURN_OFF_HEATERS`. If the previous behavior is
