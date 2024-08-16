@@ -2401,6 +2401,65 @@ temperature sensors that are reported via the M105 command.
 #   parameter.
 ```
 
+### [temperature_probe]
+
+Reports probe coil temperature.  Includes optional thermal drift
+calibration for eddy current based probes.   A `[temperature_probe]`
+section may be linked to a `[probe_eddy_current]` by using the same
+postfix for both sections.
+
+```
+[temperature_probe my_probe]
+#sensor_type:
+#sensor_pin:
+#min_temp:
+#max_temp:
+#   Temperature sensor configuration.
+#   See the "extruder" section for the definition of the above
+#   parameters.
+#smooth_time:
+#   A time value (in seconds) over which temperature measurements will
+#   be smoothed to reduce the impact of measurement noise. The default
+#   is 2.0 seconds.
+#gcode_id:
+#   See the "heater_generic" section for the definition of this
+#   parameter.
+#speed:
+#   The travel speed [mm/s] for xy moves during calibration.  Default
+#   is the speed defined by the probe.
+#horizontal_move_z:
+#   The z distance [mm] from the bed at which xy moves will occur
+#   during calibration. Default is 2mm.
+#resting_z:
+#   The z distance [mm] from the bed at which the tool will rest
+#   to heat the probe coil during calibration.  Default is .4mm
+#calibration_position:
+#   The X, Y, Z position where the tool should be moved when
+#   probe drift calibration initializes.  This is the location
+#   where the first manual probe will occur.  If omitted, the
+#   default behavior is not to move the tool prior to the first
+#   manual probe.
+#calibration_bed_temp:
+#   The maximum safe bed temperature (in C) used to heat the probe
+#   during probe drift calibration.  When set, the calibration
+#   procedure will turn on the bed after the first sample is
+#   taken.  When the calibration procedure is complete the bed
+#   temperature will be set to zero.  When omitted the default
+#   behavior is not to set the bed temperature.
+#calibration_extruder_temp:
+#   The extruder temperature (in C) set probe during drift calibration.
+#   When this option is supplied the procedure will wait for until the
+#   specified temperature is reached before requesting the first manual
+#   probe.  When the calibration procedure is complete the extruder
+#   temperature will be set to 0.  When omitted the default behavior is
+#   not to set the extruder temperature.
+#extruder_heating_z: 50.
+#   The Z location where extruder heating will occur if the
+#   "calibration_extruder_temp" option is set.  Its recommended to heat
+#   the extruder some distance from the bed to minimize its impact on
+#   the probe coil temperature.  The default is 50.
+```
+
 ## Temperature sensors
 
 Klipper includes definitions for many types of temperature sensors.
@@ -4584,6 +4643,95 @@ adc2:
 #pause_delay:
 #   See the "filament_switch_sensor" section for a description of the
 #   above parameters.
+```
+
+## Load Cells
+
+### [load_cell]
+Load Cell. Uses an ADC sensor attached to a load cell to create a digital
+scale.
+
+```
+[load_cell]
+sensor_type:
+#   This must be one of the supported sensor types, see below.
+```
+
+#### XH711
+This is a 24 bit low sample rate chip using "bit-bang" communications. It is
+suitable for filament scales.
+```
+[load_cell]
+sensor_type: hx711
+sclk_pin:
+#   The pin connected to the HX711 clock line. This parameter must be provided.
+dout_pin:
+#   The pin connected to the HX711 data output line. This parameter must be
+#   provided.
+#gain: A-128
+#   Valid values for gain are: A-128, A-64, B-32. The default is A-128.
+#   'A' denotes the input channel and the number denotes the gain. Only the 3
+#   listed combinations are supported by the chip. Note that changing the gain
+#   setting also selects the channel being read.
+#sample_rate: 80
+#   Valid values for sample_rate are 80 or 10. The default value is 80.
+#   This must match the wiring of the chip. The sample rate cannot be changed
+#   in software.
+```
+
+#### HX717
+This is the 4x higher sample rate version of the HX711, suitable for probing.
+```
+[load_cell]
+sensor_type: hx717
+sclk_pin:
+#   The pin connected to the HX717 clock line. This parameter must be provided.
+dout_pin:
+#   The pin connected to the HX717 data output line. This parameter must be
+#   provided.
+#gain: A-128
+#   Valid values for gain are A-128, B-64, A-64, B-8.
+#   'A' denotes the input channel and the number denotes the gain setting.
+#   Only the 4 listed combinations are supported by the chip. Note that
+#   changing the gain setting also selects the channel being read.
+#sample_rate: 320
+#   Valid values for sample_rate are: 10, 20, 80, 320. The default is 320.
+#   This must match the wiring of the chip. The sample rate cannot be changed
+#   in software.
+```
+
+#### ADS1220
+The ADS1220 is a 24 bit ADC supporting up to a 2Khz sample rate configurable in
+software.
+```
+[load_cell]
+sensor_type: ads1220
+cs_pin:
+#   The pin connected to the ADS1220 chip select line. This parameter must
+#   be provided.
+#spi_speed: 512000
+#   This chip supports 2 speeds: 256000 or 512000. The faster speed is only
+#   enabled when one of the Turbo sample rates is used. The correct spi_speed
+#   is selected based on the sample rate.
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the "common SPI settings" section for a description of the
+#   above parameters.
+data_ready_pin:
+#   Pin connected to the ADS1220 data ready line. This parameter must be
+#   provided.
+#gain: 128
+#   Valid gain values are 128, 64, 32, 16, 8, 4, 2, 1
+#   The default is 128
+#sample_rate: 660
+#   This chip supports two ranges of sample rates, Normal and Turbo. In turbo
+#   mode the chips c internal clock runs twice as fast and the SPI communication
+#   speed is also doubled.
+#   Normal sample rates: 20, 45, 90, 175, 330, 600, 1000
+#   Turbo sample rates: 40, 90, 180, 350, 660, 1200, 2000
+#   The default is 660
 ```
 
 ## Board specific hardware support

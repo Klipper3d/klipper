@@ -14,6 +14,7 @@ class EddyCalibration:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name()
+        self.drift_comp = DummyDriftCompensation()
         # Current calibration data
         self.cal_freqs = []
         self.cal_zpos = []
@@ -37,8 +38,10 @@ class EddyCalibration:
         self.cal_freqs = [c[0] for c in cal]
         self.cal_zpos = [c[1] for c in cal]
     def apply_calibration(self, samples):
+        cur_temp = self.drift_comp.get_temperature()
         for i, (samp_time, freq, dummy_z) in enumerate(samples):
-            pos = bisect.bisect(self.cal_freqs, freq)
+            adj_freq = self.drift_comp.adjust_freq(freq, cur_temp)
+            pos = bisect.bisect(self.cal_freqs, adj_freq)
             if pos >= len(self.cal_zpos):
                 zpos = -OUT_OF_RANGE
             elif pos == 0:
@@ -51,7 +54,7 @@ class EddyCalibration:
                 prev_zpos = self.cal_zpos[pos - 1]
                 gain = (this_zpos - prev_zpos) / (this_freq - prev_freq)
                 offset = prev_zpos - prev_freq * gain
-                zpos = freq * gain + offset
+                zpos = adj_freq * gain + offset
             samples[i] = (samp_time, freq, round(zpos, 6))
     def freq_to_height(self, freq):
         dummy_sample = [(0., freq, 0.)]
@@ -71,7 +74,8 @@ class EddyCalibration:
         prev_zpos = rev_zpos[pos - 1]
         gain = (this_freq - prev_freq) / (this_zpos - prev_zpos)
         offset = prev_freq - prev_zpos * gain
-        return height * gain + offset
+        freq = height * gain + offset
+        return self.drift_comp.unadjust_freq(freq)
     def do_calibration_moves(self, move_speed):
         toolhead = self.printer.lookup_object('toolhead')
         kin = toolhead.get_kinematics()
@@ -86,6 +90,7 @@ class EddyCalibration:
             return True
         self.printer.lookup_object(self.name).add_client(handle_batch)
         toolhead.dwell(1.)
+        self.drift_comp.note_z_calibration_start()
         # Move to each 40um position
         max_z = 4.0
         samp_dist = 0.040
@@ -112,6 +117,7 @@ class EddyCalibration:
             times.append((start_query_time, end_query_time, kin_pos[2]))
         toolhead.dwell(1.0)
         toolhead.wait_moves()
+        self.drift_comp.note_z_calibration_finish()
         # Finish data collection
         is_finished = True
         # Correlate query responses
@@ -188,6 +194,8 @@ class EddyCalibration:
         # Start manual probe
         manual_probe.ManualProbeHelper(self.printer, gcmd,
                                        self.post_manual_probe)
+    def register_drift_compensation(self, comp):
+        self.drift_comp = comp
 
 # Tool to gather samples and convert them to probe positions
 class EddyGatherSamples:
@@ -265,16 +273,18 @@ class EddyGatherSamples:
             freq = self._pull_freq(start_time, end_time)
             if pos_time is not None:
                 toolhead_pos = self._lookup_toolhead_pos(pos_time)
-            self._probe_results.append((freq, toolhead_pos))
+            sensor_z = None
+            if freq:
+                sensor_z = self._calibration.freq_to_height(freq)
+            self._probe_results.append((sensor_z, toolhead_pos))
             self._probe_times.pop(0)
     def pull_probed(self):
         self._await_samples()
         results = []
-        for freq, toolhead_pos in self._probe_results:
-            if not freq:
+        for sensor_z, toolhead_pos in self._probe_results:
+            if sensor_z is None:
                 raise self._printer.command_error(
                     "Unable to obtain probe_eddy_current sensor readings")
-            sensor_z = self._calibration.freq_to_height(freq)
             if sensor_z <= -OUT_OF_RANGE or sensor_z >= OUT_OF_RANGE:
                 raise self._printer.command_error(
                     "probe_eddy_current sensor not in valid range")
@@ -435,6 +445,20 @@ class PrinterEddyProbe:
             return EddyScanningProbe(self.printer, self.sensor_helper,
                                      self.calibration, z_offset, gcmd)
         return self.probe_session.start_probe_session(gcmd)
+    def register_drift_compensation(self, comp):
+        self.calibration.register_drift_compensation(comp)
+
+class DummyDriftCompensation:
+    def get_temperature(self):
+        return 0.
+    def note_z_calibration_start(self):
+        pass
+    def note_z_calibration_finish(self):
+        pass
+    def adjust_freq(self, freq, temp=None):
+        return freq
+    def unadjust_freq(self, freq, temp=None):
+        return freq
 
 def load_config_prefix(config):
     return PrinterEddyProbe(config)

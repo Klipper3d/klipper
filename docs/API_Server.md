@@ -364,6 +364,38 @@ and might later produce asynchronous messages such as:
 The "header" field in the initial query response is used to describe
 the fields found in later "data" responses.
 
+### hx71x/dump_hx71x
+
+This endpoint is used to subscribe to raw HX711 and HX717 ADC data.
+Obtaining these low-level ADC updates may be useful for diagnostic
+and debugging purposes. Using this endpoint may increase Klipper's
+system load.
+
+A request may look like:
+`{"id": 123, "method":"hx71x/dump_hx71x",
+"params": {"sensor": "load_cell", "response_template": {}}}`
+and might return:
+`{"id": 123,"result":{"header":["time","counts","value"]}}`
+and might later produce asynchronous messages such as:
+`{"params":{"data":[[3292.432935, 562534, 0.067059278],
+[3292.4394937, 5625322, 0.670590639]]}}`
+
+### ads1220/dump_ads1220
+
+This endpoint is used to subscribe to raw ADS1220 ADC data.
+Obtaining these low-level ADC updates may be useful for diagnostic
+and debugging purposes. Using this endpoint may increase Klipper's
+system load.
+
+A request may look like:
+`{"id": 123, "method":"ads1220/dump_ads1220",
+"params": {"sensor": "load_cell", "response_template": {}}}`
+and might return:
+`{"id": 123,"result":{"header":["time","counts","value"]}}`
+and might later produce asynchronous messages such as:
+`{"params":{"data":[[3292.432935, 562534, 0.067059278],
+[3292.4394937, 5625322, 0.670590639]]}}`
+
 ### pause_resume/cancel
 
 This endpoint is similar to running the "PRINT_CANCEL" G-Code command.
