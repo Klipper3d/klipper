@@ -9,6 +9,7 @@
 #include "generic/misc.h"
 #include "sched.h"   // DECL_TASK
 #include "spicmds.h" // spidev_transfer
+#include "board/irq.h" // irq_disable
 
 struct ads1118_sensor_config
 {
@@ -21,7 +22,6 @@ struct ads1118_sensor_config
 struct ads1118_spi
 {
     struct spidev_s *spi;
-    struct task_wake task_wake;
     struct timer timer;
     uint32_t response_interval;
     int16_t last_temperature;
@@ -29,12 +29,17 @@ struct ads1118_spi
     uint8_t sensor_count;
     uint8_t current_sensor;
     struct ads1118_sensor_config sensor_configs[5];
+    struct ads1118_spi *next_ads1118;
+    uint8_t pending_event;
 };
 
-static uint_fast8_t ads1118_event(struct timer *timer);
+static struct ads1118_spi *ads1118_list = 0;
+static struct task_wake ads1118_task_wake;
 
 static void ads1118_transfer(struct ads1118_spi *spi)
 {
+    spi->pending_event = 0;
+
     uint8_t current_sensor = spi->current_sensor;
     uint8_t next_sensor = current_sensor + 1;
     if (next_sensor == spi->sensor_count)
@@ -65,6 +70,22 @@ static void ads1118_transfer(struct ads1118_spi *spi)
     sendf("ads1118_result oid=%u temperature=%c sensor=%c value=%c", spi->oid,
           spi->last_temperature, current_sensor, (msg[0] << 8) | msg[1]);
     spi->current_sensor = next_sensor;
+
+    irq_disable();
+    spi->timer.waketime = timer_read_time() + spi->response_interval;
+    sched_add_timer(&spi->timer);
+    irq_enable();
+}
+
+static uint_fast8_t ads1118_event(struct timer *timer)
+{
+    sched_del_timer(timer);
+
+    struct ads1118_spi *spi = container_of(timer, struct ads1118_spi, timer);
+    spi->pending_event = 1;
+
+    sched_wake_task(&ads1118_task_wake);
+    return SF_DONE;
 }
 
 void command_config_ads1118(uint32_t *args)
@@ -77,10 +98,13 @@ void command_config_ads1118(uint32_t *args)
     spi->sensor_configs[0].dr = args[2] & 0b111;
     spi->sensor_count = 1;
     spi->response_interval = timer_from_us(1000) * args[3];
+    spi->pending_event = 0;
     spi->timer.func = ads1118_event;
+
+    spi->next_ads1118 = ads1118_list;
+    ads1118_list = spi;
+
     ads1118_transfer(spi);
-    spi->timer.waketime = timer_read_time() + spi->response_interval;
-    sched_add_timer(&spi->timer);
 }
 DECL_COMMAND(command_config_ads1118,
              "config_ads1118 oid=%u spi_oid=%u data_rate=%u"
@@ -100,12 +124,15 @@ void command_add_sensor_ads1118(uint32_t *args)
 DECL_COMMAND(command_add_sensor_ads1118,
              "add_sensor_ads1118 oid=%u mux=%u pga=%u dr=%u");
 
-static uint_fast8_t ads1118_event(struct timer *timer)
+void
+ads1118_task(void)
 {
-    struct ads1118_spi *spi = container_of(timer, struct ads1118_spi, timer);
-    sched_wake_task(&spi->task_wake);
-    ads1118_transfer(spi);
+    if (!sched_check_wake(&ads1118_task_wake))
+        return;
 
-    spi->timer.waketime = timer_read_time() + spi->response_interval;
-    return SF_RESCHEDULE;
+    struct ads1118_spi *spi = 0;
+    for (spi = ads1118_list; spi != 0; spi = spi->next_ads1118)
+        if(spi->pending_event)
+            ads1118_transfer(spi);
 }
+DECL_TASK(ads1118_task);
