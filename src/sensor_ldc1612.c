@@ -180,7 +180,10 @@ ldc1612_query(struct ldc1612 *ld, uint8_t oid)
     ld->sb.data_count += BYTES_PER_SAMPLE;
 
     // Check for endstop trigger
-    uint32_t data = (d[0] << 24L) | (d[1] << 16L) | (d[2] << 8) | d[3];
+    uint32_t data =   ((uint32_t)d[0] << 24)
+                    | ((uint32_t)d[1] << 16)
+                    | ((uint32_t)d[2] << 8)
+                    | ((uint32_t)d[3]);
     check_home(ld, data);
 
     // Flush local buffer if needed
