@@ -103,7 +103,7 @@ ADS101X_PGA_SCALAR = {
     0x0A00: 0.256 / 2047.0  # +/-0.256V range = Gain 16
 }
 ADS1X1X_MODE = {
-    'continous': 0x0000,  # Continuous conversion mode
+    'continuous': 0x0000,  # Continuous conversion mode
     'single': 0x0100  # Power-down single-shot mode
 }
 
@@ -129,9 +129,6 @@ ADS111X_SAMPLES_PER_SECOND = {
     '475': 0x00c0,  # 475 samples per second
     '860': 0x00e0  # 860 samples per second
 }
-
-ADS101X_CONVERSION_DELAY = 0.002
-ADS111X_CONVERSION_DELAY = 0.008
 
 ADS1X1X_COMPARATOR_MODE = {
     'TRADITIONAL': 0x0000,  # Traditional comparator with hysteresis
@@ -188,7 +185,7 @@ class ADS1X1X_chip:
         self._ppins = self._printer.lookup_object("pins")
         self._ppins.register_chip(self.name, self)
 
-        self.pga = config.getchoice('pga', ADS1X1X_PGA, 'V4.096')
+        self.pga = config.getchoice('pga', ADS1X1X_PGA, '4.096V')
         self.mode = config.getchoice('mode', ADS1X1X_MODE, 'single')
         # Comparators are not implemented, they would only be useful if the
         # alert pin is used, which we haven't made configurable.
@@ -229,7 +226,8 @@ class ADS1X1X_chip:
 
     def is_ready(self):
         config = self._read_register(ADS1X1X_REG_POINTER['CONFIG'])
-        return bool((config & ADS1X1X_REG_CONFIG['OS_MASK']) == ADS1X1X_OS['OS_IDLE'])
+        return bool((config & ADS1X1X_REG_CONFIG['OS_MASK']) == \
+                    ADS1X1X_OS['OS_IDLE'])
 
     def sample(self, sensor):
         with self._mutex:
@@ -238,13 +236,13 @@ class ADS1X1X_chip:
             try:
                 self._write_register(ADS1X1X_REG_POINTER['CONFIG'],
                                      pin_object.config)
-                delay = 0
-                if isADS101X(self.chip):
-                    delay = ADS101X_CONVERSION_DELAY
-                else:
-                    delay = ADS111X_CONVERSION_DELAY
+                # The report time is 1 / sample_count * 4 to account for the 4
+                # possible inputs. So sample_count 16 on 1 input will result
+                # in 4 samples per second.
+                delay = 1 / self.samples_per_second_numeric
+                self._reactor.pause(self._reactor.monotonic() + delay)
                 while not self.is_ready():
-                    self._reactor.pause(self._reactor.monotonic() + delay)
+                    self._reactor.pause(self._reactor.monotonic() + 0.001)
                 sample = self._read_register(ADS1X1X_REG_POINTER['CONVERSION'])
             except Exception:
                 logging.exception("ADS1X1X: error while sampling")
