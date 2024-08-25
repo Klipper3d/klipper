@@ -4867,7 +4867,7 @@ chip: ADS1115
 #mode: single
 #    Default value is single. Turn off the chip after a single reading or keep
 #    it running. Turning off saves power but turning it back on will be slower.
-#    Options are single and continous.
+#    Options are single and continuous.
 #samples_per_second: 128
 #    Default value is 128. The amount of samples that the ADC can provide per
 #    second. A lower value makes the samples more accurate, but it takes longer
