@@ -179,7 +179,7 @@ class MCU_I2C:
         self.i2c_read_cmd = self.mcu.lookup_query_command(
             "i2c_read oid=%c reg=%*s read_len=%u",
             "i2c_read_response oid=%c response=%*s", oid=self.oid,
-            cq=self.cmd_queue)
+            cq=self.cmd_queue, is_async=True)
         self.i2c_modify_bits_cmd = self.mcu.lookup_command(
             "i2c_modify_bits oid=%c reg=%*s clear_set_bits=%*s",
             cq=self.cmd_queue)
