@@ -89,6 +89,21 @@ def check_need_convert(board_name, config):
         output_line("Done")
         config['klipper_bin_path'] = robin_bin
 
+    if board_name.lower().startswith('chitu-v6'):
+        # we need to convert this file
+        chitu_util = os.path.join(
+            fatfs_lib.KLIPPER_DIR, "scripts/update_chitu.py")
+        klipper_bin = config['klipper_bin_path']
+        chitu_bin = os.path.join(
+            os.path.dirname(klipper_bin),
+            os.path.basename(config['firmware_path']))
+        cmd = "%s %s %s %s" % (sys.executable, chitu_util, klipper_bin,
+                               chitu_bin)
+        output("Converting Klipper binary to Chitu v6 format...")
+        os.system(cmd)
+        output_line("Done")
+        config['klipper_bin_path'] = chitu_bin
+
 
 ###########################################################
 #
