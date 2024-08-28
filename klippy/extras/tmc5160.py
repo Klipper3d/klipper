@@ -292,8 +292,15 @@ class TMC5160CurrentHelper:
             globalscaler = 0
         return globalscaler
     def _calc_current_bits(self, current):
-        cs = self.cs
-        return max(16, min(31, cs))
+        if self.cs == 0:
+            Ipeak = current * math.sqrt(2)
+            Rsens = self.sense_resistor
+            cs = int(math.ceil(Rsens * 32 * Ipeak / 0.32) - 1)
+        elif self.cs < 31:
+            cs = self.cs
+        else:
+            cs = 31
+        return max(0, min(31, cs))
     def _calc_current(self, run_current, hold_current):
         gscaler = self._calc_globalscaler(run_current)
         irun = self._calc_current_bits(run_current)
