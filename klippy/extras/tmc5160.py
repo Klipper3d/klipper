@@ -296,8 +296,6 @@ class TMC5160CurrentHelper:
             Ipeak = current * math.sqrt(2)
             Rsens = self.sense_resistor
             cs = int(math.ceil(Rsens * 32 * Ipeak / 0.32) - 1)
-        elif self.cs < 31:
-            cs = self.cs
         else:
             cs = 31
         return max(0, min(31, cs))
