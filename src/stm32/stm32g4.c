@@ -104,7 +104,7 @@ enable_clock_stm32g4(void)
     RCC->CR |= RCC_CR_PLLON;
 
     // Enable 48Mhz USB clock using clock recovery
-    if (CONFIG_USBSERIAL) {
+    if (CONFIG_USB) {
         RCC->CRRCR |= RCC_CRRCR_HSI48ON;
         while (!(RCC->CRRCR & RCC_CRRCR_HSI48RDY))
             ;
