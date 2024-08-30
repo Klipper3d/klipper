@@ -1,8 +1,8 @@
 This directory contains external library code.
 
 The cmsis directory contains code from:
-  https://github.com/ARM-software/CMSIS_5
-version 5.9.0 (2b7495b8535bdcb306dac29b9ded4cfb679d7e5c). Contents
+  https://github.com/ARM-software/CMSIS_6/tree/v6.1.0
+version 6.1.0 (b0bbb0423b278ca632cfe1474eb227961d835fd2). Contents
 taken from the CMSIS/Core/Include/ directory.
 
 The sam3x directory contains code from the
