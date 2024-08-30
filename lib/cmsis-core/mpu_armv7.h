@@ -1,8 +1,8 @@
 /******************************************************************************
  * @file     mpu_armv7.h
  * @brief    CMSIS MPU API for Armv7-M MPU
- * @version  V5.1.1
- * @date     10. February 2020
+ * @version  V5.1.2
+ * @date     25. May 2020
  ******************************************************************************/
 /*
  * Copyright (c) 2017-2020 Arm Limited. All rights reserved.
@@ -223,7 +223,7 @@ __STATIC_INLINE void ARM_MPU_ClrRegion(uint32_t rnr)
 
 /** Configure an MPU region.
 * \param rbar Value for RBAR register.
-* \param rsar Value for RSAR register.
+* \param rasr Value for RASR register.
 */   
 __STATIC_INLINE void ARM_MPU_SetRegion(uint32_t rbar, uint32_t rasr)
 {
@@ -234,7 +234,7 @@ __STATIC_INLINE void ARM_MPU_SetRegion(uint32_t rbar, uint32_t rasr)
 /** Configure the given MPU region.
 * \param rnr Region number to be configured.
 * \param rbar Value for RBAR register.
-* \param rsar Value for RSAR register.
+* \param rasr Value for RASR register.
 */   
 __STATIC_INLINE void ARM_MPU_SetRegionEx(uint32_t rnr, uint32_t rbar, uint32_t rasr)
 {
@@ -243,7 +243,7 @@ __STATIC_INLINE void ARM_MPU_SetRegionEx(uint32_t rnr, uint32_t rbar, uint32_t r
   MPU->RASR = rasr;
 }
 
-/** Memcopy with strictly ordered memory access, e.g. for register targets.
+/** Memcpy with strictly ordered memory access, e.g. used by code in ARM_MPU_Load().
 * \param dst Destination data is copied to.
 * \param src Source data is copied from.
 * \param len Amount of data words to be copied.
