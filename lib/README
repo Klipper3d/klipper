@@ -61,49 +61,49 @@ It has been modified to set the appropriate clock speeds on the
 LPC1768 and LPC1769. See lpc176x.patch for the modifications.
 
 The stm32f0 directory contains code from:
-  https://github.com/STMicroelectronics/STM32CubeF0
-version v1.10.1 (d0c380d668c67dcdd4e44f656be27045ce4006a6). Contents
-taken from the Drivers/CMSIS/Device/ST/STM32F0xx/ directory.
+  https://github.com/STMicroelectronics/cmsis_device_f0/tree/v2.3.7
+version v2.3.7 (3973d99a89ac5fdf1f2593abc29a73d2981ce94a). Contents
+taken from the Include and Source/Templates directory.
 
 The stm32f1 directory contains code from:
-  https://github.com/STMicroelectronics/STM32CubeF1
-version v1.8.0 (441b2cbdc25aa50437a59c4bffe22b88e78942c9). Contents
-taken from the Drivers/CMSIS/Device/ST/STM32F1xx/ directory.
+  https://github.com/STMicroelectronics/cmsis_device_f1/tree/v4.3.5
+version v4.3.5 (8a76309ed1250d817e9c888c4417171d2ba3ba63). Contents
+taken from the Include and Source/Templates directory.
 
 The stm32f2 directory contains code from:
-  https://github.com/STMicroelectronics/STM32CubeF2
-version v1.9.0 (42fc8bf966c04ef814bb0620dcd3e036e038b4a2). Contents
-taken from the Drivers/CMSIS/Device/ST/STM32F2xx/ directory.
+  https://github.com/STMicroelectronics/cmsis_device_f2/tree/v2.2.6
+version v2.2.6 (30e6e50fb0bfc4456a468d74fc87b36465abaa5b). Contents
+taken from the Include and Source/Templates directory.
 
 The stm32f4 directory contains code from:
-  https://github.com/STMicroelectronics/STM32CubeF4
-version v1.24.1 (b5abca20c9676b04f8d2885a668a9b653ee65705). Contents
-taken from the Drivers/CMSIS/Device/ST/STM32F4xx/ directory.
+  https://github.com/STMicroelectronics/cmsis_device_f4/tree/v2.6.10
+version v2.6.10 (5f41fb29d22773896c780052bf61e47fc924d524). Contents
+taken from the Include and Source/Templates directory.
 
 The stm32f7 directory contains code from:
-  https://github.com/STMicroelectronics/STM32CubeF7
-version v1.15.0 (3600603267ebc7da619f50542e99bbdfd7e35f4a). Contents
-taken from the Drivers/CMSIS/Device/ST/STM32F7xx/ directory.
+  https://github.com/STMicroelectronics/cmsis_device_f7/tree/v1.2.9
+version v1.2.9 (b01bc43ffe13fc8fb12cd9a4bb342fd021b80524). Contents
+taken from the Include and Source/Templates directory.
 
 The stm32g0 directory contains code from:
-  https://github.com/STMicroelectronics/STM32CubeG0
-version v1.4.1 (5cb06333a6a43cefbe145f10a5aa98d3cc4cffee). Contents
-taken from the Drivers/CMSIS/Device/ST/STM32G0xx/ directory.
+  https://github.com/STMicroelectronics/cmsis_device_g0/tree/v1.4.4
+version v1.4.4 (35e1201d4db3dbbd364b7decca957902f60bc5da). Contents
+taken from the Include and Source/Templates directory.
 
 The stm32g4 directory contains code from:
-  https://github.com/STMicroelectronics/STM32CubeG4
-version v1.4.0 (e762fe2ce800cf6c18a1868a3aabc7e9351751bd). Contents
-taken from the Drivers/CMSIS/Device/ST/STM32G4xx/ directory.
+  https://github.com/STMicroelectronics/cmsis_device_g4/tree/v1.2.4
+version v1.2.4 (f4ee399953e3b5c437788526e93b10efa5fad4fa). Contents
+taken from the Include and Source/Templates directory.
 
 The stm32l4 directory contains code from:
-  https://github.com/STMicroelectronics/STM32CubeL4
-version v1.17.0 (5e1553e07706491bd11f4edd304e093b6e4b83a4). Contents
-taken from the Drivers/CMSIS/Device/ST/STM32L4xx/ directory.
+  https://github.com/STMicroelectronics/cmsis_device_l4/tree/v1.7.4
+version v1.7.4 (a2530753e86dd326a75467d28feb92e2ba7d0df2). Contents
+taken from the Include and Source/Templates directory.
 
 The stm32h7 directory contains code from:
-  https://github.com/STMicroelectronics/STM32CubeH7
-version v1.9.0 (ccb11556044540590ca6e45056e6b65cdca2deb2). Contents
-taken from the Drivers/CMSIS/Device/ST/STM32H7xx/ directory.
+  https://github.com/STMicroelectronics/cmsis_device_h7/tree/v1.10.4
+version v1.10.4 (faccfec37f82f7a1319c21638111b0f7335de7fe). Contents
+taken from the Include and Source/Templates directory.
 
 The rp2040 directory contains code from the pico sdk:
   https://github.com/raspberrypi/pico-sdk.git
