@@ -490,6 +490,7 @@ class EddyDriftCompensation:
         self.cal_temp = config.getfloat("calibration_temp", 0.)
         self.drift_calibration = None
         self.calibration_samples = None
+        self.max_valid_temp = config.getfloat("max_validation_temp", 60.)
         self.dc_min_temp = config.getfloat("drift_calibration_min_temp", 0.)
         dc = config.getlists(
             "drift_calibration", None, seps=(',', '\n'), parser=float
@@ -503,7 +504,8 @@ class EddyDriftCompensation:
                     )
             self.drift_calibration = [Polynomial2d(*coefs) for coefs in dc]
             cal = self.drift_calibration
-            self._check_calibration(cal, self.dc_min_temp, config.error)
+            start_temp, end_temp = self.dc_min_temp, self.max_valid_temp
+            self._check_calibration(cal, start_temp, end_temp, config.error)
             low_poly = self.drift_calibration[-1]
             self.min_freq = min([low_poly(temp) for temp in range(121)])
             cal_str = "\n".join([repr(p) for p in cal])
@@ -638,13 +640,15 @@ class EddyDriftCompensation:
                 "calbration error, not enough samples"
             )
         min_temp, _ = cal_samples[0][0]
+        max_temp, _ = cal_samples[-1][0]
         polynomials = []
         for i, coords in enumerate(cal_samples):
             height = .05 + i * .5
             poly = Polynomial2d.fit(coords)
             polynomials.append(poly)
             logging.info("Polynomial at Z=%.2f: %s" % (height, repr(poly)))
-        self._check_calibration(polynomials, min_temp)
+        end_vld_temp = max(self.max_valid_temp, max_temp)
+        self._check_calibration(polynomials, min_temp, end_vld_temp)
         coef_cfg = "\n" + "\n".join([str(p) for p in polynomials])
         configfile = self.printer.lookup_object('configfile')
         configfile.set(self.name, "drift_calibration", coef_cfg)
@@ -656,10 +660,11 @@ class EddyDriftCompensation:
             % (self.name, len(polynomials))
         )
 
-    def _check_calibration(self, calibration, start_temp, error=None):
+    def _check_calibration(self, calibration, start_temp, end_temp, error=None):
         error = error or self.printer.command_error
         start = int(start_temp)
-        for temp in range(start, 121, 1):
+        end = int(end_temp) + 1
+        for temp in range(start, end, 1):
             last_freq = calibration[0](temp)
             for i, poly in enumerate(calibration[1:]):
                 next_freq = poly(temp)
