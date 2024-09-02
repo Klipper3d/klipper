@@ -70,7 +70,8 @@ class PrinterSensorCombined:
         for sensor in self.sensors:
             sensor_status = sensor.get_status(eventtime)
             sensor_temperature = sensor_status['temperature']
-            values.append(sensor_temperature)
+            if sensor_temperature is not None:
+                values.append(sensor_temperature)
 
         # check if values are out of max_deviation range
         if (max(values) - min(values)) > self.max_deviation:
