@@ -46,6 +46,7 @@ BOARD_DEFS = {
         'mcu': "stm32f103xe",
         'spi_bus': "spi2",
         "cs_pin": "PA15",
+        "conversion_script": "scripts/update_mks_robin.py",
         "firmware_path": "Robin_e3.bin",
         "current_firmware_path": "Robin_e3.cur"
     },
@@ -133,6 +134,16 @@ BOARD_DEFS = {
         'mcu': "stm32g0b1xx",
         'spi_bus': "spi1",
         "cs_pin": "PB8"
+    },
+    'chitu-v6': {
+        'mcu': "stm32f103xe",
+        'spi_bus': "swspi",
+        'spi_pins': "PC8,PD2,PC12",
+        "cs_pin": "PC11",
+        #'sdio_bus': 'sdio',
+        "conversion_script": "scripts/update_chitu.py",
+        "firmware_path": "update.cbd",
+        'skip_verify': True
     }
 }
 
@@ -182,7 +193,8 @@ BOARD_ALIASES = {
     'fysetc-s6-v1.2': BOARD_DEFS['fysetc-spider'],
     'fysetc-s6-v2': BOARD_DEFS['fysetc-spider'],
     'robin_v3': BOARD_DEFS['monster8'],
-    'btt-skrat-v1.0': BOARD_DEFS['btt-skrat']
+    'btt-skrat-v1.0': BOARD_DEFS['btt-skrat'],
+    'chitu-v6': BOARD_DEFS['chitu-v6']
 }
 
 def list_boards():
