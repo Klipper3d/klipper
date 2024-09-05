@@ -866,6 +866,9 @@ class SDCardSDIO:
             if self.initialized:
                 return
             # Send reset command (CMD0)
+            self._send_command('GO_IDLE_STATE', 0)
+            # some SD cards need a second push to properly go to idle
+            # so we will just send the command twice, and only check the second
             if not self._send_command('GO_IDLE_STATE', 0):
                 raise OSError(
                     "flash_sdcard: failed to reset SD Card\n"
@@ -1316,7 +1319,7 @@ class MCUConnection:
         config = self.get_mcu_config()
         if not config["is_config"] or config["is_shutdown"]:
             raise MCUConfigError("Failed to configure MCU")
-        printfunc("Initializing SD Card and Mounting file system...")
+        printfunc("Initializing SD Card (over SPI) and Mounting file system...")
         self.fatfs = FatFS(self._serial)
         self.reactor.pause(self.reactor.monotonic() + .5)
         try:
@@ -1343,7 +1346,8 @@ class MCUConnection:
         config = self.get_mcu_config()
         if not config["is_config"] or config["is_shutdown"]:
             raise MCUConfigError("Failed to configure MCU")
-        printfunc("Initializing SD Card and Mounting file system...")
+        printfunc("Initializing SD Card (over SDIO) and "
+                        "Mounting file system...")
         self.fatfs = FatFS(self._serial,spi=False)
         self.reactor.pause(self.reactor.monotonic() + .5)
         try:

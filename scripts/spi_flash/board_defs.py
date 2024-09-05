@@ -136,14 +136,15 @@ BOARD_DEFS = {
         "cs_pin": "PB8"
     },
     'chitu-v6': {
+        # when using SDIO we can verify
         'mcu': "stm32f103xe",
-        'spi_bus': "swspi",
-        'spi_pins': "PC8,PD2,PC12",
-        "cs_pin": "PC11",
-        #'sdio_bus': 'sdio',
+        #'spi_bus': "swspi",
+        #'spi_pins': "PC8,PD2,PC12",
+        #"cs_pin": "PC11",
+        'sdio_bus': 'sdio',
         "conversion_script": "scripts/update_chitu.py",
         "firmware_path": "update.cbd",
-        'skip_verify': True
+        #'skip_verify': True
     }
 }
 
