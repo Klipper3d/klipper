@@ -451,8 +451,8 @@
   
   
     <li class="md-nav__item">
-      <a href="OctoPrint.md" class="md-nav__link">
-        None
+      <a href="OctoPrint.html" class="md-nav__link">
+        OctoPrint for Klipper
       </a>
     </li>
   
@@ -1625,8 +1625,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Eddy_Probe.md" class="md-nav__link">
-        None
+      <a href="Eddy_Probe.html" class="md-nav__link">
+        Eddy Current Inductive probe
       </a>
     </li>
   
@@ -2276,10 +2276,10 @@
 </ul>
 <h2 id="capteurs-de-temperature">Capteurs de température<a class="headerlink" href="#capteurs-de-temperature" title="Permanent link">&para;</a></h2>
 <p>Les informations suivantes sont disponibles dans</p>
-<p><a href="Config_Reference.html#bmp280bme280bme680-temperature-sensor">bme280 config_section_name</a>, <a href="Config_Reference.html#htu21d-sensor">htu21d config_section_name</a>, <a href="Config_Reference.html#lm75-temperature-sensor">lm75 config_section_name</a>, <a href="Config_Reference.html#host-temperature-sensor">temperature_host config_section_name</a> and <a href="Config_Reference.html#combined-temperature-sensor">temperature_combined config_section_name</a> objects:</p>
+<p><a href="Config_Reference.html#bmp280bme280bme680-temperature-sensor">bme280 config_section_name</a>, <a href="Config_Reference.html#htu21d-sensor">htu21d config_section_name</a>, <a href="Config_Reference.html#sht31-sensor">sht3x config_section_name</a>, <a href="Config_Reference.html#lm75-temperature-sensor">lm75 config_section_name</a>, <a href="Config_Reference.html#host-temperature-sensor">temperature_host config_section_name</a> and <a href="Config_Reference.html#combined-temperature-sensor">temperature_combined config_section_name</a> objects:</p>
 <ul>
 <li><code>temperature</code> : La dernière température lue par le capteur.</li>
-<li><code>humidité</code>, <code>pression</code>, <code>gaz</code> : les dernières valeurs lues par le capteur (uniquement sur les capteurs bme280, htu21d et lm75).</li>
+<li><code>humidity</code>, <code>pressure</code>, <code>gas</code>: The last read values from the sensor (only on bme280, htu21d, sht3x and lm75 sensors).</li>
 </ul>
 <h2 id="temperature_fan">temperature_fan<a class="headerlink" href="#temperature_fan" title="Permanent link">&para;</a></h2>
 <p>Les informations suivantes sont disponibles dans les objets <a href="Config_Reference.html#temperature_fan">temperature_fan nom_du_ventilateur</a> :</p>

@@ -490,8 +490,8 @@
   
   
     <li class="md-nav__item">
-      <a href="OctoPrint.md" class="md-nav__link">
-        None
+      <a href="OctoPrint.html" class="md-nav__link">
+        OctoPrint a Klipper-hez
       </a>
     </li>
   
@@ -1313,8 +1313,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Eddy_Probe.md" class="md-nav__link">
-        None
+      <a href="Eddy_Probe.html" class="md-nav__link">
+        Örvényáramú induktív szonda
       </a>
     </li>
   
@@ -1396,6 +1396,7 @@
 <p>Ez a dokumentum a konfigurációs fájl legújabb szoftveres változtatásait tartalmazza, amelyek nem kompatibilisek visszafelé. A Klipper szoftver frissítésekor érdemes áttanulmányozni ezt a dokumentumot.</p>
 <p>A dokumentumban szereplő valamennyi dátum hozzávetőleges.</p>
 <h2 id="valtozasok">Változások<a class="headerlink" href="#valtozasok" title="Permanent link">&para;</a></h2>
+<p>20240415: The <code>on_error_gcode</code> parameter in the <code>[virtual_sdcard]</code> config section now has a default. If this parameter is not specified it now defaults to <code>TURN_OFF_HEATERS</code>. If the previous behavior is desired (take no default action on an error during a virtual_sdcard print) then define <code>on_error_gcode</code> with an empty value.</p>
 <p>20240313: A <code>[nyomtató]</code> konfigurációs szakaszban található <code>max_accel_to_decel</code> paramétert elavultnak nyilvánítottuk. A <code>SET_VELOCITY_LIMIT</code> parancs <code>ACCEL_TO_DECEL</code> paramétere elavult. A <code>printer.toolhead.max_accel_to_decel</code> állapot eltávolításra került. Használd helyette a <a href="Config_Reference.html#printer">minimum_cruise_ratio paramétert</a>. Az elavult funkciók a közeljövőben eltávolításra kerülnek, és az időközbeni használatuk finoman eltérő viselkedést eredményezhet.</p>
 <p>20240215: Számos elavult funkciót eltávolítottunk. Az "NTC 100K beta 3950" használata termisztor névként megszűnt (elavult a 20211110 oldalon). A <code>SYNC_STEPPER_TO_EXTRUDER</code> és a <code>SET_EXTRUDER_STEP_DISTANCE</code> parancsok eltávolításra kerültek, és az extruder <code>shared_heater</code> konfigurációs opciója eltávolításra került (deprecated on 20220210). A bed_mesh <code>relative_reference_index</code> opció eltávolításra került (deprecated on 20230619).</p>
 <p>20240123: Az output_pin SET_PIN CYCLE_TIME paramétert eltávolítottuk. Használd az új <a href="Config_Reference.html#pwm_cycle_time">pwm_cycle_time</a> modult, ha egy PWM tű ciklusidejét dinamikusan kell megváltoztatni.</p>

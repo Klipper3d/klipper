@@ -490,8 +490,8 @@
   
   
     <li class="md-nav__item">
-      <a href="OctoPrint.md" class="md-nav__link">
-        None
+      <a href="OctoPrint.html" class="md-nav__link">
+        OctoPrint for Klipper
       </a>
     </li>
   
@@ -1313,8 +1313,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Eddy_Probe.md" class="md-nav__link">
-        None
+      <a href="Eddy_Probe.html" class="md-nav__link">
+        Eddy Current Inductive probe
       </a>
     </li>
   
@@ -1396,6 +1396,7 @@
 <p>Ce document couvre les modifications logicielles apportées au fichier de configuration qui ne sont pas rétro compatibles. Il est conseillé de consulter ce document lors de la mise à jour du logiciel Klipper.</p>
 <p>Toutes les dates de ce document sont approximatives.</p>
 <h2 id="changements">Changements<a class="headerlink" href="#changements" title="Permanent link">&para;</a></h2>
+<p>20240415: The <code>on_error_gcode</code> parameter in the <code>[virtual_sdcard]</code> config section now has a default. If this parameter is not specified it now defaults to <code>TURN_OFF_HEATERS</code>. If the previous behavior is desired (take no default action on an error during a virtual_sdcard print) then define <code>on_error_gcode</code> with an empty value.</p>
 <p>20240313: The <code>max_accel_to_decel</code> parameter in the <code>[printer]</code> config section has been deprecated. The <code>ACCEL_TO_DECEL</code> parameter of the <code>SET_VELOCITY_LIMIT</code> command has been deprecated. The <code>printer.toolhead.max_accel_to_decel</code> status has been removed. Use the <a href="Config_Reference.html#printer">minimum_cruise_ratio parameter</a> instead. The deprecated features will be removed in the near future, and using them in the interim may result in subtly different behavior.</p>
 <p>20240215: Several deprecated features have been removed. Using "NTC 100K beta 3950" as a thermistor name has been removed (deprecated on 20211110). The <code>SYNC_STEPPER_TO_EXTRUDER</code> and <code>SET_EXTRUDER_STEP_DISTANCE</code> commands have been removed, and the extruder <code>shared_heater</code> config option has been removed (deprecated on 20220210). The bed_mesh <code>relative_reference_index</code> option has been removed (deprecated on 20230619).</p>
 <p>20240123: The output_pin SET_PIN CYCLE_TIME parameter has been removed. Use the new <a href="Config_Reference.html#pwm_cycle_time">pwm_cycle_time</a> module if it is necessary to dynamically change a pwm pin's cycle time.</p>

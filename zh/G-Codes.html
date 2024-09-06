@@ -451,8 +451,8 @@
   
   
     <li class="md-nav__item">
-      <a href="OctoPrint.md" class="md-nav__link">
-        None
+      <a href="OctoPrint.html" class="md-nav__link">
+        OctoPrint for Klipper
       </a>
     </li>
   
@@ -1914,6 +1914,33 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#probe_eddy_current" class="md-nav__link">
+    [probe_eddy_current]
+  </a>
+  
+    <nav class="md-nav" aria-label="[probe_eddy_current]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#probe_eddy_current_calibrate" class="md-nav__link">
+    PROBE_EDDY_CURRENT_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ldc_calibrate_drive_current" class="md-nav__link">
+    LDC_CALIBRATE_DRIVE_CURRENT
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pwm_cycle_time" class="md-nav__link">
     [pwm_cycle_time]
   </a>
@@ -2374,6 +2401,54 @@
         
       </ul>
     </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temperature_probe" class="md-nav__link">
+    [temperature_probe]
+  </a>
+  
+    <nav class="md-nav" aria-label="[temperature_probe]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#temperature_probe_calibrate" class="md-nav__link">
+    TEMPERATURE_PROBE_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temperature_probe_next" class="md-nav__link">
+    TEMPERATURE_PROBE_NEXT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temperature_probe_complete" class="md-nav__link">
+    TEMPERATURE_PROBE_COMPLETE:
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#abort" class="md-nav__link">
+    ABORT
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temperature_probe_enable" class="md-nav__link">
+    TEMPERATURE_PROBE_ENABLE
+  </a>
   
 </li>
         
@@ -2890,8 +2965,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Eddy_Probe.md" class="md-nav__link">
-        None
+      <a href="Eddy_Probe.html" class="md-nav__link">
+        Eddy 感应涡流探针
       </a>
     </li>
   
@@ -4059,6 +4134,33 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#probe_eddy_current" class="md-nav__link">
+    [probe_eddy_current]
+  </a>
+  
+    <nav class="md-nav" aria-label="[probe_eddy_current]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#probe_eddy_current_calibrate" class="md-nav__link">
+    PROBE_EDDY_CURRENT_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ldc_calibrate_drive_current" class="md-nav__link">
+    LDC_CALIBRATE_DRIVE_CURRENT
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pwm_cycle_time" class="md-nav__link">
     [pwm_cycle_time]
   </a>
@@ -4522,6 +4624,54 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#temperature_probe" class="md-nav__link">
+    [temperature_probe]
+  </a>
+  
+    <nav class="md-nav" aria-label="[temperature_probe]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#temperature_probe_calibrate" class="md-nav__link">
+    TEMPERATURE_PROBE_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temperature_probe_next" class="md-nav__link">
+    TEMPERATURE_PROBE_NEXT
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temperature_probe_complete" class="md-nav__link">
+    TEMPERATURE_PROBE_COMPLETE:
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#abort" class="md-nav__link">
+    ABORT
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#temperature_probe_enable" class="md-nav__link">
+    TEMPERATURE_PROBE_ENABLE
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4877,6 +5027,12 @@ section</a> is enabled.</p>
 <p><code>PROBE_CALIBRATE [SPEED=&lt;speed&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>:运行一个对校准测头的z_offset有用的辅助脚本。有关可选测头参数的详细信息，请参见PROBE命令。参见MANUAL_PROBE命令，了解SPEED参数和工具激活时可用的附加命令的详细信息。请注意，PROBE_CALIBRATE命令使用速度变量在XY方向以及Z方向上移动。</p>
 <h4 id="z_offset_apply_probe">Z_OFFSET_APPLY_PROBE<a class="headerlink" href="#z_offset_apply_probe" title="Permanent link">&para;</a></h4>
 <p><code>Z_OFFSET_APPLY_PROBE</code>：将当前的Z 的 G 代码偏移量（就是 babystepping）从 probe 的 z_offset 中减去。该命令将持久化一个常用babystepping 微调值。需要执行 <code>SAVE_CONFIG</code>才能生效。</p>
+<h3 id="probe_eddy_current">[probe_eddy_current]<a class="headerlink" href="#probe_eddy_current" title="Permanent link">&para;</a></h3>
+<p>The following commands are available when a <a href="Config_Reference.html#probe_eddy_current">probe_eddy_current config section</a> is enabled.</p>
+<h4 id="probe_eddy_current_calibrate">PROBE_EDDY_CURRENT_CALIBRATE<a class="headerlink" href="#probe_eddy_current_calibrate" title="Permanent link">&para;</a></h4>
+<p><code>PROBE_EDDY_CURRENT_CALIBRATE CHIP=&lt;config_name&gt;</code>: This starts a tool that calibrates the sensor resonance frequencies to corresponding Z heights. The tool will take a couple of minutes to complete. After completion, use the SAVE_CONFIG command to store the results in the printer.cfg file.</p>
+<h4 id="ldc_calibrate_drive_current">LDC_CALIBRATE_DRIVE_CURRENT<a class="headerlink" href="#ldc_calibrate_drive_current" title="Permanent link">&para;</a></h4>
+<p><code>LDC_CALIBRATE_DRIVE_CURRENT CHIP=&lt;config_name&gt;</code> This tool will calibrate the ldc1612 DRIVE_CURRENT0 register. Prior to using this tool, move the sensor so that it is near the center of the bed and about 20mm above the bed surface. Run this command to determine an appropriate DRIVE_CURRENT for the sensor. After running this command use the SAVE_CONFIG command to store that new setting in the printer.cfg config file.</p>
 <h3 id="pwm_cycle_time">[pwm_cycle_time]<a class="headerlink" href="#pwm_cycle_time" title="Permanent link">&para;</a></h3>
 <p>The following command is available when a <a href="Config_Reference.html#pwm_cycle_time">pwm_cycle_time config section</a> is enabled.</p>
 <h4 id="set_pin_1">SET_PIN<a class="headerlink" href="#set_pin_1" title="Permanent link">&para;</a></h4>
@@ -5006,6 +5162,18 @@ section</a> is enabled.</p>
 <p>The following commands are available when the <a href="Config_Reference.html#z_tilt">z_tilt config section</a> is enabled.</p>
 <h4 id="z_tilt_adjust">Z_TILT_ADJUST<a class="headerlink" href="#z_tilt_adjust" title="Permanent link">&para;</a></h4>
 <p>`Z_TILT_ADJUST[HORIZONTAL_MOVE_Z=<value>][<probe_parameter>=<value>&gt;：此命令将探测配置中指定的点，然后对每个Z步进器进行独立调整以补偿倾斜。有关可选探测参数的详细信息，请参阅PROBE命令。可选的“HORIZONTAL_MOVE_Z”值将覆盖配置文件中指定的“HORIZONTAL_MOVE_Z”选项。</p>
+<h3 id="temperature_probe">[temperature_probe]<a class="headerlink" href="#temperature_probe" title="Permanent link">&para;</a></h3>
+<p>The following commands are available when a <a href="Config_Reference.html#temperature_probe">temperature_probe config section</a> is enabled.</p>
+<h4 id="temperature_probe_calibrate">TEMPERATURE_PROBE_CALIBRATE<a class="headerlink" href="#temperature_probe_calibrate" title="Permanent link">&para;</a></h4>
+<p><code>TEMPERATURE_PROBE_CALIBRATE [PROBE=&lt;probe name&gt;] [TARGET=&lt;value&gt;] [STEP=&lt;value&gt;]</code>: Initiates probe drift calibration for eddy current based probes. The <code>TARGET</code> is a target temperature for the last sample. When the temperature recorded during a sample exceeds the <code>TARGET</code> calibration will complete. The <code>STEP</code> parameter sets temperature delta (in C) between samples. After a sample has been taken, this delta is used to schedule a call to <code>TEMPERATURE_PROBE_NEXT</code>. The default <code>STEP</code> is 2.</p>
+<h4 id="temperature_probe_next">TEMPERATURE_PROBE_NEXT<a class="headerlink" href="#temperature_probe_next" title="Permanent link">&para;</a></h4>
+<p><code>TEMPERATURE_PROBE_NEXT</code>: After calibration has started this command is run to take the next sample. It is automatically scheduled to run when the delta specified by <code>STEP</code> has been reached, however its also possible to manually run this command to force a new sample. This command is only available during calibration.</p>
+<h4 id="temperature_probe_complete">TEMPERATURE_PROBE_COMPLETE:<a class="headerlink" href="#temperature_probe_complete" title="Permanent link">&para;</a></h4>
+<p><code>TEMPERATURE_PROBE_COMPLETE</code>: Can be used to end calibration and save the current result before the <code>TARGET</code> temperature is reached. This command is only available during calibration.</p>
+<h4 id="abort">ABORT<a class="headerlink" href="#abort" title="Permanent link">&para;</a></h4>
+<p><code>ABORT</code>: Aborts the calibration process, discarding the current results. This command is only available during drift calibration.</p>
+<h3 id="temperature_probe_enable">TEMPERATURE_PROBE_ENABLE<a class="headerlink" href="#temperature_probe_enable" title="Permanent link">&para;</a></h3>
+<p><code>TEMPERATURE_PROBE_ENABLE ENABLE=[0|1]</code>: Sets temperature drift compensation on or off. If ENABLE is set to 0, drift compensation will be disabled, if set to 1 it is enabled.</p>
 
               
             </article>

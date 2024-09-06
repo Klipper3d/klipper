@@ -449,8 +449,8 @@
   
   
     <li class="md-nav__item">
-      <a href="OctoPrint.md" class="md-nav__link">
-        None
+      <a href="OctoPrint.html" class="md-nav__link">
+        OctoPrint a Klipper-hez
       </a>
     </li>
   
@@ -1357,8 +1357,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Eddy_Probe.md" class="md-nav__link">
-        None
+      <a href="Eddy_Probe.html" class="md-nav__link">
+        Örvényáramú induktív szonda
       </a>
     </li>
   
@@ -1488,8 +1488,8 @@
 <p>Az adapter használatához a gazdagép operációs rendszert is konfigurálni kell. Ez általában úgy történik, hogy létrehozunk egy új <code>/etc/network/interfaces.d/can0</code> nevű fájlt a következő tartalommal:</p>
 <div class="highlight"><pre><span></span><code>allow-hotplug can0
 iface can0 can static
-         bitrate 1000000
-         up ifconfig $IFACE txqueuelen 128
+    bitrate 1000000
+    up ip link set $IFACE txqueuelen 128
 </code></pre></div>
 
 <h2 id="az-ellenallasok-megszuntetese">Az ellenállások megszüntetése<a class="headerlink" href="#az-ellenallasok-megszuntetese" title="Permanent link">&para;</a></h2>
@@ -1523,8 +1523,8 @@ canbus_uuid: 11aa22bb33cc
 </ul>
 <div class="highlight"><pre><span></span><code>allow-hotplug can0
 iface can0 can static
-         bitrate 1000000
-         up ifconfig $IFACE txqueuelen 128
+    bitrate 1000000
+    up ip link set $IFACE txqueuelen 128
 </code></pre></div>
 
 <ul>

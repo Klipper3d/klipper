@@ -449,8 +449,8 @@
   
   
     <li class="md-nav__item">
-      <a href="OctoPrint.md" class="md-nav__link">
-        None
+      <a href="OctoPrint.html" class="md-nav__link">
+        OctoPrint for Klipper
       </a>
     </li>
   
@@ -1217,15 +1217,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#installer-octoprint" class="md-nav__link">
-    Installer Octoprint
+  <a href="#installing-octoprint" class="md-nav__link">
+    Installing Octoprint
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#construire-le-code-du-microcontroleur" class="md-nav__link">
-    Construire le code du microcontrôleur
+  <a href="#building-the-beaglebone-pru-micro-controller-code-pru-firmware" class="md-nav__link">
+    Building the BeagleBone PRU micro-controller code (PRU firmware)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-and-installing-linux-host-micro-controller-code" class="md-nav__link">
+    Building and installing Linux host micro-controller code
   </a>
   
 </li>
@@ -1240,6 +1247,41 @@
         <li class="md-nav__item">
   <a href="#imprimer-avec-le-beaglebone" class="md-nav__link">
     Imprimer avec le Beaglebone
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#avr-micro-controller-code-build" class="md-nav__link">
+    AVR micro-controller code build
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hardware-pin-designation" class="md-nav__link">
+    Hardware Pin designation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-hardware-spi" class="md-nav__link">
+    Enabling hardware SPI
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-hardware-i2c" class="md-nav__link">
+    Enabling hardware I2C
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-hardware-uartserialcan" class="md-nav__link">
+    Enabling hardware UART(Serial)/CAN
   </a>
   
 </li>
@@ -1343,8 +1385,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Eddy_Probe.md" class="md-nav__link">
-        None
+      <a href="Eddy_Probe.html" class="md-nav__link">
+        Eddy Current Inductive probe
       </a>
     </li>
   
@@ -1406,15 +1448,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#installer-octoprint" class="md-nav__link">
-    Installer Octoprint
+  <a href="#installing-octoprint" class="md-nav__link">
+    Installing Octoprint
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#construire-le-code-du-microcontroleur" class="md-nav__link">
-    Construire le code du microcontrôleur
+  <a href="#building-the-beaglebone-pru-micro-controller-code-pru-firmware" class="md-nav__link">
+    Building the BeagleBone PRU micro-controller code (PRU firmware)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#building-and-installing-linux-host-micro-controller-code" class="md-nav__link">
+    Building and installing Linux host micro-controller code
   </a>
   
 </li>
@@ -1429,6 +1478,41 @@
         <li class="md-nav__item">
   <a href="#imprimer-avec-le-beaglebone" class="md-nav__link">
     Imprimer avec le Beaglebone
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#avr-micro-controller-code-build" class="md-nav__link">
+    AVR micro-controller code build
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hardware-pin-designation" class="md-nav__link">
+    Hardware Pin designation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-hardware-spi" class="md-nav__link">
+    Enabling hardware SPI
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-hardware-i2c" class="md-nav__link">
+    Enabling hardware I2C
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enabling-hardware-uartserialcan" class="md-nav__link">
+    Enabling hardware UART(Serial)/CAN
   </a>
   
 </li>
@@ -1453,14 +1537,36 @@
 <h1 id="beaglebone">Beaglebone<a class="headerlink" href="#beaglebone" title="Permanent link">&para;</a></h1>
 <p>Ce document décrit le processus d'exécution de Klipper sur un Beaglebone PRU.</p>
 <h2 id="construire-limage-du-systeme">Construire l'image du système<a class="headerlink" href="#construire-limage-du-systeme" title="Permanent link">&para;</a></h2>
-<p>Commencez par installer l'image <a href="https://beagleboard.org/latest-images">Debian 9.9 2019-08-03 4GB SD IoT</a>. Vous pouvez exécuter l'image à partir d'une carte micro-SD ou de la carte eMMC intégrée. Si vous utilisez l'eMMC, installez-la sur l'eMMC maintenant en suivant les instructions du lien ci-dessus.</p>
-<p>Ensuite, connectez-vous à la machine Beaglebone (<code>ssh debian@beaglebone</code> -- le mot de passe est <code>temppwd</code>) et installez Klipper en exécutant les commandes suivantes :</p>
-<div class="highlight"><pre><span></span><code>git clone https://github.com/Klipper3d/klipper
+<p>Start by installing the <a href="https://beagleboard.org/latest-images">Debian 11.7 2023-09-02 4GB microSD IoT</a> image. One may run the image from either a micro-SD card or from builtin eMMC. If using the eMMC, install it to eMMC now by following the instructions from the above link.</p>
+<p>Then ssh into the Beaglebone machine (<code>ssh debian@beaglebone</code> -- password is <code>temppwd</code>).</p>
+<p>Before start installing Klipper you need to free-up additional space. there are 3 options to do that:</p>
+<ol>
+<li>remove some BeagleBone "Demo" resources</li>
+<li>if you did boot from SD-Card, and it's bigger than 4Gb - you can expand current filesystem to take whole card space</li>
+<li>do option #1 and #2 together.</li>
+</ol>
+<p>To remove some BeagleBone "Demo" resources execute these commands</p>
+<div class="highlight"><pre><span></span><code>sudo apt remove bb-node-red-installer
+sudo apt remove bb-code-server
+</code></pre></div>
+
+<p>To expand filesystem to full size of your SD-Card execute this command, reboot is not required.</p>
+<div class="highlight"><pre><span></span><code>sudo growpart /dev/mmcblk0 1
+sudo resize2fs /dev/mmcblk0p1
+</code></pre></div>
+
+<p>Install Klipper by running the following commands:</p>
+<div class="highlight"><pre><span></span><code>git clone https://github.com/Klipper3d/klipper.git
 ./klipper/scripts/install-beaglebone.sh
 </code></pre></div>
 
-<h2 id="installer-octoprint">Installer Octoprint<a class="headerlink" href="#installer-octoprint" title="Permanent link">&para;</a></h2>
-<p>On peut ensuite installer Octoprint :</p>
+<p>After installing Klipper you need to decide what kind of deployment do you need, but take a note that BeagleBone is 3.3v based hardware and in most cases you can't directly connect pins to 5v or 12v based hardware without conversion boards.</p>
+<p>As Klipper have multimodule architecture on BeagleBone you can achieve many different use cases, but general ones are following:</p>
+<p>Use case 1: Use BeagleBone only as a host system to run Klipper and additional software like OctoPrint/Fluidd + Moonraker/... and this configuration will be driving external micro-controllers via serial/usb/canbus connections.</p>
+<p>Use case 2: Use BeagleBone with extension board (cape) like CRAMPS board. in this configuration BeagleBone will host Klipper + additional software, and it will drive extension board with BeagleBone PRU cores (2 additional cores 200Mh, 32Bit).</p>
+<p>Use case 3: It's same as "Use case 1" but additionally you want to drive BeagleBone GPIOs with high speed by utilizing PRU cores to offload main CPU.</p>
+<h2 id="installing-octoprint">Installing Octoprint<a class="headerlink" href="#installing-octoprint" title="Permanent link">&para;</a></h2>
+<p>One may then install Octoprint or fully skip this section if desired other software:</p>
 <div class="highlight"><pre><span></span><code>git clone https://github.com/foosel/OctoPrint.git
 cd OctoPrint/
 virtualenv venv
@@ -1482,19 +1588,69 @@ sudo update-rc.d octoprint defaults
 <div class="highlight"><pre><span></span><code>sudo systemctl start octoprint
 </code></pre></div>
 
-<p>Assurez-vous que le serveur web OctoPrint est accessible - il devrait se trouver à l'adresse suivante : <a href="http://beaglebone:5000/">http://beaglebone:5000/</a></p>
-<h2 id="construire-le-code-du-microcontroleur">Construire le code du microcontrôleur<a class="headerlink" href="#construire-le-code-du-microcontroleur" title="Permanent link">&para;</a></h2>
-<p>Pour compiler le code du microcontrôleur Klipper, commencez par le configurer pour le "Beaglebone PRU" :</p>
+<p>Wait 1-2 minutes and make sure the OctoPrint web server is accessible - it should be at: <a href="http://beaglebone:5000/">http://beaglebone:5000/</a></p>
+<h2 id="building-the-beaglebone-pru-micro-controller-code-pru-firmware">Building the BeagleBone PRU micro-controller code (PRU firmware)<a class="headerlink" href="#building-the-beaglebone-pru-micro-controller-code-pru-firmware" title="Permanent link">&para;</a></h2>
+<p>This section is required for "Use case 2" and "Use case 3" mentioned above, you should skip it for "Use case 1".</p>
+<p>Check that required devices are present</p>
+<div class="highlight"><pre><span></span><code>sudo beagle-version
+</code></pre></div>
+
+<p>You should check that output contains successful "remoteproc" drivers loading and presence of PRU cores, in Kernel 5.10 they should be "remoteproc1" and "remoteproc2" (4a334000.pru, 4a338000.pru) Also check that many GPIOs are loaded they will look like "Allocated GPIO id=0 name='P8_03'" Usually everything is fine and no hardware configuration is required. If something is missing - try to play with "uboot overlays" options or with cape-overlays Just for reference some output of working BeagleBone Black configuration with CRAMPS board:</p>
+<div class="highlight"><pre><span></span><code>model:[TI_AM335x_BeagleBone_Black]
+UBOOT: Booted Device-Tree:[am335x-boneblack-uboot-univ.dts]
+UBOOT: Loaded Overlay:[BB-ADC-00A0.bb.org-overlays]
+UBOOT: Loaded Overlay:[BB-BONE-eMMC1-01-00A0.bb.org-overlays]
+kernel:[5.10.168-ti-r71]
+/boot/uEnv.txt Settings:
+uboot_overlay_options:[enable_uboot_overlays=1]
+uboot_overlay_options:[disable_uboot_overlay_video=0]
+uboot_overlay_options:[disable_uboot_overlay_audio=1]
+uboot_overlay_options:[disable_uboot_overlay_wireless=1]
+uboot_overlay_options:[enable_uboot_cape_universal=1]
+pkg:[bb-cape-overlays]:[4.14.20210821.0-0~bullseye+20210821]
+pkg:[bb-customizations]:[1.20230720.1-0~bullseye+20230720]
+pkg:[bb-usb-gadgets]:[1.20230414.0-0~bullseye+20230414]
+pkg:[bb-wl18xx-firmware]:[1.20230414.0-0~bullseye+20230414]
+.............
+.............
+</code></pre></div>
+
+<p>To compile the Klipper micro-controller code, start by configuring it for the "Beaglebone PRU", for "BeagleBone Black" additionally disable options "Support GPIO Bit-banging devices" and disable "Support LCD devices" inside the "Optional features" because they will not fit in 8Kb PRU firmware memory, then exit and save config:</p>
 <div class="highlight"><pre><span></span><code>cd ~/klipper/
 make menuconfig
 </code></pre></div>
 
-<p>Pour compiler et installer le nouveau code du microcontrôleur, exécutez :</p>
+<p>To build and install the new PRU micro-controller code, run:</p>
 <div class="highlight"><pre><span></span><code>sudo service klipper stop
 make flash
 sudo service klipper start
 </code></pre></div>
 
+<p>After previous commands was executed your PRU firmware should be ready and started to check if everything was fine you can execute following command</p>
+<div class="highlight"><pre><span></span><code>dmesg
+</code></pre></div>
+
+<p>and compare last messages with sample one which indicate that everything started properly:</p>
+<div class="highlight"><pre><span></span><code>[   71.105499] remoteproc remoteproc1: 4a334000.pru is available
+[   71.157155] remoteproc remoteproc2: 4a338000.pru is available
+[   73.256287] remoteproc remoteproc1: powering up 4a334000.pru
+[   73.279246] remoteproc remoteproc1: Booting fw image am335x-pru0-fw, size 97112
+[   73.285807]  remoteproc1#vdev0buffer: registered virtio0 (type 7)
+[   73.285836] remoteproc remoteproc1: remote processor 4a334000.pru is now up
+[   73.286322] remoteproc remoteproc2: powering up 4a338000.pru
+[   73.313717] remoteproc remoteproc2: Booting fw image am335x-pru1-fw, size 188560
+[   73.313753] remoteproc remoteproc2: header-less resource table
+[   73.329964] remoteproc remoteproc2: header-less resource table
+[   73.348321] remoteproc remoteproc2: remote processor 4a338000.pru is now up
+[   73.443355] virtio_rpmsg_bus virtio0: creating channel rpmsg-pru addr 0x1e
+[   73.443727] virtio_rpmsg_bus virtio0: msg received with no recipient
+[   73.444352] virtio_rpmsg_bus virtio0: rpmsg host is online
+[   73.540993] rpmsg_pru virtio0.rpmsg-pru.-1.30: new rpmsg_pru device: /dev/rpmsg_pru30
+</code></pre></div>
+
+<p>take a note about "/dev/rpmsg_pru30" - it's your future serial device for main mcu configuration this device is required to be present, if it's absent - your PRU cores did not start properly.</p>
+<h2 id="building-and-installing-linux-host-micro-controller-code">Building and installing Linux host micro-controller code<a class="headerlink" href="#building-and-installing-linux-host-micro-controller-code" title="Permanent link">&para;</a></h2>
+<p>This section is required for "Use case 2" and optional for "Use case 3" mentioned above</p>
 <p>Il est également nécessaire de compiler et d'installer le code du microcontrôleur pour un processus hôte Linux. Configurez-le une seconde fois pour un "processus Linux" :</p>
 <div class="highlight"><pre><span></span><code>make menuconfig
 </code></pre></div>
@@ -1505,10 +1661,57 @@ make flash
 sudo service klipper start
 </code></pre></div>
 
+<p>take a note about "/tmp/klipper_host_mcu" - it will be your future serial device for "mcu host" if that file don't exist - refer to "scripts/klipper-mcu.service" file, it was installed by previous commands, and it's responsible for it.</p>
+<p>Take a note for "Use case 2" about following: when you will define printer configuration you should always use temperature sensors from "mcu host" because ADCs not present in default "mcu" (PRU cores). Sample configuration of "sensor_pin" for extruder and heated bed are available in "generic-cramps.cfg" You can use any other GPIO directly from "mcu host" by referencing them this way "host:gpiochip1/gpio17" but that should be avoided because it will be creating additional load on main CPU and most probably you can't use them for stepper control.</p>
 <h2 id="configuration-restante">Configuration restante<a class="headerlink" href="#configuration-restante" title="Permanent link">&para;</a></h2>
-<p>Terminez l'installation en configurant Klipper et Octoprint en suivant les instructions du document principal <a href="Installation.html#configuration-klipper">Installation</a>.</p>
+<p>Complete the installation by configuring Klipper following the instructions in the main <a href="Installation.html#configuring-octoprint-to-use-klipper">Installation</a> document.</p>
 <h2 id="imprimer-avec-le-beaglebone">Imprimer avec le Beaglebone<a class="headerlink" href="#imprimer-avec-le-beaglebone" title="Permanent link">&para;</a></h2>
-<p>Malheureusement, le processeur du Beaglebone peut parfois avoir du mal à faire fonctionner OctoPrint correctement. Des blocages d'impression sont connus pour se produire sur des impressions complexes (l'imprimante peut se déplacer plus rapidement qu'OctoPrint ne peut envoyer de commandes de mouvement). Si cela se produit, envisagez d'utiliser la fonctionnalité "virtual_sdcard" (voir <a href="Config_Reference.html#virtual_sdcard">Référence des configurations</a> pour plus de détails) pour imprimer directement depuis Klipper.</p>
+<p>Unfortunately, the Beaglebone processor can sometimes struggle to run OctoPrint well. Print stalls have been known to occur on complex prints (the printer may move faster than OctoPrint can send movement commands). If this occurs, consider using the "virtual_sdcard" feature (see <a href="Config_Reference.html#virtual_sdcard">Config Reference</a> for details) to print directly from Klipper and disable any DEBUG or VERBOSE logging options if you did enable them.</p>
+<h2 id="avr-micro-controller-code-build">AVR micro-controller code build<a class="headerlink" href="#avr-micro-controller-code-build" title="Permanent link">&para;</a></h2>
+<p>This environment have everything to build necessary micro-controller code except AVR, AVR packages was removed because of conflict with PRU packages. if you still want to build AVR micro-controller code in this environment you need to remove PRU packages and install AVR packages by executing following commands</p>
+<div class="highlight"><pre><span></span><code>sudo apt-get remove gcc-pru
+sudo apt-get install avrdude gcc-avr binutils-avr avr-libc
+</code></pre></div>
+
+<p>if you need to restore PRU packages - then remove ARV packages before that</p>
+<div class="highlight"><pre><span></span><code>sudo apt-get remove avrdude gcc-avr binutils-avr avr-libc
+sudo apt-get install gcc-pru
+</code></pre></div>
+
+<h2 id="hardware-pin-designation">Hardware Pin designation<a class="headerlink" href="#hardware-pin-designation" title="Permanent link">&para;</a></h2>
+<p>BeagleBone is very flexible in terms of pin designation, same pin can be configured for different function but always single function for single pin, same function can be present on different pins. So you can't have multiple functions on single pin or have same function on multiple pins. Example: P9_20 - i2c2_sda/can0_tx/spi1_cs0/gpio0_12/uart1_ctsn P9_19 - i2c2_scl/can0_rx/spi1_cs1/gpio0_13/uart1_rtsn P9_24 - i2c1_scl/can1_rx/gpio0_15/uart1_tx P9_26 - i2c1_sda/can1_tx/gpio0_14/uart1_rx</p>
+<p>Pin designation is defined by using special "overlays" which will be loaded during linux boot they are configured by editing file /boot/uEnv.txt with elevated permissions</p>
+<div class="highlight"><pre><span></span><code>sudo editor /boot/uEnv.txt
+</code></pre></div>
+
+<p>and defining which functionality to load, for example to enable CAN1 you need to define overlay for it</p>
+<div class="highlight"><pre><span></span><code>uboot_overlay_addr4=/lib/firmware/BB-CAN1-00A0.dtbo
+</code></pre></div>
+
+<p>This overlay BB-CAN1-00A0.dtbo will reconfigure all required pins for CAN1 and create CAN device in Linux. Any change in overlays will require system reboot to be applied. If you need to understand which pins are involved in some overlay - you can analyze source files in this location: /opt/sources/bb.org-overlays/src/arm/ or search info in BeagleBone forums.</p>
+<h2 id="enabling-hardware-spi">Enabling hardware SPI<a class="headerlink" href="#enabling-hardware-spi" title="Permanent link">&para;</a></h2>
+<p>BeagleBone usually have multiple hardware SPI buses, for example BeagleBone Black can have 2 of them, they can work up to 48Mhz, but usually they are limited to 16Mhz by Kernel Device-tree. By default, in BeagleBone Black some of SPI1 pins are configured for HDMI-Audio output, to fully enable 4-wire SPI1 you need to disable HDMI Audio and enable SPI1 To do that edit file /boot/uEnv.txt with elevated permissions</p>
+<div class="highlight"><pre><span></span><code>sudo editor /boot/uEnv.txt
+</code></pre></div>
+
+<p>uncomment variable</p>
+<div class="highlight"><pre><span></span><code>disable_uboot_overlay_audio=1
+</code></pre></div>
+
+<p>next uncomment variable and define it this way</p>
+<div class="highlight"><pre><span></span><code>uboot_overlay_addr4=/lib/firmware/BB-SPIDEV1-00A0.dtbo
+</code></pre></div>
+
+<p>Save changes in /boot/uEnv.txt and reboot the board. Now you have SPI1 Enabled, to verify its presence execute command</p>
+<div class="highlight"><pre><span></span><code>ls /dev/spidev1.*
+</code></pre></div>
+
+<p>Take a note that BeagleBone usually is 3.3v based hardware and to use 5V SPI devices you need to add Level-Shifting chip, for example SN74CBTD3861, SN74LVC1G34 or similar. If you are using CRAMPS board - it already contains Level-Shifting chip and SPI1 pins will become available on P503 port, and they can accept 5v hardware, check CRAMPS board Schematics for pin references.</p>
+<h2 id="enabling-hardware-i2c">Enabling hardware I2C<a class="headerlink" href="#enabling-hardware-i2c" title="Permanent link">&para;</a></h2>
+<p>BeagleBone usually have multiple hardware I2C buses, for example BeagleBone Black can have 3 of them, they support speed up-to 400Kbit Fast mode. By default, in BeagleBone Black there are two of them (i2c-1 and i2c-2) usually both are already configured and present on P9, third ic2-0 usually reserved for internal use. If you are using CRAMPS board then i2c-2 is present on P303 port with 3.3v level, If you want to obtain I2c-1 in CRAMPS board - you can get them on Extruder1.Step, Extruder1.Dir pins, they also are 3.3v based, check CRAMPS board Schematics for pin references. Related overlays, for <a href="#hardware-pin-designation">Hardware Pin designation</a>: I2C1(100Kbit): BB-I2C1-00A0.dtbo I2C1(400Kbit): BB-I2C1-FAST-00A0.dtbo I2C2(100Kbit): BB-I2C2-00A0.dtbo I2C2(400Kbit): BB-I2C2-FAST-00A0.dtbo</p>
+<h2 id="enabling-hardware-uartserialcan">Enabling hardware UART(Serial)/CAN<a class="headerlink" href="#enabling-hardware-uartserialcan" title="Permanent link">&para;</a></h2>
+<p>BeagleBone have up to 6 hardware UART(Serial) buses (up to 3Mbit) and up to 2 hardware CAN(1Mbit) buses. UART1(RX,TX) and CAN1(TX,RX) and I2C2(SDA,SCL) are using same pins - so you need to chose what to use UART1(CTSN,RTSN) and CAN0(TX,RX) and I2C1(SDA,SCL) are using same pins - so you need to chose what to use All UART/CAN related pins are 3.3v based, so you will need to use Transceiver chips/boards like SN74LVC2G241DCUR (for UART), SN65HVD230 (for CAN), TTL-RS485 (for RS-485) or something similar which can convert 3.3v signals to appropriate levels.</p>
+<p>Related overlays, for <a href="#hardware-pin-designation">Hardware Pin designation</a> CAN0: BB-CAN0-00A0.dtbo CAN1: BB-CAN1-00A0.dtbo UART0: - used for Console UART1(RX,TX): BB-UART1-00A0.dtbo UART1(RTS,CTS): BB-UART1-RTSCTS-00A0.dtbo UART2(RX,TX): BB-UART2-00A0.dtbo UART3(RX,TX): BB-UART3-00A0.dtbo UART4(RS-485): BB-UART4-RS485-00A0.dtbo UART5(RX,TX): BB-UART5-00A0.dtbo</p>
 
               
             </article>

@@ -451,8 +451,8 @@
   
   
     <li class="md-nav__item">
-      <a href="OctoPrint.md" class="md-nav__link">
-        None
+      <a href="OctoPrint.html" class="md-nav__link">
+        OctoPrint for Klipper
       </a>
     </li>
   
@@ -1440,8 +1440,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Eddy_Probe.md" class="md-nav__link">
-        None
+      <a href="Eddy_Probe.html" class="md-nav__link">
+        Eddy Current Inductive probe
       </a>
     </li>
   
@@ -1663,7 +1663,7 @@
 <p>首先，測量<strong>振紋頻率</strong>。</p>
 <ol>
 <li>如果 <code>square_corner_velocity</code> 參數已更改，請將其恢復為 5.0。使用input shaper時不建議增加它，因為它會導致零件更平滑 - 最好使用更高的加速度值。</li>
-<li>Disable the <code>miminum_cruise_ratio</code> feature by issuing the following command: <code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
+<li>Disable the <code>minimum_cruise_ratio</code> feature by issuing the following command: <code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
 <li>禁用Pressure Advance：<code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>如果你已經將<code>[input_shaper]</code>分段新增到print.cfg中，執行<code>SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0</code>命令。如果你得到"未知命令"錯誤，此時你可以安全地忽略它，繼續進行測量。</li>
 <li>執行命令： <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code> 基本上，我們嘗試通過設置不同的大加速度值來使環紋更加明顯。此命令將從 1500 mm/sec^2 開始每 5 mm 增加加速度：1500 mm/sec^2、2000 mm/sec^2、2500 mm/sec^2 等等，直到 7000 mm/sec^2最後一個區域。</li>

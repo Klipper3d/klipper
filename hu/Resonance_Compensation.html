@@ -451,8 +451,8 @@
   
   
     <li class="md-nav__item">
-      <a href="OctoPrint.md" class="md-nav__link">
-        None
+      <a href="OctoPrint.html" class="md-nav__link">
+        OctoPrint a Klipper-hez
       </a>
     </li>
   
@@ -1440,8 +1440,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Eddy_Probe.md" class="md-nav__link">
-        None
+      <a href="Eddy_Probe.html" class="md-nav__link">
+        Örvényáramú induktív szonda
       </a>
     </li>
   
@@ -1663,7 +1663,7 @@
 <p>Először is mérd meg a <strong>gyűrődési frekvenciát</strong>.</p>
 <ol>
 <li>Ha a <code>square_corner_velocity</code> paramétert megváltoztattuk, állítsuk vissza az 5.0-ra. Nem tanácsos növelni, ha bemeneti alakítót használsz, mert ez nagyobb simítást okozhat az alkatrészeken - helyette jobb, ha nagyobb gyorsulási értéket használsz.</li>
-<li>Kapcsold ki a <code>miminum_cruise_ratio</code> funkciót a következő parancs kiadásával: <code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
+<li>Disable the <code>minimum_cruise_ratio</code> feature by issuing the following command: <code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
 <li>Nyomás előtolás kikapcsolása: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
 <li>Ha már hozzáadtad az <code>[input_shaper]</code> részt a printer.cfg fájlhoz, akkor hajtsd végre a <code>SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0</code> parancsot. Ha "Unknown command" hibát kapsz, nyugodtan figyelmen kívül hagyhatod ezen a ponton, és folytathatod a méréseket.</li>
 <li>Végezd el a parancsot: <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code> Alapvetően a gyorsulás különböző nagy értékeinek beállításával próbáljuk a gyűrődést hangsúlyosabbá tenni. Ez a parancs 1500 mm/sec^2-től kezdve 5 mm-enként növeli a gyorsulást: 1500 mm/sec^2, 2000 mm/sec^2, 2500 mm/sec^2 és így tovább, egészen 7000 mm/sec^2-ig az utolsó sávra.</li>
