@@ -198,7 +198,7 @@ class GenericCartesianKinematics:
         carriages = {a : MainCarriage(config.getsection('carriage ' + a), a)
                      for a in 'xyz'}
         dc_carriages = []
-        for c in config.get_prefix_sections('dual_carriage'):
+        for c in config.get_prefix_sections('dual_carriage '):
             dc_carriages.append(DualCarriage(c, carriages))
         for dc in dc_carriages:
             name = dc.get_name()
@@ -209,7 +209,7 @@ class GenericCartesianKinematics:
         self.carriages = dict(carriages)
         self.dc_carriages = dc_carriages
         ec_carriages = []
-        for c in config.get_prefix_sections('extra_carriage'):
+        for c in config.get_prefix_sections('extra_carriage '):
             ec_carriages.append(ExtraCarriage(c, carriages))
         for ec in ec_carriages:
             name = ec.get_name()
@@ -231,7 +231,7 @@ class GenericCartesianKinematics:
                     "stepper(s) kinematics" % (", ".join(carriages),))
     def _load_steppers(self, config, carriages):
         return [ks.KinematicStepper(c, carriages)
-                for c in config.get_prefix_sections('stepper')]
+                for c in config.get_prefix_sections('stepper ')]
     def get_steppers(self):
         return self.steppers
     def get_primary_carriages(self):

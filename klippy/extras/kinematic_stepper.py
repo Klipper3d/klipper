@@ -67,7 +67,6 @@ class KinematicStepper:
                 self.kin_coeffs[0], self.kin_coeffs[1], self.kin_coeffs[2])
         self.stepper_sk = self.stepper.get_stepper_kinematics()
         # Add stepper methods
-        self.get_name = self.stepper.get_name
         self.get_step_dist = self.stepper.get_step_dist
         self.units_in_radians = self.stepper.units_in_radians
         self.get_pulse_duration = self.stepper.get_pulse_duration
@@ -95,6 +94,11 @@ class KinematicStepper:
         # Add stepper to the carriages it references
         for sc in self.carriages:
             sc.add_stepper(self)
+    def get_name(self, short=False):
+        name = self.stepper.get_name(short)
+        if short and name.startswith('stepper '):
+            return name[8:]
+        return name
     def get_kin_coeffs(self):
         return tuple(self.kin_coeffs)
     def get_active_axes(self):
