@@ -113,7 +113,7 @@ The Linux [can-utils](https://github.com/linux-can/can-utils) tool
 provides the capture software. It is typically installed on a machine
 by running:
 ```
-sudo apt-get update && sudo apt-get install can-utils
+sudo apt update && sudo apt install can-utils
 ```
 
 Once installed, one may obtain a capture of all CAN bus messages on an
