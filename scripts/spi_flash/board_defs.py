@@ -98,17 +98,19 @@ BOARD_DEFS = {
     },
     'btt-skr-3-h743': {
         'mcu': 'stm32h743xx',
-        'spi_bus': 'swspi',
-        'spi_pins': "PC8,PD2,PC12",
-        'cs_pin': 'PC11',
-        'skip_verify': True
+        #'spi_bus': 'swspi',
+        #'spi_pins': "PC8,PD2,PC12",
+        #'cs_pin': 'PC11',
+        'sdio_bus': 'sdio1',
+        #'skip_verify': True
     },
     'btt-skr-3-h723': {
         'mcu': 'stm32h723xx',
-        'spi_bus': 'swspi',
-        'spi_pins': "PC8,PD2,PC12",
-        'cs_pin': 'PC11',
-        'skip_verify': True
+        #'spi_bus': 'swspi',
+        #'spi_pins': "PC8,PD2,PC12",
+        #'cs_pin': 'PC11',
+        'sdio_bus': 'sdio1',
+        #'skip_verify': True
     },
     'creality-v4.2.2': {
         'mcu': "stm32f103xe",

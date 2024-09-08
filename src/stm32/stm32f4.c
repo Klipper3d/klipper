@@ -45,6 +45,8 @@ lookup_clock_line(uint32_t periph_base)
 uint32_t
 get_pclock_frequency(uint32_t periph_base)
 {
+    if (periph_base == SDIO_BASE)
+        return 48000000;
     return FREQ_PERIPH;
 }
 
