@@ -141,7 +141,7 @@ do_dispatch(uint8_t *buf, uint32_t msglen)
     uint8_t *msgend = &buf[msglen-MESSAGE_TRAILER_SIZE];
     while (p < msgend) {
         // Parse command
-        uint_fast8_t cmdid = *p++;
+        uint_fast16_t cmdid = command_parse_msgid(&p);
         const struct command_parser *cp = &SHARED_MEM->command_index[cmdid];
         if (!cmdid || cmdid >= SHARED_MEM->command_index_size
             || cp->num_args > ARRAY_SIZE(SHARED_MEM->next_command_args)) {

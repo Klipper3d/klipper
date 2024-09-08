@@ -9,7 +9,7 @@ import logging
 from .. import bus
 
 LINE_LENGTH_DEFAULT=20
-LINE_LENGTH_OPTIONS={16:16, 20:20}
+LINE_LENGTH_OPTIONS=[16, 20]
 
 TextGlyphs = { 'right_arrow': b'\x7e' }
 

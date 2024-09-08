@@ -1,0 +1,38 @@
+# Extruder tests
+DICTIONARY atmega2560.dict
+CONFIG pressure_advance.cfg
+
+SET_PRESSURE_ADVANCE ADVANCE=0.1
+# Home and extrusion moves
+G28
+G1 X20 Y20 Z1 F6000
+G1 E7
+G1 X25 Y25 E7.5
+
+# Update pressure advance for my_extra_stepper
+SET_PRESSURE_ADVANCE EXTRUDER=my_extra_stepper ADVANCE=0.02
+G1 X30 Y30 E8.0
+
+# Unsync my_extra_stepper from extruder
+SYNC_EXTRUDER_MOTION EXTRUDER=my_extra_stepper MOTION_QUEUE=
+
+# Update pressure advance for primary extruder
+SET_PRESSURE_ADVANCE ADVANCE=0.01
+G1 X35 Y35 E8.5
+
+# Update pressure advance both extruders
+SET_PRESSURE_ADVANCE EXTRUDER=my_extra_stepper ADVANCE=0.05
+SET_PRESSURE_ADVANCE ADVANCE=0.05
+# Sync my_extra_stepper to extruder
+SYNC_EXTRUDER_MOTION EXTRUDER=my_extra_stepper MOTION_QUEUE=extruder
+G1 X40 Y40 E9.0
+
+# Update smooth_time
+SET_PRESSURE_ADVANCE SMOOTH_TIME=0.02
+SET_PRESSURE_ADVANCE EXTRUDER=my_extra_stepper SMOOTH_TIME=0.02
+G1 X45 Y45 E9.5
+
+# Updating both smooth_time and pressure advance
+SET_PRESSURE_ADVANCE SMOOTH_TIME=0.03 ADVANCE=0.1
+SET_PRESSURE_ADVANCE EXTRUDER=my_extra_stepper SMOOTH_TIME=0.03 ADVANCE=0.1
+G1 X50 Y50 E10.0

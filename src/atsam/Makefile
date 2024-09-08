@@ -20,7 +20,7 @@ CFLAGS-$(CONFIG_MACH_SAM4E) += -Ilib/sam4e/include
 CFLAGS-$(CONFIG_MACH_SAME70) += -Ilib/same70b/include
 CFLAGS += $(CFLAGS-y) -D__$(MCU)__ -mthumb -Ilib/cmsis-core -Ilib/fast-hash
 
-CFLAGS_klipper.elf += --specs=nano.specs --specs=nosys.specs
+CFLAGS_klipper.elf += -nostdlib -lgcc -lc_nano
 CFLAGS_klipper.elf += -T $(OUT)src/generic/armcm_link.ld
 $(OUT)klipper.elf: $(OUT)src/generic/armcm_link.ld
 

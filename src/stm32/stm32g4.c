@@ -22,6 +22,12 @@ lookup_clock_line(uint32_t periph_base)
     if (periph_base < APB2PERIPH_BASE) {
         uint32_t pos = (periph_base - APB1PERIPH_BASE) / 0x400;
         if (pos < 32) {
+#if defined(FDCAN2_BASE)
+            if (periph_base == FDCAN2_BASE)
+                return (struct cline){.en = &RCC->APB1ENR1,
+                                      .rst = &RCC->APB1RSTR1,
+                                      .bit = 1 << 25};
+#endif
             return (struct cline){.en = &RCC->APB1ENR1,
                                   .rst = &RCC->APB1RSTR1,
                                   .bit = 1 << pos};
@@ -98,7 +104,7 @@ enable_clock_stm32g4(void)
     RCC->CR |= RCC_CR_PLLON;
 
     // Enable 48Mhz USB clock using clock recovery
-    if (CONFIG_USBSERIAL) {
+    if (CONFIG_USB) {
         RCC->CRRCR |= RCC_CRRCR_HSI48ON;
         while (!(RCC->CRRCR & RCC_CRRCR_HSI48RDY))
             ;

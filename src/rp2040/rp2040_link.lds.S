@@ -21,6 +21,16 @@ MEMORY
   ram (rwx) : ORIGIN = CONFIG_RAM_START , LENGTH = CONFIG_RAM_SIZE
 }
 
+// Force flags for each output section to avoid RWX linker warning
+PHDRS
+{
+    text_segment PT_LOAD FLAGS(5); // RX flags
+    ram_vectortable_segment PT_LOAD FLAGS(6); // RW flags
+    data_segment PT_LOAD FLAGS(6); // RW flags
+    bss_segment PT_LOAD FLAGS(6); // RW flags
+    stack_segment PT_LOAD FLAGS(6); // RW flags
+}
+
 SECTIONS
 {
     .text : {
@@ -32,7 +42,7 @@ SECTIONS
         KEEP(*(.vector_table))
         _text_vectortable_end = .;
         *(.text.armcm_boot*)
-    } > rom
+    } > rom :text_segment
 
     . = ALIGN(4);
     _data_flash = .;
@@ -41,7 +51,7 @@ SECTIONS
         _ram_vectortable_start = .;
         . = . + ( _text_vectortable_end - _text_vectortable_start ) ;
         _ram_vectortable_end = .;
-    } > ram
+    } > ram :ram_vectortable_segment
 
     .data : AT (_data_flash)
     {
@@ -53,7 +63,7 @@ SECTIONS
         *(.data .data.*);
         . = ALIGN(4);
         _data_end = .;
-    } > ram
+    } > ram :data_segment
 
     .bss (NOLOAD) :
     {
@@ -63,19 +73,22 @@ SECTIONS
         *(COMMON)
         . = ALIGN(4);
         _bss_end = .;
-    } > ram
+    } > ram :bss_segment
 
     _stack_start = CONFIG_RAM_START + CONFIG_RAM_SIZE - CONFIG_STACK_SIZE ;
     .stack _stack_start (NOLOAD) :
     {
         . = . + CONFIG_STACK_SIZE;
         _stack_end = .;
-    } > ram
+    } > ram :stack_segment
 
     /DISCARD/ : {
         // The .init/.fini sections are used by __libc_init_array(), but
         // that isn't needed so no need to include them in the binary.
         *(.init)
         *(.fini)
+        // Don't include exception tables
+        *(.ARM.extab)
+        *(.ARM.exidx)
     }
 }
