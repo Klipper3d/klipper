@@ -2,6 +2,7 @@
 #define __RP2040_GPIO_H
 
 #include <stdint.h> // uint32_t
+#include "sched.h"
 
 struct gpio_out {
     uint32_t bit;
@@ -53,5 +54,6 @@ struct i2c_config i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr);
 void i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write);
 void i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
               , uint8_t read_len, uint8_t *read);
+uint_fast8_t i2c_async(struct timer *timer);
 
 #endif // gpio.h

@@ -11,6 +11,7 @@
 #include "gpio.h" // i2c_setup
 #include "internal.h" // GPIO
 #include "sched.h" // sched_shutdown
+#include "i2ccmds.h" // struct i2cdev_s
 
 DECL_ENUMERATION("i2c_bus", "twi", 0);
 
@@ -120,4 +121,38 @@ i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
     while (read_len--)
         i2c_receive_byte(read++, timeout, read_len);
     i2c_stop(timeout);
+}
+
+uint_fast8_t i2c_async(struct timer *timer)
+{
+    struct i2cdev_s *i2c = container_of(timer, struct i2cdev_s, timer);
+    struct i2c_config config = i2c->i2c_config;
+    if (i2c->data_len[1] & I2C_R) {
+        uint8_t reg_len = i2c->data_len[0];
+        uint8_t *reg = i2c->buf;
+        uint8_t read_len = i2c->data_len[1] & ~(I2C_R);
+        uint8_t *resp = &i2c->buf[reg_len];
+        i2c_read(config, reg_len, reg, read_len, resp);
+        for (int i = 0; i < reg_len; i++) {
+            i2c_buf_read_b(i2c);
+        }
+        i2c_cmd_done(i2c);
+        i2c->cur = i2c->tail + read_len;
+        timer->func = i2c->callback;
+        timer->waketime = timer_read_time() + timer_from_us(50);
+        return SF_RESCHEDULE;
+    } else if (i2c->data_len[0]) {
+        uint8_t to_write = i2c->data_len[0];
+        uint8_t buf[to_write];
+        for (int i = 0; i < to_write; i++) {
+            buf[i] = i2c_buf_read_b(i2c);
+        }
+        i2c_write(config, to_write, buf);
+        i2c_cmd_done(i2c);
+        timer->waketime = timer_read_time() + timer_from_us(50);
+        return SF_RESCHEDULE;
+    }
+
+    i2c->flags &= ~IF_ACTIVE;
+    return SF_DONE;
 }
