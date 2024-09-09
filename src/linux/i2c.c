@@ -9,11 +9,13 @@
 #include <stdio.h> // snprintf
 #include <sys/ioctl.h> // ioctl
 #include <unistd.h> // write
+#include <pthread.h>
 #include "gpio.h" // i2c_setup
 #include "command.h" // shutdown
 #include "internal.h" // report_errno
 #include "sched.h" // sched_shutdown
 #include "i2ccmds.h" // struct i2cdev_s
+#include "board/misc.h" // timer_read_time
 
 DECL_ENUMERATION_RANGE("i2c_bus", "i2c.0", 0, 15);
 
@@ -127,33 +129,124 @@ i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
     }
 }
 
+static pthread_t i2c_thread;
+
+uint_fast8_t i2c_async_write_end(struct timer *timer)
+{
+    struct i2cdev_s *i2c = container_of(timer, struct i2cdev_s, timer);
+    struct i2c_config *config = &i2c->i2c_config;
+    uint8_t to_write = i2c->data_len[0];
+
+    pthread_join(i2c_thread, NULL);
+    // drain buffer
+    for (int i = 0; i < to_write; i++) {
+        i2c_buf_read_b(i2c);
+    }
+    i2c_cmd_done(i2c);
+
+    if (config->ret != to_write) {
+        if (config->ret < 0)
+            report_errno("write value i2c", config->ret);
+        try_shutdown("Unable write i2c device");
+    }
+
+    timer->waketime = timer_read_time() + timer_from_us(50);
+    timer->func = i2c_async;
+    return SF_RESCHEDULE;
+}
+
+void *i2c_async_write(void *arg)
+{
+    struct i2cdev_s *i2c = arg;
+    struct i2c_config *config = &i2c->i2c_config;
+
+    uint8_t to_write = i2c->data_len[0];
+    uint8_t buf[to_write];
+    for (int i = 0; i < to_write; i++) {
+        uint8_t c = (i2c->tail + i) % sizeof(i2c->buf);
+        buf[i] = i2c->buf[c];
+    }
+
+    config->ret = write(config->fd, buf, to_write);
+    return NULL;
+}
+
+uint_fast8_t i2c_async_read_end(struct timer *timer)
+{
+    struct i2cdev_s *i2c = container_of(timer, struct i2cdev_s, timer);
+    struct i2c_config *config = &i2c->i2c_config;
+    uint8_t to_write = i2c->data_len[0];
+    uint8_t read_len = i2c->data_len[1] & ~(I2C_R);
+
+    pthread_join(i2c_thread, NULL);
+    // drain write buffer
+    for (int i = 0; i < to_write; i++) {
+        i2c_buf_read_b(i2c);
+    }
+    i2c_cmd_done(i2c);
+
+    if (config->ret < 0)
+        try_shutdown("Unable to read i2c device");
+
+    i2c->cur = i2c->tail + read_len;
+    timer->waketime = timer_read_time() + timer_from_us(50);
+    timer->func = i2c->callback;
+    return SF_RESCHEDULE;
+}
+
+void *i2c_async_rw(void *arg)
+{
+    struct i2cdev_s *i2c = arg;
+    struct i2c_config *config = &i2c->i2c_config;
+    struct i2c_rdwr_ioctl_data i2c_data;
+    struct i2c_msg msgs[2];
+    uint8_t reg_len = i2c->data_len[0];
+    uint8_t *reg = i2c->buf;
+    uint8_t read_len = i2c->data_len[1] & ~(I2C_R);
+    uint8_t *resp = &i2c->buf[reg_len];
+
+    if (reg_len != 0) {
+        msgs[0].addr = config->addr;
+        msgs[0].flags = 0x0;
+        msgs[0].len = reg_len;
+        msgs[0].buf = reg;
+        i2c_data.nmsgs = 2;
+        i2c_data.msgs = &msgs[0];
+    } else {
+        i2c_data.nmsgs = 1;
+        i2c_data.msgs = &msgs[1];
+    }
+
+    msgs[1].addr = config->addr;
+    msgs[1].flags = I2C_M_RD;
+    msgs[1].len = read_len;
+    msgs[1].buf = resp;
+
+    config->ret = ioctl(config->fd, I2C_RDWR, &i2c_data);
+    return NULL;
+}
+
 uint_fast8_t i2c_async(struct timer *timer)
 {
     struct i2cdev_s *i2c = container_of(timer, struct i2cdev_s, timer);
-    struct i2c_config config = i2c->i2c_config;
+    // write register + read
+    // For now data expected to be linear because read is always first in queue
     if (i2c->data_len[1] & I2C_R) {
         uint8_t reg_len = i2c->data_len[0];
-        uint8_t *reg = i2c->buf;
         uint8_t read_len = i2c->data_len[1] & ~(I2C_R);
-        uint8_t *resp = &i2c->buf[reg_len];
-        i2c_read(config, reg_len, reg, read_len, resp);
-        for (int i = 0; i < reg_len; i++) {
-            i2c_buf_read_b(i2c);
-        }
-        i2c_cmd_done(i2c);
-        i2c->cur = i2c->tail + read_len;
-        timer->func = i2c->callback;
-        timer->waketime = timer_read_time() + timer_from_us(50);
+        uint8_t tx_len = reg_len + read_len;
+        pthread_create(&i2c_thread, NULL, i2c_async_rw, i2c);
+
+        timer->waketime = timer_read_time() + timer_from_us(22) * tx_len;
+        timer->func = i2c_async_read_end;
+
         return SF_RESCHEDULE;
     } else if (i2c->data_len[0]) {
         uint8_t to_write = i2c->data_len[0];
-        uint8_t buf[to_write];
-        for (int i = 0; i < to_write; i++) {
-            buf[i] = i2c_buf_read_b(i2c);
-        }
-        i2c_write(config, to_write, buf);
-        i2c_cmd_done(i2c);
-        timer->waketime = timer_read_time() + timer_from_us(50);
+        pthread_create(&i2c_thread, NULL, i2c_async_write, i2c);
+
+        timer->waketime = timer_read_time() + timer_from_us(22) * (to_write);
+        timer->func = i2c_async_write_end;
         return SF_RESCHEDULE;
     }
 
