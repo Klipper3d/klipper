@@ -19,31 +19,16 @@ struct i2c_software {
     struct gpio_in scl_in, sda_in;
     uint8_t addr;
     unsigned int ticks;
+    unsigned int ticks_half;
+
+    // callback to return to
+    uint_fast8_t (*func)(struct timer *timer);
+
+    // bit-banging
+    uint8_t byte;
+    uint8_t nack;
+    int i;
 };
-
-void
-command_i2c_set_software_bus(uint32_t *args)
-{
-    struct i2cdev_s *i2c = i2cdev_oid_lookup(args[0]);
-    struct i2c_software *is = alloc_chunk(sizeof(*is));
-    is->ticks = 1000000 / 100 / 2; // 100KHz
-    is->addr = (args[4] & 0x7f) << 1; // address format shifted
-    is->scl_in = gpio_in_setup(args[1], 1);
-    is->scl_out = gpio_out_setup(args[1], 1);
-    is->sda_in = gpio_in_setup(args[2], 1);
-    is->sda_out = gpio_out_setup(args[2], 1);
-    i2cdev_set_software_bus(i2c, is);
-}
-DECL_COMMAND(command_i2c_set_software_bus,
-             "i2c_set_software_bus oid=%c scl_pin=%u sda_pin=%u"
-             " rate=%u address=%u");
-
-// The AVR micro-controllers require specialized timing
-#if CONFIG_MACH_AVR
-
-#define i2c_delay(ticks) (void)(ticks)
-
-#else
 
 static unsigned int
 nsecs_to_ticks(uint32_t ns)
@@ -51,161 +36,314 @@ nsecs_to_ticks(uint32_t ns)
     return timer_from_us(ns * 1000) / 1000000;
 }
 
-static void
-i2c_delay(unsigned int ticks) {
-    unsigned int t = timer_read_time() + nsecs_to_ticks(ticks);
-    while (t > timer_read_time());
-}
-
-#endif
-
-static void
-i2c_software_send_ack(struct i2c_software *is, const uint8_t ack)
+void
+command_i2c_set_software_bus(uint32_t *args)
 {
-    if (ack) {
-        gpio_in_reset(is->sda_in, 1);
-    } else {
-        gpio_out_reset(is->sda_out, 0);
+    struct i2cdev_s *i2c = i2cdev_oid_lookup(args[0]);
+    struct i2c_software *is = alloc_chunk(sizeof(*is));
+    int rate = args[3] / 1000;
+    int ns = 1000000 / rate / 2;
+    is->ticks = nsecs_to_ticks(ns);
+    is->ticks_half = is->ticks / 2;
+    is->addr = (args[4] & 0x7f) << 1; // address format shifted
+    is->scl_in = gpio_in_setup(args[1], 1);
+    is->scl_out = gpio_out_setup(args[1], 1);
+    is->sda_in = gpio_in_setup(args[2], 1);
+    is->sda_out = gpio_out_setup(args[2], 1);
+    i2cdev_set_software_bus(i2c, is);
+
+    // time correction
+    uint32_t start = timer_read_time();
+    gpio_out_reset(is->scl_out, 0);
+    gpio_in_reset(is->scl_in, 1);
+    uint32_t end = timer_read_time();
+    uint32_t t_diff = (end - start) / 2;
+    if (t_diff < is->ticks) {
+        is->ticks = is->ticks - t_diff;
+        is->ticks_half = is->ticks / 2;
     }
-    i2c_delay(is->ticks);
-    gpio_in_reset(is->scl_in, 1);
-    i2c_delay(is->ticks);
-    gpio_out_reset(is->scl_out, 0);
+}
+DECL_COMMAND(command_i2c_set_software_bus,
+             "i2c_set_software_bus oid=%c scl_pin=%u sda_pin=%u"
+             " rate=%u address=%u");
+
+// Example implementation of Async RW of I2C
+// Function chaining used for simplify flag checks & overral logic
+
+uint_fast8_t i2c_software_async(struct timer *timer);
+
+static uint_fast8_t
+i2c_async_end(struct timer *timer)
+{
+    struct i2cdev_s *i2c = container_of(timer, struct i2cdev_s, timer);
+    struct i2c_software *is = i2c->i2c_software;
+
+    is->i++;
+    switch (is->i) {
+    case 1:
+        gpio_out_reset(is->sda_out, 0);
+        timer->waketime = timer_read_time() + is->ticks_half;
+        return SF_RESCHEDULE;
+    case 2:
+        gpio_in_reset(is->scl_in, 1);
+        timer->waketime = timer_read_time() + is->ticks_half;
+        return SF_RESCHEDULE;
+    }
+    gpio_in_reset(is->sda_in, 1);
+
+    if (is->nack)
+        shutdown("soft_i2c NACK");
+
+    timer->func = i2c_software_async;
+    if (i2c->flags & IF_RW)
+        return i2c->callback(timer);
+    timer->waketime = timer_read_time() + is->ticks;
+    return SF_RESCHEDULE;
 }
 
-static uint8_t
-i2c_software_read_ack(struct i2c_software *is)
+static uint_fast8_t
+i2c_async_read_byte(struct timer *timer);
+
+static uint_fast8_t sda_read(struct timer *timer)
 {
-    uint8_t nack = 0;
-    gpio_in_reset(is->sda_in, 1);
-    i2c_delay(is->ticks);
-    gpio_in_reset(is->scl_in, 1);
-    nack = gpio_in_read(is->sda_in);
-    i2c_delay(is->ticks);
+    struct i2cdev_s *i2c = container_of(timer, struct i2cdev_s, timer);
+    struct i2c_software *is = i2c->i2c_software;
+    i2c->buf[i2c->cur] <<= 1;
+    i2c->buf[i2c->cur] |= gpio_in_read(is->sda_in);
     gpio_out_reset(is->scl_out, 0);
-    gpio_in_reset(is->sda_in, 1);
-    return nack;
+    is->i++;
+    timer->func = i2c_async_read_byte;
+    if (is->i == 8)
+        timer->waketime = timer_read_time() + is->ticks_half;
+    else
+        timer->waketime = timer_read_time() + is->ticks;
+    return SF_RESCHEDULE;
 }
 
-static void
-i2c_software_send_byte(struct i2c_software *is, uint8_t b)
+static uint_fast8_t
+i2c_async_read_byte(struct timer *timer)
 {
-    for (uint_fast8_t i = 0; i < 8; i++) {
-        if (b & 0x80) {
+    struct i2cdev_s *i2c = container_of(timer, struct i2cdev_s, timer);
+    struct i2c_software *is = i2c->i2c_software;
+
+    if (is->i < 8) {
+        gpio_in_reset(is->scl_in, 1);
+        timer->func = sda_read;
+        timer->waketime = timer_read_time() + is->ticks;
+        return SF_RESCHEDULE;
+    }
+
+    if (is->i == 8) {
+        is->i++;
+        if (i2c->data_len[0] == 0) {
             gpio_in_reset(is->sda_in, 1);
         } else {
             gpio_out_reset(is->sda_out, 0);
         }
-        b <<= 1;
-        i2c_delay(is->ticks);
+        timer->waketime = timer_read_time() + is->ticks_half;
+        return SF_RESCHEDULE;
+    }
+
+    if (is->i == 9) {
         gpio_in_reset(is->scl_in, 1);
-        i2c_delay(is->ticks);
-        gpio_out_reset(is->scl_out, 0);
+        is->i++;
+        timer->waketime = timer_read_time() + is->ticks;
+        return SF_RESCHEDULE;
     }
 
-    if (i2c_software_read_ack(is)) {
-        shutdown("soft_i2c NACK");
-    }
-}
-
-static uint8_t
-i2c_software_read_byte(struct i2c_software *is, uint8_t remaining)
-{
-    uint8_t b = 0;
-    gpio_in_reset(is->sda_in, 1);
-    for (uint_fast8_t i = 0; i < 8; i++) {
-        i2c_delay(is->ticks);
-        gpio_in_reset(is->scl_in, 1);
-        i2c_delay(is->ticks);
-        b <<= 1;
-        b |= gpio_in_read(is->sda_in);
-        gpio_out_reset(is->scl_out, 0);
-    }
-    gpio_in_reset(is->sda_in, 1);
-    i2c_software_send_ack(is, remaining == 0);
-    return b;
-}
-
-static void
-i2c_software_start(struct i2c_software *is, uint8_t addr)
-{
-    i2c_delay(is->ticks);
-    gpio_in_reset(is->sda_in, 1);
-    gpio_in_reset(is->scl_in, 1);
-    i2c_delay(is->ticks);
-    gpio_out_reset(is->sda_out, 0);
-    i2c_delay(is->ticks);
     gpio_out_reset(is->scl_out, 0);
+    i2c->cur++;
+    is->i = 0;
+    if (i2c->data_len[0] == 0) {
+        timer->func = i2c_async_end;
+        return i2c_async_end(timer);
+    }
 
-    i2c_software_send_byte(is, addr);
+    timer->func = is->func;
+    timer->waketime = timer_read_time() + is->ticks_half;
+    return SF_RESCHEDULE;
 }
 
-static void
-i2c_software_stop(struct i2c_software *is)
+static uint_fast8_t
+i2c_async_read(struct timer *timer)
 {
-    gpio_out_reset(is->sda_out, 0);
-    i2c_delay(is->ticks);
-    gpio_in_reset(is->scl_in, 1);
-    i2c_delay(is->ticks);
+    struct i2cdev_s *i2c = container_of(timer, struct i2cdev_s, timer);
+    struct i2c_software *is = i2c->i2c_software;
+
+    i2c->data_len[0]--;
     gpio_in_reset(is->sda_in, 1);
+    is->i = 0;
+    is->func = i2c_async_read;
+    i2c->buf[i2c->cur] = 0;
+    timer->func = i2c_async_read_byte;
+    timer->waketime = timer_read_time() + is->ticks_half;
+    return SF_RESCHEDULE;
 }
 
-void
-i2c_software_write(struct i2c_software *is, uint8_t write_len, uint8_t *write)
+static uint_fast8_t
+i2c_async_send_byte(struct timer *timer);
+static uint_fast8_t send_bit(struct timer *timer);
+static uint_fast8_t scl_high(struct timer *timer);
+
+static uint_fast8_t scl_low(struct timer *timer)
 {
-    i2c_software_start(is, is->addr);
-    while (write_len--)
-        i2c_software_send_byte(is, *write++);
-    i2c_software_stop(is);
+    struct i2cdev_s *i2c = container_of(timer, struct i2cdev_s, timer);
+    struct i2c_software *is = i2c->i2c_software;
+    gpio_out_reset(is->scl_out, 0);
+    timer->func = send_bit;
+    timer->waketime = timer_read_time() + is->ticks_half;
+    return SF_RESCHEDULE;
 }
 
-void
-i2c_software_read(struct i2c_software *is, uint8_t reg_len, uint8_t *reg
-                  , uint8_t read_len, uint8_t *read)
+static uint_fast8_t send_bit(struct timer *timer)
 {
-    uint8_t addr = is->addr | 0x01;
-
-    if (reg_len) {
-        // write the register
-        i2c_software_start(is, is->addr);
-        while(reg_len--)
-            i2c_software_send_byte(is, *reg++);
+    struct i2cdev_s *i2c = container_of(timer, struct i2cdev_s, timer);
+    struct i2c_software *is = i2c->i2c_software;
+    if (is->byte & 0x80) {
+        gpio_in_reset(is->sda_in, 1);
+    } else {
+        gpio_out_reset(is->sda_out, 0);
     }
+    is->byte <<= 1;
+    is->i++;
+    timer->func = scl_high;
+    timer->waketime = timer_read_time() + is->ticks_half;
+    return SF_RESCHEDULE;
+}
+
+static uint_fast8_t scl_high(struct timer *timer)
+{
+    struct i2cdev_s *i2c = container_of(timer, struct i2cdev_s, timer);
+    struct i2c_software *is = i2c->i2c_software;
+    gpio_in_reset(is->scl_in, 1);
+    timer->func = i2c_async_send_byte;
+    timer->waketime = timer_read_time() + is->ticks_half;
+    return SF_RESCHEDULE;
+}
+
+static uint_fast8_t fin_scl_low(struct timer *timer)
+{
+    struct i2cdev_s *i2c = container_of(timer, struct i2cdev_s, timer);
+    struct i2c_software *is = i2c->i2c_software;
+    gpio_out_reset(is->scl_out, 0);
+    timer->func = i2c_async_send_byte;
+    timer->waketime = timer_read_time() + is->ticks_half;
+    return SF_RESCHEDULE;
+}
+
+static uint_fast8_t
+i2c_async_send_byte(struct timer *timer)
+{
+    struct i2cdev_s *i2c = container_of(timer, struct i2cdev_s, timer);
+    struct i2c_software *is = i2c->i2c_software;
+
+    if (is->i < 8) {
+        timer->func = scl_low;
+        goto sched;
+    }
+
+    // prepare ACK
+    if (is->i == 8) {
+        is->byte = 1 << 7;
+        timer->func = scl_low;
+        goto sched;
+    }
+
+    if (is->i == 9) {
+        is->nack = gpio_in_read(is->sda_in);
+        is->i++;
+        timer->func = fin_scl_low;
+        goto sched;
+    }
+
+    gpio_in_reset(is->sda_in, 1);
+    // HW controllers ignore last NACK
+    if (is->nack && i2c->data_len[0] != 0) {
+        // Stop as HW controller
+        timer->func = i2c_async_end;
+        return i2c_async_end(timer);
+    }
+    is->i = 0;
+    timer->func = is->func;
+    return is->func(timer);
+sched:
+    timer->waketime = timer_read_time() + is->ticks_half;
+    return SF_RESCHEDULE;
+}
+
+static uint_fast8_t
+i2c_async_start(struct timer *timer);
+
+static uint_fast8_t
+i2c_async_write(struct timer *timer)
+{
+    struct i2cdev_s *i2c = container_of(timer, struct i2cdev_s, timer);
+    struct i2c_software *is = i2c->i2c_software;
+    is->i = 0;
+    is->byte = i2c_buf_read_b(i2c);
+    i2c->data_len[0]--;
+
+    timer->func = i2c_async_send_byte;
+    if (i2c->data_len[0]) {
+        is->func = i2c_async_write;
+        return i2c_async_send_byte(timer);
+    }
+    i2c_cmd_done(i2c);
+    is->i = 0;
+    if (i2c->flags & IF_RW)
+        is->func = i2c_async_start;
+    else
+        is->func = i2c_async_end;
+    return i2c_async_send_byte(timer);
+}
+
+static uint_fast8_t
+i2c_async_start(struct timer *timer)
+{
+    struct i2cdev_s *i2c = container_of(timer, struct i2cdev_s, timer);
+    struct i2c_software *is = i2c->i2c_software;
+    uint8_t rw_bit;
+
     // start/re-start and read data
-    i2c_software_start(is, addr);
-    while(read_len--) {
-        *read = i2c_software_read_byte(is, read_len);
-        read++;
+    is->i++;
+    switch (is->i)
+    {
+    case 1:
+        gpio_in_reset(is->sda_in, 1);
+        timer->func = i2c_async_start;
+        timer->waketime = timer_read_time() + is->ticks_half;
+        return SF_RESCHEDULE;
+    case 2:
+        gpio_in_reset(is->scl_in, 1);
+        timer->func = i2c_async_start;
+        timer->waketime = timer_read_time() + is->ticks_half;
+        return SF_RESCHEDULE;
     }
-    i2c_software_stop(is);
+    gpio_out_reset(is->sda_out, 0);
+
+    rw_bit = ((i2c->data_len[0] & IF_RW) >> 7);
+    is->i = 0;
+    is->byte = is->addr | rw_bit;
+    i2c->cur = i2c->tail;
+    i2c->data_len[0] &= ~(I2C_R);
+    if (rw_bit)
+        is->func = i2c_async_read;
+    else
+        is->func = i2c_async_write;
+    timer->func = i2c_async_send_byte;
+    return i2c_async_send_byte(timer);
 }
 
 uint_fast8_t i2c_software_async(struct timer *timer)
 {
     struct i2cdev_s *i2c = container_of(timer, struct i2cdev_s, timer);
-    struct i2c_software *is = alloc_chunk(sizeof(*is));
-    if (i2c->data_len[1] & I2C_R) {
-        uint8_t reg_len = i2c->data_len[0];
-        uint8_t *reg = i2c->buf;
-        uint8_t read_len = i2c->data_len[1] & ~(I2C_R);
-        uint8_t *resp = &i2c->buf[reg_len];
-        i2c_software_read(is, reg_len, reg, read_len, resp);
-
-        i2c->cur = i2c->tail + read_len;
-        timer->func = i2c->callback;
-        timer->waketime = timer_read_time() + timer_from_us(50);
-        return SF_RESCHEDULE;
-    } else if (i2c->data_len[0]) {
-        uint8_t to_write = i2c->data_len[0];
-        uint8_t buf[to_write];
-        for (int i = 0; i < to_write; i++)
-        {
-            buf[i] = i2c_buf_read_b(i2c);
-        }
-
-        i2c_software_write(is, to_write, buf);
-        timer->waketime = timer_read_time() + timer_from_us(50);
-        return SF_RESCHEDULE;
+    // write register + read
+    if (i2c->data_len[0] || i2c->data_len[1] & IF_RW) {
+        if (i2c->data_len[0] == 0)
+            // cleanup empty write
+            i2c_cmd_done(i2c);
+        i2c->i2c_software->i = 0;
+        return i2c_async_start(timer);
     }
 
     i2c->flags &= ~IF_ACTIVE;
