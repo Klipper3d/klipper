@@ -160,7 +160,7 @@ class MCU_I2C:
                 % (self.oid, speed, addr))
         self.cmd_queue = self.mcu.alloc_command_queue()
         self.mcu.register_config_callback(self.build_config)
-        self.i2c_write_cmd = self.i2c_read_cmd = self.i2c_modify_bits_cmd = None
+        self.i2c_write_cmd = self.i2c_read_cmd = None
     def get_oid(self):
         return self.oid
     def get_mcu(self):
@@ -180,9 +180,6 @@ class MCU_I2C:
             "i2c_read oid=%c reg=%*s read_len=%u",
             "i2c_read_response oid=%c response=%*s", oid=self.oid,
             cq=self.cmd_queue)
-        self.i2c_modify_bits_cmd = self.mcu.lookup_command(
-            "i2c_modify_bits oid=%c reg=%*s clear_set_bits=%*s",
-            cq=self.cmd_queue)
     def i2c_write(self, data, minclock=0, reqclock=0):
         if self.i2c_write_cmd is None:
             # Send setup message via mcu initialization
@@ -197,19 +194,6 @@ class MCU_I2C:
                                 minclock=minclock, reqclock=reqclock)
     def i2c_read(self, write, read_len):
         return self.i2c_read_cmd.send([self.oid, write, read_len])
-    def i2c_modify_bits(self, reg, clear_bits, set_bits,
-                        minclock=0, reqclock=0):
-        clearset = clear_bits + set_bits
-        if self.i2c_modify_bits_cmd is None:
-            # Send setup message via mcu initialization
-            reg_msg = "".join(["%02x" % (x,) for x in reg])
-            clearset_msg = "".join(["%02x" % (x,) for x in clearset])
-            self.mcu.add_config_cmd(
-                "i2c_modify_bits oid=%d reg=%s clear_set_bits=%s" % (
-                    self.oid, reg_msg, clearset_msg), is_init=True)
-            return
-        self.i2c_modify_bits_cmd.send([self.oid, reg, clearset],
-                                      minclock=minclock, reqclock=reqclock)
 
 def MCU_I2C_from_config(config, default_addr=None, default_speed=100000):
     # Load bus parameters
