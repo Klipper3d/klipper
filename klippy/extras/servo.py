@@ -1,11 +1,11 @@
 # Support for servos
 #
-# Copyright (C) 2017-2020  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2017-2024  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+from . import output_pin
 
 SERVO_SIGNAL_PERIOD = 0.020
-PIN_MIN_TIME = 0.100
 
 class PrinterServo:
     def __init__(self, config):
@@ -18,7 +18,7 @@ class PrinterServo:
         self.max_angle = config.getfloat('maximum_servo_angle', 180.)
         self.angle_to_width = (self.max_width - self.min_width) / self.max_angle
         self.width_to_value = 1. / SERVO_SIGNAL_PERIOD
-        self.last_value = self.last_value_time = 0.
+        self.last_value = 0.
         initial_pwm = 0.
         iangle = config.getfloat('initial_angle', None, minval=0., maxval=360.)
         if iangle is not None:
@@ -33,6 +33,9 @@ class PrinterServo:
         self.mcu_servo.setup_max_duration(0.)
         self.mcu_servo.setup_cycle_time(SERVO_SIGNAL_PERIOD)
         self.mcu_servo.setup_start_value(initial_pwm, 0.)
+        # Create gcode request queue
+        self.gcrq = output_pin.GCodeRequestQueue(
+            config, self.mcu_servo.get_mcu(), self._set_pwm)
         # Register commands
         servo_name = config.get_name().split()[1]
         gcode = self.printer.lookup_object('gcode')
@@ -42,12 +45,10 @@ class PrinterServo:
     def get_status(self, eventtime):
         return {'value': self.last_value}
     def _set_pwm(self, print_time, value):
-        if value == self.last_value:
-            return
-        print_time = max(print_time, self.last_value_time + PIN_MIN_TIME)
-        self.mcu_servo.set_pwm(print_time, value)
-        self.last_value = value
-        self.last_value_time = print_time
+        if value != self.last_value:
+            self.last_value = value
+            self.mcu_servo.set_pwm(print_time, value)
+        return (True, 0.)
     def _get_pwm_from_angle(self, angle):
         angle = max(0., min(self.max_angle, angle))
         width = self.min_width + angle * self.angle_to_width
@@ -64,9 +65,7 @@ class PrinterServo:
         else:
             angle = gcmd.get_float('ANGLE')
             value = self._get_pwm_from_angle(angle)
-        toolhead = self.printer.lookup_object('toolhead')
-        toolhead.register_lookahead_callback((lambda pt:
-                                              self._set_pwm(pt, value)))
+        self.gcrq.queue_gcode_request(value)
 
 def load_config_prefix(config):
     return PrinterServo(config)
