@@ -1398,6 +1398,17 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<p>20240912: <code>SET_PIN</code>, <code>SET_SERVO</code>, <code>SET_FAN_SPEED</code>, <code>M106</code>, and <code>M107</code>
+commands are now collated. Previously, if many updates to the same
+object were issued faster than the minimum scheduling time (typically
+100ms) then actual updates could be queued far into the future. Now if
+many updates are issued in rapid succession then it is possible that
+only the latest request will be applied. If the previous behavior is
+requried then consider adding explicit <code>G4</code> delay commands between
+updates.</p>
+<p>20240912: Support for <code>maximum_mcu_duration</code> and <code>static_value</code>
+parameters in <code>[output_pin]</code> config sections have been removed. These
+options have been deprecated since 20240123.</p>
 <p>20240415: The <code>on_error_gcode</code> parameter in the <code>[virtual_sdcard]</code>
 config section now has a default. If this parameter is not specified
 it now defaults to <code>TURN_OFF_HEATERS</code>. If the previous behavior is
