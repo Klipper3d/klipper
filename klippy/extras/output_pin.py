@@ -22,24 +22,24 @@ class GCodeRequestQueue:
         self.toolhead = self.printer.lookup_object('toolhead')
     def _flush_notification(self, print_time, clock):
         rqueue = self.rqueue
-        if not rqueue:
-            return
-        next_time = max(rqueue[0][0], self.next_min_flush_time)
-        if next_time > print_time:
-            return
-        # Skip requests that have been overridden with a following request
-        pos = 0
-        while pos + 1 < len(rqueue) and rqueue[pos + 1][0] <= next_time:
-            pos += 1
-        req_pt, req_val = rqueue[pos]
-        # Invoke callback for the request
-        want_dequeue, min_wait_time = self.callback(next_time, req_val)
-        self.next_min_flush_time = next_time + max(min_wait_time, PIN_MIN_TIME)
-        if want_dequeue:
-            pos += 1
-        del rqueue[:pos]
-        # Ensure following queue items are flushed
-        self.toolhead.note_mcu_movequeue_activity(self.next_min_flush_time)
+        while rqueue:
+            next_time = max(rqueue[0][0], self.next_min_flush_time)
+            if next_time > print_time:
+                return
+            # Skip requests that have been overridden with a following request
+            pos = 0
+            while pos + 1 < len(rqueue) and rqueue[pos + 1][0] <= next_time:
+                pos += 1
+            req_pt, req_val = rqueue[pos]
+            # Invoke callback for the request
+            want_dequeue, min_wait_time = self.callback(next_time, req_val)
+            self.next_min_flush_time = next_time + max(min_wait_time,
+                                                       PIN_MIN_TIME)
+            if want_dequeue:
+                pos += 1
+            del rqueue[:pos]
+            # Ensure following queue items are flushed
+            self.toolhead.note_mcu_movequeue_activity(self.next_min_flush_time)
     def queue_request(self, print_time, value):
         self.rqueue.append((print_time, value))
         self.toolhead.note_mcu_movequeue_activity(print_time)
