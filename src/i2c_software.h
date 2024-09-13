@@ -4,9 +4,9 @@
 #include <stdint.h> // uint8_t
 
 struct i2c_software *i2c_software_oid_lookup(uint8_t oid);
-void i2c_software_write(struct i2c_software *sw_i2c
+void i2c_software_write(struct i2c_software *i2c_sw, uint8_t addr
                         , uint8_t write_len, uint8_t *write);
-void i2c_software_read(struct i2c_software *sw_i2c
+void i2c_software_read(struct i2c_software *i2c_sw, uint8_t addr
                        , uint8_t reg_len, uint8_t *reg
                        , uint8_t read_len, uint8_t *read);
 

@@ -34,9 +34,9 @@ i2cdev_oid_lookup(uint8_t oid)
 void
 command_i2c_set_bus(uint32_t *args)
 {
-    uint8_t addr = args[3] & 0x7f;
     struct i2cdev_s *i2c = i2cdev_oid_lookup(args[0]);
-    i2c->i2c_hw = i2c_setup(args[1], args[2], addr);
+    i2c->i2c_hw = i2c_setup(args[1], args[2]);
+    i2c->addr = args[3] & 0x7f;
     i2c->flags |= IF_HARDWARE;
 }
 DECL_COMMAND(command_i2c_set_bus,
@@ -53,9 +53,9 @@ void i2c_dev_write(struct i2cdev_s *i2c, uint8_t write_len, uint8_t *data)
 {
     uint_fast8_t flags = i2c->flags;
     if (CONFIG_WANT_SOFTWARE_I2C && flags & IF_SOFTWARE)
-        i2c_software_write(i2c->i2c_sw, write_len, data);
+        i2c_software_write(i2c->i2c_sw, i2c->addr, write_len, data);
     else
-        i2c_write(i2c->i2c_hw, write_len, data);
+        i2c_write(i2c->i2c_hw, i2c->addr, write_len, data);
 }
 
 void command_i2c_write(uint32_t *args)
@@ -72,10 +72,11 @@ void i2c_dev_read(struct i2cdev_s *i2c, uint8_t reg_len, uint8_t *reg
                   , uint8_t read_len, uint8_t *read)
 {
     uint_fast8_t flags = i2c->flags;
+    uint8_t addr = i2c->addr;
     if (CONFIG_WANT_SOFTWARE_I2C && flags & IF_SOFTWARE)
-        i2c_software_read(i2c->i2c_sw, reg_len, reg, read_len, read);
+        i2c_software_read(i2c->i2c_sw, addr, reg_len, reg, read_len, read);
     else
-        i2c_read(i2c->i2c_hw, reg_len, reg, read_len, read);
+        i2c_read(i2c->i2c_hw, addr, reg_len, reg, read_len, read);
 }
 
 void command_i2c_read(uint32_t *args)

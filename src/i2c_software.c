@@ -17,7 +17,6 @@
 struct i2c_software {
     struct gpio_out scl_out, sda_out;
     struct gpio_in scl_in, sda_in;
-    uint8_t addr;
     unsigned int ticks;
 };
 
@@ -26,8 +25,8 @@ command_i2c_set_software_bus(uint32_t *args)
 {
     struct i2cdev_s *i2c = i2cdev_oid_lookup(args[0]);
     struct i2c_software *is = alloc_chunk(sizeof(*is));
+    i2c->addr = (args[4] & 0x7f) << 1; // address format shifted
     is->ticks = 1000000 / 100 / 2; // 100KHz
-    is->addr = (args[4] & 0x7f) << 1; // address format shifted
     is->scl_in = gpio_in_setup(args[1], 1);
     is->scl_out = gpio_out_setup(args[1], 1);
     is->sda_in = gpio_in_setup(args[2], 1);
@@ -151,27 +150,28 @@ i2c_software_stop(struct i2c_software *is)
 }
 
 void
-i2c_software_write(struct i2c_software *is, uint8_t write_len, uint8_t *write)
+i2c_software_write(struct i2c_software *is, uint8_t addr
+                   , uint8_t write_len, uint8_t *write)
 {
-    i2c_software_start(is, is->addr);
+    i2c_software_start(is, addr);
     while (write_len--)
         i2c_software_send_byte(is, *write++);
     i2c_software_stop(is);
 }
 
 void
-i2c_software_read(struct i2c_software *is, uint8_t reg_len, uint8_t *reg
+i2c_software_read(struct i2c_software *is, uint8_t addr
+                  , uint8_t reg_len, uint8_t *reg
                   , uint8_t read_len, uint8_t *read)
 {
-    uint8_t addr = is->addr | 0x01;
-
     if (reg_len) {
         // write the register
-        i2c_software_start(is, is->addr);
+        i2c_software_start(is, addr);
         while(reg_len--)
             i2c_software_send_byte(is, *reg++);
     }
     // start/re-start and read data
+    addr = addr | 0x01;
     i2c_software_start(is, addr);
     while(read_len--) {
         *read = i2c_software_read_byte(is, read_len);

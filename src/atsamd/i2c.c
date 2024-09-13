@@ -40,14 +40,14 @@ i2c_init(uint32_t bus, SercomI2cm *si)
         ;
 }
 
-struct i2c_config
-i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
+struct i2c_bus
+i2c_setup(uint32_t bus, uint32_t rate)
 {
     Sercom *sercom = sercom_enable_pclock(bus);
     sercom_i2c_pins(bus);
     SercomI2cm *si = &sercom->I2CM;
     i2c_init(bus, si);
-    return (struct i2c_config){ .si=si, .addr=addr<<1 };
+    return (struct i2c_bus){ .si=si };
 }
 
 static void
@@ -87,25 +87,27 @@ i2c_stop(SercomI2cm *si)
 }
 
 void
-i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
+i2c_write(struct i2c_bus bus, uint8_t addr, uint8_t write_len, uint8_t *write)
 {
-    SercomI2cm *si = (SercomI2cm *)config.si;
-    i2c_start(si, config.addr);
+    SercomI2cm *si = (SercomI2cm *)bus.si;
+    addr = addr << 1;
+    i2c_start(si, addr);
     while (write_len--)
         i2c_send_byte(si, *write++);
     i2c_stop(si);
 }
 
 void
-i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
+i2c_read(struct i2c_bus bus, uint8_t addr, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *read)
 {
-    SercomI2cm *si = (SercomI2cm *)config.si;
+    SercomI2cm *si = (SercomI2cm *)bus.si;
+    addr = addr << 1;
 
     // start in write mode and write register if provided
     if(reg_len) {
         // start in write mode
-        si->ADDR.reg = config.addr;
+        si->ADDR.reg = addr;
         while (!(si->INTFLAG.reg & SERCOM_I2CM_INTFLAG_MB));
 
         // write registers
@@ -116,7 +118,7 @@ i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
     }
 
     // start with read bit enabled
-    si->ADDR.reg = (config.addr | 0x1);
+    si->ADDR.reg = (addr | 0x1);
 
     // read bytes from slave
     while (read_len--){

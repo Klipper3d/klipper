@@ -18,7 +18,6 @@ DECL_ENUMERATION_RANGE("i2c_bus", "i2c.0", 0, 15);
 
 struct i2c_s {
     uint32_t bus;
-    uint8_t addr;
     int fd;
 };
 
@@ -26,12 +25,12 @@ static struct i2c_s devices[16];
 static int devices_count;
 
 static int
-i2c_open(uint32_t bus, uint8_t addr)
+i2c_open(uint32_t bus)
 {
     // Find existing device (if already opened)
     int i;
     for (i=0; i<devices_count; i++) {
-        if (devices[i].bus == bus && devices[i].addr == addr) {
+        if (devices[i].bus == bus) {
             return devices[i].fd;
         }
     }
@@ -50,17 +49,11 @@ i2c_open(uint32_t bus, uint8_t addr)
         report_errno("i2c does not support I2C_RDWR", fd);
         goto fail;
     }
-    int ret = ioctl(fd, I2C_SLAVE, addr);
-    if (ret < 0) {
-        report_errno("ioctl i2c", fd);
-        goto fail;
-    }
-    ret = set_non_blocking(fd);
+    int ret = set_non_blocking(fd);
     if (ret < 0)
         goto fail;
 
     devices[devices_count].bus = bus;
-    devices[devices_count].addr = addr;
     devices[devices_count].fd = fd;
     devices_count++;
 
@@ -72,38 +65,46 @@ fail:
     shutdown("Unable to open i2c device");
 }
 
-struct i2c_config
-i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
+struct i2c_bus
+i2c_setup(uint32_t bus, uint32_t rate)
 {
     // Note:  The rate is set by the kernel driver, for a Raspberry Pi this
     // is done with the following setting in /boot/config.txt:
     //
     // dtparam=i2c_baudrate=<rate>
 
-    int fd = i2c_open(bus, addr);
-    return (struct i2c_config){.fd=fd, .addr=addr};
+    int fd = i2c_open(bus);
+    return (struct i2c_bus){.fd=fd};
 }
 
 void
-i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *data)
+i2c_write(struct i2c_bus bus, uint8_t addr, uint8_t write_len, uint8_t *data)
 {
-    int ret = write(config.fd, data, write_len);
-    if (ret != write_len) {
-        if (ret < 0)
-            report_errno("write value i2c", ret);
-        try_shutdown("Unable write i2c device");
+    struct i2c_rdwr_ioctl_data i2c_data;
+    struct i2c_msg msgs[1];
+    msgs[0].addr = addr;
+    msgs[0].flags = 0x0;
+    msgs[0].len = write_len;
+    msgs[0].buf = data;
+    i2c_data.nmsgs = 1;
+    i2c_data.msgs = &msgs[0];
+
+    int ret = ioctl(bus.fd, I2C_RDWR, &i2c_data);
+
+    if (ret < 0) {
+        try_shutdown("Unable to write i2c device");
     }
 }
 
 void
-i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
+i2c_read(struct i2c_bus bus, uint8_t addr, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *data)
 {
     struct i2c_rdwr_ioctl_data i2c_data;
     struct i2c_msg msgs[2];
 
     if(reg_len != 0) {
-        msgs[0].addr = config.addr;
+        msgs[0].addr = addr;
         msgs[0].flags = 0x0;
         msgs[0].len = reg_len;
         msgs[0].buf = reg;
@@ -114,12 +115,12 @@ i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
         i2c_data.msgs = &msgs[1];
     }
 
-    msgs[1].addr = config.addr;
+    msgs[1].addr = addr;
     msgs[1].flags = I2C_M_RD;
     msgs[1].len = read_len;
     msgs[1].buf = data;
 
-    int ret = ioctl(config.fd, I2C_RDWR, &i2c_data);
+    int ret = ioctl(bus.fd, I2C_RDWR, &i2c_data);
 
     if(ret < 0) {
         try_shutdown("Unable to read i2c device");

@@ -132,8 +132,8 @@ static const struct i2c_info i2c_bus[] = {
 #endif
 };
 
-struct i2c_config
-i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
+struct i2c_bus
+i2c_setup(uint32_t bus, uint32_t rate)
 {
     // Lookup requested i2c bus
     if (bus >= ARRAY_SIZE(i2c_bus))
@@ -164,7 +164,7 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
         i2c->CR1 = I2C_CR1_PE;
     }
 
-    return (struct i2c_config){ .i2c=i2c, .addr=addr<<1 };
+    return (struct i2c_bus){ .i2c=i2c };
 }
 
 static uint32_t
@@ -182,13 +182,14 @@ i2c_wait(I2C_TypeDef *i2c, uint32_t set, uint32_t timeout)
 }
 
 void
-i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
+i2c_write(struct i2c_bus bus, uint8_t addr, uint8_t write_len, uint8_t *write)
 {
-    I2C_TypeDef *i2c = config.i2c;
+    I2C_TypeDef *i2c = bus.i2c;
     uint32_t timeout = timer_read_time() + timer_from_us(5000);
+    addr = addr << 1;
 
     // Send start and address
-    i2c->CR2 = (I2C_CR2_START | config.addr | (write_len << I2C_CR2_NBYTES_Pos)
+    i2c->CR2 = (I2C_CR2_START | addr | (write_len << I2C_CR2_NBYTES_Pos)
                 | I2C_CR2_AUTOEND);
     while (write_len--) {
         i2c_wait(i2c, I2C_ISR_TXIS, timeout);
@@ -198,14 +199,15 @@ i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
 }
 
 void
-i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
+i2c_read(struct i2c_bus bus, uint8_t addr, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *read)
 {
-    I2C_TypeDef *i2c = config.i2c;
+    I2C_TypeDef *i2c = bus.i2c;
     uint32_t timeout = timer_read_time() + timer_from_us(5000);
+    addr = addr << 1;
 
     // Send start, address, reg
-    i2c->CR2 = (I2C_CR2_START | config.addr |
+    i2c->CR2 = (I2C_CR2_START | addr |
                (reg_len << I2C_CR2_NBYTES_Pos));
     while (reg_len--) {
         i2c_wait(i2c, I2C_ISR_TXIS, timeout);
@@ -214,7 +216,7 @@ i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
     i2c_wait(i2c, I2C_ISR_TC, timeout);
 
     // send restart, read data
-    i2c->CR2 = (I2C_CR2_START | I2C_CR2_RD_WRN | config.addr |
+    i2c->CR2 = (I2C_CR2_START | I2C_CR2_RD_WRN | addr |
                (read_len << I2C_CR2_NBYTES_Pos) | I2C_CR2_AUTOEND);
     while (read_len--) {
         i2c_wait(i2c, I2C_ISR_RXNE, timeout);

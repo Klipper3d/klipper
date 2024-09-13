@@ -61,8 +61,8 @@ i2c_busy_errata(uint8_t scl_pin, uint8_t sda_pin)
     gpio_peripheral(sda_pin, GPIO_OUTPUT | GPIO_OPEN_DRAIN, 1);
 }
 
-struct i2c_config
-i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
+struct i2c_bus
+i2c_setup(uint32_t bus, uint32_t rate)
 {
     // Lookup requested i2c bus
     if (bus >= ARRAY_SIZE(i2c_bus))
@@ -87,7 +87,7 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
         i2c->CR1 = I2C_CR1_PE;
     }
 
-    return (struct i2c_config){ .i2c=i2c, .addr=addr<<1 };
+    return (struct i2c_bus){ .i2c=i2c };
 }
 
 static uint32_t
@@ -150,32 +150,34 @@ i2c_stop(I2C_TypeDef *i2c, uint32_t timeout)
 }
 
 void
-i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
+i2c_write(struct i2c_bus bus, uint8_t addr, uint8_t write_len, uint8_t *write)
 {
-    I2C_TypeDef *i2c = config.i2c;
+    I2C_TypeDef *i2c = bus.i2c;
     uint32_t timeout = timer_read_time() + timer_from_us(5000);
+    addr = addr << 1;
 
-    i2c_start(i2c, config.addr, write_len, timeout);
+    i2c_start(i2c, addr, write_len, timeout);
     while (write_len--)
         i2c_send_byte(i2c, *write++, timeout);
     i2c_stop(i2c, timeout);
 }
 
 void
-i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
+i2c_read(struct i2c_bus bus, uint8_t addr, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *read)
 {
-    I2C_TypeDef *i2c = config.i2c;
+    I2C_TypeDef *i2c = bus.i2c;
     uint32_t timeout = timer_read_time() + timer_from_us(5000);
-    uint8_t addr = config.addr | 0x01;
+    addr = addr << 1;
 
     if (reg_len) {
         // write the register
-        i2c_start(i2c, config.addr, reg_len, timeout);
+        i2c_start(i2c, addr, reg_len, timeout);
         while(reg_len--)
             i2c_send_byte(i2c, *reg++, timeout);
     }
     // start/re-start and read data
+    addr = addr | 0x01;
     i2c_start(i2c, addr, read_len, timeout);
     while(read_len--) {
         *read = i2c_read_byte(i2c, timeout, read_len);

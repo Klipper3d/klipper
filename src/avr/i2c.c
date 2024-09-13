@@ -27,8 +27,8 @@ static const uint8_t SCL = GPIO('D', 0), SDA = GPIO('D', 1);
 DECL_CONSTANT_STR("BUS_PINS_twi", "PD0,PD1");
 #endif
 
-struct i2c_config
-i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
+struct i2c_bus
+i2c_setup(uint32_t bus, uint32_t rate)
 {
     if (bus)
         shutdown("Unsupported i2c bus");
@@ -48,7 +48,7 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
         // Enable interface
         TWCR = (1<<TWEN);
     }
-    return (struct i2c_config){ .addr=addr<<1 };
+    return (struct i2c_bus){};
 }
 
 static void
@@ -95,28 +95,30 @@ i2c_stop(uint32_t timeout)
 }
 
 void
-i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
+i2c_write(struct i2c_bus bus, uint8_t addr, uint8_t write_len, uint8_t *write)
 {
     uint32_t timeout = timer_read_time() + timer_from_us(5000);
+    addr = addr << 1;
 
     i2c_start(timeout);
-    i2c_send_byte(config.addr, timeout);
+    i2c_send_byte(addr, timeout);
     while (write_len--)
         i2c_send_byte(*write++, timeout);
     i2c_stop(timeout);
 }
 
 void
-i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
+i2c_read(struct i2c_bus bus, uint8_t addr, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *read)
 {
     uint32_t timeout = timer_read_time() + timer_from_us(5000);
+    addr = addr << 1;
     i2c_start(timeout);
-    i2c_send_byte(config.addr, timeout);
+    i2c_send_byte(addr, timeout);
     while (reg_len--)
         i2c_send_byte(*reg++, timeout);
     i2c_start(timeout);
-    i2c_send_byte(config.addr | 0x1, timeout);
+    i2c_send_byte(addr | 0x1, timeout);
     while (read_len--)
         i2c_receive_byte(read++, timeout, read_len);
     i2c_stop(timeout);

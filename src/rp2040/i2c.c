@@ -67,8 +67,8 @@ static const struct i2c_info i2c_bus[] = {
     { i2c1_hw, 26, 27, RESETS_RESET_I2C1_BITS },
 };
 
-struct i2c_config
-i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
+struct i2c_bus
+i2c_setup(uint32_t bus, uint32_t rate)
 {
     if (bus > ARRAY_SIZE(i2c_bus))
         shutdown("Invalid i2c bus");
@@ -115,7 +115,7 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
                         I2C_IC_SDA_HOLD_IC_SDA_TX_HOLD_BITS);
     }
 
-    return (struct i2c_config){ .i2c=info->i2c, .addr=addr };
+    return (struct i2c_bus){ .i2c=info->i2c };
 }
 
 static void
@@ -133,7 +133,7 @@ i2c_stop(i2c_hw_t *i2c)
 }
 
 static void
-i2c_do_write(i2c_hw_t *i2c, uint8_t addr, uint8_t write_len, uint8_t *write
+i2c_do_write(i2c_hw_t *i2c, uint8_t write_len, uint8_t *write
              , uint8_t send_stop, uint32_t timeout)
 {
     for (int i = 0; i < write_len; i++) {
@@ -176,7 +176,7 @@ i2c_do_write(i2c_hw_t *i2c, uint8_t addr, uint8_t write_len, uint8_t *write
 }
 
 static void
-i2c_do_read(i2c_hw_t *i2c, uint8_t addr, uint8_t read_len, uint8_t *read
+i2c_do_read(i2c_hw_t *i2c, uint8_t read_len, uint8_t *read
             , uint32_t timeout)
 {
     int have_read = 0;
@@ -212,26 +212,26 @@ i2c_do_read(i2c_hw_t *i2c, uint8_t addr, uint8_t read_len, uint8_t *read
 }
 
 void
-i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
+i2c_write(struct i2c_bus bus, uint8_t addr, uint8_t write_len, uint8_t *write)
 {
-    i2c_hw_t *i2c = (i2c_hw_t*)config.i2c;
+    i2c_hw_t *i2c = (i2c_hw_t*)bus.i2c;
     uint32_t timeout = timer_read_time() + timer_from_us(5000);
 
-    i2c_start(i2c, config.addr);
-    i2c_do_write(i2c, config.addr, write_len, write, 1, timeout);
+    i2c_start(i2c, addr);
+    i2c_do_write(i2c, write_len, write, 1, timeout);
     i2c_stop(i2c);
 }
 
 void
-i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
+i2c_read(struct i2c_bus bus, uint8_t addr, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *read)
 {
-    i2c_hw_t *i2c = (i2c_hw_t*)config.i2c;
+    i2c_hw_t *i2c = (i2c_hw_t*)bus.i2c;
     uint32_t timeout = timer_read_time() + timer_from_us(5000);
 
-    i2c_start(i2c, config.addr);
+    i2c_start(i2c, addr);
     if (reg_len != 0)
-        i2c_do_write(i2c, config.addr, reg_len, reg, 0, timeout);
-    i2c_do_read(i2c, config.addr, read_len, read, timeout);
+        i2c_do_write(i2c, reg_len, reg, 0, timeout);
+    i2c_do_read(i2c, read_len, read, timeout);
     i2c_stop(i2c);
 }

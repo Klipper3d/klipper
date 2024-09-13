@@ -36,8 +36,8 @@ enum {
     IF_START = 1<<5, IF_STOP = 1<<4, IF_IRQ = 1<<3, IF_ACK = 1<<2, IF_ENA = 1<<6
 };
 
-struct i2c_config
-i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
+struct i2c_bus
+i2c_setup(uint32_t bus, uint32_t rate)
 {
     if (bus >= ARRAY_SIZE(i2c_bus))
         shutdown("Invalid i2c bus");
@@ -64,7 +64,7 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
         i2c->I2CONSET = IF_ENA;
     }
 
-    return (struct i2c_config){ .i2c=i2c, .addr=addr<<1 };
+    return (struct i2c_bus){ .i2c=i2c };
 }
 
 static void
@@ -123,35 +123,37 @@ i2c_stop(LPC_I2C_TypeDef *i2c, uint32_t timeout)
 }
 
 void
-i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
+i2c_write(struct i2c_bus bus, uint8_t addr, uint8_t write_len, uint8_t *write)
 {
-    LPC_I2C_TypeDef *i2c = config.i2c;
+    LPC_I2C_TypeDef *i2c = bus.i2c;
     uint32_t timeout = timer_read_time() + timer_from_us(5000);
+    addr = addr << 1;
 
     i2c_start(i2c, timeout);
-    i2c_send_byte(i2c, config.addr, timeout);
+    i2c_send_byte(i2c, addr, timeout);
     while (write_len--)
         i2c_send_byte(i2c, *write++, timeout);
     i2c_stop(i2c, timeout);
 }
 
 void
-i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
+i2c_read(struct i2c_bus bus, uint8_t addr, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *read)
 {
-    LPC_I2C_TypeDef *i2c = config.i2c;
+    LPC_I2C_TypeDef *i2c = bus.i2c;
     uint32_t timeout = timer_read_time() + timer_from_us(5000);
-    uint8_t addr = config.addr | 0x01;
+    addr = addr << 1;
 
     if (reg_len != 0) {
         // write the register
         i2c_start(i2c, timeout);
-        i2c_send_byte(i2c, config.addr, timeout);
+        i2c_send_byte(i2c, addr, timeout);
         while(reg_len--)
             i2c_send_byte(i2c, *reg++, timeout);
         i2c_stop(i2c, timeout);
     }
     // start/re-start and read data
+    addr = addr | 0x01;
     i2c_start(i2c, timeout);
     i2c_send_byte(i2c, addr, timeout);
     while(read_len--) {

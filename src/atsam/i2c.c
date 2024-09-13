@@ -115,24 +115,24 @@ addr_to_u32(uint8_t addr_len, uint8_t *addr)
     return address;
 }
 
-struct i2c_config
-i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
+struct i2c_bus
+i2c_setup(uint32_t bus, uint32_t rate)
 {
     if (bus >= ARRAY_SIZE(twi_bus)  || rate > 400000)
         shutdown("Invalid i2c_setup parameters!");
     Twi *p_twi = twi_bus[bus].dev;
     init_pins(bus);
     i2c_init(bus, rate);
-    return (struct i2c_config){ .twi=p_twi, .addr=addr};
+    return (struct i2c_bus){ .twi=p_twi};
 }
 
 void
-i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
+i2c_write(struct i2c_bus bus, uint8_t addr, uint8_t write_len, uint8_t *write)
 {
-    Twi *p_twi = config.twi;
+    Twi *p_twi = bus.twi;
     uint32_t timeout = timer_read_time() + timer_from_us(5000);
     uint32_t status, bytes_to_send = write_len;
-    p_twi->TWI_MMR = TWI_MMR_DADR(config.addr);
+    p_twi->TWI_MMR = TWI_MMR_DADR(addr);
     for (;;) {
         status = p_twi->TWI_SR;
         if (status & TWI_SR_NACK)
@@ -153,15 +153,15 @@ i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
 }
 
 void
-i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
+i2c_read(struct i2c_bus bus, uint8_t addr, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *read)
 {
-    Twi *p_twi = config.twi;
+    Twi *p_twi = bus.twi;
     uint32_t timeout = timer_read_time() + timer_from_us(5000);
     uint32_t status, bytes_to_send = read_len;
     uint8_t stop = 0;
     p_twi->TWI_MMR = 0;
-    p_twi->TWI_MMR = (TWI_MMR_MREAD | TWI_MMR_DADR(config.addr)
+    p_twi->TWI_MMR = (TWI_MMR_MREAD | TWI_MMR_DADR(addr)
                       | ((reg_len << TWI_MMR_IADRSZ_Pos) & TWI_MMR_IADRSZ_Msk));
     p_twi->TWI_IADR = 0;
     p_twi->TWI_IADR = addr_to_u32(reg_len, reg);

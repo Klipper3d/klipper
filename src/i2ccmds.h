@@ -6,9 +6,10 @@
 
 struct i2cdev_s {
     union {
-        struct i2c_config i2c_hw;
+        struct i2c_bus i2c_hw;
         struct i2c_software *i2c_sw;
     };
+    uint8_t addr;
     uint8_t flags;
 };
 
