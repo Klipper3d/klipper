@@ -24,7 +24,7 @@ def hexify(byte_array):
     return "[%s]" % (", ".join([hex(b) for b in byte_array]))
 
 
-class ADS1220():
+class ADS1220:
     def __init__(self, config):
         self.printer = printer = config.get_printer()
         self.name = config.get_name().split()[-1]
