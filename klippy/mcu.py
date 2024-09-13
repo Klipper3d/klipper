@@ -538,6 +538,29 @@ class MCU_adc:
         if self._callback is not None:
             self._callback(last_read_time, last_value)
 
+class MCU_induction_heater:
+    def __init__(self, mcu):
+        self._mcu = mcu
+        self._oid = None
+    def get_mcu(self):
+        return self._mcu
+    def set_temperature(self, print_time, value):
+        clock = self._mcu.print_time_to_clock(print_time)
+        self._mcu.self._mcu.lookup_command(
+            "hotend_set_temperature value=%i"
+            % (value))
+        self._set_cmd.send()
+        self._last_clock = clock
+    def get_temperature(self):
+        self._query_cmd = self._mcu.lookup_query_command(
+            "hotend_query_temperature")
+        params = self._query_cmd.send()
+        return params['temp']
+    def set_state(self, value):
+        self._mcu.self._mcu.lookup_command(
+            "command_hotend_update_state value=%c"
+            % (value))
+        self._set_cmd.send()
 
 ######################################################################
 # Main MCU class
@@ -697,6 +720,7 @@ class MCU:
                 logging.info("Sending MCU '%s' printer configuration...",
                              self._name)
                 for c in self._config_cmds:
+                    logging.info(c)
                     self._serial.send(c)
             else:
                 for c in self._restart_cmds:
