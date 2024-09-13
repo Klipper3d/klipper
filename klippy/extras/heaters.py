@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, logging, threading
+from klippy.mcu import MCU_induction_heater
 
 
 ######################################################################
@@ -271,7 +272,8 @@ class PrinterHeaters:
         # Setup sensor
         sensor = self.setup_sensor(config)
         # Create heater
-        self.heaters[heater_name] = heater = Heater(config, sensor)
+        # TODO: read type from config
+        self.heaters[heater_name] = heater = HeaterHCU(config, sensor)
         self.register_sensor(config, heater, gcode_id)
         self.available_heaters.append(config.get_name())
         return heater
@@ -379,3 +381,24 @@ class PrinterHeaters:
 
 def load_config(config):
     return PrinterHeaters(config)
+
+class HeaterHCU(Heater):
+    def __init__(self, config, sensor):
+        super().__init__(config, sensor)
+        self.mcu_hcu = MCU_induction_heater(self.mcu_pwm.get_mcu())
+
+    def set_temp(self, degrees):
+        super().set_temp(degrees)
+        with self.lock:
+            self.mcu_hcu.set_temperature(int(degrees*10))
+
+    def get_temp(self, eventtime):
+        print_time = self.mcu_pwm.get_mcu().estimated_print_time(eventtime) - 5.
+        with self.lock:
+            self.target_temp = self.mcu_hcu.get_temperature()
+            if self.last_temp_time < print_time:
+                return 0., self.target_temp
+            return self.target_temp, self.target_temp
+        
+    def temperature_callback(self, read_time, temp):
+        pass
