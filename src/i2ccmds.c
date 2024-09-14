@@ -17,6 +17,14 @@ enum {
     IF_SOFTWARE = 1, IF_HARDWARE = 2
 };
 
+enum {
+    I2C_DEV_OK = 0,
+    I2C_DEV_NACK = 1,
+    I2C_DEV_TIMEOUT = 2,
+    I2C_DEV_START_NACK = 3,
+    I2C_DEV_START_READ_NACK = 4,
+};
+
 void
 command_config_i2c(uint32_t *args)
 {
@@ -49,56 +57,74 @@ i2cdev_set_software_bus(struct i2cdev_s *i2c, struct i2c_software *is)
     i2c->flags |= IF_SOFTWARE;
 }
 
-void i2c_dev_write(struct i2cdev_s *i2c, uint8_t write_len, uint8_t *data)
+static int i2c_dev_remap_ret(int ret)
+{
+    switch (ret) {
+    case I2C_BUS_SUCCESS:
+        ret = I2C_DEV_OK;
+        break;
+    case I2C_BUS_NACK:
+        ret = I2C_DEV_NACK;
+        break;
+    case I2C_BUS_START_NACK:
+        ret = I2C_DEV_START_NACK;
+        break;
+    case I2C_BUS_START_READ_NACK:
+        ret = I2C_DEV_START_READ_NACK;
+        break;
+    case I2C_BUS_TIMEOUT:
+        ret = I2C_DEV_TIMEOUT;
+        break;
+    }
+    return ret;
+}
+
+int i2c_dev_write(struct i2cdev_s *i2c, uint8_t write_len, uint8_t *data)
 {
     uint_fast8_t flags = i2c->flags;
-    int ret;
     if (CONFIG_WANT_SOFTWARE_I2C && flags & IF_SOFTWARE)
-        ret = i2c_software_write(i2c->i2c_sw, i2c->addr, write_len, data);
+        return i2c_software_write(i2c->i2c_sw, i2c->addr, write_len, data);
     else
-        ret = i2c_write(i2c->i2c_hw, i2c->addr, write_len, data);
-
-    switch (ret) {
-        case I2C_BUS_NACK:
-            shutdown("I2C NACK");
-        case I2C_BUS_START_NACK:
-            shutdown("I2C_START_NACK");
-        case I2C_BUS_TIMEOUT:
-            shutdown("I2C Timeout");
-    }
+        return i2c_write(i2c->i2c_hw, i2c->addr, write_len, data);
 }
 
 void command_i2c_write(uint32_t *args)
 {
     uint8_t oid = args[0];
     struct i2cdev_s *i2c = oid_lookup(oid, command_config_i2c);
-    uint8_t data_len = args[1];
-    uint8_t *data = command_decode_ptr(args[2]);
-    i2c_dev_write(i2c, data_len, data);
-}
-DECL_COMMAND(command_i2c_write, "i2c_write oid=%c data=%*s");
+    uint8_t check = args[1];
+    uint8_t data_len = args[2];
+    uint8_t *data = command_decode_ptr(args[3]);
+    int ret = i2c_dev_write(i2c, data_len, data);
+    ret = i2c_dev_remap_ret(ret);
+    if (check) {
+        sendf("i2c_write_response oid=%c status=%c", oid, ret);
+        return;
+    }
 
-void i2c_dev_read(struct i2cdev_s *i2c, uint8_t reg_len, uint8_t *reg
-                  , uint8_t read_len, uint8_t *read)
+    switch (ret) {
+    case I2C_DEV_NACK:
+        shutdown("I2C NACK");
+    case I2C_DEV_START_NACK:
+        shutdown("I2C START NACK");
+    case I2C_DEV_START_READ_NACK:
+        shutdown("I2C START READ NACK");
+    case I2C_DEV_TIMEOUT:
+        shutdown("I2C TIMEOUT");
+    }
+}
+DECL_COMMAND(command_i2c_write, "i2c_write oid=%c check=%c data=%*s");
+
+int i2c_dev_read(struct i2cdev_s *i2c, uint8_t reg_len, uint8_t *reg
+                 , uint8_t read_len, uint8_t *read)
 {
     uint_fast8_t flags = i2c->flags;
     uint8_t addr = i2c->addr;
-    int ret;
     if (CONFIG_WANT_SOFTWARE_I2C && flags & IF_SOFTWARE)
-        ret = i2c_software_read(i2c->i2c_sw, addr, reg_len, reg
-                                , read_len, read);
+        return i2c_software_read(i2c->i2c_sw, addr, reg_len, reg
+                                 , read_len, read);
     else
-        ret = i2c_read(i2c->i2c_hw, addr, reg_len, reg, read_len, read);
-    switch (ret) {
-        case I2C_BUS_NACK:
-            shutdown("I2C NACK");
-        case I2C_BUS_START_NACK:
-            shutdown("I2C START NACK");
-        case I2C_BUS_START_READ_NACK:
-            shutdown("I2C START READ NACK");
-        case I2C_BUS_TIMEOUT:
-            shutdown("I2C Timeout");
-    }
+        return i2c_read(i2c->i2c_hw, addr, reg_len, reg, read_len, read);
 }
 
 void command_i2c_read(uint32_t *args)
@@ -109,7 +135,9 @@ void command_i2c_read(uint32_t *args)
     uint8_t *reg = command_decode_ptr(args[2]);
     uint8_t data_len = args[3];
     uint8_t data[data_len];
-    i2c_dev_read(i2c, reg_len, reg, data_len, data);
-    sendf("i2c_read_response oid=%c response=%*s", oid, data_len, data);
+    int ret = i2c_dev_read(i2c, reg_len, reg, data_len, data);
+    ret = i2c_dev_remap_ret(ret);
+    sendf("i2c_read_response oid=%c status=%c response=%*s", oid, ret
+          , data_len, data);
 }
 DECL_COMMAND(command_i2c_read, "i2c_read oid=%c reg=%*s read_len=%u");

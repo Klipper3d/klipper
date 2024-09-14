@@ -39,20 +39,21 @@ class SX1509(object):
         self.reg_i_on_dict = {reg : 0 for reg in REG_I_ON}
     def _build_config(self):
         # Reset the chip, Default RegClock/RegMisc 0x0
-        self._mcu.add_config_cmd("i2c_write oid=%d data=%02x%02x" % (
-            self._oid, REG_RESET, 0x12))
-        self._mcu.add_config_cmd("i2c_write oid=%d data=%02x%02x" % (
-            self._oid, REG_RESET, 0x34))
+        self._mcu.add_config_cmd("i2c_write oid=%d check=%d data=%02x%02x" % (
+            self._oid, 0x0, REG_RESET, 0x12))
+        self._mcu.add_config_cmd("i2c_write oid=%d check=%d data=%02x%02x" % (
+            self._oid, 0x0, REG_RESET, 0x34))
         # Enable Oscillator
-        self._mcu.add_config_cmd("i2c_write oid=%d data=%02x%02x" % (
-            self._oid, REG_CLOCK, (1 << 6)))
+        self._mcu.add_config_cmd("i2c_write oid=%d check=%d data=%02x%02x" % (
+            self._oid, 0x0, REG_CLOCK, (1 << 6)))
         # Setup Clock Divider
-        self._mcu.add_config_cmd("i2c_write oid=%d data=%02x%02x" % (
-            self._oid, REG_MISC, (1 << 4)))
+        self._mcu.add_config_cmd("i2c_write oid=%d check=%d data=%02x%02x" % (
+            self._oid, 0x0, REG_MISC, (1 << 4)))
         # Transfer all regs with their initial cached state
         for _reg, _data in self.reg_dict.items():
-            self._mcu.add_config_cmd("i2c_write oid=%d data=%02x%04x" % (
-                self._oid, _reg, _data), is_init=True)
+            self._mcu.add_config_cmd(
+                "i2c_write oid=%d check=%d data=%02x%04x" % (
+                self._oid, 0x0, _reg, _data), is_init=True)
     def setup_pin(self, pin_type, pin_params):
         if pin_type == 'digital_out' and pin_params['pin'][0:4] == "PIN_":
             return SX1509_digital_out(self, pin_params)
@@ -162,8 +163,9 @@ class SX1509_pwm(object):
         # Send initial value
         self._sx1509.set_register(self._i_on_reg,
                                   ~int(255 * self._start_value) & 0xFF)
-        self._mcu.add_config_cmd("i2c_write oid=%d data=%02x%02x" % (
+        self._mcu.add_config_cmd("i2c_write oid=%d check=%d data=%02x%02x" % (
             self._sx1509.get_oid(),
+            0x0,
             self._i_on_reg,
             self._sx1509.reg_i_on_dict[self._i_on_reg]
             ),
