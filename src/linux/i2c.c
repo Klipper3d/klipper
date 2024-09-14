@@ -13,6 +13,7 @@
 #include "command.h" // shutdown
 #include "internal.h" // report_errno
 #include "sched.h" // sched_shutdown
+#include "i2ccmds.h" // I2C RET codes
 
 DECL_ENUMERATION_RANGE("i2c_bus", "i2c.0", 0, 15);
 
@@ -77,7 +78,7 @@ i2c_setup(uint32_t bus, uint32_t rate)
     return (struct i2c_bus){.fd=fd};
 }
 
-void
+int
 i2c_write(struct i2c_bus bus, uint8_t addr, uint8_t write_len, uint8_t *data)
 {
     struct i2c_rdwr_ioctl_data i2c_data;
@@ -92,11 +93,13 @@ i2c_write(struct i2c_bus bus, uint8_t addr, uint8_t write_len, uint8_t *data)
     int ret = ioctl(bus.fd, I2C_RDWR, &i2c_data);
 
     if (ret < 0) {
-        try_shutdown("Unable to write i2c device");
+        return I2C_BUS_NACK;
     }
+
+    return I2C_BUS_SUCCESS;
 }
 
-void
+int
 i2c_read(struct i2c_bus bus, uint8_t addr, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *data)
 {
@@ -122,7 +125,9 @@ i2c_read(struct i2c_bus bus, uint8_t addr, uint8_t reg_len, uint8_t *reg
 
     int ret = ioctl(bus.fd, I2C_RDWR, &i2c_data);
 
-    if(ret < 0) {
-        try_shutdown("Unable to read i2c device");
+    if (ret < 0) {
+        return I2C_BUS_NACK;
     }
+
+    return I2C_BUS_SUCCESS;
 }

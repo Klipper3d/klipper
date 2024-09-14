@@ -9,6 +9,7 @@
 #include "gpio.h" // i2c_setup
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // sched_shutdown
+#include "i2ccmds.h" // I2C BUS Codes
 
 struct i2c_info {
     LPC_I2C_TypeDef *i2c;
@@ -122,7 +123,7 @@ i2c_stop(LPC_I2C_TypeDef *i2c, uint32_t timeout)
     i2c_wait(i2c, IF_STOP, timeout);
 }
 
-void
+int
 i2c_write(struct i2c_bus bus, uint8_t addr, uint8_t write_len, uint8_t *write)
 {
     LPC_I2C_TypeDef *i2c = bus.i2c;
@@ -134,9 +135,11 @@ i2c_write(struct i2c_bus bus, uint8_t addr, uint8_t write_len, uint8_t *write)
     while (write_len--)
         i2c_send_byte(i2c, *write++, timeout);
     i2c_stop(i2c, timeout);
+
+    return I2C_BUS_SUCCESS;
 }
 
-void
+int
 i2c_read(struct i2c_bus bus, uint8_t addr, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *read)
 {
@@ -161,4 +164,6 @@ i2c_read(struct i2c_bus bus, uint8_t addr, uint8_t reg_len, uint8_t *reg
         read++;
     }
     i2c_stop(i2c, timeout);
+
+    return I2C_BUS_SUCCESS;
 }

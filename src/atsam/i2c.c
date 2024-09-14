@@ -10,6 +10,7 @@
 #include "gpio.h" // i2c_setup
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // sched_shutdown
+#include "i2ccmds.h" // I2C BUS Codes
 
 #if CONFIG_MACH_SAME70
 #include "same70_i2c.h" // Fixes for upstream header changes
@@ -126,20 +127,25 @@ i2c_setup(uint32_t bus, uint32_t rate)
     return (struct i2c_bus){ .twi=p_twi};
 }
 
-void
+int
 i2c_write(struct i2c_bus bus, uint8_t addr, uint8_t write_len, uint8_t *write)
 {
     Twi *p_twi = bus.twi;
     uint32_t timeout = timer_read_time() + timer_from_us(5000);
     uint32_t status, bytes_to_send = write_len;
+    int ret = I2C_BUS_SUCCESS;
     p_twi->TWI_MMR = TWI_MMR_DADR(addr);
     for (;;) {
         status = p_twi->TWI_SR;
-        if (status & TWI_SR_NACK)
-            shutdown("I2C NACK error encountered!");
+        if (status & TWI_SR_NACK) {
+            ret = I2C_BUS_NACK;
+            goto out;
+        }
         if (!(status & TWI_SR_TXRDY)) {
-            if (!timer_is_before(timer_read_time(), timeout))
-                shutdown("I2C timeout occured");
+            if (!timer_is_before(timer_read_time(), timeout)) {
+                ret = I2C_BUS_TIMEOUT;
+                goto out;
+            }
             continue;
         }
         if (!bytes_to_send)
@@ -147,12 +153,14 @@ i2c_write(struct i2c_bus bus, uint8_t addr, uint8_t write_len, uint8_t *write)
         p_twi->TWI_THR = *write++;
         bytes_to_send--;
     }
+out:
     p_twi->TWI_CR = TWI_CR_STOP;
     while (!(p_twi->TWI_SR & TWI_SR_TXCOMP))
         ;
+    return ret;
 }
 
-void
+int
 i2c_read(struct i2c_bus bus, uint8_t addr, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *read)
 {
@@ -160,6 +168,7 @@ i2c_read(struct i2c_bus bus, uint8_t addr, uint8_t reg_len, uint8_t *reg
     uint32_t timeout = timer_read_time() + timer_from_us(5000);
     uint32_t status, bytes_to_send = read_len;
     uint8_t stop = 0;
+    int ret = I2C_BUS_SUCCESS;
     p_twi->TWI_MMR = 0;
     p_twi->TWI_MMR = (TWI_MMR_MREAD | TWI_MMR_DADR(addr)
                       | ((reg_len << TWI_MMR_IADRSZ_Pos) & TWI_MMR_IADRSZ_Msk));
@@ -175,21 +184,28 @@ i2c_read(struct i2c_bus bus, uint8_t addr, uint8_t reg_len, uint8_t *reg
     while (bytes_to_send > 0) {
         status = p_twi->TWI_SR;
         if (status & TWI_SR_NACK) {
-            shutdown("I2C NACK error encountered!");
+            ret = I2C_BUS_NACK;
+            goto out;
         }
         if (bytes_to_send == 1 && !stop) {
             p_twi->TWI_CR = TWI_CR_STOP;
             stop = 1;
         }
         if (!(status & TWI_SR_RXRDY)) {
-            if (!timer_is_before(timer_read_time(), timeout))
-                shutdown("I2C timeout occured");
+            if (!timer_is_before(timer_read_time(), timeout)) {
+                ret = I2C_BUS_TIMEOUT;
+                goto out;
+            }
             continue;
         }
         *read++ = p_twi->TWI_RHR;
         bytes_to_send--;
     }
+out:
+    if (ret != I2C_BUS_SUCCESS)
+        p_twi->TWI_CR = TWI_CR_STOP;
     while (!(p_twi->TWI_SR & TWI_SR_TXCOMP))
         ;
     (void)p_twi->TWI_SR;
+    return ret;
 }
