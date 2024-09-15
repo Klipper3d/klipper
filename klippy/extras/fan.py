@@ -57,7 +57,7 @@ class Fan:
                 self.enable_pin.set_digital(print_time, 1)
             elif value == 0 and self.last_fan_value > 0:
                 self.enable_pin.set_digital(print_time, 0)
-        if (value and value < self.max_power and self.kick_start_time
+        if (value and self.kick_start_time
             and (not self.last_fan_value or value - self.last_fan_value > .5)):
             # Run fan at full speed for specified kick_start_time
             self.last_req_value = value
