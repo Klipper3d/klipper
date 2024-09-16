@@ -113,7 +113,7 @@ class PrinterLED:
         if not self.active_templates:
             # Nothing to do - unregister timer
             reactor = self.printer.get_reactor()
-            reactor.register_timer(self.render_timer)
+            reactor.unregister_timer(self.render_timer)
             self.render_timer = None
             return reactor.NEVER
         # Setup gcode_macro template context
