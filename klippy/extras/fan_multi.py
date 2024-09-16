@@ -86,7 +86,7 @@ class FanMulti:
             'speed': self.last_fan_value,
             'rpm': tachometer_status['rpm'],
         }
-        
+
     def cmd_SET_FAN_SPEED(self, gcmd):
         speed = gcmd.get_float('SPEED', 0.)
         self.set_speed_from_command(speed)
