@@ -896,9 +896,9 @@ uncalibrated load cells.
 `LOAD_CELL_CALIBRATE [LOAD_CELL=<config_name>]`: Start the guided calibration
 utility. Calibration is a 3 step process:
 1. First you remove all load from the load cell and run the `TARE` command
-1. Next you apply a known load to the load cell and run the
+2. Next you apply a known load to the load cell and run the
 `CALIBRATE GRAMS=nnn` command
-1. Finally use the `ACCEPT` command to save the results
+3. Finally use the `ACCEPT` command to save the results
 
 You can cancel the calibration process at any time with `ABORT`.
 
@@ -906,13 +906,47 @@ You can cancel the calibration process at any time with `ABORT`.
 `LOAD_CELL_TARE [LOAD_CELL=<config_name>]`: This works just like the tare button
 on digital scale. It sets the current raw reading of the load cell to be the
 zero point reference value. The response is the percentage of the sensors range
-that was read and the raw value in counts.
+that was read and the raw value in counts. If the load cell is calibrated a
+force in grams is also reported.
 
 ### LOAD_CELL_READ load_cell="name"
 `LOAD_CELL_READ [LOAD_CELL=<config_name>]`:
 This command takes a reading from the load cell. The response is the percentage
 of the sensors range that was read and the raw value in counts. If the load cell
 is calibrated a force in grams is also reported.
+
+### [load_cell_probe]
+
+The following commands are enabled if a
+[load_cell config section](Config_Reference.md#load_cell_probe) has been
+enabled.
+
+### LOAD_CELL_TEST_TAP
+`LOAD_CELL_TEST_TAP [TAPS=<taps>] [TIMEOUT=<timeout>]`: Run a testing routine
+that reports taps on the load cell. The toolhead will not move but the load cell
+probe will sense taps just as if it was probing. This can be used as a
+sanity check to make sure that the probe works. This tool replaces
+QUERY_ENDSTOPS and QUERY_PROBE for load cell probes.
+- `TAPS`: the number of taps the tool expects
+- `TIMEOOUT`: the time, in seconds, that the tool waits for each tab before
+  aborting.
+
+### Load Cell Command Extensions
+Commands that perform probes, such as [`PROBE`](#probe),
+[`PROBE_ACCURACY`](#probe_accuracy),
+[`BED_MESH_CALIBRATE`](#bed_mesh_calibrate) etc. will accept additional
+parameters if a `[load_cell_probe]` is defined. The parameters override the
+corresponding settings from the
+[`[load_cell_probe]`](./Config_Reference.md#load_cell_probe) configuration:
+- `FORCE_SAFETY_LIMIT=<grams>`
+- `TRIGGER_FORCE=<grams>`
+- `DRIFT_FILTER_CUTOFF_FREQUENCY=<frequency_hz>`
+- `DRIFT_FILTER_DELAY=<1|2>`
+- `BUZZ_FILTER_CUTOFF_FREQUENCY=<frequency_hz>`
+- `BUZZ_FILTER_DELAY=<1|2>`
+- `NOTCH_FILTER_FREQUENCIES=<list of frequency_hz>`
+- `NOTCH_FILTER_QUALITY=<quality>`
+- `TARE_TIME=<seconds>`
 
 ### [manual_probe]
 
