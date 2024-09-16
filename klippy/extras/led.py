@@ -3,11 +3,8 @@
 # Copyright (C) 2019-2024  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, ast
-from .display import display
-
-# Time between each led template update
-RENDER_TIME = 0.500
+import logging
+from . import output_pin
 
 # Helper code for common LED initialization and control
 class LEDHelper:
@@ -23,7 +20,7 @@ class LEDHelper:
         white = config.getfloat('initial_WHITE', 0., minval=0., maxval=1.)
         self.led_state = [(red, green, blue, white)] * led_count
         # Support setting an led template
-        self.template_eval = lookup_template_eval(config)
+        self.template_eval = output_pin.lookup_template_eval(config)
         self.tcallbacks = [(lambda text, s=self, index=i:
                             s._template_update(index, text))
                            for i in range(led_count)]
@@ -99,94 +96,6 @@ class LEDHelper:
         else:
             for i in range(self.led_count):
                 set_template(gcmd, self.tcallbacks[i], self._check_transmit)
-
-# Main template evaluation code
-class PrinterTemplateEvaluator:
-    def __init__(self, config):
-        self.printer = config.get_printer()
-        self.active_templates = {}
-        self.render_timer = None
-        # Load templates
-        dtemplates = display.lookup_display_templates(config)
-        self.templates = dtemplates.get_display_templates()
-        gcode_macro = self.printer.load_object(config, "gcode_macro")
-        self.create_template_context = gcode_macro.create_template_context
-    def _activate_timer(self):
-        if self.render_timer is not None or not self.active_templates:
-            return
-        reactor = self.printer.get_reactor()
-        self.render_timer = reactor.register_timer(self._render, reactor.NOW)
-    def _activate_template(self, callback, template, lparams, flush_callback):
-        if template is not None:
-            uid = (template,) + tuple(sorted(lparams.items()))
-            self.active_templates[callback] = (
-                uid, template, lparams, flush_callback)
-            return
-        if callback in self.active_templates:
-            del self.active_templates[callback]
-    def _render(self, eventtime):
-        if not self.active_templates:
-            # Nothing to do - unregister timer
-            reactor = self.printer.get_reactor()
-            reactor.unregister_timer(self.render_timer)
-            self.render_timer = None
-            return reactor.NEVER
-        # Setup gcode_macro template context
-        context = self.create_template_context(eventtime)
-        def render(name, **kwargs):
-            return self.templates[name].render(context, **kwargs)
-        context['render'] = render
-        # Render all templates
-        flush_callbacks = {}
-        rendered = {}
-        template_info = self.active_templates.items()
-        for callback, (uid, template, lparams, flush_callback) in template_info:
-            text = rendered.get(uid)
-            if text is None:
-                try:
-                    text = template.render(context, **lparams)
-                except Exception as e:
-                    logging.exception("display template render error")
-                    text = ""
-                rendered[uid] = text
-            if flush_callback is not None:
-                flush_callbacks[flush_callback] = 1
-            callback(text)
-        context.clear() # Remove circular references for better gc
-        # Invoke optional flush callbacks
-        for flush_callback in flush_callbacks.keys():
-            flush_callback()
-        return eventtime + RENDER_TIME
-    def set_template(self, gcmd, callback, flush_callback=None):
-        template = None
-        lparams = {}
-        tpl_name = gcmd.get("TEMPLATE")
-        if tpl_name:
-            template = self.templates.get(tpl_name)
-            if template is None:
-                raise gcmd.error("Unknown display_template '%s'" % (tpl_name,))
-            tparams = template.get_params()
-            for p, v in gcmd.get_command_parameters().items():
-                if not p.startswith("PARAM_"):
-                    continue
-                p = p.lower()
-                if p not in tparams:
-                    raise gcmd.error("Invalid display_template parameter: %s"
-                                     % (p,))
-                try:
-                    lparams[p] = ast.literal_eval(v)
-                except ValueError as e:
-                    raise gcmd.error("Unable to parse '%s' as a literal" % (v,))
-        self._activate_template(callback, template, lparams, flush_callback)
-        self._activate_timer()
-
-def lookup_template_eval(config):
-    printer = config.get_printer()
-    te = printer.lookup_object("template_evaluator", None)
-    if te is None:
-        te = PrinterTemplateEvaluator(config)
-        printer.add_object("template_evaluator", te)
-    return te
 
 PIN_MIN_TIME = 0.100
 MAX_SCHEDULE_TIME = 5.0
