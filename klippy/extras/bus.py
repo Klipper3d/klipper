@@ -180,14 +180,20 @@ class MCU_I2C:
     def get_command_queue(self):
         return self.cmd_queue
     def i2c_status_check(self, status):
-        if status == 1:
-            raise I2CNAck
-        if status == 2:
-            raise I2CTimeout
-        if status == 3:
-            raise I2CStartNAck
-        if status == 4:
-            raise I2CStartReadNAck
+        msg = self.id_of_static_string.get(status, None)
+        if msg is None:
+            return
+        error_pref = "MCU %s addr %d:" % (
+            self.mcu.get_name(), self.i2c_address)
+        if msg == "I2C NACK":
+            raise I2CNAck("%s I2C NACK" % error_pref)
+        if status == "I2C START NACK":
+            raise I2CStartNAck("%s I2C START NACK" % error_pref)
+        if status == "I2C START READ NACK":
+            raise I2CStartReadNAck("%s I2C START READ NACK" % error_pref)
+        if status == "I2C Timeout":
+            raise I2CTimeout("%s I2C Timeout" % error_pref)
+        raise Exception("%s %s" % (error_pref, msg))
     def build_config(self):
         if '%' in self.config_fmt:
             bus = resolve_bus_name(self.mcu, "i2c_bus", self.bus)
@@ -195,12 +201,17 @@ class MCU_I2C:
         self.mcu.add_config_cmd(self.config_fmt)
         self.i2c_write_cmd = self.mcu.lookup_query_command(
             "i2c_write oid=%c check=%c data=%*s",
-            "i2c_write_response oid=%c status=%c", oid=self.oid,
+            "i2c_write_response oid=%c status=%hu", oid=self.oid,
             cq=self.cmd_queue)
         self.i2c_read_cmd = self.mcu.lookup_query_command(
             "i2c_read oid=%c reg=%*s read_len=%u",
-            "i2c_read_response oid=%c status=%c response=%*s", oid=self.oid,
+            "i2c_read_response oid=%c status=%hu response=%*s", oid=self.oid,
             cq=self.cmd_queue)
+        static_string_ids = self.mcu.get_enumerations().get("static_string_id", {})
+        self.id_of_static_string = {}
+        for k in static_string_ids:
+            v = static_string_ids[k]
+            self.id_of_static_string[v] = k
     def i2c_write(self, data, minclock=0, reqclock=0):
         if self.i2c_write_cmd is None:
             # Send setup message via mcu initialization
