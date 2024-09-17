@@ -159,6 +159,20 @@ i2c_do_write(i2c_hw_t *i2c, uint8_t addr, uint8_t write_len, uint8_t *write
         if (!timer_is_before(timer_read_time(), timeout))
             shutdown("i2c timeout");
     }
+
+    if (i2c->raw_intr_stat & I2C_IC_RAW_INTR_STAT_TX_ABRT_BITS) {
+        uint32_t abort_source = i2c->tx_abrt_source;
+        if (abort_source & I2C_IC_TX_ABRT_SOURCE_ABRT_7B_ADDR_NOACK_BITS)
+        {
+            i2c->clr_tx_abrt;
+            shutdown("i2c Start NACK");
+        }
+        if (abort_source & I2C_IC_TX_ABRT_SOURCE_ABRT_TXDATA_NOACK_BITS)
+        {
+            i2c->clr_tx_abrt;
+            shutdown("i2c NACK");
+        }
+    }
 }
 
 static void
@@ -185,6 +199,14 @@ i2c_do_read(i2c_hw_t *i2c, uint8_t addr, uint8_t read_len, uint8_t *read
         if (have_read < read_len && i2c->rxflr > 0) {
             *read++ = i2c->data_cmd & 0xFF;
             have_read++;
+        }
+
+        if (i2c->raw_intr_stat & I2C_IC_RAW_INTR_STAT_TX_ABRT_BITS) {
+            uint32_t abort_source = i2c->tx_abrt_source;
+            if (abort_source & I2C_IC_TX_ABRT_SOURCE_ABRT_7B_ADDR_NOACK_BITS) {
+                i2c->clr_tx_abrt;
+                shutdown("i2c Start Read NACK");
+            }
         }
     }
 }
