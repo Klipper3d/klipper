@@ -400,7 +400,7 @@ class HeaterHCU(Heater):
             self.mcu_hcu.set_temperature(int(degrees*10))
 
     def get_temp(self, eventtime):
-        read_time = self.mcu.estimated_print_time(eventtime)
+        read_time = self.mcu_hcu.get_mcu().estimated_print_time(eventtime)
 
         temp = self.mcu_hcu.get_temperature() / 10.0
 
