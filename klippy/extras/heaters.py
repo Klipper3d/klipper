@@ -386,7 +386,10 @@ def load_config(config):
 class HeaterHCU(Heater):
     def __init__(self, config, sensor):
         super().__init__(config, sensor)
-        self.mcu_hcu = self.printer.lookup_object("hcu")
+    
+    @property
+    def mcu_hcu(self):
+        return self.printer.lookup_object("hcu")
 
     def set_temp(self, degrees):
         super().set_temp(degrees)
