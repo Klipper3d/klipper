@@ -405,7 +405,8 @@ class HeaterHCU(Heater):
             self.target_temp = self.mcu_hcu.get_temperature() / 10.0
             # if self.last_temp_time < print_time:
             #     return 0., self.target_temp
-            return self.target_temp, self.target_temp
+            self.smoothed_temp = self.target_temp
+            return self.smoothed_temp, self.target_temp
 
     def temperature_callback(self, read_time, temp):
         pass
