@@ -868,6 +868,8 @@ class MCU:
         if pin_type not in pcs:
             raise pins.error("pin type %s not supported on mcu" % (pin_type,))
         return pcs[pin_type](self, pin_params)
+    def setup_heater_mcu(self) -> MCU_induction_heater:
+        return MCU_induction_heater(self)
     def create_oid(self):
         self._oid_count += 1
         return self._oid_count - 1

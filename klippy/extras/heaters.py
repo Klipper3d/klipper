@@ -4,7 +4,6 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, logging, threading
-from ..mcu import MCU_induction_heater
 
 
 ######################################################################
@@ -385,7 +384,8 @@ def load_config(config):
 class HeaterHCU(Heater):
     def __init__(self, config, sensor):
         super().__init__(config, sensor)
-        self.mcu_hcu = MCU_induction_heater(self.mcu_pwm.get_mcu())
+        self.mcu = self.mcu_pwm.get_mcu()
+        self.mcu_hcu = self.mcu.setup_heater_mcu()
 
     def set_temp(self, degrees):
         super().set_temp(degrees)
@@ -393,7 +393,7 @@ class HeaterHCU(Heater):
             self.mcu_hcu.set_temperature(int(degrees*10))
 
     def get_temp(self, eventtime):
-        print_time = self.mcu_pwm.get_mcu().estimated_print_time(eventtime) - 5.
+        print_time = self.mcu.estimated_print_time(eventtime) - 5.
         with self.lock:
             self.target_temp = self.mcu_hcu.get_temperature()
             if self.last_temp_time < print_time:
