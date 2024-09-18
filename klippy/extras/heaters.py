@@ -400,13 +400,24 @@ class HeaterHCU(Heater):
             self.mcu_hcu.set_temperature(int(degrees*10))
 
     def get_temp(self, eventtime):
-        # print_time = self.mcu.estimated_print_time(eventtime) - 5.
-        with self.lock:
-            self.target_temp = self.mcu_hcu.get_temperature() / 10.0
+        read_time = self.mcu.estimated_print_time(eventtime)
+
+        temp = self.mcu_hcu.get_temperature() / 10.0
+
+        time_diff = read_time - self.last_temp_time
+        self.last_temp = temp
+        self.last_temp_time = read_time
+        temp_diff = temp - self.smoothed_temp
+        adj_time = min(time_diff * self.inv_smooth_time, 1.)
+        self.smoothed_temp += temp_diff * adj_time
+        self.can_extrude = (self.smoothed_temp >= self.min_extrude_temp)
+
+        # with self.lock:
+            # self.target_temp = self.mcu_hcu.get_temperature() / 10.0
             # if self.last_temp_time < print_time:
             #     return 0., self.target_temp
-            self.smoothed_temp = self.target_temp
-            return self.smoothed_temp, self.target_temp
+            # self.smoothed_temp = self.target_temp
+        return self.smoothed_temp, self.target_temp
 
     def temperature_callback(self, read_time, temp):
         pass
