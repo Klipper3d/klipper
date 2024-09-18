@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, logging, threading
-from klippy.mcu import MCU_induction_heater
+from ..mcu import MCU_induction_heater
 
 
 ######################################################################
