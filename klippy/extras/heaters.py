@@ -384,8 +384,7 @@ def load_config(config):
 class HeaterHCU(Heater):
     def __init__(self, config, sensor):
         super().__init__(config, sensor)
-        self.mcu = self.mcu_pwm.get_mcu()
-        self.mcu_hcu = self.mcu.setup_heater_mcu()
+        self.mcu_hcu = self.printer.lookup_object("hcu")
 
     def set_temp(self, degrees):
         super().set_temp(degrees)
@@ -393,12 +392,12 @@ class HeaterHCU(Heater):
             self.mcu_hcu.set_temperature(int(degrees*10))
 
     def get_temp(self, eventtime):
-        print_time = self.mcu.estimated_print_time(eventtime) - 5.
+        # print_time = self.mcu.estimated_print_time(eventtime) - 5.
         with self.lock:
-            self.target_temp = self.mcu_hcu.get_temperature()
-            if self.last_temp_time < print_time:
-                return 0., self.target_temp
+            self.target_temp = self.mcu_hcu.get_temperature() / 10.0
+            # if self.last_temp_time < print_time:
+            #     return 0., self.target_temp
             return self.target_temp, self.target_temp
-        
+
     def temperature_callback(self, read_time, temp):
         pass
