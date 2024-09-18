@@ -556,7 +556,7 @@ class MCU_induction_heater:
         params = self._query_cmd.send()
         return params['temp']
     def set_state(self, value):
-        self._mcu.self._mcu.lookup_command(
+        self._mcu.lookup_command(
             "command_hotend_update_state value=%c"
             % (value))
         self._set_cmd.send()
