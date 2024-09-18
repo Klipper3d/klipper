@@ -539,21 +539,20 @@ class MCU_adc:
             self._callback(last_read_time, last_value)
 
 class MCU_induction_heater:
-    def __init__(self, mcu):
+    def __init__(self, mcu: "MCU"):
         self._mcu = mcu
         self._oid = None
     def get_mcu(self):
         return self._mcu
     def set_temperature(self, value):
         #clock = self._mcu.print_time_to_clock(print_time)
-        self._mcu.self._mcu.lookup_command(
+        self._mcu.lookup_command(
             "hotend_set_temperature value=%i"
             % (value))
         self._set_cmd.send()
         #self._last_clock = clock
     def get_temperature(self):
-        self._query_cmd = self._mcu.lookup_query_command(
-            "hotend_query_temperature")
+        self._query_cmd = self._mcu.lookup_query_command("hotend_query_temperature", "")
         params = self._query_cmd.send()
         return params['temp']
     def set_state(self, value):
