@@ -1426,7 +1426,7 @@
 <li>当挤出机到达设定温度，移动z下降到离热床1mm的位置。</li>
 </ul>
 </li>
-<li>开始漂移校准。如果探针名字是<code>my_probe</code> 并且最大探针温度可以到达80C，可以使用<code>TEMPERATURE_PROBE_CALIBRATE PROBE=my_probe TARGET=80</code>来进行校准。如果进行了配置，喷头的XY应该会移动到<code>calibration_position</code> 并且Z轴通过<code>extruder_heating_z</code>来调整。将挤出机加热到指定温度后，工具将移动到<code>校准位置</code>指定的 Z 值。</li>
+<li>开始漂移校准。如果探针名字是<code>my_probe</code> 并且最大探针温度可以到达80C，可以使用<code>TEMPERATURE_PROBE_CALIBRATE PROBE=my_probe TARGET=80</code>来进行校准。如果进行了配置，喷头的XY应该会移动到<code>calibration_position</code> 并且Z轴通过<code>extruder_heating_z</code>来调整。将挤出机加热到指定温度后，工具将会移动到<code>calibration_position</code>中指定的 Z 值。</li>
 <li>程序将要求进行手动探测。使用纸张测试执行手动探头，然后使用 <code>ACCEPT</code>接受当前位置。校准程序将使用探针采集第一组采样，然后将探针停在加热位置。</li>
 <li>如果<code>calibration_bed_temp</code><strong>未被</strong>配置启动热床加热到最高安全温度。否则将自动执行此步骤。</li>
 <li>在默认的校准流程中在到达 <code>TARGET</code>之前会每2C要求一次手动偏移探针校准。温度偏移量在校准中可以通过<code>TEMPERATURE_PROBE_CALIBRATE</code> 中的<code>STEP</code>来进行修改。注意在自定义<code>STEP</code> 的值的时候，特别高的值和太少的校准点回导致很差的校准结果。</li>

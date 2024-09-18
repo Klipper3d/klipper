@@ -2354,7 +2354,7 @@ probe_points: ...
 <div class="highlight"><pre><span></span><code>TEST_RESONANCES AXIS=Y
 </code></pre></div>
 
-<p>This will generate 2 CSV files (<code>/tmp/resonances_x_*.csv</code> and <code>/tmp/resonances_y_*.csv</code>). These files can be processed with the stand-alone script on a Raspberry Pi. This script is intended to be run with a single CSV file for each axis measured, although it can be used with multiple CSV files if you desire to average the results. Averaging results can be useful, for example, if resonance tests were done at multiple test points. Delete the extra CSV files if you do not desire to average them.</p>
+<p>Ez 2 CSV-fájlt generál (<code>/tmp/resonances_x_*.csv</code> és <code>/tmp/resonances_y_*.csv</code>). Ezeket a fájlokat a Raspberry Pi önálló szkriptjével lehet feldolgozni. Ezt a szkriptet egyetlen CSV-fájllal kell futtatni minden mért tengelyhez, bár több CSV-fájllal is használható, ha átlagolni szeretnéd az eredményeket. Az eredmények átlagolása hasznos lehet például, ha több vizsgálati ponton végeztél rezonanciatesztet. Töröld az extra CSV-fájlokat, ha nem szeretnéd átlagolni őket.</p>
 <div class="highlight"><pre><span></span><code>~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png
 ~/klipper/scripts/calibrate_shaper.py /tmp/resonances_y_*.csv -o /tmp/shaper_calibrate_y.png
 </code></pre></div>

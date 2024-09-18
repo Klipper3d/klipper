@@ -1280,8 +1280,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#use-an-appropriate-txqueuelen-setting" class="md-nav__link">
-    Use an appropriate txqueuelen setting
+  <a href="#hasznalj-megfelelo-txqueuelen-beallitast" class="md-nav__link">
+    Használj megfelelő txqueuelen beállítást
   </a>
   
 </li>
@@ -1426,8 +1426,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#use-an-appropriate-txqueuelen-setting" class="md-nav__link">
-    Use an appropriate txqueuelen setting
+  <a href="#hasznalj-megfelelo-txqueuelen-beallitast" class="md-nav__link">
+    Használj megfelelő txqueuelen beállítást
   </a>
   
 </li>
@@ -1492,17 +1492,17 @@ resistors</a> on the CAN bus. If the resistors are not properly installed then m
 <li>Néhány beágyazott eszközökhöz készült Linux kernelről ismert, hogy átrendezi a CAN-busz üzeneteket. Szükség lehet egy alternatív Linux kernel használatára, vagy olyan alternatív hardverek használatára, amelyek támogatják a mainstream Linux kerneleket, amelyek nem mutatják ezt a problémát.</li>
 </ol>
 <p>Az átrendezett üzenetek súlyos problémát jelentenek, amelyet orvosolni kell. Ez instabil viselkedést eredményez, és zavaró hibákhoz vezethet a nyomtatás bármelyik részénél.</p>
-<h2 id="use-an-appropriate-txqueuelen-setting">Use an appropriate txqueuelen setting<a class="headerlink" href="#use-an-appropriate-txqueuelen-setting" title="Permanent link">&para;</a></h2>
-<p>The Klipper code uses the Linux kernel to manage CAN bus traffic. By default, the kernel will only queue 10 CAN transmit packets. It is recommended to <a href="CANBUS.html#host-hardware">configure the can0 device</a> with a <code>txqueuelen 128</code> to increase that size.</p>
-<p>If Klipper transmits a packet and Linux has filled all of its transmit queue space then Linux will drop that packet and messages like the following will appear in the Klipper log:</p>
-<div class="highlight"><pre><span></span><code>Got error -1 in can write: (105)No buffer space available
+<h2 id="hasznalj-megfelelo-txqueuelen-beallitast">Használj megfelelő txqueuelen beállítást<a class="headerlink" href="#hasznalj-megfelelo-txqueuelen-beallitast" title="Permanent link">&para;</a></h2>
+<p>A Klipper kód a Linux kernelt használja a CAN-busz forgalom kezelésére. Alapértelmezés szerint a kernel csak 10 CAN átviteli csomagot állít sorba. Ajánlott <a href="CANBUS.html#host-hardware">a can0 eszköz konfigurálása</a> <code>txqueuelen 128</code>-val, hogy növeld ezt a méretet.</p>
+<p>Ha a Klipper továbbít egy csomagot, és a Linux betöltötte az összes átviteli várólistát, akkor a Linux eldobja a csomagot, és a Klipper naplójában a következő üzenetek jelennek meg:</p>
+<div class="highlight"><pre><span></span><code>Hiba -1 CAN írásban: (105)Nincs szabad pufferterület
 </code></pre></div>
 
-<p>Klipper will automatically retransmit the lost messages as part of its normal application level message retransmit system. Thus, this log message is a warning and it does not indicate an unrecoverable error.</p>
-<p>If a complete CAN bus failure occurs (such as a CAN wire break) then Linux will not be able to transmit any messages on the CAN bus and it is common to find the above message in the Klipper log. In this case, the log message is a symptom of a larger problem (the inability to transmit any messages) and is not directly related to Linux <code>txqueuelen</code>.</p>
-<p>One may check the current queue size by running the Linux command <code>ip link show can0</code>. It should report a bunch of text including the snippet <code>qlen 128</code>. If one sees something like <code>qlen 10</code> then it indicates the CAN device has not been properly configured.</p>
-<p>It is not recommended to use a <code>txqueuelen</code> significantly larger than 128. A CAN bus running at a frequency of 1000000 will typically take around 120us to transmit a CAN packet. Thus a queue of 128 packets is likely to take around 15-20ms to drain. A substantially larger queue could cause excessive spikes in message round-trip-time which could lead to unrecoverable errors. Said another way, Klipper's application retransmit system is more robust if it does not have to wait for Linux to drain an excessively large queue of possibly stale data. This is analogous to the problem of <a href="https://en.wikipedia.org/wiki/Bufferbloat">bufferbloat</a> on internet routers.</p>
-<p>Under normal circumstances Klipper may utilize ~25 queue slots per MCU - typically only utilizing more slots during retransmits. (Specifically, the Klipper host may transmit up to 192 bytes to each Klipper MCU before receiving an acknowledgment from that MCU.) If a single CAN bus has 5 or more Klipper MCUs on it, then it might be necessary to increase the <code>txqueuelen</code> above the recommended value of 128. However, as above, care should be taken when selecting a new value to avoid excessive round-trip-time latency.</p>
+<p>A Klipper automatikusan továbbítja az elveszett üzeneteket a normál alkalmazásszintű üzenetek újraküldési rendszerének részeként. Ez a naplóüzenet tehát figyelmeztetés, és nem jelez helyrehozhatatlan hibát.</p>
+<p>Ha a CAN-busz teljes meghibásodása következik be (pl. CAN vezetékszakadás), akkor a Linux nem tud üzeneteket továbbítani a CAN-buszon, és a Klipper naplójában gyakran megjelenik a fenti üzenet. Ebben az esetben a naplóüzenet egy nagyobb probléma (az üzenetek továbbításának képtelensége) tünete, és nem kapcsolódik közvetlenül a Linux <code>txqueuelen</code>-hez.</p>
+<p>Az aktuális várólista méretét a Linux <code>ip link show can0</code> parancs futtatásával ellenőrizhetjük. A parancsnak egy csomó szöveget kell kiírnia, köztük a <code>qlen 128</code> szalagot. Ha valami olyasmit látunk, mint <code>qlen 10</code>, akkor az azt jelzi, hogy a CAN-eszköz nincs megfelelően konfigurálva.</p>
+<p>Nem ajánlott 128-nál lényegesen nagyobb <code>txqueuelen</code> értéket használni. Egy 1000000-ós frekvencián futó CAN-buszon egy CAN-csomag továbbítása általában körülbelül 120 másodpercig tart. Így egy 128 csomagból álló sor valószínűleg 15-20 ms-ig tart, amíg a sor kiürül. Egy lényegesen nagyobb várólista az üzenetek átfutási idejében túlzott kiugrásokat okozhat, ami helyrehozhatatlan hibákhoz vezethet. Másképp fogalmazva, a Klipper alkalmazás újraküldési rendszere robusztusabb, ha nem kell megvárnia, hogy a Linuxnak ki kelljen ürítenie egy túl nagy, esetleg elavult adatokat tartalmazó várólistát. Ez analóg a <a href="https://en.wikipedia.org/wiki/Bufferbloat">bufferbloat</a> problémájával az internetes útválasztókon.</p>
+<p>Normál körülmények között a Klipper MCU-nként ~25 várólistahelyet használhat - jellemzően csak az újratovábbítások során használ több helyet. (Konkrétan, a Klipper gazdagép legfeljebb 192 bájtot küldhet minden Klipper MCU-nak, mielőtt nyugtát kapna az adott MCU-tól). Ha egy CAN-buszon 5 vagy több Klipper MCU van, akkor szükséges lehet a <code>txqueuelen</code> értéket a 128-as ajánlott érték fölé emelni. A fentiekhez hasonlóan azonban az új érték kiválasztásakor óvatosan kell eljárni, hogy elkerülhető legyen a túlzott körutazási késleltetés.</p>
 <h2 id="candump-naplok-beszerzese">Candump naplók beszerzése<a class="headerlink" href="#candump-naplok-beszerzese" title="Permanent link">&para;</a></h2>
 <p>A mikrokontrollerhez küldött és onnan érkező CAN-busz üzeneteket a Linux kernel kezeli. Lehetőség van arra, hogy ezeket az üzeneteket a kernelből hibakeresés céljából rögzítsük. Ezen üzenetek naplózása hasznos lehet a diagnosztikában.</p>
 <p>A Linux <a href="https://github.com/linux-can/can-utils">can-utils</a> eszköz biztosítja a rögzítő szoftvert. Ezt általában a következő futtatásával telepíthetjük a gépre:</p>

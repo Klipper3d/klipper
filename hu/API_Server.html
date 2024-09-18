@@ -1868,11 +1868,11 @@ gcode:
 <p>Egy kérés így nézhet ki: <code>{"id": 123, "method":"angle/dump_angle", "params": {"sensor": "my_angle_sensor", "response_template": {}}}</code> és esetleg visszatér: <code>{"id": 123,"result":{"header":["time","angle"]}}}</code> és később olyan aszinkron üzeneteket produkálhat, mint például: <code>{"params":{"position_offset":3.151562,"errors":0, "data":[[1290.951905,-5063],[1290.952321,-5065]]}}</code></p>
 <p>A kezdeti lekérdezési válasz "header" mezője a későbbi "data" válaszokban található mezők leírására szolgál.</p>
 <h3 id="hx71xdump_hx71x">hx71x/dump_hx71x<a class="headerlink" href="#hx71xdump_hx71x" title="Permanent link">&para;</a></h3>
-<p>This endpoint is used to subscribe to raw HX711 and HX717 ADC data. Obtaining these low-level ADC updates may be useful for diagnostic and debugging purposes. Using this endpoint may increase Klipper's system load.</p>
-<p>A request may look like: <code>{"id": 123, "method":"hx71x/dump_hx71x", "params": {"sensor": "load_cell", "response_template": {}}}</code> and might return: <code>{"id": 123,"result":{"header":["time","counts","value"]}}</code> and might later produce asynchronous messages such as: <code>{"params":{"data":[[3292.432935, 562534, 0.067059278], [3292.4394937, 5625322, 0.670590639]]}}</code></p>
+<p>Ez a végpont a nyers HX711 és HX717 ADC-adatok előfizetésére szolgál. Ezen alacsony szintű ADC-frissítések lekérése hasznos lehet diagnosztikai és hibakeresési célokra. Ennek a végpontnak a használata növelheti a Klipper rendszerterhelését.</p>
+<p>Egy kérés így nézhet ki: <code>{"id": 123, "method":"hx71x/dump_hx71x", "params": {"sensor": "load_cell", "response_template": {}}}</code> és visszatérhet: <code>{"id": 123,"result":{"header":["time","counts","value"]}}</code> és később aszinkron üzeneteket produkálhat, mint például: <code>{"params":{"data":[[3292.432935, 562534, 0.067059278], [3292.4394937, 5625322, 0.670590639]]}}</code></p>
 <h3 id="ads1220dump_ads1220">ads1220/dump_ads1220<a class="headerlink" href="#ads1220dump_ads1220" title="Permanent link">&para;</a></h3>
-<p>This endpoint is used to subscribe to raw ADS1220 ADC data. Obtaining these low-level ADC updates may be useful for diagnostic and debugging purposes. Using this endpoint may increase Klipper's system load.</p>
-<p>A request may look like: <code>{"id": 123, "method":"ads1220/dump_ads1220", "params": {"sensor": "load_cell", "response_template": {}}}</code> and might return: <code>{"id": 123,"result":{"header":["time","counts","value"]}}</code> and might later produce asynchronous messages such as: <code>{"params":{"data":[[3292.432935, 562534, 0.067059278], [3292.4394937, 5625322, 0.670590639]]}}</code></p>
+<p>Ez a végpont a nyers ADS1220 ADC-adatok felírására szolgál. Ezen alacsony szintű ADC-frissítések lekérése hasznos lehet diagnosztikai és hibakeresési célokra. Ennek a végpontnak a használata növelheti a Klipper rendszerterhelését.</p>
+<p>Egy kérés így nézhet ki: <code>{"id": 123, "method":"ads1220/dump_ads1220", "params": {"sensor": "load_cell", "response_template": {}}}</code> és visszatérhet: <code>{"id": 123,"result":{"header":["time","counts","value"]}}</code> és később aszinkron üzeneteket produkálhat: <code>{"params":{"data":[[3292.432935, 562534, 0.067059278], [3292.4394937, 5625322, 0.670590639]]}}</code></p>
 <h3 id="pause_resumecancel">pause_resume/cancel<a class="headerlink" href="#pause_resumecancel" title="Permanent link">&para;</a></h3>
 <p>Ez a végpont hasonló a "PRINT_CANCEL" G-kód parancs futtatásához. Például: <code>{"id": }</code></p>
 <p>A "gcode/script" végponthoz hasonlóan ez a végpont is csak a függőben lévő G-kód parancsok befejezése után fejeződik be.</p>
@@ -1886,9 +1886,9 @@ gcode:
 <p>Ez a végpont lekérdezi az aktív végpontokat és visszaadja azok állapotát. Például: <code>{"id": 123, "method": "query_endstops/status"}</code> visszatérhet: <code>{"id": 123, "result": {"y": "open", "x": "open", "z": "TRIGGERED"}}</code></p>
 <p>A "gcode/script" végponthoz hasonlóan ez a végpont is csak a függőben lévő G-kód parancsok befejezése után fejeződik be.</p>
 <h3 id="bed_meshdump_mesh">bed_mesh/dump_mesh<a class="headerlink" href="#bed_meshdump_mesh" title="Permanent link">&para;</a></h3>
-<p>Dumps the configuration and state for the current mesh and all saved profiles.</p>
-<p>For example: <code>{"id": 123, "method": "bed_mesh/dump_mesh"}</code></p>
-<p>might return:</p>
+<p>Kitölti az aktuális háló és az összes mentett profil konfigurációját és állapotát.</p>
+<p>Például: <code>{"id": 123, "method": "bed_mesh/dump_mesh"}</code></p>
+<p>visszatérhet:</p>
 <div class="highlight"><pre><span></span><code>{
     &quot;current_mesh&quot;: {
         &quot;name&quot;: &quot;eddy-scan-test&quot;,
@@ -1997,7 +1997,7 @@ gcode:
 }
 </code></pre></div>
 
-<p>The <code>dump_mesh</code> endpoint takes one optional parameter, <code>mesh_args</code>. This parameter must be an object, where the keys and values are parameters available to <a href="#bed_mesh_calibrate">BED_MESH_CALIBRATE</a>. This will update the mesh configuration and probe points using the supplied parameters prior to returning the result. It is recommended to omit mesh parameters unless it is desired to visualize the probe points and/or travel path before performing <code>BED_MESH_CALIBRATE</code>.</p>
+<p>A <code>dump_mesh</code> végpontnak egy opcionális paramétere van, a <code>mesh_args</code>. Ennek a paraméternek egy objektumnak kell lennie, ahol a kulcsok és az értékek a <a href="#bed_mesh_calibrate">BED_MESH_CALIBRATE</a> számára elérhető paraméterek. Ez frissíti a háló konfigurációját és a mérési pontokat a megadott paraméterek segítségével, mielőtt visszaküldi az eredményt. A hálóparaméterek elhagyása ajánlott, kivéve, ha a <code>BED_MESH_CALIBRATE</code> végrehajtása előtt a mérési pontokat és/vagy a haladási útvonalat kívánod megjeleníteni.</p>
 
               
             </article>
