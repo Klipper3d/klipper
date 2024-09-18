@@ -50,12 +50,14 @@ class Heater:
         self.control = algo(self, config)
         # Setup output heater pin
         heater_pin = config.get('heater_pin')
-        ppins = self.printer.lookup_object('pins')
-        self.mcu_pwm = ppins.setup_pin('pwm', heater_pin)
-        pwm_cycle_time = config.getfloat('pwm_cycle_time', 0.100, above=0.,
+
+        if(heater_pin != "induction"):
+            ppins = self.printer.lookup_object('pins')
+            self.mcu_pwm = ppins.setup_pin('pwm', heater_pin)
+            pwm_cycle_time = config.getfloat('pwm_cycle_time', 0.100, above=0.,
                                          maxval=self.pwm_delay)
-        self.mcu_pwm.setup_cycle_time(pwm_cycle_time)
-        self.mcu_pwm.setup_max_duration(MAX_HEAT_TIME)
+            self.mcu_pwm.setup_cycle_time(pwm_cycle_time)
+            self.mcu_pwm.setup_max_duration(MAX_HEAT_TIME)
         # Load additional modules
         self.printer.load_object(config, "verify_heater %s" % (short_name,))
         self.printer.load_object(config, "pid_calibrate")
