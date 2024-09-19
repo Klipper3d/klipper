@@ -274,7 +274,11 @@ class PrinterHeaters:
         sensor = self.setup_sensor(config)
         # Create heater
         # TODO: read type from config
-        self.heaters[heater_name] = heater = HeaterHCU(config, sensor)
+        if heater_name == "extruder":
+            heater = HeaterHCU(config, sensor)
+        else:
+            heater = Heater(config, sensor)
+        self.heaters[heater_name] = heater
         self.register_sensor(config, heater, gcode_id)
         self.available_heaters.append(config.get_name())
         return heater
