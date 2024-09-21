@@ -66,7 +66,7 @@ class Fan:
             return "delay", self.kick_start_time
         self.last_fan_value = self.last_req_value = value
         self.mcu_fan.set_pwm(print_time, value)
-    def set_speed(self, print_time, value):
+    def set_speed(self, value, print_time=None):
         self.gcrq.send_async_request(value, print_time)
     def set_speed_from_command(self, value):
         self.gcrq.queue_gcode_request(value)
