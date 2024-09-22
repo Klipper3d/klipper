@@ -166,6 +166,8 @@ i2c_wait(I2C_TypeDef *i2c, uint32_t set, uint32_t timeout)
         uint32_t isr = i2c->ISR;
         if (isr & set)
             return isr;
+        if (isr & I2C_ISR_NACKF)
+            shutdown("I2C NACK error encountered");
         if (!timer_is_before(timer_read_time(), timeout))
             shutdown("i2c timeout");
     }
