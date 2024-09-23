@@ -81,36 +81,3 @@ command_i2c_read(uint32_t * args)
     sendf("i2c_read_response oid=%c response=%*s", oid, data_len, data);
 }
 DECL_COMMAND(command_i2c_read, "i2c_read oid=%c reg=%*s read_len=%u");
-
-void
-command_i2c_modify_bits(uint32_t *args)
-{
-    uint8_t oid = args[0];
-    struct i2cdev_s *i2c = oid_lookup(oid, command_config_i2c);
-    uint8_t reg_len = args[1];
-    uint8_t *reg = command_decode_ptr(args[2]);
-    uint32_t clear_set_len = args[3];
-    if (clear_set_len % 2 != 0)
-        shutdown("i2c_modify_bits: Odd number of bits!");
-    uint8_t data_len = clear_set_len/2;
-    uint8_t *clear_set = command_decode_ptr(args[4]);
-    uint8_t receive_data[reg_len + data_len];
-    uint_fast8_t flags = i2c->flags;
-    memcpy(receive_data, reg, reg_len);
-    if (CONFIG_WANT_SOFTWARE_I2C && flags & IF_SOFTWARE)
-        i2c_software_read(
-            i2c->i2c_software, reg_len, reg, data_len, receive_data + reg_len);
-    else
-        i2c_read(
-            i2c->i2c_config, reg_len, reg, data_len, receive_data + reg_len);
-    for (int i = 0; i < data_len; i++) {
-        receive_data[reg_len + i] &= ~clear_set[i];
-        receive_data[reg_len + i] |= clear_set[data_len + i];
-    }
-    if (CONFIG_WANT_SOFTWARE_I2C && flags & IF_SOFTWARE)
-        i2c_software_write(i2c->i2c_software, reg_len + data_len, receive_data);
-    else
-        i2c_write(i2c->i2c_config, reg_len + data_len, receive_data);
-}
-DECL_COMMAND(command_i2c_modify_bits,
-             "i2c_modify_bits oid=%c reg=%*s clear_set_bits=%*s");
