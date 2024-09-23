@@ -148,11 +148,19 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
         gpio_peripheral(ii->sda_pin, ii->function | GPIO_OPEN_DRAIN, 1);
 
         // Set 100Khz frequency and enable
-        i2c->TIMINGR = ((0xB << I2C_TIMINGR_PRESC_Pos)
-                        | (0x13 << I2C_TIMINGR_SCLL_Pos)
-                        | (0xF << I2C_TIMINGR_SCLH_Pos)
-                        | (0x2 << I2C_TIMINGR_SDADEL_Pos)
-                        | (0x4 << I2C_TIMINGR_SCLDEL_Pos));
+        uint32_t nom_i2c_clock = 8000000;  // 8mhz internal clock = 125ns ticks
+        uint32_t scll = 40; // 40 * 125ns = 5us
+        uint32_t sclh = 32; // 32 * 125ns = 4us
+        uint32_t sdadel = 4; // 4 * 125ns = 500ns
+        uint32_t scldel = 10; // 10 * 125ns = 1250ns
+
+        uint32_t pclk = get_pclock_frequency((uint32_t)i2c);
+        uint32_t presc = DIV_ROUND_UP(pclk, nom_i2c_clock);
+        i2c->TIMINGR = (((presc - 1) << I2C_TIMINGR_PRESC_Pos)
+                        | ((scll - 1) << I2C_TIMINGR_SCLL_Pos)
+                        | ((sclh - 1) << I2C_TIMINGR_SCLH_Pos)
+                        | (sdadel << I2C_TIMINGR_SDADEL_Pos)
+                        | ((scldel - 1) << I2C_TIMINGR_SCLDEL_Pos));
         i2c->CR1 = I2C_CR1_PE;
     }
 
