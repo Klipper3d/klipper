@@ -306,7 +306,7 @@ class ConfigAutoSave:
         self.fileconfig = cfgrdr.build_fileconfig(autosave_data, filename)
         cfgrdr.append_fileconfig(regular_fileconfig,
                                  autosave_data, '*AUTOSAVE*')
-        return regular_fileconfig
+        return regular_fileconfig, self.fileconfig
     def get_status(self, eventtime):
         return {'save_config_pending': self.save_config_pending,
                 'save_config_pending_items': self.status_save_pending}
@@ -406,6 +406,55 @@ class ConfigAutoSave:
 
 
 ######################################################################
+# Config validation (check for undefined options)
+######################################################################
+
+class ConfigValidate:
+    def __init__(self, printer):
+        self.printer = printer
+        self.status_settings = {}
+        self.access_tracking = {}
+        self.autosave_options = {}
+    def start_access_tracking(self, autosave_fileconfig):
+        # Note autosave options for use during undefined options check
+        self.autosave_options = {}
+        for section in autosave_fileconfig.sections():
+            for option in autosave_fileconfig.options(section):
+                self.autosave_options[(section.lower(), option.lower())] = 1
+        self.access_tracking = {}
+        return self.access_tracking
+    def check_unused(self, fileconfig):
+        # Don't warn on fields set in autosave segment
+        access_tracking = dict(self.access_tracking)
+        access_tracking.update(self.autosave_options)
+        # Note locally used sections
+        valid_sections = { s: 1 for s, o in self.printer.lookup_objects() }
+        valid_sections.update({ s: 1 for s, o in access_tracking })
+        # Validate that there are no undefined parameters in the config file
+        for section_name in fileconfig.sections():
+            section = section_name.lower()
+            if section not in valid_sections:
+                raise error("Section '%s' is not a valid config section"
+                            % (section,))
+            for option in fileconfig.options(section_name):
+                option = option.lower()
+                if (section, option) not in access_tracking:
+                    raise error("Option '%s' is not valid in section '%s'"
+                                % (option, section))
+        # Setup get_status()
+        self._build_status_settings()
+        # Clear tracking state
+        self.access_tracking.clear()
+        self.autosave_options.clear()
+    def _build_status_settings(self):
+        self.status_settings = {}
+        for (section, option), value in self.access_tracking.items():
+            self.status_settings.setdefault(section, {})[option] = value
+    def get_status(self, eventtime):
+        return {'settings': self.status_settings}
+
+
+######################################################################
 # Main printer config tracking
 ######################################################################
 
@@ -413,11 +462,11 @@ class PrinterConfig:
     def __init__(self, printer):
         self.printer = printer
         self.autosave = ConfigAutoSave(printer)
+        self.validate = ConfigValidate(printer)
         self.deprecated = {}
         self.runtime_warnings = []
         self.deprecate_warnings = []
         self.status_raw_config = {}
-        self.status_settings = {}
         self.status_warnings = []
     def get_printer(self):
         return self.printer
@@ -427,53 +476,32 @@ class PrinterConfig:
         fileconfig = cfgrdr.build_fileconfig(data, filename)
         return ConfigWrapper(self.printer, fileconfig, {}, 'printer')
     def read_main_config(self):
-        fileconfig = self.autosave.load_main_config()
-        return ConfigWrapper(self.printer, fileconfig, {}, 'printer')
-    def check_unused_options(self, config):
-        fileconfig = config.fileconfig
-        objects = dict(self.printer.lookup_objects())
-        # Determine all the fields that have been accessed
-        access_tracking = dict(config.access_tracking)
-        for section in self.autosave.fileconfig.sections():
-            for option in self.autosave.fileconfig.options(section):
-                access_tracking[(section.lower(), option.lower())] = 1
-        # Validate that there are no undefined parameters in the config file
-        valid_sections = { s: 1 for s, o in access_tracking }
-        for section_name in fileconfig.sections():
-            section = section_name.lower()
-            if section not in valid_sections and section not in objects:
-                raise error("Section '%s' is not a valid config section"
-                            % (section,))
-            for option in fileconfig.options(section_name):
-                option = option.lower()
-                if (section, option) not in access_tracking:
-                    raise error("Option '%s' is not valid in section '%s'"
-                                % (option, section))
-        # Setup get_status()
-        self._build_status(config)
+        fileconfig, autosave_fileconfig = self.autosave.load_main_config()
+        access_tracking = self.validate.start_access_tracking(
+            autosave_fileconfig)
+        config = ConfigWrapper(self.printer, fileconfig,
+                               access_tracking, 'printer')
+        self._build_status_config(config)
+        return config
     def log_config(self, config):
         cfgrdr = ConfigFileReader()
         lines = ["===== Config file =====",
                  cfgrdr.build_config_string(config.fileconfig),
                  "======================="]
         self.printer.set_rollover_info("config", "\n".join(lines))
-    # Status reporting
+    def check_unused_options(self, config):
+        self.validate.check_unused(config.fileconfig)
+    # Deprecation warnings
     def runtime_warning(self, msg):
         logging.warning(msg)
         res = {'type': 'runtime_warning', 'message': msg}
         self.runtime_warnings.append(res)
         self.status_warnings = self.runtime_warnings + self.deprecate_warnings
     def deprecate(self, section, option, value=None, msg=None):
-        self.deprecated[(section, option, value)] = msg
-    def _build_status(self, config):
-        self.status_raw_config.clear()
-        for section in config.get_prefix_sections(''):
-            self.status_raw_config[section.get_name()] = section_status = {}
-            for option in section.get_prefix_options(''):
-                section_status[option] = section.get(option, note_valid=False)
-        self.status_settings = {}
-        for (section, option), value in config.access_tracking.items():
-            self.status_settings.setdefault(section, {})[option] = value
+        key = (section, option, value)
+        if key in self.deprecated and self.deprecated[key] == msg:
+            return
+        self.deprecated[key] = msg
         self.deprecate_warnings = []
         for (section, option, value), msg in self.deprecated.items():
             if value is None:
@@ -485,11 +513,18 @@ class PrinterConfig:
             res['option'] = option
             self.deprecate_warnings.append(res)
         self.status_warnings = self.runtime_warnings + self.deprecate_warnings
+    # Status reporting
+    def _build_status_config(self, config):
+        self.status_raw_config = {}
+        for section in config.get_prefix_sections(''):
+            self.status_raw_config[section.get_name()] = section_status = {}
+            for option in section.get_prefix_options(''):
+                section_status[option] = section.get(option, note_valid=False)
     def get_status(self, eventtime):
         status = {'config': self.status_raw_config,
-                  'settings': self.status_settings,
                   'warnings': self.status_warnings}
         status.update(self.autosave.get_status(eventtime))
+        status.update(self.validate.get_status(eventtime))
         return status
     # Autosave functions
     def set(self, section, option, value):
