@@ -247,7 +247,7 @@ class ConfigAutoSave:
             regular_data = data[:pos]
             autosave_data = data[pos + len(AUTOSAVE_HEADER):].strip()
         # Check for errors and strip line prefixes
-        if "\n#*# " in regular_data:
+        if "\n#*# " in regular_data or autosave_data.find(AUTOSAVE_HEADER) >= 0:
             logging.warning("Can't read autosave from config file"
                             " - autosave state corrupted")
             return data, ""
@@ -361,6 +361,11 @@ class ConfigAutoSave:
         regular_data = self._strip_duplicates(regular_data, self.fileconfig)
         self._disallow_include_conflicts(regular_data, cfgname, gcode)
         data = regular_data.rstrip() + autosave_data
+        new_regular_data, new_autosave_data = self._find_autosave_data(data)
+        if not new_autosave_data:
+            raise gcode.error(
+                "Existing config autosave is corrupted."
+                " Can't complete SAVE_CONFIG")
         # Determine filenames
         datestr = time.strftime("-%Y%m%d_%H%M%S")
         backup_name = cfgname + datestr
