@@ -155,16 +155,35 @@ class ConfigFileReader:
             logging.exception(msg)
             raise error(msg)
         return data.replace('\r\n', '\n')
-    def _parse_config_buffer(self, buffer, filename, fileconfig):
-        if not buffer:
+    def build_config_string(self, fileconfig):
+        sfile = io.StringIO()
+        fileconfig.write(sfile)
+        return sfile.getvalue().strip()
+    def append_fileconfig(self, fileconfig, data, filename):
+        if not data:
             return
-        data = '\n'.join(buffer)
-        del buffer[:]
-        sbuffer = io.StringIO(data)
+        # Strip trailing comments
+        lines = data.split('\n')
+        for i, line in enumerate(lines):
+            pos = line.find('#')
+            if pos >= 0:
+                lines[i] = line[:pos]
+        sbuffer = io.StringIO('\n'.join(lines))
         if sys.version_info.major >= 3:
             fileconfig.read_file(sbuffer, filename)
         else:
             fileconfig.readfp(sbuffer, filename)
+    def _create_fileconfig(self):
+        if sys.version_info.major >= 3:
+            fileconfig = configparser.RawConfigParser(
+                strict=False, inline_comment_prefixes=(';', '#'))
+        else:
+            fileconfig = configparser.RawConfigParser()
+        return fileconfig
+    def build_fileconfig(self, data, filename):
+        fileconfig = self._create_fileconfig()
+        self.append_fileconfig(fileconfig, data, filename)
+        return fileconfig
     def _resolve_include(self, source_filename, include_spec, fileconfig,
                          visited):
         dirname = os.path.dirname(source_filename)
@@ -188,36 +207,25 @@ class ConfigFileReader:
         lines = data.split('\n')
         # Buffer lines between includes and parse as a unit so that overrides
         # in includes apply linearly as they do within a single file
-        buffer = []
+        buf = []
         for line in lines:
-            # Strip trailing comment
-            pos = line.find('#')
-            if pos >= 0:
-                line = line[:pos]
             # Process include or buffer line
             mo = configparser.RawConfigParser.SECTCRE.match(line)
             header = mo and mo.group('header')
             if header and header.startswith('include '):
-                self._parse_config_buffer(buffer, filename, fileconfig)
+                self.append_fileconfig(fileconfig, '\n'.join(buf), filename)
+                del buf[:]
                 include_spec = header[8:].strip()
                 self._resolve_include(filename, include_spec, fileconfig,
                                       visited)
             else:
-                buffer.append(line)
-        self._parse_config_buffer(buffer, filename, fileconfig)
+                buf.append(line)
+        self.append_fileconfig(fileconfig, '\n'.join(buf), filename)
         visited.remove(path)
-    def build_fileconfig(self, data, filename):
-        if sys.version_info.major >= 3:
-            fileconfig = configparser.RawConfigParser(
-                strict=False, inline_comment_prefixes=(';', '#'))
-        else:
-            fileconfig = configparser.RawConfigParser()
+    def build_fileconfig_with_includes(self, data, filename):
+        fileconfig = self._create_fileconfig()
         self._parse_config(data, filename, fileconfig, set())
         return fileconfig
-    def build_config_string(self, fileconfig):
-        sfile = io.StringIO()
-        fileconfig.write(sfile)
-        return sfile.getvalue().strip()
 
 
 ######################################################################
@@ -291,11 +299,14 @@ class ConfigAutoSave:
         cfgrdr = ConfigFileReader()
         data = cfgrdr.read_config_file(filename)
         regular_data, autosave_data = self._find_autosave_data(data)
-        regular_fileconfig = cfgrdr.build_fileconfig(regular_data, filename)
+        regular_fileconfig = cfgrdr.build_fileconfig_with_includes(
+            regular_data, filename)
         autosave_data = self._strip_duplicates(autosave_data,
                                                regular_fileconfig)
         self.fileconfig = cfgrdr.build_fileconfig(autosave_data, filename)
-        return cfgrdr.build_fileconfig(regular_data + autosave_data, filename)
+        cfgrdr.append_fileconfig(regular_fileconfig,
+                                 autosave_data, '*AUTOSAVE*')
+        return regular_fileconfig
     def get_status(self, eventtime):
         return {'save_config_pending': self.save_config_pending,
                 'save_config_pending_items': self.status_save_pending}
@@ -326,20 +337,17 @@ class ConfigAutoSave:
             del pending[section]
             self.status_save_pending = pending
             self.save_config_pending = True
-    def _disallow_include_conflicts(self, regular_data, cfgname, gcode):
-        cfgrdr = ConfigFileReader()
-        regular_fileconfig = cfgrdr.build_fileconfig(regular_data, cfgname)
+    def _disallow_include_conflicts(self, regular_fileconfig):
         for section in self.fileconfig.sections():
             for option in self.fileconfig.options(section):
                 if regular_fileconfig.has_option(section, option):
                     msg = ("SAVE_CONFIG section '%s' option '%s' conflicts "
                            "with included value" % (section, option))
-                    raise gcode.error(msg)
+                    raise self.printer.command_error(msg)
     cmd_SAVE_CONFIG_help = "Overwrite config file and restart"
     def cmd_SAVE_CONFIG(self, gcmd):
         if not self.fileconfig.sections():
             return
-        gcode = self.printer.lookup_object('gcode')
         # Create string containing autosave data
         cfgrdr = ConfigFileReader()
         autosave_data = cfgrdr.build_config_string(self.fileconfig)
@@ -352,20 +360,26 @@ class ConfigAutoSave:
         cfgname = self.printer.get_start_args()['config_file']
         try:
             data = cfgrdr.read_config_file(cfgname)
-            regular_data, old_autosave_data = self._find_autosave_data(data)
-            regular_fileconfig = cfgrdr.build_fileconfig(regular_data, cfgname)
         except error as e:
-            msg = "Unable to parse existing config on SAVE_CONFIG"
+            msg = "Unable to read existing config on SAVE_CONFIG"
             logging.exception(msg)
-            raise gcode.error(msg)
+            raise gcmd.error(msg)
+        regular_data, old_autosave_data = self._find_autosave_data(data)
         regular_data = self._strip_duplicates(regular_data, self.fileconfig)
-        self._disallow_include_conflicts(regular_data, cfgname, gcode)
         data = regular_data.rstrip() + autosave_data
         new_regular_data, new_autosave_data = self._find_autosave_data(data)
         if not new_autosave_data:
-            raise gcode.error(
+            raise gcmd.error(
                 "Existing config autosave is corrupted."
                 " Can't complete SAVE_CONFIG")
+        try:
+            regular_fileconfig = cfgrdr.build_fileconfig_with_includes(
+                new_regular_data, cfgname)
+        except error as e:
+            msg = "Unable to parse existing config on SAVE_CONFIG"
+            logging.exception(msg)
+            raise gcmd.error(msg)
+        self._disallow_include_conflicts(regular_fileconfig)
         # Determine filenames
         datestr = time.strftime("-%Y%m%d_%H%M%S")
         backup_name = cfgname + datestr
@@ -385,8 +399,9 @@ class ConfigAutoSave:
         except:
             msg = "Unable to write config file during SAVE_CONFIG"
             logging.exception(msg)
-            raise gcode.error(msg)
+            raise gcmd.error(msg)
         # Request a restart
+        gcode = self.printer.lookup_object('gcode')
         gcode.request_restart('restart')
 
 
