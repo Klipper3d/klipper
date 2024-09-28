@@ -29,7 +29,10 @@ enum {
     DF_ON=1<<0, DF_TOGGLING=1<<1, DF_CHECK_END=1<<2, DF_DEFAULT_ON=1<<4
 };
 
-static uint_fast8_t digital_load_event(struct timer *timer);
+static uint_fast8_t digital_load_during_toggle(
+    struct digital_out_s *d, uint32_t curtime);
+static uint_fast8_t process_digital_load_event(
+    struct digital_out_s *d, uint32_t on_duration);
 
 // Software PWM toggle event
 static uint_fast8_t
@@ -38,17 +41,62 @@ digital_toggle_event(struct timer *timer)
     struct digital_out_s *d = container_of(timer, struct digital_out_s, timer);
     gpio_out_toggle_noirq(d->pin);
     d->flags ^= DF_ON;
-    uint32_t waketime = d->timer.waketime;
+    uint32_t curtime = d->timer.waketime;
+    uint32_t waketime = curtime;
     if (d->flags & DF_ON)
         waketime += d->on_duration;
     else
         waketime += d->off_duration;
     if (d->flags & DF_CHECK_END && !timer_is_before(waketime, d->end_time)) {
-        // End of normal pulsing - next event loads new pwm settings
-        d->timer.func = digital_load_event;
-        waketime = d->end_time;
+        return digital_load_during_toggle(d, curtime);
     }
     d->timer.waketime = waketime;
+    return SF_RESCHEDULE;
+}
+
+// Load next pin output setting without rescheduling the timer.
+static uint_fast8_t
+digital_load_during_toggle(struct digital_out_s *d, uint32_t curtime)
+{
+    // Apply next update and remove it from queue
+    if (move_queue_empty(&d->mq))
+        shutdown("Missed scheduling of next digital out event");
+    struct move_node *mn = move_queue_pop(&d->mq);
+    struct digital_move *m = container_of(mn, struct digital_move, node);
+    uint32_t on_duration = m->on_duration;
+    int32_t off_duration = d->cycle_time - on_duration;
+    move_free(m);
+    if (on_duration <= 0 && off_duration <= 0) {
+        // Need a full reload
+        return process_digital_load_event(d, on_duration);
+    }
+    // Just a PWM update.
+    uint32_t waketime;
+    if (d->flags & DF_ON) {
+        // Switched to on, set the new time.
+        waketime = curtime + on_duration;
+    } else {
+        // Switched to off, keep the old off time to preserve cycle length.
+        waketime = curtime + d->off_duration;
+    }
+    uint32_t end_time;
+    int32_t watchdog_time = curtime + d->max_duration;
+    if (!move_queue_empty(&d->mq)) {
+        struct move_node *nn = move_queue_first(&d->mq);
+        end_time = container_of(nn, struct digital_move, node)->waketime;
+        if (d->max_duration && timer_is_before(watchdog_time, end_time))
+            shutdown("Scheduled digital out event will exceed max_duration");
+    } else if (d->max_duration) {
+        end_time = watchdog_time;
+    } else {
+        // No end time, clear check end.
+        end_time = 0;
+        d->flags &= ~DF_CHECK_END;
+    }
+    d->timer.waketime = waketime;
+    d->end_time = end_time;
+    d->on_duration = on_duration;
+    d->off_duration = off_duration;
     return SF_RESCHEDULE;
 }
 
@@ -63,9 +111,16 @@ digital_load_event(struct timer *timer)
     struct move_node *mn = move_queue_pop(&d->mq);
     struct digital_move *m = container_of(mn, struct digital_move, node);
     uint32_t on_duration = m->on_duration;
+    move_free(m);
+    return process_digital_load_event(d, on_duration);
+}
+
+// Updates the a new on duration immediately, handling all the cases.
+static uint_fast8_t
+process_digital_load_event(struct digital_out_s *d, uint32_t on_duration)
+{
     uint8_t flags = on_duration ? DF_ON : 0;
     gpio_out_write(d->pin, flags);
-    move_free(m);
 
     // Calculate next end_time and flags
     uint32_t end_time = 0;
