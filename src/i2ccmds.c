@@ -64,6 +64,19 @@ static int i2c_dev_remap_ret(int ret)
     return 0;
 }
 
+void i2c_shutdown_on_err(int ret){
+    switch (ret) {
+    case I2C_BUS_NACK:
+        shutdown("I2C NACK");
+    case I2C_BUS_START_NACK:
+        shutdown("I2C START NACK");
+    case I2C_BUS_START_READ_NACK:
+        shutdown("I2C START READ NACK");
+    case I2C_BUS_TIMEOUT:
+        shutdown("I2C Timeout");
+    }
+}
+
 int i2c_dev_write(struct i2cdev_s *i2c, uint8_t write_len, uint8_t *data)
 {
     uint_fast8_t flags = i2c->flags;
@@ -87,16 +100,7 @@ void command_i2c_write(uint32_t *args)
         return;
     }
 
-    switch (ret) {
-    case I2C_BUS_NACK:
-        shutdown("I2C NACK");
-    case I2C_BUS_START_NACK:
-        shutdown("I2C START NACK");
-    case I2C_BUS_START_READ_NACK:
-        shutdown("I2C START READ NACK");
-    case I2C_BUS_TIMEOUT:
-        shutdown("I2C Timeout");
-    }
+    i2c_shutdown_on_err(ret);
 }
 DECL_COMMAND(command_i2c_write, "i2c_write oid=%c check=%c data=%*s");
 
