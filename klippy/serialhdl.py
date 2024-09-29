@@ -136,7 +136,7 @@ class SerialReader:
                                         can_filters=filters,
                                         bustype='socketcan')
                 bus.send(set_id_msg)
-            except (can.CanError, os.error) as e:
+            except (can.CanError, os.error, IOError) as e:
                 logging.warning("%sUnable to open CAN port: %s",
                                 self.warn_prefix, e)
                 self.reactor.pause(self.reactor.monotonic() + 5.)
@@ -166,7 +166,8 @@ class SerialReader:
             try:
                 fd = os.open(filename, os.O_RDWR | os.O_NOCTTY)
             except OSError as e:
-                logging.warn("%sUnable to open port: %s", self.warn_prefix, e)
+                logging.warning("%sUnable to open port: %s",
+                                self.warn_prefix, e)
                 self.reactor.pause(self.reactor.monotonic() + 5.)
                 continue
             serial_dev = os.fdopen(fd, 'rb+', 0)
@@ -187,7 +188,7 @@ class SerialReader:
                 serial_dev.rts = rts
                 serial_dev.open()
             except (OSError, IOError, serial.SerialException) as e:
-                logging.warn("%sUnable to open serial port: %s",
+                logging.warning("%sUnable to open serial port: %s",
                              self.warn_prefix, e)
                 self.reactor.pause(self.reactor.monotonic() + 5.)
                 continue
@@ -291,13 +292,13 @@ class SerialReader:
         logging.debug("%sUnknown message %d (len %d) while identifying",
                       self.warn_prefix, params['#msgid'], len(params['#msg']))
     def handle_unknown(self, params):
-        logging.warn("%sUnknown message type %d: %s",
+        logging.warning("%sUnknown message type %d: %s",
                      self.warn_prefix, params['#msgid'], repr(params['#msg']))
     def handle_output(self, params):
         logging.info("%s%s: %s", self.warn_prefix,
                      params['#name'], params['#msg'])
     def handle_default(self, params):
-        logging.warn("%sgot %s", self.warn_prefix, params)
+        logging.warning("%sgot %s", self.warn_prefix, params)
 
 # Class to send a query command and return the received response
 class SerialRetryCommand:

@@ -142,8 +142,9 @@ defs_kin_winch = """
 
 defs_kin_extruder = """
     struct stepper_kinematics *extruder_stepper_alloc(void);
+    void extruder_stepper_free(struct stepper_kinematics *sk);
     void extruder_set_pressure_advance(struct stepper_kinematics *sk
-        , double pressure_advance, double smooth_time);
+        , double print_time, double pressure_advance, double smooth_time);
 """
 
 defs_kin_shaper = """

@@ -8,6 +8,41 @@ All dates in this document are approximate.
 
 ## Changes
 
+20240912: `SET_PIN`, `SET_SERVO`, `SET_FAN_SPEED`, `M106`, and `M107`
+commands are now collated. Previously, if many updates to the same
+object were issued faster than the minimum scheduling time (typically
+100ms) then actual updates could be queued far into the future. Now if
+many updates are issued in rapid succession then it is possible that
+only the latest request will be applied. If the previous behavior is
+requried then consider adding explicit `G4` delay commands between
+updates.
+
+20240912: Support for `maximum_mcu_duration` and `static_value`
+parameters in `[output_pin]` config sections have been removed. These
+options have been deprecated since 20240123.
+
+20240415: The `on_error_gcode` parameter in the `[virtual_sdcard]`
+config section now has a default. If this parameter is not specified
+it now defaults to `TURN_OFF_HEATERS`. If the previous behavior is
+desired (take no default action on an error during a virtual_sdcard
+print) then define `on_error_gcode` with an empty value.
+
+20240313: The `max_accel_to_decel` parameter in the `[printer]` config
+section has been deprecated. The `ACCEL_TO_DECEL` parameter of the
+`SET_VELOCITY_LIMIT` command has been deprecated. The
+`printer.toolhead.max_accel_to_decel` status has been removed. Use the
+[minimum_cruise_ratio parameter](./Config_Reference.md#printer)
+instead. The deprecated features will be removed in the near future,
+and using them in the interim may result in subtly different behavior.
+
+20240215: Several deprecated features have been removed. Using "NTC
+100K beta 3950" as a thermistor name has been removed (deprecated on
+20211110). The `SYNC_STEPPER_TO_EXTRUDER` and
+`SET_EXTRUDER_STEP_DISTANCE` commands have been removed, and the
+extruder `shared_heater` config option has been removed (deprecated on
+20220210). The bed_mesh `relative_reference_index` option has been
+removed (deprecated on 20230619).
+
 20240123: The output_pin SET_PIN CYCLE_TIME parameter has been
 removed. Use the new
 [pwm_cycle_time](Config_Reference.md#pwm_cycle_time) module if it is

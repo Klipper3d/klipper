@@ -18,7 +18,7 @@ class MenuKeys:
         # Register rotary encoder
         encoder_pins = config.get('encoder_pins', None)
         encoder_steps_per_detent = config.getchoice('encoder_steps_per_detent',
-                                                    {2: 2, 4: 4}, 4)
+                                                    [2, 4], 4)
         if encoder_pins is not None:
             try:
                 pin1, pin2 = encoder_pins.split(',')

@@ -71,7 +71,7 @@ extra:
   # https://squidfunk.github.io/mkdocs-material/setup/setting-up-site-analytics/#site-search-tracking
   analytics:
     provider: google
-    property: UA-138371409-1
+    property: G-VEN1PGNQL4
   # Language Selection
   alternate:
     - name: English
@@ -88,7 +88,9 @@ nav:
   - Config_Changes.md
   - Contact.md
   - Installation and Configuration:
-    - Installation.md
+    - Installation:
+      - Installation.md
+      - OctoPrint.md
     - Configuration Reference:
       - Config_Reference.md
       - Rotation_Distance.md
@@ -138,4 +140,5 @@ nav:
     - CANBUS_Troubleshooting.md
     - TSL1401CL_Filament_Width_Sensor.md
     - Hall_Filament_Width_Sensor.md
+    - Eddy_Probe.md
   - Sponsors.md

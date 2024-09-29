@@ -14,7 +14,7 @@
 #include "internal.h" // report_errno
 #include "sched.h" // sched_shutdown
 
-DECL_ENUMERATION_RANGE("i2c_bus", "i2c.0", 0, 7);
+DECL_ENUMERATION_RANGE("i2c_bus", "i2c.0", 0, 15);
 
 struct i2c_s {
     uint32_t bus;

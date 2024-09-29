@@ -8,7 +8,7 @@ import logging
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 LINE_LENGTH_DEFAULT=20
-LINE_LENGTH_OPTIONS={16:16, 20:20}
+LINE_LENGTH_OPTIONS=[16, 20]
 
 TextGlyphs = { 'right_arrow': b'\x7e' }
 
