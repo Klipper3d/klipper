@@ -274,6 +274,9 @@ def main():
     opts.add_option("-d", "--dictionary", dest="dictionary", type="string",
                     action="callback", callback=arg_dictionary,
                     help="file to read for mcu protocol dictionary")
+    opts.add_option("-w", "--work-offsets", dest="work_offsets_file",
+                    help="location for work offsets storage file")
+
     opts.add_option("--import-test", action="store_true",
                     help="perform an import module test")
     options, args = opts.parse_args()
@@ -302,6 +305,11 @@ def main():
         bglogger = queuelogger.setup_bg_logging(options.logfile, debuglevel)
     else:
         logging.getLogger().setLevel(debuglevel)
+    if options.work_offsets_file:
+        start_args['work_offsets_file'] = options.work_offsets_file
+    else:
+        wo = os.path.dirname(os.path.abspath(start_args['config_file']))
+        start_args['work_offsets_file'] = os.path.join(wo, 'work_offsets.mem')
     logging.info("Starting Klippy...")
     git_info = util.get_git_version()
     git_vers = git_info["version"]
