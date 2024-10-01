@@ -1,0 +1,5 @@
+# Tests for loadcell sensors
+DICTIONARY atmega2560.dict
+CONFIG load_cell.cfg
+
+G4 P1000

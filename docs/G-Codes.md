@@ -476,6 +476,20 @@ enabled.
 `SET_FAN_SPEED FAN=config_name SPEED=<speed>` This command sets the
 speed of a fan. "speed" must be between 0.0 and 1.0.
 
+`SET_FAN_SPEED PIN=config_name TEMPLATE=<template_name>
+[<param_x>=<literal>]`: If `TEMPLATE` is specified then it assigns a
+[display_template](Config_Reference.md#display_template) to the given
+fan. For example, if one defined a `[display_template
+my_fan_template]` config section then one could assign
+`TEMPLATE=my_fan_template` here. The display_template should produce a
+string containing a floating point number with the desired value. The
+template will be continuously evaluated and the fan will be
+automatically set to the resulting speed. One may set display_template
+parameters to use during template evaluation (parameters will be
+parsed as Python literals). If TEMPLATE is an empty string then this
+command will clear any previous template assigned to the pin (one can
+then use `SET_FAN_SPEED` commands to manage the values directly).
+
 ### [filament_switch_sensor]
 
 The following command is available when a
@@ -856,6 +870,20 @@ enabled.
 output `VALUE`. VALUE should be 0 or 1 for "digital" output pins. For
 PWM pins, set to a value between 0.0 and 1.0, or between 0.0 and
 `scale` if a scale is configured in the output_pin config section.
+
+`SET_PIN PIN=config_name TEMPLATE=<template_name> [<param_x>=<literal>]`:
+If `TEMPLATE` is specified then it assigns a
+[display_template](Config_Reference.md#display_template) to the given
+pin. For example, if one defined a `[display_template
+my_pin_template]` config section then one could assign
+`TEMPLATE=my_pin_template` here. The display_template should produce a
+string containing a floating point number with the desired value. The
+template will be continuously evaluated and the pin will be
+automatically set to the resulting value. One may set display_template
+parameters to use during template evaluation (parameters will be
+parsed as Python literals). If TEMPLATE is an empty string then this
+command will clear any previous template assigned to the pin (one can
+then use `SET_PIN` commands to manage the values directly).
 
 ### [palette2]
 

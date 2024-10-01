@@ -78,7 +78,9 @@ for further details on how to configure a `temperature_probe`.  It is
 advised to configure the `calibration_position`,
 `calibration_extruder_temp`, `extruder_heating_z`, and
 `calibration_bed_temp` options, as doing so will automate some of the
-steps outlined below.
+steps outlined below.  If the printer to be calibrated is enclosed, it
+is strongly recommended to set the `max_validation_temp` option to a value
+between 100 and 120.
 
 Eddy probe manufacturers may offer a stock drift calibration that can be
 manually added to `drift_calibration` option of the `[probe_eddy_current]`

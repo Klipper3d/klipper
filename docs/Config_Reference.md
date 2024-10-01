@@ -2458,6 +2458,10 @@ postfix for both sections.
 #   "calibration_extruder_temp" option is set.  Its recommended to heat
 #   the extruder some distance from the bed to minimize its impact on
 #   the probe coil temperature.  The default is 50.
+#max_validation_temp: 60.
+#   The maximum temperature used to validate the calibration.  It is
+#   recommended to set this to a value between 100 and 120 for enclosed
+#   printers.  The default is 60.
 ```
 
 ## Temperature sensors
