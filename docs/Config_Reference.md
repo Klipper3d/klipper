@@ -3718,6 +3718,16 @@ run_current:
 #   velocity" threshold (THIGH) to. This is typically used to disable
 #   the "CoolStep" feature at high speeds. The default is to not set a
 #   TMC "high velocity" threshold.
+#overvoltage_threshold: 37.735
+#   The threshold voltage (in V) of overvoltage protection. The decelerating
+#   stepper motor can cause a raise of V_supply of the driver. When the V_supply
+#   is higher than overvoltage_threshold, the mosfet is turned on and dump the
+#   excess energy into the power resistor, keep the supply voltage below
+#   the threshold.
+#overtemperature_warning_threshold: 120.0
+#   The threshold temperature (in ℃) of the overtemperature warning.
+#   When the temperature of the driver is higher than this threshold,
+#   a warning will be reported.
 #driver_MSLUT0: 2863314260
 #driver_MSLUT1: 1251300522
 #driver_MSLUT2: 608774441
