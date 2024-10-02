@@ -224,6 +224,7 @@ CONFIG ../../config/generic-bigtreetech-skr-2.cfg
 CONFIG ../../config/generic-flyboard.cfg
 CONFIG ../../config/generic-I3DBEEZ9.cfg
 CONFIG ../../config/generic-mellow-fly-cdy-v3.cfg
+CONFIG ../../config/generic-mellow-fly-e3-v2.cfg
 CONFIG ../../config/generic-mellow-super-infinty-hv.cfg
 CONFIG ../../config/generic-mks-monster8.cfg
 CONFIG ../../config/generic-mks-robin-nano-v3.cfg
