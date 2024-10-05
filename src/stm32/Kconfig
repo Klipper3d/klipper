@@ -111,6 +111,12 @@ choice
         bool "Nation N32G455"
         select MACH_N32G45x
         select MACH_STM32F1
+    config MACH_AT32F415
+        bool "Artery AT32F415"
+        select MACH_STM32F1
+    config MACH_AT32F413
+        bool "Artery AT32F413"
+        select MACH_STM32F1
 endchoice
 
 config MACH_STM32F103x6
@@ -144,6 +150,10 @@ config MACH_STM32F4x5 # F405, F407, F429 series
 config MACH_STM32L4
     bool
 config MACH_N32G45x
+    bool
+config MACH_AT32F415
+    bool
+config MACH_AT32F413
     bool
 config HAVE_STM32_USBFS
     bool
@@ -190,6 +200,8 @@ config MCU
     default "stm32h750xx" if MACH_STM32H750
     default "stm32l412xx" if MACH_STM32L412
     default "stm32f103xe" if MACH_N32G45x
+    default "stm32f103xe" if MACH_AT32F415
+    default "stm32f103xe" if MACH_AT32F413
 
 config CLOCK_FREQ
     int
@@ -208,6 +220,9 @@ config CLOCK_FREQ
     default 80000000 if MACH_STM32L412
     default 64000000 if MACH_N32G45x && STM32_CLOCK_REF_INTERNAL
     default 128000000 if MACH_N32G45x
+    default 64000000 if MACH_AT32F415 && STM32_CLOCK_REF_INTERNAL
+    default 120000000 if MACH_AT32F415
+    default 120000000 if MACH_AT32F413
 
 config FLASH_SIZE
     hex
@@ -221,6 +236,8 @@ config FLASH_SIZE
     default 0x20000 if MACH_STM32H750
     default 0x200000 if MACH_STM32H743 || MACH_STM32F765
     default 0x20000 if MACH_N32G45x
+    default 0x20000 if MACH_AT32F415
+    default 0x20000 if MACH_AT32F413
 
 config FLASH_BOOT_ADDRESS
     hex
@@ -248,6 +265,8 @@ config RAM_SIZE
     default 0x24000 if MACH_STM32G0Bx
     default 0x20000 if MACH_STM32H7
     default 0x10000 if MACH_N32G45x
+    default 0x8000 if MACH_AT32F415
+    default 0x8000 if MACH_AT32F413
 
 config STACK_SIZE
     int

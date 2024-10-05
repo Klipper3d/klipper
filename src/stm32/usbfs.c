@@ -265,7 +265,8 @@ usb_send_bulk_in(void *data, uint_fast8_t len)
             // buffering mode, so wait for second packet before starting.
             if (bipp == (BI_START | 1)) {
                 bulk_in_push_pos = 0;
-                writel(&bulk_in_pop_flag, USB_EP_KIND); // Dummy flag
+                if (! CONFIG_MACH_AT32F413)
+                    writel(&bulk_in_pop_flag, USB_EP_KIND); // Dummy flag
                 USB_EPR[ep] = calc_epr_bits(epr, USB_EPTX_STAT
                                             , USB_EP_TX_VALID);
             }
