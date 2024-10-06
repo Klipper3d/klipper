@@ -58,6 +58,10 @@ class Heater:
                                          maxval=self.pwm_delay)
         self.mcu_pwm.setup_cycle_time(pwm_cycle_time)
         self.mcu_pwm.setup_max_duration(MAX_HEAT_TIME)
+        # Enter fast mode
+        self.fast_pwm = False
+        if (pwm_cycle_time <= 0.01):
+            self.fast_pwm = True
         # Load additional modules
         self.printer.load_object(config, "verify_heater %s" % (short_name,))
         self.printer.load_object(config, "pid_calibrate")
@@ -78,7 +82,11 @@ class Heater:
         self.next_pwm_time = (pwm_time + MAX_HEAT_TIME
                               - (3. * self.pwm_delay + 0.001))
         self.last_pwm_value = value
-        self.mcu_pwm.set_pwm(pwm_time, value)
+        if not self.fast_pwm:
+            self.mcu_pwm.set_pwm(pwm_time, value)
+        else:
+            # PWM will apply on arrival, expect less then pending delay
+            self.mcu_pwm.set_pwm_now(pwm_time, value)
         #logging.debug("%s: pwm=%.3f@%.3f (from %.3f@%.3f [%.3f])",
         #              self.name, value, pwm_time,
         #              self.last_temp, self.last_temp_time, self.target_temp)
