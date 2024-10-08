@@ -244,7 +244,6 @@ class ProbeSessionHelper:
             pconfig = config.getsection('printer')
             self.z_position = pconfig.getfloat('minimum_z_position', 0.,
                                                note_valid=False)
-        self.homing_helper = HomingViaProbeHelper(config, mcu_probe)
         # Configurable probing speeds
         self.speed = config.getfloat('speed', 5.0, above=0.)
         self.lift_speed = config.getfloat('lift_speed', self.speed, above=0.)
@@ -567,6 +566,7 @@ class PrinterProbe:
                                              self.mcu_probe.query_endstop)
         self.probe_offsets = ProbeOffsetsHelper(config)
         self.probe_session = ProbeSessionHelper(config, self.mcu_probe)
+        self.homing_helper = HomingViaProbeHelper(config, self.mcu_probe)
     def get_probe_params(self, gcmd=None):
         return self.probe_session.get_probe_params(gcmd)
     def get_offsets(self):
