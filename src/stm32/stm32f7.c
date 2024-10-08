@@ -13,6 +13,9 @@
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
 
+//address of the DWT Lock Access register (deprecated in CMSIS v6)
+volatile unsigned int *DWT_LAR      = (volatile unsigned int *)0xE0001FB0;
+
 
 /****************************************************************
  * Clock setup
@@ -160,7 +163,7 @@ armcm_main(void)
 
     // STM32F7 specific DWT unlock required prior to timer_init() DWT setup.
     CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-    DWT->LAR = 0xC5ACCE55;
+    *DWT_LAR = 0xC5ACCE55;
 
     clock_setup();
 
