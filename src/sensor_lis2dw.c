@@ -20,12 +20,16 @@
 
 #define BYTES_PER_SAMPLE 6
 
+#define LIS2DW_MODEL 0
+#define LIS3DH_MODEL 1
+
 struct lis2dw {
     struct timer timer;
     uint32_t rest_ticks;
     struct spidev_s *spi;
     uint8_t flags;
     struct sensor_bulk sb;
+    uint8_t model;
 };
 
 enum {
@@ -51,8 +55,10 @@ command_config_lis2dw(uint32_t *args)
                                    , sizeof(*ax));
     ax->timer.func = lis2dw_event;
     ax->spi = spidev_oid_lookup(args[1]);
+    ax->model = args[2];
 }
-DECL_COMMAND(command_config_lis2dw, "config_lis2dw oid=%c spi_oid=%c");
+DECL_COMMAND(command_config_lis2dw, "config_lis2dw oid=%c spi_oid=%c"
+                                    " lis3dh=%c");
 
 // Helper code to reschedule the lis2dw_event() timer
 static void
@@ -75,18 +81,39 @@ lis2dw_query(struct lis2dw *ax, uint8_t oid)
     msg[0] = LIS_AR_DATAX0 | LIS_AM_READ ;
     uint8_t *d = &ax->sb.data[ax->sb.data_count];
 
-    spidev_transfer(ax->spi, 1, sizeof(msg), msg);
-
     spidev_transfer(ax->spi, 1, sizeof(fifo), fifo);
     fifo_empty = fifo[1]&0x3F;
     fifo_ovrn = fifo[1]&0x40;
 
-    d[0] = msg[1]; // x low bits
-    d[1] = msg[2]; // x high bits
-    d[2] = msg[3]; // y low bits
-    d[3] = msg[4]; // y high bits
-    d[4] = msg[5]; // z low bits
-    d[5] = msg[6]; // z high bits
+    if(ax->model == LIS2DW_MODEL){
+        spidev_transfer(ax->spi, 1, sizeof(msg), msg);
+        d[0] = msg[1]; // x low bits
+        d[1] = msg[2]; // x high bits
+        d[2] = msg[3]; // y low bits
+        d[3] = msg[4]; // y high bits
+        d[4] = msg[5]; // z low bits
+        d[5] = msg[6]; // z high bits
+    }else{
+        msg[0] = 0x28 | LIS_AM_READ ;
+        spidev_transfer(ax->spi, 1, sizeof(msg), msg);
+        d[0] = msg[1]; // x low bits
+        msg[0] = 0x29 | LIS_AM_READ ;
+        spidev_transfer(ax->spi, 1, sizeof(msg), msg);
+        d[1] = msg[1]; // x high bits
+        msg[0] = 0x2A | LIS_AM_READ ;
+        spidev_transfer(ax->spi, 1, sizeof(msg), msg);
+        d[2] = msg[1]; // y low bits
+        msg[0] = 0x2B | LIS_AM_READ ;
+        spidev_transfer(ax->spi, 1, sizeof(msg), msg);
+        d[3] = msg[1]; // y high bits
+        msg[0] = 0x2C | LIS_AM_READ ;
+        spidev_transfer(ax->spi, 1, sizeof(msg), msg);
+        d[4] = msg[1]; // z low bits
+        msg[0] = 0x2D | LIS_AM_READ ;
+        spidev_transfer(ax->spi, 1, sizeof(msg), msg);
+        d[5] = msg[1]; // z high bits
+    }
+
 
     ax->sb.data_count += BYTES_PER_SAMPLE;
     if (ax->sb.data_count + BYTES_PER_SAMPLE > ARRAY_SIZE(ax->sb.data))
