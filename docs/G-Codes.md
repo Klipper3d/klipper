@@ -512,35 +512,70 @@ will be disabled, if set to 1 it is enabled.
 
 The following standard G-Code commands are available when the
 [firmware_retraction config section](Config_Reference.md#firmware_retraction)
-is enabled. These commands allow you to utilize the firmware
-retraction feature available in many slicers, to reduce stringing
-during non-extrusion moves from one part of the print to another.
-Appropriately configuring pressure advance reduces the length of
-retraction required.
-- `G10`: Retracts the extruder using the currently configured
-  parameters.
-- `G11`: Unretracts the extruder using the currently configured
-  parameters.
+is enabled. These commands allow utilizing the firmware
+retraction feature available in many slicers. Retraction is a strategy to
+reduce stringing during travel moves (non-extrusion) from one part of the
+print to another. Note that pressure advance should be properly configured
+before retraction parameters are tuned to ensure optimal results.
+- `G10`: Retracts the filament using the currently configured
+  parameters. If z_hop_height is set to a value greater zero,
+  besides retracting the filament, the nozzle is lifted by set value.
+- `G11`: Unretracts the filament using the currently configured
+  parameters. If z_hop_height is set to a value greater zero,
+  besides unretracting the filament, the nozzle is lowered back on the print
+  with a vertical movement.
 
 The following additional commands are also available.
 
 #### SET_RETRACTION
 `SET_RETRACTION [RETRACT_LENGTH=<mm>] [RETRACT_SPEED=<mm/s>]
-[UNRETRACT_EXTRA_LENGTH=<mm>] [UNRETRACT_SPEED=<mm/s>]`: Adjust the
-parameters used by firmware retraction. RETRACT_LENGTH determines the
-length of filament to retract and unretract. The speed of retraction
-is adjusted via RETRACT_SPEED, and is typically set relatively
-high. The speed of unretraction is adjusted via UNRETRACT_SPEED, and
-is not particularly critical, although often lower than RETRACT_SPEED.
-In some cases it is useful to add a small amount of additional length
-on unretraction, and this is set via UNRETRACT_EXTRA_LENGTH.
-SET_RETRACTION is commonly set as part of slicer per-filament
-configuration, as different filaments require different parameter
-settings.
+[UNRETRACT_EXTRA_LENGTH=<mm>] [UNRETRACT_SPEED=<mm/s>] [Z_HOP_HEIGHT=<mm>]`:
+Adjust the parameters used by firmware retraction. RETRACT_LENGTH determines the
+length of filament to retract (the minimum as well as standard value is 0 mm).
+RETRACT_SPEED determines the speed of the filament retraction move (the minimum
+value is 1 mm/s, the standard value is 20 mm/s). This value is typically set
+relatively high (>40 mm/s), except for soft and/or oozy filaments like TPU and
+PETG (20 to 30 mm/s).
+UNRETRACT_SPEED sets the speed of the filament unretract move (the minimum value
+is 1 mm/s, the standard value is 10 mm/s). This parameter is not particularly
+critical, although often lower than RETRACT_SPEED.
+UNRETRACT_EXTRA_LENGTH allows to add a small amount of length to the filament
+unretract move to prime the nozzle or to subtract a small amount of length from
+the filament unretract move to reduce blobbing at seams (the minimum value is
+-1 mm (2.41 mm3 volume for 1.75 mm filament), the standard value is 0 mm).
+Z_HOP_HEIGHT determines the vertical height by which the nozzle is lifted from
+the print to prevent collisions with the print during travel moves (the
+minimum value is 0 mm, the standard value is 0 mm, which disables Z-Hop moves).
+SET_RETRACTION is commonly set as part of slicer per-filament configuration, as
+different filaments require different parameter settings. The command can be
+issued at runtime.
 
 #### GET_RETRACTION
-`GET_RETRACTION`: Queries the current parameters used by firmware
-retraction and displays them on the terminal.
+`GET_RETRACTION`: Queries the current parameters used by the firmware retraction
+module as well as the retract state. RETRACT_LENGTH, RETRACT_SPEED,
+UNRETRACT_EXTRA_LENGTH, UNRETRACT_SPEED, Z_HOP_HEIGHT and RETRACTED (True, if
+retracted) are displayed on the terminal.
+
+#### CLEAR_RETRACTION
+`CLEAR_RETRACTION`: Clears the current retract state without extruder or
+motion system movement. All flags related to the retract state are reset to
+False and all changes to retraction parameters made via previous SET_RETRACTION
+commands are reset to config values.
+NOTE: The Module contains a lot of redundancy for safety to prevent undesired
+behavior. When printing from virtual SD Card, the printer state is monitored and
+retraction state is cleared if a print is started, canceled or finished or if a
+virtual SD card file is reset. When printing via GCode streaming (e.g. using
+OctoPrint), the retract state is cleared when the steppers are disabled (M84,
+typically part of end gcode and standard behavior of OctoPrint if a print is
+canceled) or the printer is homed (G28, typically part of start gcode). Hence,
+upon ending or canceling a print as well as starting a new print via GCode
+streaming or virtual SD card, the printer should always be in unretracted state.
+Nevertheless, it is recommended to add `CLEAR_RETRACTION` to your start and end
+gcode to make sure the retract state is reset before and after each print. If a
+print is finished or canceled while retracted and the retract state is not
+cleared, either via `CLEAR_RETRACTION` without filament or motion system
+movement or G11, the nozzle will stay above the requested z coordinate by the
+set z_hop_height.
 
 ### [force_move]
 
