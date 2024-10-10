@@ -8440,8 +8440,9 @@ same printed circuit board as the micro-controller.</p>
 micro-controller supports a 400000 speed (<em>fast mode</em>, 400kbit/s), but it must be
 <a href="RPi_microcontroller.html#optional-enabling-i2c">set in the operating system</a>
 and the <code>i2c_speed</code> parameter is otherwise ignored. The Klipper
-"RP2040" micro-controller and ATmega AVR family support a rate of 400000
-via the <code>i2c_speed</code> parameter. All other Klipper micro-controllers use a
+"RP2040" micro-controller and ATmega AVR family and some STM32
+(F0, G0, G4, L4, F7, H7) support a rate of 400000 via the <code>i2c_speed</code> parameter.
+All other Klipper micro-controllers use a
 100000 rate and ignore the <code>i2c_speed</code> parameter.</p>
 <div class="highlight"><pre><span></span><code>#i2c_address:
 #   The i2c address of the device. This must specified as a decimal
