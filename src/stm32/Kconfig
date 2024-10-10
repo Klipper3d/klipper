@@ -340,17 +340,17 @@ config ARMCM_RAM_VECTORTABLE
 choice
     prompt "Clock Reference" if LOW_LEVEL_OPTIONS
     config STM32_CLOCK_REF_8M
-        bool "8 MHz crystal"
+        bool "8 MHz external"
     config STM32_CLOCK_REF_12M
-        bool "12 MHz crystal"
+        bool "12 MHz external"
     config STM32_CLOCK_REF_16M
-        bool "16 MHz crystal"
+        bool "16 MHz external"
     config STM32_CLOCK_REF_20M
-        bool "20 MHz crystal"
+        bool "20 MHz external"
     config STM32_CLOCK_REF_24M
-        bool "24 MHz crystal"
+        bool "24 MHz external"
     config STM32_CLOCK_REF_25M
-        bool "25 MHz crystal"
+        bool "25 MHz external"
     config STM32_CLOCK_REF_INTERNAL
         bool "Internal clock"
 endchoice
@@ -372,6 +372,14 @@ config STM32F0_TRIM
         useful if the factory default internal clock is not accurate.
         Default is 16 (use factory default). Each increment increases
         the clock rate by ~240KHz.
+
+choice
+    prompt "External Clock Type" if LOW_LEVEL_OPTIONS && !STM32_CLOCK_REF_INTERNAL && MACH_STM32G474
+    config STM32_CLOCK_HSE_CRYSTAL
+        bool "HSE Crystal"
+    config STM32_CLOCK_HSE_BYPASS
+        bool "HSE Bypass"
+endchoice
 
 
 ######################################################################
