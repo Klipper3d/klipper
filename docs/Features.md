@@ -190,6 +190,7 @@ represent total number of steps per second on the micro-controller.
 | AR100                           | 3529K             | 2507K             |
 | STM32F407                       | 3652K             | 2459K             |
 | STM32F446                       | 3913K             | 2634K             |
+| SAME70                          | 6667K             | 4737K             |
 | STM32H743                       | 9091K             | 6061K             |
 
 If unsure of the micro-controller on a particular board, find the
