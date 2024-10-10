@@ -32,6 +32,7 @@ usb_write_packet(uint32_t ep, const uint8_t *data, uint32_t len)
     uint8_t *dest = usb_fifo(ep);
     while (len--)
         *dest++ = *data++;
+    __DMB();
 }
 
 static void

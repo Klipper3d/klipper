@@ -21,8 +21,14 @@ CFLAGS-$(CONFIG_MACH_SAME70) += -Ilib/same70b/include
 CFLAGS += $(CFLAGS-y) -D__$(MCU)__ -mthumb -Ilib/cmsis-core -Ilib/fast-hash
 
 CFLAGS_klipper.elf += -nostdlib -lgcc -lc_nano
-CFLAGS_klipper.elf += -T $(OUT)src/generic/armcm_link.ld
-$(OUT)klipper.elf: $(OUT)src/generic/armcm_link.ld
+
+ifeq ($(CONFIG_MACH_SAME70),y)
+    CFLAGS_klipper.elf += -T $(OUT)src/atsam/same70_link.ld
+    $(OUT)klipper.elf: $(OUT)src/atsam/same70_link.ld
+else
+    CFLAGS_klipper.elf += -T $(OUT)src/generic/armcm_link.ld
+    $(OUT)klipper.elf: $(OUT)src/generic/armcm_link.ld
+endif
 
 # Add source files
 src-y += atsam/main.c atsam/gpio.c atsam/i2c.c atsam/spi.c
