@@ -174,6 +174,17 @@ command_queue_digital_out(uint32_t *args)
 DECL_COMMAND(command_queue_digital_out,
              "queue_digital_out oid=%c clock=%u on_ticks=%u");
 
+void command_queue_digital_out_now(uint32_t *args)
+{
+    uint32_t oid = args[0];
+    uint32_t on_duration = args[1];
+    uint32_t time = timer_read_time() + timer_from_us(1000);
+    uint32_t new_args[] = {oid, time, on_duration};
+    command_queue_digital_out(new_args);
+}
+DECL_COMMAND(command_queue_digital_out_now,
+             "queue_digital_out_now oid=%c on_ticks=%u");
+
 void
 command_update_digital_out(uint32_t *args)
 {

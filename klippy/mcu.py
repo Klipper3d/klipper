@@ -473,6 +473,8 @@ class MCU_pwm:
             % (self._oid, self._last_clock, svalue), is_init=True)
         self._set_cmd = self._mcu.lookup_command(
             "queue_digital_out oid=%c clock=%u on_ticks=%u", cq=cmd_queue)
+        self._set_now_cmd = self._mcu.lookup_command(
+            "queue_digital_out_now oid=%c on_ticks=%u", cq=cmd_queue)
     def set_pwm(self, print_time, value):
         if self._invert:
             value = 1. - value
@@ -480,6 +482,14 @@ class MCU_pwm:
         clock = self._mcu.print_time_to_clock(print_time)
         self._set_cmd.send([self._oid, clock, v],
                            minclock=self._last_clock, reqclock=clock)
+        self._last_clock = clock
+    def set_pwm_now(self, print_time, value):
+        if self._invert:
+            value = 1. - value
+        v = int(max(0., min(1., value)) * self._pwm_max + 0.5)
+        clock = self._mcu.print_time_to_clock(print_time)
+        self._set_now_cmd.send([self._oid, v],
+                               minclock=self._last_clock, reqclock=0)
         self._last_clock = clock
 
 class MCU_adc:
