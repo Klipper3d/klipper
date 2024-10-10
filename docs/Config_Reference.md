@@ -2874,6 +2874,10 @@ a shutdown_speed equal to max_power.
 #heater_temp: 50.0
 #   A temperature (in Celsius) that the heater must drop below before
 #   the fan is disabled. The default is 50 Celsius.
+#heater_temp_off_offset: 0
+#   How many degrees (Celsius/Kelvin) the heater temperature has to
+#   drop below "heater_temp" before the fan turns off
+#   (to prevent a fan oscilating on and off). The default is 0K.
 #fan_speed: 1.0
 #   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
 #   will be set to when its associated heater is enabled. The default
