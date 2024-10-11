@@ -11,6 +11,16 @@ DEFAULT_DAMPING_RATIO = 0.1
 InputShaperCfg = collections.namedtuple(
         'InputShaperCfg', ('name', 'init_func', 'min_freq'))
 
+def convolve(L, R):
+    # Convolve A
+    As = [a * b for a in L[0] for b in R[0]]
+    # Sum up the times for each pulse
+    Ts = [a + b for a in L[1] for b in R[1]]
+    # sort by time
+    C = sorted(list(zip(Ts, As)))
+    # Rearrange into (A, T)
+    return ([a for _, a in C], [t for t, _ in C])
+
 def get_none_shaper():
     return ([], [])
 
