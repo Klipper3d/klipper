@@ -1,0 +1,36 @@
+# Tests for work offset commands G10, G53, G54-59
+DICTIONARY atmega2560.dict
+CONFIG work_offsets.cfg
+
+# clear out any stored offsets
+G10 L2 P1 X0 Y0 Z0
+G10 L2 P2 X0 Y0 Z0
+G10 L2 P3 X0 Y0 Z0
+G10 L2 P4 X0 Y0 Z0
+G10 L2 P5 X0 Y0 Z0
+G10 L2 P6 X0 Y0 Z0
+
+# home (printer endstops not at origin)
+G28
+# go to origin
+G0 X0 Y0 Z0
+GET_POSITION
+
+# set coordinate system 5 offsets, no movement
+G10 L2 P5 X10 Y10 Z0
+WORK_OFFSETS
+# change to coordinate system 5, no movement
+G58
+WORK_OFFSETS
+# offsets should cancel, no movement
+G0 X-10 Y-10 Z0
+GET_POSITION
+
+# move to coordinate system 5 origin
+G0 X0 Y0 Z0
+GET_POSITION
+
+# return to machine space
+G53
+WORK_OFFSETS
+GET_POSITION
