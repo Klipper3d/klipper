@@ -121,16 +121,20 @@ class BedMesh:
         self.gcode.register_command(
             'BED_MESH_OFFSET', self.cmd_BED_MESH_OFFSET,
             desc=self.cmd_BED_MESH_OFFSET_help)
-        #Added by Lazycoder to make BED_MESH_SAVE work on Ender-3 V3 KE Vanilla Klipper
+#### ADDED FROM ENDER 3 V3 KE bed_mesh.py ####
         self.gcode.register_command(
-            'BED_MESH_SAVE', self.cmd_BED_MESH_SAVE,
+           'BED_MESH_SAVE', self.cmd_BED_MESH_SAVE,
             desc=self.cmd_BED_MESH_SAVE_help)
         self.gcode.register_command(
             'BED_MESH_RESTORE', self.cmd_BED_MESH_RESTORE,
             desc=self.cmd_BED_MESH_RESTORE_help)
-
+#### END OF ADDITION ####
         # Register dump webhooks
         webhooks = self.printer.lookup_object('webhooks')
+#### ADDED FROM ENDER 3 V3 KE bed_mesh.py ####
+        webhooks.register_endpoint("get_mesh", self._get_mesh)
+        webhooks.register_endpoint("update_mesh", self.update_mesh)
+#### END OF ADDITION ####
         webhooks.register_endpoint(
             "bed_mesh/dump_mesh", self._handle_dump_request
         )
@@ -142,6 +146,25 @@ class BedMesh:
     def handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
         self.bmc.print_generated_points(logging.info)
+#### ADDED FROM ENDER 3 V3 KE bed_mesh.py ####
+    def _get_mesh(self, web_request):
+        probed_matrix = [[]]
+        try:
+            probed_matrix = self.z_mesh.get_probed_matrix()
+        except Exception as err:
+            logging.error(err)
+        web_request.send({'probed_matrix': probed_matrix})
+    def update_mesh(self, web_request):
+        probed_matrix = web_request.get("probed_matrix", [[]])
+        self.z_mesh.update_mesh_probed_matrix(probed_matrix)
+        self.set_mesh(self.z_mesh)
+        self.update_status()
+        self.save_profile(self.pmgr.get_current_profile())
+        self.load_profile(self.pmgr.get_current_profile())
+        self.gcode.run_script_from_command('CXSAVE_CONFIG')
+        probed_matrix = self.z_mesh.get_probed_matrix()
+        web_request.send({'probed_matrix': probed_matrix})
+#### END OF ADDITION ####
     def set_mesh(self, mesh):
         if mesh is not None and self.fade_end != self.FADE_DISABLE:
             self.log_fade_complete = True
@@ -295,7 +318,7 @@ class BedMesh:
             gcode_move.reset_last_position()
         else:
             gcmd.respond_info("No mesh loaded to offset")
-    #Added by Lazycoder to make BED_MESH_SAVE work on Ender-3 V3 KE Vanilla Klipper
+#### ADDED FROM ENDER 3 V3 KE bed_mesh.py ####
     cmd_BED_MESH_SAVE_help = "Save the Mesh to bak"
     def cmd_BED_MESH_SAVE(self, gcmd):
         if self.z_mesh is not None:
@@ -303,6 +326,7 @@ class BedMesh:
     cmd_BED_MESH_RESTORE_help = "Restore the bak Mesh to Mesh"
     def cmd_BED_MESH_RESTORE(self, gcmd):
         self.set_mesh(self.z_mesh_bak)
+#### END OF ADDITION ####
     def _handle_dump_request(self, web_request):
         eventtime = self.printer.get_reactor().monotonic()
         prb = self.printer.lookup_object("probe", None)
