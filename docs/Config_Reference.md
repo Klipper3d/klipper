@@ -4471,6 +4471,21 @@ information on menu attributes available during template rendering.
 #enable:
 #   See above for a description of these parameters.
 
+#[menu some_list some_file_list]
+#type: vsdlist
+#name:
+#enable:
+#   See above for a description of these parameters.
+#sort:
+#   How to sort the virtual sdcard files. Must be one of "name", "date", "size":
+#       name - Alphabetical, from A to Z
+#       date - Modification time, from newest to oldest
+#       size - Dimension, from large to small
+#   Default is "name".
+#reverse:
+#   Whether to reverse the sorting order.
+#   Evaluated as a boolean and defaults to False.
+
 #[menu some_list some_command]
 #type: command
 #name:
