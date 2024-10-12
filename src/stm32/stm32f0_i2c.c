@@ -153,6 +153,13 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
         uint32_t sclh = 32; // 32 * 125ns = 4us
         uint32_t sdadel = 4; // 4 * 125ns = 500ns
         uint32_t scldel = 10; // 10 * 125ns = 1250ns
+        // Clamp the rate to 400Khz
+        if (rate >= 400000) {
+            scll = 10; // 10 * 125ns = 1250ns
+            sclh = 4; // 4 * 125 = 500ns
+            sdadel = 3; // 3 * 125 = 375ns
+            scldel = 4; // 4 * 125 = 500ns
+        }
 
         uint32_t pclk = get_pclock_frequency((uint32_t)i2c);
         uint32_t presc = DIV_ROUND_UP(pclk, nom_i2c_clock);
