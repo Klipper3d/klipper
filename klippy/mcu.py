@@ -294,6 +294,7 @@ class MCU_endstop:
         self._home_cmd = self._query_cmd = None
         self._mcu.register_config_callback(self._build_config)
         self._rest_ticks = 0
+        self._oversample_ticks = 0
         self._dispatch = TriggerDispatch(mcu)
     def get_mcu(self):
         return self._mcu
@@ -324,9 +325,11 @@ class MCU_endstop:
         clock = self._mcu.print_time_to_clock(print_time)
         rest_ticks = self._mcu.print_time_to_clock(print_time+rest_time) - clock
         self._rest_ticks = rest_ticks
+        sample_ticks = self._mcu.seconds_to_clock(sample_time)
+        self._oversample_ticks = sample_ticks * (sample_count - 1)
         trigger_completion = self._dispatch.start(print_time)
         self._home_cmd.send(
-            [self._oid, clock, self._mcu.seconds_to_clock(sample_time),
+            [self._oid, clock, sample_ticks,
              sample_count, rest_ticks, triggered ^ self._invert,
              self._dispatch.get_oid(), MCU_trsync.REASON_ENDSTOP_HIT],
             reqclock=clock)
@@ -344,7 +347,9 @@ class MCU_endstop:
             return home_end_time
         params = self._query_cmd.send([self._oid])
         next_clock = self._mcu.clock32_to_clock64(params['next_clock'])
-        return self._mcu.clock_to_print_time(next_clock - self._rest_ticks)
+        return self._mcu.clock_to_print_time(
+            next_clock - self._rest_ticks + self._oversample_ticks
+        )
     def query_endstop(self, print_time):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._mcu.is_fileoutput():
