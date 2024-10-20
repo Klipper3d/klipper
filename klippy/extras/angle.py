@@ -411,6 +411,52 @@ class HelperTLE5012B:
                        parser=lambda x: int(x, 0))
         self._write_reg(reg, val)
 
+class HelperMT6816:
+    SPI_MODE = 3
+    SPI_SPEED = 10000000
+    def __init__(self, config, spi, oid):
+        self.printer = config.get_printer()
+        self.spi = spi
+        self.oid = oid
+        self.mcu = spi.get_mcu()
+        self.mcu.register_config_callback(self._build_config)
+        self.spi_angle_transfer_cmd = None
+        self.is_tcode_absolute = False
+        self.last_temperature = None
+        name = config.get_name().split()[-1]
+        gcode = self.printer.lookup_object("gcode")
+        gcode.register_mux_command("ANGLE_DEBUG_READ", "CHIP", name,
+                                   self.cmd_ANGLE_DEBUG_READ,
+                                   desc=self.cmd_ANGLE_DEBUG_READ_help)
+    def _build_config(self):
+        cmdqueue = self.spi.get_command_queue()
+        self.spi_angle_transfer_cmd = self.mcu.lookup_query_command(
+            "spi_angle_transfer oid=%c data=%*s",
+            "spi_angle_transfer_response oid=%c clock=%u response=%*s",
+            oid=self.oid, cq=cmdqueue)
+    def _send_spi(self, msg):
+        return self.spi.spi_transfer(msg)
+    def get_static_delay(self):
+        return .000001
+    def _read_reg(self, reg):
+        msg = [reg, 0, 0]
+        params = self._send_spi(msg)
+        resp = bytearray(params['response'])
+        val =  (resp[1] << 8) | resp[2]
+        return val
+    def start(self):
+        pass
+    cmd_ANGLE_DEBUG_READ_help = "Query low-level angle sensor register"
+    def cmd_ANGLE_DEBUG_READ(self, gcmd):
+        reg = 0x83
+        val = self._read_reg(reg)
+        gcmd.respond_info("ANGLE REG[0x%02x] = 0x%04x" % (reg, val))
+        angle = val >> 2
+        parity = bin(val >> 1).count("1") % 2
+        gcmd.respond_info("Angle %i ~ %.2f" % (angle, angle * 360 / (1 << 14)))
+        gcmd.respond_info("No Mag: %i" % (val >> 1 & 0x1))
+        gcmd.respond_info("Parity: %i == %i" % (parity, val & 0x1))
+
 BYTES_PER_SAMPLE = 3
 SAMPLES_PER_BLOCK = bulk_sensor.MAX_BULK_MSG_SIZE // BYTES_PER_SAMPLE
 
@@ -428,7 +474,7 @@ class Angle:
         self.last_sequence = self.last_angle = 0
         # Sensor type
         sensors = { "a1333": HelperA1333, "as5047d": HelperAS5047D,
-                    "tle5012b": HelperTLE5012B }
+                    "tle5012b": HelperTLE5012B, "mt6816": HelperMT6816 }
         sensor_type = config.getchoice('sensor_type', {s: s for s in sensors})
         sensor_class = sensors[sensor_type]
         self.spi = bus.MCU_SPI_from_config(config, sensor_class.SPI_MODE,
