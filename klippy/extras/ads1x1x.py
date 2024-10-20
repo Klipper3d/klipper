@@ -86,21 +86,23 @@ ADS1X1X_PGA = {
     '0.512V': 0x0800,  # +/-0.512V range = Gain 8
     '0.256V': 0x0A00  # +/-0.256V range = Gain 16
 }
+ADS111X_RESOLUTION = 32767.0
 ADS111X_PGA_SCALAR = {
-    0x0000: 6.144 / 32767.0,  # +/-6.144V range = Gain 2/3
-    0x0200: 4.096 / 32767.0,  # +/-4.096V range = Gain 1
-    0x0400: 2.048 / 32767.0,  # +/-2.048V range = Gain 2
-    0x0600: 1.024 / 32767.0,  # +/-1.024V range = Gain 4
-    0x0800: 0.512 / 32767.0,  # +/-0.512V range = Gain 8
-    0x0A00: 0.256 / 32767.0  # +/-0.256V range = Gain 16
+    0x0000: 6.144 / ADS111X_RESOLUTION,  # +/-6.144V range = Gain 2/3
+    0x0200: 4.096 / ADS111X_RESOLUTION,  # +/-4.096V range = Gain 1
+    0x0400: 2.048 / ADS111X_RESOLUTION,  # +/-2.048V range = Gain 2
+    0x0600: 1.024 / ADS111X_RESOLUTION,  # +/-1.024V range = Gain 4
+    0x0800: 0.512 / ADS111X_RESOLUTION,  # +/-0.512V range = Gain 8
+    0x0A00: 0.256 / ADS111X_RESOLUTION  # +/-0.256V range = Gain 16
 }
+ADS101X_RESOLUTION = 2047.0
 ADS101X_PGA_SCALAR = {
-    0x0000: 6.144 / 2047.0,  # +/-6.144V range = Gain 2/3
-    0x0200: 4.096 / 2047.0,  # +/-4.096V range = Gain 1
-    0x0400: 2.048 / 2047.0,  # +/-2.048V range = Gain 2
-    0x0600: 1.024 / 2047.0,  # +/-1.024V range = Gain 4
-    0x0800: 0.512 / 2047.0,  # +/-0.512V range = Gain 8
-    0x0A00: 0.256 / 2047.0  # +/-0.256V range = Gain 16
+    0x0000: 6.144 / ADS101X_RESOLUTION,  # +/-6.144V range = Gain 2/3
+    0x0200: 4.096 / ADS101X_RESOLUTION,  # +/-4.096V range = Gain 1
+    0x0400: 2.048 / ADS101X_RESOLUTION,  # +/-2.048V range = Gain 2
+    0x0600: 1.024 / ADS101X_RESOLUTION,  # +/-1.024V range = Gain 4
+    0x0800: 0.512 / ADS101X_RESOLUTION,  # +/-0.512V range = Gain 8
+    0x0A00: 0.256 / ADS101X_RESOLUTION  # +/-0.256V range = Gain 16
 }
 ADS1X1X_MODE = {
     'continuous': 0x0000,  # Continuous conversion mode
@@ -196,8 +198,6 @@ class ADS1X1X_chip:
         self.comp_queue = ADS1X1X_COMPARATOR_QUEUE['QUEUE_NONE']
         self._i2c = bus.MCU_I2C_from_config(config, address)
 
-        self.adc_voltage = config.getfloat('adc_voltage', 5., above=0.)
-
         self.mcu = self._i2c.get_mcu()
 
         self._printer.add_object("ads1x1x " + self.name, self)
@@ -271,114 +271,10 @@ class ADS1X1X_chip:
         except Exception:
             logging.exception("ADS1X1X: error while resetting device")
 
-class ADS1X1X_sensor:
-    def __init__(self, config):
-        self._printer = config.get_printer()
-        self.name = config.get_name().split()[-1]
-        sensor_pin = config.get('sensor_pin')
-
-        self.pin = sensor_pin.split(':')[-1]
-        self.chip = self._printer.lookup_object("ads1x1x " +
-                                                sensor_pin.split(':')[0])
-
-        self.voltage_offset = config.getfloat('voltage_offset', 0.0)
-        self.pullup_resistor = config.getfloat('pullup_resistor', 4700.,
-            above=0.)
-        self.report_time = config.getfloat('report_time'
-            , 1.0 / self.chip.samples_per_second_numeric * 4 # 4 possible inputs
-            , minval= 1.0 / self.chip.samples_per_second_numeric)
-
-        # Find probe for voltage to temp conversion function/table
-        for probe_type, params in adc_temperature.DefaultVoltageSensors:
-            if probe_type == config.get('probe_type'):
-                self.converter = adc_temperature.LinearVoltage(config, params)
-                break
-        # Find probe for resistance to temp conversion function/table
-        if probe_type != config.get('probe_type'):
-            for probe_type, params in \
-                adc_temperature.DefaultResistanceSensors:
-                if (probe_type == config.get('probe_type')):
-                    self.converter = adc_temperature.LinearResistance(config,
-                                                                      params)
-                    break
-        # Attempt to match against existing thermistors, generate conversion
-        # table
-        if probe_type != config.get('probe_type'):
-            pheaters = config.get_printer().load_object(config, "heaters")
-            probe_config = \
-                pheaters.sensor_factories[config.get('probe_type')](config) \
-                    .adc_convert
-            all_temps = [float(i) for i in range(1, 351)]
-            adcs = [(t, probe_config.calc_adc(t)) for t in all_temps]
-            rs = [(t,self.pullup_resistor * adc / (1.0 - adc)) \
-                for t, adc in adcs]
-            if probe_config is not None:
-                self.converter = adc_temperature.LinearResistance(config, rs)
-                probe_type = config.get('probe_type')
-
-        if probe_type != config.get('probe_type'):
-            logging.error("Probe '%s' not found in adc_temperature for %s" \
-                % (config.get('probe_type'), self.name))
-
-        self.temp = self.min_temp = self.max_temp = 0.0
-
-        self._printer.register_event_handler("klippy:connect", \
-                                            self._handle_connect)
-
-    def _handle_connect(self):
-        self._reactor = self._printer.get_reactor()
-        self._sample_timer = \
-                self._reactor.register_timer(self._timer)
-        self._reactor.update_timer(self._sample_timer, self._reactor.NOW)
-
-    def setup_minmax(self, min_temp, max_temp):
-        self.min_temp = min_temp
-        self.max_temp = max_temp
-
-    def setup_callback(self, cb):
-        self._callback = cb
-
-    def _timer(self, eventtime):
-        sample = self.chip.sample(self)
-        if sample is not None:
-            self._process_sample(sample)
-
-        return self._reactor.monotonic() + self.report_time
-
-    def _process_sample(self, sample):
-        # The sample is encoded in the top 12 or full 16 bits
-        # Value's meaning is defined by ADS1X1X_REG_CONFIG['PGA_MASK']
-        if isADS101X(self.chip.chip):
-            sample >>= 4
-            volts = sample * ADS101X_PGA_SCALAR[self.chip.pga]
-        else:
-            volts = sample * ADS111X_PGA_SCALAR[self.chip.pga]
-        self.temp = self.converter.calc_temp( (volts - self.voltage_offset) \
-            / self.chip.adc_voltage )
-
-        # Check if result is within limits
-        if self.temp < self.min_temp or self.temp > self.max_temp:
-            self._printer.invoke_shutdown(
-                "ADS1X1X temperature %0.1f outside range of %0.1f:%.01f"
-                % (self.temp, self.min_temp, self.max_temp))
-
-        # Publish result
-        measured_time = self._reactor.monotonic()
-        self._callback(self.chip.mcu.estimated_print_time(measured_time),
-                       self.temp)
-
-    def get_report_time_delta(self):
-        return self.report_time
-
-    def get_status(self, eventtime):
-        return {
-            'temperature': round(self.temp, 2),
-        }
-
-
 class ADS1X1X_pin:
     def __init__(self, chip, pin_params):
         self.mcu = chip.mcu
+        self.chip = chip
         self.pin = pin_params['pin']
 
         if (self.pin not in ADS1X1X_MUX):
@@ -403,6 +299,48 @@ class ADS1X1X_pin:
         self.config |= (chip.comp_queue \
             & ADS1X1X_REG_CONFIG['COMPARATOR_QUEUE_MASK'])
 
+        self.report_time = 1.0 / chip.samples_per_second_numeric * 4
+        self.invalid_count = 0
+
+        self.chip._printer.register_event_handler("klippy:connect", \
+                                            self._handle_connect)
+
+    def _handle_connect(self):
+        self._reactor = self.chip._printer.get_reactor()
+        self._sample_timer = \
+                self._reactor.register_timer(self._timer)
+        self._reactor.update_timer(self._sample_timer, self._reactor.NOW)
+
+    def _timer(self, eventtime):
+        sample = self.chip.sample(self)
+        if sample is not None:
+            self._process_sample(sample)
+
+        return self._reactor.monotonic() + self.report_time
+
+    def _process_sample(self, sample):
+        # The sample is encoded in the top 12 or full 16 bits
+        # Value's meaning is defined by ADS1X1X_REG_CONFIG['PGA_MASK']
+        if isADS101X(self.chip.chip):
+            sample >>= 4
+            target_value = sample / ADS101X_RESOLUTION
+        else:
+            target_value = sample / ADS111X_RESOLUTION
+
+        if self.maxval > self.minval:
+            if target_value > self.maxval or target_value < self.minval:
+                self.invalid_count = self.invalid_count + 1
+                if self.invalid_count > self.range_check_count:
+                    self.chip._printer.invoke_shutdown(
+                        "ADS1X1X temperature outside range")
+            else:
+                self.invalid_count = 0
+
+        # Publish result
+        measured_time = self._reactor.monotonic()
+        self.callback(self.chip.mcu.estimated_print_time(measured_time),
+                       target_value)
+
     def get_mcu(self):
         return self.mcu
 
@@ -410,10 +348,11 @@ class ADS1X1X_pin:
         self.report_time = report_time
         self.callback = callback
 
+    def setup_adc_sample(self, sample_time, sample_count,
+                         minval=0., maxval=1., range_check_count=0):
+        self.minval = minval
+        self.maxval = maxval
+        self.range_check_count = range_check_count
+
 def load_config_prefix(config):
     return ADS1X1X_chip(config)
-
-def load_config(config):
-    # Register sensor
-    pheaters = config.get_printer().load_object(config, "heaters")
-    pheaters.add_sensor_factory('ads1x1x', ADS1X1X_sensor)
