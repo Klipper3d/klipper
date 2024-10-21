@@ -150,16 +150,18 @@ i2c_software_stop(struct i2c_software *is)
     gpio_in_reset(is->sda_in, 1);
 }
 
-void
+int
 i2c_software_write(struct i2c_software *is, uint8_t write_len, uint8_t *write)
 {
     i2c_software_start(is, is->addr);
     while (write_len--)
         i2c_software_send_byte(is, *write++);
     i2c_software_stop(is);
+
+    return I2C_BUS_SUCCESS;
 }
 
-void
+int
 i2c_software_read(struct i2c_software *is, uint8_t reg_len, uint8_t *reg
                   , uint8_t read_len, uint8_t *read)
 {
@@ -178,4 +180,6 @@ i2c_software_read(struct i2c_software *is, uint8_t reg_len, uint8_t *reg
         read++;
     }
     i2c_software_stop(is);
+
+    return I2C_BUS_SUCCESS;
 }

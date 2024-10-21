@@ -52,10 +52,20 @@ i2cdev_set_software_bus(struct i2cdev_s *i2c, struct i2c_software *is)
 void i2c_dev_write(struct i2cdev_s *i2c, uint8_t write_len, uint8_t *data)
 {
     uint_fast8_t flags = i2c->flags;
+    int ret;
     if (CONFIG_WANT_SOFTWARE_I2C && flags & IF_SOFTWARE)
-        i2c_software_write(i2c->i2c_sw, write_len, data);
+        ret = i2c_software_write(i2c->i2c_sw, write_len, data);
     else
-        i2c_write(i2c->i2c_hw, write_len, data);
+        ret = i2c_write(i2c->i2c_hw, write_len, data);
+
+    switch (ret) {
+        case I2C_BUS_NACK:
+            shutdown("I2C NACK");
+        case I2C_BUS_START_NACK:
+            shutdown("I2C_START_NACK");
+        case I2C_BUS_TIMEOUT:
+            shutdown("I2C Timeout");
+    }
 }
 
 void command_i2c_write(uint32_t *args)
@@ -72,10 +82,21 @@ void i2c_dev_read(struct i2cdev_s *i2c, uint8_t reg_len, uint8_t *reg
                   , uint8_t read_len, uint8_t *read)
 {
     uint_fast8_t flags = i2c->flags;
+    int ret;
     if (CONFIG_WANT_SOFTWARE_I2C && flags & IF_SOFTWARE)
-        i2c_software_read(i2c->i2c_sw, reg_len, reg, read_len, read);
+        ret = i2c_software_read(i2c->i2c_sw, reg_len, reg, read_len, read);
     else
-        i2c_read(i2c->i2c_hw, reg_len, reg, read_len, read);
+        ret = i2c_read(i2c->i2c_hw, reg_len, reg, read_len, read);
+    switch (ret) {
+        case I2C_BUS_NACK:
+            shutdown("I2C NACK");
+        case I2C_BUS_START_NACK:
+            shutdown("I2C START NACK");
+        case I2C_BUS_START_READ_NACK:
+            shutdown("I2C START READ NACK");
+        case I2C_BUS_TIMEOUT:
+            shutdown("I2C Timeout");
+    }
 }
 
 void command_i2c_read(uint32_t *args)
