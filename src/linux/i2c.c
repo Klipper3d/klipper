@@ -13,6 +13,7 @@
 #include "command.h" // shutdown
 #include "internal.h" // report_errno
 #include "sched.h" // sched_shutdown
+#include "i2ccmds.h" // I2C_BUS_SUCCESS
 
 DECL_ENUMERATION_RANGE("i2c_bus", "i2c.0", 0, 15);
 
@@ -84,7 +85,7 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
     return (struct i2c_config){.fd=fd, .addr=addr};
 }
 
-void
+int
 i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *data)
 {
     int ret = write(config.fd, data, write_len);
@@ -93,9 +94,11 @@ i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *data)
             report_errno("write value i2c", ret);
         try_shutdown("Unable write i2c device");
     }
+
+    return I2C_BUS_SUCCESS;
 }
 
-void
+int
 i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *data)
 {
@@ -124,4 +127,6 @@ i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
     if(ret < 0) {
         try_shutdown("Unable to read i2c device");
     }
+
+    return I2C_BUS_SUCCESS;
 }

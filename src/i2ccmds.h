@@ -4,6 +4,15 @@
 #include <inttypes.h>
 #include "board/gpio.h" // i2c_config
 
+// I2C ERROR Codes
+enum {
+    I2C_BUS_SUCCESS,
+    I2C_BUS_NACK,
+    I2C_BUS_TIMEOUT,
+    I2C_BUS_START_NACK,
+    I2C_BUS_START_READ_NACK,
+};
+
 struct i2cdev_s {
     union {
         struct i2c_config i2c_hw;

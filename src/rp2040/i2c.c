@@ -11,6 +11,7 @@
 #include "internal.h" // pclock, gpio_peripheral
 #include "hardware/regs/resets.h" // RESETS_RESET_I2C*_BITS
 #include "hardware/structs/i2c.h"
+#include "i2ccmds.h" // I2C_BUS_SUCCESS
 
 struct i2c_info {
     i2c_hw_t *i2c;
@@ -211,7 +212,7 @@ i2c_do_read(i2c_hw_t *i2c, uint8_t addr, uint8_t read_len, uint8_t *read
     }
 }
 
-void
+int
 i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
 {
     i2c_hw_t *i2c = (i2c_hw_t*)config.i2c;
@@ -220,9 +221,11 @@ i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
     i2c_start(i2c, config.addr);
     i2c_do_write(i2c, config.addr, write_len, write, 1, timeout);
     i2c_stop(i2c);
+
+    return I2C_BUS_SUCCESS;
 }
 
-void
+int
 i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *read)
 {
@@ -234,4 +237,6 @@ i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
         i2c_do_write(i2c, config.addr, reg_len, reg, 0, timeout);
     i2c_do_read(i2c, config.addr, read_len, read, timeout);
     i2c_stop(i2c);
+
+    return I2C_BUS_SUCCESS;
 }

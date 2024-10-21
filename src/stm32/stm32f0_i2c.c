@@ -9,6 +9,7 @@
 #include "gpio.h" // i2c_setup
 #include "internal.h" // GPIO
 #include "sched.h" // sched_shutdown
+#include "i2ccmds.h" // I2C_BUS_SUCCESS
 
 struct i2c_info {
     I2C_TypeDef *i2c;
@@ -188,7 +189,7 @@ i2c_wait(I2C_TypeDef *i2c, uint32_t set, uint32_t timeout)
     }
 }
 
-void
+int
 i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
 {
     I2C_TypeDef *i2c = config.i2c;
@@ -202,9 +203,11 @@ i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
         i2c->TXDR = *write++;
     }
     i2c_wait(i2c, I2C_ISR_TXE, timeout);
+
+    return I2C_BUS_SUCCESS;
 }
 
-void
+int
 i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *read)
 {
@@ -228,4 +231,6 @@ i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
         *read++ = i2c->RXDR;
     }
     i2c_wait(i2c, I2C_ISR_STOPF, timeout);
+
+    return I2C_BUS_SUCCESS;
 }

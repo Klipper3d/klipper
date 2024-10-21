@@ -9,6 +9,7 @@
 #include "command.h" // shutdown
 #include "gpio.h" // i2c_setup
 #include "sched.h" // sched_shutdown
+#include "i2ccmds.h" // I2C_BUS_SUCCESS
 
 #define TIME_RISE 125ULL // 125 nanoseconds
 #define I2C_FREQ 100000
@@ -86,7 +87,7 @@ i2c_stop(SercomI2cm *si)
     si->CTRLB.reg = SERCOM_I2CM_CTRLB_CMD(3);
 }
 
-void
+int
 i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
 {
     SercomI2cm *si = (SercomI2cm *)config.si;
@@ -94,9 +95,11 @@ i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
     while (write_len--)
         i2c_send_byte(si, *write++);
     i2c_stop(si);
+
+    return I2C_BUS_SUCCESS;
 }
 
-void
+int
 i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *read)
 {
@@ -143,4 +146,6 @@ i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
         // read received data byte
         *read++ = si->DATA.reg;
     }
+
+    return I2C_BUS_SUCCESS;
 }
