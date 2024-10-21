@@ -347,7 +347,7 @@ The following command is available when the
 enabled.
 
 #### SET_DUAL_CARRIAGE
-`SET_DUAL_CARRIAGE CARRIAGE=[0|1] [MODE=[PRIMARY|COPY|MIRROR]]`:
+`SET_DUAL_CARRIAGE CARRIAGE=[0|1] [AXIS=[X|Y]] [MODE=[PRIMARY|COPY|MIRROR]]`:
 This command will change the mode of the specified carriage.
 If no `MODE` is provided it defaults to `PRIMARY`. Setting the mode
 to `PRIMARY` deactivates the other carriage and makes the specified
@@ -355,7 +355,11 @@ carriage execute subsequent G-Code commands as-is. `COPY` and `MIRROR`
 modes are supported only for `CARRIAGE=1`. When set to either of these
 modes, carriage 1 will then track the subsequent moves of the carriage 0
 and either copy relative movements of it (in `COPY` mode) or execute them
-in the opposite (mirror) direction (in `MIRROR` mode).
+in the opposite (mirror) direction (in `MIRROR` mode). `AXIS` parameter is
+supported if a user defined two dual carriages with `generic_cartesian`
+kinematic. It can be omitted if the `MODE` is `PRIMARY`, in which case
+the command changes the mode for both axes, but it must be provided for
+`COPY` and `MIRROR` mode.
 
 #### SAVE_DUAL_CARRIAGE_STATE
 `SAVE_DUAL_CARRIAGE_STATE [NAME=<state_name>]`: Save the current positions
@@ -687,6 +691,50 @@ be issued to move back to the previous XYZ position. If "MOVE_SPEED"
 is specified then the toolhead move will be performed with the given
 speed (in mm/s); otherwise the toolhead move will use the restored
 g-code speed.
+
+### [generic_cartesian]
+The commands in this section become automatically available when
+`kinematics: generic_cartesian` is specified as the printer kinematics.
+
+#### SET_STEPPER_KINEMATICS
+`SET_STEPPER_KINEMATICS STEPPER=<stepper_name> KINEMATICS=<kinematics>
+[DISABLE_CHECKS=[0|1]]`: Set or update the stepper kinematics.
+`<stepper_name>` must reference an existing stepper defined in
+`printer.cfg`, and `<kinematics>` describes the carriages the stepper
+moves. All defined carriages can be specified here, as well as their
+linear combinations, for example `x`, `x+y`, `y-0.5z`, `x-z`, etc. Note
+that unlike the printer configuration, `KINEMATICS=...` string must not
+use `*` symbol for multiplication, since it is a special GCode character,
+and if required, the multipliers must precede the carriage reference
+without any further delimiters, e.g. `0.5x+0.5z` or
+`0.333333333333x-0.666666666667y`.
+
+`SET_STEPPER_KINEMATICS` is an advanced tool, and the user is advised
+to excercise an extreme caution using, since specifying incorrect
+configuration may result in a physical damage to the printer.
+
+Note that `SET_STEPPER_KINEMATICS` performs certain internal validations
+of the new printer kinematics after the change. Keep in mind that if it
+detects an issue, it may leave Klipper in an invalid state. This means
+that if `SET_STEPPER_KINEMATICS` reports an error, it is unsafe to
+issue other GCode commands, and the user must inspect the error message
+and either fix the problem, or manually restore the previous stepper(s)
+configuration.
+
+Since `SET_STEPPER_KINEMATICS` can update a configuration of a single
+stepper at a time, some sequences of changes can lead to invalid
+intermediate kinematic configurations, even if the final configuration
+is valid. In such cases a user can pass `DISABLE_CHECKS=1` parameters to
+all but the last command to disable intermediate checks. For example,
+if `stepper a` and `stepper b` initially have `x-y` and `x+y` kinematics
+correspondingly, then the following sequence of commands will swap their
+kinematics: `SET_STEPPER_KINEMATICS STEPPER='stepper a' KINEMATICS=x+y DISABLE_CHECKS=1`
+and `SET_STEPPER_KINEMATICS STEPPER='stepper b' KINEMATICS=x-y`, while
+still validating the final kinematics state. Be aware that passing
+`DISABLE_CHECKS=1` disables all internal validations, and lets a user
+configure even a semi-defined kinematics. This can become useful on very
+rare occasions such as particularly special homing procedures, but extreme
+caution is advised when using this feature.
 
 ### [hall_filament_width_sensor]
 

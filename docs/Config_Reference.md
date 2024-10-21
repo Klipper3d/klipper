@@ -84,8 +84,9 @@ The printer section controls high level printer settings.
 [printer]
 kinematics:
 #   The type of printer in use. This option may be one of: cartesian,
-#   corexy, corexz, hybrid_corexy, hybrid_corexz, rotary_delta, delta,
-#   deltesian, polar, winch, or none. This parameter must be specified.
+#   corexy, corexz, hybrid_corexy, hybrid_corexz, generic_cartesia,
+#   rotary_delta, delta, deltesian, polar, winch, or none.
+#   This parameter must be specified.
 max_velocity:
 #   Maximum velocity (in mm/s) of the toolhead (relative to the
 #   print). This value may be changed at runtime using the
@@ -711,6 +712,172 @@ anchor_z:
 #   The X, Y, and Z position of the cable winch in cartesian space.
 #   These parameters must be provided.
 ```
+
+### Generic Cartesian Kinematics
+
+See [example-generic-cartesian.cfg](../config/example-generic-caretesian.cfg)
+for an example generic caretesian kinematics config file.
+
+This new kinematic class allows a user to define in a pretty flexible
+manner an arbitrary Cartesian-style kinematics. In principle, the regular
+cartesian, corexy, hybrid_corexy can be defined this way too. However,
+more importantly, various otherwise unsupported kinematics such as
+inverted hybrid_corexy or corexyuv can be defined using this kinematic.
+
+Notably, the declaration of a generic Cartesian kinematic deviates
+significantly from the definition of other kinematc types. It follows
+the following convention: a user defines a set of carriages with certain
+range of motion that can move independently (they should move over the
+Cartesian axes X, Y, and Z, hence the name of the kinematic) and
+corresponding endstops that allow the firmware to determine the position
+of carriages during homing, as well as a set of steppers that can move
+these carriages. The `[printer]` section must specify the kinematic and
+other printer-level settings same as the regular Cartesian kinematic:
+```
+[printer]
+kinematics: generic_cartesian
+max_velocity:
+max_accel:
+#minimum_cruise_ratio:
+#square_corner_velocity:
+#max_accel_to_decel:
+#max_z_velocity:
+#max_z_accel:
+
+```
+
+Then a user must define the following three carriages: `[carriage x]`,
+`[carriage y]`, and `[carriage z]`, e.g.
+```
+[carriage x]
+endstop_pin:
+#   Endstop switch detection pin. If this endstop pin is on a
+#   different mcu than the stepper motor(s) moving this carriage,
+#   then it enables "multi-mcu homing". This parameter must be provided.
+#position_min: 0
+#   Minimum valid distance (in mm) the user may command the carriage to
+#   move to.  The default is 0mm.
+position_endstop:
+#   Location of the endstop (in mm). This parameter must be provided.
+position_max:
+#   Maximum valid distance (in mm) the user may command the stepper to
+#   move to. This parameter must be provided.
+#homing_speed: 5.0
+#   Maximum velocity (in mm/s) of the carriage when homing. The default
+#   is 5mm/s.
+#homing_retract_dist: 5.0
+#   Distance to backoff (in mm) before homing a second time during
+#   homing. Set this to zero to disable the second home. The default
+#   is 5mm.
+#homing_retract_speed:
+#   Speed to use on the retract move after homing in case this should
+#   be different from the homing speed, which is the default for this
+#   parameter
+#second_homing_speed:
+#   Velocity (in mm/s) of the carriage when performing the second home.
+#   The default is homing_speed/2.
+#homing_positive_dir:
+#   If true, homing will cause the carriage to move in a positive
+#   direction (away from zero); if false, home towards zero. It is
+#   better to use the default than to specify this parameter. The
+#   default is true if position_endstop is near position_max and false
+#   if near position_min.
+```
+
+Afterwards, a user specifies the stepper motors that move these carriages,
+for instance
+```
+[stepper my_stepper]
+kinematics:
+#   A string describing the carriages the stepper moves. All defined
+#   carriages can be specified here, as well as their linear combinations,
+#   e.g. x, x+y, y-0.5*z, x-z, etc. This parameter must be provided.
+step_pin:
+dir_pin:
+enable_pin:
+rotation_distance:
+microsteps:
+#full_steps_per_rotation: 200
+#gear_ratio:
+#step_pulse_duration:
+```
+See [stepper](#stepper) section for more information on the regular
+stepper parameters. The `kinematics` parameter defines how the stepper
+affects the motion of the carriages. For example, `x+y` indicates that
+the motion of the stepper in the positive direction by the distance `d`
+moves the carriages `x` and `y` by the same distance `d` in the positive
+direction, while `x-0.5*y` means the motion of the stepper in the positive
+direction by the distance `d` moves the carraige `x` by the distance `d`
+in the positive direction, but the carriage `y` will travel distance `d/2`
+in the negative direction.
+
+More than a single stepper motor can be defined to drive the same axis
+or belt. For example, on a CoreXY AWD setups two motors driving the same
+belt can be defined as
+```
+[carriage x]
+endstop_pin: ...
+...
+
+[carriage y]
+endstop_pin: ...
+...
+
+[stepper a0]
+kinematics: x-y
+step_pin: ...
+dir_pin: ...
+enable_pin: ...
+rotation_distance: ...
+...
+
+[stepper a1]
+kinematics: x-y
+step_pin: ...
+dir_pin: ...
+enable_pin: ...
+rotation_distance: ...
+...
+```
+with `a0` and `a1` steppers having their own control pins, but
+sharing the same `kinematics` and corresponding endstops.
+
+There are situations when a user wants to have more than one endstop
+per axis. Examples of such configurations include Y axis driven by
+two independent stepper motors with belts attached to both ends of the
+X beam, with effectively two carriages on Y axis each having an
+independent endstop, and multi-stepper Z axis with each stepper having
+its own endstop (not to be confused with the configurations with
+multiple Z motors but only a single endstop). These configurations
+can be declared by specifying additional carriage(s) with their endstops:
+
+```
+[extra_carriage my_carriage]
+primary_carriage:
+#   The name of the primary carriage this carriage corresponds to.
+#   It also effectively defines the axis the carriage moves over.
+#   This parameter must be provided.
+endstop_pin:
+#   Endstop switch detection pin. This parameter must be provided.
+```
+
+and the corresponding stepper motors, for example:
+```
+[extra_carriage y1]
+primary_carriage: y
+endstop_pin: ...
+
+[stepper sy1]
+kinematics: y1
+...
+```
+Notably, an `[extra_carriage]` does not define parameters such as
+`position_min`, `position_max`, and `position_endstop`, and inherits
+them from the specified `primary_carriage`, sharing the same range of
+motion with the primary carriage.
+
+For the references on how to configure IDEX setups, see the
+[dual carriage](#dual-carriage) section.
 
 ### None Kinematics
 
@@ -2185,8 +2352,8 @@ for an example configuration.
 
 ### [dual_carriage]
 
-Support for cartesian and hybrid_corexy/z printers with dual carriages
-on a single axis. The carriage mode can be set via the
+Support for cartesian, generic_cartesian and hybrid_corexy/z printers with
+dual carriages on a single axis. The carriage mode can be set via the
 SET_DUAL_CARRIAGE extended g-code command. For example,
 "SET_DUAL_CARRIAGE CARRIAGE=1" command will activate the carriage defined
 in this section (CARRIAGE=0 will return activation to the primary carriage).
@@ -2213,7 +2380,7 @@ typically be achieved with
 or a similar command.
 
 See [sample-idex.cfg](../config/sample-idex.cfg) for an example
-configuration.
+configuration with a regular Cartesian kinematic.
 
 ```
 [dual_carriage]
@@ -2240,6 +2407,62 @@ axis:
 #position_max:
 #   See the "stepper" section for the definition of the above parameters.
 ```
+
+For an example of dual carriage configuration with `generic_cartesian`
+kinematic, see the following configuration
+[sample](../config/example-generic-caretesian.cfg).
+Please note that in this case the `[dual_carriage]` configuration deviates
+from the configuration described above:
+```
+[dual_carriage my_dc_carriage]
+primary_carriage:
+#   Defines the matching primary carriage of this dual carriage and
+#   the corresponding IDEX axis. Valid choices are x, y, z.
+#   This parameter must be provided.
+#safe_distance:
+#   The minimum distance (in mm) to enforce between the dual and the primary
+#   carriages. If a G-Code command is executed that will bring the carriages
+#   closer than the specified limit, such a command will be rejected with an
+#   error. If safe_distance is not provided, it will be inferred from
+#   position_min and position_max for the dual and primary carriages. If set
+#   to 0 (or safe_distance is unset and position_min and position_max are
+#   identical for the primary and dual carraiges), the carriages proximity
+#   checks will be disabled.
+endstop_pin:
+#position_min:
+position_endstop:
+position_max:
+#homing_speed:
+#homing_retract_dist:
+#homing_retract_speed:
+#second_homing_speed:
+#homing_positive_dir:
+...
+```
+Refer to [generic cartesian](#generic-cartesian) section for more information
+on the regular `carriage` parameters.
+
+Then a user must define one or more stepper motors moving the dual carriage
+(and other carriages as appropriate), for instance
+```
+[carriage x]
+...
+
+[carriage y]
+...
+
+[dual_carriage u]
+primary_carriage: x
+...
+
+[stepper dc_stepper]
+kinematics: u-y
+...
+```
+
+It is worth noting that `generic_cartesian` kinematic can support two
+dual carriages for X and Y axes. For reference, see for instance a
+[sample](../config/sample-corexyuv.cfg) of CoreXYUV configuration.
 
 ### [extruder_stepper]
 
