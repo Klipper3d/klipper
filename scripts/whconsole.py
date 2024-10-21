@@ -38,25 +38,25 @@ class KeyboardReader:
         self.poll = select.poll()
         self.poll.register(sys.stdin, select.POLLIN | select.POLLHUP)
         self.poll.register(self.webhook_socket, select.POLLIN | select.POLLHUP)
-        self.kbd_data = self.socket_data = ""
+        self.kbd_data = self.socket_data = b""
     def process_socket(self):
         data = self.webhook_socket.recv(4096)
         if not data:
             sys.stderr.write("Socket closed\n")
             sys.exit(0)
-        parts = data.split('\x03')
+        parts = data.split(b'\x03')
         parts[0] = self.socket_data + parts[0]
         self.socket_data = parts.pop()
         for line in parts:
             sys.stdout.write("GOT: %s\n" % (line,))
     def process_kbd(self):
         data = os.read(self.kbd_fd, 4096)
-        parts = data.split('\n')
+        parts = data.split(b'\n')
         parts[0] = self.kbd_data + parts[0]
         self.kbd_data = parts.pop()
         for line in parts:
             line = line.strip()
-            if not line or line.startswith('#'):
+            if not line or line.startswith(b'#'):
                 continue
             try:
                 m = json.loads(line)
@@ -65,7 +65,7 @@ class KeyboardReader:
                 continue
             cm = json.dumps(m, separators=(',', ':'))
             sys.stdout.write("SEND: %s\n" % (cm,))
-            self.webhook_socket.send("%s\x03" % (cm,))
+            self.webhook_socket.send(cm.encode() + b"\x03")
     def run(self):
         while 1:
             res = self.poll.poll(1000.)
