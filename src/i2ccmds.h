@@ -23,8 +23,8 @@ struct i2cdev_s {
 
 struct i2cdev_s *i2cdev_oid_lookup(uint8_t oid);
 void i2cdev_set_software_bus(struct i2cdev_s *i2c, struct i2c_software *is);
-void i2c_dev_read(struct i2cdev_s *i2c, uint8_t reg_len, uint8_t *reg
+int i2c_dev_read(struct i2cdev_s *i2c, uint8_t reg_len, uint8_t *reg
                   , uint8_t read_len, uint8_t *read);
-void i2c_dev_write(struct i2cdev_s *i2c, uint8_t write_len, uint8_t *data);
+int i2c_dev_write(struct i2cdev_s *i2c, uint8_t write_len, uint8_t *data);
 
 #endif
