@@ -2083,7 +2083,7 @@ sensor_type: ldc1612
 
 ### [axis_twist_compensation]
 
-A tool to compensate for inaccurate probe readings due to twist in X gantry. See
+A tool to compensate for inaccurate probe readings due to twist in X or Y gantry. See
 the [Axis Twist Compensation Guide](Axis_Twist_Compensation.md) for more
 detailed information regarding symptoms, configuration and setup.
 
@@ -2108,6 +2108,23 @@ calibrate_y: 112.5
 #   This should be the Y coordinate that positions the nozzle during the
 #   calibration process. This parameter must be provided and is recommended to
 #   be near the center of the bed
+
+# For Y-axis twist compensation, specify the following parameters:
+calibrate_start_y: ...
+#   Defines the minimum Y coordinate of the calibration
+#   This should be the Y coordinate that positions the nozzle at the starting
+#   calibration position for the Y axis. This parameter must be provided if
+#   compensating for Y axis twist.
+calibrate_end_y: ...
+#   Defines the maximum Y coordinate of the calibration
+#   This should be the Y coordinate that positions the nozzle at the ending
+#   calibration position for the Y axis. This parameter must be provided if
+#   compensating for Y axis twist.
+calibrate_x: ...
+#   Defines the X coordinate of the calibration for Y axis twist compensation
+#   This should be the X coordinate that positions the nozzle during the
+#   calibration process for Y axis twist compensation. This parameter must be
+#   provided and is recommended to be near the center of the bed.
 ```
 
 ## Additional stepper motors and extruders
