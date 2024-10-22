@@ -70,6 +70,7 @@ config CLOCK_FREQ
 
 config FLASH_SIZE
     hex
+    default 0x20000 if MACH_SAME70
     default 0x80000
 
 config FLASH_BOOT_ADDRESS
@@ -84,8 +85,7 @@ config RAM_START
 config RAM_SIZE
     hex
     default 0x18000 if MACH_SAM3X
-    default 0x20000 if MACH_SAM4
-    default 0x40000 if MACH_SAME70
+    default 0x20000 if MACH_SAM4 || MACH_SAME70
 
 config STACK_SIZE
     int
@@ -93,8 +93,24 @@ config STACK_SIZE
 
 config FLASH_APPLICATION_ADDRESS
     hex
-    default 0x400000 if MACH_SAM4 || MACH_SAME70
+    default 0x0 if MACH_SAME70
+    default 0x400000 if MACH_SAM4
     default 0x80000
+
+config ARMCM_ITCM_FLASH_MIRROR_START
+    depends on MACH_SAME70
+    hex
+    default 0x400000
+
+config ARMCM_DTCM_START
+    depends on MACH_SAME70
+    hex
+    default 0x20000000
+
+config ARMCM_DTCM_SIZE
+    depends on MACH_SAME70
+    hex
+    default 0x20000
 
 choice
     prompt "Communication interface"

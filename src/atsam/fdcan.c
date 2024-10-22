@@ -71,8 +71,8 @@ struct fdcan_msg_ram {
     struct fdcan_fifo TXFIFO[3];
 };
 
-// Message ram is in regular memory
-static struct fdcan_msg_ram MSG_RAM;
+// Message ram is in DTCM - locate it there to avoid cache.
+static struct fdcan_msg_ram MSG_RAM __section(".dtcm.bss");
 
 
 /****************************************************************

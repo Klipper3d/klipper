@@ -354,6 +354,26 @@ micro-controller.
 | 1 stepper (200Mhz)   | 39    |
 | 3 stepper (200Mhz)   | 181   |
 
+### SAME70 step rate benchmark
+
+The following configuration sequence is used on the SAME70:
+```
+allocate_oids count=3
+config_stepper oid=0 step_pin=PC18 dir_pin=PB5 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PC16 dir_pin=PD10 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PC28 dir_pin=PA4 invert_step=-1 step_pulse_ticks=0
+finalize_config crc=0
+```
+
+The test was last run on commit `e3f1140d` with gcc version
+`arm-none-eabi-gcc (NixOS 10.3-2021.10) 10.3.1` on a SAME70Q20B
+micro-controller.
+
+| same70               | ticks |
+| -------------------- | ----- |
+| 1 stepper            | 45    |
+| 3 stepper            | 190   |
+
 ### AR100 step rate benchmark ###
 
 The following configuration sequence is used on AR100 CPU (Allwinner A64):

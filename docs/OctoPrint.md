@@ -52,7 +52,7 @@ Navigate to the Settings tab (the wrench icon at the top of the page).
 Under "Serial Connection" in "Additional serial ports" add:
 
 ```
-~/printer_data/comms/klippy.sock
+~/printer_data/comms/klippy.serial
 ```
 Then click "Save".
 
