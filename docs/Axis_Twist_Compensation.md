@@ -30,6 +30,7 @@ perform `AXIS_TWIST_COMPENSATION_CALIBRATE`
 points along the bed
 * The calibration defaults to 3 points but you can use the option
 `SAMPLE_COUNT=` to use a different number.
+* For Y-axis calibration, use `AXIS_TWIST_COMPENSATION_CALIBRATE AXIS=Y` instead.
 2. [Adjust your Z offset](Probe_Calibrate.md#calibrating-probe-z-offset)
 3. Perform automatic/probe-based bed tramming operations, such as
 [Screws Tilt Adjust](G-Codes.md#screws_tilt_adjust),
