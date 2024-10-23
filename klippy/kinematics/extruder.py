@@ -95,7 +95,7 @@ class ExtruderStepper:
                                           minval=0.)
         smooth_time = gcmd.get_float('SMOOTH_TIME',
                                      self.pressure_advance_smooth_time,
-                                     minval=0., maxval=.200)
+                                     minval=0., maxval=5.)
         self._set_pressure_advance(pressure_advance, smooth_time)
         msg = ("pressure_advance: %.6f\n"
                "pressure_advance_smooth_time: %.6f"
