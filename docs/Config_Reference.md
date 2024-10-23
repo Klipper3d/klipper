@@ -2035,9 +2035,9 @@ sensor_type: ldc1612
 
 ### [axis_twist_compensation]
 
-A tool to compensate for inaccurate probe readings due to twist in X or Y gantry. See
-the [Axis Twist Compensation Guide](Axis_Twist_Compensation.md) for more
-detailed information regarding symptoms, configuration and setup.
+A tool to compensate for inaccurate probe readings due to twist in X or Y
+gantry. See the [Axis Twist Compensation Guide](Axis_Twist_Compensation.md)
+for more detailed information regarding symptoms, configuration and setup.
 
 ```
 [axis_twist_compensation]
