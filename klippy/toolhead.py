@@ -610,7 +610,10 @@ class ToolHead:
         self.max_accel_to_decel = self.max_accel * (1. - self.min_cruise_ratio)
     def cmd_G4(self, gcmd):
         # Dwell
-        delay = gcmd.get_float('P', 0., minval=0.) / 1000.
+        if 'S' in gcmd.get_command_parameters():
+            delay = gcmd.get_float('S', 0., minval=0.)
+        else:
+            delay = gcmd.get_float('P', 0., minval=0.) / 1000.
         self.dwell(delay)
     def cmd_M400(self, gcmd):
         # Wait for current moves to finish
