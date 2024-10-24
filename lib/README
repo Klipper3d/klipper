@@ -105,11 +105,11 @@ The stm32h7 directory contains code from:
 version v1.9.0 (ccb11556044540590ca6e45056e6b65cdca2deb2). Contents
 taken from the Drivers/CMSIS/Device/ST/STM32H7xx/ directory.
 
-The rp2040 directory contains code from the pico sdk:
+The pico-sdk directory contains code from the pico sdk:
   https://github.com/raspberrypi/pico-sdk.git
-version 1.2.0 (bfcbefafc5d2a210551a4d9d80b4303d4ae0adf7). It has been
+version 2.0.0 (efe2103f9b28458a1615ff096054479743ade236). It has been
 modified so that it can build outside of the pico sdk. See
-rp2040.patch for the modifications.
+pico-sdk.patch for the modifications.
 
 The elf2uf2 directory contains code from the pico sdk:
   https://github.com/raspberrypi/pico-sdk.git
