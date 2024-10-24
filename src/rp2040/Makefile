@@ -3,7 +3,7 @@
 # Setup the toolchain
 CROSS_PREFIX=arm-none-eabi-
 
-dirs-y += src/rp2040 src/generic lib/rp2040/elf2uf2 lib/fast-hash lib/can2040
+dirs-y += src/rp2040 src/generic lib/elf2uf2 lib/fast-hash lib/can2040
 
 CFLAGS += -mcpu=cortex-m0plus -mthumb -Ilib/cmsis-core
 CFLAGS += -Ilib/rp2040 -Ilib/rp2040/cmsis_include -Ilib/fast-hash -Ilib/can2040
@@ -37,13 +37,13 @@ $(OUT)stage2.o: lib/rp2040/boot_stage2/$(STAGE2_FILE) $(OUT)autoconf.h
 	$(Q)$(CC) $(CFLAGS) -c $(OUT)stage2.S -o $(OUT)stage2.o
 
 # Binary output file rules when using stage2
-$(OUT)lib/rp2040/elf2uf2/elf2uf2: lib/rp2040/elf2uf2/main.cpp
+$(OUT)lib/elf2uf2/elf2uf2: lib/elf2uf2/main.cpp
 	@echo "  Building $@"
 	$(Q)g++ -g -O -Ilib/rp2040 $< -o $@
 
-$(OUT)klipper.uf2: $(OUT)klipper.elf $(OUT)lib/rp2040/elf2uf2/elf2uf2
+$(OUT)klipper.uf2: $(OUT)klipper.elf $(OUT)lib/elf2uf2/elf2uf2
 	@echo "  Creating uf2 file $@"
-	$(Q)$(OUT)lib/rp2040/elf2uf2/elf2uf2 $< $@
+	$(Q)$(OUT)lib/elf2uf2/elf2uf2 $< $@
 
 rptarget-$(CONFIG_RP2040_HAVE_STAGE2) := $(OUT)klipper.uf2
 stage2-$(CONFIG_RP2040_HAVE_STAGE2) := $(OUT)stage2.o

@@ -111,6 +111,11 @@ version 1.2.0 (bfcbefafc5d2a210551a4d9d80b4303d4ae0adf7). It has been
 modified so that it can build outside of the pico sdk. See
 rp2040.patch for the modifications.
 
+The elf2uf2 directory contains code from the pico sdk:
+  https://github.com/raspberrypi/pico-sdk.git
+version 1.2.0 (bfcbefafc5d2a210551a4d9d80b4303d4ae0adf7). Contents
+taken from the tools/elf2uf2/ directory.
+
 The rp2040_flash directory contains a light-weight bootsel flash tool.
 It uses C part of the the `picoboot_connection` directory found in:
   https://github.com/raspberrypi/picotool.git
