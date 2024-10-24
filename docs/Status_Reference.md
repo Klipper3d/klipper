@@ -68,6 +68,16 @@ The following information is available in the `display_status` object
   `virtual_sdcard.progress` if no recent `M73` received).
 - `message`: The message contained in the last `M117` G-Code command.
 
+## dockable_probe
+
+The following information is available in the
+[dockable_probe](Config_Reference.md#dockable_probe):
+- `last_status`: The UNKNOWN/ATTACHED/DOCKED status of the probbe as
+  reported during the last QUERY_DOCKABLE_PROBE command. Note, if
+  this is used in a macro, due to the order of template expansion,
+  the QUERY_DOCKABLE_PROBE command must be run prior to the macro
+  containing this reference.
+
 ## endstop_phase
 
 The following information is available in the
