@@ -42,8 +42,35 @@ class ADS1220:
                           '660': 660, '1200': 1200, '2000': 2000}
         self.sps_options = self.sps_normal.copy()
         self.sps_options.update(self.sps_turbo)
-        self.sps = config.getchoice('sps', self.sps_options, default='660')
+        self.sps = config.getchoice('sample_rate', self.sps_options,
+                                    default='660')
         self.is_turbo = str(self.sps) in self.sps_turbo
+        # Input multiplexer: AINP and AINN
+        mux_options = {'AIN0_AIN1': 0b0000, 'AIN0_AIN2': 0b0001,
+                       'AIN0_AIN3': 0b0010, 'AIN1_AIN2': 0b0011,
+                       'AIN1_AIN3': 0b0100, 'AIN2_AIN3': 0b0101,
+                       'AIN1_AIN0': 0b0110, 'AIN3_AIN2': 0b0111,
+                       'AIN0_AVSS': 0b1000, 'AIN1_AVSS': 0b1001,
+                       'AIN2_AVSS': 0b1010, 'AIN3_AVSS': 0b1011}
+        self.mux = config.getchoice('input_mux', mux_options,
+                                    default='AIN0_AIN1')
+        # PGA Bypass
+        self.pga_bypass = config.getboolean('pga_bypass', default=False)
+        # bypass PGA when AVSS is the negative input
+        force_pga_bypass = self.mux >= 0b1000
+        self.pga_bypass = force_pga_bypass or self.pga_bypass
+        # Voltage Reference
+        self.vref_options = {'internal': 0b0, 'REF0': 0b01, 'REF1': 0b10,
+                             'analog_supply': 0b11}
+        self.vref = config.getchoice('vref', self.vref_options,
+                                     default='internal')
+        # check for conflict between REF1 and AIN0/AIN3
+        mux_conflict = [0b0000, 0b0001, 0b0010, 0b0100, 0b0101, 0b0110, 0b0111,
+                        0b1000, 0b1011]
+        if self.vref == 0b10 and self.mux in mux_conflict:
+            raise config.error("ADS1220 config error: AIN0/REFP1 and AIN3/REFN1"
+                               " cant be used as a voltage reference and"
+                               " an input at the same time")
         # SPI Setup
         spi_speed = 512000 if self.is_turbo else 256000
         self.spi = bus.MCU_SPI_from_config(config, 1, default_speed=spi_speed)
@@ -157,8 +184,10 @@ class ADS1220:
         mode = 0x2 if self.is_turbo else 0x0  # turbo mode
         sps_list = self.sps_turbo if self.is_turbo else self.sps_normal
         data_rate = list(sps_list.keys()).index(str(self.sps))
-        reg_values = [(self.gain << 1),
-                      (data_rate << 5) | (mode << 3) | (continuous << 2)]
+        reg_values = [(self.mux << 4) | (self.gain << 1) | int(self.pga_bypass),
+                      (data_rate << 5) | (mode << 3) | (continuous << 2),
+                      (self.vref << 6),
+                      0x0]
         self.write_reg(0x0, reg_values)
         # start measurements immediately
         self.send_command(START_SYNC_CMD)
@@ -177,7 +206,7 @@ class ADS1220:
         write_command.extend(register_bytes)
         self.spi.spi_send(write_command)
         stored_val = self.read_reg(reg, len(register_bytes))
-        if register_bytes != stored_val:
+        if bytearray(register_bytes) != stored_val:
             raise self.printer.command_error(
                 "Failed to set ADS1220 register [0x%x] to %s: got %s. "
                 "This may be a connection problem (e.g. faulty wiring)" % (
