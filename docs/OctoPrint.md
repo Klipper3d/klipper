@@ -54,10 +54,10 @@ Under "Serial Connection" in "Additional serial ports" add:
 ```
 ~/printer_data/comms/klippy.serial
 ```
+
 Then click "Save".
 
-_In some older setups this address may be `/tmp/printer`_
-
+_In some older setups this address may be `/tmp/printer`, depending on your setup, you may need to keep this line as well_
 
 Enter the Settings tab again and under "Serial Connection" change the "Serial Port"
 setting to the one added above.
