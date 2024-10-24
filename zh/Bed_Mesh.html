@@ -688,14 +688,14 @@
         
           <li class="md-nav__item">
   <a href="#_3" class="md-nav__link">
-    矩形床
+    矩形热床
   </a>
   
 </li>
         
           <li class="md-nav__item">
   <a href="#_4" class="md-nav__link">
-    圆形床
+    圆形热床
   </a>
   
 </li>
@@ -1619,14 +1619,14 @@
         
           <li class="md-nav__item">
   <a href="#_3" class="md-nav__link">
-    矩形床
+    矩形热床
   </a>
   
 </li>
         
           <li class="md-nav__item">
   <a href="#_4" class="md-nav__link">
-    圆形床
+    圆形热床
   </a>
   
 </li>
@@ -1874,7 +1874,7 @@
 <p>床网模块可以用于补偿床面的不规则性，以实现更好的首层均一性。需要注意的是，基于软件的校正无法达到完美的结果，它只能近似地模拟床面的形状。床网模块也无法对机械和电气问题进行补偿。如果一个轴倾斜或探针不准确，那么床网模块将无法从探测过程中获得准确的结果。</p>
 <p>在进行网格校准之前，需要先校准探针的 Z 偏移。如果使用限位开关进行Z轴定位，也需要对其进行校准。请参阅<a href="Probe_Calibrate.html">探针校准</a>和<a href="Manual_Level.html">手动调平</a>中的 Z_ENDSTOP_CALIBRATE 获取更多信息。</p>
 <h2 id="_2">基本配置<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
-<h3 id="_3">矩形床<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
+<h3 id="_3">矩形热床<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h3>
 <p>此示例假定打印机具有 250 mm x 220 mm 矩形床和一个 x 偏移为 24 mm和 y 偏移为 5 mm的探针。</p>
 <div class="highlight"><pre><span></span><code>[bed_mesh]
 speed: 120
@@ -1893,7 +1893,7 @@ probe_count: 5, 3
 </ul>
 <p>下图演示了如何使用 <code>mesh_min</code>、<code>mesh_max</code> 和 <code>probe_count</code> 选项来生成探测点。 箭头表示探测过程的运动方向，从“mesh_min”开始。 图中所示，当探针位于“mesh_min”时，喷嘴将位于 (11, 1)，当探针位于“mesh_max”时，喷嘴将位于 (206, 193)。</p>
 <p><img alt="矩形网床基本配置" src="img/bedmesh_rect_basic.svg" /></p>
-<h3 id="_4">圆形床<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
+<h3 id="_4">圆形热床<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
 <p>本示例假设打印机配备的圆床半径为 100 mm。 我们将使用与矩形网床示例相同的探针偏移来演示，X 偏移为 24 mm，Y 偏移为 5 mm。</p>
 <div class="highlight"><pre><span></span><code>[bed_mesh]
 speed: 120

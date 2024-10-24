@@ -1195,8 +1195,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#aht10aht20aht21-temperature-sensor" class="md-nav__link">
-    AHT10/AHT20/AHT21 temperature sensor
+  <a href="#aht10aht20aht21-capteur-de-temperature" class="md-nav__link">
+    AHT10/AHT20/AHT21 capteur de température
   </a>
   
 </li>
@@ -3289,8 +3289,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#aht10aht20aht21-temperature-sensor" class="md-nav__link">
-    AHT10/AHT20/AHT21 temperature sensor
+  <a href="#aht10aht20aht21-capteur-de-temperature" class="md-nav__link">
+    AHT10/AHT20/AHT21 capteur de température
   </a>
   
 </li>
@@ -5539,27 +5539,27 @@ sensor_type: ldc1612
 </code></pre></div>
 
 <h3 id="axis_twist_compensation">[axis_twist_compensation]<a class="headerlink" href="#axis_twist_compensation" title="Permanent link">&para;</a></h3>
-<p>A tool to compensate for inaccurate probe readings due to twist in X gantry. See the <a href="Axis_Twist_Compensation.html">Axis Twist Compensation Guide</a> for more detailed information regarding symptoms, configuration and setup.</p>
+<p>Un outil pour compenser les lectures inexactes de la sonde en raison de la torsion de la structure en X. Voir le <a href="Axis_Twist_Compensation.html">Axis Twist Compensation Guide</a> pour des informations plus détaillées sur les symptômes, la configuration et la mise en service.</p>
 <div class="highlight"><pre><span></span><code>[axis_twist_compensation]
 #speed: 50
-#   The speed (in mm/s) of non-probing moves during the calibration.
-#   The default is 50.
+#   Vitesse (en mm/s) des déplacements sans mesures pendant l&#39;étape d&#39;étalonnage.
+#   La valeur par défaut est de 50.
 #horizontal_move_z: 5
-#   The height (in mm) that the head should be commanded to move to
-#   just prior to starting a probe operation. The default is 5.
+#   La hauteur (en mm) à laquelle la tête doit se positionner
+#   avant de commencer une mesure. La valeur par défaut est de 5.
 calibrate_start_x: 20
-#   Defines the minimum X coordinate of the calibration
-#   This should be the X coordinate that positions the nozzle at the starting
-#   calibration position. This parameter must be provided.
+#   Définit la coordonnée minimum en X pour les mesures
+#   Ce doit être la coordonnée X qui positionne la buse à la position de
+#   départ des mesures. Ce paramètre est obligatoire.
 calibrate_end_x: 200
-#   Defines the maximum X coordinate of the calibration
-#   This should be the X coordinate that positions the nozzle at the ending
-#   calibration position. This parameter must be provided.
+#   Définit la coordonnée maximum en X pour les mesures
+#   Ce doit être la coordonnée X qui positionne la buse à la position de
+#   fin des mesures. Ce paramètre est obligatoire.
 calibrate_y: 112.5
-#   Defines the Y coordinate of the calibration
-#   This should be the Y coordinate that positions the nozzle during the
-#   calibration process. This parameter must be provided and is recommended to
-#   be near the center of the bed
+#   Définit la coordonnée Y de mesure
+#   Ce doit être la coordonnée Y qui positionne la buse à la position de
+#   mesures. Ce paramètre est obligatoire et il est conseillé de mettre une mesure
+#   proche du centre du plateau
 </code></pre></div>
 
 <h2 id="moteurs-pas-a-pas-et-extrudeurs-additionnels">Moteurs pas à  pas et extrudeurs additionnels<a class="headerlink" href="#moteurs-pas-a-pas-et-extrudeurs-additionnels" title="Permanent link">&para;</a></h2>
@@ -5594,7 +5594,7 @@ calibrate_y: 112.5
 
 <h3 id="dual_carriage">[dual_carriage]<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h3>
 <p>Support for cartesian and hybrid_corexy/z printers with dual carriages on a single axis. The carriage mode can be set via the SET_DUAL_CARRIAGE extended g-code command. For example, "SET_DUAL_CARRIAGE CARRIAGE=1" command will activate the carriage defined in this section (CARRIAGE=0 will return activation to the primary carriage). Dual carriage support is typically combined with extra extruders - the SET_DUAL_CARRIAGE command is often called at the same time as the ACTIVATE_EXTRUDER command. Be sure to park the carriages during deactivation. Note that during G28 homing, typically the primary carriage is homed first followed by the carriage defined in the <code>[dual_carriage]</code> config section. However, the <code>[dual_carriage]</code> carriage will be homed first if both carriages home in a positive direction and the [dual_carriage] carriage has a <code>position_endstop</code> greater than the primary carriage, or if both carriages home in a negative direction and the <code>[dual_carriage]</code> carriage has a <code>position_endstop</code> less than the primary carriage.</p>
-<p>Additionally, one could use "SET_DUAL_CARRIAGE CARRIAGE=1 MODE=COPY" or "SET_DUAL_CARRIAGE CARRIAGE=1 MODE=MIRROR" commands to activate either copying or mirroring mode of the dual carriage, in which case it will follow the motion of the carriage 0 accordingly. These commands can be used to print two parts simultaneously - either two identical parts (in COPY mode) or mirrored parts (in MIRROR mode). Note that COPY and MIRROR modes also require appropriate configuration of the extruder on the dual carriage, which can typically be achieved with "SYNC_EXTRUDER_MOTION MOTION_QUEUE=extruder EXTRUDER=<dual_carriage_extruder>" or a similar command.</p>
+<p>En outre, on pourrait utiliser les commandes "SET_DUAL_CARRIAGE CARRIAGE=1 MODE=COPY" ou "SET_DUAL_CARRIAGE CARRIAGE=1 MODE=MIRROR" pour activer le mode copie ou miroir du double chariot, auquel cas il suivra le mouvement du chariot 0 en conséquence. Ces commandes peuvent être utilisées pour imprimer deux pièces simultanément - soit deux pièces identiques (en mode COPY) ou des pièces miroirs (en mode MIRROR). Notez que les modes COPY et MIRROR nécessitent également la configuration appropriée de l'extrudeur sur le double chariot, qui peut généralement être atteint avec "SYNC_EXTRUDER_MOTION MOTION_QUEUE=extruder EXTRUDER=exedual_carriage_extruderю" ou une commande similaire.</p>
 <p>Voir <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-idex.cfg">sample-idex.cfg</a> pour un exemple de configuration.</p>
 <div class="highlight"><pre><span></span><code>[dual_carriage]
 axis:
@@ -5935,8 +5935,8 @@ sensor_pin:
 #   above parameters.
 </code></pre></div>
 
-<h3 id="aht10aht20aht21-temperature-sensor">AHT10/AHT20/AHT21 temperature sensor<a class="headerlink" href="#aht10aht20aht21-temperature-sensor" title="Permanent link">&para;</a></h3>
-<p>AHT10/AHT20/AHT21 two wire interface (I2C) environmental sensors. Note that these sensors are not intended for use with extruders and heater beds, but rather for monitoring ambient temperature (C) and relative humidity. See <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> for a gcode_macro that may be used to report humidity in addition to temperature.</p>
+<h3 id="aht10aht20aht21-capteur-de-temperature">AHT10/AHT20/AHT21 capteur de température<a class="headerlink" href="#aht10aht20aht21-capteur-de-temperature" title="Permanent link">&para;</a></h3>
+<p>AHT10/AHT20/AHT21 : capteurs environnementaux à deux fils (I2C). Notez que ces capteurs ne sont pas destinés à être utilisés avec des extrudeurs et des lits chauffants, mais plutôt pour surveiller la température ambiante (C) et l'humidité relative. Voir <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> pour un gcode_macro qui peut être utilisé pour signaler l'humidité en plus de la température.</p>
 <div class="highlight"><pre><span></span><code>sensor_type: AHT10
 #   Also use AHT10 for AHT20 and AHT21 sensors.
 #i2c_address:
