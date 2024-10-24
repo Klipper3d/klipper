@@ -214,6 +214,20 @@ class ToolHead:
         self.lookahead = LookAheadQueue(self)
         self.lookahead.set_flush_time(BUFFER_TIME_HIGH)
         self.commanded_pos = [0., 0., 0., 0.]
+        # The manufacturing process type
+        atypes = {'FDM': 'FDM', 'SLA': 'SLA', 'mSLA': 'mSLA', 'DLP': 'DLP'}
+        self.manufacturing_process = config.getchoice('manufacturing_process',
+                                                      atypes, default='FDM')
+
+        if self.manufacturing_process in ('mSLA', 'DLP'):
+            for s in ('msla_display',):
+                section = self.printer.lookup_object(s, None)
+                if section is None:
+                    msg = ("Error: A section with [%s] is required "
+                           "for mSLA/DLP printers.") % s
+                    logging.exception(msg)
+                    raise config.error(msg)
+
         # Velocity and acceleration control
         self.max_velocity = config.getfloat('max_velocity', above=0.)
         self.max_accel = config.getfloat('max_accel', above=0.)
@@ -282,6 +296,12 @@ class ToolHead:
                                self.cmd_SET_VELOCITY_LIMIT,
                                desc=self.cmd_SET_VELOCITY_LIMIT_help)
         gcode.register_command('M204', self.cmd_M204)
+
+        gcode.register_command('QUERY_MANUFACTORING_PROCESS',
+                               self.cmd_QUERY_MANUFACTORING_PROCESS,
+                               desc="Query manufacturing process")
+
+
         self.printer.register_event_handler("klippy:shutdown",
                                             self._handle_shutdown)
         # Load some default modules
@@ -664,6 +684,14 @@ class ToolHead:
             accel = min(p, t)
         self.max_accel = accel
         self._calc_junction_deviation()
+
+    def cmd_QUERY_MANUFACTORING_PROCESS(self, gcmd):
+        """
+        Returns the manufacturing process
+        @param gcmd:
+        """
+        gcmd.respond_raw(self.manufacturing_process)
+
 
 def add_printer_objects(config):
     config.get_printer().add_object('toolhead', ToolHead(config))
