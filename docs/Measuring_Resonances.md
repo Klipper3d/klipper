@@ -212,7 +212,7 @@ sudo apt install python3-numpy python3-matplotlib libatlas-base-dev libopenblas-
 
 Next, in order to install NumPy in the Klipper environment, run the command:
 ```
-~/klippy-env/bin/pip install -v numpy==1.25.2
+~/klippy-env/bin/pip install -v "numpy<1.26"
 ```
 Note that, depending on the performance of the CPU, it may take *a lot*
 of time, up to 10-20 minutes. Be patient and wait for the completion of
