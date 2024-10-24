@@ -331,6 +331,7 @@ class BedMeshCalibrate:
         self.bedmesh = bedmesh
         self.mesh_config = collections.OrderedDict()
         self._init_mesh_config(config)
+        self.probe_name = config.get('probe','probe')
         self.probe_mgr = ProbeManager(
             config, self.orig_config, self.probe_finalize
         )
@@ -348,7 +349,7 @@ class BedMeshCalibrate:
             desc=self.cmd_BED_MESH_CALIBRATE_help)
     def print_generated_points(self, print_func):
         x_offset = y_offset = 0.
-        probe = self.printer.lookup_object('probe', None)
+        probe = self.printer.lookup_object(self.probe_name, None)
         if probe is not None:
             x_offset, y_offset = probe.get_offsets()[:2]
         print_func("bed_mesh: generated points\nIndex"
