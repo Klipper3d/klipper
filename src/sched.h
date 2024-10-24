@@ -31,7 +31,7 @@ void sched_del_timer(struct timer *del);
 unsigned int sched_timer_dispatch(void);
 void sched_timer_reset(void);
 void sched_wake_tasks(void);
-uint8_t sched_tasks_busy(void);
+uint8_t sched_check_set_tasks_busy(void);
 void sched_wake_task(struct task_wake *w);
 uint8_t sched_check_wake(struct task_wake *w);
 uint8_t sched_is_shutdown(void);
