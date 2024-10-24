@@ -13,11 +13,11 @@ choice
     config MACH_AVR
         bool "Atmega AVR"
     config MACH_ATSAM
-        bool "SAM3/SAM4/SAM E70 (Due and Duet)"
+        bool "SAM3/SAM4/SAM E70"
     config MACH_ATSAMD
         bool "SAMC21/SAMD21/SAMD51/SAME5x"
     config MACH_LPC176X
-        bool "LPC176x (Smoothieboard)"
+        bool "LPC176x"
     config MACH_STM32
         bool "STMicroelectronics STM32"
     config MACH_HC32F460

@@ -27,31 +27,31 @@ config BOARD_DIRECTORY
 choice
     prompt "Processor model"
     config MACH_SAMC21G18
-        bool "SAMC21G18 (Duet 3 Toolboard 1LC)"
+        bool "SAMC21G18"
         select MACH_SAMC21
     config MACH_SAMD21G18
-        bool "SAMD21G18 (Arduino Zero)"
+        bool "SAMD21G18"
         select MACH_SAMD21
     config MACH_SAMD21E18
-        bool "SAMD21E18 (Adafruit Trinket M0)"
+        bool "SAMD21E18"
         select MACH_SAMD21
     config MACH_SAMD21J18
-        bool "SAMD21J18 (ReprapWorld Minitronics v2)"
+        bool "SAMD21J18"
         select MACH_SAMD21
     config MACH_SAMD21E15
         bool "SAMD21E15"
         select MACH_SAMD21
     config MACH_SAMD51G19
-        bool "SAMD51G19 (Adafruit ItsyBitsy M4)"
+        bool "SAMD51G19"
         select MACH_SAMD51
     config MACH_SAMD51J19
-        bool "SAMD51J19 (Adafruit Metro M4)"
+        bool "SAMD51J19"
         select MACH_SAMD51
     config MACH_SAMD51N19
         bool "SAMD51N19"
         select MACH_SAMD51
     config MACH_SAMD51P20
-        bool "SAMD51P20 (Adafruit Grand Central)"
+        bool "SAMD51P20"
         select MACH_SAMD51
     config MACH_SAME51J19
         bool "SAME51J19"
@@ -137,9 +137,9 @@ choice
     prompt "Bootloader offset"
     config SAMD_FLASH_START_2000
         depends on MACH_SAMD21
-        bool "8KiB bootloader (Arduino Zero)"
+        bool "8KiB bootloader"
     config SAMD_FLASH_START_4000
-        bool "16KiB bootloader (Arduino M0, Duet 3 Bootloader)"
+        bool "16KiB bootloader"
     config SAMD_FLASH_START_0000
         bool "No bootloader"
 endchoice
