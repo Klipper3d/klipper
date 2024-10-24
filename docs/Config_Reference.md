@@ -4841,6 +4841,51 @@ vssa_pin:
 #   noise. The default is 2 seconds.
 ```
 
+### [ads1x1x]
+
+ADS1013, ADS1014, ADS1015, ADS1113, ADS1114 and ADS1115 are I2C based Analog to
+Digital Converters that can be used for temperature sensors. They provide 4
+analog input pins either as single line or as differential input.
+
+```
+[ads1x1x my_ads1x1x]
+chip: ADS1115
+#pga: 6.144V
+#   Default value is 4.096V. The maximum voltage range used for the input. This
+#   scales all values read from the ADC. Options are: 6.144V, 4.096V, 2.048V,
+#   1.024V, 0.512V, 0.256V
+#mode: single
+#    Default value is single. Turn off the chip after a single reading or keep
+#    it running. Turning off saves power but turning it back on will be slower.
+#    Options are single and continuous.
+#samples_per_second: 128
+#    Default value is 128. The amount of samples that the ADC can provide per
+#    second. A lower value makes the samples more accurate, but it takes longer
+#    until a new value is available.
+#    ADS101X's support 128, 250, 490, 920, 1600, 2400, 3300.
+#    ADS111X's support 8, 16, 32, 64, 128, 250, 475, 860.
+i2c_mcu: host
+i2c_bus: i2c.1
+#address_pin: GND
+#   Default value is GND.  There can be up to four addressed devices depending
+#   upon wiring of the device. Check the datasheet for details. The i2_address
+#   can be specified directly instead of using the address_pin.
+```
+
+The chip provides pins that can be used on other sensors.
+
+```
+sensor_type: ...
+#   Can be any thermistor or adc_temperature.
+sensor_pin: my_ads1x1x:AIN0
+#   A combination of the name of the ads1x1x chip that and the pin. Possible
+#   pin values are AIN0, AIN1, AIN2 and AIN3 for single ended lines and
+#   DIFF01, DIFF03, DIFF13 and DIFF23 for differential between their
+#   correspoding lines. For example
+#   DIFF03 measures the differential between line 0 and 3. Only specific
+#   combinations for the differentials are allowed.
+```
+
 ### [replicape]
 
 Replicape support - see the [beaglebone guide](Beaglebone.md) and the
