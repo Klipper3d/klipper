@@ -10,6 +10,7 @@
 #include "gpio.h" // i2c_setup
 #include "internal.h" // gpio_peripheral
 #include "sched.h" // sched_shutdown
+#include "i2ccmds.h" // I2C_BUS_SUCCESS
 
 #if CONFIG_MACH_SAME70
 #include "same70_i2c.h" // Fixes for upstream header changes
@@ -126,7 +127,7 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
     return (struct i2c_config){ .twi=p_twi, .addr=addr};
 }
 
-void
+int
 i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
 {
     Twi *p_twi = config.twi;
@@ -150,9 +151,11 @@ i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
     p_twi->TWI_CR = TWI_CR_STOP;
     while (!(p_twi->TWI_SR & TWI_SR_TXCOMP))
         ;
+
+    return I2C_BUS_SUCCESS;
 }
 
-void
+int
 i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *read)
 {
@@ -192,4 +195,6 @@ i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
     while (!(p_twi->TWI_SR & TWI_SR_TXCOMP))
         ;
     (void)p_twi->TWI_SR;
+
+    return I2C_BUS_SUCCESS;
 }
