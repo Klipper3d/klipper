@@ -1,11 +1,16 @@
 # Code for reading and writing the Klipper config file
 #
-# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2024  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, glob, re, time, logging, configparser, io
 
 error = configparser.Error
+
+
+######################################################################
+# Config section parsing helper
+######################################################################
 
 class sentinel:
     pass
@@ -134,30 +139,13 @@ class ConfigWrapper:
         pconfig = self.printer.lookup_object("configfile")
         pconfig.deprecate(self.section, option, value, msg)
 
-AUTOSAVE_HEADER = """
-#*# <---------------------- SAVE_CONFIG ---------------------->
-#*# DO NOT EDIT THIS BLOCK OR BELOW. The contents are auto-generated.
-#*#
-"""
 
-class PrinterConfig:
-    def __init__(self, printer):
-        self.printer = printer
-        self.autosave = None
-        self.deprecated = {}
-        self.runtime_warnings = []
-        self.deprecate_warnings = []
-        self.status_raw_config = {}
-        self.status_save_pending = {}
-        self.status_settings = {}
-        self.status_warnings = []
-        self.save_config_pending = False
-        gcode = self.printer.lookup_object('gcode')
-        gcode.register_command("SAVE_CONFIG", self.cmd_SAVE_CONFIG,
-                               desc=self.cmd_SAVE_CONFIG_help)
-    def get_printer(self):
-        return self.printer
-    def _read_config_file(self, filename):
+######################################################################
+# Config file parsing (with include file support)
+######################################################################
+
+class ConfigFileReader:
+    def read_config_file(self, filename):
         try:
             f = open(filename, 'r')
             data = f.read()
@@ -167,6 +155,98 @@ class PrinterConfig:
             logging.exception(msg)
             raise error(msg)
         return data.replace('\r\n', '\n')
+    def build_config_string(self, fileconfig):
+        sfile = io.StringIO()
+        fileconfig.write(sfile)
+        return sfile.getvalue().strip()
+    def append_fileconfig(self, fileconfig, data, filename):
+        if not data:
+            return
+        # Strip trailing comments
+        lines = data.split('\n')
+        for i, line in enumerate(lines):
+            pos = line.find('#')
+            if pos >= 0:
+                lines[i] = line[:pos]
+        sbuffer = io.StringIO('\n'.join(lines))
+        if sys.version_info.major >= 3:
+            fileconfig.read_file(sbuffer, filename)
+        else:
+            fileconfig.readfp(sbuffer, filename)
+    def _create_fileconfig(self):
+        if sys.version_info.major >= 3:
+            fileconfig = configparser.RawConfigParser(
+                strict=False, inline_comment_prefixes=(';', '#'))
+        else:
+            fileconfig = configparser.RawConfigParser()
+        return fileconfig
+    def build_fileconfig(self, data, filename):
+        fileconfig = self._create_fileconfig()
+        self.append_fileconfig(fileconfig, data, filename)
+        return fileconfig
+    def _resolve_include(self, source_filename, include_spec, fileconfig,
+                         visited):
+        dirname = os.path.dirname(source_filename)
+        include_spec = include_spec.strip()
+        include_glob = os.path.join(dirname, include_spec)
+        include_filenames = glob.glob(include_glob)
+        if not include_filenames and not glob.has_magic(include_glob):
+            # Empty set is OK if wildcard but not for direct file reference
+            raise error("Include file '%s' does not exist" % (include_glob,))
+        include_filenames.sort()
+        for include_filename in include_filenames:
+            include_data = self.read_config_file(include_filename)
+            self._parse_config(include_data, include_filename, fileconfig,
+                               visited)
+        return include_filenames
+    def _parse_config(self, data, filename, fileconfig, visited):
+        path = os.path.abspath(filename)
+        if path in visited:
+            raise error("Recursive include of config file '%s'" % (filename))
+        visited.add(path)
+        lines = data.split('\n')
+        # Buffer lines between includes and parse as a unit so that overrides
+        # in includes apply linearly as they do within a single file
+        buf = []
+        for line in lines:
+            # Process include or buffer line
+            mo = configparser.RawConfigParser.SECTCRE.match(line)
+            header = mo and mo.group('header')
+            if header and header.startswith('include '):
+                self.append_fileconfig(fileconfig, '\n'.join(buf), filename)
+                del buf[:]
+                include_spec = header[8:].strip()
+                self._resolve_include(filename, include_spec, fileconfig,
+                                      visited)
+            else:
+                buf.append(line)
+        self.append_fileconfig(fileconfig, '\n'.join(buf), filename)
+        visited.remove(path)
+    def build_fileconfig_with_includes(self, data, filename):
+        fileconfig = self._create_fileconfig()
+        self._parse_config(data, filename, fileconfig, set())
+        return fileconfig
+
+
+######################################################################
+# Config auto save helper
+######################################################################
+
+AUTOSAVE_HEADER = """
+#*# <---------------------- SAVE_CONFIG ---------------------->
+#*# DO NOT EDIT THIS BLOCK OR BELOW. The contents are auto-generated.
+#*#
+"""
+
+class ConfigAutoSave:
+    def __init__(self, printer):
+        self.printer = printer
+        self.fileconfig = None
+        self.status_save_pending = {}
+        self.save_config_pending = False
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_command("SAVE_CONFIG", self.cmd_SAVE_CONFIG,
+                               desc=self.cmd_SAVE_CONFIG_help)
     def _find_autosave_data(self, data):
         regular_data = data
         autosave_data = ""
@@ -175,7 +255,7 @@ class PrinterConfig:
             regular_data = data[:pos]
             autosave_data = data[pos + len(AUTOSAVE_HEADER):].strip()
         # Check for errors and strip line prefixes
-        if "\n#*# " in regular_data:
+        if "\n#*# " in regular_data or autosave_data.find(AUTOSAVE_HEADER) >= 0:
             logging.warning("Can't read autosave from config file"
                             " - autosave state corrupted")
             return data, ""
@@ -192,7 +272,7 @@ class PrinterConfig:
         return regular_data, "\n".join(out)
     comment_r = re.compile('[#;].*$')
     value_r = re.compile('[^A-Za-z0-9_].*$')
-    def _strip_duplicates(self, data, config):
+    def _strip_duplicates(self, data, fileconfig):
         # Comment out fields in 'data' that are defined in 'config'
         lines = data.split('\n')
         section = None
@@ -210,152 +290,31 @@ class PrinterConfig:
                 section = pruned_line[1:-1].strip()
                 continue
             field = self.value_r.sub('', pruned_line)
-            if config.fileconfig.has_option(section, field):
+            if fileconfig.has_option(section, field):
                 is_dup_field = True
                 lines[lineno] = '#' + lines[lineno]
         return "\n".join(lines)
-    def _parse_config_buffer(self, buffer, filename, fileconfig):
-        if not buffer:
-            return
-        data = '\n'.join(buffer)
-        del buffer[:]
-        sbuffer = io.StringIO(data)
-        if sys.version_info.major >= 3:
-            fileconfig.read_file(sbuffer, filename)
-        else:
-            fileconfig.readfp(sbuffer, filename)
-    def _resolve_include(self, source_filename, include_spec, fileconfig,
-                         visited):
-        dirname = os.path.dirname(source_filename)
-        include_spec = include_spec.strip()
-        include_glob = os.path.join(dirname, include_spec)
-        include_filenames = glob.glob(include_glob)
-        if not include_filenames and not glob.has_magic(include_glob):
-            # Empty set is OK if wildcard but not for direct file reference
-            raise error("Include file '%s' does not exist" % (include_glob,))
-        include_filenames.sort()
-        for include_filename in include_filenames:
-            include_data = self._read_config_file(include_filename)
-            self._parse_config(include_data, include_filename, fileconfig,
-                               visited)
-        return include_filenames
-    def _parse_config(self, data, filename, fileconfig, visited):
-        path = os.path.abspath(filename)
-        if path in visited:
-            raise error("Recursive include of config file '%s'" % (filename))
-        visited.add(path)
-        lines = data.split('\n')
-        # Buffer lines between includes and parse as a unit so that overrides
-        # in includes apply linearly as they do within a single file
-        buffer = []
-        for line in lines:
-            # Strip trailing comment
-            pos = line.find('#')
-            if pos >= 0:
-                line = line[:pos]
-            # Process include or buffer line
-            mo = configparser.RawConfigParser.SECTCRE.match(line)
-            header = mo and mo.group('header')
-            if header and header.startswith('include '):
-                self._parse_config_buffer(buffer, filename, fileconfig)
-                include_spec = header[8:].strip()
-                self._resolve_include(filename, include_spec, fileconfig,
-                                      visited)
-            else:
-                buffer.append(line)
-        self._parse_config_buffer(buffer, filename, fileconfig)
-        visited.remove(path)
-    def _build_config_wrapper(self, data, filename):
-        if sys.version_info.major >= 3:
-            fileconfig = configparser.RawConfigParser(
-                strict=False, inline_comment_prefixes=(';', '#'))
-        else:
-            fileconfig = configparser.RawConfigParser()
-        self._parse_config(data, filename, fileconfig, set())
-        return ConfigWrapper(self.printer, fileconfig, {}, 'printer')
-    def _build_config_string(self, config):
-        sfile = io.StringIO()
-        config.fileconfig.write(sfile)
-        return sfile.getvalue().strip()
-    def read_config(self, filename):
-        return self._build_config_wrapper(self._read_config_file(filename),
-                                          filename)
-    def read_main_config(self):
+    def load_main_config(self):
         filename = self.printer.get_start_args()['config_file']
-        data = self._read_config_file(filename)
+        cfgrdr = ConfigFileReader()
+        data = cfgrdr.read_config_file(filename)
         regular_data, autosave_data = self._find_autosave_data(data)
-        regular_config = self._build_config_wrapper(regular_data, filename)
-        autosave_data = self._strip_duplicates(autosave_data, regular_config)
-        self.autosave = self._build_config_wrapper(autosave_data, filename)
-        cfg = self._build_config_wrapper(regular_data + autosave_data, filename)
-        return cfg
-    def check_unused_options(self, config):
-        fileconfig = config.fileconfig
-        objects = dict(self.printer.lookup_objects())
-        # Determine all the fields that have been accessed
-        access_tracking = dict(config.access_tracking)
-        for section in self.autosave.fileconfig.sections():
-            for option in self.autosave.fileconfig.options(section):
-                access_tracking[(section.lower(), option.lower())] = 1
-        # Validate that there are no undefined parameters in the config file
-        valid_sections = { s: 1 for s, o in access_tracking }
-        for section_name in fileconfig.sections():
-            section = section_name.lower()
-            if section not in valid_sections and section not in objects:
-                raise error("Section '%s' is not a valid config section"
-                            % (section,))
-            for option in fileconfig.options(section_name):
-                option = option.lower()
-                if (section, option) not in access_tracking:
-                    raise error("Option '%s' is not valid in section '%s'"
-                                % (option, section))
-        # Setup get_status()
-        self._build_status(config)
-    def log_config(self, config):
-        lines = ["===== Config file =====",
-                 self._build_config_string(config),
-                 "======================="]
-        self.printer.set_rollover_info("config", "\n".join(lines))
-    # Status reporting
-    def runtime_warning(self, msg):
-        logging.warning(msg)
-        res = {'type': 'runtime_warning', 'message': msg}
-        self.runtime_warnings.append(res)
-        self.status_warnings = self.runtime_warnings + self.deprecate_warnings
-    def deprecate(self, section, option, value=None, msg=None):
-        self.deprecated[(section, option, value)] = msg
-    def _build_status(self, config):
-        self.status_raw_config.clear()
-        for section in config.get_prefix_sections(''):
-            self.status_raw_config[section.get_name()] = section_status = {}
-            for option in section.get_prefix_options(''):
-                section_status[option] = section.get(option, note_valid=False)
-        self.status_settings = {}
-        for (section, option), value in config.access_tracking.items():
-            self.status_settings.setdefault(section, {})[option] = value
-        self.deprecate_warnings = []
-        for (section, option, value), msg in self.deprecated.items():
-            if value is None:
-                res = {'type': 'deprecated_option'}
-            else:
-                res = {'type': 'deprecated_value', 'value': value}
-            res['message'] = msg
-            res['section'] = section
-            res['option'] = option
-            self.deprecate_warnings.append(res)
-        self.status_warnings = self.runtime_warnings + self.deprecate_warnings
+        regular_fileconfig = cfgrdr.build_fileconfig_with_includes(
+            regular_data, filename)
+        autosave_data = self._strip_duplicates(autosave_data,
+                                               regular_fileconfig)
+        self.fileconfig = cfgrdr.build_fileconfig(autosave_data, filename)
+        cfgrdr.append_fileconfig(regular_fileconfig,
+                                 autosave_data, '*AUTOSAVE*')
+        return regular_fileconfig, self.fileconfig
     def get_status(self, eventtime):
-        return {'config': self.status_raw_config,
-                'settings': self.status_settings,
-                'warnings': self.status_warnings,
-                'save_config_pending': self.save_config_pending,
+        return {'save_config_pending': self.save_config_pending,
                 'save_config_pending_items': self.status_save_pending}
-    # Autosave functions
     def set(self, section, option, value):
-        if not self.autosave.fileconfig.has_section(section):
-            self.autosave.fileconfig.add_section(section)
+        if not self.fileconfig.has_section(section):
+            self.fileconfig.add_section(section)
         svalue = str(value)
-        self.autosave.fileconfig.set(section, option, svalue)
+        self.fileconfig.set(section, option, svalue)
         pending = dict(self.status_save_pending)
         if not section in pending or pending[section] is None:
             pending[section] = {}
@@ -366,8 +325,8 @@ class PrinterConfig:
         self.save_config_pending = True
         logging.info("save_config: set [%s] %s = %s", section, option, svalue)
     def remove_section(self, section):
-        if self.autosave.fileconfig.has_section(section):
-            self.autosave.fileconfig.remove_section(section)
+        if self.fileconfig.has_section(section):
+            self.fileconfig.remove_section(section)
             pending = dict(self.status_save_pending)
             pending[section] = None
             self.status_save_pending = pending
@@ -378,21 +337,20 @@ class PrinterConfig:
             del pending[section]
             self.status_save_pending = pending
             self.save_config_pending = True
-    def _disallow_include_conflicts(self, regular_data, cfgname, gcode):
-        config = self._build_config_wrapper(regular_data, cfgname)
-        for section in self.autosave.fileconfig.sections():
-            for option in self.autosave.fileconfig.options(section):
-                if config.fileconfig.has_option(section, option):
+    def _disallow_include_conflicts(self, regular_fileconfig):
+        for section in self.fileconfig.sections():
+            for option in self.fileconfig.options(section):
+                if regular_fileconfig.has_option(section, option):
                     msg = ("SAVE_CONFIG section '%s' option '%s' conflicts "
                            "with included value" % (section, option))
-                    raise gcode.error(msg)
+                    raise self.printer.command_error(msg)
     cmd_SAVE_CONFIG_help = "Overwrite config file and restart"
     def cmd_SAVE_CONFIG(self, gcmd):
-        if not self.autosave.fileconfig.sections():
+        if not self.fileconfig.sections():
             return
-        gcode = self.printer.lookup_object('gcode')
         # Create string containing autosave data
-        autosave_data = self._build_config_string(self.autosave)
+        cfgrdr = ConfigFileReader()
+        autosave_data = cfgrdr.build_config_string(self.fileconfig)
         lines = [('#*# ' + l).strip()
                  for l in autosave_data.split('\n')]
         lines.insert(0, "\n" + AUTOSAVE_HEADER.rstrip())
@@ -401,16 +359,27 @@ class PrinterConfig:
         # Read in and validate current config file
         cfgname = self.printer.get_start_args()['config_file']
         try:
-            data = self._read_config_file(cfgname)
-            regular_data, old_autosave_data = self._find_autosave_data(data)
-            config = self._build_config_wrapper(regular_data, cfgname)
+            data = cfgrdr.read_config_file(cfgname)
+        except error as e:
+            msg = "Unable to read existing config on SAVE_CONFIG"
+            logging.exception(msg)
+            raise gcmd.error(msg)
+        regular_data, old_autosave_data = self._find_autosave_data(data)
+        regular_data = self._strip_duplicates(regular_data, self.fileconfig)
+        data = regular_data.rstrip() + autosave_data
+        new_regular_data, new_autosave_data = self._find_autosave_data(data)
+        if not new_autosave_data:
+            raise gcmd.error(
+                "Existing config autosave is corrupted."
+                " Can't complete SAVE_CONFIG")
+        try:
+            regular_fileconfig = cfgrdr.build_fileconfig_with_includes(
+                new_regular_data, cfgname)
         except error as e:
             msg = "Unable to parse existing config on SAVE_CONFIG"
             logging.exception(msg)
-            raise gcode.error(msg)
-        regular_data = self._strip_duplicates(regular_data, self.autosave)
-        self._disallow_include_conflicts(regular_data, cfgname, gcode)
-        data = regular_data.rstrip() + autosave_data
+            raise gcmd.error(msg)
+        self._disallow_include_conflicts(regular_fileconfig)
         # Determine filenames
         datestr = time.strftime("-%Y%m%d_%H%M%S")
         backup_name = cfgname + datestr
@@ -430,6 +399,135 @@ class PrinterConfig:
         except:
             msg = "Unable to write config file during SAVE_CONFIG"
             logging.exception(msg)
-            raise gcode.error(msg)
+            raise gcmd.error(msg)
         # Request a restart
+        gcode = self.printer.lookup_object('gcode')
         gcode.request_restart('restart')
+
+
+######################################################################
+# Config validation (check for undefined options)
+######################################################################
+
+class ConfigValidate:
+    def __init__(self, printer):
+        self.printer = printer
+        self.status_settings = {}
+        self.access_tracking = {}
+        self.autosave_options = {}
+    def start_access_tracking(self, autosave_fileconfig):
+        # Note autosave options for use during undefined options check
+        self.autosave_options = {}
+        for section in autosave_fileconfig.sections():
+            for option in autosave_fileconfig.options(section):
+                self.autosave_options[(section.lower(), option.lower())] = 1
+        self.access_tracking = {}
+        return self.access_tracking
+    def check_unused(self, fileconfig):
+        # Don't warn on fields set in autosave segment
+        access_tracking = dict(self.access_tracking)
+        access_tracking.update(self.autosave_options)
+        # Note locally used sections
+        valid_sections = { s: 1 for s, o in self.printer.lookup_objects() }
+        valid_sections.update({ s: 1 for s, o in access_tracking })
+        # Validate that there are no undefined parameters in the config file
+        for section_name in fileconfig.sections():
+            section = section_name.lower()
+            if section not in valid_sections:
+                raise error("Section '%s' is not a valid config section"
+                            % (section,))
+            for option in fileconfig.options(section_name):
+                option = option.lower()
+                if (section, option) not in access_tracking:
+                    raise error("Option '%s' is not valid in section '%s'"
+                                % (option, section))
+        # Setup get_status()
+        self._build_status_settings()
+        # Clear tracking state
+        self.access_tracking.clear()
+        self.autosave_options.clear()
+    def _build_status_settings(self):
+        self.status_settings = {}
+        for (section, option), value in self.access_tracking.items():
+            self.status_settings.setdefault(section, {})[option] = value
+    def get_status(self, eventtime):
+        return {'settings': self.status_settings}
+
+
+######################################################################
+# Main printer config tracking
+######################################################################
+
+class PrinterConfig:
+    def __init__(self, printer):
+        self.printer = printer
+        self.autosave = ConfigAutoSave(printer)
+        self.validate = ConfigValidate(printer)
+        self.deprecated = {}
+        self.runtime_warnings = []
+        self.deprecate_warnings = []
+        self.status_raw_config = {}
+        self.status_warnings = []
+    def get_printer(self):
+        return self.printer
+    def read_config(self, filename):
+        cfgrdr = ConfigFileReader()
+        data = cfgrdr.read_config_file(filename)
+        fileconfig = cfgrdr.build_fileconfig(data, filename)
+        return ConfigWrapper(self.printer, fileconfig, {}, 'printer')
+    def read_main_config(self):
+        fileconfig, autosave_fileconfig = self.autosave.load_main_config()
+        access_tracking = self.validate.start_access_tracking(
+            autosave_fileconfig)
+        config = ConfigWrapper(self.printer, fileconfig,
+                               access_tracking, 'printer')
+        self._build_status_config(config)
+        return config
+    def log_config(self, config):
+        cfgrdr = ConfigFileReader()
+        lines = ["===== Config file =====",
+                 cfgrdr.build_config_string(config.fileconfig),
+                 "======================="]
+        self.printer.set_rollover_info("config", "\n".join(lines))
+    def check_unused_options(self, config):
+        self.validate.check_unused(config.fileconfig)
+    # Deprecation warnings
+    def runtime_warning(self, msg):
+        logging.warning(msg)
+        res = {'type': 'runtime_warning', 'message': msg}
+        self.runtime_warnings.append(res)
+        self.status_warnings = self.runtime_warnings + self.deprecate_warnings
+    def deprecate(self, section, option, value=None, msg=None):
+        key = (section, option, value)
+        if key in self.deprecated and self.deprecated[key] == msg:
+            return
+        self.deprecated[key] = msg
+        self.deprecate_warnings = []
+        for (section, option, value), msg in self.deprecated.items():
+            if value is None:
+                res = {'type': 'deprecated_option'}
+            else:
+                res = {'type': 'deprecated_value', 'value': value}
+            res['message'] = msg
+            res['section'] = section
+            res['option'] = option
+            self.deprecate_warnings.append(res)
+        self.status_warnings = self.runtime_warnings + self.deprecate_warnings
+    # Status reporting
+    def _build_status_config(self, config):
+        self.status_raw_config = {}
+        for section in config.get_prefix_sections(''):
+            self.status_raw_config[section.get_name()] = section_status = {}
+            for option in section.get_prefix_options(''):
+                section_status[option] = section.get(option, note_valid=False)
+    def get_status(self, eventtime):
+        status = {'config': self.status_raw_config,
+                  'warnings': self.status_warnings}
+        status.update(self.autosave.get_status(eventtime))
+        status.update(self.validate.get_status(eventtime))
+        return status
+    # Autosave functions
+    def set(self, section, option, value):
+        self.autosave.set(section, option, value)
+    def remove_section(self, section):
+        self.autosave.remove_section(section)
