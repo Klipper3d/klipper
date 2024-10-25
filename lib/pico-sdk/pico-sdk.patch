@@ -47,3 +47,23 @@ index aff1fc9ae..59c67db19 100644
  
  # note we don't do this by default in this file for backwards comaptibility with user code
  # that may include this file, but not use unified syntax. Note that this macro does equivalent
+diff --git a/lib/pico-sdk/rp2350/cmsis_include/RP2350.h b/lib/pico-sdk/rp2350/cmsis_include/RP2350.h
+index 8ae014e04..94d0f178c 100644
+--- a/lib/pico-sdk/rp2350/cmsis_include/RP2350.h
++++ b/lib/pico-sdk/rp2350/cmsis_include/RP2350.h
+@@ -5933,6 +5933,7 @@ typedef struct {                                /*!< USB_DPRAM Structure
+   * @{
+   */
+ 
++#if 0
+ #define RESETS_BASE                 0x40020000UL
+ #define PSM_BASE                    0x40018000UL
+ #define CLOCKS_BASE                 0x40010000UL
+@@ -5986,6 +5987,7 @@ typedef struct {                                /*!< USB_DPRAM Structure
+ #define OTP_DATA_RAW_BASE           0x40134000UL
+ #define TBMAN_BASE                  0x40160000UL
+ #define USB_DPRAM_BASE              0x50100000UL
++#endif
+ 
+ /** @} */ /* End of group Device_Peripheral_peripheralAddr */
+ 
