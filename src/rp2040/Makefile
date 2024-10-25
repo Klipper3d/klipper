@@ -8,23 +8,25 @@ dirs-y += src/rp2040 src/generic lib/elf2uf2 lib/fast-hash lib/can2040
 MCU := $(shell echo $(CONFIG_MCU))
 MCU_UPPER := $(shell echo $(CONFIG_MCU) | tr a-z A-Z | tr X x)
 
-CFLAGS += -mcpu=cortex-m0plus -mthumb -Ilib/cmsis-core
+CFLAGS-$(CONFIG_MACH_RP2040) += -mcpu=cortex-m0plus
+CFLAGS-$(CONFIG_MACH_RP2350) += -mcpu=cortex-m33
+CFLAGS += $(CFLAGS-y) -DPICO_$(MCU_UPPER) -mthumb -Ilib/cmsis-core
 CFLAGS += -Ilib/pico-sdk/$(MCU) -Ilib/pico-sdk
 CFLAGS += -Ilib/pico-sdk/$(MCU)/cmsis_include -Ilib/fast-hash -Ilib/can2040
-CFLAGS += -DPICO_$(MCU_UPPER)
 
 # Add source files
-src-y += rp2040/main.c rp2040/watchdog.c rp2040/gpio.c
-src-y += rp2040/adc.c rp2040/timer.c rp2040/bootrom.c
-src-y += generic/armcm_boot.c generic/armcm_irq.c generic/armcm_reset.c
-src-y += generic/timer_irq.c generic/crc16_ccitt.c
-src-$(CONFIG_USBSERIAL) += rp2040/usbserial.c generic/usb_cdc.c
-src-$(CONFIG_USBSERIAL) += rp2040/chipid.c
+src-y += rp2040/main.c rp2040/watchdog.c rp2040/gpio.c rp2040/adc.c
+src-y += generic/armcm_boot.c generic/armcm_irq.c
+src-y += generic/armcm_reset.c generic/crc16_ccitt.c
+chipid-src-$(CONFIG_MACH_RP2040) := rp2040/chipid.c
+src-$(CONFIG_MACH_RP2040) += rp2040/timer.c generic/timer_irq.c rp2040/bootrom.c
+src-$(CONFIG_MACH_RP2350) += generic/armcm_timer.c
+src-$(CONFIG_USBSERIAL) += rp2040/usbserial.c generic/usb_cdc.c $(chipid-src-y)
 src-$(CONFIG_SERIAL) += rp2040/serial.c generic/serial_irq.c
-src-$(CONFIG_CANSERIAL) += rp2040/can.c rp2040/chipid.c ../lib/can2040/can2040.c
+src-$(CONFIG_CANSERIAL) += rp2040/can.c $(chipid-src-y) ../lib/can2040/can2040.c
 src-$(CONFIG_CANSERIAL) += generic/canserial.c generic/canbus.c
 src-$(CONFIG_CANSERIAL) += ../lib/fast-hash/fasthash.c
-src-$(CONFIG_USBCANBUS) += rp2040/can.c rp2040/chipid.c ../lib/can2040/can2040.c
+src-$(CONFIG_USBCANBUS) += rp2040/can.c $(chipid-src-y) ../lib/can2040/can2040.c
 src-$(CONFIG_USBCANBUS) += generic/canserial.c generic/usb_canbus.c
 src-$(CONFIG_USBCANBUS) += ../lib/fast-hash/fasthash.c rp2040/usbserial.c
 src-$(CONFIG_HAVE_GPIO_HARD_PWM) += rp2040/hard_pwm.c
@@ -50,7 +52,7 @@ $(OUT)klipper.uf2: $(OUT)klipper.elf $(OUT)lib/elf2uf2/elf2uf2
 	@echo "  Creating uf2 file $@"
 	$(Q)$(OUT)lib/elf2uf2/elf2uf2 $< $@
 
-rptarget-$(CONFIG_RP2040_HAVE_STAGE2) := $(OUT)klipper.uf2
+rptarget-y := $(OUT)klipper.uf2
 stage2-$(CONFIG_RP2040_HAVE_STAGE2) := $(OUT)stage2.o
 
 # rp2040 building when using a bootloader

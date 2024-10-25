@@ -1,8 +1,14 @@
 #ifndef __RP2040_INTERNAL_H
 #define __RP2040_INTERNAL_H
-// Local definitions for rp2040
+// Local definitions for RPxxxx chips
 
-#include "RP2040.h"
+#include "autoconf.h" // CONFIG_MACH_RP2040
+
+#if CONFIG_MACH_RP2040
+  #include "RP2040.h"
+#elif CONFIG_MACH_RP2350
+  #include "RP2350.h"
+#endif
 
 void enable_pclock(uint32_t reset_bit);
 int is_enabled_pclock(uint32_t reset_bit);

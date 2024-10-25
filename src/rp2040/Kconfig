@@ -10,7 +10,7 @@ config RPXXXX_SELECT
     select HAVE_GPIO_SPI
     select HAVE_GPIO_I2C
     select HAVE_STRICT_TIMING
-    select HAVE_CHIPID
+    select HAVE_CHIPID if MACH_RP2040
     select HAVE_GPIO_HARD_PWM
     select HAVE_STEPPER_BOTH_EDGE
     select HAVE_BOOTLOADER_REQUEST
@@ -27,15 +27,19 @@ choice
     prompt "Processor model"
     config MACH_RP2040
         bool "rp2040"
+    config MACH_RP2350
+        bool "rp2350"
 endchoice
 
 config MCU
     string
-    default "rp2040"
+    default "rp2040" if MACH_RP2040
+    default "rp2350" if MACH_RP2350
 
 config CLOCK_FREQ
     int
-    default 12000000
+    default 12000000 if MACH_RP2040
+    default 150000000 if MACH_RP2350
 
 config FLASH_SIZE
     hex
@@ -43,7 +47,8 @@ config FLASH_SIZE
 
 config FLASH_BOOT_ADDRESS
     hex
-    default 0x10000100 # Stage2 binary starts at 0x10000000
+    default 0x10000100 if MACH_RP2040 # Stage2 binary starts at 0x10000000
+    default 0x10000000 if MACH_RP2350
 
 config RAM_START
     hex
@@ -51,7 +56,8 @@ config RAM_START
 
 config RAM_SIZE
     hex
-    default 0x42000
+    default 0x42000 if MACH_RP2040
+    default 0x82000 if MACH_RP2350
 
 config STACK_SIZE
     int
@@ -66,20 +72,25 @@ config RP2040_HAVE_STAGE2
     bool
 config RPXXXX_HAVE_BOOTLOADER
     bool
-    default y if !RP2040_HAVE_STAGE2
 
 choice
     prompt "Bootloader offset"
+    config RPXXXX_FLASH_START_0000
+        bool "No bootloader"
+        depends on MACH_RP2350
     config RPXXXX_FLASH_START_0100
         bool "No bootloader"
+        depends on MACH_RP2040
         select RP2040_HAVE_STAGE2
     config RPXXXX_FLASH_START_4000
         bool "16KiB bootloader"
+        select RPXXXX_HAVE_BOOTLOADER
 endchoice
 config FLASH_APPLICATION_ADDRESS
     hex
     default 0x10004000 if RPXXXX_FLASH_START_4000
-    default 0x10000100
+    default 0x10000100 if RPXXXX_FLASH_START_0100
+    default 0x10000000 if RPXXXX_FLASH_START_0000
 
 choice
     prompt "Flash chip" if LOW_LEVEL_OPTIONS && RP2040_HAVE_STAGE2

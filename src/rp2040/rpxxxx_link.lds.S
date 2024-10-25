@@ -42,6 +42,15 @@ SECTIONS
         KEEP(*(.vector_table))
         _text_vectortable_end = .;
         *(.text.armcm_boot*)
+
+#if CONFIG_MACH_RP2350
+        // The rp2350 needs an "image definition" for the internal ROM
+        LONG(0xffffded3)
+        LONG(0x10210142)
+        LONG(0x000001ff)
+        LONG(0x00000000)
+        LONG(0xab123579)
+#endif
     } > rom :text_segment
 
     . = ALIGN(4);

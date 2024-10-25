@@ -15,6 +15,10 @@
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
 
+#if !CONFIG_MACH_RP2040
+#include "hardware/structs/ticks.h" // ticks_hw
+#endif
+
 
 /****************************************************************
  * Ram IRQ vector table
@@ -46,7 +50,8 @@ bootloader_request(void)
     watchdog_hw->ctrl = 0;
     try_request_canboot();
     // Use the bootrom-provided code to reset into BOOTSEL mode
-    reset_to_usb_boot(0, 0);
+    if (CONFIG_MACH_RP2040)
+        reset_to_usb_boot(0, 0);
 }
 
 
@@ -55,7 +60,7 @@ bootloader_request(void)
  ****************************************************************/
 
 #define FREQ_XOSC 12000000
-#define FREQ_SYS 125000000
+#define FREQ_SYS (CONFIG_MACH_RP2040 ? 125000000 : CONFIG_CLOCK_FREQ)
 #define FREQ_USB 48000000
 
 void
@@ -85,7 +90,7 @@ xosc_setup(void)
     xosc_hw->startup = DIV_ROUND_UP(FREQ_XOSC, 1000 * 256); // 1ms
     xosc_hw->ctrl = (XOSC_CTRL_FREQ_RANGE_VALUE_1_15MHZ
                      | (XOSC_CTRL_ENABLE_VALUE_ENABLE << XOSC_CTRL_ENABLE_LSB));
-    while(!(xosc_hw->status & XOSC_STATUS_STABLE_BITS))
+    while (!(xosc_hw->status & XOSC_STATUS_STABLE_BITS))
         ;
 }
 
@@ -159,7 +164,12 @@ clock_setup(void)
     cref->ctrl = CLOCKS_CLK_REF_CTRL_SRC_VALUE_XOSC_CLKSRC;
     while (!(cref->selected & (1 << 2)))
         ;
+#if CONFIG_MACH_RP2040
     watchdog_hw->tick = 1 | WATCHDOG_TICK_ENABLE_BITS;
+#else
+    ticks_hw->ticks[TICK_WATCHDOG].cycles = 1;
+    ticks_hw->ticks[TICK_WATCHDOG].ctrl = TICKS_WATCHDOG_CTRL_ENABLE_BITS;
+#endif
 
     // Enable GPIO control
     enable_pclock(RESETS_RESET_IO_BANK0_BITS | RESETS_RESET_PADS_BANK0_BITS);
