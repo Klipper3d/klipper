@@ -1,8 +1,8 @@
-# Kconfig settings for RP2040 processors
+# Kconfig settings for RPxxxx processors
 
-if MACH_RP2040
+if MACH_RPXXXX
 
-config RP2040_SELECT
+config RPXXXX_SELECT
     bool
     default y
     select HAVE_GPIO
@@ -18,6 +18,16 @@ config RP2040_SELECT
 config BOARD_DIRECTORY
     string
     default "rp2040"
+
+######################################################################
+# Chip selection
+######################################################################
+
+choice
+    prompt "Processor model"
+    config MACH_RP2040
+        bool "rp2040"
+endchoice
 
 config MCU
     string
@@ -54,21 +64,21 @@ config STACK_SIZE
 
 config RP2040_HAVE_STAGE2
     bool
-config RP2040_HAVE_BOOTLOADER
+config RPXXXX_HAVE_BOOTLOADER
     bool
     default y if !RP2040_HAVE_STAGE2
 
 choice
     prompt "Bootloader offset"
-    config RP2040_FLASH_START_0100
+    config RPXXXX_FLASH_START_0100
         bool "No bootloader"
         select RP2040_HAVE_STAGE2
-    config RP2040_FLASH_START_4000
+    config RPXXXX_FLASH_START_4000
         bool "16KiB bootloader"
 endchoice
 config FLASH_APPLICATION_ADDRESS
     hex
-    default 0x10004000 if RP2040_FLASH_START_4000
+    default 0x10004000 if RPXXXX_FLASH_START_4000
     default 0x10000100
 
 choice
@@ -96,47 +106,47 @@ config RP2040_STAGE2_CLKDIV
 
 choice
  prompt "Communication Interface"
- config RP2040_USB
+ config RPXXXX_USB
      bool "USBSERIAL"
      select USBSERIAL
- config RP2040_SERIAL_UART0_PINS_0_1
+ config RPXXXX_SERIAL_UART0_PINS_0_1
       bool "UART0 on GPIO0/GPIO1"
       select SERIAL
- config RP2040_SERIAL_UART0_PINS_12_13
+ config RPXXXX_SERIAL_UART0_PINS_12_13
       bool "UART0 on GPIO12/GPIO13" if LOW_LEVEL_OPTIONS
       select SERIAL
- config RP2040_SERIAL_UART0_PINS_16_17
+ config RPXXXX_SERIAL_UART0_PINS_16_17
       bool "UART0 on GPIO16/GPIO17" if LOW_LEVEL_OPTIONS
       select SERIAL
-  config RP2040_SERIAL_UART0_PINS_28_29
+  config RPXXXX_SERIAL_UART0_PINS_28_29
       bool "UART0 on GPIO28/GPIO29" if LOW_LEVEL_OPTIONS
       select SERIAL
- config RP2040_SERIAL_UART1_PINS_4_5
+ config RPXXXX_SERIAL_UART1_PINS_4_5
       bool "UART1 on GPIO4/GPIO5" if LOW_LEVEL_OPTIONS
       select SERIAL
- config RP2040_SERIAL_UART1_PINS_8_9
+ config RPXXXX_SERIAL_UART1_PINS_8_9
       bool "UART1 on  GPIO8/GPIO9" if LOW_LEVEL_OPTIONS
       select SERIAL
- config RP2040_SERIAL_UART1_PINS_20_21
+ config RPXXXX_SERIAL_UART1_PINS_20_21
       bool "UART1 on  GPIO20/GPIO21" if LOW_LEVEL_OPTIONS
       select SERIAL
- config RP2040_SERIAL_UART1_PINS_24_25
+ config RPXXXX_SERIAL_UART1_PINS_24_25
       bool "UART1 on GPIO24/GPIO25"  if LOW_LEVEL_OPTIONS
       select SERIAL
- config RP2040_CANBUS
+ config RPXXXX_CANBUS
        bool "CAN bus"
        select CANSERIAL
- config RP2040_USBCANBUS
+ config RPXXXX_USBCANBUS
        bool "USB to CAN bus bridge"
        select USBCANBUS
 endchoice
 
-config RP2040_CANBUS_GPIO_RX
+config RPXXXX_CANBUS_GPIO_RX
     int "CAN RX gpio number" if CANBUS
     default 4
     range 0 29
 
-config RP2040_CANBUS_GPIO_TX
+config RPXXXX_CANBUS_GPIO_TX
     int "CAN TX gpio number" if CANBUS
     default 5
     range 0 29

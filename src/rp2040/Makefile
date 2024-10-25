@@ -1,4 +1,4 @@
-# Additional RP2040 build rules
+# Additional RPxxxx Raspberry Pi MCU build rules
 
 # Setup the toolchain
 CROSS_PREFIX=arm-none-eabi-
@@ -58,7 +58,7 @@ $(OUT)klipper.bin: $(OUT)klipper.elf
 	@echo "  Creating bin file $@"
 	$(Q)$(OBJCOPY) -O binary $< $@
 
-rptarget-$(CONFIG_RP2040_HAVE_BOOTLOADER) := $(OUT)klipper.bin
+rptarget-$(CONFIG_RPXXXX_HAVE_BOOTLOADER) := $(OUT)klipper.bin
 
 # Set klipper.elf linker rules
 target-y += $(rptarget-y)
