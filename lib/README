@@ -119,7 +119,9 @@ taken from the tools/elf2uf2/ directory.
 The rp2040_flash directory contains a light-weight bootsel flash tool.
 It uses C part of the the `picoboot_connection` directory found in:
   https://github.com/raspberrypi/picotool.git
-version v1.1.0 (55fd880c3dc029b961fc1a0967a6cfdc0af02721).
+version 2.0.0 (8a9af99ab10b20b1c6afb30cd9384e562a6647f9). Note that
+Makefile and main.c are locally developed files (the remaining files
+are from the picotool repo).
 
 The hub-ctrl directory contains code from:
   https://github.com/codazoda/hub-ctrl.c/

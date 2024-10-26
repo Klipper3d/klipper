@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-c -Wall -ggdb
+CFLAGS=-c -Wall -ggdb -DHAS_LIBUSB
 LDFALGS=
 SOURCES=main.c picoboot_connection.c
 OBJECTS=$(SOURCES:.c=.o)

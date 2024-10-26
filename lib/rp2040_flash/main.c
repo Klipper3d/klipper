@@ -12,7 +12,7 @@
 #include "picoboot_connection.h"
 #include "boot/uf2.h"
 
-#define FLASH_MAX_SIZE (FLASH_END - FLASH_START)
+#define FLASH_MAX_SIZE (FLASH_END_RP2350 - FLASH_START)
 #define FLASH_NUM_WRITE_BLOCKS (FLASH_MAX_SIZE / PAGE_SIZE)
 #define FLASH_NUM_ERASE_BLOCKS (FLASH_MAX_SIZE / FLASH_SECTOR_ERASE_SIZE)
 
@@ -62,7 +62,7 @@ int load_flash_data(const char *filename, struct flash_data *target) {
 
         // Bounds and alignment checking
         if (block.target_addr != (block.target_addr & ~(PAGE_SIZE-1))) continue;
-        if (block.target_addr > FLASH_END - PAGE_SIZE) continue;
+        if (block.target_addr > FLASH_END_RP2350 - PAGE_SIZE) continue;
         if (block.target_addr < FLASH_START) continue;
 
         uint32_t offset = block.target_addr - FLASH_START;
@@ -209,7 +209,8 @@ int main(int argc, char *argv[]) {
             if (target_bus != libusb_get_bus_number(*dev)) continue;
             if (target_address != libusb_get_device_address(*dev)) continue;
         }
-        enum picoboot_device_result res = picoboot_open_device(*dev, &handle);
+        model_t model;
+        enum picoboot_device_result res = picoboot_open_device(*dev, &handle, &model, -1, -1, "");
         if (res == dr_vidpid_bootrom_ok) {
             break;
         }
