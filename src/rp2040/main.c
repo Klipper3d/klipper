@@ -94,6 +94,10 @@ pll_setup(pll_hw_t *pll, uint32_t mul, uint32_t postdiv)
 {
     // Setup pll
     uint32_t refdiv = 1, fbdiv = mul, postdiv2 = 2, postdiv1 = postdiv/postdiv2;
+    if (postdiv1 > 0x07) {
+        postdiv1 >>= 1;
+        postdiv2 <<= 1;
+    }
     pll->cs = refdiv;
     pll->fbdiv_int = fbdiv;
     pll->pwr = PLL_PWR_DSMPD_BITS | PLL_PWR_POSTDIVPD_BITS;
@@ -143,7 +147,7 @@ clock_setup(void)
 
     // Setup pll_usb
     enable_pclock(RESETS_RESET_PLL_USB_BITS);
-    pll_setup(pll_usb_hw, 40, 40*FREQ_XOSC/FREQ_USB);
+    pll_setup(pll_usb_hw, 80, 80*FREQ_XOSC/FREQ_USB);
 
     // Setup peripheral clocks
     clk_aux_setup(clk_peri, CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS);
