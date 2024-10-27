@@ -36,7 +36,7 @@ command_i2c_set_bus(uint32_t *args)
 {
     uint8_t addr = args[3] & 0x7f;
     struct i2cdev_s *i2c = i2cdev_oid_lookup(args[0]);
-    i2c->i2c_config = i2c_setup(args[1], args[2], addr);
+    i2c->i2c_hw = i2c_setup(args[1], args[2], addr);
     i2c->flags |= IF_HARDWARE;
 }
 DECL_COMMAND(command_i2c_set_bus,
@@ -45,27 +45,55 @@ DECL_COMMAND(command_i2c_set_bus,
 void
 i2cdev_set_software_bus(struct i2cdev_s *i2c, struct i2c_software *is)
 {
-    i2c->i2c_software = is;
+    i2c->i2c_sw = is;
     i2c->flags |= IF_SOFTWARE;
 }
 
-void
-command_i2c_write(uint32_t *args)
+void i2c_shutdown_on_err(int ret)
+{
+    switch (ret) {
+    case I2C_BUS_NACK:
+        shutdown("I2C NACK");
+    case I2C_BUS_START_NACK:
+        shutdown("I2C START NACK");
+    case I2C_BUS_START_READ_NACK:
+        shutdown("I2C START READ NACK");
+    case I2C_BUS_TIMEOUT:
+        shutdown("I2C Timeout");
+    }
+}
+
+int i2c_dev_write(struct i2cdev_s *i2c, uint8_t write_len, uint8_t *data)
+{
+    uint_fast8_t flags = i2c->flags;
+    if (CONFIG_WANT_SOFTWARE_I2C && flags & IF_SOFTWARE)
+        return i2c_software_write(i2c->i2c_sw, write_len, data);
+    else
+        return i2c_write(i2c->i2c_hw, write_len, data);
+}
+
+void command_i2c_write(uint32_t *args)
 {
     uint8_t oid = args[0];
     struct i2cdev_s *i2c = oid_lookup(oid, command_config_i2c);
     uint8_t data_len = args[1];
     uint8_t *data = command_decode_ptr(args[2]);
-    uint_fast8_t flags = i2c->flags;
-    if (CONFIG_WANT_SOFTWARE_I2C && flags & IF_SOFTWARE)
-        i2c_software_write(i2c->i2c_software, data_len, data);
-    else
-        i2c_write(i2c->i2c_config, data_len, data);
+    int ret = i2c_dev_write(i2c, data_len, data);
+    i2c_shutdown_on_err(ret);
 }
 DECL_COMMAND(command_i2c_write, "i2c_write oid=%c data=%*s");
 
-void
-command_i2c_read(uint32_t * args)
+int i2c_dev_read(struct i2cdev_s *i2c, uint8_t reg_len, uint8_t *reg
+                  , uint8_t read_len, uint8_t *read)
+{
+    uint_fast8_t flags = i2c->flags;
+    if (CONFIG_WANT_SOFTWARE_I2C && flags & IF_SOFTWARE)
+        return i2c_software_read(i2c->i2c_sw, reg_len, reg, read_len, read);
+    else
+        return i2c_read(i2c->i2c_hw, reg_len, reg, read_len, read);
+}
+
+void command_i2c_read(uint32_t *args)
 {
     uint8_t oid = args[0];
     struct i2cdev_s *i2c = oid_lookup(oid, command_config_i2c);
@@ -73,11 +101,8 @@ command_i2c_read(uint32_t * args)
     uint8_t *reg = command_decode_ptr(args[2]);
     uint8_t data_len = args[3];
     uint8_t data[data_len];
-    uint_fast8_t flags = i2c->flags;
-    if (CONFIG_WANT_SOFTWARE_I2C && flags & IF_SOFTWARE)
-        i2c_software_read(i2c->i2c_software, reg_len, reg, data_len, data);
-    else
-        i2c_read(i2c->i2c_config, reg_len, reg, data_len, data);
+    int ret = i2c_dev_read(i2c, reg_len, reg, data_len, data);
+    i2c_shutdown_on_err(ret);
     sendf("i2c_read_response oid=%c response=%*s", oid, data_len, data);
 }
 DECL_COMMAND(command_i2c_read, "i2c_read oid=%c reg=%*s read_len=%u");

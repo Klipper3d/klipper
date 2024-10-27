@@ -17,7 +17,6 @@ serve the 3D printing community better. Follow them on
 ## Sponsors
 
 [<img src="./img/sponsors/obico-light-horizontal.png" width="200" style="margin:25px" />](https://obico.io/klipper.html?source=klipper_sponsor)
-[<img src="./img/sponsors/peopoly-logo.png" width="200" style="margin:25px" />](https://peopoly.net)
 
 ## Klipper Developers
 

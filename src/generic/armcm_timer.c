@@ -137,7 +137,7 @@ timer_dispatch_many(void)
             // Check if there are too many repeat timers
             if (diff < (int32_t)(-timer_from_us(1000)))
                 try_shutdown("Rescheduled timer in the past");
-            if (sched_tasks_busy()) {
+            if (sched_check_set_tasks_busy()) {
                 timer_repeat_until = now + TIMER_REPEAT_TICKS;
                 return TIMER_DEFER_REPEAT_TICKS;
             }
