@@ -6,7 +6,6 @@
 import logging
 import pins
 from . import bus
-from . import adc_temperature
 
 # Supported chip types
 ADS1X1X_CHIP_TYPE = {
@@ -173,22 +172,10 @@ class ADS1X1X_chip:
         if config.get('address_pin', None) is not None:
             address = config.getchoice('address_pin', ADS1X1X_CHIP_ADDR)
 
-        if isADS101X(self.chip):
-            self.samples_per_second = config.getchoice('samples_per_second',
-                ADS101X_SAMPLES_PER_SECOND, '128')
-            self.samples_per_second_numeric = config.getint(
-                'samples_per_second', 128)
-        else:
-            self.samples_per_second = config.getchoice('samples_per_second',
-                ADS111X_SAMPLES_PER_SECOND, '128')
-            self.samples_per_second_numeric = config.getint(
-                'samples_per_second', 128)
-
         self._ppins = self._printer.lookup_object("pins")
         self._ppins.register_chip(self.name, self)
 
         self.pga = config.getchoice('pga', ADS1X1X_PGA, '4.096V')
-        self.mode = config.getchoice('mode', ADS1X1X_MODE, 'single')
         # Comparators are not implemented, they would only be useful if the
         # alert pin is used, which we haven't made configurable.
         # But that wouldn't be useful for a normal temperature sensor anyway.
@@ -201,54 +188,111 @@ class ADS1X1X_chip:
         self.mcu = self._i2c.get_mcu()
 
         self._printer.add_object("ads1x1x " + self.name, self)
-        self._printer.register_event_handler("klippy:ready", \
-                                            self._handle_ready)
-        self._printer.register_event_handler("klippy:shutdown", \
-                                            self.reset_all_devices)
+        self._printer.register_event_handler("klippy:connect", \
+                                            self._handle_connect)
 
         self._pins = {}
         self._mutex = self._reactor.mutex()
 
     def setup_pin(self, pin_type, pin_params):
+        pin = pin_params['pin']
         if pin_type == 'adc':
-            pin = ADS1X1X_pin(self, pin_params)
-            if pin.pin in self._pins:
-                raise pins.error(
-                    '%s pin %s for chip %s is used multiple times' \
-                        % (self.chip, pin.pin, self.name))
-            self._pins[pin.pin] = pin
-            return pin
-        raise pins.error('Wrong pin or incompatible type: %s with type %s! ' % (
-            pin_params['pin'], pin_type))
+            if (pin not in ADS1X1X_MUX):
+                raise pins.error('ADS1x1x pin %s is not valid' % \
+                                 pin_params['pin'])
 
-    def _handle_ready(self):
-        self.reset_all_devices()
+            config = 0
+            config |= (ADS1X1X_OS['OS_SINGLE'] & \
+                       ADS1X1X_REG_CONFIG['OS_MASK'])
+            config |= (ADS1X1X_MUX[pin_params['pin']] & \
+                       ADS1X1X_REG_CONFIG['MULTIPLEXER_MASK'])
+            config |= (self.pga & ADS1X1X_REG_CONFIG['PGA_MASK'])
+            # Have to use single mode, because in continuous, it never reaches
+            # idle state, which we use to determine if the sampling is done.
+            config |= (ADS1X1X_MODE['single'] & \
+                       ADS1X1X_REG_CONFIG['MODE_MASK'])
+            # lowest sample rate per default, until report time has been set in
+            # setup_adc_sample
+            config |= (self.comp_mode \
+                & ADS1X1X_REG_CONFIG['COMPARATOR_MODE_MASK'])
+            config |= (self.comp_polarity \
+                & ADS1X1X_REG_CONFIG['COMPARATOR_POLARITY_MASK'])
+            config |= (self.comp_latching \
+                & ADS1X1X_REG_CONFIG['COMPARATOR_LATCHING_MASK'])
+            config |= (self.comp_queue \
+                & ADS1X1X_REG_CONFIG['COMPARATOR_QUEUE_MASK'])
+
+            pin_obj = ADS1X1X_pin(self, config)
+            if pin in self._pins:
+                raise pins.error(
+                    'pin %s for chip %s is used multiple times' \
+                        % (pin, self.name))
+            self._pins[pin] = pin_obj
+
+            return pin_obj
+        raise pins.error('Wrong pin or incompatible type: %s with type %s! ' % (
+            pin, pin_type))
+
+    def _handle_connect(self):
+        try:
+            # Init all devices on bus for this kind of device
+            self._i2c.i2c_write([0x06, 0x00, 0x00])
+        except Exception:
+            logging.exception("ADS1X1X: error while resetting device")
 
     def is_ready(self):
         config = self._read_register(ADS1X1X_REG_POINTER['CONFIG'])
         return bool((config & ADS1X1X_REG_CONFIG['OS_MASK']) == \
                     ADS1X1X_OS['OS_IDLE'])
 
-    def sample(self, sensor):
+    def calculate_sample_rate(self):
+        pin_count = len(self._pins)
+        lowest_report_time = 1
+        for pin in self._pins.values():
+            lowest_report_time = min(lowest_report_time, pin.report_time)
+
+        sample_rate = 1 / lowest_report_time * pin_count
+        samples_per_second = ADS111X_SAMPLES_PER_SECOND
+        if isADS101X(self.chip):
+            samples_per_second = ADS101X_SAMPLES_PER_SECOND
+
+        # make sure the samples list is sorted correctly by number.
+        samples_per_second = sorted(samples_per_second.items(), \
+                                    key=lambda t: int(t[0]))
+        for rate, bits in samples_per_second:
+            rate_number = int(rate)
+            if sample_rate <= rate_number:
+                return (rate_number, bits)
+        logging.warning(
+            "ADS1X1X: requested sample rate %s is higher than supported by %s."\
+                % (sample_rate, self.name))
+        return (rate_number, bits)
+
+    def handle_report_time_update(self):
+        (sample_rate, sample_rate_bits) = self.calculate_sample_rate()
+
+        for pin in self._pins.values():
+            pin.config = (pin.config & ~ADS1X1X_REG_CONFIG['DATA_RATE_MASK']) \
+                | (sample_rate_bits & ADS1X1X_REG_CONFIG['DATA_RATE_MASK'])
+
+        self.delay = 1 / float(sample_rate)
+
+    def sample(self, pin):
         with self._mutex:
-            pin_object = self._pins[sensor.pin]
-            sample = 0
             try:
-                self._write_register(ADS1X1X_REG_POINTER['CONFIG'],
-                                     pin_object.config)
-                # The report time is 1 / sample_count * 4 to account for the 4
-                # possible inputs. So sample_count 16 on 1 input will result
-                # in 4 samples per second.
-                delay = 1 / self.samples_per_second_numeric
-                self._reactor.pause(self._reactor.monotonic() + delay)
+                self._write_register(ADS1X1X_REG_POINTER['CONFIG'], pin.config)
+                self._reactor.pause(self._reactor.monotonic() + self.delay)
+                start_time = self._reactor.monotonic()
                 while not self.is_ready():
                     self._reactor.pause(self._reactor.monotonic() + 0.001)
-                sample = self._read_register(ADS1X1X_REG_POINTER['CONVERSION'])
-            except Exception:
-                logging.exception("ADS1X1X: error while sampling")
+                    # if we waited twice the expected time, mark this an error
+                    if start_time + self.delay < self._reactor.monotonic():
+                        logging.warning("ADS1X1X: timeout during sampling")
+                        return None
+                return self._read_register(ADS1X1X_REG_POINTER['CONVERSION'])
+            except Exception as e:
+                logging.exception("ADS1X1X: error while sampling: %s" % str(e))
                 return None
-
-            return sample
 
     def _read_register(self, reg):
         # read a single register
@@ -264,82 +308,55 @@ class ADS1X1X_chip:
         ]
         self._i2c.i2c_write(data)
 
-    def reset_all_devices(self):
-        try:
-            # Init all devices on bus for this kind of device
-            self._i2c.i2c_write([0x06, 0x00, 0x00])
-        except Exception:
-            logging.exception("ADS1X1X: error while resetting device")
-
 class ADS1X1X_pin:
-    def __init__(self, chip, pin_params):
+    def __init__(self, chip, config):
         self.mcu = chip.mcu
         self.chip = chip
-        self.pin = pin_params['pin']
+        self.config = config
 
-        if (self.pin not in ADS1X1X_MUX):
-            raise pins.error('ADS1x1x pin %s is not valid' % self.pin)
-
-        self.mux = ADS1X1X_MUX[self.pin]
-        # Set up 2-byte configuration that will be used with each request
-        self.config = 0
-        self.config |= (ADS1X1X_OS['OS_SINGLE'] \
-            & ADS1X1X_REG_CONFIG['OS_MASK'])
-        self.config |= (self.mux & ADS1X1X_REG_CONFIG['MULTIPLEXER_MASK'])
-        self.config |= (chip.pga & ADS1X1X_REG_CONFIG['PGA_MASK'])
-        self.config |= (chip.mode & ADS1X1X_REG_CONFIG['MODE_MASK'])
-        self.config |= (chip.samples_per_second & \
-                        ADS1X1X_REG_CONFIG['DATA_RATE_MASK'])
-        self.config |= (chip.comp_mode \
-            & ADS1X1X_REG_CONFIG['COMPARATOR_MODE_MASK'])
-        self.config |= (chip.comp_polarity \
-            & ADS1X1X_REG_CONFIG['COMPARATOR_POLARITY_MASK'])
-        self.config |= (chip.comp_latching \
-            & ADS1X1X_REG_CONFIG['COMPARATOR_LATCHING_MASK'])
-        self.config |= (chip.comp_queue \
-            & ADS1X1X_REG_CONFIG['COMPARATOR_QUEUE_MASK'])
-
-        self.report_time = 1.0 / chip.samples_per_second_numeric * 4
         self.invalid_count = 0
 
         self.chip._printer.register_event_handler("klippy:connect", \
-                                            self._handle_connect)
+                                                  self._handle_connect)
 
     def _handle_connect(self):
         self._reactor = self.chip._printer.get_reactor()
         self._sample_timer = \
-                self._reactor.register_timer(self._timer)
-        self._reactor.update_timer(self._sample_timer, self._reactor.NOW)
+            self._reactor.register_timer(self._process_sample, \
+                                         self._reactor.NOW)
 
-    def _timer(self, eventtime):
+    def _process_sample(self, eventtime):
         sample = self.chip.sample(self)
         if sample is not None:
-            self._process_sample(sample)
+            # The sample is encoded in the top 12 or full 16 bits
+            # Value's meaning is defined by ADS1X1X_REG_CONFIG['PGA_MASK']
+            if isADS101X(self.chip.chip):
+                sample >>= 4
+                target_value = sample / ADS101X_RESOLUTION
+            else:
+                target_value = sample / ADS111X_RESOLUTION
 
-        return self._reactor.monotonic() + self.report_time
-
-    def _process_sample(self, sample):
-        # The sample is encoded in the top 12 or full 16 bits
-        # Value's meaning is defined by ADS1X1X_REG_CONFIG['PGA_MASK']
-        if isADS101X(self.chip.chip):
-            sample >>= 4
-            target_value = sample / ADS101X_RESOLUTION
-        else:
-            target_value = sample / ADS111X_RESOLUTION
-
-        if self.maxval > self.minval:
             if target_value > self.maxval or target_value < self.minval:
                 self.invalid_count = self.invalid_count + 1
-                if self.invalid_count > self.range_check_count:
-                    self.chip._printer.invoke_shutdown(
-                        "ADS1X1X temperature outside range")
+                logging.warning("ADS1X1X: temperature outside range")
+                self.check_invalid()
             else:
                 self.invalid_count = 0
 
-        # Publish result
-        measured_time = self._reactor.monotonic()
-        self.callback(self.chip.mcu.estimated_print_time(measured_time),
-                       target_value)
+            # Publish result
+            measured_time = self._reactor.monotonic()
+            self.callback(self.chip.mcu.estimated_print_time(measured_time),
+                        target_value)
+        else:
+            self.invalid_count = self.invalid_count + 1
+            self.check_invalid()
+
+        return eventtime + self.report_time
+
+    def check_invalid(self):
+        if self.invalid_count > self.range_check_count:
+            self.chip._printer.invoke_shutdown(
+                "ADS1X1X temperature check failed")
 
     def get_mcu(self):
         return self.mcu
@@ -347,6 +364,7 @@ class ADS1X1X_pin:
     def setup_adc_callback(self, report_time, callback):
         self.report_time = report_time
         self.callback = callback
+        self.chip.handle_report_time_update()
 
     def setup_adc_sample(self, sample_time, sample_count,
                          minval=0., maxval=1., range_check_count=0):
