@@ -1785,11 +1785,23 @@ section of the measuring resonances guide for more information on
 #   and on the toolhead (for X axis). These parameters have the same
 #   format as 'accel_chip' parameter. Only 'accel_chip' or these two
 #   parameters must be provided.
+#method: vibrations
+#   A test method to use for resonance testing. Valid choices are
+#   vibrations, sweeping_vibrations. The vibrations method tests
+#   different vibration frequencies at the designated test point.
+#   The sweeping_vibrations method tests different vibration frequencies
+#   while also moving the toolhead slowly around the test point, and
+#   thus may help, for example, if stiction of the toolhead (a force that
+#   must be be overcome to start toolhead motion) is too high.
+#   The default is vibrations, which is generally a recommended choice.
 #max_smoothing:
 #   Maximum input shaper smoothing to allow for each axis during shaper
 #   auto-calibration (with 'SHAPER_CALIBRATE' command). By default no
 #   maximum smoothing is specified. Refer to Measuring_Resonances guide
 #   for more details on using this feature.
+#move_speed: 50
+#   The speed (in mm/s) to move the toolhead to and between test points
+#   during the calibration. The default is 50.
 #min_freq: 5
 #   Minimum frequency to test for resonances. The default is 5 Hz.
 #max_freq: 133.33
@@ -1808,6 +1820,13 @@ section of the measuring resonances guide for more information on
 #   hz_per_sec. Small values make the test slow, and the large values
 #   will decrease the precision of the test. The default value is 1.0
 #   (Hz/sec == sec^-2).
+#motion_accel: 400
+#   An acceleration of slow moves. Available only for sweeping_vibrations
+#   test method. The default is 400 mm/sec^2.
+#motion_period: 1.2
+#   A period of slow moves. Must not be set to a too small value in order
+#   to not poison the measurements. Available only for sweeping_vibrations
+#   test method. The default is 1.2 sec which is a good all-round choice.
 ```
 
 ## Config file helpers

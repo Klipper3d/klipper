@@ -694,6 +694,38 @@ If you are doing a shaper re-calibration and the reported smoothing for the
 suggested shaper configuration is almost the same as what you got during the
 previous calibration, this step can be skipped.
 
+### Unreliable measurements of resonance frequencies
+
+Sometimes the resonance measurements can produce bogus results, leading to
+the incorrect suggestions for the input shapers. This can be caused by a
+variety of reasons, including running fans on the toolhead, incorrect
+position or non-rigid mounting of the accelerometer, or mechanical problems
+such as loose belts or binding or bumpy axis. Keep in mind that all fans
+should be disabled for resonance testing, especially the noisy ones, and
+that the accelerometer should be rigidly mounted on the corresponding
+moving part (e.g. on the bed itself for the bed slinger, or on the extruder
+of the printer itself and not the carriage, and some people get better
+results by mounting the accelerometer on the nozzle itself). As for
+mechanical problems, the user should inspect if there is any fault that
+can be fixed with a moving axis (e.g. linear guide rails cleaned up and
+lubricated and V-slot wheels tension adjusted correctly). However, if
+the axis has too high stiction (a force that must be be overcome to start
+toolhead motion over that axis) and thus binds, or if the user gets
+recommended shapers that do not eliminate the echo well on the prints
+and troubleshooting did not help, the user may try to use a different
+resonance test method that can be activated by adding
+```
+[resonance_tester]
+method: sweeping_vibrations
+```
+option to the Klipper config, restarting Klipper, and reruning the resonance
+test again. Note that this test moves the toolhead slowly around the test
+point, thus requiring some clearance around the test point over the tested
+axis. Since this method may produce higher amplitude vibrations compared to
+the default method, it is avised to monitor the printer closely during the
+test, and if the vibrations get too strong, the user may need to reduce
+`accel_per_hz` value in `[resonance_tester]` section from its default value.
+
 ### Testing custom axes
 
 `TEST_RESONANCES` command supports custom axes. While this is not really
