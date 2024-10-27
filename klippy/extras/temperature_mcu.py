@@ -66,7 +66,7 @@ class PrinterTemperatureMCU:
         self.mcu_type = mcu.get_constants().get("MCU", "")
         # Run MCU specific configuration
         cfg_funcs = [
-            ('rp2040', self.config_rp2040),
+            ('rp2', self.config_rp2040),
             ('sam3', self.config_sam3), ('sam4', self.config_sam4),
             ('same70', self.config_same70), ('samd21', self.config_samd21),
             ('samd51', self.config_samd51), ('same5', self.config_samd51),
