@@ -24,7 +24,7 @@
 static void
 enable_ram_vectortable(void)
 {
-    // Symbols created by rp2040_link.lds.S linker script
+    // Symbols created by rpxxxx_link.lds.S linker script
     extern uint32_t _ram_vectortable_start, _ram_vectortable_end;
     extern uint32_t _text_vectortable_start;
 
