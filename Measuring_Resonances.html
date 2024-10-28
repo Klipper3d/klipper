@@ -2239,13 +2239,20 @@ sudo apt install python3-numpy python3-matplotlib libatlas-base-dev libopenblas-
 </code></pre></div>
 
 <p>Next, in order to install NumPy in the Klipper environment, run the command:</p>
-<div class="highlight"><pre><span></span><code>~/klippy-env/bin/pip install -v numpy
+<div class="highlight"><pre><span></span><code>~/klippy-env/bin/pip install -v &quot;numpy&lt;1.26&quot;
 </code></pre></div>
 
 <p>Note that, depending on the performance of the CPU, it may take <em>a lot</em>
 of time, up to 10-20 minutes. Be patient and wait for the completion of
 the installation. On some occasions, if the board has too little RAM
-the installation may fail and you will need to enable swap.</p>
+the installation may fail and you will need to enable swap. Also note
+the forced version, due to newer versions of NumPY having requirements
+that may not be satisfied in some klipper python environments.</p>
+<p>Once installed please check that no errors show from the command:</p>
+<div class="highlight"><pre><span></span><code>~/klippy-env/bin/python -c &#39;import numpy;&#39;
+</code></pre></div>
+
+<p>The correct output should simply be a new line.</p>
 <h4 id="configure-adxl345-with-rpi">Configure ADXL345 With RPi<a class="headerlink" href="#configure-adxl345-with-rpi" title="Permanent link">&para;</a></h4>
 <p>First, check and follow the instructions in the
 <a href="RPi_microcontroller.html">RPi Microcontroller document</a> to setup the
