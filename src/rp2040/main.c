@@ -49,9 +49,7 @@ bootloader_request(void)
 {
     watchdog_hw->ctrl = 0;
     try_request_canboot();
-    // Use the bootrom-provided code to reset into BOOTSEL mode
-    if (CONFIG_MACH_RP2040)
-        bootrom_reboot_usb_bootloader();
+    bootrom_reboot_usb_bootloader();
 }
 
 
