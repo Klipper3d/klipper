@@ -65,6 +65,8 @@ class VibrationPulseTest:
         self.freq_start = gcmd.get_float("FREQ_START", self.min_freq, minval=1.)
         self.freq_end = gcmd.get_float("FREQ_END", self.max_freq,
                                        minval=self.freq_start, maxval=300.)
+        self.accel_per_hz = gcmd.get_float("ACCEL_PER_HZ",
+                                           self.accel_per_hz, above=0.)
         self.hz_per_sec = gcmd.get_float("HZ_PER_SEC", self.hz_per_sec,
                                          above=0., maxval=2.)
     def run_test(self, axis, gcmd):

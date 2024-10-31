@@ -1086,7 +1086,7 @@ all enabled accelerometer chips.
 #### TEST_RESONANCES
 `TEST_RESONANCES AXIS=<axis> OUTPUT=<resonances,raw_data>
 [NAME=<name>] [FREQ_START=<min_freq>] [FREQ_END=<max_freq>]
-[HZ_PER_SEC=<hz_per_sec>] [CHIPS=<chip_name>]
+[ACCEL_PER_HZ=<accel_per_hz>] [HZ_PER_SEC=<hz_per_sec>] [CHIPS=<chip_name>]
 [POINT=x,y,z] [INPUT_SHAPING=[<0:1>]]`: Runs the resonance
 test in all configured probe points for the requested "axis" and
 measures the acceleration using the accelerometer chips configured for
@@ -1113,8 +1113,9 @@ frequency response is calculated (across all probe points) and written into
 
 #### SHAPER_CALIBRATE
 `SHAPER_CALIBRATE [AXIS=<axis>] [NAME=<name>] [FREQ_START=<min_freq>]
-[FREQ_END=<max_freq>] [HZ_PER_SEC=<hz_per_sec>] [CHIPS=<chip_name>]
-[MAX_SMOOTHING=<max_smoothing>]`: Similarly to `TEST_RESONANCES`, runs
+[FREQ_END=<max_freq>] [ACCEL_PER_HZ=<accel_per_hz>][HZ_PER_SEC=<hz_per_sec>]
+[CHIPS=<chip_name>] [MAX_SMOOTHING=<max_smoothing>]`:
+Similarly to `TEST_RESONANCES`, runs
 the resonance test as configured, and tries to find the optimal
 parameters for the input shaper for the requested axis (or both X and
 Y axes if `AXIS` parameter is unset). If `MAX_SMOOTHING` is unset, its
