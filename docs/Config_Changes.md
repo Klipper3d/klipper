@@ -8,6 +8,10 @@ All dates in this document are approximate.
 
 ## Changes
 
+20241112: Option `CHIPS=<chip_name>` in `TEST_RESONANCES` and
+`SHAPER_CALIBRATE` requires specifying the full name(s) of the accel
+chip(s). For example, `adxl345 rpi` instead of short name - `rpi`.
+
 20240912: `SET_PIN`, `SET_SERVO`, `SET_FAN_SPEED`, `M106`, and `M107`
 commands are now collated. Previously, if many updates to the same
 object were issued faster than the minimum scheduling time (typically

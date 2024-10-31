@@ -212,11 +212,7 @@ class ResonanceTester:
     def _parse_chips(self, accel_chips):
         parsed_chips = []
         for chip_name in accel_chips.split(','):
-            if "adxl345" in chip_name:
-                chip_lookup_name = chip_name.strip()
-            else:
-                chip_lookup_name = "adxl345 " + chip_name.strip();
-            chip = self.printer.lookup_object(chip_lookup_name)
+            chip = self.printer.lookup_object(chip_name.strip())
             parsed_chips.append(chip)
         return parsed_chips
     def _get_max_calibration_freq(self):
