@@ -1820,13 +1820,14 @@ section of the measuring resonances guide for more information on
 #   hz_per_sec. Small values make the test slow, and the large values
 #   will decrease the precision of the test. The default value is 1.0
 #   (Hz/sec == sec^-2).
-#motion_accel: 400
-#   An acceleration of slow moves. Available only for sweeping_vibrations
-#   test method. The default is 400 mm/sec^2.
-#motion_period: 1.2
-#   A period of slow moves. Must not be set to a too small value in order
-#   to not poison the measurements. Available only for sweeping_vibrations
-#   test method. The default is 1.2 sec which is a good all-round choice.
+#sweeping_accel: 400
+#   An acceleration of slow sweeping moves. Available only for
+#   sweeping_vibrations test method. The default is 400 mm/sec^2.
+#sweeping_period: 1.2
+#   A period of slow sweeping moves. Must not be set to a too small
+#   value in order to not poison the measurements. Available only for
+#   sweeping_vibrations test method. The default is 1.2 sec which is
+#   a good all-round choice.
 ```
 
 ## Config file helpers

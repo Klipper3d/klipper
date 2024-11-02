@@ -87,21 +87,27 @@ class VibrationPulseTestGenerator:
     def get_max_freq(self):
         return self.freq_end
 
-class VibrationsWithMotionTestGenerator:
+class SweepingVibrationsTestGenerator:
     def __init__(self, config):
         self.vibration_generator = VibrationPulseTestGenerator(config)
-        self.motion_accel = config.getfloat('motion_accel', 400., above=0.)
-        self.motion_period = config.getfloat('motion_period', 1.2, above=0.)
+        self.sweeping_accel = config.getfloat('sweeping_accel', 400., above=0.)
+        self.sweeping_period = config.getfloat('sweeping_period', 1.2,
+                                               minval=0.)
     def prepare_test(self, gcmd):
         self.vibration_generator.prepare_test(gcmd)
-        self.motion_accel = gcmd.get_float("MOTION_ACCEL",
-                                           self.motion_accel, above=0.)
-        self.motion_period = gcmd.get_float("MOTION_PERIOD",
-                                            self.motion_period, above=0.)
+        self.test_sweeping_accel = gcmd.get_float(
+                "SWEEPING_ACCEL", self.sweeping_accel, above=0.)
+        self.test_sweeping_period = gcmd.get_float(
+                "SWEEPING_PERIOD", self.sweeping_period, minval=0.)
     def gen_test(self):
         test_seq = self.vibration_generator.gen_test()
         accel_fraction = math.sqrt(2.0) * 0.125
-        t_rem = self.motion_period * accel_fraction
+        if self.test_sweeping_period:
+            t_rem = self.test_sweeping_period * accel_fraction
+            sweeping_accel = self.test_sweeping_accel
+        else:
+            t_rem = float('inf')
+            sweeping_accel = 0.
         res = []
         last_t = 0.
         sig = 1.
@@ -110,19 +116,19 @@ class VibrationsWithMotionTestGenerator:
             t_seg = next_t - last_t
             while t_rem <= t_seg:
                 last_t += t_rem
-                res.append((last_t, accel + self.motion_accel * sig))
+                res.append((last_t, accel + sweeping_accel * sig))
                 t_seg -= t_rem
-                t_rem = self.motion_period * accel_fraction
+                t_rem = self.test_sweeping_period * accel_fraction
                 accel_fraction = 0.5
                 sig = -sig
             t_rem -= t_seg
-            res.append((next_t, accel + self.motion_accel * sig))
+            res.append((next_t, accel + sweeping_accel * sig))
             last_t = next_t
         return res
     def get_params(self):
         params = self.vibration_generator.get_params()
-        params.update({'motion_accel': self.motion_accel,
-                       'motion_period': self.motion_period})
+        params.update({'sweeping_accel': self.sweeping_accel,
+                       'sweeping_period': self.sweeping_period})
         return params
     def get_max_freq(self):
         return self.vibration_generator.get_max_freq()
@@ -207,7 +213,7 @@ class ResonanceTester:
         self.move_speed = config.getfloat('move_speed', 50., above=0.)
         test_methods = {
                 'vibrations': VibrationPulseTestGenerator,
-                'sweeping_vibrations': VibrationsWithMotionTestGenerator}
+                'sweeping_vibrations': SweepingVibrationsTestGenerator}
         test_method = config.getchoice('method', test_methods, 'vibrations')
         self.generator = test_method(config)
         self.executor = ResonanceTestExecutor(config)
