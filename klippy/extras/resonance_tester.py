@@ -100,12 +100,12 @@ class VibrationsWithMotionTestGenerator:
                                             self.motion_period, above=0.)
     def gen_test(self):
         test_seq = self.vibration_generator.gen_test()
-        accel_fraction = 0.125
+        accel_fraction = math.sqrt(2.0) * 0.125
         t_rem = self.motion_period * accel_fraction
         res = []
         last_t = 0.
         sig = 1.
-        accel_fraction = 0.375
+        accel_fraction += 0.25
         for next_t, accel in test_seq:
             t_seg = next_t - last_t
             while t_rem <= t_seg:
@@ -187,10 +187,10 @@ class ResonanceTestExecutor:
             last_v = v
             last_accel = accel
         if last_v:
-            d_decel = -.5 * last_v2 / max_accel
+            d_decel = -.5 * last_v2 / old_max_accel
             decel_X, decel_Y = axis.get_point(d_decel)
             toolhead.cmd_M204(self.gcode.create_gcode_command(
-                "M204", "M204", {"S": max_accel}))
+                "M204", "M204", {"S": old_max_accel}))
             toolhead.move([X + decel_X, Y + decel_Y, Z, E], abs(last_v))
         # Restore the original acceleration values
         self.gcode.run_script_from_command(
