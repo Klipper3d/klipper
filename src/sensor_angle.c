@@ -18,6 +18,7 @@ enum {
     SA_CHIP_AS5047D,
     SA_CHIP_TLE5012B,
     SA_CHIP_MT6816,
+    SA_CHIP_MT6826S,
     SA_CHIP_MAX
 };
 
@@ -25,6 +26,7 @@ DECL_ENUMERATION("spi_angle_type", "a1333", SA_CHIP_A1333);
 DECL_ENUMERATION("spi_angle_type", "as5047d", SA_CHIP_AS5047D);
 DECL_ENUMERATION("spi_angle_type", "tle5012b", SA_CHIP_TLE5012B);
 DECL_ENUMERATION("spi_angle_type", "mt6816", SA_CHIP_MT6816);
+DECL_ENUMERATION("spi_angle_type", "mt6826s", SA_CHIP_MT6826S);
 
 enum { TCODE_ERROR = 0xff };
 enum {
@@ -192,6 +194,40 @@ static void mt6816_query(struct spi_angle *sa, uint32_t stime)
         angle_add_data(sa, stime, mtime2, (msg[1] << 8) | (msg[2] & 0xfc));
 }
 
+static uint8_t
+crc8_mt(uint8_t crc, uint8_t data)
+{
+    crc ^= data;
+    int i;
+    for (i = 0; i < 8; i++)
+        crc = crc & 0x80 ? (crc << 1) ^ 0x07 : crc << 1;
+    return crc;
+}
+
+static void mt6826s_query(struct spi_angle *sa, uint32_t stime)
+{
+    uint8_t msg[6] = {0x30, 0x03, 0x00, 0x00, 0x00, 0x00};
+    uint32_t mtime1 = timer_read_time();
+    spidev_transfer(sa->spi, 1, sizeof(msg), msg);
+    uint32_t mtime2 = timer_read_time();
+    // Data is latched on first sclk edge of response
+    if (mtime2 - mtime1 > MAX_SPI_READ_TIME) {
+        angle_add_error(sa, SE_SPI_TIME);
+        return;
+    }
+    uint8_t crc = 0;
+    for (int i = 2; i < 5; i++)
+        crc = crc8_mt(crc, msg[i]);
+
+    if (crc != msg[5])
+        angle_add_error(sa, SE_CRC);
+    else if (msg[4] & 0x02)
+        angle_add_error(sa, SE_NO_ANGLE);
+    else
+        angle_add_data(sa, stime, mtime2, (msg[2] << 8) | msg[3]);
+}
+
+
 #define TLE_READ 0x80
 #define TLE_READ_LATCH (TLE_READ | 0x04)
 #define TLE_REG_AVAL 0x02
@@ -336,6 +372,8 @@ spi_angle_task(void)
             tle5012b_query(sa, stime);
         else if (chip == SA_CHIP_MT6816)
             mt6816_query(sa, stime);
+        else if (chip == SA_CHIP_MT6826S)
+            mt6826s_query(sa, stime);
         angle_check_report(sa, oid);
     }
 }
