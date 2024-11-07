@@ -178,6 +178,17 @@ class AngleCalibration:
         move(mcu_stepper, 2. * rotation_dist, move_speed)
         move(mcu_stepper, -2. * rotation_dist, move_speed)
         move(mcu_stepper, .5 * rotation_dist - full_step_dist, move_speed)
+        # Align stepper to zero
+        toolhead = self.printer.lookup_object('toolhead')
+        zero_offset = 0
+        mscnt_quant = 256 // microsteps
+        mscnt_min = (mscnt_quant // 2)
+        mscnt = self.tmc_module.mcu_tmc.get_register("MSCNT")
+        while mscnt != mscnt_min:
+            move(mcu_stepper, step_dist, move_speed)
+            zero_offset -= step_dist
+            toolhead.wait_moves()
+            mscnt = self.tmc_module.mcu_tmc.get_register("MSCNT")
         # Move to each full step position
         toolhead = self.printer.lookup_object('toolhead')
         times = []
@@ -194,6 +205,7 @@ class AngleCalibration:
                 move(mcu_stepper, -.5 * rotation_dist + samp_dist, move_speed)
                 samp_dist = -samp_dist
         move(mcu_stepper, .5*rotation_dist + align_dist, move_speed)
+        move(mcu_stepper, zero_offset, move_speed)
         toolhead.wait_moves()
         # Finish data collection
         is_finished = True
