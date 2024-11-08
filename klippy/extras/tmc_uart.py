@@ -220,6 +220,8 @@ class MCU_TMC_uart:
             config, max_addr)
         self.mutex = self.mcu_uart.mutex
         self.tmc_frequency = tmc_frequency
+        self.mcu = self.mcu_uart.mcu
+
     def get_fields(self):
         return self.fields
     def _do_get_register(self, reg_name):

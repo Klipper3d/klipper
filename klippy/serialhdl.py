@@ -12,9 +12,10 @@ class error(Exception):
     pass
 
 class SerialReader:
-    def __init__(self, reactor, warn_prefix=""):
+    def __init__(self, reactor, warn_prefix="", mcu=None):
         self.reactor = reactor
         self.warn_prefix = warn_prefix
+        self.mcu = mcu
         # Serial port
         self.serial_dev = None
         self.msgparser = msgproto.MessageParser(warn_prefix=warn_prefix)
@@ -198,6 +199,7 @@ class SerialReader:
             ret = self._start_session(serial_dev)
             if ret:
                 break
+
     def check_connect(self, serialport, baud, rts=True):
         serial_dev = serial.Serial(baudrate=baud, timeout=0, exclusive=False)
         serial_dev.port = serialport
@@ -251,16 +253,23 @@ class SerialReader:
                 del self.handlers[name, oid]
             else:
                 self.handlers[name, oid] = callback
+
+    def _check_noncritical_disconnected(self):
+        if self.mcu is not None and self.mcu.non_critical_disconnected:
+            self._error("non-critical MCU is disconnected")
+
     # Command sending
     def raw_send(self, cmd, minclock, reqclock, cmd_queue):
+        self._check_noncritical_disconnected()
         if self.serialqueue is None:
-            logging.info("%sSerial connection closed, cmd: %s", self.warn_prefix, repr(cmd))
             return
-        self.ffi_lib.serialqueue_send(self.serialqueue, cmd_queue,
-                                      cmd, len(cmd), minclock, reqclock, 0)
+        self.ffi_lib.serialqueue_send(
+            self.serialqueue, cmd_queue, cmd, len(cmd), minclock, reqclock, 0
+        )
+
     def raw_send_wait_ack(self, cmd, minclock, reqclock, cmd_queue):
+        self._check_noncritical_disconnected()
         if self.serialqueue is None:
-            logging.info("%sSerial connection closed, in wait ack, cmd: %s", self.warn_prefix, repr(cmd))
             return
         self.last_notify_id += 1
         nid = self.last_notify_id
