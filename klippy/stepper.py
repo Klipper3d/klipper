@@ -138,8 +138,10 @@ class MCU_stepper:
     def get_commanded_position(self):
         ffi_main, ffi_lib = chelper.get_ffi()
         return ffi_lib.itersolve_get_commanded_pos(self._stepper_kinematics)
-    def get_mcu_position(self):
-        mcu_pos_dist = self.get_commanded_position() + self._mcu_position_offset
+    def get_mcu_position(self, cmd_pos=None):
+        if cmd_pos is None:
+            cmd_pos = self.get_commanded_position()
+        mcu_pos_dist = cmd_pos + self._mcu_position_offset
         mcu_pos = mcu_pos_dist / self._step_dist
         if mcu_pos >= 0.:
             return int(mcu_pos + 0.5)
@@ -265,6 +267,7 @@ def parse_gear_ratio(config, note_valid):
 
 # Obtain "step distance" information from a config section
 def parse_step_distance(config, units_in_radians=None, note_valid=False):
+    # Check rotation_distance and gear_ratio
     if units_in_radians is None:
         # Caller doesn't know if units are in radians - infer it
         rd = config.get('rotation_distance', None, note_valid=False)
@@ -276,7 +279,7 @@ def parse_step_distance(config, units_in_radians=None, note_valid=False):
     else:
         rotation_dist = config.getfloat('rotation_distance', above=0.,
                                         note_valid=note_valid)
-    # Newer config format with rotation_distance
+    # Check microsteps and full_steps_per_rotation
     microsteps = config.getint('microsteps', minval=1, note_valid=note_valid)
     full_steps = config.getint('full_steps_per_rotation', 200, minval=1,
                                note_valid=note_valid)

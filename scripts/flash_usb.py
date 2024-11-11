@@ -198,7 +198,7 @@ def flash_picoboot(device, binfile, sudo):
     # We need one level up to get access to busnum/devnum files
     usbdir = os.path.dirname(devpath)
     enter_bootloader(device)
-    wait_path(usbdir)
+    wait_path(usbdir + "/busnum")
     with open(usbdir + "/busnum") as f:
         bus = f.read().strip()
     with open(usbdir + "/devnum") as f:

@@ -46,9 +46,9 @@ class PrinterMultiPin:
     def set_digital(self, print_time, value):
         for mcu_pin in self.mcu_pins:
             mcu_pin.set_digital(print_time, value)
-    def set_pwm(self, print_time, value, cycle_time=None):
+    def set_pwm(self, print_time, value):
         for mcu_pin in self.mcu_pins:
-            mcu_pin.set_pwm(print_time, value, cycle_time)
+            mcu_pin.set_pwm(print_time, value)
 
 def load_config_prefix(config):
     return PrinterMultiPin(config)

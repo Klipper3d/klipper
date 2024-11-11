@@ -17,6 +17,26 @@
 
 
 /****************************************************************
+ * Ram IRQ vector table
+ ****************************************************************/
+
+// Copy vector table to ram and activate it
+static void
+enable_ram_vectortable(void)
+{
+    // Symbols created by rp2040_link.lds.S linker script
+    extern uint32_t _ram_vectortable_start, _ram_vectortable_end;
+    extern uint32_t _text_vectortable_start;
+
+    uint32_t count = (&_ram_vectortable_end - &_ram_vectortable_start) * 4;
+    __builtin_memcpy(&_ram_vectortable_start, &_text_vectortable_start, count);
+    barrier();
+
+    SCB->VTOR = (uint32_t)&_ram_vectortable_start;
+}
+
+
+/****************************************************************
  * Bootloader
  ****************************************************************/
 
@@ -145,6 +165,7 @@ clock_setup(void)
 void
 armcm_main(void)
 {
+    enable_ram_vectortable();
     clock_setup();
     sched_main();
 }

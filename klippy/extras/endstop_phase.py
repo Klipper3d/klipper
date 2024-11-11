@@ -191,7 +191,6 @@ class EndstopPhases:
     def generate_stats(self, stepper_name, phase_calc):
         phase_history = phase_calc.phase_history
         wph = phase_history + phase_history
-        count = sum(phase_history)
         phases = len(phase_history)
         half_phases = phases // 2
         res = []

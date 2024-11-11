@@ -207,17 +207,25 @@ software dependencies not installed by default. First, run on your Raspberry Pi
 the following commands:
 ```
 sudo apt update
-sudo apt install python3-numpy python3-matplotlib libatlas-base-dev
+sudo apt install python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev
 ```
 
 Next, in order to install NumPy in the Klipper environment, run the command:
 ```
-~/klippy-env/bin/pip install -v numpy
+~/klippy-env/bin/pip install -v "numpy<1.26"
 ```
 Note that, depending on the performance of the CPU, it may take *a lot*
 of time, up to 10-20 minutes. Be patient and wait for the completion of
 the installation. On some occasions, if the board has too little RAM
-the installation may fail and you will need to enable swap.
+the installation may fail and you will need to enable swap. Also note
+the forced version, due to newer versions of NumPY having requirements
+that may not be satisfied in some klipper python environments.
+
+Once installed please check that no errors show from the command:
+```
+~/klippy-env/bin/python -c 'import numpy;'
+```
+The correct output should simply be a new line.
 
 #### Configure ADXL345 With RPi
 
@@ -450,7 +458,11 @@ TEST_RESONANCES AXIS=Y
 ```
 This will generate 2 CSV files (`/tmp/resonances_x_*.csv` and
 `/tmp/resonances_y_*.csv`). These files can be processed with the stand-alone
-script on a Raspberry Pi. To do that, run the following commands:
+script on a Raspberry Pi. This script is intended to be run with a single CSV
+file for each axis measured, although it can be used with multiple CSV files
+if you desire to average the results. Averaging results can be useful, for
+example, if resonance tests were done at multiple test points. Delete the extra
+CSV files if you do not desire to average them.
 ```
 ~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png
 ~/klipper/scripts/calibrate_shaper.py /tmp/resonances_y_*.csv -o /tmp/shaper_calibrate_y.png
@@ -661,6 +673,19 @@ The same notice applies to the input shaper
 `SHAPER_CALIBRATE` command: it is still necessary to choose the right
 `max_accel` value after the auto-calibration, and the suggested acceleration
 limits will not be applied automatically.
+
+Keep in mind that the maximum acceleration without too much smoothing depends
+on the `square_corner_velocity`. The general recommendation is not to change
+it from its default value 5.0, and this is the value used by default by the
+`calibrate_shaper.py` script. If you did change it though, you should inform
+the script about it by passing `--square_corner_velocity=...` parameter, e.g.
+```
+~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png --square_corner_velocity=10.0
+```
+so that it can calculate the maximum acceleration recommendations correctly.
+Note that the `SHAPER_CALIBRATE` command already takes the configured
+`square_corner_velocity` parameter into account, and there is no need
+to specify it explicitly.
 
 If you are doing a shaper re-calibration and the reported smoothing for the
 suggested shaper configuration is almost the same as what you got during the
