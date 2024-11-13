@@ -1398,6 +1398,9 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<p>20241112: Option <code>CHIPS=&lt;chip_name&gt;</code> in <code>TEST_RESONANCES</code> and
+<code>SHAPER_CALIBRATE</code> requires specifying the full name(s) of the accel
+chip(s). For example, <code>adxl345 rpi</code> instead of short name - <code>rpi</code>.</p>
 <p>20240912: <code>SET_PIN</code>, <code>SET_SERVO</code>, <code>SET_FAN_SPEED</code>, <code>M106</code>, and <code>M107</code>
 commands are now collated. Previously, if many updates to the same
 object were issued faster than the minimum scheduling time (typically
