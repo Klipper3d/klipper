@@ -209,6 +209,10 @@ class ConfigFileReader:
         # in includes apply linearly as they do within a single file
         buf = []
         for line in lines:
+            # Strip trailing comment
+            pos = line.find('#')
+            if pos >= 0:
+                line = line[:pos]
             # Process include or buffer line
             mo = configparser.RawConfigParser.SECTCRE.match(line)
             header = mo and mo.group('header')
