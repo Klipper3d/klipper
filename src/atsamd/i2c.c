@@ -12,10 +12,11 @@
 #include "i2ccmds.h" // I2C_BUS_SUCCESS
 
 #define TIME_RISE 125ULL // 125 nanoseconds
-#define I2C_FREQ 100000
+#define I2C_FREQ      100000
+#define I2C_FREQ_FAST 400000
 
 static void
-i2c_init(uint32_t bus, SercomI2cm *si)
+i2c_init(uint32_t bus, uint32_t rate, SercomI2cm *si)
 {
     static uint8_t have_run_init;
     if (have_run_init & (1<<bus))
@@ -29,7 +30,12 @@ i2c_init(uint32_t bus, SercomI2cm *si)
                      | SERCOM_I2CM_CTRLA_MODE(5));
     si->CTRLA.reg = areg;
     uint32_t freq = sercom_get_pclock_frequency(bus);
-    uint32_t baud = (freq/I2C_FREQ - 10 - freq*TIME_RISE/1000000000) / 2;
+    uint32_t baud = 0;
+    if (rate < I2C_FREQ_FAST) {
+        baud = (freq/I2C_FREQ - 10 - freq*TIME_RISE/1000000000) / 2;
+    } else {
+        baud = (freq/I2C_FREQ_FAST - 10 - freq*TIME_RISE/1000000000) / 2;
+    }
     si->BAUD.reg = baud;
     si->CTRLA.reg = areg | SERCOM_I2CM_CTRLA_ENABLE;
     while (si->SYNCBUSY.reg & SERCOM_I2CM_SYNCBUSY_ENABLE)
@@ -47,7 +53,7 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
     Sercom *sercom = sercom_enable_pclock(bus);
     sercom_i2c_pins(bus);
     SercomI2cm *si = &sercom->I2CM;
-    i2c_init(bus, si);
+    i2c_init(bus, rate, si);
     return (struct i2c_config){ .si=si, .addr=addr<<1 };
 }
 

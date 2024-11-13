@@ -324,7 +324,7 @@ class MessageParser:
     def create_command(self, msg):
         parts = msg.strip().split()
         if not parts:
-            return ""
+            return []
         msgname = parts[0]
         mp = self.messages_by_name.get(msgname)
         if mp is None:

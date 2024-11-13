@@ -1675,8 +1675,9 @@ Support for LIS2DW accelerometers.
 
 ```
 [lis2dw]
-cs_pin:
-#   The SPI enable pin for the sensor. This parameter must be provided.
+#cs_pin:
+#   The SPI enable pin for the sensor. This parameter must be provided
+#   if using SPI.
 #spi_speed: 5000000
 #   The SPI speed (in hz) to use when communicating with the chip.
 #   The default is 5000000.
@@ -1686,6 +1687,46 @@ cs_pin:
 #spi_software_miso_pin:
 #   See the "common SPI settings" section for a description of the
 #   above parameters.
+#i2c_address:
+#   Default is 25 (0x19). If SA0 is high, it would be 24 (0x18) instead.
+#i2c_mcu:
+#i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#i2c_speed: 400000
+#   See the "common I2C settings" section for a description of the
+#   above parameters. The default "i2c_speed" is 400000.
+#axes_map: x, y, z
+#   See the "adxl345" section for information on this parameter.
+```
+
+### [lis3dh]
+
+Support for LIS3DH accelerometers.
+
+```
+[lis3dh]
+#cs_pin:
+#   The SPI enable pin for the sensor. This parameter must be provided
+#   if using SPI.
+#spi_speed: 5000000
+#   The SPI speed (in hz) to use when communicating with the chip.
+#   The default is 5000000.
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the "common SPI settings" section for a description of the
+#   above parameters.
+#i2c_address:
+#   Default is 25 (0x19). If SA0 is high, it would be 24 (0x18) instead.
+#i2c_mcu:
+#i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#i2c_speed: 400000
+#   See the "common I2C settings" section for a description of the
+#   above parameters. The default "i2c_speed" is 400000.
 #axes_map: x, y, z
 #   See the "adxl345" section for information on this parameter.
 ```
@@ -2042,9 +2083,9 @@ sensor_type: ldc1612
 
 ### [axis_twist_compensation]
 
-A tool to compensate for inaccurate probe readings due to twist in X gantry. See
-the [Axis Twist Compensation Guide](Axis_Twist_Compensation.md) for more
-detailed information regarding symptoms, configuration and setup.
+A tool to compensate for inaccurate probe readings due to twist in X or Y
+gantry. See the [Axis Twist Compensation Guide](Axis_Twist_Compensation.md)
+for more detailed information regarding symptoms, configuration and setup.
 
 ```
 [axis_twist_compensation]
@@ -2057,16 +2098,33 @@ detailed information regarding symptoms, configuration and setup.
 calibrate_start_x: 20
 #   Defines the minimum X coordinate of the calibration
 #   This should be the X coordinate that positions the nozzle at the starting
-#   calibration position. This parameter must be provided.
+#   calibration position.
 calibrate_end_x: 200
 #   Defines the maximum X coordinate of the calibration
 #   This should be the X coordinate that positions the nozzle at the ending
-#   calibration position. This parameter must be provided.
+#   calibration position.
 calibrate_y: 112.5
 #   Defines the Y coordinate of the calibration
 #   This should be the Y coordinate that positions the nozzle during the
-#   calibration process. This parameter must be provided and is recommended to
+#   calibration process. This parameter is recommended to
 #   be near the center of the bed
+
+# For Y-axis twist compensation, specify the following parameters:
+calibrate_start_y: ...
+#   Defines the minimum Y coordinate of the calibration
+#   This should be the Y coordinate that positions the nozzle at the starting
+#   calibration position for the Y axis. This parameter must be provided if
+#   compensating for Y axis twist.
+calibrate_end_y: ...
+#   Defines the maximum Y coordinate of the calibration
+#   This should be the Y coordinate that positions the nozzle at the ending
+#   calibration position for the Y axis. This parameter must be provided if
+#   compensating for Y axis twist.
+calibrate_x: ...
+#   Defines the X coordinate of the calibration for Y axis twist compensation
+#   This should be the X coordinate that positions the nozzle during the
+#   calibration process for Y axis twist compensation. This parameter must be
+#   provided and is recommended to be near the center of the bed.
 ```
 
 ## Additional stepper motors and extruders
