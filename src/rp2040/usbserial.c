@@ -1,6 +1,6 @@
 // Hardware interface to USB on rp2040
 //
-// Copyright (C) 2021-2023  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2021-2024  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -69,6 +69,29 @@ get_rx_count(uint32_t epb, uint32_t max_len)
     return c;
 }
 
+// Memcpy using 8-bit read/write (system memcpy may make unaligned accesses)
+static void
+dpram_memcpy(void *dest, const void *src, size_t n)
+{
+    const uint8_t *s = src;
+    volatile uint8_t *d = dest;
+    while (n) {
+        *d++ = *s++;
+        n -= sizeof(*d);
+    }
+}
+
+// Memset using only 8-bit writes (system memcpy may make unaligned accesses)
+static void
+dpram_memset(void *s, int c, size_t n)
+{
+    volatile uint8_t *p = s;
+    while (n) {
+        *p++ = c;
+        n -= sizeof(*p);
+    }
+}
+
 
 /****************************************************************
  * Interface
@@ -94,7 +117,7 @@ usb_read_bulk_out(void *data, uint_fast8_t max_len)
     barrier();
     // Copy the packet to the given buffer
     uint32_t c = get_rx_count(epb, max_len);
-    memcpy(data, usb_buf_addr(ep, bufnum), c);
+    dpram_memcpy(data, usb_buf_addr(ep, bufnum), c);
     // Notify the USB hardware that the space is now available
     barrier();
     *epbp = new_epb | USB_BUF_CTRL_AVAIL;
@@ -120,7 +143,7 @@ usb_send_bulk_in(void *data, uint_fast8_t len)
     *epbp = new_epb;
     barrier();
     // Copy the packet to the hw buffer
-    memcpy(usb_buf_addr(ep, bufnum), data, len);
+    dpram_memcpy(usb_buf_addr(ep, bufnum), data, len);
     // Inform the USB hardware of the available packet
     barrier();
     *epbp = new_epb | USB_BUF_CTRL_AVAIL;
@@ -140,7 +163,7 @@ usb_read_ep0_setup(void *data, uint_fast8_t max_len)
                                      | USB_BUF_CTRL_AVAIL | DPBUF_SIZE);
     usb_hw->sie_status = USB_SIE_STATUS_SETUP_REC_BITS;
     barrier();
-    memcpy(data, (void*)usb_dpram->setup_packet, max_len);
+    dpram_memcpy(data, (void*)usb_dpram->setup_packet, max_len);
     barrier();
     if (usb_hw->intr & USB_INTR_SETUP_REQ_BITS) {
         // Raced with next setup packet
@@ -168,7 +191,7 @@ usb_read_ep0(void *data, uint_fast8_t max_len)
     barrier();
     // Copy the packet to the given buffer
     uint32_t c = get_rx_count(epb, max_len);
-    memcpy(data, usb_buf_addr(ep, 0), c);
+    dpram_memcpy(data, usb_buf_addr(ep, 0), c);
     // Notify the USB hardware that the space is now available
     barrier();
     *epbp = new_epb | USB_BUF_CTRL_AVAIL;
@@ -193,7 +216,7 @@ usb_send_ep0(const void *data, uint_fast8_t len)
     *epbp = new_epb;
     barrier();
     // Copy the packet to the hw buffer
-    memcpy(usb_buf_addr(ep, 0), data, len);
+    dpram_memcpy(usb_buf_addr(ep, 0), data, len);
     // Inform the USB hardware of the available packet
     barrier();
     *epbp = new_epb | USB_BUF_CTRL_AVAIL;
@@ -380,7 +403,7 @@ usbserial_init(void)
     enable_pclock(RESETS_RESET_USBCTRL_BITS);
 
     // Setup shared memory area
-    memset(usb_dpram, 0, sizeof(*usb_dpram));
+    dpram_memset(usb_dpram, 0, sizeof(*usb_dpram));
     endpoint_setup();
 
     // Enable USB in device mode
