@@ -48,20 +48,19 @@ def _parse_axis(gcmd, raw_axis):
 class VibrationPulseTestGenerator:
     def __init__(self, config):
         self.min_freq = config.getfloat('min_freq', 5., minval=1.)
-        # Defaults are such that max_freq * accel_per_hz == 10000 (max_accel)
-        self.max_freq = config.getfloat('max_freq', 10000. / 75.,
+        self.max_freq = config.getfloat('max_freq', 135.,
                                         minval=self.min_freq, maxval=300.)
-        self.accel_per_hz = config.getfloat('accel_per_hz', 75., above=0.)
+        self.accel_per_hz = config.getfloat('accel_per_hz', 60., above=0.)
         self.hz_per_sec = config.getfloat('hz_per_sec', 1.,
                                           minval=0.1, maxval=2.)
     def prepare_test(self, gcmd):
         self.freq_start = gcmd.get_float("FREQ_START", self.min_freq, minval=1.)
         self.freq_end = gcmd.get_float("FREQ_END", self.max_freq,
                                        minval=self.freq_start, maxval=300.)
-        self.accel_per_hz = gcmd.get_float("ACCEL_PER_HZ",
-                                           self.accel_per_hz, above=0.)
-        self.hz_per_sec = gcmd.get_float("HZ_PER_SEC", self.hz_per_sec,
-                                         above=0., maxval=2.)
+        self.test_accel_per_hz = gcmd.get_float("ACCEL_PER_HZ",
+                                                self.accel_per_hz, above=0.)
+        self.test_hz_per_sec = gcmd.get_float("HZ_PER_SEC", self.hz_per_sec,
+                                              above=0., maxval=2.)
     def gen_test(self):
         freq = self.freq_start
         res = []
@@ -69,21 +68,14 @@ class VibrationPulseTestGenerator:
         time = 0.
         while freq <= self.freq_end + 0.000001:
             t_seg = .25 / freq
-            accel = self.accel_per_hz * freq
+            accel = self.test_accel_per_hz * freq
             time += t_seg
             res.append((time, sign * accel))
             time += t_seg
             res.append((time, -sign * accel))
-            freq += 2. * t_seg * self.hz_per_sec
+            freq += 2. * t_seg * self.test_hz_per_sec
             sign = -sign
         return res
-    def get_params(self):
-        return {
-            'freq_start': self.freq_start,
-            'freq_end': self.freq_end,
-            'accel_per_hz': self.accel_per_hz,
-            'hz_per_sec': self.hz_per_sec,
-        }
     def get_max_freq(self):
         return self.freq_end
 
@@ -125,11 +117,6 @@ class SweepingVibrationsTestGenerator:
             res.append((next_t, accel + sweeping_accel * sig))
             last_t = next_t
         return res
-    def get_params(self):
-        params = self.vibration_generator.get_params()
-        params.update({'sweeping_accel': self.sweeping_accel,
-                       'sweeping_period': self.sweeping_period})
-        return params
     def get_max_freq(self):
         return self.vibration_generator.get_max_freq()
 
@@ -211,11 +198,7 @@ class ResonanceTester:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.move_speed = config.getfloat('move_speed', 50., above=0.)
-        test_methods = {
-                'vibrations': VibrationPulseTestGenerator,
-                'sweeping_vibrations': SweepingVibrationsTestGenerator}
-        test_method = config.getchoice('method', test_methods, 'vibrations')
-        self.generator = test_method(config)
+        self.generator = SweepingVibrationsTestGenerator(config)
         self.executor = ResonanceTestExecutor(config)
         if not config.get('accel_chip_x', None):
             self.accel_chip_names = [('xy', config.get('accel_chip').strip())]
