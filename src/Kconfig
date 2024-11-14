@@ -22,8 +22,8 @@ choice
         bool "STMicroelectronics STM32"
     config MACH_HC32F460
         bool "Huada Semiconductor HC32F460"
-    config MACH_RP2040
-        bool "Raspberry Pi RP2040"
+    config MACH_RPXXXX
+        bool "Raspberry Pi RP2040/RP235x"
     config MACH_PRU
         bool "Beaglebone PRU"
     config MACH_AR100

@@ -59,8 +59,13 @@ reset_handler_stage_two(void)
     }
 
     // Reset all user interrupt priorities
+#if __CORTEX_M == 33
+    for (i = 0; i < ARRAY_SIZE(NVIC->IPR); i++)
+        NVIC->IPR[i] = 0;
+#else
     for (i = 0; i < ARRAY_SIZE(NVIC->IP); i++)
         NVIC->IP[i] = 0;
+#endif
 
     // Disable SysTick interrupt
     SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk;
@@ -70,7 +75,7 @@ reset_handler_stage_two(void)
     SCB->ICSR = SCB_ICSR_PENDSVCLR_Msk | SCB_ICSR_PENDSTCLR_Msk;
 
     // Reset all system interrupt priorities
-#if __CORTEX_M >= 7
+#if __CORTEX_M == 7 || __CORTEX_M == 33
     for (i = 0; i < ARRAY_SIZE(SCB->SHPR); i++)
         SCB->SHPR[i] = 0;
 #else

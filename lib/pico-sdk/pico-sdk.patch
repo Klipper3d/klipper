@@ -1,0 +1,69 @@
+diff --git a/lib/pico-sdk/hardware/address_mapped.h b/lib/pico-sdk/hardware/address_mapped.h
+index b384f5572..635a275b5 100644
+--- a/lib/pico-sdk/hardware/address_mapped.h
++++ b/lib/pico-sdk/hardware/address_mapped.h
+@@ -7,7 +7,10 @@
+ #ifndef _HARDWARE_ADDRESS_MAPPED_H
+ #define _HARDWARE_ADDRESS_MAPPED_H
+ 
+-#include "pico.h"
++//#include "pico.h"
++#define __force_inline inline
++#define static_assert(a,b)
++#define valid_params_if(a,b)
+ #include "hardware/regs/addressmap.h"
+ 
+ /** \file address_mapped.h
+diff --git a/lib/pico-sdk/rp2040/cmsis_include/RP2040.h b/lib/pico-sdk/rp2040/cmsis_include/RP2040.h
+index 8da431fae..be661392c 100644
+--- a/lib/pico-sdk/rp2040/cmsis_include/RP2040.h
++++ b/lib/pico-sdk/rp2040/cmsis_include/RP2040.h
+@@ -2572,6 +2572,7 @@ typedef struct {                                /*!< RTC Structure
+   * @{
+   */
+ 
++#if 0
+ #define RESETS_BASE                 0x4000C000UL
+ #define PSM_BASE                    0x40010000UL
+ #define CLOCKS_BASE                 0x40008000UL
+@@ -2608,6 +2609,7 @@ typedef struct {                                /*!< RTC Structure
+ #define TBMAN_BASE                  0x4006C000UL
+ #define VREG_AND_CHIP_RESET_BASE    0x40064000UL
+ #define RTC_BASE                    0x4005C000UL
++#endif
+ 
+ /** @} */ /* End of group Device_Peripheral_peripheralAddr */
+ 
+diff --git a/lib/pico-sdk/rp2040/pico/asm_helper.S b/lib/pico-sdk/rp2040/pico/asm_helper.S
+index aff1fc9ae..59c67db19 100644
+--- a/lib/pico-sdk/rp2040/pico/asm_helper.S
++++ b/lib/pico-sdk/rp2040/pico/asm_helper.S
+@@ -4,7 +4,7 @@
+  * SPDX-License-Identifier: BSD-3-Clause
+  */
+ 
+-#include "pico.h"
++//#include "pico.h"
+ 
+ # note we don't do this by default in this file for backwards comaptibility with user code
+ # that may include this file, but not use unified syntax. Note that this macro does equivalent
+diff --git a/lib/pico-sdk/rp2350/cmsis_include/RP2350.h b/lib/pico-sdk/rp2350/cmsis_include/RP2350.h
+index 8ae014e04..94d0f178c 100644
+--- a/lib/pico-sdk/rp2350/cmsis_include/RP2350.h
++++ b/lib/pico-sdk/rp2350/cmsis_include/RP2350.h
+@@ -5933,6 +5933,7 @@ typedef struct {                                /*!< USB_DPRAM Structure
+   * @{
+   */
+ 
++#if 0
+ #define RESETS_BASE                 0x40020000UL
+ #define PSM_BASE                    0x40018000UL
+ #define CLOCKS_BASE                 0x40010000UL
+@@ -5986,6 +5987,7 @@ typedef struct {                                /*!< USB_DPRAM Structure
+ #define OTP_DATA_RAW_BASE           0x40134000UL
+ #define TBMAN_BASE                  0x40160000UL
+ #define USB_DPRAM_BASE              0x50100000UL
++#endif
+ 
+ /** @} */ /* End of group Device_Peripheral_peripheralAddr */
+ 
