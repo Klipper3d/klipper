@@ -61,15 +61,6 @@ AXIS_TWIST_COMPENSATION_CALIBRATE AXIS=Y
 ```
 This will guide you through the same measuring process as for the X-axis.
 
-### Automatic Calibration for Both Axes
-To perform automatic calibration for both the X and Y axes without manual
-intervention, use:
-```
-AXIS_TWIST_COMPENSATION_CALIBRATE AUTO=True
-```
-In this mode, the calibration process will run for both axes automatically.
-
-
 > **Tip:** Bed temperature and nozzle temperature and size do not seem to have
 > an influence to the calibration process.
 

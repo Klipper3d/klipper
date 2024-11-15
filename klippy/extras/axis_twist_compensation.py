@@ -45,6 +45,21 @@ class AxisTwistCompensation:
         self.zy_compensations = config.getlists('zy_compensations',
                                                 default=[], parser=float)
 
+        # Validate single compensation
+        valid_conditions = sum(
+            [
+                bool(self.z_compensations),
+                bool(self.zy_compensations)
+            ]
+        )
+
+        if valid_conditions > 1:
+            raise config.error(
+                """AXIS_TWIST_COMPENSATION: Only one type of compensation
+                can be present at a time:
+                either z_compensations or zy_compensations."""
+            )
+
         # setup calibrater
         self.calibrater = Calibrater(self, config)
         # register events
@@ -150,20 +165,7 @@ class Calibrater:
     def cmd_AXIS_TWIST_COMPENSATION_CALIBRATE(self, gcmd):
         self.gcmd = gcmd
         sample_count = gcmd.get_int('SAMPLE_COUNT', DEFAULT_SAMPLE_COUNT)
-        axis = gcmd.get('AXIS', None)
-        auto = gcmd.get('AUTO', False)
-
-        if axis is not None and auto:
-            raise self.gcmd.error(
-                "Cannot use both 'AXIS' and 'AUTO' at the same time."
-            )
-
-        if auto:
-            self._start_autocalibration(sample_count)
-            return
-
-        if axis is None and not auto:
-            axis = 'X'
+        axis = gcmd.get('AXIS', 'X')
 
         # check for valid sample_count
         if sample_count < 2:
@@ -243,153 +245,6 @@ class Calibrater:
         self.results = []
         self.current_axis = axis
         self._calibration(probe_points, nozzle_points, interval_dist)
-
-    def _calculate_corrections(self, coordinates):
-        # Extracting x, y, and z values from coordinates
-        x_coords = [coord[0] for coord in coordinates]
-        y_coords = [coord[1] for coord in coordinates]
-        z_coords = [coord[2] for coord in coordinates]
-
-        # Calculate the desired point (average of all corner points in z)
-        # For a general case, we should extract the unique
-        # combinations of corner points
-        z_corners = [z_coords[i] for i, coord in enumerate(coordinates)
-                        if (coord[0] in [x_coords[0], x_coords[-1]])
-                        and (coord[1] in [y_coords[0], y_coords[-1]])]
-        z_desired = sum(z_corners) / len(z_corners)
-
-
-        # Calculate average deformation per axis
-        unique_x_coords = sorted(set(x_coords))
-        unique_y_coords = sorted(set(y_coords))
-
-        avg_z_x = []
-        for x in unique_x_coords:
-            indices = [i for i, coord in enumerate(coordinates)
-                        if coord[0] == x]
-            avg_z = sum(z_coords[i] for i in indices) / len(indices)
-            avg_z_x.append(avg_z)
-
-        avg_z_y = []
-        for y in unique_y_coords:
-            indices = [i for i, coord in enumerate(coordinates)
-                        if coord[1] == y]
-            avg_z = sum(z_coords[i] for i in indices) / len(indices)
-            avg_z_y.append(avg_z)
-
-        # Calculate corrections to reach the desired point
-        x_corrections = [z_desired - avg for avg in avg_z_x]
-        y_corrections = [z_desired - avg for avg in avg_z_y]
-
-        return x_corrections, y_corrections
-
-    def _start_autocalibration(self, sample_count):
-
-        if not all([
-                self.x_start_point[0],
-                self.x_end_point[0],
-                self.y_start_point[0],
-                self.y_end_point[0]
-                ]):
-                raise self.gcmd.error(
-                    """AXIS_TWIST_COMPENSATION_AUTOCALIBRATE requires
-                    calibrate_start_x, calibrate_end_x, calibrate_start_y
-                    and calibrate_end_y to be defined
-                    """
-                    )
-
-        # check for valid sample_count
-        if sample_count is None or sample_count < 2:
-            raise self.gcmd.error(
-                "SAMPLE_COUNT to probe must be at least 2")
-
-        # verify no other manual probe is in progress
-        manual_probe.verify_no_manual_probe(self.printer)
-
-        # clear the current config
-        self.compensation.clear_compensations()
-
-        min_x = self.x_start_point[0]
-        max_x = self.x_end_point[0]
-        min_y = self.y_start_point[1]
-        max_y = self.y_end_point[1]
-
-        # calculate x positions
-        interval_x = (max_x - min_x) / (sample_count - 1)
-        xps = [min_x + interval_x * i for i in range(sample_count)]
-
-        # Calculate points array
-        interval_y = (max_y - min_y) / (sample_count - 1)
-        flip = False
-
-        points = []
-        for i in range(sample_count):
-            for j in range(sample_count):
-                if(not flip):
-                    idx = j
-                else:
-                    idx = sample_count -1 - j
-                points.append([xps[i], min_y + interval_y * idx ])
-            flip = not flip
-
-
-        # calculate the points to put the nozzle at, and probe
-        probe_points = []
-
-        for i in range(len(points)):
-            x = points[i][0] - self.probe_x_offset
-            y = points[i][1] - self.probe_y_offset
-            probe_points.append([x, y, self._auto_calibration((x,y))[2]])
-
-        # calculate corrections
-        x_corr, y_corr = self._calculate_corrections(probe_points)
-
-        x_corr_str = ', '.join(["{:.6f}".format(x)
-                                    for x in x_corr])
-
-        y_corr_str = ', '.join(["{:.6f}".format(x)
-                                    for x in y_corr])
-
-        # finalize
-        configfile = self.printer.lookup_object('configfile')
-        configfile.set(self.configname, 'z_compensations', x_corr_str)
-        configfile.set(self.configname, 'compensation_start_x',
-                    self.x_start_point[0])
-        configfile.set(self.configname, 'compensation_end_x',
-                    self.x_end_point[0])
-
-
-        configfile.set(self.configname, 'zy_compensations', y_corr_str)
-        configfile.set(self.configname, 'compensation_start_y',
-                    self.y_start_point[1])
-        configfile.set(self.configname, 'compensation_end_y',
-                    self.y_end_point[1])
-
-        self.gcode.respond_info(
-            "AXIS_TWIST_COMPENSATION state has been saved "
-            "for the current session.  The SAVE_CONFIG command will "
-            "update the printer config file and restart the printer.")
-        # output result
-        self.gcmd.respond_info(
-            "AXIS_TWIST_COMPENSATION_AUTOCALIBRATE: Calibration complete: ")
-        self.gcmd.respond_info("\n".join(map(str, [x_corr, y_corr])), log=False)
-
-    def _auto_calibration(self, probe_point):
-
-        # horizontal_move_z (to prevent probe trigger or hitting bed)
-        self._move_helper((None, None, self.horizontal_move_z))
-
-        # move to point to probe
-        self._move_helper((probe_point[0],
-                            probe_point[1], None))
-
-        # probe the point
-        pos = probe.run_single_probe(self.probe, self.gcmd)
-
-        # horizontal_move_z (to prevent probe trigger or hitting bed)
-        self._move_helper((None, None, self.horizontal_move_z))
-
-        return pos
 
     def _calculate_probe_points(self, nozzle_points,
         probe_x_offset, probe_y_offset):
