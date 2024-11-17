@@ -179,8 +179,9 @@ Another option is to use a desktop editor that supports editing files
 over the "scp" and/or "sftp" protocols. There are freely available tools
 that support this (eg, Notepad++, WinSCP, and Cyberduck).
 Load the printer config file in the editor and then save it as a file
-named "printer.cfg" under `~/printer_data/config`
-(ie, /home/pi/printer_data/config/printer.cfg).
+named "printer.cfg" under `~/printer_data/config`, where `~` is your
+users home directory (i.e. for the user `pi`,
+/home/pi/printer_data/config/printer.cfg).
 
 Alternatively, one can also copy and edit the file directly on the
 host via ssh. That may look something like the following (be
