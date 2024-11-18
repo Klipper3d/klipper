@@ -540,9 +540,13 @@ Some common errors and tips for diagnosing them:
 #### TMC reports error: `... ot=1(OvertempError!)`
 
 This indicates the motor driver disabled itself because it became too
-hot. Typical solutions are to decrease the stepper motor current,
-increase cooling on the stepper motor driver, and/or increase cooling
-on the stepper motor.
+hot. Typical solutions are to decrease the stepper motor current or
+increase cooling on the stepper motor driver or add a heatsink or fan.
+
+Advanced users might want to check the specific TMC chip datasheet
+and adjust the `OTTRIM` field of the `FACTORY_CONF` register to
+increase the allowable temperature, or to reduce the `PWM_FREQ` to
+reduce heat prodeuction.
 
 #### TMC reports error: `... ShortToGND` OR `ShortToSupply`
 
