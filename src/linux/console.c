@@ -12,6 +12,7 @@
 #include <stdio.h> // fprintf
 #include <string.h> // memmove
 #include <sys/stat.h> // chmod
+#include <sys/types.h> // mode_t gid_t
 #include <time.h> // struct timespec
 #include <unistd.h> // ttyname
 #include "board/irq.h" // irq_wait
@@ -64,7 +65,7 @@ set_close_on_exec(int fd)
 }
 
 int
-console_setup(char *name)
+console_setup(char *name, mode_t mode, gid_t group)
 {
     // Open pseudo-tty
     struct termios ti;
@@ -98,10 +99,18 @@ console_setup(char *name)
         report_errno("symlink", ret);
         return -1;
     }
-    ret = chmod(tname, 0660);
+    ret = chmod(tname, mode);
     if (ret) {
         report_errno("chmod", ret);
         return -1;
+    }
+
+    if (group != (gid_t) -1) {
+        ret = chown(tname, (uid_t) -1 , group);
+        if (ret) {
+            report_errno("chgrp", ret);
+            return -1;
+        }
     }
 
     // Make sure stderr is non-blocking
