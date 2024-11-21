@@ -22,9 +22,14 @@ class QueueHandler(logging.Handler):
 
 # Class to poll a queue in a background thread and log each message
 class QueueListener(logging.handlers.TimedRotatingFileHandler):
-    def __init__(self, filename):
-        logging.handlers.TimedRotatingFileHandler.__init__(
-            self, filename, when='midnight', backupCount=5)
+    def __init__(self, filename, rotate_log_at_restart):
+        if rotate_log_at_restart:
+            logging.handlers.TimedRotatingFileHandler.__init__(
+                self, filename, when="S", interval=60 * 60 * 24, backupCount=5
+            )
+        else:
+            logging.handlers.TimedRotatingFileHandler.__init__(
+                self, filename, when='midnight', backupCount=5)
         self.bg_queue = queue.Queue()
         self.bg_thread = threading.Thread(target=self._bg_thread)
         self.bg_thread.start()
@@ -57,9 +62,9 @@ class QueueListener(logging.handlers.TimedRotatingFileHandler):
 
 MainQueueHandler = None
 
-def setup_bg_logging(filename, debuglevel):
+def setup_bg_logging(filename, debuglevel, rotate_log_at_restart):
     global MainQueueHandler
-    ql = QueueListener(filename)
+    ql = QueueListener(filename, rotate_log_at_restart)
     MainQueueHandler = QueueHandler(ql.bg_queue)
     root = logging.getLogger()
     root.addHandler(MainQueueHandler)

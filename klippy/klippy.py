@@ -276,6 +276,8 @@ def main():
                     help="file to read for mcu protocol dictionary")
     opts.add_option("--import-test", action="store_true",
                     help="perform an import module test")
+    opts.add_option("--rotate-log-at-restart", action="store_true",
+                    help="rotate the log file at every restart")
     options, args = opts.parse_args()
     if options.import_test:
         import_test()
@@ -299,7 +301,10 @@ def main():
     bglogger = None
     if options.logfile:
         start_args['log_file'] = options.logfile
-        bglogger = queuelogger.setup_bg_logging(options.logfile, debuglevel)
+        bglogger = queuelogger.setup_bg_logging(options.logfile, debuglevel,
+                                                options.rotate_log_at_restart)
+        if options.rotate_log_at_restart:
+            bglogger.doRollover()
     else:
         logging.getLogger().setLevel(debuglevel)
     logging.info("Starting Klippy...")
