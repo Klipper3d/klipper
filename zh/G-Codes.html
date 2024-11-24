@@ -4762,7 +4762,7 @@ section</a> is enabled.</p>
 <h3 id="bed_mesh">[bed_mesh]<a class="headerlink" href="#bed_mesh" title="Permanent link">&para;</a></h3>
 <p>启用[床网格配置部分]（config_Reference.md#bed_mesh）时，以下命令可用（另请参阅[床网格指南]（bed_mesh.md））。</p>
 <h4 id="bed_mesh_calibrate">BED_MESH_CALIBRATE<a class="headerlink" href="#bed_mesh_calibrate" title="Permanent link">&para;</a></h4>
-<p><code>BED_MESH_CALIBRATE [PROFILE=&lt;name&gt;] [METHOD=manual] [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;] [&lt;mesh_parameter&gt;=&lt;value&gt;] [ADAPTIVE=1] [ADAPTIVE_MARGIN=&lt;value&gt;]</code>: This command probes the bed using generated points specified by the parameters in the config. After probing, a mesh is generated and z-movement is adjusted according to the mesh. The mesh will be saved into a profile specified by the <code>PROFILE</code> parameter, or <code>default</code> if unspecified. See the PROBE command for details on the optional probe parameters. If METHOD=manual is specified then the manual probing tool is activated - see the MANUAL_PROBE command above for details on the additional commands available while this tool is active. The optional <code>HORIZONTAL_MOVE_Z</code> value overrides the <code>horizontal_move_z</code> option specified in the config file. If ADAPTIVE=1 is specified then the objects defined by the Gcode file being printed will be used to define the probed area. The optional <code>ADAPTIVE_MARGIN</code> value overrides the <code>adaptive_margin</code> option specified in the config file.</p>
+<p><code>BED_MESH_CALIBRATE [PROFILE=&lt;name&gt;] [METHOD=manual] [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;] [&lt;mesh_parameter&gt;=&lt;value&gt;] [ADAPTIVE=1] [ADAPTIVE_MARGIN=&lt;value&gt;]</code>：此命令使用配置中的参数指定的生成点探测床。探测后，将生成一个网格，并根据网格调整 z 方向的移动。网格将保存到由 <code>PROFILE</code> 参数指定的配置文件中，如果未指定，则保存到 <code>default</code> 中。有关可选探测参数的详细信息，请参阅 PROBE 命令。如果指定了 METHOD=manual，则将激活手动探测工具 - 有关此工具处于活动状态时可用的其他命令的详细信息，请参阅上面的 MANUAL_PROBE 命令。可选的 <code>HORIZONTAL_MOVE_Z</code> 值将覆盖配置文件中指定的 <code>horizontal_move_z</code> 选项。如果指定了 ADAPTIVE=1，则将使用正在打印的 Gcode 文件定义的对象来定义探测区域。可选的 <code>ADAPTIVE_MARGIN</code> 值将覆盖配置文件中指定的 <code>adaptive_margin</code> 选项。</p>
 <h4 id="bed_mesh_output">BED_MESH_OUTPUT<a class="headerlink" href="#bed_mesh_output" title="Permanent link">&para;</a></h4>
 <p><code>BED_MESH_OUTPUT PGP=[&lt;0:1&gt;]</code>：该命令将当前探测到的 Z 值和当前网格的值输出到终端。如果指定 PGP=1，则将bed_mesh产生的X、Y坐标，以及它们关联的指数，输出到终端。</p>
 <h4 id="bed_mesh_map">BED_MESH_MAP<a class="headerlink" href="#bed_mesh_map" title="Permanent link">&para;</a></h4>
@@ -4772,7 +4772,7 @@ section</a> is enabled.</p>
 <h4 id="bed_mesh_profile">BED_MESH_PROFILE<a class="headerlink" href="#bed_mesh_profile" title="Permanent link">&para;</a></h4>
 <p><code>BED_MESH_PROFILE LOAD=&lt;名称&gt; SAVE=&lt;名称&gt; REMOVE=&lt;名称&gt;</code>：此命令提供了网床配置管理功能。LOAD 将从与所提供的名称相符的配置文件中恢复网格状态。SAVE 将会把目前的网格状态保存到与提供的名称相符的配置文件中。REMOVE（移除）将从持久性内存中删除与所提供名称相符的配置文件。请注意，在 SAVE 或 REMOVE 操作后，必须发送SAVE_CONFIG G代码，以保存变更到持久性内存。</p>
 <h4 id="bed_mesh_offset">BED_MESH_OFFSET<a class="headerlink" href="#bed_mesh_offset" title="Permanent link">&para;</a></h4>
-<p><code>BED_MESH_OFFSET [X=&lt;value&gt;] [Y=&lt;value&gt;] [ZFADE=&lt;value]</code>: Applies X, Y, and/or ZFADE offsets to the mesh lookup. This is useful for printers with independent extruders, as an offset is necessary to produce correct Z adjustment after a tool change. Note that a ZFADE offset does not apply additional z-adjustment directly, it is used to correct the <code>fade</code> calculation when a <code>gcode offset</code> has been applied to the Z axis.</p>
+<p><code>BED_MESH_OFFSET [X=&lt;value&gt;] [Y=&lt;value&gt;] [ZFADE=&lt;value]</code>：将 X、Y 和/或 ZFADE 偏移应用于网格查找。这对于具有独立挤出机的打印机非常有用，因为在更换工具后，偏移对于产生正确的 Z 调整是必需的。请注意，ZFADE 偏移不会直接应用额外的 z 调整，它用于在将 <code>gcode 偏移</code> 应用于 Z 轴时校正 <code>fade</code> 计算。</p>
 <h3 id="bed_screws">[bed_screws]<a class="headerlink" href="#bed_screws" title="Permanent link">&para;</a></h3>
 <p>以下命令当 <a href="Config_Reference.html#bed_screws">bed_screws 配置段</a> 使能的时候可用 (也可参考 <a href="Manual_Level.html#adjusting-bed-leveling-screws">手动调平指南</a>)。</p>
 <h4 id="bed_screws_adjust">BED_SCREWS_ADJUST<a class="headerlink" href="#bed_screws_adjust" title="Permanent link">&para;</a></h4>
@@ -4780,7 +4780,7 @@ section</a> is enabled.</p>
 <h3 id="bed_tilt">[bed_tilt]<a class="headerlink" href="#bed_tilt" title="Permanent link">&para;</a></h3>
 <p>当 <a href="Config_Reference.html#bed_tilt">bed_tilt 配置部分</a> 被启用时，以下命令可用：</p>
 <h4 id="bed_tilt_calibrate">BED_TILT_CALIBRATE<a class="headerlink" href="#bed_tilt_calibrate" title="Permanent link">&para;</a></h4>
-<p><code>BED_TILT_CALIBRATE [METHOD=manual] [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command will probe the points specified in the config and then recommend updated x and y tilt adjustments. See the PROBE command for details on the optional probe parameters. If METHOD=manual is specified then the manual probing tool is activated - see the MANUAL_PROBE command above for details on the additional commands available while this tool is active. The optional <code>HORIZONTAL_MOVE_Z</code> value overrides the <code>horizontal_move_z</code> option specified in the config file.</p>
+<p><code>BED_TILT_CALIBRATE [METHOD=manual] [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>：此命令将探测配置中指定的点，然后推荐更新的 x 和 y 倾斜调整。有关可选探测参数的详细信息，请参阅 PROBE 命令。如果指定了 METHOD=manual，则将激活手动探测工具 - 有关此工具处于活动状态时可用的其他命令的详细信息，请参阅上面的 MANUAL_PROBE 命令。可选的 <code>HORIZONTAL_MOVE_Z</code> 值将覆盖配置文件中指定的 <code>horizontal_move_z</code> 选项。</p>
 <h3 id="bltouch">[bltouch]<a class="headerlink" href="#bltouch" title="Permanent link">&para;</a></h3>
 <p>当<a href="Config_Reference.html#bltouch">bltouch 配置分段</a>被启用时，以下命令可用（也可参见<a href="BLTouch.html">BL-Touch guide</a>）。</p>
 <h4 id="bltouch_debug">BLTOUCH_DEBUG<a class="headerlink" href="#bltouch_debug" title="Permanent link">&para;</a></h4>
@@ -4798,7 +4798,7 @@ section</a> is enabled.</p>
 <h3 id="delta_calibrate">[delta_calibrate]<a class="headerlink" href="#delta_calibrate" title="Permanent link">&para;</a></h3>
 <p>The following commands are available when the <a href="Config_Reference.html#linear-delta-kinematics">delta_calibrate config section</a> is enabled (also see the <a href="Delta_Calibrate.html">delta calibrate guide</a>).</p>
 <h4 id="delta_calibrate_1">DELTA_CALIBRATE<a class="headerlink" href="#delta_calibrate_1" title="Permanent link">&para;</a></h4>
-<p><code>DELTA_CALIBRATE [METHOD=manual] [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command will probe seven points on the bed and recommend updated endstop positions, tower angles, and radius. See the PROBE command for details on the optional probe parameters. If METHOD=manual is specified then the manual probing tool is activated - see the MANUAL_PROBE command above for details on the additional commands available while this tool is active. The optional <code>HORIZONTAL_MOVE_Z</code> value overrides the <code>horizontal_move_z</code> option specified in the config file.</p>
+<p><code>DELTA_CALIBRATE [METHOD=manual] [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>：此命令将探测床上的七个点并推荐更新的限位位置、塔角度和半径。有关可选探测参数的详细信息，请参阅 PROBE 命令。如果指定了 METHOD=manual，则将激活手动探测工具 - 有关此工具处于活动状态时可用的其他命令的详细信息，请参阅上面的 MANUAL_PROBE 命令。可选的 <code>HORIZONTAL_MOVE_Z</code> 值将覆盖配置文件中指定的 <code>horizontal_move_z</code> 选项。</p>
 <h4 id="delta_analyze">DELTA_ANALYZE<a class="headerlink" href="#delta_analyze" title="Permanent link">&para;</a></h4>
 <p><code>DELTA_ANALYZE</code>:这个命令在增强的delta校准过程中使用。详情见<a href="Delta_Calibrate.html">Delta Calibrate</a>。</p>
 <h3 id="display">[display]<a class="headerlink" href="#display" title="Permanent link">&para;</a></h3>
@@ -5032,7 +5032,7 @@ section</a> is enabled.</p>
 <h4 id="probe_eddy_current_calibrate">PROBE_EDDY_CURRENT_CALIBRATE<a class="headerlink" href="#probe_eddy_current_calibrate" title="Permanent link">&para;</a></h4>
 <p><code>PROBE_EDDY_CURRENT_CALIBRATE CHIP=&lt;config_name&gt;</code>: This starts a tool that calibrates the sensor resonance frequencies to corresponding Z heights. The tool will take a couple of minutes to complete. After completion, use the SAVE_CONFIG command to store the results in the printer.cfg file.</p>
 <h4 id="ldc_calibrate_drive_current">LDC_CALIBRATE_DRIVE_CURRENT<a class="headerlink" href="#ldc_calibrate_drive_current" title="Permanent link">&para;</a></h4>
-<p><code>LDC_CALIBRATE_DRIVE_CURRENT CHIP=&lt;config_name&gt;</code> This tool will calibrate the ldc1612 DRIVE_CURRENT0 register. Prior to using this tool, move the sensor so that it is near the center of the bed and about 20mm above the bed surface. Run this command to determine an appropriate DRIVE_CURRENT for the sensor. After running this command use the SAVE_CONFIG command to store that new setting in the printer.cfg config file.</p>
+<p><code>LDC_CALIBRATE_DRIVE_CURRENT CHIP=&lt;config_name&gt;</code> 此工具将校准 ldc1612 DRIVE_CURRENT0 寄存器。在使用此工具之前，请移动传感器，使其靠近床的中心，并距床表面约 20 毫米。运行此命令以确定传感器的适当 DRIVE_CURRENT。运行此命令后，使用 SAVE_CONFIG 命令将新设置存储在 Printer.cfg 配置文件中。</p>
 <h3 id="pwm_cycle_time">[pwm_cycle_time]<a class="headerlink" href="#pwm_cycle_time" title="Permanent link">&para;</a></h3>
 <p>The following command is available when a <a href="Config_Reference.html#pwm_cycle_time">pwm_cycle_time config section</a> is enabled.</p>
 <h4 id="set_pin_1">SET_PIN<a class="headerlink" href="#set_pin_1" title="Permanent link">&para;</a></h4>
@@ -5066,7 +5066,7 @@ section</a> is enabled.</p>
 <ul>
 <li><code>RESPOND MSG="&lt;message&gt;"</code>：回显带有配置的默认前缀的消息（没有配置前缀则默认 <code>echo:</code>为前缀 ）。</li>
 <li><code>RESPOND TYPE=echo MSG="&lt;消息&gt;"</code>：回显<code>echo:</code>开头消息。</li>
-<li><code>RESPOND TYPE=echo_no_space MSG="&lt;message&gt;"</code>: echo the message prepended with <code>echo:</code> without a space between prefix and message, helpful for compatibility with some octoprint plugins that expect very specific formatting.</li>
+<li><code>RESPOND TYPE=echo_no_space MSG="&lt;message&gt;"</code>：回显以<code>echo:</code>为前缀的消息，前缀和消息之间没有空格，有助于兼容一些需要非常特定格式的 octoprint 插件。</li>
 <li><code>RESPOND TYPE=command MSG="&lt;消息&gt;"</code>：回显以<code>/</code>为前缀的消息。可以配置 OctoPrint 对这些消息进行响应（例如，<code>RESPOND TYPE=command MSG=action:pause</code>）。</li>
 <li><code>RESPOND TYPE=error MSG="&lt;消息&gt;"</code>：回显以 <code>!!</code>开头的消息。</li>
 <li><code>RESPOND PREFIX=&lt;prefix&gt; MSG="&lt;message&gt;"</code>: 回应以<code>&lt;prefix&gt;</code>为前缀的信息。(<code>PREFIX</code>参数将优先于<code>TYPE</code>参数)</li>
@@ -5118,7 +5118,7 @@ section</a> is enabled.</p>
 <h3 id="tmcxxxx">[tmcXXXX]<a class="headerlink" href="#tmcxxxx" title="Permanent link">&para;</a></h3>
 <p>The following commands are available when any of the <a href="Config_Reference.html#tmc-stepper-driver-configuration">tmcXXXX config sections</a> are enabled.</p>
 <h4 id="dump_tmc">DUMP_TMC<a class="headerlink" href="#dump_tmc" title="Permanent link">&para;</a></h4>
-<p><code>DUMP_TMC STEPPER=&lt;name&gt; [REGISTER=&lt;name&gt;]</code>: This command will read all TMC driver registers and report their values. If a REGISTER is provided, only the specified register will be dumped.</p>
+<p><code>DUMP_TMC STEPPER=&lt;name&gt; [REGISTER=&lt;name&gt;]</code>：此命令将读取所有 TMC 驱动器寄存器并报告其值。如果提供了 REGISTER，则只会转储指定的寄存器。</p>
 <h4 id="init_tmc">INIT_TMC<a class="headerlink" href="#init_tmc" title="Permanent link">&para;</a></h4>
 <p><code>INIT_TMC STEPPER=&lt;名称&gt;</code>：此命令将初始化 TMC 寄存器。如果芯片的电源关闭然后重新打开，则需要重新启用该驱动。</p>
 <h4 id="set_tmc_current">SET_TMC_CURRENT<a class="headerlink" href="#set_tmc_current" title="Permanent link">&para;</a></h4>
@@ -5171,7 +5171,7 @@ section</a> is enabled.</p>
 <h4 id="temperature_probe_complete">TEMPERATURE_PROBE_COMPLETE:<a class="headerlink" href="#temperature_probe_complete" title="Permanent link">&para;</a></h4>
 <p><code>TEMPERATURE_PROBE_COMPLETE</code>: Can be used to end calibration and save the current result before the <code>TARGET</code> temperature is reached. This command is only available during calibration.</p>
 <h4 id="_2">关于<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h4>
-<p><code>ABORT</code>: Aborts the calibration process, discarding the current results. This command is only available during drift calibration.</p>
+<p><code>ABORT</code>：中止校准过程，丢弃当前结果。此命令仅在漂移校准期间可用。</p>
 <h3 id="temperature_probe_enable">TEMPERATURE_PROBE_ENABLE<a class="headerlink" href="#temperature_probe_enable" title="Permanent link">&para;</a></h3>
 <p><code>TEMPERATURE_PROBE_ENABLE ENABLE=[0|1]</code>: Sets temperature drift compensation on or off. If ENABLE is set to 0, drift compensation will be disabled, if set to 1 it is enabled.</p>
 
