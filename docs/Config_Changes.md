@@ -8,6 +8,12 @@ All dates in this document are approximate.
 
 ## Changes
 
+20241201: In some cases Klipper may have ignored leading characters or
+spaces in a traditional G-Code command. For example, "99M123" may have
+been interpreted as "M123" and "M 321" may have been interpreted as
+"M321". Klipper will now report these cases with an "Unknown command"
+warning.
+
 20241112: Option `CHIPS=<chip_name>` in `TEST_RESONANCES` and
 `SHAPER_CALIBRATE` requires specifying the full name(s) of the accel
 chip(s). For example, `adxl345 rpi` instead of short name - `rpi`.

@@ -198,16 +198,14 @@ class GCodeDispatch:
                 line = line[:cpos]
             # Break line into parts and determine command
             parts = self.args_r.split(line.upper())
-            numparts = len(parts)
-            cmd = ""
-            if numparts >= 3 and parts[1] != 'N':
-                cmd = parts[1] + parts[2].strip()
-            elif numparts >= 5 and parts[1] == 'N':
+            if ''.join(parts[:2]) == 'N':
                 # Skip line number at start of command
-                cmd = parts[3] + parts[4].strip()
+                cmd = ''.join(parts[3:5]).strip()
+            else:
+                cmd = ''.join(parts[:3]).strip()
             # Build gcode "params" dictionary
             params = { parts[i]: parts[i+1].strip()
-                       for i in range(1, numparts, 2) }
+                       for i in range(1, len(parts), 2) }
             gcmd = GCodeCommand(self, cmd, origline, params, need_ack)
             # Invoke handler for command
             handler = self.gcode_handlers.get(cmd, self.cmd_default)
