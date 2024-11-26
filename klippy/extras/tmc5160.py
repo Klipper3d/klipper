@@ -304,7 +304,7 @@ class TMC5160CurrentHelper:
     def _calc_current(self, run_current, hold_current):
         gscaler = self._calc_globalscaler(run_current)
         irun = self._calc_current_bits(run_current)
-        ihold = self._calc_current_bits(min(hold_current, run_current))
+        ihold = int((hold_current/run_current)*irun)
         return gscaler, irun, ihold
     def _calc_current_from_field(self, field_name):
         globalscaler = self.fields.get_field("globalscaler")
