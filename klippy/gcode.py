@@ -1,6 +1,6 @@
 # Parse gcode commands
 #
-# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2024  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, re, logging, collections, shlex
@@ -253,26 +253,22 @@ class GCodeDispatch:
     def _respond_state(self, state):
         self.respond_info("Klipper state: %s" % (state,), log=False)
     # Parameter parsing helpers
-    extended_r = re.compile(
-        r'^\s*(?:N[0-9]+\s*)?'
-        r'(?P<cmd>[a-zA-Z_][a-zA-Z0-9_]+)(?:\s+|$)'
-        r'(?P<args>[^#*;]*?)'
-        r'\s*(?:[#*;].*)?$')
     def _get_extended_params(self, gcmd):
-        m = self.extended_r.match(gcmd.get_commandline())
-        if m is None:
-            raise self.error("Malformed command '%s'"
-                             % (gcmd.get_commandline(),))
-        eargs = m.group('args')
+        rawparams = gcmd.get_raw_command_parameters()
+        # Extract args while allowing shell style quoting
+        s = shlex.shlex(rawparams, posix=True)
+        s.whitespace_split = True
+        s.commenters = '#;'
         try:
-            eparams = [earg.split('=', 1) for earg in shlex.split(eargs)]
+            eparams = [earg.split('=', 1) for earg in s]
             eparams = { k.upper(): v for k, v in eparams }
-            gcmd._params.clear()
-            gcmd._params.update(eparams)
-            return gcmd
         except ValueError as e:
             raise self.error("Malformed command '%s'"
                              % (gcmd.get_commandline(),))
+        # Update gcmd with new parameters
+        gcmd._params.clear()
+        gcmd._params.update(eparams)
+        return gcmd
     # G-Code special command handlers
     def cmd_default(self, gcmd):
         cmd = gcmd.get_command()
