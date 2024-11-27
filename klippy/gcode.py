@@ -28,11 +28,10 @@ class GCodeCommand:
         return self._params
     def get_raw_command_parameters(self):
         command = self._command
-        if command.startswith("M117 ") or command.startswith("M118 "):
-            command = command[:4]
         rawparams = self._commandline
         urawparams = rawparams.upper()
         if not urawparams.startswith(command):
+            # Skip any gcode line-number and ignore any trailing checksum
             rawparams = rawparams[urawparams.find(command):]
             end = rawparams.rfind('*')
             if end >= 0:
@@ -287,12 +286,15 @@ class GCodeDispatch:
             if cmdline:
                 logging.debug(cmdline)
             return
-        if cmd.startswith("M117 ") or cmd.startswith("M118 "):
+        if ' ' in cmd:
             # Handle M117/M118 gcode with numeric and special characters
-            handler = self.gcode_handlers.get(cmd[:4], None)
-            if handler is not None:
-                handler(gcmd)
-                return
+            realcmd = cmd.split()[0]
+            if realcmd in ["M117", "M118"]:
+                handler = self.gcode_handlers.get(realcmd, None)
+                if handler is not None:
+                    gcmd._command = realcmd
+                    handler(gcmd)
+                    return
         elif cmd in ['M140', 'M104'] and not gcmd.get_float('S', 0.):
             # Don't warn about requests to turn off heaters when not present
             return
