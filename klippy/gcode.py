@@ -187,7 +187,7 @@ class GCodeDispatch:
         self._build_status_commands()
         self._respond_state("Ready")
     # Parse input into commands
-    args_r = re.compile('([A-Z_]+|[A-Z*/])')
+    args_r = re.compile('([A-Z_]+|[A-Z*])')
     def _process_commands(self, commands, need_ack=True):
         for line in commands:
             # Ignore comments and leading/trailing spaces
@@ -289,7 +289,7 @@ class GCodeDispatch:
         if ' ' in cmd:
             # Handle M117/M118 gcode with numeric and special characters
             realcmd = cmd.split()[0]
-            if realcmd in ["M117", "M118"]:
+            if realcmd in ["M117", "M118", "M23"]:
                 handler = self.gcode_handlers.get(realcmd, None)
                 if handler is not None:
                     gcmd._command = realcmd
