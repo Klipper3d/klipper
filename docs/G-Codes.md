@@ -677,6 +677,59 @@ is specified then the toolhead move will be performed with the given
 speed (in mm/s); otherwise the toolhead move will use the restored
 g-code speed.
 
+
+### work offsets
+
+The following G-Code commands are available
+if the [work_offsets](Config_Reference.md#work_offsets) section is included.
+
+#### set work offsets for coordinate systems manually
+
+Used to establish different origins based on offsets from machine
+coordinate space. The system always starts in G53.
+
+`G10 L2 Pn [X<pos>] [Y<pos>] [Z<pos>] [E<pos>]`
+
+Set work offset for coordinate system `n` where:
+- `n=0` current coordinate system
+- `n=1..6` coordinate system index
+
+*Note: work offsets are persisted across restarts without requiring `SAVE_CONFIG`*
+
+#### select coordinate system
+
+`G53` selects machine coordinate system (no offsets)
+
+`G54` select coordinate system 1
+
+`G55` select coordinate system 2
+
+`G56` select coordinate system 3
+
+`G57` select coordinate system 4
+
+`G58` select coordinate system 5
+
+`G59` select coordinate system 6
+
+*Note: offsets will be applied on next move*
+
+#### display work offsets
+
+`WORK_OFFSETS` shows offsets for coordinate systems
+
+```
+$ WORK_OFFSETS
+[G54: 0.000,0.000,0.000,0.000]*
+[G55: 0.000,0.000,0.000,0.000]
+[G56: 0.000,0.000,0.000,0.000]
+[G57: 0.000,0.000,0.000,0.000]
+[G58: 0.000,0.000,0.000,0.000]
+[G59: 0.000,0.000,0.000,0.000]
+```
+
+ *Note: \* shows the active coordinate system*
+
 ### [hall_filament_width_sensor]
 
 The following commands are available when the
