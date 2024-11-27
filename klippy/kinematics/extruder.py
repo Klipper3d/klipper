@@ -143,24 +143,28 @@ class PrinterExtruder:
         self.heater = pheaters.setup_heater(config, gcode_id)
         # Setup kinematic checks
         self.nozzle_diameter = config.getfloat('nozzle_diameter', above=0.)
-        filament_diameter = config.getfloat(
+        self.filament_diameter = config.getfloat(
             'filament_diameter', minval=self.nozzle_diameter)
-        self.filament_area = math.pi * (filament_diameter * .5)**2
+        self.set_filament_diameter()
         def_max_cross_section = 4. * self.nozzle_diameter**2
         def_max_extrude_ratio = def_max_cross_section / self.filament_area
-        max_cross_section = config.getfloat(
+        self.max_cross_section = config.getfloat(
             'max_extrude_cross_section', def_max_cross_section, above=0.)
-        self.max_extrude_ratio = max_cross_section / self.filament_area
+        self.max_extrude_ratio = self.max_cross_section / self.filament_area
         logging.info("Extruder max_extrude_ratio=%.6f", self.max_extrude_ratio)
         toolhead = self.printer.lookup_object('toolhead')
         max_velocity, max_accel = toolhead.get_max_velocity()
-        self.max_e_velocity = config.getfloat(
+        self.max_e_only_velocity = config.getfloat(
             'max_extrude_only_velocity', max_velocity * def_max_extrude_ratio
             , above=0.)
+        self.max_e_velocity = config.getfloat(
+            'max_extruder_velocity', max_velocity * def_max_extrude_ratio,
+            maxval=10000.0, above=0.)
+        self.set_max_velocity()
         self.max_e_accel = config.getfloat(
             'max_extrude_only_accel', max_accel * def_max_extrude_ratio
             , above=0.)
-        self.max_e_dist = config.getfloat(
+        self.max_e_only_dist = config.getfloat(
             'max_extrude_only_distance', 50., minval=0.)
         self.instant_corner_v = config.getfloat(
             'instantaneous_corner_velocity', 1., minval=0.)
@@ -185,6 +189,17 @@ class PrinterExtruder:
         gcode.register_mux_command("ACTIVATE_EXTRUDER", "EXTRUDER",
                                    self.name, self.cmd_ACTIVATE_EXTRUDER,
                                    desc=self.cmd_ACTIVATE_EXTRUDER_help)
+        gcode.register_mux_command("SET_FILAMENT_DIAMETER", "EXTRUDER",
+                                   self.name, self.cmd_SET_FILAMENT_DIAMETER,
+                                   desc=self.cmd_SET_FILAMENT_DIAMETER_help)
+        gcode.register_mux_command("SET_MAX_EXTRUDER_VELOCITY", "EXTRUDER",
+                                   self.name,
+                                   self.cmd_SET_MAX_EXTRUDER_VELOCITY,
+                                   desc=self.cmd_SET_MAX_EXTRUDER_VELOCITY_help)
+        gcode.register_mux_command("GET_MAX_EXTRUDER_VELOCITY", "EXTRUDER",
+                                   self.name,
+                                   self.cmd_GET_MAX_EXTRUDER_VELOCITY,
+                                   desc=self.cmd_GET_MAX_EXTRUDER_VELOCITY_help)
     def update_move_time(self, flush_time, clear_history_time):
         self.trapq_finalize_moves(self.trapq, flush_time, clear_history_time)
     def get_status(self, eventtime):
@@ -199,6 +214,24 @@ class PrinterExtruder:
         return self.heater
     def get_trapq(self):
         return self.trapq
+    def set_max_velocity(self, e_velocity = None):
+        if e_velocity is None:
+            e_velocity = self.max_e_velocity
+        if e_velocity is None:
+            # Wrong usage of the function
+            raise self.printer.command_error("Can not update extr. velocity")
+        self.max_e_velocity = e_velocity
+        self.max_e_volumetric_speed = e_velocity * self.filament_area
+    def set_filament_diameter(self, f_diameter = None):
+        if f_diameter is None:
+            f_diameter = self.filament_diameter
+        if f_diameter is None:
+            raise self.printer.command_error("Can not update filament dia")
+        if f_diameter <= 0:
+            raise self.printer.command_error(
+                "Filament needs to be positive number")
+        self.filament_diameter = f_diameter
+        self.filament_area = math.pi * (f_diameter * .5)**2
     def stats(self, eventtime):
         return self.heater.stats(eventtime)
     def check_move(self, move):
@@ -209,13 +242,13 @@ class PrinterExtruder:
                 "See the 'min_extrude_temp' config option for details")
         if (not move.axes_d[0] and not move.axes_d[1]) or axis_r < 0.:
             # Extrude only move (or retraction move) - limit accel and velocity
-            if abs(move.axes_d[3]) > self.max_e_dist:
+            if abs(move.axes_d[3]) > self.max_e_only_dist:
                 raise self.printer.command_error(
                     "Extrude only move too long (%.3fmm vs %.3fmm)\n"
                     "See the 'max_extrude_only_distance' config"
                     " option for details" % (move.axes_d[3], self.max_e_dist))
             inv_extrude_r = 1. / abs(axis_r)
-            move.limit_speed(self.max_e_velocity * inv_extrude_r,
+            move.limit_speed(self.max_e_only_velocity * inv_extrude_r,
                              self.max_e_accel * inv_extrude_r)
         elif axis_r > self.max_extrude_ratio:
             if move.axes_d[3] <= self.nozzle_diameter * self.max_extrude_ratio:
@@ -228,6 +261,13 @@ class PrinterExtruder:
                 "Move exceeds maximum extrusion (%.3fmm^2 vs %.3fmm^2)\n"
                 "See the 'max_extrude_cross_section' config option for details"
                 % (area, self.max_extrude_ratio * self.filament_area))
+        else:
+            toolhead_speed = math.sqrt(move.max_cruise_v2)
+            e_velocity = (move.axes_d[3] * toolhead_speed) / move.move_d
+            if e_velocity > self.max_e_velocity:
+                new_speed_limit = (
+                    toolhead_speed*(self.max_e_velocity/e_velocity))
+                move.limit_speed(new_speed_limit, move.accel)
     def calc_junction(self, prev_move, move):
         diff_r = move.axes_r[3] - prev_move.axes_r[3]
         if diff_r:
@@ -282,6 +322,54 @@ class PrinterExtruder:
         toolhead.flush_step_generation()
         toolhead.set_extruder(self, self.last_position)
         self.printer.send_event("extruder:activate_extruder")
+
+    cmd_SET_FILAMENT_DIAMETER_help = "Sets current filament diameter"
+    def cmd_SET_FILAMENT_DIAMETER(self, gcmd):
+        f_diameter = gcmd.get_float('DIAMETER', None)
+        if f_diameter is None:
+            raise gcmd.error("Diameter must be specified")
+        if f_diameter <= 0:
+            raise gcmd.error("Diameter must be greater than 0")
+        self.set_filament_diameter(f_diameter)
+        gcmd.respond_info("Filament diameter set to %0.3f"
+                        % (self.filament_diameter))
+
+    cmd_SET_MAX_EXTRUDER_VELOCITY_help = (
+        "Sets the maximum extruder speed by either VOLUMETRIC_SPEED or "
+        "EXTRUDER_VELOCITY")
+    def cmd_SET_MAX_EXTRUDER_VELOCITY(self, gcmd):
+        max_vol_speed = gcmd.get_float('VOLUMETRIC_SPEED', None)
+        max_e_velocity = gcmd.get_float('EXTRUDER_VELOCITY', None)
+        if ( (max_vol_speed is None and max_e_velocity is None) or
+             (max_vol_speed is not None and max_e_velocity is not None) ):
+            raise gcmd.error("Specify volumetric OR extruder speed")
+        if max_vol_speed is not None:
+            if max_vol_speed <= 0:
+                raise gcmd.error("SPEED must be greater than 0")
+            self.set_max_velocity(
+                max_vol_speed/(math.pi * (self.filament_diameter * .5)**2))
+            gcmd.respond_info(
+                "Max volumetric speed has been set to %0.3f coresponding to "
+                "%0.3f filament diameter, the max extruder velocity is %0.3f "
+                "now."
+                % (self.max_e_volumetric_speed, self.filament_diameter,
+                self.max_e_velocity))
+        else:
+            if max_e_velocity <= 0:
+                raise gcmd.error("SPEED must be greater than 0")
+            self.set_max_velocity(max_e_velocity)
+            gcmd.respond_info(
+                "max extruder velocity has been set to %0.3f coresponding to "
+                "%0.3f filament diameter, the max volumetric speed is %0.3f "
+                "now."
+                % (self.max_e_velocity, self.filament_diameter,
+                self.max_e_volumetric_speed))
+    cmd_GET_MAX_EXTRUDER_VELOCITY_help = (
+        "Returns the maximum extruder velocity and maximum volumetric speed")
+    def cmd_GET_MAX_EXTRUDER_VELOCITY(self, gcmd):
+        gcmd.respond_info(
+            "extruder: max_velocity: %0.3f max_volumeric_speed: %0.3f"
+            % (self.max_e_velocity, self.max_e_volumetric_speed))
 
 # Dummy extruder class used when a printer has no extruder at all
 class DummyExtruder:
