@@ -65,7 +65,7 @@ config STACK_SIZE
 choice
     prompt "Bootloader offset"
     config LPC_FLASH_START_4000
-        bool "16KiB bootloader (Smoothieware bootloader)"
+        bool "16KiB bootloader"
     config LPC_FLASH_START_0000
         bool "No bootloader"
 endchoice

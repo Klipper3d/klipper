@@ -74,20 +74,19 @@ def translate_serial_to_tty(device):
     return ttyname, ttyname
 
 def check_need_convert(board_name, config):
-    if board_name.lower().startswith('mks-robin-e3'):
-        # we need to convert this file
-        robin_util = os.path.join(
-            fatfs_lib.KLIPPER_DIR, "scripts/update_mks_robin.py")
-        klipper_bin = config['klipper_bin_path']
-        robin_bin = os.path.join(
+    conv_script = config.get("conversion_script")
+    if conv_script is None:
+        return
+    conv_util = os.path.join(fatfs_lib.KLIPPER_DIR, conv_script)
+    klipper_bin = config['klipper_bin_path']
+    dest_bin = os.path.join(
             os.path.dirname(klipper_bin),
             os.path.basename(config['firmware_path']))
-        cmd = "%s %s %s %s" % (sys.executable, robin_util, klipper_bin,
-                               robin_bin)
-        output("Converting Klipper binary to MKS Robin format...")
-        os.system(cmd)
-        output_line("Done")
-        config['klipper_bin_path'] = robin_bin
+    cmd = "%s %s %s %s" % (sys.executable, conv_util, klipper_bin, dest_bin)
+    output("Converting Klipper binary to custom format...")
+    os.system(cmd)
+    output_line("Done")
+    config['klipper_bin_path'] = dest_bin
 
 
 ###########################################################

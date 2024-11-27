@@ -29,7 +29,7 @@ canboot_reset(uint64_t req_signature)
         return;
     irq_disable();
     *req_sig = req_signature;
-#if __CORTEX_M >= 7
+#if __CORTEX_M == 7
     SCB_CleanDCache_by_Addr((void*)req_sig, sizeof(*req_sig));
 #endif
     NVIC_SystemReset();

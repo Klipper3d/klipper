@@ -88,7 +88,9 @@ nav:
   - Config_Changes.md
   - Contact.md
   - Installation and Configuration:
-    - Installation.md
+    - Installation:
+      - Installation.md
+      - OctoPrint.md
     - Configuration Reference:
       - Config_Reference.md
       - Rotation_Distance.md

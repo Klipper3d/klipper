@@ -259,7 +259,8 @@ class PrinterHeaters:
         try:
             dconfig = pconfig.read_config(filename)
         except Exception:
-            raise config.config_error("Cannot load config '%s'" % (filename,))
+            logging.exception("Unable to load temperature_sensors.cfg")
+            raise config.error("Cannot load config '%s'" % (filename,))
         for c in dconfig.get_prefix_sections(''):
             self.printer.load_object(dconfig, c.get_name())
     def add_sensor_factory(self, sensor_type, sensor_factory):

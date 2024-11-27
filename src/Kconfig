@@ -13,17 +13,17 @@ choice
     config MACH_AVR
         bool "Atmega AVR"
     config MACH_ATSAM
-        bool "SAM3/SAM4/SAM E70 (Due and Duet)"
+        bool "SAM3/SAM4/SAM E70"
     config MACH_ATSAMD
         bool "SAMC21/SAMD21/SAMD51/SAME5x"
     config MACH_LPC176X
-        bool "LPC176x (Smoothieboard)"
+        bool "LPC176x"
     config MACH_STM32
         bool "STMicroelectronics STM32"
     config MACH_HC32F460
         bool "Huada Semiconductor HC32F460"
-    config MACH_RP2040
-        bool "Raspberry Pi RP2040"
+    config MACH_RPXXXX
+        bool "Raspberry Pi RP2040/RP235x"
     config MACH_PRU
         bool "Beaglebone PRU"
     config MACH_AR100
@@ -102,11 +102,19 @@ config WANT_SENSORS
     default y
 config WANT_LIS2DW
     bool
-    depends on HAVE_GPIO_SPI
+    depends on HAVE_GPIO_SPI || HAVE_GPIO_I2C
     default y
 config WANT_LDC1612
     bool
     depends on HAVE_GPIO_I2C
+    default y
+config WANT_HX71X
+    bool
+    depends on WANT_GPIO_BITBANGING
+    default y
+config WANT_ADS1220
+    bool
+    depends on HAVE_GPIO_SPI
     default y
 config WANT_SOFTWARE_I2C
     bool
@@ -118,7 +126,8 @@ config WANT_SOFTWARE_SPI
     default y
 config NEED_SENSOR_BULK
     bool
-    depends on WANT_SENSORS || WANT_LIS2DW || WANT_LDC1612
+    depends on WANT_SENSORS || WANT_LIS2DW || WANT_LDC1612 || WANT_HX71X \
+        || WANT_ADS1220
     default y
 menu "Optional features (to reduce code size)"
     depends on HAVE_LIMITED_CODE_SIZE
@@ -132,11 +141,17 @@ config WANT_SENSORS
     bool "Support external sensor devices"
     depends on HAVE_GPIO_I2C || HAVE_GPIO_SPI
 config WANT_LIS2DW
-    bool "Support lis2dw 3-axis accelerometer"
-    depends on HAVE_GPIO_SPI
+    bool "Support lis2dw and lis3dh 3-axis accelerometers"
+    depends on HAVE_GPIO_SPI || HAVE_GPIO_I2C
 config WANT_LDC1612
     bool "Support ldc1612 eddy current sensor"
     depends on HAVE_GPIO_I2C
+config WANT_HX71X
+    bool "Support HX711 and HX717 ADC chips"
+    depends on WANT_GPIO_BITBANGING
+config WANT_ADS1220
+    bool "Support ADS 1220 ADC chip"
+    depends on HAVE_GPIO_SPI
 config WANT_SOFTWARE_I2C
     bool "Support software based I2C \"bit-banging\""
     depends on HAVE_GPIO && HAVE_GPIO_I2C

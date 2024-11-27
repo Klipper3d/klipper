@@ -8,6 +8,23 @@ All dates in this document are approximate.
 
 ## Changes
 
+20241112: Option `CHIPS=<chip_name>` in `TEST_RESONANCES` and
+`SHAPER_CALIBRATE` requires specifying the full name(s) of the accel
+chip(s). For example, `adxl345 rpi` instead of short name - `rpi`.
+
+20240912: `SET_PIN`, `SET_SERVO`, `SET_FAN_SPEED`, `M106`, and `M107`
+commands are now collated. Previously, if many updates to the same
+object were issued faster than the minimum scheduling time (typically
+100ms) then actual updates could be queued far into the future. Now if
+many updates are issued in rapid succession then it is possible that
+only the latest request will be applied. If the previous behavior is
+requried then consider adding explicit `G4` delay commands between
+updates.
+
+20240912: Support for `maximum_mcu_duration` and `static_value`
+parameters in `[output_pin]` config sections have been removed. These
+options have been deprecated since 20240123.
+
 20240415: The `on_error_gcode` parameter in the `[virtual_sdcard]`
 config section now has a default. If this parameter is not specified
 it now defaults to `TURN_OFF_HEATERS`. If the previous behavior is

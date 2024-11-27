@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-from . import bus
+from . import bus, led
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
@@ -16,8 +16,7 @@ class PCA9533:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.i2c = bus.MCU_I2C_from_config(config, default_addr=98)
-        pled = self.printer.load_object(config, "led")
-        self.led_helper = pled.setup_helper(config, self.update_leds, 1)
+        self.led_helper = led.LEDHelper(config, self.update_leds, 1)
         self.i2c.i2c_write([PCA9533_PWM0, 85])
         self.i2c.i2c_write([PCA9533_PWM1, 170])
         self.update_leds(self.led_helper.get_status()['color_data'], None)

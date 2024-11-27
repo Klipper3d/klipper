@@ -1675,8 +1675,9 @@ Support for LIS2DW accelerometers.
 
 ```
 [lis2dw]
-cs_pin:
-#   The SPI enable pin for the sensor. This parameter must be provided.
+#cs_pin:
+#   The SPI enable pin for the sensor. This parameter must be provided
+#   if using SPI.
 #spi_speed: 5000000
 #   The SPI speed (in hz) to use when communicating with the chip.
 #   The default is 5000000.
@@ -1686,6 +1687,46 @@ cs_pin:
 #spi_software_miso_pin:
 #   See the "common SPI settings" section for a description of the
 #   above parameters.
+#i2c_address:
+#   Default is 25 (0x19). If SA0 is high, it would be 24 (0x18) instead.
+#i2c_mcu:
+#i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#i2c_speed: 400000
+#   See the "common I2C settings" section for a description of the
+#   above parameters. The default "i2c_speed" is 400000.
+#axes_map: x, y, z
+#   See the "adxl345" section for information on this parameter.
+```
+
+### [lis3dh]
+
+Support for LIS3DH accelerometers.
+
+```
+[lis3dh]
+#cs_pin:
+#   The SPI enable pin for the sensor. This parameter must be provided
+#   if using SPI.
+#spi_speed: 5000000
+#   The SPI speed (in hz) to use when communicating with the chip.
+#   The default is 5000000.
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the "common SPI settings" section for a description of the
+#   above parameters.
+#i2c_address:
+#   Default is 25 (0x19). If SA0 is high, it would be 24 (0x18) instead.
+#i2c_mcu:
+#i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#i2c_speed: 400000
+#   See the "common I2C settings" section for a description of the
+#   above parameters. The default "i2c_speed" is 400000.
 #axes_map: x, y, z
 #   See the "adxl345" section for information on this parameter.
 ```
@@ -2042,9 +2083,9 @@ sensor_type: ldc1612
 
 ### [axis_twist_compensation]
 
-A tool to compensate for inaccurate probe readings due to twist in X gantry. See
-the [Axis Twist Compensation Guide](Axis_Twist_Compensation.md) for more
-detailed information regarding symptoms, configuration and setup.
+A tool to compensate for inaccurate probe readings due to twist in X or Y
+gantry. See the [Axis Twist Compensation Guide](Axis_Twist_Compensation.md)
+for more detailed information regarding symptoms, configuration and setup.
 
 ```
 [axis_twist_compensation]
@@ -2057,16 +2098,33 @@ detailed information regarding symptoms, configuration and setup.
 calibrate_start_x: 20
 #   Defines the minimum X coordinate of the calibration
 #   This should be the X coordinate that positions the nozzle at the starting
-#   calibration position. This parameter must be provided.
+#   calibration position.
 calibrate_end_x: 200
 #   Defines the maximum X coordinate of the calibration
 #   This should be the X coordinate that positions the nozzle at the ending
-#   calibration position. This parameter must be provided.
+#   calibration position.
 calibrate_y: 112.5
 #   Defines the Y coordinate of the calibration
 #   This should be the Y coordinate that positions the nozzle during the
-#   calibration process. This parameter must be provided and is recommended to
+#   calibration process. This parameter is recommended to
 #   be near the center of the bed
+
+# For Y-axis twist compensation, specify the following parameters:
+calibrate_start_y: ...
+#   Defines the minimum Y coordinate of the calibration
+#   This should be the Y coordinate that positions the nozzle at the starting
+#   calibration position for the Y axis. This parameter must be provided if
+#   compensating for Y axis twist.
+calibrate_end_y: ...
+#   Defines the maximum Y coordinate of the calibration
+#   This should be the Y coordinate that positions the nozzle at the ending
+#   calibration position for the Y axis. This parameter must be provided if
+#   compensating for Y axis twist.
+calibrate_x: ...
+#   Defines the X coordinate of the calibration for Y axis twist compensation
+#   This should be the X coordinate that positions the nozzle during the
+#   calibration process for Y axis twist compensation. This parameter must be
+#   provided and is recommended to be near the center of the bed.
 ```
 
 ## Additional stepper motors and extruders
@@ -2399,6 +2457,69 @@ temperature sensors that are reported via the M105 command.
 #gcode_id:
 #   See the "heater_generic" section for the definition of this
 #   parameter.
+```
+
+### [temperature_probe]
+
+Reports probe coil temperature.  Includes optional thermal drift
+calibration for eddy current based probes.   A `[temperature_probe]`
+section may be linked to a `[probe_eddy_current]` by using the same
+postfix for both sections.
+
+```
+[temperature_probe my_probe]
+#sensor_type:
+#sensor_pin:
+#min_temp:
+#max_temp:
+#   Temperature sensor configuration.
+#   See the "extruder" section for the definition of the above
+#   parameters.
+#smooth_time:
+#   A time value (in seconds) over which temperature measurements will
+#   be smoothed to reduce the impact of measurement noise. The default
+#   is 2.0 seconds.
+#gcode_id:
+#   See the "heater_generic" section for the definition of this
+#   parameter.
+#speed:
+#   The travel speed [mm/s] for xy moves during calibration.  Default
+#   is the speed defined by the probe.
+#horizontal_move_z:
+#   The z distance [mm] from the bed at which xy moves will occur
+#   during calibration. Default is 2mm.
+#resting_z:
+#   The z distance [mm] from the bed at which the tool will rest
+#   to heat the probe coil during calibration.  Default is .4mm
+#calibration_position:
+#   The X, Y, Z position where the tool should be moved when
+#   probe drift calibration initializes.  This is the location
+#   where the first manual probe will occur.  If omitted, the
+#   default behavior is not to move the tool prior to the first
+#   manual probe.
+#calibration_bed_temp:
+#   The maximum safe bed temperature (in C) used to heat the probe
+#   during probe drift calibration.  When set, the calibration
+#   procedure will turn on the bed after the first sample is
+#   taken.  When the calibration procedure is complete the bed
+#   temperature will be set to zero.  When omitted the default
+#   behavior is not to set the bed temperature.
+#calibration_extruder_temp:
+#   The extruder temperature (in C) set probe during drift calibration.
+#   When this option is supplied the procedure will wait for until the
+#   specified temperature is reached before requesting the first manual
+#   probe.  When the calibration procedure is complete the extruder
+#   temperature will be set to 0.  When omitted the default behavior is
+#   not to set the extruder temperature.
+#extruder_heating_z: 50.
+#   The Z location where extruder heating will occur if the
+#   "calibration_extruder_temp" option is set.  Its recommended to heat
+#   the extruder some distance from the bed to minimize its impact on
+#   the probe coil temperature.  The default is 50.
+#max_validation_temp: 60.
+#   The maximum temperature used to validate the calibration.  It is
+#   recommended to set this to a value between 100 and 120 for enclosed
+#   printers.  The default is 60.
 ```
 
 ## Temperature sensors
@@ -4586,6 +4707,112 @@ adc2:
 #   above parameters.
 ```
 
+## Load Cells
+
+### [load_cell]
+Load Cell. Uses an ADC sensor attached to a load cell to create a digital
+scale.
+
+```
+[load_cell]
+sensor_type:
+#   This must be one of the supported sensor types, see below.
+```
+
+#### HX711
+This is a 24 bit low sample rate chip using "bit-bang" communications. It is
+suitable for filament scales.
+```
+[load_cell]
+sensor_type: hx711
+sclk_pin:
+#   The pin connected to the HX711 clock line. This parameter must be provided.
+dout_pin:
+#   The pin connected to the HX711 data output line. This parameter must be
+#   provided.
+#gain: A-128
+#   Valid values for gain are: A-128, A-64, B-32. The default is A-128.
+#   'A' denotes the input channel and the number denotes the gain. Only the 3
+#   listed combinations are supported by the chip. Note that changing the gain
+#   setting also selects the channel being read.
+#sample_rate: 80
+#   Valid values for sample_rate are 80 or 10. The default value is 80.
+#   This must match the wiring of the chip. The sample rate cannot be changed
+#   in software.
+```
+
+#### HX717
+This is the 4x higher sample rate version of the HX711, suitable for probing.
+```
+[load_cell]
+sensor_type: hx717
+sclk_pin:
+#   The pin connected to the HX717 clock line. This parameter must be provided.
+dout_pin:
+#   The pin connected to the HX717 data output line. This parameter must be
+#   provided.
+#gain: A-128
+#   Valid values for gain are A-128, B-64, A-64, B-8.
+#   'A' denotes the input channel and the number denotes the gain setting.
+#   Only the 4 listed combinations are supported by the chip. Note that
+#   changing the gain setting also selects the channel being read.
+#sample_rate: 320
+#   Valid values for sample_rate are: 10, 20, 80, 320. The default is 320.
+#   This must match the wiring of the chip. The sample rate cannot be changed
+#   in software.
+```
+
+#### ADS1220
+The ADS1220 is a 24 bit ADC supporting up to a 2Khz sample rate configurable in
+software.
+```
+[load_cell]
+sensor_type: ads1220
+cs_pin:
+#   The pin connected to the ADS1220 chip select line. This parameter must
+#   be provided.
+#spi_speed: 512000
+#   This chip supports 2 speeds: 256000 or 512000. The faster speed is only
+#   enabled when one of the Turbo sample rates is used. The correct spi_speed
+#   is selected based on the sample rate.
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the "common SPI settings" section for a description of the
+#   above parameters.
+data_ready_pin:
+#   Pin connected to the ADS1220 data ready line. This parameter must be
+#   provided.
+#gain: 128
+#   Valid gain values are 128, 64, 32, 16, 8, 4, 2, 1
+#   The default is 128
+#pga_bypass: False
+#   Disable the internal Programmable Gain Amplifier. If
+#   True the PGA will be disabled for gains 1, 2, and 4. The PGA is always
+#   enabled for gain settings 8 to 128, regardless of the pga_bypass setting.
+#   If AVSS is used as an input pga_bypass is forced to True.
+#   The default is False.
+#sample_rate: 660
+#   This chip supports two ranges of sample rates, Normal and Turbo. In turbo
+#   mode the chip's internal clock runs twice as fast and the SPI communication
+#   speed is also doubled.
+#   Normal sample rates: 20, 45, 90, 175, 330, 600, 1000
+#   Turbo sample rates: 40, 90, 180, 350, 660, 1200, 2000
+#   The default is 660
+#input_mux:
+#   Input multiplexer configuration, select a pair of pins to use. The first pin
+#   is the positive, AINP, and the second pin is the negative, AINN. Valid
+#   values are: 'AIN0_AIN1', 'AIN0_AIN2', 'AIN0_AIN3', 'AIN1_AIN2', 'AIN1_AIN3',
+#   'AIN2_AIN3', 'AIN1_AIN0', 'AIN3_AIN2', 'AIN0_AVSS', 'AIN1_AVSS', 'AIN2_AVSS'
+#   and 'AIN3_AVSS'. If AVSS is used the PGA is bypassed and the pga_bypass
+#   setting will be forced to True.
+#   The default is AIN0_AIN1.
+#vref:
+#   The selected voltage reference. Valid values are: 'internal', 'REF0', 'REF1'
+#   and 'analog_supply'. Default is 'internal'.
+```
+
 ## Board specific hardware support
 
 ### [sx1509]
@@ -4849,8 +5076,9 @@ Most Klipper micro-controller implementations only support an
 micro-controller supports a 400000 speed (*fast mode*, 400kbit/s), but it must be
 [set in the operating system](RPi_microcontroller.md#optional-enabling-i2c)
 and the `i2c_speed` parameter is otherwise ignored. The Klipper
-"RP2040" micro-controller and ATmega AVR family support a rate of 400000
-via the `i2c_speed` parameter. All other Klipper micro-controllers use a
+"RP2040" micro-controller and ATmega AVR family and some STM32
+(F0, G0, G4, L4, F7, H7) support a rate of 400000 via the `i2c_speed` parameter.
+All other Klipper micro-controllers use a
 100000 rate and ignore the `i2c_speed` parameter.
 
 ```
