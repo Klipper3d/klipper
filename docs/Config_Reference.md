@@ -4549,6 +4549,21 @@ information on menu attributes available during template rendering.
 #   Position where an item needs to be inserted in list. By default
 #   the item is added at the end.
 
+#[menu some_vsdlist]
+#type: vsdlist
+#name:
+#enable:
+#   See above for a description of these parameters.
+#sort_by_date: False
+#   Sort files using thier creation date from the filesystem.
+#   Default: (False) sort files using their names.
+#sort_reverse: False
+#   Reverse order of sorting.
+#   When sort_by_date is True, files will be sorted from new to old.
+#   When sort_by_date is False, files will be sorted in alphabetical
+#   descending order, else they will be sorted in alphabetical
+#   ascending order.
+
 #[menu some_list]
 #type: list
 #name:
