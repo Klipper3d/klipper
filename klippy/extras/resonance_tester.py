@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math, os, time
-from . import bulk_sensor, shaper_calibrate
+from . import shaper_calibrate
 
 class TestAxis:
     def __init__(self, axis=None, vib_dir=None):
@@ -70,9 +70,9 @@ class VibrationPulseTestGenerator:
             t_seg = .25 / freq
             accel = self.test_accel_per_hz * freq
             time += t_seg
-            res.append((time, sign * accel))
+            res.append((time, sign * accel, freq))
             time += t_seg
-            res.append((time, -sign * accel))
+            res.append((time, -sign * accel, freq))
             freq += 2. * t_seg * self.test_hz_per_sec
             sign = -sign
         return res
@@ -104,17 +104,17 @@ class SweepingVibrationsTestGenerator:
         last_t = 0.
         sig = 1.
         accel_fraction += 0.25
-        for next_t, accel in test_seq:
+        for next_t, accel, freq in test_seq:
             t_seg = next_t - last_t
             while t_rem <= t_seg:
                 last_t += t_rem
-                res.append((last_t, accel + sweeping_accel * sig))
+                res.append((last_t, accel + sweeping_accel * sig, freq))
                 t_seg -= t_rem
                 t_rem = self.test_sweeping_period * accel_fraction
                 accel_fraction = 0.5
                 sig = -sig
             t_rem -= t_seg
-            res.append((next_t, accel + sweeping_accel * sig))
+            res.append((next_t, accel + sweeping_accel * sig, freq))
             last_t = next_t
         return res
     def get_max_freq(self):
@@ -130,11 +130,11 @@ class ResonanceTestExecutor:
         X, Y, Z, E = toolhead.get_position()
         # Override maximum acceleration and acceleration to
         # deceleration based on the maximum test frequency
-        systime = self.printer.get_reactor().monotonic()
+        systime = reactor.monotonic()
         toolhead_info = toolhead.get_status(systime)
         old_max_accel = toolhead_info['max_accel']
         old_minimum_cruise_ratio = toolhead_info['minimum_cruise_ratio']
-        max_accel = max([abs(a) for _, a in test_seq])
+        max_accel = max([abs(a) for _, a, _ in test_seq])
         self.gcode.run_script_from_command(
             "SET_VELOCITY_LIMIT ACCEL=%.3f MINIMUM_CRUISE_RATIO=0"
             % (max_accel,))
@@ -144,10 +144,8 @@ class ResonanceTestExecutor:
             gcmd.respond_info("Disabled [input_shaper] for resonance testing")
         else:
             input_shaper = None
-        last_v = last_t = last_accel = 0.
-        msg_rate = 1. / (bulk_sensor.BATCH_INTERVAL - 0.05)
-        total_time = test_seq[-1][0]
-        for next_t, accel in test_seq:
+        last_v = last_t = last_accel = last_freq = 0.
+        for next_t, accel, freq in test_seq:
             t_seg = next_t - last_t
             toolhead.cmd_M204(self.gcode.create_gcode_command(
                 "M204", "M204", {"S": abs(accel)}))
@@ -171,14 +169,14 @@ class ResonanceTestExecutor:
             else:
                 toolhead.move([nX, nY, Z, E], max(abs(v), abs(last_v)),
                               max_junction_v2=last_v2)
-            if math.floor(next_t * msg_rate) > math.floor(last_t * msg_rate):
-                gcmd.respond_info("Testing %.1f%%.." % (
-                    next_t / total_time * 100.,))
+            if math.floor(freq) > math.floor(last_freq):
+                gcmd.respond_info("Testing frequency %.0f Hz" % (freq,))
                 reactor.pause(reactor.monotonic() + 0.01)
             X, Y = nX, nY
             last_t = next_t
             last_v = v
             last_accel = accel
+            last_freq = freq
         if last_v:
             d_decel = -.5 * last_v2 / old_max_accel
             decel_X, decel_Y = axis.get_point(d_decel)
