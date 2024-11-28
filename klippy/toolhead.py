@@ -76,10 +76,11 @@ class Move:
         sin_theta_d2 = math.sqrt(0.5*(1.0-junction_cos_theta))
         R_jd = sin_theta_d2 / (1. - sin_theta_d2)
         # Approximated circle must contact moves no further away than mid-move
-        tan_theta_d2 = sin_theta_d2 / math.sqrt(0.5*(1.0+junction_cos_theta))
-        move_centripetal_v2 = .5 * self.move_d * tan_theta_d2 * self.accel
-        prev_move_centripetal_v2 = (.5 * prev_move.move_d * tan_theta_d2
-                                    * prev_move.accel)
+        #   centripetal_v2 = .5 * self.move_d * self.accel * tan_theta_d2
+        cos_theta_d2 = math.sqrt(0.5*(1.0+junction_cos_theta))
+        quarter_tan_theta_d2 = .25 * sin_theta_d2 / cos_theta_d2
+        move_centripetal_v2 = self.delta_v2 * quarter_tan_theta_d2
+        prev_move_centripetal_v2 = prev_move.delta_v2 * quarter_tan_theta_d2
         # Apply limits
         self.max_start_v2 = min(
             R_jd * self.junction_deviation * self.accel,
