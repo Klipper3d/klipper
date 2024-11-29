@@ -545,6 +545,7 @@ class HCU_register:
         self._last_clock = 0
         self._address = address
 
+        self._sample_time = self._report_time = 0.1
         self._oid = self._callback = None
         self._mcu.register_config_callback(self._build_config)
 
@@ -563,6 +564,9 @@ class HCU_register:
     #     self._query_cmd = self._mcu.lookup_query_command("hotend_query_temperature", "hotend_temperature temp=%i")
     #     params = self._query_cmd.send()
     #     return params['temp']
+    def setup_register_callback(self, report_time, callback):
+        self._report_time = report_time
+        self._callback = callback
     def _build_config(self):
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd("config_hcu oid=%d addr=%d" % (
@@ -572,7 +576,7 @@ class HCU_register:
         self._report_clock = self._mcu.seconds_to_clock(self._report_time)
         self._mcu.add_config_cmd(
             "query_hcu_value oid=%d clock=%d sample_ticks=%d" % (
-                self._oid, clock, sample_ticks, self._sample_count), is_init=True)
+                self._oid, clock, sample_ticks), is_init=True)
         self._mcu.register_response(self._handle_hcu_stats,
                                     "hcu_value", self._oid)
     def _handle_hcu_stats(self, params):
@@ -890,7 +894,7 @@ class MCU:
         if pin_type not in pcs:
             raise pins.error("pin type %s not supported on mcu" % (pin_type,))
         return pcs[pin_type](self, pin_params)
-    def setup_heater_mcu(self, addr) -> HCU_register:
+    def setup_register(self, addr) -> HCU_register:
         return HCU_register(self, addr)
     def create_oid(self):
         self._oid_count += 1
