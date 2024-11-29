@@ -391,17 +391,19 @@ class HeaterHCU(Heater):
     def __init__(self, config, sensor):
         super().__init__(config, sensor)
         self._mcu_hcu = None
+        self.sensor_sample_time = 0.1
+        self.last_temp = 0
 
     @property
     def mcu_hcu(self):
         if self._mcu_hcu is None:
-            self._mcu_hcu = self.printer.lookup_object("mcu hcu").setup_heater_mcu()
+            self._mcu_hcu = self.printer.lookup_object("mcu hcu").setup_heater_mcu(0x2006)
         return self._mcu_hcu
 
-    def set_temp(self, degrees):
-        super().set_temp(degrees)
-        with self.lock:
-            self.mcu_hcu.set_temperature(int(degrees*10))
+    # def set_temp(self, degrees):
+    #     super().set_temp(degrees)
+    #     with self.lock:
+    #         self.mcu_hcu.set_temperature(int(degrees*10))
 
     def get_temp(self, eventtime):
         read_time = self.mcu_hcu.get_mcu().estimated_print_time(eventtime)
@@ -424,4 +426,23 @@ class HeaterHCU(Heater):
         return self.smoothed_temp, self.target_temp
 
     def temperature_callback(self, read_time, temp):
-        pass
+        with self.lock:
+            time_diff = read_time - self.last_temp_time
+            self.last_temp = temp
+            self.last_temp_time = read_time
+            self.send_temp_update(read_time, temp, self.target_temp)
+            # self.mcu_hcu.set_temperature(int(degrees*10))
+            #self.control.temperature_update(read_time, temp, self.target_temp)
+            temp_diff = temp - self.smoothed_temp
+            adj_time = min(time_diff * self.inv_smooth_time, 1.)
+            self.smoothed_temp += temp_diff * adj_time
+            self.can_extrude = (self.smoothed_temp >= self.min_extrude_temp)
+        #logging.debug("temp: %.3f %f = %f", read_time, temp)
+
+    def send_temp_update(self, read_time, temp, target_temp):
+        if self.target_temp <= 0. or self.is_shutdown:
+            value = 0.
+        if (self.last_temp == target_temp):
+            # No significant change in value - can suppress update
+            return
+        self.mcu_hcu.set_temperature(int(temp*10), read_time+self.sensor_sample_time)

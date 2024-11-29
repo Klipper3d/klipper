@@ -538,29 +538,51 @@ class MCU_adc:
         if self._callback is not None:
             self._callback(last_read_time, last_value)
 
-class MCU_induction_heater:
-    def __init__(self, mcu: "MCU"):
+class HCU_register:
+    def __init__(self, mcu: "MCU", address):
         self._mcu = mcu
         self._oid = None
+        self._last_clock = 0
+        self._address = address
+
+        self._oid = self._callback = None
+        self._mcu.register_config_callback(self._build_config)
 
         self._temp_set_cmd = self._mcu.lookup_command(
-            "hotend_set_temperature value=%u")
+            "hotend_set_temperature value=%u, clock=%u")
 
     def get_mcu(self):
         return self._mcu
-    def set_temperature(self, value):
-        #clock = self._mcu.print_time_to_clock(print_time)
-        self._temp_set_cmd.send([value])
+    def set_temperature(self, print_time, value):
+        clock = self._mcu.print_time_to_clock(print_time)
+        self._temp_set_cmd.send([value, clock],
+                           minclock=self._last_clock, reqclock=clock)
+        self._last_clock = clock
         #self._last_clock = clock
-    def get_temperature(self):
-        self._query_cmd = self._mcu.lookup_query_command("hotend_query_temperature", "hotend_temperature temp=%i")
-        params = self._query_cmd.send()
-        return params['temp']
-    def set_state(self, value):
-        self._mcu.lookup_command(
-            "command_hotend_update_state value=%c"
-            % (value))
-        self._set_cmd.send()
+    # def get_temperature(self):
+    #     self._query_cmd = self._mcu.lookup_query_command("hotend_query_temperature", "hotend_temperature temp=%i")
+    #     params = self._query_cmd.send()
+    #     return params['temp']
+    def _build_config(self):
+        self._oid = self._mcu.create_oid()
+        self._mcu.add_config_cmd("config_hcu oid=%d addr=%d" % (
+            self._oid, self._address))
+        clock = self._mcu.get_query_slot(self._oid)
+        sample_ticks = self._mcu.seconds_to_clock(self._sample_time)
+        self._report_clock = self._mcu.seconds_to_clock(self._report_time)
+        self._mcu.add_config_cmd(
+            "query_hcu_value oid=%d clock=%d sample_ticks=%d" % (
+                self._oid, clock, sample_ticks, self._sample_count), is_init=True)
+        self._mcu.register_response(self._handle_hcu_stats,
+                                    "hcu_value", self._oid)
+    def _handle_hcu_stats(self, params):
+        last_value = params['value']
+        next_clock = self._mcu.clock32_to_clock64(params['next_clock'])
+        last_read_clock = next_clock - self._report_clock
+        last_read_time = self._mcu.clock_to_print_time(last_read_clock)
+        self._last_state = (last_value, last_read_time)
+        if self._callback is not None:
+            self._callback(last_read_time, last_value)
 
 ######################################################################
 # Main MCU class
@@ -868,8 +890,8 @@ class MCU:
         if pin_type not in pcs:
             raise pins.error("pin type %s not supported on mcu" % (pin_type,))
         return pcs[pin_type](self, pin_params)
-    def setup_heater_mcu(self) -> MCU_induction_heater:
-        return MCU_induction_heater(self)
+    def setup_heater_mcu(self, addr) -> HCU_register:
+        return HCU_register(self, addr)
     def create_oid(self):
         self._oid_count += 1
         return self._oid_count - 1
