@@ -112,7 +112,7 @@ teeth, then the rotation distance is 40.
 It is easy to calculate the rotation_distance for common lead screws
 using the following formula:
 ```
-rotation_distance = <screw_pitch> * <number_of_separate_threads>
+rotation_distance = <screw_factor> * <number_of_separate_threads>
 ```
 
 For example, the common "T8 leadscrew" has a rotation distance of 8

@@ -161,7 +161,7 @@ screw4: -5, 190
 screw4_name: rear left screw
 horizontal_move_z: 10.
 speed: 50.
-screw_pitch: 0.5
+screw_factor: 0.5
 screw_direction: CW
 ```
 

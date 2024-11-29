@@ -1136,12 +1136,14 @@ information.
 #horizontal_move_z: 5
 #   The height (in mm) that the head should be commanded to move to
 #   just prior to starting a probe operation. The default is 5.
-# screw_pitch: 0.5
-#   The pitch of the screw used for bed leveling, which determines the 
-#   distance moved vertically for each full rotation of the knob. 
-#   This value is specific to the screw type (e.g., M3, M4, M5, etc.). 
-#   Accepted values: numerical values representing the screw pitch in mm. 
-#   Default value is 0.5, which is typical for M3 screws.
+# screw_factor: 0.5
+#   A factor that accounts for the offset between the actual bed 
+#   leveling screw positions and the probing points used during 
+#   calibration. If probing were performed directly above the screws, 
+#   this value would equal the screw thread pitch (distance per full 
+#   rotation). However, since probing is typically performed within 
+#   the bed area and not exactly at the screws, this value must be 
+#   determined empirically.
 # screw_direction: CW
 #   The rotation direction of the knob used to level the bed. 
 #   CW indicates a clockwise rotation decreases the gap between 

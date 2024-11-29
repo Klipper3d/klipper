@@ -29,7 +29,7 @@ class ScrewsTiltAdjust:
             raise config.error("screws_tilt_adjust: Must have "
                                "at least three screws")
         
-        self.screw_pitch = config.getfloat("screw_pitch", 0.5)
+        self.screw_factor = config.getfloat("screw_factor", 0.5)
         self.screw_direction = config.get('screw_direction', "CW")
 
         # Initialize ProbePointsHelper
@@ -99,7 +99,7 @@ class ScrewsTiltAdjust:
                 if abs(diff) < 0.001:
                     adjust = 0
                 else:
-                    adjust = diff / self.screw_pitch
+                    adjust = diff / self.screw_factor
                 if self.screw_direction == "CW":
                     sign = "CW" if adjust >= 0 else "CCW"
                 else:
