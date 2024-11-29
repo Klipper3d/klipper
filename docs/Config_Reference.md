@@ -1136,13 +1136,19 @@ information.
 #horizontal_move_z: 5
 #   The height (in mm) that the head should be commanded to move to
 #   just prior to starting a probe operation. The default is 5.
-#screw_thread: CW-M3
-#   The type of screw used for bed leveling, M3, M4, or M5, and the
-#   rotation direction of the knob that is used to level the bed.
-#   Accepted values: CW-M3, CCW-M3, CW-M4, CCW-M4, CW-M5, CCW-M5.
-#   Default value is CW-M3 which most printers use. A clockwise
-#   rotation of the knob decreases the gap between the nozzle and the
-#   bed. Conversely, a counter-clockwise rotation increases the gap.
+# screw_pitch: 0.5
+#   The pitch of the screw used for bed leveling, which determines the 
+#   distance moved vertically for each full rotation of the knob. 
+#   This value is specific to the screw type (e.g., M3, M4, M5, etc.). 
+#   Accepted values: numerical values representing the screw pitch in mm. 
+#   Default value is 0.5, which is typical for M3 screws.
+# screw_direction: CW
+#   The rotation direction of the knob used to level the bed. 
+#   CW indicates a clockwise rotation decreases the gap between 
+#   the nozzle and the bed, while CCW indicates a counter-clockwise 
+#   rotation decreases the gap. 
+#   Accepted values: CW, CCW. 
+#   Default value is CW, which is standard for most printers.
 ```
 
 ### [z_tilt]

@@ -161,7 +161,8 @@ screw4: -5, 190
 screw4_name: rear left screw
 horizontal_move_z: 10.
 speed: 50.
-screw_thread: CW-M3
+screw_pitch: 0.5
+screw_direction: CW
 ```
 
 The screw1 is always the reference point for the others, so the system
