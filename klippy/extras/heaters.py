@@ -397,7 +397,7 @@ class HeaterHCU(Heater):
     @property
     def mcu_hcu(self):
         if self._mcu_hcu is None:
-            self._mcu_hcu = self.printer.lookup_object("mcu hcu").setup_heater_mcu(0x2006)
+            self._mcu_hcu = self.printer.lookup_object("mcu hcu").setup_heater_mcu(0x200E)
         return self._mcu_hcu
 
     # def set_temp(self, degrees):
