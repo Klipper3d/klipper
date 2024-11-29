@@ -17,7 +17,7 @@ class PrinterTemperatureHCU:
         # Setup register query
         _mcu = config.get_printer().lookup_object("mcu hcu")
         _mcu_register = _mcu.setup_register(0x200E)
-        _mcu_register.setup_register_callback(REPORT_TIME, self.hcu_callback)
+        _mcu_register.setup_register_read_callback(REPORT_TIME, self.hcu_callback)
 
     def setup_callback(self, temperature_callback):
         self.temperature_callback = temperature_callback

@@ -45,7 +45,7 @@ class Heater:
         self.next_pwm_time = 0.
         self.last_pwm_value = 0.
         # Setup control algorithm sub-class
-        algos = {'watermark': ControlBangBang, 'pid': ControlPID}
+        algos = {'watermark': ControlBangBang, 'pid': ControlPID, 'hcu' : ControlHCU}
         algo = config.getchoice('control', algos)
         self.control = algo(self, config)
         # Setup output heater pin
@@ -58,6 +58,9 @@ class Heater:
                                          maxval=self.pwm_delay)
             self.mcu_pwm.setup_cycle_time(pwm_cycle_time)
             self.mcu_pwm.setup_max_duration(MAX_HEAT_TIME)
+        else:
+            self.hcu_heater = self.printer.lookup_object("mcu hcu").setup_register(0x2012)
+
         # Load additional modules
         self.printer.load_object(config, "verify_heater %s" % (short_name,))
         self.printer.load_object(config, "pid_calibrate")
@@ -274,10 +277,10 @@ class PrinterHeaters:
         sensor = self.setup_sensor(config)
         # Create heater
         # TODO: read type from config
-        if heater_name == "extruder":
-            heater = HeaterHCU(config, sensor)
-        else:
-            heater = Heater(config, sensor)
+        # if heater_name == "extruder":
+        #     heater = HeaterHCU(config, sensor)
+        # else:
+        heater = Heater(config, sensor)
         self.heaters[heater_name] = heater
         self.register_sensor(config, heater, gcode_id)
         self.available_heaters.append(config.get_name())
@@ -419,3 +422,15 @@ class HeaterHCU(Heater):
             # No significant change in value - can suppress update
             return
         self.mcu_hcu.set_temperature(int(temp*10), read_time+self.sensor_sample_time)
+
+######################################################################
+# HCU control
+######################################################################
+
+class ControlHCU:
+    def __init__(self, heater, config):
+        self.heater = heater
+        self.heater_max_power = heater.get_max_power()
+        # self.max_delta = config.getfloat('max_delta', 2.0, above=0.)
+    def temperature_update(self, read_time, temp, target_temp):
+        self.heater.hcu_heater.register_write(read_time, target_temp)
