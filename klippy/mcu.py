@@ -549,7 +549,7 @@ class HCU_register:
         self._mcu.register_config_callback(self._build_config)
 
         self._temp_set_cmd = self._mcu.lookup_command(
-            "hotend_set_temperature value=%u, clock=%u")
+            "hotend_set_temperature value=%u clock=%u")
 
     def get_mcu(self):
         return self._mcu
