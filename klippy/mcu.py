@@ -567,7 +567,6 @@ class HCU_register:
     def setup_register_read_callback(self, report_time, callback):
         self._report_time = report_time
         self._callback = callback
-        self._mcu.register_config_callback(self._build_read_config)
     def _build_config(self):
         self._oid = self._mcu.create_oid()
         cmd_queue = self._mcu.alloc_command_queue()
