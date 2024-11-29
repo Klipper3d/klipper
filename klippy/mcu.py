@@ -544,11 +544,9 @@ class HCU_register:
         self._oid = None
         self._last_clock = 0
         self._address = address
-
+        self._mcu.register_config_callback(self._build_config)
         self._sample_time = self._report_time = 0.1
         self._oid = self._callback = None
-        self._mcu.register_config_callback(self._build_config)
-
     def get_mcu(self):
         return self._mcu
     def set_temperature(self, print_time, value):
@@ -561,9 +559,15 @@ class HCU_register:
     #     self._query_cmd = self._mcu.lookup_query_command("hotend_query_temperature", "hotend_temperature temp=%i")
     #     params = self._query_cmd.send()
     #     return params['temp']
-    def setup_register_callback(self, report_time, callback):
+    def register_write(self, print_time, value):
+        clock = self._mcu.print_time_to_clock(print_time)
+        self._temp_set_cmd.send([value, clock],
+                           minclock=self._last_clock, reqclock=clock)
+        self._last_clock = clock
+    def setup_register_read_callback(self, report_time, callback):
         self._report_time = report_time
         self._callback = callback
+        self._mcu.register_config_callback(self._build_read_config)
     def _build_config(self):
         self._oid = self._mcu.create_oid()
         cmd_queue = self._mcu.alloc_command_queue()
