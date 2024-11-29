@@ -274,10 +274,10 @@ class PrinterHeaters:
         sensor = self.setup_sensor(config)
         # Create heater
         # TODO: read type from config
-        # if heater_name == "extruder":
-        #     heater = HeaterHCU(config, sensor)
-        # else:
-        heater = Heater(config, sensor)
+        if heater_name == "extruder":
+            heater = HeaterHCU(config, sensor)
+        else:
+            heater = Heater(config, sensor)
         self.heaters[heater_name] = heater
         self.register_sensor(config, heater, gcode_id)
         self.available_heaters.append(config.get_name())
@@ -397,33 +397,8 @@ class HeaterHCU(Heater):
     @property
     def mcu_hcu(self):
         if self._mcu_hcu is None:
-            self._mcu_hcu = self.printer.lookup_object("mcu hcu").setup_heater_mcu(0x200E)
+            self._mcu_hcu = self.printer.lookup_object("mcu hcu")
         return self._mcu_hcu
-
-    # def set_temp(self, degrees):
-    #     super().set_temp(degrees)
-    #     with self.lock:
-    #         self.mcu_hcu.set_temperature(int(degrees*10))
-
-    def get_temp(self, eventtime):
-        read_time = self.mcu_hcu.get_mcu().estimated_print_time(eventtime)
-
-        temp = self.mcu_hcu.get_temperature() / 10.0
-
-        time_diff = read_time - self.last_temp_time
-        self.last_temp = temp
-        self.last_temp_time = read_time
-        temp_diff = temp - self.smoothed_temp
-        adj_time = min(time_diff * self.inv_smooth_time, 1.)
-        self.smoothed_temp += temp_diff * adj_time
-        self.can_extrude = (self.smoothed_temp >= self.min_extrude_temp)
-
-        # with self.lock:
-            # self.target_temp = self.mcu_hcu.get_temperature() / 10.0
-            # if self.last_temp_time < print_time:
-            #     return 0., self.target_temp
-            # self.smoothed_temp = self.target_temp
-        return self.smoothed_temp, self.target_temp
 
     def temperature_callback(self, read_time, temp):
         with self.lock:
@@ -431,8 +406,6 @@ class HeaterHCU(Heater):
             self.last_temp = temp
             self.last_temp_time = read_time
             self.send_temp_update(read_time, temp, self.target_temp)
-            # self.mcu_hcu.set_temperature(int(degrees*10))
-            #self.control.temperature_update(read_time, temp, self.target_temp)
             temp_diff = temp - self.smoothed_temp
             adj_time = min(time_diff * self.inv_smooth_time, 1.)
             self.smoothed_temp += temp_diff * adj_time
