@@ -561,7 +561,7 @@ class HCU_register:
     #     return params['temp']
     def register_write(self, print_time, value):
         clock = self._mcu.print_time_to_clock(print_time)
-        self._temp_set_cmd.send([value, clock],
+        self._temp_set_cmd.send([int(value*10), clock],
                            minclock=self._last_clock, reqclock=clock)
         self._last_clock = clock
     def setup_register_read_callback(self, report_time, callback):
