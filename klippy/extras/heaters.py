@@ -66,6 +66,7 @@ class Heater:
             self.mcu_pwm.setup_max_duration(MAX_HEAT_TIME)
         else:
             self.hcu_heater = self.printer.lookup_object("mcu hcu").setup_register(0x2012)
+            self.mcu_pwm = self.hcu_heater.get_mcu()
 
         # Load additional modules
         self.printer.load_object(config, "verify_heater %s" % (short_name,))
