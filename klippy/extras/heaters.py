@@ -123,7 +123,10 @@ class Heater:
         with self.lock:
             self.target_temp = degrees
     def get_temp(self, eventtime):
-        print_time = self.hcu_heater.get_mcu().estimated_print_time(eventtime) - 5.
+        if self.hcu_heater:
+            print_time = self.hcu_heater.get_mcu().estimated_print_time(eventtime) - 5.
+        else:
+            print_time = self.mcu_pwm.get_mcu().estimated_print_time(eventtime) - 5.
         with self.lock:
             if self.last_temp_time < print_time:
                 return 0., self.target_temp
