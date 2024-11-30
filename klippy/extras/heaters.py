@@ -66,7 +66,7 @@ class Heater:
             self.mcu_pwm.setup_max_duration(MAX_HEAT_TIME)
         else:
             self.hcu_heater = self.printer.lookup_object("mcu hcu").setup_register(0x2012)
-            self.mcu_pwm = self.hcu_heater.get_mcu()
+            #self.mcu_pwm = self.hcu_heater.get_mcu()
 
         # Load additional modules
         self.printer.load_object(config, "verify_heater %s" % (short_name,))
@@ -123,7 +123,7 @@ class Heater:
         with self.lock:
             self.target_temp = degrees
     def get_temp(self, eventtime):
-        print_time = self.mcu_pwm.get_mcu().estimated_print_time(eventtime) - 5.
+        print_time = self.hcu_heater.get_mcu().estimated_print_time(eventtime) - 5.
         with self.lock:
             if self.last_temp_time < print_time:
                 return 0., self.target_temp
