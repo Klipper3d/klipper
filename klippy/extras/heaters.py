@@ -443,6 +443,8 @@ class ControlHCU:
     def __init__(self, heater, config):
         self.heater = heater
         self.heater_max_power = heater.get_max_power()
-        # self.max_delta = config.getfloat('max_delta', 2.0, above=0.)
+        self.max_delta = config.getfloat('max_delta', 2.0, above=0.)
     def temperature_update(self, read_time, temp, target_temp):
         self.heater.hcu_heater.register_write(read_time, target_temp)
+    def check_busy(self, eventtime, smoothed_temp, target_temp):
+        return smoothed_temp < target_temp-self.max_delta
