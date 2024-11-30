@@ -27,6 +27,11 @@ class Heater:
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
         self.sensor.setup_callback(self.temperature_callback)
         self.pwm_delay = self.sensor.get_report_time_delta()
+
+        if hasattr(self.sensor, "setup_pwm_callback"):
+            self.sensor.setup_pwm_callback(self.pwm_callback)
+
+
         # Setup temperature checks
         self.min_extrude_temp = config.getfloat(
             'min_extrude_temp', 170.,
@@ -50,6 +55,7 @@ class Heater:
         self.control = algo(self, config)
         # Setup output heater pin
         heater_pin = config.get('heater_pin')
+        self.hcu_heater = None
 
         if(heater_pin != "induction"):
             ppins = self.printer.lookup_object('pins')
@@ -95,6 +101,8 @@ class Heater:
             self.smoothed_temp += temp_diff * adj_time
             self.can_extrude = (self.smoothed_temp >= self.min_extrude_temp)
         #logging.debug("temp: %.3f %f = %f", read_time, temp)
+    def pwm_callback(self, read_time, duty_cycle):
+        self.last_pwm_value = duty_cycle
     def _handle_shutdown(self):
         self.is_shutdown = True
     # External commands
