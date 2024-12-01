@@ -28,18 +28,18 @@ class GCodeCommand:
         return self._params
     def get_raw_command_parameters(self):
         command = self._command
-        rawparams = self._commandline
-        urawparams = rawparams.upper()
-        if not urawparams.startswith(command):
+        origline = self._commandline
+        param_start = len(command)
+        param_end = len(origline)
+        if origline[:param_start].upper() != command:
             # Skip any gcode line-number and ignore any trailing checksum
-            rawparams = rawparams[urawparams.find(command):]
-            end = rawparams.rfind('*')
+            param_start += origline.upper().find(command)
+            end = origline.rfind('*')
             if end >= 0:
-                rawparams = rawparams[:end]
-        rawparams = rawparams[len(command):]
-        if rawparams.startswith(' '):
-            rawparams = rawparams[1:]
-        return rawparams
+                param_end = end
+        if origline[param_start:param_start+1].isspace():
+            param_start += 1
+        return origline[param_start:param_end]
     def ack(self, msg=None):
         if not self._need_ack:
             return False
