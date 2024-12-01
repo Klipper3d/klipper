@@ -1398,6 +1398,11 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<p>20241201: In some cases Klipper may have ignored leading characters or
+spaces in a traditional G-Code command. For example, "99M123" may have
+been interpreted as "M123" and "M 321" may have been interpreted as
+"M321". Klipper will now report these cases with an "Unknown command"
+warning.</p>
 <p>20241112: Option <code>CHIPS=&lt;chip_name&gt;</code> in <code>TEST_RESONANCES</code> and
 <code>SHAPER_CALIBRATE</code> requires specifying the full name(s) of the accel
 chip(s). For example, <code>adxl345 rpi</code> instead of short name - <code>rpi</code>.</p>
