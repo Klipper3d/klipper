@@ -34,7 +34,12 @@ class PrinterNeoPixel:
             raise config.error("color_order does not match chain_count")
         color_indexes = []
         for lidx, co in enumerate(color_order):
-            if sorted(co) not in (sorted("RGB"), sorted("RGBW"), sorted("WWWW"), sorted("WWW")):
+            if sorted(co) not in (
+                sorted("RGB"),
+                sorted("RGBW"),
+                sorted("WWWW"),
+                sorted("WWW"),
+            ):
                 raise config.error("Invalid color_order '%s'" % (co,))
             color_indexes.extend([(lidx, "RGBW".index(c)) for c in co])
         self.color_map = list(enumerate(color_indexes))
