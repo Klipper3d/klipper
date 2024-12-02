@@ -16,9 +16,13 @@ MPU_DEV_IDS = {
     0x70: "mpu-6500",
     0x68: "mpu-6050",
     #everything above are normal MPU IDs
+    0xEA: "icm-20948",
     0x75: "mpu-unknown (DEFECTIVE! USE WITH CAUTION!)",
     0x69: "mpu-unknown (DEFECTIVE! USE WITH CAUTION!)",
     }
+
+REG_DEVID_ICM20948 = 0x00
+ICM_DEV_ID = 0xEA
 
 # MPU9250 registers
 REG_DEVID =         0x75
@@ -61,6 +65,7 @@ class MPU9250:
         adxl345.AccelCommandHelper(config, self)
         self.axes_map = adxl345.read_axes_map(config, SCALE, SCALE, SCALE)
         self.data_rate = config.getint('rate', 4000)
+        self.this_mpu9250_is_icm20948 = False
         if self.data_rate not in SAMPLE_RATE_DIVS:
             raise config.error("Invalid rate parameter: %d" % (self.data_rate,))
         # Setup mcu sensor_mpu9250 bulk query code
@@ -69,8 +74,10 @@ class MPU9250:
                                            default_speed=400000)
         self.mcu = mcu = self.i2c.get_mcu()
         self.oid = oid = mcu.create_oid()
+
         self.query_mpu9250_cmd = None
         mcu.register_config_callback(self._build_config)
+
         # Bulk sample message reading
         chip_smooth = self.data_rate * BATCH_UPDATES * 2
         self.ffreader = bulk_sensor.FixedFreqReader(mcu, chip_smooth, ">hhh")
@@ -83,6 +90,23 @@ class MPU9250:
         hdr = ('time', 'x_acceleration', 'y_acceleration', 'z_acceleration')
         self.batch_bulk.add_mux_endpoint("mpu9250/dump_mpu9250", "sensor",
                                          self.name, {'header': hdr})
+        dev_id_icm = self.read_reg(REG_DEVID_ICM20948)
+        if dev_id_icm == ICM_DEV_ID:
+            self.this_mpu9250_is_icm20948 = True
+            self._exchange_registers_icm20948()
+            self.data_rate = config.getint('rate', 4500)
+        chip_smooth = self.data_rate * BATCH_UPDATES * 2
+        self.ffreader = bulk_sensor.FixedFreqReader(mcu, chip_smooth, ">hhh")
+        self.last_error_count = 0
+        # Process messages in batches
+        self.batch_bulk = bulk_sensor.BatchBulkHelper(
+            self.printer, self._process_batch,
+            self._start_measurements, self._finish_measurements, BATCH_UPDATES)
+        self.name = config.get_name().split()[-1]
+        hdr = ('time', 'x_acceleration', 'y_acceleration', 'z_acceleration')
+        self.batch_bulk.add_mux_endpoint("mpu9250/dump_mpu9250", "sensor",
+                                         self.name, {'header': hdr})
+
     def _build_config(self):
         cmdqueue = self.i2c.get_command_queue()
         self.mcu.add_config_cmd("config_mpu9250 oid=%d i2c_oid=%d"
@@ -93,6 +117,7 @@ class MPU9250:
             "query_mpu9250 oid=%c rest_ticks=%u", cq=cmdqueue)
         self.ffreader.setup_query_command("query_mpu9250_status oid=%c",
                                           oid=self.oid, cq=cmdqueue)
+
     def read_reg(self, reg):
         params = self.i2c.i2c_read([reg], 1)
         return bytearray(params['response'])[0]
@@ -118,6 +143,9 @@ class MPU9250:
         # In case of miswiring, testing MPU9250 device ID prevents treating
         # noise or wrong signal as a correctly initialized device
         dev_id = self.read_reg(REG_DEVID)
+        icm_dev_id = self.read_reg(REG_DEVID_ICM20948)
+        if icm_dev_id in MPU_DEV_IDS.keys():
+            dev_id = icm_dev_id
         if dev_id not in MPU_DEV_IDS.keys():
             raise self.printer.command_error(
                 "Invalid mpu id (got %x).\n"
@@ -126,6 +154,7 @@ class MPU9250:
                 % (dev_id))
         else:
             logging.info("Found %s with id %x"% (MPU_DEV_IDS[dev_id], dev_id))
+
         # Setup chip in requested query rate
         self.set_reg(REG_PWR_MGMT_1, SET_PWR_MGMT_1_WAKE)
         self.set_reg(REG_PWR_MGMT_2, SET_PWR_MGMT_2_ACCEL_ON)
@@ -133,11 +162,20 @@ class MPU9250:
         self.read_reg(REG_DEVID) # Dummy read to ensure queues flushed
         systime = self.printer.get_reactor().monotonic()
         next_time = self.mcu.estimated_print_time(systime) + 0.020
-        self.set_reg(REG_SMPLRT_DIV, SAMPLE_RATE_DIVS[self.data_rate],
-                     minclock=self.mcu.print_time_to_clock(next_time))
-        self.set_reg(REG_CONFIG, SET_CONFIG)
+        if not self.this_mpu9250_is_icm20948:
+            self.set_reg(REG_SMPLRT_DIV, SAMPLE_RATE_DIVS[self.data_rate],
+                        minclock=self.mcu.print_time_to_clock(next_time))
+        else:
+            self.set_reg(REG_ACCEL_SMPLRT_DIV1,
+                         SAMPLE_RATE_DIVS[self.data_rate])
+            self.set_reg(REG_ACCEL_SMPLRT_DIV2,
+                         SAMPLE_RATE_DIVS[self.data_rate],
+                        minclock=self.mcu.print_time_to_clock(next_time))
+        if not self.this_mpu9250_is_icm20948:
+            self.set_reg(REG_CONFIG, SET_CONFIG)
         self.set_reg(REG_ACCEL_CONFIG, SET_ACCEL_CONFIG)
-        self.set_reg(REG_ACCEL_CONFIG2, SET_ACCEL_CONFIG2)
+        if not self.this_mpu9250_is_icm20948:
+            self.set_reg(REG_ACCEL_CONFIG2, SET_ACCEL_CONFIG2)
         # Reset fifo
         self.set_reg(REG_FIFO_EN, SET_DISABLE_FIFO)
         self.set_reg(REG_USER_CTRL, SET_USER_FIFO_RESET)
@@ -167,6 +205,54 @@ class MPU9250:
             return {}
         return {'data': samples, 'errors': self.last_error_count,
                 'overflows': self.ffreader.get_last_overflows()}
+
+    def _exchange_registers_icm20948(self):
+        # Exchanges the register addresses and values
+        # in this file from MPU9250-compat to
+        # ICM20948 compat.
+        global REG_DEVID
+        REG_DEVID = 0x00 # 0xEA
+        global REG_FIFO_EN
+        REG_FIFO_EN = 0x67 # FIFO_EN_2
+        global REG_ACCEL_SMPLRT_DIV1
+        REG_ACCEL_SMPLRT_DIV1 = 0x10 # MSB
+        global REG_ACCEL_SMPLRT_DIV2
+        REG_ACCEL_SMPLRT_DIV2 = 0x11 # LSB
+        global REG_ACCEL_CONFIG
+        REG_ACCEL_CONFIG = 0x14
+        global REG_USER_CTRL
+        REG_USER_CTRL = 0x03
+        global REG_PWR_MGMT_1
+        REG_PWR_MGMT_1 = 0x06
+        global REG_PWR_MGMT_2
+        REG_PWR_MGMT_2 = 0x07
+        global REG_INT_STATUS
+        REG_INT_STATUS = 0x19
+
+        global SAMPLE_RATE_DIVS
+        SAMPLE_RATE_DIVS = { 4000: 0x00, 4500: 0x00 }
+
+        #SET_CONFIG = 0x01 # FIFO mode 'stream' style
+        global SET_ACCEL_CONFIG
+        SET_ACCEL_CONFIG =  0x04 # 8g full scale, 1209Hz BW
+        # ??? delay, 4.5kHz samp rate
+        global SET_PWR_MGMT_1_WAKE
+        SET_PWR_MGMT_1_WAKE = 0x01
+        global SET_PWR_MGMT_1_SLEEP
+        SET_PWR_MGMT_1_SLEEP = 0x41
+        global SET_PWR_MGMT_2_ACCEL_ON
+        SET_PWR_MGMT_2_ACCEL_ON = 0x07
+        global SET_PWR_MGMT_2_OFF
+        SET_PWR_MGMT_2_OFF = 0x3F
+        global SET_USER_FIFO_RESET
+        SET_USER_FIFO_RESET = 0x0E
+        global SET_USER_FIFO_EN
+        SET_USER_FIFO_EN = 0x40
+        global SET_ENABLE_FIFO
+        SET_ENABLE_FIFO = 0x10
+        global SET_DISABLE_FIFO
+        SET_DISABLE_FIFO = 0x00
+
 
 def load_config(config):
     return MPU9250(config)
