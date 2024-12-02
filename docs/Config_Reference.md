@@ -4218,10 +4218,9 @@ spi_software_miso_pin:
 
 #### aip31068_spi display
 
-Information on configuring an aip31068_spi display - a very similar to
-hd44780_spi display but uses 9 bit SPI commands.
-
-To avoid modifying SW_SPI driver instead sending 9-bit command, 8 commands packed in series and it sums to full 9 bytes without need for exoctic drivers.
+Information on configuring an aip31068_spi display - a very similar to hd44780_spi
+a 20x04 (20 symbols by 4 lines) display with slightly different internal
+protocol.
 
 ```
 [display]

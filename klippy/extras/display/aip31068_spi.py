@@ -1,15 +1,18 @@
 # Support for YHCB2004 (20x4 text) LCD displays based on AiP31068 controller
 #
-# Copyright (C) 2024  Alexander Bazarov <oss@bazarov.dev>
-#
-# based on : hd44780_spi.py
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
 # Copyright (C) 2018  Eric Callahan <arksine.code@gmail.com>
 # Copyright (C) 2021  Marc-Andre Denis <marcadenis@msn.com>
-#
-# inspired by https://github.com/red-scorp/LiquidCrystal_AIP31068
+# Copyright (C) 2024  Alexander Bazarov <oss@bazarov.dev>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+#
+# This file is a modified version of hd44780_spi.py, introducing slightly
+# different protocol as implemented in Marlin FW (based on
+# https://github.com/red-scorp/LiquidCrystal_AIP31068 ).
+# In addition, a hack is used to send 8 commands, each 9 bits, at once,
+# allowing the transmission of a full 9 bytes.
+# This helps avoid modifying the SW_SPI driver to handle non-8-bit data.
 
 from .. import bus
 
@@ -19,8 +22,8 @@ LINE_LENGTH_OPTIONS={16:16, 20:20}
 TextGlyphs = { 'right_arrow': b'\x7e' }
 
 # Each command is 9 bits long:
-# 1 bit for RS (Register Select) - 0 for command, 1 for data
-# 8 bits for the command/data
+#     1 bit for RS (Register Select) - 0 for command, 1 for data
+#     8 bits for the command/data
 # Command is a bitwise OR of CMND(=opcode) and flg_CMND(=parameters) multiplied
 # by 1 or 0 as En/Dis flag.
 #     cmd = CMND | flg_CMND.param0*0 | flg_CMND.param1*1
@@ -69,7 +72,7 @@ DISPLAY_INIT_CMNDS= [
     CMND.HOME, # move cursor to home (0x00)
     CMND.ENTERY_MODE | flg_ENTERY_MODE.INC, # increment cursor and no shift
     CMND.DISPLAY | flg_DISPLAY.ON, # keep cursor and blinking off
-    CMND.SHIFT | flg_SHIFT.RIGHT, # shift right curson only
+    CMND.SHIFT | flg_SHIFT.RIGHT, # shift right cursor only
     CMND.FUNCTION | flg_FUNCTION.TWO_LINES, # 2-line display mode, 5x8 dots
 ]
 
