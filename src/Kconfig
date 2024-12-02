@@ -112,6 +112,10 @@ config WANT_MPU9250
     bool
     depends on HAVE_GPIO_I2C
     default y
+config WANT_ICM20948
+    bool
+    depends on HAVE_GPIO_I2C
+    default y
 config WANT_HX71X
     bool
     depends on WANT_GPIO_BITBANGING
@@ -138,7 +142,7 @@ config WANT_SOFTWARE_SPI
     default y
 config NEED_SENSOR_BULK
     bool
-    depends on WANT_ADXL345 || WANT_LIS2DW || WANT_MPU9250 \
+    depends on WANT_ADXL345 || WANT_LIS2DW || WANT_MPU9250 || WANT_ICM20948 \
         || WANT_HX71X || WANT_ADS1220 || WANT_LDC1612 || WANT_SENSOR_ANGLE
     default y
 menu "Optional features (to reduce code size)"
@@ -160,6 +164,9 @@ config WANT_LIS2DW
     depends on HAVE_GPIO_SPI || HAVE_GPIO_I2C
 config WANT_MPU9250
     bool "Support MPU accelerometers"
+    depends on HAVE_GPIO_I2C
+config WANT_ICM20948
+    bool "Support ICM20948 accelerometer"
     depends on HAVE_GPIO_I2C
 config WANT_HX71X
     bool "Support HX711 and HX717 ADC chips"
