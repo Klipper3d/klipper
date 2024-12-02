@@ -6,7 +6,7 @@
 # Copyright (C) 2024  Alexander Bazarov <oss@bazarov.dev>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-#
+
 # This file is a modified version of hd44780_spi.py, introducing slightly
 # different protocol as implemented in Marlin FW (based on
 # https://github.com/red-scorp/LiquidCrystal_AIP31068 ).
