@@ -57,6 +57,14 @@ enum {
 static struct task_wake mpu9250_wake;
 
 static void
+read_mpu(struct i2cdev_s *i2c, uint8_t reg_len, uint8_t *reg
+         , uint8_t read_len, uint8_t *read)
+{
+    int ret = i2c_dev_read(i2c, reg_len, reg, read_len, read);
+    i2c_shutdown_on_err(ret);
+}
+
+static void
 autodetect_mpu_icm(struct mpu9250 *mp)
 {
     // determine whether this sensor is an MPU9250-like
@@ -104,14 +112,6 @@ mp9250_reschedule_timer(struct mpu9250 *mp)
     mp->timer.waketime = timer_read_time() + mp->rest_ticks;
     sched_add_timer(&mp->timer);
     irq_enable();
-}
-
-static void
-read_mpu(struct i2cdev_s *i2c, uint8_t reg_len, uint8_t *reg
-         , uint8_t read_len, uint8_t *read)
-{
-    int ret = i2c_dev_read(i2c, reg_len, reg, read_len, read);
-    i2c_shutdown_on_err(ret);
 }
 
 // Reads the fifo byte count from the device.
