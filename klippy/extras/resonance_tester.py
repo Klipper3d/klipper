@@ -150,25 +150,26 @@ class ResonanceTestExecutor:
             toolhead.cmd_M204(self.gcode.create_gcode_command(
                 "M204", "M204", {"S": abs(accel)}))
             v = last_v + accel * t_seg
-            if abs(v) < 0.000001:
-                v = 0.
-            last_v2 = last_v * last_v
+            abs_v = abs(v)
+            if abs_v < 0.000001:
+                v = abs_v = 0.
+            abs_last_v = abs(last_v)
             v2 = v * v
+            last_v2 = last_v * last_v
             half_inv_accel = .5 / accel
             d = (v2 - last_v2) * half_inv_accel
             dX, dY = axis.get_point(d)
             nX = X + dX
             nY = Y + dY
+            toolhead.limit_next_junction_speed(abs_last_v)
             if v * last_v < 0:
                 # The move first goes to a complete stop, then changes direction
                 d_decel = -last_v2 * half_inv_accel
                 decel_X, decel_Y = axis.get_point(d_decel)
-                toolhead.move([X + decel_X, Y + decel_Y, Z, E], abs(last_v),
-                              max_junction_v2=last_v2)
-                toolhead.move([nX, nY, Z, E], abs(v))
+                toolhead.move([X + decel_X, Y + decel_Y, Z, E], abs_last_v)
+                toolhead.move([nX, nY, Z, E], abs_v)
             else:
-                toolhead.move([nX, nY, Z, E], max(abs(v), abs(last_v)),
-                              max_junction_v2=last_v2)
+                toolhead.move([nX, nY, Z, E], max(abs_v, abs_last_v))
             if math.floor(freq) > math.floor(last_freq):
                 gcmd.respond_info("Testing frequency %.0f Hz" % (freq,))
                 reactor.pause(reactor.monotonic() + 0.01)
