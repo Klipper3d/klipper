@@ -6,7 +6,8 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-# From https://invensense.tdk.com/wp-content/uploads/2016/06/DS-000189-ICM-20948-v1.3.pdf
+# From https://invensense.tdk.com/wp-content/uploads/
+#               2016/06/DS-000189-ICM-20948-v1.3.pdf
 
 import logging
 from . import bus, adxl345, bulk_sensor
@@ -33,7 +34,7 @@ REG_INT_STATUS = 0x19
 SAMPLE_RATE_DIVS = { 4500: 0x00 }
 
 #SET_CONFIG =        0x01 # FIFO mode 'stream' style
-SET_ACCEL_CONFIG =  0x04 # 8g full scale, 1209Hz BW, ??? delay 4.5kHz sample rate
+SET_ACCEL_CONFIG =  0x04 # 8g full scale, 1209Hz BW, ??? delay 4.5kHz samp rate
 SET_PWR_MGMT_1_WAKE =     0x01
 SET_PWR_MGMT_1_SLEEP=     0x41
 SET_PWR_MGMT_2_ACCEL_ON = 0x07
