@@ -18,8 +18,8 @@ board designs and different clones of them. If it is going to be connected to a
 For ADXL345s, make sure that the board supports SPI mode (a small number of
 boards appear to be hard-configured for I2C by pulling SDO to GND).
 
-For MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948s and LIS2DW/LIS3DH there 
-are also a variety of board designs and clones with different I2C pull-up resistors 
+For MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948s and LIS2DW/LIS3DH there
+are also a variety of board designs and clones with different I2C pull-up resistors
 which will need supplementing.
 
 ## MCUs with Klipper I2C *fast-mode* Support
