@@ -35,7 +35,7 @@ class GCodeCommand:
             # Skip any gcode line-number and ignore any trailing checksum
             param_start += origline.upper().find(command)
             end = origline.rfind('*')
-            if end >= 0:
+            if end >= 0 and origline[end+1:].isdigit():
                 param_end = end
         if origline[param_start:param_start+1].isspace():
             param_start += 1
