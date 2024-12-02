@@ -348,7 +348,7 @@ class TMC2240:
         if config.get("uart_pin", None) is not None:
             # use UART for communication
             self.mcu_tmc = tmc_uart.MCU_TMC_uart(config, Registers, self.fields,
-                                                 3, TMC_FREQUENCY)
+                                                 7, TMC_FREQUENCY)
         else:
             # Use SPI bus for communication
             self.mcu_tmc = tmc2130.MCU_TMC_SPI(config, Registers, self.fields,
