@@ -755,6 +755,9 @@ together with either of SHAPER_TYPE_X and SHAPER_TYPE_Y parameters.
 See [config reference](Config_Reference.md#input_shaper) for more
 details on each of these parameters.
 
+`GET_INPUT_SHAPER`: Queries the current parameters used by the input
+shaper and displays them on the terminal.
+
 ### [manual_probe]
 
 The manual_probe module is automatically loaded.
