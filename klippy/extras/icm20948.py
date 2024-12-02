@@ -23,14 +23,14 @@ ICM_DEV_IDS = {
 REG_DEVID =         0x00 # 0xEA
 REG_FIFO_EN =       0x67 # FIFO_EN_2
 REG_ACCEL_SMPLRT_DIV1 =    0x10 # MSB
-#REG_ACCEL_SMPLRT_DIV2 =    0x11 # LSB
+REG_ACCEL_SMPLRT_DIV2 =    0x11 # LSB
 REG_ACCEL_CONFIG    =    0x14
 REG_USER_CTRL =     0x03
 REG_PWR_MGMT_1 = 0x06
 REG_PWR_MGMT_2 = 0x07
 REG_INT_STATUS = 0x19
 
-SAMPLE_RATE_DIVS = { 4500: [0x00, 0x00] }
+SAMPLE_RATE_DIVS = { 4500: 0x00 }
 
 #SET_CONFIG =        0x01 # FIFO mode 'stream' style
 SET_ACCEL_CONFIG =  0x04 # 8g full scale, 1209Hz BW, ??? delay 4.5kHz sample rate
@@ -131,7 +131,8 @@ class ICM20948:
         self.read_reg(REG_DEVID) # Dummy read to ensure queues flushed
         systime = self.printer.get_reactor().monotonic()
         next_time = self.mcu.estimated_print_time(systime) + 0.020
-        self.set_reg(REG_ACCEL_SMPLRT_DIV1, SAMPLE_RATE_DIVS[self.data_rate],
+        self.set_reg(REG_ACCEL_SMPLRT_DIV1, SAMPLE_RATE_DIVS[self.data_rate])
+        self.set_reg(REG_ACCEL_SMPLRT_DIV2, SAMPLE_RATE_DIVS[self.data_rate],
                      minclock=self.mcu.print_time_to_clock(next_time))
         # self.set_reg(REG_CONFIG, SET_CONFIG) # No config register
         self.set_reg(REG_ACCEL_CONFIG, SET_ACCEL_CONFIG)
