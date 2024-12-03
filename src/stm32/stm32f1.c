@@ -74,6 +74,8 @@ clock_setup(void)
                 | ((div2 - 2) << RCC_CFGR_PLLMULL_Pos));
     }
     cfgr |= RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV2 | RCC_CFGR_ADCPRE_DIV8;
+    if (CONFIG_MACH_AT32F413 && CONFIG_CLOCK_FREQ == 120000000)
+        cfgr |= RCC_CFGR_PLLRANGE | RCC_CFGR_USBPRE_DIV2_5;
     RCC->CFGR = cfgr;
     RCC->CR |= RCC_CR_PLLON;
 
