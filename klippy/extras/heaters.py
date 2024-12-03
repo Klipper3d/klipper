@@ -277,7 +277,7 @@ class PrinterHeaters:
         self.available_heaters.append(config.get_name())
         return heater
     def get_all_heaters(self):
-        return self.available_heaters
+        return self.heaters
     def lookup_heater(self, heater_name):
         if heater_name not in self.heaters:
             raise self.printer.config_error(
