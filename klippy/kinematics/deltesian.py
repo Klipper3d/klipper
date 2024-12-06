@@ -117,6 +117,10 @@ class DeltesianKinematics:
             rail.set_position(newpos)
         for n in homing_axes:
             self.homed_axis[n] = True
+    def clear_homing_state(self, axes):
+        for i, _ in enumerate(self.limits):
+            if i in axes:
+                self.homed_axis[i] = False
     def home(self, homing_state):
         homing_axes = homing_state.get_axes()
         home_xz = 0 in homing_axes or 2 in homing_axes
