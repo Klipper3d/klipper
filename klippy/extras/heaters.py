@@ -26,7 +26,6 @@ class Heater:
         self.max_temp = config.getfloat('max_temp', above=self.min_temp)
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
         self.sensor.setup_callback(self.temperature_callback)
-        self.pwm_delay = self.sensor.get_report_time_delta()
         # Setup temperature checks
         self.min_extrude_temp = config.getfloat(
             'min_extrude_temp', 170.,
@@ -52,8 +51,9 @@ class Heater:
         heater_pin = config.get('heater_pin')
         ppins = self.printer.lookup_object('pins')
         self.mcu_pwm = ppins.setup_pin('pwm', heater_pin)
+        self.pwm_pending_delay = 0.3
         pwm_cycle_time = config.getfloat('pwm_cycle_time', 0.100, above=0.,
-                                         maxval=self.pwm_delay)
+                                         maxval=self.pwm_pending_delay)
         self.mcu_pwm.setup_cycle_time(pwm_cycle_time)
         self.mcu_pwm.setup_max_duration(MAX_HEAT_TIME)
         # Load additional modules
@@ -72,10 +72,11 @@ class Heater:
             and abs(value - self.last_pwm_value) < 0.05):
             # No significant change in value - can suppress update
             return
-        pwm_time = read_time + self.pwm_delay
-        self.next_pwm_time = pwm_time + 0.75 * MAX_HEAT_TIME
+        # PWM will apply on arrival, expect less then pending delay
+        pwm_time = read_time + self.pwm_pending_delay
+        self.next_pwm_time = pwm_time + 0.7 * MAX_HEAT_TIME
         self.last_pwm_value = value
-        self.mcu_pwm.set_pwm(pwm_time, value)
+        self.mcu_pwm.set_pwm_now(pwm_time, value)
         #logging.debug("%s: pwm=%.3f@%.3f (from %.3f@%.3f [%.3f])",
         #              self.name, value, pwm_time,
         #              self.last_temp, self.last_temp_time, self.target_temp)
@@ -95,8 +96,6 @@ class Heater:
     # External commands
     def get_name(self):
         return self.name
-    def get_pwm_delay(self):
-        return self.pwm_delay
     def get_max_power(self):
         return self.max_power
     def get_smooth_time(self):
