@@ -127,6 +127,14 @@ use this tool the Python "numpy" package must be installed (see the
 [measuring resonance document](Measuring_Resonances.md#software-installation)
 for more information).
 
+#### ANGLE_CHIP_CALIBRATE
+`ANGLE_CHIP_CALIBRATE CHIP=<chip_name>`: Perform internal sensor calibration,
+if implemented (MT6826S/MT6835).
+
+- **MT68XX**: The motor should be disconnected
+from any printer carriage before performing calibration.
+After calibration, the sensor should be reset by disconnecting the power.
+
 #### ANGLE_DEBUG_READ
 `ANGLE_DEBUG_READ CHIP=<config_name> REG=<register>`: Queries sensor
 register "register" (e.g. 44 or 0x2C). Can be useful for debugging
