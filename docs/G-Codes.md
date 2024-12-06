@@ -332,6 +332,57 @@ Also provided is the following extended G-Code command:
   setting the supplied `MSG` as the current display message.  If
   `MSG` is omitted the display will be cleared.
 
+### [framebuffer_display]
+
+The following commands are available when a
+[framebuffer_display config section](Config_Reference.md#framebuffer_display)
+is enabled.
+
+- Clear the framebuffer (fill with zeros):
+  `FRAMEBUFFER_CLEAR DEVICE=<name> WAIT=[0/1]`
+- Send image: `FRAMEBUFFER_DRAW_IMAGE DEVICE=<name> PATH=<path> CLEAR=[0/1/2]
+               OFFSET=[n] WAIT=[0/1]`
+  - `DEVICE`: Configured device name in [framebuffer_display name]
+  - `PATH`: Absolute image path
+  - `OFFSET`: Offset from buffer start to write the image
+  - `CLEAR`: Clear the remaining buffer, 0=No, 1=Yes, 2=Auto. (int) Default: 2
+  - `WAIT`: Wait for the render to complete
+
+### [msla_display]
+
+The following commands are available when a
+[msla_display config section](Config_Reference.md#msla_display)
+is enabled.
+
+- Validate print resolution and pixel size against the display information:
+  `MSLA_DISPLAY_VALIDATE RESOLUTION=<x,y> PIXEL=<width,height> STRICT=[0/1]`
+  - `RESOLUTION:` Resolution size in pixels
+  - `PIXEL`: Pixel size in millimeters
+  - `STRICT`: 0 = Prints if same or lower resolutions and same pixel size
+              1 = Prints if same resolutions and pixel size
+- Tests the display response time: `MSLA_DISPLAY_RESPONSE_TIME AVG=[1]`
+  - `AVG`: Number of samples to average the results
+- Test the display by showing full white and grey shades: `MSLA_DISPLAY_TEST
+     DELAY=[ms]`
+  - `DELAY`: Time in milliseconds between tests
+- Display clear: `M1450`
+- Display image: `M1451 F<"image.png"> O[n] C[0/1] W[0/1]`
+  - `F`: Image file to display, when printing this file is relative to the
+         base path of the print gcode
+  - `O`: Positive offset from start position of the buffer. Default: 0
+  - `C`: Clear the remaining buffer, 0=No, 1=Yes, 2=Auto. Default: 2
+  - `W`: Wait for the render to complete. Default: 0
+- Tests the UV LED response time:
+  `MSLA_UVLED_RESPONSE_TIME TIME=[ms] OFFSET=[ms] TYPE=[0/1]`
+  - `TIME`: Exposure time in milliseconds
+  - `OFFSET`: Offset time from exposure time. Default: 0
+  - `TYPE`: 0 = When using M1400 Sx and Px. (Faster response time). (Default)
+            1 = When using M1400 Sx, G4 Px, M1400 S0 (Slower response time)
+- Set the UV LED power: `M1400 S[0-255] P[ms]`
+  - `S`: The LED Power (Non PWM LEDs will turn on from 1 to 255). Default: 255
+  - `P`: Time to wait in milliseconds when (S>0) before turn off. Default: 0
+- Turn off the UV LED: `M1401`
+
 ### [dual_carriage]
 
 The following command is available when the
