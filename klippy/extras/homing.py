@@ -245,7 +245,7 @@ class PrinterHoming:
                     triggered, check_triggered):
         hmove = HomingMove(self.printer, endstops, toolhead)
         try:
-            hmove.homing_move(pos, speed, triggered=triggered,
+            hmove.homing_move(pos, speed, probe_pos=True, triggered=triggered,
                               check_triggered=check_triggered)
         except self.printer.command_error:
             if self.printer.is_shutdown():
