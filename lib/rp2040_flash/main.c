@@ -146,7 +146,7 @@ int picoboot_flash(libusb_device_handle *handle, struct flash_data *image, model
     }
 
     fprintf(stderr, "Rebooting device\n");
-    if (model == 2040) {
+    if (model == rp2040) {
         if (picoboot_reboot(handle, 0, 0, 500)) {
             return report_error(handle, "reboot");
         }
