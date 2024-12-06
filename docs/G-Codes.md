@@ -476,6 +476,43 @@ MOTION_QUEUE (as defined in an [extruder](Config_Reference.md#extruder)
 config section). If MOTION_QUEUE is an empty string then the stepper
 will be desynchronized from all extruder movement.
 
+### [mixing_extruder]
+
+The following commands are available when a
+[mixingextruder config section](Config_Reference.md#mixingextruder) is
+enabled:
+
+#### SET_MIXING_EXTRUDER
+`SET_MIXING_EXTRUDER [FACTORS=<factor1>[:<factor2>[:<factor3>...]]]
+[ENABLE=[0|1]]`:
+This command activates the specified mixing extruder. Subsequent G1 commands
+use the mixing defined by the factors. FACTORS defines the mixing by providing
+a number of positive values. The number of values should correspond to the
+number of steppers defined in the configuration. The values are normalized
+internally to add up to 1 and the extrusion of the corresponding stepper is
+multiplied by that value. If ENABLED is omitted the current mixing state is
+not changed.
+If neither FACTORS nor ENABLE is provided the current mixing status is
+displayed.
+
+#### SET_MIXING_EXTRUDER_GRADIENT
+`SET_MIXING_EXTRUDER_GRADIENT [START_FACTORS=<s1>[,<s2>[,<s3>...]]
+END_FACTORS=<e1>[,<e2>[,<e3>...]] START_HEIGHT=<start> END_HEIGHT=<end>`]
+[ENABLE=[0|1|RESET]] [METHOD=[linear|spherical] [VECTOR=<x>,<y>,<z>]]`: When
+START_FACTORS, END_FACTORS, START_HEIGHT, END_HEIGHT is provided
+then an gradient configuration is added. The START_FACTORS define the mixing
+below and up to the START_HEIGHT. The END_FACTORS respectively the mixing
+from the END_HEIGHT onward. The mixing in between is linearly interpolated.
+When ENABLE is either 0 or 1 or METHOD is specified the mixing gradient is
+turned off or on and the gradient method (METHOD) which should be used is
+selected. All previously added gradients are used when enabled. The optional
+VECTOR configures a parameter depending on the METHOD: eg. for linear VECTOR
+defines the up direction and for spherical it defines the origin of the
+spheres.
+When ENABLE is RESET all configured gradients are removed and the gradient
+handling is disabled.
+When no parameter is provided the current mixing gradient status is displayed.
+
 ### [fan_generic]
 
 The following command is available when a
