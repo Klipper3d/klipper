@@ -714,14 +714,7 @@ class MCU:
         self.gcode.respond_info(f"mcu: '{self._name}' disconnected!", log=True)
 
     def non_critical_recon_event(self, eventtime):
-        success = self.recon_mcu()
-        if success:
-            self.gcode.respond_info(
-                f"mcu: '{self._name}' reconnected!", log=True
-            )
-            return self._reactor.NEVER
-        else:
-            return eventtime + self.reconnect_interval
+        return self._reactor.NEVER
 
     def _send_config(self, prev_crc):
         if not self._cached_init_state:
