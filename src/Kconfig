@@ -95,15 +95,15 @@ config WANT_GPIO_BITBANGING
 config WANT_GPIO_BUTTONS
     bool
     depends on HAVE_GPIO
-    default y
+    default y if WANT_GPIO_BITBANGING
 config WANT_GPIO_SPI
     bool
     depends on HAVE_GPIO_SPI
-    default y
+    default y if HAVE_GPIO_SPI
 config WANT_GPIO_I2C
     bool
     depends on HAVE_GPIO_I2C
-    default y
+    default y if HAVE_GPIO_I2C
 config WANT_DISPLAYS
     bool
     depends on HAVE_GPIO
