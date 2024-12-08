@@ -92,6 +92,10 @@ config WANT_GPIO_BITBANGING
     bool
     depends on HAVE_GPIO
     default y
+config WANT_GPIO_BUTTONS
+    bool
+    depends on HAVE_GPIO
+    default y
 config WANT_GPIO_SPI
     bool
     depends on HAVE_GPIO_SPI
@@ -165,6 +169,9 @@ menu "Optional features (to reduce code size)"
     depends on HAVE_LIMITED_CODE_SIZE
 config WANT_GPIO_BITBANGING
     bool "Support GPIO \"bit-banging\" devices"
+    depends on HAVE_GPIO
+config WANT_GPIO_BUTTONS
+    bool "Support GPIO buttons"
     depends on HAVE_GPIO
 config WANT_GPIO_SPI
     bool "Support SPI"
