@@ -877,6 +877,22 @@ max_temp:
 #   See the "extruder" section for a description of the above parameters.
 ```
 
+### [heater_chamber]
+
+The heater_chamber section describes a heated chamber. It uses the same
+heater settings described in the "extruder" section.
+
+```
+[heater_chamber]
+heater_pin:
+sensor_type:
+sensor_pin:
+control:
+min_temp:
+max_temp:
+#   See the "extruder" section for a description of the above parameters.
+```
+
 ## Bed level support
 
 ### [bed_mesh]
