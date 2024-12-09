@@ -54,7 +54,7 @@ DECL_CONSTANT_STR("BUS_PINS_spi5a", "PH7,PF11,PH6");
 DECL_ENUMERATION("spi_bus", "spi6", __COUNTER__);
 DECL_CONSTANT_STR("BUS_PINS_spi6", "PG12,PG14,PG13");
 DECL_ENUMERATION("spi_bus", "spi6a", __COUNTER__);
-DECL_CONSTANT_STR("BUS_PINS_spi6a", "PB3,PB4,PB5");
+DECL_CONSTANT_STR("BUS_PINS_spi6a", "PB4,PB5,PB3");
 #endif
 
 
@@ -78,7 +78,7 @@ static const struct spi_info spi_bus[] = {
 #endif
 #ifdef SPI6
     { SPI6, GPIO('G', 12), GPIO('G', 14), GPIO('G', 13), GPIO_FUNCTION(5)},
-    { SPI6, GPIO('B', 3), GPIO('B', 4), GPIO('B', 5), GPIO_FUNCTION(8)},
+    { SPI6, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION(8)},
 #endif
 };
 
