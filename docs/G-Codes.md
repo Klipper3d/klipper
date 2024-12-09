@@ -29,6 +29,10 @@ Klipper supports the following standard G-Code commands:
 - Set bed temperature and wait: `M190 S<temperature>`
   - Note: M190 always waits for temperature to settle at requested
     value
+- Set chamber temperature: `M141 [S<temperature>]`
+- Set chamber temperature and wait: `M191 <temperature>`
+  - Note: M191 always waits for temperature to settle at request
+    value
 - Set fan speed: `M106 S<value>`
 - Turn fan off: `M107`
 - Emergency stop: `M112`
