@@ -661,7 +661,7 @@ class MCU:
             dict_fname = start_args.get('dictionary')
         else:
             out_fname = start_args.get('debugoutput') + "-" + self._name
-            dict_fname = start_args.get('dictionary_' + self._name)
+            dict_fname = start_args.get('dictionary') + "-" + self._name
         outfile = open(out_fname, 'wb')
         dfile = open(dict_fname, 'rb')
         dict_data = dfile.read()
