@@ -88,7 +88,7 @@ class ConcentricityToleranceCompansation:
     def cmd_CALIBRATE_DEFLECTION_ANGLE(self, gcmd):
         pass
     
-    cmd_CALIBRATE_DEFLECTION_RADIUS = "-TODO- Calibration Deflection Radius"
+    cmd_CALIBRATE_DEFLECTION_RADIUS_help = "-TODO- Calibration Deflection Radius"
     def cmd_CALIBRATE_DEFLECTION_RADIUS(self, gcmd):
         pass
     
