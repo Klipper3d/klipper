@@ -53,7 +53,6 @@ class ConcentricityToleranceCompansation:
         
     def handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
-        self.bmc.print_generated_points(logging.info)
         
     def calc_adj(self, a_pos):
         calc_deflection_angle = a_pos + self.deflection_angle
