@@ -39,6 +39,8 @@ class ConcentricityToleranceCompansation:
             'CALIBRATE_DEFLECTION_RADIUS', self.cmd_CALIBRATE_DEFLECTION_RADIUS,
             desc=self.cmd_CALIBRATE_DEFLECTION_RADIUS_help)
         
+        
+        
         # Register transform
         gcode_move = self.printer.load_object(config, 'gcode_move')
         gcode_move.set_move_transform(self)
@@ -86,8 +88,8 @@ class ConcentricityToleranceCompansation:
     def cmd_CALIBRATE_DEFLECTION_ANGLE(self, gcmd):
         pass
     
-    CALIBRATE_DEFLECTION_RADIUS_help = "-TODO- Calibration Deflection Radius"
-    def CALIBRATE_DEFLECTION_RADIUS(self, gcmd):
+    cmd_CALIBRATE_DEFLECTION_RADIUS = "-TODO- Calibration Deflection Radius"
+    def cmd_CALIBRATE_DEFLECTION_RADIUS(self, gcmd):
         pass
     
     
