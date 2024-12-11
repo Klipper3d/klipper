@@ -65,7 +65,7 @@ class ConcentricityToleranceCompansation:
     def get_position(self):      
         # return current position minus the current z-adjustment
         x, y, z, a, e = self.toolhead.get_position()
-        x_adj, y_adj = self.calc_xy_adj(self, a)
+        x_adj, y_adj = self.calc_xy_adj(a)
         
         self.last_position[:] = [x + x_adj, y + y_adj, z, a, e]
             
@@ -129,7 +129,7 @@ class MoveSplitter:
         return x_adj, y_adj
       
     def _calc_xya_offset(self, pos):
-        return self.calc_xy_adj(self, pos[3])
+        return self.calc_xy_adj(pos[3])
     
     def _set_next_move(self, distance_from_prev):
         t = distance_from_prev / self.total_move_length
