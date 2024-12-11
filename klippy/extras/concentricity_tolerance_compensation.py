@@ -54,7 +54,7 @@ class ConcentricityToleranceCompansation:
     def handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
         
-    def calc_adj(self, a_pos):
+    def calc_xy_adj(self, a_pos):
         calc_deflection_angle = a_pos + self.deflection_angle
         
         x_adj = self.deflection_radius * math.sin(calc_deflection_angle)
@@ -65,7 +65,7 @@ class ConcentricityToleranceCompansation:
     def get_position(self):      
         # return current position minus the current z-adjustment
         x, y, z, a, e = self.toolhead.get_position()
-        x_adj, y_adj = self.calc_adj(self, a)
+        x_adj, y_adj = self.calc_xy_adj(self, a)
         
         self.last_position[:] = [x + x_adj, y + y_adj, z, a, e]
             
@@ -120,7 +120,7 @@ class MoveSplitter:
         self.total_move_length = math.sqrt(sum([d*d for d in axes_d[:3]]))
         self.axis_move = [not isclose(d, 0., abs_tol=1e-10) for d in axes_d]
       
-    def calc_adj(self, a_pos):
+    def calc_xy_adj(self, a_pos):
         calc_deflection_angle = a_pos + self.deflection_angle
         
         x_adj = self.deflection_radius * math.sin(calc_deflection_angle)
@@ -129,12 +129,7 @@ class MoveSplitter:
         return x_adj, y_adj
       
     def _calc_xy_offset(self, pos):
-        return self.calc_adj(self, pos[3])
-        
-    def _calc_z_offset(self, pos):
-        z = self.z_mesh.calc_z(pos[0], pos[1])
-        offset = self.fade_offset
-        return self.z_factor * (z - offset) + offset
+        return self.calc_xy_adj(self, pos[3])
     
     def _set_next_move(self, distance_from_prev):
         t = distance_from_prev / self.total_move_length
@@ -155,10 +150,10 @@ class MoveSplitter:
                         < self.total_move_length:
                     self.distance_checked += self.move_check_distance_a
                     self._set_next_move(self.distance_checked)
-                    next_x, next_y = self._calc_xy_offset(self.current_pos)
-                    if abs(next_x) >= self.split_delta_xy or abs(next_y) >= self.split_delta_xy : 
-                        self.x_offset = next_x
-                        self.y_offset = next_y
+                    next_offset_x, next_offset_y = self._calc_xy_offset(self.current_pos)
+                    if abs(next_offset_x) >= self.split_delta_xy or abs(next_offset_y) >= self.split_delta_xy : 
+                        self.x_offset = next_offset_x
+                        self.y_offset = next_offset_y
                         return self.current_pos[0] + self.x_offset, self.current_pos[1] + self.y_offset, \
                             self.current_pos[2], \
                             self.current_pos[3], self.current_pos[4]
