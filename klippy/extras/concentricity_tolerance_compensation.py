@@ -120,7 +120,7 @@ class MoveSplitter:
         self.total_move_length = math.sqrt(sum([d*d for d in axes_d[:3]]))
         self.axis_move = [not isclose(d, 0., abs_tol=1e-10) for d in axes_d]
       
-    def calc_xy_adj(self, a_pos):
+    def calc_xya_adj(self, a_pos):
         calc_deflection_angle = a_pos + self.deflection_angle
         
         x_adj = self.deflection_radius * math.sin(calc_deflection_angle)
@@ -128,7 +128,7 @@ class MoveSplitter:
         
         return x_adj, y_adj
       
-    def _calc_xy_offset(self, pos):
+    def _calc_xya_offset(self, pos):
         return self.calc_xy_adj(self, pos[3])
     
     def _set_next_move(self, distance_from_prev):
