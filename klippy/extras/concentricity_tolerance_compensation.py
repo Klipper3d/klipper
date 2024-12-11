@@ -74,6 +74,7 @@ class ConcentricityToleranceCompansation:
     def move(self, newpos, speed):
         self.splitter.build_move(self.last_position, newpos)
         while not self.splitter.traverse_complete:
+            logging.info("While loop")
             split_move = self.splitter.split()
             if split_move:
                 self.toolhead.move(split_move, speed)
@@ -135,7 +136,7 @@ class MoveSplitter:
         t = distance_from_prev / self.total_move_length
         if t > 1. or t < 0.:
             raise self.gcode.error(
-                "conecntricity_tolerance_comp0ensation: Slice distance is negative "
+                "conecntricity_tolerance_compensation: Slice distance is negative "
                 "or greater than entire move length")
         for i in range(5):
             if self.axis_move[i]:
