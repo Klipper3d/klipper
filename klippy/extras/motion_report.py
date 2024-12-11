@@ -110,10 +110,12 @@ class DumpTrapQ:
             return None, None
         move = data[0]
         move_time = max(0., min(move.move_t, print_time - move.print_time))
-        dist = (move.start_v + .5 * move.accel * move_time) * move_time;
+        dist = (move.start_v + .5 * move.accel * move_time) * move_time,
         pos = (move.start_x + move.x_r * dist, move.start_y + move.y_r * dist,
                move.start_z + move.z_r * dist, move.start_a + move.a_r * dist)
         logging.info(" move.start_x: %s move.x_r: %s dist: %s", move.start_x, move.x_r, dist)
+        logging.info(" move.start_y: %s move.y_r: %s dist: %s", move.start_y, move.y_r, dist)
+        logging.info(" move.start_z: %s move.z_r: %s dist: %s", move.start_z, move.z_r, dist)
         logging.info(" move.start_a: %s move.a_r: %s dist: %s", move.start_a, move.a_r, dist)
         velocity = move.start_v + move.accel * move_time
         return pos, velocity

@@ -128,7 +128,7 @@ class MoveSplitter:
         
         return x_adj, y_adj
       
-    def _calc_xya_offset(self, pos):
+    def _calc_xy_offset(self, pos):
         return self.calc_xy_adj(pos[3])
     
     def _set_next_move(self, distance_from_prev):
