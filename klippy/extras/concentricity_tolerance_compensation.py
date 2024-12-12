@@ -54,7 +54,7 @@ class ConcentricityToleranceCompansation:
         self.toolhead = self.printer.lookup_object('toolhead')
         
     def calc_xy_adj(self, a_pos):
-        calc_deflection_angle = a_pos + self.deflection_angle
+        calc_deflection_angle = math.radians(a_pos + self.deflection_angle)
         
         x_adj = self.deflection_radius * math.sin(calc_deflection_angle)
         y_adj = self.deflection_radius * math.cos(calc_deflection_angle)
@@ -118,7 +118,7 @@ class MoveSplitter:
         self.axis_move = [not isclose(d, 0., abs_tol=1e-10) for d in axes_d]
       
     def calc_xy_adj(self, a_pos):
-        calc_deflection_angle = a_pos + self.deflection_angle
+        calc_deflection_angle = math.radians(a_pos + self.deflection_angle)
         
         x_adj = self.deflection_radius * math.sin(calc_deflection_angle)
         y_adj = self.deflection_radius * math.cos(calc_deflection_angle)
