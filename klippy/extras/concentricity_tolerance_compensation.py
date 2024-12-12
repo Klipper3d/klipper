@@ -151,9 +151,13 @@ class MoveSplitter:
                     if abs(next_offset_x -  self.x_offset) >= self.split_delta_xy or abs(next_offset_y - self.y_offset) >= self.split_delta_xy : 
                         self.x_offset = next_offset_x
                         self.y_offset = next_offset_y
-                        return self.current_pos[0] + self.x_offset, self.current_pos[1] + self.y_offset, \
+                        return self.x_offset, self.y_offset, \
                             self.current_pos[2], \
                             self.current_pos[3], self.current_pos[4]
+                        
+                        #return self.current_pos[0] + self.x_offset, self.current_pos[1] + self.y_offset, \
+                        #    self.current_pos[2], \
+                        #    self.current_pos[3], self.current_pos[4]
             # end of move reached
             self.current_pos[:] = self.next_pos
             self.x_offset, self.y_offset = self._calc_xy_offset(self.current_pos)
