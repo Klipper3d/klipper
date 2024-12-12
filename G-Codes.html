@@ -872,6 +872,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#angle_chip_calibrate" class="md-nav__link">
+    ANGLE_CHIP_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#angle_debug_read" class="md-nav__link">
     ANGLE_DEBUG_READ
   </a>
@@ -3092,6 +3099,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#angle_chip_calibrate" class="md-nav__link">
+    ANGLE_CHIP_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#angle_debug_read" class="md-nav__link">
     ANGLE_DEBUG_READ
   </a>
@@ -4812,6 +4826,14 @@ command to save the calibration data to the config file. In order to
 use this tool the Python "numpy" package must be installed (see the
 <a href="Measuring_Resonances.html#software-installation">measuring resonance document</a>
 for more information).</p>
+<h4 id="angle_chip_calibrate">ANGLE_CHIP_CALIBRATE<a class="headerlink" href="#angle_chip_calibrate" title="Permanent link">&para;</a></h4>
+<p><code>ANGLE_CHIP_CALIBRATE CHIP=&lt;chip_name&gt;</code>: Perform internal sensor calibration,
+if implemented (MT6826S/MT6835).</p>
+<ul>
+<li><strong>MT68XX</strong>: The motor should be disconnected
+from any printer carriage before performing calibration.
+After calibration, the sensor should be reset by disconnecting the power.</li>
+</ul>
 <h4 id="angle_debug_read">ANGLE_DEBUG_READ<a class="headerlink" href="#angle_debug_read" title="Permanent link">&para;</a></h4>
 <p><code>ANGLE_DEBUG_READ CHIP=&lt;config_name&gt; REG=&lt;register&gt;</code>: Queries sensor
 register "register" (e.g. 44 or 0x2C). Can be useful for debugging
