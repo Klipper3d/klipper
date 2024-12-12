@@ -86,6 +86,7 @@ def parse_gcmd_coord(gcmd, name):
 class BedMesh:
     FADE_DISABLE = 0x7FFFFFFF
     def __init__(self, config):
+        self.config = config
         self.printer = config.get_printer()
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
@@ -122,13 +123,15 @@ class BedMesh:
             'BED_MESH_OFFSET', self.cmd_BED_MESH_OFFSET,
             desc=self.cmd_BED_MESH_OFFSET_help)
         # Register transform
-        gcode_move = self.printer.load_object(config, 'gcode_move')
-        gcode_move.set_move_transform(self)
+        move_transformer = self.printer.load_object(config, 'move_transformer')
+        move_transformer.set_concentricity_tolerance_compensation(self)
         # initialize status dict
         self.update_status()
     def handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
         self.bmc.print_generated_points(logging.info)
+    
+    #Wird nur intern verwendet
     def set_mesh(self, mesh):
         if mesh is not None and self.fade_end != self.FADE_DISABLE:
             self.log_fade_complete = True
@@ -165,6 +168,8 @@ class BedMesh:
         gcode_move = self.printer.lookup_object('gcode_move')
         gcode_move.reset_last_position()
         self.update_status()
+        
+        #Wird nur intern verwendet 
     def get_z_factor(self, z_pos):
         z_pos += self.tool_offset
         if z_pos >= self.fade_end:
@@ -173,6 +178,36 @@ class BedMesh:
             return (self.fade_end - z_pos) / self.fade_dist
         else:
             return 1.
+    
+    def get_position_multiple_compensations(self, pos : list):
+        # return current position minus the current z-adjustment
+        # Return last, non-transformed position
+        if self.z_mesh is None:
+            # No mesh calibrated, so send toolhead position
+            self.last_position[:] = pos
+            self.last_position[2] -= self.fade_target
+        else:
+            # return current position minus the current z-adjustment
+            x, y, z, a, e = pos
+            max_adj = self.z_mesh.calc_z(x, y)
+            factor = 1.
+            z_adj = max_adj - self.fade_target
+            fade_z_pos = z + self.tool_offset
+            if min(fade_z_pos, (fade_z_pos - max_adj)) >= self.fade_end:
+                # Fade out is complete, no factor
+                factor = 0.
+            elif max(fade_z_pos, (fade_z_pos - max_adj)) >= self.fade_start:
+                # Likely in the process of fading out adjustment.
+                # Because we don't yet know the gcode z position, use
+                # algebra to calculate the factor from the toolhead pos
+                factor = ((self.fade_end + self.fade_target - fade_z_pos) /
+                          (self.fade_dist - z_adj))
+                factor = constrain(factor, 0., 1.)
+            final_z_adj = factor * z_adj + self.fade_target
+            self.last_position[:] = [x, y, z - final_z_adj, a, e]
+            
+        return list(self.last_position)
+        
     def get_position(self):
         # Return last, non-transformed position
         if self.z_mesh is None:
@@ -199,6 +234,32 @@ class BedMesh:
             final_z_adj = factor * z_adj + self.fade_target
             self.last_position[:] = [x, y, z - final_z_adj, a, e]
         return list(self.last_position)
+    
+    def get_position_multiple_compensations(self, newpos, lastpos ):
+        move_list = []
+        factor = self.get_z_factor(newpos[2])
+        if self.z_mesh is None or not factor:
+            # No mesh calibrated, or mesh leveling phased out.
+            x, y, z, a, e = newpos
+            if self.log_fade_complete:
+                self.log_fade_complete = False
+                logging.info(
+                    "bed_mesh fade complete: Current Z: %.4f fade_target: %.4f "
+                    % (z, self.fade_target))
+            move_list.append([x, y, z + self.fade_target, a, e])
+        else:
+            self.splitter.build_move(lastpos, newpos, factor)
+            while not self.splitter.traverse_complete:
+                split_move = self.splitter.split()
+                if split_move:
+                    
+                    move_list.append(split_move)
+                else:
+                    raise self.gcode.error(
+                        "Mesh Leveling: Error splitting move ")
+        self.last_position[:] = newpos
+        return move_list
+    
     def move(self, newpos, speed):
         factor = self.get_z_factor(newpos[2])
         if self.z_mesh is None or not factor:
@@ -220,8 +281,10 @@ class BedMesh:
                     raise self.gcode.error(
                         "Mesh Leveling: Error splitting move ")
         self.last_position[:] = newpos
+    
     def get_status(self, eventtime=None):
         return self.status
+    
     def update_status(self):
         self.status = {
             "profile_name": "",
@@ -242,6 +305,8 @@ class BedMesh:
             self.status['mesh_max'] = mesh_max
             self.status['probed_matrix'] = probed_matrix
             self.status['mesh_matrix'] = mesh_matrix
+            
+            
     def get_mesh(self):
         return self.z_mesh
     cmd_BED_MESH_OUTPUT_help = "Retrieve interpolated grid of probed z-points"

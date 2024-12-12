@@ -16,6 +16,7 @@ def lerp(t, v0, v1):
 class ConcentricityToleranceCompansation:
     
     def __init__(self, config):
+        self.config = config
         self.printer = config.get_printer()
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
@@ -42,8 +43,8 @@ class ConcentricityToleranceCompansation:
         
         
         # Register transform
-        gcode_move = self.printer.load_object(config, 'gcode_move')
-        gcode_move.set_move_transform(self)
+        move_transformer = self.printer.load_object(config, 'move_transformer')
+        move_transformer.set_concentricity_tolerance_compensation(self)
         
         # cache the current position before a transform takes place
         gcode_move = self.printer.lookup_object('gcode_move')
@@ -59,7 +60,17 @@ class ConcentricityToleranceCompansation:
         x_adj = self.deflection_radius * math.sin(calc_deflection_angle)
         y_adj = self.deflection_radius * math.cos(calc_deflection_angle)
         
-        return x_adj, y_adj
+        return x_adj, y_adj    
+        
+        
+    def get_position_multiple_compensations(self, pos : list):
+        # return current position minus the current z-adjustment
+        x, y, z, a, e = pos
+        x_adj, y_adj = self.calc_xy_adj(a)
+        
+        self.last_position[:] = [x + x_adj, y + y_adj, z, a, e]
+            
+        return list(self.last_position)
         
     def get_position(self):      
         # return current position minus the current z-adjustment
@@ -69,11 +80,11 @@ class ConcentricityToleranceCompansation:
         self.last_position[:] = [x + x_adj, y + y_adj, z, a, e]
             
         return list(self.last_position)
-    
+        
+        
     def move(self, newpos, speed):
         self.splitter.build_move(self.last_position, newpos)
         while not self.splitter.traverse_complete:
-            logging.info("While loop")
             split_move = self.splitter.split()
             if split_move:
                 self.toolhead.move(split_move, speed)
@@ -82,6 +93,9 @@ class ConcentricityToleranceCompansation:
                     "Concentricity Tolerance Compensation: Error splitting move ")
         self.last_position[:] = newpos
 
+    def get_status(self, eventtime=None):
+        pass
+    
     # Calibration section
     cmd_CALIBRATE_DEFLECTION_ANGLE_help = "-TODO- Calibration Deflection Angle"
     def cmd_CALIBRATE_DEFLECTION_ANGLE(self, gcmd):
