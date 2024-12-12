@@ -154,19 +154,13 @@ The following commands are available when the
 section](Config_Reference.md#axis_twist_compensation) is enabled.
 
 #### AXIS_TWIST_COMPENSATION_CALIBRATE
-`AXIS_TWIST_COMPENSATION_CALIBRATE [AXIS=<X|Y>] [AUTO=<True|False>]
-[SAMPLE_COUNT=<value>]`
+`AXIS_TWIST_COMPENSATION_CALIBRATE [AXIS=<X|Y>] [SAMPLE_COUNT=<value>]`
 
 Calibrates axis twist compensation by specifying the target axis or
 enabling automatic calibration.
 
 - **AXIS:** Define the axis (`X` or `Y`) for which the twist compensation
 will be calibrated. If not specified, the axis defaults to `'X'`.
-
-- **AUTO:** Enables automatic calibration mode. When `AUTO=True`, the
-calibration will run for both the X and Y axes. In this mode, `AXIS`
-cannot be specified. If both `AXIS` and `AUTO` are provided, an error
-will be raised.
 
 ### [bed_mesh]
 
