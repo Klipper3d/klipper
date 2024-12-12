@@ -29,7 +29,7 @@ class ConcentricityToleranceCompansation:
         self.x_offset = 0.
         self.y_offset = 0.
         self.gcode = self.printer.lookup_object('gcode')
-        self.splitter = MoveSplitter(config, self.gcode)
+        self.splitter = MoveSplitter(config, self.gcode, self.deflection_angle, self.deflection_radius)
         
         # register gcodes
         self.gcode.register_command(
@@ -45,7 +45,6 @@ class ConcentricityToleranceCompansation:
         gcode_move = self.printer.load_object(config, 'gcode_move')
         gcode_move.set_move_transform(self)
         
-        self.splitter.initialize(self.deflection_angle, self.deflection_radius)
         # cache the current position before a transform takes place
         gcode_move = self.printer.lookup_object('gcode_move')
         gcode_move.reset_last_position()
@@ -95,18 +94,15 @@ class ConcentricityToleranceCompansation:
     
             
 class MoveSplitter:
-    def __init__(self, config, gcode):
+    def __init__(self, config, gcode, deflection_angle, deflection_radius):
         self.split_delta_xy = config.getfloat(
             'split_delta_xy', .025, minval=0.01)
         self.move_check_distance_a = config.getfloat(
             'move_check_distance_a', 5., minval=3.)
         self.gcode = gcode
-        self.deflection_angle = 0
-        self.deflection_radius = 0
-        
-    def initialize(self, deflection_angle, deflection_radius):
         self.deflection_angle = deflection_angle
         self.deflection_radius = deflection_radius
+        
         
     def build_move(self, prev_pos, next_pos):
         self.prev_pos = tuple(prev_pos)
@@ -145,7 +141,7 @@ class MoveSplitter:
                 
     def split(self):
         if not self.traverse_complete:
-            if self.axis_move[0] or self.axis_move[1]:
+            if self.axis_move[3]:
                 # X and/or Y axis move, traverse if necessary
                 while self.distance_checked + self.move_check_distance_a \
                         < self.total_move_length:
