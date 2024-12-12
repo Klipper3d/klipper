@@ -114,7 +114,7 @@ class MoveSplitter:
         self.traverse_complete = False
         self.distance_checked = 0.
         axes_d = [self.next_pos[i] - self.prev_pos[i] for i in range(5)]
-        self.total_move_length = math.sqrt(sum([d*d for d in axes_d[:3]]))
+        self.total_move_length = math.sqrt(axes_d[3] * axes_d[3])
         self.axis_move = [not isclose(d, 0., abs_tol=1e-10) for d in axes_d]
       
     def calc_xy_adj(self, a_pos):
@@ -148,7 +148,7 @@ class MoveSplitter:
                     self.distance_checked += self.move_check_distance_a
                     self._set_next_move(self.distance_checked)
                     next_offset_x, next_offset_y = self._calc_xy_offset(self.current_pos)
-                    if abs(next_offset_x) >= self.split_delta_xy or abs(next_offset_y) >= self.split_delta_xy : 
+                    if abs(next_offset_x -  self.x_offset) >= self.split_delta_xy or abs(next_offset_y - self.y_offset) >= self.split_delta_xy : 
                         self.x_offset = next_offset_x
                         self.y_offset = next_offset_y
                         return self.current_pos[0] + self.x_offset, self.current_pos[1] + self.y_offset, \
