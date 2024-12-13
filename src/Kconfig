@@ -144,10 +144,6 @@ config WANT_MPU9250
     bool
     depends on WANT_GPIO_I2C
     default y
-config WANT_HX71X
-    bool
-    depends on WANT_GPIO_BITBANGING
-    default y
 config WANT_ADS1220
     bool
     depends on WANT_GPIO_SPI
