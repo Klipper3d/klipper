@@ -15,8 +15,8 @@ class CoreXYKinematics:
             self.rails[0].get_endstops()[0][0].add_stepper(s)
         for s in self.rails[0].get_steppers():
             self.rails[1].get_endstops()[0][0].add_stepper(s)
-        self.rails[0].setup_itersolve('corexy_stepper_alloc', b'+')
-        self.rails[1].setup_itersolve('corexy_stepper_alloc', b'-')
+        self.rails[0].setup_itersolve('corexya_stepper_alloc', b'+')
+        self.rails[1].setup_itersolve('corexya_stepper_alloc', b'-')
         self.rails[2].setup_itersolve('cartesian_xyza_stepper_alloc', b'z')
         self.rails[3].setup_itersolve('cartesian_xyza_stepper_alloc', b'a')
         for s in self.get_steppers():
