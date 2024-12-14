@@ -293,7 +293,7 @@ class HandleStepPhase:
                 self._pull_block(req_time)
                 continue
             step_pos = step_data[data_pos][1]
-            return (step_pos - self.mcu_phase_offset) % self.phases
+            return (step_pos + self.mcu_phase_offset) % self.phases
     def _pull_block(self, req_time):
         step_data = self.step_data
         del step_data[:-1]

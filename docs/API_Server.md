@@ -364,6 +364,38 @@ and might later produce asynchronous messages such as:
 The "header" field in the initial query response is used to describe
 the fields found in later "data" responses.
 
+### hx71x/dump_hx71x
+
+This endpoint is used to subscribe to raw HX711 and HX717 ADC data.
+Obtaining these low-level ADC updates may be useful for diagnostic
+and debugging purposes. Using this endpoint may increase Klipper's
+system load.
+
+A request may look like:
+`{"id": 123, "method":"hx71x/dump_hx71x",
+"params": {"sensor": "load_cell", "response_template": {}}}`
+and might return:
+`{"id": 123,"result":{"header":["time","counts","value"]}}`
+and might later produce asynchronous messages such as:
+`{"params":{"data":[[3292.432935, 562534, 0.067059278],
+[3292.4394937, 5625322, 0.670590639]]}}`
+
+### ads1220/dump_ads1220
+
+This endpoint is used to subscribe to raw ADS1220 ADC data.
+Obtaining these low-level ADC updates may be useful for diagnostic
+and debugging purposes. Using this endpoint may increase Klipper's
+system load.
+
+A request may look like:
+`{"id": 123, "method":"ads1220/dump_ads1220",
+"params": {"sensor": "load_cell", "response_template": {}}}`
+and might return:
+`{"id": 123,"result":{"header":["time","counts","value"]}}`
+and might later produce asynchronous messages such as:
+`{"params":{"data":[[3292.432935, 562534, 0.067059278],
+[3292.4394937, 5625322, 0.670590639]]}}`
+
 ### pause_resume/cancel
 
 This endpoint is similar to running the "PRINT_CANCEL" G-Code command.
@@ -401,3 +433,130 @@ might return:
 
 As with the "gcode/script" endpoint, this endpoint only completes
 after any pending G-Code commands complete.
+
+### bed_mesh/dump_mesh
+
+Dumps the configuration and state for the current mesh and all
+saved profiles.
+
+For example:
+`{"id": 123, "method": "bed_mesh/dump_mesh"}`
+
+might return:
+
+```
+{
+    "current_mesh": {
+        "name": "eddy-scan-test",
+        "probed_matrix": [...],
+        "mesh_matrix": [...],
+        "mesh_params": {
+            "x_count": 9,
+            "y_count": 9,
+            "mesh_x_pps": 2,
+            "mesh_y_pps": 2,
+            "algo": "bicubic",
+            "tension": 0.5,
+            "min_x": 20,
+            "max_x": 330,
+            "min_y": 30,
+            "max_y": 320
+        }
+    },
+    "profiles": {
+        "default": {
+            "points": [...],
+            "mesh_params": {
+                "min_x": 20,
+                "max_x": 330,
+                "min_y": 30,
+                "max_y": 320,
+                "x_count": 9,
+                "y_count": 9,
+                "mesh_x_pps": 2,
+                "mesh_y_pps": 2,
+                "algo": "bicubic",
+                "tension": 0.5
+            }
+        },
+        "eddy-scan-test": {
+            "points": [...],
+            "mesh_params": {
+                "x_count": 9,
+                "y_count": 9,
+                "mesh_x_pps": 2,
+                "mesh_y_pps": 2,
+                "algo": "bicubic",
+                "tension": 0.5,
+                "min_x": 20,
+                "max_x": 330,
+                "min_y": 30,
+                "max_y": 320
+            }
+        },
+        "eddy-rapid-test": {
+            "points": [...],
+            "mesh_params": {
+                "x_count": 9,
+                "y_count": 9,
+                "mesh_x_pps": 2,
+                "mesh_y_pps": 2,
+                "algo": "bicubic",
+                "tension": 0.5,
+                "min_x": 20,
+                "max_x": 330,
+                "min_y": 30,
+                "max_y": 320
+            }
+        }
+    },
+    "calibration": {
+        "points": [...],
+        "config": {
+            "x_count": 9,
+            "y_count": 9,
+            "mesh_x_pps": 2,
+            "mesh_y_pps": 2,
+            "algo": "bicubic",
+            "tension": 0.5,
+            "mesh_min": [
+                20,
+                30
+            ],
+            "mesh_max": [
+                330,
+                320
+            ],
+            "origin": null,
+            "radius": null
+        },
+        "probe_path": [...],
+        "rapid_path": [...]
+    },
+    "probe_offsets": [
+        0,
+        25,
+        0.5
+    ],
+    "axis_minimum": [
+        0,
+        0,
+        -5,
+        0
+    ],
+    "axis_maximum": [
+        351,
+        358,
+        330,
+        0
+    ]
+}
+```
+
+The `dump_mesh` endpoint takes one optional parameter, `mesh_args`.
+This parameter must be an object, where the keys and values are
+parameters available to [BED_MESH_CALIBRATE](#bed_mesh_calibrate).
+This will update the mesh configuration and probe points using the
+supplied parameters prior to returning the result.   It is recommended
+to omit mesh parameters unless it is desired to visualize the probe points
+and/or travel path before performing `BED_MESH_CALIBRATE`.

@@ -204,6 +204,7 @@ CONFIG ../../config/printer-voxelab-aquila-2021.cfg
 # Printers using the stm32f401
 DICTIONARY stm32f401.dict
 CONFIG ../../config/generic-fysetc-cheetah-v2.0.cfg
+CONFIG ../../config/printer-artillery-genius-pro-2022.cfg
 CONFIG ../../config/printer-artillery-sidewinder-x2-2022.cfg
 CONFIG ../../config/printer-artillery-sidewinder-x3-plus-2024.cfg
 CONFIG ../../config/printer-creality-ender5-s1-2023.cfg
@@ -223,6 +224,7 @@ CONFIG ../../config/generic-bigtreetech-skr-2.cfg
 CONFIG ../../config/generic-flyboard.cfg
 CONFIG ../../config/generic-I3DBEEZ9.cfg
 CONFIG ../../config/generic-mellow-fly-cdy-v3.cfg
+CONFIG ../../config/generic-mellow-fly-e3-v2.cfg
 CONFIG ../../config/generic-mellow-super-infinty-hv.cfg
 CONFIG ../../config/generic-mks-monster8.cfg
 CONFIG ../../config/generic-mks-robin-nano-v3.cfg
@@ -246,6 +248,7 @@ CONFIG ../../config/generic-fysetc-spider.cfg
 CONFIG ../../config/generic-ldo-leviathan-v1.2.cfg
 CONFIG ../../config/generic-mks-rumba32-v1.0.cfg
 CONFIG ../../config/printer-ratrig-v-minion-2021.cfg
+CONFIG ../../config/printer-tronxy-crux1-2022.cfg
 
 # Printers using the stm32h723
 DICTIONARY stm32h723.dict

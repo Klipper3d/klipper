@@ -12,7 +12,7 @@
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
 
-#define FREQ_PERIPH_DIV 1
+#define FREQ_PERIPH_DIV 2
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / FREQ_PERIPH_DIV)
 
 // Map a peripheral address to its enable bits
@@ -22,6 +22,12 @@ lookup_clock_line(uint32_t periph_base)
     if (periph_base < APB2PERIPH_BASE) {
         uint32_t pos = (periph_base - APB1PERIPH_BASE) / 0x400;
         if (pos < 32) {
+#if defined(FDCAN2_BASE)
+            if (periph_base == FDCAN2_BASE)
+                return (struct cline){.en = &RCC->APB1ENR1,
+                                      .rst = &RCC->APB1RSTR1,
+                                      .bit = 1 << 25};
+#endif
             return (struct cline){.en = &RCC->APB1ENR1,
                                   .rst = &RCC->APB1RSTR1,
                                   .bit = 1 << pos};
@@ -98,7 +104,7 @@ enable_clock_stm32g4(void)
     RCC->CR |= RCC_CR_PLLON;
 
     // Enable 48Mhz USB clock using clock recovery
-    if (CONFIG_USBSERIAL) {
+    if (CONFIG_USB) {
         RCC->CRRCR |= RCC_CRRCR_HSI48ON;
         while (!(RCC->CRRCR & RCC_CRRCR_HSI48RDY))
             ;
@@ -136,7 +142,7 @@ clock_setup(void)
     RCC->PLLCFGR |= RCC_PLLCFGR_PLLREN;
 
     // Switch system clock to PLL
-    RCC->CFGR = RCC_CFGR_HPRE_DIV1 | RCC_CFGR_PPRE1_DIV1 | RCC_CFGR_PPRE2_DIV1
+    RCC->CFGR = RCC_CFGR_HPRE_DIV1 | RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV2
                 | RCC_CFGR_SW_PLL;
     while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL)
         ;

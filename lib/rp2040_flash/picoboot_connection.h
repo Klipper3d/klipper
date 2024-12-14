@@ -10,8 +10,20 @@
 // todo we should use fully encapsulate libusb
 
 #include <assert.h>
+#if HAS_LIBUSB
 #include <libusb.h>
+#endif
 #include "boot/picoboot.h"
+
+#include "addresses.h"
+
+#define VENDOR_ID_RASPBERRY_PI 0x2e8au
+#define PRODUCT_ID_RP2040_USBBOOT 0x0003u
+#define PRODUCT_ID_PICOPROBE   0x0004u
+#define PRODUCT_ID_MICROPYTHON 0x0005u
+#define PRODUCT_ID_STDIO_USB   0x0009u
+#define PRODUCT_ID_RP2040_STDIO_USB 0x000au
+#define PRODUCT_ID_RP2350_USBBOOT 0x000fu
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,7 +40,20 @@ enum picoboot_device_result {
     dr_vidpid_stdio_usb,
 };
 
-enum picoboot_device_result picoboot_open_device(libusb_device *device, libusb_device_handle **dev_handle);
+typedef enum {
+    rp2040,
+    rp2350,
+    unknown
+} model_t;
+
+typedef enum {
+    rp2350_a2,
+    rp2350_unknown
+} rp2350_version_t;
+
+#if HAS_LIBUSB
+// note that vid and pid are filters, unless both are specified in which case a device with that VID and PID is allowed for RP2350
+enum picoboot_device_result picoboot_open_device(libusb_device *device, libusb_device_handle **dev_handle, model_t *model, int vid, int pid, const char* ser);
 
 int picoboot_reset(libusb_device_handle *usb_device);
 int picoboot_cmd_status_verbose(libusb_device_handle *usb_device, struct picoboot_cmd_status *status,
@@ -38,26 +63,20 @@ int picoboot_exclusive_access(libusb_device_handle *usb_device, uint8_t exclusiv
 int picoboot_enter_cmd_xip(libusb_device_handle *usb_device);
 int picoboot_exit_xip(libusb_device_handle *usb_device);
 int picoboot_reboot(libusb_device_handle *usb_device, uint32_t pc, uint32_t sp, uint32_t delay_ms);
+int picoboot_reboot2(libusb_device_handle *usb_device, struct picoboot_reboot2_cmd *reboot_cmd);
+int picoboot_get_info(libusb_device_handle *usb_device, struct picoboot_get_info_cmd *cmd, uint8_t *buffer, uint32_t len);
 int picoboot_exec(libusb_device_handle *usb_device, uint32_t addr);
+// int picoboot_exec2(libusb_device_handle *usb_device, struct picoboot_exec2_cmd *exec2_cmd); // currently unused
 int picoboot_flash_erase(libusb_device_handle *usb_device, uint32_t addr, uint32_t len);
 int picoboot_vector(libusb_device_handle *usb_device, uint32_t addr);
 int picoboot_write(libusb_device_handle *usb_device, uint32_t addr, uint8_t *buffer, uint32_t len);
 int picoboot_read(libusb_device_handle *usb_device, uint32_t addr, uint8_t *buffer, uint32_t len);
+int picoboot_otp_write(libusb_device_handle *usb_device, struct picoboot_otp_cmd *otp_cmd, uint8_t *buffer, uint32_t len);
+int picoboot_otp_read(libusb_device_handle *usb_device, struct picoboot_otp_cmd *otp_cmd, uint8_t *buffer, uint32_t len);
 int picoboot_poke(libusb_device_handle *usb_device, uint32_t addr, uint32_t data);
 int picoboot_peek(libusb_device_handle *usb_device, uint32_t addr, uint32_t *data);
-
-#define ROM_START   0x00000000
-#define ROM_END     0x00004000
-#define FLASH_START 0x10000000
-#define FLASH_END   0x11000000 // this is maximum
-#define XIP_SRAM_BASE 0x15000000
-#define XIP_SRAM_END 0x15004000
-
-#define SRAM_START  0x20000000
-#define SRAM_END    0x20042000
-
-#define SRAM_UNSTRIPED_START  0x21000000
-#define SRAM_UNSTRIPED_END    0x21040000
+int picoboot_flash_id(libusb_device_handle *usb_device, uint64_t *data);
+#endif
 
 // we require 256 (as this is the page size supported by the device)
 #define LOG2_PAGE_SIZE 8u
@@ -74,27 +93,44 @@ enum memory_type {
 };
 
 // inclusive of ends
-static inline enum memory_type get_memory_type(uint32_t addr) {
-    if (addr >= ROM_START && addr <= ROM_END) {
-        return rom;
-    }
-    if (addr >= FLASH_START && addr <= FLASH_END) {
+static inline enum memory_type get_memory_type(uint32_t addr, model_t model) {
+    if (addr >= FLASH_START && addr <= FLASH_END_RP2040) {
         return flash;
     }
-    if (addr >= SRAM_START && addr <= SRAM_END) {
+    if (addr >= ROM_START && addr <= ROM_END_RP2040) {
+        return rom;
+    }
+    if (addr >= SRAM_START && addr <= SRAM_END_RP2040) {
         return sram;
     }
-    if (addr >= SRAM_UNSTRIPED_START && addr <= SRAM_UNSTRIPED_END) {
+    if (model == rp2350) {
+        if (addr >= FLASH_START && addr <= FLASH_END_RP2350) {
+            return flash;
+        }
+        if (addr >= ROM_START && addr <= ROM_END_RP2350) {
+            return rom;
+        }
+        if (addr >= SRAM_START && addr <= SRAM_END_RP2350) {
+            return sram;
+        }
+    }
+    if (addr >= MAIN_RAM_BANKED_START && addr <= MAIN_RAM_BANKED_END) {
         return sram_unstriped;
     }
-    if (addr >= XIP_SRAM_BASE && addr <= XIP_SRAM_END) {
-        return xip_sram;
+    if (model == rp2040) {
+        if (addr >= XIP_SRAM_START_RP2040 && addr <= XIP_SRAM_END_RP2040) {
+            return xip_sram;
+        }
+    } else if (model == rp2350) {
+        if (addr >= XIP_SRAM_START_RP2350 && addr <= XIP_SRAM_END_RP2350) {
+            return xip_sram;
+        }
     }
     return invalid;
 }
 
-static inline bool is_transfer_aligned(uint32_t addr) {
-    enum memory_type t = get_memory_type(addr);
+static inline bool is_transfer_aligned(uint32_t addr, model_t model) {
+    enum memory_type t = get_memory_type(addr, model);
     return t != invalid && !(t == flash && addr & (PAGE_SIZE-1));
 }
 

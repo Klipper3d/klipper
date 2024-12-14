@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
+from . import led
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
@@ -40,9 +41,7 @@ class PrinterNeoPixel:
         if len(self.color_map) > MAX_MCU_SIZE:
             raise config.error("neopixel chain too long")
         # Initialize color data
-        pled = printer.load_object(config, "led")
-        self.led_helper = pled.setup_helper(config, self.update_leds,
-                                            chain_count)
+        self.led_helper = led.LEDHelper(config, self.update_leds, chain_count)
         self.color_data = bytearray(len(self.color_map))
         self.update_color_data(self.led_helper.get_status()['color_data'])
         self.old_color_data = bytearray([d ^ 1 for d in self.color_data])

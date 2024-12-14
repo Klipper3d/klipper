@@ -1,6 +1,6 @@
 # Interface to Klipper micro-controller code
 #
-# Copyright (C) 2016-2023  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2024  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, zlib, logging, math
@@ -87,7 +87,7 @@ class CommandWrapper:
         if cmd_queue is None:
             cmd_queue = serial.get_default_command_queue()
         self._cmd_queue = cmd_queue
-        self._msgtag = msgparser.lookup_msgtag(msgformat) & 0xffffffff
+        self._msgtag = msgparser.lookup_msgid(msgformat) & 0xffffffff
     def send(self, data=(), minclock=0, reqclock=0):
         cmd = self._cmd.encode(data)
         self._serial.raw_send(cmd, minclock, reqclock, self._cmd_queue)
@@ -104,9 +104,9 @@ class CommandWrapper:
 
 class MCU_trsync:
     REASON_ENDSTOP_HIT = 1
-    REASON_COMMS_TIMEOUT = 2
-    REASON_HOST_REQUEST = 3
-    REASON_PAST_END_TIME = 4
+    REASON_HOST_REQUEST = 2
+    REASON_PAST_END_TIME = 3
+    REASON_COMMS_TIMEOUT = 4
     def __init__(self, mcu, trdispatch):
         self._mcu = mcu
         self._trdispatch = trdispatch
@@ -180,7 +180,7 @@ class MCU_trsync:
             if tc is not None:
                 self._trigger_completion = None
                 reason = params['trigger_reason']
-                is_failure = (reason == self.REASON_COMMS_TIMEOUT)
+                is_failure = (reason >= self.REASON_COMMS_TIMEOUT)
                 self._reactor.async_complete(tc, is_failure)
         elif self._home_end_clock is not None:
             clock = self._mcu.clock32_to_clock64(params['clock'])
@@ -279,8 +279,9 @@ class TriggerDispatch:
         ffi_main, ffi_lib = chelper.get_ffi()
         ffi_lib.trdispatch_stop(self._trdispatch)
         res = [trsync.stop() for trsync in self._trsyncs]
-        if any([r == MCU_trsync.REASON_COMMS_TIMEOUT for r in res]):
-            return MCU_trsync.REASON_COMMS_TIMEOUT
+        err_res = [r for r in res if r >= MCU_trsync.REASON_COMMS_TIMEOUT]
+        if err_res:
+            return err_res[0]
         return res[0]
 
 class MCU_endstop:
@@ -334,8 +335,9 @@ class MCU_endstop:
         self._dispatch.wait_end(home_end_time)
         self._home_cmd.send([self._oid, 0, 0, 0, 0, 0, 0, 0])
         res = self._dispatch.stop()
-        if res == MCU_trsync.REASON_COMMS_TIMEOUT:
-            return -1.
+        if res >= MCU_trsync.REASON_COMMS_TIMEOUT:
+            cmderr = self._mcu.get_printer().command_error
+            raise cmderr("Communication timeout during homing")
         if res != MCU_trsync.REASON_ENDSTOP_HIT:
             return 0.
         if self._mcu.is_fileoutput():
@@ -494,8 +496,8 @@ class MCU_adc:
         self._inv_max_adc = 0.
     def get_mcu(self):
         return self._mcu
-    def setup_minmax(self, sample_time, sample_count,
-                     minval=0., maxval=1., range_check_count=0):
+    def setup_adc_sample(self, sample_time, sample_count,
+                         minval=0., maxval=1., range_check_count=0):
         self._sample_time = sample_time
         self._sample_count = sample_count
         self._min_sample = minval
@@ -572,9 +574,8 @@ class MCU:
         restart_methods = [None, 'arduino', 'cheetah', 'command', 'rpi_usb']
         self._restart_method = 'command'
         if self._baud:
-            rmethods = {m: m for m in restart_methods}
             self._restart_method = config.getchoice('restart_method',
-                                                    rmethods, None)
+                                                    restart_methods, None)
         self._reset_cmd = self._config_reset_cmd = None
         self._is_mcu_bridge = False
         self._emergency_stop_cmd = None
@@ -604,6 +605,7 @@ class MCU:
         self._mcu_tick_stddev = 0.
         self._mcu_tick_awake = 0.
         # Register handlers
+        printer.load_object(config, "error_mcu")
         printer.register_event_handler("klippy:firmware_restart",
                                        self._firmware_restart)
         printer.register_event_handler("klippy:mcu_identify",
@@ -630,13 +632,13 @@ class MCU:
         if clock is not None:
             self._shutdown_clock = self.clock32_to_clock64(clock)
         self._shutdown_msg = msg = params['static_string_id']
-        logging.info("MCU '%s' %s: %s\n%s\n%s", self._name, params['#name'],
+        event_type = params['#name']
+        self._printer.invoke_async_shutdown(
+            "MCU shutdown", {"reason": msg, "mcu": self._name,
+                             "event_type": event_type})
+        logging.info("MCU '%s' %s: %s\n%s\n%s", self._name, event_type,
                      self._shutdown_msg, self._clocksync.dump_debug(),
                      self._serial.dump_debug())
-        prefix = "MCU '%s' shutdown: " % (self._name,)
-        if params['#name'] == 'is_shutdown':
-            prefix = "Previous MCU '%s' shutdown: " % (self._name,)
-        self._printer.invoke_async_shutdown(prefix + msg + error_help(msg))
     def _handle_starting(self, params):
         if not self._is_shutdown:
             self._printer.invoke_async_shutdown("MCU '%s' spontaneous restart"
@@ -830,9 +832,10 @@ class MCU:
         systime = self._reactor.monotonic()
         get_clock = self._clocksync.get_clock
         calc_freq = get_clock(systime + 1) - get_clock(systime)
+        freq_diff = abs(mcu_freq - calc_freq)
         mcu_freq_mhz = int(mcu_freq / 1000000. + 0.5)
         calc_freq_mhz = int(calc_freq / 1000000. + 0.5)
-        if mcu_freq_mhz != calc_freq_mhz:
+        if freq_diff > mcu_freq*0.01 and mcu_freq_mhz != calc_freq_mhz:
             pconfig = self._printer.lookup_object('configfile')
             msg = ("MCU '%s' configured for %dMhz but running at %dMhz!"
                     % (self._name, mcu_freq_mhz, calc_freq_mhz))
@@ -1006,34 +1009,6 @@ class MCU:
         last_stats = {k:(float(v) if '.' in v else int(v)) for k, v in parts}
         self._get_status_info['last_stats'] = last_stats
         return False, '%s: %s' % (self._name, stats)
-
-Common_MCU_errors = {
-    ("Timer too close",): """
-This often indicates the host computer is overloaded. Check
-for other processes consuming excessive CPU time, high swap
-usage, disk errors, overheating, unstable voltage, or
-similar system problems on the host computer.""",
-    ("Missed scheduling of next ",): """
-This is generally indicative of an intermittent
-communication failure between micro-controller and host.""",
-    ("ADC out of range",): """
-This generally occurs when a heater temperature exceeds
-its configured min_temp or max_temp.""",
-    ("Rescheduled timer in the past", "Stepper too far in past"): """
-This generally occurs when the micro-controller has been
-requested to step at a rate higher than it is capable of
-obtaining.""",
-    ("Command request",): """
-This generally occurs in response to an M112 G-Code command
-or in response to an internal error in the host software.""",
-}
-
-def error_help(msg):
-    for prefixes, help_msg in Common_MCU_errors.items():
-        for prefix in prefixes:
-            if msg.startswith(prefix):
-                return help_msg
-    return ""
 
 def add_printer_objects(config):
     printer = config.get_printer()

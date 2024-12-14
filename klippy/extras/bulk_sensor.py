@@ -198,7 +198,7 @@ class ClockSyncRegression:
         inv_freq = clock_to_print_time(base_mcu + inv_cfreq) - base_time
         return base_time, base_chip, inv_freq
 
-MAX_BULK_MSG_SIZE = 52
+MAX_BULK_MSG_SIZE = 51
 
 # Read sensor_bulk_data and calculate timestamps for devices that take
 # samples at a fixed frequency (and produce fixed data size samples).
