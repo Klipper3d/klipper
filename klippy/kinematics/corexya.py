@@ -42,7 +42,7 @@ class CoreXYKinematics:
         pos = [stepper_positions[rail.get_name()] for rail in self.rails]
         return [0.5 * (pos[0] + pos[1]), 0.5 * (pos[0] - pos[1]), pos[2], pos[3]]
     def set_position(self, newpos, homing_axes):
-        logging.info("set position: %f" % newpos)
+        logging.info("set position: %f,%f,%f,%f" % newpos[0],newpos[1],newpos[2],newpos[3])
         for i, rail in enumerate(self.rails):
             rail.set_position(newpos)
             if i in homing_axes:
