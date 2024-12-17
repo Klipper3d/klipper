@@ -1476,7 +1476,7 @@
 <p>准确的探针 z 偏移(z_offset)是高质量打印的基础。z 偏移是探针触发时探针和喷嘴之间的高度差。Klipper 中的 <code>PROBE_CALIBRATE</code>（探针校准）工具可用于测量这个值——首先，该工具会运行一次自动探测以获取探针的 z 触发位置，然后需要手动调整Z坐标以获取喷嘴碰触到热床时的 z 高度。然后将根据这些测量值计算探针的 z 偏移。</p>
 <p>首先进行三轴的归零，然后将喷嘴移动到热床的中央位置。转到OctoPrint的“命令行（Terminal）”子页，输入 <code>PROBE_CALIBRATE</code>以启动z_offset校准工具。</p>
 <p>工具首先会令探针进行一次自动探测，获取触发探针的z位置，之后，控制喷嘴上升，并将喷嘴的X/Y位置移动到探针对应位置上，并开始手动调平流程。如果喷嘴没有移动到探针进行自动探测的位置，输入<code>ABORT</code>以停止手动调平，并上文根据X、y偏移校准流程进行探针X、Y校准。</p>
-<p>Once the manual probe tool starts, follow the steps described at <a href="Bed_Level.html#the-paper-test">"the paper test"</a> to determine the actual distance between the nozzle and bed at the given location. Once those steps are complete one can <code>ACCEPT</code> the position and save the results to the config file with:</p>
+<p>手动探测工具启动后，按照 <a href="Bed_Level.html#the-paper-test">"纸张测试"</a> 中描述的步骤确定给定位置处喷嘴和床之间的实际距离。完成这些步骤后，可以<code>接受</code> 位置并将结果保存到配置文件中：</p>
 <div class="highlight"><pre><span></span><code>SAVE_CONFIG
 </code></pre></div>
 
