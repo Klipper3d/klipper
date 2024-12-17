@@ -18,9 +18,9 @@ board designs and different clones of them. If it is going to be connected to a
 For ADXL345s, make sure that the board supports SPI mode (a small number of
 boards appear to be hard-configured for I2C by pulling SDO to GND).
 
-For MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500s and LIS2DW/LIS3DH there are also
-a variety of board designs and clones with different I2C pull-up resistors which
-will need supplementing.
+For MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948s and LIS2DW/LIS3DH there
+are also a variety of board designs and clones with different I2C pull-up resistors
+which will need supplementing.
 
 ## MCUs with Klipper I2C *fast-mode* Support
 
@@ -136,7 +136,7 @@ GND+SCL
 
 Note that unlike a cable shield, any GND(s) should be connected at both ends.
 
-#### MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500
+#### MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948
 
 These accelerometers have been tested to work over I2C on the RPi, RP2040 (Pico)
 and AVR at 400kbit/s (*fast mode*). Some MPU accelerometer modules include
@@ -355,6 +355,7 @@ accel_chip: mpu9250
 probe_points:
     100, 100, 20  # an example
 ```
+If you are using the ICM20948, replace instances of "mpu9250" with "icm20948".
 
 #### Configure MPU-9520 Compatibles With Pico
 
@@ -377,6 +378,7 @@ probe_points:
 [static_digital_output pico_3V3pwm] # Improve power stability
 pins: pico:gpio23
 ```
+If you are using the ICM20948, replace instances of "mpu9250" with "icm20948".
 
 #### Configure MPU-9520 Compatibles with AVR
 
@@ -395,6 +397,7 @@ accel_chip: mpu9250
 probe_points:
     100, 100, 20  # an example
 ```
+If you are using the ICM20948, replace instances of "mpu9250" with "icm20948".
 
 Restart Klipper via the `RESTART` command.
 
