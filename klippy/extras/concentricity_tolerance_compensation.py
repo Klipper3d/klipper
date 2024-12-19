@@ -79,6 +79,7 @@ class ConcentricityToleranceCompansation:
                     raise self.gcode.error(
                         "Concentricity Tolerance Compensation: Error splitting move ")
             last_position[:] = position
+        logging.info("Transformed_Positions %s", transformed_positions)
         return transformed_positions
           
     #def get_status(self, eventtime=None):
