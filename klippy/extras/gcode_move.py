@@ -36,9 +36,9 @@ class MoveTransformer:
         position = self.last_position
 
         for obj in self.compensations:
-            position = obj.get_position(position)
+            position[:] = obj.get_position(position)
             
-        self.last_position = position
+        self.last_position[:] = position
         logging.info("Hier! %f", self.last_position[0])
         return list(self.last_position)
     
