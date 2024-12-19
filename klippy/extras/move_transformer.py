@@ -74,12 +74,12 @@ class MoveTransformer:
         self.initialize()
         
     def handle_connect(self):
-        for obj in self.compensations.items:
+        for key, obj in self.compensations.items():
             if obj != None:
                 obj.handle_connect()
 
     def get_status(self, eventtime=None):
-        for obj in self.compensations.items:
+        for key, obj in self.compensations.items():
             if obj != None:
                 obj.handle_connect()
                 
