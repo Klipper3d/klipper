@@ -1,5 +1,4 @@
 import logging, math, json, collections
-from . import probe
 
 class ConcentricityToleranceCompansationError(Exception):
     pass
@@ -26,23 +25,24 @@ class ConcentricityToleranceCompansation:
         self.x_offset = 0.
         self.y_offset = 0.
         self.gcode = self.printer.lookup_object('gcode')
-        self.splitter = None #MoveSplitter(config, self.gcode, self.deflection_angle, self.deflection_radius)
+        self.splitter = MoveSplitter(config, self.gcode, self.deflection_angle, self.deflection_radius)
         
         # register gcodes
-        #self.gcode.register_command(
-        #    'CALIBRATE_DEFLECTION_ANGLE', self.cmd_CALIBRATE_DEFLECTION_ANGLE,
-        #    desc=self.cmd_CALIBRATE_DEFLECTION_ANGLE_help)
-        #self.gcode.register_command(
-        #    'CALIBRATE_DEFLECTION_RADIUS', self.cmd_CALIBRATE_DEFLECTION_RADIUS,
-        #    desc=self.cmd_CALIBRATE_DEFLECTION_RADIUS_help)
+        self.gcode.register_command(
+            'CALIBRATE_DEFLECTION_ANGLE', self.cmd_CALIBRATE_DEFLECTION_ANGLE,
+            desc=self.cmd_CALIBRATE_DEFLECTION_ANGLE_help)
+        self.gcode.register_command(
+            'CALIBRATE_DEFLECTION_RADIUS', self.cmd_CALIBRATE_DEFLECTION_RADIUS,
+            desc=self.cmd_CALIBRATE_DEFLECTION_RADIUS_help)
         
-        self.printer.register_event_handler("klippy:ready", self.add_move_transformer)
+        self.add_move_transformer
+        
         
         
     def add_move_transformer(self):
         # Register transform
-        #gcode_move = self.printer.lookup_object('gcode_move')
-        #gcode_move.add_move_transformer(self)
+        gcode_move = self.printer.lookup_object('gcode_move')
+        gcode_move.add_move_transformer(self)
         pass
         
     def calc_xy_adj(self, a_pos):
