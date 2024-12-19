@@ -39,60 +39,60 @@ class ConcentricityToleranceCompansation:
         #self.move_transformer()
         pass
         
-    def move_transformer(self):
-        # Register transform
-        gcode_move = self.printer.load_object(self.config,'gcode_move')
-        gcode_move.add_move_transformer(self)
+    # def move_transformer(self):
+    #     # Register transform
+    #     gcode_move = self.printer.load_object(self.config,'gcode_move')
+    #     gcode_move.add_move_transformer(self)
         
-    def handle_connect(self):
-        self.toolhead = self.printer.lookup_object('toolhead')
+    # def handle_connect(self):
+    #     self.toolhead = self.printer.lookup_object('toolhead')
         
-    def calc_xy_adj(self, a_pos):
-        calc_deflection_angle = math.radians(a_pos + self.deflection_angle)
+    # def calc_xy_adj(self, a_pos):
+    #     calc_deflection_angle = math.radians(a_pos + self.deflection_angle)
         
-        x_adj = self.deflection_radius * math.sin(calc_deflection_angle)
-        y_adj = self.deflection_radius * math.cos(calc_deflection_angle)
+    #     x_adj = self.deflection_radius * math.sin(calc_deflection_angle)
+    #     y_adj = self.deflection_radius * math.cos(calc_deflection_angle)
         
-        return x_adj, y_adj    
+    #     return x_adj, y_adj    
         
         
-    def get_position(self, pos : list):
-        # return current position minus the current z-adjustment
-        x, y, z, a, e = pos
-        x_adj, y_adj = self.calc_xy_adj(a)
+    # def get_position(self, pos : list):
+    #     # return current position minus the current z-adjustment
+    #     x, y, z, a, e = pos
+    #     x_adj, y_adj = self.calc_xy_adj(a)
         
-        self.last_position[:] = [x + x_adj, y + y_adj, z, a, e]
+    #     self.last_position[:] = [x + x_adj, y + y_adj, z, a, e]
             
-        return list(self.last_position)
+    #     return list(self.last_position)
         
-    def move(self, positions : list, last_position_): 
-        last_position = last_position_
-        transformed_positions = []
+    # def move(self, positions : list, last_position_): 
+    #     last_position = last_position_
+    #     transformed_positions = []
           
-        for position in positions:
-            self.splitter.build_move(last_position, position)
-            while not self.splitter.traverse_complete:
-                split_move = self.splitter.split()
-                if split_move:
-                    transformed_positions.append(split_move)
-                else:
-                    raise self.gcode.error(
-                        "Concentricity Tolerance Compensation: Error splitting move ")
-            last_position[:] = position
-        return transformed_positions
+    #     for position in positions:
+    #         self.splitter.build_move(last_position, position)
+    #         while not self.splitter.traverse_complete:
+    #             split_move = self.splitter.split()
+    #             if split_move:
+    #                 transformed_positions.append(split_move)
+    #             else:
+    #                 raise self.gcode.error(
+    #                     "Concentricity Tolerance Compensation: Error splitting move ")
+    #         last_position[:] = position
+    #     return transformed_positions
             
 
-    def get_status(self, eventtime=None):
-        pass
+    # def get_status(self, eventtime=None):
+    #     pass
     
-    # Calibration section
-    cmd_CALIBRATE_DEFLECTION_ANGLE_help = "-TODO- Calibration Deflection Angle"
-    def cmd_CALIBRATE_DEFLECTION_ANGLE(self, gcmd):
-        pass
+    # # Calibration section
+    # cmd_CALIBRATE_DEFLECTION_ANGLE_help = "-TODO- Calibration Deflection Angle"
+    # def cmd_CALIBRATE_DEFLECTION_ANGLE(self, gcmd):
+    #     pass
     
-    cmd_CALIBRATE_DEFLECTION_RADIUS_help = "-TODO- Calibration Deflection Radius"
-    def cmd_CALIBRATE_DEFLECTION_RADIUS(self, gcmd):
-        pass
+    # cmd_CALIBRATE_DEFLECTION_RADIUS_help = "-TODO- Calibration Deflection Radius"
+    # def cmd_CALIBRATE_DEFLECTION_RADIUS(self, gcmd):
+    #     pass
     
     
             
