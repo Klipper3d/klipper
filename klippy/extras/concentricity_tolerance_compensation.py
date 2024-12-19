@@ -36,6 +36,10 @@ class ConcentricityToleranceCompansation:
             'CALIBRATE_DEFLECTION_RADIUS', self.cmd_CALIBRATE_DEFLECTION_RADIUS,
             desc=self.cmd_CALIBRATE_DEFLECTION_RADIUS_help)
         
+        self.printer.register_event_handler("klippy:ready", self.add_move_transformer)
+        
+        
+    def add_move_transformer(self):
         # Register transform
         gcode_move = self.printer.lookup_object('gcode_move')
         gcode_move.add_move_transformer(self)
