@@ -15,30 +15,29 @@ def lerp(t, v0, v1):
 class ConcentricityToleranceCompansation:
     
     def __init__(self, config):
-        logging.info("CTC erstellt")
-        self.config = config
-        self.printer = config.get_printer()
-        self.last_position = [0., 0., 0., 0., 0.]
-        
-        self.deflection_angle = config.getfloat('deflection_angle', 0.)
-        self.deflection_radius = config.getfloat('deflection_radius', 0.)
-            
-        self.x_offset = 0.
-        self.y_offset = 0.
-        self.gcode = self.printer.lookup_object('gcode')
-        self.splitter = MoveSplitter(config, self.gcode, self.deflection_angle, self.deflection_radius)
-        
-        # register gcodes
-        self.gcode.register_command(
-            'CALIBRATE_DEFLECTION_ANGLE', self.cmd_CALIBRATE_DEFLECTION_ANGLE,
-            desc=self.cmd_CALIBRATE_DEFLECTION_ANGLE_help)
-        self.gcode.register_command(
-            'CALIBRATE_DEFLECTION_RADIUS', self.cmd_CALIBRATE_DEFLECTION_RADIUS,
-            desc=self.cmd_CALIBRATE_DEFLECTION_RADIUS_help)
-        
-        self.move_transformer()
-        
-        
+        #logging.info("CTC erstellt")
+        #self.config = config
+        #self.printer = config.get_printer()
+        #self.last_position = [0., 0., 0., 0., 0.]
+        #
+        #self.deflection_angle = config.getfloat('deflection_angle', 0.)
+        #self.deflection_radius = config.getfloat('deflection_radius', 0.)
+        #    
+        #self.x_offset = 0.
+        #self.y_offset = 0.
+        #self.gcode = self.printer.lookup_object('gcode')
+        #self.splitter = MoveSplitter(config, self.gcode, self.deflection_angle, self.deflection_radius)
+        #
+        ## register gcodes
+        #self.gcode.register_command(
+        #    'CALIBRATE_DEFLECTION_ANGLE', self.cmd_CALIBRATE_DEFLECTION_ANGLE,
+        #    desc=self.cmd_CALIBRATE_DEFLECTION_ANGLE_help)
+        #self.gcode.register_command(
+        #    'CALIBRATE_DEFLECTION_RADIUS', self.cmd_CALIBRATE_DEFLECTION_RADIUS,
+        #    desc=self.cmd_CALIBRATE_DEFLECTION_RADIUS_help)
+        #
+        #self.move_transformer()
+        pass
         
     def move_transformer(self):
         # Register transform
