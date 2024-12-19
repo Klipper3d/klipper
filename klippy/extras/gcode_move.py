@@ -7,6 +7,7 @@ import logging
 
 class MoveTransformer:
     def __init__(self, config):
+        logging.info("MoveTransformer")
         self.config = config
         self.last_position = [0., 0., 0., 0., 0.]
         self.compensations = []
