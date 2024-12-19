@@ -18,11 +18,7 @@ class ConcentricityToleranceCompansation:
     def __init__(self, config):
         self.config = config
         self.printer = config.get_printer()
-        self.printer.register_event_handler("klippy:connect",
-                                            self.handle_connect)
         self.last_position = [0., 0., 0., 0., 0.]
-        
-        self.toolhead = None
         
         self.deflection_angle = config.getfloat('deflection_angle', 0.)
         self.deflection_radius = config.getfloat('deflection_radius', 0.)
