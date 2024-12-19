@@ -57,12 +57,14 @@ class MoveTransformer:
     def handle_connect(self):
        self.toolhead = self.printer.lookup_object('toolhead')
         
-    def set_bed_mesh_compensation(self, obj):
+    def set_bed_mesh_compensation(self, obj, config):
         self.compensations[CompensationType.BM] = obj
+        self.config = config
         self.initialize()
         
-    def set_concentricity_tolerance_compensation(self, obj):
+    def set_concentricity_tolerance_compensation(self, obj, config):
         self.compensations[CompensationType.CTC] = obj
+        self.config = config
         self.initialize()
         
     def handle_connect(self):

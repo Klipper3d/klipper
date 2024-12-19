@@ -124,7 +124,7 @@ class BedMesh:
             desc=self.cmd_BED_MESH_OFFSET_help)
         # Register transform
         move_transformer = self.printer.load_object(config, 'move_transformer')
-        move_transformer.set_concentricity_tolerance_compensation(self)
+        move_transformer.set_concentricity_tolerance_compensation(self, config)
         # initialize status dict
         self.update_status()
     def handle_connect(self):
