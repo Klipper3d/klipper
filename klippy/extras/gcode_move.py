@@ -46,7 +46,7 @@ class MoveTransformer:
         position = self.last_position
 
         for obj in self.compensations:
-            obj.get_position_multiple_compensations(position)
+            obj.get_position(position)
             
         self.last_position = position
         
