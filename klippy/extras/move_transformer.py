@@ -19,6 +19,7 @@ class CompensationType(Enum):
 
 
 class MoveTransformer:
+    compensations = {}
     
     def __init__(self, config):
         self.config = config
