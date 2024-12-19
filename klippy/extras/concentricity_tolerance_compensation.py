@@ -41,7 +41,7 @@ class ConcentricityToleranceCompansation:
         
     def move_transformer(self):
         # Register transform
-        gcode_move = self.printer.load_object('gcode_move')
+        gcode_move = self.printer.lookup_object('gcode_move')
         gcode_move.add_move_transformer(self)
         
     def calc_xy_adj(self, a_pos):
