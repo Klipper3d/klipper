@@ -29,12 +29,12 @@ class ConcentricityToleranceCompansation:
         self.splitter = MoveSplitter(config, self.gcode, self.deflection_angle, self.deflection_radius)
         
         # register gcodes
-        self.gcode.register_command(
-            'CALIBRATE_DEFLECTION_ANGLE', self.cmd_CALIBRATE_DEFLECTION_ANGLE,
-            desc=self.cmd_CALIBRATE_DEFLECTION_ANGLE_help)
-        self.gcode.register_command(
-            'CALIBRATE_DEFLECTION_RADIUS', self.cmd_CALIBRATE_DEFLECTION_RADIUS,
-            desc=self.cmd_CALIBRATE_DEFLECTION_RADIUS_help)
+        #self.gcode.register_command(
+        #    'CALIBRATE_DEFLECTION_ANGLE', self.cmd_CALIBRATE_DEFLECTION_ANGLE,
+        #    desc=self.cmd_CALIBRATE_DEFLECTION_ANGLE_help)
+        #self.gcode.register_command(
+        #    'CALIBRATE_DEFLECTION_RADIUS', self.cmd_CALIBRATE_DEFLECTION_RADIUS,
+        #    desc=self.cmd_CALIBRATE_DEFLECTION_RADIUS_help)
         
         self.printer.register_event_handler("klippy:ready", self.add_move_transformer)
         
