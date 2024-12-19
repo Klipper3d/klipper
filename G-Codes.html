@@ -1968,6 +1968,26 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#quad_gantry_level" class="md-nav__link">
+    [quad_gantry_level]
+  </a>
+  
+    <nav class="md-nav" aria-label="[quad_gantry_level]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quad_gantry_level_1" class="md-nav__link">
+    QUAD_GANTRY_LEVEL
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#query_adc" class="md-nav__link">
     [query_adc]
   </a>
@@ -4195,6 +4215,26 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#quad_gantry_level" class="md-nav__link">
+    [quad_gantry_level]
+  </a>
+  
+    <nav class="md-nav" aria-label="[quad_gantry_level]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quad_gantry_level_1" class="md-nav__link">
+    QUAD_GANTRY_LEVEL
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#query_adc" class="md-nav__link">
     [query_adc]
   </a>
@@ -5605,6 +5645,18 @@ using the CYCLE_TIME parameter (specified in seconds). Note that the
 CYCLE_TIME parameter is not stored between SET_PIN commands (any
 SET_PIN command without an explicit CYCLE_TIME parameter will use the
 <code>cycle_time</code> specified in the pwm_cycle_time config section).</p>
+<h3 id="quad_gantry_level">[quad_gantry_level]<a class="headerlink" href="#quad_gantry_level" title="Permanent link">&para;</a></h3>
+<p>The following commands are available when the
+<a href="Config_Reference.html#quad_gantry_level">quad_gantry_level config section</a>
+is enabled.</p>
+<h4 id="quad_gantry_level_1">QUAD_GANTRY_LEVEL<a class="headerlink" href="#quad_gantry_level_1" title="Permanent link">&para;</a></h4>
+<p><code>QUAD_GANTRY_LEVEL [RETRIES=&lt;value&gt;] [RETRY_TOLERANCE=&lt;value&gt;]
+[HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command
+will probe the points specified in the config and then make
+independent adjustments to each Z stepper to compensate for tilt. See
+the PROBE command for details on the optional probe parameters. The
+optional <code>RETRIES</code>, <code>RETRY_TOLERANCE</code>, and <code>HORIZONTAL_MOVE_Z</code> values
+override those options specified in the config file.</p>
 <h3 id="query_adc">[query_adc]<a class="headerlink" href="#query_adc" title="Permanent link">&para;</a></h3>
 <p>The query_adc module is automatically loaded.</p>
 <h4 id="query_adc_1">QUERY_ADC<a class="headerlink" href="#query_adc_1" title="Permanent link">&para;</a></h4>
@@ -5937,11 +5989,13 @@ automatically upon homing.</p>
 <p>The following commands are available when the
 <a href="Config_Reference.html#z_tilt">z_tilt config section</a> is enabled.</p>
 <h4 id="z_tilt_adjust">Z_TILT_ADJUST<a class="headerlink" href="#z_tilt_adjust" title="Permanent link">&para;</a></h4>
-<p><code>Z_TILT_ADJUST [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This
-command will probe the points specified in the config and then make independent
-adjustments to each Z stepper to compensate for tilt. See the PROBE command for
-details on the optional probe parameters. The optional <code>HORIZONTAL_MOVE_Z</code>
-value overrides the <code>horizontal_move_z</code> option specified in the config file.</p>
+<p><code>Z_TILT_ADJUST [RETRIES=&lt;value&gt;] [RETRY_TOLERANCE=&lt;value&gt;]
+[HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command
+will probe the points specified in the config and then make
+independent adjustments to each Z stepper to compensate for tilt. See
+the PROBE command for details on the optional probe parameters. The
+optional <code>RETRIES</code>, <code>RETRY_TOLERANCE</code>, and <code>HORIZONTAL_MOVE_Z</code> values
+override those options specified in the config file.</p>
 <h3 id="temperature_probe">[temperature_probe]<a class="headerlink" href="#temperature_probe" title="Permanent link">&para;</a></h3>
 <p>The following commands are available when a
 <a href="Config_Reference.html#temperature_probe">temperature_probe config section</a>
