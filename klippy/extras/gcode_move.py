@@ -37,15 +37,15 @@ class MoveTransformer:
     def get_position(self):      
 
         self.last_position[:] = self.toolhead.get_position()
-        logging.info("Hier1! %f", self.last_position[0])
+        logging.info("Hier1! %s", self.last_position)
         position = self.last_position
 
         for obj in self.compensations:
             position[:] = obj.get_position(position)
             
         self.last_position = position
-        logging.info("Hier2! x:%f y:%f z:%f a:%f e:%f", self.last_position[0], self.last_position[1], self.last_position[2], self.last_position[3], self.last_position[4])
-        return list(self.last_position)
+        logging.info("Hier2! %s y", self.last_position)
+        return self.toolhead.get_position()
     
     
     def move(self, newpos, speed):
