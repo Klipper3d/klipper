@@ -13,15 +13,13 @@ class MoveTransformer:
             
         self.printer = self.config.get_printer()
         self.printer.register_event_handler("klippy:connect", self.handle_connect)
+    
         
-        # Register transformation/ compensation when availabled
-        # gcode_move = self.printer.load_object(self.config, 'gcode_move')
-        # gcode_move.set_move_transform(self)
-        
+    def reset_last_position(self):
         # cache the current position before a transform takes place
         gcode_move = self.printer.lookup_object('gcode_move')
         gcode_move.reset_last_position()
-         
+        
             
     def handle_connect(self):
        self.toolhead = self.printer.lookup_object('toolhead')
@@ -117,6 +115,7 @@ class GCodeMove:
             self.move_with_transform = toolhead.move
             self.position_with_transform = toolhead.get_position
         self.reset_last_position()
+        self.move_transform.reset_last_position()
     def _handle_shutdown(self):
         if not self.is_printer_ready:
             return
