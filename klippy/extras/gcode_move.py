@@ -38,7 +38,7 @@ class MoveTransformer:
         position = self.last_position
 
         for obj in self.compensations:
-            obj.get_position(position)
+            position = obj.get_position(position)
             
         self.last_position = position
         
@@ -49,7 +49,7 @@ class MoveTransformer:
         move_list = [newpos]
         
         for obj in self.compensations:
-            obj.move(move_list, self.last_position)
+            move_list = obj.move(move_list, self.last_position)
             
         for move in move_list:
             self.toolhead.move(move, speed)
