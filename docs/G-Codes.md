@@ -1456,11 +1456,13 @@ The following commands are available when the
 [z_tilt config section](Config_Reference.md#z_tilt) is enabled.
 
 #### Z_TILT_ADJUST
-`Z_TILT_ADJUST [HORIZONTAL_MOVE_Z=<value>] [<probe_parameter>=<value>]`: This
-command will probe the points specified in the config and then make independent
-adjustments to each Z stepper to compensate for tilt. See the PROBE command for
-details on the optional probe parameters. The optional `HORIZONTAL_MOVE_Z`
-value overrides the `horizontal_move_z` option specified in the config file.
+`Z_TILT_ADJUST [RETRIES=<value>] [RETRY_TOLERANCE=<value>]
+[HORIZONTAL_MOVE_Z=<value>] [<probe_parameter>=<value>]`: This command
+will probe the points specified in the config and then make
+independent adjustments to each Z stepper to compensate for tilt. See
+the PROBE command for details on the optional probe parameters. The
+optional `RETRIES`, `RETRY_TOLERANCE`, and `HORIZONTAL_MOVE_Z` values
+override those options specified in the config file.
 
 ### [temperature_probe]
 
