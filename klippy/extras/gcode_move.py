@@ -26,7 +26,7 @@ class MoveTransformer:
 
     def add_transformation(self, obj):
         logging.info("Test1")
-        self.compensations.append(obj)
+        #self.compensations.append(obj)
         logging.info("Test11")
 
     def get_status(self, eventtime=None):
