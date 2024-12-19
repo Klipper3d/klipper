@@ -56,7 +56,7 @@ class MoveTransformer:
         elif self.compensations[CompensationType.CTC] != None:
             # Register transformation/ compensation when availabled
             gcode_move = self.printer.load_object(self.concentricity_tolerance_compensation.config, 'gcode_move')
-            gcode_move.set_move_transform(self.bed_mesh_compensation)
+            gcode_move.set_move_transform(self.concentricity_tolerance_compensation)
             
     def handle_connect(self):
        self.toolhead = self.printer.lookup_object('toolhead')
