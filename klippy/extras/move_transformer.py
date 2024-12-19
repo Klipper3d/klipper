@@ -57,6 +57,12 @@ class MoveTransformer:
             # Register transformation/ compensation when availabled
             gcode_move = self.printer.load_object(self.concentricity_tolerance_compensation.config, 'gcode_move')
             gcode_move.set_move_transform(self.concentricity_tolerance_compensation)
+        
+        self.reset_position()   
+      
+    def reset_position(self):
+        gcode_move = self.printer.lookup_object('gcode_move')
+        gcode_move.reset_last_position() 
             
     def handle_connect(self):
        self.toolhead = self.printer.lookup_object('toolhead')

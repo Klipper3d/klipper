@@ -47,8 +47,8 @@ class ConcentricityToleranceCompansation:
         move_transformer.set_bed_mesh_compensation(self, config)
         
         # cache the current position before a transform takes place
-        gcode_move = self.printer.lookup_object('gcode_move')
-        gcode_move.reset_last_position()
+        #gcode_move = self.printer.lookup_object('gcode_move')
+        #gcode_move.reset_last_position()
 
         
     def handle_connect(self):
