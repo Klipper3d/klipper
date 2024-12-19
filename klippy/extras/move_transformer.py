@@ -20,6 +20,8 @@ class CompensationType(Enum):
 
 class MoveTransformer:
     compensations = {}
+    concentricity_tolerance_compensation = None
+    bed_mesh_compensation = None
     
     def __init__(self, config):
         self.config = config
