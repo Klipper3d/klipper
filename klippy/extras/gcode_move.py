@@ -43,7 +43,7 @@ class MoveTransformer:
             position[:] = obj.get_position(position)
             
         self.last_position = position
-        logging.info("Hier2! %f", self.last_position[0])
+        logging.info("Hier2! x:%f y:%f z:%f a:%f e:%f", self.last_position[0], self.last_position[1], self.last_position[2], self.last_position[3], self.last_position[4])
         return list(self.last_position)
     
     
