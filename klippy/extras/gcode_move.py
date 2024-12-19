@@ -44,8 +44,8 @@ class MoveTransformer:
             position[:] = obj.get_position(position)
             
         self.last_position = position
-        logging.info("Hier2! %s y", self.last_position)
-        return self.toolhead.get_position()
+        logging.info("Hier2! %s", self.last_position)
+        return self.last_position
     
     
     def move(self, newpos, speed):
