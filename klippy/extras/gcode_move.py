@@ -51,11 +51,11 @@ class MoveTransformer:
     def move(self, newpos, speed):
         logging.info("Vielleicht auch hier")
         move_list = [newpos]
-        
+        logging.info("MoveList1! %s", move_list)
         for obj in self.compensations:
             move_list = obj.move(move_list, self.last_position)
             
-        logging.info("MoveList! %s", move_list)
+        logging.info("MoveList2! %s", move_list)
         for move in move_list:
             self.toolhead.move(move, speed)
 
