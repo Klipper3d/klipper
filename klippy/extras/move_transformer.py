@@ -41,7 +41,7 @@ class MoveTransformer:
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
         
-        if self.compensations[CompensationType.BM] != None and self.compensations[CompensationType.CTC] != None:
+        if self.bed_mesh_compensation != None and self.concentricity_tolerance_compensation != None:
             
             # Register transformation/ compensation when availabled
             gcode_move = self.printer.load_object(self.config, 'gcode_move')
@@ -51,12 +51,12 @@ class MoveTransformer:
             gcode_move = self.printer.lookup_object('gcode_move')
             gcode_move.reset_last_position()
             
-        elif self.compensations[CompensationType.BM] != None:
+        elif self.bed_mesh_compensation != None:
             # Register transformation/ compensation when availabled
             gcode_move = self.printer.load_object(self.bed_mesh_compensation.config, 'gcode_move')
             gcode_move.set_move_transform(self.bed_mesh_compensation)
             
-        elif self.compensations[CompensationType.CTC] != None:
+        elif self.concentricity_tolerance_compensation != None:
             # Register transformation/ compensation when availabled
             gcode_move = self.printer.load_object(self.concentricity_tolerance_compensation.config, 'gcode_move')
             gcode_move.set_move_transform(self.concentricity_tolerance_compensation)
