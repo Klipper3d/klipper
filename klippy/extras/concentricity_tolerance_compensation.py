@@ -26,7 +26,7 @@ class ConcentricityToleranceCompansation:
         self.x_offset = 0.
         self.y_offset = 0.
         self.gcode = self.printer.lookup_object('gcode')
-        self.splitter = MoveSplitter(config, self.gcode, self.deflection_angle, self.deflection_radius)
+        self.splitter = None #MoveSplitter(config, self.gcode, self.deflection_angle, self.deflection_radius)
         
         # register gcodes
         #self.gcode.register_command(
