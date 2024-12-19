@@ -56,7 +56,7 @@ class ConcentricityToleranceCompansation:
         return x_adj, y_adj    
         
         
-    def get_position(self, pos : list):
+    def get_position(self, pos):
          # return current position minus the current z-adjustment
          x, y, z, a, e = pos
          x_adj, y_adj = self.calc_xy_adj(a)
