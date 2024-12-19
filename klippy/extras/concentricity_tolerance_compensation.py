@@ -36,7 +36,7 @@ class ConcentricityToleranceCompansation:
         #     'CALIBRATE_DEFLECTION_RADIUS', self.cmd_CALIBRATE_DEFLECTION_RADIUS,
         #     desc=self.cmd_CALIBRATE_DEFLECTION_RADIUS_help)
         
-        self.move_transformer()
+        # self.move_transformer()
         
         
     def move_transformer(self):
