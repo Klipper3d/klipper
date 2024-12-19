@@ -96,15 +96,19 @@ config WANT_DISPLAYS
     bool
     depends on HAVE_GPIO
     default y
-config WANT_SENSORS
+config WANT_THERMOCOUPLE
     bool
-    depends on HAVE_GPIO_I2C || HAVE_GPIO_SPI
+    depends on HAVE_GPIO_SPI
+    default y
+config WANT_ADXL345
+    bool
+    depends on HAVE_GPIO_SPI
     default y
 config WANT_LIS2DW
     bool
     depends on HAVE_GPIO_SPI || HAVE_GPIO_I2C
     default y
-config WANT_LDC1612
+config WANT_MPU9250
     bool
     depends on HAVE_GPIO_I2C
     default y
@@ -113,6 +117,14 @@ config WANT_HX71X
     depends on WANT_GPIO_BITBANGING
     default y
 config WANT_ADS1220
+    bool
+    depends on HAVE_GPIO_SPI
+    default y
+config WANT_LDC1612
+    bool
+    depends on HAVE_GPIO_I2C
+    default y
+config WANT_SENSOR_ANGLE
     bool
     depends on HAVE_GPIO_SPI
     default y
@@ -126,8 +138,8 @@ config WANT_SOFTWARE_SPI
     default y
 config NEED_SENSOR_BULK
     bool
-    depends on WANT_SENSORS || WANT_LIS2DW || WANT_LDC1612 || WANT_HX71X \
-        || WANT_ADS1220
+    depends on WANT_ADXL345 || WANT_LIS2DW || WANT_MPU9250 \
+        || WANT_HX71X || WANT_ADS1220 || WANT_LDC1612 || WANT_SENSOR_ANGLE
     default y
 menu "Optional features (to reduce code size)"
     depends on HAVE_LIMITED_CODE_SIZE
@@ -137,20 +149,29 @@ config WANT_GPIO_BITBANGING
 config WANT_DISPLAYS
     bool "Support LCD devices"
     depends on HAVE_GPIO
-config WANT_SENSORS
-    bool "Support external sensor devices"
-    depends on HAVE_GPIO_I2C || HAVE_GPIO_SPI
+config WANT_THERMOCOUPLE
+    bool "Support thermocouple MAX sensors"
+    depends on HAVE_GPIO_SPI
+config WANT_ADXL345
+    bool "Support adxl accelerometers"
+    depends on HAVE_GPIO_SPI
 config WANT_LIS2DW
     bool "Support lis2dw and lis3dh 3-axis accelerometers"
     depends on HAVE_GPIO_SPI || HAVE_GPIO_I2C
-config WANT_LDC1612
-    bool "Support ldc1612 eddy current sensor"
+config WANT_MPU9250
+    bool "Support MPU accelerometers"
     depends on HAVE_GPIO_I2C
 config WANT_HX71X
     bool "Support HX711 and HX717 ADC chips"
     depends on WANT_GPIO_BITBANGING
 config WANT_ADS1220
     bool "Support ADS 1220 ADC chip"
+    depends on HAVE_GPIO_SPI
+config WANT_LDC1612
+    bool "Support ldc1612 eddy current sensor"
+    depends on HAVE_GPIO_I2C
+config WANT_SENSOR_ANGLE
+    bool "Support angle sensors"
     depends on HAVE_GPIO_SPI
 config WANT_SOFTWARE_I2C
     bool "Support software based I2C \"bit-banging\""

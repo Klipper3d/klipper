@@ -694,6 +694,24 @@ If you are doing a shaper re-calibration and the reported smoothing for the
 suggested shaper configuration is almost the same as what you got during the
 previous calibration, this step can be skipped.
 
+### Unreliable measurements of resonance frequencies
+
+Sometimes the resonance measurements can produce bogus results, leading to
+the incorrect suggestions for the input shapers. This can be caused by a
+variety of reasons, including running fans on the toolhead, incorrect
+position or non-rigid mounting of the accelerometer, or mechanical problems
+such as loose belts or binding or bumpy axis. Keep in mind that all fans
+should be disabled for resonance testing, especially the noisy ones, and
+that the accelerometer should be rigidly mounted on the corresponding
+moving part (e.g. on the bed itself for the bed slinger, or on the extruder
+of the printer itself and not the carriage, and some people get better
+results by mounting the accelerometer on the nozzle itself). As for
+mechanical problems, the user should inspect if there is any fault that
+can be fixed with a moving axis (e.g. linear guide rails cleaned up and
+lubricated and V-slot wheels tension adjusted correctly). If none of that
+helps, a user may try the other shapers from the produced list besides the
+one recommended by default.
+
 ### Testing custom axes
 
 `TEST_RESONANCES` command supports custom axes. While this is not really
