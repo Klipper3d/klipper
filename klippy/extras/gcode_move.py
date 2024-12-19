@@ -25,9 +25,11 @@ class MoveTransformer:
        self.toolhead = self.printer.lookup_object('toolhead')
 
     def add_transformation(self, obj):
+        logging.info("Test1")
         self.compensations.append(obj)
 
     def get_status(self, eventtime=None):
+        logging.info("Test2")
         self.handle_connect()
                 
     def get_position(self):      
@@ -45,6 +47,7 @@ class MoveTransformer:
     
     
     def move(self, newpos, speed):
+        logging.info("Vielleicht auch hier")
         move_list = [newpos]
         
         for obj in self.compensations:
@@ -108,7 +111,6 @@ class GCodeMove:
             self.move_with_transform = toolhead.move
             self.position_with_transform = toolhead.get_position
         self.reset_last_position()
-        self.move_transform.reset_last_position()
     def _handle_shutdown(self):
         if not self.is_printer_ready:
             return
