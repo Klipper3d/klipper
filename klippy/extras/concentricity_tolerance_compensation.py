@@ -29,12 +29,12 @@ class ConcentricityToleranceCompansation:
         self.splitter = MoveSplitter(config, self.gcode, self.deflection_angle, self.deflection_radius)
         
         # register gcodes
-        self.gcode.register_command(
-            'CALIBRATE_DEFLECTION_ANGLE', self.cmd_CALIBRATE_DEFLECTION_ANGLE,
-            desc=self.cmd_CALIBRATE_DEFLECTION_ANGLE_help)
-        self.gcode.register_command(
-            'CALIBRATE_DEFLECTION_RADIUS', self.cmd_CALIBRATE_DEFLECTION_RADIUS,
-            desc=self.cmd_CALIBRATE_DEFLECTION_RADIUS_help)
+        #self.gcode.register_command(
+        #    'CALIBRATE_DEFLECTION_ANGLE', self.cmd_CALIBRATE_DEFLECTION_ANGLE,
+        #    desc=self.cmd_CALIBRATE_DEFLECTION_ANGLE_help)
+        #self.gcode.register_command(
+        #    'CALIBRATE_DEFLECTION_RADIUS', self.cmd_CALIBRATE_DEFLECTION_RADIUS,
+        #    desc=self.cmd_CALIBRATE_DEFLECTION_RADIUS_help)
         
         self.move_transformer()
         
@@ -81,15 +81,15 @@ class ConcentricityToleranceCompansation:
             last_position[:] = position
         return transformed_positions
           
-    def get_status(self, eventtime=None):
-        pass
-       # Calibration section
-    cmd_CALIBRATE_DEFLECTION_ANGLE_help = "-TODO- Calibration Deflection Angle"
-    def cmd_CALIBRATE_DEFLECTION_ANGLE(self, gcmd):
-        pass
-    cmd_CALIBRATE_DEFLECTION_RADIUS_help = "-TODO- Calibration Deflection Radius"
-    def cmd_CALIBRATE_DEFLECTION_RADIUS(self, gcmd):
-        pass
+    #def get_status(self, eventtime=None):
+    #    pass
+    #   # Calibration section
+    #cmd_CALIBRATE_DEFLECTION_ANGLE_help = "-TODO- Calibration Deflection Angle"
+    #def cmd_CALIBRATE_DEFLECTION_ANGLE(self, gcmd):
+    #    pass
+    #cmd_CALIBRATE_DEFLECTION_RADIUS_help = "-TODO- Calibration Deflection Radius"
+    #def cmd_CALIBRATE_DEFLECTION_RADIUS(self, gcmd):
+    #    pass
     
     
             
