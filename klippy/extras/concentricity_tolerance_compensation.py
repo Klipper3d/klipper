@@ -15,45 +15,45 @@ def lerp(t, v0, v1):
 class ConcentricityToleranceCompansation:
     
     def __init__(self, config):
-        #logging.info("CTC erstellt")
-        #self.config = config
-        #self.printer = config.get_printer()
-        #self.last_position = [0., 0., 0., 0., 0.]
-        #
-        #self.deflection_angle = config.getfloat('deflection_angle', 0.)
-        #self.deflection_radius = config.getfloat('deflection_radius', 0.)
-        #    
-        #self.x_offset = 0.
-        #self.y_offset = 0.
-        #self.gcode = self.printer.lookup_object('gcode')
-        #self.splitter = MoveSplitter(config, self.gcode, self.deflection_angle, self.deflection_radius)
-        #
-        ## register gcodes
-        #self.gcode.register_command(
-        #    'CALIBRATE_DEFLECTION_ANGLE', self.cmd_CALIBRATE_DEFLECTION_ANGLE,
-        #    desc=self.cmd_CALIBRATE_DEFLECTION_ANGLE_help)
-        #self.gcode.register_command(
-        #    'CALIBRATE_DEFLECTION_RADIUS', self.cmd_CALIBRATE_DEFLECTION_RADIUS,
-        #    desc=self.cmd_CALIBRATE_DEFLECTION_RADIUS_help)
-        #
-        #self.move_transformer()
-        pass
+        logging.info("CTC erstellt")
+        self.config = config
+        self.printer = config.get_printer()
+        self.last_position = [0., 0., 0., 0., 0.]
         
-    # def move_transformer(self):
-    #     # Register transform
-    #     gcode_move = self.printer.load_object(self.config,'gcode_move')
-    #     gcode_move.add_move_transformer(self)
+        self.deflection_angle = config.getfloat('deflection_angle', 0.)
+        self.deflection_radius = config.getfloat('deflection_radius', 0.)
+            
+        self.x_offset = 0.
+        self.y_offset = 0.
+        self.gcode = self.printer.lookup_object('gcode')
+        self.splitter = MoveSplitter(config, self.gcode, self.deflection_angle, self.deflection_radius)
         
-    # def handle_connect(self):
-    #     self.toolhead = self.printer.lookup_object('toolhead')
+        # register gcodes
+        self.gcode.register_command(
+            'CALIBRATE_DEFLECTION_ANGLE', self.cmd_CALIBRATE_DEFLECTION_ANGLE,
+            desc=self.cmd_CALIBRATE_DEFLECTION_ANGLE_help)
+        self.gcode.register_command(
+            'CALIBRATE_DEFLECTION_RADIUS', self.cmd_CALIBRATE_DEFLECTION_RADIUS,
+            desc=self.cmd_CALIBRATE_DEFLECTION_RADIUS_help)
         
-    # def calc_xy_adj(self, a_pos):
-    #     calc_deflection_angle = math.radians(a_pos + self.deflection_angle)
+        self.move_transformer()
         
-    #     x_adj = self.deflection_radius * math.sin(calc_deflection_angle)
-    #     y_adj = self.deflection_radius * math.cos(calc_deflection_angle)
         
-    #     return x_adj, y_adj    
+    def move_transformer(self):
+         # Register transform
+        gcode_move = self.printer.load_object(self.config,'gcode_move')
+        gcode_move.add_move_transformer(self)
+        
+    def handle_connect(self):
+        self.toolhead = self.printer.lookup_object('toolhead')
+        
+    def calc_xy_adj(self, a_pos):
+        calc_deflection_angle = math.radians(a_pos + self.deflection_angle)
+        
+        x_adj = self.deflection_radius * math.sin(calc_deflection_angle)
+        y_adj = self.deflection_radius * math.cos(calc_deflection_angle)
+        
+        return x_adj, y_adj    
         
         
     # def get_position(self, pos : list):
