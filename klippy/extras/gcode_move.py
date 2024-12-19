@@ -26,12 +26,6 @@ class MoveTransformer:
 
     def add_transformation(self, obj):
         self.compensations.append(obj)
-        
-        
-    def handle_connect(self):
-        for obj in self.compensations:
-            if obj != None:
-                obj.handle_connect()
 
     def get_status(self, eventtime=None):
         for obj in self.compensations:
