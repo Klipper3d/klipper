@@ -59,6 +59,8 @@ class MoveTransformer:
         logging.info("MoveList2! %s", move_list)
         for move in move_list:
             self.toolhead.move(move, speed)
+        
+        self.last_position = move_list[-1]
 
 
 class GCodeMove:
