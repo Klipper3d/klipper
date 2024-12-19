@@ -50,6 +50,7 @@ class MoveTransformer:
     
     def move(self, newpos, speed):
         logging.info("Vielleicht auch hier")
+        logging.info("last_position %s, new position %s", self.last_position, newpos)
         move_list = [newpos]
         logging.info("MoveList1! %s", move_list)
         for obj in self.compensations:
