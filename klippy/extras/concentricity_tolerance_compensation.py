@@ -41,8 +41,9 @@ class ConcentricityToleranceCompansation:
         
     def add_move_transformer(self):
         # Register transform
-        gcode_move = self.printer.lookup_object('gcode_move')
-        gcode_move.add_move_transformer(self)
+        #gcode_move = self.printer.lookup_object('gcode_move')
+        #gcode_move.add_move_transformer(self)
+        pass
         
     def calc_xy_adj(self, a_pos):
         calc_deflection_angle = math.radians(a_pos + self.deflection_angle)
