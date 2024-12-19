@@ -101,12 +101,14 @@ class GCodeMove:
         # G-Code state
         self.saved_states = {}
         self.move_transform = MoveTransformer(config)
-        self.move_with_transform = self.move_transform.move
-        self.position_with_transform = self.move_transform.get_position
+        self.move_with_transform = None
+        self.position_with_transform = (lambda: [0., 0., 0., 0., 0.])
     def add_move_transformer(self, obj):
         self.move_transform.add_transformation(obj)
     def _handle_ready(self):
         self.is_printer_ready = True
+        self.move_with_transform = self.move_transform.move
+        self.position_with_transform = self.move_transform.get_position
         if self.move_transform is None:
             toolhead = self.printer.lookup_object('toolhead')
             self.move_with_transform = toolhead.move
