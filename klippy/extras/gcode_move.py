@@ -12,7 +12,7 @@ class MoveTransformer:
         self.compensations = []
             
         self.printer = self.config.get_printer()
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        #self.printer.register_event_handler("klippy:connect", self.handle_connect)
     
         
     def reset_last_position(self):
@@ -27,6 +27,7 @@ class MoveTransformer:
     def add_transformation(self, obj):
         logging.info("Test1")
         self.compensations.append(obj)
+        logging.info("Test11")
 
     def get_status(self, eventtime=None):
         logging.info("Test2")
@@ -111,6 +112,7 @@ class GCodeMove:
             self.move_with_transform = toolhead.move
             self.position_with_transform = toolhead.get_position
         self.reset_last_position()
+        self.move_transform.handle_connect()
     def _handle_shutdown(self):
         if not self.is_printer_ready:
             return
