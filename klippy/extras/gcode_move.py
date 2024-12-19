@@ -28,9 +28,7 @@ class MoveTransformer:
         self.compensations.append(obj)
 
     def get_status(self, eventtime=None):
-        for obj in self.compensations:
-            if obj != None:
-                obj.handle_connect()
+        self.handle_connect()
                 
     def get_position(self):      
 
