@@ -22,22 +22,24 @@ class MoveTransformer:
     
     def __init__(self, config):
         self.config = config
-        self.bed_mesh_compensation = None
-        self.concentricity_tolerance_compensation = None
+        #self.bed_mesh_compensation = None
+        #self.concentricity_tolerance_compensation = None
         self.last_position = [0., 0., 0., 0., 0.]
         
         #self.has_concentricy_tolerance_compensation = config.getboolean('has_concentricy_tolerance_compensation', False)
         #self.has_bed_mesh = config.getboolean('has_bed_mesh', False)
         
-        self.printer = config.get_printer()
-        self.printer.register_event_handler("klippy:connect",
-                                            self.handle_connect)
         
-        self.compensations = {CompensationType.BM : self.bed_mesh_compensation, 
-                              CompensationType.CTC : self.concentricity_tolerance_compensation}
+        
+        #self.compensations = {CompensationType.BM : self.bed_mesh_compensation, 
+        #                      CompensationType.CTC : self.concentricity_tolerance_compensation}
         
         
     def initialize(self):
+        self.printer = self.config.get_printer()
+        self.printer.register_event_handler("klippy:connect",
+                                            self.handle_connect)
+        
         if self.compensations[CompensationType.BM] != None and self.compensations[CompensationType.CTC] != None:
             
             # Register transformation/ compensation when availabled
