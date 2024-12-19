@@ -21,9 +21,13 @@ class CompensationType(Enum):
 class MoveTransformer:
     
     def __init__(self, config):
+        self.config = config
         self.bed_mesh_compensation = None
         self.concentricity_tolerance_compensation = None
         self.last_position = [0., 0., 0., 0., 0.]
+        
+        #self.has_concentricy_tolerance_compensation = config.getboolean('has_concentricy_tolerance_compensation', False)
+        #self.has_bed_mesh = config.getboolean('has_bed_mesh', False)
         
         self.printer = config.get_printer()
         self.printer.register_event_handler("klippy:connect",
@@ -31,7 +35,7 @@ class MoveTransformer:
         
         self.compensations = {CompensationType.BM : self.bed_mesh_compensation, 
                               CompensationType.CTC : self.concentricity_tolerance_compensation}
-        self.config = config
+        
         
     def initialize(self):
         if self.compensations[CompensationType.BM] != None and self.compensations[CompensationType.CTC] != None:
@@ -59,11 +63,13 @@ class MoveTransformer:
         
     def set_bed_mesh_compensation(self, obj, config):
         self.compensations[CompensationType.BM] = obj
+        self.bed_mesh_compensation = obj
         self.config = config
         self.initialize()
         
     def set_concentricity_tolerance_compensation(self, obj, config):
         self.compensations[CompensationType.CTC] = obj
+        self.concentricity_tolerance_compensation = obj
         self.config = config
         self.initialize()
         
