@@ -1,23 +1,3 @@
-import logging, math, json, collections
-from enum import Enum
-from . import probe
-
-class ConcentricityToleranceCompansationError(Exception):
-    pass
-
-# PEP 485 isclose()
-def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
-    return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
-
-# Linear interpolation between two values
-def lerp(t, v0, v1):
-    return (1. - t) * v0 + t * v1
-
-class CompensationType(Enum):
-    BM = "BedMesh"
-    CTC = "ConcentricityToleranceCompansation"
-
-
 class MoveTransformer:
     compensations = {}
     concentricity_tolerance_compensation = None

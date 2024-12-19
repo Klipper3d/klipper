@@ -5,6 +5,64 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 
+class MoveTransformer:
+    def __init__(self, config):
+        self.config = config
+        self.last_position = [0., 0., 0., 0., 0.]
+        self.compensations = []
+            
+        self.printer = self.config.get_printer()
+        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        
+        # Register transformation/ compensation when availabled
+        gcode_move = self.printer.load_object(self.config, 'gcode_move')
+        gcode_move.set_move_transform(self)
+        
+        # cache the current position before a transform takes place
+        gcode_move = self.printer.lookup_object('gcode_move')
+        gcode_move.reset_last_position()
+         
+            
+    def handle_connect(self):
+       self.toolhead = self.printer.lookup_object('toolhead')
+
+    def add_transformation(self, obj):
+        self.compensations.append(obj)
+        
+        
+    def handle_connect(self):
+        for obj in self.compensations:
+            if obj != None:
+                obj.handle_connect()
+
+    def get_status(self, eventtime=None):
+        for obj in self.compensations:
+            if obj != None:
+                obj.handle_connect()
+                
+    def get_position(self):      
+
+        self.last_position[:] = self.toolhead.get_position()
+        position = self.last_position
+
+        for obj in self.compensations:
+            obj.get_position_multiple_compensations(position)
+            
+        self.last_position = position
+        
+        return list(self.last_position)
+    
+    
+    def move(self, newpos, speed):
+        move_list = [newpos]
+        
+        for obj in self.compensations:
+            obj.move(move_list, self.last_position)
+            
+        for move in move_list:
+            self.toolhead.move(move, speed)
+
+
 class GCodeMove:
     def __init__(self, config):
         self.printer = printer = config.get_printer()
@@ -47,8 +105,11 @@ class GCodeMove:
         self.extrude_factor = 1.
         # G-Code state
         self.saved_states = {}
-        self.move_transform = self.move_with_transform = None
+        self.move_transform = MoveTransformer(config)
+        self.move_with_transform = None
         self.position_with_transform = (lambda: [0., 0., 0., 0., 0.])
+    def add_move_transformer(self, obj):
+        self.move_transform.add_transformation(obj)
     def _handle_ready(self):
         self.is_printer_ready = True
         if self.move_transform is None:

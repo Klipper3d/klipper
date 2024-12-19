@@ -40,19 +40,9 @@ class ConcentricityToleranceCompansation:
             'CALIBRATE_DEFLECTION_RADIUS', self.cmd_CALIBRATE_DEFLECTION_RADIUS,
             desc=self.cmd_CALIBRATE_DEFLECTION_RADIUS_help)
         
-        
-        
         # Register transform
-        move_transformer = self.printer.load_object(config, 'move_transformer')
-        move_transformer.set_bed_mesh_compensation(self, config)
-        
-        # cache the current position before a transform takes place
-        #gcode_move = self.printer.lookup_object('gcode_move')
-        #gcode_move.reset_last_position()
-
-        
-    def handle_connect(self):
-        self.toolhead = self.printer.lookup_object('toolhead')
+        gcode_move = self.printer.lookup_object('gcode_move')
+        gcode_move.add_move_transformer(self)
         
     def calc_xy_adj(self, a_pos):
         calc_deflection_angle = math.radians(a_pos + self.deflection_angle)
@@ -63,7 +53,7 @@ class ConcentricityToleranceCompansation:
         return x_adj, y_adj    
         
         
-    def get_position_multiple_compensations(self, pos : list):
+    def get_position(self, pos : list):
         # return current position minus the current z-adjustment
         x, y, z, a, e = pos
         x_adj, y_adj = self.calc_xy_adj(a)
@@ -72,26 +62,21 @@ class ConcentricityToleranceCompansation:
             
         return list(self.last_position)
         
-    def get_position(self):      
-        # return current position minus the current z-adjustment
-        x, y, z, a, e = self.toolhead.get_position()
-        x_adj, y_adj = self.calc_xy_adj(a)
-        
-        self.last_position[:] = [x + x_adj, y + y_adj, z, a, e]
+    def move(self, positions : list, last_position_): 
+        last_position = last_position_
+        transformed_positions = []
+          
+        for position in positions:
+            self.splitter.build_move(last_position, position)
+            while not self.splitter.traverse_complete:
+                split_move = self.splitter.split()
+                if split_move:
+                    transformed_positions.append(split_move)
+                else:
+                    raise self.gcode.error(
+                        "Concentricity Tolerance Compensation: Error splitting move ")
+            last_position[:] = position
             
-        return list(self.last_position)
-        
-        
-    def move(self, newpos, speed):
-        self.splitter.build_move(self.last_position, newpos)
-        while not self.splitter.traverse_complete:
-            split_move = self.splitter.split()
-            if split_move:
-                self.toolhead.move(split_move, speed)
-            else:
-                raise self.gcode.error(
-                    "Concentricity Tolerance Compensation: Error splitting move ")
-        self.last_position[:] = newpos
 
     def get_status(self, eventtime=None):
         pass
