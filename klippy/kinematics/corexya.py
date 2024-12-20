@@ -6,7 +6,7 @@
 import logging, math
 import stepper
 
-class CoreXYKinematics:
+class CoreXYAKinematics:
     def __init__(self, toolhead, config):
         # Setup axis rails
         self.rails = [stepper.LookupMultiRail(config.getsection('stepper_' + n))
@@ -127,4 +127,4 @@ class CoreXYKinematics:
         }
 
 def load_kinematics(toolhead, config):
-    return CoreXYKinematics(toolhead, config)
+    return CoreXYAKinematics(toolhead, config)
