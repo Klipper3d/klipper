@@ -235,9 +235,12 @@ itersolve_check_active(struct stepper_kinematics *sk, double flush_time)
 int32_t __visible
 itersolve_is_active_axis(struct stepper_kinematics *sk, char axis)
 {
-    if (axis < 'x' || axis > 'a')
+    if((axis >= 'x') && (axis <= 'z'))
+        return (sk->active_flags & (AF_X << (axis - 'x'))) != 0;
+    else if(axis == 'a')
+        return (sk->active_flags & (AF_X << 3)) != 0;
+    else
         return 0;
-    return (sk->active_flags & (AF_X << (axis - 'x'))) != 0;
 }
 
 void __visible
