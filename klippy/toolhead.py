@@ -479,6 +479,7 @@ class ToolHead:
         self.printer.send_event("toolhead:set_position")
     def move(self, newpos, speed):
         move = Move(self, self.commanded_pos, newpos, speed)
+        logging.info("Toolhead move to %s ", newpos)
         if not move.move_d:
             return
         if move.is_kinematic_move:

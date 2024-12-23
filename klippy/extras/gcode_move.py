@@ -26,30 +26,25 @@ class MoveTransformer:
        self.toolhead = self.printer.lookup_object('toolhead')
 
     def add_transformation(self, obj):
-        logging.info("Test1")
         self.compensations.append(obj)
-        logging.info("Test11")
 
     def get_status(self, eventtime=None):
-        logging.info("Test2")
         self.handle_connect()
                 
     def get_position(self):      
 
         self.last_position[:] = self.toolhead.get_position()
-        logging.info("Hier1! %s", self.last_position)
         position = self.last_position
 
         for obj in self.compensations:
             position[:] = obj.get_position(position)
             
         self.last_position = position
-        logging.info("Hier2! %s", self.last_position)
         return self.last_position
     
     
     def move(self, newpos, speed):
-        logging.info("last_position %s, new position %s", self.last_position, newpos)
+        logging.info("MoveTransformer: last_position %s, new position %s", self.last_position, newpos)
         move_list = [newpos]
         
         for obj in self.compensations:
