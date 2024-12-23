@@ -32,7 +32,6 @@ class MoveTransformer:
         self.handle_connect()
                 
     def get_position(self):      
-
         self.last_position[:] = self.toolhead.get_position()
         position = self.last_position
 
@@ -40,6 +39,7 @@ class MoveTransformer:
             position[:] = obj.get_position(position)
             
         self.last_position = position
+        logging.info("MoveTransformer: position %s", self.last_position)
         return self.last_position
     
     
