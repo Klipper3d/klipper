@@ -41,14 +41,22 @@ class PrinterSensorCombined:
             sensor = self.printer.lookup_object(sensor_name)
             # check if sensor has get_status function and
             # get_status has a 'temperature' value
-            if (hasattr(sensor, 'get_status') and
-                    'temperature' in sensor.get_status(
-                            self.reactor.monotonic())):
-                self.sensors.append(sensor)
-            else:
+            if not hasattr(sensor, 'get_status'):
+                raise self.printer.config_error(
+                        "'%s' does not have a status."
+                        % (sensor_name,))
+            status = sensor.get_status(self.reactor.monotonic())
+            if 'temperature' not in status:
                 raise self.printer.config_error(
                         "'%s' does not report a temperature."
                         % (sensor_name,))
+            # Handle temperature monitors
+            if status["temperature"] is None:
+                raise self.printer.config_error(
+                        "Temperature monitor '%s' is not supported"
+                        % (sensor_name,))
+
+            self.sensors.append(sensor)
 
     def _handle_ready(self):
         # Start temperature update timer
