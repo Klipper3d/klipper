@@ -238,7 +238,7 @@ class BedMesh:
                     else:
                         raise self.gcode.error(
                             "Mesh Leveling: Error splitting move ")
-            last_position = position
+            last_position[:] = position
         
         return transformed_positions
     

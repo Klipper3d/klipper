@@ -49,6 +49,7 @@ class MoveTransformer:
         
         for obj in self.compensations:
             move_list = obj.move(move_list, self.last_position)
+            logging.info("move liste: %s", move_list)
             
         for move in move_list:
             self.toolhead.move(move, speed)
