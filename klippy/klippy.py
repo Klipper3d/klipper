@@ -214,7 +214,7 @@ class Printer:
         logging.info("Reactor garbage collection: %s",
                      self.reactor.get_gc_stats())
         self.send_event("klippy:notify_mcu_shutdown", msg, details)
-    def invoke_async_shutdown(self, msg, details):
+    def invoke_async_shutdown(self, msg, details={}):
         self.reactor.register_async_callback(
             (lambda e: self.invoke_shutdown(msg, details)))
     def register_event_handler(self, event, callback):

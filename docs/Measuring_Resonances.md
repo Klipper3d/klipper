@@ -1,24 +1,26 @@
 # Measuring Resonances
 
-Klipper has built-in support for the ADXL345, MPU-9250 and LIS2DW compatible
+Klipper has built-in support for the ADXL345, MPU-9250, LIS2DW and LIS3DH compatible
 accelerometers which can be used to measure resonance frequencies of the printer
 for different axes, and auto-tune [input shapers](Resonance_Compensation.md) to
 compensate for resonances. Note that using accelerometers requires some
-soldering and crimping. The ADXL345/LIS2DW can be connected to the SPI interface
+soldering and crimping. The ADXL345 can be connected to the SPI interface
 of a Raspberry Pi or MCU board (it needs to be reasonably fast). The MPU family can
 be connected to the I2C interface of a Raspberry Pi directly, or to an I2C
-interface of an MCU board that supports 400kbit/s *fast mode* in Klipper.
+interface of an MCU board that supports 400kbit/s *fast mode* in Klipper. The
+LIS2DW and LIS3DH can be connected to either SPI or I2C with the same considerations
+as above.
 
 When sourcing accelerometers, be aware that there are a variety of different PCB
 board designs and different clones of them. If it is going to be connected to a
 5V printer MCU ensure it has a voltage regulator and level shifters.
 
-For ADXL345s/LIS2DWs, make sure that the board supports SPI mode (a small number of
+For ADXL345s, make sure that the board supports SPI mode (a small number of
 boards appear to be hard-configured for I2C by pulling SDO to GND).
 
-For MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500s there are also a variety of
-board designs and clones with different I2C pull-up resistors which will need
-supplementing.
+For MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500s and LIS2DW/LIS3DH there are also
+a variety of board designs and clones with different I2C pull-up resistors which
+will need supplementing.
 
 ## MCUs with Klipper I2C *fast-mode* Support
 
@@ -27,6 +29,7 @@ supplementing.
 | Raspberry Pi | 3B+, Pico | 3A, 3A+, 3B, 4 |
 | AVR ATmega | ATmega328p | ATmega32u4, ATmega128, ATmega168, ATmega328, ATmega644p, ATmega1280, ATmega1284, ATmega2560 |
 | AVR AT90 | - | AT90usb646, AT90usb1286 |
+| SAMD | SAMC21G18 | SAMC21G18, SAMD21G18, SAMD21E18, SAMD21J18, SAMD21E15, SAMD51G19, SAMD51J19, SAMD51N19, SAMD51P20, SAME51J19, SAME51N19, SAME54P20 |
 
 ## Installation instructions
 
@@ -313,7 +316,7 @@ you'll also want to modify your `printer.cfg` file to include this:
 
 Restart Klipper via the `RESTART` command.
 
-#### Configure LIS2DW series
+#### Configure LIS2DW series over SPI
 
 ```
 [mcu lis]
@@ -690,6 +693,24 @@ to specify it explicitly.
 If you are doing a shaper re-calibration and the reported smoothing for the
 suggested shaper configuration is almost the same as what you got during the
 previous calibration, this step can be skipped.
+
+### Unreliable measurements of resonance frequencies
+
+Sometimes the resonance measurements can produce bogus results, leading to
+the incorrect suggestions for the input shapers. This can be caused by a
+variety of reasons, including running fans on the toolhead, incorrect
+position or non-rigid mounting of the accelerometer, or mechanical problems
+such as loose belts or binding or bumpy axis. Keep in mind that all fans
+should be disabled for resonance testing, especially the noisy ones, and
+that the accelerometer should be rigidly mounted on the corresponding
+moving part (e.g. on the bed itself for the bed slinger, or on the extruder
+of the printer itself and not the carriage, and some people get better
+results by mounting the accelerometer on the nozzle itself). As for
+mechanical problems, the user should inspect if there is any fault that
+can be fixed with a moving axis (e.g. linear guide rails cleaned up and
+lubricated and V-slot wheels tension adjusted correctly). If none of that
+helps, a user may try the other shapers from the produced list besides the
+one recommended by default.
 
 ### Testing custom axes
 

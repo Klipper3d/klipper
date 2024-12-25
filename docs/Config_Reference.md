@@ -1790,11 +1790,14 @@ section of the measuring resonances guide for more information on
 #   auto-calibration (with 'SHAPER_CALIBRATE' command). By default no
 #   maximum smoothing is specified. Refer to Measuring_Resonances guide
 #   for more details on using this feature.
+#move_speed: 50
+#   The speed (in mm/s) to move the toolhead to and between test points
+#   during the calibration. The default is 50.
 #min_freq: 5
 #   Minimum frequency to test for resonances. The default is 5 Hz.
 #max_freq: 133.33
 #   Maximum frequency to test for resonances. The default is 133.33 Hz.
-#accel_per_hz: 75
+#accel_per_hz: 60
 #   This parameter is used to determine which acceleration to use to
 #   test a specific frequency: accel = accel_per_hz * freq. Higher the
 #   value, the higher is the energy of the oscillations. Can be set to
@@ -1808,6 +1811,13 @@ section of the measuring resonances guide for more information on
 #   hz_per_sec. Small values make the test slow, and the large values
 #   will decrease the precision of the test. The default value is 1.0
 #   (Hz/sec == sec^-2).
+#sweeping_accel: 400
+#   An acceleration of slow sweeping moves. The default is 400 mm/sec^2.
+#sweeping_period: 1.2
+#   A period of slow sweeping moves. Setting this parameter to 0
+#   disables slow sweeping moves. Avoid setting it to a too small
+#   non-zero value in order to not poison the measurements.
+#   The default is 1.2 sec which is a good all-round choice.
 ```
 
 ## Config file helpers
@@ -4139,15 +4149,16 @@ Support for a display attached to the micro-controller.
 [display]
 lcd_type:
 #   The type of LCD chip in use. This may be "hd44780", "hd44780_spi",
-#   "st7920", "emulated_st7920", "uc1701", "ssd1306", or "sh1106".
+#   "aip31068_spi", "st7920", "emulated_st7920", "uc1701", "ssd1306", or
+#   "sh1106".
 #   See the display sections below for information on each type and
 #   additional parameters they provide. This parameter must be
 #   provided.
 #display_group:
 #   The name of the display_data group to show on the display. This
 #   controls the content of the screen (see the "display_data" section
-#   for more information). The default is _default_20x4 for hd44780
-#   displays and _default_16x4 for other displays.
+#   for more information). The default is _default_20x4 for hd44780 or
+#   aip31068_spi displays and _default_16x4 for other displays.
 #menu_timeout:
 #   Timeout for menu. Being inactive this amount of seconds will
 #   trigger menu exit or return to root menu when having autorun
@@ -4266,6 +4277,31 @@ spi_software_miso_pin:
 #   Perform 8-bit/4-bit protocol initialization on an hd44780 display.
 #   This is necessary on real hd44780 devices. However, one may need
 #   to disable this on some "clone" devices. The default is True.
+#line_length:
+#   Set the number of characters per line for an hd44780 type lcd.
+#   Possible values are 20 (default) and 16. The number of lines is
+#   fixed to 4.
+...
+```
+
+#### aip31068_spi display
+
+Information on configuring an aip31068_spi display - a very similar to hd44780_spi
+a 20x04 (20 symbols by 4 lines) display with slightly different internal
+protocol.
+
+```
+[display]
+lcd_type: aip31068_spi
+latch_pin:
+spi_software_sclk_pin:
+spi_software_mosi_pin:
+spi_software_miso_pin:
+#   The pins connected to the shift register controlling the display.
+#   The spi_software_miso_pin needs to be set to an unused pin of the
+#   printer mainboard as the shift register does not have a MISO pin,
+#   but the software spi implementation requires this pin to be
+#   configured.
 #line_length:
 #   Set the number of characters per line for an hd44780 type lcd.
 #   Possible values are 20 (default) and 16. The number of lines is
@@ -5004,8 +5040,9 @@ serial:
 ### [angle]
 
 Magnetic hall angle sensor support for reading stepper motor angle
-shaft measurements using a1333, as5047d, or tle5012b SPI chips.  The
-measurements are available via the [API Server](API_Server.md) and
+shaft measurements using a1333, as5047d, mt6816, mt6826s,
+or tle5012b SPI chips.
+The measurements are available via the [API Server](API_Server.md) and
 [motion analysis tool](Debugging.md#motion-analysis-and-data-logging).
 See the [G-Code reference](G-Codes.md#angle) for available commands.
 
@@ -5013,7 +5050,7 @@ See the [G-Code reference](G-Codes.md#angle) for available commands.
 [angle my_angle_sensor]
 sensor_type:
 #   The type of the magnetic hall sensor chip. Available choices are
-#   "a1333", "as5047d", and "tle5012b". This parameter must be
+#   "a1333", "as5047d", "mt6816", "mt6826s", and "tle5012b". This parameter must be
 #   specified.
 #sample_period: 0.000400
 #   The query period (in seconds) to use during measurements. The
