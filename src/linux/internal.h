@@ -19,7 +19,7 @@ void report_errno(char *where, int rc);
 int set_non_blocking(int fd);
 int set_close_on_exec(int fd);
 int console_setup(char *name);
-void console_sleep(sigset_t *sigset);
+void console_sleep(void);
 
 // timer.c
 int timer_check_periodic(uint32_t *ts);

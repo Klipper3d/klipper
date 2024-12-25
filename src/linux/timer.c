@@ -269,10 +269,7 @@ irq_wait(void)
 {
     // Must atomically sleep until signaled
     if (!readl(&TimerInfo.must_wake_timers)) {
-        timer_disable_signals();
-        if (!TimerInfo.must_wake_timers)
-            console_sleep(&TimerInfo.ss_sleep);
-        timer_enable_signals();
+        console_sleep();
     }
     irq_poll();
 }
