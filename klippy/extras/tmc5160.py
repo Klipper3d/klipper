@@ -284,9 +284,9 @@ class TMC5160CurrentHelper:
         self.fields.set_field("irun", irun)
     def _calc_globalscaler(self, current):
         cs = self._calc_current_bits(current)
-        globalscaler = int(
+        globalscaler = int(math.ceil(
             (current * 256.0 * math.sqrt(2.0) * self.sense_resistor * 32 / (
-            VREF * (1 + cs))) + 0.5)
+            VREF * (1 + cs)))))
         globalscaler = max(32, globalscaler)
         if globalscaler >= 256:
             globalscaler = 0
