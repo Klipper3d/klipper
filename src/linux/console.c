@@ -15,6 +15,7 @@
 #include <time.h> // struct timespec
 #include <unistd.h> // ttyname
 #include <pthread.h> // pthread_create
+#include <stdatomic.h> // atomic_store
 #include "board/irq.h" // irq_wait
 #include "board/misc.h" // console_sendf
 #include "command.h" // command_find_block
@@ -26,6 +27,7 @@ static struct pollfd main_pfd[1];
 static struct ring_buf outputq;
 static struct ring_buf inputq;
 static pthread_t main;
+static _Atomic int main_is_sleeping;
 static pthread_t reader;
 static pthread_t writer;
 #define MP_TTY_IDX   0
@@ -55,6 +57,8 @@ tty_reader(void *_unused)
         while (ring_buffer_available_to_write(&inputq) < ret)
             nanosleep(&(struct timespec){.tv_nsec = 10000}, NULL);
         ring_buffer_write(&inputq, buf, ret);
+        if (atomic_load(&main_is_sleeping))
+            pthread_kill(main, SIGUSR1);
     }
 
     return NULL;
@@ -64,12 +68,18 @@ static void *
 tty_writer(void *_unused)
 {
     static uint8_t buf[128];
+    // adjustable sleep
+    static uint32_t nsec = 1000000;
     while (1) {
         int len = ring_buffer_read(&outputq, buf, sizeof(buf));
         if (len == 0) {
-            nanosleep(&(struct timespec){.tv_nsec = 100000}, NULL);
+            if (nsec < 1000000)
+                nsec += 1000;
+            nanosleep(&(struct timespec){.tv_nsec = nsec}, NULL);
             continue;
         }
+        if (nsec > 1000)
+            nsec = nsec >> 1;
 
         int ret = write(main_pfd[MP_TTY_IDX].fd, buf, len);
         if (ret < 0)
@@ -109,6 +119,9 @@ set_close_on_exec(int fd)
     }
     return 0;
 }
+
+static void
+reader_signal(int signal);
 
 int
 console_setup(char *name)
@@ -164,6 +177,14 @@ console_setup(char *name)
     pthread_setschedparam(writer, SCHED_OTHER,
                           &(struct sched_param){.sched_priority = 0});
 
+    struct sigaction act = {.sa_handler = reader_signal,
+                            .sa_flags = SA_RESTART};
+    ret = sigaction(SIGUSR1, &act, NULL);
+    if (ret < 0){
+        report_errno("sigaction", ret);
+        return -1;
+    }
+
     return 0;
 }
 
@@ -175,6 +196,12 @@ console_setup(char *name)
 static struct task_wake console_wake;
 static uint8_t receive_buf[4096];
 static int receive_pos;
+
+static void
+reader_signal(int signal)
+{
+    sched_wake_task(&console_wake);
+}
 
 void *
 console_receive_buffer(void)
@@ -233,5 +260,7 @@ console_sleep(void)
         sched_wake_task(&console_wake);
         return;
     }
-    nanosleep(&(struct timespec){.tv_nsec = 500000}, NULL);
+    atomic_store(&main_is_sleeping, 1);
+    nanosleep(&(struct timespec){.tv_nsec = 1000000}, NULL);
+    atomic_store(&main_is_sleeping, 0);
 }
