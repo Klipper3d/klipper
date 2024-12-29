@@ -188,5 +188,5 @@ class SGP40:
 
 def load_config(config):
     # Register sensor
-    pheater = config.get_printer().lookup_object("heaters")
-    pheater.add_sensor_factory("SGP40", SGP40)
+    pheaters = config.get_printer().load_object(config, "heaters")
+    pheaters.add_sensor_factory("SGP40", SGP40)
