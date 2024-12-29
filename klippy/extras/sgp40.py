@@ -70,8 +70,9 @@ class SGP40:
             logging.error(self._log_message("Failed to read serial number, "
                                             "communication error"))
         else:
-            serial_str = ''.join([f'{x:02x}' for x in serial])
-            logging.info(self._log_message(f"Serial number: {serial_str}"))
+            serial_str = ''.join(["{:02x}".format(x) for x in serial])
+            logging.info(
+                self._log_message("Serial number: {}".format(serial_str)))
 
         # Perform a self-test with increased delay
         logging.info(self._log_message("Performing self-test"))
@@ -106,7 +107,8 @@ class SGP40:
             self.raw = value[0]
             self.voc = self.voc_algorithm.process(self.raw)
         except Exception as e:
-            logging.error(self._log_message(f"Error processing sample: {e}"))
+            logging.error(
+                self._log_message("Error processing sample: {}".format(e)))
 
         measured_time = self.reactor.monotonic()
         print_time = self.i2c.get_mcu().estimated_print_time(measured_time)
@@ -174,7 +176,7 @@ class SGP40:
         return crc & 0xFF
 
     def _log_message(self, message):
-        return f"SGP40 {self.name}: {message}"
+        return "SGP40 {}: {}".format(self.name, message)
 
     def get_status(self, eventtime):
         return {
