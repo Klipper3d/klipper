@@ -67,12 +67,12 @@ class SGP40:
         serial = self._write_command(SGP40_CMD["GET_SERIAL"], read_len=6,
                                      delay=.001)
         if serial is None:
-            logging.error(self._log_message("Failed to read serial number, "
-                                            "communication error"))
+            logging.error(self._log_message(
+                "Failed to read serial number, communication error"))
         else:
             serial_str = ''.join(["{:02x}".format(x) for x in serial])
-            logging.info(
-                self._log_message("Serial number: {}".format(serial_str)))
+            logging.info(self._log_message(
+                "Serial number: {serial}".format(serial=serial_str)))
 
         # Perform a self-test with increased delay
         logging.info(self._log_message("Performing self-test"))
@@ -86,14 +86,12 @@ class SGP40:
 
     def _sample_sgp40(self, eventtime):
         if self.temp_sensor is not None:
-            self.temp = self.printer.lookup_object(
-                "{}".format(self.temp_sensor)).get_status(eventtime)[
-                    "temperature"]
+            sensor = self.printer.lookup_object(self.temp_sensor)
+            self.temp = sensor.get_status(eventtime)["temperature"]
 
         if self.humidity_sensor is not None:
-            self.humidity = self.printer.lookup_object(
-                "{}".format(self.humidity_sensor)).get_status(eventtime)[
-                    "humidity"]
+            sensor = self.printer.lookup_object(self.humidity_sensor)
+            self.humidity = sensor.get_status(eventtime)["humidity"]
         else:
             # calculate humidity from temperature
             self.humidity = self._calculate_humidity(self.temp)
@@ -108,7 +106,7 @@ class SGP40:
             self.voc = self.voc_algorithm.process(self.raw)
         except Exception as e:
             logging.error(
-                self._log_message("Error processing sample: {}".format(e)))
+                self._log_message("Error processing sample: {error}".format(error=e)))
 
         measured_time = self.reactor.monotonic()
         print_time = self.i2c.get_mcu().estimated_print_time(measured_time)
@@ -176,7 +174,7 @@ class SGP40:
         return crc & 0xFF
 
     def _log_message(self, message):
-        return "SGP40 {}: {}".format(self.name, message)
+        return "SGP40 {name}: {msg}".format(name=self.name, msg=message)
 
     def get_status(self, eventtime):
         return {
