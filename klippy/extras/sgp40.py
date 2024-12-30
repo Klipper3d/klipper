@@ -2,14 +2,16 @@
 #
 # Copyright (C) 2024 Stefan Dej <meteyou@gmail.com>
 # Based on the Nevermore sgp40.py code:
-# https://github.com/nevermore3d/Nevermore_Max/blob/master/Software/Klipper/sgp40.py
+# https://github.com/nevermore3d/Nevermore_Max/blob/master/Software/Klipper/
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 #
 # The `VOCAlgorithm` class is based on the following work:
-# SPDX-FileCopyrightText: Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
+# SPDX-FileCopyrightText:
+# Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
 # SPDX-License-Identifier: MIT
-# Class and algorithm to convert Sensirion sgp40 raw reading to indexed voc readings.
+# Class and algorithm to convert Sensirion sgp40 raw reading to indexed voc
+# readings.
 # Author(s): yangfeng
 
 import logging
@@ -144,8 +146,8 @@ class SGP40:
             self.raw = value[0]
             self.voc = self.voc_algorithm.process(self.raw)
         except Exception as e:
-            logging.error(
-                self._log_message("Error processing sample: {error}".format(error=e)))
+            logging.error(self._log_message(
+                "Error processing sample: {error}".format(error=e)))
 
         measured_time = self.reactor.monotonic()
         print_time = self.i2c.get_mcu().estimated_print_time(measured_time)
