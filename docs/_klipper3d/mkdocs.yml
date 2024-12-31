@@ -129,6 +129,7 @@ nav:
     - Benchmarks.md
     - CONTRIBUTING.md
     - Packaging.md
+    - Python_Versions.md
   - Device Specific Documents:
     - Example_Configs.md
     - SDCard_Updates.md
