@@ -74,6 +74,7 @@ class SGP40:
         self.report_time = config.getint('sgp40_report_time', 1, minval=1)
         self.temp_sensor = config.get('ref_temp_sensor', None)
         self.humidity_sensor = config.get('ref_humidity_sensor', None)
+        self.soft_reset_on_startup = config.get('soft_reset_on_startup', True)
 
         self.temp = 25
         self.humidity = 50
@@ -99,10 +100,10 @@ class SGP40:
     def _init_sgp40(self):
         logging.info(self._log_message("Initializing sensor"))
 
-        # Perform a soft reset with increased delay
-        logging.info(self._log_message("Performing soft reset"))
-        # Data sheet specifies a maximum of 0.6ms for the soft reset
-        self._write_command(SGP40_CMD["SOFT_RESET"], delay=.001)
+        if self.soft_reset_on_startup:
+            logging.info(self._log_message("Performing soft reset"))
+            # Data sheet specifies a maximum of 0.6ms for the soft reset
+            self._write_command(SGP40_CMD["SOFT_RESET"], delay=.001)
 
         # Get the serial number to verify communication
         serial = self._write_command(SGP40_CMD["GET_SERIAL"], read_len=6,
