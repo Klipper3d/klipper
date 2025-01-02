@@ -4843,6 +4843,9 @@ chip: ADS1115
 #   Default value is 4.096V. The maximum voltage range used for the input. This
 #   scales all values read from the ADC. Options are: 6.144V, 4.096V, 2.048V,
 #   1.024V, 0.512V, 0.256V
+#adc_voltage: 3.3
+#   The suppy voltage for the device. This allows additional software scaling
+#   for all values read from the ADC.
 i2c_mcu: host
 i2c_bus: i2c.1
 #address_pin: GND

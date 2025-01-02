@@ -85,6 +85,14 @@ ADS1X1X_PGA = {
     '0.512V': 0x0800,  # +/-0.512V range = Gain 8
     '0.256V': 0x0A00  # +/-0.256V range = Gain 16
 }
+ADS1X1X_PGA_VALUE = {
+    0x0000: 6.144,
+    0x0200: 4.096,
+    0x0400: 2.048,
+    0x0600: 1.024,
+    0x0800: 0.512,
+    0x0A00: 0.256,
+}
 ADS111X_RESOLUTION = 32767.0
 ADS111X_PGA_SCALAR = {
     0x0000: 6.144 / ADS111X_RESOLUTION,  # +/-6.144V range = Gain 2/3
@@ -176,6 +184,7 @@ class ADS1X1X_chip:
         self._ppins.register_chip(self.name, self)
 
         self.pga = config.getchoice('pga', ADS1X1X_PGA, '4.096V')
+        self.adc_voltage = config.getfloat('adc_voltage', above=0., default=3.3)
         # Comparators are not implemented, they would only be useful if the
         # alert pin is used, which we haven't made configurable.
         # But that wouldn't be useful for a normal temperature sensor anyway.
@@ -335,6 +344,14 @@ class ADS1X1X_pin:
                 target_value = sample / ADS101X_RESOLUTION
             else:
                 target_value = sample / ADS111X_RESOLUTION
+
+            # Thermistors expect a value between 0 and 1 to work. If we use a
+            # PGA with 4.096V but supply only 3.3V, the reference voltage for
+            # voltage divider is only 3.3V, not 4.096V. So we remap the range
+            # from what the PGA allows as range to end up between 0 and 1 for
+            # the thermistor logic to work as expected.
+            target_value = target_value * (ADS1X1X_PGA_VALUE[self.chip.pga] / \
+                                           self.chip.adc_voltage)
 
             if target_value > self.maxval or target_value < self.minval:
                 self.invalid_count = self.invalid_count + 1
