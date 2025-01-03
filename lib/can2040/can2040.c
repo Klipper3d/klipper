@@ -1,6 +1,6 @@
 // Software CANbus implementation for rp2040
 //
-// Copyright (C) 2022,2023  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2022-2024  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -19,6 +19,13 @@
 /****************************************************************
  * rp2040 and low-level helper functions
  ****************************************************************/
+
+// Determine if the target is an rp2350
+#ifdef PICO_RP2350
+  #define IS_RP2350 1
+#else
+  #define IS_RP2350 0
+#endif
 
 // Helper compiler definitions
 #define barrier() __asm__ __volatile__("": : :"memory")
@@ -123,19 +130,29 @@ static const uint16_t can2040_program_instructions[] = {
 #define SI_RX_DATA   PIO_IRQ0_INTE_SM1_RXNEMPTY_BITS
 #define SI_TXPENDING PIO_IRQ0_INTE_SM1_BITS // Misc bit manually forced
 
+// Return the gpio bank offset (on rp2350 chips)
+static uint32_t
+pio_gpiobase(struct can2040 *cd)
+{
+    if (!IS_RP2350)
+        return 0;
+    return (cd->gpio_rx > 31 || cd->gpio_tx > 31) ? 16 : 0;
+}
+
 // Setup PIO "sync" state machine (state machine 0)
 static void
 pio_sync_setup(struct can2040 *cd)
 {
     pio_hw_t *pio_hw = cd->pio_hw;
     pio_sm_hw_t *sm = &pio_hw->sm[0];
+    uint32_t gpio_rx = (cd->gpio_rx - pio_gpiobase(cd)) & 0x1f;
     sm->execctrl = (
-        cd->gpio_rx << PIO_SM0_EXECCTRL_JMP_PIN_LSB
+        gpio_rx << PIO_SM0_EXECCTRL_JMP_PIN_LSB
         | (can2040_offset_sync_end - 1) << PIO_SM0_EXECCTRL_WRAP_TOP_LSB
         | can2040_offset_sync_signal_start << PIO_SM0_EXECCTRL_WRAP_BOTTOM_LSB);
     sm->pinctrl = (
         1 << PIO_SM0_PINCTRL_SET_COUNT_LSB
-        | cd->gpio_rx << PIO_SM0_PINCTRL_SET_BASE_LSB);
+        | gpio_rx << PIO_SM0_PINCTRL_SET_BASE_LSB);
     sm->instr = 0xe080; // set pindirs, 0
     sm->pinctrl = 0;
     pio_hw->txf[0] = 9 + 6 * PIO_CLOCK_PER_BIT / 2;
@@ -149,10 +166,11 @@ pio_rx_setup(struct can2040 *cd)
 {
     pio_hw_t *pio_hw = cd->pio_hw;
     pio_sm_hw_t *sm = &pio_hw->sm[1];
+    uint32_t gpio_rx = (cd->gpio_rx - pio_gpiobase(cd)) & 0x1f;
     sm->execctrl = (
         (can2040_offset_shared_rx_end - 1) << PIO_SM0_EXECCTRL_WRAP_TOP_LSB
         | can2040_offset_shared_rx_read << PIO_SM0_EXECCTRL_WRAP_BOTTOM_LSB);
-    sm->pinctrl = cd->gpio_rx << PIO_SM0_PINCTRL_IN_BASE_LSB;
+    sm->pinctrl = gpio_rx << PIO_SM0_PINCTRL_IN_BASE_LSB;
     sm->shiftctrl = 0; // flush fifo on a restart
     sm->shiftctrl = (PIO_SM0_SHIFTCTRL_FJOIN_RX_BITS
                      | PIO_RX_WAKE_BITS << PIO_SM0_SHIFTCTRL_PUSH_THRESH_LSB
@@ -169,7 +187,8 @@ pio_match_setup(struct can2040 *cd)
     sm->execctrl = (
         (can2040_offset_match_end - 1) << PIO_SM0_EXECCTRL_WRAP_TOP_LSB
         | can2040_offset_shared_rx_read << PIO_SM0_EXECCTRL_WRAP_BOTTOM_LSB);
-    sm->pinctrl = cd->gpio_rx << PIO_SM0_PINCTRL_IN_BASE_LSB;
+    uint32_t gpio_rx = (cd->gpio_rx - pio_gpiobase(cd)) & 0x1f;
+    sm->pinctrl = gpio_rx << PIO_SM0_PINCTRL_IN_BASE_LSB;
     sm->shiftctrl = 0;
     sm->instr = 0xe040; // set y, 0
     sm->instr = 0xa0e2; // mov osr, y
@@ -183,16 +202,18 @@ pio_tx_setup(struct can2040 *cd)
 {
     pio_hw_t *pio_hw = cd->pio_hw;
     pio_sm_hw_t *sm = &pio_hw->sm[3];
+    uint32_t gpio_rx = (cd->gpio_rx - pio_gpiobase(cd)) & 0x1f;
+    uint32_t gpio_tx = (cd->gpio_tx - pio_gpiobase(cd)) & 0x1f;
     sm->execctrl = (
-        cd->gpio_rx << PIO_SM0_EXECCTRL_JMP_PIN_LSB
+        gpio_rx << PIO_SM0_EXECCTRL_JMP_PIN_LSB
         | can2040_offset_tx_conflict << PIO_SM0_EXECCTRL_WRAP_TOP_LSB
         | can2040_offset_tx_conflict << PIO_SM0_EXECCTRL_WRAP_BOTTOM_LSB);
     sm->shiftctrl = (PIO_SM0_SHIFTCTRL_FJOIN_TX_BITS
                      | PIO_SM0_SHIFTCTRL_AUTOPULL_BITS);
     sm->pinctrl = (1 << PIO_SM0_PINCTRL_SET_COUNT_LSB
                    | 1 << PIO_SM0_PINCTRL_OUT_COUNT_LSB
-                   | cd->gpio_tx << PIO_SM0_PINCTRL_SET_BASE_LSB
-                   | cd->gpio_tx << PIO_SM0_PINCTRL_OUT_BASE_LSB);
+                   | gpio_tx << PIO_SM0_PINCTRL_SET_BASE_LSB
+                   | gpio_tx << PIO_SM0_PINCTRL_OUT_BASE_LSB);
     sm->instr = 0xe001; // set pins, 1
     sm->instr = 0xe081; // set pindirs, 1
 }
@@ -382,6 +403,10 @@ pio_setup(struct can2040 *cd, uint32_t sys_clock, uint32_t bitrate)
 {
     // Configure pio0 clock
     uint32_t rb = cd->pio_num ? RESETS_RESET_PIO1_BITS : RESETS_RESET_PIO0_BITS;
+#if IS_RP2350
+    if (cd->pio_num == 2)
+        rb = RESETS_RESET_PIO2_BITS;
+#endif
     rp2040_clear_reset(rb);
 
     // Setup and sync pio state machine clocks
@@ -391,11 +416,16 @@ pio_setup(struct can2040 *cd, uint32_t sys_clock, uint32_t bitrate)
     for (i=0; i<4; i++)
         pio_hw->sm[i].clkdiv = div << PIO_SM0_CLKDIV_FRAC_LSB;
 
+    // Configure gpiobase (on rp2350)
+#if IS_RP2350
+    pio_hw->gpiobase = pio_gpiobase(cd);
+#endif
+
     // Configure state machines
     pio_sm_setup(cd);
 
     // Map Rx/Tx gpios
-    uint32_t pio_func = cd->pio_num ? 7 : 6;
+    uint32_t pio_func = 6 + cd->pio_num;
     rp2040_gpio_peripheral(cd->gpio_rx, pio_func, 1);
     rp2040_gpio_peripheral(cd->gpio_tx, pio_func, 0);
 }
@@ -495,7 +525,7 @@ unstuf_restore_state(struct can2040_bitunstuffer *bu, uint32_t data)
 
 // Pull bits from unstuffer (as specified in unstuf_set_count() )
 static int
-unstuf_pull_bits(struct can2040_bitunstuffer *bu)
+unstuf_pull_bits_rp2040(struct can2040_bitunstuffer *bu)
 {
     uint32_t sb = bu->stuffed_bits, edges = sb ^ (sb >> 1);
     uint32_t e2 = edges | (edges >> 1), e4 = e2 | (e2 >> 2), rm_bits = ~e4;
@@ -539,6 +569,49 @@ unstuf_pull_bits(struct can2040_bitunstuffer *bu)
     }
 }
 
+// Pull bits from unstuffer (optimized for rp2350)
+static int
+unstuf_pull_bits(struct can2040_bitunstuffer *bu)
+{
+    if (!IS_RP2350)
+        return unstuf_pull_bits_rp2040(bu);
+    uint32_t sb = bu->stuffed_bits, edges = sb ^ (sb >> 1);
+    uint32_t e2 = edges | (edges >> 1), e4 = e2 | (e2 >> 2), rm_bits = ~e4;
+    uint32_t cs = bu->count_stuff, cu = bu->count_unstuff;
+    for (;;) {
+        if (!cs)
+            // Need more data
+            return 1;
+        uint32_t try_cnt = cs > cu ? cu : cs;
+        uint32_t try_mask = ((1 << try_cnt) - 1) << (cs + 1 - try_cnt);
+        uint32_t rm_masked_bits = rm_bits & try_mask;
+        if (likely(!rm_masked_bits)) {
+            // No stuff bits in try_cnt bits - copy into unstuffed_bits
+            bu->count_unstuff = cu = cu - try_cnt;
+            bu->count_stuff = cs = cs - try_cnt;
+            bu->unstuffed_bits |= ((sb >> cs) & ((1 << try_cnt) - 1)) << cu;
+            if (! cu)
+                // Extracted desired bits
+                return 0;
+            // Need more data
+            return 1;
+        }
+        // Copy any leading bits prior to stuff bit (may be zero)
+        uint32_t copy_cnt = cs - (31 - __builtin_clz(rm_masked_bits));
+        cs -= copy_cnt;
+        bu->count_unstuff = cu = cu - copy_cnt;
+        bu->unstuffed_bits |= ((sb >> cs) & ((1 << copy_cnt) - 1)) << cu;
+        // High bit is now a stuff bit - remove it
+        bu->count_stuff = cs = cs - 1;
+        if (unlikely(rm_bits & (1 << cs))) {
+            // Six consecutive bits - a bitstuff error
+            if (sb & (1 << cs))
+                return -1;
+            return -2;
+        }
+    }
+}
+
 // Return most recent raw (still stuffed) bits
 static uint32_t
 unstuf_get_raw(struct can2040_bitunstuffer *bu)
@@ -553,7 +626,7 @@ unstuf_get_raw(struct can2040_bitunstuffer *bu)
 
 // Stuff 'num_bits' bits in '*pb' - upper bits must already be stuffed
 static uint32_t
-bitstuff(uint32_t *pb, uint32_t num_bits)
+bitstuff_rp2040(uint32_t *pb, uint32_t num_bits)
 {
     uint32_t b = *pb, count = num_bits;
     for (;;) {
@@ -586,6 +659,34 @@ bitstuff(uint32_t *pb, uint32_t num_bits)
         }
     }
 done:
+    *pb = b;
+    return count;
+}
+
+// Stuff 'num_bits' bits in '*pb' (optimized for rp2350)
+static uint32_t
+bitstuff(uint32_t *pb, uint32_t num_bits)
+{
+    if (!IS_RP2350)
+        return bitstuff_rp2040(pb, num_bits);
+    uint32_t b = *pb, count = num_bits;
+    for (;;) {
+        uint32_t edges = b ^ (b >> 1);
+        uint32_t e2 = edges | (edges >> 1), e4 = e2 | (e2 >> 2), add_bits = ~e4;
+        uint32_t mask = (1 << num_bits) - 1, add_masked_bits = add_bits & mask;
+        if (!add_masked_bits)
+            // No more stuff bits needed
+            break;
+        // Insert a stuff bit
+        uint32_t stuff_pos = 1 + 31 - __builtin_clz(add_masked_bits);
+        uint32_t low_mask = (1 << stuff_pos) - 1, low = b & low_mask;
+        uint32_t high = (b & ~(low_mask >> 1)) << 1;
+        b = high ^ low ^ (1 << (stuff_pos - 1));
+        count += 1;
+        if (stuff_pos <= 4)
+            break;
+        num_bits = stuff_pos - 4;
+    }
     *pb = b;
     return count;
 }
@@ -1326,6 +1427,12 @@ can2040_setup(struct can2040 *cd, uint32_t pio_num)
     memset(cd, 0, sizeof(*cd));
     cd->pio_num = !!pio_num;
     cd->pio_hw = cd->pio_num ? pio1_hw : pio0_hw;
+#if IS_RP2350
+    if (pio_num == 2) {
+        cd->pio_num = pio_num;
+        cd->pio_hw = pio2_hw;
+    }
+#endif
 }
 
 // API function to configure callback
