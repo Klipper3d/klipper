@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
+import math
 import pins
 from . import manual_probe
 
@@ -14,12 +15,23 @@ can travel further (the Z minimum position can be negative).
 """
 
 # Calculate the average Z from a set of positions
-def calc_probe_z_average(positions, method='average'):
+def calc_probe_z_average(positions, method='average', trunc_count=0):
+
     if method != 'median':
         # Use mean average
-        count = float(len(positions))
-        return [sum([pos[i] for pos in positions]) / count
+        count = len(positions)
+
+        # Perform truncated mean if required
+        if trunc_count > 0:
+            z_sorted = sorted(positions, key=(lambda p: p[2]))
+            start_index = trunc_count // 2
+            end_index = count - math.ceil(trunc_count / 2.0)
+            return calc_probe_z_average(
+                z_sorted[start_index:end_index], 'average', 0)
+
+        return [sum([pos[i] for pos in positions]) / float(count)
                 for i in range(3)]
+
     # Use median
     z_sorted = sorted(positions, key=(lambda p: p[2]))
     middle = len(positions) // 2
@@ -259,6 +271,19 @@ class ProbeSessionHelper:
                                                  minval=0.)
         self.samples_retries = config.getint('samples_tolerance_retries', 0,
                                              minval=0)
+        self.samples_trunc_count = config.getint('samples_trunc_count', 0,
+                                             minval=0)
+
+        if self.samples_trunc_count > 0:
+            if self.samples_result != 'average':
+                raise config.error("samples_trunc_count is only "
+                                   "valid with samples_result=average")
+
+            if not self.sample_count - self.samples_trunc_count > 2:
+                raise config.error(
+                    "samples_trunc_count must be either zero or "
+                    "such that: sample_count - samples_trunc_count > 2")
+
         # Session state
         self.multi_probe_pending = False
         self.results = []
@@ -299,13 +324,27 @@ class ProbeSessionHelper:
                                            self.samples_tolerance, minval=0.)
         samples_retries = gcmd.get_int("SAMPLES_TOLERANCE_RETRIES",
                                        self.samples_retries, minval=0)
+        samples_trunc_count = gcmd.get_int("SAMPLES_TRUNC_COUNT",
+                                       self.samples_trunc_count, minval=0)
         samples_result = gcmd.get("SAMPLES_RESULT", self.samples_result)
+
+        if samples_trunc_count > 0:
+            if samples_result != 'average':
+                raise gcmd.error("samples_trunc_count is only "
+                                   "valid with samples_result=average")
+
+            if not samples - samples_trunc_count > 2:
+                raise gcmd.error(
+                    "samples_trunc_count must be either zero or "
+                    "such that: sample_count - samples_trunc_count > 2")
+
         return {'probe_speed': probe_speed,
                 'lift_speed': lift_speed,
                 'samples': samples,
                 'sample_retract_dist': sample_retract_dist,
                 'samples_tolerance': samples_tolerance,
                 'samples_tolerance_retries': samples_retries,
+                'samples_trunc_count': samples_trunc_count,
                 'samples_result': samples_result}
     def _probe(self, speed):
         toolhead = self.printer.lookup_object('toolhead')
@@ -355,7 +394,8 @@ class ProbeSessionHelper:
                     probexy + [pos[2] + params['sample_retract_dist']],
                     params['lift_speed'])
         # Calculate result
-        epos = calc_probe_z_average(positions, params['samples_result'])
+        epos = calc_probe_z_average(positions, params['samples_result'],
+                                    params['samples_trunc_count'])
         self.results.append(epos)
     def pull_probed_results(self):
         res = self.results

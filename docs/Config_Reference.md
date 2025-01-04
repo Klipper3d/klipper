@@ -1929,6 +1929,17 @@ z_offset:
 #   not obtained in the given number of retries then an error is
 #   reported. The default is zero which causes an error to be reported
 #   on the first sample that exceeds samples_tolerance.
+#samples_trunc_count: 0
+#   Setting this to a non-zero value effectively enables a 'truncated mean' algorithm
+#   which removes 'samples_trunc_count' number of highest and lowest probe values
+#   before taking an average. The number which are removed is specified by this configruation value.
+#   This averaging option gives the best of both worlds between the median and the mean (average)
+#   since it is resistant to outliers but still averages the remaining results.
+#   This option is useful when you are taking 5 or more samples (using a
+#   samples_trunc_count of 2 for example).
+#   Note that if this option is configured such that there is less than 3 samples remaining
+#   after removing the truncated samples (i.e. samples_trunc_count) then this is considered a
+#   configuration error since this is the same as simply taking a median.
 #activate_gcode:
 #   A list of G-Code commands to execute prior to each probe attempt.
 #   See docs/Command_Templates.md for G-Code format. This may be
@@ -1997,6 +2008,7 @@ control_pin:
 #samples_result:
 #samples_tolerance:
 #samples_tolerance_retries:
+#samples_trunc_count:
 #   See the "probe" section for information on these parameters.
 ```
 
@@ -2048,6 +2060,7 @@ z_offset:
 #samples_result:
 #samples_tolerance:
 #samples_tolerance_retries:
+#samples_trunc_count:
 #activate_gcode:
 #deactivate_gcode:
 #deactivate_on_each_sample:
@@ -2088,6 +2101,7 @@ sensor_type: ldc1612
 #samples_result:
 #samples_tolerance:
 #samples_tolerance_retries:
+#samples_trunc_count:
 #   See the "probe" section for information on these parameters.
 ```
 
