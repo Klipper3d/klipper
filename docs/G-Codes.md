@@ -736,6 +736,13 @@ above the supplied MINIMUM and/or at or below the supplied MAXIMUM.
 [TARGET=<target_temperature>]`: Sets the target temperature for a
 heater. If a target temperature is not supplied, the target is 0.
 
+### [homing_heaters]
+
+#### SET_HOMING_HEATERS [THRESHOLD=<temperature_threshold>]
+`SET_HOMING_HEATERS [THRESHOLD=<temperature_threshold>]`: Setting this to any value at all causes homing procedures to wait until the heaters have reached
+thier target temperatures AFTER probing has occurred.
+This is helpful during bed mesh calibration in the event that the probe is sensitive to the EMI caused by the bed but the bed temperature must be maintained during probing. To disable this, simply run the `SET_HOMING_HEATERS` command while omitting the `THRESHOLD` parameter.
+
 ### [idle_timeout]
 
 The idle_timeout module is automatically loaded.
