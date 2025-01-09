@@ -592,9 +592,11 @@ debugging command; use SET_GCODE_OFFSET and/or G92 for regular axis
 transformations. If an axis is not specified then it will default to the
 position that the head was last commanded to. Setting an incorrect or
 invalid position may lead to internal software errors. Use the CLEAR
-parameter to forget the homing state for the given axes. This command
-may invalidate future boundary checks; issue a G28 afterwards to reset
-the kinematics.
+parameter to forget the homing state for the given axes. Note that CLEAR
+will not override the previous functionality; if an axis is not specified
+to CLEAR it will have its kinematic position set as per above. This
+command may invalidate future boundary checks; issue a G28 afterwards to
+reset the kinematics.
 
 ### [gcode]
 
