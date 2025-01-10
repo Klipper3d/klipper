@@ -74,10 +74,10 @@ class HybridCoreXYKinematics:
             else:
                 rail = self.rails[axis]
             self.limits[axis] = rail.get_range()
-    def clear_homing_state(self, axes):
-        for i, _ in enumerate(self.limits):
-            if i in axes:
-                self.limits[i] = (1.0, -1.0)
+    def clear_homing_state(self, clear_axes):
+        for axis, axis_name in enumerate("xyz"):
+            if axis_name in clear_axes:
+                self.limits[axis] = (1.0, -1.0)
     def home_axis(self, homing_state, axis, rail):
         position_min, position_max = rail.get_range()
         hi = rail.get_homing_info()

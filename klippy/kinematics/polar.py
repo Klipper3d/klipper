@@ -49,11 +49,11 @@ class PolarKinematics:
             self.limit_z = self.rails[1].get_range()
         if "x" in homing_axes and "y" in homing_axes:
             self.limit_xy2 = self.rails[0].get_range()[1]**2
-    def clear_homing_state(self, axes):
-        if 0 in axes or 1 in axes:
+    def clear_homing_state(self, clear_axes):
+        if "x" in clear_axes or "y" in clear_axes:
             # X and Y cannot be cleared separately
             self.limit_xy2 = -1.
-        if 2 in axes:
+        if "z" in clear_axes:
             self.limit_z = (1.0, -1.0)
     def _home_axis(self, homing_state, axis, rail):
         # Determine movement

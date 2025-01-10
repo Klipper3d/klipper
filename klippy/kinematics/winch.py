@@ -36,7 +36,7 @@ class WinchKinematics:
     def set_position(self, newpos, homing_axes):
         for s in self.steppers:
             s.set_position(newpos)
-    def clear_homing_state(self, axes):
+    def clear_homing_state(self, clear_axes):
         # XXX - homing not implemented
         pass
     def home(self, homing_state):

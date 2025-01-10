@@ -40,7 +40,7 @@ class SafeZHoming:
                 toolhead.set_position(pos, homing_axes="z")
                 toolhead.manual_move([None, None, self.z_hop],
                                      self.z_hop_speed)
-                toolhead.get_kinematics().clear_homing_state((2,))
+                toolhead.get_kinematics().clear_homing_state("z")
             elif pos[2] < self.z_hop:
                 # If the Z axis is homed, and below z_hop, lift it to z_hop
                 toolhead.manual_move([None, None, self.z_hop],
