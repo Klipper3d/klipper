@@ -39,7 +39,7 @@ class CoreXYKinematics:
     def set_position(self, newpos, homing_axes):
         for i, rail in enumerate(self.rails):
             rail.set_position(newpos)
-            if i in homing_axes:
+            if "xyz"[i] in homing_axes:
                 self.limits[i] = rail.get_range()
     def clear_homing_state(self, axes):
         for i, _ in enumerate(self.limits):

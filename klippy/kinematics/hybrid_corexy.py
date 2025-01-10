@@ -67,7 +67,8 @@ class HybridCoreXYKinematics:
     def set_position(self, newpos, homing_axes):
         for i, rail in enumerate(self.rails):
             rail.set_position(newpos)
-        for axis in homing_axes:
+        for axis_name in homing_axes:
+            axis = "xyz".index(axis_name)
             if self.dc_module and axis == self.dc_module.axis:
                 rail = self.dc_module.get_primary_rail().get_rail()
             else:

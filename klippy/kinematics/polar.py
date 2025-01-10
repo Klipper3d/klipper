@@ -45,9 +45,9 @@ class PolarKinematics:
     def set_position(self, newpos, homing_axes):
         for s in self.steppers:
             s.set_position(newpos)
-        if 2 in homing_axes:
+        if "z" in homing_axes:
             self.limit_z = self.rails[1].get_range()
-        if 0 in homing_axes and 1 in homing_axes:
+        if "x" in homing_axes and "y" in homing_axes:
             self.limit_xy2 = self.rails[0].get_range()[1]**2
     def clear_homing_state(self, axes):
         if 0 in axes or 1 in axes:

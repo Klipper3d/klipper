@@ -37,7 +37,7 @@ class SafeZHoming:
             if 'z' not in kin_status['homed_axes']:
                 # Always perform the z_hop if the Z axis is not homed
                 pos[2] = 0
-                toolhead.set_position(pos, homing_axes=[2])
+                toolhead.set_position(pos, homing_axes="z")
                 toolhead.manual_move([None, None, self.z_hop],
                                      self.z_hop_speed)
                 toolhead.get_kinematics().clear_homing_state((2,))

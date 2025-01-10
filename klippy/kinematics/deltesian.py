@@ -87,7 +87,7 @@ class DeltesianKinematics:
         self.axes_min = toolhead.Coord(*[l[0] for l in self.limits], e=0.)
         self.axes_max = toolhead.Coord(*[l[1] for l in self.limits], e=0.)
         self.homed_axis = [False] * 3
-        self.set_position([0., 0., 0.], ())
+        self.set_position([0., 0., 0.], "")
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
     def _actuator_to_cartesian(self, sp):
@@ -113,8 +113,9 @@ class DeltesianKinematics:
     def set_position(self, newpos, homing_axes):
         for rail in self.rails:
             rail.set_position(newpos)
-        for n in homing_axes:
-            self.homed_axis[n] = True
+        for axis_name in homing_axes:
+            axis = "xyz".index(axis_name)
+            self.homed_axis[axis] = True
     def clear_homing_state(self, axes):
         for i, _ in enumerate(self.limits):
             if i in axes:
