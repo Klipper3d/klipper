@@ -51,9 +51,12 @@ class PolarKinematics:
             self.limit_z = self.rails[1].get_range()
         if 0 in homing_axes and 1 in homing_axes:
             self.limit_xy2 = self.rails[0].get_range()[1]**2
-    def note_z_not_homed(self):
-        # Helper for Safe Z Home
-        self.limit_z = (1.0, -1.0)
+    def clear_homing_state(self, axes):
+        if 0 in axes or 1 in axes:
+            # X and Y cannot be cleared separately
+            self.limit_xy2 = -1.
+        if 2 in axes:
+            self.limit_z = (1.0, -1.0)
     def _home_axis(self, homing_state, axis, rail):
         # Determine movement
         position_min, position_max = rail.get_range()
@@ -86,8 +89,7 @@ class PolarKinematics:
         if home_z:
             self._home_axis(homing_state, 2, self.rails[1])
     def _motor_off(self, print_time):
-        self.limit_z = (1.0, -1.0)
-        self.limit_xy2 = -1.
+        self.clear_homing_state((0, 1, 2))
     def check_move(self, move):
         end_pos = move.end_pos
         xy2 = end_pos[0]**2 + end_pos[1]**2
