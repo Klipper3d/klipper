@@ -403,7 +403,7 @@ class PrinterRail:
             changed_invert = pin_params['invert'] != endstop['invert']
             changed_pullup = pin_params['pullup'] != endstop['pullup']
             if changed_invert or changed_pullup:
-                raise error("Pinter rail %s shared endstop pin %s "
+                raise error("Printer rail %s shared endstop pin %s "
                             "must specify the same pullup/invert settings" % (
                                 self.get_name(), pin_name))
         mcu_endstop.add_stepper(stepper)
