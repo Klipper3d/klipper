@@ -1851,10 +1851,10 @@ should only need to update the host software.</p>
    be efficient as it is typically only called during homing and
    probing operations.</li>
 <li>Other methods. Implement the <code>check_move()</code>, <code>get_status()</code>,
-   <code>get_steppers()</code>, <code>home()</code>, and <code>set_position()</code> methods. These
-   functions are typically used to provide kinematic specific checks.
-   However, at the start of development one can use boiler-plate code
-   here.</li>
+   <code>get_steppers()</code>, <code>home()</code>, <code>clear_homing_state()</code>, and <code>set_position()</code>
+   methods. These functions are typically used to provide kinematic
+   specific checks. However, at the start of development one can use
+   boiler-plate code here.</li>
 <li>Implement test cases. Create a g-code file with a series of moves
    that can test important cases for the given kinematics. Follow the
    <a href="Debugging.html">debugging documentation</a> to convert this g-code file
