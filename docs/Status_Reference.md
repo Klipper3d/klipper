@@ -256,6 +256,11 @@ object is available if any heater is defined):
   e.g. `["tmc2240 stepper_x"]`.  While a temperature sensor is always
   available to read, a temperature monitor may not be available and
   will return null in such case.
+- `temperature_wait`: Indicates if G-Code processing is stalled
+  waiting for a requested temperature (typically via
+  `TEMPERATURE_WAIT`, `M109`, or `M190` commands). The value will
+  contain the name of the sensor that is causing the stall or `None`
+  if no wait is in progress.
 
 ## idle_timeout
 
