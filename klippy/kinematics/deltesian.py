@@ -41,8 +41,6 @@ class DeltesianKinematics:
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
-        config.get_printer().register_event_handler(
-            "stepper_enable:motor_off", self._motor_off)
         self.limits = [(1.0, -1.0)] * 3
         # X axis limits
         min_angle = config.getfloat('min_angle', MIN_ANGLE,
@@ -146,8 +144,6 @@ class DeltesianKinematics:
             else:
                 forcepos[1] += 1.5 * (position_max - hi.position_endstop)
             homing_state.home_rails([self.rails[2]], forcepos, homepos)
-    def _motor_off(self, print_time):
-        self.homed_axis = [False] * 3
     def check_move(self, move):
         limits = list(map(list, self.limits))
         spos, epos = move.start_pos, move.end_pos

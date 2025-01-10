@@ -21,8 +21,6 @@ class RotaryDeltaKinematics:
             stepper_configs[2], need_position_minmax=False,
             default_position_endstop=a_endstop, units_in_radians=True)
         self.rails = [rail_a, rail_b, rail_c]
-        config.get_printer().register_event_handler("stepper_enable:motor_off",
-                                                    self._motor_off)
         # Read config
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat('max_z_velocity', max_velocity,
@@ -101,8 +99,6 @@ class RotaryDeltaKinematics:
         #forcepos[2] = self.calibration.actuator_to_cartesian(min_angles)[2]
         forcepos[2] = -1.
         homing_state.home_rails(self.rails, forcepos, self.home_position)
-    def _motor_off(self, print_time):
-        self.clear_homing_state((0, 1, 2))
     def check_move(self, move):
         end_pos = move.end_pos
         end_xy2 = end_pos[0]**2 + end_pos[1]**2

@@ -21,8 +21,6 @@ class CoreXYKinematics:
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
-        config.get_printer().register_event_handler("stepper_enable:motor_off",
-                                                    self._motor_off)
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(
@@ -63,8 +61,6 @@ class CoreXYKinematics:
                 forcepos[axis] += 1.5 * (position_max - hi.position_endstop)
             # Perform homing
             homing_state.home_rails([rail], forcepos, homepos)
-    def _motor_off(self, print_time):
-        self.clear_homing_state((0, 1, 2))
     def _check_endstops(self, move):
         end_pos = move.end_pos
         for i in (0, 1, 2):
