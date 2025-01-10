@@ -3,12 +3,19 @@
 # Copyright (C) 2016-2024  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+
+import logging
+from collections import namedtuple
 from . import pulse_counter, output_pin
+
+SpeedAtTime = namedtuple('SpeedAtTime', ['speed', 'print_time'])
 
 class Fan:
     def __init__(self, config, default_shutdown_speed=0.):
+        self.name = config.get_name()
         self.printer = config.get_printer()
         self.last_fan_value = self.last_req_value = 0.
+
         # Read config
         self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
         self.kick_start_time = config.getfloat('kick_start_time', 0.1,
@@ -39,6 +46,9 @@ class Fan:
 
         # Setup tachometer
         self.tachometer = FanTachometer(config)
+        min_rpm = config.getint('tachometer_min_rpm', default=1, minval=0)
+        if min_rpm > 0:
+            self.tachometer.setup_rpm_error_callback(min_rpm, self._fan_error)
 
         # Register callbacks
         self.printer.register_event_handler("gcode:request_restart",
@@ -63,9 +73,11 @@ class Fan:
             self.last_req_value = value
             self.last_fan_value = self.max_power
             self.mcu_fan.set_pwm(print_time, self.max_power)
+            self.tachometer.set_fan_speed(value, print_time)
             return "delay", self.kick_start_time
         self.last_fan_value = self.last_req_value = value
         self.mcu_fan.set_pwm(print_time, value)
+        self.tachometer.set_fan_speed(value, print_time)
     def set_speed(self, value, print_time=None):
         self.gcrq.send_async_request(value, print_time)
     def set_speed_from_command(self, value):
@@ -74,16 +86,25 @@ class Fan:
         self.set_speed(0., print_time)
 
     def get_status(self, eventtime):
-        tachometer_status = self.tachometer.get_status(eventtime)
+        rpm = self.tachometer.get_rpm()
         return {
             'speed': self.last_req_value,
-            'rpm': tachometer_status['rpm'],
+            'rpm': rpm,
         }
+
+    def _fan_error(self):
+        msg = "Fan '%s' Failure" % (self.name,)
+        logging.error(msg)
+        self.printer.invoke_shutdown(msg)
 
 class FanTachometer:
     def __init__(self, config):
         printer = config.get_printer()
         self._freq_counter = None
+        self._rpm = None
+        self._min_rpm = 0
+        self._error_callback = None
+        self._fan_speed_schedule = [SpeedAtTime(0, 0)]
 
         pin = config.get('tachometer_pin', None)
         if pin is not None:
@@ -93,13 +114,37 @@ class FanTachometer:
             sample_time = 1.
             self._freq_counter = pulse_counter.FrequencyCounter(
                 printer, pin, sample_time, poll_time)
+            self._freq_counter.setup_callback(self._counter_callback)
 
-    def get_status(self, eventtime):
-        if self._freq_counter is not None:
-            rpm = self._freq_counter.get_frequency() * 30. / self.ppr
-        else:
-            rpm = None
-        return {'rpm': rpm}
+    def setup_rpm_error_callback(self, min_rpm, cb):
+        self._min_rpm = min_rpm
+        self._error_callback = cb
+
+    def set_fan_speed(self, speed, print_time):
+        if not self._error_callback: return
+        self._fan_speed_schedule.append(SpeedAtTime(speed, print_time))
+
+    def _counter_callback(self, count_time, frequency):
+        self._rpm = frequency * 30 / self.ppr
+
+        if not self._error_callback: return
+
+        # Drop older entries. Results in one current, and zero or more future.
+        schedule = self._fan_speed_schedule
+        while len(schedule) >= 2 and schedule[1].print_time < count_time:
+            del schedule[0]
+        current = schedule[0]
+
+        # Give the fan and the measurements some time to settle.
+        if count_time - current.print_time < 2.5: return
+
+        # Check if the rpm is more than min_rpm scaled by the speed
+        if self._rpm >= self._min_rpm * current.speed: return
+
+        self._error_callback()
+
+    def get_rpm(self):
+        return self._rpm
 
 class PrinterFan:
     def __init__(self, config):
