@@ -1,6 +1,6 @@
 # Main code build rules
 
-src-y += sched.c command.c basecmd.c debugcmds.c
+src-y += sched.c command.c basecmd.c debugcmds.c printf.c
 src-$(CONFIG_HAVE_GPIO) += initial_pins.c gpiocmds.c stepper.c endstop.c \
     trsync.c
 src-$(CONFIG_HAVE_GPIO_ADC) += adccmds.c
@@ -20,6 +20,6 @@ src-$(CONFIG_WANT_LIS2DW) += sensor_lis2dw.c
 src-$(CONFIG_WANT_MPU9250) += sensor_mpu9250.c
 src-$(CONFIG_WANT_HX71X) += sensor_hx71x.c
 src-$(CONFIG_WANT_ADS1220) += sensor_ads1220.c
-src-$(CONFIG_WANT_LDC1612) += sensor_ldc1612.c
+src-$(CONFIG_WANT_LDC1612) += sensor_ldc1612.c sensor_ldc1612_ng.c
 src-$(CONFIG_WANT_SENSOR_ANGLE) += sensor_angle.c
 src-$(CONFIG_NEED_SENSOR_BULK) += sensor_bulk.c
