@@ -711,6 +711,33 @@
     薪酬使用概览
   </a>
   
+    <nav class="md-nav" aria-label="薪酬使用概览">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-usage-x-axis-calibration" class="md-nav__link">
+    Basic Usage: X-Axis Calibration
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#for-y-axis-calibration" class="md-nav__link">
+    For Y-Axis Calibration
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automatic-calibration-for-both-axes" class="md-nav__link">
+    Automatic Calibration for Both Axes
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1384,6 +1411,33 @@
     薪酬使用概览
   </a>
   
+    <nav class="md-nav" aria-label="薪酬使用概览">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-usage-x-axis-calibration" class="md-nav__link">
+    Basic Usage: X-Axis Calibration
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#for-y-axis-calibration" class="md-nav__link">
+    For Y-Axis Calibration
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automatic-calibration-for-both-axes" class="md-nav__link">
+    Automatic Calibration for Both Axes
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1420,19 +1474,43 @@ bias</a>. It may result in probe operations such as <a href="Bed_Mesh.html">Bed 
 <blockquote>
 <p><strong>提示：</strong>请确保正确设置<a href="Config_Reference.html#Probe">Probe X和Y Offset</a>，因为它们对校准影响很大。</p>
 </blockquote>
+<h3 id="basic-usage-x-axis-calibration">Basic Usage: X-Axis Calibration<a class="headerlink" href="#basic-usage-x-axis-calibration" title="Permanent link">&para;</a></h3>
 <ol>
-<li>设置好[AXIS_TWIST_COMPOMENT]模块后，执行<code>AXIS_TWIST_COMCOMPATION_CALIBRATE</code></li>
+<li>After setting up the <code>[axis_twist_compensation]</code> module, run:</li>
 </ol>
+<div class="highlight"><pre><span></span><code>AXIS_TWIST_COMPENSATION_CALIBRATE
+</code></pre></div>
+
+<p>This command will calibrate the X-axis by default. - The calibration wizard will prompt you to measure the probe Z offset at several points along the bed. - By default, the calibration uses 3 points, but you can specify a different number with the option: <code>SAMPLE_COUNT=&lt;value&gt;</code></p>
+<ol>
+<li><strong>Adjust Your Z Offset:</strong> After completing the calibration, be sure to [adjust your Z offset] (Probe_Calibrate.md#calibrating-probe-z-offset).</li>
+<li>
+<p><strong>Perform Bed Leveling Operations:</strong> Use probe-based operations as needed, such as:</p>
 <ul>
-<li>校准向导将提示您在床上的几个点上测量探头Z偏移量</li>
-<li>该校准默认为3分，但您可以使用选项<code>SAMPLE_COUNT=</code>来使用不同的数字。</li>
+<li><a href="G-Codes.html#screws_tilt_adjust">Screws Tilt Adjust</a></li>
+<li><a href="G-Codes.html#z_tilt_adjust">Z Tilt Adjust</a></li>
 </ul>
-<ol>
-<li><a href="Probe_Calibrate.html#calibrating-probe-z-offset">调整您的Z offset</a></li>
-<li>执行自动/探针式床铺操作，如<a href="G-Codes.html#螺旋倾斜调整">螺旋倾斜调整</a>、<a href="G-Codes.html#z_倾斜调整">Z倾斜调整</a>等</li>
-<li>原点所有轴，然后根据需要执行<a href="Bed_Mesh.html">Bed Mesh</a></li>
-<li>执行测试打印，然后根据需要执行任何<a href="Axis_Twist_Compensation.html#fine-tuning">fine-tuning</a></li>
+</li>
+<li>
+<p><strong>Finalize the Setup:</strong></p>
+<ul>
+<li>Home all axes, and perform a <a href="Bed_Mesh.html">Bed Mesh</a> if necessary.</li>
+<li>Run a test print, followed by any <a href="Axis_Twist_Compensation.html#fine-tuning">fine-tuning</a> if needed.</li>
+</ul>
+</li>
 </ol>
+<h3 id="for-y-axis-calibration">For Y-Axis Calibration<a class="headerlink" href="#for-y-axis-calibration" title="Permanent link">&para;</a></h3>
+<p>The calibration process for the Y-axis is similar to the X-axis. To calibrate the Y-axis, use:</p>
+<div class="highlight"><pre><span></span><code>AXIS_TWIST_COMPENSATION_CALIBRATE AXIS=Y
+</code></pre></div>
+
+<p>This will guide you through the same measuring process as for the X-axis.</p>
+<h3 id="automatic-calibration-for-both-axes">Automatic Calibration for Both Axes<a class="headerlink" href="#automatic-calibration-for-both-axes" title="Permanent link">&para;</a></h3>
+<p>To perform automatic calibration for both the X and Y axes without manual intervention, use:</p>
+<div class="highlight"><pre><span></span><code>AXIS_TWIST_COMPENSATION_CALIBRATE AUTO=True
+</code></pre></div>
+
+<p>In this mode, the calibration process will run for both axes automatically.</p>
 <blockquote>
 <p><strong>提示：</strong>床温、喷嘴温度和尺寸似乎对校准过程没有影响。</p>
 </blockquote>

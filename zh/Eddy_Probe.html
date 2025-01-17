@@ -1412,7 +1412,7 @@
 # 温度探针配置文件
 </code></pre></div>
 
-<p>在<a href="Config_Reference.html#temperature_probe">configuration reference</a>有更多关于如何配置<code>temperature_probe</code>的内容。建议配置<code>calibration_position</code>， <code>calibration_extruder_temp</code>， <code>extruder_heating_z</code>, 和 <code>calibration_bed_temp</code>选项，这会在接下来的校准过程中自动完成一些步骤。</p>
+<p>See the <a href="Config_Reference.html#temperature_probe">configuration reference</a> for further details on how to configure a <code>temperature_probe</code>. It is advised to configure the <code>calibration_position</code>, <code>calibration_extruder_temp</code>, <code>extruder_heating_z</code>, and <code>calibration_bed_temp</code> options, as doing so will automate some of the steps outlined below. If the printer to be calibrated is enclosed, it is strongly recommended to set the <code>max_validation_temp</code> option to a value between 100 and 120.</p>
 <p>Eddy probe的制造商提供了一些可以使用的校准预设可以手动添加到<code>[probe_eddy_current]</code>中到<code>drift_calibration</code>选项中。如果他们没提供预设的校准文件或者预设的校准文件不适用于你的系统，<code>temperature_probe</code>模块可以使用TEMPERATURE_PROBE_CALIBRATE`命令来进行手动校准。</p>
 <p>在进行校准前，用户应该知道大概的探针线圈最大温度。这个温度应该被配置到<code>TEMPERATURE_PROBE_CALIBRATE</code>命令的<code>TARGET</code>选项中。校准的目的是尽量有一个最宽的温度范围，因此最好在打印机冷却后进行校准，并且在线圈到达最高温度的时候停止。</p>
 <p>当<code>[temperature_probe]</code> 被配置后，可以使用以下步骤进行热偏移校准：</p>

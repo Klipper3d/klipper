@@ -1968,7 +1968,7 @@ fade_target: 0
 <li><code>fade_target: 0</code> <em>默认值：网格的平均 Z 值</em> <code>fade_target</code> 可以被视为在淡化完成后应用于整个床面的额外 Z 偏移量。一般来说，我们希望这个值为 0，但有些情况下不应该是这样的。例如，假设您在床上的归位位置是一个异常值，比床面的平均探测高度低 0.2 毫米。如果 <code>fade_target</code> 为 0，淡化将会使整个床面平均降低 0.2 毫米。通过将 <code>fade_target</code> 设置为 0.2，淡化区域将会提高到 0.2 毫米，但是，床面的其余部分将保持原大小。通常最好将 <code>fade_target</code> 留在配置中，以便使用网格的平均高度，但是如果您想在床面的特定部分上打印，则可能需要手动调整淡化目标。</li>
 </ul>
 <h3 id="_9">配置零点参考位置<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
-<p>许多探头容易出现“漂移”，即：由于热或干扰而引起的探头不准确。这使得计算探测器的z偏移量具有挑战性，特别是在不同床温的情况下。因此，一些打印机使用端止器来定位Z轴，并使用探头来校准网格。在这种配置中，可以对网格进行偏移，从而使(X，Y)<code>参考位置‘应用零点调整。‘参考位置’应该是床上进行[Z_ENDSTOP_CALIBRATE](./Manual_Level#calibrating-a-z-endstop)试纸测试的位置。Bed_Mesh模块提供了</code>ZERO_REFERENCE_Position`选项来指定该坐标：</p>
+<p>Many probes are susceptible to "drift", ie: inaccuracies in probing introduced by heat or interference. This can make calculating the probe's z-offset challenging, particularly at different bed temperatures. As such, some printers use an endstop for homing the Z axis and a probe for calibrating the mesh. In this configuration it is possible offset the mesh so that the (X, Y) <code>reference position</code> applies zero adjustment. The <code>reference postion</code> should be the location on the bed where a <a href="Manual_Level.html#calibrating-a-z-endstop">Z_ENDSTOP_CALIBRATE</a> paper test is performed. The bed_mesh module provides the <code>zero_reference_position</code> option for specifying this coordinate:</p>
 <div class="highlight"><pre><span></span><code>[bed_mesh]
 speed: 120
 horizontal_move_z: 5

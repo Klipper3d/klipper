@@ -1412,7 +1412,7 @@
 # 溫度感測器設定...
 </code></pre></div>
 
-<p>更多關於設定 <code>temperature_probe</code> 相關細節請見<a href="https://www.klipper3d.org/zh-Hant/Config_Reference.html#_18">配置參考</a>。建議先行設定 <code>calibration_position</code>、<code>calibration_extruder_temp</code>、<code>extruder_heating_z</code>、<code>calibration_bed_temp</code> 部分，便能自動化下述一些步驟。若要校準的列印機是封閉式的，強烈建議將 <code>max_validation_temp</code> 設定在 100\~120 之間。</p>
+<p>See the <a href="Config_Reference.html#temperature_probe">configuration reference</a> for further details on how to configure a <code>temperature_probe</code>. It is advised to configure the <code>calibration_position</code>, <code>calibration_extruder_temp</code>, <code>extruder_heating_z</code>, and <code>calibration_bed_temp</code> options, as doing so will automate some of the steps outlined below. If the printer to be calibrated is enclosed, it is strongly recommended to set the <code>max_validation_temp</code> option to a value between 100 and 120.</p>
 <p>渦電流探針的製造商可能會提供預設的飄移補償，可以將它手動添加到 <code>[probe_eddy_current]</code> 部分中的 <code>drift_calibration</code> 設定。若是沒有、或預設補償效果不佳，可以輸入 <code>TEMPERATURE_PROBE_CALIBRATE</code> 指令以使用 <code>[temperature_probe]</code> 功能中的手動校準流程。</p>
 <p>在開始校準之前，使用者必須知道探針線圈可能達到的最高溫度，這個溫度會在 <code>TEMPERATURE_PROBE_CALIBRATE</code> 指令中作為 <code>TARGET</code> 。校準的目標是涵蓋最大的溫度範圍，因此應在列印機冷卻後開始；並在線圈達到最高溫度時結束。</p>
 <p>在 <code>[temperature_probe]</code> 設定完成後，按照下列步驟執行熱飄移校準：</p>

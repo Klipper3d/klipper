@@ -1198,6 +1198,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#same70-step-rate-benchmark" class="md-nav__link">
+    SAME70 step rate benchmark
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#ar100" class="md-nav__link">
     AR100 步进率基准测试
   </a>
@@ -1205,8 +1212,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#rp2040" class="md-nav__link">
-    RP2040 步速率基准测试
+  <a href="#rpxxxx-step-rate-benchmark" class="md-nav__link">
+    RPxxxx step rate benchmark
   </a>
   
 </li>
@@ -1616,6 +1623,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#same70-step-rate-benchmark" class="md-nav__link">
+    SAME70 step rate benchmark
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#ar100" class="md-nav__link">
     AR100 步进率基准测试
   </a>
@@ -1623,8 +1637,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#rp2040" class="md-nav__link">
-    RP2040 步速率基准测试
+  <a href="#rpxxxx-step-rate-benchmark" class="md-nav__link">
+    RPxxxx step rate benchmark
   </a>
   
 </li>
@@ -2122,6 +2136,34 @@ finalize_config crc=0
 </tr>
 </tbody>
 </table>
+<h3 id="same70-step-rate-benchmark">SAME70 step rate benchmark<a class="headerlink" href="#same70-step-rate-benchmark" title="Permanent link">&para;</a></h3>
+<p>The following configuration sequence is used on the SAME70:</p>
+<div class="highlight"><pre><span></span><code>allocate_oids count=3
+config_stepper oid=0 step_pin=PC18 dir_pin=PB5 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=1 step_pin=PC16 dir_pin=PD10 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=2 step_pin=PC28 dir_pin=PA4 invert_step=-1 step_pulse_ticks=0
+finalize_config crc=0
+</code></pre></div>
+
+<p>The test was last run on commit <code>34e9ea55</code> with gcc version <code>arm-none-eabi-gcc (NixOS 10.3-2021.10) 10.3.1</code> on a SAME70Q20B micro-controller.</p>
+<table>
+<thead>
+<tr>
+<th>same70</th>
+<th>ticks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1个步进电机</td>
+<td>45</td>
+</tr>
+<tr>
+<td>3个步进电机</td>
+<td>190</td>
+</tr>
+</tbody>
+</table>
 <h3 id="ar100">AR100 步进率基准测试<a class="headerlink" href="#ar100" title="Permanent link">&para;</a></h3>
 <p>以下配置顺序被用于AR100 CPU（全志A64）：</p>
 <div class="highlight"><pre><span></span><code>allocate_oids count=3
@@ -2131,7 +2173,7 @@ config_stepper oid=2 step_pin=PL12 dir_pin=PE16 invert_step=-1 step_pulse_ticks=
 finalize_config crc=0
 </code></pre></div>
 
-<p>该测试最后一次运行在提交<code>08d037c6</code> ，gcc版本<code>or1k-linux-musl-gcc（GCC）9.2.0</code> ，全志A64-H微控制器上进行。</p>
+<p>The test was last run on commit <code>b7978d37</code> with gcc version <code>or1k-linux-musl-gcc (GCC) 9.2.0</code> on an Allwinner A64-H micro-controller.</p>
 <table>
 <thead>
 <tr>
@@ -2150,8 +2192,8 @@ finalize_config crc=0
 </tr>
 </tbody>
 </table>
-<h3 id="rp2040">RP2040 步速率基准测试<a class="headerlink" href="#rp2040" title="Permanent link">&para;</a></h3>
-<p>RP2040 上使用以下配置序列：</p>
+<h3 id="rpxxxx-step-rate-benchmark">RPxxxx step rate benchmark<a class="headerlink" href="#rpxxxx-step-rate-benchmark" title="Permanent link">&para;</a></h3>
+<p>The following configuration sequence is used on the RP2040 and RP2350:</p>
 <div class="highlight"><pre><span></span><code>allocate_oids count=3
 config_stepper oid=0 step_pin=gpio25 dir_pin=gpio3 invert_step=-1 step_pulse_ticks=0
 config_stepper oid=1 step_pin=gpio26 dir_pin=gpio4 invert_step=-1 step_pulse_ticks=0
@@ -2159,11 +2201,11 @@ config_stepper oid=2 step_pin=gpio27 dir_pin=gpio5 invert_step=-1 step_pulse_tic
 finalize_config crc=0
 </code></pre></div>
 
-<p>该测试最后一次在 Raspberry Pi Pico 板上使用 gcc 版本 <code>arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0</code>和提交 <code>59314d99</code> 运行。</p>
+<p>The test was last run on commit <code>f6718291</code> with gcc version <code>arm-none-eabi-gcc (Fedora 14.1.0-1.fc40) 14.1.0</code> on Raspberry Pi Pico and Pico 2 boards.</p>
 <table>
 <thead>
 <tr>
-<th>rp2040</th>
+<th>rp2040 (*)</th>
 <th>ticks</th>
 </tr>
 </thead>
@@ -2178,6 +2220,25 @@ finalize_config crc=0
 </tr>
 </tbody>
 </table>
+<table>
+<thead>
+<tr>
+<th>rp2350</th>
+<th>ticks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1个步进电机</td>
+<td>36</td>
+</tr>
+<tr>
+<td>3个步进电机</td>
+<td>169</td>
+</tr>
+</tbody>
+</table>
+<p>(*) Note that the reported rp2040 ticks are relative to a 12Mhz scheduling timer and do not correspond to its 125Mhz internal ARM processing rate. It is expected that 5 scheduling ticks corresponds to ~47 ARM core cycles and 22 scheduling ticks corresponds to ~224 ARM core cycles.</p>
 <h3 id="linux-mcu">Linux MCU 步速率基准测试<a class="headerlink" href="#linux-mcu" title="Permanent link">&para;</a></h3>
 <p>树莓派上使用以下配置序列：</p>
 <div class="highlight"><pre><span></span><code>allocate_oids count=3
@@ -2311,9 +2372,15 @@ get_uptime
 </tr>
 <tr>
 <td>rp2040 (USB)</td>
-<td>873K</td>
-<td>c5667193</td>
-<td>arm-none-eabi-gcc (Fedora 10.2.0-4.fc34) 10.2.0</td>
+<td>885K</td>
+<td>f6718291</td>
+<td>arm-none-eabi-gcc (Fedora 14.1.0-1.fc40) 14.1.0</td>
+</tr>
+<tr>
+<td>rp2350 (USB)</td>
+<td>885K</td>
+<td>f6718291</td>
+<td>arm-none-eabi-gcc (Fedora 14.1.0-1.fc40) 14.1.0</td>
 </tr>
 </tbody>
 </table>

@@ -912,8 +912,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#lis2dw" class="md-nav__link">
-    配置LIS2DW系列
+  <a href="#configure-lis2dw-series-over-spi" class="md-nav__link">
+    Configure LIS2DW series over SPI
   </a>
   
 </li>
@@ -988,6 +988,13 @@
           <li class="md-nav__item">
   <a href="#max_accel" class="md-nav__link">
     选择 max_accel
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unreliable-measurements-of-resonance-frequencies" class="md-nav__link">
+    Unreliable measurements of resonance frequencies
   </a>
   
 </li>
@@ -1774,8 +1781,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#lis2dw" class="md-nav__link">
-    配置LIS2DW系列
+  <a href="#configure-lis2dw-series-over-spi" class="md-nav__link">
+    Configure LIS2DW series over SPI
   </a>
   
 </li>
@@ -1855,6 +1862,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#unreliable-measurements-of-resonance-frequencies" class="md-nav__link">
+    Unreliable measurements of resonance frequencies
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#_11" class="md-nav__link">
     自定义测试轴
   </a>
@@ -1911,10 +1925,10 @@
 
 
 <h1 id="_1">共振值测量<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
-<p>Klipper has built-in support for the ADXL345, MPU-9250 and LIS2DW compatible accelerometers which can be used to measure resonance frequencies of the printer for different axes, and auto-tune <a href="Resonance_Compensation.html">input shapers</a> to compensate for resonances. Note that using accelerometers requires some soldering and crimping. The ADXL345/LIS2DW can be connected to the SPI interface of a Raspberry Pi or MCU board (it needs to be reasonably fast). The MPU family can be connected to the I2C interface of a Raspberry Pi directly, or to an I2C interface of an MCU board that supports 400kbit/s <em>fast mode</em> in Klipper.</p>
+<p>Klipper has built-in support for the ADXL345, MPU-9250, LIS2DW and LIS3DH compatible accelerometers which can be used to measure resonance frequencies of the printer for different axes, and auto-tune <a href="Resonance_Compensation.html">input shapers</a> to compensate for resonances. Note that using accelerometers requires some soldering and crimping. The ADXL345 can be connected to the SPI interface of a Raspberry Pi or MCU board (it needs to be reasonably fast). The MPU family can be connected to the I2C interface of a Raspberry Pi directly, or to an I2C interface of an MCU board that supports 400kbit/s <em>fast mode</em> in Klipper. The LIS2DW and LIS3DH can be connected to either SPI or I2C with the same considerations as above.</p>
 <p>When sourcing accelerometers, be aware that there are a variety of different PCB board designs and different clones of them. If it is going to be connected to a 5V printer MCU ensure it has a voltage regulator and level shifters.</p>
-<p>For ADXL345s/LIS2DWs, make sure that the board supports SPI mode (a small number of boards appear to be hard-configured for I2C by pulling SDO to GND).</p>
-<p>For MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500s there are also a variety of board designs and clones with different I2C pull-up resistors which will need supplementing.</p>
+<p>For ADXL345s, make sure that the board supports SPI mode (a small number of boards appear to be hard-configured for I2C by pulling SDO to GND).</p>
+<p>For MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500s and LIS2DW/LIS3DH there are also a variety of board designs and clones with different I2C pull-up resistors which will need supplementing.</p>
 <h2 id="mcus-with-klipper-i2c-fast-mode-support">MCUs with Klipper I2C <em>fast-mode</em> Support<a class="headerlink" href="#mcus-with-klipper-i2c-fast-mode-support" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1939,6 +1953,11 @@
 <td align="center">AVR AT90</td>
 <td align="left">-</td>
 <td align="left">AT90usb646, AT90usb1286</td>
+</tr>
+<tr>
+<td align="center">SAMD</td>
+<td align="left">SAMC21G18</td>
+<td align="left">SAMC21G18, SAMD21G18, SAMD21E18, SAMD21J18, SAMD21E15, SAMD51G19, SAMD51J19, SAMD51N19, SAMD51P20, SAME51J19, SAME51N19, SAME54P20</td>
 </tr>
 </tbody>
 </table>
@@ -2195,10 +2214,15 @@ sudo apt install python3-numpy python3-matplotlib libatlas-base-dev libopenblas-
 </code></pre></div>
 
 <p>接下来，为了在Klipper环境中安装NumPy，运行命令：</p>
-<div class="highlight"><pre><span></span><code>~/klippy-env/bin/pip install -v numpy
+<div class="highlight"><pre><span></span><code>~/klippy-env/bin/pip install -v &quot;numpy&lt;1.26&quot;
 </code></pre></div>
 
-<p>请注意，根据CPU性能的不同，这可能需要<em>很长</em>时间，最长可达10-20分钟。请耐心等待安装完成。在某些情况下，如果主板的RAM太少，安装可能会失败，您需要启用交换。</p>
+<p>Note that, depending on the performance of the CPU, it may take <em>a lot</em> of time, up to 10-20 minutes. Be patient and wait for the completion of the installation. On some occasions, if the board has too little RAM the installation may fail and you will need to enable swap. Also note the forced version, due to newer versions of NumPY having requirements that may not be satisfied in some klipper python environments.</p>
+<p>Once installed please check that no errors show from the command:</p>
+<div class="highlight"><pre><span></span><code>~/klippy-env/bin/python -c &#39;import numpy;&#39;
+</code></pre></div>
+
+<p>The correct output should simply be a new line.</p>
 <h4 id="rpiadxl345">使用RPI配置ADXL345<a class="headerlink" href="#rpiadxl345" title="Permanent link">&para;</a></h4>
 <p>首先，检查并按照<a href="rpi_微控制器.md">RPI微控制器文档</a>中的说明在Raspberry PI上设置“Linux MCU”。这将配置在您的PI上运行的第二个Klipper实例。</p>
 <p>通过运行<code>sudo raspi-config</code> 后的 "Interfacing options"菜单中启用 SPI 以确保Linux SPI 驱动已启用。</p>
@@ -2257,7 +2281,7 @@ pin: adxl:gpio23
 </code></pre></div>
 
 <p>通过<code>RESTART</code>命令重启Klipper。</p>
-<h4 id="lis2dw">配置LIS2DW系列<a class="headerlink" href="#lis2dw" title="Permanent link">&para;</a></h4>
+<h4 id="configure-lis2dw-series-over-spi">Configure LIS2DW series over SPI<a class="headerlink" href="#configure-lis2dw-series-over-spi" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code>[MCU列表]。
 #将&lt;mySerial&gt;更改为您在上面找到的任何内容。例如,。
 #usb-klipper_rp2040_E661640843545B2E-if00。
@@ -2482,6 +2506,8 @@ max_smoothing: 0.25  # an example
 
 <p>so that it can calculate the maximum acceleration recommendations correctly. Note that the <code>SHAPER_CALIBRATE</code> command already takes the configured <code>square_corner_velocity</code> parameter into account, and there is no need to specify it explicitly.</p>
 <p>如果重新校准一个整形器，并且建议的整形器配置的报告平滑度与你在以前的校准中得到的几乎相同，这个步骤可以被跳过。</p>
+<h3 id="unreliable-measurements-of-resonance-frequencies">Unreliable measurements of resonance frequencies<a class="headerlink" href="#unreliable-measurements-of-resonance-frequencies" title="Permanent link">&para;</a></h3>
+<p>Sometimes the resonance measurements can produce bogus results, leading to the incorrect suggestions for the input shapers. This can be caused by a variety of reasons, including running fans on the toolhead, incorrect position or non-rigid mounting of the accelerometer, or mechanical problems such as loose belts or binding or bumpy axis. Keep in mind that all fans should be disabled for resonance testing, especially the noisy ones, and that the accelerometer should be rigidly mounted on the corresponding moving part (e.g. on the bed itself for the bed slinger, or on the extruder of the printer itself and not the carriage, and some people get better results by mounting the accelerometer on the nozzle itself). As for mechanical problems, the user should inspect if there is any fault that can be fixed with a moving axis (e.g. linear guide rails cleaned up and lubricated and V-slot wheels tension adjusted correctly). If none of that helps, a user may try the other shapers from the produced list besides the one recommended by default.</p>
 <h3 id="_11">自定义测试轴<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
 <p><code>TEST_RESONANCES</code>命令支持自定义轴。虽然这对输入整形器校准并不真正有用，但它可用于深入研究打印机共振，并检查皮带张力等。</p>
 <p>要检查CoreXY打印机上的皮带张力，请执行</p>

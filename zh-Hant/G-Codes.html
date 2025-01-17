@@ -872,6 +872,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#angle_chip_calibrate" class="md-nav__link">
+    ANGLE_CHIP_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#angle_debug_read" class="md-nav__link">
     ANGLE_DEBUG_READ
   </a>
@@ -1951,6 +1958,26 @@
           <li class="md-nav__item">
   <a href="#set_pin_1" class="md-nav__link">
     SET_PIN
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quad_gantry_level" class="md-nav__link">
+    [quad_gantry_level]
+  </a>
+  
+    <nav class="md-nav" aria-label="[quad_gantry_level]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quad_gantry_level_1" class="md-nav__link">
+    QUAD_GANTRY_LEVEL
   </a>
   
 </li>
@@ -3092,6 +3119,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#angle_chip_calibrate" class="md-nav__link">
+    ANGLE_CHIP_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#angle_debug_read" class="md-nav__link">
     ANGLE_DEBUG_READ
   </a>
@@ -4181,6 +4215,26 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#quad_gantry_level" class="md-nav__link">
+    [quad_gantry_level]
+  </a>
+  
+    <nav class="md-nav" aria-label="[quad_gantry_level]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quad_gantry_level_1" class="md-nav__link">
+    QUAD_GANTRY_LEVEL
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#query_adc" class="md-nav__link">
     [query_adc]
   </a>
@@ -4750,6 +4804,11 @@
 <p>The following commands are available when an <a href="Config_Reference.html#angle">angle config section</a> is enabled.</p>
 <h4 id="angle_calibrate">ANGLE_CALIBRATE<a class="headerlink" href="#angle_calibrate" title="Permanent link">&para;</a></h4>
 <p><code>ANGLE_CALIBRATE CHIP=&lt;chip_name&gt;</code>: Perform angle calibration on the given sensor (there must be an <code>[angle chip_name]</code> config section that has specified a <code>stepper</code> parameter). IMPORTANT - this tool will command the stepper motor to move without checking the normal kinematic boundary limits. Ideally the motor should be disconnected from any printer carriage before performing calibration. If the stepper can not be disconnected from the printer, make sure the carriage is near the center of its rail before starting calibration. (The stepper motor may move forwards or backwards two full rotations during this test.) After completing this test use the <code>SAVE_CONFIG</code> command to save the calibration data to the config file. In order to use this tool the Python "numpy" package must be installed (see the <a href="Measuring_Resonances.html#software-installation">measuring resonance document</a> for more information).</p>
+<h4 id="angle_chip_calibrate">ANGLE_CHIP_CALIBRATE<a class="headerlink" href="#angle_chip_calibrate" title="Permanent link">&para;</a></h4>
+<p><code>ANGLE_CHIP_CALIBRATE CHIP=&lt;chip_name&gt;</code>: Perform internal sensor calibration, if implemented (MT6826S/MT6835).</p>
+<ul>
+<li><strong>MT68XX</strong>: The motor should be disconnected from any printer carriage before performing calibration. After calibration, the sensor should be reset by disconnecting the power.</li>
+</ul>
 <h4 id="angle_debug_read">ANGLE_DEBUG_READ<a class="headerlink" href="#angle_debug_read" title="Permanent link">&para;</a></h4>
 <p><code>ANGLE_DEBUG_READ CHIP=&lt;config_name&gt; REG=&lt;register&gt;</code>: Queries sensor register "register" (e.g. 44 or 0x2C). Can be useful for debugging purposes. This is only available for tle5012b chips.</p>
 <h4 id="angle_debug_write">ANGLE_DEBUG_WRITE<a class="headerlink" href="#angle_debug_write" title="Permanent link">&para;</a></h4>
@@ -4758,7 +4817,12 @@
 <p>The following commands are available when the <a href="Config_Reference.html#axis_twist_compensation">axis_twist_compensation config
 section</a> is enabled.</p>
 <h4 id="axis_twist_compensation_calibrate">AXIS_TWIST_COMPENSATION_CALIBRATE<a class="headerlink" href="#axis_twist_compensation_calibrate" title="Permanent link">&para;</a></h4>
-<p><code>AXIS_TWIST_COMPENSATION_CALIBRATE [SAMPLE_COUNT=&lt;value&gt;]</code>: Initiates the X twist calibration wizard. <code>SAMPLE_COUNT</code> specifies the number of points along the X axis to calibrate at and defaults to 3.</p>
+<p><code>AXIS_TWIST_COMPENSATION_CALIBRATE [AXIS=&lt;X|Y&gt;] [AUTO=&lt;True|False&gt;] [SAMPLE_COUNT=&lt;value&gt;]</code></p>
+<p>Calibrates axis twist compensation by specifying the target axis or enabling automatic calibration.</p>
+<ul>
+<li><strong>AXIS:</strong> Define the axis (<code>X</code> or <code>Y</code>) for which the twist compensation will be calibrated. If not specified, the axis defaults to <code>'X'</code>.</li>
+<li><strong>AUTO:</strong> Enables automatic calibration mode. When <code>AUTO=True</code>, the calibration will run for both the X and Y axes. In this mode, <code>AXIS</code> cannot be specified. If both <code>AXIS</code> and <code>AUTO</code> are provided, an error will be raised.</li>
+</ul>
 <h3 id="bed_mesh">[bed_mesh]<a class="headerlink" href="#bed_mesh" title="Permanent link">&para;</a></h3>
 <p>當啟用 <a href="Config_Reference.html#bed_mesh">bed_mesh config section</a> 時，以下命令可用（另請參閱 <a href="Bed_Mesh.html">bed mesh guide</a>）。</p>
 <h4 id="bed_mesh_calibrate">BED_MESH_CALIBRATE<a class="headerlink" href="#bed_mesh_calibrate" title="Permanent link">&para;</a></h4>
@@ -4862,6 +4926,7 @@ section</a> is enabled.</p>
 <p>當啟用 <a href="Config_Reference.html#fan_generic">fan_generic config section</a> 時，以下命令可用。</p>
 <h4 id="set_fan_speed">SET_FAN_SPEED<a class="headerlink" href="#set_fan_speed" title="Permanent link">&para;</a></h4>
 <p><code>SET_FAN_SPEED FAN=config_name SPEED=&lt;速度&gt;</code>該命令設定風扇的速度。"速度" 必須在0.0到1.0之間。</p>
+<p><code>SET_FAN_SPEED PIN=config_name TEMPLATE=&lt;template_name&gt; [&lt;param_x&gt;=&lt;literal&gt;]</code>: If <code>TEMPLATE</code> is specified then it assigns a <a href="Config_Reference.html#display_template">display_template</a> to the given fan. For example, if one defined a <code>[display_template my_fan_template]</code> config section then one could assign <code>TEMPLATE=my_fan_template</code> here. The display_template should produce a string containing a floating point number with the desired value. The template will be continuously evaluated and the fan will be automatically set to the resulting speed. One may set display_template parameters to use during template evaluation (parameters will be parsed as Python literals). If TEMPLATE is an empty string then this command will clear any previous template assigned to the pin (one can then use <code>SET_FAN_SPEED</code> commands to manage the values directly).</p>
 <h3 id="filament_switch_sensor">[filament_switch_sensor]<a class="headerlink" href="#filament_switch_sensor" title="Permanent link">&para;</a></h3>
 <p>當啟用 <a href="Config_Reference.html#filament_switch_sensor">filament_switch_sensor</a> 或 <a href="Config_Reference.html#filament_motion_sensor">filament_motion_sensor</a> 配置部分時，以下命令可用。</p>
 <h4 id="query_filament_sensor">QUERY_FILAMENT_SENSOR<a class="headerlink" href="#query_filament_sensor" title="Permanent link">&para;</a></h4>
@@ -4886,7 +4951,7 @@ section</a> is enabled.</p>
 <h4 id="force_move_1">FORCE_MOVE<a class="headerlink" href="#force_move_1" title="Permanent link">&para;</a></h4>
 <p><code>FORCE_MOVE STEPPER=&lt;config_name&gt; DISTANCE=&lt;value&gt; VELOCITY=&lt;value&gt; [ACCEL=&lt;value&gt;]</code> 。該命令將以給定的恒定速度（mm/s）強制移動給定的步進器，移動距離（mm）。如果指定了ACCEL並且大於零，那麼將使用給定的加速度（單位：mm/s^2）；否則不進行加速。不執行邊界檢查；不進行運動學更新；一個軸上的其他平行步進器將不會被移動。請謹慎使用，因為不正確的命令可能會導致損壞使用該命令幾乎肯定會使低階運動學處於不正確的狀態；隨後發出G28命令以重置運動學。該命令用於低階別的診斷和除錯。</p>
 <h4 id="set_kinematic_position">SET_KINEMATIC_POSITION<a class="headerlink" href="#set_kinematic_position" title="Permanent link">&para;</a></h4>
-<p><code>SET_KINEMATIC_POSITION [X=&lt;值&gt;] [Y=&lt;值&gt;] [Z=&lt;值&gt;]</code>：強制設定低階運動學程式碼使用的列印頭位置。這是一個診斷和除錯工具，常規的軸轉換應該使用 SET_GCODE_OFFSET 和/或 G92指令。如果沒有指定一個軸，則使用上一次命令的列印頭位置。設定一個不合理的數值可能會導致內部程式問題。這個命令可能會使邊界檢查失效，使用后發送 G28 來重置運動學。</p>
+<p><code>SET_KINEMATIC_POSITION [X=&lt;value&gt;] [Y=&lt;value&gt;] [Z=&lt;value&gt;] [CLEAR=&lt;[X][Y][Z]&gt;]</code>: Force the low-level kinematic code to believe the toolhead is at the given cartesian position. This is a diagnostic and debugging command; use SET_GCODE_OFFSET and/or G92 for regular axis transformations. If an axis is not specified then it will default to the position that the head was last commanded to. Setting an incorrect or invalid position may lead to internal software errors. Use the CLEAR parameter to forget the homing state for the given axes. Note that CLEAR will not override the previous functionality; if an axis is not specified to CLEAR it will have its kinematic position set as per above. This command may invalidate future boundary checks; issue a G28 afterwards to reset the kinematics.</p>
 <h3 id="gcode">[gcode]<a class="headerlink" href="#gcode" title="Permanent link">&para;</a></h3>
 <p>模組gcode module已自動載入.</p>
 <h4 id="restart">RESTART<a class="headerlink" href="#restart" title="Permanent link">&para;</a></h4>
@@ -4980,6 +5045,7 @@ section</a> is enabled.</p>
 <p>當啟用 <a href="Config_Reference.html#output_pin">output_pin config section</a> 時，以下命令可用。</p>
 <h4 id="set_pin">SET_PIN<a class="headerlink" href="#set_pin" title="Permanent link">&para;</a></h4>
 <p><code>SET_PIN PIN=config_name VALUE=&lt;value&gt;</code>: Set the pin to the given output <code>VALUE</code>. VALUE should be 0 or 1 for "digital" output pins. For PWM pins, set to a value between 0.0 and 1.0, or between 0.0 and <code>scale</code> if a scale is configured in the output_pin config section.</p>
+<p><code>SET_PIN PIN=config_name TEMPLATE=&lt;template_name&gt; [&lt;param_x&gt;=&lt;literal&gt;]</code>: If <code>TEMPLATE</code> is specified then it assigns a <a href="Config_Reference.html#display_template">display_template</a> to the given pin. For example, if one defined a <code>[display_template my_pin_template]</code> config section then one could assign <code>TEMPLATE=my_pin_template</code> here. The display_template should produce a string containing a floating point number with the desired value. The template will be continuously evaluated and the pin will be automatically set to the resulting value. One may set display_template parameters to use during template evaluation (parameters will be parsed as Python literals). If TEMPLATE is an empty string then this command will clear any previous template assigned to the pin (one can then use <code>SET_PIN</code> commands to manage the values directly).</p>
 <h3 id="palette2">[palette2]<a class="headerlink" href="#palette2" title="Permanent link">&para;</a></h3>
 <p>啟用 <a href="Config_Reference.html#palette2">palette2 config section</a> 時，以下命令可用。</p>
 <p>Palette列印通過在GCode檔案中嵌入特殊的OCodes（Omega Codes）來工作:</p>
@@ -5037,6 +5103,10 @@ section</a> is enabled.</p>
 <p>The following command is available when a <a href="Config_Reference.html#pwm_cycle_time">pwm_cycle_time config section</a> is enabled.</p>
 <h4 id="set_pin_1">SET_PIN<a class="headerlink" href="#set_pin_1" title="Permanent link">&para;</a></h4>
 <p><code>SET_PIN PIN=config_name VALUE=&lt;value&gt; [CYCLE_TIME=&lt;cycle_time&gt;]</code>: This command works similarly to <a href="#output_pin">output_pin</a> SET_PIN commands. The command here supports setting an explicit cycle time using the CYCLE_TIME parameter (specified in seconds). Note that the CYCLE_TIME parameter is not stored between SET_PIN commands (any SET_PIN command without an explicit CYCLE_TIME parameter will use the <code>cycle_time</code> specified in the pwm_cycle_time config section).</p>
+<h3 id="quad_gantry_level">[quad_gantry_level]<a class="headerlink" href="#quad_gantry_level" title="Permanent link">&para;</a></h3>
+<p>The following commands are available when the <a href="Config_Reference.html#quad_gantry_level">quad_gantry_level config section</a> is enabled.</p>
+<h4 id="quad_gantry_level_1">QUAD_GANTRY_LEVEL<a class="headerlink" href="#quad_gantry_level_1" title="Permanent link">&para;</a></h4>
+<p><code>QUAD_GANTRY_LEVEL [RETRIES=&lt;value&gt;] [RETRY_TOLERANCE=&lt;value&gt;] [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command will probe the points specified in the config and then make independent adjustments to each Z stepper to compensate for tilt. See the PROBE command for details on the optional probe parameters. The optional <code>RETRIES</code>, <code>RETRY_TOLERANCE</code>, and <code>HORIZONTAL_MOVE_Z</code> values override those options specified in the config file.</p>
 <h3 id="query_adc">[query_adc]<a class="headerlink" href="#query_adc" title="Permanent link">&para;</a></h3>
 <p>The query_adc module is automatically loaded.</p>
 <h4 id="query_adc_1">QUERY_ADC<a class="headerlink" href="#query_adc_1" title="Permanent link">&para;</a></h4>
@@ -5053,9 +5123,9 @@ section</a> is enabled.</p>
 <h4 id="measure_axes_noise">MEASURE_AXES_NOISE<a class="headerlink" href="#measure_axes_noise" title="Permanent link">&para;</a></h4>
 <p><code>MEASURE_AXES_NOISE</code>：測量並輸出所有啟用的加速度計晶片的所有軸的噪聲。</p>
 <h4 id="test_resonances">TEST_RESONANCES<a class="headerlink" href="#test_resonances" title="Permanent link">&para;</a></h4>
-<p><code>TEST_RESONANCES AXIS=&lt;axis&gt; OUTPUT=&lt;resonances,raw_data&gt; [NAME=&lt;name&gt;] [FREQ_START=&lt;min_freq&gt;] [FREQ_END=&lt;max_freq&gt;] [HZ_PER_SEC=&lt;hz_per_sec&gt;] [CHIPS=&lt;adxl345_chip_name&gt;] [POINT=x,y,z] [INPUT_SHAPING=[&lt;0:1&gt;]]</code>: Runs the resonance test in all configured probe points for the requested "axis" and measures the acceleration using the accelerometer chips configured for the respective axis. "axis" can either be X or Y, or specify an arbitrary direction as <code>AXIS=dx,dy</code>, where dx and dy are floating point numbers defining a direction vector (e.g. <code>AXIS=X</code>, <code>AXIS=Y</code>, or <code>AXIS=1,-1</code> to define a diagonal direction). Note that <code>AXIS=dx,dy</code> and <code>AXIS=-dx,-dy</code> is equivalent. <code>adxl345_chip_name</code> can be one or more configured adxl345 chip,delimited with comma, for example <code>CHIPS="adxl345, adxl345 rpi"</code>. Note that <code>adxl345</code> can be omitted from named adxl345 chips. If POINT is specified it will override the point(s) configured in <code>[resonance_tester]</code>. If <code>INPUT_SHAPING=0</code> or not set(default), disables input shaping for the resonance testing, because it is not valid to run the resonance testing with the input shaper enabled. <code>OUTPUT</code> parameter is a comma-separated list of which outputs will be written. If <code>raw_data</code> is requested, then the raw accelerometer data is written into a file or a series of files <code>/tmp/raw_data_&lt;axis&gt;_[&lt;chip_name&gt;_][&lt;point&gt;_]&lt;name&gt;.csv</code> with (<code>&lt;point&gt;_</code> part of the name generated only if more than 1 probe point is configured or POINT is specified). If <code>resonances</code> is specified, the frequency response is calculated (across all probe points) and written into <code>/tmp/resonances_&lt;axis&gt;_&lt;name&gt;.csv</code> file. If unset, OUTPUT defaults to <code>resonances</code>, and NAME defaults to the current time in "YYYYMMDD_HHMMSS" format.</p>
+<p><code>TEST_RESONANCES AXIS=&lt;axis&gt; [OUTPUT=&lt;resonances,raw_data&gt;] [NAME=&lt;name&gt;] [FREQ_START=&lt;min_freq&gt;] [FREQ_END=&lt;max_freq&gt;] [ACCEL_PER_HZ=&lt;accel_per_hz&gt;] [HZ_PER_SEC=&lt;hz_per_sec&gt;] [CHIPS=&lt;chip_name&gt;] [POINT=x,y,z] [INPUT_SHAPING=&lt;0:1&gt;]</code>: Runs the resonance test in all configured probe points for the requested "axis" and measures the acceleration using the accelerometer chips configured for the respective axis. "axis" can either be X or Y, or specify an arbitrary direction as <code>AXIS=dx,dy</code>, where dx and dy are floating point numbers defining a direction vector (e.g. <code>AXIS=X</code>, <code>AXIS=Y</code>, or <code>AXIS=1,-1</code> to define a diagonal direction). Note that <code>AXIS=dx,dy</code> and <code>AXIS=-dx,-dy</code> is equivalent. <code>chip_name</code> can be one or more configured accel chips, delimited with comma, for example <code>CHIPS="adxl345, adxl345 rpi"</code>. If POINT is specified it will override the point(s) configured in <code>[resonance_tester]</code>. If <code>INPUT_SHAPING=0</code> or not set(default), disables input shaping for the resonance testing, because it is not valid to run the resonance testing with the input shaper enabled. <code>OUTPUT</code> parameter is a comma-separated list of which outputs will be written. If <code>raw_data</code> is requested, then the raw accelerometer data is written into a file or a series of files <code>/tmp/raw_data_&lt;axis&gt;_[&lt;chip_name&gt;_][&lt;point&gt;_]&lt;name&gt;.csv</code> with (<code>&lt;point&gt;_</code> part of the name generated only if more than 1 probe point is configured or POINT is specified). If <code>resonances</code> is specified, the frequency response is calculated (across all probe points) and written into <code>/tmp/resonances_&lt;axis&gt;_&lt;name&gt;.csv</code> file. If unset, OUTPUT defaults to <code>resonances</code>, and NAME defaults to the current time in "YYYYMMDD_HHMMSS" format.</p>
 <h4 id="shaper_calibrate">SHAPER_CALIBRATE<a class="headerlink" href="#shaper_calibrate" title="Permanent link">&para;</a></h4>
-<p><code>SHAPER_CALIBRATE [AXIS=&lt;axis&gt;] [NAME=&lt;name&gt;] [FREQ_START=&lt;min_freq&gt;] [FREQ_END=&lt;max_freq&gt;] [HZ_PER_SEC=&lt;hz_per_sec&gt;] [CHIPS=&lt;adxl345_chip_name&gt;] [MAX_SMOOTHING=&lt;max_smoothing&gt;]</code>: Similarly to <code>TEST_RESONANCES</code>, runs the resonance test as configured, and tries to find the optimal parameters for the input shaper for the requested axis (or both X and Y axes if <code>AXIS</code> parameter is unset). If <code>MAX_SMOOTHING</code> is unset, its value is taken from <code>[resonance_tester]</code> section, with the default being unset. See the <a href="Measuring_Resonances.html#max-smoothing">Max smoothing</a> of the measuring resonances guide for more information on the use of this feature. The results of the tuning are printed to the console, and the frequency responses and the different input shapers values are written to a CSV file(s) <code>/tmp/calibration_data_&lt;axis&gt;_&lt;name&gt;.csv</code>. Unless specified, NAME defaults to the current time in "YYYYMMDD_HHMMSS" format. Note that the suggested input shaper parameters can be persisted in the config by issuing <code>SAVE_CONFIG</code> command, and if <code>[input_shaper]</code> was already enabled previously, these parameters take effect immediately.</p>
+<p><code>SHAPER_CALIBRATE [AXIS=&lt;axis&gt;] [NAME=&lt;name&gt;] [FREQ_START=&lt;min_freq&gt;] [FREQ_END=&lt;max_freq&gt;] [ACCEL_PER_HZ=&lt;accel_per_hz&gt;][HZ_PER_SEC=&lt;hz_per_sec&gt;] [CHIPS=&lt;chip_name&gt;] [MAX_SMOOTHING=&lt;max_smoothing&gt;] [INPUT_SHAPING=&lt;0:1&gt;]</code>: Similarly to <code>TEST_RESONANCES</code>, runs the resonance test as configured, and tries to find the optimal parameters for the input shaper for the requested axis (or both X and Y axes if <code>AXIS</code> parameter is unset). If <code>MAX_SMOOTHING</code> is unset, its value is taken from <code>[resonance_tester]</code> section, with the default being unset. See the <a href="Measuring_Resonances.html#max-smoothing">Max smoothing</a> of the measuring resonances guide for more information on the use of this feature. The results of the tuning are printed to the console, and the frequency responses and the different input shapers values are written to a CSV file(s) <code>/tmp/calibration_data_&lt;axis&gt;_&lt;name&gt;.csv</code>. Unless specified, NAME defaults to the current time in "YYYYMMDD_HHMMSS" format. Note that the suggested input shaper parameters can be persisted in the config by issuing <code>SAVE_CONFIG</code> command, and if <code>[input_shaper]</code> was already enabled previously, these parameters take effect immediately.</p>
 <h3 id="respond">[respond]<a class="headerlink" href="#respond" title="Permanent link">&para;</a></h3>
 <p>當啟用 <a href="Config_Reference.html#respond">respond config section</a> 時，以下標準 G-Code 命令可用：</p>
 <ul>
@@ -5161,7 +5231,7 @@ section</a> is enabled.</p>
 <h3 id="z_tilt">[z_tilt]<a class="headerlink" href="#z_tilt" title="Permanent link">&para;</a></h3>
 <p>當啟用 <a href="Config_Reference.html#z_tilt">z_tilt config section</a> 時，以下命令可用。</p>
 <h4 id="z_tilt_adjust">Z_TILT_ADJUST<a class="headerlink" href="#z_tilt_adjust" title="Permanent link">&para;</a></h4>
-<p><code>Z_TILT_ADJUST [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command will probe the points specified in the config and then make independent adjustments to each Z stepper to compensate for tilt. See the PROBE command for details on the optional probe parameters. The optional <code>HORIZONTAL_MOVE_Z</code> value overrides the <code>horizontal_move_z</code> option specified in the config file.</p>
+<p><code>Z_TILT_ADJUST [RETRIES=&lt;value&gt;] [RETRY_TOLERANCE=&lt;value&gt;] [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command will probe the points specified in the config and then make independent adjustments to each Z stepper to compensate for tilt. See the PROBE command for details on the optional probe parameters. The optional <code>RETRIES</code>, <code>RETRY_TOLERANCE</code>, and <code>HORIZONTAL_MOVE_Z</code> values override those options specified in the config file.</p>
 <h3 id="temperature_probe">[temperature_probe]<a class="headerlink" href="#temperature_probe" title="Permanent link">&para;</a></h3>
 <p>The following commands are available when a <a href="Config_Reference.html#temperature_probe">temperature_probe config section</a> is enabled.</p>
 <h4 id="temperature_probe_calibrate">TEMPERATURE_PROBE_CALIBRATE<a class="headerlink" href="#temperature_probe_calibrate" title="Permanent link">&para;</a></h4>

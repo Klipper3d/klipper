@@ -1580,7 +1580,7 @@
 <li>參考位於klippy/kinematics/目錄已有的運動學類。動力學類旨在將一個笛卡爾座標系中的運動轉化為各個步進電機的運動。建議複製已有的程式碼，並在其基礎上進行修改。</li>
 <li>若需要的運動學方程未被Klipper涵蓋，則應使用C語言實現新動力學體系中各個步進電機的位置方程（見klippy/chelper/，如kin_cart.c, kin_corexy.c, and kin_delta.c）。位置方程中應呼叫<code>move_get_coord()</code>以將運動的時間點（單位 ：秒）轉化為對應的笛卡爾座標位置（單位：毫米），進而計算目標步進電機運動目標位置（單位：毫米）。</li>
 <li>在新的運動學類中實現<code>calc_position</code>方法。該方法將通過各個步進電機的位置計算笛卡爾座標系下的列印頭位置；同時該方法通常只在回零和z探測時使用，因此無需過分追求效率。</li>
-<li>之後實現<code>check_move()</code>, <code>get_status()</code>, <code>get_steppers()</code>, <code>home()</code>, <code>set_position()</code>方法。這些函式用於特定的運動學檢查。在開發的初期，可以直接使用已有程式碼。</li>
+<li>Other methods. Implement the <code>check_move()</code>, <code>get_status()</code>, <code>get_steppers()</code>, <code>home()</code>, <code>clear_homing_state()</code>, and <code>set_position()</code> methods. These functions are typically used to provide kinematic specific checks. However, at the start of development one can use boiler-plate code here.</li>
 <li>新增測試實例。建立一個G程式碼檔案，其中包含一系列的運動命令用於測試新增的運動學模型。 按照<a href="Debugging.html">除錯文件</a>將該G程式碼檔案轉換為微控制器命令。在遭遇困難狀況和檢查數據傳遞相當有用。</li>
 </ol>
 <h2 id="_8">移植到新的微控制器<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h2>
