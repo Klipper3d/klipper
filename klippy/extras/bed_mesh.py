@@ -190,7 +190,7 @@ class BedMesh:
         # Return last, non-transformed position
         if self.z_mesh is None:
             # No mesh calibrated, so send toolhead position
-            self.last_position[:] = pos
+            self.last_position[:] = pos.copy()
             self.last_position[2] -= self.fade_target
         else:
             # return current position minus the current z-adjustment

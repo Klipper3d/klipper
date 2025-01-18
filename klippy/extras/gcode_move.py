@@ -40,16 +40,16 @@ class MoveTransformer:
             
         self.last_position = position
         logging.info("MoveTransformer: position %s", self.last_position)
-        return self.last_position
+        return self.last_position.copy()
     
     
     def move(self, newpos, speed):
-        logging.info("MoveTransformer: last_position %s, new position %s", self.last_position, newpos)
+        #logging.info("MoveTransformer: last_position %s, new position %s", self.last_position, newpos)
         move_list = [newpos]
         
         for obj in self.compensations:
             move_list = obj.move(move_list, self.last_position)
-            logging.info("move liste: %s", move_list)
+            #logging.info("move liste: %s", move_list)
             
         for move in move_list:
             self.toolhead.move(move, speed)

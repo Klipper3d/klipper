@@ -61,12 +61,12 @@ class ConcentricityToleranceCompansation:
          x, y, z, a, e = pos
          x_adj, y_adj = self.calc_xy_adj(a)
        
-         self.last_position[:] = [x + x_adj, y + y_adj, z, a, e]
+         self.last_position[:] = [x - x_adj, y - y_adj, z, a, e]
             
          return list(self.last_position)
         
     def move(self, positions : list, last_position_): 
-        last_position = last_position_
+        last_position = last_position_.copy()
         transformed_positions = []
         
         for position in positions:
