@@ -21,6 +21,8 @@ MCU_UPPER := $(shell echo $(CONFIG_MCU) | tr a-z A-Z | tr X x)
 CFLAGS-$(CONFIG_MACH_STM32F0) += -mcpu=cortex-m0 -Ilib/stm32f0/include
 CFLAGS-$(CONFIG_MACH_STM32F103) += -mcpu=cortex-m3
 CFLAGS-$(CONFIG_MACH_N32G45x) += -mcpu=cortex-m4 -Ilib/n32g45x/include
+CFLAGS-$(CONFIG_MACH_AT32F415) += -mcpu=cortex-m4
+CFLAGS-$(CONFIG_MACH_AT32F413) += -mcpu=cortex-m4
 CFLAGS-$(CONFIG_MACH_STM32F1) += -Ilib/stm32f1/include
 CFLAGS-$(CONFIG_MACH_STM32F2) += -mcpu=cortex-m3 -Ilib/stm32f2/include
 CFLAGS-$(CONFIG_MACH_STM32F4) += -mcpu=cortex-m4 -Ilib/stm32f4/include
@@ -47,6 +49,10 @@ src-$(CONFIG_MACH_STM32F103) += ../lib/stm32f1/system_stm32f1xx.c
 src-$(CONFIG_MACH_STM32F103) += stm32/adc.c
 src-$(CONFIG_MACH_N32G45x) += ../lib/stm32f1/system_stm32f1xx.c
 src-$(CONFIG_MACH_N32G45x) += ../lib/n32g45x/n32g45x_adc.c stm32/n32g45x_adc.c
+src-$(CONFIG_MACH_AT32F415) += ../lib/stm32f1/system_stm32f1xx.c
+src-$(CONFIG_MACH_AT32F415) += stm32/adc.c
+src-$(CONFIG_MACH_AT32F413) += ../lib/stm32f1/system_stm32f1xx.c
+src-$(CONFIG_MACH_AT32F413) += stm32/adc.c
 src-$(CONFIG_MACH_STM32F1) += stm32/stm32f1.c generic/armcm_timer.c stm32/i2c.c
 src-$(CONFIG_MACH_STM32F2) += ../lib/stm32f2/system_stm32f2xx.c
 src-$(CONFIG_MACH_STM32F2) += stm32/stm32f4.c generic/armcm_timer.c
