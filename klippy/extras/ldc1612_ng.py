@@ -209,11 +209,11 @@ class LDC1612_ng:
             'ERR_ZC', 'ERR_ALE', 'ERR_AHE', 'ERR_WD',
             'ERR_OR', 'ERR_UR', '14', 'ERR_CH1'
         ]
-        result = ''
-        for i in range(16):
-            if s & (1<<i):
-                result += status_bits[i] + ' '
-        return result
+        flags = []
+        for bit, flag in enumerate(status_bits):
+            if s & (1<<bit):
+                flags.append(flag)
+        return ' '.join(flags)
 
     def read_one_value(self):
         self._init_chip()
@@ -333,7 +333,7 @@ class LDC1612_ng:
         self.set_reg(REG_CONFIG, (1<<12) | (1<<10) | (1<<9) | 0x001)
         self.set_reg(REG_DRIVE_CURRENT0, self._drive_current << 11)
 
-        self._initialized = True
+        self._chip_initialized = True
 
     def get_deglitch(self):
         return self.read_reg(REG_MUX_CONFIG) & ~0x0208

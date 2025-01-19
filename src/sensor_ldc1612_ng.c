@@ -487,13 +487,42 @@ ldc1612_ng_update(struct ldc1612_ng *ld, uint8_t oid)
 
 #define WEIGHT_SUM(size) ((size * (size + 1)) / 2)
 
+static inline uint32_t
+windowed_moving_average_u32(uint32_t* buf, uint8_t buf_size, uint8_t start_i)
+{
+    // TODO: We can avoid 64-bit integers here by just offseting
+    // the input numbers to ensure that we can always add buf_size values
+    // without overflow into an uint32_t. For frequencies, it should be safe
+    // to subtract the safe_start_freq and just deal with offsets above that,
+    // because ultimately we only care about the derivative.
+    // But this 64-bit math is here for now to keep the logic simple
+    // during development.
+    uint64_t wma_sum = 0;
+    for (uint8_t i = 0; i < buf_size; i++) {
+        uint8_t j = (start_i + i) % buf_size;
+        wma_sum += buf[j] * (i+1);
+    }
+
+    uint32_t freq_weight_sum = (buf_size * (buf_size + 1)) / 2;
+
+    return (uint32_t)(wma_sum / freq_weight_sum);
+}
+
+static inline int32_t
+simple_average_i32(int32_t* buf, uint8_t buf_size)
+{
+    // This assumes that the sum can fit in an i32.
+    int32_t sum = 0;
+    for (uint8_t i = 0; i < buf_size; i++) {
+        sum += buf[i];
+    }
+
+    return sum / buf_size;
+}
+
 void
 ldc1612_ng_check_home(struct ldc1612_ng* ld, uint32_t data, uint32_t time)
 {
-    // should be a constexpr, the compiler will sort it out
-    const uint64_t s_freq_weight_sum = WEIGHT_SUM(FREQ_WINDOW_SIZE);
-
-    struct ldc1612_ng_homing *lh = &ld->homing;
     uint8_t homing_flags = ld->homing_flags;
     uint8_t is_tap = !!(homing_flags & LH_WANT_TAP);
 
@@ -535,9 +564,20 @@ ldc1612_ng_check_home(struct ldc1612_ng* ld, uint32_t data, uint32_t time)
     // Tap detection is done by looking at the derivative of this value only.
     //
 
-    lh->freq_buffer[lh->freq_i] = data;
-    lh->freq_i = (lh->freq_i + 1) % FREQ_WINDOW_SIZE;
+    // TODO: the below can absolutely be made more efficient, but I'm
+    // keeping it simple while things are dialed in.
 
+    // Helpers to clean up the adds/mods/etc. to make the below more readable
+    #define NEXT_FREQ_I(i) (((i) + 1) % FREQ_WINDOW_SIZE)
+    #define NEXT_WMA_D_I(i) (((i) + 1) % WMA_D_WINDOW_SIZE)
+
+    lh->freq_buffer[lh->freq_i] = data;
+    lh->freq_i = NEXT_FREQ_I(lh->freq_i);
+
+#if false
+    const uint64_t s_freq_weight_sum = WEIGHT_SUM(FREQ_WINDOW_SIZE);
+
+    struct ldc1612_ng_homing *lh = &ld->homing;
     // TODO: We can avoid 64-bit integers here by just offseting
     // the numbers -- it should be safe to subtract the safe_start_freq
     // and just deal with offsets above that, because ultimately we
@@ -545,7 +585,7 @@ ldc1612_ng_check_home(struct ldc1612_ng* ld, uint32_t data, uint32_t time)
     // for now
     uint64_t wma_numerator = 0;
     for (int i = 0; i < FREQ_WINDOW_SIZE; i++) {
-        int j = (lh->freq_i + i) % FREQ_WINDOW_SIZE;
+        int j = NEXT_FREQ_I(lh->freq_i + i);
         uint64_t weight = i + 1;
         uint64_t val = lh->freq_buffer[j];
         wma_numerator += val * weight;
@@ -553,18 +593,25 @@ ldc1612_ng_check_home(struct ldc1612_ng* ld, uint32_t data, uint32_t time)
 
     // WMA and derivative of the WMA
     uint32_t wma = (uint32_t)(wma_numerator / s_freq_weight_sum);
-    int32_t wma_d = (int32_t)wma - (int32_t)lh->wma;
+#else
+    uint32_t wma = windowed_moving_average_u32(lh->freq_buffer, FREQ_WINDOW_SIZE, lh->freq_i);
+#endif
+    int32_t wma_d = wma - lh->wma;
 
     // A simple average of wma_d to smooth it out a bit. Without this,
     // we'll see some small spikes which will reset the accumulator;
     // I think this is due to the drip move.
     lh->wma_d_buf[lh->wma_d_i] = wma_d;
-    lh->wma_d_i = (lh->wma_d_i + 1) % WMA_D_WINDOW_SIZE;
+    lh->wma_d_i = NEXT_WMA_D_I(lh->wma_d_i);
+#if false
     int32_t wma_d_avg = 0;
     for (int i = 0; i < WMA_D_WINDOW_SIZE; i++) {
         wma_d_avg += lh->wma_d_buf[i];
     }
     wma_d_avg = wma_d_avg / WMA_D_WINDOW_SIZE;
+#else
+    int32_t wma_d_avg = simple_average_i32(lh->wma_d_buf, WMA_D_WINDOW_SIZE);
+#endif
 
     // The core tap threshold computation.  If the derivative is decreasing,
     // accumulate the amount of decrease; that's checked at the end
