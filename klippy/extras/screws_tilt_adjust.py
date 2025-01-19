@@ -18,7 +18,7 @@ class ScrewsTiltAdjust:
         self.end_z = config.getfloat("end_z", None)
 
         use_bed_screws = config.get("use_bed_screws", "no").lower()
-        if use_bed_screws == "yes" or use_bed_screws == "true" or use_bed_screws == "1":
+        if use_bed_screws in ["yes", "true", "1"]:
             self.need_probe_offsets = True
             self._load_screws_from_bed_screws()
         else:
