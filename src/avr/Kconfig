@@ -1,0 +1,152 @@
+# Kconfig settings for AVR processors
+
+if MACH_AVR
+
+config AVR_SELECT
+    bool
+    default y
+    select HAVE_GPIO
+    select HAVE_GPIO_ADC
+    select HAVE_GPIO_SPI
+    select HAVE_GPIO_I2C
+    select HAVE_GPIO_HARD_PWM
+    select HAVE_STRICT_TIMING
+    select HAVE_LIMITED_CODE_SIZE if MACH_atmega168 || MACH_atmega328 || MACH_atmega328p || MACH_atmega32u4
+
+config BOARD_DIRECTORY
+    string
+    default "avr"
+
+choice
+    prompt "Processor model"
+    config MACH_atmega2560
+        bool "atmega2560"
+    config MACH_atmega1280
+        bool "atmega1280"
+    config MACH_at90usb1286
+        bool "at90usb1286"
+    config MACH_at90usb646
+        bool "at90usb646"
+    config MACH_atmega32u4
+        bool "atmega32u4"
+    config MACH_atmega1284p
+        bool "atmega1284p"
+    config MACH_atmega644p
+        bool "atmega644p"
+    config MACH_atmega328p
+        bool "atmega328p"
+    config MACH_atmega328
+        bool "atmega328"
+    config MACH_atmega168
+        bool "atmega168"
+endchoice
+
+config MCU
+    string
+    default "atmega168" if MACH_atmega168
+    default "atmega328" if MACH_atmega328
+    default "atmega328p" if MACH_atmega328p
+    default "atmega1284p" if MACH_atmega1284p
+    default "atmega644p" if MACH_atmega644p
+    default "at90usb1286" if MACH_at90usb1286
+    default "at90usb646" if MACH_at90usb646
+    default "atmega32u4" if MACH_atmega32u4
+    default "atmega1280" if MACH_atmega1280
+    default "atmega2560" if MACH_atmega2560
+
+config AVRDUDE_PROTOCOL
+    string
+    default "wiring" if MACH_atmega2560
+    default "avr109" if MACH_at90usb1286 || MACH_at90usb646 || MACH_atmega32u4
+    default "arduino"
+
+choice
+    prompt "Processor speed" if LOW_LEVEL_OPTIONS
+    config AVR_FREQ_16000000
+        bool "16Mhz"
+    config AVR_FREQ_20000000
+        bool "20Mhz"
+        depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega328p || MACH_atmega644p || MACH_atmega1284p
+    config AVR_FREQ_8000000
+        bool "8Mhz"
+endchoice
+
+config CLOCK_FREQ
+    int
+    default 8000000 if AVR_FREQ_8000000
+    default 20000000 if AVR_FREQ_20000000
+    default 16000000
+
+config CLEAR_PRESCALER
+    bool "Manually clear the CPU prescaler field at startup" if LOW_LEVEL_OPTIONS
+    depends on MACH_at90usb1286 || MACH_at90usb646 || MACH_atmega32u4
+    default y
+    help
+         Some AVR chips ship with a "clock prescaler" that causes the
+         chip to run at 1/8th speed. Enable this setting to clear the
+         prescaler field at startup which will cause the chip to run
+         without a clock divisor.
+
+config AVR_CLKPR
+    int
+    default 0 if CLEAR_PRESCALER
+    default -1
+
+config AVR_STACK_SIZE
+    int
+    default 256
+
+config AVR_WATCHDOG
+    bool
+    default y
+
+config USBSERIAL
+    depends on (MACH_at90usb1286 || MACH_at90usb646 || MACH_atmega32u4) && !AVR_SERIAL_UART1
+    bool
+    default y
+config SERIAL
+    depends on !USBSERIAL
+    bool
+    default y
+choice
+    prompt "Communication interface" if LOW_LEVEL_OPTIONS && (MACH_atmega2560 || MACH_atmega1280 || MACH_atmega644p || MACH_atmega1284p || MACH_at90usb1286 || MACH_at90usb646 || MACH_atmega32u4)
+    config AVR_USB
+        bool "USB" if MACH_at90usb1286 || MACH_at90usb646 || MACH_atmega32u4
+        select USBSERIAL
+    config AVR_SERIAL_UART0
+        bool "UART0" if !(MACH_at90usb1286 || MACH_at90usb646 || MACH_atmega32u4)
+        select SERIAL
+    config AVR_SERIAL_UART1
+        bool "UART1"
+        select SERIAL
+    config AVR_SERIAL_UART2
+        bool "UART2" if MACH_atmega2560 || MACH_atmega1280
+        select SERIAL
+    config AVR_SERIAL_UART3
+        bool "UART3" if MACH_atmega2560 || MACH_atmega1280
+        select SERIAL
+endchoice
+config SERIAL_BAUD_U2X
+    depends on SERIAL && !SIMULAVR
+    bool
+    default y
+
+config SERIAL_PORT
+    int
+    default 3 if AVR_SERIAL_UART3
+    default 2 if AVR_SERIAL_UART2
+    default 1 if AVR_SERIAL_UART1
+    default 0
+
+config SIMULAVR
+    depends on MACH_atmega168 || MACH_atmega328 || MACH_atmega328p || MACH_atmega644p || MACH_atmega1284p
+    bool "Compile for simulavr software emulation" if LOW_LEVEL_OPTIONS
+    default n
+    help
+         Compile the code to run on simulavr software emulation
+         instead of for real hardware. This disables support for "U2X
+         baud" mode which is not supported on simulavr.
+
+         If unsure, select "N".
+
+endif

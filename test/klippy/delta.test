@@ -1,0 +1,47 @@
+# Test case for basic movement on delta printers
+CONFIG ../../config/example-delta.cfg
+DICTIONARY atmega2560.dict
+
+# Start by homing the printer.  Also tests Z moves.
+G28
+
+# Perform an XY+Z move with infintesimal XY component
+G1 x0 y0 z15
+
+# Perform an XY move along Y axis (aligned with rear tower)
+G1 x0 y5 z15
+
+# Perform an XY+Z move along Y axis
+G1 x0 y-5 z10
+
+# Perform a Z move
+G1 x0 y-5 z15
+
+# Perform an XY move across all three towers
+G1 x2 y2 z10
+
+# Perform an XY+Z move with tiny Z movement
+G1 x2 y-10 z10.1
+
+# Move to far away position
+G1 x140 y0
+
+# Move to extreme position
+G1 x145 y0
+
+# Move to another extreme position
+G1 x145 y5
+
+# Test delta_calibrate command
+DELTA_CALIBRATE
+
+# Dummy move
+G1 Z5 X0 Y0
+
+# Verify stepper_buzz
+STEPPER_BUZZ STEPPER=stepper_a
+STEPPER_BUZZ STEPPER=stepper_b
+STEPPER_BUZZ STEPPER=stepper_c
+
+# Dummy move
+G1 Z3 X2 Y3

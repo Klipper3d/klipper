@@ -1,0 +1,21 @@
+# Kconfig settings for PRU
+
+if MACH_PRU
+
+config PRU_SELECT
+    bool
+    default y
+    select HAVE_GPIO
+    #select HAVE_GPIO_ADC
+    select HAVE_STRICT_TIMING
+    select HAVE_LIMITED_CODE_SIZE
+
+config BOARD_DIRECTORY
+    string
+    default "pru"
+
+config CLOCK_FREQ
+    int
+    default 200000000
+
+endif

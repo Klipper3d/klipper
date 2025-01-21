@@ -1,0 +1,10 @@
+# Python virtualenv module requirements for mkdocs
+jinja2==3.1.4
+mkdocs==1.2.4
+mkdocs-material==8.1.3
+mkdocs-simple-hooks==0.1.3
+mkdocs-exclude==1.0.2
+mdx-truly-sane-lists==1.2
+mdx-breakless-lists==1.0.1
+py-gfm==1.0.2
+markdown==3.3.7

@@ -1,0 +1,95 @@
+# Kconfig settings for LPC176x processors
+
+if MACH_LPC176X
+
+config LPC_SELECT
+    bool
+    default y
+    select HAVE_GPIO
+    select HAVE_GPIO_ADC
+    select HAVE_GPIO_I2C
+    select HAVE_GPIO_SPI
+    select HAVE_GPIO_HARD_PWM
+    select HAVE_STRICT_TIMING
+    select HAVE_CHIPID
+    select HAVE_STEPPER_BOTH_EDGE
+    select HAVE_BOOTLOADER_REQUEST
+
+config BOARD_DIRECTORY
+    string
+    default "lpc176x"
+
+choice
+    prompt "Processor model"
+    config MACH_LPC1768
+        bool "lpc1768 (100 MHz)"
+    config MACH_LPC1769
+        bool "lpc1769 (120 MHz)"
+endchoice
+
+config MCU
+    string
+    default "lpc1768" if MACH_LPC1768
+    default "lpc1769" if MACH_LPC1769
+
+config CLOCK_FREQ
+    int
+    default 100000000 if MACH_LPC1768
+    default 120000000 if MACH_LPC1769
+
+config FLASH_SIZE
+    hex
+    default 0x80000
+
+config FLASH_BOOT_ADDRESS
+    hex
+    default 0x0
+
+config RAM_START
+    hex
+    default 0x10000000
+
+config RAM_SIZE
+    hex
+    default 0x7fe0 # (0x8000 - 32) - top 32 bytes used by IAP functions
+
+config STACK_SIZE
+    int
+    default 512
+
+
+######################################################################
+# Bootloader
+######################################################################
+
+choice
+    prompt "Bootloader offset"
+    config LPC_FLASH_START_4000
+        bool "16KiB bootloader"
+    config LPC_FLASH_START_0000
+        bool "No bootloader"
+endchoice
+config FLASH_APPLICATION_ADDRESS
+    hex
+    default 0x4000 if LPC_FLASH_START_4000
+    default 0x0000
+
+
+######################################################################
+# Communication inteface
+######################################################################
+
+choice
+    prompt "Communication interface"
+    config LPC_USB
+        bool "USB"
+        select USBSERIAL
+    config LPC_SERIAL_UART0_P03_P02
+        bool "Serial (on UART0 P0.3/P0.2)"
+        select SERIAL
+    config LPC_SERIAL_UART3_P429_P428
+        bool "Serial (on UART3 P4.29/P4.28)" if LOW_LEVEL_OPTIONS
+        select SERIAL
+endchoice
+
+endif

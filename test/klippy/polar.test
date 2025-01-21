@@ -1,0 +1,74 @@
+# Test case for basic movement on polar printers
+CONFIG ../../config/example-polar.cfg
+DICTIONARY atmega2560.dict
+
+; Start by homing the printer.
+G28
+G90
+G1 F6000
+
+; Z / X / Y moves
+G1 Z1
+G1 X1
+G1 Y1
+
+; Delayed moves
+G1 Y2
+G4 P100
+G1 Y1.5
+M400
+G1 Y1
+
+; diagonal moves
+G1 X10 Y0
+G1 X1 Z2
+G1 X0 Y1 Z1
+
+; extrude only moves
+G1 E1
+G1 E0
+
+; regular extrude move
+G1 X10 Y0 E.01
+
+; Multiple rotations
+g1 X10 Y10
+g1 X-10 Y10
+g1 X-10 Y-10
+g1 X10 Y-10
+
+g1 X10 Y15
+g1 X-10 Y15
+g1 X-10 Y-15
+g1 X10 Y-15
+
+g1 X10 Y20
+g1 X-10 Y20
+g1 X-10 Y-20
+g1 X10 Y-20
+
+g1 X10 Y25
+g1 X-10 Y25
+g1 X-10 Y-25
+g1 X10 Y-25
+
+; Multiple rotations in reverse direction
+g1 X-15 Y-25
+g1 X-15 Y25
+g1 X15 Y25
+g1 X15 Y-25
+
+g1 X-20 Y-25
+g1 X-20 Y25
+g1 X20 Y25
+g1 X20 Y-25
+
+g1 X-25 Y-25
+g1 X-25 Y25
+g1 X25 Y25
+g1 X25 Y-25
+
+g1 X-30 Y-25
+g1 X-30 Y25
+g1 X30 Y25
+g1 X30 Y-25

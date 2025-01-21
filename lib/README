@@ -1,0 +1,185 @@
+This directory contains external library code.
+
+The cmsis directory contains code from:
+  https://github.com/ARM-software/CMSIS_5
+version 5.7.0 (a65b7c9a3e6502127fdb80eb288d8cbdf251a6f4). Contents
+taken from the CMSIS/Core/Include/ directory.
+
+The sam3x directory contains code from the
+Atmel.SAM3X_DFP.1.0.50.atpack zip file found at:
+  http://packs.download.atmel.com/
+version 1.0.50 (extracted on 20180725).
+
+The sam4e directory contains code from the
+Atmel.SAM4E_DFP.1.1.57.atpack zip file found at:
+  http://packs.download.atmel.com/
+version 1.1.57 (extracted on 20180806). It has been modified to fix
+some AFEC register RW accesses. See sam4e.patch for the modifications.
+
+The sam4s directory contains code from the
+Atmel.SAM4S_DFP.1.0.56.atpack zip file found at:
+  http://packs.download.atmel.com/
+version 1.0.56 (extracted on 20181220).
+
+The samc21 directory contains code from the
+Atmel.SAMC21_DFP.1.2.176.atpack zip file found at:
+  http://packs.download.atmel.com/
+version 1.2.176 (extracted on 20230115). It has been modified to fix
+an incorrect base address for the CAN message ram. See samc21.patch
+for the modifications.
+
+The samd21 directory contains code from the
+Atmel.SAMD21_DFP.1.3.304.atpack zip file found at:
+  http://packs.download.atmel.com/
+version 1.3.304 (extracted on 20180725).
+
+The samd51 directory contains code from the
+Atmel.SAMD51_DFP.1.1.96.atpack zip file found at:
+  http://packs.download.atmel.com/
+version 1.1.96 (extracted on 20190110).
+
+The same51 directory contains code from the
+Atmel.SAME51_DFP.1.1.139.atpack zip file found at:
+  http://packs.download.atmel.com/
+version 1.1.139 (extracted on 20220929).
+
+The same54 directory contains code from the
+Atmel.SAME54_DFP.1.1.134.atpack zip file found at:
+  http://packs.download.atmel.com/
+version 1.1.134 (extracted on 20221005).
+
+The same70b directory contains code from the
+Atmel.SAME70_DFP.2.4.166.atpack zip file found at:
+  http://packs.download.atmel.com/
+version 2.4.166 (extracted on 20210809).
+
+The lpc176x directory contains code from the mbed project:
+  https://github.com/ARMmbed/mbed-os
+version mbed-os-5.8.3 (c05d72c3c005fbb7e92c3994c32bda45218ae7fe).
+Contents taken from the targets/TARGET_NXP/TARGET_LPC176X/ directory.
+It has been modified to set the appropriate clock speeds on the
+LPC1768 and LPC1769. See lpc176x.patch for the modifications.
+
+The stm32f0 directory contains code from:
+  https://github.com/STMicroelectronics/STM32CubeF0
+version v1.10.1 (d0c380d668c67dcdd4e44f656be27045ce4006a6). Contents
+taken from the Drivers/CMSIS/Device/ST/STM32F0xx/ directory.
+
+The stm32f1 directory contains code from:
+  https://github.com/STMicroelectronics/STM32CubeF1
+version v1.8.0 (441b2cbdc25aa50437a59c4bffe22b88e78942c9). Contents
+taken from the Drivers/CMSIS/Device/ST/STM32F1xx/ directory.
+
+The stm32f2 directory contains code from:
+  https://github.com/STMicroelectronics/STM32CubeF2
+version v1.9.0 (42fc8bf966c04ef814bb0620dcd3e036e038b4a2). Contents
+taken from the Drivers/CMSIS/Device/ST/STM32F2xx/ directory.
+
+The stm32f4 directory contains code from:
+  https://github.com/STMicroelectronics/STM32CubeF4
+version v1.24.1 (b5abca20c9676b04f8d2885a668a9b653ee65705). Contents
+taken from the Drivers/CMSIS/Device/ST/STM32F4xx/ directory.
+
+The stm32f7 directory contains code from:
+  https://github.com/STMicroelectronics/STM32CubeF7
+version v1.15.0 (3600603267ebc7da619f50542e99bbdfd7e35f4a). Contents
+taken from the Drivers/CMSIS/Device/ST/STM32F7xx/ directory.
+
+The stm32g0 directory contains code from:
+  https://github.com/STMicroelectronics/STM32CubeG0
+version v1.4.1 (5cb06333a6a43cefbe145f10a5aa98d3cc4cffee). Contents
+taken from the Drivers/CMSIS/Device/ST/STM32G0xx/ directory.
+
+The stm32g4 directory contains code from:
+  https://github.com/STMicroelectronics/STM32CubeG4
+version v1.4.0 (e762fe2ce800cf6c18a1868a3aabc7e9351751bd). Contents
+taken from the Drivers/CMSIS/Device/ST/STM32G4xx/ directory.
+
+The stm32l4 directory contains code from:
+  https://github.com/STMicroelectronics/STM32CubeL4
+version v1.17.0 (5e1553e07706491bd11f4edd304e093b6e4b83a4). Contents
+taken from the Drivers/CMSIS/Device/ST/STM32L4xx/ directory.
+
+The stm32h7 directory contains code from:
+  https://github.com/STMicroelectronics/STM32CubeH7
+version v1.9.0 (ccb11556044540590ca6e45056e6b65cdca2deb2). Contents
+taken from the Drivers/CMSIS/Device/ST/STM32H7xx/ directory.
+
+The pico-sdk directory contains code from the pico sdk:
+  https://github.com/raspberrypi/pico-sdk.git
+version 2.0.0 (efe2103f9b28458a1615ff096054479743ade236). It has been
+modified so that it can build outside of the pico sdk. See
+pico-sdk.patch for the modifications.
+
+The elf2uf2 directory contains code from the pico sdk:
+  https://github.com/raspberrypi/pico-sdk.git
+version 1.2.0 (bfcbefafc5d2a210551a4d9d80b4303d4ae0adf7). Contents
+taken from the tools/elf2uf2/ directory.
+
+The rp2040_flash directory contains a light-weight bootsel flash tool.
+It uses C part of the the `picoboot_connection` directory found in:
+  https://github.com/raspberrypi/picotool.git
+version 2.0.0 (8a9af99ab10b20b1c6afb30cd9384e562a6647f9). Note that
+Makefile and main.c are locally developed files (the remaining files
+are from the picotool repo).
+
+The hub-ctrl directory contains code from:
+  https://github.com/codazoda/hub-ctrl.c/
+revision 42095e522859059e8a5f4ec05c1e3def01a870a9.
+
+The bossac directory contains code from:
+  https://github.com/shumatech/BOSSA
+version 1.9 (b176eeef918fc810045c832348590595120187b4).
+
+The hidflash directory contains code from:
+  https://github.com/Serasidis/STM32_HID_Bootloader
+version 2.2.2 (2ab7927a27b7b78ef730782ea5f9b5d2c8f34671). It has been
+modified to work with Klipper - see hidflash/README for the
+details. See changes.diff for the modifications.
+
+The pru_rpmsg directory contains code from:
+  https://github.com/dinuxbg/pru-gcc-examples
+revision e2bd170d4d61b3e642da65e0f0d487e10872fe22. The code is taken
+from the repo's hc-sr04-range-sensor directory. It has been modified
+so that the IEP definitions compile correctly. See pru_rpmsg.patch for
+the modifications.
+
+The ar100 directory contains code from:
+  https://github.com/crust-firmware/crust
+revision 966124af914ce611aadd06fbbcbc4c36c4a0b240
+
+The fast-hash directory contains code from:
+  https://github.com/ztanml/fast-hash
+revision ae3bb53c199fe75619e940b5b6a3584ede99c5fc
+
+The kconfiglib directory contains code from:
+  https://github.com/ulfalizer/Kconfiglib.git
+version v14.1.0 (061e71f7d78cb057762d88de088055361863deff). It has
+been modified to always emit symbols and to simplify the "menuconfig"
+screens. See kconfiglib.patch for the modifications.
+
+The fatfs directory contains code from:
+  http://elm-chan.org/fsw/ff/00index_e.html
+version R0.14a (extracted 20210116).  The configuration (ffconf.h)
+has been modfied to enable the US code page (437) and enable label
+support.  The file "diskio.c" in the original archive is not included
+as it is only serves as an example for how to implement the media api
+callbacks.
+
+The canboot directory contains code from:
+  https://github.com/Arksine/CanBoot
+revision 870200826561b150137913d42fd7edc6515229ff.  The Python module,
+flash_can.py, is taken from the repo's scripts directory.  It may be
+used to upload firmware to devices flashed with the CanBoot bootloader.
+
+The can2040 directory contains code from:
+  https://github.com/KevinOConnor/can2040
+version v1.7.0 (90515f53ce89442f1bcc3033aae222e9eb77818c).
+
+The Huada HC32F460 directory contains code from:
+  https://www.hdsc.com.cn/Category83-1490
+version 2.2 DDL minus example directory, empty/extra files
+
+The n32g45x directory contains parts of code from:
+  https://github.com/RT-Thread/rt-thread/tree/master/bsp/n32g452xx/Libraries/N32_Std_Driver
+version v1.0.1 (77638c17877c4b6b0b81e189a36bb08b3384923b)

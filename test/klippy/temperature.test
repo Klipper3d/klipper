@@ -1,0 +1,17 @@
+# Tests for various temperature sensors
+DICTIONARY atmega2560.dict
+CONFIG temperature.cfg
+
+# Set various temperatures
+M104 S100
+M105
+
+M140 S60
+M105
+
+M140 S0
+
+# Test "wait for temp" g-code
+M109 S100
+M109 S60
+M105

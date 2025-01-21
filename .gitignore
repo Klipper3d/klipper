@@ -1,0 +1,6 @@
+out
+*.so
+*.pyc
+.config
+.config.old
+klippy/.version

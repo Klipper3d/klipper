@@ -1,0 +1,60 @@
+# Test case with multiple z stepper motors
+CONFIG multi_z.cfg
+DICTIONARY atmega2560.dict
+
+# Start by homing the printer.
+G28
+G1 F6000
+
+# Z / X / Y moves
+G1 Z1
+G1 X1
+G1 Y1
+
+# Run bed_tilt_calibrate
+BED_TILT_CALIBRATE
+
+# Move again
+G1 Z5 X0 Y0
+
+# Run Z_TILT_ADJUST
+Z_TILT_ADJUST
+
+# Move again
+G1 Z2 X2 Y3
+
+# Do regular probe
+PROBE
+QUERY_PROBE
+
+# Test manual probe commands
+PROBE_CALIBRATE
+ABORT
+PROBE_CALIBRATE SPEED=7.3
+TESTZ Z=-.2
+TESTZ Z=-.3
+TESTZ Z=+.1
+TESTZ Z=++
+TESTZ Z=--
+TESTZ Z=+
+TESTZ Z=-
+ACCEPT
+Z_ENDSTOP_CALIBRATE
+TESTZ Z=-.1
+TESTZ Z=+.2
+ACCEPT
+MANUAL_PROBE
+TESTZ Z=--
+ABORT
+
+# Do regular probe
+PROBE
+QUERY_PROBE
+
+# Verify stepper_buzz
+STEPPER_BUZZ STEPPER=stepper_z
+STEPPER_BUZZ STEPPER=stepper_z1
+STEPPER_BUZZ STEPPER=stepper_z2
+
+# Move again
+G1 Z9

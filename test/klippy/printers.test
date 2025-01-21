@@ -1,0 +1,295 @@
+# Basic sanity checks on the example printer config files
+GCODE move.gcode
+
+# Example kinematic files
+DICTIONARY atmega2560.dict
+CONFIG ../../config/example-cartesian.cfg
+CONFIG ../../config/example-corexy.cfg
+CONFIG ../../config/example-corexz.cfg
+CONFIG ../../config/example-hybrid-corexy.cfg
+CONFIG ../../config/example-hybrid-corexz.cfg
+CONFIG ../../config/example-delta.cfg
+CONFIG ../../config/example-deltesian.cfg
+CONFIG ../../config/example-rotary-delta.cfg
+CONFIG ../../config/example-winch.cfg
+
+# Printers using the atmega2560
+DICTIONARY atmega2560.dict
+CONFIG ../../config/generic-einsy-rambo.cfg
+CONFIG ../../config/generic-fysetc-f6.cfg
+CONFIG ../../config/generic-gt2560.cfg
+CONFIG ../../config/generic-mini-rambo.cfg
+CONFIG ../../config/generic-rambo.cfg
+CONFIG ../../config/generic-ramps.cfg
+CONFIG ../../config/generic-rumba.cfg
+CONFIG ../../config/generic-ultimaker-ultimainboard-v2.cfg
+CONFIG ../../config/kit-zav3d-2019.cfg
+CONFIG ../../config/printer-adimlab-2018.cfg
+CONFIG ../../config/printer-anycubic-4max-2018.cfg
+CONFIG ../../config/printer-anycubic-4maxpro-2.0-2021.cfg
+CONFIG ../../config/printer-anycubic-i3-mega-2017.cfg
+CONFIG ../../config/printer-anycubic-kossel-2016.cfg
+CONFIG ../../config/printer-anycubic-kossel-plus-2017.cfg
+CONFIG ../../config/printer-bq-hephestos-2014.cfg
+CONFIG ../../config/printer-creality-cr5pro-ht-2022.cfg
+CONFIG ../../config/printer-creality-cr10-v3-2020.cfg
+CONFIG ../../config/printer-creality-cr10s-2017.cfg
+CONFIG ../../config/printer-creality-cr10s-pro-v2-2020.cfg
+CONFIG ../../config/printer-creality-cr20-2018.cfg
+CONFIG ../../config/printer-creality-cr20-pro-2019.cfg
+CONFIG ../../config/printer-creality-ender5plus-2019.cfg
+CONFIG ../../config/printer-eryone-thinker-series-v2-2020.cfg
+CONFIG ../../config/printer-flashforge-creator-pro-2018.cfg
+CONFIG ../../config/printer-geeetech-A10T-A20T-2021.cfg
+CONFIG ../../config/printer-hiprecy-leo-2019.cfg
+CONFIG ../../config/printer-longer-lk4-pro-2019.cfg
+CONFIG ../../config/printer-lulzbot-mini1-2016.cfg
+CONFIG ../../config/printer-lulzbot-mini2-2018.cfg
+CONFIG ../../config/printer-lulzbot-taz6-2017.cfg
+CONFIG ../../config/printer-lulzbot-taz6-dual-v3-2017.cfg
+CONFIG ../../config/printer-makergear-m2-2012.cfg
+CONFIG ../../config/printer-makergear-m2-2016.cfg
+CONFIG ../../config/printer-micromake-d1-2016.cfg
+CONFIG ../../config/printer-mtw-create-2015.cfg
+CONFIG ../../config/printer-robo3d-r2-2017.cfg
+CONFIG ../../config/printer-seemecnc-rostock-max-v2-2015.cfg
+CONFIG ../../config/printer-sovol-sv01-2020.cfg
+CONFIG ../../config/printer-sunlu-s8-2020.cfg
+CONFIG ../../config/printer-tevo-flash-2018.cfg
+CONFIG ../../config/printer-tevo-tarantula-pro-2020.cfg
+CONFIG ../../config/printer-velleman-k8200-2013.cfg
+CONFIG ../../config/printer-velleman-k8800-2017.cfg
+CONFIG ../../config/printer-wanhao-duplicator-i3-mini-2017.cfg
+CONFIG ../../config/printer-wanhao-duplicator-i3-plus-2017.cfg
+CONFIG ../../config/printer-wanhao-duplicator-i3-plus-mark2-2019.cfg
+CONFIG ../../config/printer-wanhao-duplicator-6-2016.cfg
+CONFIG ../../config/printer-wanhao-duplicator-9-2018.cfg
+
+# Printers using the atmega1280
+DICTIONARY atmega1280.dict
+CONFIG ../../config/generic-mightyboard.cfg
+CONFIG ../../config/generic-minitronics1.cfg
+
+# Printers using the atmega1284p
+DICTIONARY atmega1284p.dict
+CONFIG ../../config/generic-melzi.cfg
+CONFIG ../../config/printer-anet-a4-2018.cfg
+CONFIG ../../config/printer-anet-a8-2017.cfg
+CONFIG ../../config/printer-anet-a8-2019.cfg
+CONFIG ../../config/printer-anet-e10-2018.cfg
+CONFIG ../../config/printer-anet-e16-2019.cfg
+CONFIG ../../config/printer-creality-cr10-2017.cfg
+CONFIG ../../config/printer-creality-cr10mini-2017.cfg
+CONFIG ../../config/printer-creality-ender2-2017.cfg
+CONFIG ../../config/printer-creality-ender3-2018.cfg
+CONFIG ../../config/printer-creality-ender5-2019.cfg
+CONFIG ../../config/printer-tronxy-p802e-2020.cfg
+CONFIG ../../config/printer-tronxy-p802m-2020.cfg
+CONFIG ../../config/printer-tronxy-x5s-2018.cfg
+CONFIG ../../config/printer-tronxy-x8-2018.cfg
+CONFIG ../../config/printer-wanhao-duplicator-i3-v2.1-2017.cfg
+
+# Printers using the atmega644
+DICTIONARY atmega644p.dict
+CONFIG ../../config/generic-simulavr.cfg
+
+# Printers using the at90usb1286
+DICTIONARY at90usb1286.dict
+CONFIG ../../config/generic-printrboard.cfg
+
+# Printers using the sam3x8c
+DICTIONARY sam3x8c.dict
+CONFIG ../../config/generic-printrboard-g2.cfg
+
+# Printers using the sam3x8e
+DICTIONARY sam3x8e.dict
+CONFIG ../../config/generic-alligator-r2.cfg
+CONFIG ../../config/generic-alligator-r3.cfg
+CONFIG ../../config/generic-archim2.cfg
+CONFIG ../../config/generic-radds.cfg
+CONFIG ../../config/generic-ruramps-v1.3.cfg
+
+# Printers using the sam4s8c
+DICTIONARY sam4s8c.dict
+CONFIG ../../config/generic-duet2-maestro.cfg
+
+# Printers using the sam4e8e
+DICTIONARY sam4e8e.dict
+CONFIG ../../config/generic-duet2.cfg
+CONFIG ../../config/generic-duet2-duex.cfg
+CONFIG ../../config/printer-modix-big60-2020.cfg
+
+# Printers using the samd51
+DICTIONARY samd51p20.dict
+CONFIG ../../config/generic-duet3-mini.cfg
+
+# Printers using the SAM E70
+DICTIONARY same70q20b.dict
+CONFIG ../../config/generic-duet3-6hc.cfg
+CONFIG ../../config/generic-duet3-6xd.cfg
+
+# Printers using the lpc176x
+DICTIONARY lpc176x.dict
+CONFIG ../../config/generic-azteeg-x5-mini-v3.cfg
+CONFIG ../../config/generic-bigtreetech-skr-e3-turbo.cfg
+CONFIG ../../config/generic-bigtreetech-skr-v1.1.cfg
+CONFIG ../../config/generic-bigtreetech-skr-v1.3.cfg
+CONFIG ../../config/generic-bigtreetech-skr-v1.4.cfg
+CONFIG ../../config/generic-mks-sgenl.cfg
+CONFIG ../../config/generic-re-arm.cfg
+CONFIG ../../config/generic-smoothieboard.cfg
+CONFIG ../../config/generic-th3d-ezboard-lite-v1.2.cfg
+
+# Printers using the stm32f070
+DICTIONARY stm32f070.dict
+CONFIG ../../config/printer-monoprice-mini-delta-2017.cfg
+CONFIG ../../config/printer-monoprice-select-mini-v2-2018.cfg
+
+# Printers using the stm32f103
+DICTIONARY stm32f103.dict
+CONFIG ../../config/generic-bigtreetech-skr-cr6-v1.0.cfg
+CONFIG ../../config/generic-bigtreetech-skr-e3-dip.cfg
+CONFIG ../../config/generic-bigtreetech-skr-mini.cfg
+CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v1.0.cfg
+CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v1.2.cfg
+CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v2.0.cfg
+CONFIG ../../config/generic-bigtreetech-skr-mini-mz.cfg
+CONFIG ../../config/printer-anycubic-vyper-2021.cfg
+CONFIG ../../config/printer-monoprice-select-mini-v1-2016.cfg
+CONFIG ../../config/printer-sovol-sv05-2022.cfg
+CONFIG ../../config/printer-sovol-sv06-2022.cfg
+CONFIG ../../config/printer-sovol-sv06-plus-2023.cfg
+CONFIG ../../config/printer-sunlu-t3-2022.cfg
+
+# Printers using the stm32f103 via serial
+DICTIONARY stm32f103-serial.dict
+CONFIG ../../config/generic-creality-v4.2.7.cfg
+CONFIG ../../config/generic-creality-v4.2.10.cfg
+CONFIG ../../config/generic-fysetc-cheetah-v1.1.cfg
+CONFIG ../../config/generic-fysetc-cheetah-v1.2.cfg
+CONFIG ../../config/generic-mks-robin-e3.cfg
+CONFIG ../../config/generic-mks-robin-nano-v1.cfg
+CONFIG ../../config/generic-mks-robin-nano-v2.cfg
+CONFIG ../../config/printer-alfawise-u30-2018.cfg
+CONFIG ../../config/printer-creality-cr10-smart-pro-2022.cfg
+CONFIG ../../config/printer-creality-cr30-2021.cfg
+CONFIG ../../config/printer-creality-cr6se-2020.cfg
+CONFIG ../../config/printer-creality-cr6se-2021.cfg
+CONFIG ../../config/printer-creality-ender2pro-2021.cfg
+CONFIG ../../config/printer-creality-ender3-s1-2021.cfg
+CONFIG ../../config/printer-creality-ender3-s1plus-2022.cfg
+CONFIG ../../config/printer-creality-ender3-v2-2020.cfg
+CONFIG ../../config/printer-creality-ender3-v2-neo-2022.cfg
+CONFIG ../../config/printer-creality-ender3max-2021.cfg
+CONFIG ../../config/printer-creality-ender3pro-2020.cfg
+CONFIG ../../config/printer-creality-ender5pro-2020.cfg
+CONFIG ../../config/printer-creality-ender6-2020.cfg
+CONFIG ../../config/printer-creality-sermoonD1-2021.cfg
+CONFIG ../../config/printer-creality-sermoonV1-2022.cfg
+CONFIG ../../config/printer-elegoo-neptune2-2021.cfg
+CONFIG ../../config/printer-eryone-er20-2021.cfg
+CONFIG ../../config/printer-flsun-q5-2020.cfg
+CONFIG ../../config/printer-flsun-qqs-2020.cfg
+CONFIG ../../config/printer-fokoos-odin5-f3-2021.cfg
+CONFIG ../../config/printer-geeetech-301-2019.cfg
+CONFIG ../../config/printer-kingroon-kp3s-2020.cfg
+CONFIG ../../config/printer-longer-lk4x-2022.cfg
+CONFIG ../../config/printer-tronxy-x5sa-v6-2019.cfg
+CONFIG ../../config/printer-tronxy-x5sa-pro-2020.cfg
+CONFIG ../../config/printer-tronxy-xy-2-Pro-2020.cfg
+CONFIG ../../config/printer-twotrees-sapphire-plus-sp-5-v1-2020.cfg
+CONFIG ../../config/printer-twotrees-sapphire-plus-sp-5-v1.1-2021.cfg
+CONFIG ../../config/printer-twotrees-sapphire-pro-sp-3-2020.cfg
+CONFIG ../../config/printer-voxelab-aquila-2021.cfg
+
+# Printers using the stm32f401
+DICTIONARY stm32f401.dict
+CONFIG ../../config/generic-fysetc-cheetah-v2.0.cfg
+CONFIG ../../config/printer-artillery-genius-pro-2022.cfg
+CONFIG ../../config/printer-artillery-sidewinder-x2-2022.cfg
+CONFIG ../../config/printer-artillery-sidewinder-x3-plus-2024.cfg
+CONFIG ../../config/printer-creality-ender5-s1-2023.cfg
+CONFIG ../../config/printer-elegoo-neptune3-pro-2023.cfg
+
+# Printers using the stm32f405
+DICTIONARY stm32f405.dict
+CONFIG ../../config/generic-mellow-fly-gemini-v1.cfg
+CONFIG ../../config/generic-mellow-fly-gemini-v2.cfg
+
+# Printers using the stm32f407
+DICTIONARY stm32f407.dict
+CONFIG ../../config/generic-bigtreetech-e3-rrf-v1.1.cfg
+CONFIG ../../config/generic-bigtreetech-gtr.cfg
+CONFIG ../../config/generic-bigtreetech-skr-pro.cfg
+CONFIG ../../config/generic-bigtreetech-skr-2.cfg
+CONFIG ../../config/generic-flyboard.cfg
+CONFIG ../../config/generic-I3DBEEZ9.cfg
+CONFIG ../../config/generic-mellow-fly-cdy-v3.cfg
+CONFIG ../../config/generic-mellow-fly-e3-v2.cfg
+CONFIG ../../config/generic-mellow-super-infinty-hv.cfg
+CONFIG ../../config/generic-mks-monster8.cfg
+CONFIG ../../config/generic-mks-robin-nano-v3.cfg
+CONFIG ../../config/generic-prusa-buddy.cfg
+CONFIG ../../config/generic-th3d-ezboard-v2.0.cfg
+CONFIG ../../config/printer-biqu-b1-se-plus-2022.cfg
+CONFIG ../../config/printer-prusa-mini-plus-2020.cfg
+
+
+
+# Printers using the stm32f429
+DICTIONARY stm32f429.dict
+CONFIG ../../config/generic-bigtreetech-octopus-v1.1.cfg
+
+# Printers using the stm32f446
+DICTIONARY stm32f446.dict
+CONFIG ../../config/generic-bigtreetech-octopus-pro-v1.0.cfg
+CONFIG ../../config/generic-fysetc-s6.cfg
+CONFIG ../../config/generic-fysetc-s6-v2.cfg
+CONFIG ../../config/generic-fysetc-spider.cfg
+CONFIG ../../config/generic-ldo-leviathan-v1.2.cfg
+CONFIG ../../config/generic-mks-rumba32-v1.0.cfg
+CONFIG ../../config/printer-ratrig-v-minion-2021.cfg
+CONFIG ../../config/printer-tronxy-crux1-2022.cfg
+
+# Printers using the stm32h723
+DICTIONARY stm32h723.dict
+CONFIG ../../config/generic-bigtreetech-octopus-max-ez.cfg
+CONFIG ../../config/generic-bigtreetech-octopus-pro-v1.1.cfg
+
+# Printers using the stm32h743
+DICTIONARY stm32h743.dict
+CONFIG ../../config/printer-biqu-bx-2021.cfg
+CONFIG ../../config/generic-bigtreetech-skr-3.cfg
+
+# Printers using the stm32g0b1
+DICTIONARY stm32g0b1.dict
+CONFIG ../../config/generic-bigtreetech-manta-m4p.cfg
+CONFIG ../../config/generic-bigtreetech-manta-m5p.cfg
+CONFIG ../../config/generic-bigtreetech-manta-m8p-v1.0.cfg
+CONFIG ../../config/generic-bigtreetech-manta-m8p-v1.1.cfg
+CONFIG ../../config/generic-bigtreetech-manta-e3ez.cfg
+CONFIG ../../config/generic-bigtreetech-skr-mini-e3-v3.0.cfg
+
+# Printers using the rp2040
+DICTIONARY rp2040.dict
+CONFIG ../../config/generic-bigtreetech-skr-pico-v1.0.cfg
+
+# Printers using the hc32f460 with serial on PA3 PA2
+DICTIONARY hc32f460-serial-PA3PA2.dict
+CONFIG ../../config/printer-anycubic-kobra-go-2022.cfg
+CONFIG ../../config/printer-anycubic-kobra-plus-2022.cfg
+
+# Printers using the hc32f460 with serial on PA7 PA8
+DICTIONARY hc32f460-serial-PA7PA8.dict
+CONFIG ../../config/printer-creality-ender2pro-hc32-2022.cfg
+
+# Printers using the PRU
+DICTIONARY pru.dict host=linuxprocess.dict
+CONFIG ../../config/generic-cramps.cfg
+CONFIG ../../config/generic-replicape.cfg
+
+# Tests with multiple mcus
+DICTIONARY atmega2560.dict zboard=atmega2560.dict auxboard=atmega2560.dict
+CONFIG ../../config/sample-multi-mcu.cfg
+DICTIONARY atmega2560.dict z=atmega2560.dict
+CONFIG ../../config/kit-voron2-250mm.cfg

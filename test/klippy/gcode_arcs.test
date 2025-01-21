@@ -1,0 +1,50 @@
+# Tests for g-code G2/G3 arc commands
+DICTIONARY atmega2560.dict
+CONFIG gcode_arcs.cfg
+
+# Home and move in XY arc
+G28
+G90
+G1 X20 Y20 Z20
+G2 X125 Y32 Z20 E1 I10.5 J10.5
+
+# XY+Z arc move
+G2 X20 Y20 Z10 E1 I10.5 J10.5
+
+# allowable commands
+G2 X20 Y20 I0 J10
+G2 X20 Y20 J10
+G2 X20 Y20 I10 J0
+G2 X20 Y20 I10
+
+# Home and move in XZ arc
+G28
+G90
+G1 X20 Y20 Z20
+G18
+G2 X125 Y20 Z32 E1 I10.5 K10.5
+
+# XZ+Y arc move
+G2 X20 Y10 Z20 E1 I10.5 K10.5
+
+# allowable commands
+G2 X20 Y20 I0 K10
+G2 X20 Y20 K10
+G2 X20 Y20 I10 K0
+G2 X20 Y20 I10
+
+# Home and move in YZ arc
+G28
+G90
+G1 X20 Y20 Z20
+G19
+G2 X20 Y125 Z32 E1 J10.5 K10.5
+
+# YZ+X arc move
+G2 X10 Y20 Z20 E1 J10.5 K10.5
+
+# allowable commands
+G2 X20 Y20 J0 K10
+G2 X20 Y20 K10
+G2 X20 Y20 J10 K0
+G2 X20 Y20 J10

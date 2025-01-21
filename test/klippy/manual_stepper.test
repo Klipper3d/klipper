@@ -1,0 +1,24 @@
+# Test case for manual_stepper
+CONFIG manual_stepper.cfg
+DICTIONARY atmega2560.dict
+
+# Test basic moves
+MANUAL_STEPPER STEPPER=basic_stepper ENABLE=1
+MANUAL_STEPPER STEPPER=basic_stepper SET_POSITION=0
+MANUAL_STEPPER STEPPER=basic_stepper MOVE=10 SPEED=10
+MANUAL_STEPPER STEPPER=basic_stepper MOVE=5
+MANUAL_STEPPER STEPPER=basic_stepper MOVE=12 SPEED=12 ACCEL=9000.2
+MANUAL_STEPPER STEPPER=basic_stepper ENABLE=0
+
+# Test homing move
+MANUAL_STEPPER STEPPER=homing_stepper ENABLE=1
+MANUAL_STEPPER STEPPER=homing_stepper SET_POSITION=0
+MANUAL_STEPPER STEPPER=homing_stepper MOVE=10 SPEED=100 ACCEL=1
+MANUAL_STEPPER STEPPER=homing_stepper ENABLE=0
+
+# Test motor off
+M84
+
+# Verify stepper_buzz
+STEPPER_BUZZ STEPPER="manual_stepper basic_stepper"
+STEPPER_BUZZ STEPPER="manual_stepper homing_stepper"

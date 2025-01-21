@@ -1,0 +1,51 @@
+# Test cases on printers with dual carriage and multiple extruders
+CONFIG dual_carriage.cfg
+DICTIONARY atmega2560.dict
+
+# First home the printer
+G90
+G28
+
+# Perform a dummy move
+G1 X10 F6000
+
+# Activate alternate carriage
+SET_DUAL_CARRIAGE CARRIAGE=1
+G1 X190 F6000
+
+# Go back to main carriage
+SET_DUAL_CARRIAGE CARRIAGE=0
+G1 X20 F6000
+
+# Save dual carriage state
+SAVE_DUAL_CARRIAGE_STATE
+
+G1 X50 F6000
+
+# Go back to alternate carriage
+SET_DUAL_CARRIAGE CARRIAGE=1
+G1 X170 F6000
+
+# Restore dual carriage state
+RESTORE_DUAL_CARRIAGE_STATE
+
+# Test changing extruders
+G1 X5
+T1
+G91
+G1 X-10 E.2
+T0
+G91
+G1 X20 E.2
+G90
+
+QUERY_ENDSTOPS
+
+# Servo tests
+SET_SERVO servo=my_servo angle=160
+SET_SERVO servo=my_servo angle=130
+
+# Verify STEPPER_BUZZ
+STEPPER_BUZZ STEPPER=dual_carriage
+STEPPER_BUZZ STEPPER=extruder
+STEPPER_BUZZ STEPPER=extruder1

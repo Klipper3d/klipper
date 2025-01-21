@@ -1,0 +1,8 @@
+# Test that basic bounds checks work
+CONFIG ../../config/example-cartesian.cfg
+DICTIONARY atmega2560.dict
+SHOULD_FAIL
+
+# Home the printer, and then attempt to move to an obviously bad location
+G28
+G1 Y9999

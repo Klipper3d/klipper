@@ -1,0 +1,236 @@
+# Main Kconfig settings
+
+mainmenu "Klipper Firmware Configuration"
+
+config LOW_LEVEL_OPTIONS
+    bool "Enable extra low-level configuration options"
+    help
+        Enable low-level configuration options that (if modified) may
+        result in a build that does not function correctly.
+
+choice
+    prompt "Micro-controller Architecture"
+    config MACH_AVR
+        bool "Atmega AVR"
+    config MACH_ATSAM
+        bool "SAM3/SAM4/SAM E70"
+    config MACH_ATSAMD
+        bool "SAMC21/SAMD21/SAMD51/SAME5x"
+    config MACH_LPC176X
+        bool "LPC176x"
+    config MACH_STM32
+        bool "STMicroelectronics STM32"
+    config MACH_HC32F460
+        bool "Huada Semiconductor HC32F460"
+    config MACH_RPXXXX
+        bool "Raspberry Pi RP2040/RP235x"
+    config MACH_PRU
+        bool "Beaglebone PRU"
+    config MACH_AR100
+        bool "Allwinner A64 AR100"
+    config MACH_LINUX
+        bool "Linux process"
+    config MACH_SIMU
+        bool "Host simulator"
+endchoice
+
+source "src/avr/Kconfig"
+source "src/atsam/Kconfig"
+source "src/atsamd/Kconfig"
+source "src/lpc176x/Kconfig"
+source "src/stm32/Kconfig"
+source "src/hc32f460/Kconfig"
+source "src/rp2040/Kconfig"
+source "src/pru/Kconfig"
+source "src/ar100/Kconfig"
+source "src/linux/Kconfig"
+source "src/simulator/Kconfig"
+
+# Generic configuration options for serial ports
+config SERIAL
+    bool
+config SERIAL_BAUD
+    depends on SERIAL
+    int "Baud rate for serial port" if LOW_LEVEL_OPTIONS
+    default 250000
+    help
+        Specify the baud rate of the serial port. This should be set
+        to 250000. Read the FAQ before changing this value.
+
+# Generic configuration options for USB
+config USBSERIAL
+    bool
+config USBCANBUS
+    bool
+config USB
+    bool
+    default y if USBSERIAL || USBCANBUS
+config USB_VENDOR_ID
+    default 0x1d50
+config USB_DEVICE_ID
+    default 0x614e
+config USB_SERIAL_NUMBER_CHIPID
+    depends on USB && HAVE_CHIPID
+    default y
+config USB_SERIAL_NUMBER
+    default "12345"
+
+menu "USB ids"
+    depends on USB && LOW_LEVEL_OPTIONS
+config USB_VENDOR_ID
+    hex "USB vendor ID" if USBSERIAL
+config USB_DEVICE_ID
+    hex "USB device ID" if USBSERIAL
+config USB_SERIAL_NUMBER_CHIPID
+    bool "USB serial number from CHIPID" if HAVE_CHIPID
+config USB_SERIAL_NUMBER
+    string "USB serial number" if !USB_SERIAL_NUMBER_CHIPID
+endmenu
+
+# Optional features that can be disabled (for devices with small flash sizes)
+config WANT_GPIO_BITBANGING
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_DISPLAYS
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_THERMOCOUPLE
+    bool
+    depends on HAVE_GPIO_SPI
+    default y
+config WANT_ADXL345
+    bool
+    depends on HAVE_GPIO_SPI
+    default y
+config WANT_LIS2DW
+    bool
+    depends on HAVE_GPIO_SPI || HAVE_GPIO_I2C
+    default y
+config WANT_MPU9250
+    bool
+    depends on HAVE_GPIO_I2C
+    default y
+config WANT_HX71X
+    bool
+    depends on WANT_GPIO_BITBANGING
+    default y
+config WANT_ADS1220
+    bool
+    depends on HAVE_GPIO_SPI
+    default y
+config WANT_LDC1612
+    bool
+    depends on HAVE_GPIO_I2C
+    default y
+config WANT_SENSOR_ANGLE
+    bool
+    depends on HAVE_GPIO_SPI
+    default y
+config WANT_SOFTWARE_I2C
+    bool
+    depends on HAVE_GPIO && HAVE_GPIO_I2C
+    default y
+config WANT_SOFTWARE_SPI
+    bool
+    depends on HAVE_GPIO && HAVE_GPIO_SPI
+    default y
+config NEED_SENSOR_BULK
+    bool
+    depends on WANT_ADXL345 || WANT_LIS2DW || WANT_MPU9250 \
+        || WANT_HX71X || WANT_ADS1220 || WANT_LDC1612 || WANT_SENSOR_ANGLE
+    default y
+menu "Optional features (to reduce code size)"
+    depends on HAVE_LIMITED_CODE_SIZE
+config WANT_GPIO_BITBANGING
+    bool "Support GPIO \"bit-banging\" devices"
+    depends on HAVE_GPIO
+config WANT_DISPLAYS
+    bool "Support LCD devices"
+    depends on HAVE_GPIO
+config WANT_THERMOCOUPLE
+    bool "Support thermocouple MAX sensors"
+    depends on HAVE_GPIO_SPI
+config WANT_ADXL345
+    bool "Support adxl accelerometers"
+    depends on HAVE_GPIO_SPI
+config WANT_LIS2DW
+    bool "Support lis2dw and lis3dh 3-axis accelerometers"
+    depends on HAVE_GPIO_SPI || HAVE_GPIO_I2C
+config WANT_MPU9250
+    bool "Support MPU accelerometers"
+    depends on HAVE_GPIO_I2C
+config WANT_HX71X
+    bool "Support HX711 and HX717 ADC chips"
+    depends on WANT_GPIO_BITBANGING
+config WANT_ADS1220
+    bool "Support ADS 1220 ADC chip"
+    depends on HAVE_GPIO_SPI
+config WANT_LDC1612
+    bool "Support ldc1612 eddy current sensor"
+    depends on HAVE_GPIO_I2C
+config WANT_SENSOR_ANGLE
+    bool "Support angle sensors"
+    depends on HAVE_GPIO_SPI
+config WANT_SOFTWARE_I2C
+    bool "Support software based I2C \"bit-banging\""
+    depends on HAVE_GPIO && HAVE_GPIO_I2C
+config WANT_SOFTWARE_SPI
+    bool "Support software based SPI \"bit-banging\""
+    depends on HAVE_GPIO && HAVE_GPIO_SPI
+endmenu
+
+# Generic configuration options for CANbus
+config CANSERIAL
+    bool
+config CANBUS
+    bool
+    default y if CANSERIAL || USBCANBUS
+config CANBUS_FREQUENCY
+    int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANBUS
+    default 1000000
+config CANBUS_FILTER
+    bool
+    default y if CANSERIAL
+
+# Support setting gpio state at startup
+config INITIAL_PINS
+    string "GPIO pins to set at micro-controller startup"
+    depends on LOW_LEVEL_OPTIONS
+    help
+        One may specify a comma separated list of gpio pins to set
+        during the micro-controller startup sequence. By default the
+        pins will be set to output high - preface a pin with a '!'
+        character to set that pin to output low.
+
+# The HAVE_x options allow boards to disable support for some commands
+# if the hardware does not support the feature.
+config HAVE_GPIO
+    bool
+config HAVE_GPIO_ADC
+    bool
+config HAVE_GPIO_SPI
+    bool
+config HAVE_GPIO_SDIO
+    bool
+config HAVE_GPIO_I2C
+    bool
+config HAVE_GPIO_HARD_PWM
+    bool
+config HAVE_STRICT_TIMING
+    bool
+config HAVE_CHIPID
+    bool
+config HAVE_STEPPER_BOTH_EDGE
+    bool
+config HAVE_BOOTLOADER_REQUEST
+    bool
+config HAVE_LIMITED_CODE_SIZE
+    bool
+
+config INLINE_STEPPER_HACK
+    # Enables gcc to inline stepper_event() into the main timer irq handler
+    bool
+    depends on HAVE_GPIO
+    default y

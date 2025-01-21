@@ -1,0 +1,35 @@
+--- device/system_LPC17xx.c	2018-05-02 12:23:57.292132454 -0400
++++ device/system_LPC17xx.c	2021-05-04 10:08:17.637502030 -0400
+@@ -297,22 +297,19 @@
+ #define CLKSRCSEL_Val         0x00000001
+ #define PLL0_SETUP            1
+ 
+-#ifdef MCB1700
+-#    define PLL0CFG_Val           0x00050063
+-#    define PLL1_SETUP            1
+-#    define PLL1CFG_Val           0x00000023
+-#    define CCLKCFG_Val           0x00000003
+-#    define USBCLKCFG_Val         0x00000000
++#include "autoconf.h" // CONFIG_MACH_LPC1769
++#if CONFIG_MACH_LPC1769
++# define PLL0CFG_Val           0x0000000E
+ #else
+-#    define PLL0CFG_Val           0x0000000B
+-#    define PLL1_SETUP            0
+-#    define PLL1CFG_Val           0x00000000
+-#    define CCLKCFG_Val           0x00000002
+-#    define USBCLKCFG_Val         0x00000005
++# define PLL0CFG_Val           0x00010018
+ #endif
++#define PLL1_SETUP            1
++#define PLL1CFG_Val           0x00000023
++#define CCLKCFG_Val           0x00000002
++#define USBCLKCFG_Val         0x00000000
+ 
+-#define PCLKSEL0_Val          0x00000000
+-#define PCLKSEL1_Val          0x00000000
++#define PCLKSEL0_Val          0x55515155
++#define PCLKSEL1_Val          0x54555455
+ #define PCONP_Val             0x042887DE
+ #define CLKOUTCFG_Val         0x00000000
+ 
