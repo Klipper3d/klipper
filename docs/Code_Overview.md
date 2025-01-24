@@ -3,6 +3,10 @@
 This document describes the overall code layout and major code flow of
 Klipper.
 
+## Compiling Klipper
+
+Cloning the Klipper repository does not included all build dependencies. To compile Klipper on a development system **without** installing it, find the appropriate installer script in **scripts/** and comment out the function calls to do a full installation. Run the script, and then run `make`.
+
 ## Directory Layout
 
 The **src/** directory contains the C source for the micro-controller
