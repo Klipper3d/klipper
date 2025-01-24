@@ -8,6 +8,8 @@ import sys, os, gc, optparse, logging, time, collections, importlib
 import util, reactor, queuelogger, msgproto
 import gcode, configfile, pins, mcu, toolhead, webhooks
 
+init_filename = "__init__.py"
+
 message_ready = "Printer is ready"
 
 message_startup = """
@@ -95,7 +97,7 @@ class Printer:
         py_name = os.path.join(os.path.dirname(__file__),
                                'extras', module_name + '.py')
         py_dirname = os.path.join(os.path.dirname(__file__),
-                                  'extras', module_name, '__init__.py')
+                                  'extras', module_name, init_filename)
         if not os.path.exists(py_name) and not os.path.exists(py_dirname):
             if default is not configfile.sentinel:
                 return default
@@ -236,10 +238,10 @@ def import_test():
     dname = os.path.dirname(__file__)
     for mname in ['extras', 'kinematics']:
         for fname in os.listdir(os.path.join(dname, mname)):
-            if fname.endswith('.py') and fname != '__init__.py':
+            if fname.endswith('.py') and fname != init_filename:
                 module_name = fname[:-3]
             else:
-                iname = os.path.join(dname, mname, fname, '__init__.py')
+                iname = os.path.join(dname, mname, fname, init_filename)
                 if not os.path.exists(iname):
                     continue
                 module_name = fname
