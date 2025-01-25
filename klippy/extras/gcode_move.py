@@ -5,6 +5,58 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 
+class MoveTransformer:
+    def __init__(self, config):
+        logging.info("MoveTransformer")
+        self.config = config
+        self.last_position = [0., 0., 0., 0., 0.]
+        self.compensations = []
+            
+        self.printer = self.config.get_printer()
+        #self.printer.register_event_handler("klippy:connect", self.handle_connect)
+    
+        
+    def reset_last_position(self):
+        # cache the current position before a transform takes place
+        gcode_move = self.printer.lookup_object('gcode_move')
+        gcode_move.reset_last_position()
+        
+            
+    def handle_connect(self):
+       self.toolhead = self.printer.lookup_object('toolhead')
+
+    def add_transformation(self, obj):
+        self.compensations.append(obj)
+
+    def get_status(self, eventtime=None):
+        self.handle_connect()
+                
+    def get_position(self):      
+        self.last_position[:] = self.toolhead.get_position()
+        position = self.last_position
+
+        for obj in self.compensations:
+            position[:] = obj.get_position(position)
+            
+        self.last_position = position
+        logging.info("MoveTransformer: position %s", self.last_position)
+        return self.last_position.copy()
+    
+    
+    def move(self, newpos, speed):
+        #logging.info("MoveTransformer: last_position %s, new position %s", self.last_position, newpos)
+        move_list = [newpos]
+        
+        for obj in self.compensations:
+            move_list = obj.move(move_list, self.last_position)
+            #logging.info("move liste: %s", move_list)
+            
+        for move in move_list:
+            self.toolhead.move(move, speed)
+        
+        self.last_position = move_list[-1]
+
+
 class GCodeMove:
     def __init__(self, config):
         self.printer = printer = config.get_printer()
@@ -47,15 +99,22 @@ class GCodeMove:
         self.extrude_factor = 1.
         # G-Code state
         self.saved_states = {}
-        self.move_transform = self.move_with_transform = None
+        self.move_transform = MoveTransformer(config)
+        self.move_with_transform = None
         self.position_with_transform = (lambda: [0., 0., 0., 0., 0.])
+    def add_move_transformer(self, obj):
+        self.move_transform.add_transformation(obj)
     def _handle_ready(self):
         self.is_printer_ready = True
+        self.move_with_transform = self.move_transform.move
+        self.position_with_transform = self.move_transform.get_position
         if self.move_transform is None:
             toolhead = self.printer.lookup_object('toolhead')
             self.move_with_transform = toolhead.move
             self.position_with_transform = toolhead.get_position
+        self.move_transform.handle_connect()
         self.reset_last_position()
+        
     def _handle_shutdown(self):
         if not self.is_printer_ready:
             return
@@ -75,17 +134,17 @@ class GCodeMove:
         self.reset_last_position()
         for axis in homing_state.get_axes():
             self.base_position[axis] = self.homing_position[axis]
-    def set_move_transform(self, transform, force=False):
-        if self.move_transform is not None and not force:
-            raise self.printer.config_error(
-                "G-Code move transform already specified")
-        old_transform = self.move_transform
-        if old_transform is None:
-            old_transform = self.printer.lookup_object('toolhead', None)
-        self.move_transform = transform
-        self.move_with_transform = transform.move
-        self.position_with_transform = transform.get_position
-        return old_transform
+    # def set_move_transform(self, transform, force=False):
+    #     if self.move_transform is not None and not force:
+    #         raise self.printer.config_error(
+    #             "G-Code move transform already specified")
+    #     old_transform = self.move_transform
+    #     if old_transform is None:
+    #         old_transform = self.printer.lookup_object('toolhead', None)
+    #     self.move_transform = transform
+    #     self.move_with_transform = transform.move
+    #     self.position_with_transform = transform.get_position
+    #     return old_transform
     def _get_gcode_position(self):
         p = [lp - bp for lp, bp in zip(self.last_position, self.base_position)]
         p[3] /= self.extrude_factor
