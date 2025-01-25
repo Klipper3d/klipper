@@ -11,7 +11,7 @@
 #include "trapq.h" // move_get_coord
 
 static double
-corexy_stepper_plus_calc_position(struct stepper_kinematics *sk, struct move *m
+corexya_stepper_plus_calc_position(struct stepper_kinematics *sk, struct move *m
                                   , double move_time)
 {
     struct coord c = move_get_coord(m, move_time);
@@ -19,7 +19,7 @@ corexy_stepper_plus_calc_position(struct stepper_kinematics *sk, struct move *m
 }
 
 static double
-corexy_stepper_minus_calc_position(struct stepper_kinematics *sk, struct move *m
+corexya_stepper_minus_calc_position(struct stepper_kinematics *sk, struct move *m
                                    , double move_time)
 {
     struct coord c = move_get_coord(m, move_time);
@@ -27,14 +27,14 @@ corexy_stepper_minus_calc_position(struct stepper_kinematics *sk, struct move *m
 }
 
 struct stepper_kinematics * __visible
-corexy_stepper_alloc(char type)
+corexya_stepper_alloc(char type)
 {
     struct stepper_kinematics *sk = malloc(sizeof(*sk));
     memset(sk, 0, sizeof(*sk));
     if (type == '+')
-        sk->calc_position_cb = corexy_stepper_plus_calc_position;
+        sk->calc_position_cb = corexya_stepper_plus_calc_position;
     else if (type == '-')
-        sk->calc_position_cb = corexy_stepper_minus_calc_position;
+        sk->calc_position_cb = corexya_stepper_minus_calc_position;
     sk->active_flags = AF_X | AF_Y;
     return sk;
 }
