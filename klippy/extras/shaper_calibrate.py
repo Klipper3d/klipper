@@ -13,7 +13,8 @@ MAX_SHAPER_FREQ = 150.
 
 TEST_DAMPING_RATIOS=[0.075, 0.1, 0.15]
 
-AUTOTUNE_SHAPERS = ['zv', 'mzv', 'ei', '2hump_ei', '3hump_ei']
+#AUTOTUNE_SHAPERS = ['zv', 'mzv', 'ei', '2hump_ei', '3hump_ei']
+AUTOTUNE_SHAPERS = ['zv']
 
 ######################################################################
 # Frequency response calculation and shaper auto-tuning
@@ -319,10 +320,14 @@ class ShaperCalibrate:
             shaper, test_accel, scv) <= TARGET_SMOOTHING)
         return max_accel
 
+<<<<<<< Updated upstream
     def find_best_shaper(self, calibration_data, shapers=None,
                          damping_ratio=None, scv=None, shaper_freqs=None,
                          max_smoothing=None, test_damping_ratios=None,
                          max_freq=None, logger=None):
+=======
+    def find_best_shaper(self, axis_name, calibration_data, max_smoothing, logger=None):
+>>>>>>> Stashed changes
         best_shaper = None
         all_shapers = []
         shapers = shapers or AUTOTUNE_SHAPERS
@@ -340,6 +345,10 @@ class ShaperCalibrate:
                 logger("To avoid too much smoothing with '%s', suggested "
                        "max_accel <= %.0f mm/sec^2" % (
                            shaper.name, round(shaper.max_accel / 100.) * 100.))
+            if (shaper.freq < 33 and axis_name == 'y'):
+                shaper = shaper._replace(freq=33)
+            if (shaper.freq > 38 and axis_name == 'y'):
+                shaper = shaper._replace(freq=38)
             all_shapers.append(shaper)
             if (best_shaper is None or shaper.score * 1.2 < best_shaper.score or
                     (shaper.score * 1.05 < best_shaper.score and

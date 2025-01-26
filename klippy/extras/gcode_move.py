@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
+import json
 
 class GCodeMove:
     def __init__(self, config):
@@ -26,7 +27,7 @@ class GCodeMove:
         handlers = [
             'G1', 'G20', 'G21',
             'M82', 'M83', 'G90', 'G91', 'G92', 'M220', 'M221',
-            'SET_GCODE_OFFSET', 'SAVE_GCODE_STATE', 'RESTORE_GCODE_STATE',
+            'SET_GCODE_OFFSET', 'SAVE_GCODE_STATE', 'RESTORE_GCODE_STATE', 'GET_GCODE_STATE',
         ]
         for cmd in handlers:
             func = getattr(self, 'cmd_' + cmd)
@@ -36,6 +37,7 @@ class GCodeMove:
         gcode.register_command('M114', self.cmd_M114, True)
         gcode.register_command('GET_POSITION', self.cmd_GET_POSITION, True,
                                desc=self.cmd_GET_POSITION_help)
+        gcode.register_command('MKS_GET_STATE', self.cmd_MKS_GET_STATE)
         self.Coord = gcode.Coord
         # G-Code coordinate manipulation
         self.absolute_coord = self.absolute_extrude = True
@@ -49,6 +51,10 @@ class GCodeMove:
         self.saved_states = {}
         self.move_transform = self.move_with_transform = None
         self.position_with_transform = (lambda: [0., 0., 0., 0.])
+
+        self.content = {"commandline": None, "Z": None}
+
+        # self.v_sd = self.printer.lookup_object('virtual_sdcard', None)
     def _handle_ready(self):
         self.is_printer_ready = True
         if self.move_transform is None:
@@ -56,6 +62,7 @@ class GCodeMove:
             self.move_with_transform = toolhead.move
             self.position_with_transform = toolhead.get_position
         self.reset_last_position()
+        self.v_sd = self.printer.lookup_object('virtual_sdcard', None)
     def _handle_shutdown(self):
         if not self.is_printer_ready:
             return
@@ -105,6 +112,9 @@ class GCodeMove:
             'homing_origin': self.Coord(*self.homing_position),
             'position': self.Coord(*self.last_position),
             'gcode_position': self.Coord(*move_position),
+            'base_position': list(self.base_position),
+            # 'last_position': list(self.last_position),
+            'content': self.content
         }
     def reset_last_position(self):
         if self.is_printer_ready:
@@ -113,6 +123,16 @@ class GCodeMove:
     def cmd_G1(self, gcmd):
         # Move
         params = gcmd.get_command_parameters()
+        
+        if 'G' in params and 'Z' in params:
+            if self.v_sd.cmd_from_sd:
+                self.content = {
+                    'commandline': gcmd.get_commandline(),
+                    'Z': params['Z']
+                }
+                # with open("/home/mks/mks_plr_height", 'w') as height:
+                #     json.dump(content, height)
+        
         try:
             for pos, axis in enumerate('XYZ'):
                 if axis in params:
@@ -271,6 +291,43 @@ class GCodeMove:
                           "gcode homing: %s"
                           % (mcu_pos, stepper_pos, kin_pos, toolhead_pos,
                              gcode_pos, base_pos, homing_pos))
+    cmd_GET_GCODE_STATE_help = "Get G-Code coordinate state"
+    def cmd_GET_GCODE_STATE(self, gcmd):
+        gcmd.respond_info("absolute_coord: %s\n"
+                          "absolute_extrude: %s\n"
+                          "base_position: %s\n"
+                          "last_position: %s\n"
+                          "homing_position: %s\n"
+                          "speed: %s\n"
+                          "speed_factor: %s\n"
+                          "extrude_factor: %s\n"
+                          % (self.absolute_coord, self.absolute_extrude, list(self.base_position),list(self.last_position),
+                          list(self.homing_position),self.speed,self.speed_factor,self.extrude_factor))
+    def cmd_MKS_GET_STATE(self, gcmd):
+        gcode = self.printer.lookup_object('gcode')
+        toolhead = self.printer.lookup_object('toolhead')
+        with open('/home/mks/mks_plr/gcode_move/position', 'r') as position:
+            _pos = position.read()
+        pos = list(eval(_pos))
+        with open('/home/mks/mks_plr/gcode_move/gcode_position', 'r') as gcode_position:
+            _g_pos = gcode_position.read()
+        g_pos = list(eval(_pos))
+        with open('/home/mks/mks_plr/gcode_move/absolute_coordinates', 'r') as absolute_coordinates:
+            _absolute_coordinates = absolute_coordinates.read()
+        ac = bool(_absolute_coordinates)
+        with open('/home/mks/mks_plr/gcode_move/absolute_extrude', 'r') as absolute_extrude:
+            _absolute_extrude = absolute_extrude.read()
+        ae = bool(_absolute_extrude)
+        with open('/home/mks/mks_plr/gcode_move/speed', 'r') as speed:
+            _speed = speed.read()
+        gcmd.respond_info("position: %s\n"
+                          "gcode_position: %s\n"
+                          "absolute_coordinates: %s\n"
+                          "absolute_extrude: %s\n" % (pos, g_pos, ac, ae))
+        self.absolute_coord = ac
+        self.absolute_extrude = ae
+        self.last_position = pos
+        self.base_position = pos
 
 def load_config(config):
     return GCodeMove(config)

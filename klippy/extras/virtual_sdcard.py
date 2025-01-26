@@ -3,7 +3,13 @@
 # Copyright (C) 2018-2024  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+<<<<<<< Updated upstream
 import os, sys, logging, io
+=======
+import os, sys, logging
+reload(sys)
+sys.setdefaultencoding('utf-8')
+>>>>>>> Stashed changes
 
 VALID_GCODE_EXTS = ['gcode', 'g', 'gco']
 
@@ -46,6 +52,13 @@ class VirtualSD:
         self.gcode.register_command(
             "SDCARD_PRINT_FILE", self.cmd_SDCARD_PRINT_FILE,
             desc=self.cmd_SDCARD_PRINT_FILE_help)
+        self.gcode.register_command(
+            "POC_PRINT_FILE", self.cmd_POC_PRINT_FILE,
+            desc=self.cmd_POC_PRINT_FILE_help)
+        self.gcode.register_command("MKS_LOAD_FILE_POSITION", self.cmd_MKS_LOAD_FILE_POSITION)
+        self.gcode.register_command(
+            "SDCARD_SELECT_FILE", self.cmd_SDCARD_SELECT_FILE,
+            desc=self.cmd_SDCARD_SELECT_FILE_help)
     def handle_shutdown(self):
         if self.work_timer is not None:
             self.must_pause_work = True
@@ -155,6 +168,17 @@ class VirtualSD:
             filename = filename[1:]
         self._load_file(gcmd, filename, check_subdirs=True)
         self.do_resume()
+    cmd_SDCARD_SELECT_FILE_help = "Select a SD file.  May "\
+        "include files in subdirectories."
+    def cmd_SDCARD_SELECT_FILE(self, gcmd):
+        if self.work_timer is not None:
+            raise gcmd.error("SD busy")
+        self._reset_file()
+        filename = gcmd.get("FILENAME")
+        if filename[0] == '/':
+            filename = filename[1:]
+        self._load_file(gcmd, filename, check_subdirs=True)
+        #self.do_resume()
     def cmd_M20(self, gcmd):
         # List SD card
         files = self.get_file_list()
@@ -174,6 +198,26 @@ class VirtualSD:
         if filename.startswith('/'):
             filename = filename[1:]
         self._load_file(gcmd, filename)
+    cmd_POC_PRINT_FILE_help = "Loads a SD file and resume the print."
+    def cmd_POC_PRINT_FILE(self, gcmd):
+        gcmd.respond_raw("POC")
+    def cmd_MKS_LOAD_FILE_POSITION(self, gcmd):
+        with open('/home/mks/mks_plr/heater_bed/target', 'r') as target_190:
+            m_190 = target_190.read()
+        _m_190 = str(m_190)
+        with open('/home/mks/mks_plr/extruder/target', 'r') as extruder_109:
+            m_109 = extruder_109.read()
+        _m_109 = str(m_109)
+        with open('/home/mks/mks_plr/virtual_sdcard/file_position', 'r') as file_position:
+            fp = file_position.read()
+        with open('/home/mks/mks_plr/gcode_move/position', 'r') as position:
+            _pos = position.read()
+        pos = list(eval(_pos))
+        line = "G28\nG90\nG1 X" + str(pos[0]) + " Y" + str(pos[1]) + " Z" + str(pos[2]) + "\nM109 S" + _m_109 + "\nM190 S" + _m_190
+        # line = "G28\nG90\nG1 X" + str(g_pos[0]) + " Y" + str(g_pos[1]) + " Z" + str(g_pos[2]) "\nM109 S" + _m_109 + "\nM190 S" + _m_190 
+        self.gcode.run_script_from_command(line)
+        gcmd.respond_raw("%s\n" % (line, ))
+        self.file_position = int(fp)
     def _load_file(self, gcmd, filename, check_subdirs=False):
         files = self.get_file_list(check_subdirs)
         flist = [f[0] for f in files]
@@ -264,13 +308,19 @@ class VirtualSD:
             # Dispatch command
             self.cmd_from_sd = True
             line = lines.pop()
+<<<<<<< Updated upstream
             if sys.version_info.major >= 3:
                 next_file_position = self.file_position + len(line.encode()) + 1
             else:
                 next_file_position = self.file_position + len(line) + 1
+=======
+            # logging.info("%s", lines)
+            next_file_position = self.file_position + len(line) + 1
+>>>>>>> Stashed changes
             self.next_file_position = next_file_position
             try:
                 self.gcode.run_script(line)
+                # logging.info("%s", line)
             except self.gcode.error as e:
                 error_message = str(e)
                 try:

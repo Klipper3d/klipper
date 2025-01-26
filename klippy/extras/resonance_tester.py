@@ -385,8 +385,12 @@ class ResonanceTester:
             scv = toolhead_info['square_corner_velocity']
             max_freq = self._get_max_calibration_freq()
             best_shaper, all_shapers = helper.find_best_shaper(
+<<<<<<< Updated upstream
                     calibration_data[axis], max_smoothing=max_smoothing,
                     scv=scv, max_freq=max_freq, logger=gcmd.respond_info)
+=======
+                    axis_name, calibration_data[axis], max_smoothing, gcmd.respond_info)
+>>>>>>> Stashed changes
             gcmd.respond_info(
                     "Recommended shaper_type_%s = %s, shaper_freq_%s = %.1f Hz"
                     % (axis_name, best_shaper.name,

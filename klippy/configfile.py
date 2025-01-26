@@ -406,7 +406,7 @@ class ConfigAutoSave:
             raise gcmd.error(msg)
         # Request a restart
         gcode = self.printer.lookup_object('gcode')
-        gcode.request_restart('restart')
+        gcode.request_restart('firmware_restart')
 
 
 ######################################################################
