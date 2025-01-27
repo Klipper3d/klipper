@@ -207,6 +207,14 @@ class GCodeMove:
                 self.last_position[pos] += delta
             self.move_with_transform(self.last_position, speed)
     cmd_SAVE_GCODE_STATE_help = "Save G-Code coordinate state"
+    def set_offset(self, offset):
+        for pos, axis in enumerate('XYZE'):
+            self.base_position[pos] += offset[axis]
+            self.homing_position[pos] = offset[axis]
+    def clear_offset(self, offset):
+        for pos, axis in enumerate('XYZE'):
+            self.base_position[pos] -= offset[axis]
+            self.homing_position[pos] = 0
     def cmd_SAVE_GCODE_STATE(self, gcmd):
         state_name = gcmd.get('NAME', 'default')
         self.saved_states[state_name] = {

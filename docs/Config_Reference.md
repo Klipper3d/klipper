@@ -1561,6 +1561,50 @@ Support for gcode arc (G2/G3) commands.
 #   1mm.
 ```
 
+### CNC functionality
+
+Provisions for CNC functionality which is not necessarily applicable to 3d printers.
+
+Where possible, g-codes consistent across _most_ command sets are used to invoke functionality. For other situations,
+functionality uses Klipper's preference for human readable ["extended G-Code command"](#additional-commands)
+language and additional macro mappings are provided to support the different command sets. All status commands follow
+Klipper's extended command language.
+
+| function                   | command | GRBL v1.1 | marlin | linuxcnc | Haas CNC | Smoothie | Mach3 |
+| -------------------------- | ------- | --------- | ------ | -------- | -------- | -------- | ----- |
+| arc move clockwise         | G2      | x         | x      | x        | x        | x        | x     |
+| arc move counter clockwise | G3      | x         | x      | x        | x        | x        | x     |
+| set work offsets           | G10 L2  | x         | ?      | x        | x        | x        | x     |
+| select XY arc plane        | G17     | x         | x      | x        | x        | x        | x     |
+| select XZ arc plane        | G18     | x         | x      | x        | x        | x        | x     |
+| select YZ arc plane        | G19     | x         | x      | x        | x        | x        | x     |
+| select machine space       | G53     | x         | x      | x        | x        | x        | x     |
+| select coordinate system 1 | G54     | x         | x      | x        | x        | x        | x     |
+| select coordinate system 2 | G55     | x         | x      | x        | x        | x        | x     |
+| select coordinate system 3 | G56     | x         | x      | x        | x        | x        | x     |
+| select coordinate system 4 | G57     | x         | x      | x        | x        | x        | x     |
+| select coordinate system 5 | G58     | x         | x      | x        | x        | x        | x     |
+| select coordinate system 6 | G59     | x         | x      | x        | x        | x        | x     |
+
+Details on individual commands can be found in [gcode work offset commands](G-Codes.md#work_offsets).
+
+References:
+
+- [Grbl v1.1](https://github.com/gnea/grbl/wiki)
+- [Marlin](https://marlinfw.org/meta/gcode/)
+- LinuxCNC [G](https://linuxcnc.org/docs/html/gcode/g-code.html) / [M](https://linuxcnc.org/docs/html/gcode/m-code.html)
+- Haas CNC [G](https://www.haascnc.com/service/service-content/guide-procedures/mill---g-codes.html) /
+  [M](https://www.haascnc.com/service/service-content/guide-procedures/mill---m-codes.html)
+- [smoothie](https://smoothieware.org/supported-g-codes)
+- [Mach3](https://machmotion.com/documentation/Software/Mach3/Mach3%20G-Code%20Manual.pdf)
+
+#### coordinate systems for work offsets
+
+```
+[work_offsets]
+#work_offsets: standard
+```
+
 ### [respond]
 
 Enable the "M118" and "RESPOND" extended
