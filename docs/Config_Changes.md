@@ -8,6 +8,12 @@ All dates in this document are approximate.
 
 ## Changes
 
+20240125: A fan with a tachometer will now shutdown the printer if the
+fan fails to run. This is controlled with a new `tachometer_min_rpm`
+option. The default is 1. When set to 0, this check will be disabled.
+To verify a fan is still performing as it should, set this value some
+margin below the rpm of the fan when running at maximum speed.
+
 20241203: The resonance test has been changed to include slow sweeping
 moves. This change requires that testing point(s) have some clearance
 in X/Y plane (+/- 30 mm from the test point should suffice when using

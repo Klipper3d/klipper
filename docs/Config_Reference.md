@@ -2895,6 +2895,14 @@ pin:
 #tachometer_pin:
 #   Tachometer input pin for monitoring fan speed. A pullup is generally
 #   required. This parameter is optional.
+#tachometer_min_rpm: 1
+#   When tachometer_pin is specified, this will shutdown the printer when the
+#   fan is stalling or running too slow. Set to 0 to disable this check.
+#   The default of 1 will only shutdown the printer if the fan stops spinning
+#   completely. To verify a fan is still performing as it should, set this
+#   value some margin below the rpm of the fan when running at maximum speed.
+#   When running at lower speeds, the check will verify rpm > min_rpm * speed.
+#   If a fan stalls at low speeds, make sure to configure `off_below` correctly.
 #tachometer_ppr: 2
 #   When tachometer_pin is specified, this is the number of pulses per
 #   revolution of the tachometer signal. For a BLDC fan this is
