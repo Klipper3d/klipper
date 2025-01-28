@@ -83,8 +83,9 @@ class Heater:
         if not self.fast_pwm:
             self.mcu_pwm.set_pwm(pwm_time, value)
         else:
-            # PWM will apply on arrival, expect less then pending delay
-            self.mcu_pwm.set_pwm_now(pwm_time, value)
+            # PWM will apply on arrival
+            self.next_pwm_time = read_time + 0.75 * max_heat_time
+            self.mcu_pwm.set_pwm_with_end(read_time, value)
         #logging.debug("%s: pwm=%.3f@%.3f (from %.3f@%.3f [%.3f])",
         #              self.name, value, pwm_time,
         #              self.last_temp, self.last_temp_time, self.target_temp)

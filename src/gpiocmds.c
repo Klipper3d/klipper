@@ -22,7 +22,12 @@ struct digital_out_s {
 
 struct digital_move {
     struct move_node node;
-    uint32_t waketime, on_duration;
+    union {
+        uint32_t waketime;
+        uint32_t endtime;
+    };
+    uint32_t on_duration;
+    uint8_t is_endtime;
 };
 
 enum {
@@ -82,12 +87,20 @@ digital_load_event(struct timer *timer)
             flags |= DF_CHECK_END;
         }
     }
-    if (!move_queue_empty(&d->mq)) {
+    if (m->is_endtime)
+        end_time = m->endtime;
+    if (!move_queue_empty(&d->mq) && !m->is_endtime) {
         struct move_node *nn = move_queue_first(&d->mq);
         uint32_t wake = container_of(nn, struct digital_move, node)->waketime;
         if (flags & DF_CHECK_END && timer_is_before(end_time, wake))
             shutdown("Scheduled digital out event will exceed max_duration");
         end_time = wake;
+        flags |= DF_CHECK_END;
+    } else if (!move_queue_empty(&d->mq) && m->is_endtime) {
+        struct move_node *nn = move_queue_first(&d->mq);
+        uint32_t end = container_of(nn, struct digital_move, node)->endtime;
+        if (flags & DF_CHECK_END && timer_is_before(end, end_time))
+            shutdown("Scheduled digital out event will exceed max_duration");
         flags |= DF_CHECK_END;
     }
     d->end_time = end_time;
@@ -187,6 +200,40 @@ void command_queue_digital_out_now(uint32_t *args)
 }
 DECL_COMMAND(command_queue_digital_out_now,
              "queue_digital_out_now oid=%c clock=%u on_ticks=%u");
+
+void command_queue_digital_out_end(uint32_t *args)
+{
+    struct digital_out_s *d = oid_lookup(args[0], command_config_digital_out);
+    struct digital_move *m = move_alloc();
+    uint32_t time = timer_read_time() + timer_from_us(100);
+    m->endtime = args[1];
+    m->is_endtime = 1;
+    m->on_duration = args[2];
+
+    irq_disable();
+    int first_on_queue = move_queue_push(&m->node, &d->mq);
+    if (!first_on_queue) {
+        irq_enable();
+        return;
+    }
+    uint8_t flags = d->flags;
+    if (flags & DF_CHECK_END && timer_is_before(m->endtime, d->end_time))
+        shutdown("Scheduled digital out event will exceed max_duration");
+    d->end_time = time;
+    d->flags = flags | DF_CHECK_END;
+    if (flags & DF_TOGGLING && timer_is_before(d->timer.waketime, time)) {
+        // digital_toggle_event() will schedule a load event when ready
+    } else {
+        // Schedule the loading of the parameters at the requested time
+        sched_del_timer(&d->timer);
+        d->timer.waketime = time;
+        d->timer.func = digital_load_event;
+        sched_add_timer(&d->timer);
+    }
+    irq_enable();
+}
+DECL_COMMAND(command_queue_digital_out_end,
+             "queue_digital_out_end oid=%c end_clock=%u on_ticks=%u");
 
 void
 command_update_digital_out(uint32_t *args)
