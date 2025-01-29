@@ -27,7 +27,7 @@ mode") or that run the
 It is also necessary to configure the host operating system to use the
 adapter.
 
-If you are using a Bullseye based system using ifupdown, this
+If you are using a Debian Bullseye based system using ifupdown, this
 is typically done by creating a new file named
 `/etc/network/interfaces.d/can0` with the following contents:
 ```
@@ -37,7 +37,7 @@ iface can0 can static
     up ip link set $IFACE txqueuelen 128
 ```
 
-In newer Bookworm installations it is necessary to use systemd-networkd,
+In newer Debian Bookworm installations it is necessary to use systemd-networkd,
 two files need to be created, one to define the interface and another to
 set the txqueuelen, these are:
 `/etc/systemd/network/80-can0.network` with the contents:
