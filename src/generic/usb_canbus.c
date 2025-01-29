@@ -1,6 +1,6 @@
 // Support for Linux "gs_usb" CANbus adapter emulation
 //
-// Copyright (C) 2018-2022  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2025  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -108,6 +108,10 @@ static struct usbcan_data {
     uint8_t notify_local, usb_send_busy;
     uint32_t assigned_id;
 
+    // State tracking for messages to be sent from host to canbus
+    uint32_t bus_send_discard_time;
+    uint8_t bus_send_state;
+
     // Canbus data from host
     uint8_t host_status;
     uint32_t host_pull_pos, host_push_pos;
@@ -117,6 +121,10 @@ static struct usbcan_data {
     uint32_t canhw_pull_pos, canhw_push_pos;
     struct canbus_msg canhw_queue[32];
 } UsbCan;
+
+enum {
+    BSS_READY = 0, BSS_BLOCKING, BSS_DISCARDING
+};
 
 enum {
     HS_TX_ECHO = 1,
@@ -205,10 +213,56 @@ fill_usb_host_queue(void)
     }
 }
 
+// Report bus stall state
+static void
+note_discard_state(uint32_t discard)
+{
+    sendf("usb_canbus_state discard=%u", discard);
+}
+
+// Check if canbus queue has gotten stuck
+static int
+check_need_discard(void)
+{
+    if (UsbCan.bus_send_state != BSS_BLOCKING)
+        return 0;
+    return timer_is_before(UsbCan.bus_send_discard_time, timer_read_time());
+}
+
+// Attempt to send a message on the canbus
+static int
+try_canmsg_send(struct canbus_msg *msg)
+{
+    int ret = canhw_send(msg);
+    if (ret >= 0) {
+        // Success
+        if (UsbCan.bus_send_state == BSS_DISCARDING)
+            note_discard_state(0);
+        UsbCan.bus_send_state = BSS_READY;
+        return ret;
+    }
+
+    // Unable to send message
+    if (check_need_discard()) {
+        // The canbus is stalled - start discarding messages
+        note_discard_state(1);
+        UsbCan.bus_send_state = BSS_DISCARDING;
+    }
+    if (UsbCan.bus_send_state == BSS_DISCARDING)
+        // Queue is stalled - just discard the message
+        return 0;
+    if (UsbCan.bus_send_state == BSS_READY) {
+        // Just starting to block - setup stall detection after 50ms
+        UsbCan.bus_send_state = BSS_BLOCKING;
+        UsbCan.bus_send_discard_time = timer_read_time() + timer_from_us(50000);
+    }
+    return ret;
+}
+
 void
 usbcan_task(void)
 {
-    if (!sched_check_wake(&UsbCan.wake))
+    if (!sched_check_wake(&UsbCan.wake) && !check_need_discard())
         return;
 
     // Send any pending hw frames to host
@@ -235,7 +289,7 @@ usbcan_task(void)
                 UsbCan.host_status = host_status = host_status & ~HS_TX_LOCAL;
             }
             if (host_status & HS_TX_HW) {
-                int ret = canhw_send(&msg);
+                int ret = try_canmsg_send(&msg);
                 if (ret < 0)
                     break;
                 UsbCan.host_status = host_status = host_status & ~HS_TX_HW;

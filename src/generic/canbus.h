@@ -17,9 +17,20 @@ struct canbus_msg {
 
 #define CANMSG_DATA_LEN(msg) ((msg)->dlc > 8 ? 8 : (msg)->dlc)
 
+struct canbus_status {
+    uint32_t rx_error, tx_error, tx_retries;
+    uint32_t bus_state;
+};
+
+enum {
+    CANBUS_STATE_ACTIVE, CANBUS_STATE_WARN, CANBUS_STATE_PASSIVE,
+    CANBUS_STATE_OFF,
+};
+
 // callbacks provided by board specific code
 int canhw_send(struct canbus_msg *msg);
 void canhw_set_filter(uint32_t id);
+void canhw_get_status(struct canbus_status *status);
 
 // canbus.c
 int canbus_send(struct canbus_msg *msg);
