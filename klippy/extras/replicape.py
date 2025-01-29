@@ -30,7 +30,6 @@ class pca9685_pwm:
         self._invert = pin_params['invert']
         self._start_value = self._shutdown_value = float(self._invert)
         self._is_enable = not not self._start_value
-        self._is_static = False
         self._last_clock = 0
         self._pwm_max = 0.
         self._set_cmd = None
@@ -44,28 +43,18 @@ class pca9685_pwm:
         if cycle_time != self._cycle_time:
             logging.info("Ignoring pca9685 cycle time of %.6f (using %.6f)",
                          cycle_time, self._cycle_time)
-    def setup_start_value(self, start_value, shutdown_value, is_static=False):
-        if is_static and start_value != shutdown_value:
-            raise pins.error("Static pin can not have shutdown value")
+    def setup_start_value(self, start_value, shutdown_value):
         if self._invert:
             start_value = 1. - start_value
             shutdown_value = 1. - shutdown_value
         self._start_value = max(0., min(1., start_value))
         self._shutdown_value = max(0., min(1., shutdown_value))
-        self._is_static = is_static
         self._replicape.note_pwm_start_value(
             self._channel, self._start_value, self._shutdown_value)
         self._is_enable = not not self._start_value
     def _build_config(self):
         self._pwm_max = self._mcu.get_constant_float("PCA9685_MAX")
         cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
-        if self._is_static:
-            self._mcu.add_config_cmd(
-                "set_pca9685_out bus=%d addr=%d channel=%d"
-                " cycle_ticks=%d value=%d" % (
-                    self._bus, self._address, self._channel,
-                    cycle_ticks, self._start_value * self._pwm_max))
-            return
         self._mcu.request_move_queue_slot()
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
@@ -78,7 +67,7 @@ class pca9685_pwm:
         cmd_queue = self._mcu.alloc_command_queue()
         self._set_cmd = self._mcu.lookup_command(
             "queue_pca9685_out oid=%c clock=%u value=%hu", cq=cmd_queue)
-    def set_pwm(self, print_time, value, cycle_time=None):
+    def set_pwm(self, print_time, value):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._invert:
             value = 1. - value
@@ -171,7 +160,7 @@ class Replicape:
         printer = config.get_printer()
         ppins = printer.lookup_object('pins')
         ppins.register_chip('replicape', self)
-        revisions = {'B3': 'B3'}
+        revisions = ['B3']
         config.getchoice('revision', revisions)
         self.host_mcu = mcu.get_printer_mcu(printer, config.get('host_mcu'))
         # Setup enable pin

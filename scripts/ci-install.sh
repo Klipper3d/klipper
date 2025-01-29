@@ -20,6 +20,7 @@ PKGS="virtualenv python2-dev libffi-dev build-essential"
 PKGS="${PKGS} gcc-avr avr-libc"
 PKGS="${PKGS} libnewlib-arm-none-eabi gcc-arm-none-eabi binutils-arm-none-eabi"
 PKGS="${PKGS} pv libmpfr-dev libgmp-dev libmpc-dev texinfo bison flex"
+sudo apt-get update
 sudo apt-get install ${PKGS}
 
 
@@ -35,7 +36,7 @@ if [ ! -f ${PRU_FILE} ]; then
     cd ${BUILD_DIR}
     git config --global user.email "you@example.com"
     git config --global user.name "Your Name"
-    git clone https://github.com/dinuxbg/gnupru -b 2023.01 --depth 1
+    git clone https://github.com/dinuxbg/gnupru -b 2024.05 --depth 1
     cd gnupru
     export PREFIX=${PRU_DIR}
     ./download-and-prepare.sh 2>&1 | pv -nli 30 > ${BUILD_DIR}/gnupru-build.log

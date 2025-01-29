@@ -162,6 +162,8 @@ bootloader_request(void)
 void
 armcm_main(void)
 {
+    // Disable internal pull-down resistors on UCPDx CCx pins
+    SYSCFG->CFGR1 |= (SYSCFG_CFGR1_UCPD1_STROBE | SYSCFG_CFGR1_UCPD2_STROBE);
     SCB->VTOR = (uint32_t)VectorTable;
 
     // Reset clock registers (in case bootloader has changed them)

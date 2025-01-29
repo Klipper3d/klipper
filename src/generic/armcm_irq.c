@@ -38,7 +38,7 @@ irq_restore(irqstatus_t flag)
 void
 irq_wait(void)
 {
-    if (__CORTEX_M >= 7)
+    if (__CORTEX_M == 7)
         // Cortex-m7 may disable cpu counter on wfi, so use nop
         asm volatile("cpsie i\n    nop\n    cpsid i\n" ::: "memory");
     else

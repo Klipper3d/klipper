@@ -12,7 +12,7 @@ class ScrewsTiltAdjust:
         self.config = config
         self.printer = config.get_printer()
         self.screws = []
-        self.results = []
+        self.results = {}
         self.max_diff = None
         self.max_diff_error = False
         # Read config

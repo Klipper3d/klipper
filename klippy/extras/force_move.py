@@ -86,11 +86,13 @@ class ForceMove:
                           0., 0., 0., axis_r, 0., 0., 0., cruise_v, accel)
         print_time = print_time + accel_t + cruise_t + accel_t
         stepper.generate_steps(print_time)
-        self.trapq_finalize_moves(self.trapq, print_time + 99999.9)
+        self.trapq_finalize_moves(self.trapq, print_time + 99999.9,
+                                  print_time + 99999.9)
         stepper.set_trapq(prev_trapq)
         stepper.set_stepper_kinematics(prev_sk)
-        toolhead.note_kinematic_activity(print_time)
+        toolhead.note_mcu_movequeue_activity(print_time)
         toolhead.dwell(accel_t + cruise_t + accel_t)
+        toolhead.flush_step_generation()
     def _lookup_stepper(self, gcmd):
         name = gcmd.get('STEPPER')
         if name not in self.steppers:
@@ -129,8 +131,12 @@ class ForceMove:
         x = gcmd.get_float('X', curpos[0])
         y = gcmd.get_float('Y', curpos[1])
         z = gcmd.get_float('Z', curpos[2])
-        logging.info("SET_KINEMATIC_POSITION pos=%.3f,%.3f,%.3f", x, y, z)
-        toolhead.set_position([x, y, z, curpos[3]], homing_axes=(0, 1, 2))
+        clear = gcmd.get('CLEAR', '').lower()
+        clear_axes = "".join([a for a in "xyz" if a in clear])
+        logging.info("SET_KINEMATIC_POSITION pos=%.3f,%.3f,%.3f clear=%s",
+                     x, y, z, clear_axes)
+        toolhead.set_position([x, y, z, curpos[3]], homing_axes="xyz")
+        toolhead.get_kinematics().clear_homing_state(clear_axes)
 
 def load_config(config):
     return ForceMove(config)

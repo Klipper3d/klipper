@@ -13,8 +13,9 @@
 #include "command.h" // shutdown
 #include "internal.h" // report_errno
 #include "sched.h" // sched_shutdown
+#include "i2ccmds.h" // I2C_BUS_SUCCESS
 
-DECL_ENUMERATION_RANGE("i2c_bus", "i2c.0", 0, 7);
+DECL_ENUMERATION_RANGE("i2c_bus", "i2c.0", 0, 15);
 
 struct i2c_s {
     uint32_t bus;
@@ -84,18 +85,28 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
     return (struct i2c_config){.fd=fd, .addr=addr};
 }
 
-void
+int
 i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *data)
 {
-    int ret = write(config.fd, data, write_len);
-    if (ret != write_len) {
-        if (ret < 0)
-            report_errno("write value i2c", ret);
-        try_shutdown("Unable write i2c device");
+    struct i2c_rdwr_ioctl_data i2c_data;
+    struct i2c_msg msgs[1];
+    msgs[0].addr = config.addr;
+    msgs[0].flags = 0x0;
+    msgs[0].len = write_len;
+    msgs[0].buf = data;
+    i2c_data.nmsgs = 1;
+    i2c_data.msgs = &msgs[0];
+
+    int ret = ioctl(config.fd, I2C_RDWR, &i2c_data);
+
+    if (ret < 0) {
+        return I2C_BUS_NACK;
     }
+
+    return I2C_BUS_SUCCESS;
 }
 
-void
+int
 i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *data)
 {
@@ -121,7 +132,9 @@ i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
 
     int ret = ioctl(config.fd, I2C_RDWR, &i2c_data);
 
-    if(ret < 0) {
-        try_shutdown("Unable to read i2c device");
+    if (ret < 0) {
+        return I2C_BUS_NACK;
     }
+
+    return I2C_BUS_SUCCESS;
 }

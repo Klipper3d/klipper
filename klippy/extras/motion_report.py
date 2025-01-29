@@ -56,8 +56,6 @@ class DumpStepper:
         mcu_pos = first.start_position
         start_position = self.mcu_stepper.mcu_to_commanded_position(mcu_pos)
         step_dist = self.mcu_stepper.get_step_dist()
-        if self.mcu_stepper.get_dir_inverted()[0]:
-            step_dist = -step_dist
         d = [(s.interval, s.step_count, s.add) for s in data]
         return {"data": d, "start_position": start_position,
                 "start_mcu_position": mcu_pos, "step_distance": step_dist,

@@ -10,13 +10,23 @@
 #include "board/irq.h" // irq_disable
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // DECL_TASK
+#include "sensor_bulk.h" // sensor_bulk_report
 #include "spicmds.h" // spidev_transfer
 
-enum { SA_CHIP_A1333, SA_CHIP_AS5047D, SA_CHIP_TLE5012B, SA_CHIP_MAX };
+enum {
+    SA_CHIP_A1333,
+    SA_CHIP_AS5047D,
+    SA_CHIP_TLE5012B,
+    SA_CHIP_MT6816,
+    SA_CHIP_MT6826S,
+    SA_CHIP_MAX
+};
 
 DECL_ENUMERATION("spi_angle_type", "a1333", SA_CHIP_A1333);
 DECL_ENUMERATION("spi_angle_type", "as5047d", SA_CHIP_AS5047D);
 DECL_ENUMERATION("spi_angle_type", "tle5012b", SA_CHIP_TLE5012B);
+DECL_ENUMERATION("spi_angle_type", "mt6816", SA_CHIP_MT6816);
+DECL_ENUMERATION("spi_angle_type", "mt6826s", SA_CHIP_MT6826S);
 
 enum { TCODE_ERROR = 0xff };
 enum {
@@ -29,14 +39,15 @@ struct spi_angle {
     struct timer timer;
     uint32_t rest_ticks;
     struct spidev_s *spi;
-    uint16_t sequence;
-    uint8_t flags, chip_type, data_count, time_shift, overflow;
-    uint8_t data[48];
+    uint8_t flags, chip_type, time_shift, overflow;
+    struct sensor_bulk sb;
 };
 
 enum {
     SA_PENDING = 1<<2,
 };
+
+#define BYTES_PER_SAMPLE 3
 
 static struct task_wake angle_wake;
 
@@ -72,32 +83,22 @@ command_config_spi_angle(uint32_t *args)
 DECL_COMMAND(command_config_spi_angle,
              "config_spi_angle oid=%c spi_oid=%c spi_angle_type=%c");
 
-// Report local measurement buffer
-static void
-angle_report(struct spi_angle *sa, uint8_t oid)
-{
-    sendf("spi_angle_data oid=%c sequence=%hu data=%*s"
-          , oid, sa->sequence, sa->data_count, sa->data);
-    sa->data_count = 0;
-    sa->sequence++;
-}
-
 // Send spi_angle_data message if buffer is full
 static void
 angle_check_report(struct spi_angle *sa, uint8_t oid)
 {
-    if (sa->data_count + 3 > ARRAY_SIZE(sa->data))
-        angle_report(sa, oid);
+    if (sa->sb.data_count + BYTES_PER_SAMPLE > ARRAY_SIZE(sa->sb.data))
+        sensor_bulk_report(&sa->sb, oid);
 }
 
 // Add an entry to the measurement buffer
 static void
 angle_add(struct spi_angle *sa, uint_fast8_t tcode, uint_fast16_t data)
 {
-    sa->data[sa->data_count] = tcode;
-    sa->data[sa->data_count + 1] = data;
-    sa->data[sa->data_count + 2] = data >> 8;
-    sa->data_count += 3;
+    sa->sb.data[sa->sb.data_count] = tcode;
+    sa->sb.data[sa->sb.data_count + 1] = data;
+    sa->sb.data[sa->sb.data_count + 2] = data >> 8;
+    sa->sb.data_count += BYTES_PER_SAMPLE;
 }
 
 // Add an error indicator to the measurement buffer
@@ -139,6 +140,15 @@ a1333_query(struct spi_angle *sa, uint32_t stime)
         angle_add_data(sa, stime, mtime1, (msg[0] << 9) | (msg[1] << 1));
 }
 
+static int bit_parity(uint8_t *msg)
+{
+    uint_fast8_t parity = msg[0] ^ msg[1];
+    parity ^= parity >> 4;
+    parity ^= parity >> 2;
+    parity ^= parity >> 1;
+    return parity;
+}
+
 // as5047d sensor query
 static void
 as5047d_query(struct spi_angle *sa, uint32_t stime)
@@ -155,10 +165,7 @@ as5047d_query(struct spi_angle *sa, uint32_t stime)
     msg[0] = 0xC0;
     msg[1] = 0x00;
     spidev_transfer(sa->spi, 1, sizeof(msg), msg);
-    uint_fast8_t parity = msg[0] ^ msg[1];
-    parity ^= parity >> 4;
-    parity ^= parity >> 2;
-    parity ^= parity >> 1;
+    uint_fast8_t parity = bit_parity(msg);
     if (parity & 1)
         angle_add_error(sa, SE_CRC);
     else if (msg[0] & 0x40)
@@ -166,6 +173,60 @@ as5047d_query(struct spi_angle *sa, uint32_t stime)
     else
         angle_add_data(sa, stime, mtime2, (msg[0] << 10) | (msg[1] << 2));
 }
+
+static void mt6816_query(struct spi_angle *sa, uint32_t stime)
+{
+    uint8_t msg[3] = {0x83, 0x00, 0x00};
+    uint32_t mtime1 = timer_read_time();
+    spidev_transfer(sa->spi, 1, sizeof(msg), msg);
+    uint32_t mtime2 = timer_read_time();
+    // Data is latched on first sclk edge of response
+    if (mtime2 - mtime1 > MAX_SPI_READ_TIME) {
+        angle_add_error(sa, SE_SPI_TIME);
+        return;
+    }
+    uint_fast8_t parity = bit_parity(&msg[1]);
+    if (parity & 1)
+        angle_add_error(sa, SE_CRC);
+    else if (msg[2] & 0x02)
+        angle_add_error(sa, SE_NO_ANGLE);
+    else
+        angle_add_data(sa, stime, mtime2, (msg[1] << 8) | (msg[2] & 0xfc));
+}
+
+static uint8_t
+crc8_mt(uint8_t crc, uint8_t data)
+{
+    crc ^= data;
+    int i;
+    for (i = 0; i < 8; i++)
+        crc = crc & 0x80 ? (crc << 1) ^ 0x07 : crc << 1;
+    return crc;
+}
+
+static void mt6826s_query(struct spi_angle *sa, uint32_t stime)
+{
+    uint8_t msg[6] = {0x30, 0x03, 0x00, 0x00, 0x00, 0x00};
+    uint32_t mtime1 = timer_read_time();
+    spidev_transfer(sa->spi, 1, sizeof(msg), msg);
+    uint32_t mtime2 = timer_read_time();
+    // Data is latched on first sclk edge of response
+    if (mtime2 - mtime1 > MAX_SPI_READ_TIME) {
+        angle_add_error(sa, SE_SPI_TIME);
+        return;
+    }
+    uint8_t crc = 0;
+    for (int i = 2; i < 5; i++)
+        crc = crc8_mt(crc, msg[i]);
+
+    if (crc != msg[5])
+        angle_add_error(sa, SE_CRC);
+    else if (msg[4] & 0x02)
+        angle_add_error(sa, SE_NO_ANGLE);
+    else
+        angle_add_data(sa, stime, mtime2, (msg[2] << 8) | msg[3]);
+}
+
 
 #define TLE_READ 0x80
 #define TLE_READ_LATCH (TLE_READ | 0x04)
@@ -230,18 +291,14 @@ command_query_spi_angle(uint32_t *args)
 
     sched_del_timer(&sa->timer);
     sa->flags = 0;
-    if (!args[2]) {
+    if (!args[2])
         // End measurements
-        if (sa->data_count)
-            angle_report(sa, oid);
-        sendf("spi_angle_end oid=%c sequence=%hu", oid, sa->sequence);
         return;
-    }
+
     // Start new measurements query
     sa->timer.waketime = args[1];
     sa->rest_ticks = args[2];
-    sa->sequence = 0;
-    sa->data_count = 0;
+    sensor_bulk_reset(&sa->sb);
     sa->time_shift = args[3];
     sched_add_timer(&sa->timer);
 }
@@ -313,6 +370,10 @@ spi_angle_task(void)
             as5047d_query(sa, stime);
         else if (chip == SA_CHIP_TLE5012B)
             tle5012b_query(sa, stime);
+        else if (chip == SA_CHIP_MT6816)
+            mt6816_query(sa, stime);
+        else if (chip == SA_CHIP_MT6826S)
+            mt6826s_query(sa, stime);
         angle_check_report(sa, oid);
     }
 }

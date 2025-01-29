@@ -67,9 +67,10 @@ class ManualStepper:
                           0., cruise_v, accel)
         self.next_cmd_time = self.next_cmd_time + accel_t + cruise_t + accel_t
         self.rail.generate_steps(self.next_cmd_time)
-        self.trapq_finalize_moves(self.trapq, self.next_cmd_time + 99999.9)
+        self.trapq_finalize_moves(self.trapq, self.next_cmd_time + 99999.9,
+                                  self.next_cmd_time + 99999.9)
         toolhead = self.printer.lookup_object('toolhead')
-        toolhead.note_kinematic_activity(self.next_cmd_time)
+        toolhead.note_mcu_movequeue_activity(self.next_cmd_time)
         if sync:
             self.sync_print_time()
     def do_homing_move(self, movepos, speed, accel, triggered, check_trigger):
@@ -108,7 +109,7 @@ class ManualStepper:
         self.sync_print_time()
     def get_position(self):
         return [self.rail.get_commanded_position(), 0., 0., 0.]
-    def set_position(self, newpos, homing_axes=()):
+    def set_position(self, newpos, homing_axes=""):
         self.do_set_position(newpos[0])
     def get_last_move_time(self):
         self.sync_print_time()

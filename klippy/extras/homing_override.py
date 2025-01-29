@@ -46,15 +46,16 @@ class HomingOverride:
         # Calculate forced position (if configured)
         toolhead = self.printer.lookup_object('toolhead')
         pos = toolhead.get_position()
-        homing_axes = []
+        homing_axes = ""
         for axis, loc in enumerate(self.start_pos):
             if loc is not None:
                 pos[axis] = loc
-                homing_axes.append(axis)
+                homing_axes += "xyz"[axis]
         toolhead.set_position(pos, homing_axes=homing_axes)
         # Perform homing
         context = self.template.create_template_context()
         context['params'] = gcmd.get_command_parameters()
+        context['rawparams'] = gcmd.get_raw_command_parameters()
         try:
             self.in_script = True
             self.template.run_gcode_from_command(context)

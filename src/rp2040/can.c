@@ -18,8 +18,8 @@
 #include "internal.h" // DMA_IRQ_0_IRQn
 #include "sched.h" // DECL_INIT
 
-#define GPIO_STR_CAN_RX "gpio" __stringify(CONFIG_RP2040_CANBUS_GPIO_RX)
-#define GPIO_STR_CAN_TX "gpio" __stringify(CONFIG_RP2040_CANBUS_GPIO_TX)
+#define GPIO_STR_CAN_RX "gpio" __stringify(CONFIG_RPXXXX_CANBUS_GPIO_RX)
+#define GPIO_STR_CAN_TX "gpio" __stringify(CONFIG_RPXXXX_CANBUS_GPIO_TX)
 DECL_CONSTANT_STR("RESERVE_PINS_CAN", GPIO_STR_CAN_RX "," GPIO_STR_CAN_TX);
 
 static struct can2040 cbus;
@@ -73,6 +73,6 @@ can_init(void)
     // Start canbus
     uint32_t pclk = get_pclock_frequency(RESETS_RESET_PIO0_RESET);
     can2040_start(&cbus, pclk, CONFIG_CANBUS_FREQUENCY
-                  , CONFIG_RP2040_CANBUS_GPIO_RX, CONFIG_RP2040_CANBUS_GPIO_TX);
+                  , CONFIG_RPXXXX_CANBUS_GPIO_RX, CONFIG_RPXXXX_CANBUS_GPIO_TX);
 }
 DECL_INIT(can_init);
