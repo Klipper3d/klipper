@@ -2095,7 +2095,7 @@ sensor_type: ldc1612
 
 This tool allows the homing procedure (```G28```) to use probing (i.e. the same as the ```PROBE``` command) so that in some cases the Z axis can be more accurately probed.
 
-You should only use this option if you are occasionally experiencing innacurate homing.
+You should use this option if you are occasionally experiencing innacurate homing.
 
 Configuring this tool will also cause the ```G28``` G-Code to emit a console message stating the correction that was performed. You can use this to measure the level of benefit that the tool is providing.
 
@@ -2107,6 +2107,11 @@ See [command reference](G-Codes.md#G-Code_commands) for further information.
 
 ```
 [probe_as_z_home]
+#g28_probe_cmd_args:
+#   Optional command arguments passed to the PROBE command while homing.
+#   See [g-code PROBE command](G-Codes.md#probe).
+#   Example:
+#      g28_probe_cmd_args: SAMPLES=3 SAMPLES_TOLERANCE_RETRIES=5
 ```
 
 _Note: The standing homing procedure is still perofrmed before probing since this is required to ensure safety and compatibility with the probing method since probing requires homing to first be performed_

@@ -17,6 +17,7 @@ class ProbeAsZHome:
         self.printer.load_object(config, 'homing')
         self.prev_G28 = self.gcode.register_command("G28", None)
         self.gcode.register_command("G28", self.cmd_G28)
+        self.g28_probe_cmd_args = config.get("g28_probe_cmd_args", None)
 
     def cmd_G28(self, gcmd):
         logging.debug("Probe As Home: Performing G28")
@@ -61,10 +62,21 @@ class ProbeAsZHome:
             current_pos[2] += retract_dist
             self.toolhead.move(current_pos, lift_speed)
 
-            # Use the probe options from the configuration here
-            g28_gcmd = self.gcode.create_gcode_command("PROBE", "PROBE", {})
-            probe_session = probe.start_probe_session(gcmd)
-            probe_session.run_probe(gcmd)
+            # Parse and pass any arguments defined in the g28_probe_cmd_args
+            # configuration to the PROBE command.
+            probe_args_dict = {}
+
+            if self.g28_probe_cmd_args is not None:
+                probe_arg_tokens = self.g28_probe_cmd_args.split(" ")
+                probe_arg_tokens = filter(lambda token: token.strip() != "",
+                                          probe_arg_tokens)
+                probe_args_dict = { operand[0]: operand[1] for operand in \
+                                  [arg.split("=") for arg in probe_arg_tokens]}
+
+            probe_gcmd = self.gcode.create_gcode_command(
+                "PROBE", "PROBE", probe_args_dict)
+            probe_session = probe.start_probe_session(probe_gcmd)
+            probe_session.run_probe(probe_gcmd)
             probed_pos = probe_session.pull_probed_results()[0]
             current_pos = self.toolhead.get_position()
             z_error_delta = probed_pos[2] - current_pos[2]
