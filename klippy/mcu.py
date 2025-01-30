@@ -223,7 +223,7 @@ class MCU_trsync:
             s.note_homing_end()
         return params['trigger_reason']
 
-TRSYNC_TIMEOUT = 0.025
+TRSYNC_TIMEOUT = 0.10
 TRSYNC_SINGLE_MCU_TIMEOUT = 0.250
 
 class TriggerDispatch:
@@ -614,6 +614,27 @@ class MCU:
         printer.register_event_handler("klippy:shutdown", self._shutdown)
         printer.register_event_handler("klippy:disconnect", self._disconnect)
         printer.register_event_handler("klippy:ready", self._ready)
+
+    def _check_temperature(self,msg,name):
+        heater = self._printer.lookup_object(name)
+        if heater is not None:
+            if hasattr(heater,"heater") == True:
+                heater = heater.heater
+            last_temp = heater.last_temp
+            last_time = heater.last_temp_time
+            if last_time!=0.0 and (
+                                   last_temp < heater.min_temp or last_temp > heater.max_temp
+                                  ):
+                msg += ", {} temperature is {}, has out of range (
+                                                                  {},
+                                                                  {})".format(name,
+                                                                  last_temp,
+                                                                  heater.min_temp,
+                                                                  heater.max_temp
+                                                                 )
+        else:
+            msg += ", not find {}".format(name)
+        return msg
     # Serial callbacks
     def _handle_mcu_stats(self, params):
         count = params['count']
@@ -636,6 +657,11 @@ class MCU:
         self._printer.invoke_async_shutdown(
             "MCU shutdown", {"reason": msg, "mcu": self._name,
                              "event_type": event_type})
+        if "ADC out of range" in msg:
+            heaters=self._printer.lookup_object("heaters")
+            for senser_name in heaters.available_sensors:
+                msg=self._check_temperature(msg,senser_name)
+            self._shutdown_msg=msg
         logging.info("MCU '%s' %s: %s\n%s\n%s", self._name, event_type,
                      self._shutdown_msg, self._clocksync.dump_debug(),
                      self._serial.dump_debug())
