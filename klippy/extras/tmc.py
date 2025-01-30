@@ -162,6 +162,8 @@ class TMCErrorCheck:
                 fmt = self.fields.pretty_format(reg_name, val)
                 raise self.printer.command_error("TMC '%s' reports error: %s"
                                                  % (self.stepper_name, fmt))
+            if "uv_cp" in fmt:
+                try_clear = True
             if try_clear and val & err_mask:
                 try_clear = False
                 cleared_flags |= val & err_mask

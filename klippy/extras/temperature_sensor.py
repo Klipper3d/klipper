@@ -20,10 +20,12 @@ class PrinterSensorGeneric:
         self.sensor.setup_callback(self.temperature_callback)
         pheaters.register_sensor(config, self)
         self.last_temp = 0.
+        self.last_temp_time=0.
         self.measured_min = 99999999.
         self.measured_max = 0.
     def temperature_callback(self, read_time, temp):
         self.last_temp = temp
+        self.last_temp_time=read_time
         if temp:
             self.measured_min = min(self.measured_min, temp)
             self.measured_max = max(self.measured_max, temp)

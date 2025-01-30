@@ -49,6 +49,15 @@ class GCodeMove:
         self.saved_states = {}
         self.move_transform = self.move_with_transform = None
         self.position_with_transform = (lambda: [0., 0., 0., 0.])
+        # Save and load z offset
+        gcode.register_command(
+                               'SAVE_ZOFFSET_TO_VARIABLE',
+                               self.cmd_SAVE_ZOFFSET_TO_VARIABLE
+                              )
+        gcode.register_command(
+                               'LOAD_ZOFFSET_FROM_VARIABLE',
+                               self.cmd_LOAD_ZOFFSET_FROM_VARIABLE
+                              )
     def _handle_ready(self):
         self.is_printer_ready = True
         if self.move_transform is None:
@@ -271,6 +280,21 @@ class GCodeMove:
                           "gcode homing: %s"
                           % (mcu_pos, stepper_pos, kin_pos, toolhead_pos,
                              gcode_pos, base_pos, homing_pos))
+
+    def cmd_SAVE_ZOFFSET_TO_VARIABLE(self, gcmd):
+        variables = self.printer.lookup_object("save_variables")
+        gcode_move = self.printer.lookup_object("gcode_move")
+        variables.save_variable(
+                                'Variables', 'z_offset',
+                                gcode_move.homing_position[2]
+                               )
+
+    def cmd_LOAD_ZOFFSET_FROM_VARIABLE(self, gcmd):
+        variables = self.printer.lookup_object("save_variables")
+        gcode_move = self.printer.lookup_object("gcode_move")
+        gcode_move.homing_position[2] = float(
+                                              variables.load_variable('Variables', 'z_offset')
+                                             )
 
 def load_config(config):
     return GCodeMove(config)

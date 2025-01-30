@@ -285,6 +285,9 @@ class ToolHead:
         gcode.register_command('SET_VELOCITY_LIMIT',
                                self.cmd_SET_VELOCITY_LIMIT,
                                desc=self.cmd_SET_VELOCITY_LIMIT_help)
+        gcode.register_command('SET_Z_VELOCITY_LIMIT',
+                                self.cmd_SET_Z_VELOCITY_LIMIT,
+                               desc=self.cmd_SET_Z_VELOCITY_LIMIT_help)
         gcode.register_command('M204', self.cmd_M204)
         self.printer.register_event_handler("klippy:shutdown",
                                             self._handle_shutdown)
@@ -293,6 +296,20 @@ class ToolHead:
                    "manual_probe", "tuning_tower"]
         for module_name in modules:
             self.printer.load_object(config, module_name)
+
+    cmd_SET_Z_VELOCITY_LIMIT_help = "Change z velocity limit, parameter VALUE"
+    def cmd_SET_Z_VELOCITY_LIMIT(self, gcmd):
+        kin = self.get_kinematics()
+        value = gcmd.get_float('VALUE', None, above=0.)
+        gcmd.respond_info(
+                          'Z velocity before change: ' + str(kin.max_z_velocity)
+                         )
+        if value:
+            kin.max_z_velocity = value
+        else:
+            gcmd.respond_info("Value given is illegal")
+        gcmd.respond_info('Z velocity after change: ' + str(kin.max_z_velocity))
+
     # Print time and flush tracking
     def _advance_flush_time(self, flush_time):
         flush_time = max(flush_time, self.last_flush_time)

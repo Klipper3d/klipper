@@ -54,7 +54,9 @@ class SmartEffectorProbe:
         self.gcode = self.printer.lookup_object('gcode')
         self.probe_accel = config.getfloat('probe_accel', 0., minval=0.)
         self.recovery_time = config.getfloat('recovery_time', 0.4, minval=0.)
-        self.probe_wrapper = probe.ProbeEndstopWrapper(config)
+        self.probe_wrapper = self.probe_wrapper_2 = probe.ProbeEndstopWrapper(
+                                                                              config
+                                                                             )
         # Wrappers
         self.get_mcu = self.probe_wrapper.get_mcu
         self.add_stepper = self.probe_wrapper.add_stepper
