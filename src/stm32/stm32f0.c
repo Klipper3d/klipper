@@ -186,10 +186,8 @@ armcm_main(void)
     hsi14_setup();
 
     // Support pin remapping USB/CAN pins on low pinout stm32f042
-#ifdef SYSCFG_CFGR1_PA11_PA12_RMP
     if (CONFIG_STM32_USB_PA11_PA12_REMAP || CONFIG_STM32_CANBUS_PA11_PA12_REMAP)
-        SYSCFG->CFGR1 |= SYSCFG_CFGR1_PA11_PA12_RMP;
-#endif
+        SYSCFG->CFGR1 |= 1<<4; // SYSCFG_CFGR1_PA11_PA12_RMP
 
     sched_main();
 }
