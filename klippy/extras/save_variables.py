@@ -36,6 +36,8 @@ class SaveVariables:
     cmd_SAVE_VARIABLE_help = "Save arbitrary variables to disk"
     def cmd_SAVE_VARIABLE(self, gcmd):
         varname = gcmd.get('VARIABLE')
+        if (varname.lower() != varname):
+            raise gcmd.error("VARIABLE must not contain upper case")
         value = gcmd.get('VALUE')
         try:
             value = ast.literal_eval(value)

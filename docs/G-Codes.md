@@ -1201,8 +1201,9 @@ has been enabled.
 
 #### SAVE_VARIABLE
 `SAVE_VARIABLE VARIABLE=<name> VALUE=<value>`: Saves the variable to
-disk so that it can be used across restarts. All stored variables are
-loaded into the `printer.save_variables.variables` dict at startup and
+disk so that it can be used across restarts. The VARIABLE must be lowercase.
+All stored variables are loaded into the
+`printer.save_variables.variables` dict at startup and
 can be used in gcode macros. The provided VALUE is parsed as a Python
 literal.
 
