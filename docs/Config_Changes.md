@@ -8,6 +8,10 @@ All dates in this document are approximate.
 
 ## Changes
 
+20250131: Option `VARIABLE=<name>` in `SAVE_VARIABLE` requires lowercase
+value. For example, `extruder` instead of mixedcase `Extruder` or
+uppercase `EXTRUDER`. Using any uppercase letter will raise an error.
+
 20241203: The resonance test has been changed to include slow sweeping
 moves. This change requires that testing point(s) have some clearance
 in X/Y plane (+/- 30 mm from the test point should suffice when using
