@@ -21,7 +21,7 @@ jobs:
       run: ./scripts/ci-build.sh 2>&1
 
     - name: Upload micro-controller data dictionaries
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: data-dict
         path: ci_build/dict

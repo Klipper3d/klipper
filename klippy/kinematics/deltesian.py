@@ -41,8 +41,6 @@ class DeltesianKinematics:
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
-        config.get_printer().register_event_handler(
-            "stepper_enable:motor_off", self._motor_off)
         self.limits = [(1.0, -1.0)] * 3
         # X axis limits
         min_angle = config.getfloat('min_angle', MIN_ANGLE,
@@ -89,7 +87,7 @@ class DeltesianKinematics:
         self.axes_min = toolhead.Coord(*[l[0] for l in self.limits], e=0.)
         self.axes_max = toolhead.Coord(*[l[1] for l in self.limits], e=0.)
         self.homed_axis = [False] * 3
-        self.set_position([0., 0., 0.], ())
+        self.set_position([0., 0., 0.], "")
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]
     def _actuator_to_cartesian(self, sp):
@@ -115,8 +113,13 @@ class DeltesianKinematics:
     def set_position(self, newpos, homing_axes):
         for rail in self.rails:
             rail.set_position(newpos)
-        for n in homing_axes:
-            self.homed_axis[n] = True
+        for axis_name in homing_axes:
+            axis = "xyz".index(axis_name)
+            self.homed_axis[axis] = True
+    def clear_homing_state(self, clear_axes):
+        for axis, axis_name in enumerate("xyz"):
+            if axis_name in clear_axes:
+                self.homed_axis[axis] = False
     def home(self, homing_state):
         homing_axes = homing_state.get_axes()
         home_xz = 0 in homing_axes or 2 in homing_axes
@@ -142,8 +145,6 @@ class DeltesianKinematics:
             else:
                 forcepos[1] += 1.5 * (position_max - hi.position_endstop)
             homing_state.home_rails([self.rails[2]], forcepos, homepos)
-    def _motor_off(self, print_time):
-        self.homed_axis = [False] * 3
     def check_move(self, move):
         limits = list(map(list, self.limits))
         spos, epos = move.start_pos, move.end_pos
