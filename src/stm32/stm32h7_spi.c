@@ -100,19 +100,27 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
     while ((pclk >> (div + 1)) > rate && div < 7)
         div++;
 
-    uint32_t cr1 = SPI_CR1_SPE;
     spi->CFG1 |= (div << SPI_CFG1_MBR_Pos) | (7 << SPI_CFG1_DSIZE_Pos);
     CLEAR_BIT(spi->CFG1, SPI_CFG1_CRCSIZE);
     spi->CFG2 |= ((mode << SPI_CFG2_CPHA_Pos) | SPI_CFG2_MASTER | SPI_CFG2_SSM
                    | SPI_CFG2_AFCNTR | SPI_CFG2_SSOE);
     spi->CR1 |= SPI_CR1_SSI;
 
-    return (struct spi_config){ .spi = spi, .spi_cr1 = cr1 };
+    return (struct spi_config){ .spi = spi, .div = div, .mode = mode };
 }
 
 void
 spi_prepare(struct spi_config config)
 {
+    uint32_t div = config.div;
+    uint32_t mode = config.mode;
+    SPI_TypeDef *spi = config.spi;
+    // Reload frequency
+    spi->CFG1 = (spi->CFG1 & ~SPI_CFG1_MBR_Msk);
+    spi->CFG1 |= (div << SPI_CFG1_MBR_Pos);
+    // Reload mode
+    spi->CFG2 = (spi->CFG2 & ~SPI_CFG2_CPHA_Msk);
+    spi->CFG2 |= (mode << SPI_CFG2_CPHA_Pos);
 }
 
 void
