@@ -52,24 +52,27 @@ BOARD_DEFS = {
     },
     'btt-octopus-f407-v1': {
         'mcu': "stm32f407xx",
-        'spi_bus': "swspi",
-        'spi_pins': "PC8,PD2,PC12",
-        'cs_pin': "PC11",
-        'skip_verify': True
+        #'spi_bus': "swspi",
+        #'spi_pins': "PC8,PD2,PC12",
+        #'cs_pin': "PC11",
+        'sdio_bus': 'sdio',
+        #'skip_verify': True
     },
     'btt-octopus-f429-v1': {
         'mcu': "stm32f429xx",
-        'spi_bus': "swspi",
-        'spi_pins': "PC8,PD2,PC12",
-        'cs_pin': "PC11",
-        'skip_verify': True
+        #'spi_bus': "swspi",
+        #'spi_pins': "PC8,PD2,PC12",
+        #'cs_pin': "PC11",
+        'sdio_bus': 'sdio',
+        #'skip_verify': True
     },
     'btt-octopus-f446-v1': {
         'mcu': "stm32f446xx",
-        'spi_bus': "swspi",
-        'spi_pins': "PC8,PD2,PC12",
-        'cs_pin': "PC11",
-        'skip_verify': True
+        #'spi_bus': "swspi",
+        #'spi_pins': "PC8,PD2,PC12",
+        #'cs_pin': "PC11",
+        'sdio_bus': 'sdio',
+        #'skip_verify': True
     },
     'btt-skr-pro': {
         'mcu': "stm32f407xx",
@@ -95,24 +98,27 @@ BOARD_DEFS = {
     },
     'btt-skr-3-h743': {
         'mcu': 'stm32h743xx',
-        'spi_bus': 'swspi',
-        'spi_pins': "PC8,PD2,PC12",
-        'cs_pin': 'PC11',
-        'skip_verify': True
+        #'spi_bus': 'swspi',
+        #'spi_pins': "PC8,PD2,PC12",
+        #'cs_pin': 'PC11',
+        'sdio_bus': 'sdio1',
+        #'skip_verify': True
     },
     'btt-skr-3-h723': {
         'mcu': 'stm32h723xx',
-        'spi_bus': 'swspi',
-        'spi_pins': "PC8,PD2,PC12",
-        'cs_pin': 'PC11',
-        'skip_verify': True
+        #'spi_bus': 'swspi',
+        #'spi_pins': "PC8,PD2,PC12",
+        #'cs_pin': 'PC11',
+        'sdio_bus': 'sdio1',
+        #'skip_verify': True
     },
     'creality-v4.2.2': {
         'mcu': "stm32f103xe",
-        'spi_bus': "swspi",
-        'spi_pins': "PC8,PD2,PC12",
-        'cs_pin': "PC11",
-        'skip_verify': True
+        #'spi_bus': "swspi",
+        #'spi_pins': "PC8,PD2,PC12",
+        #'cs_pin': "PC11",
+        'sdio_bus': 'sdio',
+        #'skip_verify': True
     },
     'monster8': {
         'mcu': "stm32f407xx",
@@ -136,14 +142,15 @@ BOARD_DEFS = {
         "cs_pin": "PB8"
     },
     'chitu-v6': {
+        # when using SDIO we can verify
         'mcu': "stm32f103xe",
-        'spi_bus': "swspi",
-        'spi_pins': "PC8,PD2,PC12",
-        "cs_pin": "PC11",
-        #'sdio_bus': 'sdio',
+        #'spi_bus': "swspi",
+        #'spi_pins': "PC8,PD2,PC12",
+        #"cs_pin": "PC11",
+        'sdio_bus': 'sdio',
         "conversion_script": "scripts/update_chitu.py",
         "firmware_path": "update.cbd",
-        'skip_verify': True
+        #'skip_verify': True
     }
 }
 
