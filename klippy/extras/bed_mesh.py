@@ -215,7 +215,7 @@ class BedMesh:
 
     #verändert
     def move(self, positions : list, last_position_):
-        last_position = last_position_
+        last_position = last_position_.copy()
         transformed_positions = []
         
         for position in positions:
