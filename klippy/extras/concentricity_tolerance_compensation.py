@@ -50,8 +50,8 @@ class ConcentricityToleranceCompansation:
     def calc_xy_adj(self, a_pos):
         calc_deflection_angle = math.radians(a_pos + self.deflection_angle)
         
-        x_adj = self.deflection_radius * math.sin(calc_deflection_angle)
-        y_adj = self.deflection_radius * math.cos(calc_deflection_angle)
+        x_adj = - self.deflection_radius * math.cos(calc_deflection_angle)
+        y_adj = - self.deflection_radius * math.sin(calc_deflection_angle)
         
         return x_adj, y_adj    
         
@@ -120,8 +120,8 @@ class MoveSplitter:
     def calc_xy_adj(self, a_pos):
         calc_deflection_angle = math.radians(a_pos + self.deflection_angle)
         
-        x_adj = self.deflection_radius * math.sin(calc_deflection_angle)
-        y_adj = self.deflection_radius * math.cos(calc_deflection_angle)
+        x_adj = - self.deflection_radius * math.cos(calc_deflection_angle)
+        y_adj = - self.deflection_radius * math.sin(calc_deflection_angle)
         
         return x_adj, y_adj
       
