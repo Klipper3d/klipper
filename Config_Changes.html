@@ -1398,6 +1398,9 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<p>20250131: Option <code>VARIABLE=&lt;name&gt;</code> in <code>SAVE_VARIABLE</code> requires lowercase
+value. For example, <code>extruder</code> instead of mixedcase <code>Extruder</code> or
+uppercase <code>EXTRUDER</code>. Using any uppercase letter will raise an error.</p>
 <p>20241203: The resonance test has been changed to include slow sweeping
 moves. This change requires that testing point(s) have some clearance
 in X/Y plane (+/- 30 mm from the test point should suffice when using

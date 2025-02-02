@@ -5765,8 +5765,9 @@ take effect immediately.</p>
 has been enabled.</p>
 <h4 id="save_variable">SAVE_VARIABLE<a class="headerlink" href="#save_variable" title="Permanent link">&para;</a></h4>
 <p><code>SAVE_VARIABLE VARIABLE=&lt;name&gt; VALUE=&lt;value&gt;</code>: Saves the variable to
-disk so that it can be used across restarts. All stored variables are
-loaded into the <code>printer.save_variables.variables</code> dict at startup and
+disk so that it can be used across restarts. The VARIABLE must be lowercase.
+All stored variables are loaded into the
+<code>printer.save_variables.variables</code> dict at startup and
 can be used in gcode macros. The provided VALUE is parsed as a Python
 literal.</p>
 <h3 id="screws_tilt_adjust">[screws_tilt_adjust]<a class="headerlink" href="#screws_tilt_adjust" title="Permanent link">&para;</a></h3>
