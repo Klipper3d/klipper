@@ -5,7 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import chelper
 
-MAX_SCHEDULE_TIME = 5.0
+MAX_SCHEDULE_TIME = 3.5
 
 class error(Exception):
     pass
