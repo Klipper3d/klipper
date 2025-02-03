@@ -445,6 +445,14 @@ class BedMeshCalibrate:
                     "interpolation. Configured Probe Count: %d, %d" %
                     (self.mesh_config['x_count'], self.mesh_config['y_count']))
                 params['algo'] = 'lagrange'
+
+    def suppress_points_output(self, gcmd):
+        if not gcmd.get_int('SGPO', 0):
+            self.print_generated_points(gcmd.respond_info)     
+        else:
+            gcmd.respond_info("Suppessing generated points output...")
+            return False
+
     def set_adaptive_mesh(self, gcmd):
         if not gcmd.get_int('ADAPTIVE', 0):
             return False
@@ -614,7 +622,7 @@ class BedMeshCalibrate:
                 self.radius, self.origin, probe_method
             )
             gcmd.respond_info("Generating new points...")
-            self.print_generated_points(gcmd.respond_info)
+            self.suppress_points_output(gcmd)
             msg = "\n".join(["%s: %s" % (k, v)
                              for k, v in self.mesh_config.items()])
             logging.info("Updated Mesh Configuration:\n" + msg)
