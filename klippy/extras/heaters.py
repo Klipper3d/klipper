@@ -11,10 +11,10 @@ import os, logging, threading
 ######################################################################
 
 KELVIN_TO_CELSIUS = -273.15
-MAX_HEAT_TIME = 5.0
+MAX_HEAT_TIME = 3.5
 AMBIENT_TEMP = 25.
 PID_PARAM_BASE = 255.
-MAX_MAINTHREAD_TIME = 5.0
+MAX_MAINTHREAD_TIME = 3.5
 
 class Heater:
     def __init__(self, config, sensor):
