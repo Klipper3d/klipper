@@ -7,5 +7,7 @@ pyserial==3.4
 greenlet==2.0.2 ; python_version < '3.12'
 greenlet==3.0.3 ; python_version >= '3.12'
 Jinja2==2.11.3
-python-can==3.3.4
+python-can==3.3.4 ; python_version < '3.12'
+python-can==4.3   ; python_version >= '3.12'
 markupsafe==1.1.1
+setuptools==75.6.0 ; python_version >= '3.12'
