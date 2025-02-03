@@ -451,7 +451,6 @@ class BedMeshCalibrate:
             self.print_generated_points(gcmd.respond_info)     
         else:
             gcmd.respond_info("Suppessing generated points output...")
-            return False
 
     def set_adaptive_mesh(self, gcmd):
         if not gcmd.get_int('ADAPTIVE', 0):
