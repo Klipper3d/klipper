@@ -448,7 +448,7 @@ class BedMeshCalibrate:
 
     def suppress_points_output(self, gcmd):
         if not gcmd.get_int('SGPO', 0):
-            self.print_generated_points(gcmd.respond_info)     
+            self.print_generated_points(gcmd.respond_info)
         else:
             gcmd.respond_info("Suppessing generated points output...")
 
