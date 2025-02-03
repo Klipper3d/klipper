@@ -29,6 +29,8 @@
  #define HAVE_AVR_OPTIMIZATION 0
 #endif
 
+#define HAVE_TOO_FAST_MCU (CONFIG_CLOCK_FREQ > 430000000)
+
 struct stepper_move {
     struct move_node node;
     uint32_t interval;
@@ -77,6 +79,8 @@ stepper_load_next(struct stepper *s)
     s->interval = m->interval + m->add;
     if (HAVE_SINGLE_SCHEDULE && s->flags & SF_SINGLE_SCHED) {
         s->time.waketime += m->interval;
+        if (HAVE_TOO_FAST_MCU)
+            s->next_step_time = s->time.waketime;
         if (HAVE_AVR_OPTIMIZATION)
             s->flags = m->add ? s->flags|SF_HAVE_ADD : s->flags & ~SF_HAVE_ADD;
         s->count = m->count;
@@ -99,11 +103,23 @@ stepper_load_next(struct stepper *s)
     return SF_RESCHEDULE;
 }
 
+static unsigned int
+nsecs_to_ticks(uint32_t ns)
+{
+    return timer_from_us(ns * 1000) / 1000000;
+}
+
 // Optimized step function to step on each step pin edge
 uint_fast8_t
 stepper_event_edge(struct timer *t)
 {
     struct stepper *s = container_of(t, struct stepper, time);
+    if (HAVE_TOO_FAST_MCU) {
+        uint32_t ctime = timer_read_time();
+        while (unlikely(timer_is_before(ctime, s->next_step_time)))
+            ctime = timer_read_time();
+        s->next_step_time = ctime + nsecs_to_ticks(100);
+    }
     gpio_out_toggle_noirq(s->step_pin);
     uint32_t count = s->count - 1;
     if (likely(count)) {
