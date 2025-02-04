@@ -249,7 +249,6 @@ class TriggerDispatch:
             self._trsyncs.append(trsync)
         trsync.add_stepper(stepper)
         # Check for unsupported multi-mcu shared stepper rails
-        # TODO: figure out this check for generic_cartesian kinematics
         sname = stepper.get_name()
         if sname.startswith('stepper_'):
             for ot in self._trsyncs:
