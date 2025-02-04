@@ -1,6 +1,6 @@
 # Code for generic handling the kinematics of cartesian-like printers
 #
-# Copyright (C) 2024  Dmitry Butyugin <dmbutyugin@google.com>
+# Copyright (C) 2024-2025  Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -220,6 +220,7 @@ class GenericCartesianKinematics:
         self.steppers = self._load_steppers(config, carriages)
         self.all_carriages = carriages
         self._check_carriages_references(config.error)
+        self._check_multi_mcu_homing(config.error)
     def _check_carriages_references(self, report_error):
         carriages = dict(self.all_carriages)
         for s in self.steppers:
@@ -229,6 +230,14 @@ class GenericCartesianKinematics:
             raise report_error(
                     "Carriage(s) %s must be referenced by some "
                     "stepper(s) kinematics" % (", ".join(carriages),))
+    def _check_multi_mcu_homing(self, report_error):
+        for carriage in self.carriages.values():
+            for es in carriage.get_endstops():
+                stepper_mcus = set([s.get_mcu() for s in es[0].get_steppers()
+                                    if s in carriage.get_steppers()])
+                if len(stepper_mcus) > 1:
+                    raise report_error("Multi-mcu homing not supported on"
+                                       " multi-mcu shared carriage %s" % es[1])
     def _load_steppers(self, config, carriages):
         return [ks.KinematicStepper(c, carriages)
                 for c in config.get_prefix_sections('stepper ')]
@@ -385,6 +394,7 @@ class GenericCartesianKinematics:
         if not validate:
             return
         self._check_carriages_references(gcmd.error)
+        self._check_multi_mcu_homing(gcmd.error)
         if self.dc_module:
             dc_state = self.dc_module.save_dual_carriage_state()
             axes = [dc.get_axis() for dc in self.dc_carriages]
