@@ -350,10 +350,10 @@ modes are supported only for `CARRIAGE=1`. When set to either of these
 modes, carriage 1 will then track the subsequent moves of the carriage 0
 and either copy relative movements of it (in `COPY` mode) or execute them
 in the opposite (mirror) direction (in `MIRROR` mode). `AXIS` parameter is
-supported if a user defined two dual carriages with `generic_cartesian`
-kinematic. It can be omitted if the `MODE` is `PRIMARY`, in which case
-the command changes the mode for both axes, but it must be provided for
-`COPY` and `MIRROR` mode.
+supported only if a user defined two dual carriages with `generic_cartesian`
+kinematic. In this case `AXIS` parameter can be omitted if `MODE` is `PRIMARY`,
+effectively changing the mode for both axes, but it must be specified for
+`COPY` and `MIRROR` modes.
 
 #### SAVE_DUAL_CARRIAGE_STATE
 `SAVE_DUAL_CARRIAGE_STATE [NAME=<state_name>]`: Save the current positions
@@ -737,8 +737,8 @@ without any further delimiters, e.g. `0.5x+0.5z` or
 `0.333333333333x-0.666666666667y`.
 
 `SET_STEPPER_KINEMATICS` is an advanced tool, and the user is advised
-to excercise an extreme caution using, since specifying incorrect
-configuration may result in a physical damage to the printer.
+to exercise an extreme caution using it, since specifying incorrect
+configuration may physically damage the printer.
 
 Note that `SET_STEPPER_KINEMATICS` performs certain internal validations
 of the new printer kinematics after the change. Keep in mind that if it
