@@ -61,7 +61,6 @@ class KinematicStepper:
             raise config.error(
                     "'%s' must provide a valid 'kinematics' configuration" %
                     self.stepper.get_name())
-        # TODO: Add shortcuts for some typical optimized kinematics
         self.stepper.setup_itersolve(
                 'generic_cartesian_stepper_alloc',
                 self.kin_coeffs[0], self.kin_coeffs[1], self.kin_coeffs[2])

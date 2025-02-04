@@ -59,8 +59,8 @@ def mat_eigen(mtm):
     x2 = -(2. * a - b - c) * (2. * b - a - c) * (2. * c - a - b) \
             + 9. * ((2. * c - a - b) * d**2 + (2. * b - a - c) * f**2 \
             + (2. * a - b - c) * e**2) - 54. * d * e * f
-    phi = math.atan2(math.sqrt(4. * x1**3 - x2**2), x2)
-    sqrt_x1 = math.sqrt(x1)
+    phi = math.atan2(math.sqrt(max(4. * x1**3 - x2**2, 0.)), x2)
+    sqrt_x1 = math.sqrt(max(x1, 0.))
     # Closed-form expressions for eigenvalues of a symmetric matrix
     l = [li / 3. if abs(li) > 1e-8 else 0. for li in
          [a + b + c - 2. * sqrt_x1 * math.cos(phi / 3.),

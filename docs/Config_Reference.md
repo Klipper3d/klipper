@@ -84,7 +84,7 @@ The printer section controls high level printer settings.
 [printer]
 kinematics:
 #   The type of printer in use. This option may be one of: cartesian,
-#   corexy, corexz, hybrid_corexy, hybrid_corexz, generic_cartesia,
+#   corexy, corexz, hybrid_corexy, hybrid_corexz, generic_cartesian,
 #   rotary_delta, delta, deltesian, polar, winch, or none.
 #   This parameter must be specified.
 max_velocity:
@@ -716,22 +716,22 @@ anchor_z:
 ### Generic Cartesian Kinematics
 
 See [example-generic-cartesian.cfg](../config/example-generic-caretesian.cfg)
-for an example generic caretesian kinematics config file.
+for an example generic Cartesian kinematics config file.
 
-This new kinematic class allows a user to define in a pretty flexible
+This printer kinematic class allows a user to define in a pretty flexible
 manner an arbitrary Cartesian-style kinematics. In principle, the regular
 cartesian, corexy, hybrid_corexy can be defined this way too. However,
 more importantly, various otherwise unsupported kinematics such as
 inverted hybrid_corexy or corexyuv can be defined using this kinematic.
 
-Notably, the declaration of a generic Cartesian kinematic deviates
-significantly from the definition of other kinematc types. It follows
-the following convention: a user defines a set of carriages with certain
-range of motion that can move independently (they should move over the
+Notably, the definition of a generic Cartesian kinematic deviates
+significantly from the other kinematic types. It follows the following
+convention: a user defines a set of carriages with certain range of motion
+that can move independently from each other (they should move over the
 Cartesian axes X, Y, and Z, hence the name of the kinematic) and
 corresponding endstops that allow the firmware to determine the position
-of carriages during homing, as well as a set of steppers that can move
-these carriages. The `[printer]` section must specify the kinematic and
+of carriages during homing, as well as a set of steppers that move those
+carriages. The `[printer]` section must specify the kinematic and
 other printer-level settings same as the regular Cartesian kinematic:
 ```
 [printer]
@@ -807,7 +807,7 @@ affects the motion of the carriages. For example, `x+y` indicates that
 the motion of the stepper in the positive direction by the distance `d`
 moves the carriages `x` and `y` by the same distance `d` in the positive
 direction, while `x-0.5*y` means the motion of the stepper in the positive
-direction by the distance `d` moves the carraige `x` by the distance `d`
+direction by the distance `d` moves the carriage `x` by the distance `d`
 in the positive direction, but the carriage `y` will travel distance `d/2`
 in the negative direction.
 
@@ -2394,7 +2394,7 @@ axis:
 #   error. If safe_distance is not provided, it will be inferred from
 #   position_min and position_max for the dual and primary carriages. If set
 #   to 0 (or safe_distance is unset and position_min and position_max are
-#   identical for the primary and dual carraiges), the carriages proximity
+#   identical for the primary and dual carriages), the carriages proximity
 #   checks will be disabled.
 #step_pin:
 #dir_pin:
@@ -2426,7 +2426,7 @@ primary_carriage:
 #   error. If safe_distance is not provided, it will be inferred from
 #   position_min and position_max for the dual and primary carriages. If set
 #   to 0 (or safe_distance is unset and position_min and position_max are
-#   identical for the primary and dual carraiges), the carriages proximity
+#   identical for the primary and dual carriages), the carriages proximity
 #   checks will be disabled.
 endstop_pin:
 #position_min:
