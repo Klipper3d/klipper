@@ -61,8 +61,8 @@ their own Klipper-centric images.
 
 The two main Moonraker based front ends are [Fluidd](https://docs.fluidd.xyz/)
 and [Mainsail](https://docs.mainsail.xyz/), the latter of which has a premade install
-image ["MainsailOS"](http://docs.mainsailOS.xyz), this has the option for Raspberry Pi
-and some OrangePi varianta.
+image ["MainsailOS"](https://docs-os.mainsail.xyz), this has the option for Raspberry Pi
+and some OrangePi variants.
 
 Fluidd can be installed via KIAUH(Klipper Install And Update Helper), which
 is explained below and is a 3rd party installer for all things Klipper.
