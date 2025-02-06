@@ -187,12 +187,12 @@ the end of the rail. However, the TMC drivers can't reliably detect a
 stall at very slow speeds.
 
 A good starting point for the homing speed is for the stepper motor to
-make a full rotation every two seconds. For many axes this will be the
-`rotation_distance` divided by two. For example:
+make a full rotation every second. For many axes this will be equal to the
+`rotation_distance`. For example:
 ```
 [stepper_x]
 rotation_distance: 40
-homing_speed: 20
+homing_speed: 40
 ...
 ```
 
