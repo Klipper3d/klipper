@@ -53,6 +53,10 @@ class Heater:
         heater_pin = config.get('heater_pin')
         ppins = self.printer.lookup_object('pins')
         self.mcu_pwm = ppins.setup_pin('pwm', heater_pin)
+        self.min_change_pct = 100*config.getfloat('pwm_adjust_early_min', 0.05, minval=0)
+        self.pwm_min_period = 1/config.getfloat('pwm_adjust_max_hz', 0.5, above=0.75/MAX_HEAT_TIME)
+        self.pwm_max_period = 0.75 * MAX_HEAT_TIME
+        self.last_pwm_time = 0
         pwm_cycle_time = config.getfloat('pwm_cycle_time', 0.100, above=0.,
                                          maxval=self.pwm_delay)
         self.mcu_pwm.setup_cycle_time(pwm_cycle_time)
@@ -66,20 +70,37 @@ class Heater:
                                    desc=self.cmd_SET_HEATER_TEMPERATURE_help)
         self.printer.register_event_handler("klippy:shutdown",
                                             self._handle_shutdown)
-    def set_pwm(self, read_time, value):
+    def set_pwm(self, read_time, value, kp_pct=0., ki_pct=0., kd_pct=0., temp_err=0., temp_err_accum=0., temp_change_rate=0.):
         if self.target_temp <= 0. or read_time > self.verify_mainthread_time:
             value = 0.
-        if ((read_time < self.next_pwm_time or not self.last_pwm_value)
-            and abs(value - self.last_pwm_value) < 0.05):
-            # No significant change in value - can suppress update
+        pwm_delta_pct = abs(value - self.last_pwm_value) * 100
+        pwm_set_ago_s = read_time - self.last_pwm_time
+        if value == 0 and self.last_pwm_value == 0:
             return
+        elif not (self.last_pwm_value > 0 and value == 0):
+            if abs(pwm_set_ago_s) < self.pwm_min_period:
+                # too recently adjusted - suppress for now
+                logging.debug("heater.%s: [%.2f/%.0fºC @t=%.1f] too soon (ago=%.1fs)! Not adjusting to %.1f%$",
+                      self.name, self.last_temp, self.target_temp, self.last_temp_time,
+                      pwm_set_ago_s, value*100)
+                return
+            elif abs(pwm_set_ago_s) < self.pwm_max_period and pwm_delta_pct < self.min_change_pct:
+                # change in value is de minimus - can suppress until regular update
+                logging.debug("heater.%s: [%.2f/%.0fºC @t=%.1f] change too small, deferred pwm_delta_pct=%.1fs min_change=%.1f%",
+                      self.name, self.last_temp, self.target_temp, self.last_temp_time,
+                      pwm_delta_pct, self.min_change_pct)
+                return
         pwm_time = read_time + self.pwm_delay
         self.next_pwm_time = pwm_time + 0.75 * MAX_HEAT_TIME
         self.last_pwm_value = value
         self.mcu_pwm.set_pwm(pwm_time, value)
-        #logging.debug("%s: pwm=%.3f@%.3f (from %.3f@%.3f [%.3f])",
-        #              self.name, value, pwm_time,
-        #              self.last_temp, self.last_temp_time, self.target_temp)
+        self.last_pwm_time = pwm_time
+        logging.info("heater.%s: [ %6.2f/%3.0fºC %s%6.2f%% @t=%.1fs "
+                     "| P:%6.2f%% I:%6.2f%% D:%6.2f%% ]"
+                     " ΔT=%.2fºC ∫ΔT·dT=%.0fº·s δT/δt=%.3fº/s",
+                      self.name, self.last_temp, self.target_temp, "♨" if value > 0 else " ", value*100, self.last_temp_time,
+                      kp_pct, ki_pct, kd_pct, temp_err, temp_err_accum, temp_change_rate,
+                      )
     def temperature_callback(self, read_time, temp):
         with self.lock:
             time_diff = read_time - self.last_temp_time
@@ -170,7 +191,7 @@ class ControlBangBang:
         elif not self.heating and temp <= target_temp-self.max_delta:
             self.heating = True
         if self.heating:
-            self.heater.set_pwm(read_time, self.heater_max_power)
+            self.heater.set_pwm(read_time, self.heater_max_power, kp_pct=100)
         else:
             self.heater.set_pwm(read_time, 0.)
     def check_busy(self, eventtime, smoothed_temp, target_temp):
@@ -192,6 +213,7 @@ class ControlPID:
         self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
         self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
         self.min_deriv_time = heater.get_smooth_time()
+        logging.info("heater.%s: initialized, Kp=%.3f%%/ºC Ki=%.4f%%/(ºC·s) Kd=%.3f%%/(ºC/s)", self.heater.short_name, self.Kp*100, self.Ki*100, self.Kd*100)
         self.temp_integ_max = 0.
         if self.Ki:
             self.temp_integ_max = self.heater_max_power / self.Ki
@@ -213,17 +235,22 @@ class ControlPID:
         temp_integ = self.prev_temp_integ + temp_err * time_diff
         temp_integ = max(0., min(self.temp_integ_max, temp_integ))
         # Calculate output
-        co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
-        #logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d",
-        #    temp, read_time, temp_diff, temp_deriv, temp_err, temp_integ, co)
+        kp_pct, ki_pct, kd_pct = self.Kp*temp_err*100, self.Ki*temp_integ*100, -self.Kd*temp_deriv*100
+        co = sum((kp_pct, ki_pct, kd_pct))/100.
+        logging.debug("pid.%s: %f@%.3f -> diff=%.2fºC/%.3fs err=%.2fº(%.1f%%) integ=%.1fºC·s(%.1f%%) deriv=%.2fºC/s(%.1f%%) co=%.2f%%",
+            self.heater.short_name,
+            temp, read_time, temp_diff, time_diff, temp_err, kp_pct, temp_integ, ki_pct, temp_deriv, kd_pct, co*100)
         bounded_co = max(0., min(self.heater_max_power, co))
-        self.heater.set_pwm(read_time, bounded_co)
+        self.heater.set_pwm(read_time, bounded_co, kp_pct=kp_pct, ki_pct=ki_pct, kd_pct=kd_pct,
+                            temp_err=temp_err, temp_err_accum=temp_integ, temp_change_rate=temp_deriv)
+
         # Store state for next measurement
         self.prev_temp = temp
         self.prev_temp_time = read_time
         self.prev_temp_deriv = temp_deriv
         if co == bounded_co:
-            self.prev_temp_integ = temp_integ
+             self.prev_temp_integ = temp_integ
+
     def check_busy(self, eventtime, smoothed_temp, target_temp):
         temp_diff = target_temp - smoothed_temp
         return (abs(temp_diff) > PID_SETTLE_DELTA
