@@ -76,7 +76,7 @@ def calibrate_shaper(datas, csv_output, *, shapers, damping_ratio, scv,
 ######################################################################
 
 def plot_freq_response(lognames, calibration_data, shapers,
-                       selected_shaper, max_freq):
+                       selected_shaper, max_freq, max_psd):
     freqs = calibration_data.freq_bins
     psd = calibration_data.psd_sum[freqs <= max_freq]
     px = calibration_data.psd_x[freqs <= max_freq]
@@ -90,6 +90,8 @@ def plot_freq_response(lognames, calibration_data, shapers,
     fig, ax = matplotlib.pyplot.subplots()
     ax.set_xlabel('Frequency, Hz')
     ax.set_xlim([0, max_freq])
+    if max_psd > 0:
+        ax.set_ylim([0, max_psd])
     ax.set_ylabel('Power spectral density')
 
     ax.plot(freqs, psd, label='X+Y+Z', color='purple')
@@ -152,6 +154,8 @@ def main():
                     default=None, help="filename of output csv file")
     opts.add_option("-f", "--max_freq", type="float", default=200.,
                     help="maximum frequency to plot")
+    opts.add_option("-d", "--max_psd", type="float", default=0.,
+                    help="PSD scaling: Set to 0 for auto scaling, set positive value to set a fixed scaling of PSD axis")
     opts.add_option("-s", "--max_smoothing", type="float", dest="max_smoothing",
                     default=None, help="maximum shaper smoothing to allow")
     opts.add_option("--scv", "--square_corner_velocity", type="float",
@@ -175,6 +179,7 @@ def main():
         opts.error("Too small max_smoothing specified (must be at least 0.05)")
 
     max_freq = options.max_freq
+    max_psd = options.max_psd
     if options.shaper_freq is None:
         shaper_freqs = []
     elif options.shaper_freq.find(':') >= 0:
@@ -238,7 +243,7 @@ def main():
         setup_matplotlib(options.output is not None)
 
         fig = plot_freq_response(args, calibration_data, shapers,
-                                 selected_shaper, max_freq)
+                                 selected_shaper, max_freq, max_psd)
 
         # Show graph
         if options.output is None:
