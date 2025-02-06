@@ -27,9 +27,11 @@ class ClockSync:
         self.clock_avg = self.clock_covariance = 0.
         self.prediction_variance = 0.
         self.last_prediction_time = 0.
+        self._sync_period = .9839
     def connect(self, serial):
         self.serial = serial
         self.mcu_freq = serial.msgparser.get_constant_float('CLOCK_FREQ')
+        self._sync_period = min(self._sync_period, (1<<32)/self.mcu_freq/11)
         # Load initial clock and frequency
         params = serial.send_with_response('get_uptime', 'uptime')
         self.last_clock = (params['high'] << 32) | params['clock']
@@ -61,7 +63,7 @@ class ClockSync:
         self.queries_pending += 1
         # Use an unusual time for the next event so clock messages
         # don't resonate with other periodic events.
-        return eventtime + .9839
+        return eventtime + self._sync_period
     def _handle_clock(self, params):
         self.queries_pending = 0
         # Extend clock to 64bit
