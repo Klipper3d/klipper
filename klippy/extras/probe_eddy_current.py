@@ -429,6 +429,7 @@ class PrinterEddyProbe:
             config, self, self.mcu_probe.query_endstop)
         self.probe_offsets = probe.ProbeOffsetsHelper(config)
         self.probe_session = probe.ProbeSessionHelper(config, self.mcu_probe)
+        self.homing_helper = probe.HomingViaProbeHelper(config, self.mcu_probe)
         self.printer.add_object('probe', self)
     def add_client(self, cb):
         self.sensor_helper.add_client(cb)
