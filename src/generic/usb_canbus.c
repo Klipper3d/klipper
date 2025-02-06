@@ -335,7 +335,7 @@ canbus_send(struct canbus_msg *msg)
     int ret = send_frame(msg);
     if (ret < 0)
         goto retry_later;
-    if (UsbCan.notify_local && UsbCan.host_status)
+    if (UsbCan.host_status)
         canbus_notify_tx();
     UsbCan.notify_local = 0;
     return msg->dlc;
