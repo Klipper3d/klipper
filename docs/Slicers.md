@@ -2,13 +2,15 @@
 
 This document provides some tips for configuring a "slicer"
 application for use with Klipper. Common slicers used with Klipper are
-Slic3r, Cura, Simplify3D, etc.
+Slic3r, Cura, Simplify3D, PrusaSlicer, SuperSlicer, OrcaSlicer etc.
 
 ## Set the G-Code flavor to Marlin
 
 Many slicers have an option to configure the "G-Code flavor". The
 default is frequently "Marlin" and that works well with Klipper. The
-"Smoothieware" setting also works well with Klipper.
+"Smoothieware" setting also works well with Klipper. Some slicers
+may have an actual "Klipper" flavor, which you should use over
+"Marlin" or "Smoothieware" if available.
 
 ## Klipper gcode_macro
 
@@ -87,6 +89,28 @@ Klipper's maximum extrusion cross-section check.
 
 In contrast, it is okay (and often helpful) to use a slicer's
 "retract" setting, "wipe" setting, and/or "wipe on retract" setting.
+
+## Disable arc generating features of OrcaSlicer
+
+OrcaSlicer uses "Arc fitting" and "Spiral Z-Lift", these will produce
+errors in the console if used without enabling gcode_arcs in Klipper
+config. These options can also produce timing errors due to how Klipper
+deals with arcs and can cause the step rate to be massively increased,
+overloading the hardware.
+
+## Object labelling and exclude_object
+
+Some slicers, like the Slic3r forks: PrusaSlicer and OrcaSlicer can
+automatically produce the gcode needed for exclude_object support with no
+need for external processing. This slicer option should be enabled when
+using exclude_object support. The flavor should be set to Klipper and the
+label object setting set to "Firmware Specific", making sure all options
+for Label Object and Exclude Object are enabled.
+Other slicers that dont have this functionality can be processed through a
+plugin or via Moonraker Object Processing. In all cases this will insert an
+EXCLUDE_OBJECT_DEFINE gcode into the first commands in the Gcode file that
+will inform Klipper of the object details, to be used for adaptive functions
+and object cancelling.
 
 ## START_PRINT macros
 
