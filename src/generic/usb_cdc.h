@@ -3,14 +3,6 @@
 
 #include <stdint.h> // uint_fast8_t
 
-// endpoint sizes
-enum {
-    USB_CDC_EP0_SIZE = 16,
-    USB_CDC_EP_ACM_SIZE = 8,
-    USB_CDC_EP_BULK_OUT_SIZE = 64,
-    USB_CDC_EP_BULK_IN_SIZE = 64,
-};
-
 // callbacks provided by board specific code
 int_fast8_t usb_read_bulk_out(void *data, uint_fast8_t max_len);
 int_fast8_t usb_send_bulk_in(void *data, uint_fast8_t len);
