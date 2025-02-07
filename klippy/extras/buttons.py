@@ -104,7 +104,7 @@ class MCU_ADC_buttons:
         self.max_value = 0.
         ppins = printer.lookup_object('pins')
         self.mcu_adc = ppins.setup_pin('adc', self.pin)
-        self.mcu_adc.setup_minmax(ADC_SAMPLE_TIME, ADC_SAMPLE_COUNT)
+        self.mcu_adc.setup_adc_sample(ADC_SAMPLE_TIME, ADC_SAMPLE_COUNT)
         self.mcu_adc.setup_adc_callback(ADC_REPORT_TIME, self.adc_callback)
         query_adc = printer.lookup_object('query_adc')
         query_adc.register_adc('adc_button:' + pin.strip(), self.mcu_adc)

@@ -4,7 +4,7 @@
 struct sensor_bulk {
     uint16_t sequence, possible_overflows;
     uint8_t data_count;
-    uint8_t data[52];
+    uint8_t data[51];
 };
 
 void sensor_bulk_reset(struct sensor_bulk *sb);

@@ -152,7 +152,7 @@ timer_dispatch(void)
             // Check if there are too many repeat timers
             if (diff < (int32_t)(-timer_from_us(100000)))
                 try_shutdown("Rescheduled timer in the past");
-            if (sched_tasks_busy())
+            if (sched_check_set_tasks_busy())
                 return;
             repeat_count = TIMER_IDLE_REPEAT_COUNT;
         }

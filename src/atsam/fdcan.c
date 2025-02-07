@@ -1,11 +1,12 @@
 // CANbus support on atsame70 chips
 //
-// Copyright (C) 2021-2022  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2021-2025  Kevin O'Connor <kevin@koconnor.net>
 // Copyright (C) 2019 Eug Krashtan <eug.krashtan@gmail.com>
 // Copyright (C) 2020 Pontus Borg <glpontus@gmail.com>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "board/irq.h" // irq_save
 #include "command.h" // DECL_CONSTANT_STR
 #include "generic/armcm_boot.h" // armcm_enable_irq
 #include "generic/canbus.h" // canbus_notify_tx
@@ -71,8 +72,8 @@ struct fdcan_msg_ram {
     struct fdcan_fifo TXFIFO[3];
 };
 
-// Message ram is in regular memory
-static struct fdcan_msg_ram MSG_RAM;
+// Message ram is in DTCM - locate it there to avoid cache.
+static struct fdcan_msg_ram MSG_RAM __section(".dtcm.bss");
 
 
 /****************************************************************
@@ -147,6 +148,38 @@ canhw_set_filter(uint32_t id)
     CANx->MCAN_CCCR &= ~MCAN_CCCR_INIT;
 }
 
+static struct {
+    uint32_t rx_error, tx_error;
+} CAN_Errors;
+
+// Report interface status
+void
+canhw_get_status(struct canbus_status *status)
+{
+    irqstatus_t flag = irq_save();
+    uint32_t psr = CANx->MCAN_PSR, lec = psr & MCAN_PSR_LEC_Msk;
+    if (lec && lec != 7) {
+        // Reading PSR clears it - so update state here
+        if (lec >= 3 && lec <= 5)
+            CAN_Errors.tx_error += 1;
+        else
+            CAN_Errors.rx_error += 1;
+    }
+    uint32_t rx_error = CAN_Errors.rx_error, tx_error = CAN_Errors.tx_error;
+    irq_restore(flag);
+
+    status->rx_error = rx_error;
+    status->tx_error = tx_error;
+    if (psr & MCAN_PSR_BO)
+        status->bus_state = CANBUS_STATE_OFF;
+    else if (psr & MCAN_PSR_EP)
+        status->bus_state = CANBUS_STATE_PASSIVE;
+    else if (psr & MCAN_PSR_EW)
+        status->bus_state = CANBUS_STATE_WARN;
+    else
+        status->bus_state = 0;
+}
+
 // This function handles CAN global interrupts
 void
 CAN_IRQHandler(void)
@@ -182,6 +215,18 @@ CAN_IRQHandler(void)
         // Tx
         CANx->MCAN_IR = FDCAN_IE_TC;
         canbus_notify_tx();
+    }
+    if (ir & (MCAN_IR_PED | MCAN_IR_PEA)) {
+        // Bus error
+        uint32_t psr = CANx->MCAN_PSR;
+        CANx->MCAN_IR = MCAN_IR_PED | MCAN_IR_PEA;
+        uint32_t lec = psr & MCAN_PSR_LEC_Msk;
+        if (lec && lec != 7) {
+            if (lec >= 3 && lec <= 5)
+                CAN_Errors.tx_error += 1;
+            else
+                CAN_Errors.rx_error += 1;
+        }
     }
 }
 
@@ -302,6 +347,6 @@ can_init(void)
     /*##-3- Configure Interrupts #################################*/
     armcm_enable_irq(CAN_IRQHandler, CANx_IRQn, 1);
     CANx->MCAN_ILE = MCAN_ILE_EINT0;
-    CANx->MCAN_IE = MCAN_IE_RF0NE | FDCAN_IE_TC;
+    CANx->MCAN_IE = MCAN_IE_RF0NE | FDCAN_IE_TC | MCAN_IE_PEDE | MCAN_IE_PEAE;
 }
 DECL_INIT(can_init);

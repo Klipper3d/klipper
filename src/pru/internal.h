@@ -15,6 +15,12 @@
 #define WAKE_PRU1_IRQ  1
 #define WAKE_ARM_IRQ   2
 
+/* Host-0 Interrupt sets bit 31 in register R31 */
+#define HOST_INT_0 ((uint32_t) 1 << 30)
+
+/* Host-1 Interrupt sets bit 31 in register R31 */
+#define HOST_INT_1 ((uint32_t) 1 << 31)
+
 #define R31_IRQ_OFFSET 30
 
 #define R31_WRITE_IRQ_SELECT (1<<5)

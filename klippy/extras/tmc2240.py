@@ -95,7 +95,7 @@ Fields["DRV_STATUS"] = {
     "s2vsb":                    0x01 << 13,
     "stealth":                  0x01 << 14,
     "fsactive":                 0x01 << 15,
-    "csactual":                 0x1F << 16,
+    "cs_actual":                0x1F << 16,
     "stallguard":               0x01 << 24,
     "ot":                       0x01 << 25,
     "otpw":                     0x01 << 26,
@@ -348,7 +348,7 @@ class TMC2240:
         if config.get("uart_pin", None) is not None:
             # use UART for communication
             self.mcu_tmc = tmc_uart.MCU_TMC_uart(config, Registers, self.fields,
-                                                 3, TMC_FREQUENCY)
+                                                 7, TMC_FREQUENCY)
         else:
             # Use SPI bus for communication
             self.mcu_tmc = tmc2130.MCU_TMC_SPI(config, Registers, self.fields,
@@ -364,7 +364,10 @@ class TMC2240:
         # Setup basic register values
         tmc.TMCWaveTableHelper(config, self.mcu_tmc)
         self.fields.set_config_field(config, "offset_sin90", 0)
-        tmc.TMCStealthchopHelper(config, self.mcu_tmc, TMC_FREQUENCY)
+        tmc.TMCStealthchopHelper(config, self.mcu_tmc)
+        tmc.TMCVcoolthrsHelper(config, self.mcu_tmc)
+        tmc.TMCVhighHelper(config, self.mcu_tmc)
+        # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field
         #   GCONF
         set_config_field(config, "multistep_filt", True)
@@ -405,6 +408,8 @@ class TMC2240:
         set_config_field(config, "tpowerdown", 10)
         #   SG4_THRS
         set_config_field(config, "sg4_angle_offset", 1)
+        #   DRV_CONF
+        set_config_field(config, "slope_control", 0)
 
 def load_config_prefix(config):
     return TMC2240(config)

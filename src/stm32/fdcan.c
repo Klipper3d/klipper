@@ -1,11 +1,12 @@
 // FDCAN support on stm32 chips
 //
-// Copyright (C) 2021-2022  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2021-2025  Kevin O'Connor <kevin@koconnor.net>
 // Copyright (C) 2019 Eug Krashtan <eug.krashtan@gmail.com>
 // Copyright (C) 2020 Pontus Borg <glpontus@gmail.com>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "board/irq.h" // irq_save
 #include "command.h" // DECL_CONSTANT_STR
 #include "generic/armcm_boot.h" // armcm_enable_irq
 #include "generic/canbus.h" // canbus_notify_tx
@@ -60,16 +61,23 @@
      || CONFIG_STM32_CANBUS_PB5_PB6 ||CONFIG_STM32_CANBUS_PB12_PB13)
  #define SOC_CAN FDCAN1
  #define MSG_RAM (((struct fdcan_ram_layout*)SRAMCAN_BASE)->fdcan1)
+ #if CONFIG_MACH_STM32H7 || CONFIG_MACH_STM32G4
+  #define CAN_IT0_IRQn  FDCAN1_IT0_IRQn
+ #endif
 #else
  #define SOC_CAN FDCAN2
  #define MSG_RAM (((struct fdcan_ram_layout*)SRAMCAN_BASE)->fdcan2)
+ #if CONFIG_MACH_STM32H7 || CONFIG_MACH_STM32G4
+  #define CAN_IT0_IRQn  FDCAN2_IT0_IRQn
+ #endif
 #endif
 
 #if CONFIG_MACH_STM32G0
  #define CAN_IT0_IRQn  TIM16_FDCAN_IT0_IRQn
  #define CAN_FUNCTION  GPIO_FUNCTION(3) // Alternative function mapping number
-#elif CONFIG_MACH_STM32H7 || CONFIG_MACH_STM32G4
- #define CAN_IT0_IRQn  FDCAN1_IT0_IRQn
+#endif
+
+#if CONFIG_MACH_STM32H7 || CONFIG_MACH_STM32G4
  #define CAN_FUNCTION  GPIO_FUNCTION(9) // Alternative function mapping number
 #endif
 
@@ -177,6 +185,38 @@ canhw_set_filter(uint32_t id)
     SOC_CAN->CCCR &= ~FDCAN_CCCR_INIT;
 }
 
+static struct {
+    uint32_t rx_error, tx_error;
+} CAN_Errors;
+
+// Report interface status
+void
+canhw_get_status(struct canbus_status *status)
+{
+    irqstatus_t flag = irq_save();
+    uint32_t psr = SOC_CAN->PSR, lec = psr & FDCAN_PSR_LEC_Msk;
+    if (lec && lec != 7) {
+        // Reading PSR clears it - so update state here
+        if (lec >= 3 && lec <= 5)
+            CAN_Errors.tx_error += 1;
+        else
+            CAN_Errors.rx_error += 1;
+    }
+    uint32_t rx_error = CAN_Errors.rx_error, tx_error = CAN_Errors.tx_error;
+    irq_restore(flag);
+
+    status->rx_error = rx_error;
+    status->tx_error = tx_error;
+    if (psr & FDCAN_PSR_BO)
+        status->bus_state = CANBUS_STATE_OFF;
+    else if (psr & FDCAN_PSR_EP)
+        status->bus_state = CANBUS_STATE_PASSIVE;
+    else if (psr & FDCAN_PSR_EW)
+        status->bus_state = CANBUS_STATE_WARN;
+    else
+        status->bus_state = 0;
+}
+
 // This function handles CAN global interrupts
 void
 CAN_IRQHandler(void)
@@ -212,6 +252,18 @@ CAN_IRQHandler(void)
         // Tx
         SOC_CAN->IR = FDCAN_IE_TC;
         canbus_notify_tx();
+    }
+    if (ir & (FDCAN_IR_PED | FDCAN_IR_PEA)) {
+        // Bus error
+        uint32_t psr = SOC_CAN->PSR;
+        SOC_CAN->IR = FDCAN_IR_PED | FDCAN_IR_PEA;
+        uint32_t lec = psr & FDCAN_PSR_LEC_Msk;
+        if (lec && lec != 7) {
+            if (lec >= 3 && lec <= 5)
+                CAN_Errors.tx_error += 1;
+            else
+                CAN_Errors.rx_error += 1;
+        }
     }
 }
 
@@ -313,6 +365,6 @@ can_init(void)
     /*##-3- Configure Interrupts #################################*/
     armcm_enable_irq(CAN_IRQHandler, CAN_IT0_IRQn, 1);
     SOC_CAN->ILE = FDCAN_ILE_EINT0;
-    SOC_CAN->IE = FDCAN_IE_RF0NE | FDCAN_IE_TC;
+    SOC_CAN->IE = FDCAN_IE_RF0NE | FDCAN_IE_TC | FDCAN_IE_PEDE | FDCAN_IE_PEAE;
 }
 DECL_INIT(can_init);

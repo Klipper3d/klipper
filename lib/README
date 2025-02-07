@@ -105,16 +105,23 @@ The stm32h7 directory contains code from:
 version v1.9.0 (ccb11556044540590ca6e45056e6b65cdca2deb2). Contents
 taken from the Drivers/CMSIS/Device/ST/STM32H7xx/ directory.
 
-The rp2040 directory contains code from the pico sdk:
+The pico-sdk directory contains code from the pico sdk:
   https://github.com/raspberrypi/pico-sdk.git
-version 1.2.0 (bfcbefafc5d2a210551a4d9d80b4303d4ae0adf7). It has been
+version 2.0.0 (efe2103f9b28458a1615ff096054479743ade236). It has been
 modified so that it can build outside of the pico sdk. See
-rp2040.patch for the modifications.
+pico-sdk.patch for the modifications.
+
+The elf2uf2 directory contains code from the pico sdk:
+  https://github.com/raspberrypi/pico-sdk.git
+version 1.2.0 (bfcbefafc5d2a210551a4d9d80b4303d4ae0adf7). Contents
+taken from the tools/elf2uf2/ directory.
 
 The rp2040_flash directory contains a light-weight bootsel flash tool.
 It uses C part of the the `picoboot_connection` directory found in:
   https://github.com/raspberrypi/picotool.git
-version v1.1.0 (55fd880c3dc029b961fc1a0967a6cfdc0af02721).
+version 2.0.0 (8a9af99ab10b20b1c6afb30cd9384e562a6647f9). Note that
+Makefile and main.c are locally developed files (the remaining files
+are from the picotool repo).
 
 The hub-ctrl directory contains code from:
   https://github.com/codazoda/hub-ctrl.c/
@@ -132,7 +139,7 @@ details. See changes.diff for the modifications.
 
 The pru_rpmsg directory contains code from:
   https://github.com/dinuxbg/pru-gcc-examples
-revision 425a42d82006cf0aa24be27b483d2f6a41607489. The code is taken
+revision e2bd170d4d61b3e642da65e0f0d487e10872fe22. The code is taken
 from the repo's hc-sr04-range-sensor directory. It has been modified
 so that the IEP definitions compile correctly. See pru_rpmsg.patch for
 the modifications.
@@ -167,7 +174,7 @@ used to upload firmware to devices flashed with the CanBoot bootloader.
 
 The can2040 directory contains code from:
   https://github.com/KevinOConnor/can2040
-version v1.6.0 (af3d21e5d61b8408c63fbdfb0aceb21d69d91693)
+version v1.7.0 (90515f53ce89442f1bcc3033aae222e9eb77818c).
 
 The Huada HC32F460 directory contains code from:
   https://www.hdsc.com.cn/Category83-1490

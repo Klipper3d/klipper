@@ -48,7 +48,9 @@ class CalibrationData:
             # Avoid division by zero errors
             psd /= self.freq_bins + .1
             # Remove low-frequency noise
-            psd[self.freq_bins < MIN_FREQ] = 0.
+            low_freqs = self.freq_bins < 2. * MIN_FREQ
+            psd[low_freqs] *= self.numpy.exp(
+                    -(2. * MIN_FREQ / (self.freq_bins[low_freqs] + .1))**2 + 1.)
     def get_psd(self, axis='all'):
         return self._psd_map[axis]
 

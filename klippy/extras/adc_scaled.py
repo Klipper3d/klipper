@@ -7,7 +7,6 @@
 SAMPLE_TIME = 0.001
 SAMPLE_COUNT = 8
 REPORT_TIME = 0.300
-RANGE_CHECK_COUNT = 4
 
 class MCU_scaled_adc:
     def __init__(self, main, pin_params):
@@ -18,7 +17,7 @@ class MCU_scaled_adc:
         qname = main.name + ":" + pin_params['pin']
         query_adc.register_adc(qname, self._mcu_adc)
         self._callback = None
-        self.setup_minmax = self._mcu_adc.setup_minmax
+        self.setup_adc_sample = self._mcu_adc.setup_adc_sample
         self.get_mcu = self._mcu_adc.get_mcu
     def _handle_callback(self, read_time, read_value):
         max_adc = self._main.last_vref[1]
@@ -54,8 +53,7 @@ class PrinterADCScaled:
         ppins = self.printer.lookup_object('pins')
         mcu_adc = ppins.setup_pin('adc', pin_name)
         mcu_adc.setup_adc_callback(REPORT_TIME, callback)
-        mcu_adc.setup_minmax(SAMPLE_TIME, SAMPLE_COUNT, minval=0., maxval=1.,
-                             range_check_count=RANGE_CHECK_COUNT)
+        mcu_adc.setup_adc_sample(SAMPLE_TIME, SAMPLE_COUNT)
         query_adc = config.get_printer().load_object(config, 'query_adc')
         query_adc.register_adc(self.name + ":" + name, mcu_adc)
         return mcu_adc

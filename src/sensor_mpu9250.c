@@ -13,7 +13,6 @@
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // DECL_TASK
 #include "sensor_bulk.h" // sensor_bulk_report
-#include "board/gpio.h" // i2c_read
 #include "i2ccmds.h" // i2cdev_oid_lookup
 
 // Chip registers
@@ -71,13 +70,21 @@ mp9250_reschedule_timer(struct mpu9250 *mp)
     irq_enable();
 }
 
+static void
+read_mpu(struct i2cdev_s *i2c, uint8_t reg_len, uint8_t *reg
+         , uint8_t read_len, uint8_t *read)
+{
+    int ret = i2c_dev_read(i2c, reg_len, reg, read_len, read);
+    i2c_shutdown_on_err(ret);
+}
+
 // Reads the fifo byte count from the device.
 static uint16_t
 get_fifo_status(struct mpu9250 *mp)
 {
     uint8_t reg[] = {AR_FIFO_COUNT_H};
     uint8_t msg[2];
-    i2c_read(mp->i2c->i2c_config, sizeof(reg), reg, sizeof(msg), msg);
+    read_mpu(mp->i2c, sizeof(reg), reg, sizeof(msg), msg);
     uint16_t fifo_bytes = ((msg[0] & 0x1f) << 8) | msg[1];
     if (fifo_bytes > mp->fifo_max)
         mp->fifo_max = fifo_bytes;
@@ -95,8 +102,7 @@ mp9250_query(struct mpu9250 *mp, uint8_t oid)
     // If we have enough bytes to fill the buffer do it and send report
     if (mp->fifo_pkts_bytes >= BYTES_PER_BLOCK) {
         uint8_t reg = AR_FIFO;
-        i2c_read(mp->i2c->i2c_config, sizeof(reg), &reg
-                 , BYTES_PER_BLOCK, &mp->sb.data[0]);
+        read_mpu(mp->i2c, sizeof(reg), &reg, BYTES_PER_BLOCK, &mp->sb.data[0]);
         mp->sb.data_count = BYTES_PER_BLOCK;
         mp->fifo_pkts_bytes -= BYTES_PER_BLOCK;
         sensor_bulk_report(&mp->sb, oid);
@@ -144,8 +150,7 @@ command_query_mpu9250_status(uint32_t *args)
     // Detect if a FIFO overrun occurred
     uint8_t int_reg[] = {AR_INT_STATUS};
     uint8_t int_msg;
-    i2c_read(mp->i2c->i2c_config, sizeof(int_reg), int_reg, sizeof(int_msg),
-             &int_msg);
+    read_mpu(mp->i2c, sizeof(int_reg), int_reg, sizeof(int_msg), &int_msg);
     if (int_msg & FIFO_OVERFLOW_INT)
         mp->sb.possible_overflows++;
 
@@ -153,7 +158,7 @@ command_query_mpu9250_status(uint32_t *args)
     uint8_t reg[] = {AR_FIFO_COUNT_H};
     uint8_t msg[2];
     uint32_t time1 = timer_read_time();
-    i2c_read(mp->i2c->i2c_config, sizeof(reg), reg, sizeof(msg), msg);
+    read_mpu(mp->i2c, sizeof(reg), reg, sizeof(msg), msg);
     uint32_t time2 = timer_read_time();
     uint16_t fifo_bytes = ((msg[0] & 0x1f) << 8) | msg[1];
 

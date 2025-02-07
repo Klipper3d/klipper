@@ -359,10 +359,10 @@ Useful steps:
    be efficient as it is typically only called during homing and
    probing operations.
 5. Other methods. Implement the `check_move()`, `get_status()`,
-   `get_steppers()`, `home()`, and `set_position()` methods. These
-   functions are typically used to provide kinematic specific checks.
-   However, at the start of development one can use boiler-plate code
-   here.
+   `get_steppers()`, `home()`, `clear_homing_state()`, and `set_position()`
+   methods. These functions are typically used to provide kinematic
+   specific checks. However, at the start of development one can use
+   boiler-plate code here.
 6. Implement test cases. Create a g-code file with a series of moves
    that can test important cases for the given kinematics. Follow the
    [debugging documentation](Debugging.md) to convert this g-code file

@@ -17,6 +17,29 @@ BME280_REGS = {
     'HUM_MSB': 0xFD, 'HUM_LSB': 0xFE, 'CAL_1': 0x88, 'CAL_2': 0xE1
 }
 
+BMP388_REGS = {
+    "CMD": 0x7E,
+    "STATUS": 0x03,
+    "PWR_CTRL": 0x1B,
+    "OSR": 0x1C,
+    "ORD": 0x1D,
+    "INT_CTRL": 0x19,
+    "CAL_1": 0x31,
+    "TEMP_MSB": 0x09,
+    "TEMP_LSB": 0x08,
+    "TEMP_XLSB": 0x07,
+    "PRESS_MSB": 0x06,
+    "PRESS_LSB": 0x05,
+    "PRESS_XLSB": 0x04,
+}
+BMP388_REG_VAL_PRESS_EN = 0x01
+BMP388_REG_VAL_TEMP_EN = 0x02
+BMP388_REG_VAL_PRESS_OS_NO = 0b000
+BMP388_REG_VAL_TEMP_OS_NO = 0b000000
+BMP388_REG_VAL_ODR_50_HZ = 0x02
+BMP388_REG_VAL_DRDY_EN = 0b100000
+BMP388_REG_VAL_NORMAL_MODE = 0x30
+
 BME680_REGS = {
     'RESET': 0xE0, 'CTRL_HUM': 0x72, 'CTRL_GAS_1': 0x71, 'CTRL_GAS_0': 0x70,
     'GAS_WAIT_0': 0x64, 'RES_HEAT_0': 0x5A, 'IDAC_HEAT_0': 0x50,
@@ -60,6 +83,7 @@ BMP180_REGS = {
 STATUS_MEASURING = 1 << 3
 STATUS_IM_UPDATE = 1
 MODE = 1
+MODE_PERIODIC = 3
 RUN_GAS = 1 << 4
 NB_CONV_0 = 0
 EAS_NEW_DATA = 1 << 7
@@ -68,9 +92,11 @@ MEASURE_DONE = 1 << 5
 RESET_CHIP_VALUE = 0xB6
 
 BME_CHIPS = {
-    0x58: 'BMP280', 0x60: 'BME280', 0x61: 'BME680', 0x55: 'BMP180'
+    0x58: 'BMP280', 0x60: 'BME280', 0x61: 'BME680', 0x55: 'BMP180',
+    0x50: 'BMP388'
 }
 BME_CHIP_ID_REG = 0xD0
+BMP3_CHIP_ID_REG = 0x00
 
 
 def get_twos_complement(val, bit_size):
@@ -118,6 +144,7 @@ class BME280:
             pow(2, self.os_temp - 1), pow(2, self.os_hum - 1),
             pow(2, self.os_pres - 1)))
         logging.info("BMxx80: IIR: %dx" % (pow(2, self.iir_filter) - 1))
+        self.iir_filter = self.iir_filter & 0x07
 
         self.temp = self.pressure = self.humidity = self.gas = self.t_fine = 0.
         self.min_temp = self.max_temp = self.range_switching_error = 0.
@@ -130,6 +157,7 @@ class BME280:
             return
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
+        self.last_gas_time = 0
 
     def handle_connect(self):
         self._init_bmxx80()
@@ -161,6 +189,29 @@ class BME280:
             dig['P7'] = get_signed_short(calib_data_1[18:20])
             dig['P8'] = get_signed_short(calib_data_1[20:22])
             dig['P9'] = get_signed_short(calib_data_1[22:24])
+            return dig
+
+        def read_calibration_data_bmp388(calib_data_1):
+            dig = {}
+            dig["T1"] = get_unsigned_short(calib_data_1[0:2]) / 0.00390625
+            dig["T2"] = get_unsigned_short(calib_data_1[2:4]) / 1073741824.0
+            dig["T3"] = get_signed_byte(calib_data_1[4]) / 281474976710656.0
+
+            dig["P1"] = get_signed_short(calib_data_1[5:7]) - 16384
+            dig["P1"] /= 1048576.0
+            dig["P2"] = get_signed_short(calib_data_1[7:9]) - 16384
+            dig["P2"] /= 536870912.0
+            dig["P3"] = get_signed_byte(calib_data_1[9]) / 4294967296.0
+            dig["P4"] = get_signed_byte(calib_data_1[10]) / 137438953472.0
+            dig["P5"] = get_unsigned_short(calib_data_1[11:13]) / 0.125
+            dig["P6"] = get_unsigned_short(calib_data_1[13:15]) / 64.0
+            dig["P7"] = get_signed_byte(calib_data_1[15]) / 256.0
+            dig["P8"] = get_signed_byte(calib_data_1[16]) / 32768.0
+            dig["P9"] = get_signed_short(calib_data_1[17:19])
+            dig["P9"] /= 281474976710656.0
+            dig["P10"] = get_signed_byte(calib_data_1[19]) / 281474976710656.0
+            dig["P11"] = get_signed_byte(calib_data_1[20])
+            dig["P11"] /= 36893488147419103232.0
             return dig
 
         def read_calibration_data_bme280(calib_data_1, calib_data_2):
@@ -224,7 +275,7 @@ class BME280:
             dig['MD'] = get_signed_short_msb(calib_data_1[20:22])
             return dig
 
-        chip_id = self.read_id()
+        chip_id = self.read_id() or self.read_bmp3_id()
         if chip_id not in BME_CHIPS.keys():
             logging.info("bme280: Unknown Chip ID received %#x" % chip_id)
         else:
@@ -233,7 +284,7 @@ class BME280:
                 self.chip_type, self.i2c.i2c_address))
 
         # Reset chip
-        self.write_register('RESET', [RESET_CHIP_VALUE])
+        self.write_register('RESET', [RESET_CHIP_VALUE], wait=True)
         self.reactor.pause(self.reactor.monotonic() + .5)
 
         # Make sure non-volatile memory has been copied to registers
@@ -245,26 +296,49 @@ class BME280:
                 status = self.read_register('STATUS', 1)[0]
 
         if self.chip_type == 'BME680':
-            self.max_sample_time = 0.5
+            self.max_sample_time = \
+                    (1.25 + (2.3 * self.os_temp) + ((2.3 * self.os_pres) + .575)
+                     + ((2.3 * self.os_hum) + .575)) / 1000
             self.sample_timer = self.reactor.register_timer(self._sample_bme680)
             self.chip_registers = BME680_REGS
         elif self.chip_type == 'BMP180':
-            self.max_sample_time = (1.25 + ((2.3 * self.os_pres) + .575)) / 1000
             self.sample_timer = self.reactor.register_timer(self._sample_bmp180)
             self.chip_registers = BMP180_REGS
-        else:
+        elif self.chip_type == 'BMP388':
+            self.chip_registers = BMP388_REGS
+            self.write_register(
+                "PWR_CTRL",
+                [
+                    BMP388_REG_VAL_PRESS_EN
+                    | BMP388_REG_VAL_TEMP_EN
+                    | BMP388_REG_VAL_NORMAL_MODE
+                ],
+            )
+            self.write_register(
+                "OSR", [BMP388_REG_VAL_PRESS_OS_NO | BMP388_REG_VAL_TEMP_OS_NO]
+            )
+            self.write_register("ORD", [BMP388_REG_VAL_ODR_50_HZ])
+            self.write_register("INT_CTRL", [BMP388_REG_VAL_DRDY_EN])
+
+            self.sample_timer = self.reactor.register_timer(self._sample_bmp388)
+        elif self.chip_type == 'BME280':
             self.max_sample_time = \
                 (1.25 + (2.3 * self.os_temp) + ((2.3 * self.os_pres) + .575)
                  + ((2.3 * self.os_hum) + .575)) / 1000
             self.sample_timer = self.reactor.register_timer(self._sample_bme280)
             self.chip_registers = BME280_REGS
-
-        if self.chip_type in ('BME680', 'BME280'):
-            self.write_register('CONFIG', (self.iir_filter & 0x07) << 2)
+        else:
+            self.max_sample_time = \
+                (1.25 + (2.3 * self.os_temp)
+                + ((2.3 * self.os_pres) + .575)) / 1000
+            self.sample_timer = self.reactor.register_timer(self._sample_bme280)
+            self.chip_registers = BME280_REGS
 
         # Read out and calculate the trimming parameters
         if self.chip_type == 'BMP180':
             cal_1 = self.read_register('CAL_1', 22)
+        elif self.chip_type == 'BMP388':
+            cal_1 = self.read_register('CAL_1', 21)
         else:
             cal_1 = self.read_register('CAL_1', 26)
             cal_2 = self.read_register('CAL_2', 16)
@@ -276,22 +350,67 @@ class BME280:
             self.dig = read_calibration_data_bme680(cal_1, cal_2)
         elif self.chip_type == 'BMP180':
             self.dig = read_calibration_data_bmp180(cal_1)
+        elif self.chip_type == 'BMP388':
+            self.dig = read_calibration_data_bmp388(cal_1)
+
+        if self.chip_type in ('BME280', 'BMP280'):
+            max_standby_time = REPORT_TIME - self.max_sample_time
+            # 0.5 ms
+            t_sb = 0
+            if self.chip_type == 'BME280':
+                if max_standby_time > 1:
+                    t_sb = 5
+                elif max_standby_time > 0.5:
+                    t_sb = 4
+                elif max_standby_time > 0.25:
+                    t_sb = 3
+                elif max_standby_time > 0.125:
+                    t_sb = 2
+                elif max_standby_time > 0.0625:
+                    t_sb = 1
+                elif max_standby_time > 0.020:
+                    t_sb = 7
+                elif max_standby_time > 0.010:
+                    t_sb = 6
+            else:
+                if max_standby_time > 4:
+                    t_sb = 7
+                elif max_standby_time > 2:
+                    t_sb = 6
+                elif max_standby_time > 1:
+                    t_sb = 5
+                elif max_standby_time > 0.5:
+                    t_sb = 4
+                elif max_standby_time > 0.25:
+                    t_sb = 3
+                elif max_standby_time > 0.125:
+                    t_sb = 2
+                elif max_standby_time > 0.0625:
+                    t_sb = 1
+
+            cfg = t_sb << 5 | self.iir_filter << 2
+            self.write_register('CONFIG', cfg)
+            if self.chip_type == 'BME280':
+                self.write_register('CTRL_HUM', self.os_hum)
+            # Enter normal (periodic) mode
+            meas = self.os_temp << 5 | self.os_pres << 2 | MODE_PERIODIC
+            self.write_register('CTRL_MEAS', meas, wait=True)
+
+        if self.chip_type == 'BME680':
+            self.write_register('CONFIG', self.iir_filter << 2)
+            # Should be set once and reused on every mode register write
+            self.write_register('CTRL_HUM', self.os_hum & 0x07)
+            gas_wait_0 = self._calc_gas_heater_duration(self.gas_heat_duration)
+            self.write_register('GAS_WAIT_0', [gas_wait_0])
+            res_heat_0 = self._calc_gas_heater_resistance(self.gas_heat_temp)
+            self.write_register('RES_HEAT_0', [res_heat_0])
+            # Set initial heater current to reach Gas heater target on start
+            self.write_register('IDAC_HEAT_0', 96)
 
     def _sample_bme280(self, eventtime):
-        # Enter forced mode
-        if self.chip_type == 'BME280':
-            self.write_register('CTRL_HUM', self.os_hum)
-        meas = self.os_temp << 5 | self.os_pres << 2 | MODE
-        self.write_register('CTRL_MEAS', meas)
-
+        # In normal mode data shadowing is performed
+        # So reading can be done while measurements are in process
         try:
-            # wait until results are ready
-            status = self.read_register('STATUS', 1)[0]
-            while status & STATUS_MEASURING:
-                self.reactor.pause(
-                    self.reactor.monotonic() + self.max_sample_time)
-                status = self.read_register('STATUS', 1)[0]
-
             if self.chip_type == 'BME280':
                 data = self.read_register('PRESSURE_MSB', 8)
             elif self.chip_type == 'BMP280':
@@ -318,37 +437,114 @@ class BME280:
         self._callback(self.mcu.estimated_print_time(measured_time), self.temp)
         return measured_time + REPORT_TIME
 
+    def _sample_bmp388(self, eventtime):
+        status = self.read_register("STATUS", 1)
+        if status[0] & 0b100000:
+            self.temp = self._sample_bmp388_temp()
+            if self.temp < self.min_temp or self.temp > self.max_temp:
+                self.printer.invoke_shutdown(
+                    "BME280 temperature %0.1f outside range of %0.1f:%.01f"
+                    % (self.temp, self.min_temp, self.max_temp)
+                )
+
+        if status[0] & 0b010000:
+            self.pressure = self._sample_bmp388_press() / 100.0
+
+        measured_time = self.reactor.monotonic()
+        self._callback(self.mcu.estimated_print_time(measured_time), self.temp)
+        return measured_time + REPORT_TIME
+
+    def _sample_bmp388_temp(self):
+        xlsb = self.read_register("TEMP_XLSB", 1)
+        lsb = self.read_register("TEMP_LSB", 1)
+        msb = self.read_register("TEMP_MSB", 1)
+        adc_T = (msb[0] << 16) + (lsb[0] << 8) + (xlsb[0])
+
+        partial_data1 = adc_T - self.dig["T1"]
+        partial_data2 = self.dig["T2"] * partial_data1
+
+        self.t_fine = partial_data2
+        self.t_fine += (partial_data1 * partial_data1) * self.dig["T3"]
+
+        if self.t_fine < -40.0:
+            self.t_fine = -40.0
+
+        if self.t_fine > 85.0:
+            self.t_fine = 85.0
+
+        return self.t_fine
+
+    def _sample_bmp388_press(self):
+        xlsb = self.read_register("PRESS_XLSB", 1)
+        lsb = self.read_register("PRESS_LSB", 1)
+        msb = self.read_register("PRESS_MSB", 1)
+        adc_P = (msb[0] << 16) + (lsb[0] << 8) + (xlsb[0])
+
+        partial_data1 = self.dig["P6"] * self.t_fine
+        partial_data2 = self.dig["P7"] * (self.t_fine * self.t_fine)
+        partial_data3 = self.dig["P8"]
+        partial_data3 *= self.t_fine * self.t_fine * self.t_fine
+        partial_out1 = self.dig["P5"]
+        partial_out1 += partial_data1 + partial_data2 + partial_data3
+
+        partial_data1 = self.dig["P2"] * self.t_fine
+        partial_data2 = self.dig["P3"] * (self.t_fine * self.t_fine)
+        partial_data3 = self.dig["P4"]
+        partial_data3 *= (self.t_fine * self.t_fine * self.t_fine)
+        partial_out2 = adc_P * (
+            self.dig["P1"] + partial_data1 + partial_data2 + partial_data3
+        )
+
+        partial_data1 = adc_P * adc_P
+        partial_data2 = self.dig["P9"] + (self.dig["P10"] * self.t_fine)
+        partial_data3 = partial_data1 * partial_data2
+        partial_data4 = partial_data3 + adc_P * adc_P * adc_P * self.dig["P11"]
+
+        comp_press = partial_out1 + partial_out2 + partial_data4
+
+        if comp_press < 30000:
+            comp_press = 30000
+
+        if comp_press > 125000:
+            comp_press = 125000
+
+        return comp_press
+
     def _sample_bme680(self, eventtime):
-        self.write_register('CTRL_HUM', self.os_hum & 0x07)
-        meas = self.os_temp << 5 | self.os_pres << 2
-        self.write_register('CTRL_MEAS', [meas])
-
-        gas_wait_0 = self._calculate_gas_heater_duration(self.gas_heat_duration)
-        self.write_register('GAS_WAIT_0', [gas_wait_0])
-        res_heat_0 = self._calculate_gas_heater_resistance(self.gas_heat_temp)
-        self.write_register('RES_HEAT_0', [res_heat_0])
-        gas_config = RUN_GAS | NB_CONV_0
-        self.write_register('CTRL_GAS_1', [gas_config])
-
-        def data_ready(stat):
+        def data_ready(stat, run_gas):
             new_data = (stat & EAS_NEW_DATA)
             gas_done = not (stat & GAS_DONE)
             meas_done = not (stat & MEASURE_DONE)
+            if not run_gas:
+                gas_done = True
             return new_data and gas_done and meas_done
 
+        run_gas = False
+        # Check VOC once a while
+        if self.reactor.monotonic() - self.last_gas_time > 3:
+            gas_config = RUN_GAS | NB_CONV_0
+            self.write_register('CTRL_GAS_1', [gas_config])
+            run_gas = True
+
         # Enter forced mode
-        meas = meas | MODE
-        self.write_register('CTRL_MEAS', meas)
+        meas = self.os_temp << 5 | self.os_pres << 2 | MODE
+        self.write_register('CTRL_MEAS', meas, wait=True)
+        max_sample_time = self.max_sample_time
+        if run_gas:
+            max_sample_time += self.gas_heat_duration / 1000
+        self.reactor.pause(self.reactor.monotonic() + max_sample_time)
         try:
             # wait until results are ready
             status = self.read_register('EAS_STATUS_0', 1)[0]
-            while not data_ready(status):
+            while not data_ready(status, run_gas):
                 self.reactor.pause(
                     self.reactor.monotonic() + self.max_sample_time)
                 status = self.read_register('EAS_STATUS_0', 1)[0]
 
             data = self.read_register('PRESSURE_MSB', 8)
-            gas_data = self.read_register('GAS_R_MSB', 2)
+            gas_data = [0, 0]
+            if run_gas:
+                gas_data = self.read_register('GAS_R_MSB', 2)
         except Exception:
             logging.exception("BME680: Error reading data")
             self.temp = self.pressure = self.humidity = self.gas = .0
@@ -372,6 +568,10 @@ class BME280:
             gas_raw = (gas_data[0] << 2) | ((gas_data[1] & 0xC0) >> 6)
             gas_range = (gas_data[1] & 0x0F)
             self.gas = self._compensate_gas(gas_raw, gas_range)
+            # Disable gas measurement on success
+            gas_config = NB_CONV_0
+            self.write_register('CTRL_GAS_1', [gas_config])
+            self.last_gas_time = self.reactor.monotonic()
 
         if self.temp < self.min_temp or self.temp > self.max_temp:
             self.printer.invoke_shutdown(
@@ -500,7 +700,7 @@ class BME280:
                 gas_raw - 512. + var1)
         return gas
 
-    def _calculate_gas_heater_resistance(self, target_temp):
+    def _calc_gas_heater_resistance(self, target_temp):
         amb_temp = self.temp
         heater_data = self.read_register('RES_HEAT_VAL', 3)
         res_heat_val = get_signed_byte(heater_data[0])
@@ -515,7 +715,7 @@ class BME280:
                             * (1. / (1. + (res_heat_val * 0.002)))) - 25))
         return int(res_heat)
 
-    def _calculate_gas_heater_duration(self, duration_ms):
+    def _calc_gas_heater_duration(self, duration_ms):
         if duration_ms >= 4032:
             duration_reg = 0xff
         else:
@@ -564,18 +764,27 @@ class BME280:
         params = self.i2c.i2c_read(regs, 1)
         return bytearray(params['response'])[0]
 
+    def read_bmp3_id(self):
+        # read chip id register
+        regs = [BMP3_CHIP_ID_REG]
+        params = self.i2c.i2c_read(regs, 1)
+        return bytearray(params['response'])[0]
+
     def read_register(self, reg_name, read_len):
         # read a single register
         regs = [self.chip_registers[reg_name]]
         params = self.i2c.i2c_read(regs, read_len)
         return bytearray(params['response'])
 
-    def write_register(self, reg_name, data):
+    def write_register(self, reg_name, data, wait = False):
         if type(data) is not list:
             data = [data]
         reg = self.chip_registers[reg_name]
         data.insert(0, reg)
-        self.i2c.i2c_write(data)
+        if not wait:
+            self.i2c.i2c_write(data)
+        else:
+            self.i2c.i2c_write_wait_ack(data)
 
     def get_status(self, eventtime):
         data = {
