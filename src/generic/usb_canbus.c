@@ -18,6 +18,8 @@
 #include "sched.h" // sched_wake_task
 #include "usb_cdc.h" // usb_notify_ep0
 
+DECL_CONSTANT("CANBUS_BRIDGE", 1);
+
 
 /****************************************************************
  * Linux "gs_usb" definitions
@@ -97,7 +99,7 @@ struct gs_host_frame {
 
 
 /****************************************************************
- * Message sending
+ * Main usbcan task (read requests from usb and send msgs to usb)
  ****************************************************************/
 
 // Global storage
@@ -132,32 +134,6 @@ enum {
     HS_TX_LOCAL = 4,
 };
 
-DECL_CONSTANT("CANBUS_BRIDGE", 1);
-
-void
-canbus_notify_tx(void)
-{
-    sched_wake_task(&UsbCan.wake);
-}
-
-// Handle incoming data from hw canbus interface (called from IRQ handler)
-void
-canbus_process_data(struct canbus_msg *msg)
-{
-    // Add to admin command queue
-    uint32_t pushp = UsbCan.canhw_push_pos;
-    if (pushp - UsbCan.canhw_pull_pos >= ARRAY_SIZE(UsbCan.canhw_queue))
-        // No space - drop message
-        return;
-    if (UsbCan.assigned_id && (msg->id & ~1) == UsbCan.assigned_id)
-        // Id reserved for local
-        return;
-    uint32_t pos = pushp % ARRAY_SIZE(UsbCan.canhw_queue);
-    memcpy(&UsbCan.canhw_queue[pos], msg, sizeof(*msg));
-    UsbCan.canhw_push_pos = pushp + 1;
-    usb_notify_bulk_out();
-}
-
 // Send a message to the Linux host
 static int
 send_frame(struct canbus_msg *msg)
@@ -171,7 +147,7 @@ send_frame(struct canbus_msg *msg)
     return usb_send_bulk_in(&gs, sizeof(gs));
 }
 
-// Send any pending hw frames to host
+// Send any pending messages read from canbus hw to host
 static void
 drain_canhw_queue(void)
 {
@@ -194,7 +170,7 @@ drain_canhw_queue(void)
     }
 }
 
-// Fill local queue with any USB messages sent from host
+// Fill local queue with any USB messages read from host
 static void
 fill_usb_host_queue(void)
 {
@@ -259,6 +235,7 @@ try_canmsg_send(struct canbus_msg *msg)
     return ret;
 }
 
+// Main message routing task
 void
 usbcan_task(void)
 {
@@ -327,6 +304,47 @@ usbcan_task(void)
 }
 DECL_TASK(usbcan_task);
 
+// Helper function to wake usbcan_task()
+static void
+wake_usbcan_task(void)
+{
+    sched_wake_task(&UsbCan.wake);
+}
+
+
+/****************************************************************
+ * Interface to canbus hardware (read canbus hw msgs and tx notifications)
+ ****************************************************************/
+
+void
+canbus_notify_tx(void)
+{
+    wake_usbcan_task();
+}
+
+// Handle incoming data from hw canbus interface (called from IRQ handler)
+void
+canbus_process_data(struct canbus_msg *msg)
+{
+    // Add to admin command queue
+    uint32_t pushp = UsbCan.canhw_push_pos;
+    if (pushp - UsbCan.canhw_pull_pos >= ARRAY_SIZE(UsbCan.canhw_queue))
+        // No space - drop message
+        return;
+    if (UsbCan.assigned_id && (msg->id & ~1) == UsbCan.assigned_id)
+        // Id reserved for local
+        return;
+    uint32_t pos = pushp % ARRAY_SIZE(UsbCan.canhw_queue);
+    memcpy(&UsbCan.canhw_queue[pos], msg, sizeof(*msg));
+    UsbCan.canhw_push_pos = pushp + 1;
+    wake_usbcan_task();
+}
+
+
+/****************************************************************
+ * Handle messages routed locally (canserial.c interface)
+ ****************************************************************/
+
 int
 canbus_send(struct canbus_msg *msg)
 {
@@ -336,7 +354,7 @@ canbus_send(struct canbus_msg *msg)
     if (ret < 0)
         goto retry_later;
     if (UsbCan.host_status)
-        canbus_notify_tx();
+        wake_usbcan_task();
     UsbCan.notify_local = 0;
     return msg->dlc;
 retry_later:
@@ -350,16 +368,21 @@ canbus_set_filter(uint32_t id)
     UsbCan.assigned_id = id;
 }
 
+
+/****************************************************************
+ * USB bulk wakeup interface
+ ****************************************************************/
+
 void
 usb_notify_bulk_out(void)
 {
-    canbus_notify_tx();
+    wake_usbcan_task();
 }
 
 void
 usb_notify_bulk_in(void)
 {
-    canbus_notify_tx();
+    wake_usbcan_task();
 }
 
 
@@ -630,8 +653,7 @@ usb_req_set_configuration(struct usb_ctrlrequest *req)
         return;
     }
     usb_set_configure();
-    usb_notify_bulk_in();
-    usb_notify_bulk_out();
+    wake_usbcan_task();
     usb_do_xfer(NULL, 0, UX_SEND);
 }
 
@@ -746,8 +768,7 @@ DECL_TASK(usb_ep0_task);
 void
 usb_shutdown(void)
 {
-    usb_notify_bulk_in();
-    usb_notify_bulk_out();
+    wake_usbcan_task();
     usb_notify_ep0();
 }
 DECL_SHUTDOWN(usb_shutdown);
