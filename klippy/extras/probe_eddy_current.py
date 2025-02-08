@@ -415,7 +415,9 @@ class EddyDescend:
             if res == mcu.MCU_trsync.REASON_COMMS_TIMEOUT:
                 raise self._printer.command_error(
                     "Communication timeout during homing")
-            raise self._printer.command_error("Eddy current sensor error")
+            error_code = res - self.REASON_SENSOR_ERROR
+            error_msg = self._sensor_helper.lookup_sensor_error(error_code)
+            raise self._printer.command_error(error_msg)
         if res != mcu.MCU_trsync.REASON_ENDSTOP_HIT:
             return 0.
         if self._mcu.is_fileoutput():

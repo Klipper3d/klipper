@@ -84,6 +84,7 @@ class LDC1612:
                                            default_addr=LDC1612_ADDR,
                                            default_speed=400000)
         self.mcu = mcu = self.i2c.get_mcu()
+        self._sensor_errors = {}
         self.oid = oid = mcu.create_oid()
         self.query_ldc1612_cmd = None
         self.ldc1612_setup_home_cmd = self.query_ldc1612_home_state_cmd = None
@@ -132,6 +133,8 @@ class LDC1612:
             "query_ldc1612_home_state oid=%c",
             "ldc1612_home_state oid=%c homing=%c trigger_clock=%u",
             oid=self.oid, cq=cmdqueue)
+        errors = self.mcu.get_enumerations().get("ldc1612_error:", {})
+        self._sensor_errors = {v: k for k, v in errors.items()}
     def get_mcu(self):
         return self.i2c.get_mcu()
     def read_reg(self, reg):
@@ -157,16 +160,32 @@ class LDC1612:
         params = self.query_ldc1612_home_state_cmd.send([self.oid])
         tclock = self.mcu.clock32_to_clock64(params['trigger_clock'])
         return self.mcu.clock_to_print_time(tclock)
+    def lookup_sensor_error(self, error):
+        return self._sensor_errors.get(error, "Unknown ldc1612 error")
     # Measurement decoding
     def _convert_samples(self, samples):
         freq_conv = self.freq_conv
         count = 0
+        errors = {}
+        def log_once(msg):
+            if not errors.get(msg, 0):
+                errors[msg] = 0
+            errors[msg] += 1
         for ptime, val in samples:
             mv = val & 0x0fffffff
             if mv != val:
                 self.last_error_count += 1
+                if (val >> 16 & 0xffff) == 0xffff:
+                    # Encoded error from sensor_ldc1612.c
+                    log_once(self.lookup_sensor_error(val & 0xffff))
+                    continue
+                error_bits = (val >> 28) & 0x0f
+                log_once("Sensor reports error (%s)" % (bin(error_bits),))
             samples[count] = (round(ptime, 6), round(freq_conv * mv, 3), 999.9)
             count += 1
+        del samples[count:]
+        for msg in errors:
+            logging.error("%s: %s (%d)" % (self.name, msg, errors[msg]))
     # Start, stop, and process message batches
     def _start_measurements(self):
         # In case of miswiring, testing LDC1612 device ID prevents treating

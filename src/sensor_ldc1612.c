@@ -37,6 +37,16 @@ struct ldc1612 {
 
 static struct task_wake ldc1612_wake;
 
+// Internal errors transmitted in sample reports (or trsync error)
+enum {
+    SE_SENSOR_ERROR, SE_I2C_STATUS, SE_I2C_DATA, SE_INVALID_DATA
+};
+
+DECL_ENUMERATION("ldc1612_error:", "SENSOR_REPORTS_ERROR", SE_SENSOR_ERROR);
+DECL_ENUMERATION("ldc1612_error:", "I2C_STATUS_ERROR", SE_I2C_STATUS);
+DECL_ENUMERATION("ldc1612_error:", "I2C_DATA_ERROR", SE_I2C_DATA);
+DECL_ENUMERATION("ldc1612_error:", "INVALID_READ_DATA", SE_INVALID_DATA);
+
 // Check if the intb line is "asserted"
 static int
 check_intb_asserted(struct ldc1612 *ld)
@@ -111,19 +121,34 @@ command_query_ldc1612_home_state(uint32_t *args)
 DECL_COMMAND(command_query_ldc1612_home_state,
              "query_ldc1612_home_state oid=%c");
 
+// Cancel homing due to an error
+static void
+cancel_homing(struct ldc1612 *ld, int error_code)
+{
+    if (!(ld->homing_flags & LH_CAN_TRIGGER))
+        return;
+    ld->homing_flags = 0;
+    trsync_do_trigger(ld->ts, ld->error_reason + error_code);
+}
+
+static int
+check_data_bits(struct ldc1612 *ld, uint32_t raw_data) {
+    if (raw_data < 0x0fffffff)
+        return 0;
+    cancel_homing(ld, SE_SENSOR_ERROR);
+    return -1;
+}
+
 // Check if a sample should trigger a homing event
 static void
-check_home(struct ldc1612 *ld, uint32_t data)
+check_home(struct ldc1612 *ld, uint32_t raw_data)
 {
     uint8_t homing_flags = ld->homing_flags;
     if (!(homing_flags & LH_CAN_TRIGGER))
         return;
-    if (data > 0x0fffffff) {
-        // Sensor reports an issue - cancel homing
-        ld->homing_flags = 0;
-        trsync_do_trigger(ld->ts, ld->error_reason);
+    if (check_data_bits(ld, raw_data))
         return;
-    }
+    uint32_t data = raw_data & 0x0fffffff;
     uint32_t time = timer_read_time();
     if ((homing_flags & LH_AWAIT_HOMING)
         && timer_is_before(time, ld->homing_clock))
@@ -143,41 +168,69 @@ check_home(struct ldc1612 *ld, uint32_t data)
 #define REG_STATUS    0x18
 
 // Read a register on the ldc1612
-static void
+static int
 read_reg(struct ldc1612 *ld, uint8_t reg, uint8_t *res)
 {
-    int ret = i2c_dev_read(ld->i2c, sizeof(reg), &reg, 2, res);
-    i2c_shutdown_on_err(ret);
+    return i2c_dev_read(ld->i2c, sizeof(reg), &reg, 2, res);
 }
 
 // Read the status register on the ldc1612
-static uint16_t
-read_reg_status(struct ldc1612 *ld)
+static int
+read_reg_status(struct ldc1612 *ld, uint16_t *status)
 {
     uint8_t data_status[2];
-    read_reg(ld, REG_STATUS, data_status);
-    return (data_status[0] << 8) | data_status[1];
+    int ret = read_reg(ld, REG_STATUS, data_status);
+    *status = (data_status[0] << 8) | data_status[1];
+    return ret;
 }
 
+#define STATUS_UNREADCONV0 (1 << 3)
 #define BYTES_PER_SAMPLE 4
+
+static void
+report_sample_error(struct ldc1612 *ld, int error_code)
+{
+    cancel_homing(ld, error_code);
+
+    uint8_t *d = &ld->sb.data[ld->sb.data_count];
+    d[0] = 0xff;
+    d[1] = 0xff;
+    d[2] = 0;
+    d[3] = error_code;
+}
 
 // Query ldc1612 data
 static void
 ldc1612_query(struct ldc1612 *ld, uint8_t oid)
 {
     // Check if data available (and clear INTB line)
-    uint16_t status = read_reg_status(ld);
+    uint16_t status;
+    int ret = read_reg_status(ld, &status);
     irq_disable();
     ld->flags &= ~LDC_PENDING;
     irq_enable();
-    if (!(status & 0x08))
+    if (ret) {
+        report_sample_error(ld, SE_I2C_STATUS);
+        goto out;
+    }
+    if (!(status & STATUS_UNREADCONV0))
+        // No data available
         return;
 
     // Read coil0 frequency
     uint8_t *d = &ld->sb.data[ld->sb.data_count];
-    read_reg(ld, REG_DATA0_MSB, &d[0]);
-    read_reg(ld, REG_DATA0_LSB, &d[2]);
-    ld->sb.data_count += BYTES_PER_SAMPLE;
+    ret |= read_reg(ld, REG_DATA0_MSB, &d[0]);
+    ret |= read_reg(ld, REG_DATA0_LSB, &d[2]);
+
+    if (ret) {
+        report_sample_error(ld, SE_I2C_DATA);
+        goto out;
+    }
+    if (d[0] == 0xff && d[1] == 0xff) {
+        // Invalid data from sensor (conflict with internal error indicator)
+        report_sample_error(ld, SE_INVALID_DATA);
+        goto out;
+    }
 
     // Check for endstop trigger
     uint32_t data =   ((uint32_t)d[0] << 24)
@@ -185,7 +238,8 @@ ldc1612_query(struct ldc1612 *ld, uint8_t oid)
                     | ((uint32_t)d[2] << 8)
                     | ((uint32_t)d[3]);
     check_home(ld, data);
-
+out:
+    ld->sb.data_count += BYTES_PER_SAMPLE;
     // Flush local buffer if needed
     if (ld->sb.data_count + BYTES_PER_SAMPLE > ARRAY_SIZE(ld->sb.data))
         sensor_bulk_report(&ld->sb, oid);
@@ -228,11 +282,15 @@ command_query_status_ldc1612(uint32_t *args)
     }
 
     // Query sensor to see if a sample is pending
+    uint16_t status;
     uint32_t time1 = timer_read_time();
-    uint16_t status = read_reg_status(ld);
+    int ret = read_reg_status(ld, &status);
     uint32_t time2 = timer_read_time();
 
-    uint32_t fifo = status & 0x08 ? BYTES_PER_SAMPLE : 0;
+    if (ret)
+        // Query error - don't send response - host will retry
+        return;
+    uint32_t fifo = status & STATUS_UNREADCONV0 ? BYTES_PER_SAMPLE : 0;
     sensor_bulk_status(&ld->sb, args[0], time1, time2-time1, fifo);
 }
 DECL_COMMAND(command_query_status_ldc1612, "query_status_ldc1612 oid=%c");
