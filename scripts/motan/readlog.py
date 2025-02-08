@@ -234,6 +234,58 @@ class HandleStepQ:
                 step_data.append((step_time, step_halfpos, step_pos))
 LogHandlers["stepq"] = HandleStepQ
 
+# Extract tmc stallguard value and current from queue_step log
+class HandleStallguard:
+    SubscriptionIdParts = 2
+    ParametersMin = 2
+    ParametersMax = 2
+    DataSets = [
+        ('stallguard(<stepper>,sg_result)',
+         'Stallguard result of the given stepper driver'),
+        ('stallguard(<stepper>,cs_actual)',
+         'Current level result of the given stepper driver'),
+        ('stallguard(<stepper>,velocity)',
+         'Velocity result of the given stepper driver'),
+    ]
+    def __init__(self, lmanager, name, name_parts):
+        self.name = name
+        self.stepper_name = name_parts[1]
+        self.filter = name_parts[2]
+        self.jdispatch = lmanager.get_jdispatch()
+        self.data = None
+    def get_label(self):
+        label = '%s %s' % (self.stepper_name, self.filter)
+        if self.filter != "velocity":
+            return {'label': label, 'units': 'value'}
+        else:
+            return {'label': label, 'units': 'velocity\nmm/s'}
+    # Search datapoint in dataset extrapolate in between
+    def pull_data(self, req_time):
+        while 1:
+            if self.data is None:
+                jmsg = self.jdispatch.pull_msg(req_time, self.name)
+                if jmsg is None:
+                    return
+                data = jmsg["data"]
+                if len(data) > 1:
+                    raise error(
+                        "Stallguard sampling return only one set of value")
+                time, velocity, sg_result, cs_actual = data[0]
+                self.data = {
+                    "time": time,
+                    "velocity": velocity,
+                    "sg_result": sg_result,
+                    "cs_actual": cs_actual
+                }
+            # Assume jmsg is ordered
+            time = self.data["time"]
+            if req_time <= time:
+                if time - req_time > 0.05:
+                    return
+                return self.data[self.filter]
+            self.data = None
+LogHandlers["stallguard"] = HandleStallguard
+
 # Extract stepper motor phase position
 class HandleStepPhase:
     SubscriptionIdParts = 0
