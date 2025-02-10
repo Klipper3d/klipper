@@ -389,7 +389,7 @@ class ConfigAutoSave:
         backup_name = "." + cfgname + datestr
         temp_name = cfgname + "_autosave"
         if cfgname.endswith(".cfg"):
-            backup_name = cfgname[:-4] + datestr + ".cfg"
+            backup_name = "." + cfgname[:-4] + datestr + ".cfg"
             temp_name = cfgname[:-4] + "_autosave.cfg"
         # Create new config file with temporary name and swap with main config
         logging.info("SAVE_CONFIG to '%s' (backup in '%s')",
