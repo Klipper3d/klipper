@@ -386,7 +386,7 @@ class ConfigAutoSave:
         self._disallow_include_conflicts(regular_fileconfig)
         # Determine filenames
         datestr = time.strftime("-%Y%m%d_%H%M%S")
-        backup_name = cfgname + datestr
+        backup_name = "." + cfgname + datestr
         temp_name = cfgname + "_autosave"
         if cfgname.endswith(".cfg"):
             backup_name = cfgname[:-4] + datestr + ".cfg"
