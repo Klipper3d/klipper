@@ -130,6 +130,13 @@ BOARD_DEFS = {
         "cs_pin": "PA4",
         "current_firmware_path": "OLD.BIN"
     },
+    'btt-octopus-max-ez': {
+        'mcu': "stm32h723xx",
+        'spi_bus': "swspi",
+        'spi_pins': "PE13,PE14,PE12",
+        'cs_pin': "PB12",
+        'skip_verify': True
+    },
     'btt-skrat': {
         'mcu': "stm32g0b1xx",
         'spi_bus': "spi1",
