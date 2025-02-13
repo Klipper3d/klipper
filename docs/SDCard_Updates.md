@@ -48,7 +48,7 @@ All options can be viewed by the help screen:
 ./scripts/flash-sdcard.sh -h
 SD Card upload utility for Klipper
 
-usage: flash_sdcard.sh [-h] [-l] [-c] [-b <baud>] [-f <firmware>]
+usage: flash_sdcard.sh [-h] [-l] [-c] [-s] [-b <baud>] [-f <firmware>]
                        <device> <board>
 
 positional arguments:
@@ -59,6 +59,7 @@ optional arguments:
   -h              show this message
   -l              list available boards
   -c              run flash check/verify only (skip upload)
+  -s              use fast SPI speed (4MHz)
   -b <baud>       serial baud rate (default is 250000)
   -f <firmware>   path to klipper.bin
 ```
@@ -86,6 +87,25 @@ necessary to complete the flashing procedure, such as with bootloaders that
 use SDIO mode instead of SPI to access their SD Cards. (See Caveats below)
 But, it can also be used anytime to verify if the code flashed into the board
 matches the version in your build folder on any supported board.
+
+## Failure to Initialize
+
+Some SD cards may fail to initialize at the default SPI speed of 400KHz.  In
+this situation it is possible to use `-s` to drive the SPI peripheral at 4MHz.
+For example:
+
+```
+./scripts/flash-sdcard.sh -s /dev/ttyACM0 btt-skr-v1.3
+```
+
+If the device still fails to initialize then cause of the failure is
+unrelated to the speed and likely a result of one of the following
+conditions:
+
+- The SD card is improperly formatted.  Must be `fat` or `fat32`.
+- Attempt to initialize a card using the SPI interface that has already
+  been initialized over SDIO.
+- The SD card has failed or is corrupt.
 
 ## Caveats
 
