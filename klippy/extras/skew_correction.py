@@ -20,6 +20,7 @@ class PrinterSkew:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name()
+        self.cur_skew_prof_name = ""
         self.toolhead = None
         self.xy_factor = 0.
         self.xz_factor = 0.
@@ -32,6 +33,9 @@ class PrinterSkew:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command('GET_CURRENT_SKEW', self.cmd_GET_CURRENT_SKEW,
                                desc=self.cmd_GET_CURRENT_SKEW_help)
+        gcode.register_command('GET_CURRENT_SKEW_NAME',
+                               self.cmd_GET_CURRENT_SKEW_NAME,
+                               desc=self.cmd_GET_CURRENT_SKEW_NAME_help)
         gcode.register_command('CALC_MEASURED_SKEW',
                                self.cmd_CALC_MEASURED_SKEW,
                                desc=self.cmd_CALC_MEASURED_SKEW_help)
@@ -85,6 +89,10 @@ class PrinterSkew:
             out += " Skew: %.6f radians, %.2f degrees" % (
                 fac, math.degrees(fac))
         gcmd.respond_info(out)
+    cmd_GET_CURRENT_SKEW_NAME_help = "Report current printer skew name"
+    def cmd_GET_CURRENT_SKEW_NAME(self, gcmd):
+        out = self.cur_skew_prof_name
+        gcmd.respond_info(out)
     cmd_CALC_MEASURED_SKEW_help = "Calculate skew from measured print"
     def cmd_CALC_MEASURED_SKEW(self, gcmd):
         ac = gcmd.get_float("AC", above=0.)
@@ -117,6 +125,7 @@ class PrinterSkew:
     def cmd_SKEW_PROFILE(self, gcmd):
         if gcmd.get('LOAD', None) is not None:
             name = gcmd.get('LOAD')
+            self.cur_skew_prof_name = name
             prof = self.skew_profiles.get(name)
             if prof is None:
                 gcmd.respond_info(
