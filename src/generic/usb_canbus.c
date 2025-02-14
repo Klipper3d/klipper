@@ -172,7 +172,7 @@ drain_canhw_queue(void)
 
 // Fill local queue with any USB messages read from host
 static void
-fill_usb_host_queue(void)
+drain_usb_host_messages(void)
 {
     uint32_t pull_pos = UsbCan.host_pull_pos, push_pos = UsbCan.host_push_pos;
     for (;;) {
@@ -235,20 +235,10 @@ try_canmsg_send(struct canbus_msg *msg)
     return ret;
 }
 
-// Main message routing task
-void
-usbcan_task(void)
+// Process new requests arriving from the host
+static void
+drain_host_queue(void)
 {
-    if (!sched_check_wake(&UsbCan.wake) && !check_need_discard())
-        return;
-
-    // Send any pending hw frames to host
-    drain_canhw_queue();
-
-    // Fill local queue with any USB messages arriving from host
-    fill_usb_host_queue();
-
-    // Route messages received from host
     uint32_t pull_pos = UsbCan.host_pull_pos, push_pos = UsbCan.host_push_pos;
     uint32_t pullp = pull_pos % ARRAY_SIZE(UsbCan.host_frames);
     struct gs_host_frame *gs = &UsbCan.host_frames[pullp];
@@ -280,7 +270,7 @@ usbcan_task(void)
                 break;
             int ret = usb_send_bulk_in(gs, sizeof(*gs));
             if (ret < 0)
-                return;
+                break;
             UsbCan.host_status = 0;
             UsbCan.host_pull_pos = pull_pos = pull_pos + 1;
         }
@@ -297,6 +287,23 @@ usbcan_task(void)
         else if (UsbCan.assigned_id && UsbCan.assigned_id == id)
             UsbCan.host_status = HS_TX_ECHO | HS_TX_LOCAL;
     }
+}
+
+// Main message routing task
+void
+usbcan_task(void)
+{
+    if (!sched_check_wake(&UsbCan.wake) && !check_need_discard())
+        return;
+
+    // Send messages read from canbus hardware to host
+    drain_canhw_queue();
+
+    // Fill local queue with any USB messages arriving from host
+    drain_usb_host_messages();
+
+    // Route messages received from host
+    drain_host_queue();
 
     // Wake up local message response handling (if usb is not busy)
     if (UsbCan.notify_local && !UsbCan.usb_send_busy)
