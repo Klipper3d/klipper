@@ -40,8 +40,6 @@ class CartKinematics:
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
-        self.printer.register_event_handler("stepper_enable:motor_off",
-                                            self._motor_off)
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat('max_z_velocity', max_velocity,
@@ -67,15 +65,17 @@ class CartKinematics:
     def set_position(self, newpos, homing_axes):
         for i, rail in enumerate(self.rails):
             rail.set_position(newpos)
-        for axis in homing_axes:
+        for axis_name in homing_axes:
+            axis = "xyz".index(axis_name)
             if self.dc_module and axis == self.dc_module.axis:
                 rail = self.dc_module.get_primary_rail().get_rail()
             else:
                 rail = self.rails[axis]
             self.limits[axis] = rail.get_range()
-    def note_z_not_homed(self):
-        # Helper for Safe Z Home
-        self.limits[2] = (1.0, -1.0)
+    def clear_homing_state(self, clear_axes):
+        for axis, axis_name in enumerate("xyz"):
+            if axis_name in clear_axes:
+                self.limits[axis] = (1.0, -1.0)
     def home_axis(self, homing_state, axis, rail):
         # Determine movement
         position_min, position_max = rail.get_range()
@@ -96,8 +96,6 @@ class CartKinematics:
                 self.dc_module.home(homing_state)
             else:
                 self.home_axis(homing_state, axis, self.rails[axis])
-    def _motor_off(self, print_time):
-        self.limits = [(1.0, -1.0)] * 3
     def _check_endstops(self, move):
         end_pos = move.end_pos
         for i in (0, 1, 2):

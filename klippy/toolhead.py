@@ -290,7 +290,7 @@ class ToolHead:
                                             self._handle_shutdown)
         # Load some default modules
         modules = ["gcode_move", "homing", "idle_timeout", "statistics",
-                   "manual_probe", "tuning_tower"]
+                   "manual_probe", "tuning_tower", "garbage_collection"]
         for module_name in modules:
             self.printer.load_object(config, module_name)
     # Print time and flush tracking
@@ -457,7 +457,7 @@ class ToolHead:
     # Movement commands
     def get_position(self):
         return list(self.commanded_pos)
-    def set_position(self, newpos, homing_axes=()):
+    def set_position(self, newpos, homing_axes=""):
         self.flush_step_generation()
         ffi_main, ffi_lib = chelper.get_ffi()
         ffi_lib.trapq_set_position(self.trapq, self.print_time,
