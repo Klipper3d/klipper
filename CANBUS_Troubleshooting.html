@@ -1506,21 +1506,34 @@ bus micro-controller during normal printing (it increments every few
 hours or more frequently) then it is an indication of a severe
 problem.</p>
 <p>Incrementing <code>bytes_invalid</code> on a CAN bus connection is a symptom of
-reordered messages on the CAN bus. There are two known causes of
-reordered messages:</p>
-<ol>
-<li>Old versions of the popular candlight_firmware for USB CAN adapters
-   had a bug that could cause reordered messages. If using a USB CAN
-   adapter running this firmware then make sure to update to the
-   latest firmware if incrementing <code>bytes_invalid</code> is observed.</li>
-<li>Some Linux kernel builds for embedded devices have been known to
-   reorder CAN bus messages. It may be necessary to use an alternative
-   Linux kernel or to use alternative hardware that supports
-   mainstream Linux kernels that do not exhibit this problem.</li>
-</ol>
+reordered messages on the CAN bus. If seen, make sure to:</p>
+<ul>
+<li>Use a Linux kernel version 6.6.0 or later.</li>
+<li>If using a USB-to-CANBUS adapter running candlelight firmware, use
+  v2.0 or later of candleLight_fw.</li>
+<li>If using Klipper's USB-to-CANBUS bridge mode, make sure the bridge
+  node is flashed with Klipper v0.12.0 or later.</li>
+</ul>
 <p>Reordered messages is a severe problem that must be fixed. It will
 result in unstable behavior and can lead to confusing errors at any
-part of a print.</p>
+part of a print. An incrementing <code>bytes_invalid</code> is not caused by
+wiring or similar hardware issues and can only be fixed by identifying
+and updating the faulty software.</p>
+<p>Older versions of the Linux kernel had a bug in the gs_usb canbus
+driver code that could cause reordered canbus packets.  The issue is
+thought to be fixed in
+<a href="https://github.com/torvalds/linux/commit/24bc41b4558347672a3db61009c339b1f5692169">Linux commit 24bc41b4</a>
+which was released in v6.6.0. In some cases, older Linux versions may
+not show the problem (due to how hardware interrupts are configured),
+however if problems are seen the recommended solution is to upgrade to
+a newer kernel.</p>
+<p>Older versions of candlelight firmware could reorder canbus packets,
+and the issue is thought to be fixed in
+<a href="https://github.com/candle-usb/candleLight_fw/commit/8b3a7b4565a3c9521b762b154c94c72c5acb2bcf">candlelight_fw commit 8b3a7b45</a>.</p>
+<p>Older versions of Klipper's USB-to-CANBUS bridge code could
+incorrectly drop canbus messages. This is not as severe as reordering
+messages, but it should still be fixed. It is thought to be fixed with
+<a href="https://github.com/Klipper3d/klipper/pull/6175">Klipper PR #6175</a>.</p>
 <h2 id="use-an-appropriate-txqueuelen-setting">Use an appropriate txqueuelen setting<a class="headerlink" href="#use-an-appropriate-txqueuelen-setting" title="Permanent link">&para;</a></h2>
 <p>The Klipper code uses the Linux kernel to manage CAN bus traffic. By
 default, the kernel will only queue 10 CAN transmit packets. It is
