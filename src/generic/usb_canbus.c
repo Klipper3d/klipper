@@ -240,52 +240,55 @@ static void
 drain_host_queue(void)
 {
     uint32_t pull_pos = UsbCan.host_pull_pos, push_pos = UsbCan.host_push_pos;
-    uint32_t pullp = pull_pos % ARRAY_SIZE(UsbCan.host_frames);
-    struct gs_host_frame *gs = &UsbCan.host_frames[pullp];
     for (;;) {
-        // See if previous host frame needs to be transmitted
+        uint32_t pullp = pull_pos % ARRAY_SIZE(UsbCan.host_frames);
+        struct gs_host_frame *gs = &UsbCan.host_frames[pullp];
         uint_fast8_t host_status = UsbCan.host_status;
-        if (host_status & (HS_TX_HW | HS_TX_LOCAL)) {
-            struct canbus_msg msg;
-            msg.id = gs->can_id;
-            msg.dlc = gs->can_dlc;
-            msg.data32[0] = gs->data32[0];
-            msg.data32[1] = gs->data32[1];
-            if (host_status & HS_TX_LOCAL) {
-                canserial_process_data(&msg);
-                UsbCan.host_status = host_status = host_status & ~HS_TX_LOCAL;
-            }
-            if (host_status & HS_TX_HW) {
-                int ret = try_canmsg_send(&msg);
-                if (ret < 0)
-                    break;
-                UsbCan.host_status = host_status = host_status & ~HS_TX_HW;
-            }
+
+        // Extract next frame from host
+        if (! host_status) {
+            if (pull_pos == push_pos)
+                // No frame available - no more work to be done
+                break;
+            uint32_t id = gs->can_id;
+            host_status = HS_TX_ECHO | HS_TX_HW;
+            if (id == CANBUS_ID_ADMIN)
+                host_status = HS_TX_ECHO | HS_TX_HW | HS_TX_LOCAL;
+            else if (UsbCan.assigned_id && UsbCan.assigned_id == id)
+                host_status = HS_TX_ECHO | HS_TX_LOCAL;
+            UsbCan.host_status = host_status;
         }
 
-        // Send any previous echo frames
-        if (host_status) {
+        // Send echo frames back to host
+        if (host_status & HS_TX_ECHO) {
             if (UsbCan.notify_local || UsbCan.usb_send_busy)
                 // Don't send echo frame until other traffic is sent
                 break;
             int ret = usb_send_bulk_in(gs, sizeof(*gs));
             if (ret < 0)
                 break;
-            UsbCan.host_status = 0;
-            UsbCan.host_pull_pos = pull_pos = pull_pos + 1;
+            UsbCan.host_status = host_status = host_status & ~HS_TX_ECHO;
         }
 
-        // Process next frame from host
-        if (pull_pos == push_pos)
-            // No frame available - no more work to be done
-            break;
-        gs = &UsbCan.host_frames[pull_pos % ARRAY_SIZE(UsbCan.host_frames)];
-        uint32_t id = gs->can_id;
-        UsbCan.host_status = HS_TX_ECHO | HS_TX_HW;
-        if (id == CANBUS_ID_ADMIN)
-            UsbCan.host_status = HS_TX_ECHO | HS_TX_HW | HS_TX_LOCAL;
-        else if (UsbCan.assigned_id && UsbCan.assigned_id == id)
-            UsbCan.host_status = HS_TX_ECHO | HS_TX_LOCAL;
+        // See if host frame needs to be transmitted
+        struct canbus_msg msg;
+        msg.id = gs->can_id;
+        msg.dlc = gs->can_dlc;
+        msg.data32[0] = gs->data32[0];
+        msg.data32[1] = gs->data32[1];
+        if (host_status & HS_TX_LOCAL) {
+            canserial_process_data(&msg);
+            UsbCan.host_status = host_status = host_status & ~HS_TX_LOCAL;
+        }
+        if (host_status & HS_TX_HW) {
+            int ret = try_canmsg_send(&msg);
+            if (ret < 0)
+                break;
+            UsbCan.host_status = host_status = host_status & ~HS_TX_HW;
+        }
+
+        // Note message fully processed
+        UsbCan.host_pull_pos = pull_pos = pull_pos + 1;
     }
 }
 
