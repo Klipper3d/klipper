@@ -64,7 +64,8 @@ class VirtualSD:
         if self.work_timer is None:
             return False, ""
         return True, "sd_pos=%d" % (self.file_position,)
-    def get_file_list(self, check_subdirs=False):
+    def get_file_list(self, check_subdirs=False,
+                      sortByDate=False, sortReverse=False):
         if check_subdirs:
             flist = []
             for root, dirs, files in os.walk(
@@ -77,11 +78,41 @@ class VirtualSD:
                     r_path = full_path[len(self.sdcard_dirname) + 1:]
                     size = os.path.getsize(full_path)
                     flist.append((r_path, size))
+            if sortByDate:
+                if sortReverse:
+                    return sorted(flist,
+                                  key=lambda f: os.path.getmtime(f[0],
+                                                                 reverse=True))
+                return sorted(flist, key=lambda f: os.path.getmtime(f[0]))
+            if sortReverse:
+                return sorted(flist, key=lambda f: f[0].lower(), reverse=True)
             return sorted(flist, key=lambda f: f[0].lower())
         else:
             dname = self.sdcard_dirname
             try:
                 filenames = os.listdir(self.sdcard_dirname)
+                if sortByDate:
+                    if sortReverse:
+                        return [(fname,
+                                 os.path.getsize(os.path.join(dname, fname)))
+                            for fname in sorted(filenames,
+                                                key=lambda f: os.path.getmtime(
+                                                    os.path.join(dname, f)),
+                                                    reverse=True)
+                            if not fname.startswith('.')
+                            and os.path.isfile((os.path.join(dname, fname)))]
+                    return [(fname, os.path.getsize(os.path.join(dname, fname)))
+                        for fname in sorted(filenames,
+                                            key=lambda f: os.path.getmtime(
+                                                os.path.join(dname, f)))
+                        if not fname.startswith('.')
+                        and os.path.isfile((os.path.join(dname, fname)))]
+                if sortReverse:
+                    return [(fname, os.path.getsize(os.path.join(dname, fname)))
+                            for fname in sorted(filenames, key=str.lower,
+                                                reverse=True)
+                            if not fname.startswith('.')
+                            and os.path.isfile((os.path.join(dname, fname)))]
                 return [(fname, os.path.getsize(os.path.join(dname, fname)))
                         for fname in sorted(filenames, key=str.lower)
                         if not fname.startswith('.')
