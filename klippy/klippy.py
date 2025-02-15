@@ -92,15 +92,21 @@ class Printer:
             return self.objects[section]
         module_parts = section.split()
         module_name = module_parts[0]
-        py_name = os.path.join(os.path.dirname(__file__),
-                               'extras', module_name + '.py')
-        py_dirname = os.path.join(os.path.dirname(__file__),
-                                  'extras', module_name, '__init__.py')
-        if not os.path.exists(py_name) and not os.path.exists(py_dirname):
-            if default is not configfile.sentinel:
-                return default
-            raise self.config_error("Unable to load module '%s'" % (section,))
-        mod = importlib.import_module('extras.' + module_name)
+        mod = None
+        if config.has_section('custom_component ' + module_name):
+            custom_component = self.load_object(config, 'custom_component ' + module_name, default=None)
+            if custom_component:
+                mod = custom_component.load_module()
+        if not mod:
+            py_name = os.path.join(os.path.dirname(__file__),
+                                'extras', module_name + '.py')
+            py_dirname = os.path.join(os.path.dirname(__file__),
+                                    'extras', module_name, '__init__.py')
+            if not os.path.exists(py_name) and not os.path.exists(py_dirname):
+                if default is not configfile.sentinel:
+                    return default
+                raise self.config_error("Unable to load module '%s'" % (section,))
+            mod = importlib.import_module('extras.' + module_name)
         init_func = 'load_config'
         if len(module_parts) > 1:
             init_func = 'load_config_prefix'
@@ -303,7 +309,7 @@ def main():
     else:
         logging.getLogger().setLevel(debuglevel)
     logging.info("Starting Klippy...")
-    git_info = util.get_git_version()
+    git_info = util.get_git_version(__file__)
     git_vers = git_info["version"]
     extra_files = [fname for code, fname in git_info["file_status"]
                    if (code in ('??', '!!') and fname.endswith('.py')

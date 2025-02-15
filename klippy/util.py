@@ -182,7 +182,7 @@ def _get_repo_info(gitdir):
         logging.debug("Error fetching repo info: %s", traceback.format_exc())
     return repo_info
 
-def get_git_version(from_file=True):
+def get_git_version(src, from_file=True):
     git_info = {
         "version": "?",
         "file_status": [],
@@ -190,7 +190,7 @@ def get_git_version(from_file=True):
         "remote": "?",
         "url": "?"
     }
-    klippy_src = os.path.dirname(__file__)
+    klippy_src = os.path.dirname(src)
 
     # Obtain version info from "git" program
     gitdir = os.path.join(klippy_src, '..')
