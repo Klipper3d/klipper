@@ -83,6 +83,10 @@ setting `stealthchop_threshold` to 999999). Unfortunately, the drivers
 often produce poor and confusing results if the mode changes while the
 motor is at a non-zero velocity.
 
+When sensorless homing is enabled the homing moves will always
+automatically temporarily switch to the mode required by stallGuard,
+regardless of `stealthchop_threshold` setting.
+
 ## TMC interpolate setting introduces small position deviation
 
 The TMC driver `interpolate` setting may reduce the audible noise of
