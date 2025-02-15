@@ -1874,6 +1874,9 @@ mode.</p>
 setting <code>stealthchop_threshold</code> to 999999). Unfortunately, the drivers
 often produce poor and confusing results if the mode changes while the
 motor is at a non-zero velocity.</p>
+<p>Note that the <code>stealthchop_threshold</code> config option does not impact
+sensorless homing as Klipper automatically switches the TMC driver to
+an appropriate mode during sensorless homing operations.</p>
 <h2 id="tmc-interpolate-setting-introduces-small-position-deviation">TMC interpolate setting introduces small position deviation<a class="headerlink" href="#tmc-interpolate-setting-introduces-small-position-deviation" title="Permanent link">&para;</a></h2>
 <p>The TMC driver <code>interpolate</code> setting may reduce the audible noise of
 printer movement at the cost of introducing a small systemic
