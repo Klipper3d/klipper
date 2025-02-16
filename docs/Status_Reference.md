@@ -451,8 +451,7 @@ The following information is available in
 
 The following information is available in the `skew_correction` object (this
 object is available if any skew_correction is defined):
-- `printer.skew_correction.cur_prof_name`: Returns the name of the 
-  currently loaded SKEW_PROFILE.
+- `cur_prof_name`: Returns the name of the currently loaded SKEW_PROFILE.
 
 ## stepper_enable
 
