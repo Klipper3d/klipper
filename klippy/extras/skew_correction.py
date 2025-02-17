@@ -20,7 +20,7 @@ class PrinterSkew:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name()
-        self.cur_skew_prof_name = ""
+        self.current_profile_name = ""
         self.toolhead = None
         self.xy_factor = 0.
         self.xz_factor = 0.
@@ -118,7 +118,7 @@ class PrinterSkew:
     def cmd_SKEW_PROFILE(self, gcmd):
         if gcmd.get('LOAD', None) is not None:
             name = gcmd.get('LOAD')
-            self.cur_skew_prof_name = name
+            self.current_profile_name = name
             prof = self.skew_profiles.get(name)
             if prof is None:
                 gcmd.respond_info(
@@ -160,7 +160,7 @@ class PrinterSkew:
                     % (name))
     def get_status(self, eventtime):
         return {
-            'cur_prof_name': self.cur_skew_prof_name
+            'current_profile_name': self.current_profile_name
         }
 
 def load_config(config):
