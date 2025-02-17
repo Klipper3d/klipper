@@ -254,6 +254,16 @@ class PrinterHeaters:
         gcode.register_command("M105", self.cmd_M105, when_not_ready=True)
         gcode.register_command("TEMPERATURE_WAIT", self.cmd_TEMPERATURE_WAIT,
                                desc=self.cmd_TEMPERATURE_WAIT_help)
+        # Wait heater interupt
+        webhooks = self.printer.lookup_object('webhooks')
+        webhooks.register_endpoint("breakheater", self._handle_breakheater)
+        self.break_flag=False
+    def _handle_breakheater(self,web_request):
+        reactor = self.printer.get_reactor()
+        for heater in self.heaters.values():
+            eventtime = reactor.monotonic()
+            if heater.check_busy(eventtime):
+                self.break_flag = True
     def load_config(self, config):
         self.have_load_sensors = True
         # Load default temperature sensors
@@ -345,7 +355,11 @@ class PrinterHeaters:
         gcode = self.printer.lookup_object("gcode")
         reactor = self.printer.get_reactor()
         eventtime = reactor.monotonic()
+        self.break_flag = False
         while not self.printer.is_shutdown() and heater.check_busy(eventtime):
+            if self.break_flag:
+                self.break_flag = False
+                break
             print_time = toolhead.get_last_move_time()
             gcode.respond_raw(self._get_temp(eventtime))
             eventtime = reactor.pause(eventtime + 1.)
@@ -374,7 +388,7 @@ class PrinterHeaters:
         toolhead = self.printer.lookup_object("toolhead")
         reactor = self.printer.get_reactor()
         eventtime = reactor.monotonic()
-        while not self.printer.is_shutdown():
+        while not self.printer.is_shutdown() and not self.break_flag:
             temp, target = sensor.get_temp(eventtime)
             if temp >= min_temp and temp <= max_temp:
                 return
