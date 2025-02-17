@@ -5,7 +5,10 @@
 # This file may be distributed under the terms of the GNU GPLv3 license
 import logging, socket, os, sys, errno, json, collections
 import gcode
-from urllib.parse import urlparse
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 
 REQUEST_LOG_SIZE = 20
 
