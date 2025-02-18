@@ -9,16 +9,20 @@ control the Klipper host software.
 In order to use the API server, the klippy.py host software must be
 started with the `-a` parameter. For example:
 ```
-~/klippy-env/bin/python ~/klipper/klippy/klippy.py ~/printer.cfg -a /tmp/klippy_uds -l /tmp/klippy.log
+~/klippy-env/bin/python ~/klipper/klippy/klippy.py ~/printer.cfg -a unix:///tmp/klippy_uds -l /tmp/klippy.log
 ```
 
 This causes the host software to create a Unix Domain Socket. A client
 can then open a connection on that socket and send commands to
 Klipper.
 
+You can also use a TCP socket, using the tcp scheme (be careful if you expose Klipper on a public interface) :
+```
+~/klippy-env/bin/python ~/klipper/klippy/klippy.py ~/printer.cfg -a tcp://127.0.0.1:7120 -l /tmp/klippy.log
+```
+
 See the [Moonraker](https://github.com/Arksine/moonraker) project for
-a popular tool that can forward HTTP requests to Klipper's API Server
-Unix Domain Socket.
+a popular tool that can forward HTTP requests to Klipper's API Server.
 
 ## Request format
 
@@ -31,7 +35,8 @@ terminated by an ASCII 0x03 character:
 Klipper contains a `scripts/whconsole.py` tool that can perform the
 above message framing. For example:
 ```
-~/klipper/scripts/whconsole.py /tmp/klippy_uds
+~/klipper/scripts/whconsole.py unix:///tmp/klippy_uds
+~/klipper/scripts/whconsole.py tcp://127.0.0.1:7120
 ```
 
 This tool can read a series of JSON commands from stdin, send them to
