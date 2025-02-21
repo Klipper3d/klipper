@@ -66,7 +66,7 @@ class ICM20948:
                                            default_addr=ICM20948_ADDR,
                                            default_speed=400000)
         self.mcu = mcu = self.i2c.get_mcu()
-        self.oid = oid = mcu.create_oid()
+        self.oid = mcu.create_oid()
         self.query_icm20948_cmd = None
         mcu.register_config_callback(self._build_config)
         # Bulk sample message reading
@@ -128,10 +128,10 @@ class ICM20948:
         # Setup chip in requested query rate
         self.set_reg(REG_PWR_MGMT_1, SET_PWR_MGMT_1_WAKE)
         self.set_reg(REG_PWR_MGMT_2, SET_PWR_MGMT_2_ACCEL_ON)
-        # Add 20ms pause for accelerometer chip wake up
+        # Don't add 20ms pause for accelerometer chip wake up
         self.read_reg(REG_DEVID) # Dummy read to ensure queues flushed
-        systime = self.printer.get_reactor().monotonic()
-        next_time = self.mcu.estimated_print_time(systime) + 0.020
+        # systime = self.printer.get_reactor().monotonic()
+        # next_time = self.mcu.estimated_print_time(systime) + 0.020
         self.set_reg(REG_ACCEL_SMPLRT_DIV1, SAMPLE_RATE_DIVS[self.data_rate])
         self.set_reg(REG_ACCEL_SMPLRT_DIV2, SAMPLE_RATE_DIVS[self.data_rate],
                      minclock=self.mcu.print_time_to_clock(next_time))
