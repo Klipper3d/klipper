@@ -125,7 +125,7 @@ class MCU_trsync:
             s.note_homing_end()
         return params['trigger_reason']
 
-TRSYNC_TIMEOUT = 0.025
+TRSYNC_TIMEOUT = 0.10
 TRSYNC_SINGLE_MCU_TIMEOUT = 0.250
 
 class MCU_endstop:
@@ -920,6 +920,9 @@ class MCU:
             self._restart_cheetah()
         else:
             self._restart_arduino()
+    def microcontroller_close_port(self):
+        logging.info("Self define cmd: close Port ")
+        self._disconnect()
     # Misc external commands
     def is_fileoutput(self):
         return self._printer.get_start_args().get('debugoutput') is not None
