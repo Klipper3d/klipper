@@ -109,6 +109,9 @@ class TMCErrorCheck:
             # TMC2130 driver quirks
             self.clear_gstat = False
             cs_actual_mask = self.fields.all_fields[reg_name]["cs_actual"]
+        # elif name_parts[0] == 'tmc2240':
+        #     self.clear_gstat = False
+        #     cs_actual_mask = self.fields.all_fields[reg_name]["cs_actual"]
         elif name_parts[0] == 'tmc2660':
             # TMC2660 driver quirks
             self.irun_field = "cs"
@@ -507,6 +510,7 @@ class TMCVirtualPinHelper:
         self.pwmthrs = self.fields.get_field("tpwmthrs")
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
+            logging.info("##############################")
             # On "stallguard4" drivers, "stealthchop" must be enabled
             self.en_pwm = not self.fields.get_field("en_spreadcycle")
             tp_val = self.fields.set_field("tpwmthrs", 0)
@@ -515,6 +519,7 @@ class TMCVirtualPinHelper:
         else:
             # On earlier drivers, "stealthchop" must be disabled
             self.en_pwm = self.fields.get_field("en_pwm_mode")
+            logging.info("******************************")
             self.fields.set_field("en_pwm_mode", 0)
             val = self.fields.set_field(self.diag_pin_field, 1)
         self.mcu_tmc.set_register("GCONF", val)
@@ -626,7 +631,6 @@ def TMCStealthchopHelper(config, mcu_tmc):
     else:
         # TMC2208 uses en_spreadCycle
         fields.set_field("en_spreadcycle", not en_pwm_mode)
-
 # Helper to configure StallGuard and CoolStep minimum velocity
 def TMCVcoolthrsHelper(config, mcu_tmc):
     fields = mcu_tmc.get_fields()
@@ -645,3 +649,20 @@ def TMCVhighHelper(config, mcu_tmc):
     if velocity is not None:
         thigh = TMCtstepHelper(mcu_tmc, velocity, config=config)
     fields.set_field("thigh", thigh)
+# Helper to configure "stealthchop" mode
+def TMC2240StealthchopHelper(config, mcu_tmc, tmc_freq):
+    fields = mcu_tmc.get_fields()
+    en_pwm_mode = True
+    velocity = config.getfloat('stealthchop_threshold', 0., minval=0.)
+    if velocity:
+        stepper_name = " ".join(config.get_name().split()[1:])
+        sconfig = config.getsection(stepper_name)
+        rotation_dist, steps_per_rotation = stepper.parse_step_distance(sconfig)
+        step_dist = rotation_dist / steps_per_rotation
+        step_dist_256 = step_dist / (1 << fields.get_field("mres"))
+        threshold = int(tmc_freq * step_dist_256 / velocity + .5)
+        fields.set_field("tpwmthrs", max(0, min(0xfffff, threshold)))
+        en_pwm_mode = False
+    reg = fields.lookup_register("en_pwm_mode", None)
+    if reg is not None:
+        fields.set_field("en_pwm_mode", en_pwm_mode)

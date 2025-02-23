@@ -223,7 +223,7 @@ class MAX31855(SensorBase):
 ######################################################################
 
 MAX6675_SCALE = 3
-MAX6675_MULT = 0.25
+MAX6675_MULT = 0.25 * 0.95
 
 class MAX6675(SensorBase):
     def __init__(self, config):

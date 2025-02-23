@@ -43,12 +43,12 @@ class ForceMove:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command('STEPPER_BUZZ', self.cmd_STEPPER_BUZZ,
                                desc=self.cmd_STEPPER_BUZZ_help)
+        gcode.register_command('SET_KINEMATIC_POSITION',
+                                   self.cmd_SET_KINEMATIC_POSITION,
+                                   desc=self.cmd_SET_KINEMATIC_POSITION_help)
         if config.getboolean("enable_force_move", False):
             gcode.register_command('FORCE_MOVE', self.cmd_FORCE_MOVE,
                                    desc=self.cmd_FORCE_MOVE_help)
-            gcode.register_command('SET_KINEMATIC_POSITION',
-                                   self.cmd_SET_KINEMATIC_POSITION,
-                                   desc=self.cmd_SET_KINEMATIC_POSITION_help)
     def register_stepper(self, config, mcu_stepper):
         self.steppers[mcu_stepper.get_name()] = mcu_stepper
     def lookup_stepper(self, name):

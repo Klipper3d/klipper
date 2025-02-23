@@ -325,7 +325,15 @@ class ProbeSessionHelper:
         self.printer.send_event("probe:update_results", epos)
         # Report results
         gcode = self.printer.lookup_object('gcode')
-        gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
+        # get z compensation from x_twist
+        # x_twist module checks if it is enabled, returns 0 compensation if not
+        x_twist_compensation = self.printer.lookup_object(
+            'x_twist_compensation', None)
+        z_compensation = 0 if not x_twist_compensation \
+            else x_twist_compensation.get_z_compensation_value(pos[0])
+        # add z compensation to probe position
+        epos[2] += z_compensation
+         gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
                            % (epos[0], epos[1], epos[2]))
         return epos[:3]
     def run_probe(self, gcmd):
@@ -361,6 +369,7 @@ class ProbeSessionHelper:
         res = self.results
         self.results = []
         return res
+
 
 # Helper to read the xyz probe offsets from the config
 class ProbeOffsetsHelper:

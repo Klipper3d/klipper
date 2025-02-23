@@ -106,7 +106,7 @@ class GCodeDispatch:
         self.status_commands = {}
         # Register commands needed before config file is loaded
         handlers = ['M110', 'M112', 'M115',
-                    'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP']
+                    'RESTART', 'FIRMWARE_RESTART', 'ECHO', 'STATUS', 'HELP', 'CLOSE_MCU_PORT']
         for cmd in handlers:
             func = getattr(self, 'cmd_' + cmd)
             desc = getattr(self, 'cmd_' + cmd + '_help', None)
@@ -342,6 +342,9 @@ class GCodeDispatch:
     def cmd_RESTART(self, gcmd):
         self.request_restart('restart')
     cmd_FIRMWARE_RESTART_help = "Restart firmware, host, and reload config"
+    def cmd_CLOSE_MCU_PORT(self, gcmd):
+        self.request_restart('close_mcu_port')
+    cmd_CLOSE_MCU_PORT_help = "Close the port of mcu"
     def cmd_FIRMWARE_RESTART(self, gcmd):
         self.request_restart('firmware_restart')
     def cmd_ECHO(self, gcmd):
