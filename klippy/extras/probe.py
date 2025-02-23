@@ -333,8 +333,7 @@ class ProbeSessionHelper:
             else x_twist_compensation.get_z_compensation_value(pos[0])
         # add z compensation to probe position
         epos[2] += z_compensation
-         gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
-                           % (epos[0], epos[1], epos[2]))
+        gcode.respond_info("probe at %.3f,%.3f is z=%.6f" % (epos[0], epos[1], epos[2]))
         return epos[:3]
     def run_probe(self, gcmd):
         if not self.multi_probe_pending:
