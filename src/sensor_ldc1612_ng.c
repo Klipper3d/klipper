@@ -159,6 +159,11 @@ struct ldc1612_ng_homing {
     // the time we actually decided to fire the tap trigger)
     uint32_t tap_end_time;
 
+    // Number of errors we've seen in a row
+    uint8_t error_count;
+    // Number we're allowed to see, from home setup
+    uint8_t error_threshold;
+
     union {
         struct ldc1612_ng_homing_wma_tap wma_tap;
         struct ldc1612_ng_homing_sos_tap sos_tap;
@@ -487,6 +492,7 @@ command_ldc1612_ng_setup_home(uint32_t *args)
     uint32_t start_time = args[6];
     uint8_t mode = args[7];
     int32_t tap_threshold = args[8];
+    uint8_t err_max = args[9];
 
     if (trigger_freq == 0 || trsync_oid == 0) {
         dprint("ZZZ resetting homing/tapping");
@@ -513,6 +519,8 @@ command_ldc1612_ng_setup_home(uint32_t *args)
     lh->safe_start_freq = start_freq;
     lh->safe_start_time = start_time;
     lh->homing_trigger_freq = trigger_freq;
+
+    lh->error_threshold = err_max;
 
     ld->ts = trsync_oid_lookup(trsync_oid);
     ld->success_reason = trigger_reason;
@@ -541,7 +549,7 @@ DECL_COMMAND(command_ldc1612_ng_setup_home,
              "ldc1612_ng_setup_home oid=%c"
              " trsync_oid=%c trigger_reason=%c other_reason_base=%c"
              " trigger_freq=%u start_freq=%u start_time=%u"
-             " mode=%c tap_threshold=%i");
+             " mode=%c tap_threshold=%i err_max=%c");
 
 //
 // Once homing has finished, call this to clear the homing state and
@@ -669,20 +677,29 @@ sosfilter(float value, struct sosfilter_sos* filter, float* state)
 bool
 check_error(struct ldc1612_ng* ld, uint32_t data, uint32_t time)
 {
-    if (!SAMPLE_ERR(data))
-        return true;
-
     struct ldc1612_ng_homing *lh = &ld->homing;
+    if (!SAMPLE_ERR(data)) {
+        lh->error_count = 0;
+        return true;
+    }
+
     uint8_t is_tap = lh->mode > 0;
 
-    // Ignore amplitude errors (likely probe too far),
-    // unless we're tapping, in which case we consider
-    // all errors for safety -- it means the tap wasn't started
-    // at an appropriate distance
-    if (!is_tap && (ld->last_status & STATUS_ERR_AHE) != 0)
+    // Ignore amplitude too high errors for homing,
+    // because this is generally the probe being very
+    // far from the build plate.
+    if (!is_tap && (ld->last_status & STATUS_ERR_AHE) != 0) {
+        lh->error_count = 0;
         return false;
+    }
 
-    dprint("ZZZ err=%u t=%u s=%u", data, time, ld->last_status);
+    lh->error_count++;
+
+    dprint("ZZZ err=%u t=%u s=%u cnt=%u", data, time, ld->last_status,
+        lh->error_count);
+
+    if (lh->error_count <= lh->error_threshold)
+        return false;
 
     // Sensor reports an issue - cancel homing
     notify_trigger(ld, 0, ld->other_reason_base + REASON_ERROR_SENSOR);

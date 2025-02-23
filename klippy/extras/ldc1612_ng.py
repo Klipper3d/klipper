@@ -262,7 +262,8 @@ class LDC1612_ng:
         self._ldc1612_ng_setup_home_cmd = self._mcu.lookup_command(
             "ldc1612_ng_setup_home oid=%c"
             " trsync_oid=%c trigger_reason=%c other_reason_base=%c"
-            " trigger_freq=%u start_freq=%u start_time=%u mode=%c tap_threshold=%i",
+            " trigger_freq=%u start_freq=%u start_time=%u mode=%c tap_threshold=%i"
+            " err_max=%c",
             cq=cmdqueue,
         )
 
@@ -374,6 +375,7 @@ class LDC1612_ng:
         start_time: float,
         mode: str = "home",
         tap_threshold: float = None,
+        max_errors: int = 0,
     ):
         MODES = {
             "home": HOME_MODE_HOME,
@@ -411,6 +413,7 @@ class LDC1612_ng:
                 start_time_mcu,
                 mode_val,
                 tap_threshold_val,
+                max_errors,
             ]
         )
 
