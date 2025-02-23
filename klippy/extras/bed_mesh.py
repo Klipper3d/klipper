@@ -865,8 +865,10 @@ class ProbeManager:
         can_scan = False
         pprobe = self.printer.lookup_object("probe", None)
         if pprobe is not None:
-            probe_name = pprobe.get_status(None).get("name", "")
-            can_scan = probe_name.startswith("probe_eddy_current")
+            pstatus = pprobe.get_status(None)
+            probe_name = pstatus.get("name", "")
+            can_scan = (pstatus.get("supports_rapid_scan", False) or
+                ("eddy" in probe_name))
         if method == "rapid_scan" and can_scan:
             self.rapid_scan_helper.perform_rapid_scan(gcmd)
         else:
