@@ -49,9 +49,8 @@ class BatchBulkHelper:
             del self.client_cbs[:]
             raise
         reactor = self.printer.get_reactor()
-        systime = reactor.monotonic()
-        waketime = systime + self.batch_interval
-        self.batch_timer = reactor.register_timer(self._proc_batch, waketime)
+        self.batch_timer = reactor.register_timer(self._proc_batch,
+                                                  reactor.NOW)
     def _stop(self):
         del self.client_cbs[:]
         self.printer.get_reactor().unregister_timer(self.batch_timer)
@@ -213,6 +212,7 @@ class FixedFreqReader:
         self.last_sequence = self.max_query_duration = 0
         self.last_overflows = 0
         self.bulk_queue = self.oid = self.query_status_cmd = None
+        self._reset_clock = True
     def setup_query_command(self, msgformat, oid, cq):
         # Lookup sensor query command (that responds with sensor_bulk_status)
         self.oid = oid
@@ -233,12 +233,12 @@ class FixedFreqReader:
         self.bulk_queue.clear_queue()
         # Set initial clock
         self._clear_duration_filter()
-        self._update_clock(is_reset=True)
+        self._reset_clock = True
         self._clear_duration_filter()
     def note_end(self):
         # Clear local queue (free no longer needed memory)
         self.bulk_queue.clear_queue()
-    def _update_clock(self, is_reset=False):
+    def _update_clock(self, is_reset):
         params = self.query_status_cmd.send([self.oid])
         mcu_clock = self.mcu.clock32_to_clock64(params['clock'])
         seq_diff = (params['next_sequence'] - self.last_sequence) & 0xffff
@@ -267,7 +267,11 @@ class FixedFreqReader:
     # Convert sensor_bulk_data responses into list of samples
     def pull_samples(self):
         # Query MCU for sample timing and update clock synchronization
-        self._update_clock()
+        reset = self._reset_clock
+        self._update_clock(reset)
+        if reset:
+            self._reset_clock = False
+            return []
         # Pull sensor_bulk_data messages from local queue
         raw_samples = self.bulk_queue.pull_queue()
         if not raw_samples:
