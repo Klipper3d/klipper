@@ -2064,7 +2064,7 @@ class ProbeEddy:
         results = []
         tap_z = None
         tap_stddev = None
-        tap_oveshoot = None
+        tap_overshoot = None
         sample_err_count = 0
         tap = None
 
@@ -2147,7 +2147,7 @@ class ProbeEddy:
 
         if home_z:
             th_pos = th.get_position()
-            th_pos[2] = -tap_overshoot
+            th_pos[2] = -(tap_adjust_z + tap_overshoot)
             self._log_info(
                 f"setting toolhead z {th_pos[2]:.3f} (adj {adjusted_tap_z:.3f}, ovs {tap_overshoot:.3f})"
             )
