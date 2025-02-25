@@ -25,7 +25,6 @@ REG_LIS2DW_OUT_ZH_ADDR = 0x2D
 REG_LIS2DW_FIFO_CTRL   = 0x2E
 REG_LIS2DW_FIFO_SAMPLES = 0x2F
 REG_MOD_READ = 0x80
-# REG_MOD_MULTI = 0x40
 
 LIS2DW_DEV_ID = 0x44
 LIS3DH_DEV_ID = 0x33
@@ -40,7 +39,6 @@ LIS3DH_SCALE = FREEFALL_ACCEL * 3.906 / 16
 BATCH_UPDATES = 0.100
 
 # "Enums" that should be compatible with all python versions
-
 LIS2DW_TYPE = 'LIS2DW'
 LIS3DH_TYPE = 'LIS3DH'
 
@@ -94,7 +92,6 @@ class LIS2DW:
         hdr = ('time', 'x_acceleration', 'y_acceleration', 'z_acceleration')
         self.batch_bulk.add_mux_endpoint("lis2dw/dump_lis2dw", "sensor",
                                          self.name, {'header': hdr})
-
     def _build_config(self):
         cmdqueue = self.bus.get_command_queue()
         self.query_lis2dw_cmd = self.mcu.lookup_command(
