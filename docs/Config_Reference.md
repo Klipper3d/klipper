@@ -5123,17 +5123,29 @@ cs_pin:
 
 ### [heater_pc]
 
-Heater prediction power correction.
+Heater prediction correction.
 To use this feature, define a config section with a "heater_pc" prefix
 followed by the name of the corresponding heater config section.
 For example `[heater_pc heater_bed]`
+This is not a gcode, there are special functions available:
+ * `set_val("name", value)` - update value and returns the current value
+ * `get_val("name")` - returns the current value
+ * `log("data")` - output to the log
+
 
 ```
 [heater_pc extruder]
+#variable_old_val: .0
+#   One may specify any number of options with a "variable_" prefix. The
+#   given name will be assigned the given value (parsed as a Python
+#   literal) and will be available during macro expansion in get_val().
 #func:
-#  {% set pwr_adj = printer.fan.speed * 0.10 %}
-#  { pwr_adj }
-#   Because of PID reactivity, the cooling fan can cool hotend too much.
+#   {% set _ = log(get_var("old_val")) %}
+#   {% set _ = set_var("old_val", 0.5) %}
+#   {% set old_val = get_var("old_val") %}
+#   {% set _ = log(old_val) %}
+#   {% set pwr_adj = printer.fan.speed * 0.15 %}
+#   { pwr_adj + old_val }
 #   This a place for template, which should return float
 #   -1. < 0 < 1. which later will adj pid values
 ```
