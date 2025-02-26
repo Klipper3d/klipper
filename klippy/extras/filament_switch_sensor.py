@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 
+
 class RunoutHelper:
     def __init__(self, config):
         self.name = config.get_name().split()[-1]
@@ -24,7 +25,7 @@ class RunoutHelper:
             self.insert_gcode = gcode_macro.load_template(
                 config, 'insert_gcode')
         self.pause_delay = config.getfloat('pause_delay', .5, above=.0)
-        self.event_delay = config.getfloat('event_delay', 3., above=0.)
+        self.event_delay = config.getfloat('event_delay', 3., minval=.0)
         # Internal state
         self.min_event_systime = self.reactor.NEVER
         self.filament_present = False
@@ -59,19 +60,20 @@ class RunoutHelper:
         except Exception:
             logging.exception("Script running error")
         self.min_event_systime = self.reactor.monotonic() + self.event_delay
-    def note_filament_present(self, is_filament_present):
+    def note_filament_present(self, eventtime, is_filament_present):
         if is_filament_present == self.filament_present:
             return
         self.filament_present = is_filament_present
-        eventtime = self.reactor.monotonic()
+
         if eventtime < self.min_event_systime or not self.sensor_enabled:
             # do not process during the initialization time, duplicates,
             # during the event delay time, while an event is running, or
             # when the sensor is disabled
             return
         # Determine "printing" status
+        now = self.reactor.monotonic()
         idle_timeout = self.printer.lookup_object("idle_timeout")
-        is_printing = idle_timeout.get_status(eventtime)["state"] == "Printing"
+        is_printing = idle_timeout.get_status(now)["state"] == "Printing"
         # Perform filament action associated with status change (if any)
         if is_filament_present:
             if not is_printing and self.insert_gcode is not None:
@@ -79,14 +81,14 @@ class RunoutHelper:
                 self.min_event_systime = self.reactor.NEVER
                 logging.info(
                     "Filament Sensor %s: insert event detected, Time %.2f" %
-                    (self.name, eventtime))
+                    (self.name, now))
                 self.reactor.register_callback(self._insert_event_handler)
         elif is_printing and self.runout_gcode is not None:
             # runout detected
             self.min_event_systime = self.reactor.NEVER
             logging.info(
                 "Filament Sensor %s: runout event detected, Time %.2f" %
-                (self.name, eventtime))
+                (self.name, now))
             self.reactor.register_callback(self._runout_event_handler)
     def get_status(self, eventtime):
         return {
@@ -108,11 +110,12 @@ class SwitchSensor:
         printer = config.get_printer()
         buttons = printer.load_object(config, 'buttons')
         switch_pin = config.get('switch_pin')
-        buttons.register_buttons([switch_pin], self._button_handler)
+        buttons.register_debounce_button(switch_pin, self._button_handler
+                                         , config)
         self.runout_helper = RunoutHelper(config)
         self.get_status = self.runout_helper.get_status
     def _button_handler(self, eventtime, state):
-        self.runout_helper.note_filament_present(state)
+        self.runout_helper.note_filament_present(eventtime, state)
 
 def load_config_prefix(config):
     return SwitchSensor(config)
