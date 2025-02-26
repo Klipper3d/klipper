@@ -3,7 +3,9 @@
 # Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import logging
 from . import fan
+from .gcode_macro import TemplateWrapper, PrinterGCodeMacro
 
 KELVIN_TO_CELSIUS = -273.15
 MAX_FAN_TIME = 5.0
@@ -35,7 +37,8 @@ class TemperatureFan:
             'target_temp', 40. if self.max_temp > 40. else self.max_temp,
             minval=self.min_temp, maxval=self.max_temp)
         self.target_temp = self.target_temp_conf
-        algos = {'watermark': ControlBangBang, 'pid': ControlPID}
+        algos = { 'watermark': ControlBangBang, 'pid': ControlPID,
+                  'custom': ControlCustom }
         algo = config.getchoice('control', algos)
         self.control = algo(self, config)
         self.next_speed_time = 0.
@@ -180,6 +183,71 @@ class ControlPID:
         self.prev_temp_deriv = temp_deriv
         if co == bounded_co:
             self.prev_temp_integ = temp_integ
+
+######################################################################
+# Custom Control Algo
+######################################################################
+
+class ControlCustom:
+    def __init__(self, temperature_fan, config):
+        self.temperature_fan = temperature_fan
+        self.config = config
+        self.name = config.get_name().split()[-1]
+        script = config.get("custom")
+        printer = config.get_printer()
+        self.env = PrinterGCodeMacro(config).env
+        self.env.globals.update({
+            'log': self._log,
+            'set_var': self._set_var,
+            'get_var': self._get_var,
+        })
+        current_temp, target_temp = self.temperature_fan.get_temp(.0)
+        self.variables = {
+            "current_temp": current_temp,
+            "target_temp": target_temp,
+            "read_time": .0
+        }
+        self.load_variables()
+        self.template = TemplateWrapper(printer, self.env,
+                                        config.get_name(), script)
+    def temperature_callback(self, read_time, temp):
+        current_temp, target_temp = self.temperature_fan.get_temp(read_time)
+        max_speed = self.temperature_fan.get_max_speed()
+        self.variables["current_temp"] = temp
+        self.variables["target_temp"] = target_temp
+        self.variables["read_time"] = read_time
+
+        co = float(self.template.render())
+        bounded_co = max(0., min(max_speed, co))
+        self.temperature_fan.set_tf_speed(read_time, bounded_co)
+    def load_variables(self):
+        import ast
+        import json
+        prefix = 'variable_'
+        for option in self.config.get_prefix_options(prefix):
+            try:
+                literal = ast.literal_eval(self.config.get(option))
+                json.dumps(literal, separators=(',', ':'))
+                self.variables[option[len(prefix):]] = literal
+            except (SyntaxError, TypeError, ValueError) as e:
+                raise self.config.error(
+                    "Option '%s' in section '%s' is not a valid literal: %s" % (
+                        option, self.config.get_name(), e))
+    def _log(self, output):
+        logging.info(output)
+        # Make it callable in a block section
+        return ""
+    def _get_var(self, name):
+        v = self.variables.get(name)
+        if v is None:
+            raise self.config.error(
+                "variable_%s is not defined" % (name)
+            )
+        return v
+    def _set_var(self, name, value):
+        v = self._get_var(name)
+        self.variables[name] = value
+        return v
 
 def load_config_prefix(config):
     return TemperatureFan(config)

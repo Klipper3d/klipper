@@ -3053,6 +3053,31 @@ information.
 #gcode_id:
 #   If set, the temperature will be reported in M105 queries using the
 #   given id. The default is to not report the temperature via M105.
+#variable_last_pwm: 0.0
+#   One may specify any number of options with a "variable_" prefix. The
+#   given name will be assigned the given value (parsed as a Python
+#   literal) and will be available during macro expansion in get_val().
+#custom:
+#   {% set ct = get_var("current_temp") %}
+#   {% set tt = get_var("target_temp") %}
+#   {% set rtime = get_var("read_time") %}
+#   # Variables above only avaliable here
+#   {% set tmax = tt + 1.0 %}
+#   {% set tmin = tt - 1.0 %}
+#   {% set power = get_var("last_pwm") | float() %}
+#   {% if ((ct > tmax) and (power < 1.0)) %}
+#     {% set power = power + 0.02 %}
+#     {% set _ = set_var("last_pwm", power) %}
+#   {% elif ((ct < tmin) and (power > 0.0)) %}
+#     {% set power = power - 0.02 %}
+#     {% set _ = set_var("last_pwm", power) %}
+#   {% endif %}
+#   {% set _ = log(power) %}
+#   { power }
+#   This is not a gcode, there are special functions available:
+#    * `set_val("name", value)` - update value and returns the current value
+#    * `get_val("name")` - returns the current value
+#    * `log("data")` - output to the log
 ```
 
 ### [fan_generic]
