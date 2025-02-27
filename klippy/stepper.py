@@ -329,8 +329,9 @@ class PrinterRail:
         if (self.position_endstop < self.position_min
             or self.position_endstop > self.position_max):
             raise config.error(
-                "position_endstop in section '%s' must be between"
-                " position_min and position_max" % config.get_name())
+                "position_endstop in section '%s' must not be outside the range"
+                " specified by position_min and position_max."
+                % config.get_name())
         # Homing mechanics
         self.homing_speed = config.getfloat('homing_speed', 5.0, above=0.)
         self.second_homing_speed = config.getfloat(
