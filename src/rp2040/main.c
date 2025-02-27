@@ -12,11 +12,12 @@
 #include "hardware/structs/resets.h" // sio_hw
 #include "hardware/structs/watchdog.h" // watchdog_hw
 #include "hardware/structs/xosc.h" // xosc_hw
-#include "hardware/structs/vreg_and_chip_reset.h" // vreg_and_chip_reset_hw
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
 
-#if !CONFIG_MACH_RP2040
+#if CONFIG_MACH_RP2040
+#include "hardware/structs/vreg_and_chip_reset.h" // vreg_and_chip_reset_hw
+#else
 #include "hardware/structs/ticks.h" // ticks_hw
 #endif
 
@@ -63,18 +64,17 @@ bootloader_request(void)
 #define FBDIV (FREQ_SYS == 200000000 ? 100 : 125)
 #define FREQ_USB 48000000
 
-#if CONFIG_MACH_RP2040
 void set_vsel(void)
 {
+    // Set internal voltage regulator output to 1.15V on rp2040
+#if CONFIG_MACH_RP2040
     uint32_t cval = vreg_and_chip_reset_hw->vreg;
     uint32_t vref = VREG_AND_CHIP_RESET_VREG_VSEL_RESET + 1;
     cval &= ~VREG_AND_CHIP_RESET_VREG_VSEL_BITS;
     cval |= vref << VREG_AND_CHIP_RESET_VREG_VSEL_LSB;
     vreg_and_chip_reset_hw->vreg = cval;
-}
-#else
-void set_vsel(void) {}
 #endif
+}
 
 void
 enable_pclock(uint32_t reset_bit)
