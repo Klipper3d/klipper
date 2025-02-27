@@ -447,6 +447,12 @@ The following information is available in
 - `printer["servo <config_name>"].value`: The last setting of the PWM
   pin (a value between 0.0 and 1.0) associated with the servo.
 
+## skew_correction.py
+
+The following information is available in the `skew_correction` object (this
+object is available if any skew_correction is defined):
+- `current_profile_name`: Returns the name of the currently loaded SKEW_PROFILE.
+
 ## stepper_enable
 
 The following information is available in the `stepper_enable` object (this
