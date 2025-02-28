@@ -11,7 +11,7 @@ class ManualStepper:
         self.printer = config.get_printer()
         if config.get('endstop_pin', None) is not None:
             self.can_home = True
-            self.rail = stepper.PrinterRail(
+            self.rail = stepper.LookupMultiRail(
                 config, need_position_minmax=False, default_position_endstop=0.)
             self.steppers = self.rail.get_steppers()
         else:
@@ -104,6 +104,13 @@ class ManualStepper:
             self.do_move(movepos, speed, accel, sync)
         elif gcmd.get_int('SYNC', 0):
             self.sync_print_time()
+
+    def get_status(self, eventtime):
+        stepper_enable = self.printer.lookup_object('stepper_enable')
+        enable = stepper_enable.lookup_enable(self.steppers[0].get_name())
+        return {'position': self.rail.get_commanded_position(),
+                'enabled': enable.is_motor_enabled()}
+
     # Toolhead wrappers to support homing
     def flush_step_generation(self):
         self.sync_print_time()
@@ -125,5 +132,15 @@ class ManualStepper:
     def calc_position(self, stepper_positions):
         return [stepper_positions[self.rail.get_name()], 0., 0.]
 
+# Dummy object for multi stepper setup
+class DummyStepper():
+    def get_status(self, eventtime):
+        return {}
+
 def load_config_prefix(config):
+    name = config.get_name()
+    # Return a dummy if this is a secondary motor in a multi-motor setup.
+    for i in range(1,99):
+        if name.endswith(str(i)) and config.has_section(name[:-len(str(i))]):
+            return DummyStepper()
     return ManualStepper(config)
