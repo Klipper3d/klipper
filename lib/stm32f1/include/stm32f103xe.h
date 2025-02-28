@@ -9,7 +9,7 @@
   *          This file contains:
   *           - Data structures and the address mapping for all peripherals
   *           - Peripheral's registers declarations and bits definition
-  *           - Macros to access peripheral’s registers hardware
+  *           - Macros to access peripheralï¿½s registers hardware
   *  
   ******************************************************************************
   * @attention
@@ -1447,6 +1447,18 @@ typedef struct
 #define RCC_CFGR_USBPRE_Pos                  (22U)                             
 #define RCC_CFGR_USBPRE_Msk                  (0x1UL << RCC_CFGR_USBPRE_Pos)     /*!< 0x00400000 */
 #define RCC_CFGR_USBPRE                      RCC_CFGR_USBPRE_Msk               /*!< USB Device prescaler */
+
+/* AT32 USB CLOCK  configuration */
+#define RCC_CFGR_USBPRE_DIV2                 0xC00000U                         /*!< USB Device prescaler 2 */
+#define RCC_CFGR_USBPRE_DIV2_5               0x800000U                         /*!< USB Device prescaler 2.5 */
+#define RCC_CFGR_USBPRE_DIV3                 0x8400000U                        /*!< USB Device prescaler 3 */
+#define RCC_CFGR_USBPRE_DIV3_5               0x8000000U                        /*!< USB Device prescaler 3.5 */
+#define RCC_CFGR_USBPRE_DIV4                 0x8800000U                        /*!< USB Device prescaler 4 */
+
+/* AT32F4X3 PLL RANGE */
+#define RCC_CFGR_PLLRANGE_Pos                (31U)                             
+#define RCC_CFGR_PLLRANGE_Msk                (0x1UL << RCC_CFGR_PLLRANGE_Pos)     /*!< 0x80000000 */
+#define RCC_CFGR_PLLRANGE                    RCC_CFGR_PLLRANGE_Msk               /*!< PLL RANGE GT 72MHZ */
 
 /*!< MCO configuration */
 #define RCC_CFGR_MCO_Pos                     (24U)                             
