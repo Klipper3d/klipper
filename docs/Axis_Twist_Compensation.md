@@ -42,7 +42,7 @@ SAMPLE_COUNT=<value>
 After completing the calibration, be sure to
 [adjust your Z offset](Probe_Calibrate.md#calibrating-probe-z-offset).
 
-4. **Perform Bed Leveling Operations:**
+3. **Perform Bed Leveling Operations:**
 Use probe-based operations as needed, such as:
   - [Screws Tilt Adjust](G-Codes.md#screws_tilt_adjust)
   - [Z Tilt Adjust](G-Codes.md#z_tilt_adjust)
