@@ -23,6 +23,16 @@
 struct cline
 lookup_clock_line(uint32_t periph_base)
 {
+#ifdef SDIO_BASE
+    if (periph_base == SDIO_BASE) {
+        return (struct cline){.en=&RCC->AHBENR, .bit=RCC_AHBENR_SDIOEN};
+    }
+#endif
+#ifdef FSMC_R_BASE
+    if (periph_base == FSMC_R_BASE) {
+        return (struct cline){.en=&RCC->AHBENR, .bit=RCC_AHBENR_FSMCEN};
+    }
+#endif
     if (periph_base >= AHBPERIPH_BASE) {
         uint32_t bit = 1 << ((periph_base - AHBPERIPH_BASE) / 0x400);
         return (struct cline){.en=&RCC->AHBENR, .bit=bit};
@@ -107,13 +117,17 @@ stm32f1_alternative_remap(uint32_t mapr_mask, uint32_t mapr_value)
     AFIO->MAPR = mapr;
 }
 
-#define STM_OSPEED 0x1 // ~10Mhz at 50pF
+#define STM_OSPEED_10MHz    0x01 // ~10Mhz at 50pF
+#define STM_OSPEED_2MHz     0x02 // ~ 2Mhz at 50pF
+#define STM_OSPEED_50MHz    0x03 // ~50Mhz at 50pF
 
 // Set the mode and extended function of a pin
 void
 gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
 {
     GPIO_TypeDef *regs = digital_regs[GPIO2PORT(gpio)];
+    uint32_t out_spd = (mode & GPIO_HIGH_SPEED) ? STM_OSPEED_50MHz \
+                                                : STM_OSPEED_10MHz;
 
     // Enable GPIO clock
     gpio_clock_enable(regs);
@@ -123,20 +137,21 @@ gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
     if (mode == GPIO_INPUT) {
         cfg = pullup ? 0x8 : 0x4;
     } else if (mode == GPIO_OUTPUT) {
-        cfg = STM_OSPEED;
+        cfg = out_spd;
     } else if (mode == (GPIO_OUTPUT | GPIO_OPEN_DRAIN)) {
-        cfg = 0x4 | STM_OSPEED;
+        cfg = 0x4 | out_spd;
     } else if (mode == GPIO_ANALOG) {
         cfg = 0x0;
     } else {
         if (mode & GPIO_OPEN_DRAIN)
             // Alternate function with open-drain mode
-            cfg = 0xc | STM_OSPEED;
-        else if (pullup > 0)
+            cfg = 0xc | out_spd;
+        else if (pullup == 0 || (mode & GPIO_HIGH_SPEED))
+            // Alternate function with push-pull
+            cfg = 0x8 | out_spd;
+        else
             // Alternate function input pins use GPIO_INPUT mode on the stm32f1
             cfg = 0x8;
-        else
-            cfg = 0x8 | STM_OSPEED;
     }
     if (pos & 0x8)
         regs->CRH = (regs->CRH & ~msk) | (cfg << shift);
