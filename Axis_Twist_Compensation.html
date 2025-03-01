@@ -1465,7 +1465,7 @@
 
 
 <h1 id="axis-twist-compensation">Axis Twist Compensation<a class="headerlink" href="#axis-twist-compensation" title="Permanent link">&para;</a></h1>
-<p>This document describes the [axis_twist_compensation] module.</p>
+<p>This document describes the <code>[axis_twist_compensation]</code> module.</p>
 <p>Some printers may have a small twist in their X rail which can skew the results
 of a probe attached to the X carriage.
 This is common in printers with designs like the Prusa MK3, Sovol SV06 etc and is
@@ -1501,8 +1501,8 @@ correctly set as they greatly influence calibration.</p>
 <ol>
 <li>
 <p><strong>Adjust Your Z Offset:</strong>
-After completing the calibration, be sure to [adjust your Z offset]
-(Probe_Calibrate.md#calibrating-probe-z-offset).</p>
+After completing the calibration, be sure to
+<a href="Probe_Calibrate.html#calibrating-probe-z-offset">adjust your Z offset</a>.</p>
 </li>
 <li>
 <p><strong>Perform Bed Leveling Operations:</strong>
@@ -1511,11 +1511,13 @@ Use probe-based operations as needed, such as:
 - <a href="G-Codes.html#z_tilt_adjust">Z Tilt Adjust</a></p>
 </li>
 <li>
-<p><strong>Finalize the Setup:</strong>
-    - Home all axes, and perform a <a href="Bed_Mesh.html">Bed Mesh</a> if necessary.
-    - Run a test print, followed by any
-    <a href="Axis_Twist_Compensation.html#fine-tuning">fine-tuning</a>
-    if needed.</p>
+<p><strong>Finalize the Setup:</strong></p>
+<ul>
+<li>Home all axes, and perform a <a href="Bed_Mesh.html">Bed Mesh</a> if necessary.</li>
+<li>Run a test print, followed by any
+  <a href="Axis_Twist_Compensation.html#fine-tuning">fine-tuning</a>
+  if needed.</li>
+</ul>
 </li>
 </ol>
 <h3 id="for-y-axis-calibration">For Y-Axis Calibration<a class="headerlink" href="#for-y-axis-calibration" title="Permanent link">&para;</a></h3>
@@ -1537,9 +1539,9 @@ intervention, use:</p>
 an influence to the calibration process.</p>
 </blockquote>
 <h2 id="axis_twist_compensation-setup-and-commands">[axis_twist_compensation] setup and commands<a class="headerlink" href="#axis_twist_compensation-setup-and-commands" title="Permanent link">&para;</a></h2>
-<p>Configuration options for [axis_twist_compensation] can be found in the
+<p>Configuration options for <code>[axis_twist_compensation]</code> can be found in the
 <a href="Config_Reference.html#axis_twist_compensation">Configuration Reference</a>.</p>
-<p>Commands for [axis_twist_compensation] can be found in the
+<p>Commands for <code>[axis_twist_compensation]</code> can be found in the
 <a href="G-Codes.html#axis_twist_compensation">G-Codes Reference</a></p>
 
               
