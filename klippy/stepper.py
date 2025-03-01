@@ -294,23 +294,19 @@ def parse_step_distance(config, units_in_radians=None, note_valid=False):
 # Stepper controlled rails
 ######################################################################
 
-# A motor control "rail" with one (or more) steppers and one (or more)
+# A motor control carriage with one (or more) steppers and one (or more)
 # endstops.
-class PrinterRail:
+class GenericPrinterCarriage:
     def __init__(self, config, need_position_minmax=True,
-                 default_position_endstop=None, units_in_radians=False):
-        # Primary stepper and endstop
-        self.stepper_units_in_radians = units_in_radians
+                 default_position_endstop=None):
+        self.config = config
+        self.name = config.get_name().split()[-1]
         self.steppers = []
         self.endstops = []
         self.endstop_map = {}
-        self.add_extra_stepper(config)
-        mcu_stepper = self.steppers[0]
-        self.get_name = mcu_stepper.get_name
-        self.get_commanded_position = mcu_stepper.get_commanded_position
-        self.calc_position_from_coord = mcu_stepper.calc_position_from_coord
+        self.endstop_pin = config.get('endstop_pin')
         # Primary endstop position
-        mcu_endstop = self.endstops[0][0]
+        mcu_endstop = self.lookup_endstop(self.endstop_pin, self.name)
         if hasattr(mcu_endstop, "get_position_endstop"):
             self.position_endstop = mcu_endstop.get_position_endstop()
         elif default_position_endstop is None:
@@ -359,6 +355,8 @@ class PrinterRail:
             raise config.error(
                 "Invalid homing_positive_dir / position_endstop in '%s'"
                 % (config.get_name(),))
+    def get_name(self):
+        return self.name
     def get_range(self):
         return self.position_min, self.position_max
     def get_homing_info(self):
@@ -373,15 +371,8 @@ class PrinterRail:
         return list(self.steppers)
     def get_endstops(self):
         return list(self.endstops)
-    def add_extra_stepper(self, config):
-        stepper = PrinterStepper(config, self.stepper_units_in_radians)
-        self.steppers.append(stepper)
-        if self.endstops and config.get('endstop_pin', None) is None:
-            # No endstop defined - use primary endstop
-            self.endstops[0][0].add_stepper(stepper)
-            return
-        endstop_pin = config.get('endstop_pin')
-        printer = config.get_printer()
+    def lookup_endstop(self, endstop_pin, name):
+        printer = self.config.get_printer()
         ppins = printer.lookup_object('pins')
         pin_params = ppins.parse_pin(endstop_pin, True, True)
         # Normalize pin name
@@ -394,19 +385,47 @@ class PrinterRail:
             self.endstop_map[pin_name] = {'endstop': mcu_endstop,
                                           'invert': pin_params['invert'],
                                           'pullup': pin_params['pullup']}
-            name = stepper.get_name(short=True)
             self.endstops.append((mcu_endstop, name))
-            query_endstops = printer.load_object(config, 'query_endstops')
+            query_endstops = printer.load_object(self.config, 'query_endstops')
             query_endstops.register_endstop(mcu_endstop, name)
         else:
             mcu_endstop = endstop['endstop']
             changed_invert = pin_params['invert'] != endstop['invert']
             changed_pullup = pin_params['pullup'] != endstop['pullup']
             if changed_invert or changed_pullup:
-                raise error("Printer rail %s shared endstop pin %s "
-                            "must specify the same pullup/invert settings" % (
-                                self.get_name(), pin_name))
+                raise self.config.error(
+                        "Printer rail %s shared endstop pin %s "
+                        "must specify the same pullup/invert settings" % (
+                            self.get_name(), pin_name))
+        return mcu_endstop
+    def add_stepper(self, stepper, endstop_pin=None, endstop_name=None):
+        self.steppers.append(stepper)
+        if endstop_pin is not None:
+            mcu_endstop = self.lookup_endstop(
+                    endstop_pin, endstop_name or stepper.get_name(short=True))
+        else:
+            mcu_endstop = self.lookup_endstop(self.endstop_pin, self.name)
         mcu_endstop.add_stepper(stepper)
+    def del_stepper(self, stepper):
+        if stepper not in self.steppers:
+            return
+        for mcu_endstop, _ in self.endstops:
+            mcu_endstop.del_stepper(stepper)
+
+class PrinterRail(GenericPrinterCarriage):
+    def __init__(self, config, need_position_minmax=True,
+                 default_position_endstop=None, units_in_radians=False):
+        GenericPrinterCarriage.__init__(self, config, need_position_minmax,
+                                        default_position_endstop)
+        self.stepper_units_in_radians = units_in_radians
+        self.add_extra_stepper(config)
+        mcu_stepper = self.steppers[0]
+        self.get_name = mcu_stepper.get_name
+        self.get_commanded_position = mcu_stepper.get_commanded_position
+        self.calc_position_from_coord = mcu_stepper.calc_position_from_coord
+    def add_extra_stepper(self, config):
+        stepper = PrinterStepper(config, self.stepper_units_in_radians)
+        self.add_stepper(stepper, config.get('endstop_pin', None))
     def setup_itersolve(self, alloc_func, *params):
         for stepper in self.steppers:
             stepper.setup_itersolve(alloc_func, *params)
@@ -422,7 +441,7 @@ class PrinterRail:
 
 # Wrapper for dual stepper motor support
 def LookupMultiRail(config, need_position_minmax=True,
-                 default_position_endstop=None, units_in_radians=False):
+                    default_position_endstop=None, units_in_radians=False):
     rail = PrinterRail(config, need_position_minmax,
                        default_position_endstop, units_in_radians)
     for i in range(1, 99):
