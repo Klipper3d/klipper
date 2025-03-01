@@ -18,6 +18,7 @@ src-$(CONFIG_WANT_THERMOCOUPLE) += thermocouple.c
 src-$(CONFIG_WANT_ADXL345) += sensor_adxl345.c
 src-$(CONFIG_WANT_LIS2DW) += sensor_lis2dw.c
 src-$(CONFIG_WANT_MPU9250) += sensor_mpu9250.c
+src-$(CONFIG_WANT_ICM20948) += sensor_icm20948.c
 src-$(CONFIG_WANT_HX71X) += sensor_hx71x.c
 src-$(CONFIG_WANT_ADS1220) += sensor_ads1220.c
 src-$(CONFIG_WANT_LDC1612) += sensor_ldc1612.c
