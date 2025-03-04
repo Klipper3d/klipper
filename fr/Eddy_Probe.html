@@ -13,7 +13,7 @@
     
     
       
-        <title>Eddy Current Inductive probe - Documentation Klipper</title>
+        <title>Sonde inductive à courants de Foucault - Documentation Klipper</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#eddy-current-inductive-probe" class="md-skip">
+        <a href="#sonde-inductive-a-courants-de-foucault" class="md-skip">
           Aller au contenu
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Eddy Current Inductive probe
+              Sonde inductive à courants de Foucault
             
           </span>
         </div>
@@ -450,7 +450,7 @@
   
     <li class="md-nav__item">
       <a href="OctoPrint.html" class="md-nav__link">
-        OctoPrint for Klipper
+        OctoPrint pour Klipper
       </a>
     </li>
   
@@ -1284,12 +1284,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Eddy Current Inductive probe
+          Sonde inductive à courants de Foucault
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="Eddy_Probe.html" class="md-nav__link md-nav__link--active">
-        Eddy Current Inductive probe
+        Sonde inductive à courants de Foucault
       </a>
       
         
@@ -1394,9 +1394,9 @@
 </a>
 
 
-<h1 id="eddy-current-inductive-probe">Eddy Current Inductive probe<a class="headerlink" href="#eddy-current-inductive-probe" title="Permanent link">&para;</a></h1>
-<p>This document describes how to use an <a href="https://en.wikipedia.org/wiki/Eddy_current">eddy current</a> inductive probe in Klipper.</p>
-<p>Currently, an eddy current probe can not be used for Z homing. The sensor can only be used for Z probing.</p>
+<h1 id="sonde-inductive-a-courants-de-foucault">Sonde inductive à courants de Foucault<a class="headerlink" href="#sonde-inductive-a-courants-de-foucault" title="Permanent link">&para;</a></h1>
+<p>Ce document décrit comment utiliser une <a href="https://en.wikipedia.org/wiki/Eddy_current">sonde inductive</a> à courants de Foucault dans Klipper.</p>
+<p>Actuellement, une sonde à courants de Foucault ne peut pas être utilisée pour une mise à zéro du Z . Le capteur ne peut être utilisé que pour le palpage Z.</p>
 <p>Start by declaring a <a href="Config_Reference.html#probe_eddy_current">probe_eddy_current config section</a> in the printer.cfg file. It is recommended to set the <code>z_offset</code> to 0.5mm. It is typical for the sensor to require an <code>x_offset</code> and <code>y_offset</code>. If these values are not known, one should estimate the values during initial calibration.</p>
 <p>The first step in calibration is to determine the appropriate DRIVE_CURRENT for the sensor. Home the printer and navigate the toolhead so that the sensor is near the center of the bed and is about 20mm above the bed. Then issue an <code>LDC_CALIBRATE_DRIVE_CURRENT CHIP=&lt;config_name&gt;</code> command. For example, if the config section was named <code>[probe_eddy_current my_eddy_probe]</code> then one would run <code>LDC_CALIBRATE_DRIVE_CURRENT CHIP=my_eddy_probe</code>. This command should complete in a few seconds. After it completes, issue a <code>SAVE_CONFIG</code> command to save the results to the printer.cfg and restart.</p>
 <p>The second step in calibration is to correlate the sensor readings to the corresponding Z heights. Home the printer and navigate the toolhead so that the nozzle is near the center of the bed. Then run an <code>PROBE_EDDY_CURRENT_CALIBRATE CHIP=my_eddy_probe</code> command. Once the tool starts, follow the steps described at <a href="Bed_Level.html#the-paper-test">"the paper test"</a> to determine the actual distance between the nozzle and bed at the given location. Once those steps are complete one can <code>ACCEPT</code> the position. The tool will then move the the toolhead so that the sensor is above the point where the nozzle used to be and run a series of movements to correlate the sensor to Z positions. This will take a couple of minutes. After the tool completes, issue a <code>SAVE_CONFIG</code> command to save the results to the printer.cfg and restart.</p>

@@ -715,22 +715,22 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#basic-usage-x-axis-calibration" class="md-nav__link">
-    Basic Usage: X-Axis Calibration
+  <a href="#alapveto-hasznalat-x-tengely-kalibralas" class="md-nav__link">
+    Alapvető használat: X-Tengely kalibrálás
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#for-y-axis-calibration" class="md-nav__link">
-    For Y-Axis Calibration
+  <a href="#y-tengely-kalibralasa" class="md-nav__link">
+    Y-Tengely kalibrálása
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#automatic-calibration-for-both-axes" class="md-nav__link">
-    Automatic Calibration for Both Axes
+  <a href="#automatikus-kalibralas-mindket-tengelyhez" class="md-nav__link">
+    Automatikus kalibrálás mindkét tengelyhez
   </a>
   
 </li>
@@ -1415,22 +1415,22 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#basic-usage-x-axis-calibration" class="md-nav__link">
-    Basic Usage: X-Axis Calibration
+  <a href="#alapveto-hasznalat-x-tengely-kalibralas" class="md-nav__link">
+    Alapvető használat: X-Tengely kalibrálás
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#for-y-axis-calibration" class="md-nav__link">
-    For Y-Axis Calibration
+  <a href="#y-tengely-kalibralasa" class="md-nav__link">
+    Y-Tengely kalibrálása
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#automatic-calibration-for-both-axes" class="md-nav__link">
-    Automatic Calibration for Both Axes
+  <a href="#automatikus-kalibralas-mindket-tengelyhez" class="md-nav__link">
+    Automatikus kalibrálás mindkét tengelyhez
   </a>
   
 </li>
@@ -1474,43 +1474,43 @@ bias</a>. It may result in probe operations such as <a href="Bed_Mesh.html">Bed 
 <blockquote>
 <p><strong>Tip:</strong> Győződj meg róla, hogy az <a href="Config_Reference.html#probe"> X és Y eltolás</a> megfelelően van beállítva, mivel nagymértékben befolyásolják a kalibrálást.</p>
 </blockquote>
-<h3 id="basic-usage-x-axis-calibration">Basic Usage: X-Axis Calibration<a class="headerlink" href="#basic-usage-x-axis-calibration" title="Permanent link">&para;</a></h3>
+<h3 id="alapveto-hasznalat-x-tengely-kalibralas">Alapvető használat: X-Tengely kalibrálás<a class="headerlink" href="#alapveto-hasznalat-x-tengely-kalibralas" title="Permanent link">&para;</a></h3>
 <ol>
-<li>After setting up the <code>[axis_twist_compensation]</code> module, run:</li>
+<li>Az <code>[axis_twist_compensation]</code> modul beállítása után futtasd a következőt:</li>
 </ol>
 <div class="highlight"><pre><span></span><code>AXIS_TWIST_COMPENSATION_CALIBRATE
 </code></pre></div>
 
-<p>This command will calibrate the X-axis by default. - The calibration wizard will prompt you to measure the probe Z offset at several points along the bed. - By default, the calibration uses 3 points, but you can specify a different number with the option: <code>SAMPLE_COUNT=&lt;value&gt;</code></p>
+<p>Ez a parancs alapértelmezés szerint az X-tengelyt kalibrálja. - A kalibrációs varázsló felszólít, hogy mérd meg a szonda Z eltolását az ágy mentén több ponton. - Alapértelmezés szerint a kalibrálás 3 pontot használ, de a <code>SAMPLE_COUNT=&lt;value&gt;</code> opcióval más számot is megadhatsz.</p>
 <ol>
-<li><strong>Adjust Your Z Offset:</strong> After completing the calibration, be sure to [adjust your Z offset] (Probe_Calibrate.md#calibrating-probe-z-offset).</li>
+<li><strong>Z-eltolás beállítása:</strong> A kalibrálás befejezése után mindenképpen [állítsd be a Z-eltolást] (Probe_Calibrate.md#calibrating-probe-z-offset).</li>
 <li>
-<p><strong>Perform Bed Leveling Operations:</strong> Use probe-based operations as needed, such as:</p>
+<p><strong>Perform Bed Leveling Operations:</strong> Használj szonda alapú műveleteket, például:</p>
 <ul>
-<li><a href="G-Codes.html#screws_tilt_adjust">Screws Tilt Adjust</a></li>
-<li><a href="G-Codes.html#z_tilt_adjust">Z Tilt Adjust</a></li>
+<li><a href="G-Codes.html#screws_tilt_adjust">Csavarok dőlésszög beállítása</a></li>
+<li><a href="G-Codes.html#z_tilt_adjust">Z dőlésszög beállítása</a></li>
 </ul>
 </li>
 <li>
-<p><strong>Finalize the Setup:</strong></p>
+<p><strong>A beállítás befejezése:</strong></p>
 <ul>
-<li>Home all axes, and perform a <a href="Bed_Mesh.html">Bed Mesh</a> if necessary.</li>
-<li>Run a test print, followed by any <a href="Axis_Twist_Compensation.html#fine-tuning">fine-tuning</a> if needed.</li>
+<li>Küldj kezdő pozícióba minden tengelyt, és hajtsd végre az <a href="Bed_Mesh.html">Ágy háló</a> parancsot, ha szükséges.</li>
+<li>Futtass egy próbanyomtatást, majd szükség esetén <a href="Axis_Twist_Compensation.html#fine-tuning">finomhangolást</a>.</li>
 </ul>
 </li>
 </ol>
-<h3 id="for-y-axis-calibration">For Y-Axis Calibration<a class="headerlink" href="#for-y-axis-calibration" title="Permanent link">&para;</a></h3>
-<p>The calibration process for the Y-axis is similar to the X-axis. To calibrate the Y-axis, use:</p>
+<h3 id="y-tengely-kalibralasa">Y-Tengely kalibrálása<a class="headerlink" href="#y-tengely-kalibralasa" title="Permanent link">&para;</a></h3>
+<p>Az Y-tengely kalibrálási folyamata hasonló az X-tengelyéhez. Az Y-tengely kalibrálásához használd a következőt:</p>
 <div class="highlight"><pre><span></span><code>AXIS_TWIST_COMPENSATION_CALIBRATE AXIS=Y
 </code></pre></div>
 
-<p>This will guide you through the same measuring process as for the X-axis.</p>
-<h3 id="automatic-calibration-for-both-axes">Automatic Calibration for Both Axes<a class="headerlink" href="#automatic-calibration-for-both-axes" title="Permanent link">&para;</a></h3>
-<p>To perform automatic calibration for both the X and Y axes without manual intervention, use:</p>
+<p>Ez végigvezet Téged ugyanazon a mérési folyamaton, mint az X-tengely esetében.</p>
+<h3 id="automatikus-kalibralas-mindket-tengelyhez">Automatikus kalibrálás mindkét tengelyhez<a class="headerlink" href="#automatikus-kalibralas-mindket-tengelyhez" title="Permanent link">&para;</a></h3>
+<p>Az X és Y tengely automatikus kalibrálásához kézi beavatkozás nélkül használd a következőt:</p>
 <div class="highlight"><pre><span></span><code>AXIS_TWIST_COMPENSATION_CALIBRATE AUTO=True
 </code></pre></div>
 
-<p>In this mode, the calibration process will run for both axes automatically.</p>
+<p>Ebben az üzemmódban a kalibrációs folyamat mindkét tengelyre automatikusan lefut.</p>
 <blockquote>
 <p><strong>Tipp:</strong> Úgy tűnik, hogy az ágy hőmérséklete és a fúvóka hőmérséklete és mértéke nem befolyásolja a kalibrálási folyamatot.</p>
 </blockquote>
