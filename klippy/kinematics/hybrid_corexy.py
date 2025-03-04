@@ -12,11 +12,10 @@ class HybridCoreXYKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
         # itersolve parameters
-        self.rails = [ stepper.PrinterRail(config.getsection('stepper_x')),
-                       stepper.LookupMultiRail(config.getsection('stepper_y')),
-                       stepper.LookupMultiRail(config.getsection('stepper_z'))]
-        self.rails[1].get_endstops()[0][0].add_stepper(
-            self.rails[0].get_steppers()[0])
+        self.rails = [stepper.LookupMultiRail(config.getsection('stepper_' + n))
+                      for n in 'xyz']
+        for s in self.rails[0].get_steppers():
+            self.rails[1].get_endstops()[0][0].add_stepper(s)
         self.rails[0].setup_itersolve('corexy_stepper_alloc', b'-')
         self.rails[1].setup_itersolve('cartesian_stepper_alloc', b'y')
         self.rails[2].setup_itersolve('cartesian_stepper_alloc', b'z')
@@ -29,9 +28,9 @@ class HybridCoreXYKinematics:
             # dummy for cartesian config users
             dc_config.getchoice('axis', ['x'], default='x')
             # setup second dual carriage rail
-            self.rails.append(stepper.PrinterRail(dc_config))
-            self.rails[1].get_endstops()[0][0].add_stepper(
-                self.rails[3].get_steppers()[0])
+            self.rails.append(stepper.LookupMultiRail(dc_config))
+            for s in self.rails[3].get_steppers():
+                self.rails[1].get_endstops()[0][0].add_stepper(s)
             self.rails[3].setup_itersolve('corexy_stepper_alloc', b'+')
             dc_rail_0 = idex_modes.DualCarriagesRail(
                     self.rails[0], axis=0, active=True)
