@@ -133,7 +133,7 @@ class BedMesh:
         self.update_status()
     def handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
-        self.bmc.print_generated_points(logging.info)
+        self.bmc.print_generated_points(logging.info, truncate=True)
     def set_mesh(self, mesh):
         if mesh is not None and self.fade_end != self.FADE_DISABLE:
             self.log_fade_complete = True
@@ -346,7 +346,7 @@ class BedMeshCalibrate:
         self.gcode.register_command(
             'BED_MESH_CALIBRATE', self.cmd_BED_MESH_CALIBRATE,
             desc=self.cmd_BED_MESH_CALIBRATE_help)
-    def print_generated_points(self, print_func):
+    def print_generated_points(self, print_func, truncate=False):
         x_offset = y_offset = 0.
         probe = self.printer.lookup_object('probe', None)
         if probe is not None:
@@ -355,6 +355,10 @@ class BedMeshCalibrate:
                    " |  Tool Adjusted  |   Probe")
         points = self.probe_mgr.get_base_points()
         for i, (x, y) in enumerate(points):
+            if i >= 50 and truncate:
+                end = len(points) - 1
+                print_func("...points %d through %d truncated" % (i, end))
+                break
             adj_pt = "(%.1f, %.1f)" % (x - x_offset, y - y_offset)
             mesh_pt = "(%.1f, %.1f)" % (x, y)
             print_func(
@@ -613,8 +617,6 @@ class BedMeshCalibrate:
                 self.mesh_config, self.mesh_min, self.mesh_max,
                 self.radius, self.origin, probe_method
             )
-            gcmd.respond_info("Generating new points...")
-            self.print_generated_points(gcmd.respond_info)
             msg = "\n".join(["%s: %s" % (k, v)
                              for k, v in self.mesh_config.items()])
             logging.info("Updated Mesh Configuration:\n" + msg)

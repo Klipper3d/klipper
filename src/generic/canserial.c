@@ -2,7 +2,7 @@
 //
 // Copyright (C) 2019 Eug Krashtan <eug.krashtan@gmail.com>
 // Copyright (C) 2020 Pontus Borg <glpontus@gmail.com>
-// Copyright (C) 2021  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2021-2025  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -317,6 +317,25 @@ DECL_TASK(canserial_rx_task);
 /****************************************************************
  * Setup and shutdown
  ****************************************************************/
+
+DECL_ENUMERATION("canbus_bus_state", "active", CANBUS_STATE_ACTIVE);
+DECL_ENUMERATION("canbus_bus_state", "warn", CANBUS_STATE_WARN);
+DECL_ENUMERATION("canbus_bus_state", "passive", CANBUS_STATE_PASSIVE);
+DECL_ENUMERATION("canbus_bus_state", "off", CANBUS_STATE_OFF);
+
+void
+command_get_canbus_status(uint32_t *args)
+{
+    struct canbus_status status;
+    memset(&status, 0, sizeof(status));
+    canhw_get_status(&status);
+    sendf("canbus_status rx_error=%u tx_error=%u tx_retries=%u"
+          " canbus_bus_state=%u"
+          , status.rx_error, status.tx_error, status.tx_retries
+          , status.bus_state);
+}
+DECL_COMMAND_FLAGS(command_get_canbus_status, HF_IN_SHUTDOWN
+                   , "get_canbus_status");
 
 void
 command_get_canbus_id(uint32_t *args)

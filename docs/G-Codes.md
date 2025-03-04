@@ -585,15 +585,18 @@ state; issue a G28 afterwards to reset the kinematics. This command is
 intended for low-level diagnostics and debugging.
 
 #### SET_KINEMATIC_POSITION
-`SET_KINEMATIC_POSITION [X=<value>] [Y=<value>] [Z=<value>]`: Force
-the low-level kinematic code to believe the toolhead is at the given
-cartesian position. This is a diagnostic and debugging command; use
-SET_GCODE_OFFSET and/or G92 for regular axis transformations. If an
-axis is not specified then it will default to the position that the
-head was last commanded to. Setting an incorrect or invalid position
-may lead to internal software errors. This command may invalidate
-future boundary checks; issue a G28 afterwards to reset the
-kinematics.
+`SET_KINEMATIC_POSITION [X=<value>] [Y=<value>] [Z=<value>]
+[CLEAR=<[X][Y][Z]>]`: Force the low-level kinematic code to believe the
+toolhead is at the given cartesian position. This is a diagnostic and
+debugging command; use SET_GCODE_OFFSET and/or G92 for regular axis
+transformations. If an axis is not specified then it will default to the
+position that the head was last commanded to. Setting an incorrect or
+invalid position may lead to internal software errors. Use the CLEAR
+parameter to forget the homing state for the given axes. Note that CLEAR
+will not override the previous functionality; if an axis is not specified
+to CLEAR it will have its kinematic position set as per above. This
+command may invalidate future boundary checks; issue a G28 afterwards to
+reset the kinematics.
 
 ### [gcode]
 
@@ -1067,6 +1070,21 @@ CYCLE_TIME parameter is not stored between SET_PIN commands (any
 SET_PIN command without an explicit CYCLE_TIME parameter will use the
 `cycle_time` specified in the pwm_cycle_time config section).
 
+### [quad_gantry_level]
+
+The following commands are available when the
+[quad_gantry_level config section](Config_Reference.md#quad_gantry_level)
+is enabled.
+
+#### QUAD_GANTRY_LEVEL
+`QUAD_GANTRY_LEVEL [RETRIES=<value>] [RETRY_TOLERANCE=<value>]
+[HORIZONTAL_MOVE_Z=<value>] [<probe_parameter>=<value>]`: This command
+will probe the points specified in the config and then make
+independent adjustments to each Z stepper to compensate for tilt. See
+the PROBE command for details on the optional probe parameters. The
+optional `RETRIES`, `RETRY_TOLERANCE`, and `HORIZONTAL_MOVE_Z` values
+override those options specified in the config file.
+
 ### [query_adc]
 
 The query_adc module is automatically loaded.
@@ -1183,8 +1201,9 @@ has been enabled.
 
 #### SAVE_VARIABLE
 `SAVE_VARIABLE VARIABLE=<name> VALUE=<value>`: Saves the variable to
-disk so that it can be used across restarts. All stored variables are
-loaded into the `printer.save_variables.variables` dict at startup and
+disk so that it can be used across restarts. The VARIABLE must be lowercase.
+All stored variables are loaded into the
+`printer.save_variables.variables` dict at startup and
 can be used in gcode macros. The provided VALUE is parsed as a Python
 literal.
 
@@ -1456,11 +1475,13 @@ The following commands are available when the
 [z_tilt config section](Config_Reference.md#z_tilt) is enabled.
 
 #### Z_TILT_ADJUST
-`Z_TILT_ADJUST [HORIZONTAL_MOVE_Z=<value>] [<probe_parameter>=<value>]`: This
-command will probe the points specified in the config and then make independent
-adjustments to each Z stepper to compensate for tilt. See the PROBE command for
-details on the optional probe parameters. The optional `HORIZONTAL_MOVE_Z`
-value overrides the `horizontal_move_z` option specified in the config file.
+`Z_TILT_ADJUST [RETRIES=<value>] [RETRY_TOLERANCE=<value>]
+[HORIZONTAL_MOVE_Z=<value>] [<probe_parameter>=<value>]`: This command
+will probe the points specified in the config and then make
+independent adjustments to each Z stepper to compensate for tilt. See
+the PROBE command for details on the optional probe parameters. The
+optional `RETRIES`, `RETRY_TOLERANCE`, and `HORIZONTAL_MOVE_Z` values
+override those options specified in the config file.
 
 ### [temperature_probe]
 

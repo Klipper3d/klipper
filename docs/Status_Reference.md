@@ -39,6 +39,27 @@ the following strings: "adjust", "fine".
 - `current_screw`: The index for the current screw being adjusted.
 - `accepted_screws`: The number of accepted screws.
 
+## canbus_stats
+
+The following information is available in the `canbus_stats
+some_mcu_name` object (this object is automatically available if an
+mcu is configured to use canbus):
+- `rx_error`: The number of receive errors detected by the
+  micro-controller canbus hardware.
+- `tx_error`: The number of transmit errors detected by the
+  micro-controller canbus hardware.
+- `tx_retries`: The number of transmit attempts that were retried due
+  to bus contention or errors.
+- `bus_state`: The status of the interface (typically "active" for a
+  bus in normal operation, "warn" for a bus with recent errors,
+  "passive" for a bus that will no longer transmit canbus error
+  frames, or "off" for a bus that will no longer transmit or receive
+  messages).
+
+Note that only the rp2XXX micro-controllers report a non-zero
+`tx_retries` field and the rp2XXX micro-controllers always report
+`tx_error` as zero and `bus_state` as "active".
+
 ## configfile
 
 The following information is available in the `configfile` object
@@ -425,6 +446,12 @@ The following information is available in
 [servo some_name](Config_Reference.md#servo) objects:
 - `printer["servo <config_name>"].value`: The last setting of the PWM
   pin (a value between 0.0 and 1.0) associated with the servo.
+
+## skew_correction.py
+
+The following information is available in the `skew_correction` object (this
+object is available if any skew_correction is defined):
+- `current_profile_name`: Returns the name of the currently loaded SKEW_PROFILE.
 
 ## stepper_enable
 

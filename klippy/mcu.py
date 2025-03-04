@@ -565,6 +565,7 @@ class MCU:
             self._canbus_iface = config.get('canbus_interface', 'can0')
             cbid = self._printer.load_object(config, 'canbus_ids')
             cbid.add_uuid(config, canbus_uuid, self._canbus_iface)
+            self._printer.load_object(config, 'canbus_stats %s' % (self._name,))
         else:
             self._serialport = config.get('serial')
             if not (self._serialport.startswith("/dev/rpmsg_")

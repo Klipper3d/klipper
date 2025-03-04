@@ -184,12 +184,12 @@ represent total number of steps per second on the micro-controller.
 | SAM4S8C                         | 1690K             | 1385K             |
 | LPC1768                         | 1923K             | 1351K             |
 | LPC1769                         | 2353K             | 1622K             |
-| RP2040                          | 2400K             | 1636K             |
 | SAM4E8E                         | 2500K             | 1674K             |
 | SAMD51                          | 3077K             | 1885K             |
 | AR100                           | 3529K             | 2507K             |
 | STM32F407                       | 3652K             | 2459K             |
 | STM32F446                       | 3913K             | 2634K             |
+| RP2040                          | 4000K             | 2571K             |
 | RP2350                          | 4167K             | 2663K             |
 | SAME70                          | 6667K             | 4737K             |
 | STM32H743                       | 9091K             | 6061K             |
