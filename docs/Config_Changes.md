@@ -8,6 +8,9 @@ All dates in this document are approximate.
 
 ## Changes
 
+20250308: The `AUTO` parameter of the
+`AXIS_TWIST_COMPENSATION_CALIBRATE` command has been removed.
+
 20250131: Option `VARIABLE=<name>` in `SAVE_VARIABLE` requires lowercase
 value. For example, `extruder` instead of mixedcase `Extruder` or
 uppercase `EXTRUDER`. Using any uppercase letter will raise an error.
