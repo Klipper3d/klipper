@@ -322,8 +322,14 @@ stats_update(uint32_t start, uint32_t cur)
         nextsumsq = 0xffffffff;
     sumsq = nextsumsq;
 
-    if (timer_is_before(cur, stats_send_time + timer_from_us(5000000)))
+    // Passed time tracker
+    static uint32_t tstart, tsum;
+    uint32_t tcur = timer_read_time();
+    tsum += tcur - tstart;
+    tstart = tcur;
+    if (timer_from_us(5000000) > tsum)
         return;
+    tsum = 0;
     sendf("stats count=%u sum=%u sumsq=%u", count, sum, sumsq);
     if (cur < stats_send_time)
         stats_send_time_high++;
