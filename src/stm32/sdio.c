@@ -60,7 +60,11 @@ static const struct sdio_info sdio_bus[] = {
       GPIO('C', 9), GPIO('C', 10), GPIO('C', 11), SDIO_FUNCTION },
 };
 
+#ifdef MACH_STM32F4
 #define SDIO_CLK_FREQ 48000000
+#else
+#define SDIO_CLK_FREQ get_pclock_frequency(SDIO_BASE)
+#endif
 #define SDIO_INIT_CLK 400000
 #define SDIO_MAX_TIMEOUT 500 // Wait for at least 500ms before a timeout occurs
 #define CLKCR_CLEAR_MASK (SDIO_CLKCR_CLKDIV | SDIO_CLKCR_PWRSAV | \
