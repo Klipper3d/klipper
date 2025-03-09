@@ -191,9 +191,9 @@ class GenericCartesianKinematics:
         self.limits = [(1.0, -1.0)] * 3
         # Register gcode commands
         gcode = self.printer.lookup_object('gcode')
-        gcode.register_command("SET_STEPPER_KINEMATICS",
-                               self.cmd_SET_STEPPER_KINEMATICS,
-                               desc=self.cmd_SET_STEPPER_KINEMATICS_help)
+        gcode.register_command("SET_STEPPER_CARRIAGES",
+                               self.cmd_SET_STEPPER_CARRIAGES,
+                               desc=self.cmd_SET_STEPPER_CARRIAGES_help)
     def _load_kinematics(self, config):
         carriages = {a : MainCarriage(config.getsection('carriage ' + a), a)
                      for a in 'xyz'}
@@ -229,7 +229,7 @@ class GenericCartesianKinematics:
         if carriages:
             raise report_error(
                     "Carriage(s) %s must be referenced by some "
-                    "stepper(s) kinematics" % (", ".join(carriages),))
+                    "stepper(s)" % (", ".join(carriages),))
     def _check_multi_mcu_homing(self, report_error):
         for carriage in self.carriages.values():
             for es in carriage.get_endstops():
@@ -272,7 +272,7 @@ class GenericCartesianKinematics:
         det = mathutil.matrix_det(mat_mul(mat_transp(matr), matr))
         if abs(det) < 0.00001:
             raise report_error(
-                    "Verify configured stepper(s) and their 'kinematics' "
+                    "Verify configured stepper(s) and their 'carriages' "
                     "specifications, the current configuration does not "
                     "allow independent movements of all printer axes.")
     def calc_position(self, stepper_positions):
@@ -363,21 +363,22 @@ class GenericCartesianKinematics:
             'toolhead_kinematics': {s.get_name() : P[i]
                                     for i, s in enumerate(self.steppers)},
         }
-    cmd_SET_STEPPER_KINEMATICS_help = "Set stepper kinematics"
-    def cmd_SET_STEPPER_KINEMATICS(self, gcmd):
+    cmd_SET_STEPPER_CARRIAGES_help = "Set stepper carriages"
+    def cmd_SET_STEPPER_CARRIAGES(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.flush_step_generation()
         stepper_name = gcmd.get("STEPPER")
         steppers = [stepper for stepper in self.steppers
-                    if stepper.get_name() == stepper_name]
+                    if stepper.get_name() == stepper_name
+                    or stepper.get_name(short=True) == stepper_name]
         if len(steppers) == 0:
             raise gcmd.error("Invalid STEPPER '%s' specified" % stepper_name)
         stepper = steppers[0]
-        kinematics_str = gcmd.get("KINEMATICS").lower()
+        carriages_str = gcmd.get("CARRIAGES").lower()
         validate = not gcmd.get_int("DISABLE_CHECKS", 0)
         old_carriages = stepper.get_carriages()
-        stepper.update_kinematics(kinematics_str, self.all_carriages,
-                                  report_error=gcmd.error if validate else None)
+        stepper.update_carriages(carriages_str, self.all_carriages,
+                                 report_error=gcmd.error if validate else None)
         new_carriages = stepper.get_carriages()
         for c in old_carriages:
             if c not in new_carriages:

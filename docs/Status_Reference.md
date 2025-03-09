@@ -561,17 +561,17 @@ The following information is available in the `toolhead` object
   moves could be read from the G-Code input.
 
 Additionally, if the printer uses `generic_cartesian` kinematic, the
-follwoing information is available:
+following information is available:
 - `stepper_kinematics`: a map from a stepper name to the array of 3
   floats - coefficients of the stepper kinematics for each of the axis
-  X, Y, and Z from the corresponding `kinematics` option, as indicated
+  X, Y, and Z from the corresponding `carriages` option, as indicated
   by the specified carriages and their axes. Can be used to compute
-  stepper positions from the known toolhead position.
+  stepper positions from a known toolhead position.
 - `toolhead_kinematics`: a map from a stepper name to the array of 3
   floats - a contribution of a given stepper into the motion of each of
   the axes X, Y and Z of the printer - which is effectively a
-  pseudoinverse of the `stepper_kinematics`. Can be used to compute
-  the toolhead position from the known stepper positions.
+  pseudoinverse of the `stepper_carriages`. Can be used to compute
+  the toolhead position from known stepper positions.
 
 ## dual_carriage
 

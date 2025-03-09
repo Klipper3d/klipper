@@ -788,7 +788,7 @@ Afterwards, a user specifies the stepper motors that move these carriages,
 for instance
 ```
 [stepper my_stepper]
-kinematics:
+carriages:
 #   A string describing the carriages the stepper moves. All defined
 #   carriages can be specified here, as well as their linear combinations,
 #   e.g. x, x+y, y-0.5*z, x-z, etc. This parameter must be provided.
@@ -802,7 +802,7 @@ microsteps:
 #step_pulse_duration:
 ```
 See [stepper](#stepper) section for more information on the regular
-stepper parameters. The `kinematics` parameter defines how the stepper
+stepper parameters. The `carriages` parameter defines how the stepper
 affects the motion of the carriages. For example, `x+y` indicates that
 the motion of the stepper in the positive direction by the distance `d`
 moves the carriages `x` and `y` by the same distance `d` in the positive
@@ -824,7 +824,7 @@ endstop_pin: ...
 ...
 
 [stepper a0]
-kinematics: x-y
+carriages: x-y
 step_pin: ...
 dir_pin: ...
 enable_pin: ...
@@ -832,7 +832,7 @@ rotation_distance: ...
 ...
 
 [stepper a1]
-kinematics: x-y
+carriages: x-y
 step_pin: ...
 dir_pin: ...
 enable_pin: ...
@@ -840,7 +840,7 @@ rotation_distance: ...
 ...
 ```
 with `a0` and `a1` steppers having their own control pins, but
-sharing the same `kinematics` and corresponding endstops.
+sharing the same `carriages` and corresponding endstops.
 
 There are situations when a user wants to have more than one endstop
 per axis. Examples of such configurations include Y axis driven by
@@ -868,13 +868,13 @@ primary_carriage: y
 endstop_pin: ...
 
 [stepper sy1]
-kinematics: y1
+carriages: y1
 ...
 ```
 Notably, an `[extra_carriage]` does not define parameters such as
-`position_min`, `position_max`, and `position_endstop`, and inherits
-them from the specified `primary_carriage`, sharing the same range of
-motion with the primary carriage.
+`position_min`, `position_max`, and `position_endstop`, but instead
+inherits them from the specified `primary_carriage`, thus sharing
+the same range of motion with the primary carriage.
 
 For the references on how to configure IDEX setups, see the
 [dual carriage](#dual-carriage) section.
@@ -2478,7 +2478,7 @@ primary_carriage: x
 ...
 
 [stepper dc_stepper]
-kinematics: u-y
+carriages: u-y
 ...
 ```
 

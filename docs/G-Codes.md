@@ -723,40 +723,38 @@ g-code speed.
 The commands in this section become automatically available when
 `kinematics: generic_cartesian` is specified as the printer kinematics.
 
-#### SET_STEPPER_KINEMATICS
-`SET_STEPPER_KINEMATICS STEPPER=<stepper_name> KINEMATICS=<kinematics>
-[DISABLE_CHECKS=[0|1]]`: Set or update the stepper kinematics.
+#### SET_STEPPER_CARRIAGES
+`SET_STEPPER_CARRIAGES STEPPER=<stepper_name> CARRIAGES=<carriages>
+[DISABLE_CHECKS=[0|1]]`: Set or update the stepper carriages.
 `<stepper_name>` must reference an existing stepper defined in
-`printer.cfg`, and `<kinematics>` describes the carriages the stepper
+`printer.cfg`, and `<carriages>` describes the carriages the stepper
 moves. All defined carriages can be specified here, as well as their
-linear combinations, for example `x`, `x+y`, `y-0.5z`, `x-z`, etc. Note
-that unlike the printer configuration, `KINEMATICS=...` string must not
-use `*` symbol for multiplication, since it is a special GCode character,
-and if required, the multipliers must precede the carriage reference
-without any further delimiters, e.g. `0.5x+0.5z` or
-`0.333333333333x-0.666666666667y`.
+linear combinations, for example `x`, `x+y`, `y-0.5*z`, `x-z`, etc.
+See [Generic Cartesian Kinematics](Config_Reference.md#generic-cartesian-kinematics)
+for a more detailed overview of the `carriages` parameter in the
+stepper configuration section.
 
-`SET_STEPPER_KINEMATICS` is an advanced tool, and the user is advised
+`SET_STEPPER_CARRIAGES` is an advanced tool, and the user is advised
 to exercise an extreme caution using it, since specifying incorrect
 configuration may physically damage the printer.
 
-Note that `SET_STEPPER_KINEMATICS` performs certain internal validations
+Note that `SET_STEPPER_CARRIAGES` performs certain internal validations
 of the new printer kinematics after the change. Keep in mind that if it
-detects an issue, it may leave Klipper in an invalid state. This means
-that if `SET_STEPPER_KINEMATICS` reports an error, it is unsafe to
-issue other GCode commands, and the user must inspect the error message
+detects an issue, it may leave printer kinematics in an invalid state.
+This means that if `SET_STEPPER_CARRIAGES` reports an error, it is unsafe
+to issue other GCode commands, and the user must inspect the error message
 and either fix the problem, or manually restore the previous stepper(s)
 configuration.
 
-Since `SET_STEPPER_KINEMATICS` can update a configuration of a single
+Since `SET_STEPPER_CARRIAGES` can update a configuration of a single
 stepper at a time, some sequences of changes can lead to invalid
 intermediate kinematic configurations, even if the final configuration
 is valid. In such cases a user can pass `DISABLE_CHECKS=1` parameters to
 all but the last command to disable intermediate checks. For example,
-if `stepper a` and `stepper b` initially have `x-y` and `x+y` kinematics
+if `stepper a` and `stepper b` initially have `x-y` and `x+y` carriages
 correspondingly, then the following sequence of commands will swap their
-kinematics: `SET_STEPPER_KINEMATICS STEPPER='stepper a' KINEMATICS=x+y DISABLE_CHECKS=1`
-and `SET_STEPPER_KINEMATICS STEPPER='stepper b' KINEMATICS=x-y`, while
+carriages: `SET_STEPPER_CARRIAGES STEPPER='stepper a' CARRIAGES=x+y DISABLE_CHECKS=1`
+and `SET_STEPPER_CARRIAGES STEPPER='stepper b' CARRIAGES=x-y`, while
 still validating the final kinematics state. Be aware that passing
 `DISABLE_CHECKS=1` disables all internal validations, and lets a user
 configure even a semi-defined kinematics. This can become useful on very

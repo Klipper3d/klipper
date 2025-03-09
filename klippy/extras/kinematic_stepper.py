@@ -7,25 +7,19 @@
 import logging, re
 import stepper, chelper
 
-def parse_kinematic_string(kinematics_str, carriages, parse_error):
+def parse_carriages_string(carriages_str, printer_carriages, parse_error):
     nxt = 0
     pat = re.compile('[+-]')
     coeffs = [0.] * 3
     ref_carriages = []
-    while nxt < len(kinematics_str):
-        match = pat.search(kinematics_str, nxt+1)
-        end = len(kinematics_str) if match is None else match.start()
-        term = kinematics_str[nxt:end].strip()
-        if '*' in term:
-            term_lst = term.split('*')
-        else:
-            term_lst = re.split(r"^([-+]?(?:\d*\.*\d+))", term)
-            if not term_lst[0]:
-                del term_lst[0]
+    while nxt < len(carriages_str):
+        match = pat.search(carriages_str, nxt+1)
+        end = len(carriages_str) if match is None else match.start()
+        term = carriages_str[nxt:end].strip()
+        term_lst = term.split('*')
         if len(term_lst) not in [1, 2]:
             raise parse_error(
-                    "Invalid term '%s' in kinematics '%s'" % (term,
-                                                              kinematics_str))
+                    "Invalid term '%s' in '%s'" % (term, carriages_str))
         if len(term_lst) == 2:
             try:
                 coeff = float(term_lst[0])
@@ -36,30 +30,28 @@ def parse_kinematic_string(kinematics_str, carriages, parse_error):
             if term_lst[0].startswith('-') or term_lst[0].startswith('+'):
                 term_lst[0] = term_lst[0][1:]
         c = term_lst[-1]
-        if c not in carriages:
-            raise parse_error(
-                    "Invalid '%s' carriage referenced in kinematics '%s'" % (
-                        c, kinematics_str))
-        carriage = carriages[c]
+        if c not in printer_carriages:
+            raise parse_error("Invalid '%s' carriage referenced in '%s'" %
+                              (c, carriages_str))
+        carriage = printer_carriages[c]
         j = carriage.get_axis()
         if coeffs[j]:
-            raise error("Axis '%s' was referenced multiple times in "
-                        "kinematics '%s'" % ("xyz"[i], kinematics_str))
+            raise error("Carriage '%s' was referenced multiple times in '%s'" %
+                        (c, carriages_str))
         coeffs[j] = coeff
         ref_carriages.append(carriage)
         nxt = end
     return coeffs, ref_carriages
 
 class KinematicStepper:
-    def __init__(self, config, carriages):
+    def __init__(self, config, printer_carriages):
         self.printer = config.get_printer()
-        self.config = config
         self.stepper = stepper.PrinterStepper(config)
-        self.kin_coeffs, self.carriages = parse_kinematic_string(
-                config.get('kinematics'), carriages, config.error)
+        self.kin_coeffs, self.carriages = parse_carriages_string(
+                config.get('carriages'), printer_carriages, config.error)
         if not any(self.kin_coeffs):
             raise config.error(
-                    "'%s' must provide a valid 'kinematics' configuration" %
+                    "'%s' must provide a valid 'carriages' configuration" %
                     self.stepper.get_name())
         self.stepper.setup_itersolve(
                 'generic_cartesian_stepper_alloc',
@@ -104,14 +96,14 @@ class KinematicStepper:
         return [i for i, c in enumerate(self.kin_coeffs) if c]
     def get_carriages(self):
         return self.carriages
-    def update_kinematics(self, kinematics_str, carriages, report_error=None):
-        kin_coeffs, carriages = parse_kinematic_string(
-                kinematics_str, carriages,
+    def update_carriages(self, carriages_str, printer_carriages, report_error):
+        kin_coeffs, carriages = parse_carriages_string(
+                carriages_str, printer_carriages,
                 report_error or self.printer.command_error)
         if report_error is not None and not any(kin_coeffs):
             raise report_error(
-                    "A valid 'kinematics' that references at least one carriage"
-                    " must be provided for '%s'" % self.stepper.get_name())
+                    "A valid string that references at least one carriage"
+                    " must be provided for '%s'" % self.get_name())
         self.kin_coeffs = kin_coeffs
         self.carriages = carriages
         ffi_main, ffi_lib = chelper.get_ffi()
