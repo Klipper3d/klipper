@@ -6,8 +6,8 @@
 
 import copy, itertools, logging, math
 import gcode, mathutil, stepper
-import extras.kinematic_stepper as ks
 from . import idex_modes
+from . import kinematic_stepper as ks
 
 def mat_mul(a, b):
     if len(a[0]) != len(b):
