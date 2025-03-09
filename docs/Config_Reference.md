@@ -4758,6 +4758,18 @@ scale.
 [load_cell]
 sensor_type:
 #   This must be one of the supported sensor types, see below.
+#counts_per_gram:
+#   The floating point number of sensor counts that indicates 1 gram of force.
+#   This value is calculated by the LOAD_CELL_CALIBRATE command.
+#reverse:
+#   Reverse the polarity of the force reported by the load cell. The default
+#   is False.
+#reference_tare_counts:
+#   The integer tare value, in raw sensor counts, taken when LOAD_CELL_CALIBRATE
+#   is run. This is the default tare value when klipper starts up.
+#reverse:
+#   Reverses the polarity of the load cell. This is a boolean value, the
+#   default is False.
 ```
 
 #### HX711
