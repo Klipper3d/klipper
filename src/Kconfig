@@ -229,7 +229,7 @@ config HAVE_STRICT_TIMING
     bool
 config HAVE_CHIPID
     bool
-config HAVE_STEPPER_BOTH_EDGE
+config HAVE_STEPPER_OPTIMIZED_BOTH_EDGE
     bool
 config HAVE_BOOTLOADER_REQUEST
     bool
