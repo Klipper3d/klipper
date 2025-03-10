@@ -2352,6 +2352,16 @@ Tool to disable heaters when homing or probing an axis.
 #   A comma separated list of heaters to disable during homing/probing
 #   moves. The default is to disable all heaters.
 #   Typical example: extruder, heater_bed
+#threshold:
+#   If this is set then the printer will wait until the heaters have
+#   reached their target temperatures before continuing. If set then the
+#   number indicates the threshold below which the temperature of any
+#   heater must fall before needing to re-heat.
+#   This is useful for when performing bed mesh calinbration probing for
+#   probes that are sensitive to EMI, while still allowing the bed to
+#   maintain a constant temperature.
+#   Note that it is typically more convenient to set this via the
+#   SET_HOMING_HEATERS [gcode command](G-Codes.md#set_homing_heaters)
 ```
 
 ### [thermistor]
