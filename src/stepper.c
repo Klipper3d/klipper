@@ -14,17 +14,16 @@
 #include "stepper.h" // stepper_event
 #include "trsync.h" // trsync_add_signal
 
+#define HAVE_TOO_FAST_MCU (CONFIG_CLOCK_FREQ > 430000000)
+
 #if CONFIG_INLINE_STEPPER_HACK && CONFIG_HAVE_STEPPER_BOTH_EDGE
- #define HAVE_SINGLE_SCHEDULE 1
- #define HAVE_EDGE_OPTIMIZATION 1
+ #define HAVE_EDGE_OPTIMIZATION !(CONFIG_CLOCK_FREQ > 430000000)
  #define HAVE_AVR_OPTIMIZATION 0
  DECL_CONSTANT("STEPPER_BOTH_EDGE", 1);
 #elif CONFIG_INLINE_STEPPER_HACK && CONFIG_MACH_AVR
- #define HAVE_SINGLE_SCHEDULE 1
  #define HAVE_EDGE_OPTIMIZATION 0
  #define HAVE_AVR_OPTIMIZATION 1
 #else
- #define HAVE_SINGLE_SCHEDULE 0
  #define HAVE_EDGE_OPTIMIZATION 0
  #define HAVE_AVR_OPTIMIZATION 0
 #endif
@@ -75,8 +74,12 @@ stepper_load_next(struct stepper *s)
     struct stepper_move *m = container_of(mn, struct stepper_move, node);
     s->add = m->add;
     s->interval = m->interval + m->add;
-    if (HAVE_SINGLE_SCHEDULE && s->flags & SF_SINGLE_SCHED) {
+    if (s->flags & SF_SINGLE_SCHED) {
         s->time.waketime += m->interval;
+        if (HAVE_TOO_FAST_MCU) {
+            s->next_step_time += m->interval;
+            s->time.waketime = s->next_step_time;
+        }
         if (HAVE_AVR_OPTIMIZATION)
             s->flags = m->add ? s->flags|SF_HAVE_ADD : s->flags & ~SF_HAVE_ADD;
         s->count = m->count;
@@ -146,7 +149,10 @@ stepper_event_full(struct timer *t)
     uint32_t curtime = timer_read_time();
     uint32_t min_next_time = curtime + s->step_pulse_ticks;
     s->count--;
-    if (likely(s->count & 1))
+    uint8_t combined = 0;
+    if (HAVE_TOO_FAST_MCU)
+        combined = s->flags & SF_SINGLE_SCHED;
+    if (s->count & 1 && !(combined))
         // Schedule unstep event
         goto reschedule_min;
     if (likely(s->count)) {
@@ -181,6 +187,12 @@ stepper_event(struct timer *t)
     return stepper_event_full(t);
 }
 
+static unsigned int
+nsecs_to_ticks(uint32_t ns)
+{
+    return timer_from_us(ns * 1000) / 1000000;
+}
+
 void
 command_config_stepper(uint32_t *args)
 {
@@ -204,6 +216,11 @@ command_config_stepper(uint32_t *args)
             s->time.func = stepper_event_full;
     } else if (!CONFIG_INLINE_STEPPER_HACK) {
         s->time.func = stepper_event_full;
+    } else if (invert_step < 0) {
+        // If mcu can step faster then 10M steps/s
+        s->flags |= SF_SINGLE_SCHED;
+        if (!s->step_pulse_ticks)
+            s->step_pulse_ticks = nsecs_to_ticks(100);
     }
 }
 DECL_COMMAND(command_config_stepper, "config_stepper oid=%c step_pin=%c"
@@ -284,7 +301,7 @@ stepper_get_position(struct stepper *s)
 {
     uint32_t position = s->position;
     // If stepper is mid-move, subtract out steps not yet taken
-    if (HAVE_SINGLE_SCHEDULE && s->flags & SF_SINGLE_SCHED)
+    if (s->flags & SF_SINGLE_SCHED)
         position -= s->count;
     else
         position -= s->count / 2;
