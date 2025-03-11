@@ -37,7 +37,7 @@ CFLAGS_klipper.elf += -T $(OUT)src/generic/armcm_link.ld
 $(OUT)klipper.elf: $(OUT)src/generic/armcm_link.ld
 
 # Add source files
-src-y += stm32/watchdog.c stm32/gpio.c stm32/clockline.c stm32/dfu_reboot.c
+src-y += stm32/watchdog.c stm32/clockline.c stm32/dfu_reboot.c
 src-y += generic/crc16_ccitt.c
 src-y += generic/armcm_boot.c generic/armcm_irq.c generic/armcm_reset.c
 src-$(CONFIG_MACH_STM32F0) += stm32/stm32f0.c ../lib/stm32f0/system_stm32f0xx.c
@@ -52,8 +52,9 @@ src-$(CONFIG_MACH_STM32L4) += stm32/stm32l4.c ../lib/stm32l4/system_stm32l4xx.c
 timer-src-y := generic/armcm_timer.c
 timer-src-$(CONFIG_MACH_STM32F0) := generic/timer_irq.c stm32/stm32f0_timer.c
 timer-src-$(CONFIG_MACH_STM32G0) := generic/timer_irq.c stm32/stm32f0_timer.c
-gpio-src-y := stm32/gpioperiph.c
-gpio-src-$(CONFIG_MACH_STM32F1) :=
+gpio-src-y := stm32/gpio.c stm32/gpioperiph.c
+gpio-src-$(CONFIG_MACH_STM32F1) := stm32/gpio.c
+gpio-src-$(CONFIG_MACH_STM32H7) := stm32/stm32h7_gpio.c stm32/gpioperiph.c
 src-y += $(timer-src-y) $(gpio-src-y)
 adc-src-y := stm32/adc.c
 adc-src-$(CONFIG_MACH_STM32F0) := stm32/stm32f0_adc.c
