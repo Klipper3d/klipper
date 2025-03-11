@@ -22,6 +22,25 @@ command to reload the config and restart the host software.
 Printer is halted
 """
 
+def load_entrypoints():
+    if sys.version_info < (3, 8):
+        return None
+    if sys.version_info < (3, 10):
+        try:
+            from importlib_metadata import entry_points
+        except ImportError:
+            logging.warning(
+                'importlib_metadata backport not found,'
+                + ' unable to load custom extras'
+            )
+            return None
+    else:
+        from importlib.metadata import entry_points
+
+    discovered_extras = entry_points(group='klippy.extras')
+    logging.info("Discovered extras: %s", discovered_extras.names)
+    return discovered_extras
+
 class Printer:
     config_error = configfile.error
     command_error = gcode.CommandError
@@ -35,6 +54,7 @@ class Printer:
         self.run_result = None
         self.event_handlers = {}
         self.objects = collections.OrderedDict()
+        self.discovered_extras = None
         # Init printer components that must be setup prior to config
         for m in [gcode, webhooks]:
             m.add_early_printer_objects(self)
@@ -96,11 +116,19 @@ class Printer:
                                'extras', module_name + '.py')
         py_dirname = os.path.join(os.path.dirname(__file__),
                                   'extras', module_name, '__init__.py')
-        if not os.path.exists(py_name) and not os.path.exists(py_dirname):
+
+        if os.path.exists(py_name) or os.path.exists(py_dirname):
+            mod = importlib.import_module('extras.' + module_name)
+        elif (
+            self.discovered_extras is not None
+            and module_name in self.discovered_extras.names
+        ):
+            mod = self.discovered_extras[module_name].load()
+        else:
             if default is not configfile.sentinel:
                 return default
             raise self.config_error("Unable to load module '%s'" % (section,))
-        mod = importlib.import_module('extras.' + module_name)
+
         init_func = 'load_config'
         if len(module_parts) > 1:
             init_func = 'load_config_prefix'
@@ -117,6 +145,7 @@ class Printer:
         if self.bglogger is not None:
             pconfig.log_config(config)
         # Create printer components
+        self.discovered_extras = load_entrypoints()
         for m in [pins, mcu]:
             m.add_printer_objects(config)
         for section_config in config.get_prefix_sections(''):
