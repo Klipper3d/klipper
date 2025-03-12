@@ -2,9 +2,13 @@
 #define __STM32_GPIO_H
 
 #include <stdint.h> // uint32_t
+#include "autoconf.h" // CONFIG_MACH_STM32H7
 
 struct gpio_out {
     void *regs;
+#if CONFIG_MACH_STM32H7
+    struct odr_cache *oc;
+#endif
     uint32_t bit;
 };
 struct gpio_out gpio_out_setup(uint32_t pin, uint32_t val);
