@@ -45,21 +45,6 @@ class AxisTwistCompensation:
         self.zy_compensations = config.getlists('zy_compensations',
                                                 default=[], parser=float)
 
-        # Validate single compensation
-        valid_conditions = sum(
-            [
-                bool(self.z_compensations),
-                bool(self.zy_compensations)
-            ]
-        )
-
-        if valid_conditions > 1:
-            raise config.error(
-                """AXIS_TWIST_COMPENSATION: Only one type of compensation
-                can be present at a time:
-                either z_compensations or zy_compensations."""
-            )
-
         # setup calibrater
         self.calibrater = Calibrater(self, config)
         # register events
