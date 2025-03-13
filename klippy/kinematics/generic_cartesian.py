@@ -107,7 +107,7 @@ class MainCarriage(stepper.GenericPrinterCarriage):
     def is_active(self):
         if self.dual_carriage is None:
             return True
-        return self.dual_carriage.get_dc_module().is_active(self.axis, 0)
+        return self.dual_carriage.get_dc_module().is_active(self)
     def set_dual_carriage(self, carriage):
         old_dc = self.dual_carriage
         self.dual_carriage = carriage
@@ -150,8 +150,8 @@ class DualCarriage(stepper.GenericPrinterCarriage):
     def get_dc_module(self):
         return self.printer.lookup_object('dual_carriage')
     def is_active(self):
-        return self.get_dc_module().is_active(self.axis, 1)
-    def get_primary_carriage(self):
+        return self.get_dc_module().is_active(self)
+    def get_dual_carriage(self):
         return self.primary_carriage
 
 class GenericCartesianKinematics:
@@ -163,23 +163,23 @@ class GenericCartesianKinematics:
             toolhead.register_step_generator(s.generate_steps)
         self.dc_module = None
         if self.dc_carriages:
-            pcs = [dc.get_primary_carriage()
-                   for dc in self.dc_carriages]
+            pcs = [dc.get_dual_carriage() for dc in self.dc_carriages]
             axes = [dc.get_axis() for dc in self.dc_carriages]
             self.dc_module = idex_modes.DualCarriages(
                     self.printer, pcs, self.dc_carriages, axes)
             zero_pos = (0., 0.)
-            for active_dc_per_axis in itertools.product(*[(0, 1)]*len(axes)):
-                for i, axis in enumerate(axes):
-                    active_dc = active_dc_per_axis[i]
-                    dcs = self.dc_module.get_dc()
-                    dcs[active_dc].activate(axis, idex_modes.PRIMARY, zero_pos)
-                    dcs[1-active_dc].inactivate(axis, zero_pos)
+            for acs in itertools.product(*zip(pcs, self.dc_carriages)):
+                for c in acs:
+                    self.dc_module.get_carriage_wrapper(c).activate(
+                            idex_modes.PRIMARY, zero_pos)
+                    self.dc_module.get_carriage_wrapper(
+                            c.get_dual_carriage()).inactivate(zero_pos)
                 self._check_kinematics(config.error)
-            for axis in axes:
-                self.dc_module.get_dc()[0].activate(axis, idex_modes.PRIMARY,
-                                                    zero_pos)
-                self.dc_module.get_dc()[1].inactivate(axis, zero_pos)
+            for c in pcs:
+                self.dc_module.get_carriage_wrapper(c).activate(
+                        idex_modes.PRIMARY, zero_pos)
+                self.dc_module.get_carriage_wrapper(
+                        c.get_dual_carriage()).inactivate(zero_pos)
         else:
             self._check_kinematics(config.error)
         # Setup boundary checks
@@ -259,8 +259,8 @@ class GenericCartesianKinematics:
         orig_matr = copy.deepcopy(matr)
         for dc in self.dc_carriages:
             axis = dc.get_axis()
-            for i, c in enumerate([dc.get_primary_carriage(), dc]):
-                m, o = self.dc_module.get_transform(axis, i)
+            for c in [dc.get_dual_carriage(), dc]:
+                m, o = self.dc_module.get_transform(c)
                 for s in c.get_steppers():
                     matr[s.get_name()][axis] *= m
                     offs[s.get_name()][axis] += o
@@ -398,14 +398,14 @@ class GenericCartesianKinematics:
         self._check_multi_mcu_homing(gcmd.error)
         if self.dc_module:
             dc_state = self.dc_module.save_dual_carriage_state()
+            pcs = [dc.get_dual_carriage() for dc in self.dc_carriages]
             axes = [dc.get_axis() for dc in self.dc_carriages]
-            for active_dc_per_axis in itertools.product(*[(0, 1)]*len(axes)):
-                pos = toolhead.get_position()
-                for i, axis in enumerate(axes):
-                    active_dc = active_dc_per_axis[i]
-                    dcs = self.dc_module.get_dc()
-                    dcs[active_dc].activate(axis, idex_modes.PRIMARY, pos)
-                    dcs[1-active_dc].inactivate(axis, pos)
+            for acs in itertools.product(*zip(pcs, self.dc_carriages)):
+                for c in acs:
+                    self.dc_module.get_carriage_wrapper(c).activate(
+                            idex_modes.PRIMARY, pos)
+                    self.dc_module.get_carriage_wrapper(
+                            c.get_dual_carriage()).inactivate(pos)
                 self._check_kinematics(gcmd.error)
             self.dc_module.restore_dual_carriage_state(dc_state, move=0)
         else:

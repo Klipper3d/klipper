@@ -564,18 +564,17 @@ following information is available:
 
 The following information is available in
 [dual_carriage](Config_Reference.md#dual_carriage)
-on a cartesian, generic_cartesian, hybrid_corexy or hybrid_corexz robot
+on a cartesian, hybrid_corexy or hybrid_corexz robot
 - `carriage_0`: The mode of the carriage 0. Possible values are:
   "INACTIVE" and "PRIMARY".
 - `carriage_1`: The mode of the carriage 1. Possible values are:
   "INACTIVE", "PRIMARY", "COPY", and "MIRROR".
 
-If a user defined two dual carriages with `generic_cartesian` kinematic,
-the statuses exported are:
-- `carriage_0`: The array of length 2 - modes of the carriage 0 for X and Y
-  axes. Possible values are: "INACTIVE" and "PRIMARY".
-- `carriage_1`: The array of length 2 - modes of the carriage 1 for X and Y
-  axes. Possible values are: "INACTIVE", "PRIMARY", "COPY", and "MIRROR".
+On a `generic_cartesian` kinematic, the following information is
+available in `dual_carriage`:
+- `carriages["<carriage>"]`: The mode of the carriage `<carriage>`. Possible
+  values are "INACTIVE" and "PRIMARY" for the primary carriage and "INACTIVE",
+  "PRIMARY", "COPY", and "MIRROR" for the dual carriage.
 
 ## virtual_sdcard
 

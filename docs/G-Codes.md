@@ -341,19 +341,18 @@ The following command is available when the
 enabled.
 
 #### SET_DUAL_CARRIAGE
-`SET_DUAL_CARRIAGE CARRIAGE=[0|1] [AXIS=[X|Y]] [MODE=[PRIMARY|COPY|MIRROR]]`:
+`SET_DUAL_CARRIAGE CARRIAGE=<carriage> [MODE=[PRIMARY|COPY|MIRROR]]`:
 This command will change the mode of the specified carriage.
-If no `MODE` is provided it defaults to `PRIMARY`. Setting the mode
-to `PRIMARY` deactivates the other carriage and makes the specified
-carriage execute subsequent G-Code commands as-is. `COPY` and `MIRROR`
-modes are supported only for `CARRIAGE=1`. When set to either of these
-modes, carriage 1 will then track the subsequent moves of the carriage 0
-and either copy relative movements of it (in `COPY` mode) or execute them
-in the opposite (mirror) direction (in `MIRROR` mode). `AXIS` parameter is
-supported only if a user defined two dual carriages with `generic_cartesian`
-kinematic. In this case `AXIS` parameter can be omitted if `MODE` is `PRIMARY`,
-effectively changing the mode for both axes, but it must be specified for
-`COPY` and `MIRROR` modes.
+If no `MODE` is provided it defaults to `PRIMARY`. `<carriage>` must
+reference a defined primary or dual carriage for `generic_cartesian`
+kinematics or be 0 (for primary carriage) or 1 (for dual carriage)
+for all other kinematics supporting IDEX. Setting the mode to `PRIMARY`
+deactivates the other carriage and makes the specified carriage execute
+subsequent G-Code commands as-is. `COPY` and `MIRROR` modes are supported
+only for dual carriages. When set to either of these modes, dual carriage
+will then track the subsequent moves of its primary carriage and either
+copy relative movements of it (in `COPY` mode) or execute them in the
+opposite (mirror) direction (in `MIRROR` mode).
 
 #### SAVE_DUAL_CARRIAGE_STATE
 `SAVE_DUAL_CARRIAGE_STATE [NAME=<state_name>]`: Save the current positions
