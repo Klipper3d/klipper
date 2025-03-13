@@ -405,11 +405,6 @@ class GenericPrinterCarriage:
         else:
             mcu_endstop = self.lookup_endstop(self.endstop_pin, self.name)
         mcu_endstop.add_stepper(stepper)
-    def del_stepper(self, stepper):
-        if stepper not in self.steppers:
-            return
-        for mcu_endstop, _ in self.endstops:
-            mcu_endstop.del_stepper(stepper)
 
 class PrinterRail(GenericPrinterCarriage):
     def __init__(self, config, need_position_minmax=True,

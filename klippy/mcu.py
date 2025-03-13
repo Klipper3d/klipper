@@ -133,10 +133,6 @@ class MCU_trsync:
         if stepper in self._steppers:
             return
         self._steppers.append(stepper)
-    def del_stepper(self, stepper):
-        if stepper not in self._steppers:
-            return
-        self._steppers.remove(stepper)
     def get_steppers(self):
         return list(self._steppers)
     def _build_config(self):
@@ -257,10 +253,6 @@ class TriggerDispatch:
                         cerror = self._mcu.get_printer().config_error
                         raise cerror("Multi-mcu homing not supported on"
                                      " multi-mcu shared axis")
-    def del_stepper(self, stepper):
-        for trsync in self._trsyncs:
-            if trsync.get_mcu() == stepper.get_mcu():
-                trsync.del_stepper(stepper)
     def get_steppers(self):
         return [s for trsync in self._trsyncs for s in trsync.get_steppers()]
     def start(self, print_time):
@@ -307,8 +299,6 @@ class MCU_endstop:
         return self._mcu
     def add_stepper(self, stepper):
         self._dispatch.add_stepper(stepper)
-    def del_stepper(self, stepper):
-        self._dispatch.del_stepper(stepper)
     def get_steppers(self):
         return self._dispatch.get_steppers()
     def _build_config(self):

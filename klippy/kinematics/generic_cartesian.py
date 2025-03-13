@@ -25,75 +25,10 @@ def mat_transp(a):
         res.append([a[j][i] for j in range(len(a))])
     return res
 
-def find_eigenvectors(m, ek):
-    res = []
-    for i in range(3):
-        if abs(m[i][i]) < 1e-8:
-            for j in range(i+1, 3):
-                if abs(m[j][i]) > 1e-8:
-                    m[i], m[j] = m[j], m[i]
-                    break
-        if abs(m[i][i]) < 1e-8:
-            vr = [-m[k][i] for k in range(3)]
-            vr[i] = 1.
-            nrm_recipr = 1. / math.sqrt(mathutil.matrix_magsq(vr))
-            res.append([x * nrm_recipr for x in vr])
-            if len(res) == ek:
-                return res
-            continue
-        recipr = 1. / m[i][i]
-        for j in range(i+1, 3):
-            m[i][j] *= recipr
-        m[i][i] = 1.
-        for j in range(3):
-            if i != j:
-                c = m[j][i]
-                for k in range(i, 3):
-                    m[j][k] -= c * m[i][k]
-
-def mat_eigen(mtm):
-    a, d, f = mtm[0]
-    b, e = mtm[1][1:]
-    c = mtm[2][2]
-    x1 = a**2 + b**2 + c**2 - a*b - a*c - b*c + 3. * (d**2 + f**2 + e**2)
-    x2 = -(2. * a - b - c) * (2. * b - a - c) * (2. * c - a - b) \
-            + 9. * ((2. * c - a - b) * d**2 + (2. * b - a - c) * f**2 \
-            + (2. * a - b - c) * e**2) - 54. * d * e * f
-    phi = math.atan2(math.sqrt(max(4. * x1**3 - x2**2, 0.)), x2)
-    sqrt_x1 = math.sqrt(max(x1, 0.))
-    # Closed-form expressions for eigenvalues of a symmetric matrix
-    l = [li / 3. if abs(li) > 1e-8 else 0. for li in
-         [a + b + c - 2. * sqrt_x1 * math.cos(phi / 3.),
-          a + b + c + 2. * sqrt_x1 * math.cos((phi - math.pi) / 3.),
-          a + b + c + 2. * sqrt_x1 * math.cos((phi + math.pi) / 3.)]]
-    l.sort(reverse=True)
-    # Count different eigenvalues
-    lc = {l[0]: 1}
-    j = 0
-    for i in range(1, 3):
-        if abs(l[i]-l[j]) < 1e-8:
-            lc[l[j]] += 1
-        else:
-            j = i
-            lc[l[j]] = 1
-    v = []
-    # Find eigenvector(s) for each eigenvalue and its multiplicity
-    for li in sorted(lc.keys(), reverse=True):
-        mc = copy.deepcopy(mtm)
-        for j in range(3):
-            mc[j][j] -= li
-        v.extend(find_eigenvectors(mc, lc[li]))
-    return l, mat_transp(v)
-
 def mat_pseudo_inverse(m):
-    mtm = mat_mul(mat_transp(m), m)
-    l, v = mat_eigen(mtm)
-    # Compute matrix SVD and S pseudo-inverse
-    s = [[0.]*3 for i in range(3)]
-    for i in range(3):
-        s[i][i] = 1. / math.sqrt(l[i]) if l[i] else 0.
-    u = mat_mul(m, mat_mul(v, s))
-    pinv = mat_mul(v, mat_mul(s, mat_transp(u)))
+    mt = mat_transp(m)
+    mtm = mat_mul(mt, m)
+    pinv = mat_mul(mathutil.matrix_inv(mtm), mt)
     return pinv
 
 class MainCarriage(stepper.GenericPrinterCarriage):
@@ -126,8 +61,6 @@ class ExtraCarriage:
         return self.primary_carriage.get_axis()
     def add_stepper(self, stepper):
         self.primary_carriage.add_stepper(stepper, self.endstop_pin, self.name)
-    def del_stepper(self, stepper):
-        self.primary_carriage.del_stepper(stepper)
 
 class DualCarriage(stepper.GenericPrinterCarriage):
     def __init__(self, config, carriages):
@@ -317,6 +250,7 @@ class GenericCartesianKinematics:
         # Perform homing
         homing_state.home_rails([carriage], forcepos, homepos)
     def home(self, homing_state):
+        self._check_kinematics(self.printer.command_error)
         # Each axis is homed independently and in order
         for axis in homing_state.get_axes():
             carriage = self.carriages["xyz"[axis]]
@@ -352,16 +286,10 @@ class GenericCartesianKinematics:
         ranges = [c.get_range() for c in self.get_primary_carriages()]
         axes_min = gcode.Coord(*[r[0] for r in ranges], e=0.)
         axes_max = gcode.Coord(*[r[1] for r in ranges], e=0.)
-        A = self._get_kinematics_coeffs()[0]
-        P = mat_transp(mat_pseudo_inverse(A))
         return {
             'homed_axes': "".join(axes),
             'axis_minimum': axes_min,
             'axis_maximum': axes_max,
-            'stepper_kinematics': {s.get_name() : A[i]
-                                   for i, s in enumerate(self.steppers)},
-            'toolhead_kinematics': {s.get_name() : P[i]
-                                    for i, s in enumerate(self.steppers)},
         }
     cmd_SET_STEPPER_CARRIAGES_help = "Set stepper carriages"
     def cmd_SET_STEPPER_CARRIAGES(self, gcmd):
@@ -371,31 +299,23 @@ class GenericCartesianKinematics:
         steppers = [stepper for stepper in self.steppers
                     if stepper.get_name() == stepper_name
                     or stepper.get_name(short=True) == stepper_name]
-        if len(steppers) == 0:
+        if len(steppers) != 1:
             raise gcmd.error("Invalid STEPPER '%s' specified" % stepper_name)
         stepper = steppers[0]
         carriages_str = gcmd.get("CARRIAGES").lower()
         validate = not gcmd.get_int("DISABLE_CHECKS", 0)
         old_carriages = stepper.get_carriages()
-        stepper.update_carriages(carriages_str, self.all_carriages,
-                                 report_error=gcmd.error if validate else None)
+        old_kin_coeffs = stepper.get_kin_coeffs()
+        stepper.update_carriages(carriages_str, self.all_carriages, gcmd.error)
         new_carriages = stepper.get_carriages()
-        for c in old_carriages:
-            if c not in new_carriages:
-                c.del_stepper(stepper)
-        for c in new_carriages:
-            if c not in old_carriages:
-                c.add_stepper(stepper)
-        if not new_carriages:
-            stepper.set_trapq(None)
-        elif not old_carriages:
-            stepper.set_trapq(toolhead.get_trapq())
+        if new_carriages != old_carriages:
+            stepper.update_kin_coeffs(old_kin_coeffs)
+            raise gcmd.error("SET_STEPPER_CARRIAGES cannot add or remove "
+                             "carriages that the stepper controls")
         pos = toolhead.get_position()
         stepper.set_position(pos)
         if not validate:
             return
-        self._check_carriages_references(gcmd.error)
-        self._check_multi_mcu_homing(gcmd.error)
         if self.dc_module:
             dc_state = self.dc_module.save_dual_carriage_state()
             pcs = [dc.get_dual_carriage() for dc in self.dc_carriages]

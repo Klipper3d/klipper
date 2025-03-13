@@ -692,13 +692,14 @@ The commands in this section become automatically available when
 #### SET_STEPPER_CARRIAGES
 `SET_STEPPER_CARRIAGES STEPPER=<stepper_name> CARRIAGES=<carriages>
 [DISABLE_CHECKS=[0|1]]`: Set or update the stepper carriages.
-`<stepper_name>` must reference an existing stepper defined in
-`printer.cfg`, and `<carriages>` describes the carriages the stepper
-moves. All defined carriages can be specified here, as well as their
-linear combinations, for example `x`, `x+y`, `y-0.5*z`, `x-z`, etc.
-See [Generic Cartesian Kinematics](Config_Reference.md#generic-cartesian-kinematics)
+`<stepper_name>` must reference an existing stepper defined in `printer.cfg`,
+and `<carriages>` describes the carriages the stepper moves. See
+[Generic Cartesian Kinematics](Config_Reference.md#generic-cartesian-kinematics)
 for a more detailed overview of the `carriages` parameter in the
-stepper configuration section.
+stepper configuration section. Note that it is only possible
+to change the coefficients or signs of the carriages with this
+command, but a user cannot add or remove the carriages that the stepper
+controls.
 
 `SET_STEPPER_CARRIAGES` is an advanced tool, and the user is advised
 to exercise an extreme caution using it, since specifying incorrect
@@ -718,14 +719,11 @@ intermediate kinematic configurations, even if the final configuration
 is valid. In such cases a user can pass `DISABLE_CHECKS=1` parameters to
 all but the last command to disable intermediate checks. For example,
 if `stepper a` and `stepper b` initially have `x-y` and `x+y` carriages
-correspondingly, then the following sequence of commands will swap their
-carriages: `SET_STEPPER_CARRIAGES STEPPER='stepper a' CARRIAGES=x+y DISABLE_CHECKS=1`
-and `SET_STEPPER_CARRIAGES STEPPER='stepper b' CARRIAGES=x-y`, while
-still validating the final kinematics state. Be aware that passing
-`DISABLE_CHECKS=1` disables all internal validations, and lets a user
-configure even a semi-defined kinematics. This can become useful on very
-rare occasions such as particularly special homing procedures, but extreme
-caution is advised when using this feature.
+correspondingly, then the following sequence of commands will let a user
+effectively swap the carriage controls:
+`SET_STEPPER_CARRIAGES STEPPER=a CARRIAGES=x+y DISABLE_CHECKS=1`
+and `SET_STEPPER_CARRIAGES STEPPER=b CARRIAGES=x-y`, while
+still validating the final kinematics state.
 
 ### [hall_filament_width_sensor]
 
