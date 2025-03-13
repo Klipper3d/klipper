@@ -20,11 +20,10 @@ struct spi_software {
 };
 
 void
-command_spi_set_software_bus(uint32_t *args)
+command_spi_set_sw_bus(uint32_t *args)
 {
     uint8_t mode = args[4];
-    uint32_t rate = args[5];
-    uint8_t div = 0;
+    uint32_t pulse_ticks = args[5];
     if (mode > 3)
         shutdown("Invalid spi config");
 
@@ -34,14 +33,12 @@ command_spi_set_software_bus(uint32_t *args)
     ss->mosi = gpio_out_setup(args[2], 0);
     ss->sclk = gpio_out_setup(args[3], 0);
     ss->mode = mode;
-    while (((CONFIG_CLOCK_FREQ/2) >> div) > rate)
-        div++;
-    ss->sck_ticks = 1 << div;
+    ss->sck_ticks = pulse_ticks;
     spidev_set_software_bus(spi, ss);
 }
-DECL_COMMAND(command_spi_set_software_bus,
-             "spi_set_software_bus oid=%c miso_pin=%u mosi_pin=%u sclk_pin=%u"
-             " mode=%u rate=%u");
+DECL_COMMAND(command_spi_set_sw_bus,
+             "spi_set_sw_bus oid=%c miso_pin=%u mosi_pin=%u sclk_pin=%u"
+             " mode=%u pulse_ticks=%u");
 
 void
 spi_software_prepare(struct spi_software *ss)
