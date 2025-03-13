@@ -3789,6 +3789,10 @@ run_current:
 #   velocity" threshold (THIGH) to. This is typically used to disable
 #   the "CoolStep" feature at high speeds. The default is to not set a
 #   TMC "high velocity" threshold.
+#report_temp_always: False
+#   The driver can be disabled by power and temperature will be not available.
+#   If the driver always has power and is disabled only by enabling a pin,
+#   the driver can return the current temperature.
 #driver_MSLUT0: 2863314260
 #driver_MSLUT1: 1251300522
 #driver_MSLUT2: 608774441
