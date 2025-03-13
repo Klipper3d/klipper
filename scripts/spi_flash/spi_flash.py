@@ -112,8 +112,12 @@ SPI_CFG_CMDS = (
     "config_spi oid=%d pin=%s"                      # Original
 )
 SPI_BUS_CMD = "spi_set_bus oid=%d spi_bus=%s mode=%d rate=%d"
-SW_SPI_BUS_CMD = "spi_set_software_bus oid=%d " \
-    "miso_pin=%s mosi_pin=%s sclk_pin=%s mode=%d rate=%d"
+SW_SPI_BUS_CMDS = (
+    "spi_set_sw_bus oid=%d miso_pin=%s mosi_pin=%s "
+    "sclk_pin=%s mode=%d pulse_ticks=%d",
+    "spi_set_software_bus oid=%d miso_pin=%s mosi_pin=%s "
+    "sclk_pin=%s mode=%d rate=%d",
+)
 SPI_SEND_CMD = "spi_send oid=%c data=%*s"
 SPI_XFER_CMD = "spi_transfer oid=%c data=%*s"
 SPI_XFER_RESPONSE = "spi_transfer_response oid=%c response=%*s"
@@ -1279,6 +1283,8 @@ class MCUConnection:
             'spi_bus', self.enumerations.get('bus'))
         pin_enums = self.enumerations.get('pin')
         if bus == "swspi":
+            mcu_freq = self.clocksync.print_time_to_clock(1)
+            pulse_ticks = mcu_freq//SD_SPI_SPEED
             cfgpins = self.board_config['spi_pins']
             pins = [p.strip().upper() for p in cfgpins.split(',') if p.strip()]
             pin_err_msg = "Invalid Software SPI Pins: %s" % (cfgpins,)
@@ -1287,30 +1293,27 @@ class MCUConnection:
             for p in pins:
                 if p not in pin_enums:
                     raise SPIFlashError(pin_err_msg)
-            bus_cmd = SW_SPI_BUS_CMD % (SPI_OID, pins[0], pins[1], pins[2],
-                                        SPI_MODE, SD_SPI_SPEED)
+            bus_cmds = [
+                SW_SPI_BUS_CMDS[0] % (SPI_OID, pins[0], pins[1], pins[2],
+                                      SPI_MODE, pulse_ticks),
+                SW_SPI_BUS_CMDS[1] % (SPI_OID, pins[0], pins[1], pins[2],
+                                      SPI_MODE, SD_SPI_SPEED)
+            ]
         else:
             if bus not in bus_enums:
                 raise SPIFlashError("Invalid SPI Bus: %s" % (bus,))
-            bus_cmd = SPI_BUS_CMD % (SPI_OID, bus, SPI_MODE, SD_SPI_SPEED)
+            bus_cmds = SPI_BUS_CMD % (SPI_OID, bus, SPI_MODE, SD_SPI_SPEED)
         if cs_pin not in pin_enums:
             raise SPIFlashError("Invalid CS Pin: %s" % (cs_pin,))
-        cfg_cmds = [ALLOC_OIDS_CMD % (1,), bus_cmd]
+        cfg_cmds = [ALLOC_OIDS_CMD % (1,),]
         self._serial.send(cfg_cmds[0])
         spi_cfg_cmds = [
             SPI_CFG_CMDS[0] % (SPI_OID, cs_pin, False),
             SPI_CFG_CMDS[1] % (SPI_OID, cs_pin),
         ]
-        for cmd in spi_cfg_cmds:
-            try:
-                self._serial.send(cmd)
-            except self.proto_error:
-                if cmd == spi_cfg_cmds[-1]:
-                    raise
-            else:
-                cfg_cmds.insert(1, cmd)
-                break
-        self._serial.send(bus_cmd)
+        cfg_cmds.append(self._try_send_command(spi_cfg_cmds))
+        cfg_cmds.append(self._try_send_command(bus_cmds))
+        self._try_send_command(cfg_cmds)
         config_crc = zlib.crc32('\n'.join(cfg_cmds).encode()) & 0xffffffff
         self._serial.send(FINALIZE_CFG_CMD % (config_crc,))
         config = self.get_mcu_config()
@@ -1325,6 +1328,16 @@ class MCUConnection:
             logging.exception("SD Card Mount Failure")
             raise SPIFlashError(
                 "Failed to Initialize SD Card. Is it inserted?")
+
+    def _try_send_command(self, cmd_list):
+        for cmd in cmd_list:
+            try:
+                self._serial.send(cmd)
+            except self.proto_error:
+                if cmd == cmd_list[-1]:
+                    raise
+            else:
+                return cmd
 
     def _configure_mcu_sdiobus(self, printfunc=logging.info):
         bus = self.board_config['sdio_bus']
