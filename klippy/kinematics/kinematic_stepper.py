@@ -96,6 +96,11 @@ class KinematicStepper:
         return [i for i, c in enumerate(self.kin_coeffs) if c]
     def get_carriages(self):
         return self.carriages
+    def update_kin_coeffs(self, kin_coeffs):
+        self.kin_coeffs = kin_coeffs
+        ffi_main, ffi_lib = chelper.get_ffi()
+        ffi_lib.generic_cartesian_stepper_set_coeffs(
+                self.stepper_sk, kin_coeffs[0], kin_coeffs[1], kin_coeffs[2])
     def update_carriages(self, carriages_str, printer_carriages, report_error):
         kin_coeffs, carriages = parse_carriages_string(
                 carriages_str, printer_carriages,
@@ -104,8 +109,5 @@ class KinematicStepper:
             raise report_error(
                     "A valid string that references at least one carriage"
                     " must be provided for '%s'" % self.get_name())
-        self.kin_coeffs = kin_coeffs
         self.carriages = carriages
-        ffi_main, ffi_lib = chelper.get_ffi()
-        ffi_lib.generic_cartesian_stepper_set_coeffs(
-                self.stepper_sk, kin_coeffs[0], kin_coeffs[1], kin_coeffs[2])
+        self.update_kin_coeffs(kin_coeffs)
