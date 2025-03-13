@@ -299,13 +299,14 @@ def parse_step_distance(config, units_in_radians=None, note_valid=False):
 class GenericPrinterCarriage:
     def __init__(self, config, need_position_minmax=True,
                  default_position_endstop=None):
-        self.config = config
+        self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.steppers = []
         self.endstops = []
         self.endstop_map = {}
         self.endstop_pin = config.get('endstop_pin')
         # Primary endstop position
+        self.query_endstops = self.printer.load_object(config, 'query_endstops')
         mcu_endstop = self.lookup_endstop(self.endstop_pin, self.name)
         if hasattr(mcu_endstop, "get_position_endstop"):
             self.position_endstop = mcu_endstop.get_position_endstop()
@@ -372,8 +373,7 @@ class GenericPrinterCarriage:
     def get_endstops(self):
         return list(self.endstops)
     def lookup_endstop(self, endstop_pin, name):
-        printer = self.config.get_printer()
-        ppins = printer.lookup_object('pins')
+        ppins = self.printer.lookup_object('pins')
         pin_params = ppins.parse_pin(endstop_pin, True, True)
         # Normalize pin name
         pin_name = "%s:%s" % (pin_params['chip_name'], pin_params['pin'])
@@ -386,14 +386,13 @@ class GenericPrinterCarriage:
                                           'invert': pin_params['invert'],
                                           'pullup': pin_params['pullup']}
             self.endstops.append((mcu_endstop, name))
-            query_endstops = printer.load_object(self.config, 'query_endstops')
-            query_endstops.register_endstop(mcu_endstop, name)
+            self.query_endstops.register_endstop(mcu_endstop, name)
         else:
             mcu_endstop = endstop['endstop']
             changed_invert = pin_params['invert'] != endstop['invert']
             changed_pullup = pin_params['pullup'] != endstop['pullup']
             if changed_invert or changed_pullup:
-                raise self.config.error(
+                raise self.printer.config_error(
                         "Printer rail %s shared endstop pin %s "
                         "must specify the same pullup/invert settings" % (
                             self.get_name(), pin_name))
