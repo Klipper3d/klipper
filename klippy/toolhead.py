@@ -257,7 +257,9 @@ class ToolHead:
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
         self.trapq_append = ffi_lib.trapq_append
         self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
+        # Motion flushing
         self.step_generators = []
+        self.flush_trapqs = [self.trapq]
         # Create kinematics class
         gcode = self.printer.lookup_object('gcode')
         self.Coord = gcode.Coord
@@ -303,8 +305,8 @@ class ToolHead:
         if not self.can_pause:
             clear_history_time = flush_time - MOVE_HISTORY_EXPIRE
         free_time = sg_flush_time - self.kin_flush_delay
-        self.trapq_finalize_moves(self.trapq, free_time, clear_history_time)
-        self.extruder.update_move_time(free_time, clear_history_time)
+        for trapq in self.flush_trapqs:
+            self.trapq_finalize_moves(trapq, free_time, clear_history_time)
         # Flush stepcompress and mcu steppersync
         for m in self.all_mcus:
             m.flush_moves(flush_time, clear_history_time)
@@ -498,8 +500,14 @@ class ToolHead:
                 break
             eventtime = self.reactor.pause(eventtime + 0.100)
     def set_extruder(self, extruder, extrude_pos):
+        prev_ea_trapq = self.extruder.get_trapq()
+        if prev_ea_trapq in self.flush_trapqs:
+            self.flush_trapqs.remove(prev_ea_trapq)
         self.extruder = extruder
         self.commanded_pos[3] = extrude_pos
+        ea_trapq = extruder.get_trapq()
+        if ea_trapq is not None:
+            self.flush_trapqs.append(ea_trapq)
     def get_extruder(self):
         return self.extruder
     # Homing "drip move" handling
