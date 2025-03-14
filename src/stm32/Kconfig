@@ -485,7 +485,7 @@ choice
         depends on HAVE_STM32_FDCANBUS
         select CANSERIAL
     config STM32_MMENU_CANBUS_PH13_PH14
-        bool "CAN bus (on PH13/PH14)"
+        bool "CAN bus (on PH13/PH14)" if MACH_STM32H743
         depends on HAVE_STM32_FDCANBUS
         select CANSERIAL
     config STM32_USBCANBUS_PA11_PA12
@@ -519,7 +519,7 @@ choice
         bool "CAN bus (on PC2/PC3)"
         depends on HAVE_STM32_FDCANBUS
     config STM32_CMENU_CANBUS_PH13_PH14
-        bool "CAN bus (on PH13/PH14)"
+        bool "CAN bus (on PH13/PH14)" if MACH_STM32H743
         depends on HAVE_STM32_FDCANBUS
 endchoice
 
