@@ -8,6 +8,10 @@ All dates in this document are approximate.
 
 ## Changes
 
+20250315: `SET_KINEMATIC_POSITION` now forces the toolhead position
+only for the explicitly specified axes. Other axes will not assume
+homed state by default.
+
 20250308: The `AUTO` parameter of the
 `AXIS_TWIST_COMPENSATION_CALIBRATE` command has been removed.
 
