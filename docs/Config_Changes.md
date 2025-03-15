@@ -8,6 +8,8 @@ All dates in this document are approximate.
 
 ## Changes
 
+20250315: `[homing_override]` is permitted to home only some axes.
+
 20250315: `SET_KINEMATIC_POSITION` now forces the toolhead position
 only for the explicitly specified axes. Other axes will not assume
 homed state by default.

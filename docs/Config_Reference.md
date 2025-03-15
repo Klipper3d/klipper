@@ -1319,14 +1319,21 @@ gcode:
 #   found in the normal g-code input. See docs/Command_Templates.md
 #   for G-Code format. If a G28 is contained in this list of commands
 #   then it will invoke the normal homing procedure for the printer.
-#   The commands listed here must home all axes. This parameter must
-#   be provided.
+#   For simplicity, it is recommended to always home all printer axes.
+#   However, in order to speed up the homing process, it is possible
+#   to write the gcode that homes only some axes. The commands listed
+#   here must home at least all requested axes, which are passed from
+#   the original G28 invocation via the params pseudo-variable, as well
+#   as all axes, for which the position is forced via set_position_?
+#   parameters (see below). If no specific axis is requested to home, the
+#   commands here must home all axes. This parameter must be provided.
 #axes: xyz
 #   The axes to override. For example, if this is set to "z" then the
 #   override script will only be run when the z axis is homed (eg, via
 #   a "G28" or "G28 Z0" command). Note, the override script should
-#   still home all axes. The default is "xyz" which causes the
-#   override script to be run in place of all G28 commands.
+#   still home all required axes as described above. The default is
+#   "xyz" which causes the override script to be run in place of all
+#   G28 commands.
 #set_position_x:
 #set_position_y:
 #set_position_z:
@@ -1334,7 +1341,13 @@ gcode:
 #   position prior to running the above g-code commands. Setting this
 #   disables homing checks for that axis. This may be useful if the
 #   head must move prior to invoking the normal G28 mechanism for an
-#   axis. The default is to not force a position for an axis.
+#   axis. If specified for some of the axes, the homing override gcode
+#   must home those axes, otherwise the printer will assume an incorrect
+#   location after homing. An alternative to these parameters is to use
+#   SET_KINEMATIC_POSITION in the homing override gcode (potentially
+#   followed by another invocation of SET_KINEMATIC_POSITION with CLEAR
+#   parameter to reset homing state of some axes).
+#   The default is to not force a position for an axis.
 ```
 
 ### [endstop_phase]

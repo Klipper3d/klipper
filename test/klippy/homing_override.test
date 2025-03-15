@@ -1,0 +1,17 @@
+# Test cases of the homing_override
+CONFIG homing_override.cfg
+DICTIONARY atmega2560.dict
+
+G90
+G28 Y
+G0 Y50
+G28 X
+G0 X100
+G28 Z
+G0 Z20
+M84
+G28 Z
+G0 Z10
+G0 X50
+M84
+G28
