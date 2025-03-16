@@ -18,6 +18,7 @@ class DualCarriages:
                  safe_dist=-1):
         self.printer = printer
         self.axes = axes
+        self._init_steppers(primary_carriages + dual_carriages)
         self.primary_carriages = [
                 DualCarriage(c, dual_carriages[i], axes[i], active=True)
                 for i, c in enumerate(primary_carriages)]
@@ -41,7 +42,6 @@ class DualCarriages:
             pc = primary_carriages[i]
             self.safe_dist[axis] = min(abs(pc.position_min - dc.position_min),
                                        abs(pc.position_max - dc.position_max))
-        self._init_steppers()
         self.printer.add_object('dual_carriage', self)
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
         gcode = self.printer.lookup_object('gcode')
@@ -56,17 +56,17 @@ class DualCarriages:
                    'RESTORE_DUAL_CARRIAGE_STATE',
                    self.cmd_RESTORE_DUAL_CARRIAGE_STATE,
                    desc=self.cmd_RESTORE_DUAL_CARRIAGE_STATE_help)
-    def _init_steppers(self):
+    def _init_steppers(self, carriages):
         ffi_main, ffi_lib = chelper.get_ffi()
         self.dc_stepper_kinematics = []
         self.orig_stepper_kinematics = []
         steppers = set()
-        for name, dc in self.dc_carriages.items():
-            c_steppers = dc.carriage.get_steppers()
+        for carriage in carriages:
+            c_steppers = carriage.get_steppers()
             if not c_steppers:
                 raise self.printer.config_error(
                         "At least one stepper must be "
-                        "associated with carriage: %s" % name)
+                        "associated with carriage: %s" % carriage.get_name())
             steppers.update(c_steppers)
         for s in steppers:
             sk = ffi_main.gc(ffi_lib.dual_carriage_alloc(), ffi_lib.free)
@@ -320,6 +320,7 @@ class DualCarriage:
     def __init__(self, carriage, dual_carriage, axis, active):
         self.carriage = carriage
         self.dual_carriage = dual_carriage
+        self.sks = [s.get_stepper_kinematics() for s in carriage.get_steppers()]
         self.axis = axis
         self.mode = (INACTIVE, PRIMARY)[active]
         self.offset = 0.
@@ -332,8 +333,7 @@ class DualCarriage:
         return position[self.axis] * self.scale + self.offset
     def apply_transform(self):
         ffi_main, ffi_lib = chelper.get_ffi()
-        for s in self.carriage.get_steppers():
-            sk = s.get_stepper_kinematics()
+        for sk in self.sks:
             ffi_lib.dual_carriage_set_transform(
                     sk, self.ENC_AXES[self.axis], self.scale, self.offset)
     def activate(self, mode, position, old_position=None):
