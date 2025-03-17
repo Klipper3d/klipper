@@ -493,7 +493,7 @@ usb_req_set_line(struct usb_ctrlrequest *req)
 static void
 usb_req_get_status(struct usb_ctrlrequest * req)
 {
-    // Basic implementation of GET STATUS. Doesn't handle status requests for 
+    // Basic implementation of GET STATUS. Doesn't handle status requests for
     // Interfaces or Endpoints
     typedef uint16_t status_t;
     if (req->wValue || req->wLength != sizeof(status_t) || req->wIndex
@@ -504,7 +504,7 @@ usb_req_get_status(struct usb_ctrlrequest * req)
     }
 
     // config descriptor already contains "Self Powered" and
-    // "Remote Wakeup Enabled" flags. 
+    // "Remote Wakeup Enabled" flags.
     const status_t is_self_powered =
             (cdc_config_descriptor.config.bmAttributes & (1<<6)) != 0;
     const status_t remote_wakeup =
