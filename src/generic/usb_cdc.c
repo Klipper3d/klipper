@@ -524,9 +524,9 @@ usb_req_get_status(struct usb_ctrlrequest * req)
     // "Remote Wakeup Enabled" flags this message requests layout of descriptor
     // can be found in usb_20.pdf page 265, 266
     const status_t is_self_powered =
-            (cdc_config_descriptor.config.bmAttributes & (1<<6)) > 0;
+            (cdc_config_descriptor.config.bmAttributes & (1<<6)) != 0;
     const status_t remote_wakeup =
-            (cdc_config_descriptor.config.bmAttributes & (1<<5)) > 0;
+            (cdc_config_descriptor.config.bmAttributes & (1<<5)) != 0;
 
 
     // pack status data and send
