@@ -493,25 +493,8 @@ usb_req_set_line(struct usb_ctrlrequest *req)
 static void
 usb_req_get_status(struct usb_ctrlrequest * req)
 {
-    // zip file from https://www.usb.org/document-library/usb-20-specification
-    // filename: usb_20.pdf page 254 (9.4.5 Get Status)
-
-    // Verify request fields
-    // Special attention must be taken for bRequest
-    // if there are issues in the future.
-    // bRequest specifies the target of the status request.
-    // The USB spec mentions that the value may be "Device, Interface,
-    // or Endpoint"-number.
-    // For Interfaces (usb_interface_descriptor::bInterfaceNumber)
-    // status must always be zero.
-    // For Endpoints (usb_endpoint_descriptor::bEndpointAddress)
-    // the first bit indicates if the endpoint is halted.
-    // This isn't implemented and can be set to zero.
-    // For devices the self powered state and remote wakeup must be sent,
-    // but I'm not sure what bRequest number identifies a 'Device'.
-    // Experimenting with it, I only ever got zero.
-    // Referenced tinyusb https://github.com/hathach/tinyusb
-    // in src/device/usbd.c process_control_request()
+    // Basic implementation of GET STATUS. Doesn't handle status requests for 
+    // Interfaces or Endpoints
     typedef uint16_t status_t;
     if (req->wValue || req->wLength != sizeof(status_t) || req->wIndex
         || req->bRequest)
@@ -520,9 +503,8 @@ usb_req_get_status(struct usb_ctrlrequest * req)
         return;
     }
 
-    // config descriptor contains "Self Powered" and
-    // "Remote Wakeup Enabled" flags this message requests layout of descriptor
-    // can be found in usb_20.pdf page 265, 266
+    // config descriptor already contains "Self Powered" and
+    // "Remote Wakeup Enabled" flags. 
     const status_t is_self_powered =
             (cdc_config_descriptor.config.bmAttributes & (1<<6)) != 0;
     const status_t remote_wakeup =
