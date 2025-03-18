@@ -209,10 +209,12 @@ class HallFilamentWidthSensor:
                       +self.lastFilamentWidthReading2))
         gcmd.respond_info(response)
     def get_status(self, eventtime):
-        return {'Diameter': self.diameter,
+        status = self.runout_helper.get_status(eventtime)
+        status.update({'Diameter': self.diameter,
                 'Raw':(self.lastFilamentWidthReading+
                  self.lastFilamentWidthReading2),
-                'is_active':self.is_active}
+                'is_active':self.is_active})
+        return status
     def cmd_log_enable(self, gcmd):
         self.is_log = True
         gcmd.respond_info("Filament width logging Turned On")
