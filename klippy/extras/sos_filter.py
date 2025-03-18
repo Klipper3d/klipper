@@ -24,6 +24,27 @@ def as_fixed_q16(val):
     return assert_is_int32(fixed_val, "Fixed point Q16 overflow")
 
 
+#########################
+## Config Parsing Helpers
+
+# support for validating individual options in a config list
+def getfloatlist(config, option, above=None, below=None, max_len=None):
+    values = config.getfloatlist(option, default=[])
+    if max_len is not None and len(values) > max_len:
+        raise config.error("Option '%s' in section '%s' must have maximum"
+                           " length %s" % (option, config.get_name(), max_len))
+    for value in values:
+        validatefloat(config, option, value, above, below)
+    return values
+
+def validatefloat(config, option, value, above, below):
+    if above is not None and value <= above:
+        raise config.error("Option '%s' in section '%s' must be above %s"
+                    % (option, config.get_name(), above))
+    if below is not None and value >= below:
+        raise config.error("Option '%s' in section '%s' must be below %s"
+                     % (option, config.get_name(), below))
+
 # Digital filter designer and container
 class DigitalFilter:
     def __init__(self, sps, cfg_error, highpass=None, lowpass=None,
