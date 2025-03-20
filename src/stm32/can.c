@@ -333,6 +333,6 @@ can_init(void)
         armcm_enable_irq(CAN_IRQHandler, CAN_TX_IRQn, 0);
     if (CAN_RX0_IRQn != CAN_SCE_IRQn)
         armcm_enable_irq(CAN_IRQHandler, CAN_SCE_IRQn, 0);
-    SOC_CAN->IER = CAN_IER_FMPIE0 | CAN_IER_ERRIE;
+    SOC_CAN->IER = CAN_IER_FMPIE0 | CAN_IER_ERRIE | CAN_IER_LECIE;
 }
 DECL_INIT(can_init);
