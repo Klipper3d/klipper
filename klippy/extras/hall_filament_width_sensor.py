@@ -125,7 +125,7 @@ class HallFilamentWidthSensor:
         # Update filament array for lastFilamentWidthReading
         self.update_filament_array(last_epos)
         # Check runout
-        self.runout_helper.note_filament_present(
+        self.runout_helper.note_filament_present(eventtime,
             self.runout_dia_min <= self.diameter <= self.runout_dia_max)
         # Does filament exists
         if self.diameter > 0.5:
