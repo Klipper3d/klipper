@@ -1549,6 +1549,41 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#load_cell" class="md-nav__link">
+    [load_cell]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_cell_diagnostic" class="md-nav__link">
+    LOAD_CELL_DIAGNOSTIC
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_cell_calibrate" class="md-nav__link">
+    LOAD_CELL_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_cell_tare" class="md-nav__link">
+    LOAD_CELL_TARE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_cell_read-load_cellname" class="md-nav__link">
+    LOAD_CELL_READ load_cell="name"
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#heaters" class="md-nav__link">
     [heaters]
   </a>
@@ -3000,6 +3035,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -3792,6 +3841,41 @@
         
       </ul>
     </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_cell" class="md-nav__link">
+    [load_cell]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_cell_diagnostic" class="md-nav__link">
+    LOAD_CELL_DIAGNOSTIC
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_cell_calibrate" class="md-nav__link">
+    LOAD_CELL_CALIBRATE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_cell_tare" class="md-nav__link">
+    LOAD_CELL_TARE
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_cell_read-load_cellname" class="md-nav__link">
+    LOAD_CELL_READ load_cell="name"
+  </a>
   
 </li>
         
@@ -5354,6 +5438,34 @@ and RAW sensor value for calibration points.</p>
 <p><code>ENABLE_FILAMENT_WIDTH_LOG</code>: Turn on diameter logging.</p>
 <h4 id="disable_filament_width_log">DISABLE_FILAMENT_WIDTH_LOG<a class="headerlink" href="#disable_filament_width_log" title="Permanent link">&para;</a></h4>
 <p><code>DISABLE_FILAMENT_WIDTH_LOG</code>: Turn off diameter logging.</p>
+<h3 id="load_cell">[load_cell]<a class="headerlink" href="#load_cell" title="Permanent link">&para;</a></h3>
+<p>The following commands are enabled if a
+<a href="Config_Reference.html#load_cell">load_cell config section</a> has been enabled.</p>
+<h3 id="load_cell_diagnostic">LOAD_CELL_DIAGNOSTIC<a class="headerlink" href="#load_cell_diagnostic" title="Permanent link">&para;</a></h3>
+<p><code>LOAD_CELL_DIAGNOSTIC [LOAD_CELL=&lt;config_name&gt;]</code>: This command collects 10
+seconds of load cell data and reports statistics that can help you verify proper
+operation of the load cell. This command can be run on both calibrated and
+uncalibrated load cells.</p>
+<h3 id="load_cell_calibrate">LOAD_CELL_CALIBRATE<a class="headerlink" href="#load_cell_calibrate" title="Permanent link">&para;</a></h3>
+<p><code>LOAD_CELL_CALIBRATE [LOAD_CELL=&lt;config_name&gt;]</code>: Start the guided calibration
+utility. Calibration is a 3 step process:</p>
+<ol>
+<li>First you remove all load from the load cell and run the <code>TARE</code> command</li>
+<li>Next you apply a known load to the load cell and run the
+<code>CALIBRATE GRAMS=nnn</code> command</li>
+<li>Finally use the <code>ACCEPT</code> command to save the results</li>
+</ol>
+<p>You can cancel the calibration process at any time with <code>ABORT</code>.</p>
+<h3 id="load_cell_tare">LOAD_CELL_TARE<a class="headerlink" href="#load_cell_tare" title="Permanent link">&para;</a></h3>
+<p><code>LOAD_CELL_TARE [LOAD_CELL=&lt;config_name&gt;]</code>: This works just like the tare button
+on digital scale. It sets the current raw reading of the load cell to be the
+zero point reference value. The response is the percentage of the sensors range
+that was read and the raw value in counts.</p>
+<h3 id="load_cell_read-load_cellname">LOAD_CELL_READ load_cell="name"<a class="headerlink" href="#load_cell_read-load_cellname" title="Permanent link">&para;</a></h3>
+<p><code>LOAD_CELL_READ [LOAD_CELL=&lt;config_name&gt;]</code>:
+This command takes a reading from the load cell. The response is the percentage
+of the sensors range that was read and the raw value in counts. If the load cell
+is calibrated a force in grams is also reported.</p>
 <h3 id="heaters">[heaters]<a class="headerlink" href="#heaters" title="Permanent link">&para;</a></h3>
 <p>The heaters module is automatically loaded if a heater is defined in
 the config file.</p>

@@ -1011,6 +1011,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#load_cell" class="md-nav__link">
+    load_cell
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#manual_probe" class="md-nav__link">
     manual_probe
   </a>
@@ -1654,6 +1661,20 @@
 
             
           
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
+      </a>
+    </li>
+  
+
+            
+          
         </ul>
       </nav>
     </li>
@@ -1851,6 +1872,13 @@
         <li class="md-nav__item">
   <a href="#led" class="md-nav__link">
     led
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#load_cell" class="md-nav__link">
+    load_cell
   </a>
   
 </li>
@@ -2356,6 +2384,17 @@ is always available):</p>
   the blue value (3rd item in color list) of the second neopixel in a
   chain could be accessed at
   <code>printer["neopixel &lt;config_name&gt;"].color_data[1][2]</code>.</li>
+</ul>
+<h2 id="load_cell">load_cell<a class="headerlink" href="#load_cell" title="Permanent link">&para;</a></h2>
+<p>The following information is available for each <code>[load_cell name]</code>:</p>
+<ul>
+<li>'is_calibrated': True/False is the load cell calibrated</li>
+<li>'counts_per_gram': The number of raw sensor counts that equals 1 gram of force</li>
+<li>'reference_tare_counts': The reference number of raw sensor counts for 0 force</li>
+<li>'tare_counts': The current number of raw sensor counts for 0 force</li>
+<li>'force_g': The force in grams, averaged over the last polling period.</li>
+<li>'min_force_g': The minimum force in grams, over the last polling period.</li>
+<li>'max_force_g': The maximum force in grams, over the last polling period.</li>
 </ul>
 <h2 id="manual_probe">manual_probe<a class="headerlink" href="#manual_probe" title="Permanent link">&para;</a></h2>
 <p>The following information is available in the
