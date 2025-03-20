@@ -51,10 +51,6 @@ class HX71xBase:
         self.batch_bulk = bulk_sensor.BatchBulkHelper(
             self.printer, self._process_batch, self._start_measurements,
             self._finish_measurements, UPDATE_INTERVAL)
-        # publish raw samples to the socket
-        dump_path = "%s/dump_%s" % (sensor_type, sensor_type)
-        hdr = {'header': ('time', 'counts', 'value')}
-        self.batch_bulk.add_mux_endpoint(dump_path, "sensor", self.name, hdr)
         # Command Configuration
         self.query_hx71x_cmd = None
         mcu.add_config_cmd(
