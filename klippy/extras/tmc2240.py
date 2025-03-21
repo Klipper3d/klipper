@@ -336,6 +336,34 @@ class TMC2240CurrentHelper:
         val = self.fields.set_field("irun", irun)
         self.mcu_tmc.set_register("IHOLD_IRUN", val, print_time)
 
+######################################################################
+# TMC stepper overvoltage config helper
+######################################################################
+
+def TMC2240OvervoltageHelper(config, mcu_tmc):
+    fields = mcu_tmc.get_fields()
+    ov_thres = config.getfloat(
+        'overvoltage_threshold',
+        37.735, # 0xF25 by default
+        maxval = 40.0,
+    )
+    overvoltage_vth = int(ov_thres / 0.009732)
+    fields.set_field("overvoltage_vth", overvoltage_vth)
+
+######################################################################
+# TMC stepper overtemperature warning config helper
+######################################################################
+
+def TMC2240OvertemperatureWarningHelper(config, mcu_tmc):
+    fields = mcu_tmc.get_fields()
+    otw_thres = config.getfloat(
+        'overtemperature_warning_threshold',
+        120.0, # 0xB92 by default
+        maxval = 120.0,
+    )
+    overtempprewarning_vth = int((otw_thres * 7.7) + 2038)
+    fields.set_field("overtempprewarning_vth", overtempprewarning_vth)
+
 
 ######################################################################
 # TMC2240 printer object
@@ -357,6 +385,8 @@ class TMC2240:
         tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
         current_helper = TMC2240CurrentHelper(config, self.mcu_tmc)
+        TMC2240OvervoltageHelper(config, self.mcu_tmc)
+        TMC2240OvertemperatureWarningHelper(config, self.mcu_tmc)
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
         cmdhelper.setup_register_dump(ReadRegisters)
         self.get_phase_offset = cmdhelper.get_phase_offset
