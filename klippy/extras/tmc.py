@@ -93,6 +93,8 @@ class TMCErrorCheck:
         self.mcu_tmc = mcu_tmc
         self.fields = mcu_tmc.get_fields()
         self.check_timer = None
+        self.temp_timer = None
+        self.temp_always = config.getboolean('report_temp_always', False)
         self.last_drv_status = self.last_drv_fields = None
         # Setup for GSTAT query
         reg_name = self.fields.lookup_register("drv_err")
@@ -128,6 +130,11 @@ class TMCErrorCheck:
         if self.adc_temp_reg is not None:
             pheaters = self.printer.load_object(config, 'heaters')
             pheaters.register_monitor(config)
+    def handle_connect(self):
+        if self.adc_temp_reg is not None and self.temp_always:
+            reactor = self.printer.get_reactor()
+            self.temp_timer = reactor.register_timer(self._query_temperature)
+            reactor.update_timer(self.temp_timer, reactor.NOW)
     def _query_register(self, reg_info, try_clear=False):
         last_value, reg_name, mask, err_mask, cs_actual_mask = reg_info
         cleared_flags = 0
@@ -167,32 +174,39 @@ class TMCErrorCheck:
                 cleared_flags |= val & err_mask
                 self.mcu_tmc.set_register(reg_name, val & err_mask)
         return cleared_flags
-    def _query_temperature(self):
+    def _query_temperature(self, eventtime=None):
         try:
             self.adc_temp = self.mcu_tmc.get_register(self.adc_temp_reg)
         except self.printer.command_error as e:
             # Ignore comms error for temperature
             self.adc_temp = None
-            return
+        return eventtime + 1.
     def _do_periodic_check(self, eventtime):
         try:
             self._query_register(self.drv_status_reg_info)
             if self.gstat_reg_info is not None:
                 self._query_register(self.gstat_reg_info)
-            if self.adc_temp_reg is not None:
-                self._query_temperature()
         except self.printer.command_error as e:
             self.printer.invoke_shutdown(str(e))
             return self.printer.get_reactor().NEVER
         return eventtime + 1.
-    def stop_checks(self):
+    def _stop_err_checks(self):
         if self.check_timer is None:
             return
         self.printer.get_reactor().unregister_timer(self.check_timer)
         self.check_timer = None
+    def _stop_temp_monitor(self):
+        if self.temp_always or self.temp_timer is None:
+            return
+        self.printer.get_reactor().unregister_timer(self.temp_timer)
+        self.temp_timer = None
+        self.adc_temp = None
+    def stop_checks(self):
+        self._stop_err_checks()
+        self._stop_temp_monitor()
     def start_checks(self):
-        if self.check_timer is not None:
-            self.stop_checks()
+        self._stop_err_checks()
+        self._stop_temp_monitor()
         cleared_flags = 0
         self._query_register(self.drv_status_reg_info)
         if self.gstat_reg_info is not None:
@@ -202,23 +216,32 @@ class TMCErrorCheck:
         curtime = reactor.monotonic()
         self.check_timer = reactor.register_timer(self._do_periodic_check,
                                                   curtime + 1.)
+        if self.temp_timer is None and self.adc_temp_reg is not None:
+            self.temp_timer = reactor.register_timer(self._query_temperature)
+            reactor.update_timer(self.temp_timer, curtime + 1.)
         if cleared_flags:
             reset_mask = self.fields.all_fields["GSTAT"]["reset"]
             if cleared_flags & reset_mask:
                 return True
         return False
     def get_status(self, eventtime=None):
-        if self.check_timer is None:
-            return {'drv_status': None, 'temperature': None}
-        temp = None
+        status = {
+            'drv_status': None,
+            'temperature': None
+        }
+        if self.temp_always:
+            status["temperature"] = 0
         if self.adc_temp is not None:
             temp = round((self.adc_temp - 2038) / 7.7, 2)
-        last_value, reg_name = self.drv_status_reg_info[:2]
-        if last_value != self.last_drv_status:
-            self.last_drv_status = last_value
-            fields = self.fields.get_reg_fields(reg_name, last_value)
-            self.last_drv_fields = {n: v for n, v in fields.items() if v}
-        return {'drv_status': self.last_drv_fields, 'temperature': temp}
+            status["temperature"] = temp
+        if self.check_timer is not None:
+            last_value, reg_name = self.drv_status_reg_info[:2]
+            if last_value != self.last_drv_status:
+                self.last_drv_status = last_value
+                fields = self.fields.get_reg_fields(reg_name, last_value)
+                self.last_drv_fields = {n: v for n, v in fields.items() if v}
+            status["drv_status"] = self.last_drv_fields
+        return status
 
 
 ######################################################################
@@ -406,6 +429,8 @@ class TMCCommandHelper:
             self._init_registers()
         except self.printer.command_error as e:
             logging.info("TMC %s failed to init: %s", self.name, str(e))
+        # Run temperature monitoring if avaliable
+        self.echeck_helper.handle_connect()
     # get_status information export
     def get_status(self, eventtime=None):
         cpos = None
