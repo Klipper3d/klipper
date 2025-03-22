@@ -197,6 +197,8 @@ class PrinterExtruder:
         return self.heater
     def get_trapq(self):
         return self.trapq
+    def get_axis_gcode_id(self):
+        return 'E'
     def stats(self, eventtime):
         return self.heater.stats(eventtime)
     def check_move(self, move, ea_index):
@@ -298,6 +300,8 @@ class DummyExtruder:
         raise self.printer.command_error("Extruder not configured")
     def get_trapq(self):
         return None
+    def get_axis_gcode_id(self):
+        return 'E'
 
 def add_printer_objects(config):
     printer = config.get_printer()
