@@ -21,14 +21,14 @@ class Move:
         self.timing_callbacks = []
         velocity = min(speed, toolhead.max_velocity)
         self.is_kinematic_move = True
-        self.axes_d = axes_d = [end_pos[i] - start_pos[i] for i in (0, 1, 2, 3)]
+        self.axes_d = axes_d = [ep - sp for sp, ep in zip(start_pos, end_pos)]
         self.move_d = move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
         if move_d < .000000001:
             # Extrude only move
-            self.end_pos = (start_pos[0], start_pos[1], start_pos[2],
-                            end_pos[3])
+            self.end_pos = ((start_pos[0], start_pos[1], start_pos[2])
+                            + self.end_pos[3:])
             axes_d[0] = axes_d[1] = axes_d[2] = 0.
-            self.move_d = move_d = abs(axes_d[3])
+            self.move_d = move_d = max([abs(ad) for ad in axes_d[3:]])
             inv_move_d = 0.
             if move_d:
                 inv_move_d = 1. / move_d
@@ -65,11 +65,13 @@ class Move:
     def calc_junction(self, prev_move):
         if not self.is_kinematic_move or not prev_move.is_kinematic_move:
             return
-        # Allow extruder to calculate its maximum junction
-        extruder_v2 = self.toolhead.extruder.calc_junction(prev_move, self)
-        max_start_v2 = min(extruder_v2, self.max_cruise_v2,
-                           prev_move.max_cruise_v2, prev_move.next_junction_v2,
-                           prev_move.max_start_v2 + prev_move.delta_v2)
+        # Allow extra axes to calculate maximum junction
+        ea_v2 = [ea.calc_junction(prev_move, self, e_index+3)
+                 for e_index, ea in enumerate(self.toolhead.extra_axes)]
+        max_start_v2 = min([self.max_cruise_v2,
+                            prev_move.max_cruise_v2, prev_move.next_junction_v2,
+                            prev_move.max_start_v2 + prev_move.delta_v2]
+                           + ea_v2)
         # Find max velocity using "approximated centripetal velocity"
         axes_r = self.axes_r
         prev_axes_r = prev_move.axes_r
@@ -263,7 +265,8 @@ class ToolHead:
         # Create kinematics class
         gcode = self.printer.lookup_object('gcode')
         self.Coord = gcode.Coord
-        self.extruder = kinematics.extruder.DummyExtruder(self.printer)
+        extruder = kinematics.extruder.DummyExtruder(self.printer)
+        self.extra_axes = [extruder]
         kin_name = config.get('kinematics')
         try:
             mod = importlib.import_module('kinematics.' + kin_name)
@@ -351,8 +354,9 @@ class ToolHead:
                     move.start_pos[0], move.start_pos[1], move.start_pos[2],
                     move.axes_r[0], move.axes_r[1], move.axes_r[2],
                     move.start_v, move.cruise_v, move.accel)
-            if move.axes_d[3]:
-                self.extruder.process_move(next_move_time, move)
+            for e_index, ea in enumerate(self.extra_axes):
+                if move.axes_d[e_index + 3]:
+                    ea.process_move(next_move_time, move, e_index + 3)
             next_move_time = (next_move_time + move.accel_t
                               + move.cruise_t + move.decel_t)
             for cb in move.timing_callbacks:
@@ -472,8 +476,9 @@ class ToolHead:
             return
         if move.is_kinematic_move:
             self.kin.check_move(move)
-        if move.axes_d[3]:
-            self.extruder.check_move(move)
+        for e_index, ea in enumerate(self.extra_axes):
+            if move.axes_d[e_index + 3]:
+                ea.check_move(move, e_index + 3)
         self.commanded_pos[:] = move.end_pos
         want_flush = self.lookahead.add_move(move)
         if want_flush:
@@ -500,16 +505,38 @@ class ToolHead:
                 break
             eventtime = self.reactor.pause(eventtime + 0.100)
     def set_extruder(self, extruder, extrude_pos):
-        prev_ea_trapq = self.extruder.get_trapq()
+        # XXX - should use add_extra_axis
+        prev_ea_trapq = self.extra_axes[0].get_trapq()
         if prev_ea_trapq in self.flush_trapqs:
             self.flush_trapqs.remove(prev_ea_trapq)
-        self.extruder = extruder
+        self.extra_axes[0] = extruder
         self.commanded_pos[3] = extrude_pos
         ea_trapq = extruder.get_trapq()
         if ea_trapq is not None:
             self.flush_trapqs.append(ea_trapq)
     def get_extruder(self):
-        return self.extruder
+        return self.extra_axes[0]
+    def add_extra_axis(self, ea, axis_pos):
+        self._flush_lookahead()
+        self.extra_axes.append(ea)
+        self.commanded_pos.append(axis_pos)
+        ea_trapq = ea.get_trapq()
+        if ea_trapq is not None:
+            self.flush_trapqs.append(ea_trapq)
+        self.printer.send_event("toolhead:update_extra_axes")
+    def remove_extra_axis(self, ea):
+        self._flush_lookahead()
+        if ea not in self.extra_axes:
+            return
+        ea_index = self.extra_axes.index(ea) + 3
+        ea_trapq = ea.get_trapq()
+        if ea_trapq in self.flush_trapqs:
+            self.flush_trapqs.remove(ea_trapq)
+        self.commanded_pos.pop(ea_index)
+        self.extra_axes.pop(ea_index - 3)
+        self.printer.send_event("toolhead:update_extra_axes")
+    def get_extra_axes(self):
+        return [None, None, None] + self.extra_axes
     # Homing "drip move" handling
     def drip_update_time(self, next_print_time, drip_completion, addstepper=()):
         # Transition from "NeedPrime"/"Priming"/main state to "Drip" state
@@ -593,12 +620,13 @@ class ToolHead:
     def get_status(self, eventtime):
         print_time = self.print_time
         estimated_print_time = self.mcu.estimated_print_time(eventtime)
+        extruder = self.extra_axes[0]
         res = dict(self.kin.get_status(eventtime))
         res.update({ 'print_time': print_time,
                      'stalls': self.print_stall,
                      'estimated_print_time': estimated_print_time,
-                     'extruder': self.extruder.get_name(),
-                     'position': self.Coord(*self.commanded_pos),
+                     'extruder': extruder.get_name(),
+                     'position': self.Coord(*self.commanded_pos[:4]),
                      'max_velocity': self.max_velocity,
                      'max_accel': self.max_accel,
                      'minimum_cruise_ratio': self.min_cruise_ratio,
