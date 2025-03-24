@@ -39,7 +39,7 @@ SET_BANK_0 = 0x00
 SET_BANK_1 = 0x10
 SET_BANK_2 = 0x20
 SET_BANK_3 = 0x30
-SET_ACCEL_CONFIG =  0x04 # 8g full scale, 1209Hz BW, ??? delay 4.5kHz samp rate
+SET_ACCEL_CONFIG =  0x06 # 16g full scale, 1209Hz BW, ??? delay 4.5kHz samp rate
 SET_PWR_MGMT_1_WAKE =     0x01
 SET_PWR_MGMT_1_SLEEP=     0x41
 SET_PWR_MGMT_2_ACCEL_ON = 0x07
@@ -50,8 +50,8 @@ SET_ENABLE_FIFO  = 0x10
 SET_DISABLE_FIFO = 0x00
 
 FREEFALL_ACCEL = 9.80665 * 1000.
-# SCALE = 1/4096 g/LSB @8g scale * Earth gravity in mm/s**2
-SCALE = 0.000244140625 * FREEFALL_ACCEL
+# SCALE = 1/2048 g/LSB @16g scale * Earth gravity in mm/s**2
+SCALE = 0.00048828125 * FREEFALL_ACCEL
 
 FIFO_SIZE = 512
 
