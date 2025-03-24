@@ -30,10 +30,15 @@ REG_USER_CTRL =     0x03
 REG_PWR_MGMT_1 = 0x06
 REG_PWR_MGMT_2 = 0x07
 REG_INT_STATUS = 0x19
+REG_BANK_SEL =   0x7F
 
 SAMPLE_RATE_DIVS = { 4500: 0x00 }
 
 #SET_CONFIG =        0x01 # FIFO mode 'stream' style
+SET_BANK_0 = 0x00
+SET_BANK_1 = 0x10
+SET_BANK_2 = 0x20
+SET_BANK_3 = 0x30
 SET_ACCEL_CONFIG =  0x04 # 8g full scale, 1209Hz BW, ??? delay 4.5kHz samp rate
 SET_PWR_MGMT_1_WAKE =     0x01
 SET_PWR_MGMT_1_SLEEP=     0x41
@@ -133,7 +138,9 @@ class ICM20948:
         self.set_reg(REG_ACCEL_SMPLRT_DIV1, SAMPLE_RATE_DIVS[self.data_rate])
         self.set_reg(REG_ACCEL_SMPLRT_DIV2, SAMPLE_RATE_DIVS[self.data_rate])
         # self.set_reg(REG_CONFIG, SET_CONFIG) # No config register
+        self.set_reg(REG_BANK_SEL, SET_BANK_2)
         self.set_reg(REG_ACCEL_CONFIG, SET_ACCEL_CONFIG)
+        self.set_reg(REG_BANK_SEL, SET_BANK_0)
         # Reset fifo
         self.set_reg(REG_FIFO_EN, SET_DISABLE_FIFO)
         self.set_reg(REG_USER_CTRL, SET_USER_FIFO_RESET)
