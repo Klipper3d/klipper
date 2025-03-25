@@ -228,6 +228,7 @@ class PrinterOutputPin:
             value = float(text)
         except ValueError as e:
             logging.exception("output_pin template render error")
+            value = 0.
         self.gcrq.send_async_request(value)
     cmd_SET_PIN_help = "Set the value of an output pin"
     def cmd_SET_PIN(self, gcmd):
