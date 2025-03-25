@@ -613,6 +613,9 @@ class ToolHead:
         return self.trapq
     def register_step_generator(self, handler):
         self.step_generators.append(handler)
+    def unregister_step_generator(self, handler):
+        if handler in self.step_generators:
+            self.step_generators.remove(handler)
     def note_step_generation_scan_time(self, delay, old_delay=0.):
         self.flush_step_generation()
         if old_delay:
