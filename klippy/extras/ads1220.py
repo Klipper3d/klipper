@@ -64,6 +64,7 @@ class ADS1220:
                              'analog_supply': 0b11}
         self.vref = config.getchoice('vref', self.vref_options,
                                      default='internal')
+
         # check for conflict between REF1 and AIN0/AIN3
         mux_conflict = [0b0000, 0b0001, 0b0010, 0b0100, 0b0101, 0b0110, 0b0111,
                         0b1000, 0b1011]
@@ -71,6 +72,49 @@ class ADS1220:
             raise config.error("ADS1220 config error: AIN0/REFP1 and AIN3/REFN1"
                                " cant be used as a voltage reference and"
                                " an input at the same time")
+
+        # FIR filter
+        self.fir_options = {
+            'none': 0b00,
+            'both': 0b01,
+            '50Hz': 0b10,
+            '60Hz': 0b11
+        }
+        self.fir = config.getchoice('fir_filter', self.fir_options,
+                                    default='none')
+
+        # Low side power switch
+        self.psw = config.getboolean('power_switch', default=False)
+
+        # IDAC Current
+        self.idac_current_options = {
+            'none': 0b0000, '10': 0b0001, '50': 0b0010,
+            '100': 0b0011, '250': 0b0100, '500': 0b0101,
+            '1000': 0b0110, '1500': 0b0111
+        }
+        self.idac_current = config.getchoice('idac_current',
+                self.idac_current_options, default='none')
+
+        # IDAC 1 and 2 routing
+        self.idac1_2_routing_options = {
+            'none': 0b000,
+            'AIN0_REFP1': 0b001,
+            'AIN1': 0b010,
+            'AIN2': 0b011,
+            'AIN3_REFN1': 0b100,
+            'REFP0': 0b101,
+            'REFN0': 0b110,
+        }
+        self.idac1_routing = config.getchoice('idac1_routing',
+                self.idac1_2_routing_options, default='none')
+
+        self.idac2_routing = config.getchoice('idac2_routing',
+                self.idac1_2_routing_options, default='none')
+
+        # DRDY mode
+        self.data_ready_mode = config.getboolean('data_ready_mode',
+                                                 default=False)
+
         # SPI Setup
         spi_speed = 512000 if self.is_turbo else 256000
         self.spi = bus.MCU_SPI_from_config(config, 1, default_speed=spi_speed)
@@ -180,11 +224,17 @@ class ADS1220:
         mode = 0x2 if self.is_turbo else 0x0  # turbo mode
         sps_list = self.sps_turbo if self.is_turbo else self.sps_normal
         data_rate = list(sps_list.keys()).index(str(self.sps))
-        reg_values = [(self.mux << 4) | (self.gain << 1) | int(self.pga_bypass),
-                      (data_rate << 5) | (mode << 3) | (continuous << 2),
-                      (self.vref << 6),
-                      0x0]
-        self.write_reg(0x0, reg_values)
+
+        reg_values = [
+            (self.mux << 4) | (self.gain << 1) | int(self.pga_bypass), # Reg 0
+            (data_rate << 5) | (mode << 3) | (continuous << 2), # Reg 1
+            (self.vref << 6) | (self.fir << 4) | (int(self.psw) << 3)
+            | self.idac_current, # Reg 2
+            (self.idac1_routing << 5) | (self.idac2_routing << 2)
+            | (self.data_ready_mode << 1) # Reg 3
+        ]
+        self.write_reg(0x00, reg_values)
+
         # start measurements immediately
         self.send_command(START_SYNC_CMD)
 

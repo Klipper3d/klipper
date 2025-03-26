@@ -4896,6 +4896,38 @@ data_ready_pin:
 #vref:
 #   The selected voltage reference. Valid values are: 'internal', 'REF0', 'REF1'
 #   and 'analog_supply'. Default is 'internal'.
+#fir_filter:
+#   Noise filtering for 50/60Hz power line rejection.
+#   Valid values are: 'none', '50Hz', '60Hz', and 'both'.
+#   Default is 'none'.
+#power_switch:
+#   The low-side power switch is responsible for providing power to the
+#   load cell bridge between conversion intervals.
+#   If True, the switch remains closed during conversions, therefore power will
+#   continue to be provided to the bridge.
+#   The default is False.
+#idac_current:
+#   Configures the excitation current source value of the IDAC bridges.
+#   When using a vref of either 'analog_supply' or 'internal', the IDAC current
+#   value is used to determine how much current will flow across the bridge
+#   IDAC pairs (idac1_routing/idac2_routing). The current is set for both IDACs.
+#   The value is specified in microamps (μA).
+#   Valid values are: 'none', '10', '50', '100', '250', '500', '1000', and '1500'.
+#   The default is 'none'.
+#idac1_routing:
+#   Configures IDAC1 to be routed to the specified pin.
+#   Valid values are: 'none', 'AIN0_REFP1', 'AIN1', 'AIN2', 'AIN3_REFN1', 'REFP0',
+#   and 'REFN0'.
+#   The default is 'none'.
+#idac2_routing:
+#   Configures IDAC2 to be routed to the specified pin.
+#   Valid values are the same as for IDAC1.
+#   The default is 'none'.
+#data_ready_mode:
+#   The behavior of the data ready pins.
+#   If True, the data ready signal is present on both DOUT and DRDY pins.
+#   When False, the data ready signal is only supplied to the DRDY pin.
+#   The default is False.
 ```
 
 ## Board specific hardware support
