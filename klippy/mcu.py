@@ -413,6 +413,9 @@ class MCU_pwm:
         return self._mcu
     def setup_max_duration(self, max_duration):
         self._max_duration = max_duration
+    # Can be limited by mcu frequency on connect
+    def get_max_duration(self):
+        return self._max_duration
     def setup_cycle_time(self, cycle_time, hardware_pwm=False):
         self._cycle_time = cycle_time
         self._hardware_pwm = hardware_pwm
@@ -431,6 +434,9 @@ class MCU_pwm:
         printtime = self._mcu.estimated_print_time(curtime)
         self._last_clock = self._mcu.print_time_to_clock(printtime + 0.200)
         cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
+        mcu_freq = self._mcu.seconds_to_clock(1)
+        max_duration = round((1 << 31) / mcu_freq - 0.1, 2)
+        self._max_duration = min(self._max_duration, max_duration)
         mdur_ticks = self._mcu.seconds_to_clock(self._max_duration)
         if mdur_ticks >= 1<<31:
             raise pins.error("PWM pin max duration too large")

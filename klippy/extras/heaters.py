@@ -74,7 +74,8 @@ class Heater:
             # No significant change in value - can suppress update
             return
         pwm_time = read_time + self.pwm_delay
-        self.next_pwm_time = pwm_time + 0.75 * MAX_HEAT_TIME
+        max_heat_time = self.mcu_pwm.get_max_duration()
+        self.next_pwm_time = pwm_time + 0.75 * max_heat_time
         self.last_pwm_value = value
         self.mcu_pwm.set_pwm(pwm_time, value)
         #logging.debug("%s: pwm=%.3f@%.3f (from %.3f@%.3f [%.3f])",
