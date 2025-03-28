@@ -74,8 +74,10 @@ neopixel_delay(neopixel_time_t start, neopixel_time_t ticks)
 
 #endif
 
-#define PULSE_LONG_TICKS  nsecs_to_ticks(650)
-#define PULSE_SHORT_TICKS nsecs_to_ticks(200)
+// Selected as the common-midpoint durations between the SK8612,
+// WS2812, and WS2812B
+#define PULSE_LONG_TICKS  nsecs_to_ticks(700)
+#define PULSE_SHORT_TICKS nsecs_to_ticks(350)
 #define BIT_MIN_TICKS     nsecs_to_ticks(1250)
 
 
