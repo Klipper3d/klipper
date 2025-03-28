@@ -23,8 +23,8 @@
 
 #define FIFO_OVERFLOW_INT 0x0F // from datasheet
 
-#define BYTES_PER_FIFO_ENTRY 6
-#define BYTES_PER_BLOCK 48
+#define BYTES_PER_SAMPLE 6
+#define BYTES_PER_BLOCK (BYTES_PER_SAMPLE * 2)
 
 struct icm20948 {
     struct timer timer;
@@ -71,12 +71,11 @@ ic20948_reschedule_timer(struct icm20948 *ic)
     irq_enable();
 }
 
-static void
+static int
 read_mpu(struct i2cdev_s *i2c, uint8_t reg_len, uint8_t *reg
          , uint8_t read_len, uint8_t *read)
 {
-    int ret = i2c_dev_read(i2c, reg_len, reg, read_len, read);
-    i2c_shutdown_on_err(ret);
+    return i2c_dev_read(i2c, reg_len, reg, read_len, read);
 }
 
 // Reads the fifo byte count from the device.
@@ -85,7 +84,10 @@ get_fifo_status(struct icm20948 *ic)
 {
     uint8_t reg[] = {AR_FIFO_COUNT_H};
     uint8_t msg[2];
-    read_mpu(ic->i2c, sizeof(reg), reg, sizeof(msg), msg);
+    int r = read_mpu(ic->i2c, sizeof(reg), reg, sizeof(msg), msg);
+    if (r)
+        // Query error
+        return 0;
     uint16_t fifo_bytes = ((msg[0] & 0x1f) << 8) | msg[1];
     if (fifo_bytes > ic->fifo_max)
         ic->fifo_max = fifo_bytes;
@@ -103,12 +105,30 @@ ic20948_query(struct icm20948 *ic, uint8_t oid)
     // If we have enough bytes to fill the buffer do it and send report
     if (ic->fifo_pkts_bytes >= BYTES_PER_BLOCK) {
         uint8_t reg = AR_FIFO;
-        read_mpu(ic->i2c, sizeof(reg), &reg, BYTES_PER_BLOCK, &ic->sb.data[0]);
-        ic->sb.data_count = BYTES_PER_BLOCK;
+        uint8_t *d = &ic->sb.data[ic->sb.data_count];
+        memset(d, 0, BYTES_PER_BLOCK);
+        int r = read_mpu(ic->i2c, sizeof(reg), &reg,
+                         BYTES_PER_BLOCK, d);
+        if (r) {
+            if (r == I2C_BUS_START_NACK || r == I2C_BUS_START_READ_NACK)
+                goto out;
+            int i = 0;
+            for (; i < BYTES_PER_BLOCK; i++) {
+                if (d[i] != 0)
+                    break;
+            }
+            if (i == BYTES_PER_BLOCK)
+                goto out;
+            // Unaligned read
+            i2c_shutdown_on_err(r);
+        }
+        ic->sb.data_count += BYTES_PER_BLOCK;
         ic->fifo_pkts_bytes -= BYTES_PER_BLOCK;
-        sensor_bulk_report(&ic->sb, oid);
+        if (ic->sb.data_count + BYTES_PER_BLOCK > ARRAY_SIZE(ic->sb.data))
+            sensor_bulk_report(&ic->sb, oid);
     }
 
+out:
     // If we have enough bytes remaining to fill another report wake again
     //  otherwise schedule timed wakeup
     if (ic->fifo_pkts_bytes >= BYTES_PER_BLOCK) {
@@ -151,7 +171,8 @@ command_query_icm20948_status(uint32_t *args)
     // Detect if a FIFO overrun occurred
     uint8_t int_reg[] = {AR_INT_STATUS};
     uint8_t int_msg;
-    read_mpu(ic->i2c, sizeof(int_reg), int_reg, sizeof(int_msg), &int_msg);
+    int r;
+    r = read_mpu(ic->i2c, sizeof(int_reg), int_reg, sizeof(int_msg), &int_msg);
     if (int_msg & FIFO_OVERFLOW_INT)
         ic->sb.possible_overflows++;
 
@@ -159,9 +180,12 @@ command_query_icm20948_status(uint32_t *args)
     uint8_t reg[] = {AR_FIFO_COUNT_H};
     uint8_t msg[2];
     uint32_t time1 = timer_read_time();
-    read_mpu(ic->i2c, sizeof(reg), reg, sizeof(msg), msg);
+    r |= read_mpu(ic->i2c, sizeof(reg), reg, sizeof(msg), msg);
     uint32_t time2 = timer_read_time();
     uint16_t fifo_bytes = ((msg[0] & 0x1f) << 8) | msg[1];
+    if (r)
+        // Query error, host will retry
+        return;
 
     // Report status
     sensor_bulk_status(&ic->sb, args[0], time1, time2-time1, fifo_bytes);
