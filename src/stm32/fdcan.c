@@ -324,10 +324,16 @@ can_init(void)
 
     gpio_peripheral(GPIO_Rx, CAN_FUNCTION, 1);
     gpio_peripheral(GPIO_Tx, CAN_FUNCTION, 0);
+    canhw_start(CONFIG_CANBUS_FREQUENCY);
+}
+DECL_INIT(can_init);
 
+void
+canhw_start(uint32_t canbus_frequency)
+{
     uint32_t pclock = get_pclock_frequency((uint32_t)SOC_CAN);
 
-    uint32_t btr = compute_btr(pclock, CONFIG_CANBUS_FREQUENCY);
+    uint32_t btr = compute_btr(pclock, canbus_frequency);
 
     /*##-1- Configure the CAN #######################################*/
 
@@ -371,4 +377,11 @@ can_init(void)
     SOC_CAN->ILE = FDCAN_ILE_EINT0;
     SOC_CAN->IE = FDCAN_IE_RF0NE | FDCAN_IE_TC | FDCAN_IE_PEDE | FDCAN_IE_PEAE;
 }
-DECL_INIT(can_init);
+
+void
+canhw_stop(void)
+{
+    NVIC_DisableIRQ(CAN_IT0_IRQn);
+    SOC_CAN->ILE &= ~FDCAN_ILE_EINT0;
+    SOC_CAN->IE &= ~(FDCAN_IE_RF0NE | FDCAN_IE_TC);
+}
