@@ -74,8 +74,8 @@ neopixel_delay(neopixel_time_t start, neopixel_time_t ticks)
 
 #endif
 
-#define PULSE_LONG_TICKS  nsecs_to_ticks(650)
-#define PULSE_SHORT_TICKS nsecs_to_ticks(200)
+#define PULSE_LONG_TICKS  nsecs_to_ticks(820)
+#define PULSE_SHORT_TICKS nsecs_to_ticks(420)
 #define BIT_MIN_TICKS     nsecs_to_ticks(1250)
 
 
