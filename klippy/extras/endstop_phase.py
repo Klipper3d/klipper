@@ -52,7 +52,7 @@ class PhaseCalc:
 class EndstopPhase:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.name = config.get_name().split()[1]
+        self.name = " ".join(config.get_name().split()[1:])
         # Obtain step_distance and microsteps from stepper config section
         sconfig = config.getsection(self.name)
         rotation_dist, steps_per_rotation = stepper.parse_step_distance(sconfig)
@@ -118,7 +118,7 @@ class EndstopPhase:
         return delta * self.step_dist
     def handle_home_rails_end(self, homing_state, rails):
         for rail in rails:
-            stepper = rail.get_steppers()[0]
+            stepper = rail.get_endstops()[0][0].get_steppers()[0]
             if stepper.get_name() == self.name:
                 trig_mcu_pos = homing_state.get_trigger_position(self.name)
                 align = self.align_endstop(rail)
