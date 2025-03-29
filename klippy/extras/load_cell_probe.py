@@ -178,7 +178,14 @@ class LoadCellEndstop:
         # calculate the safety band
         zero = self._load_cell.get_reference_tare_counts()
         safety_counts = int(counts_per_gram * self.force_safety_limit_grams)
-        return int(zero - safety_counts), int(zero + safety_counts)
+        safety_min = int(zero - safety_counts)
+        safety_max = int(zero + safety_counts)
+        # don't allow a safety range outside the sensor's real range
+        sensor_min, sensor_max = self._load_cell.get_sensor().get_range()
+        if safety_min <= sensor_min or  safety_max >= sensor_max:
+            cmd_err = self.printer.command_error
+            raise cmd_err("Load cell force_safety_limit exceeds sensor range!")
+        return safety_min, safety_max
 
     def _get_filter_converter(self):
         counts_per_gram = self._load_cell.get_counts_per_gram()
