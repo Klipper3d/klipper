@@ -2241,6 +2241,121 @@ axis:
 #   See the "stepper" section for the definition of the above parameters.
 ```
 
+### [multi_carriageN]
+
+Support for cartesian and hybrid_corexy/z printers with multiple carriages
+on a single axis. The carriage mode can be set via the SET_MULTI_CARRIAGE
+extended g-code command. For example, "SET_MULTI_CARRIAGE CARRIAGE=1"
+command will activate the carriage defined in section `[multi_carriage1]`
+(other carriages will return activation to the primary carriage).
+Multi carriage support is typically combined with extra extruders - the
+SET_MULTI_CARRIAGE command is often called at the same time as the
+ACTIVATE_EXTRUDER command. Be sure to park the carriages during deactivation.
+Note that during G28 homing, carriages will home based on the distance their
+endstop positions (defined in the `[multi_carriageN]` config sections) are
+from the rail's center. In most cases this sort order should avoid collisions.
+However, if you have a non-standard setup you can add an optional parameter
+to `[printer]` - carriage_homing_order - to explicitly specify a sort order.
+
+Additionally, one could use "SET_MULTI_CARRIAGE CARRIAGE=1 MODE=COPY" or
+"SET_MULTI_CARRIAGE CARRIAGE=2 MODE=MIRROR" commands to activate either copying
+or mirroring mode of the specified carriage, in which case it will follow the
+motion of carriage 0 accordingly. These commands can be used to print
+two parts (or more, depending on the number of carriages) simultaneously -
+either multiple identical parts (in COPY mode), multiple mirrored parts
+(in MIRROR mode), or any combination setting multiple heads to COPY or MIRROR.
+Note that COPY and MIRROR modes also require appropriate configuration of
+the extruder on each carriage, which can typically be achieved with
+"SYNC_EXTRUDER_MOTION MOTION_QUEUE=extruder EXTRUDER=<multi_carriage_extruder>"
+or a similar command.
+
+See [sample-multicarriage-multigantry.cfg](../config/sample-multicarriage-multigantry.cfg) for an example
+configuration.
+
+```
+[multi_carriageN]
+axis:
+#   The axis this extra carriage is on (either x or y). This parameter
+#   must be provided.
+#safe_distance:
+#   The minimum distance (in mm) to enforce between the carriages on the
+#	carriage axis. If a G-Code command is executed that will bring the
+#   carriages closer than the specified limit, such a command will be rejected
+#   with an error. If safe_distance is not provided, it will be inferred from
+#   position_min and position_max for all the carriages. If set to 0 (or
+#	safe_distance is unset and position_min and position_max are identical
+#   for the carriages), the carriages proximity checks will be disabled.
+#step_pin:
+#dir_pin:
+#enable_pin:
+#microsteps:
+#rotation_distance:
+#endstop_pin:
+#position_endstop:
+#position_min:
+#position_max:
+#   See the "stepper" section for the definition of the above parameters.
+```
+
+
+### [multi_gantryN]
+
+Support for cartesian and hybrid_corexy/z printers with multiple gantries
+on a single axis. The gantry mode can be set via the SET_MULTI_GANTRY
+extended g-code command. For example, "SET_MULTI_GANTRY GANTRY=1"
+command will activate the gantry defined in section `[multi_gantry1]`
+(other gantries will return activation to the primary gantry).
+Multi gantry support is meant to be combined with extra carriages - the
+SET_MULTI_GANTRY command is often called at the same time as the
+SET_MULTI_CARRIAGE command. Be sure to park the gantries during deactivation.
+Note that during G28 homing, gantries will home based on the distance their
+endstop positions (defined in the `[multi_gantryN]` config sections) are
+from the rail's center. In most cases this sort order should avoid collisions.
+However, if you have a non-standard setup you can add an optional parameter
+to `[printer]` - gantry_homing_order - to explicitly specify a sort order.
+
+Additionally, one could use "SET_MULTI_GANTRY GANTRY=1 MODE=COPY" or
+"SET_MULTI_GANTRY GANTRY=2 MODE=MIRROR" commands to activate either copying
+or mirroring mode of the specified gantry, in which case it will follow the
+motion of gantry 0 (G0) accordingly. These commands can be used to set the
+primary gantry, or set any gantry besides G0 to COPY or MIRROR the movement
+of G0.
+
+Note: When a multi_carriage is set to COPY or MIRROR its gantry will also
+be set to COPY (since without movement on the gantry's axis the multi_carriage
+won't actually be copying or mirroring). If you would rather the multi_gantry
+mirrors G0's movement simply replace "N" with the gantry number and run
+"SET_MULTI_GANTRY GANTRY=N MODE=MIRROR" - the gantry will now mirror G0's
+movement on the gantry axis.
+
+See [sample-multicarriage-multigantry.cfg](../config/sample-multicarriage-multigantry.cfg) for an example
+configuration.
+
+```
+[multi_gantryN]
+axis:
+#   The axis this extra gantry is on (either x or y). This parameter
+#   must be provided.
+#safe_distance:
+#   The minimum distance (in mm) to enforce between the gantries on the
+#	gantry axis. If a G-Code command is executed that will bring the
+#   gantries closer than the specified limit, such a command will be rejected
+#   with an error. If safe_distance is not provided, it will be inferred from
+#   position_min and position_max for all the gantries. If set to 0 (or
+#   safe_distance is unset and position_min and position_max are identical
+#   for the gantries), the gantries proximity checks will be disabled.
+#step_pin:
+#dir_pin:
+#enable_pin:
+#microsteps:
+#rotation_distance:
+#endstop_pin:
+#position_endstop:
+#position_min:
+#position_max:
+#   See the "stepper" section for the definition of the above parameters.
+```
+
 ### [extruder_stepper]
 
 Support for additional steppers synchronized to the movement of an
