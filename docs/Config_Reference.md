@@ -2014,7 +2014,7 @@ Support for eddy current inductive probes. One may define this section
 sensor_type: ldc1612
 #   The sensor chip used to perform eddy current measurements. This
 #   parameter must be provided and must be set to ldc1612.
-#freq:
+#frequency:
 #   The external crystal frequency (in Hz) of the LDC1612 chip.
 #   The default is 12000000.
 #intb_pin:
