@@ -177,7 +177,7 @@ def lookup_template_eval(config):
 # Main output pin handling
 ######################################################################
 
-MAX_SCHEDULE_TIME = 5.0
+MAX_SCHEDULE_TIME = 3.5
 
 class PrinterOutputPin:
     def __init__(self, config):
