@@ -87,8 +87,8 @@ class LDC1612:
         self.oid = oid = mcu.create_oid()
         self.query_ldc1612_cmd = None
         self.ldc1612_setup_home_cmd = self.query_ldc1612_home_state_cmd = None
-        self.frequency = config.getint("frequency", DEFAULT_LDC1612_FREQ, 2000000,
-                                 40000000)
+        self.frequency = config.getint("frequency", DEFAULT_LDC1612_FREQ,
+                                       2000000, 40000000)
         if config.get('intb_pin', None) is not None:
             ppins = config.get_printer().lookup_object("pins")
             pin_params = ppins.lookup_pin(config.get('intb_pin'))
