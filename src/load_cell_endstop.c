@@ -21,6 +21,10 @@ typedef int64_t fixedQ33_t; // Q1.30 value stored in int64
 #define MAX_TRIGGER_GRAMS ((1 << FIXEDQ16) - 1)
 #define FIXEDQ1_ONE 1 << FIXEDQ1_FRAC_BITS
 
+#define ERROR_SAFETY_RANGE 0
+#define ERROR_OVERFLOW 1
+#define ERROR_WATCHDOG 2
+
 // Flags
 enum {FLAG_IS_HOMING = 1 << 0
     , FLAG_IS_TRIGGERED = 1 << 1
@@ -98,11 +102,11 @@ try_trigger(struct load_cell_endstop *lce, uint32_t ticks)
 }
 
 void
-try_trigger_error(struct load_cell_endstop *lce)
+try_trigger_error(struct load_cell_endstop *lce, uint8_t error_code)
 {
     uint8_t is_homing = is_flag_set(FLAG_IS_HOMING, lce);
     if (is_homing) {
-        trsync_do_trigger(lce->ts, lce->error_reason);
+        trsync_do_trigger(lce->ts, lce->error_reason + error_code);
     }
 }
 
@@ -120,7 +124,7 @@ load_cell_endstop_report_sample(struct load_cell_endstop *lce
                                         || sample >= lce->safety_counts_max;
     // too much force, this is an error while homing
     if (is_safety_trigger) {
-        try_trigger_error(lce);
+        try_trigger_error(lce, ERROR_SAFETY_RANGE);
     }
 
     // only trigger when trigger_grams is greater than 0
@@ -141,7 +145,7 @@ load_cell_endstop_report_sample(struct load_cell_endstop *lce
         // assume triggered in the case of an overflow
         is_trigger = 1;
         // While homing an overflow is an error
-        try_trigger_error(lce);
+        try_trigger_error(lce, ERROR_OVERFLOW);
     }
 
     // latching trigger for QUERY_ENDSTOPS: dont clear until force is removed
@@ -177,7 +181,7 @@ watchdog_event(struct timer *t)
 
     irq_disable();
     if (lce->watchdog_count > lce->watchdog_max) {
-        try_trigger_error(lce);
+        try_trigger_error(lce, ERROR_WATCHDOG);
     }
     lce->watchdog_count += 1;
     irq_enable();

@@ -57,7 +57,9 @@ class ProbeSessionContext:
 WATCHDOG_MAX = 3
 # LoadCellEndstop implements both MCU_endstop and ProbeEndstopWrapper
 class LoadCellEndstop:
-    REASON_SENSOR_ERROR = mcu.MCU_trsync.REASON_COMMS_TIMEOUT + 1
+    ERROR_SAFETY_RANGE = mcu.MCU_trsync.REASON_COMMS_TIMEOUT + 1
+    ERROR_OVERFLOW = mcu.MCU_trsync.REASON_COMMS_TIMEOUT + 2
+    ERROR_WATCHDOG = mcu.MCU_trsync.REASON_COMMS_TIMEOUT + 3
     def __init__(self, config, load_cell_inst, helper):
         self._config = config
         self._config_name = config.get_name()
@@ -259,7 +261,7 @@ class LoadCellEndstop:
         clock = self._mcu.print_time_to_clock(print_time)
         rest_ticks = self._mcu.seconds_to_clock(self._rest_time)
         self._home_cmd.send([self._oid, self._dispatch.get_oid(),
-            mcu.MCU_trsync.REASON_ENDSTOP_HIT, self.REASON_SENSOR_ERROR, clock,
+            mcu.MCU_trsync.REASON_ENDSTOP_HIT, self.ERROR_SAFETY_RANGE, clock,
             rest_ticks, WATCHDOG_MAX], reqclock=clock)
         return trigger_completion
 
@@ -271,7 +273,19 @@ class LoadCellEndstop:
             if res == mcu.MCU_trsync.REASON_COMMS_TIMEOUT:
                 raise self.printer.command_error(
                     "Communication timeout during homing")
-            raise self.printer.command_error("Load cell sensor error")
+            elif res == self.ERROR_SAFETY_RANGE:
+                raise self.printer.command_error(
+                    "Load Cell Probe Error: load exceeds safety limit")
+            elif res == self.ERROR_OVERFLOW:
+                raise self.printer.command_error(
+                    "Load Cell Probe Error: fixed point math overflow ")
+            elif res == self.ERROR_WATCHDOG:
+                raise self.printer.command_error(
+                    "Load Cell Probe Error: timed out waiting for sensor data")
+            else:
+                raise self.printer.command_error(
+                    "Load Cell Probe Error: unknown reason code %i" % (res,))
+
         if res != mcu.MCU_trsync.REASON_ENDSTOP_HIT:
             return 0.
         if self._mcu.is_fileoutput():
