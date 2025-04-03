@@ -24,22 +24,14 @@ class HomingOverride:
             return
 
         # if no axis is given as parameter we assume the override
-        no_axis = True
+        axes_to_home = ''
         for axis in 'XYZ':
             if gcmd.get(axis, None) is not None:
-                no_axis = False
-                break
+                axes_to_home += axis
+        if not axes_to_home:
+            axes_to_home = 'XYZ'
 
-        if no_axis:
-            override = True
-        else:
-            # check if we home an axis which needs the override
-            override = False
-            for axis in self.axes:
-                if gcmd.get(axis, None) is not None:
-                    override = True
-
-        if not override:
+        if not (set(axes_to_home) & set(self.axes)):
             self.prev_G28(gcmd)
             return
 
@@ -61,6 +53,12 @@ class HomingOverride:
             self.template.run_gcode_from_command(context)
         finally:
             self.in_script = False
+        curtime = self.printer.get_reactor().monotonic()
+        homed_axes = toolhead.get_status(curtime)['homed_axes']
+        for axis in axes_to_home:
+            if axis.lower() not in homed_axes:
+                raise gcmd.error(
+                        'homing_override did not home requested axis %s', axis)
 
 def load_config(config):
     return HomingOverride(config)
