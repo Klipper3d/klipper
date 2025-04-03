@@ -53,6 +53,7 @@ class HX71xBase:
             self._finish_measurements, UPDATE_INTERVAL)
         # Command Configuration
         self.query_hx71x_cmd = None
+        self.config_endstop_cmd = None
         mcu.add_config_cmd(
             "config_hx71x oid=%d gain_channel=%d dout_pin=%s sclk_pin=%s"
             % (self.oid, self.gain_channel, self.dout_pin, self.sclk_pin))
@@ -64,9 +65,12 @@ class HX71xBase:
     def _build_config(self):
         self.query_hx71x_cmd = self.mcu.lookup_command(
             "query_hx71x oid=%c rest_ticks=%u")
+        self.config_endstop_cmd = self.mcu.lookup_command(
+            "attach_endstop_hx71x oid=%c load_cell_endstop_oid=%c")
         self.ffreader.setup_query_command("query_hx71x_status oid=%c",
                                           oid=self.oid,
                                           cq=self.mcu.alloc_command_queue())
+
 
     def get_mcu(self):
         return self.mcu
@@ -82,6 +86,9 @@ class HX71xBase:
     # add_client interface, direct pass through to bulk_sensor API
     def add_client(self, callback):
         self.batch_bulk.add_client(callback)
+
+    def attach_endstop(self, endstop_oid):
+        self.config_endstop_cmd.send_wait_ack([self.oid, endstop_oid])
 
     # Measurement decoding
     def _convert_samples(self, samples):
