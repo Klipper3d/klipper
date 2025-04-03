@@ -89,7 +89,7 @@ class MCU_SPI:
             if self.mcu.try_lookup_command("spi_set_sw_bus oid=%c miso_pin=%u "
                                            "mosi_pin=%u sclk_pin=%u "
                                            "mode=%u pulse_ticks=%u"):
-                pulse_ticks = self.mcu.seconds_to_clock(1)//self.speed
+                pulse_ticks = self.mcu.seconds_to_clock(1./self.speed)
                 self.config_fmt = self.config_fmt_ticks % (pulse_ticks,)
         self.mcu.add_config_cmd(self.config_fmt)
         self.spi_send_cmd = self.mcu.lookup_command(
