@@ -7,7 +7,6 @@
 #include "autoconf.h"   // CONFIG_*
 #include "board/gpio.h" // gpio_out_setup
 #include "board/misc.h" // timer_read_time
-#include "board/irq.h"  // irq_disable
 #include "basecmd.h" // oid_alloc
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // sched_shutdown
@@ -67,38 +66,28 @@ spi_software_transfer(struct spi_software *ss, uint8_t receive_data
         uint8_t inbuf = 0;
         for (uint_fast8_t i = 0; i < 8; i++) {
             spi_delay(&time, t1);
-            irq_disable();
-            time = timer_read_time();
             if (ss->mode & 0x01) {
                 // MODE 1 & 3
-                gpio_out_toggle_noirq(ss->sclk);
+                gpio_out_toggle(ss->sclk);
                 gpio_out_write(ss->mosi, outbuf & 0x80);
-
-                irq_enable();
-                outbuf <<= 1;
-                spi_delay(&time, t2);
-
-                irq_disable();
                 time = timer_read_time();
-                gpio_out_toggle_noirq(ss->sclk);
+                outbuf <<= 1;
                 inbuf <<= 1;
+                spi_delay(&time, t2);
+                gpio_out_toggle(ss->sclk);
                 inbuf |= gpio_in_read(ss->miso);
             } else {
                 // MODE 0 & 2
                 gpio_out_write(ss->mosi, outbuf & 0x80);
-                outbuf <<= 1;
-                gpio_out_toggle_noirq(ss->sclk);
-
-                irq_enable();
-                spi_delay(&time, t2);
-                inbuf <<= 1;
-
-                irq_disable();
+                gpio_out_toggle(ss->sclk);
                 time = timer_read_time();
+                outbuf <<= 1;
+                inbuf <<= 1;
+                spi_delay(&time, t2);
                 inbuf |= gpio_in_read(ss->miso);
-                gpio_out_toggle_noirq(ss->sclk);
+                gpio_out_toggle(ss->sclk);
             }
-            irq_enable();
+            time = timer_read_time();
         }
 
         if (receive_data)
