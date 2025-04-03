@@ -1283,7 +1283,7 @@ class MCUConnection:
             'spi_bus', self.enumerations.get('bus'))
         pin_enums = self.enumerations.get('pin')
         if bus == "swspi":
-            mcu_freq = self.clocksync.mcu_freq
+            mcu_freq = self.clocksync.print_time_to_clock(1)
             pulse_ticks = mcu_freq//SD_SPI_SPEED
             cfgpins = self.board_config['spi_pins']
             pins = [p.strip().upper() for p in cfgpins.split(',') if p.strip()]
