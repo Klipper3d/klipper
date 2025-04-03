@@ -934,6 +934,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#icm20948" class="md-nav__link">
+    [icm20948]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#lis2dw" class="md-nav__link">
     [lis2dw]
   </a>
@@ -3058,6 +3065,13 @@
           <li class="md-nav__item">
   <a href="#adxl345" class="md-nav__link">
     [adxl345]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#icm20948" class="md-nav__link">
+    [icm20948]
   </a>
   
 </li>
@@ -5465,6 +5479,22 @@ cs_pin:
 #   not recommended to change this rate from the default 3200, and
 #   rates below 800 will considerably affect the quality of resonance
 #   measurements.
+</code></pre></div>
+
+<h3 id="icm20948">[icm20948]<a class="headerlink" href="#icm20948" title="Permanent link">&para;</a></h3>
+<p>Support for icm20948 accelerometers.</p>
+<div class="highlight"><pre><span></span><code>[icm20948]
+#i2c_address:
+#   Default is 104 (0x68). If AD0 is high, it would be 0x69 instead.
+#i2c_mcu:
+#i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#i2c_speed: 400000
+#   See the &quot;common I2C settings&quot; section for a description of the
+#   above parameters. The default &quot;i2c_speed&quot; is 400000.
+#axes_map: x, y, z
+#   See the &quot;adxl345&quot; section for information on this parameter.
 </code></pre></div>
 
 <h3 id="lis2dw">[lis2dw]<a class="headerlink" href="#lis2dw" title="Permanent link">&para;</a></h3>
