@@ -180,6 +180,19 @@ def lookup_minimum_z(config):
     pconfig = config.getsection('printer')
     return pconfig.getfloat('minimum_z_position', 0., note_valid=False)
 
+# Helper to lookup all the Z axis steppers
+class LookupZSteppers:
+    def __init__(self, config, add_stepper_cb):
+        self.printer = config.get_printer()
+        self.add_stepper_cb = add_stepper_cb
+        self.printer.register_event_handler('klippy:mcu_identify',
+                                            self._handle_mcu_identify)
+    def _handle_mcu_identify(self):
+        kin = self.printer.lookup_object('toolhead').get_kinematics()
+        for stepper in kin.get_steppers():
+            if stepper.is_active_axis('z'):
+                self.add_stepper_cb(stepper)
+
 # Homing via probe:z_virtual_endstop
 class HomingViaProbeHelper:
     def __init__(self, config, mcu_probe, param_helper):
@@ -189,11 +202,10 @@ class HomingViaProbeHelper:
         self.multi_probe_pending = False
         self.z_min_position = lookup_minimum_z(config)
         self.results = []
+        LookupZSteppers(config, self.mcu_probe.add_stepper)
         # Register z_virtual_endstop pin
         self.printer.lookup_object('pins').register_chip('probe', self)
         # Register event handlers
-        self.printer.register_event_handler('klippy:mcu_identify',
-                                            self._handle_mcu_identify)
         self.printer.register_event_handler("homing:homing_move_begin",
                                             self._handle_homing_move_begin)
         self.printer.register_event_handler("homing:homing_move_end",
@@ -204,11 +216,6 @@ class HomingViaProbeHelper:
                                             self._handle_home_rails_end)
         self.printer.register_event_handler("gcode:command_error",
                                             self._handle_command_error)
-    def _handle_mcu_identify(self):
-        kin = self.printer.lookup_object('toolhead').get_kinematics()
-        for stepper in kin.get_steppers():
-            if stepper.is_active_axis('z'):
-                self.mcu_probe.add_stepper(stepper)
     def _handle_homing_move_begin(self, hmove):
         if self.mcu_probe in hmove.get_mcu_endstops():
             self.mcu_probe.probe_prepare(hmove)
