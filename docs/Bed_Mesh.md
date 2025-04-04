@@ -410,9 +410,12 @@ adaptive_margin: 5
   ![adaptive_bedmesh_margin](img/adaptive_bed_mesh_margin.svg)
 
 By nature, adaptive bed meshes use the objects defined by the Gcode file being printed.
-Therefore, it is expected that each Gcode file will generate a mesh that probes a different
-area of the print bed. Therefore, adapted bed meshes should not be re-used. The expectation
-is that a new mesh will be generated for each print if adaptive meshing is used.
+EXCLUDE_OBJECT_DEFINE gcode needs to be present in the Gcode file, which can be procesed in
+with a slicer plugin, moonraker or by slicer specific functions, see [Slicers.md](Slicers.md),
+also [exclude_object] should be in the configuration.It is expected that each Gcode file
+will generate a mesh that probes a different area of the print bed. Therefore, adapted bed
+meshes should not be re-used. The expectation is that a new mesh will be generated for each
+print if adaptive meshing is used.
 
 It is also important to consider that adaptive bed meshing is best used on machines that can
 normally probe the entire bed and achieve a maximum variance less than or equal to 1 layer
