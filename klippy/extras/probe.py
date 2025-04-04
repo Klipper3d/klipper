@@ -182,10 +182,12 @@ def lookup_minimum_z(config):
 
 # Homing via probe:z_virtual_endstop
 class HomingViaProbeHelper:
-    def __init__(self, config, mcu_probe):
+    def __init__(self, config, mcu_probe, param_helper):
         self.printer = config.get_printer()
         self.mcu_probe = mcu_probe
+        self.param_helper = param_helper
         self.multi_probe_pending = False
+        self.z_min_position = lookup_minimum_z(config)
         # Register z_virtual_endstop pin
         self.printer.lookup_object('pins').register_chip('probe', self)
         # Register event handlers
@@ -236,7 +238,11 @@ class HomingViaProbeHelper:
             raise pins.error("Can not pullup/invert probe virtual endstop")
         return self.mcu_probe
     # Helper to convert probe based commands to use homing module
-    def probing_move(self, pos, speed):
+    def probing_move(self, gcmd):
+        toolhead = self.printer.lookup_object('toolhead')
+        pos = toolhead.get_position()
+        pos[2] = self.z_min_position
+        speed = self.param_helper.get_probe_params(gcmd)['probe_speed']
         phoming = self.printer.lookup_object('homing')
         return phoming.probing_move(self.mcu_probe, pos, speed)
 
@@ -287,8 +293,6 @@ class ProbeSessionHelper:
         self.mcu_probe = mcu_probe
         self.param_helper = param_helper
         self.probing_move_cb = probing_move_cb
-        # Infer Z position to move to during a probe
-        self.z_position = lookup_minimum_z(config)
         # Session state
         self.multi_probe_pending = False
         self.results = []
@@ -317,15 +321,13 @@ class ProbeSessionHelper:
         self.results = []
         self.multi_probe_pending = False
         self.mcu_probe.multi_probe_end()
-    def _probe(self, speed):
+    def _probe(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
         curtime = self.printer.get_reactor().monotonic()
         if 'z' not in toolhead.get_status(curtime)['homed_axes']:
             raise self.printer.command_error("Must home before probe")
-        pos = toolhead.get_position()
-        pos[2] = self.z_position
         try:
-            epos = self.probing_move_cb(pos, speed)
+            epos = self.probing_move_cb(gcmd)
         except self.printer.command_error as e:
             reason = str(e)
             if "Timeout during endstop homing" in reason:
@@ -349,7 +351,7 @@ class ProbeSessionHelper:
         sample_count = params['samples']
         while len(positions) < sample_count:
             # Probe position
-            pos = self._probe(params['probe_speed'])
+            pos = self._probe(gcmd)
             positions.append(pos)
             # Check samples tolerance
             z_positions = [p[2] for p in positions]
@@ -376,7 +378,8 @@ class ProbeSessionHelper:
 class ProbeEndstopSessionHelper:
     def __init__(self, config, mcu_probe):
         self.param_helper = ProbeParameterHelper(config)
-        self.homing_helper = HomingViaProbeHelper(config, mcu_probe)
+        self.homing_helper = HomingViaProbeHelper(config, mcu_probe,
+                                                  self.param_helper)
         self.probe_session = ProbeSessionHelper(
             config, mcu_probe, self.param_helper,
             self.homing_helper.probing_move)
