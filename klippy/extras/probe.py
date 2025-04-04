@@ -393,18 +393,6 @@ class ProbeSessionHelper:
         self.results = []
         return res
 
-# Helper for probes based purely on an endstop wrapper
-class ProbeEndstopSessionHelper:
-    def __init__(self, config, mcu_probe):
-        self.param_helper = ProbeParameterHelper(config)
-        self.homing_helper = HomingViaProbeHelper(config, mcu_probe,
-                                                  self.param_helper)
-        self.probe_session = ProbeSessionHelper(
-            config, self.param_helper, self.homing_helper.start_probe_session)
-        # Main printer probe session starting API
-        self.start_probe_session = self.probe_session.start_probe_session
-        self.get_probe_params = self.param_helper.get_probe_params
-
 # Helper to read the xyz probe offsets from the config
 class ProbeOffsetsHelper:
     def __init__(self, config):
@@ -606,9 +594,13 @@ class PrinterProbe:
         self.cmd_helper = ProbeCommandHelper(config, self,
                                              self.mcu_probe.query_endstop)
         self.probe_offsets = ProbeOffsetsHelper(config)
-        self.probe_session = ProbeEndstopSessionHelper(config, self.mcu_probe)
+        self.param_helper = ProbeParameterHelper(config)
+        self.homing_helper = HomingViaProbeHelper(config, self.mcu_probe,
+                                                  self.param_helper)
+        self.probe_session = ProbeSessionHelper(
+            config, self.param_helper, self.homing_helper.start_probe_session)
     def get_probe_params(self, gcmd=None):
-        return self.probe_session.get_probe_params(gcmd)
+        return self.param_helper.get_probe_params(gcmd)
     def get_offsets(self):
         return self.probe_offsets.get_offsets()
     def get_status(self, eventtime):
