@@ -348,8 +348,11 @@ class EddyEndstopWrapper:
         return trigger_time
     def query_endstop(self, print_time):
         return False # XXX
-    # Interface for ProbeEndstopWrapper
-    def probing_move(self, gcmd):
+    # Probe session interface
+    def start_probe_session(self, gcmd):
+        self.multi_probe_begin()
+        return self
+    def run_probe(self, gcmd):
         toolhead = self._printer.lookup_object('toolhead')
         pos = toolhead.get_position()
         pos[2] = self._z_min_position
@@ -364,7 +367,11 @@ class EddyEndstopWrapper:
         end_time = start_time + 0.100
         toolhead_pos = toolhead.get_position()
         self._gather.note_probe(start_time, end_time, toolhead_pos)
-        return self._gather.pull_probed()[0]
+    def pull_probed_results(self):
+        return self._gather.pull_probed()
+    def end_probe_session(self):
+        self.multi_probe_end()
+    # Interface for ProbeEndstopWrapper
     def multi_probe_begin(self):
         self._gather = EddyGatherSamples(self._printer, self._sensor_helper,
                                          self._calibration, self._z_offset)
@@ -437,8 +444,7 @@ class PrinterEddyProbe:
         self.homing_helper = probe.HomingViaProbeHelper(config, self.mcu_probe,
                                                         self.param_helper)
         self.probe_session = probe.ProbeSessionHelper(
-            config, self.mcu_probe, self.param_helper,
-            self.mcu_probe.probing_move)
+            config, self.param_helper, self.mcu_probe.start_probe_session)
         self.printer.add_object('probe', self)
     def add_client(self, cb):
         self.sensor_helper.add_client(cb)

@@ -188,6 +188,7 @@ class HomingViaProbeHelper:
         self.param_helper = param_helper
         self.multi_probe_pending = False
         self.z_min_position = lookup_minimum_z(config)
+        self.results = []
         # Register z_virtual_endstop pin
         self.printer.lookup_object('pins').register_chip('probe', self)
         # Register event handlers
@@ -238,13 +239,24 @@ class HomingViaProbeHelper:
             raise pins.error("Can not pullup/invert probe virtual endstop")
         return self.mcu_probe
     # Helper to convert probe based commands to use homing module
-    def probing_move(self, gcmd):
+    def start_probe_session(self, gcmd):
+        self.mcu_probe.multi_probe_begin()
+        self.results = []
+        return self
+    def run_probe(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
         pos = toolhead.get_position()
         pos[2] = self.z_min_position
         speed = self.param_helper.get_probe_params(gcmd)['probe_speed']
         phoming = self.printer.lookup_object('homing')
-        return phoming.probing_move(self.mcu_probe, pos, speed)
+        self.results.append(phoming.probing_move(self.mcu_probe, pos, speed))
+    def pull_probed_results(self):
+        res = self.results
+        self.results = []
+        return res
+    def end_probe_session(self):
+        self.results = []
+        self.mcu_probe.multi_probe_end()
 
 # Helper to read multi-sample parameters from config
 class ProbeParameterHelper:
@@ -288,19 +300,18 @@ class ProbeParameterHelper:
 
 # Helper to track multiple probe attempts in a single command
 class ProbeSessionHelper:
-    def __init__(self, config, mcu_probe, param_helper, probing_move_cb=None):
+    def __init__(self, config, param_helper, start_session_cb):
         self.printer = config.get_printer()
-        self.mcu_probe = mcu_probe
         self.param_helper = param_helper
-        self.probing_move_cb = probing_move_cb
+        self.start_session_cb = start_session_cb
         # Session state
-        self.multi_probe_pending = False
+        self.hw_probe_session = None
         self.results = []
         # Register event handlers
         self.printer.register_event_handler("gcode:command_error",
                                             self._handle_command_error)
     def _handle_command_error(self):
-        if self.multi_probe_pending:
+        if self.hw_probe_session is not None:
             try:
                 self.end_probe_session()
             except:
@@ -309,25 +320,26 @@ class ProbeSessionHelper:
         raise self.printer.command_error(
             "Internal probe error - start/end probe session mismatch")
     def start_probe_session(self, gcmd):
-        if self.multi_probe_pending:
+        if self.hw_probe_session is not None:
             self._probe_state_error()
-        self.mcu_probe.multi_probe_begin()
-        self.multi_probe_pending = True
+        self.hw_probe_session = self.start_session_cb(gcmd)
         self.results = []
         return self
     def end_probe_session(self):
-        if not self.multi_probe_pending:
+        hw_probe_session = self.hw_probe_session
+        if hw_probe_session is None:
             self._probe_state_error()
         self.results = []
-        self.multi_probe_pending = False
-        self.mcu_probe.multi_probe_end()
+        self.hw_probe_session = None
+        hw_probe_session.end_probe_session()
     def _probe(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
         curtime = self.printer.get_reactor().monotonic()
         if 'z' not in toolhead.get_status(curtime)['homed_axes']:
             raise self.printer.command_error("Must home before probe")
         try:
-            epos = self.probing_move_cb(gcmd)
+            self.hw_probe_session.run_probe(gcmd)
+            epos = self.hw_probe_session.pull_probed_results()[0]
         except self.printer.command_error as e:
             reason = str(e)
             if "Timeout during endstop homing" in reason:
@@ -341,7 +353,7 @@ class ProbeSessionHelper:
                            % (epos[0], epos[1], epos[2]))
         return epos[:3]
     def run_probe(self, gcmd):
-        if not self.multi_probe_pending:
+        if self.hw_probe_session is None:
             self._probe_state_error()
         params = self.param_helper.get_probe_params(gcmd)
         toolhead = self.printer.lookup_object('toolhead')
@@ -381,8 +393,7 @@ class ProbeEndstopSessionHelper:
         self.homing_helper = HomingViaProbeHelper(config, mcu_probe,
                                                   self.param_helper)
         self.probe_session = ProbeSessionHelper(
-            config, mcu_probe, self.param_helper,
-            self.homing_helper.probing_move)
+            config, self.param_helper, self.homing_helper.start_probe_session)
         # Main printer probe session starting API
         self.start_probe_session = self.probe_session.start_probe_session
         self.get_probe_params = self.param_helper.get_probe_params
