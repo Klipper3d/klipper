@@ -227,10 +227,14 @@ class HomingViaProbeHelper:
         if pin_params['invert'] or pin_params['pullup']:
             raise pins.error("Can not pullup/invert probe virtual endstop")
         return self.mcu_probe
+    # Helper to convert probe based commands to use homing module
+    def probing_move(self, pos, speed):
+        phoming = self.printer.lookup_object('homing')
+        return phoming.probing_move(self.mcu_probe, pos, speed)
 
 # Helper to track multiple probe attempts in a single command
 class ProbeSessionHelper:
-    def __init__(self, config, mcu_probe):
+    def __init__(self, config, mcu_probe, probing_move_cb=None):
         self.printer = config.get_printer()
         self.mcu_probe = mcu_probe
         gcode = self.printer.lookup_object('gcode')
@@ -245,6 +249,9 @@ class ProbeSessionHelper:
             self.z_position = pconfig.getfloat('minimum_z_position', 0.,
                                                note_valid=False)
         self.homing_helper = HomingViaProbeHelper(config, mcu_probe)
+        self.probing_move_cb = probing_move_cb
+        if probing_move_cb is None:
+            self.probing_move_cb = self.homing_helper.probing_move
         # Configurable probing speeds
         self.speed = config.getfloat('speed', 5.0, above=0.)
         self.lift_speed = config.getfloat('lift_speed', self.speed, above=0.)
@@ -315,7 +322,7 @@ class ProbeSessionHelper:
         pos = toolhead.get_position()
         pos[2] = self.z_position
         try:
-            epos = self.mcu_probe.probing_move(pos, speed)
+            epos = self.probing_move_cb(pos, speed)
         except self.printer.command_error as e:
             reason = str(e)
             if "Timeout during endstop homing" in reason:
@@ -544,9 +551,6 @@ class ProbeEndstopWrapper:
             return
         self._raise_probe()
         self.multi = 'OFF'
-    def probing_move(self, pos, speed):
-        phoming = self.printer.lookup_object('homing')
-        return phoming.probing_move(self, pos, speed)
     def probe_prepare(self, hmove):
         if self.multi == 'OFF' or self.multi == 'FIRST':
             self._lower_probe()

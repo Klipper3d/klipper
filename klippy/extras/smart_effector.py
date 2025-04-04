@@ -92,9 +92,6 @@ class SmartEffectorProbe:
         return self.cmd_helper.get_status(eventtime)
     def start_probe_session(self, gcmd):
         return self.probe_session.start_probe_session(gcmd)
-    def probing_move(self, pos, speed):
-        phoming = self.printer.lookup_object('homing')
-        return phoming.probing_move(self, pos, speed)
     def probe_prepare(self, hmove):
         toolhead = self.printer.lookup_object('toolhead')
         self.probe_wrapper.probe_prepare(hmove)
