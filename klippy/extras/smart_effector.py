@@ -69,7 +69,11 @@ class SmartEffectorProbe:
         self.cmd_helper = probe.ProbeCommandHelper(
             config, self, self.probe_wrapper.query_endstop)
         self.probe_offsets = probe.ProbeOffsetsHelper(config)
-        self.probe_session = probe.ProbeSessionHelper(config, self)
+        self.param_helper = probe.ProbeParameterHelper(config)
+        self.homing_helper = probe.HomingViaProbeHelper(config, self,
+                                                        self.param_helper)
+        self.probe_session = probe.ProbeSessionHelper(
+            config, self.param_helper, self.homing_helper.start_probe_session)
         # SmartEffector control
         control_pin = config.get('control_pin', None)
         if control_pin:
@@ -85,16 +89,13 @@ class SmartEffectorProbe:
                                     self.cmd_SET_SMART_EFFECTOR,
                                     desc=self.cmd_SET_SMART_EFFECTOR_help)
     def get_probe_params(self, gcmd=None):
-        return self.probe_session.get_probe_params(gcmd)
+        return self.param_helper.get_probe_params(gcmd)
     def get_offsets(self):
         return self.probe_offsets.get_offsets()
     def get_status(self, eventtime):
         return self.cmd_helper.get_status(eventtime)
     def start_probe_session(self, gcmd):
         return self.probe_session.start_probe_session(gcmd)
-    def probing_move(self, pos, speed):
-        phoming = self.printer.lookup_object('homing')
-        return phoming.probing_move(self, pos, speed)
     def probe_prepare(self, hmove):
         toolhead = self.printer.lookup_object('toolhead')
         self.probe_wrapper.probe_prepare(hmove)
