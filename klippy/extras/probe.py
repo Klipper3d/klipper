@@ -172,6 +172,14 @@ class ProbeCommandHelper:
         configfile = self.printer.lookup_object('configfile')
         configfile.set(self.name, 'z_offset', "%.3f" % (new_calibrate,))
 
+# Helper to lookup the minimum Z position for the printer
+def lookup_minimum_z(config):
+    if config.has_section('stepper_z'):
+        zconfig = config.getsection('stepper_z')
+        return zconfig.getfloat('position_min', 0., note_valid=False)
+    pconfig = config.getsection('printer')
+    return pconfig.getfloat('minimum_z_position', 0., note_valid=False)
+
 # Homing via probe:z_virtual_endstop
 class HomingViaProbeHelper:
     def __init__(self, config, mcu_probe):
@@ -241,14 +249,7 @@ class ProbeSessionHelper:
         gcode = self.printer.lookup_object('gcode')
         self.dummy_gcode_cmd = gcode.create_gcode_command("", "", {})
         # Infer Z position to move to during a probe
-        if config.has_section('stepper_z'):
-            zconfig = config.getsection('stepper_z')
-            self.z_position = zconfig.getfloat('position_min', 0.,
-                                               note_valid=False)
-        else:
-            pconfig = config.getsection('printer')
-            self.z_position = pconfig.getfloat('minimum_z_position', 0.,
-                                               note_valid=False)
+        self.z_position = lookup_minimum_z(config)
         # Configurable probing speeds
         self.speed = config.getfloat('speed', 5.0, above=0.)
         self.lift_speed = config.getfloat('lift_speed', self.speed, above=0.)
