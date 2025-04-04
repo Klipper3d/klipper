@@ -240,16 +240,11 @@ class HomingViaProbeHelper:
         phoming = self.printer.lookup_object('homing')
         return phoming.probing_move(self.mcu_probe, pos, speed)
 
-# Helper to track multiple probe attempts in a single command
-class ProbeSessionHelper:
-    def __init__(self, config, mcu_probe, probing_move_cb=None):
-        self.printer = config.get_printer()
-        self.mcu_probe = mcu_probe
-        self.probing_move_cb = probing_move_cb
-        gcode = self.printer.lookup_object('gcode')
+# Helper to read multi-sample parameters from config
+class ProbeParameterHelper:
+    def __init__(self, config):
+        gcode = config.get_printer().lookup_object('gcode')
         self.dummy_gcode_cmd = gcode.create_gcode_command("", "", {})
-        # Infer Z position to move to during a probe
-        self.z_position = lookup_minimum_z(config)
         # Configurable probing speeds
         self.speed = config.getfloat('speed', 5.0, above=0.)
         self.lift_speed = config.getfloat('lift_speed', self.speed, above=0.)
@@ -264,6 +259,36 @@ class ProbeSessionHelper:
                                                  minval=0.)
         self.samples_retries = config.getint('samples_tolerance_retries', 0,
                                              minval=0)
+    def get_probe_params(self, gcmd=None):
+        if gcmd is None:
+            gcmd = self.dummy_gcode_cmd
+        probe_speed = gcmd.get_float("PROBE_SPEED", self.speed, above=0.)
+        lift_speed = gcmd.get_float("LIFT_SPEED", self.lift_speed, above=0.)
+        samples = gcmd.get_int("SAMPLES", self.sample_count, minval=1)
+        sample_retract_dist = gcmd.get_float("SAMPLE_RETRACT_DIST",
+                                             self.sample_retract_dist, above=0.)
+        samples_tolerance = gcmd.get_float("SAMPLES_TOLERANCE",
+                                           self.samples_tolerance, minval=0.)
+        samples_retries = gcmd.get_int("SAMPLES_TOLERANCE_RETRIES",
+                                       self.samples_retries, minval=0)
+        samples_result = gcmd.get("SAMPLES_RESULT", self.samples_result)
+        return {'probe_speed': probe_speed,
+                'lift_speed': lift_speed,
+                'samples': samples,
+                'sample_retract_dist': sample_retract_dist,
+                'samples_tolerance': samples_tolerance,
+                'samples_tolerance_retries': samples_retries,
+                'samples_result': samples_result}
+
+# Helper to track multiple probe attempts in a single command
+class ProbeSessionHelper:
+    def __init__(self, config, mcu_probe, param_helper, probing_move_cb=None):
+        self.printer = config.get_printer()
+        self.mcu_probe = mcu_probe
+        self.param_helper = param_helper
+        self.probing_move_cb = probing_move_cb
+        # Infer Z position to move to during a probe
+        self.z_position = lookup_minimum_z(config)
         # Session state
         self.multi_probe_pending = False
         self.results = []
@@ -292,26 +317,6 @@ class ProbeSessionHelper:
         self.results = []
         self.multi_probe_pending = False
         self.mcu_probe.multi_probe_end()
-    def get_probe_params(self, gcmd=None):
-        if gcmd is None:
-            gcmd = self.dummy_gcode_cmd
-        probe_speed = gcmd.get_float("PROBE_SPEED", self.speed, above=0.)
-        lift_speed = gcmd.get_float("LIFT_SPEED", self.lift_speed, above=0.)
-        samples = gcmd.get_int("SAMPLES", self.sample_count, minval=1)
-        sample_retract_dist = gcmd.get_float("SAMPLE_RETRACT_DIST",
-                                             self.sample_retract_dist, above=0.)
-        samples_tolerance = gcmd.get_float("SAMPLES_TOLERANCE",
-                                           self.samples_tolerance, minval=0.)
-        samples_retries = gcmd.get_int("SAMPLES_TOLERANCE_RETRIES",
-                                       self.samples_retries, minval=0)
-        samples_result = gcmd.get("SAMPLES_RESULT", self.samples_result)
-        return {'probe_speed': probe_speed,
-                'lift_speed': lift_speed,
-                'samples': samples,
-                'sample_retract_dist': sample_retract_dist,
-                'samples_tolerance': samples_tolerance,
-                'samples_tolerance_retries': samples_retries,
-                'samples_result': samples_result}
     def _probe(self, speed):
         toolhead = self.printer.lookup_object('toolhead')
         curtime = self.printer.get_reactor().monotonic()
@@ -336,7 +341,7 @@ class ProbeSessionHelper:
     def run_probe(self, gcmd):
         if not self.multi_probe_pending:
             self._probe_state_error()
-        params = self.get_probe_params(gcmd)
+        params = self.param_helper.get_probe_params(gcmd)
         toolhead = self.printer.lookup_object('toolhead')
         probexy = toolhead.get_position()[:2]
         retries = 0
@@ -370,12 +375,14 @@ class ProbeSessionHelper:
 # Helper for probes based purely on an endstop wrapper
 class ProbeEndstopSessionHelper:
     def __init__(self, config, mcu_probe):
+        self.param_helper = ProbeParameterHelper(config)
         self.homing_helper = HomingViaProbeHelper(config, mcu_probe)
-        self.probe_session = ProbeSessionHelper(config, mcu_probe,
-                                                self.homing_helper.probing_move)
+        self.probe_session = ProbeSessionHelper(
+            config, mcu_probe, self.param_helper,
+            self.homing_helper.probing_move)
         # Main printer probe session starting API
         self.start_probe_session = self.probe_session.start_probe_session
-        self.get_probe_params = self.probe_session.get_probe_params
+        self.get_probe_params = self.param_helper.get_probe_params
 
 # Helper to read the xyz probe offsets from the config
 class ProbeOffsetsHelper:
