@@ -5,7 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 PIN_MIN_TIME = 0.100
-MAX_SCHEDULE_TIME = 5.0
+MAX_SCHEDULE_TIME = 3.5
 
 class MCU_pwm_cycle:
     def __init__(self, pin_params, cycle_time, start_value, shutdown_value):

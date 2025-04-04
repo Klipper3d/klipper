@@ -98,7 +98,7 @@ class LEDHelper:
                 set_template(gcmd, self.tcallbacks[i], self._check_transmit)
 
 PIN_MIN_TIME = 0.100
-MAX_SCHEDULE_TIME = 5.0
+MAX_SCHEDULE_TIME = 3.5
 
 # Handler for PWM controlled LEDs
 class PrinterPWMLED:
