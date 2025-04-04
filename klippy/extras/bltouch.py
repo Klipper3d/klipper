@@ -64,7 +64,7 @@ class BLTouchProbe:
         self.cmd_helper = probe.ProbeCommandHelper(
             config, self, self.mcu_endstop.query_endstop)
         self.probe_offsets = probe.ProbeOffsetsHelper(config)
-        self.probe_session = probe.ProbeSessionHelper(config, self)
+        self.probe_session = probe.ProbeEndstopSessionHelper(config, self)
         # Register BLTOUCH_DEBUG command
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("BLTOUCH_DEBUG", self.cmd_BLTOUCH_DEBUG,

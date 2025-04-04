@@ -69,7 +69,7 @@ class SmartEffectorProbe:
         self.cmd_helper = probe.ProbeCommandHelper(
             config, self, self.probe_wrapper.query_endstop)
         self.probe_offsets = probe.ProbeOffsetsHelper(config)
-        self.probe_session = probe.ProbeSessionHelper(config, self)
+        self.probe_session = probe.ProbeEndstopSessionHelper(config, self)
         # SmartEffector control
         control_pin = config.get('control_pin', None)
         if control_pin:

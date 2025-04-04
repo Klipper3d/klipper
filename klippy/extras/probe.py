@@ -237,6 +237,7 @@ class ProbeSessionHelper:
     def __init__(self, config, mcu_probe, probing_move_cb=None):
         self.printer = config.get_printer()
         self.mcu_probe = mcu_probe
+        self.probing_move_cb = probing_move_cb
         gcode = self.printer.lookup_object('gcode')
         self.dummy_gcode_cmd = gcode.create_gcode_command("", "", {})
         # Infer Z position to move to during a probe
@@ -248,10 +249,6 @@ class ProbeSessionHelper:
             pconfig = config.getsection('printer')
             self.z_position = pconfig.getfloat('minimum_z_position', 0.,
                                                note_valid=False)
-        self.homing_helper = HomingViaProbeHelper(config, mcu_probe)
-        self.probing_move_cb = probing_move_cb
-        if probing_move_cb is None:
-            self.probing_move_cb = self.homing_helper.probing_move
         # Configurable probing speeds
         self.speed = config.getfloat('speed', 5.0, above=0.)
         self.lift_speed = config.getfloat('lift_speed', self.speed, above=0.)
@@ -368,6 +365,16 @@ class ProbeSessionHelper:
         res = self.results
         self.results = []
         return res
+
+# Helper for probes based purely on an endstop wrapper
+class ProbeEndstopSessionHelper:
+    def __init__(self, config, mcu_probe):
+        self.homing_helper = HomingViaProbeHelper(config, mcu_probe)
+        self.probe_session = ProbeSessionHelper(config, mcu_probe,
+                                                self.homing_helper.probing_move)
+        # Main printer probe session starting API
+        self.start_probe_session = self.probe_session.start_probe_session
+        self.get_probe_params = self.probe_session.get_probe_params
 
 # Helper to read the xyz probe offsets from the config
 class ProbeOffsetsHelper:
@@ -570,7 +577,7 @@ class PrinterProbe:
         self.cmd_helper = ProbeCommandHelper(config, self,
                                              self.mcu_probe.query_endstop)
         self.probe_offsets = ProbeOffsetsHelper(config)
-        self.probe_session = ProbeSessionHelper(config, self.mcu_probe)
+        self.probe_session = ProbeEndstopSessionHelper(config, self.mcu_probe)
     def get_probe_params(self, gcmd=None):
         return self.probe_session.get_probe_params(gcmd)
     def get_offsets(self):

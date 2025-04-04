@@ -428,6 +428,7 @@ class PrinterEddyProbe:
         self.cmd_helper = probe.ProbeCommandHelper(
             config, self, self.mcu_probe.query_endstop)
         self.probe_offsets = probe.ProbeOffsetsHelper(config)
+        self.homing_helper = probe.HomingViaProbeHelper(config, self.mcu_probe)
         self.probe_session = probe.ProbeSessionHelper(
             config, self.mcu_probe, self.mcu_probe.probing_move)
         self.printer.add_object('probe', self)
