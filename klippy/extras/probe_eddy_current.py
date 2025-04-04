@@ -438,8 +438,7 @@ class PrinterEddyProbe:
         self.param_helper = probe.ProbeParameterHelper(config)
         self.mcu_probe = EddyEndstopWrapper(
             config, self.sensor_helper, self.calibration, self.param_helper)
-        self.cmd_helper = probe.ProbeCommandHelper(
-            config, self, self.mcu_probe.query_endstop)
+        self.cmd_helper = probe.ProbeCommandHelper(config, self)
         self.probe_offsets = probe.ProbeOffsetsHelper(config)
         self.homing_helper = probe.HomingViaProbeHelper(config, self.mcu_probe,
                                                         self.param_helper)
