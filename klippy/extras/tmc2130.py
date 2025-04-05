@@ -323,6 +323,7 @@ class TMC2130:
         set_config_field(config, "pwm_grad", 4)
         set_config_field(config, "pwm_freq", 1)
         set_config_field(config, "pwm_autoscale", True)
+        set_config_field(config, "freewheel", 0)
         # TPOWERDOWN
         set_config_field(config, "tpowerdown", 0)
 
