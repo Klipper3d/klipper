@@ -125,9 +125,8 @@ class Calibrater:
 
     def _handle_connect(self):
         self.probe = self.printer.lookup_object('probe', None)
-        if (self.probe is None):
-            config = self.printer.lookup_object('configfile')
-            raise config.error(
+        if self.probe is None:
+            raise self.printer.config_error(
                 "AXIS_TWIST_COMPENSATION requires [probe] to be defined")
         self.lift_speed = self.probe.get_probe_params()['lift_speed']
         self.probe_x_offset, self.probe_y_offset, _ = \
