@@ -104,7 +104,11 @@ config WANT_PULSE_COUNTER
     bool
     depends on HAVE_GPIO
     default y
-config WANT_DISPLAYS
+config WANT_ST7920
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_HD44780
     bool
     depends on HAVE_GPIO
     default y
@@ -171,8 +175,11 @@ config WANT_NEOPIXEL
 config WANT_PULSE_COUNTER
     bool "Support measuring fan tachometer GPIO pins"
     depends on HAVE_GPIO
-config WANT_DISPLAYS
-    bool "Support LCD devices"
+config WANT_ST7920
+    bool "Support ST7920 LCD display"
+    depends on HAVE_GPIO
+config WANT_HD44780
+    bool "Support HD44780 LCD display"
     depends on HAVE_GPIO
 config WANT_THERMOCOUPLE
     bool "Support thermocouple MAX sensors"
