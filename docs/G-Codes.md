@@ -579,18 +579,51 @@ state; issue a G28 afterwards to reset the kinematics. This command is
 intended for low-level diagnostics and debugging.
 
 #### SET_KINEMATIC_POSITION
+
 `SET_KINEMATIC_POSITION [X=<value>] [Y=<value>] [Z=<value>]
-[CLEAR=<[X][Y][Z]>]`: Force the low-level kinematic code to believe the
-toolhead is at the given cartesian position. This is a diagnostic and
-debugging command; use SET_GCODE_OFFSET and/or G92 for regular axis
-transformations. If an axis is not specified then it will default to the
-position that the head was last commanded to. Setting an incorrect or
-invalid position may lead to internal software errors. Use the CLEAR
-parameter to forget the homing state for the given axes. Note that CLEAR
-will not override the previous functionality; if an axis is not specified
-to CLEAR it will have its kinematic position set as per above. This
-command may invalidate future boundary checks; issue a G28 afterwards to
-reset the kinematics.
+[SET_HOMED=<[X][Y][Z]>] [CLEAR_HOMED=<[X][Y][Z]>]`: Force the
+low-level kinematic code to believe the toolhead is at the given
+cartesian position and set/clear homed status. This is a diagnostic
+and debugging command; use SET_GCODE_OFFSET and/or G92 for regular
+axis transformations. Setting an incorrect or invalid position may
+lead to internal software errors.
+
+The `X`, `Y`, and `Z` parameters are used to alter the low-level
+kinematic position tracking. If any of these parameters are not set
+then the position is not changed - for example `SET_KINEMATIC_POSITION
+Z=10` would set all axes as homed, set the internal Z position to 10,
+and leave the X and Y positions unchanged. Changing the internal
+position tracking is not dependent on the internal homing state - one
+may alter the position for both homed and not homed axes, and
+similarly one may set or clear the homing state of an axis without
+altering its internal position.
+
+The `SET_HOMED` parameter defaults to `XYZ` which instructs the
+kinematics to consider all axes as homed. A bare
+`SET_KINEMATIC_POSITION` command will result in all axes being
+considered homed (and not change its current position). If it is not
+desired to change the state of homed axes then assign `SET_HOMED` to
+an empty string - for example:
+`SET_KINEMATIC_POSITION SET_HOMED= X=10`. It is also possible to
+request an individual axis be considered homed (eg, `SET_HOMED=X`),
+but note that non-cartesian style kinematics (such as delta
+kinematics) may not support setting an individual axis as homed.
+
+The `CLEAR_HOMED` parameter instructs the kinematics to consider the
+given axes as not homed. For example, `CLEAR_HOMED=XYZ` would request
+all axes to be considered not homed (and thus require homing prior to
+movement on those axes). The default is `SET_HOMED=XYZ` even if
+`CLEAR_HOMED` is present, so the command `SET_KINEMATIC_POSITION
+CLEAR_HOMED=Z` will set X and Y as homed and clear the homing state
+for Z.  Use `SET_KINEMATIC_POSITION SET_HOMED= CLEAR_HOMED=Z` if the
+goal is to clear only the Z homing state. If an axis is specified in
+neither `SET_HOMED` nor `CLEAR_HOMED` then its homing state is not
+changed and if it is specified in both then `CLEAR_HOMED` has
+precedence. It is possible to request clearing of an individual axis,
+but on non-cartesian style kinematics (such as delta kinematics) doing
+so may result in clearing the homing state of additional axes. Note
+the `CLEAR` parameter is currently an alias for the `CLEAR_HOMED`
+parameter, but this alias will be removed in the future.
 
 ### [gcode]
 
