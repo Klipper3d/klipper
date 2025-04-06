@@ -1,11 +1,12 @@
 // Software I2C emulation
 //
-// Copyright (C) 2023  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2023-2025  Kevin O'Connor <kevin@koconnor.net>
 // Copyright (C) 2023  Alan.Ma <tech@biqu3d.com>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // memcpy
+#include "autoconf.h" // CONFIG_CLOCK_FREQ
 #include "board/gpio.h" // gpio_out_setup
 #include "board/internal.h" // gpio_peripheral
 #include "board/misc.h" // timer_read_time
@@ -17,7 +18,7 @@ struct i2c_software {
     struct gpio_out scl_out, sda_out;
     struct gpio_in scl_in, sda_in;
     uint8_t addr;
-    unsigned int ticks;
+    uint32_t ticks;
 };
 
 void
@@ -25,7 +26,7 @@ command_i2c_set_software_bus(uint32_t *args)
 {
     struct i2cdev_s *i2c = i2cdev_oid_lookup(args[0]);
     struct i2c_software *is = alloc_chunk(sizeof(*is));
-    is->ticks = 1000000 / 100 / 2; // 100KHz
+    is->ticks = CONFIG_CLOCK_FREQ / (100000 * 2); // 100KHz
     is->addr = (args[4] & 0x7f) << 1; // address format shifted
     is->scl_in = gpio_in_setup(args[1], 1);
     is->scl_out = gpio_out_setup(args[1], 1);
@@ -44,16 +45,12 @@ DECL_COMMAND(command_i2c_set_software_bus,
 
 #else
 
-static unsigned int
-nsecs_to_ticks(uint32_t ns)
-{
-    return timer_from_us(ns * 1000) / 1000000;
-}
-
 static void
-i2c_delay(unsigned int ticks) {
-    unsigned int t = timer_read_time() + nsecs_to_ticks(ticks);
-    while (t > timer_read_time());
+i2c_delay(uint32_t ticks)
+{
+    uint32_t end = timer_read_time() + ticks;
+    while (timer_is_before(timer_read_time(), end))
+        ;
 }
 
 #endif
