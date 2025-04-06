@@ -9,8 +9,10 @@ src-$(CONFIG_HAVE_GPIO_SDIO) += sdiocmds.c
 src-$(CONFIG_HAVE_GPIO_I2C) += i2ccmds.c
 src-$(CONFIG_HAVE_GPIO_HARD_PWM) += pwmcmds.c
 
-src-$(CONFIG_WANT_GPIO_BITBANGING) += buttons.c tmcuart.c neopixel.c \
-    pulse_counter.c
+src-$(CONFIG_WANT_BUTTONS) += buttons.c
+src-$(CONFIG_WANT_TMCUART) += tmcuart.c
+src-$(CONFIG_WANT_NEOPIXEL) += neopixel.c
+src-$(CONFIG_WANT_PULSE_COUNTER) += pulse_counter.c
 src-$(CONFIG_WANT_DISPLAYS) += lcd_st7920.c lcd_hd44780.c
 src-$(CONFIG_WANT_SOFTWARE_SPI) += spi_software.c
 src-$(CONFIG_WANT_SOFTWARE_I2C) += i2c_software.c

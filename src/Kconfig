@@ -88,7 +88,19 @@ config USB_SERIAL_NUMBER
 endmenu
 
 # Optional features that can be disabled (for devices with small flash sizes)
-config WANT_GPIO_BITBANGING
+config WANT_BUTTONS
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_TMCUART
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_NEOPIXEL
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_PULSE_COUNTER
     bool
     depends on HAVE_GPIO
     default y
@@ -118,7 +130,7 @@ config WANT_ICM20948
     default y
 config WANT_HX71X
     bool
-    depends on WANT_GPIO_BITBANGING
+    depends on HAVE_GPIO
     default y
 config WANT_ADS1220
     bool
@@ -147,8 +159,17 @@ config NEED_SENSOR_BULK
     default y
 menu "Optional features (to reduce code size)"
     depends on HAVE_LIMITED_CODE_SIZE
-config WANT_GPIO_BITBANGING
-    bool "Support GPIO \"bit-banging\" devices"
+config WANT_BUTTONS
+    bool "Support GPIO based button reading"
+    depends on HAVE_GPIO
+config WANT_TMCUART
+    bool "Support Trinamic stepper motor driver UART communication"
+    depends on HAVE_GPIO
+config WANT_NEOPIXEL
+    bool "Support 'neopixel' type LED control"
+    depends on HAVE_GPIO
+config WANT_PULSE_COUNTER
+    bool "Support measuring fan tachometer GPIO pins"
     depends on HAVE_GPIO
 config WANT_DISPLAYS
     bool "Support LCD devices"
@@ -170,7 +191,7 @@ config WANT_ICM20948
     depends on HAVE_GPIO_I2C
 config WANT_HX71X
     bool "Support HX711 and HX717 ADC chips"
-    depends on WANT_GPIO_BITBANGING
+    depends on HAVE_GPIO
 config WANT_ADS1220
     bool "Support ADS 1220 ADC chip"
     depends on HAVE_GPIO_SPI
