@@ -7,7 +7,7 @@ config AR100_SELECT
     default y
     select HAVE_GPIO
     select HAVE_GPIO_SPI
-    select HAVE_STEPPER_BOTH_EDGE
+    select HAVE_STEPPER_OPTIMIZED_BOTH_EDGE
     select HAVE_LIMITED_CODE_SIZE
 
 config BOARD_DIRECTORY

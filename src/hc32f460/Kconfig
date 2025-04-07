@@ -9,7 +9,7 @@ config HC32F460_SELECT
     select HAVE_GPIO_ADC
     select HAVE_STRICT_TIMING
     select HAVE_GPIO_HARD_PWM
-    select HAVE_STEPPER_BOTH_EDGE
+    select HAVE_STEPPER_OPTIMIZED_BOTH_EDGE
 
 config BOARD_DIRECTORY
     string
