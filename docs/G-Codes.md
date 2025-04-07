@@ -715,40 +715,6 @@ and RAW sensor value for calibration points.
 #### DISABLE_FILAMENT_WIDTH_LOG
 `DISABLE_FILAMENT_WIDTH_LOG`: Turn off diameter logging.
 
-### [load_cell]
-
-The following commands are enabled if a
-[load_cell config section](Config_Reference.md#load_cell) has been enabled.
-
-### LOAD_CELL_DIAGNOSTIC
-`LOAD_CELL_DIAGNOSTIC [LOAD_CELL=<config_name>]`: This command collects 10
-seconds of load cell data and reports statistics that can help you verify proper
-operation of the load cell. This command can be run on both calibrated and
-uncalibrated load cells.
-
-### LOAD_CELL_CALIBRATE
-`LOAD_CELL_CALIBRATE [LOAD_CELL=<config_name>]`: Start the guided calibration
-utility. Calibration is a 3 step process:
-1. First you remove all load from the load cell and run the `TARE` command
-1. Next you apply a known load to the load cell and run the
-`CALIBRATE GRAMS=nnn` command
-1. Finally use the `ACCEPT` command to save the results
-
-You can cancel the calibration process at any time with `ABORT`.
-
-### LOAD_CELL_TARE
-`LOAD_CELL_TARE [LOAD_CELL=<config_name>]`: This works just like the tare button
-on digital scale. It sets the current raw reading of the load cell to be the
-zero point reference value. The response is the percentage of the sensors range
-that was read and the raw value in counts.
-
-### LOAD_CELL_READ load_cell="name"
-`LOAD_CELL_READ [LOAD_CELL=<config_name>]`:
-This command takes a reading from the load cell. The response is the percentage
-of the sensors range that was read and the raw value in counts. If the load cell
-is calibrated a force in grams is also reported.
-
-
 ### [heaters]
 
 The heaters module is automatically loaded if a heater is defined in
@@ -793,6 +759,82 @@ been configured in [input_shaper] section. SHAPER_TYPE cannot be used
 together with either of SHAPER_TYPE_X and SHAPER_TYPE_Y parameters.
 See [config reference](Config_Reference.md#input_shaper) for more
 details on each of these parameters.
+
+### [led]
+
+The following command is available when any of the
+[led config sections](Config_Reference.md#leds) are enabled.
+
+#### SET_LED
+`SET_LED LED=<config_name> RED=<value> GREEN=<value> BLUE=<value>
+WHITE=<value> [INDEX=<index>] [TRANSMIT=0] [SYNC=1]`: This sets the
+LED output. Each color `<value>` must be between 0.0 and 1.0. The
+WHITE option is only valid on RGBW LEDs. If the LED supports multiple
+chips in a daisy-chain then one may specify INDEX to alter the color
+of just the given chip (1 for the first chip, 2 for the second,
+etc.). If INDEX is not provided then all LEDs in the daisy-chain will
+be set to the provided color. If TRANSMIT=0 is specified then the
+color change will only be made on the next SET_LED command that does
+not specify TRANSMIT=0; this may be useful in combination with the
+INDEX parameter to batch multiple updates in a daisy-chain. By
+default, the SET_LED command will sync it's changes with other ongoing
+gcode commands.  This can lead to undesirable behavior if LEDs are
+being set while the printer is not printing as it will reset the idle
+timeout. If careful timing is not needed, the optional SYNC=0
+parameter can be specified to apply the changes without resetting the
+idle timeout.
+
+#### SET_LED_TEMPLATE
+`SET_LED_TEMPLATE LED=<led_name> TEMPLATE=<template_name>
+[<param_x>=<literal>] [INDEX=<index>]`: Assign a
+[display_template](Config_Reference.md#display_template) to a given
+[LED](Config_Reference.md#leds). For example, if one defined a
+`[display_template my_led_template]` config section then one could
+assign `TEMPLATE=my_led_template` here. The display_template should
+produce a comma separated string containing four floating point
+numbers corresponding to red, green, blue, and white color settings.
+The template will be continuously evaluated and the LED will be
+automatically set to the resulting colors. One may set
+display_template parameters to use during template evaluation
+(parameters will be parsed as Python literals). If INDEX is not
+specified then all chips in the LED's daisy-chain will be set to the
+template, otherwise only the chip with the given index will be
+updated. If TEMPLATE is an empty string then this command will clear
+any previous template assigned to the LED (one can then use `SET_LED`
+commands to manage the LED's color settings).
+
+### [load_cell]
+
+The following commands are enabled if a
+[load_cell config section](Config_Reference.md#load_cell) has been enabled.
+
+### LOAD_CELL_DIAGNOSTIC
+`LOAD_CELL_DIAGNOSTIC [LOAD_CELL=<config_name>]`: This command collects 10
+seconds of load cell data and reports statistics that can help you verify proper
+operation of the load cell. This command can be run on both calibrated and
+uncalibrated load cells.
+
+### LOAD_CELL_CALIBRATE
+`LOAD_CELL_CALIBRATE [LOAD_CELL=<config_name>]`: Start the guided calibration
+utility. Calibration is a 3 step process:
+1. First you remove all load from the load cell and run the `TARE` command
+1. Next you apply a known load to the load cell and run the
+`CALIBRATE GRAMS=nnn` command
+1. Finally use the `ACCEPT` command to save the results
+
+You can cancel the calibration process at any time with `ABORT`.
+
+### LOAD_CELL_TARE
+`LOAD_CELL_TARE [LOAD_CELL=<config_name>]`: This works just like the tare button
+on digital scale. It sets the current raw reading of the load cell to be the
+zero point reference value. The response is the percentage of the sensors range
+that was read and the raw value in counts.
+
+### LOAD_CELL_READ load_cell="name"
+`LOAD_CELL_READ [LOAD_CELL=<config_name>]`:
+This command takes a reading from the load cell. The response is the percentage
+of the sensors range that was read and the raw value in counts. If the load cell
+is calibrated a force in grams is also reported.
 
 ### [manual_probe]
 
@@ -864,49 +906,6 @@ be between 0.0 and 1.0, unless a 'scale' is defined in the config.
 When 'scale' is defined, then this value should be  between 0.0 and
 'scale'.
 
-### [led]
-
-The following command is available when any of the
-[led config sections](Config_Reference.md#leds) are enabled.
-
-#### SET_LED
-`SET_LED LED=<config_name> RED=<value> GREEN=<value> BLUE=<value>
-WHITE=<value> [INDEX=<index>] [TRANSMIT=0] [SYNC=1]`: This sets the
-LED output. Each color `<value>` must be between 0.0 and 1.0. The
-WHITE option is only valid on RGBW LEDs. If the LED supports multiple
-chips in a daisy-chain then one may specify INDEX to alter the color
-of just the given chip (1 for the first chip, 2 for the second,
-etc.). If INDEX is not provided then all LEDs in the daisy-chain will
-be set to the provided color. If TRANSMIT=0 is specified then the
-color change will only be made on the next SET_LED command that does
-not specify TRANSMIT=0; this may be useful in combination with the
-INDEX parameter to batch multiple updates in a daisy-chain. By
-default, the SET_LED command will sync it's changes with other ongoing
-gcode commands.  This can lead to undesirable behavior if LEDs are
-being set while the printer is not printing as it will reset the idle
-timeout. If careful timing is not needed, the optional SYNC=0
-parameter can be specified to apply the changes without resetting the
-idle timeout.
-
-#### SET_LED_TEMPLATE
-`SET_LED_TEMPLATE LED=<led_name> TEMPLATE=<template_name>
-[<param_x>=<literal>] [INDEX=<index>]`: Assign a
-[display_template](Config_Reference.md#display_template) to a given
-[LED](Config_Reference.md#leds). For example, if one defined a
-`[display_template my_led_template]` config section then one could
-assign `TEMPLATE=my_led_template` here. The display_template should
-produce a comma separated string containing four floating point
-numbers corresponding to red, green, blue, and white color settings.
-The template will be continuously evaluated and the LED will be
-automatically set to the resulting colors. One may set
-display_template parameters to use during template evaluation
-(parameters will be parsed as Python literals). If INDEX is not
-specified then all chips in the LED's daisy-chain will be set to the
-template, otherwise only the chip with the given index will be
-updated. If TEMPLATE is an empty string then this command will clear
-any previous template assigned to the LED (one can then use `SET_LED`
-commands to manage the LED's color settings).
-
 ### [output_pin]
 
 The following command is available when an
@@ -969,20 +968,6 @@ Palette 2 once the loading has been completed. This command is the
 same as pressing **Smart Load** directly on the Palette 2 screen after
 the filament load is complete.
 
-### [pid_calibrate]
-
-The pid_calibrate module is automatically loaded if a heater is defined
-in the config file.
-
-#### PID_CALIBRATE
-`PID_CALIBRATE HEATER=<config_name> TARGET=<temperature>
-[WRITE_FILE=1]`: Perform a PID calibration test. The specified heater
-will be enabled until the specified target temperature is reached, and
-then the heater will be turned off and on for several cycles. If the
-WRITE_FILE parameter is enabled, then the file /tmp/heattest.txt will
-be created with a log of all temperature samples taken during the
-test.
-
 ### [pause_resume]
 
 The following commands are available when the
@@ -1007,6 +992,20 @@ the paused state is fresh for each print.
 
 #### CANCEL_PRINT
 `CANCEL_PRINT`: Cancels the current print.
+
+### [pid_calibrate]
+
+The pid_calibrate module is automatically loaded if a heater is defined
+in the config file.
+
+#### PID_CALIBRATE
+`PID_CALIBRATE HEATER=<config_name> TARGET=<temperature>
+[WRITE_FILE=1]`: Perform a PID calibration test. The specified heater
+will be enabled until the specified target temperature is reached, and
+then the heater will be turned off and on for several cycles. If the
+WRITE_FILE parameter is enabled, then the file /tmp/heattest.txt will
+be created with a log of all temperature samples taken during the
+test.
 
 ### [print_stats]
 
@@ -1375,6 +1374,42 @@ temperature_fan. If a target is not supplied, it is set to the
 specified temperature in the config file. If speeds are not supplied,
 no change is applied.
 
+### [temperature_probe]
+
+The following commands are available when a
+[temperature_probe config section](Config_Reference.md#temperature_probe)
+is enabled.
+
+#### TEMPERATURE_PROBE_CALIBRATE
+`TEMPERATURE_PROBE_CALIBRATE [PROBE=<probe name>] [TARGET=<value>] [STEP=<value>]`:
+Initiates probe drift calibration for eddy current based probes.  The `TARGET`
+is a target temperature for the last sample.  When the temperature recorded
+during a sample exceeds the `TARGET` calibration will complete.  The `STEP`
+parameter sets temperature delta (in C) between samples. After a sample has
+been taken, this delta is used to schedule a call to `TEMPERATURE_PROBE_NEXT`.
+The default `STEP` is 2.
+
+#### TEMPERATURE_PROBE_NEXT
+`TEMPERATURE_PROBE_NEXT`: After calibration has started this command is run to
+take the next sample.  It is automatically scheduled to run when the delta
+specified by `STEP` has been reached, however its also possible to manually run
+this command to force a new sample.  This command is only available during
+calibration.
+
+#### TEMPERATURE_PROBE_COMPLETE:
+`TEMPERATURE_PROBE_COMPLETE`:  Can be used to end calibration and save the
+current result before the `TARGET` temperature is reached.  This command
+is only available during calibration.
+
+#### ABORT
+`ABORT`:  Aborts the calibration process, discarding the current results.
+This command is only available during drift calibration.
+
+### TEMPERATURE_PROBE_ENABLE
+`TEMPERATURE_PROBE_ENABLE ENABLE=[0|1]`: Sets temperature drift
+compensation on or off. If ENABLE is set to 0, drift compensation
+will be disabled, if set to 1 it is enabled.
+
 ### [tmcXXXX]
 
 The following commands are available when any of the
@@ -1510,39 +1545,3 @@ independent adjustments to each Z stepper to compensate for tilt. See
 the PROBE command for details on the optional probe parameters. The
 optional `RETRIES`, `RETRY_TOLERANCE`, and `HORIZONTAL_MOVE_Z` values
 override those options specified in the config file.
-
-### [temperature_probe]
-
-The following commands are available when a
-[temperature_probe config section](Config_Reference.md#temperature_probe)
-is enabled.
-
-#### TEMPERATURE_PROBE_CALIBRATE
-`TEMPERATURE_PROBE_CALIBRATE [PROBE=<probe name>] [TARGET=<value>] [STEP=<value>]`:
-Initiates probe drift calibration for eddy current based probes.  The `TARGET`
-is a target temperature for the last sample.  When the temperature recorded
-during a sample exceeds the `TARGET` calibration will complete.  The `STEP`
-parameter sets temperature delta (in C) between samples. After a sample has
-been taken, this delta is used to schedule a call to `TEMPERATURE_PROBE_NEXT`.
-The default `STEP` is 2.
-
-#### TEMPERATURE_PROBE_NEXT
-`TEMPERATURE_PROBE_NEXT`: After calibration has started this command is run to
-take the next sample.  It is automatically scheduled to run when the delta
-specified by `STEP` has been reached, however its also possible to manually run
-this command to force a new sample.  This command is only available during
-calibration.
-
-#### TEMPERATURE_PROBE_COMPLETE:
-`TEMPERATURE_PROBE_COMPLETE`:  Can be used to end calibration and save the
-current result before the `TARGET` temperature is reached.  This command
-is only available during calibration.
-
-#### ABORT
-`ABORT`:  Aborts the calibration process, discarding the current results.
-This command is only available during drift calibration.
-
-### TEMPERATURE_PROBE_ENABLE
-`TEMPERATURE_PROBE_ENABLE ENABLE=[0|1]`: Sets temperature drift
-compensation on or off. If ENABLE is set to 0, drift compensation
-will be disabled, if set to 1 it is enabled.
