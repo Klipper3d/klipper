@@ -291,10 +291,10 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val){
     if (pclock_div > 1)
         pclock_div /= 2; // Timers run at twice the normal pclock frequency
     uint32_t prescaler = cycle_time / (pclock_div * (MAX_PWM - 1));
-    if (prescaler > 0) {
-        prescaler -= 1;
-    } else if (prescaler > UINT16_MAX) {
+    if (prescaler > UINT16_MAX) {
         prescaler = UINT16_MAX;
+    } else if (prescaler > 0) {
+        prescaler -= 1;
     }
 
     gpio_peripheral(p->pin, p->function, 0);
