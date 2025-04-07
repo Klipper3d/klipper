@@ -11,7 +11,7 @@
 #include "internal.h" // GPIO
 #include "sched.h" // sched_shutdown
 
-#define MAX_PWM 255
+#define MAX_PWM (256 + 1)
 DECL_CONSTANT("PWM_MAX", MAX_PWM);
 
 struct gpio_pwm_info {
@@ -275,7 +275,8 @@ static const struct gpio_pwm_info pwm_regs[] = {
 };
 
 struct gpio_pwm
-gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val){
+gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint32_t val)
+{
     // Find pin in pwm_regs table
     const struct gpio_pwm_info* p = pwm_regs;
     for (;; p++) {
