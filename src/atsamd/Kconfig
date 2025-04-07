@@ -15,6 +15,8 @@ config ATSAMD_SELECT
     select HAVE_STEPPER_OPTIMIZED_BOTH_EDGE
     select HAVE_BOOTLOADER_REQUEST
     select HAVE_LIMITED_CODE_SIZE if FLASH_SIZE < 0x10000
+    # Software divide needed to convert rate to baud in spi.c
+    select HAVE_SOFTWARE_DIVIDE_REQUIRED if MACH_SAMD21
 
 config HAVE_SERCOM
     depends on HAVE_GPIO_I2C || HAVE_GPIO_SPI

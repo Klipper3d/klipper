@@ -318,3 +318,5 @@ config HAVE_BOOTLOADER_REQUEST
     bool
 config HAVE_LIMITED_CODE_SIZE
     bool
+config HAVE_SOFTWARE_DIVIDE_REQUIRED
+    bool
