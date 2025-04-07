@@ -56,6 +56,7 @@ for TARGET in test/configs/*.config ; do
     make olddefconfig
     make V=1
     size out/*.elf
+    ./scripts/check-software-div.sh .config out/*.elf
     finish_test mcu_compile "$TARGET"
     cp out/klipper.dict ${DICTDIR}/$(basename ${TARGET} .config).dict
 done
