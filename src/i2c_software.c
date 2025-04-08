@@ -25,13 +25,15 @@ void
 command_i2c_set_software_bus(uint32_t *args)
 {
     struct i2cdev_s *i2c = i2cdev_oid_lookup(args[0]);
-    struct i2c_software *is = alloc_chunk(sizeof(*is));
-    is->ticks = CONFIG_CLOCK_FREQ / (100000 * 2); // 100KHz
-    is->addr = (args[4] & 0x7f) << 1; // address format shifted
-    is->scl_in = gpio_in_setup(args[1], 1);
-    is->scl_out = gpio_out_setup(args[1], 1);
-    is->sda_in = gpio_in_setup(args[2], 1);
-    is->sda_out = gpio_out_setup(args[2], 1);
+    struct i2c_software init = {
+        .ticks = CONFIG_CLOCK_FREQ / (100000 * 2), // 100KHz
+        .addr = (args[4] & 0x7f) << 1,             // address format shifted
+        .scl_in = gpio_in_setup(args[1], 1),
+        .scl_out = gpio_out_setup(args[1], 1),
+        .sda_in = gpio_in_setup(args[2], 1),
+        .sda_out = gpio_out_setup(args[2], 1),
+    };
+    struct i2c_software *is = alloc_chunk_init(sizeof(*is), &init);
     i2cdev_set_software_bus(i2c, is);
 }
 DECL_COMMAND(command_i2c_set_software_bus,

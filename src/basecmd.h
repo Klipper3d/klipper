@@ -11,7 +11,6 @@ struct move_queue_head {
     struct move_node *first, *last;
 };
 
-void *alloc_chunk(size_t size);
 void *alloc_chunk_init(size_t size, const void *ptr);
 void move_free(void *m);
 void *move_alloc(void);
