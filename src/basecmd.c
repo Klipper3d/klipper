@@ -38,6 +38,18 @@ alloc_chunk(size_t size)
     return data;
 }
 
+// Allocate an area of memory with default value
+void *
+alloc_chunk_init(size_t size, const void *ptr)
+{
+    if (alloc_end + size > dynmem_end())
+        shutdown("alloc_chunk failed");
+    void *data = alloc_end;
+    alloc_end += ALIGN(size, __alignof__(void *));
+    memcpy(data, ptr, size);
+    return data;
+}
+
 // Allocate an array of chunks
 static void *
 alloc_chunks(size_t size, size_t count, uint16_t *avail)

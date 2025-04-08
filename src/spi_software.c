@@ -27,14 +27,14 @@ command_spi_set_software_bus(uint32_t *args)
     uint32_t pulse_ticks = args[5];
     if (mode > 3)
         shutdown("Invalid spi config");
-
     struct spidev_s *spi = spidev_oid_lookup(args[0]);
-    struct spi_software *ss = alloc_chunk(sizeof(*ss));
-    ss->miso = gpio_in_setup(args[1], 1);
-    ss->mosi = gpio_out_setup(args[2], 0);
-    ss->sclk = gpio_out_setup(args[3], 0);
-    ss->mode = mode;
-    ss->sck_ticks = pulse_ticks;
+    struct spi_software init = {
+        .miso = gpio_in_setup(args[1], 1),
+        .mosi = gpio_out_setup(args[2], 0),
+        .sclk = gpio_out_setup(args[3], 0),
+        .mode = mode,
+        .sck_ticks = pulse_ticks};
+    struct spi_software *ss = alloc_chunk_init(sizeof(*ss), &init);
     spidev_set_software_bus(spi, ss);
 }
 DECL_COMMAND(command_spi_set_software_bus,

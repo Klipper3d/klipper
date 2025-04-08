@@ -12,6 +12,7 @@ struct move_queue_head {
 };
 
 void *alloc_chunk(size_t size);
+void *alloc_chunk_init(size_t size, const void *ptr);
 void move_free(void *m);
 void *move_alloc(void);
 int move_queue_empty(struct move_queue_head *mh);
