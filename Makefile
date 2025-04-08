@@ -1,6 +1,6 @@
 # Klipper build system
 #
-# Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -33,7 +33,8 @@ CFLAGS := -iquote $(OUT) -iquote src -iquote $(OUT)board-generic/ \
 		-std=gnu11 -O2 -MD -Wall \
 		-Wold-style-definition $(call cc-option,$(CC),-Wtype-limits,) \
     -ffunction-sections -fdata-sections -fno-delete-null-pointer-checks
-CFLAGS += -flto=auto -fwhole-program -fno-use-linker-plugin -ggdb3
+CFLAGS += -flto=auto -fwhole-program -ggdb3
+CFLAGS += $(call cc-option,$(CC),-ffat-lto-objects,-fno-use-linker-plugin)
 
 OBJS_klipper.elf = $(patsubst %.c, $(OUT)src/%.o,$(src-y))
 OBJS_klipper.elf += $(OUT)compile_time_request.o

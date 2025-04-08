@@ -8,6 +8,7 @@ dirs-y += lib/pru_rpmsg
 
 CFLAGS += -Os -minrt -mmcu=am335x.pru1
 CFLAGS += -Ilib/pru_rpmsg/include -Ilib/pru_rpmsg/include/am335x
+CFLAGS += -fno-use-linker-plugin
 
 CFLAGS_klipper.elf := $(filter-out -mmcu=%, $(CFLAGS))
 CFLAGS_klipper.elf += -Wl,-r -nostdlib -Wl,-T,src/pru/pru.lds
