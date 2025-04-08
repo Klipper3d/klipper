@@ -22,28 +22,21 @@ struct i2c_software {
 };
 
 void
-command_i2c_set_software_bus(uint32_t *args)
+command_i2c_set_sw_bus(uint32_t *args)
 {
     struct i2cdev_s *i2c = i2cdev_oid_lookup(args[0]);
     struct i2c_software *is = alloc_chunk(sizeof(*is));
-    uint32_t rate = args[3];
-    is->ticks = CONFIG_CLOCK_FREQ / (100000 * 2); // 100KHz
+    is->ticks = args[3];
     is->addr = (args[4] & 0x7f) << 1; // address format shifted
     is->scl_in = gpio_in_setup(args[1], 1);
     is->scl_out = gpio_out_setup(args[1], 1);
     is->sda_in = gpio_in_setup(args[2], 1);
     is->sda_out = gpio_out_setup(args[2], 1);
-    while (rate > 100000) {
-        rate = rate >> 1;
-        if (rate < 100000)
-            break;
-        is->ticks = is->ticks >> 1;
-    }
     i2cdev_set_software_bus(i2c, is);
 }
-DECL_COMMAND(command_i2c_set_software_bus,
-             "i2c_set_software_bus oid=%c scl_pin=%u sda_pin=%u"
-             " rate=%u address=%u");
+DECL_COMMAND(command_i2c_set_sw_bus,
+             "i2c_set_sw_bus oid=%c scl_pin=%u sda_pin=%u"
+             " pulse_ticks=%u address=%u");
 
 // The AVR micro-controllers require specialized timing
 #if CONFIG_MACH_AVR
