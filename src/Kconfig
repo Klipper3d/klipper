@@ -88,6 +88,10 @@ config USB_SERIAL_NUMBER
 endmenu
 
 # Optional features that can be disabled (for devices with small flash sizes)
+config WANT_ADC
+    bool
+    depends on HAVE_GPIO_ADC
+    default y
 config WANT_SPI
     bool
     depends on HAVE_GPIO && HAVE_GPIO_SPI
@@ -175,6 +179,9 @@ config NEED_SENSOR_BULK
     default y
 menu "Optional features (to reduce code size)"
     depends on HAVE_LIMITED_CODE_SIZE
+config WANT_ADC
+    bool "Support micro-controller based ADC (analog to digital)"
+    depends on HAVE_GPIO_ADC
 config WANT_SPI
     bool "Support communicating with external chips via SPI bus"
     depends on HAVE_GPIO && HAVE_GPIO_SPI
