@@ -137,7 +137,7 @@ class ForceMove:
             # "CLEAR" is an alias for "CLEAR_HOMED"; should deprecate
             clear_homed = gcmd.get('CLEAR', '').lower()
         else:
-            clear_homed = gcmd.get('CLEAR_HOMED', '')
+            clear_homed = gcmd.get('CLEAR_HOMED', '').lower()
         clear_homed_axes = "".join([a for a in "xyz" if a in clear_homed])
         logging.info("SET_KINEMATIC_POSITION pos=%.3f,%.3f,%.3f"
                      " set_homed=%s clear_homed=%s",
