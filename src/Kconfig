@@ -136,10 +136,6 @@ config WANT_HD44780
     bool
     depends on HAVE_GPIO
     default y
-config WANT_THERMOCOUPLE
-    bool
-    depends on WANT_SPI
-    default y
 config WANT_ADXL345
     bool
     depends on WANT_SPI
@@ -155,6 +151,10 @@ config WANT_MPU9250
 config WANT_ICM20948
     bool
     depends on WANT_I2C
+    default y
+config WANT_THERMOCOUPLE
+    bool
+    depends on WANT_SPI
     default y
 config WANT_HX71X
     bool
@@ -209,15 +209,15 @@ config WANT_NEOPIXEL
 config WANT_PULSE_COUNTER
     bool "Support measuring fan tachometer GPIO pins"
     depends on HAVE_GPIO
+comment "LCD chips"
 config WANT_ST7920
     bool "Support ST7920 LCD display"
     depends on HAVE_GPIO
 config WANT_HD44780
     bool "Support HD44780 LCD display"
     depends on HAVE_GPIO
-config WANT_THERMOCOUPLE
-    bool "Support thermocouple MAX sensors"
-    depends on WANT_SPI
+comment "Accelerometer chips"
+    depends on WANT_SPI || WANT_I2C
 config WANT_ADXL345
     bool "Support adxl accelerometers"
     depends on WANT_SPI
@@ -230,12 +230,18 @@ config WANT_MPU9250
 config WANT_ICM20948
     bool "Support ICM20948 accelerometer"
     depends on WANT_I2C
+comment "External ADC type chips"
+config WANT_THERMOCOUPLE
+    bool "Support thermocouple MAX sensors"
+    depends on WANT_SPI
 config WANT_HX71X
     bool "Support HX711 and HX717 ADC chips"
     depends on HAVE_GPIO
 config WANT_ADS1220
     bool "Support ADS 1220 ADC chip"
     depends on WANT_SPI
+comment "Other external sensor chips"
+    depends on WANT_SPI || WANT_I2C
 config WANT_LDC1612
     bool "Support ldc1612 eddy current sensor"
     depends on WANT_I2C
