@@ -583,14 +583,14 @@ intended for low-level diagnostics and debugging.
 [CLEAR=<[X][Y][Z]>]`: Force the low-level kinematic code to believe the
 toolhead is at the given cartesian position. This is a diagnostic and
 debugging command; use SET_GCODE_OFFSET and/or G92 for regular axis
-transformations. If an axis is not specified then it will default to the
-position that the head was last commanded to. Setting an incorrect or
-invalid position may lead to internal software errors. Use the CLEAR
-parameter to forget the homing state for the given axes. Note that CLEAR
-will not override the previous functionality; if an axis is not specified
-to CLEAR it will have its kinematic position set as per above. This
-command may invalidate future boundary checks; issue a G28 afterwards to
-reset the kinematics.
+transformations. If an axis is not specified then its state will not
+be altered. Setting an incorrect or invalid position may lead to internal
+software errors. This command may invalidate future boundary checks on the
+affected axes; issue a G28 afterwards to reset the kinematics.
+
+Use the CLEAR parameter to forget the homing state for the given axes. Note
+that CLEAR will not override the previous functionality; if an axis is not
+specified to CLEAR it will have its kinematic position set as per above.
 
 ### [gcode]
 
