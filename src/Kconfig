@@ -88,6 +88,10 @@ config USB_SERIAL_NUMBER
 endmenu
 
 # Optional features that can be disabled (for devices with small flash sizes)
+config WANT_HARD_PWM
+    bool
+    depends on HAVE_GPIO_HARD_PWM
+    default y
 config WANT_BUTTONS
     bool
     depends on HAVE_GPIO
@@ -163,6 +167,9 @@ config NEED_SENSOR_BULK
     default y
 menu "Optional features (to reduce code size)"
     depends on HAVE_LIMITED_CODE_SIZE
+config WANT_HARD_PWM
+    bool "Support hardware PWM (pulse width modulation)"
+    depends on HAVE_GPIO_HARD_PWM
 config WANT_BUTTONS
     bool "Support GPIO based button reading"
     depends on HAVE_GPIO
