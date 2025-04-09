@@ -85,7 +85,7 @@ command_config_lis2dw(uint32_t *args)
                 shutdown("bus_type spi unsupported");
             }
         case I2C_SERIAL:
-            if (CONFIG_HAVE_GPIO_I2C) {
+            if (CONFIG_WANT_I2C) {
                ax->i2c = i2cdev_oid_lookup(args[1]);
                ax->bus_type = I2C_SERIAL;
                break;
@@ -147,7 +147,7 @@ lis2dw_query(struct lis2dw *ax, uint8_t oid)
 
         for (uint32_t i = 0; i < BYTES_PER_SAMPLE; i++)
             d[i] = msg[i + 1];
-    } else if (CONFIG_HAVE_GPIO_I2C && ax->bus_type == I2C_SERIAL) {
+    } else if (CONFIG_WANT_I2C && ax->bus_type == I2C_SERIAL) {
         uint8_t msg_reg[] = {LIS_AR_DATAX0};
         if (ax->model == LIS3DH)
             msg_reg[0] |= LIS_MS_I2C;
@@ -226,7 +226,7 @@ command_query_lis2dw_status(uint32_t *args)
         spidev_transfer(ax->spi, 1, sizeof(msg), msg);
         time2 = timer_read_time();
         status = msg[1];
-    } else if (CONFIG_HAVE_GPIO_I2C && ax->bus_type == I2C_SERIAL) {
+    } else if (CONFIG_WANT_I2C && ax->bus_type == I2C_SERIAL) {
         uint8_t fifo_reg[1] = {LIS_FIFO_SAMPLES};
         uint8_t fifo[1];
 
