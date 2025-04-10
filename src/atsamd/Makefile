@@ -7,6 +7,7 @@ dirs-y += src/atsamd src/generic lib/fast-hash
 
 MCU := $(shell echo $(CONFIG_MCU) | tr a-z A-Z)
 
+CFLAGS-$(CONFIG_HAVE_LIMITED_CODE_SIZE) += -Os
 CFLAGS-$(CONFIG_MACH_SAMC21) += -mcpu=cortex-m0plus -Ilib/samc21/samc21/include
 CFLAGS-$(CONFIG_MACH_SAMD21) += -mcpu=cortex-m0plus -Ilib/samd21/samd21a/include
 CFLAGS-$(CONFIG_MACH_SAMD51) += -Ilib/samd51/samd51a/include
