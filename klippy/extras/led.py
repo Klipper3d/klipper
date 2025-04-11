@@ -21,7 +21,7 @@ class LEDHelper:
         self.led_state = [(red, green, blue, white)] * led_count
         # Support setting an led template
         self.template_eval = output_pin.lookup_template_eval(config)
-        self.tcallbacks = [(lambda text, s=self, index=i:
+        self.tcallbacks = [(lambda text, s=self, index=i+1:
                             s._template_update(index, text))
                            for i in range(led_count)]
         # Register commands
