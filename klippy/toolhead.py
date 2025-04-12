@@ -202,8 +202,6 @@ MOVE_HISTORY_EXPIRE = 30.
 
 DRIP_SEGMENT_TIME = 0.050
 DRIP_TIME = 0.100
-class DripModeEndSignal(Exception):
-    pass
 
 # Main code to track events (and their timing) on the printer toolhead
 class ToolHead:
@@ -246,7 +244,6 @@ class ToolHead:
         self.print_time = 0.
         self.special_queuing_state = "NeedPrime"
         self.priming_timer = None
-        self.drip_completion = None
         # Flush tracking
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
         self.do_kick_flush_timer = True
@@ -338,10 +335,9 @@ class ToolHead:
             return
         # Resync print_time if necessary
         if self.special_queuing_state:
-            if self.special_queuing_state != "Drip":
-                # Transition from "NeedPrime"/"Priming" state to main state
-                self.special_queuing_state = ""
-                self.need_check_pause = -1.
+            # Transition from "NeedPrime"/"Priming" state to main state
+            self.special_queuing_state = ""
+            self.need_check_pause = -1.
             self._calc_print_time()
         # Queue moves into trapezoid motion queue (trapq)
         next_move_time = self.print_time
@@ -360,8 +356,6 @@ class ToolHead:
             for cb in move.timing_callbacks:
                 cb(next_move_time)
         # Generate steps for moves
-        if self.special_queuing_state:
-            self._update_drip_move_time(next_move_time)
         self.note_mcu_movequeue_activity(next_move_time + self.kin_flush_delay,
                                          set_step_gen_time=True)
         self._advance_move_time(next_move_time)
@@ -509,49 +503,66 @@ class ToolHead:
     def get_extruder(self):
         return self.extruder
     # Homing "drip move" handling
-    def _update_drip_move_time(self, next_print_time):
-        flush_delay = DRIP_TIME + STEPCOMPRESS_FLUSH_TIME + self.kin_flush_delay
-        while self.print_time < next_print_time:
-            if self.drip_completion.test():
-                raise DripModeEndSignal()
-            curtime = self.reactor.monotonic()
-            est_print_time = self.mcu.estimated_print_time(curtime)
-            wait_time = self.print_time - est_print_time - flush_delay
-            if wait_time > 0. and self.can_pause:
-                # Pause before sending more steps
-                self.drip_completion.wait(curtime + wait_time)
-                continue
-            npt = min(self.print_time + DRIP_SEGMENT_TIME, next_print_time)
-            self.note_mcu_movequeue_activity(npt + self.kin_flush_delay,
-                                             set_step_gen_time=True)
-            self._advance_move_time(npt)
-    def drip_move(self, newpos, speed, drip_completion):
-        self.dwell(self.kin_flush_delay)
+    def drip_update_time(self, next_print_time, drip_completion):
         # Transition from "NeedPrime"/"Priming"/main state to "Drip" state
-        self._process_lookahead()
         self.special_queuing_state = "Drip"
         self.need_check_pause = self.reactor.NEVER
         self.reactor.update_timer(self.flush_timer, self.reactor.NEVER)
         self.do_kick_flush_timer = False
         self.lookahead.set_flush_time(BUFFER_TIME_HIGH)
         self.check_stall_time = 0.
-        self.drip_completion = drip_completion
-        # Submit move
-        try:
-            self.move(newpos, speed)
-        except self.printer.command_error as e:
-            self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
-            self.flush_step_generation()
-            raise
-        # Transmit move in "drip" mode
-        try:
-            self._process_lookahead()
-        except DripModeEndSignal as e:
-            self.lookahead.reset()
-            self.trapq_finalize_moves(self.trapq, self.reactor.NEVER, 0)
+        # Update print_time in segments until drip_completion signal
+        flush_delay = DRIP_TIME + STEPCOMPRESS_FLUSH_TIME + self.kin_flush_delay
+        while self.print_time < next_print_time:
+            if drip_completion.test():
+                break
+            curtime = self.reactor.monotonic()
+            est_print_time = self.mcu.estimated_print_time(curtime)
+            wait_time = self.print_time - est_print_time - flush_delay
+            if wait_time > 0. and self.can_pause:
+                # Pause before sending more steps
+                drip_completion.wait(curtime + wait_time)
+                continue
+            npt = min(self.print_time + DRIP_SEGMENT_TIME, next_print_time)
+            self.note_mcu_movequeue_activity(npt + self.kin_flush_delay,
+                                             set_step_gen_time=True)
+            self._advance_move_time(npt)
         # Exit "Drip" state
         self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
         self.flush_step_generation()
+    def _drip_load_trapq(self, submit_move):
+        # Queue move into trapezoid motion queue (trapq)
+        if submit_move.move_d:
+            self.commanded_pos[:] = submit_move.end_pos
+            self.lookahead.add_move(submit_move)
+        moves = self.lookahead.flush()
+        self._calc_print_time()
+        next_move_time = self.print_time
+        for move in moves:
+            self.trapq_append(
+                self.trapq, next_move_time,
+                move.accel_t, move.cruise_t, move.decel_t,
+                move.start_pos[0], move.start_pos[1], move.start_pos[2],
+                move.axes_r[0], move.axes_r[1], move.axes_r[2],
+                move.start_v, move.cruise_v, move.accel)
+            next_move_time = (next_move_time + move.accel_t
+                              + move.cruise_t + move.decel_t)
+        self.lookahead.reset()
+        return next_move_time
+    def drip_move(self, newpos, speed, drip_completion):
+        # Create and verify move is valid
+        newpos = newpos[:3] + self.commanded_pos[3:]
+        move = Move(self, self.commanded_pos, newpos, speed)
+        if move.move_d:
+            self.kin.check_move(move)
+        # Make sure stepper movement doesn't start before nominal start time
+        self.dwell(self.kin_flush_delay)
+        # Transmit move in "drip" mode
+        self._process_lookahead()
+        next_move_time = self._drip_load_trapq(move)
+        self.drip_update_time(next_move_time, drip_completion)
+        # Move finished; cleanup any remnants on trapq
+        self.trapq_finalize_moves(self.trapq, self.reactor.NEVER, 0)
     # Misc commands
     def stats(self, eventtime):
         max_queue_time = max(self.print_time, self.last_flush_time)
