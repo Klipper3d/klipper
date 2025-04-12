@@ -55,17 +55,20 @@ class ManualStepper:
         self.sync_print_time()
     def do_set_position(self, setpos):
         self.rail.set_position([setpos, 0., 0.])
-    def do_move(self, movepos, speed, accel, sync=True):
-        self.sync_print_time()
+    def _submit_move(self, movetime, movepos, speed, accel):
         cp = self.rail.get_commanded_position()
         dist = movepos - cp
         axis_r, accel_t, cruise_t, cruise_v = force_move.calc_move_time(
             dist, speed, accel)
-        self.trapq_append(self.trapq, self.next_cmd_time,
+        self.trapq_append(self.trapq, movetime,
                           accel_t, cruise_t, accel_t,
                           cp, 0., 0., axis_r, 0., 0.,
                           0., cruise_v, accel)
-        self.next_cmd_time = self.next_cmd_time + accel_t + cruise_t + accel_t
+        return movetime + accel_t + cruise_t + accel_t
+    def do_move(self, movepos, speed, accel, sync=True):
+        self.sync_print_time()
+        self.next_cmd_time = self._submit_move(self.next_cmd_time, movepos,
+                                               speed, accel)
         self.rail.generate_steps(self.next_cmd_time)
         self.trapq_finalize_moves(self.trapq, self.next_cmd_time + 99999.9,
                                   self.next_cmd_time + 99999.9)
@@ -117,7 +120,18 @@ class ManualStepper:
     def dwell(self, delay):
         self.next_cmd_time += max(0., delay)
     def drip_move(self, newpos, speed, drip_completion):
-        self.do_move(newpos[0], speed, self.homing_accel)
+        # Submit move to trapq
+        self.sync_print_time()
+        maxtime = self._submit_move(self.next_cmd_time, newpos[0],
+                                    speed, self.homing_accel)
+        # Drip updates to motors
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.drip_update_time(maxtime, drip_completion, self.steppers)
+        # Clear trapq of any remaining parts of movement
+        reactor = self.printer.get_reactor()
+        self.trapq_finalize_moves(self.trapq, reactor.NEVER, 0)
+        self.rail.set_position([newpos[0], 0., 0.])
+        self.sync_print_time()
     def get_kinematics(self):
         return self
     def get_steppers(self):
