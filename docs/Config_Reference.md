@@ -796,6 +796,16 @@ filament_diameter:
 heater_pin:
 #   PWM output pin controlling the heater. This parameter must be
 #   provided.
+#pwm_adjust_early_min: 0.01
+#   The minimum amount output change that the PID controller will
+#   send to the heater straight away, without requiring waiting for
+#   the regular cadence, which is every 3.9s (the heater is disabled
+#   if 5s passes without control).
+#pwm_adjust_max_hz: 0.5
+#   Maximum frequency to update the PWM temperature, even if a change
+#   larger than the "early adjust minimum".  Values of 0.26 and lower
+#   disable all changes faster than 3.9s.  Note, switching heaters off
+#   is never subject to this limit.
 #max_power: 1.0
 #   The maximum power (expressed as a value from 0.0 to 1.0) that the
 #   heater_pin may be set to. The value 1.0 allows the pin to be set
@@ -836,6 +846,7 @@ pid_Kd:
 #   off and 1.0 being full on. Consider using the PID_CALIBRATE
 #   command to obtain these parameters. The pid_Kp, pid_Ki, and pid_Kd
 #   parameters must be provided for PID heaters.
+
 #max_delta: 2.0
 #   On 'watermark' controlled heaters this is the number of degrees in
 #   Celsius above the target temperature before disabling the heater
