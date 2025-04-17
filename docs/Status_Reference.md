@@ -570,6 +570,12 @@ on a cartesian, hybrid_corexy or hybrid_corexz robot
 - `carriage_1`: The mode of the carriage 1. Possible values are:
   "INACTIVE", "PRIMARY", "COPY", and "MIRROR".
 
+On a `generic_cartesian` kinematic, the following information is
+available in `dual_carriage`:
+- `carriages["<carriage>"]`: The mode of the carriage `<carriage>`. Possible
+  values are "INACTIVE" and "PRIMARY" for the primary carriage and "INACTIVE",
+  "PRIMARY", "COPY", and "MIRROR" for the dual carriage.
+
 ## virtual_sdcard
 
 The following information is available in the

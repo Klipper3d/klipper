@@ -341,15 +341,18 @@ The following command is available when the
 enabled.
 
 #### SET_DUAL_CARRIAGE
-`SET_DUAL_CARRIAGE CARRIAGE=[0|1] [MODE=[PRIMARY|COPY|MIRROR]]`:
+`SET_DUAL_CARRIAGE CARRIAGE=<carriage> [MODE=[PRIMARY|COPY|MIRROR]]`:
 This command will change the mode of the specified carriage.
-If no `MODE` is provided it defaults to `PRIMARY`. Setting the mode
-to `PRIMARY` deactivates the other carriage and makes the specified
-carriage execute subsequent G-Code commands as-is. `COPY` and `MIRROR`
-modes are supported only for `CARRIAGE=1`. When set to either of these
-modes, carriage 1 will then track the subsequent moves of the carriage 0
-and either copy relative movements of it (in `COPY` mode) or execute them
-in the opposite (mirror) direction (in `MIRROR` mode).
+If no `MODE` is provided it defaults to `PRIMARY`. `<carriage>` must
+reference a defined primary or dual carriage for `generic_cartesian`
+kinematics or be 0 (for primary carriage) or 1 (for dual carriage)
+for all other kinematics supporting IDEX. Setting the mode to `PRIMARY`
+deactivates the other carriage and makes the specified carriage execute
+subsequent G-Code commands as-is. `COPY` and `MIRROR` modes are supported
+only for dual carriages. When set to either of these modes, dual carriage
+will then track the subsequent moves of its primary carriage and either
+copy relative movements of it (in `COPY` mode) or execute them in the
+opposite (mirror) direction (in `MIRROR` mode).
 
 #### SAVE_DUAL_CARRIAGE_STATE
 `SAVE_DUAL_CARRIAGE_STATE [NAME=<state_name>]`: Save the current positions
@@ -714,6 +717,46 @@ be issued to move back to the previous XYZ position. If "MOVE_SPEED"
 is specified then the toolhead move will be performed with the given
 speed (in mm/s); otherwise the toolhead move will use the restored
 g-code speed.
+
+### [generic_cartesian]
+The commands in this section become automatically available when
+`kinematics: generic_cartesian` is specified as the printer kinematics.
+
+#### SET_STEPPER_CARRIAGES
+`SET_STEPPER_CARRIAGES STEPPER=<stepper_name> CARRIAGES=<carriages>
+[DISABLE_CHECKS=[0|1]]`: Set or update the stepper carriages.
+`<stepper_name>` must reference an existing stepper defined in `printer.cfg`,
+and `<carriages>` describes the carriages the stepper moves. See
+[Generic Cartesian Kinematics](Config_Reference.md#generic-cartesian-kinematics)
+for a more detailed overview of the `carriages` parameter in the
+stepper configuration section. Note that it is only possible
+to change the coefficients or signs of the carriages with this
+command, but a user cannot add or remove the carriages that the stepper
+controls.
+
+`SET_STEPPER_CARRIAGES` is an advanced tool, and the user is advised
+to exercise an extreme caution using it, since specifying incorrect
+configuration may physically damage the printer.
+
+Note that `SET_STEPPER_CARRIAGES` performs certain internal validations
+of the new printer kinematics after the change. Keep in mind that if it
+detects an issue, it may leave printer kinematics in an invalid state.
+This means that if `SET_STEPPER_CARRIAGES` reports an error, it is unsafe
+to issue other GCode commands, and the user must inspect the error message
+and either fix the problem, or manually restore the previous stepper(s)
+configuration.
+
+Since `SET_STEPPER_CARRIAGES` can update a configuration of a single
+stepper at a time, some sequences of changes can lead to invalid
+intermediate kinematic configurations, even if the final configuration
+is valid. In such cases a user can pass `DISABLE_CHECKS=1` parameters to
+all but the last command to disable intermediate checks. For example,
+if `stepper a` and `stepper b` initially have `x-y` and `x+y` carriages
+correspondingly, then the following sequence of commands will let a user
+effectively swap the carriage controls:
+`SET_STEPPER_CARRIAGES STEPPER=a CARRIAGES=x+y DISABLE_CHECKS=1`
+and `SET_STEPPER_CARRIAGES STEPPER=b CARRIAGES=x-y`, while
+still validating the final kinematics state.
 
 ### [hall_filament_width_sensor]
 
