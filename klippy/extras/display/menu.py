@@ -1026,7 +1026,7 @@ class MenuManager:
             self.begin(eventtime)
 
     def key_event(self, key, eventtime):
-        self.printer.send_event(f'menu:{key}', key, eventtime) # granular
+        self.printer.send_event('menu:%s' % (key), key, eventtime) # granular
         self.printer.send_event('menu:action', key, eventtime) # any item
         if key == 'click':
             self._click_callback(eventtime, key)
