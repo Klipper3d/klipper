@@ -1521,15 +1521,15 @@ make menuconfig
 
 <p>通常，每台打印机都有自己独特的串行端口名称。此唯一名称将在刷新微控制器时使用。上面的输出中可能有多行 - 如果是这样，请选择与微控制器相对应的行。如果列出了许多项目并且选择不明确，请拔下电路板并再次运行命令，缺少的项目将是您的打印板（有关更多信息，请参阅 <a href="FAQ.html#wheres-my-serial-port">FAQ</a>）。</p>
 <p>对于带有 STM32 或克隆芯片、LPC 芯片和其他芯片的常见微控制器，通常需要通过 SD 卡进行初始 Klipper 闪存。</p>
-<p>使用此方法进行闪烁时，务必确保打印板未通过 USB 连接到主机，因为某些电路板能够将电源反馈给电路板并阻止发生闪烁。</p>
-<p>For common micro-controllers using Atmega chips, for example the 2560, the code can be flashed with something similar to:</p>
+<p>使用此方法进行刷写时，务必确保打印板未通过 USB 连接到主机，因为某些电路板能够将电源反馈给电路板并阻止刷写开始。</p>
+<p>对于使用 Atmega 芯片的常见微控制器，例如 2560，代码可以使用类似以下内容进行烧录：</p>
 <div class="highlight"><pre><span></span><code>sudo service klipper stop
 make flash FLASH_DEVICE=/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0
 sudo service klipper start
 </code></pre></div>
 
 <p>请务必用打印机的唯一串行端口名称来更新 FLASH_DEVICE 参数。</p>
-<p>For common micro-controllers using RP2040 chips, the code can be flashed with something similar to:</p>
+<p>对于使用 RP2040 芯片的常见微控制器，代码可以使用类似以下方式烧录：</p>
 <div class="highlight"><pre><span></span><code>sudo service klipper stop
 make flash FLASH_DEVICE=first
 sudo service klipper start

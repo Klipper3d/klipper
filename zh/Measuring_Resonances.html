@@ -2589,8 +2589,8 @@ TEST_RESONANCES AXIS=X OUTPUT=raw_data
 <p>在一些正常的打印机活动中，也可以通过运行命令 <code>ACCELEROMETER_MEASURE</code>两次来获得原始数据——首先是开始测量，然后是停止测量并写入输出文件。有关更多详细信息，请参阅<a href="G-Codes.html#adxl345">G-Codes</a>。</p>
 <p>这些数据可在以后通过<code>scripts/graph_accelerometer.py</code>和scripts/calibrate_shaper.py`脚本进行处理，在不同的工作模式下，两种脚本支持一个或多个原始数据csv文件作为输入。graph_accelerometer.py支持以下几种模式：</p>
 <ul>
-<li>绘制原始加速度数据图（使用<code>-r</code>参数），仅支持一个输入；</li>
-<li>绘制频率响应图（无需额外参数），如果指定了多个输入文件，将计算他们的平均值；</li>
+<li>绘制原始加速度数据图（使用<code>-r</code>参数），仅支持一个输入;</li>
+<li>绘制频率响应图（无需额外参数），如果指定了多个输入文件，将计算他们的平均值;</li>
 <li>在多个输入之间比较频率响应曲线（使用<code>-c</code>参数）；通过<code>-ax，</code>-ay<code>或</code>-az`参数，可以额外指定哪个轴参与比较（在未指定时将计算所有轴振动的总和）;</li>
 <li>绘制频谱图(使用<code>-s</code>参数)，只支持1个输入；您可以通过<code>-a x</code>、<code>-a y</code>或<code>-a z</code>参数指定考虑哪个加速度计轴(如果不指定，则取所有轴的振动总和)。</li>
 </ul>
