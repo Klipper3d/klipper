@@ -1412,6 +1412,13 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<p>20250417: SPI devices using "software SPI" are now rate limited.
+Previously, the <code>spi_speed</code> in the config was ignored and the
+transmission speed was only limited by the processing speed of the
+micro-controller. Now, speeds are limited by the <code>spi_speed</code> config
+parameter (actual hardware speeds are likely to be lower than the
+configured value due to software overhead).</p>
+<p>20250411: Klipper v0.13.0 released.</p>
 <p>20250308: The <code>AUTO</code> parameter of the
 <code>AXIS_TWIST_COMPENSATION_CALIBRATE</code> command has been removed.</p>
 <p>20250131: Option <code>VARIABLE=&lt;name&gt;</code> in <code>SAVE_VARIABLE</code> requires lowercase
