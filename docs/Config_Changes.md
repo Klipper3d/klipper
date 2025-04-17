@@ -8,6 +8,15 @@ All dates in this document are approximate.
 
 ## Changes
 
+20250417: SPI devices using "software SPI" are now rate limited.
+Previously, the `spi_speed` in the config was ignored and the
+transmission speed was only limited by the processing speed of the
+micro-controller. Now, speeds are limited by the `spi_speed` config
+parameter (actual hardware speeds are likely to be lower than the
+configured value due to software overhead).
+
+20250411: Klipper v0.13.0 released.
+
 20250308: The `AUTO` parameter of the
 `AXIS_TWIST_COMPENSATION_CALIBRATE` command has been removed.
 
