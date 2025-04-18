@@ -98,9 +98,29 @@ clock_setup(void)
     PWR->CR3 = (PWR->CR3 | PWR_CR3_LDOEN) & ~(PWR_CR3_BYPASS | PWR_CR3_SCUEN);
     while (!(PWR->CSR1 & PWR_CSR1_ACTVOSRDY))
         ;
-    // (HSE 25mhz) /DIVM1(5) (pll_base 5Mhz) *DIVN1(192) (pll_freq 960Mhz)
-    // /DIVP1(2) (SYSCLK 480Mhz)
-    uint32_t pll_base = 5000000;
+    uint32_t pll_base;
+    // (HSE 12mhz) /DIVM1(3) (pll_base 4Mhz) *DIVN1(200) (pll_freq 800Mhz)
+    // /DIVP1(2) (SYSCLK 400Mhz)
+    // (HSE 16mhz) /DIVM1(4) (pll_base 4Mhz) *DIVN1(200) (pll_freq 800Mhz)
+    // /DIVP1(2) (SYSCLK 400Mhz)
+    // (HSE 20mhz) /DIVM1(5) (pll_base 4Mhz) *DIVN1(200) (pll_freq 800Mhz)
+    // /DIVP1(2) (SYSCLK 400Mhz)
+    // (HSE 24mhz) /DIVM1(6) (pll_base 4Mhz) *DIVN1(200) (pll_freq 800Mhz)
+    // /DIVP1(2) (SYSCLK 400Mhz)
+#if CONFIG_STM32_CLOCK_REF_12M || \
+    CONFIG_STM32_CLOCK_REF_16M || \
+    CONFIG_STM32_CLOCK_REF_20M || \
+    CONFIG_STM32_CLOCK_REF_24M
+    pll_base = 4000000;
+    // (HSE 8mhz) /DIVM1(1) (pll_base 8Mhz) *DIVN1(100) (pll_freq 800Mhz)
+    // /DIVP1(2) (SYSCLK 400Mhz)
+#elif CONFIG_STM32_CLOCK_REF_8M
+    pll_base = 8000000;
+    // (HSE 25mhz) /DIVM1(5) (pll_base 5Mhz) *DIVN1(160) (pll_freq 800Mhz)
+    // /DIVP1(2) (SYSCLK 400Mhz)
+#else
+    pll_base = 5000000;
+#endif
     // Only even dividers (DIVP1) are allowed
     uint32_t pll_freq = CONFIG_CLOCK_FREQ * 2;
     if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
