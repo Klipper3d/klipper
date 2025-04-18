@@ -110,7 +110,7 @@ clock_setup(void)
 #if CONFIG_STM32_CLOCK_REF_12M || \
     CONFIG_STM32_CLOCK_REF_16M || \
     CONFIG_STM32_CLOCK_REF_20M || \
-    CONFIG_STM32_CLOCK_REF_24M 
+    CONFIG_STM32_CLOCK_REF_24M
     pll_base = 4000000;
     // (HSE 8mhz) /DIVM1(1) (pll_base 8Mhz) *DIVN1(100) (pll_freq 800Mhz)
     // /DIVP1(2) (SYSCLK 400Mhz)
