@@ -1412,6 +1412,10 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<p>20250418: The manual_stepper <code>STOP_ON_ENDSTOP</code> feature may now take
+less time to complete. Previously, the command would wait the entire
+time the move could possibly take even if the endstop triggered
+earlier. Now, the command finishes shortly after the endstop trigger.</p>
 <p>20250417: SPI devices using "software SPI" are now rate limited.
 Previously, the <code>spi_speed</code> in the config was ignored and the
 transmission speed was only limited by the processing speed of the
