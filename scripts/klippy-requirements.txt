@@ -10,3 +10,4 @@ Jinja2==2.11.3
 python-can==3.3.4
 markupsafe==1.1.1
 setuptools==75.6.0 ; python_version >= '3.12' # Needed by python-can
+importlib-metadata==4.13.0 ; python_version >= "3.8" and python_version < "3.10"
