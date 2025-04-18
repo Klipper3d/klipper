@@ -98,7 +98,7 @@ clock_setup(void)
     PWR->CR3 = (PWR->CR3 | PWR_CR3_LDOEN) & ~(PWR_CR3_BYPASS | PWR_CR3_SCUEN);
     while (!(PWR->CSR1 & PWR_CSR1_ACTVOSRDY))
         ;
-    // (HSE 8mhz) /DIVM1(1) (pll_base 8Mhz) *DIVN1(100) (pll_freq 800Mhz)
+    // (HSE 8mhz) /DIVM1(2) (pll_base 8Mhz) *DIVN1(200) (pll_freq 800Mhz)
     // /DIVP1(2) (SYSCLK 400Mhz)
     // (HSE 12mhz) /DIVM1(3) (pll_base 4Mhz) *DIVN1(200) (pll_freq 800Mhz)
     // /DIVP1(2) (SYSCLK 400Mhz)
@@ -113,8 +113,6 @@ clock_setup(void)
     uint32_t pll_base;
 #if CONFIG_STM32_CLOCK_REF_25M
     pll_base = 5000000;
-#elif CONFIG_STM32_CLOCK_REF_8M
-    pll_base = 8000000;
 #else
     pll_base = 4000000;
 #endif
