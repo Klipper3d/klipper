@@ -1203,8 +1203,7 @@ Where x is the 0, 0 point on the bed
 #   A newline separated list of four X, Y points that should be probed
 #   during a QUAD_GANTRY_LEVEL command. Order of the locations is
 #   important, and should correspond to Z, Z1, Z2, and Z3 location in
-#   order. This parameter must be provided. For maximum accuracy,
-#   ensure your probe offsets are configured.
+#   order. This parameter must be provided.
 #speed: 50
 #   The speed (in mm/s) of non-probing moves during the calibration.
 #   The default is 50.
