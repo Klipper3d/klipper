@@ -102,7 +102,13 @@ class PrinterTemplateEvaluator:
         self.render_timer = reactor.register_timer(self._render, reactor.NOW)
     def _activate_template(self, callback, template, lparams, flush_callback):
         if template is not None:
+            # Build a unique id to make it possible to cache duplicate rendering
             uid = (template,) + tuple(sorted(lparams.items()))
+            try:
+                {}.get(uid)
+            except TypeError as e:
+                # lparams is not static, so disable caching
+                uid = None
             self.active_templates[callback] = (
                 uid, template, lparams, flush_callback)
             return
@@ -122,17 +128,18 @@ class PrinterTemplateEvaluator:
         context['render'] = render
         # Render all templates
         flush_callbacks = {}
-        rendered = {}
+        render_cache = {}
         template_info = self.active_templates.items()
         for callback, (uid, template, lparams, flush_callback) in template_info:
-            text = rendered.get(uid)
+            text = render_cache.get(uid)
             if text is None:
                 try:
                     text = template.render(context, **lparams)
                 except Exception as e:
                     logging.exception("display template render error")
                     text = ""
-                rendered[uid] = text
+                if uid is not None:
+                    render_cache[uid] = text
             if flush_callback is not None:
                 flush_callbacks[flush_callback] = 1
             callback(text)
@@ -228,6 +235,7 @@ class PrinterOutputPin:
             value = float(text)
         except ValueError as e:
             logging.exception("output_pin template render error")
+            value = 0.
         self.gcrq.send_async_request(value)
     cmd_SET_PIN_help = "Set the value of an output pin"
     def cmd_SET_PIN(self, gcmd):

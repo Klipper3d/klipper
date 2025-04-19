@@ -45,21 +45,6 @@ class AxisTwistCompensation:
         self.zy_compensations = config.getlists('zy_compensations',
                                                 default=[], parser=float)
 
-        # Validate single compensation
-        valid_conditions = sum(
-            [
-                bool(self.z_compensations),
-                bool(self.zy_compensations)
-            ]
-        )
-
-        if valid_conditions > 1:
-            raise config.error(
-                """AXIS_TWIST_COMPENSATION: Only one type of compensation
-                can be present at a time:
-                either z_compensations or zy_compensations."""
-            )
-
         # setup calibrater
         self.calibrater = Calibrater(self, config)
         # register events
@@ -140,9 +125,8 @@ class Calibrater:
 
     def _handle_connect(self):
         self.probe = self.printer.lookup_object('probe', None)
-        if (self.probe is None):
-            config = self.printer.lookup_object('configfile')
-            raise config.error(
+        if self.probe is None:
+            raise self.printer.config_error(
                 "AXIS_TWIST_COMPENSATION requires [probe] to be defined")
         self.lift_speed = self.probe.get_probe_params()['lift_speed']
         self.probe_x_offset, self.probe_y_offset, _ = \

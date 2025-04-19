@@ -12,41 +12,44 @@
 import logging
 from . import bus, adxl345, bulk_sensor
 
-ICM20948_ADDR =      0x68
+ICM20948_ADDR =         0x68
 
 ICM_DEV_IDS = {
     0xEA: "icm-20948",
     #everything above are normal ICM IDs
-    }
-
+}
 
 # ICM20948 registers
-REG_DEVID =         0x00 # 0xEA
-REG_FIFO_EN =       0x67 # FIFO_EN_2
-REG_ACCEL_SMPLRT_DIV1 =    0x10 # MSB
-REG_ACCEL_SMPLRT_DIV2 =    0x11 # LSB
-REG_ACCEL_CONFIG    =    0x14
-REG_USER_CTRL =     0x03
-REG_PWR_MGMT_1 = 0x06
-REG_PWR_MGMT_2 = 0x07
-REG_INT_STATUS = 0x19
+REG_DEVID =             0x00 # 0xEA
+REG_FIFO_EN =           0x67 # FIFO_EN_2
+REG_ACCEL_SMPLRT_DIV1 = 0x10 # MSB
+REG_ACCEL_SMPLRT_DIV2 = 0x11 # LSB
+REG_ACCEL_CONFIG =      0x14
+REG_USER_CTRL =         0x03
+REG_PWR_MGMT_1 =        0x06
+REG_PWR_MGMT_2 =        0x07
+REG_INT_STATUS =        0x19
+REG_BANK_SEL =          0x7F
 
 SAMPLE_RATE_DIVS = { 4500: 0x00 }
 
-#SET_CONFIG =        0x01 # FIFO mode 'stream' style
-SET_ACCEL_CONFIG =  0x04 # 8g full scale, 1209Hz BW, ??? delay 4.5kHz samp rate
-SET_PWR_MGMT_1_WAKE =     0x01
-SET_PWR_MGMT_1_SLEEP=     0x41
+SET_BANK_0 =            0x00
+SET_BANK_1 =            0x10
+SET_BANK_2 =            0x20
+SET_BANK_3 =            0x30
+SET_ACCEL_CONFIG =      0x06 # 16g full scale, 1209Hz BW, 4.5kHz samp rate
+SET_PWR_MGMT_1_WAKE =   0x01
+SET_PWR_MGMT_1_SLEEP =  0x41
 SET_PWR_MGMT_2_ACCEL_ON = 0x07
-SET_PWR_MGMT_2_OFF  =     0x3F
-SET_USER_FIFO_RESET = 0x0E
-SET_USER_FIFO_EN    = 0x40
-SET_ENABLE_FIFO  = 0x10
-SET_DISABLE_FIFO = 0x00
+SET_PWR_MGMT_2_OFF =    0x3F
+SET_USER_FIFO_RESET =   0x0E
+SET_USER_FIFO_EN =      0x40
+SET_ENABLE_FIFO  =      0x10
+SET_DISABLE_FIFO =      0x00
 
 FREEFALL_ACCEL = 9.80665 * 1000.
-# SCALE = 1/4096 g/LSB @8g scale * Earth gravity in mm/s**2
-SCALE = 0.000244140625 * FREEFALL_ACCEL
+# SCALE = 1/2048 g/LSB @16g scale * Earth gravity in mm/s**2
+SCALE = 0.00048828125 * FREEFALL_ACCEL
 
 FIFO_SIZE = 512
 
@@ -124,7 +127,6 @@ class ICM20948:
                 % (dev_id))
         else:
             logging.info("Found %s with id %x"% (ICM_DEV_IDS[dev_id], dev_id))
-
         # Setup chip in requested query rate
         self.set_reg(REG_PWR_MGMT_1, SET_PWR_MGMT_1_WAKE)
         self.set_reg(REG_PWR_MGMT_2, SET_PWR_MGMT_2_ACCEL_ON)
@@ -132,14 +134,14 @@ class ICM20948:
         self.read_reg(REG_DEVID) # Dummy read to ensure queues flushed
         self.set_reg(REG_ACCEL_SMPLRT_DIV1, SAMPLE_RATE_DIVS[self.data_rate])
         self.set_reg(REG_ACCEL_SMPLRT_DIV2, SAMPLE_RATE_DIVS[self.data_rate])
-        # self.set_reg(REG_CONFIG, SET_CONFIG) # No config register
+        self.set_reg(REG_BANK_SEL, SET_BANK_2)
         self.set_reg(REG_ACCEL_CONFIG, SET_ACCEL_CONFIG)
+        self.set_reg(REG_BANK_SEL, SET_BANK_0)
         # Reset fifo
         self.set_reg(REG_FIFO_EN, SET_DISABLE_FIFO)
         self.set_reg(REG_USER_CTRL, SET_USER_FIFO_RESET)
         self.set_reg(REG_USER_CTRL, SET_USER_FIFO_EN)
         self.read_reg(REG_INT_STATUS) # clear FIFO overflow flag
-
         # Start bulk reading
         rest_ticks = self.mcu.seconds_to_clock(4. / self.data_rate)
         self.query_icm20948_cmd.send([self.oid, rest_ticks])

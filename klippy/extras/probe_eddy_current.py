@@ -302,22 +302,21 @@ class EddyGatherSamples:
         self._check_samples()
 
 # Helper for implementing PROBE style commands (descend until trigger)
-class EddyEndstopWrapper:
+class EddyDescend:
     REASON_SENSOR_ERROR = mcu.MCU_trsync.REASON_COMMS_TIMEOUT + 1
-    def __init__(self, config, sensor_helper, calibration):
+    def __init__(self, config, sensor_helper, calibration, param_helper):
         self._printer = config.get_printer()
         self._sensor_helper = sensor_helper
         self._mcu = sensor_helper.get_mcu()
         self._calibration = calibration
+        self._param_helper = param_helper
+        self._z_min_position = probe.lookup_minimum_z(config)
         self._z_offset = config.getfloat('z_offset', minval=0.)
         self._dispatch = mcu.TriggerDispatch(self._mcu)
         self._trigger_time = 0.
         self._gather = None
-    # Interface for MCU_endstop
-    def get_mcu(self):
-        return self._mcu
-    def add_stepper(self, stepper):
-        self._dispatch.add_stepper(stepper)
+        probe.LookupZSteppers(config, self._dispatch.add_stepper)
+    # Interface for phoming.probing_move()
     def get_steppers(self):
         return self._dispatch.get_steppers()
     def home_start(self, print_time, sample_time, sample_count, rest_time,
@@ -344,10 +343,16 @@ class EddyEndstopWrapper:
             return home_end_time
         self._trigger_time = trigger_time
         return trigger_time
-    def query_endstop(self, print_time):
-        return False # XXX
-    # Interface for ProbeEndstopWrapper
-    def probing_move(self, pos, speed):
+    # Probe session interface
+    def start_probe_session(self, gcmd):
+        self._gather = EddyGatherSamples(self._printer, self._sensor_helper,
+                                         self._calibration, self._z_offset)
+        return self
+    def run_probe(self, gcmd):
+        toolhead = self._printer.lookup_object('toolhead')
+        pos = toolhead.get_position()
+        pos[2] = self._z_min_position
+        speed = self._param_helper.get_probe_params(gcmd)['probe_speed']
         # Perform probing move
         phoming = self._printer.lookup_object('homing')
         trig_pos = phoming.probing_move(self, pos, speed)
@@ -356,22 +361,48 @@ class EddyEndstopWrapper:
         # Extract samples
         start_time = self._trigger_time + 0.050
         end_time = start_time + 0.100
-        toolhead = self._printer.lookup_object("toolhead")
         toolhead_pos = toolhead.get_position()
         self._gather.note_probe(start_time, end_time, toolhead_pos)
-        return self._gather.pull_probed()[0]
-    def multi_probe_begin(self):
-        self._gather = EddyGatherSamples(self._printer, self._sensor_helper,
-                                         self._calibration, self._z_offset)
-    def multi_probe_end(self):
+    def pull_probed_results(self):
+        return self._gather.pull_probed()
+    def end_probe_session(self):
         self._gather.finish()
         self._gather = None
+
+# Wrapper to emulate mcu_endstop for probe:z_virtual_endstop
+# Note that this does not provide accurate results
+class EddyEndstopWrapper:
+    def __init__(self, sensor_helper, eddy_descend):
+        self._sensor_helper = sensor_helper
+        self._eddy_descend = eddy_descend
+        self._hw_probe_session = None
+    # Interface for MCU_endstop
+    def get_mcu(self):
+        return self._sensor_helper.get_mcu()
+    def add_stepper(self, stepper):
+        pass
+    def get_steppers(self):
+        return self._eddy_descend.get_steppers()
+    def home_start(self, print_time, sample_time, sample_count, rest_time,
+                   triggered=True):
+        return self._eddy_descend.home_start(
+            print_time, sample_time, sample_count, rest_time, triggered)
+    def home_wait(self, home_end_time):
+        return self._eddy_descend.home_wait(home_end_time)
+    def query_endstop(self, print_time):
+        return False # XXX
+    # Interface for HomingViaProbeHelper
+    def multi_probe_begin(self):
+        self._hw_probe_session = self._eddy_descend.start_probe_session(None)
+    def multi_probe_end(self):
+        self._hw_probe_session.end_probe_session()
+        self._hw_probe_session = None
     def probe_prepare(self, hmove):
         pass
     def probe_finish(self, hmove):
         pass
     def get_position_endstop(self):
-        return self._z_offset
+        return self._eddy_descend._z_offset
 
 # Implementing probing with "METHOD=scan"
 class EddyScanningProbe:
@@ -423,17 +454,20 @@ class PrinterEddyProbe:
         sensor_type = config.getchoice('sensor_type', {s: s for s in sensors})
         self.sensor_helper = sensors[sensor_type](config, self.calibration)
         # Probe interface
-        self.mcu_probe = EddyEndstopWrapper(config, self.sensor_helper,
-                                            self.calibration)
-        self.cmd_helper = probe.ProbeCommandHelper(
-            config, self, self.mcu_probe.query_endstop)
+        self.param_helper = probe.ProbeParameterHelper(config)
+        self.eddy_descend = EddyDescend(
+            config, self.sensor_helper, self.calibration, self.param_helper)
+        self.cmd_helper = probe.ProbeCommandHelper(config, self)
         self.probe_offsets = probe.ProbeOffsetsHelper(config)
-        self.probe_session = probe.ProbeSessionHelper(config, self.mcu_probe)
+        self.probe_session = probe.ProbeSessionHelper(
+            config, self.param_helper, self.eddy_descend.start_probe_session)
+        mcu_probe = EddyEndstopWrapper(self.sensor_helper, self.eddy_descend)
+        probe.HomingViaProbeHelper(config, mcu_probe, self.param_helper)
         self.printer.add_object('probe', self)
     def add_client(self, cb):
         self.sensor_helper.add_client(cb)
     def get_probe_params(self, gcmd=None):
-        return self.probe_session.get_probe_params(gcmd)
+        return self.param_helper.get_probe_params(gcmd)
     def get_offsets(self):
         return self.probe_offsets.get_offsets()
     def get_status(self, eventtime):

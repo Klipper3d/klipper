@@ -31,7 +31,7 @@ The following information is available in the
 ## bed_screws
 
 The following information is available in the
-`Config_Reference.md#bed_screws` object:
+[bed_screws](Config_Reference.md#bed_screws) object:
 - `is_active`: Returns True if the bed screws adjustment tool is currently
 active.
 - `state`: The bed screws adjustment tool state. It is one of
@@ -242,6 +242,8 @@ The following information is available in the `gcode_move` object
 The following information is available in the
 [hall_filament_width_sensor](Config_Reference.md#hall_filament_width_sensor)
 object:
+- all items from
+  [filament_switch_sensor](Status_Reference.md#filament_switch_sensor)
 - `is_active`: Returns True if the sensor is currently active.
 - `Diameter`: The last reading from the sensor in mm.
 - `Raw`: The last raw ADC reading from the sensor.
@@ -302,6 +304,17 @@ The following information is available for each `[led led_name]`,
   the blue value (3rd item in color list) of the second neopixel in a
   chain could be accessed at
   `printer["neopixel <config_name>"].color_data[1][2]`.
+
+## load_cell
+
+The following information is available for each `[load_cell name]`:
+- 'is_calibrated': True/False is the load cell calibrated
+- 'counts_per_gram': The number of raw sensor counts that equals 1 gram of force
+- 'reference_tare_counts': The reference number of raw sensor counts for 0 force
+- 'tare_counts': The current number of raw sensor counts for 0 force
+- 'force_g': The force in grams, averaged over the last polling period.
+- 'min_force_g': The minimum force in grams, over the last polling period.
+- 'max_force_g': The maximum force in grams, over the last polling period.
 
 ## manual_probe
 

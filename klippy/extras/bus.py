@@ -43,6 +43,7 @@ class MCU_SPI:
                  cs_active_high=False):
         self.mcu = mcu
         self.bus = bus
+        self.speed = speed
         # Config SPI object (set all CS pins high before spi_set_bus commands)
         self.oid = mcu.create_oid()
         if pin is None:
@@ -51,11 +52,17 @@ class MCU_SPI:
             mcu.add_config_cmd("config_spi oid=%d pin=%s cs_active_high=%d"
                                % (self.oid, pin, cs_active_high))
         # Generate SPI bus config message
+        self.config_fmt_ticks = None
         if sw_pins is not None:
             self.config_fmt = (
                 "spi_set_software_bus oid=%d"
                 " miso_pin=%s mosi_pin=%s sclk_pin=%s mode=%d rate=%d"
                 % (self.oid, sw_pins[0], sw_pins[1], sw_pins[2], mode, speed))
+            self.config_fmt_ticks = (
+                "spi_set_sw_bus oid=%d"
+                " miso_pin=%s mosi_pin=%s sclk_pin=%s mode=%d pulse_ticks=%%d"
+                % (self.oid, sw_pins[0], sw_pins[1],
+                    sw_pins[2], mode))
         else:
             self.config_fmt = (
                 "spi_set_bus oid=%d spi_bus=%%s mode=%d rate=%d"
@@ -78,6 +85,12 @@ class MCU_SPI:
         if '%' in self.config_fmt:
             bus = resolve_bus_name(self.mcu, "spi_bus", self.bus)
             self.config_fmt = self.config_fmt % (bus,)
+        if self.config_fmt_ticks:
+            if self.mcu.try_lookup_command("spi_set_sw_bus oid=%c miso_pin=%u "
+                                           "mosi_pin=%u sclk_pin=%u "
+                                           "mode=%u pulse_ticks=%u"):
+                pulse_ticks = self.mcu.seconds_to_clock(1./self.speed)
+                self.config_fmt = self.config_fmt_ticks % (pulse_ticks,)
         self.mcu.add_config_cmd(self.config_fmt)
         self.spi_send_cmd = self.mcu.lookup_command(
             "spi_send oid=%c data=%*s", cq=self.cmd_queue)
@@ -147,6 +160,8 @@ class MCU_I2C:
         self.bus = bus
         self.i2c_address = addr
         self.oid = self.mcu.create_oid()
+        self.speed = speed
+        self.config_fmt_ticks = None
         mcu.add_config_cmd("config_i2c oid=%d" % (self.oid,))
         # Generate I2C bus config message
         if sw_pins is not None:
@@ -154,6 +169,10 @@ class MCU_I2C:
                 "i2c_set_software_bus oid=%d"
                 " scl_pin=%s sda_pin=%s rate=%d address=%d"
                 % (self.oid, sw_pins[0], sw_pins[1], speed, addr))
+            self.config_fmt_ticks = (
+                "i2c_set_sw_bus oid=%d"
+                " scl_pin=%s sda_pin=%s pulse_ticks=%%d address=%d"
+                % (self.oid, sw_pins[0], sw_pins[1], addr))
         else:
             self.config_fmt = (
                 "i2c_set_bus oid=%d i2c_bus=%%s rate=%d address=%d"
@@ -173,6 +192,12 @@ class MCU_I2C:
         if '%' in self.config_fmt:
             bus = resolve_bus_name(self.mcu, "i2c_bus", self.bus)
             self.config_fmt = self.config_fmt % (bus,)
+        if self.config_fmt_ticks:
+            if self.mcu.try_lookup_command("i2c_set_sw_bus oid=%c"
+                                           " scl_pin=%u sda_pin=%u"
+                                           " pulse_ticks=%u address=%u"):
+                pulse_ticks = self.mcu.seconds_to_clock(1./self.speed/2)
+                self.config_fmt = self.config_fmt_ticks % (pulse_ticks,)
         self.mcu.add_config_cmd(self.config_fmt)
         self.i2c_write_cmd = self.mcu.lookup_command(
             "i2c_write oid=%c data=%*s", cq=self.cmd_queue)
