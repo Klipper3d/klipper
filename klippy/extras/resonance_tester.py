@@ -127,7 +127,8 @@ class ResonanceTestExecutor:
     def run_test(self, test_seq, axis, gcmd):
         reactor = self.printer.get_reactor()
         toolhead = self.printer.lookup_object('toolhead')
-        X, Y, Z, E = toolhead.get_position()
+        tpos = toolhead.get_position()
+        X, Y = thpos[:2]
         # Override maximum acceleration and acceleration to
         # deceleration based on the maximum test frequency
         systime = reactor.monotonic()
@@ -166,10 +167,10 @@ class ResonanceTestExecutor:
                 # The move first goes to a complete stop, then changes direction
                 d_decel = -last_v2 * half_inv_accel
                 decel_X, decel_Y = axis.get_point(d_decel)
-                toolhead.move([X + decel_X, Y + decel_Y, Z, E], abs_last_v)
-                toolhead.move([nX, nY, Z, E], abs_v)
+                toolhead.move([X + decel_X, Y + decel_Y] + tpos[2:], abs_last_v)
+                toolhead.move([nX, nY] + tpos[2:], abs_v)
             else:
-                toolhead.move([nX, nY, Z, E], max(abs_v, abs_last_v))
+                toolhead.move([nX, nY] + tpos[2:], max(abs_v, abs_last_v))
             if math.floor(freq) > math.floor(last_freq):
                 gcmd.respond_info("Testing frequency %.0f Hz" % (freq,))
                 reactor.pause(reactor.monotonic() + 0.01)
@@ -183,7 +184,7 @@ class ResonanceTestExecutor:
             decel_X, decel_Y = axis.get_point(d_decel)
             toolhead.cmd_M204(self.gcode.create_gcode_command(
                 "M204", "M204", {"S": old_max_accel}))
-            toolhead.move([X + decel_X, Y + decel_Y, Z, E], abs(last_v))
+            toolhead.move([X + decel_X, Y + decel_Y] + tpos[2:], abs(last_v))
         # Restore the original acceleration values
         self.gcode.run_script_from_command(
             "SET_VELOCITY_LIMIT ACCEL=%.3f MINIMUM_CRUISE_RATIO=%.3f"

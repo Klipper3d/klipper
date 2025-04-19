@@ -1,8 +1,9 @@
 # Support for a manual controlled stepper
 #
-# Copyright (C) 2019-2021  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2019-2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import logging
 import stepper, chelper
 from . import force_move
 
@@ -28,6 +29,8 @@ class ManualStepper:
         self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
         self.rail.setup_itersolve('cartesian_stepper_alloc', b'x')
         self.rail.set_trapq(self.trapq)
+        # Registered with toolhead as an axtra axis
+        self.axis_gcode_id = None
         # Register commands
         stepper_name = config.get_name().split()[1]
         gcode = self.printer.lookup_object('gcode')
@@ -88,6 +91,10 @@ class ManualStepper:
                             triggered, check_trigger)
     cmd_MANUAL_STEPPER_help = "Command a manually configured stepper"
     def cmd_MANUAL_STEPPER(self, gcmd):
+        if gcmd.get('GCODE_AXIS', None) is not None:
+            return self.command_with_gcode_axis(gcmd)
+        if self.axis_gcode_id is not None:
+            raise gcmd.error("Must unregister from gcode axis first")
         enable = gcmd.get_int('ENABLE', None)
         if enable is not None:
             self.do_enable(enable)
@@ -107,6 +114,54 @@ class ManualStepper:
             self.do_move(movepos, speed, accel, sync)
         elif gcmd.get_int('SYNC', 0):
             self.sync_print_time()
+    # Register as a gcode axis
+    def command_with_gcode_axis(self, gcmd):
+        gcode_move = self.printer.lookup_object("gcode_move")
+        toolhead = self.printer.lookup_object('toolhead')
+        gcode_axis = gcmd.get('GCODE_AXIS').upper()
+        if self.axis_gcode_id is not None:
+            if gcode_axis:
+                raise gcmd.error("Must unregister axis first")
+            # Unregister
+            toolhead.remove_extra_axis(self)
+            toolhead.unregister_step_generator(self.rail.generate_steps)
+            self.axis_gcode_id = None
+            return
+        if (len(gcode_axis) != 1 or not gcode_axis.isupper()
+            or gcode_axis in "XYZEFN"):
+            if not gcode_axis:
+                # Request to unregister already unregistered axis
+                return
+            raise gcmd.error("Not a valid GCODE_AXIS")
+        for ea in toolhead.get_extra_axes():
+            if ea is not None and ea.get_axis_gcode_id() == gcode_axis:
+                raise gcmd.error("Axis '%s' already registered" % (gcode_axis,))
+        self.axis_gcode_id = gcode_axis
+        toolhead.add_extra_axis(self, self.get_position()[0])
+        toolhead.register_step_generator(self.rail.generate_steps)
+    def process_move(self, print_time, move, ea_index):
+        axis_r = move.axes_r[ea_index]
+        start_pos = move.start_pos[ea_index]
+        accel = move.accel * axis_r
+        start_v = move.start_v * axis_r
+        cruise_v = move.cruise_v * axis_r
+        self.trapq_append(self.trapq, print_time,
+                          move.accel_t, move.cruise_t, move.decel_t,
+                          start_pos, 0., 0.,
+                          1., 0., 0.,
+                          start_v, cruise_v, accel)
+    def check_move(self, move, ea_index):
+        # XXX - support out of bounds checks
+        pass
+    def calc_junction(self, prev_move, move, ea_index):
+        # XXX - support max instantaneous velocity change
+        # XXX - support max accel/velocity
+        # XXX - support non-kinematic max accel/velocity
+        return move.max_cruise_v2
+    def get_axis_gcode_id(self):
+        return self.axis_gcode_id
+    def get_trapq(self):
+        return self.trapq
     # Toolhead wrappers to support homing
     def flush_step_generation(self):
         self.sync_print_time()
