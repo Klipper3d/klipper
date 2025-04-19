@@ -74,10 +74,13 @@ neopixel_delay(neopixel_time_t start, neopixel_time_t ticks)
 
 #endif
 
+// Pulse urations of 700ns and 350ns are selected as the common-midpoint
+// durations between the SK8612, WS2812, and WS2812B chips.
+
 // Minimum amount of time for a '1 bit' to be reliably detected
-#define PULSE_LONG_TICKS  nsecs_to_ticks(650)
+#define PULSE_LONG_TICKS  nsecs_to_ticks(700)
 // Minimum amount of time for any level change to be reliably detected
-#define EDGE_MIN_TICKS    nsecs_to_ticks(200)
+#define EDGE_MIN_TICKS    nsecs_to_ticks(350)
 // Minimum average time needed to transmit each bit (two level changes)
 #define BIT_MIN_TICKS     nsecs_to_ticks(1250)
 
