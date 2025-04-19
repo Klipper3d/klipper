@@ -225,6 +225,8 @@ class TMCErrorCheck:
 # G-Code command helpers
 ######################################################################
 
+MIN_SCHED_TIME = 0.1
+
 class TMCCommandHelper:
     def __init__(self, config, mcu_tmc, current_helper):
         self.printer = config.get_printer()
@@ -288,7 +290,10 @@ class TMCCommandHelper:
             value = TMCtstepHelper(self.mcu_tmc, velocity,
                                    pstepper=self.stepper)
         reg_val = self.fields.set_field(field_name, value)
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        toolhead = self.printer.lookup_object('toolhead')
+        systime = self.printer.get_reactor().monotonic()
+        tgt_time = systime + MIN_SCHED_TIME
+        print_time = toolhead.mcu.estimated_print_time(tgt_time)
         self.mcu_tmc.set_register(reg_name, reg_val, print_time)
     cmd_SET_TMC_CURRENT_help = "Set the current of a TMC driver"
     def cmd_SET_TMC_CURRENT(self, gcmd):
@@ -303,7 +308,9 @@ class TMCCommandHelper:
             if hold_current is None:
                 hold_current = req_hold_cur
             toolhead = self.printer.lookup_object('toolhead')
-            print_time = toolhead.get_last_move_time()
+            systime = self.printer.get_reactor().monotonic()
+            tgt_time = systime + MIN_SCHED_TIME
+            print_time = toolhead.mcu.estimated_print_time(tgt_time)
             ch.set_current(run_current, hold_current, print_time)
             prev_cur, prev_hold_cur, req_hold_cur, max_cur = ch.get_current()
         # Report values
