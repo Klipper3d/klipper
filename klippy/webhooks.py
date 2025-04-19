@@ -5,6 +5,10 @@
 # This file may be distributed under the terms of the GNU GPLv3 license
 import logging, socket, os, sys, errno, json, collections
 import gcode
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 
 REQUEST_LOG_SIZE = 20
 
@@ -114,10 +118,42 @@ class ServerSocket:
         if not server_address or is_fileinput:
             # Do not enable server
             return
-        self._remove_socket_file(server_address)
-        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.sock.setblocking(0)
-        self.sock.bind(server_address)
+        # Parsing the server_address configuration string
+        server_url = urlparse(server_address, allow_fragments=False)
+        if server_url.scheme == 'unix' or server_url.scheme == '':
+            try:
+                self._remove_socket_file(server_address)
+                self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                self.sock.setblocking(0)
+                self.sock.bind(server_url.path)
+            except FileNotFoundError as e:
+                logging.exception(
+                    "webhooks: Unable to bind to unix socket '%s'"
+                    % (server_url.path))
+                return
+        elif server_url.scheme == 'tcp':
+            try:
+                if server_url.netloc.startswith('['):
+                    # IPv6 address
+                    self.sock = socket.socket(socket.AF_INET6,
+                                              socket.SOCK_STREAM)
+                else:
+                    # IPv4 address
+                    self.sock = socket.socket(socket.AF_INET,
+                                              socket.SOCK_STREAM)
+                self.sock.setblocking(0)
+                self.sock.bind((server_url.hostname,
+                                server_url.port if server_url.port else 7120))
+            except OSError as e:
+                logging.exception(
+                    "webhooks: Unable to bind to '%s:%d'"
+                    % (server_url.hostname, server_url.port))
+                return
+        else:
+            logging.exception(
+                "webhooks: Unknown scheme '%s'"
+                % (server_url.scheme))
+            return
         self.sock.listen(1)
         self.fd_handle = self.reactor.register_fd(
             self.sock.fileno(), self._handle_accept)
