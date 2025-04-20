@@ -1313,7 +1313,6 @@ class MCUConnection:
         ]
         cfg_cmds.append(self._try_send_command(spi_cfg_cmds))
         cfg_cmds.append(self._try_send_command(bus_cmds))
-        self._try_send_command(cfg_cmds)
         config_crc = zlib.crc32('\n'.join(cfg_cmds).encode()) & 0xffffffff
         self._serial.send(FINALIZE_CFG_CMD % (config_crc,))
         config = self.get_mcu_config()
