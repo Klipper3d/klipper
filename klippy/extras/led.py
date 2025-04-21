@@ -1,6 +1,6 @@
 # Support for PWM driven LEDs
 #
-# Copyright (C) 2019-2024  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2019-2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
@@ -97,17 +97,15 @@ class LEDHelper:
             for i in range(self.led_count):
                 set_template(gcmd, self.tcallbacks[i], self._check_transmit)
 
-PIN_MIN_TIME = 0.100
-MAX_SCHEDULE_TIME = 5.0
-
 # Handler for PWM controlled LEDs
 class PrinterPWMLED:
     def __init__(self, config):
         self.printer = printer = config.get_printer()
         # Configure pwm pins
         ppins = printer.lookup_object('pins')
+        max_duration = printer.lookup_object('mcu').max_nominal_duration()
         cycle_time = config.getfloat('cycle_time', 0.010, above=0.,
-                                     maxval=MAX_SCHEDULE_TIME)
+                                     maxval=max_duration)
         hardware_pwm = config.getboolean('hardware_pwm', False)
         self.pins = []
         for i, name in enumerate(("red", "green", "blue", "white")):
@@ -128,11 +126,12 @@ class PrinterPWMLED:
         for idx, mcu_pin in self.pins:
             mcu_pin.setup_start_value(color[idx], 0.)
     def update_leds(self, led_state, print_time):
+        mcu = self.pins[0][1].get_mcu()
+        min_sched_time = mcu.min_schedule_time()
         if print_time is None:
             eventtime = self.printer.get_reactor().monotonic()
-            mcu = self.pins[0][1].get_mcu()
-            print_time = mcu.estimated_print_time(eventtime) + PIN_MIN_TIME
-        print_time = max(print_time, self.last_print_time + PIN_MIN_TIME)
+            print_time = mcu.estimated_print_time(eventtime) + min_sched_time
+        print_time = max(print_time, self.last_print_time + min_sched_time)
         color = led_state[0]
         for idx, mcu_pin in self.pins:
             if self.prev_color[idx] != color[idx]:
