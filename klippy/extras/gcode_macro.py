@@ -107,10 +107,41 @@ class PrinterGCodeMacro:
             'action_respond_info': self._action_respond_info,
             'action_raise_error': self._action_raise_error,
             'action_call_remote_method': self._action_call_remote_method,
+            'cache': GCodeMacroEphemeralCache(),
         }
 
 def load_config(config):
     return PrinterGCodeMacro(config)
+
+
+######################################################################
+# GCode macro cache
+######################################################################
+
+class GCodeMacroEphemeralCache:
+    def __init__(self):
+        self._store = {}
+    def set(self, key, value):
+        self._store[key] = value
+        return ""
+    def get(self, key, default=None):
+        return self._store.get(key, default)
+    def exists(self, key):
+        return key in self._store
+    def delete(self, key):
+        if key in self._store:
+            del self._store[key]
+        return ""
+    def clear(self):
+        self._store.clear()
+        return ""
+    def list(self):
+        return list(self._store.keys())
+    def dump(self):
+        return json.dumps(self._store)
+    def load(self, data):
+        self._store = dict(data)
+        return ""
 
 
 ######################################################################
