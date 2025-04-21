@@ -78,7 +78,7 @@ class PrinterGCodeMacro:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.env = jinja2.Environment('{%', '%}', '{', '}')
-        self.cache_store = {}
+        self.store = {}
     def load_template(self, config, option, default=None):
         name = "%s:%s" % (config.get_name(), option)
         if default is None:
@@ -108,7 +108,7 @@ class PrinterGCodeMacro:
             'action_respond_info': self._action_respond_info,
             'action_raise_error': self._action_raise_error,
             'action_call_remote_method': self._action_call_remote_method,
-            'cache': GCodeMacroEphemeralCache(self.cache_store),
+            'store': GCodeMacroEphemeralStore(self.store),
         }
 
 def load_config(config):
@@ -116,12 +116,12 @@ def load_config(config):
 
 
 ######################################################################
-# GCode macro cache
+# GCode macro store
 ######################################################################
 
-class GCodeMacroEphemeralCache:
-    def __init__(self, existing_cache):
-        self._store = existing_cache
+class GCodeMacroEphemeralStore:
+    def __init__(self, existing_store):
+        self._store = existing_store
     def set(self, key, value):
         self._store[key] = value
         return ""
