@@ -93,7 +93,7 @@ clock_setup(void)
 
     // Setup pll1 frequency
     uint32_t pll_base = CONFIG_STM32_CLOCK_REF_25M ? 5000000 : 4000000;
-    uint32_t pll_freq = CONFIG_CLOCK_FREQ * 2;
+    uint32_t pll_freq = CONFIG_CLOCK_FREQ * (CONFIG_MACH_STM32H723 ? 1 : 2);
     uint32_t rcc_cr = RCC_CR_HSION;
     if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
         // Configure PLL from external crystal (HSE)
