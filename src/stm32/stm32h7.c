@@ -141,7 +141,7 @@ clock_setup(void)
 
     // Enable VOS0 (overdrive)
     if (CONFIG_CLOCK_FREQ > 400000000) {
-        RCC->APB4ENR |= RCC_APB4ENR_SYSCFGEN;
+        enable_pclock((uint32_t)SYSCFG);
 #if !CONFIG_MACH_STM32H723
         SYSCFG->PWRCR |= SYSCFG_PWRCR_ODEN;
 #else
@@ -190,10 +190,9 @@ clock_setup(void)
     // Configure HSI48 clock for USB
     if (CONFIG_USB) {
         SET_BIT(RCC->CR, RCC_CR_HSI48ON);
-        while((RCC->CR & RCC_CR_HSI48RDY) == 0);
-        SET_BIT(RCC->APB1HENR, RCC_APB1HENR_CRSEN);
-        SET_BIT(RCC->APB1HRSTR, RCC_APB1HRSTR_CRSRST);
-        CLEAR_BIT(RCC->APB1HRSTR, RCC_APB1HRSTR_CRSRST);
+        while ((RCC->CR & RCC_CR_HSI48RDY) == 0)
+            ;
+        enable_pclock((uint32_t)CRS);
         CLEAR_BIT(CRS->CFGR, CRS_CFGR_SYNCSRC);
         SET_BIT(CRS->CR, CRS_CR_CEN | CRS_CR_AUTOTRIMEN);
         CLEAR_BIT(RCC->D2CCIP2R, RCC_D2CCIP2R_USBSEL);
