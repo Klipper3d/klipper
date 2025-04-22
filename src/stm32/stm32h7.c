@@ -86,11 +86,6 @@ DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PH0,PH1");
 static void
 clock_setup(void)
 {
-#if !CONFIG_MACH_STM32H723
-    // Ensure USB OTG ULPI is not enabled
-    CLEAR_BIT(RCC->AHB1ENR, RCC_AHB1ENR_USB2OTGHSULPIEN);
-    CLEAR_BIT(RCC->AHB1LPENR, RCC_AHB1LPENR_USB2OTGHSULPILPEN);
-#endif
     // Set this despite correct defaults.
     // "The software has to program the supply configuration in PWR control
     // register 3" (pg. 259)
@@ -239,6 +234,7 @@ armcm_main(void)
     RCC->APB2ENR = 0x00000000;
     RCC->APB3ENR = 0x00000000;
     RCC->APB4ENR = 0x00000000;
+    RCC->AHB1ENR = 0x00000000;
 
     SCB->VTOR = (uint32_t)VectorTable;
 
