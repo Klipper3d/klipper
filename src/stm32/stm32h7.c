@@ -128,17 +128,15 @@ clock_setup(void)
     while (!(PWR->D3CR & PWR_D3CR_VOSRDY))
         ;
 
-    // Enable VOS0 (overdrive)
+    // Enable VOS0 (overdrive) on stm32h743/stm32h750
+#if !CONFIG_MACH_STM32H723
     if (CONFIG_CLOCK_FREQ > 400000000) {
         enable_pclock((uint32_t)SYSCFG);
-#if !CONFIG_MACH_STM32H723
         SYSCFG->PWRCR |= SYSCFG_PWRCR_ODEN;
-#else
-        PWR->CR3 |= PWR_CR3_BYPASS;
-#endif
         while (!(PWR->D3CR & PWR_D3CR_VOSRDY))
             ;
     }
+#endif
 
     SCB_EnableICache();
     SCB_EnableDCache();
