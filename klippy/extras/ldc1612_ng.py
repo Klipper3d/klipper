@@ -8,10 +8,18 @@ import math
 import logging
 import struct
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
-from . import bus, bulk_sensor
-from klippy import Printer
+try:
+    from klippy.extras import bus, bulk_sensor
+    from klippy.printer import Printer
+
+    IS_KALICO = True
+except ImportError:
+    from . import bus, bulk_sensor
+    from klippy import Printer
+
+    IS_KALICO = False
 
 MIN_MSG_TIME = 0.100
 
@@ -61,7 +69,8 @@ class LDC1612_ng_value:
 @dataclass
 class LDC1612_ng_homing_result:
     trigger_time: float
-    tap_end_time: float
+    tap_start_time: float
+    error: int
 
 
 # Interface class to LDC1612 mcu support
@@ -70,7 +79,7 @@ class LDC1612_ng:
         self.printer: Printer = config.get_printer()
 
         self._name = config.get_name().split()[-1]
-        self._verbose = config.getboolean("verbose", True)
+        self._verbose = config.getboolean("debug", False)
 
         device_choices = {
             "ldc1612": PRODUCT_UNKNOWN,
@@ -78,9 +87,7 @@ class LDC1612_ng:
             "cartographer": PRODUCT_CARTOGRAPHER,
             "mellow_fly": PRODUCT_MELLOW_FLY,
         }
-        self._device_product = config.getchoice(
-            "sensor_type", device_choices, PRODUCT_UNKNOWN
-        )
+        self._device_product = config.getchoice("sensor_type", device_choices, PRODUCT_UNKNOWN)
 
         # Fin0 = Fsensor0 / FIN_DIVIDER0
         # Fref0 = Fclk / FREF_DIVIDER0
@@ -93,7 +100,7 @@ class LDC1612_ng:
         elif self._device_product == PRODUCT_MELLOW_FLY:
             self._ldc_freq_clk = 40_000_000
             self._ldc_fin_divider = 1
-            self._ldc_fref_divider = 1
+            self._ldc_fref_divider = 2
             self._ldc_settle_time = 0.00125
             self._default_drive_current = 15
         else:  # Generic/BTT Eddy using external 12MHz clock source
@@ -106,37 +113,24 @@ class LDC1612_ng:
 
         self._ldc_freq_ref = round(self._ldc_freq_clk / self._ldc_fref_divider)
 
-        drive_current: int = config.getint(
-            "reg_drive_current", 0, minval=0, maxval=31
-        )
-        saved_drive_current: int = config.getint(
-            "saved_reg_drive_current", 0, minval=0, maxval=31
-        )
+        drive_current: int = config.getint("reg_drive_current", 0, minval=0, maxval=31)
+        saved_drive_current: int = config.getint("saved_reg_drive_current", 0, minval=0, maxval=31)
         if drive_current == 0:
             drive_current = saved_drive_current
         if drive_current == 0:
             drive_current = self._default_drive_current
         self._drive_current = drive_current
-        logging.info(f"ldc dc {self._drive_current}")
 
         self._deglitch: str = config.get("ldc_deglitch", "default").lower()
-        self._data_rate: int = config.getint(
-            "samples_per_second", 250, minval=50
-        )
-        self._ldc_settle_time = min(
-            self._ldc_settle_time, 1.0 / self._data_rate
-        )
+        self._data_rate: int = config.getint("samples_per_second", 250, minval=50)
+        self._ldc_settle_time = min(self._ldc_settle_time, 1.0 / self._data_rate)
 
         # Setup mcu sensor_ldc1612 bulk query code
-        self._i2c = bus.MCU_I2C_from_config(
-            config, default_addr=LDC1612_ADDR, default_speed=400000
-        )
+        self._i2c = bus.MCU_I2C_from_config(config, default_addr=LDC1612_ADDR, default_speed=400000)
         self._mcu = mcu = self._i2c.get_mcu()
         self._oid = oid = mcu.create_oid()
 
-        logging.info(
-            f"LDC1612ng {self._name} oid: {oid} i2c_oid {self._i2c.get_oid()}"
-        )
+        logging.info(f"LDC1612ng {self._name} oid: {oid} i2c_oid {self._i2c.get_oid()}")
 
         # params ending in "_pin" are magic and are a %s on this side, but %c on
         # the native side. There doesn't seem to be a way to pass "no pin". So we
@@ -156,10 +150,7 @@ class LDC1612_ng:
                 )
             )
         else:
-            mcu.add_config_cmd(
-                "config_ldc1612_ng oid=%d i2c_oid=%d product=%i"
-                % (oid, self._i2c.get_oid(), self._device_product)
-            )
+            mcu.add_config_cmd("config_ldc1612_ng oid=%d i2c_oid=%d product=%i" % (oid, self._i2c.get_oid(), self._device_product))
 
         # Make sure the sensor is stopped on restart
         mcu.add_config_cmd(
@@ -170,8 +161,6 @@ class LDC1612_ng:
 
         self._start_count = 0
         self._chip_initialized = False
-        self._last_error_count = 0
-        self._last_err_kind = 0
 
         # Bulk sample message reading
         chip_smooth = self._data_rate * BATCH_UPDATES * 2
@@ -185,9 +174,7 @@ class LDC1612_ng:
             BATCH_UPDATES,
         )
         hdr = ("time", "frequency", "z")
-        self._batch_bulk.add_mux_endpoint(
-            "ldc1612_ng/dump_ldc1612", "sensor", self._name, {"header": hdr}
-        )
+        self._batch_bulk.add_mux_endpoint("ldc1612_ng/dump_ldc1612", "sensor", self._name, {"header": hdr})
 
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
@@ -205,9 +192,7 @@ class LDC1612_ng:
             desc=self.cmd_LDC_SET_DC_help,
         )
 
-    cmd_LDC_SET_DC_help = (
-        "Set LDC1612 DRIVE_CURRENT register (idrive value only)"
-    )
+    cmd_LDC_SET_DC_help = "Set LDC1612 DRIVE_CURRENT register (idrive value only)"
 
     def cmd_LDC_SET_DC(self, gcmd):
         drive_cur = gcmd.get_int("VAL", minval=0, maxval=31)
@@ -244,13 +229,9 @@ class LDC1612_ng:
     def _build_config(self):
         cmdqueue = self._i2c.get_command_queue()
 
-        self._ldc1612_ng_start_stop_cmd = self._mcu.lookup_command(
-            "ldc1612_ng_start_stop oid=%c rest_ticks=%u", cq=cmdqueue
-        )
+        self._ldc1612_ng_start_stop_cmd = self._mcu.lookup_command("ldc1612_ng_start_stop oid=%c rest_ticks=%u", cq=cmdqueue)
 
-        self._ffreader.setup_query_command(
-            "ldc1612_ng_query_bulk_status oid=%c", oid=self._oid, cq=cmdqueue
-        )
+        self._ffreader.setup_query_command("ldc1612_ng_query_bulk_status oid=%c", oid=self._oid, cq=cmdqueue)
 
         self._ldc1612_ng_latched_status_cmd = self._mcu.lookup_query_command(
             "query_ldc1612_ng_latched_status_v2 oid=%c",
@@ -269,7 +250,7 @@ class LDC1612_ng:
 
         self._ldc1612_ng_finish_home_cmd = self._mcu.lookup_query_command(
             "ldc1612_ng_finish_home oid=%c",
-            "ldc1612_ng_finish_home_reply oid=%c trigger_clock=%u tap_end_clock=%u",
+            "ldc1612_ng_finish_home_reply oid=%c trigger_clock=%u tap_start_clock=%u error=%u",
             oid=self._oid,
             cq=cmdqueue,
         )
@@ -286,9 +267,7 @@ class LDC1612_ng:
         logging.info(params["m"])
 
     def _clock32_to_print_time(self, clock) -> float:
-        return self._mcu.clock_to_print_time(
-            self._mcu.clock32_to_clock64(clock)
-        )
+        return self._mcu.clock_to_print_time(self._mcu.clock32_to_clock64(clock))
 
     def get_mcu(self):
         return self._i2c.get_mcu()
@@ -299,9 +278,7 @@ class LDC1612_ng:
         return (response[0] << 8) | response[1]
 
     def set_reg(self, reg, val, minclock=0):
-        self._i2c.i2c_write(
-            [reg, (val >> 8) & 0xFF, val & 0xFF], minclock=minclock
-        )
+        self._i2c.i2c_write([reg, (val >> 8) & 0xFF, val & 0xFF], minclock=minclock)
 
     def add_bulk_sensor_data_client(self, cb):
         self._batch_bulk.add_client(cb)
@@ -339,6 +316,20 @@ class LDC1612_ng:
                 flags.append(flag)
         return " ".join(flags)
 
+    def data_error_to_str(self, d: int):
+        err_bits = [
+            "Under-range Error",
+            "Over-range Error",
+            "Watchdog Error",
+            "Amplitude Error",
+        ]
+        d = d >> 12  # shift out the data bits
+        errors = []
+        for bit, err in enumerate(err_bits):
+            if d & (1 << bit):
+                errors.append(err)
+        return " ".join(errors)
+
     def read_one_value(self):
         self._init_chip()
         # the status command also returns the last value
@@ -357,9 +348,7 @@ class LDC1612_ng:
 
     def from_ldc_freqval(self, val, ignore_err=False):
         if val >= 0x0FFFFFFF and not ignore_err:
-            raise self.printer.command_error(
-                f"LDC1612 frequency value has error bits: {hex(val)}"
-            )
+            raise self.printer.command_error(f"LDC1612 frequency value has error bits: {hex(val)}")
         return round(val * (float(self._ldc_freq_ref) / (1 << 28)), 3)
 
     #
@@ -374,7 +363,7 @@ class LDC1612_ng:
         start_freq: float,
         start_time: float,
         mode: str = "home",
-        tap_threshold: float = None,
+        tap_threshold: Optional[float] = None,
         max_errors: int = 0,
     ):
         MODES = {
@@ -388,12 +377,8 @@ class LDC1612_ng:
 
         t_freqvl = self.to_ldc_freqval(trigger_freq)
         s_freqval = self.to_ldc_freqval(start_freq)
-        start_time_mcu = (
-            self._mcu.print_time_to_clock(start_time) if start_time > 0 else 0
-        )
-        tap_threshold_val = (
-            int(tap_threshold * 65536.0) if tap_threshold is not None else 0
-        )
+        start_time_mcu = self._mcu.print_time_to_clock(start_time) if start_time > 0 else 0
+        tap_threshold_val = int(tap_threshold * 65536.0) if tap_threshold is not None else 0
 
         if self._verbose:
             logging.info(
@@ -417,26 +402,23 @@ class LDC1612_ng:
             ]
         )
 
+    def _convert_clock(self, c):
+        if c == 0:
+            return 0
+        return self._clock32_to_print_time(c)
+
     def finish_home(self):
-        # "ldc1612_finish_home2_reply oid=%c homing=%c trigger_clock=%u tap_end_clock=%u",
+        # "ldc1612_finish_home2_reply oid=%c homing=%c trigger_clock=%u tap_start_clock=%u",
         reply = self._ldc1612_ng_finish_home_cmd.send([self._oid])
         trigger_clock = reply["trigger_clock"]
-        tap_end_clock = reply["tap_end_clock"]
-        trigger_time = (
-            self._clock32_to_print_time(trigger_clock)
-            if trigger_clock > 0
-            else 0
-        )
-        tap_end_time = (
-            self._clock32_to_print_time(tap_end_clock)
-            if tap_end_clock > 0
-            else 0
-        )
+        tap_start_clock = reply["tap_start_clock"]
+        error = reply["error"]
+        trigger_time = self._convert_clock(trigger_clock)
+        tap_start_time = self._convert_clock(tap_start_clock)
 
-        return LDC1612_ng_homing_result(trigger_time, tap_end_time)
+        return LDC1612_ng_homing_result(trigger_time, tap_start_time, error)
 
     def set_sos_section(self, sect_num: int, sect_vals: List[float]):
-        print(sect_vals)
         # pack sect_vals into a byte array using struct.pack
         sect_bytes = [b for b in struct.pack("<6f", *sect_vals)]
         self._ldc1612_ng_set_sos_section.send([self._oid, sect_num, sect_bytes])
@@ -444,24 +426,6 @@ class LDC1612_ng:
     # The value that freqvals are multiplied by to get a float frequency
     def freqval_conversion_value(self):
         return float(self._ldc_freq_ref) / (1 << 28)
-
-    # Measurement decoding
-    def _convert_samples(self, samples):
-        # TODO! include both converted and uncoverted values
-        count = 0
-        for ptime, val in samples:
-            if val > 0x0FFFFFFF:  # high nibble indicates an error
-                if self._last_err_kind != (val >> 28):
-                    if self._verbose:
-                        logging.info(f"LDC1612 error: {hex(val)}")
-                    self._last_err_kind = val >> 28
-                self._last_error_count += 1
-            else:
-                # Note! Raw values here
-                samples[count] = (round(ptime, 6), val, math.inf)
-                count += 1
-        # remove the samples we didn't fill in because of errors
-        del samples[count:]
 
     def _verify_chip(self):
         # In case of miswiring, testing LDC1612 device ID prevents treating
@@ -472,8 +436,7 @@ class LDC1612_ng:
             raise self.printer.command_error(
                 "Invalid ldc1612 id (got %x,%x vs %x,%x).\n"
                 "This is generally indicative of connection problems\n"
-                "(e.g. faulty wiring) or a faulty ldc1612 chip."
-                % (manuf_id, dev_id, LDC1612_MANUF_ID, LDC1612_DEV_ID)
+                "(e.g. faulty wiring) or a faulty ldc1612 chip." % (manuf_id, dev_id, LDC1612_MANUF_ID, LDC1612_DEV_ID)
             )
 
     def _init_chip(self):
@@ -492,9 +455,7 @@ class LDC1612_ng:
         elif self._deglitch == "33mhz":
             deglitch = DEGLITCH_33MHZ
         else:
-            raise self.printer.error(
-                f"Invalid {self._name} deglitch value: {self._deglitch}"
-            )
+            raise self.printer.error(f"Invalid {self._name} deglitch value: {self._deglitch}")
 
         # This is the TI-recommended register configuration order
         # Setup chip in requested query rate
@@ -509,9 +470,7 @@ class LDC1612_ng:
             REG_CLOCK_DIVIDERS0,
             (self._ldc_fin_divider << 12) | (self._ldc_fref_divider),
         )
-        self.set_reg(
-            REG_ERROR_CONFIG, 0b1111_1100_1111_1001
-        )  # report everything to STATUS and INTB except ZC
+        self.set_reg(REG_ERROR_CONFIG, 0b1111_1100_1111_1001)  # report everything to STATUS and INTB except ZC
         self.set_reg(REG_MUX_CONFIG, 0x0208 | deglitch)
         # RP_OVERRIDE_EN | AUTO_AMP_DIS | REF_CLK_SRC=clkin | reserved
         self.set_reg(REG_CONFIG, (1 << 12) | (1 << 10) | (1 << 9) | 0x001)
@@ -531,9 +490,7 @@ class LDC1612_ng:
 
     def set_drive_current(self, cval: int, maxfreq: float = None):
         if cval < 0 or cval > 31:
-            raise self.printer.command_error(
-                "Drive current must be between 0 and 31"
-            )
+            raise self.printer.command_error("Drive current must be between 0 and 31")
         if self._drive_current == cval:
             return
 
@@ -561,7 +518,6 @@ class LDC1612_ng:
             return
 
         # Start bulk reading
-        self._last_error_count = 0
         rest_ticks = self._mcu.seconds_to_clock(0.5 / self._data_rate)
         self._ldc1612_ng_start_stop_cmd.send([self._oid, rest_ticks])
         # logging.info("LDC1612 starting '%s' measurements", self._name)
@@ -582,11 +538,26 @@ class LDC1612_ng:
 
     def _process_batch(self, eventtime):
         samples = self._ffreader.pull_samples()
-        self._convert_samples(samples)
-        if not samples:
-            return {}
+        count = 0
+        err_count = 0
+        last_err_kind = 0
+        for ptime, val in samples:
+            if val > 0x0FFFFFFF:  # high nibble indicates an error
+                err_kind = (val >> 28)
+                err_count += 1
+                if last_err_kind != err_kind:
+                    if self._verbose:
+                        logging.info(f"LDC1612 error: {hex(val)}")
+                    last_err_kind = err_kind
+            else:
+                # val is a raw value
+                samples[count] = (ptime, val)
+                count += 1
+        # remove the samples we didn't fill in because of errors
+        del samples[count:]
         return {
             "data": samples,
-            "errors": self._last_error_count,
+            "errors": err_count,
             "overflows": self._ffreader.get_last_overflows(),
         }
+
