@@ -123,20 +123,24 @@ clock_setup(void)
         // Set PLL1P cpu clock frequency
         | ((pll_freq/CONFIG_CLOCK_FREQ - 1) << RCC_PLL1DIVR_P1_Pos);
 
-    // Enable VOS1 power mode
-    PWR->D3CR = 3 << PWR_D3CR_VOS_Pos;
-    while (!(PWR->D3CR & PWR_D3CR_VOSRDY))
-        ;
-
-    // Enable VOS0 (overdrive) on stm32h743/stm32h750
-#if !CONFIG_MACH_STM32H723
-    if (CONFIG_CLOCK_FREQ > 400000000) {
-        enable_pclock((uint32_t)SYSCFG);
-        SYSCFG->PWRCR |= SYSCFG_PWRCR_ODEN;
+    // Enable VOS1 power mode (or VOS0 if freq>400Mhz)
+    if (CONFIG_MACH_STM32H723) {
+        PWR->D3CR = (CONFIG_CLOCK_FREQ > 400000000 ? 0 : 3) << PWR_D3CR_VOS_Pos;
         while (!(PWR->D3CR & PWR_D3CR_VOSRDY))
             ;
-    }
+    } else {
+        PWR->D3CR = 3 << PWR_D3CR_VOS_Pos;
+        while (!(PWR->D3CR & PWR_D3CR_VOSRDY))
+            ;
+        if (CONFIG_CLOCK_FREQ > 400000000) {
+            enable_pclock((uint32_t)SYSCFG);
+#ifdef SYSCFG_PWRCR_ODEN
+            SYSCFG->PWRCR |= SYSCFG_PWRCR_ODEN;
 #endif
+            while (!(PWR->D3CR & PWR_D3CR_VOSRDY))
+                ;
+        }
+    }
 
     SCB_EnableICache();
     SCB_EnableDCache();
