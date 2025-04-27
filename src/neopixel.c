@@ -34,7 +34,9 @@ typedef unsigned int neopixel_time_t;
 static __always_inline neopixel_time_t
 nsecs_to_ticks(uint32_t ns)
 {
-    return timer_from_us(ns * 1000) / 1000000;
+    // ROUND_UP ensures MCUs with slower system clocks don't produce
+    // pulses shorter than the minimums specified.
+    return DIV_ROUND_UP(timer_from_us(ns * 1000), 1000000);
 }
 
 static inline int
@@ -74,13 +76,10 @@ neopixel_delay(neopixel_time_t start, neopixel_time_t ticks)
 
 #endif
 
-// Pulse urations of 700ns and 350ns are selected as the common-midpoint
-// durations between the SK8612, WS2812, and WS2812B chips.
-
 // Minimum amount of time for a '1 bit' to be reliably detected
-#define PULSE_LONG_TICKS  nsecs_to_ticks(700)
+#define PULSE_LONG_TICKS  nsecs_to_ticks(650)
 // Minimum amount of time for any level change to be reliably detected
-#define EDGE_MIN_TICKS    nsecs_to_ticks(350)
+#define EDGE_MIN_TICKS    nsecs_to_ticks(200)
 // Minimum average time needed to transmit each bit (two level changes)
 #define BIT_MIN_TICKS     nsecs_to_ticks(1250)
 
