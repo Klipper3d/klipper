@@ -178,9 +178,14 @@ class SerialReader:
         # Initial connection
         logging.info("%sStarting serial connect", self.warn_prefix)
         start_time = self.reactor.monotonic()
+        error_description = None
         while 1:
-            if self.reactor.monotonic() > start_time + 90.:
-                self._error("Unable to connect")
+            if self.reactor.monotonic() > start_time + 90. or error_description is not None:
+                if error_description is not None:
+                    conditional_error_description = ': %s' % error_description
+                else:
+                    conditional_error_description = ''
+                self._error("Unable to connect%s" % conditional_error_description)
             try:
                 serial_dev = serial.Serial(baudrate=baud, timeout=0,
                                            exclusive=True)
@@ -188,6 +193,10 @@ class SerialReader:
                 serial_dev.rts = rts
                 serial_dev.open()
             except (OSError, IOError, serial.SerialException) as e:
+                if '[Errno 2] No such file or directory:' in str(e): # Serial port not found
+                    error_description = "Serial port not found: '%s'.\nAre you sure this MCU has the correct serial port, is plugged in, and powered?" % serialport
+                elif '[Errno 11] Resource temporarily unavailable' in str(e): # Serial port already in use
+                    error_description = "Serial port already in use: '%s'.\nAre you sure this serial port is not in use by another MCU or program?" % serialport
                 logging.warning("%sUnable to open serial port: %s",
                              self.warn_prefix, e)
                 self.reactor.pause(self.reactor.monotonic() + 5.)
