@@ -12,9 +12,10 @@ class error(Exception):
     pass
 
 class SerialReader:
-    def __init__(self, reactor, warn_prefix=""):
+    def __init__(self, reactor, warn_prefix="", mcu_name=""):
         self.reactor = reactor
         self.warn_prefix = warn_prefix
+        self.mcu_name = mcu_name
         # Serial port
         self.serial_dev = None
         self.msgparser = msgproto.MessageParser(warn_prefix=warn_prefix)
@@ -196,14 +197,18 @@ class SerialReader:
             except (OSError, IOError, serial.SerialException) as e:
                 # Serial port not found
                 if '[Errno 2] No such file or directory:' in str(e):
-                    self.current_error_description = "Serial port not \
-                        found: '%s'.\nAre you sure this MCU has the correct \
-                        serial port, is plugged in, and powered?" % serialport
+                    self.current_error_description = (
+                        "The specified serial path for MCU '%s' does not "
+                        "exist. Ensure the MCU is correctly flashed and "
+                        "connected. Verify with “ls /dev/serial/by-id/*”."
+                    ) % self.mcu_name 
                 # Serial port already in use
                 elif '[Errno 11] Resource temporarily unavailable' in str(e):
-                    self.current_error_description = "Serial port already in \
-                        use: '%s'.\nAre you sure this serial port is not in \
-                        use by another MCU or program?" % serialport
+                    self.current_error_description = (
+                        "Serial port already in use: '%s'. Are you sure "
+                        "this serial port is not in use by another MCU "
+                        "or program?"
+                    ) % serialport
                 logging.warning("%sUnable to open serial port: %s",
                              self.warn_prefix, e)
                 self.reactor.pause(self.reactor.monotonic() + 5.)
@@ -267,9 +272,11 @@ class SerialReader:
                                       cmd, len(cmd), minclock, reqclock, nid)
         params = completion.wait()
         if params is None:
-            error_message = 'Serial connection closed.\nEnsure Klipper \
-                firmware is properly flashed to your MCU, and your USB/CAN \
-                conection is secure.'
+            error_message = (
+                "Serial connection closed.\nEnsure Klipper firmware "
+                "is properly flashed to your MCU, and your USB/CAN "
+                "conection is secure."
+            )
             self.current_error_description = error_message
             self._error(error_message)
         return params
