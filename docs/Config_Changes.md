@@ -8,7 +8,7 @@ All dates in this document are approximate.
 
 ## Changes
 
-20250425: The maximum `cycle_time` for pwm `[output_pin]`,
+20250428: The maximum `cycle_time` for pwm `[output_pin]`,
 `[pwm_cycle_time]`, `[pwm_tool]`, and similar config sections is now 3
 seconds (reduced from 5 seconds). The `maximum_mcu_duration` in
 `[pwm_tool]` is now also 3 seconds.
