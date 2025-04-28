@@ -34,7 +34,7 @@ typedef unsigned int neopixel_time_t;
 static __always_inline neopixel_time_t
 nsecs_to_ticks(uint32_t ns)
 {
-    return timer_from_us(ns * 1000) / 1000000;
+    return DIV_ROUND_UP(timer_from_us(ns * 1000), 1000000);
 }
 
 static inline int
