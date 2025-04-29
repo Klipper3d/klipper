@@ -208,7 +208,8 @@ config CLOCK_FREQ
     default 64000000 if MACH_STM32G0
     default 150000000 if MACH_STM32G431
     default 170000000 if MACH_STM32G474
-    default 400000000 if MACH_STM32H7 # 400Mhz is max Klipper currently supports
+    default 520000000 if MACH_STM32H723
+    default 400000000 if MACH_STM32H743 || MACH_STM32H750
     default 80000000 if MACH_STM32L412
     default 64000000 if MACH_N32G45x && STM32_CLOCK_REF_INTERNAL
     default 128000000 if MACH_N32G45x

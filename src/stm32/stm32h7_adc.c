@@ -161,7 +161,8 @@ static const uint8_t adc_pins[] = {
 #define ADC_ATICKS 0b110
 #define ADC_ATICKS_H723_ADC3 0b111
 // 400Mhz stm32h7: clock=25Mhz, Tsamp=387.5, Tconv=394, total=15.76us
-// 400Mhz stm32h723 adc3: clock=50Mhz, Tsamp=640.5, Tconv=653, total=13.06us
+// 520Mhz stm32h723: clock=32.5Mhz, Tsamp=387.5, Tconv=394, total=12.12us
+// 520Mhz stm32h723 adc3: clock=65Mhz, Tsamp=640.5, Tconv=653, total=10.05us
 // 80Mhz stm32l4: clock=20Mhz, Tsamp=247.5, Tconv=260, total=13.0us
 // 150Mhz stm32g4: clock=37.5Mhz, Tsamp=247.5, Tconv=260, total=6.933us
 
