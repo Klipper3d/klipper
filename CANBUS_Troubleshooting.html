@@ -1287,6 +1287,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#use-canbus_querypy-only-to-identify-nodes-never-previously-seen" class="md-nav__link">
+    Use canbus_query.py only to identify nodes never previously seen
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#obtaining-candump-logs" class="md-nav__link">
     Obtaining candump logs
   </a>
@@ -1447,6 +1454,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#use-canbus_querypy-only-to-identify-nodes-never-previously-seen" class="md-nav__link">
+    Use canbus_query.py only to identify nodes never previously seen
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#obtaining-candump-logs" class="md-nav__link">
     Obtaining candump logs
   </a>
@@ -1591,6 +1605,19 @@ single CAN bus has 5 or more Klipper MCUs on it, then it might be
 necessary to increase the <code>txqueuelen</code> above the recommended value
 of 128. However, as above, care should be taken when selecting a new
 value to avoid excessive round-trip-time latency.</p>
+<h2 id="use-canbus_querypy-only-to-identify-nodes-never-previously-seen">Use <code>canbus_query.py</code> only to identify nodes never previously seen<a class="headerlink" href="#use-canbus_querypy-only-to-identify-nodes-never-previously-seen" title="Permanent link">&para;</a></h2>
+<p>It is only valid to use the
+<a href="CANBUS.html#finding-the-canbus_uuid-for-new-micro-controllers"><code>canbus_query.py</code> tool</a>
+to identify micro-controllers that have never been previously
+identified. Once all nodes on a bus are identified, record the
+resulting uuids in the printer.cfg, and avoid running the tool
+unnecessarily.</p>
+<p>The tool is implemented using a low-level mechanism that can cause
+nodes to internally observe bus errors. These internal errors may
+result in communication interruptions and may result is some nodes
+disconnecting from the bus.</p>
+<p>It is not valid to use the tool to "ping" if a node is connected. Do
+not run the tool during an active print.</p>
 <h2 id="obtaining-candump-logs">Obtaining candump logs<a class="headerlink" href="#obtaining-candump-logs" title="Permanent link">&para;</a></h2>
 <p>The CAN bus messages sent to and from the micro-controller are handled
 by the Linux kernel. It is possible to capture these messages from the
