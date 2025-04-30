@@ -22,6 +22,8 @@ class ManualStepper:
         self.velocity = config.getfloat('velocity', 5., above=0.)
         self.accel = self.homing_accel = config.getfloat('accel', 0., minval=0.)
         self.next_cmd_time = 0.
+        self.pos_min = config.getfloat('position_min', None)
+        self.pos_max = config.getfloat('position_max', None)
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
@@ -107,10 +109,16 @@ class ManualStepper:
         homing_move = gcmd.get_int('STOP_ON_ENDSTOP', 0)
         if homing_move:
             movepos = gcmd.get_float('MOVE')
+            if ((self.pos_min is not None and movepos < self.pos_min)
+                or (self.pos_max is not None and movepos > self.pos_max)):
+                raise gcmd.error("Move out of range")
             self.do_homing_move(movepos, speed, accel,
                                 homing_move > 0, abs(homing_move) == 1)
         elif gcmd.get_float('MOVE', None) is not None:
             movepos = gcmd.get_float('MOVE')
+            if ((self.pos_min is not None and movepos < self.pos_min)
+                or (self.pos_max is not None and movepos > self.pos_max)):
+                raise gcmd.error("Move out of range")
             sync = gcmd.get_int('SYNC', 1)
             self.do_move(movepos, speed, accel, sync)
         elif gcmd.get_int('SYNC', 0):
@@ -155,10 +163,12 @@ class ManualStepper:
                           1., 0., 0.,
                           start_v, cruise_v, accel)
     def check_move(self, move, ea_index):
-        # XXX - support out of bounds checks
+        movepos = move.end_pos[ea_index]
+        if ((self.pos_min is not None and movepos < self.pos_min)
+            or (self.pos_max is not None and movepos > self.pos_max)):
+            raise move.move_error()
         # XXX - support max accel/velocity
         # XXX - support non-kinematic max accel/velocity
-        pass
     def calc_junction(self, prev_move, move, ea_index):
         diff_r = move.axes_r[ea_index] - prev_move.axes_r[ea_index]
         if diff_r:

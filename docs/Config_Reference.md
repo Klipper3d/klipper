@@ -2540,6 +2540,13 @@ printer kinematics.
 #   Endstop switch detection pin. If specified, then one may perform
 #   "homing moves" by adding a STOP_ON_ENDSTOP parameter to
 #   MANUAL_STEPPER movement commands.
+#position_min:
+#position_max:
+#   The minimum and maximum position the stepper can be commanded to
+#   move to. If specified then one may not command the stepper to move
+#   past the given position. Note that these limits do not prevent
+#   setting an arbitrary position with the `MANUAL_STEPPER
+#   SET_POSITION=x` command. The default is to not enforce a limit.
 ```
 
 ## Custom heaters and sensors
