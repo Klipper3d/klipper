@@ -31,6 +31,7 @@ class ManualStepper:
         self.rail.set_trapq(self.trapq)
         # Registered with toolhead as an axtra axis
         self.axis_gcode_id = None
+        self.instant_corner_v = 0.
         # Register commands
         stepper_name = config.get_name().split()[1]
         gcode = self.printer.lookup_object('gcode')
@@ -119,6 +120,8 @@ class ManualStepper:
         gcode_move = self.printer.lookup_object("gcode_move")
         toolhead = self.printer.lookup_object('toolhead')
         gcode_axis = gcmd.get('GCODE_AXIS').upper()
+        instant_corner_v = gcmd.get_float('INSTANTANEOUS_CORNER_VELOCITY', 1.,
+                                          minval=0.)
         if self.axis_gcode_id is not None:
             if gcode_axis:
                 raise gcmd.error("Must unregister axis first")
@@ -137,6 +140,7 @@ class ManualStepper:
             if ea is not None and ea.get_axis_gcode_id() == gcode_axis:
                 raise gcmd.error("Axis '%s' already registered" % (gcode_axis,))
         self.axis_gcode_id = gcode_axis
+        self.instant_corner_v = instant_corner_v
         toolhead.add_extra_axis(self, self.get_position()[0])
         toolhead.register_step_generator(self.rail.generate_steps)
     def process_move(self, print_time, move, ea_index):
@@ -156,7 +160,9 @@ class ManualStepper:
         # XXX - support non-kinematic max accel/velocity
         pass
     def calc_junction(self, prev_move, move, ea_index):
-        # XXX - support max instantaneous velocity change
+        diff_r = move.axes_r[ea_index] - prev_move.axes_r[ea_index]
+        if diff_r:
+            return (self.instant_corner_v / abs(diff_r))**2
         return move.max_cruise_v2
     def get_axis_gcode_id(self):
         return self.axis_gcode_id
