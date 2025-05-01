@@ -1,0 +1,80 @@
+# Kconfig settings for LogicGreen processors
+
+if MACH_LGT
+
+config LGT_SELECT
+    bool
+    default y
+    select HAVE_GPIO
+    select HAVE_GPIO_ADC
+    select HAVE_GPIO_SPI
+    select HAVE_GPIO_I2C
+    select HAVE_GPIO_HARD_PWM
+    select HAVE_STRICT_TIMING
+    select HAVE_LIMITED_CODE_SIZE
+
+config BOARD_DIRECTORY
+    string
+    default "lgt"
+
+choice
+    prompt "Processor model"
+    config MACH_lgtf328p
+        bool "lgtf328p"
+endchoice
+
+config MCU
+    string
+    default "lgtf328p" if MACH_lgtf328p
+
+config AVRDUDE_PROTOCOL
+    string
+    default "arduino"
+
+choice
+    prompt "Processor speed"
+    config LGT_FREQ_32000000
+        bool "32Mhz"
+    config LGT_FREQ_16000000
+        bool "16Mhz"
+endchoice
+
+config CLOCK_FREQ
+    int
+    default 32000000 if LGT_FREQ_32000000
+    default 16000000
+
+config LGT_STACK_SIZE
+    int
+    default 256
+
+config LGT_WATCHDOG
+    bool
+    default y
+
+config SERIAL
+    bool
+    default y
+
+config SERIAL_BAUD_U2X
+    depends on SERIAL
+    bool
+    default y
+
+choice
+    prompt "Baud rate for serial port"
+    config LGT_SERIAL_BAUD_115200
+        bool "115200"
+    config LGT_SERIAL_BAUD_250000
+        bool "250000"
+endchoice
+
+config SERIAL_BAUD
+    int
+    default 250000 if LGT_SERIAL_BAUD_250000
+    default 115200
+
+config SERIAL_PORT
+    int
+    default 0
+endif
