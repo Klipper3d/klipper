@@ -1068,8 +1068,8 @@ optional parameters are provided they override their equivalent
 setting in the [probe config section](Config_Reference.md#probe).
 
 #### QUERY_PROBE
-`QUERY_PROBE [NO_OUTPUT=1]`: Report the current status of the probe 
-("triggered" or "open"). If NO_OUTPUT=1 is specified then QUERY_PROBE 
+`QUERY_PROBE [NO_OUTPUT=1]`: Report the current status of the probe
+("triggered" or "open"). If NO_OUTPUT=1 is specified then QUERY_PROBE
 will only update the probe state, but not report the status to console.
 
 #### PROBE_ACCURACY
