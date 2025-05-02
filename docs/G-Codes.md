@@ -174,6 +174,7 @@ The following commands are available when the
 [ADAPTIVE_MARGIN=<value>]`: This command probes the bed using generated points
 specified by the parameters in the config. After probing, a mesh is generated
 and z-movement is adjusted according to the mesh.
+The mesh is immediately active after successful completion of `BED_MESH_CALIBRATE`.
 The mesh will be saved into a profile specified by the `PROFILE` parameter,
 or `default` if unspecified.
 See the PROBE command for details on the optional probe parameters. If
