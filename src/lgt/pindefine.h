@@ -3,5 +3,5 @@
 
 #define PMCR    _SFR_MEM8(0xF2)
 #define PINE    _SFR_IO8(0x0C)
-#define RCMCAL	(*((volatile unsigned char *)0x66))
-#endif 
+#define RCMCAL  (*((volatile unsigned char *)0x66))
+#endif

@@ -12,10 +12,10 @@
 #include "sched.h" // sched_shutdown
 
 static const uint8_t adc_pins[] PROGMEM = {
-    GPIO('B', 5), GPIO('C', 0), GPIO('C', 1), GPIO('C', 2), 
+    GPIO('B', 5), GPIO('C', 0), GPIO('C', 1), GPIO('C', 2),
     GPIO('C', 3), GPIO('C', 4), GPIO('C', 5), GPIO('D', 4),
     GPIO('D', 6), GPIO('D', 7), GPIO('E', 0), GPIO('E', 1),
-    GPIO('E', 2), GPIO('E', 6), 
+    GPIO('E', 2), GPIO('E', 6),
 };
 
 enum { ADC_ENABLE = (1<<ADPS0)|(1<<ADPS1)|(1<<ADPS2)|(1<<ADEN)|(1<<ADIF) };

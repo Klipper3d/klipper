@@ -15,7 +15,8 @@
 #include "sched.h"  // sched_main
 
 #if CONFIG_SERIAL_BAUD > 115200
-#warning "Lgt8f328p always using cheap usb to uart ic, some of lgt8f328p cannot support high baudrate"
+#warning "Lgt8f328p always using cheap usb to uart ic, " \
+         "some of lgt8f328p cannot support high baudrate"
 #endif
 
 DECL_CONSTANT_STR("MCU", CONFIG_MCU);
