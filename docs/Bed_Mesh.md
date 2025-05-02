@@ -562,7 +562,9 @@ load the `default` profile it is recommended to add
 `BED_MESH_PROFILE LOAD=default` to either their `START_PRINT` macro or their
 slicer's "Start G-Code" configuration, whichever is applicable. 
 
-Note that this is not required if a new mesh is generated with `BED_MESH_CALIBRATE` in the `START_PRINT` macro or the slicer's "Start G-Code" and may produce unexpected results, especially with adaptive meshing.
+Note that this is not required if a new mesh is generated with 
+`BED_MESH_CALIBRATE` in the `START_PRINT` macro or the slicer's "Start G-Code" 
+and may produce unexpected results, especially with adaptive meshing.
 
 Alternatively the old behavior of loading a profile at startup can be
 restored with a `[delayed_gcode]`:
