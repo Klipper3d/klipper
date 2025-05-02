@@ -12,7 +12,7 @@ class HybridCoreXYKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
         # itersolve parameters
-        self.rails = [ stepper.PrinterRail(config.getsection('stepper_x')),
+        self.rails = [ stepper.LookupRail(config.getsection('stepper_x')),
                        stepper.LookupMultiRail(config.getsection('stepper_y')),
                        stepper.LookupMultiRail(config.getsection('stepper_z'))]
         self.rails[1].get_endstops()[0][0].add_stepper(
@@ -29,7 +29,7 @@ class HybridCoreXYKinematics:
             # dummy for cartesian config users
             dc_config.getchoice('axis', ['x'], default='x')
             # setup second dual carriage rail
-            self.rails.append(stepper.PrinterRail(dc_config))
+            self.rails.append(stepper.LookupRail(dc_config))
             self.rails[1].get_endstops()[0][0].add_stepper(
                 self.rails[3].get_steppers()[0])
             self.rails[3].setup_itersolve('corexy_stepper_alloc', b'+')
@@ -67,7 +67,7 @@ class HybridCoreXYKinematics:
         for axis_name in homing_axes:
             axis = "xyz".index(axis_name)
             if self.dc_module and axis == 0:
-                rail = self.dc_module.get_primary_carriage(axis)
+                rail = self.dc_module.get_primary_rail(axis)
             else:
                 rail = self.rails[axis]
             self.limits[axis] = rail.get_range()

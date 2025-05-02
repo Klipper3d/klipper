@@ -56,7 +56,8 @@ class MCU_stepper:
     def get_mcu(self):
         return self._mcu
     def get_name(self, short=False):
-        if short and self._name.startswith('stepper_'):
+        if short and self._name.startswith('stepper'):
+            # Skip an extra symbol after 'stepper'
             return self._name[8:]
         return self._name
     def units_in_radians(self):
@@ -317,9 +318,10 @@ def parse_step_distance(config, units_in_radians=None, note_valid=False):
 
 # A motor control carriage with one (or more) steppers and one (or more)
 # endstops.
-class GenericPrinterCarriage:
+class GenericPrinterRail:
     def __init__(self, config, need_position_minmax=True,
-                 default_position_endstop=None):
+                 default_position_endstop=None, units_in_radians=False):
+        self.stepper_units_in_radians = units_in_radians
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.steppers = []
@@ -377,7 +379,10 @@ class GenericPrinterCarriage:
             raise config.error(
                 "Invalid homing_positive_dir / position_endstop in '%s'"
                 % (config.get_name(),))
-    def get_name(self):
+    def get_name(self, short=False):
+        if short and self.name.startswith('stepper'):
+            # Skip an extra symbol after 'stepper'
+            return self.name[8:]
         return self.name
     def get_range(self):
         return self.position_min, self.position_max
@@ -419,6 +424,9 @@ class GenericPrinterCarriage:
                             self.get_name(), pin_name))
         return mcu_endstop
     def add_stepper(self, stepper, endstop_pin=None, endstop_name=None):
+        if not self.steppers:
+            self.get_commanded_position = stepper.get_commanded_position
+            self.calc_position_from_coord = stepper.calc_position_from_coord
         self.steppers.append(stepper)
         if endstop_pin is not None:
             mcu_endstop = self.lookup_endstop(
@@ -426,19 +434,7 @@ class GenericPrinterCarriage:
         else:
             mcu_endstop = self.lookup_endstop(self.endstop_pin, self.name)
         mcu_endstop.add_stepper(stepper)
-
-class PrinterRail(GenericPrinterCarriage):
-    def __init__(self, config, need_position_minmax=True,
-                 default_position_endstop=None, units_in_radians=False):
-        GenericPrinterCarriage.__init__(self, config, need_position_minmax,
-                                        default_position_endstop)
-        self.stepper_units_in_radians = units_in_radians
-        self.add_extra_stepper(config)
-        mcu_stepper = self.steppers[0]
-        self.get_name = mcu_stepper.get_name
-        self.get_commanded_position = mcu_stepper.get_commanded_position
-        self.calc_position_from_coord = mcu_stepper.calc_position_from_coord
-    def add_extra_stepper(self, config):
+    def add_stepper_from_config(self, config):
         stepper = PrinterStepper(config, self.stepper_units_in_radians)
         self.add_stepper(stepper, config.get('endstop_pin', None))
     def setup_itersolve(self, alloc_func, *params):
@@ -454,13 +450,21 @@ class PrinterRail(GenericPrinterCarriage):
         for stepper in self.steppers:
             stepper.set_position(coord)
 
+def LookupRail(config, need_position_minmax=True,
+               default_position_endstop=None, units_in_radians=False):
+    rail = GenericPrinterRail(config, need_position_minmax,
+                              default_position_endstop, units_in_radians)
+    rail.add_stepper_from_config(config)
+    return rail
+
 # Wrapper for dual stepper motor support
 def LookupMultiRail(config, need_position_minmax=True,
                     default_position_endstop=None, units_in_radians=False):
-    rail = PrinterRail(config, need_position_minmax,
-                       default_position_endstop, units_in_radians)
+    rail = LookupRail(config, need_position_minmax,
+                      default_position_endstop, units_in_radians)
     for i in range(1, 99):
         if not config.has_section(config.get_name() + str(i)):
             break
-        rail.add_extra_stepper(config.getsection(config.get_name() + str(i)))
+        rail.add_stepper_from_config(
+                config.getsection(config.get_name() + str(i)))
     return rail

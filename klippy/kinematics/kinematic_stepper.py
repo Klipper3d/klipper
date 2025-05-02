@@ -57,31 +57,6 @@ class KinematicStepper:
                 'generic_cartesian_stepper_alloc',
                 self.kin_coeffs[0], self.kin_coeffs[1], self.kin_coeffs[2])
         self.stepper_sk = self.stepper.get_stepper_kinematics()
-        # Add stepper methods
-        self.get_step_dist = self.stepper.get_step_dist
-        self.units_in_radians = self.stepper.units_in_radians
-        self.get_pulse_duration = self.stepper.get_pulse_duration
-        self.setup_default_pulse_duration = \
-                self.stepper.setup_default_pulse_duration
-        self.get_mcu = self.stepper.get_mcu
-        self.get_oid = self.stepper.get_oid
-        self.get_trapq = self.stepper.get_trapq
-        self.set_trapq = self.stepper.set_trapq
-        self.get_dir_inverted = self.stepper.get_dir_inverted
-        self.set_dir_inverted = self.stepper.set_dir_inverted
-        self.set_position = self.stepper.set_position
-        self.get_commanded_position = self.stepper.get_commanded_position
-        self.get_mcu_position = self.stepper.get_mcu_position
-        self.get_past_mcu_position = self.stepper.get_past_mcu_position
-        self.mcu_to_commanded_position = self.stepper.mcu_to_commanded_position
-        self.dump_steps = self.stepper.dump_steps
-        self.get_stepper_kinematics = self.stepper.get_stepper_kinematics
-        self.set_stepper_kinematics = self.stepper.set_stepper_kinematics
-        self.note_homing_end = self.stepper.note_homing_end
-        self.calc_position_from_coord = self.stepper.calc_position_from_coord
-        self.generate_steps = self.stepper.generate_steps
-        self.add_active_callback = self.stepper.add_active_callback
-        self.is_active_axis = self.stepper.is_active_axis
         # Add stepper to the carriages it references
         for sc in self.carriages:
             sc.add_stepper(self)
@@ -90,6 +65,8 @@ class KinematicStepper:
         if short and name.startswith('stepper '):
             return name[8:]
         return name
+    def get_stepper(self):
+        return self.stepper
     def get_kin_coeffs(self):
         return tuple(self.kin_coeffs)
     def get_active_axes(self):
@@ -111,3 +88,5 @@ class KinematicStepper:
                     " must be provided for '%s'" % self.get_name())
         self.carriages = carriages
         self.update_kin_coeffs(kin_coeffs)
+    def set_position(self, coord):
+        self.stepper.set_position(coord)
