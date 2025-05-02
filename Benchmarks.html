@@ -2030,15 +2030,15 @@ results were obtained by running an STM32F407 binary on an STM32F446
 </tbody>
 </table>
 <h3 id="stm32h7-step-rate-benchmark">STM32H7 step rate benchmark<a class="headerlink" href="#stm32h7-step-rate-benchmark" title="Permanent link">&para;</a></h3>
-<p>The following configuration sequence is used on STM32H7:</p>
+<p>The following configuration sequence is used on STM32H723:</p>
 <div class="highlight"><pre><span></span><code>allocate_oids count=3
-config_stepper oid=0 step_pin=PA13 dir_pin=PB5 invert_step=-1 step_pulse_ticks=40
-config_stepper oid=1 step_pin=PB2 dir_pin=PB6 invert_step=-1 step_pulse_ticks=40
-config_stepper oid=2 step_pin=PB3 dir_pin=PB7 invert_step=-1 step_pulse_ticks=40
+config_stepper oid=0 step_pin=PA13 dir_pin=PB5 invert_step=-1 step_pulse_ticks=52
+config_stepper oid=1 step_pin=PB2 dir_pin=PB6 invert_step=-1 step_pulse_ticks=52
+config_stepper oid=2 step_pin=PB3 dir_pin=PB7 invert_step=-1 step_pulse_ticks=52
 finalize_config crc=0
 </code></pre></div>
 
-<p>The test was last run on commit <code>0d27195f</code> with gcc version
+<p>The test was last run on commit <code>554ae78d</code> with gcc version
 <code>arm-none-eabi-gcc (Fedora 14.1.0-1.fc40) 14.1.0</code>.</p>
 <table>
 <thead>
@@ -2050,11 +2050,11 @@ finalize_config crc=0
 <tbody>
 <tr>
 <td>1 stepper</td>
-<td>60</td>
+<td>70</td>
 </tr>
 <tr>
 <td>3 stepper</td>
-<td>183</td>
+<td>181</td>
 </tr>
 </tbody>
 </table>
