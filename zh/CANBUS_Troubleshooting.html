@@ -1287,6 +1287,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#use-canbus_querypy-only-to-identify-nodes-never-previously-seen" class="md-nav__link">
+    Use canbus_query.py only to identify nodes never previously seen
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#candump" class="md-nav__link">
     获取candump日志
   </a>
@@ -1370,8 +1377,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1447,6 +1454,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#use-canbus_querypy-only-to-identify-nodes-never-previously-seen" class="md-nav__link">
+    Use canbus_query.py only to identify nodes never previously seen
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#candump" class="md-nav__link">
     获取candump日志
   </a>
@@ -1500,12 +1514,16 @@ resistors</a> on the CAN bus. If the resistors are not properly installed then m
 <p>确认CAN总线接线上的所有插头和线夹都已完全固定。打印机刀头的移动可能会挤压CAN总线布线，导致不良的线缆卷曲或未固定的插头，从而导致间歇性通信错误。</p>
 <h2 id="bytes_invalid">检查递增BYTES_INVALID计数器<a class="headerlink" href="#bytes_invalid" title="Permanent link">&para;</a></h2>
 <p>当打印机处于活动状态时，Klipper日志文件将每秒报告一次<code>Stats‘行。对于每个微控制器，这些“Stat”行都将有一个</code>bytes_valid`计数器。在正常的打印机操作期间，此计数器不应递增(重新启动后计数器为非零值是正常的，如果计数器每月递增一次也无关紧要)。如果在正常打印过程中，CAN Bus微控制器上的此计数器增加(每隔几个小时或更频繁地增加一次)，则表示存在严重问题。</p>
-<p>在CAN总线连接上递增<code>BYTES_INVALID</code>是CAN总线上消息重新排序的症状。消息重新排序有两个已知原因：</p>
-<ol>
-<li>用于USB CAN适配器的常用烛光固件的旧版本有一个错误，可能会导致消息重新排序。如果使用运行此固件的USB CAN适配器，则在观察到递增的<code>Bytes_Invalid</code>时，请确保更新到最新固件。</li>
-<li>已知一些用于嵌入式设备的Linux内核版本会对CAN总线消息进行重新排序。可能需要使用替代的Linux内核，或者使用支持不存在此问题的主流Linux内核的替代硬件。</li>
-</ol>
-<p>重新排序的消息是一个必须解决的严重问题。这将导致行为不稳定，并可能导致打印的任何部分出现令人困惑的错误。</p>
+<p>Incrementing <code>bytes_invalid</code> on a CAN bus connection is a symptom of reordered messages on the CAN bus. If seen, make sure to:</p>
+<ul>
+<li>Use a Linux kernel version 6.6.0 or later.</li>
+<li>If using a USB-to-CANBUS adapter running candlelight firmware, use v2.0 or later of candleLight_fw.</li>
+<li>If using Klipper's USB-to-CANBUS bridge mode, make sure the bridge node is flashed with Klipper v0.12.0 or later.</li>
+</ul>
+<p>Reordered messages is a severe problem that must be fixed. It will result in unstable behavior and can lead to confusing errors at any part of a print. An incrementing <code>bytes_invalid</code> is not caused by wiring or similar hardware issues and can only be fixed by identifying and updating the faulty software.</p>
+<p>Older versions of the Linux kernel had a bug in the gs_usb canbus driver code that could cause reordered canbus packets. The issue is thought to be fixed in <a href="https://github.com/torvalds/linux/commit/24bc41b4558347672a3db61009c339b1f5692169">Linux commit 24bc41b4</a> which was released in v6.6.0. In some cases, older Linux versions may not show the problem (due to how hardware interrupts are configured), however if problems are seen the recommended solution is to upgrade to a newer kernel.</p>
+<p>Older versions of candlelight firmware could reorder canbus packets, and the issue is thought to be fixed in <a href="https://github.com/candle-usb/candleLight_fw/commit/8b3a7b4565a3c9521b762b154c94c72c5acb2bcf">candlelight_fw commit 8b3a7b45</a>.</p>
+<p>Older versions of Klipper's USB-to-CANBUS bridge code could incorrectly drop canbus messages. This is not as severe as reordering messages, but it should still be fixed. It is thought to be fixed with <a href="https://github.com/Klipper3d/klipper/pull/6175">Klipper PR #6175</a>.</p>
 <h2 id="txqueuelen">使用适当的 txqueuelen 设置<a class="headerlink" href="#txqueuelen" title="Permanent link">&para;</a></h2>
 <p>Klipper 代码使用 Linux 内核来管理 CAN 总线流量。默认情况下，内核只会排队 10 个 CAN 传输数据包。建议使用 <code>txqueuelen 128</code> <a href="CANBUS.html#host-hardware">配置 can0 设备</a> 来增加该大小。</p>
 <p>如果 Klipper 传输了一个数据包，而 Linux 已经填满了其所有的传输队列空间，那么 Linux 将丢弃该数据包，并且 Klipper 日志中将出现如下消息：</p>
@@ -1517,6 +1535,10 @@ resistors</a> on the CAN bus. If the resistors are not properly installed then m
 <p>可以通过运行 Linux 命令“ip link show can0”来检查当前队列大小。它应该会报告一堆文本，包括代码片段“qlen 128”。如果看到类似“qlen 10”的内容，则表明 CAN 设备尚未正确配置。</p>
 <p>不建议使用明显大于 128 的 <code>txqueuelen</code>。以 1000000 频率运行的 CAN 总线通常需要大约 120us 来传输 CAN 数据包。因此，128 个数据包的队列可能需要大约 15-20ms 才能耗尽。大得多的队列可能会导致消息往返时间出现过度峰值，从而导致无法恢复的错误。换句话说，如果 Klipper 的应用程序重传系统不必等待 Linux 耗尽可能过时的过大队列，它会更加强大。这类似于互联网路由器上的 <a href="https://en.wikipedia.org/wiki/Bufferbloat">bufferbloat</a> 问题。</p>
 <p>在正常情况下，Klipper 可能每个 MCU 使用约 25 个队列槽 - 通常仅在重传期间使用更多槽。（具体而言，Klipper 主机可能向每个 Klipper MCU 传输最多 192 个字节，然后才会收到该 MCU 的确认。）如果单个 CAN 总线上有 5 个或更多 Klipper MCU，则可能需要将<code>txqueuelen</code>增加到建议值 128 以上。但是，如上所述，选择新值时应小心谨慎，以避免过长的往返时间延迟。</p>
+<h2 id="use-canbus_querypy-only-to-identify-nodes-never-previously-seen">Use <code>canbus_query.py</code> only to identify nodes never previously seen<a class="headerlink" href="#use-canbus_querypy-only-to-identify-nodes-never-previously-seen" title="Permanent link">&para;</a></h2>
+<p>It is only valid to use the <a href="CANBUS.html#finding-the-canbus_uuid-for-new-micro-controllers"><code>canbus_query.py</code> tool</a> to identify micro-controllers that have never been previously identified. Once all nodes on a bus are identified, record the resulting uuids in the printer.cfg, and avoid running the tool unnecessarily.</p>
+<p>The tool is implemented using a low-level mechanism that can cause nodes to internally observe bus errors. These internal errors may result in communication interruptions and may result is some nodes disconnecting from the bus.</p>
+<p>It is not valid to use the tool to "ping" if a node is connected. Do not run the tool during an active print.</p>
 <h2 id="candump">获取candump日志<a class="headerlink" href="#candump" title="Permanent link">&para;</a></h2>
 <p>向微控制器发送和从微控制器发送的CAN总线消息由Linux内核处理。出于调试目的，可以从内核捕获这些消息。这些消息的日志可能在诊断中有用。</p>
 <p>Linux<a href="https://github.com/linux-can/can-utils">can-utils</a>工具提供了捕获软件。通常通过运行以下命令将其安装在计算机上：</p>

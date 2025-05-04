@@ -1334,8 +1334,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1443,18 +1443,18 @@
 <li>Standard G-kód támogatás. A tipikus "szeletelők" (SuperSlicer, Cura, PrusaSlicer, stb.) által előállított általános G-kód parancsok támogatottak.</li>
 <li>Több extruder támogatása. A közös fűtőberendezéssel rendelkező extrudereket és a független kocsikon (IDEX) lévő extrudereket is támogatják.</li>
 <li>Támogatja a cartesian, delta, corexy, corexz, hybrid-corexy, hybrid-corexz, rotary delta, polár és kábelcsörlő stílusú nyomtatókat.</li>
-<li>Tárgyasztal szintezésének automatikus támogatása. A Klipper konfigurálható alapszintű tárgyasztal dőlés-érzékelésre vagy a tárgyasztal teljes hálós szintezésére. Ha a tárgyasztal több Z steppert használ, akkor a Klipper a Z stepper-ek független manipulálásával is képes szintezni. A legtöbb Z magasságmérő szonda támogatott, beleértve a BL-Touch szondákat és a szervómotoros szondákat is.</li>
+<li>Automatic bed leveling support. Klipper can be configured for basic bed tilt detection or full mesh bed leveling. The bed mesh can be customized to the print size (adaptive bed mesh). If the bed uses multiple Z steppers then Klipper can also level by independently manipulating the Z steppers. Most Z height probes are supported, including BL-Touch probes and servo activated probes. Probes may be calibrated for axis twist compensation. If using an "eddy current probe" then one can utilize fast bed mesh scanning,</li>
 <li>Automatikus delta kalibráció támogatása. A kalibráló eszköz alapvető magassági kalibrálást, valamint továbbfejlesztett X és Y dimenzió kalibrálást végezhet. A kalibrálás elvégezhető Z magasságmérővel vagy kézi szintezővel.</li>
 <li>Futtatási idejű "objektum kizárása" támogatás. Beállítása esetén ez a modul megkönnyítheti egy több részből álló nyomtatás egyetlen objektumának törlését.</li>
-<li>Az általános hőmérséklet-érzékelők támogatása (pl. általános termisztorok, AD595, AD597, AD849x, PT100, PT1000, MAX6675, MAX31855, MAX31856, MAX31865, BME280, HTU21D, DS18B20 és LM75). Egyedi termisztorok és egyedi analóg hőmérséklet-érzékelők is konfigurálhatók. Lehet figyelni a mikrokontroller hőmérsékletét és a Raspberry Pi processzor hőmérsékletét.</li>
+<li>Support for common temperature sensors (eg, common thermistors, AD595, AD597, AD849x, PT100, PT1000, MAX6675, MAX31855, MAX31856, MAX31865, BME280, HTU21D, DS18B20, AHT10, SHT3x, and LM75). Custom thermistors and custom analog temperature sensors can also be configured. One can monitor the internal micro-controller temperature sensor and the internal temperature sensor of a Raspberry Pi.</li>
 <li>Alapértelmezés szerint a fűtésvédelem engedélyezett.</li>
-<li>Standard ventilátorok, fejhűtő ventilátorok és hőmérséklet-szabályozott ventilátorok támogatása. Nincs szükség arra, hogy a ventilátorok folyamatosan működjenek, amikor a nyomtató üresjáratban van. A fordulatszámmérővel ellátott ventilátoroknál a ventilátorok fordulatszáma ellenőrizhető.</li>
+<li>Support for standard fans, nozzle fans, and temperature controlled fans. No need to keep fans running when the printer is idle. Fan speed can be monitored on fans that have a tachometer. One can assign a "math formula" to a fan for automatic fan speed updating.</li>
 <li>A TMC2130, TMC2208/TMC2224, TMC2209, TMC2660 és TMC5160 léptetőmotor-meghajtók futásidejű konfigurációjának támogatása. A hagyományos léptetőmotor-meghajtók AD5206, MCP4451, MCP4728, MCP4018 és PWM-tűkön keresztül történő áramszabályozásának támogatása is biztosított.</li>
 <li>Közvetlenül a nyomtatóhoz csatlakoztatott általános LCD-kijelzők támogatása. Egy alapértelmezett menü is rendelkezésre áll. A kijelző és a menü tartalma a konfigurációs fájlon keresztül teljesen testreszabható.</li>
 <li>Állandó gyorsulás és "look-ahead" támogatás. Minden mozgás fokozatosan gyorsul fel álló helyzetből utazósebességre, majd lassul vissza álló helyzetbe. A beérkező G-kódos mozgásparancsok sorba kerülnek és elemzi őket - a hasonló irányú mozgások közötti gyorsulás optimalizálva lesz a nyomtatási hibák csökkentése és a teljes nyomtatási idő javítása érdekében.</li>
 <li>A Klipper egy olyan "léptetőfázis végállás" algoritmust valósít meg, amely javíthatja a tipikus végálláskapcsolók pontosságát. Megfelelő beállítás esetén javíthatja a nyomtatás első réteg tárgyasztalhoz tapadását.</li>
 <li>Száljelenlét-, szálmozgás- és szálszélesség-érzékelők támogatása.</li>
-<li>A gyorsulás mérésének és rögzítésének támogatása adxl345, mpu9250 és mpu6050 gyorsulásmérőkkel.</li>
+<li>Support for measuring and recording acceleration using adxl345, mpu9250, mpu6050, lis2dw12, lis3dh, and icm20948 accelerometers.</li>
 <li>A nyomtató rezgésének és zajának csökkentése érdekében a rövid "cikcakk" mozgások csúcssebességének korlátozásának támogatása. További információkért lásd a <a href="Kinematics.html">Kinematika</a> dokumentumot.</li>
 <li>Számos gyakori nyomtatóhoz rendelkezésre állnak minta konfigurációs fájlok. Listát a <a href="https://github.com/Klipper3d/klipper/blob/master/config/">config könyvtárban</a> találod.</li>
 </ul>
@@ -1526,11 +1526,6 @@
 <td>1622K</td>
 </tr>
 <tr>
-<td>RP2040</td>
-<td>2400K</td>
-<td>1636K</td>
-</tr>
-<tr>
 <td>SAM4E8E</td>
 <td>2500K</td>
 <td>1674K</td>
@@ -1556,6 +1551,11 @@
 <td>2634K</td>
 </tr>
 <tr>
+<td>RP2040</td>
+<td>4000K</td>
+<td>2571K</td>
+</tr>
+<tr>
 <td>RP2350</td>
 <td>4167K</td>
 <td>2663K</td>
@@ -1566,9 +1566,9 @@
 <td>4737K</td>
 </tr>
 <tr>
-<td>STM32H743</td>
-<td>9091K</td>
-<td>6061K</td>
+<td>STM32H723</td>
+<td>7429K</td>
+<td>8619K</td>
 </tr>
 </tbody>
 </table>

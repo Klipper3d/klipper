@@ -838,11 +838,11 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500" class="md-nav__link">
-    MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500
+  <a href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500icm20948" class="md-nav__link">
+    MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948
   </a>
   
-    <nav class="md-nav" aria-label="MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500">
+    <nav class="md-nav" aria-label="MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1595,8 +1595,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1721,11 +1721,11 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500" class="md-nav__link">
-    MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500
+  <a href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500icm20948" class="md-nav__link">
+    MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948
   </a>
   
-    <nav class="md-nav" aria-label="MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500">
+    <nav class="md-nav" aria-label="MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1942,7 +1942,7 @@
 <p>Klipper has built-in support for the ADXL345, MPU-9250, LIS2DW and LIS3DH compatible accelerometers which can be used to measure resonance frequencies of the printer for different axes, and auto-tune <a href="Resonance_Compensation.html">input shapers</a> to compensate for resonances. Note that using accelerometers requires some soldering and crimping. The ADXL345 can be connected to the SPI interface of a Raspberry Pi or MCU board (it needs to be reasonably fast). The MPU family can be connected to the I2C interface of a Raspberry Pi directly, or to an I2C interface of an MCU board that supports 400kbit/s <em>fast mode</em> in Klipper. The LIS2DW and LIS3DH can be connected to either SPI or I2C with the same considerations as above.</p>
 <p>When sourcing accelerometers, be aware that there are a variety of different PCB board designs and different clones of them. If it is going to be connected to a 5V printer MCU ensure it has a voltage regulator and level shifters.</p>
 <p>For ADXL345s, make sure that the board supports SPI mode (a small number of boards appear to be hard-configured for I2C by pulling SDO to GND).</p>
-<p>For MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500s and LIS2DW/LIS3DH there are also a variety of board designs and clones with different I2C pull-up resistors which will need supplementing.</p>
+<p>For MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948s and LIS2DW/LIS3DH there are also a variety of board designs and clones with different I2C pull-up resistors which will need supplementing.</p>
 <h2 id="mcus-with-klipper-i2c-fast-mode-support">MCUs with Klipper I2C <em>fast-mode</em> Support<a class="headerlink" href="#mcus-with-klipper-i2c-fast-mode-support" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2107,7 +2107,7 @@ GND+SCL
 </code></pre></div>
 
 <p>Note that unlike a cable shield, any GND(s) should be connected at both ends.</p>
-<h4 id="mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500">MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500<a class="headerlink" href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500" title="Permanent link">&para;</a></h4>
+<h4 id="mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500icm20948">MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948<a class="headerlink" href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500icm20948" title="Permanent link">&para;</a></h4>
 <p>These accelerometers have been tested to work over I2C on the RPi, RP2040 (Pico) and AVR at 400kbit/s (<em>fast mode</em>). Some MPU accelerometer modules include pull-ups, but some are too large at 10K and must be changed or supplemented by smaller parallel resistors.</p>
 <p>Recommended connection scheme for I2C on the Raspberry Pi:</p>
 <table>
@@ -2328,6 +2328,7 @@ probe_points:
     100, 100, 20  # an example
 </code></pre></div>
 
+<p>If you are using the ICM20948, replace instances of "mpu9250" with "icm20948".</p>
 <h4 id="configure-mpu-9520-compatibles-with-pico">Configure MPU-9520 Compatibles With Pico<a class="headerlink" href="#configure-mpu-9520-compatibles-with-pico" title="Permanent link">&para;</a></h4>
 <p>Pico I2C is set to 400000 on default. Simply add the following to the printer.cfg:</p>
 <div class="highlight"><pre><span></span><code>[mcu pico]
@@ -2346,6 +2347,7 @@ probe_points:
 pins: pico:gpio23
 </code></pre></div>
 
+<p>If you are using the ICM20948, replace instances of "mpu9250" with "icm20948".</p>
 <h4 id="configure-mpu-9520-compatibles-with-avr">Configure MPU-9520 Compatibles with AVR<a class="headerlink" href="#configure-mpu-9520-compatibles-with-avr" title="Permanent link">&para;</a></h4>
 <p>AVR I2C will be set to 400000 by the mpu9250 option. Simply add the following to the printer.cfg:</p>
 <div class="highlight"><pre><span></span><code>[mcu nano]
@@ -2360,6 +2362,7 @@ probe_points:
     100, 100, 20  # an example
 </code></pre></div>
 
+<p>If you are using the ICM20948, replace instances of "mpu9250" with "icm20948".</p>
 <p>通過<code>RESTART</code>命令重啟Klipper。</p>
 <h2 id="_6">測量共振值<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <h3 id="_7">檢查設定<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h3>

@@ -1334,8 +1334,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1443,18 +1443,18 @@
 <li>標準 G 程式碼支援。支援由常見「切片軟體」（SuperSlicer、Cura、PrusaSlicer 等）產生的通用 G 程式碼命令。</li>
 <li>支援多擠出機。包括對共享熱端的擠出機（多進一出）和多頭（IDEX）的支援。</li>
 <li>支援多種列印機架構，包括直線式 (Cartesian)、三角洲式 (Delta)、CoreXY、CoreXZ、混合式 CoreXY、混合式 CoreXZ、Deltesian、旋轉三角洲式 (Rotary Delta)、極座標式 (Polar) 以及纜繩式 (Cable Winch) 列印機。</li>
-<li>自動床面平整支援。Klipper可以被配置為基本的床身傾斜檢測或網床調平。如果床鋪使用多個Z步進器，那麼Klipper也可以通過獨立操縱Z步進器來調平。支援大多數Z高度探頭，包括BL-Touch探頭和伺服啟用的探頭。</li>
+<li>Automatic bed leveling support. Klipper can be configured for basic bed tilt detection or full mesh bed leveling. The bed mesh can be customized to the print size (adaptive bed mesh). If the bed uses multiple Z steppers then Klipper can also level by independently manipulating the Z steppers. Most Z height probes are supported, including BL-Touch probes and servo activated probes. Probes may be calibrated for axis twist compensation. If using an "eddy current probe" then one can utilize fast bed mesh scanning,</li>
 <li>支援自動delta校準。校準工具可以進行基本的高度校準，以及增強的X和Y尺寸校準。校準可以用Z型高度探頭或通過手動探測來完成。</li>
 <li>列印時支援“排除物件”。當啟用此模組時，可在多件列印中僅取消指定的單一物件。</li>
-<li>支援常見的溫度感測器（例如，常見的熱敏電阻、AD595、AD597、AD849x、PT100、PT1000、MAX6675、MAX31855、MAX31856、MAX31865、BME280、HTU21D、DS18B20和LM75）。還可以配置自定義熱敏電阻和自定義模擬溫度感測器。還可以監測微控制器和 Raspberry Pi 內部的溫度感測器。</li>
+<li>Support for common temperature sensors (eg, common thermistors, AD595, AD597, AD849x, PT100, PT1000, MAX6675, MAX31855, MAX31856, MAX31865, BME280, HTU21D, DS18B20, AHT10, SHT3x, and LM75). Custom thermistors and custom analog temperature sensors can also be configured. One can monitor the internal micro-controller temperature sensor and the internal temperature sensor of a Raspberry Pi.</li>
 <li>預設啟用基本加熱器保護。</li>
-<li>支援標準風扇、噴嘴風扇和溫控風扇。不需要在印表機閑置時保持風扇運轉。可以在帶有轉速錶的風扇上監測風扇速度。</li>
+<li>Support for standard fans, nozzle fans, and temperature controlled fans. No need to keep fans running when the printer is idle. Fan speed can be monitored on fans that have a tachometer. One can assign a "math formula" to a fan for automatic fan speed updating.</li>
 <li>支援運行時配置 TMC2130、TMC2208/TMC2224、TMC2209、TMC2660 和 TMC5160 步進馬達驅動器。此外，也支援透過 AD5206、DAC084S085、MCP4451、MCP4728、MCP4018 和 PWM 腳位對傳統步進驅動器進行電流控制。</li>
 <li>支援直接連線到印表機的普通LCD顯示器。還提供了一個預設的菜單。顯示器和菜單的內容可以通過配置檔案完全定製。</li>
 <li>恒定加速和「look-ahead」（前瞻）支援。所有印表機移動將從靜止逐漸加速到巡航速度，然後減速回到靜止。對傳入的 G 程式碼移動命令流進行排隊和分析 - 將優化類似方向上的移動之間的加速度，以減少列印停頓並改善整體列印時間。</li>
 <li>Klipper 實現了一種「步進相位限位」演算法，可以提高典型限位開關的精度。如果調整得當，它可以提高列印件首層和列印床的附著力。</li>
 <li>支援列印絲存在感測器、列印絲運動感測器和列印絲寬度感測器。</li>
-<li>支援使用 ADXL345、MPU9250 和 MPU6050 加速度計進行加速度的測量與記錄。</li>
+<li>Support for measuring and recording acceleration using adxl345, mpu9250, mpu6050, lis2dw12, lis3dh, and icm20948 accelerometers.</li>
 <li>支援限制短距離「之」字形移動的最高速度，以減少印表機的振動和噪音。更多資訊見<a href="Kinematics.html">運動學</a>文件。</li>
 <li>許多常見的印表機都有樣本配置檔案。檢視<a href="https://github.com/Klipper3d/klipper/blob/master/config/">配置資料夾</a>中的列表。</li>
 </ul>
@@ -1526,11 +1526,6 @@
 <td>1622K</td>
 </tr>
 <tr>
-<td>RP2040</td>
-<td>2400K</td>
-<td>1636K</td>
-</tr>
-<tr>
 <td>SAM4E8E</td>
 <td>2500K</td>
 <td>1674K</td>
@@ -1556,6 +1551,11 @@
 <td>2634K</td>
 </tr>
 <tr>
+<td>RP2040</td>
+<td>4000K</td>
+<td>2571K</td>
+</tr>
+<tr>
 <td>RP2350</td>
 <td>4167K</td>
 <td>2663K</td>
@@ -1566,9 +1566,9 @@
 <td>4737K</td>
 </tr>
 <tr>
-<td>STM32H743</td>
-<td>9091K</td>
-<td>6061K</td>
+<td>STM32H723</td>
+<td>7429K</td>
+<td>8619K</td>
 </tr>
 </tbody>
 </table>

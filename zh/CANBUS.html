@@ -1371,8 +1371,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1549,6 +1549,7 @@ iface can0 can static
 </li>
 </ul>
 <ul>
+<li>It is only valid to use USB to CAN bridge mode if there is a functioning CAN bus with at least one other node available (in addition to the bridge node itself). Use a standard USB configuration if the goal is to communicate only with the single USB device. Using USB to CAN bridge mode without a fully functioning CAN bus (including terminating resistors and an additional node) may result in sporadic errors even when communicating with the bridge node.</li>
 <li>USB转CAN桥板不会显示为USB串口设备，也不会在运行<code>ls/dev/Serial/by-id</code>时出现，也不能在Klipper的printer.cfg文件中使用<code>Serial：</code>参数进行配置。桥接板显示为“USB CAN适配器”，并在printer.cfg中配置为<a href="#configuring-klipper">CAN节点</a>。</li>
 </ul>
 <h2 id="_4">故障排除提示<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>

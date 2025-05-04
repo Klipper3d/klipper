@@ -1327,8 +1327,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1410,6 +1410,12 @@
 <p>本文件涵蓋了軟體更新中對配置檔案不向后相容的部分。在升級 Klipper 時，最好也檢視一下這份文件。</p>
 <p>本文件中的所有日期都是不精確的。</p>
 <h2 id="_2">變更<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>20250428: The maximum <code>cycle_time</code> for pwm <code>[output_pin]</code>, <code>[pwm_cycle_time]</code>, <code>[pwm_tool]</code>, and similar config sections is now 3 seconds (reduced from 5 seconds). The <code>maximum_mcu_duration</code> in <code>[pwm_tool]</code> is now also 3 seconds.</p>
+<p>20250418: The manual_stepper <code>STOP_ON_ENDSTOP</code> feature may now take less time to complete. Previously, the command would wait the entire time the move could possibly take even if the endstop triggered earlier. Now, the command finishes shortly after the endstop trigger.</p>
+<p>20250417: SPI devices using "software SPI" are now rate limited. Previously, the <code>spi_speed</code> in the config was ignored and the transmission speed was only limited by the processing speed of the micro-controller. Now, speeds are limited by the <code>spi_speed</code> config parameter (actual hardware speeds are likely to be lower than the configured value due to software overhead).</p>
+<p>20250411: Klipper v0.13.0 released.</p>
+<p>20250308: The <code>AUTO</code> parameter of the <code>AXIS_TWIST_COMPENSATION_CALIBRATE</code> command has been removed.</p>
+<p>20250131: Option <code>VARIABLE=&lt;name&gt;</code> in <code>SAVE_VARIABLE</code> requires lowercase value. For example, <code>extruder</code> instead of mixedcase <code>Extruder</code> or uppercase <code>EXTRUDER</code>. Using any uppercase letter will raise an error.</p>
 <p>20241203: The resonance test has been changed to include slow sweeping moves. This change requires that testing point(s) have some clearance in X/Y plane (+/- 30 mm from the test point should suffice when using the default settings). The new test should generally produce more accurate and reliable test results. However, if required, the previous test behavior can be restored by adding options <code>sweeping_period: 0</code> and <code>accel_per_hz: 75</code> to the <code>[resonance_tester]</code> config section.</p>
 <p>20241201: In some cases Klipper may have ignored leading characters or spaces in a traditional G-Code command. For example, "99M123" may have been interpreted as "M123" and "M 321" may have been interpreted as "M321". Klipper will now report these cases with an "Unknown command" warning.</p>
 <p>20241112: Option <code>CHIPS=&lt;chip_name&gt;</code> in <code>TEST_RESONANCES</code> and <code>SHAPER_CALIBRATE</code> requires specifying the full name(s) of the accel chip(s). For example, <code>adxl345 rpi</code> instead of short name - <code>rpi</code>.</p>

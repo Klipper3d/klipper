@@ -1287,6 +1287,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#use-canbus_querypy-only-to-identify-nodes-never-previously-seen" class="md-nav__link">
+    Use canbus_query.py only to identify nodes never previously seen
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#obtenir-les-journaux-candump" class="md-nav__link">
     Obtenir les journaux 'candump'
   </a>
@@ -1370,8 +1377,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1447,6 +1454,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#use-canbus_querypy-only-to-identify-nodes-never-previously-seen" class="md-nav__link">
+    Use canbus_query.py only to identify nodes never previously seen
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#obtenir-les-journaux-candump" class="md-nav__link">
     Obtenir les journaux 'candump'
   </a>
@@ -1500,12 +1514,16 @@ resistors</a> on the CAN bus. If the resistors are not properly installed then m
 <p>Vérifier que toutes les fiches et sertissages sur le câblage CAN sont entièrement sécurisés. Le mouvement de la tête d'outil d'imprimante peut faire bouger le câblage de bus CAN et provoquer des faux contacts - source d'erreurs de communication aléatoires.</p>
 <h2 id="verification-de-laugmentation-du-compteur-octets_invalide">Vérification de l'augmentation du compteur octets_invalide<a class="headerlink" href="#verification-de-laugmentation-du-compteur-octets_invalide" title="Permanent link">&para;</a></h2>
 <p>Le fichier journal de Klipper affiche une ligne <code>Stats</code> une fois par seconde lorsque l'imprimante est active. Ces lignes "Stats" ont un compteur <code>bytes_invalid</code> pour chaque microcontrôleur. Ce compteur ne devrait pas augmenter au cours de l'utilisation normale de l'imprimante (il est normal que le compteur soit non nul après un RESTART et ce n'est pas une préoccupation si le compteur augmente une fois par mois). Si ce compteur augmente sur un microcontrôleur de bus CAN pendant un fonctionnement normal (s'il augmente toutes les heures ou plus fréquemment) alors c'est une indication d'un problème grave.</p>
-<p>L'augmentation du compteur <code>bytes_invalid</code> sur une connexion de bus CAN est un symptôme de messages réémis sur le bus CAN. Il existe deux causes connues de réémission de messages :</p>
-<ol>
-<li>Les anciennes versions du micrologiciel candlight ont un bug qui peut causer des réémissions de messages. Si vous utilisez un adaptateur USB CAN qui exécute ce micrologiciel, assurez-vous de mettre à jour le dernier micrologiciel si vous remarquez une incrémentation anormale du compteur <code>bytes_invalid</code>.</li>
-<li>Certains noyaux Linux destinés à des périphériques embarqués sont connus pour réémettre les messages de bus CAN. Il peut être nécessaire d'utiliser un autre noyau Linux ou d'utiliser du matériel qui prend en charge les noyaux Linux courants qui ne présentent pas ce problème.</li>
-</ol>
-<p>La réorganisation des messages est un problème grave qui doit être résolu. Cela entraînera un comportement instable et peut conduire à des erreurs déroutantes à n'importe quelle partie d'une impression.</p>
+<p>Incrementing <code>bytes_invalid</code> on a CAN bus connection is a symptom of reordered messages on the CAN bus. If seen, make sure to:</p>
+<ul>
+<li>Use a Linux kernel version 6.6.0 or later.</li>
+<li>If using a USB-to-CANBUS adapter running candlelight firmware, use v2.0 or later of candleLight_fw.</li>
+<li>If using Klipper's USB-to-CANBUS bridge mode, make sure the bridge node is flashed with Klipper v0.12.0 or later.</li>
+</ul>
+<p>Reordered messages is a severe problem that must be fixed. It will result in unstable behavior and can lead to confusing errors at any part of a print. An incrementing <code>bytes_invalid</code> is not caused by wiring or similar hardware issues and can only be fixed by identifying and updating the faulty software.</p>
+<p>Older versions of the Linux kernel had a bug in the gs_usb canbus driver code that could cause reordered canbus packets. The issue is thought to be fixed in <a href="https://github.com/torvalds/linux/commit/24bc41b4558347672a3db61009c339b1f5692169">Linux commit 24bc41b4</a> which was released in v6.6.0. In some cases, older Linux versions may not show the problem (due to how hardware interrupts are configured), however if problems are seen the recommended solution is to upgrade to a newer kernel.</p>
+<p>Older versions of candlelight firmware could reorder canbus packets, and the issue is thought to be fixed in <a href="https://github.com/candle-usb/candleLight_fw/commit/8b3a7b4565a3c9521b762b154c94c72c5acb2bcf">candlelight_fw commit 8b3a7b45</a>.</p>
+<p>Older versions of Klipper's USB-to-CANBUS bridge code could incorrectly drop canbus messages. This is not as severe as reordering messages, but it should still be fixed. It is thought to be fixed with <a href="https://github.com/Klipper3d/klipper/pull/6175">Klipper PR #6175</a>.</p>
 <h2 id="use-an-appropriate-txqueuelen-setting">Use an appropriate txqueuelen setting<a class="headerlink" href="#use-an-appropriate-txqueuelen-setting" title="Permanent link">&para;</a></h2>
 <p>The Klipper code uses the Linux kernel to manage CAN bus traffic. By default, the kernel will only queue 10 CAN transmit packets. It is recommended to <a href="CANBUS.html#host-hardware">configure the can0 device</a> with a <code>txqueuelen 128</code> to increase that size.</p>
 <p>If Klipper transmits a packet and Linux has filled all of its transmit queue space then Linux will drop that packet and messages like the following will appear in the Klipper log:</p>
@@ -1517,6 +1535,10 @@ resistors</a> on the CAN bus. If the resistors are not properly installed then m
 <p>One may check the current queue size by running the Linux command <code>ip link show can0</code>. It should report a bunch of text including the snippet <code>qlen 128</code>. If one sees something like <code>qlen 10</code> then it indicates the CAN device has not been properly configured.</p>
 <p>It is not recommended to use a <code>txqueuelen</code> significantly larger than 128. A CAN bus running at a frequency of 1000000 will typically take around 120us to transmit a CAN packet. Thus a queue of 128 packets is likely to take around 15-20ms to drain. A substantially larger queue could cause excessive spikes in message round-trip-time which could lead to unrecoverable errors. Said another way, Klipper's application retransmit system is more robust if it does not have to wait for Linux to drain an excessively large queue of possibly stale data. This is analogous to the problem of <a href="https://en.wikipedia.org/wiki/Bufferbloat">bufferbloat</a> on internet routers.</p>
 <p>Under normal circumstances Klipper may utilize ~25 queue slots per MCU - typically only utilizing more slots during retransmits. (Specifically, the Klipper host may transmit up to 192 bytes to each Klipper MCU before receiving an acknowledgment from that MCU.) If a single CAN bus has 5 or more Klipper MCUs on it, then it might be necessary to increase the <code>txqueuelen</code> above the recommended value of 128. However, as above, care should be taken when selecting a new value to avoid excessive round-trip-time latency.</p>
+<h2 id="use-canbus_querypy-only-to-identify-nodes-never-previously-seen">Use <code>canbus_query.py</code> only to identify nodes never previously seen<a class="headerlink" href="#use-canbus_querypy-only-to-identify-nodes-never-previously-seen" title="Permanent link">&para;</a></h2>
+<p>It is only valid to use the <a href="CANBUS.html#finding-the-canbus_uuid-for-new-micro-controllers"><code>canbus_query.py</code> tool</a> to identify micro-controllers that have never been previously identified. Once all nodes on a bus are identified, record the resulting uuids in the printer.cfg, and avoid running the tool unnecessarily.</p>
+<p>The tool is implemented using a low-level mechanism that can cause nodes to internally observe bus errors. These internal errors may result in communication interruptions and may result is some nodes disconnecting from the bus.</p>
+<p>It is not valid to use the tool to "ping" if a node is connected. Do not run the tool during an active print.</p>
 <h2 id="obtenir-les-journaux-candump">Obtenir les journaux 'candump'<a class="headerlink" href="#obtenir-les-journaux-candump" title="Permanent link">&para;</a></h2>
 <p>Les messages de bus CAN envoyés au microcontrôleur sont gérés par le noyau Linux. Il est possible de capturer ces messages à des fins de débogage. Le journal de ces messages peut être utile lors des diagnostics.</p>
 <p>L'outil Linux <a href="https ://github.com/linux-can/can-utils">can-utils</a> fournit le logiciel de capture. Il peut être installé en exécutant :</p>

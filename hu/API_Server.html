@@ -1177,15 +1177,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#hx71xdump_hx71x" class="md-nav__link">
-    hx71x/dump_hx71x
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ads1220dump_ads1220" class="md-nav__link">
-    ads1220/dump_ads1220
+  <a href="#load_celldump_force" class="md-nav__link">
+    load_cell/dump_force
   </a>
   
 </li>
@@ -1517,8 +1510,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1714,15 +1707,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#hx71xdump_hx71x" class="md-nav__link">
-    hx71x/dump_hx71x
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ads1220dump_ads1220" class="md-nav__link">
-    ads1220/dump_ads1220
+  <a href="#load_celldump_force" class="md-nav__link">
+    load_cell/dump_force
   </a>
   
 </li>
@@ -1881,12 +1867,10 @@ gcode:
 <p>Ez a végpont a <a href="Config_Reference.html#angle">szögérzékelő adatainak</a> feliratkozására szolgál. Ezeknek az alacsony szintű mozgásfrissítéseknek a lekérése hasznos lehet diagnosztikai és hibakeresési célokra. Ennek a végpontnak a használata növelheti a Klipper rendszer terhelését.</p>
 <p>Egy kérés így nézhet ki: <code>{"id": 123, "method":"angle/dump_angle", "params": {"sensor": "my_angle_sensor", "response_template": {}}}</code> és esetleg visszatér: <code>{"id": 123,"result":{"header":["time","angle"]}}}</code> és később olyan aszinkron üzeneteket produkálhat, mint például: <code>{"params":{"position_offset":3.151562,"errors":0, "data":[[1290.951905,-5063],[1290.952321,-5065]]}}</code></p>
 <p>A kezdeti lekérdezési válasz "header" mezője a későbbi "data" válaszokban található mezők leírására szolgál.</p>
-<h3 id="hx71xdump_hx71x">hx71x/dump_hx71x<a class="headerlink" href="#hx71xdump_hx71x" title="Permanent link">&para;</a></h3>
-<p>Ez a végpont a nyers HX711 és HX717 ADC-adatok előfizetésére szolgál. Ezen alacsony szintű ADC-frissítések lekérése hasznos lehet diagnosztikai és hibakeresési célokra. Ennek a végpontnak a használata növelheti a Klipper rendszerterhelését.</p>
-<p>Egy kérés így nézhet ki: <code>{"id": 123, "method":"hx71x/dump_hx71x", "params": {"sensor": "load_cell", "response_template": {}}}</code> és visszatérhet: <code>{"id": 123,"result":{"header":["time","counts","value"]}}</code> és később aszinkron üzeneteket produkálhat, mint például: <code>{"params":{"data":[[3292.432935, 562534, 0.067059278], [3292.4394937, 5625322, 0.670590639]]}}</code></p>
-<h3 id="ads1220dump_ads1220">ads1220/dump_ads1220<a class="headerlink" href="#ads1220dump_ads1220" title="Permanent link">&para;</a></h3>
-<p>Ez a végpont a nyers ADS1220 ADC-adatok felírására szolgál. Ezen alacsony szintű ADC-frissítések lekérése hasznos lehet diagnosztikai és hibakeresési célokra. Ennek a végpontnak a használata növelheti a Klipper rendszerterhelését.</p>
-<p>Egy kérés így nézhet ki: <code>{"id": 123, "method":"ads1220/dump_ads1220", "params": {"sensor": "load_cell", "response_template": {}}}</code> és visszatérhet: <code>{"id": 123,"result":{"header":["time","counts","value"]}}</code> és később aszinkron üzeneteket produkálhat: <code>{"params":{"data":[[3292.432935, 562534, 0.067059278], [3292.4394937, 5625322, 0.670590639]]}}</code></p>
+<h3 id="load_celldump_force">load_cell/dump_force<a class="headerlink" href="#load_celldump_force" title="Permanent link">&para;</a></h3>
+<p>This endpoint is used to subscribe to force data produced by a load_cell. Using this endpoint may increase Klipper's system load.</p>
+<p>A request may look like: <code>{"id": 123, "method":"load_cell/dump_force", "params": {"sensor": "load_cell", "response_template": {}}}</code> and might return: <code>{"id": 123,"result":{"header":["time", "force (g)", "counts", "tare_counts"]}}</code> and might later produce asynchronous messages such as: <code>{"params":{"data":[[3292.432935, 40.65, 562534, -234467]]}}</code></p>
+<p>A kezdeti lekérdezési válasz "header" mezője a későbbi "data" válaszokban található mezők leírására szolgál.</p>
 <h3 id="pause_resumecancel">pause_resume/cancel<a class="headerlink" href="#pause_resumecancel" title="Permanent link">&para;</a></h3>
 <p>Ez a végpont hasonló a "PRINT_CANCEL" G-kód parancs futtatásához. Például: <code>{"id": }</code></p>
 <p>A "gcode/script" végponthoz hasonlóan ez a végpont is csak a függőben lévő G-kód parancsok befejezése után fejeződik be.</p>

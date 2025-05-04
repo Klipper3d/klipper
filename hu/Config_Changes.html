@@ -1327,8 +1327,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1410,6 +1410,12 @@
 <p>Ez a dokumentum a konfigurációs fájl legújabb szoftveres változtatásait tartalmazza, amelyek nem kompatibilisek visszafelé. A Klipper szoftver frissítésekor érdemes áttanulmányozni ezt a dokumentumot.</p>
 <p>A dokumentumban szereplő valamennyi dátum hozzávetőleges.</p>
 <h2 id="valtozasok">Változások<a class="headerlink" href="#valtozasok" title="Permanent link">&para;</a></h2>
+<p>20250428: The maximum <code>cycle_time</code> for pwm <code>[output_pin]</code>, <code>[pwm_cycle_time]</code>, <code>[pwm_tool]</code>, and similar config sections is now 3 seconds (reduced from 5 seconds). The <code>maximum_mcu_duration</code> in <code>[pwm_tool]</code> is now also 3 seconds.</p>
+<p>20250418: The manual_stepper <code>STOP_ON_ENDSTOP</code> feature may now take less time to complete. Previously, the command would wait the entire time the move could possibly take even if the endstop triggered earlier. Now, the command finishes shortly after the endstop trigger.</p>
+<p>20250417: SPI devices using "software SPI" are now rate limited. Previously, the <code>spi_speed</code> in the config was ignored and the transmission speed was only limited by the processing speed of the micro-controller. Now, speeds are limited by the <code>spi_speed</code> config parameter (actual hardware speeds are likely to be lower than the configured value due to software overhead).</p>
+<p>20250411: Klipper v0.13.0 released.</p>
+<p>20250308: The <code>AUTO</code> parameter of the <code>AXIS_TWIST_COMPENSATION_CALIBRATE</code> command has been removed.</p>
+<p>20250131: Option <code>VARIABLE=&lt;name&gt;</code> in <code>SAVE_VARIABLE</code> requires lowercase value. For example, <code>extruder</code> instead of mixedcase <code>Extruder</code> or uppercase <code>EXTRUDER</code>. Using any uppercase letter will raise an error.</p>
 <p>20241203: A rezonancia tesztet megváltoztattuk, hogy lassú, pásztázó mozdulatokat is tartalmazzon. Ez a változtatás megköveteli, hogy a vizsgálati pontoknak legyen némi távolsága az X/Y síkban (az alapértelmezett beállítások használata esetén +/- 30 mm távolság elegendő a vizsgálati pontoktól). Az új tesztnek általában pontosabb és megbízhatóbb teszteredményeket kell produkálnia. Szükség esetén azonban a korábbi tesztelési viselkedés visszaállítható a <code>sweeping_period: 0</code> és <code>accel_per_hz: 75</code> beállításokat a <code>[resonance_tester]</code> konfigurációs szakaszhoz.</p>
 <p>20241201: Egyes esetekben a Klipper figyelmen kívül hagyhatta a hagyományos G-kód-os parancsban a vezető karaktereket vagy szóközöket. Például a „99M123”-at „M123”-nak, az „M 321”-et pedig „M321”-nek értelmezhette. A Klipper mostantól ezeket az eseteket „Ismeretlen parancs” figyelmeztetéssel jelzi.</p>
 <p>20241112: A <code>CHIPS=&lt;chip_name&gt;</code> opció a <code>TEST_RESONANCES</code> és a <code>SHAPER_CALIBRATE</code> műveletekben megköveteli a gyorsítóchipek teljes nevének megadását. Például <code>adxl345 rpi</code> a rövid név - <code>rpi</code> helyett.</p>

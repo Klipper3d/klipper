@@ -728,13 +728,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#automatic-calibration-for-both-axes" class="md-nav__link">
-    Automatic Calibration for Both Axes
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -1365,8 +1358,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1442,13 +1435,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#automatic-calibration-for-both-axes" class="md-nav__link">
-    Automatic Calibration for Both Axes
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -1479,7 +1465,7 @@
 
 
 <h1 id="compensazione-torsione-assi">Compensazione torsione assi<a class="headerlink" href="#compensazione-torsione-assi" title="Permanent link">&para;</a></h1>
-<p>Questo documento descrive il modulo [axis_twist_compensation].</p>
+<p>This document describes the <code>[axis_twist_compensation]</code> module.</p>
 <p>Some printers may have a small twist in their X rail which can skew the results of a probe attached to the X carriage. This is common in printers with designs like the Prusa MK3, Sovol SV06 etc and is further described under <a href="Probe_Calibrate.html#location-bias-check">probe location
 bias</a>. It may result in probe operations such as <a href="Bed_Mesh.html">Bed Mesh</a>, <a href="G-Codes.html#screws_tilt_adjust">Screws Tilt Adjust</a>, <a href="G-Codes.html#z_tilt_adjust">Z Tilt Adjust</a> etc returning inaccurate representations of the bed.</p>
 <p>Questo modulo utilizza misurazioni manuali da parte dell'utente per correggere i risultati della sonda. Tieni presente che se l'asse è notevolmente distorto, ti consigliamo vivamente di utilizzare mezzi meccanici per ripararlo prima di applicare le correzioni del software.</p>
@@ -1495,42 +1481,38 @@ bias</a>. It may result in probe operations such as <a href="Bed_Mesh.html">Bed 
 <div class="highlight"><pre><span></span><code>AXIS_TWIST_COMPENSATION_CALIBRATE
 </code></pre></div>
 
-<p>This command will calibrate the X-axis by default. - The calibration wizard will prompt you to measure the probe Z offset at several points along the bed. - By default, the calibration uses 3 points, but you can specify a different number with the option: <code>SAMPLE_COUNT=&lt;value&gt;</code></p>
+<p>This command will calibrate the X-axis by default.</p>
+<ul>
+<li>The calibration wizard will prompt you to measure the probe Z offset at several points along the bed.</li>
+<li>By default, the calibration uses 3 points, but you can specify a different number with the option: <code>SAMPLE_COUNT=&lt;value&gt;</code></li>
+</ul>
 <ol>
-<li><strong>Adjust Your Z Offset:</strong> After completing the calibration, be sure to [adjust your Z offset] (Probe_Calibrate.md#calibrating-probe-z-offset).</li>
-<li>
-<p><strong>Perform Bed Leveling Operations:</strong> Use probe-based operations as needed, such as:</p>
+<li><strong>Adjust Your Z Offset:</strong> After completing the calibration, be sure to <a href="Probe_Calibrate.html#calibrating-probe-z-offset">adjust your Z offset</a>.</li>
+<li><strong>Perform Bed Leveling Operations:</strong> Use probe-based operations as needed, such as:</li>
+</ol>
 <ul>
 <li><a href="G-Codes.html#screws_tilt_adjust">Screws Tilt Adjust</a></li>
 <li><a href="G-Codes.html#z_tilt_adjust">Z Tilt Adjust</a></li>
 </ul>
-</li>
-<li>
-<p><strong>Finalize the Setup:</strong></p>
+<ol>
+<li><strong>Finalize the Setup:</strong></li>
+</ol>
 <ul>
 <li>Home all axes, and perform a <a href="Bed_Mesh.html">Bed Mesh</a> if necessary.</li>
 <li>Run a test print, followed by any <a href="Axis_Twist_Compensation.html#fine-tuning">fine-tuning</a> if needed.</li>
 </ul>
-</li>
-</ol>
 <h3 id="for-y-axis-calibration">For Y-Axis Calibration<a class="headerlink" href="#for-y-axis-calibration" title="Permanent link">&para;</a></h3>
 <p>The calibration process for the Y-axis is similar to the X-axis. To calibrate the Y-axis, use:</p>
 <div class="highlight"><pre><span></span><code>AXIS_TWIST_COMPENSATION_CALIBRATE AXIS=Y
 </code></pre></div>
 
 <p>This will guide you through the same measuring process as for the X-axis.</p>
-<h3 id="automatic-calibration-for-both-axes">Automatic Calibration for Both Axes<a class="headerlink" href="#automatic-calibration-for-both-axes" title="Permanent link">&para;</a></h3>
-<p>To perform automatic calibration for both the X and Y axes without manual intervention, use:</p>
-<div class="highlight"><pre><span></span><code>AXIS_TWIST_COMPENSATION_CALIBRATE AUTO=True
-</code></pre></div>
-
-<p>In this mode, the calibration process will run for both axes automatically.</p>
 <blockquote>
 <p><strong>Tip:</strong> Bed temperature and nozzle temperature and size do not seem to have an influence to the calibration process.</p>
 </blockquote>
 <h2 id="axis_twist_compensation-setup-and-commands">[axis_twist_compensation] setup and commands<a class="headerlink" href="#axis_twist_compensation-setup-and-commands" title="Permanent link">&para;</a></h2>
-<p>Configuration options for [axis_twist_compensation] can be found in the <a href="Config_Reference.html#axis_twist_compensation">Configuration Reference</a>.</p>
-<p>Commands for [axis_twist_compensation] can be found in the <a href="G-Codes.html#axis_twist_compensation">G-Codes Reference</a></p>
+<p>Configuration options for <code>[axis_twist_compensation]</code> can be found in the <a href="Config_Reference.html#axis_twist_compensation">Configuration Reference</a>.</p>
+<p>Commands for <code>[axis_twist_compensation]</code> can be found in the <a href="G-Codes.html#axis_twist_compensation">G-Codes Reference</a></p>
 
               
             </article>

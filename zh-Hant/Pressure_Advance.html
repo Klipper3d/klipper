@@ -1336,8 +1336,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1427,7 +1427,7 @@
 <h2 id="pressure-advance_1">調整pressure advance<a class="headerlink" href="#pressure-advance_1" title="Permanent link">&para;</a></h2>
 <p>Pressure advance有兩個作用 - 它可以減少非擠出移動過程中的溢料和減少轉彎時的凸起。本指南使用第二個功能（減少轉彎過程中的凸起）作為優化機制。</p>
 <p>爲了校準pressure advance，印表機必須已經配置完成並可以正常工作。因為調優測試涉及列印和檢查測試對象。在執行測試之前，最好完整閱讀本文件。</p>
-<p>使用切片器為 <a href="prints/square_tower.stl">docs/prints/square_tower.stl</a> 中的大空心正方形生成 g 代碼。使用高速（例如，100 毫米/秒）、零填充和粗層高度（層高應約為噴嘴直徑的 75%）。確保在切片器中禁用任何“動態加速控制”。</p>
+<p>Use a slicer to generate g-code for the large hollow square found in <a href="prints/square_tower.stl">docs/prints/square_tower.stl</a>. Use a high speed (eg, 100mm/s), zero infill, and a coarse layer height (the layer height should be around 75% of the nozzle diameter). Make sure any "dynamic acceleration control" and "scarf joint" seams are disabled in the slicer.</p>
 <p>通過發出以下 G-Code命令為測試做準備：</p>
 <div class="highlight"><pre><span></span><code>SET_VELOCITY_LIMIT SQUARE_CORNER_VELOCITY=1 ACCEL=500
 </code></pre></div>

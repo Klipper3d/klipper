@@ -372,6 +372,20 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#klipper-0130" class="md-nav__link">
+    Klipper 0.13.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-0120" class="md-nav__link">
+    Klipper 0.12.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#klipper-0110" class="md-nav__link">
     Klipper 0.11.0
   </a>
@@ -1403,8 +1417,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1457,6 +1471,20 @@
       Table des matières
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-0130" class="md-nav__link">
+    Klipper 0.13.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klipper-0120" class="md-nav__link">
+    Klipper 0.12.0
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#klipper-0110" class="md-nav__link">
@@ -1560,6 +1588,48 @@
 
 <h1 id="versions">Versions<a class="headerlink" href="#versions" title="Permanent link">&para;</a></h1>
 <p>Historique de versions de Klipper. Merci de vous référer a la ressource <a href="Installation.html">installation</a> pour plus d'information sur l'installation de Klipper.</p>
+<h2 id="klipper-0130">Klipper 0.13.0<a class="headerlink" href="#klipper-0130" title="Permanent link">&para;</a></h2>
+<p>Available on 20250411. Major changes in this release:</p>
+<ul>
+<li>New "sweeping vibrations" resonance testing mechanism for input shaper.</li>
+<li>Fans and GPIO pins can now be assigned a formula (via Jinja2 "templates").</li>
+<li>The bed_mesh code now supports "adaptive bed mesh". The area probed can be adjusted for the size of the print.</li>
+<li>A new <code>minimum_cruise_ratio</code> kinematic parameter has been added (it replaces the previous <code>max_accel_to_decel</code> parameter).</li>
+<li>Several new sensors added:<ul>
+<li>Support for ldc1612 "eddy" current sensors. This includes probing support, fast "scan" probing, and temperature calibration.</li>
+<li>New support for "load cell" measurements. Support for connecting these load cells to hx71x and ads1220 ADC sensors.</li>
+<li>Support for BMP180, BMP388, and SHT3x temperature sensors. Support for measuring temperature with ADS1x1x ADC chips.</li>
+<li>New lis3dh and icm20948 accelerometer support.</li>
+<li>Support for mt6816 and mt6826s "hall angle" sensors.</li>
+</ul>
+</li>
+<li>New micro-controller improvements:<ul>
+<li>New support for rp2350 micro-controllers.</li>
+<li>Existing rp2040 chips now run at 200MHz (up from 125Mhz).</li>
+<li>The micro-controller code can now define many more commands (up to 16384 from 128).</li>
+</ul>
+</li>
+<li>Other modules added: aip31068_spi, canbus_stats, error_mcu, garbage_collection, pwm_cycle_time, pwm_tool, garbage_collection.</li>
+<li>Plusieurs corrections de bogues et nettoyages de code.</li>
+</ul>
+<h2 id="klipper-0120">Klipper 0.12.0<a class="headerlink" href="#klipper-0120" title="Permanent link">&para;</a></h2>
+<p>Available on 20231110. Major changes in this release:</p>
+<ul>
+<li>Support for COPY and MIRROR modes on IDEX printers.</li>
+<li>Several micro-controller improvements:<ul>
+<li>Support for new ar100 and hc32f460 architectures.</li>
+<li>Support for stm32f7, stm32g0b0, stm32g07x, stm32g4, stm32h723, n32g45x, samc21, and samd21j18 chip variants.</li>
+<li>Improved DFU and Katapult reboot handling.</li>
+<li>Improved performance on USB to CANbus bridge mode.</li>
+<li>Improved performance on "linux mcu".</li>
+<li>New support for software based i2c.</li>
+</ul>
+</li>
+<li>New hardware support for tmc2240 stepper motor drivers, lis2dw12 accelerometers, and aht10 temperature sensors.</li>
+<li>New axis_twist_compensation and temperature_combined modules added.</li>
+<li>New support for gcode arcs in XY, XZ, and YZ planes.</li>
+<li>Plusieurs corrections de bogues et nettoyages de code.</li>
+</ul>
 <h2 id="klipper-0110">Klipper 0.11.0<a class="headerlink" href="#klipper-0110" title="Permanent link">&para;</a></h2>
 <p>Disponible le 28/11/2022. Changements majeurs dans cette version :</p>
 <ul>

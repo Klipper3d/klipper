@@ -838,11 +838,11 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500" class="md-nav__link">
-    MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500
+  <a href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500icm20948" class="md-nav__link">
+    MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948
   </a>
   
-    <nav class="md-nav" aria-label="MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500">
+    <nav class="md-nav" aria-label="MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1595,8 +1595,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1721,11 +1721,11 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500" class="md-nav__link">
-    MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500
+  <a href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500icm20948" class="md-nav__link">
+    MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948
   </a>
   
-    <nav class="md-nav" aria-label="MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500">
+    <nav class="md-nav" aria-label="MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1942,7 +1942,7 @@
 <p>A Klipper beépített támogatással rendelkezik az ADXL345, MPU-9250, LIS2DW és LIS3DH kompatibilis gyorsulásmérőkhöz, amelyek segítségével a nyomtató különböző tengelyek rezonanciafrekvenciái mérhetők, és a rezonanciák kompenzálására a <a href="Resonance_Compensation.html">Rezonancia kompenzáció</a> automatikus beállítása használható. Vedd figyelembe, hogy a gyorsulásmérők használata némi forrasztást és krimpelést igényel. Az ADXL345 csatlakoztatható egy Raspberry Pi vagy MCU lap SPI interfészéhez (viszonylag gyorsnak kell lennie). Az MPU-család közvetlenül csatlakoztatható egy Raspberry Pi I2C-interfészéhez, vagy egy MCU-kártya I2C-interfészéhez, amely támogatja a Klipper 400kbit/s <em>gyors üzemmódot</em>. A LIS2DW és a LIS3DH csatlakoztatható SPI vagy I2C interfészhez a fentiekkel megegyező megfontolásokkal.</p>
 <p>A gyorsulásmérők beszerzésekor vedd figyelembe, hogy számos különböző nyomtatott áramköri lapkakialakítás és különböző klónok léteznek. Ha 5V-os nyomtató MCU-hoz csatlakozik, győződj meg róla, hogy rendelkezel feszültségszabályozóval és szintválasztóval.</p>
 <p>Az ADXL345-ök esetében győződj meg róla, hogy a kártya támogatja az SPI módot (úgy tűnik, hogy néhány kártya keményen I2C-re van konfigurálva az SDO GND-re húzásával).</p>
-<p>Az MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500-asok és a LIS2DW/LIS3DH-ok esetében is számos különböző lapkakialakítás és klón létezik különböző I2C felhúzó ellenállásokkal, amelyeket ki kell egészíteni.</p>
+<p>For MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948s and LIS2DW/LIS3DH there are also a variety of board designs and clones with different I2C pull-up resistors which will need supplementing.</p>
 <h2 id="mcu-k-klipper-i2c-gyors-uzemmodu-tamogatassal">MCU-k Klipper I2C <em>gyors üzemmódú</em> támogatással<a class="headerlink" href="#mcu-k-klipper-i2c-gyors-uzemmodu-tamogatassal" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2107,7 +2107,7 @@ GND+SCL
 </code></pre></div>
 
 <p>Vedd figyelembe, hogy a kábelárnyékolással ellentétben a GND(k)-et mindkét végén csatlakoztatni kell.</p>
-<h4 id="mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500">MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500<a class="headerlink" href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500" title="Permanent link">&para;</a></h4>
+<h4 id="mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500icm20948">MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948<a class="headerlink" href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500icm20948" title="Permanent link">&para;</a></h4>
 <p>Ezeket a gyorsulásmérőket teszteltük, hogy az RPi, RP2040 (Pico) és AVR modelleken 400kbit/s sebességgel (<em>gyors mód</em>) működnek I2C-n keresztül. Néhány MPU gyorsulásmérő modul tartalmaz pull-upot, de néhány túl nagy 10K, és kisebb párhuzamos ellenállásokkal kell megváltoztatni vagy kiegészíteni.</p>
 <p>Ajánlott csatlakozási séma az I2C-hez a Raspberry Pi-n:</p>
 <table>
@@ -2328,6 +2328,7 @@ probe_points:
     100, 100, 20  # egy példa
 </code></pre></div>
 
+<p>If you are using the ICM20948, replace instances of "mpu9250" with "icm20948".</p>
 <h4 id="mpu-9520-konfiguralasa-kompatibilis-pico-segitsegevel">MPU-9520 konfigurálása kompatibilis Pico segítségével<a class="headerlink" href="#mpu-9520-konfiguralasa-kompatibilis-pico-segitsegevel" title="Permanent link">&para;</a></h4>
 <p>A Pico I2C alapértelmezés szerint 400000-re van beállítva. Egyszerűen add hozzá a következőket a printer.cfg fájlhoz:</p>
 <div class="highlight"><pre><span></span><code>[mcu pico]
@@ -2346,6 +2347,7 @@ probe_points:
 pins: pico:gpio23
 </code></pre></div>
 
+<p>If you are using the ICM20948, replace instances of "mpu9250" with "icm20948".</p>
 <h4 id="mpu-9520-konfiguralasa-kompatibilis-avr-rel">MPU-9520 konfigurálása kompatibilis AVR-rel<a class="headerlink" href="#mpu-9520-konfiguralasa-kompatibilis-avr-rel" title="Permanent link">&para;</a></h4>
 <p>Az AVR I2C az MPU9250 opcióval 400000-re lesz beállítva. Egyszerűen add hozzá a következőket a printer.cfg fájlhoz:</p>
 <div class="highlight"><pre><span></span><code>[mcu nano]
@@ -2360,6 +2362,7 @@ probe_points:
  100, 100, 20 # egy példa
 </code></pre></div>
 
+<p>If you are using the ICM20948, replace instances of "mpu9250" with "icm20948".</p>
 <p>Indítsd újra a Klippert a <code>RESTART</code> paranccsal.</p>
 <h2 id="a-rezonanciak-merese">A rezonanciák mérése<a class="headerlink" href="#a-rezonanciak-merese" title="Permanent link">&para;</a></h2>
 <h3 id="a-beallitas-ellenorzese">A beállítás ellenőrzése<a class="headerlink" href="#a-beallitas-ellenorzese" title="Permanent link">&para;</a></h3>

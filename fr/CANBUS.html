@@ -1371,8 +1371,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1549,6 +1549,7 @@ iface can0 can static
 </li>
 </ul>
 <ul>
+<li>It is only valid to use USB to CAN bridge mode if there is a functioning CAN bus with at least one other node available (in addition to the bridge node itself). Use a standard USB configuration if the goal is to communicate only with the single USB device. Using USB to CAN bridge mode without a fully functioning CAN bus (including terminating resistors and an additional node) may result in sporadic errors even when communicating with the bridge node.</li>
 <li>Une carte de pont USB à CAN n'apparaîtra pas en tant que périphérique série USB, elle ne s'affichera pas lors de l'execution de la commande <code>ls /dev/serial/by-id</code>, et elle ne peut pas être configurée dans le fichier Klipper avec un paramètre <code>serial:</code>. La carte pont apparaît comme un « adaptateur CAN USB » et est configuré dans le printer.cfg en tant que <a href="#configuring-klipper">Nœud CAN</a>.</li>
 </ul>
 <h2 id="conseils-pour-le-depannage">Conseils pour le dépannage<a class="headerlink" href="#conseils-pour-le-depannage" title="Permanent link">&para;</a></h2>

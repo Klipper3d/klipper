@@ -1535,8 +1535,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1837,6 +1837,7 @@
 <p>In generale, la modalità SpreadCycle fornisce una coppia maggiore e una maggiore precisione di posizionamento rispetto alla modalità StealthChop. Tuttavia, la modalità StealthChop può produrre un rumore udibile notevolmente inferiore su alcune stampanti.</p>
 <p>I test di confronto delle modalità hanno mostrato un "ritardo posizionale" aumentato di circa il 75% di un passo completo durante i movimenti a velocità costante quando si utilizza la modalità StealthChop (ad esempio, su una stampante con distanza_rotazione di 40 mm e 200 passi_per_rotazione, la deviazione di posizione dei movimenti a velocità costante è aumentata di ~0,150 mm). Tuttavia, questo "ritardo nell'ottenimento della posizione richiesta" potrebbe non manifestarsi come un difetto di stampa significativo e si potrebbe preferire il comportamento più silenzioso della modalità stealthChop.</p>
 <p>Si consiglia di utilizzare sempre la modalità "spreadCycle" (non specificando <code>stealthchop_threshold</code>) o di utilizzare sempre la modalità "stealthChop" (impostando <code>stealthchop_threshold</code> su 999999). Sfortunatamente, i driver spesso producono risultati scadenti e confusi se la modalità cambia mentre il motore è a una velocità diversa da zero.</p>
+<p>Note that the <code>stealthchop_threshold</code> config option does not impact sensorless homing as Klipper automatically switches the TMC driver to an appropriate mode during sensorless homing operations.</p>
 <h2 id="limpostazione-dellinterpolazione-tmc-introduce-una-piccola-deviazione-di-posizione">L'impostazione dell'interpolazione TMC introduce una piccola deviazione di posizione<a class="headerlink" href="#limpostazione-dellinterpolazione-tmc-introduce-una-piccola-deviazione-di-posizione" title="Permanent link">&para;</a></h2>
 <p>L'impostazione <code>interpolate</code> del driver TMC può ridurre il rumore udibile del movimento della stampante a costo di introdurre un piccolo errore di posizione sistemico. Questo errore di posizione sistematico deriva dal ritardo del driver nell'esecuzione dei "passi" inviati da Klipper. Durante i movimenti a velocità costante, questo ritardo si traduce in un errore di posizione di quasi mezzo micropasso configurato (più precisamente, l'errore è di mezzo micropasso meno un 512esimo di un passo intero). Ad esempio, su un asse con una distanza_rotazione di 40 mm, 200 passi_per_rotazione e 16 micropassi, l'errore sistemico introdotto durante i movimenti a velocità costante è ~0,006 mm.</p>
 <p>Per una migliore precisione di posizionamento, considerare l'utilizzo della modalità SpreadCycle e disabilitare l'interpolazione (impostare <code>interpolate: False</code> nella configurazione del driver TMC). Se configurato in questo modo, è possibile aumentare l'impostazione <code>microstep</code> per ridurre il rumore udibile durante il movimento del passo-passo. Tipicamente, un'impostazione microstep di <code>64</code> o <code>128</code> avrà un rumore udibile simile all'interpolazione e lo farà senza introdurre un errore posizionale sistemico.</p>

@@ -1535,8 +1535,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1837,6 +1837,7 @@
 <p>一般来说，spreadCycle模式比stealthChop模式提供更大的扭矩和更高的定位精度。然而，在某些打印机上，stealthChop 模式显著降低可听到的噪音。</p>
 <p>对两个模式的比较测试显示，在使用stealthChop模式时，恒速移动过程时有大约为一个整步75%的"位置滞后 "（例如，在一台旋转距离（rotation_distance ）为40mm、每圈200步（steps_per_rotation）的打印机上，恒速移动的位置偏差增加了约0.150mm）。然而，这种 "获得所需位置的延迟 "可能不会表现为明显的打印缺陷，大多数人可能更喜欢stealthChop模式更安静的打印。</p>
 <p>建议总是使用 "spreadCycle "模式（通过不指定<code>stealthchop_threshold</code>）或总是使用 "stealthChop "模式（通过设置<code>stealthchop_threshold</code>为99999）。不幸的是，如果在电机处于非零速度时改变模式，驱动器往往会产生糟糕和混乱的结果。</p>
+<p>Note that the <code>stealthchop_threshold</code> config option does not impact sensorless homing as Klipper automatically switches the TMC driver to an appropriate mode during sensorless homing operations.</p>
 <h2 id="tmc_1">TMC插值设置引入了微小的位置偏差<a class="headerlink" href="#tmc_1" title="Permanent link">&para;</a></h2>
 <p>TMC驱动程序的 <code>interpolate</code> 设置可以减少打印机运动的噪音，但代价是引入一个小的系统位置误差。这个系统性的位置误差是由驱动器在执行Klipper发送的 "步骤 "时的延迟造成的。在恒速移动过程中，这种延迟导致了将近一半的配置微步的位置误差（更准确地说，误差是一半的微步距离减去512分之一的整步距离）。例如，在一个旋转距离（rotation_distance）为40毫米、每圈200步（steps_per_rotation）、16微步的轴上，在恒速移动过程中引入的系统误差是~0.006毫米。</p>
 <p>为了获得最佳的定位精度，可以考虑使用spreadCycle模式，并禁用插值（在TMC驱动配置中设置<code>interpolate: False</code> ）。当以这种方式配置时，可以增加<code>microstep</code>设置，以减少步进运动中的噪音。通常情况下，微步设置为<code>64</code>或<code>128</code>会有类似于插值的噪音水平，而且不会引入系统性的位置误差。</p>

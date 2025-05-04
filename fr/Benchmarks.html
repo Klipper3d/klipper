@@ -1475,8 +1475,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1985,30 +1985,30 @@ finalize_config crc=0
 </tbody>
 </table>
 <h3 id="test-du-taux-de-pas-sur-stm32h7">Test du taux de pas sur STM32H7<a class="headerlink" href="#test-du-taux-de-pas-sur-stm32h7" title="Permanent link">&para;</a></h3>
-<p>La séquence de configuration suivante est utilisée sur un STM32H743VIT6 :</p>
+<p>The following configuration sequence is used on STM32H723:</p>
 <div class="highlight"><pre><span></span><code>allocate_oids count=3
-config_stepper oid=0 step_pin=PD4 dir_pin=PD3 invert_step=-1 step_pulse_ticks=0
-config_stepper oid=1 step_pin=PA15 dir_pin=PA8 invert_step=-1 step_pulse_ticks=0
-config_stepper oid=2 step_pin=PE2 dir_pin=PE3 invert_step=-1 step_pulse_ticks=0
+config_stepper oid=0 step_pin=PA13 dir_pin=PB5 invert_step=-1 step_pulse_ticks=52
+config_stepper oid=1 step_pin=PB2 dir_pin=PB6 invert_step=-1 step_pulse_ticks=52
+config_stepper oid=2 step_pin=PB3 dir_pin=PB7 invert_step=-1 step_pulse_ticks=52
 finalize_config crc=0
 </code></pre></div>
 
-<p>Le test a été exécuté pour la dernière fois sur le commit <code>00191b5c</code> avec la version de gcc <code>arm-none-eabi-gcc (15:8-2019-q3-1+b1) 8.3.1 20190703 (release) [gcc- 8 branches révision 273027]</code>.</p>
+<p>The test was last run on commit <code>554ae78d</code> with gcc version <code>arm-none-eabi-gcc (Fedora 14.1.0-1.fc40) 14.1.0</code>.</p>
 <table>
 <thead>
 <tr>
-<th>stm32h7</th>
+<th>stm32h723</th>
 <th>ticks</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>1 moteur pas à pas</td>
-<td>44</td>
+<td>70</td>
 </tr>
 <tr>
 <td>3 moteurs pas à pas</td>
-<td>198</td>
+<td>181</td>
 </tr>
 </tbody>
 </table>
@@ -2215,7 +2215,7 @@ config_stepper oid=2 step_pin=gpio27 dir_pin=gpio5 invert_step=-1 step_pulse_tic
 finalize_config crc=0
 </code></pre></div>
 
-<p>The test was last run on commit <code>f6718291</code> with gcc version <code>arm-none-eabi-gcc (Fedora 14.1.0-1.fc40) 14.1.0</code> on Raspberry Pi Pico and Pico 2 boards.</p>
+<p>The test was last run on commit <code>14c105b8</code> with gcc version <code>arm-none-eabi-gcc (Fedora 14.1.0-1.fc40) 14.1.0</code> on Raspberry Pi Pico and Pico 2 boards.</p>
 <table>
 <thead>
 <tr>
@@ -2226,11 +2226,11 @@ finalize_config crc=0
 <tbody>
 <tr>
 <td>1 moteur pas à pas</td>
-<td>5</td>
+<td>3</td>
 </tr>
 <tr>
 <td>3 moteurs pas à pas</td>
-<td>22</td>
+<td>14</td>
 </tr>
 </tbody>
 </table>
@@ -2252,7 +2252,7 @@ finalize_config crc=0
 </tr>
 </tbody>
 </table>
-<p>(*) Note that the reported rp2040 ticks are relative to a 12Mhz scheduling timer and do not correspond to its 125Mhz internal ARM processing rate. It is expected that 5 scheduling ticks corresponds to ~47 ARM core cycles and 22 scheduling ticks corresponds to ~224 ARM core cycles.</p>
+<p>(*) Note that the reported rp2040 ticks are relative to a 12Mhz scheduling timer and do not correspond to its 200Mhz internal ARM processing rate. It is expected that 5 scheduling ticks corresponds to ~42 ARM core cycles and 14 scheduling ticks corresponds to ~225 ARM core cycles.</p>
 <h3 id="test-du-taux-de-pas-pour-le-mcu-linux">Test du taux de pas pour le MCU Linux<a class="headerlink" href="#test-du-taux-de-pas-pour-le-mcu-linux" title="Permanent link">&para;</a></h3>
 <p>La séquence de configuration suivante est utilisée sur un Raspberry Pi :</p>
 <div class="highlight"><pre><span></span><code>allocate_oids count=3

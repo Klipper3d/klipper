@@ -1336,8 +1336,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1427,7 +1427,7 @@
 <h2 id="nyomas-elotolas-hangolasa">Nyomás előtolás hangolása<a class="headerlink" href="#nyomas-elotolas-hangolasa" title="Permanent link">&para;</a></h2>
 <p>A nyomás előtolás két hasznos dolgot tesz. Csökkenti a nem extrudált mozgások során fellépő szálazást, és csökkenti a kanyarodás során fellépő puffadást. Ez az útmutató a második funkciót (kanyarodás közbeni puffadás csökkentése) használja a hangolás mechanizmusaként.</p>
 <p>A nyomás előtolás kalibrálásához a nyomtatónak konfiguráltnak és működőképesnek kell lennie, mivel a hangolási teszt egy tesztobjektum nyomtatásával és vizsgálatával jár. A teszt lefuttatása előtt érdemes ezt a dokumentumot teljes egészében elolvasni.</p>
-<p>A <a href="prints/square_tower.stl">docs/prints/square_tower.stl</a> fájlban található nagy üreges négyzet G-kódjának létrehozásához használj egy szeletelőt. Használj nagy sebességet (pl. 100 mm/s), nulla kitöltést és durva rétegmagasságot (a rétegmagasságnak a fúvóka átmérőjének 75%-a körül kell lennie). Győződj meg róla, hogy a szeletelőben minden "dinamikus gyorsításvezérlés" ki van kapcsolva.</p>
+<p>Use a slicer to generate g-code for the large hollow square found in <a href="prints/square_tower.stl">docs/prints/square_tower.stl</a>. Use a high speed (eg, 100mm/s), zero infill, and a coarse layer height (the layer height should be around 75% of the nozzle diameter). Make sure any "dynamic acceleration control" and "scarf joint" seams are disabled in the slicer.</p>
 <p>Készülj fel a tesztre a következő G-kód parancs kiadásával:</p>
 <div class="highlight"><pre><span></span><code>SET_VELOCITY_LIMIT SQUARE_CORNER_VELOCITY=1 ACCEL=500
 </code></pre></div>

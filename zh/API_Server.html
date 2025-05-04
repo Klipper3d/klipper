@@ -1177,15 +1177,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#hx71xdump_hx71x" class="md-nav__link">
-    hx71x/dump_hx71x
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ads1220dump_ads1220" class="md-nav__link">
-    ads1220/dump_ads1220
+  <a href="#load_celldump_force" class="md-nav__link">
+    load_cell/dump_force
   </a>
   
 </li>
@@ -1517,8 +1510,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1714,15 +1707,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#hx71xdump_hx71x" class="md-nav__link">
-    hx71x/dump_hx71x
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ads1220dump_ads1220" class="md-nav__link">
-    ads1220/dump_ads1220
+  <a href="#load_celldump_force" class="md-nav__link">
+    load_cell/dump_force
   </a>
   
 </li>
@@ -1881,12 +1867,10 @@ gcode:
 <p>该端点用于订阅<a href="Config_Reference.html#Angel">角度传感器数据</a>。获取这些低级运动更新对于诊断和调试目的可能有用。使用此终结点可能会增加Klipper的系统负载。</p>
 <p>请求可能类似于：<code>{“id”：123，“方法”：“角度/转储_角度”，“参数”：{“传感器”：“我的角度_传感器”，“响应模板”：{}</code>，并且可能返回：<code>{“id”：123，“结果”：{“标题”：[“时间”，“角度”]}}</code>，并且可能稍后产生诸如：<code>{“参数”：{“位置偏移量”：3.151562，“错误”：0,“data”：[[1290.951905，-5063]，[1290.952321，-5065]}}</code></p>
 <p>初始查询响应中的“Header”字段用于描述在随后的“数据”响应中找到的字段。</p>
-<h3 id="hx71xdump_hx71x">hx71x/dump_hx71x<a class="headerlink" href="#hx71xdump_hx71x" title="Permanent link">&para;</a></h3>
-<p>This endpoint is used to subscribe to raw HX711 and HX717 ADC data. Obtaining these low-level ADC updates may be useful for diagnostic and debugging purposes. Using this endpoint may increase Klipper's system load.</p>
-<p>A request may look like: <code>{"id": 123, "method":"hx71x/dump_hx71x", "params": {"sensor": "load_cell", "response_template": {}}}</code> and might return: <code>{"id": 123,"result":{"header":["time","counts","value"]}}</code> and might later produce asynchronous messages such as: <code>{"params":{"data":[[3292.432935, 562534, 0.067059278], [3292.4394937, 5625322, 0.670590639]]}}</code></p>
-<h3 id="ads1220dump_ads1220">ads1220/dump_ads1220<a class="headerlink" href="#ads1220dump_ads1220" title="Permanent link">&para;</a></h3>
-<p>This endpoint is used to subscribe to raw ADS1220 ADC data. Obtaining these low-level ADC updates may be useful for diagnostic and debugging purposes. Using this endpoint may increase Klipper's system load.</p>
-<p>A request may look like: <code>{"id": 123, "method":"ads1220/dump_ads1220", "params": {"sensor": "load_cell", "response_template": {}}}</code> and might return: <code>{"id": 123,"result":{"header":["time","counts","value"]}}</code> and might later produce asynchronous messages such as: <code>{"params":{"data":[[3292.432935, 562534, 0.067059278], [3292.4394937, 5625322, 0.670590639]]}}</code></p>
+<h3 id="load_celldump_force">load_cell/dump_force<a class="headerlink" href="#load_celldump_force" title="Permanent link">&para;</a></h3>
+<p>This endpoint is used to subscribe to force data produced by a load_cell. Using this endpoint may increase Klipper's system load.</p>
+<p>A request may look like: <code>{"id": 123, "method":"load_cell/dump_force", "params": {"sensor": "load_cell", "response_template": {}}}</code> and might return: <code>{"id": 123,"result":{"header":["time", "force (g)", "counts", "tare_counts"]}}</code> and might later produce asynchronous messages such as: <code>{"params":{"data":[[3292.432935, 40.65, 562534, -234467]]}}</code></p>
+<p>初始查询响应中的“Header”字段用于描述在随后的“数据”响应中找到的字段。</p>
 <h3 id="_">暂停_继续/取消<a class="headerlink" href="#_" title="Permanent link">&para;</a></h3>
 <p>该端点类似于运行“PRINT_CANCEL”G-Code命令。例如：<code>{“id”：123，“方法”：“PAUSE_RESUME/Cancel”}</code></p>
 <p>与“gcode/脚本”终结点一样，该终结点只有在所有挂起的G-Code命令完成后才会完成。</p>

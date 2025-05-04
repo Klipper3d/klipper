@@ -878,6 +878,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#canbus_stats" class="md-nav__link">
+    canbus_stats
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#fichier-de-configuration" class="md-nav__link">
     fichier de configuration
   </a>
@@ -997,6 +1004,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#load_cell" class="md-nav__link">
+    load_cell
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#manual_probe" class="md-nav__link">
     manual_probe
   </a>
@@ -1083,6 +1097,13 @@
         <li class="md-nav__item">
   <a href="#servo" class="md-nav__link">
     servo
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#skew_correctionpy" class="md-nav__link">
+    skew_correction.py
   </a>
   
 </li>
@@ -1639,8 +1660,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1711,6 +1732,13 @@
         <li class="md-nav__item">
   <a href="#bed_screws" class="md-nav__link">
     bed_screws
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#canbus_stats" class="md-nav__link">
+    canbus_stats
   </a>
   
 </li>
@@ -1835,6 +1863,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#load_cell" class="md-nav__link">
+    load_cell
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#manual_probe" class="md-nav__link">
     manual_probe
   </a>
@@ -1921,6 +1956,13 @@
         <li class="md-nav__item">
   <a href="#servo" class="md-nav__link">
     servo
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#skew_correctionpy" class="md-nav__link">
+    skew_correction.py
   </a>
   
 </li>
@@ -2041,13 +2083,22 @@
 <li><code>profiles</code> : l'ensemble des profils actuellement définis tels que configurés à l'aide de BED_MESH_PROFILE.</li>
 </ul>
 <h2 id="bed_screws">bed_screws<a class="headerlink" href="#bed_screws" title="Permanent link">&para;</a></h2>
-<p>Les informations suivantes sont disponibles dans l'objet <code>Config_Reference.md#bed_screws</code> :</p>
+<p>The following information is available in the <a href="Config_Reference.html#bed_screws">bed_screws</a> object:</p>
 <ul>
 <li><code>is_active</code> : Renvoie True si le script de réglage des vis du lit est en cours.</li>
 <li><code>state</code> : L'état du script de réglage des vis du lit. deux étaIl s'agit de l'une des chaînes suivantes : "adjust", "fine".</li>
 <li><code>current_screw</code> : le numéro de la vis en cours de réglage.</li>
 <li><code>accepted_screws</code> : nombre de vis qui ont été acceptées (ndt donc marquées comme réglées).</li>
 </ul>
+<h2 id="canbus_stats">canbus_stats<a class="headerlink" href="#canbus_stats" title="Permanent link">&para;</a></h2>
+<p>The following information is available in the <code>canbus_stats some_mcu_name</code> object (this object is automatically available if an mcu is configured to use canbus):</p>
+<ul>
+<li><code>rx_error</code>: The number of receive errors detected by the micro-controller canbus hardware.</li>
+<li><code>tx_error</code>: The number of transmit errors detected by the micro-controller canbus hardware.</li>
+<li><code>tx_retries</code>: The number of transmit attempts that were retried due to bus contention or errors.</li>
+<li><code>bus_state</code>: The status of the interface (typically "active" for a bus in normal operation, "warn" for a bus with recent errors, "passive" for a bus that will no longer transmit canbus error frames, or "off" for a bus that will no longer transmit or receive messages).</li>
+</ul>
+<p>Note that only the rp2XXX micro-controllers report a non-zero <code>tx_retries</code> field and the rp2XXX micro-controllers always report <code>tx_error</code> as zero and <code>bus_state</code> as "active".</p>
 <h2 id="fichier-de-configuration">fichier de configuration<a class="headerlink" href="#fichier-de-configuration" title="Permanent link">&para;</a></h2>
 <p>Les informations suivantes sont disponibles dans l'objet <code>configfile</code> (cet objet est toujours disponible) :</p>
 <ul>
@@ -2161,6 +2212,7 @@
 <h2 id="hall_filament_width_sensor">hall_filament_width_sensor<a class="headerlink" href="#hall_filament_width_sensor" title="Permanent link">&para;</a></h2>
 <p>Les informations suivantes sont disponibles dans l'objet <a href="Config_Reference.html#hall_filament_width_sensor">hall_filament_width_sensor</a> :</p>
 <ul>
+<li>all items from <a href="Status_Reference.html#filament_switch_sensor">filament_switch_sensor</a></li>
 <li><code>is_active</code> : renvoie True si le capteur est actif.</li>
 <li><code>Diameter</code> : La dernière lecture du capteur en mm.</li>
 <li><code>Raw</code> : La dernière lecture brute du convertisseur AN du capteur.</li>
@@ -2190,6 +2242,17 @@
 <p>Les informations suivantes sont disponibles pour chaque sections <code>[led nom_des_leds]</code>, <code>[neopixel nom_des_leds]</code>, <code>[dotstar nom_des_leds]</code>, <code>[pca9533 nom_des_leds]</code> et <code>[pca9632 nom_des_leds]</code> définies dans printer.cfg :</p>
 <ul>
 <li><code>color_data</code> : une liste de listes de couleurs contenant les valeurs RGBW pour une led de la chaîne. Chaque valeur est représentée par un réel de 0,0 à 1,0. Chaque liste de couleurs contient 4 éléments (rouge, vert, bleu, blanc) même si la LED sous-jacente prend en charge moins de canaux de couleur. Par exemple, la valeur bleue (3e élément de la liste des couleurs) du deuxième neopixel d'une chaîne peut être consultée sur <code>printer["neopixel &lt;config_name&gt;"].color_data[1][2]</code>.</li>
+</ul>
+<h2 id="load_cell">load_cell<a class="headerlink" href="#load_cell" title="Permanent link">&para;</a></h2>
+<p>The following information is available for each <code>[load_cell name]</code>:</p>
+<ul>
+<li>'is_calibrated': True/False is the load cell calibrated</li>
+<li>'counts_per_gram': The number of raw sensor counts that equals 1 gram of force</li>
+<li>'reference_tare_counts': The reference number of raw sensor counts for 0 force</li>
+<li>'tare_counts': The current number of raw sensor counts for 0 force</li>
+<li>'force_g': The force in grams, averaged over the last polling period.</li>
+<li>'min_force_g': The minimum force in grams, over the last polling period.</li>
+<li>'max_force_g': The maximum force in grams, over the last polling period.</li>
 </ul>
 <h2 id="manual_probe">manual_probe<a class="headerlink" href="#manual_probe" title="Permanent link">&para;</a></h2>
 <p>Les informations suivantes sont disponibles dans l'objet <code>manual_probe</code> :</p>
@@ -2277,6 +2340,11 @@
 <p>Les informations suivantes sont disponibles dans les objets <a href="Config_Reference.html#servo">servo some_name</a> :</p>
 <ul>
 <li><code>printer["servo &lt;config_name&gt;"].value</code> : le dernier réglage de la broche PWM (une valeur comprise entre 0,0 et 1,0) associée au servo.</li>
+</ul>
+<h2 id="skew_correctionpy">skew_correction.py<a class="headerlink" href="#skew_correctionpy" title="Permanent link">&para;</a></h2>
+<p>The following information is available in the <code>skew_correction</code> object (this object is available if any skew_correction is defined):</p>
+<ul>
+<li><code>current_profile_name</code>: Returns the name of the currently loaded SKEW_PROFILE.</li>
 </ul>
 <h2 id="stepper_enable">stepper_enable<a class="headerlink" href="#stepper_enable" title="Permanent link">&para;</a></h2>
 <p>Les informations suivantes sont disponibles dans l'objet <code>stepper_enable</code> (cet objet est disponible si un stepper est défini) :</p>

@@ -1336,8 +1336,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1427,7 +1427,7 @@
 <h2 id="regolazione-della-pressure-advance">Regolazione della pressure advance<a class="headerlink" href="#regolazione-della-pressure-advance" title="Permanent link">&para;</a></h2>
 <p>Pressure advance fa due cose utili: riduce le colature durante i movimenti senza estrusione e riduce il blobbing durante le curve. Questa guida utilizza la seconda funzione (riduzione del blobbing durante le curve) come meccanismo per la messa a punto.</p>
 <p>Per calibrare la pressure advance, la stampante deve essere configurata e operativa poiché il test di ottimizzazione prevede la stampa e l'ispezione di un oggetto di prova. È una buona idea leggere questo documento per intero prima di eseguire il test.</p>
-<p>Usa uno slicer per generare il codice G per il grande cubo vuoto che si trova in <a href="prints/square_tower.stl">docs/prints/square_tower.stl</a>. Utilizzare una velocità elevata (ad es. 100 mm/s), riempimento zero e un'altezza dello strato grossolana (l'altezza dello strato dovrebbe essere circa il 75% del diametro dell'ugello). Assicurati che qualsiasi "controllo dinamico dell'accelerazione" sia disabilitato nello slicer.</p>
+<p>Use a slicer to generate g-code for the large hollow square found in <a href="prints/square_tower.stl">docs/prints/square_tower.stl</a>. Use a high speed (eg, 100mm/s), zero infill, and a coarse layer height (the layer height should be around 75% of the nozzle diameter). Make sure any "dynamic acceleration control" and "scarf joint" seams are disabled in the slicer.</p>
 <p>Prepararsi per il test emettendo il seguente comando G-Code:</p>
 <div class="highlight"><pre><span></span><code>SET_VELOCITY_LIMIT SQUARE_CORNER_VELOCITY=1 ACCEL=500
 </code></pre></div>

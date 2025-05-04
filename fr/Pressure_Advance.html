@@ -1336,8 +1336,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1427,7 +1427,7 @@
 <h2 id="reglage-du-pressure-advance">Réglage du pressure advance<a class="headerlink" href="#reglage-du-pressure-advance" title="Permanent link">&para;</a></h2>
 <p>Pressure advance permet deux choses importantes - réduire le suintement pendant les déplacements sans extrusion et réduire les bavures dans les coins. Ce guide utilise la réduction des bavures dans les angles comme base de réglage.</p>
 <p>Pour régler le pressure advance, l'imprimante doit être configurée et en état de marche le test nécessitant une impression et une inspection de l'objet imprimé. Il est conseillé de lire ce document en intégralité avant de lancer les tests.</p>
-<p>Utilisez un trancheur pour générer le g-code du grand carré creux disponible dans <a href="prints/square_tower.stl">docs/prints/square_tower.stl</a>. Utilisez un vitesse rapide (ex 100mm/s), pas de remplissage et une hauteur de couche grossière (la hauteur de couche devrait être dans les 75% du diamètre de la buse). Pensez à désactiver toutes les contrôle d'"accélération dynamique" dans le trancheur.</p>
+<p>Use a slicer to generate g-code for the large hollow square found in <a href="prints/square_tower.stl">docs/prints/square_tower.stl</a>. Use a high speed (eg, 100mm/s), zero infill, and a coarse layer height (the layer height should be around 75% of the nozzle diameter). Make sure any "dynamic acceleration control" and "scarf joint" seams are disabled in the slicer.</p>
 <p>Préparez le test en exécutant la commande G-Code suivante :</p>
 <div class="highlight"><pre><span></span><code>SET_VELOCITY_LIMIT SQUARE_CORNER_VELOCITY=1 ACCEL=500
 </code></pre></div>

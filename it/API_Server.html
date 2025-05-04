@@ -1177,15 +1177,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#hx71xdump_hx71x" class="md-nav__link">
-    hx71x/dump_hx71x
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ads1220dump_ads1220" class="md-nav__link">
-    ads1220/dump_ads1220
+  <a href="#load_celldump_force" class="md-nav__link">
+    load_cell/dump_force
   </a>
   
 </li>
@@ -1517,8 +1510,8 @@
   
   
     <li class="md-nav__item">
-      <a href="Load_Cell.md" class="md-nav__link">
-        None
+      <a href="Load_Cell.html" class="md-nav__link">
+        Load Cells
       </a>
     </li>
   
@@ -1714,15 +1707,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#hx71xdump_hx71x" class="md-nav__link">
-    hx71x/dump_hx71x
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ads1220dump_ads1220" class="md-nav__link">
-    ads1220/dump_ads1220
+  <a href="#load_celldump_force" class="md-nav__link">
+    load_cell/dump_force
   </a>
   
 </li>
@@ -1881,12 +1867,10 @@ gcode:
 <p>Questo endpoint viene utilizzato per iscriversi a <a href="Config_Reference.html#angle">dati del sensore angolare</a>. L'ottenimento di questi aggiornamenti di movimento di basso livello può essere utile per scopi diagnostici e di debug. L'utilizzo di questo endpoint può aumentare il carico di sistema di Klipper.</p>
 <p>Una richiesta può essere simile a: <code>{"id": 123, "method":"angle/dump_angle", "params": {"sensor": "my_angle_sensor", "response_template": {}}}</code> e potrebbe restituire: <code>{"id": 123,"result":{"header":["time","angle"]}}</code> e potrebbe in seguito produrre messaggi asincroni come: <code>{"params":{"position_offset":3.151562 ,"errori":0, "dati":[[1290.951905,-5063],[1290.952321,-5065]]}}</code></p>
 <p>Il campo "intestazione" nella risposta alla query iniziale viene utilizzato per descrivere i campi trovati nelle risposte "dati" successive.</p>
-<h3 id="hx71xdump_hx71x">hx71x/dump_hx71x<a class="headerlink" href="#hx71xdump_hx71x" title="Permanent link">&para;</a></h3>
-<p>This endpoint is used to subscribe to raw HX711 and HX717 ADC data. Obtaining these low-level ADC updates may be useful for diagnostic and debugging purposes. Using this endpoint may increase Klipper's system load.</p>
-<p>A request may look like: <code>{"id": 123, "method":"hx71x/dump_hx71x", "params": {"sensor": "load_cell", "response_template": {}}}</code> and might return: <code>{"id": 123,"result":{"header":["time","counts","value"]}}</code> and might later produce asynchronous messages such as: <code>{"params":{"data":[[3292.432935, 562534, 0.067059278], [3292.4394937, 5625322, 0.670590639]]}}</code></p>
-<h3 id="ads1220dump_ads1220">ads1220/dump_ads1220<a class="headerlink" href="#ads1220dump_ads1220" title="Permanent link">&para;</a></h3>
-<p>This endpoint is used to subscribe to raw ADS1220 ADC data. Obtaining these low-level ADC updates may be useful for diagnostic and debugging purposes. Using this endpoint may increase Klipper's system load.</p>
-<p>A request may look like: <code>{"id": 123, "method":"ads1220/dump_ads1220", "params": {"sensor": "load_cell", "response_template": {}}}</code> and might return: <code>{"id": 123,"result":{"header":["time","counts","value"]}}</code> and might later produce asynchronous messages such as: <code>{"params":{"data":[[3292.432935, 562534, 0.067059278], [3292.4394937, 5625322, 0.670590639]]}}</code></p>
+<h3 id="load_celldump_force">load_cell/dump_force<a class="headerlink" href="#load_celldump_force" title="Permanent link">&para;</a></h3>
+<p>This endpoint is used to subscribe to force data produced by a load_cell. Using this endpoint may increase Klipper's system load.</p>
+<p>A request may look like: <code>{"id": 123, "method":"load_cell/dump_force", "params": {"sensor": "load_cell", "response_template": {}}}</code> and might return: <code>{"id": 123,"result":{"header":["time", "force (g)", "counts", "tare_counts"]}}</code> and might later produce asynchronous messages such as: <code>{"params":{"data":[[3292.432935, 40.65, 562534, -234467]]}}</code></p>
+<p>Il campo "intestazione" nella risposta alla query iniziale viene utilizzato per descrivere i campi trovati nelle risposte "dati" successive.</p>
 <h3 id="pause_resumecancel">pause_resume/cancel<a class="headerlink" href="#pause_resumecancel" title="Permanent link">&para;</a></h3>
 <p>Questo endpoint è simile all'esecuzione del comando G-Code "PRINT_CANCEL". Ad esempio: <code>{"id": 123, "method": "pause_resume/cancel"}</code></p>
 <p>Come con l'endpoint "gcode/script", questo endpoint viene completato solo dopo il completamento di tutti i comandi G-Code in sospeso.</p>
