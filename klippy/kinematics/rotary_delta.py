@@ -10,14 +10,14 @@ class RotaryDeltaKinematics:
     def __init__(self, toolhead, config):
         # Setup tower rails
         stepper_configs = [config.getsection('stepper_' + a) for a in 'abc']
-        rail_a = stepper.PrinterRail(
+        rail_a = stepper.LookupRail(
             stepper_configs[0], need_position_minmax=False,
             units_in_radians=True)
         a_endstop = rail_a.get_homing_info().position_endstop
-        rail_b = stepper.PrinterRail(
+        rail_b = stepper.LookupRail(
             stepper_configs[1], need_position_minmax=False,
             default_position_endstop=a_endstop, units_in_radians=True)
-        rail_c = stepper.PrinterRail(
+        rail_c = stepper.LookupRail(
             stepper_configs[2], need_position_minmax=False,
             default_position_endstop=a_endstop, units_in_radians=True)
         self.rails = [rail_a, rail_b, rail_c]

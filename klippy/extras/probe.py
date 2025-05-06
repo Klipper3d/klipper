@@ -177,6 +177,9 @@ def lookup_minimum_z(config):
     if config.has_section('stepper_z'):
         zconfig = config.getsection('stepper_z')
         return zconfig.getfloat('position_min', 0., note_valid=False)
+    elif config.has_section('carriage z'):
+        zconfig = config.getsection('carriage z')
+        return zconfig.getfloat('position_min', 0., note_valid=False)
     pconfig = config.getsection('printer')
     return pconfig.getfloat('minimum_z_position', 0., note_valid=False)
 

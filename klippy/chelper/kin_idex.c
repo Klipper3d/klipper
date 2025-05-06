@@ -77,5 +77,6 @@ dual_carriage_alloc(void)
     struct dual_carriage_stepper *dc = malloc(sizeof(*dc));
     memset(dc, 0, sizeof(*dc));
     dc->m.move_t = 2. * DUMMY_T;
+    dc->x_scale = dc->y_scale = 1.0;
     return &dc->sk;
 }
