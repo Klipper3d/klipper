@@ -3,11 +3,12 @@
 # typically installed via the command:
 #   pip install -r klippy-requirements.txt
 
-# The 'cffi' package is used by the "chelper" code
-cffi==1.14.6
 # greenlet is used by the reactor.py code
 greenlet==2.0.2 ; python_version < '3.12'
-greenlet==3.0.3 ; python_version >= '3.12'
+greenlet==3.1.1 ; python_version >= '3.12'
+# cffi is used by "chelper" code and by greenlet
+cffi==1.14.6 ; python_version < '3.12'
+cffi==1.17.1 ; python_version >= '3.12'
 # Jinja2 is used by gcode_macro.py
 Jinja2==2.11.3
 markupsafe==1.1.1       # Needed by Jinja2
