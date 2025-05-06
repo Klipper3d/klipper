@@ -368,13 +368,12 @@ class MCU_multiaxis_probe:
         return self._mcu
     def _build_config(self):        
         # Create commands
-        self._probe_clear_cmd = self._mcu.lookup_command("multiaxis_probe_clear oid=%c", (self._oid,))
+        self._probe_clear_cmd = self._mcu.lookup_command("multiaxis_probe_clear oid=%c")
         self._probe_start_cmd = self._mcu.lookup_command(
             "multiaxis_probe_start oid=%c clock=%u rest_ticks=%u pin_value=%c")
         self._query_cmd = self._mcu.lookup_query_command(
             "multiaxis_probe_query_state oid=%c",
-            "multiaxis_probe_state oid=%c next_clock=%u pin_value=%c",
-            oid=self._oid)
+            "multiaxis_probe_state oid=%c next_clock=%u pin_value=%c", oid=self._oid)
         
         # Setup config
         self._mcu.add_config_cmd("config_multiaxis_probe oid=%d pin=%s pull_up=%d" % (self._oid, self._pin, self._pullup))

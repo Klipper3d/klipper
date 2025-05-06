@@ -53,7 +53,7 @@ class CncProbe:
                              % (gcmd.get_commandline(),))
         
         msg = self.probe_move(target_pos, self.speed)
-        gcmd.respond_raw(msg)
+        gcmd.respond_raw("probe_value : " + str(msg))
         return
 
 def load_config(config):
