@@ -1487,6 +1487,26 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#generic_cartesian" class="md-nav__link">
+    [generic_cartesian]
+  </a>
+  
+    <nav class="md-nav" aria-label="[generic_cartesian]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_stepper_carriages" class="md-nav__link">
+    SET_STEPPER_CARRIAGES
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#hall_filament_width_sensor" class="md-nav__link">
     [hall_filament_width_sensor]
   </a>
@@ -3783,6 +3803,26 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#generic_cartesian" class="md-nav__link">
+    [generic_cartesian]
+  </a>
+  
+    <nav class="md-nav" aria-label="[generic_cartesian]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_stepper_carriages" class="md-nav__link">
+    SET_STEPPER_CARRIAGES
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#hall_filament_width_sensor" class="md-nav__link">
     [hall_filament_width_sensor]
   </a>
@@ -5127,15 +5167,18 @@ provides the following standard G-Code commands:</p>
 <a href="Config_Reference.html#dual_carriage">dual_carriage config section</a> is
 enabled.</p>
 <h4 id="set_dual_carriage">SET_DUAL_CARRIAGE<a class="headerlink" href="#set_dual_carriage" title="Permanent link">&para;</a></h4>
-<p><code>SET_DUAL_CARRIAGE CARRIAGE=[0|1] [MODE=[PRIMARY|COPY|MIRROR]]</code>:
+<p><code>SET_DUAL_CARRIAGE CARRIAGE=&lt;carriage&gt; [MODE=[PRIMARY|COPY|MIRROR]]</code>:
 This command will change the mode of the specified carriage.
-If no <code>MODE</code> is provided it defaults to <code>PRIMARY</code>. Setting the mode
-to <code>PRIMARY</code> deactivates the other carriage and makes the specified
-carriage execute subsequent G-Code commands as-is. <code>COPY</code> and <code>MIRROR</code>
-modes are supported only for <code>CARRIAGE=1</code>. When set to either of these
-modes, carriage 1 will then track the subsequent moves of the carriage 0
-and either copy relative movements of it (in <code>COPY</code> mode) or execute them
-in the opposite (mirror) direction (in <code>MIRROR</code> mode).</p>
+If no <code>MODE</code> is provided it defaults to <code>PRIMARY</code>. <code>&lt;carriage&gt;</code> must
+reference a defined primary or dual carriage for <code>generic_cartesian</code>
+kinematics or be 0 (for primary carriage) or 1 (for dual carriage)
+for all other kinematics supporting IDEX. Setting the mode to <code>PRIMARY</code>
+deactivates the other carriage and makes the specified carriage execute
+subsequent G-Code commands as-is. <code>COPY</code> and <code>MIRROR</code> modes are supported
+only for dual carriages. When set to either of these modes, dual carriage
+will then track the subsequent moves of its primary carriage and either
+copy relative movements of it (in <code>COPY</code> mode) or execute them in the
+opposite (mirror) direction (in <code>MIRROR</code> mode).</p>
 <h4 id="save_dual_carriage_state">SAVE_DUAL_CARRIAGE_STATE<a class="headerlink" href="#save_dual_carriage_state" title="Permanent link">&para;</a></h4>
 <p><code>SAVE_DUAL_CARRIAGE_STATE [NAME=&lt;state_name&gt;]</code>: Save the current positions
 of the dual carriages and their modes. Saving and restoring DUAL_CARRIAGE
@@ -5443,6 +5486,41 @@ be issued to move back to the previous XYZ position. If "MOVE_SPEED"
 is specified then the toolhead move will be performed with the given
 speed (in mm/s); otherwise the toolhead move will use the restored
 g-code speed.</p>
+<h3 id="generic_cartesian">[generic_cartesian]<a class="headerlink" href="#generic_cartesian" title="Permanent link">&para;</a></h3>
+<p>The commands in this section become automatically available when
+<code>kinematics: generic_cartesian</code> is specified as the printer kinematics.</p>
+<h4 id="set_stepper_carriages">SET_STEPPER_CARRIAGES<a class="headerlink" href="#set_stepper_carriages" title="Permanent link">&para;</a></h4>
+<p><code>SET_STEPPER_CARRIAGES STEPPER=&lt;stepper_name&gt; CARRIAGES=&lt;carriages&gt;
+[DISABLE_CHECKS=[0|1]]</code>: Set or update the stepper carriages.
+<code>&lt;stepper_name&gt;</code> must reference an existing stepper defined in <code>printer.cfg</code>,
+and <code>&lt;carriages&gt;</code> describes the carriages the stepper moves. See
+<a href="Config_Reference.html#generic-cartesian-kinematics">Generic Cartesian Kinematics</a>
+for a more detailed overview of the <code>carriages</code> parameter in the
+stepper configuration section. Note that it is only possible
+to change the coefficients or signs of the carriages with this
+command, but a user cannot add or remove the carriages that the stepper
+controls.</p>
+<p><code>SET_STEPPER_CARRIAGES</code> is an advanced tool, and the user is advised
+to exercise an extreme caution using it, since specifying incorrect
+configuration may physically damage the printer.</p>
+<p>Note that <code>SET_STEPPER_CARRIAGES</code> performs certain internal validations
+of the new printer kinematics after the change. Keep in mind that if it
+detects an issue, it may leave printer kinematics in an invalid state.
+This means that if <code>SET_STEPPER_CARRIAGES</code> reports an error, it is unsafe
+to issue other GCode commands, and the user must inspect the error message
+and either fix the problem, or manually restore the previous stepper(s)
+configuration.</p>
+<p>Since <code>SET_STEPPER_CARRIAGES</code> can update a configuration of a single
+stepper at a time, some sequences of changes can lead to invalid
+intermediate kinematic configurations, even if the final configuration
+is valid. In such cases a user can pass <code>DISABLE_CHECKS=1</code> parameters to
+all but the last command to disable intermediate checks. For example,
+if <code>stepper a</code> and <code>stepper b</code> initially have <code>x-y</code> and <code>x+y</code> carriages
+correspondingly, then the following sequence of commands will let a user
+effectively swap the carriage controls:
+<code>SET_STEPPER_CARRIAGES STEPPER=a CARRIAGES=x+y DISABLE_CHECKS=1</code>
+and <code>SET_STEPPER_CARRIAGES STEPPER=b CARRIAGES=x-y</code>, while
+still validating the final kinematics state.</p>
 <h3 id="hall_filament_width_sensor">[hall_filament_width_sensor]<a class="headerlink" href="#hall_filament_width_sensor" title="Permanent link">&para;</a></h3>
 <p>The following commands are available when the
 <a href="Config_Reference.html#tsl1401cl_filament_width_sensor">tsl1401cl filament width sensor config section</a>
