@@ -71,32 +71,40 @@ stepper_load_next(struct stepper *s)
         return SF_DONE;
     }
 
-    // Load next 'struct stepper_move' into 'struct stepper'
+    // Read next 'struct stepper_move'
     struct move_node *mn = move_queue_pop(&s->mq);
     struct stepper_move *m = container_of(mn, struct stepper_move, node);
-    s->add = m->add;
-    s->interval = m->interval + m->add;
-    if (HAVE_OPTIMIZED_PATH && s->flags & SF_OPTIMIZED_PATH) {
-        s->time.waketime += m->interval;
-        if (HAVE_AVR_OPTIMIZATION)
-            s->flags = m->add ? s->flags|SF_HAVE_ADD : s->flags & ~SF_HAVE_ADD;
-        s->count = m->count;
-    } else {
-        // It is necessary to schedule unstep events and so there are
-        // twice as many events.
-        s->next_step_time += m->interval;
-        s->time.waketime = s->next_step_time;
-        s->count = s->flags & SF_SINGLE_SCHED ? m->count : (uint32_t)m->count*2;
-    }
+    uint32_t move_interval = m->interval;
+    uint_fast16_t move_count = m->count;
+    int_fast16_t move_add = m->add;
+    uint_fast8_t need_dir_change = m->flags & MF_DIR;
+    move_free(m);
+
     // Add all steps to s->position (stepper_get_position() can calc mid-move)
-    if (m->flags & MF_DIR) {
-        s->position = -s->position + m->count;
-        gpio_out_toggle_noirq(s->dir_pin);
+    s->position = (need_dir_change ? -s->position : s->position) + move_count;
+
+    // Load next move into 'struct stepper'
+    s->add = move_add;
+    s->interval = move_interval + move_add;
+    if (HAVE_OPTIMIZED_PATH && s->flags & SF_OPTIMIZED_PATH) {
+        // Using optimized stepper_event_edge() or stepper_event_avr()
+        s->time.waketime += move_interval;
+        if (HAVE_AVR_OPTIMIZATION)
+            s->flags = (move_add ? s->flags | SF_HAVE_ADD
+                        : s->flags & ~SF_HAVE_ADD);
+        s->count = move_count;
     } else {
-        s->position += m->count;
+        // Using fully scheduled stepper_event_full() code (the scheduler
+        // may be called twice for each step)
+        s->next_step_time += move_interval;
+        s->time.waketime = s->next_step_time;
+        s->count = (s->flags & SF_SINGLE_SCHED ? move_count
+                    : (uint32_t)move_count * 2);
     }
 
-    move_free(m);
+    // Set new direction (if needed)
+    if (need_dir_change)
+        gpio_out_toggle_noirq(s->dir_pin);
     return SF_RESCHEDULE;
 }
 
