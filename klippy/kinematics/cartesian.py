@@ -32,7 +32,8 @@ class CartKinematics:
             self.dc_module = idex_modes.DualCarriages(
                     self.printer, [self.rails[self.dual_carriage_axis]],
                     [self.rails[3]], axes=[self.dual_carriage_axis],
-                    safe_dist=config.getfloat('safe_distance', None, minval=0.))
+                    safe_dist=dc_config.getfloat(
+                        'safe_distance', None, minval=0.))
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
