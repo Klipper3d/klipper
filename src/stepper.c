@@ -96,10 +96,19 @@ stepper_load_next(struct stepper *s)
     } else {
         // Using fully scheduled stepper_event_full() code (the scheduler
         // may be called twice for each step)
+        uint_fast8_t was_active = !!s->count;
+        uint32_t min_next_time = s->time.waketime;
         s->next_step_time += move_interval;
         s->time.waketime = s->next_step_time;
         s->count = (s->flags & SF_SINGLE_SCHED ? move_count
                     : (uint32_t)move_count * 2);
+        if (was_active && timer_is_before(s->next_step_time, min_next_time)) {
+            // Actively stepping and next step event close to the last unstep
+            int32_t diff = s->next_step_time - min_next_time;
+            if (diff < (int32_t)-timer_from_us(1000))
+                shutdown("Stepper too far in past");
+            s->time.waketime = min_next_time;
+        }
     }
 
     // Set new direction (if needed)
@@ -163,27 +172,24 @@ stepper_event_full(struct timer *t)
     gpio_out_toggle_noirq(s->step_pin);
     uint32_t curtime = timer_read_time();
     uint32_t min_next_time = curtime + s->step_pulse_ticks;
-    s->count--;
-    if (likely(s->count & 1 && !(s->flags & SF_SINGLE_SCHED)))
+    uint32_t count = s->count - 1;
+    if (likely(count & 1 && !(s->flags & SF_SINGLE_SCHED)))
         // Schedule unstep event
         goto reschedule_min;
-    if (likely(s->count)) {
+    if (likely(count)) {
         s->next_step_time += s->interval;
         s->interval += s->add;
         if (unlikely(timer_is_before(s->next_step_time, min_next_time)))
             // The next step event is too close - push it back
             goto reschedule_min;
+        s->count = count;
         s->time.waketime = s->next_step_time;
         return SF_RESCHEDULE;
     }
-    uint_fast8_t ret = stepper_load_next(s);
-    if (ret == SF_DONE || !timer_is_before(s->time.waketime, min_next_time))
-        return ret;
-    // Next step event is too close to the last unstep
-    int32_t diff = s->time.waketime - min_next_time;
-    if (diff < (int32_t)-timer_from_us(1000))
-        shutdown("Stepper too far in past");
+    s->time.waketime = min_next_time;
+    return stepper_load_next(s);
 reschedule_min:
+    s->count = count;
     s->time.waketime = min_next_time;
     return SF_RESCHEDULE;
 }
