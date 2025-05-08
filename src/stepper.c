@@ -109,10 +109,18 @@ stepper_load_next(struct stepper *s)
                 shutdown("Stepper too far in past");
             s->time.waketime = min_next_time;
         }
-        if (was_active && need_dir_change && s->flags & SF_SINGLE_SCHED)
+        if (was_active && need_dir_change) {
             // Must ensure minimum time between step change and dir change
-            while (timer_is_before(timer_read_time(), min_next_time))
-                ;
+            if (s->flags & SF_SINGLE_SCHED)
+                while (timer_is_before(timer_read_time(), min_next_time))
+                    ;
+            gpio_out_toggle_noirq(s->dir_pin);
+            uint32_t curtime = timer_read_time();
+            min_next_time = curtime + s->step_pulse_ticks;
+            if (timer_is_before(s->time.waketime, min_next_time))
+                s->time.waketime = min_next_time;
+            return SF_RESCHEDULE;
+        }
     }
 
     // Set new direction (if needed)
