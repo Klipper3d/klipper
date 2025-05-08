@@ -152,6 +152,10 @@ class MCU_stepper:
         ffi_main, ffi_lib = chelper.get_ffi()
         ffi_lib.stepcompress_set_invert_sdir(self._stepqueue, invert_dir)
         self._mcu.get_printer().send_event("stepper:set_dir_inverted", self)
+    def set_lag_correction(self, rad_per_mm, motor_lag_const):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        return ffi_lib.stepcorr_set_lag_correction(
+                self._stepper_kinematics, rad_per_mm, motor_lag_const) == 0
     def calc_position_from_coord(self, coord):
         ffi_main, ffi_lib = chelper.get_ffi()
         return ffi_lib.itersolve_calc_position_from_coord(

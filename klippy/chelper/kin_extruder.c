@@ -11,6 +11,7 @@
 #include "itersolve.h" // struct stepper_kinematics
 #include "list.h" // list_node
 #include "pyhelper.h" // errorf
+#include "stepcorr.h" // stepcorr_update_gen_steps_window
 #include "trapq.h" // move_get_distance
 
 struct pa_params {
@@ -143,6 +144,7 @@ extruder_set_pressure_advance(struct stepper_kinematics *sk, double print_time
     double hst = smooth_time * .5, old_hst = es->half_smooth_time;
     es->half_smooth_time = hst;
     es->sk.gen_steps_pre_active = es->sk.gen_steps_post_active = hst;
+    stepcorr_update_gen_steps_window(&es->sk);
 
     // Cleanup old pressure advance parameters
     double cleanup_time = sk->last_flush_time - (old_hst > hst ? old_hst : hst);

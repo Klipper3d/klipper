@@ -2,6 +2,7 @@
 #define ITERSOLVE_H
 
 #include <stdint.h> // int32_t
+#include "stepcorr.h"  // stepper_corrections
 
 enum {
     AF_X = 1 << 0, AF_Y = 1 << 1, AF_Z = 1 << 2,
@@ -20,6 +21,8 @@ struct stepper_kinematics {
     struct trapq *tq;
     int active_flags;
     double gen_steps_pre_active, gen_steps_post_active;
+
+    struct stepper_corrections step_corr;
 
     sk_calc_callback calc_position_cb;
     sk_calc_callback calc_velocity_cb;
