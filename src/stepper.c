@@ -109,6 +109,10 @@ stepper_load_next(struct stepper *s)
                 shutdown("Stepper too far in past");
             s->time.waketime = min_next_time;
         }
+        if (was_active && need_dir_change && s->flags & SF_SINGLE_SCHED)
+            // Must ensure minimum time between step change and dir change
+            while (timer_is_before(timer_read_time(), min_next_time))
+                ;
     }
 
     // Set new direction (if needed)
