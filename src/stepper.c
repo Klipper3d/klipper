@@ -17,15 +17,12 @@
 DECL_CONSTANT("STEPPER_STEP_BOTH_EDGE", 1);
 
 #if CONFIG_INLINE_STEPPER_HACK && CONFIG_WANT_STEPPER_OPTIMIZED_BOTH_EDGE
- #define HAVE_OPTIMIZED_PATH 1
  #define HAVE_EDGE_OPTIMIZATION 1
  #define HAVE_AVR_OPTIMIZATION 0
 #elif CONFIG_INLINE_STEPPER_HACK && CONFIG_MACH_AVR
- #define HAVE_OPTIMIZED_PATH 1
  #define HAVE_EDGE_OPTIMIZATION 0
  #define HAVE_AVR_OPTIMIZATION 1
 #else
- #define HAVE_OPTIMIZED_PATH 0
  #define HAVE_EDGE_OPTIMIZATION 0
  #define HAVE_AVR_OPTIMIZATION 0
 #endif
@@ -86,13 +83,15 @@ stepper_load_next(struct stepper *s)
     // Load next move into 'struct stepper'
     s->add = move_add;
     s->interval = move_interval + move_add;
-    if (HAVE_OPTIMIZED_PATH && s->flags & SF_OPTIMIZED_PATH) {
-        // Using optimized stepper_event_edge() or stepper_event_avr()
+    if (HAVE_EDGE_OPTIMIZATION && s->flags & SF_OPTIMIZED_PATH) {
+        // Using optimized stepper_event_edge()
         s->time.waketime += move_interval;
-        if (HAVE_AVR_OPTIMIZATION)
-            s->flags = (move_add ? s->flags | SF_HAVE_ADD
-                        : s->flags & ~SF_HAVE_ADD);
         s->count = move_count;
+    } else if (HAVE_AVR_OPTIMIZATION && s->flags & SF_OPTIMIZED_PATH) {
+        // Using optimized stepper_event_avr()
+        s->time.waketime += move_interval;
+        s->count = move_count;
+        s->flags = (move_add ? s->flags|SF_HAVE_ADD : s->flags & ~SF_HAVE_ADD);
     } else {
         // Using fully scheduled stepper_event_full() code (the scheduler
         // may be called twice for each step)
