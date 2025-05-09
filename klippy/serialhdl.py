@@ -275,7 +275,7 @@ class SerialReader:
             error_message = (
                 "Serial connection closed.\nEnsure Klipper firmware "
                 "is properly flashed to your MCU, and your USB/CAN "
-                "conection is secure."
+                "conection is stable."
             )
             self.current_error_description = error_message
             self._error(error_message)
