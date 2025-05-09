@@ -91,7 +91,7 @@ stepper_load_next(struct stepper *s)
         // Using optimized stepper_event_avr()
         s->time.waketime += move_interval;
         s->count = move_count;
-        s->flags = (move_add ? s->flags|SF_HAVE_ADD : s->flags & ~SF_HAVE_ADD);
+        s->flags = move_add ? s->flags | SF_HAVE_ADD : s->flags & ~SF_HAVE_ADD;
     } else {
         // Using fully scheduled stepper_event_full() code (the scheduler
         // may be called twice for each step)
