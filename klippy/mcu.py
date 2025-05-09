@@ -556,7 +556,11 @@ class MCU:
             self._name = self._name[4:]
         # Serial port
         wp = "mcu '%s': " % (self._name)
-        self._serial = serialhdl.SerialReader(self._reactor, warn_prefix=wp, mcu_name=self._name)
+        self._serial = serialhdl.SerialReader(
+            self._reactor,
+            warn_prefix=wp,
+            mcu_name=self._name
+        )
         self._baud = 0
         self._canbus_iface = None
         canbus_uuid = config.get('canbus_uuid', None)

@@ -201,7 +201,7 @@ class SerialReader:
                         "The specified serial path for MCU '%s' does not "
                         "exist. Ensure the MCU is correctly flashed and "
                         "connected. Verify with “ls /dev/serial/by-id/*”."
-                    ) % self.mcu_name 
+                    ) % self.mcu_name
                 # Serial port already in use
                 elif '[Errno 11] Resource temporarily unavailable' in str(e):
                     self.current_error_description = (
