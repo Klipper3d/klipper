@@ -245,12 +245,31 @@ class VirtualSD:
                     logging.exception("virtual_sdcard read")
                     break
                 if not data:
-                    # End of file
-                    self.current_file.close()
-                    self.current_file = None
-                    logging.info("Finished SD card print")
-                    self.gcode.respond_raw("Done printing file")
-                    break
+                    if partial_input:
+                        # EOL encountered while data remains in the buffer.
+                        # Synthesize the final newline to prevent
+                        #   losing the block
+                        data = partial_input + '\n'
+                        partial_input = ''
+                        logging.warning(
+                                        'Input file does not contain '\
+                                        'a final newline'
+                                       )
+                        self.gcode.respond_raw(
+                                               'File does not contain '\
+                                               'a final newline'
+                                              )
+                        # Data will still be None when we come through the
+                        #   loop again
+
+                        # fallthrough
+                    else:
+                        # End of file
+                        self.current_file.close()
+                        self.current_file = None
+                        logging.info("Finished SD card print")
+                        self.gcode.respond_raw("Done printing file")
+                        break
                 lines = data.split('\n')
                 lines[0] = partial_input + lines[0]
                 partial_input = lines.pop()
