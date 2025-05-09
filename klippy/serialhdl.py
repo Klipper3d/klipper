@@ -12,9 +12,10 @@ class error(Exception):
     pass
 
 class SerialReader:
-    def __init__(self, reactor, warn_prefix=""):
+    def __init__(self, reactor, warn_prefix="", mcu_name=""):
         self.reactor = reactor
         self.warn_prefix = warn_prefix
+        self.mcu_name = mcu_name
         # Serial port
         self.serial_dev = None
         self.msgparser = msgproto.MessageParser(warn_prefix=warn_prefix)
@@ -178,9 +179,15 @@ class SerialReader:
         # Initial connection
         logging.info("%sStarting serial connect", self.warn_prefix)
         start_time = self.reactor.monotonic()
+        self.current_error_description = None
         while 1:
-            if self.reactor.monotonic() > start_time + 90.:
-                self._error("Unable to connect")
+            if self.reactor.monotonic() > start_time + 90. \
+                or self.current_error_description is not None:
+                if self.current_error_description is not None:
+                    error_description = ': %s' % self.current_error_description
+                else:
+                    error_description = ''
+                self._error("Unable to connect%s" % error_description)
             try:
                 serial_dev = serial.Serial(baudrate=baud, timeout=0,
                                            exclusive=True)
@@ -188,6 +195,20 @@ class SerialReader:
                 serial_dev.rts = rts
                 serial_dev.open()
             except (OSError, IOError, serial.SerialException) as e:
+                # Serial port not found
+                if '[Errno 2] No such file or directory:' in str(e):
+                    self.current_error_description = (
+                        "The specified serial path for MCU '%s' does not "
+                        "exist. Ensure the MCU is correctly flashed and "
+                        "connected. Verify with \"ls /dev/serial/by-id/*\"."
+                    ) % self.mcu_name
+                # Serial port already in use
+                elif '[Errno 11] Resource temporarily unavailable' in str(e):
+                    self.current_error_description = (
+                        "Serial port already in use: '%s'. Are you sure "
+                        "this serial port is not in use by another MCU "
+                        "or program?"
+                    ) % serialport
                 logging.warning("%sUnable to open serial port: %s",
                              self.warn_prefix, e)
                 self.reactor.pause(self.reactor.monotonic() + 5.)
@@ -251,7 +272,13 @@ class SerialReader:
                                       cmd, len(cmd), minclock, reqclock, nid)
         params = completion.wait()
         if params is None:
-            self._error("Serial connection closed")
+            error_message = (
+                "Serial connection closed.\nEnsure Klipper firmware "
+                "is properly flashed to your MCU, and your USB/CAN "
+                "conection is stable."
+            )
+            self.current_error_description = error_message
+            self._error(error_message)
         return params
     def send(self, msg, minclock=0, reqclock=0):
         cmd = self.msgparser.create_command(msg)
