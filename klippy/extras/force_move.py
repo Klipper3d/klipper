@@ -142,7 +142,7 @@ class ForceMove:
         logging.info("SET_KINEMATIC_POSITION pos=%.3f,%.3f,%.3f"
                      " set_homed=%s clear_homed=%s",
                      x, y, z, set_homed_axes, clear_homed_axes)
-        toolhead.set_position([x, y, z, curpos[3]], homing_axes=set_homed_axes)
+        toolhead.set_position([x, y, z], homing_axes=set_homed_axes)
         toolhead.get_kinematics().clear_homing_state(clear_homed_axes)
 
 def load_config(config):

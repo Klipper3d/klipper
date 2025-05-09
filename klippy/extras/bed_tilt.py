@@ -24,12 +24,14 @@ class BedTilt:
     def handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
     def get_position(self):
-        x, y, z, e = self.toolhead.get_position()
-        return [x, y, z - x*self.x_adjust - y*self.y_adjust - self.z_adjust, e]
+        pos = self.toolhead.get_position()
+        x, y, z = pos[:3]
+        z -= x*self.x_adjust + y*self.y_adjust + self.z_adjust
+        return [x, y, z] + pos[3:]
     def move(self, newpos, speed):
-        x, y, z, e = newpos
-        self.toolhead.move([x, y, z + x*self.x_adjust + y*self.y_adjust
-                            + self.z_adjust, e], speed)
+        x, y, z = newpos[:3]
+        z += x*self.x_adjust + y*self.y_adjust + self.z_adjust
+        self.toolhead.move([x, y, z] + newpos[3:], speed)
     def update_adjust(self, x_adjust, y_adjust, z_adjust):
         self.x_adjust = x_adjust
         self.y_adjust = y_adjust

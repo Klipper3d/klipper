@@ -82,24 +82,25 @@ class ExcludeObject:
         self._reset_state()
         self._unregister_transform()
 
-    def _get_extrusion_offsets(self):
-        offset = self.extrusion_offsets.get(
-            self.toolhead.get_extruder().get_name())
+    def _get_extrusion_offsets(self, num_coord):
+        ename = self.toolhead.get_extruder().get_name()
+        offset = self.extrusion_offsets.get(ename)
         if offset is None:
-            offset = [0., 0., 0., 0.]
-            self.extrusion_offsets[self.toolhead.get_extruder().get_name()] = \
-                offset
+            offset = [0.] * num_coord
+            self.extrusion_offsets[ename] = offset
+        if len(offset) < num_coord:
+            offset.extend([0.] * (len(num_coord) - len(offset)))
         return offset
 
     def get_position(self):
-        offset = self._get_extrusion_offsets()
         pos = self.next_transform.get_position()
-        for i in range(4):
+        offset = self._get_extrusion_offsets(len(pos))
+        for i in range(len(pos)):
             self.last_position[i] = pos[i] + offset[i]
         return list(self.last_position)
 
     def _normal_move(self, newpos, speed):
-        offset = self._get_extrusion_offsets()
+        offset = self._get_extrusion_offsets(len(newpos))
 
         if self.initial_extrusion_moves > 0 and \
             self.last_position[3] != newpos[3]:
@@ -122,9 +123,9 @@ class ExcludeObject:
         if (offset[0] != 0 or offset[1] != 0) and \
             (newpos[0] != self.last_position_excluded[0] or \
             newpos[1] != self.last_position_excluded[1]):
-            offset[0] = 0
-            offset[1] = 0
-            offset[2] = 0
+            for i in range(len(newpos)):
+                if i != 3:
+                    offset[i] = 0
             offset[3] += self.extruder_adj
             self.extruder_adj = 0
 
@@ -137,17 +138,18 @@ class ExcludeObject:
             self.extruder_adj = 0
 
         tx_pos = newpos[:]
-        for i in range(4):
+        for i in range(len(newpos)):
             tx_pos[i] = newpos[i] - offset[i]
         self.next_transform.move(tx_pos, speed)
 
     def _ignore_move(self, newpos, speed):
-        offset = self._get_extrusion_offsets()
-        for i in range(3):
-            offset[i] = newpos[i] - self.last_position_extruded[i]
+        offset = self._get_extrusion_offsets(len(newpos))
+        for i in range(len(newpos)):
+            if i != 3:
+                offset[i] = newpos[i] - self.last_position_extruded[i]
         offset[3] = offset[3] + newpos[3] - self.last_position[3]
         self.last_position[:] = newpos
-        self.last_position_excluded[:] =self.last_position
+        self.last_position_excluded[:] = self.last_position
         self.max_position_excluded = max(self.max_position_excluded, newpos[3])
 
     def _move_into_excluded_region(self, newpos, speed):
