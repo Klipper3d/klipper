@@ -38,7 +38,7 @@ class MainCarriage:
         self.axis_name = axis
         self.dual_carriage = None
     def get_name(self):
-        return self.rail.get_name()
+        return self.rail.get_name(short=True)
     def get_axis(self):
         return self.axis
     def get_rail(self):
@@ -86,7 +86,7 @@ class DualCarriage:
                                self.primary_carriage.get_axis_name())
         self.safe_dist = config.getfloat('safe_distance', None, minval=0.)
     def get_name(self):
-        return self.rail.get_name()
+        return self.rail.get_name(short=True)
     def get_axis(self):
         return self.primary_carriage.get_axis()
     def get_rail(self):

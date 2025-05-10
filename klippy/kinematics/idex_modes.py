@@ -26,7 +26,7 @@ class DualCarriages:
                 DualCarriagesRail(c, primary_rails[i], axes[i], active=False)
                 for i, c in enumerate(dual_rails)]
         self.dc_rails = collections.OrderedDict(
-                [(c.rail.get_name(), c)
+                [(c.rail.get_name(short=True), c)
                  for c in self.primary_rails + self.dual_rails])
         self.saved_states = {}
         self.safe_dist = {}

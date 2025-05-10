@@ -323,7 +323,7 @@ class GenericPrinterRail:
                  default_position_endstop=None, units_in_radians=False):
         self.stepper_units_in_radians = units_in_radians
         self.printer = config.get_printer()
-        self.name = config.get_name().split()[-1]
+        self.name = config.get_name()
         self.steppers = []
         self.endstops = []
         self.endstop_map = {}
@@ -380,9 +380,11 @@ class GenericPrinterRail:
                 "Invalid homing_positive_dir / position_endstop in '%s'"
                 % (config.get_name(),))
     def get_name(self, short=False):
-        if short and self.name.startswith('stepper'):
-            # Skip an extra symbol after 'stepper'
-            return self.name[8:]
+        if short:
+            if self.name.startswith('stepper'):
+                # Skip an extra symbol after 'stepper'
+                return self.name[8:]
+            return self.name.split()[-1]
         return self.name
     def get_range(self):
         return self.position_min, self.position_max
