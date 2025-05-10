@@ -11,6 +11,8 @@ class StepperShaper:
         self.printer = config.get_printer()
         self.stepper_name = ' '.join(config.get_name().split()[1:])
         self.stepper = None
+        self.velocity_smooth_time = config.getfloat('velocity_smooth_time',
+                                                    0.001, above=0., maxval=0.1)
         self.printer.register_event_handler("klippy:mcu_identify",
                                             self._handle_mcu_identify)
         sconfig = config.getsection(self.stepper_name)
@@ -35,7 +37,8 @@ class StepperShaper:
             sk = self.stepper.get_stepper_kinematics()
             rad_per_mm = .5 * math.pi / (
                     self.microsteps * self.stepper.get_step_dist())
-            if not self.stepper.set_lag_correction(rad_per_mm, lag_coeff):
+            if not self.stepper.set_lag_correction(rad_per_mm, lag_coeff,
+                                                   self.velocity_smooth_time):
                 raise gcmd.error(
                         "Unable to set STEALTHCHOP_COMP=%.6f for stepper '%s'" %
                         (lag_coeff, self.stepper_name))

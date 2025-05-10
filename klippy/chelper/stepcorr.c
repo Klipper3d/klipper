@@ -26,8 +26,9 @@ static inline double
 calc_position_lag(struct stepper_corrections *sc, double velocity)
 {
     double omega = sc->rad_per_mm * velocity;
-    double phi = atan(omega * sc->motor_lag_const);
-    return phi / sc->rad_per_mm;
+    double tan_phi = omega * sc->motor_lag_const;
+    return atan(tan_phi) / sc->rad_per_mm;
+    // return sc->fstep_dist * tan_phi * (1. / sqrt(1. + tan_phi * tan_phi));
 }
 
 static inline struct move*
@@ -49,36 +50,37 @@ stepcorr_calc_position(struct stepper_kinematics *sk, struct move *m
                        , double move_time)
 {
     struct stepper_corrections *sc = &sk->step_corr;
-    if (!sc->motor_lag_const || !sk->calc_velocity_cb)
+    if (!sc->motor_lag_const || !sk->calc_smoothed_velocity_cb)
         return sk->calc_position_cb(sk, m, move_time);
 
-    double stepper_velocity = sk->calc_velocity_cb(sk, m, move_time);
-    move_time += calc_time_lag(sc, stepper_velocity);
+    double velocity = sk->calc_smoothed_velocity_cb(sk, m, move_time, sc->hst);
+    move_time += calc_time_lag(sc, velocity);
     m = find_move_at_time(m, &move_time);
-    double stepper_position = sk->calc_position_cb(sk, m, move_time);
-    return stepper_position + calc_position_lag(
-            sc, sk->calc_velocity_cb(sk, m, move_time));
+    return sk->calc_position_cb(sk, m, move_time);
 }
 
 inline void
 stepcorr_update_gen_steps_window(struct stepper_kinematics *sk)
 {
     struct stepper_corrections *sc = &sk->step_corr;
-    sk->gen_steps_pre_active += sc->motor_lag_const;
-    sk->gen_steps_post_active += sc->motor_lag_const;
+    sk->gen_steps_pre_active += sc->motor_lag_const + sc->hst;
+    sk->gen_steps_post_active += sc->hst;
 }
 
 int __visible
 stepcorr_set_lag_correction(struct stepper_kinematics *sk, double rad_per_mm
-                            , double motor_lag_const)
+                            , double motor_lag_const
+                            , double velocity_smooth_time)
 {
     struct stepper_corrections *sc = &sk->step_corr;
-    if (!sk->calc_velocity_cb && motor_lag_const)
+    if (!sk->calc_smoothed_velocity_cb && motor_lag_const)
         return -1;
-    sc->motor_lag_const = -sc->motor_lag_const;
-    stepcorr_update_gen_steps_window(sk);
+    sk->gen_steps_pre_active -= sc->motor_lag_const + sc->hst;
+    sk->gen_steps_post_active -= sc->hst;
     sc->rad_per_mm = rad_per_mm;
+    sc->fstep_dist = M_PI_2 / rad_per_mm;
     sc->motor_lag_const = motor_lag_const;
+    sc->hst = 0.5 * velocity_smooth_time;
     stepcorr_update_gen_steps_window(sk);
     return 0;
 }

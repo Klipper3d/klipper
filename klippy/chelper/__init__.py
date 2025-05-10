@@ -22,12 +22,13 @@ SOURCE_FILES = [
     'kin_cartesian.c', 'kin_corexy.c', 'kin_corexz.c', 'kin_delta.c',
     'kin_deltesian.c', 'kin_polar.c', 'kin_rotary_delta.c', 'kin_winch.c',
     'kin_extruder.c', 'kin_shaper.c', 'kin_idex.c', 'kin_generic.c',
-    'stepcorr.c'
+    'integrate.c', 'stepcorr.c'
 ]
 DEST_LIB = "c_helper.so"
 OTHER_FILES = [
-    'list.h', 'serialqueue.h', 'stepcompress.h', 'steppersync.h', 'stepcorr.h',
-    'itersolve.h', 'pyhelper.h', 'trapq.h', 'pollreactor.h', 'msgblock.h'
+    'list.h', 'serialqueue.h', 'stepcompress.h', 'steppersync.h',
+    'itersolve.h', 'pyhelper.h', 'trapq.h', 'pollreactor.h', 'msgblock.h',
+    'integrate.h', 'stepcorr.h'
 ]
 
 defs_stepcompress = """
@@ -182,7 +183,8 @@ defs_kin_idex = """
 
 defs_stepcorr = """
     int stepcorr_set_lag_correction(struct stepper_kinematics *sk
-        , double rad_per_mm, double motor_lag_const);
+        , double rad_per_mm, double motor_lag_const
+        , double velocity_smooth_time);
 """
 
 defs_serialqueue = """

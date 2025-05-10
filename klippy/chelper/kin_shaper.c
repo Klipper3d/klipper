@@ -10,6 +10,7 @@
 #include <stdlib.h> // malloc
 #include <string.h> // memset
 #include "compiler.h" // __visible
+#include "integrate.h" // calc_smoothed_velocity
 #include "itersolve.h" // struct stepper_kinematics
 #include "stepcorr.h" // stepcorr_update_gen_steps_window
 #include "trapq.h" // struct move
@@ -92,7 +93,7 @@ get_axis_position_across_moves(struct move *m, int axis, double time)
 }
 
 static inline double
-get_velocity_across_moves(struct move *m, int axis, double time)
+get_velocity_across_moves(struct move *m, int axis, double time, double hst)
 {
     while (likely(time < 0.)) {
         m = list_prev_entry(m, node);
@@ -102,7 +103,7 @@ get_velocity_across_moves(struct move *m, int axis, double time)
         time -= m->move_t;
         m = list_next_entry(m, node);
     }
-    return move_get_velocity(m, time) * m->axes_r.axis[axis - 'x'];
+    return calc_smoothed_velocity(m, axis, time, hst);
 }
 
 // Calculate the position from the convolution of the shaper with input signal
@@ -120,14 +121,14 @@ calc_position(struct move *m, int axis, double move_time
 }
 
 static inline double
-calc_velocity(struct move *m, int axis, double move_time
+calc_velocity(struct move *m, int axis, double move_time, double hst
               , struct shaper_pulses *sp)
 {
     double res = 0.;
     int num_pulses = sp->num_pulses, i;
     for (i = 0; i < num_pulses; ++i) {
         double t = sp->pulses[i].t, a = sp->pulses[i].a;
-        res += a * get_velocity_across_moves(m, axis, move_time + t);
+        res += a * get_velocity_across_moves(m, axis, move_time + t, hst);
     }
     return res;
 }
@@ -136,6 +137,7 @@ calc_velocity(struct move *m, int axis, double move_time
  * Kinematics-related shaper code
  ****************************************************************/
 
+#define ZERO_SMOOTH_T 0.0
 #define DUMMY_T 500.0
 
 struct input_shaper {
@@ -161,14 +163,17 @@ shaper_x_calc_position(struct stepper_kinematics *sk, struct move *m
 
 static double
 shaper_x_calc_velocity(struct stepper_kinematics *sk, struct move *m
-                       , double move_time)
+                       , double move_time, double hst)
 {
     struct input_shaper *is = container_of(sk, struct input_shaper, sk);
     struct shaper_pulses *sx = &is->sp[0];
     if (!sx->num_pulses)
-        return is->orig_sk->calc_velocity_cb(is->orig_sk, m, move_time);
-    is->m.start_v = calc_velocity(m, 'x', move_time, sx);
-    return is->orig_sk->calc_velocity_cb(is->orig_sk, &is->m, DUMMY_T);
+        return is->orig_sk->calc_smoothed_velocity_cb(
+                is->orig_sk, m, move_time, hst);
+    is->m.start_v = calc_velocity(m, 'x', move_time, hst, sx);
+    // Velocity smoothing was already applied
+    return is->orig_sk->calc_smoothed_velocity_cb(
+            is->orig_sk, &is->m, DUMMY_T, ZERO_SMOOTH_T);
 }
 
 // Optimized calc_position when only y axis is needed
@@ -187,14 +192,17 @@ shaper_y_calc_position(struct stepper_kinematics *sk, struct move *m
 
 static double
 shaper_y_calc_velocity(struct stepper_kinematics *sk, struct move *m
-                       , double move_time)
+                       , double move_time, double hst)
 {
     struct input_shaper *is = container_of(sk, struct input_shaper, sk);
     struct shaper_pulses *sy = &is->sp[1];
     if (!sy->num_pulses)
-        return is->orig_sk->calc_velocity_cb(is->orig_sk, m, move_time);
-    is->m.start_v = calc_velocity(m, 'y', move_time, sy);
-    return is->orig_sk->calc_velocity_cb(is->orig_sk, &is->m, DUMMY_T);
+        return is->orig_sk->calc_smoothed_velocity_cb(
+                is->orig_sk, m, move_time, hst);
+    is->m.start_v = calc_velocity(m, 'y', move_time, hst, sy);
+    // Velocity smoothing was already applied
+    return is->orig_sk->calc_smoothed_velocity_cb(
+            is->orig_sk, &is->m, DUMMY_T, ZERO_SMOOTH_T);
 }
 
 // Optimized calc_position when only z axis is needed
@@ -213,14 +221,17 @@ shaper_z_calc_position(struct stepper_kinematics *sk, struct move *m
 
 static double
 shaper_z_calc_velocity(struct stepper_kinematics *sk, struct move *m
-                       , double move_time)
+                       , double move_time, double hst)
 {
     struct input_shaper *is = container_of(sk, struct input_shaper, sk);
     struct shaper_pulses *sz = &is->sp[2];
     if (!sz->num_pulses)
-        return is->orig_sk->calc_velocity_cb(is->orig_sk, m, move_time);
-    is->m.start_v = calc_velocity(m, 'z', move_time, sz);
-    return is->orig_sk->calc_velocity_cb(is->orig_sk, &is->m, DUMMY_T);
+        return is->orig_sk->calc_smoothed_velocity_cb(
+                is->orig_sk, m, move_time, hst);
+    is->m.start_v = calc_velocity(m, 'z', move_time, hst, sz);
+    // Velocity smoothing was already applied
+    return is->orig_sk->calc_smoothed_velocity_cb(
+            is->orig_sk, &is->m, DUMMY_T, ZERO_SMOOTH_T);
 }
 
 // General calc_position for all x, y, and z axes
@@ -244,21 +255,25 @@ shaper_xyz_calc_position(struct stepper_kinematics *sk, struct move *m
 
 static double
 shaper_xyz_calc_velocity(struct stepper_kinematics *sk, struct move *m
-                         , double move_time)
+                         , double move_time, double hst)
 {
     struct input_shaper *is = container_of(sk, struct input_shaper, sk);
     if (!is->sp[0].num_pulses && !is->sp[1].num_pulses && !is->sp[2].num_pulses)
-        return is->orig_sk->calc_velocity_cb(is->orig_sk, m, move_time);
-    double velocity = move_get_velocity(m, move_time);
-    double v_x = velocity * m->axes_r.x;
-    double v_y = velocity * m->axes_r.y;
-    double v_z = velocity * m->axes_r.z;
+        return is->orig_sk->calc_smoothed_velocity_cb(
+                is->orig_sk, m, move_time, hst);
+    double v_x, v_y, v_z;
     if (is->sp[0].num_pulses)
-        v_x = calc_velocity(m, 'x', move_time, &is->sp[0]);
+        v_x = calc_velocity(m, 'x', move_time, hst, &is->sp[0]);
+    else
+        v_x = calc_smoothed_velocity(m, 'x', move_time, hst);
     if (is->sp[1].num_pulses)
-        v_y = calc_velocity(m, 'y', move_time, &is->sp[1]);
+        v_y = calc_velocity(m, 'y', move_time, hst, &is->sp[1]);
+    else
+        v_y = calc_smoothed_velocity(m, 'y', move_time, hst);
     if (is->sp[2].num_pulses)
-        v_z = calc_velocity(m, 'z', move_time, &is->sp[2]);
+        v_z = calc_velocity(m, 'z', move_time, hst, &is->sp[2]);
+    else
+        v_z = calc_smoothed_velocity(m, 'z', move_time, hst);
     double v_nrm = sqrt(v_x * v_x + v_y * v_y + v_z * v_z);
     if (v_nrm < 1e-10) {
         memset(&is->m.axes_r, 0, sizeof(is->m.axes_r));
@@ -270,7 +285,9 @@ shaper_xyz_calc_velocity(struct stepper_kinematics *sk, struct move *m
         is->m.axes_r.y = v_y * v_recipr;
         is->m.axes_r.z = v_z * v_recipr;
     }
-    return is->orig_sk->calc_velocity_cb(is->orig_sk, &is->m, DUMMY_T);
+    // Velocity smoothing was already applied
+    return is->orig_sk->calc_smoothed_velocity_cb(
+            is->orig_sk, &is->m, DUMMY_T, ZERO_SMOOTH_T);
 }
 
 // A callback that forwards post_cb call to the original kinematics
@@ -351,15 +368,15 @@ input_shaper_set_sk(struct stepper_kinematics *sk
     if (orig_sk->post_cb) {
         is->sk.post_cb = shaper_commanded_pos_post_fixup;
     }
-    if (orig_sk->calc_velocity_cb) {
+    if (orig_sk->calc_smoothed_velocity_cb) {
         if (orig_sk->active_flags == AF_X)
-            is->sk.calc_velocity_cb = shaper_x_calc_velocity;
+            is->sk.calc_smoothed_velocity_cb = shaper_x_calc_velocity;
         else if (orig_sk->active_flags == AF_Y)
-            is->sk.calc_velocity_cb = shaper_y_calc_velocity;
+            is->sk.calc_smoothed_velocity_cb = shaper_y_calc_velocity;
         else if (orig_sk->active_flags == AF_Z)
-            is->sk.calc_velocity_cb = shaper_z_calc_velocity;
+            is->sk.calc_smoothed_velocity_cb = shaper_z_calc_velocity;
         else if (orig_sk->active_flags & (AF_X | AF_Y | AF_Z))
-            is->sk.calc_velocity_cb = shaper_xyz_calc_velocity;
+            is->sk.calc_smoothed_velocity_cb = shaper_xyz_calc_velocity;
         else
             return -1;
     }
