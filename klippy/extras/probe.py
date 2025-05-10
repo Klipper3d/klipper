@@ -172,13 +172,17 @@ class ProbeCommandHelper:
         configfile = self.printer.lookup_object('configfile')
         configfile.set(self.name, 'z_offset', "%.3f" % (new_calibrate,))
 
+def lookup_z_endstop_config(config):
+    if config.has_section('stepper_z'):
+        return config.getsection('stepper_z')
+    elif config.has_section('carriage z'):
+        return config.getsection('carriage z')
+    return None
+
 # Helper to lookup the minimum Z position for the printer
 def lookup_minimum_z(config):
-    if config.has_section('stepper_z'):
-        zconfig = config.getsection('stepper_z')
-        return zconfig.getfloat('position_min', 0., note_valid=False)
-    elif config.has_section('carriage z'):
-        zconfig = config.getsection('carriage z')
+    zconfig = lookup_z_endstop_config(config)
+    if zconfig is not None:
         return zconfig.getfloat('position_min', 0., note_valid=False)
     pconfig = config.getsection('printer')
     return pconfig.getfloat('minimum_z_position', 0., note_valid=False)
