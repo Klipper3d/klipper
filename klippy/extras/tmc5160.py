@@ -131,6 +131,12 @@ Fields["DRV_STATUS"] = {
 Fields["FACTORY_CONF"] = {
     "factory_conf":             0x1F << 0
 }
+Fields["SHORT_CONF"] = {
+    "s2vs_level":               0x0F << 0,
+    "s2g_level":                0x0F << 8,
+    "shortfilter":              0x03 << 16,
+    "shortdelay":               0x01 << 18
+}
 Fields["GCONF"] = {
     "recalibrate":              0x01 << 0,
     "faststandstill":           0x01 << 1,
@@ -382,6 +388,11 @@ class TMC5160:
         set_config_field(config, "freewheel", 0)
         set_config_field(config, "pwm_reg", 4)
         set_config_field(config, "pwm_lim", 12)
+        #   SHORT_CONF
+        set_config_field(config, "s2vs_level", 6)
+        set_config_field(config, "s2g_level", 6)
+        set_config_field(config, "shortfilter", 1)
+        set_config_field(config, "shortdelay", 0)
         #   TPOWERDOWN
         set_config_field(config, "tpowerdown", 10)
 
