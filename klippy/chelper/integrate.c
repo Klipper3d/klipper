@@ -11,38 +11,28 @@
 #include "list.h" // list_node
 #include "trapq.h" // move_get_velocity
 
-// Calculate the definitive integral of the motion formula:
-//   position(t) = base + t * (start_v + t * half_accel)
-static inline double
-move_integrate(double base, double start_v, double half_accel
-               , double start, double end)
-{
-    double half_v = .5 * start_v, sixth_a = (1. / 3.) * half_accel;
-    double si = start * (base + start * (half_v + start * sixth_a));
-    double ei = end * (base + end * (half_v + end * sixth_a));
-    return ei - si;
-}
-
-// Calculate the definitive integral of time weighted position:
-//   weighted_position(t) = t * (base + t * (start_v + t * half_accel))
-static inline double
-move_integrate_time(double base, double start_v, double half_accel
-                    , double start, double end)
-{
-    double half_b = .5 * base, third_v = (1. / 3.) * start_v;
-    double eighth_a = .25 * half_accel;
-    double si = start * start * (half_b + start * (third_v + start * eighth_a));
-    double ei = end * end * (half_b + end * (third_v + end * eighth_a));
-    return ei - si;
-}
-
 inline double
 move_integrate_weighted(double base, double start_v, double half_accel
                         , double start, double end, double time_offset)
 {
-    double iext = move_integrate(base, start_v, half_accel, start, end);
-    double wgt_ext = move_integrate_time(base, start_v, half_accel, start, end);
-    return wgt_ext - time_offset * iext;
+    // Calculate the definitive integral of the motion formula:
+    //   position(t) = base + t * (start_v + t * half_accel)
+    double half_v = .5 * start_v, sixth_a = (1. / 3.) * half_accel;
+    double start_p_end = start + end;
+    double end2 = end * end;
+    double start_p_end_2 = start_p_end * start + end2;
+    double iext_avg = base + half_v * start_p_end + sixth_a * start_p_end_2;
+
+    // Calculate the definitive integral of time weighted position:
+    //   weighted_position(t) = t * (base + t * (start_v + t * half_accel))
+    double half_b = .5 * base, third_v = (1. / 3.) * start_v;
+    double eighth_a = .25 * half_accel;
+    double end3 = end2 * end;
+    double start_p_end_3 = start_p_end_2 * start + end3;
+    double wgt_ext_avg = half_b * start_p_end + third_v * start_p_end_2
+        + eighth_a * start_p_end_3;
+
+    return (wgt_ext_avg - time_offset * iext_avg) * (end - start);
 }
 
 static inline double
