@@ -359,9 +359,11 @@ stepper_stop_all(void)
 {
     uint8_t i;
     struct stepper *s;
+    irq_disable();
     foreach_oid(i, s, command_config_stepper) {
         stepper_stop(&s->stop_signal, 0);
     }
+    irq_enable();
 }
 
 void

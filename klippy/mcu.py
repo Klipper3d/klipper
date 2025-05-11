@@ -370,10 +370,10 @@ class MCU_multiaxis_probe:
         # Create commands
         self._probe_clear_cmd = self._mcu.lookup_command("multiaxis_probe_clear oid=%c")
         self._probe_start_cmd = self._mcu.lookup_command(
-            "multiaxis_probe_start oid=%c clock=%u rest_ticks=%u pin_value=%c")
+            "multiaxis_probe_start oid=%c clock=%u rest_ticks=%u pin_value_on_probe_triggered=%c")
         self._query_cmd = self._mcu.lookup_query_command(
             "multiaxis_probe_query_state oid=%c",
-            "multiaxis_probe_state oid=%c next_clock=%u pin_value=%c", oid=self._oid)
+            "multiaxis_probe_state oid=%c triggered_clock=%u pin_value=%c is_probe_triggered=%c", oid=self._oid)
         
         # Setup config
         self._mcu.add_config_cmd("config_multiaxis_probe oid=%d pin=%s pull_up=%d" % (self._oid, self._pin, self._pullup))
@@ -390,11 +390,11 @@ class MCU_multiaxis_probe:
         if self._mcu.is_fileoutput():
             return 0
         params = self._query_cmd.send([self._oid])
-        return params['pin_value'] ^ self._invert
+        triggered_clock = self._mcu.clock32_to_clock64(params['triggered_clock'])
+        triggered_time = self._mcu.clock_to_print_time(triggered_clock)
+        return triggered_time, params['pin_value'] ^ self._invert, params['is_probe_triggered']
     def probe_clear(self):
         self._probe_clear_cmd.send([self._oid])
-    def probe_wait(self):
-        return self.query_probe()
     
 
 class MCU_digital_out:

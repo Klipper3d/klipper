@@ -17,42 +17,63 @@ class CncProbe:
 
         self.speed = 25.
         self.speed_factor = 1. / 60.
-
         return
     
+    def _lookup_toolhead_pos(self, pos_time):
+        toolhead = self.printer.lookup_object('toolhead')
+        kin = toolhead.get_kinematics()
+        kin_spos = {s.get_name(): s.mcu_to_commanded_position(s.get_past_mcu_position(pos_time)) for s in kin.get_steppers()}
+        return kin.calc_position(kin_spos)
+    
+    def probe_end_move_condition_func(self):
+        return self.mcu_multiaxis_probe.query_probe()[2]
+
     def probe_move(self, movepos, speed):
         toolhead = self.printer.lookup_object('toolhead')
-        print_time = toolhead.get_last_move_time()
-        x, y, z = movepos 
+        x, y, z, e = movepos   
 
         # Enable probe
+        print_time = toolhead.get_last_move_time()
         self.mcu_multiaxis_probe.probe_start(print_time, PROBE_REST_TIME, True)
+
         # Move to desire position
-        toolhead.move([x, y, z, 0.0], speed)
+        toolhead.move([x, y, z, e], speed)
+
+        # Wait for move to finish
+        toolhead.wait_moves(self.probe_end_move_condition_func)
+
+        # Check if probe triggered during move
+        probe_query = self.mcu_multiaxis_probe.query_probe()
+        ret = probe_query[2]
+        trigger_time = probe_query[0]
+        
         # Clear probe
         self.mcu_multiaxis_probe.probe_clear()
-        # Check if probe is triggered
-        return self.mcu_multiaxis_probe.query_probe()
+
+        # Set correct position
+        if trigger_time != 0:
+            new_pos = self._lookup_toolhead_pos(trigger_time)
+            new_pos.append(e)
+            toolhead.set_position(new_pos)
+
+        # Check if probe was triggered
+        return ret
     
     def cmd_G38_3(self, gcmd):
         params = gcmd.get_command_parameters()
-        target_pos = [0.0, 0.0, 0.0]
-        try:
-            for pos, axis in enumerate('XYZ'):
-                if axis in params:
-                    v = float(params[axis])
-                    target_pos[pos] += v
-            if 'F' in params:
-                gcode_speed = float(params['F'])
-                if gcode_speed <= 0.:
-                    raise gcmd.error("Invalid speed in '%s'"
-                                        % (gcmd.get_commandline(),))
-                self.speed = gcode_speed * self.speed_factor
-        except ValueError as e:
-            raise gcmd.error("Unable to parse move '%s'"
-                             % (gcmd.get_commandline(),))
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.get_last_move_time()
+        curpos = toolhead.get_position()
+
+        x = gcmd.get_float('X', curpos[0])
+        y = gcmd.get_float('Y', curpos[1])
+        z = gcmd.get_float('Z', curpos[2])
+        e = curpos[3]
+        gcode_speed = gcmd.get_float('F', self.speed)
+
+        target_pos = [x, y, z, e]
         
-        msg = self.probe_move(target_pos, self.speed)
+        msg = self.probe_move(target_pos, gcode_speed)
         gcmd.respond_raw("probe_value : " + str(msg))
         return
 

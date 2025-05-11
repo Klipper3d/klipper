@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "trsync.h": "c"
+        "trsync.h": "c",
+        "stdbool.h": "c"
     }
 }
