@@ -714,7 +714,18 @@ class MCU:
         self.gcode.respond_info(f"mcu: '{self._name}' disconnected!", log=True)
 
     def non_critical_recon_event(self, eventtime):
-        return self._reactor.NEVER
+        # for beacon, carto (scanner) or eddy we want to bail out of trying to reconnect
+        if self._name == 'beacon' or self._name == 'scanner' or self._name == 'eddy':
+            return self._reactor.NEVER
+
+        success = self.recon_mcu()
+        if success:
+            self.gcode.respond_info(
+                f"mcu: '{self._name}' reconnected!", log=True
+            )
+            return self._reactor.NEVER
+        else:
+            return eventtime + self.reconnect_interval
 
     def _send_config(self, prev_crc):
         if not self._cached_init_state:
