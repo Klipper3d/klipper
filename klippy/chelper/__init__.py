@@ -183,8 +183,8 @@ defs_kin_idex = """
 
 defs_stepcorr = """
     int stepcorr_set_lag_correction(struct stepper_kinematics *sk
-        , double rad_per_mm, double motor_lag_const
-        , double velocity_smooth_time);
+        , double rad_per_mm, double stealthchop_lag_const
+        , double velocity_lag_const, double velocity_smooth_time);
 """
 
 defs_serialqueue = """
