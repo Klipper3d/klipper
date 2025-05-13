@@ -128,7 +128,7 @@ class ResonanceTestExecutor:
         reactor = self.printer.get_reactor()
         toolhead = self.printer.lookup_object('toolhead')
         tpos = toolhead.get_position()
-        X, Y = thpos[:2]
+        X, Y = tpos[:2]
         # Override maximum acceleration and acceleration to
         # deceleration based on the maximum test frequency
         systime = reactor.monotonic()
