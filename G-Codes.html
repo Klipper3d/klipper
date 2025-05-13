@@ -5696,6 +5696,24 @@ reports not triggered). Normally future G-Code commands will be
 scheduled to run after the stepper move completes, however if a manual
 stepper move uses SYNC=0 then future G-Code movement commands may run
 in parallel with the stepper movement.</p>
+<p><code>MANUAL_STEPPER STEPPER=config_name GCODE_AXIS=[A-Z]
+[LIMIT_VELOCITY=&lt;velocity&gt;] [LIMIT_ACCEL=&lt;accel&gt;]
+[INSTANTANEOUS_CORNER_VELOCITY=&lt;velocity&gt;]</code>: If the <code>GCODE_AXIS</code>
+parameter is specified then it configures the stepper motor as an
+extra axis on <code>G1</code> move commands.  For example, if one were to issue a
+<code>MANUAL_STEPPER ... GCODE_AXIS=R</code> command then one could issue
+commands like <code>G1 X10 Y20 R30</code> to move the stepper motor.  The
+resulting moves will occur synchronously with the associated toolhead
+xyz movements.  If the motor is associated with a <code>GCODE_AXIS</code> then
+one may no longer issue movements using the above <code>MANUAL_STEPPER</code>
+command - one may unregister the stepper with a <code>MANUAL_STEPPER
+... GCODE_AXIS=</code> command to resume manual control of the motor. The
+<code>LIMIT_VELOCITY</code> and <code>LIMIT_ACCEL</code> parameters allow one to reduce the
+speed of <code>G1</code> moves if those moves would result in a velocity or
+acceleration above the specified limits. The
+<code>INSTANTANEOUS_CORNER_VELOCITY</code> specifies the maximum instantaneous
+velocity change (in mm/s) of the motor during the junction of two
+moves (the default is 1mm/s).</p>
 <h3 id="mcp4018">[mcp4018]<a class="headerlink" href="#mcp4018" title="Permanent link">&para;</a></h3>
 <p>The following command is available when a
 <a href="Config_Reference.html#mcp4018">mcp4018 config section</a> is
