@@ -167,7 +167,8 @@ class ResonanceTestExecutor:
                 # The move first goes to a complete stop, then changes direction
                 d_decel = -last_v2 * half_inv_accel
                 decel_X, decel_Y = axis.get_point(d_decel)
-                toolhead.move([X + decel_X, Y + decel_Y] + thpos[2:], abs_last_v)
+                toolhead.move(
+                    [X + decel_X, Y + decel_Y] + thpos[2:], abs_last_v)
                 toolhead.move([nX, nY] + thpos[2:], abs_v)
             else:
                 toolhead.move([nX, nY] + thpos[2:], max(abs_v, abs_last_v))
