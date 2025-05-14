@@ -16,7 +16,6 @@ class ZThermalAdjuster:
         self.printer = config.get_printer()
         self.gcode = self.printer.lookup_object('gcode')
         self.lock = threading.Lock()
-        self.config = config
 
         # Get config parameters, convert to SI units where necessary
         self.temp_coeff = config.getfloat('temp_coeff', minval=-1, maxval=1,
