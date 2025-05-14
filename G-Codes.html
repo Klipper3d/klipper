@@ -5030,8 +5030,10 @@ will be calibrated. If not specified, the axis defaults to <code>'X'</code>.</li
 [ADAPTIVE_MARGIN=&lt;value&gt;]</code>: This command probes the bed using generated points
 specified by the parameters in the config. After probing, a mesh is generated
 and z-movement is adjusted according to the mesh.
+The mesh is immediately active after successful completion of <code>BED_MESH_CALIBRATE</code>.
 The mesh will be saved into a profile specified by the <code>PROFILE</code> parameter,
-or <code>default</code> if unspecified.
+or <code>default</code> if unspecified. If ADAPTIVE=1 is specified then the profile
+name will begin with <code>adaptive-</code> and should not be saved for reuse.
 See the PROBE command for details on the optional probe parameters. If
 METHOD=manual is specified then the manual probing tool is activated - see the
 MANUAL_PROBE command above for details on the additional commands available
