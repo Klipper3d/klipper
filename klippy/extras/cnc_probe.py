@@ -1,5 +1,3 @@
-import stepper
-
 PROBE_REST_TIME = .001
 
 class CncProbe:
