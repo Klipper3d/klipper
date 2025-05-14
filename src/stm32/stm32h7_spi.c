@@ -1,6 +1,6 @@
 // SPI functions on STM32H7
 //
-// Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2019-2025  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -100,12 +100,6 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
     while ((pclk >> (div + 1)) > rate && div < 7)
         div++;
 
-    spi->CFG1 |= (div << SPI_CFG1_MBR_Pos) | (7 << SPI_CFG1_DSIZE_Pos);
-    CLEAR_BIT(spi->CFG1, SPI_CFG1_CRCSIZE);
-    spi->CFG2 |= ((mode << SPI_CFG2_CPHA_Pos) | SPI_CFG2_MASTER | SPI_CFG2_SSM
-                   | SPI_CFG2_AFCNTR | SPI_CFG2_SSOE);
-    spi->CR1 |= SPI_CR1_SSI;
-
     return (struct spi_config){ .spi = spi, .div = div, .mode = mode };
 }
 
@@ -115,12 +109,12 @@ spi_prepare(struct spi_config config)
     uint32_t div = config.div;
     uint32_t mode = config.mode;
     SPI_TypeDef *spi = config.spi;
-    // Reload frequency
-    spi->CFG1 = (spi->CFG1 & ~SPI_CFG1_MBR_Msk);
-    spi->CFG1 |= (div << SPI_CFG1_MBR_Pos);
-    // Reload mode
-    spi->CFG2 = (spi->CFG2 & ~SPI_CFG2_CPHA_Msk);
-    spi->CFG2 |= (mode << SPI_CFG2_CPHA_Pos);
+
+    // Load frequency
+    spi->CFG1 = (div << SPI_CFG1_MBR_Pos) | (7 << SPI_CFG1_DSIZE_Pos);
+    // Load mode
+    spi->CFG2 = ((mode << SPI_CFG2_CPHA_Pos) | SPI_CFG2_MASTER | SPI_CFG2_SSM
+                 | SPI_CFG2_AFCNTR | SPI_CFG2_SSOE);
 }
 
 void
@@ -130,14 +124,15 @@ spi_transfer(struct spi_config config, uint8_t receive_data,
     uint8_t rdata = 0;
     SPI_TypeDef *spi = config.spi;
 
-    MODIFY_REG(spi->CR2, SPI_CR2_TSIZE, len);
+    spi->CR2 = len << SPI_CR2_TSIZE_Pos;
     // Enable SPI and start transfer, these MUST be set in this sequence
-    SET_BIT(spi->CR1, SPI_CR1_SPE);
-    SET_BIT(spi->CR1, SPI_CR1_CSTART);
+    spi->CR1 = SPI_CR1_SSI | SPI_CR1_SPE;
+    spi->CR1 = SPI_CR1_SSI | SPI_CR1_CSTART | SPI_CR1_SPE;
 
     while (len--) {
         writeb((void *)&spi->TXDR, *data);
-        while((spi->SR & (SPI_SR_RXWNE | SPI_SR_RXPLVL)) == 0);
+        while ((spi->SR & (SPI_SR_RXWNE | SPI_SR_RXPLVL)) == 0)
+            ;
         rdata = readb((void *)&spi->RXDR);
 
         if (receive_data) {
@@ -146,9 +141,10 @@ spi_transfer(struct spi_config config, uint8_t receive_data,
         data++;
     }
 
-    while ((spi->SR & SPI_SR_EOT) == 0);
+    while ((spi->SR & SPI_SR_EOT) == 0)
+        ;
 
     // Clear flags and disable SPI
-    SET_BIT(spi->IFCR, 0xFFFFFFFF);
-    CLEAR_BIT(spi->CR1, SPI_CR1_SPE);
+    spi->IFCR = 0xFFFFFFFF;
+    spi->CR1 = SPI_CR1_SSI;
 }
