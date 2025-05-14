@@ -35,14 +35,17 @@ static uint_fast8_t multiaxis_probe_event(struct timer *t)
 
 void command_config_multiaxis_probe(uint32_t *args)
 {
-    struct multiaxis_probe *e = oid_alloc(args[0], command_config_multiaxis_probe, sizeof(*e));
+    struct multiaxis_probe *e = oid_alloc(
+        args[0], command_config_multiaxis_probe, sizeof(*e));
     e->pin = gpio_in_setup(args[1], args[2]);
 }
-DECL_COMMAND(command_config_multiaxis_probe, "config_multiaxis_probe oid=%c pin=%c pull_up=%c");
+DECL_COMMAND(command_config_multiaxis_probe,
+"config_multiaxis_probe oid=%c pin=%c pull_up=%c");
 
 void command_multiaxis_probe_clear(uint32_t *args)
 {
-    struct multiaxis_probe *e = oid_lookup(args[0], command_config_multiaxis_probe);
+    struct multiaxis_probe *e = oid_lookup(
+        args[0], command_config_multiaxis_probe);
     e->is_probe_triggered = false;
     e->triggered_clock = 0;
     sched_del_timer(&e->time);
@@ -51,7 +54,8 @@ DECL_COMMAND(command_multiaxis_probe_clear, "multiaxis_probe_clear oid=%c");
 
 void command_multiaxis_probe_start(uint32_t *args)
 {
-    struct multiaxis_probe *e = oid_lookup(args[0], command_config_multiaxis_probe);
+    struct multiaxis_probe *e = oid_lookup(
+        args[0], command_config_multiaxis_probe);
     sched_del_timer(&e->time);
     e->time.waketime = args[1];
     e->time.func = multiaxis_probe_event;
@@ -62,7 +66,10 @@ void command_multiaxis_probe_start(uint32_t *args)
     e->triggered_clock = 0;
     sched_add_timer(&e->time);
 }
-DECL_COMMAND(command_multiaxis_probe_start, "multiaxis_probe_start oid=%c clock=%u rest_ticks=%u pin_value_on_probe_triggered=%c");
+DECL_COMMAND(
+    command_multiaxis_probe_start,
+    "multiaxis_probe_start oid=%c clock=%u
+    rest_ticks=%u pin_value_on_probe_triggered=%c");
 
 void command_multiaxis_probe_query_state(uint32_t *args)
 {
@@ -73,7 +80,10 @@ void command_multiaxis_probe_query_state(uint32_t *args)
     uint32_t triggered_clock = e->triggered_clock;
     irq_enable();
 
-    sendf("multiaxis_probe_state oid=%c triggered_clock=%u pin_value=%c is_probe_triggered=%c"
+    sendf(
+        "multiaxis_probe_state oid=%c triggered_clock=%u
+            pin_value=%c is_probe_triggered=%c"
           , oid, triggered_clock, gpio_in_read(e->pin), e->is_probe_triggered);
 }
-DECL_COMMAND(command_multiaxis_probe_query_state, "multiaxis_probe_query_state oid=%c");
+DECL_COMMAND(command_multiaxis_probe_query_state,
+"multiaxis_probe_query_state oid=%c");

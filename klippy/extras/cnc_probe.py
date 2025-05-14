@@ -6,7 +6,7 @@ class CncProbe:
         self.probes = []
 
         probe_pin = config.get('probe_pin')
-        ppins = self.printer.lookup_object('pins')        
+        ppins = self.printer.lookup_object('pins')
 
         self.mcu_multiaxis_probe = ppins.setup_pin('multiaxis_probe', probe_pin)
 
@@ -19,23 +19,27 @@ class CncProbe:
         self.speed = 25.
         self.speed_factor = 1. / 60.
         return
-    
+
     def _lookup_toolhead_pos(self, pos_time):
         toolhead = self.printer.lookup_object('toolhead')
         kin = toolhead.get_kinematics()
-        kin_spos = {s.get_name(): s.mcu_to_commanded_position(s.get_past_mcu_position(pos_time)) for s in kin.get_steppers()}
+        kin_spos = {s.get_name():
+                    s.mcu_to_commanded_position(
+                        s.get_past_mcu_position(pos_time))
+                     for s in kin.get_steppers()}
         return kin.calc_position(kin_spos)
-    
+
     def probe_end_move_condition_func(self):
         return self.mcu_multiaxis_probe.query_probe()[2]
 
     def probe_move(self, movepos, speed, stop_on_contact=True):
         toolhead = self.printer.lookup_object('toolhead')
-        x, y, z, e = movepos   
+        x, y, z, e = movepos
 
         # Enable probe
         print_time = toolhead.get_last_move_time()
-        self.mcu_multiaxis_probe.probe_start(print_time, PROBE_REST_TIME, stop_on_contact)
+        self.mcu_multiaxis_probe.probe_start(print_time,
+                                             PROBE_REST_TIME, stop_on_contact)
 
         # Move to desire position
         toolhead.move([x, y, z, e], speed)
@@ -47,7 +51,7 @@ class CncProbe:
         probe_query = self.mcu_multiaxis_probe.query_probe()
         ret = probe_query[2]
         trigger_time = probe_query[0]
-        
+
         # Clear probe
         self.mcu_multiaxis_probe.probe_clear()
 
@@ -59,7 +63,7 @@ class CncProbe:
 
         # Check if probe was triggered
         return ret
-    
+
     def cmd_G38_2(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.get_last_move_time()
@@ -72,12 +76,12 @@ class CncProbe:
         gcode_speed = gcmd.get_float('F', self.speed)
 
         target_pos = [x, y, z, e]
-        
+
         ret = self.probe_move(target_pos, gcode_speed)
         if ret == 0:
             gcmd.respond_info("Error : Probe not triggered")
         return
-    
+
     def cmd_G38_3(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.get_last_move_time()
@@ -90,10 +94,10 @@ class CncProbe:
         gcode_speed = gcmd.get_float('F', self.speed)
 
         target_pos = [x, y, z, e]
-        
+
         self.probe_move(target_pos, gcode_speed)
         return
-    
+
     def cmd_G38_4(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.get_last_move_time()
@@ -106,12 +110,12 @@ class CncProbe:
         gcode_speed = gcmd.get_float('F', self.speed)
 
         target_pos = [x, y, z, e]
-        
+
         ret = self.probe_move(target_pos, gcode_speed, False)
         if ret == 0:
             gcmd.respond_info("Error : Probe not triggered")
         return
-    
+
     def cmd_G38_5(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.get_last_move_time()
