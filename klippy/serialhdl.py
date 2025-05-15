@@ -5,7 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, threading, os
 import serial
-
+import errno
 import msgproto, chelper, util
 
 class error(Exception):
@@ -197,14 +197,14 @@ class SerialReader:
             except (OSError, IOError, serial.SerialException) as e:
                 if isinstance(e, serial.SerialException):
                     # Serial port not found
-                    if e.errno == 2:
+                    if e.errno == errno.ENOENT:
                         self.current_error_description = (
                             "The specified serial path for MCU '%s' does not "
                             "exist. Ensure the MCU is correctly flashed and "
                             "connected. Verify with \"ls /dev/serial/by-id/*\"."
                         ) % self.mcu_name
                     # Serial port already in use
-                    elif e.errno == 11:
+                    elif e.errno == errno.EAGAIN:
                         self.current_error_description = (
                             "Serial port already in use: '%s'. Are you sure "
                             "this serial port is not in use by another MCU "
