@@ -139,6 +139,16 @@ print board is not connected with USB to the host, due to some boards
 being able to feed power back to the board and stopping a flash from
 occurring.
 
+Please note, that most print boards that use SD cards for flash will
+implement some kind of flash loop protection when the sd card is left
+in place. There are various implementations of this, such as
+Creality/Sovol who use a unique filename system where a hash of the
+last filename is stored and wont be taken again in succession. BTT
+and some other aftermarket manafacturers use the same filename, ie
+"firmware.bin" but flashing changes the extension to be .cur or .CUR
+It is important to find out which system the board is using to make
+sure issues are kept to a minimum.
+
 For common micro-controllers using Atmega chips, for example the 2560,
 the code can be flashed with something
 similar to:
