@@ -3,9 +3,8 @@
 # Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, threading, os
+import logging, threading, os, errno
 import serial
-import errno
 import msgproto, chelper, util
 
 class error(Exception):
