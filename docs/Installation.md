@@ -140,14 +140,23 @@ being able to feed power back to the board and stopping a flash from
 occurring.
 
 Please note, that most print boards that use SD cards for flash will
-implement some kind of flash loop protection when the sd card is left
-in place. There are various implementations of this, such as
-Creality/Sovol who use a unique filename system where a hash of the
-last filename is stored and wont be taken again in succession. BTT
-and some other aftermarket manafacturers use the same filename, ie
-"firmware.bin" but flashing changes the extension to be .cur or .CUR
-It is important to find out which system the board is using to make
-sure issues are kept to a minimum.
+implement some kind of flash loop protection for when the sd card is left
+in place. There are two common methods:
+
+Filename Change Required (e.g., Creality, Sovol):
+
+These boards require the firmware file to have a different name each
+time you flash (for example, firmware1.bin, firmware2.bin, etc.).
+If you reuse the same filename, the board may ignore it and not update.
+
+Automatic File Renaming (e.g., Bigtreetech):
+
+Other boards allow using the same filename, commonly firmware.bin,
+but after flashing, the board renames the file to firmware.cur.
+This helps indicate the firmware was successfully flashed and prevents
+it from flashing again on the next startup.
+
+Before flashing, make sure to check which behavior your board follows.
 
 For common micro-controllers using Atmega chips, for example the 2560,
 the code can be flashed with something
