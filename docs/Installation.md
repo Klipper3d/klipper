@@ -143,13 +143,13 @@ Please note, that most print boards that use SD cards for flash will
 implement some kind of flash loop protection for when the sd card is left
 in place. There are two common methods:
 
-Filename Change Required (e.g., Creality, Sovol):
+Filename Change Required (usually "stock" print boards):
 
 These boards require the firmware file to have a different name each
 time you flash (for example, firmware1.bin, firmware2.bin, etc.).
 If you reuse the same filename, the board may ignore it and not update.
 
-Automatic File Renaming (e.g., Bigtreetech):
+Automatic File Renaming (usually aftermarket print boards:
 
 Other boards allow using the same filename, commonly firmware.bin,
 but after flashing, the board renames the file to firmware.cur.
