@@ -35,6 +35,25 @@ move_integrate_weighted(double base, double start_v, double half_accel
     return (wgt_ext_avg - time_offset * iext_avg) * (end - start);
 }
 
+inline double
+move_no_accel_integrate_weighted(double base, double start_v
+                                 , double start, double end, double time_offset)
+{
+    // Calculate the definitive integral of the motion formula:
+    //   position(t) = base + t * start_v
+    double half_v = .5 * start_v;
+    double start_p_end = start + end;
+    double iext_avg = base + half_v * start_p_end;
+
+    // Calculate the definitive integral of time weighted position:
+    //   weighted_position(t) = t * (base + t * start_v)
+    double half_b = .5 * base, third_v = (1. / 3.) * start_v;
+    double start_p_end_2 = start_p_end * start + end * end;
+    double wgt_ext_avg = half_b * start_p_end + third_v * start_p_end_2;
+
+    return (wgt_ext_avg - time_offset * iext_avg) * (end - start);
+}
+
 static inline double
 move_velocity_integrate(struct move *m, int axis, double start, double end
                         , double time_offset)
@@ -45,8 +64,8 @@ move_velocity_integrate(struct move *m, int axis, double start, double end
         end = m->move_t;
     // Calculate definitive integral
     double axis_r = m->axes_r.axis[axis - 'x'];
-    return axis_r * move_integrate_weighted(
-            m->start_v, 2. * m->half_accel, 0., start, end, time_offset);
+    return axis_r * move_no_accel_integrate_weighted(
+            m->start_v, 2. * m->half_accel, start, end, time_offset);
 }
 
 inline double
