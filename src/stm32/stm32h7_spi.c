@@ -122,6 +122,8 @@ spi_transfer(struct spi_config config, uint8_t receive_data,
              uint8_t len, uint8_t *data)
 {
     uint8_t rdata = 0;
+    uint8_t* wptr = data;
+    uint8_t* end = data + len;
     SPI_TypeDef *spi = config.spi;
 
     spi->CR2 = len << SPI_CR2_TSIZE_Pos;
@@ -129,10 +131,12 @@ spi_transfer(struct spi_config config, uint8_t receive_data,
     spi->CR1 = SPI_CR1_SSI | SPI_CR1_SPE;
     spi->CR1 = SPI_CR1_SSI | SPI_CR1_CSTART | SPI_CR1_SPE;
 
-    while (len--) {
-        writeb((void *)&spi->TXDR, *data);
-        while ((spi->SR & (SPI_SR_RXWNE | SPI_SR_RXPLVL)) == 0)
-            ;
+    while (data < end) {
+        uint32_t sr = spi->SR & (SPI_SR_TXP | SPI_SR_RXP);
+        if ((sr == SPI_SR_TXP) && wptr < end)
+            writeb((void*)&spi->TXDR, *wptr++);
+        if (!(sr & SPI_SR_RXP))
+            continue;
         rdata = readb((void *)&spi->RXDR);
 
         if (receive_data) {
