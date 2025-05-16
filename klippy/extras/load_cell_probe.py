@@ -540,19 +540,49 @@ class TappingMove:
         }
 
 
+# Probe `activate_gcode` and `deactivate_gcode` support
+class ProbeActivationHelper:
+    def __init__(self, config):
+        self._printer = config.get_printer()
+        gcode_macro = self._printer.load_object(config, 'gcode_macro')
+        self._activate_gcode = gcode_macro.load_template(
+            config, 'activate_gcode', '')
+        self._deactivate_gcode = gcode_macro.load_template(
+            config, 'deactivate_gcode', '')
+
+    def activate_probe(self):
+        toolhead = self._printer.lookup_object('toolhead')
+        start_pos = toolhead.get_position()
+        self._activate_gcode.run_gcode_from_command()
+        if toolhead.get_position()[:3] != start_pos[:3]:
+            raise self._printer.command_error(
+                "Toolhead moved during probe activate_gcode script")
+
+    def deactivate_probe(self):
+        toolhead = self._printer.lookup_object('toolhead')
+        start_pos = toolhead.get_position()
+        self._deactivate_gcode.run_gcode_from_command()
+        if toolhead.get_position()[:3] != start_pos[:3]:
+            raise self._printer.command_error(
+                "Toolhead moved during probe deactivate_gcode script")
+
+
 # ProbeSession that implements Tap logic
 class TapSession:
     def __init__(self, config, tapping_move, probe_params_helper):
         self._printer = config.get_printer()
         self._tapping_move = tapping_move
         self._probe_params_helper = probe_params_helper
+        self._activator = ProbeActivationHelper(config)
         # Session state
         self._results = []
 
     def start_probe_session(self, gcmd):
+        self._activator.activate_probe()
         return self
 
     def end_probe_session(self):
+        self._activator.deactivate_probe()
         self._results = []
 
     # probe until a single good sample is returned or retries are exhausted
