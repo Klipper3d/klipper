@@ -101,6 +101,10 @@ class InputShaper:
                                desc=self.cmd_SET_INPUT_SHAPER_help)
     def get_shapers(self):
         return self.shapers
+    def init_for_steppers(self, steppers):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        for s in steppers:
+            self._get_input_shaper_stepper_kinematics(s)
     def connect(self):
         self.toolhead = self.printer.lookup_object("toolhead")
         # Configure initial values
