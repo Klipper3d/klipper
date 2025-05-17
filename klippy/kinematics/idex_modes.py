@@ -18,7 +18,7 @@ class DualCarriages:
                  safe_dist={}):
         self.printer = printer
         self.axes = axes
-        self._init_steppers(primary_rails + dual_rails)
+        steppers = self._init_steppers(primary_rails + dual_rails)
         self.primary_rails = [
                 DualCarriagesRail(c, dual_rails[i], axes[i], active=True)
                 for i, c in enumerate(primary_rails)]
@@ -28,6 +28,7 @@ class DualCarriages:
         self.dc_rails = collections.OrderedDict(
                 [(c.rail.get_name(short=True), c)
                  for c in self.primary_rails + self.dual_rails])
+        self._init_shapers(steppers)
         self.saved_states = {}
         self.safe_dist = {}
         for i, dc in enumerate(dual_rails):
@@ -75,6 +76,13 @@ class DualCarriages:
             self.dc_stepper_kinematics.append(sk)
             self.orig_stepper_kinematics.append(orig_sk)
             s.set_stepper_kinematics(sk)
+        return steppers
+    def _init_shapers(self, steppers):
+        input_shaper = self.printer.lookup_object("input_shaper", None)
+        if input_shaper is not None:
+            # Make sure to initialize input shaper stepper kinematics
+            # before modifying IDEX stepper kinematics.
+            input_shaper.init_for_steppers(steppers)
     def get_axes(self):
         return self.axes
     def get_primary_rail(self, axis):
@@ -213,8 +221,6 @@ class DualCarriages:
             dc.activate(mode, toolhead.get_position())
         kin.update_limits(axis, self.get_kin_range(toolhead, mode, axis))
     def _handle_ready(self):
-        # Apply the transform later during Klipper initialization to make sure
-        # that input shaping can pick up the correct stepper kinematic flags.
         for dc_rail in self.dc_rails.values():
             dc_rail.apply_transform()
     cmd_SET_DUAL_CARRIAGE_help = "Configure the dual carriages mode"
