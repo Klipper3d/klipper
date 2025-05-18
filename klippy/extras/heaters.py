@@ -72,13 +72,20 @@ class Heater:
                                    desc=self.cmd_SET_HEATER_TEMPERATURE_help)
         self.printer.register_event_handler("klippy:shutdown",
                                             self._handle_shutdown)
-    def set_pwm(self, read_time, value):
-        if self.target_temp <= 0. or read_time > self.verify_mainthread_time:
-            value = 0.
-        if ((read_time < self.next_pwm_time or not self.last_pwm_value)
-            and abs(value - self.last_pwm_value) < 0.05):
-            # No significant change in value - can suppress update
-            return
+
+        self.override_pwm = False
+
+    def set_pwm(self, read_time, value, override=False):
+        if override:
+            self.override_pwm = True
+            self.target_temp = 0.
+        else:
+            if self.target_temp <= 0. or read_time > self.verify_mainthread_time:
+                value = 0.
+            if ((read_time < self.next_pwm_time or not self.last_pwm_value)
+                and abs(value - self.last_pwm_value) < 0.05):
+                # No significant change in value - can suppress update
+                return
         pwm_time = read_time + self.pwm_delay
         self.next_pwm_time = pwm_time + 0.75 * MAX_HEAT_TIME
         self.last_pwm_value = value
@@ -86,17 +93,22 @@ class Heater:
         #logging.debug("%s: pwm=%.3f@%.3f (from %.3f@%.3f [%.3f])",
         #              self.name, value, pwm_time,
         #              self.last_temp, self.last_temp_time, self.target_temp)
+
     def temperature_callback(self, read_time, temp):
         with self.lock:
-            time_diff = read_time - self.last_temp_time
-            self.last_temp = temp
-            self.last_temp_time = read_time
-            self.control.temperature_update(read_time, temp, self.target_temp)
-            temp_diff = temp - self.smoothed_temp
-            adj_time = min(time_diff * self.inv_smooth_time, 1.)
-            self.smoothed_temp += temp_diff * adj_time
-            self.can_extrude = (self.smoothed_temp >= self.min_extrude_temp)
+            if self.override_pwm:
+                self.set_pwm(read_time, self.last_pwm_value)
+            else:
+                time_diff = read_time - self.last_temp_time
+                self.last_temp = temp
+                self.last_temp_time = read_time
+                self.control.temperature_update(read_time, temp, self.target_temp)
+                temp_diff = temp - self.smoothed_temp
+                adj_time = min(time_diff * self.inv_smooth_time, 1.)
+                self.smoothed_temp += temp_diff * adj_time
+                self.can_extrude = (self.smoothed_temp >= self.min_extrude_temp)
         #logging.debug("temp: %.3f %f = %f", read_time, temp)
+
     def _handle_shutdown(self):
         self.verify_mainthread_time = -999.
     # External commands
@@ -114,6 +126,7 @@ class Heater:
                 "Requested temperature (%.1f) out of range (%.1f:%.1f)"
                 % (degrees, self.min_temp, self.max_temp))
         with self.lock:
+            self.override_pwm = False
             self.target_temp = degrees
     def get_temp(self, eventtime):
         print_time = self.mcu_pwm.get_mcu().estimated_print_time(eventtime) - 5.
@@ -123,7 +136,7 @@ class Heater:
             return self.smoothed_temp, self.target_temp
     def check_busy(self, eventtime):
         with self.lock:
-            return self.control.check_busy(
+            return self.override_pwm or self.control.check_busy(
                 eventtime, self.smoothed_temp, self.target_temp)
     def set_control(self, control):
         with self.lock:
