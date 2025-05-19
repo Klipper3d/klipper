@@ -3,7 +3,13 @@
 # Copyright (C) 2016-2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, logging, threading
+import logging
+import os
+import threading
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from heaters_scheduler import HeatersScheduler
 
 
 ######################################################################
@@ -150,6 +156,10 @@ class Heater:
     cmd_SET_HEATER_TEMPERATURE_help = "Sets a heater temperature"
     def cmd_SET_HEATER_TEMPERATURE(self, gcmd):
         temp = gcmd.get_float('TARGET', 0.)
+
+        heaters_scheduler: 'HeatersScheduler' = self.printer.lookup_object('heaters_scheduler')
+        heaters_scheduler.pause()
+
         pheaters = self.printer.lookup_object('heaters')
         pheaters.set_temperature(self, temp)
 
