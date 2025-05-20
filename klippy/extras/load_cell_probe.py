@@ -567,27 +567,16 @@ class TapSession:
 
 
 class LoadCellProbeCommands:
-    def __init__(self, config, load_cell_probing_move, tapping_move,
-            config_helper):
+    def __init__(self, config, load_cell_probing_move):
         self._printer = config.get_printer()
         self._load_cell_probing_move = load_cell_probing_move
-        self._tapping_move = tapping_move
-        self._config_helper = config_helper
         self._register_commands()
 
     def _register_commands(self):
         # Register commands
         gcode = self._printer.lookup_object('gcode')
-        # for now there can only be 1 probe so no need for mux_command
-        gcode.register_command("LOAD_CELL_TAP", self.cmd_LOAD_CELL_TAP,
-            desc=self.cmd_LOAD_CELL_TAP_help)
         gcode.register_command("LOAD_CELL_TEST_TAP",
             self.cmd_LOAD_CELL_TEST_TAP, desc=self.cmd_LOAD_CELL_TEST_TAP_help)
-
-    cmd_LOAD_CELL_TAP_help = "Perform a single tap"
-
-    def cmd_LOAD_CELL_TAP(self, gcmd):
-        self._tapping_move.run_tap(gcmd)
 
     cmd_LOAD_CELL_TEST_TAP_help = "Tap the load cell probe to verify operation"
 
@@ -645,8 +634,7 @@ class LoadCellPrinterProbe:
         self._probe_session = probe.ProbeSessionHelper(config,
             self._param_helper, tap_session.start_probe_session)
         # printer integration
-        LoadCellProbeCommands(config, load_cell_probing_move,
-            self._tapping_move, config_helper)
+        LoadCellProbeCommands(config, load_cell_probing_move)
         probe.ProbeVirtualEndstopDeprecation(config)
         self._printer.add_object('probe', self)
 
