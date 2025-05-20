@@ -12,7 +12,6 @@ from . import bus
 # SensorBase
 ######################################################################
 
-REPORT_TIME = 0.300
 MAX_INVALID_COUNT = 3
 
 class SensorBase:
@@ -22,6 +21,7 @@ class SensorBase:
         self._callback = None
         self.min_sample_value = self.max_sample_value = 0
         self._report_clock = 0
+        self._report_time = config.getfloat("tc_report_time", default=0.3)
         self.spi = bus.MCU_SPI_from_config(
             config, spi_mode, pin_option="sensor_pin", default_speed=4000000)
         if config_cmd is not None:
@@ -39,13 +39,13 @@ class SensorBase:
     def setup_callback(self, cb):
         self._callback = cb
     def get_report_time_delta(self):
-        return REPORT_TIME
+        return self._report_time
     def _build_config(self):
         self.mcu.add_config_cmd(
             "config_thermocouple oid=%u spi_oid=%u thermocouple_type=%s" % (
                 self.oid, self.spi.get_oid(), self.chip_type))
         clock = self.mcu.get_query_slot(self.oid)
-        self._report_clock = self.mcu.seconds_to_clock(REPORT_TIME)
+        self._report_clock = self.mcu.seconds_to_clock(self._report_time)
         self.mcu.add_config_cmd(
             "query_thermocouple oid=%u clock=%u rest_ticks=%u"
             " min_value=%u max_value=%u max_invalid_count=%u" % (
