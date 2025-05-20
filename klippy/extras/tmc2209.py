@@ -73,7 +73,9 @@ class TMC2209:
         self.get_status = cmdhelper.get_status
         # Setup basic register values
         self.fields.set_field("mstep_reg_select", True)
-        tmc.TMCStealthchopHelper(config, self.mcu_tmc)
+        stealthchop_helper = tmc.TMCStealthchopHelper(config, self.mcu_tmc)
+        self.get_stealthchop_threshold = \
+                stealthchop_helper.get_velocity_threshold
         tmc.TMCVcoolthrsHelper(config, self.mcu_tmc)
         # Allow other registers to be set from the config
         set_config_field = self.fields.set_config_field

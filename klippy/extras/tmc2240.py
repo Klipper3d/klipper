@@ -368,7 +368,9 @@ class TMC2240:
         # Setup basic register values
         tmc.TMCWaveTableHelper(config, self.mcu_tmc)
         self.fields.set_config_field(config, "offset_sin90", 0)
-        tmc.TMCStealthchopHelper(config, self.mcu_tmc)
+        stealthchop_helper = tmc.TMCStealthchopHelper(config, self.mcu_tmc)
+        self.get_stealthchop_threshold = \
+                stealthchop_helper.get_velocity_threshold
         tmc.TMCVcoolthrsHelper(config, self.mcu_tmc)
         tmc.TMCVhighHelper(config, self.mcu_tmc)
         # Allow other registers to be set from the config
