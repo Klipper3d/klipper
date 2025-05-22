@@ -278,3 +278,8 @@ itersolve_get_commanded_pos(struct stepper_kinematics *sk)
 {
     return sk->commanded_pos;
 }
+void itersolve_set_data(struct stepper_kinematics *sk, void *data) {
+    if (sk) {
+        sk->data = data;
+    }
+}    //add
