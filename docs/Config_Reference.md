@@ -2482,6 +2482,27 @@ carriages: u-y
 ...
 ```
 
+`[dual_carriage]` requires special configuration for the input shaper.
+In general, it is necessary to run input shaper calibration twice -
+for the `dual_carriage` and its `primary_carriage` for the axis they
+share. Then the input shaper can be configured as follows, assuming the
+example above:
+```
+[input_shaper]
+# Intentionally empty
+
+[delayed_gcode init_shaper]
+initial_duration: 0.1
+gcode:
+  SET_DUAL_CARRIAGE CARRIAGE=u
+  SET_INPUT_SHAPER SHAPER_TYPE_X=<dual_carriage_x_shaper> SHAPER_FREQ_X=<dual_carriage_x_freq> SHAPER_TYPE_Y=<y_shaper> SHAPER_FREQ_Y=<y_freq>
+  SET_DUAL_CARRIAGE CARRIAGE=x
+  SET_INPUT_SHAPER SHAPER_TYPE_X=<primary_carriage_x_shaper> SHAPER_FREQ_X=<primary_carriage_x_freq> SHAPER_TYPE_Y=<y_shaper> SHAPER_FREQ_Y=<y_freq>
+```
+Note that `SHAPER_TYPE_Y` and `SHAPER_FREQ_Y` must be the same in both
+commands in this case, since the same motors drive Y axis when either
+of the `x` and `u` carriages are active.
+
 It is worth noting that `generic_cartesian` kinematic can support two
 dual carriages for X and Y axes. For reference, see for instance a
 [sample](../config/sample-corexyuv.cfg) of CoreXYUV configuration.
