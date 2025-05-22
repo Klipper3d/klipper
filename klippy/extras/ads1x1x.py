@@ -321,7 +321,6 @@ class ADS1X1X_pin:
     def __init__(self, chip, config):
         self.mcu = chip.mcu
         self.chip = chip
-        self.config = config
 
         self.invalid_count = 0
 

@@ -28,6 +28,8 @@ class ConfigWrapper:
         return self.section
     def _get_wrapper(self, parser, option, default, minval=None, maxval=None,
                      above=None, below=None, note_valid=True):
+        if self.access_tracking.get('#finished') is not None:
+            raise error("Internal error! 'config' access after config phase")
         if not self.fileconfig.has_option(self.section, option):
             if default is not sentinel:
                 if note_valid and default is not None:
@@ -450,6 +452,7 @@ class ConfigValidate:
         # Clear tracking state
         self.access_tracking.clear()
         self.autosave_options.clear()
+        self.access_tracking['#finished'] = 1
     def _build_status_settings(self):
         self.status_settings = {}
         for (section, option), value in self.access_tracking.items():
