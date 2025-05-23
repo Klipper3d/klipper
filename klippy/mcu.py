@@ -561,7 +561,11 @@ class MCU:
             self._name = self._name[4:]
         # Serial port
         wp = "mcu '%s': " % (self._name)
-        self._serial = serialhdl.SerialReader(self._reactor, warn_prefix=wp)
+        self._serial = serialhdl.SerialReader(
+            self._reactor,
+            warn_prefix=wp,
+            mcu_name=self._name
+        )
         self._baud = 0
         self._canbus_iface = None
         canbus_uuid = config.get('canbus_uuid', None)
@@ -999,8 +1003,11 @@ class MCU:
         self._is_timeout = True
         logging.info("Timeout with MCU '%s' (eventtime=%f)",
                      self._name, eventtime)
-        self._printer.invoke_shutdown("Lost communication with MCU '%s'" % (
-            self._name,))
+        error_message = (
+            "Lost communication with MCU '%s'. Check USB/CAN connection."
+        ) % self._name
+        self._serial.current_error_description = error_message
+        self._printer.invoke_shutdown(error_message)
     # Misc external commands
     def is_fileoutput(self):
         return self._printer.get_start_args().get('debugoutput') is not None
