@@ -145,6 +145,9 @@ class LIS2DW:
                     "This is generally indicative of connection problems\n"
                     "(e.g. faulty wiring) or a faulty lis2dw chip."
                     % (dev_id, LIS2DW_DEV_ID))
+            if self.bus_type == SPI_SERIAL_TYPE:
+                # Disable I2C
+                self.set_reg(REG_LIS2DW_CTRL_REG2_ADDR, 0x06)
             # Setup chip in requested query rate
             # ODR/2, +-16g, low-pass filter, Low-noise abled
             self.set_reg(REG_LIS2DW_CTRL_REG6_ADDR, 0x34)
