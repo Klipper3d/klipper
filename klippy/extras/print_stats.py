@@ -3,6 +3,7 @@
 # Copyright (C) 2020  Eric Callahan <arksine.code@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import logging
 
 class PrintStats:
     def __init__(self, config):
@@ -15,6 +16,11 @@ class PrintStats:
         self.gcode.register_command(
             "SET_PRINT_STATS_INFO", self.cmd_SET_PRINT_STATS_INFO,
             desc=self.cmd_SET_PRINT_STATS_INFO_help)
+        printer.register_event_handler("extruder:activate_extruder",
+                                       self._handle_activate_extruder)
+    def _handle_activate_extruder(self):
+        gc_status = self.gcode_move.get_status()
+        self.last_epos = gc_status['position'].e
     def _update_filament_usage(self, eventtime):
         gc_status = self.gcode_move.get_status(eventtime)
         cur_epos = gc_status['position'].e
