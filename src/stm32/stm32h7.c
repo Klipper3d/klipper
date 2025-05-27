@@ -86,123 +86,100 @@ DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PH0,PH1");
 static void
 clock_setup(void)
 {
-#if !CONFIG_MACH_STM32H723
-    // Ensure USB OTG ULPI is not enabled
-    CLEAR_BIT(RCC->AHB1ENR, RCC_AHB1ENR_USB2OTGHSULPIEN);
-    CLEAR_BIT(RCC->AHB1LPENR, RCC_AHB1LPENR_USB2OTGHSULPILPEN);
-#endif
-    // Set this despite correct defaults.
-    // "The software has to program the supply configuration in PWR control
-    // register 3" (pg. 259)
-    // Only a single write is allowed (pg. 304)
-    PWR->CR3 = (PWR->CR3 | PWR_CR3_LDOEN) & ~(PWR_CR3_BYPASS | PWR_CR3_SCUEN);
+    // Enable low dropout regulator
+    PWR->CR3 = PWR_CR3_LDOEN;
     while (!(PWR->CSR1 & PWR_CSR1_ACTVOSRDY))
         ;
-    // (HSE 25mhz) /DIVM1(5) (pll_base 5Mhz) *DIVN1(192) (pll_freq 960Mhz)
-    // /DIVP1(2) (SYSCLK 480Mhz)
+
+    // Setup pll1 frequency
     uint32_t pll_base = CONFIG_STM32_CLOCK_REF_25M ? 5000000 : 4000000;
-    // Only even dividers (DIVP1) are allowed
-    uint32_t pll_freq = CONFIG_CLOCK_FREQ * 2;
+    uint32_t pll_freq = CONFIG_CLOCK_FREQ * (CONFIG_MACH_STM32H723 ? 1 : 2);
+    uint32_t rcc_cr = RCC_CR_HSION;
     if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
         // Configure PLL from external crystal (HSE)
-        RCC->CR |= RCC_CR_HSEON;
-        while(!(RCC->CR & RCC_CR_HSERDY))
+        RCC->CR = rcc_cr = rcc_cr | RCC_CR_HSEON;
+        while (!(RCC->CR & RCC_CR_HSERDY))
             ;
-        MODIFY_REG(RCC->PLLCKSELR, RCC_PLLCKSELR_PLLSRC_Msk,
-                                   RCC_PLLCKSELR_PLLSRC_HSE);
-        MODIFY_REG(RCC->PLLCKSELR, RCC_PLLCKSELR_DIVM1_Msk,
-            (CONFIG_CLOCK_REF_FREQ/pll_base) << RCC_PLLCKSELR_DIVM1_Pos);
+        RCC->PLLCKSELR = RCC_PLLCKSELR_PLLSRC_HSE
+            | ((CONFIG_CLOCK_REF_FREQ/pll_base) << RCC_PLLCKSELR_DIVM1_Pos);
     } else {
         // Configure PLL from internal 64Mhz oscillator (HSI)
         // HSI frequency of 64Mhz is integer divisible with 4Mhz
         pll_base = 4000000;
-        MODIFY_REG(RCC->PLLCKSELR, RCC_PLLCKSELR_PLLSRC_Msk,
-                                   RCC_PLLCKSELR_PLLSRC_HSI);
-        MODIFY_REG(RCC->PLLCKSELR, RCC_PLLCKSELR_DIVM1_Msk,
-          (64000000/pll_base) << RCC_PLLCKSELR_DIVM1_Pos);
+        RCC->PLLCKSELR = RCC_PLLCKSELR_PLLSRC_HSI
+            | ((64000000/pll_base) << RCC_PLLCKSELR_DIVM1_Pos);
     }
     // Set input frequency range of PLL1 according to pll_base
     // 3 = 8-16Mhz, 2 = 4-8Mhz
-    MODIFY_REG(RCC->PLLCFGR, RCC_PLLCFGR_PLL1RGE_Msk, RCC_PLLCFGR_PLL1RGE_2);
-    // Disable unused PLL1 outputs
-    MODIFY_REG(RCC->PLLCFGR, RCC_PLLCFGR_DIVR1EN_Msk, 0);
-    // Enable PLL1Q and set to 100MHz for SPI 1,2,3
-    MODIFY_REG(RCC->PLLCFGR, RCC_PLLCFGR_DIVQ1EN, RCC_PLLCFGR_DIVQ1EN);
-    MODIFY_REG(RCC->PLL1DIVR, RCC_PLL1DIVR_Q1,
-        (pll_freq / FREQ_PERIPH - 1) << RCC_PLL1DIVR_Q1_Pos);
-    // This is necessary, default is not 1!
-    MODIFY_REG(RCC->PLLCFGR, RCC_PLLCFGR_DIVP1EN_Msk, RCC_PLLCFGR_DIVP1EN);
+    RCC->PLLCFGR = (2 << RCC_PLLCFGR_PLL1RGE_Pos)
+        // Enable PLL1Q (used by some peripherals)
+        | RCC_PLLCFGR_DIVQ1EN
+        // Enable PLL1P (for cpu clock)
+        | RCC_PLLCFGR_DIVP1EN;
     // Set multiplier DIVN1 and post divider DIVP1
-    // 001 = /2, 010 = not allowed, 0011 = /4 ...
-    MODIFY_REG(RCC->PLL1DIVR, RCC_PLL1DIVR_N1_Msk,
-        (pll_freq/pll_base - 1) << RCC_PLL1DIVR_N1_Pos);
-    MODIFY_REG(RCC->PLL1DIVR, RCC_PLL1DIVR_P1_Msk,
-        (pll_freq/CONFIG_CLOCK_FREQ - 1) << RCC_PLL1DIVR_P1_Pos);
+    RCC->PLL1DIVR = ((pll_freq/pll_base - 1) << RCC_PLL1DIVR_N1_Pos)
+        // Set PLL1Q frequency (some peripherals directly use pll1_q_ck)
+        | ((pll_freq/FREQ_PERIPH - 1) << RCC_PLL1DIVR_Q1_Pos)
+        // Set PLL1P cpu clock frequency
+        | ((pll_freq/CONFIG_CLOCK_FREQ - 1) << RCC_PLL1DIVR_P1_Pos);
 
-    // Pwr
-    MODIFY_REG(PWR->D3CR, PWR_D3CR_VOS_Msk, PWR_D3CR_VOS);
-    while (!(PWR->D3CR & PWR_D3CR_VOSRDY))
-        ;
-
-    // Enable VOS0 (overdrive)
-    if (CONFIG_CLOCK_FREQ > 400000000) {
-        RCC->APB4ENR |= RCC_APB4ENR_SYSCFGEN;
-#if !CONFIG_MACH_STM32H723
-        SYSCFG->PWRCR |= SYSCFG_PWRCR_ODEN;
-#else
-        PWR->CR3 |= PWR_CR3_BYPASS;
-#endif
+    // Enable VOS1 power mode (or VOS0 if freq>400Mhz)
+    if (CONFIG_MACH_STM32H723) {
+        PWR->D3CR = (CONFIG_CLOCK_FREQ > 400000000 ? 0 : 3) << PWR_D3CR_VOS_Pos;
         while (!(PWR->D3CR & PWR_D3CR_VOSRDY))
             ;
+    } else {
+        PWR->D3CR = 3 << PWR_D3CR_VOS_Pos;
+        while (!(PWR->D3CR & PWR_D3CR_VOSRDY))
+            ;
+        if (CONFIG_CLOCK_FREQ > 400000000) {
+            enable_pclock((uint32_t)SYSCFG);
+#ifdef SYSCFG_PWRCR_ODEN
+            SYSCFG->PWRCR |= SYSCFG_PWRCR_ODEN;
+#endif
+            while (!(PWR->D3CR & PWR_D3CR_VOSRDY))
+                ;
+        }
     }
 
     SCB_EnableICache();
     SCB_EnableDCache();
 
-    // Set flash latency according to clock frequency (pg.159)
+    // Set flash latency according to clock frequency
     uint32_t flash_acr_latency = (CONFIG_CLOCK_FREQ > 450000000) ?
         FLASH_ACR_LATENCY_4WS : FLASH_ACR_LATENCY_2WS;
-    MODIFY_REG(FLASH->ACR, FLASH_ACR_LATENCY_Msk, flash_acr_latency);
-    MODIFY_REG(FLASH->ACR, FLASH_ACR_WRHIGHFREQ_Msk, FLASH_ACR_WRHIGHFREQ_1);
+    FLASH->ACR = flash_acr_latency | (2 << FLASH_ACR_WRHIGHFREQ_Pos);
     while (!(FLASH->ACR & flash_acr_latency))
         ;
 
-    // Set HPRE, D1PPRE, D2PPRE, D2PPRE2, D3PPRE dividers
-    // 480MHz / 2 = 240MHz rcc_hclk3
-    MODIFY_REG(RCC->D1CFGR, RCC_D1CFGR_HPRE,    RCC_D1CFGR_HPRE_3);
-    // 240MHz / 2 = 120MHz rcc_pclk3
-    MODIFY_REG(RCC->D1CFGR, RCC_D1CFGR_D1PPRE,  RCC_D1CFGR_D1PPRE_DIV2);
-    // 240MHz / 2 = 120MHz rcc_pclk1
-    MODIFY_REG(RCC->D2CFGR, RCC_D2CFGR_D2PPRE1, RCC_D2CFGR_D2PPRE1_DIV2);
-    // 240MHz / 2 = 120MHz rcc_pclk2
-    MODIFY_REG(RCC->D2CFGR, RCC_D2CFGR_D2PPRE2, RCC_D2CFGR_D2PPRE2_DIV2);
-    // 240MHz / 2 = 120MHz rcc_pclk4
-    MODIFY_REG(RCC->D3CFGR, RCC_D3CFGR_D3PPRE,  RCC_D3CFGR_D3PPRE_DIV2);
+    // Set HPRE clock to div 2 (CONFIG_CLOCK_FREQ/2) and set
+    // peripheral clocks another div 2 (CONFIG_CLOCK_FREQ/4)
+    RCC->D1CFGR = RCC_D1CFGR_HPRE_DIV2 | RCC_D1CFGR_D1PPRE_DIV2;
+    RCC->D2CFGR = RCC_D2CFGR_D2PPRE1_DIV2 | RCC_D2CFGR_D2PPRE2_DIV2;
+    RCC->D3CFGR = RCC_D3CFGR_D3PPRE_DIV2;
 
     // Switch on PLL1
-    RCC->CR |= RCC_CR_PLL1ON;
+    RCC->CR = rcc_cr = rcc_cr | RCC_CR_PLL1ON;
     while (!(RCC->CR & RCC_CR_PLL1RDY))
         ;
 
     // Switch system clock source (SYSCLK) to PLL1
-    MODIFY_REG(RCC->CFGR, RCC_CFGR_SW_Msk, RCC_CFGR_SW_PLL1);
+    RCC->CFGR = RCC_CFGR_SW_PLL1;
     while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL1)
         ;
 
-    // Set the source of FDCAN clock
-    MODIFY_REG(RCC->D2CCIP1R, RCC_D2CCIP1R_FDCANSEL, RCC_D2CCIP1R_FDCANSEL_0);
+    // Set the source of FDCAN clock to pll1_q_ck
+    RCC->D2CCIP1R = 1 << RCC_D2CCIP1R_FDCANSEL_Pos;
 
-    // Configure HSI48 clock for USB
+    // Configure USB to use HSI48 clock
     if (CONFIG_USB) {
-        SET_BIT(RCC->CR, RCC_CR_HSI48ON);
-        while((RCC->CR & RCC_CR_HSI48RDY) == 0);
-        SET_BIT(RCC->APB1HENR, RCC_APB1HENR_CRSEN);
-        SET_BIT(RCC->APB1HRSTR, RCC_APB1HRSTR_CRSRST);
-        CLEAR_BIT(RCC->APB1HRSTR, RCC_APB1HRSTR_CRSRST);
-        CLEAR_BIT(CRS->CFGR, CRS_CFGR_SYNCSRC);
-        SET_BIT(CRS->CR, CRS_CR_CEN | CRS_CR_AUTOTRIMEN);
-        CLEAR_BIT(RCC->D2CCIP2R, RCC_D2CCIP2R_USBSEL);
-        SET_BIT(RCC->D2CCIP2R, RCC_D2CCIP2R_USBSEL);
+        RCC->CR = rcc_cr = rcc_cr | RCC_CR_HSI48ON;
+        while ((RCC->CR & RCC_CR_HSI48RDY) == 0)
+            ;
+        enable_pclock((uint32_t)CRS);
+        CRS->CFGR &= ~CRS_CFGR_SYNCSRC;
+        CRS->CR = (CRS->CR & CRS_CR_TRIM) | CRS_CR_CEN | CRS_CR_AUTOTRIMEN;
+        RCC->D2CCIP2R = RCC_D2CCIP2R_USBSEL;
     }
 }
 
@@ -239,6 +216,7 @@ armcm_main(void)
     RCC->APB2ENR = 0x00000000;
     RCC->APB3ENR = 0x00000000;
     RCC->APB4ENR = 0x00000000;
+    RCC->AHB1ENR = 0x00000000;
 
     SCB->VTOR = (uint32_t)VectorTable;
 

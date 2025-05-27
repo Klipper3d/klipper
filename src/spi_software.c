@@ -40,17 +40,20 @@ DECL_COMMAND(command_spi_set_sw_bus,
              "spi_set_sw_bus oid=%c miso_pin=%u mosi_pin=%u sclk_pin=%u"
              " mode=%u pulse_ticks=%u");
 
-void
-spi_software_prepare(struct spi_software *ss)
-{
-    gpio_out_write(ss->sclk, ss->mode & 0x02);
-}
-
 static void
 spi_delay(uint32_t end)
 {
     while (timer_is_before(timer_read_time(), end));
 }
+
+void
+spi_software_prepare(struct spi_software *ss)
+{
+    gpio_out_write(ss->sclk, ss->mode & 0x02);
+    uint32_t end = timer_read_time() + ss->sck_ticks;
+    spi_delay(end);
+}
+
 
 void
 spi_software_transfer(struct spi_software *ss, uint8_t receive_data

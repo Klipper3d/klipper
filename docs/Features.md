@@ -195,7 +195,7 @@ represent total number of steps per second on the micro-controller.
 | RP2040                          | 4000K             | 2571K             |
 | RP2350                          | 4167K             | 2663K             |
 | SAME70                          | 6667K             | 4737K             |
-| STM32H723                       | 6667K             | 6557K             |
+| STM32H723                       | 7429K             | 8619K             |
 
 If unsure of the micro-controller on a particular board, find the
 appropriate [config file](../config/), and look for the
