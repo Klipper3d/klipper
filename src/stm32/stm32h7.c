@@ -49,6 +49,10 @@ lookup_clock_line(uint32_t periph_base)
         uint32_t bit = 1 << ((periph_base - D2_APB2PERIPH_BASE) / 0x400);
         return (struct cline){.en=&RCC->APB2ENR, .rst=&RCC->APB2RSTR, .bit=bit};
     } else {
+        if (periph_base == FDCAN2_BASE)
+            // FDCAN1 and FDCAN2 share same clock enable
+            return (struct cline){.en=&RCC->APB1HENR, .rst=&RCC->APB1HRSTR,
+                                  .bit = RCC_APB1HENR_FDCANEN};
         uint32_t offset = ((periph_base - D2_APB1PERIPH_BASE) / 0x400);
         if (offset < 32) {
             uint32_t bit = 1 << offset;

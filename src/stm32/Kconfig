@@ -463,7 +463,7 @@ choice
         select CANSERIAL
     config STM32_MMENU_CANBUS_PB5_PB6
         bool "CAN bus (on PB5/PB6)" if LOW_LEVEL_OPTIONS
-        depends on (MACH_STM32F4 && HAVE_STM32_CANBUS)
+        depends on (MACH_STM32F4 && HAVE_STM32_CANBUS) || MACH_STM32H7
         select CANSERIAL
     config STM32_MMENU_CANBUS_PB12_PB13
         bool "CAN bus (on PB12/PB13)" if LOW_LEVEL_OPTIONS
@@ -503,7 +503,7 @@ choice
         depends on (MACH_STM32F4 && HAVE_STM32_CANBUS)
     config STM32_CMENU_CANBUS_PB5_PB6
         bool "CAN bus (on PB5/PB6)"
-        depends on (MACH_STM32F4 && HAVE_STM32_CANBUS) || MACH_STM32G0B1
+        depends on (MACH_STM32F4 && HAVE_STM32_CANBUS) || MACH_STM32H7 || MACH_STM32G0B1
     config STM32_CMENU_CANBUS_PB12_PB13
         bool "CAN bus (on PB12/PB13)"
         depends on (MACH_STM32F4 && HAVE_STM32_CANBUS) || HAVE_STM32_FDCANBUS
