@@ -35,7 +35,7 @@ class TapAnalysis:
 class ParamHelper:
     def __init__(self, config, name, type_name, default=None, minval=None,
             maxval=None, above=None, below=None, max_len=None):
-        self._config_section = config.section
+        self._config_section = config.get_name()
         self._config_error = config.error
         self.name = name
         self._type_name = type_name
