@@ -1705,6 +1705,27 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#load_cell_probe" class="md-nav__link">
+    [load_cell_probe]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_cell_test_tap" class="md-nav__link">
+    LOAD_CELL_TEST_TAP
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load-cell-command-extensions" class="md-nav__link">
+    Load Cell Command Extensions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#manual_probe" class="md-nav__link">
     [manual_probe]
   </a>
@@ -4021,6 +4042,27 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#load_cell_probe" class="md-nav__link">
+    [load_cell_probe]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_cell_test_tap" class="md-nav__link">
+    LOAD_CELL_TEST_TAP
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load-cell-command-extensions" class="md-nav__link">
+    Load Cell Command Extensions
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#manual_probe" class="md-nav__link">
     [manual_probe]
   </a>
@@ -5642,12 +5684,46 @@ utility. Calibration is a 3 step process:</p>
 <p><code>LOAD_CELL_TARE [LOAD_CELL=&lt;config_name&gt;]</code>: This works just like the tare button
 on digital scale. It sets the current raw reading of the load cell to be the
 zero point reference value. The response is the percentage of the sensors range
-that was read and the raw value in counts.</p>
+that was read and the raw value in counts. If the load cell is calibrated a
+force in grams is also reported.</p>
 <h3 id="load_cell_read-load_cellname">LOAD_CELL_READ load_cell="name"<a class="headerlink" href="#load_cell_read-load_cellname" title="Permanent link">&para;</a></h3>
 <p><code>LOAD_CELL_READ [LOAD_CELL=&lt;config_name&gt;]</code>:
 This command takes a reading from the load cell. The response is the percentage
 of the sensors range that was read and the raw value in counts. If the load cell
 is calibrated a force in grams is also reported.</p>
+<h3 id="load_cell_probe">[load_cell_probe]<a class="headerlink" href="#load_cell_probe" title="Permanent link">&para;</a></h3>
+<p>The following commands are enabled if a
+<a href="Config_Reference.html#load_cell_probe">load_cell config section</a> has been
+enabled.</p>
+<h3 id="load_cell_test_tap">LOAD_CELL_TEST_TAP<a class="headerlink" href="#load_cell_test_tap" title="Permanent link">&para;</a></h3>
+<p><code>LOAD_CELL_TEST_TAP [TAPS=&lt;taps&gt;] [TIMEOUT=&lt;timeout&gt;]</code>: Run a testing routine
+that reports taps on the load cell. The toolhead will not move but the load cell
+probe will sense taps just as if it was probing. This can be used as a
+sanity check to make sure that the probe works. This tool replaces
+QUERY_ENDSTOPS and QUERY_PROBE for load cell probes.</p>
+<ul>
+<li><code>TAPS</code>: the number of taps the tool expects</li>
+<li><code>TIMEOOUT</code>: the time, in seconds, that the tool waits for each tab before
+  aborting.</li>
+</ul>
+<h3 id="load-cell-command-extensions">Load Cell Command Extensions<a class="headerlink" href="#load-cell-command-extensions" title="Permanent link">&para;</a></h3>
+<p>Commands that perform probes, such as <a href="#probe"><code>PROBE</code></a>,
+<a href="#probe_accuracy"><code>PROBE_ACCURACY</code></a>,
+<a href="#bed_mesh_calibrate"><code>BED_MESH_CALIBRATE</code></a> etc. will accept additional
+parameters if a <code>[load_cell_probe]</code> is defined. The parameters override the
+corresponding settings from the
+<a href="Config_Reference.html#load_cell_probe"><code>[load_cell_probe]</code></a> configuration:</p>
+<ul>
+<li><code>FORCE_SAFETY_LIMIT=&lt;grams&gt;</code></li>
+<li><code>TRIGGER_FORCE=&lt;grams&gt;</code></li>
+<li><code>DRIFT_FILTER_CUTOFF_FREQUENCY=&lt;frequency_hz&gt;</code></li>
+<li><code>DRIFT_FILTER_DELAY=&lt;1|2&gt;</code></li>
+<li><code>BUZZ_FILTER_CUTOFF_FREQUENCY=&lt;frequency_hz&gt;</code></li>
+<li><code>BUZZ_FILTER_DELAY=&lt;1|2&gt;</code></li>
+<li><code>NOTCH_FILTER_FREQUENCIES=&lt;list of frequency_hz&gt;</code></li>
+<li><code>NOTCH_FILTER_QUALITY=&lt;quality&gt;</code></li>
+<li><code>TARE_TIME=&lt;seconds&gt;</code></li>
+</ul>
 <h3 id="manual_probe">[manual_probe]<a class="headerlink" href="#manual_probe" title="Permanent link">&para;</a></h3>
 <p>The manual_probe module is automatically loaded.</p>
 <h4 id="manual_probe_1">MANUAL_PROBE<a class="headerlink" href="#manual_probe_1" title="Permanent link">&para;</a></h4>
