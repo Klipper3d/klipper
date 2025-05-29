@@ -176,7 +176,7 @@ class SosFilter:
 
     # create an uninitialized filter object
     def create_filter(self):
-        self._mcu.add_config_cmd("config_sos_filter oid=%d max_sections=%u"
+        self._mcu.add_config_cmd("config_sos_filter oid=%d max_sections=%d"
             % (self._oid, self._max_sections))
         self._configure_filter(is_init=True)
 

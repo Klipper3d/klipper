@@ -87,7 +87,7 @@ sosfilt(struct sos_filter *sf, const int32_t unfiltered_value) {
 void
 command_config_sos_filter(uint32_t *args)
 {
-    uint32_t max_sections = args[1];
+    uint8_t max_sections = args[1];
     uint32_t size = offsetof(struct sos_filter, filter[max_sections]);
     struct sos_filter *sf = oid_alloc(args[0]
                             , command_config_sos_filter, size);
@@ -95,13 +95,21 @@ command_config_sos_filter(uint32_t *args)
     sf->is_active = 0;
 }
 DECL_COMMAND(command_config_sos_filter, "config_sos_filter oid=%c"
-    " max_sections=%u");
+    " max_sections=%c");
 
 // Lookup an sos_filter
 struct sos_filter *
 sos_filter_oid_lookup(uint8_t oid)
 {
     return oid_lookup(oid, command_config_sos_filter);
+}
+
+// Check that a section index parameter is valid
+static void
+validate_section_index(struct sos_filter *sf, uint8_t section_idx)
+{
+    if (section_idx > sf->max_sections)
+        shutdown("Filter section index larger than max_sections");
 }
 
 // Set one section of the filter
@@ -112,6 +120,7 @@ command_sos_filter_set_section(uint32_t *args)
     // setting a section marks the filter as inactive
     sf->is_active = 0;
     uint8_t section_idx = args[1];
+    validate_section_index(sf, section_idx);
     // copy section data
     const uint8_t arg_base = 2;
     for (uint8_t i = 0; i < SECTION_WIDTH; i++) {
@@ -131,6 +140,7 @@ command_sos_filter_set_state(uint32_t *args)
     sf->is_active = 0;
     // copy state data
     uint8_t section_idx = args[1];
+    validate_section_index(sf, section_idx);
     const uint8_t arg_base = 2;
     sf->filter[section_idx].state[0] = args[0 + arg_base];
     sf->filter[section_idx].state[1] = args[1 + arg_base];
@@ -144,9 +154,7 @@ command_sos_filter_activate(uint32_t *args)
 {
     struct sos_filter *sf = sos_filter_oid_lookup(args[0]);
     uint8_t n_sections = args[1];
-    if (n_sections > sf->max_sections) {
-        shutdown("Filter section count larger than max_sections");
-    }
+    validate_section_index(sf, n_sections);
     sf->n_sections = n_sections;
     const uint8_t coeff_int_bits = args[2];
     sf->coeff_frac_bits = (31 - coeff_int_bits);
