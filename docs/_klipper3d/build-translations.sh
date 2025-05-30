@@ -82,3 +82,6 @@ while IFS="," read dirname langsite langdesc langsearch; do
   ln -sf "${PWD}/site/${langsite}/" "${WORK_DIR}lang/${langsite}/site"
   mkdocs build -f "${new_mkdocs_file}"
 done < <(egrep -v '^ *(#|$)' ${TRANS_FILE})
+
+# Avoid push of pycache
+find "${PWD}/site/" -type f -name "*.pyc" -delete
