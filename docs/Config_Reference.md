@@ -5027,7 +5027,7 @@ sensor_type:
 #   This value is calculated by the LOAD_CELL_CALIBRATE command.
 #reference_tare_counts:
 #   The integer tare value, in raw sensor counts, taken when LOAD_CELL_CALIBRATE
-#   is run. This is the default tare value when klipper starts up.
+#   is run. This is the default tare value when Klipper starts up.
 #sensor_orientation:
 #   Change the sensor's orientation. Can be either 'normal' or 'inverted'.
 #   The default is 'normal'. Use 'inverted' if the sensor reports a
@@ -5156,10 +5156,10 @@ sensor_type:
 #   is 2.
 #buzz_filter_cutoff_frequency: 100.0
 #   The value is a frequency, in Hz, above which high frequency noise in the
-#   load cell will be igfiltered outnored. This option requires the SciPy
-#   library. Default: None
+#   load cell will be filtered out. This option requires the SciPy library.
+#   Default: None
 #buzz_filter_delay: 2
-#   The delay, or 'order', of the buzz filter. This controle the number of
+#   The delay, or 'order', of the buzz filter. This controls the number of
 #   samples required to make a trigger detection. Can be 1 or 2, the default
 #   is 2.
 #notch_filter_frequencies: 50, 60

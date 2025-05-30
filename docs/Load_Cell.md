@@ -14,7 +14,7 @@ A calibrated force sensor is an important part of a load cell based probe.
 
 When you first connect a load cell its good practice to check for issues by
 running `LOAD_CELL_DIAGNOSTIC`. This tool collects 10 seconds of data from the
-load cell and resport statistics:
+load cell and reports statistics:
 
 ```
 $ LOAD_CELL_DIAGNOSTIC
@@ -131,7 +131,7 @@ a macro:
 
 * [load_cell_probe Config Reference](Config_Reference.md#load_cell_probe)
 * [load_cell_probe G-Code Commands](G-Codes.md#load_cell_probe)
-* [load_cell_probe Statuc Reference](Status_Reference.md#load_cell_probe)
+* [load_cell_probe Status Reference](Status_Reference.md#load_cell_probe)
 
 ## Load Cell Probe Safety
 
@@ -185,11 +185,11 @@ in force applied to the toolhead at the end of a probing cycle. Because
 external forces can vary greatly between probing locations,
 `load_cell_probe` performs a tare before beginning each probe. If you repeat
 the `PROBE` command, load_cell_probe will tare the endstop at the current force.
-Multiple cycles of this will result in ever-increasing force on the toolhead.
+Multiple cycles of this will result in ever increasing force on the toolhead.
 `force_safety_limit` stops this cycle from running out of control.
 
-Another way this run-away can happen is damage to a strain gauge. If the metal
-part is permanently bent it wil change the `reference_tare_counts` of the
+Another way this run away can happen is damage to a strain gauge. If the metal
+part is permanently bent it will change the `reference_tare_counts` of the
 device. This puts the starting tare value much closer to the limit making it
 more likely to be violated. You want to be notified if this is happening
 because your hardware has been permanently damaged.
@@ -200,7 +200,7 @@ at ambient temperature vs operating temperature. In this case you may need
 to increase the `force_safety_limit` to allow for thermal changes.
 
 #### Load Cell Endstop Watchdog Task
-When homing the load_cell_endstop starts a task on the MCU to trac
+When homing the load_cell_endstop starts a task on the MCU to track
 measurements arriving from the sensor. If the sensor fails to send
 measurements for 2 sample periods the watchdog will shut down the printer
 with an error `!! LoadCell Endstop timed out waiting on ADC data`.
@@ -241,7 +241,7 @@ commands. Use `LOAD_CELL_TEST_TAP` for testing functionality before probing.
 ### Homing Macros
 
 Load cell probe is not an endstop and doesn't support `endstop:
-prove:z_virtual_endstop`. For the time being you'll need to configure your z
+probe:z_virtual_endstop`. For the time being you'll need to configure your z
 axis with an MCU pin as its endstop. You won't actually be using the pin but
 for the time being you have to configure something.
 
@@ -301,12 +301,11 @@ way to detect poor quality taps due to filament ooze. The existing code may
 decide that a tap is valid when it is of poor quality. Classifying these poor
 quality taps is an area of active research.
 
-Klipper also lacks support for re-locating a probe point if the
-location has become fouled by filament ooze. Modules like `quad_gantry_level`
-will repeatedly probe the same coordinates even if a probe previously failed
-there.
+Klipper also lacks support for relocating a probe point if the location has
+become fouled by filament ooze. Modules like `quad_gantry_level` will
+repeatedly probe the same coordinates even if a probe previously failed there.
 
-Give the above it is strongly suggested not to probe at printing temperatures.
+Given the above it is strongly suggested not to probe at printing temperatures.
 
 ### Hot Nozzle Protection
 
@@ -373,7 +372,7 @@ max_z_adjustment: 0.1
 ## Continuous Tare Filters for Toolhead Load Cells
 
 Klipper implements a configurable IIR filter on the MCU to provide continuous
-tareing of the load cell while probing. Continuous taring means the 0 value
+taring of the load cell while probing. Continuous taring means the 0 value
 moves with drift caused by external factors like bowden tubes and thermal
 changes. This is aimed at toolhead sensors and moving beds that experience lots
 of external forces that change while probing.
@@ -383,7 +382,7 @@ of external forces that change while probing.
 The filtering code uses the excellent [SciPy](https://scipy.org/) library to
 compute the filter coefficients based on the values your enter into the config.
 
-Pre-compiled SciPi builds are available for Python 3 on 32 bit Raspberry Pi
+Pre-compiled SciPy builds are available for Python 3 on 32 bit Raspberry Pi
 systems. 32 bit + Python 3 is strongly recommended because it will streamline
 your installation experience. It does work with Python 2 but installation can
 take 30+ minutes and require installing additional tools.
@@ -426,9 +425,9 @@ Ideally a sensor would meet these criteria:
 
 * At least 24 bits wide
 * Use SPI communications
-* Has a pin can be used to indicate sample ready without SPI communications.
-  This is often called the "data ready" or "DRDY" pin. Checking a pin is much
-  faster than running an SPI query.
+* Has a pin that can be used to indicate sample ready without SPI
+  communications. This is often called the "data ready" or "DRDY" pin. Checking
+  a pin is much faster than running an SPI query.
 * Has a programmable gain amplifier gain setting of 128. This should eliminate
   the need for a separate amplifier.
 * Indicates via SPI if the sensor has been reset. Detecting resets avoids
@@ -475,7 +474,7 @@ should have proper grounding back to the DC supply.
 This sensor is popular because of its low cost and availability in the
 supply chain. However, this is a sensor with some drawbacks:
 
-* The HX71x sensors use bit-bang communication which has a high overhead on the
+* The HX71x sensors use bitbang communication which has a high overhead on the
   MCU. Using a sensor that communicates via SPI would save resources on the tool
   board's CPU.
 * The HX71x lacks a way to communicate reset events to the MCU. Klipper detects
@@ -486,4 +485,4 @@ supply chain. However, this is a sensor with some drawbacks:
   limited to less than 2mm/s.
 * The sample rate on the HX71x cannot be set from klipper's config. If you have
   the 10SPS version of the sensor (which is widely distributed) it needs to
-  be physically re-wired to run at 80SPS.
+  be physically rewired to run at 80SPS.
