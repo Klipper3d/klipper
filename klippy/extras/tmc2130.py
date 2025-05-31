@@ -196,16 +196,22 @@ class MCU_TMC_SPI_chain:
     def _build_cmd(self, data, chain_pos):
         return ([0x00] * ((self.chain_len - chain_pos) * 5) +
                 data + [0x00] * ((chain_pos - 1) * 5))
-    def reg_read(self, reg, chain_pos):
+    # Start multi registers reads
+    def reg_read_start(self, reg, chain_pos):
         cmd = self._build_cmd([reg, 0x00, 0x00, 0x00, 0x00], chain_pos)
         self.spi.spi_send(cmd)
+    def reg_read_cont(self, reg, chain_pos):
         if self.printer.get_start_args().get('debugoutput') is not None:
             return 0
+        cmd = self._build_cmd([reg, 0x00, 0x00, 0x00, 0x00], chain_pos)
         params = self.spi.spi_transfer(cmd)
         pr = bytearray(params['response'])
         pr = pr[(self.chain_len - chain_pos) * 5 :
                 (self.chain_len - chain_pos + 1) * 5]
         return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
+    def reg_read(self, reg, chain_pos):
+        self.reg_read_start(reg, chain_pos)
+        return self.reg_read_cont(reg, chain_pos)
     def reg_write(self, reg, val, chain_pos, print_time=None):
         minclock = 0
         if print_time is not None:
@@ -258,6 +264,19 @@ class MCU_TMC_SPI:
         self.tmc_frequency = tmc_frequency
     def get_fields(self):
         return self.fields
+    def get_registers(self, *reg_names):
+        reg_values = []
+        # The last one reads bu +1 dummy transfer
+        regs = reg_names + (reg_names[-1],)
+        with self.mutex:
+            reg_name = regs[0]
+            reg = self.name_to_reg[reg_name]
+            self.tmc_spi.reg_read_start(reg, self.chain_pos)
+            for reg_name in regs[1:]:
+                reg = self.name_to_reg[reg_name]
+                ret = self.tmc_spi.reg_read_cont(reg, self.chain_pos)
+                reg_values.append(ret)
+        return dict(zip(reg_names, reg_values))
     def get_register(self, reg_name):
         reg = self.name_to_reg[reg_name]
         with self.mutex:

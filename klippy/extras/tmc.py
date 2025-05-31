@@ -450,8 +450,9 @@ class TMCCommandHelper:
                 if reg_name not in self.read_registers:
                     gcmd.respond_info(self.fields.pretty_format(reg_name, val))
             gcmd.respond_info("========== Queried registers ==========")
-            for reg_name in self.read_registers:
-                val = self.mcu_tmc.get_register(reg_name)
+            reg_kv = self.mcu_tmc.get_registers(*self.read_registers)
+            for reg_name in reg_kv:
+                val = reg_kv[reg_name]
                 if self.read_translate is not None:
                     reg_name, val = self.read_translate(reg_name, val)
                 gcmd.respond_info(self.fields.pretty_format(reg_name, val))
