@@ -286,6 +286,25 @@ The test was last run on commit `247cd753` with gcc version
 | 1 stepper        | 58    |
 | 3 stepper        | 243   |
 
+### STM32G4 step rate benchmark
+
+The following configuration sequence is used on the STM32G431:
+```
+allocate_oids count=3
+config_stepper oid=0 step_pin=PA0 dir_pin=PB5 invert_step=-1 step_pulse_ticks=17
+config_stepper oid=1 step_pin=PB2 dir_pin=PB6 invert_step=-1 step_pulse_ticks=17
+config_stepper oid=2 step_pin=PB3 dir_pin=PB7 invert_step=-1 step_pulse_ticks=17
+finalize_config crc=0
+```
+
+The test was last run on commit `cfa48fe3` with gcc version
+`arm-none-eabi-gcc (Fedora 14.1.0-1.fc40) 14.1.0`.
+
+| stm32g431        | ticks |
+| ---------------- | ----- |
+| 1 stepper        | 47    |
+| 3 stepper        | 208   |
+
 ### LPC176x step rate benchmark
 
 The following configuration sequence is used on the LPC176x:
