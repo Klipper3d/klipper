@@ -15,7 +15,7 @@ from . import bus
 #       Si7013 - Untested
 #       Si7020 - Untested
 #       Si7021 - Tested on Pico MCU
-#       SHT21  - Untested
+#       SHT21  - Tested on Linux MCU.
 #
 ######################################################################
 
@@ -34,7 +34,7 @@ HTU21D_COMMANDS = {
 
 }
 
-HTU21D_RESOLUTION_MASK = 0x7E;
+HTU21D_RESOLUTION_MASK = 0x7E
 HTU21D_RESOLUTIONS = {
     'TEMP14_HUM12':int('00000000',2),
     'TEMP13_HUM10':int('10000000',2),
@@ -42,31 +42,40 @@ HTU21D_RESOLUTIONS = {
     'TEMP11_HUM11':int('10000001',2)
 }
 
+ID_MAP = {
+    0x0D: 'SI7013',
+    0x14: 'SI7020',
+    0x15: 'SI7021',
+    0x31: 'SHT21',
+    0x01: 'SHT21',
+    0x32: 'HTU21D',
+}
+
 # Device with conversion time for tmp/resolution bit
 # The format is:
 #  <CHIPNAME>:{id:<ID>, ..<RESOlUTION>:[<temp time>,<humidity time>].. }
 HTU21D_DEVICES = {
-    'SI7013':{'id':0x0D,
+    'SI7013':{
         'TEMP14_HUM12':[.11,.12],
         'TEMP13_HUM10':[ .7, .5],
         'TEMP12_HUM08':[ .4, .4],
         'TEMP11_HUM11':[ .3, .7]},
-    'SI7020':{'id':0x14,
+    'SI7020':{
         'TEMP14_HUM12':[.11,.12],
         'TEMP13_HUM10':[ .7, .5],
         'TEMP12_HUM08':[ .4, .4],
         'TEMP11_HUM11':[ .3, .7]},
-    'SI7021':{'id':0x15,
+    'SI7021':{
         'TEMP14_HUM12':[.11,.12],
         'TEMP13_HUM10':[ .7, .5],
         'TEMP12_HUM08':[ .4, .4],
         'TEMP11_HUM11':[ .3, .7]},
-    'SHT21': {'id':0x31,
+    'SHT21': {
         'TEMP14_HUM12':[.85,.29],
         'TEMP13_HUM10':[.43, .9],
         'TEMP12_HUM08':[.22, .4],
         'TEMP11_HUM11':[.11,.15]},
-    'HTU21D':{'id':0x32,
+    'HTU21D':{
         'TEMP14_HUM12':[.50,.16],
         'TEMP13_HUM10':[.25, .5],
         'TEMP12_HUM08':[.13, .3],
@@ -128,19 +137,16 @@ class HTU21D:
         if self._chekCRC8(rdevId) != checksum:
             logging.warning("htu21d: Reading deviceId !Checksum error!")
         rdevId = rdevId >> 8
-        deviceId_list = list(
-            filter(
-              lambda elem: HTU21D_DEVICES[elem]['id'] == rdevId,HTU21D_DEVICES)
-            )
-        if len(deviceId_list) != 0:
-            logging.info("htu21d: Found Device Type %s" % deviceId_list[0])
+        guess_dev = ID_MAP.get(rdevId, "Unknown")
+        if guess_dev == self.deviceId:
+            logging.info("htu21d: Found Device Type %s" % guess_dev)
         else:
             logging.warning("htu21d: Unknown Device ID %#x " % rdevId)
 
-        if self.deviceId != deviceId_list[0]:
+        if self.deviceId != guess_dev:
             logging.warning(
-                "htu21d: Found device %s. Forcing to type %s as config.",
-                 deviceId_list[0],self.deviceId)
+                "htu21d: Found device %s. Forcing to type %s as config." %
+                 (guess_dev, self.deviceId))
 
         # Set Resolution
         params = self.i2c.i2c_read([HTU21D_COMMANDS['READ']], 1)
