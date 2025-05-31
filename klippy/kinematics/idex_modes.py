@@ -18,17 +18,18 @@ class DualCarriages:
                  safe_dist={}):
         self.printer = printer
         self.axes = axes
-        steppers = self._init_steppers(primary_rails + dual_rails)
+        self._init_steppers(primary_rails + dual_rails)
         self.primary_rails = [
-                DualCarriagesRail(c, dual_rails[i], axes[i], active=True)
+                DualCarriagesRail(printer, c, dual_rails[i],
+                                  axes[i], active=True)
                 for i, c in enumerate(primary_rails)]
         self.dual_rails = [
-                DualCarriagesRail(c, primary_rails[i], axes[i], active=False)
+                DualCarriagesRail(printer, c, primary_rails[i],
+                                  axes[i], active=False)
                 for i, c in enumerate(dual_rails)]
         self.dc_rails = collections.OrderedDict(
                 [(c.rail.get_name(short=True), c)
                  for c in self.primary_rails + self.dual_rails])
-        self._init_shapers(steppers)
         self.saved_states = {}
         self.safe_dist = {}
         for i, dc in enumerate(dual_rails):
@@ -76,13 +77,6 @@ class DualCarriages:
             self.dc_stepper_kinematics.append(sk)
             self.orig_stepper_kinematics.append(orig_sk)
             s.set_stepper_kinematics(sk)
-        return steppers
-    def _init_shapers(self, steppers):
-        input_shaper = self.printer.lookup_object("input_shaper", None)
-        if input_shaper is not None:
-            # Make sure to initialize input shaper stepper kinematics
-            # before modifying IDEX stepper kinematics.
-            input_shaper.init_for_steppers(steppers)
     def get_axes(self):
         return self.axes
     def get_primary_rail(self, axis):
@@ -324,7 +318,8 @@ class DualCarriages:
 
 class DualCarriagesRail:
     ENC_AXES = [b'x', b'y']
-    def __init__(self, rail, dual_rail, axis, active):
+    def __init__(self, printer, rail, dual_rail, axis, active):
+        self.printer = printer
         self.rail = rail
         self.dual_rail = dual_rail
         self.sks = [s.get_stepper_kinematics() for s in rail.get_steppers()]
@@ -343,6 +338,7 @@ class DualCarriagesRail:
         for sk in self.sks:
             ffi_lib.dual_carriage_set_transform(
                     sk, self.ENC_AXES[self.axis], self.scale, self.offset)
+        self.printer.send_event('dual_carriage:update_kinematics')
     def activate(self, mode, position, old_position=None):
         old_axis_position = self.get_axis_position(old_position or position)
         self.scale = -1. if mode == MIRROR else 1.

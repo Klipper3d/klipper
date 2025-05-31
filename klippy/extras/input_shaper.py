@@ -69,6 +69,8 @@ class AxisInputShaper:
             ffi_lib.input_shaper_set_shaper_params(
                     sk, self.axis.encode(), self.n, self.A, self.T)
         return success
+    def is_enabled(self):
+        return self.n > 0
     def disable_shaping(self):
         if self.saved is None and self.n:
             self.saved = (self.n, self.A, self.T)
@@ -89,6 +91,8 @@ class InputShaper:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.printer.register_event_handler("klippy:connect", self.connect)
+        self.printer.register_event_handler("dual_carriage:update_kinematics",
+                                            self._update_kinematics)
         self.toolhead = None
         self.shapers = [AxisInputShaper('x', config),
                         AxisInputShaper('y', config)]
@@ -101,23 +105,25 @@ class InputShaper:
                                desc=self.cmd_SET_INPUT_SHAPER_help)
     def get_shapers(self):
         return self.shapers
-    def init_for_steppers(self, steppers):
-        ffi_main, ffi_lib = chelper.get_ffi()
-        for s in steppers:
-            self._get_input_shaper_stepper_kinematics(s)
     def connect(self):
         self.toolhead = self.printer.lookup_object("toolhead")
+        dual_carriage = self.printer.lookup_object('dual_carriage', None)
+        if dual_carriage is not None:
+            for shaper in self.shapers:
+                if shaper.is_enabled():
+                    raise printer.config_error(
+                            'Input shaper parameters cannot be configured via'
+                            ' [input_shaper] section with dual_carriage(s) '
+                            ' enabled. Refer to Klipper documentation on how '
+                            ' to configure input shaper for dual_carriage(s).')
+            return
         # Configure initial values
         self._update_input_shaping(error=self.printer.config_error)
     def _get_input_shaper_stepper_kinematics(self, stepper):
         # Lookup stepper kinematics
         sk = stepper.get_stepper_kinematics()
-        if sk in self.orig_stepper_kinematics:
-            # Already processed this stepper kinematics unsuccessfully
-            return None
         if sk in self.input_shaper_stepper_kinematics:
             return sk
-        self.orig_stepper_kinematics.append(sk)
         ffi_main, ffi_lib = chelper.get_ffi()
         is_sk = ffi_main.gc(ffi_lib.input_shaper_alloc(), ffi_lib.free)
         stepper.set_stepper_kinematics(is_sk)
@@ -125,8 +131,27 @@ class InputShaper:
         if res < 0:
             stepper.set_stepper_kinematics(sk)
             return None
+        self.orig_stepper_kinematics.append(sk)
         self.input_shaper_stepper_kinematics.append(is_sk)
         return is_sk
+    def _update_kinematics(self):
+        if self.toolhead is None:
+            # Klipper initialization is not yet completed
+            return
+        ffi_main, ffi_lib = chelper.get_ffi()
+        kin = self.toolhead.get_kinematics()
+        for s in kin.get_steppers():
+            if s.get_trapq() is None:
+                continue
+            is_sk = self._get_input_shaper_stepper_kinematics(s)
+            if is_sk is None:
+                continue
+            old_delay = ffi_lib.input_shaper_get_step_generation_window(is_sk)
+            ffi_lib.input_shaper_update_sk(is_sk)
+            new_delay = ffi_lib.input_shaper_get_step_generation_window(is_sk)
+            if old_delay != new_delay:
+                self.toolhead.note_step_generation_scan_time(new_delay,
+                                                             old_delay)
     def _update_input_shaping(self, error=None):
         self.toolhead.flush_step_generation()
         ffi_main, ffi_lib = chelper.get_ffi()
