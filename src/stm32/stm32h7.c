@@ -82,6 +82,9 @@ gpio_clock_enable(GPIO_TypeDef *regs)
     RCC->AHB4ENR;
 }
 
+// PLL1 (h723) input: 2 to 16Mhz, vco: 192 to 836Mhz, output: 1.5 to 550Mhz
+// PLL1 (h743v) input: 2 to 16Mhz, vco: 192 to 960Mhz, output: 1.5 to 480Mhz
+
 #if !CONFIG_STM32_CLOCK_REF_INTERNAL
 DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PH0,PH1");
 #endif

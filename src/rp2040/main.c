@@ -97,6 +97,8 @@ get_pclock_frequency(uint32_t reset_bit)
     return FREQ_SYS;
 }
 
+// PLL (rp2xxx) input: 5 to 100Mhz, vco: 750 to 1600Mhz
+
 static void
 xosc_setup(void)
 {

@@ -51,6 +51,8 @@ gpio_clock_enable(GPIO_TypeDef *regs)
     RCC->APB2ENR;
 }
 
+// PLL (f103) input: 1 to 25Mhz, output: 16 to 72Mhz
+
 // Main clock setup called at chip startup
 static void
 clock_setup(void)
