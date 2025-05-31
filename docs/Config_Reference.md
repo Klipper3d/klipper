@@ -5134,8 +5134,8 @@ Load Cell Probe. This combines the functionality of a [probe] and a [load_cell].
 ```
 [load_cell_probe]
 sensor_type:
-#   This must be one of the supported bulk ADC sensor types and support
-#   load cell endstops on the mcu.
+#   This must be one of the bulk ADC sensor types that support probing on the
+#   MCU.
 #counts_per_gram:
 #reference_tare_counts:
 #sensor_orientation:
@@ -5147,9 +5147,9 @@ sensor_type:
 #trigger_force: 75.0
 #   The force that the probe will trigger at. 75g is the default.
 #drift_filter_cutoff_frequency: 0.8
-#   Enable optional continuous taring while homing & probing to reject drift.
-#   The value is a frequency, in Hz, below which drift will be ignored. This
-#   option requires the SciPy library. Default: None
+#   Enable optional continuous taring while probing to reject drift. The value
+#   is a frequency, in Hz, below which drift will be ignored. This option
+#   requires the SciPy library. Default: None
 #drift_filter_delay: 2
 #   The delay, or 'order', of the drift filter. This controls the number of
 #   samples required to make a trigger detection. Can be 1 or 2, the default
