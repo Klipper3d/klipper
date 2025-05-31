@@ -2360,12 +2360,16 @@ get_uptime
 <p>When the test completes, determine the difference between the clocks
 reported in the two "uptime" response messages. The total number of
 commands per second is then <code>100000 * mcu_frequency / clock_diff</code>.</p>
-<p>Note that this test may saturate the USB/CPU capacity of a Raspberry
-Pi. If running on a Raspberry Pi, Beaglebone, or similar host computer
-then increase the delay (eg, <code>DELAY {clock + 20*freq} get_uptime</code>).
-Where applicable, the benchmarks below are with console.py running on
-a desktop class machine with the device connected via a high-speed
-hub.</p>
+<p>The USB tests may exceed the CPU capacity of a Raspberry Pi. If
+running on a Raspberry Pi, Beaglebone, or similar host computer then
+increase the delay (eg, <code>DELAY {clock + 20*freq} get_uptime</code>). Where
+applicable, the benchmarks below are with console.py running on a
+desktop class machine with the device connected via a super-speed hub.</p>
+<p>The CAN bus tests may saturate the USB host controller of a Raspberry
+Pi (when testing via a standard gs_usb USB to CAN bus adapter). Where
+applicable, the CAN bus benchmarks below are with console.py running
+on a desktop class machine with a USB to CAN bus adapter connected via
+a super-speed USB hub.</p>
 <table>
 <thead>
 <tr>
@@ -2377,12 +2381,6 @@ hub.</p>
 </thead>
 <tbody>
 <tr>
-<td>stm32f042 (CAN)</td>
-<td>18K</td>
-<td>c105adc8</td>
-<td>arm-none-eabi-gcc (GNU Tools 7-2018-q3-update) 7.3.1</td>
-</tr>
-<tr>
 <td>atmega2560 (serial)</td>
 <td>23K</td>
 <td>b161a69e</td>
@@ -2393,6 +2391,12 @@ hub.</p>
 <td>23K</td>
 <td>b161a69e</td>
 <td>arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0</td>
+</tr>
+<tr>
+<td>rp2350 (CAN)</td>
+<td>59K</td>
+<td>17b8ce4c</td>
+<td>arm-none-eabi-gcc (Fedora 14.1.0-1.fc40) 14.1.0</td>
 </tr>
 <tr>
 <td>at90usb1286 (USB)</td>
