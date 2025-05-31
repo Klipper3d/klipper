@@ -232,6 +232,11 @@ class MCU_TMC_uart:
                 return val
         raise self.printer.command_error(
             "Unable to read tmc uart '%s' register %s" % (self.name, reg_name))
+    def get_registers(self, *reg_names):
+        ret = {}
+        for reg_name in reg_names:
+            ret[reg_name] = self.get_register(reg_name)
+        return ret
     def get_register(self, reg_name):
         with self.mutex:
             return self._do_get_register(reg_name)

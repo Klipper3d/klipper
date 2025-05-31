@@ -198,6 +198,11 @@ class MCU_TMC2660_SPI:
         self.fields = fields
     def get_fields(self):
         return self.fields
+    def get_registers(self, *reg_names):
+        ret = {}
+        for reg_name in reg_names:
+            ret[reg_name] = self.get_register(reg_name)
+        return ret
     def get_register(self, reg_name):
         new_rdsel = ReadRegisters.index(reg_name)
         reg = self.name_to_reg["DRVCONF"]
