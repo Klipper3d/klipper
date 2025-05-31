@@ -261,9 +261,18 @@ endmenu
 # Generic configuration options for CANbus
 config CANSERIAL
     bool
+config SLCAN
+    bool
+config SLCAN_BAUD
+    depends on SLCAN
+    int "Baud rate for serial port" if LOW_LEVEL_OPTIONS
+    default 2000000
+    help
+        Specify the baud rate of the serial port. This should be set
+        to 2000000. Read the FAQ before changing this value.
 config CANBUS
     bool
-    default y if CANSERIAL || USBCANBUS
+    default y if CANSERIAL || USBCANBUS || SLCAN
 config CANBUS_FREQUENCY
     int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANBUS
     default 1000000
