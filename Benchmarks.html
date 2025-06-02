@@ -1177,6 +1177,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#stm32g4-step-rate-benchmark" class="md-nav__link">
+    STM32G4 step rate benchmark
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#lpc176x-step-rate-benchmark" class="md-nav__link">
     LPC176x step rate benchmark
   </a>
@@ -1611,6 +1618,13 @@
           <li class="md-nav__item">
   <a href="#stm32g0b1-step-rate-benchmark" class="md-nav__link">
     STM32G0B1 step rate benchmark
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#stm32g4-step-rate-benchmark" class="md-nav__link">
+    STM32G4 step rate benchmark
   </a>
   
 </li>
@@ -2084,6 +2098,35 @@ finalize_config crc=0
 <tr>
 <td>3 stepper</td>
 <td>243</td>
+</tr>
+</tbody>
+</table>
+<h3 id="stm32g4-step-rate-benchmark">STM32G4 step rate benchmark<a class="headerlink" href="#stm32g4-step-rate-benchmark" title="Permanent link">&para;</a></h3>
+<p>The following configuration sequence is used on the STM32G431:</p>
+<div class="highlight"><pre><span></span><code>allocate_oids count=3
+config_stepper oid=0 step_pin=PA0 dir_pin=PB5 invert_step=-1 step_pulse_ticks=17
+config_stepper oid=1 step_pin=PB2 dir_pin=PB6 invert_step=-1 step_pulse_ticks=17
+config_stepper oid=2 step_pin=PB3 dir_pin=PB7 invert_step=-1 step_pulse_ticks=17
+finalize_config crc=0
+</code></pre></div>
+
+<p>The test was last run on commit <code>cfa48fe3</code> with gcc version
+<code>arm-none-eabi-gcc (Fedora 14.1.0-1.fc40) 14.1.0</code>.</p>
+<table>
+<thead>
+<tr>
+<th>stm32g431</th>
+<th>ticks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 stepper</td>
+<td>47</td>
+</tr>
+<tr>
+<td>3 stepper</td>
+<td>208</td>
 </tr>
 </tbody>
 </table>
