@@ -190,6 +190,7 @@ represent total number of steps per second on the micro-controller.
 | SAM4E8E                         | 2500K             | 1674K             |
 | SAMD51                          | 3077K             | 1885K             |
 | AR100                           | 3529K             | 2507K             |
+| STM32G431                       | 3617K             | 2452K             |
 | STM32F407                       | 3652K             | 2459K             |
 | STM32F446                       | 3913K             | 2634K             |
 | RP2040                          | 4000K             | 2571K             |

@@ -1,6 +1,6 @@
 // Code to setup clocks and gpio on stm32g4
 //
-// Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2019-2025  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -76,6 +76,8 @@ gpio_clock_enable(GPIO_TypeDef *regs)
     RCC->AHB2ENR;
 }
 
+// PLL (g4) input: 2.66 to 16Mhz, vco: 96 to 344Mhz, output: 2.06 to 170Mhz
+
 #if !CONFIG_STM32_CLOCK_REF_INTERNAL
 DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PF0,PF1");
 #endif
@@ -85,14 +87,14 @@ enable_clock_stm32g4(void)
 {
     uint32_t pll_base = 4000000, pll_freq = CONFIG_CLOCK_FREQ * 2, pllcfgr;
     if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
-        // Configure 150Mhz PLL from external crystal (HSE)
+        // Configure PLL from external crystal (HSE)
         uint32_t div = CONFIG_CLOCK_REF_FREQ / pll_base - 1;
         RCC->CR |= RCC_CR_HSEON;
         while (!(RCC->CR & RCC_CR_HSERDY))
             ;
         pllcfgr = RCC_PLLCFGR_PLLSRC_HSE | (div << RCC_PLLCFGR_PLLM_Pos);
     } else {
-        // Configure 150Mhz PLL from internal 16Mhz oscillator (HSI)
+        // Configure PLL from internal 16Mhz oscillator (HSI)
         uint32_t div = 16000000 / pll_base - 1;
         pllcfgr = RCC_PLLCFGR_PLLSRC_HSI | (div << RCC_PLLCFGR_PLLM_Pos);
         RCC->CR |= RCC_CR_HSION;
@@ -134,6 +136,9 @@ clock_setup(void)
 
     enable_pclock(PWR_BASE);
     PWR->CR3 |= PWR_CR3_APC; // allow gpio pullup/down
+    if (CONFIG_CLOCK_FREQ > 150000000)
+        // Enable "range 1 boost" mode
+        PWR->CR5 = 0;
 
     // Wait for PLL lock
     while (!(RCC->CR & RCC_CR_PLLRDY))

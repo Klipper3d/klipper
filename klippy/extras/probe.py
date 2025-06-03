@@ -265,6 +265,17 @@ class HomingViaProbeHelper:
         self.results = []
         self.mcu_probe.multi_probe_end()
 
+class ProbeVirtualEndstopDeprecation:
+    def __init__(self, config):
+        self._name = config.get_name()
+        self._printer = config.get_printer()
+        # Register z_virtual_endstop pin
+        self._printer.lookup_object('pins').register_chip('probe', self)
+    def setup_pin(self, pin_type, pin_params):
+        raise self._printer.config_error(
+            "Module [%s] does not support `probe:z_virtual_endstop`"
+            ", use a pin instead." % (self._name,))
+
 # Helper to read multi-sample parameters from config
 class ProbeParameterHelper:
     def __init__(self, config):
