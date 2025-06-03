@@ -17,15 +17,12 @@
 DECL_CONSTANT("STEPPER_STEP_BOTH_EDGE", 1);
 
 #if CONFIG_INLINE_STEPPER_HACK && CONFIG_WANT_STEPPER_OPTIMIZED_BOTH_EDGE
- #define HAVE_OPTIMIZED_PATH 1
  #define HAVE_EDGE_OPTIMIZATION 1
  #define HAVE_AVR_OPTIMIZATION 0
 #elif CONFIG_INLINE_STEPPER_HACK && CONFIG_MACH_AVR
- #define HAVE_OPTIMIZED_PATH 1
  #define HAVE_EDGE_OPTIMIZATION 0
  #define HAVE_AVR_OPTIMIZATION 1
 #else
- #define HAVE_OPTIMIZED_PATH 0
  #define HAVE_EDGE_OPTIMIZATION 0
  #define HAVE_AVR_OPTIMIZATION 0
 #endif
@@ -71,32 +68,63 @@ stepper_load_next(struct stepper *s)
         return SF_DONE;
     }
 
-    // Load next 'struct stepper_move' into 'struct stepper'
+    // Read next 'struct stepper_move'
     struct move_node *mn = move_queue_pop(&s->mq);
     struct stepper_move *m = container_of(mn, struct stepper_move, node);
-    s->add = m->add;
-    s->interval = m->interval + m->add;
-    if (HAVE_OPTIMIZED_PATH && s->flags & SF_OPTIMIZED_PATH) {
-        s->time.waketime += m->interval;
-        if (HAVE_AVR_OPTIMIZATION)
-            s->flags = m->add ? s->flags|SF_HAVE_ADD : s->flags & ~SF_HAVE_ADD;
-        s->count = m->count;
-    } else {
-        // It is necessary to schedule unstep events and so there are
-        // twice as many events.
-        s->next_step_time += m->interval;
-        s->time.waketime = s->next_step_time;
-        s->count = s->flags & SF_SINGLE_SCHED ? m->count : (uint32_t)m->count*2;
-    }
+    uint32_t move_interval = m->interval;
+    uint_fast16_t move_count = m->count;
+    int_fast16_t move_add = m->add;
+    uint_fast8_t need_dir_change = m->flags & MF_DIR;
+    move_free(m);
+
     // Add all steps to s->position (stepper_get_position() can calc mid-move)
-    if (m->flags & MF_DIR) {
-        s->position = -s->position + m->count;
-        gpio_out_toggle_noirq(s->dir_pin);
+    s->position = (need_dir_change ? -s->position : s->position) + move_count;
+
+    // Load next move into 'struct stepper'
+    s->add = move_add;
+    s->interval = move_interval + move_add;
+    if (HAVE_EDGE_OPTIMIZATION && s->flags & SF_OPTIMIZED_PATH) {
+        // Using optimized stepper_event_edge()
+        s->time.waketime += move_interval;
+        s->count = move_count;
+    } else if (HAVE_AVR_OPTIMIZATION && s->flags & SF_OPTIMIZED_PATH) {
+        // Using optimized stepper_event_avr()
+        s->time.waketime += move_interval;
+        s->count = move_count;
+        s->flags = move_add ? s->flags | SF_HAVE_ADD : s->flags & ~SF_HAVE_ADD;
     } else {
-        s->position += m->count;
+        // Using fully scheduled stepper_event_full() code (the scheduler
+        // may be called twice for each step)
+        uint_fast8_t was_active = !!s->count;
+        uint32_t min_next_time = s->time.waketime;
+        s->next_step_time += move_interval;
+        s->time.waketime = s->next_step_time;
+        s->count = (s->flags & SF_SINGLE_SCHED ? move_count
+                    : (uint32_t)move_count * 2);
+        if (was_active && timer_is_before(s->next_step_time, min_next_time)) {
+            // Actively stepping and next step event close to the last unstep
+            int32_t diff = s->next_step_time - min_next_time;
+            if (diff < (int32_t)-timer_from_us(1000))
+                shutdown("Stepper too far in past");
+            s->time.waketime = min_next_time;
+        }
+        if (was_active && need_dir_change) {
+            // Must ensure minimum time between step change and dir change
+            if (s->flags & SF_SINGLE_SCHED)
+                while (timer_is_before(timer_read_time(), min_next_time))
+                    ;
+            gpio_out_toggle_noirq(s->dir_pin);
+            uint32_t curtime = timer_read_time();
+            min_next_time = curtime + s->step_pulse_ticks;
+            if (timer_is_before(s->time.waketime, min_next_time))
+                s->time.waketime = min_next_time;
+            return SF_RESCHEDULE;
+        }
     }
 
-    move_free(m);
+    // Set new direction (if needed)
+    if (need_dir_change)
+        gpio_out_toggle_noirq(s->dir_pin);
     return SF_RESCHEDULE;
 }
 
@@ -155,27 +183,24 @@ stepper_event_full(struct timer *t)
     gpio_out_toggle_noirq(s->step_pin);
     uint32_t curtime = timer_read_time();
     uint32_t min_next_time = curtime + s->step_pulse_ticks;
-    s->count--;
-    if (likely(s->count & 1 && !(s->flags & SF_SINGLE_SCHED)))
+    uint32_t count = s->count - 1;
+    if (likely(count & 1 && !(s->flags & SF_SINGLE_SCHED)))
         // Schedule unstep event
         goto reschedule_min;
-    if (likely(s->count)) {
+    if (likely(count)) {
         s->next_step_time += s->interval;
         s->interval += s->add;
         if (unlikely(timer_is_before(s->next_step_time, min_next_time)))
             // The next step event is too close - push it back
             goto reschedule_min;
+        s->count = count;
         s->time.waketime = s->next_step_time;
         return SF_RESCHEDULE;
     }
-    uint_fast8_t ret = stepper_load_next(s);
-    if (ret == SF_DONE || !timer_is_before(s->time.waketime, min_next_time))
-        return ret;
-    // Next step event is too close to the last unstep
-    int32_t diff = s->time.waketime - min_next_time;
-    if (diff < (int32_t)-timer_from_us(1000))
-        shutdown("Stepper too far in past");
+    s->time.waketime = min_next_time;
+    return stepper_load_next(s);
 reschedule_min:
+    s->count = count;
     s->time.waketime = min_next_time;
     return SF_RESCHEDULE;
 }

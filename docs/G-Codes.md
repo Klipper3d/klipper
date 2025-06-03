@@ -174,8 +174,10 @@ The following commands are available when the
 [ADAPTIVE_MARGIN=<value>]`: This command probes the bed using generated points
 specified by the parameters in the config. After probing, a mesh is generated
 and z-movement is adjusted according to the mesh.
+The mesh is immediately active after successful completion of `BED_MESH_CALIBRATE`.
 The mesh will be saved into a profile specified by the `PROFILE` parameter,
-or `default` if unspecified.
+or `default` if unspecified. If ADAPTIVE=1 is specified then the profile
+name will begin with `adaptive-` and should not be saved for reuse.
 See the PROBE command for details on the optional probe parameters. If
 METHOD=manual is specified then the manual probing tool is activated - see the
 MANUAL_PROBE command above for details on the additional commands available
@@ -341,15 +343,18 @@ The following command is available when the
 enabled.
 
 #### SET_DUAL_CARRIAGE
-`SET_DUAL_CARRIAGE CARRIAGE=[0|1] [MODE=[PRIMARY|COPY|MIRROR]]`:
+`SET_DUAL_CARRIAGE CARRIAGE=<carriage> [MODE=[PRIMARY|COPY|MIRROR]]`:
 This command will change the mode of the specified carriage.
-If no `MODE` is provided it defaults to `PRIMARY`. Setting the mode
-to `PRIMARY` deactivates the other carriage and makes the specified
-carriage execute subsequent G-Code commands as-is. `COPY` and `MIRROR`
-modes are supported only for `CARRIAGE=1`. When set to either of these
-modes, carriage 1 will then track the subsequent moves of the carriage 0
-and either copy relative movements of it (in `COPY` mode) or execute them
-in the opposite (mirror) direction (in `MIRROR` mode).
+If no `MODE` is provided it defaults to `PRIMARY`. `<carriage>` must
+reference a defined primary or dual carriage for `generic_cartesian`
+kinematics or be 0 (for primary carriage) or 1 (for dual carriage)
+for all other kinematics supporting IDEX. Setting the mode to `PRIMARY`
+deactivates the other carriage and makes the specified carriage execute
+subsequent G-Code commands as-is. `COPY` and `MIRROR` modes are supported
+only for dual carriages. When set to either of these modes, dual carriage
+will then track the subsequent moves of its primary carriage and either
+copy relative movements of it (in `COPY` mode) or execute them in the
+opposite (mirror) direction (in `MIRROR` mode).
 
 #### SAVE_DUAL_CARRIAGE_STATE
 `SAVE_DUAL_CARRIAGE_STATE [NAME=<state_name>]`: Save the current positions
@@ -715,6 +720,46 @@ is specified then the toolhead move will be performed with the given
 speed (in mm/s); otherwise the toolhead move will use the restored
 g-code speed.
 
+### [generic_cartesian]
+The commands in this section become automatically available when
+`kinematics: generic_cartesian` is specified as the printer kinematics.
+
+#### SET_STEPPER_CARRIAGES
+`SET_STEPPER_CARRIAGES STEPPER=<stepper_name> CARRIAGES=<carriages>
+[DISABLE_CHECKS=[0|1]]`: Set or update the stepper carriages.
+`<stepper_name>` must reference an existing stepper defined in `printer.cfg`,
+and `<carriages>` describes the carriages the stepper moves. See
+[Generic Cartesian Kinematics](Config_Reference.md#generic-cartesian-kinematics)
+for a more detailed overview of the `carriages` parameter in the
+stepper configuration section. Note that it is only possible
+to change the coefficients or signs of the carriages with this
+command, but a user cannot add or remove the carriages that the stepper
+controls.
+
+`SET_STEPPER_CARRIAGES` is an advanced tool, and the user is advised
+to exercise an extreme caution using it, since specifying incorrect
+configuration may physically damage the printer.
+
+Note that `SET_STEPPER_CARRIAGES` performs certain internal validations
+of the new printer kinematics after the change. Keep in mind that if it
+detects an issue, it may leave printer kinematics in an invalid state.
+This means that if `SET_STEPPER_CARRIAGES` reports an error, it is unsafe
+to issue other GCode commands, and the user must inspect the error message
+and either fix the problem, or manually restore the previous stepper(s)
+configuration.
+
+Since `SET_STEPPER_CARRIAGES` can update a configuration of a single
+stepper at a time, some sequences of changes can lead to invalid
+intermediate kinematic configurations, even if the final configuration
+is valid. In such cases a user can pass `DISABLE_CHECKS=1` parameters to
+all but the last command to disable intermediate checks. For example,
+if `stepper a` and `stepper b` initially have `x-y` and `x+y` carriages
+correspondingly, then the following sequence of commands will let a user
+effectively swap the carriage controls:
+`SET_STEPPER_CARRIAGES STEPPER=a CARRIAGES=x+y DISABLE_CHECKS=1`
+and `SET_STEPPER_CARRIAGES STEPPER=b CARRIAGES=x-y`, while
+still validating the final kinematics state.
+
 ### [hall_filament_width_sensor]
 
 The following commands are available when the
@@ -924,6 +969,25 @@ reports not triggered). Normally future G-Code commands will be
 scheduled to run after the stepper move completes, however if a manual
 stepper move uses SYNC=0 then future G-Code movement commands may run
 in parallel with the stepper movement.
+
+`MANUAL_STEPPER STEPPER=config_name GCODE_AXIS=[A-Z]
+[LIMIT_VELOCITY=<velocity>] [LIMIT_ACCEL=<accel>]
+[INSTANTANEOUS_CORNER_VELOCITY=<velocity>]`: If the `GCODE_AXIS`
+parameter is specified then it configures the stepper motor as an
+extra axis on `G1` move commands.  For example, if one were to issue a
+`MANUAL_STEPPER ... GCODE_AXIS=R` command then one could issue
+commands like `G1 X10 Y20 R30` to move the stepper motor.  The
+resulting moves will occur synchronously with the associated toolhead
+xyz movements.  If the motor is associated with a `GCODE_AXIS` then
+one may no longer issue movements using the above `MANUAL_STEPPER`
+command - one may unregister the stepper with a `MANUAL_STEPPER
+... GCODE_AXIS=` command to resume manual control of the motor. The
+`LIMIT_VELOCITY` and `LIMIT_ACCEL` parameters allow one to reduce the
+speed of `G1` moves if those moves would result in a velocity or
+acceleration above the specified limits. The
+`INSTANTANEOUS_CORNER_VELOCITY` specifies the maximum instantaneous
+velocity change (in mm/s) of the motor during the junction of two
+moves (the default is 1mm/s).
 
 ### [mcp4018]
 

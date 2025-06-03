@@ -160,10 +160,11 @@ static const uint8_t adc_pins[] = {
 #define ADC_CKMODE 0b11
 #define ADC_ATICKS 0b110
 #define ADC_ATICKS_H723_ADC3 0b111
-// stm32h7: clock=25Mhz, Tsamp=387.5, Tconv=394, total=15.76us
-// stm32h723 adc3: clock=50Mhz, Tsamp=640.5, Tconv=653, total=13.06us
-// stm32l4: clock=20Mhz, Tsamp=247.5, Tconv=260, total=13.0us
-// stm32g4: clock=37.5Mhz, Tsamp=247.5, Tconv=260, total=6.933us
+// 400Mhz stm32h7: clock=25Mhz, Tsamp=387.5, Tconv=394, total=15.76us
+// 520Mhz stm32h723: clock=32.5Mhz, Tsamp=387.5, Tconv=394, total=12.12us
+// 520Mhz stm32h723 adc3: clock=65Mhz, Tsamp=640.5, Tconv=653, total=10.05us
+// 80Mhz stm32l4: clock=20Mhz, Tsamp=247.5, Tconv=260, total=13.0us
+// 150Mhz stm32g4: clock=37.5Mhz, Tsamp=247.5, Tconv=260, total=6.933us
 
 // Handle register name differences between chips
 #if CONFIG_MACH_STM32H723
@@ -231,8 +232,9 @@ gpio_adc_setup(uint32_t pin)
         } else {
             // Use linear calibration on stm32h7
             cr |= ADC_CR_ADCALLIN;
-            // Set boost mode on stm32h7 (adc clock is at 25Mhz)
-            cr |= 0b10 << ADC_CR_BOOST_Pos;
+            // Set boost mode on stm32h7
+            uint32_t boost = CONFIG_CLOCK_FREQ > 400000000 ? 0b11 : 0b10;
+            cr |= boost << ADC_CR_BOOST_Pos;
             // Set 12bit samples on the stm32h7
             adc->CFGR = ADC_CFGR_JQDIS | (0b110 << ADC_CFGR_RES_Pos);
         }
