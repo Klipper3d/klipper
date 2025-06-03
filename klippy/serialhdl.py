@@ -189,7 +189,8 @@ class SerialReader:
                 serial_dev.port = serialport
                 serial_dev.rts = rts
                 serial_dev.open()
-            except (serial.SerialException, serial.serialutil.SerialException) as e:
+            except (serial.SerialException,
+                    serial.serialutil.SerialException) as e:
                 # Serial port not found
                 if e.errno == errno.ENOENT:
                     self._error(
@@ -203,7 +204,6 @@ class SerialReader:
                         "%s: Serial port already in use: '%s'. Are you sure "
                         "this serial port is not in use by another MCU "
                         "or program?" % (connection_error_prefix, serialport))
-                
                 logging.warning("%sUnable to open serial port: %s",
                              self.warn_prefix, e)
                 self.reactor.pause(self.reactor.monotonic() + 5.)
