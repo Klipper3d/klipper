@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, threading, os, errno
 import serial
+import serial.serialutil
 import msgproto, chelper, util
 
 class error(Exception):
@@ -178,41 +179,41 @@ class SerialReader:
         # Initial connection
         logging.info("%sStarting serial connect", self.warn_prefix)
         start_time = self.reactor.monotonic()
-        self.current_error_description = None
+        connection_error_prefix = 'Unable to connect'
         while 1:
-            if self.reactor.monotonic() > start_time + 90. \
-                or self.current_error_description is not None:
-                if self.current_error_description is not None:
-                    error_description = ': %s' % self.current_error_description
-                else:
-                    error_description = ''
-                self._error("Unable to connect%s" % error_description)
+            if self.reactor.monotonic() > start_time + 90.:
+                self._error(connection_error_prefix)
             try:
                 serial_dev = serial.Serial(baudrate=baud, timeout=0,
                                            exclusive=True)
                 serial_dev.port = serialport
                 serial_dev.rts = rts
                 serial_dev.open()
-            except (OSError, IOError, serial.SerialException) as e:
-                if isinstance(e, serial.SerialException):
-                    # Serial port not found
-                    if e.errno == errno.ENOENT:
-                        self.current_error_description = (
-                            "The specified serial path for MCU '%s' does not "
-                            "exist. Ensure the MCU is correctly flashed and "
-                            "connected. Verify with \"ls /dev/serial/by-id/*\"."
-                        ) % self.mcu_name
-                    # Serial port already in use
-                    elif e.errno == errno.EAGAIN:
-                        self.current_error_description = (
-                            "Serial port already in use: '%s'. Are you sure "
-                            "this serial port is not in use by another MCU "
-                            "or program?"
-                        ) % serialport
+            except (serial.SerialException, serial.serialutil.SerialException) as e:
+                # Serial port not found
+                if e.errno == errno.ENOENT:
+                    self._error(
+                        "%s: The specified serial path for MCU '%s' does not "
+                        "exist. Ensure the MCU is correctly flashed and "
+                        "connected. Verify with \"ls /dev/serial/by-id/*\"."
+                        % (connection_error_prefix, self.mcu_name))
+                # Serial port already in use
+                elif e.errno == errno.EAGAIN:
+                    self._error(
+                        "%s: Serial port already in use: '%s'. Are you sure "
+                        "this serial port is not in use by another MCU "
+                        "or program?" % (connection_error_prefix, serialport))
+                
                 logging.warning("%sUnable to open serial port: %s",
                              self.warn_prefix, e)
                 self.reactor.pause(self.reactor.monotonic() + 5.)
                 continue
+            except (OSError, IOError) as e:
+                logging.warning("%sUnable to open serial port: %s",
+                             self.warn_prefix, e)
+                self.reactor.pause(self.reactor.monotonic() + 5.)
+                continue
+
             stk500v2_leave(serial_dev, self.reactor)
             ret = self._start_session(serial_dev)
             if ret:
@@ -277,7 +278,6 @@ class SerialReader:
                 "is properly flashed to your MCU, and your USB/CAN "
                 "connection is stable."
             )
-            self.current_error_description = error_message
             self._error(error_message)
         return params
     def send(self, msg, minclock=0, reqclock=0):
