@@ -275,7 +275,7 @@ class SerialReader:
         if params is None:
             error_message = (
                 "Serial connection closed.\nEnsure Klipper firmware "
-                "is properly flashed to your MCU, and your USB/CAN "
+                "is properly flashed to your MCU, and your MCU "
                 "connection is stable."
             )
             self._error(error_message)
