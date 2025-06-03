@@ -1004,7 +1004,7 @@ class MCU:
         logging.info("Timeout with MCU '%s' (eventtime=%f)",
                      self._name, eventtime)
         error_message = (
-            "Lost communication with MCU '%s'. Check USB/CAN connection."
+            "Lost communication with MCU '%s'. Check MCU connection."
         ) % self._name
         self._serial.current_error_description = error_message
         self._printer.invoke_shutdown(error_message)
