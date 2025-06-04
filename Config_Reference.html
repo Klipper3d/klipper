@@ -6254,6 +6254,26 @@ carriages: u-y
 ...
 </code></pre></div>
 
+<p><code>[dual_carriage]</code> requires special configuration for the input shaper.
+In general, it is necessary to run input shaper calibration twice -
+for the <code>dual_carriage</code> and its <code>primary_carriage</code> for the axis they
+share. Then the input shaper can be configured as follows, assuming the
+example above:</p>
+<div class="highlight"><pre><span></span><code>[input_shaper]
+# Intentionally empty
+
+[delayed_gcode init_shaper]
+initial_duration: 0.1
+gcode:
+  SET_DUAL_CARRIAGE CARRIAGE=u
+  SET_INPUT_SHAPER SHAPER_TYPE_X=&lt;dual_carriage_x_shaper&gt; SHAPER_FREQ_X=&lt;dual_carriage_x_freq&gt; SHAPER_TYPE_Y=&lt;y_shaper&gt; SHAPER_FREQ_Y=&lt;y_freq&gt;
+  SET_DUAL_CARRIAGE CARRIAGE=x
+  SET_INPUT_SHAPER SHAPER_TYPE_X=&lt;primary_carriage_x_shaper&gt; SHAPER_FREQ_X=&lt;primary_carriage_x_freq&gt; SHAPER_TYPE_Y=&lt;y_shaper&gt; SHAPER_FREQ_Y=&lt;y_freq&gt;
+</code></pre></div>
+
+<p>Note that <code>SHAPER_TYPE_Y</code> and <code>SHAPER_FREQ_Y</code> must be the same in both
+commands in this case, since the same motors drive Y axis when either
+of the <code>x</code> and <code>u</code> carriages are active.</p>
 <p>It is worth noting that <code>generic_cartesian</code> kinematic can support two
 dual carriages for X and Y axes. For reference, see for instance a
 <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-corexyuv.cfg">sample</a> of CoreXYUV configuration.</p>
