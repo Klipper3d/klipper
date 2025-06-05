@@ -39,6 +39,9 @@ OBJS_klipper.elf = $(patsubst %.c, $(OUT)src/%.o,$(src-y))
 OBJS_klipper.elf += $(OUT)compile_time_request.o
 CFLAGS_klipper.elf = $(CFLAGS) -Wl,--gc-sections
 
+# fix issue 4938
+LDFLAGS += -Wl,--defsym,__DATA_REGION_LENGTH__=0x1000
+
 CPPFLAGS = -I$(OUT) -P -MD -MT $@
 
 # Default targets
@@ -70,7 +73,7 @@ $(OUT)%.ld: %.lds.S $(OUT)autoconf.h
 
 $(OUT)klipper.elf: $(OBJS_klipper.elf)
 	@echo "  Linking $@"
-	$(Q)$(CC) $(OBJS_klipper.elf) $(CFLAGS_klipper.elf) -o $@
+	$(Q)$(CC) $(LDFLAGS) $(OBJS_klipper.elf) $(CFLAGS_klipper.elf) -o $@
 	$(Q)scripts/check-gcc.sh $@ $(OUT)compile_time_request.o
 
 ################ Compile time requests
