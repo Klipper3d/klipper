@@ -375,7 +375,6 @@ class ProbeSessionHelper:
             self._probe_state_error()
         params = self.param_helper.get_probe_params(gcmd)
         toolhead = self.printer.lookup_object('toolhead')
-        probexy = toolhead.get_position()[:2]
         retries = 0
         positions = []
         sample_count = params['samples']
@@ -394,7 +393,7 @@ class ProbeSessionHelper:
             # Retract
             if len(positions) < sample_count:
                 toolhead.manual_move(
-                    probexy + [pos[2] + params['sample_retract_dist']],
+                    [None, None, pos[2] + params['sample_retract_dist']],
                     params['lift_speed'])
         # Calculate result
         epos = calc_probe_z_average(positions, params['samples_result'])
