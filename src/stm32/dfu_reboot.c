@@ -6,6 +6,7 @@
 
 #include "internal.h" // NVIC_SystemReset
 #include "board/irq.h" // irq_disable
+#include "flash.h" // flash_erase_page
 
 // Many stm32 chips have a USB capable "DFU bootloader" in their ROM.
 // In order to invoke that bootloader it is necessary to reset the
@@ -51,6 +52,9 @@ dfu_reboot_check(void)
     if (*(uint64_t*)USB_BOOT_FLAG_ADDR != USB_BOOT_FLAG)
         return;
     *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
+#if CONFIG_STM32_DFU_REQUIRE_ERASE_BOOT_ADDRESS
+    flash_erase_page(CONFIG_FLASH_BOOT_ADDRESS);
+#endif
     uint32_t *sysbase = (uint32_t*)CONFIG_STM32_DFU_ROM_ADDRESS;
     asm volatile("mov sp, %0\n bx %1"
                  : : "r"(sysbase[0]), "r"(sysbase[1]));

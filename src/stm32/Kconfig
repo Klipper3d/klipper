@@ -278,6 +278,10 @@ config STM32_DFU_ROM_ADDRESS
     default 0x1ff09800 if MACH_STM32H7
     default 0
 
+config STM32_DFU_REQUIRE_ERASE_BOOT_ADDRESS
+    bool
+    default y if MACH_STM32F042
+    default n
 
 ######################################################################
 # Bootloader
