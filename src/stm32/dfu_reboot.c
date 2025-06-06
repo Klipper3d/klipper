@@ -53,7 +53,12 @@ dfu_reboot_check(void)
         return;
     *(uint64_t*)USB_BOOT_FLAG_ADDR = 0;
 #if CONFIG_STM32_DFU_REQUIRE_ERASE_BOOT_ADDRESS
-    flash_erase_page(CONFIG_FLASH_BOOT_ADDRESS);
+    #if !CONFIG_ARMCM_RAM_VECTORTABLE
+        flash_erase_page(CONFIG_FLASH_BOOT_ADDRESS);
+    #else
+        #warning "We cann't jump directly from klipper to system bootloader\
+ if there is a bootloader in the MCU"
+    #endif
 #endif
     uint32_t *sysbase = (uint32_t*)CONFIG_STM32_DFU_ROM_ADDRESS;
     asm volatile("mov sp, %0\n bx %1"
