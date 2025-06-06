@@ -111,7 +111,7 @@ class InputShaper:
         if dual_carriage is not None:
             for shaper in self.shapers:
                 if shaper.is_enabled():
-                    raise printer.config_error(
+                    raise self.printer.config_error(
                             'Input shaper parameters cannot be configured via'
                             ' [input_shaper] section with dual_carriage(s) '
                             ' enabled. Refer to Klipper documentation on how '
