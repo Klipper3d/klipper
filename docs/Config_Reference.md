@@ -5048,7 +5048,7 @@ sensor_type:
 #   This value is calculated by the LOAD_CELL_CALIBRATE command.
 #reference_tare_counts:
 #   The integer tare value, in raw sensor counts, taken when LOAD_CELL_CALIBRATE
-#   is run. This is the default tare value when klipper starts up.
+#   is run. This is the default tare value when Klipper starts up.
 #sensor_orientation:
 #   Change the sensor's orientation. Can be either 'normal' or 'inverted'.
 #   The default is 'normal'. Use 'inverted' if the sensor reports a
@@ -5155,8 +5155,8 @@ Load Cell Probe. This combines the functionality of a [probe] and a [load_cell].
 ```
 [load_cell_probe]
 sensor_type:
-#   This must be one of the supported bulk ADC sensor types and support
-#   load cell endstops on the mcu.
+#   This must be one of the bulk ADC sensor types that support probing on the
+#   MCU.
 #counts_per_gram:
 #reference_tare_counts:
 #sensor_orientation:
@@ -5168,19 +5168,19 @@ sensor_type:
 #trigger_force: 75.0
 #   The force that the probe will trigger at. 75g is the default.
 #drift_filter_cutoff_frequency: 0.8
-#   Enable optional continuous taring while homing & probing to reject drift.
-#   The value is a frequency, in Hz, below which drift will be ignored. This
-#   option requires the SciPy library. Default: None
+#   Enable optional continuous taring while probing to reject drift. The value
+#   is a frequency, in Hz, below which drift will be ignored. This option
+#   requires the SciPy library. Default: None
 #drift_filter_delay: 2
 #   The delay, or 'order', of the drift filter. This controls the number of
 #   samples required to make a trigger detection. Can be 1 or 2, the default
 #   is 2.
 #buzz_filter_cutoff_frequency: 100.0
 #   The value is a frequency, in Hz, above which high frequency noise in the
-#   load cell will be igfiltered outnored. This option requires the SciPy
-#   library. Default: None
+#   load cell will be filtered out. This option requires the SciPy library.
+#   Default: None
 #buzz_filter_delay: 2
-#   The delay, or 'order', of the buzz filter. This controle the number of
+#   The delay, or 'order', of the buzz filter. This controls the number of
 #   samples required to make a trigger detection. Can be 1 or 2, the default
 #   is 2.
 #notch_filter_frequencies: 50, 60
