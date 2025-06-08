@@ -441,7 +441,7 @@ Pico and Pico 2 boards.
 
 (*) Note that the reported rp2040 ticks are relative to a 12Mhz
 scheduling timer and do not correspond to its 200Mhz internal ARM
-processing rate. It is expected that 5 scheduling ticks corresponds to
+processing rate. It is expected that 3 scheduling ticks corresponds to
 ~42 ARM core cycles and 14 scheduling ticks corresponds to ~225 ARM
 core cycles.
 
