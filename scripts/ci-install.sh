@@ -39,20 +39,18 @@ tar xJf ${CACHE_DIR}/${PRU_ARCHIVE}
 
 
 ######################################################################
-# Install or1k-linux-musl toolchain
+# Install or1k toolchain
 ######################################################################
 
-echo -e "\n\n=============== Install or1k-linux-musl toolchain\n\n"
-TOOLCHAIN=or1k-linux-musl-cross
-TOOLCHAIN_ZIP=${TOOLCHAIN}.tgz
-GCC_VERSION=10
-TOOLCHAIN_ZIP_V=${TOOLCHAIN}-${GCC_VERSION}.tgz
-URL=https://more.musl.cc/${GCC_VERSION}/x86_64-linux-musl/
-if [ ! -f ${CACHE_DIR}/${TOOLCHAIN_ZIP_V} ]; then
-    wget "${URL}/${TOOLCHAIN_ZIP}" -O "${CACHE_DIR}/${TOOLCHAIN_ZIP_V}"
+echo -e "\n\n=============== Install or1k toolchain\n\n"
+OR1K_ARCHIVE="or1k-elf-12.0.1-20220210-20220304.tar.xz"
+OR1K_REL="or1k-12.0.1-20220210-20220304"
+OR1K_URL="https://github.com/openrisc/or1k-gcc/releases/download/${OR1K_REL}/${OR1K_ARCHIVE}"
+if [ ! -f ${CACHE_DIR}/${OR1K_ARCHIVE} ]; then
+    wget "${OR1K_URL}" -O "${CACHE_DIR}/${OR1K_ARCHIVE}"
 fi
 cd ${BUILD_DIR}
-tar xf ${CACHE_DIR}/${TOOLCHAIN_ZIP_V}
+tar xJf ${CACHE_DIR}/${OR1K_ARCHIVE}
 
 
 ######################################################################
