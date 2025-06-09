@@ -200,12 +200,21 @@ class MCU_TMC_SPI_chain:
         cmd = self._build_cmd([reg, 0x00, 0x00, 0x00, 0x00], chain_pos)
         self.spi.spi_send(cmd)
         if self.printer.get_start_args().get('debugoutput') is not None:
-            return 0
+            return {
+                "spi_status": 0,
+                "data": 0,
+                "#receive_time": .0,
+            }
         params = self.spi.spi_transfer(cmd)
         pr = bytearray(params['response'])
         pr = pr[(self.chain_len - chain_pos) * 5 :
                 (self.chain_len - chain_pos + 1) * 5]
-        return (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4]
+        return {
+            "spi_status": pr[0],
+            "data": (pr[1] << 24) | (pr[2] << 16) | (pr[3] << 8) | pr[4],
+            "#receive_time": params["#receive_time"],
+        }
+
     def reg_write(self, reg, val, chain_pos, print_time=None):
         minclock = 0
         if print_time is not None:
@@ -258,11 +267,13 @@ class MCU_TMC_SPI:
         self.tmc_frequency = tmc_frequency
     def get_fields(self):
         return self.fields
-    def get_register(self, reg_name):
+    def get_register_raw(self, reg_name):
         reg = self.name_to_reg[reg_name]
         with self.mutex:
-            read = self.tmc_spi.reg_read(reg, self.chain_pos)
-        return read
+            resp = self.tmc_spi.reg_read(reg, self.chain_pos)
+        return resp
+    def get_register(self, reg_name):
+        return self.get_register_raw(reg_name)["data"]
     def set_register(self, reg_name, val, print_time=None):
         reg = self.name_to_reg[reg_name]
         with self.mutex:
