@@ -272,6 +272,13 @@ class MCU_TMC_SPI:
         with self.mutex:
             resp = self.tmc_spi.reg_read(reg, self.chain_pos)
         return resp
+    def decode_spi_status(spi_status):
+        return {
+            "standstill": spi_status >> 3 & 0x1,
+            "sg2": spi_status >> 2 & 0x1,
+            "driver_error": spi_status >> 1 & 0x1,
+            "reset_flag": spi_status & 0x1
+        }
     def get_register(self, reg_name):
         return self.get_register_raw(reg_name)["data"]
     def set_register(self, reg_name, val, print_time=None):
