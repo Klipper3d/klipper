@@ -4,64 +4,78 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "autoconf.h" // CONFIG_SERIAL_BAUD
+#include "autoconf.h" // CONFIG_SERIAL_BAUD or CONFIG_SLCAN_BAUD
 #include "board/armcm_boot.h" // armcm_enable_irq
 #include "board/serial_irq.h" // serial_rx_byte
 #include "command.h" // DECL_CONSTANT_STR
 #include "internal.h" // enable_pclock
 #include "sched.h" // DECL_INIT
 
+#if defined(CONFIG_SLCAN) && CONFIG_SLCAN != 0
+#define SERIAL_BAUD CONFIG_SLCAN_BAUD
+#else
+#define SERIAL_BAUD CONFIG_SERIAL_BAUD
+#endif
+
 // Select the configured serial port
-#if CONFIG_STM32_SERIAL_USART1
+#if (CONFIG_STM32_SERIAL_USART1 | \
+  CONFIG_STM32_SLCAN_USART1)
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA10,PA9");
   #define GPIO_Rx GPIO('A', 10)
   #define GPIO_Tx GPIO('A', 9)
   #define GPIO_AF_MODE 7
   #define USARTx USART1
   #define USARTx_IRQn USART1_IRQn
-#elif CONFIG_STM32_SERIAL_USART1_ALT_PB7_PB6
+#elif (CONFIG_STM32_SERIAL_USART1_ALT_PB7_PB6 | \
+  CONFIG_STM32_SLCAN_USART1_ALT_PB7_PB6)
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PB7,PB6");
   #define GPIO_Rx GPIO('B', 7)
   #define GPIO_Tx GPIO('B', 6)
   #define GPIO_AF_MODE 7
   #define USARTx USART1
   #define USARTx_IRQn USART1_IRQn
-#elif CONFIG_STM32_SERIAL_USART2
+#elif (CONFIG_STM32_SERIAL_USART2 | \
+  CONFIG_STM32_SLCAN_USART2)
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA3,PA2");
   #define GPIO_Rx GPIO('A', 3)
   #define GPIO_Tx GPIO('A', 2)
   #define GPIO_AF_MODE 7
   #define USARTx USART2
   #define USARTx_IRQn USART2_IRQn
-#elif CONFIG_STM32_SERIAL_USART2_ALT_PD6_PD5
+#elif (CONFIG_STM32_SERIAL_USART2_ALT_PD6_PD5 | \
+  CONFIG_STM32_SLCAN_USART2_ALT_PD6_PD5)
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PD6,PD5");
   #define GPIO_Rx GPIO('D', 6)
   #define GPIO_Tx GPIO('D', 5)
   #define GPIO_AF_MODE 7
   #define USARTx USART2
   #define USARTx_IRQn USART2_IRQn
-#elif CONFIG_STM32_SERIAL_USART3
+#elif (CONFIG_STM32_SERIAL_USART3 | \
+  CONFIG_STM32_SLCAN_USART3)
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PB11,PB10");
   #define GPIO_Rx GPIO('B', 11)
   #define GPIO_Tx GPIO('B', 10)
   #define GPIO_AF_MODE 7
   #define USARTx USART3
   #define USARTx_IRQn USART3_IRQn
-#elif CONFIG_STM32_SERIAL_USART3_ALT_PD9_PD8
+#elif (CONFIG_STM32_SERIAL_USART3_ALT_PD9_PD8 | \
+  CONFIG_STM32_SLCAN_USART3_ALT_PD9_PD8)
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PD9,PD8");
   #define GPIO_Rx GPIO('D', 9)
   #define GPIO_Tx GPIO('D', 8)
   #define GPIO_AF_MODE 7
   #define USARTx USART3
   #define USARTx_IRQn USART3_IRQn
-#elif CONFIG_STM32_SERIAL_USART6
+#elif (CONFIG_STM32_SERIAL_USART6 | \
+  CONFIG_STM32_SLCAN_USART6)
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA12,PA11");
   #define GPIO_Rx GPIO('A', 12)
   #define GPIO_Tx GPIO('A', 11)
   #define GPIO_AF_MODE 8
   #define USARTx USART6
   #define USARTx_IRQn USART6_IRQn
-#elif CONFIG_STM32_SERIAL_USART6_ALT_PC7_PC6
+#elif (CONFIG_STM32_SERIAL_USART6_ALT_PC7_PC6 | \
+  CONFIG_STM32_SLCAN_USART6_ALT_PC7_PC6)
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PC7,PC6");
   #define GPIO_Rx GPIO('C', 7)
   #define GPIO_Tx GPIO('C', 6)
@@ -104,7 +118,7 @@ serial_init(void)
     enable_pclock((uint32_t)USARTx);
 
     uint32_t pclk = get_pclock_frequency((uint32_t)USARTx);
-    uint32_t div = DIV_ROUND_CLOSEST(pclk, CONFIG_SERIAL_BAUD);
+    uint32_t div = DIV_ROUND_CLOSEST(pclk, SERIAL_BAUD);
     USARTx->BRR = (((div / 16) << USART_BRR_DIV_Mantissa_Pos)
                    | ((div % 16) << USART_BRR_DIV_Fraction_Pos));
     USARTx->CR1 = CR1_FLAGS;
