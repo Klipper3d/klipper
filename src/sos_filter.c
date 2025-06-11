@@ -108,7 +108,7 @@ sos_filter_oid_lookup(uint8_t oid)
 static void
 validate_section_index(struct sos_filter *sf, uint8_t section_idx)
 {
-    if (section_idx > sf->max_sections)
+    if (section_idx >= sf->max_sections)
         shutdown("Filter section index larger than max_sections");
 }
 
@@ -154,7 +154,8 @@ command_sos_filter_activate(uint32_t *args)
 {
     struct sos_filter *sf = sos_filter_oid_lookup(args[0]);
     uint8_t n_sections = args[1];
-    validate_section_index(sf, n_sections);
+    if (n_sections > sf->max_sections)
+        shutdown("Filter section index larger than max_sections");
     sf->n_sections = n_sections;
     const uint8_t coeff_int_bits = args[2];
     sf->coeff_frac_bits = (31 - coeff_int_bits);
