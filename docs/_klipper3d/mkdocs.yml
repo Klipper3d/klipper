@@ -4,6 +4,7 @@
 # layout.  See that script and the README file for more details.
 
 # Site and directory configuration
+site_url: https://www.klipper3d.org
 site_name: Klipper documentation
 repo_url: https://github.com/Klipper3d/klipper
 repo_name: Klipper3d/klipper
