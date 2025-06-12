@@ -14,6 +14,7 @@ class StepperShaper:
         self.stepper_name = ' '.join(self.name.split()[1:])
         self.stepper = self.tmc_module = None
         self.in_stealthchop = self.in_spreadcycle = None
+        self.toolhead = None
         self.force_stealthchop_comp = config.getboolean(
                 'force_stealthchop_comp', False)
         self.force_spreadcycle_comp = config.getboolean(
@@ -27,6 +28,8 @@ class StepperShaper:
         self.printer.register_event_handler("klippy:connect", self._connect)
         self.printer.register_event_handler("klippy:mcu_identify",
                                             self._handle_mcu_identify)
+        self.printer.register_event_handler("input_shaper:update_shaper",
+                                            self._update)
         if not config.has_section(self.stepper_name):
             raise config.error("Incorrect stepper name '%s' specified"
                                % self.stepper_name)
@@ -44,11 +47,6 @@ class StepperShaper:
                 desc=self.cmd_ESTIMATE_STEPPER_SHAPER_PARAM_help)
     def _connect(self):
         self.toolhead = self.printer.lookup_object("toolhead")
-        input_shaper = self.printer.lookup_object("input_shaper", None)
-        if input_shaper is not None:
-            # Make sure to initialize input shaper stepper kinematics
-            # before initializing stepper shaper.
-            input_shaper.init_for_steppers([self.stepper])
         self._lookup_tmc()
         self._set_lag_correction(self.stealthchop_comp, self.spreadcycle_comp,
                                  error=self.printer.config_error)
@@ -66,6 +64,11 @@ class StepperShaper:
         self.in_stealthchop = velocity is None or velocity > 0
     def calc_rad_per_mm(self):
         return .5 * math.pi / (self.microsteps * self.stepper.get_step_dist())
+    def _update(self):
+        if self.toolhead is None:
+            self._connect()
+        self._set_lag_correction(self.stealthchop_comp, self.spreadcycle_comp,
+                                 error=self.printer.command_error)
     def _set_lag_correction(self, stealthchop_comp, spreadcycle_comp, error):
         if stealthchop_comp and not self.force_stealthchop_comp:
             if self.in_spreadcycle is None:

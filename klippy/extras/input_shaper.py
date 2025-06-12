@@ -174,6 +174,7 @@ class InputShaper:
                     failed_shapers.append(shaper)
         motion_queuing = self.printer.lookup_object("motion_queuing")
         motion_queuing.check_step_generation_scan_windows()
+        self.printer.send_event('input_shaper:update_shaper')
         if failed_shapers:
             error = error or self.printer.command_error
             raise error("Failed to configure shaper(s) %s with given parameters"
