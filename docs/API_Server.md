@@ -393,13 +393,55 @@ and might return:
 and might later produce asynchronous messages such as:
 ```
 {"params":{"tap":'{
-   "time": [118032.28039, 118032.2834, ...],
-   "force": [-459.4213119680034, -458.1640702543264, ...],
+    "time": [118032.28039, 118032.2834, ...],
+    "force": [-459.4213119680034, -458.1640702543264, ...],
+    "tap_points": [
+        {"force":-460.174769196281, "time":118032.28039},
+        {"force":-460.5688282112242, "time":118032.55509918553}, ...
+    ]
+    "tap_lines": [
+        {"slope":-1.4344588231023843, "intercept":168852.27124713376},
+        {"slope":-20953.17324785847, "intercept":2473156115.3118067}, ...
+    ],
+    "tap_angles": [
+        87.18541701142391,
+        -87.5965850636961,
+        -65.3861364656239,
+        65.43335592854575],
+    "tap_pos": [150, 150, 0.026494399229597846],
+    "moves": [
+        {
+            "print_time": 118032.44926297224,
+            "z_r": -1,
+            "move_t": 0.014285714285714285,
+            "start_x": 150,
+            "start_y": 150,
+            "start_v": 0,
+            "start_z": 0.5258747448442332,
+            "accel": 350,
+            "x_r": 0,
+            "y_r": 0
+        }, ...
+    ],
+    "home_end_time": 118032.56658077835,
+    "pullback_start_time": 118032.9893979,
+    "pullback_end_time": 118033.30281218572,
+    "elapsed": 0.159273,
+    "is_valid": False,
+    "error": {
+        "error_code": "ERROR_CODE",
+        "message": "some error message"
+    }
 }}}
 ```
 
 This data can be used to render:
+* The position of the toolhead throughout the probe
 * The time/force graph
+* The tap lines and elbow points detected by the tap algorithm
+
+The `tap_angles`, `lines`, `tap_r_squared` and `points` may all be used in
+deciding of a tap was good or bad.
 
 ### pause_resume/cancel
 
@@ -560,7 +602,7 @@ might return:
 
 The `dump_mesh` endpoint takes one optional parameter, `mesh_args`.
 This parameter must be an object, where the keys and values are
-parameters available to [BED_MESH_CALIBRATE](#bed_mesh_calibrate).
+parameters available to [BED_MESH_CALIBRATE](./G-Codes.md#bed_mesh_calibrate).
 This will update the mesh configuration and probe points using the
 supplied parameters prior to returning the result.   It is recommended
 to omit mesh parameters unless it is desired to visualize the probe points
