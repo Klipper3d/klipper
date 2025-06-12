@@ -196,6 +196,7 @@ class VirtualSD:
         self.file_position = 0
         self.file_size = fsize
         self.print_stats.set_current_file(filename)
+        self.printer.send_event("virtual_sdcard:load_file")
     def cmd_M24(self, gcmd):
         # Start/resume SD print
         self.do_resume()
