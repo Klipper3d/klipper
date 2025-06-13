@@ -77,7 +77,7 @@ class ProbeCommandHelper:
         gcmd.respond_info("probe: %s" % (["open", "TRIGGERED"][not not res],))
     cmd_PROBE_help = "Probe Z-height at current XY position"
     def cmd_PROBE(self, gcmd):
-        self.printer.send_event("probe:PROBE")
+        self.printer.send_event("probe:PROBE", gcmd)
         pos = run_single_probe(self.probe, gcmd)
         gcmd.respond_info("Result is z=%.6f" % (pos[2],))
         self.last_z_result = pos[2]
@@ -175,8 +175,11 @@ class ProbeCommandHelper:
 
 # Helper to lookup the minimum Z position for the printer
 def lookup_minimum_z(config):
-    zconfig = manual_probe.lookup_z_endstop_config(config)
-    if zconfig is not None:
+    if config.has_section('stepper_z'):
+        zconfig = config.getsection('stepper_z')
+        return zconfig.getfloat('position_min', 0., note_valid=False)
+    elif config.has_section('carriage z'):
+        zconfig = config.getsection('carriage z')
         return zconfig.getfloat('position_min', 0., note_valid=False)
     pconfig = config.getsection('printer')
     return pconfig.getfloat('minimum_z_position', 0., note_valid=False)
