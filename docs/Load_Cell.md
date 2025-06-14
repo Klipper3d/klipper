@@ -14,7 +14,7 @@ A calibrated force sensor is an important part of a load cell based probe.
 
 When you first connect a load cell its good practice to check for issues by
 running `LOAD_CELL_DIAGNOSTIC`. This tool collects 10 seconds of data from the
-load cell and resport statistics:
+load cell and reports statistics:
 
 ```
 $ LOAD_CELL_DIAGNOSTIC
@@ -131,7 +131,7 @@ a macro:
 
 * [load_cell_probe Config Reference](Config_Reference.md#load_cell_probe)
 * [load_cell_probe G-Code Commands](G-Codes.md#load_cell_probe)
-* [load_cell_probe Statuc Reference](Status_Reference.md#load_cell_probe)
+* [load_cell_probe Status Reference](Status_Reference.md#load_cell_probe)
 
 ## Load Cell Probe Safety
 
@@ -143,9 +143,9 @@ and how they work as you can defeat most of them with poorly chosen config
 values.
 
 #### Calibration Check
-Every time a homing move starts, load_cell_probe checks
-that the load_cell is calibrated. If not it will stop the move with an error:
-`!! Load Cell not calibrated`.
+Every time a probe starts, load_cell_probe checks that the load_cell is
+calibrated. If not it will stop the move with an error: `!! Load Cell not
+calibrated`.
 
 #### `counts_per_gram`
 This setting is used to convert raw sensor counts into grams. All the safety
@@ -155,13 +155,13 @@ You should never guess this value. Use `LOAD_CELL_CALIBRATE` to find your load
 cells actual `counts_per_gram`.
 
 #### `trigger_force`
-This is the force in grams that triggers the endstop to halt the homing move.
-When a homing move starts the endstop tares itself with the current reading
-from the load cell. `trigger_force` is measured from that tare value. There is
-always some overshoot of this value when the probe collides with the bed,
-so be conservative. e.g. a setting of 100g could result in 350g of peak force
-before the toolhead stops. This overshoot will increase with faster probing
-`speed`, a low ADC sample rate or [multi MCU homing](Multi_MCU_Homing.md).
+This is the force in grams that triggers the probe to halt the move. When a
+probe move starts the load cell is tared with the current reading.
+`trigger_force` is measured from that tare value. There is always some
+overshoot of this value when the probe collides with the bed, so be
+conservative. e.g. a setting of 100g could result in 350g of peak force before
+the toolhead stops. This overshoot will increase with faster probing `speed` or
+a low ADC sample rate.
 
 #### `reference_tare_counts`
 This is the baseline tare value that is set by `LOAD_CELL_CALIBRATE`.
@@ -169,27 +169,27 @@ This value works with `force_safety_limit` to limit the maximum force on the
 toolhead.
 
 #### `force_safety_limit`
-This is the maximum absolute force, relative to `reference_tare_counts`,
-that the probe will allow while homing or probing. If the MCU sees this
-force exceeded it will shut down the printer with the error `!! Load cell
-endstop: too much force!`. There are a number of ways this can be triggered:
+This is the maximum force, relative to `reference_tare_counts`, that will be
+allowed while probing. If the MCU sees this force exceeded it will shut down
+the printer with the error `!! Load Cell Probe Error: load exceeds safety
+limit`. There are a number of ways this could be triggered:
 
 The first risk this protects against is picking too large of a value for
 `drift_filter_cutoff_frequency`. This can cause the drift filter to filter out
-a probe event and continue the homing move. If this happens the
-`force_safety_limit` acts as a backup protection.
+a probe event and continue the move. If this happens the `force_safety_limit`
+acts as a backup protection.
 
 The second problem is probing repeatedly in one place. Klipper does not retract
-the probe when doing a single `PROBE` command. This can result
-in force applied to the toolhead at the end of a probing cycle. Because
-external forces can vary greatly between probing locations,
-`load_cell_probe` performs a tare before beginning each probe. If you repeat
-the `PROBE` command, load_cell_probe will tare the endstop at the current force.
-Multiple cycles of this will result in ever-increasing force on the toolhead.
-`force_safety_limit` stops this cycle from running out of control.
+the probe when doing a single `PROBE` command. This can result in force applied
+to the toolhead at the end of a probing cycle. Because external forces can vary
+greatly between probing locations, `load_cell_probe` performs a tare before
+beginning each probe. If you repeat the `PROBE` command, load_cell_probe will
+tare at the current force. Multiple cycles of this will result in ever
+increasing force on the toolhead. `force_safety_limit` stops this cycle from
+running out of control.
 
-Another way this run-away can happen is damage to a strain gauge. If the metal
-part is permanently bent it wil change the `reference_tare_counts` of the
+Another way this run away can happen is damage to a strain gauge. If the metal
+part is permanently bent it will change the `reference_tare_counts` of the
 device. This puts the starting tare value much closer to the limit making it
 more likely to be violated. You want to be notified if this is happening
 because your hardware has been permanently damaged.
@@ -199,11 +199,11 @@ strain gauges are heated their `reference_tare_counts` may be very different
 at ambient temperature vs operating temperature. In this case you may need
 to increase the `force_safety_limit` to allow for thermal changes.
 
-#### Load Cell Endstop Watchdog Task
-When homing the load_cell_endstop starts a task on the MCU to trac
+#### Load Cell Probe Watchdog Task
+When probing the load_cell_probe starts a task on the MCU to track
 measurements arriving from the sensor. If the sensor fails to send
 measurements for 2 sample periods the watchdog will shut down the printer
-with an error `!! LoadCell Endstop timed out waiting on ADC data`.
+with an error `!! Load Cell Probe Error: timed out waiting for sensor data`.
 
 If this happens, the most likely cause is a fault from the ADC. Inadequate
 grounding of your printer can be the root cause. The frame, power supply
@@ -222,7 +222,7 @@ A `[load_cell_probe]` is also a `[load_cell]` and G-code commands related to
 `[load_cell]` work with `[load_cell_probe]`. Before attempting to use a load
 cell probe, follow the directions for
 [calibrating the load cell](Load_Cell.md#calibrating-a-load-cell) with
-`CALIBRATE_LOAD_CELL` and checking its operation with `LOAD_CELL_DIAGNOSTIC`.
+`LOAD_CELL_CALIBRATE` and checking its operation with `LOAD_CELL_DIAGNOSTIC`.
 
 ### Verify Probe Operation With LOAD_CELL_TEST_TAP
 
@@ -241,9 +241,9 @@ commands. Use `LOAD_CELL_TEST_TAP` for testing functionality before probing.
 ### Homing Macros
 
 Load cell probe is not an endstop and doesn't support `endstop:
-prove:z_virtual_endstop`. For the time being you'll need to configure your z
-axis with an MCU pin as its endstop. You won't actually be using the pin but
-for the time being you have to configure something.
+probe:z_virtual_endstop`. For the time being you'll need to configure your z
+axis with an MCU pin as its endstop. The pin will not actually be used, but for
+the time being you have to configure something.
 
 To home the axis with just the probe you need to set up a custom homing
 macro. This requires setting up
@@ -301,12 +301,11 @@ way to detect poor quality taps due to filament ooze. The existing code may
 decide that a tap is valid when it is of poor quality. Classifying these poor
 quality taps is an area of active research.
 
-Klipper also lacks support for re-locating a probe point if the
-location has become fouled by filament ooze. Modules like `quad_gantry_level`
-will repeatedly probe the same coordinates even if a probe previously failed
-there.
+Klipper also lacks support for relocating a probe point if the location has
+become fouled by filament ooze. Modules like `quad_gantry_level` will
+repeatedly probe the same coordinates even if a probe previously failed there.
 
-Give the above it is strongly suggested not to probe at printing temperatures.
+Given the above it is strongly suggested not to probe at printing temperatures.
 
 ### Hot Nozzle Protection
 
@@ -373,7 +372,7 @@ max_z_adjustment: 0.1
 ## Continuous Tare Filters for Toolhead Load Cells
 
 Klipper implements a configurable IIR filter on the MCU to provide continuous
-tareing of the load cell while probing. Continuous taring means the 0 value
+taring of the load cell while probing. Continuous taring means the 0 value
 moves with drift caused by external factors like bowden tubes and thermal
 changes. This is aimed at toolhead sensors and moving beds that experience lots
 of external forces that change while probing.
@@ -383,10 +382,10 @@ of external forces that change while probing.
 The filtering code uses the excellent [SciPy](https://scipy.org/) library to
 compute the filter coefficients based on the values your enter into the config.
 
-Pre-compiled SciPi builds are available for Python 3 on 32 bit Raspberry Pi
-systems. 32 bit + Python 3 is strongly recommended because it will streamline
-your installation experience. It does work with Python 2 but installation can
-take 30+ minutes and require installing additional tools.
+Pre-compiled SciPy builds are available for Python 3 on Raspberry Pi systems.
+Python 3 is strongly recommended because it will streamline your installation
+experience. It does work with Python 2 but installation can take 30+ minutes
+and require installing additional tools.
 
 ```bash
 ~/klippy-env/bin/pip install scipy
@@ -426,15 +425,14 @@ Ideally a sensor would meet these criteria:
 
 * At least 24 bits wide
 * Use SPI communications
-* Has a pin can be used to indicate sample ready without SPI communications.
-  This is often called the "data ready" or "DRDY" pin. Checking a pin is much
-  faster than running an SPI query.
+* Has a pin that can be used to indicate sample ready without SPI
+  communications. This is often called the "data ready" or "DRDY" pin. Checking
+  a pin is much faster than running an SPI query.
 * Has a programmable gain amplifier gain setting of 128. This should eliminate
   the need for a separate amplifier.
 * Indicates via SPI if the sensor has been reset. Detecting resets avoids
-  timing errors in homing and using noisy data at startup. It can also help
-  users
-  track down wiring and grounding issues.
+  timing errors in probing and using noisy data at startup. It can also help
+  users track down wiring and grounding issues.
 * A selectable sample rate between 350Hz and 2Khz. Very high sample rates don't
   turn out to be beneficial in our 3D printers because they produce so much
   noise
@@ -449,7 +447,7 @@ Ideally a sensor would meet these criteria:
   each channel switch making them unsuitable for probing applications.
 
 Implementing support for a new sensor chip is not particularly difficult with
-Klipper's `bulk_sensor` and `load_cell_endstop` infrastructure.
+Klipper's `bulk_sensor` and `load_cell_probe` infrastructure.
 
 ### 5V Power Filtering
 
@@ -475,7 +473,7 @@ should have proper grounding back to the DC supply.
 This sensor is popular because of its low cost and availability in the
 supply chain. However, this is a sensor with some drawbacks:
 
-* The HX71x sensors use bit-bang communication which has a high overhead on the
+* The HX71x sensors use bitbang communication which has a high overhead on the
   MCU. Using a sensor that communicates via SPI would save resources on the tool
   board's CPU.
 * The HX71x lacks a way to communicate reset events to the MCU. Klipper detects
@@ -486,4 +484,4 @@ supply chain. However, this is a sensor with some drawbacks:
   limited to less than 2mm/s.
 * The sample rate on the HX71x cannot be set from klipper's config. If you have
   the 10SPS version of the sensor (which is widely distributed) it needs to
-  be physically re-wired to run at 80SPS.
+  be physically rewired to run at 80SPS.
