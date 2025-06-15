@@ -212,7 +212,13 @@ class DockableProbe:
         self.cmd_helper = probe.ProbeCommandHelper(
             config, self, self.mcu_endstop.query_endstop)
         self.probe_offsets = probe.ProbeOffsetsHelper(config)
-        self.probe_session = probe.ProbeSessionHelper(config, self)
+        if hasattr(probe, 'ProbeParameterHelper'):
+            self.param_helper = probe.ProbeParameterHelper(config)
+            self.homing_helper = probe.HomingViaProbeHelper(config, self, self.param_helper)
+            self.probe_session = probe.ProbeSessionHelper(
+                        config, self.param_helper, self.homing_helper.start_probe_session)
+        else:
+            self.probe_session = probe.ProbeSessionHelper(config, self)
 
         # State
         self.last_z = -9999
@@ -286,11 +292,15 @@ class DockableProbe:
         return p
 
     def get_probe_params(self, gcmd=None):
+        if hasattr(self, 'param_helper'):
+            return self.param_helper.get_probe_params(gcmd)
         return self.probe_session.get_probe_params(gcmd)
     def get_offsets(self):
         return self.probe_offsets.get_offsets()
     def get_status(self, eventtime):
-        return self.cmd_helper.get_status(eventtime)
+        status = self.cmd_helper.get_status(eventtime)
+        status['last_status'] = self.last_probe_state
+        return status
     def start_probe_session(self, gcmd):
         return self.probe_session.start_probe_session(gcmd)
 
@@ -320,12 +330,6 @@ class DockableProbe:
         state = self.probe_states[self.last_probe_state]
 
         gcmd.respond_info('Probe Status: %s' % (state))
-
-    def get_status(self, curtime):
-        # Use last_'status' here to be consistent with QUERY_PROBE_'STATUS'.
-        return {
-            'last_status': self.last_probe_state,
-        }
 
     cmd_MOVE_TO_APPROACH_PROBE_help = "Move close to the probe dock" \
                                     "before attaching"
