@@ -1,7 +1,7 @@
 # Main code build rules
 
-src-y += sched.c command.c basecmd.c debugcmds.c
-src-$(CONFIG_HAVE_GPIO) += initial_pins.c gpiocmds.c stepper.c endstop.c \
+src-y += sched.c command.c basecmd.c debugcmds.c touch_sensor_mcp3462r.c
+src-$(CONFIG_HAVE_GPIO) += initial_pins.c gpiocmds.c stepper.c endstop.c 
     trsync.c
 src-$(CONFIG_WANT_ADC) += adccmds.c
 src-$(CONFIG_WANT_SPI) += spicmds.c
