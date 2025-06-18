@@ -32,7 +32,7 @@ typedef int32_t fixedQ16_t;
 typedef int64_t fixedQ48_t;
 #define FIXEDQ48_FRAC_BITS FIXEDQ16_FRAC_BITS
 
-#define MAX_TRIGGER_GRAMS ((1 << FIXEDQ16) - 1)
+#define MAX_TRIGGER_GRAMS ((1L << FIXEDQ16) - 1)
 #define ERROR_SAFETY_RANGE 0
 #define ERROR_OVERFLOW 1
 #define ERROR_WATCHDOG 2
@@ -204,7 +204,7 @@ set_endstop_range(struct load_cell_probe *lce
         shutdown("trigger_grams too large");
     }
     // grams_per_count must be a positive fraction in Q2 format
-    const fixedQ2_t one = 1 << FIXEDQ2_FRAC_BITS;
+    const fixedQ2_t one = 1L << FIXEDQ2_FRAC_BITS;
     if (grams_per_count < 0 || grams_per_count >= one) {
         shutdown("grams_per_count is invalid");
     }
