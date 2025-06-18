@@ -7,36 +7,19 @@ Version: 0.1
 Owner: Mo
 #################################################################
 */
-#include "touch_sensor_mcp3462r.h"
-
+#include <stdint.h>
+#include <stdio.h>
 #include "board/gpio.h" // irq_disable
 #include "board/irq.h" // irq_disable
+
+#include "basecmd.h" // oid_alloc
 #include "board/misc.h" // timer_read_time
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // DECL_TASK
 #include "spicmds.h" // spidev_transfer
+#include "touch_sensor_mcp3462r.h"
 
 static struct mcp3462r_adc *mcp_adc_ptr = NULL;
-
-void
-command_cfg_ts_adc(uint32_t *args)
-{
-    mcp_adc_ptr = oid_alloc(args[0], command_cfg_ts_adc, sizeof(*mcp_adc_ptr));
-    mcp_adc_ptr->oid = args[0];
-    mcp_adc_ptr->spi = spidev_oid_lookup(args[1]);
-    mcp_adc_ptr->adc_ready_pin = gpio_in_setup(args[2], 0);
-    mcp_adc_ptr->trigger_out_pin = gpio_out_setup(args[3], 0);
-    mcp_adc_ptr->timer.func = mcp3462r_event;
-    mcp_adc_ptr->active_session_flag = 0;
-    mcp_adc_ptr->configured_flag = 1;
-    mcp_adc_ptr->msg = {0x00, 0x00};
-    gpio_out_write(mcp_adc_ptr->trigger_out_pin, 0);
-    output("Touch sensor ADC configured with OID=%c, SPI OID=%c, ADC ready pin=%u, Trigger out pin=%u",
-         mcp_adc_ptr->oid, args[1], args[2], args[3]);
-}
-
-DECL_COMMAND(command_cfg_ts_adc, "cfg_ts_adc oid=%c spi_oid=%c adc_int_pin=%u trigger_out_pin=%u");
-
 
 int8_t
 mcp3462r_is_data_ready(struct mcp3462r_adc *mcp3462r)
@@ -48,7 +31,7 @@ mcp3462r_is_data_ready(struct mcp3462r_adc *mcp3462r)
 static uint_fast8_t
 mcp3462r_event(struct timer *t)
 {
-    uint16_t data;
+    uint16_t doneP =0, data =0;
     struct mcp3462r_adc *mcp_adc_ptr = container_of(t, struct mcp3462r_adc, timer);
     if (mcp3462r_is_data_ready(mcp_adc_ptr)) 
     {
@@ -57,13 +40,14 @@ mcp3462r_event(struct timer *t)
         mcp_adc_ptr->msg[1] = 0x00;
         spidev_transfer(mcp_adc_ptr->spi, 1, 2, mcp_adc_ptr->msg);
         // Process the raw values here
-        output("Touch sensor raw ADC data: %02x %02x", mcp_adc_ptr->msg[0], mcp_adc_ptr->msg[1]);
+        output("Touch sensor raw ADC data: %u %u", mcp_adc_ptr->msg[0], mcp_adc_ptr->msg[1]);
         data = (mcp_adc_ptr->msg[0] << 8) | mcp_adc_ptr->msg[1];
         if (data > mcp_adc_ptr->sensitivity) {
             // Trigger the touch event
             gpio_out_write(mcp_adc_ptr->trigger_out_pin, 1);
             // This is the last cycle
             mcp_adc_ptr->timeout_cycles =0;
+            doneP = 1;
 
         } else {
             // No touch detected, reset the output pin
@@ -76,14 +60,33 @@ mcp3462r_event(struct timer *t)
         // Timeout reached, stop the task
         mcp_adc_ptr->active_session_flag = 0;
         // sched_del_timer(&mcp_adc_ptr->timer);
-        if (data > mcp_adc_ptr->sensitivity)
-            sendf("Ts_session_result oid=%c status=done lstValue=%u", mcp_adc_ptr->oid, data);
-        else
-            sendf("Ts_session_result oid=%c status=timeout lstValue=%u", mcp_adc_ptr->oid, data);
+        sendf("Ts_session_result oid=%c status=%u lstValue=%u", mcp_adc_ptr->oid, doneP,data);
         return SF_DONE;
     }
     return SF_RESCHEDULE;
 }
+
+void
+command_cfg_ts_adc(uint32_t *args)
+{
+    mcp_adc_ptr = oid_alloc(args[0], command_cfg_ts_adc, sizeof(*mcp_adc_ptr));
+    mcp_adc_ptr->oid = args[0];
+    mcp_adc_ptr->spi = spidev_oid_lookup(args[1]);
+    mcp_adc_ptr->adc_ready_pin = gpio_in_setup(args[2], 0);
+    mcp_adc_ptr->trigger_out_pin = gpio_out_setup(args[3], 0);
+    mcp_adc_ptr->timer.func = mcp3462r_event;
+    mcp_adc_ptr->active_session_flag = 0;
+    mcp_adc_ptr->configured_flag = 1;
+    mcp_adc_ptr->msg[0] = 0x00;
+    mcp_adc_ptr->msg[1] = 0x00;
+    gpio_out_write(mcp_adc_ptr->trigger_out_pin, 0);
+    output("Touch sensor ADC configured with OID=%c, SPI OID=%c, ADC ready pin=%u, Trigger out pin=%u",
+         mcp_adc_ptr->oid, args[1], args[2], args[3]);
+}
+
+DECL_COMMAND(command_cfg_ts_adc, "cfg_ts_adc oid=%c spi_oid=%c adc_int_pin=%u trigger_out_pin=%u");
+
+
 
 /*
 // This function is the cmd that is initiated by the user to wake up
