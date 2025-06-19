@@ -82,3 +82,13 @@ while IFS="," read dirname langsite langdesc langsearch; do
   ln -sf "${PWD}/site/${langsite}/" "${WORK_DIR}lang/${langsite}/site"
   mkdocs build -f "${new_mkdocs_file}"
 done < <(egrep -v '^ *(#|$)' ${TRANS_FILE})
+
+# Avoid push of pycache
+find "${PWD}/site/" -type f -name "*.pyc" -delete
+
+LAST_MODIFIED=$(git log -1 origin/master --format="%cs")
+CDATE=$(date +%Y-%m-%d)
+# Stabilize sitemap.xml dates
+for f in $(find "${PWD}/site/" -name "sitemap.xml"); do
+  sed -i "s/${CDATE}/${LAST_MODIFIED}/g" ${f}
+done
