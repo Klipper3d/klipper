@@ -79,6 +79,7 @@ class Touch_sensor_MCP3462R:
     def _handle_probing_event(self, gcmd):
         if not self.configured:
             raise gcmd.error("Touch sensor is not configured. Please initialize it first.")
+        self._pending_gcmd = gcmd  # Store for later response
         self.start_ts_session_cmd.send([
             self.oid, 10, 10000, 500
         ])
@@ -91,11 +92,16 @@ class Touch_sensor_MCP3462R:
         status = params['status']
         data = params['lstValue']
 
-        if status == 1:
-            logging.info("Touched with value: %d, hex: %s", data, data.hex())
-        elif status == 0:
-            logging.warning("Touch sensor session timed out without sensing.")
-
+        gcmd = getattr(self, '_pending_gcmd', None)
+        if gcmd is not None and status == 0:
+            self._pending_gcmd = None  # Clear after use
+            raise gcmd.error("Touch sensor session timed out without sensing.")
+        else:
+            # Fallback to logging if no gcmd is available
+            if status == 1:
+                logging.info("Touched with value: %d", data)
+            elif status == 0:
+                logging.warning("Touch sensor session timed out without sensing.")
     def cmd_INIT_TS(self, gcmd):
         """Initialize the touch sensor-SPI."""
         if not self.configured:
