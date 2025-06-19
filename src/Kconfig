@@ -12,6 +12,8 @@ choice
     prompt "Micro-controller Architecture"
     config MACH_AVR
         bool "Atmega AVR"
+    config MACH_LGT
+        bool "LogicGreen"
     config MACH_ATSAM
         bool "SAM3/SAM4/SAM E70"
     config MACH_ATSAMD
@@ -35,6 +37,7 @@ choice
 endchoice
 
 source "src/avr/Kconfig"
+source "src/lgt/Kconfig"
 source "src/atsam/Kconfig"
 source "src/atsamd/Kconfig"
 source "src/lpc176x/Kconfig"
@@ -50,7 +53,7 @@ source "src/simulator/Kconfig"
 config SERIAL
     bool
 config SERIAL_BAUD
-    depends on SERIAL
+    depends on SERIAL && !MACH_LGT
     int "Baud rate for serial port" if LOW_LEVEL_OPTIONS
     default 250000
     help
