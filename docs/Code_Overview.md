@@ -286,6 +286,11 @@ The following may also be useful:
   during the `load_config()` or "connect event" phases. Use either
   `raise config.error("my error")` or `raise printer.config_error("my
   error")` to report the error.
+* Do not store a reference to the `config` object in a class member
+  variable (nor in any similar location that may persist past initial
+  module loading). The `config` object is a reference to a "config
+  loading phase" class and it is not valid to invoke its methods after
+  the "config loading phase" has completed.
 * Use the "pins" module to configure a pin on a micro-controller. This
   is typically done with something similar to
   `printer.lookup_object("pins").setup_pin("pwm",

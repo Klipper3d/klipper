@@ -5,6 +5,14 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, bisect
 
+# Helper to lookup the Z stepper config section
+def lookup_z_endstop_config(config):
+    if config.has_section('stepper_z'):
+        return config.getsection('stepper_z')
+    elif config.has_section('carriage z'):
+        return config.getsection('carriage z')
+    return None
+
 class ManualProbe:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -14,9 +22,13 @@ class ManualProbe:
         self.gcode.register_command('MANUAL_PROBE', self.cmd_MANUAL_PROBE,
                                     desc=self.cmd_MANUAL_PROBE_help)
         # Endstop value for cartesian printers with separate Z axis
-        zconfig = config.getsection('stepper_z')
-        self.z_position_endstop = zconfig.getfloat('position_endstop', None,
-                                                   note_valid=False)
+        zconfig = lookup_z_endstop_config(config)
+        if zconfig is not None:
+            self.z_position_endstop = zconfig.getfloat('position_endstop', None,
+                                                       note_valid=False)
+            self.z_endstop_config_name = zconfig.get_name()
+        else:
+            self.z_position_endstop = self.z_endstop_config_name = None
         # Endstop values for linear delta printers with vertical A,B,C towers
         a_tower_config = config.getsection('stepper_a')
         self.a_position_endstop = a_tower_config.getfloat('position_endstop',
@@ -67,11 +79,13 @@ class ManualProbe:
             return
         z_pos = self.z_position_endstop - kin_pos[2]
         self.gcode.respond_info(
-            "stepper_z: position_endstop: %.3f\n"
+            "%s: position_endstop: %.3f\n"
             "The SAVE_CONFIG command will update the printer config file\n"
-            "with the above and restart the printer." % (z_pos,))
+            "with the above and restart the printer." % (
+                self.z_endstop_config_name, z_pos,))
         configfile = self.printer.lookup_object('configfile')
-        configfile.set('stepper_z', 'position_endstop', "%.3f" % (z_pos,))
+        configfile.set(self.z_endstop_config_name, 'position_endstop',
+                       "%.3f" % (z_pos,))
     cmd_Z_ENDSTOP_CALIBRATE_help = "Calibrate a Z endstop"
     def cmd_Z_ENDSTOP_CALIBRATE(self, gcmd):
         ManualProbeHelper(self.printer, gcmd, self.z_endstop_finalize)
@@ -83,11 +97,12 @@ class ManualProbe:
         else:
             new_calibrate = self.z_position_endstop - offset
             self.gcode.respond_info(
-                "stepper_z: position_endstop: %.3f\n"
+                "%s: position_endstop: %.3f\n"
                 "The SAVE_CONFIG command will update the printer config file\n"
-                "with the above and restart the printer." % (new_calibrate))
-            configfile.set('stepper_z', 'position_endstop',
-                "%.3f" % (new_calibrate,))
+                "with the above and restart the printer." % (
+                    self.z_endstop_config_name, new_calibrate))
+            configfile.set(self.z_endstop_config_name, 'position_endstop',
+                           "%.3f" % (new_calibrate,))
     def cmd_Z_OFFSET_APPLY_DELTA_ENDSTOPS(self,gcmd):
         offset = self.gcode_move.get_status()['homing_origin'].z
         configfile = self.printer.lookup_object('configfile')

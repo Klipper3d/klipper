@@ -174,8 +174,8 @@ class ProbeCommandHelper:
 
 # Helper to lookup the minimum Z position for the printer
 def lookup_minimum_z(config):
-    if config.has_section('stepper_z'):
-        zconfig = config.getsection('stepper_z')
+    zconfig = manual_probe.lookup_z_endstop_config(config)
+    if zconfig is not None:
         return zconfig.getfloat('position_min', 0., note_valid=False)
     pconfig = config.getsection('printer')
     return pconfig.getfloat('minimum_z_position', 0., note_valid=False)
@@ -264,6 +264,17 @@ class HomingViaProbeHelper:
     def end_probe_session(self):
         self.results = []
         self.mcu_probe.multi_probe_end()
+
+class ProbeVirtualEndstopDeprecation:
+    def __init__(self, config):
+        self._name = config.get_name()
+        self._printer = config.get_printer()
+        # Register z_virtual_endstop pin
+        self._printer.lookup_object('pins').register_chip('probe', self)
+    def setup_pin(self, pin_type, pin_params):
+        raise self._printer.config_error(
+            "Module [%s] does not support `probe:z_virtual_endstop`"
+            ", use a pin instead." % (self._name,))
 
 # Helper to read multi-sample parameters from config
 class ProbeParameterHelper:

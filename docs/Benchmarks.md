@@ -286,6 +286,25 @@ The test was last run on commit `247cd753` with gcc version
 | 1 stepper        | 58    |
 | 3 stepper        | 243   |
 
+### STM32G4 step rate benchmark
+
+The following configuration sequence is used on the STM32G431:
+```
+allocate_oids count=3
+config_stepper oid=0 step_pin=PA0 dir_pin=PB5 invert_step=-1 step_pulse_ticks=17
+config_stepper oid=1 step_pin=PB2 dir_pin=PB6 invert_step=-1 step_pulse_ticks=17
+config_stepper oid=2 step_pin=PB3 dir_pin=PB7 invert_step=-1 step_pulse_ticks=17
+finalize_config crc=0
+```
+
+The test was last run on commit `cfa48fe3` with gcc version
+`arm-none-eabi-gcc (Fedora 14.1.0-1.fc40) 14.1.0`.
+
+| stm32g431        | ticks |
+| ---------------- | ----- |
+| 1 stepper        | 47    |
+| 3 stepper        | 208   |
+
 ### LPC176x step rate benchmark
 
 The following configuration sequence is used on the LPC176x:
@@ -422,7 +441,7 @@ Pico and Pico 2 boards.
 
 (*) Note that the reported rp2040 ticks are relative to a 12Mhz
 scheduling timer and do not correspond to its 200Mhz internal ARM
-processing rate. It is expected that 5 scheduling ticks corresponds to
+processing rate. It is expected that 3 scheduling ticks corresponds to
 ~42 ARM core cycles and 14 scheduling ticks corresponds to ~225 ARM
 core cycles.
 
@@ -463,18 +482,23 @@ When the test completes, determine the difference between the clocks
 reported in the two "uptime" response messages. The total number of
 commands per second is then `100000 * mcu_frequency / clock_diff`.
 
-Note that this test may saturate the USB/CPU capacity of a Raspberry
-Pi. If running on a Raspberry Pi, Beaglebone, or similar host computer
-then increase the delay (eg, `DELAY {clock + 20*freq} get_uptime`).
-Where applicable, the benchmarks below are with console.py running on
-a desktop class machine with the device connected via a high-speed
-hub.
+The USB tests may exceed the CPU capacity of a Raspberry Pi. If
+running on a Raspberry Pi, Beaglebone, or similar host computer then
+increase the delay (eg, `DELAY {clock + 20*freq} get_uptime`). Where
+applicable, the benchmarks below are with console.py running on a
+desktop class machine with the device connected via a super-speed hub.
+
+The CAN bus tests may saturate the USB host controller of a Raspberry
+Pi (when testing via a standard gs_usb USB to CAN bus adapter). Where
+applicable, the CAN bus benchmarks below are with console.py running
+on a desktop class machine with a USB to CAN bus adapter connected via
+a super-speed USB hub.
 
 | MCU                 | Rate | Build    | Build compiler      |
 | ------------------- | ---- | -------- | ------------------- |
-| stm32f042 (CAN)     |  18K | c105adc8 | arm-none-eabi-gcc (GNU Tools 7-2018-q3-update) 7.3.1 |
 | atmega2560 (serial) |  23K | b161a69e | avr-gcc (GCC) 4.8.1 |
 | sam3x8e (serial)    |  23K | b161a69e | arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0 |
+| rp2350 (CAN)        |  59K | 17b8ce4c | arm-none-eabi-gcc (Fedora 14.1.0-1.fc40) 14.1.0 |
 | at90usb1286 (USB)   |  75K | 01d2183f | avr-gcc (GCC) 5.4.0 |
 | ar100 (serial)      | 138K | 08d037c6 | or1k-linux-musl-gcc 9.3.0 |
 | samd21 (USB)        | 223K | 01d2183f | arm-none-eabi-gcc (Fedora 7.4.0-1.fc30) 7.4.0 |

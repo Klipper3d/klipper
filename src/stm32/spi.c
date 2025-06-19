@@ -106,9 +106,7 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
         gpio_peripheral(spi_bus[bus].sck_pin, spi_bus[bus].sck_af, 0);
 
         // Configure CR2 on stm32 f0/f7/g0/l4/g4
-#if CONFIG_MACH_STM32F0 || CONFIG_MACH_STM32F7 || \
-    CONFIG_MACH_STM32G0 || CONFIG_MACH_STM32G4 || \
-    CONFIG_MACH_STM32L4
+#ifdef SPI_CR2_FRXTH
         spi->CR2 = SPI_CR2_FRXTH | (7 << SPI_CR2_DS_Pos);
 #endif
     }
@@ -137,15 +135,31 @@ spi_prepare(struct spi_config config)
     spi->CR1 = config.spi_cr1;
 }
 
+#ifdef SPI_CR2_FRXTH // stm32 f0/f7/g0/l4/g4 supports buffering
+#define CAN_BUFFER 1
+#else
+#define CAN_BUFFER 0
+#endif
+
 void
 spi_transfer(struct spi_config config, uint8_t receive_data,
              uint8_t len, uint8_t *data)
 {
     SPI_TypeDef *spi = config.spi;
-    while (len--) {
-        writeb((void*)&spi->DR, *data);
-        while (!(spi->SR & SPI_SR_RXNE))
-            ;
+    uint8_t *wptr = data;
+    uint8_t *end = data + len;
+    while (data < end) {
+        if (CAN_BUFFER) {
+            uint32_t sr = spi->SR & (SPI_SR_TXE | SPI_SR_RXNE);
+            if ((sr == SPI_SR_TXE) && wptr < end)
+                writeb((void*)&spi->DR, *wptr++);
+            if (!(sr & SPI_SR_RXNE))
+                 continue;
+        } else {
+            writeb((void*)&spi->DR, *data);
+            while (!(spi->SR & SPI_SR_RXNE))
+                ;
+        }
         uint8_t rdata = readb((void*)&spi->DR);
         if (receive_data)
             *data = rdata;
