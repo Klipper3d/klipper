@@ -29,10 +29,15 @@ class Touch_sensor_MCP3462R:
 
         self.printer = config.get_printer()
         self.gcode = self.printer.lookup_object('gcode')
-
         ppins = self.printer.lookup_object('pins')
         self.probe_interrupt_pin = ppins.lookup_pin(config.get('probe_interrupt_pin'))
         self.adc_int_pin = ppins.lookup_pin(config.get('adc_int_pin')) 
+
+
+        self.mcu.add_config_cmd("cfg_ts_adc oid=%d spi_oid=%d adc_int_pin=%s trigger_out_pin=%s" % (self.oid, self.spi_oid, self.adc_int_pin['pin'], self.probe_interrupt_pin['pin']))
+
+
+        self.mcu.register_config_callback(self._build_config)
 
         self.gcode.register_command('INIT_SPI_TS', self.cmd_INIT_TS,
             desc="Initialize the touch sensor")
@@ -41,13 +46,6 @@ class Touch_sensor_MCP3462R:
         self.gcode.register_command('GET_TS_VAL', self.cmd_GET_TS_VALUE,
             desc="Klippy read for touch sensor value")
 
-        self.cfg_hw_cmd = self.mcu.lookup_command(
-            "cfg_ts_adc oid=%c spi_oid=%c adc_int_pin=%u trigger_out_pin=%u"
-        )
-        self.start_ts_session_cmd = self.mcu.lookup_command(
-            "start_ts_session oid=%c timeout_cycles=%u rest_ticks=%u sensitivity=%u"
-        )
-
 
         self.configured = False
 
@@ -55,34 +53,35 @@ class Touch_sensor_MCP3462R:
         # Hook a handler to probing event, so once it is triggered, we tell the mcu/adc that we are looking for your input now.
         self.printer.register_event_handler("probe:PROBE", self._handle_probing_event)
         
+    def _build_config(self):
+        self.start_ts_session_cmd = self.mcu.lookup_command(
+            "start_ts_session oid=%c timeout_cycles=%u rest_ticks=%u sensitivity=%u"
+        )
+        self.mcu.register_response(self._handle_ts_session_response, "Ts_session_result", self.oid)
+
     def _do_initialization_commands(self):
+
         self.spi.spi_send(
             CONFIG0_WRITE + CONFIG0_DATA + CONFIG1_DATA +
             CONFIG2_FORCE_DATA + CONFIG3_DATA + IRQ_DATA
             )
-        # Config the HW connections, send a command
-        self.cfg_hw_cmd.send([
-            self.oid, self.spi_oid, self.adc_int_pin['pin'], self.probe_interrupt_pin['pin']
-        ])
         # For future validation
         return True
 
     def _handle_on_ready(self):
         # Startup configuration for the touch sensor (Initialization)
-        self.configured = self._do_initialization_commands()
-
+        if not self.configured:
+            self.configured = self._do_initialization_commands()
         #TEMPORARY: For testing purposes, I will run a fake home command
         self.gcode.run_script("FAKE_HOME")
+        self.gcode.run_script("PROBE")
 
     def _handle_probing_event(self, gcmd):
         if not self.configured:
             raise gcmd.error("Touch sensor is not configured. Please initialize it first.")
-        self.mcu.register_response(self._handle_ts_session_response, "Ts_session_result", self.oid)
         self.start_ts_session_cmd.send([
-            self.oid, 1000, 100, 10
+            self.oid, 10, 10000, 500
         ])
-        # # Later, send the command with the appropriate data
-        # self._set_cmd.send([oid, clock, on_ticks])
 
     def _handle_ts_session_response(self, params):
         """Handle the response from the touch sensor session."""
@@ -92,9 +91,9 @@ class Touch_sensor_MCP3462R:
         status = params['status']
         data = params['lstValue']
 
-        if status == 'done':
+        if status == 1:
             logging.info("Touched with value: %d, hex: %s", data, data.hex())
-        elif status == 'timeout':
+        elif status == 0:
             logging.warning("Touch sensor session timed out without sensing.")
 
     def cmd_INIT_TS(self, gcmd):

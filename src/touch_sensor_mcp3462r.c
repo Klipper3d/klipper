@@ -9,6 +9,8 @@ Owner: Mo
 */
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+
 #include "board/gpio.h" // irq_disable
 #include "board/irq.h" // irq_disable
 
@@ -33,6 +35,7 @@ mcp3462r_event(struct timer *t)
 {
     uint16_t doneP =0, data =0;
     struct mcp3462r_adc *mcp_adc_ptr = container_of(t, struct mcp3462r_adc, timer);
+    output("Touch sensor ADC event triggered at cycle= %u",  mcp_adc_ptr->timeout_cycles);
     if (mcp3462r_is_data_ready(mcp_adc_ptr)) 
     {
         // Read ADC data
@@ -40,13 +43,14 @@ mcp3462r_event(struct timer *t)
         mcp_adc_ptr->msg[1] = 0x00;
         spidev_transfer(mcp_adc_ptr->spi, 1, 2, mcp_adc_ptr->msg);
         // Process the raw values here
-        output("Touch sensor raw ADC data: %u %u", mcp_adc_ptr->msg[0], mcp_adc_ptr->msg[1]);
+        output("Got new raw ADC data: %u %u at cycle= %u", mcp_adc_ptr->msg[0], mcp_adc_ptr->msg[1], mcp_adc_ptr->timeout_cycles); 
         data = (mcp_adc_ptr->msg[0] << 8) | mcp_adc_ptr->msg[1];
-        if (data > mcp_adc_ptr->sensitivity) {
+        if (data < mcp_adc_ptr->sensitivity) 
+        {
             // Trigger the touch event
             gpio_out_write(mcp_adc_ptr->trigger_out_pin, 1);
             // This is the last cycle
-            mcp_adc_ptr->timeout_cycles =0;
+            mcp_adc_ptr->timeout_cycles =1;
             doneP = 1;
 
         } else {
@@ -61,6 +65,7 @@ mcp3462r_event(struct timer *t)
         mcp_adc_ptr->active_session_flag = 0;
         // sched_del_timer(&mcp_adc_ptr->timer);
         sendf("Ts_session_result oid=%c status=%u lstValue=%u", mcp_adc_ptr->oid, doneP,data);
+        output("Ts_session_result status=%u lstValue=%u", doneP,data);
         return SF_DONE;
     }
     return SF_RESCHEDULE;
@@ -103,6 +108,8 @@ command_start_touch_sensing_session(uint32_t *args)
     mcp_adc_ptr->timeout_cycles = args[1];
     mcp_adc_ptr->rest_ticks = args[2];
     mcp_adc_ptr->sensitivity = args[3];
+    output("Starting touch sensing session with OID=%c, timeout_cycles=%u, rest_ticks=%u, sensitivity=%u\n",
+         mcp_adc_ptr->oid, mcp_adc_ptr->timeout_cycles, mcp_adc_ptr->rest_ticks, mcp_adc_ptr->sensitivity);
     if (!mcp_adc_ptr->timeout_cycles || !mcp_adc_ptr->rest_ticks) 
         shutdown("Timeout cycles and rest ticks must be greater than 0");
     if (mcp_adc_ptr->sensitivity == 0) 
