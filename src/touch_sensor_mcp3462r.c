@@ -21,12 +21,16 @@ Owner: Mo
 #include "spicmds.h" // spidev_transfer
 #include "touch_sensor_mcp3462r.h"
 
+#define ADC_ACTIVE_STATE 1
+
+
+
 static struct mcp3462r_adc *mcp_adc_ptr = NULL;
 
 int8_t
 mcp3462r_is_data_ready(struct mcp3462r_adc *mcp3462r)
 {
-    return gpio_in_read(mcp3462r->adc_ready_pin) == 0;
+    return gpio_in_read(mcp3462r->adc_ready_pin) == ADC_ACTIVE_STATE;
 }
 
 
@@ -45,7 +49,7 @@ mcp3462r_event(struct timer *t)
         // Process the raw values here
         output("Got new raw ADC data: %u %u at cycle= %u", mcp_adc_ptr->msg[0], mcp_adc_ptr->msg[1], mcp_adc_ptr->timeout_cycles); 
         data = (mcp_adc_ptr->msg[0] << 8) | mcp_adc_ptr->msg[1];
-        if (data < mcp_adc_ptr->sensitivity) 
+        if (data > mcp_adc_ptr->sensitivity) 
         {
             // Trigger the touch event
             gpio_out_write(mcp_adc_ptr->trigger_out_pin, 1);
@@ -77,7 +81,7 @@ command_cfg_ts_adc(uint32_t *args)
     mcp_adc_ptr = oid_alloc(args[0], command_cfg_ts_adc, sizeof(*mcp_adc_ptr));
     mcp_adc_ptr->oid = args[0];
     mcp_adc_ptr->spi = spidev_oid_lookup(args[1]);
-    mcp_adc_ptr->adc_ready_pin = gpio_in_setup(args[2], 0);
+    mcp_adc_ptr->adc_ready_pin = gpio_in_setup(args[2], !ADC_ACTIVE_STATE);
     mcp_adc_ptr->trigger_out_pin = gpio_out_setup(args[3], 0);
     mcp_adc_ptr->timer.func = mcp3462r_event;
     mcp_adc_ptr->active_session_flag = 0;
@@ -90,8 +94,6 @@ command_cfg_ts_adc(uint32_t *args)
 }
 
 DECL_COMMAND(command_cfg_ts_adc, "cfg_ts_adc oid=%c spi_oid=%c adc_int_pin=%u trigger_out_pin=%u");
-
-
 
 /*
 // This function is the cmd that is initiated by the user to wake up
