@@ -35,6 +35,15 @@ mcp3462r_is_data_ready(struct mcp3462r_adc *mcp3462r)
 
 
 static uint_fast8_t
+mcp3462r_terminator_event(struct timer *t)
+{
+    // Reset the touch sensor ADC state
+    struct mcp3462r_adc *mcp_adc_ptr = container_of(t, struct mcp3462r_adc, timer);
+    gpio_out_write(mcp_adc_ptr->trigger_out_pin, 0);
+    return SF_DONE;
+    
+}
+static uint_fast8_t
 mcp3462r_event(struct timer *t)
 {
     uint16_t doneP =0, data =0;
@@ -53,14 +62,17 @@ mcp3462r_event(struct timer *t)
         {
             // Trigger the touch event
             gpio_out_write(mcp_adc_ptr->trigger_out_pin, 1);
-            // This is the last cycle
+            // Terminate the session and send the result
             mcp_adc_ptr->timeout_cycles =1;
             doneP = 1;
-
         } else {
             // No touch detected, reset the output pin
             gpio_out_write(mcp_adc_ptr->trigger_out_pin, 0);
+            // send another read command to the ADC
+            mcp_adc_ptr->msg[0] = READ_CMD;
+            spidev_transfer(mcp_adc_ptr->spi, 0, 1, &mcp_adc_ptr->msg[0]);
         }
+
     }
 
     mcp_adc_ptr->timer.waketime += mcp_adc_ptr->rest_ticks;
@@ -70,6 +82,12 @@ mcp3462r_event(struct timer *t)
         // sched_del_timer(&mcp_adc_ptr->timer);
         sendf("Ts_session_result oid=%c status=%u lstValue=%u", mcp_adc_ptr->oid, doneP,data);
         output("Ts_session_result status=%u lstValue=%u", doneP,data);
+        if (doneP) {
+            // Point to the terminator event to reset the probe event state
+            mcp_adc_ptr->timer.func = mcp3462r_terminator_event;
+            return SF_RESCHEDULE;
+        } 
+
         return SF_DONE;
     }
     return SF_RESCHEDULE;
