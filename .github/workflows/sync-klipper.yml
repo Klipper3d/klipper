@@ -1,0 +1,37 @@
+name: Sync with upstream Klipper
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # Každý den ve 3:00
+  workflow_dispatch:      # Možnost ručního spuštění
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout your repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Potřebujeme celý Git historie kvůli merge
+
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+      - name: Add upstream Klipper
+        run: |
+          git remote add upstream https://github.com/Klipper3d/klipper.git
+          git fetch upstream
+
+      - name: Merge upstream/master into your master
+        run: |
+          git checkout master
+          git merge upstream/master --no-edit || true
+          git push origin master
+
+      - name: Merge master into dgus-integration
+        run: |
+          git checkout dgus-integration
+          git merge master --no-edit || true
+          git push origin dgus-integration
