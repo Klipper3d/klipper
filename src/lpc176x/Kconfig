@@ -92,4 +92,6 @@ choice
         select SERIAL
 endchoice
 
+source "src/lpc176x/t5uid1/Kconfig"
+
 endif

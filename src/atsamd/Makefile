@@ -62,3 +62,5 @@ BOSSAC_OFFSET-$(CONFIG_MACH_SAMX5) := 0x4000
 flash: $(OUT)klipper.bin lib/bossac/bin/bossac
 	@echo "  Flashing $< to $(FLASH_DEVICE)"
 	$(Q)$(PYTHON) ./scripts/flash_usb.py -t $(CONFIG_MCU) -d "$(FLASH_DEVICE)" -s "$(BOSSAC_OFFSET-y)" $(OUT)klipper.bin
+
+include src/atsamd/t5uid1/Makefile

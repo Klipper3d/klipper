@@ -1,0 +1,29 @@
+# Kconfig T5UID1 settings for LPC176x processors
+
+config T5UID1_SERIAL
+    bool "Enable DGUS T5UID1 screen"
+    default n
+
+choice
+    depends on T5UID1_SERIAL
+    prompt "Screen Serial Port" if LOW_LEVEL_OPTIONS
+    default LPC176X_T5UID1_SERIAL_UART3 if !USBSERIAL
+    default LPC176X_T5UID1_SERIAL_UART0
+    help
+        Select the serial device to use for the touchscreen.
+    config LPC176X_T5UID1_SERIAL_UART0
+        bool "UART0" if USBSERIAL
+    config LPC176X_T5UID1_SERIAL_UART1
+        bool "UART1 (on P0.16/P0.15)"
+    config LPC176X_T5UID1_SERIAL_UART3
+        bool "UART3 (on P4.29/P4.28)"
+endchoice
+
+config T5UID1_SERIAL_PORT
+    depends on T5UID1_SERIAL
+    int
+    default 3 if LPC176X_T5UID1_SERIAL_UART3
+    default 1 if LPC176X_T5UID1_SERIAL_UART1
+    default 0 if LPC176X_T5UID1_SERIAL_UART0
+    default 3 if !USBSERIAL
+    default 0
