@@ -38,8 +38,11 @@ static uint_fast8_t
 mcp3462r_terminator_event(struct timer *t)
 {
     // Reset the touch sensor ADC state
-    struct mcp3462r_adc *mcp_adc_ptr = container_of(t, struct mcp3462r_adc, timer);
     gpio_out_write(mcp_adc_ptr->trigger_out_pin, 0);
+    sched_del_timer(&mcp_adc_ptr->timer);
+    output("Touch sensor ADC terminator event triggered at cycle= %u", mcp_adc_ptr->timeout_cycles);
+    // Report the end of the session flag
+    output("Touch sensor ADC session terminated at cycle= %u, session flag is= %u", mcp_adc_ptr->timeout_cycles, mcp_adc_ptr->active_session_flag);
     return SF_DONE;
     
 }
@@ -47,7 +50,7 @@ static uint_fast8_t
 mcp3462r_event(struct timer *t)
 {
     uint16_t doneP =0, data =0;
-    struct mcp3462r_adc *mcp_adc_ptr = container_of(t, struct mcp3462r_adc, timer);
+    // struct mcp3462r_adc *mcp_adc_ptr = container_of(t, struct mcp3462r_adc, timer);
     output("Touch sensor ADC event triggered at cycle= %u",  mcp_adc_ptr->timeout_cycles);
     if (mcp3462r_is_data_ready(mcp_adc_ptr)) 
     {
@@ -79,15 +82,14 @@ mcp3462r_event(struct timer *t)
     if (--mcp_adc_ptr->timeout_cycles == 0) {
         // Timeout reached, stop the task
         mcp_adc_ptr->active_session_flag = 0;
-        // sched_del_timer(&mcp_adc_ptr->timer);
         sendf("Ts_session_result oid=%c status=%u lstValue=%u", mcp_adc_ptr->oid, doneP,data);
         output("Ts_session_result status=%u lstValue=%u", doneP,data);
         if (doneP) {
             // Point to the terminator event to reset the probe event state
             mcp_adc_ptr->timer.func = mcp3462r_terminator_event;
             return SF_RESCHEDULE;
-        } 
-
+        }
+        sched_del_timer(&mcp_adc_ptr->timer);
         return SF_DONE;
     }
     return SF_RESCHEDULE;
@@ -120,6 +122,7 @@ DECL_COMMAND(command_cfg_ts_adc, "cfg_ts_adc oid=%c spi_oid=%c adc_int_pin=%u tr
 void
 command_start_touch_sensing_session(uint32_t *args)
 {
+    output("got a new touch sensing request");
     if (mcp_adc_ptr == NULL || !mcp_adc_ptr->configured_flag) 
         shutdown("Touch sensor ADC HW is not configured");
     if (mcp_adc_ptr->oid != args[0]) 
@@ -142,6 +145,7 @@ command_start_touch_sensing_session(uint32_t *args)
     mcp_adc_ptr->active_session_flag = 1;
     // Start the periodic event to listen for data ready
     sched_del_timer(&mcp_adc_ptr->timer);
+    mcp_adc_ptr->timer.func = mcp3462r_event;
     irq_disable();
     mcp_adc_ptr->timer.waketime = timer_read_time() + mcp_adc_ptr->rest_ticks;
     sched_add_timer(&mcp_adc_ptr->timer);

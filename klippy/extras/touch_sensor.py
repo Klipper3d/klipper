@@ -81,8 +81,14 @@ class Touch_sensor_MCP3462R:
         if not self.configured:
             raise gcmd.error("Touch sensor is not configured. Please initialize it first.")
         self._pending_gcmd = gcmd  # Store for later response
+        logging.info("Probing event detected, starting touch sensor session.")
+        # Report the internal values
+        logging.info("Touch sensor OID: %s", self.oid)
+        logging.info("Touch sensor SPI OID: %s", self.spi_oid)
+        logging.info("Touch sensor configured: %s", self.configured)
+        
         self.start_ts_session_cmd.send([
-            self.oid, 100000, 1000000, 500
+            self.oid, 100000, 10000, 500
         ])
 
     def _handle_ts_session_response(self, params):
