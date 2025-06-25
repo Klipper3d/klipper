@@ -141,7 +141,7 @@ void command_start_touch_sensing_session(uint32_t *args) {
 
     output("Starting touch sensing session with OID=%c, timeout_cycles=%u, rest_ticks=%u, sensitivity=%u",
            mcp_adc_ptr->oid, mcp_adc_ptr->timeout_cycles, mcp_adc_ptr->rest_ticks, mcp_adc_ptr->sensitivity);
-
+    // TODO: Make the errors less aggressive
     if (!mcp_adc_ptr->timeout_cycles || !mcp_adc_ptr->rest_ticks) {
         shutdown("Timeout cycles and rest ticks must be greater than 0");
     }

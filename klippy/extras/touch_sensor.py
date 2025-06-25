@@ -91,10 +91,7 @@ class Touch_sensor_MCP3462R:
         """Handle printer ready event and initialize sensor if needed."""
         if not self.configured:
             self.configured = self._do_initialization_commands()
-        # TEMPORARY: For testing purposes, run a fake home command
-        self.gcode.run_script("FAKE_HOME")
-        # self.gcode.run_script("PROBE")
-
+    
     def _handle_probing_event(self, gcmd):
         """Handle probing event and start touch sensor session."""
         if not self.configured:
