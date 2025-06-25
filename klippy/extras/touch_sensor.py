@@ -12,15 +12,17 @@ from . import bus
 # -------------------------------------------------------------------------
 # MCP3462R SPI Command Constants
 # -------------------------------------------------------------------------
-FULL_RST         = bytes([0b01111000])
-ADCDATA_READ     = bytes([0b01000011])
-CONFIG0_WRITE    = bytes([0b01000110])
+CONFIG0_WRITE    = bytes([0b01000110]) # 01 Chip address, 0001 Config0Address, 10 Write command
 CONFIG0_DATA     = bytes([0b01100011])
+CONFIG0_READ     = bytes([0b01000111]) # 01 Chip address, 0001 Config0Address, 11 Read command
 CONFIG1_DATA     = bytes([0b00001100])  # Default
-CONFIG2_FORCE_DATA = bytes([0b10110011])  # Gain is x32 (x16 analog, x2 digital)
+CONFIG2_FORCE_DATA = bytes([0b10001011])  
 CONFIG3_DATA     = bytes([0b11000000])
 IRQ_DATA         = bytes([0b00000110])
-MUX_FORCE_DATA   = bytes([0b00110010])  # For ch2&3. Default is Ch0&1.
+FULL_RST         = bytes([0b01111000])
+ADCDATA_READ     = bytes([0b01000011])
+MUX_FORCE_DATA   = bytes([0b00000001])  
+DUMP_BYTE   = bytes([0b00000000])  
 
 # -------------------------------------------------------------------------
 # Touch Sensor Class
@@ -41,11 +43,12 @@ class Touch_sensor_MCP3462R:
         ppins = self.printer.lookup_object('pins')
         self.probe_interrupt_pin = ppins.lookup_pin(config.get('probe_interrupt_pin'))
         self.adc_int_pin = ppins.lookup_pin(config.get('adc_int_pin'))
+        self.PI_EN_pin = ppins.lookup_pin(config.get('PI_EN_pin'))
 
         # Register MCU configuration
         self.mcu.add_config_cmd(
-            "cfg_ts_adc oid=%d spi_oid=%d adc_int_pin=%s trigger_out_pin=%s" %
-            (self.oid, self.spi_oid, self.adc_int_pin['pin'], self.probe_interrupt_pin['pin'])
+            "cfg_ts_adc oid=%d spi_oid=%d adc_int_pin=%s trigger_out_pin=%s PI_EN_pin=%s" %
+            (self.oid, self.spi_oid, self.adc_int_pin['pin'], self.probe_interrupt_pin['pin'], self.PI_EN_pin['pin'])
         )
         self.mcu.register_config_callback(self._build_config)
 
@@ -74,13 +77,13 @@ class Touch_sensor_MCP3462R:
 
     def _do_initialization_commands(self):
         """Send initialization commands to the touch sensor."""
+        self.spi.spi_send(FULL_RST)
         self.spi.spi_send(
             CONFIG0_WRITE + CONFIG0_DATA + CONFIG1_DATA +
-            CONFIG2_FORCE_DATA + CONFIG3_DATA + IRQ_DATA
+            CONFIG2_FORCE_DATA + CONFIG3_DATA + IRQ_DATA + MUX_FORCE_DATA
         )
         logging.info("Touch sensor configuration commands sent successfully.")
         return True
-
     # ---------------------------------------------------------------------
     # Event Handlers
     # ---------------------------------------------------------------------
@@ -102,7 +105,7 @@ class Touch_sensor_MCP3462R:
         logging.info("Touch sensor SPI OID: %s", self.spi_oid)
         logging.info("Touch sensor configured: %s", self.configured)
         self.start_ts_session_cmd.send([
-            self.oid, 100000, 10000, 500
+            self.oid, 100000, 10000, 1000
         ])
 
     def _handle_ts_session_response(self, params):
@@ -145,17 +148,20 @@ class Touch_sensor_MCP3462R:
         """Get the touch sensor data."""
         if not self.configured:
             raise gcmd.error("Touch sensor not configured. Please initialize it first.")
-
-        self.spi.spi_send(ADCDATA_READ)
-        resp = self.spi.spi_transfer([0xff, 0xff])
+        # Dummy delay to allow sensor to finish sampling. Just for calibration purposes.
+        # TODO: Hangle theis using Klipper's sleep command or similar.
+        x= 10000
+        while x:
+            x-=1
+        resp = self.spi.spi_transfer(ADCDATA_READ+DUMP_BYTE+ DUMP_BYTE)
         data = resp['response']
 
-        if not isinstance(data, (bytes, bytearray)) or len(data) != 2:
+        if not isinstance(data, (bytes, bytearray)) or len(data) != 3:
             raise gcmd.error("Invalid SPI response: expected 2 bytes, got %s" % repr(data))
 
-        value = (data[0] << 8) | data[1]
+        value = (data[1] << 8) | data[2]
         hex_v = data.hex()
-        gcmd.respond_info("Touch sensor value: %d, hex: %s" % (value, hex_v))
+        gcmd.respond_info("Touch sensor value: %d" % (value))
 
 # -------------------------------------------------------------------------
 # Module Load Function

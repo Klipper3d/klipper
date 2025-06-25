@@ -5,9 +5,10 @@ struct mcp3462r_adc {
     struct spidev_s *spi;
     struct gpio_in adc_ready_pin;
     struct gpio_out trigger_out_pin;
+    struct gpio_out PI_EN_pin;
     uint32_t rest_ticks, timeout_cycles;
     struct timer timer;
     uint8_t active_session_flag, configured_flag;
-    uint8_t msg[2];
+    uint8_t msg[3];
     uint16_t sensitivity; 
 };

@@ -21,7 +21,7 @@ Owner: Mo
 #include "spicmds.h"
 #include "touch_sensor_mcp3462r.h"
 
-#define ADC_ACTIVE_STATE 1
+#define ADC_ACTIVE_STATE 0
 
 // Global pointer to the ADC instance
 static struct mcp3462r_adc *mcp_adc_ptr = NULL;
@@ -54,30 +54,27 @@ static uint_fast8_t mcp3462r_terminator_event(struct timer *t) {
 static uint_fast8_t mcp3462r_event(struct timer *t) {
     uint16_t doneP = 0, data = 0;
 
-    output("Touch sensor ADC event triggered at cycle= %u", mcp_adc_ptr->timeout_cycles);
+    // output("Touch sensor ADC event triggered at cycle= %u", mcp_adc_ptr->timeout_cycles);
 
     if (mcp3462r_is_data_ready(mcp_adc_ptr)) {
         // Read ADC data
-        mcp_adc_ptr->msg[0] = 0x00;
+        mcp_adc_ptr->msg[0] = READ_CMD;
         mcp_adc_ptr->msg[1] = 0x00;
-        spidev_transfer(mcp_adc_ptr->spi, 1, 2, mcp_adc_ptr->msg);
+        mcp_adc_ptr->msg[2] = 0x00;
+        spidev_transfer(mcp_adc_ptr->spi, 1, 3, mcp_adc_ptr->msg);
 
+        data = (mcp_adc_ptr->msg[1] << 8) | mcp_adc_ptr->msg[2];
         // Process the raw values
-        output("Got new raw ADC data: %u %u at cycle= %u",
-               mcp_adc_ptr->msg[0], mcp_adc_ptr->msg[1], mcp_adc_ptr->timeout_cycles);
-
-        data = (mcp_adc_ptr->msg[0] << 8) | mcp_adc_ptr->msg[1];
-
-        if (data > mcp_adc_ptr->sensitivity) {
+        output("Got new raw ADC data: %u at cycle= %u",
+                data, mcp_adc_ptr->timeout_cycles);
+        if (data < mcp_adc_ptr->sensitivity) {
             // Touch detected
             gpio_out_write(mcp_adc_ptr->trigger_out_pin, 1);
             mcp_adc_ptr->timeout_cycles = 1; // End session soon
             doneP = 1;
         } else {
-            // No touch detected, reset output pin and send another read command
+            // No touch detected, reset output pin
             gpio_out_write(mcp_adc_ptr->trigger_out_pin, 0);
-            mcp_adc_ptr->msg[0] = READ_CMD;
-            spidev_transfer(mcp_adc_ptr->spi, 0, 1, &mcp_adc_ptr->msg[0]);
         }
     }
 
@@ -89,6 +86,7 @@ static uint_fast8_t mcp3462r_event(struct timer *t) {
         sendf("Ts_session_result oid=%c status=%u lstValue=%u",
               mcp_adc_ptr->oid, doneP, data);
         output("Ts_session_result status=%u lstValue=%u", doneP, data);
+        gpio_out_write(mcp_adc_ptr->PI_EN_pin, 0);
 
         if (doneP) {
             // Schedule terminator event to reset probe state
@@ -112,6 +110,7 @@ void command_cfg_ts_adc(uint32_t *args) {
     mcp_adc_ptr->spi = spidev_oid_lookup(args[1]);
     mcp_adc_ptr->adc_ready_pin = gpio_in_setup(args[2], !ADC_ACTIVE_STATE);
     mcp_adc_ptr->trigger_out_pin = gpio_out_setup(args[3], 0);
+    mcp_adc_ptr->PI_EN_pin = gpio_out_setup(args[4], 0);
     mcp_adc_ptr->timer.func = mcp3462r_event;
     mcp_adc_ptr->active_session_flag = 0;
     mcp_adc_ptr->configured_flag = 1;
@@ -119,12 +118,12 @@ void command_cfg_ts_adc(uint32_t *args) {
     mcp_adc_ptr->msg[1] = 0x00;
     gpio_out_write(mcp_adc_ptr->trigger_out_pin, 0);
 
-    output("Touch sensor ADC configured with OID=%c, SPI OID=%c, ADC ready pin=%u, Trigger out pin=%u",
-           mcp_adc_ptr->oid, args[1], args[2], args[3]);
+    output("Touch sensor ADC configured with OID=%c, SPI OID=%c, ADC ready pin=%u, Trigger out pin=%u PI_EN pin=%u",
+           mcp_adc_ptr->oid, args[1], args[2], args[3], args[4]);
 }
 
 DECL_COMMAND(command_cfg_ts_adc,
-             "cfg_ts_adc oid=%c spi_oid=%c adc_int_pin=%u trigger_out_pin=%u");
+             "cfg_ts_adc oid=%c spi_oid=%c adc_int_pin=%u trigger_out_pin=%u PI_EN_pin=%u");
 
 // Start a new touch sensing session
 void command_start_touch_sensing_session(uint32_t *args) {
@@ -138,6 +137,7 @@ void command_start_touch_sensing_session(uint32_t *args) {
     mcp_adc_ptr->timeout_cycles = args[1];
     mcp_adc_ptr->rest_ticks = args[2];
     mcp_adc_ptr->sensitivity = args[3];
+    gpio_out_write(mcp_adc_ptr->PI_EN_pin, 1);
 
     output("Starting touch sensing session with OID=%c, timeout_cycles=%u, rest_ticks=%u, sensitivity=%u",
            mcp_adc_ptr->oid, mcp_adc_ptr->timeout_cycles, mcp_adc_ptr->rest_ticks, mcp_adc_ptr->sensitivity);
@@ -152,9 +152,6 @@ void command_start_touch_sensing_session(uint32_t *args) {
         shutdown("Touch sensing session is already active");
     }
 
-    // Send a reading command to the MCP3462R ADC
-    mcp_adc_ptr->msg[0] = READ_CMD;
-    spidev_transfer(mcp_adc_ptr->spi, 0, 1, &mcp_adc_ptr->msg[0]);
     mcp_adc_ptr->active_session_flag = 1;
 
     // Start the periodic event to listen for data ready
