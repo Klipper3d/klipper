@@ -1,0 +1,4 @@
+## This file contains additional requirements
+## Packages defined here will be installed prior to klippy requirements
+##
+numpy
