@@ -77,6 +77,7 @@ class ProbeCommandHelper:
         gcmd.respond_info("probe: %s" % (["open", "TRIGGERED"][not not res],))
     cmd_PROBE_help = "Probe Z-height at current XY position"
     def cmd_PROBE(self, gcmd):
+        self.printer.send_event("probe:PROBE", gcmd)
         pos = run_single_probe(self.probe, gcmd)
         gcmd.respond_info("Result is z=%.6f" % (pos[2],))
         self.last_z_result = pos[2]

@@ -1,0 +1,5 @@
+# Set default behavior to LF
+* text=auto eol=lf
+
+# Ensure shell scripts are treated as LF-only
+*.sh text eol=lf
