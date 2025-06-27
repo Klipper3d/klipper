@@ -2,3 +2,4 @@
 ## Packages defined here will be installed prior to klippy requirements
 ##
 numpy
+can

@@ -23,6 +23,35 @@ RUN venv/bin/pip install -r klipper/scripts/klippy-requirements.txt \
  && venv/bin/python klipper/klippy/chelper/__init__.py
 
 ###
+## Firmware Builder:  (rp2040 and manta control board)
+##
+
+FROM debian:bookworm AS firmware
+
+WORKDIR /opt
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt update \
+ && apt install -y \
+      sudo \
+      virtualenv python3-dev libffi-dev build-essential pkg-config\
+      libncurses-dev \
+      avrdude gcc-avr binutils-avr avr-libc \
+      stm32flash dfu-util libnewlib-arm-none-eabi \
+      gcc-arm-none-eabi binutils-arm-none-eabi libusb-1.0-0 libusb-1.0-0-dev \
+      python3-serial \
+      python3-can \
+      python3-numpy python3-matplotlib \
+ && apt clean
+
+COPY --from=build /opt/klipper ./klipper
+COPY --from=build /opt/venv ./venv
+
+RUN mkdir -p /klipper_firmware/manta && cd klipper && cp ./config.manta.firmware ./.config && make clean && make && mv ./out  /klipper_firmware/manta/
+RUN mkdir -p /klipper_firmware/manta && cd klipper && cp ./config.manta.firmware ./.config && make clean && make && mv ./out  /klipper_firmware/rp2040/
+
+
+
+###
 ## Klippy Runtime Image
 ##
 FROM python:3.11-slim-bookworm AS run
@@ -38,8 +67,11 @@ RUN mkdir -p printer_data/run printer_data/gcodes printer_data/logs printer_data
 
 COPY --chown=klipper:klipper health.py ./
 
+
 COPY --chown=klipper:klipper --from=build /opt/klipper ./klipper
 COPY --chown=klipper:klipper --from=build /opt/venv ./venv
+
+COPY --chown=klipper:klipper --from=firmware /klipper_firmware /klipper_firmware
 
 USER klipper
 VOLUME ["/opt/printer_data/run", "/opt/printer_data/gcodes", "/opt/printer_data/logs", "/opt/printer_data/config"]
@@ -47,26 +79,6 @@ ENTRYPOINT ["/opt/venv/bin/python", "klipper/klippy/klippy.py"]
 CMD ["-I", "printer_data/run/klipper.tty", "-a", "printer_data/run/klipper.sock", "printer_data/config/printer.cfg"]
 ###
 
-
-# ## Image for building MCU code including other tooling
-# ##
-# FROM debian:bookworm AS tools
-
-# WORKDIR /opt
-# ARG DEBIAN_FRONTEND=noninteractive
-# RUN apt update \
-#  && apt install -y \
-#       sudo \
-#       virtualenv python3-dev libffi-dev build-essential pkg-config\
-#       libncurses-dev \
-#       avrdude gcc-avr binutils-avr avr-libc \
-#       stm32flash dfu-util libnewlib-arm-none-eabi \
-#       gcc-arm-none-eabi binutils-arm-none-eabi libusb-1.0-0 libusb-1.0-0-dev \
-#       python3-numpy python3-matplotlib \
-#  && apt clean
-
-# COPY --from=build /opt/klipper ./klipper
-# COPY --from=build /opt/venv ./venv
 # ###
 
 
