@@ -1,6 +1,6 @@
 # Code for coordinating events on the printer toolhead
 #
-# Copyright (C) 2016-2024  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, importlib
@@ -21,14 +21,14 @@ class Move:
         self.timing_callbacks = []
         velocity = min(speed, toolhead.max_velocity)
         self.is_kinematic_move = True
-        self.axes_d = axes_d = [end_pos[i] - start_pos[i] for i in (0, 1, 2, 3)]
+        self.axes_d = axes_d = [ep - sp for sp, ep in zip(start_pos, end_pos)]
         self.move_d = move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
         if move_d < .000000001:
             # Extrude only move
-            self.end_pos = (start_pos[0], start_pos[1], start_pos[2],
-                            end_pos[3])
+            self.end_pos = ((start_pos[0], start_pos[1], start_pos[2])
+                            + self.end_pos[3:])
             axes_d[0] = axes_d[1] = axes_d[2] = 0.
-            self.move_d = move_d = abs(axes_d[3])
+            self.move_d = move_d = max([abs(ad) for ad in axes_d[3:]])
             inv_move_d = 0.
             if move_d:
                 inv_move_d = 1. / move_d
@@ -65,11 +65,13 @@ class Move:
     def calc_junction(self, prev_move):
         if not self.is_kinematic_move or not prev_move.is_kinematic_move:
             return
-        # Allow extruder to calculate its maximum junction
-        extruder_v2 = self.toolhead.extruder.calc_junction(prev_move, self)
-        max_start_v2 = min(extruder_v2, self.max_cruise_v2,
-                           prev_move.max_cruise_v2, prev_move.next_junction_v2,
-                           prev_move.max_start_v2 + prev_move.delta_v2)
+        # Allow extra axes to calculate maximum junction
+        ea_v2 = [ea.calc_junction(prev_move, self, e_index+3)
+                 for e_index, ea in enumerate(self.toolhead.extra_axes)]
+        max_start_v2 = min([self.max_cruise_v2,
+                            prev_move.max_cruise_v2, prev_move.next_junction_v2,
+                            prev_move.max_start_v2 + prev_move.delta_v2]
+                           + ea_v2)
         # Find max velocity using "approximated centripetal velocity"
         axes_r = self.axes_r
         prev_axes_r = prev_move.axes_r
@@ -115,8 +117,7 @@ LOOKAHEAD_FLUSH_TIME = 0.250
 # Class to track a list of pending move requests and to facilitate
 # "look-ahead" across moves to reduce acceleration between moves.
 class LookAheadQueue:
-    def __init__(self, toolhead):
-        self.toolhead = toolhead
+    def __init__(self):
         self.queue = []
         self.junction_flush = LOOKAHEAD_FLUSH_TIME
     def reset(self):
@@ -175,20 +176,19 @@ class LookAheadQueue:
             next_end_v2 = start_v2
             next_smoothed_v2 = smoothed_v2
         if update_flush_count or not flush_count:
-            return
-        # Generate step times for all moves ready to be flushed
-        self.toolhead._process_moves(queue[:flush_count])
+            return []
         # Remove processed moves from the queue
+        res = queue[:flush_count]
         del queue[:flush_count]
+        return res
     def add_move(self, move):
         self.queue.append(move)
         if len(self.queue) == 1:
             return
         move.calc_junction(self.queue[-2])
         self.junction_flush -= move.min_move_t
-        if self.junction_flush <= 0.:
-            # Enough moves have been queued to reach the target flush time.
-            self.flush(lazy=True)
+        # Check if enough moves have been queued to reach the target flush time.
+        return self.junction_flush <= 0.
 
 BUFFER_TIME_LOW = 1.0
 BUFFER_TIME_HIGH = 2.0
@@ -204,8 +204,6 @@ MOVE_HISTORY_EXPIRE = 30.
 
 DRIP_SEGMENT_TIME = 0.050
 DRIP_TIME = 0.100
-class DripModeEndSignal(Exception):
-    pass
 
 # Main code to track events (and their timing) on the printer toolhead
 class ToolHead:
@@ -215,7 +213,7 @@ class ToolHead:
         self.all_mcus = [
             m for n, m in self.printer.lookup_objects(module='mcu')]
         self.mcu = self.all_mcus[0]
-        self.lookahead = LookAheadQueue(self)
+        self.lookahead = LookAheadQueue()
         self.lookahead.set_flush_time(BUFFER_TIME_HIGH)
         self.commanded_pos = [0., 0., 0., 0.]
         # Velocity and acceleration control
@@ -248,7 +246,6 @@ class ToolHead:
         self.print_time = 0.
         self.special_queuing_state = "NeedPrime"
         self.priming_timer = None
-        self.drip_completion = None
         # Flush tracking
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
         self.do_kick_flush_timer = True
@@ -262,11 +259,14 @@ class ToolHead:
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
         self.trapq_append = ffi_lib.trapq_append
         self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
+        # Motion flushing
         self.step_generators = []
+        self.flush_trapqs = [self.trapq]
         # Create kinematics class
         gcode = self.printer.lookup_object('gcode')
         self.Coord = gcode.Coord
-        self.extruder = kinematics.extruder.DummyExtruder(self.printer)
+        extruder = kinematics.extruder.DummyExtruder(self.printer)
+        self.extra_axes = [extruder]
         kin_name = config.get('kinematics')
         try:
             mod = importlib.import_module('kinematics.' + kin_name)
@@ -290,7 +290,7 @@ class ToolHead:
                                             self._handle_shutdown)
         # Load some default modules
         modules = ["gcode_move", "homing", "idle_timeout", "statistics",
-                   "manual_probe", "tuning_tower"]
+                   "manual_probe", "tuning_tower", "garbage_collection"]
         for module_name in modules:
             self.printer.load_object(config, module_name)
     # Print time and flush tracking
@@ -308,8 +308,8 @@ class ToolHead:
         if not self.can_pause:
             clear_history_time = flush_time - MOVE_HISTORY_EXPIRE
         free_time = sg_flush_time - self.kin_flush_delay
-        self.trapq_finalize_moves(self.trapq, free_time, clear_history_time)
-        self.extruder.update_move_time(free_time, clear_history_time)
+        for trapq in self.flush_trapqs:
+            self.trapq_finalize_moves(trapq, free_time, clear_history_time)
         # Flush stepcompress and mcu steppersync
         for m in self.all_mcus:
             m.flush_moves(flush_time, clear_history_time)
@@ -334,13 +334,15 @@ class ToolHead:
             self.print_time = min_print_time
             self.printer.send_event("toolhead:sync_print_time",
                                     curtime, est_print_time, self.print_time)
-    def _process_moves(self, moves):
+    def _process_lookahead(self, lazy=False):
+        moves = self.lookahead.flush(lazy=lazy)
+        if not moves:
+            return
         # Resync print_time if necessary
         if self.special_queuing_state:
-            if self.special_queuing_state != "Drip":
-                # Transition from "NeedPrime"/"Priming" state to main state
-                self.special_queuing_state = ""
-                self.need_check_pause = -1.
+            # Transition from "NeedPrime"/"Priming" state to main state
+            self.special_queuing_state = ""
+            self.need_check_pause = -1.
             self._calc_print_time()
         # Queue moves into trapezoid motion queue (trapq)
         next_move_time = self.print_time
@@ -352,21 +354,20 @@ class ToolHead:
                     move.start_pos[0], move.start_pos[1], move.start_pos[2],
                     move.axes_r[0], move.axes_r[1], move.axes_r[2],
                     move.start_v, move.cruise_v, move.accel)
-            if move.axes_d[3]:
-                self.extruder.move(next_move_time, move)
+            for e_index, ea in enumerate(self.extra_axes):
+                if move.axes_d[e_index + 3]:
+                    ea.process_move(next_move_time, move, e_index + 3)
             next_move_time = (next_move_time + move.accel_t
                               + move.cruise_t + move.decel_t)
             for cb in move.timing_callbacks:
                 cb(next_move_time)
         # Generate steps for moves
-        if self.special_queuing_state:
-            self._update_drip_move_time(next_move_time)
         self.note_mcu_movequeue_activity(next_move_time + self.kin_flush_delay,
                                          set_step_gen_time=True)
         self._advance_move_time(next_move_time)
     def _flush_lookahead(self):
         # Transit from "NeedPrime"/"Priming"/"Drip"/main state to "NeedPrime"
-        self.lookahead.flush()
+        self._process_lookahead()
         self.special_queuing_state = "NeedPrime"
         self.need_check_pause = -1.
         self.lookahead.set_flush_time(BUFFER_TIME_HIGH)
@@ -380,7 +381,7 @@ class ToolHead:
             self._flush_lookahead()
             self._calc_print_time()
         else:
-            self.lookahead.flush()
+            self._process_lookahead()
         return self.print_time
     def _check_pause(self):
         eventtime = self.reactor.monotonic()
@@ -457,12 +458,12 @@ class ToolHead:
     # Movement commands
     def get_position(self):
         return list(self.commanded_pos)
-    def set_position(self, newpos, homing_axes=()):
+    def set_position(self, newpos, homing_axes=""):
         self.flush_step_generation()
         ffi_main, ffi_lib = chelper.get_ffi()
         ffi_lib.trapq_set_position(self.trapq, self.print_time,
                                    newpos[0], newpos[1], newpos[2])
-        self.commanded_pos[:] = newpos
+        self.commanded_pos[:3] = newpos[:3]
         self.kin.set_position(newpos, homing_axes)
         self.printer.send_event("toolhead:set_position")
     def limit_next_junction_speed(self, speed):
@@ -475,10 +476,13 @@ class ToolHead:
             return
         if move.is_kinematic_move:
             self.kin.check_move(move)
-        if move.axes_d[3]:
-            self.extruder.check_move(move)
+        for e_index, ea in enumerate(self.extra_axes):
+            if move.axes_d[e_index + 3]:
+                ea.check_move(move, e_index + 3)
         self.commanded_pos[:] = move.end_pos
-        self.lookahead.add_move(move)
+        want_flush = self.lookahead.add_move(move)
+        if want_flush:
+            self._process_lookahead(lazy=True)
         if self.print_time > self.need_check_pause:
             self._check_pause()
     def manual_move(self, coord, speed):
@@ -501,54 +505,101 @@ class ToolHead:
                 break
             eventtime = self.reactor.pause(eventtime + 0.100)
     def set_extruder(self, extruder, extrude_pos):
-        self.extruder = extruder
+        # XXX - should use add_extra_axis
+        prev_ea_trapq = self.extra_axes[0].get_trapq()
+        if prev_ea_trapq in self.flush_trapqs:
+            self.flush_trapqs.remove(prev_ea_trapq)
+        self.extra_axes[0] = extruder
         self.commanded_pos[3] = extrude_pos
+        ea_trapq = extruder.get_trapq()
+        if ea_trapq is not None:
+            self.flush_trapqs.append(ea_trapq)
     def get_extruder(self):
-        return self.extruder
+        return self.extra_axes[0]
+    def add_extra_axis(self, ea, axis_pos):
+        self._flush_lookahead()
+        self.extra_axes.append(ea)
+        self.commanded_pos.append(axis_pos)
+        ea_trapq = ea.get_trapq()
+        if ea_trapq is not None:
+            self.flush_trapqs.append(ea_trapq)
+        self.printer.send_event("toolhead:update_extra_axes")
+    def remove_extra_axis(self, ea):
+        self._flush_lookahead()
+        if ea not in self.extra_axes:
+            return
+        ea_index = self.extra_axes.index(ea) + 3
+        ea_trapq = ea.get_trapq()
+        if ea_trapq in self.flush_trapqs:
+            self.flush_trapqs.remove(ea_trapq)
+        self.commanded_pos.pop(ea_index)
+        self.extra_axes.pop(ea_index - 3)
+        self.printer.send_event("toolhead:update_extra_axes")
+    def get_extra_axes(self):
+        return [None, None, None] + self.extra_axes
     # Homing "drip move" handling
-    def _update_drip_move_time(self, next_print_time):
-        flush_delay = DRIP_TIME + STEPCOMPRESS_FLUSH_TIME + self.kin_flush_delay
-        while self.print_time < next_print_time:
-            if self.drip_completion.test():
-                raise DripModeEndSignal()
-            curtime = self.reactor.monotonic()
-            est_print_time = self.mcu.estimated_print_time(curtime)
-            wait_time = self.print_time - est_print_time - flush_delay
-            if wait_time > 0. and self.can_pause:
-                # Pause before sending more steps
-                self.drip_completion.wait(curtime + wait_time)
-                continue
-            npt = min(self.print_time + DRIP_SEGMENT_TIME, next_print_time)
-            self.note_mcu_movequeue_activity(npt + self.kin_flush_delay,
-                                             set_step_gen_time=True)
-            self._advance_move_time(npt)
-    def drip_move(self, newpos, speed, drip_completion):
-        self.dwell(self.kin_flush_delay)
+    def drip_update_time(self, next_print_time, drip_completion, addstepper=()):
         # Transition from "NeedPrime"/"Priming"/main state to "Drip" state
-        self.lookahead.flush()
         self.special_queuing_state = "Drip"
         self.need_check_pause = self.reactor.NEVER
         self.reactor.update_timer(self.flush_timer, self.reactor.NEVER)
         self.do_kick_flush_timer = False
         self.lookahead.set_flush_time(BUFFER_TIME_HIGH)
         self.check_stall_time = 0.
-        self.drip_completion = drip_completion
-        # Submit move
-        try:
-            self.move(newpos, speed)
-        except self.printer.command_error as e:
-            self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
-            self.flush_step_generation()
-            raise
-        # Transmit move in "drip" mode
-        try:
-            self.lookahead.flush()
-        except DripModeEndSignal as e:
-            self.lookahead.reset()
-            self.trapq_finalize_moves(self.trapq, self.reactor.NEVER, 0)
+        # Update print_time in segments until drip_completion signal
+        flush_delay = DRIP_TIME + STEPCOMPRESS_FLUSH_TIME + self.kin_flush_delay
+        while self.print_time < next_print_time:
+            if drip_completion.test():
+                break
+            curtime = self.reactor.monotonic()
+            est_print_time = self.mcu.estimated_print_time(curtime)
+            wait_time = self.print_time - est_print_time - flush_delay
+            if wait_time > 0. and self.can_pause:
+                # Pause before sending more steps
+                drip_completion.wait(curtime + wait_time)
+                continue
+            npt = min(self.print_time + DRIP_SEGMENT_TIME, next_print_time)
+            self.note_mcu_movequeue_activity(npt + self.kin_flush_delay,
+                                             set_step_gen_time=True)
+            for stepper in addstepper:
+                stepper.generate_steps(npt)
+            self._advance_move_time(npt)
         # Exit "Drip" state
         self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
         self.flush_step_generation()
+    def _drip_load_trapq(self, submit_move):
+        # Queue move into trapezoid motion queue (trapq)
+        if submit_move.move_d:
+            self.commanded_pos[:] = submit_move.end_pos
+            self.lookahead.add_move(submit_move)
+        moves = self.lookahead.flush()
+        self._calc_print_time()
+        next_move_time = self.print_time
+        for move in moves:
+            self.trapq_append(
+                self.trapq, next_move_time,
+                move.accel_t, move.cruise_t, move.decel_t,
+                move.start_pos[0], move.start_pos[1], move.start_pos[2],
+                move.axes_r[0], move.axes_r[1], move.axes_r[2],
+                move.start_v, move.cruise_v, move.accel)
+            next_move_time = (next_move_time + move.accel_t
+                              + move.cruise_t + move.decel_t)
+        self.lookahead.reset()
+        return next_move_time
+    def drip_move(self, newpos, speed, drip_completion):
+        # Create and verify move is valid
+        newpos = newpos[:3] + self.commanded_pos[3:]
+        move = Move(self, self.commanded_pos, newpos, speed)
+        if move.move_d:
+            self.kin.check_move(move)
+        # Make sure stepper movement doesn't start before nominal start time
+        self.dwell(self.kin_flush_delay)
+        # Transmit move in "drip" mode
+        self._process_lookahead()
+        next_move_time = self._drip_load_trapq(move)
+        self.drip_update_time(next_move_time, drip_completion)
+        # Move finished; cleanup any remnants on trapq
+        self.trapq_finalize_moves(self.trapq, self.reactor.NEVER, 0)
     # Misc commands
     def stats(self, eventtime):
         max_queue_time = max(self.print_time, self.last_flush_time)
@@ -569,12 +620,13 @@ class ToolHead:
     def get_status(self, eventtime):
         print_time = self.print_time
         estimated_print_time = self.mcu.estimated_print_time(eventtime)
+        extruder = self.extra_axes[0]
         res = dict(self.kin.get_status(eventtime))
         res.update({ 'print_time': print_time,
                      'stalls': self.print_stall,
                      'estimated_print_time': estimated_print_time,
-                     'extruder': self.extruder.get_name(),
-                     'position': self.Coord(*self.commanded_pos),
+                     'extruder': extruder.get_name(),
+                     'position': self.Coord(*self.commanded_pos[:4]),
                      'max_velocity': self.max_velocity,
                      'max_accel': self.max_accel,
                      'minimum_cruise_ratio': self.min_cruise_ratio,
@@ -589,6 +641,9 @@ class ToolHead:
         return self.trapq
     def register_step_generator(self, handler):
         self.step_generators.append(handler)
+    def unregister_step_generator(self, handler):
+        if handler in self.step_generators:
+            self.step_generators.remove(handler)
     def note_step_generation_scan_time(self, delay, old_delay=0.):
         self.flush_step_generation()
         if old_delay:

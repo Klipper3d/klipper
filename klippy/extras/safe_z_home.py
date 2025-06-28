@@ -3,6 +3,7 @@
 # Copyright (C) 2019 Florian Heilmann <Florian.Heilmann@gmx.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+from . import manual_probe
 
 class SafeZHoming:
     def __init__(self, config):
@@ -11,7 +12,9 @@ class SafeZHoming:
         self.home_x_pos, self.home_y_pos = x_pos, y_pos
         self.z_hop = config.getfloat("z_hop", default=0.0)
         self.z_hop_speed = config.getfloat('z_hop_speed', 15., above=0.)
-        zconfig = config.getsection('stepper_z')
+        zconfig = manual_probe.lookup_z_endstop_config(config)
+        if zconfig is None:
+            raise gcmd.error('Missing Z endstop config for safe_z_homing')
         self.max_z = zconfig.getfloat('position_max', note_valid=False)
         self.speed = config.getfloat('speed', 50.0, above=0.)
         self.move_to_previous = config.getboolean('move_to_previous', False)
@@ -37,11 +40,10 @@ class SafeZHoming:
             if 'z' not in kin_status['homed_axes']:
                 # Always perform the z_hop if the Z axis is not homed
                 pos[2] = 0
-                toolhead.set_position(pos, homing_axes=[2])
+                toolhead.set_position(pos, homing_axes="z")
                 toolhead.manual_move([None, None, self.z_hop],
                                      self.z_hop_speed)
-                if hasattr(toolhead.get_kinematics(), "note_z_not_homed"):
-                    toolhead.get_kinematics().note_z_not_homed()
+                toolhead.get_kinematics().clear_homing_state("z")
             elif pos[2] < self.z_hop:
                 # If the Z axis is homed, and below z_hop, lift it to z_hop
                 toolhead.manual_move([None, None, self.z_hop],

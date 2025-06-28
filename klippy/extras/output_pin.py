@@ -1,6 +1,6 @@
 # PWM and digital output pin handling
 #
-# Copyright (C) 2017-2024  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2017-2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, ast
@@ -10,8 +10,6 @@ from .display import display
 ######################################################################
 # G-Code request queuing helper
 ######################################################################
-
-PIN_MIN_TIME = 0.100
 
 # Helper code to queue g-code requests
 class GCodeRequestQueue:
@@ -27,6 +25,7 @@ class GCodeRequestQueue:
     def _handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
     def _flush_notification(self, print_time, clock):
+        min_sched_time = self.mcu.min_schedule_time()
         rqueue = self.rqueue
         while rqueue:
             next_time = max(rqueue[0][0], self.next_min_flush_time)
@@ -49,7 +48,7 @@ class GCodeRequestQueue:
                 if action == "delay":
                     pos -= 1
             del rqueue[:pos+1]
-            self.next_min_flush_time = next_time + max(min_wait, PIN_MIN_TIME)
+            self.next_min_flush_time = next_time + max(min_wait, min_sched_time)
             # Ensure following queue items are flushed
             self.toolhead.note_mcu_movequeue_activity(self.next_min_flush_time)
     def _queue_request(self, print_time, value):
@@ -59,9 +58,10 @@ class GCodeRequestQueue:
         self.toolhead.register_lookahead_callback(
             (lambda pt: self._queue_request(pt, value)))
     def send_async_request(self, value, print_time=None):
+        min_sched_time = self.mcu.min_schedule_time()
         if print_time is None:
             systime = self.printer.get_reactor().monotonic()
-            print_time = self.mcu.estimated_print_time(systime + PIN_MIN_TIME)
+            print_time = self.mcu.estimated_print_time(systime + min_sched_time)
         while 1:
             next_time = max(print_time, self.next_min_flush_time)
             # Invoke callback for the request
@@ -72,7 +72,7 @@ class GCodeRequestQueue:
                 action, min_wait = ret
                 if action == "discard":
                     break
-            self.next_min_flush_time = next_time + max(min_wait, PIN_MIN_TIME)
+            self.next_min_flush_time = next_time + max(min_wait, min_sched_time)
             if action != "delay":
                 break
 
@@ -102,7 +102,13 @@ class PrinterTemplateEvaluator:
         self.render_timer = reactor.register_timer(self._render, reactor.NOW)
     def _activate_template(self, callback, template, lparams, flush_callback):
         if template is not None:
+            # Build a unique id to make it possible to cache duplicate rendering
             uid = (template,) + tuple(sorted(lparams.items()))
+            try:
+                {}.get(uid)
+            except TypeError as e:
+                # lparams is not static, so disable caching
+                uid = None
             self.active_templates[callback] = (
                 uid, template, lparams, flush_callback)
             return
@@ -122,17 +128,18 @@ class PrinterTemplateEvaluator:
         context['render'] = render
         # Render all templates
         flush_callbacks = {}
-        rendered = {}
+        render_cache = {}
         template_info = self.active_templates.items()
         for callback, (uid, template, lparams, flush_callback) in template_info:
-            text = rendered.get(uid)
+            text = render_cache.get(uid)
             if text is None:
                 try:
                     text = template.render(context, **lparams)
                 except Exception as e:
                     logging.exception("display template render error")
                     text = ""
-                rendered[uid] = text
+                if uid is not None:
+                    render_cache[uid] = text
             if flush_callback is not None:
                 flush_callbacks[flush_callback] = 1
             callback(text)
@@ -177,8 +184,6 @@ def lookup_template_eval(config):
 # Main output pin handling
 ######################################################################
 
-MAX_SCHEDULE_TIME = 5.0
-
 class PrinterOutputPin:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -187,8 +192,9 @@ class PrinterOutputPin:
         self.is_pwm = config.getboolean('pwm', False)
         if self.is_pwm:
             self.mcu_pin = ppins.setup_pin('pwm', config.get('pin'))
+            max_duration = self.mcu_pin.get_mcu().max_nominal_duration()
             cycle_time = config.getfloat('cycle_time', 0.100, above=0.,
-                                         maxval=MAX_SCHEDULE_TIME)
+                                         maxval=max_duration)
             hardware_pwm = config.getboolean('hardware_pwm', False)
             self.mcu_pin.setup_cycle_time(cycle_time, hardware_pwm)
             self.scale = config.getfloat('scale', 1., above=0.)
@@ -228,6 +234,7 @@ class PrinterOutputPin:
             value = float(text)
         except ValueError as e:
             logging.exception("output_pin template render error")
+            value = 0.
         self.gcrq.send_async_request(value)
     cmd_SET_PIN_help = "Set the value of an output pin"
     def cmd_SET_PIN(self, gcmd):

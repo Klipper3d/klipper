@@ -12,7 +12,7 @@ class HybridCoreXYKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
         # itersolve parameters
-        self.rails = [ stepper.PrinterRail(config.getsection('stepper_x')),
+        self.rails = [ stepper.LookupRail(config.getsection('stepper_x')),
                        stepper.LookupMultiRail(config.getsection('stepper_y')),
                        stepper.LookupMultiRail(config.getsection('stepper_z'))]
         self.rails[1].get_endstops()[0][0].add_stepper(
@@ -29,21 +29,17 @@ class HybridCoreXYKinematics:
             # dummy for cartesian config users
             dc_config.getchoice('axis', ['x'], default='x')
             # setup second dual carriage rail
-            self.rails.append(stepper.PrinterRail(dc_config))
+            self.rails.append(stepper.LookupRail(dc_config))
             self.rails[1].get_endstops()[0][0].add_stepper(
                 self.rails[3].get_steppers()[0])
             self.rails[3].setup_itersolve('corexy_stepper_alloc', b'+')
-            dc_rail_0 = idex_modes.DualCarriagesRail(
-                    self.rails[0], axis=0, active=True)
-            dc_rail_1 = idex_modes.DualCarriagesRail(
-                    self.rails[3], axis=0, active=False)
             self.dc_module = idex_modes.DualCarriages(
-                    dc_config, dc_rail_0, dc_rail_1, axis=0)
+                    self.printer, [self.rails[0]], [self.rails[3]], axes=[0],
+                    safe_dist=dc_config.getfloat(
+                        'safe_distance', None, minval=0.))
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
             toolhead.register_step_generator(s.generate_steps)
-        self.printer.register_event_handler("stepper_enable:motor_off",
-                                                    self._motor_off)
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(
@@ -69,15 +65,17 @@ class HybridCoreXYKinematics:
     def set_position(self, newpos, homing_axes):
         for i, rail in enumerate(self.rails):
             rail.set_position(newpos)
-        for axis in homing_axes:
-            if self.dc_module and axis == self.dc_module.axis:
-                rail = self.dc_module.get_primary_rail().get_rail()
+        for axis_name in homing_axes:
+            axis = "xyz".index(axis_name)
+            if self.dc_module and axis == 0:
+                rail = self.dc_module.get_primary_rail(axis)
             else:
                 rail = self.rails[axis]
             self.limits[axis] = rail.get_range()
-    def note_z_not_homed(self):
-        # Helper for Safe Z Home
-        self.limits[2] = (1.0, -1.0)
+    def clear_homing_state(self, clear_axes):
+        for axis, axis_name in enumerate("xyz"):
+            if axis_name in clear_axes:
+                self.limits[axis] = (1.0, -1.0)
     def home_axis(self, homing_state, axis, rail):
         position_min, position_max = rail.get_range()
         hi = rail.get_homing_info()
@@ -93,11 +91,9 @@ class HybridCoreXYKinematics:
     def home(self, homing_state):
         for axis in homing_state.get_axes():
             if self.dc_module is not None and axis == 0:
-                self.dc_module.home(homing_state)
+                self.dc_module.home(homing_state, axis)
             else:
                 self.home_axis(homing_state, axis, self.rails[axis])
-    def _motor_off(self, print_time):
-        self.limits = [(1.0, -1.0)] * 3
     def _check_endstops(self, move):
         end_pos = move.end_pos
         for i in (0, 1, 2):

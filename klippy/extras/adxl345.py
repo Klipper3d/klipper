@@ -166,12 +166,12 @@ class AccelCommandHelper:
                           % (accel_x, accel_y, accel_z))
     cmd_ACCELEROMETER_DEBUG_READ_help = "Query register (for debugging)"
     def cmd_ACCELEROMETER_DEBUG_READ(self, gcmd):
-        reg = gcmd.get("REG", minval=0, maxval=126, parser=lambda x: int(x, 0))
+        reg = gcmd.get("REG", minval=0, maxval=127, parser=lambda x: int(x, 0))
         val = self.chip.read_reg(reg)
         gcmd.respond_info("Accelerometer REG[0x%x] = 0x%x" % (reg, val))
     cmd_ACCELEROMETER_DEBUG_WRITE_help = "Set register (for debugging)"
     def cmd_ACCELEROMETER_DEBUG_WRITE(self, gcmd):
-        reg = gcmd.get("REG", minval=0, maxval=126, parser=lambda x: int(x, 0))
+        reg = gcmd.get("REG", minval=0, maxval=127, parser=lambda x: int(x, 0))
         val = gcmd.get("VAL", minval=0, maxval=255, parser=lambda x: int(x, 0))
         self.chip.set_reg(reg, val)
 

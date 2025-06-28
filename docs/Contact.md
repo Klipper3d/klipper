@@ -132,3 +132,10 @@ There are several
 you have questions on the code then you can also ask in the
 [Klipper Discourse Forum](#discourse-forum) or on the
 [Klipper Discord Chat](#discord-chat).
+
+## Professional Services
+
+![](img/klipper-logo-small.png)
+
+Custom software development, software support, and solutions:
+[https://ko-fi.com/koconnor](https://ko-fi.com/koconnor)

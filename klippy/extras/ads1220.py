@@ -95,11 +95,8 @@ class ADS1220:
         self.batch_bulk = bulk_sensor.BatchBulkHelper(
             self.printer, self._process_batch, self._start_measurements,
             self._finish_measurements, UPDATE_INTERVAL)
-        # publish raw samples to the socket
-        hdr = {'header': ('time', 'counts', 'value')}
-        self.batch_bulk.add_mux_endpoint("ads1220/dump_ads1220", "sensor",
-                                         self.name, hdr)
         # Command Configuration
+        self.attach_probe_cmd = None
         mcu.add_config_cmd(
             "config_ads1220 oid=%d spi_oid=%d data_ready_pin=%s"
             % (self.oid, self.spi.get_oid(), self.data_ready_pin))
@@ -112,6 +109,8 @@ class ADS1220:
         cmdqueue = self.spi.get_command_queue()
         self.query_ads1220_cmd = self.mcu.lookup_command(
             "query_ads1220 oid=%c rest_ticks=%u", cq=cmdqueue)
+        self.attach_probe_cmd = self.mcu.lookup_command(
+            "ads1220_attach_load_cell_probe oid=%c load_cell_probe_oid=%c")
         self.ffreader.setup_query_command("query_ads1220_status oid=%c",
                                           oid=self.oid, cq=cmdqueue)
 
@@ -129,6 +128,9 @@ class ADS1220:
     # add_client interface, direct pass through to bulk_sensor API
     def add_client(self, callback):
         self.batch_bulk.add_client(callback)
+
+    def attach_load_cell_probe(self, load_cell_probe_oid):
+        self.attach_probe_cmd.send([self.oid, load_cell_probe_oid])
 
     # Measurement decoding
     def _convert_samples(self, samples):

@@ -12,8 +12,10 @@ config RPXXXX_SELECT
     select HAVE_STRICT_TIMING
     select HAVE_CHIPID
     select HAVE_GPIO_HARD_PWM
-    select HAVE_STEPPER_BOTH_EDGE
+    select HAVE_STEPPER_OPTIMIZED_BOTH_EDGE
     select HAVE_BOOTLOADER_REQUEST
+    # Software divide needed on rp2040 in spi rate, i2c rate, hard_pwm rate
+    select HAVE_SOFTWARE_DIVIDE_REQUIRED if MACH_RP2040
 
 config BOARD_DIRECTORY
     string

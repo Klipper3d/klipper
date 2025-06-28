@@ -1,0 +1,64 @@
+# Test cases on printers with dual carriage and multiple extruders
+CONFIG generic_cartesian.cfg
+DICTIONARY atmega2560.dict
+
+# Configure the input shaper
+SET_DUAL_CARRIAGE CARRIAGE=u
+SET_INPUT_SHAPER SHAPER_TYPE_X=ei SHAPER_FREQ_X=50 SHAPER_TYPE_Y=2hump_ei SHAPER_FREQ_Y=80
+SET_DUAL_CARRIAGE CARRIAGE=x
+SET_INPUT_SHAPER SHAPER_TYPE_X=ei SHAPER_FREQ_X=50 SHAPER_TYPE_Y=2hump_ei SHAPER_FREQ_Y=80
+
+# Then home the printer
+G90
+G28
+
+# Perform a dummy move
+G1 X10 F6000
+
+# Activate alternate carriage
+SET_DUAL_CARRIAGE CARRIAGE=u
+G1 X190 F6000
+
+# Go back to main carriage
+SET_DUAL_CARRIAGE CARRIAGE=x
+G1 X100 F6000
+
+# Save dual carriage state
+SAVE_DUAL_CARRIAGE_STATE
+
+G1 X50 F6000
+
+# Go back to alternate carriage
+SET_DUAL_CARRIAGE CARRIAGE=u
+G1 X130 F6000
+
+# Restore dual carriage state
+RESTORE_DUAL_CARRIAGE_STATE MOVE=1
+
+# Test changing extruders
+G1 X5
+T1
+G91
+G1 X-10 E.2
+T0
+G91
+G1 X20 E.2
+G90
+
+# Test changing the stepper kinematics
+SET_STEPPER_CARRIAGES STEPPER=dual_carriage CARRIAGES=u+y1
+SET_STEPPER_CARRIAGES STEPPER=stepper_x CARRIAGES=x-y
+
+G1 X30 E.2
+G1 Z3
+
+QUERY_ENDSTOPS
+
+# Servo tests
+SET_SERVO servo=my_servo angle=160
+SET_SERVO servo=my_servo angle=130
+
+# Verify STEPPER_BUZZ
+STEPPER_BUZZ STEPPER='stepper dual_carriage'
+STEPPER_BUZZ STEPPER=extruder
+STEPPER_BUZZ STEPPER=extruder1

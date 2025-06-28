@@ -9,10 +9,9 @@ from . import probe
 
 class ScrewsTiltAdjust:
     def __init__(self, config):
-        self.config = config
         self.printer = config.get_printer()
         self.screws = []
-        self.results = []
+        self.results = {}
         self.max_diff = None
         self.max_diff_error = False
         # Read config
@@ -33,7 +32,7 @@ class ScrewsTiltAdjust:
                                        default='CW-M3')
         # Initialize ProbePointsHelper
         points = [coord for coord, name in self.screws]
-        self.probe_helper = probe.ProbePointsHelper(self.config,
+        self.probe_helper = probe.ProbePointsHelper(config,
                                                     self.probe_finalize,
                                                     default_points=points)
         self.probe_helper.minimum_points(3)

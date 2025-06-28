@@ -22,3 +22,18 @@ M84
 # Verify stepper_buzz
 STEPPER_BUZZ STEPPER="manual_stepper basic_stepper"
 STEPPER_BUZZ STEPPER="manual_stepper homing_stepper"
+
+# Register with g-code
+MANUAL_STEPPER STEPPER=basic_stepper GCODE_AXIS=A
+G28
+G1 X20 Y20 Z10
+G1 A10 X22
+
+# Test unregistering
+MANUAL_STEPPER STEPPER=basic_stepper GCODE_AXIS=
+G1 X15
+
+# Test registering again
+G28
+MANUAL_STEPPER STEPPER=basic_stepper GCODE_AXIS=A
+G1 X20 Y20 Z10  A20

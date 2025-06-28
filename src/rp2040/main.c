@@ -15,7 +15,9 @@
 #include "internal.h" // enable_pclock
 #include "sched.h" // sched_main
 
-#if !CONFIG_MACH_RP2040
+#if CONFIG_MACH_RP2040
+#include "hardware/structs/vreg_and_chip_reset.h" // vreg_and_chip_reset_hw
+#else
 #include "hardware/structs/ticks.h" // ticks_hw
 #endif
 
@@ -58,8 +60,21 @@ bootloader_request(void)
  ****************************************************************/
 
 #define FREQ_XOSC 12000000
-#define FREQ_SYS (CONFIG_MACH_RP2040 ? 125000000 : CONFIG_CLOCK_FREQ)
+#define FREQ_SYS (CONFIG_MACH_RP2040 ? 200000000 : CONFIG_CLOCK_FREQ)
+#define FBDIV (FREQ_SYS == 200000000 ? 100 : 125)
 #define FREQ_USB 48000000
+
+void set_vsel(void)
+{
+    // Set internal voltage regulator output to 1.15V on rp2040
+#if CONFIG_MACH_RP2040
+    uint32_t cval = vreg_and_chip_reset_hw->vreg;
+    uint32_t vref = VREG_AND_CHIP_RESET_VREG_VSEL_RESET + 1;
+    cval &= ~VREG_AND_CHIP_RESET_VREG_VSEL_BITS;
+    cval |= vref << VREG_AND_CHIP_RESET_VREG_VSEL_LSB;
+    vreg_and_chip_reset_hw->vreg = cval;
+#endif
+}
 
 void
 enable_pclock(uint32_t reset_bit)
@@ -82,6 +97,8 @@ get_pclock_frequency(uint32_t reset_bit)
     return FREQ_SYS;
 }
 
+// PLL (rp2xxx) input: 5 to 100Mhz, vco: 750 to 1600Mhz
+
 static void
 xosc_setup(void)
 {
@@ -96,8 +113,8 @@ static void
 pll_setup(pll_hw_t *pll, uint32_t mul, uint32_t postdiv)
 {
     // Setup pll
-    uint32_t refdiv = 1, fbdiv = mul, postdiv2 = 2, postdiv1 = postdiv/postdiv2;
-    if (postdiv1 > 0x07) {
+    uint32_t refdiv = 1, fbdiv = mul, postdiv2 = 1, postdiv1 = postdiv;
+    while (postdiv1 > 0x07) {
         postdiv1 >>= 1;
         postdiv2 <<= 1;
     }
@@ -141,7 +158,8 @@ clock_setup(void)
     // Setup xosc, pll_sys, and switch clk_sys
     xosc_setup();
     enable_pclock(RESETS_RESET_PLL_SYS_BITS);
-    pll_setup(pll_sys_hw, 125, 125*FREQ_XOSC/FREQ_SYS);
+    set_vsel();
+    pll_setup(pll_sys_hw, FBDIV, FBDIV * FREQ_XOSC / FREQ_SYS);
     csys->ctrl = 0;
     csys->div = 1<<CLOCKS_CLK_SYS_DIV_INT_LSB;
     csys->ctrl = CLOCKS_CLK_SYS_CTRL_SRC_VALUE_CLKSRC_CLK_SYS_AUX;

@@ -37,20 +37,36 @@ hours or more frequently) then it is an indication of a severe
 problem.
 
 Incrementing `bytes_invalid` on a CAN bus connection is a symptom of
-reordered messages on the CAN bus. There are two known causes of
-reordered messages:
-1. Old versions of the popular candlight_firmware for USB CAN adapters
-   had a bug that could cause reordered messages. If using a USB CAN
-   adapter running this firmware then make sure to update to the
-   latest firmware if incrementing `bytes_invalid` is observed.
-2. Some Linux kernel builds for embedded devices have been known to
-   reorder CAN bus messages. It may be necessary to use an alternative
-   Linux kernel or to use alternative hardware that supports
-   mainstream Linux kernels that do not exhibit this problem.
+reordered messages on the CAN bus. If seen, make sure to:
+* Use a Linux kernel version 6.6.0 or later.
+* If using a USB-to-CANBUS adapter running candlelight firmware, use
+  v2.0 or later of candleLight_fw.
+* If using Klipper's USB-to-CANBUS bridge mode, make sure the bridge
+  node is flashed with Klipper v0.12.0 or later.
 
 Reordered messages is a severe problem that must be fixed. It will
 result in unstable behavior and can lead to confusing errors at any
-part of a print.
+part of a print. An incrementing `bytes_invalid` is not caused by
+wiring or similar hardware issues and can only be fixed by identifying
+and updating the faulty software.
+
+Older versions of the Linux kernel had a bug in the gs_usb canbus
+driver code that could cause reordered canbus packets.  The issue is
+thought to be fixed in
+[Linux commit 24bc41b4](https://github.com/torvalds/linux/commit/24bc41b4558347672a3db61009c339b1f5692169)
+which was released in v6.6.0. In some cases, older Linux versions may
+not show the problem (due to how hardware interrupts are configured),
+however if problems are seen the recommended solution is to upgrade to
+a newer kernel.
+
+Older versions of candlelight firmware could reorder canbus packets,
+and the issue is thought to be fixed in
+[candlelight_fw commit 8b3a7b45](https://github.com/candle-usb/candleLight_fw/commit/8b3a7b4565a3c9521b762b154c94c72c5acb2bcf).
+
+Older versions of Klipper's USB-to-CANBUS bridge code could
+incorrectly drop canbus messages. This is not as severe as reordering
+messages, but it should still be fixed. It is thought to be fixed with
+[Klipper PR #6175](https://github.com/Klipper3d/klipper/pull/6175).
 
 ## Use an appropriate txqueuelen setting
 
@@ -101,6 +117,23 @@ single CAN bus has 5 or more Klipper MCUs on it, then it might be
 necessary to increase the `txqueuelen` above the recommended value
 of 128. However, as above, care should be taken when selecting a new
 value to avoid excessive round-trip-time latency.
+
+## Use `canbus_query.py` only to identify nodes never previously seen
+
+It is only valid to use the
+[`canbus_query.py` tool](CANBUS.md#finding-the-canbus_uuid-for-new-micro-controllers)
+to identify micro-controllers that have never been previously
+identified. Once all nodes on a bus are identified, record the
+resulting uuids in the printer.cfg, and avoid running the tool
+unnecessarily.
+
+The tool is implemented using a low-level mechanism that can cause
+nodes to internally observe bus errors. These internal errors may
+result in communication interruptions and may result is some nodes
+disconnecting from the bus.
+
+It is not valid to use the tool to "ping" if a node is connected. Do
+not run the tool during an active print.
 
 ## Obtaining candump logs
 

@@ -23,19 +23,19 @@ struct hd44780 {
  * Transmit functions
  ****************************************************************/
 
-static uint32_t
+static __always_inline uint32_t
 nsecs_to_ticks(uint32_t ns)
 {
     return timer_from_us(ns * 1000) / 1000000;
 }
 
-static inline void
-ndelay(uint32_t nsecs)
+static void
+ndelay(uint32_t ticks)
 {
     if (CONFIG_MACH_AVR)
         // Slower MCUs don't require a delay
         return;
-    uint32_t end = timer_read_time() + nsecs_to_ticks(nsecs);
+    uint32_t end = timer_read_time() + ticks;
     while (timer_is_before(timer_read_time(), end))
         irq_poll();
 }
@@ -54,7 +54,7 @@ hd44780_xmit_bits(uint8_t toggle, struct gpio_out e, struct gpio_out d4
         gpio_out_toggle(d6);
     if (toggle & 0x80)
         gpio_out_toggle(d7);
-    ndelay(230);
+    ndelay(nsecs_to_ticks(230));
     gpio_out_toggle(e);
 }
 
@@ -65,7 +65,7 @@ hd44780_xmit_byte(struct hd44780 *h, uint8_t data)
     struct gpio_out e = h->e, d4 = h->d4, d5 = h->d5, d6 = h->d6, d7 = h->d7;
     hd44780_xmit_bits(h->last ^ data, e, d4, d5, d6, d7);
     h->last = data << 4;
-    ndelay(500 - 230);
+    ndelay(nsecs_to_ticks(500 - 230));
     hd44780_xmit_bits(data ^ h->last, e, d4, d5, d6, d7);
 }
 

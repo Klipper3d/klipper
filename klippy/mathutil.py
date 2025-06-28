@@ -135,3 +135,18 @@ def matrix_sub(m1, m2):
 
 def matrix_mul(m1, s):
     return [m1[0]*s, m1[1]*s, m1[2]*s]
+
+######################################################################
+# Matrix helper functions for 3x3 matrices
+######################################################################
+
+def matrix_det(a):
+    x0, x1, x2 = a
+    return matrix_dot(x0, matrix_cross(x1, x2))
+
+def matrix_inv(a):
+    x0, x1, x2 = a
+    inv_det = 1. / matrix_det(a)
+    return [matrix_mul(matrix_cross(x1, x2), inv_det),
+            matrix_mul(matrix_cross(x2, x0), inv_det),
+            matrix_mul(matrix_cross(x0, x1), inv_det)]

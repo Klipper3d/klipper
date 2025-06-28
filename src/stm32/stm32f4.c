@@ -57,6 +57,11 @@ gpio_clock_enable(GPIO_TypeDef *regs)
     RCC->AHB1ENR;
 }
 
+// PLL (f207) input: 0.95 to 2.1Mhz, vco: 192 to 432Mhz, output: 24 to 120Mhz
+// PLL (f401) input: 0.95 to 2.1Mhz, vco: 192 to 432Mhz, output: 24 to 84Mhz
+// PLL (f405/7) input: 0.95 to 2.1Mhz, vco: 100 to 432Mhz, output: 24 to 168Mhz
+// PLL (f446) input: 0.95 to 2.1Mhz, vco: 100 to 432Mhz, output: 12.5 to 180Mhz
+
 #if !CONFIG_STM32_CLOCK_REF_INTERNAL
 DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PH0,PH1");
 #endif

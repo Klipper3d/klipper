@@ -2,7 +2,7 @@
 //
 // Copyright (C) 2019 Eug Krashtan <eug.krashtan@gmail.com>
 // Copyright (C) 2020 Pontus Borg <glpontus@gmail.com>
-// Copyright (C) 2021  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2021-2025  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -168,6 +168,31 @@ canhw_set_filter(uint32_t id)
     fcan->FMR = fmr & ~CAN_FMR_FINIT;
 }
 
+static struct {
+    uint32_t rx_error, tx_error;
+} CAN_Errors;
+
+// Report interface status
+void
+canhw_get_status(struct canbus_status *status)
+{
+    irqstatus_t flag = irq_save();
+    uint32_t esr = SOC_CAN->ESR;
+    uint32_t rx_error = CAN_Errors.rx_error, tx_error = CAN_Errors.tx_error;
+    irq_restore(flag);
+
+    status->rx_error = rx_error;
+    status->tx_error = tx_error;
+    if (esr & CAN_ESR_BOFF)
+        status->bus_state = CANBUS_STATE_OFF;
+    else if (esr & CAN_ESR_EPVF)
+        status->bus_state = CANBUS_STATE_PASSIVE;
+    else if (esr & CAN_ESR_EWGF)
+        status->bus_state = CANBUS_STATE_WARN;
+    else
+        status->bus_state = 0;
+}
+
 // This function handles CAN global interrupts
 void
 CAN_IRQHandler(void)
@@ -190,12 +215,29 @@ CAN_IRQHandler(void)
         // Process packet
         canbus_process_data(&msg);
     }
+
+    // Check for transmit ready
     uint32_t ier = SOC_CAN->IER;
     if (ier & CAN_IER_TMEIE
         && SOC_CAN->TSR & (CAN_TSR_RQCP0|CAN_TSR_RQCP1|CAN_TSR_RQCP2)) {
         // Tx
         SOC_CAN->IER = ier & ~CAN_IER_TMEIE;
         canbus_notify_tx();
+    }
+
+    // Check for error irq
+    uint32_t msr = SOC_CAN->MSR;
+    if (msr & CAN_MSR_ERRI) {
+        uint32_t esr = SOC_CAN->ESR;
+        uint32_t lec = (esr & CAN_ESR_LEC_Msk) >> CAN_ESR_LEC_Pos;
+        if (lec && lec != 7) {
+            SOC_CAN->ESR = 7 << CAN_ESR_LEC_Pos;
+            if (lec >= 3 && lec <= 5)
+                CAN_Errors.tx_error += 1;
+            else
+                CAN_Errors.rx_error += 1;
+        }
+        SOC_CAN->MSR = CAN_MSR_ERRI;
     }
 }
 
@@ -289,6 +331,8 @@ can_init(void)
         armcm_enable_irq(CAN_IRQHandler, CAN_RX1_IRQn, 0);
     if (CAN_RX0_IRQn != CAN_TX_IRQn)
         armcm_enable_irq(CAN_IRQHandler, CAN_TX_IRQn, 0);
-    SOC_CAN->IER = CAN_IER_FMPIE0;
+    if (CAN_RX0_IRQn != CAN_SCE_IRQn)
+        armcm_enable_irq(CAN_IRQHandler, CAN_SCE_IRQn, 0);
+    SOC_CAN->IER = CAN_IER_FMPIE0 | CAN_IER_ERRIE | CAN_IER_LECIE;
 }
 DECL_INIT(can_init);
