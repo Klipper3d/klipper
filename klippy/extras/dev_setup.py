@@ -15,7 +15,7 @@ class dev_setup:
         # Printer and pin setup
         self.printer = config.get_printer()
         self.gcode = self.printer.lookup_object('gcode')
-        self.fakeHome = config.getboolean('fake_home', False, False)
+        self.fakeHome = config.getboolean('fake_home', False)
   
     # ---------------------------------------------------------------------
     # Event Handlers
