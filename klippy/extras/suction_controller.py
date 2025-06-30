@@ -7,7 +7,7 @@
 # Owner: Mo
 #################################################################
 from . import  output_pin
-from XGZP6847D_sensor import PumpPressureSensor
+# from .XGZP6847D_sensor import XGZP6847D_sensor
 
 class Pump:
     def __init__(self, config, default_shutdown_pressure=0.):
@@ -42,7 +42,7 @@ class Pump:
                                                  self._apply_pressure)
 
         # Setup Pressure sensor
-        self.PressureSensor = PumpPressureSensor(config)
+        # self.PressureSensor = XGZP6847D_sensor(config)
 
         # Register callbacks
         self.printer.register_event_handler("gcode:request_restart",
@@ -50,6 +50,7 @@ class Pump:
 
     def get_mcu(self):
         return self.mcu_fan.get_mcu()
+    
     def _apply_pressure(self, print_time, value):
         if value < self.off_below:
             value = 0.
@@ -78,15 +79,17 @@ class Pump:
         self.set_pressure(0., print_time)
 
     def get_status(self, eventtime):
-        PumpPressureSensor_status = self.PumpPressureSensor.get_status(eventtime)
+        # PumpPressureSensor_status = self.PumpPressureSensor.get_status(eventtime)
         return {
             'Pump Power': self.last_req_value,
-            'Actual Pressure': PumpPressureSensor_status['pressure'],
+            # 'Actual Pressure': PumpPressureSensor_status['Pressure'],
+            # 'Temperature': PumpPressureSensor_status['Temperature'],
+            # 'Sampling Status': PumpPressureSensor_status['Sampling Status']
         }
 
 
 
-class PrinterPump:
+class suction_controller:
     def __init__(self, config):
         self.pump = Pump(config)
         # Register commands
@@ -104,4 +107,4 @@ class PrinterPump:
         self.pump.set_pressure_from_command(0.)
 
 def load_config(config):
-    return PrinterPump(config)
+    return suction_controller(config)

@@ -23,6 +23,7 @@ REG_DATA_CMD = 0x0A # start combined conversion pressure and temperature
 # Sampling takes 20ms at most
 SAMPLING_CYCLE_MS = 5.
 MAX_SAMPLING_CYCLE = 6
+STATUS_UPDATE_MS = 200.  # Status update interval in milliseconds
 
 READ_READY_STATE = 0
 
@@ -45,7 +46,7 @@ k_dict = {
     'XGZP6847D100KPG': 128. # 130<Pressure Range≤260 (absolute value)
 }
 
-class PumpPressureSensor:
+class XGZP6847D_sensor:
     # XGZP6847D vacuum pressure sensor
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -58,7 +59,7 @@ class PumpPressureSensor:
 
         self.pressure,  self.temperature, self.read_cycle = 0, 0, 0
         self.timer = None
-
+        self.last_read = self.reactor.monotonic()
         self.gcode.register_command('DO_PT_MEASURE', self.cmd_do_PT_measure,
             desc="Start a pressure and temperature measurement cycle on the XGZP6847D sensor")
         self.gcode.register_command('TELL_PT_MEASURE', self.cmd_tell_readings,
@@ -68,7 +69,10 @@ class PumpPressureSensor:
 
                
     def get_status(self, eventtime):
-        # Read pressure and temperature from the sensor
+        if eventtime - self.last_read > STATUS_UPDATE_MS/1000. and not self.active_read:
+            # Read pressure and temperature from the sensor
+            self._read_sensor_data()
+            self.last_read = eventtime
         return {'Sampling Status': self.active_read, 'Pressure': self.pressure, 'Temperature': self.temperature}
     def _handle_on_ready(self):
         """Handle the 'klippy:ready' event to initialize the sensor."""
@@ -86,9 +90,9 @@ class PumpPressureSensor:
             raw_pressure = (p_msb << 16) | (p_csb << 8) | p_lsb
             if raw_pressure & 0x800000:
                 raw_pressure -= 0x1000000  # Convert to signed 24-bit int
-            self.pressure = raw_pressure/ k_dict['XGZP6847D100KPG']  # Convert to Pa using the K value
+            self.pressure = round(raw_pressure/ k_dict['XGZP6847D100KPG'])  # Convert to Pa using the K value
             self.temperature = (t_msb << 8) | t_lsb
-            self.temperature = self.temperature / 256.  # Convert to Celsius
+            self.temperature = round(self.temperature / 256., 2)  # Convert to Celsius
             # Force to make this the last cycle
             self.read_cycle = MAX_SAMPLING_CYCLE
             logging.info(f"XGZP6847D sensor read completed: Pressure={self.pressure} Pa, Temperature={self.temperature} C")
@@ -105,6 +109,7 @@ class PumpPressureSensor:
         return eventtime + SAMPLING_CYCLE_MS/1000.
 
     def _read_sensor_data(self):
+        # Never call if already reading!
         # Start sampling
         self.i2c.i2c_write([REG_ADD_CMD, REG_DATA_CMD])
         waketime = self.reactor.monotonic() + SAMPLING_CYCLE_MS/1000.
@@ -142,4 +147,4 @@ class PumpPressureSensor:
             return
         gcmd.respond_info(f"XGZP6847D sensor readings: Pressure={self.pressure} Pa, Temperature={self.temperature} C")
 def load_config(config):
-    return PumpPressureSensor(config)
+    return XGZP6847D_sensor(config)
