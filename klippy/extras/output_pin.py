@@ -129,7 +129,7 @@ class PrinterTemplateEvaluator:
         # Render all templates
         flush_callbacks = {}
         render_cache = {}
-        template_info = self.active_templates.items()
+        template_info = list(self.active_templates.items())
         for callback, (uid, template, lparams, flush_callback) in template_info:
             text = render_cache.get(uid)
             if text is None:
