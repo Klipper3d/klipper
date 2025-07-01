@@ -24,6 +24,8 @@ adapters that can run Klipper directly (in its "USB to CAN bridge
 mode") or that run the
 [candlelight firmware](https://github.com/candle-usb/candleLight_fw).
 
+### If using ifupdown 
+
 It is also necessary to configure the host operating system to use the
 adapter. This is typically done by creating a new file named
 `/etc/network/interfaces.d/can0` with the following contents:
@@ -32,6 +34,44 @@ allow-hotplug can0
 iface can0 can static
     bitrate 1000000
     up ip link set $IFACE txqueuelen 128
+```
+
+### If using systemd-networkd
+
+Some new system using `systemd-networkd` to manage. 
+
+This is typically done by creating a new file named
+`/etc/systemd/network/80-can.network` with the following contents:
+
+```
+[Match]
+Name=can0
+
+[CAN]
+BitRate=1000000
+```
+
+Also a new file named
+`/etc/systemd/network/80-can.link` with the following contents:
+
+```
+[Match]
+Type=can
+
+[Link]
+TransmitQueueLength=128
+```
+
+Then restart `systemd-networkd` use following command
+
+``` shell
+sudo systemctl restart systemd-networkd.service 
+```
+
+If `systemd-networkd` not enable it can be enable using following command
+
+``` shell
+sudo systemctl enable --now systemd-networkd.service 
 ```
 
 ## Terminating Resistors
