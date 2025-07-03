@@ -195,6 +195,7 @@ i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
     I2C_TypeDef *i2c = config.i2c;
     uint32_t timeout = timer_read_time() + timer_from_us(5000);
     int ret = I2C_BUS_SUCCESS;
+    uint8_t *write_orig = write;
 
     // Send start and address
     i2c->CR2 = (I2C_CR2_START | config.addr | (write_len << I2C_CR2_NBYTES_Pos)
@@ -207,6 +208,8 @@ i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
     }
     return i2c_wait(i2c, I2C_ISR_TXE, timeout);
 abrt:
+    if (write == write_orig && ret == I2C_BUS_NACK)
+        ret = I2C_BUS_START_NACK;
     i2c->CR2 |= I2C_CR2_STOP;
     return ret;
 }
@@ -218,6 +221,8 @@ i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
     I2C_TypeDef *i2c = config.i2c;
     uint32_t timeout = timer_read_time() + timer_from_us(5000);
     int ret = I2C_BUS_SUCCESS;
+    uint8_t *write_orig = reg;
+    uint8_t *read_orig = read;
 
     // Send start, address, reg
     i2c->CR2 = (I2C_CR2_START | config.addr |
@@ -236,11 +241,16 @@ i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
     while (read_len--) {
         ret = i2c_wait(i2c, I2C_ISR_RXNE, timeout);
         if (ret != I2C_BUS_SUCCESS)
-            goto abrt;
+            goto abrt_read;
         *read++ = i2c->RXDR;
     }
     return i2c_wait(i2c, I2C_ISR_STOPF, timeout);
+abrt_read:
+    if (read == read_orig && ret == I2C_BUS_NACK)
+        ret = I2C_BUS_START_READ_NACK;
 abrt:
+    if (reg == write_orig && ret == I2C_BUS_NACK)
+        ret = I2C_BUS_START_NACK;
     i2c->CR2 |= I2C_CR2_STOP;
     return ret;
 }
