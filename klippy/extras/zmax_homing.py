@@ -89,7 +89,7 @@ class ZMaxHomingAlt:
             trigger_pos = self.phoming.probing_move(self.y_endstop_wrapper, target_pos, speed)
             # Mensaje en el momento exacto de detección
             gcode = self.printer.lookup_object('gcode')
-            gcode.respond_info(f"🎯 Y-endstop ACTIVADO en Z={trigger_pos[2]:.3f}mm")
+            gcode.respond_info(f"Y-endstop triggered at Z={trigger_pos[2]:.3f}mm")
             return trigger_pos
         except self.printer.command_error as e:
             if "No trigger" in str(e):
@@ -221,7 +221,7 @@ class ZMaxHomingAlt:
             # Solo considerar que está "ya activado" si estamos cerca de Z-max
             if endstop_initially_triggered and current_pos[2] > (z_max_cfg - 10.0):
                 # Ya estamos en contacto con el endstop cerca de Z-max
-                gcmd.respond_info(f"🎯 Y-endstop YA ACTIVADO en Z={current_pos[2]:.3f}mm")
+                # gcmd.respond_info(f"🎯 Y-endstop YA ACTIVADO en Z={current_pos[2]:.3f}mm")
                 detected_z_pos = current_pos[2]
                 
             else:
@@ -237,7 +237,7 @@ class ZMaxHomingAlt:
                 except self.printer.command_error as e:
                     if "Probe triggered prior to movement" in str(e):
                         # El endstop se activó inmediatamente al iniciar el movimiento
-                        gcmd.respond_info(f"🎯 Y-endstop YA ACTIVADO en Z={current_pos[2]:.3f}mm")
+                        # gcmd.respond_info(f"🎯 Y-endstop YA ACTIVADO en Z={current_pos[2]:.3f}mm")
                         detected_z_pos = current_pos[2]
                     else:
                         raise
@@ -254,7 +254,7 @@ class ZMaxHomingAlt:
                     else:
                         gcmd.respond_info(f"⚠️ PÉRDIDA DE PASOS: +{step_loss:.3f}mm (perdió pasos SUBIENDO)")
                 else:
-                    gcmd.respond_info(f"✅ Sin pérdida de pasos (+{step_loss:.3f}mm)")
+                    gcmd.respond_info(f"✅ Sin pérdida de pasos ({step_loss:+.3f}mm)")
 
             # --- "Engañar" a Klipper estableciendo Z=Z-max para poder retraer ---
             fake_pos = self.toolhead.get_position()
@@ -281,7 +281,7 @@ class ZMaxHomingAlt:
                 if "Probe triggered prior to movement" in str(e):
                     # El endstop se activó inmediatamente, usar posición actual
                     current_pos = self.toolhead.get_position()
-                    gcmd.respond_info(f"🎯 Y-endstop ACTIVADO en Z={current_pos[2]:.3f}mm")
+                    gcmd.respond_info(f"Y-endstop triggered at Z={current_pos[2]:.3f}mm")
                     final_trigger_pos = current_pos
                 else:
                     raise
@@ -295,7 +295,7 @@ class ZMaxHomingAlt:
             else:
                 self.toolhead.set_position(final_pos)
                 
-            gcmd.respond_info(f"✅ Posición Z establecida en {final_pos[2]:.3f}mm")
+            gcmd.respond_info(f"Z position set to {final_pos[2]:.3f}mm")
             
             # Medición silenciosa de pérdida de pasos (sin reportar)
 
