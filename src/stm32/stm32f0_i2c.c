@@ -224,16 +224,18 @@ i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
     uint8_t *write_orig = reg;
     uint8_t *read_orig = read;
 
-    // Send start, address, reg
-    i2c->CR2 = (I2C_CR2_START | config.addr |
-               (reg_len << I2C_CR2_NBYTES_Pos));
-    while (reg_len--) {
-        ret = i2c_wait(i2c, I2C_ISR_TXIS, timeout);
-        if (ret != I2C_BUS_SUCCESS)
-            goto abrt;
-        i2c->TXDR = *reg++;
+    if (reg_len) {
+        // Send start, address, reg
+        i2c->CR2 = (I2C_CR2_START | config.addr |
+                   (reg_len << I2C_CR2_NBYTES_Pos));
+        while (reg_len--) {
+            ret = i2c_wait(i2c, I2C_ISR_TXIS, timeout);
+            if (ret != I2C_BUS_SUCCESS)
+                goto abrt;
+            i2c->TXDR = *reg++;
+        }
+        i2c_wait(i2c, I2C_ISR_TC, timeout);
     }
-    i2c_wait(i2c, I2C_ISR_TC, timeout);
 
     // send restart, read data
     i2c->CR2 = (I2C_CR2_START | I2C_CR2_RD_WRN | config.addr |
