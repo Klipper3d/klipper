@@ -35,16 +35,16 @@ class RetryAsyncCommand:
         cmd, = cmds
         self.serial.raw_send_wait_ack(cmd, minclock, reqclock, cmd_queue)
         self.min_query_time = 0.
-        first_query_time = query_time = self.reactor.monotonic()
-        if not retry:
-            self.TIMEOUT_TIME=.0
+        timeout_time = query_time = self.reactor.monotonic()
+        if retry:
+            timeout_time += self.TIMEOUT_TIME
         while 1:
             params = self.completion.wait(query_time + self.RETRY_TIME)
             if params is not None:
                 self.serial.register_response(None, self.name, self.oid)
                 return params
             query_time = self.reactor.monotonic()
-            if query_time > first_query_time + self.TIMEOUT_TIME:
+            if query_time > timeout_time:
                 self.serial.register_response(None, self.name, self.oid)
                 raise serialhdl.error("Timeout on wait for '%s' response"
                                       % (self.name,))
