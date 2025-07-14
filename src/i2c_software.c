@@ -28,10 +28,10 @@ command_i2c_set_sw_bus(uint32_t *args)
     struct i2c_software *is = alloc_chunk(sizeof(*is));
     is->ticks = args[3];
     is->addr = (args[4] & 0x7f) << 1; // address format shifted
-    is->scl_in = gpio_in_setup(args[1], 1);
     is->scl_out = gpio_out_setup(args[1], 1);
-    is->sda_in = gpio_in_setup(args[2], 1);
+    is->scl_in = gpio_in_setup(args[1], 1);
     is->sda_out = gpio_out_setup(args[2], 1);
+    is->sda_in = gpio_in_setup(args[2], 1);
     i2cdev_set_software_bus(i2c, is);
 }
 DECL_COMMAND(command_i2c_set_sw_bus,
