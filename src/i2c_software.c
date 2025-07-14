@@ -38,13 +38,6 @@ DECL_COMMAND(command_i2c_set_sw_bus,
              "i2c_set_sw_bus oid=%c scl_pin=%u sda_pin=%u"
              " pulse_ticks=%u address=%u");
 
-// The AVR micro-controllers require specialized timing
-#if CONFIG_MACH_AVR
-
-#define i2c_delay(ticks) (void)(ticks)
-
-#else
-
 static void
 i2c_delay(uint32_t ticks)
 {
@@ -52,8 +45,6 @@ i2c_delay(uint32_t ticks)
     while (timer_is_before(timer_read_time(), end))
         ;
 }
-
-#endif
 
 static void
 i2c_software_send_ack(struct i2c_software *is, const uint8_t ack)
