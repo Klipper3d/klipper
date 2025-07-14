@@ -8,8 +8,8 @@ All dates in this document are approximate.
 
 ## Changes
 
-20250721: The `[pca9632]` module no longer accepts the `scl_pin` and
-`sda_pin` options.  Use `i2c_software_scl_pin` and
+20250721: The `[pca9632]` and `[mcp4018]` modules no longer accept the
+`scl_pin` and `sda_pin` options. Use `i2c_software_scl_pin` and
 `i2c_software_sda_pin` instead.
 
 20250428: The maximum `cycle_time` for pwm `[output_pin]`,
