@@ -99,19 +99,14 @@ int
 canhw_send(struct canbus_msg *msg)
 {
     uint32_t tsr = SOC_CAN->TSR;
-    if (!(tsr & (CAN_TSR_TME0|CAN_TSR_TME1|CAN_TSR_TME2))) {
+    if (!(tsr & CAN_TSR_TME0)) {
         // No space in transmit fifo - enable tx irq
         irq_disable();
         SOC_CAN->IER |= CAN_IER_TMEIE;
         irq_enable();
         return -1;
     }
-    int mbox = 2;
-    if (tsr & CAN_TSR_TME0)
-        mbox = 0;
-    else if (tsr & CAN_TSR_TME1)
-        mbox = 1;
-    CAN_TxMailBox_TypeDef *mb = &SOC_CAN->sTxMailBox[mbox];
+    CAN_TxMailBox_TypeDef *mb = SOC_CAN->sTxMailBox;
 
     /* Set up the DLC */
     mb->TDTR = (mb->TDTR & 0xFFFFFFF0) | (msg->dlc & 0x0F);
@@ -219,7 +214,7 @@ CAN_IRQHandler(void)
     // Check for transmit ready
     uint32_t ier = SOC_CAN->IER;
     if (ier & CAN_IER_TMEIE
-        && SOC_CAN->TSR & (CAN_TSR_RQCP0|CAN_TSR_RQCP1|CAN_TSR_RQCP2)) {
+        && SOC_CAN->TSR & CAN_TSR_RQCP0) {
         // Tx
         SOC_CAN->IER = ier & ~CAN_IER_TMEIE;
         canbus_notify_tx();
