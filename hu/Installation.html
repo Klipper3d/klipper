@@ -1522,6 +1522,12 @@ make menuconfig
 <p>Gyakori, hogy minden nyomtatónak saját egyedi soros port neve van. Ez az egyedi név kerül felhasználásra a mikrokontroller égetésekor. Lehetséges, hogy a fenti kimeneten több sor is szerepel - ha igen, válaszd ki a mikrokontrollernek megfelelő sort. Ha több elem is szerepel a listában, és a választás nem egyértelmű, húzd ki a kártyát, és futtasd le újra a parancsot, a hiányzó elem a nyomtató alaplapod lesz(további információért lásd <a href="FAQ.html#wheres-my-serial-port">GYIK</a>).</p>
 <p>For common micro-controllers with STM32 or clone chips, LPC chips and others, it is usual that these need an initial Klipper flash via SD card.</p>
 <p>When flashing with this method, it is important to make sure that the print board is not connected with USB to the host, due to some boards being able to feed power back to the board and stopping a flash from occurring.</p>
+<p>Please note, that most print boards that use SD cards for flash will implement some kind of flash loop protection for when the sd card is left in place. There are two common methods:</p>
+<p>Filename Change Required (usually "stock" print boards):</p>
+<p>These boards require the firmware file to have a different name each time you flash (for example, firmware1.bin, firmware2.bin, etc.). If you reuse the same filename, the board may ignore it and not update.</p>
+<p>Automatic File Renaming (usually aftermarket print boards:</p>
+<p>Other boards allow using the same filename, commonly firmware.bin, but after flashing, the board renames the file to firmware.cur. This helps indicate the firmware was successfully flashed and prevents it from flashing again on the next startup.</p>
+<p>Before flashing, make sure to check which behavior your board follows.</p>
 <p>Az Atmega chipeket használó általános mikrovezérlők, például a 2560-asok esetében a kódot a következő módon lehet égetni:</p>
 <div class="highlight"><pre><span></span><code>sudo service klipper stop
 make flash FLASH_DEVICE=/dev/serial/by-id/usb-1a86_USB2.0-Serial-if00-port0

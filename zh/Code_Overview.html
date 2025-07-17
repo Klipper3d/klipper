@@ -1577,6 +1577,7 @@
 </ul>
 </li>
 <li>如果用户配置中存在错误，应在<code>load_config()</code>或连接事件（connect event）中抛出异常。使用 <code>raise config.error("my error")</code> 或 <code>raise printer.config_error("my error")</code> 进行告警。</li>
+<li>Do not store a reference to the <code>config</code> object in a class member variable (nor in any similar location that may persist past initial module loading). The <code>config</code> object is a reference to a "config loading phase" class and it is not valid to invoke its methods after the "config loading phase" has completed.</li>
 <li>使用"pins"模块对微控制器的引脚进行定义，例如<code>printer.lookup_object("pins").setup_pin("pwm", config.get("my_pin"))</code>。此后，运行时，可通过返回的对象对针脚进行控制。</li>
 <li>如果打印机对象中定义了 <code>get_status()</code> 方法，则在模块中可以通过<a href="Command_Templates.html">宏</a>或<a href="API_Server.html">API服务</a>输出<a href="Status_Reference.html">状态信息</a>。 <code>get_status()</code> 必须返回一个Python字典对象，其键需要为字符串，而值应为整形、浮点数、列表、字典、True、False或者None。元组（或命名元组）也可以作为值（它们在API服务中将被视为列表）。列表和字典的输出值必须为“不可变的（immutable）”，即在函数内，如果 <code>get_status()</code> 需要输出上述类型的实例，则需要新建或者进行深层复制，否则API服务会识别出输出值中的内容变更。</li>
 <li>如果模块需要使用系统时钟或外部文件描述符，可通过<code>printer.get_reactor()</code>对获取全局事件反应器进行访问（event reactor）。通过该反应器类可以部署定时器，等待文件描述符输入，或者“挂起”上位机程序。</li>

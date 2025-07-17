@@ -1556,6 +1556,162 @@ Total capacity: +/- 29.14Kg
 <div class="highlight"><pre><span></span><code>{% set tare_counts = printer.load_cell.tare_counts %}
 </code></pre></div>
 
+<h1 id="load-cell-probes">Load Cell Probes<a class="headerlink" href="#load-cell-probes" title="Permanent link">&para;</a></h1>
+<h2 id="related-documentation_1">Related Documentation<a class="headerlink" href="#related-documentation_1" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="Config_Reference.html#load_cell_probe">load_cell_probe Config Reference</a></li>
+<li><a href="G-Codes.html#load_cell_probe">load_cell_probe G-Code Commands</a></li>
+<li><a href="Status_Reference.html#load_cell_probe">load_cell_probe Statuc Reference</a></li>
+</ul>
+<h2 id="load-cell-probe-safety">Load Cell Probe Safety<a class="headerlink" href="#load-cell-probe-safety" title="Permanent link">&para;</a></h2>
+<p>Because load cells are a direct nozzle contact probe there is a risk of damage to your printer if too much force is used. The load cell probing system includes a number of safety checks that try to keep your machine safe from excessive force to the toolhead. It's important to understand what they are and how they work as you can defeat most of them with poorly chosen config values.</p>
+<h4 id="calibration-check">Calibration Check<a class="headerlink" href="#calibration-check" title="Permanent link">&para;</a></h4>
+<p>Every time a homing move starts, load_cell_probe checks that the load_cell is calibrated. If not it will stop the move with an error: <code>!! Load Cell not calibrated</code>.</p>
+<h4 id="counts_per_gram"><code>counts_per_gram</code><a class="headerlink" href="#counts_per_gram" title="Permanent link">&para;</a></h4>
+<p>This setting is used to convert raw sensor counts into grams. All the safety limits are in gram units for your convenience. If the <code>counts_per_gram</code> setting is not accurate you can easily exceed the safe force on the toolhead. You should never guess this value. Use <code>LOAD_CELL_CALIBRATE</code> to find your load cells actual <code>counts_per_gram</code>.</p>
+<h4 id="trigger_force"><code>trigger_force</code><a class="headerlink" href="#trigger_force" title="Permanent link">&para;</a></h4>
+<p>This is the force in grams that triggers the endstop to halt the homing move. When a homing move starts the endstop tares itself with the current reading from the load cell. <code>trigger_force</code> is measured from that tare value. There is always some overshoot of this value when the probe collides with the bed, so be conservative. e.g. a setting of 100g could result in 350g of peak force before the toolhead stops. This overshoot will increase with faster probing <code>speed</code>, a low ADC sample rate or <a href="Multi_MCU_Homing.html">multi MCU homing</a>.</p>
+<h4 id="reference_tare_counts"><code>reference_tare_counts</code><a class="headerlink" href="#reference_tare_counts" title="Permanent link">&para;</a></h4>
+<p>This is the baseline tare value that is set by <code>LOAD_CELL_CALIBRATE</code>. This value works with <code>force_safety_limit</code> to limit the maximum force on the toolhead.</p>
+<h4 id="force_safety_limit"><code>force_safety_limit</code><a class="headerlink" href="#force_safety_limit" title="Permanent link">&para;</a></h4>
+<p>This is the maximum absolute force, relative to <code>reference_tare_counts</code>, that the probe will allow while homing or probing. If the MCU sees this force exceeded it will shut down the printer with the error <code>!! Load cell endstop: too much force!</code>. There are a number of ways this can be triggered:</p>
+<p>The first risk this protects against is picking too large of a value for <code>drift_filter_cutoff_frequency</code>. This can cause the drift filter to filter out a probe event and continue the homing move. If this happens the <code>force_safety_limit</code> acts as a backup protection.</p>
+<p>The second problem is probing repeatedly in one place. Klipper does not retract the probe when doing a single <code>PROBE</code> command. This can result in force applied to the toolhead at the end of a probing cycle. Because external forces can vary greatly between probing locations, <code>load_cell_probe</code> performs a tare before beginning each probe. If you repeat the <code>PROBE</code> command, load_cell_probe will tare the endstop at the current force. Multiple cycles of this will result in ever-increasing force on the toolhead. <code>force_safety_limit</code> stops this cycle from running out of control.</p>
+<p>Another way this run-away can happen is damage to a strain gauge. If the metal part is permanently bent it wil change the <code>reference_tare_counts</code> of the device. This puts the starting tare value much closer to the limit making it more likely to be violated. You want to be notified if this is happening because your hardware has been permanently damaged.</p>
+<p>The final way this can be triggered is due to temperature changes. If your strain gauges are heated their <code>reference_tare_counts</code> may be very different at ambient temperature vs operating temperature. In this case you may need to increase the <code>force_safety_limit</code> to allow for thermal changes.</p>
+<h4 id="load-cell-endstop-watchdog-task">Load Cell Endstop Watchdog Task<a class="headerlink" href="#load-cell-endstop-watchdog-task" title="Permanent link">&para;</a></h4>
+<p>When homing the load_cell_endstop starts a task on the MCU to trac measurements arriving from the sensor. If the sensor fails to send measurements for 2 sample periods the watchdog will shut down the printer with an error <code>!! LoadCell Endstop timed out waiting on ADC data</code>.</p>
+<p>If this happens, the most likely cause is a fault from the ADC. Inadequate grounding of your printer can be the root cause. The frame, power supply case and pint bed should all be connected to ground. You may need to ground the frame in multiple places. Anodized aluminum extrusions do not conduct electricity well. You might need to sand the area where the grounding wire is attached to make good electrical contact.</p>
+<h2 id="load-cell-probe-setup">Load Cell Probe Setup<a class="headerlink" href="#load-cell-probe-setup" title="Permanent link">&para;</a></h2>
+<p>This section covers the process for commissioning a load cell probe.</p>
+<h3 id="verify-the-load-cell-first">Verify the Load Cell First<a class="headerlink" href="#verify-the-load-cell-first" title="Permanent link">&para;</a></h3>
+<p>A <code>[load_cell_probe]</code> is also a <code>[load_cell]</code> and G-code commands related to <code>[load_cell]</code> work with <code>[load_cell_probe]</code>. Before attempting to use a load cell probe, follow the directions for <a href="Load_Cell.html#calibrating-a-load-cell">calibrating the load cell</a> with <code>CALIBRATE_LOAD_CELL</code> and checking its operation with <code>LOAD_CELL_DIAGNOSTIC</code>.</p>
+<h3 id="verify-probe-operation-with-load_cell_test_tap">Verify Probe Operation With LOAD_CELL_TEST_TAP<a class="headerlink" href="#verify-probe-operation-with-load_cell_test_tap" title="Permanent link">&para;</a></h3>
+<p>Use the command <code>LOAD_CELL_TEST_TAP</code> to test the operation of the load cell probe before actually trying to probe with it. This command detects taps, just like the PROBE command, but it does not move the z axis. By default, it listens for 3 taps before ending the test. You have 30 seconds to do each tap, if no taps are detected the command will time out.</p>
+<p>If this test fails, check your configuration and <code>LOAD_CELL_DIAGNOSTIC</code> carefully to look for issues.</p>
+<p>Load cell probes don't support the <code>QUERY_ENDSTOPS</code> or <code>QUERY_PROBE</code> commands. Use <code>LOAD_CELL_TEST_TAP</code> for testing functionality before probing.</p>
+<h3 id="homing-macros">Homing Macros<a class="headerlink" href="#homing-macros" title="Permanent link">&para;</a></h3>
+<p>Load cell probe is not an endstop and doesn't support <code>endstop: prove:z_virtual_endstop</code>. For the time being you'll need to configure your z axis with an MCU pin as its endstop. You won't actually be using the pin but for the time being you have to configure something.</p>
+<p>To home the axis with just the probe you need to set up a custom homing macro. This requires setting up <a href="Config_Reference.html#homing_override">homing_override</a>.</p>
+<p>Here is a simple macro that can accomplish this. Note that the <code>_HOME_Z_FROM_LAST_PROBE</code> macro has to be separate because of the way macros work. The sub-call is needed so that the <code>_HOME_Z_FROM_LAST_PROBE</code> macro can see the result of the probe in <code>printer.probe.last_z_result</code>.</p>
+<div class="highlight"><pre><span></span><code>[gcode_macro _HOME_Z_FROM_LAST_PROBE]
+gcode:
+<span class="w">    </span>{% set z_probed = printer.probe.last_z_result %}
+<span class="w">    </span>{% set z_position = printer.toolhead.position[2] %}
+<span class="w">    </span>{% set z_actual = z_position - z_probed %}
+<span class="w">    </span>SET_KINEMATIC_POSITION Z={z_actual}
+
+[gcode_macro _HOME_Z]
+gcode:
+<span class="w">    </span>SET_GCODE_OFFSET Z=0  # load cell probes dont need a Z offset
+<span class="w">    </span># position toolhead for homing Z, edit for your printers size
+<span class="w">    </span>#G90  # absolute move
+<span class="w">    </span>#G1 Y50 X50 F{5 * 60}  # move to X/Y position for homing
+
+<span class="w">    </span># soft home the z axis to its limit so it can be moved:
+<span class="w">    </span>SET_KINEMATIC_POSITION Z={printer.toolhead.axis_maximum[2]}
+
+<span class="w">    </span># Fast approach and tap
+<span class="w">    </span>PROBE PROBE_SPEED={5 * 60}  # override the speed for faster homing
+<span class="w">    </span>_HOME_Z_FROM_LAST_PROBE
+
+<span class="w">    </span># lift z to 2mm
+<span class="w">    </span>G91  # relative move
+<span class="w">    </span>G1 Z2 F{5 * 60}
+
+<span class="w">    </span># probe at standard speed
+<span class="w">    </span>PROBE
+<span class="w">    </span>_HOME_Z_FROM_LAST_PROBE
+
+<span class="w">    </span># lift z to 10mm for clearance
+<span class="w">    </span>G91  # relative move
+<span class="w">    </span>G1 Z10 F{5 * 60}
+</code></pre></div>
+
+<h3 id="suggested-probing-temperature">Suggested Probing Temperature<a class="headerlink" href="#suggested-probing-temperature" title="Permanent link">&para;</a></h3>
+<p>Currently, we suggest keeping the nozzle temperature below the level that causes the filament to ooze while homing and probing. 140C is a good starting point. This temperature is also low enough not to scar PEI build surfaces.</p>
+<p>Fouling of the nozzle and the print bed due to oozing filament is the #1 source of probing error with the load cell probe. Klipper does not yet have a universal way to detect poor quality taps due to filament ooze. The existing code may decide that a tap is valid when it is of poor quality. Classifying these poor quality taps is an area of active research.</p>
+<p>Klipper also lacks support for re-locating a probe point if the location has become fouled by filament ooze. Modules like <code>quad_gantry_level</code> will repeatedly probe the same coordinates even if a probe previously failed there.</p>
+<p>Give the above it is strongly suggested not to probe at printing temperatures.</p>
+<h3 id="hot-nozzle-protection">Hot Nozzle Protection<a class="headerlink" href="#hot-nozzle-protection" title="Permanent link">&para;</a></h3>
+<p>The Voron project has a great macro for protecting your print surface from the hot nozzle. See <a href="https://github.com/VoronDesign/Voron-Tap/blob/main/config/tap_klipper_instructions.md">Voron Tap's
+<code>activate_gcode</code></a></p>
+<p>It is highly suggested to add something like this to your config.</p>
+<h3 id="nozzle-cleaning">Nozzle Cleaning<a class="headerlink" href="#nozzle-cleaning" title="Permanent link">&para;</a></h3>
+<p>Before probing the nozzle should be clean. You could do this manually before every print. You can also implement a nozzle scrubber and automate the process. Here is a suggested sequence:</p>
+<ol>
+<li>Wait for the nozzle to heat up to probing temp (e.g. <code>M109 S140</code>)</li>
+<li>Home the machine (<code>G28</code>)</li>
+<li>Scrub the nozzle on a brush</li>
+<li>Heat soak the print bed</li>
+<li>Perform probing tasks: QGL, bed mesh etc.</li>
+</ol>
+<h3 id="temperature-compensation-for-nozzle-growth">Temperature Compensation for Nozzle Growth<a class="headerlink" href="#temperature-compensation-for-nozzle-growth" title="Permanent link">&para;</a></h3>
+<p>If you are probing at a safe temperature, the nozzle will expand after heating to printing temperatures. This will cause the nozzle to get longer and closer to the print surface. You can compensate for this with <a href="Config_Reference.html#z_thermal_adjust">[z_thermal_adjust]</a>. This adjustment will work across a range of printing temperatures from PLA to PC.</p>
+<h4 id="calculating-the-temp_coeff-for-z_thermal_adjust">Calculating the <code>temp_coeff</code> for <code>[z_thermal_adjust]</code><a class="headerlink" href="#calculating-the-temp_coeff-for-z_thermal_adjust" title="Permanent link">&para;</a></h4>
+<p>The easiest way to do this is to measure at 2 different temperatures. Ideally these should be the upper and lower limits of the printing temperature range. E.g. 180C and 290C. You can perform a <code>PROBE_ACCURACY</code> at both temperatures and then calculate the difference of the <code>average z</code> at both.</p>
+<p>The adjustment value is the change in nozzle length divided by the change in temperature. e.g.</p>
+<div class="highlight"><pre><span></span><code>temp_coeff = -0.05 / (290 - 180) = -0.00045455
+</code></pre></div>
+
+<p>The expected result is a negative number. Positive values for <code>temp_coeff</code> move the nozzle closer to the bed and negative values move it further away. Expect to have to move the nozzle further away as it gets longer when hot.</p>
+<h4 id="configure-z_thermal_adjust">Configure <code>[z_thermal_adjust]</code><a class="headerlink" href="#configure-z_thermal_adjust" title="Permanent link">&para;</a></h4>
+<p>Set up z_thermal_adjust to reference the <code>extruder</code> as the source of temperature data. E.g.:</p>
+<div class="highlight"><pre><span></span><code>[z_thermal_adjust nozzle]
+temp_coeff=-0.00045455
+sensor_type: temperature_combined
+sensor_list: extruder
+combination_method: max
+min_temp: 0
+max_temp: 400
+max_z_adjustment: 0.1
+</code></pre></div>
+
+<h2 id="continuous-tare-filters-for-toolhead-load-cells">Continuous Tare Filters for Toolhead Load Cells<a class="headerlink" href="#continuous-tare-filters-for-toolhead-load-cells" title="Permanent link">&para;</a></h2>
+<p>Klipper implements a configurable IIR filter on the MCU to provide continuous tareing of the load cell while probing. Continuous taring means the 0 value moves with drift caused by external factors like bowden tubes and thermal changes. This is aimed at toolhead sensors and moving beds that experience lots of external forces that change while probing.</p>
+<h3 id="installing-scipy">Installing SciPy<a class="headerlink" href="#installing-scipy" title="Permanent link">&para;</a></h3>
+<p>The filtering code uses the excellent <a href="https://scipy.org/">SciPy</a> library to compute the filter coefficients based on the values your enter into the config.</p>
+<p>Pre-compiled SciPi builds are available for Python 3 on 32 bit Raspberry Pi systems. 32 bit + Python 3 is strongly recommended because it will streamline your installation experience. It does work with Python 2 but installation can take 30+ minutes and require installing additional tools.</p>
+<div class="highlight"><pre><span></span><code>~/klippy-env/bin/pip<span class="w"> </span>install<span class="w"> </span>scipy
+</code></pre></div>
+
+<h3 id="filter-workbench">Filter Workbench<a class="headerlink" href="#filter-workbench" title="Permanent link">&para;</a></h3>
+<p>The filter parameters should be selected based on drift seen on the printer during normal operation. A Jupyter notebook is provided in scripts, <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/filter_workbench.ipynb">filter_workbench.ipynb</a>, to perform a detailed investigation with real captured data and FFTs.</p>
+<h3 id="filtering-suggestions">Filtering Suggestions<a class="headerlink" href="#filtering-suggestions" title="Permanent link">&para;</a></h3>
+<p>For those just trying to get a filter working follow these suggestions:</p>
+<ul>
+<li>The only essential option is <code>drift_filter_cutoff_frequency</code>. A conservative starting value is <code>0.5</code>Hz. Prusa shipped the MK4 with a setting of <code>0.8</code>Hz and the XL with <code>11.2</code>Hz. This is probably a safe range to experiment with. This value should be increased only until normal drift due to bowden tube force is eliminated. Setting this value too high will result in slow triggering and excess force going through the toolhead.</li>
+<li>Keep <code>trigger_force</code> low. The default is <code>75</code>g. The drift filter keeps the internal grams value very close to 0 so a large trigger force is not needed.</li>
+<li>Keep <code>force_safety_limit</code> to a conservative value. The default value is 2Kg and should keep your toolhead safe while experimenting. If you hit this limit the <code>drift_filter_cutoff_frequency</code> value may be too high.</li>
+</ul>
+<h2 id="suggestions-for-load-cell-tool-boards">Suggestions for Load Cell Tool Boards<a class="headerlink" href="#suggestions-for-load-cell-tool-boards" title="Permanent link">&para;</a></h2>
+<p>This section covers suggestions for those developing toolhead boards that want to support [load_cell_probe]</p>
+<h3 id="adc-sensor-selection-board-development-hints">ADC Sensor Selection &amp; Board Development Hints<a class="headerlink" href="#adc-sensor-selection-board-development-hints" title="Permanent link">&para;</a></h3>
+<p>Ideally a sensor would meet these criteria:</p>
+<ul>
+<li>At least 24 bits wide</li>
+<li>Use SPI communications</li>
+<li>Has a pin can be used to indicate sample ready without SPI communications. This is often called the "data ready" or "DRDY" pin. Checking a pin is much faster than running an SPI query.</li>
+<li>Has a programmable gain amplifier gain setting of 128. This should eliminate the need for a separate amplifier.</li>
+<li>Indicates via SPI if the sensor has been reset. Detecting resets avoids timing errors in homing and using noisy data at startup. It can also help users track down wiring and grounding issues.</li>
+<li>A selectable sample rate between 350Hz and 2Khz. Very high sample rates don't turn out to be beneficial in our 3D printers because they produce so much noise when moving fast. Sample rates below 250Hz will require slower probing speeds. They also increase the force on the toolhead due to longer delays between measurements. E.g. a 500Hz sensor moving at 5mm/s has the same safety factor as a 100Hz sensor moving at only 1mm/s.</li>
+<li>If designing for under-bed applications, and you want to sense multiple load cells, use a chip that can sample all of its inputs simultaneously. Multiplex ADCs that require switching channels have a settling of several samples after each channel switch making them unsuitable for probing applications.</li>
+</ul>
+<p>Implementing support for a new sensor chip is not particularly difficult with Klipper's <code>bulk_sensor</code> and <code>load_cell_endstop</code> infrastructure.</p>
+<h3 id="5v-power-filtering">5V Power Filtering<a class="headerlink" href="#5v-power-filtering" title="Permanent link">&para;</a></h3>
+<p>It is strongly suggested to use larger capacitors than specified by the ADC chip manufacturer. ADC chips are usually targeted at low noise environments, like battery powered devices. Sensor manufacturers suggested application notes generally assume a quiet power supply. Treat their suggested capacitor values as minimums.</p>
+<p>3D printers put huge amounts of noise onto the 5V bus and this can ruin the sensor's accuracy. Test the sensor on the board with a typical 3D printer power supply and active stepper drivers before deciding on smoothing capacitor sizes.</p>
+<h3 id="grounding-ground-planes">Grounding &amp; Ground Planes<a class="headerlink" href="#grounding-ground-planes" title="Permanent link">&para;</a></h3>
+<p>Analog ADC chips contain components that are very vulnerable to noise and ESD. A large ground plane on the first board layer under the chip can help with noise. Keep the chip away from power sections and DC to DC converters. The board should have proper grounding back to the DC supply.</p>
+<h3 id="hx711-and-hx717-notes">HX711 and HX717 Notes<a class="headerlink" href="#hx711-and-hx717-notes" title="Permanent link">&para;</a></h3>
+<p>This sensor is popular because of its low cost and availability in the supply chain. However, this is a sensor with some drawbacks:</p>
+<ul>
+<li>The HX71x sensors use bit-bang communication which has a high overhead on the MCU. Using a sensor that communicates via SPI would save resources on the tool board's CPU.</li>
+<li>The HX71x lacks a way to communicate reset events to the MCU. Klipper detects resets with a timing heuristic but this is not ideal. Resets indicate a problem with wiring or grounding.</li>
+<li>For probing applications the HX717 version is strongly preferred because of its higher sample rate (320 vs 80). Probing speed on the HX711 should be limited to less than 2mm/s.</li>
+<li>The sample rate on the HX71x cannot be set from klipper's config. If you have the 10SPS version of the sensor (which is widely distributed) it needs to be physically re-wired to run at 80SPS.</li>
+</ul>
+
               
             </article>
           </div>

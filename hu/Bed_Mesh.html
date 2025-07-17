@@ -2083,7 +2083,7 @@ scan_overshoot: 8
 <h3 id="kalibracio">Kalibráció<a class="headerlink" href="#kalibracio" title="Permanent link">&para;</a></h3>
 <p><code>BED_MESH_CALIBRATE PROFILE=&lt;name&gt; METHOD=[manual | automatic | scan | rapid_scan] \ [&lt;probe_parameter&gt;=&lt;value&gt;] [&lt;mesh_parameter&gt;=&lt;value&gt;] [ADAPTIVE=[0|1] \ [ADAPTIVE_MARGIN=&lt;value&gt;]</code> <em>Alapértelmezett profil: alapértelmezett</em> <em>Alapértelmezett módszer: automatikus, ha szondát észlel, egyébként manuális</em> <em>Alapértelmezett adaptív: 0</em> <em>Alapértelmezett adaptív margó: 0</em></p>
 <p>Mérési eljárást indítása a tárgyasztal háló kalibrálásához.</p>
-<p>A háló a <code>PROFILE</code> paraméter által megadott profilba lesz mentve, vagy a <code>default</code>, ha nincs megadva. A <code>METHOD</code> paraméter a következő értékek egyikét veszi fel:</p>
+<p>The mesh will be immediately ready to use when the command completes and saved into a profile specified by the <code>PROFILE</code> parameter, or <code>default</code> if unspecified. The <code>METHOD</code> parameter takes one of the following values:</p>
 <ul>
 <li><code>METHOD=manual</code>: lehetővé teszi a kézi mérést a fúvókával és a papírlappal</li>
 <li><code>METHOD=automatic</code>: Automatikus (szabvány) mérés. Ez az alapértelmezett.</li>
@@ -2123,6 +2123,7 @@ scan_overshoot: 8
 <p>Bármely más elmentett profil ugyanígy eltávolítható, a <em>default</em> helyettesítve az eltávolítani kívánt névvel.</p>
 <h4 id="az-alapertelmezett-profil-betoltese">Az alapértelmezett profil betöltése<a class="headerlink" href="#az-alapertelmezett-profil-betoltese" title="Permanent link">&para;</a></h4>
 <p>A <code>bed_mesh</code> korábbi verziói indításkor mindig betöltötték az <em>alapértelmezett</em> nevű profilt, ha az jelen volt. Ezt a viselkedést megszüntettük annak érdekében, hogy a felhasználó határozhassa meg, mikor töltődik be egy profil. Ha a felhasználó az <code>alapértelmezett</code> profilt kívánja betölteni, ajánlott a <code>BED_MESH_PROFILE LOAD=default</code> hozzáadása a <code>START_PRINT</code> makróhoz vagy a szeletelő "Start G-Code" konfigurációjához, attól függően, hogy melyik alkalmazandó.</p>
+<p>Note that this is not required if a new mesh is generated with <code>BED_MESH_CALIBRATE</code> in the <code>START_PRINT</code> macro or the slicer's "Start G-Code" and may produce unexpected results, especially with adaptive meshing.</p>
 <p>Alternatívaként a <code>[delayed_gcode]</code> segítségével visszaállítható a profil indításkor történő betöltésének régi viselkedése:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[delayed_gcode bed_mesh_init]</span>
 <span class="na">initial_duration</span><span class="o">:</span><span class="w"> </span><span class="s">.01</span>

@@ -2083,7 +2083,7 @@ scan_overshoot: 8
 <h3 id="calibrazione">Calibrazione<a class="headerlink" href="#calibrazione" title="Permanent link">&para;</a></h3>
 <p><code>BED_MESH_CALIBRATE PROFILE=&lt;name&gt; METHOD=[manual | automatic | scan | rapid_scan] \ [&lt;probe_parameter&gt;=&lt;value&gt;] [&lt;mesh_parameter&gt;=&lt;value&gt;] [ADAPTIVE=[0|1] \ [ADAPTIVE_MARGIN=&lt;value&gt;]</code> <em>Default Profile: default</em> <em>Default Method: automatic if a probe is detected, otherwise manual</em>  <em>Default Adaptive: 0</em>  <em>Default Adaptive Margin: 0</em></p>
 <p>Avvia la procedura di sondaggio per la calibrazione della mesh del piatto.</p>
-<p>The mesh will be saved into a profile specified by the <code>PROFILE</code> parameter, or <code>default</code> if unspecified. The <code>METHOD</code> parameter takes one of the following values:</p>
+<p>The mesh will be immediately ready to use when the command completes and saved into a profile specified by the <code>PROFILE</code> parameter, or <code>default</code> if unspecified. The <code>METHOD</code> parameter takes one of the following values:</p>
 <ul>
 <li><code>METHOD=manual</code>: enables manual probing using the nozzle and the paper test</li>
 <li><code>METHOD=automatic</code>: Automatic (standard) probing. This is the default.</li>
@@ -2123,6 +2123,7 @@ scan_overshoot: 8
 <p>Qualsiasi altro profilo salvato può essere rimosso allo stesso modo, sostituendo <em>default</em> con il nome del profilo che desideri rimuovere.</p>
 <h4 id="caricamento-del-profilo-predefinito">Caricamento del profilo predefinito<a class="headerlink" href="#caricamento-del-profilo-predefinito" title="Permanent link">&para;</a></h4>
 <p>Le versioni precedenti di <code>bed_mesh</code> caricavano sempre il profilo denominato <em>default</em> all'avvio se era presente. Questo comportamento è stato rimosso per consentire all'utente di determinare quando viene caricato un profilo. Se un utente desidera caricare il profilo <code>predefinito</code>, si consiglia di aggiungere <code>BED_MESH_PROFILE LOAD=default</code> alla macro <code>START_PRINT</code> o alla configurazione "Start G-Code" del proprio slicer, a seconda di quale sia applicabile.</p>
+<p>Note that this is not required if a new mesh is generated with <code>BED_MESH_CALIBRATE</code> in the <code>START_PRINT</code> macro or the slicer's "Start G-Code" and may produce unexpected results, especially with adaptive meshing.</p>
 <p>In alternativa, il vecchio comportamento di caricamento di un profilo all'avvio può essere ripristinato con un <code>[delayed_gcode]</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[delayed_gcode bed_mesh_init]</span>
 <span class="na">initial_duration</span><span class="o">:</span><span class="w"> </span><span class="s">.01</span>

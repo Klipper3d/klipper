@@ -1011,6 +1011,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#load_cell_probe" class="md-nav__link">
+    load_cell_probe
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#manual_probe" class="md-nav__link">
     manual_probe
   </a>
@@ -1870,6 +1877,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#load_cell_probe" class="md-nav__link">
+    load_cell_probe
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#manual_probe" class="md-nav__link">
     manual_probe
   </a>
@@ -2254,6 +2268,14 @@
 <li>'min_force_g': The minimum force in grams, over the last polling period.</li>
 <li>'max_force_g': The maximum force in grams, over the last polling period.</li>
 </ul>
+<h2 id="load_cell_probe">load_cell_probe<a class="headerlink" href="#load_cell_probe" title="Permanent link">&para;</a></h2>
+<p>The following information is available for <code>[load_cell_probe]</code>:</p>
+<ul>
+<li>all items from <a href="Status_Reference.html#load_cell">load_cell</a></li>
+<li>all items from <a href="Status_Reference.html#probe">probe</a></li>
+<li>'endstop_tare_counts': the load cell probe keeps a tare value independent of the load cell. This re-set at the start of each probe.</li>
+<li>'last_trigger_time': timestamp of the last homing trigger</li>
+</ul>
 <h2 id="manual_probe">manual_probe<a class="headerlink" href="#manual_probe" title="Permanent link">&para;</a></h2>
 <p><code>manual_probe</code> 对象中提供了以下信息：</p>
 <ul>
@@ -2401,6 +2423,10 @@
 <ul>
 <li><code>Carty_0</code>：表示0的车厢模式。可能的值为：“非活动”和“主要”。</li>
 <li><code>Carrance_1</code>：马车1的模式，可选值为：Inactive、PRIMARY、COPY、MIRROR。</li>
+</ul>
+<p>On a <code>generic_cartesian</code> kinematic, the following information is available in <code>dual_carriage</code>:</p>
+<ul>
+<li><code>carriages["&lt;carriage&gt;"]</code>: The mode of the carriage <code>&lt;carriage&gt;</code>. Possible values are "INACTIVE" and "PRIMARY" for the primary carriage and "INACTIVE", "PRIMARY", "COPY", and "MIRROR" for the dual carriage.</li>
 </ul>
 <h2 id="virtual_sdcard">virtual_sdcard<a class="headerlink" href="#virtual_sdcard" title="Permanent link">&para;</a></h2>
 <p><a href="Config_Reference.html#virtual_sdcard">virtual_sdcard</a>对象提供了以下信息：</p>

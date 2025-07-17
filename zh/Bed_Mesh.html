@@ -2083,7 +2083,7 @@ scan_overshoot: 8
 <h3 id="_11">校准<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h3>
 <p><code>BED_MESH_CALIBRATE PROFILE=&lt;name&gt; METHOD=[manual | automatic | scan | rapid_scan] \ [&lt;probe_parameter&gt;=&lt;value&gt;] [&lt;mesh_parameter&gt;=&lt;value&gt;] [ADAPTIVE=[0|1] \ [ADAPTIVE_MARGIN=&lt;value&gt;]</code> <em>Default Profile: default</em> <em>Default Method: automatic if a probe is detected, otherwise manual</em>  <em>Default Adaptive: 0</em>  <em>Default Adaptive Margin: 0</em></p>
 <p>启动床网校准的探测程序。</p>
-<p>The mesh will be saved into a profile specified by the <code>PROFILE</code> parameter, or <code>default</code> if unspecified. The <code>METHOD</code> parameter takes one of the following values:</p>
+<p>The mesh will be immediately ready to use when the command completes and saved into a profile specified by the <code>PROFILE</code> parameter, or <code>default</code> if unspecified. The <code>METHOD</code> parameter takes one of the following values:</p>
 <ul>
 <li><code>METHOD=manual</code>: enables manual probing using the nozzle and the paper test</li>
 <li><code>METHOD=automatic</code>: Automatic (standard) probing. This is the default.</li>
@@ -2123,6 +2123,7 @@ scan_overshoot: 8
 <p>任何其他保存的配置也可以用相同的方式删除，用你想删除的配置名称替换<em>default</em>。</p>
 <h4 id="_13">加载默认配置文件<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h4>
 <p>以前版本的<code>bed_mesh</code>如果(default)默认配置存在，则始终在启动时加载名为<em>default</em>的配置文件。现已删除此行为，以允许用户确定何时加载配置文件。如果用户希望加载<code>default</code>配置文件，则建议将 <code>BED_MESH_PROFILE LOAD=default</code> 添加到其 <code>START_PRINT</code> 宏或其切片软件的“启动 G代码”配置中，视情况而定。</p>
+<p>Note that this is not required if a new mesh is generated with <code>BED_MESH_CALIBRATE</code> in the <code>START_PRINT</code> macro or the slicer's "Start G-Code" and may produce unexpected results, especially with adaptive meshing.</p>
 <p>或者可以通过添加<code>[delayed_gcode]</code>恢复在启动时加载配置文件的旧行为：</p>
 <div class="highlight"><pre><span></span><code><span class="k">[delayed_gcode bed_mesh_init]</span>
 <span class="na">initial_duration</span><span class="o">:</span><span class="w"> </span><span class="s">.01</span>

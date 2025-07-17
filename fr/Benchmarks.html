@@ -1177,6 +1177,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#stm32g4-step-rate-benchmark" class="md-nav__link">
+    STM32G4 step rate benchmark
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#test-du-taux-de-pas-sur-lpc176x" class="md-nav__link">
     Test du taux de pas sur LPC176x
   </a>
@@ -1616,6 +1623,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#stm32g4-step-rate-benchmark" class="md-nav__link">
+    STM32G4 step rate benchmark
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#test-du-taux-de-pas-sur-lpc176x" class="md-nav__link">
     Test du taux de pas sur LPC176x
   </a>
@@ -2040,6 +2054,34 @@ finalize_config crc=0
 </tr>
 </tbody>
 </table>
+<h3 id="stm32g4-step-rate-benchmark">STM32G4 step rate benchmark<a class="headerlink" href="#stm32g4-step-rate-benchmark" title="Permanent link">&para;</a></h3>
+<p>The following configuration sequence is used on the STM32G431:</p>
+<div class="highlight"><pre><span></span><code>allocate_oids count=3
+config_stepper oid=0 step_pin=PA0 dir_pin=PB5 invert_step=-1 step_pulse_ticks=17
+config_stepper oid=1 step_pin=PB2 dir_pin=PB6 invert_step=-1 step_pulse_ticks=17
+config_stepper oid=2 step_pin=PB3 dir_pin=PB7 invert_step=-1 step_pulse_ticks=17
+finalize_config crc=0
+</code></pre></div>
+
+<p>The test was last run on commit <code>cfa48fe3</code> with gcc version <code>arm-none-eabi-gcc (Fedora 14.1.0-1.fc40) 14.1.0</code>.</p>
+<table>
+<thead>
+<tr>
+<th>stm32g431</th>
+<th>ticks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 moteur pas à pas</td>
+<td>47</td>
+</tr>
+<tr>
+<td>3 moteurs pas à pas</td>
+<td>208</td>
+</tr>
+</tbody>
+</table>
 <h3 id="test-du-taux-de-pas-sur-lpc176x">Test du taux de pas sur LPC176x<a class="headerlink" href="#test-du-taux-de-pas-sur-lpc176x" title="Permanent link">&para;</a></h3>
 <p>La séquence de configuration suivante est utilisée sur le LPC176x :</p>
 <div class="highlight"><pre><span></span><code>allocate_oids count=3
@@ -2252,7 +2294,7 @@ finalize_config crc=0
 </tr>
 </tbody>
 </table>
-<p>(*) Note that the reported rp2040 ticks are relative to a 12Mhz scheduling timer and do not correspond to its 200Mhz internal ARM processing rate. It is expected that 5 scheduling ticks corresponds to ~42 ARM core cycles and 14 scheduling ticks corresponds to ~225 ARM core cycles.</p>
+<p>(*) Note that the reported rp2040 ticks are relative to a 12Mhz scheduling timer and do not correspond to its 200Mhz internal ARM processing rate. It is expected that 3 scheduling ticks corresponds to ~42 ARM core cycles and 14 scheduling ticks corresponds to ~225 ARM core cycles.</p>
 <h3 id="test-du-taux-de-pas-pour-le-mcu-linux">Test du taux de pas pour le MCU Linux<a class="headerlink" href="#test-du-taux-de-pas-pour-le-mcu-linux" title="Permanent link">&para;</a></h3>
 <p>La séquence de configuration suivante est utilisée sur un Raspberry Pi :</p>
 <div class="highlight"><pre><span></span><code>allocate_oids count=3
@@ -2289,7 +2331,8 @@ get_uptime
 </code></pre></div>
 
 <p>Une fois le test terminé, déterminez la différence entre les horloges signalées dans les deux messages de réponse "uptime". Le nombre total de commandes par seconde est alors <code>100000 * mcu_frequency / clock_diff</code>.</p>
-<p>Notez que ce test peut saturer la capacité USB/CPU d'un Raspberry Pi. En cas d'exécution sur un Raspberry Pi, Beaglebone ou un ordinateur hôte similaire, augmentez le délai (par exemple, <code>DELAY {clock + 20*freq} get_uptime</code>). Le cas échéant, les tests de performances ci-dessous concernent console.py exécuté sur une machine de bureau avec l'appareil connecté via un concentrateur à haut débit.</p>
+<p>The USB tests may exceed the CPU capacity of a Raspberry Pi. If running on a Raspberry Pi, Beaglebone, or similar host computer then increase the delay (eg, <code>DELAY {clock + 20*freq} get_uptime</code>). Where applicable, the benchmarks below are with console.py running on a desktop class machine with the device connected via a super-speed hub.</p>
+<p>The CAN bus tests may saturate the USB host controller of a Raspberry Pi (when testing via a standard gs_usb USB to CAN bus adapter). Where applicable, the CAN bus benchmarks below are with console.py running on a desktop class machine with a USB to CAN bus adapter connected via a super-speed USB hub.</p>
 <table>
 <thead>
 <tr>
@@ -2301,12 +2344,6 @@ get_uptime
 </thead>
 <tbody>
 <tr>
-<td>stm32f042 (CAN)</td>
-<td>18K</td>
-<td>c105adc8</td>
-<td>arm-none-eabi-gcc (GNU Tools 7-2018-q3-update) 7.3.1</td>
-</tr>
-<tr>
 <td>atmega2560 (serial)</td>
 <td>23K</td>
 <td>b161a69e</td>
@@ -2317,6 +2354,12 @@ get_uptime
 <td>23K</td>
 <td>b161a69e</td>
 <td>arm-none-eabi-gcc (Fedora 7.1.0-5.fc27) 7.1.0</td>
+</tr>
+<tr>
+<td>rp2350 (CAN)</td>
+<td>59K</td>
+<td>17b8ce4c</td>
+<td>arm-none-eabi-gcc (Fedora 14.1.0-1.fc40) 14.1.0</td>
 </tr>
 <tr>
 <td>at90usb1286 (USB)</td>

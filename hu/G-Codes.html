@@ -1487,6 +1487,26 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#generic_cartesian" class="md-nav__link">
+    [generic_cartesian]
+  </a>
+  
+    <nav class="md-nav" aria-label="[generic_cartesian]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_stepper_carriages" class="md-nav__link">
+    SET_STEPPER_CARRIAGES
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#hall_filament_width_sensor" class="md-nav__link">
     [hall_filament_width_sensor]
   </a>
@@ -1680,6 +1700,27 @@
           <li class="md-nav__item">
   <a href="#load_cell_read-load_cellname" class="md-nav__link">
     LOAD_CELL_READ load_cell="name"
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_cell_probe" class="md-nav__link">
+    [load_cell_probe]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_cell_test_tap" class="md-nav__link">
+    LOAD_CELL_TEST_TAP
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load-cell-command-extensions" class="md-nav__link">
+    Load Cell Command Extensions
   </a>
   
 </li>
@@ -3783,6 +3824,26 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#generic_cartesian" class="md-nav__link">
+    [generic_cartesian]
+  </a>
+  
+    <nav class="md-nav" aria-label="[generic_cartesian]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_stepper_carriages" class="md-nav__link">
+    SET_STEPPER_CARRIAGES
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#hall_filament_width_sensor" class="md-nav__link">
     [hall_filament_width_sensor]
   </a>
@@ -3976,6 +4037,27 @@
           <li class="md-nav__item">
   <a href="#load_cell_read-load_cellname" class="md-nav__link">
     LOAD_CELL_READ load_cell="name"
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_cell_probe" class="md-nav__link">
+    [load_cell_probe]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_cell_test_tap" class="md-nav__link">
+    LOAD_CELL_TEST_TAP
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load-cell-command-extensions" class="md-nav__link">
+    Load Cell Command Extensions
   </a>
   
 </li>
@@ -4909,7 +4991,7 @@ section</a> is enabled.</p>
 <h3 id="bed_mesh">[bed_mesh]<a class="headerlink" href="#bed_mesh" title="Permanent link">&para;</a></h3>
 <p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#bed_mesh">bed_mesh konfigurációs szakasz</a> engedélyezve van (lásd még a <a href="Bed_Mesh.html">tárgyasztal háló útmutatót</a>).</p>
 <h4 id="bed_mesh_calibrate">BED_MESH_CALIBRATE<a class="headerlink" href="#bed_mesh_calibrate" title="Permanent link">&para;</a></h4>
-<p><code>BED_MESH_CALIBRATE [PROFILE=&lt;name&gt;] [METHOD=manual] [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;] [&lt;mesh_parameter&gt;=&lt;value&gt;] [ADAPTIVE=1] [ADAPTIVE_MARGIN=&lt;value&gt;]</code>: Ez a parancs a konfigban megadott paraméterek által generált pontok segítségével szondázza az ágyat. A szondázás után egy háló generálódik, és a Z elmozdulás a hálónak megfelelően kerül beállításra. A háló a <code>PROFILE</code> paraméter által megadott profilba kerül elmentésre, vagy <code>default</code>, ha nincs megadva. Az opcionális szondázó paraméterek részletes leírását lásd a PROBE parancsban. Ha a METHOD=manual meg van adva, akkor a kézi tapintás eszköze aktiválódik - lásd a fenti MANUAL_PROBE parancsot az ezen eszköz aktív állapotában elérhető további parancsok részleteiért. Az opcionális <code>HORIZONTAL_MOVE_Z</code> érték felülírja a konfigurációs fájlban megadott <code>horizontal_move_z</code> opciót. Ha az ADAPTIVE=1 érték van megadva, akkor a nyomtatás alatt álló G-Kód fájl által meghatározott objektumok lesznek használva a vizsgált terület meghatározásához. Az opcionális <code>ADAPTIVE_MARGIN</code> érték felülírja a konfigurációs fájlban megadott <code>adaptive_margin</code> opciót.</p>
+<p><code>BED_MESH_CALIBRATE [PROFILE=&lt;name&gt;] [METHOD=manual] [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;] [&lt;mesh_parameter&gt;=&lt;value&gt;] [ADAPTIVE=1] [ADAPTIVE_MARGIN=&lt;value&gt;]</code>: This command probes the bed using generated points specified by the parameters in the config. After probing, a mesh is generated and z-movement is adjusted according to the mesh. The mesh is immediately active after successful completion of <code>BED_MESH_CALIBRATE</code>. The mesh will be saved into a profile specified by the <code>PROFILE</code> parameter, or <code>default</code> if unspecified. If ADAPTIVE=1 is specified then the profile name will begin with <code>adaptive-</code> and should not be saved for reuse. See the PROBE command for details on the optional probe parameters. If METHOD=manual is specified then the manual probing tool is activated - see the MANUAL_PROBE command above for details on the additional commands available while this tool is active. The optional <code>HORIZONTAL_MOVE_Z</code> value overrides the <code>horizontal_move_z</code> option specified in the config file. If ADAPTIVE=1 is specified then the objects defined by the Gcode file being printed will be used to define the probed area. The optional <code>ADAPTIVE_MARGIN</code> value overrides the <code>adaptive_margin</code> option specified in the config file.</p>
 <h4 id="bed_mesh_output">BED_MESH_OUTPUT<a class="headerlink" href="#bed_mesh_output" title="Permanent link">&para;</a></h4>
 <p><code>BED_MESH_OUTPUT PGP=[&lt;0:1&gt;]</code>: Ez a parancs az aktuális mért Z értékeket és az aktuális hálóértékeket adja ki a terminálra. A PGP=1 megadása esetén a bed_mesh által generált X, Y koordináták és a hozzájuk tartozó indexek kerülnek a terminálra.</p>
 <h4 id="bed_mesh_map">BED_MESH_MAP<a class="headerlink" href="#bed_mesh_map" title="Permanent link">&para;</a></h4>
@@ -4965,7 +5047,7 @@ section</a> is enabled.</p>
 <h3 id="dual_carriage">[dual_carriage]<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h3>
 <p>A következő parancs akkor érhető el, ha a <a href="Config_Reference.html#dual_carriage">dual_carriage konfigurációs szakasz</a> engedélyezve van.</p>
 <h4 id="set_dual_carriage">SET_DUAL_CARRIAGE<a class="headerlink" href="#set_dual_carriage" title="Permanent link">&para;</a></h4>
-<p><code>SET_DUAL_CARRIAGE CARRIAGE=[0|1] [MODE=[PRIMARY|COPY|MIRROR]]</code>: Ez a parancs megváltoztatja a megadott kocsi üzemmódját. Ha nincs megadva a <code>MODE</code>, akkor az alapértelmezett érték a <code>PRIMARY</code>. Az üzemmód <code>PRIMARY</code>-re állítása kikapcsolja a másik kocsit, és a megadott kocsi a következő G-kód parancsokat változatlanul végrehajtja. A <code>COPY</code> és a <code>MIRROR</code> üzemmódok csak a <code>CARRIAGE=1</code> esetén támogatottak. Ha az 1-es kocsi ezen üzemmódok valamelyikére van állítva, akkor az 1-es kocsi követi a 0 kocsi következő mozgásait, és vagy lemásolja annak relatív mozgásait (<code>COPY</code> üzemmódban), vagy ellenkező (tükör) irányban hajtja végre azokat (<code>MIRROR</code> üzemmódban).</p>
+<p><code>SET_DUAL_CARRIAGE CARRIAGE=&lt;carriage&gt; [MODE=[PRIMARY|COPY|MIRROR]]</code>: This command will change the mode of the specified carriage. If no <code>MODE</code> is provided it defaults to <code>PRIMARY</code>. <code>&lt;carriage&gt;</code> must reference a defined primary or dual carriage for <code>generic_cartesian</code> kinematics or be 0 (for primary carriage) or 1 (for dual carriage) for all other kinematics supporting IDEX. Setting the mode to <code>PRIMARY</code> deactivates the other carriage and makes the specified carriage execute subsequent G-Code commands as-is. <code>COPY</code> and <code>MIRROR</code> modes are supported only for dual carriages. When set to either of these modes, dual carriage will then track the subsequent moves of its primary carriage and either copy relative movements of it (in <code>COPY</code> mode) or execute them in the opposite (mirror) direction (in <code>MIRROR</code> mode).</p>
 <h4 id="save_dual_carriage_state">SAVE_DUAL_CARRIAGE_STATE<a class="headerlink" href="#save_dual_carriage_state" title="Permanent link">&para;</a></h4>
 <p><code>SAVE_DUAL_CARRIAGE_STATE [NAME=&lt;state_name&gt;]</code>: Mentsd el a kettős kocsik aktuális helyzetét és módjukat. A DUAL_CARRIAGE állapot mentése és visszaállítása hasznos lehet szkriptekben és makrókban, valamint a rutin felülírásainál. Ha meg van adva a NÉV, akkor lehetővé teszi a mentett állapot elnevezését az adott karakterlánchoz. Ha a NÉV nincs megadva, akkor az alapértelmezés szerint "alapértelmezett".</p>
 <h4 id="restore_dual_carriage_state">RESTORE_DUAL_CARRIAGE_STATE<a class="headerlink" href="#restore_dual_carriage_state" title="Permanent link">&para;</a></h4>
@@ -5068,6 +5150,13 @@ section</a> is enabled.</p>
 <p><code>SAVE_GCODE_STATE [NAME=&lt;state_name&gt;]</code>: Az aktuális G-kód koordináták elemzési állapotának mentése. A G-kód állapotának mentése és visszaállítása hasznos a szkriptekben és makrókban. Ez a parancs elmenti az aktuális G-kód abszolút koordinátamódot (G90/G91), az abszolút extrudálási módot (M82/M83), az origót (G92), az eltolást (SET_GCODE_OFFSET), a sebesség felülbírálását (M220), az extruder felülbírálását (M221), a mozgási sebességet, az aktuális XYZ pozíciót és a relatív extruder "E" pozíciót. A NAME megadása esetén lehetővé teszi, hogy a mentett állapotot a megadott karakterláncnak nevezzük el. Ha a NAME nincs megadva, az alapértelmezett érték "default".</p>
 <h4 id="restore_gcode_state">RESTORE_GCODE_STATE<a class="headerlink" href="#restore_gcode_state" title="Permanent link">&para;</a></h4>
 <p><code>RESTORE_GCODE_STATE [NAME=&lt;state_name&gt;] [MOVE=1 [MOVE_SPEED=&lt;speed&gt;]]</code>: A SAVE_GCODE_STATE segítségével korábban elmentett állapot visszaállítása. Ha "MOVE=1" van megadva, akkor a nyomtatófej mozgatása az előző XYZ-pozícióba való visszalépéshez történik. Ha "MOVE_SPEED" van megadva, akkor a nyomtatófej mozgatása a megadott sebességgel (mm/sec-ben) történik; egyébként a nyomtatófej mozgatása a visszaállított G-kód sebességét használja.</p>
+<h3 id="generic_cartesian">[generic_cartesian]<a class="headerlink" href="#generic_cartesian" title="Permanent link">&para;</a></h3>
+<p>The commands in this section become automatically available when <code>kinematics: generic_cartesian</code> is specified as the printer kinematics.</p>
+<h4 id="set_stepper_carriages">SET_STEPPER_CARRIAGES<a class="headerlink" href="#set_stepper_carriages" title="Permanent link">&para;</a></h4>
+<p><code>SET_STEPPER_CARRIAGES STEPPER=&lt;stepper_name&gt; CARRIAGES=&lt;carriages&gt; [DISABLE_CHECKS=[0|1]]</code>: Set or update the stepper carriages. <code>&lt;stepper_name&gt;</code> must reference an existing stepper defined in <code>printer.cfg</code>, and <code>&lt;carriages&gt;</code> describes the carriages the stepper moves. See <a href="Config_Reference.html#generic-cartesian-kinematics">Generic Cartesian Kinematics</a> for a more detailed overview of the <code>carriages</code> parameter in the stepper configuration section. Note that it is only possible to change the coefficients or signs of the carriages with this command, but a user cannot add or remove the carriages that the stepper controls.</p>
+<p><code>SET_STEPPER_CARRIAGES</code> is an advanced tool, and the user is advised to exercise an extreme caution using it, since specifying incorrect configuration may physically damage the printer.</p>
+<p>Note that <code>SET_STEPPER_CARRIAGES</code> performs certain internal validations of the new printer kinematics after the change. Keep in mind that if it detects an issue, it may leave printer kinematics in an invalid state. This means that if <code>SET_STEPPER_CARRIAGES</code> reports an error, it is unsafe to issue other GCode commands, and the user must inspect the error message and either fix the problem, or manually restore the previous stepper(s) configuration.</p>
+<p>Since <code>SET_STEPPER_CARRIAGES</code> can update a configuration of a single stepper at a time, some sequences of changes can lead to invalid intermediate kinematic configurations, even if the final configuration is valid. In such cases a user can pass <code>DISABLE_CHECKS=1</code> parameters to all but the last command to disable intermediate checks. For example, if <code>stepper a</code> and <code>stepper b</code> initially have <code>x-y</code> and <code>x+y</code> carriages correspondingly, then the following sequence of commands will let a user effectively swap the carriage controls: <code>SET_STEPPER_CARRIAGES STEPPER=a CARRIAGES=x+y DISABLE_CHECKS=1</code> and <code>SET_STEPPER_CARRIAGES STEPPER=b CARRIAGES=x-y</code>, while still validating the final kinematics state.</p>
 <h3 id="hall_filament_width_sensor">[hall_filament_width_sensor]<a class="headerlink" href="#hall_filament_width_sensor" title="Permanent link">&para;</a></h3>
 <p>A következő parancsok akkor érhetők el, ha a <a href="Config_Reference.html#tsl1401cl_filament_width_sensor">tsl1401cl szálszélesség érzékelő konfigurációs szakasz</a> vagy a <a href="Config_Reference.html#hall_filament_width_sensor">hall szálszélesség érzékelő konfigurációs szakasz</a> engedélyezve van (lásd még <a href="TSL1401CL_Filament_Width_Sensor.html">TSLll401CL Szálszélesség érzékelő</a> és a <a href="Hall_Filament_Width_Sensor.html">Hall Szálszélesség érzékelő</a> dokumentumot):</p>
 <h4 id="query_filament_width">QUERY_FILAMENT_WIDTH<a class="headerlink" href="#query_filament_width" title="Permanent link">&para;</a></h4>
@@ -5119,9 +5208,30 @@ section</a> is enabled.</p>
 </ol>
 <p>You can cancel the calibration process at any time with <code>ABORT</code>.</p>
 <h3 id="load_cell_tare">LOAD_CELL_TARE<a class="headerlink" href="#load_cell_tare" title="Permanent link">&para;</a></h3>
-<p><code>LOAD_CELL_TARE [LOAD_CELL=&lt;config_name&gt;]</code>: This works just like the tare button on digital scale. It sets the current raw reading of the load cell to be the zero point reference value. The response is the percentage of the sensors range that was read and the raw value in counts.</p>
+<p><code>LOAD_CELL_TARE [LOAD_CELL=&lt;config_name&gt;]</code>: This works just like the tare button on digital scale. It sets the current raw reading of the load cell to be the zero point reference value. The response is the percentage of the sensors range that was read and the raw value in counts. If the load cell is calibrated a force in grams is also reported.</p>
 <h3 id="load_cell_read-load_cellname">LOAD_CELL_READ load_cell="name"<a class="headerlink" href="#load_cell_read-load_cellname" title="Permanent link">&para;</a></h3>
 <p><code>LOAD_CELL_READ [LOAD_CELL=&lt;config_name&gt;]</code>: This command takes a reading from the load cell. The response is the percentage of the sensors range that was read and the raw value in counts. If the load cell is calibrated a force in grams is also reported.</p>
+<h3 id="load_cell_probe">[load_cell_probe]<a class="headerlink" href="#load_cell_probe" title="Permanent link">&para;</a></h3>
+<p>The following commands are enabled if a <a href="Config_Reference.html#load_cell_probe">load_cell config section</a> has been enabled.</p>
+<h3 id="load_cell_test_tap">LOAD_CELL_TEST_TAP<a class="headerlink" href="#load_cell_test_tap" title="Permanent link">&para;</a></h3>
+<p><code>LOAD_CELL_TEST_TAP [TAPS=&lt;taps&gt;] [TIMEOUT=&lt;timeout&gt;]</code>: Run a testing routine that reports taps on the load cell. The toolhead will not move but the load cell probe will sense taps just as if it was probing. This can be used as a sanity check to make sure that the probe works. This tool replaces QUERY_ENDSTOPS and QUERY_PROBE for load cell probes.</p>
+<ul>
+<li><code>TAPS</code>: the number of taps the tool expects</li>
+<li><code>TIMEOOUT</code>: the time, in seconds, that the tool waits for each tab before aborting.</li>
+</ul>
+<h3 id="load-cell-command-extensions">Load Cell Command Extensions<a class="headerlink" href="#load-cell-command-extensions" title="Permanent link">&para;</a></h3>
+<p>Commands that perform probes, such as <a href="#probe"><code>PROBE</code></a>, <a href="#probe_accuracy"><code>PROBE_ACCURACY</code></a>, <a href="#bed_mesh_calibrate"><code>BED_MESH_CALIBRATE</code></a> etc. will accept additional parameters if a <code>[load_cell_probe]</code> is defined. The parameters override the corresponding settings from the <a href="Config_Reference.html#load_cell_probe"><code>[load_cell_probe]</code></a> configuration:</p>
+<ul>
+<li><code>FORCE_SAFETY_LIMIT=&lt;grams&gt;</code></li>
+<li><code>TRIGGER_FORCE=&lt;grams&gt;</code></li>
+<li><code>DRIFT_FILTER_CUTOFF_FREQUENCY=&lt;frequency_hz&gt;</code></li>
+<li><code>DRIFT_FILTER_DELAY=&lt;1|2&gt;</code></li>
+<li><code>BUZZ_FILTER_CUTOFF_FREQUENCY=&lt;frequency_hz&gt;</code></li>
+<li><code>BUZZ_FILTER_DELAY=&lt;1|2&gt;</code></li>
+<li><code>NOTCH_FILTER_FREQUENCIES=&lt;list of frequency_hz&gt;</code></li>
+<li><code>NOTCH_FILTER_QUALITY=&lt;quality&gt;</code></li>
+<li><code>TARE_TIME=&lt;seconds&gt;</code></li>
+</ul>
 <h3 id="manual_probe">[manual_probe]<a class="headerlink" href="#manual_probe" title="Permanent link">&para;</a></h3>
 <p>A manual_probe modul automatikusan betöltődik.</p>
 <h4 id="manual_probe_1">MANUAL_PROBE<a class="headerlink" href="#manual_probe_1" title="Permanent link">&para;</a></h4>
@@ -5139,6 +5249,7 @@ section</a> is enabled.</p>
 <p>A következő parancs akkor érhető el, ha a <a href="Config_Reference.html#manual_stepper">manual_stepper konfigurációs szakasz</a> engedélyezve van.</p>
 <h4 id="manual_stepper_1">MANUAL_STEPPER<a class="headerlink" href="#manual_stepper_1" title="Permanent link">&para;</a></h4>
 <p><code>MANUAL_STEPPER STEPPER=config_name [ENABLE=[0|1]] [SET_POSITION=&lt;pos&gt;] [SPEED=&lt;speed&gt;] [ACCEL=&lt;accel&gt;] [MOVE=&lt;pos&gt; [STOP_ON_ENDSTOP=[1|2|2|-1|-2]] [SYNC=0]]]</code>: Ez a parancs megváltoztatja a léptető állapotát. Az ENABLE paraméterrel engedélyezheted/letilthatod a léptetőt. A SET_POSITION paraméterrel kényszerítheted a léptetőt arra, hogy azt higgye, az adott helyzetben van. A MOVE paraméterrel kezdeményezhetsz mozgást egy adott pozícióba. Ha a SPEED és/vagy az ACCEL paraméter meg van adva, akkor a rendszer a megadott értékeket használja a konfigurációs fájlban megadott alapértelmezett értékek helyett. Ha nulla ACCEL-t ad meg, akkor nem történik gyorsítás. Ha STOP_ON_ENDSTOP=1 van megadva, akkor a lépés korán véget ér. Ha a végálláskapcsoló aktiválódik (a STOP_ON_ENDSTOP=2 paranccsal hiba nélkül befejezheted a mozgást, még akkor is, ha a végálláskapcsoló nem aktiválódott. Használd a -1 vagy a -2 jelölést, hogy leálljon, amikor a végálláskapcsoló még nem aktiválódott). Normális esetben a későbbi G-kód parancsok a léptetőmozgás befejezése után kerülnek ütemezésre, azonban ha a kézi léptetőmozgás parancs a SYNC=0 értéket használja, akkor a későbbi G-kód mozgatási parancsok a léptetőmozgással párhuzamosan is futhatnak.</p>
+<p><code>MANUAL_STEPPER STEPPER=config_name GCODE_AXIS=[A-Z] [LIMIT_VELOCITY=&lt;velocity&gt;] [LIMIT_ACCEL=&lt;accel&gt;] [INSTANTANEOUS_CORNER_VELOCITY=&lt;velocity&gt;]</code>: If the <code>GCODE_AXIS</code> parameter is specified then it configures the stepper motor as an extra axis on <code>G1</code> move commands. For example, if one were to issue a <code>MANUAL_STEPPER ... GCODE_AXIS=R</code> command then one could issue commands like <code>G1 X10 Y20 R30</code> to move the stepper motor. The resulting moves will occur synchronously with the associated toolhead xyz movements. If the motor is associated with a <code>GCODE_AXIS</code> then one may no longer issue movements using the above <code>MANUAL_STEPPER</code> command - one may unregister the stepper with a <code>MANUAL_STEPPER ... GCODE_AXIS=</code> command to resume manual control of the motor. The <code>LIMIT_VELOCITY</code> and <code>LIMIT_ACCEL</code> parameters allow one to reduce the speed of <code>G1</code> moves if those moves would result in a velocity or acceleration above the specified limits. The <code>INSTANTANEOUS_CORNER_VELOCITY</code> specifies the maximum instantaneous velocity change (in mm/s) of the motor during the junction of two moves (the default is 1mm/s).</p>
 <h3 id="mcp4018">[mcp4018]<a class="headerlink" href="#mcp4018" title="Permanent link">&para;</a></h3>
 <p>A következő parancs akkor érhető el, ha az <a href="Config_Reference.html#mcp4018">mcp4018 config szekció</a> engedélyezve van.</p>
 <h4 id="set_digipot">SET_DIGIPOT<a class="headerlink" href="#set_digipot" title="Permanent link">&para;</a></h4>
