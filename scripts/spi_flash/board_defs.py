@@ -151,6 +151,14 @@ BOARD_DEFS = {
         "conversion_script": "scripts/update_chitu.py",
         "firmware_path": "update.cbd",
         'skip_verify': True
+    },
+        'qidi-x7': {
+        'mcu': "stm32f401xc",
+        'spi_bus': "spi2",
+        'cs_pin': "PB12",
+        'skip_verify': False,
+        'firmware_path': 'qd_mcu.bin',
+        'current_firmware_path': 'qd_mcu.CUR'
     }
 }
 
@@ -201,7 +209,9 @@ BOARD_ALIASES = {
     'fysetc-s6-v2': BOARD_DEFS['fysetc-spider'],
     'robin_v3': BOARD_DEFS['monster8'],
     'btt-skrat-v1.0': BOARD_DEFS['btt-skrat'],
-    'chitu-v6': BOARD_DEFS['chitu-v6']
+    'chitu-v6': BOARD_DEFS['chitu-v6'],
+    'qidi-q1-pro': BOARD_DEFS['qidi-x7'],
+    'qidi-plus4': BOARD_DEFS['qidi-x7']
 }
 
 def list_boards():
