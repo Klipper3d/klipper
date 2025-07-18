@@ -58,7 +58,7 @@ BOARD_DEFS = {
         'spi_bus': "swspi",
         'spi_pins': "PC8,PD2,PC12",
         'cs_pin': "PC11",
-        'skip_verify': True
+        'skip_verify': True,
         "conversion_script": "scripts/update_mks_robin.py",
         "firmware_path": "ROBIN_NANO35.BIN", 
         "current_firmware_path": "ROBIN_NANO35.BIN"
