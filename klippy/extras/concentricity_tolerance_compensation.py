@@ -50,8 +50,8 @@ class ConcentricityToleranceCompansation:
     def calc_xy_adj(self, a_pos):
         calc_deflection_angle = math.radians(a_pos + self.deflection_angle)
         
-        x_adj = - self.deflection_radius * math.cos(calc_deflection_angle)
-        y_adj = - self.deflection_radius * math.sin(calc_deflection_angle)
+        x_adj = self.deflection_radius * math.cos(calc_deflection_angle)
+        y_adj = self.deflection_radius * math.sin(calc_deflection_angle)
         
         return x_adj, y_adj    
         
@@ -61,7 +61,7 @@ class ConcentricityToleranceCompansation:
          x, y, z, a, e = pos
          x_adj, y_adj = self.calc_xy_adj(a)
        
-         self.last_position[:] = [x - x_adj, y - y_adj, z, a, e]
+         self.last_position[:] = [x + x_adj, y + y_adj, z, a, e]
             
          return list(self.last_position)
         
@@ -120,8 +120,8 @@ class MoveSplitter:
     def calc_xy_adj(self, a_pos):
         calc_deflection_angle = math.radians(a_pos + self.deflection_angle)
         
-        x_adj = - self.deflection_radius * math.cos(calc_deflection_angle)
-        y_adj = - self.deflection_radius * math.sin(calc_deflection_angle)
+        x_adj = self.deflection_radius * math.cos(calc_deflection_angle)
+        y_adj = self.deflection_radius * math.sin(calc_deflection_angle)
         
         return x_adj, y_adj
       
@@ -148,7 +148,7 @@ class MoveSplitter:
                     self.distance_checked += self.move_check_distance_a
                     self._set_next_move(self.distance_checked)
                     next_offset_x, next_offset_y = self._calc_xy_offset(self.current_pos)
-                    if abs(next_offset_x -  self.x_offset) >= self.split_delta_xy or abs(next_offset_y - self.y_offset) >= self.split_delta_xy : 
+                    if abs(next_offset_x - self.x_offset) >= self.split_delta_xy or abs(next_offset_y - self.y_offset) >= self.split_delta_xy : 
                         self.x_offset = next_offset_x
                         self.y_offset = next_offset_y
                         
