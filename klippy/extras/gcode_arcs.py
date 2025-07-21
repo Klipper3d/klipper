@@ -29,6 +29,7 @@ class ArcSupport:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.mm_per_arc_segment = config.getfloat('resolution', 1., above=0.0)
+        self.sagitta = config.getfloat('saggita', 0.01, above=0.0)
 
         self.gcode_move = self.printer.load_object(config, 'gcode_move')
         self.gcode = self.printer.lookup_object('gcode')
@@ -137,7 +138,13 @@ class ArcSupport:
             mm_of_travel = math.hypot(flat_mm, linear_travel)
         else:
             mm_of_travel = math.fabs(flat_mm)
-        segments = max(1., math.floor(mm_of_travel / self.mm_per_arc_segment))
+        mm_per_segment = self.mm_per_arc_segment
+        if radius > self.sagitta:
+            r = radius
+            s = self.sagitta
+            l = 2 * math.sqrt(2 * r * s - s**2)
+            mm_per_segment = min(l, self.mm_per_arc_segment)
+        segments = max(1., math.floor(mm_of_travel / mm_per_segment))
 
         # Generate coordinates
         theta_per_segment = angular_travel / segments
