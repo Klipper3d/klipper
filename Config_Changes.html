@@ -1412,6 +1412,9 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<p>20250721: The <code>[pca9632]</code> and <code>[mcp4018]</code> modules no longer accept the
+<code>scl_pin</code> and <code>sda_pin</code> options. Use <code>i2c_software_scl_pin</code> and
+<code>i2c_software_sda_pin</code> instead.</p>
 <p>20250428: The maximum <code>cycle_time</code> for pwm <code>[output_pin]</code>,
 <code>[pwm_cycle_time]</code>, <code>[pwm_tool]</code>, and similar config sections is now 3
 seconds (reduced from 5 seconds). The <code>maximum_mcu_duration</code> in

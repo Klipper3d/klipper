@@ -7143,11 +7143,6 @@ clock_pin:
 #i2c_speed:
 #   See the &quot;common I2C settings&quot; section for a description of the
 #   above parameters.
-#scl_pin:
-#sda_pin:
-#   Alternatively, if the pca9632 is not connected to a hardware I2C
-#   bus, then one may specify the &quot;clock&quot; (scl_pin) and &quot;data&quot;
-#   (sda_pin) pins. The default is to use hardware I2C.
 #color_order: RGBW
 #   Set the pixel order of the LED (using a string containing the
 #   letters R, G, B, W). The default is RGBW.
@@ -8010,14 +8005,19 @@ prefix).</p>
 </code></pre></div>
 
 <h3 id="mcp4018">[mcp4018]<a class="headerlink" href="#mcp4018" title="Permanent link">&para;</a></h3>
-<p>Statically configured MCP4018 digipot connected via two gpio "bit
-banging" pins (one may define any number of sections with an "mcp4018"
-prefix).</p>
+<p>Statically configured MCP4018 digipot connected via i2c (one may
+define any number of sections with an "mcp4018" prefix).</p>
 <div class="highlight"><pre><span></span><code>[mcp4018 my_digipot]
-scl_pin:
-#   The SCL &quot;clock&quot; pin. This parameter must be provided.
-sda_pin:
-#   The SDA &quot;data&quot; pin. This parameter must be provided.
+#i2c_address: 47
+#   The i2c address that the chip is using on the i2c bus. The default
+#   is 47.
+#i2c_mcu:
+#i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#i2c_speed:
+#   See the &quot;common I2C settings&quot; section for a description of the
+#   above parameters.
 wiper:
 #   The value to statically set the given MCP4018 &quot;wiper&quot; to. This is
 #   typically set to a number between 0.0 and 1.0 with 1.0 being the
