@@ -120,14 +120,6 @@ class TMC2660CurrentHelper:
         self.fields = mcu_tmc.get_fields()
         self.sense_resistor = config.getfloat('sense_resistor')
         self.current = .0
-        # Register ready/printing handlers
-        self.idle_current_percentage = config.getint(
-            'idle_current_percent', default=100, minval=0, maxval=100)
-        if self.idle_current_percentage < 100:
-            self.printer.register_event_handler("idle_timeout:printing",
-                                                self._handle_printing)
-            self.printer.register_event_handler("idle_timeout:ready",
-                                                self._handle_ready)
 
     def _calc_current_bits(self, current, vsense):
         vref = 0.165 if vsense else 0.310
@@ -151,16 +143,6 @@ class TMC2660CurrentHelper:
                     vsense = False
                     irun = irun2
         return vsense, irun
-
-    def _handle_printing(self, print_time):
-        print_time -= 0.100 # Schedule slightly before deadline
-        self.printer.get_reactor().register_callback(
-            (lambda ev: self._update_current(self.current, print_time)))
-
-    def _handle_ready(self, print_time):
-        current = self.current * float(self.idle_current_percentage) / 100.
-        self.printer.get_reactor().register_callback(
-            (lambda ev: self._update_current(current, print_time)))
 
     def _update_current(self, current, print_time):
         vsense, cs = self._calc_current(current)
