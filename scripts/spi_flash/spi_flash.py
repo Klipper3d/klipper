@@ -1386,7 +1386,6 @@ class MCUConnection:
                 with self.fatfs.open_file(fw_path, "wb") as sd_f:
                     while True:
                         buf = local_f.read(4096)
-                        output(".")
                         if not buf:
                             break
                         input_sha.update(buf)
@@ -1398,10 +1397,9 @@ class MCUConnection:
         output("Validating Upload...")
         try:
             finfo = self.fatfs.get_file_info(fw_path)
-            with self.fatfs.open_file(fw_path, 'rb') as sd_f:
+            with self.fatfs.open_file(fw_path, 'r') as sd_f:
                 while True:
                     buf = sd_f.read(4096)
-                    output(".")
                     if not buf:
                         break
                     sd_sha.update(buf)
