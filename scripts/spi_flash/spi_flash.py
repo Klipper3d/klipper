@@ -380,7 +380,7 @@ class FatFS:
             (fdate >> 5) & 0xF, fdate & 0x1F, ((fdate >> 9) & 0x7F) + 1980,
             (ftime >> 11) & 0x1F, (ftime >> 5) & 0x3F, ftime & 0x1F)
         return {
-            'name': self.ffi_main.string(finfo.name, 13),
+            'name': self.ffi_main.string(finfo.name, 256),
             'size': finfo.size,
             'modified': dstr,
             'is_dir': bool(finfo.attrs & 0x10),
@@ -1386,6 +1386,7 @@ class MCUConnection:
                 with self.fatfs.open_file(fw_path, "wb") as sd_f:
                     while True:
                         buf = local_f.read(4096)
+                        output(".")
                         if not buf:
                             break
                         input_sha.update(buf)
@@ -1397,9 +1398,10 @@ class MCUConnection:
         output("Validating Upload...")
         try:
             finfo = self.fatfs.get_file_info(fw_path)
-            with self.fatfs.open_file(fw_path, 'r') as sd_f:
+            with self.fatfs.open_file(fw_path, 'rb') as sd_f:
                 while True:
                     buf = sd_f.read(4096)
+                    output(".")
                     if not buf:
                         break
                     sd_sha.update(buf)
