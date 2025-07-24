@@ -20,7 +20,7 @@ SHAPER_DAMPING_RATIO=0.1
 STEP_SIMULATION_RESONANCE_FREQ=60.
 STEP_SIMULATION_DAMPING_RATIO=0.15
 
-# If set, defines which range of frequencies to plot shaper frequency responce
+# If set, defines which range of frequencies to plot shaper frequency response
 PLOT_FREQ_RANGE = []  # If empty, will be automatically determined
 #PLOT_FREQ_RANGE = [10., 100.]
 
@@ -159,7 +159,7 @@ def find_shaper_plot_range(shaper, vib_tol):
     return (left, right)
 
 def gen_shaper_response(shaper):
-    # Calculate shaper vibration responce on a range of requencies
+    # Calculate shaper vibration response on a range of frequencies
     response = []
     freqs = []
     freq, freq_end = find_shaper_plot_range(shaper, vib_tol=0.25)

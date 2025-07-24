@@ -234,7 +234,7 @@ class HandleStepQ:
                 step_data.append((step_time, step_halfpos, step_pos))
 LogHandlers["stepq"] = HandleStepQ
 
-# Extract tmc currect and stallguard data from the log
+# Extract tmc current and stallguard data from the log
 class HandleStallguard:
     SubscriptionIdParts = 2
     ParametersMin = 2

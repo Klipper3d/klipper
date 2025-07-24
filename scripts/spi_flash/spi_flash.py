@@ -46,7 +46,7 @@ def calc_crc7(data, with_padding=True):
         crc ^= b & 0xFF
         for i in range(8):
             crc = (crc << 1) ^ poly if crc & 0x80 else crc << 1
-    # The sdcard protocol likes the crc left justfied with a
+    # The sdcard protocol likes the crc left justified with a
     # padded bit
     if not with_padding:
         return crc
@@ -566,7 +566,7 @@ class SDCardSPI:
             # At this time MMC is not supported
             if len(resp) == 5:
                 if self.sd_version == 1 and resp[0] == 1:
-                    # Check acceptable volatage range for V1 cards
+                    # Check acceptable voltage range for V1 cards
                     if resp[2] != 0xFF:
                         raise OSError("flash_sdcard: card does not support"
                                       " 3.3v range")
@@ -903,7 +903,7 @@ class SDCardSDIO:
                                   " out of IDLE after reset")
             if len(resp) == 4:
                 if self.sd_version == 1:
-                    # Check acceptable volatage range for V1 cards
+                    # Check acceptable voltage range for V1 cards
                     if resp[1] != 0xFF:
                         raise OSError("flash_sdcard: card does not support"
                                       " 3.3v range")
@@ -1643,7 +1643,7 @@ def main():
     logging.basicConfig(level=log_level)
     flash_args = board_defs.lookup_board(args.board)
     if flash_args is None:
-        output_line("Unable to find defintion for board: %s" % (args.board,))
+        output_line("Unable to find definition for board: %s" % (args.board,))
         sys.exit(-1)
     flash_args['device'] = args.device
     flash_args['baud'] = args.baud

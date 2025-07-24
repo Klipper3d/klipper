@@ -86,7 +86,7 @@ class MCU_stepper:
         if self._step_pulse_duration > MIN_BOTH_EDGE_DURATION:
             # If user has requested a very large step pulse duration
             # then disable step on both edges (rise and fall times may
-            # not be symetric)
+            # not be symmetric)
             want_both_edges = False
         elif sbe and self._step_pulse_duration>MIN_OPTIMIZED_BOTH_EDGE_DURATION:
             # Older MCU and user has requested large pulse duration

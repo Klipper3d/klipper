@@ -53,7 +53,7 @@ class ApiClientHelper(object):
         wh = self.printer.lookup_object('webhooks')
         wh.register_mux_endpoint(path, key, value, self._add_webhooks_client)
 
-# Class for handling commands related ot load cells
+# Class for handling commands related to load cells
 class LoadCellCommandHelper:
     def __init__(self, config, load_cell):
         self.printer = config.get_printer()

@@ -97,7 +97,7 @@ class AngleCalibration:
                 return None
         return self.mcu_stepper.mcu_to_commanded_position(self.mcu_pos_offset)
     def load_calibration(self, angles):
-        # Calculate linear intepolation calibration buckets by solving
+        # Calculate linear interpolation calibration buckets by solving
         # linear equations
         angle_max = 1 << ANGLE_BITS
         calibration_count = 1 << CALIBRATION_BITS

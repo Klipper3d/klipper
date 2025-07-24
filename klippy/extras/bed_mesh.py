@@ -34,7 +34,7 @@ def constrain(val, min_val, max_val):
 def lerp(t, v0, v1):
     return (1. - t) * v0 + t * v1
 
-# retreive commma separated pair from config
+# retrieve comma separated pair from config
 def parse_config_pair(config, option, default, minval=None, maxval=None):
     pair = config.getintlist(option, (default, default))
     if len(pair) != 2:
@@ -54,7 +54,7 @@ def parse_config_pair(config, option, default, minval=None, maxval=None):
                 % (option, str(maxval)))
     return pair
 
-# retreive commma separated pair from a g-code command
+# retrieve comma separated pair from a g-code command
 def parse_gcmd_pair(gcmd, name, minval=None, maxval=None):
     try:
         pair = [int(v.strip()) for v in gcmd.get(name).split(',')]
@@ -74,7 +74,7 @@ def parse_gcmd_pair(gcmd, name, minval=None, maxval=None):
                              % (name, maxval))
     return pair
 
-# retreive commma separated coordinate from a g-code command
+# retrieve comma separated coordinate from a g-code command
 def parse_gcmd_coord(gcmd, name):
     try:
         v1, v2 = [float(v.strip()) for v in gcmd.get(name).split(',')]
@@ -914,7 +914,7 @@ class ProbeManager:
         for i in range(y_cnt):
             for j in range(x_cnt):
                 if not i % 2:
-                    # move in positive directon
+                    # move in positive direction
                     pos_x = min_x + j * x_dist
                 else:
                     # move in negative direction
@@ -1164,7 +1164,7 @@ class ProbeManager:
 
     def _gen_arc(self, origin, radius, start, step, count):
         end = start + step * count
-        # create a segent for every 3 degress of travel
+        # create a segent for every 3 degrees of travel
         for angle in range(start, end, step):
             rad = math.radians(angle % 360)
             opp = math.sin(rad) * radius
