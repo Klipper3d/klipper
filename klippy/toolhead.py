@@ -300,8 +300,14 @@ class ToolHead:
         sg_flush_want = min(flush_time + STEPCOMPRESS_FLUSH_TIME,
                             self.print_time - self.kin_flush_delay)
         sg_flush_time = max(sg_flush_want, flush_time)
-        for sg in self.step_generators:
-            sg(sg_flush_time)
+        for _, hook in self.step_generators:
+            hook(sg_flush_time)
+        cbs = []
+        for sg, _ in self.step_generators:
+            res = sg(sg_flush_time, async_run=True)
+            cbs.extend(res)
+        for cb in cbs:
+            cb()
         self.min_restart_time = max(self.min_restart_time, sg_flush_time)
         # Free trapq entries that are no longer needed
         clear_history_time = self.clear_history_time
@@ -639,11 +645,15 @@ class ToolHead:
         return self.kin
     def get_trapq(self):
         return self.trapq
-    def register_step_generator(self, handler):
-        self.step_generators.append(handler)
+    def register_step_generator(self, handler, pre_hook=None):
+        generator = (handler, pre_hook)
+        self.step_generators.append(generator)
     def unregister_step_generator(self, handler):
-        if handler in self.step_generators:
-            self.step_generators.remove(handler)
+        gens = self.step_generators
+        for obj in gens:
+            if obj[0] == handler:
+                self.step_generators.remove(obj)
+                return
     def note_step_generation_scan_time(self, delay, old_delay=0.):
         self.flush_step_generation()
         if old_delay:

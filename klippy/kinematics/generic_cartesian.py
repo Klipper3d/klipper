@@ -108,7 +108,8 @@ class GenericCartesianKinematics:
         self._load_kinematics(config)
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
-            toolhead.register_step_generator(s.generate_steps)
+            toolhead.register_step_generator(s.generate_steps,
+                                             s.run_active_callbacks)
         self.dc_module = None
         if self.dc_carriages:
             pcs = [dc.get_dual_carriage() for dc in self.dc_carriages]

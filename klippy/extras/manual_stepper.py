@@ -155,7 +155,8 @@ class ManualStepper:
         self.gaxis_limit_velocity = limit_velocity
         self.gaxis_limit_accel = limit_accel
         toolhead.add_extra_axis(self, self.get_position()[0])
-        toolhead.register_step_generator(self.rail.generate_steps)
+        toolhead.register_step_generator(self.rail.generate_steps,
+                                         self.rail.run_active_callbacks)
     def process_move(self, print_time, move, ea_index):
         axis_r = move.axes_r[ea_index]
         start_pos = move.start_pos[ea_index]
