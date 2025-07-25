@@ -12,7 +12,7 @@ def load_config_prefix(config):
     if not config.has_section('display'):
         raise config.error(
             "A primary [display] section must be defined in printer.cfg "
-            "to use auxilary displays")
+            "to use auxiliary displays")
     name = config.get_name().split()[-1]
     if name == "display":
         raise config.error(

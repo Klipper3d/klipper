@@ -100,12 +100,12 @@ class SHT3X:
         self.i2c.i2c_write_wait_ack(
             SHT3X_CMD['PERIODIC']['2HZ']['HIGH_REP']
         )
-        # Wait <=15.5ms for first measurment
+        # Wait <=15.5ms for first measurement
         self.reactor.pause(self.reactor.monotonic() + .0155)
 
     def _sample_sht3x(self, eventtime):
         try:
-            # Read measurment
+            # Read measurement
             retries = 5
             params = None
             error = None

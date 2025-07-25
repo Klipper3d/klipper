@@ -129,7 +129,7 @@ class SmartEffectorProbe:
         start_time = toolhead.get_last_move_time()
         # Write generated bits to the control pin
         end_time = self.control_pin.write_bits(start_time, bit_stream)
-        # Dwell to make sure no subseqent actions are queued together
+        # Dwell to make sure no subsequent actions are queued together
         # with the SmartEffector programming
         toolhead.dwell(end_time - start_time)
         toolhead.wait_moves()
