@@ -47,6 +47,7 @@ struct serialqueue {
     pthread_mutex_t lock; // protects variables below
     pthread_cond_t cond;
     int receive_waiting;
+    char name[16];
     // Baud / clock tracking
     int receive_window;
     double bittime_adjust, idle_time;
@@ -612,6 +613,7 @@ static void *
 background_thread(void *data)
 {
     struct serialqueue *sq = data;
+    set_thread_name(sq->name);
     pollreactor_run(sq->pr);
 
     pthread_mutex_lock(&sq->lock);
@@ -623,13 +625,15 @@ background_thread(void *data)
 
 // Create a new 'struct serialqueue' object
 struct serialqueue * __visible
-serialqueue_alloc(int serial_fd, char serial_fd_type, int client_id)
+serialqueue_alloc(int serial_fd, char serial_fd_type, int client_id
+                  , char name[16])
 {
     struct serialqueue *sq = malloc(sizeof(*sq));
     memset(sq, 0, sizeof(*sq));
     sq->serial_fd = serial_fd;
     sq->serial_fd_type = serial_fd_type;
     sq->client_id = client_id;
+    strncpy(sq->name, name, sizeof(sq->name));
 
     int ret = pipe(sq->pipe_fds);
     if (ret)
