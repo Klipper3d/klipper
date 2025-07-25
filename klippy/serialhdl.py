@@ -12,12 +12,15 @@ class error(Exception):
     pass
 
 class SerialReader:
-    def __init__(self, reactor, warn_prefix=""):
+    def __init__(self, reactor, mcu_name=""):
         self.reactor = reactor
-        self.warn_prefix = warn_prefix
+        self.warn_prefix = ""
+        self.mcu_name = mcu_name
+        if self.mcu_name:
+            self.warn_prefix = "mcu '%s': " % (self.mcu_name)
         # Serial port
         self.serial_dev = None
-        self.msgparser = msgproto.MessageParser(warn_prefix=warn_prefix)
+        self.msgparser = msgproto.MessageParser(warn_prefix=self.warn_prefix)
         # C interface
         self.ffi_main, self.ffi_lib = chelper.get_ffi()
         self.serialqueue = None
@@ -34,6 +37,8 @@ class SerialReader:
         self.last_notify_id = 0
         self.pending_notifications = {}
     def _bg_thread(self):
+        name_short = ("serialhdl %s" % (self.mcu_name))[:15]
+        self.ffi_lib.set_thread_name(name_short.encode('utf-8'))
         response = self.ffi_main.new('struct pull_queue_message *')
         while 1:
             self.ffi_lib.serialqueue_pull(self.serialqueue, response)
