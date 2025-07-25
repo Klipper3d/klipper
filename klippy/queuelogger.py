@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, logging.handlers, threading, queue, time
+import chelper
 
 # Class to forward all messages through a queue to a background thread
 class QueueHandler(logging.Handler):
@@ -25,11 +26,15 @@ class QueueListener(logging.handlers.TimedRotatingFileHandler):
     def __init__(self, filename):
         logging.handlers.TimedRotatingFileHandler.__init__(
             self, filename, when='midnight', backupCount=5)
+        _, ffi_lib = chelper.get_ffi()
+        self._set_thread_name = ffi_lib.set_thread_name
         self.bg_queue = queue.Queue()
         self.bg_thread = threading.Thread(target=self._bg_thread)
         self.bg_thread.start()
         self.rollover_info = {}
     def _bg_thread(self):
+        name_short = "queuelogger"[:15]
+        self._set_thread_name(name_short.encode('utf-8'))
         while 1:
             record = self.bg_queue.get(True)
             if record is None:
