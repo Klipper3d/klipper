@@ -182,7 +182,7 @@ defs_serialqueue = """
     };
 
     struct serialqueue *serialqueue_alloc(int serial_fd, char serial_fd_type
-        , int client_id);
+        , int client_id, char name[16]);
     void serialqueue_exit(struct serialqueue *sq);
     void serialqueue_free(struct serialqueue *sq);
     struct command_queue *serialqueue_alloc_commandqueue(void);
