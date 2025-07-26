@@ -143,7 +143,7 @@ check_active(struct stepper_kinematics *sk, struct move *m)
 }
 
 // Generate step times for a range of moves on the trapq
-int32_t __visible
+int32_t
 itersolve_generate_steps(struct stepper_kinematics *sk, double flush_time)
 {
     double last_flush_time = sk->last_flush_time;
