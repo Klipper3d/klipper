@@ -152,7 +152,7 @@ Recommended connection scheme for I2C on the Raspberry Pi:
 | SDA | 03 | GPIO02 (SDA1) |
 | SCL | 05 | GPIO03 (SCL1) |
 
-The RPi has buit-in 1.8K pull-ups on both SCL and SDA.
+The RPi has built-in 1.8K pull-ups on both SCL and SDA.
 
 ![MPU-9250 connected to Pi](img/mpu9250-PI-fritzing.png)
 
