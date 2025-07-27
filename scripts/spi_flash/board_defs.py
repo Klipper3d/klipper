@@ -50,6 +50,17 @@ BOARD_DEFS = {
         "firmware_path": "Robin_e3.bin",
         "current_firmware_path": "Robin_e3.cur"
     },
+    # twotrees sapphire 5 v1.1 using mks robin nano 1.2 board
+    'mks-robin-v12': {
+        'mcu': "stm32f103xe",
+        'spi_bus': "swspi",
+        'spi_pins': "PC8,PD2,PC12",
+        'cs_pin': "PC11",
+        'skip_verify': True,
+        "conversion_script": "scripts/update_mks_robin.py",
+        "firmware_path": "ROBIN_NANO35.BIN",
+        "current_firmware_path": "ROBIN_NANO35.BIN"
+    },
     'btt-octopus-f407-v1': {
         'mcu': "stm32f407xx",
         'spi_bus': "swspi",

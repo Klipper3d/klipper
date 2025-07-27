@@ -62,7 +62,7 @@ object were issued faster than the minimum scheduling time (typically
 100ms) then actual updates could be queued far into the future. Now if
 many updates are issued in rapid succession then it is possible that
 only the latest request will be applied. If the previous behavior is
-requried then consider adding explicit `G4` delay commands between
+required then consider adding explicit `G4` delay commands between
 updates.
 
 20240912: Support for `maximum_mcu_duration` and `static_value`
@@ -135,7 +135,7 @@ carriage are exported as `printer.dual_carriage.carriage_0` and
 `printer.dual_carriage.carriage_1`.
 
 20230619: The `relative_reference_index` option has been deprecated
-and superceded by the `zero_reference_position` option.  Refer to the
+and superseded by the `zero_reference_position` option.  Refer to the
 [Bed Mesh Documentation](./Bed_Mesh.md#the-deprecated-relative_reference_index)
 for details on how to update the configuration.  With this deprecation
 the `RELATIVE_REFERENCE_INDEX` is no longer available as a parameter
@@ -369,7 +369,7 @@ endstop phases by running the ENDSTOP_PHASE_CALIBRATE command.
 `gear_ratio` for their rotary steppers, and they may no longer specify
 a `step_distance` parameter.  See the
 [config reference](Config_Reference.md#stepper) for the format of the
-new gear_ratio paramter.
+new gear_ratio parameter.
 
 20201213: It is not valid to specify a Z "position_endstop" when using
 "probe:z_virtual_endstop".  An error will now be raised if a Z

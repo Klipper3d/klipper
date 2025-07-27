@@ -372,7 +372,7 @@ restored and "MOVE_SPEED" is specified, then the toolhead moves will be
 performed with the given speed (in mm/s); otherwise the toolhead move will
 use the rail homing speed. Note that the carriages restore their positions
 only over their own axis, which may be necessary to correctly restore COPY
-and MIRROR mode of the dual carraige.
+and MIRROR mode of the dual carriage.
 
 ### [endstop_phase]
 

@@ -13,7 +13,7 @@
 # ftp://ftp.simtel.net/pub/simtelnet/msdos/screen/fntcol16.zip
 # (c) Joseph Gil
 #
-# Indivdual fonts are public domain
+# Individual fonts are public domain
 ######################################################################
 
 VGA_FONT = [

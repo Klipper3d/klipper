@@ -1,4 +1,4 @@
-# Mechanicaly conforms a moving gantry to the bed with 4 Z steppers
+# Mechanically conforms a moving gantry to the bed with 4 Z steppers
 #
 # Copyright (C) 2018  Maks Zolin <mzolin@vorondesign.com>
 #

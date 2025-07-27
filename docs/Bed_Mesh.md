@@ -267,7 +267,7 @@ by heat or interference.  This can make calculating the probe's z-offset
 challenging, particularly at different bed temperatures.  As such, some
 printers use an endstop for homing the Z axis and a probe for calibrating the
 mesh. In this configuration it is possible offset the mesh so that the (X, Y)
-`reference position` applies zero adjustment.  The `reference postion` should
+`reference position` applies zero adjustment.  The `reference position` should
 be the location on the bed where a
 [Z_ENDSTOP_CALIBRATE](./Manual_Level.md#calibrating-a-z-endstop)
 paper test is performed.  The bed_mesh module provides the

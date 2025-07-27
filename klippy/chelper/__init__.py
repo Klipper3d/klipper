@@ -274,7 +274,7 @@ FFI_main = None
 FFI_lib = None
 pyhelper_logging_callback = None
 
-# Hepler invoked from C errorf() code to log errors
+# Helper invoked from C errorf() code to log errors
 def logging_callback(msg):
     logging.error(FFI_main.string(msg))
 

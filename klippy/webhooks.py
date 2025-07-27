@@ -12,7 +12,7 @@ except ImportError:
     import json
 
     # Json decodes strings as unicode types in Python 2.x.  This doesn't
-    # play well with some parts of Klipper (particuarly displays), so we
+    # play well with some parts of Klipper (particularly displays), so we
     # need to create an object hook. This solution borrowed from:
     #
     # https://stackoverflow.com/questions/956867/

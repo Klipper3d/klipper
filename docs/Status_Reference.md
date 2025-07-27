@@ -300,7 +300,7 @@ The following information is available for each `[led led_name]`,
 - `color_data`: A list of color lists containing the RGBW values for a
   led in the chain. Each value is represented as a float from 0.0 to
   1.0. Each color list contains 4 items (red, green, blue, white) even
-  if the underyling LED supports fewer color channels. For example,
+  if the underlying LED supports fewer color channels. For example,
   the blue value (3rd item in color list) of the second neopixel in a
   chain could be accessed at
   `printer["neopixel <config_name>"].color_data[1][2]`.
