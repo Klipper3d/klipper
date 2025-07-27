@@ -380,7 +380,7 @@ class FatFS:
             (fdate >> 5) & 0xF, fdate & 0x1F, ((fdate >> 9) & 0x7F) + 1980,
             (ftime >> 11) & 0x1F, (ftime >> 5) & 0x3F, ftime & 0x1F)
         return {
-            'name': self.ffi_main.string(finfo.name, 13),
+            'name': self.ffi_main.string(finfo.name, 256),
             'size': finfo.size,
             'modified': dstr,
             'is_dir': bool(finfo.attrs & 0x10),
