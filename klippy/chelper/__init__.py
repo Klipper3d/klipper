@@ -219,6 +219,7 @@ defs_trdispatch = """
 defs_pyhelper = """
     void set_python_logging_callback(void (*func)(const char *));
     double get_monotonic(void);
+    int set_thread_name(char name[16]);
 """
 
 defs_std = """
