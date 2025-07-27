@@ -1456,7 +1456,7 @@ object were issued faster than the minimum scheduling time (typically
 100ms) then actual updates could be queued far into the future. Now if
 many updates are issued in rapid succession then it is possible that
 only the latest request will be applied. If the previous behavior is
-requried then consider adding explicit <code>G4</code> delay commands between
+required then consider adding explicit <code>G4</code> delay commands between
 updates.</p>
 <p>20240912: Support for <code>maximum_mcu_duration</code> and <code>static_value</code>
 parameters in <code>[output_pin]</code> config sections have been removed. These
@@ -1515,7 +1515,7 @@ exporting <code>mode</code> and <code>active_carriage</code>, the individual mod
 carriage are exported as <code>printer.dual_carriage.carriage_0</code> and
 <code>printer.dual_carriage.carriage_1</code>.</p>
 <p>20230619: The <code>relative_reference_index</code> option has been deprecated
-and superceded by the <code>zero_reference_position</code> option.  Refer to the
+and superseded by the <code>zero_reference_position</code> option.  Refer to the
 <a href="Bed_Mesh.html#the-deprecated-relative_reference_index">Bed Mesh Documentation</a>
 for details on how to update the configuration.  With this deprecation
 the <code>RELATIVE_REFERENCE_INDEX</code> is no longer available as a parameter
@@ -1704,7 +1704,7 @@ endstop phases by running the ENDSTOP_PHASE_CALIBRATE command.</p>
 <code>gear_ratio</code> for their rotary steppers, and they may no longer specify
 a <code>step_distance</code> parameter.  See the
 <a href="Config_Reference.html#stepper">config reference</a> for the format of the
-new gear_ratio paramter.</p>
+new gear_ratio parameter.</p>
 <p>20201213: It is not valid to specify a Z "position_endstop" when using
 "probe:z_virtual_endstop".  An error will now be raised if a Z
 "position_endstop" is specified with "probe:z_virtual_endstop".
