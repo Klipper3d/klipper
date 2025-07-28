@@ -162,6 +162,13 @@ BOARD_DEFS = {
         "conversion_script": "scripts/update_chitu.py",
         "firmware_path": "update.cbd",
         'skip_verify': True
+    },
+    'znp-robin-nano-dw-v2.2': {
+        'mcu': "stm32f401xc",
+        'spi_bus': "spi2",
+        "cs_pin": "PB12",
+        "firmware_path": "ZNP_ROBIN_NANO.bin",
+        "current_firmware_path": "ZNP_ROBIN_NANO.CUR"
     }
 }
 
