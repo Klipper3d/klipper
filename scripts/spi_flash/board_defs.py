@@ -152,7 +152,7 @@ BOARD_DEFS = {
         "firmware_path": "update.cbd",
         'skip_verify': True
     },
-        'qidi-x7': {
+    'qidi-x7': {
         'mcu': "stm32f401xc",
         'spi_bus': "spi2",
         'cs_pin': "PB12",
