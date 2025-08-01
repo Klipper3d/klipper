@@ -36,7 +36,7 @@ Things you can check with this data:
 * 'Unique values' should be a large percentage of the 'Samples
   Collected' value. If 'Unique values' is 1 it is very likely a wiring issue.
 * Tap or push on the sensor while `LOAD_CELL_DIAGNOSTIC` runs. If
-  things are working correctly ths should increase the 'Sample range'.
+  things are working correctly this should increase the 'Sample range'.
 
 ## Calibrating a Load Cell
 
@@ -189,7 +189,7 @@ Multiple cycles of this will result in ever-increasing force on the toolhead.
 `force_safety_limit` stops this cycle from running out of control.
 
 Another way this run-away can happen is damage to a strain gauge. If the metal
-part is permanently bent it wil change the `reference_tare_counts` of the
+part is permanently bent it will change the `reference_tare_counts` of the
 device. This puts the starting tare value much closer to the limit making it
 more likely to be violated. You want to be notified if this is happening
 because your hardware has been permanently damaged.

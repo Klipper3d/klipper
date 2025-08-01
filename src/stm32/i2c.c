@@ -94,21 +94,21 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
     return (struct i2c_config){ .i2c=i2c, .addr=addr<<1 };
 }
 
-static uint32_t
+static int
 i2c_wait(I2C_TypeDef *i2c, uint32_t set, uint32_t clear, uint32_t timeout)
 {
     for (;;) {
         uint32_t sr1 = i2c->SR1;
         if ((sr1 & set) == set && (sr1 & clear) == 0)
-            return sr1;
+            return I2C_BUS_SUCCESS;
         if (sr1 & I2C_SR1_AF)
-            shutdown("I2C NACK error encountered");
+            return I2C_BUS_NACK;
         if (!timer_is_before(timer_read_time(), timeout))
-            shutdown("i2c timeout");
+            return I2C_BUS_TIMEOUT;
     }
 }
 
-static void
+static int
 i2c_start(I2C_TypeDef *i2c, uint8_t addr, uint8_t xfer_len,
           uint32_t timeout)
 {
@@ -117,7 +117,7 @@ i2c_start(I2C_TypeDef *i2c, uint8_t addr, uint8_t xfer_len,
     i2c->DR = addr;
     if (addr & 0x01)
         i2c->CR1 |= I2C_CR1_ACK;
-    i2c_wait(i2c, I2C_SR1_ADDR, 0, timeout);
+    int ret = i2c_wait(i2c, I2C_SR1_ADDR, 0, timeout);
     irqstatus_t flag = irq_save();
     uint32_t sr2 = i2c->SR2;
     if (addr & 0x01 && xfer_len == 1)
@@ -125,13 +125,14 @@ i2c_start(I2C_TypeDef *i2c, uint8_t addr, uint8_t xfer_len,
     irq_restore(flag);
     if (!(sr2 & I2C_SR2_MSL))
         shutdown("Failed to send i2c addr");
+    return ret;
 }
 
-static void
+static int
 i2c_send_byte(I2C_TypeDef *i2c, uint8_t b, uint32_t timeout)
 {
     i2c->DR = b;
-    i2c_wait(i2c, I2C_SR1_TXE, 0, timeout);
+    return i2c_wait(i2c, I2C_SR1_TXE, 0, timeout);
 }
 
 static uint8_t
@@ -146,11 +147,11 @@ i2c_read_byte(I2C_TypeDef *i2c, uint32_t timeout, uint8_t remaining)
     return b;
 }
 
-static void
+static int
 i2c_stop(I2C_TypeDef *i2c, uint32_t timeout)
 {
     i2c->CR1 = I2C_CR1_STOP | I2C_CR1_PE;
-    i2c_wait(i2c, 0, I2C_SR1_TXE, timeout);
+    return i2c_wait(i2c, 0, I2C_SR1_TXE, timeout);
 }
 
 int
@@ -159,12 +160,16 @@ i2c_write(struct i2c_config config, uint8_t write_len, uint8_t *write)
     I2C_TypeDef *i2c = config.i2c;
     uint32_t timeout = timer_read_time() + timer_from_us(5000);
 
-    i2c_start(i2c, config.addr, write_len, timeout);
-    while (write_len--)
-        i2c_send_byte(i2c, *write++, timeout);
-    i2c_stop(i2c, timeout);
+    int ret = i2c_start(i2c, config.addr, write_len, timeout);
+    if (ret == I2C_BUS_NACK)
+        ret = I2C_BUS_START_NACK;
+    while (write_len-- && ret == I2C_BUS_SUCCESS)
+        ret = i2c_send_byte(i2c, *write++, timeout);
+    int timeout_err = i2c_stop(i2c, timeout);
 
-    return I2C_BUS_SUCCESS;
+    if (ret == I2C_BUS_SUCCESS && timeout_err != I2C_BUS_SUCCESS)
+        ret = timeout_err;
+    return ret;
 }
 
 int
@@ -174,20 +179,31 @@ i2c_read(struct i2c_config config, uint8_t reg_len, uint8_t *reg
     I2C_TypeDef *i2c = config.i2c;
     uint32_t timeout = timer_read_time() + timer_from_us(5000);
     uint8_t addr = config.addr | 0x01;
+    int ret;
 
     if (reg_len) {
         // write the register
-        i2c_start(i2c, config.addr, reg_len, timeout);
-        while(reg_len--)
-            i2c_send_byte(i2c, *reg++, timeout);
+        ret = i2c_start(i2c, config.addr, reg_len, timeout);
+        if (ret == I2C_BUS_NACK)
+            ret = I2C_BUS_START_NACK;
+        while(reg_len-- && ret == I2C_BUS_SUCCESS)
+            ret = i2c_send_byte(i2c, *reg++, timeout);
+        if (ret != I2C_BUS_SUCCESS)
+            goto abrt;
     }
     // start/re-start and read data
-    i2c_start(i2c, addr, read_len, timeout);
+    ret = i2c_start(i2c, addr, read_len, timeout);
+    if (ret == I2C_BUS_NACK)
+        ret = I2C_BUS_START_READ_NACK;
+    if (ret != I2C_BUS_SUCCESS)
+        goto abrt;
     while(read_len--) {
         *read = i2c_read_byte(i2c, timeout, read_len);
         read++;
     }
-    i2c_wait(i2c, 0, I2C_SR1_RXNE, timeout);
-
-    return I2C_BUS_SUCCESS;
+    // covers read timeout
+    return i2c_wait(i2c, 0, I2C_SR1_RXNE, timeout);
+abrt:
+    i2c_stop(i2c, timeout);
+    return ret;
 }

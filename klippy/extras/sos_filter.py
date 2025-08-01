@@ -116,7 +116,7 @@ class FixedPointSosFilter:
                 if col != 3:  # omit column 3
                     fixed_coeff = to_fixed_32(coeff, self._coeff_int_bits)
                     fixed_section.append(fixed_coeff)
-                elif coeff != 1.0:  # double check colum 3 is always 1.0
+                elif coeff != 1.0:  # double check column 3 is always 1.0
                     raise ValueError("Coefficient 3 is expected to be 1.0"
                                      " but was %f" % (coeff,))
             sos_fixed.append(fixed_section)

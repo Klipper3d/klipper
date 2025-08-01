@@ -295,7 +295,7 @@ class ResonanceTester:
         return parsed_chips
     def _get_max_calibration_freq(self):
         return 1.5 * self.generator.get_max_freq()
-    cmd_TEST_RESONANCES_help = ("Runs the resonance test for a specifed axis")
+    cmd_TEST_RESONANCES_help = ("Runs the resonance test for a specified axis")
     def cmd_TEST_RESONANCES(self, gcmd):
         # Parse parameters
         axis = _parse_axis(gcmd, gcmd.get("AXIS").lower())
@@ -345,7 +345,7 @@ class ResonanceTester:
             gcmd.respond_info(
                     "Resonances data written to %s file" % (csv_name,))
     cmd_SHAPER_CALIBRATE_help = (
-        "Simular to TEST_RESONANCES but suggest input shaper config")
+        "Similar to TEST_RESONANCES but suggest input shaper config")
     def cmd_SHAPER_CALIBRATE(self, gcmd):
         # Parse parameters
         axis = gcmd.get("AXIS", None)

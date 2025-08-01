@@ -408,7 +408,7 @@ class TemperatureProbe:
         except self.printer.command_error:
             self._finalize_drift_cal(False, "Error during initial move")
             raise
-        # Caputure start position and begin initial probe
+        # Capture start position and begin initial probe
         toolhead = self.printer.lookup_object("toolhead")
         self.start_pos = toolhead.get_position()[:2]
         manual_probe.ManualProbeHelper(
@@ -637,7 +637,7 @@ class EddyDriftCompensation:
         gcode = self.printer.lookup_object("gcode")
         if len(cal_samples) < 3:
             raise gcode.error(
-                "calbration error, not enough samples"
+                "calibration error, not enough samples"
             )
         min_temp, _ = cal_samples[0][0]
         max_temp, _ = cal_samples[-1][0]
@@ -687,7 +687,7 @@ class EddyDriftCompensation:
         return self._calc_freq(freq, origin_temp, self.cal_temp)
 
     def unadjust_freq(self, freq, dest_temp=None):
-        # Given a frequency and its orignal sampled temp, find the
+        # Given a frequency and its original sampled temp, find the
         # offset frequency based on the current temp
         if not self.enabled or freq < self.min_freq:
             return freq
@@ -703,7 +703,7 @@ class EddyDriftCompensation:
             low_freq = poly(origin_temp)
             if freq >= low_freq:
                 if high_freq is None:
-                    # Freqency above max calibration value
+                    # Frequency above max calibration value
                     err = poly(dest_temp) - low_freq
                     return freq + err
                 t = min(1., max(0., (freq - low_freq) / (high_freq - low_freq)))

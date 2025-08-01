@@ -14,7 +14,7 @@ class SafeZHoming:
         self.z_hop_speed = config.getfloat('z_hop_speed', 15., above=0.)
         zconfig = manual_probe.lookup_z_endstop_config(config)
         if zconfig is None:
-            raise gcmd.error('Missing Z endstop config for safe_z_homing')
+            raise config.error('Missing Z endstop config for safe_z_homing')
         self.max_z = zconfig.getfloat('position_max', note_valid=False)
         self.speed = config.getfloat('speed', 50.0, above=0.)
         self.move_to_previous = config.getboolean('move_to_previous', False)
