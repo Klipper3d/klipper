@@ -124,7 +124,7 @@ class DualCarriages:
             self.toggle_active_dc_rail(dc)
             kin.home_axis(homing_state, axis, dc.rail)
         # Restore the original rails ordering
-        self.toggle_active_dc_rail(dcs[0])
+        self.activate_dc_mode(dcs[0], PRIMARY)
     def get_status(self, eventtime=None):
         status = {'carriages' : {dc.get_name() : dc.mode
                                  for dc in self.dc_rails.values()}}
