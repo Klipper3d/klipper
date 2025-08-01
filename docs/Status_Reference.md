@@ -291,6 +291,9 @@ is always available):
 - `printing_time`: The amount of time (in seconds) the printer has
   been in the "Printing" state (as tracked by the idle_timeout
   module).
+- `idle_timeout`: The current 'timeout' (in seconds)
+   to wait for the gcode to be triggered.
+   (as set by [SET_IDLE_TIMEOUT](G-Codes.md#set_idle_timeout))
 
 ## led
 
