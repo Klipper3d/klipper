@@ -1502,6 +1502,10 @@ gcode:
 #   disables homing checks for that axis. This may be useful if the
 #   head must move prior to invoking the normal G28 mechanism for an
 #   axis. The default is to not force a position for an axis.
+#rename_existing:
+#   If specified, this option will rename the original G28 command to
+#   the value specified here, allowing the unmodified homing sequence
+#   to be used outside of this block.
 ```
 
 ### [endstop_phase]
