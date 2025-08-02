@@ -21,7 +21,8 @@ SOURCE_FILES = [
     'pollreactor.c', 'msgblock.c', 'trdispatch.c',
     'kin_cartesian.c', 'kin_corexy.c', 'kin_corexz.c', 'kin_delta.c',
     'kin_deltesian.c', 'kin_polar.c', 'kin_rotary_delta.c', 'kin_winch.c',
-    'kin_extruder.c', 'kin_shaper.c', 'kin_idex.c', 'kin_generic.c'
+    'kin_extruder.c', 'kin_shaper.c', 'kin_idex.c', 'kin_generic.c',
+    'offload_worker.c'
 ]
 DEST_LIB = "c_helper.so"
 OTHER_FILES = [
@@ -65,8 +66,6 @@ defs_stepcompress = """
 """
 
 defs_itersolve = """
-    int32_t itersolve_generate_steps(struct stepper_kinematics *sk
-        , double flush_time);
     double itersolve_check_active(struct stepper_kinematics *sk
         , double flush_time);
     int32_t itersolve_is_active_axis(struct stepper_kinematics *sk, char axis);
@@ -226,13 +225,22 @@ defs_std = """
     void free(void*);
 """
 
+defs_offload_worker = """
+    struct offload_worker *offload_worker_alloc(char name[16]);
+    void async_itersolve_generate_steps(struct offload_worker *worker,
+                                        struct stepper_kinematics *sk,
+                                        double flush_time);
+    int result_offload_worker(struct offload_worker *worker);
+    void offload_worker_free(struct offload_worker *worker);
+"""
+
 defs_all = [
     defs_pyhelper, defs_serialqueue, defs_std, defs_stepcompress,
     defs_itersolve, defs_trapq, defs_trdispatch,
     defs_kin_cartesian, defs_kin_corexy, defs_kin_corexz, defs_kin_delta,
     defs_kin_deltesian, defs_kin_polar, defs_kin_rotary_delta, defs_kin_winch,
     defs_kin_extruder, defs_kin_shaper, defs_kin_idex,
-    defs_kin_generic_cartesian,
+    defs_kin_generic_cartesian, defs_offload_worker,
 ]
 
 # Update filenames to an absolute path
