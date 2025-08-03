@@ -9,6 +9,30 @@ import chelper
 class error(Exception):
     pass
 
+class OffloadExecutor:
+    def __init__(self, name):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        _name = name[:15]
+        name_b = bytes(_name.encode("utf-8"))
+        self._worker = ffi_main.gc(ffi_lib.offload_worker_alloc(name_b),
+                                   ffi_lib.offload_worker_free)
+        self.ffi_lib = ffi_lib
+        # Simple sanity check, one task at a time
+        self.busy = False
+    def _lock(self):
+        if self.busy:
+            raise error()
+        self.busy = True
+    def async_itersolve_generate_steps(self, sk, flush_time, move_clock=0):
+        self._lock()
+        self.ffi_lib.async_itersolve_generate_steps(self._worker, sk,
+                                                    flush_time, move_clock)
+    def result(self):
+        if not self.busy:
+            raise error()
+        ret = self.ffi_lib.result_offload_worker(self._worker)
+        self.busy = False
+        return ret
 
 ######################################################################
 # Steppers
@@ -42,17 +66,20 @@ class MCU_stepper:
         self._mcu_position_offset = 0.
         self._reset_cmd_tag = self._get_position_cmd = None
         self._active_callbacks = []
+        # Handle case where callbacks are called, but would not be executed
+        self._active_callbacks_done = False
         ffi_main, ffi_lib = chelper.get_ffi()
         self._stepqueue = ffi_main.gc(ffi_lib.stepcompress_alloc(oid),
                                       ffi_lib.stepcompress_free)
         ffi_lib.stepcompress_set_invert_sdir(self._stepqueue, self._invert_dir)
         self._mcu.register_stepqueue(self._stepqueue)
         self._stepper_kinematics = None
-        self._itersolve_generate_steps = ffi_lib.itersolve_generate_steps
         self._itersolve_check_active = ffi_lib.itersolve_check_active
         self._trapq = ffi_main.NULL
         self._mcu.get_printer().register_event_handler('klippy:connect',
                                                        self._query_mcu_position)
+        # Thread offload executor
+        self._executor = OffloadExecutor(self._name)
     def get_mcu(self):
         return self._mcu
     def get_name(self, short=False):
@@ -235,21 +262,44 @@ class MCU_stepper:
         return old_tq
     def add_active_callback(self, cb):
         self._active_callbacks.append(cb)
-    def generate_steps(self, flush_time):
-        # Check for activity if necessary
-        if self._active_callbacks:
-            sk = self._stepper_kinematics
-            ret = self._itersolve_check_active(sk, flush_time)
-            if ret:
-                cbs = self._active_callbacks
-                self._active_callbacks = []
-                for cb in cbs:
-                    cb(ret)
+    def run_active_callbacks(self, flush_time):
+        self._active_callbacks_done = True
+        if not self._active_callbacks:
+            return
+        sk = self._stepper_kinematics
+        ret = self._itersolve_check_active(sk, flush_time)
+        if ret:
+            cbs = self._active_callbacks
+            self._active_callbacks = []
+            for cb in cbs:
+                cb(ret)
+    def _async_generate_steps(self, flush_time, sc_flush_time=.0):
+        run_cbs = self._active_callbacks and not self._active_callbacks_done
+        if run_cbs:
+            raise error("Active callbacks should be already executed")
+        self._active_callbacks_done = False
         # Generate steps
         sk = self._stepper_kinematics
-        ret = self._itersolve_generate_steps(sk, flush_time)
-        if ret:
-            raise error("Internal error in stepcompress")
+        # Pre run stepcompress flush with sc_flush_time
+        move_clock = self._mcu.print_time_to_clock(sc_flush_time)
+        self._executor.async_itersolve_generate_steps(sk, flush_time,
+                                                      move_clock)
+        def cb():
+            ret = self._executor.result()
+            if ret:
+                raise error("Internal error in stepcompress")
+        return [cb]
+    def generate_steps(self, flush_time, async_run=False, sc_flush_time=.0):
+        if async_run:
+            return self._async_generate_steps(flush_time, sc_flush_time)
+        # Check for activity if necessary
+        self.run_active_callbacks(flush_time)
+        # Generate steps
+        cbs = self._async_generate_steps(flush_time)
+        self._active_callbacks_done = False
+        for cb in cbs:
+            cb()
+        return []
     def is_active_axis(self, axis):
         ffi_main, ffi_lib = chelper.get_ffi()
         a = axis.encode()
@@ -442,9 +492,15 @@ class GenericPrinterRail:
     def setup_itersolve(self, alloc_func, *params):
         for stepper in self.steppers:
             stepper.setup_itersolve(alloc_func, *params)
-    def generate_steps(self, flush_time):
+    def run_active_callbacks(self, flush_time):
         for stepper in self.steppers:
-            stepper.generate_steps(flush_time)
+            stepper.run_active_callbacks(flush_time)
+    def generate_steps(self, flush_time, async_run=False):
+        cbs = []
+        for stepper in self.steppers:
+            cb = stepper.generate_steps(flush_time, async_run)
+            cbs.extend(cb)
+        return cbs
     def set_trapq(self, trapq):
         for stepper in self.steppers:
             stepper.set_trapq(trapq)

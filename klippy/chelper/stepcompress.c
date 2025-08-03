@@ -539,7 +539,7 @@ stepcompress_commit(struct stepcompress *sc)
 }
 
 // Flush pending steps
-static int
+int
 stepcompress_flush(struct stepcompress *sc, uint64_t move_clock)
 {
     if (sc->next_step_clock && move_clock >= sc->next_step_clock) {
