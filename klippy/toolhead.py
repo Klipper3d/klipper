@@ -304,7 +304,7 @@ class ToolHead:
             hook(sg_flush_time)
         cbs = []
         for sg, _ in self.step_generators:
-            res = sg(sg_flush_time, async_run=True)
+            res = sg(sg_flush_time, async_run=True, sc_flush_time=flush_time)
             cbs.extend(res)
         for cb in cbs:
             cb()

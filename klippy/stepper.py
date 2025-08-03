@@ -23,10 +23,10 @@ class OffloadExecutor:
         if self.busy:
             raise error()
         self.busy = True
-    def async_itersolve_generate_steps(self, sk, flush_time):
+    def async_itersolve_generate_steps(self, sk, flush_time, move_clock=0):
         self._lock()
         self.ffi_lib.async_itersolve_generate_steps(self._worker, sk,
-                                                    flush_time)
+                                                    flush_time, move_clock)
     def result(self):
         if not self.busy:
             raise error()
@@ -273,22 +273,25 @@ class MCU_stepper:
             self._active_callbacks = []
             for cb in cbs:
                 cb(ret)
-    def _async_generate_steps(self, flush_time):
+    def _async_generate_steps(self, flush_time, sc_flush_time=.0):
         run_cbs = self._active_callbacks and not self._active_callbacks_done
         if run_cbs:
             raise error("Active callbacks should be already executed")
         self._active_callbacks_done = False
         # Generate steps
         sk = self._stepper_kinematics
-        self._executor.async_itersolve_generate_steps(sk, flush_time)
+        # Pre run stepcompress flush with sc_flush_time
+        move_clock = self._mcu.print_time_to_clock(sc_flush_time)
+        self._executor.async_itersolve_generate_steps(sk, flush_time,
+                                                      move_clock)
         def cb():
             ret = self._executor.result()
             if ret:
                 raise error("Internal error in stepcompress")
         return [cb]
-    def generate_steps(self, flush_time, async_run=False):
+    def generate_steps(self, flush_time, async_run=False, sc_flush_time=.0):
         if async_run:
-            return self._async_generate_steps(flush_time)
+            return self._async_generate_steps(flush_time, sc_flush_time)
         # Check for activity if necessary
         self.run_active_callbacks(flush_time)
         # Generate steps

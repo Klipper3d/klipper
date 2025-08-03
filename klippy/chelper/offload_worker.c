@@ -2,15 +2,10 @@
 #include <stdint.h> // uint64_t
 #include <stdlib.h> // malloc
 #include <string.h> // memset
-#include "stepcompress.h" // struct stepcompress *sc
+#include "stepcompress.h" // stepcompress_flush()
 #include "itersolve.h" // struct stepper_kinematics *sk
 #include "compiler.h" // __visible
 #include "pyhelper.h" // set_thread_name
-
-// function types
-enum {
-    ITERSOLVE_GEN_STEPS,
-};
 
 struct offload_worker {
     pthread_mutex_t work_mutex;
@@ -20,13 +15,9 @@ struct offload_worker {
     pthread_t thread;
     char name[16];
 
-    uint8_t ftype;
-    union {
-        struct stepper_kinematics *sk;
-    };
-    union {
-        double flush_time;
-    };
+    struct stepper_kinematics *sk;
+    double flush_time;
+    uint64_t move_clock;
     int ret;
 
     uint8_t has_work;
@@ -49,12 +40,10 @@ worker_thread(void* arg) {
             break;
         }
 
-        int ret = -1;
-        switch (worker->ftype) {
-            case ITERSOLVE_GEN_STEPS:
-                ret = itersolve_generate_steps(worker->sk, worker->flush_time);
-                break;
-        }
+        int ret = itersolve_generate_steps(worker->sk, worker->flush_time);
+        struct stepcompress *sc = worker->sk->sc;
+        if (!ret && worker->move_clock > 0)
+            ret = stepcompress_flush(sc, worker->move_clock);
 
         worker->has_work = 0;
         pthread_mutex_unlock(&worker->work_mutex);
@@ -89,11 +78,12 @@ offload_worker_alloc(char name[16]) {
 void __visible
 async_itersolve_generate_steps(struct offload_worker *worker,
                                struct stepper_kinematics *sk,
-                               double flush_time) {
+                               double flush_time,
+                               uint64_t move_clock) {
     pthread_mutex_lock(&worker->work_mutex);
     worker->sk = sk;
     worker->flush_time = flush_time;
-    worker->ftype = ITERSOLVE_GEN_STEPS;
+    worker->move_clock = move_clock;
     worker->has_work = 1;
     worker->work_done = 0;
     pthread_cond_signal(&worker->work_cond);

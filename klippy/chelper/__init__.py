@@ -229,7 +229,8 @@ defs_offload_worker = """
     struct offload_worker *offload_worker_alloc(char name[16]);
     void async_itersolve_generate_steps(struct offload_worker *worker,
                                         struct stepper_kinematics *sk,
-                                        double flush_time);
+                                        double flush_time,
+                                        uint64_t move_clock);
     int result_offload_worker(struct offload_worker *worker);
     void offload_worker_free(struct offload_worker *worker);
 """
