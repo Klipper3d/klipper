@@ -270,13 +270,7 @@ class ToolHead:
             msg = "Error loading kinematics '%s'" % (kin_name,)
             logging.exception(msg)
             raise config.error(msg)
-        # Register commands
-        gcode.register_command('G4', self.cmd_G4)
-        gcode.register_command('M400', self.cmd_M400)
-        gcode.register_command('SET_VELOCITY_LIMIT',
-                               self.cmd_SET_VELOCITY_LIMIT,
-                               desc=self.cmd_SET_VELOCITY_LIMIT_help)
-        gcode.register_command('M204', self.cmd_M204)
+        # Register handlers
         self.printer.register_event_handler("klippy:shutdown",
                                             self._handle_shutdown)
     # Print time and flush tracking
@@ -657,21 +651,8 @@ class ToolHead:
         scv2 = self.square_corner_velocity**2
         self.junction_deviation = scv2 * (math.sqrt(2.) - 1.) / self.max_accel
         self.max_accel_to_decel = self.max_accel * (1. - self.min_cruise_ratio)
-    def cmd_G4(self, gcmd):
-        # Dwell
-        delay = gcmd.get_float('P', 0., minval=0.) / 1000.
-        self.dwell(delay)
-    def cmd_M400(self, gcmd):
-        # Wait for current moves to finish
-        self.wait_moves()
-    cmd_SET_VELOCITY_LIMIT_help = "Set printer velocity limits"
-    def cmd_SET_VELOCITY_LIMIT(self, gcmd):
-        max_velocity = gcmd.get_float('VELOCITY', None, above=0.)
-        max_accel = gcmd.get_float('ACCEL', None, above=0.)
-        square_corner_velocity = gcmd.get_float(
-            'SQUARE_CORNER_VELOCITY', None, minval=0.)
-        min_cruise_ratio = gcmd.get_float(
-            'MINIMUM_CRUISE_RATIO', None, minval=0., below=1.)
+    def set_max_velocities(self, max_velocity, max_accel,
+                           square_corner_velocity, min_cruise_ratio):
         if max_velocity is not None:
             self.max_velocity = max_velocity
         if max_accel is not None:
@@ -681,12 +662,43 @@ class ToolHead:
         if min_cruise_ratio is not None:
             self.min_cruise_ratio = min_cruise_ratio
         self._calc_junction_deviation()
+        return (self.max_velocity, self.max_accel,
+                self.square_corner_velocity, self.min_cruise_ratio)
+
+# Support common G-Code commands relative to the toolhead
+class ToolHeadCommandHelper:
+    def __init__(self, config):
+        self.printer = config.get_printer()
+        self.toolhead = self.printer.lookup_object("toolhead")
+        # Register commands
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_command('G4', self.cmd_G4)
+        gcode.register_command('M400', self.cmd_M400)
+        gcode.register_command('SET_VELOCITY_LIMIT',
+                               self.cmd_SET_VELOCITY_LIMIT,
+                               desc=self.cmd_SET_VELOCITY_LIMIT_help)
+        gcode.register_command('M204', self.cmd_M204)
+    def cmd_G4(self, gcmd):
+        # Dwell
+        delay = gcmd.get_float('P', 0., minval=0.) / 1000.
+        self.toolhead.dwell(delay)
+    def cmd_M400(self, gcmd):
+        # Wait for current moves to finish
+        self.toolhead.wait_moves()
+    cmd_SET_VELOCITY_LIMIT_help = "Set printer velocity limits"
+    def cmd_SET_VELOCITY_LIMIT(self, gcmd):
+        max_velocity = gcmd.get_float('VELOCITY', None, above=0.)
+        max_accel = gcmd.get_float('ACCEL', None, above=0.)
+        square_corner_velocity = gcmd.get_float(
+            'SQUARE_CORNER_VELOCITY', None, minval=0.)
+        min_cruise_ratio = gcmd.get_float(
+            'MINIMUM_CRUISE_RATIO', None, minval=0., below=1.)
+        mv, ma, scv, mcr = self.toolhead.set_max_velocities(
+            max_velocity, max_accel, square_corner_velocity, min_cruise_ratio)
         msg = ("max_velocity: %.6f\n"
                "max_accel: %.6f\n"
                "minimum_cruise_ratio: %.6f\n"
-               "square_corner_velocity: %.6f" % (
-                   self.max_velocity, self.max_accel,
-                   self.min_cruise_ratio, self.square_corner_velocity))
+               "square_corner_velocity: %.6f" % (mv, ma, scv, mcr))
         self.printer.set_rollover_info("toolhead", "toolhead: %s" % (msg,))
         if (max_velocity is None and max_accel is None
             and square_corner_velocity is None and min_cruise_ratio is None):
@@ -703,12 +715,13 @@ class ToolHead:
                                   % (gcmd.get_commandline(),))
                 return
             accel = min(p, t)
-        self.max_accel = accel
-        self._calc_junction_deviation()
+        self.toolhead.set_max_velocities(None, accel, None, None)
 
 def add_printer_objects(config):
     printer = config.get_printer()
     printer.add_object('toolhead', ToolHead(config))
+    ToolHeadCommandHelper(config)
+    # Load default extruder objects
     kinematics.extruder.add_printer_objects(config)
     # Load some default modules
     modules = ["gcode_move", "homing", "idle_timeout", "statistics",
