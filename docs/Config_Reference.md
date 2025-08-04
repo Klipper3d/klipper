@@ -1036,9 +1036,17 @@ settings described in the "extruder" section.
 ```
 [heater_bed]
 heater_pin:
+#max_power:
 sensor_type:
 sensor_pin:
+#pullup_resistor:
+#smooth_time:
 control:
+pid_Kp:
+pid_Ki:
+pid_Kd:
+#max_delta:
+#pwm_cycle_time:
 min_temp:
 max_temp:
 #   See the "extruder" section for a description of the above parameters.
