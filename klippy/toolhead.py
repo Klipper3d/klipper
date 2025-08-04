@@ -279,11 +279,6 @@ class ToolHead:
         gcode.register_command('M204', self.cmd_M204)
         self.printer.register_event_handler("klippy:shutdown",
                                             self._handle_shutdown)
-        # Load some default modules
-        modules = ["gcode_move", "homing", "idle_timeout", "statistics",
-                   "manual_probe", "tuning_tower", "garbage_collection"]
-        for module_name in modules:
-            self.printer.load_object(config, module_name)
     # Print time and flush tracking
     def _advance_flush_time(self, flush_time):
         flush_time = max(flush_time, self.last_flush_time)
@@ -712,5 +707,11 @@ class ToolHead:
         self._calc_junction_deviation()
 
 def add_printer_objects(config):
-    config.get_printer().add_object('toolhead', ToolHead(config))
+    printer = config.get_printer()
+    printer.add_object('toolhead', ToolHead(config))
     kinematics.extruder.add_printer_objects(config)
+    # Load some default modules
+    modules = ["gcode_move", "homing", "idle_timeout", "statistics",
+               "manual_probe", "tuning_tower", "garbage_collection"]
+    for module_name in modules:
+        printer.load_object(config, module_name)
