@@ -292,33 +292,6 @@ probe_count: 5, 3
   z-offset.  Note that this coordinate must NOT be in a location specified as
   a `faulty_region` if a probe is necessary.
 
-#### The deprecated relative_reference_index
-
-Existing configurations using the `relative_reference_index` option must be
-updated to use the `zero_reference_position`.  The response to the
-[BED_MESH_OUTPUT PGP=1](#output) gcode command will include the (X, Y)
-coordinate associated with the index;  this position may be used as the value for
-the `zero_reference_position`. The output will look similar to the following:
-
-```
-// bed_mesh: generated points
-// Index | Tool Adjusted | Probe
-// 0 | (1.0, 1.0) | (24.0, 6.0)
-// 1 | (36.7, 1.0) | (59.7, 6.0)
-// 2 | (72.3, 1.0) | (95.3, 6.0)
-// 3 | (108.0, 1.0) | (131.0, 6.0)
-... (additional generated points)
-// bed_mesh: relative_reference_index 24 is (131.5, 108.0)
-```
-
-_Note:  The above output is also printed in `klippy.log` during initialization._
-
-Using the example above we see that the `relative_reference_index` is
-printed along with its coordinate.  Thus the `zero_reference_position`
-is `131.5, 108`.
-
-
-
 ### Faulty Regions
 
 It is possible for some areas of a bed to report inaccurate results when
