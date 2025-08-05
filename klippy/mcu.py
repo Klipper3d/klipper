@@ -770,13 +770,13 @@ class MCU:
         move_count = config_params['move_count']
         if move_count < self._reserved_move_slots:
             raise error("Too few moves available on MCU '%s'" % (self._name,))
-        ffi_main, ffi_lib = chelper.get_ffi()
-        self._steppersync = ffi_main.gc(
-            ffi_lib.steppersync_alloc(self._serial.get_serialqueue(),
-                                      self._stepqueues, len(self._stepqueues),
-                                      move_count-self._reserved_move_slots),
-            ffi_lib.steppersync_free)
-        ffi_lib.steppersync_set_time(self._steppersync, 0., self._mcu_freq)
+        ss_move_count = move_count - self._reserved_move_slots
+        motion_queuing = self._printer.lookup_object('motion_queuing')
+        self._steppersync = motion_queuing.allocate_steppersync(
+            self, self._serial.get_serialqueue(),
+            self._stepqueues, ss_move_count)
+        self._ffi_lib.steppersync_set_time(self._steppersync,
+                                           0., self._mcu_freq)
         # Log config information
         move_msg = "Configured MCU '%s' (%d moves)" % (self._name, move_count)
         logging.info(move_msg)
