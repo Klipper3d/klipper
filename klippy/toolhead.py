@@ -285,8 +285,7 @@ class ToolHead:
         free_time = sg_flush_time - self.kin_flush_delay
         self.motion_queuing.clean_motion_queues(free_time, clear_history_time)
         # Flush stepcompress and mcu steppersync
-        for m in self.all_mcus:
-            m.flush_moves(flush_time, clear_history_time)
+        self.motion_queuing.flush_steppersync(flush_time, clear_history_time)
         self.last_flush_time = flush_time
     def _advance_move_time(self, next_print_time):
         pt_delay = self.kin_flush_delay + STEPCOMPRESS_FLUSH_TIME

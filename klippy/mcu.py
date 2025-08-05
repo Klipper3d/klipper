@@ -970,19 +970,6 @@ class MCU:
     # Move queue tracking
     def request_move_queue_slot(self):
         self._reserved_move_slots += 1
-    def flush_moves(self, print_time, clear_history_time):
-        if self._steppersync is None:
-            return
-        clock = self.print_time_to_clock(print_time)
-        if clock < 0:
-            return
-        clear_history_clock = \
-            max(0, self.print_time_to_clock(clear_history_time))
-        ret = self._ffi_lib.steppersync_flush(self._steppersync, clock,
-                                              clear_history_clock)
-        if ret:
-            raise error("Internal error in MCU '%s' stepcompress"
-                        % (self._name,))
     def check_active(self, print_time, eventtime):
         if self._steppersync is None:
             return
