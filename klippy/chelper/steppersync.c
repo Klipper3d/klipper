@@ -76,6 +76,22 @@ steppersync_set_time(struct steppersync *ss, double time_offset
     }
 }
 
+// Generate steps and flush stepcompress objects
+int32_t __visible
+steppersync_generate_steps(struct steppersync *ss, double gen_steps_time
+                           , uint64_t flush_clock)
+{
+    int i;
+    for (i=0; i<ss->sc_num; i++) {
+        struct stepcompress *sc = ss->sc_list[i];
+        int32_t ret = stepcompress_generate_steps(sc, gen_steps_time
+                                                  , flush_clock);
+        if (ret)
+            return ret;
+    }
+    return 0;
+}
+
 // Expire the stepcompress history before the given clock time
 void __visible
 steppersync_history_expire(struct steppersync *ss, uint64_t end_clock)
@@ -116,14 +132,6 @@ heap_replace(struct steppersync *ss, uint64_t req_clock)
 int __visible
 steppersync_flush(struct steppersync *ss, uint64_t move_clock)
 {
-    // Flush each stepcompress to the specified move_clock
-    int i;
-    for (i=0; i<ss->sc_num; i++) {
-        int ret = stepcompress_flush(ss->sc_list[i], move_clock);
-        if (ret)
-            return ret;
-    }
-
     // Order commands by the reqclock of each pending command
     struct list_head msgs;
     list_init(&msgs);
@@ -131,6 +139,7 @@ steppersync_flush(struct steppersync *ss, uint64_t move_clock)
         // Find message with lowest reqclock
         uint64_t req_clock = MAX_CLOCK;
         struct queue_message *qm = NULL;
+        int i;
         for (i=0; i<ss->sc_num; i++) {
             struct stepcompress *sc = ss->sc_list[i];
             struct list_head *sc_mq = stepcompress_get_msg_queue(sc);
