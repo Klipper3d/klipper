@@ -273,7 +273,8 @@ def PrinterStepper(config, units_in_radians=False):
                               rotation_dist, steps_per_rotation,
                               step_pulse_duration, units_in_radians)
     # Register with helper modules
-    for mname in ['stepper_enable', 'force_move', 'motion_report']:
+    mods = ['stepper_enable', 'force_move', 'motion_report', 'motion_queuing']
+    for mname in mods:
         m = printer.load_object(config, mname)
         m.register_stepper(config, mcu_stepper)
     return mcu_stepper
@@ -442,9 +443,6 @@ class GenericPrinterRail:
     def setup_itersolve(self, alloc_func, *params):
         for stepper in self.steppers:
             stepper.setup_itersolve(alloc_func, *params)
-    def generate_steps(self, flush_time):
-        for stepper in self.steppers:
-            stepper.generate_steps(flush_time)
     def set_trapq(self, trapq):
         for stepper in self.steppers:
             stepper.set_trapq(trapq)
