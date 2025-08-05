@@ -25,12 +25,12 @@ class GCodeRequestQueue:
         printer.register_event_handler("klippy:connect", self._handle_connect)
     def _handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
-    def _flush_notification(self, print_time):
+    def _flush_notification(self, must_flush_time, max_step_gen_time):
         min_sched_time = self.mcu.min_schedule_time()
         rqueue = self.rqueue
         while rqueue:
             next_time = max(rqueue[0][0], self.next_min_flush_time)
-            if next_time > print_time:
+            if next_time > must_flush_time:
                 return
             # Skip requests that have been overridden with a following request
             pos = 0

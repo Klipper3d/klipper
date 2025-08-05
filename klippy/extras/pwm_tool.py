@@ -124,8 +124,8 @@ class MCU_queued_pwm:
             value = 1. - value
         v = int(max(0., min(1., value)) * self._pwm_max + 0.5)
         self._send_update(clock, v)
-    def _flush_notification(self, print_time):
-        clock = self._mcu.print_time_to_clock(print_time)
+    def _flush_notification(self, must_flush_time, max_step_gen_time):
+        clock = self._mcu.print_time_to_clock(must_flush_time)
         if self._last_value != self._default_value:
             while clock >= self._last_clock + self._duration_ticks:
                 self._send_update(self._last_clock + self._duration_ticks,
