@@ -21,12 +21,12 @@ SOURCE_FILES = [
     'pollreactor.c', 'msgblock.c', 'trdispatch.c',
     'kin_cartesian.c', 'kin_corexy.c', 'kin_corexz.c', 'kin_delta.c',
     'kin_deltesian.c', 'kin_polar.c', 'kin_rotary_delta.c', 'kin_winch.c',
-    'kin_extruder.c', 'kin_shaper.c', 'kin_idex.c', 'kin_generic.c'
+    'kin_extruder.c', 'kin_shaper.c', 'kin_idex.c', 'kin_scara.c'
 ]
 DEST_LIB = "c_helper.so"
 OTHER_FILES = [
     'list.h', 'serialqueue.h', 'stepcompress.h', 'itersolve.h', 'pyhelper.h',
-    'trapq.h', 'pollreactor.h', 'msgblock.h'
+    'trapq.h', 'pollreactor.h', 'msgblock.h', 'kin_scara.h'
 ]
 
 defs_stepcompress = """
@@ -105,12 +105,6 @@ defs_trapq = """
 
 defs_kin_cartesian = """
     struct stepper_kinematics *cartesian_stepper_alloc(char axis);
-"""
-defs_kin_generic_cartesian = """
-    struct stepper_kinematics *generic_cartesian_stepper_alloc(double a_x
-        , double a_y, double a_z);
-    void generic_cartesian_stepper_set_coeffs(struct stepper_kinematics *sk
-        , double a_x, double a_y, double a_z);
 """
 
 defs_kin_corexy = """
@@ -226,13 +220,43 @@ defs_std = """
     void free(void*);
 """
 
+defs_kin_scara = """
+struct scara_params {
+    double arm1_length;
+    double arm2_length;
+    double theta_min;
+    double theta_max;
+    double phi_min;
+    double phi_max;
+};
+
+
+void scara_forward_kinematics(double theta, double phi, double *x, double *y,
+                              const struct scara_params *params);
+
+
+void scara_inverse_kinematics(double x, double y, double *theta, double *phi,
+                              const struct scara_params *params);
+
+
+double scara_stepper_theta_calc_position(struct stepper_kinematics *sk, struct move *m, double move_time);
+
+
+double scara_stepper_phi_calc_position(struct stepper_kinematics *sk, struct move *m, double move_time);
+
+
+double scara_stepper_z_calc_position(struct stepper_kinematics *sk, struct move *m, double move_time);
+
+
+struct stepper_kinematics *scara_stepper_alloc(char axis, double arm1_length, double arm2_length,double theta_min, double theta_max, double phi_min, double phi_max);
+"""
+
 defs_all = [
     defs_pyhelper, defs_serialqueue, defs_std, defs_stepcompress,
     defs_itersolve, defs_trapq, defs_trdispatch,
     defs_kin_cartesian, defs_kin_corexy, defs_kin_corexz, defs_kin_delta,
     defs_kin_deltesian, defs_kin_polar, defs_kin_rotary_delta, defs_kin_winch,
-    defs_kin_extruder, defs_kin_shaper, defs_kin_idex,
-    defs_kin_generic_cartesian,
+    defs_kin_extruder, defs_kin_shaper, defs_kin_idex, defs_kin_scara
 ]
 
 # Update filenames to an absolute path
