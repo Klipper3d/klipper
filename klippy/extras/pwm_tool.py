@@ -9,18 +9,18 @@ class error(Exception):
     pass
 
 class MCU_queued_pwm:
-    def __init__(self, pin_params):
-        self._mcu = pin_params['chip']
+    def __init__(self, config, pin_params):
+        self._mcu = mcu = pin_params['chip']
         self._hardware_pwm = False
         self._cycle_time = 0.100
         self._max_duration = 2.
-        self._oid = self._mcu.create_oid()
+        self._oid = oid = mcu.create_oid()
+        printer = mcu.get_printer()
+        motion_queuing = printer.load_object(config, 'motion_queuing')
+        self._stepqueue = motion_queuing.allocate_stepcompress(mcu, oid)
         ffi_main, ffi_lib = chelper.get_ffi()
-        self._stepqueue = ffi_main.gc(ffi_lib.stepcompress_alloc(self._oid),
-                                      ffi_lib.stepcompress_free)
-        self._mcu.register_stepqueue(self._stepqueue)
         self._stepcompress_queue_mq_msg = ffi_lib.stepcompress_queue_mq_msg
-        self._mcu.register_config_callback(self._build_config)
+        mcu.register_config_callback(self._build_config)
         self._pin = pin_params['pin']
         self._invert = pin_params['invert']
         self._start_value = self._shutdown_value = float(self._invert)
@@ -29,7 +29,6 @@ class MCU_queued_pwm:
         self._pwm_max = 0.
         self._set_cmd_tag = None
         self._toolhead = None
-        printer = self._mcu.get_printer()
         printer.register_event_handler("klippy:connect", self._handle_connect)
     def _handle_connect(self):
         self._toolhead = self._mcu.get_printer().lookup_object("toolhead")
@@ -135,7 +134,7 @@ class PrinterOutputPin:
         ppins = self.printer.lookup_object('pins')
         # Determine pin type
         pin_params = ppins.lookup_pin(config.get('pin'), can_invert=True)
-        self.mcu_pin = MCU_queued_pwm(pin_params)
+        self.mcu_pin = MCU_queued_pwm(config, pin_params)
         max_duration = self.mcu_pin.get_mcu().max_nominal_duration()
         cycle_time = config.getfloat('cycle_time', 0.100, above=0.,
                                      maxval=max_duration)

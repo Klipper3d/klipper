@@ -11,6 +11,7 @@ class PrinterMotionQueuing:
         self.printer = config.get_printer()
         self.steppers = []
         self.trapqs = []
+        self.stepcompress = []
         self.steppersyncs = []
         ffi_main, ffi_lib = chelper.get_ffi()
         self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
@@ -19,7 +20,17 @@ class PrinterMotionQueuing:
         trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
         self.trapqs.append(trapq)
         return trapq
-    def allocate_steppersync(self, mcu, serialqueue, stepqueues, move_count):
+    def allocate_stepcompress(self, mcu, oid):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        sc = ffi_main.gc(ffi_lib.stepcompress_alloc(oid),
+                         ffi_lib.stepcompress_free)
+        self.stepcompress.append((mcu, sc))
+        return sc
+    def allocate_steppersync(self, mcu, serialqueue, move_count):
+        stepqueues = []
+        for sc_mcu, sc in self.stepcompress:
+            if sc_mcu is mcu:
+                stepqueues.append(sc)
         ffi_main, ffi_lib = chelper.get_ffi()
         ss = ffi_main.gc(
             ffi_lib.steppersync_alloc(serialqueue, stepqueues, len(stepqueues),
