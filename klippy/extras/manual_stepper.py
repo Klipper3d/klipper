@@ -25,10 +25,9 @@ class ManualStepper:
         self.pos_min = config.getfloat('position_min', None)
         self.pos_max = config.getfloat('position_max', None)
         # Setup iterative solver
-        ffi_main, ffi_lib = chelper.get_ffi()
-        self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
-        self.trapq_append = ffi_lib.trapq_append
-        self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
+        self.motion_queuing = self.printer.load_object(config, 'motion_queuing')
+        self.trapq = self.motion_queuing.allocate_trapq()
+        self.trapq_append = self.motion_queuing.lookup_trapq_append()
         self.rail.setup_itersolve('cartesian_stepper_alloc', b'x')
         self.rail.set_trapq(self.trapq)
         # Registered with toolhead as an axtra axis
@@ -76,8 +75,6 @@ class ManualStepper:
         self.sync_print_time()
         self.next_cmd_time = self._submit_move(self.next_cmd_time, movepos,
                                                speed, accel)
-        self.trapq_finalize_moves(self.trapq, self.next_cmd_time + 99999.9,
-                                  self.next_cmd_time + 99999.9)
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.note_mcu_movequeue_activity(self.next_cmd_time)
         if sync:
@@ -208,7 +205,7 @@ class ManualStepper:
         toolhead.drip_update_time(maxtime, drip_completion)
         # Clear trapq of any remaining parts of movement
         reactor = self.printer.get_reactor()
-        self.trapq_finalize_moves(self.trapq, reactor.NEVER, 0)
+        self.motion_queuing.wipe_trapq(self.trapq)
         self.rail.set_position([newpos[0], 0., 0.])
         self.sync_print_time()
     def get_kinematics(self):
