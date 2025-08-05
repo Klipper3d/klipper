@@ -606,7 +606,6 @@ class MCU:
                                                   minval=0.)
         self._reserved_move_slots = 0
         self._steppersync = None
-        self._flush_callbacks = []
         # Stats
         self._get_status_info = {}
         self._stats_sumsq_base = 0.
@@ -971,16 +970,12 @@ class MCU:
     # Move queue tracking
     def request_move_queue_slot(self):
         self._reserved_move_slots += 1
-    def register_flush_callback(self, callback):
-        self._flush_callbacks.append(callback)
     def flush_moves(self, print_time, clear_history_time):
         if self._steppersync is None:
             return
         clock = self.print_time_to_clock(print_time)
         if clock < 0:
             return
-        for cb in self._flush_callbacks:
-            cb(print_time, clock)
         clear_history_clock = \
             max(0, self.print_time_to_clock(clear_history_time))
         ret = self._ffi_lib.steppersync_flush(self._steppersync, clock,
