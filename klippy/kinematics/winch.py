@@ -21,7 +21,6 @@ class WinchKinematics:
             self.anchors.append(a)
             s.setup_itersolve('winch_stepper_alloc', *a)
             s.set_trapq(toolhead.get_trapq())
-            toolhead.register_step_generator(s.generate_steps)
         # Setup boundary checks
         acoords = list(zip(*self.anchors))
         self.axes_min = toolhead.Coord(*[min(a) for a in acoords], e=0.)

@@ -76,7 +76,6 @@ class ManualStepper:
         self.sync_print_time()
         self.next_cmd_time = self._submit_move(self.next_cmd_time, movepos,
                                                speed, accel)
-        self.rail.generate_steps(self.next_cmd_time)
         self.trapq_finalize_moves(self.trapq, self.next_cmd_time + 99999.9,
                                   self.next_cmd_time + 99999.9)
         toolhead = self.printer.lookup_object('toolhead')
@@ -138,7 +137,6 @@ class ManualStepper:
                 raise gcmd.error("Must unregister axis first")
             # Unregister
             toolhead.remove_extra_axis(self)
-            toolhead.unregister_step_generator(self.rail.generate_steps)
             self.axis_gcode_id = None
             return
         if (len(gcode_axis) != 1 or not gcode_axis.isupper()
@@ -155,7 +153,6 @@ class ManualStepper:
         self.gaxis_limit_velocity = limit_velocity
         self.gaxis_limit_accel = limit_accel
         toolhead.add_extra_axis(self, self.get_position()[0])
-        toolhead.register_step_generator(self.rail.generate_steps)
     def process_move(self, print_time, move, ea_index):
         axis_r = move.axes_r[ea_index]
         start_pos = move.start_pos[ea_index]
@@ -208,7 +205,7 @@ class ManualStepper:
                                     speed, self.homing_accel)
         # Drip updates to motors
         toolhead = self.printer.lookup_object('toolhead')
-        toolhead.drip_update_time(maxtime, drip_completion, self.steppers)
+        toolhead.drip_update_time(maxtime, drip_completion)
         # Clear trapq of any remaining parts of movement
         reactor = self.printer.get_reactor()
         self.trapq_finalize_moves(self.trapq, reactor.NEVER, 0)
