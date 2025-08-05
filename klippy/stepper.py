@@ -19,22 +19,23 @@ MIN_OPTIMIZED_BOTH_EDGE_DURATION = 0.000000150
 
 # Interface to low-level mcu and chelper code
 class MCU_stepper:
-    def __init__(self, name, step_pin_params, dir_pin_params,
+    def __init__(self, config, step_pin_params, dir_pin_params,
                  rotation_dist, steps_per_rotation,
                  step_pulse_duration=None, units_in_radians=False):
-        self._name = name
+        self._name = config.get_name()
         self._rotation_dist = rotation_dist
         self._steps_per_rotation = steps_per_rotation
         self._step_pulse_duration = step_pulse_duration
         self._units_in_radians = units_in_radians
         self._step_dist = rotation_dist / steps_per_rotation
-        self._mcu = step_pin_params['chip']
-        self._oid = oid = self._mcu.create_oid()
-        self._mcu.register_config_callback(self._build_config)
+        self._mcu = mcu = step_pin_params['chip']
+        self._oid = oid = mcu.create_oid()
+        mcu.register_config_callback(self._build_config)
         self._step_pin = step_pin_params['pin']
         self._invert_step = step_pin_params['invert']
-        if dir_pin_params['chip'] is not self._mcu:
-            raise self._mcu.get_printer().config_error(
+        printer = mcu.get_printer()
+        if dir_pin_params['chip'] is not mcu:
+            raise printer.config_error(
                 "Stepper dir pin must be on same mcu as step pin")
         self._dir_pin = dir_pin_params['pin']
         self._invert_dir = self._orig_invert_dir = dir_pin_params['invert']
@@ -42,17 +43,16 @@ class MCU_stepper:
         self._mcu_position_offset = 0.
         self._reset_cmd_tag = self._get_position_cmd = None
         self._active_callbacks = []
+        motion_queuing = printer.load_object(config, 'motion_queuing')
+        self._stepqueue = motion_queuing.allocate_stepcompress(mcu, oid)
         ffi_main, ffi_lib = chelper.get_ffi()
-        self._stepqueue = ffi_main.gc(ffi_lib.stepcompress_alloc(oid),
-                                      ffi_lib.stepcompress_free)
         ffi_lib.stepcompress_set_invert_sdir(self._stepqueue, self._invert_dir)
-        self._mcu.register_stepqueue(self._stepqueue)
         self._stepper_kinematics = None
         self._itersolve_generate_steps = ffi_lib.itersolve_generate_steps
         self._itersolve_check_active = ffi_lib.itersolve_check_active
         self._trapq = ffi_main.NULL
-        self._mcu.get_printer().register_event_handler('klippy:connect',
-                                                       self._query_mcu_position)
+        printer.register_event_handler('klippy:connect',
+                                       self._query_mcu_position)
     def get_mcu(self):
         return self._mcu
     def get_name(self, short=False):
@@ -258,7 +258,6 @@ class MCU_stepper:
 # Helper code to build a stepper object from a config section
 def PrinterStepper(config, units_in_radians=False):
     printer = config.get_printer()
-    name = config.get_name()
     # Stepper definition
     ppins = printer.lookup_object('pins')
     step_pin = config.get('step_pin')
@@ -269,7 +268,7 @@ def PrinterStepper(config, units_in_radians=False):
         config, units_in_radians, True)
     step_pulse_duration = config.getfloat('step_pulse_duration', None,
                                           minval=0., maxval=.001)
-    mcu_stepper = MCU_stepper(name, step_pin_params, dir_pin_params,
+    mcu_stepper = MCU_stepper(config, step_pin_params, dir_pin_params,
                               rotation_dist, steps_per_rotation,
                               step_pulse_duration, units_in_radians)
     # Register with helper modules
