@@ -17,6 +17,7 @@ class PrinterMotionQueuing:
         ffi_main, ffi_lib = chelper.get_ffi()
         self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
         self.steppersync_flush = ffi_lib.steppersync_flush
+        self.steppersync_history_expire = ffi_lib.steppersync_history_expire
     def allocate_trapq(self):
         ffi_main, ffi_lib = chelper.get_ffi()
         trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
@@ -58,12 +59,13 @@ class PrinterMotionQueuing:
             clock = mcu.print_time_to_clock(print_time)
             if clock < 0:
                 continue
-            clear_history_clock = \
-                max(0, mcu.print_time_to_clock(clear_history_time))
-            ret = self.steppersync_flush(ss, clock, clear_history_clock)
+            ret = self.steppersync_flush(ss, clock)
             if ret:
                 raise mcu.error("Internal error in MCU '%s' stepcompress"
                                 % (mcu.get_name(),))
+            clear_history_clock = \
+                max(0, mcu.print_time_to_clock(clear_history_time))
+            self.steppersync_history_expire(ss, clear_history_clock)
     def wipe_trapq(self, trapq):
         # Expire any remaining movement in the trapq (force to history list)
         NEVER = 9999999999999999.

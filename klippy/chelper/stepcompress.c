@@ -276,9 +276,9 @@ stepcompress_set_invert_sdir(struct stepcompress *sc, uint32_t invert_sdir)
     }
 }
 
-// Helper to free items from the history_list
+// Expire the stepcompress history older than the given clock
 static void
-free_history(struct stepcompress *sc, uint64_t end_clock)
+stepcompress_history_expire(struct stepcompress *sc, uint64_t end_clock)
 {
     while (!list_empty(&sc->history_list)) {
         struct history_steps *hs = list_last_entry(
@@ -290,13 +290,6 @@ free_history(struct stepcompress *sc, uint64_t end_clock)
     }
 }
 
-// Expire the stepcompress history older than the given clock
-static void
-stepcompress_history_expire(struct stepcompress *sc, uint64_t end_clock)
-{
-    free_history(sc, end_clock);
-}
-
 // Free memory associated with a 'stepcompress' object
 void __visible
 stepcompress_free(struct stepcompress *sc)
@@ -305,7 +298,7 @@ stepcompress_free(struct stepcompress *sc)
         return;
     free(sc->queue);
     message_queue_free(&sc->msg_queue);
-    free_history(sc, UINT64_MAX);
+    stepcompress_history_expire(sc, UINT64_MAX);
     free(sc);
 }
 
@@ -734,12 +727,11 @@ steppersync_set_time(struct steppersync *ss, double time_offset
 }
 
 // Expire the stepcompress history before the given clock time
-static void
+void __visible
 steppersync_history_expire(struct steppersync *ss, uint64_t end_clock)
 {
     int i;
-    for (i = 0; i < ss->sc_num; i++)
-    {
+    for (i = 0; i < ss->sc_num; i++) {
         struct stepcompress *sc = ss->sc_list[i];
         stepcompress_history_expire(sc, end_clock);
     }
@@ -772,8 +764,7 @@ heap_replace(struct steppersync *ss, uint64_t req_clock)
 
 // Find and transmit any scheduled steps prior to the given 'move_clock'
 int __visible
-steppersync_flush(struct steppersync *ss, uint64_t move_clock
-                  , uint64_t clear_history_clock)
+steppersync_flush(struct steppersync *ss, uint64_t move_clock)
 {
     // Flush each stepcompress to the specified move_clock
     int i;
@@ -822,6 +813,5 @@ steppersync_flush(struct steppersync *ss, uint64_t move_clock
     if (!list_empty(&msgs))
         serialqueue_send_batch(ss->sq, ss->cq, &msgs);
 
-    steppersync_history_expire(ss, clear_history_clock);
     return 0;
 }
