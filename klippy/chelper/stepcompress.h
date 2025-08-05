@@ -27,7 +27,6 @@ void stepcompress_set_time(struct stepcompress *sc
 int stepcompress_append(struct stepcompress *sc, int sdir
                         , double print_time, double step_time);
 int stepcompress_commit(struct stepcompress *sc);
-int stepcompress_flush(struct stepcompress *sc, uint64_t move_clock);
 int stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);
 int stepcompress_set_last_position(struct stepcompress *sc, uint64_t clock
                                    , int64_t last_position);
@@ -39,5 +38,11 @@ int stepcompress_queue_mq_msg(struct stepcompress *sc, uint64_t req_clock
 int stepcompress_extract_old(struct stepcompress *sc
                              , struct pull_history_steps *p, int max
                              , uint64_t start_clock, uint64_t end_clock);
+struct stepper_kinematics;
+void stepcompress_set_stepper_kinematics(struct stepcompress *sc
+                                         , struct stepper_kinematics *sk);
+int32_t stepcompress_generate_steps(struct stepcompress *sc
+                                    , double gen_steps_time
+                                    , uint64_t flush_clock);
 
 #endif // stepcompress.h

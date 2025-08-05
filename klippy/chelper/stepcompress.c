@@ -21,6 +21,7 @@
 #include <stdlib.h> // malloc
 #include <string.h> // memset
 #include "compiler.h" // DIV_ROUND_UP
+#include "itersolve.h" // itersolve_generate_steps
 #include "pyhelper.h" // errorf
 #include "serialqueue.h" // struct queue_message
 #include "stepcompress.h" // stepcompress_alloc
@@ -46,6 +47,8 @@ struct stepcompress {
     // History tracking
     int64_t last_position;
     struct list_head history_list;
+    // Itersolve reference
+    struct stepper_kinematics *sk;
 };
 
 struct step_move {
@@ -538,7 +541,7 @@ stepcompress_commit(struct stepcompress *sc)
 }
 
 // Flush pending steps
-int
+static int
 stepcompress_flush(struct stepcompress *sc, uint64_t move_clock)
 {
     if (sc->next_step_clock && move_clock >= sc->next_step_clock) {
@@ -661,4 +664,27 @@ stepcompress_extract_old(struct stepcompress *sc, struct pull_history_steps *p
         res++;
     }
     return res;
+}
+
+// Store a reference to stepper_kinematics
+void __visible
+stepcompress_set_stepper_kinematics(struct stepcompress *sc
+                                    , struct stepper_kinematics *sk)
+{
+    sc->sk = sk;
+}
+
+// Generate steps (via itersolve) and flush
+int32_t
+stepcompress_generate_steps(struct stepcompress *sc, double gen_steps_time
+                            , uint64_t flush_clock)
+{
+    if (!sc->sk)
+        return 0;
+    // Generate steps
+    int32_t ret = itersolve_generate_steps(sc->sk, sc, gen_steps_time);
+    if (ret)
+        return ret;
+    // Flush steps
+    return stepcompress_flush(sc, flush_clock);
 }

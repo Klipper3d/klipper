@@ -11,13 +11,13 @@ MOVE_HISTORY_EXPIRE = 30.
 class PrinterMotionQueuing:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.steppers = []
         self.trapqs = []
         self.stepcompress = []
         self.steppersyncs = []
         self.flush_callbacks = []
         ffi_main, ffi_lib = chelper.get_ffi()
         self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
+        self.steppersync_generate_steps = ffi_lib.steppersync_generate_steps
         self.steppersync_flush = ffi_lib.steppersync_flush
         self.steppersync_history_expire = ffi_lib.steppersync_history_expire
         self.clear_history_time = 0.
@@ -46,8 +46,6 @@ class PrinterMotionQueuing:
             ffi_lib.steppersync_free)
         self.steppersyncs.append((mcu, ss))
         return ss
-    def register_stepper(self, config, stepper):
-        self.steppers.append(stepper)
     def register_flush_callback(self, callback):
         self.flush_callbacks.append(callback)
     def unregister_flush_callback(self, callback):
@@ -59,12 +57,14 @@ class PrinterMotionQueuing:
         # Invoke flush callbacks (if any)
         for cb in self.flush_callbacks:
             cb(must_flush_time, max_step_gen_time)
-        # Generate itersolve steps
-        for stepper in self.steppers:
-            stepper.generate_steps(max_step_gen_time)
-        # Flush steps from stepcompress and steppersync
         for mcu, ss in self.steppersyncs:
             clock = max(0, mcu.print_time_to_clock(must_flush_time))
+            # Generate steps
+            ret = self.steppersync_generate_steps(ss, max_step_gen_time, clock)
+            if ret:
+                raise mcu.error("Internal error in MCU '%s' stepcompress"
+                                % (mcu.get_name(),))
+            # Flush steps from steppersync
             ret = self.steppersync_flush(ss, clock)
             if ret:
                 raise mcu.error("Internal error in MCU '%s' stepcompress"

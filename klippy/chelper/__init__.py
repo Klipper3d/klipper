@@ -54,6 +54,8 @@ defs_stepcompress = """
     int stepcompress_extract_old(struct stepcompress *sc
         , struct pull_history_steps *p, int max
         , uint64_t start_clock, uint64_t end_clock);
+    void stepcompress_set_stepper_kinematics(struct stepcompress *sc
+        , struct stepper_kinematics *sk);
 """
 
 defs_steppersync = """
@@ -62,13 +64,13 @@ defs_steppersync = """
     void steppersync_free(struct steppersync *ss);
     void steppersync_set_time(struct steppersync *ss
         , double time_offset, double mcu_freq);
+    int32_t steppersync_generate_steps(struct steppersync *ss
+        , double gen_steps_time, uint64_t flush_clock);
     void steppersync_history_expire(struct steppersync *ss, uint64_t end_clock);
     int steppersync_flush(struct steppersync *ss, uint64_t move_clock);
 """
 
 defs_itersolve = """
-    int32_t itersolve_generate_steps(struct stepper_kinematics *sk
-        , struct stepcompress *sc, double flush_time);
     double itersolve_check_active(struct stepper_kinematics *sk
         , double flush_time);
     int32_t itersolve_is_active_axis(struct stepper_kinematics *sk, char axis);
