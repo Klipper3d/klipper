@@ -67,7 +67,7 @@ class PCA9685Controller:
         prescale = round(25000000.0 / (4096.0 * self._frequency)) - 1
         if prescale < 3 or prescale > 255:
             raise self._printer.config_error(
-                f"PCA9685 {self.name}: Frequency out of range")
+                "PCA9685 %s: Frequency out of range"%(self.name,))
         self._i2c.i2c_write_wait_ack([0x00, 0x10])
         self._i2c.i2c_write_wait_ack([0xFE, prescale])
         self._i2c.i2c_write_wait_ack([0x00, 0xA1])
@@ -79,8 +79,8 @@ class PCA9685Controller:
             mode2_value |= 0x04  # OUTDRV=1
         self._i2c.i2c_write_wait_ack([0x01, mode2_value])
         self._reactor.pause(self._reactor.monotonic() + .01)
-        logging.info(f"PCA9685 {self.name}: "
-            f"Initialized with frequency {self._frequency} Hz")
+        logging.info("PCA9685 %s: Initialized with frequency %s Hz"%(
+            self.name,self._frequency))
 
     def _set_pwm(self, channel, value):
         base_reg = 0x06 + (4 * channel)
@@ -119,12 +119,12 @@ class PCA9685Controller:
     def setup_pin(self, pin_type, pin_params):
         if pin_type != 'pwm':
             raise self._printer.config_error(
-                f"PCA9685 {self.name}: Only PWM pins supported")
+                "PCA9685 %s: Only PWM pins supported"%(self.name,))
         pin_name = pin_params['pin']
         channel = int(pin_name.split('pwm')[-1])
         if channel < 0 or channel > 15:
             raise self._printer.config_error(
-                f"PCA9685 {self.name}: Invalid pin {pin_name}")
+                "PCA9685 %s: Invalid pin %s"%(self.name,pin_name))
         # Inject frequency and pwm_max into pin_params
         pin_params['frequency'] = self._frequency
         pin_params['pwm_max'] = self._pwm_max
@@ -145,8 +145,8 @@ class PCA9685PWMPin:
         self._max_duration = 0.
         self._hardware_pwm = False
         self._last_time = 0
-        logging.info(f"PCA9685 {self._mcu.name}:{self.name}: "
-            f"Initialized pin={self._channel}, invert={self._invert}")
+        logging.info("PCA9685 %s:%s: Initialized pin=%s, invert=%s"%(
+                self._mcu.name,self.name,self._channel,self._invert))
 
     def get_mcu(self):
         return self._mcu
@@ -158,9 +158,10 @@ class PCA9685PWMPin:
     def setup_cycle_time(self, cycle_time, hardware_pwm=False):
         expected_cycle_time = 1. / self._mcu._frequency
         if abs(cycle_time - expected_cycle_time) > 0.000001:
-            logging.warning(f"PCA9685 {self._mcu.name}:pwm{self._channel}: "
-                           f"Requested cycle_time {cycle_time} does not match "
-                           f"controller frequency {self._mcu._frequency} Hz")
+            logging.warning("PCA9685 %s:%s: "
+                "Requested cycle_time %s does not match "
+                "controller frequency %s Hz"%(
+                self._mcu.name,self.name,cycle_time,self._mcu._frequency))
         self._cycle_time = cycle_time
         self._hardware_pwm = hardware_pwm
 
@@ -176,9 +177,9 @@ class PCA9685PWMPin:
     def set_pwm(self, print_time, value, cycle_time=None):
         if (cycle_time is not None and
             abs(cycle_time - self._cycle_time) > 0.000001):
-            logging.warning(f"PCA9685 {self._mcu.name}:pwm{self._channel}: "
-                f"Cycle time change to {cycle_time} ignored, "
-                f"using {self._cycle_time}")
+            logging.warning("PCA9685 %s:%s: "
+                "Cycle time change to %s ignored, using %s"%(
+                self._mcu.name,self.name,cycle_time,self._cycle_time))
         # Apply inversion
         effective_value = 1. - value if self._invert else value
         self._set_pwm_value(effective_value)
