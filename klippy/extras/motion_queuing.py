@@ -46,26 +46,28 @@ class PrinterMotionQueuing:
     def register_flush_callback(self, callback):
         self.flush_callbacks.append(callback)
     def flush_motion_queues(self, must_flush_time, max_step_gen_time):
+        # Invoke flush callbacks (if any)
         for cb in self.flush_callbacks:
             cb(must_flush_time)
+        # Generate itersolve steps
         for stepper in self.steppers:
             stepper.generate_steps(max_step_gen_time)
-    def clean_motion_queues(self, trapq_free_time, clear_history_time):
-        for trapq in self.trapqs:
-            self.trapq_finalize_moves(trapq, trapq_free_time,
-                                      clear_history_time)
-    def flush_steppersync(self, print_time, clear_history_time):
+        # Flush steps from stepcompress and steppersync
         for mcu, ss in self.steppersyncs:
-            clock = mcu.print_time_to_clock(print_time)
-            if clock < 0:
-                continue
+            clock = max(0, mcu.print_time_to_clock(must_flush_time))
             ret = self.steppersync_flush(ss, clock)
             if ret:
                 raise mcu.error("Internal error in MCU '%s' stepcompress"
                                 % (mcu.get_name(),))
-            clear_history_clock = \
-                max(0, mcu.print_time_to_clock(clear_history_time))
-            self.steppersync_history_expire(ss, clear_history_clock)
+    def clean_motion_queues(self, trapq_free_time, clear_history_time):
+        # Move processed trapq moves to history list, and expire old history
+        for trapq in self.trapqs:
+            self.trapq_finalize_moves(trapq, trapq_free_time,
+                                      clear_history_time)
+        # Clean up old history entries in stepcompress objects
+        for mcu, ss in self.steppersyncs:
+            clock = max(0, mcu.print_time_to_clock(clear_history_time))
+            self.steppersync_history_expire(ss, clock)
     def wipe_trapq(self, trapq):
         # Expire any remaining movement in the trapq (force to history list)
         NEVER = 9999999999999999.
