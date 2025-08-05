@@ -6,6 +6,8 @@
 import logging
 import chelper
 
+MOVE_HISTORY_EXPIRE = 30.
+
 class PrinterMotionQueuing:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -18,6 +20,9 @@ class PrinterMotionQueuing:
         self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
         self.steppersync_flush = ffi_lib.steppersync_flush
         self.steppersync_history_expire = ffi_lib.steppersync_history_expire
+        self.clear_history_time = 0.
+        is_debug = self.printer.get_start_args().get('debugoutput') is not None
+        self.is_debugoutput = is_debug
     def allocate_trapq(self):
         ffi_main, ffi_lib = chelper.get_ffi()
         trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
@@ -59,7 +64,10 @@ class PrinterMotionQueuing:
             if ret:
                 raise mcu.error("Internal error in MCU '%s' stepcompress"
                                 % (mcu.get_name(),))
-    def clean_motion_queues(self, trapq_free_time, clear_history_time):
+    def clean_motion_queues(self, trapq_free_time):
+        clear_history_time = self.clear_history_time
+        if self.is_debugoutput:
+            clear_history_time = trapq_free_time - MOVE_HISTORY_EXPIRE
         # Move processed trapq moves to history list, and expire old history
         for trapq in self.trapqs:
             self.trapq_finalize_moves(trapq, trapq_free_time,
@@ -75,6 +83,11 @@ class PrinterMotionQueuing:
     def lookup_trapq_append(self):
         ffi_main, ffi_lib = chelper.get_ffi()
         return ffi_lib.trapq_append
+    def stats(self, eventtime):
+        mcu = self.printer.lookup_object('mcu')
+        est_print_time = mcu.estimated_print_time(eventtime)
+        self.clear_history_time = est_print_time - MOVE_HISTORY_EXPIRE
+        return False, ""
 
 def load_config(config):
     return PrinterMotionQueuing(config)
