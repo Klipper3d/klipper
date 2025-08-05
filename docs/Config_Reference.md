@@ -5210,6 +5210,32 @@ sensor_type:
 
 ## Board specific hardware support
 
+## PCA9685 PWM Controller
+
+The `[pca9685]` module enables a PCA9685 16-channel PWM controller over I2C, providing 16 virtual PWM pins for use with `[servo]` and `[output_pin]` modules.
+This is useful for driving servos, LEDs, or other PWM devices like component feeders. 
+I2C is slow so those pins shouldn't be used to run anything time critical like driving stepper motors.
+
+See the [example-pca9685.cfg](../config/example-pca9685.cfg)
+file for an example.
+```
+[pca9685 my_expander]
+i2c_address: 64
+# default  64 (0x40), range: 64-127 (0x40-0x7F) depending on addr pins.
+#i2c_mcu: mcu
+#i2c_bus: i2c1
+#   See the "common I2C settings" section for a description of the
+#   above parameters.
+#frequency: 50.0
+#   PWM frequency in Hz (default: 50.0, range: 1.0-1000.0).
+#    Use `50` for standard servos.
+#invert_output: False
+#   Boolean (default: `False`). Sets MODE2 INVRT bit
+#   to invert all PWM outputs globally in hardware.
+#totem_pole: True
+#   Boolean (default: `True`). Sets MODE2 OUTDRV bit for totem-pole output; if `False`, uses open-drain.
+```
+
 ### [sx1509]
 
 Configure an SX1509 I2C to GPIO expander. Due to the delay incurred by
