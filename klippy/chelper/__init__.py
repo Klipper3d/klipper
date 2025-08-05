@@ -17,16 +17,16 @@ COMPILE_ARGS = ("-Wall -g -O2 -shared -fPIC"
                 " -o %s %s")
 SSE_FLAGS = "-mfpmath=sse -msse2"
 SOURCE_FILES = [
-    'pyhelper.c', 'serialqueue.c', 'stepcompress.c', 'itersolve.c', 'trapq.c',
-    'pollreactor.c', 'msgblock.c', 'trdispatch.c',
+    'pyhelper.c', 'serialqueue.c', 'stepcompress.c', 'steppersync.c',
+    'itersolve.c', 'trapq.c', 'pollreactor.c', 'msgblock.c', 'trdispatch.c',
     'kin_cartesian.c', 'kin_corexy.c', 'kin_corexz.c', 'kin_delta.c',
     'kin_deltesian.c', 'kin_polar.c', 'kin_rotary_delta.c', 'kin_winch.c',
     'kin_extruder.c', 'kin_shaper.c', 'kin_idex.c', 'kin_generic.c'
 ]
 DEST_LIB = "c_helper.so"
 OTHER_FILES = [
-    'list.h', 'serialqueue.h', 'stepcompress.h', 'itersolve.h', 'pyhelper.h',
-    'trapq.h', 'pollreactor.h', 'msgblock.h'
+    'list.h', 'serialqueue.h', 'stepcompress.h', 'steppersync.h',
+    'itersolve.h', 'pyhelper.h', 'trapq.h', 'pollreactor.h', 'msgblock.h'
 ]
 
 defs_stepcompress = """
@@ -54,7 +54,9 @@ defs_stepcompress = """
     int stepcompress_extract_old(struct stepcompress *sc
         , struct pull_history_steps *p, int max
         , uint64_t start_clock, uint64_t end_clock);
+"""
 
+defs_steppersync = """
     struct steppersync *steppersync_alloc(struct serialqueue *sq
         , struct stepcompress **sc_list, int sc_num, int move_num);
     void steppersync_free(struct steppersync *ss);
@@ -228,7 +230,7 @@ defs_std = """
 
 defs_all = [
     defs_pyhelper, defs_serialqueue, defs_std, defs_stepcompress,
-    defs_itersolve, defs_trapq, defs_trdispatch,
+    defs_steppersync, defs_itersolve, defs_trapq, defs_trdispatch,
     defs_kin_cartesian, defs_kin_corexy, defs_kin_corexz, defs_kin_delta,
     defs_kin_deltesian, defs_kin_polar, defs_kin_rotary_delta, defs_kin_winch,
     defs_kin_extruder, defs_kin_shaper, defs_kin_idex,
