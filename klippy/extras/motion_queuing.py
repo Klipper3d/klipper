@@ -50,10 +50,15 @@ class PrinterMotionQueuing:
         self.steppers.append(stepper)
     def register_flush_callback(self, callback):
         self.flush_callbacks.append(callback)
+    def unregister_flush_callback(self, callback):
+        if callback in self.flush_callbacks:
+            fcbs = list(self.flush_callbacks)
+            fcbs.remove(callback)
+            self.flush_callbacks = fcbs
     def flush_motion_queues(self, must_flush_time, max_step_gen_time):
         # Invoke flush callbacks (if any)
         for cb in self.flush_callbacks:
-            cb(must_flush_time)
+            cb(must_flush_time, max_step_gen_time)
         # Generate itersolve steps
         for stepper in self.steppers:
             stepper.generate_steps(max_step_gen_time)
