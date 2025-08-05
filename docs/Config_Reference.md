@@ -5213,7 +5213,7 @@ sensor_type:
 ## PCA9685 PWM Controller
 
 The `[pca9685]` module enables a PCA9685 16-channel PWM controller over I2C, providing 16 virtual PWM pins for use with `[servo]` and `[output_pin]` modules.
-This is useful for driving servos, LEDs, or other PWM devices like component feeders. 
+This is useful for driving servos, LEDs, or other PWM devices like component feeders.
 I2C is slow so those pins shouldn't be used to run anything time critical like driving stepper motors.
 
 See the [example-pca9685.cfg](../config/example-pca9685.cfg)
