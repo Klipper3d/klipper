@@ -245,14 +245,10 @@ class ToolHead:
         # Kinematic step generation scan window time tracking
         self.kin_flush_delay = SDS_CHECK_TIME
         self.kin_flush_times = []
-        # Setup iterative solver
-        ffi_main, ffi_lib = chelper.get_ffi()
-        self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
-        self.trapq_append = ffi_lib.trapq_append
-        self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
-        # Motion flushing
+        # Setup for generating moves
         self.motion_queuing = self.printer.load_object(config, 'motion_queuing')
-        self.flush_trapqs = [self.trapq]
+        self.trapq = self.motion_queuing.allocate_trapq()
+        self.trapq_append = self.motion_queuing.lookup_trapq_append()
         # Create kinematics class
         gcode = self.printer.lookup_object('gcode')
         self.Coord = gcode.Coord
@@ -287,8 +283,7 @@ class ToolHead:
         if not self.can_pause:
             clear_history_time = flush_time - MOVE_HISTORY_EXPIRE
         free_time = sg_flush_time - self.kin_flush_delay
-        for trapq in self.flush_trapqs:
-            self.trapq_finalize_moves(trapq, free_time, clear_history_time)
+        self.motion_queuing.clean_motion_queues(free_time, clear_history_time)
         # Flush stepcompress and mcu steppersync
         for m in self.all_mcus:
             m.flush_moves(flush_time, clear_history_time)
@@ -484,32 +479,20 @@ class ToolHead:
             eventtime = self.reactor.pause(eventtime + 0.100)
     def set_extruder(self, extruder, extrude_pos):
         # XXX - should use add_extra_axis
-        prev_ea_trapq = self.extra_axes[0].get_trapq()
-        if prev_ea_trapq in self.flush_trapqs:
-            self.flush_trapqs.remove(prev_ea_trapq)
         self.extra_axes[0] = extruder
         self.commanded_pos[3] = extrude_pos
-        ea_trapq = extruder.get_trapq()
-        if ea_trapq is not None:
-            self.flush_trapqs.append(ea_trapq)
     def get_extruder(self):
         return self.extra_axes[0]
     def add_extra_axis(self, ea, axis_pos):
         self._flush_lookahead()
         self.extra_axes.append(ea)
         self.commanded_pos.append(axis_pos)
-        ea_trapq = ea.get_trapq()
-        if ea_trapq is not None:
-            self.flush_trapqs.append(ea_trapq)
         self.printer.send_event("toolhead:update_extra_axes")
     def remove_extra_axis(self, ea):
         self._flush_lookahead()
         if ea not in self.extra_axes:
             return
         ea_index = self.extra_axes.index(ea) + 3
-        ea_trapq = ea.get_trapq()
-        if ea_trapq in self.flush_trapqs:
-            self.flush_trapqs.remove(ea_trapq)
         self.commanded_pos.pop(ea_index)
         self.extra_axes.pop(ea_index - 3)
         self.printer.send_event("toolhead:update_extra_axes")
@@ -574,7 +557,7 @@ class ToolHead:
         next_move_time = self._drip_load_trapq(move)
         self.drip_update_time(next_move_time, drip_completion)
         # Move finished; cleanup any remnants on trapq
-        self.trapq_finalize_moves(self.trapq, self.reactor.NEVER, 0)
+        self.motion_queuing.wipe_trapq(self.trapq)
     # Misc commands
     def stats(self, eventtime):
         max_queue_time = max(self.print_time, self.last_flush_time)
