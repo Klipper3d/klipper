@@ -200,7 +200,6 @@ MIN_KIN_TIME = 0.100
 MOVE_BATCH_TIME = 0.500
 STEPCOMPRESS_FLUSH_TIME = 0.050
 SDS_CHECK_TIME = 0.001 # step+dir+step filter in stepcompress.c
-MOVE_HISTORY_EXPIRE = 30.
 
 DRIP_SEGMENT_TIME = 0.050
 DRIP_TIME = 0.100
@@ -241,7 +240,7 @@ class ToolHead:
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
         self.do_kick_flush_timer = True
         self.last_flush_time = self.min_restart_time = 0.
-        self.need_flush_time = self.step_gen_time = self.clear_history_time = 0.
+        self.need_flush_time = self.step_gen_time = 0.
         # Kinematic step generation scan window time tracking
         self.kin_flush_delay = SDS_CHECK_TIME
         self.kin_flush_times = []
@@ -279,11 +278,8 @@ class ToolHead:
         self.motion_queuing.flush_motion_queues(flush_time, sg_flush_time)
         self.min_restart_time = max(self.min_restart_time, sg_flush_time)
         # Free trapq entries that are no longer needed
-        clear_history_time = self.clear_history_time
-        if not self.can_pause:
-            clear_history_time = flush_time - MOVE_HISTORY_EXPIRE
         free_time = sg_flush_time - self.kin_flush_delay
-        self.motion_queuing.clean_motion_queues(free_time, clear_history_time)
+        self.motion_queuing.clean_motion_queues(free_time)
         self.last_flush_time = flush_time
     def _advance_move_time(self, next_print_time):
         pt_delay = self.kin_flush_delay + STEPCOMPRESS_FLUSH_TIME
@@ -561,7 +557,6 @@ class ToolHead:
         for m in self.all_mcus:
             m.check_active(max_queue_time, eventtime)
         est_print_time = self.mcu.estimated_print_time(eventtime)
-        self.clear_history_time = est_print_time - MOVE_HISTORY_EXPIRE
         buffer_time = self.print_time - est_print_time
         is_active = buffer_time > -60. or not self.special_queuing_state
         if self.special_queuing_state == "Drip":
