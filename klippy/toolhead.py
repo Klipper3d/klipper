@@ -275,11 +275,10 @@ class ToolHead:
         sg_flush_want = min(flush_time + STEPCOMPRESS_FLUSH_TIME,
                             self.print_time - self.kin_flush_delay)
         sg_flush_time = max(sg_flush_want, flush_time)
-        self.motion_queuing.flush_motion_queues(flush_time, sg_flush_time)
+        trapq_free_time = sg_flush_time - self.kin_flush_delay
+        self.motion_queuing.flush_motion_queues(flush_time, sg_flush_time,
+                                                trapq_free_time)
         self.min_restart_time = max(self.min_restart_time, sg_flush_time)
-        # Free trapq entries that are no longer needed
-        free_time = sg_flush_time - self.kin_flush_delay
-        self.motion_queuing.clean_motion_queues(free_time)
         self.last_flush_time = flush_time
     def _advance_move_time(self, next_print_time):
         pt_delay = self.kin_flush_delay + STEPCOMPRESS_FLUSH_TIME
