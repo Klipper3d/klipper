@@ -91,7 +91,7 @@ _Linux GPIO character device_ to verify the configuration.
 To install the _Linux GPIO character device - binary_ on a debian
 based distro like octopi run:
 ```
-sudo apt-get install gpiod
+sudo apt install gpiod
 ```
 
 To check available gpiochip run:
