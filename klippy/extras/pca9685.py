@@ -15,6 +15,7 @@ MAX_NOMINAL_DURATION = 3.0
 class PCA9685Controller:
     def __init__(self, config):
         self._printer = config.get_printer()
+        self.toolhead = None #set up in _handle_connect
         self._reactor = self._printer.get_reactor()
         self.name = config.get_name().split()[-1]
         self._i2c_addr = config.getint(
@@ -28,8 +29,8 @@ class PCA9685Controller:
         self._i2c = bus.MCU_I2C_from_config(config, self._i2c_addr)
         self._mcu = self._i2c.get_mcu()
         self._printer.add_object(self.name, self)
-        self._ppins = self._printer.lookup_object("pins")
-        self._ppins.register_chip(self.name, self)
+        _ppins = self._printer.lookup_object("pins")
+        _ppins.register_chip(self.name, self)
         self._pins = {}
         self._flush_callbacks = []
         self._printer.register_event_handler(
@@ -94,14 +95,14 @@ class PCA9685Controller:
             off_time & 0xFF,        # LEDn_OFF_L
             (off_time >> 8) & 0x0F  # LEDn_OFF_H
         ]
-        self._i2c.i2c_write_wait_ack(data)
+        self._i2c.i2c_write(data)
 
     def _set_digital(self, channel, value):
         base_reg = 0x06 + (4 * channel)
         if value: # Fully on: LEDn_ON_H bit 4 (0x10)
-            self._i2c.i2c_write_wait_ack([base_reg, 0x00, 0x10, 0x00, 0x00])
+            self._i2c.i2c_write([base_reg, 0x00, 0x10, 0x00, 0x00])
         else:     # Fully off: LEDn_OFF_H bit 4 (0x10)
-            self._i2c.i2c_write_wait_ack([base_reg, 0x00, 0x00, 0x00, 0x10])
+            self._i2c.i2c_write([base_reg, 0x00, 0x00, 0x00, 0x10])
 
     def print_time_to_clock(self, print_time):
         return self._mcu.print_time_to_clock(print_time)
