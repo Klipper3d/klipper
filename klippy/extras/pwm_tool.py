@@ -115,7 +115,8 @@ class MCU_queued_pwm:
             # Continue flushing to resend time
             wakeclock += self._duration_ticks
         wake_print_time = self._mcu.clock_to_print_time(wakeclock)
-        self._toolhead.note_mcu_movequeue_activity(wake_print_time)
+        self._toolhead.note_mcu_movequeue_activity(wake_print_time,
+                                                   is_step_gen=False)
     def set_pwm(self, print_time, value):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._invert:
