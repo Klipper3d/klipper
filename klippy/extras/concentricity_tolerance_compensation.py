@@ -1,4 +1,4 @@
-import logging, math, json, collections
+import logging, math, json, collections, copy
 
 class ConcentricityToleranceCompansationError(Exception):
     pass
@@ -61,12 +61,12 @@ class ConcentricityToleranceCompansation:
          x, y, z, a, e = pos
          x_adj, y_adj = self.calc_xy_adj(a)
        
-         self.last_position[:] = [x + x_adj, y + y_adj, z, a, e]
+         self.last_position[:] = [x - x_adj, y - y_adj, z, a, e]
             
          return list(self.last_position)
         
     def move(self, positions : list, last_position_): 
-        last_position = last_position_.copy()
+        last_position = copy.deepcopy(last_position_)
         transformed_positions = []
         
         for position in positions:
@@ -98,18 +98,25 @@ class MoveSplitter:
         self.split_delta_xy = config.getfloat(
             'split_delta_xy', .025, minval=0.01)
         self.move_check_distance_a = config.getfloat(
-            'move_check_distance_a', 5., minval=3.)
+            'move_check_distance_a', 5., minval=0.01)
         self.gcode = gcode
         self.deflection_angle = deflection_angle
         self.deflection_radius = deflection_radius
         
         
     def build_move(self, prev_pos, next_pos):
-        self.prev_pos = tuple(prev_pos)
         self.next_pos = tuple(next_pos)
-        self.current_pos = list(prev_pos)
+
+        x, y, z, a, e = prev_pos
+        x_adj, y_adj = self.calc_xy_adj(a)
+       
+        self.prev_pos = tuple([x - x_adj, y - y_adj, z, a, e])
+        self.current_pos = list([x - x_adj, y - y_adj, z, a, e])
         
-        self.x_offset, self.y_offset = self._calc_xy_offset(prev_pos)
+        # self.prev_pos = tuple(prev_pos)
+        # self.current_pos = list(prev_pos)
+        
+        self.x_offset, self.y_offset = self._calc_xy_offset(self.prev_pos)
         
         self.traverse_complete = False
         self.distance_checked = 0.
@@ -120,8 +127,8 @@ class MoveSplitter:
     def calc_xy_adj(self, a_pos):
         calc_deflection_angle = math.radians(a_pos + self.deflection_angle)
         
-        x_adj = self.deflection_radius * math.cos(calc_deflection_angle)
-        y_adj = self.deflection_radius * math.sin(calc_deflection_angle)
+        x_adj =  self.deflection_radius * math.cos(calc_deflection_angle)
+        y_adj =  self.deflection_radius * math.sin(calc_deflection_angle)
         
         return x_adj, y_adj
       
@@ -148,7 +155,7 @@ class MoveSplitter:
                     self.distance_checked += self.move_check_distance_a
                     self._set_next_move(self.distance_checked)
                     next_offset_x, next_offset_y = self._calc_xy_offset(self.current_pos)
-                    if abs(next_offset_x - self.x_offset) >= self.split_delta_xy or abs(next_offset_y - self.y_offset) >= self.split_delta_xy : 
+                    if abs(next_offset_x -  self.x_offset) >= self.split_delta_xy or abs(next_offset_y - self.y_offset) >= self.split_delta_xy : 
                         self.x_offset = next_offset_x
                         self.y_offset = next_offset_y
                         
