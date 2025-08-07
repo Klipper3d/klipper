@@ -26,12 +26,11 @@ struct stepper_kinematics {
 };
 
 int32_t itersolve_generate_steps(struct stepper_kinematics *sk
-                                 , double flush_time);
+                                 , struct stepcompress *sc, double flush_time);
 double itersolve_check_active(struct stepper_kinematics *sk, double flush_time);
 int32_t itersolve_is_active_axis(struct stepper_kinematics *sk, char axis);
-void itersolve_set_trapq(struct stepper_kinematics *sk, struct trapq *tq);
-void itersolve_set_stepcompress(struct stepper_kinematics *sk
-                                , struct stepcompress *sc, double step_dist);
+void itersolve_set_trapq(struct stepper_kinematics *sk, struct trapq *tq
+                         , double step_dist);
 double itersolve_calc_position_from_coord(struct stepper_kinematics *sk
                                           , double x, double y, double z);
 void itersolve_set_position(struct stepper_kinematics *sk

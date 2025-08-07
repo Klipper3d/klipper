@@ -200,7 +200,6 @@ MIN_KIN_TIME = 0.100
 MOVE_BATCH_TIME = 0.500
 STEPCOMPRESS_FLUSH_TIME = 0.050
 SDS_CHECK_TIME = 0.001 # step+dir+step filter in stepcompress.c
-MOVE_HISTORY_EXPIRE = 30.
 
 DRIP_SEGMENT_TIME = 0.050
 DRIP_TIME = 0.100
@@ -219,17 +218,8 @@ class ToolHead:
         # Velocity and acceleration control
         self.max_velocity = config.getfloat('max_velocity', above=0.)
         self.max_accel = config.getfloat('max_accel', above=0.)
-        min_cruise_ratio = 0.5
-        if config.getfloat('minimum_cruise_ratio', None) is None:
-            req_accel_to_decel = config.getfloat('max_accel_to_decel', None,
-                                                 above=0.)
-            if req_accel_to_decel is not None:
-                config.deprecate('max_accel_to_decel')
-                min_cruise_ratio = 1. - min(1., (req_accel_to_decel
-                                                 / self.max_accel))
         self.min_cruise_ratio = config.getfloat('minimum_cruise_ratio',
-                                                min_cruise_ratio,
-                                                below=1., minval=0.)
+                                                0.5, below=1., minval=0.)
         self.square_corner_velocity = config.getfloat(
             'square_corner_velocity', 5., minval=0.)
         self.junction_deviation = self.max_accel_to_decel = 0.
@@ -250,18 +240,14 @@ class ToolHead:
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
         self.do_kick_flush_timer = True
         self.last_flush_time = self.min_restart_time = 0.
-        self.need_flush_time = self.step_gen_time = self.clear_history_time = 0.
+        self.need_flush_time = self.step_gen_time = 0.
         # Kinematic step generation scan window time tracking
         self.kin_flush_delay = SDS_CHECK_TIME
         self.kin_flush_times = []
-        # Setup iterative solver
-        ffi_main, ffi_lib = chelper.get_ffi()
-        self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
-        self.trapq_append = ffi_lib.trapq_append
-        self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
-        # Motion flushing
-        self.step_generators = []
-        self.flush_trapqs = [self.trapq]
+        # Setup for generating moves
+        self.motion_queuing = self.printer.load_object(config, 'motion_queuing')
+        self.trapq = self.motion_queuing.allocate_trapq()
+        self.trapq_append = self.motion_queuing.lookup_trapq_append()
         # Create kinematics class
         gcode = self.printer.lookup_object('gcode')
         self.Coord = gcode.Coord
@@ -279,20 +265,9 @@ class ToolHead:
             msg = "Error loading kinematics '%s'" % (kin_name,)
             logging.exception(msg)
             raise config.error(msg)
-        # Register commands
-        gcode.register_command('G4', self.cmd_G4)
-        gcode.register_command('M400', self.cmd_M400)
-        gcode.register_command('SET_VELOCITY_LIMIT',
-                               self.cmd_SET_VELOCITY_LIMIT,
-                               desc=self.cmd_SET_VELOCITY_LIMIT_help)
-        gcode.register_command('M204', self.cmd_M204)
+        # Register handlers
         self.printer.register_event_handler("klippy:shutdown",
                                             self._handle_shutdown)
-        # Load some default modules
-        modules = ["gcode_move", "homing", "idle_timeout", "statistics",
-                   "manual_probe", "tuning_tower", "garbage_collection"]
-        for module_name in modules:
-            self.printer.load_object(config, module_name)
     # Print time and flush tracking
     def _advance_flush_time(self, flush_time):
         flush_time = max(flush_time, self.last_flush_time)
@@ -300,19 +275,10 @@ class ToolHead:
         sg_flush_want = min(flush_time + STEPCOMPRESS_FLUSH_TIME,
                             self.print_time - self.kin_flush_delay)
         sg_flush_time = max(sg_flush_want, flush_time)
-        for sg in self.step_generators:
-            sg(sg_flush_time)
+        trapq_free_time = sg_flush_time - self.kin_flush_delay
+        self.motion_queuing.flush_motion_queues(flush_time, sg_flush_time,
+                                                trapq_free_time)
         self.min_restart_time = max(self.min_restart_time, sg_flush_time)
-        # Free trapq entries that are no longer needed
-        clear_history_time = self.clear_history_time
-        if not self.can_pause:
-            clear_history_time = flush_time - MOVE_HISTORY_EXPIRE
-        free_time = sg_flush_time - self.kin_flush_delay
-        for trapq in self.flush_trapqs:
-            self.trapq_finalize_moves(trapq, free_time, clear_history_time)
-        # Flush stepcompress and mcu steppersync
-        for m in self.all_mcus:
-            m.flush_moves(flush_time, clear_history_time)
         self.last_flush_time = flush_time
     def _advance_move_time(self, next_print_time):
         pt_delay = self.kin_flush_delay + STEPCOMPRESS_FLUSH_TIME
@@ -362,8 +328,7 @@ class ToolHead:
             for cb in move.timing_callbacks:
                 cb(next_move_time)
         # Generate steps for moves
-        self.note_mcu_movequeue_activity(next_move_time + self.kin_flush_delay,
-                                         set_step_gen_time=True)
+        self.note_mcu_movequeue_activity(next_move_time + self.kin_flush_delay)
         self._advance_move_time(next_move_time)
     def _flush_lookahead(self):
         # Transit from "NeedPrime"/"Priming"/"Drip"/main state to "NeedPrime"
@@ -506,39 +471,27 @@ class ToolHead:
             eventtime = self.reactor.pause(eventtime + 0.100)
     def set_extruder(self, extruder, extrude_pos):
         # XXX - should use add_extra_axis
-        prev_ea_trapq = self.extra_axes[0].get_trapq()
-        if prev_ea_trapq in self.flush_trapqs:
-            self.flush_trapqs.remove(prev_ea_trapq)
         self.extra_axes[0] = extruder
         self.commanded_pos[3] = extrude_pos
-        ea_trapq = extruder.get_trapq()
-        if ea_trapq is not None:
-            self.flush_trapqs.append(ea_trapq)
     def get_extruder(self):
         return self.extra_axes[0]
     def add_extra_axis(self, ea, axis_pos):
         self._flush_lookahead()
         self.extra_axes.append(ea)
         self.commanded_pos.append(axis_pos)
-        ea_trapq = ea.get_trapq()
-        if ea_trapq is not None:
-            self.flush_trapqs.append(ea_trapq)
         self.printer.send_event("toolhead:update_extra_axes")
     def remove_extra_axis(self, ea):
         self._flush_lookahead()
         if ea not in self.extra_axes:
             return
         ea_index = self.extra_axes.index(ea) + 3
-        ea_trapq = ea.get_trapq()
-        if ea_trapq in self.flush_trapqs:
-            self.flush_trapqs.remove(ea_trapq)
         self.commanded_pos.pop(ea_index)
         self.extra_axes.pop(ea_index - 3)
         self.printer.send_event("toolhead:update_extra_axes")
     def get_extra_axes(self):
         return [None, None, None] + self.extra_axes
     # Homing "drip move" handling
-    def drip_update_time(self, next_print_time, drip_completion, addstepper=()):
+    def drip_update_time(self, next_print_time, drip_completion):
         # Transition from "NeedPrime"/"Priming"/main state to "Drip" state
         self.special_queuing_state = "Drip"
         self.need_check_pause = self.reactor.NEVER
@@ -559,10 +512,7 @@ class ToolHead:
                 drip_completion.wait(curtime + wait_time)
                 continue
             npt = min(self.print_time + DRIP_SEGMENT_TIME, next_print_time)
-            self.note_mcu_movequeue_activity(npt + self.kin_flush_delay,
-                                             set_step_gen_time=True)
-            for stepper in addstepper:
-                stepper.generate_steps(npt)
+            self.note_mcu_movequeue_activity(npt + self.kin_flush_delay)
             self._advance_move_time(npt)
         # Exit "Drip" state
         self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
@@ -599,14 +549,13 @@ class ToolHead:
         next_move_time = self._drip_load_trapq(move)
         self.drip_update_time(next_move_time, drip_completion)
         # Move finished; cleanup any remnants on trapq
-        self.trapq_finalize_moves(self.trapq, self.reactor.NEVER, 0)
+        self.motion_queuing.wipe_trapq(self.trapq)
     # Misc commands
     def stats(self, eventtime):
         max_queue_time = max(self.print_time, self.last_flush_time)
         for m in self.all_mcus:
             m.check_active(max_queue_time, eventtime)
         est_print_time = self.mcu.estimated_print_time(eventtime)
-        self.clear_history_time = est_print_time - MOVE_HISTORY_EXPIRE
         buffer_time = self.print_time - est_print_time
         is_active = buffer_time > -60. or not self.special_queuing_state
         if self.special_queuing_state == "Drip":
@@ -639,11 +588,6 @@ class ToolHead:
         return self.kin
     def get_trapq(self):
         return self.trapq
-    def register_step_generator(self, handler):
-        self.step_generators.append(handler)
-    def unregister_step_generator(self, handler):
-        if handler in self.step_generators:
-            self.step_generators.remove(handler)
     def note_step_generation_scan_time(self, delay, old_delay=0.):
         self.flush_step_generation()
         if old_delay:
@@ -658,9 +602,9 @@ class ToolHead:
             callback(self.get_last_move_time())
             return
         last_move.timing_callbacks.append(callback)
-    def note_mcu_movequeue_activity(self, mq_time, set_step_gen_time=False):
+    def note_mcu_movequeue_activity(self, mq_time, is_step_gen=True):
         self.need_flush_time = max(self.need_flush_time, mq_time)
-        if set_step_gen_time:
+        if is_step_gen:
             self.step_gen_time = max(self.step_gen_time, mq_time)
         if self.do_kick_flush_timer:
             self.do_kick_flush_timer = False
@@ -671,29 +615,8 @@ class ToolHead:
         scv2 = self.square_corner_velocity**2
         self.junction_deviation = scv2 * (math.sqrt(2.) - 1.) / self.max_accel
         self.max_accel_to_decel = self.max_accel * (1. - self.min_cruise_ratio)
-    def cmd_G4(self, gcmd):
-        # Dwell
-        delay = gcmd.get_float('P', 0., minval=0.) / 1000.
-        self.dwell(delay)
-    def cmd_M400(self, gcmd):
-        # Wait for current moves to finish
-        self.wait_moves()
-    cmd_SET_VELOCITY_LIMIT_help = "Set printer velocity limits"
-    def cmd_SET_VELOCITY_LIMIT(self, gcmd):
-        max_velocity = gcmd.get_float('VELOCITY', None, above=0.)
-        max_accel = gcmd.get_float('ACCEL', None, above=0.)
-        square_corner_velocity = gcmd.get_float(
-            'SQUARE_CORNER_VELOCITY', None, minval=0.)
-        min_cruise_ratio = gcmd.get_float(
-            'MINIMUM_CRUISE_RATIO', None, minval=0., below=1.)
-        if min_cruise_ratio is None:
-            req_accel_to_decel = gcmd.get_float('ACCEL_TO_DECEL',
-                                                None, above=0.)
-            if req_accel_to_decel is not None and max_accel is not None:
-                min_cruise_ratio = 1. - min(1., req_accel_to_decel / max_accel)
-            elif req_accel_to_decel is not None and max_accel is None:
-                min_cruise_ratio = 1. - min(1., (req_accel_to_decel
-                                                 / self.max_accel))
+    def set_max_velocities(self, max_velocity, max_accel,
+                           square_corner_velocity, min_cruise_ratio):
         if max_velocity is not None:
             self.max_velocity = max_velocity
         if max_accel is not None:
@@ -703,12 +626,43 @@ class ToolHead:
         if min_cruise_ratio is not None:
             self.min_cruise_ratio = min_cruise_ratio
         self._calc_junction_deviation()
+        return (self.max_velocity, self.max_accel,
+                self.square_corner_velocity, self.min_cruise_ratio)
+
+# Support common G-Code commands relative to the toolhead
+class ToolHeadCommandHelper:
+    def __init__(self, config):
+        self.printer = config.get_printer()
+        self.toolhead = self.printer.lookup_object("toolhead")
+        # Register commands
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_command('G4', self.cmd_G4)
+        gcode.register_command('M400', self.cmd_M400)
+        gcode.register_command('SET_VELOCITY_LIMIT',
+                               self.cmd_SET_VELOCITY_LIMIT,
+                               desc=self.cmd_SET_VELOCITY_LIMIT_help)
+        gcode.register_command('M204', self.cmd_M204)
+    def cmd_G4(self, gcmd):
+        # Dwell
+        delay = gcmd.get_float('P', 0., minval=0.) / 1000.
+        self.toolhead.dwell(delay)
+    def cmd_M400(self, gcmd):
+        # Wait for current moves to finish
+        self.toolhead.wait_moves()
+    cmd_SET_VELOCITY_LIMIT_help = "Set printer velocity limits"
+    def cmd_SET_VELOCITY_LIMIT(self, gcmd):
+        max_velocity = gcmd.get_float('VELOCITY', None, above=0.)
+        max_accel = gcmd.get_float('ACCEL', None, above=0.)
+        square_corner_velocity = gcmd.get_float(
+            'SQUARE_CORNER_VELOCITY', None, minval=0.)
+        min_cruise_ratio = gcmd.get_float(
+            'MINIMUM_CRUISE_RATIO', None, minval=0., below=1.)
+        mv, ma, scv, mcr = self.toolhead.set_max_velocities(
+            max_velocity, max_accel, square_corner_velocity, min_cruise_ratio)
         msg = ("max_velocity: %.6f\n"
                "max_accel: %.6f\n"
                "minimum_cruise_ratio: %.6f\n"
-               "square_corner_velocity: %.6f" % (
-                   self.max_velocity, self.max_accel,
-                   self.min_cruise_ratio, self.square_corner_velocity))
+               "square_corner_velocity: %.6f" % (mv, ma, scv, mcr))
         self.printer.set_rollover_info("toolhead", "toolhead: %s" % (msg,))
         if (max_velocity is None and max_accel is None
             and square_corner_velocity is None and min_cruise_ratio is None):
@@ -725,9 +679,16 @@ class ToolHead:
                                   % (gcmd.get_commandline(),))
                 return
             accel = min(p, t)
-        self.max_accel = accel
-        self._calc_junction_deviation()
+        self.toolhead.set_max_velocities(None, accel, None, None)
 
 def add_printer_objects(config):
-    config.get_printer().add_object('toolhead', ToolHead(config))
+    printer = config.get_printer()
+    printer.add_object('toolhead', ToolHead(config))
+    ToolHeadCommandHelper(config)
+    # Load default extruder objects
     kinematics.extruder.add_printer_objects(config)
+    # Load some default modules
+    modules = ["gcode_move", "homing", "idle_timeout", "statistics",
+               "manual_probe", "tuning_tower", "garbage_collection"]
+    for module_name in modules:
+        printer.load_object(config, module_name)

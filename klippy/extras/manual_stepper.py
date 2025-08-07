@@ -25,10 +25,9 @@ class ManualStepper:
         self.pos_min = config.getfloat('position_min', None)
         self.pos_max = config.getfloat('position_max', None)
         # Setup iterative solver
-        ffi_main, ffi_lib = chelper.get_ffi()
-        self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
-        self.trapq_append = ffi_lib.trapq_append
-        self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
+        self.motion_queuing = self.printer.load_object(config, 'motion_queuing')
+        self.trapq = self.motion_queuing.allocate_trapq()
+        self.trapq_append = self.motion_queuing.lookup_trapq_append()
         self.rail.setup_itersolve('cartesian_stepper_alloc', b'x')
         self.rail.set_trapq(self.trapq)
         # Registered with toolhead as an axtra axis
@@ -76,9 +75,6 @@ class ManualStepper:
         self.sync_print_time()
         self.next_cmd_time = self._submit_move(self.next_cmd_time, movepos,
                                                speed, accel)
-        self.rail.generate_steps(self.next_cmd_time)
-        self.trapq_finalize_moves(self.trapq, self.next_cmd_time + 99999.9,
-                                  self.next_cmd_time + 99999.9)
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.note_mcu_movequeue_activity(self.next_cmd_time)
         if sync:
@@ -138,7 +134,6 @@ class ManualStepper:
                 raise gcmd.error("Must unregister axis first")
             # Unregister
             toolhead.remove_extra_axis(self)
-            toolhead.unregister_step_generator(self.rail.generate_steps)
             self.axis_gcode_id = None
             return
         if (len(gcode_axis) != 1 or not gcode_axis.isupper()
@@ -155,7 +150,6 @@ class ManualStepper:
         self.gaxis_limit_velocity = limit_velocity
         self.gaxis_limit_accel = limit_accel
         toolhead.add_extra_axis(self, self.get_position()[0])
-        toolhead.register_step_generator(self.rail.generate_steps)
     def process_move(self, print_time, move, ea_index):
         axis_r = move.axes_r[ea_index]
         start_pos = move.start_pos[ea_index]
@@ -208,10 +202,10 @@ class ManualStepper:
                                     speed, self.homing_accel)
         # Drip updates to motors
         toolhead = self.printer.lookup_object('toolhead')
-        toolhead.drip_update_time(maxtime, drip_completion, self.steppers)
+        toolhead.drip_update_time(maxtime, drip_completion)
         # Clear trapq of any remaining parts of movement
         reactor = self.printer.get_reactor()
-        self.trapq_finalize_moves(self.trapq, reactor.NEVER, 0)
+        self.motion_queuing.wipe_trapq(self.trapq)
         self.rail.set_position([newpos[0], 0., 0.])
         self.sync_print_time()
     def get_kinematics(self):

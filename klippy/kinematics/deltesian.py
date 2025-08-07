@@ -40,7 +40,6 @@ class DeltesianKinematics:
         self.rails[2].setup_itersolve('cartesian_stepper_alloc', b'y')
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
-            toolhead.register_step_generator(s.generate_steps)
         self.limits = [(1.0, -1.0)] * 3
         # X axis limits
         min_angle = config.getfloat('min_angle', MIN_ANGLE,

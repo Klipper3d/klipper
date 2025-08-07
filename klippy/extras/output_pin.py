@@ -20,16 +20,17 @@ class GCodeRequestQueue:
         self.rqueue = []
         self.next_min_flush_time = 0.
         self.toolhead = None
-        mcu.register_flush_callback(self._flush_notification)
+        motion_queuing = printer.load_object(config, 'motion_queuing')
+        motion_queuing.register_flush_callback(self._flush_notification)
         printer.register_event_handler("klippy:connect", self._handle_connect)
     def _handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
-    def _flush_notification(self, print_time, clock):
+    def _flush_notification(self, must_flush_time, max_step_gen_time):
         min_sched_time = self.mcu.min_schedule_time()
         rqueue = self.rqueue
         while rqueue:
             next_time = max(rqueue[0][0], self.next_min_flush_time)
-            if next_time > print_time:
+            if next_time > must_flush_time:
                 return
             # Skip requests that have been overridden with a following request
             pos = 0
@@ -50,10 +51,11 @@ class GCodeRequestQueue:
             del rqueue[:pos+1]
             self.next_min_flush_time = next_time + max(min_wait, min_sched_time)
             # Ensure following queue items are flushed
-            self.toolhead.note_mcu_movequeue_activity(self.next_min_flush_time)
+            self.toolhead.note_mcu_movequeue_activity(self.next_min_flush_time,
+                                                      is_step_gen=False)
     def _queue_request(self, print_time, value):
         self.rqueue.append((print_time, value))
-        self.toolhead.note_mcu_movequeue_activity(print_time)
+        self.toolhead.note_mcu_movequeue_activity(print_time, is_step_gen=False)
     def queue_gcode_request(self, value):
         self.toolhead.register_lookahead_callback(
             (lambda pt: self._queue_request(pt, value)))
