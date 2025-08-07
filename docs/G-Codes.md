@@ -7,7 +7,7 @@ commands that one may enter into the OctoPrint terminal tab.
 
 Klipper supports the following standard G-Code commands:
 - Move (G0 or G1): `G1 [X<pos>] [Y<pos>] [Z<pos>] [E<pos>] [F<speed>]`
-- Dwell: `G4 P<milliseconds>`
+- Dwell: `G4 P<milliseconds>` or  `G4 S<seconds>`
 - Move to origin: `G28 [X] [Y] [Z]`
 - Turn off motors: `M18` or `M84`
 - Wait for current moves to finish: `M400`
