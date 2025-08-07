@@ -277,11 +277,14 @@ The following may also be useful:
   * klippy:connect - This event is generated after all printer objects
     are instantiated. It is commonly used to lookup other printer
     objects, to verify config settings, and to perform an initial
-    "handshake" with printer hardware.
+    "handshake" with printer hardware. Event handlers may pause the
+    reactor (e.g. due to asynchronous communication with MCUs) and
+    raise exceptions (e.g. for configuration errors).
   * klippy:ready - This event is generated after all connect handlers
     have completed successfully. It indicates the printer is
     transitioning to a state ready to handle normal operations. Do not
-    raise an error in this callback.
+    raise an error or pause the reactor (e.g. communicating with an
+    MCU) in this callback.
 * If there is an error in the user's config, be sure to raise it
   during the `load_config()` or "connect event" phases. Use either
   `raise config.error("my error")` or `raise printer.config_error("my
