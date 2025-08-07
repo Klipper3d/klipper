@@ -4,8 +4,8 @@
 # Copyright (C) 2016-2024  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import sys, os, subprocess, optparse, logging, shlex, socket, time, traceback
-import json, zlib
+import sys, os, pathlib, subprocess, optparse, logging, shlex, socket, time
+import traceback, json, zlib
 sys.path.append('./klippy')
 import msgproto
 
@@ -485,9 +485,17 @@ def git_version():
 
 def build_version(extra, cleanbuild):
     version = git_version()
+
     if not version:
-        cleanbuild = False
-        version = "?"
+        version_file_path = (
+                                pathlib.Path(__file__).parents[1] /
+                                "src" / ".version"
+                            )
+        if version_file_path.exists():
+            version = version_file_path.read_text().strip()
+        else:
+            cleanbuild = False
+            version = "?"
     elif 'dirty' in version:
         cleanbuild = False
     if not cleanbuild:
