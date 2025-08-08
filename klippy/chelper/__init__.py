@@ -250,11 +250,20 @@ def get_mtimes(filelist):
         out.append(t)
     return out
 
+# return the file size, or 0 if not present
+def get_size(file):
+    try:
+        size = os.path.getsize(file)
+    except os.error:
+        return 0
+    return size
+
 # Check if the code needs to be compiled
 def check_build_code(sources, target):
     src_times = get_mtimes(sources)
     obj_times = get_mtimes([target])
-    return not obj_times or max(src_times) > min(obj_times)
+    target_size = get_size(target)
+    return not target_size or not obj_times or max(src_times) > min(obj_times)
 
 # Check if the current gcc version supports a particular command-line option
 def check_gcc_option(option):
