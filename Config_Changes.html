@@ -1412,6 +1412,10 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<p>20250811: Support for the <code>max_accel_to_decel</code> parameter in the
+<code>[printer]</code> config section has been removed and support for the
+<code>ACCEL_TO_DECEL</code> parameter in the <code>SET_VELOCITY_LIMIT</code> command has
+been removed. These capabilities were deprecated on 20240313.</p>
 <p>20250721: The <code>[pca9632]</code> and <code>[mcp4018]</code> modules no longer accept the
 <code>scl_pin</code> and <code>sda_pin</code> options. Use <code>i2c_software_scl_pin</code> and
 <code>i2c_software_sda_pin</code> instead.</p>
