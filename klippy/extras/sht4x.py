@@ -144,7 +144,7 @@ class SHT4X:
                     self.temp = temp
                 else:
                     raise ValueError("Temperature out of reasonable range: "
-                                   "%f°C" % temp)
+                                   "%fC" % temp)
 
                 # Convert humidity
                 raw_humidity = (recv[3] << 8) | recv[4]
