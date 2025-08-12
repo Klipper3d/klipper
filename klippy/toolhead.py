@@ -269,25 +269,38 @@ class ToolHead:
         self.printer.register_event_handler("klippy:shutdown",
                                             self._handle_shutdown)
     # Print time and flush tracking
-    def _advance_flush_time(self, flush_time):
-        flush_time = max(flush_time, self.last_flush_time)
-        # Generate steps via itersolve
-        sg_flush_want = min(flush_time + STEPCOMPRESS_FLUSH_TIME,
-                            self.print_time - self.kin_flush_delay)
-        step_gen_time = max(self.last_step_gen_time, sg_flush_want, flush_time)
-        self.motion_queuing.flush_motion_queues(flush_time, step_gen_time)
-        self.last_flush_time = flush_time
-        self.last_step_gen_time = step_gen_time
-    def _advance_move_time(self, next_print_time):
-        pt_delay = self.kin_flush_delay + STEPCOMPRESS_FLUSH_TIME
-        flush_time = max(self.last_flush_time, self.print_time - pt_delay)
-        self.print_time = max(self.print_time, next_print_time)
-        want_flush_time = max(flush_time, self.print_time - pt_delay)
+    def _advance_flush_time(self, target_time=None, lazy_target=False):
+        if target_time is None:
+            # This is a full flush
+            target_time = self.need_step_gen_time
+        want_flush_time = want_step_gen_time = target_time
+        if lazy_target:
+            # Account for step gen scan windows and optimize step compression
+            want_step_gen_time -= self.kin_flush_delay
+            want_flush_time = want_step_gen_time - STEPCOMPRESS_FLUSH_TIME
+        want_flush_time = max(want_flush_time, self.last_flush_time)
+        flush_time = self.last_flush_time
+        if want_flush_time > flush_time + 10. * MOVE_BATCH_TIME:
+            # Use closer startup time when coming out of idle state
+            curtime = self.reactor.monotonic()
+            est_print_time = self.mcu.estimated_print_time(curtime)
+            flush_time = max(flush_time, est_print_time)
+        flush_motion_queues = self.motion_queuing.flush_motion_queues
         while 1:
             flush_time = min(flush_time + MOVE_BATCH_TIME, want_flush_time)
-            self._advance_flush_time(flush_time)
+            # Generate steps via itersolve
+            want_sg_wave = min(flush_time + STEPCOMPRESS_FLUSH_TIME,
+                               want_step_gen_time)
+            step_gen_time = max(self.last_step_gen_time, want_sg_wave,
+                                flush_time)
+            flush_motion_queues(flush_time, step_gen_time)
+            self.last_flush_time = flush_time
+            self.last_step_gen_time = step_gen_time
             if flush_time >= want_flush_time:
                 break
+    def _advance_move_time(self, next_print_time):
+        self.print_time = max(self.print_time, next_print_time)
+        self._advance_flush_time(self.print_time, lazy_target=True)
     def _calc_print_time(self):
         curtime = self.reactor.monotonic()
         est_print_time = self.mcu.estimated_print_time(curtime)
@@ -337,7 +350,7 @@ class ToolHead:
         self.check_stall_time = 0.
     def flush_step_generation(self):
         self._flush_lookahead()
-        self._advance_flush_time(self.need_step_gen_time)
+        self._advance_flush_time()
     def get_last_move_time(self):
         if self.special_queuing_state:
             self._flush_lookahead()
