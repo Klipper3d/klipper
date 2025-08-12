@@ -298,14 +298,16 @@ class ToolHead:
             self.last_step_gen_time = step_gen_time
             if flush_time >= want_flush_time:
                 break
+    def _calc_step_gen_restart(self, est_print_time):
+        kin_time = max(est_print_time + MIN_KIN_TIME, self.last_step_gen_time)
+        return kin_time + self.kin_flush_delay
     def _advance_move_time(self, next_print_time):
         self.print_time = max(self.print_time, next_print_time)
         self._advance_flush_time(self.print_time, lazy_target=True)
     def _calc_print_time(self):
         curtime = self.reactor.monotonic()
         est_print_time = self.mcu.estimated_print_time(curtime)
-        kin_time = max(est_print_time + MIN_KIN_TIME, self.last_step_gen_time)
-        kin_time += self.kin_flush_delay
+        kin_time = self._calc_step_gen_restart(est_print_time)
         min_print_time = max(est_print_time + BUFFER_TIME_START, kin_time)
         if min_print_time > self.print_time:
             self.print_time = min_print_time
