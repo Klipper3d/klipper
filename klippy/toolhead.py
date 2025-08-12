@@ -275,9 +275,7 @@ class ToolHead:
         sg_flush_want = min(flush_time + STEPCOMPRESS_FLUSH_TIME,
                             self.print_time - self.kin_flush_delay)
         sg_flush_time = max(sg_flush_want, flush_time)
-        trapq_free_time = sg_flush_time - self.kin_flush_delay
-        self.motion_queuing.flush_motion_queues(flush_time, sg_flush_time,
-                                                trapq_free_time)
+        self.motion_queuing.flush_motion_queues(flush_time, sg_flush_time)
         self.min_restart_time = max(self.min_restart_time, sg_flush_time)
         self.last_flush_time = flush_time
     def _advance_move_time(self, next_print_time):
@@ -596,6 +594,7 @@ class ToolHead:
             self.kin_flush_times.append(delay)
         new_delay = max(self.kin_flush_times + [SDS_CHECK_TIME])
         self.kin_flush_delay = new_delay
+        self.motion_queuing.set_step_generate_scan_time(new_delay)
     def register_lookahead_callback(self, callback):
         last_move = self.lookahead.get_last()
         if last_move is None:
