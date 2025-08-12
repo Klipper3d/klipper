@@ -401,21 +401,29 @@ class ToolHead:
             logging.exception("Exception in priming_handler")
             self.printer.invoke_shutdown("Exception in priming_handler")
         return self.reactor.NEVER
+    def _check_flush_lookahead(self, eventtime):
+        if self.special_queuing_state:
+            return None
+        # In "main" state - flush lookahead if buffer runs low
+        est_print_time = self.mcu.estimated_print_time(eventtime)
+        print_time = self.print_time
+        buffer_time = print_time - est_print_time
+        if buffer_time > BUFFER_TIME_LOW:
+            # Running normally - reschedule check
+            return eventtime + buffer_time - BUFFER_TIME_LOW
+        # Under ran low buffer mark - flush lookahead queue
+        self._flush_lookahead()
+        if print_time != self.print_time:
+            self.check_stall_time = self.print_time
+        return None
     def _flush_handler(self, eventtime):
         try:
+            # Check if flushing is done via lookahead queue
+            ret = self._check_flush_lookahead(eventtime)
+            if ret is not None:
+                return ret
+            # Flush motion queues
             est_print_time = self.mcu.estimated_print_time(eventtime)
-            if not self.special_queuing_state:
-                # In "main" state - flush lookahead if buffer runs low
-                print_time = self.print_time
-                buffer_time = print_time - est_print_time
-                if buffer_time > BUFFER_TIME_LOW:
-                    # Running normally - reschedule check
-                    return eventtime + buffer_time - BUFFER_TIME_LOW
-                # Under ran low buffer mark - flush lookahead queue
-                self._flush_lookahead()
-                if print_time != self.print_time:
-                    self.check_stall_time = self.print_time
-            # In "NeedPrime"/"Priming" state - flush queues if needed
             while 1:
                 end_flush = self.need_flush_time + BGFLUSH_EXTRA_TIME
                 if self.last_flush_time >= end_flush:
