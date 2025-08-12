@@ -257,6 +257,6 @@ class SHT4X:
 def load_config(config):
     pheaters = config.get_printer().load_object(config, "heaters")
     pheaters.add_sensor_factory("SHT4X", SHT4X)
-    
+
 def load_config_prefix(config):
     return SHT4X(config)
