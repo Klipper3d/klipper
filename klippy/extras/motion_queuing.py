@@ -7,22 +7,29 @@ import logging
 import chelper
 
 MOVE_HISTORY_EXPIRE = 30.
+SDS_CHECK_TIME = 0.001 # step+dir+step filter in stepcompress.c
 
 class PrinterMotionQueuing:
     def __init__(self, config):
         self.printer = config.get_printer()
+        # Low level C allocations
         self.trapqs = []
         self.stepcompress = []
         self.steppersyncs = []
-        self.flush_callbacks = []
+        # Low-level C flushing calls
         ffi_main, ffi_lib = chelper.get_ffi()
         self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
         self.steppersync_generate_steps = ffi_lib.steppersync_generate_steps
         self.steppersync_flush = ffi_lib.steppersync_flush
         self.steppersync_history_expire = ffi_lib.steppersync_history_expire
+        # Flush notification callbacks
+        self.flush_callbacks = []
+        # History expiration
         self.clear_history_time = 0.
         is_debug = self.printer.get_start_args().get('debugoutput') is not None
         self.is_debugoutput = is_debug
+        # Kinematic step generation scan window time tracking
+        self.kin_flush_delay = SDS_CHECK_TIME
     def allocate_trapq(self):
         ffi_main, ffi_lib = chelper.get_ffi()
         trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
@@ -53,8 +60,7 @@ class PrinterMotionQueuing:
             fcbs = list(self.flush_callbacks)
             fcbs.remove(callback)
             self.flush_callbacks = fcbs
-    def flush_motion_queues(self, must_flush_time, max_step_gen_time,
-                            trapq_free_time):
+    def flush_motion_queues(self, must_flush_time, max_step_gen_time):
         # Invoke flush callbacks (if any)
         for cb in self.flush_callbacks:
             cb(must_flush_time, max_step_gen_time)
@@ -72,6 +78,7 @@ class PrinterMotionQueuing:
                 raise mcu.error("Internal error in MCU '%s' stepcompress"
                                 % (mcu.get_name(),))
         # Determine maximum history to keep
+        trapq_free_time = max_step_gen_time - self.kin_flush_delay
         clear_history_time = self.clear_history_time
         if self.is_debugoutput:
             clear_history_time = trapq_free_time - MOVE_HISTORY_EXPIRE
@@ -90,6 +97,8 @@ class PrinterMotionQueuing:
     def lookup_trapq_append(self):
         ffi_main, ffi_lib = chelper.get_ffi()
         return ffi_lib.trapq_append
+    def set_step_generate_scan_time(self, delay):
+        self.kin_flush_delay = delay
     def stats(self, eventtime):
         mcu = self.printer.lookup_object('mcu')
         est_print_time = mcu.estimated_print_time(eventtime)
