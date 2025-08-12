@@ -51,7 +51,8 @@ class SHT4X:
         }
         if precision not in precision_map:
             raise config.error("Invalid precision value '%s'. "
-                              "Valid options are: high, medium, low" % precision)
+                              "Valid options are: high, medium, low"
+                              % precision)
         self.precision_mode = precision_map[precision]
 
         # Core sensor state
@@ -204,7 +205,8 @@ class SHT4X:
         """Read the sensor's unique serial number"""
         try:
             self.i2c.i2c_write([REQUEST_CHIPID])
-            self.reactor.pause(self.reactor.monotonic() + 0.001)  # Small delay
+            # Small delay
+            self.reactor.pause(self.reactor.monotonic() + 0.001)
             recv = self.i2c.i2c_read([], 6)
             data = bytearray(recv['response'])
             if len(data) != 6 or not self._validate_crc(data):
@@ -215,7 +217,8 @@ class SHT4X:
             serial_lsb = (data[3] << 8) | data[4]
             return (serial_msb << 16) | serial_lsb
         except Exception as e:
-            logging.warning("SHT4X: Failed to read serial number: %s", str(e))
+            logging.warning("SHT4X: Failed to read serial number: %s",
+                          str(e))
             return None
 
     def reset(self):
@@ -227,7 +230,10 @@ class SHT4X:
 
     def get_status(self, eventtime):
         """Return sensor status for Mainsail"""
-        serial_str = "0x%08X" % self.serial_number if self.serial_number else "unknown"
+        if self.serial_number:
+            serial_str = "0x%08X" % self.serial_number
+        else:
+            serial_str = "unknown"
         return {
             'temperature': round(self.temp, 2),
             'humidity': round(self.humidity, 1),
@@ -251,7 +257,6 @@ class SHT4X:
 def load_config(config):
     pheaters = config.get_printer().load_object(config, "heaters")
     pheaters.add_sensor_factory("SHT4X", SHT4X)
-
+    
 def load_config_prefix(config):
     return SHT4X(config)
-    
