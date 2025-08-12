@@ -1,9 +1,3 @@
-# Support for sht4x temperature sensors
-#
-# Copyright (C) 2025  Milzo <overchecking@gmail.com>
-#
-# This file may be distributed under the terms of the GNU GPLv3 license.
-
 import logging
 from . import bus
 import threading
@@ -20,12 +14,12 @@ LOW_PRECISION_MODE = 0xE0     # ~1.6ms measurement time
 
 # Timing constants from datasheet
 MEASUREMENT_TIMES = {
-    HIGH_PRECISION_MODE: 0.0083,   # 8.3ms
-    MEDIUM_PRECISION_MODE: 0.0045, # 4.5ms
-    LOW_PRECISION_MODE: 0.0016     # 1.6ms
+    HIGH_PRECISION_MODE: 0.0083,   # 8.3ms max according to datasheet
+    MEDIUM_PRECISION_MODE: 0.0045, # 4.5ms max according to datasheet
+    LOW_PRECISION_MODE: 0.0016     # 1.6ms max according to datasheet
 }
 
-SOFT_RESET_TIME = 0.001  # 1ms max
+SOFT_RESET_TIME = 0.001  # 1ms max according to datasheet
 REPORT_TIME = 0.8        # How often to report readings
 
 
@@ -36,12 +30,12 @@ class SHT4X:
         self.reactor = self.printer.get_reactor()
 
         # I2C setup
-        valid_addresses = [0x44, 0x45, 0x46]
+        valid_addresses = [0x44, 0x45, 0x46]  # From datasheet
         addr = config.getint('i2c_address', DEFAULT_ADDR)
         if addr not in valid_addresses:
-            addr_list = ', '.join([f'{a:#x}' for a in valid_addresses])
-            raise config.error(f"Invalid I2C address {addr:#x}. "
-                              f"Valid addresses are: {addr_list}")
+            addr_list = ', '.join(['0x%x' % a for a in valid_addresses])
+            raise config.error("Invalid I2C address 0x%x. "
+                              "Valid addresses are: %s" % (addr, addr_list))
 
         speed = config.getint('i2c_speed', 100000)
         self.i2c = bus.MCU_I2C_from_config(
@@ -56,8 +50,8 @@ class SHT4X:
             'low': LOW_PRECISION_MODE
         }
         if precision not in precision_map:
-            raise config.error(f"Invalid precision value '{precision}'. "
-                              "Valid options are: high, medium, low")
+            raise config.error("Invalid precision value '%s'. "
+                              "Valid options are: high, medium, low" % precision)
         self.precision_mode = precision_map[precision]
 
         # Core sensor state
@@ -148,8 +142,8 @@ class SHT4X:
                 if -50 <= temp <= 150:
                     self.temp = temp
                 else:
-                    raise ValueError(f"Temperature out of reasonable range: "
-                                   f"{temp}°C")
+                    raise ValueError("Temperature out of reasonable range: "
+                                   "%f°C" % temp)
 
                 # Convert humidity
                 raw_humidity = (recv[3] << 8) | recv[4]
@@ -204,7 +198,7 @@ class SHT4X:
                     else:
                         raise
         except Exception as e:
-            raise Exception(f"Failed to get measurements: {e}")
+            raise Exception("Failed to get measurements: %s" % e)
 
     def get_serial_number(self):
         """Read the sensor's unique serial number"""
@@ -233,12 +227,12 @@ class SHT4X:
 
     def get_status(self, eventtime):
         """Return sensor status for Mainsail"""
+        serial_str = "0x%08X" % self.serial_number if self.serial_number else "unknown"
         return {
             'temperature': round(self.temp, 2),
             'humidity': round(self.humidity, 1),
             'sensor_ready': self.sensor_ready,
-            'serial_number': (f"0x{self.serial_number:08X}"
-                            if self.serial_number else "unknown")
+            'serial_number': serial_str
         }
 
     def _crc8(self, buffer):
@@ -258,6 +252,6 @@ def load_config(config):
     pheaters = config.get_printer().load_object(config, "heaters")
     pheaters.add_sensor_factory("SHT4X", SHT4X)
 
-
 def load_config_prefix(config):
     return SHT4X(config)
+    
