@@ -180,10 +180,13 @@ class MCU_I2C:
         self.cmd_queue = self.mcu.alloc_command_queue()
         self.mcu.register_config_callback(self.build_config)
         self.i2c_write_cmd = self.i2c_read_cmd = None
+        self.i2c_transfer_cmd = None
         printer = self.mcu.get_printer()
         printer.register_event_handler("klippy:connect", self._handle_connect)
         # backward support i2c_write inside the init section
         self._to_write = []
+        # Host side I2C error handling
+        self._configured = False
     def _handle_connect(self):
         for data in self._to_write:
             self.i2c_write(data)
@@ -208,21 +211,54 @@ class MCU_I2C:
         self.mcu.add_config_cmd(self.config_fmt)
         self.i2c_write_cmd = self.mcu.lookup_command(
             "i2c_write oid=%c data=%*s", cq=self.cmd_queue)
-        self.i2c_read_cmd = self.mcu.lookup_query_command(
-            "i2c_read oid=%c reg=%*s read_len=%u",
-            "i2c_read_response oid=%c response=%*s", oid=self.oid,
-            cq=self.cmd_queue)
+        if self.mcu.try_lookup_command("i2c_read oid=%c reg=%*s read_len=%u"):
+            self.i2c_read_cmd = self.mcu.lookup_query_command(
+                "i2c_read oid=%c reg=%*s read_len=%u",
+                "i2c_read_response oid=%c response=%*s", oid=self.oid,
+                cq=self.cmd_queue)
+        else:
+            self.i2c_transfer_cmd = self.mcu.lookup_query_command(
+                "i2c_transfer oid=%c write=%*s read_len=%u",
+                "i2c_response oid=%c i2c_bus_status=%c response=%*s",
+                oid=self.oid, cq=self.cmd_queue)
+            if self.mcu.is_fileoutput():
+                self.i2c_transfer_cmd = self.mcu.lookup_command(
+                    "i2c_transfer oid=%c write=%*s read_len=%u",
+                    cq=self.cmd_queue)
+        self._configured = True
     def i2c_write_noack(self, data, minclock=0, reqclock=0):
         self.i2c_write_cmd.send([self.oid, data],
                                 minclock=minclock, reqclock=reqclock)
-    def i2c_write(self, data, minclock=0, reqclock=0):
-        if self.i2c_write_cmd is None:
+    def i2c_write(self, data, minclock=0, reqclock=0, retry=True):
+        if not self._configured:
             self._to_write.append(data)
+            return
+        if self.i2c_transfer_cmd is not None:
+            self.i2c_transfer(data, minclock=minclock, reqclock=reqclock,
+                              retry=retry)
             return
         self.i2c_write_cmd.send_wait_ack([self.oid, data],
                                          minclock=minclock, reqclock=reqclock)
     def i2c_read(self, write, read_len, retry=True):
-        return self.i2c_read_cmd.send([self.oid, write, read_len], retry)
+        if self.i2c_transfer_cmd is not None:
+            return self.i2c_transfer(write, read_len, retry=retry)
+        return self.i2c_read_cmd.send([self.oid, write, read_len],
+                                      retry=retry)
+    def i2c_transfer(self, write, read_len=0, minclock=0, reqclock=0,
+                     retry=True):
+        cmd = self.i2c_transfer_cmd
+        if self.mcu.is_fileoutput():
+            cmd.send([self.oid, write, read_len],
+                     minclock=minclock, reqclock=reqclock)
+            return
+        param = cmd.send([self.oid, write, read_len],
+                         minclock=minclock, reqclock=reqclock, retry=retry)
+        status = param["i2c_bus_status"]
+        if status == "SUCCESS":
+            return param
+        err_msg = "MCU '%s' I2C request to addr %i reports error %s" % (
+            self.mcu.get_name(), self.i2c_address, status)
+        self.mcu.get_printer().invoke_shutdown(err_msg)
 
 def MCU_I2C_from_config(config, default_addr=None, default_speed=100000):
     # Load bus parameters
