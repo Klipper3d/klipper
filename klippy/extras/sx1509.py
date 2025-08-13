@@ -52,6 +52,10 @@ class SX1509(object):
             curtime = reactor.monotonic()
             printtime = self._mcu.estimated_print_time(curtime)
             self.send_register(_reg, printtime)
+        for reg in self.reg_i_on_dict:
+            curtime = reactor.monotonic()
+            printtime = self._mcu.estimated_print_time(curtime)
+            self.send_register(reg, printtime)
     def setup_pin(self, pin_type, pin_params):
         if pin_type == 'digital_out' and pin_params['pin'][0:4] == "PIN_":
             return SX1509_digital_out(self, pin_params)
@@ -158,15 +162,6 @@ class SX1509_pwm(object):
             raise pins.error("SX1509_pwm must have hardware_pwm enabled")
         if self._max_duration:
             raise pins.error("SX1509 pins are not suitable for heaters")
-        # Send initial value
-        self._sx1509.set_register(self._i_on_reg,
-                                  ~int(255 * self._start_value) & 0xFF)
-        self._mcu.add_config_cmd("i2c_write oid=%d data=%02x%02x" % (
-            self._sx1509.get_oid(),
-            self._i_on_reg,
-            self._sx1509.reg_i_on_dict[self._i_on_reg]
-            ),
-                                 is_init=True)
     def get_mcu(self):
         return self._mcu
     def setup_max_duration(self, max_duration):
@@ -180,6 +175,8 @@ class SX1509_pwm(object):
             shutdown_value = 1. - shutdown_value
         self._start_value = max(0., min(1., start_value))
         self._shutdown_value = max(0., min(1., shutdown_value))
+        self._sx1509.set_register(self._i_on_reg,
+                                  ~int(255 * self._start_value) & 0xFF)
     def set_pwm(self, print_time, value):
         self._sx1509.set_register(self._i_on_reg, ~int(255 * value)
                                   if not self._invert
