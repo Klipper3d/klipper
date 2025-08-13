@@ -189,12 +189,14 @@ class MCU_I2C:
         return self.i2c_address
     def get_command_queue(self):
         return self.cmd_queue
-    def i2c_status_check(self, nack):
+    def i2c_status_check(self, nack, fatal=True):
         msg = self.i2c_bus_status.get(nack)
         if msg is None:
             return
         error_str = "MCU '%s' I2C addr %d: %s" % (
             self.mcu.get_name(), self.i2c_address, msg)
+        if not fatal:
+            return error_str
         raise mcu.error(error_str)
     def build_config(self):
         if '%' in self.config_fmt:
@@ -255,10 +257,17 @@ class MCU_I2C:
     def i2c_write_wait_ack(self, data, minclock=0, reqclock=0):
         self.i2c_write(data, minclock, reqclock)
     def i2c_read(self, write, read_len, retry=True):
-        params = self.i2c_read_cmd.send([self.oid, write, read_len], retry)
-        if self.i2c_bus_status is not None:
-            self.i2c_status_check(params["nack"])
-        return params
+        attempts = [1]
+        if retry:
+            attempts = [1, 2, 3, 4, 5]
+        err = None
+        for _ in attempts:
+            params = self.i2c_read_cmd.send([self.oid, write, read_len], retry)
+            if self.i2c_bus_status is not None:
+                err = self.i2c_status_check(params["nack"], fatal=False)
+            if err is None:
+                return params
+        raise mcu.error(err)
 
 def MCU_I2C_from_config(config, default_addr=None, default_speed=100000):
     # Load bus parameters
