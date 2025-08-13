@@ -20,7 +20,6 @@ class CoreXZKinematics:
         self.rails[2].setup_itersolve('corexz_stepper_alloc', b'-')
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
-            toolhead.register_step_generator(s.generate_steps)
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(

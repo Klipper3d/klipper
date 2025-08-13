@@ -17,16 +17,16 @@ COMPILE_ARGS = ("-Wall -g -O2 -shared -fPIC"
                 " -o %s %s")
 SSE_FLAGS = "-mfpmath=sse -msse2"
 SOURCE_FILES = [
-    'pyhelper.c', 'serialqueue.c', 'stepcompress.c', 'itersolve.c', 'trapq.c',
-    'pollreactor.c', 'msgblock.c', 'trdispatch.c',
+    'pyhelper.c', 'serialqueue.c', 'stepcompress.c', 'steppersync.c',
+    'itersolve.c', 'trapq.c', 'pollreactor.c', 'msgblock.c', 'trdispatch.c',
     'kin_cartesian.c', 'kin_corexy.c', 'kin_corexz.c', 'kin_delta.c',
     'kin_deltesian.c', 'kin_polar.c', 'kin_rotary_delta.c', 'kin_winch.c',
     'kin_extruder.c', 'kin_shaper.c', 'kin_idex.c', 'kin_generic.c'
 ]
 DEST_LIB = "c_helper.so"
 OTHER_FILES = [
-    'list.h', 'serialqueue.h', 'stepcompress.h', 'itersolve.h', 'pyhelper.h',
-    'trapq.h', 'pollreactor.h', 'msgblock.h'
+    'list.h', 'serialqueue.h', 'stepcompress.h', 'steppersync.h',
+    'itersolve.h', 'pyhelper.h', 'trapq.h', 'pollreactor.h', 'msgblock.h'
 ]
 
 defs_stepcompress = """
@@ -54,25 +54,28 @@ defs_stepcompress = """
     int stepcompress_extract_old(struct stepcompress *sc
         , struct pull_history_steps *p, int max
         , uint64_t start_clock, uint64_t end_clock);
+    void stepcompress_set_stepper_kinematics(struct stepcompress *sc
+        , struct stepper_kinematics *sk);
+"""
 
+defs_steppersync = """
     struct steppersync *steppersync_alloc(struct serialqueue *sq
         , struct stepcompress **sc_list, int sc_num, int move_num);
     void steppersync_free(struct steppersync *ss);
     void steppersync_set_time(struct steppersync *ss
         , double time_offset, double mcu_freq);
-    int steppersync_flush(struct steppersync *ss, uint64_t move_clock
-        , uint64_t clear_history_clock);
+    int32_t steppersync_generate_steps(struct steppersync *ss
+        , double gen_steps_time, uint64_t flush_clock);
+    void steppersync_history_expire(struct steppersync *ss, uint64_t end_clock);
+    int steppersync_flush(struct steppersync *ss, uint64_t move_clock);
 """
 
 defs_itersolve = """
-    int32_t itersolve_generate_steps(struct stepper_kinematics *sk
-        , double flush_time);
     double itersolve_check_active(struct stepper_kinematics *sk
         , double flush_time);
     int32_t itersolve_is_active_axis(struct stepper_kinematics *sk, char axis);
-    void itersolve_set_trapq(struct stepper_kinematics *sk, struct trapq *tq);
-    void itersolve_set_stepcompress(struct stepper_kinematics *sk
-        , struct stepcompress *sc, double step_dist);
+    void itersolve_set_trapq(struct stepper_kinematics *sk, struct trapq *tq
+        , double step_dist);
     double itersolve_calc_position_from_coord(struct stepper_kinematics *sk
         , double x, double y, double z);
     void itersolve_set_position(struct stepper_kinematics *sk
@@ -228,7 +231,7 @@ defs_std = """
 
 defs_all = [
     defs_pyhelper, defs_serialqueue, defs_std, defs_stepcompress,
-    defs_itersolve, defs_trapq, defs_trdispatch,
+    defs_steppersync, defs_itersolve, defs_trapq, defs_trdispatch,
     defs_kin_cartesian, defs_kin_corexy, defs_kin_corexz, defs_kin_delta,
     defs_kin_deltesian, defs_kin_polar, defs_kin_rotary_delta, defs_kin_winch,
     defs_kin_extruder, defs_kin_shaper, defs_kin_idex,
