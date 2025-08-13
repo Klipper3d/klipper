@@ -34,6 +34,7 @@ int stepcompress_queue_mq_msg(struct stepcompress *sc, uint64_t req_clock
 int stepcompress_extract_old(struct stepcompress *sc
                              , struct pull_history_steps *p, int max
                              , uint64_t start_clock, uint64_t end_clock);
+int stepcompress_flush(struct stepcompress *sc, uint64_t move_clock);
 
 struct serialqueue;
 struct steppersync *steppersync_alloc(
