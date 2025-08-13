@@ -76,7 +76,7 @@ class ForceMove:
         self.trapq_append(self.trapq, print_time, accel_t, cruise_t, accel_t,
                           0., 0., 0., axis_r, 0., 0., 0., cruise_v, accel)
         print_time = print_time + accel_t + cruise_t + accel_t
-        toolhead.note_mcu_movequeue_activity(print_time)
+        self.motion_queuing.note_mcu_movequeue_activity(print_time)
         toolhead.dwell(accel_t + cruise_t + accel_t)
         toolhead.flush_step_generation()
         stepper.set_trapq(prev_trapq)
