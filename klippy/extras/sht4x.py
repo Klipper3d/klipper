@@ -22,21 +22,22 @@ class SHT4X:
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.reactor = self.printer.get_reactor()
-        
+
         # I2C setup
         addr = config.getint('i2c_address', DEFAULT_ADDR)
         self.i2c = bus.MCU_I2C_from_config(config, default_addr=addr)
         self.mcu = self.i2c.get_mcu()
-        
+
         # Sensor state
         self.temp = 0
         self.humidity = 0
         self._error_count = 0
         self.sensor_ready = False
-        
+
         # Register with Klipper
         self.printer.add_object("sht4x " + self.name, self)
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self.handle_connect)
 
     def handle_connect(self):
         """Initialize sensor"""
@@ -45,7 +46,8 @@ class SHT4X:
             if self._test_measurement():
                 self.sensor_ready = True
                 logging.info("SHT4X: Sensor ready")
-                self.sample_timer = self.reactor.register_timer(self.sample_sensor)
+                self.sample_timer = self.reactor.register_timer(
+                    self.sample_sensor)
                 self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
             else:
                 logging.error("SHT4X: Sensor test failed")
@@ -77,37 +79,38 @@ class SHT4X:
         """Main sensor sampling method"""
         if not self.sensor_ready:
             return eventtime + 1.0
-            
+
         try:
             # Get measurements
             recv = self.get_measurements()
-            
+
             if not self._validate_crc(recv):
                 raise Exception("CRC validation failed")
-            
+
             # Process temperature
             raw_temp = (recv[0] << 8) | recv[1]
             self.temp = -45.0 + 175.0 * raw_temp / 65535.0
-            
+
             # Process humidity
             raw_humidity = (recv[3] << 8) | recv[4]
             humidity_percent = -6.0 + 125.0 * raw_humidity / 65535.0
             self.humidity = max(min(humidity_percent, 100.0), 0.0)
-            
+
             self._error_count = 0
-            
+
             # Report to Klipper
             if hasattr(self, '_callback'):
-                self._callback(self.mcu.estimated_print_time(eventtime), self.temp)
-                
+                self._callback(self.mcu.estimated_print_time(
+                    eventtime), self.temp)
+
         except Exception as e:
             self._error_count += 1
             logging.warning("SHT4X: Error %d: %s" % (self._error_count, str(e)))
-            
+
             if self._error_count > 5:
                 logging.error("SHT4X: Too many errors, sensor failed")
                 self.sensor_ready = False
-        
+
         return eventtime + 1.0
 
     def get_measurements(self):
@@ -115,10 +118,10 @@ class SHT4X:
         # Send measurement command and wait for acknowledgment
         params = self.i2c.i2c_write_wait_ack([MEASUREMENT_CMD])
         completion_time = params['completion_time']
-        
+
         # Wait for measurement to complete
         self.reactor.pause(completion_time + MEASUREMENT_TIME)
-        
+
         # Read response after proper delay
         params = self.i2c.i2c_read([], 6)
         return bytearray(params['response'])
