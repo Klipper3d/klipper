@@ -605,9 +605,7 @@ class MCU:
         self._max_stepper_error = config.getfloat('max_stepper_error', 0.000025,
                                                   minval=0.)
         self._reserved_move_slots = 0
-        self._stepqueues = []
         self._steppersync = None
-        self._flush_callbacks = []
         # Stats
         self._get_status_info = {}
         self._stats_sumsq_base = 0.
@@ -770,13 +768,12 @@ class MCU:
         move_count = config_params['move_count']
         if move_count < self._reserved_move_slots:
             raise error("Too few moves available on MCU '%s'" % (self._name,))
-        ffi_main, ffi_lib = chelper.get_ffi()
-        self._steppersync = ffi_main.gc(
-            ffi_lib.steppersync_alloc(self._serial.get_serialqueue(),
-                                      self._stepqueues, len(self._stepqueues),
-                                      move_count-self._reserved_move_slots),
-            ffi_lib.steppersync_free)
-        ffi_lib.steppersync_set_time(self._steppersync, 0., self._mcu_freq)
+        ss_move_count = move_count - self._reserved_move_slots
+        motion_queuing = self._printer.lookup_object('motion_queuing')
+        self._steppersync = motion_queuing.allocate_steppersync(
+            self, self._serial.get_serialqueue(), ss_move_count)
+        self._ffi_lib.steppersync_set_time(self._steppersync,
+                                           0., self._mcu_freq)
         # Log config information
         move_msg = "Configured MCU '%s' (%d moves)" % (self._name, move_count)
         logging.info(move_msg)
@@ -971,27 +968,8 @@ class MCU:
     def _firmware_restart_bridge(self):
         self._firmware_restart(True)
     # Move queue tracking
-    def register_stepqueue(self, stepqueue):
-        self._stepqueues.append(stepqueue)
     def request_move_queue_slot(self):
         self._reserved_move_slots += 1
-    def register_flush_callback(self, callback):
-        self._flush_callbacks.append(callback)
-    def flush_moves(self, print_time, clear_history_time):
-        if self._steppersync is None:
-            return
-        clock = self.print_time_to_clock(print_time)
-        if clock < 0:
-            return
-        for cb in self._flush_callbacks:
-            cb(print_time, clock)
-        clear_history_clock = \
-            max(0, self.print_time_to_clock(clear_history_time))
-        ret = self._ffi_lib.steppersync_flush(self._steppersync, clock,
-                                              clear_history_clock)
-        if ret:
-            raise error("Internal error in MCU '%s' stepcompress"
-                        % (self._name,))
     def check_active(self, print_time, eventtime):
         if self._steppersync is None:
             return

@@ -26,8 +26,8 @@ struct timepos {
 
 // Generate step times for a portion of a move
 static int32_t
-itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
-                          , double abs_start, double abs_end)
+itersolve_gen_steps_range(struct stepper_kinematics *sk, struct stepcompress *sc
+                          , struct move *m, double abs_start, double abs_end)
 {
     sk_calc_callback calc_position_cb = sk->calc_position_cb;
     double half_step = .5 * sk->step_dist;
@@ -37,7 +37,7 @@ itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
     if (end > m->move_t)
         end = m->move_t;
     struct timepos old_guess = {start, sk->commanded_pos}, guess = old_guess;
-    int sdir = stepcompress_get_step_dir(sk->sc);
+    int sdir = stepcompress_get_step_dir(sc);
     int is_dir_change = 0, have_bracket = 0, check_oscillate = 0;
     double target = sk->commanded_pos + (sdir ? half_step : -half_step);
     double last_time=start, low_time=start, high_time=start + SEEK_TIME_RESET;
@@ -99,13 +99,13 @@ itersolve_gen_steps_range(struct stepper_kinematics *sk, struct move *m
             if (!have_bracket || high_time - low_time > .000000001) {
                 if (!is_dir_change && rel_dist >= -half_step)
                     // Avoid rollback if stepper fully reaches step position
-                    stepcompress_commit(sk->sc);
+                    stepcompress_commit(sc);
                 // Guess is not close enough - guess again with new time
                 continue;
             }
         }
         // Found next step - submit it
-        int ret = stepcompress_append(sk->sc, sdir, m->print_time, guess.time);
+        int ret = stepcompress_append(sc, sdir, m->print_time, guess.time);
         if (ret)
             return ret;
         target = sdir ? target+half_step+half_step : target-half_step-half_step;
@@ -143,8 +143,9 @@ check_active(struct stepper_kinematics *sk, struct move *m)
 }
 
 // Generate step times for a range of moves on the trapq
-int32_t __visible
-itersolve_generate_steps(struct stepper_kinematics *sk, double flush_time)
+int32_t
+itersolve_generate_steps(struct stepper_kinematics *sk, struct stepcompress *sc
+                         , double flush_time)
 {
     double last_flush_time = sk->last_flush_time;
     sk->last_flush_time = flush_time;
@@ -170,15 +171,15 @@ itersolve_generate_steps(struct stepper_kinematics *sk, double flush_time)
                 while (--skip_count && pm->print_time > abs_start)
                     pm = list_prev_entry(pm, node);
                 do {
-                    int32_t ret = itersolve_gen_steps_range(sk, pm, abs_start
-                                                            , flush_time);
+                    int32_t ret = itersolve_gen_steps_range(
+                        sk, sc, pm, abs_start, flush_time);
                     if (ret)
                         return ret;
                     pm = list_next_entry(pm, node);
                 } while (pm != m);
             }
             // Generate steps for this move
-            int32_t ret = itersolve_gen_steps_range(sk, m, last_flush_time
+            int32_t ret = itersolve_gen_steps_range(sk, sc, m, last_flush_time
                                                     , flush_time);
             if (ret)
                 return ret;
@@ -195,8 +196,8 @@ itersolve_generate_steps(struct stepper_kinematics *sk, double flush_time)
                 double abs_end = force_steps_time;
                 if (abs_end > flush_time)
                     abs_end = flush_time;
-                int32_t ret = itersolve_gen_steps_range(sk, m, last_flush_time
-                                                        , abs_end);
+                int32_t ret = itersolve_gen_steps_range(
+                    sk, sc, m, last_flush_time, abs_end);
                 if (ret)
                     return ret;
                 skip_count = 1;
@@ -240,16 +241,10 @@ itersolve_is_active_axis(struct stepper_kinematics *sk, char axis)
 }
 
 void __visible
-itersolve_set_trapq(struct stepper_kinematics *sk, struct trapq *tq)
+itersolve_set_trapq(struct stepper_kinematics *sk, struct trapq *tq
+                    , double step_dist)
 {
     sk->tq = tq;
-}
-
-void __visible
-itersolve_set_stepcompress(struct stepper_kinematics *sk
-                           , struct stepcompress *sc, double step_dist)
-{
-    sk->sc = sc;
     sk->step_dist = step_dist;
 }
 

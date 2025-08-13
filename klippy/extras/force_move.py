@@ -33,10 +33,10 @@ class ForceMove:
         self.printer = config.get_printer()
         self.steppers = {}
         # Setup iterative solver
+        self.motion_queuing = self.printer.load_object(config, 'motion_queuing')
+        self.trapq = self.motion_queuing.allocate_trapq()
+        self.trapq_append = self.motion_queuing.lookup_trapq_append()
         ffi_main, ffi_lib = chelper.get_ffi()
-        self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
-        self.trapq_append = ffi_lib.trapq_append
-        self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
         self.stepper_kinematics = ffi_main.gc(
             ffi_lib.cartesian_stepper_alloc(b'x'), ffi_lib.free)
         # Register commands
@@ -85,14 +85,12 @@ class ForceMove:
         self.trapq_append(self.trapq, print_time, accel_t, cruise_t, accel_t,
                           0., 0., 0., axis_r, 0., 0., 0., cruise_v, accel)
         print_time = print_time + accel_t + cruise_t + accel_t
-        stepper.generate_steps(print_time)
-        self.trapq_finalize_moves(self.trapq, print_time + 99999.9,
-                                  print_time + 99999.9)
-        stepper.set_trapq(prev_trapq)
-        stepper.set_stepper_kinematics(prev_sk)
         toolhead.note_mcu_movequeue_activity(print_time)
         toolhead.dwell(accel_t + cruise_t + accel_t)
         toolhead.flush_step_generation()
+        stepper.set_trapq(prev_trapq)
+        stepper.set_stepper_kinematics(prev_sk)
+        self.motion_queuing.wipe_trapq(self.trapq)
     def _lookup_stepper(self, gcmd):
         name = gcmd.get('STEPPER')
         if name not in self.steppers:
