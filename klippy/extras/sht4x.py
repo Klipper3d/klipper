@@ -66,7 +66,7 @@ class SHT4X:
         """Validate CRC for both temp and humidity"""
         temp_crc = data[2]
         humidity_crc = data[5]
-        return (temp_crc == self._crc8(data[0:2]) and 
+        return (temp_crc == self._crc8(data[0:2]) and
                 humidity_crc == self._crc8(data[3:5]))
 
     def setup_minmax(self, min_temp, max_temp):
