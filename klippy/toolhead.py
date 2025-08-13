@@ -568,9 +568,8 @@ class ToolHead:
         self.motion_queuing.wipe_trapq(self.trapq)
     # Misc commands
     def stats(self, eventtime):
-        max_queue_time = max(self.print_time, self.last_flush_time)
         for m in self.all_mcus:
-            m.check_active(max_queue_time, eventtime)
+            m.check_active(self.last_step_gen_time, eventtime)
         est_print_time = self.mcu.estimated_print_time(eventtime)
         buffer_time = self.print_time - est_print_time
         is_active = buffer_time > -60. or not self.special_queuing_state
