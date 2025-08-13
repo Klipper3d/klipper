@@ -36,6 +36,7 @@ class SX1509(object):
                          REG_PULLUP : 0, REG_PULLDOWN : 0,
                          REG_INPUT_DISABLE : 0, REG_ANALOG_DRIVER_ENABLE : 0}
         self.reg_i_on_dict = {reg : 0 for reg in REG_I_ON}
+        self._init_cbs = []
         config.get_printer().register_event_handler("klippy:connect",
                                                     self.handle_connect)
     def handle_connect(self):
@@ -49,6 +50,10 @@ class SX1509(object):
         # Transfer all regs with their initial cached state
         for _reg, _data in self.reg_dict.items():
             self._i2c.i2c_write([_reg, (_data >> 8) & 0xFF , _data & 0xFF])
+        for cb in self._init_cbs:
+            cb()
+    def register_init_cb(self, cb):
+        self._init_cbs.append(cb)
     def setup_pin(self, pin_type, pin_params):
         if pin_type == 'digital_out' and pin_params['pin'][0:4] == "PIN_":
             return SX1509_digital_out(self, pin_params)
@@ -156,14 +161,13 @@ class SX1509_pwm(object):
         if self._max_duration:
             raise pins.error("SX1509 pins are not suitable for heaters")
         # Send initial value
-        self._sx1509.set_register(self._i_on_reg,
-                                  ~int(255 * self._start_value) & 0xFF)
-        self._mcu.add_config_cmd("i2c_write oid=%d data=%02x%02x" % (
-            self._sx1509.get_oid(),
-            self._i_on_reg,
-            self._sx1509.reg_i_on_dict[self._i_on_reg]
-            ),
-                                 is_init=True)
+        def cb():
+            self._sx1509.set_register(self._i_on_reg,
+                                    ~int(255 * self._start_value) & 0xFF)
+            curtime = self._mcu.get_printer().get_reactor().monotonic()
+            printtime = self._mcu.estimated_print_time(curtime)
+            self._sx1509.send_register(self._i_on_reg, printtime)
+        self._sx1509.register_init_cb(cb)
     def get_mcu(self):
         return self._mcu
     def setup_max_duration(self, max_duration):
