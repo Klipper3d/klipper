@@ -148,8 +148,7 @@ class ResonanceTestExecutor:
         last_v = last_t = last_accel = last_freq = 0.
         for next_t, accel, freq in test_seq:
             t_seg = next_t - last_t
-            toolhead.cmd_M204(self.gcode.create_gcode_command(
-                "M204", "M204", {"S": abs(accel)}))
+            toolhead.set_max_velocities(None, abs(accel), None, None)
             v = last_v + accel * t_seg
             abs_v = abs(v)
             if abs_v < 0.000001:
@@ -182,8 +181,7 @@ class ResonanceTestExecutor:
         if last_v:
             d_decel = -.5 * last_v2 / old_max_accel
             decel_X, decel_Y = axis.get_point(d_decel)
-            toolhead.cmd_M204(self.gcode.create_gcode_command(
-                "M204", "M204", {"S": old_max_accel}))
+            toolhead.set_max_velocities(None, old_max_accel, None, None)
             toolhead.move([X + decel_X, Y + decel_Y] + tpos[2:], abs(last_v))
         # Restore the original acceleration values
         self.gcode.run_script_from_command(
