@@ -739,19 +739,6 @@
     Configuring the zero reference position
   </a>
   
-    <nav class="md-nav" aria-label="Configuring the zero reference position">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-deprecated-relative_reference_index" class="md-nav__link">
-    The deprecated relative_reference_index
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
           <li class="md-nav__item">
@@ -1684,19 +1671,6 @@
     Configuring the zero reference position
   </a>
   
-    <nav class="md-nav" aria-label="Configuring the zero reference position">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-deprecated-relative_reference_index" class="md-nav__link">
-    The deprecated relative_reference_index
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
           <li class="md-nav__item">
@@ -2167,26 +2141,6 @@ probe_count: 5, 3
   z-offset.  Note that this coordinate must NOT be in a location specified as
   a <code>faulty_region</code> if a probe is necessary.</li>
 </ul>
-<h4 id="the-deprecated-relative_reference_index">The deprecated relative_reference_index<a class="headerlink" href="#the-deprecated-relative_reference_index" title="Permanent link">&para;</a></h4>
-<p>Existing configurations using the <code>relative_reference_index</code> option must be
-updated to use the <code>zero_reference_position</code>.  The response to the
-<a href="#output">BED_MESH_OUTPUT PGP=1</a> gcode command will include the (X, Y)
-coordinate associated with the index;  this position may be used as the value for
-the <code>zero_reference_position</code>. The output will look similar to the following:</p>
-<div class="highlight"><pre><span></span><code>// bed_mesh: generated points
-// Index | Tool Adjusted | Probe
-// 0 | (1.0, 1.0) | (24.0, 6.0)
-// 1 | (36.7, 1.0) | (59.7, 6.0)
-// 2 | (72.3, 1.0) | (95.3, 6.0)
-// 3 | (108.0, 1.0) | (131.0, 6.0)
-... (additional generated points)
-// bed_mesh: relative_reference_index 24 is (131.5, 108.0)
-</code></pre></div>
-
-<p><em>Note:  The above output is also printed in <code>klippy.log</code> during initialization.</em></p>
-<p>Using the example above we see that the <code>relative_reference_index</code> is
-printed along with its coordinate.  Thus the <code>zero_reference_position</code>
-is <code>131.5, 108</code>.</p>
 <h3 id="faulty-regions">Faulty Regions<a class="headerlink" href="#faulty-regions" title="Permanent link">&para;</a></h3>
 <p>It is possible for some areas of a bed to report inaccurate results when
 probing due to a "fault" at specific locations.  The best example of this
