@@ -170,6 +170,14 @@ BOARD_DEFS = {
         "firmware_path": "ZNP_ROBIN_NANO.bin",
         "current_firmware_path": "ZNP_ROBIN_NANO.CUR"
     },
+    'qidi-x6': {
+        'mcu': "stm32f401xc",
+        'spi_bus': "spi2",
+        'cs_pin': "PB12",
+        'skip_verify': False,
+        'firmware_path': 'X_4.bin',
+        'current_firmware_path': 'X_4.CUR'
+    },
     'qidi-x7': {
         'mcu': "stm32f401xc",
         'spi_bus': "spi2",
@@ -228,6 +236,9 @@ BOARD_ALIASES = {
     'robin_v3': BOARD_DEFS['monster8'],
     'btt-skrat-v1.0': BOARD_DEFS['btt-skrat'],
     'chitu-v6': BOARD_DEFS['chitu-v6'],
+    'qidi-x-smart3': BOARD_DEFS['qidi-x6'],
+    'qidi-x-plus3': BOARD_DEFS['qidi-x6'],
+    'qidi-x-max3': BOARD_DEFS['qidi-x6'],
     'qidi-q1-pro': BOARD_DEFS['qidi-x7'],
     'qidi-plus4': BOARD_DEFS['qidi-x7']
 }
