@@ -10,7 +10,6 @@
 #include <stdio.h> // fprintf
 #include <string.h> // strerror
 #include <time.h> // struct timespec
-#include <linux/prctl.h>  // PR_SET_NAME
 #include <sys/prctl.h>  // prctl
 #include "compiler.h" // __visible
 #include "pyhelper.h" // get_monotonic
@@ -96,6 +95,9 @@ dump_string(char *outbuf, int outbuf_size, char *inbuf, int inbuf_size)
 }
 
 // Set custom thread names
+#ifndef PR_SET_NAME
+#define PR_SET_NAME 15
+#endif
 int __visible
 set_thread_name(char name[16])
 {
