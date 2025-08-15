@@ -1,158 +1,171 @@
-# SHT4x i2c temperature sensors
+# SHT4X i2c based temperature sensors support
 #
 # Copyright (C) 2025 Milzo <overchecking@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 from . import bus
+######################################################################
+# Compatible Sensors:
+#       SHT40, SHT41, SHT45 - Sensirion SHT4X series
+#
+######################################################################
+SHT4X_I2C_ADDR = 0x44
 
-# SHT4x I2C Commands
-DEFAULT_ADDR = 0x44
-RESET = 0x94
-
-# Measurement command (high precision)
-MEASUREMENT_CMD = 0xFD
-
-# Measurement timing constant
-MEASUREMENT_TIME = 0.009  # 9ms
-RESET_TIME = 0.001  # 1ms
+SHT4X_CMD = {
+    'MEASURE': {
+        'STRETCH_ENABLED': {
+            'HIGH_REP': [0xFD],    # High precision, 8.2ms
+            'MED_REP': [0xF6],     # Medium precision, 4.5ms
+            'LOW_REP': [0xE0]      # Low precision, 1.7ms
+        },
+    },
+    'OTHER': {
+        'SOFTRESET': [0x94],       # Soft reset
+    }
+}
 
 class SHT4X:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.reactor = self.printer.get_reactor()
-
-        # I2C setup
-        addr = config.getint('i2c_address', DEFAULT_ADDR)
-        self.i2c = bus.MCU_I2C_from_config(config, default_addr=addr)
-        self.mcu = self.i2c.get_mcu()
-
-        # Sensor state
-        self.temp = 0
-        self.humidity = 0
-        self._error_count = 0
-        self.sensor_ready = False
-
-        # Register with Klipper
+        self.i2c = bus.MCU_I2C_from_config(
+            config, default_addr=SHT4X_I2C_ADDR, default_speed=100000)
+        self._error = self.i2c.get_mcu().error
+        self.report_time = config.getint('sht4x_report_time', 1, minval=1)
+        self.deviceId = config.get('sensor_type')
+        self.temp = self.min_temp = self.max_temp = self.humidity = 0.
+        self.sample_timer = self.reactor.register_timer(self._sample_sht4x)
         self.printer.add_object("sht4x " + self.name, self)
-        self.printer.register_event_handler(
-            "klippy:connect", self.handle_connect)
+        self.printer.register_event_handler("klippy:connect",
+                                            self.handle_connect)
 
     def handle_connect(self):
-        """Initialize sensor"""
-        try:
-            self.reset()
-            if self._test_measurement():
-                self.sensor_ready = True
-                logging.info("SHT4X: Sensor ready")
-                self.sample_timer = self.reactor.register_timer(
-                    self.sample_sensor)
-                self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
-            else:
-                logging.error("SHT4X: Sensor test failed")
-        except Exception as e:
-            logging.error("SHT4X: Init failed: %s" % str(e))
-
-    def _test_measurement(self):
-        """Quick measurement test"""
-        try:
-            recv = self.get_measurements()
-            return self._validate_crc(recv)
-        except Exception:
-            return False
-
-    def _validate_crc(self, data):
-        """Validate CRC for both temp and humidity"""
-        temp_crc = data[2]
-        humidity_crc = data[5]
-        return (temp_crc == self._crc8(data[0:2]) and
-                humidity_crc == self._crc8(data[3:5]))
+        self._init_sht4x()
+        self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
 
     def setup_minmax(self, min_temp, max_temp):
-        pass  # Required by Klipper interface
+        self.min_temp = min_temp
+        self.max_temp = max_temp
 
     def setup_callback(self, cb):
         self._callback = cb
 
-    def sample_sensor(self, eventtime):
-        """Main sensor sampling method"""
-        if not self.sensor_ready:
-            return eventtime + 1.0
+    def get_report_time_delta(self):
+        return self.report_time
 
+    def _init_sht4x(self):
         try:
-            # Get measurements
-            recv = self.get_measurements()
+            # Soft reset the device
+            if hasattr(self.i2c, 'i2c_write_wait_ack'):
+                self.i2c.i2c_write_wait_ack(SHT4X_CMD['OTHER']['SOFTRESET'])
+            else:
+                self.i2c.i2c_write(SHT4X_CMD['OTHER']['SOFTRESET'])
+            # Wait after reset
+            self.reactor.pause(self.reactor.monotonic() + 0.001)
 
-            if not self._validate_crc(recv):
-                raise Exception("CRC validation failed")
+            logging.info("sht4x: initialized for single-shot measurements")
 
-            # Process temperature
-            raw_temp = (recv[0] << 8) | recv[1]
-            self.temp = -45.0 + 175.0 * raw_temp / 65535.0
+        except Exception:
+            logging.exception("sht4x: initialization failed")
+            raise
 
-            # Process humidity
-            raw_humidity = (recv[3] << 8) | recv[4]
-            humidity_percent = -6.0 + 125.0 * raw_humidity / 65535.0
-            self.humidity = max(min(humidity_percent, 100.0), 0.0)
+    def _sample_sht4x(self, eventtime):
+        try:
+            # Single-shot measurement with retries
+            retries = 5
+            params = None
+            error = None
 
-            self._error_count = 0
+            while retries > 0 and params is None:
+                try:
+                    # Send measurement command
+                    if hasattr(self.i2c, 'i2c_write_wait_ack'):
+                        self.i2c.i2c_write_wait_ack(
+                        SHT4X_CMD['MEASURE']['STRETCH_ENABLED']['HIGH_REP'])
+                    else:
+                        self.i2c.i2c_write(
+                        SHT4X_CMD['MEASURE']['STRETCH_ENABLED']['HIGH_REP'])
 
-            # Report to Klipper
-            if hasattr(self, '_callback'):
-                self._callback(self.mcu.estimated_print_time(
-                    eventtime), self.temp)
+                    # Wait for measurement to complete
+                    self.reactor.pause(self.reactor.monotonic() + 0.009)
 
-        except Exception as e:
-            self._error_count += 1
-            logging.warning("SHT4X: Error %d: %s" % (self._error_count, str(e)))
+                    # Read 6 bytes
+                    params = self.i2c.i2c_read([], 6, retry=False)
 
-            if self._error_count > 5:
-                logging.error("SHT4X: Too many errors, sensor failed")
-                self.sensor_ready = False
+                except Exception as e:
+                    logging.exception(
+                    "sht4x: measurement attempt failed: %s", e)
+                    error = e
+                    self.reactor.pause(self.reactor.monotonic() + .5)
+                    retries -= 1
 
-        return eventtime + 1.0
+            if params is None:
+                raise error
 
-    def get_measurements(self):
-        """Get temperature and humidity measurements with proper timing"""
-        # Send measurement command and wait for acknowledgment
-        params = self.i2c.i2c_write_wait_ack([MEASUREMENT_CMD])
-        completion_time = params['completion_time']
+            response = bytearray(params['response'])
+            rtemp  = response[0] << 8
+            rtemp |= response[1]
+            if self._crc8(rtemp) != response[2]:
+                logging.warning(
+                    "sht4x: Checksum error on Temperature reading!"
+                )
+            else:
+                self.temp = -45 + (175 * rtemp / 65535)
+                logging.debug("sht4x: Temperature %.2f " % self.temp)
 
-        # Wait for measurement to complete
-        self.reactor.pause(completion_time + MEASUREMENT_TIME)
+            rhumid  = response[3] << 8
+            rhumid |= response[4]
+            if self._crc8(rhumid) != response[5]:
+                logging.warning("sht4x: Checksum error on Humidity reading!")
+            else:
+                self.humidity = 100 * rhumid / 65535
+                logging.debug("sht4x: Humidity %.2f " % self.humidity)
 
-        # Read response after proper delay
-        params = self.i2c.i2c_read([], 6)
-        return bytearray(params['response'])
+        except Exception:
+            logging.exception("sht4x: Error reading data")
+            self.temp = self.humidity = .0
+            return self.reactor.NEVER
 
-    def reset(self):
-        """Reset sensor with proper timing"""
-        params = self.i2c.i2c_write_wait_ack([RESET])
-        self.reactor.pause(params['completion_time'] + RESET_TIME)
+        if self.temp < self.min_temp or self.temp > self.max_temp:
+            self.printer.invoke_shutdown(
+                "sht4x: temperature %0.1f outside range of %0.1f:%.01f"
+                % (self.temp, self.min_temp, self.max_temp))
 
-    def get_status(self, eventtime):
-        """Return sensor status for Mainsail"""
-        return {
-            'temperature': round(self.temp, 2),
-            'humidity': round(self.humidity, 1)
-        }
+        measured_time = self.reactor.monotonic()
+        print_time = self.i2c.get_mcu().estimated_print_time(measured_time)
+        self._callback(print_time, self.temp)
+        return measured_time + self.report_time
 
-    def _crc8(self, buffer):
-        """CRC8 checksum for SHT4x sensors"""
+    def _split_bytes(self, data):
+        bytes = []
+        for i in range((data.bit_length() + 7) // 8):
+            bytes.append((data >> i*8) & 0xFF)
+        bytes.reverse()
+        return bytes
+
+    def _crc8(self, data):
+        #crc8 polynomial for 16bit value, CRC8 -> x^8 + x^5 + x^4 + 1
+        SHT4X_CRC8_POLYNOMINAL= 0x31
         crc = 0xFF
-        for byte in buffer:
+        data_bytes = self._split_bytes(data)
+        for byte in data_bytes:
             crc ^= byte
             for _ in range(8):
                 if crc & 0x80:
-                    crc = (crc << 1) ^ 0x31
+                    crc = (crc << 1) ^ SHT4X_CRC8_POLYNOMINAL
                 else:
-                    crc = crc << 1
+                    crc <<= 1
         return crc & 0xFF
 
-def load_config(config):
-    pheaters = config.get_printer().load_object(config, "heaters")
-    pheaters.add_sensor_factory("SHT4X", SHT4X)
+    def get_status(self, eventtime):
+        return {
+            'temperature': round(self.temp, 2),
+            'humidity': round(self.humidity, 1),
+        }
 
-def load_config_prefix(config):
-    return SHT4X(config)
+def load_config(config):
+    # Register sensor
+    pheater = config.get_printer().lookup_object("heaters")
+    pheater.add_sensor_factory("SHT4X", SHT4X)
