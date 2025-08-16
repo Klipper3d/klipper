@@ -180,6 +180,7 @@ class MCU_I2C:
         self.cmd_queue = self.mcu.alloc_command_queue()
         self.mcu.register_config_callback(self.build_config)
         self.i2c_write_cmd = self.i2c_read_cmd = None
+        self.i2c_bus_status = None
     def get_oid(self):
         return self.oid
     def get_mcu(self):
@@ -188,6 +189,15 @@ class MCU_I2C:
         return self.i2c_address
     def get_command_queue(self):
         return self.cmd_queue
+    def i2c_status_check(self, nack, fatal=True):
+        msg = self.i2c_bus_status.get(nack)
+        if msg is None:
+            return
+        error_str = "MCU '%s' I2C addr %d: %s" % (
+            self.mcu.get_name(), self.i2c_address, msg)
+        if not fatal:
+            return error_str
+        raise mcu.error(error_str)
     def build_config(self):
         if '%' in self.config_fmt:
             bus = resolve_bus_name(self.mcu, "i2c_bus", self.bus)
@@ -199,12 +209,39 @@ class MCU_I2C:
                 pulse_ticks = self.mcu.seconds_to_clock(1./self.speed/2)
                 self.config_fmt = self.config_fmt_ticks % (pulse_ticks,)
         self.mcu.add_config_cmd(self.config_fmt)
-        self.i2c_write_cmd = self.mcu.lookup_command(
-            "i2c_write oid=%c data=%*s", cq=self.cmd_queue)
-        self.i2c_read_cmd = self.mcu.lookup_query_command(
-            "i2c_read oid=%c reg=%*s read_len=%u",
-            "i2c_read_response oid=%c response=%*s", oid=self.oid,
-            cq=self.cmd_queue)
+        # Disable responses in debug mode
+        printer = self.mcu.get_printer()
+        debugoutput = printer.get_start_args().get('debugoutput')
+        if debugoutput is not None:
+            self.i2c_write_cmd = self.mcu.lookup_command(
+                "i2c_write oid=%c data=%*s", cq=self.cmd_queue)
+            return
+        # Migration to host error handling
+        enums = self.mcu.get_enumerations()
+        status_to_id = enums.get("i2c_bus_status")
+        if status_to_id is not None:
+            self.i2c_bus_status = {}
+            for k in status_to_id:
+                v = status_to_id[k]
+                self.i2c_bus_status[v] = k
+        if self.i2c_bus_status:
+            self.i2c_write_cmd = self.mcu.lookup_query_command(
+                "i2c_write oid=%c data=%*s",
+                "i2c_write_status oid=%c nack=%c", oid=self.oid,
+                cq=self.cmd_queue)
+            self.i2c_read_cmd = self.mcu.lookup_query_command(
+                "i2c_read oid=%c reg=%*s read_len=%u",
+                "i2c_read_response oid=%c nack=%c response=%*s",
+                oid=self.oid,
+                cq=self.cmd_queue)
+        else:
+            self.i2c_write_cmd = self.mcu.lookup_command(
+                "i2c_write oid=%c data=%*s", cq=self.cmd_queue)
+            self.i2c_read_cmd = self.mcu.lookup_query_command(
+                "i2c_read oid=%c reg=%*s read_len=%u",
+                "i2c_read_response oid=%c response=%*s",
+                oid=self.oid,
+                cq=self.cmd_queue)
     def i2c_write(self, data, minclock=0, reqclock=0):
         if self.i2c_write_cmd is None:
             # Send setup message via mcu initialization
@@ -212,13 +249,25 @@ class MCU_I2C:
             self.mcu.add_config_cmd("i2c_write oid=%d data=%s" % (
                 self.oid, data_msg), is_init=True)
             return
-        self.i2c_write_cmd.send([self.oid, data],
-                                minclock=minclock, reqclock=reqclock)
+        params = self.i2c_write_cmd.send([self.oid, data],
+                                         minclock=minclock,
+                                         reqclock=reqclock)
+        if params is not None:
+            self.i2c_status_check(params["nack"])
     def i2c_write_wait_ack(self, data, minclock=0, reqclock=0):
-        self.i2c_write_cmd.send_wait_ack([self.oid, data],
-                                minclock=minclock, reqclock=reqclock)
+        self.i2c_write(data, minclock, reqclock)
     def i2c_read(self, write, read_len, retry=True):
-        return self.i2c_read_cmd.send([self.oid, write, read_len], retry)
+        attempts = [1]
+        if retry:
+            attempts = [1, 2, 3, 4, 5]
+        err = None
+        for _ in attempts:
+            params = self.i2c_read_cmd.send([self.oid, write, read_len], retry)
+            if self.i2c_bus_status is not None:
+                err = self.i2c_status_check(params["nack"], fatal=False)
+            if err is None:
+                return params
+        raise mcu.error(err)
 
 def MCU_I2C_from_config(config, default_addr=None, default_speed=100000):
     # Load bus parameters

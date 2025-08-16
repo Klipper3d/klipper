@@ -17,6 +17,11 @@ enum {
     IF_SOFTWARE = 1, IF_HARDWARE = 2
 };
 
+DECL_ENUMERATION("i2c_bus_status", "NACK", I2C_BUS_NACK);
+DECL_ENUMERATION("i2c_bus_status", "START_NACK", I2C_BUS_START_NACK);
+DECL_ENUMERATION("i2c_bus_status", "START_READ_NACK", I2C_BUS_START_READ_NACK);
+DECL_ENUMERATION("i2c_bus_status", "BUS_TIMEOUT", I2C_BUS_TIMEOUT);
+
 void
 command_config_i2c(uint32_t *args)
 {
@@ -78,8 +83,8 @@ void command_i2c_write(uint32_t *args)
     struct i2cdev_s *i2c = oid_lookup(oid, command_config_i2c);
     uint8_t data_len = args[1];
     uint8_t *data = command_decode_ptr(args[2]);
-    int ret = i2c_dev_write(i2c, data_len, data);
-    i2c_shutdown_on_err(ret);
+    int nack = i2c_dev_write(i2c, data_len, data);
+    sendf("i2c_write_status oid=%c nack=%c", oid, nack);
 }
 DECL_COMMAND(command_i2c_write, "i2c_write oid=%c data=%*s");
 
@@ -101,8 +106,8 @@ void command_i2c_read(uint32_t *args)
     uint8_t *reg = command_decode_ptr(args[2]);
     uint8_t data_len = args[3];
     uint8_t data[data_len];
-    int ret = i2c_dev_read(i2c, reg_len, reg, data_len, data);
-    i2c_shutdown_on_err(ret);
-    sendf("i2c_read_response oid=%c response=%*s", oid, data_len, data);
+    int nack = i2c_dev_read(i2c, reg_len, reg, data_len, data);
+    sendf("i2c_read_response oid=%c nack=%c response=%*s",
+                                    oid, nack, data_len, data);
 }
 DECL_COMMAND(command_i2c_read, "i2c_read oid=%c reg=%*s read_len=%u");
