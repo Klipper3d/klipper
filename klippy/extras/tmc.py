@@ -548,6 +548,60 @@ class TMCCommandHelper:
                     reg_name, val = self.read_translate(reg_name, val)
                 gcmd.respond_info(self.fields.pretty_format(reg_name, val))
 
+######################################################################
+# TMC passive braking
+######################################################################
+
+class TMCPassiveBrake:
+    def __init__(self, config, mcu_tmc):
+        self.printer = config.get_printer()
+        self.mcu_tmc = mcu_tmc
+        self.fields = mcu_tmc.get_fields()
+        name_parts = config.get_name().split()
+        self.stepper_name = ' '.join(name_parts[1:])
+        self.state = {}
+        gcode = self.printer.lookup_object("gcode")
+        gcode.register_mux_command("TMC_PASSIVE_BRAKE", "STEPPER",
+                                   self.stepper_name,
+                                   self.cmd_TMC_PASSIVE_BRAKE,
+                                   desc=self.cmd_TMC_PASSIVE_BRAKE_help)
+    cmd_TMC_PASSIVE_BRAKE_help = "Enable the passive braking"
+    def cmd_TMC_PASSIVE_BRAKE(self, gcmd):
+        force_move = self.printer.lookup_object("force_move")
+        stepper = force_move.lookup_stepper(self.stepper_name)
+        stepper.add_active_callback(self.restore)
+        state = {}
+        reg = self.fields.lookup_register("en_pwm_mode", None)
+        if reg is not None:
+            en_pwm = self.fields.get_field("en_pwm_mode")
+            if en_pwm == 0:
+                state["en_pwm_mode"] = 0
+                val = self.fields.set_field("en_pwm_mode", 1)
+                self.mcu_tmc.set_register("GCONF", val)
+        if reg is None:
+            en_spread = not self.fields.get_field("en_spreadcycle")
+            if en_spread == 1:
+                val = self.fields.set_field("en_spreadcycle", 0)
+                state["en_spreadcycle"] = 1
+                self.mcu_tmc.set_register("GCONF", val)
+        pwmthrs = self.fields.get_field("tpwmthrs")
+        if pwmthrs == 0xfffff:
+            state["tpwmthrs"] = 0xfffff
+            val = self.fields.set_field("tpwmthrs", 0xffff0)
+            self.mcu_tmc.set_register("TPWMTHRS", val)
+        ihold = self.fields.get_field("ihold")
+        if ihold:
+            state["ihold"] = ihold
+            val = self.fields.set_field("ihold", 0)
+            self.mcu_tmc.set_register("IHOLD_IRUN", val)
+        self.state = state
+    def restore(self, flush_time):
+        state = self.state
+        self.state = {}
+        for field in state:
+            reg = self.fields.lookup_register(field)
+            v = self.fields.set_field(field, state[field])
+            self.mcu_tmc.set_register(reg, v)
 
 ######################################################################
 # TMC virtual pins
