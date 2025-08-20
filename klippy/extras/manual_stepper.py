@@ -22,6 +22,7 @@ class ManualStepper:
         self.velocity = config.getfloat('velocity', 5., above=0.)
         self.accel = self.homing_accel = config.getfloat('accel', 0., minval=0.)
         self.next_cmd_time = 0.
+        self.commanded_pos = 0.
         self.pos_min = config.getfloat('position_min', None)
         self.pos_max = config.getfloat('position_max', None)
         # Setup iterative solver
@@ -60,9 +61,12 @@ class ManualStepper:
                 se.motor_disable(self.next_cmd_time)
         self.sync_print_time()
     def do_set_position(self, setpos):
-        self.rail.set_position([setpos, 0., 0.])
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.flush_step_generation()
+        self.commanded_pos = setpos
+        self.rail.set_position([self.commanded_pos, 0., 0.])
     def _submit_move(self, movetime, movepos, speed, accel):
-        cp = self.rail.get_commanded_position()
+        cp = self.commanded_pos
         dist = movepos - cp
         axis_r, accel_t, cruise_t, cruise_v = force_move.calc_move_time(
             dist, speed, accel)
@@ -70,6 +74,7 @@ class ManualStepper:
                           accel_t, cruise_t, accel_t,
                           cp, 0., 0., axis_r, 0., 0.,
                           0., cruise_v, accel)
+        self.commanded_pos = movepos
         return movetime + accel_t + cruise_t + accel_t
     def do_move(self, movepos, speed, accel, sync=True):
         self.sync_print_time()
@@ -149,7 +154,7 @@ class ManualStepper:
         self.instant_corner_v = instant_corner_v
         self.gaxis_limit_velocity = limit_velocity
         self.gaxis_limit_accel = limit_accel
-        toolhead.add_extra_axis(self, self.get_position()[0])
+        toolhead.add_extra_axis(self, self.commanded_pos)
     def process_move(self, print_time, move, ea_index):
         axis_r = move.axes_r[ea_index]
         start_pos = move.start_pos[ea_index]
@@ -161,6 +166,7 @@ class ManualStepper:
                           start_pos, 0., 0.,
                           1., 0., 0.,
                           start_v, cruise_v, accel)
+        self.commanded_pos = move.end_pos[ea_index]
     def check_move(self, move, ea_index):
         # Check move is in bounds
         movepos = move.end_pos[ea_index]
@@ -185,9 +191,10 @@ class ManualStepper:
         return self.trapq
     # Toolhead wrappers to support homing
     def flush_step_generation(self):
-        self.sync_print_time()
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.flush_step_generation()
     def get_position(self):
-        return [self.rail.get_commanded_position(), 0., 0., 0.]
+        return [self.commanded_pos, 0., 0., 0.]
     def set_position(self, newpos, homing_axes=""):
         self.do_set_position(newpos[0])
     def get_last_move_time(self):
@@ -206,7 +213,7 @@ class ManualStepper:
         # Clear trapq of any remaining parts of movement
         reactor = self.printer.get_reactor()
         self.motion_queuing.wipe_trapq(self.trapq)
-        self.rail.set_position([newpos[0], 0., 0.])
+        self.rail.set_position([self.commanded_pos, 0., 0.])
         self.sync_print_time()
     def get_kinematics(self):
         return self
