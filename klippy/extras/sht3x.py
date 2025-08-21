@@ -80,10 +80,10 @@ class SHT3X:
 
     def _init_sht3x(self):
         # Device Soft Reset
-        self.i2c.i2c_write_wait_ack(SHT3X_CMD['OTHER']['BREAK'])
+        self.i2c.i2c_write(SHT3X_CMD['OTHER']['BREAK'])
         # Break takes ~ 1ms
         self.reactor.pause(self.reactor.monotonic() + .0015)
-        self.i2c.i2c_write_wait_ack(SHT3X_CMD['OTHER']['SOFTRESET'])
+        self.i2c.i2c_write(SHT3X_CMD['OTHER']['SOFTRESET'])
         # Wait <=1.5ms after reset
         self.reactor.pause(self.reactor.monotonic() + .0015)
 
@@ -97,7 +97,7 @@ class SHT3X:
             logging.warning("sht3x: Reading status - checksum error!")
 
         # Enable periodic mode
-        self.i2c.i2c_write_wait_ack(
+        self.i2c.i2c_write(
             SHT3X_CMD['PERIODIC']['2HZ']['HIGH_REP']
         )
         # Wait <=15.5ms for first measurement
