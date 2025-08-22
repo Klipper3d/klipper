@@ -56,6 +56,8 @@ defs_stepcompress = """
         , uint64_t start_clock, uint64_t end_clock);
     void stepcompress_set_stepper_kinematics(struct stepcompress *sc
         , struct stepper_kinematics *sk);
+    struct stepper_kinematics *stepcompress_get_stepper_kinematics(
+        struct stepcompress *sc);
 """
 
 defs_steppersync = """
@@ -76,11 +78,14 @@ defs_itersolve = """
     int32_t itersolve_is_active_axis(struct stepper_kinematics *sk, char axis);
     void itersolve_set_trapq(struct stepper_kinematics *sk, struct trapq *tq
         , double step_dist);
+    struct trapq *itersolve_get_trapq(struct stepper_kinematics *sk);
     double itersolve_calc_position_from_coord(struct stepper_kinematics *sk
         , double x, double y, double z);
     void itersolve_set_position(struct stepper_kinematics *sk
         , double x, double y, double z);
     double itersolve_get_commanded_pos(struct stepper_kinematics *sk);
+    double itersolve_get_gen_steps_pre_active(struct stepper_kinematics *sk);
+    double itersolve_get_gen_steps_post_active(struct stepper_kinematics *sk);
 """
 
 defs_trapq = """
@@ -157,8 +162,6 @@ defs_kin_extruder = """
 """
 
 defs_kin_shaper = """
-    double input_shaper_get_step_generation_window(
-        struct stepper_kinematics *sk);
     int input_shaper_set_shaper_params(struct stepper_kinematics *sk, char axis
         , int n, double a[], double t[]);
     int input_shaper_set_sk(struct stepper_kinematics *sk

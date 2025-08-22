@@ -80,8 +80,7 @@ class ManualStepper:
         self.sync_print_time()
         self.next_cmd_time = self._submit_move(self.next_cmd_time, movepos,
                                                speed, accel)
-        toolhead = self.printer.lookup_object('toolhead')
-        toolhead.note_mcu_movequeue_activity(self.next_cmd_time)
+        self.motion_queuing.note_mcu_movequeue_activity(self.next_cmd_time)
         if sync:
             self.sync_print_time()
     def do_homing_move(self, movepos, speed, accel, triggered, check_trigger):
@@ -205,11 +204,12 @@ class ManualStepper:
     def drip_move(self, newpos, speed, drip_completion):
         # Submit move to trapq
         self.sync_print_time()
-        maxtime = self._submit_move(self.next_cmd_time, newpos[0],
-                                    speed, self.homing_accel)
+        start_time = self.next_cmd_time
+        end_time = self._submit_move(start_time, newpos[0],
+                                     speed, self.homing_accel)
         # Drip updates to motors
-        toolhead = self.printer.lookup_object('toolhead')
-        toolhead.drip_update_time(maxtime, drip_completion)
+        self.motion_queuing.drip_update_time(start_time, end_time,
+                                             drip_completion)
         # Clear trapq of any remaining parts of movement
         reactor = self.printer.get_reactor()
         self.motion_queuing.wipe_trapq(self.trapq)
