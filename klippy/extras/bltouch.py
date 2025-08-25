@@ -57,6 +57,7 @@ class BLTouchProbe:
             self.cal_retract_dist = config.getfloat('calibration_retract_dist', 2.0, above=0.)
             self.cal_nozzle_retract_dist = config.getfloat('calibration_nozzle_retract_dist', 2.0, above=0.)
             self.cal_nozzle_samples = config.getint('calibration_nozzle_samples', 1, minval=1, maxval=10)
+            self.cal_nozzle_diameter = config.getfloat('calibration_nozzle_diameter', 0.4, above=0.)
         else:
             self.nozzle_endstop = None
             self.calibration_position = None
@@ -67,6 +68,7 @@ class BLTouchProbe:
             self.cal_retract_dist = None
             self.cal_nozzle_retract_dist = None
             self.cal_nozzle_samples = None
+            self.cal_nozzle_diameter = None
         # output mode
         omodes = ['5V', 'OD', None]
         self.output_mode = config.getchoice('set_output_mode', omodes, None)
@@ -421,27 +423,70 @@ class BLTouchProbe:
         # Retract
         toolhead.manual_move([None, None, first_nozzle[2] + self.cal_nozzle_retract_dist], self.cal_lift_speed)
         
-        # Multiple slow speed touches for averaging
-        nozzle_samples = []
-        for i in range(self.cal_nozzle_samples):
-            gcmd.respond_info("Nozzle touch %d/%d at %.1f mm/s..." % (i+1, self.cal_nozzle_samples, self.cal_probe_speed_slow))
-            pos = toolhead.get_position()
-            pos[2] = target_z
-            nozzle_pos = phoming.probing_move(self.nozzle_endstop, pos, self.cal_probe_speed_slow)
-            nozzle_samples.append(nozzle_pos[2])
-            
-            # Retract between samples if not the last one
-            if i < self.cal_nozzle_samples - 1:
-                toolhead.manual_move([None, None, nozzle_pos[2] + self.cal_nozzle_retract_dist], self.cal_lift_speed)
+        # Second touch at slow speed at center position
+        gcmd.respond_info("Center nozzle touch at %.1f mm/s..." % self.cal_probe_speed_slow)
+        pos = toolhead.get_position()
+        pos[2] = target_z
+        center_pos = phoming.probing_move(self.nozzle_endstop, pos, self.cal_probe_speed_slow)
+        center_z = center_pos[2]
         
-        # Calculate average and standard deviation
-        z_nozzle = sum(nozzle_samples) / len(nozzle_samples)
+        # Retract
+        toolhead.manual_move([None, None, center_z + self.cal_nozzle_retract_dist], self.cal_lift_speed)
+        
+        # Perform cross pattern measurements if enabled
+        nozzle_samples = [center_z]  # Start with center measurement
+        
+        if self.cal_nozzle_samples > 1:
+            # Define cross pattern offsets: back, right, front, left
+            cross_offsets = [
+                (0, -self.cal_nozzle_diameter),  # Back
+                (self.cal_nozzle_diameter, 0),   # Right
+                (0, self.cal_nozzle_diameter),   # Front
+                (-self.cal_nozzle_diameter, 0)   # Left
+            ]
+            
+            # Limit to requested number of samples
+            num_cross_samples = min(self.cal_nozzle_samples - 1, 4)
+            
+            for i in range(num_cross_samples):
+                x_off, y_off = cross_offsets[i]
+                direction = ["back", "right", "front", "left"][i]
+                
+                # Move to cross position
+                toolhead.manual_move([cal_x + x_off, cal_y + y_off, None], 50.)
+                
+                gcmd.respond_info("Cross touch %s (%.1f, %.1f) at %.1f mm/s..." % 
+                                (direction, cal_x + x_off, cal_y + y_off, self.cal_probe_speed_slow))
+                
+                pos = toolhead.get_position()
+                pos[2] = target_z
+                cross_pos = phoming.probing_move(self.nozzle_endstop, pos, self.cal_probe_speed_slow)
+                nozzle_samples.append(cross_pos[2])
+                
+                # Retract
+                toolhead.manual_move([None, None, cross_pos[2] + self.cal_nozzle_retract_dist], self.cal_lift_speed)
+        
+        # Calculate statistics with weighted average favoring center
         if len(nozzle_samples) > 1:
-            variance = sum((x - z_nozzle) ** 2 for x in nozzle_samples) / len(nozzle_samples)
+            # Calculate average and standard deviation of all samples
+            avg_all = sum(nozzle_samples) / len(nozzle_samples)
+            variance = sum((x - avg_all) ** 2 for x in nozzle_samples) / len(nozzle_samples)
             std_dev = variance ** 0.5
-            gcmd.respond_info("Nozzle samples: %s" % ", ".join(["%.6f" % z for z in nozzle_samples]))
-            gcmd.respond_info("Nozzle average Z: %.6f, StdDev: %.6f" % (z_nozzle, std_dev))
+            
+            # Weighted average: center has 50% weight, cross points share remaining 50%
+            center_weight = 0.5
+            cross_weight = 0.5 / (len(nozzle_samples) - 1)
+            
+            z_nozzle = center_z * center_weight
+            for cross_z in nozzle_samples[1:]:
+                z_nozzle += cross_z * cross_weight
+            
+            gcmd.respond_info("Nozzle samples: Center=%.6f, Cross=[%s]" % 
+                            (center_z, ", ".join(["%.6f" % z for z in nozzle_samples[1:]])))
+            gcmd.respond_info("Center Z: %.6f, Simple avg: %.6f, Weighted avg: %.6f, StdDev: %.6f" % 
+                            (center_z, avg_all, z_nozzle, std_dev))
         else:
+            z_nozzle = center_z
             gcmd.respond_info("Nozzle final Z position: %.6f" % z_nozzle)
         
         # Step 8: Calculate and save new z-offset
@@ -451,16 +496,19 @@ class BLTouchProbe:
         # Move up for safety
         toolhead.manual_move([None, None, z_nozzle + 10.], 50.)
         
+        # Convert negative offset to positive for saving
+        save_z_offset = abs(new_z_offset) if new_z_offset < 0 else new_z_offset
+        
         # Save the new z-offset
-        self.position_endstop = new_z_offset
+        self.position_endstop = save_z_offset
         configfile = self.printer.lookup_object('configfile')
-        configfile.set('bltouch', 'z_offset', "%.6f" % new_z_offset)
+        configfile.set('bltouch', 'z_offset', "%.6f" % save_z_offset)
         
         gcmd.respond_info(
             "BLTouch z_offset calibration complete!\n"
             "New z_offset: %.6f\n"
             "The SAVE_CONFIG command will update the printer config file\n"
-            "with the above and restart the printer." % new_z_offset)
+            "with the above and restart the printer." % save_z_offset)
 
 def load_config(config):
     blt = BLTouchProbe(config)
