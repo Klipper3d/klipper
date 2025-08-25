@@ -55,6 +55,8 @@ class BLTouchProbe:
             self.cal_probe_speed_slow = config.getfloat('calibration_probe_speed_slow', 1.0, above=0.)
             self.cal_lift_speed = config.getfloat('calibration_lift_speed', 10.0, above=0.)
             self.cal_retract_dist = config.getfloat('calibration_retract_dist', 2.0, above=0.)
+            self.cal_nozzle_retract_dist = config.getfloat('calibration_nozzle_retract_dist', 2.0, above=0.)
+            self.cal_nozzle_samples = config.getint('calibration_nozzle_samples', 1, minval=1, maxval=10)
         else:
             self.nozzle_endstop = None
             self.calibration_position = None
@@ -63,6 +65,8 @@ class BLTouchProbe:
             self.cal_probe_speed_slow = None
             self.cal_lift_speed = None
             self.cal_retract_dist = None
+            self.cal_nozzle_retract_dist = None
+            self.cal_nozzle_samples = None
         # output mode
         omodes = ['5V', 'OD', None]
         self.output_mode = config.getchoice('set_output_mode', omodes, None)
@@ -318,6 +322,7 @@ class BLTouchProbe:
         heaters = self.printer.lookup_object('heaters')
         
         # Get optional parameters
+        heat_nozzle = gcmd.get_int('HEAT_NOZZLE', 1)  # Default: 1 (enabled)
         nozzle_temp = gcmd.get_float('NOZZLE_TEMP', self.nozzle_temp, above=0.)
         cal_pos = gcmd.get('POSITION', None)
         if cal_pos:
@@ -336,8 +341,8 @@ class BLTouchProbe:
         toolhead_y = cal_y - y_offset
         toolhead.manual_move([toolhead_x, toolhead_y, None], 50.)
         
-        # Step 3: Heat nozzle if needed
-        if nozzle_temp > 0:
+        # Step 3: Heat nozzle if needed and enabled
+        if heat_nozzle and nozzle_temp > 0:
             gcmd.respond_info("Heating nozzle to %.1f°C..." % nozzle_temp)
             extruder = toolhead.get_extruder()
             heaters.set_temperature(extruder.get_heater(), nozzle_temp, True)
@@ -378,7 +383,7 @@ class BLTouchProbe:
         gcmd.respond_info("BLTouch final Z position: %.6f" % z_bltouch)
         
         # Step 5: Move up and retract BLTouch
-        toolhead.manual_move([None, None, z_bltouch + 5.], 50.)
+        toolhead.manual_move([None, None, z_bltouch + 10.], 50.)
         self.raise_probe()
         self.verify_raise_probe()
         
@@ -414,16 +419,30 @@ class BLTouchProbe:
         first_nozzle = phoming.probing_move(self.nozzle_endstop, pos, self.cal_probe_speed)
         
         # Retract
-        toolhead.manual_move([None, None, first_nozzle[2] + self.cal_retract_dist], self.cal_lift_speed)
+        toolhead.manual_move([None, None, first_nozzle[2] + self.cal_nozzle_retract_dist], self.cal_lift_speed)
         
-        # Second touch at slow speed
-        gcmd.respond_info("Second nozzle touch at %.1f mm/s..." % self.cal_probe_speed_slow)
-        pos = toolhead.get_position()
-        pos[2] = target_z
-        nozzle_pos = phoming.probing_move(self.nozzle_endstop, pos, self.cal_probe_speed_slow)
+        # Multiple slow speed touches for averaging
+        nozzle_samples = []
+        for i in range(self.cal_nozzle_samples):
+            gcmd.respond_info("Nozzle touch %d/%d at %.1f mm/s..." % (i+1, self.cal_nozzle_samples, self.cal_probe_speed_slow))
+            pos = toolhead.get_position()
+            pos[2] = target_z
+            nozzle_pos = phoming.probing_move(self.nozzle_endstop, pos, self.cal_probe_speed_slow)
+            nozzle_samples.append(nozzle_pos[2])
+            
+            # Retract between samples if not the last one
+            if i < self.cal_nozzle_samples - 1:
+                toolhead.manual_move([None, None, nozzle_pos[2] + self.cal_nozzle_retract_dist], self.cal_lift_speed)
         
-        z_nozzle = nozzle_pos[2]
-        gcmd.respond_info("Nozzle final Z position: %.6f" % z_nozzle)
+        # Calculate average and standard deviation
+        z_nozzle = sum(nozzle_samples) / len(nozzle_samples)
+        if len(nozzle_samples) > 1:
+            variance = sum((x - z_nozzle) ** 2 for x in nozzle_samples) / len(nozzle_samples)
+            std_dev = variance ** 0.5
+            gcmd.respond_info("Nozzle samples: %s" % ", ".join(["%.6f" % z for z in nozzle_samples]))
+            gcmd.respond_info("Nozzle average Z: %.6f, StdDev: %.6f" % (z_nozzle, std_dev))
+        else:
+            gcmd.respond_info("Nozzle final Z position: %.6f" % z_nozzle)
         
         # Step 8: Calculate and save new z-offset
         new_z_offset = z_bltouch - z_nozzle
