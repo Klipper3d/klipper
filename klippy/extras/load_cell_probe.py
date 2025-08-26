@@ -109,48 +109,75 @@ class ForceGraph:
     def __init__(self, time_nd_64, force_nd_64):
         self.time = time_nd_64
         self.force = force_nd_64
-        # prepare arrays for numpy to save re-allocation costs
-        ones = np.ones(len(time_nd_64), dtype=np.float64)
-        self._time_nd = np.vstack([time_nd_64, ones]).T
+        # linear implementation:
+        self._cum_x = np.cumsum(self.time)
+        self._cum_y = np.cumsum(self.force)
+        self._cum_xx = np.cumsum(self.time * self.time)
+        self._cum_xy = np.cumsum(self.time * self.force)
+        self._cum_yy = np.cumsum(self.force * self.force)
 
-    # Least Squares on x[] y[] points, returns ForceLine
-    def _lstsq_line(self, x_stacked, y):
-        mx, b = np.linalg.lstsq(x_stacked, y, rcond=None)[0]
-        return mx, b
+    def _get_segment_sum(self, arr, start_idx, end_idx):
+        prior_sum = 0 if start_idx == 0 else arr[start_idx - 1]
+        return arr[end_idx] - prior_sum
 
-    # returns the residual sum for a best fit line
-    def _lstsq_error(self, x_stacked, y):
-        residuals = np.linalg.lstsq(x_stacked, y, rcond=None)[1]
-        return residuals[0] if residuals.size > 0 else 0
+    def _get_segment_stats(self, start_idx, end_idx):
+        """
+        Get statistics for segment [start_idx:end_idx] using cumulative sums
+        """
+        n = end_idx - start_idx
+        sum_x = self._get_segment_sum(self._cum_x, start_idx, end_idx)
+        sum_y = self._get_segment_sum(self._cum_y, start_idx, end_idx)
+        sum_xx = self._get_segment_sum(self._cum_xx, start_idx, end_idx)
+        sum_xy = self._get_segment_sum(self._cum_xy, start_idx, end_idx)
+        sum_yy = self._get_segment_sum(self._cum_yy, start_idx, end_idx)
+        return n, sum_x, sum_y, sum_xx, sum_xy, sum_yy
 
-    # split a chunk of the graph in to 2 lines at i and return the residual sum
-    def _two_lines_error(self, time_t, force, i):
-        r1 = self._lstsq_error(time_t[0:i], force[0:i])
-        r2 = self._lstsq_error(time_t[i:], force[i:])
-        return r1 + r2
+    def _least_squares(self, start_idx, end_idx):
+        """
+        Compute slope/intercept and RSS for a segment of the data
+        """
+        n = (end_idx - start_idx) + 1
+        if n < 2:
+            raise ValueError("Error: fewer than 2 points used")
+
+        sum_x = self._get_segment_sum(self._cum_x, start_idx, end_idx)
+        sum_y = self._get_segment_sum(self._cum_y, start_idx, end_idx)
+        sum_xx = self._get_segment_sum(self._cum_xx, start_idx, end_idx)
+        sum_xy = self._get_segment_sum(self._cum_xy, start_idx, end_idx)
+        sum_yy = self._get_segment_sum(self._cum_yy, start_idx, end_idx)
+
+        denom = n * sum_xx - sum_x * sum_x
+        if abs(denom) < 1e-10:
+            return None, np.inf
+
+        slope = (n * sum_xy - sum_x * sum_y) / denom
+        intercept = (sum_y - slope * sum_x) / n
+        rss = (sum_yy
+               - 2 * slope * sum_xy
+               - 2 * intercept * sum_y
+               + slope * slope * sum_xx
+               + 2 * slope * intercept * sum_x
+               + n * intercept * intercept)
+        return [slope, intercept], max(0.0, rss)
 
     # search exhaustively for the 2 lines that best fit the data
     # return the elbow index
-    def _two_lines_best_fit(self, time_t, force):
+    def _two_lines_best_fit(self, start_idx, end_idx):
         best_error = float('inf')
         best_fit_index = -1
-        for i in range(1, len(force) - 2):
-            error = self._two_lines_error(time_t, force, i)
-            if error < best_error:
-                best_error = error
-                best_fit_index = i
+        for i in range(1 + start_idx, end_idx - 1):
+            params1, r1 = self._least_squares(start_idx, i)
+            params2, r2 = self._least_squares(i + 1, end_idx)
+            if params1 is not None and params2 is not None:
+                error = r1 + r2
+                if error < best_error:
+                    best_error = error
+                    best_fit_index = i
+        # the index returns is the first point in the second line
         return best_fit_index
 
-    # slice the internal nd arrays
-    def _slice_nd(self, start_idx, end_idx):
-        t = self._time_nd[start_idx:end_idx]
-        f = self.force[start_idx:end_idx]
-        return t, f
-
     def find_elbow(self, start_idx, end_idx):
-        t, f = self._slice_nd(start_idx, end_idx)
-        elbow_index = self._two_lines_best_fit(t, f)
-        return start_idx + elbow_index
+        return self._two_lines_best_fit(start_idx, end_idx)
 
     # finds the index nearest to a time
     def index_near(self, instant):
@@ -159,16 +186,14 @@ class ForceGraph:
 
     # construct a line from 2 points
     def _points_to_line(self, a, b):
-        t = np.asarray([[a.time, 1], [b.time, 1]], dtype=np.float64)
-        f = np.asarray([a.force, b.force], dtype=np.float64)
-        mx, b = self._lstsq_line(t, f)
-        return ForceLine(mx, b)
+        slope = (b.force - a.force) / (b.time - a.time)
+        intercept = a.force - (slope * a.time)
+        return ForceLine(slope, intercept)
 
     # construct a line using a subset of the graph
     def line(self, start_idx, end_idx):
-        t, f = self._slice_nd(start_idx, end_idx)
-        mx, b = self._lstsq_line(t, f)
-        return ForceLine(mx, b)
+        params, rss = self._least_squares(start_idx, end_idx)
+        return ForceLine(params[0], params[1])
 
     # given a line and a range, calculate the standard deviation of the noise
     def noise_std(self, start_idx, end_idx, line):
@@ -305,6 +330,7 @@ class TapAnalysis(object):
         self._tap_lines = []
         self._tap_angles = []
         self._elapsed = 0.
+        self._collection_time = 0.
         self._error = None
         self._home_end_time = None
         self._pullback_start_time = None
@@ -521,6 +547,12 @@ class TapAnalysis(object):
     def set_elapsed(self, elapsed):
         self._elapsed = elapsed
 
+    def get_collection_time(self):
+        return self._collection_time
+
+    def set_collection_time(self, collection_time):
+        self._collection_time = collection_time
+
     # convert to dictionary for JSON encoder
     def to_dict(self):
         return {
@@ -534,6 +566,7 @@ class TapAnalysis(object):
             'home_end_time': self.get_home_end_time(),
             'pullback_start_time': self.get_pullback_start_time(),
             'pullback_end_time': self.get_pullback_end_time(),
+            'collection_time': self.get_collection_time(),
             'elapsed': self.get_elapsed(),
             'is_valid': self.is_valid(),
             'error': None if self._error is None else self._error.to_dict(),
@@ -552,7 +585,7 @@ class TapAnalysisHelper:
         self._clients.add_mux_endpoint("load_cell_probe/dump_taps",
             "load_cell_probe", name, header)
 
-    def analyze(self, samples, trigger_force):
+    def analyze(self, samples, trigger_force, collection_time):
         t_start = time.time()
         tap_analysis = TapAnalysis(samples, trigger_force)
         try:
@@ -568,6 +601,7 @@ class TapAnalysisHelper:
             tap_analysis.set_validation_error(ve)
         # total elapsed time for all calculations
         tap_analysis.set_elapsed(time.time() - t_start)
+        tap_analysis.set_collection_time(collection_time)
         # broadcast tap event data:
         self._clients.send({'tap': tap_analysis.to_dict()})
         self._log_errors(tap_analysis)
@@ -1126,9 +1160,10 @@ class LoadCellProbingMove:
 
 # Perform a single complete tap
 class TappingMove:
-    def __init__(self, config, load_cell_probing_move, tap_analysis_helper,
+    def __init__(self, config, mcu, load_cell_probing_move, tap_analysis_helper,
             config_helper):
         self._printer = config.get_printer()
+        self._mcu = mcu
         self._load_cell_probing_move = load_cell_probing_move
         self._tap_analysis_helper = tap_analysis_helper
         self._config_helper = config_helper
@@ -1156,10 +1191,17 @@ class TappingMove:
         pullback_end_time = self.pullback_move(gcmd)
         # collect samples from the tap
         results = collector.collect_until(pullback_end_time)
+        # calculate how long we waited to get the data
+        t_end = self._printer.get_reactor().monotonic()
+        t_end = self._mcu.estimated_print_time(t_end)
+        logging.error(f"t_start {pullback_end_time}, t_end: {t_end}")
+        collection_time = t_end - pullback_end_time
+        # check for data errors
         samples = check_sensor_errors(results, self._printer)
         trigger_force = self._config_helper.get_trigger_force_grams(gcmd)
         # Analyze the tap data
-        tap_analysis = self._tap_analysis_helper.analyze(samples, trigger_force)
+        tap_analysis = self._tap_analysis_helper.analyze(samples,
+            trigger_force, collection_time)
         self._last_analysis = tap_analysis
         self._is_last_result_valid = tap_analysis.is_valid()
         if self._is_last_result_valid:
@@ -1498,8 +1540,8 @@ class LoadCellPrinterProbe:
         load_cell_probing_move = LoadCellProbingMove(config,
             self._mcu_load_cell_probe, self._param_helper,
             continuous_tare_filter_helper, config_helper)
-        self._tapping_move = TappingMove(config, load_cell_probing_move,
-            self._tap_analysis_helper, config_helper)
+        self._tapping_move = TappingMove(config, self._mcu,
+            load_cell_probing_move, self._tap_analysis_helper, config_helper)
         tap_session = TapSession(config, self._tapping_move, self._param_helper,
             nozzle_cleaner, config_helper)
         self._probe_session = probe.ProbeSessionHelper(config,
