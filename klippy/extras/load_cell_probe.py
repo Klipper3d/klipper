@@ -482,7 +482,11 @@ class LoadCellProbingMove:
         # start collector after tare samples are consumed
         collector = self._start_collector()
         # do homing move
-        return phoming.probing_move(self, pos, speed), collector
+        try:
+            return phoming.probing_move(self, pos, speed), collector
+        except self._printer.command_error:
+            collector.stop_collecting()
+            raise
 
     # Wait for the MCU to trigger with no movement
     def probing_test(self, gcmd, timeout):
