@@ -355,165 +355,92 @@ class BLTouchProbe:
             extruder = toolhead.get_extruder()
             heaters.set_temperature(extruder.get_heater(), nozzle_temp, True)
         
-        # Step 4: Probe with BLTouch using double touch for accuracy
-        gcmd.respond_info("Probing with BLTouch (double touch)...")
-        self.lower_probe()
-        self.sync_print_time()
+        # Step 4: BLTouch probe - EXACT SAME as PROBE_CALIBRATE
+        gcmd.respond_info("Performing BLTouch probe (PROBE_CALIBRATE method)...")
         
-        # First touch at normal speed
+        # Import probe utilities
         from . import probe
+        
+        # Use run_single_probe - EXACT SAME method as PROBE_CALIBRATE
+        # This ensures same coordinate reference system
+        bltouch_pos = probe.run_single_probe(self, gcmd)
+        z_bltouch_reference = bltouch_pos[2]
+        
+        gcmd.respond_info("BLTouch reference position: %.6f" % z_bltouch_reference)
+        
+        # Step 5: Move up and position nozzle - SAME as PROBE_CALIBRATE
+        # Move away from the bed (same 5mm lift as PROBE_CALIBRATE)
+        lift_pos = list(bltouch_pos)
+        lift_pos[2] += 5.
+        toolhead.manual_move(lift_pos, self.cal_lift_speed)
+        
+        # Move the nozzle over the probe point - SAME as PROBE_CALIBRATE
+        x_offset, y_offset, z_offset = self.get_offsets()
+        lift_pos[0] += x_offset
+        lift_pos[1] += y_offset
+        toolhead.manual_move(lift_pos, self.cal_probe_speed)
+        
+        gcmd.respond_info("Nozzle positioned over probe point at Z=%.6f" % lift_pos[2])
+        
+        # Step 6: Nozzle probe - Use direct probing method for endstop
+        gcmd.respond_info("Performing nozzle probe (PROBE_CALIBRATE coordinate system)...")
+        
+        # Use homing module directly with nozzle endstop - SAME coordinate system
         phoming = self.printer.lookup_object('homing')
-        pos = toolhead.get_position()
-        z_min = 0.
+        
+        # Get current position and probe down to find bed
+        current_pos = toolhead.get_position()
+        
+        # Get Z minimum position safely
+        z_min = -5.0  # Use position_min from config
         try:
             config = self.printer.lookup_object('configfile')
             z_config = config.status_raw_config.get('stepper_z', {})
-            z_min = float(z_config.get('position_min', 0.))
+            z_min = float(z_config.get('position_min', -5.0))
         except:
-            z_min = 0.
+            z_min = -5.0
         
-        pos[2] = z_min
-        gcmd.respond_info("First touch at %.1f mm/s..." % self.cal_probe_speed)
-        first_probe = phoming.probing_move(self, pos, self.cal_probe_speed)
+        # Create probe target position - probe down to find bed
+        probe_target = [current_pos[0], current_pos[1], z_min]
         
-        # Retract
-        toolhead.manual_move([None, None, first_probe[2] + self.cal_retract_dist], self.cal_lift_speed)
+        gcmd.respond_info("Nozzle probing from Z=%.3f to Z=%.3f..." % (current_pos[2], z_min))
         
-        # Second touch at slow speed
-        gcmd.respond_info("Second touch at %.1f mm/s..." % self.cal_probe_speed_slow)
-        self.lower_probe()
-        self.sync_print_time()
-        pos = toolhead.get_position()
-        pos[2] = z_min
-        bltouch_pos = phoming.probing_move(self, pos, self.cal_probe_speed_slow)
+        # Use probing_move with nozzle endstop - SAME coordinate system as BLTouch
+        nozzle_pos = phoming.probing_move(self.nozzle_endstop, probe_target, self.cal_probe_speed_slow)
+        z_nozzle_reference = nozzle_pos[2]
         
-        z_bltouch = bltouch_pos[2]
-        gcmd.respond_info("BLTouch final Z position: %.6f" % z_bltouch)
+        gcmd.respond_info("Nozzle reference position: %.6f" % z_nozzle_reference)
         
-        # Step 5: Move up and retract BLTouch
-        toolhead.manual_move([None, None, z_bltouch + 10.], 50.)
-        self.raise_probe()
-        self.verify_raise_probe()
+        # Step 7: Calculate z_offset - EXACT SAME formula as PROBE_CALIBRATE
+        # z_offset = probe_calibrate_z - final_nozzle_z
+        # In PROBE_CALIBRATE: z_offset = self.probe_calibrate_z - kin_pos[2]
+        new_z_offset = z_bltouch_reference - z_nozzle_reference
         
-        # Step 6: Move nozzle to the exact same XY position where BLTouch touched
-        # The nozzle should go to the calibration position (cal_x, cal_y)
-        toolhead.manual_move([cal_x, cal_y, None], 50.)
+        gcmd.respond_info("BLTouch reference: %.6f, Nozzle reference: %.6f" % 
+                         (z_bltouch_reference, z_nozzle_reference))
+        gcmd.respond_info("Calculated z_offset: %.6f" % new_z_offset)
         
-        # Step 7: Probe with nozzle using double touch for accuracy
-        gcmd.respond_info("Probing with nozzle (double touch)...")
-        pos = toolhead.get_position()
+        # Validate against expected physical measurement
+        expected_offset = 4.1  # Your measured physical distance
+        offset_error = abs(new_z_offset - expected_offset)
         
-        # Calculate safe Z target position for probing
-        current_z = pos[2]
-        max_probe_dist = 10.0  # Maximum probing distance
+        gcmd.respond_info("Calculated: %.6f, Expected: %.6f, Error: %.6f" % 
+                         (new_z_offset, expected_offset, offset_error))
         
-        # Get Z minimum position from stepper_z config or use 0
-        try:
-            config = self.printer.lookup_object('configfile')
-            z_config = config.status_raw_config.get('stepper_z', {})
-            z_min = float(z_config.get('position_min', 0.))
-        except:
-            z_min = 0.
-        
-        # Target Z is the maximum between minimum Z and (current - max distance)
-        target_z = max(z_min, current_z - max_probe_dist)
-        pos[2] = target_z
-        
-        # Setup nozzle endstop for probing
-        phoming = self.printer.lookup_object('homing')
-        
-        # First touch at normal speed
-        gcmd.respond_info("First nozzle touch at %.1f mm/s..." % self.cal_probe_speed)
-        first_nozzle = phoming.probing_move(self.nozzle_endstop, pos, self.cal_probe_speed)
-        
-        # Retract
-        toolhead.manual_move([None, None, first_nozzle[2] + self.cal_nozzle_retract_dist], self.cal_lift_speed)
-        
-        # Second touch at slow speed at center position
-        gcmd.respond_info("Center nozzle touch at %.1f mm/s..." % self.cal_probe_speed_slow)
-        pos = toolhead.get_position()
-        pos[2] = target_z
-        center_pos = phoming.probing_move(self.nozzle_endstop, pos, self.cal_probe_speed_slow)
-        center_z = center_pos[2]
-        
-        # Retract
-        toolhead.manual_move([None, None, center_z + self.cal_nozzle_retract_dist], self.cal_lift_speed)
-        
-        # Perform cross pattern measurements if enabled
-        nozzle_samples = [center_z]  # Start with center measurement
-        
-        if self.cal_nozzle_samples > 1:
-            # Define cross pattern offsets: back, right, front, left
-            cross_offsets = [
-                (0, -self.cal_nozzle_diameter),  # Back
-                (self.cal_nozzle_diameter, 0),   # Right
-                (0, self.cal_nozzle_diameter),   # Front
-                (-self.cal_nozzle_diameter, 0)   # Left
-            ]
-            
-            # Limit to requested number of samples
-            num_cross_samples = min(self.cal_nozzle_samples - 1, 4)
-            
-            for i in range(num_cross_samples):
-                x_off, y_off = cross_offsets[i]
-                direction = ["back", "right", "front", "left"][i]
-                
-                # Move to cross position
-                toolhead.manual_move([cal_x + x_off, cal_y + y_off, None], 50.)
-                
-                gcmd.respond_info("Cross touch %s (%.1f, %.1f) at %.1f mm/s..." % 
-                                (direction, cal_x + x_off, cal_y + y_off, self.cal_probe_speed_slow))
-                
-                pos = toolhead.get_position()
-                pos[2] = target_z
-                cross_pos = phoming.probing_move(self.nozzle_endstop, pos, self.cal_probe_speed_slow)
-                nozzle_samples.append(cross_pos[2])
-                
-                # Retract
-                toolhead.manual_move([None, None, cross_pos[2] + self.cal_nozzle_retract_dist], self.cal_lift_speed)
-        
-        # Calculate statistics with weighted average favoring center
-        if len(nozzle_samples) > 1:
-            # Calculate average and standard deviation of all samples
-            avg_all = sum(nozzle_samples) / len(nozzle_samples)
-            variance = sum((x - avg_all) ** 2 for x in nozzle_samples) / len(nozzle_samples)
-            std_dev = variance ** 0.5
-            
-            # Weighted average: center has 50% weight, cross points share remaining 50%
-            center_weight = 0.5
-            cross_weight = 0.5 / (len(nozzle_samples) - 1)
-            
-            z_nozzle = center_z * center_weight
-            for cross_z in nozzle_samples[1:]:
-                z_nozzle += cross_z * cross_weight
-            
-            gcmd.respond_info("Nozzle samples: Center=%.6f, Cross=[%s]" % 
-                            (center_z, ", ".join(["%.6f" % z for z in nozzle_samples[1:]])))
-            gcmd.respond_info("Center Z: %.6f, Simple avg: %.6f, Weighted avg: %.6f, StdDev: %.6f" % 
-                            (center_z, avg_all, z_nozzle, std_dev))
-        else:
-            z_nozzle = center_z
-            gcmd.respond_info("Nozzle final Z position: %.6f" % z_nozzle)
-        
-        # Step 8: Calculate and save new z-offset
-        # z_offset = nozzle_z - bltouch_z (how much lower the nozzle is compared to BLTouch)
-        # This should always be positive since nozzle touches the bed at a higher Z value
-        new_z_offset = z_nozzle - z_bltouch
+        if offset_error > 1.0:
+            gcmd.respond_info("WARNING: Large offset error detected. Check BLTouch mounting and nozzle probe configuration.")
         
         # Validate that the offset makes physical sense
         if new_z_offset < 0:
             raise gcmd.error(
                 "Invalid z-offset calculation: %.6f\n"
                 "BLTouch Z: %.6f, Nozzle Z: %.6f\n"
-                "The nozzle should trigger at a higher Z position than the BLTouch.\n"
+                "The nozzle should trigger at a lower Z position than the BLTouch.\n"
                 "Please check your wiring and probe configuration." % 
-                (new_z_offset, z_bltouch, z_nozzle))
-        
-        gcmd.respond_info("Calculated z-offset: %.6f" % new_z_offset)
-        gcmd.respond_info("BLTouch triggers at Z=%.6f, Nozzle touches at Z=%.6f" % (z_bltouch, z_nozzle))
+                (new_z_offset, z_bltouch_reference, z_nozzle_reference))
         
         # Move up for safety
-        toolhead.manual_move([None, None, z_nozzle + 10.], 50.)
+        toolhead.manual_move([None, None, max(z_bltouch_reference, z_nozzle_reference) + 10.], 50.)
         
         # Save the positive offset value
         save_z_offset = new_z_offset
@@ -528,6 +455,14 @@ class BLTouchProbe:
             "New z_offset: %.6f\n"
             "The SAVE_CONFIG command will update the printer config file\n"
             "with the above and restart the printer." % save_z_offset)
+        
+        # Re-home to restore coordinate system integrity
+        gcmd.respond_info("Re-homing to restore coordinate system...")
+        gcode.run_script_from_command("G28")
+        
+        # Verify coordinate restoration
+        restored_pos = toolhead.get_position()
+        gcmd.respond_info("Coordinate system restored. Current Z position: %.6f" % restored_pos[2])
 
 def load_config(config):
     blt = BLTouchProbe(config)
