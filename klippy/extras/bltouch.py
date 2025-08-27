@@ -1,6 +1,7 @@
 # BLTouch support
 #
 # Copyright (C) 2018-2024  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2025  Marco Abbattista <max.abbattista@llive.it>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
