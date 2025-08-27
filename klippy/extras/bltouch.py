@@ -319,6 +319,12 @@ class BLTouchProbe:
         if self.nozzle_endstop is None:
             raise gcmd.error("nozzle_probe_pin not configured in [bltouch] section")
         
+        # Check if nozzle probe is already triggered before starting
+        curtime = self.printer.get_reactor().monotonic()
+        nozzle_triggered = self.nozzle_endstop.query_endstop(curtime)
+        if nozzle_triggered:
+            raise gcmd.error("Nozzle probe is already triggered. Please check for obstructions and ensure the nozzle is clear before starting calibration.")
+        
         toolhead = self.printer.lookup_object('toolhead')
         gcode = self.printer.lookup_object('gcode')
         heaters = self.printer.lookup_object('heaters')
@@ -490,14 +496,27 @@ class BLTouchProbe:
             gcmd.respond_info("Nozzle final Z position: %.6f" % z_nozzle)
         
         # Step 8: Calculate and save new z-offset
-        new_z_offset = z_bltouch - z_nozzle
+        # z_offset = nozzle_z - bltouch_z (how much lower the nozzle is compared to BLTouch)
+        # This should always be positive since nozzle touches the bed at a higher Z value
+        new_z_offset = z_nozzle - z_bltouch
+        
+        # Validate that the offset makes physical sense
+        if new_z_offset < 0:
+            raise gcmd.error(
+                "Invalid z-offset calculation: %.6f\n"
+                "BLTouch Z: %.6f, Nozzle Z: %.6f\n"
+                "The nozzle should trigger at a higher Z position than the BLTouch.\n"
+                "Please check your wiring and probe configuration." % 
+                (new_z_offset, z_bltouch, z_nozzle))
+        
         gcmd.respond_info("Calculated z-offset: %.6f" % new_z_offset)
+        gcmd.respond_info("BLTouch triggers at Z=%.6f, Nozzle touches at Z=%.6f" % (z_bltouch, z_nozzle))
         
         # Move up for safety
         toolhead.manual_move([None, None, z_nozzle + 10.], 50.)
         
-        # Convert negative offset to positive for saving
-        save_z_offset = abs(new_z_offset) if new_z_offset < 0 else new_z_offset
+        # Save the positive offset value
+        save_z_offset = new_z_offset
         
         # Save the new z-offset
         self.position_endstop = save_z_offset
