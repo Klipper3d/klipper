@@ -267,6 +267,28 @@ V3.0 or V3.1 may also support `set_5V_output_mode`,
 `BLTOUCH_STORE MODE=<output_mode>`: This stores an output mode in the
 EEPROM of a BLTouch V3.1 Available output_modes are: `5V`, `OD`
 
+#### BLTOUCH_AUTO_Z_OFFSET
+`BLTOUCH_AUTO_Z_OFFSET [HEAT_NOZZLE=<0|1>] [NOZZLE_TEMP=<temp>] [POSITION=<x,y>]`:
+Performs automatic z-offset calibration for the BLTouch using electrical
+contact detection between the nozzle and a conductive bed surface. This
+command requires `nozzle_probe_pin` to be configured in the [bltouch]
+section.
+
+The calibration process:
+1. Homes all axes if not already done
+2. Moves to the calibration position
+3. Heats the nozzle (if enabled)
+4. Performs BLTouch probing to establish a reference
+5. Detects electrical contact between nozzle and bed
+6. Calculates and updates the z-offset
+
+Parameters:
+- `HEAT_NOZZLE`: Set to 0 to skip nozzle heating, 1 to heat (default: 1)
+- `NOZZLE_TEMP`: Override nozzle temperature in Celsius (default: from config)
+- `POSITION`: Override calibration position as "x,y" in mm (default: from config)
+
+Note: After calibration, use `SAVE_CONFIG` to make the new z-offset permanent.
+
 ### [configfile]
 
 The configfile module is automatically loaded.
