@@ -1806,16 +1806,15 @@ of the micro-controller's bootloader. See the
 <a href="Bootloaders.html">bootloader document</a> for additional information on
 bootloaders.</p>
 <h2 id="can-i-run-klipper-on-something-other-than-a-raspberry-pi-3">Can I run Klipper on something other than a Raspberry Pi 3?<a class="headerlink" href="#can-i-run-klipper-on-something-other-than-a-raspberry-pi-3" title="Permanent link">&para;</a></h2>
-<p>The recommended hardware is a Raspberry Pi 2, Raspberry Pi 3, or
-Raspberry Pi 4.</p>
-<p>Klipper will run on a Raspberry Pi 1 and on the Raspberry Pi Zero, but
-these boards don't have enough processing power to run OctoPrint
+<p>The recommended hardware is a Raspberry Pi Zero2w, Raspberry Pi 3,
+Raspberry Pi 4 or Raspberry Pi 5. Klipper will also run on other SBC
+devices as well as x86 hardware, as described below.</p>
+<p>Klipper will run on a Raspberry Pi 1, 2 and on the Raspberry Pi Zero1,
+but these boards don't have enough processing power to run Klipper
 well. It is common for print stalls to occur on these slower machines
-when printing directly from OctoPrint. (The printer may move faster
-than OctoPrint can send movement commands.) If you wish to run on one
-one of these slower boards anyway, consider using the "virtual_sdcard"
-feature when printing (see
-<a href="Config_Reference.html#virtual_sdcard">config reference</a> for details).</p>
+when printing (The printer may move faster than Klipper can send
+movement commands.) It is not reccomended to run Kliper on these older
+machines.</p>
 <p>For running on the Beaglebone, see the
 <a href="Beaglebone.html">Beaglebone specific installation instructions</a>.</p>
 <p>Klipper has been run on other machines. The Klipper host software only
