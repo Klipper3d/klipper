@@ -24,7 +24,7 @@ def parse_carriages_string(carriages_str, printer_carriages, parse_error):
             try:
                 coeff = float(term_lst[0])
             except ValueError:
-                raise error("Invalid float '%s'" % term_lst[0])
+                raise parse_error("Invalid float '%s'" % term_lst[0])
         else:
             coeff = -1. if term_lst[0].startswith('-') else 1.
             if term_lst[0].startswith('-') or term_lst[0].startswith('+'):
@@ -36,8 +36,8 @@ def parse_carriages_string(carriages_str, printer_carriages, parse_error):
         carriage = printer_carriages[c]
         j = carriage.get_axis()
         if coeffs[j]:
-            raise error("Carriage '%s' was referenced multiple times in '%s'" %
-                        (c, carriages_str))
+            raise parse_error("Axis '%s' was referenced multiple times by "
+                              "carriages in '%s'" % ("xyz"[j], carriages_str))
         coeffs[j] = coeff
         ref_carriages.append(carriage)
         nxt = end
