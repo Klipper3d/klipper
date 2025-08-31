@@ -33,6 +33,10 @@ G28
 G1 X20 Y20 Z10
 G1 A10 X22
 
+# Verify position query commands work with extra axis
+GET_POSITION
+M114
+
 # Test unregistering
 MANUAL_STEPPER STEPPER=basic_stepper GCODE_AXIS=
 G1 X15
