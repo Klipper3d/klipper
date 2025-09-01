@@ -353,7 +353,7 @@ class MultiCarriages:
         # Set the corresponding gantry to PRIMARY using gantry_map
         if self.gantry_map and self.multi_gantries:
             gantry_index = self.gantry_map[index]
-            self.multi_gantries.activate_gantry_mode(gantry_index, "PRIMARY")
+            self.multi_gantries.activate_gantry_mode(gantry_index, PRIMARY)
     def _validate_homing_order(self, order, num_items, item_type):
         """Validate that the homing order includes each index exactly once."""
         if len(order) != num_items:
@@ -533,7 +533,7 @@ class MultiCarriages:
             # Restore gantry positions if they exist
             if self.multi_gantries and 'gantry_positions' in saved_state:
                 for i, gantry_pos in enumerate(saved_state['gantry_positions']):
-                    self.multi_gantries.activate_gantry_mode(i, "PRIMARY")
+                    self.multi_gantries.activate_gantry_mode(i, PRIMARY)
                     current_pos = toolhead.get_position()
                     move_pos = current_pos[:self.axis] + [gantry_pos] + current_pos[self.axis+1:]
                     toolhead.manual_move(move_pos, move_speed or homing_speed)
@@ -616,8 +616,8 @@ class MultiGantries:
         # Reset to the first gantry after homing
         self.toggle_active_gantry_rail(0)
     def get_status(self, eventtime=None):
-        return {('gantry_%d' % (i,)) : gantries.mode
-                for (i, gantries) in enumerate(self.gantries)}
+        return {('gantry_%d' % (i,)) : gantry.mode
+                for (i, gantry) in enumerate(self.gantries)}
     def get_kin_range(self, toolhead, mode, active_idx):
         pos = toolhead.get_position()
         axes_pos = [gantry.get_axis_position(pos) for gantry in self.gantries]
