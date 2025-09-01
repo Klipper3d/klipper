@@ -3,15 +3,18 @@
 src-y += sched.c command.c basecmd.c debugcmds.c
 src-$(CONFIG_HAVE_GPIO) += initial_pins.c gpiocmds.c stepper.c endstop.c \
     trsync.c
-src-$(CONFIG_HAVE_GPIO_ADC) += adccmds.c
-src-$(CONFIG_HAVE_GPIO_SPI) += spicmds.c
+src-$(CONFIG_WANT_ADC) += adccmds.c
+src-$(CONFIG_WANT_SPI) += spicmds.c
+src-$(CONFIG_WANT_I2C) += i2ccmds.c
+src-$(CONFIG_WANT_HARD_PWM) += pwmcmds.c
 src-$(CONFIG_HAVE_GPIO_SDIO) += sdiocmds.c
-src-$(CONFIG_HAVE_GPIO_I2C) += i2ccmds.c
-src-$(CONFIG_HAVE_GPIO_HARD_PWM) += pwmcmds.c
 
-src-$(CONFIG_WANT_GPIO_BITBANGING) += buttons.c tmcuart.c neopixel.c \
-    pulse_counter.c
-src-$(CONFIG_WANT_DISPLAYS) += lcd_st7920.c lcd_hd44780.c
+src-$(CONFIG_WANT_BUTTONS) += buttons.c
+src-$(CONFIG_WANT_TMCUART) += tmcuart.c
+src-$(CONFIG_WANT_NEOPIXEL) += neopixel.c
+src-$(CONFIG_WANT_PULSE_COUNTER) += pulse_counter.c
+src-$(CONFIG_WANT_ST7920) += lcd_st7920.c
+src-$(CONFIG_WANT_HD44780) += lcd_hd44780.c
 src-$(CONFIG_WANT_SOFTWARE_SPI) += spi_software.c
 src-$(CONFIG_WANT_SOFTWARE_I2C) += i2c_software.c
 src-$(CONFIG_WANT_THERMOCOUPLE) += thermocouple.c
@@ -24,3 +27,5 @@ src-$(CONFIG_WANT_ADS1220) += sensor_ads1220.c
 src-$(CONFIG_WANT_LDC1612) += sensor_ldc1612.c
 src-$(CONFIG_WANT_SENSOR_ANGLE) += sensor_angle.c
 src-$(CONFIG_NEED_SENSOR_BULK) += sensor_bulk.c
+src-$(CONFIG_NEED_SOS_FILTER) += sos_filter.c
+src-$(CONFIG_WANT_LOAD_CELL_PROBE) += load_cell_probe.c

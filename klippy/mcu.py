@@ -1,6 +1,6 @@
 # Interface to Klipper micro-controller code
 #
-# Copyright (C) 2016-2024  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, zlib, logging, math
@@ -31,18 +31,20 @@ class RetryAsyncCommand:
         if self.need_response and params['#sent_time'] >= self.min_query_time:
             self.need_response = False
             self.reactor.async_complete(self.completion, params)
-    def get_response(self, cmds, cmd_queue, minclock=0, reqclock=0):
+    def get_response(self, cmds, cmd_queue, minclock=0, reqclock=0, retry=True):
         cmd, = cmds
         self.serial.raw_send_wait_ack(cmd, minclock, reqclock, cmd_queue)
         self.min_query_time = 0.
-        first_query_time = query_time = self.reactor.monotonic()
+        timeout_time = query_time = self.reactor.monotonic()
+        if retry:
+            timeout_time += self.TIMEOUT_TIME
         while 1:
             params = self.completion.wait(query_time + self.RETRY_TIME)
             if params is not None:
                 self.serial.register_response(None, self.name, self.oid)
                 return params
             query_time = self.reactor.monotonic()
-            if query_time > first_query_time + self.TIMEOUT_TIME:
+            if query_time > timeout_time:
                 self.serial.register_response(None, self.name, self.oid)
                 raise serialhdl.error("Timeout on wait for '%s' response"
                                       % (self.name,))
@@ -64,23 +66,25 @@ class CommandQueryWrapper:
         if cmd_queue is None:
             cmd_queue = serial.get_default_command_queue()
         self._cmd_queue = cmd_queue
-    def _do_send(self, cmds, minclock, reqclock):
+    def _do_send(self, cmds, minclock, reqclock, retry):
         xh = self._xmit_helper(self._serial, self._response, self._oid)
         reqclock = max(minclock, reqclock)
         try:
-            return xh.get_response(cmds, self._cmd_queue, minclock, reqclock)
+            return xh.get_response(cmds, self._cmd_queue, minclock, reqclock,
+                                   retry)
         except serialhdl.error as e:
             raise self._error(str(e))
-    def send(self, data=(), minclock=0, reqclock=0):
-        return self._do_send([self._cmd.encode(data)], minclock, reqclock)
+    def send(self, data=(), minclock=0, reqclock=0, retry=True):
+        return self._do_send([self._cmd.encode(data)], minclock, reqclock,
+                             retry)
     def send_with_preface(self, preface_cmd, preface_data=(), data=(),
-                          minclock=0, reqclock=0):
+                          minclock=0, reqclock=0, retry=True):
         cmds = [preface_cmd._cmd.encode(preface_data), self._cmd.encode(data)]
-        return self._do_send(cmds, minclock, reqclock)
+        return self._do_send(cmds, minclock, reqclock, retry)
 
 # Wrapper around command sending
 class CommandWrapper:
-    def __init__(self, serial, msgformat, cmd_queue=None):
+    def __init__(self, serial, msgformat, cmd_queue=None, debugoutput=False):
         self._serial = serial
         msgparser = serial.get_msgparser()
         self._cmd = msgparser.lookup_command(msgformat)
@@ -88,6 +92,9 @@ class CommandWrapper:
             cmd_queue = serial.get_default_command_queue()
         self._cmd_queue = cmd_queue
         self._msgtag = msgparser.lookup_msgid(msgformat) & 0xffffffff
+        if debugoutput:
+            # Can't use send_wait_ack when in debugging mode
+            self.send_wait_ack = self.send
     def send(self, data=(), minclock=0, reqclock=0):
         cmd = self._cmd.encode(data)
         self._serial.raw_send(cmd, minclock, reqclock, self._cmd_queue)
@@ -545,6 +552,11 @@ class MCU_adc:
 # Main MCU class
 ######################################################################
 
+# Minimum time host needs to get scheduled events queued into mcu
+MIN_SCHEDULE_TIME = 0.100
+# Maximum time all MCUs can internally schedule into the future
+MAX_NOMINAL_DURATION = 3.0
+
 class MCU:
     error = error
     def __init__(self, config, clocksync):
@@ -555,8 +567,8 @@ class MCU:
         if self._name.startswith('mcu '):
             self._name = self._name[4:]
         # Serial port
-        wp = "mcu '%s': " % (self._name)
-        self._serial = serialhdl.SerialReader(self._reactor, warn_prefix=wp)
+        name = self._name
+        self._serial = serialhdl.SerialReader(self._reactor, mcu_name = name)
         self._baud = 0
         self._canbus_iface = None
         canbus_uuid = config.get('canbus_uuid', None)
@@ -596,9 +608,7 @@ class MCU:
         self._max_stepper_error = config.getfloat('max_stepper_error', 0.000025,
                                                   minval=0.)
         self._reserved_move_slots = 0
-        self._stepqueues = []
         self._steppersync = None
-        self._flush_callbacks = []
         # Stats
         self._get_status_info = {}
         self._stats_sumsq_base = 0.
@@ -761,13 +771,12 @@ class MCU:
         move_count = config_params['move_count']
         if move_count < self._reserved_move_slots:
             raise error("Too few moves available on MCU '%s'" % (self._name,))
-        ffi_main, ffi_lib = chelper.get_ffi()
-        self._steppersync = ffi_main.gc(
-            ffi_lib.steppersync_alloc(self._serial.get_serialqueue(),
-                                      self._stepqueues, len(self._stepqueues),
-                                      move_count-self._reserved_move_slots),
-            ffi_lib.steppersync_free)
-        ffi_lib.steppersync_set_time(self._steppersync, 0., self._mcu_freq)
+        ss_move_count = move_count - self._reserved_move_slots
+        motion_queuing = self._printer.lookup_object('motion_queuing')
+        self._steppersync = motion_queuing.allocate_steppersync(
+            self, self._serial.get_serialqueue(), ss_move_count)
+        self._ffi_lib.steppersync_set_time(self._steppersync,
+                                           0., self._mcu_freq)
         # Log config information
         move_msg = "Configured MCU '%s' (%d moves)" % (self._name, move_count)
         logging.info(move_msg)
@@ -868,6 +877,10 @@ class MCU:
         return int(time * self._mcu_freq)
     def get_max_stepper_error(self):
         return self._max_stepper_error
+    def min_schedule_time(self):
+        return MIN_SCHEDULE_TIME
+    def max_nominal_duration(self):
+        return MAX_NOMINAL_DURATION
     # Wrapper functions
     def get_printer(self):
         return self._printer
@@ -878,7 +891,8 @@ class MCU:
     def alloc_command_queue(self):
         return self._serial.alloc_command_queue()
     def lookup_command(self, msgformat, cq=None):
-        return CommandWrapper(self._serial, msgformat, cq)
+        return CommandWrapper(self._serial, msgformat, cq,
+                              debugoutput=self.is_fileoutput())
     def lookup_query_command(self, msgformat, respformat, oid=None,
                              cq=None, is_async=False):
         return CommandQueryWrapper(self._serial, msgformat, respformat, oid,
@@ -958,27 +972,8 @@ class MCU:
     def _firmware_restart_bridge(self):
         self._firmware_restart(True)
     # Move queue tracking
-    def register_stepqueue(self, stepqueue):
-        self._stepqueues.append(stepqueue)
     def request_move_queue_slot(self):
         self._reserved_move_slots += 1
-    def register_flush_callback(self, callback):
-        self._flush_callbacks.append(callback)
-    def flush_moves(self, print_time, clear_history_time):
-        if self._steppersync is None:
-            return
-        clock = self.print_time_to_clock(print_time)
-        if clock < 0:
-            return
-        for cb in self._flush_callbacks:
-            cb(print_time, clock)
-        clear_history_clock = \
-            max(0, self.print_time_to_clock(clear_history_time))
-        ret = self._ffi_lib.steppersync_flush(self._steppersync, clock,
-                                              clear_history_clock)
-        if ret:
-            raise error("Internal error in MCU '%s' stepcompress"
-                        % (self._name,))
     def check_active(self, print_time, eventtime):
         if self._steppersync is None:
             return

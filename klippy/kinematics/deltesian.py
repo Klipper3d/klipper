@@ -17,10 +17,10 @@ class DeltesianKinematics:
         self.rails = [None] * 3
         stepper_configs = [config.getsection('stepper_' + s)
                                     for s in ['left', 'right', 'y']]
-        self.rails[0] = stepper.PrinterRail(
+        self.rails[0] = stepper.LookupRail(
             stepper_configs[0], need_position_minmax = False)
         def_pos_es = self.rails[0].get_homing_info().position_endstop
-        self.rails[1] = stepper.PrinterRail(
+        self.rails[1] = stepper.LookupRail(
             stepper_configs[1], need_position_minmax = False,
             default_position_endstop = def_pos_es)
         self.rails[2] = stepper.LookupMultiRail(stepper_configs[2])
@@ -40,7 +40,6 @@ class DeltesianKinematics:
         self.rails[2].setup_itersolve('cartesian_stepper_alloc', b'y')
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
-            toolhead.register_step_generator(s.generate_steps)
         self.limits = [(1.0, -1.0)] * 3
         # X axis limits
         min_angle = config.getfloat('min_angle', MIN_ANGLE,

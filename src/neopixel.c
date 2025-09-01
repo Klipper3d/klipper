@@ -1,6 +1,6 @@
 // Support for bit-banging commands to WS2812 type "neopixel" LEDs
 //
-// Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2019-2025  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -31,10 +31,10 @@
 
 typedef unsigned int neopixel_time_t;
 
-static neopixel_time_t
+static __always_inline neopixel_time_t
 nsecs_to_ticks(uint32_t ns)
 {
-    return timer_from_us(ns * 1000) / 1000000;
+    return DIV_ROUND_UP(timer_from_us(ns * 1000), 1000000);
 }
 
 static inline int
@@ -74,8 +74,11 @@ neopixel_delay(neopixel_time_t start, neopixel_time_t ticks)
 
 #endif
 
+// Minimum amount of time for a '1 bit' to be reliably detected
 #define PULSE_LONG_TICKS  nsecs_to_ticks(650)
-#define PULSE_SHORT_TICKS nsecs_to_ticks(200)
+// Minimum amount of time for any level change to be reliably detected
+#define EDGE_MIN_TICKS    nsecs_to_ticks(200)
+// Minimum average time needed to transmit each bit (two level changes)
 #define BIT_MIN_TICKS     nsecs_to_ticks(1250)
 
 
@@ -147,14 +150,14 @@ send_data(struct neopixel_s *n)
                 gpio_out_toggle_noirq(pin);
                 irq_enable();
 
-                neopixel_delay(neopixel_get_time(), PULSE_SHORT_TICKS);
+                neopixel_delay(neopixel_get_time(), EDGE_MIN_TICKS);
             } else {
                 // Short pulse
                 neopixel_delay(last_start, BIT_MIN_TICKS);
                 irq_disable();
                 neopixel_time_t start = neopixel_get_time();
                 gpio_out_toggle_noirq(pin);
-                neopixel_delay(start, PULSE_SHORT_TICKS);
+                neopixel_delay(start, EDGE_MIN_TICKS);
                 gpio_out_toggle_noirq(pin);
                 irq_enable();
 

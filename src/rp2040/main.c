@@ -97,6 +97,8 @@ get_pclock_frequency(uint32_t reset_bit)
     return FREQ_SYS;
 }
 
+// PLL (rp2xxx) input: 5 to 100Mhz, vco: 750 to 1600Mhz
+
 static void
 xosc_setup(void)
 {
@@ -111,8 +113,8 @@ static void
 pll_setup(pll_hw_t *pll, uint32_t mul, uint32_t postdiv)
 {
     // Setup pll
-    uint32_t refdiv = 1, fbdiv = mul, postdiv2 = 2, postdiv1 = postdiv/postdiv2;
-    if (postdiv1 > 0x07) {
+    uint32_t refdiv = 1, fbdiv = mul, postdiv2 = 1, postdiv1 = postdiv;
+    while (postdiv1 > 0x07) {
         postdiv1 >>= 1;
         postdiv2 <<= 1;
     }

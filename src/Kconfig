@@ -88,104 +88,174 @@ config USB_SERIAL_NUMBER
 endmenu
 
 # Optional features that can be disabled (for devices with small flash sizes)
-config WANT_GPIO_BITBANGING
+config WANT_ADC
     bool
-    depends on HAVE_GPIO
+    depends on HAVE_GPIO_ADC
     default y
-config WANT_DISPLAYS
+config WANT_SPI
     bool
-    depends on HAVE_GPIO
-    default y
-config WANT_THERMOCOUPLE
-    bool
-    depends on HAVE_GPIO_SPI
-    default y
-config WANT_ADXL345
-    bool
-    depends on HAVE_GPIO_SPI
-    default y
-config WANT_LIS2DW
-    bool
-    depends on HAVE_GPIO_SPI || HAVE_GPIO_I2C
-    default y
-config WANT_MPU9250
-    bool
-    depends on HAVE_GPIO_I2C
-    default y
-config WANT_ICM20948
-    bool
-    depends on HAVE_GPIO_I2C
-    default y
-config WANT_HX71X
-    bool
-    depends on WANT_GPIO_BITBANGING
-    default y
-config WANT_ADS1220
-    bool
-    depends on HAVE_GPIO_SPI
-    default y
-config WANT_LDC1612
-    bool
-    depends on HAVE_GPIO_I2C
-    default y
-config WANT_SENSOR_ANGLE
-    bool
-    depends on HAVE_GPIO_SPI
-    default y
-config WANT_SOFTWARE_I2C
-    bool
-    depends on HAVE_GPIO && HAVE_GPIO_I2C
+    depends on HAVE_GPIO && HAVE_GPIO_SPI
     default y
 config WANT_SOFTWARE_SPI
     bool
-    depends on HAVE_GPIO && HAVE_GPIO_SPI
+    depends on WANT_SPI
+    default y
+config WANT_I2C
+    bool
+    depends on HAVE_GPIO && HAVE_GPIO_I2C
+    default y
+config WANT_SOFTWARE_I2C
+    bool
+    depends on WANT_I2C
+    default y
+config WANT_HARD_PWM
+    bool
+    depends on HAVE_GPIO_HARD_PWM
+    default y
+config WANT_BUTTONS
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_TMCUART
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_NEOPIXEL
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_PULSE_COUNTER
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_ST7920
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_HD44780
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_ADXL345
+    bool
+    depends on WANT_SPI
+    default y
+config WANT_LIS2DW
+    bool
+    depends on WANT_SPI || WANT_I2C
+    default y
+config WANT_MPU9250
+    bool
+    depends on WANT_I2C
+    default y
+config WANT_ICM20948
+    bool
+    depends on WANT_I2C
+    default y
+config WANT_THERMOCOUPLE
+    bool
+    depends on WANT_SPI
+    default y
+config WANT_HX71X
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_ADS1220
+    bool
+    depends on WANT_SPI
+    default y
+config WANT_LDC1612
+    bool
+    depends on WANT_I2C
+    default y
+config WANT_SENSOR_ANGLE
+    bool
+    depends on WANT_SPI
     default y
 config NEED_SENSOR_BULK
     bool
     depends on WANT_ADXL345 || WANT_LIS2DW || WANT_MPU9250 || WANT_ICM20948 \
         || WANT_HX71X || WANT_ADS1220 || WANT_LDC1612 || WANT_SENSOR_ANGLE
     default y
+config WANT_LOAD_CELL_PROBE
+    bool
+    depends on WANT_HX71X || WANT_ADS1220
+    default y
+config NEED_SOS_FILTER
+    bool
+    depends on WANT_LOAD_CELL_PROBE
+    default y
 menu "Optional features (to reduce code size)"
     depends on HAVE_LIMITED_CODE_SIZE
-config WANT_GPIO_BITBANGING
-    bool "Support GPIO \"bit-banging\" devices"
-    depends on HAVE_GPIO
-config WANT_DISPLAYS
-    bool "Support LCD devices"
-    depends on HAVE_GPIO
-config WANT_THERMOCOUPLE
-    bool "Support thermocouple MAX sensors"
-    depends on HAVE_GPIO_SPI
-config WANT_ADXL345
-    bool "Support adxl accelerometers"
-    depends on HAVE_GPIO_SPI
-config WANT_LIS2DW
-    bool "Support lis2dw and lis3dh 3-axis accelerometers"
-    depends on HAVE_GPIO_SPI || HAVE_GPIO_I2C
-config WANT_MPU9250
-    bool "Support MPU accelerometers"
-    depends on HAVE_GPIO_I2C
-config WANT_ICM20948
-    bool "Support ICM20948 accelerometer"
-    depends on HAVE_GPIO_I2C
-config WANT_HX71X
-    bool "Support HX711 and HX717 ADC chips"
-    depends on WANT_GPIO_BITBANGING
-config WANT_ADS1220
-    bool "Support ADS 1220 ADC chip"
-    depends on HAVE_GPIO_SPI
-config WANT_LDC1612
-    bool "Support ldc1612 eddy current sensor"
-    depends on HAVE_GPIO_I2C
-config WANT_SENSOR_ANGLE
-    bool "Support angle sensors"
-    depends on HAVE_GPIO_SPI
-config WANT_SOFTWARE_I2C
-    bool "Support software based I2C \"bit-banging\""
-    depends on HAVE_GPIO && HAVE_GPIO_I2C
+config WANT_ADC
+    bool "Support micro-controller based ADC (analog to digital)"
+    depends on HAVE_GPIO_ADC
+config WANT_SPI
+    bool "Support communicating with external chips via SPI bus"
+    depends on HAVE_GPIO && HAVE_GPIO_SPI
 config WANT_SOFTWARE_SPI
     bool "Support software based SPI \"bit-banging\""
-    depends on HAVE_GPIO && HAVE_GPIO_SPI
+    depends on WANT_SPI
+config WANT_I2C
+    bool "Support communicating with external chips via I2C bus"
+    depends on HAVE_GPIO && HAVE_GPIO_I2C
+config WANT_SOFTWARE_I2C
+    bool "Support software based I2C \"bit-banging\""
+    depends on WANT_I2C
+config WANT_HARD_PWM
+    bool "Support hardware PWM (pulse width modulation)"
+    depends on HAVE_GPIO_HARD_PWM
+config WANT_BUTTONS
+    bool "Support GPIO based button reading"
+    depends on HAVE_GPIO
+config WANT_TMCUART
+    bool "Support Trinamic stepper motor driver UART communication"
+    depends on HAVE_GPIO
+config WANT_NEOPIXEL
+    bool "Support 'neopixel' type LED control"
+    depends on HAVE_GPIO
+config WANT_PULSE_COUNTER
+    bool "Support measuring fan tachometer GPIO pins"
+    depends on HAVE_GPIO
+comment "LCD chips"
+config WANT_ST7920
+    bool "Support ST7920 LCD display"
+    depends on HAVE_GPIO
+config WANT_HD44780
+    bool "Support HD44780 LCD display"
+    depends on HAVE_GPIO
+comment "Accelerometer chips"
+    depends on WANT_SPI || WANT_I2C
+config WANT_ADXL345
+    bool "Support adxl accelerometers"
+    depends on WANT_SPI
+config WANT_LIS2DW
+    bool "Support lis2dw and lis3dh 3-axis accelerometers"
+    depends on WANT_SPI || WANT_I2C
+config WANT_MPU9250
+    bool "Support MPU accelerometers"
+    depends on WANT_I2C
+config WANT_ICM20948
+    bool "Support ICM20948 accelerometer"
+    depends on WANT_I2C
+comment "External ADC type chips"
+config WANT_THERMOCOUPLE
+    bool "Support thermocouple MAX sensors"
+    depends on WANT_SPI
+config WANT_HX71X
+    bool "Support HX711 and HX717 ADC chips"
+    depends on HAVE_GPIO
+config WANT_ADS1220
+    bool "Support ADS 1220 ADC chip"
+    depends on WANT_SPI
+comment "Other external sensor chips"
+    depends on WANT_SPI || WANT_I2C
+config WANT_LDC1612
+    bool "Support ldc1612 eddy current sensor"
+    depends on WANT_I2C
+config WANT_SENSOR_ANGLE
+    bool "Support angle sensors"
+    depends on WANT_SPI
 endmenu
 
 # Generic configuration options for CANbus
@@ -255,4 +325,6 @@ config HAVE_CHIPID
 config HAVE_BOOTLOADER_REQUEST
     bool
 config HAVE_LIMITED_CODE_SIZE
+    bool
+config HAVE_SOFTWARE_DIVIDE_REQUIRED
     bool

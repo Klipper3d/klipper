@@ -8,6 +8,34 @@ All dates in this document are approximate.
 
 ## Changes
 
+20250811: Support for the `max_accel_to_decel` parameter in the
+`[printer]` config section has been removed and support for the
+`ACCEL_TO_DECEL` parameter in the `SET_VELOCITY_LIMIT` command has
+been removed. These capabilities were deprecated on 20240313.
+
+20250721: The `[pca9632]` and `[mcp4018]` modules no longer accept the
+`scl_pin` and `sda_pin` options. Use `i2c_software_scl_pin` and
+`i2c_software_sda_pin` instead.
+
+20250428: The maximum `cycle_time` for pwm `[output_pin]`,
+`[pwm_cycle_time]`, `[pwm_tool]`, and similar config sections is now 3
+seconds (reduced from 5 seconds). The `maximum_mcu_duration` in
+`[pwm_tool]` is now also 3 seconds.
+
+20250418: The manual_stepper `STOP_ON_ENDSTOP` feature may now take
+less time to complete. Previously, the command would wait the entire
+time the move could possibly take even if the endstop triggered
+earlier. Now, the command finishes shortly after the endstop trigger.
+
+20250417: SPI devices using "software SPI" are now rate limited.
+Previously, the `spi_speed` in the config was ignored and the
+transmission speed was only limited by the processing speed of the
+micro-controller. Now, speeds are limited by the `spi_speed` config
+parameter (actual hardware speeds are likely to be lower than the
+configured value due to software overhead).
+
+20250411: Klipper v0.13.0 released.
+
 20250308: The `AUTO` parameter of the
 `AXIS_TWIST_COMPENSATION_CALIBRATE` command has been removed.
 
@@ -39,7 +67,7 @@ object were issued faster than the minimum scheduling time (typically
 100ms) then actual updates could be queued far into the future. Now if
 many updates are issued in rapid succession then it is possible that
 only the latest request will be applied. If the previous behavior is
-requried then consider adding explicit `G4` delay commands between
+required then consider adding explicit `G4` delay commands between
 updates.
 
 20240912: Support for `maximum_mcu_duration` and `static_value`
@@ -112,7 +140,7 @@ carriage are exported as `printer.dual_carriage.carriage_0` and
 `printer.dual_carriage.carriage_1`.
 
 20230619: The `relative_reference_index` option has been deprecated
-and superceded by the `zero_reference_position` option.  Refer to the
+and superseded by the `zero_reference_position` option.  Refer to the
 [Bed Mesh Documentation](./Bed_Mesh.md#the-deprecated-relative_reference_index)
 for details on how to update the configuration.  With this deprecation
 the `RELATIVE_REFERENCE_INDEX` is no longer available as a parameter
@@ -346,7 +374,7 @@ endstop phases by running the ENDSTOP_PHASE_CALIBRATE command.
 `gear_ratio` for their rotary steppers, and they may no longer specify
 a `step_distance` parameter.  See the
 [config reference](Config_Reference.md#stepper) for the format of the
-new gear_ratio paramter.
+new gear_ratio parameter.
 
 20201213: It is not valid to specify a Z "position_endstop" when using
 "probe:z_virtual_endstop".  An error will now be raised if a Z

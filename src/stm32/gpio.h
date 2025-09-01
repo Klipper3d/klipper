@@ -5,7 +5,10 @@
 
 struct gpio_out {
     void *regs;
-    uint32_t bit;
+    union {
+        struct odr_cache *oc;  // stm32h7 uses 'oc'; all others use 'bit'
+        uint32_t bit;
+    };
 };
 struct gpio_out gpio_out_setup(uint32_t pin, uint32_t val);
 void gpio_out_reset(struct gpio_out g, uint32_t val);
@@ -24,7 +27,7 @@ uint8_t gpio_in_read(struct gpio_in g);
 struct gpio_pwm {
   void *reg;
 };
-struct gpio_pwm gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val);
+struct gpio_pwm gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint32_t val);
 void gpio_pwm_write(struct gpio_pwm g, uint32_t val);
 
 struct gpio_adc {

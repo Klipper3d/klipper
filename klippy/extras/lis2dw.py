@@ -34,7 +34,7 @@ LIS_I2C_ADDR = 0x19
 # Right shift for left justified registers.
 FREEFALL_ACCEL = 9.80665
 LIS2DW_SCALE = FREEFALL_ACCEL * 1.952 / 4
-LIS3DH_SCALE = FREEFALL_ACCEL * 3.906 / 16
+LIS3DH_SCALE = FREEFALL_ACCEL * 11.718 / 16
 
 BATCH_UPDATES = 0.100
 
@@ -145,6 +145,9 @@ class LIS2DW:
                     "This is generally indicative of connection problems\n"
                     "(e.g. faulty wiring) or a faulty lis2dw chip."
                     % (dev_id, LIS2DW_DEV_ID))
+            if self.bus_type == SPI_SERIAL_TYPE:
+                # Disable I2C
+                self.set_reg(REG_LIS2DW_CTRL_REG2_ADDR, 0x06)
             # Setup chip in requested query rate
             # ODR/2, +-16g, low-pass filter, Low-noise abled
             self.set_reg(REG_LIS2DW_CTRL_REG6_ADDR, 0x34)
@@ -167,8 +170,8 @@ class LIS2DW:
             self.set_reg(REG_LIS2DW_CTRL_REG1_ADDR, 0x97)
             # Disable all filtering
             self.set_reg(REG_LIS2DW_CTRL_REG2_ADDR, 0)
-            # Set +-8g, High Resolution mode
-            self.set_reg(REG_LIS2DW_CTRL_REG4_ADDR, 0x28)
+            # Set +-16g, High Resolution mode
+            self.set_reg(REG_LIS2DW_CTRL_REG4_ADDR, 0x38)
             # Enable FIFO
             self.set_reg(REG_LIS2DW_CTRL_REG5_ADDR, 0x40)
             # Stream mode

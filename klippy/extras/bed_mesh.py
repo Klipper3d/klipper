@@ -34,7 +34,7 @@ def constrain(val, min_val, max_val):
 def lerp(t, v0, v1):
     return (1. - t) * v0 + t * v1
 
-# retreive commma separated pair from config
+# retrieve comma separated pair from config
 def parse_config_pair(config, option, default, minval=None, maxval=None):
     pair = config.getintlist(option, (default, default))
     if len(pair) != 2:
@@ -54,7 +54,7 @@ def parse_config_pair(config, option, default, minval=None, maxval=None):
                 % (option, str(maxval)))
     return pair
 
-# retreive commma separated pair from a g-code command
+# retrieve comma separated pair from a g-code command
 def parse_gcmd_pair(gcmd, name, minval=None, maxval=None):
     try:
         pair = [int(v.strip()) for v in gcmd.get(name).split(',')]
@@ -74,7 +74,7 @@ def parse_gcmd_pair(gcmd, name, minval=None, maxval=None):
                              % (name, maxval))
     return pair
 
-# retreive commma separated coordinate from a g-code command
+# retrieve comma separated coordinate from a g-code command
 def parse_gcmd_coord(gcmd, name):
     try:
         v1, v2 = [float(v.strip()) for v in gcmd.get(name).split(',')]
@@ -186,7 +186,8 @@ class BedMesh:
             self.last_position[2] -= self.fade_target
         else:
             # return current position minus the current z-adjustment
-            x, y, z, e = self.toolhead.get_position()
+            cur_pos = self.toolhead.get_position()
+            x, y, z = cur_pos[:3]
             max_adj = self.z_mesh.calc_z(x, y)
             factor = 1.
             z_adj = max_adj - self.fade_target
@@ -202,19 +203,19 @@ class BedMesh:
                           (self.fade_dist - z_adj))
                 factor = constrain(factor, 0., 1.)
             final_z_adj = factor * z_adj + self.fade_target
-            self.last_position[:] = [x, y, z - final_z_adj, e]
+            self.last_position[:] = [x, y, z - final_z_adj] + cur_pos[3:]
         return list(self.last_position)
     def move(self, newpos, speed):
         factor = self.get_z_factor(newpos[2])
         if self.z_mesh is None or not factor:
             # No mesh calibrated, or mesh leveling phased out.
-            x, y, z, e = newpos
+            x, y, z = newpos[:3]
             if self.log_fade_complete:
                 self.log_fade_complete = False
                 logging.info(
                     "bed_mesh fade complete: Current Z: %.4f fade_target: %.4f "
                     % (z, self.fade_target))
-            self.toolhead.move([x, y, z + self.fade_target, e], speed)
+            self.toolhead.move([x, y, z + self.fade_target] + newpos[3:], speed)
         else:
             self.splitter.build_move(self.last_position, newpos, factor)
             while not self.splitter.traverse_complete:
@@ -913,7 +914,7 @@ class ProbeManager:
         for i in range(y_cnt):
             for j in range(x_cnt):
                 if not i % 2:
-                    # move in positive directon
+                    # move in positive direction
                     pos_x = min_x + j * x_dist
                 else:
                     # move in negative direction
@@ -1163,7 +1164,7 @@ class ProbeManager:
 
     def _gen_arc(self, origin, radius, start, step, count):
         end = start + step * count
-        # create a segent for every 3 degress of travel
+        # create a segent for every 3 degrees of travel
         for angle in range(start, end, step):
             rad = math.radians(angle % 360)
             opp = math.sin(rad) * radius
@@ -1273,7 +1274,7 @@ class MoveSplitter:
         self.z_offset = self._calc_z_offset(prev_pos)
         self.traverse_complete = False
         self.distance_checked = 0.
-        axes_d = [self.next_pos[i] - self.prev_pos[i] for i in range(4)]
+        axes_d = [np - pp for np, pp in zip(self.next_pos, self.prev_pos)]
         self.total_move_length = math.sqrt(sum([d*d for d in axes_d[:3]]))
         self.axis_move = [not isclose(d, 0., abs_tol=1e-10) for d in axes_d]
     def _calc_z_offset(self, pos):
@@ -1286,7 +1287,7 @@ class MoveSplitter:
             raise self.gcode.error(
                 "bed_mesh: Slice distance is negative "
                 "or greater than entire move length")
-        for i in range(4):
+        for i in range(len(self.next_pos)):
             if self.axis_move[i]:
                 self.current_pos[i] = lerp(
                     t, self.prev_pos[i], self.next_pos[i])
@@ -1301,9 +1302,9 @@ class MoveSplitter:
                     next_z = self._calc_z_offset(self.current_pos)
                     if abs(next_z - self.z_offset) >= self.split_delta_z:
                         self.z_offset = next_z
-                        return self.current_pos[0], self.current_pos[1], \
-                            self.current_pos[2] + self.z_offset, \
-                            self.current_pos[3]
+                        newpos = list(self.current_pos)
+                        newpos[2] += self.z_offset
+                        return newpos
             # end of move reached
             self.current_pos[:] = self.next_pos
             self.z_offset = self._calc_z_offset(self.current_pos)
