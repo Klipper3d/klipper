@@ -303,8 +303,6 @@ class MultiCarriages:
                                desc=self.cmd_SAVE_MULTI_CARRIAGE_STATE_help)
         gcode.register_command('RESTORE_MULTI_CARRIAGE_STATE', self.cmd_RESTORE_MULTI_CARRIAGE_STATE,
                                desc=self.cmd_RESTORE_MULTI_CARRIAGE_STATE_help)
-        gcode.register_command('GET_GANTRY_INFO', self.cmd_GET_GANTRY_INFO,
-                               desc="Get gantry map and axis information")
         self.multi_gantries = multi_gantries
         # gantry_map provides mapping of carriages to gantries
         #   Example
@@ -313,10 +311,12 @@ class MultiCarriages:
         #       gantry 0 remain inactive.
         self.gantry_map = config.getintlist('gantry_map', None)
         if self.gantry_map is not None:
+            if isinstance(self.gantry_map, tuple):
+                self.gantry_map = list(self.gantry_map)
+            if not isinstance(self.gantry_map, list):
+                raise config.error("gantry_map must be a list, not a %s" % (type(self.gantry_map).__name__,))
             if self.multi_gantries is None:
                 raise config.error("gantry_map requires multi_gantries to be defined")
-            if not isinstance(self.gantry_map, list):
-                raise config.error("gantry_map must be a list")
             if len(self.gantry_map) != len(self.dc):
                 raise config.error("gantry_map length must match the number of carriages")
             num_gantries = len(self.multi_gantries.gantries)
