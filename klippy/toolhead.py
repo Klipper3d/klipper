@@ -661,8 +661,8 @@ class ToolHeadCommandHelper:
             max_velocity, max_accel, square_corner_velocity, min_cruise_ratio)
         msg = ("max_velocity: %.6f\n"
                "max_accel: %.6f\n"
-               "minimum_cruise_ratio: %.6f\n"
-               "square_corner_velocity: %.6f" % (mv, ma, scv, mcr))
+               "square_corner_velocity: %.6f\n"
+               "minimum_cruise_ratio: %.6f" % (mv, ma, scv, mcr))
         self.printer.set_rollover_info("toolhead", "toolhead: %s" % (msg,))
         if (max_velocity is None and max_accel is None
             and square_corner_velocity is None and min_cruise_ratio is None):
