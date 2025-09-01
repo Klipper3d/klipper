@@ -50,15 +50,9 @@ class ManualStepper:
             self.next_cmd_time = print_time
     def do_enable(self, enable):
         self.sync_print_time()
+        stepper_names = [s.get_name() for s in self.steppers]
         stepper_enable = self.printer.lookup_object('stepper_enable')
-        if enable:
-            for s in self.steppers:
-                se = stepper_enable.lookup_enable(s.get_name())
-                se.motor_enable(self.next_cmd_time)
-        else:
-            for s in self.steppers:
-                se = stepper_enable.lookup_enable(s.get_name())
-                se.motor_disable(self.next_cmd_time)
+        stepper_enable.set_motors_enable(stepper_names, enable)
         self.sync_print_time()
     def do_set_position(self, setpos):
         toolhead = self.printer.lookup_object('toolhead')

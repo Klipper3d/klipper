@@ -1,6 +1,6 @@
 # Utility for manually moving a stepper for diagnostic purposes
 #
-# Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging
@@ -10,7 +10,6 @@ BUZZ_DISTANCE = 1.
 BUZZ_VELOCITY = BUZZ_DISTANCE / .250
 BUZZ_RADIANS_DISTANCE = math.radians(1.)
 BUZZ_RADIANS_VELOCITY = BUZZ_RADIANS_DISTANCE / .250
-STALL_TIME = 0.100
 
 # Calculate a move's accel_t, cruise_t, and cruise_v
 def calc_move_time(dist, speed, accel):
@@ -56,24 +55,16 @@ class ForceMove:
             raise self.printer.config_error("Unknown stepper %s" % (name,))
         return self.steppers[name]
     def _force_enable(self, stepper):
-        toolhead = self.printer.lookup_object('toolhead')
-        print_time = toolhead.get_last_move_time()
+        stepper_name = stepper.get_name()
         stepper_enable = self.printer.lookup_object('stepper_enable')
-        enable = stepper_enable.lookup_enable(stepper.get_name())
-        was_enable = enable.is_motor_enabled()
-        if not was_enable:
-            enable.motor_enable(print_time)
-            toolhead.dwell(STALL_TIME)
-        return was_enable
-    def _restore_enable(self, stepper, was_enable):
-        if not was_enable:
-            toolhead = self.printer.lookup_object('toolhead')
-            toolhead.dwell(STALL_TIME)
-            print_time = toolhead.get_last_move_time()
-            stepper_enable = self.printer.lookup_object('stepper_enable')
-            enable = stepper_enable.lookup_enable(stepper.get_name())
-            enable.motor_disable(print_time)
-            toolhead.dwell(STALL_TIME)
+        did_enable = stepper_enable.set_motors_enable([stepper_name], True)
+        return did_enable
+    def _restore_enable(self, stepper, did_enable):
+        if not did_enable:
+            return
+        stepper_name = stepper.get_name()
+        stepper_enable = self.printer.lookup_object('stepper_enable')
+        stepper_enable.set_motors_enable([stepper_name], False)
     def manual_move(self, stepper, dist, speed, accel=0.):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.flush_step_generation()
@@ -100,7 +91,7 @@ class ForceMove:
     def cmd_STEPPER_BUZZ(self, gcmd):
         stepper = self._lookup_stepper(gcmd)
         logging.info("Stepper buzz %s", stepper.get_name())
-        was_enable = self._force_enable(stepper)
+        did_enable = self._force_enable(stepper)
         toolhead = self.printer.lookup_object('toolhead')
         dist, speed = BUZZ_DISTANCE, BUZZ_VELOCITY
         if stepper.units_in_radians():
@@ -110,7 +101,7 @@ class ForceMove:
             toolhead.dwell(.050)
             self.manual_move(stepper, -dist, speed)
             toolhead.dwell(.450)
-        self._restore_enable(stepper, was_enable)
+        self._restore_enable(stepper, did_enable)
     cmd_FORCE_MOVE_help = "Manually move a stepper; invalidates kinematics"
     def cmd_FORCE_MOVE(self, gcmd):
         stepper = self._lookup_stepper(gcmd)
