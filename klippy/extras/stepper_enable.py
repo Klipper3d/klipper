@@ -1,6 +1,6 @@
 # Support for enable pins on stepper motor drivers
 #
-# Copyright (C) 2019-2021  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2019-2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
@@ -90,19 +90,27 @@ class PrinterStepperEnable:
         self.enable_lines[name] = EnableTracking(mcu_stepper, enable)
     def set_motors_enable(self, stepper_names, enable):
         toolhead = self.printer.lookup_object('toolhead')
-        toolhead.dwell(DISABLE_STALL_TIME)
-        print_time = toolhead.get_last_move_time()
+        # Flush steps to ensure all auto enable callbacks invoked
+        toolhead.flush_step_generation()
+        print_time = None
         did_change = False
         for stepper_name in stepper_names:
             el = self.enable_lines[stepper_name]
-            was_enabled = el.is_motor_enabled()
+            if el.is_motor_enabled() == enable:
+                continue
+            if print_time is None:
+                # Dwell for sufficient delay from any previous auto enable
+                if not enable:
+                    toolhead.dwell(DISABLE_STALL_TIME)
+                print_time = toolhead.get_last_move_time()
             if enable:
                 el.motor_enable(print_time)
             else:
                 el.motor_disable(print_time)
-            if was_enabled != el.is_motor_enabled():
-                did_change = True
-        toolhead.dwell(DISABLE_STALL_TIME)
+            did_change = True
+        # Dwell to ensure sufficient delay prior to a future auto enable
+        if did_change and not enable:
+            toolhead.dwell(DISABLE_STALL_TIME)
         return did_change
     def motor_off(self):
         self.set_motors_enable(self.get_steppers(), False)
