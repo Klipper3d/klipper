@@ -190,7 +190,6 @@ class LookAheadQueue:
         # Check if enough moves have been queued to reach the target flush time.
         return self.junction_flush <= 0.
 
-BUFFER_TIME_LOW = 1.0
 BUFFER_TIME_HIGH = 2.0
 BUFFER_TIME_START = 0.250
 
@@ -226,8 +225,8 @@ class ToolHead:
         self.priming_timer = None
         # Setup for generating moves
         self.motion_queuing = self.printer.load_object(config, 'motion_queuing')
-        self.motion_queuing.setup_lookahead_flush_callback(
-            self._check_flush_lookahead)
+        self.motion_queuing.register_flush_callback(self._handle_step_flush,
+                                                    can_add_trapq=True)
         self.trapq = self.motion_queuing.allocate_trapq()
         self.trapq_append = self.motion_queuing.lookup_trapq_append()
         # Create kinematics class
@@ -253,8 +252,6 @@ class ToolHead:
     # Print time tracking
     def _advance_move_time(self, next_print_time):
         self.print_time = max(self.print_time, next_print_time)
-        self.motion_queuing.advance_flush_time(self.print_time,
-                                               lazy_target=True)
     def _calc_print_time(self):
         curtime = self.reactor.monotonic()
         est_print_time = self.mcu.estimated_print_time(curtime)
@@ -292,8 +289,8 @@ class ToolHead:
             for cb in move.timing_callbacks:
                 cb(next_move_time)
         # Generate steps for moves
-        self.motion_queuing.note_mcu_movequeue_activity(next_move_time)
         self._advance_move_time(next_move_time)
+        self.motion_queuing.note_mcu_movequeue_activity(next_move_time)
     def _flush_lookahead(self, is_runout=False):
         # Transit from "NeedPrime"/"Priming"/main state to "NeedPrime"
         prev_print_time = self.print_time
@@ -330,7 +327,7 @@ class ToolHead:
             if self.priming_timer is None:
                 self.priming_timer = self.reactor.register_timer(
                     self._priming_handler)
-            wtime = eventtime + max(0.100, buffer_time - BUFFER_TIME_LOW)
+            wtime = eventtime + max(0.100, buffer_time - BUFFER_TIME_HIGH)
             self.reactor.update_timer(self.priming_timer, wtime)
         # Check if there are lots of queued moves and pause if so
         while 1:
@@ -356,18 +353,13 @@ class ToolHead:
             logging.exception("Exception in priming_handler")
             self.printer.invoke_shutdown("Exception in priming_handler")
         return self.reactor.NEVER
-    def _check_flush_lookahead(self, eventtime):
+    def _handle_step_flush(self, flush_time, step_gen_time):
         if self.special_queuing_state:
-            return None
+            return
         # In "main" state - flush lookahead if buffer runs low
-        est_print_time = self.mcu.estimated_print_time(eventtime)
-        buffer_time = self.print_time - est_print_time
-        if buffer_time > BUFFER_TIME_LOW:
-            # Running normally - reschedule check
-            return eventtime + buffer_time - BUFFER_TIME_LOW
-        # Under ran low buffer mark - flush lookahead queue
-        self._flush_lookahead(is_runout=True)
-        return None
+        kin_flush_delay = self.motion_queuing.get_kin_flush_delay()
+        if step_gen_time >= self.print_time - kin_flush_delay:
+            self._flush_lookahead(is_runout=True)
     # Movement commands
     def get_position(self):
         return list(self.commanded_pos)
