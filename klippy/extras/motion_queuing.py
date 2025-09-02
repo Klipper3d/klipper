@@ -7,8 +7,11 @@ import logging
 import chelper
 
 BGFLUSH_LOW_TIME = 0.200
-BGFLUSH_BATCH_TIME = 0.200
+BGFLUSH_HIGH_TIME = 0.400
+BGFLUSH_SG_LOW_TIME = 0.450
+BGFLUSH_SG_HIGH_TIME = 0.700
 BGFLUSH_EXTRA_TIME = 0.250
+
 MOVE_HISTORY_EXPIRE = 30.
 MIN_KIN_TIME = 0.100
 MOVE_BATCH_TIME = 0.500
@@ -37,18 +40,20 @@ class PrinterMotionQueuing:
         self.flush_callbacks = []
         # History expiration
         self.clear_history_time = 0.
-        # Flush tracking
-        self.flush_timer = self.reactor.register_timer(self._flush_handler)
-        self.do_kick_flush_timer = True
-        self.last_flush_time = self.last_step_gen_time = 0.
-        self.need_flush_time = self.need_step_gen_time = 0.
-        self.check_flush_lookahead_cb = (lambda e: None)
         # MCU tracking
         self.all_mcus = [m for n, m in printer.lookup_objects(module='mcu')]
         self.mcu = self.all_mcus[0]
         self.can_pause = True
         if self.mcu.is_fileoutput():
             self.can_pause = False
+        # Flush tracking
+        flush_handler = self._flush_handler
+        if not self.can_pause:
+            flush_handler = self._flush_handler_debug
+        self.flush_timer = self.reactor.register_timer(flush_handler)
+        self.do_kick_flush_timer = True
+        self.last_flush_time = self.last_step_gen_time = 0.
+        self.need_flush_time = self.need_step_gen_time = 0.
         # Kinematic step generation scan window time tracking
         self.kin_flush_delay = SDS_CHECK_TIME
         # Register handlers
@@ -79,8 +84,11 @@ class PrinterMotionQueuing:
         self.steppersyncs.append((mcu, ss))
         mcu_freq = float(mcu.seconds_to_clock(1.))
         ffi_lib.steppersync_set_time(ss, 0., mcu_freq)
-    def register_flush_callback(self, callback):
-        self.flush_callbacks.append(callback)
+    def register_flush_callback(self, callback, can_add_trapq=False):
+        if can_add_trapq:
+            self.flush_callbacks = [callback] + self.flush_callbacks
+        else:
+            self.flush_callbacks = self.flush_callbacks + [callback]
     def unregister_flush_callback(self, callback):
         if callback in self.flush_callbacks:
             fcbs = list(self.flush_callbacks)
@@ -150,15 +158,10 @@ class PrinterMotionQueuing:
     # Flush tracking
     def _handle_shutdown(self):
         self.can_pause = False
-    def setup_lookahead_flush_callback(self, check_flush_lookahead_cb):
-        self.check_flush_lookahead_cb = check_flush_lookahead_cb
-    def advance_flush_time(self, target_time, lazy_target=False):
-        want_flush_time = want_step_gen_time = target_time
-        if lazy_target:
-            # Account for step gen scan windows and optimize step compression
-            want_step_gen_time -= self.kin_flush_delay
-            want_flush_time = want_step_gen_time - STEPCOMPRESS_FLUSH_TIME
-        want_flush_time = max(want_flush_time, self.last_flush_time)
+    def _advance_flush_time(self, want_flush_time, want_step_gen_time=0.):
+        want_flush_time = max(want_flush_time, self.last_flush_time,
+                              want_step_gen_time - STEPCOMPRESS_FLUSH_TIME)
+        want_step_gen_time = max(want_step_gen_time, want_flush_time)
         flush_time = self.last_flush_time
         if want_flush_time > flush_time + 10. * MOVE_BATCH_TIME:
             # Use closer startup time when coming out of idle state
@@ -178,31 +181,69 @@ class PrinterMotionQueuing:
             if flush_time >= want_flush_time:
                 break
     def flush_all_steps(self):
-        self.advance_flush_time(self.need_step_gen_time)
+        self._advance_flush_time(self.need_step_gen_time)
     def calc_step_gen_restart(self, est_print_time):
         kin_time = max(est_print_time + MIN_KIN_TIME, self.last_step_gen_time)
         return kin_time + self.kin_flush_delay
     def _flush_handler(self, eventtime):
         try:
-            # Check if flushing is done via lookahead queue
-            ret = self.check_flush_lookahead_cb(eventtime)
-            if ret is not None:
-                return ret
-            # Flush motion queues
             est_print_time = self.mcu.estimated_print_time(eventtime)
-            while 1:
-                end_flush = self.need_flush_time + BGFLUSH_EXTRA_TIME
-                if self.last_flush_time >= end_flush:
-                    self.do_kick_flush_timer = True
+            aggr_sg_time = self.need_step_gen_time - 2.*self.kin_flush_delay
+            if self.last_step_gen_time < aggr_sg_time:
+                # Actively stepping - want more aggressive flushing
+                want_sg_time = est_print_time + BGFLUSH_SG_HIGH_TIME
+                want_sg_time = min(want_sg_time, aggr_sg_time)
+                # Try improving run-to-run reproducibility by batching from last
+                batch_time = BGFLUSH_SG_HIGH_TIME - BGFLUSH_SG_LOW_TIME
+                next_batch_time = self.last_step_gen_time + batch_time
+                if next_batch_time > est_print_time + BGFLUSH_SG_LOW_TIME:
+                    want_sg_time = min(want_sg_time, next_batch_time)
+                # Flush motion queues (if needed)
+                if want_sg_time > self.last_step_gen_time:
+                    self._advance_flush_time(0., want_sg_time)
+            else:
+                # Not stepping (or only step remnants) - use relaxed flushing
+                want_flush_time = est_print_time + BGFLUSH_HIGH_TIME
+                max_flush_time = self.need_flush_time + BGFLUSH_EXTRA_TIME
+                want_flush_time = min(want_flush_time, max_flush_time)
+                # Flush motion queues (if needed)
+                if want_flush_time > self.last_flush_time:
+                    self._advance_flush_time(want_flush_time)
+            # Reschedule timer
+            aggr_sg_time = self.need_step_gen_time - 2.*self.kin_flush_delay
+            if self.last_step_gen_time < aggr_sg_time:
+                waketime = self.last_step_gen_time - BGFLUSH_SG_LOW_TIME
+            else:
+                self.do_kick_flush_timer = True
+                max_flush_time = self.need_flush_time + BGFLUSH_EXTRA_TIME
+                if self.last_flush_time >= max_flush_time:
                     return self.reactor.NEVER
-                buffer_time = self.last_flush_time - est_print_time
-                if buffer_time > BGFLUSH_LOW_TIME:
-                    return eventtime + buffer_time - BGFLUSH_LOW_TIME
-                ftime = est_print_time + BGFLUSH_LOW_TIME + BGFLUSH_BATCH_TIME
-                self.advance_flush_time(min(end_flush, ftime))
+                waketime = self.last_flush_time - BGFLUSH_LOW_TIME
+            return eventtime + waketime - est_print_time
         except:
             logging.exception("Exception in flush_handler")
             self.printer.invoke_shutdown("Exception in flush_handler")
+        return self.reactor.NEVER
+    def _flush_handler_debug(self, eventtime):
+        # Use custom flushing code when in batch output mode
+        try:
+            faux_time = self.need_flush_time - 1.5
+            batch_time = BGFLUSH_SG_HIGH_TIME - BGFLUSH_SG_LOW_TIME
+            flush_count = 0
+            while self.last_step_gen_time < faux_time:
+                target = self.last_step_gen_time + batch_time
+                if flush_count > 100.:
+                    target = faux_time
+                self._advance_flush_time(0., target)
+                flush_count += 1
+            if flush_count:
+                return self.reactor.NOW
+            self._advance_flush_time(self.need_flush_time + BGFLUSH_EXTRA_TIME)
+            self.do_kick_flush_timer = True
+            return self.reactor.NEVER
+        except:
+            logging.exception("Exception in flush_handler_debug")
+            self.printer.invoke_shutdown("Exception in flush_handler_debug")
         return self.reactor.NEVER
     def note_mcu_movequeue_activity(self, mq_time, is_step_gen=True):
         if is_step_gen:
@@ -230,10 +271,10 @@ class PrinterMotionQueuing:
                 continue
             flush_time = min(flush_time + DRIP_SEGMENT_TIME, end_time)
             self.note_mcu_movequeue_activity(flush_time)
-            self.advance_flush_time(flush_time)
+            self._advance_flush_time(flush_time)
         # Restore background flushing
         self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
-        self.advance_flush_time(flush_time + self.kin_flush_delay)
+        self._advance_flush_time(flush_time + self.kin_flush_delay)
 
 def load_config(config):
     return PrinterMotionQueuing(config)
