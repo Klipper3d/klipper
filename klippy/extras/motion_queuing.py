@@ -217,24 +217,23 @@ class PrinterMotionQueuing:
         self.reactor.update_timer(self.flush_timer, self.reactor.NEVER)
         self.do_kick_flush_timer = False
         # Flush in segments until drip_completion signal
-        flush_delay = DRIP_TIME + STEPCOMPRESS_FLUSH_TIME + self.kin_flush_delay
         flush_time = start_time
         while flush_time < end_time:
             if drip_completion.test():
                 break
             curtime = self.reactor.monotonic()
             est_print_time = self.mcu.estimated_print_time(curtime)
-            wait_time = flush_time - est_print_time - flush_delay
+            wait_time = flush_time - est_print_time - DRIP_TIME
             if wait_time > 0. and self.can_pause:
                 # Pause before sending more steps
                 drip_completion.wait(curtime + wait_time)
                 continue
             flush_time = min(flush_time + DRIP_SEGMENT_TIME, end_time)
             self.note_mcu_movequeue_activity(flush_time)
-            self.advance_flush_time(flush_time, lazy_target=True)
+            self.advance_flush_time(flush_time)
         # Restore background flushing
         self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
-        self.advance_flush_time(self.need_step_gen_time)
+        self.advance_flush_time(flush_time + self.kin_flush_delay)
 
 def load_config(config):
     return PrinterMotionQueuing(config)
