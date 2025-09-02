@@ -303,7 +303,7 @@ class ToolHead:
         self.check_stall_time = 0.
     def flush_step_generation(self):
         self._flush_lookahead()
-        self.motion_queuing.advance_flush_time()
+        self.motion_queuing.flush_all_steps()
     def get_last_move_time(self):
         if self.special_queuing_state:
             self._flush_lookahead()
