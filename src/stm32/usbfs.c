@@ -435,5 +435,12 @@ usb_init(void)
     USB->CNTR = USB_CNTR_RESETM;
     USB->ISTR = 0;
     armcm_enable_irq(USB_IRQHandler, USBx_IRQn, 1);
+
+#if CONFIG_MACH_STM32G0
+    // For STM32G0, enable USB device to activate internal pullup
+    // The STM32G0 family doesn't have USB_BCDR_DPPU register
+    // Instead, the pullup is automatically enabled when the device is enabled
+    USB->DADDR = USB_DADDR_EF;
+#endif
 }
 DECL_INIT(usb_init);
