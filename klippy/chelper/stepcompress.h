@@ -11,7 +11,7 @@ struct pull_history_steps {
     int step_count, interval, add;
 };
 
-struct stepcompress *stepcompress_alloc(uint32_t oid);
+struct stepcompress *stepcompress_alloc(uint32_t oid, char name[16]);
 void stepcompress_fill(struct stepcompress *sc, uint32_t max_error
                        , int32_t queue_step_msgtag
                        , int32_t set_next_step_dir_msgtag);
@@ -43,8 +43,8 @@ void stepcompress_set_stepper_kinematics(struct stepcompress *sc
                                          , struct stepper_kinematics *sk);
 struct stepper_kinematics *stepcompress_get_stepper_kinematics(
     struct stepcompress *sc);
-int32_t stepcompress_generate_steps(struct stepcompress *sc
-                                    , double gen_steps_time
-                                    , uint64_t flush_clock);
+void stepcompress_start_gen_steps(struct stepcompress *sc, double gen_steps_time
+                                  , uint64_t flush_clock);
+int32_t stepcompress_finalize_gen_steps(struct stepcompress *sc);
 
 #endif // stepcompress.h
