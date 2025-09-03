@@ -44,7 +44,8 @@ class MCU_stepper:
         self._reset_cmd_tag = self._get_position_cmd = None
         self._active_callbacks = []
         motion_queuing = printer.load_object(config, 'motion_queuing')
-        self._stepqueue = motion_queuing.allocate_stepcompress(mcu, oid)
+        sname = self._name.split()[-1]
+        self._stepqueue = motion_queuing.allocate_stepcompress(mcu, oid, sname)
         ffi_main, ffi_lib = chelper.get_ffi()
         ffi_lib.stepcompress_set_invert_sdir(self._stepqueue, self._invert_dir)
         self._stepper_kinematics = None
