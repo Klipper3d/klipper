@@ -71,6 +71,8 @@ class HD44780:
         for new_data, old_data, fb_id in self.all_framebuffers:
             if new_data == old_data:
                 continue
+            # Make intermediate copy
+            new_data = new_data[:]
             # Find the position of all changed bytes in this framebuffer
             diffs = [[i, 1] for i, (n, o) in enumerate(zip(new_data, old_data))
                      if n != o]
