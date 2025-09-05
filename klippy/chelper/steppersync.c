@@ -76,22 +76,6 @@ steppersync_set_time(struct steppersync *ss, double time_offset
     }
 }
 
-// Generate steps and flush stepcompress objects
-int32_t __visible
-steppersync_generate_steps(struct steppersync *ss, double gen_steps_time
-                           , uint64_t flush_clock)
-{
-    int i;
-    for (i=0; i<ss->sc_num; i++) {
-        struct stepcompress *sc = ss->sc_list[i];
-        int32_t ret = stepcompress_generate_steps(sc, gen_steps_time
-                                                  , flush_clock);
-        if (ret)
-            return ret;
-    }
-    return 0;
-}
-
 // Expire the stepcompress history before the given clock time
 void __visible
 steppersync_history_expire(struct steppersync *ss, uint64_t end_clock)
@@ -129,7 +113,7 @@ heap_replace(struct steppersync *ss, uint64_t req_clock)
 }
 
 // Find and transmit any scheduled steps prior to the given 'move_clock'
-int __visible
+static void
 steppersync_flush(struct steppersync *ss, uint64_t move_clock)
 {
     // Order commands by the reqclock of each pending command
@@ -172,6 +156,34 @@ steppersync_flush(struct steppersync *ss, uint64_t move_clock)
     // Transmit commands
     if (!list_empty(&msgs))
         serialqueue_send_batch(ss->sq, ss->cq, &msgs);
+}
 
+// Start generating steps in stepcompress objects
+void __visible
+steppersync_start_gen_steps(struct steppersync *ss, double gen_steps_time
+                            , uint64_t flush_clock)
+{
+    int i;
+    for (i=0; i<ss->sc_num; i++) {
+        struct stepcompress *sc = ss->sc_list[i];
+        stepcompress_start_gen_steps(sc, gen_steps_time, flush_clock);
+    }
+}
+
+// Finalize step generation and flush
+int32_t __visible
+steppersync_finalize_gen_steps(struct steppersync *ss, uint64_t flush_clock)
+{
+    int i;
+    int32_t res = 0;
+    for (i=0; i<ss->sc_num; i++) {
+        struct stepcompress *sc = ss->sc_list[i];
+        int32_t ret = stepcompress_finalize_gen_steps(sc);
+        if (ret)
+            res = ret;
+    }
+    if (res)
+        return res;
+    steppersync_flush(ss, flush_clock);
     return 0;
 }
