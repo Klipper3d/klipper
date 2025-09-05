@@ -110,8 +110,8 @@ class PrinterPWMLED:
         # Configure pwm pins
         ppins = printer.lookup_object('pins')
         max_duration = printer.lookup_object('mcu').max_nominal_duration()
-        cycle_time = config.getfloat('cycle_time', 0.010, above=0.,
-                                     maxval=max_duration)
+        self.cycle_time = config.getfloat('cycle_time', 0.010, above=0.,
+                                          maxval=max_duration)
         hardware_pwm = config.getboolean('hardware_pwm', False)
         self.pins = []
         for i, name in enumerate(("red", "green", "blue", "white")):
@@ -120,7 +120,7 @@ class PrinterPWMLED:
                 continue
             mcu_pin = ppins.setup_pin('pwm', pin_name)
             mcu_pin.setup_max_duration(0.)
-            mcu_pin.setup_cycle_time(cycle_time, hardware_pwm)
+            mcu_pin.setup_cycle_time(self.cycle_time, hardware_pwm)
             self.pins.append((i, mcu_pin))
         if not self.pins:
             raise config.error("No LED pin definitions found in '%s'"
@@ -138,6 +138,13 @@ class PrinterPWMLED:
             eventtime = self.printer.get_reactor().monotonic()
             print_time = mcu.estimated_print_time(eventtime) + min_sched_time
         print_time = max(print_time, self.last_print_time + min_sched_time)
+        # Avoid flickering
+        pulses = (print_time - self.last_print_time) / self.cycle_time
+        last_clock = mcu.print_time_to_clock(self.last_print_time)
+        full_pulses = round(pulses + 0.5)
+        clock_offset = mcu.seconds_to_clock(full_pulses * self.cycle_time)
+        next_clock = last_clock + clock_offset
+        print_time = mcu.clock_to_print_time(next_clock)
         color = led_state[0]
         for idx, mcu_pin in self.pins:
             if self.prev_color[idx] != color[idx]:
