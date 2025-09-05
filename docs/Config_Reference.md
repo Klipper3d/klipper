@@ -5472,6 +5472,17 @@ cs_pin:
 #   above parameters.
 ```
 
+### [heater_pc]
+
+Heater prediction correction.
+To use this feature, define a config section with a "heater_pc" prefix
+followed by the name of the corresponding heater config section.
+For example `[heater_pc heater_bed]`
+```
+[heater_pc extruder]
+#macro_template: <display_template's name>
+```
+
 ## Common bus parameters
 
 ### Common SPI settings
