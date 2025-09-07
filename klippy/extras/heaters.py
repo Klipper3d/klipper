@@ -46,6 +46,8 @@ class Heater:
         # pwm caching
         self.next_pwm_time = 0.
         self.last_pwm_value = 0.
+        # Predictive control callback
+        self.pc_callback = self._pc_def_callback
         # Setup control algorithm sub-class
         algos = {'watermark': ControlBangBang, 'pid': ControlPID}
         algo = config.getchoice('control', algos)
@@ -93,6 +95,12 @@ class Heater:
             self.smoothed_temp += temp_diff * adj_time
             self.can_extrude = (self.smoothed_temp >= self.min_extrude_temp)
         #logging.debug("temp: %.3f %f = %f", read_time, temp)
+    def _pc_def_callback(self):
+        return .0
+    def get_pc_correction(self):
+        return self.pc_callback()
+    def set_pc_callback(self, cb):
+        self.pc_callback = cb
     def _handle_shutdown(self):
         self.verify_mainthread_time = -999.
     # External commands
@@ -217,6 +225,7 @@ class ControlPID:
         temp_integ = max(0., min(self.temp_integ_max, temp_integ))
         # Calculate output
         co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
+        co += self.heater.get_pc_correction()
         #logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d",
         #    temp, read_time, temp_diff, temp_deriv, temp_err, temp_integ, co)
         bounded_co = max(0., min(self.heater_max_power, co))
