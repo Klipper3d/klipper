@@ -50,7 +50,6 @@ class PrinterMotionQueuing:
         if self.mcu.is_fileoutput():
             self.can_pause = False
         # Kinematic step generation scan window time tracking
-        self.need_calc_kin_flush_delay = True
         self.kin_flush_delay = SDS_CHECK_TIME
         # Register handlers
         printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
@@ -129,8 +128,7 @@ class PrinterMotionQueuing:
     # Kinematic step generation scan window time tracking
     def get_kin_flush_delay(self):
         return self.kin_flush_delay
-    def _calc_kin_flush_delay(self):
-        self.need_calc_kin_flush_delay = False
+    def check_step_generation_scan_windows(self):
         ffi_main, ffi_lib = chelper.get_ffi()
         kin_flush_delay = SDS_CHECK_TIME
         for mcu, sc in self.stepcompress:
@@ -175,11 +173,8 @@ class PrinterMotionQueuing:
             if flush_time >= want_flush_time:
                 break
     def flush_all_steps(self):
-        self.need_calc_kin_flush_delay = True
         self.advance_flush_time(self.need_step_gen_time)
     def calc_step_gen_restart(self, est_print_time):
-        if self.need_calc_kin_flush_delay:
-            self._calc_kin_flush_delay()
         kin_time = max(est_print_time + MIN_KIN_TIME, self.last_step_gen_time)
         return kin_time + self.kin_flush_delay
     def _flush_handler(self, eventtime):
