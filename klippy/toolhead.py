@@ -294,13 +294,16 @@ class ToolHead:
         # Generate steps for moves
         self.motion_queuing.note_mcu_movequeue_activity(next_move_time)
         self._advance_move_time(next_move_time)
-    def _flush_lookahead(self):
+    def _flush_lookahead(self, is_runout=False):
         # Transit from "NeedPrime"/"Priming"/main state to "NeedPrime"
+        prev_print_time = self.print_time
         self._process_lookahead()
         self.special_queuing_state = "NeedPrime"
         self.need_check_pause = -1.
         self.lookahead.set_flush_time(BUFFER_TIME_HIGH)
         self.check_stall_time = 0.
+        if is_runout and prev_print_time != self.print_time:
+            self.check_stall_time = self.print_time
     def flush_step_generation(self):
         self._flush_lookahead()
         self.motion_queuing.flush_all_steps()
@@ -348,8 +351,7 @@ class ToolHead:
         self.priming_timer = None
         try:
             if self.special_queuing_state == "Priming":
-                self._flush_lookahead()
-                self.check_stall_time = self.print_time
+                self._flush_lookahead(is_runout=True)
         except:
             logging.exception("Exception in priming_handler")
             self.printer.invoke_shutdown("Exception in priming_handler")
@@ -359,15 +361,12 @@ class ToolHead:
             return None
         # In "main" state - flush lookahead if buffer runs low
         est_print_time = self.mcu.estimated_print_time(eventtime)
-        print_time = self.print_time
-        buffer_time = print_time - est_print_time
+        buffer_time = self.print_time - est_print_time
         if buffer_time > BUFFER_TIME_LOW:
             # Running normally - reschedule check
             return eventtime + buffer_time - BUFFER_TIME_LOW
         # Under ran low buffer mark - flush lookahead queue
-        self._flush_lookahead()
-        if print_time != self.print_time:
-            self.check_stall_time = self.print_time
+        self._flush_lookahead(is_runout=True)
         return None
     # Movement commands
     def get_position(self):
