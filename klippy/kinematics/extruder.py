@@ -75,6 +75,8 @@ class ExtruderStepper:
             # Need full kinematic flush to change the smooth time
             toolhead.flush_step_generation()
             espa(self.sk_extruder, 0., pressure_advance, new_smooth_time)
+            motion_queuing = self.printer.lookup_object('motion_queuing')
+            motion_queuing.check_step_generation_scan_windows()
         else:
             toolhead.register_lookahead_callback(
                 lambda print_time: espa(self.sk_extruder, print_time,
