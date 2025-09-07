@@ -180,8 +180,20 @@ class PrinterMotionQueuing:
             self.last_step_gen_time = step_gen_time
             if flush_time >= want_flush_time:
                 break
+    def _await_flush_time(self, want_flush_time):
+        while 1:
+            if self.last_flush_time >= want_flush_time or not self.can_pause:
+                return
+            systime = self.reactor.monotonic()
+            est_print_time = self.mcu.estimated_print_time(systime)
+            wait = want_flush_time - BGFLUSH_HIGH_TIME - est_print_time
+            if wait <= 0.:
+                return
+            self.reactor.pause(systime + min(1., wait))
     def flush_all_steps(self):
-        self._advance_flush_time(self.need_step_gen_time)
+        flush_time = self.need_step_gen_time
+        self._await_flush_time(flush_time)
+        self._advance_flush_time(flush_time)
     def calc_step_gen_restart(self, est_print_time):
         kin_time = max(est_print_time + MIN_KIN_TIME, self.last_step_gen_time)
         return kin_time + self.kin_flush_delay
@@ -254,9 +266,11 @@ class PrinterMotionQueuing:
             self.do_kick_flush_timer = False
             self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
     def drip_update_time(self, start_time, end_time, drip_completion):
+        self._await_flush_time(start_time)
         # Disable background flushing from timer
         self.reactor.update_timer(self.flush_timer, self.reactor.NEVER)
         self.do_kick_flush_timer = False
+        self._advance_flush_time(start_time)
         # Flush in segments until drip_completion signal
         flush_time = start_time
         while flush_time < end_time:
