@@ -190,7 +190,7 @@ class LookAheadQueue:
         # Check if enough moves have been queued to reach the target flush time.
         return self.junction_flush <= 0.
 
-BUFFER_TIME_HIGH = 2.0
+BUFFER_TIME_HIGH = 1.0
 BUFFER_TIME_START = 0.250
 
 # Main code to track events (and their timing) on the printer toolhead

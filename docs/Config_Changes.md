@@ -8,6 +8,10 @@ All dates in this document are approximate.
 
 ## Changes
 
+20251010: During normal printing the command processing will now
+attempt to stay one second ahead of printer movement (reduced from two
+seconds previously).
+
 20250811: Support for the `max_accel_to_decel` parameter in the
 `[printer]` config section has been removed and support for the
 `ACCEL_TO_DECEL` parameter in the `SET_VELOCITY_LIMIT` command has
