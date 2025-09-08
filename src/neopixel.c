@@ -4,6 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include <stdint.h>
 #include <string.h> // memcpy
 #include "autoconf.h" // CONFIG_MACH_AVR
 #include "board/gpio.h" // gpio_out_write
@@ -134,40 +135,23 @@ send_data(struct neopixel_s *n)
         uint_fast8_t byte = *data++;
         uint_fast8_t bits = 8;
         while (bits--) {
+            irq_disable();
+            neopixel_time_t start = neopixel_get_time();
+            gpio_out_toggle_noirq(pin);
             if (byte & 0x80) {
                 // Long pulse
-                neopixel_delay(last_start, BIT_MIN_TICKS);
-                irq_disable();
-                neopixel_time_t start = neopixel_get_time();
-                gpio_out_toggle_noirq(pin);
-                irq_enable();
-
-                if (neopixel_check_elapsed(last_start, start, bit_max_ticks))
-                    goto fail;
-                last_start = start;
-                byte <<= 1;
-
                 neopixel_delay(start, PULSE_LONG_TICKS);
-                irq_disable();
-                gpio_out_toggle_noirq(pin);
-                irq_enable();
-
-                neopixel_delay(neopixel_get_time(), EDGE_MIN_TICKS);
             } else {
                 // Short pulse
-                neopixel_delay(last_start, BIT_MIN_TICKS);
-                irq_disable();
-                neopixel_time_t start = neopixel_get_time();
-                gpio_out_toggle_noirq(pin);
                 neopixel_delay(start, EDGE_MIN_TICKS);
-                gpio_out_toggle_noirq(pin);
-                irq_enable();
-
-                if (neopixel_check_elapsed(last_start, start, bit_max_ticks))
-                    goto fail;
-                last_start = start;
-                byte <<= 1;
             }
+            gpio_out_toggle_noirq(pin);
+            irq_enable();
+            if (neopixel_check_elapsed(last_start, start, bit_max_ticks))
+                goto fail;
+            last_start = start;
+            byte <<= 1;
+            neopixel_delay(last_start, BIT_MIN_TICKS);
         }
     }
     n->last_req_time = timer_read_time();
