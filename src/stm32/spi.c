@@ -135,31 +135,28 @@ spi_prepare(struct spi_config config)
     spi->CR1 = config.spi_cr1;
 }
 
-#ifdef SPI_CR2_FRXTH // stm32 f0/f7/g0/l4/g4 supports buffering
-#define CAN_BUFFER 1
-#else
-#define CAN_BUFFER 0
-#endif
-
 void
 spi_transfer(struct spi_config config, uint8_t receive_data,
              uint8_t len, uint8_t *data)
 {
+    uint8_t *wptr = data, *end = data + len;
     SPI_TypeDef *spi = config.spi;
-    uint8_t *wptr = data;
-    uint8_t *end = data + len;
+
     while (data < end) {
-        if (CAN_BUFFER) {
-            uint32_t sr = spi->SR & (SPI_SR_TXE | SPI_SR_RXNE);
-            if ((sr == SPI_SR_TXE) && wptr < end)
-                writeb((void*)&spi->DR, *wptr++);
-            if (!(sr & SPI_SR_RXNE))
-                 continue;
-        } else {
-            writeb((void*)&spi->DR, *data);
-            while (!(spi->SR & SPI_SR_RXNE))
-                ;
-        }
+        // stm32 f0/f7/g0/l4/g4 supports buffering
+#ifdef SPI_CR2_FRXTH
+        // Rx/Tx FIFO is 32 bits = 4 bytes
+        #define MAX_FIFO 4
+        uint32_t sr = spi->SR & (SPI_SR_TXE | SPI_SR_RXNE);
+        if (sr == SPI_SR_TXE && wptr < end && wptr < data + MAX_FIFO)
+            writeb((void*)&spi->DR, *wptr++);
+        if (!(sr & SPI_SR_RXNE))
+                continue;
+#else
+        writeb((void*)&spi->DR, *data);
+        while (!(spi->SR & SPI_SR_RXNE))
+            ;
+#endif
         uint8_t rdata = readb((void*)&spi->DR);
         if (receive_data)
             *data = rdata;
