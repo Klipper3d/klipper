@@ -227,75 +227,72 @@ struct spi_info {
   DECL_CONSTANT_STR("BUS_PINS_spi2a", "PC2,PC3,PB10");
 #endif
 
-#define GPIO_FUNCTION_ALL(fn) GPIO_FUNCTION(fn), \
-    GPIO_FUNCTION(fn), GPIO_FUNCTION(fn)
+#define SPI_FUNCTION(miso, mosi, sck) GPIO_FUNCTION(miso), \
+    GPIO_FUNCTION(mosi), GPIO_FUNCTION(sck)
 
 static const struct spi_info spi_bus[] = {
 #if CONFIG_MACH_STM32F0
-    { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), GPIO_FUNCTION_ALL(0) },
-    { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), GPIO_FUNCTION_ALL(0) },
-    { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION_ALL(0) },
-    { SPI2, GPIO('C', 2), GPIO('C', 3), GPIO('B', 10),
-        GPIO_FUNCTION(1), GPIO_FUNCTION(1), GPIO_FUNCTION(5) },
+  { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), SPI_FUNCTION(0, 0, 0) },
+  { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), SPI_FUNCTION(0, 0, 0) },
+  { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), SPI_FUNCTION(0, 0, 0) },
+  { SPI2, GPIO('C', 2), GPIO('C', 3), GPIO('B', 10), SPI_FUNCTION(1, 1, 5) },
 #elif CONFIG_MACH_STM32F1
-    { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), GPIO_FUNCTION_ALL(0) },
-    { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), GPIO_FUNCTION_ALL(0) },
-    { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION_ALL(5) },
-    { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION_ALL(0) },
+  { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), SPI_FUNCTION(0, 0, 0) },
+  { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), SPI_FUNCTION(0, 0, 0) },
+  { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), SPI_FUNCTION(5, 5, 5) },
+  { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), SPI_FUNCTION(0, 0, 0) },
 #elif CONFIG_MACH_STM32F2
-    { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), GPIO_FUNCTION_ALL(5) },
-    { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), GPIO_FUNCTION_ALL(5) },
-    { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION_ALL(5) },
-    { SPI2, GPIO('C', 2), GPIO('C', 3), GPIO('B', 10), GPIO_FUNCTION_ALL(5) },
-    { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION_ALL(6) },
+  { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), SPI_FUNCTION(5, 5, 5) },
+  { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), SPI_FUNCTION(5, 5, 5) },
+  { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), SPI_FUNCTION(5, 5, 5) },
+  { SPI2, GPIO('C', 2), GPIO('C', 3), GPIO('B', 10), SPI_FUNCTION(5, 5, 5) },
+  { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), SPI_FUNCTION(6, 6, 6) },
 #elif CONFIG_MACH_STM32F4
-    { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), GPIO_FUNCTION_ALL(5) },
-    { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), GPIO_FUNCTION_ALL(5) },
-    { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION_ALL(5) },
-    { SPI2, GPIO('C', 2), GPIO('C', 3), GPIO('B', 10), GPIO_FUNCTION_ALL(5) },
-    { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION_ALL(6) },
-    { SPI3, GPIO('C', 11), GPIO('C', 12), GPIO('C', 10), GPIO_FUNCTION_ALL(6) },
-  #ifdef GPIOI
-    { SPI2, GPIO('I', 2), GPIO('I', 3), GPIO('I', 1), GPIO_FUNCTION_ALL(5) },
-  #endif
-  #ifdef SPI4
-    { SPI4, GPIO('E', 13), GPIO('E', 14), GPIO('E', 12), GPIO_FUNCTION_ALL(5) },
-  #endif
-  #ifdef SPI6
-    { SPI6, GPIO('G', 12), GPIO('G', 14), GPIO('G', 13), GPIO_FUNCTION_ALL(5)},
-  #endif
+  { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), SPI_FUNCTION(5, 5, 5) },
+  { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), SPI_FUNCTION(5, 5, 5) },
+  { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), SPI_FUNCTION(5, 5, 5) },
+  { SPI2, GPIO('C', 2), GPIO('C', 3), GPIO('B', 10), SPI_FUNCTION(5, 5, 5) },
+  { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), SPI_FUNCTION(6, 6, 6) },
+  { SPI3, GPIO('C', 11), GPIO('C', 12), GPIO('C', 10), SPI_FUNCTION(6, 6, 6) },
+ #ifdef GPIOI
+  { SPI2, GPIO('I', 2), GPIO('I', 3), GPIO('I', 1), SPI_FUNCTION(5, 5, 5) },
+ #endif
+ #ifdef SPI4
+  { SPI4, GPIO('E', 13), GPIO('E', 14), GPIO('E', 12), SPI_FUNCTION(5, 5, 5) },
+ #endif
+ #ifdef SPI6
+  { SPI6, GPIO('G', 12), GPIO('G', 14), GPIO('G', 13), SPI_FUNCTION(5, 5, 5)},
+ #endif
 #elif CONFIG_MACH_STM32F7
-    { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), GPIO_FUNCTION_ALL(5) },
-    { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), GPIO_FUNCTION_ALL(5) },
-    { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION_ALL(5) },
-    { SPI2, GPIO('C', 2), GPIO('C', 3), GPIO('B', 10), GPIO_FUNCTION_ALL(5) },
-    { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION_ALL(6) },
+  { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), SPI_FUNCTION(5, 5, 5) },
+  { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), SPI_FUNCTION(5, 5, 5) },
+  { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), SPI_FUNCTION(5, 5, 5) },
+  { SPI2, GPIO('C', 2), GPIO('C', 3), GPIO('B', 10), SPI_FUNCTION(5, 5, 5) },
+  { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), SPI_FUNCTION(6, 6, 6) },
 #elif CONFIG_MACH_STM32G0
-    { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), GPIO_FUNCTION_ALL(0) },
-    { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), GPIO_FUNCTION_ALL(0) },
-    { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION_ALL(0) },
-    { SPI2, GPIO('C', 2), GPIO('C', 3), GPIO('B', 10),
-        GPIO_FUNCTION(1), GPIO_FUNCTION(1), GPIO_FUNCTION(5) },
-    { SPI2, GPIO('B', 2), GPIO('B', 11), GPIO('B', 10),
-        GPIO_FUNCTION(1), GPIO_FUNCTION(0), GPIO_FUNCTION(5) },
-  #ifdef SPI3
-    { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION_ALL(9) },
-  #endif
+  { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), SPI_FUNCTION(0, 0, 0) },
+  { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), SPI_FUNCTION(0, 0, 0) },
+  { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), SPI_FUNCTION(0, 0, 0) },
+  { SPI2, GPIO('C', 2), GPIO('C', 3), GPIO('B', 10), SPI_FUNCTION(1, 1, 5) },
+  { SPI2, GPIO('B', 2), GPIO('B', 11), GPIO('B', 10), SPI_FUNCTION(1, 0, 5) },
+ #ifdef SPI3
+  { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), SPI_FUNCTION(9, 9, 9) },
+ #endif
 #elif CONFIG_MACH_STM32G4
-    { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), GPIO_FUNCTION_ALL(5) },
-    { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), GPIO_FUNCTION_ALL(5) },
-    { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION_ALL(5) },
-    { SPI2, GPIO('A', 10), GPIO('A', 11), GPIO('F', 1), GPIO_FUNCTION_ALL(5) },
-    { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION_ALL(6) },
-    { SPI3, GPIO('C', 11), GPIO('C', 12), GPIO('C', 10), GPIO_FUNCTION_ALL(6) },
-  #ifdef SPI4
-    { SPI4, GPIO('E', 13), GPIO('E', 14), GPIO('E', 12), GPIO_FUNCTION_ALL(5) },
-  #endif
+  { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), SPI_FUNCTION(5, 5, 5) },
+  { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), SPI_FUNCTION(5, 5, 5) },
+  { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), SPI_FUNCTION(5, 5, 5) },
+  { SPI2, GPIO('A', 10), GPIO('A', 11), GPIO('F', 1), SPI_FUNCTION(5, 5, 5) },
+  { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), SPI_FUNCTION(6, 6, 6) },
+  { SPI3, GPIO('C', 11), GPIO('C', 12), GPIO('C', 10), SPI_FUNCTION(6, 6, 6) },
+ #ifdef SPI4
+  { SPI4, GPIO('E', 13), GPIO('E', 14), GPIO('E', 12), SPI_FUNCTION(5, 5, 5) },
+ #endif
 #elif CONFIG_MACH_STM32L4
-    { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), GPIO_FUNCTION_ALL(5) },
-    { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), GPIO_FUNCTION_ALL(5) },
-    { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), GPIO_FUNCTION_ALL(5) },
-    { SPI2, GPIO('C', 2), GPIO('C', 3), GPIO('B', 10), GPIO_FUNCTION_ALL(5) },
+  { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), SPI_FUNCTION(5, 5, 5) },
+  { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), SPI_FUNCTION(5, 5, 5) },
+  { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), SPI_FUNCTION(5, 5, 5) },
+  { SPI2, GPIO('C', 2), GPIO('C', 3), GPIO('B', 10), SPI_FUNCTION(5, 5, 5) },
 #endif
 };
 
