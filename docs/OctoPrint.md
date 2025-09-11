@@ -27,7 +27,7 @@ sudo apt install git
 then proceed:
 ```
 cd ~
-git clone https://github.com/Klipper3d/klipper
+git clone --depth 1 https://github.com/Klipper3d/klipper
 ./klipper/scripts/install-octopi.sh
 ```
 
