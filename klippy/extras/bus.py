@@ -226,7 +226,7 @@ class MCU_I2C:
     def i2c_read(self, write, read_len, retry=True):
         return self.i2c_read_cmd.send([self.oid, write, read_len], retry)
 
-def MCU_I2C_from_config(config, default_addr=None, default_speed=100000, 
+def MCU_I2C_from_config(config, default_addr=None, default_speed=100000,
                         default_is_async=False):
     # Load bus parameters
     printer = config.get_printer()
