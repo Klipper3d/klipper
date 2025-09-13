@@ -212,9 +212,13 @@ class MCU_I2C:
             "i2c_read oid=%c reg=%*s read_len=%u",
             "i2c_read_response oid=%c response=%*s", oid=self.oid,
             cq=self.cmd_queue)
-    def i2c_write(self, data, minclock=0, reqclock=0):
+    def i2c_write(self, data, minclock=0, reqclock=0, wait=True):
         if self.i2c_write_cmd is None:
             self._to_write.append(data)
+            return        
+        if not wait:
+            self.i2c_write_cmd.send([self.oid, data], 
+                                    minclock=minclock, reqclock=reqclock)
             return
         self.i2c_write_cmd.send_wait_ack([self.oid, data],
                                          minclock=minclock, reqclock=reqclock)
