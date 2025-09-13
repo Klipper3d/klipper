@@ -128,9 +128,10 @@ class SPI4wire:
 
 # IO wrapper for i2c bus
 class I2C:
-    def __init__(self, config, default_addr):
+    def __init__(self, config, default_addr, default_is_async):
         self.i2c = bus.MCU_I2C_from_config(config, default_addr=default_addr,
-                                           default_speed=400000)
+                                           default_speed=400000, 
+                                           default_is_async=default_is_async)
     def send(self, cmds, is_data=False):
         if is_data:
             hdr = 0x40
@@ -138,7 +139,7 @@ class I2C:
             hdr = 0x00
         cmds = bytearray(cmds)
         cmds.insert(0, hdr)
-        self.i2c.i2c_write(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK, wait=False)
+        self.i2c.i2c_write(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
 
 # Helper code for toggling a reset pin on startup
 class ResetHelper:
@@ -199,7 +200,7 @@ class SSD1306(DisplayBase):
     def __init__(self, config, columns=128, x_offset=0):
         cs_pin = config.get("cs_pin", None)
         if cs_pin is None:
-            io = I2C(config, 60)
+            io = I2C(config, 60, True)
             io_bus = io.i2c
         else:
             io = SPI4wire(config, "dc_pin")

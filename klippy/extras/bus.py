@@ -155,13 +155,14 @@ def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
 
 # Helper code for working with devices connected to an MCU via an I2C bus
 class MCU_I2C:
-    def __init__(self, mcu, bus, addr, speed, sw_pins=None):
+    def __init__(self, mcu, bus, addr, speed, sw_pins=None, is_async=False):
         self.mcu = mcu
         self.bus = bus
         self.i2c_address = addr
         self.oid = self.mcu.create_oid()
         self.speed = speed
         self.config_fmt_ticks = None
+        self.is_async = is_async
         mcu.add_config_cmd("config_i2c oid=%d" % (self.oid,))
         # Generate I2C bus config message
         if sw_pins is not None:
@@ -212,11 +213,11 @@ class MCU_I2C:
             "i2c_read oid=%c reg=%*s read_len=%u",
             "i2c_read_response oid=%c response=%*s", oid=self.oid,
             cq=self.cmd_queue)
-    def i2c_write(self, data, minclock=0, reqclock=0, wait=True):
+    def i2c_write(self, data, minclock=0, reqclock=0):
         if self.i2c_write_cmd is None:
             self._to_write.append(data)
             return        
-        if not wait:
+        if self.is_async:
             self.i2c_write_cmd.send([self.oid, data], 
                                     minclock=minclock, reqclock=reqclock)
             return
@@ -225,7 +226,7 @@ class MCU_I2C:
     def i2c_read(self, write, read_len, retry=True):
         return self.i2c_read_cmd.send([self.oid, write, read_len], retry)
 
-def MCU_I2C_from_config(config, default_addr=None, default_speed=100000):
+def MCU_I2C_from_config(config, default_addr=None, default_speed=100000, default_is_async=False):
     # Load bus parameters
     printer = config.get_printer()
     i2c_mcu = mcu.get_printer_mcu(printer, config.get('i2c_mcu', 'mcu'))
@@ -234,6 +235,7 @@ def MCU_I2C_from_config(config, default_addr=None, default_speed=100000):
         addr = config.getint('i2c_address', minval=0, maxval=127)
     else:
         addr = config.getint('i2c_address', default_addr, minval=0, maxval=127)
+    is_async = config.getboolean('i2c_async', default_is_async)
     # Determine pin from config
     ppins = config.get_printer().lookup_object("pins")
     if config.get('i2c_software_scl_pin', None) is not None:
@@ -247,7 +249,7 @@ def MCU_I2C_from_config(config, default_addr=None, default_speed=100000):
         bus = config.get('i2c_bus', None)
         sw_pins = None
     # Create MCU_I2C object
-    return MCU_I2C(i2c_mcu, bus, addr, speed, sw_pins)
+    return MCU_I2C(i2c_mcu, bus, addr, speed, sw_pins, is_async)
 
 
 ######################################################################
