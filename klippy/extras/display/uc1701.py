@@ -130,7 +130,7 @@ class SPI4wire:
 class I2C:
     def __init__(self, config, default_addr, default_is_async):
         self.i2c = bus.MCU_I2C_from_config(config, default_addr=default_addr,
-                                           default_speed=400000, 
+                                           default_speed=400000,
                                            default_is_async=default_is_async)
     def send(self, cmds, is_data=False):
         if is_data:

@@ -216,9 +216,9 @@ class MCU_I2C:
     def i2c_write(self, data, minclock=0, reqclock=0):
         if self.i2c_write_cmd is None:
             self._to_write.append(data)
-            return        
+            return
         if self.is_async:
-            self.i2c_write_cmd.send([self.oid, data], 
+            self.i2c_write_cmd.send([self.oid, data],
                                     minclock=minclock, reqclock=reqclock)
             return
         self.i2c_write_cmd.send_wait_ack([self.oid, data],
@@ -226,7 +226,8 @@ class MCU_I2C:
     def i2c_read(self, write, read_len, retry=True):
         return self.i2c_read_cmd.send([self.oid, write, read_len], retry)
 
-def MCU_I2C_from_config(config, default_addr=None, default_speed=100000, default_is_async=False):
+def MCU_I2C_from_config(config, default_addr=None, default_speed=100000, 
+                        default_is_async=False):
     # Load bus parameters
     printer = config.get_printer()
     i2c_mcu = mcu.get_printer_mcu(printer, config.get('i2c_mcu', 'mcu'))
