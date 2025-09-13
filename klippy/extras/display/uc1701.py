@@ -128,9 +128,10 @@ class SPI4wire:
 
 # IO wrapper for i2c bus
 class I2C:
-    def __init__(self, config, default_addr):
+    def __init__(self, config, default_addr, default_is_async):
         self.i2c = bus.MCU_I2C_from_config(config, default_addr=default_addr,
-                                           default_speed=400000)
+                                           default_speed=400000,
+                                           default_is_async=default_is_async)
     def send(self, cmds, is_data=False):
         if is_data:
             hdr = 0x40
@@ -199,7 +200,7 @@ class SSD1306(DisplayBase):
     def __init__(self, config, columns=128, x_offset=0):
         cs_pin = config.get("cs_pin", None)
         if cs_pin is None:
-            io = I2C(config, 60)
+            io = I2C(config, 60, True)
             io_bus = io.i2c
         else:
             io = SPI4wire(config, "dc_pin")
