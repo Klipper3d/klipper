@@ -5541,4 +5541,10 @@ All other Klipper micro-controllers use a
 #   The Klipper implementation on most micro-controllers is hard-coded
 #   to 100000 and changing this value has no effect. The default is
 #   100000. Linux, RP2040 and ATmega support 400000.
+#i2c_async:
+#   Indicates whether the I2C bus should use asynchronous
+#   (pre-v0.13.0 behavior) or synchronous communication. 
+#   This parameter can have some effects on performance of some I2C
+#   display drivers like the SSD1306.
+#   Default value: false
 ```
