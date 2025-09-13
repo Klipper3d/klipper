@@ -529,6 +529,7 @@ class QueryStatusHelper:
             reactor.unregister_timer(self.query_timer)
             self.query_timer = None
             return reactor.NEVER
+        self.last_query = query
         return eventtime + SUBSCRIPTION_REFRESH_TIME
     def _handle_query(self, web_request, is_subscribe=False):
         objects = web_request.get_dict('objects')
@@ -556,6 +557,8 @@ class QueryStatusHelper:
         msg = complete.wait()
         web_request.send(msg['params'])
         if is_subscribe:
+            # Reset cache for each new subscription
+            self.last_query = {}
             self.clients[cconn] = (cconn, objects, cconn.send, template)
     def _handle_subscribe(self, web_request):
         self._handle_query(web_request, is_subscribe=True)
