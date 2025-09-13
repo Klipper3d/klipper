@@ -108,9 +108,13 @@ class SerialReader:
             wire_freq = msgparser.get_constant_float('CANBUS_FREQUENCY', None)
         else:
             wire_freq = msgparser.get_constant_float('SERIAL_BAUD', None)
+        is_bridge = 0
+        if msgparser.get_constant('RESERVE_PINS_USB', 0):
+            is_bridge = 1
+            wire_freq = 12000000
         if wire_freq is not None:
             self.ffi_lib.serialqueue_set_wire_frequency(self.serialqueue,
-                                                        wire_freq)
+                                                        wire_freq, is_bridge)
         receive_window = msgparser.get_constant_int('RECEIVE_WINDOW', None)
         if receive_window is not None:
             self.ffi_lib.serialqueue_set_receive_window(

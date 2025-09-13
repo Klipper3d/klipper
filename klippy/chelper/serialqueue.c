@@ -38,6 +38,7 @@ struct serialqueue {
     // Input reading
     struct pollreactor *pr;
     int serial_fd, serial_fd_type, client_id;
+    int is_bridge;
     int pipe_fds[2];
     uint8_t input_buf[4096];
     uint8_t need_sync;
@@ -50,7 +51,11 @@ struct serialqueue {
     int receive_waiting;
     // Baud / clock tracking
     int receive_window;
-    double bittime_adjust, idle_time;
+    union {
+        double bittime_adjust;
+        double bytetime_adjust;
+    };
+    double idle_time;
     struct clock_estimate ce;
     double last_receive_sent_time;
     // Retransmit support
@@ -142,16 +147,29 @@ kick_bg_thread(struct serialqueue *sq)
 #define CANBUS_PACKET_BITS ((1 + 11 + 3 + 4) + (16 + 2 + 7 + 3))
 #define CANBUS_IFS_BITS 4
 
+// Minimum number of bits in a USB message
+// PID + DCRC + EOP + ACK
+#define USB_PACKET_BITS (8 + 16 + 3 + 8)
+
 // Determine minimum time needed to transmit a given number of bytes
 static double
 calculate_bittime(struct serialqueue *sq, uint32_t bytes)
 {
-    if (sq->serial_fd_type == SQT_CAN) {
+    if (sq->is_bridge) {
+        uint32_t bits = bytes * 8 + USB_PACKET_BITS;
+        // Account for transaction token
+        if (bytes > 64)
+            bits += 8 + 7 + 4 + 5;
+        // ~Half frame, account for SOF
+        if (bytes > 64 * 10)
+            bits += 8 + 11 + 5;
+        return sq->bittime_adjust * bits;
+    } else if (sq->serial_fd_type == SQT_CAN) {
         uint32_t pkts = DIV_ROUND_UP(bytes, 8);
         uint32_t bits = bytes * 8 + pkts * CANBUS_PACKET_BITS - CANBUS_IFS_BITS;
         return sq->bittime_adjust * bits;
     } else {
-        return sq->bittime_adjust * bytes;
+        return sq->bytetime_adjust * bytes;
     }
 }
 
@@ -881,14 +899,19 @@ exit:
 }
 
 void __visible
-serialqueue_set_wire_frequency(struct serialqueue *sq, double frequency)
+serialqueue_set_wire_frequency(struct serialqueue *sq, double frequency
+                               , int bridge)
 {
     pthread_mutex_lock(&sq->lock);
-    if (sq->serial_fd_type == SQT_CAN) {
+    if (bridge) {
+        sq->is_bridge = 1;
+        // Bit stuffing worst case 1.1667, assume avg half overhead
+        sq->bittime_adjust = 1.08 / frequency;
+    } else if (sq->serial_fd_type == SQT_CAN) {
         sq->bittime_adjust = 1. / frequency;
     } else {
         // An 8N1 serial line is 10 bits per byte (1 start, 8 data, 1 stop)
-        sq->bittime_adjust = 10. / frequency;
+        sq->bytetime_adjust = 10. / frequency;
     }
     pthread_mutex_unlock(&sq->lock);
 }
