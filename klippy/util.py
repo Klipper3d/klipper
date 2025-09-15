@@ -125,6 +125,17 @@ def get_cpu_info():
     model_name = dict(lines).get("model name", "?")
     return "%d core %s" % (core_count, model_name)
 
+def get_device_info():
+    try:
+        f = open('/proc/device-tree/model', 'r')
+        data = f.read()
+        f.close()
+    except (IOError, OSError) as e:
+        logging.debug("Exception on read /proc/device-tree/model: %s",
+                      traceback.format_exc())
+        return "?"
+    return data.rstrip(' \0')
+
 def get_version_from_file(klippy_src):
     try:
         with open(os.path.join(klippy_src, '.version')) as h:
