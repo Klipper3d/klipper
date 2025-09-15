@@ -189,9 +189,11 @@ class PrinterMotionQueuing:
                 want_sg_time = est_print_time + BGFLUSH_SG_HIGH_TIME
                 batch_time = BGFLUSH_SG_HIGH_TIME - BGFLUSH_SG_LOW_TIME
                 next_batch_time = self.last_step_gen_time + batch_time
-                if (next_batch_time > est_print_time
-                    and next_batch_time < want_sg_time + 0.005):
+                if next_batch_time > est_print_time:
                     # Improve run-to-run reproducibility by batching from last
+                    if next_batch_time > want_sg_time:
+                        # Delay flushing until next wakeup
+                        next_batch_time = self.last_step_gen_time
                     want_sg_time = next_batch_time
                 want_sg_time = min(want_sg_time, aggr_sg_time)
                 # Flush motion queues (if needed)
