@@ -191,7 +191,7 @@ class PrinterMotionQueuing:
                 next_batch_time = self.last_step_gen_time + batch_time
                 if next_batch_time > est_print_time:
                     # Improve run-to-run reproducibility by batching from last
-                    if next_batch_time > want_sg_time:
+                    if next_batch_time > want_sg_time + 0.005:
                         # Delay flushing until next wakeup
                         next_batch_time = self.last_step_gen_time
                     want_sg_time = next_batch_time
