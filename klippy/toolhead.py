@@ -358,7 +358,7 @@ class ToolHead:
             return
         # In "main" state - flush lookahead if buffer runs low
         kin_flush_delay = self.motion_queuing.get_kin_flush_delay()
-        if step_gen_time >= self.print_time - kin_flush_delay:
+        if step_gen_time >= self.print_time - kin_flush_delay - 0.001:
             self._flush_lookahead(is_runout=True)
     # Movement commands
     def get_position(self):
