@@ -187,12 +187,13 @@ class PrinterMotionQueuing:
             if self.last_step_gen_time < aggr_sg_time:
                 # Actively stepping - want more aggressive flushing
                 want_sg_time = est_print_time + BGFLUSH_SG_HIGH_TIME
-                want_sg_time = min(want_sg_time, aggr_sg_time)
-                # Try improving run-to-run reproducibility by batching from last
                 batch_time = BGFLUSH_SG_HIGH_TIME - BGFLUSH_SG_LOW_TIME
                 next_batch_time = self.last_step_gen_time + batch_time
-                if next_batch_time > est_print_time + BGFLUSH_SG_LOW_TIME:
-                    want_sg_time = min(want_sg_time, next_batch_time)
+                if (next_batch_time > est_print_time
+                    and next_batch_time < want_sg_time + 0.005):
+                    # Improve run-to-run reproducibility by batching from last
+                    want_sg_time = next_batch_time
+                want_sg_time = min(want_sg_time, aggr_sg_time)
                 # Flush motion queues (if needed)
                 if want_sg_time > self.last_step_gen_time:
                     self._advance_flush_time(0., want_sg_time)
