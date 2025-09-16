@@ -102,20 +102,35 @@ some functionality in C code.
 Initial execution starts in **klippy/klippy.py**. This reads the
 command-line arguments, opens the printer config file, instantiates
 the main printer objects, and starts the serial connection. The main
-execution of G-code commands is in the process_commands() method in
+execution of G-code commands is in the _process_commands() method in
 **klippy/gcode.py**. This code translates the G-code commands into
 printer object calls, which frequently translate the actions to
 commands to be executed on the micro-controller (as declared via the
 DECL_COMMAND macro in the micro-controller code).
 
-There are four threads in the Klippy host code. The main thread
-handles incoming gcode commands. A second thread (which resides
-entirely in the **klippy/chelper/serialqueue.c** C code) handles
-low-level IO with the serial port. The third thread is used to process
-response messages from the micro-controller in the Python code (see
-**klippy/serialhdl.py**). The fourth thread writes debug messages to
-the log (see **klippy/queuelogger.py**) so that the other threads
-never block on log writes.
+There are several threads in the Klipper host code:
+* There is a Python "main thread" that handles incoming G-Code
+  commands and is the starting point for most actions. This thread
+  runs the [reactor](https://en.wikipedia.org/wiki/Reactor_pattern)
+  (**klippy/reactor.py**) and most high-level actions originate from
+  IO and timer event callbacks from that reactor.
+* A thread for writing messages to the log so that the other threads
+  do not block on log writes. This thread resides entirely in the
+  **klippy/queuelogger.py** code and its operation is generally not
+  exposed to the main Python thread.
+* A thread per micro-controller that performs the low-level reading
+  and writing of messages to that micro-controller. It resides in the
+  **klippy/chelper/serialqueue.c** C code and its operation is
+  generally not exposed to the Python code.
+* A thread per micro-controller for processing messages received from
+  that micro-controller in the Python code. This thread is created in
+  **klippy/serialhdl.py**. Care must be taken in Python callbacks
+  invoked from this thread as this thread may directly interact with
+  the main Python thread.
+* A thread per stepper motor that calculates the timing of stepper
+  motor step pulses and compresses those times. This thread resides in
+  the **klippy/chelper/stepcompress.c** C code and its operation is
+  generally not exposed to the Python code.
 
 ## Code flow of a move command
 
@@ -138,7 +153,7 @@ provides further information on the mechanics of moves.
   the timing of printing actions. The main codepath for a move is:
   `ToolHead.move() -> LookAheadQueue.add_move() ->
   LookAheadQueue.flush() -> Move.set_junction() ->
-  ToolHead._process_moves()`.
+  ToolHead._process_moves() -> trapq_append()`.
   * ToolHead.move() creates a Move() object with the parameters of the
   move (in cartesian space and in units of seconds and millimeters).
   * The kinematics class is given the opportunity to audit each move
@@ -163,33 +178,40 @@ provides further information on the mechanics of moves.
   during acceleration/cruising/deceleration. All the information is
   stored in the Move() class and is in cartesian space in units of
   millimeters and seconds.
-
-* Klipper uses an
-  [iterative solver](https://en.wikipedia.org/wiki/Root-finding_algorithm)
-  to generate the step times for each stepper. For efficiency reasons,
-  the stepper pulse times are generated in C code. The moves are first
-  placed on a "trapezoid motion queue": `ToolHead._process_moves() ->
-  trapq_append()` (in klippy/chelper/trapq.c). The step times are then
-  generated: `ToolHead._process_moves() ->
-  ToolHead._advance_move_time() -> ToolHead._advance_flush_time() ->
-  MCU_Stepper.generate_steps() -> itersolve_generate_steps() ->
-  itersolve_gen_steps_range()` (in klippy/chelper/itersolve.c). The
-  goal of the iterative solver is to find step times given a function
-  that calculates a stepper position from a time. This is done by
-  repeatedly "guessing" various times until the stepper position
-  formula returns the desired position of the next step on the
-  stepper. The feedback produced from each guess is used to improve
-  future guesses so that the process rapidly converges to the desired
-  time. The kinematic stepper position formulas are located in the
-  klippy/chelper/ directory (eg, kin_cart.c, kin_corexy.c,
-  kin_delta.c, kin_extruder.c).
+  * The moves are then placed on a "trapezoid motion queue" via
+  trapq_append() (in klippy/chelper/trapq.c). The trapq stores all the
+  information in the Move() class in a C struct accessible to the host
+  C code.
 
 * Note that the extruder is handled in its own kinematic class:
-  `ToolHead._process_moves() -> PrinterExtruder.move()`. Since
+  `ToolHead._process_moves() -> PrinterExtruder.process_move()`. Since
   the Move() class specifies the exact movement time and since step
   pulses are sent to the micro-controller with specific timing,
   stepper movements produced by the extruder class will be in sync
   with head movement even though the code is kept separate.
+
+* Klipper uses an
+  [iterative solver](https://en.wikipedia.org/wiki/Root-finding_algorithm)
+  to generate the step times for each stepper. For efficiency reasons,
+  the stepper pulse times are generated in C code in a thread per
+  stepper motor. The threads are notified of new activity by the
+  motion_queuing module (klippy/extras/motion_queuing.py):
+  `PrinterMotionQueuing._flush_handler() ->
+  PrinterMotionQueuing._advance_move_time() ->
+  steppersync_start_gen_steps() ->
+  stepcompress_start_gen_steps()`. The step times are then generated
+  from that thread (klippy/chelper/stepcompress.c):
+  `sc_background_thread() -> stepcompress_generate_steps() ->
+  itersolve_generate_steps() -> itersolve_gen_steps_range()` (in
+  klippy/chelper/itersolve.c). The goal of the iterative solver is to
+  find step times given a function that calculates a stepper position
+  from a time. This is done by repeatedly "guessing" various times
+  until the stepper position formula returns the desired position of
+  the next step on the stepper. The feedback produced from each guess
+  is used to improve future guesses so that the process rapidly
+  converges to the desired time. The kinematic stepper position
+  formulas are located in the klippy/chelper/ directory (eg,
+  kin_cart.c, kin_corexy.c, kin_delta.c, kin_extruder.c).
 
 * After the iterative solver calculates the step times they are added
   to an array: `itersolve_gen_steps_range() -> stepcompress_append()`
