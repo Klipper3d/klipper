@@ -33,10 +33,7 @@ class PrinterMotionQueuing:
                                           ffi_lib.steppersyncmgr_free)
         self.stepcompress = []
         self.steppersyncs = []
-        self.steppersync_start_gen_steps = ffi_lib.steppersync_start_gen_steps
-        self.steppersync_finalize_gen_steps = \
-            ffi_lib.steppersync_finalize_gen_steps
-        self.steppersync_history_expire = ffi_lib.steppersync_history_expire
+        self.steppersyncmgr_gen_steps = ffi_lib.steppersyncmgr_gen_steps
         # History expiration
         self.clear_history_time = 0.
         # Flush notification callbacks
@@ -101,7 +98,7 @@ class PrinterMotionQueuing:
             ffi_lib.steppersync_set_time(ss, offset, freq)
         # Calculate history expiration
         est_print_time = self.mcu.estimated_print_time(eventtime)
-        self.clear_history_time = est_print_time - MOVE_HISTORY_EXPIRE
+        self.clear_history_time = max(0., est_print_time - MOVE_HISTORY_EXPIRE)
         return False, ""
     # Flush notification callbacks
     def register_flush_callback(self, callback, can_add_trapq=False):
@@ -142,31 +139,22 @@ class PrinterMotionQueuing:
         # Invoke flush callbacks (if any)
         for cb in self.flush_callbacks:
             cb(flush_time, step_gen_time)
-        # Generate stepper movement and transmit
-        for mcu, ss in self.steppersyncs:
-            clock = max(0, mcu.print_time_to_clock(flush_time))
-            self.steppersync_start_gen_steps(ss, step_gen_time, clock)
-        for mcu, ss in self.steppersyncs:
-            clock = max(0, mcu.print_time_to_clock(flush_time))
-            ret = self.steppersync_finalize_gen_steps(ss, clock)
-            if ret:
-                raise mcu.error("Internal error in MCU '%s' stepcompress"
-                                % (mcu.get_name(),))
-        self.last_flush_time = flush_time
-        self.last_step_gen_time = step_gen_time
         # Determine maximum history to keep
         trapq_free_time = step_gen_time - self.kin_flush_delay
         clear_history_time = self.clear_history_time
         if not self.can_pause:
-            clear_history_time = trapq_free_time - MOVE_HISTORY_EXPIRE
-        # Move processed trapq moves to history list, and expire old history
+            clear_history_time = max(0., trapq_free_time - MOVE_HISTORY_EXPIRE)
+        # Generate stepper movement and transmit
+        ret = self.steppersyncmgr_gen_steps(self.steppersyncmgr, flush_time,
+                                            step_gen_time, clear_history_time)
+        if ret:
+            raise self.mcu.error("Internal error in stepcompress")
+        self.last_flush_time = flush_time
+        self.last_step_gen_time = step_gen_time
+        # Move processed trapq entries to history list, and expire old history
         for trapq in self.trapqs:
             self.trapq_finalize_moves(trapq, trapq_free_time,
                                       clear_history_time)
-        # Clean up old history entries in stepcompress objects
-        for mcu, ss in self.steppersyncs:
-            clock = max(0, mcu.print_time_to_clock(clear_history_time))
-            self.steppersync_history_expire(ss, clock)
     def _await_flush_time(self, want_flush_time):
         while 1:
             if self.last_flush_time >= want_flush_time or not self.can_pause:
