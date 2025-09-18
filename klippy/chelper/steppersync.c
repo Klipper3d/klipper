@@ -19,7 +19,14 @@
 #include "stepcompress.h" // stepcompress_flush
 #include "steppersync.h" // steppersync_alloc
 
+
+/****************************************************************
+ * StepperSync - sort move queue for a micro-controller
+ ****************************************************************/
+
 struct steppersync {
+    // List node for storage in steppersyncmgr list
+    struct list_node ssm_node;
     // Serial port
     struct serialqueue *sq;
     struct command_queue *cq;
@@ -32,7 +39,7 @@ struct steppersync {
 };
 
 // Allocate a new 'steppersync' object
-struct steppersync * __visible
+static struct steppersync *
 steppersync_alloc(struct serialqueue *sq, struct stepcompress **sc_list
                   , int sc_num, int move_num)
 {
@@ -53,7 +60,7 @@ steppersync_alloc(struct serialqueue *sq, struct stepcompress **sc_list
 }
 
 // Free memory associated with a 'steppersync' object
-void __visible
+static void
 steppersync_free(struct steppersync *ss)
 {
     if (!ss)
@@ -186,4 +193,49 @@ steppersync_finalize_gen_steps(struct steppersync *ss, uint64_t flush_clock)
         return res;
     steppersync_flush(ss, flush_clock);
     return 0;
+}
+
+
+/****************************************************************
+ * StepperSyncMgr - manage a list of steppersync
+ ****************************************************************/
+
+struct steppersyncmgr {
+    struct list_head ss_list;
+};
+
+// Allocate a new 'steppersyncmgr' object
+struct steppersyncmgr * __visible
+steppersyncmgr_alloc(void)
+{
+    struct steppersyncmgr *ssm = malloc(sizeof(*ssm));
+    memset(ssm, 0, sizeof(*ssm));
+    list_init(&ssm->ss_list);
+    return ssm;
+}
+
+// Free memory associated with a 'steppersync' object
+void __visible
+steppersyncmgr_free(struct steppersyncmgr *ssm)
+{
+    if (!ssm)
+        return;
+    while (!list_empty(&ssm->ss_list)) {
+        struct steppersync *ss = list_first_entry(
+            &ssm->ss_list, struct steppersync, ssm_node);
+        list_del(&ss->ssm_node);
+        steppersync_free(ss);
+    }
+    free(ssm);
+}
+
+// Allocate a new 'steppersync' object
+struct steppersync * __visible
+steppersyncmgr_alloc_steppersync(
+    struct steppersyncmgr *ssm, struct serialqueue *sq
+    , struct stepcompress **sc_list, int sc_num, int move_num)
+{
+    struct steppersync *ss = steppersync_alloc(sq, sc_list, sc_num, move_num);
+    list_add_tail(&ss->ssm_node, &ssm->ss_list);
+    return ss;
 }

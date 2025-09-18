@@ -29,6 +29,8 @@ class PrinterMotionQueuing:
         ffi_main, ffi_lib = chelper.get_ffi()
         self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
         # C steppersync tracking
+        self.steppersyncmgr = ffi_main.gc(ffi_lib.steppersyncmgr_alloc(),
+                                          ffi_lib.steppersyncmgr_free)
         self.stepcompress = []
         self.steppersyncs = []
         self.steppersync_start_gen_steps = ffi_lib.steppersync_start_gen_steps
@@ -84,10 +86,9 @@ class PrinterMotionQueuing:
             if sc_mcu is mcu:
                 stepqueues.append(sc)
         ffi_main, ffi_lib = chelper.get_ffi()
-        ss = ffi_main.gc(
-            ffi_lib.steppersync_alloc(serialqueue, stepqueues, len(stepqueues),
-                                      move_count),
-            ffi_lib.steppersync_free)
+        ss = ffi_lib.steppersyncmgr_alloc_steppersync(
+            self.steppersyncmgr, serialqueue, stepqueues, len(stepqueues),
+            move_count)
         self.steppersyncs.append((mcu, ss))
         mcu_freq = float(mcu.seconds_to_clock(1.))
         ffi_lib.steppersync_set_time(ss, 0., mcu_freq)
