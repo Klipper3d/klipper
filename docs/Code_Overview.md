@@ -130,7 +130,9 @@ There are several threads in the Klipper host code:
 * A thread per stepper motor that calculates the timing of stepper
   motor step pulses and compresses those times. This thread resides in
   the **klippy/chelper/stepcompress.c** C code and its operation is
-  generally not exposed to the Python code.
+  generally not exposed to the Python code. For detailed information
+  on the threading architecture and synchronization mechanisms, see
+  the [Motion Queuing Internals](Motion_Queuing_Internals.md) document.
 
 ## Code flow of a move command
 
@@ -251,6 +253,26 @@ However, the only really interesting parts are in the ToolHead and
 kinematic classes. It's this part of the code which specifies the
 movements and their timings. The remaining parts of the processing is
 mostly just communication and plumbing.
+
+## Advanced Motion System Details
+
+The motion system includes several advanced optimizations:
+
+* **Binary Heap Optimization**: The steppersync module uses a binary
+  heap algorithm for O(log n) command ordering across multiple steppers.
+
+* **Adaptive Flushing**: Dynamic flushing intervals based on printer
+  activity - aggressive during printing, relaxed when idle.
+
+* **Lazy Evaluation**: The look-ahead queue defers calculations until
+  needed, improving system responsiveness.
+
+* **Threading Synchronization**: Dedicated background threads per stepper
+  with pthread mutexes and condition variables.
+
+For complete technical details, refer to:
+* [Motion Queuing Internals](Motion_Queuing_Internals.md)
+* [Performance Metrics](Performance_Metrics.md)
 
 ## Adding a host module
 
