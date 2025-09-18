@@ -33,7 +33,7 @@ SDS_CHECK_TIME = 0.001        # 1ms - Step+dir+step filter time
 #define CLOCK_DIFF_MAX (3<<28)            // ~134s - Maximum clock difference
 #define QUADRATIC_DEV 11                  // Quadratic deviation factor
 
-// src/stepper.c  
+// src/stepper.c
 #define EDGE_STEP_TICKS DIV_ROUND_UP(CONFIG_CLOCK_FREQ, 8000000)  // 125ns @ 1MHz
 #define AVR_STEP_TICKS 40                 // 40 clock ticks minimum
 ```
@@ -61,7 +61,7 @@ def _advance_flush_time(self, want_flush_time, want_step_gen_time=0.):
     for mcu, ss in self.steppersyncs:
         clock = max(0, mcu.print_time_to_clock(flush_time))
         self.steppersync_start_gen_steps(ss, step_gen_time, clock)
-    
+
     # Synchronous completion wait
     for mcu, ss in self.steppersyncs:
         ret = self.steppersync_finalize_gen_steps(ss, clock)
@@ -79,11 +79,11 @@ static int queue_append_extend(struct stepcompress *sc)
 {
     if (sc->queue_next - sc->queue_pos > 65535 + 2000) {
         // Limit memory usage to ~64K steps
-        uint32_t flush = (*(sc->queue_next-65535) 
+        uint32_t flush = (*(sc->queue_next-65535)
                          - (uint32_t)sc->last_step_clock);
         int ret = queue_flush(sc, sc->last_step_clock + flush);
     }
-    
+
     // Dynamic reallocation strategy
     int alloc = sc->queue_end - sc->queue;
     if (!alloc)
@@ -104,7 +104,7 @@ def _advance_flush_time(self, want_flush_time, want_step_gen_time=0.):
     clear_history_time = self.clear_history_time
     if not self.can_pause:
         clear_history_time = trapq_free_time - MOVE_HISTORY_EXPIRE
-    
+
     for trapq in self.trapqs:
         self.trapq_finalize_moves(trapq, trapq_free_time, clear_history_time)
 ```
@@ -130,11 +130,11 @@ static struct step_move compress_bisect_add(struct stepcompress *sc)
 {
     // Bisection algorithm for optimal step compression
     // Reduces from O(n²) to O(n log n) complexity
-    
+
     for (;;) {
         // Binary search for optimal interval/add parameters
         add = maxadd - (maxadd - minadd) / 4;  // Bisection step
-        
+
         // Quadratic deviation optimization
         if (count > 1) {
             int32_t errdelta = sc->max_error*QUADRATIC_DEV / (count*count);
@@ -155,7 +155,7 @@ def _process_lookahead(self, lazy=False):
     moves = self.lookahead.flush(lazy=lazy)
     if not moves:
         return  # Early exit - no processing needed
-    
+
     # Process only when buffer requires flushing
     if self.special_queuing_state:
         self._calc_print_time()  # Deferred calculation
@@ -169,7 +169,7 @@ def _flush_handler(self, eventtime):
     # Batch operations for better cache locality
     batch_time = BGFLUSH_SG_HIGH_TIME - BGFLUSH_SG_LOW_TIME
     next_batch_time = self.last_step_gen_time + batch_time
-    
+
     # Reproducible timing through batching
     if next_batch_time > est_print_time:
         if next_batch_time > want_sg_time + 0.005:
@@ -187,7 +187,7 @@ uint_fast8_t stepper_event(struct timer *t)
 {
     if (HAVE_EDGE_OPTIMIZATION)
         return stepper_event_edge(t);    // Fastest: step on both edges
-    if (HAVE_AVR_OPTIMIZATION)  
+    if (HAVE_AVR_OPTIMIZATION)
         return stepper_event_avr(t);     // AVR-specific optimizations
     return stepper_event_full(t);        // Full compatibility mode
 }
@@ -220,7 +220,7 @@ class PrinterMotionQueuing:
         self.last_step_gen_time = 0.
         self.need_flush_time = 0.
         self.need_step_gen_time = 0.
-        
+
         # Performance counters
         self.kin_flush_delay = SDS_CHECK_TIME
         self.clear_history_time = 0.
@@ -234,7 +234,7 @@ def stats(self, eventtime):
     est_print_time = self.mcu.estimated_print_time(eventtime)
     buffer_time = self.print_time - est_print_time
     is_active = buffer_time > -60. or not self.special_queuing_state
-    
+
     return is_active, "print_time=%.3f buffer_time=%.3f print_stall=%d" % (
         self.print_time, max(buffer_time, 0.), self.print_stall)
 ```

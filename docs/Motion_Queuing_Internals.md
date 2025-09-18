@@ -48,7 +48,7 @@ The motion queuing system implements adaptive flushing based on printer activity
 ```python
 # klippy/extras/motion_queuing.py
 BGFLUSH_LOW_TIME = 0.200      # Relaxed flushing interval
-BGFLUSH_HIGH_TIME = 0.400     # Normal flushing interval  
+BGFLUSH_HIGH_TIME = 0.400     # Normal flushing interval
 BGFLUSH_SG_LOW_TIME = 0.450   # Aggressive stepping low threshold
 BGFLUSH_SG_HIGH_TIME = 0.700  # Aggressive stepping high threshold
 BGFLUSH_EXTRA_TIME = 0.250    # Additional buffer time
@@ -60,13 +60,13 @@ BGFLUSH_EXTRA_TIME = 0.250    # Additional buffer time
 def _flush_handler(self, eventtime):
     est_print_time = self.mcu.estimated_print_time(eventtime)
     aggr_sg_time = self.need_step_gen_time - 2.*self.kin_flush_delay
-    
+
     if self.last_step_gen_time < aggr_sg_time:
         # AGGRESSIVE MODE: Printer is actively stepping
         want_sg_time = est_print_time + BGFLUSH_SG_HIGH_TIME
         batch_time = BGFLUSH_SG_HIGH_TIME - BGFLUSH_SG_LOW_TIME
         next_batch_time = self.last_step_gen_time + batch_time
-        
+
         # Batch processing for reproducibility
         if next_batch_time > est_print_time:
             if next_batch_time > want_sg_time + 0.005:
@@ -81,7 +81,7 @@ def _flush_handler(self, eventtime):
 
 ### Benefits
 - **Reduces latency** during active printing
-- **Conserves CPU** during idle periods  
+- **Conserves CPU** during idle periods
 - **Improves reproducibility** through batched processing
 - **Prevents buffer overflow** with adaptive thresholds
 
@@ -98,7 +98,7 @@ def _process_lookahead(self, lazy=False):
     if not moves:
         return
     # Process only when necessary
-    
+
 def flush(self, lazy=False):
     update_flush_count = lazy
     # Skip expensive calculations when lazy=True
@@ -139,7 +139,7 @@ static void *sc_background_thread(void *data)
 {
     struct stepcompress *sc = data;
     set_thread_name(sc->name);
-    
+
     pthread_mutex_lock(&sc->lock);
     for (;;) {
         if (!sc->have_work) {
@@ -149,9 +149,9 @@ static void *sc_background_thread(void *data)
         }
         if (sc->have_work < 0)
             break; // Exit request
-            
+
         // Process step generation
-        sc->bg_result = stepcompress_generate_steps(sc, 
+        sc->bg_result = stepcompress_generate_steps(sc,
                        sc->bg_gen_steps_time, sc->bg_flush_clock);
         sc->have_work = 0;
         pthread_cond_signal(&sc->cond); // Signal completion
@@ -164,7 +164,7 @@ static void *sc_background_thread(void *data)
 ### Synchronization Protocol
 
 1. **Work Assignment**: Main thread sets work parameters and signals
-2. **Background Processing**: Worker thread processes steps independently  
+2. **Background Processing**: Worker thread processes steps independently
 3. **Completion Signaling**: Worker signals completion via condition variable
 4. **Result Collection**: Main thread collects results synchronously
 
@@ -181,7 +181,7 @@ static void *sc_background_thread(void *data)
 ```python
 # Internal timing tracking (not exposed to users)
 self.last_flush_time = 0.        # Last flush operation timestamp
-self.last_step_gen_time = 0.     # Last step generation timestamp  
+self.last_step_gen_time = 0.     # Last step generation timestamp
 self.need_flush_time = 0.        # Next required flush time
 self.need_step_gen_time = 0.     # Next required step generation time
 self.kin_flush_delay = SDS_CHECK_TIME  # Kinematic flush delay
@@ -193,7 +193,7 @@ self.kin_flush_delay = SDS_CHECK_TIME  # Kinematic flush delay
 // klippy/chelper/stepcompress.c
 #define SDS_FILTER_TIME .000750  // 750 microseconds
 
-int stepcompress_append(struct stepcompress *sc, int sdir, 
+int stepcompress_append(struct stepcompress *sc, int sdir,
                        double print_time, double step_time)
 {
     if (sc->next_step_clock) {
@@ -224,7 +224,7 @@ MOVE_HISTORY_EXPIRE = 30.        # Move history retention time
 ### ToolHead Integration
 
 The motion queuing system integrates with ToolHead through callback mechanisms:
-
+'
 ```python
 # klippy/toolhead.py
 def __init__(self, config):
@@ -240,7 +240,7 @@ Multiple MCUs are coordinated through synchronized step generation:
 ```python
 def setup_mcu_movequeue(self, mcu, serialqueue, move_count):
     # Create steppersync for each MCU
-    ss = ffi_lib.steppersync_alloc(serialqueue, stepqueues, 
+    ss = ffi_lib.steppersync_alloc(serialqueue, stepqueues,
                                   len(stepqueues), move_count)
     self.steppersyncs.append((mcu, ss))
 ```
