@@ -33,6 +33,8 @@ struct steppersync {
     // Storage for associated stepcompress objects
     struct stepcompress **sc_list;
     int sc_num;
+    // Convert from time to clock
+    struct clock_estimate ce;
     // Storage for list of pending move clocks
     uint64_t *move_clocks;
     int num_move_clocks;
@@ -76,21 +78,11 @@ void __visible
 steppersync_set_time(struct steppersync *ss, double time_offset
                      , double mcu_freq)
 {
+    clock_fill(&ss->ce, mcu_freq, time_offset, 0, 0);
     int i;
     for (i=0; i<ss->sc_num; i++) {
         struct stepcompress *sc = ss->sc_list[i];
         stepcompress_set_time(sc, time_offset, mcu_freq);
-    }
-}
-
-// Expire the stepcompress history before the given clock time
-void __visible
-steppersync_history_expire(struct steppersync *ss, uint64_t end_clock)
-{
-    int i;
-    for (i = 0; i < ss->sc_num; i++) {
-        struct stepcompress *sc = ss->sc_list[i];
-        stepcompress_history_expire(sc, end_clock);
     }
 }
 
@@ -165,36 +157,6 @@ steppersync_flush(struct steppersync *ss, uint64_t move_clock)
         serialqueue_send_batch(ss->sq, ss->cq, &msgs);
 }
 
-// Start generating steps in stepcompress objects
-void __visible
-steppersync_start_gen_steps(struct steppersync *ss, double gen_steps_time
-                            , uint64_t flush_clock)
-{
-    int i;
-    for (i=0; i<ss->sc_num; i++) {
-        struct stepcompress *sc = ss->sc_list[i];
-        stepcompress_start_gen_steps(sc, gen_steps_time, flush_clock);
-    }
-}
-
-// Finalize step generation and flush
-int32_t __visible
-steppersync_finalize_gen_steps(struct steppersync *ss, uint64_t flush_clock)
-{
-    int i;
-    int32_t res = 0;
-    for (i=0; i<ss->sc_num; i++) {
-        struct stepcompress *sc = ss->sc_list[i];
-        int32_t ret = stepcompress_finalize_gen_steps(sc);
-        if (ret)
-            res = ret;
-    }
-    if (res)
-        return res;
-    steppersync_flush(ss, flush_clock);
-    return 0;
-}
-
 
 /****************************************************************
  * StepperSyncMgr - manage a list of steppersync
@@ -238,4 +200,48 @@ steppersyncmgr_alloc_steppersync(
     struct steppersync *ss = steppersync_alloc(sq, sc_list, sc_num, move_num);
     list_add_tail(&ss->ssm_node, &ssm->ss_list);
     return ss;
+}
+
+// Generate and flush steps
+int32_t __visible
+steppersyncmgr_gen_steps(struct steppersyncmgr *ssm, double flush_time
+                         , double gen_steps_time, double clear_history_time)
+{
+    struct steppersync *ss;
+    // Start step generation threads
+    list_for_each_entry(ss, &ssm->ss_list, ssm_node) {
+        uint64_t flush_clock = clock_from_time(&ss->ce, flush_time);
+        int i;
+        for (i=0; i<ss->sc_num; i++) {
+            struct stepcompress *sc = ss->sc_list[i];
+            stepcompress_start_gen_steps(sc, gen_steps_time, flush_clock);
+        }
+    }
+    // Wait for step generation threads to complete
+    int32_t res = 0;
+    list_for_each_entry(ss, &ssm->ss_list, ssm_node) {
+        int i;
+        for (i=0; i<ss->sc_num; i++) {
+            struct stepcompress *sc = ss->sc_list[i];
+            int32_t ret = stepcompress_finalize_gen_steps(sc);
+            if (ret)
+                res = ret;
+        }
+        if (res)
+            continue;
+        uint64_t flush_clock = clock_from_time(&ss->ce, flush_time);
+        steppersync_flush(ss, flush_clock);
+    }
+    if (res)
+        return res;
+    // Clear history
+    list_for_each_entry(ss, &ssm->ss_list, ssm_node) {
+        uint64_t end_clock = clock_from_time(&ss->ce, clear_history_time);
+        int i;
+        for (i = 0; i < ss->sc_num; i++) {
+            struct stepcompress *sc = ss->sc_list[i];
+            stepcompress_history_expire(sc, end_clock);
+        }
+    }
+    return 0;
 }
