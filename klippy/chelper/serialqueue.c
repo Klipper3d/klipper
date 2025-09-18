@@ -909,10 +909,7 @@ serialqueue_set_clock_est(struct serialqueue *sq, double est_freq
                           , uint64_t last_clock)
 {
     pthread_mutex_lock(&sq->lock);
-    sq->ce.est_freq = est_freq;
-    sq->ce.conv_time = conv_time;
-    sq->ce.conv_clock = conv_clock;
-    sq->ce.last_clock = last_clock;
+    clock_fill(&sq->ce, est_freq, conv_time, conv_clock, last_clock);
     pthread_mutex_unlock(&sq->lock);
 }
 
