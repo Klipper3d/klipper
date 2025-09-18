@@ -257,7 +257,7 @@ static int sc_thread_alloc(struct stepcompress *sc, char name[16]);
 static void sc_thread_free(struct stepcompress *sc);
 
 // Allocate a new 'stepcompress' object
-struct stepcompress * __visible
+struct stepcompress *
 stepcompress_alloc(char name[16])
 {
     struct stepcompress *sc = malloc(sizeof(*sc));
@@ -310,7 +310,7 @@ stepcompress_history_expire(struct stepcompress *sc, uint64_t end_clock)
 }
 
 // Free memory associated with a 'stepcompress' object
-void __visible
+void
 stepcompress_free(struct stepcompress *sc)
 {
     if (!sc)

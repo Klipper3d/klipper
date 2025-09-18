@@ -36,13 +36,11 @@ defs_stepcompress = """
         int step_count, interval, add;
     };
 
-    struct stepcompress *stepcompress_alloc(char name[16]);
     void stepcompress_fill(struct stepcompress *sc, uint32_t oid
         , uint32_t max_error, int32_t queue_step_msgtag
         , int32_t set_next_step_dir_msgtag);
     void stepcompress_set_invert_sdir(struct stepcompress *sc
         , uint32_t invert_sdir);
-    void stepcompress_free(struct stepcompress *sc);
     int stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);
     int stepcompress_set_last_position(struct stepcompress *sc
         , uint64_t clock, int64_t last_position);
@@ -62,13 +60,17 @@ defs_stepcompress = """
 """
 
 defs_steppersync = """
+    struct stepcompress *syncemitter_get_stepcompress(struct syncemitter *se);
+    struct syncemitter *steppersync_alloc_syncemitter(struct steppersync *ss
+        , char name[16], int alloc_stepcompress);
+    void steppersync_setup_movequeue(struct steppersync *ss
+        , struct serialqueue *sq, int move_num);
     void steppersync_set_time(struct steppersync *ss
         , double time_offset, double mcu_freq);
     struct steppersyncmgr *steppersyncmgr_alloc(void);
     void steppersyncmgr_free(struct steppersyncmgr *ssm);
     struct steppersync *steppersyncmgr_alloc_steppersync(
-        struct steppersyncmgr *ssm, struct serialqueue *sq
-        , struct stepcompress **sc_list, int sc_num, int move_num);
+        struct steppersyncmgr *ssm);
     int32_t steppersyncmgr_gen_steps(struct steppersyncmgr *ssm
         , double flush_time, double gen_steps_time, double clear_history_time);
 """
