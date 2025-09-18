@@ -258,13 +258,12 @@ static void sc_thread_free(struct stepcompress *sc);
 
 // Allocate a new 'stepcompress' object
 struct stepcompress * __visible
-stepcompress_alloc(uint32_t oid, char name[16])
+stepcompress_alloc(char name[16])
 {
     struct stepcompress *sc = malloc(sizeof(*sc));
     memset(sc, 0, sizeof(*sc));
     list_init(&sc->msg_queue);
     list_init(&sc->history_list);
-    sc->oid = oid;
     sc->sdir = -1;
 
     int ret = sc_thread_alloc(sc, name);
@@ -275,9 +274,10 @@ stepcompress_alloc(uint32_t oid, char name[16])
 
 // Fill message id information
 void __visible
-stepcompress_fill(struct stepcompress *sc, uint32_t max_error
+stepcompress_fill(struct stepcompress *sc, uint32_t oid, uint32_t max_error
                   , int32_t queue_step_msgtag, int32_t set_next_step_dir_msgtag)
 {
+    sc->oid = oid;
     sc->max_error = max_error;
     sc->queue_step_msgtag = queue_step_msgtag;
     sc->set_next_step_dir_msgtag = set_next_step_dir_msgtag;

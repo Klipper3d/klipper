@@ -14,12 +14,11 @@ class MCU_queued_pwm:
         self._hardware_pwm = False
         self._cycle_time = 0.100
         self._max_duration = 2.
-        self._oid = oid = mcu.create_oid()
+        self._oid = mcu.create_oid()
         printer = mcu.get_printer()
         sname = config.get_name().split()[-1]
         self._motion_queuing = printer.load_object(config, 'motion_queuing')
-        self._stepqueue = self._motion_queuing.allocate_stepcompress(
-            mcu, oid, sname)
+        self._stepqueue = self._motion_queuing.allocate_stepcompress(mcu, sname)
         ffi_main, ffi_lib = chelper.get_ffi()
         self._stepcompress_queue_mq_msg = ffi_lib.stepcompress_queue_mq_msg
         mcu.register_config_callback(self._build_config)
