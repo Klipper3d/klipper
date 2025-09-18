@@ -21,6 +21,24 @@
 
 
 /****************************************************************
+ * SyncEmitter - message generation for each stepper
+ ****************************************************************/
+
+struct syncemitter {
+    // List node for storage in steppersync list
+    struct list_node ss_node;
+    // Step compression and generation
+    struct stepcompress *sc;
+};
+
+struct stepcompress * __visible
+syncemitter_get_stepcompress(struct syncemitter *se)
+{
+    return se->sc;
+}
+
+
+/****************************************************************
  * StepperSync - sort move queue for a micro-controller
  ****************************************************************/
 
@@ -30,9 +48,8 @@ struct steppersync {
     // Serial port
     struct serialqueue *sq;
     struct command_queue *cq;
-    // Storage for associated stepcompress objects
-    struct stepcompress **sc_list;
-    int sc_num;
+    // The syncemitters that generate messages on this mcu
+    struct list_head se_list;
     // Convert from time to clock
     struct clock_estimate ce;
     // Storage for list of pending move clocks
@@ -40,37 +57,33 @@ struct steppersync {
     int num_move_clocks;
 };
 
-// Allocate a new 'steppersync' object
-static struct steppersync *
-steppersync_alloc(struct serialqueue *sq, struct stepcompress **sc_list
-                  , int sc_num, int move_num)
+// Allocate a new syncemitter instance
+struct syncemitter * __visible
+steppersync_alloc_syncemitter(struct steppersync *ss, char name[16]
+                              , int alloc_stepcompress)
 {
-    struct steppersync *ss = malloc(sizeof(*ss));
-    memset(ss, 0, sizeof(*ss));
+    struct syncemitter *se = malloc(sizeof(*se));
+    memset(se, 0, sizeof(*se));
+    list_add_tail(&se->ss_node, &ss->se_list);
+    if (alloc_stepcompress)
+        se->sc = stepcompress_alloc(name);
+    return se;
+}
+
+// Fill information on mcu move queue
+void __visible
+steppersync_setup_movequeue(struct steppersync *ss, struct serialqueue *sq
+                            , int move_num)
+{
+    serialqueue_free_commandqueue(ss->cq);
+    free(ss->move_clocks);
+
     ss->sq = sq;
     ss->cq = serialqueue_alloc_commandqueue();
-
-    ss->sc_list = malloc(sizeof(*sc_list)*sc_num);
-    memcpy(ss->sc_list, sc_list, sizeof(*sc_list)*sc_num);
-    ss->sc_num = sc_num;
 
     ss->move_clocks = malloc(sizeof(*ss->move_clocks)*move_num);
     memset(ss->move_clocks, 0, sizeof(*ss->move_clocks)*move_num);
     ss->num_move_clocks = move_num;
-
-    return ss;
-}
-
-// Free memory associated with a 'steppersync' object
-static void
-steppersync_free(struct steppersync *ss)
-{
-    if (!ss)
-        return;
-    free(ss->sc_list);
-    free(ss->move_clocks);
-    serialqueue_free_commandqueue(ss->cq);
-    free(ss);
 }
 
 // Set the conversion rate of 'print_time' to mcu clock
@@ -79,10 +92,10 @@ steppersync_set_time(struct steppersync *ss, double time_offset
                      , double mcu_freq)
 {
     clock_fill(&ss->ce, mcu_freq, time_offset, 0, 0);
-    int i;
-    for (i=0; i<ss->sc_num; i++) {
-        struct stepcompress *sc = ss->sc_list[i];
-        stepcompress_set_time(sc, time_offset, mcu_freq);
+    struct syncemitter *se;
+    list_for_each_entry(se, &ss->se_list, ss_node) {
+        if (se->sc)
+            stepcompress_set_time(se->sc, time_offset, mcu_freq);
     }
 }
 
@@ -122,10 +135,9 @@ steppersync_flush(struct steppersync *ss, uint64_t move_clock)
         // Find message with lowest reqclock
         uint64_t req_clock = MAX_CLOCK;
         struct queue_message *qm = NULL;
-        int i;
-        for (i=0; i<ss->sc_num; i++) {
-            struct stepcompress *sc = ss->sc_list[i];
-            struct list_head *sc_mq = stepcompress_get_msg_queue(sc);
+        struct syncemitter *se;
+        list_for_each_entry(se, &ss->se_list, ss_node) {
+            struct list_head *sc_mq = stepcompress_get_msg_queue(se->sc);
             if (!list_empty(sc_mq)) {
                 struct queue_message *m = list_first_entry(
                     sc_mq, struct queue_message, node);
@@ -186,18 +198,27 @@ steppersyncmgr_free(struct steppersyncmgr *ssm)
         struct steppersync *ss = list_first_entry(
             &ssm->ss_list, struct steppersync, ssm_node);
         list_del(&ss->ssm_node);
-        steppersync_free(ss);
+        free(ss->move_clocks);
+        serialqueue_free_commandqueue(ss->cq);
+        while (!list_empty(&ss->se_list)) {
+            struct syncemitter *se = list_first_entry(
+                &ss->se_list, struct syncemitter, ss_node);
+            list_del(&se->ss_node);
+            stepcompress_free(se->sc);
+            free(se);
+        }
+        free(ss);
     }
     free(ssm);
 }
 
 // Allocate a new 'steppersync' object
 struct steppersync * __visible
-steppersyncmgr_alloc_steppersync(
-    struct steppersyncmgr *ssm, struct serialqueue *sq
-    , struct stepcompress **sc_list, int sc_num, int move_num)
+steppersyncmgr_alloc_steppersync(struct steppersyncmgr *ssm)
 {
-    struct steppersync *ss = steppersync_alloc(sq, sc_list, sc_num, move_num);
+    struct steppersync *ss = malloc(sizeof(*ss));
+    memset(ss, 0, sizeof(*ss));
+    list_init(&ss->se_list);
     list_add_tail(&ss->ssm_node, &ssm->ss_list);
     return ss;
 }
@@ -211,19 +232,21 @@ steppersyncmgr_gen_steps(struct steppersyncmgr *ssm, double flush_time
     // Start step generation threads
     list_for_each_entry(ss, &ssm->ss_list, ssm_node) {
         uint64_t flush_clock = clock_from_time(&ss->ce, flush_time);
-        int i;
-        for (i=0; i<ss->sc_num; i++) {
-            struct stepcompress *sc = ss->sc_list[i];
-            stepcompress_start_gen_steps(sc, gen_steps_time, flush_clock);
+        struct syncemitter *se;
+        list_for_each_entry(se, &ss->se_list, ss_node) {
+            if (!se->sc)
+                continue;
+            stepcompress_start_gen_steps(se->sc, gen_steps_time, flush_clock);
         }
     }
     // Wait for step generation threads to complete
     int32_t res = 0;
     list_for_each_entry(ss, &ssm->ss_list, ssm_node) {
-        int i;
-        for (i=0; i<ss->sc_num; i++) {
-            struct stepcompress *sc = ss->sc_list[i];
-            int32_t ret = stepcompress_finalize_gen_steps(sc);
+        struct syncemitter *se;
+        list_for_each_entry(se, &ss->se_list, ss_node) {
+            if (!se->sc)
+                continue;
+            int32_t ret = stepcompress_finalize_gen_steps(se->sc);
             if (ret)
                 res = ret;
         }
@@ -237,10 +260,11 @@ steppersyncmgr_gen_steps(struct steppersyncmgr *ssm, double flush_time
     // Clear history
     list_for_each_entry(ss, &ssm->ss_list, ssm_node) {
         uint64_t end_clock = clock_from_time(&ss->ce, clear_history_time);
-        int i;
-        for (i = 0; i < ss->sc_num; i++) {
-            struct stepcompress *sc = ss->sc_list[i];
-            stepcompress_history_expire(sc, end_clock);
+        struct syncemitter *se;
+        list_for_each_entry(se, &ss->se_list, ss_node) {
+            if (!se->sc)
+                continue;
+            stepcompress_history_expire(se->sc, end_clock);
         }
     }
     return 0;
