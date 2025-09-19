@@ -46,9 +46,10 @@ class DisplayBase:
                 ra = 0xb0 | (page & 0x0F)
                 ca_msb = 0x10 | ((col_pos >> 4) & 0x0F)
                 ca_lsb = col_pos & 0x0F
-                self.send([ra, ca_msb, ca_lsb])
+                self.send([ra, ca_msb, ca_lsb], noblock=True)
                 # Send Data
-                self.send(new_data[col_pos:col_pos+count], is_data=True)
+                self.send(new_data[col_pos:col_pos+count], is_data=True,
+                          noblock=True)
             old_data[:] = new_data
     def _swizzle_bits(self, data):
         # Convert from "rows of pixels" format to "columns of pixels"
@@ -121,7 +122,7 @@ class SPI4wire:
         dc_pin = config.get(data_pin_name)
         self.mcu_dc = bus.MCU_bus_digital_out(self.spi.get_mcu(), dc_pin,
                                               self.spi.get_command_queue())
-    def send(self, cmds, is_data=False):
+    def send(self, cmds, is_data=False, noblock=True):
         self.mcu_dc.update_digital_out(is_data,
                                        reqclock=BACKGROUND_PRIORITY_CLOCK)
         self.spi.spi_send(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
@@ -131,14 +132,17 @@ class I2C:
     def __init__(self, config, default_addr):
         self.i2c = bus.MCU_I2C_from_config(config, default_addr=default_addr,
                                            default_speed=400000)
-    def send(self, cmds, is_data=False):
+    def send(self, cmds, is_data=False, noblock=False):
         if is_data:
             hdr = 0x40
         else:
             hdr = 0x00
         cmds = bytearray(cmds)
         cmds.insert(0, hdr)
-        self.i2c.i2c_write(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
+        if noblock:
+            self.i2c.i2c_write_noack(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
+        else:
+            self.i2c.i2c_write(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
 
 # Helper code for toggling a reset pin on startup
 class ResetHelper:
