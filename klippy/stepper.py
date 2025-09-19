@@ -205,9 +205,7 @@ class MCU_stepper:
         if ret:
             raise error("Internal error in stepcompress")
         data = (self._reset_cmd_tag, self._oid, 0)
-        ret = ffi_lib.stepcompress_queue_msg(self._stepqueue, data, len(data))
-        if ret:
-            raise error("Internal error in stepcompress")
+        ffi_lib.syncemitter_queue_msg(self._syncemitter, 0, data, len(data))
         self._query_mcu_position()
     def _query_mcu_position(self):
         if self._mcu.is_fileoutput():
