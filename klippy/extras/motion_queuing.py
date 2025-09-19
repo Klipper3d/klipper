@@ -77,13 +77,13 @@ class PrinterMotionQueuing:
         ss = ffi_lib.steppersyncmgr_alloc_steppersync(self.steppersyncmgr)
         self.steppersyncs.append((mcu, ss))
         return ss
-    def allocate_stepcompress(self, mcu, name):
+    def allocate_syncemitter(self, mcu, name, alloc_stepcompress=True):
         name = name.encode("utf-8")[:15]
         ss = self._lookup_steppersync(mcu)
         ffi_main, ffi_lib = chelper.get_ffi()
-        se = ffi_lib.steppersync_alloc_syncemitter(ss, name, True)
+        se = ffi_lib.steppersync_alloc_syncemitter(ss, name, alloc_stepcompress)
         self.syncemitters.append(se)
-        return ffi_lib.syncemitter_get_stepcompress(se)
+        return se
     def setup_mcu_movequeue(self, mcu, serialqueue, move_count):
         # Setup steppersync object for the mcu's main movequeue
         ffi_main, ffi_lib = chelper.get_ffi()

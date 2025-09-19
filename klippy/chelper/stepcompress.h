@@ -11,7 +11,9 @@ struct pull_history_steps {
     int step_count, interval, add;
 };
 
-struct stepcompress *stepcompress_alloc(char name[16]);
+struct list_head;
+struct stepcompress *stepcompress_alloc(char name[16]
+                                        , struct list_head *msg_queue);
 void stepcompress_fill(struct stepcompress *sc, uint32_t oid, uint32_t max_error
                        , int32_t queue_step_msgtag
                        , int32_t set_next_step_dir_msgtag);
@@ -21,7 +23,6 @@ void stepcompress_history_expire(struct stepcompress *sc, uint64_t end_clock);
 void stepcompress_free(struct stepcompress *sc);
 uint32_t stepcompress_get_oid(struct stepcompress *sc);
 int stepcompress_get_step_dir(struct stepcompress *sc);
-struct list_head *stepcompress_get_msg_queue(struct stepcompress *sc);
 void stepcompress_set_time(struct stepcompress *sc
                            , double time_offset, double mcu_freq);
 int stepcompress_append(struct stepcompress *sc, int sdir
@@ -33,8 +34,6 @@ int stepcompress_set_last_position(struct stepcompress *sc, uint64_t clock
 int64_t stepcompress_find_past_position(struct stepcompress *sc
                                         , uint64_t clock);
 int stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len);
-int stepcompress_queue_mq_msg(struct stepcompress *sc, uint64_t req_clock
-                              , uint32_t *data, int len);
 int stepcompress_extract_old(struct stepcompress *sc
                              , struct pull_history_steps *p, int max
                              , uint64_t start_clock, uint64_t end_clock);
