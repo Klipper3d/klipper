@@ -5,6 +5,10 @@
 
 struct syncemitter;
 struct stepcompress *syncemitter_get_stepcompress(struct syncemitter *se);
+void syncemitter_set_stepper_kinematics(struct syncemitter *se
+                                        , struct stepper_kinematics *sk);
+struct stepper_kinematics *syncemitter_get_stepper_kinematics(
+    struct syncemitter *se);
 void syncemitter_queue_msg(struct syncemitter *se, uint64_t req_clock
                            , uint32_t *data, int len);
 

@@ -120,10 +120,7 @@ class PrinterMotionQueuing:
         ffi_main, ffi_lib = chelper.get_ffi()
         kin_flush_delay = SDS_CHECK_TIME
         for se in self.syncemitters:
-            sc = ffi_lib.syncemitter_get_stepcompress(se)
-            if sc == ffi_main.NULL:
-                continue
-            sk = ffi_lib.stepcompress_get_stepper_kinematics(sc)
+            sk = ffi_lib.syncemitter_get_stepper_kinematics(se)
             if sk == ffi_main.NULL:
                 continue
             trapq = ffi_lib.itersolve_get_trapq(sk)
