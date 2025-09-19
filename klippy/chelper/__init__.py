@@ -51,14 +51,14 @@ defs_stepcompress = """
     int stepcompress_extract_old(struct stepcompress *sc
         , struct pull_history_steps *p, int max
         , uint64_t start_clock, uint64_t end_clock);
-    void stepcompress_set_stepper_kinematics(struct stepcompress *sc
-        , struct stepper_kinematics *sk);
-    struct stepper_kinematics *stepcompress_get_stepper_kinematics(
-        struct stepcompress *sc);
 """
 
 defs_steppersync = """
     struct stepcompress *syncemitter_get_stepcompress(struct syncemitter *se);
+    void syncemitter_set_stepper_kinematics(struct syncemitter *se
+        , struct stepper_kinematics *sk);
+    struct stepper_kinematics *syncemitter_get_stepper_kinematics(
+        struct syncemitter *se);
     void syncemitter_queue_msg(struct syncemitter *se, uint64_t req_clock
         , uint32_t *data, int len);
     struct syncemitter *steppersync_alloc_syncemitter(struct steppersync *ss

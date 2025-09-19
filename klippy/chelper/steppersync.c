@@ -11,10 +11,13 @@
 // mcu step queue is ordered between steppers so that no stepper
 // starves the other steppers of space in the mcu step queue.
 
+#include <pthread.h> // pthread_mutex_lock
 #include <stddef.h> // offsetof
 #include <stdlib.h> // malloc
 #include <string.h> // memset
 #include "compiler.h" // __visible
+#include "pyhelper.h" // set_thread_name
+#include "itersolve.h" // itersolve_generate_steps
 #include "serialqueue.h" // struct queue_message
 #include "stepcompress.h" // stepcompress_flush
 #include "steppersync.h" // steppersync_alloc
@@ -29,8 +32,17 @@ struct syncemitter {
     struct list_node ss_node;
     // Transmit message queue
     struct list_head msg_queue;
-    // Step compression and generation
+    // Thread for step generation
     struct stepcompress *sc;
+    struct stepper_kinematics *sk;
+    char name[16];
+    pthread_t tid;
+    pthread_mutex_t lock; // protects variables below
+    pthread_cond_t cond;
+    int have_work;
+    double bg_gen_steps_time;
+    uint64_t bg_flush_clock;
+    int32_t bg_result;
 };
 
 // Return this emitters 'struct stepcompress' (or NULL if not allocated)
@@ -38,6 +50,21 @@ struct stepcompress * __visible
 syncemitter_get_stepcompress(struct syncemitter *se)
 {
     return se->sc;
+}
+
+// Store a reference to stepper_kinematics
+void __visible
+syncemitter_set_stepper_kinematics(struct syncemitter *se
+                                   , struct stepper_kinematics *sk)
+{
+    se->sk = sk;
+}
+
+// Report current stepper_kinematics
+struct stepper_kinematics * __visible
+syncemitter_get_stepper_kinematics(struct syncemitter *se)
+{
+    return se->sk;
 }
 
 // Queue an mcu command that will consume space in the mcu move queue
@@ -48,6 +75,129 @@ syncemitter_queue_msg(struct syncemitter *se, uint64_t req_clock
     struct queue_message *qm = message_alloc_and_encode(data, len);
     qm->min_clock = qm->req_clock = req_clock;
     list_add_tail(&qm->node, &se->msg_queue);
+}
+
+// Generate steps (via itersolve) and flush
+static int32_t
+se_generate_steps(struct syncemitter *se, double gen_steps_time
+                  , uint64_t flush_clock)
+{
+    if (!se->sc || !se->sk)
+        return 0;
+    // Generate steps
+    int32_t ret = itersolve_generate_steps(se->sk, se->sc, gen_steps_time);
+    if (ret)
+        return ret;
+    // Flush steps
+    return stepcompress_flush(se->sc, flush_clock);
+}
+
+// Main background thread for generating steps
+static void *
+se_background_thread(void *data)
+{
+    struct syncemitter *se = data;
+    set_thread_name(se->name);
+
+    pthread_mutex_lock(&se->lock);
+    for (;;) {
+        if (!se->have_work) {
+            pthread_cond_wait(&se->cond, &se->lock);
+            continue;
+        }
+        if (se->have_work < 0)
+            // Exit request
+            break;
+
+        // Request to generate steps
+        se->bg_result = se_generate_steps(se, se->bg_gen_steps_time
+                                          , se->bg_flush_clock);
+        se->have_work = 0;
+        pthread_cond_signal(&se->cond);
+    }
+    pthread_mutex_unlock(&se->lock);
+
+    return NULL;
+}
+
+// Signal background thread to start step generation
+static void
+se_start_gen_steps(struct syncemitter *se, double gen_steps_time
+                   , uint64_t flush_clock)
+{
+    if (!se->sc || !se->sk)
+        return;
+    pthread_mutex_lock(&se->lock);
+    while (se->have_work)
+        pthread_cond_wait(&se->cond, &se->lock);
+    se->bg_gen_steps_time = gen_steps_time;
+    se->bg_flush_clock = flush_clock;
+    se->have_work = 1;
+    pthread_mutex_unlock(&se->lock);
+    pthread_cond_signal(&se->cond);
+}
+
+// Wait for background thread to complete last step generation request
+static int32_t
+se_finalize_gen_steps(struct syncemitter *se)
+{
+    if (!se->sc || !se->sk)
+        return 0;
+    pthread_mutex_lock(&se->lock);
+    while (se->have_work)
+        pthread_cond_wait(&se->cond, &se->lock);
+    int32_t res = se->bg_result;
+    pthread_mutex_unlock(&se->lock);
+    return res;
+}
+
+// Allocate syncemitter and start thread
+static struct syncemitter *
+syncemitter_alloc(char name[16], int alloc_stepcompress)
+{
+    struct syncemitter *se = malloc(sizeof(*se));
+    memset(se, 0, sizeof(*se));
+    list_init(&se->msg_queue);
+    strncpy(se->name, name, sizeof(se->name));
+    se->name[sizeof(se->name)-1] = '\0';
+    if (!alloc_stepcompress)
+        return se;
+    se->sc = stepcompress_alloc(&se->msg_queue);
+    int ret = pthread_mutex_init(&se->lock, NULL);
+    if (ret)
+        goto fail;
+    ret = pthread_cond_init(&se->cond, NULL);
+    if (ret)
+        goto fail;
+    ret = pthread_create(&se->tid, NULL, se_background_thread, se);
+    if (ret)
+        goto fail;
+    return se;
+fail:
+    report_errno("se alloc", ret);
+    return NULL;
+}
+
+// Free syncemitter and exit background thread
+static void
+syncemitter_free(struct syncemitter *se)
+{
+    if (!se)
+        return;
+    if (se->sc) {
+        pthread_mutex_lock(&se->lock);
+        while (se->have_work)
+            pthread_cond_wait(&se->cond, &se->lock);
+        se->have_work = -1;
+        pthread_cond_signal(&se->cond);
+        pthread_mutex_unlock(&se->lock);
+        int ret = pthread_join(se->tid, NULL);
+        if (ret)
+            report_errno("se pthread_join", ret);
+        stepcompress_free(se->sc);
+    }
+    message_queue_free(&se->msg_queue);
+    free(se);
 }
 
 
@@ -75,12 +225,9 @@ struct syncemitter * __visible
 steppersync_alloc_syncemitter(struct steppersync *ss, char name[16]
                               , int alloc_stepcompress)
 {
-    struct syncemitter *se = malloc(sizeof(*se));
-    memset(se, 0, sizeof(*se));
-    list_add_tail(&se->ss_node, &ss->se_list);
-    list_init(&se->msg_queue);
-    if (alloc_stepcompress)
-        se->sc = stepcompress_alloc(name, &se->msg_queue);
+    struct syncemitter *se = syncemitter_alloc(name, alloc_stepcompress);
+    if (se)
+        list_add_tail(&se->ss_node, &ss->se_list);
     return se;
 }
 
@@ -217,9 +364,7 @@ steppersyncmgr_free(struct steppersyncmgr *ssm)
             struct syncemitter *se = list_first_entry(
                 &ss->se_list, struct syncemitter, ss_node);
             list_del(&se->ss_node);
-            stepcompress_free(se->sc);
-            message_queue_free(&se->msg_queue);
-            free(se);
+            syncemitter_free(se);
         }
         free(ss);
     }
@@ -248,9 +393,7 @@ steppersyncmgr_gen_steps(struct steppersyncmgr *ssm, double flush_time
         uint64_t flush_clock = clock_from_time(&ss->ce, flush_time);
         struct syncemitter *se;
         list_for_each_entry(se, &ss->se_list, ss_node) {
-            if (!se->sc)
-                continue;
-            stepcompress_start_gen_steps(se->sc, gen_steps_time, flush_clock);
+            se_start_gen_steps(se, gen_steps_time, flush_clock);
         }
     }
     // Wait for step generation threads to complete
@@ -258,9 +401,7 @@ steppersyncmgr_gen_steps(struct steppersyncmgr *ssm, double flush_time
     list_for_each_entry(ss, &ssm->ss_list, ssm_node) {
         struct syncemitter *se;
         list_for_each_entry(se, &ss->se_list, ss_node) {
-            if (!se->sc)
-                continue;
-            int32_t ret = stepcompress_finalize_gen_steps(se->sc);
+            int32_t ret = se_finalize_gen_steps(se);
             if (ret)
                 res = ret;
         }

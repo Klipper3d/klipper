@@ -15,14 +15,12 @@
 // efficiency - the repetitive integer math is vastly faster in C.
 
 #include <math.h> // sqrt
-#include <pthread.h> // pthread_mutex_lock
 #include <stddef.h> // offsetof
 #include <stdint.h> // uint32_t
 #include <stdio.h> // fprintf
 #include <stdlib.h> // malloc
 #include <string.h> // memset
 #include "compiler.h" // DIV_ROUND_UP
-#include "itersolve.h" // itersolve_generate_steps
 #include "pyhelper.h" // errorf
 #include "serialqueue.h" // struct queue_message
 #include "stepcompress.h" // stepcompress_alloc
@@ -48,16 +46,6 @@ struct stepcompress {
     // History tracking
     int64_t last_position;
     struct list_head history_list;
-    // Thread for step generation
-    struct stepper_kinematics *sk;
-    char name[16];
-    pthread_t tid;
-    pthread_mutex_t lock; // protects variables below
-    pthread_cond_t cond;
-    int have_work;
-    double bg_gen_steps_time;
-    uint64_t bg_flush_clock;
-    int32_t bg_result;
 };
 
 struct step_move {
@@ -253,22 +241,15 @@ check_line(struct stepcompress *sc, struct step_move move)
  * Step compress interface
  ****************************************************************/
 
-static int sc_thread_alloc(struct stepcompress *sc, char name[16]);
-static void sc_thread_free(struct stepcompress *sc);
-
 // Allocate a new 'stepcompress' object
 struct stepcompress *
-stepcompress_alloc(char name[16], struct list_head *msg_queue)
+stepcompress_alloc(struct list_head *msg_queue)
 {
     struct stepcompress *sc = malloc(sizeof(*sc));
     memset(sc, 0, sizeof(*sc));
     list_init(&sc->history_list);
     sc->sdir = -1;
     sc->msg_queue = msg_queue;
-
-    int ret = sc_thread_alloc(sc, name);
-    if (ret)
-        return NULL;
     return sc;
 }
 
@@ -315,7 +296,6 @@ stepcompress_free(struct stepcompress *sc)
 {
     if (!sc)
         return;
-    sc_thread_free(sc);
     free(sc->queue);
     stepcompress_history_expire(sc, UINT64_MAX);
     free(sc);
@@ -551,7 +531,7 @@ stepcompress_commit(struct stepcompress *sc)
 }
 
 // Flush pending steps
-static int
+int
 stepcompress_flush(struct stepcompress *sc, uint64_t move_clock)
 {
     if (sc->next_step_clock && move_clock >= sc->next_step_clock) {
@@ -659,132 +639,4 @@ stepcompress_extract_old(struct stepcompress *sc, struct pull_history_steps *p
         res++;
     }
     return res;
-}
-
-
-/****************************************************************
- * Step generation thread
- ****************************************************************/
-
-// Store a reference to stepper_kinematics
-void __visible
-stepcompress_set_stepper_kinematics(struct stepcompress *sc
-                                    , struct stepper_kinematics *sk)
-{
-    sc->sk = sk;
-}
-
-// Report current stepper_kinematics
-struct stepper_kinematics * __visible
-stepcompress_get_stepper_kinematics(struct stepcompress *sc)
-{
-    return sc->sk;
-}
-
-// Generate steps (via itersolve) and flush
-static int32_t
-stepcompress_generate_steps(struct stepcompress *sc, double gen_steps_time
-                            , uint64_t flush_clock)
-{
-    if (!sc->sk)
-        return 0;
-    // Generate steps
-    int32_t ret = itersolve_generate_steps(sc->sk, sc, gen_steps_time);
-    if (ret)
-        return ret;
-    // Flush steps
-    return stepcompress_flush(sc, flush_clock);
-}
-
-// Main background thread for generating steps
-static void *
-sc_background_thread(void *data)
-{
-    struct stepcompress *sc = data;
-    set_thread_name(sc->name);
-
-    pthread_mutex_lock(&sc->lock);
-    for (;;) {
-        if (!sc->have_work) {
-            pthread_cond_wait(&sc->cond, &sc->lock);
-            continue;
-        }
-        if (sc->have_work < 0)
-            // Exit request
-            break;
-
-        // Request to generate steps
-        sc->bg_result = stepcompress_generate_steps(sc, sc->bg_gen_steps_time
-                                                    , sc->bg_flush_clock);
-        sc->have_work = 0;
-        pthread_cond_signal(&sc->cond);
-    }
-    pthread_mutex_unlock(&sc->lock);
-
-    return NULL;
-}
-
-// Signal background thread to start step generation
-void
-stepcompress_start_gen_steps(struct stepcompress *sc, double gen_steps_time
-                             , uint64_t flush_clock)
-{
-    if (!sc->sk)
-        return;
-    pthread_mutex_lock(&sc->lock);
-    while (sc->have_work)
-        pthread_cond_wait(&sc->cond, &sc->lock);
-    sc->bg_gen_steps_time = gen_steps_time;
-    sc->bg_flush_clock = flush_clock;
-    sc->have_work = 1;
-    pthread_mutex_unlock(&sc->lock);
-    pthread_cond_signal(&sc->cond);
-}
-
-// Wait for background thread to complete last step generation request
-int32_t
-stepcompress_finalize_gen_steps(struct stepcompress *sc)
-{
-    pthread_mutex_lock(&sc->lock);
-    while (sc->have_work)
-        pthread_cond_wait(&sc->cond, &sc->lock);
-    int32_t res = sc->bg_result;
-    pthread_mutex_unlock(&sc->lock);
-    return res;
-}
-
-// Internal helper to start thread
-static int
-sc_thread_alloc(struct stepcompress *sc, char name[16])
-{
-    strncpy(sc->name, name, sizeof(sc->name));
-    sc->name[sizeof(sc->name)-1] = '\0';
-    int ret = pthread_mutex_init(&sc->lock, NULL);
-    if (ret)
-        goto fail;
-    ret = pthread_cond_init(&sc->cond, NULL);
-    if (ret)
-        goto fail;
-    ret = pthread_create(&sc->tid, NULL, sc_background_thread, sc);
-    if (ret)
-        goto fail;
-    return 0;
-fail:
-    report_errno("sc init", ret);
-    return -1;
-}
-
-// Request background thread to exit
-static void
-sc_thread_free(struct stepcompress *sc)
-{
-    pthread_mutex_lock(&sc->lock);
-    while (sc->have_work)
-        pthread_cond_wait(&sc->cond, &sc->lock);
-    sc->have_work = -1;
-    pthread_cond_signal(&sc->cond);
-    pthread_mutex_unlock(&sc->lock);
-    int ret = pthread_join(sc->tid, NULL);
-    if (ret)
-        report_errno("sc pthread_join", ret);
 }
