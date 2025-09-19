@@ -27,14 +27,27 @@
 struct syncemitter {
     // List node for storage in steppersync list
     struct list_node ss_node;
+    // Transmit message queue
+    struct list_head msg_queue;
     // Step compression and generation
     struct stepcompress *sc;
 };
 
+// Return this emitters 'struct stepcompress' (or NULL if not allocated)
 struct stepcompress * __visible
 syncemitter_get_stepcompress(struct syncemitter *se)
 {
     return se->sc;
+}
+
+// Queue an mcu command that will consume space in the mcu move queue
+void __visible
+syncemitter_queue_msg(struct syncemitter *se, uint64_t req_clock
+                      , uint32_t *data, int len)
+{
+    struct queue_message *qm = message_alloc_and_encode(data, len);
+    qm->min_clock = qm->req_clock = req_clock;
+    list_add_tail(&qm->node, &se->msg_queue);
 }
 
 
@@ -65,8 +78,9 @@ steppersync_alloc_syncemitter(struct steppersync *ss, char name[16]
     struct syncemitter *se = malloc(sizeof(*se));
     memset(se, 0, sizeof(*se));
     list_add_tail(&se->ss_node, &ss->se_list);
+    list_init(&se->msg_queue);
     if (alloc_stepcompress)
-        se->sc = stepcompress_alloc(name);
+        se->sc = stepcompress_alloc(name, &se->msg_queue);
     return se;
 }
 
@@ -137,10 +151,9 @@ steppersync_flush(struct steppersync *ss, uint64_t move_clock)
         struct queue_message *qm = NULL;
         struct syncemitter *se;
         list_for_each_entry(se, &ss->se_list, ss_node) {
-            struct list_head *sc_mq = stepcompress_get_msg_queue(se->sc);
-            if (!list_empty(sc_mq)) {
+            if (!list_empty(&se->msg_queue)) {
                 struct queue_message *m = list_first_entry(
-                    sc_mq, struct queue_message, node);
+                    &se->msg_queue, struct queue_message, node);
                 if (m->req_clock < req_clock) {
                     qm = m;
                     req_clock = m->req_clock;
@@ -205,6 +218,7 @@ steppersyncmgr_free(struct steppersyncmgr *ssm)
                 &ss->se_list, struct syncemitter, ss_node);
             list_del(&se->ss_node);
             stepcompress_free(se->sc);
+            message_queue_free(&se->msg_queue);
             free(se);
         }
         free(ss);

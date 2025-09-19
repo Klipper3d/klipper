@@ -5,6 +5,8 @@
 
 struct syncemitter;
 struct stepcompress *syncemitter_get_stepcompress(struct syncemitter *se);
+void syncemitter_queue_msg(struct syncemitter *se, uint64_t req_clock
+                           , uint32_t *data, int len);
 
 struct steppersync;
 struct syncemitter *steppersync_alloc_syncemitter(

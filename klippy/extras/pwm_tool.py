@@ -18,9 +18,10 @@ class MCU_queued_pwm:
         printer = mcu.get_printer()
         sname = config.get_name().split()[-1]
         self._motion_queuing = printer.load_object(config, 'motion_queuing')
-        self._stepqueue = self._motion_queuing.allocate_stepcompress(mcu, sname)
+        self._syncemitter = self._motion_queuing.allocate_syncemitter(
+            mcu, sname, alloc_stepcompress=False)
         ffi_main, ffi_lib = chelper.get_ffi()
-        self._stepcompress_queue_mq_msg = ffi_lib.stepcompress_queue_mq_msg
+        self._syncemitter_queue_msg = ffi_lib.syncemitter_queue_msg
         mcu.register_config_callback(self._build_config)
         self._pin = pin_params['pin']
         self._invert = pin_params['invert']
@@ -107,10 +108,7 @@ class MCU_queued_pwm:
         self._last_clock = clock = max(self._last_clock, clock)
         self._last_value = val
         data = (self._set_cmd_tag, self._oid, clock & 0xffffffff, val)
-        ret = self._stepcompress_queue_mq_msg(self._stepqueue, clock,
-                                              data, len(data))
-        if ret:
-            raise error("Internal error in stepcompress")
+        self._syncemitter_queue_msg(self._syncemitter, clock, data, len(data))
         # Notify toolhead so that it will flush this update
         wakeclock = clock
         if self._last_value != self._default_value:

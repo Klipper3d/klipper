@@ -38,7 +38,7 @@ struct stepcompress {
     double mcu_time_offset, mcu_freq, last_step_print_time;
     // Message generation
     uint64_t last_step_clock;
-    struct list_head msg_queue;
+    struct list_head *msg_queue;
     uint32_t oid;
     int32_t queue_step_msgtag, set_next_step_dir_msgtag;
     int sdir, invert_sdir;
@@ -258,13 +258,13 @@ static void sc_thread_free(struct stepcompress *sc);
 
 // Allocate a new 'stepcompress' object
 struct stepcompress *
-stepcompress_alloc(char name[16])
+stepcompress_alloc(char name[16], struct list_head *msg_queue)
 {
     struct stepcompress *sc = malloc(sizeof(*sc));
     memset(sc, 0, sizeof(*sc));
-    list_init(&sc->msg_queue);
     list_init(&sc->history_list);
     sc->sdir = -1;
+    sc->msg_queue = msg_queue;
 
     int ret = sc_thread_alloc(sc, name);
     if (ret)
@@ -317,7 +317,6 @@ stepcompress_free(struct stepcompress *sc)
         return;
     sc_thread_free(sc);
     free(sc->queue);
-    message_queue_free(&sc->msg_queue);
     stepcompress_history_expire(sc, UINT64_MAX);
     free(sc);
 }
@@ -332,12 +331,6 @@ int
 stepcompress_get_step_dir(struct stepcompress *sc)
 {
     return sc->next_step_dir;
-}
-
-struct list_head *
-stepcompress_get_msg_queue(struct stepcompress *sc)
-{
-    return &sc->msg_queue;
 }
 
 // Determine the "print time" of the last_step_clock
@@ -377,7 +370,7 @@ add_move(struct stepcompress *sc, uint64_t first_clock, struct step_move *move)
     qm->min_clock = qm->req_clock = sc->last_step_clock;
     if (move->count == 1 && first_clock >= sc->last_step_clock + CLOCK_DIFF_MAX)
         qm->req_clock = first_clock;
-    list_add_tail(&qm->node, &sc->msg_queue);
+    list_add_tail(&qm->node, sc->msg_queue);
     sc->last_step_clock = last_clock;
 
     // Create and store move in history tracking
@@ -441,7 +434,7 @@ set_next_step_dir(struct stepcompress *sc, int sdir)
     };
     struct queue_message *qm = message_alloc_and_encode(msg, 3);
     qm->req_clock = sc->last_step_clock;
-    list_add_tail(&qm->node, &sc->msg_queue);
+    list_add_tail(&qm->node, sc->msg_queue);
     return 0;
 }
 
@@ -640,22 +633,7 @@ stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len)
 
     struct queue_message *qm = message_alloc_and_encode(data, len);
     qm->req_clock = sc->last_step_clock;
-    list_add_tail(&qm->node, &sc->msg_queue);
-    return 0;
-}
-
-// Queue an mcu command that will consume space in the mcu move queue
-int __visible
-stepcompress_queue_mq_msg(struct stepcompress *sc, uint64_t req_clock
-                          , uint32_t *data, int len)
-{
-    int ret = stepcompress_flush(sc, UINT64_MAX);
-    if (ret)
-        return ret;
-
-    struct queue_message *qm = message_alloc_and_encode(data, len);
-    qm->min_clock = qm->req_clock = req_clock;
-    list_add_tail(&qm->node, &sc->msg_queue);
+    list_add_tail(&qm->node, sc->msg_queue);
     return 0;
 }
 

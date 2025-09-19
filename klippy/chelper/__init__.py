@@ -48,8 +48,6 @@ defs_stepcompress = """
         , uint64_t clock);
     int stepcompress_queue_msg(struct stepcompress *sc
         , uint32_t *data, int len);
-    int stepcompress_queue_mq_msg(struct stepcompress *sc, uint64_t req_clock
-        , uint32_t *data, int len);
     int stepcompress_extract_old(struct stepcompress *sc
         , struct pull_history_steps *p, int max
         , uint64_t start_clock, uint64_t end_clock);
@@ -61,6 +59,8 @@ defs_stepcompress = """
 
 defs_steppersync = """
     struct stepcompress *syncemitter_get_stepcompress(struct syncemitter *se);
+    void syncemitter_queue_msg(struct syncemitter *se, uint64_t req_clock
+        , uint32_t *data, int len);
     struct syncemitter *steppersync_alloc_syncemitter(struct steppersync *ss
         , char name[16], int alloc_stepcompress);
     void steppersync_setup_movequeue(struct steppersync *ss
