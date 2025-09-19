@@ -118,6 +118,8 @@ se_background_thread(void *data)
 
         // Request to generate steps
         se->bg_result = se_generate_steps(se);
+        if (se->bg_result)
+            errorf("Error in syncemitter '%s' step generation", se->name);
         se->have_work = 0;
         pthread_cond_signal(&se->cond);
     }
