@@ -138,7 +138,7 @@ class I2C:
             hdr = 0x00
         cmds = bytearray(cmds)
         cmds.insert(0, hdr)
-        self.i2c.i2c_write(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
+        self.i2c.i2c_write_noack(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
 
 # Helper code for toggling a reset pin on startup
 class ResetHelper:
