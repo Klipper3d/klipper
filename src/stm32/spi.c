@@ -86,19 +86,14 @@ struct spi_info {
   DECL_CONSTANT_STR("BUS_PINS_spi3_PB4_PB5_PB3", "PB4,PB5,PB3");
   DECL_ENUMERATION("spi_bus", "spi3_PC11_PC12_PC10", 5);
   DECL_CONSTANT_STR("BUS_PINS_spi3_PC11_PC12_PC10", "PC11,PC12,PC10");
-  #ifdef GPIOI
-    DECL_ENUMERATION("spi_bus", "spi2_PI2_PI3_PI1", 6);
-    DECL_CONSTANT_STR("BUS_PINS_spi2_PI2_PI3_PI1", "PI2,PI3,PI1");
-    #define SPI4_INDEX (1 + 6)
-  #else
-    #define SPI4_INDEX (0 + 6)
-  #endif
+  DECL_ENUMERATION("spi_bus", "spi2_PI2_PI3_PI1", 6);
+  DECL_CONSTANT_STR("BUS_PINS_spi2_PI2_PI3_PI1", "PI2,PI3,PI1");
   #ifdef SPI4
-    DECL_ENUMERATION("spi_bus", "spi4_PE13_PE14_PE12", SPI4_INDEX);
+    DECL_ENUMERATION("spi_bus", "spi4_PE13_PE14_PE12", 7);
     DECL_CONSTANT_STR("BUS_PINS_spi4_PE13_PE14_PE12", "PE13,PE14,PE12");
-    #define SPI6_INDEX (1 + SPI4_INDEX)
+    #define SPI6_INDEX (1 + 7)
   #else
-    #define SPI6_INDEX (0 + SPI4_INDEX)
+    #define SPI6_INDEX (0 + 7)
   #endif
   #ifdef SPI6
     DECL_ENUMERATION("spi_bus", "spi6_PG12_PG14_PG13",  SPI6_INDEX);
@@ -117,12 +112,10 @@ struct spi_info {
   DECL_CONSTANT_STR("BUS_PINS_spi3", "PB4,PB5,PB3");
   DECL_ENUMERATION("spi_bus", "spi3a", 5);
   DECL_CONSTANT_STR("BUS_PINS_spi3a", "PC11,PC12,PC10");
-  #ifdef GPIOI
-    DECL_ENUMERATION("spi_bus", "spi2b", 6);
-    DECL_CONSTANT_STR("BUS_PINS_spi2b", "PI2,PI3,PI1");
-  #endif
+  DECL_ENUMERATION("spi_bus", "spi2b", 6);
+  DECL_CONSTANT_STR("BUS_PINS_spi2b", "PI2,PI3,PI1");
   #ifdef SPI4
-    DECL_ENUMERATION("spi_bus", "spi4", SPI4_INDEX);
+    DECL_ENUMERATION("spi_bus", "spi4", 7);
     DECL_CONSTANT_STR("BUS_PINS_spi4", "PE13,PE14,PE12");
   #endif
 #elif CONFIG_MACH_STM32F7
@@ -254,9 +247,7 @@ static const struct spi_info spi_bus[] = {
   { SPI2, GPIO('C', 2), GPIO('C', 3), GPIO('B', 10), SPI_FUNCTION(5, 5, 5) },
   { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), SPI_FUNCTION(6, 6, 6) },
   { SPI3, GPIO('C', 11), GPIO('C', 12), GPIO('C', 10), SPI_FUNCTION(6, 6, 6) },
- #ifdef GPIOI
   { SPI2, GPIO('I', 2), GPIO('I', 3), GPIO('I', 1), SPI_FUNCTION(5, 5, 5) },
- #endif
  #ifdef SPI4
   { SPI4, GPIO('E', 13), GPIO('E', 14), GPIO('E', 12), SPI_FUNCTION(5, 5, 5) },
  #endif
