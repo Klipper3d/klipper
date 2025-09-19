@@ -34,10 +34,8 @@ DECL_ENUMERATION("spi_bus", "spi5a", 7);
 DECL_CONSTANT_STR("BUS_PINS_spi5a", "PH7,PF11,PH6");
 DECL_ENUMERATION("spi_bus", "spi6", 8);
 DECL_CONSTANT_STR("BUS_PINS_spi6", "PG12,PG14,PG13");
-#ifdef GPIOI
 DECL_ENUMERATION("spi_bus", "spi2b", 9);
 DECL_CONSTANT_STR("BUS_PINS_spi2b", "PI2,PI3,PI1");
-#endif
 
 static const struct spi_info spi_bus[] = {
     { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), GPIO_FUNCTION(5) },
@@ -49,9 +47,7 @@ static const struct spi_info spi_bus[] = {
     { SPI5, GPIO('F', 8), GPIO('F', 9), GPIO('F', 7), GPIO_FUNCTION(5) },
     { SPI5, GPIO('H', 7), GPIO('F', 11), GPIO('H', 6), GPIO_FUNCTION(5) },
     { SPI6, GPIO('G', 12), GPIO('G', 14), GPIO('G', 13), GPIO_FUNCTION(5)},
-#ifdef GPIOI
     { SPI2, GPIO('I', 2), GPIO('I', 3), GPIO('I', 1), GPIO_FUNCTION(5) },
-#endif
 };
 
 struct spi_config
