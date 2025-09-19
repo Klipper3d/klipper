@@ -1,7 +1,7 @@
 # Kinematic input shaper to minimize motion vibrations in XY plane
 #
 # Copyright (C) 2019-2020  Kevin O'Connor <kevin@koconnor.net>
-# Copyright (C) 2020  Dmitry Butyugin <dmbutyugin@google.com>
+# Copyright (C) 2020-2025  Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import collections
@@ -100,7 +100,8 @@ class InputShaper:
                                             self._update_kinematics)
         self.toolhead = None
         self.shapers = [AxisInputShaper('x', config),
-                        AxisInputShaper('y', config)]
+                        AxisInputShaper('y', config),
+                        AxisInputShaper('z', config)]
         self.input_shaper_stepper_kinematics = []
         self.orig_stepper_kinematics = []
         # Register gcode commands
@@ -191,8 +192,9 @@ class InputShaper:
             for shaper in self.shapers:
                 shaper.update(gcmd)
             self._update_input_shaping()
-        for shaper in self.shapers:
-            shaper.report(gcmd)
+        for ind, shaper in enumerate(self.shapers):
+            if ind < 2 or shaper.is_enabled():
+                shaper.report(gcmd)
 
 def load_config(config):
     return InputShaper(config)
