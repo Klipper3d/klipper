@@ -603,20 +603,6 @@ stepcompress_find_past_position(struct stepcompress *sc, uint64_t clock)
     return last_position;
 }
 
-// Queue an mcu command to go out in order with stepper commands
-int __visible
-stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len)
-{
-    int ret = stepcompress_flush(sc, UINT64_MAX);
-    if (ret)
-        return ret;
-
-    struct queue_message *qm = message_alloc_and_encode(data, len);
-    qm->req_clock = sc->last_step_clock;
-    list_add_tail(&qm->node, sc->msg_queue);
-    return 0;
-}
-
 // Return history of queue_step commands
 int __visible
 stepcompress_extract_old(struct stepcompress *sc, struct pull_history_steps *p
