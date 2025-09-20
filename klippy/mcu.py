@@ -714,7 +714,6 @@ class MCU:
             self._check_restart_on_crc_mismatch()
             raise error("MCU '%s' CRC does not match config" % (self._name,))
         # Transmit config messages (if needed)
-        self.register_response(self._handle_starting, 'starting')
         try:
             if prev_crc is None:
                 logging.info("Sending MCU '%s' printer configuration...",
@@ -808,6 +807,7 @@ class MCU:
         self._emergency_stop_cmd = self.lookup_command("emergency_stop")
         self.register_response(self._handle_shutdown, 'shutdown')
         self.register_response(self._handle_shutdown, 'is_shutdown')
+        self.register_response(self._handle_starting, 'starting')
     def _post_attach_setup_restart(self):
         self._reset_cmd = self.try_lookup_command("reset")
         self._config_reset_cmd = self.try_lookup_command("config_reset")
