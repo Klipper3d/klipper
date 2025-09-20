@@ -223,9 +223,13 @@ class ResonanceTester:
         self.printer.register_event_handler("klippy:connect", self.connect)
 
     def connect(self):
-        self.accel_chips = [
-                (chip_axis, self.printer.lookup_object(chip_name))
-                for chip_axis, chip_name in self.accel_chip_names]
+        self.accel_chips = []
+        for chip_axis, chip_name in self.accel_chip_names:
+            chip = self.printer.lookup_object(chip_name)
+            if not hasattr(chip, 'start_internal_client'):
+                raise self.printer.config_error(
+                        "'%s' is not an accelerometer" % chip_name)
+            self.accel_chips.append((chip_axis, chip))
 
     def _run_test(self, gcmd, axes, helper, raw_name_suffix=None,
                   accel_chips=None, test_point=None):
@@ -288,7 +292,13 @@ class ResonanceTester:
     def _parse_chips(self, accel_chips):
         parsed_chips = []
         for chip_name in accel_chips.split(','):
-            chip = self.printer.lookup_object(chip_name.strip())
+            chip = self.printer.lookup_object(chip_name.strip(), None)
+            if chip is None:
+                raise self.printer.command_error("Name '%s' is not valid for"
+                                                 " CHIPS parameter" % chip_name)
+            if not hasattr(chip, 'start_internal_client'):
+                raise self.printer.command_error(
+                        "'%s' is not an accelerometer" % chip_name)
             parsed_chips.append(chip)
         return parsed_chips
     def _get_max_calibration_freq(self):
