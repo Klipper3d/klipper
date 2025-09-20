@@ -598,8 +598,12 @@ class MCUConnectHelper:
                                        self._firmware_restart)
         printer.register_event_handler("klippy:shutdown", self._shutdown)
         printer.register_event_handler("klippy:disconnect", self._disconnect)
+    def get_mcu(self):
+        return self._mcu
     def get_serial(self):
         return self._serial
+    def get_clocksync(self):
+        return self._clocksync
     def _handle_shutdown(self, params):
         if self._is_shutdown:
             return
@@ -781,6 +785,69 @@ class MCUConnectHelper:
     def get_shutdown_msg(self):
         return self._shutdown_msg
 
+# Handle statistics reporting
+class MCUStatsHelper:
+    def __init__(self, config, conn_helper):
+        self._printer = printer = config.get_printer()
+        self._mcu = mcu = conn_helper.get_mcu()
+        self._serial = conn_helper.get_serial()
+        self._clocksync = conn_helper.get_clocksync()
+        self._reactor = printer.get_reactor()
+        self._name = mcu.get_name()
+        self._mcu_freq = 0.
+        self._get_status_info = {}
+        self._stats_sumsq_base = 0.
+        self._mcu_tick_avg = 0.
+        self._mcu_tick_stddev = 0.
+        self._mcu_tick_awake = 0.
+        printer.register_event_handler("klippy:ready", self._ready)
+    def _handle_mcu_stats(self, params):
+        count = params['count']
+        tick_sum = params['sum']
+        c = 1.0 / (count * self._mcu_freq)
+        self._mcu_tick_avg = tick_sum * c
+        tick_sumsq = params['sumsq'] * self._stats_sumsq_base
+        diff = count*tick_sumsq - tick_sum**2
+        self._mcu_tick_stddev = c * math.sqrt(max(0., diff))
+        self._mcu_tick_awake = tick_sum / self._mcu_freq
+    def post_attach_setup_stats(self):
+        self._mcu_freq = self._mcu.get_constant_float('CLOCK_FREQ')
+        self._stats_sumsq_base = self._mcu.get_constant_float(
+            'STATS_SUMSQ_BASE')
+        msgparser = self._serial.get_msgparser()
+        version, build_versions = msgparser.get_version_info()
+        self._get_status_info['mcu_version'] = version
+        self._get_status_info['mcu_build_versions'] = build_versions
+        self._get_status_info['mcu_constants'] = msgparser.get_constants()
+        self._mcu.register_response(self._handle_mcu_stats, 'stats')
+    def _ready(self):
+        if self._mcu.is_fileoutput():
+            return
+        # Check that reported mcu frequency is in range
+        mcu_freq = self._mcu_freq
+        systime = self._reactor.monotonic()
+        get_clock = self._clocksync.get_clock
+        calc_freq = get_clock(systime + 1) - get_clock(systime)
+        freq_diff = abs(mcu_freq - calc_freq)
+        mcu_freq_mhz = int(mcu_freq / 1000000. + 0.5)
+        calc_freq_mhz = int(calc_freq / 1000000. + 0.5)
+        if freq_diff > mcu_freq*0.01 and mcu_freq_mhz != calc_freq_mhz:
+            pconfig = self._printer.lookup_object('configfile')
+            msg = ("MCU '%s' configured for %dMhz but running at %dMhz!"
+                    % (self._name, mcu_freq_mhz, calc_freq_mhz))
+            pconfig.runtime_warning(msg)
+    def get_status(self, eventtime=None):
+        return dict(self._get_status_info)
+    def stats(self, eventtime):
+        load = "mcu_awake=%.03f mcu_task_avg=%.06f mcu_task_stddev=%.06f" % (
+            self._mcu_tick_awake, self._mcu_tick_avg, self._mcu_tick_stddev)
+        stats = ' '.join([load, self._serial.stats(eventtime),
+                          self._clocksync.stats(eventtime)])
+        parts = [s.split('=', 1) for s in stats.split()]
+        last_stats = {k:(float(v) if '.' in v else int(v)) for k, v in parts}
+        self._get_status_info['last_stats'] = last_stats
+        return False, '%s: %s' % (self._name, stats)
+
 # Main MCU class
 class MCU:
     error = error
@@ -803,33 +870,18 @@ class MCU:
         self._init_cmds = []
         self._mcu_freq = 0.
         self._reserved_move_slots = 0
-        # Stats
-        self._get_status_info = {}
-        self._stats_sumsq_base = 0.
-        self._mcu_tick_avg = 0.
-        self._mcu_tick_stddev = 0.
-        self._mcu_tick_awake = 0.
         # Alter time reporting when debugging
         if self.is_fileoutput():
             def dummy_estimated_print_time(eventtime):
                 return 0.
             self.estimated_print_time = dummy_estimated_print_time
         # Register handlers
+        self._stats_helper = MCUStatsHelper(self, self._conn_helper)
         printer.load_object(config, "error_mcu")
         printer.register_event_handler("klippy:mcu_identify",
                                        self._mcu_identify)
         printer.register_event_handler("klippy:connect", self._connect)
-        printer.register_event_handler("klippy:ready", self._ready)
     # Serial callbacks
-    def _handle_mcu_stats(self, params):
-        count = params['count']
-        tick_sum = params['sum']
-        c = 1.0 / (count * self._mcu_freq)
-        self._mcu_tick_avg = tick_sum * c
-        tick_sumsq = params['sumsq'] * self._stats_sumsq_base
-        diff = count*tick_sumsq - tick_sum**2
-        self._mcu_tick_stddev = c * math.sqrt(max(0., diff))
-        self._mcu_tick_awake = tick_sum / self._mcu_freq
     def _send_config(self, prev_crc):
         # Build config commands
         for cb in self._config_callbacks:
@@ -913,14 +965,6 @@ class MCU:
         logging.info(move_msg)
         log_info = self._conn_helper.log_info() + "\n" + move_msg
         self._printer.set_rollover_info(self._name, log_info, log=False)
-    def _post_attach_setup_stats(self):
-        self._stats_sumsq_base = self.get_constant_float('STATS_SUMSQ_BASE')
-        msgparser = self._serial.get_msgparser()
-        version, build_versions = msgparser.get_version_info()
-        self._get_status_info['mcu_version'] = version
-        self._get_status_info['mcu_build_versions'] = build_versions
-        self._get_status_info['mcu_constants'] = msgparser.get_constants()
-        self.register_response(self._handle_mcu_stats, 'stats')
     def _post_attach_setup_for_config(self):
         self._mcu_freq = self.get_constant_float('CLOCK_FREQ')
         ppins = self._printer.lookup_object('pins')
@@ -932,23 +976,7 @@ class MCU:
     def _mcu_identify(self):
         self._conn_helper.start_attach()
         self._post_attach_setup_for_config()
-        self._post_attach_setup_stats()
-    def _ready(self):
-        if self.is_fileoutput():
-            return
-        # Check that reported mcu frequency is in range
-        mcu_freq = self._mcu_freq
-        systime = self._reactor.monotonic()
-        get_clock = self._clocksync.get_clock
-        calc_freq = get_clock(systime + 1) - get_clock(systime)
-        freq_diff = abs(mcu_freq - calc_freq)
-        mcu_freq_mhz = int(mcu_freq / 1000000. + 0.5)
-        calc_freq_mhz = int(calc_freq / 1000000. + 0.5)
-        if freq_diff > mcu_freq*0.01 and mcu_freq_mhz != calc_freq_mhz:
-            pconfig = self._printer.lookup_object('configfile')
-            msg = ("MCU '%s' configured for %dMhz but running at %dMhz!"
-                    % (self._name, mcu_freq_mhz, calc_freq_mhz))
-            pconfig.runtime_warning(msg)
+        self._stats_helper.post_attach_setup_stats()
     # Config creation helpers
     def setup_pin(self, pin_type, pin_params):
         pcs = {'endstop': MCU_endstop,
@@ -1028,16 +1056,9 @@ class MCU:
     def get_shutdown_clock(self):
         return self._conn_helper.get_shutdown_clock()
     def get_status(self, eventtime=None):
-        return dict(self._get_status_info)
+        return self._stats_helper.get_status(eventtime)
     def stats(self, eventtime):
-        load = "mcu_awake=%.03f mcu_task_avg=%.06f mcu_task_stddev=%.06f" % (
-            self._mcu_tick_awake, self._mcu_tick_avg, self._mcu_tick_stddev)
-        stats = ' '.join([load, self._serial.stats(eventtime),
-                          self._clocksync.stats(eventtime)])
-        parts = [s.split('=', 1) for s in stats.split()]
-        last_stats = {k:(float(v) if '.' in v else int(v)) for k, v in parts}
-        self._get_status_info['last_stats'] = last_stats
-        return False, '%s: %s' % (self._name, stats)
+        return self._stats_helper.stats(eventtime)
 
 def add_printer_objects(config):
     printer = config.get_printer()
