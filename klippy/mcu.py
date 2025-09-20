@@ -659,6 +659,21 @@ class MCU:
         self._printer.request_exit('firmware_restart')
         self._reactor.pause(self._reactor.monotonic() + 2.000)
         raise error("Attempt MCU '%s' restart failed" % (self._name,))
+    def _check_restart_on_crc_mismatch(self):
+        self._check_restart("CRC mismatch")
+    def _check_restart_on_send_config(self):
+        if self._restart_method == 'rpi_usb':
+            # Only configure mcu after usb power reset
+            self._check_restart("full reset before config")
+    def _check_restart_on_attach(self):
+        resmeth = self._restart_method
+        if resmeth == 'rpi_usb' and not os.path.exists(self._serialport):
+            # Try toggling usb power
+            self._check_restart("enable power")
+    def _lookup_attach_uart_rts(self):
+        # Cheetah boards require RTS to be deasserted
+        # else a reset will trigger the built-in bootloader.
+        return (self._restart_method != "cheetah")
     def _attach_file(self, pace=False):
         # In a debugging mode.  Open debug output file and read data dictionary
         start_args = self._printer.get_start_args()
@@ -696,7 +711,7 @@ class MCU:
         config_crc = zlib.crc32(encoded_config) & 0xffffffff
         self.add_config_cmd("finalize_config crc=%d" % (config_crc,))
         if prev_crc is not None and config_crc != prev_crc:
-            self._check_restart("CRC mismatch")
+            self._check_restart_on_crc_mismatch()
             raise error("MCU '%s' CRC does not match config" % (self._name,))
         # Transmit config messages (if needed)
         self.register_response(self._handle_starting, 'starting')
@@ -747,9 +762,7 @@ class MCU:
     def _connect(self):
         config_params = self._send_get_config()
         if not config_params['is_config']:
-            if self._restart_method == 'rpi_usb':
-                # Only configure mcu after usb power reset
-                self._check_restart("full reset before config")
+            self._check_restart_on_send_config()
             # Not configured - send config and issue get_config again
             self._send_config(None)
             config_params = self._send_get_config()
@@ -776,10 +789,7 @@ class MCU:
         log_info = self._log_info() + "\n" + move_msg
         self._printer.set_rollover_info(self._name, log_info, log=False)
     def _attach(self):
-        resmeth = self._restart_method
-        if resmeth == 'rpi_usb' and not os.path.exists(self._serialport):
-            # Try toggling usb power
-            self._check_restart("enable power")
+        self._check_restart_on_attach()
         try:
             if self._canbus_iface is not None:
                 cbid = self._printer.lookup_object('canbus_ids')
@@ -787,9 +797,7 @@ class MCU:
                 self._serial.connect_canbus(self._serialport, nodeid,
                                             self._canbus_iface)
             elif self._baud:
-                # Cheetah boards require RTS to be deasserted
-                # else a reset will trigger the built-in bootloader.
-                rts = (resmeth != "cheetah")
+                rts = self._lookup_attach_uart_rts()
                 self._serial.connect_uart(self._serialport, self._baud, rts)
             else:
                 self._serial.connect_pipe(self._serialport)
