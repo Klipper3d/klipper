@@ -610,6 +610,11 @@ class MCU:
         self._mcu_tick_avg = 0.
         self._mcu_tick_stddev = 0.
         self._mcu_tick_awake = 0.
+        # Alter time reporting when debugging
+        if self.is_fileoutput():
+            def dummy_estimated_print_time(eventtime):
+                return 0.
+            self.estimated_print_time = dummy_estimated_print_time
         # Register handlers
         printer.load_object(config, "error_mcu")
         printer.register_event_handler("klippy:firmware_restart",
@@ -674,7 +679,7 @@ class MCU:
         # Cheetah boards require RTS to be deasserted
         # else a reset will trigger the built-in bootloader.
         return (self._restart_method != "cheetah")
-    def _attach_file(self, pace=False):
+    def _attach_file(self):
         # In a debugging mode.  Open debug output file and read data dictionary
         start_args = self._printer.get_start_args()
         if self._name == 'mcu':
@@ -688,12 +693,7 @@ class MCU:
         dict_data = dfile.read()
         dfile.close()
         self._serial.connect_file(outfile, dict_data)
-        self._clocksync.connect_file(self._serial, pace)
-        # Handle pacing
-        if not pace:
-            def dummy_estimated_print_time(eventtime):
-                return 0.
-            self.estimated_print_time = dummy_estimated_print_time
+        self._clocksync.connect_file(self._serial)
     def _send_config(self, prev_crc):
         # Build config commands
         for cb in self._config_callbacks:
