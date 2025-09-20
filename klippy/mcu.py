@@ -549,7 +549,7 @@ class MCU_adc:
 
 
 ######################################################################
-# Main MCU class
+# Main MCU class (and its helper classes)
 ######################################################################
 
 # Minimum time host needs to get scheduled events queued into mcu
@@ -557,18 +557,16 @@ MIN_SCHEDULE_TIME = 0.100
 # Maximum time all MCUs can internally schedule into the future
 MAX_NOMINAL_DURATION = 3.0
 
-class MCU:
-    error = error
-    def __init__(self, config, clocksync):
-        self._printer = printer = config.get_printer()
+# Low-level mcu connection management helper
+class MCUConnectHelper:
+    def __init__(self, config, mcu, clocksync):
+        self._mcu = mcu
         self._clocksync = clocksync
+        self._printer = printer = config.get_printer()
         self._reactor = printer.get_reactor()
-        self._name = config.get_name()
-        if self._name.startswith('mcu '):
-            self._name = self._name[4:]
+        self._name = name = mcu.get_name()
         # Serial port
-        name = self._name
-        self._serial = serialhdl.SerialReader(self._reactor, mcu_name = name)
+        self._serial = serialhdl.SerialReader(self._reactor, mcu_name=name)
         self._baud = 0
         self._canbus_iface = None
         canbus_uuid = config.get('canbus_uuid', None)
@@ -577,7 +575,7 @@ class MCU:
             self._canbus_iface = config.get('canbus_interface', 'can0')
             cbid = self._printer.load_object(config, 'canbus_ids')
             cbid.add_uuid(config, canbus_uuid, self._canbus_iface)
-            self._printer.load_object(config, 'canbus_stats %s' % (self._name,))
+            self._printer.load_object(config, 'canbus_stats %s' % (name,))
         else:
             self._serialport = config.get('serial')
             if not (self._serialport.startswith("/dev/rpmsg_")
@@ -595,53 +593,20 @@ class MCU:
         self._is_shutdown = self._is_timeout = False
         self._shutdown_clock = 0
         self._shutdown_msg = ""
-        # Config building
-        printer.lookup_object('pins').register_chip(self._name, self)
-        self._oid_count = 0
-        self._config_callbacks = []
-        self._config_cmds = []
-        self._restart_cmds = []
-        self._init_cmds = []
-        self._mcu_freq = 0.
-        self._reserved_move_slots = 0
-        # Stats
-        self._get_status_info = {}
-        self._stats_sumsq_base = 0.
-        self._mcu_tick_avg = 0.
-        self._mcu_tick_stddev = 0.
-        self._mcu_tick_awake = 0.
-        # Alter time reporting when debugging
-        if self.is_fileoutput():
-            def dummy_estimated_print_time(eventtime):
-                return 0.
-            self.estimated_print_time = dummy_estimated_print_time
         # Register handlers
-        printer.load_object(config, "error_mcu")
         printer.register_event_handler("klippy:firmware_restart",
                                        self._firmware_restart)
-        printer.register_event_handler("klippy:mcu_identify",
-                                       self._mcu_identify)
-        printer.register_event_handler("klippy:connect", self._connect)
         printer.register_event_handler("klippy:shutdown", self._shutdown)
         printer.register_event_handler("klippy:disconnect", self._disconnect)
-        printer.register_event_handler("klippy:ready", self._ready)
-    # Serial callbacks
-    def _handle_mcu_stats(self, params):
-        count = params['count']
-        tick_sum = params['sum']
-        c = 1.0 / (count * self._mcu_freq)
-        self._mcu_tick_avg = tick_sum * c
-        tick_sumsq = params['sumsq'] * self._stats_sumsq_base
-        diff = count*tick_sumsq - tick_sum**2
-        self._mcu_tick_stddev = c * math.sqrt(max(0., diff))
-        self._mcu_tick_awake = tick_sum / self._mcu_freq
+    def get_serial(self):
+        return self._serial
     def _handle_shutdown(self, params):
         if self._is_shutdown:
             return
         self._is_shutdown = True
         clock = params.get("clock")
         if clock is not None:
-            self._shutdown_clock = self.clock32_to_clock64(clock)
+            self._shutdown_clock = self._mcu.clock32_to_clock64(clock)
         self._shutdown_msg = msg = params['static_string_id']
         event_type = params['#name']
         self._printer.invoke_async_shutdown(
@@ -664,9 +629,9 @@ class MCU:
         self._printer.request_exit('firmware_restart')
         self._reactor.pause(self._reactor.monotonic() + 2.000)
         raise error("Attempt MCU '%s' restart failed" % (self._name,))
-    def _check_restart_on_crc_mismatch(self):
+    def check_restart_on_crc_mismatch(self):
         self._check_restart("CRC mismatch")
-    def _check_restart_on_send_config(self):
+    def check_restart_on_send_config(self):
         if self._restart_method == 'rpi_usb':
             # Only configure mcu after usb power reset
             self._check_restart("full reset before config")
@@ -679,6 +644,17 @@ class MCU:
         # Cheetah boards require RTS to be deasserted
         # else a reset will trigger the built-in bootloader.
         return (self._restart_method != "cheetah")
+    def log_info(self):
+        msgparser = self._serial.get_msgparser()
+        message_count = len(msgparser.get_messages())
+        version, build_versions = msgparser.get_version_info()
+        log_info = [
+            "Loaded MCU '%s' %d commands (%s / %s)"
+            % (self._name, message_count, version, build_versions),
+            "MCU '%s' config: %s" % (self._name, " ".join(
+                ["%s=%s" % (k, v)
+                 for k, v in msgparser.get_constants().items()]))]
+        return "\n".join(log_info)
     def _attach_file(self):
         # In a debugging mode.  Open debug output file and read data dictionary
         start_args = self._printer.get_start_args()
@@ -694,6 +670,166 @@ class MCU:
         dfile.close()
         self._serial.connect_file(outfile, dict_data)
         self._clocksync.connect_file(self._serial)
+    def _attach(self):
+        self._check_restart_on_attach()
+        try:
+            if self._canbus_iface is not None:
+                cbid = self._printer.lookup_object('canbus_ids')
+                nodeid = cbid.get_nodeid(self._serialport)
+                self._serial.connect_canbus(self._serialport, nodeid,
+                                            self._canbus_iface)
+            elif self._baud:
+                rts = self._lookup_attach_uart_rts()
+                self._serial.connect_uart(self._serialport, self._baud, rts)
+            else:
+                self._serial.connect_pipe(self._serialport)
+            self._clocksync.connect(self._serial)
+        except serialhdl.error as e:
+            raise error(str(e))
+    def _post_attach_setup_shutdown(self):
+        self._emergency_stop_cmd = self._mcu.lookup_command("emergency_stop")
+        self._mcu.register_response(self._handle_shutdown, 'shutdown')
+        self._mcu.register_response(self._handle_shutdown, 'is_shutdown')
+        self._mcu.register_response(self._handle_starting, 'starting')
+    def _post_attach_setup_restart(self):
+        self._reset_cmd = self._mcu.try_lookup_command("reset")
+        self._config_reset_cmd = self._mcu.try_lookup_command("config_reset")
+        ext_only = self._reset_cmd is None and self._config_reset_cmd is None
+        msgparser = self._serial.get_msgparser()
+        mbaud = msgparser.get_constant('SERIAL_BAUD', None)
+        if self._restart_method is None and mbaud is None and not ext_only:
+            self._restart_method = 'command'
+        if msgparser.get_constant('CANBUS_BRIDGE', 0):
+            self._is_mcu_bridge = True
+            self._printer.register_event_handler("klippy:firmware_restart",
+                                                 self._firmware_restart_bridge)
+    def start_attach(self):
+        if self._mcu.is_fileoutput():
+            self._attach_file()
+        else:
+            self._attach()
+        logging.info(self.log_info())
+        self._post_attach_setup_shutdown()
+        self._post_attach_setup_restart()
+    # Restarts
+    def _disconnect(self):
+        self._serial.disconnect()
+    def _shutdown(self, force=False):
+        if (self._emergency_stop_cmd is None
+            or (self._is_shutdown and not force)):
+            return
+        self._emergency_stop_cmd.send()
+    def _restart_arduino(self):
+        logging.info("Attempting MCU '%s' reset", self._name)
+        self._disconnect()
+        serialhdl.arduino_reset(self._serialport, self._reactor)
+    def _restart_cheetah(self):
+        logging.info("Attempting MCU '%s' Cheetah-style reset", self._name)
+        self._disconnect()
+        serialhdl.cheetah_reset(self._serialport, self._reactor)
+    def _restart_via_command(self):
+        if ((self._reset_cmd is None and self._config_reset_cmd is None)
+            or not self._clocksync.is_active()):
+            logging.info("Unable to issue reset command on MCU '%s'",
+                         self._name)
+            return
+        if self._reset_cmd is None:
+            # Attempt reset via config_reset command
+            logging.info("Attempting MCU '%s' config_reset command", self._name)
+            self._is_shutdown = True
+            self._shutdown(force=True)
+            self._reactor.pause(self._reactor.monotonic() + 0.015)
+            self._config_reset_cmd.send()
+        else:
+            # Attempt reset via reset command
+            logging.info("Attempting MCU '%s' reset command", self._name)
+            self._reset_cmd.send()
+        self._reactor.pause(self._reactor.monotonic() + 0.015)
+        self._disconnect()
+    def _restart_rpi_usb(self):
+        logging.info("Attempting MCU '%s' reset via rpi usb power", self._name)
+        self._disconnect()
+        chelper.run_hub_ctrl(0)
+        self._reactor.pause(self._reactor.monotonic() + 2.)
+        chelper.run_hub_ctrl(1)
+    def _firmware_restart(self, force=False):
+        if self._is_mcu_bridge and not force:
+            return
+        if self._restart_method == 'rpi_usb':
+            self._restart_rpi_usb()
+        elif self._restart_method == 'command':
+            self._restart_via_command()
+        elif self._restart_method == 'cheetah':
+            self._restart_cheetah()
+        else:
+            self._restart_arduino()
+    def _firmware_restart_bridge(self):
+        self._firmware_restart(True)
+    def check_timeout(self, eventtime):
+        if (self._clocksync.is_active() or self._mcu.is_fileoutput()
+            or self._is_timeout):
+            return
+        self._is_timeout = True
+        logging.info("Timeout with MCU '%s' (eventtime=%f)",
+                     self._name, eventtime)
+        self._printer.invoke_shutdown("Lost communication with MCU '%s'" % (
+            self._name,))
+    def is_shutdown(self):
+        return self._is_shutdown
+    def get_shutdown_clock(self):
+        return self._shutdown_clock
+    def get_shutdown_msg(self):
+        return self._shutdown_msg
+
+# Main MCU class
+class MCU:
+    error = error
+    def __init__(self, config, clocksync):
+        self._printer = printer = config.get_printer()
+        self._clocksync = clocksync
+        self._reactor = printer.get_reactor()
+        self._name = config.get_name()
+        if self._name.startswith('mcu '):
+            self._name = self._name[4:]
+        # Low-level connection
+        self._conn_helper = MCUConnectHelper(config, self, clocksync)
+        self._serial = self._conn_helper.get_serial()
+        # Config building
+        printer.lookup_object('pins').register_chip(self._name, self)
+        self._oid_count = 0
+        self._config_callbacks = []
+        self._config_cmds = []
+        self._restart_cmds = []
+        self._init_cmds = []
+        self._mcu_freq = 0.
+        self._reserved_move_slots = 0
+        # Stats
+        self._get_status_info = {}
+        self._stats_sumsq_base = 0.
+        self._mcu_tick_avg = 0.
+        self._mcu_tick_stddev = 0.
+        self._mcu_tick_awake = 0.
+        # Alter time reporting when debugging
+        if self.is_fileoutput():
+            def dummy_estimated_print_time(eventtime):
+                return 0.
+            self.estimated_print_time = dummy_estimated_print_time
+        # Register handlers
+        printer.load_object(config, "error_mcu")
+        printer.register_event_handler("klippy:mcu_identify",
+                                       self._mcu_identify)
+        printer.register_event_handler("klippy:connect", self._connect)
+        printer.register_event_handler("klippy:ready", self._ready)
+    # Serial callbacks
+    def _handle_mcu_stats(self, params):
+        count = params['count']
+        tick_sum = params['sum']
+        c = 1.0 / (count * self._mcu_freq)
+        self._mcu_tick_avg = tick_sum * c
+        tick_sumsq = params['sumsq'] * self._stats_sumsq_base
+        diff = count*tick_sumsq - tick_sum**2
+        self._mcu_tick_stddev = c * math.sqrt(max(0., diff))
+        self._mcu_tick_awake = tick_sum / self._mcu_freq
     def _send_config(self, prev_crc):
         # Build config commands
         for cb in self._config_callbacks:
@@ -711,7 +847,7 @@ class MCU:
         config_crc = zlib.crc32(encoded_config) & 0xffffffff
         self.add_config_cmd("finalize_config crc=%d" % (config_crc,))
         if prev_crc is not None and config_crc != prev_crc:
-            self._check_restart_on_crc_mismatch()
+            self._conn_helper.check_restart_on_crc_mismatch()
             raise error("MCU '%s' CRC does not match config" % (self._name,))
         # Transmit config messages (if needed)
         try:
@@ -741,27 +877,17 @@ class MCU:
         if self.is_fileoutput():
             return { 'is_config': 0, 'move_count': 500, 'crc': 0 }
         config_params = get_config_cmd.send()
-        if self._is_shutdown:
+        if self._conn_helper.is_shutdown():
             raise error("MCU '%s' error during config: %s" % (
-                self._name, self._shutdown_msg))
+                self._name, self._conn_helper.get_shutdown_msg()))
         if config_params['is_shutdown']:
             raise error("Can not update MCU '%s' config as it is shutdown" % (
                 self._name,))
         return config_params
-    def _log_info(self):
-        msgparser = self._serial.get_msgparser()
-        message_count = len(msgparser.get_messages())
-        version, build_versions = msgparser.get_version_info()
-        log_info = [
-            "Loaded MCU '%s' %d commands (%s / %s)"
-            % (self._name, message_count, version, build_versions),
-            "MCU '%s' config: %s" % (self._name, " ".join(
-                ["%s=%s" % (k, v) for k, v in self.get_constants().items()]))]
-        return "\n".join(log_info)
     def _connect(self):
         config_params = self._send_get_config()
         if not config_params['is_config']:
-            self._check_restart_on_send_config()
+            self._conn_helper.check_restart_on_send_config()
             # Not configured - send config and issue get_config again
             self._send_config(None)
             config_params = self._send_get_config()
@@ -785,41 +911,8 @@ class MCU:
         # Log config information
         move_msg = "Configured MCU '%s' (%d moves)" % (self._name, move_count)
         logging.info(move_msg)
-        log_info = self._log_info() + "\n" + move_msg
+        log_info = self._conn_helper.log_info() + "\n" + move_msg
         self._printer.set_rollover_info(self._name, log_info, log=False)
-    def _attach(self):
-        self._check_restart_on_attach()
-        try:
-            if self._canbus_iface is not None:
-                cbid = self._printer.lookup_object('canbus_ids')
-                nodeid = cbid.get_nodeid(self._serialport)
-                self._serial.connect_canbus(self._serialport, nodeid,
-                                            self._canbus_iface)
-            elif self._baud:
-                rts = self._lookup_attach_uart_rts()
-                self._serial.connect_uart(self._serialport, self._baud, rts)
-            else:
-                self._serial.connect_pipe(self._serialport)
-            self._clocksync.connect(self._serial)
-        except serialhdl.error as e:
-            raise error(str(e))
-    def _post_attach_setup_shutdown(self):
-        self._emergency_stop_cmd = self.lookup_command("emergency_stop")
-        self.register_response(self._handle_shutdown, 'shutdown')
-        self.register_response(self._handle_shutdown, 'is_shutdown')
-        self.register_response(self._handle_starting, 'starting')
-    def _post_attach_setup_restart(self):
-        self._reset_cmd = self.try_lookup_command("reset")
-        self._config_reset_cmd = self.try_lookup_command("config_reset")
-        ext_only = self._reset_cmd is None and self._config_reset_cmd is None
-        msgparser = self._serial.get_msgparser()
-        mbaud = msgparser.get_constant('SERIAL_BAUD', None)
-        if self._restart_method is None and mbaud is None and not ext_only:
-            self._restart_method = 'command'
-        if msgparser.get_constant('CANBUS_BRIDGE', 0):
-            self._is_mcu_bridge = True
-            self._printer.register_event_handler("klippy:firmware_restart",
-                                                 self._firmware_restart_bridge)
     def _post_attach_setup_stats(self):
         self._stats_sumsq_base = self.get_constant_float('STATS_SUMSQ_BASE')
         msgparser = self._serial.get_msgparser()
@@ -837,13 +930,7 @@ class MCU:
                 for pin in value.split(','):
                     pin_resolver.reserve_pin(pin, cname[13:])
     def _mcu_identify(self):
-        if self.is_fileoutput():
-            self._attach_file()
-        else:
-            self._attach()
-        logging.info(self._log_info())
-        self._post_attach_setup_shutdown()
-        self._post_attach_setup_restart()
+        self._conn_helper.start_attach()
         self._post_attach_setup_for_config()
         self._post_attach_setup_stats()
     def _ready(self):
@@ -926,83 +1013,20 @@ class MCU:
         return self._clocksync.estimated_print_time(eventtime)
     def clock32_to_clock64(self, clock32):
         return self._clocksync.clock32_to_clock64(clock32)
-    # Restarts
-    def _disconnect(self):
-        self._serial.disconnect()
-    def _shutdown(self, force=False):
-        if (self._emergency_stop_cmd is None
-            or (self._is_shutdown and not force)):
-            return
-        self._emergency_stop_cmd.send()
-    def _restart_arduino(self):
-        logging.info("Attempting MCU '%s' reset", self._name)
-        self._disconnect()
-        serialhdl.arduino_reset(self._serialport, self._reactor)
-    def _restart_cheetah(self):
-        logging.info("Attempting MCU '%s' Cheetah-style reset", self._name)
-        self._disconnect()
-        serialhdl.cheetah_reset(self._serialport, self._reactor)
-    def _restart_via_command(self):
-        if ((self._reset_cmd is None and self._config_reset_cmd is None)
-            or not self._clocksync.is_active()):
-            logging.info("Unable to issue reset command on MCU '%s'",
-                         self._name)
-            return
-        if self._reset_cmd is None:
-            # Attempt reset via config_reset command
-            logging.info("Attempting MCU '%s' config_reset command", self._name)
-            self._is_shutdown = True
-            self._shutdown(force=True)
-            self._reactor.pause(self._reactor.monotonic() + 0.015)
-            self._config_reset_cmd.send()
-        else:
-            # Attempt reset via reset command
-            logging.info("Attempting MCU '%s' reset command", self._name)
-            self._reset_cmd.send()
-        self._reactor.pause(self._reactor.monotonic() + 0.015)
-        self._disconnect()
-    def _restart_rpi_usb(self):
-        logging.info("Attempting MCU '%s' reset via rpi usb power", self._name)
-        self._disconnect()
-        chelper.run_hub_ctrl(0)
-        self._reactor.pause(self._reactor.monotonic() + 2.)
-        chelper.run_hub_ctrl(1)
-    def _firmware_restart(self, force=False):
-        if self._is_mcu_bridge and not force:
-            return
-        if self._restart_method == 'rpi_usb':
-            self._restart_rpi_usb()
-        elif self._restart_method == 'command':
-            self._restart_via_command()
-        elif self._restart_method == 'cheetah':
-            self._restart_cheetah()
-        else:
-            self._restart_arduino()
-    def _firmware_restart_bridge(self):
-        self._firmware_restart(True)
     # Move queue tracking
     def request_move_queue_slot(self):
         self._reserved_move_slots += 1
-    def _check_timeout(self, eventtime):
-        if (self._clocksync.is_active() or self.is_fileoutput()
-            or self._is_timeout):
-            return
-        self._is_timeout = True
-        logging.info("Timeout with MCU '%s' (eventtime=%f)",
-                     self._name, eventtime)
-        self._printer.invoke_shutdown("Lost communication with MCU '%s'" % (
-            self._name,))
     def calibrate_clock(self, print_time, eventtime):
         offset, freq = self._clocksync.calibrate_clock(print_time, eventtime)
-        self._check_timeout(eventtime)
+        self._conn_helper.check_timeout(eventtime)
         return offset, freq
     # Misc external commands
     def is_fileoutput(self):
         return self._printer.get_start_args().get('debugoutput') is not None
     def is_shutdown(self):
-        return self._is_shutdown
+        return self._conn_helper.is_shutdown()
     def get_shutdown_clock(self):
-        return self._shutdown_clock
+        return self._conn_helper.get_shutdown_clock()
     def get_status(self, eventtime=None):
         return dict(self._get_status_info)
     def stats(self, eventtime):
