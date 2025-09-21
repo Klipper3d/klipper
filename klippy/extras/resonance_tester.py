@@ -145,19 +145,27 @@ class ResonanceTestExecutor:
             gcmd.respond_info("Disabled [input_shaper] for resonance testing")
         else:
             input_shaper = None
-        last_v = last_t = last_accel = last_freq = 0.
+        last_v = last_t = last_freq = 0.
         for next_t, accel, freq in test_seq:
             t_seg = next_t - last_t
-            toolhead.set_max_velocities(None, abs(accel), None, None)
-            v = last_v + accel * t_seg
-            abs_v = abs(v)
-            if abs_v < 0.000001:
-                v = abs_v = 0.
             abs_last_v = abs(last_v)
-            v2 = v * v
             last_v2 = last_v * last_v
-            half_inv_accel = .5 / accel
-            d = (v2 - last_v2) * half_inv_accel
+            if abs(accel) < 0.000001:
+                v, abs_v = last_v, abs_last_v
+                if abs_v < 0.000001:
+                    toolhead.dwell(t_seg)
+                    last_t, last_freq = next_t, freq
+                    continue
+                half_inv_accel = 0.
+                d = v * t_seg
+            else:
+                toolhead.set_max_velocities(None, abs(accel), None, None)
+                v = last_v + accel * t_seg
+                abs_v = abs(v)
+                if abs_v < 0.000001:
+                    v = abs_v = 0.
+                half_inv_accel = .5 / accel
+                d = (v * v - last_v2) * half_inv_accel
             dX, dY = axis.get_point(d)
             nX = X + dX
             nY = Y + dY
@@ -176,7 +184,6 @@ class ResonanceTestExecutor:
             X, Y = nX, nY
             last_t = next_t
             last_v = v
-            last_accel = accel
             last_freq = freq
         if last_v:
             d_decel = -.5 * last_v2 / old_max_accel
