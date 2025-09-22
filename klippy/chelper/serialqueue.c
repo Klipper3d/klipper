@@ -30,8 +30,10 @@
 #include "serialqueue.h" // struct queue_message
 
 struct command_queue {
-    struct list_head upcoming_queue, ready_queue;
-    struct list_node node;
+    struct list_head ready_queue;
+    struct list_node rnode;
+    struct list_head upcoming_queue;
+    struct list_node pnode;
 };
 
 struct serialqueue {
@@ -60,7 +62,10 @@ struct serialqueue {
     double srtt, rttvar, rto;
     // Pending transmission message queues
     struct list_head pending_queues;
-    int ready_bytes, upcoming_bytes, need_ack_bytes, last_ack_bytes;
+    int upcoming_bytes;
+    struct list_head ready_queues;
+    int ready_bytes;
+    int need_ack_bytes, last_ack_bytes;
     uint64_t need_kick_clock;
     struct list_head notify_queue;
     double last_write_fail_time;
@@ -452,24 +457,22 @@ build_and_send_command(struct serialqueue *sq, uint8_t *buf, int pending
         uint64_t min_clock = MAX_CLOCK;
         struct command_queue *q, *cq = NULL;
         struct queue_message *qm = NULL;
-        list_for_each_entry(q, &sq->pending_queues, node) {
-            if (!list_empty(&q->ready_queue)) {
-                struct queue_message *m = list_first_entry(
-                    &q->ready_queue, struct queue_message, node);
-                if (m->req_clock < min_clock) {
-                    min_clock = m->req_clock;
-                    cq = q;
-                    qm = m;
-                }
+        list_for_each_entry(q, &sq->ready_queues, rnode) {
+            struct queue_message *m = list_first_entry(
+                &q->ready_queue, struct queue_message, node);
+            if (m->req_clock < min_clock) {
+                min_clock = m->req_clock;
+                cq = q;
+                qm = m;
             }
         }
         // Append message to outgoing command
         if (len + qm->len > MESSAGE_MAX - MESSAGE_TRAILER_SIZE)
             break;
         list_del(&qm->node);
-        if (list_empty(&cq->ready_queue) && list_empty(&cq->upcoming_queue)) {
-            list_del(&cq->node);
-            list_mark_orphan(&cq->node);
+        if (list_empty(&cq->ready_queue)) {
+            list_del(&cq->rnode);
+            list_mark_orphan(&cq->rnode);
         }
         memcpy(&buf[len], qm->msg, qm->len);
         len += qm->len;
@@ -532,8 +535,8 @@ check_send_command(struct serialqueue *sq, int pending, double eventtime)
     idletime += calculate_bittime(sq, pending + MESSAGE_MIN);
     uint64_t ack_clock = clock_from_time(&sq->ce, idletime);
     uint64_t min_stalled_clock = MAX_CLOCK, min_ready_clock = MAX_CLOCK;
-    struct command_queue *cq;
-    list_for_each_entry(cq, &sq->pending_queues, node) {
+    struct command_queue *cq, *_next_cq;
+    list_for_each_entry_safe(cq, _next_cq, &sq->pending_queues, pnode) {
         // Move messages from the upcoming_queue to the ready_queue
         while (!list_empty(&cq->upcoming_queue)) {
             struct queue_message *qm = list_first_entry(
@@ -548,6 +551,19 @@ check_send_command(struct serialqueue *sq, int pending, double eventtime)
             sq->upcoming_bytes -= qm->len;
             sq->ready_bytes += qm->len;
         }
+        // Remove cq from the list if it is now empty
+        if (list_empty(&cq->upcoming_queue)) {
+            list_del(&cq->pnode);
+            list_mark_orphan(&cq->pnode);
+        }
+        // Add to ready queues
+        if (!list_empty(&cq->ready_queue) && list_is_orphan(&cq->rnode)) {
+            list_unmark_orphan(&cq->rnode);
+            list_add_tail(&cq->rnode, &sq->ready_queues);
+        }
+    }
+    // Check if it is still needed to send messages from the ready_queues
+    list_for_each_entry(cq, &sq->ready_queues, rnode) {
         // Update min_ready_clock
         if (!list_empty(&cq->ready_queue)) {
             struct queue_message *qm = list_first_entry(
@@ -667,6 +683,7 @@ serialqueue_alloc(int serial_fd, char serial_fd_type, int client_id
     // Queues
     sq->need_kick_clock = MAX_CLOCK;
     list_init(&sq->pending_queues);
+    list_init(&sq->ready_queues);
     list_init(&sq->sent_queue);
     list_init(&sq->receive_queue);
     list_init(&sq->notify_queue);
@@ -724,11 +741,18 @@ serialqueue_free(struct serialqueue *sq)
     message_queue_free(&sq->notify_queue);
     message_queue_free(&sq->old_sent);
     message_queue_free(&sq->old_receive);
+    while (!list_empty(&sq->ready_queues)) {
+        struct command_queue* cq = list_first_entry(
+            &sq->ready_queues, struct command_queue, rnode);
+        list_del(&cq->rnode);
+        list_mark_orphan(&cq->rnode);
+        message_queue_free(&cq->ready_queue);
+    }
     while (!list_empty(&sq->pending_queues)) {
         struct command_queue *cq = list_first_entry(
-            &sq->pending_queues, struct command_queue, node);
-        list_del(&cq->node);
-        message_queue_free(&cq->ready_queue);
+            &sq->pending_queues, struct command_queue, pnode);
+        list_del(&cq->pnode);
+        list_mark_orphan(&cq->pnode);
         message_queue_free(&cq->upcoming_queue);
     }
     pthread_mutex_unlock(&sq->lock);
@@ -743,8 +767,9 @@ serialqueue_alloc_commandqueue(void)
     struct command_queue *cq = malloc(sizeof(*cq));
     memset(cq, 0, sizeof(*cq));
     list_init(&cq->ready_queue);
+    list_mark_orphan(&cq->rnode);
     list_init(&cq->upcoming_queue);
-    list_mark_orphan(&cq->node);
+    list_mark_orphan(&cq->pnode);
     return cq;
 }
 
@@ -754,7 +779,7 @@ serialqueue_free_commandqueue(struct command_queue *cq)
 {
     if (!cq)
         return;
-    if (!list_is_orphan(&cq->node)) {
+    if (!list_is_orphan(&cq->rnode) || !list_is_orphan(&cq->pnode)) {
         errorf("Memory leak! Can't free commandqueue in use");
         return;
     }
@@ -806,9 +831,9 @@ serialqueue_send_batch(struct serialqueue *sq, struct command_queue *cq
 
     // Add list to cq->upcoming_queue
     pthread_mutex_lock(&sq->lock);
-    if (list_is_orphan(&cq->node)) {
-        list_unmark_orphan(&cq->node);
-        list_add_tail(&cq->node, &sq->pending_queues);
+    if (list_is_orphan(&cq->pnode)) {
+        list_unmark_orphan(&cq->pnode);
+        list_add_tail(&cq->pnode, &sq->pending_queues);
     }
     list_join_tail(msgs, &cq->upcoming_queue);
     sq->upcoming_bytes += len;
