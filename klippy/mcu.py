@@ -713,6 +713,11 @@ class MCU:
                 for c in self._restart_cmds:
                     self._serial.send(c)
             # Transmit init messages
+            def clock_sort(line):
+                if "clock=" in line:
+                    return int(line.split('clock=')[1].split()[0])
+                return 0
+            self._init_cmds.sort(key=clock_sort)
             for c in self._init_cmds:
                 self._serial.send(c)
         except msgproto.enumeration_error as e:
