@@ -1041,6 +1041,13 @@ class MCU:
             def dummy_estimated_print_time(eventtime):
                 return 0.
             self.estimated_print_time = dummy_estimated_print_time
+    def get_name(self):
+        return self._name
+    def get_printer(self):
+        return self._printer
+    def is_fileoutput(self):
+        return self._printer.get_start_args().get('debugoutput') is not None
+    # MCU Configuration wrappers
     def setup_pin(self, pin_type, pin_params):
         return self._config_helper.setup_pin(pin_type, pin_params)
     def create_oid(self):
@@ -1055,19 +1062,11 @@ class MCU:
         return self._config_helper.get_query_slot(oid)
     def seconds_to_clock(self, time):
         return self._config_helper.seconds_to_clock(time)
+    # Command Handler helpers
     def min_schedule_time(self):
         return MIN_SCHEDULE_TIME
     def max_nominal_duration(self):
         return MAX_NOMINAL_DURATION
-    # Wrapper functions
-    def get_printer(self):
-        return self._printer
-    def get_name(self):
-        return self._name
-    def register_response(self, cb, msg, oid=None):
-        self._serial.register_response(cb, msg, oid)
-    def alloc_command_queue(self):
-        return self._serial.alloc_command_queue()
     def lookup_command(self, msgformat, cq=None):
         return CommandWrapper(self._serial, msgformat, cq,
                               debugoutput=self.is_fileoutput())
@@ -1080,12 +1079,19 @@ class MCU:
             return self.lookup_command(msgformat)
         except self._serial.get_msgparser().error as e:
             return None
+    # SerialHdl wrappers
+    def register_response(self, cb, msg, oid=None):
+        self._serial.register_response(cb, msg, oid)
+    def alloc_command_queue(self):
+        return self._serial.alloc_command_queue()
+    # MsgParser wrappers
     def get_enumerations(self):
         return self._serial.get_msgparser().get_enumerations()
     def get_constants(self):
         return self._serial.get_msgparser().get_constants()
     def get_constant_float(self, name):
         return self._serial.get_msgparser().get_constant_float(name)
+    # ClockSync wrappers
     def print_time_to_clock(self, print_time):
         return self._clocksync.print_time_to_clock(print_time)
     def clock_to_print_time(self, clock):
@@ -1098,13 +1104,12 @@ class MCU:
         offset, freq = self._clocksync.calibrate_clock(print_time, eventtime)
         self._conn_helper.check_timeout(eventtime)
         return offset, freq
-    # Misc external commands
-    def is_fileoutput(self):
-        return self._printer.get_start_args().get('debugoutput') is not None
+    # Low-level connection wrappers
     def is_shutdown(self):
         return self._conn_helper.is_shutdown()
     def get_shutdown_clock(self):
         return self._conn_helper.get_shutdown_clock()
+    # Statistics wrappers
     def get_status(self, eventtime=None):
         return self._stats_helper.get_status(eventtime)
     def stats(self, eventtime):
