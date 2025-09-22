@@ -567,6 +567,7 @@ class MCURestartHelper:
         self._clocksync = conn_helper.get_clocksync()
         self._reactor = printer.get_reactor()
         self._name = mcu.get_name()
+        # Restart tracking
         restart_methods = [None, 'arduino', 'cheetah', 'command', 'rpi_usb']
         self._restart_method = 'command'
         serialport, baud = conn_helper.get_serialport()
@@ -579,6 +580,8 @@ class MCURestartHelper:
         printer.register_event_handler("klippy:firmware_restart",
                                        self._firmware_restart)
         printer.register_event_handler("klippy:disconnect", self._disconnect)
+        printer.register_event_handler("klippy:mcu_identify",
+                                       self._mcu_identify)
     # Connection phase
     def _check_restart(self, reason):
         start_reason = self._printer.get_start_args().get("start_reason")
@@ -605,7 +608,7 @@ class MCURestartHelper:
         # Cheetah boards require RTS to be deasserted
         # else a reset will trigger the built-in bootloader.
         return (self._restart_method != "cheetah")
-    def post_attach_setup_restart(self):
+    def _mcu_identify(self):
         self._reset_cmd = self._mcu.try_lookup_command("reset")
         self._config_reset_cmd = self._mcu.try_lookup_command("config_reset")
         ext_only = self._reset_cmd is None and self._config_reset_cmd is None
@@ -691,10 +694,14 @@ class MCUConnectHelper:
             if not (self._serialport.startswith("/dev/rpmsg_")
                     or self._serialport.startswith("/tmp/klipper_host_")):
                 self._baud = config.getint('baud', 250000, minval=2400)
+        # Shutdown tracking
         self._emergency_stop_cmd = None
         self._is_shutdown = self._is_timeout = False
         self._shutdown_clock = 0
         self._shutdown_msg = ""
+        # Register handlers
+        printer.register_event_handler("klippy:mcu_identify",
+                                       self._mcu_identify)
         self._restart_helper = MCURestartHelper(config, self)
         printer.register_event_handler("klippy:shutdown", self._shutdown)
     def get_mcu(self):
@@ -768,19 +775,17 @@ class MCUConnectHelper:
             self._clocksync.connect(self._serial)
         except serialhdl.error as e:
             raise error(str(e))
-    def _post_attach_setup_shutdown(self):
-        self._emergency_stop_cmd = self._mcu.lookup_command("emergency_stop")
-        self._mcu.register_response(self._handle_shutdown, 'shutdown')
-        self._mcu.register_response(self._handle_shutdown, 'is_shutdown')
-        self._mcu.register_response(self._handle_starting, 'starting')
-    def start_attach(self):
+    def _mcu_identify(self):
         if self._mcu.is_fileoutput():
             self._attach_file()
         else:
             self._attach()
         logging.info(self.log_info())
-        self._post_attach_setup_shutdown()
-        self._restart_helper.post_attach_setup_restart()
+        # Setup shutdown handling
+        self._emergency_stop_cmd = self._mcu.lookup_command("emergency_stop")
+        self._mcu.register_response(self._handle_shutdown, 'shutdown')
+        self._mcu.register_response(self._handle_shutdown, 'is_shutdown')
+        self._mcu.register_response(self._handle_starting, 'starting')
     def _shutdown(self, force=False):
         if (self._emergency_stop_cmd is None
             or (self._is_shutdown and not force)):
@@ -814,13 +819,17 @@ class MCUStatsHelper:
         self._clocksync = conn_helper.get_clocksync()
         self._reactor = printer.get_reactor()
         self._name = mcu.get_name()
+        # Statistics tracking
         self._mcu_freq = 0.
         self._get_status_info = {}
         self._stats_sumsq_base = 0.
         self._mcu_tick_avg = 0.
         self._mcu_tick_stddev = 0.
         self._mcu_tick_awake = 0.
+        # Register handlers
         printer.register_event_handler("klippy:ready", self._ready)
+        printer.register_event_handler("klippy:mcu_identify",
+                                       self._mcu_identify)
     def _handle_mcu_stats(self, params):
         count = params['count']
         tick_sum = params['sum']
@@ -830,7 +839,7 @@ class MCUStatsHelper:
         diff = count*tick_sumsq - tick_sum**2
         self._mcu_tick_stddev = c * math.sqrt(max(0., diff))
         self._mcu_tick_awake = tick_sum / self._mcu_freq
-    def post_attach_setup_stats(self):
+    def _mcu_identify(self):
         self._mcu_freq = self._mcu.get_constant_float('CLOCK_FREQ')
         self._stats_sumsq_base = self._mcu.get_constant_float(
             'STATS_SUMSQ_BASE')
@@ -878,7 +887,7 @@ class MCUConfigHelper:
         self._clocksync = conn_helper.get_clocksync()
         self._reactor = printer.get_reactor()
         self._name = mcu.get_name()
-        printer.lookup_object('pins').register_chip(self._name, mcu)
+        # Configuration tracking
         self._oid_count = 0
         self._config_callbacks = []
         self._config_cmds = []
@@ -886,6 +895,10 @@ class MCUConfigHelper:
         self._init_cmds = []
         self._mcu_freq = 0.
         self._reserved_move_slots = 0
+        # Register handlers
+        printer.lookup_object('pins').register_chip(self._name, mcu)
+        printer.register_event_handler("klippy:mcu_identify",
+                                       self._mcu_identify)
         printer.register_event_handler("klippy:connect", self._connect)
     def _send_config(self, prev_crc):
         # Build config commands
@@ -972,7 +985,7 @@ class MCUConfigHelper:
         logging.info(move_msg)
         log_info = self._conn_helper.log_info() + "\n" + move_msg
         self._printer.set_rollover_info(self._name, log_info, log=False)
-    def post_attach_setup_for_config(self):
+    def _mcu_identify(self):
         self._mcu_freq = self._mcu.get_constant_float('CLOCK_FREQ')
         ppins = self._printer.lookup_object('pins')
         pin_resolver = ppins.get_pin_resolver(self._name)
@@ -1017,24 +1030,17 @@ class MCU:
         self._name = config.get_name()
         if self._name.startswith('mcu '):
             self._name = self._name[4:]
-        # Low-level connection
+        # Low-level connection and helpers
         self._conn_helper = MCUConnectHelper(config, self, clocksync)
         self._serial = self._conn_helper.get_serial()
         self._config_helper = MCUConfigHelper(self, self._conn_helper)
+        self._stats_helper = MCUStatsHelper(self, self._conn_helper)
+        printer.load_object(config, "error_mcu")
         # Alter time reporting when debugging
         if self.is_fileoutput():
             def dummy_estimated_print_time(eventtime):
                 return 0.
             self.estimated_print_time = dummy_estimated_print_time
-        # Register handlers
-        self._stats_helper = MCUStatsHelper(self, self._conn_helper)
-        printer.load_object(config, "error_mcu")
-        printer.register_event_handler("klippy:mcu_identify",
-                                       self._mcu_identify)
-    def _mcu_identify(self):
-        self._conn_helper.start_attach()
-        self._config_helper.post_attach_setup_for_config()
-        self._stats_helper.post_attach_setup_stats()
     def setup_pin(self, pin_type, pin_params):
         return self._config_helper.setup_pin(pin_type, pin_params)
     def create_oid(self):
