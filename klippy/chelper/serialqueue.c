@@ -467,8 +467,10 @@ build_and_send_command(struct serialqueue *sq, uint8_t *buf, int pending
         if (len + qm->len > MESSAGE_MAX - MESSAGE_TRAILER_SIZE)
             break;
         list_del(&qm->node);
-        if (list_empty(&cq->ready_queue) && list_empty(&cq->upcoming_queue))
+        if (list_empty(&cq->ready_queue) && list_empty(&cq->upcoming_queue)) {
             list_del(&cq->node);
+            list_mark_orphan(&cq->node);
+        }
         memcpy(&buf[len], qm->msg, qm->len);
         len += qm->len;
         sq->ready_bytes -= qm->len;
@@ -742,6 +744,7 @@ serialqueue_alloc_commandqueue(void)
     memset(cq, 0, sizeof(*cq));
     list_init(&cq->ready_queue);
     list_init(&cq->upcoming_queue);
+    list_mark_orphan(&cq->node);
     return cq;
 }
 
@@ -751,6 +754,10 @@ serialqueue_free_commandqueue(struct command_queue *cq)
 {
     if (!cq)
         return;
+    if (!list_is_orphan(&cq->node)) {
+        errorf("Memory leak! Can't free commandqueue in use");
+        return;
+    }
     if (!list_empty(&cq->ready_queue) || !list_empty(&cq->upcoming_queue)) {
         errorf("Memory leak! Can't free non-empty commandqueue");
         return;
@@ -799,8 +806,10 @@ serialqueue_send_batch(struct serialqueue *sq, struct command_queue *cq
 
     // Add list to cq->upcoming_queue
     pthread_mutex_lock(&sq->lock);
-    if (list_empty(&cq->ready_queue) && list_empty(&cq->upcoming_queue))
+    if (list_is_orphan(&cq->node)) {
+        list_unmark_orphan(&cq->node);
         list_add_tail(&cq->node, &sq->pending_queues);
+    }
     list_join_tail(msgs, &cq->upcoming_queue);
     sq->upcoming_bytes += len;
     int mustwake = 0;

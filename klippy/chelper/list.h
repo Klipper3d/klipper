@@ -52,6 +52,26 @@ list_del(struct list_node *n)
 }
 
 static inline void
+list_mark_orphan(struct list_node *n)
+{
+    n->next = n;
+    n->prev = n;
+}
+
+static inline int
+list_is_orphan(struct list_node *n)
+{
+    return n->next == n;
+}
+
+static inline void
+list_unmark_orphan(struct list_node* n)
+{
+    n->next = NULL;
+    n->prev = NULL;
+}
+
+static inline void
 __list_add(struct list_node *n, struct list_node *prev, struct list_node *next)
 {
     next->prev = n;
