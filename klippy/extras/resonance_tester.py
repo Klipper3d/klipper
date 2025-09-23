@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2025  Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, math, os, time
+import itertools, logging, math, os, time
 from . import shaper_calibrate
 
 class TestAxis:
@@ -259,17 +259,21 @@ class ResonanceTester:
         self.generator = SweepingVibrationsTestGenerator(config)
         self.executor = ResonanceTestExecutor(config)
         if not config.get('accel_chip_x', None):
-            self.accel_chip_names = [
+            accel_chip_names = [
                     ('xy', config.get('accel_chip').strip()),
                     ('z', config.get('accel_chip_z', '').strip())]
         else:
-            self.accel_chip_names = [
-                ('x', config.get('accel_chip_x').strip()),
-                ('y', config.get('accel_chip_y').strip()),
-                ('z', config.get('accel_chip_z', '').strip())]
-            if self.accel_chip_names[0][1] == self.accel_chip_names[1][1]:
-                self.accel_chip_names = [('xy', self.accel_chip_names[0][1])] \
-                        + self.accel_chip_names[2:]
+            accel_chip_names = [
+                    ('x', config.get('accel_chip_x').strip()),
+                    ('y', config.get('accel_chip_y').strip()),
+                    ('z', config.get('accel_chip_z', '').strip())]
+        get_chip_name = lambda t: t[1]
+        # Group chips by their axes
+        self.accel_chip_names = [
+                (''.join(sorted(axis for axis, _ in vals)), chip_name)
+                for chip_name, vals in itertools.groupby(
+                    sorted(accel_chip_names, key=get_chip_name),
+                    key=get_chip_name)]
         self.max_smoothing = config.getfloat('max_smoothing', None, minval=0.05)
         self.probe_points = config.getlists('probe_points', seps=(',', '\n'),
                                             parser=float, count=3)
