@@ -43,15 +43,16 @@ def _parse_axis(gcmd, raw_axis):
     if raw_axis in ['x', 'y', 'z']:
         return TestAxis(axis=raw_axis)
     dirs = raw_axis.split(',')
-    if len(dirs) != 2:
+    if len(dirs) not in (2, 3):
         raise gcmd.error("Invalid format of axis '%s'" % (raw_axis,))
     try:
         dir_x = float(dirs[0].strip())
         dir_y = float(dirs[1].strip())
+        dir_z = float(dirs[2].strip()) if len(dirs) == 3 else 0.
     except:
         raise gcmd.error(
                 "Unable to parse axis direction '%s'" % (raw_axis,))
-    return TestAxis(vib_dir=(dir_x, dir_y))
+    return TestAxis(vib_dir=(dir_x, dir_y, dir_z))
 
 class VibrationPulseTestGenerator:
     def __init__(self, config):
@@ -61,7 +62,7 @@ class VibrationPulseTestGenerator:
         self.max_freq_z = config.getfloat('max_freq_z', 100.,
                                           minval=self.min_freq, maxval=300.)
         self.accel_per_hz = config.getfloat('accel_per_hz', 60., above=0.)
-        self.accel_per_hz_z = config.getfloat('accel_per_hz_z', 12.5, above=0.)
+        self.accel_per_hz_z = config.getfloat('accel_per_hz_z', 15., above=0.)
         self.hz_per_sec = config.getfloat('hz_per_sec', 1.,
                                           minval=0.1, maxval=2.)
     def prepare_test(self, gcmd, is_z):
@@ -175,16 +176,21 @@ class ResonanceTestExecutor:
             last_t, last_v = next_t, v
         if axis.get_dir()[2]:
             max_z_velocity, max_z_accel = lookup_z_limits(configfile)
+            error_msg = ""
             if max_velocity > max_z_velocity:
-                raise gcmd.error(
+                error_msg = (
                         "Insufficient maximum Z velocity for these"
                         " test parameters, increase at least to %.f mm/s"
-                        " for the resonance test" % (max_velocity+0.5))
+                        " for the resonance test." % (max_velocity+0.5))
             if max_accel > max_z_accel:
-                raise gcmd.error(
+                if error_msg:
+                    error_msg += "\n"
+                error_msg += (
                         "Insufficient maximum Z acceleration for these"
                         " test parameters, increase at least to %.f mm/s^2"
-                        " for the resonance test" % (max_accel+0.5))
+                        " for the resonance test." % (max_accel+0.5))
+            if error_msg:
+                raise gcmd.error(error_msg)
         self.gcode.run_script_from_command(
             "SET_VELOCITY_LIMIT VELOCITY=%.f ACCEL=%.f MINIMUM_CRUISE_RATIO=0"
             % (max_velocity+0.5, max_accel+0.5,))
@@ -348,7 +354,8 @@ class ResonanceTester:
                         raw_name = self.get_filename(
                                 'raw_data', raw_name_suffix, axis,
                                 point if len(test_points) > 1 else None,
-                                chip_name if accel_chips is not None else None,)
+                                chip_name if (accel_chips is not None
+                                              or len(raw_values) > 1) else None)
                         aclient.write_to_file(raw_name)
                         gcmd.respond_info(
                                 "Writing raw accelerometer data to "
