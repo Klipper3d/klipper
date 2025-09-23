@@ -439,9 +439,12 @@ gcode:
   SET_INPUT_SHAPER SHAPER_TYPE_X=<primary_carriage_shaper> SHAPER_FREQ_X=<primary_carriage_freq> SHAPER_TYPE_Y=<y_shaper> SHAPER_FREQ_Y=<y_freq>
 ```
 Note that `SHAPER_TYPE_Y` and `SHAPER_FREQ_Y` should be the same in both
-commands. It is also possible to put a similar snippet into the start g-code
-in the slicer, however then the shaper will not be enabled until any print
-is started.
+commands. If you need to configure an input shaper for Z axis, include
+its parameters in both `SET_INPUT_SHAPER` commands.
+
+Besides `delayed_gcode`, it is also possible to put a similar snippet into
+the start g-code in the slicer, however then the shaper will not be enabled
+until any print is started.
 
 Note that the input shaper only needs to be configured once. Subsequent changes
 of the carriages or their modes via `SET_DUAL_CARRIAGE` command will preserve
@@ -452,6 +455,18 @@ the configured input shaper parameters.
 No, `input_shaper` feature has pretty much no impact on the print times by
 itself. However, the value of `max_accel` certainly does (tuning of this
 parameter described in [this section](#selecting-max_accel)).
+
+### Should I enable and tune input shaper for Z axis?
+
+Most of the users are not likely to see improvements in the quality of
+the prints directly, much unlike X and Y shapers. However, users of
+delta printers, printers with flying gantry, or printers with heavy
+moving beds may be able to increase the `max_z_accel` and `max_z_velocity`
+kinematics limits and thus get faster Z movements. This can be especially
+useful e.g. for toolchangers, but also when Z-hops are enabled in slicer.
+And in general, after enabling Z input shaper many users will hear that
+Z axis operates more smoothly, which may increase the comfort of printer
+operation, and may somewhat extend lifespan of Z axis parts.
 
 ## Technical details
 
