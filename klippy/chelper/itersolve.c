@@ -151,7 +151,6 @@ itersolve_generate_steps(struct stepper_kinematics *sk, struct stepcompress *sc
     sk->last_flush_time = flush_time;
     if (!sk->tq)
         return 0;
-    trapq_check_sentinels(sk->tq);
     struct move *m = list_first_entry(&sk->tq->moves, struct move, node);
     while (last_flush_time >= m->print_time + m->move_t)
         m = list_next_entry(m, node);
