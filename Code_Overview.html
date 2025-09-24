@@ -1632,7 +1632,7 @@ DECL_COMMAND macro in the micro-controller code).</p>
   the main Python thread.</li>
 <li>A thread per stepper motor that calculates the timing of stepper
   motor step pulses and compresses those times. This thread resides in
-  the <strong>klippy/chelper/stepcompress.c</strong> C code and its operation is
+  the <strong>klippy/chelper/steppersync.c</strong> C code and its operation is
   generally not exposed to the Python code.</li>
 </ul>
 <h2 id="code-flow-of-a-move-command">Code flow of a move command<a class="headerlink" href="#code-flow-of-a-move-command" title="Permanent link">&para;</a></h2>
@@ -1654,9 +1654,10 @@ provides further information on the mechanics of moves.</p>
 <ul>
 <li>The ToolHead class (in toolhead.py) handles "look-ahead" and tracks
   the timing of printing actions. The main codepath for a move is:
-  <code>ToolHead.move() -&gt; LookAheadQueue.add_move() -&gt;
-  LookAheadQueue.flush() -&gt; Move.set_junction() -&gt;
-  ToolHead._process_moves() -&gt; trapq_append()</code>.<ul>
+  <code>ToolHead.move() -&gt; LookAheadQueue.add_move()</code>, then
+  <code>ToolHead.move() -&gt; ToolHead._process_lookahead() -&gt;
+  LookAheadQueue.flush() -&gt; Move.set_junction()</code>, and then
+  <code>ToolHead._process_lookahead() -&gt; trapq_append()</code>.<ul>
 <li>ToolHead.move() creates a Move() object with the parameters of the
 move (in cartesian space and in units of seconds and millimeters).</li>
 <li>The kinematics class is given the opportunity to audit each move
@@ -1675,7 +1676,7 @@ a constant acceleration phase, followed by a constant velocity
 phase, followed by a constant deceleration phase. Every move
 contains these three phases in this order, but some phases may be of
 zero duration.</li>
-<li>When ToolHead._process_moves() is called, everything about the
+<li>When ToolHead._process_lookahead() resumes, everything about the
 move is known - its start location, its end location, its
 acceleration, its start/cruising/end velocity, and distance traveled
 during acceleration/cruising/deceleration. All the information is
@@ -1690,9 +1691,9 @@ C code.</li>
 </ul>
 <ul>
 <li>Note that the extruder is handled in its own kinematic class:
-  <code>ToolHead._process_moves() -&gt; PrinterExtruder.process_move()</code>. Since
-  the Move() class specifies the exact movement time and since step
-  pulses are sent to the micro-controller with specific timing,
+  <code>ToolHead._process_lookahead() -&gt; PrinterExtruder.process_move()</code>.
+  Since the Move() class specifies the exact movement time and since
+  step pulses are sent to the micro-controller with specific timing,
   stepper movements produced by the extruder class will be in sync
   with head movement even though the code is kept separate.</li>
 </ul>
