@@ -127,7 +127,12 @@ def get_cpu_info():
 
 def get_device_info():
     try:
-        f = open('/proc/device-tree/model', 'r')
+        path = '/proc/device-tree/model'
+        if not os.access(path, os.F_OK):
+            path = "/sys/class/dmi/id/product_name"
+            if not os.access(path, os.F_OK):
+                return "?"
+        f = open(path, 'r')
         data = f.read()
         f.close()
     except (IOError, OSError) as e:
