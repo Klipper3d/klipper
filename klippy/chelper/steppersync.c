@@ -21,6 +21,7 @@
 #include "serialqueue.h" // struct queue_message
 #include "stepcompress.h" // stepcompress_flush
 #include "steppersync.h" // steppersync_alloc
+#include "trapq.h" // trapq_check_sentinels
 
 
 /****************************************************************
@@ -397,6 +398,17 @@ steppersyncmgr_gen_steps(struct steppersyncmgr *ssm, double flush_time
                          , double gen_steps_time, double clear_history_time)
 {
     struct steppersync *ss;
+    // Prepare trapqs for step generation
+    list_for_each_entry(ss, &ssm->ss_list, ssm_node) {
+        struct syncemitter *se;
+        list_for_each_entry(se, &ss->se_list, ss_node) {
+            if (!se->sc || !se->sk)
+                continue;
+            struct trapq *tq = itersolve_get_trapq(se->sk);
+            if (tq)
+                trapq_check_sentinels(tq);
+        }
+    }
     // Start step generation threads
     list_for_each_entry(ss, &ssm->ss_list, ssm_node) {
         uint64_t flush_clock = clock_from_time(&ss->ce, flush_time);
