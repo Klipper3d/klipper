@@ -129,7 +129,7 @@ There are several threads in the Klipper host code:
   the main Python thread.
 * A thread per stepper motor that calculates the timing of stepper
   motor step pulses and compresses those times. This thread resides in
-  the **klippy/chelper/stepcompress.c** C code and its operation is
+  the **klippy/chelper/steppersync.c** C code and its operation is
   generally not exposed to the Python code.
 
 ## Code flow of a move command
@@ -151,9 +151,10 @@ provides further information on the mechanics of moves.
 
 * The ToolHead class (in toolhead.py) handles "look-ahead" and tracks
   the timing of printing actions. The main codepath for a move is:
-  `ToolHead.move() -> LookAheadQueue.add_move() ->
-  LookAheadQueue.flush() -> Move.set_junction() ->
-  ToolHead._process_moves() -> trapq_append()`.
+  `ToolHead.move() -> LookAheadQueue.add_move()`, then
+  `ToolHead.move() -> ToolHead._process_lookahead() ->
+  LookAheadQueue.flush() -> Move.set_junction()`, and then
+  `ToolHead._process_lookahead() -> trapq_append()`.
   * ToolHead.move() creates a Move() object with the parameters of the
   move (in cartesian space and in units of seconds and millimeters).
   * The kinematics class is given the opportunity to audit each move
@@ -172,7 +173,7 @@ provides further information on the mechanics of moves.
   phase, followed by a constant deceleration phase. Every move
   contains these three phases in this order, but some phases may be of
   zero duration.
-  * When ToolHead._process_moves() is called, everything about the
+  * When ToolHead._process_lookahead() resumes, everything about the
   move is known - its start location, its end location, its
   acceleration, its start/cruising/end velocity, and distance traveled
   during acceleration/cruising/deceleration. All the information is
@@ -184,9 +185,9 @@ provides further information on the mechanics of moves.
   C code.
 
 * Note that the extruder is handled in its own kinematic class:
-  `ToolHead._process_moves() -> PrinterExtruder.process_move()`. Since
-  the Move() class specifies the exact movement time and since step
-  pulses are sent to the micro-controller with specific timing,
+  `ToolHead._process_lookahead() -> PrinterExtruder.process_move()`.
+  Since the Move() class specifies the exact movement time and since
+  step pulses are sent to the micro-controller with specific timing,
   stepper movements produced by the extruder class will be in sync
   with head movement even though the code is kept separate.
 
