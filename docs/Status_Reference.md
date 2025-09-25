@@ -497,7 +497,8 @@ The following information is available in
 
 [bme280 config_section_name](Config_Reference.md#bmp280bme280bme680-temperature-sensor),
 [htu21d config_section_name](Config_Reference.md#htu21d-sensor),
-[sht3x config_section_name](Config_Reference.md#sht31-sensor),
+[sht3x config_section_name](Config_Reference.md#sht3x-sensor),
+[sht4x config_section_name](Config_Reference.md#sht4x-sensor),
 [lm75 config_section_name](Config_Reference.md#lm75-temperature-sensor),
 [temperature_host config_section_name](Config_Reference.md#host-temperature-sensor)
 and
