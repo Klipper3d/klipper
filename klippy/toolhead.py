@@ -138,46 +138,45 @@ class LookAheadQueue:
         # Traverse queue from last to first move and determine maximum
         # junction speed assuming the robot comes to a complete stop
         # after the last move.
-        delayed = []
+        junction_info = [None] * flush_count
         next_start_v2 = next_mcr_start_v2 = peak_cruise_v2 = 0.
+        pending_cv2_assign = 0
         for i in range(flush_count-1, -1, -1):
             move = queue[i]
             reachable_start_v2 = next_start_v2 + move.delta_v2
             start_v2 = min(move.max_start_v2, reachable_start_v2)
+            cruise_v2 = None
+            pending_cv2_assign += 1
             reach_mcr_start_v2 = next_mcr_start_v2 + move.mcr_delta_v2
             mcr_start_v2 = min(move.max_mcr_start_v2, reach_mcr_start_v2)
             if mcr_start_v2 < reach_mcr_start_v2:
                 # It's possible for this move to accelerate
                 if (mcr_start_v2 + move.mcr_delta_v2 > next_mcr_start_v2
-                    or delayed):
-                    # This move can decelerate or this is a full accel
-                    # move after a full decel move
+                    or pending_cv2_assign > 1):
+                    # This move can both accel and decel, or this is a
+                    # full accel move followed by a full decel move
                     if update_flush_count and peak_cruise_v2:
                         flush_count = i
                         update_flush_count = False
-                    peak_cruise_v2 = min(move.max_cruise_v2, (
-                        mcr_start_v2 + reach_mcr_start_v2) * .5)
-                    if delayed:
-                        # Propagate peak_cruise_v2 to any delayed moves
-                        if not update_flush_count and i < flush_count:
-                            mc_v2 = peak_cruise_v2
-                            for m, ms_v2, me_v2 in reversed(delayed):
-                                mc_v2 = min(mc_v2, ms_v2)
-                                m.set_junction(min(ms_v2, mc_v2), mc_v2
-                                               , min(me_v2, mc_v2))
-                        del delayed[:]
-                if not update_flush_count and i < flush_count:
-                    cruise_v2 = min((start_v2 + reachable_start_v2) * .5
-                                    , move.max_cruise_v2, peak_cruise_v2)
-                    move.set_junction(min(start_v2, cruise_v2), cruise_v2
-                                      , min(next_start_v2, cruise_v2))
-            else:
-                # Delay calculating this move until peak_cruise_v2 is known
-                delayed.append((move, start_v2, next_start_v2))
+                    peak_cruise_v2 = (mcr_start_v2 + reach_mcr_start_v2) * .5
+                cruise_v2 = min((start_v2 + reachable_start_v2) * .5
+                                , move.max_cruise_v2, peak_cruise_v2)
+                pending_cv2_assign = 0
+            junction_info[i] = (move, start_v2, cruise_v2, next_start_v2)
             next_start_v2 = start_v2
             next_mcr_start_v2 = mcr_start_v2
         if update_flush_count or not flush_count:
             return []
+        # Traverse queue in forward direction to propagate cruise_v2
+        prev_cruise_v2 = 0.
+        for i in range(flush_count):
+            move, start_v2, cruise_v2, next_start_v2 = junction_info[i]
+            if cruise_v2 is None:
+                # This move can't accelerate - propagate cruise_v2 from previous
+                cruise_v2 = min(prev_cruise_v2, start_v2)
+            move.set_junction(min(start_v2, cruise_v2), cruise_v2
+                              , min(next_start_v2, cruise_v2))
+            prev_cruise_v2 = cruise_v2
         # Remove processed moves from the queue
         res = queue[:flush_count]
         del queue[:flush_count]
