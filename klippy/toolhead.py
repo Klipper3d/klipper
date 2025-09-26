@@ -401,13 +401,16 @@ class ToolHead:
         next_print_time = self.get_last_move_time() + max(0., delay)
         self._advance_move_time(next_print_time)
         self._check_pause()
-    def wait_moves(self):
+    def wait_moves(self, end_move_condition_func=None):
         self._flush_lookahead()
         eventtime = self.reactor.monotonic()
         while (not self.special_queuing_state
                or self.print_time >= self.mcu.estimated_print_time(eventtime)):
             if not self.can_pause:
                 break
+            if end_move_condition_func != None:
+                if end_move_condition_func():
+                    break
             eventtime = self.reactor.pause(eventtime + 0.100)
     def set_extruder(self, extruder, extrude_pos):
         # XXX - should use add_extra_axis
