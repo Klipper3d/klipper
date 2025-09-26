@@ -4242,6 +4242,10 @@ run_current:
 #driver_PWM_OFS: 30
 #driver_PWM_REG: 4
 #driver_PWM_LIM: 12
+#driver_S2VS_LEVEL: 6
+#driver_S2G_LEVEL: 6
+#driver_SHORTFILTER: 1
+#driver_SHORTDELAY: 0
 #driver_SGT: 0
 #driver_SEMIN: 0
 #driver_SEUP: 0
