@@ -327,12 +327,14 @@ def main():
     extra_git_desc += "\nTracked URL: %s" % (git_info["url"])
     start_args['software_version'] = git_vers
     start_args['cpu_info'] = util.get_cpu_info()
+    start_args['device'] = util.get_device_info()
     if bglogger is not None:
         versions = "\n".join([
             "Args: %s" % (sys.argv,),
             "Git version: %s%s" % (repr(start_args['software_version']),
                                    extra_git_desc),
             "CPU: %s" % (start_args['cpu_info'],),
+            "Device: %s" % (start_args['device']),
             "Python: %s" % (repr(sys.version),)])
         logging.info(versions)
     elif not options.debugoutput:
