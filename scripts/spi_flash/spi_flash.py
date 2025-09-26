@@ -22,7 +22,8 @@ import reactor
 import serialhdl
 import clocksync
 import mcu
-
+import os
+import time
 ###########################################################
 #
 # Helper methods
@@ -1381,6 +1382,13 @@ class MCUConnection:
         sd_sha = hashlib.sha1()
         klipper_bin_path = self.board_config['klipper_bin_path']
         fw_path = self.board_config.get('firmware_path', "firmware.bin")
+        fw_name, fw_ext = os.path.splitext(os.path.basename(fw_path))
+        ts = time.strftime("%Y%m%d%H%M%S")
+        fw_name_ts = f"{ts}{fw_name}{fw_ext}"
+        if fw_dir:
+            fw_path = os.path.join(fw_dir, fw_name_ts)
+        else:
+            fw_path = fw_name_ts
         try:
             with open(klipper_bin_path, 'rb') as local_f:
                 with self.fatfs.open_file(fw_path, "wb") as sd_f:
