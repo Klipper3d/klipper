@@ -1723,6 +1723,9 @@ Support for gcode arc (G2/G3) commands.
 #   finer arc, but also more work for your machine. Arcs smaller than
 #   the configured value will become straight lines. The default is
 #   1mm.
+#sagitta: 0.01
+#   Max path deviation between the actual arg segment and
+#   the approximated line. The default is 0.01mm
 ```
 
 ### [respond]
