@@ -156,7 +156,7 @@ class LookAheadQueue:
                     # This move can both accel and decel, or this is a
                     # full accel move followed by a full decel move
                     if update_flush_count and peak_cruise_v2:
-                        flush_count = i
+                        flush_count = i + pending_cv2_assign
                         update_flush_count = False
                     peak_cruise_v2 = (mcr_start_v2 + reach_mcr_start_v2) * .5
                 cruise_v2 = min((start_v2 + reachable_start_v2) * .5
