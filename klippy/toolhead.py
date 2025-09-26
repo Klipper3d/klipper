@@ -45,9 +45,10 @@ class Move:
         self.max_start_v2 = 0.
         self.max_cruise_v2 = velocity**2
         self.delta_v2 = 2.0 * move_d * self.accel
-        self.max_smoothed_v2 = 0.
-        self.smooth_delta_v2 = 2.0 * move_d * toolhead.max_accel_to_decel
         self.next_junction_v2 = 999999999.9
+        # Setup for minimum_cruise_ratio checks
+        self.max_mcr_start_v2 = 0.
+        self.mcr_delta_v2 = 2.0 * move_d * toolhead.mcr_pseudo_accel
     def limit_speed(self, speed, accel):
         speed2 = speed**2
         if speed2 < self.max_cruise_v2:
@@ -55,7 +56,7 @@ class Move:
             self.min_move_t = self.move_d / speed
         self.accel = min(self.accel, accel)
         self.delta_v2 = 2.0 * self.move_d * self.accel
-        self.smooth_delta_v2 = min(self.smooth_delta_v2, self.delta_v2)
+        self.mcr_delta_v2 = min(self.mcr_delta_v2, self.delta_v2)
     def limit_next_junction_speed(self, speed):
         self.next_junction_v2 = min(self.next_junction_v2, speed**2)
     def move_error(self, msg="Move out of range"):
@@ -94,8 +95,8 @@ class Move:
                                move_centripetal_v2, pmove_centripetal_v2)
         # Apply limits
         self.max_start_v2 = max_start_v2
-        self.max_smoothed_v2 = min(
-            max_start_v2, prev_move.max_smoothed_v2 + prev_move.smooth_delta_v2)
+        self.max_mcr_start_v2 = min(
+            max_start_v2, prev_move.max_mcr_start_v2 + prev_move.mcr_delta_v2)
     def set_junction(self, start_v2, cruise_v2, end_v2):
         # Determine accel, cruise, and decel portions of the move distance
         half_inv_accel = .5 / self.accel
@@ -138,16 +139,16 @@ class LookAheadQueue:
         # junction speed assuming the robot comes to a complete stop
         # after the last move.
         delayed = []
-        next_end_v2 = next_smoothed_v2 = peak_cruise_v2 = 0.
+        next_start_v2 = next_mcr_start_v2 = peak_cruise_v2 = 0.
         for i in range(flush_count-1, -1, -1):
             move = queue[i]
-            reachable_start_v2 = next_end_v2 + move.delta_v2
+            reachable_start_v2 = next_start_v2 + move.delta_v2
             start_v2 = min(move.max_start_v2, reachable_start_v2)
-            reachable_smoothed_v2 = next_smoothed_v2 + move.smooth_delta_v2
-            smoothed_v2 = min(move.max_smoothed_v2, reachable_smoothed_v2)
-            if smoothed_v2 < reachable_smoothed_v2:
+            reach_mcr_start_v2 = next_mcr_start_v2 + move.mcr_delta_v2
+            mcr_start_v2 = min(move.max_mcr_start_v2, reach_mcr_start_v2)
+            if mcr_start_v2 < reach_mcr_start_v2:
                 # It's possible for this move to accelerate
-                if (smoothed_v2 + move.smooth_delta_v2 > next_smoothed_v2
+                if (mcr_start_v2 + move.mcr_delta_v2 > next_mcr_start_v2
                     or delayed):
                     # This move can decelerate or this is a full accel
                     # move after a full decel move
@@ -155,7 +156,7 @@ class LookAheadQueue:
                         flush_count = i
                         update_flush_count = False
                     peak_cruise_v2 = min(move.max_cruise_v2, (
-                        smoothed_v2 + reachable_smoothed_v2) * .5)
+                        mcr_start_v2 + reach_mcr_start_v2) * .5)
                     if delayed:
                         # Propagate peak_cruise_v2 to any delayed moves
                         if not update_flush_count and i < flush_count:
@@ -169,12 +170,12 @@ class LookAheadQueue:
                     cruise_v2 = min((start_v2 + reachable_start_v2) * .5
                                     , move.max_cruise_v2, peak_cruise_v2)
                     move.set_junction(min(start_v2, cruise_v2), cruise_v2
-                                      , min(next_end_v2, cruise_v2))
+                                      , min(next_start_v2, cruise_v2))
             else:
                 # Delay calculating this move until peak_cruise_v2 is known
-                delayed.append((move, start_v2, next_end_v2))
-            next_end_v2 = start_v2
-            next_smoothed_v2 = smoothed_v2
+                delayed.append((move, start_v2, next_start_v2))
+            next_start_v2 = start_v2
+            next_mcr_start_v2 = mcr_start_v2
         if update_flush_count or not flush_count:
             return []
         # Remove processed moves from the queue
@@ -209,7 +210,7 @@ class ToolHead:
                                                 0.5, below=1., minval=0.)
         self.square_corner_velocity = config.getfloat(
             'square_corner_velocity', 5., minval=0.)
-        self.junction_deviation = self.max_accel_to_decel = 0.
+        self.junction_deviation = self.mcr_pseudo_accel = 0.
         self._calc_junction_deviation()
         # Input stall detection
         self.check_stall_time = 0.
@@ -510,7 +511,7 @@ class ToolHead:
     def _calc_junction_deviation(self):
         scv2 = self.square_corner_velocity**2
         self.junction_deviation = scv2 * (math.sqrt(2.) - 1.) / self.max_accel
-        self.max_accel_to_decel = self.max_accel * (1. - self.min_cruise_ratio)
+        self.mcr_pseudo_accel = self.max_accel * (1. - self.min_cruise_ratio)
     def set_max_velocities(self, max_velocity, max_accel,
                            square_corner_velocity, min_cruise_ratio):
         if max_velocity is not None:
