@@ -263,6 +263,8 @@ def main():
     opts.add_option("-I", "--input-tty", dest="inputtty",
                     default='/tmp/printer',
                     help="input tty name (default is /tmp/printer)")
+    opts.add_option("-T", "--tty", dest="tty",
+                    help="open existing tty, don't create pty")
     opts.add_option("-a", "--api-server", dest="apiserver",
                     help="api server unix domain socket filename")
     opts.add_option("-l", "--logfile", dest="logfile",
@@ -291,6 +293,9 @@ def main():
         start_args['debuginput'] = options.debuginput
         debuginput = open(options.debuginput, 'rb')
         start_args['gcode_fd'] = debuginput.fileno()
+    elif options.tty:
+        ttyinput = open(options.tty, 'rb+', buffering=0)
+        start_args['gcode_fd'] = ttyinput.fileno()
     else:
         start_args['gcode_fd'] = util.create_pty(options.inputtty)
     if options.debugoutput:
