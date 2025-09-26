@@ -24,6 +24,8 @@ import clocksync
 import mcu
 import os
 import time
+import re
+
 ###########################################################
 #
 # Helper methods
@@ -1382,6 +1384,7 @@ class MCUConnection:
         sd_sha = hashlib.sha1()
         klipper_bin_path = self.board_config['klipper_bin_path']
         add_ts = self.board_config.get('add_timestamp', False)
+        clean_old = self.board_config.get('clean_old_firmware', False)
         fw_path = self.board_config.get('firmware_path', "firmware.bin")
         if add_ts:
             fw_dir = os.path.dirname(fw_path)
@@ -1392,6 +1395,19 @@ class MCUConnection:
                 fw_path = os.path.join(fw_dir, fw_name_ts)
             else:
                 fw_path = fw_name_ts
+            if clean_old:
+                list_dir = fw_dir if fw_dir else ""
+                pattern = re.compile(rf"\d{{14}}{re.escape(fw_name)}{re.escape(fw_ext)}")
+                try:
+                    output_line("")
+                    output_line("SD Card FW Directory Contents:")
+                    for f in self.fatfs.list_sd_directory(list_dir):
+                        fname = f['name'].decode('utf-8')
+                        if pattern.match(fname):
+                            self.fatfs.remove_item(os.path.join(list_dir, fname))
+                            output_line("Old firmware file %s found and deleted" % (fname,))
+                except Exception:
+                   logging.exception("Error cleaning old firmware files")
         try:
             with open(klipper_bin_path, 'rb') as local_f:
                 with self.fatfs.open_file(fw_path, "wb") as sd_f:
