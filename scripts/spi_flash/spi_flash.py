@@ -1410,7 +1410,7 @@ class MCUConnection:
                                 os.path.join(list_dir, fname)
                             )
                             output_line(
-                                "Old firmware file %s found and deleted" 
+                                "Old firmware file %s found and deleted"
                                 % (fname,)
                             )
                 except Exception:
