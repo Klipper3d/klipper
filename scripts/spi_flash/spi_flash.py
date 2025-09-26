@@ -1397,15 +1397,22 @@ class MCUConnection:
                 fw_path = fw_name_ts
             if clean_old:
                 list_dir = fw_dir if fw_dir else ""
-                pattern = re.compile(rf"\d{{14}}{re.escape(fw_name)}{re.escape(fw_ext)}")
+                pattern = re.compile(
+                    rf"\d{{14}}{re.escape(fw_name)}{re.escape(fw_ext)}"
+                )
                 try:
                     output_line("")
                     output_line("SD Card FW Directory Contents:")
                     for f in self.fatfs.list_sd_directory(list_dir):
                         fname = f['name'].decode('utf-8')
                         if pattern.match(fname):
-                            self.fatfs.remove_item(os.path.join(list_dir, fname))
-                            output_line("Old firmware file %s found and deleted" % (fname,))
+                            self.fatfs.remove_item(
+                                os.path.join(list_dir, fname)
+                            )
+                            output_line(
+                                "Old firmware file %s found and deleted" 
+                                % (fname,)
+                            )
                 except Exception:
                    logging.exception("Error cleaning old firmware files")
         try:
