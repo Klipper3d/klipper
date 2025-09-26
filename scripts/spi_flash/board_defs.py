@@ -123,7 +123,8 @@ BOARD_DEFS = {
         'spi_bus': "swspi",
         'spi_pins': "PC8,PD2,PC12",
         'cs_pin': "PC11",
-        'skip_verify': True
+        'skip_verify': True,
+        'add_timestamp': True
     },
     'monster8': {
         'mcu': "stm32f407xx",
