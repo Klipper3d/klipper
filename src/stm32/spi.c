@@ -151,9 +151,13 @@ struct spi_info {
   DECL_CONSTANT_STR("BUS_PINS_spi2_PC2_PC3_PB10", "PC2,PC3,PB10");
   DECL_ENUMERATION("spi_bus", "spi2_PB2_PB11_PB10", 4);
   DECL_CONSTANT_STR("BUS_PINS_spi2_PB2_PB11_PB10", "PB2,PB11,PB10");
+  DECL_ENUMERATION("spi_bus", "spi2_PB6_PB7_PB8", 5);
+  DECL_CONSTANT_STR("BUS_PINS_spi2_PB6_PB7_PB8", "PB6,PB7,PB8");
   #ifdef SPI3
-    DECL_ENUMERATION("spi_bus", "spi3_PB4_PB5_PB3", 5);
+    DECL_ENUMERATION("spi_bus", "spi3_PB4_PB5_PB3", 6);
     DECL_CONSTANT_STR("BUS_PINS_spi3_PB4_PB5_PB3", "PB4,PB5,PB3");
+    DECL_ENUMERATION("spi_bus", "spi3_PC11_PC12_PC10", 7);
+    DECL_CONSTANT_STR("BUS_PINS_spi3_PC11_PC12_PC10", "PC11,PC12,PC10");
   #endif
   // Deprecated "spi1" style mappings
   DECL_ENUMERATION("spi_bus", "spi2", 0);
@@ -165,7 +169,7 @@ struct spi_info {
   DECL_ENUMERATION("spi_bus", "spi2a", 3);
   DECL_CONSTANT_STR("BUS_PINS_spi2a", "PC2,PC3,PB10");
   #ifdef SPI3
-    DECL_ENUMERATION("spi_bus", "spi3", 5);
+    DECL_ENUMERATION("spi_bus", "spi3", 6);
     DECL_CONSTANT_STR("BUS_PINS_spi3", "PB4,PB5,PB3");
   #endif
 #elif CONFIG_MACH_STM32G4
@@ -266,8 +270,10 @@ static const struct spi_info spi_bus[] = {
   { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), SPI_FUNCTION(0, 0, 0) },
   { SPI2, GPIO('C', 2), GPIO('C', 3), GPIO('B', 10), SPI_FUNCTION(1, 1, 5) },
   { SPI2, GPIO('B', 2), GPIO('B', 11), GPIO('B', 10), SPI_FUNCTION(1, 0, 5) },
+  { SPI2, GPIO('B', 6), GPIO('B', 7), GPIO('B', 8), SPI_FUNCTION(4, 1, 1) },
  #ifdef SPI3
   { SPI3, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), SPI_FUNCTION(9, 9, 9) },
+  { SPI3, GPIO('C', 11), GPIO('C', 12), GPIO('C', 10), SPI_FUNCTION(4, 4, 4) },
  #endif
 #elif CONFIG_MACH_STM32G4
   { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), SPI_FUNCTION(5, 5, 5) },
