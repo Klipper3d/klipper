@@ -3,9 +3,10 @@
 
 #include <stdint.h> // int32_t
 
-enum {
-    AF_X = 1 << 0, AF_Y = 1 << 1, AF_Z = 1 << 2,
-};
+#define AF_AXIS(n) (1 << (n))
+#define AF_X AF_AXIS(0)
+#define AF_Y AF_AXIS(1)
+#define AF_Z AF_AXIS(2)
 
 struct stepper_kinematics;
 struct move;
@@ -33,9 +34,8 @@ void itersolve_set_trapq(struct stepper_kinematics *sk, struct trapq *tq
                          , double step_dist);
 struct trapq *itersolve_get_trapq(struct stepper_kinematics *sk);
 double itersolve_calc_position_from_coord(struct stepper_kinematics *sk
-                                          , double x, double y, double z);
-void itersolve_set_position(struct stepper_kinematics *sk
-                            , double x, double y, double z);
+                                          , double *coord);
+void itersolve_set_position(struct stepper_kinematics *sk, double *coord);
 double itersolve_get_commanded_pos(struct stepper_kinematics *sk);
 double itersolve_get_gen_steps_pre_active(struct stepper_kinematics *sk);
 double itersolve_get_gen_steps_post_active(struct stepper_kinematics *sk);

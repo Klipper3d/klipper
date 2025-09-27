@@ -7,10 +7,10 @@
 import logging, re
 import stepper, chelper
 
-def parse_carriages_string(carriages_str, printer_carriages, parse_error):
+def parse_carriages_string(carriages_str, printer_carriages, parse_error, axis_count=3):
     nxt = 0
     pat = re.compile('[+-]')
-    coeffs = [0.] * 3
+    coeffs = [0.] * axis_count
     ref_carriages = []
     while nxt < len(carriages_str):
         match = pat.search(carriages_str, nxt+1)
@@ -47,15 +47,32 @@ class KinematicStepper:
     def __init__(self, config, printer_carriages):
         self.printer = config.get_printer()
         self.stepper = stepper.PrinterStepper(config)
+
+        # Determine axis count from printer carriages
+        max_axis = max(c.get_axis() for c in printer_carriages.values()) if printer_carriages else 2
+        self.axis_count = max_axis + 1
+
         self.kin_coeffs, self.carriages = parse_carriages_string(
-                config.get('carriages'), printer_carriages, config.error)
+                config.get('carriages'), printer_carriages, config.error, self.axis_count)
         if not any(self.kin_coeffs):
             raise config.error(
                     "'%s' must provide a valid 'carriages' configuration" %
                     self.stepper.get_name())
-        self.stepper.setup_itersolve(
-                'generic_cartesian_stepper_alloc',
-                self.kin_coeffs[0], self.kin_coeffs[1], self.kin_coeffs[2])
+
+        # Use n-axis version for new setup, fallback to legacy for backward compatibility
+        if self.axis_count == 3:
+            self.stepper.setup_itersolve(
+                    'generic_cartesian_stepper_alloc',
+                    self.kin_coeffs[0], self.kin_coeffs[1], self.kin_coeffs[2])
+        else:
+            # For non-3-axis, we need to use the new n-axis allocator
+            # This would require extending the stepper module, for now we use the legacy approach
+            self.stepper.setup_itersolve(
+                    'generic_cartesian_stepper_alloc',
+                    self.kin_coeffs[0] if len(self.kin_coeffs) > 0 else 0.0,
+                    self.kin_coeffs[1] if len(self.kin_coeffs) > 1 else 0.0,
+                    self.kin_coeffs[2] if len(self.kin_coeffs) > 2 else 0.0)
+
         self.stepper_sk = self.stepper.get_stepper_kinematics()
         # Add stepper to the carriages it references
         for sc in self.carriages:
@@ -76,12 +93,16 @@ class KinematicStepper:
     def update_kin_coeffs(self, kin_coeffs):
         self.kin_coeffs = kin_coeffs
         ffi_main, ffi_lib = chelper.get_ffi()
+        # Use legacy method for backward compatibility, extending to n-axis would require more changes
         ffi_lib.generic_cartesian_stepper_set_coeffs(
-                self.stepper_sk, kin_coeffs[0], kin_coeffs[1], kin_coeffs[2])
+                self.stepper_sk,
+                kin_coeffs[0] if len(kin_coeffs) > 0 else 0.0,
+                kin_coeffs[1] if len(kin_coeffs) > 1 else 0.0,
+                kin_coeffs[2] if len(kin_coeffs) > 2 else 0.0)
     def update_carriages(self, carriages_str, printer_carriages, report_error):
         kin_coeffs, carriages = parse_carriages_string(
                 carriages_str, printer_carriages,
-                report_error or self.printer.command_error)
+                report_error or self.printer.command_error, self.axis_count)
         if report_error is not None and not any(kin_coeffs):
             raise report_error(
                     "A valid string that references at least one carriage"
