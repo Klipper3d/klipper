@@ -82,8 +82,7 @@ class Move:
         prev_axes_r = prev_move.axes_r
         junction_cos_theta = -(axes_r[0] * prev_axes_r[0]
                                + axes_r[1] * prev_axes_r[1]
-                               + axes_r[2] * prev_axes_r[2]
-                               + axes_r[3] * prev_axes_r[3])
+                               + axes_r[2] * prev_axes_r[2])
         if junction_cos_theta > 0.999999:
             return
         junction_cos_theta = max(junction_cos_theta, -0.999999)
