@@ -23,8 +23,8 @@ class WinchKinematics:
             s.set_trapq(toolhead.get_trapq())
         # Setup boundary checks
         acoords = list(zip(*self.anchors))
-        self.axes_min = toolhead.Coord(*[min(a) for a in acoords], e=0.)
-        self.axes_max = toolhead.Coord(*[max(a) for a in acoords], e=0.)
+        self.axes_min = toolhead.Coord([min(a) for a in acoords])
+        self.axes_max = toolhead.Coord([max(a) for a in acoords])
         self.set_position([0., 0., 0.], "")
     def get_steppers(self):
         return list(self.steppers)

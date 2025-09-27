@@ -31,8 +31,8 @@ class PolarKinematics:
         self.limit_xy2 = -1.
         max_xy = self.rails[0].get_range()[1]
         min_z, max_z = self.rails[1].get_range()
-        self.axes_min = toolhead.Coord(-max_xy, -max_xy, min_z, 0.)
-        self.axes_max = toolhead.Coord(max_xy, max_xy, max_z, 0.)
+        self.axes_min = toolhead.Coord((-max_xy, -max_xy, min_z))
+        self.axes_max = toolhead.Coord((max_xy, max_xy, max_z))
     def get_steppers(self):
         return list(self.steppers)
     def calc_position(self, stepper_positions):
