@@ -500,7 +500,7 @@ class ToolHead:
                      'stalls': self.print_stall,
                      'estimated_print_time': estimated_print_time,
                      'extruder': extruder.get_name(),
-                     'position': self.Coord(*self.commanded_pos[:4]),
+                     'position': self.Coord(self.commanded_pos[:4]),
                      'max_velocity': self.max_velocity,
                      'max_accel': self.max_accel,
                      'minimum_cruise_ratio': self.min_cruise_ratio,

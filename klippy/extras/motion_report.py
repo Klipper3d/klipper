@@ -151,7 +151,7 @@ class PrinterMotionReport:
         self.next_status_time = 0.
         gcode = self.printer.lookup_object('gcode')
         self.last_status = {
-            'live_position': gcode.Coord(0., 0., 0., 0.),
+            'live_position': gcode.Coord((0., 0., 0.)),
             'live_velocity': 0., 'live_extruder_velocity': 0.,
             'steppers': [], 'trapq': [],
         }
@@ -236,7 +236,7 @@ class PrinterMotionReport:
                 evelocity = velocity
         # Report status
         self.last_status = dict(self.last_status)
-        self.last_status['live_position'] = toolhead.Coord(*(xyzpos + epos))
+        self.last_status['live_position'] = toolhead.Coord(xyzpos + epos)
         self.last_status['live_velocity'] = xyzvelocity
         self.last_status['live_extruder_velocity'] = evelocity
         return self.last_status

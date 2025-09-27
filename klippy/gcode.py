@@ -11,10 +11,10 @@ class CommandError(Exception):
 # Custom "tuple" class for coordinates - add easy access to x, y, z components
 class Coord(tuple):
     __slots__ = ()
-    def __new__(cls, x, y, z, e, *args):
-        return tuple.__new__(cls, (x, y, z, e) + args)
-    def __getnewargs__(self):
-        return tuple(self)
+    def __new__(cls, t):
+        if len(t) < 4:
+            t = tuple(t) + (0,) * (4 - len(t))
+        return tuple.__new__(cls, t)
     x = property(operator.itemgetter(0))
     y = property(operator.itemgetter(1))
     z = property(operator.itemgetter(2))

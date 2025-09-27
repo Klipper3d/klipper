@@ -107,9 +107,9 @@ class GCodeMove:
             'extrude_factor': self.extrude_factor,
             'absolute_coordinates': self.absolute_coord,
             'absolute_extrude': self.absolute_extrude,
-            'homing_origin': self.Coord(*self.homing_position[:4]),
-            'position': self.Coord(*self.last_position[:4]),
-            'gcode_position': self.Coord(*move_position),
+            'homing_origin': self.Coord(self.homing_position[:4]),
+            'position': self.Coord(self.last_position[:4]),
+            'gcode_position': self.Coord(move_position),
         }
     def reset_last_position(self):
         if self.is_printer_ready:
