@@ -105,6 +105,9 @@ class DualCarriage:
 class GenericCartesianKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
+        # Get configurable axis names (default to xyz for backward compatibility)
+        self.axis_names = config.get('axis_names', 'xyz')
+        self.axis_count = len(self.axis_names)
         self._load_kinematics(config)
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
@@ -135,11 +138,16 @@ class GenericCartesianKinematics:
             self._check_kinematics(config.error)
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
-        self.max_z_velocity = config.getfloat('max_z_velocity', max_velocity,
-                                              above=0., maxval=max_velocity)
-        self.max_z_accel = config.getfloat('max_z_accel', max_accel,
-                                           above=0., maxval=max_accel)
-        self.limits = [(1.0, -1.0)] * 3
+        # Backward compatibility: Z velocity/accel limits for 3rd axis if it exists
+        if self.axis_count >= 3:
+            self.max_z_velocity = config.getfloat('max_z_velocity', max_velocity,
+                                                  above=0., maxval=max_velocity)
+            self.max_z_accel = config.getfloat('max_z_accel', max_accel,
+                                               above=0., maxval=max_accel)
+        else:
+            self.max_z_velocity = max_velocity
+            self.max_z_accel = max_accel
+        self.limits = [(1.0, -1.0)] * self.axis_count
         # Register gcode commands
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("SET_STEPPER_CARRIAGES",
@@ -147,7 +155,7 @@ class GenericCartesianKinematics:
                                desc=self.cmd_SET_STEPPER_CARRIAGES_help)
     def _load_kinematics(self, config):
         carriages = {a : MainCarriage(config.getsection('carriage ' + a), a)
-                     for a in 'xyz'}
+                     for a in self.axis_names}
         dc_carriages = []
         for c in config.get_prefix_sections('dual_carriage '):
             dc_carriages.append(DualCarriage(c, carriages))
@@ -193,7 +201,7 @@ class GenericCartesianKinematics:
     def get_steppers(self):
         return [s.get_stepper() for s in self.kin_steppers]
     def get_primary_carriages(self):
-        carriages = [self.carriages[a] for a in "xyz"]
+        carriages = [self.carriages[a] for a in self.axis_names]
         if self.dc_module:
             for a in self.dc_module.get_axes():
                 primary_rail = self.dc_module.get_primary_rail(a)
@@ -204,7 +212,7 @@ class GenericCartesianKinematics:
     def _get_kinematics_coeffs(self):
         matr = {s.get_name() : list(s.get_kin_coeffs())
                 for s in self.kin_steppers}
-        offs = {s.get_name() : [0.] * 3 for s in self.kin_steppers}
+        offs = {s.get_name() : [0.] * self.axis_count for s in self.kin_steppers}
         if self.dc_module is None:
             return ([matr[s.get_name()] for s in self.kin_steppers],
                     [0. for s in self.kin_steppers])
@@ -234,7 +242,7 @@ class GenericCartesianKinematics:
         spos = [stepper_positions[s.get_name()] for s in self.kin_steppers]
         pinv = mat_pseudo_inverse(matr)
         pos = mat_mul([[sp-o for sp, o in zip(spos, offs)]], mat_transp(pinv))
-        for i in range(3):
+        for i in range(self.axis_count):
             if not any(pinv[i]):
                 pos[0][i] = None
         return pos[0]
@@ -248,20 +256,21 @@ class GenericCartesianKinematics:
         for s in self.kin_steppers:
             s.set_position(newpos)
         for axis_name in homing_axes:
-            axis = "xyz".index(axis_name)
-            for c in self.carriages.values():
-                if c.get_axis() == axis and c.is_active():
-                    self.limits[axis] = c.get_rail().get_range()
-                    break
+            if axis_name in self.axis_names:
+                axis = self.axis_names.index(axis_name)
+                for c in self.carriages.values():
+                    if c.get_axis() == axis and c.is_active():
+                        self.limits[axis] = c.get_rail().get_range()
+                        break
     def clear_homing_state(self, clear_axes):
-        for axis, axis_name in enumerate("xyz"):
+        for axis, axis_name in enumerate(self.axis_names):
             if axis_name in clear_axes:
                 self.limits[axis] = (1.0, -1.0)
     def home_axis(self, homing_state, axis, rail):
         # Determine movement
         position_min, position_max = rail.get_range()
         hi = rail.get_homing_info()
-        homepos = [None, None, None, None]
+        homepos = [None] * (self.axis_count + 1)  # +1 for extruder
         homepos[axis] = hi.position_endstop
         forcepos = list(homepos)
         if hi.positive_dir:
@@ -274,14 +283,15 @@ class GenericCartesianKinematics:
         self._check_kinematics(self.printer.command_error)
         # Each axis is homed independently and in order
         for axis in homing_state.get_axes():
-            carriage = self.carriages["xyz"[axis]]
-            if carriage.get_dual_carriage() != None:
-                self.dc_module.home(homing_state, axis)
-            else:
-                self.home_axis(homing_state, axis, carriage.get_rail())
+            if axis < len(self.axis_names):
+                carriage = self.carriages[self.axis_names[axis]]
+                if carriage.get_dual_carriage() != None:
+                    self.dc_module.home(homing_state, axis)
+                else:
+                    self.home_axis(homing_state, axis, carriage.get_rail())
     def _check_endstops(self, move):
         end_pos = move.end_pos
-        for i in (0, 1, 2):
+        for i in range(self.axis_count):
             if (move.axes_d[i]
                 and (end_pos[i] < self.limits[i][0]
                      or end_pos[i] > self.limits[i][1])):
@@ -290,20 +300,28 @@ class GenericCartesianKinematics:
                 raise move.move_error()
     def check_move(self, move):
         limits = self.limits
-        xpos, ypos = move.end_pos[:2]
-        if (xpos < limits[0][0] or xpos > limits[0][1]
-            or ypos < limits[1][0] or ypos > limits[1][1]):
-            self._check_endstops(move)
-        if not move.axes_d[2]:
+        # Check first two axes bounds for initial validation (XY for backward compatibility)
+        if self.axis_count >= 2:
+            xpos, ypos = move.end_pos[:2]
+            if (xpos < limits[0][0] or xpos > limits[0][1]
+                or ypos < limits[1][0] or ypos > limits[1][1]):
+                self._check_endstops(move)
+
+        # Check Z axis movement if it exists (3rd axis for backward compatibility)
+        if self.axis_count >= 3 and not move.axes_d[2]:
             # Normal XY move - use defaults
             return
-        # Move with Z - update velocity and accel for slower Z axis
-        self._check_endstops(move)
-        z_ratio = move.move_d / abs(move.axes_d[2])
-        move.limit_speed(
-            self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
+        elif self.axis_count >= 3:
+            # Move with Z - update velocity and accel for slower Z axis
+            self._check_endstops(move)
+            z_ratio = move.move_d / abs(move.axes_d[2])
+            move.limit_speed(
+                self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
+        else:
+            # For non-3-axis configurations, just check all endstops
+            self._check_endstops(move)
     def get_status(self, eventtime):
-        axes = [a for a, (l, h) in zip("xyz", self.limits) if l <= h]
+        axes = [a for a, (l, h) in zip(self.axis_names, self.limits) if l <= h]
         ranges = [c.get_rail().get_range()
                   for c in self.get_primary_carriages()]
         axes_min = gcode.Coord(*[r[0] for r in ranges], e=0.)
