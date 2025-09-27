@@ -1399,8 +1399,7 @@ class MCUConnection:
                     rf"\d{{14}}{re.escape(fw_name)}{re.escape(fw_ext)}"
                 )
                 try:
-                    output_line("")
-                    output_line("SD Card FW Directory Contents:")
+                    output_line("\nSD Card FW Directory Contents:")
                     for f in self.fatfs.list_sd_directory(list_dir):
                         fname = f['name'].decode('utf-8')
                         if pattern.match(fname):
