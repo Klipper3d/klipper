@@ -22,8 +22,6 @@ import reactor
 import serialhdl
 import clocksync
 import mcu
-import os
-import time
 import re
 
 ###########################################################
