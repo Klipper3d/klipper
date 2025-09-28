@@ -37,8 +37,8 @@ class PCA9632:
         if self.prev_regs.get(reg) == val:
             return
         self.prev_regs[reg] = val
-        self.i2c.i2c_write([reg, val], minclock=minclock,
-                           reqclock=BACKGROUND_PRIORITY_CLOCK)
+        self.i2c.i2c_write_noack([reg, val], minclock=minclock,
+                                 reqclock=BACKGROUND_PRIORITY_CLOCK)
     def handle_connect(self):
         #Configure MODE1
         self.reg_write(PCA9632_MODE1, 0x00)

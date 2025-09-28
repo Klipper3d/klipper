@@ -92,7 +92,8 @@ class SX1509(object):
             # Byte
             data += [self.reg_i_on_dict[reg] & 0xFF]
         clock = self._mcu.print_time_to_clock(print_time)
-        self._i2c.i2c_write(data, minclock=self._last_clock, reqclock=clock)
+        self._i2c.i2c_write_noack(data, minclock=self._last_clock,
+                                  reqclock=clock)
         self._last_clock = clock
 
 class SX1509_digital_out(object):
