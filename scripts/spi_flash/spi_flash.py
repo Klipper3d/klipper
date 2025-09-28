@@ -22,7 +22,6 @@ import reactor
 import serialhdl
 import clocksync
 import mcu
-import re
 
 ###########################################################
 #
@@ -1395,14 +1394,11 @@ class MCUConnection:
                 fw_path = fw_name_ts
             if clean_old:
                 list_dir = fw_dir if fw_dir else ""
-                pattern = re.compile(
-                    rf"\d{{14}}{re.escape(fw_name)}{re.escape(fw_ext)}"
-                )
                 try:
                     output_line("\nSD Card FW Directory Contents:")
                     for f in self.fatfs.list_sd_directory(list_dir):
                         fname = f['name'].decode('utf-8')
-                        if pattern.match(fname):
+                        if fname.endswith(fw_ext):
                             self.fatfs.remove_item(
                                 os.path.join(list_dir, fname)
                             )
