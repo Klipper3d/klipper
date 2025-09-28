@@ -359,6 +359,63 @@ class MCU_endstop:
         params = self._query_cmd.send([self._oid], minclock=clock)
         return params['pin_value'] ^ self._invert
 
+class MCU_multiaxis_probe:
+    def __init__(self, mcu, pin_params):
+        self._mcu = mcu
+        self._pin = pin_params['pin']
+        self._pullup = pin_params['pullup']
+        self._invert = pin_params['invert']
+        self._oid = self._mcu.create_oid()
+        self._mcu.register_config_callback(self._build_config)
+        self._probe_clear_cmd = None
+        self._probe_start_cmd = None
+        self._query_cmd = None
+        self._rest_ticks = 0
+    def get_mcu(self):
+        return self._mcu
+    def _build_config(self):
+        # Create commands
+        self._probe_clear_cmd = self._mcu.lookup_command(
+            "multiaxis_probe_clear oid=%c")
+        self._probe_start_cmd = self._mcu.lookup_command(
+            "multiaxis_probe_start oid=%c clock=%u " \
+            "rest_ticks=%u pin_value_on_probe_triggered=%c")
+        self._query_cmd = self._mcu.lookup_query_command(
+            "multiaxis_probe_query_state oid=%c",
+            "multiaxis_probe_state oid=%c triggered_clock=%u " \
+            "pin_value=%c is_probe_triggered=%c",
+            oid=self._oid)
+
+        # Setup config
+        self._mcu.add_config_cmd(
+            "config_multiaxis_probe oid=%d " \
+            "pin=%s pull_up=%d"
+            % (self._oid, self._pin, self._pullup))
+        self._mcu.add_config_cmd(
+            "multiaxis_probe_clear oid=%c"
+            % (self._oid,), on_restart=True)
+    def probe_start(self, print_time, rest_time, triggered=True):
+        clock = self._mcu.print_time_to_clock(print_time)
+        rest_ticks = self._mcu.print_time_to_clock(print_time+rest_time) - clock
+        self._rest_ticks = rest_ticks
+        self._probe_start_cmd.send(
+            [self._oid, clock, rest_ticks, triggered ^ self._invert],
+            reqclock=clock)
+        return
+    def query_probe(self):
+        if self._mcu.is_fileoutput():
+            return 0
+        params = self._query_cmd.send([self._oid])
+        triggered_clock = self._mcu.clock32_to_clock64(
+            params['triggered_clock'])
+        triggered_time = self._mcu.clock_to_print_time(
+            triggered_clock)
+        return (triggered_time,
+                params['pin_value'] ^ self._invert,
+                params['is_probe_triggered'])
+    def probe_clear(self):
+        self._probe_clear_cmd.send([self._oid])
+
 class MCU_digital_out:
     def __init__(self, mcu, pin_params):
         self._mcu = mcu
@@ -848,7 +905,7 @@ class MCU:
             pconfig.runtime_warning(msg)
     # Config creation helpers
     def setup_pin(self, pin_type, pin_params):
-        pcs = {'endstop': MCU_endstop,
+        pcs = {'endstop': MCU_endstop, 'multiaxis_probe': MCU_multiaxis_probe,
                'digital_out': MCU_digital_out, 'pwm': MCU_pwm, 'adc': MCU_adc}
         if pin_type not in pcs:
             raise pins.error("pin type %s not supported on mcu" % (pin_type,))

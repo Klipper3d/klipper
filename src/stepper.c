@@ -380,6 +380,18 @@ DECL_COMMAND(command_stepper_stop_on_trigger,
              "stepper_stop_on_trigger oid=%c trsync_oid=%c");
 
 void
+stepper_stop_all(void)
+{
+    uint8_t i;
+    struct stepper *s;
+    irq_disable();
+    foreach_oid(i, s, command_config_stepper) {
+        stepper_stop(&s->stop_signal, 0);
+    }
+    irq_enable();
+}
+
+void
 stepper_shutdown(void)
 {
     uint8_t i;

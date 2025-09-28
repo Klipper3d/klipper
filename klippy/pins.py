@@ -112,8 +112,9 @@ class PrinterPins:
         self.active_pins[share_name] = pin_params
         return pin_params
     def setup_pin(self, pin_type, pin_desc):
-        can_invert = pin_type in ['endstop', 'digital_out', 'pwm']
-        can_pullup = pin_type in ['endstop']
+        can_invert = pin_type in ['endstop', 'multiaxis_probe',
+                                  'digital_out', 'pwm']
+        can_pullup = pin_type in ['endstop', 'multiaxis_probe']
         pin_params = self.lookup_pin(pin_desc, can_invert, can_pullup)
         return pin_params['chip'].setup_pin(pin_type, pin_params)
     def reset_pin_sharing(self, pin_params):
