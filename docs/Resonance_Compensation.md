@@ -469,8 +469,8 @@ parameters of each shaper.
 | MZV | 0.75 / shaper_freq | ± 4% shaper_freq | -10%...+15% shaper_freq |
 | ZVD | 1 / shaper_freq | ± 15% shaper_freq | ± 22% shaper_freq |
 | EI | 1 / shaper_freq | ± 20% shaper_freq | ± 25% shaper_freq |
-| 2HUMP_EI | 1.5 / shaper_freq | ± 35% shaper_freq | ± 40 shaper_freq |
-| 3HUMP_EI | 2 / shaper_freq | -45...+50% shaper_freq | -50%...+55% shaper_freq |
+| 2HUMP_EI | 1.5 / shaper_freq | -40...+45% shaper_freq | -45..+50% shaper_freq |
+| 3HUMP_EI | 2 / shaper_freq | -50...+60% shaper_freq | -55%...+65% shaper_freq |
 
 A note on vibration reduction: the values in the table above are approximate.
 If the damping ratio of the printer is known for each axis, the shaper can be
@@ -502,11 +502,11 @@ so the values for 10% vibration tolerance are provided only for the reference.
  resonances at 35 Hz and 60 Hz on the same axis: a) EI shaper needs to have
  shaper_freq = 35 / (1 - 0.2) = 43.75 Hz, and it will reduce resonances
  until 43.75 * (1 + 0.2) = 52.5 Hz, so it is not sufficient; b) 2HUMP_EI
- shaper needs to have shaper_freq = 35 / (1 - 0.35) = 53.85 Hz and will
- reduce vibrations until 53.85 * (1 + 0.35) = 72.7 Hz - so this is an
+ shaper needs to have shaper_freq = 35 / (1 - 0.4) = 58.3 Hz and will
+ reduce vibrations until 58.3 * (1 + 0.45) = 84.5 Hz - so this is an
  acceptable configuration. Always try to use as high shaper_freq as possible
  for a given shaper (perhaps with some safety margin, so in this example
- shaper_freq ≈ 50-52 Hz would work best), and try to use a shaper with as
+ shaper_freq ≈ 55 Hz would work best), and try to use a shaper with as
  small shaper duration as possible.
 * If one needs to reduce vibrations at several very different frequencies
  (say, 30 Hz and 100 Hz), they may see that the table above does not provide
