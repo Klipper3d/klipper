@@ -1380,7 +1380,32 @@ class MCUConnection:
         input_sha = hashlib.sha1()
         sd_sha = hashlib.sha1()
         klipper_bin_path = self.board_config['klipper_bin_path']
+        add_ts = self.board_config.get('requires_unique_fw_name', False)
         fw_path = self.board_config.get('firmware_path', "firmware.bin")
+        if add_ts:
+            fw_dir = os.path.dirname(fw_path)
+            fw_name, fw_ext = os.path.splitext(os.path.basename(fw_path))
+            ts = time.strftime("%Y%m%d%H%M%S")
+            fw_name_ts = f"{ts}{fw_name}{fw_ext}"
+            if fw_dir:
+                fw_path = os.path.join(fw_dir, fw_name_ts)
+            else:
+                fw_path = fw_name_ts
+            list_dir = fw_dir if fw_dir else ""
+            try:
+                output_line("\nSD Card FW Directory Contents:")
+                for f in self.fatfs.list_sd_directory(list_dir):
+                    fname = f['name'].decode('utf-8')
+                    if fname.endswith(fw_ext):
+                        self.fatfs.remove_item(
+                            os.path.join(list_dir, fname)
+                        )
+                        output_line(
+                            "Old firmware file %s found and deleted"
+                            % (fname,)
+                        )
+            except Exception:
+                logging.exception("Error cleaning old firmware files")
         try:
             with open(klipper_bin_path, 'rb') as local_f:
                 with self.fatfs.open_file(fw_path, "wb") as sd_f:
