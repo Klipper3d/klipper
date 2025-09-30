@@ -166,7 +166,7 @@ def main():
                     default=None, help="shaper damping_ratio parameter")
     opts.add_option("--test_damping_ratios", type="string",
                     dest="test_damping_ratios", default=None,
-                    help="a comma-separated liat of damping ratios to test " +
+                    help="a comma-separated list of damping ratios to test " +
                     "input shaper for")
     options, args = opts.parse_args()
     if len(args) < 1:
