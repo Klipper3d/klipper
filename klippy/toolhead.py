@@ -337,7 +337,8 @@ class ToolHead:
             if not self.can_pause:
                 self.need_check_pause = self.reactor.NEVER
                 return
-            eventtime = self.reactor.pause(eventtime + min(1., pause_time))
+            eventtime = self.reactor.pause(
+                eventtime + max(.005, min(1., pause_time)))
             est_print_time = self.mcu.estimated_print_time(eventtime)
             buffer_time = self.print_time - est_print_time
         if not self.special_queuing_state:
