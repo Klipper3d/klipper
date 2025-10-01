@@ -129,7 +129,7 @@ def get_device_info():
         data = _try_read_file("/sys/class/dmi/id/product_name")
         if data is None:
             return "?"
-    return data.rstrip(' \0')
+    return data.rstrip(' \0').strip()
 
 def get_version_from_file(klippy_src):
     data = _try_read_file(os.path.join(klippy_src, '.version'))
