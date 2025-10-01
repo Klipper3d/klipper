@@ -343,7 +343,7 @@ class ToolHead:
             buffer_time = self.print_time - est_print_time
         if not self.special_queuing_state:
             # In main state - defer pause checking until needed
-            self.need_check_pause = est_print_time + BUFFER_TIME_HIGH + 0.100
+            self.need_check_pause = est_print_time + BUFFER_TIME_HIGH
     def _priming_handler(self, eventtime):
         self.reactor.unregister_timer(self.priming_timer)
         self.priming_timer = None
