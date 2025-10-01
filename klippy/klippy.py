@@ -328,6 +328,7 @@ def main():
     start_args['software_version'] = git_vers
     start_args['cpu_info'] = util.get_cpu_info()
     start_args['device'] = util.get_device_info()
+    start_args['linux_version'] = util.get_linux_version()
     if bglogger is not None:
         versions = "\n".join([
             "Args: %s" % (sys.argv,),
@@ -335,6 +336,7 @@ def main():
                                    extra_git_desc),
             "CPU: %s" % (start_args['cpu_info'],),
             "Device: %s" % (start_args['device']),
+            "Linux: %s" % (start_args['linux_version']),
             "Python: %s" % (repr(sys.version),)])
         logging.info(versions)
     elif not options.debugoutput:
