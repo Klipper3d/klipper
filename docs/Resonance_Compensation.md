@@ -457,11 +457,24 @@ parameter described in [this section](#selecting-max_accel)).
 
 ### Input shapers
 
-Input shapers used in Klipper are rather standard, and one can find more
-in-depth overview in the articles describing the corresponding shapers.
 This section contains a brief overview of some technical aspects of the
-supported input shapers. The table below shows some (usually approximate)
-parameters of each shaper.
+supported input shapers. Input shapers used in Klipper are rather standard,
+with the exception of MZV, and one can find more in-depth overview in
+the articles describing the corresponding shapers.
+
+MZV stands for a Modified-ZV input shaper. The classic definition of ZV shaper
+assumes the duration Ts equal to 1/2 of the damped period of oscillations Td and
+has two pulses. However, ZV input shaper has a generalized form for an arbitrary
+duration in the range (0, Td] with three pulses (Specified-Duration ZV, see also
+SNA-ZV), with a negative middle pulse if Ts < Td and a positive one if Ts > Td.
+The MZV shaper was designed as an intermediate shaper between ZV and ZVD,
+offering better vibrations suppression than ZV when the determined (measured)
+shaper parameters deviate from the ones actually required by the printer,
+and smaller smoothing than ZVD. Effectively, it is a SD-ZV shaper with the
+specific duration Ts = 3/4 Td, exactly between ZV (Ts = 1/2 Td) and
+ZVD (Ts = Td), and it happens to work well for many real-life 3D printers.
+
+The table below shows some (usually approximate) parameters of each shaper.
 
 | Input <br> shaper | Shaper <br> duration | Vibration reduction 20x <br> (5% vibration tolerance) | Vibration reduction 10x <br> (10% vibration tolerance) |
 |:--:|:--:|:--:|:--:|
