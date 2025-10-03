@@ -1618,13 +1618,13 @@ DECL_COMMAND macro in the micro-controller code).</p>
   (<strong>klippy/reactor.py</strong>) and most high-level actions originate from
   IO and timer event callbacks from that reactor.</li>
 <li>A thread for writing messages to the log so that the other threads
-  do not block on log writes. This thread resides entirely in the
-  <strong>klippy/queuelogger.py</strong> code and its operation is generally not
+  do not block on log writes. This thread resides in the
+  <strong>klippy/queuelogger.py</strong> code and its multi-threaded nature is not
   exposed to the main Python thread.</li>
 <li>A thread per micro-controller that performs the low-level reading
   and writing of messages to that micro-controller. It resides in the
-  <strong>klippy/chelper/serialqueue.c</strong> C code and its operation is
-  generally not exposed to the Python code.</li>
+  <strong>klippy/chelper/serialqueue.c</strong> C code and its multi-threaded
+  nature is not exposed to the Python code.</li>
 <li>A thread per micro-controller for processing messages received from
   that micro-controller in the Python code. This thread is created in
   <strong>klippy/serialhdl.py</strong>. Care must be taken in Python callbacks
@@ -1632,8 +1632,8 @@ DECL_COMMAND macro in the micro-controller code).</p>
   the main Python thread.</li>
 <li>A thread per stepper motor that calculates the timing of stepper
   motor step pulses and compresses those times. This thread resides in
-  the <strong>klippy/chelper/steppersync.c</strong> C code and its operation is
-  generally not exposed to the Python code.</li>
+  the <strong>klippy/chelper/steppersync.c</strong> C code and its multi-threaded
+  nature is not exposed to the Python code.</li>
 </ul>
 <h2 id="code-flow-of-a-move-command">Code flow of a move command<a class="headerlink" href="#code-flow-of-a-move-command" title="Permanent link">&para;</a></h2>
 <p>A typical printer movement starts when a "G1" command is sent to the
