@@ -331,6 +331,9 @@ class ToolHead:
             self.printer.invoke_shutdown("Exception in priming_handler")
         return self.reactor.NEVER
     def _check_priming_state(self, eventtime):
+        if self.lookahead.is_empty():
+            # In "NeedPrime" state and can remain there
+            return
         est_print_time = self.mcu.estimated_print_time(eventtime)
         if self.check_stall_time:
             # Was in "NeedPrime" state and got there from idle input
