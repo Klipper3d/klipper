@@ -8,6 +8,10 @@ All dates in this document are approximate.
 
 ## Changes
 
+20251010: During normal printing the command processing will now
+attempt to stay one second ahead of printer movement (reduced from two
+seconds previously).
+
 20251003: Support for the undocumented `max_stepper_error` option in
 the `[printer]` config section has been removed.
 
