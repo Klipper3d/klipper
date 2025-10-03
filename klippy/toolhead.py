@@ -126,6 +126,8 @@ class LookAheadQueue:
         self.junction_flush = LOOKAHEAD_FLUSH_TIME
     def set_flush_time(self, flush_time):
         self.junction_flush = flush_time
+    def is_empty(self):
+        return not self.queue
     def get_last(self):
         if self.queue:
             return self.queue[-1]
@@ -476,8 +478,7 @@ class ToolHead:
             self.print_time, max(buffer_time, 0.), self.print_stall)
     def check_busy(self, eventtime):
         est_print_time = self.mcu.estimated_print_time(eventtime)
-        lookahead_empty = not self.lookahead.queue
-        return self.print_time, est_print_time, lookahead_empty
+        return self.print_time, est_print_time, self.lookahead.is_empty()
     def get_status(self, eventtime):
         print_time = self.print_time
         estimated_print_time = self.mcu.estimated_print_time(eventtime)
