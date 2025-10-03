@@ -115,13 +115,13 @@ There are several threads in the Klipper host code:
   (**klippy/reactor.py**) and most high-level actions originate from
   IO and timer event callbacks from that reactor.
 * A thread for writing messages to the log so that the other threads
-  do not block on log writes. This thread resides entirely in the
-  **klippy/queuelogger.py** code and its operation is generally not
+  do not block on log writes. This thread resides in the
+  **klippy/queuelogger.py** code and its multi-threaded nature is not
   exposed to the main Python thread.
 * A thread per micro-controller that performs the low-level reading
   and writing of messages to that micro-controller. It resides in the
-  **klippy/chelper/serialqueue.c** C code and its operation is
-  generally not exposed to the Python code.
+  **klippy/chelper/serialqueue.c** C code and its multi-threaded
+  nature is not exposed to the Python code.
 * A thread per micro-controller for processing messages received from
   that micro-controller in the Python code. This thread is created in
   **klippy/serialhdl.py**. Care must be taken in Python callbacks
@@ -129,8 +129,8 @@ There are several threads in the Klipper host code:
   the main Python thread.
 * A thread per stepper motor that calculates the timing of stepper
   motor step pulses and compresses those times. This thread resides in
-  the **klippy/chelper/steppersync.c** C code and its operation is
-  generally not exposed to the Python code.
+  the **klippy/chelper/steppersync.c** C code and its multi-threaded
+  nature is not exposed to the Python code.
 
 ## Code flow of a move command
 
