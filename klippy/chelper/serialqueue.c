@@ -17,6 +17,7 @@
 #include <pthread.h> // pthread_mutex_lock
 #include <stddef.h> // offsetof
 #include <stdint.h> // uint64_t
+#include <stdatomic.h> // atomic_int
 #include <stdio.h> // snprintf
 #include <stdlib.h> // malloc
 #include <string.h> // memset
@@ -30,8 +31,21 @@
 #include "serialqueue.h" // struct queue_message
 
 struct command_queue {
-    struct list_head upcoming_queue, ready_queue;
-    struct list_node node;
+    // Ready queue managed by the serial reactor thread
+    struct list_head ready_queue;
+    struct list_node rnode;
+    // shared between external callers and serial reactor
+    pthread_mutex_t lock; // protects variables below
+    struct list_head upcoming_queue;
+    struct list_node pnode;
+};
+
+struct receiver {
+    pthread_mutex_t lock;
+    pthread_cond_t cond;
+    int waiting;
+    struct list_head queue;
+    struct list_head old_receive;
 };
 
 struct serialqueue {
@@ -45,9 +59,9 @@ struct serialqueue {
     // Threading
     char name[16];
     pthread_t tid;
+    // SerialHDL reader
+    struct receiver receiver;
     pthread_mutex_t lock; // protects variables below
-    pthread_cond_t cond;
-    int receive_waiting;
     // Baud / clock tracking
     int receive_window;
     double bittime_adjust, idle_time;
@@ -60,17 +74,18 @@ struct serialqueue {
     double srtt, rttvar, rto;
     // Pending transmission message queues
     struct list_head pending_queues;
-    int ready_bytes, upcoming_bytes, need_ack_bytes, last_ack_bytes;
+    atomic_int upcoming_bytes;
+    struct list_head ready_queues;
+    int ready_bytes;
+    int need_ack_bytes, last_ack_bytes;
     uint64_t need_kick_clock;
     struct list_head notify_queue;
     double last_write_fail_time;
-    // Received messages
-    struct list_head receive_queue;
     // Fastreader support
     pthread_mutex_t fast_reader_dispatch_lock;
     struct list_head fast_readers;
     // Debugging
-    struct list_head old_sent, old_receive;
+    struct list_head old_sent;
     // Stats
     uint32_t bytes_write, bytes_read, bytes_retransmit, bytes_invalid;
 };
@@ -121,11 +136,11 @@ debug_queue_add(struct list_head *root, struct queue_message *qm)
 
 // Wake up the receiver thread if it is waiting
 static void
-check_wake_receive(struct serialqueue *sq)
+check_wake_receive(struct receiver *receiver)
 {
-    if (sq->receive_waiting) {
-        sq->receive_waiting = 0;
-        pthread_cond_signal(&sq->cond);
+    if (receiver->waiting) {
+        receiver->waiting = 0;
+        pthread_cond_signal(&receiver->cond);
     }
 }
 
@@ -239,7 +254,9 @@ handle_message(struct serialqueue *sq, double eventtime, int len)
     sq->bytes_read += len;
 
     // Check for pending messages on notify_queue
-    int must_wake = 0;
+
+    struct list_head received;
+    list_init(&received);
     while (!list_empty(&sq->notify_queue)) {
         struct queue_message *qm = list_first_entry(
             &sq->notify_queue, struct queue_message, node);
@@ -251,8 +268,7 @@ handle_message(struct serialqueue *sq, double eventtime, int len)
         qm->len = 0;
         qm->sent_time = sq->last_receive_sent_time;
         qm->receive_time = eventtime;
-        list_add_tail(&qm->node, &sq->receive_queue);
-        must_wake = 1;
+        list_add_tail(&qm->node, &received);
     }
 
     // Process message
@@ -270,8 +286,14 @@ handle_message(struct serialqueue *sq, double eventtime, int len)
                          ? sq->last_receive_sent_time : 0.);
         qm->receive_time = get_monotonic(); // must be time post read()
         qm->receive_time -= calculate_bittime(sq, len);
-        list_add_tail(&qm->node, &sq->receive_queue);
-        must_wake = 1;
+        list_add_tail(&qm->node, &received);
+    }
+
+    if (!list_empty(&received)) {
+        pthread_mutex_lock(&sq->receiver.lock);
+        list_join_tail(&received, &sq->receiver.queue);
+        check_wake_receive(&sq->receiver);
+        pthread_mutex_unlock(&sq->receiver.lock);
     }
 
     // Check fast readers
@@ -282,17 +304,12 @@ handle_message(struct serialqueue *sq, double eventtime, int len)
                       , fr->prefix, fr->prefix_len) != 0)
             continue;
         // Release main lock and invoke callback
-        pthread_mutex_lock(&sq->fast_reader_dispatch_lock);
-        if (must_wake)
-            check_wake_receive(sq);
         pthread_mutex_unlock(&sq->lock);
+        pthread_mutex_lock(&sq->fast_reader_dispatch_lock);
         fr->func(fr, sq->input_buf, len);
         pthread_mutex_unlock(&sq->fast_reader_dispatch_lock);
         return;
     }
-
-    if (must_wake)
-        check_wake_receive(sq);
     pthread_mutex_unlock(&sq->lock);
 }
 
@@ -452,23 +469,23 @@ build_and_send_command(struct serialqueue *sq, uint8_t *buf, int pending
         uint64_t min_clock = MAX_CLOCK;
         struct command_queue *q, *cq = NULL;
         struct queue_message *qm = NULL;
-        list_for_each_entry(q, &sq->pending_queues, node) {
-            if (!list_empty(&q->ready_queue)) {
-                struct queue_message *m = list_first_entry(
-                    &q->ready_queue, struct queue_message, node);
-                if (m->req_clock < min_clock) {
-                    min_clock = m->req_clock;
-                    cq = q;
-                    qm = m;
-                }
+        list_for_each_entry(q, &sq->ready_queues, rnode) {
+            struct queue_message *m = list_first_entry(
+                &q->ready_queue, struct queue_message, node);
+            if (m->req_clock < min_clock) {
+                min_clock = m->req_clock;
+                cq = q;
+                qm = m;
             }
         }
         // Append message to outgoing command
         if (len + qm->len > MESSAGE_MAX - MESSAGE_TRAILER_SIZE)
             break;
         list_del(&qm->node);
-        if (list_empty(&cq->ready_queue) && list_empty(&cq->upcoming_queue))
-            list_del(&cq->node);
+        if (list_empty(&cq->ready_queue)) {
+            list_del(&cq->rnode);
+            list_mark_orphan(&cq->rnode);
+        }
         memcpy(&buf[len], qm->msg, qm->len);
         len += qm->len;
         sq->ready_bytes -= qm->len;
@@ -530,9 +547,10 @@ check_send_command(struct serialqueue *sq, int pending, double eventtime)
     idletime += calculate_bittime(sq, pending + MESSAGE_MIN);
     uint64_t ack_clock = clock_from_time(&sq->ce, idletime);
     uint64_t min_stalled_clock = MAX_CLOCK, min_ready_clock = MAX_CLOCK;
-    struct command_queue *cq;
-    list_for_each_entry(cq, &sq->pending_queues, node) {
+    struct command_queue *cq, *_next_cq;
+    list_for_each_entry_safe(cq, _next_cq, &sq->pending_queues, pnode) {
         // Move messages from the upcoming_queue to the ready_queue
+        pthread_mutex_lock(&cq->lock);
         while (!list_empty(&cq->upcoming_queue)) {
             struct queue_message *qm = list_first_entry(
                 &cq->upcoming_queue, struct queue_message, node);
@@ -543,9 +561,23 @@ check_send_command(struct serialqueue *sq, int pending, double eventtime)
             }
             list_del(&qm->node);
             list_add_tail(&qm->node, &cq->ready_queue);
-            sq->upcoming_bytes -= qm->len;
+            atomic_fetch_add(&sq->upcoming_bytes, -qm->len);
             sq->ready_bytes += qm->len;
         }
+        // Remove cq from the list if it is now empty
+        if (list_empty(&cq->upcoming_queue)) {
+            list_del(&cq->pnode);
+            list_mark_orphan(&cq->pnode);
+        }
+        pthread_mutex_unlock(&cq->lock);
+        // Add to ready queues
+        if (!list_empty(&cq->ready_queue) && list_is_orphan(&cq->rnode)) {
+            list_unmark_orphan(&cq->rnode);
+            list_add_tail(&cq->rnode, &sq->ready_queues);
+        }
+    }
+    // Check if it is still needed to send messages from the ready_queues
+    list_for_each_entry(cq, &sq->ready_queues, rnode) {
         // Update min_ready_clock
         if (!list_empty(&cq->ready_queue)) {
             struct queue_message *qm = list_first_entry(
@@ -616,9 +648,9 @@ background_thread(void *data)
     set_thread_name(sq->name);
     pollreactor_run(sq->pr);
 
-    pthread_mutex_lock(&sq->lock);
-    check_wake_receive(sq);
-    pthread_mutex_unlock(&sq->lock);
+    pthread_mutex_lock(&sq->receiver.lock);
+    check_wake_receive(&sq->receiver);
+    pthread_mutex_unlock(&sq->receiver.lock);
 
     return NULL;
 }
@@ -665,22 +697,27 @@ serialqueue_alloc(int serial_fd, char serial_fd_type, int client_id
     // Queues
     sq->need_kick_clock = MAX_CLOCK;
     list_init(&sq->pending_queues);
+    list_init(&sq->ready_queues);
     list_init(&sq->sent_queue);
-    list_init(&sq->receive_queue);
+    list_init(&sq->receiver.queue);
     list_init(&sq->notify_queue);
     list_init(&sq->fast_readers);
+    atomic_init(&sq->upcoming_bytes, 0);
 
     // Debugging
     list_init(&sq->old_sent);
-    list_init(&sq->old_receive);
+    list_init(&sq->receiver.old_receive);
     debug_queue_alloc(&sq->old_sent, DEBUG_QUEUE_SENT);
-    debug_queue_alloc(&sq->old_receive, DEBUG_QUEUE_RECEIVE);
+    debug_queue_alloc(&sq->receiver.old_receive, DEBUG_QUEUE_RECEIVE);
 
     // Thread setup
     ret = pthread_mutex_init(&sq->lock, NULL);
     if (ret)
         goto fail;
-    ret = pthread_cond_init(&sq->cond, NULL);
+    ret = pthread_mutex_init(&sq->receiver.lock, NULL);
+    if (ret)
+        goto fail;
+    ret = pthread_cond_init(&sq->receiver.cond, NULL);
     if (ret)
         goto fail;
     ret = pthread_mutex_init(&sq->fast_reader_dispatch_lock, NULL);
@@ -718,16 +755,27 @@ serialqueue_free(struct serialqueue *sq)
         serialqueue_exit(sq);
     pthread_mutex_lock(&sq->lock);
     message_queue_free(&sq->sent_queue);
-    message_queue_free(&sq->receive_queue);
+    pthread_mutex_lock(&sq->receiver.lock);
+    message_queue_free(&sq->receiver.queue);
+    message_queue_free(&sq->receiver.old_receive);
+    pthread_mutex_unlock(&sq->receiver.lock);
     message_queue_free(&sq->notify_queue);
     message_queue_free(&sq->old_sent);
-    message_queue_free(&sq->old_receive);
+    while (!list_empty(&sq->ready_queues)) {
+        struct command_queue* cq = list_first_entry(
+            &sq->ready_queues, struct command_queue, rnode);
+        list_del(&cq->rnode);
+        list_mark_orphan(&cq->rnode);
+        message_queue_free(&cq->ready_queue);
+    }
     while (!list_empty(&sq->pending_queues)) {
         struct command_queue *cq = list_first_entry(
-            &sq->pending_queues, struct command_queue, node);
-        list_del(&cq->node);
-        message_queue_free(&cq->ready_queue);
+            &sq->pending_queues, struct command_queue, pnode);
+        pthread_mutex_lock(&cq->lock);
+        list_del(&cq->pnode);
+        list_mark_orphan(&cq->pnode);
         message_queue_free(&cq->upcoming_queue);
+        pthread_mutex_unlock(&cq->lock);
     }
     pthread_mutex_unlock(&sq->lock);
     pollreactor_free(sq->pr);
@@ -741,7 +789,10 @@ serialqueue_alloc_commandqueue(void)
     struct command_queue *cq = malloc(sizeof(*cq));
     memset(cq, 0, sizeof(*cq));
     list_init(&cq->ready_queue);
+    list_mark_orphan(&cq->rnode);
+    pthread_mutex_init(&cq->lock, NULL);
     list_init(&cq->upcoming_queue);
+    list_mark_orphan(&cq->pnode);
     return cq;
 }
 
@@ -751,6 +802,10 @@ serialqueue_free_commandqueue(struct command_queue *cq)
 {
     if (!cq)
         return;
+    if (!list_is_orphan(&cq->rnode) || !list_is_orphan(&cq->pnode)) {
+        errorf("Memory leak! Can't free commandqueue in use");
+        return;
+    }
     if (!list_empty(&cq->ready_queue) || !list_empty(&cq->upcoming_queue)) {
         errorf("Memory leak! Can't free non-empty commandqueue");
         return;
@@ -787,6 +842,7 @@ serialqueue_send_batch(struct serialqueue *sq, struct command_queue *cq
     // Make sure min_clock is set in list and calculate total bytes
     int len = 0;
     struct queue_message *qm;
+    uint64_t min_clock;
     list_for_each_entry(qm, msgs, node) {
         if (qm->min_clock + (1LL<<31) < qm->req_clock
             && qm->req_clock != BACKGROUND_PRIORITY_CLOCK)
@@ -797,18 +853,30 @@ serialqueue_send_batch(struct serialqueue *sq, struct command_queue *cq
         return;
     qm = list_first_entry(msgs, struct queue_message, node);
 
+    int mustadd = 0;
+    min_clock = qm->min_clock;
     // Add list to cq->upcoming_queue
-    pthread_mutex_lock(&sq->lock);
-    if (list_empty(&cq->ready_queue) && list_empty(&cq->upcoming_queue))
-        list_add_tail(&cq->node, &sq->pending_queues);
-    list_join_tail(msgs, &cq->upcoming_queue);
-    sq->upcoming_bytes += len;
-    int mustwake = 0;
-    if (qm->min_clock < sq->need_kick_clock) {
-        sq->need_kick_clock = 0;
-        mustwake = 1;
+    pthread_mutex_lock(&cq->lock);
+    if (list_is_orphan(&cq->pnode)) {
+        mustadd = 1;
+        list_unmark_orphan(&cq->pnode);
     }
-    pthread_mutex_unlock(&sq->lock);
+    // Add list to cq->upcoming_queue
+    list_join_tail(msgs, &cq->upcoming_queue);
+    atomic_fetch_add(&sq->upcoming_bytes, len);
+    pthread_mutex_unlock(&cq->lock);
+
+    int mustwake = 0;
+    if (mustadd) {
+        pthread_mutex_lock(&sq->lock);
+        list_add_tail(&cq->pnode, &sq->pending_queues);
+        // Queue was empty and was not accounted for min_stalled_clock
+        if (min_clock < sq->need_kick_clock) {
+            sq->need_kick_clock = 0;
+            mustwake = 1;
+        }
+        pthread_mutex_unlock(&sq->lock);
+    }
 
     // Wake the background thread if necessary
     if (mustwake)
@@ -845,20 +913,21 @@ serialqueue_send(struct serialqueue *sq, struct command_queue *cq, uint8_t *msg
 void __visible
 serialqueue_pull(struct serialqueue *sq, struct pull_queue_message *pqm)
 {
-    pthread_mutex_lock(&sq->lock);
+    struct receiver *receiver = &sq->receiver;
+    pthread_mutex_lock(&receiver->lock);
     // Wait for message to be available
-    while (list_empty(&sq->receive_queue)) {
+    while (list_empty(&receiver->queue)) {
         if (pollreactor_is_exit(sq->pr))
             goto exit;
-        sq->receive_waiting = 1;
-        int ret = pthread_cond_wait(&sq->cond, &sq->lock);
+        receiver->waiting = 1;
+        int ret = pthread_cond_wait(&receiver->cond, &receiver->lock);
         if (ret)
             report_errno("pthread_cond_wait", ret);
     }
 
     // Remove message from queue
     struct queue_message *qm = list_first_entry(
-        &sq->receive_queue, struct queue_message, node);
+        &receiver->queue, struct queue_message, node);
     list_del(&qm->node);
 
     // Copy message
@@ -868,16 +937,16 @@ serialqueue_pull(struct serialqueue *sq, struct pull_queue_message *pqm)
     pqm->receive_time = qm->receive_time;
     pqm->notify_id = qm->notify_id;
     if (qm->len)
-        debug_queue_add(&sq->old_receive, qm);
+        debug_queue_add(&receiver->old_receive, qm);
     else
         message_free(qm);
 
-    pthread_mutex_unlock(&sq->lock);
+    pthread_mutex_unlock(&receiver->lock);
     return;
 
 exit:
     pqm->len = -1;
-    pthread_mutex_unlock(&sq->lock);
+    pthread_mutex_unlock(&receiver->lock);
 }
 
 void __visible
@@ -950,18 +1019,28 @@ serialqueue_extract_old(struct serialqueue *sq, int sentq
                         , struct pull_queue_message *q, int max)
 {
     int count = sentq ? DEBUG_QUEUE_SENT : DEBUG_QUEUE_RECEIVE;
-    struct list_head *rootp = sentq ? &sq->old_sent : &sq->old_receive;
+    struct list_head *rootp;
+    rootp = sentq ? &sq->old_sent : &sq->receiver.old_receive;
     struct list_head replacement, current;
     list_init(&replacement);
     debug_queue_alloc(&replacement, count);
     list_init(&current);
 
     // Atomically replace existing debug list with new zero'd list
-    pthread_mutex_lock(&sq->lock);
-    list_join_tail(rootp, &current);
-    list_init(rootp);
-    list_join_tail(&replacement, rootp);
-    pthread_mutex_unlock(&sq->lock);
+    if (rootp == &sq->receiver.old_receive) {
+        pthread_mutex_lock(&sq->receiver.lock);
+        list_join_tail(rootp, &current);
+        list_init(rootp);
+        list_join_tail(&replacement, rootp);
+        pthread_mutex_unlock(&sq->receiver.lock);
+    } else {
+        pthread_mutex_lock(&sq->lock);
+        list_join_tail(rootp, &current);
+        list_init(rootp);
+        list_join_tail(&replacement, rootp);
+        pthread_mutex_unlock(&sq->lock);
+    }
+
 
     // Walk the debug list
     int pos = 0;
