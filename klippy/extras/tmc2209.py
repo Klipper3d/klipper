@@ -65,6 +65,8 @@ class TMC2209:
         self.fields.set_field("senddelay", 2) # Avoid tx errors on shared uart
         # Allow virtual pins to be created
         tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
+        # Passibe braking command
+        tmc.TMCPassiveBrake(config, self.mcu_tmc)
         # Register commands
         current_helper = tmc2130.TMCCurrentHelper(config, self.mcu_tmc)
         cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
