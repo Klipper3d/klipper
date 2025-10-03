@@ -303,6 +303,13 @@ class ToolHead:
         self.check_stall_time = 0.
         if is_runout and prev_print_time != self.print_time:
             self.check_stall_time = self.print_time
+    def _handle_step_flush(self, flush_time, step_gen_time):
+        if self.special_queuing_state:
+            return
+        # In "main" state - flush lookahead if buffer runs low
+        kin_flush_delay = self.motion_queuing.get_kin_flush_delay()
+        if step_gen_time >= self.print_time - kin_flush_delay - 0.001:
+            self._flush_lookahead(is_runout=True)
     def flush_step_generation(self):
         self._flush_lookahead()
         self.motion_queuing.flush_all_steps()
@@ -313,6 +320,16 @@ class ToolHead:
         else:
             self._process_lookahead()
         return self.print_time
+    def _priming_handler(self, eventtime):
+        self.reactor.unregister_timer(self.priming_timer)
+        self.priming_timer = None
+        try:
+            if self.special_queuing_state == "Priming":
+                self._flush_lookahead(is_runout=True)
+        except:
+            logging.exception("Exception in priming_handler")
+            self.printer.invoke_shutdown("Exception in priming_handler")
+        return self.reactor.NEVER
     def _check_priming_state(self, eventtime):
         est_print_time = self.mcu.estimated_print_time(eventtime)
         if self.check_stall_time:
@@ -349,23 +366,6 @@ class ToolHead:
         if not self.special_queuing_state:
             # In main state - defer pause checking until needed
             self.need_check_pause = est_print_time + BUFFER_TIME_HIGH
-    def _priming_handler(self, eventtime):
-        self.reactor.unregister_timer(self.priming_timer)
-        self.priming_timer = None
-        try:
-            if self.special_queuing_state == "Priming":
-                self._flush_lookahead(is_runout=True)
-        except:
-            logging.exception("Exception in priming_handler")
-            self.printer.invoke_shutdown("Exception in priming_handler")
-        return self.reactor.NEVER
-    def _handle_step_flush(self, flush_time, step_gen_time):
-        if self.special_queuing_state:
-            return
-        # In "main" state - flush lookahead if buffer runs low
-        kin_flush_delay = self.motion_queuing.get_kin_flush_delay()
-        if step_gen_time >= self.print_time - kin_flush_delay - 0.001:
-            self._flush_lookahead(is_runout=True)
     # Movement commands
     def get_position(self):
         return list(self.commanded_pos)
