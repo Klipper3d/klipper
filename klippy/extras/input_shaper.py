@@ -11,34 +11,39 @@ from . import shaper_defs
 class InputShaperParams:
     def __init__(self, axis, config):
         self.axis = axis
-        self.shapers = {s.name : s.init_func for s in shaper_defs.INPUT_SHAPERS}
+        self.shapers = {s.name : s for s in shaper_defs.INPUT_SHAPERS}
         shaper_type = config.get('shaper_type', 'mzv')
         self.shaper_type = config.get('shaper_type_' + axis, shaper_type)
         if self.shaper_type not in self.shapers:
             raise config.error(
                     'Unsupported shaper type: %s' % (self.shaper_type,))
-        self.damping_ratio = config.getfloat('damping_ratio_' + axis,
-                                             shaper_defs.DEFAULT_DAMPING_RATIO,
-                                             minval=0., maxval=1.)
+        self.damping_ratio = config.getfloat(
+                'damping_ratio_' + axis,
+                shaper_defs.DEFAULT_DAMPING_RATIO, minval=0.,
+                maxval=self.shapers[self.shaper_type].max_damping_ratio)
         self.shaper_freq = config.getfloat('shaper_freq_' + axis, 0., minval=0.)
     def update(self, gcmd):
         axis = self.axis.upper()
-        self.damping_ratio = gcmd.get_float('DAMPING_RATIO_' + axis,
-                                            self.damping_ratio,
-                                            minval=0., maxval=1.)
-        self.shaper_freq = gcmd.get_float('SHAPER_FREQ_' + axis,
-                                          self.shaper_freq, minval=0.)
         shaper_type = gcmd.get('SHAPER_TYPE', None)
         if shaper_type is None:
             shaper_type = gcmd.get('SHAPER_TYPE_' + axis, self.shaper_type)
         if shaper_type.lower() not in self.shapers:
             raise gcmd.error('Unsupported shaper type: %s' % (shaper_type,))
+        damping_ratio = gcmd.get_float('DAMPING_RATIO_' + axis,
+                                       self.damping_ratio, minval=0.)
+        if damping_ratio > self.shapers[shaper_type.lower()].max_damping_ratio:
+            raise gcmd.error(
+                    'Too high value of damping_ratio=%.3f for shaper %s'
+                    ' on axis %c' % (damping_ratio, shaper_type, axis))
+        self.shaper_freq = gcmd.get_float('SHAPER_FREQ_' + axis,
+                                          self.shaper_freq, minval=0.)
+        self.damping_ratio = damping_ratio
         self.shaper_type = shaper_type.lower()
     def get_shaper(self):
         if not self.shaper_freq:
             A, T = shaper_defs.get_none_shaper()
         else:
-            A, T = self.shapers[self.shaper_type](
+            A, T = self.shapers[self.shaper_type].init_func(
                     self.shaper_freq, self.damping_ratio)
         return len(A), A, T
     def get_status(self):

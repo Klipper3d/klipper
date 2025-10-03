@@ -9,7 +9,8 @@ SHAPER_VIBRATION_REDUCTION=20.
 DEFAULT_DAMPING_RATIO = 0.1
 
 InputShaperCfg = collections.namedtuple(
-        'InputShaperCfg', ('name', 'init_func', 'min_freq'))
+        'InputShaperCfg',
+        ('name', 'init_func', 'min_freq', 'max_damping_ratio'))
 
 def get_none_shaper():
     return ([], [])
@@ -105,10 +106,16 @@ def get_3hump_ei_shaper(shaper_freq, damping_ratio):
 
 # min_freq for each shaper is chosen to have projected max_accel ~= 1500
 INPUT_SHAPERS = [
-    InputShaperCfg('zv', get_zv_shaper, min_freq=21.),
-    InputShaperCfg('mzv', get_mzv_shaper, min_freq=23.),
-    InputShaperCfg('zvd', get_zvd_shaper, min_freq=29.),
-    InputShaperCfg('ei', get_ei_shaper, min_freq=29.),
-    InputShaperCfg('2hump_ei', get_2hump_ei_shaper, min_freq=39.),
-    InputShaperCfg('3hump_ei', get_3hump_ei_shaper, min_freq=48.),
+    InputShaperCfg(name='zv', init_func=get_zv_shaper,
+                   min_freq=21., max_damping_ratio=0.99),
+    InputShaperCfg(name='mzv', init_func=get_mzv_shaper,
+                   min_freq=23., max_damping_ratio=0.99),
+    InputShaperCfg(name='zvd', init_func=get_zvd_shaper,
+                   min_freq=29., max_damping_ratio=0.99),
+    InputShaperCfg(name='ei', init_func=get_ei_shaper,
+                   min_freq=29., max_damping_ratio=0.4),
+    InputShaperCfg(name='2hump_ei', init_func=get_2hump_ei_shaper,
+                   min_freq=39., max_damping_ratio=0.3),
+    InputShaperCfg(name='3hump_ei', init_func=get_3hump_ei_shaper,
+                   min_freq=48., max_damping_ratio=0.2),
 ]
