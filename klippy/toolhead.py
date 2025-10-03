@@ -313,36 +313,39 @@ class ToolHead:
         else:
             self._process_lookahead()
         return self.print_time
+    def _check_priming_state(self, eventtime):
+        est_print_time = self.mcu.estimated_print_time(eventtime)
+        if self.check_stall_time:
+            # Was in "NeedPrime" state and got there from idle input
+            if est_print_time < self.check_stall_time:
+                self.print_stall += 1
+            self.check_stall_time = 0.
+        # Transition from "NeedPrime"/"Priming" state to "Priming" state
+        self.special_queuing_state = "Priming"
+        self.need_check_pause = -1.
+        if self.priming_timer is None:
+            self.priming_timer = self.reactor.register_timer(
+                self._priming_handler)
+        buffer_time = self.print_time - est_print_time
+        wtime = eventtime + max(0.100, buffer_time - BUFFER_TIME_HIGH)
+        self.reactor.update_timer(self.priming_timer, wtime)
     def _check_pause(self):
         eventtime = self.reactor.monotonic()
-        est_print_time = self.mcu.estimated_print_time(eventtime)
-        buffer_time = self.print_time - est_print_time
         if self.special_queuing_state:
-            if self.check_stall_time:
-                # Was in "NeedPrime" state and got there from idle input
-                if est_print_time < self.check_stall_time:
-                    self.print_stall += 1
-                self.check_stall_time = 0.
-            # Transition from "NeedPrime"/"Priming" state to "Priming" state
-            self.special_queuing_state = "Priming"
-            self.need_check_pause = -1.
-            if self.priming_timer is None:
-                self.priming_timer = self.reactor.register_timer(
-                    self._priming_handler)
-            wtime = eventtime + max(0.100, buffer_time - BUFFER_TIME_HIGH)
-            self.reactor.update_timer(self.priming_timer, wtime)
+            # In "NeedPrime"/"Priming" state - update priming expiration timer
+            self._check_priming_state(eventtime)
         # Check if there are lots of queued moves and pause if so
         while 1:
+            est_print_time = self.mcu.estimated_print_time(eventtime)
+            buffer_time = self.print_time - est_print_time
             pause_time = buffer_time - BUFFER_TIME_HIGH
             if pause_time <= 0.:
                 break
             if not self.can_pause:
                 self.need_check_pause = self.reactor.NEVER
                 return
-            eventtime = self.reactor.pause(
-                eventtime + max(.005, min(1., pause_time)))
-            est_print_time = self.mcu.estimated_print_time(eventtime)
-            buffer_time = self.print_time - est_print_time
+            pause_time = max(.005, min(1., pause_time))
+            eventtime = self.reactor.pause(eventtime + pause_time)
         if not self.special_queuing_state:
             # In main state - defer pause checking until needed
             self.need_check_pause = est_print_time + BUFFER_TIME_HIGH
