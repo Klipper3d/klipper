@@ -41,6 +41,7 @@ class MainCarriage:
         if axis_name is None:
             if name in valid_axes:
                 axis_name = name
+                config.deprecate('axis', None)
                 logging.warning("Option 'axis' must be provided in section '%s'"
                                 % config.get_name())
             else:
