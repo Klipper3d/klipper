@@ -35,11 +35,13 @@ class MainCarriage:
     def __init__(self, config):
         self.rail = stepper.GenericPrinterRail(config)
         name = self.rail.get_name(short=True)
+        # TODO: Deprecate inference of axis via carriage name
         axis_name = config.get('axis', None)
         valid_axes = ['x', 'y', 'z']
         if axis_name is None:
             if name in valid_axes:
                 axis_name = name
+                config.deprecate('axis', value=None)
                 logging.warning("Option 'axis' must be provided in section '%s'"
                                 % config.get_name())
             else:

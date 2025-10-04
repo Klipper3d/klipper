@@ -11,6 +11,7 @@ All dates in this document are approximate.
 20251023: An option `axis` has been added to `[carriage <name>]` sections
 for `generic_cartesian` kinematics, allowing arbitrary names for primary
 carriages. Users are encouraged to explicitly specify `axis` option now.
+Inferring a carriage axis from a carriage name has been deprecated.
 
 20251010: During normal printing the command processing will now
 attempt to stay one second ahead of printer movement (reduced from two

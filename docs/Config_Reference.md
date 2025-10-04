@@ -748,7 +748,7 @@ Then a user must define three carriages for X, Y, and Z axes, e.g.:
 [carriage carriage_x]
 axis:
 #   Axis of a carriage, either x, y, or z. This parameter must be provided,
-#   unless a carriage name is x, y, or z itself.
+#   and inferring it from a carriage name (x, y, or z) is deprecated.
 endstop_pin:
 #   Endstop switch detection pin. If this endstop pin is on a
 #   different mcu than the stepper motor(s) moving this carriage,
