@@ -126,6 +126,8 @@ class LookAheadQueue:
         self.junction_flush = LOOKAHEAD_FLUSH_TIME
     def set_flush_time(self, flush_time):
         self.junction_flush = flush_time
+    def is_empty(self):
+        return not self.queue
     def get_last(self):
         if self.queue:
             return self.queue[-1]
@@ -301,6 +303,13 @@ class ToolHead:
         self.check_stall_time = 0.
         if is_runout and prev_print_time != self.print_time:
             self.check_stall_time = self.print_time
+    def _handle_step_flush(self, flush_time, step_gen_time):
+        if self.special_queuing_state:
+            return
+        # In "main" state - flush lookahead if buffer runs low
+        kin_flush_delay = self.motion_queuing.get_kin_flush_delay()
+        if step_gen_time >= self.print_time - kin_flush_delay - 0.001:
+            self._flush_lookahead(is_runout=True)
     def flush_step_generation(self):
         self._flush_lookahead()
         self.motion_queuing.flush_all_steps()
@@ -311,39 +320,6 @@ class ToolHead:
         else:
             self._process_lookahead()
         return self.print_time
-    def _check_pause(self):
-        eventtime = self.reactor.monotonic()
-        est_print_time = self.mcu.estimated_print_time(eventtime)
-        buffer_time = self.print_time - est_print_time
-        if self.special_queuing_state:
-            if self.check_stall_time:
-                # Was in "NeedPrime" state and got there from idle input
-                if est_print_time < self.check_stall_time:
-                    self.print_stall += 1
-                self.check_stall_time = 0.
-            # Transition from "NeedPrime"/"Priming" state to "Priming" state
-            self.special_queuing_state = "Priming"
-            self.need_check_pause = -1.
-            if self.priming_timer is None:
-                self.priming_timer = self.reactor.register_timer(
-                    self._priming_handler)
-            wtime = eventtime + max(0.100, buffer_time - BUFFER_TIME_HIGH)
-            self.reactor.update_timer(self.priming_timer, wtime)
-        # Check if there are lots of queued moves and pause if so
-        while 1:
-            pause_time = buffer_time - BUFFER_TIME_HIGH
-            if pause_time <= 0.:
-                break
-            if not self.can_pause:
-                self.need_check_pause = self.reactor.NEVER
-                return
-            eventtime = self.reactor.pause(
-                eventtime + max(.005, min(1., pause_time)))
-            est_print_time = self.mcu.estimated_print_time(eventtime)
-            buffer_time = self.print_time - est_print_time
-        if not self.special_queuing_state:
-            # In main state - defer pause checking until needed
-            self.need_check_pause = est_print_time + BUFFER_TIME_HIGH
     def _priming_handler(self, eventtime):
         self.reactor.unregister_timer(self.priming_timer)
         self.priming_timer = None
@@ -354,13 +330,45 @@ class ToolHead:
             logging.exception("Exception in priming_handler")
             self.printer.invoke_shutdown("Exception in priming_handler")
         return self.reactor.NEVER
-    def _handle_step_flush(self, flush_time, step_gen_time):
-        if self.special_queuing_state:
+    def _check_priming_state(self, eventtime):
+        if self.lookahead.is_empty():
+            # In "NeedPrime" state and can remain there
             return
-        # In "main" state - flush lookahead if buffer runs low
-        kin_flush_delay = self.motion_queuing.get_kin_flush_delay()
-        if step_gen_time >= self.print_time - kin_flush_delay - 0.001:
-            self._flush_lookahead(is_runout=True)
+        est_print_time = self.mcu.estimated_print_time(eventtime)
+        if self.check_stall_time:
+            # Was in "NeedPrime" state and got there from idle input
+            if est_print_time < self.check_stall_time:
+                self.print_stall += 1
+            self.check_stall_time = 0.
+        # Transition from "NeedPrime"/"Priming" state to "Priming" state
+        self.special_queuing_state = "Priming"
+        self.need_check_pause = -1.
+        if self.priming_timer is None:
+            self.priming_timer = self.reactor.register_timer(
+                self._priming_handler)
+        buffer_time = self.print_time - est_print_time
+        wtime = eventtime + max(0.100, buffer_time - BUFFER_TIME_HIGH)
+        self.reactor.update_timer(self.priming_timer, wtime)
+    def _check_pause(self):
+        eventtime = self.reactor.monotonic()
+        if self.special_queuing_state:
+            # In "NeedPrime"/"Priming" state - update priming expiration timer
+            self._check_priming_state(eventtime)
+        # Check if there are lots of queued moves and pause if so
+        while 1:
+            est_print_time = self.mcu.estimated_print_time(eventtime)
+            buffer_time = self.print_time - est_print_time
+            pause_time = buffer_time - BUFFER_TIME_HIGH
+            if pause_time <= 0.:
+                break
+            if not self.can_pause:
+                self.need_check_pause = self.reactor.NEVER
+                return
+            pause_time = max(.005, min(1., pause_time))
+            eventtime = self.reactor.pause(eventtime + pause_time)
+        if not self.special_queuing_state:
+            # In main state - defer pause checking until needed
+            self.need_check_pause = est_print_time + BUFFER_TIME_HIGH
     # Movement commands
     def get_position(self):
         return list(self.commanded_pos)
@@ -476,8 +484,7 @@ class ToolHead:
             self.print_time, max(buffer_time, 0.), self.print_stall)
     def check_busy(self, eventtime):
         est_print_time = self.mcu.estimated_print_time(eventtime)
-        lookahead_empty = not self.lookahead.queue
-        return self.print_time, est_print_time, lookahead_empty
+        return self.print_time, est_print_time, self.lookahead.is_empty()
     def get_status(self, eventtime):
         print_time = self.print_time
         estimated_print_time = self.mcu.estimated_print_time(eventtime)
