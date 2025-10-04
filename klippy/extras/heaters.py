@@ -191,17 +191,58 @@ class ControlPID:
     def __init__(self, heater, config):
         self.heater = heater
         self.heater_max_power = heater.get_max_power()
-        self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
-        self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
-        self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
+        pid_options = [opt for opt in config.get_prefix_options('pid_table_')]
+        if pid_options:
+            if len(pid_options) < 2:
+                    raise config.error(
+                        "Adaptive PID requires at least two pid_table_ entries")
+            self.adaptive = True
+            self.pid_table = []
+            for option in sorted(pid_options):
+                value = config.get(option)
+                parts = value.split(':')
+                if len(parts) != 4:
+                    raise config.error(
+                        "Invalid %s format, expected temp:Kp:Ki:Kd" % option)
+                temp = float(parts[0])
+                kp = float(parts[1]) / PID_PARAM_BASE
+                ki = float(parts[2]) / PID_PARAM_BASE
+                kd = float(parts[3]) / PID_PARAM_BASE
+                self.pid_table.append((temp, kp, ki, kd))
+
+            self.pid_table.sort(key=lambda x: x[0])
+        else:
+            self.adaptive = False
+            self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
+            self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
+            self.Kd = config.getfloat('pid_Kd') / PID_PARAM_BASE
+            self.temp_integ_max = 0.
+            if self.Ki:
+                self.temp_integ_max = self.heater_max_power / self.Ki
         self.min_deriv_time = heater.get_smooth_time()
-        self.temp_integ_max = 0.
-        if self.Ki:
-            self.temp_integ_max = self.heater_max_power / self.Ki
         self.prev_temp = AMBIENT_TEMP
         self.prev_temp_time = 0.
         self.prev_temp_deriv = 0.
         self.prev_temp_integ = 0.
+    def _get_pid_params(self, target_temp):
+        if not self.adaptive:
+            return self.Kp, self.Ki, self.Kd
+
+        for i in range(len(self.pid_table) - 1):
+            t1, kp1, ki1, kd1 = self.pid_table[i]
+            t2, kp2, ki2, kd2 = self.pid_table[i + 1]
+
+            if t1 <= target_temp <= t2:
+                ratio = (target_temp - t1) / (t2 - t1)
+                return (
+                    kp1 + (kp2 - kp1) * ratio,
+                    ki1 + (ki2 - ki1) * ratio,
+                    kd1 + (kd2 - kd1) * ratio
+                )
+
+        if target_temp < self.pid_table[0][0]:
+            return self.pid_table[0][1:]
+        return self.pid_table[-1][1:]
     def temperature_update(self, read_time, temp, target_temp):
         time_diff = read_time - self.prev_temp_time
         # Calculate change of temperature
@@ -214,9 +255,15 @@ class ControlPID:
         # Calculate accumulated temperature "error"
         temp_err = target_temp - temp
         temp_integ = self.prev_temp_integ + temp_err * time_diff
-        temp_integ = max(0., min(self.temp_integ_max, temp_integ))
+        if self.adaptive:
+            temp_integ_max = self.heater_max_power / Ki if Ki else 0.
+        else:
+            temp_integ_max = self.temp_integ_max
+        temp_integ = max(0., min(temp_integ_max, temp_integ))
+        # Get PID parameters (fixed or interpolated)
+        Kp, Ki, Kd = self._get_pid_params(target_temp)
         # Calculate output
-        co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
+        co = Kp*temp_err + Ki*temp_integ - Kd*temp_deriv
         #logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d",
         #    temp, read_time, temp_diff, temp_deriv, temp_err, temp_integ, co)
         bounded_co = max(0., min(self.heater_max_power, co))
@@ -231,7 +278,6 @@ class ControlPID:
         temp_diff = target_temp - smoothed_temp
         return (abs(temp_diff) > PID_SETTLE_DELTA
                 or abs(self.prev_temp_deriv) > PID_SETTLE_SLOPE)
-
 
 ######################################################################
 # Sensor and heater lookup
