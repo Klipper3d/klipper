@@ -438,6 +438,8 @@ gcode:
   SET_DUAL_CARRIAGE CARRIAGE=0
   SET_INPUT_SHAPER SHAPER_TYPE_X=<primary_carriage_shaper> SHAPER_FREQ_X=<primary_carriage_freq> SHAPER_TYPE_Y=<y_shaper> SHAPER_FREQ_Y=<y_freq>
 ```
+However, users of `generic_cartesian` kinematics should specify carriage names
+in `CARRIAGE=` parameters of `SET_DUAL_CARRIAGE` instead of their numbers.
 Note that `SHAPER_TYPE_Y` and `SHAPER_FREQ_Y` should be the same in both
 commands. If you need to configure an input shaper for Z axis, include
 its parameters in both `SET_INPUT_SHAPER` commands.

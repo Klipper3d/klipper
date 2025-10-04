@@ -743,10 +743,11 @@ max_accel:
 
 ```
 
-Then a user must define the following three carriages: `[carriage x]`,
-`[carriage y]`, and `[carriage z]`, e.g.
+Then a user must define three carriages for X, Y, and Z axes, e.g.:
 ```
-[carriage x]
+[carriage xc]
+axis:
+#   Axis of a carriage, either x, y, or z. This parameter must be provided.
 endstop_pin:
 #   Endstop switch detection pin. If this endstop pin is on a
 #   different mcu than the stepper motor(s) moving this carriage,
@@ -788,7 +789,7 @@ for instance
 carriages:
 #   A string describing the carriages the stepper moves. All defined
 #   carriages can be specified here, as well as their linear combinations,
-#   e.g. x, x+y, y-0.5*z, x-z, etc. This parameter must be provided.
+#   e.g. xc, xc+yc, yc-0.5*zc, xc-zc, etc. This parameter must be provided.
 step_pin:
 dir_pin:
 enable_pin:
@@ -800,28 +801,28 @@ microsteps:
 ```
 See [stepper](#stepper) section for more information on the regular
 stepper parameters. The `carriages` parameter defines how the stepper
-affects the motion of the carriages. For example, `x+y` indicates that
+affects the motion of the carriages. For example, `xc+yc` indicates that
 the motion of the stepper in the positive direction by the distance `d`
-moves the carriages `x` and `y` by the same distance `d` in the positive
-direction, while `x-0.5*y` means the motion of the stepper in the positive
-direction by the distance `d` moves the carriage `x` by the distance `d`
-in the positive direction, but the carriage `y` will travel distance `d/2`
+moves the carriages `xc` and `yc` by the same distance `d` in the positive
+direction, while `xc-0.5*yc` means the motion of the stepper in the positive
+direction by the distance `d` moves the carriage `xc` by the distance `d`
+in the positive direction, but the carriage `yc` will travel distance `d/2`
 in the negative direction.
 
 More than a single stepper motor can be defined to drive the same axis
 or belt. For example, on a CoreXY AWD setups two motors driving the same
 belt can be defined as
 ```
-[carriage x]
+[carriage xc]
 endstop_pin: ...
 ...
 
-[carriage y]
+[carriage yc]
 endstop_pin: ...
 ...
 
 [stepper a0]
-carriages: x-y
+carriages: xc-yc
 step_pin: ...
 dir_pin: ...
 enable_pin: ...
@@ -829,7 +830,7 @@ rotation_distance: ...
 ...
 
 [stepper a1]
-carriages: x-y
+carriages: xc-yc
 step_pin: ...
 dir_pin: ...
 enable_pin: ...
@@ -842,7 +843,7 @@ sharing the same `carriages` and corresponding endstops.
 There are situations when a user wants to have more than one endstop
 per axis. Examples of such configurations include Y axis driven by
 two independent stepper motors with belts attached to both ends of the
-X beam, with effectively two carriages on Y axis each having an
+X gantry, with effectively two carriages on Y axis each having an
 independent endstop, and multi-stepper Z axis with each stepper having
 its own endstop (not to be confused with the configurations with
 multiple Z motors but only a single endstop). These configurations
@@ -861,7 +862,7 @@ endstop_pin:
 and the corresponding stepper motors, for example:
 ```
 [extra_carriage y1]
-primary_carriage: y
+primary_carriage: yc
 endstop_pin: ...
 
 [stepper sy1]
