@@ -104,7 +104,7 @@ trapq_add_move(struct trapq *tq, struct move *m)
         // Add a null move to fill time gap
         struct move *null_move = move_alloc();
         null_move->start_pos = m->start_pos;
-        if (!prev->print_time && m->print_time > MAX_NULL_MOVE)
+        if (prev->print_time <= 0. && m->print_time > MAX_NULL_MOVE)
             // Limit the first null move to improve numerical stability
             null_move->print_time = m->print_time - MAX_NULL_MOVE;
         else
