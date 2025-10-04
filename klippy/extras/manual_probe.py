@@ -9,8 +9,11 @@ import logging, bisect
 def lookup_z_endstop_config(config):
     if config.has_section('stepper_z'):
         return config.getsection('stepper_z')
-    elif config.has_section('carriage z'):
-        return config.getsection('carriage z')
+    for cconfig in config.get_prefix_sections('carriage '):
+        carriage_name = cconfig.get_name().split()[-1].strip()
+        axis_name = cconfig.get('axis', carriage_name, note_valid=False)
+        if axis_name == 'z':
+            return cconfig
     return None
 
 class ManualProbe:
