@@ -47,7 +47,7 @@ class Heater:
         self.next_pwm_time = 0.
         self.last_pwm_value = 0.
         # Setup control algorithm sub-class
-        algos = {'watermark': ControlBangBang, 'pid': ControlPID}
+        algos = {'watermark': ControlBangBang, 'pid': ControlPID, 'adaptive_pid': ControlAdaptivePID}
         algo = config.getchoice('control', algos)
         self.control = algo(self, config)
         # Setup output heater pin
@@ -232,6 +232,74 @@ class ControlPID:
         return (abs(temp_diff) > PID_SETTLE_DELTA
                 or abs(self.prev_temp_deriv) > PID_SETTLE_SLOPE)
 
+class ControlAdaptivePID:
+    def __init__(self, heater, config):
+        self.heater = heater
+        self.heater_max_power = heater.get_max_power()
+
+        self.pid_options = [opt for opt in config.get_prefix_options('pid_table_')]
+
+        if not self.pid_options:
+            raise config.error(
+                "Adaptive PID requires at least one pid_table_ entry")
+
+        self.pid_table = []
+        for option in sorted(self.pid_options):
+            value = config.get(option)
+            parts = value.split(':')
+            if len(parts) != 4:
+                raise config.error(
+                    "Invalid %s format, expected temp:Kp:Ki:Kd" % option)
+            temp = float(parts[0])
+            kp = float(parts[1]) / PID_PARAM_BASE
+            ki = float(parts[2]) / PID_PARAM_BASE
+            kd = float(parts[3]) / PID_PARAM_BASE
+            self.pid_table.append((temp, kp, ki, kd))
+
+        self.pid_table.sort(key=lambda x: x[0])
+
+        self.min_deriv_time = heater.get_smooth_time()
+        self.prev_temp = AMBIENT_TEMP
+        self.prev_temp_time = 0.
+        self.prev_temp_deriv = 0.
+        self.prev_temp_integ = 0.
+
+    def _interpolate_pid(self, target_temp):
+        closest = min(self.pid_table, key=lambda x: abs(x[0] - target_temp))
+        _, kp, ki, kd = closest
+        return kp, ki, kd
+
+    def temperature_update(self, read_time, temp, target_temp):
+        time_diff = read_time - self.prev_temp_time
+
+        temp_diff = temp - self.prev_temp
+        if time_diff >= self.min_deriv_time:
+            temp_deriv = temp_diff / time_diff
+        else:
+            temp_deriv = (self.prev_temp_deriv * (self.min_deriv_time-time_diff)
+                          + temp_diff) / self.min_deriv_time
+
+        Kp, Ki, Kd = self._interpolate_pid(target_temp)
+
+        temp_err = target_temp - temp
+        temp_integ = self.prev_temp_integ + temp_err * time_diff
+        temp_integ_max = self.heater_max_power / Ki if Ki else 0.
+        temp_integ = max(0., min(temp_integ_max, temp_integ))
+
+        co = Kp*temp_err + Ki*temp_integ - Kd*temp_deriv
+        bounded_co = max(0., min(self.heater_max_power, co))
+        self.heater.set_pwm(read_time, bounded_co)
+
+        self.prev_temp = temp
+        self.prev_temp_time = read_time
+        self.prev_temp_deriv = temp_deriv
+        if co == bounded_co:
+            self.prev_temp_integ = temp_integ
+
+    def check_busy(self, eventtime, smoothed_temp, target_temp):
+        temp_diff = target_temp - smoothed_temp
+        return (abs(temp_diff) > PID_SETTLE_DELTA
+                or abs(self.prev_temp_deriv) > PID_SETTLE_SLOPE)
 
 ######################################################################
 # Sensor and heater lookup
