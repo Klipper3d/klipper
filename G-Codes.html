@@ -5614,15 +5614,17 @@ been enabled (also see the
 <a href="Resonance_Compensation.html">resonance compensation guide</a>).</p>
 <h4 id="set_input_shaper">SET_INPUT_SHAPER<a class="headerlink" href="#set_input_shaper" title="Permanent link">&para;</a></h4>
 <p><code>SET_INPUT_SHAPER [SHAPER_FREQ_X=&lt;shaper_freq_x&gt;]
-[SHAPER_FREQ_Y=&lt;shaper_freq_y&gt;] [DAMPING_RATIO_X=&lt;damping_ratio_x&gt;]
-[DAMPING_RATIO_Y=&lt;damping_ratio_y&gt;] [SHAPER_TYPE=&lt;shaper&gt;]
-[SHAPER_TYPE_X=&lt;shaper_type_x&gt;] [SHAPER_TYPE_Y=&lt;shaper_type_y&gt;]</code>:
+[SHAPER_FREQ_Y=&lt;shaper_freq_y&gt;] [SHAPER_FREQ_Y=&lt;shaper_freq_z&gt;]
+[DAMPING_RATIO_X=&lt;damping_ratio_x&gt;] [DAMPING_RATIO_Y=&lt;damping_ratio_y&gt;]
+[DAMPING_RATIO_Z=&lt;damping_ratio_z&gt;] [SHAPER_TYPE=&lt;shaper&gt;]
+[SHAPER_TYPE_X=&lt;shaper_type_x&gt;] [SHAPER_TYPE_Y=&lt;shaper_type_y&gt;]
+[SHAPER_TYPE_Z=&lt;shaper_type_z&gt;]</code>:
 Modify input shaper parameters. Note that SHAPER_TYPE parameter resets
-input shaper for both X and Y axes even if different shaper types have
+input shaper for all axes even if different shaper types have
 been configured in [input_shaper] section. SHAPER_TYPE cannot be used
-together with either of SHAPER_TYPE_X and SHAPER_TYPE_Y parameters.
-See <a href="Config_Reference.html#input_shaper">config reference</a> for more
-details on each of these parameters.</p>
+together with any of SHAPER_TYPE_X, SHAPER_TYPE_Y, and SHAPER_TYPE_Z
+parameters. See <a href="Config_Reference.html#input_shaper">config reference</a>
+for more details on each of these parameters.</p>
 <h3 id="led">[led]<a class="headerlink" href="#led" title="Permanent link">&para;</a></h3>
 <p>The following command is available when any of the
 <a href="Config_Reference.html#leds">led config sections</a> are enabled.</p>
@@ -6002,13 +6004,14 @@ all enabled accelerometer chips.</p>
 [POINT=x,y,z] [INPUT_SHAPING=&lt;0:1&gt;]</code>: Runs the resonance
 test in all configured probe points for the requested "axis" and
 measures the acceleration using the accelerometer chips configured for
-the respective axis. "axis" can either be X or Y, or specify an
-arbitrary direction as <code>AXIS=dx,dy</code>, where dx and dy are floating
+the respective axis. "axis" can either be X, Y or Z, or specify an
+arbitrary direction as <code>AXIS=dx,dy[,dz]</code>, where dx, dy, dz are floating
 point numbers defining a direction vector (e.g. <code>AXIS=X</code>, <code>AXIS=Y</code>, or
-<code>AXIS=1,-1</code> to define a diagonal direction). Note that <code>AXIS=dx,dy</code>
-and <code>AXIS=-dx,-dy</code> is equivalent. <code>chip_name</code> can be one or
-more configured accel chips, delimited with comma, for example
-<code>CHIPS="adxl345, adxl345 rpi"</code>. If POINT is specified it will override the point(s)
+<code>AXIS=1,-1</code> to define a diagonal direction in XY plane, or <code>AXIS=0,1,1</code>
+to define a direction in YZ plane). Note that <code>AXIS=dx,dy</code> and <code>AXIS=-dx,-dy</code>
+is equivalent. <code>chip_name</code> can be one or more configured accel chips,
+delimited with comma, for example <code>CHIPS="adxl345, adxl345 rpi"</code>.
+If POINT is specified it will override the point(s)
 configured in <code>[resonance_tester]</code>. If <code>INPUT_SHAPING=0</code> or not set(default),
 disables input shaping for the resonance testing, because
 it is not valid to run the resonance testing with the input shaper

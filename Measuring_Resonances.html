@@ -993,6 +993,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#measuring-the-resonances-of-z-axis" class="md-nav__link">
+    Measuring the resonances of Z axis
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#unreliable-measurements-of-resonance-frequencies" class="md-nav__link">
     Unreliable measurements of resonance frequencies
   </a>
@@ -1876,6 +1883,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#measuring-the-resonances-of-z-axis" class="md-nav__link">
+    Measuring the resonances of Z axis
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#unreliable-measurements-of-resonance-frequencies" class="md-nav__link">
     Unreliable measurements of resonance frequencies
   </a>
@@ -2691,6 +2705,86 @@ to specify it explicitly.</p>
 <p>If you are doing a shaper re-calibration and the reported smoothing for the
 suggested shaper configuration is almost the same as what you got during the
 previous calibration, this step can be skipped.</p>
+<h3 id="measuring-the-resonances-of-z-axis">Measuring the resonances of Z axis<a class="headerlink" href="#measuring-the-resonances-of-z-axis" title="Permanent link">&para;</a></h3>
+<p>Measuring the resonances of Z axis is similar in many aspects to measuring
+resonances of X and Y axes, with some subtle differences. Similarly to other
+axes measurements, you will need to have an accelerometer mounted on the
+moving parts of Z axis - either the bed itself (if the bed moves over Z axis),
+or the toolhead (if the toolhead/gantry moves over Z). You will need to
+add the appropriate chip configuration to <code>printer.cfg</code> and also add it to
+<code>[resonance_tester]</code> section, e.g.</p>
+<div class="highlight"><pre><span></span><code>[resonance_tester]
+accel_chip_z: &lt;accelerometer full name&gt;
+</code></pre></div>
+
+<p>Also make sure that <code>probe_points</code> configured in <code>[resonance_tester]</code> allow
+sufficient clearance for Z axis movements (20 mm above bed surface should
+provide enough clearance with the default test parameters).</p>
+<p>The next consideration is that Z axis can typically reach lower maximum
+speeds and accelerations that X and Y axes. Default parameters of the test
+take that into consideration and are much less agressive, but it may still
+be necessary to increase <code>max_z_accel</code> and <code>max_z_velocity</code>. If you have
+them configured in <code>[printer]</code> section, make sure to set them to at least</p>
+<div class="highlight"><pre><span></span><code>[printer]
+max_z_velocity: 20
+max_z_accel: 1550
+</code></pre></div>
+
+<p>but only for the duration of the test, afterwards you can revert them back
+to their original values if necessary. And if you use custom test parameters
+for Z axis, <code>TEST_RESONANCES</code> and <code>SHAPER_CALIBRATE</code> will provide the minimum
+required limits if necessary for your specific case.</p>
+<p>After all changes to <code>printer.cfg</code> have been made, restart Klipper and run
+either</p>
+<div class="highlight"><pre><span></span><code>TEST_RESONANCES AXIS=Z
+</code></pre></div>
+
+<p>or</p>
+<div class="highlight"><pre><span></span><code>SHAPER_CALIBRATE AXIS=Z
+</code></pre></div>
+
+<p>and proceed from there accordingly how you would for other axes.
+For example, after <code>TEST_RESONANCES</code> command you can run
+<code>calibrate_shaper.py</code> script and get shaper recommendations and
+the chart of resonance response:</p>
+<p><img alt="Resonances" src="img/calibrate-z.png" /></p>
+<p>After the calibration, the shaper parameters can be stored in the
+<code>printer.cfg</code>, e.g. from the example above:</p>
+<div class="highlight"><pre><span></span><code>[input_shaper]
+...
+shaper_type_z: mzv
+shaper_freq_z: 42.6
+</code></pre></div>
+
+<p>Also, given the movements of Z axis are slow, you can easily consider
+more aggressive input shapers, e.g.</p>
+<div class="highlight"><pre><span></span><code>[input_shaper]
+...
+shaper_type_z: 2hump_ei
+shaper_freq_z: 63.0
+</code></pre></div>
+
+<p>If the test produces bogus results, you may try to increase
+<code>accel_per_hz_z</code> parameter in <code>[resonance_tester]</code> from its
+default value 15 to a larger value in the range of 20-30, e.g.</p>
+<div class="highlight"><pre><span></span><code>[resonance_tester]
+accel_per_hz_z: 25
+</code></pre></div>
+
+<p>and repeat the test. Increasing this value will likely require
+increasing <code>max_z_accel</code> and <code>max_z_velocity</code> parameters as well.
+You can run <code>TEST_RESONANCES AXIS=Z</code> command to get the required
+minimum values.</p>
+<p>However, if you are unable to measure the resonances of Z axis,
+you can consider just using</p>
+<div class="highlight"><pre><span></span><code>[input_shaper]
+...
+shaper_type_z: 3hump_ei
+shaper_freq_z: 65
+</code></pre></div>
+
+<p>as an acceptable all-round choice, given that the smoothing of
+Z axis movements is not of particular concerns.</p>
 <h3 id="unreliable-measurements-of-resonance-frequencies">Unreliable measurements of resonance frequencies<a class="headerlink" href="#unreliable-measurements-of-resonance-frequencies" title="Permanent link">&para;</a></h3>
 <p>Sometimes the resonance measurements can produce bogus results, leading to
 the incorrect suggestions for the input shapers. This can be caused by a

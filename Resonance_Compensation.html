@@ -858,6 +858,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#should-i-enable-and-tune-input-shaper-for-z-axis" class="md-nav__link">
+    Should I enable and tune input shaper for Z axis?
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1614,6 +1621,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#should-i-enable-and-tune-input-shaper-for-z-axis" class="md-nav__link">
+    Should I enable and tune input shaper for Z axis?
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2034,9 +2048,11 @@ gcode:
 </code></pre></div>
 
 <p>Note that <code>SHAPER_TYPE_Y</code> and <code>SHAPER_FREQ_Y</code> should be the same in both
-commands. It is also possible to put a similar snippet into the start g-code
-in the slicer, however then the shaper will not be enabled until any print
-is started.</p>
+commands. If you need to configure an input shaper for Z axis, include
+its parameters in both <code>SET_INPUT_SHAPER</code> commands.</p>
+<p>Besides <code>delayed_gcode</code>, it is also possible to put a similar snippet into
+the start g-code in the slicer, however then the shaper will not be enabled
+until any print is started.</p>
 <p>Note that the input shaper only needs to be configured once. Subsequent changes
 of the carriages or their modes via <code>SET_DUAL_CARRIAGE</code> command will preserve
 the configured input shaper parameters.</p>
@@ -2044,6 +2060,16 @@ the configured input shaper parameters.</p>
 <p>No, <code>input_shaper</code> feature has pretty much no impact on the print times by
 itself. However, the value of <code>max_accel</code> certainly does (tuning of this
 parameter described in <a href="#selecting-max_accel">this section</a>).</p>
+<h3 id="should-i-enable-and-tune-input-shaper-for-z-axis">Should I enable and tune input shaper for Z axis?<a class="headerlink" href="#should-i-enable-and-tune-input-shaper-for-z-axis" title="Permanent link">&para;</a></h3>
+<p>Most of the users are not likely to see improvements in the quality of
+the prints directly, much unlike X and Y shapers. However, users of
+delta printers, printers with flying gantry, or printers with heavy
+moving beds may be able to increase the <code>max_z_accel</code> and <code>max_z_velocity</code>
+kinematics limits and thus get faster Z movements. This can be especially
+useful e.g. for toolchangers, but also when Z-hops are enabled in slicer.
+And in general, after enabling Z input shaper many users will hear that
+Z axis operates more smoothly, which may increase the comfort of printer
+operation, and may somewhat extend lifespan of Z axis parts.</p>
 <h2 id="technical-details">Technical details<a class="headerlink" href="#technical-details" title="Permanent link">&para;</a></h2>
 <h3 id="input-shapers">Input shapers<a class="headerlink" href="#input-shapers" title="Permanent link">&para;</a></h3>
 <p>This section contains a brief overview of some technical aspects of the
