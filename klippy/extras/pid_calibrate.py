@@ -15,7 +15,13 @@ class PIDCalibrate:
     cmd_PID_CALIBRATE_help = "Run PID calibration test"
     def cmd_PID_CALIBRATE(self, gcmd):
         heater_name = gcmd.get('HEATER')
-        target = gcmd.get_float('TARGET')
+        targets = []
+
+        if gcmd.get('TARGETS', None) is not None:
+            targets = [float(x) for x in gcmd.get('TARGETS').split(',') if x.strip()][:20]
+        else:
+            targets = [gcmd.get_float('TARGET')]
+
         write_file = gcmd.get_int('WRITE_FILE', 0)
         pheaters = self.printer.lookup_object('heaters')
         try:
@@ -23,32 +29,51 @@ class PIDCalibrate:
         except self.printer.config_error as e:
             raise gcmd.error(str(e))
         self.printer.lookup_object('toolhead').get_last_move_time()
-        calibrate = ControlAutoTune(heater, target)
-        old_control = heater.set_control(calibrate)
-        try:
-            pheaters.set_temperature(heater, target, True)
-        except self.printer.command_error as e:
+        results = []
+        for target in targets:
+            calibrate = ControlAutoTune(heater, target)
+            old_control = heater.set_control(calibrate)
+            try:
+                pheaters.set_temperature(heater, target, True)
+            except self.printer.command_error as e:
+                heater.set_control(old_control)
+                raise
             heater.set_control(old_control)
-            raise
-        heater.set_control(old_control)
-        if write_file:
-            calibrate.write_file('/tmp/heattest.txt')
-        if calibrate.check_busy(0., 0., 0.):
-            raise gcmd.error("pid_calibrate interrupted")
-        # Log and report results
-        Kp, Ki, Kd = calibrate.calc_final_pid()
-        logging.info("Autotune: final: Kp=%f Ki=%f Kd=%f", Kp, Ki, Kd)
-        gcmd.respond_info(
-            "PID parameters: pid_Kp=%.3f pid_Ki=%.3f pid_Kd=%.3f\n"
-            "The SAVE_CONFIG command will update the printer config file\n"
-            "with these parameters and restart the printer." % (Kp, Ki, Kd))
+            if write_file:
+                calibrate.write_file('/tmp/heattest_%.0f.txt' % target)
+            if calibrate.check_busy(0., 0., 0.):
+                raise gcmd.error("pid_calibrate interrupted")
+
+            Kp, Ki, Kd = calibrate.calc_final_pid()
+            results.append((target, Kp, Ki, Kd))
+
         # Store results for SAVE_CONFIG
         cfgname = heater.get_name()
         configfile = self.printer.lookup_object('configfile')
-        configfile.set(cfgname, 'control', 'pid')
-        configfile.set(cfgname, 'pid_Kp', "%.3f" % (Kp,))
-        configfile.set(cfgname, 'pid_Ki', "%.3f" % (Ki,))
-        configfile.set(cfgname, 'pid_Kd', "%.3f" % (Kd,))
+        if len(results) == 1:
+            configfile.set(cfgname, 'control', 'pid')
+            configfile.set(cfgname, 'pid_Kp', "%.3f" % (Kp,))
+            configfile.set(cfgname, 'pid_Ki', "%.3f" % (Ki,))
+            configfile.set(cfgname, 'pid_Kd', "%.3f" % (Kd,))
+        else:
+            for i in range(len(results), 20):
+                configfile.remove_option(cfgname, 'pid_table_%d' % i)
+
+            configfile.set(cfgname, 'control', 'adaptive_pid')
+            for i, (temp, Kp, Ki, Kd) in enumerate(results):
+                configfile.set(cfgname, 'pid_table_%d' % i,
+                        "%.1f:%.3f:%.3f:%.3f" % (temp, Kp, Ki, Kd))
+
+        # Log and report results
+        msg_lines = []
+        for i, (temp, Kp, Ki, Kd) in enumerate(results):
+            logging.info("Autotune: %.1f°C: Kp=%.3f Ki=%.3f Kd=%.3f", temp, Kp, Ki, Kd)
+            msg_lines.append("%.0f°C: Kp=%.3f Ki=%.3f Kd=%.3f" % (temp, Kp, Ki, Kd))
+
+        gcmd.respond_info(
+            "PID parameters:\n%s\n"
+            "The SAVE_CONFIG command will update the printer config file with these parameters and restart the printer." % '\n'.join(msg_lines)
+        )
 
 TUNE_PID_DELTA = 5.0
 
