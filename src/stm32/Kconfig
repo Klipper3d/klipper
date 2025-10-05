@@ -308,8 +308,6 @@ choice
         bool "2KiB bootloader" if MACH_STM32F103
     config STM32_FLASH_START_1000
         bool "4KiB bootloader" if MACH_STM32F1 || MACH_STM32F0
-    config STM32_FLASH_START_1400
-        bool "5KiB bootloader" if MACH_STM32F1 || MACH_STM32F0 || MACH_STM32G0
     config STM32_FLASH_START_1800
         bool "6KiB bootloader" if MACH_STM32F1 || MACH_STM32F0 || MACH_STM32G0
     config STM32_FLASH_START_4000
@@ -324,7 +322,6 @@ config FLASH_APPLICATION_ADDRESS
     hex
     default 0x8000800 if STM32_FLASH_START_800
     default 0x8001000 if STM32_FLASH_START_1000
-    default 0x8001400 if STM32_FLASH_START_1400
     default 0x8001800 if STM32_FLASH_START_1800
     default 0x8002000 if STM32_FLASH_START_2000
     default 0x8004000 if STM32_FLASH_START_4000
