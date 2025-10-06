@@ -3378,6 +3378,12 @@ the [command reference](G-Codes.md#led) for more information.
 #initial_WHITE: 0.0
 #   Sets the initial LED color. Each value should be between 0.0 and
 #   1.0. The default for each color is 0.
+#shutdown_RED: 0.0
+#shutdown_GREEN: 0.0
+#shutdown_BLUE: 0.0
+#shutdown_WHITE: 0.0
+#   Sets the shutdown LED color. Each value should be between 0.0 and
+#   1.0. The default for each color is 0.
 ```
 
 ### [neopixel]
