@@ -23,6 +23,9 @@ class PIDCalibrate:
                 for x in gcmd.get('TARGETS').split(',')
                 if x.strip()
             ][:20]
+
+            if len(targets)<2:
+                raise gcmd.error("You must specify minimum two temp targets")
         else:
             targets = [gcmd.get_float('TARGET')]
 
