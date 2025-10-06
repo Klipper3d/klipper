@@ -237,14 +237,14 @@ class ControlAdaptivePID:
         self.heater = heater
         self.heater_max_power = heater.get_max_power()
 
-        self.pid_options = [opt for opt in config.get_prefix_options('pid_table_')]
+        pid_options = [opt for opt in config.get_prefix_options('pid_table_')]
 
-        if not self.pid_options:
+        if not pid_options or not len(pid_options)>=2:
             raise config.error(
-                "Adaptive PID requires at least one pid_table_ entry")
+                "Adaptive PID requires at least two pid_table_ entry")
 
         self.pid_table = []
-        for option in sorted(self.pid_options):
+        for option in sorted(pid_options):
             value = config.get(option)
             parts = value.split(':')
             if len(parts) != 4:
@@ -265,9 +265,21 @@ class ControlAdaptivePID:
         self.prev_temp_integ = 0.
 
     def _interpolate_pid(self, target_temp):
-        closest = min(self.pid_table, key=lambda x: abs(x[0] - target_temp))
-        _, kp, ki, kd = closest
-        return kp, ki, kd
+        for i in range(len(self.pid_table) - 1):
+            t1, kp1, ki1, kd1 = self.pid_table[i]
+            t2, kp2, ki2, kd2 = self.pid_table[i + 1]
+
+            if t1 <= target_temp <= t2:
+                ratio = (target_temp - t1) / (t2 - t1)
+                return (
+                    kp1 + (kp2 - kp1) * ratio,
+                    ki1 + (ki2 - ki1) * ratio,
+                    kd1 + (kd2 - kd1) * ratio
+                )
+
+        if target_temp < self.pid_table[0][0]:
+            return self.pid_table[0][1:]
+        return self.pid_table[-1][1:]
 
     def temperature_update(self, read_time, temp, target_temp):
         time_diff = read_time - self.prev_temp_time
