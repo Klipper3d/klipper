@@ -19,6 +19,9 @@ class PIDCalibrate:
 
         if gcmd.get('TARGETS', None) is not None:
             targets = [float(x) for x in gcmd.get('TARGETS').split(',') if x.strip()][:20]
+
+            if len(targets)==1:
+                raise gcmd.error("You must specify minimum two temp targets")
         else:
             targets = [gcmd.get_float('TARGET')]
 
