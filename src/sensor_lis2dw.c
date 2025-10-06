@@ -141,7 +141,7 @@ lis2dw_query(struct lis2dw *ax, uint8_t oid)
         if (ax->model == LIS3DH)
             fifo_empty = fifo[1] & 0x20;
         else
-            fifo_empty = fifo[1] & 0x3F;
+            fifo_empty = ((fifo[1] & 0x3F) == 0);
 
         fifo_ovrn = fifo[1] & 0x40;
 
@@ -167,7 +167,7 @@ lis2dw_query(struct lis2dw *ax, uint8_t oid)
         if (ax->model == LIS3DH)
             fifo_empty = fifo[0] & 0x20;
         else
-            fifo_empty = fifo[0] & 0x3F;
+            fifo_empty = ((fifo[0] & 0x3F) == 0);
 
         fifo_ovrn = fifo[0] & 0x40;
 
