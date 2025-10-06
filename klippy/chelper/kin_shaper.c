@@ -217,11 +217,11 @@ input_shaper_update_sk(struct stepper_kinematics *sk)
 {
     struct input_shaper *is = container_of(sk, struct input_shaper, sk);
     int kin_flags = is->orig_sk->active_flags & (AF_X | AF_Y | AF_Z);
-    if ((kin_flags & AF_X) == AF_X)
+    if (kin_flags == AF_X)
         is->sk.calc_position_cb = shaper_x_calc_position;
-    else if ((kin_flags & AF_Y) == AF_Y)
+    else if (kin_flags == AF_Y)
         is->sk.calc_position_cb = shaper_y_calc_position;
-    else if ((kin_flags & AF_Z) == AF_Z)
+    else if (kin_flags == AF_Z)
         is->sk.calc_position_cb = shaper_z_calc_position;
     else
         is->sk.calc_position_cb = shaper_xyz_calc_position;
