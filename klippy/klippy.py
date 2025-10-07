@@ -206,16 +206,17 @@ class Printer:
         logging.error("Transition to shutdown state: %s", msg)
         self.in_shutdown_state = True
         self._set_state(msg)
-        for cb in self.event_handlers.get("klippy:shutdown", []):
-            try:
-                cb()
-            except:
-                logging.exception("Exception during shutdown handler")
-        for cb in self.event_handlers.get("klippy:analyze_shutdown", []):
-            try:
-                cb(msg, details)
-            except:
-                logging.exception("Exception during analyze_shutdown handler")
+        with self.reactor.assert_no_pause():
+            for cb in self.event_handlers.get("klippy:shutdown", []):
+                try:
+                    cb()
+                except:
+                    logging.exception("Exception during shutdown handler")
+            for cb in self.event_handlers.get("klippy:analyze_shutdown", []):
+                try:
+                    cb(msg, details)
+                except:
+                    logging.exception("Exception in analyze_shutdown handler")
     def invoke_async_shutdown(self, msg, details={}):
         self.reactor.register_async_callback(
             (lambda e: self.invoke_shutdown(msg, details)))
