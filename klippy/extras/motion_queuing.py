@@ -141,8 +141,9 @@ class PrinterMotionQueuing:
         step_gen_time = max(want_step_gen_time, self.last_step_gen_time,
                             flush_time)
         # Invoke flush callbacks (if any)
-        for cb in self.flush_callbacks:
-            cb(flush_time, step_gen_time)
+        with self.reactor.assert_no_pause():
+            for cb in self.flush_callbacks:
+                cb(flush_time, step_gen_time)
         # Determine maximum history to keep
         trapq_free_time = step_gen_time - self.kin_flush_delay
         clear_history_time = self.clear_history_time
