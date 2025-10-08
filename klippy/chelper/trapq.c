@@ -228,6 +228,22 @@ trapq_set_position(struct trapq *tq, double print_time
     list_add_head(&m->node, &tq->history);
 }
 
+// Copy the info in a 'struct move' to a 'struct pull_move'
+static void
+copy_pull_move(struct pull_move *p, struct move *m)
+{
+    p->print_time = m->print_time;
+    p->move_t = m->move_t;
+    p->start_v = m->start_v;
+    p->accel = 2. * m->half_accel;
+    p->start_x = m->start_pos.x;
+    p->start_y = m->start_pos.y;
+    p->start_z = m->start_pos.z;
+    p->x_r = m->axes_r.x;
+    p->y_r = m->axes_r.y;
+    p->z_r = m->axes_r.z;
+}
+
 // Return history of movement queue
 int __visible
 trapq_extract_old(struct trapq *tq, struct pull_move *p, int max
@@ -235,21 +251,21 @@ trapq_extract_old(struct trapq *tq, struct pull_move *p, int max
 {
     int res = 0;
     struct move *m;
+    list_for_each_entry_reverse(m, &tq->moves, node) {
+        if (start_time >= m->print_time + m->move_t || res >= max)
+            break;
+        if (end_time <= m->print_time || (!m->start_v && !m->half_accel))
+            continue;
+        copy_pull_move(p, m);
+        p++;
+        res++;
+    }
     list_for_each_entry(m, &tq->history, node) {
         if (start_time >= m->print_time + m->move_t || res >= max)
             break;
         if (end_time <= m->print_time)
             continue;
-        p->print_time = m->print_time;
-        p->move_t = m->move_t;
-        p->start_v = m->start_v;
-        p->accel = 2. * m->half_accel;
-        p->start_x = m->start_pos.x;
-        p->start_y = m->start_pos.y;
-        p->start_z = m->start_pos.z;
-        p->x_r = m->axes_r.x;
-        p->y_r = m->axes_r.y;
-        p->z_r = m->axes_r.z;
+        copy_pull_move(p, m);
         p++;
         res++;
     }
