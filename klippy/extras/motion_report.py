@@ -157,7 +157,8 @@ class PrinterMotionReport:
         }
         # Register handlers
         self.printer.register_event_handler("klippy:connect", self._connect)
-        self.printer.register_event_handler("klippy:shutdown", self._shutdown)
+        self.printer.register_event_handler("klippy:analyze_shutdown",
+                                            self._handle_analyze_shutdown)
     def register_stepper(self, config, mcu_stepper):
         ds = DumpStepper(self.printer, mcu_stepper)
         self.steppers[mcu_stepper.get_name()] = ds
@@ -180,7 +181,7 @@ class PrinterMotionReport:
         self.last_status['steppers'] = list(sorted(self.steppers.keys()))
         self.last_status['trapq'] = list(sorted(self.trapqs.keys()))
     # Shutdown handling
-    def _dump_shutdown(self, eventtime):
+    def _handle_analyze_shutdown(self, msg, details):
         # Log stepper queue_steps on mcu that started shutdown (if any)
         shutdown_time = NEVER_TIME
         for dstepper in self.steppers.values():
@@ -209,8 +210,6 @@ class PrinterMotionReport:
         if pos is not None:
             logging.info("Requested toolhead position at shutdown time %.6f: %s"
                          , shutdown_time, pos)
-    def _shutdown(self):
-        self.printer.get_reactor().register_callback(self._dump_shutdown)
     # Status reporting
     def get_status(self, eventtime):
         if eventtime < self.next_status_time or not self.trapqs:
