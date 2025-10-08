@@ -93,6 +93,9 @@ class PrinterMCUError:
             self._check_mcu_shutdown(msg, details)
         else:
             self.printer.update_error_msg(msg, "%s%s" % (msg, message_shutdown))
+        # Report reactor info (no good place to do this, so done here)
+        logging.info("Reactor garbage collection: %s",
+                     self.printer.get_reactor().get_gc_stats())
     def _check_protocol_error(self, msg, details):
         host_version = self.printer.start_args['software_version']
         msg_update = []
