@@ -1107,9 +1107,6 @@ class MCU:
         offset, freq = self._clocksync.calibrate_clock(print_time, eventtime)
         self._conn_helper.check_timeout(eventtime)
         return offset, freq
-    # Low-level connection wrappers
-    def is_shutdown(self):
-        return self._conn_helper.is_shutdown()
     # Statistics wrappers
     def get_status(self, eventtime=None):
         return self._stats_helper.get_status(eventtime)
