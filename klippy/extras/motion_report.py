@@ -146,7 +146,7 @@ class PrinterMotionReport:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.steppers = {}
-        self.trapqs = {}
+        self.dtrapqs = {}
         # get_status information
         self.next_status_time = 0.
         gcode = self.printer.lookup_object('gcode')
@@ -166,7 +166,7 @@ class PrinterMotionReport:
         # Lookup toolhead trapq
         toolhead = self.printer.lookup_object("toolhead")
         trapq = toolhead.get_trapq()
-        self.trapqs['toolhead'] = DumpTrapQ(self.printer, 'toolhead', trapq)
+        self.dtrapqs['toolhead'] = DumpTrapQ(self.printer, 'toolhead', trapq)
         # Lookup extruder trapqs
         for i in range(99):
             ename = "extruder%d" % (i,)
@@ -176,34 +176,35 @@ class PrinterMotionReport:
             if extruder is None:
                 break
             etrapq = extruder.get_trapq()
-            self.trapqs[ename] = DumpTrapQ(self.printer, ename, etrapq)
+            self.dtrapqs[ename] = DumpTrapQ(self.printer, ename, etrapq)
         # Populate 'trapq' and 'steppers' in get_status result
         self.last_status['steppers'] = list(sorted(self.steppers.keys()))
-        self.last_status['trapq'] = list(sorted(self.trapqs.keys()))
+        self.last_status['trapq'] = list(sorted(self.dtrapqs.keys()))
     # Shutdown handling
     def _handle_analyze_shutdown(self, msg, details):
+        if msg != "MCU shutdown":
+            return
+        mcu = self.printer.lookup_object(details.get("mcu"), None)
+        if mcu is None or details.get("shutdown_clock") is None:
+            return
+        shutdown_clock = details["shutdown_clock"]
+        shutdown_time = mcu.clock_to_print_time(shutdown_clock)
+        clock_100ms = mcu.seconds_to_clock(0.100)
+        start_clock = max(0, shutdown_clock - clock_100ms)
+        end_clock = shutdown_clock + clock_100ms
         # Log stepper queue_steps on mcu that started shutdown (if any)
-        shutdown_time = NEVER_TIME
         for dstepper in self.steppers.values():
-            mcu = dstepper.mcu_stepper.get_mcu()
-            sc = mcu.get_shutdown_clock()
-            if not sc:
+            if dstepper.mcu_stepper.get_mcu() is not mcu:
                 continue
-            shutdown_time = min(shutdown_time, mcu.clock_to_print_time(sc))
-            clock_100ms = mcu.seconds_to_clock(0.100)
-            start_clock = max(0, sc - clock_100ms)
-            end_clock = sc + clock_100ms
             data, cdata = dstepper.get_step_queue(start_clock, end_clock)
             dstepper.log_steps(data)
-        if shutdown_time >= NEVER_TIME:
-            return
         # Log trapqs around time of shutdown
-        for dtrapq in self.trapqs.values():
+        for dtrapq in self.dtrapqs.values():
             data, cdata = dtrapq.extract_trapq(shutdown_time - .100,
                                                shutdown_time + .100)
             dtrapq.log_trapq(data)
         # Log estimated toolhead position at time of shutdown
-        dtrapq = self.trapqs.get('toolhead')
+        dtrapq = self.dtrapqs.get('toolhead')
         if dtrapq is None:
             return
         pos, velocity = dtrapq.get_trapq_position(shutdown_time)
@@ -212,7 +213,7 @@ class PrinterMotionReport:
                          , shutdown_time, pos)
     # Status reporting
     def get_status(self, eventtime):
-        if eventtime < self.next_status_time or not self.trapqs:
+        if eventtime < self.next_status_time or not self.dtrapqs:
             return self.last_status
         self.next_status_time = eventtime + STATUS_REFRESH_TIME
         xyzpos = (0., 0., 0.)
@@ -221,13 +222,13 @@ class PrinterMotionReport:
         # Calculate current requested toolhead position
         mcu = self.printer.lookup_object('mcu')
         print_time = mcu.estimated_print_time(eventtime)
-        pos, velocity = self.trapqs['toolhead'].get_trapq_position(print_time)
+        pos, velocity = self.dtrapqs['toolhead'].get_trapq_position(print_time)
         if pos is not None:
             xyzpos = pos[:3]
             xyzvelocity = velocity
         # Calculate requested position of currently active extruder
         toolhead = self.printer.lookup_object('toolhead')
-        ehandler = self.trapqs.get(toolhead.get_extruder().get_name())
+        ehandler = self.dtrapqs.get(toolhead.get_extruder().get_name())
         if ehandler is not None:
             pos, velocity = ehandler.get_trapq_position(print_time)
             if pos is not None:
