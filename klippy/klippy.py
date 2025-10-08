@@ -211,8 +211,6 @@ class Printer:
                 cb()
             except:
                 logging.exception("Exception during shutdown handler")
-        logging.info("Reactor garbage collection: %s",
-                     self.reactor.get_gc_stats())
         for cb in self.event_handlers.get("klippy:analyze_shutdown", []):
             try:
                 cb(msg, details)
