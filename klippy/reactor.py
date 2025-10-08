@@ -224,7 +224,7 @@ class SelectReactor:
         if self._greenlets:
             g_next = self._greenlets.pop()
         else:
-            g_next = ReactorGreenlet(run=self._dispatch_loop)
+            g_next = ReactorGreenlet(run=self._start_dispatch_loop)
             self._all_greenlets.append(g_next)
         g_next.parent = g.parent
         g.timer = self.register_timer(g.switch, waketime)
@@ -297,11 +297,20 @@ class SelectReactor:
                         + [(fd, self._WRITE) for fd in res[1]])
                 eventtime = self._check_fds(eventtime, hdls)
         self._g_dispatch = None
+    def _start_dispatch_loop(self):
+        try:
+            self._dispatch_loop()
+        except greenlet.GreenletExit as e:
+            raise
+        except:
+            logging.exception("Unhandled exception in reactor")
+            self._process = False
+            raise
     def run(self):
         if self._pipe_fds is None:
             self._setup_async_callbacks()
         self._process = True
-        g_next = ReactorGreenlet(run=self._dispatch_loop)
+        g_next = ReactorGreenlet(run=self._start_dispatch_loop)
         self._all_greenlets.append(g_next)
         g_next.switch()
     def end(self):
