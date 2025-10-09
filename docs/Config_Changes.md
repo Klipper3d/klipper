@@ -8,6 +8,11 @@ All dates in this document are approximate.
 
 ## Changes
 
+20251005: An option `axis` has been added to `[carriage <name>]` sections
+for `generic_cartesian` kinematics, allowing giving arbitrary names to
+primary carriages, and inferring carriage axis from name has been deprecated.
+Users are encouraged to explicitly specify `axis` option now.
+
 20251003: Support for the undocumented `max_stepper_error` option in
 the `[printer]` config section has been removed.
 
