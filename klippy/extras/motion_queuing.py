@@ -250,7 +250,7 @@ class PrinterMotionQueuing:
         # Disable background flushing from timer
         self.reactor.update_timer(self.flush_timer, self.reactor.NEVER)
         self.do_kick_flush_timer = False
-        self._advance_flush_time(start_time)
+        self._advance_flush_time(start_time - SDS_CHECK_TIME, start_time)
         # Flush in segments until drip_completion signal
         flush_time = start_time
         while flush_time < end_time:
@@ -265,7 +265,7 @@ class PrinterMotionQueuing:
                 continue
             flush_time = min(flush_time + DRIP_SEGMENT_TIME, end_time)
             self.note_mcu_movequeue_activity(flush_time)
-            self._advance_flush_time(flush_time)
+            self._advance_flush_time(flush_time - SDS_CHECK_TIME, flush_time)
         # Restore background flushing
         self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
         self._advance_flush_time(flush_time + self.kin_flush_delay)
