@@ -51,6 +51,8 @@ class HeaterPredictControl:
                 output = self.output
             return output
         heater.set_pc_callback(callback)
+        # Test template
+        self._render(.0)
     def _render(self, eventtime):
         context = self.create_context()
         output = self.template.render(context)
