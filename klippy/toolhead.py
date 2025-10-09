@@ -194,6 +194,7 @@ class LookAheadQueue:
 
 BUFFER_TIME_HIGH = 2.0
 BUFFER_TIME_START = 0.250
+PRIMING_CMD_TIME = 0.100
 
 # Main code to track events (and their timing) on the printer toolhead
 class ToolHead:
@@ -346,8 +347,8 @@ class ToolHead:
         if self.priming_timer is None:
             self.priming_timer = self.reactor.register_timer(
                 self._priming_handler)
-        buffer_time = self.print_time - est_print_time
-        wtime = eventtime + max(0.100, buffer_time - BUFFER_TIME_HIGH)
+        will_pause_time = self.print_time - est_print_time - BUFFER_TIME_HIGH
+        wtime = eventtime + max(0., will_pause_time) + PRIMING_CMD_TIME
         self.reactor.update_timer(self.priming_timer, wtime)
     def _check_pause(self):
         eventtime = self.reactor.monotonic()
@@ -357,8 +358,7 @@ class ToolHead:
         # Check if there are lots of queued moves and pause if so
         while 1:
             est_print_time = self.mcu.estimated_print_time(eventtime)
-            buffer_time = self.print_time - est_print_time
-            pause_time = buffer_time - BUFFER_TIME_HIGH
+            pause_time = self.print_time - est_print_time - BUFFER_TIME_HIGH
             if pause_time <= 0.:
                 break
             if not self.can_pause:
