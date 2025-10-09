@@ -356,6 +356,7 @@ class ToolHead:
             # In "NeedPrime"/"Priming" state - update priming expiration timer
             self._check_priming_state(eventtime)
         # Check if there are lots of queued moves and pause if so
+        did_pause = False
         while 1:
             est_print_time = self.mcu.estimated_print_time(eventtime)
             pause_time = self.print_time - est_print_time - BUFFER_TIME_HIGH
@@ -366,9 +367,13 @@ class ToolHead:
                 return
             pause_time = max(.005, min(1., pause_time))
             eventtime = self.reactor.pause(eventtime + pause_time)
+            did_pause = True
         if not self.special_queuing_state:
-            # In main state - defer pause checking until needed
-            self.need_check_pause = est_print_time + BUFFER_TIME_HIGH
+            # In main state - defer pause checking
+            self.need_check_pause = self.print_time
+            if not did_pause:
+                # May be falling behind - yield to avoid starving other tasks
+                self.reactor.pause(self.reactor.NOW)
     # Movement commands
     def get_position(self):
         return list(self.commanded_pos)
