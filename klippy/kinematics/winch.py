@@ -3,7 +3,57 @@
 # Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import stepper, mathutil
+import stepper, mathutil, chelper
+
+class WinchFlexHelper:
+    def __init__(self, anchors, config):
+        self.ffi_main, self.ffi_lib = chelper.get_ffi()
+        self.num = len(anchors)
+        self.ptr = self.ffi_main.NULL
+        self.enabled = False
+        if not self.num:
+            return
+        self.ptr = self.ffi_main.gc(
+            self.ffi_lib.winch_flex_alloc(), self.ffi_lib.winch_flex_free)
+        self._configure(anchors, config)
+
+    def _configure(self, anchors, config):
+        mover_weight = config.getfloat('winch_mover_weight', 0., minval=0.)
+        spring_constant = config.getfloat('winch_spring_constant', 0., minval=0.)
+        target_force = config.getfloat('winch_target_force', 0., minval=0.)
+        min_force = list(config.getfloatlist(
+            'winch_min_force', [0.] * self.num, count=self.num))
+        max_force = list(config.getfloatlist(
+            'winch_max_force', [120.] * self.num, count=self.num))
+        guy_raw = config.get('winch_guy_wire_lengths', None, note_valid=False)
+        guy_valid = 0
+        guy_ptr = self.ffi_main.NULL
+        if guy_raw is not None:
+            guy_vals = list(config.getfloatlist(
+                'winch_guy_wire_lengths', count=self.num))
+            guy_ptr = self.ffi_main.new("double[]", guy_vals)
+            guy_valid = 1
+        anchors_flat = [float(coord) for anchor in anchors for coord in anchor]
+        anchors_c = self.ffi_main.new("double[]", anchors_flat)
+        min_c = self.ffi_main.new("double[]", min_force)
+        max_c = self.ffi_main.new("double[]", max_force)
+        self.ffi_lib.winch_flex_configure(
+            self.ptr, self.num, anchors_c, mover_weight, spring_constant,
+            target_force, min_c, max_c, guy_ptr, guy_valid)
+        self.enabled = bool(self.num >= 4 and mover_weight > 0. and spring_constant > 0.)
+
+    def get_ptr(self):
+        return self.ptr
+
+    def calc_arrays(self, pos):
+        if not self.ptr or not self.num:
+            return [], []
+        distances = self.ffi_main.new("double[]", self.num)
+        flex = self.ffi_main.new("double[]", self.num)
+        self.ffi_lib.winch_flex_calc_arrays(self.ptr, pos[0], pos[1], pos[2],
+                                            distances, flex)
+        return ([distances[i] for i in range(self.num)],
+                [flex[i] for i in range(self.num)])
 
 class WinchKinematics:
     def __init__(self, toolhead, config):
@@ -17,9 +67,12 @@ class WinchKinematics:
             stepper_config = config.getsection(name)
             s = stepper.PrinterStepper(stepper_config)
             self.steppers.append(s)
-            a = tuple([stepper_config.getfloat('anchor_' + n) for n in 'xyz'])
+            a = tuple(stepper_config.getfloat('anchor_' + n) for n in 'xyz')
             self.anchors.append(a)
-            s.setup_itersolve('winch_stepper_alloc', *a)
+        self.flex_helper = WinchFlexHelper(self.anchors, config)
+        flex_ptr = self.flex_helper.get_ptr()
+        for idx, s in enumerate(self.steppers):
+            s.setup_itersolve('winch_stepper_alloc', flex_ptr, idx)
             s.set_trapq(toolhead.get_trapq())
         # Setup boundary checks
         acoords = list(zip(*self.anchors))
@@ -31,7 +84,18 @@ class WinchKinematics:
     def calc_position(self, stepper_positions):
         # Use only first three steppers to calculate cartesian position
         pos = [stepper_positions[rail.get_name()] for rail in self.steppers[:3]]
-        return mathutil.trilateration(self.anchors[:3], [sp*sp for sp in pos])
+        cart = mathutil.trilateration(self.anchors[:3], [sp * sp for sp in pos])
+        if not self.flex_helper.enabled:
+            return cart
+        cart_guess = list(cart)
+        for _ in range(3):
+            distances, flex = self.flex_helper.calc_arrays(cart_guess)
+            if len(distances) < 3:
+                break
+            adjusted = [pos[i] + flex[i] for i in range(3)]
+            cart_guess = list(mathutil.trilateration(
+                self.anchors[:3], [d * d for d in adjusted]))
+        return cart_guess
     def set_position(self, newpos, homing_axes):
         for s in self.steppers:
             s.set_position(newpos)
