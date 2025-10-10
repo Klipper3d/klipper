@@ -7,17 +7,27 @@
 #include "ctr.h" // DECL_CTR
 
 // Declare a function to run when the specified command is received
+#define DECL_COMMAND_FLAGS(FUNC, FLAGS, MSG)                    \
+    DECL_CTR("DECL_COMMAND_FLAGS " __stringify(FUNC) " "        \
+             __stringify(FLAGS) " " MSG)
 #define DECL_COMMAND(FUNC, MSG)                 \
-    _DECL_COMMAND(FUNC, 0, MSG)
-#define DECL_COMMAND_FLAGS(FUNC, FLAGS, MSG)    \
-    _DECL_COMMAND(FUNC, FLAGS, MSG)
+    DECL_COMMAND_FLAGS(FUNC, 0, MSG)
 
 // Flags for command handler declarations.
 #define HF_IN_SHUTDOWN   0x01   // Handler can run even when in emergency stop
 
 // Declare a constant exported to the host
-#define DECL_CONSTANT(NAME, VALUE)              \
-    _DECL_CONSTANT(NAME, VALUE)
+#define DECL_CONSTANT(NAME, VALUE)                              \
+    DECL_CTR_INT("DECL_CONSTANT " NAME, 1, CTR_INT(VALUE))
+#define DECL_CONSTANT_STR(NAME, VALUE)                  \
+    DECL_CTR("DECL_CONSTANT_STR " NAME " " VALUE)
+
+// Declare an enumeration
+#define DECL_ENUMERATION(ENUM, NAME, VALUE)                             \
+    DECL_CTR_INT("DECL_ENUMERATION " ENUM " " NAME, 1, CTR_INT(VALUE))
+#define DECL_ENUMERATION_RANGE(ENUM, NAME, VALUE, COUNT)        \
+    DECL_CTR_INT("DECL_ENUMERATION_RANGE " ENUM " " NAME,       \
+                 2, CTR_INT(VALUE), CTR_INT(COUNT))
 
 // Send an output message (and declare a static message type for it)
 #define output(FMT, args...)                    \
@@ -47,11 +57,13 @@
 #define MESSAGE_SYNC 0x7E
 
 struct command_encoder {
-    uint8_t msg_id, max_size, num_params;
+    uint16_t encoded_msgid;
+    uint8_t max_size, num_params;
     const uint8_t *param_types;
 };
 struct command_parser {
-    uint8_t msg_id, num_args, flags, num_params;
+    uint16_t encoded_msgid;
+    uint8_t num_args, flags, num_params;
     const uint8_t *param_types;
     void (*func)(uint32_t *args);
 };
@@ -61,11 +73,10 @@ enum {
 };
 
 // command.c
+void *command_decode_ptr(uint32_t v);
+uint_fast16_t command_parse_msgid(uint8_t **pp);
 uint8_t *command_parsef(uint8_t *p, uint8_t *maxend
                         , const struct command_parser *cp, uint32_t *args);
-uint_fast8_t command_encodef(uint8_t *buf, const struct command_encoder *ce
-                             , va_list args);
-void command_add_frame(uint8_t *buf, uint_fast8_t msglen);
 uint_fast8_t command_encode_and_frame(
     uint8_t *buf, const struct command_encoder *ce, va_list args);
 void command_sendf(const struct command_encoder *ce, ...);
@@ -78,18 +89,12 @@ int_fast8_t command_find_and_dispatch(uint8_t *buf, uint_fast8_t buf_len
 
 // out/compile_time_request.c (auto generated file)
 extern const struct command_parser command_index[];
-extern const uint8_t command_index_size;
+extern const uint16_t command_index_size;
 extern const uint8_t command_identify_data[];
 extern const uint32_t command_identify_size;
 const struct command_encoder *ctr_lookup_encoder(const char *str);
 const struct command_encoder *ctr_lookup_output(const char *str);
 uint8_t ctr_lookup_static_string(const char *str);
-
-#define _DECL_COMMAND(FUNC, FLAGS, MSG)                                 \
-    DECL_CTR("_DECL_COMMAND " __stringify(FUNC) " " __stringify(FLAGS) " " MSG)
-
-#define _DECL_CONSTANT(NAME, VALUE)                                     \
-    DECL_CTR("_DECL_CONSTANT " __stringify(NAME) " " __stringify(VALUE))
 
 #define _DECL_ENCODER(FMT) ({                   \
     DECL_CTR("_DECL_ENCODER " FMT);             \

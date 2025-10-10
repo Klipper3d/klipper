@@ -4,13 +4,8 @@
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import math
-
-# Sensor types defined in the micro-controller code (thermocouple.c)
-TS_CHIP_MAX31855 = 1 << 0
-TS_CHIP_MAX31856 = 1 << 1
-TS_CHIP_MAX31865 = 1 << 2
-TS_CHIP_MAX6675  = 1 << 3
+import math, logging
+from . import bus
 
 
 ######################################################################
@@ -18,35 +13,25 @@ TS_CHIP_MAX6675  = 1 << 3
 ######################################################################
 
 REPORT_TIME = 0.300
+MAX_INVALID_COUNT = 3
 
 class SensorBase:
-    def __init__(self, config, chip_type, config_cmd=None):
+    def __init__(self, config, chip_type, config_cmd=None, spi_mode=1):
         self.printer = config.get_printer()
+        self.chip_type = chip_type
         self._callback = None
         self.min_sample_value = self.max_sample_value = 0
         self._report_clock = 0
-        ppins = config.get_printer().lookup_object('pins')
-        pin_params = ppins.lookup_pin(config.get('sensor_pin'))
-        self.mcu = mcu = pin_params['chip']
-        pin = pin_params['pin']
-        # SPI bus configuration
-        spi_oid = mcu.create_oid()
-        spi_speed = config.getint('spi_speed', 4000000, minval=1)
-        mcu.add_config_cmd(
-            "config_spi oid=%u bus=0 pin=%s mode=1 rate=%u shutdown_msg=" % (
-                spi_oid, pin, spi_speed))
+        self.spi = bus.MCU_SPI_from_config(
+            config, spi_mode, pin_option="sensor_pin", default_speed=4000000)
         if config_cmd is not None:
-            config_cmd = "".join("%02x" % b for b in config_cmd)
-            mcu.add_config_cmd("spi_send oid=%u data=%s" % (
-                spi_oid, config_cmd), is_init=True)
+            self.spi.spi_send(config_cmd)
+        self.mcu = mcu = self.spi.get_mcu()
         # Reader chip configuration
         self.oid = oid = mcu.create_oid()
-        mcu.add_config_cmd(
-            "config_thermocouple oid=%u spi_oid=%u chip_type=%u" % (
-                oid, spi_oid, chip_type))
-        mcu.register_msg(self._handle_spi_response,
-            "thermocouple_result", oid)
-        mcu.add_config_object(self)
+        mcu.register_response(self._handle_spi_response,
+                              "thermocouple_result", oid)
+        mcu.register_config_callback(self._build_config)
     def setup_minmax(self, min_temp, max_temp):
         adc_range = [self.calc_adc(min_temp), self.calc_adc(max_temp)]
         self.min_sample_value = min(adc_range)
@@ -55,22 +40,29 @@ class SensorBase:
         self._callback = cb
     def get_report_time_delta(self):
         return REPORT_TIME
-    def build_config(self):
+    def _build_config(self):
+        self.mcu.add_config_cmd(
+            "config_thermocouple oid=%u spi_oid=%u thermocouple_type=%s" % (
+                self.oid, self.spi.get_oid(), self.chip_type))
         clock = self.mcu.get_query_slot(self.oid)
         self._report_clock = self.mcu.seconds_to_clock(REPORT_TIME)
         self.mcu.add_config_cmd(
             "query_thermocouple oid=%u clock=%u rest_ticks=%u"
-            " min_value=%u max_value=%u" % (
+            " min_value=%u max_value=%u max_invalid_count=%u" % (
                 self.oid, clock, self._report_clock,
-                self.min_sample_value, self.max_sample_value), is_init=True)
+                self.min_sample_value, self.max_sample_value,
+                MAX_INVALID_COUNT), is_init=True)
     def _handle_spi_response(self, params):
-        temp = self.calc_temp(params['value'], params['fault'])
+        if params['fault']:
+            self.handle_fault(params['value'], params['fault'])
+            return
+        temp = self.calc_temp(params['value'])
         next_clock      = self.mcu.clock32_to_clock64(params['next_clock'])
         last_read_clock = next_clock - self._report_clock
         last_read_time  = self.mcu.clock_to_print_time(last_read_clock)
         self._callback(last_read_time, temp)
-    def fault(self, msg):
-        self.printer.invoke_async_shutdown(msg)
+    def report_fault(self, msg):
+        logging.warning(msg)
 
 
 ######################################################################
@@ -131,25 +123,26 @@ MAX31856_MULT = 0.0078125
 
 class MAX31856(SensorBase):
     def __init__(self, config):
-        SensorBase.__init__(self, config, TS_CHIP_MAX31856,
+        SensorBase.__init__(self, config, "MAX31856",
                             self.build_spi_init(config))
-    def calc_temp(self, adc, fault):
+    def handle_fault(self, adc, fault):
         if fault & MAX31856_FAULT_CJRANGE:
-            self.fault("Max31856: Cold Junction Range Fault")
+            self.report_fault("Max31856: Cold Junction Range Fault")
         if fault & MAX31856_FAULT_TCRANGE:
-            self.fault("Max31856: Thermocouple Range Fault")
+            self.report_fault("Max31856: Thermocouple Range Fault")
         if fault & MAX31856_FAULT_CJHIGH:
-            self.fault("Max31856: Cold Junction High Fault")
+            self.report_fault("Max31856: Cold Junction High Fault")
         if fault & MAX31856_FAULT_CJLOW:
-            self.fault("Max31856: Cold Junction Low Fault")
+            self.report_fault("Max31856: Cold Junction Low Fault")
         if fault & MAX31856_FAULT_TCHIGH:
-            self.fault("Max31856: Thermocouple High Fault")
+            self.report_fault("Max31856: Thermocouple High Fault")
         if fault & MAX31856_FAULT_TCLOW:
-            self.fault("Max31856: Thermocouple Low Fault")
+            self.report_fault("Max31856: Thermocouple Low Fault")
         if fault & MAX31856_FAULT_OVUV:
-            self.fault("Max31856: Over/Under Voltage Fault")
+            self.report_fault("Max31856: Over/Under Voltage Fault")
         if fault & MAX31856_FAULT_OPEN:
-            self.fault("Max31856: Thermocouple Open Fault")
+            self.report_fault("Max31856: Thermocouple Open Fault")
+    def calc_temp(self, adc):
         adc = adc >> MAX31856_SCALE
         # Fix sign bit:
         if adc & 0x40000:
@@ -158,7 +151,7 @@ class MAX31856(SensorBase):
         return temp
     def calc_adc(self, temp):
         adc = int( ( temp / MAX31856_MULT ) + 0.5 ) # convert to ADC value
-        adc = adc << MAX31856_SCALE
+        adc = max(0, min(0x3FFFF, adc)) << MAX31856_SCALE
         return adc
     def build_spi_init(self, config):
         cmds = []
@@ -180,19 +173,17 @@ class MAX31856(SensorBase):
         }
         value = config.getchoice('tc_type', types, default="K")
         averages = {
-            "1"  : MAX31856_CR1_AVGSEL1,
-            "2"  : MAX31856_CR1_AVGSEL2,
-            "4"  : MAX31856_CR1_AVGSEL4,
-            "8"  : MAX31856_CR1_AVGSEL8,
-            "16" : MAX31856_CR1_AVGSEL16
+            1  : MAX31856_CR1_AVGSEL1,
+            2  : MAX31856_CR1_AVGSEL2,
+            4  : MAX31856_CR1_AVGSEL4,
+            8  : MAX31856_CR1_AVGSEL8,
+            16 : MAX31856_CR1_AVGSEL16
         }
-        value |= config.getchoice('tc_averaging_count', averages, "1")
-        cmds.append(0x80 + MAX31856_CR1_REG)
+        value |= config.getchoice('tc_averaging_count', averages, 1)
         cmds.append(value)
 
         value = (MAX31856_MASK_VOLTAGE_UNDER_OVER_FAULT |
                  MAX31856_MASK_THERMOCOUPLE_OPEN_FAULT)
-        cmds.append(0x80 + MAX31856_MASK_REG)
         cmds.append(value)
         return cmds
 
@@ -206,14 +197,15 @@ MAX31855_MULT = 0.25
 
 class MAX31855(SensorBase):
     def __init__(self, config):
-        SensorBase.__init__(self, config, TS_CHIP_MAX31855)
-    def calc_temp(self, adc, fault):
-        if adc & 0x1:
-            self.fault("MAX31855 : Open Circuit")
-        if adc & 0x2:
-            self.fault("MAX31855 : Short to GND")
-        if adc & 0x4:
-            self.fault("MAX31855 : Short to Vcc")
+        SensorBase.__init__(self, config, "MAX31855", spi_mode=0)
+    def handle_fault(self, adc, fault):
+        if fault & 0x1:
+            self.report_fault("MAX31855 : Open Circuit")
+        if fault & 0x2:
+            self.report_fault("MAX31855 : Short to GND")
+        if fault & 0x4:
+            self.report_fault("MAX31855 : Short to Vcc")
+    def calc_temp(self, adc):
         adc = adc >> MAX31855_SCALE
         # Fix sign bit:
         if adc & 0x2000:
@@ -222,7 +214,7 @@ class MAX31855(SensorBase):
         return temp
     def calc_adc(self, temp):
         adc = int( ( temp / MAX31855_MULT ) + 0.5 ) # convert to ADC value
-        adc = adc << MAX31855_SCALE
+        adc = max(0, min(0x1FFF, adc)) << MAX31855_SCALE
         return adc
 
 
@@ -235,12 +227,13 @@ MAX6675_MULT = 0.25
 
 class MAX6675(SensorBase):
     def __init__(self, config):
-        SensorBase.__init__(self, config, TS_CHIP_MAX6675)
-    def calc_temp(self, adc, fault):
-        if adc & 0x02:
-            self.fault("Max6675 : Device ID error")
-        if adc & 0x04:
-            self.fault("Max6675 : Thermocouple Open Fault")
+        SensorBase.__init__(self, config, "MAX6675", spi_mode=0)
+    def handle_fault(self, adc, fault):
+        if fault & 0x02:
+            self.report_fault("Max6675 : Device ID error")
+        if fault & 0x04:
+            self.report_fault("Max6675 : Thermocouple Open Fault")
+    def calc_temp(self, adc):
         adc = adc >> MAX6675_SCALE
         # Fix sign bit:
         if adc & 0x2000:
@@ -249,7 +242,7 @@ class MAX6675(SensorBase):
         return temp
     def calc_adc(self, temp):
         adc = int( ( temp / MAX6675_MULT ) + 0.5 ) # convert to ADC value
-        adc = adc << MAX6675_SCALE
+        adc = max(0, min(0x1FFF, adc)) << MAX6675_SCALE
         return adc
 
 
@@ -280,47 +273,57 @@ MAX31865_FAULT_REFINHIGH       = 0x10
 MAX31865_FAULT_RTDINLOW        = 0x08
 MAX31865_FAULT_OVUV            = 0x04
 
-VAL_A = 0.00390830
-VAL_B = 0.0000005775
-VAL_C = -0.00000000000418301
-VAL_ADC_MAX = 32768.0 # 2^15
+MAX31865_ADC_MAX = 1<<15
+
+# Callendar-Van Dusen constants for platinum resistance thermometers (RTD)
+CVD_A = 3.9083e-3
+CVD_B = -5.775e-7
 
 class MAX31865(SensorBase):
     def __init__(self, config):
-        self.rtd_nominal_r = config.getint('rtd_nominal_r', 100)
-        self.reference_r = config.getfloat('rtd_reference_r', 430., above=0.)
-        SensorBase.__init__(self, config, TS_CHIP_MAX31865,
-                            self.build_spi_init(config))
-    def calc_temp(self, adc, fault):
+        rtd_nominal_r = config.getfloat('rtd_nominal_r', 100., above=0.)
+        rtd_reference_r = config.getfloat('rtd_reference_r', 430., above=0.)
+        adc_to_resist = rtd_reference_r / float(MAX31865_ADC_MAX)
+        self.adc_to_resist_div_nominal = adc_to_resist / rtd_nominal_r
+        self.config_reg = self.build_spi_init(config)
+        SensorBase.__init__(self, config, "MAX31865", self.config_reg)
+    def handle_fault(self, adc, fault):
         if fault & 0x80:
-            self.fault("Max31865 RTD input is disconnected")
+            self.report_fault("Max31865 RTD input is disconnected")
         if fault & 0x40:
-            self.fault("Max31865 RTD input is shorted")
+            self.report_fault("Max31865 RTD input is shorted")
         if fault & 0x20:
-            self.fault("Max31865 VREF- is greater than 0.85 * VBIAS, FORCE- open")
+            self.report_fault(
+                "Max31865 VREF- is greater than 0.85 * VBIAS, FORCE- open")
         if fault & 0x10:
-            self.fault("Max31865 VREF- is less than 0.85 * VBIAS, FORCE- open")
+            self.report_fault(
+                "Max31865 VREF- is less than 0.85 * VBIAS, FORCE- open")
         if fault & 0x08:
-            self.fault("Max31865 VRTD- is less than 0.85 * VBIAS, FORCE- open")
+            self.report_fault(
+                "Max31865 VRTD- is less than 0.85 * VBIAS, FORCE- open")
         if fault & 0x04:
-            self.fault("Max31865 Overvoltage or undervoltage fault")
-        if fault & 0x03:
-            self.fault("Max31865 Unspecified error")
+            self.report_fault("Max31865 Overvoltage or undervoltage fault")
+        if not fault & 0xfc:
+            self.report_fault("Max31865 Unspecified error")
+        # Attempt to clear the fault
+        self.spi.spi_send(self.config_reg)
+    def calc_temp(self, adc):
         adc = adc >> 1 # remove fault bit
-        R_rtd = (self.reference_r * adc) / VAL_ADC_MAX
-        temp = (
-            (( ( -1 * self.rtd_nominal_r ) * VAL_A ) +
-             math.sqrt( ( self.rtd_nominal_r * self.rtd_nominal_r * VAL_A * VAL_A ) -
-                        ( 4 * self.rtd_nominal_r * VAL_B * ( self.rtd_nominal_r - R_rtd ) )))
-            / (2 * self.rtd_nominal_r * VAL_B))
+        R_div_nominal = adc * self.adc_to_resist_div_nominal
+        # Resistance (relative to rtd_nominal_r) is calculated using:
+        #  R_div_nominal = 1. + CVD_A * temp + CVD_B * temp**2
+        # Solve for temp using quadratic equation:
+        #  temp = (-b +- sqrt(b**2 - 4ac)) / 2a
+        discriminant = math.sqrt(CVD_A**2 - 4. * CVD_B * (1. - R_div_nominal))
+        temp = (-CVD_A + discriminant) / (2. * CVD_B)
         return temp
     def calc_adc(self, temp):
-        R_rtd = temp * ( 2 * self.rtd_nominal_r * VAL_B )
-        R_rtd = math.pow( ( R_rtd + ( self.rtd_nominal_r * VAL_A ) ), 2)
-        R_rtd = -1 * ( R_rtd - ( self.rtd_nominal_r * self.rtd_nominal_r * VAL_A * VAL_A ) )
-        R_rtd = R_rtd / ( 4 * self.rtd_nominal_r * VAL_B )
-        R_rtd = ( -1 * R_rtd ) + self.rtd_nominal_r
-        adc = int( ( ( R_rtd * VAL_ADC_MAX ) / self.reference_r) + 0.5 )
+        # Calculate relative resistance via Callendar-Van Dusen formula:
+        #  resistance = rtd_nominal_r * (1 + CVD_A * temp + CVD_B * temp**2)
+        temp = min(temp, 1768.3)  # Melting point of platinum
+        R_div_nominal = 1. + CVD_A * temp + CVD_B * temp * temp
+        adc = int(R_div_nominal / self.adc_to_resist_div_nominal + 0.5)
+        adc = max(0, min(MAX31865_ADC_MAX - 1, adc))
         adc = adc << 1 # Add fault bit
         return adc
     def build_spi_init(self, config):
@@ -348,6 +351,6 @@ Sensors = {
 
 def load_config(config):
     # Register sensors
-    pheater = config.get_printer().lookup_object("heater")
+    pheaters = config.get_printer().load_object(config, "heaters")
     for name, klass in Sensors.items():
-        pheater.add_sensor(name, klass)
+        pheaters.add_sensor_factory(name, klass)

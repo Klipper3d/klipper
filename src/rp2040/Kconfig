@@ -1,0 +1,167 @@
+# Kconfig settings for RPxxxx processors
+
+if MACH_RPXXXX
+
+config RPXXXX_SELECT
+    bool
+    default y
+    select HAVE_GPIO
+    select HAVE_GPIO_ADC
+    select HAVE_GPIO_SPI
+    select HAVE_GPIO_I2C
+    select HAVE_STRICT_TIMING
+    select HAVE_CHIPID
+    select HAVE_GPIO_HARD_PWM
+    select HAVE_STEPPER_OPTIMIZED_BOTH_EDGE
+    select HAVE_BOOTLOADER_REQUEST
+    # Software divide needed on rp2040 in spi rate, i2c rate, hard_pwm rate
+    select HAVE_SOFTWARE_DIVIDE_REQUIRED if MACH_RP2040
+
+config BOARD_DIRECTORY
+    string
+    default "rp2040"
+
+######################################################################
+# Chip selection
+######################################################################
+
+choice
+    prompt "Processor model"
+    config MACH_RP2040
+        bool "rp2040"
+    config MACH_RP2350
+        bool "rp2350"
+endchoice
+
+config MCU
+    string
+    default "rp2040" if MACH_RP2040
+    default "rp2350" if MACH_RP2350
+
+config CLOCK_FREQ
+    int
+    default 12000000 if MACH_RP2040
+    default 150000000 if MACH_RP2350
+
+config FLASH_SIZE
+    hex
+    default 0x200000
+
+config FLASH_BOOT_ADDRESS
+    hex
+    default 0x10000100 if MACH_RP2040 # Stage2 binary starts at 0x10000000
+    default 0x10000000 if MACH_RP2350
+
+config RAM_START
+    hex
+    default 0x20000000
+
+config RAM_SIZE
+    hex
+    default 0x42000 if MACH_RP2040
+    default 0x82000 if MACH_RP2350
+
+config STACK_SIZE
+    int
+    default 512
+
+
+######################################################################
+# Bootloader options
+######################################################################
+
+config RP2040_HAVE_STAGE2
+    bool
+config RPXXXX_HAVE_BOOTLOADER
+    bool
+
+choice
+    prompt "Bootloader offset"
+    config RPXXXX_FLASH_START_0000
+        bool "No bootloader"
+        depends on MACH_RP2350
+    config RPXXXX_FLASH_START_0100
+        bool "No bootloader"
+        depends on MACH_RP2040
+        select RP2040_HAVE_STAGE2
+    config RPXXXX_FLASH_START_4000
+        bool "16KiB bootloader"
+        select RPXXXX_HAVE_BOOTLOADER
+endchoice
+config FLASH_APPLICATION_ADDRESS
+    hex
+    default 0x10004000 if RPXXXX_FLASH_START_4000
+    default 0x10000100 if RPXXXX_FLASH_START_0100
+    default 0x10000000 if RPXXXX_FLASH_START_0000
+
+choice
+    prompt "Flash chip" if LOW_LEVEL_OPTIONS && RP2040_HAVE_STAGE2
+    config RP2040_FLASH_W25Q080
+        bool "W25Q080 with CLKDIV 2"
+    config RP2040_FLASH_GENERIC_03
+        bool "GENERIC_03H with CLKDIV 4"
+endchoice
+
+config RP2040_STAGE2_FILE
+    string
+    default "boot2_generic_03h.S" if RP2040_FLASH_GENERIC_03
+    default "boot2_w25q080.S"
+
+config RP2040_STAGE2_CLKDIV
+    int
+    default 4 if RP2040_FLASH_GENERIC_03
+    default 2
+
+
+######################################################################
+# Communication inteface
+######################################################################
+
+choice
+    prompt "Communication Interface"
+    config RPXXXX_USB
+        bool "USBSERIAL"
+        select USBSERIAL
+    config RPXXXX_SERIAL_UART0_PINS_0_1
+        bool "UART0 on GPIO0/GPIO1"
+        select SERIAL
+    config RPXXXX_SERIAL_UART0_PINS_12_13
+        bool "UART0 on GPIO12/GPIO13" if LOW_LEVEL_OPTIONS
+        select SERIAL
+    config RPXXXX_SERIAL_UART0_PINS_16_17
+        bool "UART0 on GPIO16/GPIO17" if LOW_LEVEL_OPTIONS
+        select SERIAL
+    config RPXXXX_SERIAL_UART0_PINS_28_29
+        bool "UART0 on GPIO28/GPIO29" if LOW_LEVEL_OPTIONS
+        select SERIAL
+    config RPXXXX_SERIAL_UART1_PINS_4_5
+        bool "UART1 on GPIO4/GPIO5" if LOW_LEVEL_OPTIONS
+        select SERIAL
+    config RPXXXX_SERIAL_UART1_PINS_8_9
+        bool "UART1 on  GPIO8/GPIO9" if LOW_LEVEL_OPTIONS
+        select SERIAL
+    config RPXXXX_SERIAL_UART1_PINS_20_21
+        bool "UART1 on  GPIO20/GPIO21" if LOW_LEVEL_OPTIONS
+        select SERIAL
+    config RPXXXX_SERIAL_UART1_PINS_24_25
+        bool "UART1 on GPIO24/GPIO25"  if LOW_LEVEL_OPTIONS
+        select SERIAL
+    config RPXXXX_CANBUS
+        bool "CAN bus"
+        select CANSERIAL
+    config RPXXXX_USBCANBUS
+        bool "USB to CAN bus bridge"
+        select USBCANBUS
+endchoice
+
+config RPXXXX_CANBUS_GPIO_RX
+    int "CAN RX gpio number" if CANBUS
+    default 4
+    range 0 29
+
+config RPXXXX_CANBUS_GPIO_TX
+    int "CAN TX gpio number" if CANBUS
+    default 5
+    range 0 29
+
+endif

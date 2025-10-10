@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Check files for whitespace problems
 #
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
@@ -10,9 +10,10 @@ HaveError = False
 
 def report_error(filename, lineno, msg):
     global HaveError
+    if not HaveError:
+        sys.stderr.write("\n\nERROR:\nERROR: White space errors\nERROR:\n")
     HaveError = True
-    sys.stderr.write("Whitespace error in file %s on line %d: %s\n" % (
-        filename, lineno + 1, msg))
+    sys.stderr.write("%s:%d: %s\n" % (filename, lineno + 1, msg))
 
 def check_file(filename):
     # Open and read file
@@ -26,13 +27,14 @@ def check_file(filename):
         # Empty files are okay
         return
     # Do checks
+    is_source_code = any([filename.endswith(s) for s in ['.c', '.h', '.py']])
     lineno = 0
-    for lineno, line in enumerate(data.split('\n')):
+    for lineno, line in enumerate(data.split(b'\n')):
         # Verify line is valid utf-8
         try:
             line = line.decode('utf-8')
         except UnicodeDecodeError:
-            report_error(filename, lineno, "Non utf-8 character")
+            report_error(filename, lineno, "Found non utf-8 character")
             continue
         # Check for control characters
         for c in line:
@@ -46,11 +48,14 @@ def check_file(filename):
                     char_name,))
                 break
         # Check for trailing space
-        if line.endswith(' '):
-            report_error(filename, lineno, "Trailing space")
-    if not data.endswith('\n'):
+        if line.endswith(' ') or line.endswith('\t'):
+            report_error(filename, lineno, "Line has trailing spaces")
+        # Check for more than 80 characters
+        if is_source_code and len(line) > 80:
+            report_error(filename, lineno, "Line longer than 80 characters")
+    if not data.endswith(b'\n'):
         report_error(filename, lineno, "No newline at end of file")
-    if data.endswith('\n\n'):
+    if data.endswith(b'\n\n'):
         report_error(filename, lineno, "Extra newlines at end of file")
 
 def main():
@@ -58,6 +63,7 @@ def main():
     for filename in files:
         check_file(filename)
     if HaveError:
+        sys.stderr.write("\n\n")
         sys.exit(-1)
 
 if __name__ == '__main__':

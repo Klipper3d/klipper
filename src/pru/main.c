@@ -1,13 +1,13 @@
 // Main starting point for PRU code.
 //
-// Copyright (C) 2017  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2017-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <stdint.h> // uint32_t
 #include <pru/io.h> // read_r31
 #include <pru_iep.h> // CT_IEP
-#include <pru_intc.h> // CT_INTC
+
 #include <rsc_types.h> // resource_table
 #include "board/misc.h" // dynmem_start
 #include "board/io.h" // readl
@@ -17,7 +17,7 @@
 #include "internal.h" // SHARED_MEM
 #include "sched.h" // sched_main
 
-DECL_CONSTANT(MCU, "pru");
+DECL_CONSTANT_STR("MCU", "pru");
 
 
 /****************************************************************
@@ -56,6 +56,8 @@ irq_wait(void)
 static void
 timer_set(uint32_t value)
 {
+    if (!value)
+        value = 1;
     CT_IEP.TMR_CMP0 = value;
 }
 
@@ -73,22 +75,26 @@ timer_kick(void)
     timer_set(timer_read_time() + 50);
     CT_IEP.TMR_CMP_STS = 0xff;
     __delay_cycles(4);
-    CT_INTC.SECR0 = 1 << IEP_EVENT;
+    PRU_INTC.SECR0 = 1 << IEP_EVENT;
 }
+
+static uint32_t in_timer_dispatch;
 
 static void
 _irq_poll(void)
 {
-    uint32_t secr0 = CT_INTC.SECR0;
+    uint32_t secr0 = PRU_INTC.SECR0;
     if (secr0 & (1 << KICK_PRU1_EVENT)) {
-        CT_INTC.SECR0 = 1 << KICK_PRU1_EVENT;
+        PRU_INTC.SECR0 = 1 << KICK_PRU1_EVENT;
         sched_wake_tasks();
     }
     if (secr0 & (1 << IEP_EVENT)) {
         CT_IEP.TMR_CMP_STS = 0xff;
+        in_timer_dispatch = 1;
         uint32_t next = timer_dispatch_many();
         timer_set(next);
-        CT_INTC.SECR0 = 1 << IEP_EVENT;
+        PRU_INTC.SECR0 = 1 << IEP_EVENT;
+        in_timer_dispatch = 0;
     }
 }
 void __attribute__((optimize("O2")))
@@ -103,7 +109,7 @@ timer_init(void)
 {
     CT_IEP.TMR_CMP_CFG = 0x01 << 1;
     CT_IEP.TMR_GLB_CFG = 0x11;
-    CT_IEP.TMR_CNT = 0;
+    CT_IEP.TMR_CNT = 0xffffffff;
     timer_kick();
 }
 DECL_INIT(timer_init);
@@ -112,6 +118,9 @@ DECL_INIT(timer_init);
 /****************************************************************
  * Console IO
  ****************************************************************/
+
+// Writes over 496 bytes don't fit in a single "rpmsg" page
+DECL_CONSTANT("RECEIVE_WINDOW", 496 - 1);
 
 // Process any incoming commands
 void
@@ -136,26 +145,23 @@ DECL_TASK(console_task);
 void
 console_sendf(const struct command_encoder *ce, va_list args)
 {
-    // Verify space for message
-    uint32_t send_push_pos = SHARED_MEM->send_push_pos;
-    struct shared_response_buffer *s = &SHARED_MEM->send_data[send_push_pos];
-    if (readl(&s->count))
-        return;
+    SHARED_MEM->next_encoder_args = args;
+    writel(&SHARED_MEM->next_encoder, (uint32_t)ce);
 
-    // Generate message
-    uint32_t msglen = command_encodef(s->data, ce, args);
-
-    // Signal PRU0 to transmit message
-    writel(&s->count, msglen);
+    // Signal PRU0 to transmit message - 20 | (18-16)  = 22 = 0010 0010
     write_r31(R31_WRITE_IRQ_SELECT | (KICK_PRU0_EVENT - R31_WRITE_IRQ_OFFSET));
-    SHARED_MEM->send_push_pos = (
-        (send_push_pos + 1) % ARRAY_SIZE(SHARED_MEM->send_data));
+    uint32_t itd = in_timer_dispatch;
+    while (readl(&SHARED_MEM->next_encoder))
+        if (!itd)
+            irq_poll();
 }
 
 void
 console_shutdown(void)
 {
     writel(&SHARED_MEM->next_command, 0);
+    writel(&SHARED_MEM->next_encoder, 0);
+    in_timer_dispatch = 0;
 }
 DECL_SHUTDOWN(console_shutdown);
 
@@ -190,25 +196,6 @@ dynmem_end(void)
 {
     return (void*)(8*1024 - STACK_SIZE);
 }
-
-
-/****************************************************************
- * Resource table
- ****************************************************************/
-
-struct my_resource_table {
-    struct resource_table base;
-
-    uint32_t offset[1]; /* Should match 'num' in actual definition */
-} resourceTable __visible __section(".resource_table") = {
-    {
-        1,              /* Resource table version: only version 1 is
-                         * supported by the current driver */
-        0,              /* number of entries in the table */
-        { 0, 0 },       /* reserved, must be zero */
-    },
-};
-
 
 /****************************************************************
  * Startup

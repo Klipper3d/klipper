@@ -19,8 +19,8 @@
 static uint8_t receive_buf[RX_BUFFER_SIZE], receive_pos;
 static uint8_t transmit_buf[96], transmit_pos, transmit_max;
 
-DECL_CONSTANT(SERIAL_BAUD, CONFIG_SERIAL_BAUD);
-DECL_CONSTANT(RECEIVE_WINDOW, RX_BUFFER_SIZE);
+DECL_CONSTANT("SERIAL_BAUD", CONFIG_SERIAL_BAUD);
+DECL_CONSTANT("RECEIVE_WINDOW", RX_BUFFER_SIZE);
 
 // Rx interrupt - store read data
 void
@@ -79,6 +79,9 @@ console_task(void)
     if (ret > 0)
         command_dispatch(receive_buf, pop_count);
     if (ret) {
+        if (CONFIG_HAVE_BOOTLOADER_REQUEST && ret < 0 && pop_count == 32
+            && !memcmp(receive_buf, " \x1c Request Serial Bootloader!! ~", 32))
+            bootloader_request();
         console_pop_input(pop_count);
         if (ret > 0)
             command_send_ack();

@@ -15,6 +15,19 @@
 #include "internal.h" // report_errno
 #include "sched.h" // shutdown
 
+#define SPIBUS(chip, pin) (((chip)<<8) + (pin))
+#define SPIBUS_TO_BUS(spi_bus) ((spi_bus) >> 8)
+#define SPIBUS_TO_DEV(spi_bus) ((spi_bus) & 0xff)
+
+DECL_ENUMERATION_RANGE("spi_bus", "spidev0.0", SPIBUS(0, 0), 16);
+DECL_ENUMERATION_RANGE("spi_bus", "spidev1.0", SPIBUS(1, 0), 16);
+DECL_ENUMERATION_RANGE("spi_bus", "spidev2.0", SPIBUS(2, 0), 16);
+DECL_ENUMERATION_RANGE("spi_bus", "spidev3.0", SPIBUS(3, 0), 16);
+DECL_ENUMERATION_RANGE("spi_bus", "spidev4.0", SPIBUS(4, 0), 16);
+DECL_ENUMERATION_RANGE("spi_bus", "spidev5.0", SPIBUS(5, 0), 16);
+DECL_ENUMERATION_RANGE("spi_bus", "spidev6.0", SPIBUS(6, 0), 16);
+DECL_ENUMERATION_RANGE("spi_bus", "spidev7.0", SPIBUS(7, 0), 16);
+
 struct spi_s {
     uint32_t bus, dev;
     int fd;
@@ -48,18 +61,24 @@ spi_open(uint32_t bus, uint32_t dev)
     devices[devices_count].bus = bus;
     devices[devices_count].dev = dev;
     devices[devices_count].fd = fd;
+    devices_count++;
     return fd;
 }
 
 struct spi_config
 spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
 {
-    int bus_id = (bus >> 8) & 0xff, dev_id = bus & 0xff;
+    int bus_id = SPIBUS_TO_BUS(bus), dev_id = SPIBUS_TO_DEV(bus);
     int fd = spi_open(bus_id, dev_id);
     int ret = ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &rate);
     if (ret < 0) {
         report_errno("ioctl set max spi speed", ret);
         shutdown("Unable to set SPI speed");
+    }
+    ret = ioctl(fd, SPI_IOC_WR_MODE, &mode);
+    if (ret < 0) {
+        report_errno("ioctl set spi mode", ret);
+        shutdown("Unable to set SPI mode");
     }
     return (struct spi_config) { fd , rate};
 }
@@ -88,25 +107,13 @@ spi_transfer(struct spi_config config, uint8_t receive_data
         int ret = ioctl(config.fd, SPI_IOC_MESSAGE(1), &transfer);
         if (ret < 0) {
             report_errno("spi ioctl", ret);
-            shutdown("Unable to issue spi ioctl");
+            try_shutdown("Unable to issue spi ioctl");
         }
     } else {
         int ret = write(config.fd, data, len);
         if (ret < 0) {
             report_errno("write spi", ret);
-            shutdown("Unable to write to spi");
+            try_shutdown("Unable to write to spi");
         }
     }
-}
-
-// Dummy versions of gpio_out functions
-struct gpio_out
-gpio_out_setup(uint8_t pin, uint8_t val)
-{
-    shutdown("gpio_out_setup not supported");
-}
-
-void
-gpio_out_write(struct gpio_out g, uint8_t val)
-{
 }

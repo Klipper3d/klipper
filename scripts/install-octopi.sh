@@ -8,7 +8,7 @@ PYTHONDIR="${HOME}/klippy-env"
 install_packages()
 {
     # Packages for python cffi
-    PKGLIST="python-virtualenv virtualenv python-dev libffi-dev build-essential"
+    PKGLIST="virtualenv python-dev libffi-dev build-essential"
     # kconfig requirements
     PKGLIST="${PKGLIST} libncurses-dev"
     # hub-ctrl
@@ -16,8 +16,8 @@ install_packages()
     # AVR chip installation and building
     PKGLIST="${PKGLIST} avrdude gcc-avr binutils-avr avr-libc"
     # ARM chip installation and building
-    PKGLIST="${PKGLIST} bossa-cli stm32flash libnewlib-arm-none-eabi"
-    PKGLIST="${PKGLIST} gcc-arm-none-eabi binutils-arm-none-eabi"
+    PKGLIST="${PKGLIST} stm32flash dfu-util libnewlib-arm-none-eabi"
+    PKGLIST="${PKGLIST} gcc-arm-none-eabi binutils-arm-none-eabi libusb-1.0"
 
     # Update system package info
     report_status "Running apt-get update..."
@@ -34,10 +34,10 @@ create_virtualenv()
     report_status "Updating python virtual environment..."
 
     # Create virtualenv if it doesn't already exist
-    [ ! -d ${PYTHONDIR} ] && virtualenv ${PYTHONDIR}
+    [ ! -d ${PYTHONDIR} ] && virtualenv -p python2 ${PYTHONDIR}
 
     # Install/update dependencies
-    ${PYTHONDIR}/bin/pip install cffi==1.6.0 pyserial==3.2.1 greenlet==0.4.10
+    ${PYTHONDIR}/bin/pip install -r ${SRCDIR}/scripts/klippy-requirements.txt
 }
 
 # Step 3: Install startup script

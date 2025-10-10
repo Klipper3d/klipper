@@ -1,0 +1,28 @@
+# Test case for z_tilt and quad_gantry_level
+CONFIG z_tilt.cfg
+DICTIONARY atmega2560.dict
+
+# Start by homing the printer.
+G28
+G1 Z5 X10 Y10 F6000
+M400
+GET_POSITION
+
+# Run QUAD_GANTRY_LEVEL in manual mode
+QUAD_GANTRY_LEVEL METHOD=MANUAL
+G1 Z2.909972
+ACCEPT
+G1 Z2.924972
+ACCEPT
+G1 Z2.959972
+ACCEPT
+G1 Z2.924972
+ACCEPT
+
+# Report position
+G1 Z5 X10 Y10 F6000
+M400
+GET_POSITION
+
+# Run again in automatic mode
+QUAD_GANTRY_LEVEL

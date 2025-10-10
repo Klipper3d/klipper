@@ -1,9 +1,10 @@
 # Simple math helper functions
 #
-# Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import math, logging
+import math, logging, multiprocessing, traceback
+import queuelogger
 
 
 ######################################################################
@@ -42,8 +43,44 @@ def coordinate_descent(adj_params, params, error_func):
                 continue
             params[param_name] = orig
             dp[param_name] *= 0.9
-    logging.info("Coordinate descent best_err: %s  rounds: %d", best_err, rounds)
+    logging.info("Coordinate descent best_err: %s  rounds: %d",
+                 best_err, rounds)
     return params
+
+# Helper to run the coordinate descent function in a background
+# process so that it does not block the main thread.
+def background_coordinate_descent(printer, adj_params, params, error_func):
+    parent_conn, child_conn = multiprocessing.Pipe()
+    def wrapper():
+        queuelogger.clear_bg_logging()
+        try:
+            res = coordinate_descent(adj_params, params, error_func)
+        except:
+            child_conn.send((True, traceback.format_exc()))
+            child_conn.close()
+            return
+        child_conn.send((False, res))
+        child_conn.close()
+    # Start a process to perform the calculation
+    calc_proc = multiprocessing.Process(target=wrapper)
+    calc_proc.daemon = True
+    calc_proc.start()
+    # Wait for the process to finish
+    reactor = printer.get_reactor()
+    gcode = printer.lookup_object("gcode")
+    eventtime = last_report_time = reactor.monotonic()
+    while calc_proc.is_alive():
+        if eventtime > last_report_time + 5.:
+            last_report_time = eventtime
+            gcode.respond_info("Working on calibration...", log=False)
+        eventtime = reactor.pause(eventtime + .1)
+    # Return results
+    is_err, res = parent_conn.recv()
+    if is_err:
+        raise Exception("Error in coordinate descent: %s" % (res,))
+    calc_proc.join()
+    parent_conn.close()
+    return res
 
 
 ######################################################################
@@ -98,3 +135,18 @@ def matrix_sub(m1, m2):
 
 def matrix_mul(m1, s):
     return [m1[0]*s, m1[1]*s, m1[2]*s]
+
+######################################################################
+# Matrix helper functions for 3x3 matrices
+######################################################################
+
+def matrix_det(a):
+    x0, x1, x2 = a
+    return matrix_dot(x0, matrix_cross(x1, x2))
+
+def matrix_inv(a):
+    x0, x1, x2 = a
+    inv_det = 1. / matrix_det(a)
+    return [matrix_mul(matrix_cross(x1, x2), inv_det),
+            matrix_mul(matrix_cross(x2, x0), inv_det),
+            matrix_mul(matrix_cross(x0, x1), inv_det)]

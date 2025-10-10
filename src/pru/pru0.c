@@ -1,6 +1,6 @@
 // Code to handle IO on PRU0 and pass the messages to PRU1
 //
-// Copyright (C) 2017  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2017-2021  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -8,16 +8,16 @@
 #include <stdint.h> // uint32_t
 #include <string.h> // memset
 #include <pru/io.h> // write_r31
-#include <pru_cfg.h> // CT_CFG
-#include <pru_intc.h> // CT_INTC
 #include <pru_rpmsg.h> // pru_rpmsg_send
 #include <pru_virtio_ids.h> // VIRTIO_ID_RPMSG
-#include <rsc_types.h> // resource_table
 #include "board/io.h" // readl
-#include "command.h" // command_add_frame
+#include "board/misc.h" // console_sendf
+#include "command.h" // command_encode_add_frame
 #include "compiler.h" // __section
 #include "internal.h" // SHARED_MEM
 #include "sched.h" // sched_shutdown
+#include "intc_map_0.h"
+#include "resource_table.h"
 
 struct pru_rpmsg_transport transport;
 static uint16_t transport_dst;
@@ -31,8 +31,7 @@ static uint16_t transport_dst;
 #define CHAN_DESC                                       "Channel 30"
 #define CHAN_PORT                                       30
 
-#define RPMSG_HDR_SIZE 16
-static uint8_t transmit_buf[RPMSG_BUF_SIZE - RPMSG_HDR_SIZE];
+static uint8_t transmit_buf[RPMSG_MESSAGE_SIZE];
 static int transmit_pos;
 
 // Transmit all pending message blocks
@@ -46,14 +45,19 @@ flush_messages(void)
     transmit_pos = 0;
 }
 
-// Generate a message block and queue it for transmission
-static void
-build_message(uint8_t *msg, int msglen)
+// Verify space for a message block
+static uint8_t *
+get_transmit_ptr(const struct command_encoder *ce)
 {
-    if (transmit_pos + msglen > sizeof(transmit_buf))
+    if (transmit_pos + ce->max_size > sizeof(transmit_buf))
         flush_messages();
-    memcpy(&transmit_buf[transmit_pos], msg, msglen);
-    command_add_frame(&transmit_buf[transmit_pos], msglen);
+    return &transmit_buf[transmit_pos];
+}
+
+// Finalize a message block and queue it for transmission
+static void
+finalize_transmit(int msglen)
+{
     transmit_pos += msglen;
 }
 
@@ -62,16 +66,42 @@ static void
 check_can_send(void)
 {
     for (;;) {
-        uint32_t send_pop_pos = SHARED_MEM->send_pop_pos;
-        struct shared_response_buffer *s = &SHARED_MEM->send_data[send_pop_pos];
-        uint32_t count = readl(&s->count);
-        if (!count)
-            // Queue empty
+        uint32_t rce = readl(&SHARED_MEM->next_encoder);
+        if (!rce)
             break;
-        build_message(s->data, count);
-        writel(&s->count, 0);
-        SHARED_MEM->send_pop_pos = (
-            (send_pop_pos + 1) % ARRAY_SIZE(SHARED_MEM->send_data));
+        // Copy va_args on pru1 for use on pru0
+        void *pru1_args = ALT_PRU_PTR(SHARED_MEM->next_encoder_args);
+        uint32_t local_args[16];
+        memcpy(local_args, pru1_args, sizeof(local_args));
+        const struct command_encoder *pru1_ce = ALT_PRU_PTR((void*)rce);
+        struct command_encoder ce;
+        memcpy(&ce, pru1_ce, sizeof(ce));
+        if (readl(&SHARED_MEM->next_encoder) != rce)
+            continue;
+        // Fixup any pointers in va_args
+        ce.param_types = ALT_PRU_PTR(ce.param_types);
+        uint32_t pos=0, v, i, count = ce.num_params;
+        for (i=0; i<count; i++) {
+            switch (ce.param_types[i]) {
+            case PT_progmem_buffer:
+            case PT_buffer:
+                pos++;
+                // NO BREAK
+            case PT_string:
+                v = local_args[pos];
+                if (v < 0x2000)
+                    // Translate pointer
+                    local_args[pos] = (uint32_t)ALT_PRU_PTR((void*)v);
+            }
+            pos++;
+        }
+        // Encode and build message
+        uint8_t *data = get_transmit_ptr(&ce);
+        int msglen = command_encode_and_frame(data, &ce, (void*)local_args);
+        if (readl(&SHARED_MEM->next_encoder) != rce)
+            continue;
+        writel(&SHARED_MEM->next_encoder, 0);
+        finalize_transmit(msglen);
     }
 }
 
@@ -111,7 +141,7 @@ do_dispatch(uint8_t *buf, uint32_t msglen)
     uint8_t *msgend = &buf[msglen-MESSAGE_TRAILER_SIZE];
     while (p < msgend) {
         // Parse command
-        uint_fast8_t cmdid = *p++;
+        uint_fast16_t cmdid = command_parse_msgid(&p);
         const struct command_parser *cp = &SHARED_MEM->command_index[cmdid];
         if (!cmdid || cmdid >= SHARED_MEM->command_index_size
             || cp->num_args > ARRAY_SIZE(SHARED_MEM->next_command_args)) {
@@ -163,7 +193,8 @@ static void
 process_io(void)
 {
     for (;;) {
-        CT_INTC.SECR0 = (1 << KICK_PRU0_FROM_ARM_EVENT) | (1 << KICK_PRU0_EVENT);
+        PRU_INTC.SECR0 = ((1 << KICK_PRU0_FROM_ARM_EVENT)
+                         | (1 << KICK_PRU0_EVENT));
         check_can_send();
         int can_sleep = check_can_read();
         if (can_sleep) {
@@ -212,116 +243,11 @@ sched_shutdown(uint_fast8_t reason)
 void
 console_sendf(const struct command_encoder *ce, va_list args)
 {
-    uint8_t buf[MESSAGE_MIN];
-    build_message(buf, sizeof(buf));
+    uint8_t *data = get_transmit_ptr(ce);
+    int msglen = command_encode_and_frame(data, ce, args);
+    finalize_transmit(msglen);
 }
 
-
-/****************************************************************
- * Resource table
- ****************************************************************/
-
-/*
- * Sizes of the virtqueues (expressed in number of buffers supported,
- * and must be power of 2)
- */
-#define PRU_RPMSG_VQ0_SIZE      16
-#define PRU_RPMSG_VQ1_SIZE      16
-
-/*
- * The feature bitmap for virtio rpmsg
- */
-#define VIRTIO_RPMSG_F_NS       0               //name service notifications
-
-/* This firmware supports name service notifications as one of its features */
-#define RPMSG_PRU_C0_FEATURES   (1 << VIRTIO_RPMSG_F_NS)
-
-/* Definition for unused interrupts */
-#define HOST_UNUSED             255
-
-/* Mapping sysevts to a channel. Each pair contains a sysevt, channel. */
-static struct ch_map pru_intc_map[] = {
-    {IEP_EVENT, WAKE_PRU1_IRQ},
-    {KICK_ARM_EVENT, WAKE_ARM_IRQ},
-    {KICK_PRU0_FROM_ARM_EVENT, WAKE_PRU0_IRQ},
-    {KICK_PRU0_EVENT, WAKE_PRU0_IRQ},
-    {KICK_PRU1_EVENT, WAKE_PRU1_IRQ},
-};
-
-struct my_resource_table {
-    struct resource_table base;
-
-    uint32_t offset[2]; /* Should match 'num' in actual definition */
-
-    /* rpmsg vdev entry */
-    struct fw_rsc_vdev rpmsg_vdev;
-    struct fw_rsc_vdev_vring rpmsg_vring0;
-    struct fw_rsc_vdev_vring rpmsg_vring1;
-
-    /* intc definition */
-    struct fw_rsc_custom pru_ints;
-} resourceTable __section(".resource_table") = {
-    {
-        1,              /* Resource table version: only version 1 is
-                         * supported by the current driver */
-        2,              /* number of entries in the table */
-        { 0, 0 },       /* reserved, must be zero */
-    },
-    /* offsets to entries */
-    {
-        offsetof(struct my_resource_table, rpmsg_vdev),
-        offsetof(struct my_resource_table, pru_ints),
-    },
-
-    /* rpmsg vdev entry */
-    {
-        (uint32_t)TYPE_VDEV,                    //type
-        (uint32_t)VIRTIO_ID_RPMSG,              //id
-        (uint32_t)0,                            //notifyid
-        (uint32_t)RPMSG_PRU_C0_FEATURES,        //dfeatures
-        (uint32_t)0,                            //gfeatures
-        (uint32_t)0,                            //config_len
-        (uint8_t)0,                             //status
-        (uint8_t)2,                             //num_of_vrings, only two is supported
-        {(uint8_t)0, (uint8_t)0 },              //reserved
-        /* no config data */
-    },
-    /* the two vrings */
-    {
-        0,                                      //da, will be populated by host, can't pass it in
-        16,                                     //align (bytes),
-        PRU_RPMSG_VQ0_SIZE,                     //num of descriptors
-        0,                                      //notifyid, will be populated, can't pass right now
-        0                                       //reserved
-    },
-    {
-        0,                                      //da, will be populated by host, can't pass it in
-        16,                                     //align (bytes),
-        PRU_RPMSG_VQ1_SIZE,                     //num of descriptors
-        0,                                      //notifyid, will be populated, can't pass right now
-        0                                       //reserved
-    },
-
-    {
-        TYPE_CUSTOM, TYPE_PRU_INTS,
-        sizeof(struct fw_rsc_custom_ints),
-        { /* PRU_INTS version */
-            {
-                0x0000,
-                /* Channel-to-host mapping, 255 for unused */
-                {
-                    WAKE_PRU0_IRQ, WAKE_PRU1_IRQ, WAKE_ARM_IRQ,
-                    HOST_UNUSED, HOST_UNUSED, HOST_UNUSED,
-                    HOST_UNUSED, HOST_UNUSED, HOST_UNUSED, HOST_UNUSED
-                },
-                /* Number of evts being mapped to channels */
-                (sizeof(pru_intc_map) / sizeof(struct ch_map)),
-                /* Pointer to the structure containing mapped events */
-                pru_intc_map,
-            },
-        },
-    },
-};
 
 
 /****************************************************************
@@ -334,11 +260,26 @@ int
 main(void)
 {
     // allow access to external memory
+#if defined(__AM335X__)
+    /* AM335x must enable OCP master port access in order for the PRU to
+     * read external memories.*/
     CT_CFG.SYSCFG_bit.STANDBY_INIT = 0;
+#endif
+
+    /* Clear the status of the PRU-ICSS system event that the ARM
+    will use to 'kick' us */
+#if defined(__AM335X__)
+    PRU_INTC.SICR_bit.STS_CLR_IDX = KICK_PRU0_FROM_ARM_EVENT;
+#elif defined(__TDA4VM__) || defined(__AM62X__)
+    PRU_INTC.STATUS_CLR_INDEX_REG_bit.STATUS_CLR_INDEX = \
+    KICK_PRU0_FROM_ARM_EVENT;
+#else
+  #error "Unsupported SoC."
+#endif
 
     // clear all irqs
-    CT_INTC.SECR0 = 0xffffffff;
-    CT_INTC.SECR1 = 0xffffffff;
+    PRU_INTC.SECR0 = 0xffffffff;
+    PRU_INTC.SECR1 = 0xffffffff;
 
     /* Make sure the Linux drivers are ready for RPMsg communication */
     volatile uint8_t *status = &resourceTable.rpmsg_vdev.status;

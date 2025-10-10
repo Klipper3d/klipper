@@ -1,0 +1,8 @@
+# Test case for bed screws tilt helper tool
+CONFIG screws_tilt_adjust.cfg
+DICTIONARY atmega2560.dict
+
+# Simple script to test
+G28
+SCREWS_TILT_CALCULATE
+SCREWS_TILT_CALCULATE MAX_DEVIATION=0.01

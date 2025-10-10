@@ -1,29 +1,29 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # Script to parse a logging file, extract the stats, and graph them
 #
-# Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import optparse, datetime
 import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot, matplotlib.dates, matplotlib.font_manager
-import matplotlib.ticker
 
 MAXBANDWIDTH=25000.
 MAXBUFFER=2.
 STATS_INTERVAL=5.
 TASK_MAX=0.0025
 
-APPLY_PREFIX = ['mcu_awake', 'mcu_task_avg', 'mcu_task_stddev', 'bytes_write',
-                'bytes_read', 'bytes_retransmit', 'freq', 'adj']
+APPLY_PREFIX = [
+    'mcu_awake', 'mcu_task_avg', 'mcu_task_stddev', 'bytes_write',
+    'bytes_read', 'bytes_retransmit', 'freq', 'adj',
+    'target', 'temp', 'pwm'
+]
 
 def parse_log(logname, mcu):
     if mcu is None:
         mcu = "mcu"
     mcu_prefix = mcu + ":"
     apply_prefix = { p: 1 for p in APPLY_PREFIX }
-    f = open(logname, 'rb')
+    f = open(logname, 'r')
     out = []
     for line in f:
         parts = line.split()
@@ -43,12 +43,19 @@ def parse_log(logname, mcu):
             if name in apply_prefix:
                 name = prefix + name
             keyparts[name] = val
-        if keyparts.get('bytes_write', '0') == '0':
+        if 'print_time' not in keyparts:
             continue
         keyparts['#sampletime'] = float(parts[1][:-1])
         out.append(keyparts)
     f.close()
     return out
+
+def setup_matplotlib(output_to_file):
+    global matplotlib
+    if output_to_file:
+        matplotlib.use('Agg')
+    import matplotlib.pyplot, matplotlib.dates, matplotlib.font_manager
+    import matplotlib.ticker
 
 def find_print_restarts(data):
     runoff_samples = {}
@@ -78,7 +85,7 @@ def find_print_restarts(data):
                      for sampletime in samples if not stall}
     return sample_resets
 
-def plot_mcu(data, maxbw, outname):
+def plot_mcu(data, maxbw):
     # Generate data for plot
     basetime = lasttime = data[0]['#sampletime']
     lastbw = float(data[0]['bytes_write']) + float(data[0]['bytes_retransmit'])
@@ -128,18 +135,94 @@ def plot_mcu(data, maxbw, outname):
     ax1.legend(loc='best', prop=fontP)
     ax1.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
     ax1.grid(True)
-    fig.set_size_inches(8, 6)
-    fig.savefig(outname)
+    return fig
 
-def plot_frequency(data, outname, mcu):
+def plot_system(data):
+    # Generate data for plot
+    lasttime = data[0]['#sampletime']
+    lastcputime = float(data[0]['cputime'])
+    times = []
+    sysloads = []
+    cputimes = []
+    memavails = []
+    for d in data:
+        st = d['#sampletime']
+        timedelta = st - lasttime
+        if timedelta <= 0.:
+            continue
+        lasttime = st
+        times.append(datetime.datetime.utcfromtimestamp(st))
+        cputime = float(d['cputime'])
+        cpudelta = max(0., min(1.5, (cputime - lastcputime) / timedelta))
+        lastcputime = cputime
+        cputimes.append(cpudelta * 100.)
+        sysloads.append(float(d['sysload']) * 100.)
+        memavails.append(float(d['memavail']))
+
+    # Build plot
+    fig, ax1 = matplotlib.pyplot.subplots()
+    ax1.set_title("System load utilization")
+    ax1.set_xlabel('Time')
+    ax1.set_ylabel('Load (% of a core)')
+    ax1.plot_date(times, sysloads, '-', label='system load',
+                  color='cyan', alpha=0.8)
+    ax1.plot_date(times, cputimes, '-', label='process time',
+                  color='red', alpha=0.8)
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('Available memory (KB)')
+    ax2.plot_date(times, memavails, '-', label='system memory',
+                  color='yellow', alpha=0.3)
+    fontP = matplotlib.font_manager.FontProperties()
+    fontP.set_size('x-small')
+    ax1li, ax1la = ax1.get_legend_handles_labels()
+    ax2li, ax2la = ax2.get_legend_handles_labels()
+    ax1.legend(ax1li + ax2li, ax1la + ax2la, loc='best', prop=fontP)
+    ax1.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
+    ax1.grid(True)
+    return fig
+
+def plot_mcu_frequencies(data):
     all_keys = {}
     for d in data:
         all_keys.update(d)
-    one_mcu = mcu is not None
     graph_keys = { key: ([], []) for key in all_keys
-                   if (key in ("freq", "adj") or (not one_mcu and (
-                           key.endswith(":freq") or key.endswith(":adj")))) }
-    basetime = lasttime = data[0]['#sampletime']
+                   if (key in ("freq", "adj")
+                       or (key.endswith(":freq") or key.endswith(":adj"))) }
+    for d in data:
+        st = datetime.datetime.utcfromtimestamp(d['#sampletime'])
+        for key, (times, values) in graph_keys.items():
+            val = d.get(key)
+            if val not in (None, '0', '1'):
+                times.append(st)
+                values.append(float(val))
+    est_mhz = { key: round((sum(values)/len(values)) / 1000000.)
+                for key, (times, values) in graph_keys.items() }
+
+    # Build plot
+    fig, ax1 = matplotlib.pyplot.subplots()
+    ax1.set_title("MCU frequencies")
+    ax1.set_xlabel('Time')
+    ax1.set_ylabel('Microsecond deviation')
+    for key in sorted(graph_keys):
+        times, values = graph_keys[key]
+        mhz = est_mhz[key]
+        label = "%s(%dMhz)" % (key, mhz)
+        hz = mhz * 1000000.
+        ax1.plot_date(times, [(v - hz)/mhz for v in values], '.', label=label)
+    fontP = matplotlib.font_manager.FontProperties()
+    fontP.set_size('x-small')
+    ax1.legend(loc='best', prop=fontP)
+    ax1.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
+    ax1.yaxis.set_major_formatter(matplotlib.ticker.FormatStrFormatter('%d'))
+    ax1.grid(True)
+    return fig
+
+def plot_mcu_frequency(data, mcu):
+    all_keys = {}
+    for d in data:
+        all_keys.update(d)
+    graph_keys = { key: ([], []) for key in all_keys
+                   if key in ("freq", "adj") }
     for d in data:
         st = datetime.datetime.utcfromtimestamp(d['#sampletime'])
         for key, (times, values) in graph_keys.items():
@@ -150,10 +233,7 @@ def plot_frequency(data, outname, mcu):
 
     # Build plot
     fig, ax1 = matplotlib.pyplot.subplots()
-    if one_mcu:
-        ax1.set_title("MCU '%s' frequency" % (mcu,))
-    else:
-        ax1.set_title("MCU frequency")
+    ax1.set_title("MCU '%s' frequency" % (mcu,))
     ax1.set_xlabel('Time')
     ax1.set_ylabel('Frequency')
     for key in sorted(graph_keys):
@@ -165,27 +245,93 @@ def plot_frequency(data, outname, mcu):
     ax1.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
     ax1.yaxis.set_major_formatter(matplotlib.ticker.FormatStrFormatter('%d'))
     ax1.grid(True)
-    fig.set_size_inches(8, 6)
-    fig.savefig(outname)
+    return fig
+
+def plot_temperature(data, heaters):
+    fig, ax1 = matplotlib.pyplot.subplots()
+    ax2 = ax1.twinx()
+    for heater in heaters.split(','):
+        heater = heater.strip()
+        temp_key = heater + ':' + 'temp'
+        target_key = heater + ':' + 'target'
+        pwm_key = heater + ':' + 'pwm'
+        times = []
+        temps = []
+        targets = []
+        pwm = []
+        for d in data:
+            temp = d.get(temp_key)
+            if temp is None:
+                continue
+            times.append(datetime.datetime.utcfromtimestamp(d['#sampletime']))
+            temps.append(float(temp))
+            pwm.append(float(d.get(pwm_key, 0.)))
+            targets.append(float(d.get(target_key, 0.)))
+        ax1.plot_date(times, temps, '-', label='%s temp' % (heater,), alpha=0.8)
+        if any(targets):
+            label = '%s target' % (heater,)
+            ax1.plot_date(times, targets, '-', label=label, alpha=0.3)
+        if any(pwm):
+            label = '%s pwm' % (heater,)
+            ax2.plot_date(times, pwm, '-', label=label, alpha=0.2)
+    # Build plot
+    ax1.set_title("Temperature of %s" % (heaters,))
+    ax1.set_xlabel('Time')
+    ax1.set_ylabel('Temperature')
+    ax2.set_ylabel('pwm')
+    fontP = matplotlib.font_manager.FontProperties()
+    fontP.set_size('x-small')
+    ax1li, ax1la = ax1.get_legend_handles_labels()
+    ax2li, ax2la = ax2.get_legend_handles_labels()
+    ax1.legend(ax1li + ax2li, ax1la + ax2la, loc='best', prop=fontP)
+    ax1.xaxis.set_major_formatter(matplotlib.dates.DateFormatter('%H:%M'))
+    ax1.grid(True)
+    return fig
 
 def main():
-    usage = "%prog [options] <logfile> <outname>"
+    # Parse command-line arguments
+    usage = "%prog [options] <logfile>"
     opts = optparse.OptionParser(usage)
     opts.add_option("-f", "--frequency", action="store_true",
                     help="graph mcu frequency")
+    opts.add_option("-s", "--system", action="store_true",
+                    help="graph system load")
+    opts.add_option("-o", "--output", type="string", dest="output",
+                    default=None, help="filename of output graph")
+    opts.add_option("-t", "--temperature", type="string", dest="heater",
+                    default=None, help="graph heater temperature")
     opts.add_option("-m", "--mcu", type="string", dest="mcu", default=None,
                     help="limit stats to the given mcu")
     options, args = opts.parse_args()
-    if len(args) != 2:
+    if len(args) != 1:
         opts.error("Incorrect number of arguments")
-    logname, outname = args
+    logname = args[0]
+
+    # Parse data
     data = parse_log(logname, options.mcu)
     if not data:
         return
-    if options.frequency:
-        plot_frequency(data, outname, options.mcu)
-        return
-    plot_mcu(data, MAXBANDWIDTH, outname)
+
+    # Draw graph
+    setup_matplotlib(options.output is not None)
+    if options.heater is not None:
+        fig = plot_temperature(data, options.heater)
+    elif options.frequency:
+        if options.mcu is not None:
+            fig = plot_mcu_frequency(data, options.mcu)
+        else:
+            fig = plot_mcu_frequencies(data)
+    elif options.system:
+        fig = plot_system(data)
+    else:
+        fig = plot_mcu(data, MAXBANDWIDTH)
+
+    # Show graph
+    if options.output is None:
+        matplotlib.pyplot.show()
+    else:
+        fig.set_size_inches(8, 6)
+        fig.savefig(options.output)
 
 if __name__ == '__main__':
     main()

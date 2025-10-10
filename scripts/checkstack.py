@@ -210,7 +210,7 @@ def main():
     eventfunc = funcsbyname.get('__vector_13', funcsbyname.get('__vector_17'))
     for funcnameroot, info in funcsbyname.items():
         if funcnameroot.endswith('_event') and eventfunc is not None:
-            eventfunc.noteCall(0, info.funcaddr, eventfunc.basic_stack_usage + 2)
+            eventfunc.noteCall(0, info.funcaddr, eventfunc.basic_stack_usage+2)
 
     # Calculate maxstackusage
     for info in funcs.values():

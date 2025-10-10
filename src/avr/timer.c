@@ -16,7 +16,7 @@
  * Low level timer code
  ****************************************************************/
 
-DECL_CONSTANT(CLOCK_FREQ, CONFIG_CLOCK_FREQ);
+DECL_CONSTANT("CLOCK_FREQ", CONFIG_CLOCK_FREQ);
 
 // Return the number of clock ticks for a given number of microseconds
 uint32_t
@@ -197,7 +197,7 @@ ISR(TIMER1_COMPA_vect)
             uint16_t now = timer_get();
             if ((int16_t)(next - now) < (int16_t)(-timer_from_us(1000)))
                 try_shutdown("Rescheduled timer in the past");
-            if (sched_tasks_busy()) {
+            if (sched_check_set_tasks_busy()) {
                 timer_repeat_set(now + TIMER_REPEAT_TICKS);
                 next = now + TIMER_DEFER_REPEAT_TICKS;
                 goto done;

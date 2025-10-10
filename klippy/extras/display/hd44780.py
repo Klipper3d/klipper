@@ -7,24 +7,24 @@
 import logging
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
+LINE_LENGTH_DEFAULT=20
+LINE_LENGTH_OPTIONS=[16, 20]
 
-HD44780_DELAY = .000037
+TextGlyphs = { 'right_arrow': b'\x7e' }
+
+HD44780_DELAY = .000040
 
 class HD44780:
-    char_right_arrow = '\x7e'
-    char_thermometer = '\x00'
-    char_heater_bed = '\x01'
-    char_speed_factor = '\x02'
-    char_clock = '\x03'
-    char_degrees = '\x04'
-    char_usb = '\x05'
-    char_sd = '\x06'
     def __init__(self, config):
         self.printer = config.get_printer()
         # pin config
         ppins = self.printer.lookup_object('pins')
         pins = [ppins.lookup_pin(config.get(name + '_pin'))
                 for name in ['rs', 'e', 'd4', 'd5', 'd6', 'd7']]
+        self.hd44780_protocol_init = config.getboolean('hd44780_protocol_init',
+                                                       True)
+        self.line_length = config.getchoice('line_length', LINE_LENGTH_OPTIONS,
+                                            LINE_LENGTH_DEFAULT)
         mcu = None
         for pin_params in pins:
             if mcu is not None and pin_params['chip'] != mcu:
@@ -33,12 +33,21 @@ class HD44780:
         self.pins = [pin_params['pin'] for pin_params in pins]
         self.mcu = mcu
         self.oid = self.mcu.create_oid()
-        self.mcu.add_config_object(self)
+        self.mcu.register_config_callback(self.build_config)
         self.send_data_cmd = self.send_cmds_cmd = None
+        self.icons = {}
         # framebuffers
-        self.text_framebuffer = (bytearray(' '*80), bytearray('~'*80), 0x80)
-        self.glyph_framebuffer = (bytearray(64), bytearray('~'*64), 0x40)
-        self.framebuffers = [self.text_framebuffer, self.glyph_framebuffer]
+        self.text_framebuffers = [bytearray(b' '*2*self.line_length),
+                                  bytearray(b' '*2*self.line_length)]
+        self.glyph_framebuffer = bytearray(64)
+        self.all_framebuffers = [
+            # Text framebuffers
+            (self.text_framebuffers[0], bytearray(b'~'*2*self.line_length),
+             0x80),
+            (self.text_framebuffers[1], bytearray(b'~'*2*self.line_length),
+             0xc0),
+            # Glyph framebuffer
+            (self.glyph_framebuffer, bytearray(b'~'*64), 0x40) ]
     def build_config(self):
         self.mcu.add_config_cmd(
             "config_hd44780 oid=%d rs_pin=%s e_pin=%s"
@@ -59,12 +68,12 @@ class HD44780:
         #logging.debug("hd44780 %d %s", is_data, repr(cmds))
     def flush(self):
         # Find all differences in the framebuffers and send them to the chip
-        for new_data, old_data, fb_id in self.framebuffers:
+        for new_data, old_data, fb_id in self.all_framebuffers:
             if new_data == old_data:
                 continue
             # Find the position of all changed bytes in this framebuffer
-            diffs = [[i, 1] for i, (nd, od) in enumerate(zip(new_data, old_data))
-                     if nd != od]
+            diffs = [[i, 1] for i, (n, o) in enumerate(zip(new_data, old_data))
+                     if n != o]
             # Batch together changes that are close to each other
             for i in range(len(diffs)-2, -1, -1):
                 pos, count = diffs[i]
@@ -75,8 +84,6 @@ class HD44780:
             # Transmit changes
             for pos, count in diffs:
                 chip_pos = pos
-                if fb_id == 0x80 and pos >= 40:
-                    chip_pos += 0x40 - 40
                 self.send([fb_id + chip_pos])
                 self.send(new_data[pos:pos+count], is_data=True)
             old_data[:] = new_data
@@ -84,87 +91,44 @@ class HD44780:
         curtime = self.printer.get_reactor().monotonic()
         print_time = self.mcu.estimated_print_time(curtime)
         # Program 4bit / 2-line mode and then issue 0x02 "Home" command
-        init = [[0x33], [0x33], [0x33, 0x22, 0x28, 0x02]]
+        if self.hd44780_protocol_init:
+            init = [[0x33], [0x33], [0x32], [0x28, 0x28, 0x02]]
+        else:
+            init = [[0x02]]
         # Reset (set positive direction ; enable display and hide cursor)
         init.append([0x06, 0x0c])
         for i, cmds in enumerate(init):
             minclock = self.mcu.print_time_to_clock(print_time + i * .100)
             self.send_cmds_cmd.send([self.oid, cmds], minclock=minclock)
-        # Add custom fonts
-        self.glyph_framebuffer[0][:len(HD44780_chars)] = HD44780_chars
-        for i in range(len(self.glyph_framebuffer[0])):
-            self.glyph_framebuffer[1][i] = self.glyph_framebuffer[0][i] ^ 1
         self.flush()
     def write_text(self, x, y, data):
-        if x + len(data) > 20:
-            data = data[:20 - min(x, 20)]
-        pos = [0, 40, 20, 60][y] + x
-        self.text_framebuffer[0][pos:pos+len(data)] = data
+        if x + len(data) > self.line_length:
+            data = data[:self.line_length - min(x, self.line_length)]
+        pos = x + ((y & 0x02) >> 1) * self.line_length
+        self.text_framebuffers[y & 1][pos:pos+len(data)] = data
+    def set_glyphs(self, glyphs):
+        for glyph_name, glyph_data in glyphs.items():
+            data = glyph_data.get('icon5x8')
+            if data is not None:
+                self.icons[glyph_name] = data
+    def write_glyph(self, x, y, glyph_name):
+        data = self.icons.get(glyph_name)
+        if data is not None:
+            slot, bits = data
+            self.write_text(x, y, [slot])
+            self.glyph_framebuffer[slot * 8:(slot + 1) * 8] = bits
+            return 1
+        char = TextGlyphs.get(glyph_name)
+        if char is not None:
+            # Draw character
+            self.write_text(x, y, char)
+            return 1
+        return 0
+    def write_graphics(self, x, y, data):
+        pass
     def clear(self):
-        self.text_framebuffer[0][:] = ' '*80
-
-HD44780_chars = [
-    # Thermometer
-    0b00100,
-    0b01010,
-    0b01010,
-    0b01010,
-    0b01010,
-    0b10001,
-    0b10001,
-    0b01110,
-    # Heated bed
-    0b00000,
-    0b11111,
-    0b10101,
-    0b10001,
-    0b10101,
-    0b11111,
-    0b00000,
-    0b00000,
-    # Speed factor
-    0b11100,
-    0b10000,
-    0b11000,
-    0b10111,
-    0b00101,
-    0b00110,
-    0b00101,
-    0b00000,
-    # Clock
-    0b00000,
-    0b01110,
-    0b10011,
-    0b10101,
-    0b10001,
-    0b01110,
-    0b00000,
-    0b00000,
-    # Degrees
-    0b01100,
-    0b10010,
-    0b10010,
-    0b01100,
-    0b00000,
-    0b00000,
-    0b00000,
-    0b00000,
-    # USB
-    0b01110,
-    0b01110,
-    0b01110,
-    0b11111,
-    0b11111,
-    0b11111,
-    0b00100,
-    0b00100,
-    # SD
-    0b00000,
-    0b00111,
-    0b01111,
-    0b11111,
-    0b11111,
-    0b11111,
-    0b11111,
-    0b00000,
-]
+        spaces = b' ' * 2*self.line_length
+        self.text_framebuffers[0][:] = spaces
+        self.text_framebuffers[1][:] = spaces
+    def get_dimensions(self):
+        return (self.line_length, 4)

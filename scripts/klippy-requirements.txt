@@ -1,0 +1,21 @@
+# This file describes the Python virtualenv package requirements for
+# the Klipper host software (Klippy).  These package requirements are
+# typically installed via the command:
+#   pip install -r klippy-requirements.txt
+
+# greenlet is used by the reactor.py code
+greenlet==2.0.2 ; python_version < '3.12'
+greenlet==3.1.1 ; python_version >= '3.12'
+# cffi is used by "chelper" code and by greenlet
+cffi==1.14.6 ; python_version < '3.12'
+cffi==1.17.1 ; python_version >= '3.12'
+# Jinja2 is used by gcode_macro.py
+Jinja2==2.11.3
+markupsafe==1.1.1       # Needed by Jinja2
+# pyserial is used by serialhdl.py (for USB and UART mcu connections)
+pyserial==3.4
+# python-can is used by serialhdl.py (for canbus mcu connections)
+python-can==3.3.4
+setuptools==78.1.1 ; python_version >= '3.12' # Needed by python-can
+# msgspec is an optional dependency of webhooks.py
+msgspec==0.19.0 ; python_version >= '3.9'

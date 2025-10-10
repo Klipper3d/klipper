@@ -1,0 +1,263 @@
+# Kconfig settings for Atmel SAMD processors
+
+if MACH_ATSAMD
+
+config ATSAMD_SELECT
+    bool
+    default y
+    select HAVE_GPIO
+    select HAVE_GPIO_ADC
+    select HAVE_GPIO_I2C
+    select HAVE_GPIO_SPI
+    select HAVE_GPIO_HARD_PWM if MACH_SAMX2
+    select HAVE_STRICT_TIMING
+    select HAVE_CHIPID
+    select HAVE_STEPPER_OPTIMIZED_BOTH_EDGE
+    select HAVE_BOOTLOADER_REQUEST
+    select HAVE_LIMITED_CODE_SIZE if FLASH_SIZE < 0x10000
+    # Software divide needed to convert rate to baud in spi.c
+    select HAVE_SOFTWARE_DIVIDE_REQUIRED if MACH_SAMD21
+
+config HAVE_SERCOM
+    depends on HAVE_GPIO_I2C || HAVE_GPIO_SPI
+    bool
+    default y
+
+config BOARD_DIRECTORY
+    string
+    default "atsamd"
+
+choice
+    prompt "Processor model"
+    config MACH_SAMC21G18
+        bool "SAMC21G18"
+        select MACH_SAMC21
+    config MACH_SAMD21G18
+        bool "SAMD21G18"
+        select MACH_SAMD21
+    config MACH_SAMD21E18
+        bool "SAMD21E18"
+        select MACH_SAMD21
+    config MACH_SAMD21J18
+        bool "SAMD21J18"
+        select MACH_SAMD21
+    config MACH_SAMD21E15
+        bool "SAMD21E15"
+        select MACH_SAMD21
+    config MACH_SAMD51G19
+        bool "SAMD51G19"
+        select MACH_SAMD51
+    config MACH_SAMD51J19
+        bool "SAMD51J19"
+        select MACH_SAMD51
+    config MACH_SAMD51N19
+        bool "SAMD51N19"
+        select MACH_SAMD51
+    config MACH_SAMD51P20
+        bool "SAMD51P20"
+        select MACH_SAMD51
+    config MACH_SAME51J19
+        bool "SAME51J19"
+        select MACH_SAME51
+    config MACH_SAME51N19
+        bool "SAME51N19"
+        select MACH_SAME51
+    config MACH_SAME54P20
+        bool "SAME54P20"
+        select MACH_SAME54
+endchoice
+
+config MACH_SAMX2
+    bool
+config MACH_SAMC21
+    bool
+    select MACH_SAMX2
+config MACH_SAMD21
+    bool
+    select MACH_SAMX2
+config MACH_SAMX5
+    bool
+config MACH_SAMD51
+    bool
+    select MACH_SAMX5
+config MACH_SAME51
+    bool
+    select MACH_SAMX5
+config MACH_SAME54
+    bool
+    select MACH_SAMX5
+config HAVE_SAMD_CANBUS
+    bool
+    default y if MACH_SAMC21 || MACH_SAME51 || MACH_SAME54
+config HAVE_SAMD_USB
+    bool
+    default n if MACH_SAMC21G18
+    default y
+
+config MCU
+    string
+    default "samc21g18a" if MACH_SAMC21G18
+    default "samd21g18a" if MACH_SAMD21G18
+    default "samd21e18a" if MACH_SAMD21E18
+    default "samd21j18a" if MACH_SAMD21J18
+    default "samd21e15a" if MACH_SAMD21E15
+    default "samd51g19a" if MACH_SAMD51G19
+    default "samd51j19a" if MACH_SAMD51J19
+    default "samd51n19a" if MACH_SAMD51N19
+    default "samd51p20a" if MACH_SAMD51P20
+    default "same51j19a" if MACH_SAME51J19
+    default "same51n19a" if MACH_SAME51N19
+    default "same54p20a" if MACH_SAME54P20
+
+config FLASH_SIZE
+    hex
+    default 0x8000 if MACH_SAMD21E15
+    default 0x40000 if MACH_SAMC21G18 || MACH_SAMD21G18 || MACH_SAMD21E18 || MACH_SAMD21J18
+    default 0x80000 if MACH_SAMD51G19 || MACH_SAMD51J19 || MACH_SAMD51N19 || MACH_SAME51J19 || MACH_SAME51N19
+    default 0x100000 if MACH_SAMD51P20 || MACH_SAME54P20
+
+config FLASH_BOOT_ADDRESS
+    hex
+    default 0x0
+
+config RAM_START
+    hex
+    default 0x20000000
+
+config RAM_SIZE
+    hex
+    default 0x1000 if MACH_SAMD21E15
+    default 0x8000 if MACH_SAMC21G18 ||  MACH_SAMD21G18 || MACH_SAMD21E18 || MACH_SAMD21J18
+    default 0x30000 if MACH_SAMD51G19 || MACH_SAMD51J19 || MACH_SAMD51N19 || MACH_SAME51J19 || MACH_SAME51N19
+    default 0x40000 if MACH_SAMD51P20 || MACH_SAME54P20
+
+config STACK_SIZE
+    int
+    default 512
+
+
+######################################################################
+# Bootloader
+######################################################################
+
+choice
+    prompt "Bootloader offset"
+    config SAMD_FLASH_START_2000
+        depends on MACH_SAMD21
+        bool "8KiB bootloader"
+    config SAMD_FLASH_START_4000
+        bool "16KiB bootloader"
+    config SAMD_FLASH_START_0000
+        bool "No bootloader"
+endchoice
+config FLASH_APPLICATION_ADDRESS
+    hex
+    default 0x4000 if SAMD_FLASH_START_4000
+    default 0x2000 if SAMD_FLASH_START_2000
+    default 0x0000
+
+
+######################################################################
+# Clock
+######################################################################
+
+choice
+    prompt "Clock Reference"
+    config CLOCK_REF_X32K
+        bool "32.768Khz crystal" if !MACH_SAMC21
+    config CLOCK_REF_X12M
+        bool "12Mhz crystal" if MACH_SAMC21
+    config CLOCK_REF_X25M
+        bool "25Mhz crystal" if MACH_SAMC21 || MACH_SAMX5
+    config CLOCK_REF_INTERNAL
+        bool "Internal clock" if !MACH_SAMC21
+endchoice
+
+choice
+    depends on MACH_SAMX5 && LOW_LEVEL_OPTIONS
+    prompt "Processor speed"
+    config SAMD51_FREQ_120
+        bool "120 MHz (standard)"
+    config SAMD51_FREQ_150
+        bool "150 MHz (overclock)"
+    config SAMD51_FREQ_180
+        bool "180 MHz (overclock)"
+    config SAMD51_FREQ_200
+        bool "200 MHz (overclock)"
+endchoice
+
+config CLOCK_FREQ
+    int
+    default 48000000 if MACH_SAMX2
+    default 150000000 if SAMD51_FREQ_150
+    default 180000000 if SAMD51_FREQ_180
+    default 200000000 if SAMD51_FREQ_200
+    default 120000000 if MACH_SAMX5
+
+
+######################################################################
+# Communication inteface
+######################################################################
+
+choice
+    prompt "Communication interface"
+    config ATSAMD_USB
+        bool "USB"
+        depends on HAVE_SAMD_USB
+        select USBSERIAL
+    config ATSAMD_SERIAL
+        bool "Serial"
+        depends on !MACH_SAMC21
+        select SERIAL
+    config ATSAMD_MMENU_CANBUS_PA23_PA22
+        bool "CAN bus (on PA23/PA22)"
+        depends on HAVE_SAMD_CANBUS
+        select CANSERIAL
+    config ATSAMD_MMENU_CANBUS_PA25_PA24
+        bool "CAN bus (on PA25/PA24)"
+        depends on HAVE_SAMD_CANBUS
+        select CANSERIAL
+    config ATSAMD_MMENU_CANBUS_PB11_PB10
+        bool "CAN bus (on PB11/PB10)"
+        depends on HAVE_SAMD_CANBUS && MACH_SAMC21
+        select CANSERIAL
+    config ATSAMD_MMENU_CANBUS_PB13_PB12
+        bool "CAN bus (on PB13/PB12)"
+        depends on HAVE_SAMD_CANBUS && !MACH_SAMC21
+        select CANSERIAL
+    config ATSAMD_MMENU_CANBUS_PB15_PB14
+        bool "CAN bus (on PB15/PB14)"
+        depends on HAVE_SAMD_CANBUS
+        select CANSERIAL
+    config ATSAMD_USBCANBUS
+        bool "USB to CAN bus bridge"
+        depends on HAVE_SAMD_CANBUS && HAVE_SAMD_USB
+        select USBCANBUS
+endchoice
+choice
+    prompt "CAN bus interface" if USBCANBUS
+    config ATSAMD_CMENU_CANBUS_PA23_PA22
+        bool "CAN bus (on PA23/PA22)"
+    config ATSAMD_CMENU_CANBUS_PB13_PB12
+        bool "CAN bus (on PB13/PB12)"
+    config ATSAMD_CMENU_CANBUS_PB15_PB14
+        bool "CAN bus (on PB15/PB14)"
+endchoice
+
+config ATSAMD_CANBUS_PA23_PA22
+    bool
+    default y if ATSAMD_MMENU_CANBUS_PA23_PA22 || ATSAMD_CMENU_CANBUS_PA23_PA22
+config ATSAMD_CANBUS_PA25_PA24
+    bool
+    default y if ATSAMD_MMENU_CANBUS_PA25_PA24
+config ATSAMD_CANBUS_PB11_PB10
+    bool
+    default y if ATSAMD_MMENU_CANBUS_PB11_PB10
+config ATSAMD_CANBUS_PB13_PB12
+    bool
+    default y if ATSAMD_MMENU_CANBUS_PB13_PB12 || ATSAMD_CMENU_CANBUS_PB13_PB12
+config ATSAMD_CANBUS_PB15_PB14
+    bool
+    default y if ATSAMD_MMENU_CANBUS_PB15_PB14 || ATSAMD_CMENU_CANBUS_PB15_PB14
+
+endif

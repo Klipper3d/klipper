@@ -1,0 +1,104 @@
+# Kconfig settings for Huada HC32F460 processor
+
+if MACH_HC32F460
+
+config HC32F460_SELECT
+    bool
+    default y
+    select HAVE_GPIO
+    select HAVE_GPIO_ADC
+    select HAVE_STRICT_TIMING
+    select HAVE_GPIO_HARD_PWM
+    select HAVE_STEPPER_OPTIMIZED_BOTH_EDGE
+    # Software divide used by Huada SDK
+    select HAVE_SOFTWARE_DIVIDE_REQUIRED
+
+config BOARD_DIRECTORY
+    string
+    default "hc32f460"
+
+
+######################################################################
+# Communication interface
+######################################################################
+choice
+    prompt "Communication interface"
+    config HC32F460_SERIAL_PA7_PA8
+        bool "Serial (PA7 & PA8)"
+        select SERIAL
+    config HC32F460_SERIAL_PA13_PA14
+        bool "Serial (PA13 & PA14)"
+        select SERIAL
+    config HC32F460_SERIAL_PA3_PA2
+        bool "Serial (PA3 & PA2)"
+        select SERIAL
+    config HC32F460_SERIAL_PH2_PB10
+        bool "Serial (PH2 & PB10)"
+        select SERIAL
+    config HC32F460_SERIAL_PA15_PA9
+        bool "Serial (PA15 & PA09)"
+        select SERIAL
+    config HC32F460_SERIAL_PC0_PC1
+        bool "Serial (PC0 & PC1)"
+        select SERIAL
+endchoice
+
+######################################################################
+# Bootloader
+# bootloader moves code and then VTOR.RESET points here:
+######################################################################
+config FLASH_SIZE
+    hex
+    default 0x40000
+
+choice "Application Address"
+    prompt "Application Address"
+    config HC32F460_FLASH_APPLICATION_ADDRESS_0x008000
+        bool "0x008000"
+    config HC32F460_FLASH_APPLICATION_ADDRESS_0x00C000
+        bool "0x00C000"
+    config HC32F460_FLASH_APPLICATION_ADDRESS_0x010000
+        bool "0x010000"
+endchoice
+
+config FLASH_APPLICATION_ADDRESS
+    hex
+    default 0x008000 if HC32F460_FLASH_APPLICATION_ADDRESS_0x008000
+    default 0x00C000 if HC32F460_FLASH_APPLICATION_ADDRESS_0x00C000
+    default 0x010000 if HC32F460_FLASH_APPLICATION_ADDRESS_0x010000
+
+config FLASH_BOOT_ADDRESS
+    hex
+    default 0x0
+
+config RAM_SIZE
+    hex
+    default 0x8000
+
+# use the fast RAM in the HC32F460
+config RAM_START
+    hex
+    default 0x1fff8000
+
+config STACK_SIZE
+    int
+    default 1024
+
+choice "Clock Speed"
+    prompt "Clock Speed"
+    config HC32F460_CLOCK_SPEED_168M
+        bool "168 MHz"
+    config HC32F460_CLOCK_SPEED_200M
+        bool "200 MHz"
+endchoice
+
+config CLOCK_FREQ
+    int
+    default 200000000 if HC32F460_CLOCK_SPEED_200M
+    default 168000000 if HC32F460_CLOCK_SPEED_168M
+
+config MCU
+    string
+    default "HC32F460"
+
+endif

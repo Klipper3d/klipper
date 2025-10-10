@@ -1,0 +1,21 @@
+# Kconfig settings for AR100
+
+if MACH_AR100
+
+config AR100_SELECT
+    bool
+    default y
+    select HAVE_GPIO
+    select HAVE_GPIO_SPI
+    select HAVE_STEPPER_OPTIMIZED_BOTH_EDGE
+    select HAVE_LIMITED_CODE_SIZE
+
+config BOARD_DIRECTORY
+    string
+    default "ar100"
+
+config CLOCK_FREQ
+    int
+    default 300000000
+
+endif

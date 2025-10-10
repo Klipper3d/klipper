@@ -1,6 +1,6 @@
 // GPIO functions on PRU
 //
-// Copyright (C) 2017  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2017-2020  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -20,7 +20,7 @@
 #define GPIO2BIT(PIN) (1<<((PIN) % 32))
 
 struct gpio_regs {
-    uint32_t pad_0[77];
+    uint32_t pad_0[77]; // 77*4=308=134h
     volatile uint32_t oe;
     volatile uint32_t datain;
     volatile uint32_t dataout;
@@ -29,9 +29,19 @@ struct gpio_regs {
     volatile uint32_t setdataout;
 };
 
+DECL_ENUMERATION_RANGE("pin", "gpio0_0", GPIO(0, 0), 32);
+DECL_ENUMERATION_RANGE("pin", "gpio1_0", GPIO(1, 0), 32);
+DECL_ENUMERATION_RANGE("pin", "gpio2_0", GPIO(2, 0), 32);
+DECL_ENUMERATION_RANGE("pin", "gpio3_0", GPIO(3, 0), 32);
+
 static struct gpio_regs *digital_regs[] = {
     (void*)0x44e07000, (void*)0x4804c000, (void*)0x481ac000, (void*)0x481ae000
 };
+
+
+/****************************************************************
+ * Pin mux handling
+ ****************************************************************/
 
 #define MUXPORT(offset) (((offset)-0x800) / 4)
 
@@ -79,6 +89,17 @@ static uint8_t gpio_mux_offset[32 * ARRAY_SIZE(digital_regs)] = {
 
 #define MUXREG(mux_offset) ((volatile uint32_t *)0x44e10800 + mux_offset)
 
+static void
+set_pin_mux(uint8_t pin, uint8_t val)
+{
+    return; // XXX - can not set mux value from PRU
+
+    uint8_t mux_offset = gpio_mux_offset[pin];
+    if (mux_offset == 0xff)
+        shutdown("Invalid mux pin");
+    *MUXREG(mux_offset) = val;
+}
+
 
 /****************************************************************
  * General Purpose Input Output (GPIO) pins
@@ -89,18 +110,21 @@ gpio_out_setup(uint8_t pin, uint8_t val)
 {
     if (GPIO2PORT(pin) >= ARRAY_SIZE(digital_regs))
         goto fail;
-    uint8_t mux_offset = gpio_mux_offset[pin];
-    if (mux_offset == 0xff)
-        goto fail;
     struct gpio_regs *regs = digital_regs[GPIO2PORT(pin)];
     uint32_t bit = GPIO2BIT(pin);
-    struct gpio_out rv = (struct gpio_out){ .reg=&regs->cleardataout, .bit=bit };
+    struct gpio_out rv = (struct gpio_out){.reg=&regs->cleardataout, .bit=bit};
     gpio_out_write(rv, val);
     regs->oe &= ~bit;
-    *MUXREG(mux_offset) = 0x0f;
+    set_pin_mux(pin, 0x0f);
     return rv;
 fail:
     shutdown("Not an output pin");
+}
+
+void
+gpio_out_reset(struct gpio_out g, uint8_t val)
+{
+    shutdown("PRU does not support push/pull pins");
 }
 
 void
@@ -130,16 +154,19 @@ gpio_in_setup(uint8_t pin, int8_t pull_up)
 {
     if (GPIO2PORT(pin) >= ARRAY_SIZE(digital_regs))
         goto fail;
-    uint8_t mux_offset = gpio_mux_offset[pin];
-    if (mux_offset == 0xff)
-        goto fail;
     struct gpio_regs *regs = digital_regs[GPIO2PORT(pin)];
     uint32_t bit = GPIO2BIT(pin);
     regs->oe |= bit;
-    *MUXREG(mux_offset) = pull_up > 0 ? 0x37 : (pull_up < 0 ? 0x27 : 0x2f);
+    set_pin_mux(pin, pull_up > 0 ? 0x37 : (pull_up < 0 ? 0x27 : 0x2f));
     return (struct gpio_in){ .reg=&regs->datain, .bit=bit };
 fail:
     shutdown("Not an input pin");
+}
+
+void
+gpio_in_reset(struct gpio_in g, int8_t pull_up)
+{
+    shutdown("PRU does not support push/pull pins");
 }
 
 uint8_t

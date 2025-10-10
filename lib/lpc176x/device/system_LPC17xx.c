@@ -308,8 +308,8 @@
 #define CCLKCFG_Val           0x00000002
 #define USBCLKCFG_Val         0x00000000
 
-#define PCLKSEL0_Val          0x00000000
-#define PCLKSEL1_Val          0x00000000
+#define PCLKSEL0_Val          0x55515155
+#define PCLKSEL1_Val          0x54555455
 #define PCONP_Val             0x042887DE
 #define CLKOUTCFG_Val         0x00000000
 
@@ -511,7 +511,7 @@ uint32_t SystemCoreClock = __CORE_CLK;/*!< System Clock Frequency (Core Clock)*/
  * @brief  Setup the microcontroller system.
  *         Initialize the System.
  */
-void __attribute__((externally_visible)) SystemInit (void)
+void SystemInit (void)
 {
 #if (CLOCK_SETUP)                       /* Clock Setup                        */
   LPC_SC->SCS       = SCS_Val;

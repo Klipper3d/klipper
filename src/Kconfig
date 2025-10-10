@@ -2,22 +2,32 @@
 
 mainmenu "Klipper Firmware Configuration"
 
+config LOW_LEVEL_OPTIONS
+    bool "Enable extra low-level configuration options"
+    help
+        Enable low-level configuration options that (if modified) may
+        result in a build that does not function correctly.
+
 choice
     prompt "Micro-controller Architecture"
     config MACH_AVR
         bool "Atmega AVR"
-    config MACH_SAM3X8E
-        bool "SAM3x8e (Arduino Due)"
-    config MACH_SAMD21
-        bool "SAMD21 (Arduino Zero)"
-    config MACH_SAM4E8E
-        bool "SAM4e8e (Duet Wifi/Eth)"
+    config MACH_ATSAM
+        bool "SAM3/SAM4/SAM E70"
+    config MACH_ATSAMD
+        bool "SAMC21/SAMD21/SAMD51/SAME5x"
     config MACH_LPC176X
-        bool "LPC176x (Smoothieboard)"
-    config MACH_STM32F1
-        bool "STMicroelectronics STM32F103"
+        bool "LPC176x"
+    config MACH_STM32
+        bool "STMicroelectronics STM32"
+    config MACH_HC32F460
+        bool "Huada Semiconductor HC32F460"
+    config MACH_RPXXXX
+        bool "Raspberry Pi RP2040/RP235x"
     config MACH_PRU
         bool "Beaglebone PRU"
+    config MACH_AR100
+        bool "Allwinner A64 AR100"
     config MACH_LINUX
         bool "Linux process"
     config MACH_SIMU
@@ -25,44 +35,296 @@ choice
 endchoice
 
 source "src/avr/Kconfig"
-source "src/sam3x8e/Kconfig"
-source "src/samd21/Kconfig"
-source "src/sam4e8e/Kconfig"
+source "src/atsam/Kconfig"
+source "src/atsamd/Kconfig"
 source "src/lpc176x/Kconfig"
-source "src/stm32f1/Kconfig"
+source "src/stm32/Kconfig"
+source "src/hc32f460/Kconfig"
+source "src/rp2040/Kconfig"
 source "src/pru/Kconfig"
+source "src/ar100/Kconfig"
 source "src/linux/Kconfig"
 source "src/simulator/Kconfig"
 
+# Generic configuration options for serial ports
+config SERIAL
+    bool
+config SERIAL_BAUD
+    depends on SERIAL
+    int "Baud rate for serial port" if LOW_LEVEL_OPTIONS
+    default 250000
+    help
+        Specify the baud rate of the serial port. This should be set
+        to 250000. Read the FAQ before changing this value.
 
+# Generic configuration options for USB
+config USBSERIAL
+    bool
+config USBCANBUS
+    bool
+config USB
+    bool
+    default y if USBSERIAL || USBCANBUS
+config USB_VENDOR_ID
+    default 0x1d50
+config USB_DEVICE_ID
+    default 0x614e
+config USB_SERIAL_NUMBER_CHIPID
+    depends on USB && HAVE_CHIPID
+    default y
+config USB_SERIAL_NUMBER
+    default "12345"
 
-# The HAVE_GPIO_x options allow boards to disable support for some
-# commands if the hardware does not support the feature.
-config HAVE_GPIO
-    bool
-    default n
-config HAVE_GPIO_ADC
-    bool
-    default n
-config HAVE_GPIO_SPI
-    bool
-    default n
-config HAVE_GPIO_HARD_PWM
-    bool
-    default n
-config HAVE_USER_INTERFACE
-    bool
-    default n
+menu "USB ids"
+    depends on USB && LOW_LEVEL_OPTIONS
+config USB_VENDOR_ID
+    hex "USB vendor ID" if USBSERIAL
+config USB_DEVICE_ID
+    hex "USB device ID" if USBSERIAL
+config USB_SERIAL_NUMBER_CHIPID
+    bool "USB serial number from CHIPID" if HAVE_CHIPID
+config USB_SERIAL_NUMBER
+    string "USB serial number" if !USB_SERIAL_NUMBER_CHIPID
+endmenu
 
-config NO_UNSTEP_DELAY
-    # Slow micro-controllers do not require a delay before returning a
-    # stepper step pin to its default level.  A board can enable this
-    # option to optimize the stepper_event() handler in this case.
+# Optional features that can be disabled (for devices with small flash sizes)
+config WANT_ADC
     bool
-    default n
+    depends on HAVE_GPIO_ADC
+    default y
+config WANT_SPI
+    bool
+    depends on HAVE_GPIO && HAVE_GPIO_SPI
+    default y
+config WANT_SOFTWARE_SPI
+    bool
+    depends on WANT_SPI
+    default y
+config WANT_I2C
+    bool
+    depends on HAVE_GPIO && HAVE_GPIO_I2C
+    default y
+config WANT_SOFTWARE_I2C
+    bool
+    depends on WANT_I2C
+    default y
+config WANT_HARD_PWM
+    bool
+    depends on HAVE_GPIO_HARD_PWM
+    default y
+config WANT_BUTTONS
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_TMCUART
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_NEOPIXEL
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_PULSE_COUNTER
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_ST7920
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_HD44780
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_ADXL345
+    bool
+    depends on WANT_SPI
+    default y
+config WANT_LIS2DW
+    bool
+    depends on WANT_SPI || WANT_I2C
+    default y
+config WANT_MPU9250
+    bool
+    depends on WANT_I2C
+    default y
+config WANT_ICM20948
+    bool
+    depends on WANT_I2C
+    default y
+config WANT_THERMOCOUPLE
+    bool
+    depends on WANT_SPI
+    default y
+config WANT_HX71X
+    bool
+    depends on HAVE_GPIO
+    default y
+config WANT_ADS1220
+    bool
+    depends on WANT_SPI
+    default y
+config WANT_LDC1612
+    bool
+    depends on WANT_I2C
+    default y
+config WANT_SENSOR_ANGLE
+    bool
+    depends on WANT_SPI
+    default y
+config NEED_SENSOR_BULK
+    bool
+    depends on WANT_ADXL345 || WANT_LIS2DW || WANT_MPU9250 || WANT_ICM20948 \
+        || WANT_HX71X || WANT_ADS1220 || WANT_LDC1612 || WANT_SENSOR_ANGLE
+    default y
+config WANT_LOAD_CELL_PROBE
+    bool
+    depends on WANT_HX71X || WANT_ADS1220
+    default y
+config NEED_SOS_FILTER
+    bool
+    depends on WANT_LOAD_CELL_PROBE
+    default y
+menu "Optional features (to reduce code size)"
+    depends on HAVE_LIMITED_CODE_SIZE
+config WANT_ADC
+    bool "Support micro-controller based ADC (analog to digital)"
+    depends on HAVE_GPIO_ADC
+config WANT_SPI
+    bool "Support communicating with external chips via SPI bus"
+    depends on HAVE_GPIO && HAVE_GPIO_SPI
+config WANT_SOFTWARE_SPI
+    bool "Support software based SPI \"bit-banging\""
+    depends on WANT_SPI
+config WANT_I2C
+    bool "Support communicating with external chips via I2C bus"
+    depends on HAVE_GPIO && HAVE_GPIO_I2C
+config WANT_SOFTWARE_I2C
+    bool "Support software based I2C \"bit-banging\""
+    depends on WANT_I2C
+config WANT_HARD_PWM
+    bool "Support hardware PWM (pulse width modulation)"
+    depends on HAVE_GPIO_HARD_PWM
+config WANT_BUTTONS
+    bool "Support GPIO based button reading"
+    depends on HAVE_GPIO
+config WANT_TMCUART
+    bool "Support Trinamic stepper motor driver UART communication"
+    depends on HAVE_GPIO
+config WANT_NEOPIXEL
+    bool "Support 'neopixel' type LED control"
+    depends on HAVE_GPIO
+config WANT_PULSE_COUNTER
+    bool "Support measuring fan tachometer GPIO pins"
+    depends on HAVE_GPIO
+comment "LCD chips"
+config WANT_ST7920
+    bool "Support ST7920 LCD display"
+    depends on HAVE_GPIO
+config WANT_HD44780
+    bool "Support HD44780 LCD display"
+    depends on HAVE_GPIO
+comment "Accelerometer chips"
+    depends on WANT_SPI || WANT_I2C
+config WANT_ADXL345
+    bool "Support adxl accelerometers"
+    depends on WANT_SPI
+config WANT_LIS2DW
+    bool "Support lis2dw and lis3dh 3-axis accelerometers"
+    depends on WANT_SPI || WANT_I2C
+config WANT_MPU9250
+    bool "Support MPU accelerometers"
+    depends on WANT_I2C
+config WANT_ICM20948
+    bool "Support ICM20948 accelerometer"
+    depends on WANT_I2C
+comment "External ADC type chips"
+config WANT_THERMOCOUPLE
+    bool "Support thermocouple MAX sensors"
+    depends on WANT_SPI
+config WANT_HX71X
+    bool "Support HX711 and HX717 ADC chips"
+    depends on HAVE_GPIO
+config WANT_ADS1220
+    bool "Support ADS 1220 ADC chip"
+    depends on WANT_SPI
+comment "Other external sensor chips"
+    depends on WANT_SPI || WANT_I2C
+config WANT_LDC1612
+    bool "Support ldc1612 eddy current sensor"
+    depends on WANT_I2C
+config WANT_SENSOR_ANGLE
+    bool "Support angle sensors"
+    depends on WANT_SPI
+endmenu
 
+# Generic configuration options for CANbus
+config CANSERIAL
+    bool
+config CANBUS
+    bool
+    default y if CANSERIAL || USBCANBUS
+config CANBUS_FREQUENCY
+    int "CAN bus speed" if LOW_LEVEL_OPTIONS && CANBUS
+    default 1000000
+config CANBUS_FILTER
+    bool
+    default y if CANSERIAL
+
+# Stepper optimizations
 config INLINE_STEPPER_HACK
     # Enables gcc to inline stepper_event() into the main timer irq handler
     bool
     depends on HAVE_GPIO
     default y
+config HAVE_STEPPER_OPTIMIZED_BOTH_EDGE
+    bool
+config WANT_STEPPER_OPTIMIZED_BOTH_EDGE
+    bool "Optimize stepper code for 'step on both edges'" if LOW_LEVEL_OPTIONS
+    depends on INLINE_STEPPER_HACK && HAVE_STEPPER_OPTIMIZED_BOTH_EDGE
+    default y
+    help
+        Optimize the stepper code for Trinamic stepper motor drivers
+        that are configured in UART or SPI mode (and thus can perform
+        a step on both "edges" of the step pin).  Enabling this option
+        typically improves the stepper cpu performance by about 20%
+        when using these drivers.  If this option is disabled the code
+        will instead deploy optimizations that improve the cpu
+        performance by about 20% for traditional drivers (those that
+        take a step only on the "rising" or "falling" level of the
+        step pin).
+
+# Support setting gpio state at startup
+config INITIAL_PINS
+    string "GPIO pins to set at micro-controller startup"
+    depends on LOW_LEVEL_OPTIONS
+    help
+        One may specify a comma separated list of gpio pins to set
+        during the micro-controller startup sequence. By default the
+        pins will be set to output high - preface a pin with a '!'
+        character to set that pin to output low.
+
+# The HAVE_x options allow boards to disable support for some commands
+# if the hardware does not support the feature.
+config HAVE_GPIO
+    bool
+config HAVE_GPIO_ADC
+    bool
+config HAVE_GPIO_SPI
+    bool
+config HAVE_GPIO_SDIO
+    bool
+config HAVE_GPIO_I2C
+    bool
+config HAVE_GPIO_HARD_PWM
+    bool
+config HAVE_STRICT_TIMING
+    bool
+config HAVE_CHIPID
+    bool
+config HAVE_BOOTLOADER_REQUEST
+    bool
+config HAVE_LIMITED_CODE_SIZE
+    bool
+config HAVE_SOFTWARE_DIVIDE_REQUIRED
+    bool

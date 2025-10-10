@@ -5,6 +5,8 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <string.h> // memmove
+#include "autoconf.h" // CONFIG_USB_VENDOR_ID
+#include "board/misc.h" // console_sendf
 #include "board/pgm.h" // PROGMEM
 #include "board/usb_cdc_ep.h" // USB_CDC_EP_BULK_IN
 #include "byteorder.h" // cpu_to_le16
@@ -12,11 +14,16 @@
 #include "generic/usbstd.h" // struct usb_device_descriptor
 #include "generic/usbstd_cdc.h" // struct usb_cdc_header_descriptor
 #include "sched.h" // sched_wake_task
-#include "usb_cdc.h" // usb_notify_setup
+#include "usb_cdc.h" // usb_notify_ep0
 
-// XXX - move to Kconfig
-#define CONFIG_USB_VENDOR_ID 0x2341
-#define CONFIG_USB_PRODUCT_ID 0xabcd
+// To debug a USB connection over UART, uncomment the two macros
+// below, alter the board KConfig to "select USBSERIAL" on a serial
+// UART build (so both USB and UART are enabled in a single build),
+// compile the code using serial UART, add output() calls to the USB
+// code as needed, deploy the new binary, and then connect via
+// console.py using UART to see those output() messages.
+//#define console_sendf(ce,va) console_sendf_usb(ce,va)
+//#define command_find_and_dispatch(rb, rp, pc) ({*(pc) = rp; 1;})
 
 
 /****************************************************************
@@ -24,7 +31,7 @@
  ****************************************************************/
 
 static struct task_wake usb_bulk_in_wake;
-static uint8_t transmit_buf[96], transmit_pos;
+static uint8_t transmit_buf[192], transmit_pos;
 
 void
 usb_notify_bulk_in(void)
@@ -37,11 +44,13 @@ usb_bulk_in_task(void)
 {
     if (!sched_check_wake(&usb_bulk_in_wake))
         return;
-    uint_fast8_t tpos = transmit_pos;
+    uint_fast8_t tpos = transmit_pos, max_tpos = tpos;
     if (!tpos)
         return;
-    uint_fast8_t max_tpos = (tpos > USB_CDC_EP_BULK_IN_SIZE
-                             ? USB_CDC_EP_BULK_IN_SIZE : tpos);
+    if (max_tpos > USB_CDC_EP_BULK_IN_SIZE)
+        max_tpos = USB_CDC_EP_BULK_IN_SIZE;
+    else if (max_tpos == USB_CDC_EP_BULK_IN_SIZE)
+        max_tpos = USB_CDC_EP_BULK_IN_SIZE-1; // Avoid zero-length-packets
     int_fast8_t ret = usb_send_bulk_in(transmit_buf, max_tpos);
     if (ret <= 0)
         return;
@@ -92,8 +101,19 @@ usb_bulk_out_task(void)
 {
     if (!sched_check_wake(&usb_bulk_out_wake))
         return;
-    // Process any existing message blocks
+    // Read data
     uint_fast8_t rpos = receive_pos, pop_count;
+    if (rpos + USB_CDC_EP_BULK_OUT_SIZE <= sizeof(receive_buf)) {
+        int_fast8_t ret = usb_read_bulk_out(
+            &receive_buf[rpos], USB_CDC_EP_BULK_OUT_SIZE);
+        if (ret > 0) {
+            rpos += ret;
+            usb_notify_bulk_out();
+        }
+    } else {
+        usb_notify_bulk_out();
+    }
+    // Process a message block
     int_fast8_t ret = command_find_and_dispatch(receive_buf, rpos, &pop_count);
     if (ret) {
         // Move buffer
@@ -104,14 +124,6 @@ usb_bulk_out_task(void)
         }
         rpos = needcopy;
     }
-    // Read more data
-    if (rpos + USB_CDC_EP_BULK_OUT_SIZE <= sizeof(receive_buf)) {
-        ret = usb_read_bulk_out(&receive_buf[rpos], USB_CDC_EP_BULK_OUT_SIZE);
-        if (ret > 0) {
-            rpos += ret;
-            usb_notify_bulk_out();
-        }
-    }
     receive_pos = rpos;
 }
 DECL_TASK(usb_bulk_out_task);
@@ -121,10 +133,11 @@ DECL_TASK(usb_bulk_out_task);
  * USB descriptors
  ****************************************************************/
 
-// XXX - move to Kconfig
+#define CONCAT1(a, b) a ## b
+#define CONCAT(a, b) CONCAT1(a, b)
 #define USB_STR_MANUFACTURER u"Klipper"
-#define USB_STR_PRODUCT u"Klipper firmware"
-#define USB_STR_SERIAL u"12345"
+#define USB_STR_PRODUCT CONCAT(u,CONFIG_MCU)
+#define USB_STR_SERIAL CONCAT(u,CONFIG_USB_SERIAL_NUMBER)
 
 // String descriptors
 enum {
@@ -174,7 +187,7 @@ static const struct usb_device_descriptor cdc_device_descriptor PROGMEM = {
     .bDeviceClass = USB_CLASS_COMM,
     .bMaxPacketSize0 = USB_CDC_EP0_SIZE,
     .idVendor = cpu_to_le16(CONFIG_USB_VENDOR_ID),
-    .idProduct = cpu_to_le16(CONFIG_USB_PRODUCT_ID),
+    .idProduct = cpu_to_le16(CONFIG_USB_DEVICE_ID),
     .bcdDevice = cpu_to_le16(0x0100),
     .iManufacturer = USB_STR_ID_MANUFACTURER,
     .iProduct = USB_STR_ID_PRODUCT,
@@ -279,9 +292,26 @@ static const struct descriptor_s {
       &cdc_string_manufacturer, SIZE_cdc_string_manufacturer },
     { (USB_DT_STRING<<8) | USB_STR_ID_PRODUCT, USB_LANGID_ENGLISH_US,
       &cdc_string_product, SIZE_cdc_string_product },
+#if !CONFIG_USB_SERIAL_NUMBER_CHIPID
     { (USB_DT_STRING<<8) | USB_STR_ID_SERIAL, USB_LANGID_ENGLISH_US,
       &cdc_string_serial, SIZE_cdc_string_serial },
+#endif
 };
+
+// Fill in a USB serial string descriptor from a chip id
+void
+usb_fill_serial(struct usb_string_descriptor *desc, int strlen, void *id)
+{
+    desc->bLength = sizeof(*desc) + strlen * sizeof(desc->data[0]);
+    desc->bDescriptorType = USB_DT_STRING;
+
+    uint8_t *src = id;
+    int i;
+    for (i = 0; i < strlen; i++) {
+        uint8_t c = i & 1 ? src[i/2] & 0x0f : src[i/2] >> 4;
+        desc->data[i] = c < 10 ? c + '0' : c - 10 + 'A';
+    }
+}
 
 
 /****************************************************************
@@ -290,49 +320,62 @@ static const struct descriptor_s {
 
 // State tracking
 enum {
-    US_READY, US_SEND, US_READ
+    UX_READ = 1<<0, UX_SEND = 1<<1, UX_SEND_PROGMEM = 1<<2, UX_SEND_ZLP = 1<<3
 };
 
-static uint_fast8_t usb_state;
-static void *usb_xfer;
-static uint_fast8_t usb_xfer_size;
+static void *usb_xfer_data;
+static uint8_t usb_xfer_size, usb_xfer_flags;
 
+// Set the USB "stall" condition
 static void
 usb_do_stall(void)
 {
-    usb_set_stall();
-    usb_state = US_READY;
+    usb_stall_ep0();
+    usb_xfer_flags = 0;
 }
 
-// Sending data from device to host
+// Transfer data on the usb endpoint 0
 static void
-usb_state_xfer(void)
+usb_do_xfer(void *data, uint_fast8_t size, uint_fast8_t flags)
 {
     for (;;) {
-        uint_fast8_t xs = usb_xfer_size;
+        uint_fast8_t xs = size;
         if (xs > USB_CDC_EP0_SIZE)
             xs = USB_CDC_EP0_SIZE;
         int_fast8_t ret;
-        if (usb_state == US_SEND)
-            ret = usb_send_setup(usb_xfer, xs);
+        if (flags & UX_READ)
+            ret = usb_read_ep0(data, xs);
+        else if (NEED_PROGMEM && flags & UX_SEND_PROGMEM)
+            ret = usb_send_ep0_progmem(data, xs);
         else
-            ret = usb_read_setup(usb_xfer, xs);
+            ret = usb_send_ep0(data, xs);
         if (ret == xs) {
             // Success
-            usb_xfer += xs;
-            usb_xfer_size -= xs;
-            if (!usb_xfer_size && xs < USB_CDC_EP0_SIZE) {
-                // Transfer completed successfully
-                if (usb_state == US_READ)
-                    usb_send_setup(NULL, 0);
-                usb_state = US_READY;
+            data += xs;
+            size -= xs;
+            if (!size) {
+                // Entire transfer completed successfully
+                if (flags & UX_READ) {
+                    // Send status packet at end of read
+                    flags = UX_SEND;
+                    continue;
+                }
+                if (xs == USB_CDC_EP0_SIZE && flags & UX_SEND_ZLP)
+                    // Must send zero-length-packet
+                    continue;
+                usb_xfer_flags = 0;
+                usb_notify_ep0();
                 return;
             }
             continue;
         }
-        if (ret == -1)
+        if (ret == -1) {
             // Interface busy - retry later
+            usb_xfer_data = data;
+            usb_xfer_size = size;
+            usb_xfer_flags = flags;
             return;
+        }
         // Error
         usb_do_stall();
         return;
@@ -342,69 +385,117 @@ usb_state_xfer(void)
 static void
 usb_req_get_descriptor(struct usb_ctrlrequest *req)
 {
-    // XXX - validate req
-    uint_fast8_t i;
+    if (req->bRequestType != USB_DIR_IN)
+        goto fail;
+    void *desc = NULL;
+    uint_fast8_t flags, size, i;
     for (i=0; i<ARRAY_SIZE(cdc_descriptors); i++) {
         const struct descriptor_s *d = &cdc_descriptors[i];
         if (READP(d->wValue) == req->wValue
             && READP(d->wIndex) == req->wIndex) {
-            usb_state = US_SEND;
-            usb_xfer = (void*)READP(d->desc);
-            usb_xfer_size = READP(d->size);
-            if (usb_xfer_size > req->wLength)
-                usb_xfer_size = req->wLength;
-            usb_state_xfer();
-            return;
+            flags = NEED_PROGMEM ? UX_SEND_PROGMEM : UX_SEND;
+            size = READP(d->size);
+            desc = (void*)READP(d->desc);
         }
     }
+    if (CONFIG_USB_SERIAL_NUMBER_CHIPID
+        && req->wValue == ((USB_DT_STRING<<8) | USB_STR_ID_SERIAL)
+        && req->wIndex == USB_LANGID_ENGLISH_US) {
+            struct usb_string_descriptor *usbserial_serialid;
+            usbserial_serialid = usbserial_get_serialid();
+            flags = UX_SEND;
+            size = usbserial_serialid->bLength;
+            desc = (void*)usbserial_serialid;
+    }
+    if (desc) {
+        if (size > req->wLength)
+            size = req->wLength;
+        else if (size < req->wLength)
+            flags |= UX_SEND_ZLP;
+        usb_do_xfer(desc, size, flags);
+        return;
+    }
+fail:
     usb_do_stall();
 }
 
 static void
 usb_req_set_address(struct usb_ctrlrequest *req)
 {
+    if (req->bRequestType || req->wIndex || req->wLength) {
+        usb_do_stall();
+        return;
+    }
     usb_set_address(req->wValue);
 }
 
 static void
 usb_req_set_configuration(struct usb_ctrlrequest *req)
 {
+    if (req->bRequestType || req->wValue != 1 || req->wIndex || req->wLength) {
+        usb_do_stall();
+        return;
+    }
     usb_set_configure();
-    usb_send_setup(NULL, 0);
     usb_notify_bulk_in();
+    usb_notify_bulk_out();
+    usb_do_xfer(NULL, 0, UX_SEND);
 }
 
 static struct usb_cdc_line_coding line_coding;
+static uint8_t line_control_state;
+
+static void
+check_reboot(void)
+{
+    if (!CONFIG_HAVE_BOOTLOADER_REQUEST)
+        return;
+    if (line_coding.dwDTERate == 1200 && !(line_control_state & 0x01))
+        // A baud of 1200 is an Arduino style request to enter the bootloader
+        bootloader_request();
+}
 
 static void
 usb_req_set_line_coding(struct usb_ctrlrequest *req)
 {
-    usb_state = US_READ;
-    usb_xfer = &line_coding;
-    usb_xfer_size = sizeof(line_coding);
+    if (req->bRequestType != 0x21 || req->wValue || req->wIndex
+        || req->wLength != sizeof(line_coding)) {
+        usb_do_stall();
+        return;
+    }
+    usb_do_xfer(&line_coding, sizeof(line_coding), UX_READ);
+    check_reboot();
 }
 
 static void
 usb_req_get_line_coding(struct usb_ctrlrequest *req)
 {
-    usb_state = US_SEND;
-    usb_xfer = &line_coding;
-    usb_xfer_size = sizeof(line_coding);
+    if (req->bRequestType != 0xa1 || req->wValue || req->wIndex
+        || req->wLength < sizeof(line_coding)) {
+        usb_do_stall();
+        return;
+    }
+    usb_do_xfer(&line_coding, sizeof(line_coding), UX_SEND);
 }
 
 static void
-usb_req_line_state(struct usb_ctrlrequest *req)
+usb_req_set_line(struct usb_ctrlrequest *req)
 {
-    usb_send_setup(NULL, 0);
+    if (req->bRequestType != 0x21 || req->wIndex || req->wLength) {
+        usb_do_stall();
+        return;
+    }
+    line_control_state = req->wValue;
+    usb_do_xfer(NULL, 0, UX_SEND);
+    check_reboot();
 }
 
 static void
 usb_state_ready(void)
 {
     struct usb_ctrlrequest req;
-    int_fast8_t ret = usb_read_setup(&req, sizeof(req));
+    int_fast8_t ret = usb_read_ep0_setup(&req, sizeof(req));
     if (ret != sizeof(req))
-        // XXX - should verify that packet was sent with a setup token
         return;
     switch (req.bRequest) {
     case USB_REQ_GET_DESCRIPTOR: usb_req_get_descriptor(&req); break;
@@ -412,37 +503,37 @@ usb_state_ready(void)
     case USB_REQ_SET_CONFIGURATION: usb_req_set_configuration(&req); break;
     case USB_CDC_REQ_SET_LINE_CODING: usb_req_set_line_coding(&req); break;
     case USB_CDC_REQ_GET_LINE_CODING: usb_req_get_line_coding(&req); break;
-    case USB_CDC_REQ_SET_CONTROL_LINE_STATE: usb_req_line_state(&req); break;
+    case USB_CDC_REQ_SET_CONTROL_LINE_STATE: usb_req_set_line(&req); break;
     default: usb_do_stall(); break;
     }
 }
 
 // State tracking dispatch
-static struct task_wake usb_setup_wake;
+static struct task_wake usb_ep0_wake;
 
 void
-usb_notify_setup(void)
+usb_notify_ep0(void)
 {
-    sched_wake_task(&usb_setup_wake);
+    sched_wake_task(&usb_ep0_wake);
 }
 
 void
-usb_setup_task(void)
+usb_ep0_task(void)
 {
-    if (!sched_check_wake(&usb_setup_wake))
+    if (!sched_check_wake(&usb_ep0_wake))
         return;
-    switch (usb_state) {
-    case US_READY: usb_state_ready(); break;
-    case US_SEND: usb_state_xfer(); break;
-    case US_READ: usb_state_xfer(); break;
-    }
+    if (usb_xfer_flags)
+        usb_do_xfer(usb_xfer_data, usb_xfer_size, usb_xfer_flags);
+    else
+        usb_state_ready();
 }
-DECL_TASK(usb_setup_task);
+DECL_TASK(usb_ep0_task);
 
 void
 usb_shutdown(void)
 {
     usb_notify_bulk_in();
-    usb_notify_setup();
+    usb_notify_bulk_out();
+    usb_notify_ep0();
 }
 DECL_SHUTDOWN(usb_shutdown);
