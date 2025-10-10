@@ -71,6 +71,7 @@ class DumpTrapQ:
         self.name = name
         self.trapq = trapq
         self.last_batch_msg = (0., 0.)
+        self.motion_queuing = printer.lookup_object("motion_queuing")
         self.batch_bulk = bulk_sensor.BatchBulkHelper(printer,
                                                       self._process_batch)
         api_resp = {'header': ('time', 'duration', 'start_velocity',
@@ -121,6 +122,12 @@ class DumpTrapQ:
         d = [(m.print_time, m.move_t, m.start_v, m.accel,
               (m.start_x, m.start_y, m.start_z), (m.x_r, m.y_r, m.z_r))
              for m in data]
+        if d:
+            start_drip_time = self.motion_queuing.check_drip_timing()
+            if start_drip_time is not None:
+                # If homing, delay sending trapq entries that may change
+                while d and d[-1][0] + d[-1][1] >= start_drip_time:
+                    d.pop()
         if d and d[0] == self.last_batch_msg:
             d.pop(0)
         if not d:

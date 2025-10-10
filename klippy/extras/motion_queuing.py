@@ -54,6 +54,8 @@ class PrinterMotionQueuing:
         self.do_kick_flush_timer = True
         self.last_flush_time = self.last_step_gen_time = 0.
         self.need_flush_time = self.need_step_gen_time = 0.
+        # "Drip" timing (for homing and probing moves)
+        self.drip_start_times = []
         # Register handlers
         printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
     # C trapq tracking
@@ -245,7 +247,9 @@ class PrinterMotionQueuing:
         if self.do_kick_flush_timer:
             self.do_kick_flush_timer = False
             self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
+    # "Drip" timing (for homing and probing moves)
     def drip_update_time(self, start_time, end_time, drip_completion):
+        self.drip_start_times.append(start_time)
         self._await_flush_time(start_time)
         # Disable background flushing from timer
         self.reactor.update_timer(self.flush_timer, self.reactor.NEVER)
@@ -269,6 +273,11 @@ class PrinterMotionQueuing:
         # Restore background flushing
         self.reactor.update_timer(self.flush_timer, self.reactor.NOW)
         self._advance_flush_time(flush_time + self.kin_flush_delay)
+        self.drip_start_times.remove(start_time)
+    def check_drip_timing(self):
+        if not self.drip_start_times:
+            return None
+        return min(self.drip_start_times)
 
 def load_config(config):
     return PrinterMotionQueuing(config)
