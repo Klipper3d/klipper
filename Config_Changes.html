@@ -1412,6 +1412,9 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<p>20251010: During normal printing the command processing will now
+attempt to stay one second ahead of printer movement (reduced from two
+seconds previously).</p>
 <p>20251003: Support for the undocumented <code>max_stepper_error</code> option in
 the <code>[printer]</code> config section has been removed.</p>
 <p>20250916: The definitions of EI, 2HUMP_EI, and 3HUMP_EI input shapers
