@@ -695,6 +695,27 @@ movement commands until the toolhead is at 0, 0, 0 and then issue a
 ```
 [printer]
 kinematics: winch
+winch_mover_weight:
+#   The mover weight in kilograms. Set to 0 to disable flex
+#   compensation. The default is 0 (disabled).
+winch_spring_constant:
+#   Approximate spring constant of the line in Newton per meter. The
+#   default is 0.
+winch_target_force:
+#   Desired pre-tension per low anchor in Newton. It is common to set
+#   this to roughly ten times the mover weight. The default is 0.
+winch_min_force:
+#   Minimum permitted force per anchor in Newton. Provide one value
+#   per defined anchor (comma separated). The default is zero for each
+#   anchor.
+winch_max_force:
+#   Maximum permitted force per anchor in Newton. Provide one value
+#   per defined anchor (comma separated). The default is 120 for each
+#   anchor.
+#winch_guy_wire_lengths:
+#   Optional guy wire lengths in millimeters for each anchor. If
+#   omitted, the firmware assumes all low anchors route through the
+#   top anchor.
 
 # The stepper_a section describes the stepper connected to the first
 # cable winch. A minimum of 3 and a maximum of 26 cable winches may be
