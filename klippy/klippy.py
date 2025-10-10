@@ -158,10 +158,11 @@ class Printer:
             return
         try:
             self._set_state(message_ready)
-            for cb in self.event_handlers.get("klippy:ready", []):
-                if self.state_message is not message_ready:
-                    return
-                cb()
+            with self.reactor.assert_no_pause():
+                for cb in self.event_handlers.get("klippy:ready", []):
+                    if self.state_message is not message_ready:
+                        return
+                    cb()
         except Exception as e:
             logging.exception("Unhandled exception during ready callback")
             self.invoke_shutdown("Internal error during ready callback: %s"
@@ -206,11 +207,12 @@ class Printer:
         logging.error("Transition to shutdown state: %s", msg)
         self.in_shutdown_state = True
         self._set_state(msg)
-        for cb in self.event_handlers.get("klippy:shutdown", []):
-            try:
-                cb()
-            except:
-                logging.exception("Exception during shutdown handler")
+        with self.reactor.assert_no_pause():
+            for cb in self.event_handlers.get("klippy:shutdown", []):
+                try:
+                    cb()
+                except:
+                    logging.exception("Exception during shutdown handler")
         logging.info("Reactor garbage collection: %s",
                      self.reactor.get_gc_stats())
         self.send_event("klippy:notify_mcu_shutdown", msg, details)

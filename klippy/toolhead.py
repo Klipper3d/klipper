@@ -276,21 +276,22 @@ class ToolHead:
             self._calc_print_time()
         # Queue moves into trapezoid motion queue (trapq)
         next_move_time = self.print_time
-        for move in moves:
-            if move.is_kinematic_move:
-                self.trapq_append(
-                    self.trapq, next_move_time,
-                    move.accel_t, move.cruise_t, move.decel_t,
-                    move.start_pos[0], move.start_pos[1], move.start_pos[2],
-                    move.axes_r[0], move.axes_r[1], move.axes_r[2],
-                    move.start_v, move.cruise_v, move.accel)
-            for e_index, ea in enumerate(self.extra_axes):
-                if move.axes_d[e_index + 3]:
-                    ea.process_move(next_move_time, move, e_index + 3)
-            next_move_time = (next_move_time + move.accel_t
-                              + move.cruise_t + move.decel_t)
-            for cb in move.timing_callbacks:
-                cb(next_move_time)
+        with self.reactor.assert_no_pause():
+            for move in moves:
+                if move.is_kinematic_move:
+                    self.trapq_append(
+                        self.trapq, next_move_time,
+                        move.accel_t, move.cruise_t, move.decel_t,
+                        move.start_pos[0], move.start_pos[1], move.start_pos[2],
+                        move.axes_r[0], move.axes_r[1], move.axes_r[2],
+                        move.start_v, move.cruise_v, move.accel)
+                for e_index, ea in enumerate(self.extra_axes):
+                    if move.axes_d[e_index + 3]:
+                        ea.process_move(next_move_time, move, e_index + 3)
+                next_move_time = (next_move_time + move.accel_t
+                                  + move.cruise_t + move.decel_t)
+                for cb in move.timing_callbacks:
+                    cb(next_move_time)
         # Generate steps for moves
         self._advance_move_time(next_move_time)
         self.motion_queuing.note_mcu_movequeue_activity(next_move_time)
