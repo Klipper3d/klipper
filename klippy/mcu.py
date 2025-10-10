@@ -697,13 +697,14 @@ class MCUConnectHelper:
         # Shutdown tracking
         self._emergency_stop_cmd = None
         self._is_shutdown = self._is_timeout = False
-        self._shutdown_clock = 0
         self._shutdown_msg = ""
         # Register handlers
         printer.register_event_handler("klippy:mcu_identify",
                                        self._mcu_identify)
         self._restart_helper = MCURestartHelper(config, self)
         printer.register_event_handler("klippy:shutdown", self._shutdown)
+        printer.register_event_handler("klippy:analyze_shutdown",
+                                       self._analyze_shutdown)
     def get_mcu(self):
         return self._mcu
     def get_serial(self):
@@ -718,17 +719,15 @@ class MCUConnectHelper:
         if self._is_shutdown:
             return
         self._is_shutdown = True
-        clock = params.get("clock")
-        if clock is not None:
-            self._shutdown_clock = self._mcu.clock32_to_clock64(clock)
         self._shutdown_msg = msg = params['static_string_id']
+        shutdown_clock = params.get("clock")
+        if shutdown_clock is not None:
+            shutdown_clock = self._mcu.clock32_to_clock64(shutdown_clock)
         event_type = params['#name']
         self._printer.invoke_async_shutdown(
             "MCU shutdown", {"reason": msg, "mcu": self._name,
-                             "event_type": event_type})
-        logging.info("MCU '%s' %s: %s\n%s\n%s", self._name, event_type,
-                     self._shutdown_msg, self._clocksync.dump_debug(),
-                     self._serial.dump_debug())
+                             "event_type": event_type,
+                             "shutdown_clock": shutdown_clock})
     def _handle_starting(self, params):
         if not self._is_shutdown:
             self._printer.invoke_async_shutdown("MCU '%s' spontaneous restart"
@@ -786,6 +785,12 @@ class MCUConnectHelper:
         self._mcu.register_response(self._handle_shutdown, 'shutdown')
         self._mcu.register_response(self._handle_shutdown, 'is_shutdown')
         self._mcu.register_response(self._handle_starting, 'starting')
+    def _analyze_shutdown(self, msg, details):
+        if self._mcu.is_fileoutput():
+            return
+        logging.info("MCU '%s' shutdown: %s\n%s\n%s", self._name,
+                     self._shutdown_msg, self._clocksync.dump_debug(),
+                     self._serial.dump_debug())
     def _shutdown(self, force=False):
         if (self._emergency_stop_cmd is None
             or (self._is_shutdown and not force)):
@@ -805,8 +810,6 @@ class MCUConnectHelper:
             self._name,))
     def is_shutdown(self):
         return self._is_shutdown
-    def get_shutdown_clock(self):
-        return self._shutdown_clock
     def get_shutdown_msg(self):
         return self._shutdown_msg
 
@@ -1104,11 +1107,6 @@ class MCU:
         offset, freq = self._clocksync.calibrate_clock(print_time, eventtime)
         self._conn_helper.check_timeout(eventtime)
         return offset, freq
-    # Low-level connection wrappers
-    def is_shutdown(self):
-        return self._conn_helper.is_shutdown()
-    def get_shutdown_clock(self):
-        return self._conn_helper.get_shutdown_clock()
     # Statistics wrappers
     def get_status(self, eventtime=None):
         return self._stats_helper.get_status(eventtime)
