@@ -8,6 +8,26 @@ All dates in this document are approximate.
 
 ## Changes
 
+20251106: The status fields `{printer.toolhead.position}`,
+`{printer.gcode_move.position}`,
+`{printer.gcode_move.gcode_position}`, and
+`{printer.motion_report.live_position}` are changing. These
+coordinates used to always contain four components, but now may
+contain additional components. The ordering and number of components
+may change at run-time - see the
+[status reference](Status_Reference.md#accessing-coordinates) for
+important details. Accessing any of these coordinates in macros using
+the ".e" accessor is deprecated - use something like
+`{printer.toolhead.position[printer.gcode_move.axis_map.E]}` as an
+alternative.
+
+20251106: The status fields `{printer.gcode_move.homing_origin}`,
+`{printer.toolhead.axis_min}`, and `{printer.toolhead.axis_max}`
+currently contain four components where the fourth component is always
+zero. This behavior is deprecated. In the future these coordinates may
+contain only three components. For additional information see the
+[status reference](Status_Reference.md#accessing-coordinates).
+
 20251010: During normal printing the command processing will now
 attempt to stay one second ahead of printer movement (reduced from two
 seconds previously).
