@@ -60,10 +60,12 @@ class LEDHelper:
         if not self.need_transmit:
             return
         self.need_transmit = False
-        try:
-            self.update_func(self.led_state, print_time)
-        except self.printer.command_error as e:
-            logging.exception("led update transmit error")
+        def reactor_cb(eventtime):
+            try:
+                self.update_func(self.led_state, print_time)
+            except self.printer.command_error as e:
+                logging.exception("led update transmit error")
+        self.printer.get_reactor().register_callback(reactor_cb)
     cmd_SET_LED_help = "Set the color of an LED"
     def cmd_SET_LED(self, gcmd):
         # Parse parameters

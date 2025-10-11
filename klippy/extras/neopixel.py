@@ -99,11 +99,9 @@ class PrinterNeoPixel:
         else:
             logging.info("Neopixel update did not succeed")
     def update_leds(self, led_state, print_time):
-        def reactor_bgfunc(eventtime):
-            with self.mutex:
-                self.update_color_data(led_state)
-                self.send_data(print_time)
-        self.printer.get_reactor().register_callback(reactor_bgfunc)
+        with self.mutex:
+            self.update_color_data(led_state)
+            self.send_data(print_time)
     def get_status(self, eventtime=None):
         return self.led_helper.get_status(eventtime)
 
