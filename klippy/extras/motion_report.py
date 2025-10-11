@@ -220,27 +220,32 @@ class PrinterMotionReport:
         if eventtime < self.next_status_time or not self.dtrapqs:
             return self.last_status
         self.next_status_time = eventtime + STATUS_REFRESH_TIME
-        xyzpos = (0., 0., 0.)
-        epos = (0.,)
         xyzvelocity = evelocity = 0.
         # Calculate current requested toolhead position
+        toolhead = self.printer.lookup_object('toolhead')
+        extra_axes = toolhead.get_extra_axes()
+        live_pos = [0.] * len(extra_axes)
         mcu = self.printer.lookup_object('mcu')
         print_time = mcu.estimated_print_time(eventtime)
         pos, velocity = self.dtrapqs['toolhead'].get_trapq_position(print_time)
         if pos is not None:
-            xyzpos = pos[:3]
+            live_pos[:3] = pos[:3]
             xyzvelocity = velocity
-        # Calculate requested position of currently active extruder
-        toolhead = self.printer.lookup_object('toolhead')
-        ehandler = self.dtrapqs.get(toolhead.get_extruder().get_name())
-        if ehandler is not None:
-            pos, velocity = ehandler.get_trapq_position(print_time)
-            if pos is not None:
-                epos = (pos[0],)
-                evelocity = velocity
+        # Calculate requested position of extra axes
+        for ea_index, ea in enumerate(extra_axes):
+            if ea is None:
+                continue
+            eaname = ea.get_name()
+            ehandler = self.dtrapqs.get(eaname)
+            if ehandler is not None:
+                pos, velocity = ehandler.get_trapq_position(print_time)
+                if pos is not None:
+                    live_pos[ea_index] = pos[0]
+                    if ea_index == 4:
+                        evelocity = velocity
         # Report status
         self.last_status = dict(self.last_status)
-        self.last_status['live_position'] = toolhead.Coord(xyzpos + epos)
+        self.last_status['live_position'] = toolhead.Coord(live_pos)
         self.last_status['live_velocity'] = xyzvelocity
         self.last_status['live_extruder_velocity'] = evelocity
         return self.last_status
