@@ -177,6 +177,10 @@ class PrinterMotionReport:
                 break
             etrapq = extruder.get_trapq()
             self.dtrapqs[ename] = DumpTrapQ(self.printer, ename, etrapq)
+        # Lookup manual_stepper trapqs
+        for msname, ms in self.printer.lookup_objects("manual_stepper"):
+            mstrapq = ms.get_trapq()
+            self.dtrapqs[msname] = DumpTrapQ(self.printer, msname, mstrapq)
         # Populate 'trapq' and 'steppers' in get_status result
         self.last_status['steppers'] = list(sorted(self.steppers.keys()))
         self.last_status['trapq'] = list(sorted(self.dtrapqs.keys()))
