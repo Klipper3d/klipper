@@ -1,15 +1,26 @@
 # Parse gcode commands
 #
-# Copyright (C) 2016-2024  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, re, logging, collections, shlex
+import os, re, logging, collections, shlex, operator
 
 class CommandError(Exception):
     pass
 
-Coord = collections.namedtuple('Coord', ('x', 'y', 'z', 'e'))
+# Custom "tuple" class for coordinates - add easy access to x, y, z components
+class Coord(tuple):
+    __slots__ = ()
+    def __new__(cls, t):
+        if len(t) < 4:
+            t = tuple(t) + (0,) * (4 - len(t))
+        return tuple.__new__(cls, t)
+    x = property(operator.itemgetter(0))
+    y = property(operator.itemgetter(1))
+    z = property(operator.itemgetter(2))
+    e = property(operator.itemgetter(3))
 
+# Class for handling gcode command parameters (gcmd)
 class GCodeCommand:
     error = CommandError
     def __init__(self, gcode, command, commandline, params, need_ack):
