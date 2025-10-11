@@ -25,7 +25,8 @@ class SX1509(object):
     def __init__(self, config):
         self._printer = config.get_printer()
         self._name = config.get_name().split()[1]
-        self._i2c = bus.MCU_I2C_from_config(config, default_speed=400000)
+        self._i2c = bus.MCU_I2C_from_config(config, default_speed=400000,
+                                            async_write_only=True)
         self._ppins = self._printer.lookup_object("pins")
         self._ppins.register_chip("sx1509_" + self._name, self)
         self._mcu = self._i2c.get_mcu()
