@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import stepper, chelper
+import stepper
 from . import force_move
 
 class ManualStepper:
@@ -203,7 +203,6 @@ class ManualStepper:
         self.motion_queuing.drip_update_time(start_time, end_time,
                                              drip_completion)
         # Clear trapq of any remaining parts of movement
-        reactor = self.printer.get_reactor()
         self.motion_queuing.wipe_trapq(self.trapq)
         self.rail.set_position([self.commanded_pos, 0., 0.])
         self.sync_print_time()
