@@ -26,6 +26,7 @@ class PCA9632:
     def __init__(self, config):
         self.printer = printer = config.get_printer()
         self.i2c = bus.MCU_I2C_from_config(config, default_addr=98)
+        self.mutex = printer.get_reactor().mutex()
         color_order = config.get("color_order", "RGBW")
         if sorted(color_order) != sorted("RGBW"):
             raise config.error("Invalid color_order '%s'" % (color_order,))
@@ -53,16 +54,17 @@ class PCA9632:
 
         color = [int(v * 255. + .5) for v in led_state[0]]
         led0, led1, led2, led3 = [color[idx] for idx in self.color_map]
-        self.reg_write(PCA9632_PWM0, led0, minclock=minclock)
-        self.reg_write(PCA9632_PWM1, led1, minclock=minclock)
-        self.reg_write(PCA9632_PWM2, led2, minclock=minclock)
-        self.reg_write(PCA9632_PWM3, led3, minclock=minclock)
+        with self.mutex:
+            self.reg_write(PCA9632_PWM0, led0, minclock=minclock)
+            self.reg_write(PCA9632_PWM1, led1, minclock=minclock)
+            self.reg_write(PCA9632_PWM2, led2, minclock=minclock)
+            self.reg_write(PCA9632_PWM3, led3, minclock=minclock)
 
-        LEDOUT = (LED_PWM << PCA9632_LED0 if led0 else 0)
-        LEDOUT |= (LED_PWM << PCA9632_LED1 if led1 else 0)
-        LEDOUT |= (LED_PWM << PCA9632_LED2 if led2 else 0)
-        LEDOUT |= (LED_PWM << PCA9632_LED3 if led3 else 0)
-        self.reg_write(PCA9632_LEDOUT, LEDOUT, minclock=minclock)
+            LEDOUT = (LED_PWM << PCA9632_LED0 if led0 else 0)
+            LEDOUT |= (LED_PWM << PCA9632_LED1 if led1 else 0)
+            LEDOUT |= (LED_PWM << PCA9632_LED2 if led2 else 0)
+            LEDOUT |= (LED_PWM << PCA9632_LED3 if led3 else 0)
+            self.reg_write(PCA9632_LEDOUT, LEDOUT, minclock=minclock)
     def get_status(self, eventtime):
         return self.led_helper.get_status(eventtime)
 
