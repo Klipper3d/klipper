@@ -14,9 +14,11 @@ PCA9533_PLS0=0b101
 
 class PCA9533:
     def __init__(self, config):
-        self.printer = config.get_printer()
+        self.printer = printer =  config.get_printer()
         self.i2c = bus.MCU_I2C_from_config(config, default_addr=98)
         self.led_helper = led.LEDHelper(config, self.update_leds, 1)
+        printer.register_event_handler("klippy:connect", self.handle_connect)
+    def handle_connect(self):
         self.i2c.i2c_write([PCA9533_PWM0, 85])
         self.i2c.i2c_write([PCA9533_PWM1, 170])
         self.update_leds(self.led_helper.get_status()['color_data'], None)
