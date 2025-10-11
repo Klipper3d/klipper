@@ -7,43 +7,66 @@ import stepper, mathutil, chelper
 
 class WinchFlexHelper:
     def __init__(self, anchors, config):
-        self.ffi_main, self.ffi_lib = chelper.get_ffi()
-        self.num = len(anchors)
-        self.ptr = self.ffi_main.NULL
+        self._anchors = tuple(anchors)
+        self.num = len(self._anchors)
+        self.ptr = None
         self.enabled = False
+        self.ffi_main = self.ffi_lib = None
+        self._read_config(config)
         if not self.num:
             return
+        self.ffi_main, self.ffi_lib = chelper.get_ffi()
         self.ptr = self.ffi_main.gc(
             self.ffi_lib.winch_flex_alloc(), self.ffi_lib.winch_flex_free)
-        self._configure(anchors, config)
+        self._configure()
 
-    def _configure(self, anchors, config):
-        mover_weight = config.getfloat('winch_mover_weight', 0., minval=0.)
-        spring_constant = config.getfloat('winch_spring_constant', 0., minval=0.)
-        target_force = config.getfloat('winch_target_force', 0., minval=0.)
-        min_force = list(config.getfloatlist(
-            'winch_min_force', [0.] * self.num, count=self.num))
-        max_force = list(config.getfloatlist(
-            'winch_max_force', [120.] * self.num, count=self.num))
-        guy_raw = config.get('winch_guy_wire_lengths', None, note_valid=False)
-        guy_valid = 0
-        guy_ptr = self.ffi_main.NULL
-        if guy_raw is not None:
-            guy_vals = list(config.getfloatlist(
-                'winch_guy_wire_lengths', count=self.num))
-            guy_ptr = self.ffi_main.new("double[]", guy_vals)
-            guy_valid = 1
-        anchors_flat = [float(coord) for anchor in anchors for coord in anchor]
+    def _read_config(self, config):
+        self.mover_weight = config.getfloat('winch_mover_weight', 0., minval=0.)
+        self.spring_constant = config.getfloat('winch_spring_constant', 0., minval=0.)
+        self.target_force = config.getfloat('winch_target_force', 0., minval=0.)
+        if self.num:
+            default_min = tuple(0. for _ in range(self.num))
+            default_max = tuple(120. for _ in range(self.num))
+            self.min_force = list(config.getfloatlist(
+                'winch_min_force', default_min, count=self.num))
+            self.max_force = list(config.getfloatlist(
+                'winch_max_force', default_max, count=self.num))
+            guy_raw = config.get('winch_guy_wire_lengths', None, note_valid=False)
+            self.guy_wires = []
+            self.guy_wires_valid = 0
+            if guy_raw is not None:
+                self.guy_wires = list(config.getfloatlist(
+                    'winch_guy_wire_lengths', count=self.num))
+                self.guy_wires_valid = 1
+        else:
+            self.min_force = []
+            self.max_force = []
+            self.guy_wires = []
+            self.guy_wires_valid = 0
+        self.enabled = bool(self.num >= 4
+                            and self.mover_weight > 0.
+                            and self.spring_constant > 0.)
+
+    def _configure(self):
+        anchors_flat = [float(coord) for anchor in self._anchors for coord in anchor]
         anchors_c = self.ffi_main.new("double[]", anchors_flat)
-        min_c = self.ffi_main.new("double[]", min_force)
-        max_c = self.ffi_main.new("double[]", max_force)
+        min_c = self.ffi_main.new("double[]", self.min_force)
+        max_c = self.ffi_main.new("double[]", self.max_force)
+        if self.guy_wires_valid:
+            guy_ptr = self.ffi_main.new("double[]", self.guy_wires)
+        else:
+            guy_ptr = self.ffi_main.NULL
         self.ffi_lib.winch_flex_configure(
-            self.ptr, self.num, anchors_c, mover_weight, spring_constant,
-            target_force, min_c, max_c, guy_ptr, guy_valid)
-        self.enabled = bool(self.num >= 4 and mover_weight > 0. and spring_constant > 0.)
+            self.ptr, self.num, anchors_c, self.mover_weight,
+            self.spring_constant, self.target_force, min_c, max_c,
+            guy_ptr, self.guy_wires_valid)
 
     def get_ptr(self):
-        return self.ptr
+        if self.ptr is not None:
+            return self.ptr
+        if self.ffi_main is None:
+            self.ffi_main, _ = chelper.get_ffi()
+        return self.ffi_main.NULL
 
     def calc_arrays(self, pos):
         if not self.ptr or not self.num:
@@ -71,6 +94,8 @@ class WinchKinematics:
             self.anchors.append(a)
         self.flex_helper = WinchFlexHelper(self.anchors, config)
         flex_ptr = self.flex_helper.get_ptr()
+        if not flex_ptr:
+            raise config.error("Failed to initialise winch flex helper")
         for idx, s in enumerate(self.steppers):
             s.setup_itersolve('winch_stepper_alloc', flex_ptr, idx)
             s.set_trapq(toolhead.get_trapq())
