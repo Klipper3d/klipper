@@ -10,6 +10,7 @@ from . import output_pin
 class LEDHelper:
     def __init__(self, config, update_func, led_count=1):
         self.printer = config.get_printer()
+        self.mutex = self.printer.get_reactor().mutex()
         self.update_func = update_func
         self.led_count = led_count
         self.need_transmit = False
@@ -59,11 +60,16 @@ class LEDHelper:
     def _check_transmit(self, print_time=None):
         if not self.need_transmit:
             return
+        # Just avoid any race conditions
+        led_state = self.led_state
         self.need_transmit = False
-        try:
-            self.update_func(self.led_state, print_time)
-        except self.printer.command_error as e:
-            logging.exception("led update transmit error")
+        def reactor_cb(eventtime):
+            try:
+                with self.mutex:
+                    self.update_func(led_state, print_time)
+            except self.printer.command_error as e:
+                logging.exception("led update transmit error")
+        self.printer.get_reactor().register_callback(reactor_cb)
     cmd_SET_LED_help = "Set the color of an LED"
     def cmd_SET_LED(self, gcmd):
         # Parse parameters
