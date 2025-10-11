@@ -8,6 +8,7 @@
 #include <math.h>   // sqrt, fabs, fmax, fmin
 #include <stddef.h> // offsetof
 #include <stdlib.h> // malloc
+#include <stdio.h> // malloc
 #include <string.h> // memset
 #include "compiler.h" // __visible
 #include "itersolve.h" // struct stepper_kinematics
@@ -30,17 +31,13 @@ struct winch_flex {
     double guy_wires[WINCH_MAX_ANCHORS];
     double distances_origin[WINCH_MAX_ANCHORS];
     double relaxed_origin[WINCH_MAX_ANCHORS];
-    double cache_distances[WINCH_MAX_ANCHORS];
-    double cache_flex[WINCH_MAX_ANCHORS];
-    struct move *cache_move;
-    double cache_time;
-    int cache_valid;
 };
 
 struct winch_stepper {
     struct stepper_kinematics sk;
     struct winch_flex *wf;
     int index;
+    struct coord anchor;
 };
 
 static inline double
@@ -83,8 +80,9 @@ gauss_jordan_3x5(double M[3][5])
                 pivot = row;
             }
         }
-        if (max_val < EPSILON)
+        if (max_val < EPSILON) {
             return 0;
+        }
         if (pivot != col) {
             for (int c = col; c < 5; ++c) {
                 double tmp = M[col][c];
@@ -158,8 +156,9 @@ static_forces_tetrahedron(struct winch_flex *wf, const struct coord *pos,
     }
     M[2][3] += mg;
 
-    if (!gauss_jordan_3x5(M))
+    if (!gauss_jordan_3x5(M)) {
         return;
+    }
 
     double A_mg = M[0][3], B_mg = M[1][3], C_mg = M[2][3];
     double A_pre = M[0][4], B_pre = M[1][4], C_pre = M[2][4];
@@ -277,8 +276,13 @@ static_forces_quadrilateral(struct winch_flex *wf, const struct coord *pos,
         lower = fmax(lower, fabs(safe_ratio(wf->target_force - m_vec[i], p[i])));
 
     double upper = fabs(safe_ratio(wf->max_force[4] - top_mg, top_pre));
-    for (int i = 0; i < 4; ++i)
-        upper = fmin(upper, fabs(safe_ratio(wf->max_force[i] - m_vec[i], p[i])));
+    for (int i = 0; i < 4; ++i) {
+        double denom = fabs(p[i]);
+        double term = denom < EPSILON ? 1e9
+            : fabs((wf->max_force[i] - m_vec[i]) / p[i]);
+        if (term < upper)
+            upper = term;
+    }
 
     double preFac = fmin(lower, upper);
     if (!isfinite(preFac))
@@ -294,28 +298,20 @@ static_forces_quadrilateral(struct winch_flex *wf, const struct coord *pos,
 }
 
 static void
-static_forces(struct winch_flex *wf, const struct coord *pos, double *F)
-{
-    memset(F, 0, sizeof(double) * wf->num_anchors);
-    if (!wf->flex_enabled)
-        return;
-    if (wf->num_anchors == 4)
-        static_forces_tetrahedron(wf, pos, F);
-    else if (wf->num_anchors == 5)
-        static_forces_quadrilateral(wf, pos, F);
-}
-
-static void
 compute_flex(struct winch_flex *wf, double x, double y, double z,
              double *distances, double *flex)
 {
     int num = wf->num_anchors;
-    struct coord pos = { x, y, z };
+    struct coord pos;
+    pos.x = x;
+    pos.y = y;
+    pos.z = z;
     for (int i = 0; i < num; ++i) {
         double dx = wf->anchors[i].x - x;
         double dy = wf->anchors[i].y - y;
         double dz = wf->anchors[i].z - z;
-        distances[i] = hypot3(dx, dy, dz);
+        double dist = hypot3(dx, dy, dz);
+        distances[i] = dist;
     }
     if (!wf->flex_enabled) {
         for (int i = 0; i < num; ++i)
@@ -323,7 +319,14 @@ compute_flex(struct winch_flex *wf, double x, double y, double z,
         return;
     }
     double forces[WINCH_MAX_ANCHORS];
-    static_forces(wf, &pos, forces);
+    memset(forces, 0, sizeof(forces));
+    if (wf->num_anchors == 4) {
+        static_forces_tetrahedron(wf, &pos, forces);
+    }
+    else if (wf->num_anchors == 5)
+        static_forces_quadrilateral(wf, &pos, forces);
+    else
+        return;
     for (int i = 0; i < num; ++i) {
         double spring_length = distances[i] + wf->guy_wires[i];
         if (spring_length < EPSILON)
@@ -335,29 +338,21 @@ compute_flex(struct winch_flex *wf, double x, double y, double z,
         flex[i] = line_pos - delta;
     }
 }
-
-static void
-update_cache(struct winch_flex *wf, struct move *m, double move_time)
-{
-    if (!wf || wf->num_anchors <= 0)
-        return;
-    if (wf->cache_valid && wf->cache_move == m && wf->cache_time == move_time)
-        return;
-    struct coord pos = move_get_coord(m, move_time);
-    compute_flex(wf, pos.x, pos.y, pos.z, wf->cache_distances, wf->cache_flex);
-    wf->cache_move = m;
-    wf->cache_time = move_time;
-    wf->cache_valid = 1;
-}
-
 static double
 calc_position_common(struct winch_stepper *ws, struct move *m, double move_time)
 {
+    struct coord pos = move_get_coord(m, move_time);
+    double dx = ws->anchor.x - pos.x;
+    double dy = ws->anchor.y - pos.y;
+    double dz = ws->anchor.z - pos.z;
+    double dist = hypot3(dx, dy, dz);
     struct winch_flex *wf = ws->wf;
-    if (!wf || ws->index >= wf->num_anchors)
-        return 0.;
-    update_cache(wf, m, move_time);
-    return wf->cache_distances[ws->index] - wf->cache_flex[ws->index];
+    if (!wf || ws->index >= wf->num_anchors || !wf->flex_enabled)
+        return dist;
+    double distances[WINCH_MAX_ANCHORS];
+    double flex[WINCH_MAX_ANCHORS];
+    compute_flex(wf, pos.x, pos.y, pos.z, distances, flex);
+    return distances[ws->index] - flex[ws->index];
 }
 
 static double
@@ -418,9 +413,17 @@ recalc_origin(struct winch_flex *wf)
         return;
     }
 
-    struct coord origin = {0., 0., 0.};
-    double forces[WINCH_MAX_ANCHORS];
-    static_forces(wf, &origin, forces);
+    struct coord origin;
+    origin.x = 0.;
+    origin.y = 0.;
+    origin.z = 0.;
+    double forces[WINCH_MAX_ANCHORS] = {0.};
+    if (num == 4)
+        static_forces_tetrahedron(wf, &origin, forces);
+    else if (num == 5)
+        static_forces_quadrilateral(wf, &origin, forces);
+    else
+        return;
 
     for (int i = 0; i < num; ++i) {
         double spring_length = wf->distances_origin[i] + wf->guy_wires[i];
@@ -472,7 +475,6 @@ winch_flex_configure(struct winch_flex *wf, int num_anchors,
     wf->flex_enabled = (num_anchors >= 4
                         && mover_weight > 0.
                         && spring_constant > 0.);
-    wf->cache_valid = 0;
     recalc_origin(wf);
 }
 
@@ -494,6 +496,8 @@ winch_stepper_alloc(struct winch_flex *wf, int index)
     memset(ws, 0, sizeof(*ws));
     ws->wf = wf;
     ws->index = index;
+    if (wf && index >= 0 && index < wf->num_anchors)
+        ws->anchor = wf->anchors[index];
     ws->sk.calc_position_cb = winch_stepper_calc_position;
     ws->sk.active_flags = AF_X | AF_Y | AF_Z;
     return &ws->sk;
