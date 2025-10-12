@@ -493,7 +493,7 @@ enabled.
 `SET_FAN_SPEED FAN=config_name SPEED=<speed>` This command sets the
 speed of a fan. "speed" must be between 0.0 and 1.0.
 
-`SET_FAN_SPEED PIN=config_name TEMPLATE=<template_name>
+`SET_FAN_SPEED FAN=config_name TEMPLATE=<template_name>
 [<param_x>=<literal>]`: If `TEMPLATE` is specified then it assigns a
 [display_template](Config_Reference.md#display_template) to the given
 fan. For example, if one defined a `[display_template
