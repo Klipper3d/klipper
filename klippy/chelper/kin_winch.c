@@ -11,6 +11,7 @@
 #include <stdio.h> // malloc
 #include <string.h> // memset
 #include "compiler.h" // __visible
+#include "pyhelper.h" // errorf
 #include "itersolve.h" // struct stepper_kinematics
 #include "trapq.h" // move_get_coord
 
@@ -425,13 +426,27 @@ recalc_origin(struct winch_flex *wf)
     else
         return;
 
+    double pretension[WINCH_MAX_ANCHORS] = {0.};
     for (int i = 0; i < num; ++i) {
         double spring_length = wf->distances_origin[i] + wf->guy_wires[i];
         if (spring_length < EPSILON)
             spring_length = EPSILON;
         double spring_k = wf->spring_constant / spring_length;
-        double relaxed = wf->distances_origin[i] - forces[i] / spring_k;
+        double tension = forces[i] / spring_k;
+        pretension[i] = tension;
+        double relaxed = wf->distances_origin[i] - tension;
         wf->relaxed_origin[i] = relaxed;
+    }
+    if (wf->flex_enabled && num > 0) {
+        char msg[256];
+        int len = snprintf(msg, sizeof(msg), "winch pretension at origin:");
+        for (int i = 0; i < num && len > 0 && len < (int)sizeof(msg); ++i) {
+            len += snprintf(msg + len, sizeof(msg) - len,
+                            " %d:%.6f", i, pretension[i]);
+            if (len >= (int)sizeof(msg))
+                break;
+        }
+        errorf("%s", msg);
     }
 }
 
