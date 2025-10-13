@@ -106,7 +106,7 @@ Klipper will run on a Raspberry Pi 1, 2 and on the Raspberry Pi Zero1,
 but these boards don't have enough processing power to run Klipper
 well. It is common for print stalls to occur on these slower machines
 when printing (The printer may move faster than Klipper can send
-movement commands.) It is not reccomended to run Kliper on these older
+movement commands.) It is not reccomended to run Klipper on these older
 machines.
 
 For running on the Beaglebone, see the
