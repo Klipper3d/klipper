@@ -47,6 +47,11 @@ class DumpStepper:
         data, cdata = self.get_step_queue(self.last_batch_clock, 1<<63)
         if not data:
             return {}
+        for i, d in enumerate(data):
+            if not d.step_count:
+                # End block on a set_position marker to simplify timing
+                del data[i+1:]
+                break
         clock_to_print_time = self.mcu_stepper.get_mcu().clock_to_print_time
         first = data[0]
         first_clock = first.first_clock
@@ -56,8 +61,8 @@ class DumpStepper:
         mcu_pos = first.start_position
         start_position = self.mcu_stepper.mcu_to_commanded_position(mcu_pos)
         step_dist = self.mcu_stepper.get_step_dist()
-        d = [(s.interval, s.step_count, s.add) for s in data]
-        return {"data": d, "start_position": start_position,
+        tdata = [(s.interval, s.step_count, s.add) for s in data]
+        return {"data": tdata, "start_position": start_position,
                 "start_mcu_position": mcu_pos, "step_distance": step_dist,
                 "first_clock": first_clock, "first_step_time": first_time,
                 "last_clock": last_clock, "last_step_time": last_time}
