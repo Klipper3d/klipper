@@ -21,7 +21,6 @@
 #include <stdlib.h> // malloc
 #include <string.h> // memset
 #include "compiler.h" // DIV_ROUND_UP
-#include "itersolve.h" // itersolve_generate_steps
 #include "pyhelper.h" // errorf
 #include "serialqueue.h" // struct queue_message
 #include "stepcompress.h" // stepcompress_alloc
@@ -37,7 +36,7 @@ struct stepcompress {
     double mcu_time_offset, mcu_freq, last_step_print_time;
     // Message generation
     uint64_t last_step_clock;
-    struct list_head msg_queue;
+    struct list_head *msg_queue;
     uint32_t oid;
     int32_t queue_step_msgtag, set_next_step_dir_msgtag;
     int sdir, invert_sdir;
@@ -47,8 +46,6 @@ struct stepcompress {
     // History tracking
     int64_t last_position;
     struct list_head history_list;
-    // Itersolve reference
-    struct stepper_kinematics *sk;
 };
 
 struct step_move {
@@ -245,23 +242,23 @@ check_line(struct stepcompress *sc, struct step_move move)
  ****************************************************************/
 
 // Allocate a new 'stepcompress' object
-struct stepcompress * __visible
-stepcompress_alloc(uint32_t oid)
+struct stepcompress *
+stepcompress_alloc(struct list_head *msg_queue)
 {
     struct stepcompress *sc = malloc(sizeof(*sc));
     memset(sc, 0, sizeof(*sc));
-    list_init(&sc->msg_queue);
     list_init(&sc->history_list);
-    sc->oid = oid;
     sc->sdir = -1;
+    sc->msg_queue = msg_queue;
     return sc;
 }
 
 // Fill message id information
 void __visible
-stepcompress_fill(struct stepcompress *sc, uint32_t max_error
+stepcompress_fill(struct stepcompress *sc, uint32_t oid, uint32_t max_error
                   , int32_t queue_step_msgtag, int32_t set_next_step_dir_msgtag)
 {
+    sc->oid = oid;
     sc->max_error = max_error;
     sc->queue_step_msgtag = queue_step_msgtag;
     sc->set_next_step_dir_msgtag = set_next_step_dir_msgtag;
@@ -294,13 +291,12 @@ stepcompress_history_expire(struct stepcompress *sc, uint64_t end_clock)
 }
 
 // Free memory associated with a 'stepcompress' object
-void __visible
+void
 stepcompress_free(struct stepcompress *sc)
 {
     if (!sc)
         return;
     free(sc->queue);
-    message_queue_free(&sc->msg_queue);
     stepcompress_history_expire(sc, UINT64_MAX);
     free(sc);
 }
@@ -315,12 +311,6 @@ int
 stepcompress_get_step_dir(struct stepcompress *sc)
 {
     return sc->next_step_dir;
-}
-
-struct list_head *
-stepcompress_get_msg_queue(struct stepcompress *sc)
-{
-    return &sc->msg_queue;
 }
 
 // Determine the "print time" of the last_step_clock
@@ -360,7 +350,7 @@ add_move(struct stepcompress *sc, uint64_t first_clock, struct step_move *move)
     qm->min_clock = qm->req_clock = sc->last_step_clock;
     if (move->count == 1 && first_clock >= sc->last_step_clock + CLOCK_DIFF_MAX)
         qm->req_clock = first_clock;
-    list_add_tail(&qm->node, &sc->msg_queue);
+    list_add_tail(&qm->node, sc->msg_queue);
     sc->last_step_clock = last_clock;
 
     // Create and store move in history tracking
@@ -424,7 +414,7 @@ set_next_step_dir(struct stepcompress *sc, int sdir)
     };
     struct queue_message *qm = message_alloc_and_encode(msg, 3);
     qm->req_clock = sc->last_step_clock;
-    list_add_tail(&qm->node, &sc->msg_queue);
+    list_add_tail(&qm->node, sc->msg_queue);
     return 0;
 }
 
@@ -541,7 +531,7 @@ stepcompress_commit(struct stepcompress *sc)
 }
 
 // Flush pending steps
-static int
+int
 stepcompress_flush(struct stepcompress *sc, uint64_t move_clock)
 {
     if (sc->next_step_clock && move_clock >= sc->next_step_clock) {
@@ -613,35 +603,6 @@ stepcompress_find_past_position(struct stepcompress *sc, uint64_t clock)
     return last_position;
 }
 
-// Queue an mcu command to go out in order with stepper commands
-int __visible
-stepcompress_queue_msg(struct stepcompress *sc, uint32_t *data, int len)
-{
-    int ret = stepcompress_flush(sc, UINT64_MAX);
-    if (ret)
-        return ret;
-
-    struct queue_message *qm = message_alloc_and_encode(data, len);
-    qm->req_clock = sc->last_step_clock;
-    list_add_tail(&qm->node, &sc->msg_queue);
-    return 0;
-}
-
-// Queue an mcu command that will consume space in the mcu move queue
-int __visible
-stepcompress_queue_mq_msg(struct stepcompress *sc, uint64_t req_clock
-                          , uint32_t *data, int len)
-{
-    int ret = stepcompress_flush(sc, UINT64_MAX);
-    if (ret)
-        return ret;
-
-    struct queue_message *qm = message_alloc_and_encode(data, len);
-    qm->min_clock = qm->req_clock = req_clock;
-    list_add_tail(&qm->node, &sc->msg_queue);
-    return 0;
-}
-
 // Return history of queue_step commands
 int __visible
 stepcompress_extract_old(struct stepcompress *sc, struct pull_history_steps *p
@@ -664,27 +625,4 @@ stepcompress_extract_old(struct stepcompress *sc, struct pull_history_steps *p
         res++;
     }
     return res;
-}
-
-// Store a reference to stepper_kinematics
-void __visible
-stepcompress_set_stepper_kinematics(struct stepcompress *sc
-                                    , struct stepper_kinematics *sk)
-{
-    sc->sk = sk;
-}
-
-// Generate steps (via itersolve) and flush
-int32_t
-stepcompress_generate_steps(struct stepcompress *sc, double gen_steps_time
-                            , uint64_t flush_clock)
-{
-    if (!sc->sk)
-        return 0;
-    // Generate steps
-    int32_t ret = itersolve_generate_steps(sc->sk, sc, gen_steps_time);
-    if (ret)
-        return ret;
-    // Flush steps
-    return stepcompress_flush(sc, flush_clock);
 }

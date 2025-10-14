@@ -14,12 +14,14 @@ class MCU_queued_pwm:
         self._hardware_pwm = False
         self._cycle_time = 0.100
         self._max_duration = 2.
-        self._oid = oid = mcu.create_oid()
+        self._oid = mcu.create_oid()
         printer = mcu.get_printer()
-        motion_queuing = printer.load_object(config, 'motion_queuing')
-        self._stepqueue = motion_queuing.allocate_stepcompress(mcu, oid)
+        sname = config.get_name().split()[-1]
+        self._motion_queuing = printer.load_object(config, 'motion_queuing')
+        self._syncemitter = self._motion_queuing.allocate_syncemitter(
+            mcu, sname, alloc_stepcompress=False)
         ffi_main, ffi_lib = chelper.get_ffi()
-        self._stepcompress_queue_mq_msg = ffi_lib.stepcompress_queue_mq_msg
+        self._syncemitter_queue_msg = ffi_lib.syncemitter_queue_msg
         mcu.register_config_callback(self._build_config)
         self._pin = pin_params['pin']
         self._invert = pin_params['invert']
@@ -62,8 +64,8 @@ class MCU_queued_pwm:
         if self._duration_ticks >= 1<<31:
             raise config_error("PWM pin max duration too large")
         if self._duration_ticks:
-            motion_queuing = printer.lookup_object('motion_queuing')
-            motion_queuing.register_flush_callback(self._flush_notification)
+            self._motion_queuing.register_flush_callback(
+                self._flush_notification)
         if self._hardware_pwm:
             self._pwm_max = self._mcu.get_constant_float("PWM_MAX")
             self._default_value = self._shutdown_value * self._pwm_max
@@ -106,18 +108,15 @@ class MCU_queued_pwm:
         self._last_clock = clock = max(self._last_clock, clock)
         self._last_value = val
         data = (self._set_cmd_tag, self._oid, clock & 0xffffffff, val)
-        ret = self._stepcompress_queue_mq_msg(self._stepqueue, clock,
-                                              data, len(data))
-        if ret:
-            raise error("Internal error in stepcompress")
+        self._syncemitter_queue_msg(self._syncemitter, clock, data, len(data))
         # Notify toolhead so that it will flush this update
         wakeclock = clock
         if self._last_value != self._default_value:
             # Continue flushing to resend time
             wakeclock += self._duration_ticks
         wake_print_time = self._mcu.clock_to_print_time(wakeclock)
-        self._toolhead.note_mcu_movequeue_activity(wake_print_time,
-                                                   is_step_gen=False)
+        self._motion_queuing.note_mcu_movequeue_activity(wake_print_time,
+                                                         is_step_gen=False)
     def set_pwm(self, print_time, value):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._invert:

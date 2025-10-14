@@ -16,6 +16,7 @@ class error(Exception):
 
 MIN_BOTH_EDGE_DURATION = 0.000000500
 MIN_OPTIMIZED_BOTH_EDGE_DURATION = 0.000000150
+MAX_STEPCOMPRESS_ERROR = 0.000025
 
 # Interface to low-level mcu and chelper code
 class MCU_stepper:
@@ -29,7 +30,7 @@ class MCU_stepper:
         self._units_in_radians = units_in_radians
         self._step_dist = rotation_dist / steps_per_rotation
         self._mcu = mcu = step_pin_params['chip']
-        self._oid = oid = mcu.create_oid()
+        self._oid = mcu.create_oid()
         mcu.register_config_callback(self._build_config)
         self._step_pin = step_pin_params['pin']
         self._invert_step = step_pin_params['invert']
@@ -44,8 +45,11 @@ class MCU_stepper:
         self._reset_cmd_tag = self._get_position_cmd = None
         self._active_callbacks = []
         motion_queuing = printer.load_object(config, 'motion_queuing')
-        self._stepqueue = motion_queuing.allocate_stepcompress(mcu, oid)
+        sname = self._name.split()[-1]
+        self._syncemitter = motion_queuing.allocate_syncemitter(mcu, sname)
         ffi_main, ffi_lib = chelper.get_ffi()
+        self._stepqueue = ffi_lib.syncemitter_get_stepcompress(
+            self._syncemitter)
         ffi_lib.stepcompress_set_invert_sdir(self._stepqueue, self._invert_dir)
         self._stepper_kinematics = None
         self._itersolve_check_active = ffi_lib.itersolve_check_active
@@ -119,10 +123,9 @@ class MCU_stepper:
         self._get_position_cmd = self._mcu.lookup_query_command(
             "stepper_get_position oid=%c",
             "stepper_position oid=%c pos=%i", oid=self._oid)
-        max_error = self._mcu.get_max_stepper_error()
-        max_error_ticks = self._mcu.seconds_to_clock(max_error)
+        max_error_ticks = self._mcu.seconds_to_clock(MAX_STEPCOMPRESS_ERROR)
         ffi_main, ffi_lib = chelper.get_ffi()
-        ffi_lib.stepcompress_fill(self._stepqueue, max_error_ticks,
+        ffi_lib.stepcompress_fill(self._stepqueue, self._oid, max_error_ticks,
                                   step_cmd_tag, dir_cmd_tag)
     def get_oid(self):
         return self._oid
@@ -192,7 +195,7 @@ class MCU_stepper:
             mcu_pos = self.get_mcu_position()
         self._stepper_kinematics = sk
         ffi_main, ffi_lib = chelper.get_ffi()
-        ffi_lib.stepcompress_set_stepper_kinematics(self._stepqueue, sk);
+        ffi_lib.syncemitter_set_stepper_kinematics(self._syncemitter, sk);
         self.set_trapq(self._trapq)
         self._set_mcu_position(mcu_pos)
         return old_sk
@@ -202,9 +205,7 @@ class MCU_stepper:
         if ret:
             raise error("Internal error in stepcompress")
         data = (self._reset_cmd_tag, self._oid, 0)
-        ret = ffi_lib.stepcompress_queue_msg(self._stepqueue, data, len(data))
-        if ret:
-            raise error("Internal error in stepcompress")
+        ffi_lib.syncemitter_queue_msg(self._syncemitter, 0, data, len(data))
         self._query_mcu_position()
     def _query_mcu_position(self):
         if self._mcu.is_fileoutput():

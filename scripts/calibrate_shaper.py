@@ -77,6 +77,9 @@ def calibrate_shaper(datas, csv_output, *, shapers, damping_ratio, scv,
 
 def plot_freq_response(lognames, calibration_data, shapers,
                        selected_shaper, max_freq):
+    max_freq_bin = calibration_data.freq_bins.max()
+    if max_freq > max_freq_bin:
+        max_freq = max_freq_bin
     freqs = calibration_data.freq_bins
     psd = calibration_data.psd_sum[freqs <= max_freq]
     px = calibration_data.psd_x[freqs <= max_freq]
@@ -166,7 +169,7 @@ def main():
                     default=None, help="shaper damping_ratio parameter")
     opts.add_option("--test_damping_ratios", type="string",
                     dest="test_damping_ratios", default=None,
-                    help="a comma-separated liat of damping ratios to test " +
+                    help="a comma-separated list of damping ratios to test " +
                     "input shaper for")
     options, args = opts.parse_args()
     if len(args) < 1:

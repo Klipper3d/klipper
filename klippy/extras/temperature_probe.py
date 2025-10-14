@@ -132,7 +132,7 @@ class TemperatureProbe:
         self.start_pos = []
 
         # Register GCode Commands
-        pname = self.name.split(maxsplit=1)[-1]
+        pname = self.name.split(None, 1)[-1]
         self.gcode.register_mux_command(
             "TEMPERATURE_PROBE_CALIBRATE", "PROBE", pname,
             self.cmd_TEMPERATURE_PROBE_CALIBRATE,
@@ -357,8 +357,8 @@ class TemperatureProbe:
         self._check_homed()
         probe = self._get_probe()
         probe_name = probe.get_status(None)["name"]
-        short_name = probe_name.split(maxsplit=1)[-1]
-        if short_name != self.name.split(maxsplit=1)[-1]:
+        short_name = probe_name.split(None, 1)[-1]
+        if short_name != self.name.split(None, 1)[-1]:
             raise self.gcode.error(
                 "[%s] not linked to registered probe [%s]."
                 % (self.name, probe_name)
@@ -588,7 +588,7 @@ class EddyDriftCompensation:
                     temps[idx] = cur_temp
                     probe_samples[idx].append(sample)
             return True
-        sect_name = "probe_eddy_current " + self.name.split(maxsplit=1)[-1]
+        sect_name = "probe_eddy_current " + self.name.split(None, 1)[-1]
         self.printer.lookup_object(sect_name).add_client(_on_bulk_data_recd)
         for i in range(DRIFT_SAMPLE_COUNT):
             if i == 0:

@@ -116,6 +116,11 @@ list_join_tail(struct list_head *add, struct list_head *h)
          ; &pos->member != &(head)->root                        \
          ; pos = list_next_entry(pos, member))
 
+#define list_for_each_entry_reverse(pos, head, member)          \
+    for (pos = list_last_entry((head), typeof(*pos), member)    \
+         ; &pos->member != &(head)->root                        \
+         ; pos = list_prev_entry(pos, member))
+
 #define list_for_each_entry_safe(pos, n, head, member)          \
     for (pos = list_first_entry((head), typeof(*pos), member)   \
           , n = list_next_entry(pos, member)                    \

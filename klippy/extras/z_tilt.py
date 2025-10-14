@@ -79,7 +79,7 @@ class ZAdjustStatus:
         self.applied = False
     def get_status(self, eventtime):
         return {'applied': self.applied}
-    def _motor_off(self, print_time):
+    def _motor_off(self):
         self.reset()
 
 class RetryHelper:

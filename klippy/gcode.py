@@ -430,18 +430,17 @@ class GCodeIO:
                 self.gcode.request_restart('exit')
             pending_commands.append("")
         # Handle case where multiple commands pending
-        if self.is_processing_data or len(pending_commands) > 1:
-            if len(pending_commands) < 20:
-                # Check for M112 out-of-order
-                for line in lines:
-                    if self.m112_r.match(line) is not None:
-                        self.gcode.cmd_M112(None)
-            if self.is_processing_data:
-                if len(pending_commands) >= 20:
-                    # Stop reading input
-                    self.reactor.unregister_fd(self.fd_handle)
-                    self.fd_handle = None
-                return
+        if len(pending_commands) < 20:
+            # Check for M112 out-of-order
+            for line in lines:
+                if self.m112_r.match(line) is not None:
+                    self.gcode.cmd_M112(None)
+        if self.is_processing_data:
+            if len(pending_commands) >= 20:
+                # Stop reading input
+                self.reactor.unregister_fd(self.fd_handle)
+                self.fd_handle = None
+            return
         # Process commands
         self.is_processing_data = True
         while pending_commands:

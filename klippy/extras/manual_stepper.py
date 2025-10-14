@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-import stepper, chelper
+import stepper
 from . import force_move
 
 class ManualStepper:
@@ -49,17 +49,9 @@ class ManualStepper:
         else:
             self.next_cmd_time = print_time
     def do_enable(self, enable):
-        self.sync_print_time()
+        stepper_names = [s.get_name() for s in self.steppers]
         stepper_enable = self.printer.lookup_object('stepper_enable')
-        if enable:
-            for s in self.steppers:
-                se = stepper_enable.lookup_enable(s.get_name())
-                se.motor_enable(self.next_cmd_time)
-        else:
-            for s in self.steppers:
-                se = stepper_enable.lookup_enable(s.get_name())
-                se.motor_disable(self.next_cmd_time)
-        self.sync_print_time()
+        stepper_enable.set_motors_enable(stepper_names, enable)
     def do_set_position(self, setpos):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.flush_step_generation()
@@ -80,8 +72,7 @@ class ManualStepper:
         self.sync_print_time()
         self.next_cmd_time = self._submit_move(self.next_cmd_time, movepos,
                                                speed, accel)
-        toolhead = self.printer.lookup_object('toolhead')
-        toolhead.note_mcu_movequeue_activity(self.next_cmd_time)
+        self.motion_queuing.note_mcu_movequeue_activity(self.next_cmd_time)
         if sync:
             self.sync_print_time()
     def do_homing_move(self, movepos, speed, accel, triggered, check_trigger):
@@ -205,13 +196,13 @@ class ManualStepper:
     def drip_move(self, newpos, speed, drip_completion):
         # Submit move to trapq
         self.sync_print_time()
-        maxtime = self._submit_move(self.next_cmd_time, newpos[0],
-                                    speed, self.homing_accel)
+        start_time = self.next_cmd_time
+        end_time = self._submit_move(start_time, newpos[0],
+                                     speed, self.homing_accel)
         # Drip updates to motors
-        toolhead = self.printer.lookup_object('toolhead')
-        toolhead.drip_update_time(maxtime, drip_completion)
+        self.motion_queuing.drip_update_time(start_time, end_time,
+                                             drip_completion)
         # Clear trapq of any remaining parts of movement
-        reactor = self.printer.get_reactor()
         self.motion_queuing.wipe_trapq(self.trapq)
         self.rail.set_position([self.commanded_pos, 0., 0.])
         self.sync_print_time()
