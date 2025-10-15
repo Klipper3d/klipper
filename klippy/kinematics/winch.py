@@ -5,12 +5,22 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import stepper, mathutil, chelper
 
+
 class WinchFlexHelper:
+    ALGORITHMS = {'legacy': 0, 'thikonov': 1, 'qp': 2}
+    ALGO_NAMES = {v: k for k, v in ALGORITHMS.items()}
+
     def __init__(self, anchors, config):
         self._anchors = tuple(anchors)
         self.num = len(self._anchors)
         self.ptr = None
         self.enabled = False
+        self.base_enabled = False
+        self.runtime_enabled = True
+        self.soft_algorithm_name = 'thikonov'
+        self.hard_algorithm_name = 'qp'
+        self.soft_algorithm = self.ALGORITHMS[self.soft_algorithm_name]
+        self.hard_algorithm = self.ALGORITHMS[self.hard_algorithm_name]
         self.ffi_main = self.ffi_lib = None
         self._read_config(config)
         if not self.num:
@@ -19,6 +29,7 @@ class WinchFlexHelper:
         self.ptr = self.ffi_main.gc(
             self.ffi_lib.winch_flex_alloc(), self.ffi_lib.winch_flex_free)
         self._configure()
+        self.enabled = self.is_active()
 
     def _read_config(self, config):
         self.mover_weight = config.getfloat('winch_mover_weight', 0., minval=0.)
@@ -43,9 +54,18 @@ class WinchFlexHelper:
             self.max_force = []
             self.guy_wires = []
             self.guy_wires_valid = 0
-        self.enabled = bool(self.num >= 4
-                            and self.mover_weight > 0.
-                            and self.spring_constant > 0.)
+        algo_choices = list(self.ALGORITHMS.keys())
+        self.soft_algorithm_name = config.getchoice(
+            'winch_soft_algorithm', algo_choices, default='thikonov')
+        self.hard_algorithm_name = config.getchoice(
+            'winch_hard_algorithm', algo_choices, default='qp')
+        self.soft_algorithm = self.ALGORITHMS[self.soft_algorithm_name]
+        self.hard_algorithm = self.ALGORITHMS[self.hard_algorithm_name]
+        self.base_enabled = bool(self.num >= 4
+                                 and self.mover_weight > 0.
+                                 and self.spring_constant > 0.)
+        self.runtime_enabled = True
+        self.enabled = self.is_active()
 
     def _configure(self):
         anchors_flat = [float(coord) for anchor in self._anchors for coord in anchor]
@@ -59,7 +79,13 @@ class WinchFlexHelper:
         self.ffi_lib.winch_flex_configure(
             self.ptr, self.num, anchors_c, self.mover_weight,
             self.spring_constant, self.target_force, min_c, max_c,
-            guy_ptr, self.guy_wires_valid)
+            guy_ptr, self.guy_wires_valid, self.soft_algorithm,
+            self.hard_algorithm)
+        self.runtime_enabled = True
+        self.enabled = self.is_active()
+
+    def is_active(self):
+        return bool(self.base_enabled and self.runtime_enabled)
 
     def get_ptr(self):
         if self.ptr is not None:
@@ -68,8 +94,20 @@ class WinchFlexHelper:
             self.ffi_main, _ = chelper.get_ffi()
         return self.ffi_main.NULL
 
+    def set_active(self, enable):
+        enable = bool(enable)
+        desired = enable and self.base_enabled
+        self.runtime_enabled = desired
+        if self.ptr and self.ffi_lib is not None:
+            self.ffi_lib.winch_flex_set_enabled(self.ptr, 1 if desired else 0)
+        self.enabled = self.is_active()
+        return self.enabled
+
+    def get_algorithm_names(self):
+        return self.soft_algorithm_name, self.hard_algorithm_name
+
     def calc_arrays(self, pos):
-        if not self.ptr or not self.num:
+        if not self.ptr or not self.num or not self.is_active():
             return [], []
         distances = self.ffi_main.new("double[]", self.num)
         flex = self.ffi_main.new("double[]", self.num)
@@ -80,6 +118,7 @@ class WinchFlexHelper:
 
 class WinchKinematics:
     def __init__(self, toolhead, config):
+        self.printer = config.get_printer()
         # Setup steppers at each anchor
         self.steppers = []
         self.anchors = []
@@ -93,6 +132,10 @@ class WinchKinematics:
             a = tuple(stepper_config.getfloat('anchor_' + n) for n in 'xyz')
             self.anchors.append(a)
         self.flex_helper = WinchFlexHelper(self.anchors, config)
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_command(
+            'M669', self.cmd_M669,
+            desc="Toggle winch flex compensation. Use M669 S0/S1.")
         flex_ptr = self.flex_helper.get_ptr()
         if not flex_ptr:
             raise config.error("Failed to initialise winch flex helper")
@@ -110,7 +153,7 @@ class WinchKinematics:
         # Use only first three steppers to calculate cartesian position
         pos = [stepper_positions[rail.get_name()] for rail in self.steppers[:3]]
         cart = mathutil.trilateration(self.anchors[:3], [sp * sp for sp in pos])
-        if not self.flex_helper.enabled:
+        if not self.flex_helper.is_active():
             return cart
         cart_guess = list(cart)
         for _ in range(3):
@@ -141,6 +184,24 @@ class WinchKinematics:
             'axis_minimum': self.axes_min,
             'axis_maximum': self.axes_max,
         }
+
+    def cmd_M669(self, gcmd):
+        param = gcmd.get_int('S', None)
+        if param is None:
+            state = "enabled" if self.flex_helper.is_active() else "disabled"
+            soft, hard = self.flex_helper.get_algorithm_names()
+            gcmd.respond_info(
+                "Winch flex compensation is %s (soft=%s, hard=%s)"
+                % (state, soft, hard))
+            return
+        requested = bool(param)
+        actual = self.flex_helper.set_active(requested)
+        if requested and not actual:
+            gcmd.respond_info(
+                "Unable to enable flex compensation; check winch configuration parameters.")
+            return
+        state = "enabled" if actual else "disabled"
+        gcmd.respond_info(f"Winch flex compensation {state}.")
 
 def load_kinematics(toolhead, config):
     return WinchKinematics(toolhead, config)

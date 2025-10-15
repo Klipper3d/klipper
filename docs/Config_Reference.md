@@ -716,6 +716,12 @@ winch_max_force:
 #   Optional guy wire lengths in millimeters for each anchor. If
 #   omitted, the firmware assumes all low anchors route through the
 #   top anchor.
+winch_soft_algorithm:
+#   Solver used when computing pretension at the origin. Choices are
+#   'legacy', 'thikonov', and 'qp'. The default is 'thikonov'.
+winch_hard_algorithm:
+#   Solver used during motion for real-time flex compensation. The
+#   choices match winch_soft_algorithm and default to 'qp'.
 
 # The stepper_a section describes the stepper connected to the first
 # cable winch. A minimum of 3 and a maximum of 26 cable winches may be
@@ -731,6 +737,9 @@ anchor_z:
 #   The X, Y, and Z position of the cable winch in cartesian space.
 #   These parameters must be provided.
 ```
+
+Use `M669 S0` to disable and `M669 S1` to enable flex compensation at
+runtime without restarting the printer.
 
 ### Generic Cartesian Kinematics
 
