@@ -193,6 +193,17 @@ class UC1701(DisplayBase):
         self.send([0xA5]) # display all
         self.send([0xA4]) # normal display
         self.flush()
+    def sleep(self, on):
+        sleep_cmds = [
+            0xAE,       # Display Off
+            0xA5        # All pixel On
+        ]
+        wake_cmds = [
+            0xA4,       # All pixel Off
+            0xAF        # Display On
+        ]
+        self.send(sleep_cmds if on else wake_cmds)
+        self.flush()
 
 # The SSD1306 supports both i2c and "4-wire" spi
 class SSD1306(DisplayBase):
@@ -231,6 +242,15 @@ class SSD1306(DisplayBase):
             0xAF,       # Display on
         ]
         self.send(init_cmds)
+        self.flush()
+    def sleep(self, on):
+        sleep_cmds = [
+            0xAE,       # Display Off
+        ]
+        wake_cmds = [
+            0xAF        # Display On
+        ]
+        self.send(sleep_cmds if on else wake_cmds)
         self.flush()
 
 # the SH1106 is SSD1306 compatible with up to 132 columns
