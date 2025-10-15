@@ -300,7 +300,8 @@ static const struct gpio_pwm_info pwm_regs[] = {
 };
 
 struct gpio_pwm
-gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint32_t val)
+gpio_timer_setup(uint8_t pin, uint32_t cycle_time, uint32_t val,
+    int is_clock_out)
 {
     // Find pin in pwm_regs table
     const struct gpio_pwm_info* p = pwm_regs;
@@ -316,7 +317,18 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint32_t val)
     uint32_t pclock_div = CONFIG_CLOCK_FREQ / pclk;
     if (pclock_div > 1)
         pclock_div /= 2; // Timers run at twice the normal pclock frequency
-    uint32_t prescaler = cycle_time / (pclock_div * (MAX_PWM - 1));
+    uint32_t max_pwm = MAX_PWM;
+    uint32_t pcycle_time = cycle_time / pclock_div;
+    uint32_t prescaler = pcycle_time / (max_pwm - 1);
+    // CLK output
+    if (is_clock_out) {
+        prescaler = 1;
+        while (pcycle_time > UINT16_MAX) {
+            prescaler = prescaler * 2;
+            pcycle_time /= 2;
+        }
+        max_pwm = pcycle_time;
+    }
     if (prescaler > UINT16_MAX) {
         prescaler = UINT16_MAX;
     } else if (prescaler > 0) {
@@ -334,9 +346,12 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint32_t val)
         if (p->timer->PSC != (uint16_t) prescaler) {
             shutdown("PWM already programmed at different speed");
         }
+        if (p->timer->ARR != (uint16_t) max_pwm - 1) {
+            shutdown("PWM already programmed with different pulse duration");
+        }
     } else {
         p->timer->PSC = (uint16_t) prescaler;
-        p->timer->ARR = MAX_PWM - 1;
+        p->timer->ARR = max_pwm - 1;
         p->timer->EGR |= TIM_EGR_UG;
     }
 
@@ -392,6 +407,19 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint32_t val)
 #endif
     return channel;
 }
+
+struct gpio_pwm
+gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint32_t val) {
+    return gpio_timer_setup(pin, cycle_time, val, 0);
+}
+
+void
+command_stm32_timer_output(uint32_t *args)
+{
+    gpio_timer_setup(args[0], args[1], args[2], 1);
+}
+DECL_COMMAND(command_stm32_timer_output,
+    "stm32_timer_output pin=%u cycle_ticks=%u on_ticks=%hu");
 
 void
 gpio_pwm_write(struct gpio_pwm g, uint32_t val) {
