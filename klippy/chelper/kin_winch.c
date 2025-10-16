@@ -558,9 +558,9 @@ compute_static_forces(struct winch_flex *wf, const struct coord *pos,
 {
     int ok = 0;
     if (algo == WINCH_FORCE_ALGO_QP) {
-        ok = static_forces_tikhonov(wf, pos, forces);
-    } else if (algo == WINCH_FORCE_ALGO_TIKHONOV) {
         ok = static_forces_qp(wf, pos, forces);
+    } else if (algo == WINCH_FORCE_ALGO_TIKHONOV) {
+        ok = static_forces_tikhonov(wf, pos, forces);
     }
     if (ok) {
         return 1;
