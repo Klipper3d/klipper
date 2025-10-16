@@ -359,7 +359,7 @@ solve_box_ridge_ls(const double *A, int N, const double Fext[3], double lambda,
                    int max_iters, double tol, double *T_out)
 {
     double H[WINCH_MAX_ANCHORS * WINCH_MAX_ANCHORS];
-    double f[WINCH_MAX_ANCHORS];
+    double f[WINCH_MAX_ANCHORS] = { 0.0 };
     for (int i = 0; i < N; ++i) {
         double aix = A[0 * N + i];
         double aiy = A[1 * N + i];
@@ -565,9 +565,10 @@ static int
 compute_static_forces(struct winch_flex *wf, const struct coord *pos,
                       double *forces, int algo)
 {
+    int ok = 0;
     if (algo == WINCH_FORCE_ALGO_QP) {
         ok = static_forces_tikhonov(wf, pos, forces);
-    } else (algo == WINCH_FORCE_ALGO_TIKHONOV) {
+    } else if (algo == WINCH_FORCE_ALGO_TIKHONOV) {
         ok = static_forces_qp(wf, pos, forces);
     }
     if (ok) {
