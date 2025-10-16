@@ -7,7 +7,7 @@ import stepper, mathutil, chelper
 
 
 class WinchFlexHelper:
-    ALGORITHMS = {'thikonov': 0, 'qp': 1}
+    ALGORITHMS = {'tikhonov': 0, 'qp': 1}
     ALGO_NAMES = {v: k for k, v in ALGORITHMS.items()}
 
     def __init__(self, anchors, config):
@@ -15,7 +15,7 @@ class WinchFlexHelper:
         self.num = len(self._anchors)
         self.ptr = None
         self.enabled = False
-        self.flex_compensation_algorithm_name = 'thikonov'
+        self.flex_compensation_algorithm_name = 'tikhonov'
         self.flex_compensation_algorithm = self.ALGORITHMS[self.flex_compensation_algorithm_name]
         self.ignore_gravity = False
         self.ignore_pretension = False
@@ -48,7 +48,7 @@ class WinchFlexHelper:
             self.guy_wires = []
         algo_choices = list(self.ALGORITHMS.keys())
         self.flex_compensation_algorithm_name = config.getchoice(
-            'flex_compensation_algorithm', algo_choices, default='thikonov')
+            'flex_compensation_algorithm', algo_choices, default='tikhonov')
         self.flex_compensation_algorithm = self.ALGORITHMS[self.flex_compensation_algorithm_name]
         self.ignore_gravity = config.getboolean('ignore_gravity', False)
         self.ignore_pretension = config.getboolean('ignore_pretension', False)

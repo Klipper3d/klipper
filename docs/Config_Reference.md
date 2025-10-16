@@ -735,12 +735,12 @@ winch_guy_wire_lengths:
 #   The default is 0 for each anchor.
 flex_compensation_algorithm:
 #   Solver used when computing how much force is required to counteract
-#   gravity and pretension. Choices are 'thikonov' and 'qp'.
+#   gravity and pretension. Choices are 'tikhonov' and 'qp'.
 #   Both algorithms will respect the max/min limits at all times and
 #   compute the same forces most of the time.
 #   They behave differently near the outskirts of the build volume.
 #
-#   'thikonov' will treat force equilibrium (perfect gravity/pretension counteraction)
+#   'tikhonov' will treat force equilibrium (perfect gravity/pretension counteraction)
 #   as a "best-effort target", prioritizing making the resulting
 #   forces low, smooth, and safe.
 #
@@ -748,7 +748,7 @@ flex_compensation_algorithm:
 #   equilibrium whenever theoretically possible, even if that means adding sudden
 #   large forces or pushing several motors to their max limit simultaneously.
 #
-#   The default is 'thikonov'.
+#   The default is 'tikhonov'.
 ignore_gravity:
 #   Tell the flex compensation algorithm to
 #   only solve for pretension forces, not gravity counteracting forces.
