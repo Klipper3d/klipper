@@ -698,8 +698,9 @@ kinematics: winch
 winch_mover_weight:
 #   The mover weight in kilograms. The default is 0.
 winch_spring_constant:
-#   Approximate spring constant of the line in Newton per meter. The
-#   default is 0.
+#   Approximate spring constant of the line in Newton per meter.
+#   A rough approximation for Garda 1.1 mm line (unit N/m) is 20000.0 N/m.
+#   The default is 0.
 winch_min_force:
 #   Minimum permitted force per anchor in Newton. Provide one value
 #   per defined anchor (comma separated).

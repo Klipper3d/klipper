@@ -30,8 +30,7 @@ struct winch_flex {
     int flex_enabled;
     int runtime_enabled;
     int guy_wires_explicit;
-    int soft_algorithm;
-    int hard_algorithm;
+    int flex_compensation_algorithm;
     struct coord anchors[WINCH_MAX_ANCHORS];
     double mover_weight;
     double spring_constant;
@@ -601,7 +600,7 @@ compute_flex(struct winch_flex *wf, double x, double y, double z,
     }
     double forces[WINCH_MAX_ANCHORS];
     memset(forces, 0, sizeof(forces));
-    compute_static_forces(wf, &pos, forces, wf->hard_algorithm);
+    compute_static_forces(wf, &pos, forces, wf->flex_compensation_algorithm);
     for (int i = 0; i < num; ++i) {
         double spring_length = distances[i] + wf->guy_wires[i];
         if (spring_length < EPSILON)
@@ -694,7 +693,7 @@ recalc_origin(struct winch_flex *wf)
     origin.y = 0.;
     origin.z = 0.;
     double forces[WINCH_MAX_ANCHORS] = {0.};
-    compute_static_forces(wf, &origin, forces, wf->soft_algorithm);
+    compute_static_forces(wf, &origin, forces, wf->flex_compensation_algorithm);
 
     double pretension[WINCH_MAX_ANCHORS] = {0.};
     for (int i = 0; i < num; ++i) {
@@ -726,7 +725,7 @@ winch_flex_configure(struct winch_flex *wf, int num_anchors,
                      double spring_constant, double target_force,
                      const double *min_force, const double *max_force,
                      const double *guy_wires, int guy_wires_valid,
-                     int soft_algorithm, int hard_algorithm)
+                     int flex_compensation_algorithm)
 {
     if (!wf)
         return;
@@ -739,8 +738,7 @@ winch_flex_configure(struct winch_flex *wf, int num_anchors,
     wf->spring_constant = spring_constant;
     wf->target_force = target_force;
     wf->guy_wires_explicit = guy_wires_valid;
-    wf->soft_algorithm = soft_algorithm;
-    wf->hard_algorithm = hard_algorithm;
+    wf->flex_compensation_algorithm = flex_compensation_algorithm;
 
     for (int i = 0; i < num_anchors; ++i) {
         wf->anchors[i].x = anchors[i * 3];
@@ -764,13 +762,9 @@ winch_flex_configure(struct winch_flex *wf, int num_anchors,
                         && mover_weight > 0.
                         && spring_constant > 0.);
     wf->runtime_enabled = 1;
-    if (wf->soft_algorithm < WINCH_FORCE_ALGO_TIKHONOV
-        || wf->soft_algorithm > WINCH_FORCE_ALGO_QP) {
-        wf->soft_algorithm = WINCH_FORCE_ALGO_TIKHONOV;
-    }
-    if (wf->hard_algorithm < WINCH_FORCE_ALGO_TIKHONOV
-        || wf->hard_algorithm > WINCH_FORCE_ALGO_QP) {
-        wf->hard_algorithm = WINCH_FORCE_ALGO_TIKHONOV;
+    if (wf->flex_compensation_algorithm < WINCH_FORCE_ALGO_TIKHONOV
+        || wf->flex_compensation_algorithm > WINCH_FORCE_ALGO_QP) {
+        wf->flex_compensation_algorithm = WINCH_FORCE_ALGO_TIKHONOV;
     }
     recalc_origin(wf);
 }
