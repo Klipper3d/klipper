@@ -202,6 +202,7 @@ class PrinterLCD:
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
         self.screen_update_timer = self.reactor.register_timer(
             self.screen_update_event)
+        self.flush_mutex = self.reactor.mutex()
         self.redraw_request_pending = False
         self.redraw_time = 0.
         # Register g-code commands
@@ -228,17 +229,20 @@ class PrinterLCD:
         if self.menu is not None:
             ret = self.menu.screen_update_event(eventtime)
             if ret:
-                self.lcd_chip.flush()
+                self.reactor.register_callback(self.screen_flush_cb)
                 return eventtime + REDRAW_TIME
         # Update normal display
         try:
             self.show_data_group.show(self, self.display_templates, eventtime)
         except:
             logging.exception("Error during display screen update")
-        self.lcd_chip.flush()
+        self.reactor.register_callback(self.screen_flush_cb)
         if self.redraw_request_pending:
             return self.redraw_time
         return eventtime + REDRAW_TIME
+    def screen_flush_cb(self, eventtime):
+        with self.flush_mutex:
+            self.lcd_chip.flush()
     def request_redraw(self):
         if self.redraw_request_pending:
             return
