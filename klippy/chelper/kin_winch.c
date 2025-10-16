@@ -598,10 +598,7 @@ compute_flex(struct winch_flex *wf, double x, double y, double z,
         if (spring_length < EPSILON)
             spring_length = EPSILON;
         double spring_k = wf->spring_constant / spring_length;
-        double relaxed = distances[i] - forces[i] / spring_k;
-        double line_pos = relaxed - wf->relaxed_origin[i];
-        double delta = distances[i] - wf->distances_origin[i];
-        flex[i] = line_pos - delta;
+        flex[i] = forces[i] / spring_k;
     }
 }
 static double
@@ -618,7 +615,7 @@ calc_position_common(struct winch_stepper *ws, struct move *m, double move_time)
     double distances[WINCH_MAX_ANCHORS];
     double flex[WINCH_MAX_ANCHORS];
     compute_flex(wf, pos.x, pos.y, pos.z, distances, flex);
-    return distances[ws->index] - flex[ws->index];
+    return dist - flex[ws->index];
 }
 
 static double
