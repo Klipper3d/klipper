@@ -27,6 +27,7 @@ class WinchFlexHelper:
         self.ptr = self.ffi_main.gc(
             self.ffi_lib.winch_flex_alloc(), self.ffi_lib.winch_flex_free)
         self._configure()
+        self.set_active(self.enabled)
 
     def _read_config(self, config):
         self.enabled = config.getboolean('flex_compensation_enable', True)
@@ -71,12 +72,15 @@ class WinchFlexHelper:
             self.ffi_main, _ = chelper.get_ffi()
         return self.ffi_main.NULL
 
+    def is_active(self):
+        return bool(self.ptr) and bool(self.enabled)
+
     def set_active(self, enable):
         enable = bool(enable)
+        self.enabled = enable
         if self.ptr and self.ffi_lib is not None:
             self.ffi_lib.winch_flex_set_enabled(self.ptr, 1 if enable else 0)
-        self.enabled = enable
-        return self.enabled
+        return self.is_active()
 
     def config_valid(self):
         return True
@@ -85,7 +89,7 @@ class WinchFlexHelper:
         return self.flex_compensation_algorithm_name
 
     def calc_arrays(self, pos):
-        if not self.ptr or not self.num or not self.is_active():
+        if not self.ptr or not self.num:
             return [], []
         distances = self.ffi_main.new("double[]", self.num)
         flex = self.ffi_main.new("double[]", self.num)
@@ -97,6 +101,7 @@ class WinchFlexHelper:
 class WinchKinematics:
     def __init__(self, toolhead, config):
         self.printer = config.get_printer()
+        self.toolhead = toolhead
         # Setup steppers at each anchor
         self.steppers = []
         self.anchors = []
@@ -173,11 +178,24 @@ class WinchKinematics:
                 % (state, algo))
             return
         requested = bool(param)
-        actual = self.flex_helper.config_valid() and self.flex_helper.set_active(requested)
+        current_state = self.flex_helper.is_active()
+        if requested == current_state:
+            gcmd.respond_info(
+                f"Winch flex compensation already {'enabled' if current_state else 'disabled'}.")
+            return
+        self.toolhead.wait_moves()
+        current_pos = list(self.toolhead.get_position())
+        if requested:
+            actual = (self.flex_helper.config_valid()
+                      and self.flex_helper.set_active(True))
+        else:
+            actual = self.flex_helper.set_active(False)
         if requested and not actual:
             gcmd.respond_info(
                 "Unable to enable flex compensation; check winch configuration parameters.")
             return
+        if actual != current_state:
+            self.set_position(current_pos, "")
         state = "enabled" if actual else "disabled"
         gcmd.respond_info(f"Winch flex compensation {state}.")
 
