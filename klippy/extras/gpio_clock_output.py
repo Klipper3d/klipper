@@ -14,7 +14,7 @@ class PrinterClockOutputPin:
                                           maxval=520000000)
         # Determine start and shutdown values
         self.scale = config.getfloat('scale', 1., above=0.)
-        self.value = config.getfloat('pulse_width', 0., minval=0.,
+        self.value = config.getfloat('pulse_width', 0.5, minval=0.,
                                      maxval=self.scale)
         self.value = self.value / self.scale
         self.mcu.register_config_callback(self._build_config)

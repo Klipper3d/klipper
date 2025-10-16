@@ -3611,6 +3611,26 @@ pin:
 #   These options are deprecated and should no longer be specified.
 ```
 
+### [gpio_clock_output]
+
+Static configurable output pin (one may define any number of
+sections with an "gpio_clock_output" prefix).
+Pins configured here will be set up as clock output pins.
+Maybe used to provide clock input to other hardware on the board.
+```
+[gpio_clock_output my_pin]
+pin:
+#   The pin to configure as an output. This parameter must be
+#   provided.
+#pulse_width: 0.5
+#   The value to set the pin to during MCU configuration.
+#   The default is 0.5.
+#frequency: 1000
+#   Target output frequency.
+#scale:
+#   See the "output_pin" section for the definition of these parameters.
+```
+
 ### [pwm_tool]
 
 Pulse width modulation digital output pins capable of high speed
