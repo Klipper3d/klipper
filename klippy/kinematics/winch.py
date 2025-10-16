@@ -15,10 +15,10 @@ class WinchFlexHelper:
         self.num = len(self._anchors)
         self.ptr = None
         self.enabled = False
-        self.base_enabled = False
-        self.runtime_enabled = True
         self.flex_compensation_algorithm_name = 'thikonov'
         self.flex_compensation_algorithm = self.ALGORITHMS[self.flex_compensation_algorithm_name]
+        self.ignore_gravity = False
+        self.ignore_pretension = False
         self.ffi_main = self.ffi_lib = None
         self._read_config(config)
         if not self.num:
@@ -27,58 +27,42 @@ class WinchFlexHelper:
         self.ptr = self.ffi_main.gc(
             self.ffi_lib.winch_flex_alloc(), self.ffi_lib.winch_flex_free)
         self._configure()
-        self.enabled = self.is_active()
 
     def _read_config(self, config):
+        self.enabled = config.getboolean('flex_compensation_enable', True)
         self.mover_weight = config.getfloat('winch_mover_weight', 0., minval=0.)
         self.spring_constant = config.getfloat('winch_spring_constant', 0., minval=0.)
         if self.num:
             default_min = tuple(0. for _ in range(self.num))
             default_max = tuple(120. for _ in range(self.num))
+            default_guy_wires = tuple(0. for _ in range(self.num))
             self.min_force = list(config.getfloatlist(
                 'winch_min_force', default_min, count=self.num))
             self.max_force = list(config.getfloatlist(
                 'winch_max_force', default_max, count=self.num))
-            guy_raw = config.get('winch_guy_wire_lengths', None, note_valid=False)
-            self.guy_wires = []
-            self.guy_wires_valid = 0
-            if guy_raw is not None:
-                self.guy_wires = list(config.getfloatlist(
-                    'winch_guy_wire_lengths', count=self.num))
-                self.guy_wires_valid = 1
+            self.guy_wires = list(config.getfloatlist(
+                'winch_guy_wire_lengths', default_guy_wires, count=self.num))
         else:
             self.min_force = []
             self.max_force = []
             self.guy_wires = []
-            self.guy_wires_valid = 0
         algo_choices = list(self.ALGORITHMS.keys())
         self.flex_compensation_algorithm_name = config.getchoice(
             'flex_compensation_algorithm', algo_choices, default='thikonov')
         self.flex_compensation_algorithm = self.ALGORITHMS[self.flex_compensation_algorithm_name]
-        self.base_enabled = bool(self.num >= 4
-                                 and self.mover_weight > 0.
-                                 and self.spring_constant > 0.)
-        self.runtime_enabled = True
-        self.enabled = self.is_active()
+        self.ignore_gravity = config.getboolean('ignore_gravity', False)
+        self.ignore_pretension = config.getboolean('ignore_pretension', False)
 
     def _configure(self):
         anchors_flat = [float(coord) for anchor in self._anchors for coord in anchor]
         anchors_c = self.ffi_main.new("double[]", anchors_flat)
         min_c = self.ffi_main.new("double[]", self.min_force)
         max_c = self.ffi_main.new("double[]", self.max_force)
-        if self.guy_wires_valid:
-            guy_ptr = self.ffi_main.new("double[]", self.guy_wires)
-        else:
-            guy_ptr = self.ffi_main.NULL
+        guy_ptr = self.ffi_main.new("double[]", self.guy_wires)
         self.ffi_lib.winch_flex_configure(
             self.ptr, self.num, anchors_c, self.mover_weight,
-            self.spring_constant, self.target_force, min_c, max_c,
-            guy_ptr, self.guy_wires_valid, self.flex_compensation_algorithm)
-        self.runtime_enabled = True
-        self.enabled = self.is_active()
-
-    def is_active(self):
-        return bool(self.base_enabled and self.runtime_enabled)
+            self.spring_constant, min_c, max_c,
+            guy_ptr, self.flex_compensation_algorithm)
 
     def get_ptr(self):
         if self.ptr is not None:
@@ -89,12 +73,13 @@ class WinchFlexHelper:
 
     def set_active(self, enable):
         enable = bool(enable)
-        desired = enable and self.base_enabled
-        self.runtime_enabled = desired
         if self.ptr and self.ffi_lib is not None:
-            self.ffi_lib.winch_flex_set_enabled(self.ptr, 1 if desired else 0)
-        self.enabled = self.is_active()
+            self.ffi_lib.winch_flex_set_enabled(self.ptr, 1 if enable else 0)
+        self.enabled = enable
         return self.enabled
+
+    def config_valid(self):
+        return True
 
     def get_algorithm_name(self):
         return self.flex_compensation_algorithm_name
@@ -127,8 +112,8 @@ class WinchKinematics:
         self.flex_helper = WinchFlexHelper(self.anchors, config)
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command(
-            'M669', self.cmd_M669,
-            desc="Toggle winch flex compensation. Use M669 S0/S1.")
+            'M666', self.cmd_M666,
+            desc="Toggle winch flex compensation. Use M666 F0/F1.")
         flex_ptr = self.flex_helper.get_ptr()
         if not flex_ptr:
             raise config.error("Failed to initialise winch flex helper")
@@ -178,8 +163,8 @@ class WinchKinematics:
             'axis_maximum': self.axes_max,
         }
 
-    def cmd_M669(self, gcmd):
-        param = gcmd.get_int('S', None)
+    def cmd_M666(self, gcmd):
+        param = gcmd.get_int('F', None)
         if param is None:
             state = "enabled" if self.flex_helper.is_active() else "disabled"
             algo = self.flex_helper.get_algorithm_name()
@@ -188,7 +173,7 @@ class WinchKinematics:
                 % (state, algo))
             return
         requested = bool(param)
-        actual = self.flex_helper.set_active(requested)
+        actual = self.flex_helper.config_valid() and self.flex_helper.set_active(requested)
         if requested and not actual:
             gcmd.respond_info(
                 "Unable to enable flex compensation; check winch configuration parameters.")
