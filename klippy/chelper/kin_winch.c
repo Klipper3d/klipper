@@ -19,6 +19,8 @@
 #define WINCH_MAX_ANCHORS 26
 #define EPSILON 1e-9
 #define G_ACCEL 9.81
+// LAMBDA is Tikhonov regularization weight in both the Tikhonov and the QP solver.
+#define LAMBDA 1e-3
 
 enum winch_force_algorithm {
     WINCH_FORCE_ALGO_TIKHONOV = 0,
@@ -35,6 +37,8 @@ struct winch_flex {
     double min_force[WINCH_MAX_ANCHORS];
     double max_force[WINCH_MAX_ANCHORS];
     double guy_wires[WINCH_MAX_ANCHORS];
+    int ignore_gravity;
+    int ignore_pretension;
     double distances_origin[WINCH_MAX_ANCHORS];
     double relaxed_origin[WINCH_MAX_ANCHORS];
 };
@@ -207,49 +211,44 @@ static_forces_tikhonov(struct winch_flex *wf, const struct coord *pos,
                        double *forces)
 {
     int N = wf->num_anchors;
-    if (N < 3 || N > WINCH_MAX_ANCHORS)
-        return 0;
-
     double A[3 * WINCH_MAX_ANCHORS];
     if (!build_direction_matrix(wf, pos, A))
         return 0;
 
-    double min_targets[WINCH_MAX_ANCHORS];
-    int enforce_pretension = 0;
-    for (int i = 0; i < N; ++i) {
-        double min_v = wf->min_force[i];
-        if (wf->target_force > 0.)
-            min_v = fmax(min_v, wf->target_force);
-        min_targets[i] = min_v;
-        if (min_v > EPSILON)
-            enforce_pretension = 1;
-    }
-
     double Fext[3] = {0., 0., 0.};
-    if (wf->mover_weight > EPSILON)
-        Fext[2] = wf->mover_weight * G_ACCEL;
-
     double T[WINCH_MAX_ANCHORS];
     memset(T, 0, sizeof(T));
-    if (fabs(Fext[0]) > EPSILON || fabs(Fext[1]) > EPSILON
-        || fabs(Fext[2]) > EPSILON)
-        solve_min_norm_T(A, N, Fext, 1e-3, T);
+    if (!wf->ignore_gravity) {
+        Fext[2] = wf->mover_weight * G_ACCEL;
+        // base min-norm solution (regularized pseudoinverse)
+        // Magic number LAMBDA (1e-3) is regulatization strength,
+        // damping the least squares problem.
+        // It gives Thikonov a ~milliforce
+        // leeway to make nicer (no blow up) but less exact solutions
+        solve_min_norm_T(A, N, Fext, LAMBDA, T);
+    }
 
-    if (enforce_pretension) {
+    if (!wf->ignore_pretension) {
         double P[WINCH_MAX_ANCHORS * WINCH_MAX_ANCHORS];
         build_null_projector(A, N, P);
         const double tol = 1e-3;
+        // Magic step_damp number that makes gradient descent typically converge within tol fast
+        // Anything within [0.1, 1.5] works
         const double step_damp = 0.75;
         const int max_iters = 100;
         for (int it = 0; it < max_iters; ++it) {
             double gradient[WINCH_MAX_ANCHORS];
             for (int i = 0; i < N; ++i) {
+                // Gradient from the target objective: 0.5 * (T - T_target)^2
                 double target_grad = 0.;
+                // If tension is beyond max, pull strongly back into acceptable range
                 if (T[i] > wf->max_force[i])
                     target_grad += T[i] - wf->max_force[i];
-                if (T[i] < min_targets[i])
-                    target_grad += T[i] - min_targets[i];
-                target_grad += 0.1 * (T[i] - min_targets[i]);
+                // If tenson is below min, pull strongly back into acceptable range
+                if (T[i] < wf->min_force[i])
+                    target_grad += T[i] - wf->min_force[i];
+                // Always pull weakly towards the minvalue
+                target_grad += 0.1 * (T[i] - wf->min_force[i]);
                 gradient[i] = target_grad;
             }
             double d[WINCH_MAX_ANCHORS];
@@ -262,23 +261,24 @@ static_forces_tikhonov(struct winch_flex *wf, const struct coord *pos,
             for (int i = 0; i < N; ++i)
                 T[i] -= step_damp * d[i];
         }
+
+        // Hard cap on Tmax and 0 if we don't ignore pretension
+        for (int i=0;i<N;++i){
+            if (T[i] < 0.f) T[i] = 0.f;
+            if (T[i] > wf->max_force[i]) T[i] = wf->max_force[i];
+        }
     }
 
     for (int i = 0; i < N; ++i) {
-        double val = T[i];
-        if (val < 0.)
-            val = 0.;
-        if (val < min_targets[i])
-            val = min_targets[i];
-        if (val > wf->max_force[i])
-            val = wf->max_force[i];
-        forces[i] = val;
+        forces[i] = T[i];
     }
     for (int i = N; i < WINCH_MAX_ANCHORS; ++i)
         forces[i] = 0.;
     return 1;
 }
 
+
+// ---- Cholesky solver for small SPD systems (k x k), row-major in/out -------
 static int
 chol_decompose_spd(double *G, int k)
 {
@@ -305,7 +305,8 @@ chol_decompose_spd(double *G, int k)
 static void
 chol_solve_spd(const double *L, int k, const double *b, double *x)
 {
-    double y[WINCH_MAX_ANCHORS];
+    double y[WINCH_MAX_ANCHORS] = { 0.0 };
+    // Solve L y = b
     for (int i = 0; i < k; ++i) {
         double s = b[i];
         for (int p = 0; p < i; ++p)
@@ -314,6 +315,7 @@ chol_solve_spd(const double *L, int k, const double *b, double *x)
     }
     for (int i = 0; i < k; ++i)
         x[i] = 0.;
+    // Solve L^T x = y
     for (int i = k - 1; i >= 0; --i) {
         double s = y[i];
         for (int p = i + 1; p < k; ++p)
@@ -349,6 +351,9 @@ projected_gradient_norm(const double *H, const double *t, const double *f,
     return sqrt(s2);
 }
 
+
+// -------- Bound-constrained ridge LS: H = A^T A + lambda I, f = A^T F --------
+// minimize 0.5 T^T H T - f^T T, s.t. L <= T <= U
 static int
 solve_box_ridge_ls(const double *A, int N, const double Fext[3], double lambda,
                    const double *Lbounds, const double *Ubounds,
@@ -510,32 +515,19 @@ static_forces_qp(struct winch_flex *wf, const struct coord *pos,
                  double *forces)
 {
     int N = wf->num_anchors;
-    if (N < 3 || N > WINCH_MAX_ANCHORS)
-        return 0;
 
     double A[3 * WINCH_MAX_ANCHORS];
     if (!build_direction_matrix(wf, pos, A))
         return 0;
 
-    double min_targets[WINCH_MAX_ANCHORS];
-    int enforce_pretension = 0;
-    for (int i = 0; i < N; ++i) {
-        double min_v = wf->min_force[i];
-        if (wf->target_force > 0.)
-            min_v = fmax(min_v, wf->target_force);
-        min_targets[i] = min_v;
-        if (min_v > EPSILON)
-            enforce_pretension = 1;
-    }
-
     double Fext[3] = {0., 0., 0.};
-    if (wf->mover_weight > EPSILON)
+    if (!wf->ignore_gravity)
         Fext[2] = wf->mover_weight * G_ACCEL;
 
-    double Lbounds[WINCH_MAX_ANCHORS];
-    double Ubounds[WINCH_MAX_ANCHORS];
+    double Lbounds[WINCH_MAX_ANCHORS] = { 0. };
+    double Ubounds[WINCH_MAX_ANCHORS] = { 0. };
     for (int i = 0; i < N; ++i) {
-        double li = enforce_pretension ? min_targets[i] : 0.;
+        double li = wf->ignore_pretension ? 0. : wf->min_force[i];
         double ui = wf->max_force[i];
         if (ui < li)
             ui = li;
@@ -543,10 +535,11 @@ static_forces_qp(struct winch_flex *wf, const struct coord *pos,
         Ubounds[i] = ui;
     }
 
-    const int max_iters = 60;
-    const double tol = 1e-9;
+    // Solve convex QP
+    const int max_iters = 100;
+    const double tol = 1e-3;
     double T[WINCH_MAX_ANCHORS];
-    if (!solve_box_ridge_ls(A, N, Fext, 1e-3, Lbounds, Ubounds,
+    if (!solve_box_ridge_ls(A, N, Fext, LAMBDA, Lbounds, Ubounds,
                             max_iters, tol, T))
         return 0;
 
@@ -702,12 +695,17 @@ recalc_origin(struct winch_flex *wf)
 }
 
 void __visible
-winch_flex_configure(struct winch_flex *wf, int num_anchors,
-                     const double *anchors, double mover_weight,
+winch_flex_configure(struct winch_flex *wf,
+                     int num_anchors,
+                     const double *anchors,
+                     double mover_weight,
                      double spring_constant,
-                     const double *min_force, const double *max_force,
+                     const double *min_force,
+                     const double *max_force,
                      const double *guy_wires,
-                     int flex_compensation_algorithm)
+                     int flex_compensation_algorithm,
+                     int ignore_gravity,
+                     int ignore_pretension)
 {
     if (!wf)
         return;
@@ -718,24 +716,25 @@ winch_flex_configure(struct winch_flex *wf, int num_anchors,
     wf->num_anchors = num_anchors;
     wf->mover_weight = mover_weight;
     wf->spring_constant = spring_constant;
-    wf->target_force = target_force;
     wf->flex_compensation_algorithm = flex_compensation_algorithm;
+    wf->ignore_gravity = ignore_gravity;
+    wf->ignore_pretension = ignore_pretension;
 
     for (int i = 0; i < num_anchors; ++i) {
         wf->anchors[i].x = anchors[i * 3];
         wf->anchors[i].y = anchors[i * 3 + 1];
         wf->anchors[i].z = anchors[i * 3 + 2];
         wf->min_force[i] = min_force ? min_force[i] : 0.;
-        wf->max_force[i] = max_force ? max_force[i] : 1e6;
+        wf->max_force[i] = max_force ? max_force[i] : 120.0;
         if (guy_wires)
-            wf->guy_wires[i] = guy_wires[i] < 0. ? 0. : guy_wires[i];
+            wf->guy_wires[i] = guy_wires[i];
         else
             wf->guy_wires[i] = 0.;
     }
     for (int i = num_anchors; i < WINCH_MAX_ANCHORS; ++i) {
         wf->anchors[i].x = wf->anchors[i].y = wf->anchors[i].z = 0.;
         wf->min_force[i] = 0.;
-        wf->max_force[i] = 1e6;
+        wf->max_force[i] = 120.0;
         wf->guy_wires[i] = 0.;
     }
     if (wf->flex_compensation_algorithm < WINCH_FORCE_ALGO_TIKHONOV
@@ -755,11 +754,11 @@ winch_flex_calc_arrays(struct winch_flex *wf, double x, double y, double z,
 }
 
 void __visible
-winch_flex_set_enabled(struct winch_flex *wf, int runtime_enabled)
+winch_flex_set_enabled(struct winch_flex *wf, int enabled)
 {
     if (!wf)
         return;
-    wf->runtime_enabled = runtime_enabled ? 1 : 0;
+    wf->enabled = enabled ? 1 : 0;
 }
 
 struct stepper_kinematics * __visible

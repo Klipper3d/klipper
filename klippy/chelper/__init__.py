@@ -155,12 +155,12 @@ defs_kin_winch = """
     void winch_flex_free(struct winch_flex *wf);
     void winch_flex_configure(struct winch_flex *wf, int num_anchors,
         const double *anchors, double mover_weight, double spring_constant,
-        double target_force, const double *min_force,
+        const double *min_force,
         const double *max_force, const double *guy_wires,
-        int guy_wires_valid, int soft_algorithm, int hard_algorithm);
+        int flex_compensation_algorithm, int ignore_gravity, int ignore_pretension);
     void winch_flex_calc_arrays(struct winch_flex *wf, double x, double y,
         double z, double *distances_out, double *flex_out);
-    void winch_flex_set_enabled(struct winch_flex *wf, int runtime_enabled);
+    void winch_flex_set_enabled(struct winch_flex *wf, int enabled);
     struct stepper_kinematics *winch_stepper_alloc(struct winch_flex *wf,
         int index);
 """
