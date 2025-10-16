@@ -695,6 +695,10 @@ movement commands until the toolhead is at 0, 0, 0 and then issue a
 ```
 [printer]
 kinematics: winch
+flex_compensation_enable:
+#   Options are 'true' and 'false'.
+#   If set to false then none of the following settings are relevant.
+#   The default is 'true'.
 winch_mover_weight:
 #   The mover weight in kilograms. The default is 0.
 winch_spring_constant:
@@ -745,14 +749,14 @@ flex_compensation_algorithm:
 #   large forces or pushing several motors to their max limit simultaneously.
 #
 #   The default is 'thikonov'.
-ignoreGravity:
+ignore_gravity:
 #   Tell the flex compensation algorithm to
 #   only solve for pretension forces, not gravity counteracting forces.
 #   This is a special setting used for debugging, testing, and a small subset of machines
 #   that drag their effector on a gravity-supporting surface, eg a Slideprinter.
 #   Choices are 'true' and 'false'.
 #   The default is 'false'.
-ignorePretension:
+ignore_pretension:
 #   Tell the flex compensation algorithm to
 #   only solve for gravity counteracting forces, not pretension forces.
 #   This is a special setting only used for debugging.
@@ -775,7 +779,7 @@ anchor_z:
 #   These parameters must be provided.
 ```
 
-Use `M669 S0` to disable and `M669 S1` to enable flex compensation at
+Use `M666 F0` to disable and `M666 F1` to enable flex compensation at
 runtime without restarting the printer.
 
 ### Generic Cartesian Kinematics
