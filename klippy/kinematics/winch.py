@@ -62,7 +62,7 @@ class WinchFlexHelper:
         self.ffi_lib.winch_flex_configure(
             self.ptr, self.num, anchors_c, self.mover_weight,
             self.spring_constant, min_c, max_c,
-            guy_ptr, self.flex_compensation_algorithm)
+            guy_ptr, self.flex_compensation_algorithm, self.ignore_gravity, self.ignore_pretension)
 
     def get_ptr(self):
         if self.ptr is not None:
