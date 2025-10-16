@@ -758,6 +758,7 @@ winch_flex_set_enabled(struct winch_flex *wf, int enabled)
     if (!wf)
         return;
     wf->enabled = enabled ? 1 : 0;
+    recalc_origin(wf);
 }
 
 struct stepper_kinematics * __visible

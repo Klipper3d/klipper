@@ -115,6 +115,14 @@ class WinchKinematics:
             a = tuple(stepper_config.getfloat('anchor_' + n) for n in 'xyz')
             self.anchors.append(a)
         self.flex_helper = WinchFlexHelper(self.anchors, config)
+        self.force_move = self.printer.lookup_object('force_move')
+        self.stepper_enable = self.printer.lookup_object('stepper_enable')
+        self.pretension_speed = config.getfloat(
+            'flex_pretension_speed', 5., minval=0.001)
+        self.pretension_accel = config.getfloat(
+            'flex_pretension_accel', 0., minval=0.)
+        self.pretension_min_delta = config.getfloat(
+            'flex_pretension_min_delta', 0.0005, minval=0.)
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command(
             'M666', self.cmd_M666,
@@ -168,6 +176,29 @@ class WinchKinematics:
             'axis_maximum': self.axes_max,
         }
 
+    def _apply_flex_transition(self, current_pos, prev_lengths):
+        distances, flex = self.flex_helper.calc_arrays(current_pos[:3])
+        anchor_count = min(len(distances), len(self.steppers))
+        if not anchor_count:
+            return []
+        moves = []
+        for idx in range(anchor_count):
+            prev_length = prev_lengths[idx]
+            target_length = distances[idx] - flex[idx]
+            delta = target_length - prev_length
+            if abs(delta) <= self.pretension_min_delta:
+                continue
+            moves.append((self.steppers[idx], delta))
+        if not moves:
+            return []
+        stepper_names = [s.get_name() for s, _ in moves]
+        self.stepper_enable.set_motors_enable(stepper_names, True)
+        speed = max(self.pretension_speed, 0.001)
+        accel = self.pretension_accel
+        for stp, delta in moves:
+            self.force_move.manual_move(stp, delta, speed, accel)
+        return [(stp.get_name(), delta) for stp, delta in moves]
+
     def cmd_M666(self, gcmd):
         param = gcmd.get_int('F', None)
         if param is None:
@@ -185,6 +216,7 @@ class WinchKinematics:
             return
         self.toolhead.wait_moves()
         current_pos = list(self.toolhead.get_position())
+        prev_lengths = [s.get_commanded_position() for s in self.steppers]
         if requested:
             actual = (self.flex_helper.config_valid()
                       and self.flex_helper.set_active(True))
@@ -194,10 +226,21 @@ class WinchKinematics:
             gcmd.respond_info(
                 "Unable to enable flex compensation; check winch configuration parameters.")
             return
+        extra_msg = ""
         if actual != current_state:
+            try:
+                adjustments = self._apply_flex_transition(current_pos, prev_lengths)
+            except Exception as exc:
+                self.flex_helper.set_active(current_state)
+                self.set_position(current_pos, "")
+                raise gcmd.error(f"Failed to apply flex transition: {exc}")
             self.set_position(current_pos, "")
+            if adjustments:
+                deltas = ", ".join(
+                    f"{name}:{delta:+.6f}" for name, delta in adjustments)
+                extra_msg = f" Applied pretension deltas ({deltas})."
         state = "enabled" if actual else "disabled"
-        gcmd.respond_info(f"Winch flex compensation {state}.")
+        gcmd.respond_info(f"Winch flex compensation {state}.{extra_msg}")
 
 def load_kinematics(toolhead, config):
     return WinchKinematics(toolhead, config)
