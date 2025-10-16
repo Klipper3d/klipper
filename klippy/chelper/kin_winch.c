@@ -21,9 +21,8 @@
 #define G_ACCEL 9.81
 
 enum winch_force_algorithm {
-    WINCH_FORCE_ALGO_LEGACY = 0,
-    WINCH_FORCE_ALGO_TIKHONOV = 1,
-    WINCH_FORCE_ALGO_QP = 2,
+    WINCH_FORCE_ALGO_TIKHONOV = 0,
+    WINCH_FORCE_ALGO_QP = 1,
 };
 
 struct winch_flex {
@@ -52,262 +51,9 @@ struct winch_stepper {
 };
 
 static inline double
-clampd(double v, double min_v, double max_v)
-{
-    if (max_v > min_v) {
-        if (v < min_v)
-            return min_v;
-        if (v > max_v)
-            return max_v;
-    }
-    return v;
-}
-
-static inline double
-safe_ratio(double num, double den)
-{
-    double abs_den = fabs(den);
-    if (abs_den < EPSILON)
-        return (num >= 0.) ? 1e9 : -1e9;
-    return num / den;
-}
-
-static inline double
 hypot3(double dx, double dy, double dz)
 {
     return sqrt(dx*dx + dy*dy + dz*dz);
-}
-
-static int
-gauss_jordan_3x5(double M[3][5])
-{
-    for (int col = 0; col < 3; ++col) {
-        int pivot = col;
-        double max_val = fabs(M[pivot][col]);
-        for (int row = col + 1; row < 3; ++row) {
-            double val = fabs(M[row][col]);
-            if (val > max_val) {
-                max_val = val;
-                pivot = row;
-            }
-        }
-        if (max_val < EPSILON) {
-            return 0;
-        }
-        if (pivot != col) {
-            for (int c = col; c < 5; ++c) {
-                double tmp = M[col][c];
-                M[col][c] = M[pivot][c];
-                M[pivot][c] = tmp;
-            }
-        }
-        double inv = 1.0 / M[col][col];
-        for (int c = col; c < 5; ++c)
-            M[col][c] *= inv;
-        for (int row = 0; row < 3; ++row) {
-            if (row == col)
-                continue;
-            double factor = M[row][col];
-            if (fabs(factor) < EPSILON)
-                continue;
-            for (int c = col; c < 5; ++c)
-                M[row][c] -= factor * M[col][c];
-        }
-    }
-    return 1;
-}
-
-static int
-static_forces_tetrahedron(struct winch_flex *wf, const struct coord *pos,
-                          double *F)
-{
-    if (!wf->flex_enabled || wf->num_anchors != 4)
-        return 0;
-    double norm[4] = {0.};
-    double dirs[4][3] = {{0.}};
-    for (int i = 0; i < 3; ++i) {
-        double dx = wf->anchors[i].x - pos->x;
-        double dy = wf->anchors[i].y - pos->y;
-        double dz = wf->anchors[i].z - pos->z;
-        norm[i] = hypot3(dx, dy, dz);
-        if (norm[i] < EPSILON)
-            continue;
-        dirs[i][0] = dx / norm[i];
-        dirs[i][1] = dy / norm[i];
-        dirs[i][2] = dz / norm[i];
-    }
-    double dx = wf->anchors[3].x - pos->x;
-    double dy = wf->anchors[3].y - pos->y;
-    double dz = wf->anchors[3].z - pos->z;
-    double normD = hypot3(dx, dy, dz);
-    double dirD[3] = {0., 0., 0.};
-    if (normD >= EPSILON) {
-        dirD[0] = dx / normD;
-        dirD[1] = dy / normD;
-        dirD[2] = dz / normD;
-    }
-
-    double mg = wf->mover_weight * G_ACCEL;
-    if (mg < EPSILON)
-        return 0;
-
-    double D_mg = 0., D_pre = 0.;
-    if (wf->anchors[3].z > pos->z && fabs(dirD[2]) >= EPSILON) {
-        D_mg = mg / dirD[2];
-        D_pre = wf->target_force;
-    }
-
-    double M[3][5] = {{0.}};
-    for (int axis = 0; axis < 3; ++axis) {
-        M[axis][0] = dirs[0][axis];
-        M[axis][1] = dirs[1][axis];
-        M[axis][2] = dirs[2][axis];
-        M[axis][3] = -D_mg * dirD[axis];
-        M[axis][4] = -D_pre * dirD[axis];
-    }
-    M[2][3] += mg;
-
-    if (!gauss_jordan_3x5(M)) {
-        return 0;
-    }
-
-    double A_mg = M[0][3], B_mg = M[1][3], C_mg = M[2][3];
-    double A_pre = M[0][4], B_pre = M[1][4], C_pre = M[2][4];
-
-    double lower = 0.;
-    lower = fmax(lower, fabs(safe_ratio(wf->target_force - A_mg, A_pre)));
-    lower = fmax(lower, fabs(safe_ratio(wf->target_force - B_mg, B_pre)));
-    lower = fmax(lower, fabs(safe_ratio(wf->target_force - C_mg, C_pre)));
-
-    double upper = fabs(safe_ratio(wf->max_force[3] - D_mg, D_pre));
-    upper = fmin(upper, fabs(safe_ratio(wf->max_force[0] - A_mg, A_pre)));
-    upper = fmin(upper, fabs(safe_ratio(wf->max_force[1] - B_mg, B_pre)));
-    upper = fmin(upper, fabs(safe_ratio(wf->max_force[2] - C_mg, C_pre)));
-
-    double preFac = fmin(lower, upper);
-    if (!isfinite(preFac))
-        preFac = 0.;
-
-    double total[4];
-    total[0] = A_mg + preFac * A_pre;
-    total[1] = B_mg + preFac * B_pre;
-    total[2] = C_mg + preFac * C_pre;
-    total[3] = D_mg + preFac * D_pre;
-
-    for (int i = 0; i < 4; ++i)
-        F[i] = clampd(total[i], wf->min_force[i], wf->max_force[i]);
-    return 1;
-}
-
-static int
-static_forces_quadrilateral(struct winch_flex *wf, const struct coord *pos,
-                            double *F)
-{
-    if (!wf->flex_enabled || wf->num_anchors != 5)
-        return 0;
-
-    double mg = wf->mover_weight * G_ACCEL;
-    if (mg < EPSILON)
-        return 0;
-
-    double norm[5] = {0.};
-    double dirs[5][3] = {{0.}};
-    for (int i = 0; i < 5; ++i) {
-        double dx = wf->anchors[i].x - pos->x;
-        double dy = wf->anchors[i].y - pos->y;
-        double dz = wf->anchors[i].z - pos->z;
-        norm[i] = hypot3(dx, dy, dz);
-        if (norm[i] < EPSILON)
-            continue;
-        dirs[i][0] = dx / norm[i];
-        dirs[i][1] = dy / norm[i];
-        dirs[i][2] = dz / norm[i];
-    }
-
-    double top_mg = 0.;
-    double top_pre = wf->target_force;
-    if (wf->anchors[4].z > pos->z && fabs(dirs[4][2]) >= EPSILON)
-        top_mg = mg / dirs[4][2];
-    else
-        top_pre = 0.;
-
-    double matrices[4][3][5];
-    memset(matrices, 0, sizeof(matrices));
-    for (int i = 0; i < 4; ++i) {
-        for (int axis = 0; axis < 3; ++axis) {
-            for (int skip = 0; skip < 4; ++skip) {
-                if (skip == i)
-                    continue;
-                int col = (i > skip) ? i - 1 : i;
-                matrices[skip][axis][col] = dirs[i][axis];
-            }
-        }
-    }
-    for (int axis = 0; axis < 3; ++axis) {
-        double top_dir = dirs[4][axis];
-        for (int k = 0; k < 4; ++k) {
-            matrices[k][axis][3] = -top_mg * top_dir;
-            matrices[k][axis][4] = -top_pre * top_dir;
-        }
-    }
-    for (int k = 0; k < 4; ++k)
-        matrices[k][2][3] += mg;
-
-    for (int k = 0; k < 4; ++k) {
-        if (!gauss_jordan_3x5(matrices[k]))
-            return 0;
-    }
-
-    double norm_ABCD[4];
-    for (int k = 0; k < 4; ++k) {
-        double sum = 0.;
-        for (int axis = 0; axis < 3; ++axis) {
-            double v = matrices[k][axis][4];
-            sum += v * v;
-        }
-        norm_ABCD[k] = sqrt(sum);
-        if (norm_ABCD[k] < EPSILON)
-            norm_ABCD[k] = 1.;
-    }
-
-    double p[4] = {0., 0., 0., 0.};
-    double m_vec[4] = {0., 0., 0., 0.};
-    for (int axis = 0; axis < 3; ++axis) {
-        for (int j = 0; j < 4; ++j) {
-            double pt_weight = (wf->target_force >= EPSILON)
-                ? wf->target_force / norm_ABCD[j] : 0.;
-            double mg_weight = 0.25;
-            int s = (j <= axis) ? axis + 1 : axis;
-            p[s] += matrices[j][axis][4] * pt_weight;
-            m_vec[s] += matrices[j][axis][3] * mg_weight;
-        }
-    }
-
-    double lower = 0.;
-    for (int i = 0; i < 4; ++i)
-        lower = fmax(lower, fabs(safe_ratio(wf->target_force - m_vec[i], p[i])));
-
-    double upper = fabs(safe_ratio(wf->max_force[4] - top_mg, top_pre));
-    for (int i = 0; i < 4; ++i) {
-        double denom = fabs(p[i]);
-        double term = denom < EPSILON ? 1e9
-            : fabs((wf->max_force[i] - m_vec[i]) / p[i]);
-        if (term < upper)
-            upper = term;
-    }
-
-    double preFac = fmin(lower, upper);
-    if (!isfinite(preFac))
-        preFac = 0.;
-
-    double total[5];
-    for (int i = 0; i < 4; ++i)
-        total[i] = m_vec[i] + preFac * p[i];
-    total[4] = top_mg + preFac * top_pre;
-
-    for (int i = 0; i < 5; ++i)
-        F[i] = clampd(total[i], wf->min_force[i], wf->max_force[i]);
-    return 1;
 }
 
 static int
@@ -816,47 +562,16 @@ static_forces_qp(struct winch_flex *wf, const struct coord *pos,
 }
 
 static int
-static_forces_legacy(struct winch_flex *wf, const struct coord *pos,
-                     double *forces)
-{
-    if (wf->num_anchors == 4)
-        return static_forces_tetrahedron(wf, pos, forces);
-    if (wf->num_anchors == 5)
-        return static_forces_quadrilateral(wf, pos, forces);
-    return 0;
-}
-
-static void
-append_candidate(int *list, int *count, int algo)
-{
-    for (int i = 0; i < *count; ++i) {
-        if (list[i] == algo)
-            return;
-    }
-    list[(*count)++] = algo;
-}
-
-static int
 compute_static_forces(struct winch_flex *wf, const struct coord *pos,
-                      double *forces, int primary)
+                      double *forces, int algo)
 {
-    int candidates[4];
-    int count = 0;
-    append_candidate(candidates, &count, primary);
-    append_candidate(candidates, &count, WINCH_FORCE_ALGO_TIKHONOV);
-    append_candidate(candidates, &count, WINCH_FORCE_ALGO_QP);
-    append_candidate(candidates, &count, WINCH_FORCE_ALGO_LEGACY);
-    for (int idx = 0; idx < count; ++idx) {
-        int algo = candidates[idx];
-        int ok = 0;
-        if (algo == WINCH_FORCE_ALGO_TIKHONOV)
-            ok = static_forces_tikhonov(wf, pos, forces);
-        else if (algo == WINCH_FORCE_ALGO_QP)
-            ok = static_forces_qp(wf, pos, forces);
-        else
-            ok = static_forces_legacy(wf, pos, forces);
-        if (ok)
-            return 1;
+    if (algo == WINCH_FORCE_ALGO_QP) {
+        ok = static_forces_tikhonov(wf, pos, forces);
+    } else (algo == WINCH_FORCE_ALGO_TIKHONOV) {
+        ok = static_forces_qp(wf, pos, forces);
+    }
+    if (ok) {
+        return 1;
     }
     memset(forces, 0, sizeof(double) * wf->num_anchors);
     return 0;
@@ -1048,12 +763,14 @@ winch_flex_configure(struct winch_flex *wf, int num_anchors,
                         && mover_weight > 0.
                         && spring_constant > 0.);
     wf->runtime_enabled = 1;
-    if (wf->soft_algorithm < WINCH_FORCE_ALGO_LEGACY
-        || wf->soft_algorithm > WINCH_FORCE_ALGO_QP)
+    if (wf->soft_algorithm < WINCH_FORCE_ALGO_TIKHONOV
+        || wf->soft_algorithm > WINCH_FORCE_ALGO_QP) {
         wf->soft_algorithm = WINCH_FORCE_ALGO_TIKHONOV;
-    if (wf->hard_algorithm < WINCH_FORCE_ALGO_LEGACY
-        || wf->hard_algorithm > WINCH_FORCE_ALGO_QP)
-        wf->hard_algorithm = WINCH_FORCE_ALGO_QP;
+    }
+    if (wf->hard_algorithm < WINCH_FORCE_ALGO_TIKHONOV
+        || wf->hard_algorithm > WINCH_FORCE_ALGO_QP) {
+        wf->hard_algorithm = WINCH_FORCE_ALGO_TIKHONOV;
+    }
     recalc_origin(wf);
 }
 
