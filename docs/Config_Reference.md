@@ -3616,6 +3616,20 @@ pin:
 #   These options are deprecated and should no longer be specified.
 ```
 
+### [static_pwm_clock]
+
+Static configurable output pin (one may define any number of
+sections with an "static_pwm_clock" prefix).
+Pins configured here will be set up as clock output pins.
+Generally used to provide clock input to other hardware on the board.
+```
+[static_pwm_clock my_pin]
+pin:
+#   The pin to configure as an output. This parameter must be provided.
+#frequency: 100
+#   Target output frequency.
+```
+
 ### [pwm_tool]
 
 Pulse width modulation digital output pins capable of high speed
