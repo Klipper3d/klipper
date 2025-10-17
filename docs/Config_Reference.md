@@ -709,7 +709,6 @@ and the machine will use non-flex-compensating kinematics equations.
 [printer]
 kinematics: winch
 # These are all flex compensation related configs.
-# They should probably be in their own section?
 winch_mover_weight:
 #   The mover weight in kilograms. The default is 0.
 winch_spring_constant:
