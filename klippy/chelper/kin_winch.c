@@ -738,7 +738,7 @@ winch_flex_configure(struct winch_flex *wf,
     }
     if (wf->flex_compensation_algorithm < WINCH_FORCE_ALGO_TIKHONOV
         || wf->flex_compensation_algorithm > WINCH_FORCE_ALGO_QP) {
-        wf->flex_compensation_algorithm = WINCH_FORCE_ALGO_TIKHONOV;
+        wf->flex_compensation_algorithm = WINCH_FORCE_ALGO_QP;
     }
     recalc_origin(wf);
 }
