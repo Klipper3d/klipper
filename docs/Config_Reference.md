@@ -692,13 +692,24 @@ cable winch kinematics. In order to home the printer, manually send
 movement commands until the toolhead is at 0, 0, 0 and then issue a
 `G28` command.
 
+#### Cable Winch Flex Compensation
+
+Use `M666 F0` to disable and `M666 F1` to enable flex compensation at
+runtime without restarting the printer.
+
+When the machine starts, flex compensation is disabled. To enable:
+ 1. Tighten lines so they are just barely not sagging.
+ 2. Issue `M666 F1` (or have it near the top of your .gcode file)
+
+If you don't want/need flex compensation, simply avoid issuing `M666 F1`,
+and the machine will use non-flex-compensating kinematics equations.
+
+
 ```
 [printer]
 kinematics: winch
-flex_compensation_enable:
-#   Options are 'true' and 'false'.
-#   If set to false then none of the following settings are relevant.
-#   The default is 'true'.
+# These are all flex compensation related configs.
+# They should probably be in their own section?
 winch_mover_weight:
 #   The mover weight in kilograms. The default is 0.
 winch_spring_constant:
@@ -777,9 +788,6 @@ anchor_z:
 #   The X, Y, and Z position of the cable winch in cartesian space.
 #   These parameters must be provided.
 ```
-
-Use `M666 F0` to disable and `M666 F1` to enable flex compensation at
-runtime without restarting the printer.
 
 ### Generic Cartesian Kinematics
 

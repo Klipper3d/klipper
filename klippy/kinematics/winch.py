@@ -30,7 +30,6 @@ class WinchFlexHelper:
         self.set_active(self.enabled)
 
     def _read_config(self, config):
-        self.enabled = config.getboolean('flex_compensation_enable', True)
         self.mover_weight = config.getfloat('winch_mover_weight', 0., minval=0.)
         self.spring_constant = config.getfloat('winch_spring_constant', 0., minval=0.)
         if self.num:
