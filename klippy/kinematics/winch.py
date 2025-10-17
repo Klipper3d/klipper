@@ -15,7 +15,7 @@ class WinchFlexHelper:
         self.num = len(self._anchors)
         self.ptr = None
         self.enabled = False
-        self.flex_compensation_algorithm_name = 'tikhonov'
+        self.flex_compensation_algorithm_name = 'qp'
         self.flex_compensation_algorithm = self.ALGORITHMS[self.flex_compensation_algorithm_name]
         self.ignore_gravity = False
         self.ignore_pretension = False
@@ -49,7 +49,7 @@ class WinchFlexHelper:
             self.guy_wires = []
         algo_choices = list(self.ALGORITHMS.keys())
         self.flex_compensation_algorithm_name = config.getchoice(
-            'flex_compensation_algorithm', algo_choices, default='tikhonov')
+            'flex_compensation_algorithm', algo_choices, default='qp')
         self.flex_compensation_algorithm = self.ALGORITHMS[self.flex_compensation_algorithm_name]
         self.ignore_gravity = config.getboolean('ignore_gravity', False)
         self.ignore_pretension = config.getboolean('ignore_pretension', False)

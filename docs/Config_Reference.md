@@ -745,10 +745,9 @@ flex_compensation_algorithm:
 #   forces low, smooth, and safe.
 #
 #   'qp' will use the whole min/max force range to enforce exact force
-#   equilibrium whenever theoretically possible, even if that means adding sudden
-#   large forces or pushing several motors to their max limit simultaneously.
+#   equilibrium whenever theoretically possible.
 #
-#   The default is 'tikhonov'.
+#   The default is 'qp'.
 ignore_gravity:
 #   Tell the flex compensation algorithm to
 #   only solve for pretension forces, not gravity counteracting forces.
