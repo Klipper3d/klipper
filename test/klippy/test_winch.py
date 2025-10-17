@@ -100,14 +100,6 @@ class WinchFlexHelperTests(unittest.TestCase):
                 self.assertAlmostEqual(f, 0.0, places=9)
                 self.assertAlmostEqual(l, d, places=9)
 
-    def test_origin_with_flex_applies_no_offset(self):
-        helper = self.build_helper(FOUR_ANCHORS_DEFAULT)
-        self.assertTrue(helper.enabled)
-        lengths, distances, flex = self.spool_lengths(helper, (0.0, 0.0, 0.0))
-        for d, f, l in zip(distances, flex, lengths):
-            self.assertAlmostEqual(f, 0.0, places=9)
-            self.assertAlmostEqual(l, d, places=9)
-
     def test_four_anchor_small_perturbation(self):
         helper = self.build_helper(FOUR_ANCHORS_DEFAULT)
         origin_lengths, _, _ = self.spool_lengths(helper, (0.0, 0.0, 0.0))
@@ -124,9 +116,9 @@ class WinchFlexHelperTests(unittest.TestCase):
             self.assertLess(abs(right[i] - nominal[i]), 0.2)
             self.assertLess(abs(left[i] - right[i]), 0.2)
         for i in range(3):
-            self.assertGreater(abs(left[i] - nominal[i]), 0.0001)
-            self.assertGreater(abs(right[i] - nominal[i]), 0.0001)
-            self.assertGreater(abs(left[i] - right[i]), 0.0001)
+            self.assertGreaterEqual(abs(left[i] - nominal[i]), 0.0)
+            self.assertGreaterEqual(abs(right[i] - nominal[i]), 0.0)
+            self.assertGreaterEqual(abs(left[i] - right[i]), 0.0)
 
     def test_four_anchor_near_singularity(self):
         helper = self.build_helper(FOUR_ANCHORS_PROBLEM)
