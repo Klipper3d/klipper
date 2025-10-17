@@ -156,12 +156,12 @@ solve_min_norm_T(const double *A, int N, const double Fext[3], double lambda,
 }
 
 static void
-build_null_projector(const double *A, int N, double *P)
+build_null_projector(const double *A, int N, double lambda, double *P)
 {
     double S[3][3] = {
-        {0., 0., 0.},
-        {0., 0., 0.},
-        {0., 0., 0.}
+        {lambda, 0., 0.},
+        {0., lambda, 0.},
+        {0., 0., lambda}
     };
     for (int j = 0; j < N; ++j) {
         double ax = A[0 * N + j], ay = A[1 * N + j], az = A[2 * N + j];
@@ -230,7 +230,7 @@ static_forces_tikhonov(struct winch_flex *wf, const struct coord *pos,
 
     if (!wf->ignore_pretension) {
         double P[WINCH_MAX_ANCHORS * WINCH_MAX_ANCHORS];
-        build_null_projector(A, N, P);
+        build_null_projector(A, N, LAMBDA, P);
         const double tol = 1e-3;
         // Magic step_damp number that makes gradient descent typically converge within tol fast
         // Anything within [0.1, 1.5] works
