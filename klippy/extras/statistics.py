@@ -52,7 +52,7 @@ class PrinterSysStats:
 class PrinterStats:
     def __init__(self, config):
         self.printer = config.get_printer()
-        reactor = self.printer.get_reactor()
+        self.reactor = reactor = self.printer.get_reactor()
         self.stats_timer = reactor.register_timer(self.generate_stats)
         self.stats_cb = []
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
@@ -60,10 +60,10 @@ class PrinterStats:
         self.stats_cb = [o.stats for n, o in self.printer.lookup_objects()
                          if hasattr(o, 'stats')]
         if self.printer.get_start_args().get('debugoutput') is None:
-            reactor = self.printer.get_reactor()
-            reactor.update_timer(self.stats_timer, reactor.NOW)
+            self.reactor.update_timer(self.stats_timer, self.reactor.NOW)
     def generate_stats(self, eventtime):
-        stats = [cb(eventtime) for cb in self.stats_cb]
+        with self.reactor.assert_no_pause():
+            stats = [cb(eventtime) for cb in self.stats_cb]
         if max([s[0] for s in stats]):
             stats_str = ' '.join([s[1] for s in stats if s[1]])
             logging.info("Stats %.1f: %s", eventtime, stats_str)
