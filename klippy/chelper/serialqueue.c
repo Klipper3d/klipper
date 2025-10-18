@@ -1,6 +1,6 @@
 // Serial port command queuing
 //
-// Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2016-2025  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -626,20 +626,19 @@ command_event(struct serialqueue *sq, double eventtime)
     double waketime;
     for (;;) {
         waketime = check_send_command(sq, buflen, eventtime);
-        if (waketime != PR_NOW || buflen + MESSAGE_MAX > sizeof(buf)) {
-            if (buflen) {
-                // Write message blocks
-                do_write(sq, buf, buflen);
-                sq->bytes_write += buflen;
-                double idletime = (eventtime > sq->idle_time
-                                   ? eventtime : sq->idle_time);
-                sq->idle_time = idletime + calculate_bittime(sq, buflen);
-                buflen = 0;
-            }
-            if (waketime != PR_NOW)
-                break;
-        }
+        if (waketime != PR_NOW)
+            break;
         buflen += build_and_send_command(sq, &buf[buflen], buflen, eventtime);
+        if (buflen + MESSAGE_MAX > sizeof(buf))
+            break;
+    }
+    if (buflen) {
+        // Write message blocks
+        do_write(sq, buf, buflen);
+        sq->bytes_write += buflen;
+        double idletime = eventtime > sq->idle_time ? eventtime : sq->idle_time;
+        sq->idle_time = idletime + calculate_bittime(sq, buflen);
+        waketime = PR_NOW;
     }
     pthread_mutex_unlock(&sq->lock);
     return waketime;
