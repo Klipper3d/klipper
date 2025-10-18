@@ -51,7 +51,7 @@ struct transmit_requests {
     pthread_mutex_t lock; // protects variables below
     struct list_head upcoming_queues;
     int upcoming_bytes;
-    uint64_t need_kick_clock;
+    uint64_t need_kick_clock, min_release_clock;
 };
 
 struct serialqueue {
@@ -535,6 +535,9 @@ build_and_send_command(struct serialqueue *sq, uint8_t *buf, int pending
 static uint64_t
 check_upcoming_queues(struct serialqueue *sq, uint64_t ack_clock)
 {
+    if (ack_clock < sq->transmit_requests.min_release_clock)
+        return sq->transmit_requests.min_release_clock;
+
     uint64_t min_stalled_clock = MAX_CLOCK;
     struct command_queue *cq, *_ncq;
     list_for_each_entry_safe(cq, _ncq, &sq->transmit_requests.upcoming_queues,
@@ -560,6 +563,7 @@ check_upcoming_queues(struct serialqueue *sq, uint64_t ack_clock)
         if (not_in_ready_queues && !list_empty(&cq->ready.msg_queue))
             list_add_tail(&cq->ready.node, &sq->ready_queues);
     }
+    sq->transmit_requests.min_release_clock = min_stalled_clock;
     return min_stalled_clock;
 }
 
@@ -712,6 +716,7 @@ serialqueue_alloc(int serial_fd, char serial_fd_type, int client_id
 
     // Queues
     sq->transmit_requests.need_kick_clock = MAX_CLOCK;
+    sq->transmit_requests.min_release_clock = MAX_CLOCK;
     list_init(&sq->transmit_requests.upcoming_queues);
     pthread_mutex_init(&sq->transmit_requests.lock, NULL);
     list_init(&sq->ready_queues);
@@ -860,20 +865,23 @@ serialqueue_send_batch(struct serialqueue *sq, struct command_queue *cq
     if (! len)
         return;
     qm = list_first_entry(msgs, struct queue_message, node);
+    uint64_t min_clock = qm->min_clock;
 
     // Add list to cq->upcoming_queue
+    int mustwake = 0;
     pthread_mutex_lock(&sq->transmit_requests.lock);
-    if (list_empty(&cq->upcoming.msg_queue))
+    if (list_empty(&cq->upcoming.msg_queue)) {
         list_add_tail(&cq->upcoming.node,
             &sq->transmit_requests.upcoming_queues);
+        if (min_clock < sq->transmit_requests.min_release_clock)
+            sq->transmit_requests.min_release_clock = min_clock;
+        if (min_clock < sq->transmit_requests.need_kick_clock) {
+            sq->transmit_requests.need_kick_clock = 0;
+            mustwake = 1;
+        }
+    }
     list_join_tail(msgs, &cq->upcoming.msg_queue);
     sq->transmit_requests.upcoming_bytes += len;
-
-    int mustwake = 0;
-    if (qm->min_clock < sq->transmit_requests.need_kick_clock) {
-        sq->transmit_requests.need_kick_clock = 0;
-        mustwake = 1;
-    }
     pthread_mutex_unlock(&sq->transmit_requests.lock);
 
     // Wake the background thread if necessary
