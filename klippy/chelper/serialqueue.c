@@ -587,28 +587,29 @@ update_need_kick_clock(struct serialqueue *sq, uint64_t wantclock)
     return 0;
 }
 
-// Determine the time the next serial data should be sent
+// Determine if ready to send commands (or the amount of time to sleep if not)
 static double
 check_send_command(struct serialqueue *sq, int pending, double eventtime)
 {
+    // Check for upcoming messages now ready
+    double idletime = eventtime > sq->idle_time ? eventtime : sq->idle_time;
+    idletime += calculate_bittime(sq, pending + MESSAGE_MIN);
+    uint64_t ack_clock = clock_from_time(&sq->ce, idletime);
+    uint64_t min_stalled_clock = check_upcoming_queues(sq, ack_clock);
+
+    // Check if valid to send messages
     if (sq->send_seq - sq->receive_seq >= MAX_PENDING_BLOCKS
         && sq->receive_seq != (uint64_t)-1)
         // Need an ack before more messages can be sent
-        return PR_NEVER;
+        return eventtime + 0.250;
     if (sq->send_seq > sq->receive_seq && sq->receive_window) {
         int need_ack_bytes = sq->need_ack_bytes + MESSAGE_MAX;
         if (sq->last_ack_seq < sq->receive_seq)
             need_ack_bytes += sq->last_ack_bytes;
         if (need_ack_bytes > sq->receive_window)
             // Wait for ack from past messages before sending next message
-            return PR_NEVER;
+            return eventtime + 0.250;
     }
-
-    // Check for upcoming messages now ready
-    double idletime = eventtime > sq->idle_time ? eventtime : sq->idle_time;
-    idletime += calculate_bittime(sq, pending + MESSAGE_MIN);
-    uint64_t ack_clock = clock_from_time(&sq->ce, idletime);
-    uint64_t min_stalled_clock = check_upcoming_queues(sq, ack_clock);
 
     // Check if a block is fully ready to send
     if (sq->ready_bytes >= MESSAGE_PAYLOAD_MAX)
