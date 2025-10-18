@@ -61,11 +61,12 @@ struct serialqueue {
     uint8_t input_buf[4096];
     uint8_t need_sync;
     int input_pos;
+    // Multi-threaded support for pushing and pulling messages
+    struct receiver receiver;
+    struct transmit_requests transmit_requests;
     // Threading
     char name[16];
     pthread_t tid;
-    // SerialHDL reader
-    struct receiver receiver;
     pthread_mutex_t lock; // protects variables below
     // Baud / clock tracking
     int receive_window;
@@ -78,7 +79,6 @@ struct serialqueue {
     struct list_head sent_queue;
     double srtt, rttvar, rto;
     // Pending transmission message queues
-    struct transmit_requests transmit_requests;
     struct list_head ready_queues;
     int ready_bytes, need_ack_bytes, last_ack_bytes;
     struct list_head notify_queue;
