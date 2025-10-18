@@ -535,8 +535,13 @@ build_and_send_command(struct serialqueue *sq, uint8_t *buf, int pending
 static uint64_t
 check_upcoming_queues(struct serialqueue *sq, uint64_t ack_clock)
 {
-    if (ack_clock < sq->transmit_requests.min_release_clock)
-        return sq->transmit_requests.min_release_clock;
+    pthread_mutex_lock(&sq->transmit_requests.lock);
+    sq->transmit_requests.need_kick_clock = 0;
+    uint64_t min_release_clock = sq->transmit_requests.min_release_clock;
+    if (ack_clock < min_release_clock) {
+        pthread_mutex_unlock(&sq->transmit_requests.lock);
+        return min_release_clock;
+    }
 
     uint64_t min_stalled_clock = MAX_CLOCK;
     struct command_queue *cq, *_ncq;
@@ -564,7 +569,22 @@ check_upcoming_queues(struct serialqueue *sq, uint64_t ack_clock)
             list_add_tail(&cq->ready.node, &sq->ready_queues);
     }
     sq->transmit_requests.min_release_clock = min_stalled_clock;
+    pthread_mutex_unlock(&sq->transmit_requests.lock);
     return min_stalled_clock;
+}
+
+// Set the next transmit queue need_kick_clock
+static int
+update_need_kick_clock(struct serialqueue *sq, uint64_t wantclock)
+{
+    pthread_mutex_lock(&sq->transmit_requests.lock);
+    if (wantclock > sq->transmit_requests.min_release_clock) {
+        pthread_mutex_unlock(&sq->transmit_requests.lock);
+        return -1;
+    }
+    sq->transmit_requests.need_kick_clock = wantclock;
+    pthread_mutex_unlock(&sq->transmit_requests.lock);
+    return 0;
 }
 
 // Determine the time the next serial data should be sent
@@ -588,8 +608,20 @@ check_send_command(struct serialqueue *sq, int pending, double eventtime)
     double idletime = eventtime > sq->idle_time ? eventtime : sq->idle_time;
     idletime += calculate_bittime(sq, pending + MESSAGE_MIN);
     uint64_t ack_clock = clock_from_time(&sq->ce, idletime);
-    pthread_mutex_lock(&sq->transmit_requests.lock);
     uint64_t min_stalled_clock = check_upcoming_queues(sq, ack_clock);
+
+    // Check if a block is fully ready to send
+    if (sq->ready_bytes >= MESSAGE_PAYLOAD_MAX)
+        return PR_NOW;
+    if (! sq->ce.est_freq) {
+        // Clock unknown during initial startup - recheck on each add
+        if (sq->ready_bytes)
+            return PR_NOW;
+        int mustwake = update_need_kick_clock(sq, 1);
+        if (mustwake)
+            return eventtime;
+        return PR_NEVER;
+    }
 
     // Check if it is still needed to send messages from the ready_queues
     uint64_t min_ready_clock = MAX_CLOCK;
@@ -606,29 +638,22 @@ check_send_command(struct serialqueue *sq, int pending, double eventtime)
         if (req_clock < min_ready_clock)
             min_ready_clock = req_clock;
     }
-
-    // Check for messages to send
-    if (sq->ready_bytes >= MESSAGE_PAYLOAD_MAX)
-        goto now;
-    if (! sq->ce.est_freq) {
-        if (sq->ready_bytes)
-            goto now;
-        sq->transmit_requests.need_kick_clock = MAX_CLOCK;
-        pthread_mutex_unlock(&sq->transmit_requests.lock);
-        return PR_NEVER;
-    }
     uint64_t reqclock_delta = MIN_REQTIME_DELTA * sq->ce.est_freq;
     if (min_ready_clock <= ack_clock + reqclock_delta)
-        goto now;
+        return PR_NOW;
+
+    // Determine next wakeup time
+    if (pending)
+        // Caller wont sleep anyway - just return
+        return eventtime;
     uint64_t wantclock = min_ready_clock - reqclock_delta;
     if (min_stalled_clock < wantclock)
         wantclock = min_stalled_clock;
-    sq->transmit_requests.need_kick_clock = wantclock;
-    pthread_mutex_unlock(&sq->transmit_requests.lock);
+    int mustwake = update_need_kick_clock(sq, wantclock);
+    if (mustwake)
+        // Raced with add of new command - avoid sleeping
+        return eventtime;
     return idletime + (wantclock - ack_clock) / sq->ce.est_freq;
-now:
-    pthread_mutex_unlock(&sq->transmit_requests.lock);
-    return PR_NOW;
 }
 
 // Callback timer to send data to the serial port
