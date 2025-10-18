@@ -83,8 +83,8 @@ class DeltesianKinematics:
                                               above=0., maxval=max_velocity)
         self.max_z_accel = config.getfloat('max_z_accel', max_accel,
                                            above=0., maxval=max_accel)
-        self.axes_min = toolhead.Coord(*[l[0] for l in self.limits], e=0.)
-        self.axes_max = toolhead.Coord(*[l[1] for l in self.limits], e=0.)
+        self.axes_min = toolhead.Coord([l[0] for l in self.limits])
+        self.axes_max = toolhead.Coord([l[1] for l in self.limits])
         self.homed_axis = [False] * 3
         self.set_position([0., 0., 0.], "")
     def get_steppers(self):
