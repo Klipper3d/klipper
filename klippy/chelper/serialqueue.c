@@ -531,30 +531,12 @@ build_and_send_command(struct serialqueue *sq, uint8_t *buf, int pending
     return len;
 }
 
-// Determine the time the next serial data should be sent
-static double
-check_send_command(struct serialqueue *sq, int pending, double eventtime)
+// Move messages from upcoming queues to ready queues
+static uint64_t
+check_upcoming_queues(struct serialqueue *sq, uint64_t ack_clock)
 {
-    if (sq->send_seq - sq->receive_seq >= MAX_PENDING_BLOCKS
-        && sq->receive_seq != (uint64_t)-1)
-        // Need an ack before more messages can be sent
-        return PR_NEVER;
-    if (sq->send_seq > sq->receive_seq && sq->receive_window) {
-        int need_ack_bytes = sq->need_ack_bytes + MESSAGE_MAX;
-        if (sq->last_ack_seq < sq->receive_seq)
-            need_ack_bytes += sq->last_ack_bytes;
-        if (need_ack_bytes > sq->receive_window)
-            // Wait for ack from past messages before sending next message
-            return PR_NEVER;
-    }
-
-    // Check for stalled messages now ready
-    double idletime = eventtime > sq->idle_time ? eventtime : sq->idle_time;
-    idletime += calculate_bittime(sq, pending + MESSAGE_MIN);
-    uint64_t ack_clock = clock_from_time(&sq->ce, idletime);
-    uint64_t min_stalled_clock = MAX_CLOCK, min_ready_clock = MAX_CLOCK;
+    uint64_t min_stalled_clock = MAX_CLOCK;
     struct command_queue *cq, *_ncq;
-    pthread_mutex_lock(&sq->transmit_requests.lock);
     list_for_each_entry_safe(cq, _ncq, &sq->transmit_requests.upcoming_queues,
                              upcoming.node) {
         int not_in_ready_queues = list_empty(&cq->ready.msg_queue);
@@ -578,7 +560,36 @@ check_send_command(struct serialqueue *sq, int pending, double eventtime)
         if (not_in_ready_queues && !list_empty(&cq->ready.msg_queue))
             list_add_tail(&cq->ready.node, &sq->ready_queues);
     }
+    return min_stalled_clock;
+}
+
+// Determine the time the next serial data should be sent
+static double
+check_send_command(struct serialqueue *sq, int pending, double eventtime)
+{
+    if (sq->send_seq - sq->receive_seq >= MAX_PENDING_BLOCKS
+        && sq->receive_seq != (uint64_t)-1)
+        // Need an ack before more messages can be sent
+        return PR_NEVER;
+    if (sq->send_seq > sq->receive_seq && sq->receive_window) {
+        int need_ack_bytes = sq->need_ack_bytes + MESSAGE_MAX;
+        if (sq->last_ack_seq < sq->receive_seq)
+            need_ack_bytes += sq->last_ack_bytes;
+        if (need_ack_bytes > sq->receive_window)
+            // Wait for ack from past messages before sending next message
+            return PR_NEVER;
+    }
+
+    // Check for upcoming messages now ready
+    double idletime = eventtime > sq->idle_time ? eventtime : sq->idle_time;
+    idletime += calculate_bittime(sq, pending + MESSAGE_MIN);
+    uint64_t ack_clock = clock_from_time(&sq->ce, idletime);
+    pthread_mutex_lock(&sq->transmit_requests.lock);
+    uint64_t min_stalled_clock = check_upcoming_queues(sq, ack_clock);
+
     // Check if it is still needed to send messages from the ready_queues
+    uint64_t min_ready_clock = MAX_CLOCK;
+    struct command_queue *cq;
     list_for_each_entry(cq, &sq->ready_queues, ready.node) {
         // Update min_ready_clock
         struct queue_message *qm = list_first_entry(
