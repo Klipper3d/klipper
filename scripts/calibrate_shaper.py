@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # Shaper auto-calibration script
 #
-# Copyright (C) 2020-2024  Dmitry Butyugin <dmbutyugin@google.com>
+# Copyright (C) 2020-2025  Dmitry Butyugin <dmbutyugin@google.com>
 # Copyright (C) 2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from __future__ import print_function
-import importlib, optparse, os, sys
+import csv, importlib, optparse, os, sys
 from textwrap import wrap
 import numpy as np, matplotlib
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),
@@ -20,18 +20,39 @@ def parse_log(logname):
         for header in f:
             if not header.startswith('#'):
                 break
-        if not header.startswith('freq,psd_x,psd_y,psd_z,psd_xyz'):
-            # Raw accelerometer data
-            return np.loadtxt(logname, comments='#', delimiter=',')
+        if not header.startswith('freq,'):
+            # Process raw accelerometer data
+            data = np.loadtxt(logname, comments='#', delimiter=',')
+            helper = shaper_calibrate.ShaperCalibrate(printer=None)
+            calibration_data = helper.process_accelerometer_data(logname, data)
+            calibration_data.normalize_to_frequencies()
+            return calibration_data
     # Parse power spectral density data
-    data = np.loadtxt(logname, skiprows=1, comments='#', delimiter=',')
-    calibration_data = shaper_calibrate.CalibrationData(
-            freq_bins=data[:,0], psd_sum=data[:,4],
-            psd_x=data[:,1], psd_y=data[:,2], psd_z=data[:,3])
-    calibration_data.set_numpy(np)
+    data = np.genfromtxt(logname, dtype=np.float64, skip_header=1,
+                         comments='#', delimiter=',', filling_values=0.)
+    if header.startswith('freq,psd_x,psd_y,psd_z,psd_xyz'):
+        calibration_data = shaper_calibrate.CalibrationData(
+                name=logname, freq_bins=data[:,0], psd_sum=data[:,4],
+                psd_x=data[:,1], psd_y=data[:,2], psd_z=data[:,3])
+        calibration_data.set_numpy(np)
+    else:
+        parsed_header = next(csv.reader([header], delimiter=','))
+        calibration_data = None
+        for i, dataset_name in enumerate(parsed_header[1:]):
+            if dataset_name == 'shapers:':
+                break
+            cdata = shaper_calibrate.CalibrationData(
+                    name=dataset_name, freq_bins=data[:,0], psd_sum=data[:,i+1],
+                    # Individual per-axis data is not stored
+                    psd_x=None, psd_y=None, psd_z=None)
+            cdata.set_numpy(np)
+            if calibration_data is None:
+                calibration_data = cdata
+            else:
+                calibration_data.add_data(cdata)
     # If input shapers are present in the CSV file, the frequency
     # response is already normalized to input frequencies
-    if 'mzv' not in header:
+    if ',shapers:' not in header:
         calibration_data.normalize_to_frequencies()
     return calibration_data
 
@@ -43,19 +64,14 @@ def parse_log(logname):
 def calibrate_shaper(datas, csv_output, *, shapers, damping_ratio, scv,
                      shaper_freqs, max_smoothing, test_damping_ratios,
                      max_freq):
+    # Combine accelerometer data
+    calibration_data = datas[0]
+    for data in datas[1:]:
+        calibration_data.add_data(data)
+
+    print("Processing resonances from %s"
+          % ",".join(d.name for d in calibration_data.get_datasets()))
     helper = shaper_calibrate.ShaperCalibrate(printer=None)
-    if isinstance(datas[0], shaper_calibrate.CalibrationData):
-        calibration_data = datas[0]
-        for data in datas[1:]:
-            calibration_data.add_data(data)
-    else:
-        # Process accelerometer data
-        calibration_data = helper.process_accelerometer_data(datas[0])
-        for data in datas[1:]:
-            calibration_data.add_data(helper.process_accelerometer_data(data))
-        calibration_data.normalize_to_frequencies()
-
-
     shaper, all_shapers = helper.find_best_shaper(
             calibration_data, shapers=shapers, damping_ratio=damping_ratio,
             scv=scv, shaper_freqs=shaper_freqs, max_smoothing=max_smoothing,
@@ -75,32 +91,48 @@ def calibrate_shaper(datas, csv_output, *, shapers, damping_ratio, scv,
 # Plot frequency response and suggested input shapers
 ######################################################################
 
-def plot_freq_response(lognames, calibration_data, shapers,
+def plot_freq_response(calibration_data, shapers,
                        selected_shaper, max_freq):
-    max_freq_bin = calibration_data.freq_bins.max()
+    selected_shaper_data = [s for s in shapers if s.name == selected_shaper][0]
+    max_freq_bin = selected_shaper_data.freq_bins.max()
     if max_freq > max_freq_bin:
         max_freq = max_freq_bin
-    freqs = calibration_data.freq_bins
-    psd = calibration_data.psd_sum[freqs <= max_freq]
-    px = calibration_data.psd_x[freqs <= max_freq]
-    py = calibration_data.psd_y[freqs <= max_freq]
-    pz = calibration_data.psd_z[freqs <= max_freq]
-    freqs = freqs[freqs <= max_freq]
 
     fontP = matplotlib.font_manager.FontProperties()
     fontP.set_size('x-small')
 
-    fig, ax = matplotlib.pyplot.subplots()
+    fig, ax = matplotlib.pyplot.subplots(figsize=(8, 5))
     ax.set_xlabel('Frequency, Hz')
     ax.set_xlim([0, max_freq])
     ax.set_ylabel('Power spectral density')
 
-    ax.plot(freqs, psd, label='X+Y+Z', color='purple')
-    ax.plot(freqs, px, label='X', color='red')
-    ax.plot(freqs, py, label='Y', color='green')
-    ax.plot(freqs, pz, label='Z', color='blue')
+    datasets = calibration_data.get_datasets()
+    if len(datasets) == 1:
+        freqs = calibration_data.freq_bins
+        psd = calibration_data.psd_sum[freqs <= max_freq]
+        px = calibration_data.psd_x[freqs <= max_freq]
+        py = calibration_data.psd_y[freqs <= max_freq]
+        pz = calibration_data.psd_z[freqs <= max_freq]
+        freqs = freqs[freqs <= max_freq]
+        after_shaper = np.interp(selected_shaper_data.freq_bins, freqs, psd)
+        ax.plot(freqs, psd, label='X+Y+Z', color='purple')
+        ax.plot(freqs, px, label='X', color='red')
+        ax.plot(freqs, py, label='Y', color='green')
+        ax.plot(freqs, pz, label='Z', color='blue')
+        title = "Frequency response and shapers (%s)" % calibration_data.name
+    else:
+        after_shaper = np.zeros(shape=selected_shaper_data.freq_bins.shape)
+        for data in datasets:
+            freqs = data.freq_bins
+            psd = data.psd_sum[freqs <= max_freq]
+            freqs = freqs[freqs <= max_freq]
+            after_shaper = np.maximum(
+                    after_shaper, np.interp(selected_shaper_data.freq_bins,
+                                            freqs, psd))
+            ax.plot(freqs, psd, label=data.name)
+            title = "Frequency responses and shapers"
+    after_shaper *= selected_shaper_data.vals
 
-    title = "Frequency response and shapers (%s)" % (', '.join(lognames))
     ax.set_title("\n".join(wrap(title, MAX_TITLE_LENGTH)))
     ax.xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(5))
     ax.yaxis.set_minor_locator(matplotlib.ticker.AutoMinorLocator())
@@ -119,10 +151,11 @@ def plot_freq_response(lognames, calibration_data, shapers,
         linestyle = 'dotted'
         if shaper.name == selected_shaper:
             linestyle = 'dashdot'
-            best_shaper_vals = shaper.vals
-        ax2.plot(freqs, shaper.vals, label=label, linestyle=linestyle)
-    ax.plot(freqs, psd * best_shaper_vals,
-            label='After\nshaper', color='cyan')
+        ax2.plot(shaper.freq_bins, shaper.vals,
+                 label=label, linestyle=linestyle)
+    ax.plot(selected_shaper_data.freq_bins, after_shaper,
+            label='After%sshaper' % ('\n' if len(datasets) == 1 else ' '),
+            color='cyan')
     # A hack to add a human-readable shaper recommendation to legend
     ax2.plot([], [], ' ',
              label="Recommended shaper: %s" % (selected_shaper.upper()))
@@ -153,7 +186,7 @@ def main():
                     default=None, help="filename of output graph")
     opts.add_option("-c", "--csv", type="string", dest="csv",
                     default=None, help="filename of output csv file")
-    opts.add_option("-f", "--max_freq", type="float", default=200.,
+    opts.add_option("-f", "--max_freq", type="float", default=None,
                     help="maximum frequency to plot")
     opts.add_option("-s", "--max_smoothing", type="float", dest="max_smoothing",
                     default=None, help="maximum shaper smoothing to allow")
@@ -201,13 +234,15 @@ def main():
             opts.error("--shaper_freq param does not specify correct range " +
                        "in the format [start]:end[:step]")
         shaper_freqs = (freq_start, freq_end, freq_step)
-        max_freq = max(max_freq, freq_end * 4./3.)
+        if max_freq is not None:
+            max_freq = max(max_freq, freq_end * 4./3.)
     else:
         try:
             shaper_freqs = [float(s) for s in options.shaper_freq.split(',')]
         except ValueError:
             opts.error("invalid floating point value in --shaper_freq param")
-        max_freq = max(max_freq, max(shaper_freqs) * 4./3.)
+        if max_freq is not None:
+            max_freq = max(max_freq, max(shaper_freqs) * 4./3.)
     if options.test_damping_ratios:
         try:
             test_damping_ratios = [float(s) for s in
@@ -235,12 +270,15 @@ def main():
             max_freq=max_freq)
     if selected_shaper is None:
         return
-
+    if max_freq is None:
+        max_freq = 0.
+        for data in calibration_data.get_datasets():
+            max_freq = max(max_freq, data.freq_bins.max())
     if not options.csv or options.output:
         # Draw graph
         setup_matplotlib(options.output is not None)
 
-        fig = plot_freq_response(args, calibration_data, shapers,
+        fig = plot_freq_response(calibration_data, shapers,
                                  selected_shaper, max_freq)
 
         # Show graph
