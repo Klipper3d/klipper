@@ -263,7 +263,7 @@ class ShaperCalibrate:
             shaper = shaper_cfg.init_func(test_freq, damping_ratio)
             shaper_smoothing = self._get_shaper_smoothing(shaper, scv=scv)
             if max_smoothing and shaper_smoothing > max_smoothing and best_res:
-                return best_res
+                return best_res, results
             max_accel = self.find_shaper_max_accel(shaper, scv)
             all_shaper_vals = []
 
@@ -306,9 +306,10 @@ class ShaperCalibrate:
         # much worse than the 'best' one, but gives much less smoothing
         selected = best_res
         for res in results[::-1]:
-            if res.vibrs < best_res.vibrs * 1.1 and res.score < selected.score:
+            if res.vibrs < best_res.vibrs * 1.1 + .0005 \
+                    and res.score < selected.score:
                 selected = res
-        return selected
+        return selected, results
 
     def _bisect(self, func):
         left = right = 1.
@@ -346,9 +347,19 @@ class ShaperCalibrate:
         for shaper_cfg in shaper_defs.INPUT_SHAPERS:
             if shaper_cfg.name not in shapers:
                 continue
-            shaper = self.background_process_exec(self.fit_shaper, (
+            shaper, results = self.background_process_exec(self.fit_shaper, (
                 shaper_cfg, calibration_data, shaper_freqs, damping_ratio,
                 scv, max_smoothing, test_damping_ratios, max_freq))
+            if (best_shaper is None or shaper.score * 1.2 < best_shaper.score or
+                    (shaper.score * 1.05 < best_shaper.score and
+                        shaper.smoothing * 1.1 < best_shaper.smoothing)):
+                # Either the shaper significantly improves the score (by 20%),
+                # or it improves the score and smoothing (by 5% and 10% resp.)
+                best_shaper = shaper
+            for s in results[::-1]:
+                if s.vibrs < best_shaper.vibrs and \
+                        s.smoothing < best_shaper.smoothing:
+                    best_shaper = shaper = s
             if logger is not None:
                 logger("Fitted shaper '%s' frequency = %.1f Hz "
                        "(vibrations = %.1f%%, smoothing ~= %.3f)" % (
@@ -358,12 +369,12 @@ class ShaperCalibrate:
                        "max_accel <= %.0f mm/sec^2" % (
                            shaper.name, round(shaper.max_accel / 100.) * 100.))
             all_shapers.append(shaper)
-            if (best_shaper is None or shaper.score * 1.2 < best_shaper.score or
-                    (shaper.score * 1.05 < best_shaper.score and
-                        shaper.smoothing * 1.1 < best_shaper.smoothing)):
-                # Either the shaper significantly improves the score (by 20%),
-                # or it improves the score and smoothing (by 5% and 10% resp.)
-                best_shaper = shaper
+        if best_shaper.name == 'zv':
+            for tuned_shaper in all_shapers:
+                if tuned_shaper.name != 'zv' and \
+                        tuned_shaper.vibrs * 1.1 < best_shaper.vibrs:
+                    best_shaper = tuned_shaper
+                    break
         return best_shaper, all_shapers
 
     def save_params(self, configfile, axis, shaper_name, shaper_freq):
