@@ -79,7 +79,8 @@ neopixel_delay(neopixel_time_t start, neopixel_time_t ticks)
 // Minimum amount of time for any level change to be reliably detected
 #define EDGE_MIN_TICKS    nsecs_to_ticks(200)
 // Minimum average time needed to transmit each bit (two level changes)
-#define BIT_MIN_TICKS     nsecs_to_ticks(1250)
+#define ONE_BIT_MIN_TICKS     nsecs_to_ticks(1250)
+#define ZERO_BIT_MIN_TICKS    nsecs_to_ticks(1100)
 
 
 /****************************************************************
@@ -91,6 +92,7 @@ struct neopixel_s {
     neopixel_time_t bit_max_ticks;
     uint32_t last_req_time, reset_min_ticks;
     uint16_t data_size;
+    uint16_t diff;
     uint8_t data[0];
 };
 
@@ -105,6 +107,7 @@ command_config_neopixel(uint32_t *args)
                                      , sizeof(*n) + data_size);
     n->pin = pin;
     n->data_size = data_size;
+    n->diff = data_size;
     n->bit_max_ticks = args[3];
     n->reset_min_ticks = args[4];
 }
@@ -124,9 +127,10 @@ send_data(struct neopixel_s *n)
 
     // Transmit data
     uint8_t *data = n->data;
-    uint_fast16_t data_len = n->data_size;
+    uint_fast16_t data_len = n->diff;
     struct gpio_out pin = n->pin;
     neopixel_time_t last_start = neopixel_get_time();
+    uint_fast8_t last_bit = 0;
     neopixel_time_t bit_max_ticks = n->bit_max_ticks;
     while (data_len--) {
         uint_fast8_t byte = *data++;
@@ -134,7 +138,10 @@ send_data(struct neopixel_s *n)
         while (bits--) {
             if (byte & 0x80) {
                 // Long pulse
-                neopixel_delay(last_start, BIT_MIN_TICKS);
+                if (last_bit)
+                    neopixel_delay(last_start, ONE_BIT_MIN_TICKS);
+                else
+                    neopixel_delay(last_start, ZERO_BIT_MIN_TICKS);
                 irq_disable();
                 neopixel_time_t start = neopixel_get_time();
                 gpio_out_toggle_noirq(pin);
@@ -144,6 +151,7 @@ send_data(struct neopixel_s *n)
                     goto fail;
                 last_start = start;
                 byte <<= 1;
+                last_bit = 1;
 
                 neopixel_delay(start, PULSE_LONG_TICKS);
                 irq_disable();
@@ -153,7 +161,10 @@ send_data(struct neopixel_s *n)
                 neopixel_delay(neopixel_get_time(), EDGE_MIN_TICKS);
             } else {
                 // Short pulse
-                neopixel_delay(last_start, BIT_MIN_TICKS);
+                if (last_bit)
+                    neopixel_delay(last_start, ONE_BIT_MIN_TICKS);
+                else
+                    neopixel_delay(last_start, ZERO_BIT_MIN_TICKS);
                 irq_disable();
                 neopixel_time_t start = neopixel_get_time();
                 gpio_out_toggle_noirq(pin);
@@ -165,10 +176,12 @@ send_data(struct neopixel_s *n)
                     goto fail;
                 last_start = start;
                 byte <<= 1;
+                last_bit = 0;
             }
         }
     }
     n->last_req_time = timer_read_time();
+    n->diff = 0;
     return 0;
 fail:
     // A hardware irq messed up the transmission - report a failure
@@ -188,6 +201,8 @@ command_neopixel_update(uint32_t *args)
     if (pos & 0x8000 || pos + data_len > n->data_size)
         shutdown("Invalid neopixel update command");
     memcpy(&n->data[pos], data, data_len);
+    if (pos + data_len > n->diff)
+        n->diff = pos + data_len;
 }
 DECL_COMMAND(command_neopixel_update,
              "neopixel_update oid=%c pos=%hu data=%*s");
