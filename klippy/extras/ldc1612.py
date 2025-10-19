@@ -56,7 +56,9 @@ class DriveCurrentCalibrate:
         toolhead.dwell(0.100)
         toolhead.wait_moves()
         old_config = self.sensor.read_reg(REG_CONFIG)
-        self.sensor.set_reg(REG_CONFIG, 0x001 | (1<<9))
+        REF_CLK_SRC = 1 << 9
+        CFG = 0x001 | REF_CLK_SRC
+        self.sensor.set_reg(REG_CONFIG, CFG)
         toolhead.wait_moves()
         toolhead.dwell(0.100)
         toolhead.wait_moves()
@@ -183,7 +185,12 @@ class LDC1612:
         self.set_reg(REG_CLOCK_DIVIDERS0, (1 << 12) | 1)
         self.set_reg(REG_ERROR_CONFIG, (0x1f << 11) | 1)
         self.set_reg(REG_MUX_CONFIG, 0x0208 | DEGLITCH)
-        self.set_reg(REG_CONFIG, 0x001 | (1<<12) | (1<<10) | (1<<9))
+        REF_CLK_SRC = 1 << 9
+        AUTO_AMP_DIS = 1 << 10
+        RP_OVERRIDE_EN = 1 << 12
+        CFG = 0x001 # constant
+        CFG |= RP_OVERRIDE_EN | AUTO_AMP_DIS | REF_CLK_SRC
+        self.set_reg(REG_CONFIG, CFG)
         self.set_reg(REG_DRIVE_CURRENT0, self.dccal.get_drive_current() << 11)
         # Start bulk reading
         rest_ticks = self.mcu.seconds_to_clock(0.5 / self.data_rate)
