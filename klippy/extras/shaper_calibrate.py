@@ -87,7 +87,13 @@ class ShaperCalibrate:
                 child_conn.send((True, traceback.format_exc()))
                 child_conn.close()
                 return
-            child_conn.send((False, res))
+            if isinstance(res, list):
+                child_conn.send((True, None))
+                for el in res:
+                    child_conn.send((False, el))
+                child_conn.send((True, None))
+            else:
+                child_conn.send((False, res))
             child_conn.close()
         # Start a process to perform the calculation
         calc_proc = multiprocessing.Process(target=wrapper)
@@ -97,15 +103,24 @@ class ShaperCalibrate:
         reactor = self.printer.get_reactor()
         gcode = self.printer.lookup_object("gcode")
         eventtime = last_report_time = reactor.monotonic()
-        while calc_proc.is_alive():
+        while calc_proc.is_alive() and not parent_conn.poll():
             if eventtime > last_report_time + 5.:
                 last_report_time = eventtime
                 gcode.respond_info("Wait for calculations..", log=False)
             eventtime = reactor.pause(eventtime + .1)
         # Return results
-        is_err, res = parent_conn.recv()
-        if is_err:
-            raise self.error("Error in remote calculation: %s" % (res,))
+        status, recv = parent_conn.recv()
+        if recv is None:
+            res = []
+            while True:
+                status, recv = parent_conn.recv()
+                if status:
+                    break
+                res.append(recv)
+        else:
+            res = recv
+        if status and recv is not None:
+            raise self.error("Error in remote calculation: %s" % (recv,))
         calc_proc.join()
         parent_conn.close()
         return res
@@ -263,7 +278,7 @@ class ShaperCalibrate:
             shaper = shaper_cfg.init_func(test_freq, damping_ratio)
             shaper_smoothing = self._get_shaper_smoothing(shaper, scv=scv)
             if max_smoothing and shaper_smoothing > max_smoothing and best_res:
-                return best_res, results
+                return [best_res] + results
             max_accel = self.find_shaper_max_accel(shaper, scv)
             all_shaper_vals = []
 
@@ -309,7 +324,7 @@ class ShaperCalibrate:
             if res.vibrs < best_res.vibrs * 1.1 + .0005 \
                     and res.score < selected.score:
                 selected = res
-        return selected, results
+        return [selected] + results
 
     def _bisect(self, func):
         left = right = 1.
@@ -347,9 +362,11 @@ class ShaperCalibrate:
         for shaper_cfg in shaper_defs.INPUT_SHAPERS:
             if shaper_cfg.name not in shapers:
                 continue
-            shaper, results = self.background_process_exec(self.fit_shaper, (
+            fit_results = self.background_process_exec(self.fit_shaper, (
                 shaper_cfg, calibration_data, shaper_freqs, damping_ratio,
                 scv, max_smoothing, test_damping_ratios, max_freq))
+            shaper = fit_results[0]
+            results = fit_results[1:]
             if (best_shaper is None or shaper.score * 1.2 < best_shaper.score or
                     (shaper.score * 1.05 < best_shaper.score and
                         shaper.smoothing * 1.1 < best_shaper.smoothing)):
