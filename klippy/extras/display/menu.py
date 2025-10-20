@@ -1026,6 +1026,11 @@ class MenuManager:
             self.begin(eventtime)
 
     def key_event(self, key, eventtime):
+        for display in self.display.__class__.sleep_displays:
+            if display.is_sleep:
+                display.sleep(0)
+            display.update_next_sleep_time(eventtime)
+
         if key == 'click':
             self._click_callback(eventtime, key)
         elif key == 'long_click':
