@@ -136,6 +136,10 @@ config WANT_HD44780
     bool
     depends on HAVE_GPIO
     default y
+config WANT_GC9A01
+    bool
+    depends on WANT_SPI
+    default y
 config WANT_ADXL345
     bool
     depends on WANT_SPI
