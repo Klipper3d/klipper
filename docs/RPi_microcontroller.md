@@ -29,6 +29,12 @@ sudo cp ./scripts/klipper-mcu.service /etc/systemd/system/
 sudo systemctl enable klipper-mcu.service
 ```
 
+At this point, in some Armbian or Ubuntu arm64 distributions the path `/tmp/klipper_host_mcu` may not be generated or the `klipper-mcu.service` service (`sudo systemctl status klipper-mcu.service`) may be showing the error `Got error -1 in sched_setscheduler: (1)Operation not permitted`.
+
+This is because the kernel is compiled with CONFIG_RT_GROUP_SCHED=y. Systemd’s devs flat out [refused](https://github.com/systemd/systemd/issues/329) to implement the cgroup management for this, so it’s not possible to allocate the rt_runtime_us from the unit file.
+
+You can read more about this problem and how to solve it, in the following [forum thread klipper.discourse.group](https://klipper.discourse.group/t/armbian-kernel-klipper-host-mcu-got-error-1-in-sched-setschedule/1193).
+
 ## Building the micro-controller code
 
 To compile the Klipper micro-controller code, start by configuring it
