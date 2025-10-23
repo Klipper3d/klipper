@@ -87,8 +87,8 @@ MODE_PERIODIC = 3
 RUN_GAS = 1 << 4
 NB_CONV_0 = 0
 EAS_NEW_DATA = 1 << 7
-GAS_DONE = 1 << 6
-MEASURE_DONE = 1 << 5
+GAS_IN_PROGRESS = 1 << 6
+MEASURE_IN_PROGRESS = 1 << 5
 RESET_CHIP_VALUE = 0xB6
 
 BME_CHIPS = {
@@ -511,14 +511,6 @@ class BME280:
         return comp_press
 
     def _sample_bme680(self, eventtime):
-        def data_ready(stat, run_gas):
-            new_data = (stat & EAS_NEW_DATA)
-            gas_done = not (stat & GAS_DONE)
-            meas_done = not (stat & MEASURE_DONE)
-            if not run_gas:
-                gas_done = True
-            return new_data and gas_done and meas_done
-
         run_gas = False
         # Check VOC once a while
         if self.reactor.monotonic() - self.last_gas_time > 3:
@@ -536,11 +528,14 @@ class BME280:
         try:
             # wait until results are ready
             status = self.read_register('EAS_STATUS_0', 1)[0]
-            while not data_ready(status, run_gas):
+            while status & MEASURE_IN_PROGRESS:
                 self.reactor.pause(
                     self.reactor.monotonic() + self.max_sample_time)
                 status = self.read_register('EAS_STATUS_0', 1)[0]
 
+            # Nothing in progress and no new data
+            if not status & EAS_NEW_DATA:
+                return self.reactor.monotonic() + REPORT_TIME
             data = self.read_register('PRESSURE_MSB', 8)
             gas_data = [0, 0]
             if run_gas:
