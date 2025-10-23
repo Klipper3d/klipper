@@ -107,9 +107,10 @@ class GCodeMove:
             'extrude_factor': self.extrude_factor,
             'absolute_coordinates': self.absolute_coord,
             'absolute_extrude': self.absolute_extrude,
-            'homing_origin': self.Coord(*self.homing_position[:4]),
-            'position': self.Coord(*self.last_position[:4]),
-            'gcode_position': self.Coord(*move_position),
+            'homing_origin': self.Coord(self.homing_position),
+            'position': self.Coord(self.last_position),
+            'gcode_position': self.Coord(move_position),
+            'axis_map': self.axis_map,
         }
     def reset_last_position(self):
         if self.is_printer_ready:
@@ -122,7 +123,8 @@ class GCodeMove:
             if ea is None:
                 continue
             gcode_id = ea.get_axis_gcode_id()
-            if gcode_id is None or gcode_id in axis_map or gcode_id in "FN":
+            if (gcode_id is None or len(gcode_id) != 1 or not gcode_id.isupper()
+                or gcode_id in axis_map or gcode_id in "FN"):
                 continue
             axis_map[gcode_id] = index
         self.axis_map = axis_map
