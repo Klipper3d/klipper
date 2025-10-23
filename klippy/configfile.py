@@ -127,11 +127,14 @@ class ConfigWrapper:
     def get_prefix_options(self, prefix):
         return [o for o in self.fileconfig.options(self.section)
                 if o.startswith(prefix)]
-    def deprecate(self, option, value=None):
-        if not self.fileconfig.has_option(self.section, option):
+    def deprecate(self, option, value=sentinel):
+        if self.fileconfig.has_option(self.section, option) == (value is None):
             return
-        if value is None:
+        if value is sentinel:
             msg = ("Option '%s' in section '%s' is deprecated."
+                   % (option, self.section))
+        elif value is None:
+            msg = ("Option '%s' in section '%s' must be provided."
                    % (option, self.section))
         else:
             msg = ("Value '%s' in option '%s' in section '%s' is deprecated."
@@ -501,15 +504,17 @@ class PrinterConfig:
         res = {'type': 'runtime_warning', 'message': msg}
         self.runtime_warnings.append(res)
         self.status_warnings = self.runtime_warnings + self.deprecate_warnings
-    def deprecate(self, section, option, value=None, msg=None):
+    def deprecate(self, section, option, value=sentinel, msg=None):
         key = (section, option, value)
         if key in self.deprecated and self.deprecated[key] == msg:
             return
         self.deprecated[key] = msg
         self.deprecate_warnings = []
         for (section, option, value), msg in self.deprecated.items():
-            if value is None:
+            if value is sentinel:
                 res = {'type': 'deprecated_option'}
+            elif value is None:
+                res = {'type': 'required_option'}
             else:
                 res = {'type': 'deprecated_value', 'value': value}
             res['message'] = msg
