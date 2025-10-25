@@ -743,12 +743,21 @@ max_accel:
 
 ```
 
-Then a user must define three carriages for X, Y, and Z axes, e.g.:
+Then a user must define three primary carriages for X, Y, and Z axes
+(or more for dual gantry printers), e.g.:
 ```
 [carriage carriage_x]
 axis:
 #   Axis of a carriage, either x, y, or z. This parameter must be provided,
 #   unless a carriage name is x, y, or z itself.
+#gantry:
+#   If specified, defines a carriage that is associated with the gantry of
+#   this carriage. This parameter must refer to a name of carriage that
+#   is defined as "carriage" or "dual_carriage" and is on a different axis
+#   than the current carriage. If multiple primary carriages are defined
+#   on the same axis, they all must specify different "gantry" values.
+#   Note that all carriages of different gantries must share the same axis.
+#   The default is not to specify a gantry.
 endstop_pin:
 #   Endstop switch detection pin. If this endstop pin is on a
 #   different mcu than the stepper motor(s) moving this carriage,
