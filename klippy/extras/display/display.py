@@ -174,11 +174,17 @@ def lookup_display_templates(config):
     return dt
 
 class PrinterLCD:
+    sleep_displays = []
     def __init__(self, config):
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
         # Load low-level lcd handler
         self.lcd_chip = config.getchoice('lcd_type', LCD_chips)(config)
+        self.sleep_timeout = config.getint('sleep_timeout', 0)
+        self.next_sleep_time = 0
+        self.is_sleep = 0
+        if self.sleep_timeout != 0:
+            PrinterLCD.sleep_displays.append(self)
         # Load menu and display_status
         self.menu = None
         name = config.get_name()
@@ -209,9 +215,15 @@ class PrinterLCD:
         gcode.register_mux_command('SET_DISPLAY_GROUP', 'DISPLAY', name,
                                    self.cmd_SET_DISPLAY_GROUP,
                                    desc=self.cmd_SET_DISPLAY_GROUP_help)
+        gcode.register_mux_command('SET_DISPLAY_SLEEP', 'DISPLAY', name,
+                                   self.cmd_SET_DISPLAY_SLEEP,
+                                   desc=self.cmd_SET_DISPLAY_SLEEP_help)
         if name == 'display':
             gcode.register_mux_command('SET_DISPLAY_GROUP', 'DISPLAY', None,
                                        self.cmd_SET_DISPLAY_GROUP)
+            gcode.register_mux_command('SET_DISPLAY_SLEEP', 'DISPLAY', None,
+                                       self.cmd_SET_DISPLAY_SLEEP,
+                                       desc=self.cmd_SET_DISPLAY_SLEEP_help)
     def get_dimensions(self):
         return self.lcd_chip.get_dimensions()
     def handle_ready(self):
@@ -220,6 +232,10 @@ class PrinterLCD:
         self.reactor.update_timer(self.screen_update_timer, self.reactor.NOW)
     # Screen updating
     def screen_update_event(self, eventtime):
+        self.sleep_if_timeout(eventtime)
+        if self.is_sleep:
+            return eventtime + REDRAW_MIN_TIME
+
         if self.redraw_request_pending:
             self.redraw_request_pending = False
             self.redraw_time = eventtime + REDRAW_MIN_TIME
@@ -262,6 +278,21 @@ class PrinterLCD:
             data = [0xff] + [(pixels >> (i * 8)) & 0xff] * 14 + [0xff]
             self.lcd_chip.write_graphics(col + width - 1 - i, row, data)
         return ""
+    def update_next_sleep_time(self, eventtime):
+        if self.sleep_timeout != 0:
+            self.next_sleep_time = eventtime + self.sleep_timeout
+    def sleep_if_timeout(self, eventtime):
+        if self.is_sleep == 0 and self.sleep_timeout != 0:
+            if self.next_sleep_time == 0:
+                self.update_next_sleep_time(eventtime)
+            elif self.is_sleep == 0 and self.next_sleep_time < eventtime:
+                self.sleep(1)
+    def sleep(self, sleep):
+        if self.lcd_chip.sleep:
+            self.lcd_chip.sleep(sleep)
+            self.is_sleep = sleep
+            if not sleep:
+                self.next_sleep_time = 0
     cmd_SET_DISPLAY_GROUP_help = "Set the active display group"
     def cmd_SET_DISPLAY_GROUP(self, gcmd):
         group = gcmd.get('GROUP')
@@ -269,6 +300,10 @@ class PrinterLCD:
         if new_dg is None:
             raise gcmd.error("Unknown display_data group '%s'" % (group,))
         self.show_data_group = new_dg
+    cmd_SET_DISPLAY_SLEEP_help = "Set the display to sleep"
+    def cmd_SET_DISPLAY_SLEEP(self, gcmd):
+        sleep = gcmd.get_int("SLEEP", 1)
+        self.sleep(sleep)
 
 def load_config(config):
     return PrinterLCD(config)
