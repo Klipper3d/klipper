@@ -3,7 +3,11 @@ Firmware Deployment Log
 2025-10-28
 - Target: STM32G0B1 (Manta M4P v2.0)
 - Build config: `.config` (USB PA11/PA12, 8MHz crystal, 8KiB offset)
-- Build artifact: Pending (compile step not yet executed)
+- Build artifact: out/klipper.bin
+- Build version: v0.13.0-374-g99c0bfca4
+- Build date: 2025-10-28
+- Firmware SHA256: cafc2c9fb62c8b4454f9279a6b46337f2bcff801fc9014fec929d98da269ea3d
+- Checksum file: out/klipper.bin.sha256
 - Flash tool: STM32CubeProgrammer
 - Flash address: 0x08002000
 - Verification: Pending (post-flash version and checksum)

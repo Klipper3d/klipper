@@ -45,6 +45,7 @@ Windows Flashing (STM32CubeProgrammer)
    - Start address: `0x08002000`.
    - File: `out/klipper.bin`.
    - Click Download; then press `RESET`.
+   - Optional CLI: use `klipper/scripts/flash_stm32_usb_dfu.ps1` (requires STM32CubeProgrammer CLI). It connects via `port=USB`, writes at `0x08002000`, verifies, then issues reboot.
 3) Alternative:
    - If offset fails, rebuild Klipper with "No bootloader" and flash at `0x08000000`.
 
@@ -64,6 +65,7 @@ Troubleshooting
 - Driver issues: install STM32CubeProgrammer or use Zadig WinUSB for DFU.
 - Wrong offset: confirm `.config` bootloader and start address alignment.
 - Serial mismatch: always use `/dev/serial/by-id/...` not `/dev/tty*`.
+ - Verification: `out/klipper.bin.sha256` contains the SHA256 of the built firmware (generated via `certutil`). Use it to validate the binary before flashing and for post-flash integrity checks.
 
 Version Control
 - Do not overwrite critical files; track changes in `CHANGELOG.txt`.
