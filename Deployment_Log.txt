@@ -1,0 +1,9 @@
+Firmware Deployment Log
+
+2025-10-28
+- Target: STM32G0B1 (Manta M4P v2.0)
+- Build config: `.config` (USB PA11/PA12, 8MHz crystal, 8KiB offset)
+- Build artifact: Pending (compile step not yet executed)
+- Flash tool: STM32CubeProgrammer
+- Flash address: 0x08002000
+- Verification: Pending (post-flash version and checksum)

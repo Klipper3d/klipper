@@ -1,0 +1,4 @@
+2025-10-28
+- Added `.config` for STM32G0B1 (USB PA11/PA12, 8MHz, 8KiB bootloader).
+- Created `klipper/config/manta_m4p_v2_enderv3.cfg` example printer config.
+- Authored `klipper/README.txt` deployment guide.
