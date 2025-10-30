@@ -33,7 +33,8 @@ class GenDerivative:
         elif '(mm/s)' in units:
             rep = [('Velocity', 'Acceleration'), ('(mm/s)', '(mm/s^2)')]
         else:
-            return {'label': 'Derivative', 'units': 'Unknown'}
+            return {'label': 'Derivative of %s' % (label['label']),
+                    'units': 'Unknown'}
         for old, new in rep:
             lname = lname.replace(old, new).replace(old.lower(), new.lower())
             units = units.replace(old, new).replace(old.lower(), new.lower())
