@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-from . import bus, bulk_sensor
+from . import bus, bulk_sensor, sos_filter
 
 MIN_MSG_TIME = 0.100
 
@@ -72,6 +72,60 @@ class DriveCurrentCalibrate:
         configfile = self.printer.lookup_object('configfile')
         configfile.set(self.name, 'reg_drive_current', "%d" % (drive_cur,))
 
+class LDC1612Tap:
+    def __init__(self, config, data_rate, mcu, i2c, oid):
+        # Initial SOS Filter support
+        self.cmdqueue = i2c.get_command_queue()
+        self.mcu = mcu
+        self.oid = oid
+        self.data_rate = data_rate
+        self.lowpass_freq = config.getfloat("lowpass_hz", 25.0, minval=1.)
+        self.lowpass_order = config.getint("lowpass_order", 4, minval=1)
+        self.ldc1612_setup_tap_cmd = self.query_ldc1612_tap_state_cmd = None
+        design = sos_filter.DigitalFilter(data_rate, config.error,
+                                          lowpass=self.lowpass_freq,
+                                          lowpass_order=self.lowpass_order)
+        fixed_filter = sos_filter.FixedPointSosFilter(
+            design.get_filter_sections(), design.get_initial_state())
+        self.sos_filter = sos_filter.SosFilter(mcu,
+                                               self.cmdqueue,
+                                               fixed_filter)
+        self.mcu.register_config_callback(self._build_config)
+        from scipy.signal import sosfiltfilt, butter
+        self._lowpass = butter(4, Wn=self.lowpass_freq, btype="lowpass",
+                               fs=self.data_rate, output='sos')
+        self.sosfiltfilt = sosfiltfilt
+    def _build_config(self):
+        if self.mcu.try_lookup_command("ldc1612_set_sos oid=%c sos_oid=%c"):
+            self.sos_filter.create_filter()
+            self.mcu.add_config_cmd("ldc1612_set_sos oid=%d sos_oid=%d"
+                                    % (self.oid, self.sos_filter.get_oid()),
+                                    is_init=True)
+            self.query_ldc1612_tap_state_cmd = self.mcu.lookup_query_command(
+                "query_ldc1612_tap_state oid=%c",
+                "ldc1612_tap_state oid=%c homing=%c trigger_clock=%u",
+                oid=self.oid, cq=self.cmdqueue)
+            self.ldc1612_setup_tap_cmd = self.mcu.lookup_command(
+                "ldc1612_setup_tap oid=%c clock=%u threshold=%i odr=%u"
+                " trsync_oid=%c trigger_reason=%c error_reason=%c",
+                cq=self.cmdqueue)
+    def sos_filter_data(self, data):
+        return self.sosfiltfilt(self._lowpass, data)
+    def setup_tap(self, print_time, min_accel, trsync_oid, hit_reason,
+                  err_reason):
+        clock = self.mcu.print_time_to_clock(print_time)
+        odr = self.data_rate
+        self.sos_filter.reset_filter()
+        self.ldc1612_setup_tap_cmd.send([self.oid, clock, min_accel, odr,
+                                         trsync_oid, hit_reason, err_reason])
+    def clear_tap(self):
+        self.ldc1612_setup_tap_cmd.send([self.oid, 0, 0, 0, 0, 0, 0])
+        if self.mcu.is_fileoutput():
+            return 0.
+        params = self.query_ldc1612_tap_state_cmd.send([self.oid])
+        tclock = self.mcu.clock32_to_clock64(params['trigger_clock'])
+        return self.mcu.clock_to_print_time(tclock)
+
 # Interface class to LDC1612 mcu support
 class LDC1612:
     def __init__(self, config, calibration=None):
@@ -103,6 +157,8 @@ class LDC1612:
         mcu.add_config_cmd("query_ldc1612 oid=%d rest_ticks=0"
                            % (oid,), on_restart=True)
         mcu.register_config_callback(self._build_config)
+        self.tap = LDC1612Tap(config, self.data_rate, self.mcu,
+                              self.i2c, self.oid)
         # Bulk sample message reading
         chip_smooth = self.data_rate * BATCH_UPDATES * 2
         self.ffreader = bulk_sensor.FixedFreqReader(mcu, chip_smooth, ">I")
