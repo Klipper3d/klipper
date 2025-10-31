@@ -1,0 +1,12 @@
+Test Plan — Manta M4P v2.0 / Ender 3 V3
+
+2025-10-28 — Initial plan created
+- Axis movement: Pending hardware connection
+- Homing: Pending
+- Temperature control: Pending
+- Probe and safe_z_home: Pending
+- Emergency stop: Pending
+- Host communication: Pending
+
+Notes:
+- Populate with pass/fail and observations after hardware tests.
