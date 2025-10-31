@@ -72,6 +72,24 @@ struct gc9a01 {
 #define GC9A01_IREG_0x8E      0x8E
 #define GC9A01_IREG_0x8F      0x8F
 
+static uint16_t palette[16] = {
+    0x0000, // 0: RGB(  0,  0,  0) #000000 Black
+    0xF800, // 1: RGB(255,  0,  0) #FF0000 Red
+    0x07E0, // 2: RGB(  0,255,  0) #00FF00 Green
+    0xFFE0, // 3: RGB(255,255,  0) #FFFF00 Yellow
+    0x001F, // 4: RGB(  0,  0,255) #0000FF Blue
+    0xF81F, // 5: RGB(255,  0,255) #FF00FF Magenta
+    0x07FF, // 6: RGB(  0,255,255) #00FFFF Cyan
+    0xFFFF, // 7: RGB(255,255,255) #FFFFFF White
+    0x8410, // 8: RGB(132,130,132) #848284 Dark Gray
+    0x4208, // 9: RGB( 66, 65, 66) #424142 Very Dark Gray
+    0xA514, // 10: RGB(165,162,165) #A5A2A5 Medium Gray
+    0x6318, // 11: RGB( 99, 97,198) #6361C6 Blue-Gray
+    0xC618, // 12: RGB(198,195,198) #C6C3C6 Light Gray
+    0x39E7, // 13: RGB( 57, 60, 57) #393C39 Dark Green-Gray
+    0xE73C, // 14: RGB(231,231,231) #E7E7E7 Very Light Gray
+    0xFFFF  // 15: RGB(255,255,255) #FFFFFF White
+};
 
 /****************************************************************
  * Timing functions
@@ -207,13 +225,13 @@ command_config_gc9a01(uint32_t *args)
     gc9a01_cmd_with_data(g, GC9A01_COLMOD, 1, colmod_data);
 
     // Memory Data Access Control - apply rotation
-    uint8_t madctl_value = 0x00;
+    uint8_t madctl_value = 0x08;  // BGR bit
     if (g->rotation == 90)
-        madctl_value = 0x60;  // MV=1, MX=1
+        madctl_value |= 0x60;
     else if (g->rotation == 180)
-        madctl_value = 0xC0;  // MY=1, MX=1
+        madctl_value |= 0xC0;
     else if (g->rotation == 270)
-        madctl_value = 0xA0;  // MV=1, MY=1
+        madctl_value |= 0xA0;
     uint8_t madctl_data[] = {madctl_value};
     gc9a01_cmd_with_data(g, GC9A01_MADCTL, 1, madctl_data);
 
@@ -325,7 +343,8 @@ command_gc9a01_fill_rect(uint32_t *args)
     uint16_t y0 = args[2];
     uint16_t x1 = args[3];
     uint16_t y1 = args[4];
-    uint16_t color = args[5];
+    uint8_t color_idx = args[5] & 0x0F;
+    uint16_t color = palette[color_idx];
     uint32_t pixels = (x1 - x0 + 1) * (y1 - y0 + 1) * 2;
     uint8_t color_high = (color >> 8) & 0xFF;
     uint8_t color_low = color & 0xFF;
@@ -361,15 +380,36 @@ command_gc9a01_fill_rect(uint32_t *args)
     }
 }
 DECL_COMMAND(command_gc9a01_fill_rect,
-             "gc9a01_fill_rect oid=%c x0=%hu y0=%hu x1=%hu y1=%hu color=%hu");
+             "gc9a01_fill_rect oid=%c x0=%hu y0=%hu x1=%hu y1=%hu color=%c");
 
 void
 command_gc9a01_send_data(uint32_t *args)
 {
     struct gc9a01 *g = oid_lookup(args[0], command_config_gc9a01);
     uint8_t len = args[1], *data = command_decode_ptr(args[2]);
-    if (len > 0)
-        gc9a01_send_data(g, len, data);
+    uint8_t out_buf[GC9A01_LINE_SIZE];
+    uint16_t out_idx = 0;
+
+    for (uint8_t i = 0; i < len; i++) {
+        uint8_t byte = data[i];
+        uint8_t idx1 = (byte >> 4) & 0x0F;
+        uint8_t idx2 = byte & 0x0F;
+        uint16_t color1 = palette[idx1];
+        uint16_t color2 = palette[idx2];
+
+        out_buf[out_idx++] = (color1 >> 8) & 0xFF;
+        out_buf[out_idx++] = color1 & 0xFF;
+        out_buf[out_idx++] = (color2 >> 8) & 0xFF;
+        out_buf[out_idx++] = color2 & 0xFF;
+
+        if (out_idx >= GC9A01_LINE_SIZE) {
+            gc9a01_send_data(g, out_idx, out_buf);
+            out_idx = 0;
+        }
+    }
+
+    if (out_idx > 0)
+        gc9a01_send_data(g, out_idx, out_buf);
 }
 DECL_COMMAND(command_gc9a01_send_data, "gc9a01_send_data oid=%c data=%*s");
 
@@ -406,6 +446,30 @@ command_gc9a01_set_window(uint32_t *args)
 }
 DECL_COMMAND(command_gc9a01_set_window,
              "gc9a01_set_window oid=%c x0=%hu y0=%hu x1=%hu y1=%hu");
+
+void
+command_gc9a01_set_palette(uint32_t *args)
+{
+    oid_lookup(args[0], command_config_gc9a01);
+    palette[1] = args[1];
+    palette[2] = args[2];
+    palette[3] = args[3];
+    palette[4] = args[4];
+    palette[5] = args[5];
+    palette[6] = args[6];
+    palette[7] = args[7];
+    palette[8] = args[8];
+    palette[9] = args[9];
+    palette[10] = args[10];
+    palette[11] = args[11];
+    palette[12] = args[12];
+    palette[13] = args[13];
+    palette[14] = args[14];
+}
+DECL_COMMAND(command_gc9a01_set_palette,
+             "gc9a01_set_palette oid=%c c1=%hu c2=%hu c3=%hu c4=%hu "
+             "c5=%hu c6=%hu c7=%hu c8=%hu c9=%hu c10=%hu c11=%hu "
+             "c12=%hu c13=%hu c14=%hu");
 
 void
 gc9a01_shutdown(void)
