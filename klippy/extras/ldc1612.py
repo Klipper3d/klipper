@@ -4,7 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-from . import bus, bulk_sensor
+from . import bus, bulk_sensor, sos_filter
 
 MIN_MSG_TIME = 0.100
 
@@ -84,24 +84,56 @@ class LDC1612:
                                            default_addr=LDC1612_ADDR,
                                            default_speed=400000)
         self.mcu = mcu = self.i2c.get_mcu()
-        self.oid = oid = mcu.create_oid()
+        self.oid = mcu.create_oid()
         self.query_ldc1612_cmd = None
         self.ldc1612_setup_home_cmd = self.query_ldc1612_home_state_cmd = None
         self.frequency = config.getint("frequency", DEFAULT_LDC1612_FREQ,
                                        2000000, 40000000)
-        if config.get('intb_pin', None) is not None:
+        intb_pin = config.get('intb_pin', None)
+        pin_params = {}
+        if intb_pin is not None:
             ppins = config.get_printer().lookup_object("pins")
-            pin_params = ppins.lookup_pin(config.get('intb_pin'))
+            pin_params = ppins.lookup_pin(intb_pin)
             if pin_params['chip'] != mcu:
                 raise config.error("ldc1612 intb_pin must be on same mcu")
-            mcu.add_config_cmd(
-                "config_ldc1612_with_intb oid=%d i2c_oid=%d intb_pin=%s"
-                % (oid, self.i2c.get_oid(), pin_params['pin']))
+        # Tap setup
+        self.tap_threshold = config.getint('tap_threshold', minval=0,
+                                           default=0)
+        # Set empty filter
+        self._design = sos_filter.DigitalFilter(self.data_rate, config.error)
+        initial_state = self._design.get_initial_state()
+        sections = self._design.get_filter_sections()
+        fixed_filter = sos_filter.FixedPointSosFilter(sections, initial_state)
+        self._qfrac_bits = 4
+        if self.tap_threshold:
+            design = sos_filter.DigitalFilter(self.data_rate, config.error,
+                                              lowpass=25.0,
+                                              lowpass_order=4)
+            self._design = design
+            def_coil_freq = 3000000
+            conv_value = self._coil_freq2raw_fixed_point(def_coil_freq)
+            # Make initial state represent raw value at frequency
+            initial_state = self._design.get_initial_state() * conv_value
+            sections = self._design.get_filter_sections()
+            fixed_filter = sos_filter.FixedPointSosFilter(
+                sections, initial_state,
+                value_int_bits=(31 - self._qfrac_bits))
+        # Init with sos
+        cmdqueue = self.i2c.get_command_queue()
+        self.sos_filter = sos_filter.SosFilter(mcu, cmdqueue, fixed_filter)
+        self.sos_filter.create_filter()
+        if pin_params:
+            self.mcu.add_config_cmd(
+                "config_ldc1612_with_intb oid=%d i2c_oid=%d sos_filter_oid=%d"
+                " intb_pin=%s" % (
+                    self.oid, self.i2c.get_oid(), self.sos_filter.get_oid(),
+                    pin_params['pin'],))
         else:
-            mcu.add_config_cmd("config_ldc1612 oid=%d i2c_oid=%d"
-                               % (oid, self.i2c.get_oid()))
-        mcu.add_config_cmd("query_ldc1612 oid=%d rest_ticks=0"
-                           % (oid,), on_restart=True)
+            self.mcu.add_config_cmd(
+                "config_ldc1612 oid=%d i2c_oid=%d sos_filter_oid=%d" % (
+                    self.oid, self.i2c.get_oid(), self.sos_filter.get_oid()))
+        self.mcu.add_config_cmd("query_ldc1612 oid=%d rest_ticks=0"
+                                % (self.oid,), on_restart=True)
         mcu.register_config_callback(self._build_config)
         # Bulk sample message reading
         chip_smooth = self.data_rate * BATCH_UPDATES * 2
@@ -122,12 +154,20 @@ class LDC1612:
         self.ffreader.setup_query_command("query_status_ldc1612 oid=%c",
                                           oid=self.oid, cq=cmdqueue)
         self.ldc1612_setup_home_cmd = self.mcu.lookup_command(
-            "ldc1612_setup_home oid=%c clock=%u threshold=%u"
+            "ldc1612_setup_home oid=%c clock=%u threshold=%i"
             " trsync_oid=%c trigger_reason=%c error_reason=%c", cq=cmdqueue)
         self.query_ldc1612_home_state_cmd = self.mcu.lookup_query_command(
             "query_ldc1612_home_state oid=%c",
             "ldc1612_home_state oid=%c homing=%c trigger_clock=%u",
             oid=self.oid, cq=cmdqueue)
+    def _coil_freq2raw_fixed_point(self, coil_freq):
+        freq2raw = 1 / (self.frequency / (1 << 28))
+        # If there will be the ability to set the filter state
+        # right before tap to actual value
+        # It is done this way
+        raw_value = coil_freq * freq2raw
+        fixed_point_raw_value = raw_value / (1 << self._qfrac_bits)
+        return fixed_point_raw_value
     def get_mcu(self):
         return self.i2c.get_mcu()
     def read_reg(self, reg):
@@ -144,6 +184,8 @@ class LDC1612:
                    trsync_oid, hit_reason, err_reason):
         clock = self.mcu.print_time_to_clock(print_time)
         tfreq = int(trigger_freq * (1<<28) / float(self.frequency) + 0.5)
+        if tfreq >= 0x0fffffff:
+            self.printer.command_error("Trigger frequency is too high")
         self.ldc1612_setup_home_cmd.send(
             [self.oid, clock, tfreq, trsync_oid, hit_reason, err_reason])
     def clear_home(self):
@@ -153,6 +195,13 @@ class LDC1612:
         params = self.query_ldc1612_home_state_cmd.send([self.oid])
         tclock = self.mcu.clock32_to_clock64(params['trigger_clock'])
         return self.mcu.clock_to_print_time(tclock)
+    def setup_home_tap(self, print_time, trsync_oid, hit_reason, err_reason):
+        if not self.tap_threshold:
+            raise self.printer.command_error("tap_threshold is zero")
+        clock = self.mcu.print_time_to_clock(print_time)
+        threshold = -1 * self.tap_threshold
+        self.ldc1612_setup_home_cmd.send(
+            [self.oid, clock, threshold, trsync_oid, hit_reason, err_reason])
     # Measurement decoding
     def _convert_samples(self, samples):
         freq_conv = float(self.frequency) / (1<<28)
