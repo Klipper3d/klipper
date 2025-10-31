@@ -337,6 +337,8 @@ class EddyGatherSamples:
             # No sensor readings - raise error in pull_probed()
             return 0.
         return samp_sum / samp_count
+    def _pull_tap_time(self, start_time, end_time):
+        return (start_time + end_time) / 2
     def _lookup_toolhead_pos(self, pos_time):
         toolhead = self._printer.lookup_object('toolhead')
         kin = toolhead.get_kinematics()
@@ -349,12 +351,18 @@ class EddyGatherSamples:
             start_time, end_time, pos_time, toolhead_pos = self._probe_times[0]
             if self._samples[-1]['data'][-1][0] < end_time:
                 break
-            freq = self._pull_freq(start_time, end_time)
-            if pos_time is not None:
+            # Scanning/Probe
+            if pos_time or toolhead_pos:
+                if pos_time is not None:
+                    toolhead_pos = self._lookup_toolhead_pos(pos_time)
+                sensor_z = None
+                freq = self._pull_freq(start_time, end_time)
+                if freq:
+                    sensor_z = self._calibration.freq_to_height(freq)
+            else:
+                pos_time = self._pull_tap_time(start_time, end_time)
                 toolhead_pos = self._lookup_toolhead_pos(pos_time)
-            sensor_z = None
-            if freq:
-                sensor_z = self._calibration.freq_to_height(freq)
+                sensor_z = .0
             self._probe_results.append((sensor_z, toolhead_pos))
             self._probe_times.pop(0)
     def pull_probed(self):
@@ -374,6 +382,9 @@ class EddyGatherSamples:
             results.append(res)
         del self._probe_results[:]
         return results
+    def note_tap(self, start_time, end_time):
+        self._probe_times.append((start_time, end_time, None, None))
+        self._check_samples()
     def note_probe(self, start_time, end_time, toolhead_pos):
         self._probe_times.append((start_time, end_time, None, toolhead_pos))
         self._check_samples()
@@ -396,6 +407,7 @@ class EddyDescend:
         self._dispatch = mcu.TriggerDispatch(self._mcu)
         self._trigger_time = 0.
         self._gather = None
+        self._is_tap = False
         probe.LookupZSteppers(config, self._dispatch.add_stepper)
     # Interface for phoming.probing_move()
     def get_steppers(self):
@@ -403,12 +415,17 @@ class EddyDescend:
     def home_start(self, print_time, sample_time, sample_count, rest_time,
                    triggered=True):
         self._trigger_time = 0.
-        z_offset = self._probe_offsets.get_offsets()[2]
-        trigger_freq = self._calibration.height_to_freq(z_offset)
         trigger_completion = self._dispatch.start(print_time)
-        self._sensor_helper.setup_home(
-            print_time, trigger_freq, self._dispatch.get_oid(),
-            mcu.MCU_trsync.REASON_ENDSTOP_HIT, self.REASON_SENSOR_ERROR)
+        if self._is_tap:
+            self._sensor_helper.setup_home_tap(
+                print_time, self._dispatch.get_oid(),
+                mcu.MCU_trsync.REASON_ENDSTOP_HIT, self.REASON_SENSOR_ERROR)
+        else:
+            z_offset = self._probe_offsets.get_offsets()[2]
+            trigger_freq = self._calibration.height_to_freq(z_offset)
+            self._sensor_helper.setup_home(
+                print_time, trigger_freq, self._dispatch.get_oid(),
+                mcu.MCU_trsync.REASON_ENDSTOP_HIT, self.REASON_SENSOR_ERROR)
         return trigger_completion
     def home_wait(self, home_end_time):
         self._dispatch.wait_end(home_end_time)
@@ -430,6 +447,10 @@ class EddyDescend:
     # Probe session interface
     def start_probe_session(self, gcmd):
         offsets = self._probe_offsets.get_offsets()
+        method = gcmd.get('METHOD', 'automatic').lower() if gcmd else None
+        self._is_tap = method == 'tap'
+        if self._is_tap:
+            offsets = (.0, .0, .0)
         self._gather = EddyGatherSamples(self._printer, self._sensor_helper,
                                          self._calibration, offsets)
         return self
@@ -439,11 +460,19 @@ class EddyDescend:
         pos[2] = self._z_min_position
         speed = self._param_helper.get_probe_params(gcmd)['probe_speed']
         # Perform probing move
+        if self._is_tap:
+            # Give the SOS filter time to stabilize
+            toolhead.dwell(0.035)
         phoming = self._printer.lookup_object('homing')
         trig_pos = phoming.probing_move(self, pos, speed)
         if not self._trigger_time:
             return trig_pos
         # Extract samples
+        if self._is_tap:
+            start_time = self._trigger_time - 0.075
+            end_time = self._trigger_time + 0.075
+            self._gather.note_tap(start_time, end_time)
+            return
         start_time = self._trigger_time + 0.050
         end_time = start_time + 0.100
         toolhead_pos = toolhead.get_position()
