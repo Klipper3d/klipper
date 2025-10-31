@@ -16,13 +16,6 @@ GC9A01_CMD_DELAY = .000020  # 20us between commands
 DISPLAY_WIDTH = 240
 DISPLAY_HEIGHT = 240
 
-# RGB565 color definitions
-COLOR_BLACK = 0x0000
-COLOR_WHITE = 0xFFFF
-COLOR_RED = 0xF800
-COLOR_GREEN = 0x07E0
-COLOR_BLUE = 0x001F
-
 class GC9A01:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -63,14 +56,14 @@ class GC9A01:
             self.width = base_width
             self.height = base_height
 
-        # Display colors
-        self.fg_color = config.getint('fg_color', COLOR_WHITE,
-                                      minval=0, maxval=65535)
-        self.bg_color = config.getint('bg_color', COLOR_BLACK,
-                                      minval=0, maxval=65535)
+        # Display colors (palette indices 0-15)
+        self.fg_color = config.getint('fg_color', 15,
+                                      minval=0, maxval=15)
+        self.bg_color = config.getint('bg_color', 0,
+                                      minval=0, maxval=15)
 
-        # Framebuffer for RGB565 format (2 bytes per pixel)
-        fb_size = self.width * self.height * 2
+        # Framebuffer for 4-bit color (2 pixels per byte)
+        fb_size = (self.width * self.height + 1) // 2
         self.framebuffer = bytearray(fb_size)
         self.glyphs = {}
 
@@ -92,6 +85,7 @@ class GC9A01:
         self.start_write_cmd = None
         self.send_data_cmd = None
         self.fill_rect_cmd = None
+        self.set_palette_cmd = None
 
         # Register with printer
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
@@ -123,8 +117,12 @@ class GC9A01:
             self.send_data_cmd = self.mcu.lookup_command(
                 "gc9a01_send_data oid=%c data=%*s", cq=cmd_queue)
             self.fill_rect_cmd = self.mcu.lookup_command(
-                "gc9a01_fill_rect oid=%c x0=%hu y0=%hu x1=%hu y1=%hu color=%hu",
+                "gc9a01_fill_rect oid=%c x0=%hu y0=%hu x1=%hu y1=%hu color=%c",
                 cq=cmd_queue)
+            self.set_palette_cmd = self.mcu.lookup_command(
+                "gc9a01_set_palette oid=%c c1=%hu c2=%hu c3=%hu c4=%hu "
+                "c5=%hu c6=%hu c7=%hu c8=%hu c9=%hu c10=%hu c11=%hu "
+                "c12=%hu c13=%hu c14=%hu", cq=cmd_queue)
 
             logging.debug("GC9A01 MCU commands configured")
         except Exception as e:
@@ -156,18 +154,31 @@ class GC9A01:
         self.set_window_cmd.send([self.oid, x0, y0, x1, y1],
                                 reqclock=BACKGROUND_PRIORITY_CLOCK)
 
-    def fill_rectangle(self, x0, y0, x1, y1, color):
-        """Fill a rectangle on the display with a color"""
+    def fill_rectangle(self, x0, y0, x1, y1, color_idx):
+        """Fill a rectangle on the display with a palette color index"""
         if self.fill_rect_cmd is None:
             return
-        logging.debug("GC9A01 fill_rect %d,%d to %d,%d color=0x%04X",
-                     x0, y0, x1, y1, color)
-        self.fill_rect_cmd.send([self.oid, x0, y0, x1, y1, color],
+        color_idx &= 0x0F
+        logging.debug("GC9A01 fill_rect %d,%d to %d,%d color_idx=%d",
+                     x0, y0, x1, y1, color_idx)
+        self.fill_rect_cmd.send([self.oid, x0, y0, x1, y1, color_idx],
                             reqclock=BACKGROUND_PRIORITY_CLOCK)
         self.window_x0 = x0
         self.window_y0 = y0
         self.window_x1 = x1
         self.window_y1 = y1
+
+    def set_palette(self, colors):
+        """Upload custom palette colors (indices 1-14)
+        colors: list of 14 RGB565 values
+        """
+        if self.set_palette_cmd is None:
+            return
+        if len(colors) != 14:
+            logging.error("GC9A01 set_palette: need exactly 14 colors")
+            return
+        self.set_palette_cmd.send([self.oid] + colors,
+                                   reqclock=BACKGROUND_PRIORITY_CLOCK)
 
     def init(self):
         """Initialize the display"""
@@ -175,11 +186,10 @@ class GC9A01:
         logging.debug("GC9A01 init called")
 
     def clear(self):
-        """Clear the framebuffer (fill with background color)"""
-        color_bytes = bytes([(self.bg_color >> 8) & 0xFF,
-                             self.bg_color & 0xFF])
-        for i in range(0, len(self.framebuffer), 2):
-            self.framebuffer[i:i+2] = color_bytes
+        """Clear the framebuffer (fill with background color index)"""
+        fill_byte = (self.bg_color << 4) | self.bg_color
+        for i in range(len(self.framebuffer)):
+            self.framebuffer[i] = fill_byte
         self.dirty_x0 = self.width
         self.dirty_y0 = self.height
         self.dirty_x1 = -1
@@ -195,10 +205,10 @@ class GC9A01:
             logging.debug("GC9A01 flush: no dirty regions, skipping")
             return
 
-        # Send only the dirty region
-        x0 = self.dirty_x0
+        # Align dirty region to even pixel boundaries (2 pixels per byte)
+        x0 = self.dirty_x0 & ~1  # Round down to even
         y0 = self.dirty_y0
-        x1 = self.dirty_x1
+        x1 = self.dirty_x1 | 1   # Round up to odd
         y1 = self.dirty_y1
 
         self.set_window(x0, y0, x1, y1)
@@ -208,15 +218,18 @@ class GC9A01:
                                    reqclock=BACKGROUND_PRIORITY_CLOCK)
 
         # Send framebuffer data for dirty region
-        max_chunk = 32
-        bytes_per_pixel = 2
-        row_width = self.width * bytes_per_pixel
-        dirty_width = (x1 - x0 + 1) * bytes_per_pixel
+        max_chunk = 32  # Max bytes per send
+        dirty_width = x1 - x0 + 1
 
         for y in range(y0, y1 + 1):
-            row_start = y * row_width + x0 * bytes_per_pixel
-            row_end = row_start + dirty_width
-            row_data = self.framebuffer[row_start:row_end]
+            # Calculate byte positions for this row
+            row_start_pixel = y * self.width + x0
+            row_end_pixel = row_start_pixel + dirty_width
+
+            byte_start = row_start_pixel // 2
+            byte_end = (row_end_pixel + 1) // 2
+
+            row_data = self.framebuffer[byte_start:byte_end]
 
             # Send row in chunks
             for i in range(0, len(row_data), max_chunk):
@@ -230,22 +243,26 @@ class GC9A01:
         self.dirty_x1 = -1
         self.dirty_y1 = -1
 
-    def draw_pixel(self, x, y, color):
-        """Draw a single pixel (RGB565 format)"""
+    def draw_pixel(self, x, y, color_idx):
+        """Draw a single pixel using 4-bit color index (0-15)"""
         if x >= self.width or y >= self.height or x < 0 or y < 0:
             return
 
-        pos = (y * self.width + x) * 2
-        color_high = (color >> 8) & 0xFF
-        color_low = color & 0xFF
+        color_idx &= 0x0F
+        pixel_num = y * self.width + x
+        byte_pos = pixel_num // 2
+        is_high = (pixel_num % 2) == 0
 
-        # Only update if color changed
-        if (self.framebuffer[pos] == color_high
-                and self.framebuffer[pos + 1] == color_low):
+        old_byte = self.framebuffer[byte_pos]
+        if is_high:
+            new_byte = (color_idx << 4) | (old_byte & 0x0F)
+        else:
+            new_byte = (old_byte & 0xF0) | color_idx
+
+        if old_byte == new_byte:
             return
 
-        self.framebuffer[pos] = color_high
-        self.framebuffer[pos + 1] = color_low
+        self.framebuffer[byte_pos] = new_byte
 
         # Update dirty region
         self.dirty_x0 = min(self.dirty_x0, x)
@@ -253,9 +270,9 @@ class GC9A01:
         self.dirty_x1 = max(self.dirty_x1, x)
         self.dirty_y1 = max(self.dirty_y1, y)
 
-    def fill_rect(self, x, y, w, h, color):
-        """Fill a rectangle with a color"""
-        self.fill_rectangle(x, y, x + w - 1, y + h - 1, color)
+    def fill_rect(self, x, y, w, h, color_idx):
+        """Fill a rectangle with a palette color index"""
+        self.fill_rectangle(x, y, x + w - 1, y + h - 1, color_idx)
 
     # Display interface compatibility methods
     # For testing purposes only
@@ -321,8 +338,9 @@ class GC9A01:
                 for col in range(width):
                     pixel_x = char_x + col
                     pixel_y = y * height + row + centered_y
-                    color = self.fg_color if (bits & (0x8000 >> col)) else self.bg_color
-                    self.draw_pixel(pixel_x, pixel_y, color)
+                    color_idx = (self.fg_color if (bits & (0x8000 >> col))
+                                 else self.bg_color)
+                    self.draw_pixel(pixel_x, pixel_y, color_idx)
             return 2
 
         # Handle icon16x16 format
@@ -344,12 +362,14 @@ class GC9A01:
                 for col in range(width):
                     pixel_x = char_x + col
                     pixel_y = y * height + row + centered_y
-                    color = self.fg_color if (byte1 & (0x80 >> col)) else self.bg_color
-                    self.draw_pixel(pixel_x, pixel_y, color)
+                    color_idx = (self.fg_color if (byte1 & (0x80 >> col))
+                                 else self.bg_color)
+                    self.draw_pixel(pixel_x, pixel_y, color_idx)
 
                     pixel_x = char_x + col + width
-                    color = self.fg_color if (byte2 & (0x80 >> col)) else self.bg_color
-                    self.draw_pixel(pixel_x, pixel_y, color)
+                    color_idx = (self.fg_color if (byte2 & (0x80 >> col))
+                                 else self.bg_color)
+                    self.draw_pixel(pixel_x, pixel_y, color_idx)
             return 2
 
         return 0
