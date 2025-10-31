@@ -306,8 +306,8 @@ class GenericCartesianKinematics:
         axes = [a for a, (l, h) in zip("xyz", self.limits) if l <= h]
         ranges = [c.get_rail().get_range()
                   for c in self.get_primary_carriages()]
-        axes_min = gcode.Coord(*[r[0] for r in ranges], e=0.)
-        axes_max = gcode.Coord(*[r[1] for r in ranges], e=0.)
+        axes_min = gcode.Coord([r[0] for r in ranges])
+        axes_max = gcode.Coord([r[1] for r in ranges])
         return {
             'homed_axes': "".join(axes),
             'axis_minimum': axes_min,
