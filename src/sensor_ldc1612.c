@@ -14,10 +14,12 @@
 #include "sched.h" // DECL_TASK
 #include "sensor_bulk.h" // sensor_bulk_report
 #include "trsync.h" // trsync_do_trigger
+#include "sos_filter.h" // sos_filter_oid_lookup
 
 enum {
     LDC_PENDING = 1<<0, LDC_HAVE_INTB = 1<<1,
-    LH_AWAIT_HOMING = 1<<1, LH_CAN_TRIGGER = 1<<2
+    LH_AWAIT_HOMING = 1<<1, LH_CAN_TRIGGER = 1<<2,
+    LT_AWAIT_HOMING = 1<<3, LT_CAN_TRIGGER = 1<<4,
 };
 
 struct ldc1612 {
@@ -33,6 +35,12 @@ struct ldc1612 {
     uint8_t trigger_reason, error_reason;
     uint32_t trigger_threshold;
     uint32_t homing_clock;
+    // tap
+    struct sos_filter *sf;
+    int32_t prev_sample;
+    int32_t peak_vel;
+    int32_t max_deceleration;
+    uint32_t trigger_start;
 };
 
 static struct task_wake ldc1612_wake;
@@ -66,6 +74,7 @@ command_config_ldc1612(uint32_t *args)
                                    , sizeof(*ld));
     ld->timer.func = ldc1612_event;
     ld->i2c = i2cdev_oid_lookup(args[1]);
+    ld->sf = NULL;
 }
 DECL_COMMAND(command_config_ldc1612, "config_ldc1612 oid=%c i2c_oid=%c");
 
@@ -76,9 +85,19 @@ command_config_ldc1612_with_intb(uint32_t *args)
     struct ldc1612 *ld = oid_lookup(args[0], command_config_ldc1612);
     ld->intb_pin = gpio_in_setup(args[2], 1);
     ld->flags = LDC_HAVE_INTB;
+    ld->sf = NULL;
 }
 DECL_COMMAND(command_config_ldc1612_with_intb,
              "config_ldc1612_with_intb oid=%c i2c_oid=%c intb_pin=%c");
+
+void
+command_ldc1612_set_sos(uint32_t *args)
+{
+    struct ldc1612 *ld = oid_lookup(args[0], command_config_ldc1612);
+    ld->sf = sos_filter_oid_lookup(args[1]);
+}
+DECL_COMMAND(command_ldc1612_set_sos,
+             "ldc1612_set_sos oid=%c sos_oid=%c");
 
 void
 command_ldc1612_setup_home(uint32_t *args)
@@ -110,6 +129,87 @@ command_query_ldc1612_home_state(uint32_t *args)
 }
 DECL_COMMAND(command_query_ldc1612_home_state,
              "query_ldc1612_home_state oid=%c");
+
+void
+command_ldc1612_setup_tap(uint32_t *args)
+{
+    struct ldc1612 *ld = oid_lookup(args[0], command_config_ldc1612);
+    ld->max_deceleration = args[2];
+    if (!ld->max_deceleration) {
+        ld->ts = NULL;
+        ld->homing_flags = 0;
+        return;
+    }
+    ld->homing_clock = args[1];
+    ld->ts = trsync_oid_lookup(args[3]);
+    ld->trigger_reason = args[4];
+    ld->error_reason = args[5];
+    ld->homing_flags = LT_AWAIT_HOMING | LT_CAN_TRIGGER;
+    ld->prev_sample = 0;
+    ld->peak_vel = 0;
+}
+DECL_COMMAND(command_ldc1612_setup_tap,
+             "ldc1612_setup_tap oid=%c clock=%u threshold=%i"
+             " trsync_oid=%c trigger_reason=%c error_reason=%c");
+
+void
+command_query_ldc1612_tap_state(uint32_t *args)
+{
+    struct ldc1612 *ld = oid_lookup(args[0], command_config_ldc1612);
+    sendf("ldc1612_tap_state oid=%c homing=%c trigger_clock=%u"
+          , args[0], !!(ld->homing_flags & LH_CAN_TRIGGER), ld->homing_clock);
+}
+DECL_COMMAND(command_query_ldc1612_tap_state,
+             "query_ldc1612_tap_state oid=%c");
+
+// Check if a sample should trigger a tap event
+static void
+check_tap(struct ldc1612 *ld, uint32_t data)
+{
+    uint8_t flags = ld->homing_flags;
+    if (!(flags & LT_CAN_TRIGGER))
+        return;
+    // Filter Amplitude error bit
+    data &= ~(1 << 28);
+    if (data > 0x0fffffff) {
+        // Sensor reports an issue - cancel homing
+        ld->homing_flags = 0;
+        trsync_do_trigger(ld->ts, ld->error_reason);
+        return;
+    }
+    if (ld->sf == NULL) {
+        trsync_do_trigger(ld->ts, ld->error_reason + 16);
+        return;
+    }
+    // Raw data is noisy, it is filtered and stabilized
+    int32_t idata = sosfilt(ld->sf, data);
+    // Wait until homing sequence starts
+    uint32_t time = timer_read_time();
+    if ((flags & LT_AWAIT_HOMING) && timer_is_before(time, ld->homing_clock)) {
+        ld->prev_sample = idata;
+        return;
+    }
+    // Homing move started
+    flags &= ~LT_AWAIT_HOMING;
+    int32_t velocity = (idata - ld->prev_sample);
+    ld->prev_sample = idata;
+    // As long as the bed is moving towards the head
+    // Frequency is stable or increasing
+    // Velocity is >= 0 and increasing
+    // Backtrack velocity peak
+    if (velocity > ld->peak_vel) {
+        ld->trigger_start = time;
+        ld->peak_vel = velocity;
+    }
+    int32_t accel = velocity - ld->peak_vel;
+    // Upon tap velocity would decrease and acceleration now negative
+    if (accel < ld->max_deceleration) {
+        flags = 0;
+        ld->homing_clock = ld->trigger_start;
+        trsync_do_trigger(ld->ts, ld->trigger_reason);
+    }
+    ld->homing_flags = flags;
+}
 
 // Check if a sample should trigger a homing event
 static void
@@ -185,6 +285,7 @@ ldc1612_query(struct ldc1612 *ld, uint8_t oid)
                     | ((uint32_t)d[2] << 8)
                     | ((uint32_t)d[3]);
     check_home(ld, data);
+    check_tap(ld, data);
 
     // Flush local buffer if needed
     if (ld->sb.data_count + BYTES_PER_SAMPLE > ARRAY_SIZE(ld->sb.data))

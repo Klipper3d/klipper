@@ -2293,6 +2293,8 @@ sensor_type: ldc1612
 #samples_tolerance:
 #samples_tolerance_retries:
 #   See the "probe" section for information on these parameters.
+#tap_max_deceleration: -1
+#   Tap sensitivity, decrease value to make it less sensitive
 ```
 
 ### [axis_twist_compensation]
