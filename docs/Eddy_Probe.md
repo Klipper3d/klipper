@@ -32,8 +32,8 @@ tool starts, follow the steps described at
 ["the paper test"](Bed_Level.md#the-paper-test) to determine the
 actual distance between the nozzle and bed at the given location. Once
 those steps are complete one can `ACCEPT` the position. The tool will
-then move the the toolhead so that the sensor is above the point where
-the nozzle used to be and run a series of movements to correlate the
+then move the toolhead so that the sensor is above the point where the
+nozzle used to be and run a series of movements to correlate the
 sensor to Z positions. This will take a couple of minutes. After the
 tool completes, issue a `SAVE_CONFIG` command to save the results to
 the printer.cfg and restart.
