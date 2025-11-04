@@ -26,7 +26,7 @@ command to save the results to the printer.cfg and restart.
 
 The second step in calibration is to correlate the sensor readings to
 the corresponding Z heights. Home the printer and navigate the
-toolhead so that the nozzle is near the center of the bed. Then run an
+toolhead so that the nozzle is near the center of the bed. Then run a
 `PROBE_EDDY_CURRENT_CALIBRATE CHIP=my_eddy_probe` command. Once the
 tool starts, follow the steps described at
 ["the paper test"](Bed_Level.md#the-paper-test) to determine the
