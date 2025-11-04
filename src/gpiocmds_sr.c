@@ -10,11 +10,12 @@
 #include "board/misc.h" // timer_is_before
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // sched_add_timer
+#include "board/gpio_sr.h" // gpio_out_sr_setup
 
 struct digital_out_s {
     struct timer timer;
     uint32_t on_duration, off_duration, end_time;
-    struct gpio_out pin;
+    struct gpio_out_extended pin;
     uint32_t max_duration, cycle_time;
     struct move_queue_head mq;
     uint8_t flags;
@@ -36,7 +37,7 @@ static uint_fast8_t
 digital_toggle_event(struct timer *timer)
 {
     struct digital_out_s *d = container_of(timer, struct digital_out_s, timer);
-    gpio_out_toggle_noirq(d->pin);
+    gpio_out_sr_toggle_noirq(d->pin);
     d->flags ^= DF_ON;
     uint32_t waketime = d->timer.waketime;
     if (d->flags & DF_ON)
@@ -64,7 +65,7 @@ digital_load_event(struct timer *timer)
     struct digital_move *m = container_of(mn, struct digital_move, node);
     uint32_t on_duration = m->on_duration;
     uint8_t flags = on_duration ? DF_ON : 0;
-    gpio_out_write(d->pin, flags);
+    gpio_out_sr_write(d->pin, flags);
     move_free(m);
 
     // Calculate next end_time and flags
@@ -116,7 +117,7 @@ digital_load_event(struct timer *timer)
 void
 command_config_digital_out(uint32_t *args)
 {
-    struct gpio_out pin = gpio_out_setup(args[1], !!args[2]);
+    struct gpio_out_extended pin = gpio_out_sr_setup(args[1], !!args[2], args[5]);
     struct digital_out_s *d = oid_alloc(args[0], command_config_digital_out
                                         , sizeof(*d));
     d->pin = pin;
@@ -182,7 +183,7 @@ command_update_digital_out(uint32_t *args)
     if (!move_queue_empty(&d->mq))
         shutdown("update_digital_out not valid with active queue");
     uint8_t value = args[1], flags = d->flags, on_flag = value ? DF_ON : 0;
-    gpio_out_write(d->pin, on_flag);
+    gpio_out_sr_write(d->pin, on_flag);
     if (!on_flag != !(flags & DF_DEFAULT_ON) && d->max_duration) {
         d->timer.waketime = d->end_time = timer_read_time() + d->max_duration;
         d->timer.func = digital_load_event;
@@ -200,7 +201,7 @@ digital_out_shutdown(void)
     uint8_t i;
     struct digital_out_s *d;
     foreach_oid(i, d, command_config_digital_out) {
-        gpio_out_write(d->pin, d->flags & DF_DEFAULT_ON);
+        gpio_out_sr_write(d->pin, d->flags & DF_DEFAULT_ON);
         d->flags = d->flags & DF_DEFAULT_ON ? DF_ON | DF_DEFAULT_ON : 0;
         move_queue_clear(&d->mq);
     }

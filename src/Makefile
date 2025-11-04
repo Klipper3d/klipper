@@ -1,8 +1,19 @@
 # Main code build rules
 
 src-y += sched.c command.c basecmd.c debugcmds.c
-src-$(CONFIG_HAVE_GPIO) += initial_pins.c gpiocmds.c stepper.c endstop.c \
+src-$(CONFIG_HAVE_GPIO) += initial_pins.c endstop.c \
     trsync.c
+
+# If GPIO support is enabled, select which gpiocmds source to build:
+# - build gpiocmds_sr.c when shift registers are present
+# - otherwise build the regular gpiocmds.c
+ifeq ($(CONFIG_HAVE_GPIO),y)
+ifeq ($(CONFIG_HAVE_SHIFT_REG),y)
+src-$(CONFIG_HAVE_GPIO) += gpiocmds_sr.c shift_register.c stepper_sr.c
+else
+src-$(CONFIG_HAVE_GPIO) += gpiocmds.c stepper.c
+endif
+endif
 src-$(CONFIG_WANT_ADC) += adccmds.c
 src-$(CONFIG_WANT_SPI) += spicmds.c
 src-$(CONFIG_WANT_I2C) += i2ccmds.c
