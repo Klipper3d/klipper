@@ -116,6 +116,10 @@ config WANT_BUTTONS
     bool
     depends on HAVE_GPIO
     default y
+config WANT_SHIFT_REG
+    bool
+    depends on HAVE_GPIO && HAVE_SHIFT_REG
+    default y
 config WANT_TMCUART
     bool
     depends on HAVE_GPIO

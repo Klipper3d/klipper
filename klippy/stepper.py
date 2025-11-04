@@ -35,7 +35,19 @@ class MCU_stepper:
         self._step_pin = step_pin_params['pin']
         self._invert_step = step_pin_params['invert']
         printer = mcu.get_printer()
-        if dir_pin_params['chip'] is not mcu:
+        self._step_pin_sreg_oid = 0
+        if hasattr(step_pin_params['chip'], 'is_sreg'):
+            self._step_pin_sreg_oid = step_pin_params['chip'].get_oid()
+            if step_pin_params['chip'].get_mcu() is not self._mcu:
+                raise self._mcu.get_printer().config_error(
+                    "Stepper step pin must be on same mcu as dir pin")
+        self._dir_pin_sreg_oid = 0
+        if hasattr(dir_pin_params['chip'], 'is_sreg'):
+            self._dir_pin_sreg_oid = dir_pin_params['chip'].get_oid()
+            if dir_pin_params['chip'].get_mcu() is not self._mcu:
+                raise self._mcu.get_printer().config_error(
+                    "Stepper step pin must be on same mcu as dir pin")
+        elif dir_pin_params['chip'] is not self._mcu:
             raise printer.config_error(
                 "Stepper dir pin must be on same mcu as step pin")
         self._dir_pin = dir_pin_params['pin']

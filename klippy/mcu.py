@@ -434,14 +434,18 @@ class MCU_digital_out:
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
             "config_digital_out oid=%d pin=%s value=%d default_value=%d"
-            " max_duration=%d" % (self._oid, self._pin, self._start_value,
-                                  self._shutdown_value, mdur_ticks))
+            " max_duration=%d shift_register_oid=%d" % (self._oid, self._pin, self._start_value,
+                                self._shutdown_value, mdur_ticks, 0))
         self._mcu.add_config_cmd("update_digital_out oid=%d value=%d"
                                  % (self._oid, self._start_value),
                                  on_restart=True)
         cmd_queue = self._mcu.alloc_command_queue()
         self._set_cmd = self._mcu.lookup_command(
             "queue_digital_out oid=%c clock=%u on_ticks=%u", cq=cmd_queue)
+        self._update_cmd = self._mcu.lookup_command(
+            "update_digital_out oid=%c value=%c", cq=cmd_queue)
+    def update_digital(self, value):
+        self._update_cmd.send([self._oid, (not not value) ^ self._invert])
     def set_digital(self, print_time, value):
         clock = self._mcu.print_time_to_clock(print_time)
         self._set_cmd.send([self._oid, clock, (not not value) ^ self._invert],
@@ -515,9 +519,9 @@ class MCU_pwm:
         self._oid = self._mcu.create_oid()
         self._mcu.add_config_cmd(
             "config_digital_out oid=%d pin=%s value=%d"
-            " default_value=%d max_duration=%d"
+            " default_value=%d max_duration=%d shift_register_oid=%d"
             % (self._oid, self._pin, self._start_value >= 1.0,
-               self._shutdown_value >= 0.5, mdur_ticks))
+               self._shutdown_value >= 0.5, mdur_ticks, 0))
         self._mcu.add_config_cmd(
             "set_digital_out_pwm_cycle oid=%d cycle_ticks=%d"
             % (self._oid, cycle_ticks))
@@ -1217,6 +1221,8 @@ class MCU:
         return self._serial.get_msgparser().get_constants()
     def get_constant_float(self, name):
         return self._serial.get_msgparser().get_constant_float(name)
+    def add_enumerations(self, enumerations):
+        self._serial.get_msgparser().fill_enumerations(enumerations)
     # ClockSync wrappers
     def print_time_to_clock(self, print_time):
         return self._clocksync.print_time_to_clock(print_time)
