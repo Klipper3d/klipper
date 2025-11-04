@@ -1054,26 +1054,24 @@ serialqueue_extract_old(struct serialqueue *sq, int sentq
                         , struct pull_queue_message *q, int max)
 {
     int count = sentq ? DEBUG_QUEUE_SENT : DEBUG_QUEUE_RECEIVE;
-    struct list_head *rootp;
-    rootp = sentq ? &sq->old_sent : &sq->receiver.old_receive;
     struct list_head replacement, current;
     list_init(&replacement);
     debug_queue_alloc(&replacement, count);
     list_init(&current);
 
     // Atomically replace existing debug list with new zero'd list
-    if (rootp == &sq->receiver.old_receive) {
-        pthread_mutex_lock(&sq->receiver.lock);
-        list_join_tail(rootp, &current);
-        list_init(rootp);
-        list_join_tail(&replacement, rootp);
-        pthread_mutex_unlock(&sq->receiver.lock);
-    } else {
+    if (sentq) {
         pthread_mutex_lock(&sq->lock);
-        list_join_tail(rootp, &current);
-        list_init(rootp);
-        list_join_tail(&replacement, rootp);
+        list_join_tail(&sq->old_sent, &current);
+        list_init(&sq->old_sent);
+        list_join_tail(&replacement, &sq->old_sent);
         pthread_mutex_unlock(&sq->lock);
+    } else {
+        pthread_mutex_lock(&sq->receiver.lock);
+        list_join_tail(&sq->receiver.old_receive, &current);
+        list_init(&sq->receiver.old_receive);
+        list_join_tail(&replacement, &sq->receiver.old_receive);
+        pthread_mutex_unlock(&sq->receiver.lock);
     }
 
     // Walk the debug list
