@@ -32,9 +32,7 @@ class CutterSensor:
         self.reactor = self.printer.get_reactor()
         self.gcode = self.printer.lookup_object("gcode")
         self.toolhead = None
-        self.printer.register_event_handler(
-            "klippy:connect", self._handle_connect
-        )
+        self.printer.register_event_handler("klippy:connect", self._handle_connect)
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
         self.min_event_systime = self.reactor.NEVER
@@ -67,9 +65,7 @@ class CutterSensor:
         self.cut_speed = config.getfloat(
             "cut_speed", 100.0, above=50.0, minval=50.0, maxval=300.0
         )
-        self.cutter_position = config.getfloatlist(
-            "cutter_position_xy", count=2
-        )
+        self.cutter_position = config.getfloatlist("cutter_position_xy", count=2)
         self.pre_cutter_position = config.getfloatlist(
             "pre_cutter_position_xy", count=2
         )
@@ -81,18 +77,12 @@ class CutterSensor:
         gcode_macro = self.printer.load_object(config, "gcode_macro")
 
         if config.get("runout_gcode", None) is not None:
-            self.runout_gcode = gcode_macro.load_template(
-                config, "runout_gcode", ""
-            )
+            self.runout_gcode = gcode_macro.load_template(config, "runout_gcode", "")
         if config.get("insert_gcode", None) is not None:
-            self.insert_gcode = gcode_macro.load_template(
-                config, "insert_gcode"
-            )
+            self.insert_gcode = gcode_macro.load_template(config, "insert_gcode")
 
         if self.bucked_position_xy:
-            self.bucked_position_x, self.bucked_position_y = (
-                self.bucked_position_xy
-            )
+            self.bucked_position_x, self.bucked_position_y = self.bucked_position_xy
 
         self.cutter_position_x, self.cutter_position_y = self.cutter_position
         self.pre_cutter_position_x, self.pre_cutter_position_y = (
@@ -162,12 +152,8 @@ class CutterSensor:
 
         Call CUT gcode command to perform the filament cutting
         """
-        return_last_position = gcmd.get(
-            "MOVE_TO_LAST_POS", default=False, parser=bool
-        )
-        turn_off_heaters = gcmd.get(
-            "TURN_OFF_HEATER", default=False, parser=bool
-        )
+        return_last_position = gcmd.get("MOVE_TO_LAST_POS", default=False, parser=bool)
+        turn_off_heaters = gcmd.get("TURN_OFF_HEATER", default=False, parser=bool)
         temperature = gcmd.get(
             "TEMPERATURE", default=220.0, parser=float, minval=200, maxval=250
         )
@@ -214,16 +200,12 @@ class CutterSensor:
         self.gcode.run_script_from_command("G90\nM400")
         self.gcode.run_script_from_command("M83\nM400")
         self.gcode.run_script_from_command("G92 E0.0\nM400")
-        self.gcode.respond_info(
-            f"[CUTTER {self.name} sensor ] Heating extruder."
-        )
+        self.gcode.respond_info(f"[CUTTER {self.name} sensor ] Heating extruder.")
         self.heat_extruder(temp, wait=True)
         if self.bucked_position_xy:
             self.move_to_bucket()
         self.move_extruder_mm(distance=10, speed=self.extrude_speed)
-        self.move_extruder_mm(
-            distance=self.retract_length_mm, speed=self.extrude_speed
-        )
+        self.move_extruder_mm(distance=self.retract_length_mm, speed=self.extrude_speed)
         if self.custom_boundary_object:
             self.custom_boundary_object.restore_default_boundary()
         self.move_to_cutter_pos()
@@ -237,9 +219,7 @@ class CutterSensor:
             distance=self.extrude_length_mm + 10, speed=self.extrude_speed
         )
         self.toolhead.wait_moves()
-        self.reactor.update_timer(
-            self.unextrude_to_sensor_timer, self.reactor.NOW
-        )
+        self.reactor.update_timer(self.unextrude_to_sensor_timer, self.reactor.NOW)
 
         if self.prev_pos and return_last_pos:
             self.move_back()
@@ -255,9 +235,7 @@ class CutterSensor:
         if not self.is_cutting:
             return self.reactor.NEVER
         try:
-            self.move_extruder_mm(
-                distance=-10, speed=self.extrude_speed, wait=False
-            )
+            self.move_extruder_mm(distance=-10, speed=self.extrude_speed, wait=False)
             logging.info("[CUTTER] unextruding")
             return float(eventtime + float(10 / self.extrude_speed))
         except Exception as e:
@@ -309,9 +287,7 @@ class CutterSensor:
         except Exception as e:
             raise CutterSensorError(f"Unable to home: {e}")
 
-    def heat_extruder(
-        self, temp, wait: typing.Optional["bool"] = True
-    ) -> None:
+    def heat_extruder(self, temp, wait: typing.Optional["bool"] = True) -> None:
         """Heats the extruder and wait.
 
         Method returns when  temperature is [temp - 5 ; temp + 5].
@@ -331,9 +307,7 @@ class CutterSensor:
             extruder_heater = extruder.get_heater()
 
             while not (self.printer.is_shutdown() and wait):
-                self.gcode.respond_info(
-                    "Waiting for temperature to stabilize."
-                )
+                self.gcode.respond_info("Waiting for temperature to stabilize.")
                 heater_temp, target = extruder_heater.get_temp(eventtime)
                 if heater_temp >= (temp - 5) and heater_temp <= (temp + 5):
                     return
@@ -356,9 +330,7 @@ class CutterSensor:
             )
             self.toolhead.wait_moves()
         except Exception as e:
-            raise CutterSensorError(
-                f"Error performing performing cut move: {e}."
-            )
+            raise CutterSensorError(f"Error performing performing cut move: {e}.")
 
     def move_to_cutter_pos(self) -> None:
         """Moves the toolhead to the pre cutting position"""
@@ -394,10 +366,8 @@ class CutterSensor:
         try:
             if not self.toolhead:
                 return
-            if not self.custom_boundary_object:
-                self.gcode.respond_info(
-                    "Restoring original printer Boundaries."
-                )
+            if self.custom_boundary_object:
+                self.gcode.respond_info("Restoring original printer Boundaries.")
                 self.custom_boundary_object.restore_default_boundary()
 
             if not split:
@@ -406,13 +376,9 @@ class CutterSensor:
                     self.travel_speed,
                 )
             else:
-                self.toolhead.manual_move(
-                    [self.bucked_position_x], self.travel_speed
-                )
+                self.toolhead.manual_move([self.bucked_position_x], self.travel_speed)
                 self.toolhead.wait_moves()
-                self.toolhead.manual_move(
-                    [self.bucked_position_y], self.travel_speed
-                )
+                self.toolhead.manual_move([self.bucked_position_y], self.travel_speed)
 
             self.toolhead.wait_moves()
         except Exception as e:
@@ -430,9 +396,7 @@ class CutterSensor:
             )
             self.toolhead.wait_moves()
         except Exception as e:
-            raise CutterSensorError(
-                f"Error moving to the original position: {e}."
-            )
+            raise CutterSensorError(f"Error moving to the original position: {e}.")
 
     def _cutter_sensor_callback(self, eventtime, state):
         """Callback for the sensor state change"""
@@ -440,9 +404,7 @@ class CutterSensor:
             return
         self.filament_present = state
 
-        logging.info(
-            f"[CUTTER {self.name} Sensor] state changed to {str(state)}"
-        )
+        logging.info(f"[CUTTER {self.name} Sensor] state changed to {str(state)}")
 
         eventtime = self.reactor.monotonic()
         if (
@@ -457,14 +419,10 @@ class CutterSensor:
 
         if (
             self.load_filament_object
-            and self.load_filament_object.get_status(eventtime).get(
-                "state", False
-            )
+            and self.load_filament_object.get_status(eventtime).get("state", False)
         ) or (
             self.unload_filament_object
-            and self.unload_filament_object.get_status(eventtime).get(
-                "state", False
-            )
+            and self.unload_filament_object.get_status(eventtime).get("state", False)
         ):
             if state:
                 self.printer.send_event("cutter_sensor:filament_present")
@@ -483,9 +441,7 @@ class CutterSensor:
                     self.gcode.run_script_from_command("G90\nM400")
                     self.gcode.run_script_from_command("M83\nM400")
                     self.gcode.run_script_from_command("G92 E0.0\nM400")
-                    self.gcode.respond_info(
-                        f"[CUTTER {self.name} sensor] Cut done."
-                    )
+                    self.gcode.respond_info(f"[CUTTER {self.name} sensor] Cut done.")
                 self.printer.send_event("cutter_sensor:no_filament")
             self.min_event_systime = self.reactor.monotonic() + 2.0
 
