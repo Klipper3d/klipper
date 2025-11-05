@@ -149,4 +149,6 @@ config SIMULAVR
 
          If unsure, select "N".
 
+source "src/avr/t5uid1/Kconfig"
+
 endif

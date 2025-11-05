@@ -10,6 +10,7 @@
 
 #define PCLK_TIMER0 1
 #define PCLK_UART0 3
+#define PCLK_UART1 4
 #define PCLK_PWM1 6
 #define PCLK_I2C0 7
 #define PCLK_SSP1 10
@@ -19,6 +20,7 @@
 #define PCLK_UART3 25
 #define PCLK_I2C2 26
 #define PCLK_USB 31
+
 int is_enabled_pclock(uint32_t pclk);
 void enable_pclock(uint32_t pclk);
 uint32_t get_pclock_frequency(uint32_t pclk);

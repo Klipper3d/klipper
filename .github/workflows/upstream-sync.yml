@@ -1,0 +1,16 @@
+name: Upstream sync
+
+on:
+  schedule:
+    - cron: '30 21 * * *'
+  workflow_dispatch:
+jobs:
+  sync-with-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - name: GitHub Sync to Upstream Repository
+        uses: dabreadman/sync-upstream-repo@v1.3.0
+        with: 
+          upstream_repo: https://github.com/KevinOConnor/klipper.git
+          upstream_branch: master
+          token: ${{ secrets.GITHUB_TOKEN }}

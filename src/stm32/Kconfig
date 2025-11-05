@@ -553,4 +553,6 @@ config STM32_CANBUS_PH13_PH14
     bool
     default y if STM32_MMENU_CANBUS_PH13_PH14 || STM32_CMENU_CANBUS_PH13_PH14
 
+source "src/stm32/t5uid1/Kconfig"
+
 endif
