@@ -1412,6 +1412,24 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<p>20251106: The status fields <code>{printer.toolhead.position}</code>,
+<code>{printer.gcode_move.position}</code>,
+<code>{printer.gcode_move.gcode_position}</code>, and
+<code>{printer.motion_report.live_position}</code> are changing. These
+coordinates used to always contain four components, but now may
+contain additional components. The ordering and number of components
+may change at run-time - see the
+<a href="Status_Reference.html#accessing-coordinates">status reference</a> for
+important details. Accessing any of these coordinates in macros using
+the ".e" accessor is deprecated - use something like
+<code>{printer.toolhead.position[printer.gcode_move.axis_map.E]}</code> as an
+alternative.</p>
+<p>20251106: The status fields <code>{printer.gcode_move.homing_origin}</code>,
+<code>{printer.toolhead.axis_min}</code>, and <code>{printer.toolhead.axis_max}</code>
+currently contain four components where the fourth component is always
+zero. This behavior is deprecated. In the future these coordinates may
+contain only three components. For additional information see the
+<a href="Status_Reference.html#accessing-coordinates">status reference</a>.</p>
 <p>20251010: During normal printing the command processing will now
 attempt to stay one second ahead of printer movement (reduced from two
 seconds previously).</p>
