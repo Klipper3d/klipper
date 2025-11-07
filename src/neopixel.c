@@ -75,7 +75,7 @@ neopixel_delay(neopixel_time_t start, neopixel_time_t ticks)
 #endif
 
 // Minimum amount of time for a '1 bit' to be reliably detected
-#define PULSE_LONG_TICKS  nsecs_to_ticks(650)
+#define PULSE_LONG_TICKS  nsecs_to_ticks(800)
 // Minimum amount of time for any level change to be reliably detected
 #define EDGE_MIN_TICKS    nsecs_to_ticks(200)
 // Minimum average time needed to transmit each bit (two level changes)
