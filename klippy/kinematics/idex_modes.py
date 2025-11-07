@@ -24,14 +24,15 @@ class DualCarriages:
             pc = primary_rails[i]
             safe_dist[i] = min(abs(pc.position_min - dc.position_min),
                                abs(pc.position_max - dc.position_max))
-        self.primary_dcs = [None] * 3
+        self.primary_mode_dcs = [None] * 3
         self.primary_rails = []
         for i, c in enumerate(primary_rails):
+            activate = self.primary_mode_dcs[axes[i]] is None
             dc_rail = DualCarriagesRail(
                     printer, c, dual_rails[i], axes[i], safe_dist[i],
-                    active=(self.primary_dcs[axes[i]] is None))
-            if dc_rail.is_active():
-                self.primary_dcs[axes[i]] = dc_rail
+                    active=activate)
+            if activate:
+                self.primary_mode_dcs[axes[i]] = dc_rail
             self.primary_rails.append(dc_rail)
         self.dual_rails = [
                 DualCarriagesRail(printer, c, primary_rails[i],
@@ -82,9 +83,9 @@ class DualCarriages:
     def get_axes(self):
         return self.axes
     def get_primary_rail(self, axis):
-        if self.primary_dcs[axis] is None:
+        if self.primary_mode_dcs[axis] is None:
             return None
-        return self.primary_dcs[axis].rail
+        return self.primary_mode_dcs[axis].rail
     def get_dc_rail_wrapper(self, rail):
         for dc_rail in self.dc_rails.values():
             if dc_rail.rail == rail:
@@ -110,7 +111,7 @@ class DualCarriages:
         if target_dc.mode != PRIMARY:
             newpos = pos[:axis] + [target_dc.get_axis_position(pos)] \
                         + pos[axis+1:]
-            self.primary_dcs[axis] = target_dc
+            self.primary_mode_dcs[axis] = target_dc
             target_dc.activate(PRIMARY, newpos, old_position=pos)
             toolhead.set_position(newpos)
         kin.update_limits(axis, target_dc.rail.get_range())
@@ -138,49 +139,62 @@ class DualCarriages:
             status.update({('carriage_%d' % (i,)) : dc.mode
                            for i, dc in enumerate(self.dc_rails.values())})
         return status
-    def get_kin_range(self, toolhead, mode, carriage):
+    def get_kin_range(self, toolhead, axis):
         pos = toolhead.get_position()
-        dcs = [dc for dc in self.dc_rails.values()
-               if carriage.rail in [dc.rail, dc.dual_rail]]
-        if len(dcs) == 1:
-            return (dcs[0].rail.position_min, dcs[0].rail.position_max)
-        axes_pos = [dc.get_axis_position(pos) for dc in dcs]
-        dc0_rail = dcs[0].rail
-        dc1_rail = dcs[1].rail
-        if mode != PRIMARY or dcs[0].is_active():
-            range_min = dc0_rail.position_min
-            range_max = dc0_rail.position_max
-        else:
-            range_min = dc1_rail.position_min
-            range_max = dc1_rail.position_max
-        safe_dist = dcs[0].safe_dist
-        if not safe_dist:
-            return (range_min, range_max)
+        primary_carriage = self.primary_mode_dcs[axis]
+        if primary_carriage is None:
+            return (1.0, -1.0)
+        primary_pos = primary_carriage.get_axis_position(pos)
+        range_min = primary_carriage.rail.position_min
+        range_max = primary_carriage.rail.position_max
+        for carriage in self.dc_rails.values():
+            if carriage.axis != axis:
+                continue
+            dcs = [carriage] + [dc for dc in self.dc_rails.values()
+                                if carriage.rail is dc.dual_rail]
+            axes_pos = [dc.get_axis_position(pos) for dc in dcs]
+            # Check how dcs[0] affects the motion range of primary_carriage
+            if not dcs[0].is_active():
+                continue
+            elif dcs[0].mode == COPY:
+                range_min = max(range_min, primary_pos
+                                + dcs[0].rail.position_min - axes_pos[0])
+                range_max = min(range_max, primary_pos
+                                + dcs[0].rail.position_max - axes_pos[0])
+            elif dcs[0].mode == MIRROR:
+                range_min = max(range_min, primary_pos
+                                + axes_pos[0] - dcs[0].rail.position_max)
+                range_max = min(range_max, primary_pos
+                                + axes_pos[0] - dcs[0].rail.position_min)
+            safe_dist = dcs[0].safe_dist
+            if not safe_dist or len(dcs) == 1:
+                continue
+            if dcs[0].mode == dcs[1].mode or \
+                    set((dcs[0].mode, dcs[1].mode)) == set((PRIMARY, COPY)):
+                # dcs[0] and dcs[1] carriages move in the same direction and
+                # cannot collide with each other
+                continue
 
-        if mode == COPY:
-            range_min = max(range_min,
-                            axes_pos[0] - axes_pos[1] + dc1_rail.position_min)
-            range_max = min(range_max,
-                            axes_pos[0] - axes_pos[1] + dc1_rail.position_max)
-        elif mode == MIRROR:
+            # Compute how much dcs[0] can move towards dcs[1]
+            dcs_dist = axes_pos[1] - axes_pos[0]
             if self.get_dc_order(dcs[0], dcs[1]) > 0:
-                range_min = max(range_min,
-                                0.5 * (sum(axes_pos) + safe_dist))
-                range_max = min(range_max,
-                                sum(axes_pos) - dc1_rail.position_min)
+                safe_move_dist = dcs_dist + safe_dist
             else:
-                range_max = min(range_max,
-                                0.5 * (sum(axes_pos) - safe_dist))
-                range_min = max(range_min,
-                                sum(axes_pos) - dc1_rail.position_max)
-        else:
-            # mode == PRIMARY
-            active_idx = 1 if dcs[1].is_active() else 0
-            inactive_idx = 1 - active_idx
-            if self.get_dc_order(dcs[active_idx], dcs[inactive_idx]) > 0:
-                range_min = max(range_min, axes_pos[inactive_idx] + safe_dist)
-            else:
-                range_max = min(range_max, axes_pos[inactive_idx] - safe_dist)
+                safe_move_dist = dcs_dist - safe_dist
+            if dcs[1].is_active():
+                safe_move_dist *= 0.5
+
+            if dcs[0].mode in (PRIMARY, COPY):
+                if self.get_dc_order(dcs[0], dcs[1]) > 0:
+                    range_min = max(range_min, primary_pos + safe_move_dist)
+                else:
+                    range_max = min(range_max, primary_pos + safe_move_dist)
+            else:  # dcs[0].mode == MIRROR
+                if self.get_dc_order(dcs[0], dcs[1]) > 0:
+                    range_max = min(range_max, primary_pos - safe_move_dist)
+                else:
+                    range_min = max(range_min, primary_pos - safe_move_dist)
+
         if range_min > range_max:
             # During multi-MCU homing it is possible that the carriage
             # position will end up below position_min or above position_max
@@ -217,13 +231,13 @@ class DualCarriages:
         axis = dc.axis
         if mode == INACTIVE:
             dc.inactivate(toolhead.get_position())
-            if self.primary_dcs[axis] is dc:
-                self.primary_dcs[axis] = None
+            if self.primary_mode_dcs[axis] is dc:
+                self.primary_mode_dcs[axis] = None
         elif mode == PRIMARY:
             self.toggle_active_dc_rail(dc)
         else:
             dc.activate(mode, toolhead.get_position())
-        kin.update_limits(axis, self.get_kin_range(toolhead, mode, dc))
+        kin.update_limits(axis, self.get_kin_range(toolhead, axis))
     def _handle_ready(self):
         for dc_rail in self.dc_rails.values():
             dc_rail.apply_transform()
@@ -251,7 +265,7 @@ class DualCarriages:
         if mode not in self.VALID_MODES:
             raise gcmd.error("Invalid mode=%s specified" % (mode,))
         if mode in [COPY, MIRROR]:
-            if self.primary_dcs[dc_rail.axis] in [None, dc_rail]:
+            if self.primary_mode_dcs[dc_rail.axis] in [None, dc_rail]:
                 raise gcmd.error(
                         "Must activate another carriage as PRIMARY first")
             curtime = self.printer.get_reactor().monotonic()
