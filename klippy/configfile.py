@@ -147,9 +147,8 @@ class ConfigWrapper:
 class ConfigFileReader:
     def read_config_file(self, filename):
         try:
-            f = open(filename, 'r')
-            data = f.read()
-            f.close()
+            with open(filename, 'r') as f:
+                data = f.read()
         except:
             msg = "Unable to open config file %s" % (filename,)
             logging.exception(msg)
@@ -395,9 +394,8 @@ class ConfigAutoSave:
         logging.info("SAVE_CONFIG to '%s' (backup in '%s')",
                      cfgname, backup_name)
         try:
-            f = open(temp_name, 'w')
-            f.write(data)
-            f.close()
+            with open(temp_name, 'w') as f:
+                f.write(data)
             os.rename(cfgname, backup_name)
             os.rename(temp_name, cfgname)
         except:
