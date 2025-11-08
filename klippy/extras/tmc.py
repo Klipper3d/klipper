@@ -316,6 +316,8 @@ class TMCStallguardDump:
 # G-Code command helpers
 ######################################################################
 
+MIN_SCHED_TIME = 0.1
+
 class TMCCommandHelper:
     def __init__(self, config, mcu_tmc, current_helper):
         self.printer = config.get_printer()
@@ -326,6 +328,7 @@ class TMCCommandHelper:
         self.echeck_helper = TMCErrorCheck(config, mcu_tmc)
         self.record_helper = TMCStallguardDump(config, mcu_tmc)
         self.fields = mcu_tmc.get_fields()
+        self.fields_cache = {}
         self.read_registers = self.read_translate = None
         self.toff = None
         self.mcu_phase_offset = None
@@ -379,7 +382,10 @@ class TMCCommandHelper:
             value = TMCtstepHelper(self.mcu_tmc, velocity,
                                    pstepper=self.stepper)
         reg_val = self.fields.set_field(field_name, value)
-        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        toolhead = self.printer.lookup_object('toolhead')
+        systime = self.printer.get_reactor().monotonic()
+        tgt_time = systime + MIN_SCHED_TIME
+        print_time = toolhead.mcu.estimated_print_time(tgt_time)
         self.mcu_tmc.set_register(reg_name, reg_val, print_time)
     cmd_SET_TMC_CURRENT_help = "Set the current of a TMC driver"
     def cmd_SET_TMC_CURRENT(self, gcmd):
@@ -394,7 +400,9 @@ class TMCCommandHelper:
             if hold_current is None:
                 hold_current = req_hold_cur
             toolhead = self.printer.lookup_object('toolhead')
-            print_time = toolhead.get_last_move_time()
+            systime = self.printer.get_reactor().monotonic()
+            tgt_time = systime + MIN_SCHED_TIME
+            print_time = toolhead.mcu.estimated_print_time(tgt_time)
             ch.set_current(run_current, hold_current, print_time)
             prev_cur, prev_hold_cur, req_hold_cur, max_cur = ch.get_current()
         # Report values
@@ -509,7 +517,15 @@ class TMCCommandHelper:
                'run_current': current[0],
                'hold_current': current[1]}
         res.update(self.echeck_helper.get_status(eventtime))
+        if res["drv_status"]:
+            res["drv_status"].update(self.fields_cache)
+        else:
+            res["drv_status"] = self.fields_cache
         return res
+    def _fcache_update(self, reg, val):
+        fields = self.fields.get_reg_fields(reg, val)
+        for field, v in fields.items():
+            self.fields_cache[field] = v
     # DUMP_TMC support
     def setup_register_dump(self, read_registers, read_translate=None):
         self.read_registers = read_registers
@@ -528,12 +544,14 @@ class TMCCommandHelper:
             if (val is not None) and (reg_name not in self.read_registers):
                 # write-only register
                 gcmd.respond_info(self.fields.pretty_format(reg_name, val))
+                self._fcache_update(reg_name, val)
             elif reg_name in self.read_registers:
                 # readable register
                 val = self.mcu_tmc.get_register(reg_name)
                 if self.read_translate is not None:
                     reg_name, val = self.read_translate(reg_name, val)
                 gcmd.respond_info(self.fields.pretty_format(reg_name, val))
+                self._fcache_update(reg_name, val)
             else:
                 raise gcmd.error("Unknown register name '%s'" % (reg_name))
         else:
@@ -541,9 +559,11 @@ class TMCCommandHelper:
             for reg_name, val in self.fields.registers.items():
                 if reg_name not in self.read_registers:
                     gcmd.respond_info(self.fields.pretty_format(reg_name, val))
+                    self._fcache_update(reg_name, val)
             gcmd.respond_info("========== Queried registers ==========")
             for reg_name in self.read_registers:
                 val = self.mcu_tmc.get_register(reg_name)
+                self._fcache_update(reg_name, val)
                 if self.read_translate is not None:
                     reg_name, val = self.read_translate(reg_name, val)
                 gcmd.respond_info(self.fields.pretty_format(reg_name, val))
