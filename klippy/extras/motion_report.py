@@ -241,7 +241,7 @@ class PrinterMotionReport:
                 pos, velocity = ehandler.get_trapq_position(print_time)
                 if pos is not None:
                     live_pos[ea_index] = pos[0]
-                    if ea_index == 4:
+                    if ea_index == 3:
                         evelocity = velocity
         # Report status
         self.last_status = dict(self.last_status)
