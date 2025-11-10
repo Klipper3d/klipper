@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -ne 1 ]]; then
+	echo "Usage: ${0} OBJCOPY_BIN < filelist..."
+	exit 1
+fi
+
+OBJCOPY_BIN="${1}"
+
+TMP_FILE="$(mktemp --suffix '.ctr')"
+cleanup() {
+	rm -f "${TMP_FILE}"
+}
+trap cleanup EXIT
+
+while read -r OBJECT_PATH; do
+	"${OBJCOPY_BIN}" \
+		-O 'binary' \
+		-j '.compile_time_request' \
+		"${OBJECT_PATH}" \
+		"${TMP_FILE}"
+
+	# Convert NULL-byte to newline and filter out empty lines
+	tr '\0' '\n' < "${TMP_FILE}" | awk 'NF'
+	rm -f "${TMP_FILE}"
+done

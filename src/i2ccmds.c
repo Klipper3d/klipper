@@ -68,8 +68,9 @@ int i2c_dev_write(struct i2cdev_s *i2c, uint8_t write_len, uint8_t *data)
     uint_fast8_t flags = i2c->flags;
     if (CONFIG_WANT_SOFTWARE_I2C && flags & IF_SOFTWARE)
         return i2c_software_write(i2c->i2c_sw, write_len, data);
-    else
-        return i2c_write(i2c->i2c_hw, write_len, data);
+
+    i2c_write(i2c->i2c_hw, write_len, data);
+    return I2C_BUS_SUCCESS;
 }
 
 void command_i2c_write(uint32_t *args)
@@ -89,8 +90,9 @@ int i2c_dev_read(struct i2cdev_s *i2c, uint8_t reg_len, uint8_t *reg
     uint_fast8_t flags = i2c->flags;
     if (CONFIG_WANT_SOFTWARE_I2C && flags & IF_SOFTWARE)
         return i2c_software_read(i2c->i2c_sw, reg_len, reg, read_len, read);
-    else
-        return i2c_read(i2c->i2c_hw, reg_len, reg, read_len, read);
+
+    i2c_read(i2c->i2c_hw, reg_len, reg, read_len, read);
+    return I2C_BUS_SUCCESS;
 }
 
 void command_i2c_read(uint32_t *args)

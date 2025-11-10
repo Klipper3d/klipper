@@ -4,6 +4,7 @@
 #include <stdarg.h> // va_list
 #include <stddef.h>
 #include <stdint.h> // uint8_t
+#include "sched.h" // sched_shutdown
 #include "ctr.h" // DECL_CTR
 
 // Declare a function to run when the specified command is received

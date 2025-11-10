@@ -1,0 +1,40 @@
+#SUPPRESS stats
+
+# @todo INLINE_STEPPER_HACK?
+# 80
+
+allocate_oids count=3
+config_stepper oid=0 step_pin=GPIO_NUM_18 dir_pin=GPIO_NUM_19 invert_step=0 step_pulse_ticks=32
+config_stepper oid=1 step_pin=GPIO_NUM_21 dir_pin=GPIO_NUM_22 invert_step=0 step_pulse_ticks=32
+config_stepper oid=2 step_pin=GPIO_NUM_23 dir_pin=GPIO_NUM_25 invert_step=0 step_pulse_ticks=32
+finalize_config crc=0
+
+SET start_clock {clock+freq}
+SET ticks 70
+# ._. ?
+
+reset_step_clock oid=0 clock={start_clock}
+set_next_step_dir oid=0 dir=0
+queue_step oid=0 interval={ticks} count=60000 add=0
+set_next_step_dir oid=0 dir=1
+queue_step oid=0 interval=3000 count=1 add=0
+
+reset_step_clock oid=1 clock={start_clock}
+set_next_step_dir oid=1 dir=0
+queue_step oid=1 interval={ticks} count=60000 add=0
+set_next_step_dir oid=1 dir=1
+queue_step oid=1 interval=3000 count=1 add=0
+
+reset_step_clock oid=2 clock={start_clock}
+set_next_step_dir oid=2 dir=0
+queue_step oid=2 interval={ticks} count=60000 add=0
+set_next_step_dir oid=2 dir=1
+queue_step oid=2 interval=3000 count=1 add=0
+
+stepper_get_position oid=1
+
+clear_shutdown
+
+ECHO Test result is: {"%.0fK" % (3. * freq / ticks / 1000.)}
+
+The benchmarks are run with parameters suitable for TMC Drivers. For micro-controllers that support STEPPER_BOTH_EDGE=1 (as reported in the MCU config line when console.py first starts) use step_pulse_duration=0 and invert_step=-1 to enable optimized stepping on both edges of the step pulse. For other micro-controllers use a step_pulse_duration corresponding to 100ns.

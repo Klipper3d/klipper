@@ -16,6 +16,7 @@
 
 #define RX_BUFFER_SIZE 192
 
+// @todo: move transmit_buf to variable
 static uint8_t receive_buf[RX_BUFFER_SIZE], receive_pos;
 static uint8_t transmit_buf[96], transmit_pos, transmit_max;
 

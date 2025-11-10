@@ -4,8 +4,12 @@
 
 #define barrier() __asm__ __volatile__("": : :"memory")
 
+#ifndef likely
 #define likely(x)       __builtin_expect(!!(x), 1)
+#endif
+#ifndef unlikely
 #define unlikely(x)     __builtin_expect(!!(x), 0)
+#endif
 
 #define noinline __attribute__((noinline))
 #ifndef __always_inline

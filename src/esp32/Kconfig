@@ -1,0 +1,120 @@
+# Kconfig settings for ESP32
+
+if MACH_ESPRESSIF_ESP32
+
+config ESP32_SELECT
+    bool
+    default y
+    # @todo: actually implement this on FW
+    select HAVE_GPIO
+    #select HAVE_GPIO_ADC
+    #select HAVE_GPIO_SPI
+    #select HAVE_GPIO_I2C
+    #select HAVE_GPIO_HARD_PWM
+    #select HAVE_CHIPID
+
+config BOARD_DIRECTORY
+    string
+    default "esp32"
+
+choice
+    prompt "Processor model (IDF target)"
+    default MACH_esp32
+    
+	config MACH_esp32
+		bool "esp32"
+	config MACH_esp32s2
+		bool "esp32s2"
+	config MACH_esp32c3
+		bool "esp32c3"
+	config MACH_esp32s3
+		bool "esp32s3"
+	config MACH_esp32c2
+		bool "esp32c2"
+	config MACH_esp32c6
+		bool "esp32c6"
+	config MACH_esp32h2
+		bool "esp32h2"
+	config MACH_esp32p4
+		bool "esp32p4"
+	config MACH_esp32c5
+		bool "esp32c5"
+	config MACH_esp32c61
+		bool "esp32c61"
+	config MACH_esp_linux
+		bool "linux"
+	config MACH_esp32h21
+		bool "esp32h21"
+	config MACH_esp32h4
+	    bool "esp32h4"
+endchoice
+
+config MCU
+    string
+	default "esp32" if MACH_esp32
+	default "esp32s2" if MACH_esp32s2
+	default "esp32c3" if MACH_esp32c3
+	default "esp32s3" if MACH_esp32s3
+	default "esp32c2" if MACH_esp32c2
+	default "esp32c6" if MACH_esp32c6
+	default "esp32h2" if MACH_esp32h2
+	default "esp32p4" if MACH_esp32p4
+	default "esp32c5" if MACH_esp32c5
+	default "esp32c61" if MACH_esp32c61
+	default "linux" if MACH_esp_linux
+	default "esp32h21" if MACH_esp32h21
+	default "esp32h4" if MACH_esp32h4
+
+config CLOCK_FREQ
+    int "Timer frequency (in Hz)"
+    default 10000000
+    help
+        The frequency of the hardware timer used for scheduling
+
+# INTERNAL
+config USB_HAS_CDC
+    bool
+    default y if (MCU = "esp32s3")
+
+# Communication interface
+config USBSERIAL
+    depends on USB_HAS_CDC
+    bool
+    default y
+config SERIAL
+    depends on !USBSERIAL
+    bool
+    default y
+
+choice
+    prompt "Communication interface" if LOW_LEVEL_OPTIONS
+    default ESP32_SERIAL_UART
+
+    config ESP32_SERIAL_UART
+        bool "UART"
+
+    config ESP32_SERIAL_USB_CDC
+        depends on USBSERIAL
+        bool "USB CDC"
+endchoice
+
+# UART Console Configuration
+menu "UART Console Settings"
+    depends on ESP32_SERIAL_UART
+
+    config UART_TX_PIN
+        int "UART TX Pin"
+        range 0 48
+        default 14
+        help
+            GPIO pin for UART TX (default: GPIO 1)
+
+    config UART_RX_PIN
+        int "UART RX Pin"
+        range 0 48
+        default 12
+        help
+            GPIO pin for UART RX (default: GPIO 3)
+endmenu
+
+endif
