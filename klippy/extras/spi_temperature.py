@@ -25,7 +25,7 @@ class SensorBase:
         # measurement about once every 100 ms. Upper bound is 1.5 to allow
         # for a single missed packet.
         self._report_time = config.getfloat(
-            "tc_report_time", default=0.3, minval=0.1, maxval=1.5)
+            "tc_report_time", default=0.3, minval=0.1, maxval=3)
         self.spi = bus.MCU_SPI_from_config(
             config, spi_mode, pin_option="sensor_pin", default_speed=4000000)
         if config_cmd is not None:
