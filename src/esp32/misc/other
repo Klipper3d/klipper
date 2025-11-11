@@ -1,0 +1,11 @@
+#SUPPRESS stats
+
+# @todo INLINE_STEPPER_HACK?
+# 80
+
+clear_shutdown
+
+ECHO Test result is: {"%.0fK" % (3. * freq / ticks / 1000.)}
+
+The benchmarks are run with parameters suitable for TMC Drivers. For micro-controllers that support STEPPER_BOTH_EDGE=1 (as reported in the MCU config line when console.py first starts) use step_pulse_duration=0 and invert_step=-1 to enable optimized stepping on both edges of the step pulse. For other micro-controllers use a step_pulse_duration corresponding to 100ns.
+
