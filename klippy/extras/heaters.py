@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, logging, threading
+from math import ceil
 
 
 ######################################################################
@@ -46,6 +47,8 @@ class Heater:
         # pwm caching
         self.next_pwm_time = 0.
         self.last_pwm_value = 0.
+        self._last_pwm_time = 0.
+        self._last_control_time = 0.
         # Setup control algorithm sub-class
         algos = {'watermark': ControlBangBang, 'pid': ControlPID}
         algo = config.getchoice('control', algos)
@@ -54,9 +57,9 @@ class Heater:
         heater_pin = config.get('heater_pin')
         ppins = self.printer.lookup_object('pins')
         self.mcu_pwm = ppins.setup_pin('pwm', heater_pin)
-        pwm_cycle_time = config.getfloat('pwm_cycle_time', 0.100, above=0.,
-                                         maxval=self.pwm_delay)
-        self.mcu_pwm.setup_cycle_time(pwm_cycle_time)
+        self._pwm_cycle_time = config.getfloat(
+            'pwm_cycle_time', 0.100, above=0., maxval=MAX_HEAT_TIME)
+        self.mcu_pwm.setup_cycle_time(self._pwm_cycle_time)
         self.mcu_pwm.setup_max_duration(MAX_HEAT_TIME)
         # Load additional modules
         self.printer.load_object(config, "verify_heater %s" % (short_name,))
@@ -75,9 +78,17 @@ class Heater:
             # No significant change in value - can suppress update
             return
         pwm_time = read_time + self.pwm_delay
-        self.next_pwm_time = (pwm_time + MAX_HEAT_TIME
-                              - (3. * self.pwm_delay + 0.001))
+        self.next_pwm_time = (pwm_time + MAX_HEAT_TIME -
+                              (3. * self.pwm_delay +
+                               self._pwm_cycle_time + 0.001))
         self.last_pwm_value = value
+        if self._last_pwm_time and self.last_pwm_value < pwm_time:
+            delta_pwm_time = pwm_time - self._last_pwm_time
+            cycles = ceil(round(delta_pwm_time / self._pwm_cycle_time, 3))
+            if not cycles:
+                return
+            pwm_time = self._last_pwm_time + cycles * self._pwm_cycle_time
+        self._last_pwm_time = pwm_time
         self.mcu_pwm.set_pwm(pwm_time, value)
         #logging.debug("%s: pwm=%.3f@%.3f (from %.3f@%.3f [%.3f])",
         #              self.name, value, pwm_time,
@@ -87,7 +98,12 @@ class Heater:
             time_diff = read_time - self.last_temp_time
             self.last_temp = temp
             self.last_temp_time = read_time
-            self.control.temperature_update(read_time, temp, self.target_temp)
+            next_read_time = read_time + self.sensor.get_report_time_delta()
+            next_control_time = self._last_control_time + self._pwm_cycle_time
+            if next_read_time > next_control_time:
+                self._last_control_time = read_time
+                self.control.temperature_update(
+                    read_time, temp, self.target_temp)
             temp_diff = temp - self.smoothed_temp
             adj_time = min(time_diff * self.inv_smooth_time, 1.)
             self.smoothed_temp += temp_diff * adj_time
