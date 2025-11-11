@@ -32,7 +32,7 @@ void irq_restore(irqstatus_t flag)
 
 void irq_poll(void)
 {
-    //timer_dispatch_if_pending();
+
 }
 
 void irq_wait(void)
