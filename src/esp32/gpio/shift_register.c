@@ -15,14 +15,17 @@
 #define SPI_SR_DATA_PIN     (11)
 #define SPI_SR_CLK_PIN      (12)
 #define SPI_SR_LATCH_PIN    (13)
+#define SPI_SR_BYTE_NO      (2)
+#define SPI_SR_BIT_NO       (SPI_SR_BYTE_NO * 8)
+// @todo check max
+
+// @todo -1?
+DECL_ENUMERATION_RANGE("pin", "SR_0", (1u << 7), SPI_SR_BIT_NO);
 
 spi_dev_t* spi = NULL;
-volatile static union {
-    uint32_t u32;
-    uint8_t u8[4];
-} sr_status = { .u32 = 0x00 };
 
-// @todo check if transfer finished
+volatile static uint8_t sr_data[SPI_SR_BYTE_NO];
+
 void sr_init()
 {
     spi = SPI_LL_GET_HW(SPI_SR_BUS);
@@ -78,17 +81,20 @@ void sr_init()
     spi_ll_set_miso_bitlen(spi, 0);
     spi_ll_clear_int_stat(spi);
     spi_ll_set_tx_lsbfirst(spi, 0);
-    spi_ll_set_mosi_bitlen(spi, 32);
+    spi_ll_set_mosi_bitlen(spi, SPI_SR_BIT_NO);
     spi_ll_enable_mosi(spi, true);
     spi_ll_apply_config(spi);
 
-    while (1) {
-        spi_ll_write_buffer(spi, sr_status.u8, sizeof(sr_status.u32) * sizeof(sr_status.u8));
-        spi_ll_user_start(spi);
-
-        sr_status.u32 += 1;
-
-        esp_rom_delay_us(60);
-    }
+    // Initial write to the SR to set it to a known state
+    memset(sr_data, 0, SPI_SR_BYTE_NO);
+    sr_write();
 }
 DECL_INIT(sr_init);
+
+// @todo Critical section? noirq?
+// @todo check if transfer finished
+void sr_write()
+{
+    spi_ll_write_buffer(spi, sr_data, SPI_SR_BIT_NO);
+    spi_ll_user_start(spi);
+}
