@@ -5,6 +5,7 @@
 #include "esp_intr_types.h"
 #include "driver/uart.h"
 #include "hal/uart_ll.h"
+#include "soc/interrupts.h"
 #include "soc/uart_struct.h"
 
 #define UART_NUM    UART_NUM_2
