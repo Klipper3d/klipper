@@ -120,7 +120,7 @@ Klipper supports many standard 3d printer features:
 
 * Support for common temperature sensors (eg, common thermistors,
   AD595, AD597, AD849x, PT100, PT1000, MAX6675, MAX31855, MAX31856,
-  MAX31865, BME280, HTU21D, DS18B20, AHT10, SHT3x, and LM75). Custom
+  MAX31865, BME280, HTU21D, DS18B20, AHT1X, AHT2X, AHT3X, SHT3x, and LM75). Custom
   thermistors and custom analog temperature sensors can also be
   configured. One can monitor the internal micro-controller
   temperature sensor and the internal temperature sensor of a
