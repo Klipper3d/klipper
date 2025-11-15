@@ -88,7 +88,7 @@ void sr_init()
 
         sr_status.u32 += 1;
 
-        esp_rom_delay_us(30);
+        esp_rom_delay_us(60);
     }
 }
 DECL_INIT(sr_init);
