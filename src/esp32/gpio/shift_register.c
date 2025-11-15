@@ -83,14 +83,12 @@ void sr_init()
     spi_ll_apply_config(spi);
 
     while (1) {
-        // assert(spi_hal_usr_is_done(&host->hal));
         spi_ll_write_buffer(spi, sr_status.u8, sizeof(sr_status.u32) * sizeof(sr_status.u8));
-        //spi_ll_apply_config(spi);
         spi_ll_user_start(spi);
 
         sr_status.u32 += 1;
 
-        esp_rom_delay_us(100);
+        esp_rom_delay_us(30);
     }
 }
 DECL_INIT(sr_init);
