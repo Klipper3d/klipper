@@ -8,6 +8,7 @@ set(SOURCES
     ${KLIPPER_ROOT}/src/esp32/gpio/gpio.c
     ${KLIPPER_ROOT}/src/esp32/gpio/gpio_in.c
     ${KLIPPER_ROOT}/src/esp32/gpio/gpio_out.c
+    ${KLIPPER_ROOT}/src/esp32/gpio/shift_register.c
     ${KLIPPER_ROOT}/src/esp32/irq.c
     ${KLIPPER_ROOT}/src/esp32/serial.c
     ${KLIPPER_ROOT}/src/esp32/timer.c
