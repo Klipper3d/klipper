@@ -41,12 +41,11 @@ void sr_init()
     ESP_ERROR_CHECK(spicommon_bus_initialize_io(
         SPI_SR_BUS,
         &(spi_bus_config_t) {
-            .miso_io_num = 4,
+            .miso_io_num = -1,
             .mosi_io_num = 5,
             .sclk_io_num = 6,
             .quadwp_io_num = -1,
             .quadhd_io_num = -1,
-            //.max_transfer_sz = PARALLEL_LINES * 320 * 2 + 8
         },
         SPICOMMON_BUSFLAG_MASTER,
         NULL
@@ -54,41 +53,18 @@ void sr_init()
     spicommon_cs_initialize(SPI_SR_BUS, 7, 0, 1);
 
     /**
-     * Calculate clock info to then use in the transaction
-     */
-    spi_hal_timing_conf_t timing_conf = {
-        .clock_source = SPI_CLK_SRC_APB,
-        .source_pre_div = 1,
-        .source_real_freq = clk_hal_apb_get_freq_hz(),
-        .rx_sample_point = SPI_SAMPLING_POINT_PHASE_0,
-    };
-    ESP_ERROR_CHECK(spi_hal_cal_clock_conf(
-        &(spi_hal_timing_param_t) {
-            .clk_src_hz = clk_hal_apb_get_freq_hz(),
-            .half_duplex = 0,
-            .no_compensate = 0,
-            .expected_freq = SPI_SR_CLOCK_FREQ,
-            .duty_cycle = 128,
-            .input_delay_ns = 0,
-            .use_gpio = true
-        },
-        &timing_conf
-    ));
-
-    /**
      * Set up the whoooole thing
      */
     spi_ll_enable_clock(SPI_SR_BUS, true);
-    spi_ll_set_clk_source(spi, timing_conf.clock_source);
+    spi_ll_set_clk_source(spi, SPI_CLK_SRC_APB);
     spi_ll_master_init(spi);
     spi_ll_master_set_line_mode(spi, (spi_line_mode_t) { 1, 1, 1});
-    spi_ll_master_set_clock_by_reg(spi, &timing_conf.clock_reg);
+    spi_ll_master_set_clock(spi, (int)clk_hal_apb_get_freq_hz(), SPI_SR_CLOCK_FREQ, 128);
     spi_ll_master_set_mode(spi, 0);
     spi_ll_master_select_cs(spi, 0);
     spi_ll_master_set_cs_setup(spi, 0);
     spi_ll_master_set_cs_hold(spi, 1);
     spi_ll_master_set_pos_cs(spi, 0, 0);
-    //spi_ll_master_set_rx_timing_mode(spi, timing_conf.rx_sample_point);
     spi_ll_master_keep_cs(spi, 0);
     spi_ll_set_half_duplex(spi, 0);
     spi_ll_set_sio_mode(spi, 0);
@@ -97,12 +73,9 @@ void sr_init()
     spi_ll_set_miso_delay(spi, 2, 0);
     spi_ll_enable_miso(spi, false);
     spi_ll_set_dummy(spi, 0);
-    //spi_ll_set_command(spi, 0, 0, 0);
     spi_ll_set_command_bitlen(spi, 0);
-    //spi_ll_set_address(spi, 0, 0, 0);
     spi_ll_set_addr_bitlen(spi, 0);
     spi_ll_set_miso_bitlen(spi, 0);
-    //spi_ll_set_rx_lsbfirst(spi, 0);
     spi_ll_clear_int_stat(spi);
     spi_ll_set_tx_lsbfirst(spi, 0);
     spi_ll_set_mosi_bitlen(spi, 32);
