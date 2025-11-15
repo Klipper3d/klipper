@@ -2941,7 +2941,7 @@ sensor_type: BME280
 
 ### AHT10/AHT20/AHT21 temperature sensor
 
-AHT10/AHT20/AHT21 two wire interface (I2C) environmental sensors.
+AHT10/AHT15/AHT20/AHT21/AHT30 two wire interface (I2C) environmental sensors.
 Note that these sensors are not intended for use with extruders and
 heater beds, but rather for monitoring ambient temperature (C) and
 relative humidity. See
@@ -2949,8 +2949,9 @@ relative humidity. See
 that may be used to report humidity in addition to temperature.
 
 ```
-sensor_type: AHT10
-#   Also use AHT10 for AHT20 and AHT21 sensors.
+sensor_type: AHT1X
+#   Must be "AHT1X" , "AHT2X", "AHT3X"
+#   Some AHT20 should use "AHT1X"
 #i2c_address:
 #   Default is 56 (0x38). Some AHT10 sensors give the option to use
 #   57 (0x39) by moving a resistor.
@@ -2959,7 +2960,7 @@ sensor_type: AHT10
 #i2c_speed:
 #   See the "common I2C settings" section for a description of the
 #   above parameters.
-#aht10_report_time:
+#aht_report_time:
 #   Interval in seconds between readings. Default is 30, minimum is 5
 ```
 
