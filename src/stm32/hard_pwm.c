@@ -384,7 +384,10 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint32_t val)
     }
     // Enable PWM output
     p->timer->CR1 |= TIM_CR1_CEN;
-#if CONFIG_MACH_STM32H7 || CONFIG_MACH_STM32G0
+    // Advanced timers (TIM1/TIM8) require MOE (Main Output Enable) bit
+    // For non-advanced timers, MOE is a NOOP
+#if CONFIG_MACH_STM32F0 || CONFIG_MACH_STM32F1 || CONFIG_MACH_STM32F4 || \
+    CONFIG_MACH_STM32H7 || CONFIG_MACH_STM32G0
     p->timer->BDTR |= TIM_BDTR_MOE;
 #endif
     return channel;
