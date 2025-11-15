@@ -11,7 +11,7 @@
 #define UART_NUM    UART_NUM_2
 #define UART_IRQ    ETS_UART2_INTR_SOURCE
 
-static volatile uart_dev_t* uart_dev = NULL;
+static uart_dev_t* uart_dev = NULL;
 static intr_handle_t uart_isr_handle = NULL;
 
 /**
