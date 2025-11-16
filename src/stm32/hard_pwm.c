@@ -400,11 +400,14 @@ gpio_timer_setup(uint8_t pin, uint32_t cycle_time, uint32_t val,
         default:
             shutdown("Invalid PWM channel");
     }
+
     // Enable PWM output
     p->timer->CR1 |= TIM_CR1_CEN;
-#if CONFIG_MACH_STM32H7 || CONFIG_MACH_STM32G0
-    p->timer->BDTR |= TIM_BDTR_MOE;
-#endif
+
+    // Advanced timers need MOE enabled.  On standard timers this is a
+    // write to reserved memory, but that seems harmless in practice.
+    p->timer->BDTR = TIM_BDTR_MOE;
+
     return channel;
 }
 
