@@ -35,10 +35,10 @@ class DigitalFilter:
         except:
             raise cfg_error("DigitalFilter require the SciPy module")
         if highpass:
-            self.filter_sections.append(
+            self.filter_sections.extend(
                 self._butter(highpass, "highpass", highpass_order))
         if lowpass:
-            self.filter_sections.append(
+            self.filter_sections.extend(
                 self._butter(lowpass, "lowpass", lowpass_order))
         if notches is None:
             notches = []
@@ -50,7 +50,7 @@ class DigitalFilter:
     def _butter(self, frequency, btype, order):
         import scipy.signal as signal
         return signal.butter(order, Wn=frequency, btype=btype,
-            fs=self.sample_frequency, output='sos')[0]
+            fs=self.sample_frequency, output='sos')
 
     def _notch(self, freq, quality):
         import scipy.signal as signal
