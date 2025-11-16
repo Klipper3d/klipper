@@ -16,7 +16,7 @@ struct gpio_in gpio_in_setup(gpio_num_t pin, int_fast8_t pull_up)
 
 void gpio_in_reset(struct gpio_in gpio, int_fast8_t pull_up)
 {
-    gpio_ll_input_enable(gpio_dev, gpio.pin);
+    gpio_ll_input_enable(GPIO_LL_GET_HW(GPIO_PORT_0), gpio.pin);
 
     if (pull_up) {
         gpio_pullup_en(gpio.pin);
@@ -24,10 +24,10 @@ void gpio_in_reset(struct gpio_in gpio, int_fast8_t pull_up)
         gpio_pullup_dis(gpio.pin);
     }
 
-    gpio_ll_output_disable(gpio_dev, gpio.pin);
+    gpio_ll_output_disable(GPIO_LL_GET_HW(GPIO_PORT_0), gpio.pin);
 }
 
 uint_fast8_t gpio_in_read(struct gpio_in gpio)
 {
-    return gpio_ll_get_level(gpio_dev, gpio.pin);
+    return gpio_ll_get_level(GPIO_LL_GET_HW(GPIO_PORT_0), gpio.pin);
 }

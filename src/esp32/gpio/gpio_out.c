@@ -18,15 +18,15 @@ void gpio_out_reset(struct gpio_out gpio, uint_fast8_t val)
 {
     // We also need to keep the input enabled to be able to read it when toggling
     gpio_pullup_dis(gpio.pin);
-    gpio_ll_input_enable(gpio_dev, gpio.pin);
+    gpio_ll_input_enable(GPIO_LL_GET_HW(GPIO_PORT_0), gpio.pin);
 
-    gpio_ll_set_level(gpio_dev, gpio.pin, val);
-    gpio_ll_output_enable(gpio_dev, gpio.pin);
+    gpio_ll_set_level(GPIO_LL_GET_HW(GPIO_PORT_0), gpio.pin, val);
+    gpio_ll_output_enable(GPIO_LL_GET_HW(GPIO_PORT_0), gpio.pin);
 }
 
 void gpio_out_toggle_noirq(struct gpio_out gpio)
 {
-    gpio_ll_set_level(gpio_dev, gpio.pin, !gpio_ll_get_level(gpio_dev, gpio.pin));
+    gpio_ll_set_level(GPIO_LL_GET_HW(GPIO_PORT_0), gpio.pin, !gpio_ll_get_level(GPIO_LL_GET_HW(GPIO_PORT_0), gpio.pin));
 }
 
 void gpio_out_toggle(struct gpio_out gpio)
@@ -36,5 +36,5 @@ void gpio_out_toggle(struct gpio_out gpio)
 
 void gpio_out_write(struct gpio_out gpio, uint_fast8_t val)
 {
-    gpio_ll_set_level(gpio_dev, gpio.pin, val);
+    gpio_ll_set_level(GPIO_LL_GET_HW(GPIO_PORT_0), gpio.pin, val);
 }

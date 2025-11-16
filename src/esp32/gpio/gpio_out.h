@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gpio/gpio.h"
+#include <stdint.h>
 
 struct gpio_out gpio_out_setup(gpio_num_t pin, uint_fast8_t val);
 void gpio_out_reset(struct gpio_out gpio, uint_fast8_t val);
