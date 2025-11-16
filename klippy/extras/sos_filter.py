@@ -40,6 +40,8 @@ class DigitalFilter:
         if lowpass:
             self.filter_sections.append(
                 self._butter(lowpass, "lowpass", lowpass_order))
+        if notches is None:
+            notches = []
         for notch_freq in notches:
             self.filter_sections.append(self._notch(notch_freq, notch_quality))
         if len(self.filter_sections) > 0:
