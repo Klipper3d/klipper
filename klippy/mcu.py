@@ -554,7 +554,11 @@ class MCU_adc:
 
 # Minimum time host needs to get scheduled events queued into mcu
 MIN_SCHEDULE_TIME = 0.100
-# Maximum time all MCUs can internally schedule into the future
+# The maximum number of clock cycles an MCU is expected
+# to schedule into the future, due to the protocol and firmware.
+MAX_NUM_CYCLES = 1<<31
+# Maximum time all MCUs can internally schedule into the future.
+# Directly caused by the limitation of MAX_NUM_CYCLES
 MAX_NOMINAL_DURATION = 3.0
 
 # Support for restarting a micro-controller
@@ -996,6 +1000,12 @@ class MCUConfigHelper:
             if cname.startswith("RESERVE_PINS_"):
                 for pin in value.split(','):
                     pin_resolver.reserve_pin(pin, cname[13:])
+        if MAX_NOMINAL_DURATION * self._mcu_freq >= MAX_NUM_CYCLES:
+            max_possible = MAX_NUM_CYCLES * 1 / self._mcu_freq
+            raise error("Too high clock speed for MCU '%s' " % (self._name,) +
+                        "to be able to resolve a maximum nominal duration " +
+                        "of %ds. " % (MAX_NOMINAL_DURATION) +
+                        "Max possible duration: %ds" % (max_possible))
     # Config creation helpers
     def setup_pin(self, pin_type, pin_params):
         pcs = {'endstop': MCU_endstop,
