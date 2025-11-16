@@ -105,36 +105,46 @@ menu "UART Console Settings"
     config UART_TX_PIN
         int "UART TX Pin"
         range 0 48
-        default 15
+        default 14
         help
             GPIO pin for UART TX (default: GPIO 1)
 
     config UART_RX_PIN
         int "UART RX Pin"
         range 0 48
-        default 16
+        default 12
         help
             GPIO pin for UART RX (default: GPIO 3)
 endmenu
 
-menu "Shift Register outputs (HC595)"
-    config SPI_SR_BYTE_NO
+config HAVE_GPIO_SR
+    bool "Enable shift register output (HC595 and similar)"
+    default n
+
+# Todo use actual pins on boards
+menu "Shift register output configuration"
+    depends on HAVE_GPIO_SR
+
+    config SR_BYTE_NO
         int "Shift register count (8 bits each)"
-        range 0 8
+        range 1 16
         default 4
-    config SR_SPI_CLOCK_FREQ
-        int "Clock frequency"
-        default 5 * 1000 * 1000
-    config SR_SPI_PIN_DATA
+    config SR_CLOCK_FREQ_MHZ
+        int "Clock frequency (MHz)"
+        range 1 10
+        default 10
+    config SR_PIN_DATA
         int "Data pin"
         range 0 48
-        default 11
-    config SR_SPI_PIN_CLK
+        default 5
+    config SR_PIN_CLK
         int "Clock pin"
         range 0 48
-        default 12
-    config SPI_SR_PIN_LATCH
+        default 6
+    config SR_PIN_LATCH
         int "Latch pin"
         range 0 48
-        default 13
+        default 7
+endmenu
+
 endif
