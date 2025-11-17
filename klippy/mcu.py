@@ -1001,10 +1001,10 @@ class MCUConfigHelper:
                     pin_resolver.reserve_pin(pin, cname[13:])
         if MAX_NOMINAL_DURATION * self._mcu_freq > MAX_SCHEDULE_TICKS:
             max_possible = MAX_SCHEDULE_TICKS * 1 / self._mcu_freq
-            raise error("Too high clock speed for MCU '%s' " % (self._name,) +
-                        "to be able to resolve a maximum nominal duration " +
-                        "of %ds. " % (MAX_NOMINAL_DURATION) +
-                        "Max possible duration: %ds" % (max_possible))
+            raise error("Too high clock speed for MCU '%s'"
+                        " to be able to resolve a maximum nominal duration"
+                        " of %ds. Max possible duration: %ds"
+                        % (self._name, MAX_NOMINAL_DURATION, max_possible))
     # Config creation helpers
     def setup_pin(self, pin_type, pin_params):
         pcs = {'endstop': MCU_endstop,
