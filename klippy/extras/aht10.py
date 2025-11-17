@@ -15,13 +15,9 @@ from . import bus
 
 AHT10_I2C_ADDR= 0x38
 
-BOMBARDMENT_COMMANDS = {
-    'INIT'              :[0X71, 0X28, 0X00], 
-    
-}
-
 AHT10_COMMANDS = {
-    'INIT'              :[0xE1, 0x08, 0x00],
+    # 'INIT'              :[0xE1, 0x08, 0x00],
+    'INIT'              :[0x71],
     'MEASURE'           :[0xAC, 0x33, 0x00],
     'RESET'             :[0xBA, 0x08, 0x00]
 }
