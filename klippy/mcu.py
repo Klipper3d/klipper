@@ -9,6 +9,14 @@ import serialhdl, msgproto, pins, chelper, clocksync
 class error(Exception):
     pass
 
+# Minimum time host needs to get scheduled events queued into mcu
+MIN_SCHEDULE_TIME = 0.100
+# The maximum number of clock cycles an MCU is expected
+# to schedule into the future, due to the protocol and firmware.
+MAX_SCHEDULE_TICKS = (1<<31) - 1
+# Maximum time all MCUs can internally schedule into the future.
+# Directly caused by the limitation of MAX_SCHEDULE_TICKS.
+MAX_NOMINAL_DURATION = 3.0
 
 ######################################################################
 # Command transmit helper classes
@@ -382,7 +390,7 @@ class MCU_digital_out:
             raise pins.error("Pin with max duration must have start"
                              " value equal to shutdown value")
         mdur_ticks = self._mcu.seconds_to_clock(self._max_duration)
-        if mdur_ticks >= 1<<31:
+        if mdur_ticks > MAX_SCHEDULE_TICKS:
             raise pins.error("Digital pin max duration too large")
         self._mcu.request_move_queue_slot()
         self._oid = self._mcu.create_oid()
@@ -439,7 +447,7 @@ class MCU_pwm:
         self._last_clock = self._mcu.print_time_to_clock(printtime + 0.200)
         cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
         mdur_ticks = self._mcu.seconds_to_clock(self._max_duration)
-        if mdur_ticks >= 1<<31:
+        if mdur_ticks > MAX_SCHEDULE_TICKS:
             raise pins.error("PWM pin max duration too large")
         if self._hardware_pwm:
             self._pwm_max = self._mcu.get_constant_float("PWM_MAX")
@@ -461,7 +469,7 @@ class MCU_pwm:
         # Software PWM
         if self._shutdown_value not in [0., 1.]:
             raise pins.error("shutdown value must be 0.0 or 1.0 on soft pwm")
-        if cycle_ticks >= 1<<31:
+        if cycle_ticks > MAX_SCHEDULE_TICKS:
             raise pins.error("PWM pin cycle time too large")
         self._mcu.request_move_queue_slot()
         self._oid = self._mcu.create_oid()
@@ -551,11 +559,6 @@ class MCU_adc:
 ######################################################################
 # Main MCU class (and its helper classes)
 ######################################################################
-
-# Minimum time host needs to get scheduled events queued into mcu
-MIN_SCHEDULE_TIME = 0.100
-# Maximum time all MCUs can internally schedule into the future
-MAX_NOMINAL_DURATION = 3.0
 
 # Support for restarting a micro-controller
 class MCURestartHelper:
@@ -996,6 +999,12 @@ class MCUConfigHelper:
             if cname.startswith("RESERVE_PINS_"):
                 for pin in value.split(','):
                     pin_resolver.reserve_pin(pin, cname[13:])
+        if MAX_NOMINAL_DURATION * self._mcu_freq > MAX_SCHEDULE_TICKS:
+            max_possible = MAX_SCHEDULE_TICKS * 1 / self._mcu_freq
+            raise error("Too high clock speed for MCU '%s' " % (self._name,) +
+                        "to be able to resolve a maximum nominal duration " +
+                        "of %ds. " % (MAX_NOMINAL_DURATION) +
+                        "Max possible duration: %ds" % (max_possible))
     # Config creation helpers
     def setup_pin(self, pin_type, pin_params):
         pcs = {'endstop': MCU_endstop,
