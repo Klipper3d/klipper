@@ -143,19 +143,23 @@ check_home(struct ldc1612 *ld, uint32_t data)
 #define REG_STATUS    0x18
 
 // Read a register on the ldc1612
-static void
+static int
 read_reg(struct ldc1612 *ld, uint8_t reg, uint8_t *res)
 {
-    int ret = i2c_dev_read(ld->i2c, sizeof(reg), &reg, 2, res);
-    i2c_shutdown_on_err(ret);
+    return i2c_dev_read(ld->i2c, sizeof(reg), &reg, 2, res);
 }
+
+#define I2C_ERROR 0x30
 
 // Read the status register on the ldc1612
 static uint16_t
 read_reg_status(struct ldc1612 *ld)
 {
     uint8_t data_status[2];
-    read_reg(ld, REG_STATUS, data_status);
+    int ret = read_reg(ld, REG_STATUS, data_status);
+    // Bits 5:4 are unused, report I2C
+    if (ret != I2C_BUS_SUCCESS)
+        data_status[0] |= I2C_ERROR;
     return (data_status[0] << 8) | data_status[1];
 }
 
@@ -165,6 +169,7 @@ read_reg_status(struct ldc1612 *ld)
 static void
 ldc1612_query(struct ldc1612 *ld, uint8_t oid)
 {
+    int ret;
     // Check if data available (and clear INTB line)
     uint16_t status = read_reg_status(ld);
     irq_disable();
@@ -175,9 +180,14 @@ ldc1612_query(struct ldc1612 *ld, uint8_t oid)
 
     // Read coil0 frequency
     uint8_t *d = &ld->sb.data[ld->sb.data_count];
-    read_reg(ld, REG_DATA0_MSB, &d[0]);
-    read_reg(ld, REG_DATA0_LSB, &d[2]);
+    ret = read_reg(ld, REG_DATA0_MSB, &d[0]);
+    ret |= read_reg(ld, REG_DATA0_LSB, &d[2]);
     ld->sb.data_count += BYTES_PER_SAMPLE;
+
+    // Under-range is 0x80000000
+    // Over-range is 0x4fffffff
+    if (ret != I2C_BUS_SUCCESS)
+        d[0] |= 0xc0;
 
     // Check for endstop trigger
     uint32_t data =   ((uint32_t)d[0] << 24)
@@ -232,6 +242,9 @@ command_query_status_ldc1612(uint32_t *args)
     uint16_t status = read_reg_status(ld);
     uint32_t time2 = timer_read_time();
 
+    if (status & I2C_ERROR)
+        // Query error - don't send response - host will retry
+        return;
     uint32_t fifo = status & 0x08 ? BYTES_PER_SAMPLE : 0;
     sensor_bulk_status(&ld->sb, args[0], time1, time2-time1, fifo);
 }
