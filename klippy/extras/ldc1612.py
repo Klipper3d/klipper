@@ -202,6 +202,29 @@ class LDC1612:
         threshold = -1 * self.tap_threshold
         self.ldc1612_setup_home_cmd.send(
             [self.oid, clock, threshold, trsync_oid, hit_reason, err_reason])
+    def sos_filter_data(self, data):
+        if not self.tap_threshold:
+            raise self.printer.command_error("tap_threshold is zero")
+        if len(data) < 16:
+            raise self.printer.command_error("Not enough samples. "
+                                             "Trigger too early?")
+        return self._design.filtfilt(data)
+    def validate_samples_time(self, timestamps):
+        cycle_time = 1.0 / self.data_rate
+        SYNC_SLACK = 0.001
+        for i in range(1, len(timestamps)):
+            tdiff = timestamps[i] - timestamps[i-1]
+            if cycle_time + SYNC_SLACK < tdiff:
+                logging.error("LDC1612: Gaps in the data: %.3f < %.3f" % (
+                    (cycle_time + SYNC_SLACK, tdiff)
+                ))
+                break
+            if cycle_time - SYNC_SLACK > tdiff:
+                logging.error(
+                    "LDC1612: CLKIN frequency too low: %.3f > %.3f" % (
+                    (cycle_time - SYNC_SLACK, tdiff)
+                ))
+                break
     # Measurement decoding
     def _convert_samples(self, samples):
         freq_conv = float(self.frequency) / (1<<28)
