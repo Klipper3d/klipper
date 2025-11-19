@@ -344,7 +344,36 @@ class EddyGatherTapSamples:
     def _analyze_samples(self):
         while self._samples and self._probe_times:
             start_time, end_time = self._probe_times[0]
-            toolhead_pos = self._lookup_toolhead_pos((start_time + end_time)/2)
+            tap_time = []
+            tap_value = []
+            for time, freq, z in self._samples:
+                if start_time <= time < end_time:
+                    tap_time.append(time)
+                    tap_value.append(freq)
+                if time >= end_time:
+                    break
+            while self._samples and self._samples[0][0] < end_time:
+                self._samples.pop(0)
+            if len(tap_time) < 16:
+                raise self._printer.command_error("Not enough samples. "
+                                                  "Trigger too early?")
+            # Do the same filtering as on the MCU but without induced lag
+            fvals = self._sensor_helper.tap.sos_filter_data(tap_value)
+            velocity = [0.0] * len(fvals)
+
+            # Compute central difference
+            odr = self._sensor_helper.data_rate
+            for i in range(1, len(fvals) - 1):
+                velocity[i] = (fvals[i+1] - fvals[i-1]) * (odr / 2.)
+
+            velocity[0] = (fvals[1] - fvals[0]) * odr
+            velocity[-1] = (fvals[-1] - fvals[-2]) * odr
+
+            # Just find the time when the velocity peaked
+            i = velocity.index(max(velocity))
+            trigger_time = tap_time[i]
+
+            toolhead_pos = self._lookup_toolhead_pos(trigger_time)
             self._probe_results.append(toolhead_pos)
             self._probe_times.pop(0)
     def pull_probed(self):
