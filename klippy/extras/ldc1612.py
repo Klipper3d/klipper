@@ -78,7 +78,7 @@ class LDC1612:
         self.printer = config.get_printer()
         self.calibration = calibration
         self.dccal = DriveCurrentCalibrate(config, self)
-        self.data_rate = 250
+        self.data_rate = config.getint("data_rate", minval=50, default=250)
         # Setup mcu sensor_ldc1612 bulk query code
         self.i2c = bus.MCU_I2C_from_config(config,
                                            default_addr=LDC1612_ADDR,
