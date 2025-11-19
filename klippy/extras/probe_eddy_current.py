@@ -344,7 +344,47 @@ class EddyGatherTapSamples:
     def _analyze_samples(self):
         while self._samples and self._probe_times:
             start_time, end_time = self._probe_times[0]
-            toolhead_pos = self._lookup_toolhead_pos((start_time + end_time)/2)
+            tap_time = []
+            tap_value = []
+            for time, freq, z in self._samples:
+                if start_time <= time < end_time:
+                    tap_time.append(time)
+                    tap_value.append(freq)
+                if time >= end_time:
+                    break
+            while self._samples and self._samples[0][0] < end_time:
+                self._samples.pop(0)
+            if len(tap_time) < 16:
+                raise self._printer.command_error("Not enough samples. "
+                                                  "Trigger too early?")
+            # If samples have gaps this will not work produce adequate data
+            odr = self._sensor_helper.data_rate
+            cycle_time = 1.0 / odr
+            SYNC_SLACK = 0.001
+            for i in range(1, len(tap_time)):
+                tdiff = tap_time[i] - tap_time[i-1]
+                if cycle_time + SYNC_SLACK < tdiff:
+                    logging.error("Gaps in the data: %.3f < %.3f" % (
+                        (cycle_time + SYNC_SLACK, tdiff)
+                    ))
+                    break
+            # Do the same filtering as on the MCU but without induced lag
+            fvals = self._sensor_helper.tap.sos_filter_data(tap_value)
+            velocity = [0.0] * len(fvals)
+
+            # Compute central difference
+            tt = tap_time
+            for i in range(1, len(fvals) - 1):
+                velocity[i] = (fvals[i+1] - fvals[i-1]) / (tt[i+1] - tt[i-1])
+
+            velocity[0] = (fvals[1] - fvals[0]) / (tt[1] - tt[0])
+            velocity[-1] = (fvals[-1] - fvals[-2]) / (tt[-1] - tt[-2])
+
+            # Just find the time when the velocity peaked
+            i = velocity.index(max(velocity))
+            trigger_time = tap_time[i]
+
+            toolhead_pos = self._lookup_toolhead_pos(trigger_time)
             self._probe_results.append(toolhead_pos)
             self._probe_times.pop(0)
     def pull_probed(self):
@@ -441,7 +481,7 @@ class EddyDescend:
             return trig_pos
         # Extract samples
         if self._is_tap:
-            start_time = self._trigger_time - 0.075
+            start_time = self._trigger_time - 0.250
             end_time = self._trigger_time + 0.075
             # Ensure steady state after tap
             toolhead.dwell(0.075)

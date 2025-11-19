@@ -99,6 +99,9 @@ class LDC1612Tap:
         self.sos_filter = sos_filter.SosFilter(mcu, self.cmdqueue,
                                                fixed_filter)
         self.mcu.register_config_callback(self._build_config)
+        self._design = design
+        from scipy.signal import sosfiltfilt
+        self._sosfiltfilt = sosfiltfilt
     def _build_config(self):
         if self.mcu.try_lookup_command("ldc1612_set_sos oid=%c sos_oid=%c"):
             self.sos_filter.create_filter()
@@ -113,6 +116,9 @@ class LDC1612Tap:
                 "ldc1612_setup_tap oid=%c clock=%u threshold=%i"
                 " trsync_oid=%c trigger_reason=%c error_reason=%c",
                 cq=self.cmdqueue)
+    def sos_filter_data(self, data):
+        filters = self._design.get_filter_sections()
+        return self._sosfiltfilt(filters, data)
     def setup_tap(self, print_time, min_accel, trsync_oid, hit_reason,
                   err_reason):
         # Give the SOS filter time to stabilize
