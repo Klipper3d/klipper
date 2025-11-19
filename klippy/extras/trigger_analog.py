@@ -81,6 +81,9 @@ class DerivativeFilter:
     def __init__(self, main_filter):
         self._main_filter = main_filter
 
+    def get_main_filter(self):
+        return self._main_filter
+
     def get_filter_sections(self):
         s = list(self._main_filter.get_filter_sections())
         return s + [(1., -1., 0., 1., 0., 0.)]
