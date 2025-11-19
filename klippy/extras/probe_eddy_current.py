@@ -276,6 +276,16 @@ class EddyCalibration:
     def register_drift_compensation(self, comp):
         self.drift_comp = comp
 
+def central_diff(times, values):
+    velocity = [0.0] * len(values)
+    for i in range(1, len(values) - 1):
+        delta_v = (values[i+1] - values[i-1])
+        delta_t = (times[i+1] - times[i-1])
+        velocity[i] = delta_v / delta_t
+    velocity[0] = (values[1] - values[0]) / (times[1] - times[0])
+    velocity[-1] = (values[-1] - values[-2]) / (times[-1] - times[-2])
+    return velocity
+
 # Tool to gather samples and convert them to probe positions
 class EddyGatherSamples:
     def __init__(self, printer, sensor_helper, calibration, offsets):
@@ -314,11 +324,9 @@ class EddyGatherSamples:
                 raise self._printer.command_error(
                     "probe_eddy_current sensor outage")
             reactor.pause(systime + 0.010)
-    def _pull_freq(self, start_time, end_time):
-        # Find average sensor frequency between time range
+    def _pull_samples(self, start_time, end_time):
+        samples = []
         msg_num = discard_msgs = 0
-        samp_sum = 0.
-        samp_count = 0
         while msg_num < len(self._samples):
             msg = self._samples[msg_num]
             msg_num += 1
@@ -328,17 +336,40 @@ class EddyGatherSamples:
             if data[-1][0] < start_time:
                 discard_msgs = msg_num
                 continue
-            for time, freq, z in data:
-                if time >= start_time and time <= end_time:
-                    samp_sum += freq
-                    samp_count += 1
+            for sample in data:
+                time = sample[0]
+                if start_time <= time <= end_time:
+                    samples.append(sample)
         del self._samples[:discard_msgs]
+        return samples
+    def _pull_freq(self, start_time, end_time):
+        # Find average sensor frequency between time range
+        samp_sum = 0.
+        samp_count = 0
+        data = self._pull_samples(start_time, end_time)
+        for time, freq, z in data:
+            if time >= start_time and time <= end_time:
+                samp_sum += freq
+                samp_count += 1
         if not samp_count:
             # No sensor readings - raise error in pull_probed()
             return 0.
         return samp_sum / samp_count
     def _pull_tap_time(self, start_time, end_time):
-        return (start_time + end_time) / 2
+        tap_time = []
+        tap_value = []
+        data = self._pull_samples(start_time, end_time)
+        for time, freq, z in data:
+            tap_time.append(time)
+            tap_value.append(freq)
+        # If samples have gaps this will not produce adequate data
+        self._sensor_helper.validate_samples_time(tap_time)
+        # Do the same filtering as on the MCU but without induced lag
+        fvals = self._sensor_helper.sos_filter_data(tap_value)
+        velocity = central_diff(tap_time, fvals)
+        peak_velocity = max(velocity)
+        i = velocity.index(peak_velocity)
+        return tap_time[i]
     def _lookup_toolhead_pos(self, pos_time):
         toolhead = self._printer.lookup_object('toolhead')
         kin = toolhead.get_kinematics()
@@ -467,8 +498,10 @@ class EddyDescend:
             return trig_pos
         # Extract samples
         if self._is_tap:
-            start_time = self._trigger_time - 0.075
+            start_time = self._trigger_time - 0.250
             end_time = self._trigger_time + 0.075
+            # Ensure steady state after tap
+            toolhead.dwell(0.075)
             self._gather.note_tap(start_time, end_time)
             return
         start_time = self._trigger_time + 0.050
