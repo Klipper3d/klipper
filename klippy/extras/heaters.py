@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import os, logging, threading
+from math import ceil
 
 
 ######################################################################
@@ -46,6 +47,8 @@ class Heater:
         # pwm caching
         self.next_pwm_time = 0.
         self.last_pwm_value = 0.
+        self._last_pwm_time = 0.
+        self._last_control_time = 0.
         # Setup control algorithm sub-class
         algos = {'watermark': ControlBangBang, 'pid': ControlPID}
         algo = config.getchoice('control', algos)
@@ -54,9 +57,9 @@ class Heater:
         heater_pin = config.get('heater_pin')
         ppins = self.printer.lookup_object('pins')
         self.mcu_pwm = ppins.setup_pin('pwm', heater_pin)
-        pwm_cycle_time = config.getfloat('pwm_cycle_time', 0.100, above=0.,
-                                         maxval=self.pwm_delay)
-        self.mcu_pwm.setup_cycle_time(pwm_cycle_time)
+        self._pwm_cycle_time = config.getfloat(
+            'pwm_cycle_time', 0.100, above=0., maxval=MAX_HEAT_TIME)
+        self.mcu_pwm.setup_cycle_time(self._pwm_cycle_time)
         self.mcu_pwm.setup_max_duration(MAX_HEAT_TIME)
         # Load additional modules
         self.printer.load_object(config, "verify_heater %s" % (short_name,))
@@ -75,9 +78,17 @@ class Heater:
             # No significant change in value - can suppress update
             return
         pwm_time = read_time + self.pwm_delay
-        self.next_pwm_time = (pwm_time + MAX_HEAT_TIME
-                              - (3. * self.pwm_delay + 0.001))
+        self.next_pwm_time = (pwm_time + MAX_HEAT_TIME -
+                              (3. * self.pwm_delay +
+                               self._pwm_cycle_time + 0.001))
         self.last_pwm_value = value
+        if self._last_pwm_time and self.last_pwm_value < pwm_time:
+            delta_pwm_time = pwm_time - self._last_pwm_time
+            cycles = ceil(round(delta_pwm_time / self._pwm_cycle_time, 3))
+            if not cycles:
+                return
+            pwm_time = self._last_pwm_time + cycles * self._pwm_cycle_time
+        self._last_pwm_time = pwm_time
         self.mcu_pwm.set_pwm(pwm_time, value)
         #logging.debug("%s: pwm=%.3f@%.3f (from %.3f@%.3f [%.3f])",
         #              self.name, value, pwm_time,
@@ -87,12 +98,17 @@ class Heater:
             time_diff = read_time - self.last_temp_time
             self.last_temp = temp
             self.last_temp_time = read_time
-            self.control.temperature_update(read_time, temp, self.target_temp)
+            next_read_time = read_time + self.sensor.get_report_time_delta()
+            next_control_time = self._last_control_time + self._pwm_cycle_time
+            if next_read_time > next_control_time:
+                self._last_control_time = read_time
+                pwm_value = self.control.temperature_update(
+                    read_time, temp, self.target_temp)
+                self.set_pwm(read_time, pwm_value)
             temp_diff = temp - self.smoothed_temp
             adj_time = min(time_diff * self.inv_smooth_time, 1.)
             self.smoothed_temp += temp_diff * adj_time
             self.can_extrude = (self.smoothed_temp >= self.min_extrude_temp)
-        #logging.debug("temp: %.3f %f = %f", read_time, temp)
     def _handle_shutdown(self):
         self.verify_mainthread_time = -999.
     # External commands
@@ -120,8 +136,7 @@ class Heater:
             return self.smoothed_temp, self.target_temp
     def check_busy(self, eventtime):
         with self.lock:
-            return self.control.check_busy(
-                eventtime, self.smoothed_temp, self.target_temp)
+            return self.control.check_busy(self.smoothed_temp, self.target_temp)
     def set_control(self, control):
         with self.lock:
             old_control = self.control
@@ -167,16 +182,18 @@ class ControlBangBang:
         self.heater_max_power = heater.get_max_power()
         self.max_delta = config.getfloat('max_delta', 2.0, above=0.)
         self.heating = False
+
     def temperature_update(self, read_time, temp, target_temp):
         if self.heating and temp >= target_temp+self.max_delta:
             self.heating = False
         elif not self.heating and temp <= target_temp-self.max_delta:
             self.heating = True
         if self.heating:
-            self.heater.set_pwm(read_time, self.heater_max_power)
+            return self.heater_max_power
         else:
-            self.heater.set_pwm(read_time, 0.)
-    def check_busy(self, eventtime, smoothed_temp, target_temp):
+            return 0.
+
+    def check_busy(self, smoothed_temp, target_temp):
         return smoothed_temp < target_temp-self.max_delta
 
 
@@ -202,6 +219,7 @@ class ControlPID:
         self.prev_temp_time = 0.
         self.prev_temp_deriv = 0.
         self.prev_temp_integ = 0.
+
     def temperature_update(self, read_time, temp, target_temp):
         time_diff = read_time - self.prev_temp_time
         # Calculate change of temperature
@@ -220,14 +238,15 @@ class ControlPID:
         #logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d",
         #    temp, read_time, temp_diff, temp_deriv, temp_err, temp_integ, co)
         bounded_co = max(0., min(self.heater_max_power, co))
-        self.heater.set_pwm(read_time, bounded_co)
         # Store state for next measurement
         self.prev_temp = temp
         self.prev_temp_time = read_time
         self.prev_temp_deriv = temp_deriv
         if co == bounded_co:
             self.prev_temp_integ = temp_integ
-    def check_busy(self, eventtime, smoothed_temp, target_temp):
+        return bounded_co
+
+    def check_busy(self, smoothed_temp, target_temp):
         temp_diff = target_temp - smoothed_temp
         return (abs(temp_diff) > PID_SETTLE_DELTA
                 or abs(self.prev_temp_deriv) > PID_SETTLE_SLOPE)
