@@ -85,7 +85,11 @@ class ForceMove:
     def _lookup_stepper(self, gcmd):
         name = gcmd.get('STEPPER')
         if name not in self.steppers:
-            raise gcmd.error("Unknown stepper %s" % (name,))
+            guess_stepper = ""
+            for stepper in self.steppers:
+                if name in stepper:
+                    guess_stepper = ". Probably: \"%s\"?" % stepper
+            raise gcmd.error("Unknown stepper %s%s" % (name, guess_stepper))
         return self.steppers[name]
     cmd_STEPPER_BUZZ_help = "Oscillate a given stepper to help id it"
     def cmd_STEPPER_BUZZ(self, gcmd):
