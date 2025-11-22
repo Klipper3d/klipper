@@ -743,10 +743,12 @@ max_accel:
 
 ```
 
-Then a user must define the following three carriages: `[carriage x]`,
-`[carriage y]`, and `[carriage z]`, e.g.
+Then a user must define three carriages for X, Y, and Z axes, e.g.:
 ```
-[carriage x]
+[carriage carriage_x]
+axis:
+#   Axis of a carriage, either x, y, or z. This parameter must be provided,
+#   unless a carriage name is x, y, or z itself.
 endstop_pin:
 #   Endstop switch detection pin. If this endstop pin is on a
 #   different mcu than the stepper motor(s) moving this carriage,
@@ -788,7 +790,8 @@ for instance
 carriages:
 #   A string describing the carriages the stepper moves. All defined
 #   carriages can be specified here, as well as their linear combinations,
-#   e.g. x, x+y, y-0.5*z, x-z, etc. This parameter must be provided.
+#   e.g. carriage_x, carriage_x+carriage_y, carriage_y-0.5*carriage_z,
+#   carriage_x-carriage_z, etc. This parameter must be provided.
 step_pin:
 dir_pin:
 enable_pin:
@@ -800,28 +803,29 @@ microsteps:
 ```
 See [stepper](#stepper) section for more information on the regular
 stepper parameters. The `carriages` parameter defines how the stepper
-affects the motion of the carriages. For example, `x+y` indicates that
-the motion of the stepper in the positive direction by the distance `d`
-moves the carriages `x` and `y` by the same distance `d` in the positive
-direction, while `x-0.5*y` means the motion of the stepper in the positive
-direction by the distance `d` moves the carriage `x` by the distance `d`
-in the positive direction, but the carriage `y` will travel distance `d/2`
-in the negative direction.
+affects the motion of the carriages. For example, `carriage_x+carriage_y`
+indicates that the motion of the stepper in the positive direction by the
+distance `d` moves the carriages `carriage_x` and `carriage_y` by the same
+distance `d` in the positive direction, while `carriage_x-0.5*carriage_y`
+means the motion of the stepper in the positive direction by the distance
+`d` moves the carriage `carriage_x` by the distance `d` in the positive
+direction, but the carriage `carriage_y` will travel distance `d/2` in
+the negative direction.
 
 More than a single stepper motor can be defined to drive the same axis
 or belt. For example, on a CoreXY AWD setups two motors driving the same
 belt can be defined as
 ```
-[carriage x]
+[carriage carriage_x]
 endstop_pin: ...
 ...
 
-[carriage y]
+[carriage carriage_y]
 endstop_pin: ...
 ...
 
 [stepper a0]
-carriages: x-y
+carriages: carriage_x-carriage_y
 step_pin: ...
 dir_pin: ...
 enable_pin: ...
@@ -829,7 +833,7 @@ rotation_distance: ...
 ...
 
 [stepper a1]
-carriages: x-y
+carriages: carriage_x-carriage_y
 step_pin: ...
 dir_pin: ...
 enable_pin: ...
@@ -842,7 +846,7 @@ sharing the same `carriages` and corresponding endstops.
 There are situations when a user wants to have more than one endstop
 per axis. Examples of such configurations include Y axis driven by
 two independent stepper motors with belts attached to both ends of the
-X beam, with effectively two carriages on Y axis each having an
+X gantry, with effectively two carriages on Y axis each having an
 independent endstop, and multi-stepper Z axis with each stepper having
 its own endstop (not to be confused with the configurations with
 multiple Z motors but only a single endstop). These configurations
@@ -860,12 +864,12 @@ endstop_pin:
 
 and the corresponding stepper motors, for example:
 ```
-[extra_carriage y1]
-primary_carriage: y
+[extra_carriage carriage_y1]
+primary_carriage: carriage_y
 endstop_pin: ...
 
 [stepper sy1]
-carriages: y1
+carriages: carriage_y1
 ...
 ```
 Notably, an `[extra_carriage]` does not define parameters such as
@@ -2450,7 +2454,7 @@ from the configuration described above:
 [dual_carriage my_dc_carriage]
 primary_carriage:
 #   Defines the matching primary carriage of this dual carriage and
-#   the corresponding IDEX axis. Valid choices are x, y, z.
+#   the corresponding IDEX axis. Must match a name of a defined `[carriage]`.
 #   This parameter must be provided.
 #safe_distance:
 #   The minimum distance (in mm) to enforce between the dual and the primary
@@ -2478,18 +2482,18 @@ on the regular `carriage` parameters.
 Then a user must define one or more stepper motors moving the dual carriage
 (and other carriages as appropriate), for instance
 ```
-[carriage x]
+[carriage carriage_x]
 ...
 
-[carriage y]
+[carriage carriage_y]
 ...
 
-[dual_carriage u]
-primary_carriage: x
+[dual_carriage carriage_u]
+primary_carriage: carriage_x
 ...
 
 [stepper dc_stepper]
-carriages: u-y
+carriages: carriage_u-carriage_y
 ...
 ```
 
@@ -2505,14 +2509,14 @@ example above:
 [delayed_gcode init_shaper]
 initial_duration: 0.1
 gcode:
-  SET_DUAL_CARRIAGE CARRIAGE=u
-  SET_INPUT_SHAPER SHAPER_TYPE_X=<dual_carriage_x_shaper> SHAPER_FREQ_X=<dual_carriage_x_freq> SHAPER_TYPE_Y=<y_shaper> SHAPER_FREQ_Y=<y_freq>
-  SET_DUAL_CARRIAGE CARRIAGE=x
-  SET_INPUT_SHAPER SHAPER_TYPE_X=<primary_carriage_x_shaper> SHAPER_FREQ_X=<primary_carriage_x_freq> SHAPER_TYPE_Y=<y_shaper> SHAPER_FREQ_Y=<y_freq>
+  SET_DUAL_CARRIAGE CARRIAGE=carriage_u
+  SET_INPUT_SHAPER SHAPER_TYPE_X=<carriage_u_shaper> SHAPER_FREQ_X=<carriage_x_freq> SHAPER_TYPE_Y=<carriage_y_shaper> SHAPER_FREQ_Y=<carriage_y_freq>
+  SET_DUAL_CARRIAGE CARRIAGE=carriage_x
+  SET_INPUT_SHAPER SHAPER_TYPE_X=<carriage_x_shaper> SHAPER_FREQ_X=<carriage_x_freq> SHAPER_TYPE_Y=<carriage_y_shaper> SHAPER_FREQ_Y=<carriage_y_freq>
 ```
 Note that `SHAPER_TYPE_Y` and `SHAPER_FREQ_Y` must be the same in both
 commands in this case, since the same motors drive Y axis when either
-of the `x` and `u` carriages are active.
+of the `carriage_x` and `carriage_u` carriages are active.
 
 It is worth noting that `generic_cartesian` kinematic can support two
 dual carriages for X and Y axes. For reference, see for instance a
