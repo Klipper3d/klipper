@@ -321,8 +321,18 @@ class GCodeDispatch:
         else:
             key_param = gcmd.get(key)
         if key_param not in values:
-            raise gcmd.error("The value '%s' is not valid for %s"
-                             % (key_param, key))
+            keys = []
+            guess = ""
+            for value in values:
+                if value is None:
+                    continue
+                keys.append("\'%s\'" % value)
+                if len(key_param) and key_param in value:
+                    guess = ". Did you mean \'%s\'?" % value
+            if guess == "":
+                guess = ". Options: %s" % (", ".join(k for k in keys))
+            raise gcmd.error("The value '%s' is not valid for %s%s"
+                             % (key_param, key, guess))
         values[key_param](gcmd)
     # Low-level G-Code commands that are needed before the config file is loaded
     def cmd_M110(self, gcmd):
