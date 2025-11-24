@@ -208,9 +208,21 @@ class EddyCalibration:
         avg_mad = sum(total_mad)/len(total_mad)
         avg_mad_mm = sum(total_mad_mm)/len(total_mad_mm)
         gcode.respond_info(
-            "probe_eddy_current: MAD=%.3fHz ~ %.6fmm in %d queries\n"
+            "probe_eddy_current: MAD=%.3fHz ~ %.6fmm in %d queries\n" % (
+                avg_mad, avg_mad_mm, total))
+        freq_list = [freq for _, freq in filtered]
+        freq_diff = max(freq_list) - min(freq_list)
+        gcode.respond_info("Total frequency range: %.3fHz\n" % (freq_diff))
+        skip = 5
+        for i in range(skip, len(filtered), (len(filtered) - skip)//5):
+            pos, _ = filtered[i]
+            mad = total_mad[i]
+            mad_mm = total_mad_mm[i]
+            gcode.respond_info("z_offset: %.3f MAD=%.3fHz ~ %.6fmm\n" % (
+                                pos, mad, mad_mm))
+        gcode.respond_info(
             "The SAVE_CONFIG command will update the printer config file\n"
-            "and restart the printer." % (avg_mad, avg_mad_mm, total))
+            "and restart the printer.")
         # Save results
         cal_contents = []
         for i, (pos, freq) in enumerate(filtered):
