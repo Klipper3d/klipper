@@ -195,6 +195,13 @@ class EddyCalibration:
         freq_list = [freq for _, freq, _, _ in filtered]
         freq_diff = max(freq_list) - min(freq_list)
         gcode.respond_info("Total frequency range: %.3f Hz\n" % (freq_diff))
+        points = [0.25, 0.5, 1.0, 2.0, 3.0]
+        for pos, _, mad_hz, mad_mm in filtered:
+            if len(points) and points[0] <= pos:
+                points.pop(0)
+                msg = "z_offset: %.3f # noise %.6fmm, MAD_Hz=%.3f\n" % (
+                    pos, mad_mm, mad_hz)
+                gcode.respond_info(msg)
         return filtered
     def post_manual_probe(self, kin_pos):
         if kin_pos is None:
