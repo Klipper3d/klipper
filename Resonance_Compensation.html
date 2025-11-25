@@ -2047,7 +2047,9 @@ gcode:
   SET_INPUT_SHAPER SHAPER_TYPE_X=&lt;primary_carriage_shaper&gt; SHAPER_FREQ_X=&lt;primary_carriage_freq&gt; SHAPER_TYPE_Y=&lt;y_shaper&gt; SHAPER_FREQ_Y=&lt;y_freq&gt;
 </code></pre></div>
 
-<p>Note that <code>SHAPER_TYPE_Y</code> and <code>SHAPER_FREQ_Y</code> should be the same in both
+<p>However, users of <code>generic_cartesian</code> kinematics should specify carriage names
+in <code>CARRIAGE=</code> parameters of <code>SET_DUAL_CARRIAGE</code> instead of their numbers.
+Note that <code>SHAPER_TYPE_Y</code> and <code>SHAPER_FREQ_Y</code> should be the same in both
 commands. If you need to configure an input shaper for Z axis, include
 its parameters in both <code>SET_INPUT_SHAPER</code> commands.</p>
 <p>Besides <code>delayed_gcode</code>, it is also possible to put a similar snippet into
