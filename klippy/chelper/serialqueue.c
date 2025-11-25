@@ -107,7 +107,7 @@ struct serialqueue {
 #define MIN_RTO 0.025
 #define MAX_RTO 5.000
 #define MAX_PENDING_BLOCKS 12
-#define MIN_REQTIME_DELTA 0.250
+#define MIN_REQTIME_DELTA 0.100
 #define MIN_BACKGROUND_DELTA 0.005
 #define IDLE_QUERY_TIME 1.0
 
