@@ -114,7 +114,7 @@ DECL_INIT(timer_init);
 static uint32_t timer_repeat_until;
 #define TIMER_REPEAT_TICKS timer_from_us(100)
 
-#define TIMER_MIN_TRY_TICKS timer_from_us(2)
+#define TIMER_MIN_TRY_TICKS 90
 #define TIMER_DEFER_REPEAT_TICKS timer_from_us(5)
 
 // Invoke timers
