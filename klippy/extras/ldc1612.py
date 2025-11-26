@@ -173,14 +173,22 @@ class LDC1612:
             errors[msg] += 1
         for ptime, val in samples:
             mv = val & 0x0fffffff
-            if mv != val:
+            if val > 0x03ffffff or val == 0x0:
                 self.last_error_count += 1
                 if (val >> 16 & 0xffff) == 0xffff:
                     # Encoded error from sensor_ldc1612.c
                     log_once(self.lookup_sensor_error(val & 0xffff))
                     continue
                 error_bits = (val >> 28) & 0x0f
-                log_once("Sensor reports error (%s)" % (bin(error_bits),))
+                if error_bits & 0x8 or mv == 0x0000000:
+                    log_once("Frequency under valid range")
+                if error_bits & 0x4 or mv > 0x3ffffff:
+                    type = "hard" if error_bits & 0x4 else "soft"
+                    log_once("Frequency over valid %s range" % (type))
+                if error_bits & 0x2:
+                    log_once("Conversion Watchdog timeout")
+                if error_bits & 0x1:
+                    log_once("Amplitude Low/High warning")
             samples[count] = (round(ptime, 6), round(freq_conv * mv, 3), 999.9)
             count += 1
         del samples[count:]
