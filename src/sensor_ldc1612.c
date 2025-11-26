@@ -120,6 +120,8 @@ DECL_COMMAND(command_query_ldc1612_home_state,
 
 static uint_fast8_t
 check_data_bits(struct ldc1612 *ld, uint32_t *data) {
+    // Ignore amplitude errors
+    *data &= ~(DATA_ERROR_AMPLITUDE << 28);
     // Datasheet define valid frequency input as < F_ref / 4
     // Use half as sanity check
     if (*data < 0x07ffffff)
