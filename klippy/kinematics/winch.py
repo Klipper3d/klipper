@@ -3,6 +3,7 @@
 # Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import math
 import stepper, mathutil, chelper
 
 
@@ -137,23 +138,35 @@ class WinchKinematics:
         self.axes_min = toolhead.Coord(*[min(a) for a in acoords], e=0.)
         self.axes_max = toolhead.Coord(*[max(a) for a in acoords], e=0.)
         self.set_position([0., 0., 0.], "")
+        # Halley/LM hybrid parameters for the forward transform (3T only)
+        self._halley_eta = 1e-3
+        self._halley_tol = 1e-4
+        self._halley_max_iters = 30
+        self._halley_hybrid_iters = 3
+        self._flex_outer_iters = 2
+        self._last_forward = None
     def get_steppers(self):
         return list(self.steppers)
     def calc_position(self, stepper_positions):
-        # Use only first three steppers to calculate cartesian position
-        pos = [stepper_positions[rail.get_name()] for rail in self.steppers[:3]]
-        cart = mathutil.trilateration(self.anchors[:3], [sp * sp for sp in pos])
-        if not self.flex_helper.is_active():
-            return cart
-        cart_guess = list(cart)
-        for _ in range(3):
-            distances, flex = self.flex_helper.calc_arrays(cart_guess)
-            if len(distances) < 3:
+        lengths = [stepper_positions[rail.get_name()] for rail in self.steppers]
+        if len(lengths) < 3:
+            return [0., 0., 0.]
+        initial_guess = self._last_forward
+        if initial_guess is None:
+            initial_guess = mathutil.trilateration(
+                self.anchors[:3], [l * l for l in lengths[:3]])
+        guess = list(initial_guess)
+        for _ in range(self._flex_outer_iters):
+            eff_lengths, anchor_count = self._effective_lengths(lengths, guess)
+            if anchor_count < 3:
                 break
-            adjusted = [pos[i] + flex[i] for i in range(3)]
-            cart_guess = list(mathutil.trilateration(
-                self.anchors[:3], [d * d for d in adjusted]))
-        return cart_guess
+            anchors = self.anchors[:anchor_count]
+            guess, converged = self._solve_hybrid_halley(
+                anchors, eff_lengths, guess)
+            if converged:
+                break
+        self._last_forward = list(guess)
+        return guess
     def set_position(self, newpos, homing_axes):
         for s in self.steppers:
             s.set_position(newpos)
@@ -197,6 +210,142 @@ class WinchKinematics:
         for stp, delta in moves:
             self.force_move.manual_move(stp, delta, speed, accel)
         return [(stp.get_name(), delta) for stp, delta in moves]
+
+    # ---- Halley-based forward transform helpers ----
+    @staticmethod
+    def _vec_norm(vec):
+        return math.sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2])
+
+    def _effective_lengths(self, lengths, pos_guess):
+        if not self.flex_helper.is_active():
+            return list(lengths), min(len(lengths), len(self.anchors))
+        distances, flex = self.flex_helper.calc_arrays(pos_guess)
+        anchor_count = min(len(lengths), len(distances), len(flex), len(self.anchors))
+        if anchor_count <= 0:
+            return [], 0
+        return [lengths[i] + flex[i] for i in range(anchor_count)], anchor_count
+
+    @staticmethod
+    def _residuals_and_derivatives(anchors, lengths, pos):
+        residuals = []
+        jac = []
+        hess = []
+        for anchor, target_len in zip(anchors, lengths):
+            dx = pos[0] - anchor[0]
+            dy = pos[1] - anchor[1]
+            dz = pos[2] - anchor[2]
+            dist = math.sqrt(dx * dx + dy * dy + dz * dz)
+            if dist < 1e-9:
+                dist = 1e-9
+            inv_len = 1.0 / dist
+            inv_len3 = inv_len * inv_len * inv_len
+            residuals.append(dist - target_len)
+            jrow = [dx * inv_len, dy * inv_len, dz * inv_len]
+            jac.append(jrow)
+            hrow = [
+                [inv_len - dx * dx * inv_len3, -dx * dy * inv_len3, -dx * dz * inv_len3],
+                [-dy * dx * inv_len3, inv_len - dy * dy * inv_len3, -dy * dz * inv_len3],
+                [-dz * dx * inv_len3, -dz * dy * inv_len3, inv_len - dz * dz * inv_len3],
+            ]
+            hess.append(hrow)
+        return residuals, jac, hess
+
+    @staticmethod
+    def _accumulate_normals(jac, residuals):
+        grad = [0., 0., 0.]
+        jtj = [[0., 0., 0.], [0., 0., 0.], [0., 0., 0.]]
+        for row, res in zip(jac, residuals):
+            grad[0] += row[0] * res
+            grad[1] += row[1] * res
+            grad[2] += row[2] * res
+            jtj[0][0] += row[0] * row[0]
+            jtj[0][1] += row[0] * row[1]
+            jtj[0][2] += row[0] * row[2]
+            jtj[1][0] += row[1] * row[0]
+            jtj[1][1] += row[1] * row[1]
+            jtj[1][2] += row[1] * row[2]
+            jtj[2][0] += row[2] * row[0]
+            jtj[2][1] += row[2] * row[1]
+            jtj[2][2] += row[2] * row[2]
+        return jtj, grad
+
+    @staticmethod
+    def _solve_3x3(system, rhs):
+        try:
+            inv = mathutil.matrix_inv(system)
+        except ZeroDivisionError:
+            return None
+        return [
+            inv[0][0] * rhs[0] + inv[0][1] * rhs[1] + inv[0][2] * rhs[2],
+            inv[1][0] * rhs[0] + inv[1][1] * rhs[1] + inv[1][2] * rhs[2],
+            inv[2][0] * rhs[0] + inv[2][1] * rhs[1] + inv[2][2] * rhs[2],
+        ]
+
+    def _halley_iteration(self, anchors, lengths, pos):
+        residuals, jac, hess = self._residuals_and_derivatives(anchors, lengths, pos)
+        jtj, grad = self._accumulate_normals(jac, residuals)
+        for i in range(3):
+            jtj[i][i] += self._halley_eta
+        delta_lm = self._solve_3x3(jtj, [-g for g in grad])
+        if delta_lm is None:
+            return pos, False
+
+        hbar = []
+        for h in hess:
+            hbar.append([
+                delta_lm[0] * h[0][0] + delta_lm[1] * h[1][0] + delta_lm[2] * h[2][0],
+                delta_lm[0] * h[0][1] + delta_lm[1] * h[1][1] + delta_lm[2] * h[2][1],
+                delta_lm[0] * h[0][2] + delta_lm[1] * h[1][2] + delta_lm[2] * h[2][2],
+            ])
+
+        jbar = []
+        for jrow, hrow in zip(jac, hbar):
+            jbar.append([
+                jrow[0] + 0.5 * hrow[0],
+                jrow[1] + 0.5 * hrow[1],
+                jrow[2] + 0.5 * hrow[2],
+            ])
+        jtj2, grad2 = self._accumulate_normals(jbar, residuals)
+        for i in range(3):
+            jtj2[i][i] += self._halley_eta
+        delta = self._solve_3x3(jtj2, [-g for g in grad2])
+        if delta is None:
+            return pos, False
+        new_pos = [
+            pos[0] + delta[0],
+            pos[1] + delta[1],
+            pos[2] + delta[2],
+        ]
+        return new_pos, self._vec_norm(delta) < self._halley_tol
+
+    def _lm_iteration(self, anchors, lengths, pos):
+        residuals, jac, _ = self._residuals_and_derivatives(anchors, lengths, pos)
+        jtj, grad = self._accumulate_normals(jac, residuals)
+        for i in range(3):
+            jtj[i][i] += self._halley_eta
+        delta = self._solve_3x3(jtj, [-g for g in grad])
+        if delta is None:
+            return pos, False
+        new_pos = [
+            pos[0] + delta[0],
+            pos[1] + delta[1],
+            pos[2] + delta[2],
+        ]
+        return new_pos, self._vec_norm(delta) < self._halley_tol
+
+    def _solve_hybrid_halley(self, anchors, lengths, seed):
+        pos = list(seed)
+        # Phase 1: Halley updates
+        for _ in range(self._halley_hybrid_iters):
+            pos, ok = self._halley_iteration(anchors, lengths, pos)
+            if ok:
+                return pos, True
+        # Phase 2: LM fallback
+        for _ in range(self._halley_hybrid_iters, self._halley_max_iters):
+            pos, ok = self._lm_iteration(anchors, lengths, pos)
+            if ok:
+                return pos, True
+        return pos, False
 
     def cmd_M666(self, gcmd):
         param = gcmd.get_int('F', None)
