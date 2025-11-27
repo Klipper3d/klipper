@@ -194,6 +194,10 @@ class AHT3x(AHTBase):
 def load_config(config):
     # Register sensor
     pheater = config.get_printer().lookup_object("heaters")
+
+    # Backwards compatibility alias
+    pheater.add_sensor_factory("AHT10", AHT1x)
+
     pheater.add_sensor_factory("AHT1X", AHT1x)
     pheater.add_sensor_factory("AHT2X", AHT2x)
     pheater.add_sensor_factory("AHT3X", AHT3x)
