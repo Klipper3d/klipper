@@ -176,7 +176,7 @@ class LDC1612:
                 "(e.g. faulty wiring) or a faulty ldc1612 chip."
                 % (manuf_id, dev_id, LDC1612_MANUF_ID, LDC1612_DEV_ID))
         # Setup chip in requested query rate
-        rcount0 = self.frequency / (16. * (self.data_rate - 4))
+        rcount0 = self.frequency / (16. * self.data_rate)
         self.set_reg(REG_RCOUNT0, int(rcount0 + 0.5))
         self.set_reg(REG_OFFSET0, 0)
         self.set_reg(REG_SETTLECOUNT0, int(SETTLETIME*self.frequency/16. + .5))
