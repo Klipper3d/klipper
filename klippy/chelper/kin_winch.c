@@ -681,15 +681,15 @@ recalc_origin(struct winch_flex *wf)
         wf->relaxed_origin[i] = relaxed;
     }
     if (wf->enabled && num > 0) {
-        char msg[256];
-        int len = snprintf(msg, sizeof(msg), "winch pretension at origin:");
-        for (int i = 0; i < num && len > 0 && len < (int)sizeof(msg); ++i) {
-            len += snprintf(msg + len, sizeof(msg) - len,
-                            " %d:%.6f", i, pretension[i]);
-            if (len >= (int)sizeof(msg))
-                break;
-        }
-        errorf("%s", msg);
+        //char msg[256];
+        //int len = snprintf(msg, sizeof(msg), "winch pretension at origin:");
+        //for (int i = 0; i < num && len > 0 && len < (int)sizeof(msg); ++i) {
+        //    len += snprintf(msg + len, sizeof(msg) - len,
+        //                    " %d:%.6f", i, pretension[i]);
+        //    if (len >= (int)sizeof(msg))
+        //        break;
+        //}
+        //errorf("%s", msg);
     }
 }
 

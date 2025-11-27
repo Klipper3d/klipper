@@ -8,7 +8,8 @@ It reuses the datasets and solver runner from ai_docs/run_tests.py. For each
 sample, it:
  1) Runs solver_quadratic to get a baseline pose from motor degrees.
   2) Builds a WinchFlexHelper with the sample's config and anchors.
-  3) Computes cable lengths as (distance - flex) at the baseline pose.
+  3) Converts dataset motor degrees to cable lengths using the same spool model
+     as the generator.
   4) Calls the Klipper forward transform with those lengths.
  5) Reports Cartesian error statistics against both the quadratic solver and
     the dataset ground truth.
@@ -22,6 +23,7 @@ from typing import Dict, Iterable, List, Sequence, Tuple
 import sys
 from pathlib import Path
 import importlib.util
+from itertools import zip_longest
 
 ROOT = Path(__file__).resolve().parents[1]
 KLIPPY_DIR = ROOT / "klippy"
@@ -51,6 +53,7 @@ rt_spec.loader.exec_module(rt_module)
 
 GEOMETRY_ORDER = rt_module.GEOMETRY_ORDER
 MAX_SUCCESS_ERR_MM = rt_module.MAX_SUCCESS_ERR_MM
+DEFAULT_CONFIG = rt_module.DEFAULT_CONFIG
 Sample = rt_module.Sample
 SolverResult = rt_module.SolverResult
 Stats = rt_module.Stats
@@ -125,9 +128,55 @@ def build_flex_config(sample_cfg: Dict[str, object]) -> Dict[str, object]:
     return cfg
 
 
-def compute_lengths(helper: WinchFlexHelper, pos: Sequence[float]) -> List[float]:
-    distances, flex = helper.calc_arrays(pos)
-    return [d - f for d, f in zip(distances, flex)]
+def _broadcast_cfg(value, count: int, default):
+    if value is None:
+        base = default
+    else:
+        base = value
+    if isinstance(base, (list, tuple)):
+        arr = list(base)
+    else:
+        arr = [base]
+    if not arr:
+        arr = [default] if not isinstance(default, (list, tuple)) else list(default)
+    if len(arr) < count:
+        arr += [arr[-1]] * (count - len(arr))
+    elif len(arr) > count:
+        arr = arr[:count]
+    return [float(v) for v in arr]
+
+
+def motor_deg_to_line_lengths(sample: Sample) -> List[float]:
+    """Invert the dataset motor -> line mapping to recover commanded lengths."""
+    num = len(sample.anchors)
+    cfg = sample.config
+    spool_buildup = float(cfg.get("spool_buildup_factor", DEFAULT_CONFIG["spool_buildup_factor"]))
+    spool_r = _broadcast_cfg(cfg.get("spool_r_in_origin") or cfg.get("spool_r"), num, DEFAULT_CONFIG["spool_r_in_origin"])
+    mech_adv = _broadcast_cfg(cfg.get("mechanical_advantage"), num, DEFAULT_CONFIG["mechanical_advantage"])
+    lines_per_spool = _broadcast_cfg(cfg.get("lines_per_spool"), num, DEFAULT_CONFIG["lines_per_spool"])
+    spool_to_motor = cfg.get("spool_to_motor_gearing_factor")
+    if spool_to_motor is None:
+        spool_gear = float(cfg.get("spool_gear_teeth", DEFAULT_CONFIG["spool_gear_teeth"]))
+        motor_gear = float(cfg.get("motor_gear_teeth", DEFAULT_CONFIG["motor_gear_teeth"]))
+        spool_to_motor = spool_gear / motor_gear
+    spool_to_motor_arr = _broadcast_cfg(spool_to_motor, num, spool_to_motor)
+
+    origin_lengths = [math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]) for a in sample.anchors[:num]]
+
+    lengths: List[float] = []
+    for motor_deg, r0, ma, lps, gear, origin in zip_longest(
+        sample.motor_deg[:num], spool_r, mech_adv, lines_per_spool, spool_to_motor_arr, origin_lengths, fillvalue=0.0
+    ):
+        deg_per_unit_times_r = (gear * ma * 360.0) / (2.0 * math.pi)
+        k2 = -1.0 * ma * lps * spool_buildup
+        if abs(k2) > 1e-9:
+            k0 = 2.0 * deg_per_unit_times_r / k2
+            term = motor_deg / k0 + r0
+            delta_len = (term * term - r0 * r0) / k2
+        else:
+            delta_len = (motor_deg * r0) / deg_per_unit_times_r
+        lengths.append(origin + delta_len)
+    return lengths
 
 
 def make_forward_transform(anchors: List[List[float]], helper: WinchFlexHelper):
@@ -152,7 +201,7 @@ def klipper_forward_errors(
 ) -> List[Tuple[float | None, bool]]:
     errors: List[Tuple[float | None, bool]] = []
     for sample, ref in zip(samples, baseline):
-        if sample.unsupported or ref.unsupported or not ref.ok:
+        if sample.unsupported or (not use_ground_truth and (ref.unsupported or not ref.ok)):
             errors.append((None, False))
             continue
         cfg_map = build_flex_config(sample.config)
@@ -160,9 +209,7 @@ def klipper_forward_errors(
         helper = WinchFlexHelper(sample.anchors, cfg)
         helper.set_active(use_flex and sample.config.get("use_flex", True))
         target_pos = sample.gt if use_ground_truth else ref.pos
-        # Always derive line lengths from the solver output (motor -> pose),
-        # but optionally evaluate the error against the dataset's ground truth.
-        lengths = compute_lengths(helper, ref.pos)
+        lengths = motor_deg_to_line_lengths(sample)
         kin = make_forward_transform(sample.anchors, helper)
         stepper_positions = {s.get_name(): l for s, l in zip(kin.steppers, lengths)}
         try:
