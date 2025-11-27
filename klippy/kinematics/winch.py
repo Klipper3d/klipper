@@ -151,10 +151,60 @@ class WinchKinematics:
         lengths = [stepper_positions[rail.get_name()] for rail in self.steppers]
         if len(lengths) < 3:
             return [0., 0., 0.]
+
+        def _trilateration_guess(lengths_for_guess, anchor_count=None):
+            count = anchor_count if anchor_count is not None else len(lengths_for_guess)
+            count = min(count, len(self.anchors))
+            if count < 3:
+                return None
+            try:
+                return mathutil.trilateration(
+                    self.anchors[:count],
+                    [l * l for l in lengths_for_guess[:count]])
+            except Exception:
+                return None
+
         initial_guess = self._last_forward
         if initial_guess is None:
-            initial_guess = mathutil.trilateration(
-                self.anchors[:3], [l * l for l in lengths[:3]])
+            initial_guess = _trilateration_guess(lengths)
+        if initial_guess is None and self.flex_helper.is_active():
+            try:
+                eff_lengths, anchor_count = self._effective_lengths(
+                    lengths, [0., 0., 0.])
+            except Exception:
+                eff_lengths, anchor_count = [], 0
+            if anchor_count >= 3:
+                # Flex pretension shrinks the physical radii, which can make
+                # plain trilateration fail; seed with flex-adjusted lengths.
+                initial_guess = _trilateration_guess(
+                    eff_lengths, anchor_count)
+        if initial_guess is None:
+            initial_guess = [0., 0., 0.]
+        if self.flex_helper.is_active():
+            def _length_mismatch(pos):
+                distances, flex = self.flex_helper.calc_arrays(pos)
+                count = min(len(lengths), len(distances), len(flex), len(self.anchors))
+                if count < 3:
+                    return float("inf")
+                predicted = [distances[i] - flex[i] for i in range(count)]
+                return sum((predicted[i] - lengths[i]) ** 2 for i in range(count))
+            candidates = [initial_guess]
+            if initial_guess[2]:
+                candidates.append([initial_guess[0], initial_guess[1], -initial_guess[2]])
+                candidates.append([initial_guess[0], initial_guess[1], 0.])
+            scored = []
+            for cand in candidates:
+                err = _length_mismatch(cand)
+                scored.append((err, abs(cand[2]), cand))
+            scored.sort(key=lambda t: (t[0], t[1]))
+            # Prefer the lowest error; if multiple are close, pick the one with
+            # the smallest |z| to avoid drifting to the mirrored solution.
+            best_err = scored[0][0]
+            zvals = [a[2] for a in self.anchors]
+            planar = max(zvals) - min(zvals) < 1e-9
+            tol = 1.5 if planar else 1.01
+            close = [t for t in scored if t[0] <= best_err * tol + 1e-9]
+            initial_guess = min(close, key=lambda t: t[1])[2] if close else scored[0][2]
         guess = list(initial_guess)
         for _ in range(self._flex_outer_iters):
             eff_lengths, anchor_count = self._effective_lengths(lengths, guess)
@@ -163,7 +213,7 @@ class WinchKinematics:
             anchors = self.anchors[:anchor_count]
             guess, converged = self._solve_hybrid_halley(
                 anchors, eff_lengths, guess)
-            if converged:
+            if converged and not self.flex_helper.is_active():
                 break
         self._last_forward = list(guess)
         return guess
