@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <cmath>
@@ -146,15 +147,34 @@ struct SolverResult {
   float cost{std::numeric_limits<float>::infinity()};
 };
 
-static float residualsAndDerivatives(const std::vector<Point> &anchors, const std::vector<float> &lengths,
+static float residualsAndDerivatives(const std::vector<Point> &anchors, const std::vector<float> &measuredLinePos,
+                                     const std::array<float, HANGPRINTER_MAX_ANCHORS> &origins, const Flex &flex,
                                      const Point &pos, std::vector<float> &residuals,
                                      std::vector<std::array<float, 3>> &jacobian,
                                      std::vector<std::array<std::array<float, 3>, 3>> *hessians) {
-  const size_t m = anchors.size();
+  const size_t m = std::min(anchors.size(), measuredLinePos.size());
   residuals.resize(m);
   jacobian.resize(m);
   if (hessians) {
     hessians->assign(m, {});
+  }
+
+  std::array<float, HANGPRINTER_MAX_ANCHORS> baseDummy{};
+  std::array<float, HANGPRINTER_MAX_ANCHORS> baseImpact = flex.CartesianToMotorStepsMatrix(pos, baseDummy);
+
+  constexpr float impactStep = 1e-3F;
+  std::array<std::array<float, HANGPRINTER_MAX_ANCHORS>, 3> impactPlus{};
+  std::array<std::array<float, HANGPRINTER_MAX_ANCHORS>, 3> impactMinus{};
+  for (size_t axis = 0; axis < 3; ++axis) {
+    Point shifted = pos;
+    shifted[axis] += impactStep;
+    std::array<float, HANGPRINTER_MAX_ANCHORS> ignorePlus{};
+    impactPlus[axis] = flex.CartesianToMotorStepsMatrix(shifted, ignorePlus);
+
+    shifted = pos;
+    shifted[axis] -= impactStep;
+    std::array<float, HANGPRINTER_MAX_ANCHORS> ignoreMinus{};
+    impactMinus[axis] = flex.CartesianToMotorStepsMatrix(shifted, ignoreMinus);
   }
 
   float cost = 0.0F;
@@ -167,8 +187,9 @@ static float residualsAndDerivatives(const std::vector<Point> &anchors, const st
     const float invLen = 1.0F / len;
     const float invLen3 = invLen * invLen * invLen;
 
-    residuals[i] = len - lengths[i];
-    jacobian[i] = {diff[0] * invLen, diff[1] * invLen, diff[2] * invLen};
+    const float distanceDiff = len - origins[i];
+    const float impact = baseImpact[i];
+    residuals[i] = distanceDiff + impact - measuredLinePos[i];
 
     if (hessians) {
       auto &H = (*hessians)[i];
@@ -179,6 +200,12 @@ static float residualsAndDerivatives(const std::vector<Point> &anchors, const st
         }
       }
     }
+
+    for (size_t axis = 0; axis < 3; ++axis) {
+      const float impactDeriv = (impactPlus[axis][i] - impactMinus[axis][i]) / (2.0F * impactStep);
+      jacobian[i][axis] = diff[axis] * invLen + impactDeriv;
+    }
+
     cost += 0.5F * residuals[i] * residuals[i];
   }
   return cost;
@@ -225,8 +252,9 @@ static void accumulateJtJandGrad(const std::vector<std::array<float, 3>> &J, con
   }
 }
 
-static SolverResult solveHalley(const std::vector<Point> &anchors, const std::vector<float> &lengths, Point initial,
-                                float eta, float tol, size_t maxIters) {
+static SolverResult solveHalley(const std::vector<Point> &anchors, const std::vector<float> &measuredLinePos,
+                                const std::array<float, HANGPRINTER_MAX_ANCHORS> &origins, const Flex &flex,
+                                Point initial, float eta, float tol, size_t maxIters) {
   SolverResult result{};
   result.pos = initial;
 
@@ -234,7 +262,7 @@ static SolverResult solveHalley(const std::vector<Point> &anchors, const std::ve
     std::vector<float> residuals;
     std::vector<std::array<float, 3>> J;
     std::vector<std::array<std::array<float, 3>, 3>> H;
-    result.cost = residualsAndDerivatives(anchors, lengths, result.pos, residuals, J, &H);
+    result.cost = residualsAndDerivatives(anchors, measuredLinePos, origins, flex, result.pos, residuals, J, &H);
 
     float JTJ[3][3];
     float grad[3];
@@ -288,12 +316,14 @@ static SolverResult solveHalley(const std::vector<Point> &anchors, const std::ve
   // Refresh cost at the final pose
   std::vector<float> residuals;
   std::vector<std::array<float, 3>> Jtmp;
-  result.cost = residualsAndDerivatives(anchors, lengths, result.pos, residuals, Jtmp, nullptr);
+  result.cost =
+      residualsAndDerivatives(anchors, measuredLinePos, origins, flex, result.pos, residuals, Jtmp, nullptr);
   return result;
 }
 
-static SolverResult solveHybrid(const std::vector<Point> &anchors, const std::vector<float> &lengths, Point initial,
-                                float eta, float tol, size_t halleyIters, size_t maxIters) {
+static SolverResult solveHybrid(const std::vector<Point> &anchors, const std::vector<float> &measuredLinePos,
+                                const std::array<float, HANGPRINTER_MAX_ANCHORS> &origins, const Flex &flex,
+                                Point initial, float eta, float tol, size_t halleyIters, size_t maxIters) {
   SolverResult result{};
   result.pos = initial;
 
@@ -302,7 +332,8 @@ static SolverResult solveHybrid(const std::vector<Point> &anchors, const std::ve
     std::vector<float> residuals;
     std::vector<std::array<float, 3>> J;
     std::vector<std::array<std::array<float, 3>, 3>> H;
-    result.cost = residualsAndDerivatives(anchors, lengths, result.pos, residuals, J, &H);
+    result.cost =
+        residualsAndDerivatives(anchors, measuredLinePos, origins, flex, result.pos, residuals, J, &H);
 
     float JTJ[3][3];
     float grad[3];
@@ -355,7 +386,8 @@ static SolverResult solveHybrid(const std::vector<Point> &anchors, const std::ve
   for (; iter < maxIters && !result.converged; ++iter) {
     std::vector<float> residuals;
     std::vector<std::array<float, 3>> J;
-    result.cost = residualsAndDerivatives(anchors, lengths, result.pos, residuals, J, nullptr);
+    result.cost =
+        residualsAndDerivatives(anchors, measuredLinePos, origins, flex, result.pos, residuals, J, nullptr);
 
     float JTJ[3][3];
     float grad[3];
@@ -380,19 +412,21 @@ static SolverResult solveHybrid(const std::vector<Point> &anchors, const std::ve
 
   std::vector<float> residuals;
   std::vector<std::array<float, 3>> Jtmp;
-  result.cost = residualsAndDerivatives(anchors, lengths, result.pos, residuals, Jtmp, nullptr);
+  result.cost =
+      residualsAndDerivatives(anchors, measuredLinePos, origins, flex, result.pos, residuals, Jtmp, nullptr);
   return result;
 }
 
-static SolverResult solveLm(const std::vector<Point> &anchors, const std::vector<float> &lengths, Point initial,
-                            float eta, float tol, size_t maxIters) {
+static SolverResult solveLm(const std::vector<Point> &anchors, const std::vector<float> &measuredLinePos,
+                            const std::array<float, HANGPRINTER_MAX_ANCHORS> &origins, const Flex &flex,
+                            Point initial, float eta, float tol, size_t maxIters) {
   SolverResult result{};
   result.pos = initial;
 
   for (size_t iter = 0; iter < maxIters; ++iter) {
     std::vector<float> residuals;
     std::vector<std::array<float, 3>> J;
-    result.cost = residualsAndDerivatives(anchors, lengths, result.pos, residuals, J, nullptr);
+    result.cost = residualsAndDerivatives(anchors, measuredLinePos, origins, flex, result.pos, residuals, J, nullptr);
 
     float JTJ[3][3];
     float grad[3];
@@ -417,18 +451,19 @@ static SolverResult solveLm(const std::vector<Point> &anchors, const std::vector
 
   std::vector<float> residuals;
   std::vector<std::array<float, 3>> Jtmp;
-  result.cost = residualsAndDerivatives(anchors, lengths, result.pos, residuals, Jtmp, nullptr);
+  result.cost =
+      residualsAndDerivatives(anchors, measuredLinePos, origins, flex, result.pos, residuals, Jtmp, nullptr);
   return result;
 }
 
-static std::vector<float> motorPosToLengths(const Flex &flex, const std::array<float, HANGPRINTER_MAX_ANCHORS> &motorPos,
-                                            const std::array<float, HANGPRINTER_MAX_ANCHORS> &origins, size_t numAnchors) {
-  std::vector<float> lengths(numAnchors, 0.0F);
+static std::vector<float> motorPosToLinePositions(const Flex &flex, const std::array<float, HANGPRINTER_MAX_ANCHORS> &motorPos,
+                                                  size_t numAnchors) {
+  std::vector<float> linePositions(numAnchors, 0.0F);
   for (size_t i = 0; i < numAnchors; ++i) {
     const float steps = motorPos[i] * g_stepsPerDegree;
-    lengths[i] = flex.MotorPosToLinePos(steps, i) + origins[i];
+    linePositions[i] = flex.MotorPosToLinePos(steps, i);
   }
-  return lengths;
+  return linePositions;
 }
 
 #ifndef RUN_DATASET_CLI
@@ -438,7 +473,7 @@ int main() {
   auto const origins = originLengths(numAnchors);
 
   // Dataset from motorstepstocartesiantest.cpp ("With flex max 120 target 20")
-  std::vector<std::array<float, numAnchors>> motorPoss = {
+  std::vector<std::array<float, HANGPRINTER_MAX_ANCHORS>> motorPoss = {
       {-369.47366890F, -375.18362935F, 318.27641438F, 323.88876891F, 1076.68163402F},
       {-5980.29607895F, 12630.56774248F, 12288.67350302F, -6506.18962476F, -13348.06053879F},
       {-2353.64278337F, 15870.99892165F, 15755.46225500F, -2522.71380922F, -27477.49741579F},
@@ -505,16 +540,18 @@ int main() {
   std::cout << "idx, halley_err(mm), hybrid_err(mm), lm_err(mm), halley_it, hybrid_it, lm_it\n";
   Point seed{0.0F, 0.0F, 0.0F};
   for (size_t i = 0; i < motorPoss.size(); ++i) {
-    auto lengths = motorPosToLengths(flex, motorPoss[i], origins, numAnchors);
+    auto linePositions = motorPosToLinePositions(flex, motorPoss[i], numAnchors);
     std::vector<Point> anchorVec;
     anchorVec.reserve(numAnchors);
     for (size_t k = 0; k < numAnchors; ++k) {
       anchorVec.push_back(fiveAnchors[k]);
     }
 
-    SolverResult halley = solveHalley(anchorVec, lengths, seed, 1e-3F, 1e-3F, 20);
-    SolverResult hybrid = solveHybrid(anchorVec, lengths, seed, 1e-3F, 1e-3F, 3, 30);
-    SolverResult lm = solveLm(anchorVec, lengths, seed, 1e-3F, 1e-3F, 30);
+    SolverResult halley =
+        solveHalley(anchorVec, linePositions, origins, flex, seed, 1e-3F, 1e-3F, 20);
+    SolverResult hybrid =
+        solveHybrid(anchorVec, linePositions, origins, flex, seed, 1e-3F, 1e-3F, 3, 30);
+    SolverResult lm = solveLm(anchorVec, linePositions, origins, flex, seed, 1e-3F, 1e-3F, 30);
 
     Point halleyErr = expectedPoss[i] - halley.pos;
     Point hybridErr = expectedPoss[i] - hybrid.pos;
@@ -584,12 +621,13 @@ int main() {
 
     Flex const flex = makeFlex(numAnchors);
     auto const origins = originLengths(numAnchors);
-    auto lengths = motorPosToLengths(flex, motorPos, origins, numAnchors);
+    auto linePositions = motorPosToLinePositions(flex, motorPos, numAnchors);
     std::vector<Point> anchorVec = anchors;
 
     Point seed{0.0F, 0.0F, 0.0F};
     auto const start = std::chrono::steady_clock::now();
-    SolverResult hybrid = solveHybrid(anchorVec, lengths, seed, 1e-3F, 1e-3F, 3, 30);
+    SolverResult hybrid =
+        solveHybrid(anchorVec, linePositions, origins, flex, seed, 1e-3F, 1e-3F, 3, 30);
     auto const end = std::chrono::steady_clock::now();
     double const ms = std::chrono::duration<double, std::milli>(end - start).count();
 
