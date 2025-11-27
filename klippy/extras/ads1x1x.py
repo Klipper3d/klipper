@@ -322,7 +322,7 @@ class ADS1X1X_pin:
         self.mcu = chip.mcu
         self.chip = chip
         self.pcfg = pcfg
-
+        self._last_state = (0., 0.)
         self.invalid_count = 0
 
         self.chip._printer.register_event_handler("klippy:connect", \
@@ -362,6 +362,7 @@ class ADS1X1X_pin:
 
             # Publish result
             measured_time = self._reactor.monotonic()
+            self._last_state = (target_value, measured_time)
             self.callback(self.chip.mcu.estimated_print_time(measured_time),
                         target_value)
         else:
@@ -388,6 +389,9 @@ class ADS1X1X_pin:
         self.minval = minval
         self.maxval = maxval
         self.range_check_count = range_check_count
+
+    def get_last_value(self):
+        return self._last_state
 
 def load_config_prefix(config):
     return ADS1X1X_chip(config)
