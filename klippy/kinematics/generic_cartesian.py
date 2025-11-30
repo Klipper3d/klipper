@@ -9,6 +9,8 @@ import gcode, mathutil, stepper
 from . import idex_modes
 from . import kinematic_stepper as ks
 
+VALID_AXES = ['x', 'y', 'z']
+
 def mat_mul(a, b):
     if len(a[0]) != len(b):
         return None
@@ -35,14 +37,11 @@ class MainCarriage:
     def __init__(self, config):
         self.rail = stepper.GenericPrinterRail(config)
         carriage_name = self.rail.get_name(short=True)
-        valid_axes = ['x', 'y', 'z']
-        if carriage_name in valid_axes:
-            axis_name = config.getchoice('axis', valid_axes, carriage_name)
+        if carriage_name in VALID_AXES:
+            axis_name = config.getchoice('axis', VALID_AXES, carriage_name)
         else:
-            axis_name = config.getchoice('axis', valid_axes)
+            axis_name = config.getchoice('axis', VALID_AXES)
         self.axis = ord(axis_name) - ord('x')
-        self.axis_name = axis_name
-        self.gantry_name = config.get('gantry', None)
         self.dual_carriage = None
     def get_name(self):
         return self.rail.get_name(short=True)
@@ -57,9 +56,7 @@ class MainCarriage:
             return True
         return self.dual_carriage.get_dc_module().is_active(self.rail)
     def set_dual_carriage(self, carriage):
-        old_dc = self.dual_carriage
         self.dual_carriage = carriage
-        return old_dc
     def get_dual_carriage(self):
         return self.dual_carriage
 
@@ -79,24 +76,48 @@ class ExtraCarriage:
                                     self.endstop_pin, self.name)
 
 class DualCarriage:
-    def __init__(self, config, carriages):
+    def __init__(self, config):
         self.printer = config.get_printer()
         self.rail = stepper.GenericPrinterRail(config)
-        self.primary_carriage = config.getchoice('primary_carriage', carriages)
-        if self.primary_carriage.set_dual_carriage(self) is not None:
+        axis_name = config.getchoice('axis', VALID_AXES + [None], None)
+        self.primary_carriage_name = config.get('primary_carriage', None)
+        if axis_name is None and self.primary_carriage_name is None:
             raise config.error(
-                    "Redefinition of dual_carriage for carriage '%s'" %
-                    self.primary_carriage.get_name())
+                    "Either 'primary_carriage' or 'axis' must be specified for"
+                    + " dual_carriage '%s'" % self.rail.get_name(short=True))
+        if axis_name is not None and self.primary_carriage_name is not None:
+            raise config.error(
+                    "Only one of 'primary_carriage' or 'axis' can be specified "
+                    + "for dual_carriage '%s'" % self.rail.get_name(short=True))
+        if axis_name is not None:
+            self.axis = ord(axis_name) - ord('x')
+            self.safe_dist = None
+        else:
+            self.safe_dist = config.getfloat('safe_distance', None, minval=0.)
+        self.primary_carriage = self.dual_carriage = None
+        self.config_error = config.error
+    def resolve_primary_carriage(self, carriages):
+        if self.primary_carriage_name is None:
+            return
+        if self.primary_carriage_name not in carriages:
+            raise self.config_error(
+                    "primary_carriage = '%s' for '%s' is not a valid choice"
+                    % (self.primary_carriage_name, self.get_name()))
+        self.primary_carriage = carriages[self.primary_carriage_name]
+        if self.primary_carriage.get_dual_carriage():
+            raise self.config_error(
+                    "Multiple dual carriages ('%s', '%s') for carriage '%s'" %
+                    (self.primary_carriage.get_dual_carriage().get_name(),
+                     self.get_name(), self.primary_carriage.get_name()))
+        self.primary_carriage.set_dual_carriage(self)
         self.axis = self.primary_carriage.get_axis()
         if self.axis > 1:
-            raise config.error("Invalid axis '%s' for dual_carriage" %
-                               "xyz"[self.axis])
-        self.gantry_name = config.get('gantry', None)
-        self.safe_dist = config.getfloat('safe_distance', None, minval=0.)
+            raise self.config_error("Invalid axis '%s' for dual_carriage '%s'" %
+                                    ("xyz"[self.axis], self.get_name()))
     def get_name(self):
         return self.rail.get_name(short=True)
     def get_axis(self):
-        return self.primary_carriage.get_axis()
+        return self.axis
     def get_rail(self):
         return self.rail
     def get_safe_dist(self):
@@ -105,7 +126,13 @@ class DualCarriage:
         return self.printer.lookup_object('dual_carriage')
     def is_active(self):
         return self.get_dc_module().is_active(self.rail)
+    def set_dual_carriage(self, carriage):
+        self.dual_carriage = carriage
     def get_dual_carriage(self):
+        if self.dual_carriage is not None:
+            return self.dual_carriage
+        return self.primary_carriage
+    def get_primary_carriage(self):
         return self.primary_carriage
     def add_stepper(self, kin_stepper):
         self.rail.add_stepper(kin_stepper.get_stepper())
@@ -117,12 +144,12 @@ class GenericCartesianKinematics:
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
         self.dc_module = None
-        if self.dc_carriages or len(self.gantries) > 1:
-            pcs = [dc.get_dual_carriage() for dc in self.dc_carriages]
-            for gantry in self.gantries.values():
-                for carriage in gantry:
-                    if not (carriage in pcs or carriage in self.dc_carriages):
-                        pcs.append(carriage)
+        if self.dc_carriages:
+            dc_axes = set(dc.get_axis() for dc in self.dc_carriages)
+            pcs = ([pc for pc in self.primary_carriages
+                    if pc.get_axis() in dc_axes] +
+                   [dc for dc in self.dc_carriages
+                    if dc.get_primary_carriage() is None])
             dcs = [pc.get_dual_carriage() for pc in pcs]
             primary_rails = [pc.get_rail() for pc in pcs]
             dual_rails = [dc.get_rail() if dc else None for dc in dcs]
@@ -142,18 +169,14 @@ class GenericCartesianKinematics:
                         dc_module.get_dc_rail_wrapper(dc.get_rail()).inactivate(
                                 zero_pos)
                 self._check_kinematics(config.error)
-            activated_axes = []
-            for c in self.primary_carriages:
-                axis = c.get_axis()
-                if axis in activated_axes or c not in pcs:
+            for dc in self.dc_carriages:
+                dc_module.get_dc_rail_wrapper(dc.get_rail()).inactivate(
+                        zero_pos)
+            for pc in self.primary_carriages:
+                if pc.get_axis() not in dc_axes:
                     continue
-                activated_axes.append(axis)
-                dc_module.get_dc_rail_wrapper(c.get_rail()).activate(
+                dc_module.get_dc_rail_wrapper(pc.get_rail()).activate(
                         idex_modes.PRIMARY, zero_pos)
-                dc = c.get_dual_carriage()
-                if dc is not None:
-                    dc_module.get_dc_rail_wrapper(dc.get_rail()).inactivate(
-                            zero_pos)
         else:
             self._check_kinematics(config.error)
         # Setup boundary checks
@@ -172,49 +195,30 @@ class GenericCartesianKinematics:
         primary_carriages = []
         for mcconfig in config.get_prefix_sections('carriage '):
             primary_carriages.append(MainCarriage(mcconfig))
-        carriages = {}
-        for pc in primary_carriages:
-            carriages[pc.get_name()] = pc
+        for axis, axis_name in enumerate(VALID_AXES):
+            dups = [pc.get_name() for pc in primary_carriages
+                    if pc.get_axis() == axis]
+            if len(dups) > 1:
+                raise config.error(
+                        "Axis '%s' is set for multiple primary carriages (%s)"
+                        % (axis_name, ', '.join(dups)))
+            elif not dups:
+                raise config.error(
+                        "No carriage defined for axis '%s'" % axis_name)
         dc_carriages = []
         for dcconfig in config.get_prefix_sections('dual_carriage '):
-            dc_carriages.append(DualCarriage(dcconfig, carriages))
-        for dc in dc_carriages:
-            name = dc.get_name()
+            dc_carriages.append(DualCarriage(dcconfig))
+        carriages = {}
+        for carriage in primary_carriages + dc_carriages:
+            name = carriage.get_name()
             if name in carriages:
                 raise config.error("Redefinition of carriage %s" % name)
-            carriages[name] = dc
+            carriages[name] = carriage
+        for dc in dc_carriages:
+            dc.resolve_primary_carriage(carriages)
         self.carriages = dict(carriages)
-        self.dc_carriages = dc_carriages
         self.primary_carriages = primary_carriages
-        gantries = collections.defaultdict(list)
-        for carriage in carriages.values():
-            if carriage.gantry_name is None:
-                continue
-            if (carriage.gantry_name not in carriages or
-                carriage.get_name() == carriage.gantry_name):
-                raise config.error("Invalid '%s' gantry name for carriage '%s'"
-                                   % (carriage.gantry_name, name))
-            gantries[carriage.gantry_name].append(carriage)
-        for carriage in primary_carriages:
-            axis = carriage.get_axis()
-            same_axis = [mc for mc in primary_carriages
-                         if mc.get_axis() == axis and mc != carriage]
-            if not same_axis:
-                continue
-            if carriage.gantry_name is None:
-                raise config.error(
-                        "Axis '%s' referenced by multiple carriages (%s),"
-                        " such carriages must specify different gantries"
-                        % ("xyz"[axis], ", ".join(
-                            c.get_name() for c in [carriage] + same_axis)))
-        gantry_axes = [carriages[gantry_name].get_axis()
-                       for gantry_name in gantries]
-        if len(set(gantry_axes)) > 1:
-            raise config.error("Different gantries are on different axes: %s" %
-                               ", ".join("%s:%s" % (name, "xyz"[axis])
-                                         for name, axis in zip(
-                                             gantries, gantry_axes)))
-        self.gantries = gantries
+        self.dc_carriages = dc_carriages
         ec_carriages = []
         for ecconfig in config.get_prefix_sections('extra_carriage '):
             ec_carriages.append(ExtraCarriage(ecconfig, carriages))

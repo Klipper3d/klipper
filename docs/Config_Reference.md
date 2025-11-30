@@ -743,21 +743,12 @@ max_accel:
 
 ```
 
-Then a user must define three primary carriages for X, Y, and Z axes
-(or more for dual gantry printers), e.g.:
+Then a user must define three primary carriages for X, Y, and Z axes, e.g.:
 ```
 [carriage carriage_x]
 axis:
 #   Axis of a carriage, either x, y, or z. This parameter must be provided,
 #   unless a carriage name is x, y, or z itself.
-#gantry:
-#   If specified, defines a carriage that is associated with the gantry of
-#   this carriage. This parameter must refer to a name of carriage that
-#   is defined as "carriage" or "dual_carriage" and is on a different axis
-#   than the current carriage. If multiple primary carriages are defined
-#   on the same axis, they all must specify different "gantry" values.
-#   Note that all carriages of different gantries must share the same axis.
-#   The default is not to specify a gantry.
 endstop_pin:
 #   Endstop switch detection pin. If this endstop pin is on a
 #   different mcu than the stepper motor(s) moving this carriage,
@@ -2461,10 +2452,15 @@ Please note that in this case the `[dual_carriage]` configuration deviates
 from the configuration described above:
 ```
 [dual_carriage my_dc_carriage]
-primary_carriage:
-#   Defines the matching primary carriage of this dual carriage and
-#   the corresponding IDEX axis. Must match a name of a defined `[carriage]`.
-#   This parameter must be provided.
+#primary_carriage:
+#   Defines the matching carriage on the same gantry as this dual carriage and
+#   the corresponding dual axis. Must match a name of a defined `[carriage]` or
+#   another independent `[dual_carriage]` (see below).
+#   Either this parameter or the parameter 'axis' must be provided.
+#axis:
+#   Axis of a carriage, either x or y. If provided, defines a dual carriage
+#   independent of a `[carriage]` with the same axis on a different gantry.
+#   Either this parameter or the parameter 'primary_carriage' must be provided.
 #safe_distance:
 #   The minimum distance (in mm) to enforce between the dual and the primary
 #   carriages. If a G-Code command is executed that will bring the carriages
@@ -2473,7 +2469,8 @@ primary_carriage:
 #   position_min and position_max for the dual and primary carriages. If set
 #   to 0 (or safe_distance is unset and position_min and position_max are
 #   identical for the primary and dual carriages), the carriages proximity
-#   checks will be disabled.
+#   checks will be disabled. Only valid for a dual_carriage with a defined
+#   'primary_carriage'.
 endstop_pin:
 #position_min:
 position_endstop:
