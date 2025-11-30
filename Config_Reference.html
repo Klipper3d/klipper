@@ -6668,14 +6668,15 @@ temperature.</p>
 </code></pre></div>
 
 <h3 id="aht10aht20aht21-temperature-sensor">AHT10/AHT20/AHT21 temperature sensor<a class="headerlink" href="#aht10aht20aht21-temperature-sensor" title="Permanent link">&para;</a></h3>
-<p>AHT10/AHT20/AHT21 two wire interface (I2C) environmental sensors.
+<p>AHT10/AHT15/AHT20/AHT21/AHT30 two wire interface (I2C) environmental sensors.
 Note that these sensors are not intended for use with extruders and
 heater beds, but rather for monitoring ambient temperature (C) and
 relative humidity. See
 <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> for a gcode_macro
 that may be used to report humidity in addition to temperature.</p>
-<div class="highlight"><pre><span></span><code>sensor_type: AHT10
-#   Also use AHT10 for AHT20 and AHT21 sensors.
+<div class="highlight"><pre><span></span><code>sensor_type: AHT1X
+#   Must be &quot;AHT1X&quot; , &quot;AHT2X&quot;, &quot;AHT3X&quot;
+#   Some AHT20 sensors can use &quot;AHT1X&quot;
 #i2c_address:
 #   Default is 56 (0x38). Some AHT10 sensors give the option to use
 #   57 (0x39) by moving a resistor.
