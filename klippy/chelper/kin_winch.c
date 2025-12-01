@@ -610,7 +610,10 @@ compute_flex(struct winch_flex *wf, double x, double y, double z,
         if (spring_length < EPSILON)
             spring_length = EPSILON;
         double spring_k = wf->spring_constant / spring_length;
-        flex[i] = -forces[i] / spring_k;
+        double ma = wf->mechanical_advantage[i];
+        if (ma <= 0.)
+            ma = 1.;
+        flex[i] = -forces[i] / (spring_k * ma);
     }
 }
 
