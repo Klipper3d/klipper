@@ -282,6 +282,22 @@ window" interface. Parsing content from the G-Code terminal output is
 discouraged. Use the "objects/subscribe" endpoint to obtain updates on
 Klipper's state.
 
+### heaters/set_target_temperature
+
+This endpoint is used to asynchronously set the target temperature for
+a heater. For example:
+`{"id": 123, "method": "heaters/set_target_temperature", "params":
+{"heater":"heater_generic my_heater", "target": 100.3}}`
+
+This endpoint is similar to the `SET_HEATER_TEMPERATURE` G-Code
+command, but the target temperature takes effect immediately.  It does
+not wait for pending G-Code commands to complete.
+
+If this endpoint is issued for a heater while a `WAIT_TEMPERATURE`
+command (or `M109`, `M190`) is pending for that heater, then the
+requested target temperature will be set and the `WAIT_TEMPERATURE`
+command will exit with an error.
+
 ### motion_report/dump_stepper
 
 This endpoint is used to subscribe to Klipper's internal stepper
