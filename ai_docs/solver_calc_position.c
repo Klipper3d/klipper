@@ -142,14 +142,26 @@ parse_cfg_line(const char *line, struct cfg_state *cfg)
 }
 
 static double
+gear_ratio(const struct cfg_state *cfg)
+{
+    double motor_gear = cfg->motor_gear;
+    if (motor_gear == 0.)
+        motor_gear = 1.;
+    double gear = cfg->spool_gear / motor_gear;
+    if (gear <= 0.)
+        gear = 1.;
+    return gear;
+}
+
+static double
 rotation_distance_for_axis(const struct cfg_state *cfg, size_t idx)
 {
     double r = cfg->spool_r[idx];
     double ma = cfg->mech_adv[idx];
     if (ma == 0.)
         ma = 1.;
-    double gear = cfg->spool_gear / cfg->motor_gear;
-    return (2.0 * M_PI * r) / (gear * ma);
+    // Use circumference/mechanical advantage; gear ratio is handled via steps_per_rotation.
+    return (2.0 * M_PI * r) / ma;
 }
 
 static int
@@ -179,11 +191,13 @@ solve_sample(const struct cfg_state *cfg, size_t num, int use_flex,
         mech_adv);
     winch_flex_set_enabled(wf, use_flex ? 1 : 0);
 
+    double gear = gear_ratio(cfg);
     double motor_mm[WINCH_MAX_ANCHORS];
     for (size_t i = 0; i < num; ++i) {
         double rd = rotation_distance_for_axis(cfg, i);
-        winch_flex_set_spool_params(wf, (int)i, rd, cfg->steps_per_rev);
-        motor_mm[i] = motor_deg[i] / cfg->steps_per_rev * rd;
+        double steps_per_rotation = cfg->steps_per_rev * gear;
+        winch_flex_set_spool_params(wf, (int)i, rd, steps_per_rotation);
+        motor_mm[i] = motor_deg[i] / cfg->steps_per_rev * (rd / gear);
     }
 
     struct timespec t0, t1;
