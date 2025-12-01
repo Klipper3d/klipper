@@ -31,6 +31,7 @@ class WinchFlexHelper:
         self.set_active(self.enabled)
 
     def _read_config(self, config):
+        self.buildup_factor = config.getfloat('winch_buildup_factor', 0., minval=0.)
         self.mover_weight = config.getfloat('winch_mover_weight', 0., minval=0.)
         self.spring_constant = config.getfloat('winch_spring_constant', 0., minval=0.)
         if self.num:
@@ -50,6 +51,7 @@ class WinchFlexHelper:
             self.min_force = []
             self.max_force = []
             self.guy_wires = []
+            self.mechanical_advantage = []
         algo_choices = list(self.ALGORITHMS.keys())
         self.flex_compensation_algorithm_name = config.getchoice(
             'flex_compensation_algorithm', algo_choices, default='qp')
@@ -64,7 +66,7 @@ class WinchFlexHelper:
         max_c = self.ffi_main.new("double[]", self.max_force)
         guy_ptr = self.ffi_main.new("double[]", self.guy_wires)
         self.ffi_lib.winch_flex_configure(
-            self.ptr, self.num, anchors_c, self.mover_weight,
+            self.ptr, self.num, anchors_c, self.buildup_factor, self.mover_weight,
             self.spring_constant, min_c, max_c,
             guy_ptr, self.flex_compensation_algorithm,
             self.ignore_gravity, self.ignore_pretension, self.mechanical_advantage)

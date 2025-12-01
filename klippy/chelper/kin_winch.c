@@ -32,6 +32,7 @@ struct winch_flex {
     int num_anchors;
     int enabled;
     int flex_compensation_algorithm;
+    double buildup_factor;
     double mover_weight;
     double spring_constant;
     double min_force[WINCH_MAX_ANCHORS];
@@ -615,7 +616,7 @@ calc_position_common(struct winch_stepper *ws, struct move *m, double move_time)
     double distances[WINCH_MAX_ANCHORS];
     double flex[WINCH_MAX_ANCHORS];
     compute_flex(wf, pos.x, pos.y, pos.z, distances, flex);
-    return dist + flex[ws->index];
+    return dist - wf->distances_origin[ws->index] + flex[ws->index];
 }
 
 static double
@@ -661,6 +662,7 @@ void __visible
 winch_flex_configure(struct winch_flex *wf,
                      int num_anchors,
                      const double *anchors,
+                     double buildup_factor,
                      double mover_weight,
                      double spring_constant,
                      const double *min_force,
@@ -678,6 +680,7 @@ winch_flex_configure(struct winch_flex *wf,
     if (num_anchors > WINCH_MAX_ANCHORS)
         num_anchors = WINCH_MAX_ANCHORS;
     wf->num_anchors = num_anchors;
+    wf->buildup_factor = buildup_factor;
     wf->mover_weight = mover_weight;
     wf->spring_constant = spring_constant;
     wf->flex_compensation_algorithm = flex_compensation_algorithm;

@@ -154,7 +154,7 @@ defs_kin_winch = """
     struct winch_flex *winch_flex_alloc(void);
     void winch_flex_free(struct winch_flex *wf);
     void winch_flex_configure(struct winch_flex *wf, int num_anchors,
-        const double *anchors, double mover_weight, double spring_constant,
+        const double *anchors, double buildup_factor, double mover_weight, double spring_constant,
         const double *min_force,
         const double *max_force, const double *guy_wires,
         int flex_compensation_algorithm, int ignore_gravity, int ignore_pretension,
