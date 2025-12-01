@@ -37,12 +37,15 @@ class WinchFlexHelper:
             default_min = tuple(0. for _ in range(self.num))
             default_max = tuple(120. for _ in range(self.num))
             default_guy_wires = tuple(0. for _ in range(self.num))
+            default_mechanical_advantage = tuple(1 for _ in range(self.num))
             self.min_force = list(config.getfloatlist(
                 'winch_min_force', default_min, count=self.num))
             self.max_force = list(config.getfloatlist(
                 'winch_max_force', default_max, count=self.num))
             self.guy_wires = list(config.getfloatlist(
                 'winch_guy_wire_lengths', default_guy_wires, count=self.num))
+            self.mechanical_advantage = list(config.getintlist(
+                'winch_mechanical_advantage', default_mechanical_advantage, count=self.num))
         else:
             self.min_force = []
             self.max_force = []
@@ -63,7 +66,8 @@ class WinchFlexHelper:
         self.ffi_lib.winch_flex_configure(
             self.ptr, self.num, anchors_c, self.mover_weight,
             self.spring_constant, min_c, max_c,
-            guy_ptr, self.flex_compensation_algorithm, self.ignore_gravity, self.ignore_pretension)
+            guy_ptr, self.flex_compensation_algorithm,
+            self.ignore_gravity, self.ignore_pretension, self.mechanical_advantage)
 
     def get_ptr(self):
         if self.ptr is not None:
@@ -115,14 +119,7 @@ class WinchKinematics:
             a = tuple(stepper_config.getfloat('anchor_' + n) for n in 'xyz')
             self.anchors.append(a)
         self.flex_helper = WinchFlexHelper(self.anchors, config)
-        self.force_move = self.printer.lookup_object('force_move')
         self.stepper_enable = self.printer.lookup_object('stepper_enable')
-        self.pretension_speed = config.getfloat(
-            'flex_pretension_speed', 5., minval=0.001)
-        self.pretension_accel = config.getfloat(
-            'flex_pretension_accel', 0., minval=0.)
-        self.pretension_min_delta = config.getfloat(
-            'flex_pretension_min_delta', 0.0005, minval=0.)
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command(
             'M666', self.cmd_M666,
@@ -140,82 +137,14 @@ class WinchKinematics:
         self.set_position([0., 0., 0.], "")
         # Halley/LM hybrid parameters for the forward transform (3T only)
         self._halley_eta = 1e-3
-        self._halley_tol = 1e-4
+        self._halley_tol = 1e-3
         self._halley_max_iters = 30
         self._halley_hybrid_iters = 3
-        self._flex_outer_iters = 2
         self._last_forward = None
     def get_steppers(self):
         return list(self.steppers)
     def calc_position(self, stepper_positions):
-        lengths = [stepper_positions[rail.get_name()] for rail in self.steppers]
-        if len(lengths) < 3:
-            return [0., 0., 0.]
-
-        def _trilateration_guess(lengths_for_guess, anchor_count=None):
-            count = anchor_count if anchor_count is not None else len(lengths_for_guess)
-            count = min(count, len(self.anchors))
-            if count < 3:
-                return None
-            try:
-                return mathutil.trilateration(
-                    self.anchors[:count],
-                    [l * l for l in lengths_for_guess[:count]])
-            except Exception:
-                return None
-
-        initial_guess = self._last_forward
-        if initial_guess is None:
-            initial_guess = _trilateration_guess(lengths)
-        if initial_guess is None and self.flex_helper.is_active():
-            try:
-                eff_lengths, anchor_count = self._effective_lengths(
-                    lengths, [0., 0., 0.])
-            except Exception:
-                eff_lengths, anchor_count = [], 0
-            if anchor_count >= 3:
-                # Flex pretension shrinks the physical radii, which can make
-                # plain trilateration fail; seed with flex-adjusted lengths.
-                initial_guess = _trilateration_guess(
-                    eff_lengths, anchor_count)
-        if initial_guess is None:
-            initial_guess = [0., 0., 0.]
-        if self.flex_helper.is_active():
-            def _length_mismatch(pos):
-                distances, flex = self.flex_helper.calc_arrays(pos)
-                count = min(len(lengths), len(distances), len(flex), len(self.anchors))
-                if count < 3:
-                    return float("inf")
-                predicted = [distances[i] - flex[i] for i in range(count)]
-                return sum((predicted[i] - lengths[i]) ** 2 for i in range(count))
-            candidates = [initial_guess]
-            if initial_guess[2]:
-                candidates.append([initial_guess[0], initial_guess[1], -initial_guess[2]])
-                candidates.append([initial_guess[0], initial_guess[1], 0.])
-            scored = []
-            for cand in candidates:
-                err = _length_mismatch(cand)
-                scored.append((err, abs(cand[2]), cand))
-            scored.sort(key=lambda t: (t[0], t[1]))
-            # Prefer the lowest error; if multiple are close, pick the one with
-            # the smallest |z| to avoid drifting to the mirrored solution.
-            best_err = scored[0][0]
-            zvals = [a[2] for a in self.anchors]
-            planar = max(zvals) - min(zvals) < 1e-9
-            tol = 1.5 if planar else 1.01
-            close = [t for t in scored if t[0] <= best_err * tol + 1e-9]
-            initial_guess = min(close, key=lambda t: t[1])[2] if close else scored[0][2]
-        guess = list(initial_guess)
-        for _ in range(self._flex_outer_iters):
-            eff_lengths, anchor_count = self._effective_lengths(lengths, guess)
-            if anchor_count < 3:
-                break
-            anchors = self.anchors[:anchor_count]
-            guess, converged = self._solve_hybrid_halley(
-                anchors, eff_lengths, guess)
-            if converged and not self.flex_helper.is_active():
-                break
-        self._last_forward = list(guess)
+        guess = [0., 0., 0.]
         return guess
     def set_position(self, newpos, homing_axes):
         for s in self.steppers:
@@ -237,29 +166,6 @@ class WinchKinematics:
             'axis_minimum': self.axes_min,
             'axis_maximum': self.axes_max,
         }
-
-    def _apply_flex_transition(self, current_pos, prev_lengths):
-        distances, flex = self.flex_helper.calc_arrays(current_pos[:3])
-        anchor_count = min(len(distances), len(self.steppers))
-        if not anchor_count:
-            return []
-        moves = []
-        for idx in range(anchor_count):
-            prev_length = prev_lengths[idx]
-            target_length = distances[idx] - flex[idx]
-            delta = target_length - prev_length
-            if abs(delta) <= self.pretension_min_delta:
-                continue
-            moves.append((self.steppers[idx], delta))
-        if not moves:
-            return []
-        stepper_names = [s.get_name() for s, _ in moves]
-        self.stepper_enable.set_motors_enable(stepper_names, True)
-        speed = max(self.pretension_speed, 0.001)
-        accel = self.pretension_accel
-        for stp, delta in moves:
-            self.force_move.manual_move(stp, delta, speed, accel)
-        return [(stp.get_name(), delta) for stp, delta in moves]
 
     # ---- Halley-based forward transform helpers ----
     @staticmethod
@@ -413,8 +319,6 @@ class WinchKinematics:
                 f"Winch flex compensation already {'enabled' if current_state else 'disabled'}.")
             return
         self.toolhead.wait_moves()
-        current_pos = list(self.toolhead.get_position())
-        prev_lengths = [s.get_commanded_position() for s in self.steppers]
         if requested:
             actual = (self.flex_helper.config_valid()
                       and self.flex_helper.set_active(True))
@@ -424,21 +328,8 @@ class WinchKinematics:
             gcmd.respond_info(
                 "Unable to enable flex compensation; check winch configuration parameters.")
             return
-        extra_msg = ""
-        if actual != current_state:
-            try:
-                adjustments = self._apply_flex_transition(current_pos, prev_lengths)
-            except Exception as exc:
-                self.flex_helper.set_active(current_state)
-                self.set_position(current_pos, "")
-                raise gcmd.error(f"Failed to apply flex transition: {exc}")
-            self.set_position(current_pos, "")
-            if adjustments:
-                deltas = ", ".join(
-                    f"{name}:{delta:+.6f}" for name, delta in adjustments)
-                extra_msg = f" Applied pretension deltas ({deltas})."
         state = "enabled" if actual else "disabled"
-        gcmd.respond_info(f"Winch flex compensation {state}.{extra_msg}")
+        gcmd.respond_info(f"Winch flex compensation {state}")
 
 def load_kinematics(toolhead, config):
     return WinchKinematics(toolhead, config)

@@ -40,7 +40,7 @@ struct winch_flex {
     int ignore_gravity;
     int ignore_pretension;
     double distances_origin[WINCH_MAX_ANCHORS];
-    double relaxed_origin[WINCH_MAX_ANCHORS];
+    int mechanical_advantage[WINCH_MAX_ANCHORS];
 };
 
 struct winch_stepper {
@@ -594,11 +594,11 @@ compute_flex(struct winch_flex *wf, double x, double y, double z,
     memset(forces, 0, sizeof(forces));
     compute_static_forces(wf, &pos, forces, wf->flex_compensation_algorithm);
     for (int i = 0; i < num; ++i) {
-        double spring_length = distances[i] + wf->guy_wires[i];
+        double spring_length = distances[i]*wf->mechanical_advantage[i] + wf->guy_wires[i];
         if (spring_length < EPSILON)
             spring_length = EPSILON;
         double spring_k = wf->spring_constant / spring_length;
-        flex[i] = forces[i] / spring_k;
+        flex[i] = -forces[i] / spring_k;
     }
 }
 static double
@@ -615,7 +615,7 @@ calc_position_common(struct winch_stepper *ws, struct move *m, double move_time)
     double distances[WINCH_MAX_ANCHORS];
     double flex[WINCH_MAX_ANCHORS];
     compute_flex(wf, pos.x, pos.y, pos.z, distances, flex);
-    return dist - flex[ws->index];
+    return dist + flex[ws->index];
 }
 
 static double
@@ -655,42 +655,6 @@ recalc_origin(struct winch_flex *wf)
         double dz = wf->anchors[i].z;
         wf->distances_origin[i] = hypot3(dx, dy, dz);
     }
-
-    if (!wf->enabled) {
-        for (int i = 0; i < num; ++i)
-            wf->relaxed_origin[i] = wf->distances_origin[i];
-        return;
-    }
-
-    struct coord origin;
-    origin.x = 0.;
-    origin.y = 0.;
-    origin.z = 0.;
-    double forces[WINCH_MAX_ANCHORS] = {0.};
-    compute_static_forces(wf, &origin, forces, wf->flex_compensation_algorithm);
-
-    double pretension[WINCH_MAX_ANCHORS] = {0.};
-    for (int i = 0; i < num; ++i) {
-        double spring_length = wf->distances_origin[i] + wf->guy_wires[i];
-        if (spring_length < EPSILON)
-            spring_length = EPSILON;
-        double spring_k = wf->spring_constant / spring_length;
-        double tension = forces[i] / spring_k;
-        pretension[i] = tension;
-        double relaxed = wf->distances_origin[i] - tension;
-        wf->relaxed_origin[i] = relaxed;
-    }
-    if (wf->enabled && num > 0) {
-        //char msg[256];
-        //int len = snprintf(msg, sizeof(msg), "winch pretension at origin:");
-        //for (int i = 0; i < num && len > 0 && len < (int)sizeof(msg); ++i) {
-        //    len += snprintf(msg + len, sizeof(msg) - len,
-        //                    " %d:%.6f", i, pretension[i]);
-        //    if (len >= (int)sizeof(msg))
-        //        break;
-        //}
-        //errorf("%s", msg);
-    }
 }
 
 void __visible
@@ -704,7 +668,8 @@ winch_flex_configure(struct winch_flex *wf,
                      const double *guy_wires,
                      int flex_compensation_algorithm,
                      int ignore_gravity,
-                     int ignore_pretension)
+                     int ignore_pretension,
+                     const int *mechanical_advantage)
 {
     if (!wf)
         return;
@@ -725,16 +690,23 @@ winch_flex_configure(struct winch_flex *wf,
         wf->anchors[i].z = anchors[i * 3 + 2];
         wf->min_force[i] = min_force ? min_force[i] : 0.;
         wf->max_force[i] = max_force ? max_force[i] : 120.0;
+
         if (guy_wires)
             wf->guy_wires[i] = guy_wires[i];
         else
             wf->guy_wires[i] = 0.;
+
+        if (mechanical_advantage)
+          wf->mechanical_advantage[i] = mechanical_advantage[i];
+        else
+          wf->mechanical_advantage[i] = 1;
     }
     for (int i = num_anchors; i < WINCH_MAX_ANCHORS; ++i) {
         wf->anchors[i].x = wf->anchors[i].y = wf->anchors[i].z = 0.;
         wf->min_force[i] = 0.;
         wf->max_force[i] = 120.0;
         wf->guy_wires[i] = 0.;
+        wf->mechanical_advantage[i] = 1;
     }
     if (wf->flex_compensation_algorithm < WINCH_FORCE_ALGO_TIKHONOV
         || wf->flex_compensation_algorithm > WINCH_FORCE_ALGO_QP) {
@@ -758,7 +730,6 @@ winch_flex_set_enabled(struct winch_flex *wf, int enabled)
     if (!wf)
         return;
     wf->enabled = enabled ? 1 : 0;
-    recalc_origin(wf);
 }
 
 struct stepper_kinematics * __visible
