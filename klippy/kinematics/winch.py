@@ -87,6 +87,16 @@ class WinchFlexHelper:
         if self.ptr and self.ffi_lib is not None:
             self.ffi_lib.winch_flex_set_enabled(self.ptr, 1 if enable else 0)
         return self.is_active()
+    def set_spool_params(self, index, rotation_distance, steps_per_rotation):
+        if not self.ptr or self.ffi_lib is None:
+            return
+        self.ffi_lib.winch_flex_set_spool_params(
+            self.ptr, index, rotation_distance, steps_per_rotation)
+    def motor_to_line_pos(self, index, motor_pos):
+        if not self.ptr or self.ffi_lib is None:
+            return motor_pos
+        return self.ffi_lib.winch_flex_motor_to_line_pos(
+            self.ptr, index, motor_pos)
 
     def config_valid(self):
         return True
@@ -137,6 +147,8 @@ class WinchKinematics:
         if not flex_ptr:
             raise config.error("Failed to initialise winch flex helper")
         for idx, s in enumerate(self.steppers):
+            rdist, steps_per_rot = s.get_rotation_distance()
+            self.flex_helper.set_spool_params(idx, rdist, steps_per_rot)
             s.setup_itersolve('winch_stepper_alloc', flex_ptr, idx)
             s.set_trapq(toolhead.get_trapq())
         # Setup boundary checks
@@ -352,7 +364,10 @@ class WinchKinematics:
             return
         self.toolhead.wait_moves()
         current_pos = list(self.toolhead.get_position())
-        prev_lengths = [s.get_commanded_position() for s in self.steppers]
+        prev_lengths = [
+            self.flex_helper.motor_to_line_pos(idx, s.get_commanded_position())
+            for idx, s in enumerate(self.steppers)
+        ]
         if requested:
             actual = (self.flex_helper.config_valid()
                       and self.flex_helper.set_active(True))

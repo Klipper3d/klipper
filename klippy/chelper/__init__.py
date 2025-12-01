@@ -159,9 +159,13 @@ defs_kin_winch = """
         const double *max_force, const double *guy_wires,
         int flex_compensation_algorithm, int ignore_gravity, int ignore_pretension,
         const int* mechanical_advantage);
+    void winch_flex_set_spool_params(struct winch_flex *wf, int index,
+        double rotation_distance, double steps_per_rotation);
     void winch_flex_calc_arrays(struct winch_flex *wf, double x, double y,
         double z, double *distances_out, double *flex_out);
     void winch_flex_set_enabled(struct winch_flex *wf, int enabled);
+    double winch_flex_motor_to_line_pos(struct winch_flex *wf, int index,
+        double motor_pos);
     struct stepper_kinematics *winch_stepper_alloc(struct winch_flex *wf,
         int index);
 """
