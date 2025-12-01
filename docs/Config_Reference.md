@@ -701,9 +701,6 @@ When the machine starts, flex compensation is disabled. To enable:
  1. Tighten lines so they are just barely not sagging.
  2. Issue `M666 F1` (or have it near the top of your .gcode file)
 
-The machine will not move immediately but it will ensure correct pretension
-from the next ´G1` move and onwards.
-
 If you don't want/need flex compensation, simply avoid issuing `M666 F1`,
 and the machine will use non-flex-compensating kinematics equations.
 
