@@ -701,6 +701,9 @@ When the machine starts, flex compensation is disabled. To enable:
  1. Tighten lines so they are just barely not sagging.
  2. Issue `M666 F1` (or have it near the top of your .gcode file)
 
+The machine will not move immediately but it will ensure correct pretension
+from the next ´G1` move and onwards.
+
 If you don't want/need flex compensation, simply avoid issuing `M666 F1`,
 and the machine will use non-flex-compensating kinematics equations.
 
@@ -743,6 +746,11 @@ winch_guy_wire_lengths:
 #   All line that's not on the spool or suspended between anchor point
 #   and mover point is defined to be "guy wire".
 #   The default is 0 for each anchor.
+winch_mechanical_advantage:
+#   Optional mechanical advantage for each anchor.
+#   If the winch force is geared by winding the line back and forth to the effector
+#   in a block-and-talley system, then tell klipper how many times back plus how many times forth.
+#   The default is 1 for each anchor (no gearing).
 flex_compensation_algorithm:
 #   Solver used when computing how much force is required to counteract
 #   gravity and pretension. Choices are 'tikhonov' and 'qp'.
