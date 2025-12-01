@@ -16,6 +16,10 @@
 #include "itersolve.h" // struct stepper_kinematics
 #include "trapq.h" // move_get_coord
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 #define WINCH_MAX_ANCHORS 26
 #define EPSILON 1e-9
 #define G_ACCEL 9.81
@@ -42,6 +46,13 @@ struct winch_flex {
     int ignore_pretension;
     double distances_origin[WINCH_MAX_ANCHORS];
     int mechanical_advantage[WINCH_MAX_ANCHORS];
+    double spool_radius[WINCH_MAX_ANCHORS];
+    double spool_radius_sq[WINCH_MAX_ANCHORS];
+    double k0[WINCH_MAX_ANCHORS];
+    double k2[WINCH_MAX_ANCHORS];
+    double steps_per_mm[WINCH_MAX_ANCHORS];
+    double inv_steps_per_mm[WINCH_MAX_ANCHORS];
+    int use_constant_spool_model[WINCH_MAX_ANCHORS];
 };
 
 struct winch_stepper {
@@ -602,6 +613,43 @@ compute_flex(struct winch_flex *wf, double x, double y, double z,
         flex[i] = -forces[i] / spring_k;
     }
 }
+
+static inline double
+linepos_to_motorpos(struct winch_flex *wf, int idx, double line_pos)
+{
+    if (!wf || idx < 0 || idx >= wf->num_anchors)
+        return line_pos;
+    if (wf->use_constant_spool_model[idx])
+        return line_pos;
+    double inv_spmm = wf->inv_steps_per_mm[idx];
+    double k2 = wf->k2[idx];
+    if (inv_spmm <= 0. || fabs(k2) <= 1e-16)
+        return line_pos;
+    double radicand = wf->spool_radius_sq[idx] + line_pos * k2;
+    if (radicand < 0.)
+        radicand = 0.;
+    double motor_steps = wf->k0[idx] * (sqrt(radicand) - wf->spool_radius[idx]);
+    return motor_steps * inv_spmm;
+}
+
+static inline double
+motorpos_to_linepos(struct winch_flex *wf, int idx, double motor_pos)
+{
+    if (!wf || idx < 0 || idx >= wf->num_anchors)
+        return motor_pos;
+    if (wf->use_constant_spool_model[idx])
+        return motor_pos;
+    double spmm = wf->steps_per_mm[idx];
+    double k2 = wf->k2[idx];
+    double k0 = wf->k0[idx];
+    if (spmm <= 0. || fabs(k0) <= 1e-16 || fabs(k2) <= 1e-16)
+        return motor_pos;
+    double motor_steps = motor_pos * spmm;
+    double term = motor_steps / k0 + wf->spool_radius[idx];
+    double delta_len = (term * term - wf->spool_radius_sq[idx]) / k2;
+    return delta_len;
+}
+
 static double
 calc_position_common(struct winch_stepper *ws, struct move *m, double move_time)
 {
@@ -611,12 +659,16 @@ calc_position_common(struct winch_stepper *ws, struct move *m, double move_time)
     double dz = ws->anchor.z - pos.z;
     double dist = hypot3(dx, dy, dz);
     struct winch_flex *wf = ws->wf;
-    if (!wf || ws->index >= wf->num_anchors || !wf->enabled)
-        return dist;
-    double distances[WINCH_MAX_ANCHORS];
-    double flex[WINCH_MAX_ANCHORS];
-    compute_flex(wf, pos.x, pos.y, pos.z, distances, flex);
-    return dist - wf->distances_origin[ws->index] + flex[ws->index];
+    double line_pos = dist;
+    if (wf && ws->index < wf->num_anchors && wf->enabled) {
+        double distances[WINCH_MAX_ANCHORS];
+        double flex[WINCH_MAX_ANCHORS];
+        compute_flex(wf, pos.x, pos.y, pos.z, distances, flex);
+        line_pos = dist - wf->distances_origin[ws->index] + flex[ws->index];
+    }
+    if (!wf || ws->index >= wf->num_anchors)
+        return line_pos;
+    return linepos_to_motorpos(wf, ws->index, line_pos);
 }
 
 static double
@@ -656,6 +708,49 @@ recalc_origin(struct winch_flex *wf)
         double dz = wf->anchors[i].z;
         wf->distances_origin[i] = hypot3(dx, dy, dz);
     }
+}
+
+static void
+set_default_spool_params(struct winch_flex *wf, int idx)
+{
+    wf->spool_radius[idx] = 0.;
+    wf->spool_radius_sq[idx] = 0.;
+    wf->k0[idx] = 0.;
+    wf->k2[idx] = 0.;
+    wf->steps_per_mm[idx] = 1.;
+    wf->inv_steps_per_mm[idx] = 1.;
+    wf->use_constant_spool_model[idx] = 1;
+}
+
+void __visible
+winch_flex_set_spool_params(struct winch_flex *wf, int index,
+                            double rotation_distance,
+                            double steps_per_rotation)
+{
+    if (!wf || index < 0 || index >= wf->num_anchors)
+        return;
+    double ma = wf->mechanical_advantage[index];
+    if (ma <= 0.)
+        ma = 1.;
+    double steps_per_mm = rotation_distance > 0.
+        ? steps_per_rotation / rotation_distance : 0.;
+    wf->steps_per_mm[index] = steps_per_mm;
+    wf->inv_steps_per_mm[index] = steps_per_mm > 0. ? 1. / steps_per_mm : 0.;
+
+    const double two_pi = 2.0 * M_PI;
+    double r0 = rotation_distance > 0. ? (rotation_distance * ma) / two_pi : 0.;
+    wf->spool_radius[index] = r0;
+    wf->spool_radius_sq[index] = r0 * r0;
+
+    double k2 = -wf->buildup_factor * ma;
+    wf->k2[index] = k2;
+    wf->k0[index] = 0.;
+    wf->use_constant_spool_model[index] = 1;
+    if (fabs(k2) <= 1e-12 || steps_per_mm <= 0.)
+        return;
+    double steps_per_unit_times_r = steps_per_mm * r0;
+    wf->k0[index] = 2.0 * steps_per_unit_times_r / k2;
+    wf->use_constant_spool_model[index] = 0;
 }
 
 void __visible
@@ -703,6 +798,7 @@ winch_flex_configure(struct winch_flex *wf,
           wf->mechanical_advantage[i] = mechanical_advantage[i];
         else
           wf->mechanical_advantage[i] = 1;
+        set_default_spool_params(wf, i);
     }
     for (int i = num_anchors; i < WINCH_MAX_ANCHORS; ++i) {
         wf->anchors[i].x = wf->anchors[i].y = wf->anchors[i].z = 0.;
@@ -710,6 +806,7 @@ winch_flex_configure(struct winch_flex *wf,
         wf->max_force[i] = 120.0;
         wf->guy_wires[i] = 0.;
         wf->mechanical_advantage[i] = 1;
+        set_default_spool_params(wf, i);
     }
     if (wf->flex_compensation_algorithm < WINCH_FORCE_ALGO_TIKHONOV
         || wf->flex_compensation_algorithm > WINCH_FORCE_ALGO_QP) {
@@ -733,6 +830,15 @@ winch_flex_set_enabled(struct winch_flex *wf, int enabled)
     if (!wf)
         return;
     wf->enabled = enabled ? 1 : 0;
+}
+
+double __visible
+winch_flex_motor_to_line_pos(struct winch_flex *wf, int index,
+                             double motor_pos)
+{
+    if (!wf || index < 0 || index >= wf->num_anchors)
+        return motor_pos;
+    return motorpos_to_linepos(wf, index, motor_pos);
 }
 
 struct stepper_kinematics * __visible
