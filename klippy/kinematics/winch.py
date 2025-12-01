@@ -165,11 +165,35 @@ class WinchKinematics:
     def get_steppers(self):
         return list(self.steppers)
     def calc_position(self, stepper_positions):
-        guess = [0., 0., 0.]
-        return guess
+        flex_ptr = self.flex_helper.get_ptr()
+        ffi_main, ffi_lib = self.flex_helper.ffi_main, self.flex_helper.ffi_lib
+        if not flex_ptr or ffi_main is None or ffi_lib is None:
+            return [None, None, None]
+        try:
+            motor_pos = [stepper_positions[s.get_name()] for s in self.steppers]
+        except KeyError:
+            return [None, None, None]
+        motor_c = ffi_main.new("double[]", motor_pos)
+        guess = self._last_forward if self._last_forward is not None else [0., 0., 0.]
+        guess_c = ffi_main.new("double[3]", guess)
+        out_pos = ffi_main.new("double[3]")
+        out_cost = ffi_main.new("double[1]")
+        out_iters = ffi_main.new("int[1]")
+        ok = ffi_lib.winch_forward_solve(
+            flex_ptr, motor_c, guess_c,
+            self._halley_eta, self._halley_tol,
+            self._halley_hybrid_iters, self._halley_max_iters,
+            out_pos, out_cost, out_iters)
+        if not ok:
+            return [None, None, None]
+        result = [out_pos[0], out_pos[1], out_pos[2]]
+        self._last_forward = result
+        return result
     def set_position(self, newpos, homing_axes):
         for s in self.steppers:
             s.set_position(newpos)
+        if len(newpos) >= 3:
+            self._last_forward = list(newpos[:3])
     def clear_homing_state(self, clear_axes):
         # XXX - homing not implemented
         pass

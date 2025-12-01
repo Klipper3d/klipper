@@ -650,6 +650,272 @@ motorpos_to_linepos(struct winch_flex *wf, int idx, double motor_pos)
     return delta_len;
 }
 
+// ---- Forward transform (motor positions -> Cartesian) ----
+static inline double
+vec_norm3(const double v[3])
+{
+    return sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+}
+
+static double
+residuals_and_derivatives(struct winch_flex *wf, const double *line_pos, int N,
+                          const struct coord *pos, double *residuals,
+                          double *jac, double *hess)
+{
+    const double impact_step = 1e-3;
+    double base_flex[WINCH_MAX_ANCHORS];
+    double impact_plus[3][WINCH_MAX_ANCHORS];
+    double impact_minus[3][WINCH_MAX_ANCHORS];
+    memset(base_flex, 0, sizeof(base_flex));
+    memset(impact_plus, 0, sizeof(impact_plus));
+    memset(impact_minus, 0, sizeof(impact_minus));
+
+    if (wf && wf->enabled) {
+        double distances[WINCH_MAX_ANCHORS];
+        compute_flex(wf, pos->x, pos->y, pos->z, distances, base_flex);
+        for (int axis = 0; axis < 3; ++axis) {
+            struct coord shifted = *pos;
+            if (axis == 0)
+                shifted.x += impact_step;
+            else if (axis == 1)
+                shifted.y += impact_step;
+            else
+                shifted.z += impact_step;
+            compute_flex(wf, shifted.x, shifted.y, shifted.z,
+                         distances, impact_plus[axis]);
+            if (axis == 0)
+                shifted.x = pos->x - impact_step;
+            else if (axis == 1)
+                shifted.y = pos->y - impact_step;
+            else
+                shifted.z = pos->z - impact_step;
+            compute_flex(wf, shifted.x, shifted.y, shifted.z,
+                         distances, impact_minus[axis]);
+        }
+    }
+
+    double cost = 0.;
+    for (int i = 0; i < N; ++i) {
+        double dx = pos->x - wf->anchors[i].x;
+        double dy = pos->y - wf->anchors[i].y;
+        double dz = pos->z - wf->anchors[i].z;
+        double dist = hypot3(dx, dy, dz);
+        if (dist < EPSILON)
+            dist = EPSILON;
+        double inv_len = 1. / dist;
+        double inv_len3 = inv_len * inv_len * inv_len;
+
+        double flex = base_flex[i];
+        double found_line_pos = dist - wf->distances_origin[i] + flex;
+        double res = found_line_pos - line_pos[i];
+        if (residuals)
+            residuals[i] = res;
+
+        double impact_deriv_x = (impact_plus[0][i] - impact_minus[0][i])
+            / (2. * impact_step);
+        double impact_deriv_y = (impact_plus[1][i] - impact_minus[1][i])
+            / (2. * impact_step);
+        double impact_deriv_z = (impact_plus[2][i] - impact_minus[2][i])
+            / (2. * impact_step);
+
+        if (jac) {
+            jac[i * 3 + 0] = dx * inv_len + impact_deriv_x;
+            jac[i * 3 + 1] = dy * inv_len + impact_deriv_y;
+            jac[i * 3 + 2] = dz * inv_len + impact_deriv_z;
+        }
+
+        if (hess) {
+            double *hrow = hess + i * 9;
+            hrow[0] = inv_len - dx * dx * inv_len3;
+            hrow[1] = -dx * dy * inv_len3;
+            hrow[2] = -dx * dz * inv_len3;
+            hrow[3] = -dy * dx * inv_len3;
+            hrow[4] = inv_len - dy * dy * inv_len3;
+            hrow[5] = -dy * dz * inv_len3;
+            hrow[6] = -dz * dx * inv_len3;
+            hrow[7] = -dz * dy * inv_len3;
+            hrow[8] = inv_len - dz * dz * inv_len3;
+        }
+
+        cost += 0.5 * res * res;
+    }
+    return cost;
+}
+
+static void
+accumulate_normals(const double *jac, const double *residuals, int N,
+                   double JTJ[3][3], double grad[3])
+{
+    grad[0] = grad[1] = grad[2] = 0.;
+    JTJ[0][0] = JTJ[0][1] = JTJ[0][2] = 0.;
+    JTJ[1][0] = JTJ[1][1] = JTJ[1][2] = 0.;
+    JTJ[2][0] = JTJ[2][1] = JTJ[2][2] = 0.;
+    for (int i = 0; i < N; ++i) {
+        double jx = jac[i * 3 + 0];
+        double jy = jac[i * 3 + 1];
+        double jz = jac[i * 3 + 2];
+        double r = residuals[i];
+        grad[0] += jx * r;
+        grad[1] += jy * r;
+        grad[2] += jz * r;
+        JTJ[0][0] += jx * jx;
+        JTJ[0][1] += jx * jy;
+        JTJ[0][2] += jx * jz;
+        JTJ[1][0] += jy * jx;
+        JTJ[1][1] += jy * jy;
+        JTJ[1][2] += jy * jz;
+        JTJ[2][0] += jz * jx;
+        JTJ[2][1] += jz * jy;
+        JTJ[2][2] += jz * jz;
+    }
+}
+
+static int
+solve_normal_system(double JTJ[3][3], const double rhs[3], double delta[3])
+{
+    double JTJ_inv[3][3];
+    if (!invert3x3((const double (*)[3])JTJ, JTJ_inv))
+        return 0;
+    delta[0] = JTJ_inv[0][0] * rhs[0] + JTJ_inv[0][1] * rhs[1] + JTJ_inv[0][2] * rhs[2];
+    delta[1] = JTJ_inv[1][0] * rhs[0] + JTJ_inv[1][1] * rhs[1] + JTJ_inv[1][2] * rhs[2];
+    delta[2] = JTJ_inv[2][0] * rhs[0] + JTJ_inv[2][1] * rhs[1] + JTJ_inv[2][2] * rhs[2];
+    return 1;
+}
+
+static int
+solve_hybrid_halley(struct winch_flex *wf, const double *line_pos, int N,
+                    struct coord *pos, double eta, double tol,
+                    int halley_iters, int max_iters,
+                    double *cost_out, int *iters_out)
+{
+    int iter_count = 0;
+    int converged = 0;
+    double cost = 0.;
+    double residuals[WINCH_MAX_ANCHORS];
+    double jac[WINCH_MAX_ANCHORS * 3];
+    double hess[WINCH_MAX_ANCHORS * 9];
+    int hi_limit = halley_iters < max_iters ? halley_iters : max_iters;
+
+    for (int iter = 0; iter < hi_limit; ++iter) {
+        cost = residuals_and_derivatives(wf, line_pos, N, pos,
+                                         residuals, jac, hess);
+        double JTJ[3][3], grad[3];
+        accumulate_normals(jac, residuals, N, JTJ, grad);
+        JTJ[0][0] += eta;
+        JTJ[1][1] += eta;
+        JTJ[2][2] += eta;
+        double rhs1[3] = { -grad[0], -grad[1], -grad[2] };
+        double delta_lm[3];
+        if (!solve_normal_system(JTJ, rhs1, delta_lm))
+            break;
+
+        double Hbar[WINCH_MAX_ANCHORS][3];
+        for (int i = 0; i < N; ++i) {
+            double *hrow = hess + i * 9;
+            Hbar[i][0] = delta_lm[0] * hrow[0] + delta_lm[1] * hrow[3] + delta_lm[2] * hrow[6];
+            Hbar[i][1] = delta_lm[0] * hrow[1] + delta_lm[1] * hrow[4] + delta_lm[2] * hrow[7];
+            Hbar[i][2] = delta_lm[0] * hrow[2] + delta_lm[1] * hrow[5] + delta_lm[2] * hrow[8];
+        }
+
+        double jbar[WINCH_MAX_ANCHORS * 3];
+        for (int i = 0; i < N; ++i) {
+            jbar[i * 3 + 0] = jac[i * 3 + 0] + 0.5 * Hbar[i][0];
+            jbar[i * 3 + 1] = jac[i * 3 + 1] + 0.5 * Hbar[i][1];
+            jbar[i * 3 + 2] = jac[i * 3 + 2] + 0.5 * Hbar[i][2];
+        }
+
+        double JTJ2[3][3], grad2[3];
+        accumulate_normals(jbar, residuals, N, JTJ2, grad2);
+        JTJ2[0][0] += eta;
+        JTJ2[1][1] += eta;
+        JTJ2[2][2] += eta;
+        double rhs2[3] = { -grad2[0], -grad2[1], -grad2[2] };
+        double delta[3];
+        if (!solve_normal_system(JTJ2, rhs2, delta))
+            break;
+        pos->x += delta[0];
+        pos->y += delta[1];
+        pos->z += delta[2];
+        iter_count = iter + 1;
+        if (vec_norm3(delta) < tol) {
+            converged = 1;
+            break;
+        }
+    }
+
+    for (int iter = halley_iters; iter < max_iters && !converged; ++iter) {
+        cost = residuals_and_derivatives(wf, line_pos, N, pos,
+                                         residuals, jac, NULL);
+        double JTJ[3][3], grad[3];
+        accumulate_normals(jac, residuals, N, JTJ, grad);
+        JTJ[0][0] += eta;
+        JTJ[1][1] += eta;
+        JTJ[2][2] += eta;
+        double rhs[3] = { -grad[0], -grad[1], -grad[2] };
+        double delta[3];
+        if (!solve_normal_system(JTJ, rhs, delta))
+            break;
+        pos->x += delta[0];
+        pos->y += delta[1];
+        pos->z += delta[2];
+        iter_count = iter + 1;
+        if (vec_norm3(delta) < tol) {
+            converged = 1;
+            break;
+        }
+    }
+
+    double residuals_final[WINCH_MAX_ANCHORS];
+    double jac_tmp[WINCH_MAX_ANCHORS * 3];
+    cost = residuals_and_derivatives(wf, line_pos, N, pos,
+                                     residuals_final, jac_tmp, NULL);
+    if (iters_out)
+        *iters_out = iter_count;
+    if (cost_out)
+        *cost_out = cost;
+    return converged;
+}
+
+int __visible
+winch_forward_solve(struct winch_flex *wf, const double *motor_pos,
+                    const double *initial_guess, double eta, double tol,
+                    int halley_iters, int max_iters,
+                    double *out_pos, double *out_cost, int *out_iters)
+{
+    if (!wf || !motor_pos || !out_pos)
+        return 0;
+    int N = wf->num_anchors;
+    if (N < 3 || N > WINCH_MAX_ANCHORS)
+        return 0;
+    if (halley_iters < 0)
+        halley_iters = 0;
+    if (max_iters < 0)
+        max_iters = 0;
+    double line_pos[WINCH_MAX_ANCHORS];
+    for (int i = 0; i < N; ++i)
+        line_pos[i] = motorpos_to_linepos(wf, i, motor_pos[i]);
+
+    struct coord pos;
+    pos.x = initial_guess ? initial_guess[0] : 0.;
+    pos.y = initial_guess ? initial_guess[1] : 0.;
+    pos.z = initial_guess ? initial_guess[2] : 0.;
+
+    double cost = 0.;
+    int iters = 0;
+    int ok = solve_hybrid_halley(wf, line_pos, N, &pos, eta, tol,
+                                 halley_iters, max_iters, &cost, &iters);
+    out_pos[0] = pos.x;
+    out_pos[1] = pos.y;
+    out_pos[2] = pos.z;
+    if (out_cost)
+        *out_cost = cost;
+    if (out_iters)
+        *out_iters = iters;
+    if (!ok || cost > 10.)
+        return 0;
+    return 1;
+}
+
 static double
 calc_position_common(struct winch_stepper *ws, struct move *m, double move_time)
 {

@@ -166,6 +166,10 @@ defs_kin_winch = """
     void winch_flex_set_enabled(struct winch_flex *wf, int enabled);
     double winch_flex_motor_to_line_pos(struct winch_flex *wf, int index,
         double motor_pos);
+    int winch_forward_solve(struct winch_flex *wf, const double *motor_pos,
+        const double *initial_guess, double eta, double tol,
+        int halley_iters, int max_iters,
+        double *out_pos, double *out_cost, int *out_iters);
     struct stepper_kinematics *winch_stepper_alloc(struct winch_flex *wf,
         int index);
 """
