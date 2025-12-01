@@ -13,6 +13,8 @@ compile() {
 }
 
 compile motorstepstocartesiantest_quadratic.cpp solver_quadratic
+echo "Building solver_calc_position from solver_calc_position.c"
+gcc -O2 -std=gnu11 -D_GNU_SOURCE -I../klippy/chelper solver_calc_position.c -lm -o build/solver_calc_position
 
 echo "Running solver comparison..."
 python3 run_tests.py

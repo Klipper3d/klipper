@@ -69,7 +69,18 @@ class SolverSummary:
 
 
 SOLVERS = {
-    "quadratic": {"path": BUILD / "solver_quadratic", "supports_no_flex": False},
+    "quadratic": {
+        "path": BUILD / "solver_quadratic",
+        "supports_no_flex": False,
+        "label": "quadratic (reference)",
+        "type": "binary",
+    },
+    "calc_position": {
+        "path": BUILD / "solver_calc_position",
+        "supports_no_flex": False,
+        "label": "calc_position",
+        "type": "binary",
+    },
 }
 
 
@@ -349,6 +360,58 @@ def summarise(samples: Sequence[Sample], results: Sequence[SolverResult]) -> Sol
     return SolverSummary(overall=overall, by_geo=by_geo)
 
 
+def summarise_difference(samples: Sequence[Sample], ref: Sequence[SolverResult], alt: Sequence[SolverResult]) -> SolverSummary:
+    records_by_geo: dict[str, list[tuple[bool, float | None, float, int, float]]] = defaultdict(list)
+    skipped_by_geo: dict[str, int] = defaultdict(int)
+    skipped_total = 0
+
+    for sample, r_ref, r_alt in zip(samples, ref, alt):
+        geo = sample.geometry
+        if r_ref.unsupported or r_alt.unsupported or sample.unsupported:
+            skipped_total += 1
+            skipped_by_geo[geo] += 1
+            continue
+        if not (r_ref.ok and r_alt.ok):
+            records_by_geo[geo].append((False, None, 0.0, 0, 0.0))
+            continue
+        dx = r_ref.pos[0] - r_alt.pos[0]
+        dy = r_ref.pos[1] - r_alt.pos[1]
+        dz = r_ref.pos[2] - r_alt.pos[2]
+        err = math.sqrt(dx * dx + dy * dy + dz * dz)
+        ok = err <= MAX_SUCCESS_ERR_MM
+        cost = abs(r_ref.cost - r_alt.cost)
+        iters = abs(r_ref.iterations - r_alt.iterations)
+        dt_ms = abs(r_ref.runtime_ms - r_alt.runtime_ms)
+        records_by_geo[geo].append((ok, err, cost, iters, dt_ms))
+
+    def build_stats(records: list[tuple[bool, float | None, float, int, float]], skipped: int) -> Stats:
+        supported = len(records)
+        success = sum(1 for r in records if r[0])
+        errs = [r[1] for r in records if r[0] and r[1] is not None]
+        costs = [r[2] for r in records if r[0]]
+        iters = [r[3] for r in records if r[0]]
+        runtimes = [r[4] for r in records if r[0]]
+        return Stats(
+            total=supported + skipped,
+            supported=supported,
+            success_rate=(success / supported) * 100 if supported else 0.0,
+            mae=statistics.mean(errs) if errs else float("nan"),
+            med_err=statistics.median(errs) if errs else float("nan"),
+            std_err=statistics.pstdev(errs) if errs else float("nan"),
+            mean_cost=statistics.mean(costs) if costs else float("nan"),
+            mean_iters=statistics.mean(iters) if iters else float("nan"),
+            mean_ms=statistics.mean(runtimes) if runtimes else float("nan"),
+            skipped=skipped,
+        )
+
+    overall_records: list[tuple[bool, float | None, float, int, float]] = []
+    for recs in records_by_geo.values():
+        overall_records.extend(recs)
+    overall = build_stats(overall_records, skipped_total)
+    by_geo = {geo: build_stats(recs, skipped_by_geo.get(geo, 0)) for geo, recs in records_by_geo.items()}
+    return SolverSummary(overall=overall, by_geo=by_geo)
+
+
 def print_summary(title: str, summaries: dict):
     print(f"\n{title}")
     for solver, stats in summaries.items():
@@ -374,9 +437,21 @@ def run_suite(name: str, sample_patterns: Iterable[str], use_flex: bool = True, 
             combined.extend(load_samples(pat))
         samples = combined
     summaries = {}
-    for solver in SOLVERS:
-        results = run_solver(samples, solver, use_flex=use_flex)
-        summaries[solver + (" (noflex)" if not use_flex and SOLVERS[solver]["supports_no_flex"] else "")] = summarise(samples, results)
+    results_store: dict[str, List[SolverResult]] = {}
+    for key, meta in SOLVERS.items():
+        results = run_solver(samples, key, use_flex=use_flex)
+        label = meta["label"]
+        if not use_flex and meta["supports_no_flex"]:
+            label = f"{label} (noflex)"
+        summaries[label] = summarise(samples, results)
+        results_store[label] = results
+
+    # Pairwise difference between reference and calc_position if available
+    ref_label = SOLVERS["quadratic"]["label"]
+    alt_label = SOLVERS.get("calc_position", {}).get("label")
+    if ref_label in results_store and alt_label in results_store:
+        diff_stats = summarise_difference(samples, results_store[ref_label], results_store[alt_label])
+        summaries["difference"] = diff_stats
     print_summary(name, summaries)
     return summaries
 
@@ -406,15 +481,16 @@ def main() -> int:
     run_suite("Per-line bias (+/-5 mm)", [], samples=biased)
 
     # Flex vs no-flex (Pott supports the toggle; other solvers keep flex enabled)
-    pott_only = ["pott"]
     flex_summaries = {}
     for use_flex in (True, False):
         summaries = {}
-        for solver in SOLVERS:
-            if not use_flex and not SOLVERS[solver]["supports_no_flex"]:
+        for key, meta in SOLVERS.items():
+            if not use_flex and not meta["supports_no_flex"]:
                 continue
-            results = run_solver(clean_samples, solver, use_flex=use_flex)
-            label = solver if use_flex or solver != "pott" else f"{solver} (noflex)"
+            results = run_solver(clean_samples, key, use_flex=use_flex)
+            label = meta["label"]
+            if not use_flex and meta["supports_no_flex"]:
+                label = f"{label} (noflex)"
             summaries[label] = summarise(clean_samples, results)
         print_summary(f"Flex toggle (clean baseline, use_flex={use_flex})", summaries)
         flex_summaries.update(summaries)
@@ -423,9 +499,9 @@ def main() -> int:
     perf_samples = load_samples("clean_baseline_*.jsonl") + load_samples("larger_baseline_*.jsonl")
     perf_samples = perf_samples[:1000]
     perf_summaries = {}
-    for solver in SOLVERS:
-        results = run_solver(perf_samples, solver, use_flex=True)
-        perf_summaries[solver] = summarise(perf_samples, results)
+    for key, meta in SOLVERS.items():
+        results = run_solver(perf_samples, key, use_flex=True)
+        perf_summaries[meta["label"]] = summarise(perf_samples, results)
     print_summary("Performance microbench (<=1000 samples)", perf_summaries)
 
     return 0
