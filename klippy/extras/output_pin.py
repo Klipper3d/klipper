@@ -46,6 +46,11 @@ class GCodeRequestQueue:
                 if action == "discard":
                     del rqueue[:pos+1]
                     continue
+                if action == "reschedule":
+                    del rqueue[:pos]
+                    self.next_min_flush_time = max(self.next_min_flush_time,
+                                                   min_wait)
+                    continue
                 if action == "delay":
                     pos -= 1
             del rqueue[:pos+1]
@@ -75,6 +80,10 @@ class GCodeRequestQueue:
                 action, min_wait = ret
                 if action == "discard":
                     break
+                if action == "reschedule":
+                    self.next_min_flush_time = max(self.next_min_flush_time,
+                                                   min_wait)
+                    continue
             self.next_min_flush_time = next_time + max(min_wait, min_sched_time)
             if action != "delay":
                 break
