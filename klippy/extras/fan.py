@@ -63,7 +63,7 @@ class Fan:
             self.last_req_value = value
             self.last_fan_value = self.max_power
             self.mcu_fan.set_pwm(print_time, self.max_power)
-            return "delay", self.kick_start_time
+            return "repeat", print_time + self.kick_start_time
         self.last_fan_value = self.last_req_value = value
         self.mcu_fan.set_pwm(print_time, value)
     def set_speed(self, value, print_time=None):

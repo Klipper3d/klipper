@@ -38,23 +38,23 @@ class GCodeRequestQueue:
                 pos += 1
             req_pt, req_val = rqueue[pos]
             # Invoke callback for the request
-            min_wait = 0.
             ret = self.callback(next_time, req_val)
             if ret is not None:
                 # Handle special cases
-                action, min_wait = ret
+                action, next_min_time = ret
+                self.next_min_flush_time = max(self.next_min_flush_time,
+                                               next_min_time)
                 if action == "discard":
                     del rqueue[:pos+1]
                     continue
                 if action == "reschedule":
                     del rqueue[:pos]
-                    self.next_min_flush_time = max(self.next_min_flush_time,
-                                                   min_wait)
                     continue
-                if action == "delay":
+                if action == "repeat":
                     pos -= 1
             del rqueue[:pos+1]
-            self.next_min_flush_time = next_time + max(min_wait, min_sched_time)
+            self.next_min_flush_time = max(self.next_min_flush_time,
+                                           next_time + min_sched_time)
             # Ensure following queue items are flushed
             self.motion_queuing.note_mcu_movequeue_activity(
                 self.next_min_flush_time, is_step_gen=False)
@@ -73,19 +73,20 @@ class GCodeRequestQueue:
         while 1:
             next_time = max(print_time, self.next_min_flush_time)
             # Invoke callback for the request
-            action, min_wait = "normal", 0.
+            action, next_min_time = "normal", 0.
             ret = self.callback(next_time, value)
             if ret is not None:
                 # Handle special cases
-                action, min_wait = ret
+                action, next_min_time = ret
+                self.next_min_flush_time = max(self.next_min_flush_time,
+                                               next_min_time)
                 if action == "discard":
                     break
                 if action == "reschedule":
-                    self.next_min_flush_time = max(self.next_min_flush_time,
-                                                   min_wait)
                     continue
-            self.next_min_flush_time = next_time + max(min_wait, min_sched_time)
-            if action != "delay":
+            self.next_min_flush_time = max(self.next_min_flush_time,
+                                           next_time + min_sched_time)
+            if action != "repeat":
                 break
 
 
