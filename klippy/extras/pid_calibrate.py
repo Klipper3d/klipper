@@ -12,6 +12,7 @@ class PIDCalibrate:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command('PID_CALIBRATE', self.cmd_PID_CALIBRATE,
                                desc=self.cmd_PID_CALIBRATE_help)
+
     cmd_PID_CALIBRATE_help = "Run PID calibration test"
     def cmd_PID_CALIBRATE(self, gcmd):
         heater_name = gcmd.get('HEATER')
@@ -33,7 +34,7 @@ class PIDCalibrate:
         heater.set_control(old_control)
         if write_file:
             calibrate.write_file('/tmp/heattest.txt')
-        if calibrate.check_busy(0., 0., 0.):
+        if calibrate.check_busy( 0., 0.):
             raise gcmd.error("pid_calibrate interrupted")
         # Log and report results
         Kp, Ki, Kd = calibrate.calc_final_pid()
@@ -49,6 +50,7 @@ class PIDCalibrate:
         configfile.set(cfgname, 'pid_Kp', "%.3f" % (Kp,))
         configfile.set(cfgname, 'pid_Ki', "%.3f" % (Ki,))
         configfile.set(cfgname, 'pid_Kd', "%.3f" % (Kd,))
+
 
 TUNE_PID_DELTA = 5.0
 
@@ -67,13 +69,7 @@ class ControlAutoTune:
         self.last_pwm = 0.
         self.pwm_samples = []
         self.temp_samples = []
-    # Heater control
-    def set_pwm(self, read_time, value):
-        if value != self.last_pwm:
-            self.pwm_samples.append(
-                (read_time + self.heater.get_pwm_delay(), value))
-            self.last_pwm = value
-        self.heater.set_pwm(read_time, value)
+
     def temperature_update(self, read_time, temp, target_temp):
         self.temp_samples.append((read_time, temp))
         # Check if the temperature has crossed the target and
@@ -88,19 +84,26 @@ class ControlAutoTune:
             self.heater.alter_target(self.calibrate_temp)
         # Check if this temperature is a peak and record it if so
         if self.heating:
-            self.set_pwm(read_time, self.heater_max_power)
+            pwm_value = self.heater_max_power
             if temp < self.peak:
                 self.peak = temp
                 self.peak_time = read_time
         else:
-            self.set_pwm(read_time, 0.)
+            pwm_value = 0.
             if temp > self.peak:
                 self.peak = temp
                 self.peak_time = read_time
-    def check_busy(self, eventtime, smoothed_temp, target_temp):
+        if pwm_value != self.last_pwm:
+            self.pwm_samples.append(
+                (read_time + self.heater.get_pwm_delay(), pwm_value))
+            self.last_pwm = pwm_value
+        return pwm_value
+
+    def check_busy(self, smoothed_temp, target_temp):
         if self.heating or len(self.peaks) < 12:
             return True
         return False
+
     # Analysis
     def check_peaks(self):
         self.peaks.append((self.peak, self.peak_time))
@@ -111,6 +114,7 @@ class ControlAutoTune:
         if len(self.peaks) < 4:
             return
         self.calc_pid(len(self.peaks)-1)
+
     def calc_pid(self, pos):
         temp_diff = self.peaks[pos][0] - self.peaks[pos-1][0]
         time_diff = self.peaks[pos][1] - self.peaks[pos-2][1]
@@ -127,11 +131,13 @@ class ControlAutoTune:
         logging.info("Autotune: raw=%f/%f Ku=%f Tu=%f  Kp=%f Ki=%f Kd=%f",
                      temp_diff, self.heater_max_power, Ku, Tu, Kp, Ki, Kd)
         return Kp, Ki, Kd
+
     def calc_final_pid(self):
         cycle_times = [(self.peaks[pos][1] - self.peaks[pos-2][1], pos)
                        for pos in range(4, len(self.peaks))]
         midpoint_pos = sorted(cycle_times)[len(cycle_times)//2][1]
         return self.calc_pid(midpoint_pos)
+
     # Offline analysis helper
     def write_file(self, filename):
         pwm = ["pwm: %.3f %.3f" % (time, value)
