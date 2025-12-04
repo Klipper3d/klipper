@@ -115,6 +115,15 @@ class ZMaxHomingAlt:
             return trigger_pos
         except self.printer.command_error as e:
             if "No trigger" in str(e):
+                # Create flag file for MicLoop obstacle recovery
+                import logging
+                try:
+                    flag_file = '/tmp/homing_obstacle_flag'
+                    with open(flag_file, 'w') as flag:
+                        flag.write('TIMEOUT_OBSTACLE')
+                    logging.info(f"ZMaxHoming: Obstacle flag created at {flag_file} (timeout detected)")
+                except Exception as flag_err:
+                    logging.warning(f"ZMaxHoming: Could not create flag file: {flag_err}")
                 raise self.printer.command_error(
                     f"El endstop Y no se activó durante el movimiento hacia Z={target_pos[2]:.3f}. "
                     "Verifica que la plataforma pueda alcanzar el final de carrera.")
@@ -202,16 +211,16 @@ class ZMaxHomingAlt:
         else:
             final_retract = bool(final_retract)
         measure_travel = gcmd.get_int('MEASURE', 0, minval=0, maxval=1)
+        # Máximo recorrido de búsqueda (por defecto 150mm, suficiente para cualquier impresora)
+        max_travel = gcmd.get_float('MAX_TRAVEL', 150.0, above=0.)
 
-# gcmd.respond_info(f"ZMAX_HOME: Iniciando movimiento continuo (velocidad: {speed} mm/s)")
-
-        # Obtener configuración Z
+        # Obtener configuración Z (solo para referencia, NO como límite)
         z_max_cfg = self.z_stepper.get_range()[1]
 
         # Verificar estado de Z
         curtime = self.printer.get_reactor().monotonic()
         z_homed = 'z' in self.toolhead.get_status(curtime)['homed_axes']
-        
+
         # Detectar si ya estamos en Z-max desde el inicio
         if not z_homed and self.y_endstop.query_endstop(0):
             pos = self.toolhead.get_position()
@@ -228,75 +237,78 @@ class ZMaxHomingAlt:
         gcode_state = gcode_move.get_status()['absolute_coordinates']
         self.gcode.run_script_from_command("G90")
 
+        # === EXPANDIR LÍMITES DE Z TEMPORALMENTE ===
+        # Esto es CRÍTICO: si position_max está mal configurado, el primer probe
+        # no alcanzará el endstop físico. Expandimos los límites para permitir
+        # el recorrido completo.
+        kin = self.toolhead.get_kinematics()
+        original_z_limits = kin.limits[2]  # (min, max) para eje Z
+        current_pos = self.toolhead.get_position()
+        temp_z_max = current_pos[2] + max_travel
+        kin.update_limits(2, (original_z_limits[0], temp_z_max))
+        logging.info(f"ZMAX_HOME: Límites Z expandidos temporalmente: {original_z_limits} -> ({original_z_limits[0]}, {temp_z_max})")
+
         try:
             # Variables para detección de pérdida de pasos
             initial_z_pos = None
             detected_z_pos = None
-            
+
             # Obtener posición inicial
             current_pos = self.toolhead.get_position()
             initial_z_pos = current_pos[2]
-            
+
             # Detectar si el endstop ya está activado al inicio
             endstop_initially_triggered = self.y_endstop.query_endstop(0)
-            
+
             # Solo considerar que está "ya activado" si estamos cerca de Z-max
             if endstop_initially_triggered and current_pos[2] > (z_max_cfg - 10.0):
                 # Ya estamos en contacto con el endstop cerca de Z-max
-                # gcmd.respond_info(f"🎯 Y-endstop YA ACTIVADO en Z={current_pos[2]:.3f}mm")
                 detected_z_pos = current_pos[2]
-                
+
             else:
                 # Endstop no activado - hacer búsqueda rápida primero
-                
+
                 # --- Búsqueda rápida continua ---
+                # IMPORTANTE: Usamos temp_z_max (límite expandido), NO z_max_cfg
                 movepos = list(current_pos)
-                movepos[2] = z_max_cfg
-                
+                movepos[2] = temp_z_max
+
                 try:
                     first_trigger_pos = self._continuous_probe_move(movepos, speed)
                     detected_z_pos = first_trigger_pos[2]  # Guardar posición REAL donde se detectó
                 except self.printer.command_error as e:
                     if "Probe triggered prior to movement" in str(e):
                         # El endstop se activó inmediatamente al iniciar el movimiento
-                        # gcmd.respond_info(f"🎯 Y-endstop YA ACTIVADO en Z={current_pos[2]:.3f}mm")
                         detected_z_pos = current_pos[2]
                     else:
                         raise
 
-            # --- Calcular pérdida de pasos ANTES de cambiar posición ---
-            if initial_z_pos is not None and detected_z_pos is not None:
-                expected_travel = z_max_cfg - initial_z_pos
-                actual_travel = detected_z_pos - initial_z_pos
-                step_loss = actual_travel - expected_travel
-                
-                if abs(step_loss) > 0.01:
-                    if step_loss < 0:
-                        gcmd.respond_info(f"⚠️ PÉRDIDA DE PASOS: {step_loss:.3f}mm (perdió pasos BAJANDO)")
-                    else:
-                        gcmd.respond_info(f"⚠️ PÉRDIDA DE PASOS: +{step_loss:.3f}mm (perdió pasos SUBIENDO)")
-                else:
-                    gcmd.respond_info(f"✅ Sin pérdida de pasos ({step_loss:+.3f}mm)")
+            # La posición donde se detectó el endstop es el nuevo Z-max real
+            actual_z_max = detected_z_pos
+            logging.info(f"ZMAX_HOME: Endstop detectado en Z={actual_z_max:.3f}mm (z_max_cfg={z_max_cfg:.3f}mm)")
 
-            # --- "Engañar" a Klipper estableciendo Z=Z-max para poder retraer ---
+            # --- "Engañar" a Klipper estableciendo Z en la posición detectada ---
             fake_pos = self.toolhead.get_position()
-            fake_pos[2] = z_max_cfg
+            fake_pos[2] = actual_z_max
             self.toolhead.set_position(fake_pos)
 
-            # --- Retracción desde Z-max ---
+            # --- Retracción desde posición actual ---
             retract_pos = list(fake_pos)
-            retract_pos[2] = z_max_cfg - retract_dist
+            retract_pos[2] = actual_z_max - retract_dist
             self.toolhead.move(retract_pos, self.retract_speed)
             self.toolhead.wait_moves()
-            
+
             # Verificar que el endstop se liberó
-            if self.y_endstop.query_endstop(0):
-                raise gcmd.error("Endstop Y sigue activado después de retracción. Homing fallido.")
+            self.toolhead.wait_moves()
+            query_time = self.toolhead.get_last_move_time()
+            if self.y_endstop.query_endstop(query_time):
+                raise gcmd.error(f"Endstop Y sigue activado después de retracción de {retract_dist}mm. "
+                               f"Aumenta retract_dist o verifica el endstop.")
 
             # --- Búsqueda fina continua ---
             movepos = list(retract_pos)
-            movepos[2] = z_max_cfg
-            
+            movepos[2] = actual_z_max + 5.0  # Un poco más allá por si hay variación
+
             try:
                 final_trigger_pos = self._continuous_probe_move(movepos, second_speed)
             except self.printer.command_error as e:
@@ -308,18 +320,24 @@ class ZMaxHomingAlt:
                 else:
                     raise
 
-            # --- Establecer posición final en Z-max ---
+            # La posición final detectada es el Z-max definitivo
+            final_z_max = final_trigger_pos[2]
+
+            # --- Establecer posición final ---
             final_pos = list(final_trigger_pos)
-            final_pos[2] = z_max_cfg
+            # Usar z_max_cfg si está cerca, sino usar el valor detectado
+            if abs(final_z_max - z_max_cfg) < 5.0:
+                final_pos[2] = z_max_cfg
+            else:
+                final_pos[2] = final_z_max
+                logging.warning(f"ZMAX_HOME: Z-max detectado ({final_z_max:.3f}mm) difiere de config ({z_max_cfg:.3f}mm)")
 
             if not z_homed:
                 self.toolhead.set_position(final_pos, homing_axes=('z',))
             else:
                 self.toolhead.set_position(final_pos)
-                
+
             gcmd.respond_info(f"Z position set to {final_pos[2]:.3f}mm")
-            
-            # Medición silenciosa de pérdida de pasos (sin reportar)
 
             # --- Retracción final opcional ---
             if final_retract and retract_dist > 0:
@@ -336,6 +354,10 @@ class ZMaxHomingAlt:
                 self._measure_platform_travel(gcmd, final_pos, z_max_cfg)
 
         finally:
+            # === RESTAURAR LÍMITES ORIGINALES DE Z ===
+            kin.update_limits(2, original_z_limits)
+            logging.info(f"ZMAX_HOME: Límites Z restaurados: {original_z_limits}")
+
             # Restaurar estado Gcode
             if not gcode_state:
                 self.gcode.run_script_from_command("G91")
