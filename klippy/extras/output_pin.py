@@ -46,6 +46,10 @@ class GCodeRequestQueue:
                 if action == "discard":
                     del rqueue[:pos+1]
                     continue
+                if action == "reschedule":
+                    del rqueue[:pos]
+                    rqueue[0] = (min_wait, req_val)
+                    continue
                 if action == "delay":
                     pos -= 1
             del rqueue[:pos+1]

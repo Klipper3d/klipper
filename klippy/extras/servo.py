@@ -47,6 +47,11 @@ class PrinterServo:
     def _set_pwm(self, print_time, value):
         if value == self.last_value:
             return "discard", 0.
+        aligned_ptime = self.mcu_servo.next_aligned_print_time(print_time)
+        sched_slack = 0.001
+        if aligned_ptime > print_time + sched_slack:
+            return "reschedule", aligned_ptime
+        print_time = aligned_ptime
         self.last_value = value
         self.mcu_servo.set_pwm(print_time, value)
     def _get_pwm_from_angle(self, angle):
