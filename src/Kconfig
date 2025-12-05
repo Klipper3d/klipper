@@ -183,7 +183,7 @@ config WANT_LOAD_CELL_PROBE
     default y
 config NEED_SOS_FILTER
     bool
-    depends on WANT_LOAD_CELL_PROBE
+    depends on WANT_LOAD_CELL_PROBE || WANT_LDC1612
     default y
 menu "Optional features (to reduce code size)"
     depends on HAVE_LIMITED_CODE_SIZE
