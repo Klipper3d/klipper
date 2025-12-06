@@ -36,7 +36,8 @@ def calc_probe_z_average(positions, method='average'):
 
 # Helper to implement common probing commands
 class ProbeCommandHelper:
-    def __init__(self, config, probe, query_endstop=None):
+    def __init__(self, config, probe, query_endstop=None,
+                 replace_z_offset=False):
         self.printer = config.get_printer()
         self.probe = probe
         self.query_endstop = query_endstop
@@ -57,6 +58,8 @@ class ProbeCommandHelper:
         # Other commands
         gcode.register_command('PROBE_ACCURACY', self.cmd_PROBE_ACCURACY,
                                desc=self.cmd_PROBE_ACCURACY_help)
+        if replace_z_offset:
+            return
         gcode.register_command('Z_OFFSET_APPLY_PROBE',
                                self.cmd_Z_OFFSET_APPLY_PROBE,
                                desc=self.cmd_Z_OFFSET_APPLY_PROBE_help)
