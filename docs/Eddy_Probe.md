@@ -55,6 +55,69 @@ surface temperature or sensor hardware temperature can skew the
 results. It is important that calibration and probing is only done
 when the printer is at a stable temperature.
 
+## Tap calibration
+
+The Eddy probe measures the resonance frequency of the coil.
+By the absolute value of the frequency and the calibration curve from
+`PROBE_EDDY_CURRENT_CALIBRATE`, it is therefore possible to detect
+where the bed is without physical contact.
+
+By use of the same knowledge, we know that frequency changes with
+the distance. It is possible to track that change in real time and
+detect the time/position where contact happens - a change of frequency
+starts to change in a different way.
+For example, stopped to change because of the collision.
+
+Because eddy output is not perfect: there is sensor noise,
+mechanical oscillation, thermal expansion and other discrepancies,
+it is required to calibrate the stop threshold for your machine.
+Practically, it ensures that the Eddy's output data absolute value
+change per second (velocity) is high enough - higher than the noise level,
+and that upon collision it always decreases by at least this value.
+
+```
+[probe_eddy_current my_probe]
+# eddy probe configuration...
+tap_threshold: 0
+```
+
+Suggested calibration routine works as follows:
+1. Home Z
+2. Place toolhead at the center of the bed.
+3. Move Z far away, 30mm for example.
+4. Run `PROBE METHOD=tap`
+5. If it stops before collision, adjust the `tap_threshold`.
+
+Repeat until nozzle would softly touch the bed.
+It easier to do so with clean nozzle and by visual inspection of the process.
+
+Example sequence of threshold values to test:
+```
+1 -> 100 -> 200 -> 400 -> 800 -> 1200 -> 1600 -> 2000
+2000 -> 1800 -> 1750
+```
+Your value will normally be between those.
+- Too high a value leaves a less safe margin for early collision -
+if something is between the nozzle and the bed, or if the nozzle
+is too close to the bed before the tap.
+- Too low - can make the toolhead stop in mid-air
+because of the noise.
+
+You can validate the tap precision by measuring the paper thickness
+from the initial calibration guide. It is expected to be ~0.1mm.
+
+Tap precision is limited by the sampling frequency and
+the speed of the descent.
+If you take 24 photos per second of the moving train, you can only estimate
+where the train was between photos.
+
+It is possible to reduce the descending speed. It may require decrease of
+absolute `tap_threshold` value.
+
+It is possible to tap over non-conductive surfaces as long as there is metal
+behind it within the sensor's sensitivity range.
+Max distance can be approximated to be about 1.5x of the coil's narrowest part.
+
 ## Thermal Drift Calibration
 
 As with all inductive probes, eddy current probes are subject to
