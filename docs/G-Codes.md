@@ -1160,23 +1160,25 @@ The following commands are available when a
 see the [probe calibrate guide](Probe_Calibrate.md)).
 
 #### PROBE
-`PROBE [PROBE_SPEED=<mm/s>] [LIFT_SPEED=<mm/s>] [SAMPLES=<count>]
-[SAMPLE_RETRACT_DIST=<mm>] [SAMPLES_TOLERANCE=<mm>]
+`PROBE [METHOD=<value>] [PROBE_SPEED=<mm/s>] [LIFT_SPEED=<mm/s>]
+[SAMPLES=<count>] [SAMPLE_RETRACT_DIST=<mm>] [SAMPLES_TOLERANCE=<mm>]
 [SAMPLES_TOLERANCE_RETRIES=<count>] [SAMPLES_RESULT=median|average]`:
 Move the nozzle downwards until the probe triggers. If any of the
 optional parameters are provided they override their equivalent
 setting in the [probe config section](Config_Reference.md#probe).
+The optional parameter `METHOD` is probe-specific.
 
 #### QUERY_PROBE
 `QUERY_PROBE`: Report the current status of the probe ("triggered" or
 "open").
 
 #### PROBE_ACCURACY
-`PROBE_ACCURACY [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
+`PROBE_ACCURACY [METHOD=<value>] [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
 [SAMPLE_RETRACT_DIST=<mm>]`: Calculate the maximum, minimum, average,
 median, and standard deviation of multiple probe samples. By default,
 10 SAMPLES are taken. Otherwise the optional parameters default to
 their equivalent setting in the probe config section.
+The optional parameter `METHOD` is probe-specific.
 
 #### PROBE_CALIBRATE
 `PROBE_CALIBRATE [SPEED=<speed>] [<probe_parameter>=<value>]`: Run a
@@ -1237,13 +1239,14 @@ The following commands are available when the
 is enabled.
 
 #### QUAD_GANTRY_LEVEL
-`QUAD_GANTRY_LEVEL [RETRIES=<value>] [RETRY_TOLERANCE=<value>]
+`QUAD_GANTRY_LEVEL [METHOD=<value>] [RETRIES=<value>] [RETRY_TOLERANCE=<value>]
 [HORIZONTAL_MOVE_Z=<value>] [<probe_parameter>=<value>]`: This command
 will probe the points specified in the config and then make
 independent adjustments to each Z stepper to compensate for tilt. See
 the PROBE command for details on the optional probe parameters. The
 optional `RETRIES`, `RETRY_TOLERANCE`, and `HORIZONTAL_MOVE_Z` values
 override those options specified in the config file.
+The optional parameter `METHOD` is probe-specific.
 
 ### [query_adc]
 
@@ -1672,10 +1675,11 @@ The following commands are available when the
 [z_tilt config section](Config_Reference.md#z_tilt) is enabled.
 
 #### Z_TILT_ADJUST
-`Z_TILT_ADJUST [RETRIES=<value>] [RETRY_TOLERANCE=<value>]
+`Z_TILT_ADJUST [METHOD=<value>] [RETRIES=<value>] [RETRY_TOLERANCE=<value>]
 [HORIZONTAL_MOVE_Z=<value>] [<probe_parameter>=<value>]`: This command
 will probe the points specified in the config and then make
 independent adjustments to each Z stepper to compensate for tilt. See
 the PROBE command for details on the optional probe parameters. The
 optional `RETRIES`, `RETRY_TOLERANCE`, and `HORIZONTAL_MOVE_Z` values
 override those options specified in the config file.
+The optional parameter `METHOD` is probe-specific.
