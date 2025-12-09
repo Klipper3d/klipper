@@ -160,6 +160,17 @@ class LDC1612:
         for ptime, val in samples:
             mv = val & 0x0fffffff
             if mv != val:
+                flags = val >> 28
+                if flags & 0xc:
+                    logging.error("LDC1612: I2C IO error")
+                if mv == 0xfffffff:
+                    pass # Over-range
+                if mv == 0x0000000:
+                    pass # Under-range
+                if flags & 0x2:
+                    logging.error("LDC1612: Conversion Watchdog timeout")
+                if flags & 0x1:
+                    pass # Amplitude error
                 self.last_error_count += 1
             samples[count] = (round(ptime, 6), round(freq_conv * mv, 3), 999.9)
             count += 1
