@@ -49,7 +49,7 @@ $(OUT)lib/elf2uf2/elf2uf2: lib/elf2uf2/main.cpp
 
 $(OUT)klipper.uf2: $(OUT)klipper.elf $(OUT)lib/elf2uf2/elf2uf2
 	@echo "  Creating uf2 file $@"
-	$(Q)$(OUT)lib/elf2uf2/elf2uf2 $< $@
+	$(Q)$(OUT)lib/elf2uf2/elf2uf2 --mcu $(MCU) $< $@
 
 rptarget-y := $(OUT)klipper.uf2
 stage2-$(CONFIG_RP2040_HAVE_STAGE2) := $(OUT)stage2.o

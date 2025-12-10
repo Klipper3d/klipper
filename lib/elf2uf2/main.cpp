@@ -59,25 +59,44 @@ struct address_range {
 
 typedef std::vector<address_range> address_ranges;
 
-#define MAIN_RAM_START        0x20000000u
-#define MAIN_RAM_END          0x20042000u
-#define FLASH_START           0x10000000u
-#define FLASH_END             0x15000000u
-#define XIP_SRAM_START        0x15000000u
-#define XIP_SRAM_END          0x15004000u
-#define MAIN_RAM_BANKED_START 0x21000000u
-#define MAIN_RAM_BANKED_END   0x21040000u
+#define ROM_START                    0x00000000u
+#define ROM_END_RP2040               0x00004000u
+#define ROM_END_RP2350               0x00008000u
+#define MAIN_RAM_START               0x20000000u
+#define MAIN_RAM_END_RP2040          0x20042000u
+#define MAIN_RAM_END_RP2350          0x20082000u
+#define FLASH_START                  0x10000000u
+#define FLASH_END_RP2040             0x11000000u
+#define FLASH_END_RP2350             0x12000000u
+#define XIP_SRAM_START_RP2040        0x15000000u
+#define XIP_SRAM_START_RP2350        0x13ffc000u
+#define XIP_SRAM_END_RP2040          0x15004000u
+#define XIP_SRAM_END_RP2350          0x14000000u
+#define MAIN_RAM_BANKED_START        0x21000000u
+#define MAIN_RAM_BANKED_END          0x21040000u
 
 const address_ranges rp2040_address_ranges_flash {
-    address_range(FLASH_START, FLASH_END, address_range::type::CONTENTS),
-    address_range(MAIN_RAM_START, MAIN_RAM_END, address_range::type::NO_CONTENTS),
+    address_range(FLASH_START, FLASH_END_RP2040, address_range::type::CONTENTS),
+    address_range(MAIN_RAM_START, MAIN_RAM_END_RP2040, address_range::type::NO_CONTENTS),
     address_range(MAIN_RAM_BANKED_START, MAIN_RAM_BANKED_END, address_range::type::NO_CONTENTS)
 };
 
 const address_ranges rp2040_address_ranges_ram {
-    address_range(MAIN_RAM_START, MAIN_RAM_END, address_range::type::CONTENTS),
-    address_range(XIP_SRAM_START, XIP_SRAM_END, address_range::type::CONTENTS),
-    address_range(0x00000000u, 0x00004000u, address_range::type::IGNORE) // for now we ignore the bootrom if present
+    address_range(MAIN_RAM_START, MAIN_RAM_END_RP2040, address_range::type::CONTENTS),
+    address_range(XIP_SRAM_START_RP2040, XIP_SRAM_END_RP2040, address_range::type::CONTENTS),
+    address_range(ROM_START, ROM_END_RP2040, address_range::type::IGNORE) // for now we ignore the bootrom if present
+};
+
+const address_ranges rp2350_address_ranges_flash {
+    address_range(FLASH_START, FLASH_END_RP2350, address_range::type::CONTENTS),
+    address_range(MAIN_RAM_START, MAIN_RAM_END_RP2350, address_range::type::NO_CONTENTS),
+    address_range(MAIN_RAM_BANKED_START, MAIN_RAM_BANKED_END, address_range::type::NO_CONTENTS)
+};
+
+const address_ranges rp2350_address_ranges_ram {
+    address_range(MAIN_RAM_START, MAIN_RAM_END_RP2350, address_range::type::CONTENTS),
+    address_range(XIP_SRAM_START_RP2350, XIP_SRAM_END_RP2350, address_range::type::CONTENTS),
+    address_range(ROM_START, ROM_END_RP2350, address_range::type::IGNORE) // for now we ignore the bootrom if present
 };
 
 struct page_fragment {
@@ -88,8 +107,20 @@ struct page_fragment {
 };
 
 static int usage() {
-    fprintf(stderr, "Usage: elf2uf2 (-v) <input ELF file> <output UF2 file>\n");
+    fprintf(stderr, "Usage: elf2uf2 (-v) [--mcu MCU_NAME] <input ELF file> <output UF2 file>\n");
+    fprintf(stderr, "Known MCUs: rp2040, rp2350\n");
     return ERROR_ARGS;
+}
+
+bool lookup_family_id(const char *mcu_name, uint32_t *out_id) {
+    if (strcasecmp(mcu_name, "rp2040") == 0) {
+        *out_id = RP2040_FAMILY_ID;
+        return true;
+    } else if (strcasecmp(mcu_name, "rp2350") == 0) {
+        *out_id = RP2350_ARM_S_FAMILY_ID;
+        return true;
+    }
+    return false;
 }
 
 static int read_and_check_elf32_header(FILE *in, elf32_header& eh_out) {
@@ -234,14 +265,18 @@ static bool is_address_mapped(const std::map<uint32_t, std::vector<page_fragment
     return true;
 }
 
-int elf2uf2(FILE *in, FILE *out) {
+int elf2uf2(FILE *in, FILE *out, uint32_t family_id) {
     elf32_header eh;
     std::map<uint32_t, std::vector<page_fragment>> pages;
     int rc = read_and_check_elf32_header(in, eh);
     bool ram_style = false;
     address_ranges valid_ranges = {};
     if (!rc) {
-        ram_style = is_address_initialized(rp2040_address_ranges_ram, eh.entry);
+        if(family_id == RP2040_FAMILY_ID) {
+           ram_style = is_address_initialized(rp2040_address_ranges_ram, eh.entry); 
+        } else {
+            ram_style = is_address_initialized(rp2350_address_ranges_ram, eh.entry); 
+        }
         if (verbose) {
             if (ram_style) {
                 printf("Detected RAM binary\n");
@@ -249,7 +284,11 @@ int elf2uf2(FILE *in, FILE *out) {
                 printf("Detected FLASH binary\n");
             }
         }
-        valid_ranges = ram_style ? rp2040_address_ranges_ram : rp2040_address_ranges_flash;
+        if(family_id == RP2040_FAMILY_ID) {
+            valid_ranges = ram_style ? rp2040_address_ranges_ram : rp2040_address_ranges_flash;
+        } else {
+            valid_ranges = ram_style ? rp2350_address_ranges_ram : rp2350_address_ranges_flash;
+        }
         rc = read_and_check_elf32_ph_entries(in, eh, valid_ranges, pages);
     }
     if (rc) return rc;
@@ -261,9 +300,9 @@ int elf2uf2(FILE *in, FILE *out) {
         uint32_t expected_ep_main_ram = UINT32_MAX;
         uint32_t expected_ep_xip_sram = UINT32_MAX;
         for(auto& page_entry : pages) {
-            if ( ((page_entry.first >= MAIN_RAM_START) && (page_entry.first < MAIN_RAM_END)) && (page_entry.first < expected_ep_main_ram) ) {
+            if ( ((page_entry.first >= MAIN_RAM_START) && (page_entry.first < family_id == RP2040_FAMILY_ID ? MAIN_RAM_END_RP2040 : MAIN_RAM_END_RP2350)) && (page_entry.first < expected_ep_main_ram) ) {
                 expected_ep_main_ram = page_entry.first | 0x1;
-            } else if ( ((page_entry.first >= XIP_SRAM_START) && (page_entry.first < XIP_SRAM_END)) && (page_entry.first < expected_ep_xip_sram) ) { 
+            } else if ( ((page_entry.first >= family_id == RP2040_FAMILY_ID ? XIP_SRAM_START_RP2040 : XIP_SRAM_START_RP2350) && (page_entry.first < family_id == RP2040_FAMILY_ID ? XIP_SRAM_END_RP2040 : XIP_SRAM_END_RP2350)) && (page_entry.first < expected_ep_xip_sram) ) { 
                 expected_ep_xip_sram = page_entry.first | 0x1;
             }
         }
@@ -297,7 +336,7 @@ int elf2uf2(FILE *in, FILE *out) {
     block.flags = UF2_FLAG_FAMILY_ID_PRESENT;
     block.payload_size = PAGE_SIZE;
     block.num_blocks = (uint32_t)pages.size();
-    block.file_size = RP2040_FAMILY_ID;
+    block.file_size = family_id;
     block.magic_end = UF2_MAGIC_END;
     for(auto& page_entry : pages) {
         block.target_addr = page_entry.first;
@@ -317,9 +356,22 @@ int elf2uf2(FILE *in, FILE *out) {
 
 int main(int argc, char **argv) {
     int arg = 1;
-    if (arg < argc && !strcmp(argv[arg], "-v")) {
-        verbose = true;
-        arg++;
+    uint32_t family_id = 0;
+    while (arg < argc) {
+        if (!strcmp(argv[arg], "-v")) {
+            verbose = true;
+            arg++;
+        } else if (!strcmp(argv[arg], "--mcu")) {
+            arg++;
+            if (arg >= argc) return usage();
+            if (!lookup_family_id(argv[arg], &family_id)) {
+                fprintf(stderr, "Unknown MCU: %s\n", argv[arg]);
+                return ERROR_ARGS;
+            }
+            arg++;
+        } else {
+            break;
+        }
     }
     if (argc < arg + 2) {
         return usage();
@@ -337,7 +389,7 @@ int main(int argc, char **argv) {
         return ERROR_ARGS;
     }
 
-    int rc = elf2uf2(in, out);
+    int rc = elf2uf2(in, out, family_id != 0 ? family_id : RP2040_FAMILY_ID);
     fclose(in);
     fclose(out);
     if (rc) {
