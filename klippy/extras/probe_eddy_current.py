@@ -18,6 +18,8 @@ class EddyCalibration:
         # Current calibration data
         self.cal_freqs = []
         self.cal_zpos = []
+        self.cal_z_offset = config.getfloat('calibrate_z_offset', .0,
+                                            minval=-1.0, maxval=1.0)
         cal = config.get('calibrate', None)
         if cal is not None:
             cal = [list(map(float, d.strip().split(':', 1)))
@@ -31,12 +33,15 @@ class EddyCalibration:
         gcode.register_mux_command("PROBE_EDDY_CURRENT_CALIBRATE", "CHIP",
                                    cname, self.cmd_EDDY_CALIBRATE,
                                    desc=self.cmd_EDDY_CALIBRATE_help)
+        gcode.register_command('Z_OFFSET_APPLY_PROBE',
+                               self.cmd_Z_OFFSET_APPLY_PROBE,
+                               desc=self.cmd_Z_OFFSET_APPLY_PROBE_help)
     def is_calibrated(self):
         return len(self.cal_freqs) > 2
     def load_calibration(self, cal):
         cal = sorted([(c[1], c[0]) for c in cal])
         self.cal_freqs = [c[0] for c in cal]
-        self.cal_zpos = [c[1] for c in cal]
+        self.cal_zpos = [c[1] + self.cal_z_offset for c in cal]
     def apply_calibration(self, samples):
         cur_temp = self.drift_comp.get_temperature()
         for i, (samp_time, freq, dummy_z) in enumerate(samples):
@@ -188,12 +193,30 @@ class EddyCalibration:
         cal_contents.pop()
         configfile = self.printer.lookup_object('configfile')
         configfile.set(self.name, 'calibrate', ''.join(cal_contents))
+        configfile.set(self.name, 'calibrate_z_offset', "%.3f" %
+                       (0.,))
     cmd_EDDY_CALIBRATE_help = "Calibrate eddy current probe"
     def cmd_EDDY_CALIBRATE(self, gcmd):
         self.probe_speed = gcmd.get_float("PROBE_SPEED", 5., above=0.)
         # Start manual probe
         manual_probe.ManualProbeHelper(self.printer, gcmd,
                                        self.post_manual_probe)
+    cmd_Z_OFFSET_APPLY_PROBE_help = "Adjust the probe's z_offset"
+    def cmd_Z_OFFSET_APPLY_PROBE(self, gcmd):
+        gcode_move = self.printer.lookup_object("gcode_move")
+        offset = gcode_move.get_status()['homing_origin'].z
+        if offset == 0:
+            gcmd.respond_info("Nothing to do: Z Offset is 0")
+            return
+        new_calibrate = self.cal_z_offset - offset
+        gcmd.respond_info(
+            "%s: calibrate_z_offset: %.3f\n"
+            "The SAVE_CONFIG command will update the printer config file\n"
+            "with the above and restart the printer."
+            % (self.name, new_calibrate))
+        configfile = self.printer.lookup_object('configfile')
+        configfile.set(self.name, 'calibrate_z_offset', "%.3f" %
+                       (new_calibrate,))
     def register_drift_compensation(self, comp):
         self.drift_comp = comp
 
@@ -457,7 +480,8 @@ class PrinterEddyProbe:
         self.param_helper = probe.ProbeParameterHelper(config)
         self.eddy_descend = EddyDescend(
             config, self.sensor_helper, self.calibration, self.param_helper)
-        self.cmd_helper = probe.ProbeCommandHelper(config, self)
+        self.cmd_helper = probe.ProbeCommandHelper(config, self,
+            replace_z_offset=True)
         self.probe_offsets = probe.ProbeOffsetsHelper(config)
         self.probe_session = probe.ProbeSessionHelper(
             config, self.param_helper, self.eddy_descend.start_probe_session)
