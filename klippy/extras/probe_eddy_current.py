@@ -134,16 +134,22 @@ class EddyCalibration:
             raise self.printer.command_error(
                 "Failed calibration - incomplete sensor data")
         return cal
+
+    def _median(self, values):
+        values = sorted(values)
+        n = len(values)
+        if n % 2 == 0:
+            return (values[n//2 - 1] + values[n//2]) / 2.0
+        return values[n // 2]
     def calc_freqs(self, meas):
-        total_count = total_variance = 0
         positions = {}
         for pos, freqs in meas.items():
             count = len(freqs)
             freq_avg = float(sum(freqs)) / count
-            positions[pos] = freq_avg
-            total_count += count
-            total_variance += sum([(f - freq_avg)**2 for f in freqs])
-        return positions, math.sqrt(total_variance / total_count), total_count
+            mads = [abs(f - freq_avg) for f in freqs]
+            mad = self._median(mads)
+            positions[pos] = (freq_avg, mad, count)
+        return positions
     def post_manual_probe(self, kin_pos):
         if kin_pos is None:
             # Manual Probe was aborted
@@ -166,24 +172,64 @@ class EddyCalibration:
         # Perform calibration movement and capture
         cal = self.do_calibration_moves(self.probe_speed)
         # Calculate each sample position average and variance
-        positions, std, total = self.calc_freqs(cal)
-        last_freq = 0.
-        for pos, freq in reversed(sorted(positions.items())):
-            if freq <= last_freq:
-                raise self.printer.command_error(
-                    "Failed calibration - frequency not increasing each step")
-            last_freq = freq
+        positions = self.calc_freqs(cal)
+        last_freq = 40000000.
+        last_pos = last_mad = .0
         gcode = self.printer.lookup_object("gcode")
+        filtered = []
+        total_mad = []
+        total_mad_mm = []
+        total = 0
+        for pos, (freq_avg, mad, count) in sorted(positions.items()):
+            if freq_avg > last_freq:
+                gcode.respond_info(
+                    "Frequency stops decreasing at step %.3f" % (pos))
+                break
+            diff_mad = math.sqrt(last_mad**2 + mad**2)
+            # Calculate if samples have a significant difference
+            freq_diff = last_freq - freq_avg
+            if freq_diff < 2.5 * diff_mad:
+                gcode.respond_info(
+                    "Frequency too noisy at step %.3f" % (pos))
+                break
+            distance = pos - last_pos
+            sensitivity = freq_diff / distance
+            mad_mm = mad / sensitivity
+            filtered.append((pos, freq_avg))
+            total_mad.append(mad)
+            total_mad_mm.append(mad_mm)
+            total += count
+            last_freq = freq_avg
+            last_mad = mad
+            last_pos = pos
+        if len(filtered) <= 1:
+           raise self.printer.command_error(
+              "Failed calibration - No usable data")
+        avg_mad = sum(total_mad)/len(total_mad)
+        avg_mad_mm = sum(total_mad_mm)/len(total_mad_mm)
         gcode.respond_info(
-            "probe_eddy_current: stddev=%.3f in %d queries\n"
+            "probe_eddy_current: MAD=%.3fHz ~ %.6fmm in %d queries\n" % (
+                avg_mad, avg_mad_mm, total))
+        freq_list = [freq for _, freq in filtered]
+        freq_diff = max(freq_list) - min(freq_list)
+        gcode.respond_info("Total frequency range: %.3fHz\n" % (freq_diff))
+        skip = 5
+        for i in range(skip, len(filtered), (len(filtered) - skip)//5):
+            pos, _ = filtered[i]
+            mad = total_mad[i]
+            mad_mm = total_mad_mm[i]
+            gcode.respond_info("z_offset: %.3f MAD=%.3fHz ~ %.6fmm\n" % (
+                                pos, mad, mad_mm))
+        gcode.respond_info(
             "The SAVE_CONFIG command will update the printer config file\n"
-            "and restart the printer." % (std, total))
+            "and restart the printer.")
         # Save results
         cal_contents = []
-        for i, (pos, freq) in enumerate(sorted(positions.items())):
+        for i, (pos, freq) in enumerate(filtered):
             if not i % 3:
                 cal_contents.append('\n')
-            cal_contents.append("%.6f:%.3f" % (pos - probe_calibrate_z, freq))
+            z_height = round(pos - probe_calibrate_z, 3)
+            cal_contents.append("%.3f:%.3f" % (z_height, freq))
             cal_contents.append(',')
         cal_contents.pop()
         configfile = self.printer.lookup_object('configfile')
