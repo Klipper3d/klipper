@@ -46,6 +46,8 @@ class PrinterMultiPin:
     def set_digital(self, print_time, value):
         for mcu_pin in self.mcu_pins:
             mcu_pin.set_digital(print_time, value)
+    def next_aligned_print_time(self, print_time, allow_early=0.):
+        return print_time
     def set_pwm(self, print_time, value):
         for mcu_pin in self.mcu_pins:
             mcu_pin.set_pwm(print_time, value)
