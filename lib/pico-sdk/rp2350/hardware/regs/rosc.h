@@ -39,9 +39,9 @@
 // Field       : ROSC_CTRL_FREQ_RANGE
 // Description : Controls the number of delay stages in the ROSC ring
 //               LOW uses stages 0 to 7
-//               MEDIUM uses stages 2 to 7
-//               HIGH uses stages 4 to 7
-//               TOOHIGH uses stages 6 to 7 and should not be used because its
+//               MEDIUM uses stages 0 to 5
+//               HIGH uses stages 0 to 3
+//               TOOHIGH uses stages 0 to 1 and should not be used because its
 //               frequency exceeds design specifications
 //               The clock output will not glitch when changing the range up one
 //               step at a time
@@ -77,7 +77,7 @@
 //               DS1_RANDOM=1
 #define ROSC_FREQA_OFFSET _u(0x00000004)
 #define ROSC_FREQA_BITS   _u(0xffff77ff)
-#define ROSC_FREQA_RESET  _u(0x00000000)
+#define ROSC_FREQA_RESET  _u(0x00000088)
 // -----------------------------------------------------------------------------
 // Field       : ROSC_FREQA_PASSWD
 // Description : Set to 0x9696 to apply the settings
@@ -108,7 +108,7 @@
 // -----------------------------------------------------------------------------
 // Field       : ROSC_FREQA_DS1_RANDOM
 // Description : Randomises the stage 1 drive strength
-#define ROSC_FREQA_DS1_RANDOM_RESET  _u(0x0)
+#define ROSC_FREQA_DS1_RANDOM_RESET  _u(0x1)
 #define ROSC_FREQA_DS1_RANDOM_BITS   _u(0x00000080)
 #define ROSC_FREQA_DS1_RANDOM_MSB    _u(7)
 #define ROSC_FREQA_DS1_RANDOM_LSB    _u(7)
@@ -124,7 +124,7 @@
 // -----------------------------------------------------------------------------
 // Field       : ROSC_FREQA_DS0_RANDOM
 // Description : Randomises the stage 0 drive strength
-#define ROSC_FREQA_DS0_RANDOM_RESET  _u(0x0)
+#define ROSC_FREQA_DS0_RANDOM_RESET  _u(0x1)
 #define ROSC_FREQA_DS0_RANDOM_BITS   _u(0x00000008)
 #define ROSC_FREQA_DS0_RANDOM_MSB    _u(3)
 #define ROSC_FREQA_DS0_RANDOM_LSB    _u(3)
@@ -206,7 +206,7 @@
 //               On power-up this field is initialised to WAKE
 //               An invalid write will also select WAKE
 //               Warning: setup the irq before selecting dormant mode
-//               0x636f6d61 -> dormant
+//               0x636f6d61 -> DORMANT
 //               0x77616b65 -> WAKE
 #define ROSC_DORMANT_OFFSET _u(0x00000010)
 #define ROSC_DORMANT_BITS   _u(0xffffffff)

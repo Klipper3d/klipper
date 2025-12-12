@@ -7,6 +7,7 @@ MEMORY {
 SECTIONS {
     . = ORIGIN(SRAM);
     .text : {
+        _start = .; /* make LLVM happy */
         *(.entry)
         *(.text)
     } >SRAM
