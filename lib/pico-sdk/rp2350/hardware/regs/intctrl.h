@@ -59,12 +59,12 @@
 #define PLL_USB_IRQ 43
 #define POWMAN_IRQ_POW 44
 #define POWMAN_IRQ_TIMER 45
-#define SPAREIRQ_IRQ_0 46
-#define SPAREIRQ_IRQ_1 47
-#define SPAREIRQ_IRQ_2 48
-#define SPAREIRQ_IRQ_3 49
-#define SPAREIRQ_IRQ_4 50
-#define SPAREIRQ_IRQ_5 51
+#define SPARE_IRQ_0 46
+#define SPARE_IRQ_1 47
+#define SPARE_IRQ_2 48
+#define SPARE_IRQ_3 49
+#define SPARE_IRQ_4 50
+#define SPARE_IRQ_5 51
 #else
 /**
  * \brief Interrupt numbers on RP2350 (used as typedef \ref irq_num_t)
@@ -79,8 +79,8 @@ typedef enum irq_num_rp2350 {
     TIMER1_IRQ_1 = 5, ///< Select TIMER1's IRQ 1 output
     TIMER1_IRQ_2 = 6, ///< Select TIMER1's IRQ 2 output
     TIMER1_IRQ_3 = 7, ///< Select TIMER1's IRQ 3 output
-    PWM_IRQ_WRAP_0 = 8, ///< Select PWM's IRQ_WRAP 0 output
-    PWM_IRQ_WRAP_1 = 9, ///< Select PWM's IRQ_WRAP 1 output
+    PWM_IRQ_WRAP_0 = 8, ///< Select PWM's WRAP_0 IRQ output
+    PWM_IRQ_WRAP_1 = 9, ///< Select PWM's WRAP_1 IRQ output
     DMA_IRQ_0 = 10, ///< Select DMA's IRQ 0 output
     DMA_IRQ_1 = 11, ///< Select DMA's IRQ 1 output
     DMA_IRQ_2 = 12, ///< Select DMA's IRQ 2 output
@@ -96,27 +96,27 @@ typedef enum irq_num_rp2350 {
     IO_IRQ_BANK0_NS = 22, ///< Select IO_BANK0_NS's IRQ output
     IO_IRQ_QSPI = 23, ///< Select IO_QSPI's IRQ output
     IO_IRQ_QSPI_NS = 24, ///< Select IO_QSPI_NS's IRQ output
-    SIO_IRQ_FIFO = 25, ///< Select SIO's IRQ_FIFO output
-    SIO_IRQ_BELL = 26, ///< Select SIO's IRQ_BELL output
-    SIO_IRQ_FIFO_NS = 27, ///< Select SIO_NS's IRQ_FIFO output
-    SIO_IRQ_BELL_NS = 28, ///< Select SIO_NS's IRQ_BELL output
-    SIO_IRQ_MTIMECMP = 29, ///< Select SIO_IRQ_MTIMECMP's IRQ output
+    SIO_IRQ_FIFO = 25, ///< Select SIO's FIFO IRQ output
+    SIO_IRQ_BELL = 26, ///< Select SIO's BELL IRQ output
+    SIO_IRQ_FIFO_NS = 27, ///< Select SIO_NS's FIFO IRQ output
+    SIO_IRQ_BELL_NS = 28, ///< Select SIO_NS's BELL IRQ output
+    SIO_IRQ_MTIMECMP = 29, ///< Select SIO's MTIMECMP IRQ output
     CLOCKS_IRQ = 30, ///< Select CLOCKS's IRQ output
     SPI0_IRQ = 31, ///< Select SPI0's IRQ output
     SPI1_IRQ = 32, ///< Select SPI1's IRQ output
     UART0_IRQ = 33, ///< Select UART0's IRQ output
     UART1_IRQ = 34, ///< Select UART1's IRQ output
-    ADC_IRQ_FIFO = 35, ///< Select ADC's IRQ_FIFO output
+    ADC_IRQ_FIFO = 35, ///< Select ADC's FIFO IRQ output
     I2C0_IRQ = 36, ///< Select I2C0's IRQ output
     I2C1_IRQ = 37, ///< Select I2C1's IRQ output
     OTP_IRQ = 38, ///< Select OTP's IRQ output
     TRNG_IRQ = 39, ///< Select TRNG's IRQ output
-    PROC0_IRQ_CTI = 40, ///< Select PROC0's IRQ_CTI output
-    PROC1_IRQ_CTI = 41, ///< Select PROC1's IRQ_CTI output
+    PROC0_IRQ_CTI = 40, ///< Select PROC0's CTI IRQ output
+    PROC1_IRQ_CTI = 41, ///< Select PROC1's CTI IRQ output
     PLL_SYS_IRQ = 42, ///< Select PLL_SYS's IRQ output
     PLL_USB_IRQ = 43, ///< Select PLL_USB's IRQ output
-    POWMAN_IRQ_POW = 44, ///< Select POWMAN's IRQ_POW output
-    POWMAN_IRQ_TIMER = 45, ///< Select POWMAN's IRQ_TIMER output
+    POWMAN_IRQ_POW = 44, ///< Select POWMAN's POW IRQ output
+    POWMAN_IRQ_TIMER = 45, ///< Select POWMAN's TIMER IRQ output
     SPARE_IRQ_0 = 46, ///< Select SPARE IRQ 0
     SPARE_IRQ_1 = 47, ///< Select SPARE IRQ 1
     SPARE_IRQ_2 = 48, ///< Select SPARE IRQ 2
