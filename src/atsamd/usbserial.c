@@ -25,27 +25,30 @@ static uint8_t __aligned(4) acmin[USB_CDC_EP_ACM_SIZE];
 static uint8_t __aligned(4) bulkout[USB_CDC_EP_BULK_OUT_SIZE];
 static uint8_t __aligned(4) bulkin[USB_CDC_EP_BULK_IN_SIZE];
 
+// Convert 64, 32, 16, 8 sized buffer to 3, 2, 1, 0 for PCKSIZE.SIZE register
+#define BSIZE(bufname) (__builtin_ctz(sizeof(bufname)) - 3)
+
 static UsbDeviceDescriptor usb_desc[] = {
     [0] = { {
         {
             .ADDR.reg = (uint32_t)ep0out,
-            .PCKSIZE.reg = USB_DEVICE_PCKSIZE_SIZE(sizeof(ep0out) >> 4),
+            .PCKSIZE.reg = USB_DEVICE_PCKSIZE_SIZE(BSIZE(ep0out)),
         }, {
             .ADDR.reg = (uint32_t)ep0in,
-            .PCKSIZE.reg = USB_DEVICE_PCKSIZE_SIZE(sizeof(ep0in) >> 4),
+            .PCKSIZE.reg = USB_DEVICE_PCKSIZE_SIZE(BSIZE(ep0in)),
         },
     } },
     [USB_CDC_EP_ACM] = { {
         {
         }, {
             .ADDR.reg = (uint32_t)acmin,
-            .PCKSIZE.reg = USB_DEVICE_PCKSIZE_SIZE(sizeof(acmin) >> 4),
+            .PCKSIZE.reg = USB_DEVICE_PCKSIZE_SIZE(BSIZE(acmin)),
         },
     } },
     [USB_CDC_EP_BULK_OUT] = { {
         {
             .ADDR.reg = (uint32_t)bulkout,
-            .PCKSIZE.reg = USB_DEVICE_PCKSIZE_SIZE(sizeof(bulkout) >> 4),
+            .PCKSIZE.reg = USB_DEVICE_PCKSIZE_SIZE(BSIZE(bulkout)),
         }, {
         },
     } },
@@ -53,7 +56,7 @@ static UsbDeviceDescriptor usb_desc[] = {
         {
         }, {
             .ADDR.reg = (uint32_t)bulkin,
-            .PCKSIZE.reg = USB_DEVICE_PCKSIZE_SIZE(sizeof(bulkin) >> 4),
+            .PCKSIZE.reg = USB_DEVICE_PCKSIZE_SIZE(BSIZE(bulkin)),
         },
     } },
 };
