@@ -39,6 +39,12 @@
 #define I2C0_IRQ 23
 #define I2C1_IRQ 24
 #define RTC_IRQ 25
+#define SPARE_IRQ_0 26
+#define SPARE_IRQ_1 27
+#define SPARE_IRQ_2 28
+#define SPARE_IRQ_3 29
+#define SPARE_IRQ_4 30
+#define SPARE_IRQ_5 31
 #else
 /**
  * \brief Interrupt numbers on RP2040 (used as typedef \ref irq_num_t)
@@ -71,6 +77,12 @@ typedef enum irq_num_rp2040 {
     I2C0_IRQ = 23, ///< Select I2C0's IRQ output
     I2C1_IRQ = 24, ///< Select I2C1's IRQ output
     RTC_IRQ = 25, ///< Select RTC's IRQ output
+    SPARE_IRQ_0 = 26, ///< Select SPARE IRQ 0
+    SPARE_IRQ_1 = 27, ///< Select SPARE IRQ 1
+    SPARE_IRQ_2 = 28, ///< Select SPARE IRQ 2
+    SPARE_IRQ_3 = 29, ///< Select SPARE IRQ 3
+    SPARE_IRQ_4 = 30, ///< Select SPARE IRQ 4
+    SPARE_IRQ_5 = 31, ///< Select SPARE IRQ 5
     IRQ_COUNT
 } irq_num_t;
 #endif
@@ -101,6 +113,12 @@ typedef enum irq_num_rp2040 {
 #define isr_i2c0 isr_irq23
 #define isr_i2c1 isr_irq24
 #define isr_rtc isr_irq25
+#define isr_spare_0 isr_irq26
+#define isr_spare_1 isr_irq27
+#define isr_spare_2 isr_irq28
+#define isr_spare_3 isr_irq29
+#define isr_spare_4 isr_irq30
+#define isr_spare_5 isr_irq31
 
 #endif // _INTCTRL_H
 
