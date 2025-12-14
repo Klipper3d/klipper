@@ -1,6 +1,6 @@
 // Hardware interface to "fullspeed USB controller"
 //
-// Copyright (C) 2018-2023  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2025  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -19,29 +19,27 @@
   // Transfer memory is accessed with 32bits, but contains only 16bits of data
   typedef volatile uint32_t epmword_t;
   #define WSIZE 2
-  #define USBx_IRQn USB_LP_IRQn
-#elif CONFIG_MACH_STM32F0 || CONFIG_MACH_STM32L4
+#elif CONFIG_MACH_STM32F0 || CONFIG_MACH_STM32L4 || CONFIG_MACH_STM32G4
   // Transfer memory is accessed with 16bits and contains 16bits of data
   typedef volatile uint16_t epmword_t;
   #define WSIZE 2
-  #define USBx_IRQn USB_IRQn
-#elif CONFIG_MACH_STM32G4
-  // Transfer memory is accessed with 16bits and contains 16bits of data
-  typedef volatile uint16_t epmword_t;
-  #define WSIZE 2
-  #define USBx_IRQn USB_LP_IRQn
 #elif CONFIG_MACH_STM32G0
   // Transfer memory is accessed with 32bits and contains 32bits of data
   typedef volatile uint32_t epmword_t;
   #define WSIZE 4
+#endif
+
+// Different chips have different names for the USB irq
+#if CONFIG_MACH_STM32F1 || CONFIG_MACH_STM32G4
+  #define USBx_IRQn USB_LP_IRQn
+#elif CONFIG_MACH_STM32G0B1
+  #define USBx_IRQn USB_UCPD1_2_IRQn
+#else
   #define USBx_IRQn USB_IRQn
 #endif
 
 // The stm32g0 has slightly different register names
 #if CONFIG_MACH_STM32G0
-  #if CONFIG_MACH_STM32G0B1
-    #define USB_IRQn USB_UCPD1_2_IRQn
-  #endif
   #define USB USB_DRD_FS
   #define USB_PMAADDR USB_DRD_PMAADDR
   #define USB_EPADDR_FIELD USB_CHEP_ADDR
@@ -55,8 +53,8 @@
 
 // Some chip variants do not define these fields
 #ifndef USB_EP_DTOG_TX_Pos
-#define USB_EP_DTOG_TX_Pos 6
-#define USB_EP_DTOG_RX_Pos 14
+  #define USB_EP_DTOG_TX_Pos 6
+  #define USB_EP_DTOG_RX_Pos 14
 #endif
 
 
