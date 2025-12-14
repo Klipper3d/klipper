@@ -886,9 +886,10 @@ serialqueue_send_batch(struct serialqueue *sq, struct command_queue *cq
     int len = 0;
     struct queue_message *qm;
     list_for_each_entry(qm, msgs, node) {
-        if (qm->min_clock + (1LL<<31) < qm->req_clock
+        if (qm->min_clock + (3LL<<29) < qm->req_clock
             && qm->req_clock != BACKGROUND_PRIORITY_CLOCK)
-            qm->min_clock = qm->req_clock - (1LL<<31);
+            // Avoid mcu clock comparison 31-bit overflow issues
+            qm->min_clock = qm->req_clock - (3LL<<29);
         len += qm->len;
     }
     if (! len)
