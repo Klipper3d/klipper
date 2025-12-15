@@ -227,7 +227,6 @@ class MCU_I2C:
 def MCU_I2C_from_config(config, default_addr=None, default_speed=100000):
     # Load bus parameters
     printer = config.get_printer()
-    i2c_mcu = mcu.get_printer_mcu(printer, config.get('i2c_mcu', 'mcu'))
     speed = config.getint('i2c_speed', default_speed, minval=100000)
     if default_addr is None:
         addr = config.getint('i2c_address', minval=0, maxval=127)
@@ -240,6 +239,8 @@ def MCU_I2C_from_config(config, default_addr=None, default_speed=100000):
                         for name in ['scl', 'sda']]
         sw_pin_params = [ppins.lookup_pin(config.get(name), share_type=name)
                          for name in sw_pin_names]
+        mcu_name = sw_pin_params[0]['chip_name']
+        i2c_mcu = mcu.get_printer_mcu(printer, config.get('i2c_mcu', mcu_name))
         for pin_params in sw_pin_params:
             if pin_params['chip'] != i2c_mcu:
                 raise ppins.error("%s: i2c pins must be on same mcu" % (
@@ -247,6 +248,7 @@ def MCU_I2C_from_config(config, default_addr=None, default_speed=100000):
         sw_pins = tuple([pin_params['pin'] for pin_params in sw_pin_params])
         bus = None
     else:
+        i2c_mcu = mcu.get_printer_mcu(printer, config.get('i2c_mcu', 'mcu'))
         bus = config.get('i2c_bus', None)
         sw_pins = None
     # Create MCU_I2C object
