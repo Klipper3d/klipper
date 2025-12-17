@@ -430,6 +430,7 @@ class GCodeHelper:
     def __init__(self, printer):
         self.printer = printer
         self.gcode = printer.lookup_object("gcode")
+        self.v_sd = None
         # Output subscription tracking
         self.is_output_registered = False
         self.clients = {}
@@ -442,9 +443,24 @@ class GCodeHelper:
                              self._handle_firmware_restart)
         wh.register_endpoint("gcode/subscribe_output",
                              self._handle_subscribe_output)
+        
+        self.printer.register_event_handler('klippy:connect', self.handle_connect)
+
+    def handle_connect(self):
+        self.v_sd = self.printer.lookup_object('virtual_sdcard', None)
+    
     def _handle_help(self, web_request):
         web_request.send(self.gcode.get_command_help())
     def _handle_script(self, web_request):
+        script = web_request.get_str('script')
+        if script.strip().upper() == 'CANCEL_PRINT' and v_sd.file_path(): # Cancel mid-print
+            self.v_sd._reset_file() # Cancel SD print
+            
+            pheaters = self.printer.lookup_object('heaters')
+            for heater_name in pheaters.get_all_heaters():
+                heater = pheaters.lookup_heater(heater_name)
+                heater.set_temp(0) # Abort existing temperature_wait commands
+        
         self.gcode.run_script(web_request.get_str('script'))
     def _handle_restart(self, web_request):
         self.gcode.run_script('restart')
