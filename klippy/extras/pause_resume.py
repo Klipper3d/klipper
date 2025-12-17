@@ -33,7 +33,15 @@ class PauseResume:
     def handle_connect(self):
         self.v_sd = self.printer.lookup_object('virtual_sdcard', None)
     def _handle_cancel_request(self, web_request):
-        self.gcode.run_script("CANCEL_PRINT")
+        if self.v_sd.file_path(): # Mid-print
+            self.v_sd._reset_file() # Cancel SD print
+            
+            pheaters = self.printer.lookup_object('heaters')
+            for heater_name in pheaters.get_all_heaters():
+                heater = pheaters.lookup_heater(heater_name)
+                heater.set_temp(0) # Abort existing temperature_wait commands
+                
+        self.gcode.run_script("CANCEL_PRINT") # Remaining cancel logic
     def _handle_pause_request(self, web_request):
         self.gcode.run_script("PAUSE")
     def _handle_resume_request(self, web_request):
