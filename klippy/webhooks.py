@@ -453,7 +453,7 @@ class GCodeHelper:
         web_request.send(self.gcode.get_command_help())
     def _handle_script(self, web_request):
         script = web_request.get_str('script')
-        if script.strip().upper() == 'CANCEL_PRINT' and v_sd.file_path(): # Cancel mid-print
+        if script.strip().upper() == 'CANCEL_PRINT' and self.v_sd.file_path(): # Cancel mid-print
             self.v_sd._reset_file() # Cancel SD print
             
             pheaters = self.printer.lookup_object('heaters')
