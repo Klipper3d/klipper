@@ -20,6 +20,9 @@ DECL_ENUMERATION_RANGE("pin", "PC0", GPIO('C', 0), 8);
 DECL_ENUMERATION_RANGE("pin", "PD0", GPIO('D', 0), 8);
 #if CONFIG_MACH_atmega328p
 DECL_ENUMERATION_RANGE("pin", "PE0", GPIO('E', 0), 8);
+#elif CONFIG_MACH_lgt8f328p
+DECL_ENUMERATION_RANGE("pin", "PE0", GPIO('E', 0), 8);
+DECL_ENUMERATION_RANGE("pin", "PF0", GPIO('F', 0), 8);
 #endif
 #ifdef PINE
 DECL_ENUMERATION_RANGE("pin", "PE0", GPIO('E', 0), 8);
@@ -42,6 +45,9 @@ volatile uint8_t * const digital_regs[] PROGMEM = {
     &PINB, &PINC, &PIND,
 #if CONFIG_MACH_atmega328p
     &_SFR_IO8(0x0C), // PINE on atmega328pb
+#elif CONFIG_MACH_lgt8f328p
+    &_SFR_IO8(0x0C), // lgt8f328p have PINE and PINF
+    &_SFR_IO8(0x12)
 #endif
 #ifdef PINE
     &PINE, &PINF,
