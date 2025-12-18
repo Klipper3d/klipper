@@ -6,7 +6,7 @@ CROSS_PREFIX=avr-
 dirs-y += src/avr src/generic
 
 CFLAGS-$(CONFIG_HAVE_LIMITED_CODE_SIZE) += -Os
-CFLAGS += $(CFLAGS-y) -mmcu=$(CONFIG_MCU)
+CFLAGS += $(CFLAGS-y) -mmcu=$(CONFIG_AVR_BUILD_MCU)
 
 # Add avr source files
 src-y += avr/main.c avr/timer.c
