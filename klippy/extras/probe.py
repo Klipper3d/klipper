@@ -90,6 +90,9 @@ class ProbeCommandHelper:
                                                 pos.bed_z))
         x_offset, y_offset, z_offset = self.probe.get_offsets()
         self.last_z_result = pos.bed_z + z_offset # Deprecated
+        params = self.probe.get_probe_params(gcmd)
+        liftpos = [None, None, pos[2] + params['sample_retract_dist']]
+        self._move(liftpos, params['lift_speed'])
     def probe_calibrate_finalize(self, mpresult):
         if mpresult is None:
             return
