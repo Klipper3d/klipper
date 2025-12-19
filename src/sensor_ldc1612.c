@@ -131,13 +131,15 @@ cancel_homing(struct ldc1612 *ld, int error_code)
     trsync_do_trigger(ld->ts, ld->error_reason + error_code);
 }
 
+#define MAX_VALID_RAW_VALUE    0x03ffffff
 #define DATA_ERROR_AMPLITUDE (1L << 28)
 
 static int
 check_data_bits(struct ldc1612 *ld, uint32_t raw_data) {
     // Ignore amplitude errors
     raw_data &= ~DATA_ERROR_AMPLITUDE;
-    if (raw_data < 0x0fffffff)
+    // Datasheet define valid frequency input as < F_ref / 4
+    if (raw_data < MAX_VALID_RAW_VALUE)
         return 0;
     cancel_homing(ld, SE_SENSOR_ERROR);
     return -1;
