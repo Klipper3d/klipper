@@ -120,14 +120,19 @@ DECL_COMMAND(command_query_ldc1612_home_state,
 
 static uint_fast8_t
 check_data_bits(struct ldc1612 *ld, uint32_t *data) {
-    if (*data < 0x0fffffff)
+    // Datasheet define valid frequency input as < F_ref / 4
+    // Use half as sanity check
+    if (*data < 0x07ffffff)
         return 0;
     // Sensor reports an issue - cancel homing
     ld->homing_flags = 0;
     uint8_t error_bits = *data >> 28;
     uint8_t error_reason = ld->error_reason;
+    uint8_t freq_overflow = (*data & 0x0fffffff) > 0x7fffffff;
     if ((error_bits & DATA_ERROR_I2C) == DATA_ERROR_I2C)
         error_reason = ld->error_reason + DATA_ERROR_I2C;
+    else if (freq_overflow || error_bits & DATA_ERROR_OVER_RANGE)
+        error_reason = ld->error_reason + DATA_ERROR_OVER_RANGE;
     if ((error_bits & DATA_ERROR_ZERO_COUNT) == DATA_ERROR_ZERO_COUNT)
         error_reason = ld->error_reason + DATA_ERROR_ZERO_COUNT;
     trsync_do_trigger(ld->ts, error_reason);
