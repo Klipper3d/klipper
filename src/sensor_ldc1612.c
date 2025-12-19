@@ -116,6 +116,7 @@ DECL_COMMAND(command_query_ldc1612_home_state,
 #define DATA_ERROR_OVER_RANGE  (1 << 2)
 #define DATA_ERROR_UNDER_RANGE (1 << 3)
 #define DATA_ERROR_I2C (DATA_ERROR_OVER_RANGE | DATA_ERROR_UNDER_RANGE)
+#define DATA_ERROR_ZERO_COUNT (DATA_ERROR_WATCHDOG | DATA_ERROR_AMPLITUDE)
 
 static uint_fast8_t
 check_data_bits(struct ldc1612 *ld, uint32_t *data) {
@@ -127,6 +128,8 @@ check_data_bits(struct ldc1612 *ld, uint32_t *data) {
     uint8_t error_reason = ld->error_reason;
     if ((error_bits & DATA_ERROR_I2C) == DATA_ERROR_I2C)
         error_reason = ld->error_reason + DATA_ERROR_I2C;
+    if ((error_bits & DATA_ERROR_ZERO_COUNT) == DATA_ERROR_ZERO_COUNT)
+        error_reason = ld->error_reason + DATA_ERROR_ZERO_COUNT;
     trsync_do_trigger(ld->ts, error_reason);
     return 1;
 }
@@ -167,6 +170,7 @@ read_reg(struct ldc1612 *ld, uint8_t reg, uint8_t *res)
 
 #define STATUS_I2C_ERROR (3 << 4)
 #define STATUS_DRDY (1 << 3)
+#define STATUS_ZERO_COUNT (1 << 8)
 
 // Read the status register on the ldc1612
 static uint16_t
@@ -192,8 +196,8 @@ ldc1612_query(struct ldc1612 *ld, uint8_t oid)
     irq_disable();
     ld->flags &= ~LDC_PENDING;
     irq_enable();
-    // Force data read on I2C error
-    if (!(status & (STATUS_DRDY | STATUS_I2C_ERROR)))
+    // Force data read on I2C error or Zero Count
+    if (!(status & (STATUS_DRDY | STATUS_I2C_ERROR | STATUS_ZERO_COUNT)))
         return;
 
     // Read coil0 frequency
@@ -202,6 +206,9 @@ ldc1612_query(struct ldc1612 *ld, uint8_t oid)
     ret |= read_reg(ld, REG_DATA0_LSB, &d[2]);
     ld->sb.data_count += BYTES_PER_SAMPLE;
 
+    // Forward Zero Count
+    if (status & STATUS_ZERO_COUNT)
+        d[0] |= DATA_ERROR_ZERO_COUNT << 4;
     if (ret != I2C_BUS_SUCCESS || status & STATUS_I2C_ERROR)
         d[0] |= DATA_ERROR_I2C << 4;
 
