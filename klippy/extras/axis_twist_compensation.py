@@ -286,14 +286,14 @@ class Calibrater:
         # returns a callback function for the manual probe
         is_end = self.current_point_index == len(probe_points) - 1
 
-        def callback(kin_pos):
-            if kin_pos is None:
+        def callback(mpresult):
+            if mpresult is None:
                 # probe was cancelled
                 self.gcmd.respond_info(
                     "AXIS_TWIST_COMPENSATION_CALIBRATE: Probe cancelled, "
                     "calibration aborted")
                 return
-            z_offset = self.current_measured_z - kin_pos[2]
+            z_offset = self.current_measured_z - mpresult.bed_z
             self.results.append(z_offset)
             if is_end:
                 # end of calibration
