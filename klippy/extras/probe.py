@@ -83,10 +83,10 @@ class ProbeCommandHelper:
         pos = run_single_probe(self.probe, gcmd)
         gcmd.respond_info("Result is z=%.6f" % (pos[2],))
         self.last_z_result = pos[2]
-    def probe_calibrate_finalize(self, kin_pos):
-        if kin_pos is None:
+    def probe_calibrate_finalize(self, mpresult):
+        if mpresult is None:
             return
-        z_offset = self.probe_calibrate_z - kin_pos[2]
+        z_offset = self.probe_calibrate_z - mpresult.bed_z
         gcode = self.printer.lookup_object('gcode')
         gcode.respond_info(
             "%s: z_offset: %.3f\n"
@@ -514,7 +514,9 @@ class ProbePointsHelper:
     def _manual_probe_start(self):
         self._raise_tool(not self.manual_results)
         if len(self.manual_results) >= len(self.probe_points):
-            done = self._invoke_callback(self.manual_results)
+            results = [[mpr.bed_x, mpr.bed_y, mpr.bed_z]
+                       for mpr in self.manual_results]
+            done = self._invoke_callback(results)
             if done:
                 return
             # Caller wants a "retry" - clear results and restart probing
@@ -523,10 +525,10 @@ class ProbePointsHelper:
         gcmd = self.gcode.create_gcode_command("", "", {})
         manual_probe.ManualProbeHelper(self.printer, gcmd,
                                        self._manual_probe_finalize)
-    def _manual_probe_finalize(self, kin_pos):
-        if kin_pos is None:
+    def _manual_probe_finalize(self, mpresult):
+        if mpresult is None:
             return
-        self.manual_results.append(kin_pos)
+        self.manual_results.append(mpresult)
         self._manual_probe_start()
 
 # Helper to obtain a single probe measurement
