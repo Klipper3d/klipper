@@ -206,11 +206,11 @@ class EddyCalibration:
                     pos, mad_mm, mad_hz)
                 gcode.respond_info(msg)
         return filtered
-    def post_manual_probe(self, kin_pos):
-        if kin_pos is None:
+    def post_manual_probe(self, mpresult):
+        if mpresult is None:
             # Manual Probe was aborted
             return
-        curpos = list(kin_pos)
+        curpos = [mpresult.bed_x, mpresult.bed_y, mpresult.bed_z]
         move = self.printer.lookup_object('toolhead').manual_move
         # Move away from the bed
         probe_calibrate_z = curpos[2]
