@@ -192,20 +192,25 @@ class MCU_TMC_SPI_chain:
             share = "tmc_spi_cs"
         self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=4000000,
                                            share_type=share)
+        self._error = self.printer.command_error
         self.taken_chain_positions = []
     def _build_cmd(self, data, chain_pos):
         return ([0x00] * ((self.chain_len - chain_pos) * 5) +
                 data + [0x00] * ((chain_pos - 1) * 5))
     def reg_read(self, reg, chain_pos):
         cmd = self._build_cmd([reg, 0x00, 0x00, 0x00, 0x00], chain_pos)
-        self.spi.spi_send(cmd)
         if self.printer.get_start_args().get('debugoutput') is not None:
+            self.spi.spi_send(cmd)
             return {
                 "spi_status": 0,
                 "data": 0,
                 "#receive_time": .0,
             }
-        params = self.spi.spi_transfer(cmd)
+        # Optimize read by grouping write + transfer request
+        try:
+            params = self.spi.spi_transfer_with_preface(cmd, cmd, retry=False)
+        except self._error:
+            params = self.spi.spi_transfer(cmd)
         pr = bytearray(params['response'])
         pr = pr[(self.chain_len - chain_pos) * 5 :
                 (self.chain_len - chain_pos + 1) * 5]
