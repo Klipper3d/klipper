@@ -32,6 +32,25 @@ def resolve_bus_name(mcu, param, bus):
             pin_resolver.reserve_pin(pin, bus)
     return bus
 
+def format_cfg_line(params):
+    if params.get('pin') is not None:
+        definition = "%s:%s" % (params['chip_name'], params['pin'])
+    else:
+        definition = "%s" % (params.get("value"))
+    return "%s = %s" % (params['cfg_key'], definition)
+
+def validate_pins(config, pins_params):
+    ppins = config.get_printer().lookup_object("pins")
+    for i in range(len(pins_params)-1):
+        if pins_params[i].get('chip') == pins_params[i+1].get('chip'):
+            continue
+        msg = """
+        # Pins MUST be on the same MCU
+        [%s]
+        """ % (config.get_name(),)
+        for pin_params in pins_params:
+            msg += "%s\n" % (format_cfg_line(pin_params),)
+        raise ppins.error(msg)
 
 ######################################################################
 # SPI
@@ -136,10 +155,15 @@ def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
                         for name in ['miso', 'mosi', 'sclk']]
         sw_pin_params = [ppins.lookup_pin(config.get(name), share_type=name)
                          for name in sw_pin_names]
-        for pin_params in sw_pin_params:
-            if pin_params['chip'] != mcu:
-                raise ppins.error("%s: spi pins must be on same mcu" % (
-                    config.get_name(),))
+        # Enrich pins info
+        for i in range(len(sw_pin_params)):
+            sw_pin_params[i]['cfg_key'] = sw_pin_params[i]['share_type']
+        # Define CS as virtual pin to reuse validation
+        vpin_params = []
+        if pin is not None:
+            cs_pin_params["cfg_key"] = pin_option
+            vpin_params = [cs_pin_params]
+        validate_pins(config, sw_pin_params + vpin_params)
         sw_pins = tuple([pin_params['pin'] for pin_params in sw_pin_params])
         bus = None
     else:
@@ -241,10 +265,13 @@ def MCU_I2C_from_config(config, default_addr=None, default_speed=100000):
                          for name in sw_pin_names]
         mcu_name = sw_pin_params[0]['chip_name']
         i2c_mcu = mcu.get_printer_mcu(printer, config.get('i2c_mcu', mcu_name))
-        for pin_params in sw_pin_params:
-            if pin_params['chip'] != i2c_mcu:
-                raise ppins.error("%s: i2c pins must be on same mcu" % (
-                    config.get_name(),))
+        # Enrich pins info
+        for i in range(len(sw_pin_params)):
+            sw_pin_params[i]['cfg_key'] = sw_pin_params[i]['share_type']
+        # Define MCU as virtual pin to reuse validation
+        vpin_params = [{'cfg_key': 'i2c_mcu', 'chip': i2c_mcu,
+                        'value': i2c_mcu.get_name()}]
+        validate_pins(config, sw_pin_params + vpin_params)
         sw_pins = tuple([pin_params['pin'] for pin_params in sw_pin_params])
         bus = None
     else:
