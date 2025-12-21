@@ -8,9 +8,17 @@ All dates in this document are approximate.
 
 ## Changes
 
-20251122: An option `axis` has been added to `[carriage <name>]` sections
-for `generic_cartesian` kinematics, allowing arbitrary names for primary
-carriages. Users are encouraged to explicitly specify `axis` option now.
+20260109: The `[screws_tilt_adjust]` module now reports the status
+variable `{printer.screws_tilt_adjust.result.screw1.z}` with the
+probe's `z_offset` applied. That is, one would previously need to
+subtract the probe's configured `z_offset` to find the absolute Z
+deviation at the given screw location and now one must not apply the
+`z_offset`.
+
+20251122: An option `axis` has been added to `[carriage <name>]`
+sections for `generic_cartesian` kinematics, allowing arbitrary names
+for primary carriages. Users are encouraged to explicitly specify
+`axis` option now.
 
 20251106: The status fields `{printer.toolhead.position}`,
 `{printer.gcode_move.position}`,
