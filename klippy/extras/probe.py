@@ -466,7 +466,7 @@ class ProbePointsHelper:
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.get_last_move_time()
         # Invoke callback
-        res = self.finalize_callback(self.probe_offsets, results)
+        res = self.finalize_callback(results)
         return res != "retry"
     def _move_next(self, probe_num):
         # Move to next XY probe point
@@ -502,6 +502,10 @@ class ProbePointsHelper:
             self._raise_tool(not probe_num)
             if probe_num >= len(self.probe_points):
                 results = probe_session.pull_probed_results()
+                results = [manual_probe.ProbeResult(
+                    r[0] + self.probe_offsets[0], r[1] + self.probe_offsets[1],
+                    r[2] - self.probe_offsets[2], r[0], r[1], r[2])
+                           for r in results]
                 done = self._invoke_callback(results)
                 if done:
                     break
@@ -514,9 +518,7 @@ class ProbePointsHelper:
     def _manual_probe_start(self):
         self._raise_tool(not self.manual_results)
         if len(self.manual_results) >= len(self.probe_points):
-            results = [[mpr.bed_x, mpr.bed_y, mpr.bed_z]
-                       for mpr in self.manual_results]
-            done = self._invoke_callback(results)
+            done = self._invoke_callback(self.manual_results)
             if done:
                 return
             # Caller wants a "retry" - clear results and restart probing
