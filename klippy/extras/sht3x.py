@@ -56,7 +56,7 @@ class SHT3X:
         self.reactor = self.printer.get_reactor()
         self.i2c = bus.MCU_I2C_from_config(
             config, default_addr=SHT3X_I2C_ADDR, default_speed=100000)
-        self._error = self.i2c.get_mcu().error
+        self._error = self.printer.command_error
         self.report_time = config.getint('sht3x_report_time', 1, minval=1)
         self.deviceId = config.get('sensor_type')
         self.temp = self.min_temp = self.max_temp = self.humidity = 0.
