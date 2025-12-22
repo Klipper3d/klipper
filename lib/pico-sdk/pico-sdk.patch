@@ -1,3 +1,29 @@
+This file summarizes the local changes from the upstream pico-sdk
+repository (version 2.2.0).  In brief, the following steps can be used
+to recreate the code here from the main pico-sdk code:
+
+cp /pico-sdk/src/common/boot_uf2_headers/include/boot/*.h boot/
+cp /pico-sdk/src/common/boot_picoboot_headers/include/boot/*.h boot/
+cp /pico-sdk/src/rp2_common/boot_bootrom_headers/include/boot/*.h boot/
+
+cp /pico-sdk/src/rp2_common/hardware_base/include/hardware/*.h hardware/
+cp /pico-sdk/src/host/pico_platform/include/hardware/*.h hardware/
+
+cp /pico-sdk/src/rp2_common/pico_bootrom/include/pico/bootrom_constants.h pico/
+cp /pico-sdk/src/host/pico_platform/include/pico/*.h pico/
+
+cp -a /pico-sdk/src/rp2040/boot_stage2/ rp2040/
+cp /pico-sdk/src/rp2_common/cmsis/stub/CMSIS/Device/RP2040/Include/*.h rp2040/cmsis_include/
+cp -a /pico-sdk/src/rp2040/hardware_regs/include/hardware rp2040/
+cp -a /pico-sdk/src/rp2040/hardware_structs/include/hardware rp2040/
+cp /pico-sdk/src/rp2040/pico_platform/include/pico/*.S rp2040/pico/
+
+cp /pico-sdk/src/rp2_common/cmsis/stub/CMSIS/Device/RP2350/Include/*.h rp2350/cmsis_include/
+cp /pico-sdk/src/rp2350/hardware_regs/include/hardware/regs/*.h rp2350/hardware/regs/
+cp /pico-sdk/src/rp2350/hardware_structs/include/hardware/structs/*.h rp2350/hardware/structs/
+
+patch -p3 < pico-sdk.patch
+
 diff --git a/lib/pico-sdk/hardware/address_mapped.h b/lib/pico-sdk/hardware/address_mapped.h
 index b384f5572..635a275b5 100644
 --- a/lib/pico-sdk/hardware/address_mapped.h

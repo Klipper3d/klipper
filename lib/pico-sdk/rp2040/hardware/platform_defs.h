@@ -46,6 +46,15 @@
 
 #define HAS_SIO_DIVIDER 1
 #define HAS_RP2040_RTC  1
+
+#ifndef FPGA_CLK_SYS_HZ
+#define FPGA_CLK_SYS_HZ (48 * MHZ)
+#endif
+
+#ifndef FPGA_CLK_REF_HZ
+#define FPGA_CLK_REF_HZ (12 * MHZ)
+#endif
+
 // PICO_CONFIG: XOSC_HZ, Crystal oscillator frequency in Hz, type=int, default=12000000, advanced=true, group=hardware_base
 // NOTE:  The system and USB clocks are generated from the frequency using two PLLs.
 // If you override this define, or SYS_CLK_HZ/USB_CLK_HZ below, you will *also* need to add your own adjusted PLL set-up defines to
@@ -61,6 +70,11 @@
 #endif
 #endif
 
+// PICO_CONFIG: PICO_USE_FASTEST_SUPPORTED_CLOCK, Use the fastest officially supported clock by default, type=bool, default=0, group=hardware_base
+#ifndef PICO_USE_FASTEST_SUPPORTED_CLOCK
+#define PICO_USE_FASTEST_SUPPORTED_CLOCK 0
+#endif
+
 // PICO_CONFIG: SYS_CLK_HZ, System operating frequency in Hz, type=int, default=125000000, advanced=true, group=hardware_base
 #ifndef SYS_CLK_HZ
 #ifdef SYS_CLK_KHZ
@@ -68,7 +82,11 @@
 #elif defined(SYS_CLK_MHZ)
 #define SYS_CLK_HZ ((SYS_CLK_MHZ) * _u(1000000))
 #else
+#if PICO_USE_FASTEST_SUPPORTED_CLOCK
+#define SYS_CLK_HZ _u(200000000)
+#else
 #define SYS_CLK_HZ _u(125000000)
+#endif
 #endif
 #endif
 
@@ -115,5 +133,7 @@
 
 #define FIRST_USER_IRQ (NUM_IRQS - NUM_USER_IRQS)
 #define VTABLE_FIRST_IRQ 16
+
+#define REG_FIELD_WIDTH(f) (f ## _MSB + 1 - f ## _LSB)
 
 #endif

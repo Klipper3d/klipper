@@ -188,8 +188,10 @@ i2c_wait(I2C_TypeDef *i2c, uint32_t set, uint32_t timeout)
         uint32_t isr = i2c->ISR;
         if (isr & set)
             return I2C_BUS_SUCCESS;
-        if (isr & I2C_ISR_NACKF)
+        if (isr & I2C_ISR_NACKF) {
+            i2c->ICR = I2C_ICR_NACKCF;
             return I2C_BUS_NACK;
+        }
         if (!timer_is_before(timer_read_time(), timeout))
             return I2C_BUS_TIMEOUT;
     }

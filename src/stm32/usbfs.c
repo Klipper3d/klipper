@@ -1,6 +1,6 @@
 // Hardware interface to "fullspeed USB controller"
 //
-// Copyright (C) 2018-2023  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2018-2025  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -19,29 +19,27 @@
   // Transfer memory is accessed with 32bits, but contains only 16bits of data
   typedef volatile uint32_t epmword_t;
   #define WSIZE 2
-  #define USBx_IRQn USB_LP_IRQn
-#elif CONFIG_MACH_STM32F0 || CONFIG_MACH_STM32L4
+#elif CONFIG_MACH_STM32F0 || CONFIG_MACH_STM32L4 || CONFIG_MACH_STM32G4
   // Transfer memory is accessed with 16bits and contains 16bits of data
   typedef volatile uint16_t epmword_t;
   #define WSIZE 2
-  #define USBx_IRQn USB_IRQn
-#elif CONFIG_MACH_STM32G4
-  // Transfer memory is accessed with 16bits and contains 16bits of data
-  typedef volatile uint16_t epmword_t;
-  #define WSIZE 2
-  #define USBx_IRQn USB_LP_IRQn
 #elif CONFIG_MACH_STM32G0
   // Transfer memory is accessed with 32bits and contains 32bits of data
   typedef volatile uint32_t epmword_t;
   #define WSIZE 4
+#endif
+
+// Different chips have different names for the USB irq
+#if CONFIG_MACH_STM32F1 || CONFIG_MACH_STM32G4
+  #define USBx_IRQn USB_LP_IRQn
+#elif CONFIG_MACH_STM32G0B1
+  #define USBx_IRQn USB_UCPD1_2_IRQn
+#else
   #define USBx_IRQn USB_IRQn
 #endif
 
 // The stm32g0 has slightly different register names
 #if CONFIG_MACH_STM32G0
-  #if CONFIG_MACH_STM32G0B1
-    #define USB_IRQn USB_UCPD1_2_IRQn
-  #endif
   #define USB USB_DRD_FS
   #define USB_PMAADDR USB_DRD_PMAADDR
   #define USB_EPADDR_FIELD USB_CHEP_ADDR
@@ -55,8 +53,8 @@
 
 // Some chip variants do not define these fields
 #ifndef USB_EP_DTOG_TX_Pos
-#define USB_EP_DTOG_TX_Pos 6
-#define USB_EP_DTOG_RX_Pos 14
+  #define USB_EP_DTOG_TX_Pos 6
+  #define USB_EP_DTOG_RX_Pos 14
 #endif
 
 
@@ -244,8 +242,9 @@ usb_read_bulk_out(void *data, uint_fast8_t max_len)
 static uint32_t bulk_in_push_pos, bulk_in_pop_flag;
 #define BI_START 2
 
-int_fast8_t
-usb_send_bulk_in(void *data, uint_fast8_t len)
+// Send bulk packet to host with double buffering optimization
+static int_fast8_t
+usb_send_bulk_in_double_buffer(void *data, uint_fast8_t len)
 {
     if (readl(&bulk_in_pop_flag))
         // No buffer space available
@@ -274,6 +273,21 @@ usb_send_bulk_in(void *data, uint_fast8_t len)
         }
     }
 
+    return len;
+}
+
+// Send bulk usb packet to host
+int_fast8_t
+usb_send_bulk_in(void *data, uint_fast8_t len)
+{
+    if (CONFIG_STM32_USB_DOUBLE_BUFFER_TX)
+        return usb_send_bulk_in_double_buffer(data, len);
+    uint32_t ep = USB_CDC_EP_BULK_IN, epr = USB_EPR[ep];
+    if ((epr & USB_EPTX_STAT) != USB_EP_TX_NAK)
+        // No buffer space available
+        return -1;
+    btable_write_packet(ep, BUFTX, data, len);
+    USB_EPR[ep] = calc_epr_bits(epr, USB_EPTX_STAT, USB_EP_TX_VALID);
     return len;
 }
 
@@ -335,9 +349,10 @@ usb_set_configure(void)
     bulk_out_pop_count = 0;
     USB_EPR[ep] = calc_epr_bits(USB_EPR[ep], USB_EPRX_STAT, USB_EP_RX_VALID);
 
-    ep = USB_CDC_EP_BULK_IN;
-    bulk_in_push_pos = BI_START;
-    writel(&bulk_in_pop_flag, 0);
+    if (CONFIG_STM32_USB_DOUBLE_BUFFER_TX) {
+        bulk_in_push_pos = BI_START;
+        writel(&bulk_in_pop_flag, 0);
+    }
 }
 
 
@@ -362,9 +377,12 @@ usb_reset(void)
     bulk_out_push_flag = USB_EP_DTOG_TX;
 
     ep = USB_CDC_EP_BULK_IN;
-    USB_EPR[ep] = (USB_CDC_EP_BULK_IN | USB_EP_BULK | USB_EP_KIND
-                   | USB_EP_TX_NAK);
-    bulk_in_pop_flag = USB_EP_DTOG_RX;
+    uint32_t bi_epr_flags = USB_CDC_EP_BULK_IN | USB_EP_BULK | USB_EP_TX_NAK;
+    if (CONFIG_STM32_USB_DOUBLE_BUFFER_TX) {
+        bi_epr_flags |= USB_EP_KIND;
+        bulk_in_pop_flag = USB_EP_DTOG_RX;
+    }
+    USB_EPR[ep] = bi_epr_flags;
 
     USB->CNTR = USB_CNTR_CTRM | USB_CNTR_RESETM;
     USB->DADDR = USB_DADDR_EF;
@@ -384,9 +402,12 @@ USB_IRQHandler(void)
             bulk_out_push_flag = 0;
             usb_notify_bulk_out();
         } else if (ep == USB_CDC_EP_BULK_IN) {
-            USB_EPR[ep] = (calc_epr_bits(epr, USB_EP_CTR_RX | USB_EP_CTR_TX, 0)
-                           | bulk_in_pop_flag);
-            bulk_in_pop_flag = 0;
+            uint32_t ne = calc_epr_bits(epr, USB_EP_CTR_RX | USB_EP_CTR_TX, 0);
+            if (CONFIG_STM32_USB_DOUBLE_BUFFER_TX) {
+                ne |= bulk_in_pop_flag;
+                bulk_in_pop_flag = 0;
+            }
+            USB_EPR[ep] = ne;
             usb_notify_bulk_in();
         } else if (ep == 0) {
             USB_EPR[ep] = calc_epr_bits(epr, USB_EP_CTR_RX | USB_EP_CTR_TX, 0);

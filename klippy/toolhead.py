@@ -428,8 +428,9 @@ class ToolHead:
                 break
             eventtime = self.reactor.pause(eventtime + 0.100)
     def _build_extra_axes_status(self):
-        self.extra_axes_status = {ea.get_name(): e_index + 3
-                                  for e_index, ea in enumerate(self.extra_axes)}
+        enames = [ea.get_name() for ea in self.extra_axes]
+        self.extra_axes_status = {n: e_index + 3
+                                  for e_index, n in enumerate(enames) if n}
     def set_extruder(self, extruder, extrude_pos):
         # XXX - should use add_extra_axis
         self.extra_axes[0] = extruder

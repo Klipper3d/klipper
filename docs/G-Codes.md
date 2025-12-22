@@ -753,11 +753,11 @@ stepper at a time, some sequences of changes can lead to invalid
 intermediate kinematic configurations, even if the final configuration
 is valid. In such cases a user can pass `DISABLE_CHECKS=1` parameters to
 all but the last command to disable intermediate checks. For example,
-if `stepper a` and `stepper b` initially have `x-y` and `x+y` carriages
-correspondingly, then the following sequence of commands will let a user
-effectively swap the carriage controls:
-`SET_STEPPER_CARRIAGES STEPPER=a CARRIAGES=x+y DISABLE_CHECKS=1`
-and `SET_STEPPER_CARRIAGES STEPPER=b CARRIAGES=x-y`, while
+if `stepper a` and `stepper b` initially have `carriage_x-carriage_y` and
+`carriage_x+carriage_y` carriages correspondingly, then the following
+sequence of commands will let a user effectively swap the carriage controls:
+`SET_STEPPER_CARRIAGES STEPPER=a CARRIAGES=carriage_x+carriage_y DISABLE_CHECKS=1`
+and `SET_STEPPER_CARRIAGES STEPPER=b CARRIAGES=carriage_x-carriage_y`, while
 still validating the final kinematics state.
 
 ### [hall_filament_width_sensor]

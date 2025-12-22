@@ -36,8 +36,7 @@
 #define TICKS_PROC0_CTRL_ENABLE_ACCESS "RW"
 // =============================================================================
 // Register    : TICKS_PROC0_CYCLES
-// Description : None
-//               Total number of clk_tick cycles before the next tick.
+// Description : Total number of clk_tick cycles before the next tick.
 #define TICKS_PROC0_CYCLES_OFFSET _u(0x00000004)
 #define TICKS_PROC0_CYCLES_BITS   _u(0x000001ff)
 #define TICKS_PROC0_CYCLES_RESET  _u(0x00000000)
@@ -46,8 +45,7 @@
 #define TICKS_PROC0_CYCLES_ACCESS "RW"
 // =============================================================================
 // Register    : TICKS_PROC0_COUNT
-// Description : None
-//               Count down timer: the remaining number clk_tick cycles before
+// Description : Count down timer: the remaining number clk_tick cycles before
 //               the next tick is generated.
 #define TICKS_PROC0_COUNT_OFFSET _u(0x00000008)
 #define TICKS_PROC0_COUNT_BITS   _u(0x000001ff)
@@ -79,8 +77,7 @@
 #define TICKS_PROC1_CTRL_ENABLE_ACCESS "RW"
 // =============================================================================
 // Register    : TICKS_PROC1_CYCLES
-// Description : None
-//               Total number of clk_tick cycles before the next tick.
+// Description : Total number of clk_tick cycles before the next tick.
 #define TICKS_PROC1_CYCLES_OFFSET _u(0x00000010)
 #define TICKS_PROC1_CYCLES_BITS   _u(0x000001ff)
 #define TICKS_PROC1_CYCLES_RESET  _u(0x00000000)
@@ -89,8 +86,7 @@
 #define TICKS_PROC1_CYCLES_ACCESS "RW"
 // =============================================================================
 // Register    : TICKS_PROC1_COUNT
-// Description : None
-//               Count down timer: the remaining number clk_tick cycles before
+// Description : Count down timer: the remaining number clk_tick cycles before
 //               the next tick is generated.
 #define TICKS_PROC1_COUNT_OFFSET _u(0x00000014)
 #define TICKS_PROC1_COUNT_BITS   _u(0x000001ff)
@@ -122,8 +118,7 @@
 #define TICKS_TIMER0_CTRL_ENABLE_ACCESS "RW"
 // =============================================================================
 // Register    : TICKS_TIMER0_CYCLES
-// Description : None
-//               Total number of clk_tick cycles before the next tick.
+// Description : Total number of clk_tick cycles before the next tick.
 #define TICKS_TIMER0_CYCLES_OFFSET _u(0x0000001c)
 #define TICKS_TIMER0_CYCLES_BITS   _u(0x000001ff)
 #define TICKS_TIMER0_CYCLES_RESET  _u(0x00000000)
@@ -132,8 +127,7 @@
 #define TICKS_TIMER0_CYCLES_ACCESS "RW"
 // =============================================================================
 // Register    : TICKS_TIMER0_COUNT
-// Description : None
-//               Count down timer: the remaining number clk_tick cycles before
+// Description : Count down timer: the remaining number clk_tick cycles before
 //               the next tick is generated.
 #define TICKS_TIMER0_COUNT_OFFSET _u(0x00000020)
 #define TICKS_TIMER0_COUNT_BITS   _u(0x000001ff)
@@ -165,8 +159,7 @@
 #define TICKS_TIMER1_CTRL_ENABLE_ACCESS "RW"
 // =============================================================================
 // Register    : TICKS_TIMER1_CYCLES
-// Description : None
-//               Total number of clk_tick cycles before the next tick.
+// Description : Total number of clk_tick cycles before the next tick.
 #define TICKS_TIMER1_CYCLES_OFFSET _u(0x00000028)
 #define TICKS_TIMER1_CYCLES_BITS   _u(0x000001ff)
 #define TICKS_TIMER1_CYCLES_RESET  _u(0x00000000)
@@ -175,8 +168,7 @@
 #define TICKS_TIMER1_CYCLES_ACCESS "RW"
 // =============================================================================
 // Register    : TICKS_TIMER1_COUNT
-// Description : None
-//               Count down timer: the remaining number clk_tick cycles before
+// Description : Count down timer: the remaining number clk_tick cycles before
 //               the next tick is generated.
 #define TICKS_TIMER1_COUNT_OFFSET _u(0x0000002c)
 #define TICKS_TIMER1_COUNT_BITS   _u(0x000001ff)
@@ -208,8 +200,7 @@
 #define TICKS_WATCHDOG_CTRL_ENABLE_ACCESS "RW"
 // =============================================================================
 // Register    : TICKS_WATCHDOG_CYCLES
-// Description : None
-//               Total number of clk_tick cycles before the next tick.
+// Description : Total number of clk_tick cycles before the next tick.
 #define TICKS_WATCHDOG_CYCLES_OFFSET _u(0x00000034)
 #define TICKS_WATCHDOG_CYCLES_BITS   _u(0x000001ff)
 #define TICKS_WATCHDOG_CYCLES_RESET  _u(0x00000000)
@@ -218,8 +209,7 @@
 #define TICKS_WATCHDOG_CYCLES_ACCESS "RW"
 // =============================================================================
 // Register    : TICKS_WATCHDOG_COUNT
-// Description : None
-//               Count down timer: the remaining number clk_tick cycles before
+// Description : Count down timer: the remaining number clk_tick cycles before
 //               the next tick is generated.
 #define TICKS_WATCHDOG_COUNT_OFFSET _u(0x00000038)
 #define TICKS_WATCHDOG_COUNT_BITS   _u(0x000001ff)
@@ -251,8 +241,7 @@
 #define TICKS_RISCV_CTRL_ENABLE_ACCESS "RW"
 // =============================================================================
 // Register    : TICKS_RISCV_CYCLES
-// Description : None
-//               Total number of clk_tick cycles before the next tick.
+// Description : Total number of clk_tick cycles before the next tick.
 #define TICKS_RISCV_CYCLES_OFFSET _u(0x00000040)
 #define TICKS_RISCV_CYCLES_BITS   _u(0x000001ff)
 #define TICKS_RISCV_CYCLES_RESET  _u(0x00000000)
@@ -261,8 +250,7 @@
 #define TICKS_RISCV_CYCLES_ACCESS "RW"
 // =============================================================================
 // Register    : TICKS_RISCV_COUNT
-// Description : None
-//               Count down timer: the remaining number clk_tick cycles before
+// Description : Count down timer: the remaining number clk_tick cycles before
 //               the next tick is generated.
 #define TICKS_RISCV_COUNT_OFFSET _u(0x00000044)
 #define TICKS_RISCV_COUNT_BITS   _u(0x000001ff)

@@ -6,6 +6,7 @@
 from . import output_pin
 
 SERVO_SIGNAL_PERIOD = 0.020
+RESCHEDULE_SLACK = 0.000500
 
 class PrinterServo:
     def __init__(self, config):
@@ -47,8 +48,12 @@ class PrinterServo:
     def _set_pwm(self, print_time, value):
         if value == self.last_value:
             return "discard", 0.
+        aligned_ptime = self.mcu_servo.next_aligned_print_time(print_time,
+                                                               RESCHEDULE_SLACK)
+        if aligned_ptime > print_time + RESCHEDULE_SLACK:
+            return "reschedule", aligned_ptime
         self.last_value = value
-        self.mcu_servo.set_pwm(print_time, value)
+        self.mcu_servo.set_pwm(aligned_ptime, value)
     def _get_pwm_from_angle(self, angle):
         angle = max(0., min(self.max_angle, angle))
         width = self.min_width + angle * self.angle_to_width

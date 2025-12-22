@@ -1,6 +1,6 @@
 // GPIO functions on rp2040
 //
-// Copyright (C) 2021  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2021-2025  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -19,12 +19,16 @@
  * Pin mappings
  ****************************************************************/
 
-DECL_ENUMERATION_RANGE("pin", "gpio0", 0, 30);
+#define NUM_GPIO (CONFIG_MACH_RP2040 ? 30 : 48)
+
+DECL_ENUMERATION_RANGE("pin", "gpio0", 0, NUM_GPIO);
 
 // Set the mode and extended function of a pin
 void
 gpio_peripheral(uint32_t gpio, int func, int pull_up)
 {
+    if (gpio >= NUM_GPIO)
+        shutdown("Not a valid pin");
     padsbank0_hw->io[gpio] = (
         PADS_BANK0_GPIO0_IE_BITS
         | (PADS_BANK0_GPIO0_DRIVE_VALUE_4MA << PADS_BANK0_GPIO0_DRIVE_MSB)
@@ -35,9 +39,12 @@ gpio_peripheral(uint32_t gpio, int func, int pull_up)
 
 // Convert a register and bit location back to an integer pin identifier
 static int
-mask_to_pin(uint32_t mask)
+mask_to_pin(void *sio, uint32_t mask)
 {
-    return ffs(mask)-1;
+    int pin = ffs(mask)-1;
+    if (CONFIG_MACH_RP2350 && sio != (void*)sio_hw)
+        pin += 32;
+    return pin;
 }
 
 
@@ -48,22 +55,26 @@ mask_to_pin(uint32_t mask)
 struct gpio_out
 gpio_out_setup(uint8_t pin, uint8_t val)
 {
-    if (pin >= 30)
-        goto fail;
-    struct gpio_out g = { .bit=1<<pin };
+    if (pin >= NUM_GPIO)
+        shutdown("Not a valid pin");
+    void *sio = (void*)sio_hw;
+    if (CONFIG_MACH_RP2350 && pin >= 32) {
+        pin -= 32;
+        sio += 4;
+    }
+    struct gpio_out g = { .sio=sio, .bit=1<<pin };
     gpio_out_reset(g, val);
     return g;
-fail:
-    shutdown("Not an output pin");
 }
 
 void
 gpio_out_reset(struct gpio_out g, uint8_t val)
 {
-    int pin = mask_to_pin(g.bit);
+    int pin = mask_to_pin(g.sio, g.bit);
     irqstatus_t flag = irq_save();
     gpio_out_write(g, val);
-    sio_hw->gpio_oe_set = g.bit;
+    sio_hw_t *sio = g.sio;
+    sio->gpio_oe_set = g.bit;
     gpio_peripheral(pin, 5, 0);
     irq_restore(flag);
 }
@@ -71,7 +82,8 @@ gpio_out_reset(struct gpio_out g, uint8_t val)
 void
 gpio_out_toggle_noirq(struct gpio_out g)
 {
-    sio_hw->gpio_togl = g.bit;
+    sio_hw_t *sio = g.sio;
+    sio->gpio_togl = g.bit;
 }
 
 void
@@ -83,37 +95,43 @@ gpio_out_toggle(struct gpio_out g)
 void
 gpio_out_write(struct gpio_out g, uint8_t val)
 {
+    sio_hw_t *sio = g.sio;
     if (val)
-        sio_hw->gpio_set = g.bit;
+        sio->gpio_set = g.bit;
     else
-        sio_hw->gpio_clr = g.bit;
+        sio->gpio_clr = g.bit;
 }
 
 
 struct gpio_in
 gpio_in_setup(uint8_t pin, int8_t pull_up)
 {
-    if (pin >= 30)
-        goto fail;
-    struct gpio_in g = { .bit=1<<pin };
+    if (pin >= NUM_GPIO)
+        shutdown("Not a valid pin");
+    void *sio = (void*)sio_hw;
+    if (CONFIG_MACH_RP2350 && pin >= 32) {
+        pin -= 32;
+        sio += 4;
+    }
+    struct gpio_in g = { .sio=sio, .bit=1<<pin };
     gpio_in_reset(g, pull_up);
     return g;
-fail:
-    shutdown("Not an input pin");
 }
 
 void
 gpio_in_reset(struct gpio_in g, int8_t pull_up)
 {
-    int pin = mask_to_pin(g.bit);
+    int pin = mask_to_pin(g.sio, g.bit);
     irqstatus_t flag = irq_save();
     gpio_peripheral(pin, 5, pull_up);
-    sio_hw->gpio_oe_clr = g.bit;
+    sio_hw_t *sio = g.sio;
+    sio->gpio_oe_clr = g.bit;
     irq_restore(flag);
 }
 
 uint8_t
 gpio_in_read(struct gpio_in g)
 {
-    return !!(sio_hw->gpio_in & g.bit);
+    sio_hw_t *sio = g.sio;
+    return !!(sio->gpio_in & g.bit);
 }

@@ -9,6 +9,14 @@ import serialhdl, msgproto, pins, chelper, clocksync
 class error(Exception):
     pass
 
+# Minimum time host needs to get scheduled events queued into mcu
+MIN_SCHEDULE_TIME = 0.100
+# The maximum number of clock cycles an MCU is expected
+# to schedule into the future, due to the protocol and firmware.
+MAX_SCHEDULE_TICKS = (1<<31) - 1
+# Maximum time all MCUs can internally schedule into the future.
+# Directly caused by the limitation of MAX_SCHEDULE_TICKS.
+MAX_NOMINAL_DURATION = 3.0
 
 ######################################################################
 # Command transmit helper classes
@@ -211,12 +219,11 @@ class MCU_trsync:
         self._mcu.register_response(self._handle_trsync_state,
                                     "trsync_state", self._oid)
         self._trsync_start_cmd.send([self._oid, report_clock, report_ticks,
-                                     self.REASON_COMMS_TIMEOUT],
-                                    reqclock=report_clock)
+                                     self.REASON_COMMS_TIMEOUT], reqclock=clock)
         for s in self._steppers:
             self._stepper_stop_cmd.send([s.get_oid(), self._oid])
         self._trsync_set_timeout_cmd.send([self._oid, expire_clock],
-                                          reqclock=expire_clock)
+                                          reqclock=clock)
     def set_home_end_time(self, home_end_time):
         self._home_end_clock = self._mcu.print_time_to_clock(home_end_time)
     def stop(self):
@@ -382,7 +389,7 @@ class MCU_digital_out:
             raise pins.error("Pin with max duration must have start"
                              " value equal to shutdown value")
         mdur_ticks = self._mcu.seconds_to_clock(self._max_duration)
-        if mdur_ticks >= 1<<31:
+        if mdur_ticks > MAX_SCHEDULE_TICKS:
             raise pins.error("Digital pin max duration too large")
         self._mcu.request_move_queue_slot()
         self._oid = self._mcu.create_oid()
@@ -414,6 +421,7 @@ class MCU_pwm:
         self._invert = pin_params['invert']
         self._start_value = self._shutdown_value = float(self._invert)
         self._last_clock = 0
+        self._last_value = .0
         self._pwm_max = 0.
         self._set_cmd = None
     def get_mcu(self):
@@ -429,6 +437,7 @@ class MCU_pwm:
             shutdown_value = 1. - shutdown_value
         self._start_value = max(0., min(1., start_value))
         self._shutdown_value = max(0., min(1., shutdown_value))
+        self._last_value = self._start_value
     def _build_config(self):
         if self._max_duration and self._start_value != self._shutdown_value:
             raise pins.error("Pin with max duration must have start"
@@ -439,7 +448,7 @@ class MCU_pwm:
         self._last_clock = self._mcu.print_time_to_clock(printtime + 0.200)
         cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
         mdur_ticks = self._mcu.seconds_to_clock(self._max_duration)
-        if mdur_ticks >= 1<<31:
+        if mdur_ticks > MAX_SCHEDULE_TICKS:
             raise pins.error("PWM pin max duration too large")
         if self._hardware_pwm:
             self._pwm_max = self._mcu.get_constant_float("PWM_MAX")
@@ -461,7 +470,7 @@ class MCU_pwm:
         # Software PWM
         if self._shutdown_value not in [0., 1.]:
             raise pins.error("shutdown value must be 0.0 or 1.0 on soft pwm")
-        if cycle_ticks >= 1<<31:
+        if cycle_ticks > MAX_SCHEDULE_TICKS:
             raise pins.error("PWM pin cycle time too large")
         self._mcu.request_move_queue_slot()
         self._oid = self._mcu.create_oid()
@@ -480,6 +489,20 @@ class MCU_pwm:
             % (self._oid, self._last_clock, svalue), is_init=True)
         self._set_cmd = self._mcu.lookup_command(
             "queue_digital_out oid=%c clock=%u on_ticks=%u", cq=cmd_queue)
+    def next_aligned_print_time(self, print_time, allow_early=0.):
+        # Filter cases where there is no need to sync anything
+        if self._hardware_pwm:
+            return print_time
+        if self._last_value == 1. or self._last_value == .0:
+            return print_time
+        # Simplify the calling and allow scheduling slightly earlier
+        req_ptime = print_time - min(allow_early, 0.5 * self._cycle_time)
+        cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
+        req_clock = self._mcu.print_time_to_clock(req_ptime)
+        last_clock = self._last_clock
+        pulses = (req_clock - last_clock + cycle_ticks - 1) // cycle_ticks
+        next_clock = last_clock + pulses * cycle_ticks
+        return self._mcu.clock_to_print_time(next_clock)
     def set_pwm(self, print_time, value):
         if self._invert:
             value = 1. - value
@@ -488,6 +511,7 @@ class MCU_pwm:
         self._set_cmd.send([self._oid, clock, v],
                            minclock=self._last_clock, reqclock=clock)
         self._last_clock = clock
+        self._last_value = value
 
 class MCU_adc:
     def __init__(self, mcu, pin_params):
@@ -551,11 +575,6 @@ class MCU_adc:
 ######################################################################
 # Main MCU class (and its helper classes)
 ######################################################################
-
-# Minimum time host needs to get scheduled events queued into mcu
-MIN_SCHEDULE_TIME = 0.100
-# Maximum time all MCUs can internally schedule into the future
-MAX_NOMINAL_DURATION = 3.0
 
 # Support for restarting a micro-controller
 class MCURestartHelper:
@@ -996,6 +1015,12 @@ class MCUConfigHelper:
             if cname.startswith("RESERVE_PINS_"):
                 for pin in value.split(','):
                     pin_resolver.reserve_pin(pin, cname[13:])
+        if MAX_NOMINAL_DURATION * self._mcu_freq > MAX_SCHEDULE_TICKS:
+            max_possible = MAX_SCHEDULE_TICKS * 1 / self._mcu_freq
+            raise error("Too high clock speed for MCU '%s'"
+                        " to be able to resolve a maximum nominal duration"
+                        " of %ds. Max possible duration: %ds"
+                        % (self._name, MAX_NOMINAL_DURATION, max_possible))
     # Config creation helpers
     def setup_pin(self, pin_type, pin_params):
         pcs = {'endstop': MCU_endstop,

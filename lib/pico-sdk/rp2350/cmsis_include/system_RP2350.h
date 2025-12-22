@@ -1,9 +1,9 @@
 /*************************************************************************//**
- * @file     system_RP2040.h
+ * @file     system_RP2350.h
  * @brief    CMSIS-Core(M) Device Peripheral Access Layer Header File for
- *           Device RP2040
- * @version  V1.0.0
- * @date     5. May 2021
+ *           Device RP2350
+ * @version  V1.0.1
+ * @date     6. Sep 2024
  *****************************************************************************/
 /*
  * Copyright (c) 2009-2021 Arm Limited. All rights reserved.
@@ -26,8 +26,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef _CMSIS_SYSTEM_RP2040_H
-#define _CMSIS_SYSTEM_RP2040_H
+#ifndef _CMSIS_SYSTEM_RP2350_H
+#define _CMSIS_SYSTEM_RP2350_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,4 +62,4 @@ extern void SystemCoreClockUpdate (void);
 }
 #endif
 
-#endif /* _CMSIS_SYSTEM_RP2040_H */
+#endif /* _CMSIS_SYSTEM_RP2350_H */
