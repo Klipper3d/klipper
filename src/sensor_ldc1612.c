@@ -31,6 +31,7 @@ struct ldc1612 {
     struct trsync *ts;
     uint8_t homing_flags;
     uint8_t trigger_reason, error_reason;
+    uint32_t watchdog_deadline;
     uint32_t trigger_threshold;
     uint32_t homing_clock;
 };
@@ -110,6 +111,27 @@ command_query_ldc1612_home_state(uint32_t *args)
 }
 DECL_COMMAND(command_query_ldc1612_home_state,
              "query_ldc1612_home_state oid=%c");
+
+// Default TRSYNC_TIMEOUT, limits ODR > 40
+#define WATCHDOG_TIMEOUT timer_from_us(25000)
+#define WATCHDOG_TIMEOUT_ERROR (0xf)
+
+static void
+watchdog_check(struct ldc1612 *ld)
+{
+    if (!ld->homing_flags)
+        return;
+    if (timer_is_before(timer_read_time(), ld->watchdog_deadline))
+        return;
+    trsync_do_trigger(ld->ts, ld->error_reason + WATCHDOG_TIMEOUT_ERROR);
+    ld->homing_flags = 0;
+}
+
+static void
+watchdog_reset(struct ldc1612 *ld)
+{
+    ld->watchdog_deadline = timer_read_time() + WATCHDOG_TIMEOUT;
+}
 
 #define DATA_ERROR_AMPLITUDE   (1 << 0)
 #define DATA_ERROR_WATCHDOG    (1 << 1)
@@ -203,6 +225,7 @@ ldc1612_query(struct ldc1612 *ld, uint8_t oid)
     irq_disable();
     ld->flags &= ~LDC_PENDING;
     irq_enable();
+    watchdog_check(ld);
     // Force data read on I2C error or Zero Count
     if (!(status & (STATUS_DRDY | STATUS_I2C_ERROR | STATUS_ZERO_COUNT)))
         return;
@@ -225,6 +248,7 @@ ldc1612_query(struct ldc1612 *ld, uint8_t oid)
                     | ((uint32_t)d[2] << 8)
                     | ((uint32_t)d[3]);
     check_home(ld, data);
+    watchdog_reset(ld);
 
     // Flush local buffer if needed
     if (ld->sb.data_count + BYTES_PER_SAMPLE > ARRAY_SIZE(ld->sb.data))
@@ -248,6 +272,7 @@ command_query_ldc1612(uint32_t *args)
     irq_disable();
     ld->timer.waketime = timer_read_time() + ld->rest_ticks;
     sched_add_timer(&ld->timer);
+    watchdog_reset(ld);
     irq_enable();
 }
 DECL_COMMAND(command_query_ldc1612, "query_ldc1612 oid=%c rest_ticks=%u");
