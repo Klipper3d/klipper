@@ -23,6 +23,10 @@ done < <(egrep -v '^ *(#|$)' ${TRANS_FILE})
 echo "building site for en"
 mkdocs build -f ${MKDOCS_MAIN}
 
+# Cleanup files (mkdocs copies _klipper3d dir and its sitemap doesn't work)
+rm -r ${PWD}/site/_klipper3d
+rm ${PWD}/site/sitemap.xml ${PWD}/site/sitemap.xml.gz
+
 # Build each additional language website
 while IFS="," read dirname langsite langdesc langsearch; do
   new_docs_dir="${WORK_DIR}lang/${langsite}/docs/"
@@ -82,4 +86,9 @@ while IFS="," read dirname langsite langdesc langsearch; do
   mkdir -p "${PWD}/site/${langsite}/"
   ln -sf "${PWD}/site/${langsite}/" "${WORK_DIR}lang/${langsite}/site"
   mkdocs build -f "${new_mkdocs_file}"
+
+  # Cleanup files (mkdocs copies _klipper3d dir and its sitemap doesn't work)
+  rm -r "${PWD}/site/${langsite}/_klipper3d"
+  rm "${PWD}/site/${langsite}/sitemap.xml" "${PWD}/site/${langsite}/sitemap.xml.gz"
+
 done < <(egrep -v '^ *(#|$)' ${TRANS_FILE})
