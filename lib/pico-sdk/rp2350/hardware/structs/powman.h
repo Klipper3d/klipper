@@ -137,14 +137,14 @@ typedef struct {
  
     _REG_(POWMAN_STATE_OFFSET) // POWMAN_STATE
     // This register controls the power state of the 4 power domains
-    // 0x00002000 [13]    CHANGING     (0) 
-    // 0x00001000 [12]    WAITING      (0) 
-    // 0x00000800 [11]    BAD_HW_REQ   (0) Bad hardware initiated state request
-    // 0x00000400 [10]    BAD_SW_REQ   (0) Bad software initiated state request
-    // 0x00000200 [9]     PWRUP_WHILE_WAITING (0) Request ignored because of a pending pwrup request
-    // 0x00000100 [8]     REQ_IGNORED  (0) 
-    // 0x000000f0 [7:4]   REQ          (0x0) 
-    // 0x0000000f [3:0]   CURRENT      (0xf) 
+    // 0x00002000 [13]    CHANGING     (0) Indicates a power state change is in progress
+    // 0x00001000 [12]    WAITING      (0) Indicates the power manager has received a state change...
+    // 0x00000800 [11]    BAD_HW_REQ   (0) Invalid hardware initiated state request, power up...
+    // 0x00000400 [10]    BAD_SW_REQ   (0) Invalid software initiated state request ignored
+    // 0x00000200 [9]     PWRUP_WHILE_WAITING (0) Indicates that a power state change request was ignored...
+    // 0x00000100 [8]     REQ_IGNORED  (0) Indicates that a software state change request was...
+    // 0x000000f0 [7:4]   REQ          (0x0) This is written by software or hardware to request a new...
+    // 0x0000000f [3:0]   CURRENT      (0xf) Indicates the current power state
     io_rw_32 state;
  
     _REG_(POWMAN_POW_FASTDIV_OFFSET) // POWMAN_POW_FASTDIV

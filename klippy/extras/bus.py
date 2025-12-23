@@ -240,6 +240,10 @@ def MCU_I2C_from_config(config, default_addr=None, default_speed=100000):
                         for name in ['scl', 'sda']]
         sw_pin_params = [ppins.lookup_pin(config.get(name), share_type=name)
                          for name in sw_pin_names]
+        for pin_params in sw_pin_params:
+            if pin_params['chip'] != i2c_mcu:
+                raise ppins.error("%s: i2c pins must be on same mcu" % (
+                    config.get_name(),))
         sw_pins = tuple([pin_params['pin'] for pin_params in sw_pin_params])
         bus = None
     else:

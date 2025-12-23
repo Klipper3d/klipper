@@ -107,7 +107,7 @@ struct serialqueue {
 #define MIN_RTO 0.025
 #define MAX_RTO 5.000
 #define MAX_PENDING_BLOCKS 12
-#define MIN_REQTIME_DELTA 0.250
+#define MIN_REQTIME_DELTA 0.100
 #define MIN_BACKGROUND_DELTA 0.005
 #define IDLE_QUERY_TIME 1.0
 
@@ -886,9 +886,10 @@ serialqueue_send_batch(struct serialqueue *sq, struct command_queue *cq
     int len = 0;
     struct queue_message *qm;
     list_for_each_entry(qm, msgs, node) {
-        if (qm->min_clock + (1LL<<31) < qm->req_clock
+        if (qm->min_clock + (3LL<<29) < qm->req_clock
             && qm->req_clock != BACKGROUND_PRIORITY_CLOCK)
-            qm->min_clock = qm->req_clock - (1LL<<31);
+            // Avoid mcu clock comparison 31-bit overflow issues
+            qm->min_clock = qm->req_clock - (3LL<<29);
         len += qm->len;
     }
     if (! len)

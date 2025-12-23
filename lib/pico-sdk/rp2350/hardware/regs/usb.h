@@ -1082,13 +1082,14 @@
 #define USB_SIE_STATUS_SPEED_ACCESS "RO"
 // -----------------------------------------------------------------------------
 // Field       : USB_SIE_STATUS_SUSPENDED
-// Description : Bus in suspended state. Valid for device. Device will go into
-//               suspend if neither Keep Alive / SOF frames are enabled.
+// Description : Bus in suspended state. Valid for device and host. Host and
+//               device will go into suspend if neither Keep Alive / SOF frames
+//               are enabled.
 #define USB_SIE_STATUS_SUSPENDED_RESET  _u(0x0)
 #define USB_SIE_STATUS_SUSPENDED_BITS   _u(0x00000010)
 #define USB_SIE_STATUS_SUSPENDED_MSB    _u(4)
 #define USB_SIE_STATUS_SUSPENDED_LSB    _u(4)
-#define USB_SIE_STATUS_SUSPENDED_ACCESS "WC"
+#define USB_SIE_STATUS_SUSPENDED_ACCESS "RO"
 // -----------------------------------------------------------------------------
 // Field       : USB_SIE_STATUS_LINE_STATE
 // Description : USB bus line state

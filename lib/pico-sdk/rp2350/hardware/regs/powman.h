@@ -944,7 +944,7 @@
 //               requests and ignore the power down requests. To do nothing
 //               would risk entering an unrecoverable lock-up state. Invalid
 //               requests are: any combination of power up and power down
-//               requests any request that results in swcore boing powered and
+//               requests any request that results in swcore being powered and
 //               xip unpowered If the request is to power down the switched-core
 //               domain then POWMAN_STATE_WAITING stays active until the
 //               processors halt. During this time the POWMAN_STATE_REQ field
@@ -957,6 +957,7 @@
 #define POWMAN_STATE_RESET  _u(0x0000000f)
 // -----------------------------------------------------------------------------
 // Field       : POWMAN_STATE_CHANGING
+// Description : Indicates a power state change is in progress
 #define POWMAN_STATE_CHANGING_RESET  _u(0x0)
 #define POWMAN_STATE_CHANGING_BITS   _u(0x00002000)
 #define POWMAN_STATE_CHANGING_MSB    _u(13)
@@ -964,6 +965,9 @@
 #define POWMAN_STATE_CHANGING_ACCESS "RO"
 // -----------------------------------------------------------------------------
 // Field       : POWMAN_STATE_WAITING
+// Description : Indicates the power manager has received a state change request
+//               and is waiting for other actions to complete before executing
+//               it
 #define POWMAN_STATE_WAITING_RESET  _u(0x0)
 #define POWMAN_STATE_WAITING_BITS   _u(0x00001000)
 #define POWMAN_STATE_WAITING_MSB    _u(12)
@@ -971,8 +975,8 @@
 #define POWMAN_STATE_WAITING_ACCESS "RO"
 // -----------------------------------------------------------------------------
 // Field       : POWMAN_STATE_BAD_HW_REQ
-// Description : Bad hardware initiated state request. Went back to state 0
-//               (i.e. everything powered up)
+// Description : Invalid hardware initiated state request, power up requests
+//               actioned, power down requests ignored
 #define POWMAN_STATE_BAD_HW_REQ_RESET  _u(0x0)
 #define POWMAN_STATE_BAD_HW_REQ_BITS   _u(0x00000800)
 #define POWMAN_STATE_BAD_HW_REQ_MSB    _u(11)
@@ -980,7 +984,7 @@
 #define POWMAN_STATE_BAD_HW_REQ_ACCESS "RO"
 // -----------------------------------------------------------------------------
 // Field       : POWMAN_STATE_BAD_SW_REQ
-// Description : Bad software initiated state request. No action taken.
+// Description : Invalid software initiated state request ignored
 #define POWMAN_STATE_BAD_SW_REQ_RESET  _u(0x0)
 #define POWMAN_STATE_BAD_SW_REQ_BITS   _u(0x00000400)
 #define POWMAN_STATE_BAD_SW_REQ_MSB    _u(10)
@@ -988,9 +992,8 @@
 #define POWMAN_STATE_BAD_SW_REQ_ACCESS "RO"
 // -----------------------------------------------------------------------------
 // Field       : POWMAN_STATE_PWRUP_WHILE_WAITING
-// Description : Request ignored because of a pending pwrup request. See
-//               current_pwrup_req. Note this blocks powering up AND powering
-//               down.
+// Description : Indicates that a power state change request was ignored because
+//               of a pending power state change request
 #define POWMAN_STATE_PWRUP_WHILE_WAITING_RESET  _u(0x0)
 #define POWMAN_STATE_PWRUP_WHILE_WAITING_BITS   _u(0x00000200)
 #define POWMAN_STATE_PWRUP_WHILE_WAITING_MSB    _u(9)
@@ -998,6 +1001,8 @@
 #define POWMAN_STATE_PWRUP_WHILE_WAITING_ACCESS "WC"
 // -----------------------------------------------------------------------------
 // Field       : POWMAN_STATE_REQ_IGNORED
+// Description : Indicates that a software state change request was ignored
+//               because it clashed with an ongoing hardware or debugger request
 #define POWMAN_STATE_REQ_IGNORED_RESET  _u(0x0)
 #define POWMAN_STATE_REQ_IGNORED_BITS   _u(0x00000100)
 #define POWMAN_STATE_REQ_IGNORED_MSB    _u(8)
@@ -1005,6 +1010,8 @@
 #define POWMAN_STATE_REQ_IGNORED_ACCESS "WC"
 // -----------------------------------------------------------------------------
 // Field       : POWMAN_STATE_REQ
+// Description : This is written by software or hardware to request a new power
+//               state
 #define POWMAN_STATE_REQ_RESET  _u(0x0)
 #define POWMAN_STATE_REQ_BITS   _u(0x000000f0)
 #define POWMAN_STATE_REQ_MSB    _u(7)
@@ -1012,6 +1019,7 @@
 #define POWMAN_STATE_REQ_ACCESS "RW"
 // -----------------------------------------------------------------------------
 // Field       : POWMAN_STATE_CURRENT
+// Description : Indicates the current power state
 #define POWMAN_STATE_CURRENT_RESET  _u(0xf)
 #define POWMAN_STATE_CURRENT_BITS   _u(0x0000000f)
 #define POWMAN_STATE_CURRENT_MSB    _u(3)
@@ -1019,8 +1027,7 @@
 #define POWMAN_STATE_CURRENT_ACCESS "RO"
 // =============================================================================
 // Register    : POWMAN_POW_FASTDIV
-// Description : None
-//               divides the POWMAN clock to provide a tick for the delay module
+// Description : divides the POWMAN clock to provide a tick for the delay module
 //               and state machines
 //               when clk_pow is running from the slow clock it is not divided
 //               when clk_pow is running from the fast clock it is divided by
@@ -1187,6 +1194,10 @@
 #define POWMAN_EXT_TIME_REF_SOURCE_SEL_MSB    _u(1)
 #define POWMAN_EXT_TIME_REF_SOURCE_SEL_LSB    _u(0)
 #define POWMAN_EXT_TIME_REF_SOURCE_SEL_ACCESS "RW"
+#define POWMAN_EXT_TIME_REF_SOURCE_SEL_VALUE_GPIO12 _u(0x0)
+#define POWMAN_EXT_TIME_REF_SOURCE_SEL_VALUE_GPIO20 _u(0x1)
+#define POWMAN_EXT_TIME_REF_SOURCE_SEL_VALUE_GPIO14 _u(0x2)
+#define POWMAN_EXT_TIME_REF_SOURCE_SEL_VALUE_GPIO22 _u(0x3)
 // =============================================================================
 // Register    : POWMAN_LPOSC_FREQ_KHZ_INT
 // Description : Informs the AON Timer of the integer component of the clock
@@ -1241,8 +1252,7 @@
 #define POWMAN_XOSC_FREQ_KHZ_FRAC_ACCESS "RW"
 // =============================================================================
 // Register    : POWMAN_SET_TIME_63TO48
-// Description : None
-//               For setting the time, do not use for reading the time, use
+// Description : For setting the time, do not use for reading the time, use
 //               POWMAN_READ_TIME_UPPER and POWMAN_READ_TIME_LOWER. This field
 //               must only be written when POWMAN_TIMER_RUN=0
 #define POWMAN_SET_TIME_63TO48_OFFSET _u(0x00000060)
@@ -1253,8 +1263,7 @@
 #define POWMAN_SET_TIME_63TO48_ACCESS "RW"
 // =============================================================================
 // Register    : POWMAN_SET_TIME_47TO32
-// Description : None
-//               For setting the time, do not use for reading the time, use
+// Description : For setting the time, do not use for reading the time, use
 //               POWMAN_READ_TIME_UPPER and POWMAN_READ_TIME_LOWER. This field
 //               must only be written when POWMAN_TIMER_RUN=0
 #define POWMAN_SET_TIME_47TO32_OFFSET _u(0x00000064)
@@ -1265,8 +1274,7 @@
 #define POWMAN_SET_TIME_47TO32_ACCESS "RW"
 // =============================================================================
 // Register    : POWMAN_SET_TIME_31TO16
-// Description : None
-//               For setting the time, do not use for reading the time, use
+// Description : For setting the time, do not use for reading the time, use
 //               POWMAN_READ_TIME_UPPER and POWMAN_READ_TIME_LOWER. This field
 //               must only be written when POWMAN_TIMER_RUN=0
 #define POWMAN_SET_TIME_31TO16_OFFSET _u(0x00000068)
@@ -1277,8 +1285,7 @@
 #define POWMAN_SET_TIME_31TO16_ACCESS "RW"
 // =============================================================================
 // Register    : POWMAN_SET_TIME_15TO0
-// Description : None
-//               For setting the time, do not use for reading the time, use
+// Description : For setting the time, do not use for reading the time, use
 //               POWMAN_READ_TIME_UPPER and POWMAN_READ_TIME_LOWER. This field
 //               must only be written when POWMAN_TIMER_RUN=0
 #define POWMAN_SET_TIME_15TO0_OFFSET _u(0x0000006c)
@@ -1289,8 +1296,7 @@
 #define POWMAN_SET_TIME_15TO0_ACCESS "RW"
 // =============================================================================
 // Register    : POWMAN_READ_TIME_UPPER
-// Description : None
-//               For reading bits 63:32 of the timer. When reading all 64 bits
+// Description : For reading bits 63:32 of the timer. When reading all 64 bits
 //               it is possible for the LOWER count to rollover during the read.
 //               It is recommended to read UPPER, then LOWER, then re-read UPPER
 //               and, if it has changed, re-read LOWER.
@@ -1302,8 +1308,7 @@
 #define POWMAN_READ_TIME_UPPER_ACCESS "RO"
 // =============================================================================
 // Register    : POWMAN_READ_TIME_LOWER
-// Description : None
-//               For reading bits 31:0 of the timer.
+// Description : For reading bits 31:0 of the timer.
 #define POWMAN_READ_TIME_LOWER_OFFSET _u(0x00000074)
 #define POWMAN_READ_TIME_LOWER_BITS   _u(0xffffffff)
 #define POWMAN_READ_TIME_LOWER_RESET  _u(0x00000000)
@@ -1312,8 +1317,7 @@
 #define POWMAN_READ_TIME_LOWER_ACCESS "RO"
 // =============================================================================
 // Register    : POWMAN_ALARM_TIME_63TO48
-// Description : None
-//               This field must only be written when POWMAN_ALARM_ENAB=0
+// Description : This field must only be written when POWMAN_ALARM_ENAB=0
 #define POWMAN_ALARM_TIME_63TO48_OFFSET _u(0x00000078)
 #define POWMAN_ALARM_TIME_63TO48_BITS   _u(0x0000ffff)
 #define POWMAN_ALARM_TIME_63TO48_RESET  _u(0x00000000)
@@ -1322,8 +1326,7 @@
 #define POWMAN_ALARM_TIME_63TO48_ACCESS "RW"
 // =============================================================================
 // Register    : POWMAN_ALARM_TIME_47TO32
-// Description : None
-//               This field must only be written when POWMAN_ALARM_ENAB=0
+// Description : This field must only be written when POWMAN_ALARM_ENAB=0
 #define POWMAN_ALARM_TIME_47TO32_OFFSET _u(0x0000007c)
 #define POWMAN_ALARM_TIME_47TO32_BITS   _u(0x0000ffff)
 #define POWMAN_ALARM_TIME_47TO32_RESET  _u(0x00000000)
@@ -1332,8 +1335,7 @@
 #define POWMAN_ALARM_TIME_47TO32_ACCESS "RW"
 // =============================================================================
 // Register    : POWMAN_ALARM_TIME_31TO16
-// Description : None
-//               This field must only be written when POWMAN_ALARM_ENAB=0
+// Description : This field must only be written when POWMAN_ALARM_ENAB=0
 #define POWMAN_ALARM_TIME_31TO16_OFFSET _u(0x00000080)
 #define POWMAN_ALARM_TIME_31TO16_BITS   _u(0x0000ffff)
 #define POWMAN_ALARM_TIME_31TO16_RESET  _u(0x00000000)
@@ -1342,8 +1344,7 @@
 #define POWMAN_ALARM_TIME_31TO16_ACCESS "RW"
 // =============================================================================
 // Register    : POWMAN_ALARM_TIME_15TO0
-// Description : None
-//               This field must only be written when POWMAN_ALARM_ENAB=0
+// Description : This field must only be written when POWMAN_ALARM_ENAB=0
 #define POWMAN_ALARM_TIME_15TO0_OFFSET _u(0x00000084)
 #define POWMAN_ALARM_TIME_15TO0_BITS   _u(0x0000ffff)
 #define POWMAN_ALARM_TIME_15TO0_RESET  _u(0x00000000)

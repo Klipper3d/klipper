@@ -1,6 +1,6 @@
 // Hardware interface to "USB OTG (on the go) controller" on stm32
 //
-// Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2019-2025  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -119,6 +119,24 @@ fifo_write_packet(uint32_t ep, const uint8_t *src, uint32_t len)
     return len;
 }
 
+// Write a packet to a tx fifo (optimized for already aligned data)
+static int
+fifo_write_packet_fast(uint32_t ep, const uint32_t *src, uint32_t len)
+{
+    void *fifo = EPFIFO(ep);
+    USB_OTG_INEndpointTypeDef *epi = EPIN(ep);
+    uint32_t ctl = epi->DIEPCTL;
+    if (ctl & USB_OTG_DIEPCTL_EPENA)
+        return -1;
+    epi->DIEPINT = USB_OTG_DIEPINT_XFRC;
+    epi->DIEPTSIZ = len | (1 << USB_OTG_DIEPTSIZ_PKTCNT_Pos);
+    epi->DIEPCTL = ctl | USB_OTG_DIEPCTL_EPENA | USB_OTG_DIEPCTL_CNAK;
+    uint32_t i;
+    for (i=0; i < DIV_ROUND_UP(len, sizeof(uint32_t)); i++)
+        writel(fifo, src[i]);
+    return 0;
+}
+
 // Read a packet from the rx queue
 static int_fast8_t
 fifo_read_packet(uint8_t *dest, uint_fast8_t max_len)
@@ -208,6 +226,12 @@ usb_read_bulk_out(void *data, uint_fast8_t max_len)
     return ret;
 }
 
+// Storage for "bulk in" transmissions for a kind of manual "double buffering"
+static struct {
+    uint32_t len;
+    uint32_t buf[USB_CDC_EP_BULK_IN_SIZE / sizeof(uint32_t)];
+} TX_BUF;
+
 int_fast8_t
 usb_send_bulk_in(void *data, uint_fast8_t len)
 {
@@ -219,10 +243,21 @@ usb_send_bulk_in(void *data, uint_fast8_t len)
         return len;
     }
     if (ctl & USB_OTG_DIEPCTL_EPENA) {
-        // Wait for space to transmit
+        if (!CONFIG_STM32_USB_DOUBLE_BUFFER_TX || TX_BUF.len || !len) {
+            // Wait for space to transmit
+            OTGD->DAINTMSK |= 1 << USB_CDC_EP_BULK_IN;
+            usb_irq_enable();
+            return -1;
+        }
+        // Buffer next packet for transmission from irq handler
+        len = len > USB_CDC_EP_BULK_IN_SIZE ? USB_CDC_EP_BULK_IN_SIZE : len;
+        uint32_t blocks = DIV_ROUND_UP(len, sizeof(uint32_t));
+        TX_BUF.buf[blocks-1] = 0;
+        memcpy(TX_BUF.buf, data, len);
+        TX_BUF.len = len;
         OTGD->DAINTMSK |= 1 << USB_CDC_EP_BULK_IN;
         usb_irq_enable();
-        return -1;
+        return len;
     }
     int_fast8_t ret = fifo_write_packet(USB_CDC_EP_BULK_IN, data, len);
     usb_irq_enable();
@@ -373,6 +408,8 @@ usb_set_configure(void)
                     | USB_OTG_GRSTCTL_TXFFLSH);
     while (OTG->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH)
         ;
+    if (CONFIG_STM32_USB_DOUBLE_BUFFER_TX)
+        TX_BUF.len = 0;
     usb_irq_enable();
 }
 
@@ -401,8 +438,15 @@ OTG_FS_IRQHandler(void)
         OTGD->DAINTMSK = msk & ~daint;
         if (pend & (1 << 0))
             usb_notify_ep0();
-        if (pend & (1 << USB_CDC_EP_BULK_IN))
+        if (pend & (1 << USB_CDC_EP_BULK_IN)) {
             usb_notify_bulk_in();
+            if (CONFIG_STM32_USB_DOUBLE_BUFFER_TX && TX_BUF.len) {
+                int ret = fifo_write_packet_fast(USB_CDC_EP_BULK_IN
+                                                 , TX_BUF.buf, TX_BUF.len);
+                if (!ret)
+                    TX_BUF.len = 0;
+            }
+        }
     }
 }
 

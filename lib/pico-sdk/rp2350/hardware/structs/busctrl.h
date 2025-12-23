@@ -24,7 +24,6 @@
 // BITMASK [BITRANGE] FIELDNAME (RESETVALUE) DESCRIPTION
 
 /** \brief Bus fabric performance counters on RP2350 (used as typedef \ref bus_ctrl_perf_counter_t)
- *  \ingroup hardware_busctrl
  */
 typedef enum bus_ctrl_perf_counter_rp2350 {
     arbiter_rom_perf_event_access = 19,
