@@ -278,11 +278,11 @@ class EddyCalibration:
 
 # Tool to gather samples and convert them to probe positions
 class EddyGatherSamples:
-    def __init__(self, printer, sensor_helper, calibration, z_offset):
+    def __init__(self, printer, sensor_helper, calibration, offsets):
         self._printer = printer
         self._sensor_helper = sensor_helper
         self._calibration = calibration
-        self._z_offset = z_offset
+        self._offsets = offsets
         # Results storage
         self._samples = []
         self._probe_times = []
@@ -375,8 +375,9 @@ class EddyGatherSamples:
                 raise self._printer.command_error(
                     "probe_eddy_current sensor not in valid range")
             # Callers expect position relative to z_offset, so recalculate
+            z_offset = self._offsets[2]
             bed_deviation = toolhead_pos[2] - sensor_z
-            toolhead_pos[2] = self._z_offset + bed_deviation
+            toolhead_pos[2] = z_offset + bed_deviation
             results.append(toolhead_pos)
         del self._probe_results[:]
         return results
@@ -390,14 +391,15 @@ class EddyGatherSamples:
 # Helper for implementing PROBE style commands (descend until trigger)
 class EddyDescend:
     REASON_SENSOR_ERROR = mcu.MCU_trsync.REASON_COMMS_TIMEOUT + 1
-    def __init__(self, config, sensor_helper, calibration, param_helper):
+    def __init__(self, config, sensor_helper, calibration,
+                 probe_offsets, param_helper):
         self._printer = config.get_printer()
         self._sensor_helper = sensor_helper
         self._mcu = sensor_helper.get_mcu()
         self._calibration = calibration
+        self._probe_offsets = probe_offsets
         self._param_helper = param_helper
         self._z_min_position = probe.lookup_minimum_z(config)
-        self._z_offset = config.getfloat('z_offset', minval=0.)
         self._dispatch = mcu.TriggerDispatch(self._mcu)
         self._trigger_time = 0.
         self._gather = None
@@ -408,7 +410,8 @@ class EddyDescend:
     def home_start(self, print_time, sample_time, sample_count, rest_time,
                    triggered=True):
         self._trigger_time = 0.
-        trigger_freq = self._calibration.height_to_freq(self._z_offset)
+        z_offset = self._probe_offsets.get_offsets()[2]
+        trigger_freq = self._calibration.height_to_freq(z_offset)
         trigger_completion = self._dispatch.start(print_time)
         self._sensor_helper.setup_home(
             print_time, trigger_freq, self._dispatch.get_oid(),
@@ -433,8 +436,9 @@ class EddyDescend:
         return trigger_time
     # Probe session interface
     def start_probe_session(self, gcmd):
+        offsets = self._probe_offsets.get_offsets()
         self._gather = EddyGatherSamples(self._printer, self._sensor_helper,
-                                         self._calibration, self._z_offset)
+                                         self._calibration, offsets)
         return self
     def run_probe(self, gcmd):
         toolhead = self._printer.lookup_object('toolhead')
@@ -488,17 +492,19 @@ class EddyEndstopWrapper:
     def probe_finish(self, hmove):
         pass
     def get_position_endstop(self):
-        return self._eddy_descend._z_offset
+        z_offset = self._eddy_descend._probe_offsets.get_offsets()[2]
+        return z_offset
 
 # Implementing probing with "METHOD=scan"
 class EddyScanningProbe:
-    def __init__(self, printer, sensor_helper, calibration, z_offset, gcmd):
+    def __init__(self, printer, sensor_helper, calibration, probe_offsets,
+                 gcmd):
         self._printer = printer
         self._sensor_helper = sensor_helper
         self._calibration = calibration
-        self._z_offset = z_offset
+        offsets = probe_offsets.get_offsets()
         self._gather = EddyGatherSamples(printer, sensor_helper,
-                                         calibration, z_offset)
+                                         calibration, offsets)
         self._sample_time_delay = 0.050
         self._sample_time = gcmd.get_float("SAMPLE_TIME", 0.100, above=0.0)
         self._is_rapid = gcmd.get("METHOD", "scan") == 'rapid_scan'
@@ -540,12 +546,13 @@ class PrinterEddyProbe:
         sensor_type = config.getchoice('sensor_type', {s: s for s in sensors})
         self.sensor_helper = sensors[sensor_type](config, self.calibration)
         # Probe interface
+        self.probe_offsets = probe.ProbeOffsetsHelper(config)
         self.param_helper = probe.ProbeParameterHelper(config)
         self.eddy_descend = EddyDescend(
-            config, self.sensor_helper, self.calibration, self.param_helper)
+            config, self.sensor_helper, self.calibration, self.probe_offsets,
+            self.param_helper)
         self.cmd_helper = probe.ProbeCommandHelper(config, self,
             replace_z_offset=True)
-        self.probe_offsets = probe.ProbeOffsetsHelper(config)
         self.probe_session = probe.ProbeSessionHelper(
             config, self.param_helper, self.eddy_descend.start_probe_session)
         mcu_probe = EddyEndstopWrapper(self.sensor_helper, self.eddy_descend)
@@ -563,9 +570,8 @@ class PrinterEddyProbe:
     def start_probe_session(self, gcmd):
         method = gcmd.get('METHOD', 'automatic').lower()
         if method in ('scan', 'rapid_scan'):
-            z_offset = self.get_offsets()[2]
             return EddyScanningProbe(self.printer, self.sensor_helper,
-                                     self.calibration, z_offset, gcmd)
+                                     self.calibration, self.probe_offsets, gcmd)
         return self.probe_session.start_probe_session(gcmd)
     def register_drift_compensation(self, comp):
         self.calibration.register_drift_compensation(comp)
