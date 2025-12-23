@@ -1,7 +1,8 @@
 #!/bin/bash
-# This script extracts the Klipper translations and builds multiple
-# mdocs sites - one for each supported language.  See the README file
-# for additional details.
+# This script creates the main klipper3d.org website hosted on github.
+# It extracts the Klipper translations and builds multiple mdocs sites
+# - one for each supported language.  See the README file for
+# additional details.
 
 MKDOCS_DIR="docs/_klipper3d/"
 WORK_DIR="work/"
