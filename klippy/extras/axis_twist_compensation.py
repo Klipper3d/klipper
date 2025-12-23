@@ -51,20 +51,26 @@ class AxisTwistCompensation:
         self.printer.register_event_handler("probe:update_results",
                                             self._update_z_compensation_value)
 
-    def _update_z_compensation_value(self, pos):
+    def _update_z_compensation_value(self, poslist):
+        pos = poslist[0]
+        zo = 0.
         if self.z_compensations:
-            pos[2] += self._get_interpolated_z_compensation(
-                pos[0], self.z_compensations,
+            zo += self._get_interpolated_z_compensation(
+                pos.test_x, self.z_compensations,
                 self.compensation_start_x,
                 self.compensation_end_x
                 )
 
         if self.zy_compensations:
-            pos[2] += self._get_interpolated_z_compensation(
-                pos[1], self.zy_compensations,
+            zo += self._get_interpolated_z_compensation(
+                pos.test_y, self.zy_compensations,
                 self.compensation_start_y,
                 self.compensation_end_y
                 )
+
+        pos = manual_probe.ProbeResult(pos.bed_x, pos.bed_y, pos.bed_z + zo,
+                                       pos.test_x, pos.test_y, pos.test_z)
+        poslist[0] = pos
 
     def _get_interpolated_z_compensation(
             self, coord, z_compensations,
@@ -267,7 +273,7 @@ class Calibrater:
 
         # probe the point
         pos = probe.run_single_probe(self.probe, self.gcmd)
-        self.current_measured_z = pos[2]
+        self.current_measured_z = pos.bed_z
 
         # horizontal_move_z (to prevent probe trigger or hitting bed)
         self._move_helper((None, None, self.horizontal_move_z))

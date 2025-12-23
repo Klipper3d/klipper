@@ -8,6 +8,13 @@ All dates in this document are approximate.
 
 ## Changes
 
+20260109: The g-code console text output from the `PROBE`,
+`PROBE_ACCURACY`, and similar commands has changed. Now Z heights are
+reported relative to the nominal bed Z position instead of relative to
+the probe's configured `z_offset`. Similarly, intermediate probe x and
+y console reports will also have the probe's configured `x_offset` and
+`y_offset` applied.
+
 20260109: The `[screws_tilt_adjust]` module now reports the status
 variable `{printer.screws_tilt_adjust.result.screw1.z}` with the
 probe's `z_offset` applied. That is, one would previously need to

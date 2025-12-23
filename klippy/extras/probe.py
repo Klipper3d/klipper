@@ -17,11 +17,12 @@ can travel further (the Z minimum position can be negative).
 def calc_probe_z_average(positions, method='average'):
     if method != 'median':
         # Use mean average
-        count = float(len(positions))
-        return [sum([pos[i] for pos in positions]) / count
-                for i in range(3)]
+        inv_count = 1. / float(len(positions))
+        return manual_probe.ProbeResult(
+            *[sum([pos[i] for pos in positions]) * inv_count
+              for i in range(len(positions[0]))])
     # Use median
-    z_sorted = sorted(positions, key=(lambda p: p[2]))
+    z_sorted = sorted(positions, key=(lambda p: p.bed_z))
     middle = len(positions) // 2
     if (len(positions) & 1) == 1:
         # odd number of samples
@@ -52,7 +53,7 @@ class ProbeCommandHelper:
         gcode.register_command('PROBE', self.cmd_PROBE,
                                desc=self.cmd_PROBE_help)
         # PROBE_CALIBRATE command
-        self.probe_calibrate_z = 0.
+        self.probe_calibrate_pos = None
         gcode.register_command('PROBE_CALIBRATE', self.cmd_PROBE_CALIBRATE,
                                desc=self.cmd_PROBE_CALIBRATE_help)
         # Other commands
@@ -81,12 +82,15 @@ class ProbeCommandHelper:
     cmd_PROBE_help = "Probe Z-height at current XY position"
     def cmd_PROBE(self, gcmd):
         pos = run_single_probe(self.probe, gcmd)
-        gcmd.respond_info("Result is z=%.6f" % (pos[2],))
-        self.last_z_result = pos[2]
+        gcmd.respond_info("Result: at %.3f,%.3f estimate contact at z=%.6f"
+                          % (pos.bed_x, pos.bed_y, pos.bed_z))
+        x_offset, y_offset, z_offset = self.probe.get_offsets()
+        self.last_z_result = pos.bed_z + z_offset # XXX
     def probe_calibrate_finalize(self, mpresult):
         if mpresult is None:
             return
-        z_offset = self.probe_calibrate_z - mpresult.bed_z
+        x_offset, y_offset, z_offset = self.probe.get_offsets()
+        z_offset += mpresult.bed_z - self.probe_calibrate_pos.bed_z
         gcode = self.printer.lookup_object('gcode')
         gcode.respond_info(
             "%s: z_offset: %.3f\n"
@@ -99,17 +103,17 @@ class ProbeCommandHelper:
         manual_probe.verify_no_manual_probe(self.printer)
         params = self.probe.get_probe_params(gcmd)
         # Perform initial probe
-        curpos = run_single_probe(self.probe, gcmd)
+        pos = run_single_probe(self.probe, gcmd)
         # Move away from the bed
-        self.probe_calibrate_z = curpos[2]
+        curpos = self.printer.lookup_object('toolhead').get_position()
         curpos[2] += 5.
         self._move(curpos, params['lift_speed'])
         # Move the nozzle over the probe point
-        x_offset, y_offset, z_offset = self.probe.get_offsets()
-        curpos[0] += x_offset
-        curpos[1] += y_offset
+        curpos[0] = pos.bed_x
+        curpos[1] = pos.bed_y
         self._move(curpos, params['probe_speed'])
         # Start manual probe
+        self.probe_calibrate_pos = pos
         manual_probe.ManualProbeHelper(self.printer, gcmd,
                                        self.probe_calibrate_finalize)
     cmd_PROBE_ACCURACY_help = "Probe Z-height accuracy at current XY position"
@@ -143,15 +147,15 @@ class ProbeCommandHelper:
         positions = probe_session.pull_probed_results()
         probe_session.end_probe_session()
         # Calculate maximum, minimum and average values
-        max_value = max([p[2] for p in positions])
-        min_value = min([p[2] for p in positions])
+        max_value = max([p.bed_z for p in positions])
+        min_value = min([p.bed_z for p in positions])
         range_value = max_value - min_value
-        avg_value = calc_probe_z_average(positions, 'average')[2]
-        median = calc_probe_z_average(positions, 'median')[2]
+        avg_value = calc_probe_z_average(positions, 'average').bed_z
+        median = calc_probe_z_average(positions, 'median').bed_z
         # calculate the standard deviation
         deviation_sum = 0
         for i in range(len(positions)):
-            deviation_sum += pow(positions[i][2] - avg_value, 2.)
+            deviation_sum += pow(positions[i].bed_z - avg_value, 2.)
         sigma = (deviation_sum / len(positions)) ** 0.5
         # Show information
         gcmd.respond_info(
@@ -260,7 +264,9 @@ class HomingViaProbeHelper:
         pos[2] = self.z_min_position
         speed = self.param_helper.get_probe_params(gcmd)['probe_speed']
         phoming = self.printer.lookup_object('homing')
-        self.results.append(phoming.probing_move(self.mcu_probe, pos, speed))
+        ppos = phoming.probing_move(self.mcu_probe, pos, speed)
+        res = self.probe_offsets.create_probe_result(ppos)
+        self.results.append(res)
     def pull_probed_results(self):
         res = self.results
         self.results = []
@@ -368,12 +374,12 @@ class ProbeSessionHelper:
                 reason += HINT_TIMEOUT
             raise self.printer.command_error(reason)
         # Allow axis_twist_compensation to update results
-        self.printer.send_event("probe:update_results", epos)
+        self.printer.send_event("probe:update_results", [epos])
         # Report results
         gcode = self.printer.lookup_object('gcode')
-        gcode.respond_info("probe at %.3f,%.3f is z=%.6f"
-                           % (epos[0], epos[1], epos[2]))
-        return epos[:3]
+        gcode.respond_info("probe: at %.3f,%.3f bed will contact at z=%.6f"
+                           % (epos.bed_x, epos.bed_y, epos.bed_z))
+        return epos
     def run_probe(self, gcmd):
         if self.hw_probe_session is None:
             self._probe_state_error()
@@ -388,7 +394,7 @@ class ProbeSessionHelper:
             pos = self._probe(gcmd)
             positions.append(pos)
             # Check samples tolerance
-            z_positions = [p[2] for p in positions]
+            z_positions = [p.bed_z for p in positions]
             if max(z_positions)-min(z_positions) > params['samples_tolerance']:
                 if retries >= params['samples_tolerance_retries']:
                     raise gcmd.error("Probe samples exceed samples_tolerance")
@@ -397,8 +403,9 @@ class ProbeSessionHelper:
                 positions = []
             # Retract
             if len(positions) < sample_count:
+                cur_z = toolhead.get_position()[2]
                 toolhead.manual_move(
-                    probexy + [pos[2] + params['sample_retract_dist']],
+                    probexy + [cur_z + params['sample_retract_dist']],
                     params['lift_speed'])
         # Calculate result
         epos = calc_probe_z_average(positions, params['samples_result'])
@@ -416,6 +423,10 @@ class ProbeOffsetsHelper:
         self.z_offset = config.getfloat('z_offset')
     def get_offsets(self):
         return self.x_offset, self.y_offset, self.z_offset
+    def create_probe_result(self, test_pos):
+        return manual_probe.ProbeResult(
+            test_pos[0]+self.x_offset, test_pos[1]+self.y_offset,
+            test_pos[2]-self.z_offset, test_pos[0], test_pos[1], test_pos[2])
 
 
 ######################################################################
@@ -503,10 +514,6 @@ class ProbePointsHelper:
             self._raise_tool(not probe_num)
             if probe_num >= len(self.probe_points):
                 results = probe_session.pull_probed_results()
-                results = [manual_probe.ProbeResult(
-                    r[0] + self.probe_offsets[0], r[1] + self.probe_offsets[1],
-                    r[2] - self.probe_offsets[2], r[0], r[1], r[2])
-                           for r in results]
                 done = self._invoke_callback(results)
                 if done:
                     break

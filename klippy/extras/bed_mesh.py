@@ -1220,10 +1220,6 @@ class RapidScanHelper:
             if is_probe_pt:
                 probe_session.run_probe(gcmd)
         results = probe_session.pull_probed_results()
-        import manual_probe # XXX
-        results = [manual_probe.ProbeResult(
-            r[0]+offsets[0], r[1]+offsets[1], r[2]-offsets[2], r[0], r[1], r[2])
-                   for r in results]
         toolhead.get_last_move_time()
         self.finalize_callback(results)
         probe_session.end_probe_session()

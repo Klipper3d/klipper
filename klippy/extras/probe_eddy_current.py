@@ -374,11 +374,11 @@ class EddyGatherSamples:
             if sensor_z <= -OUT_OF_RANGE or sensor_z >= OUT_OF_RANGE:
                 raise self._printer.command_error(
                     "probe_eddy_current sensor not in valid range")
-            # Callers expect position relative to z_offset, so recalculate
-            z_offset = self._offsets[2]
-            bed_deviation = toolhead_pos[2] - sensor_z
-            toolhead_pos[2] = z_offset + bed_deviation
-            results.append(toolhead_pos)
+            res = manual_probe.ProbeResult(
+                toolhead_pos[0]+self._offsets[0],
+                toolhead_pos[1]+self._offsets[1], toolhead_pos[2]-sensor_z,
+                toolhead_pos[0], toolhead_pos[1], toolhead_pos[2])
+            results.append(res)
         del self._probe_results[:]
         return results
     def note_probe(self, start_time, end_time, toolhead_pos):
@@ -530,7 +530,7 @@ class EddyScanningProbe:
         results = self._gather.pull_probed()
         # Allow axis_twist_compensation to update results
         for epos in results:
-            self._printer.send_event("probe:update_results", epos)
+            self._printer.send_event("probe:update_results", [epos])
         return results
     def end_probe_session(self):
         self._gather.finish()
