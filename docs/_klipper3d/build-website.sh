@@ -24,7 +24,8 @@ echo "building site for en"
 mkdocs build -f ${MKDOCS_MAIN}
 
 # Cleanup files (mkdocs copies _klipper3d dir and its sitemap doesn't work)
-rm -r ${PWD}/site/_klipper3d
+rm -rf ${PWD}/site/_klipper3d/__pycache__
+find ${PWD}/site/_klipper3d ! -name '*.css' -type f -delete
 rm ${PWD}/site/sitemap.xml ${PWD}/site/sitemap.xml.gz
 
 # Build each additional language website
@@ -88,7 +89,8 @@ while IFS="," read dirname langsite langdesc langsearch; do
   mkdocs build -f "${new_mkdocs_file}"
 
   # Cleanup files (mkdocs copies _klipper3d dir and its sitemap doesn't work)
-  rm -r "${PWD}/site/${langsite}/_klipper3d"
+  rm -rf "${PWD}/site/${langsite}/_klipper3d/__pycache__"
+  find "${PWD}/site/${langsite}/_klipper3d" ! -name '*.css' -type f -delete
   rm "${PWD}/site/${langsite}/sitemap.xml" "${PWD}/site/${langsite}/sitemap.xml.gz"
 
 done < <(egrep -v '^ *(#|$)' ${TRANS_FILE})
