@@ -560,7 +560,8 @@ class TapSession:
     # probe until a single good sample is returned or retries are exhausted
     def run_probe(self, gcmd):
         epos, is_good = self._tapping_move.run_tap(gcmd)
-        self._results.append(epos)
+        res = self.probe_offsets.create_probe_result(epos)
+        self._results.append(res)
 
     def pull_probed_results(self):
         res = self._results
