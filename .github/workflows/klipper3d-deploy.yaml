@@ -27,6 +27,8 @@ jobs:
         run: pip install -r docs/_klipper3d/mkdocs-requirements.txt
       - name: Build MkDocs Pages
         run: docs/_klipper3d/build-translations.sh
+      - name: Sanitize mkdocs output
+        run: docs/_klipper3d/sanitize.sh
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4.4.3
         with:
