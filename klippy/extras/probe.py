@@ -198,9 +198,10 @@ class LookupZSteppers:
 
 # Homing via probe:z_virtual_endstop
 class HomingViaProbeHelper:
-    def __init__(self, config, mcu_probe, param_helper):
+    def __init__(self, config, mcu_probe, probe_offsets, param_helper):
         self.printer = config.get_printer()
         self.mcu_probe = mcu_probe
+        self.probe_offsets = probe_offsets
         self.param_helper = param_helper
         self.multi_probe_pending = False
         self.z_min_position = lookup_minimum_z(config)
@@ -613,8 +614,8 @@ class PrinterProbe:
                                              self.mcu_probe.query_endstop)
         self.probe_offsets = ProbeOffsetsHelper(config)
         self.param_helper = ProbeParameterHelper(config)
-        self.homing_helper = HomingViaProbeHelper(config, self.mcu_probe,
-                                                  self.param_helper)
+        self.homing_helper = HomingViaProbeHelper(
+            config, self.mcu_probe, self.probe_offsets, self.param_helper)
         self.probe_session = ProbeSessionHelper(
             config, self.param_helper, self.homing_helper.start_probe_session)
     def get_probe_params(self, gcmd=None):
