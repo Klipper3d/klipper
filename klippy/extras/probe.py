@@ -49,6 +49,7 @@ class ProbeCommandHelper:
         gcode.register_command('QUERY_PROBE', self.cmd_QUERY_PROBE,
                                desc=self.cmd_QUERY_PROBE_help)
         # PROBE command
+        self.last_probe_position = gcode.Coord((0., 0., 0.))
         self.last_z_result = 0.
         gcode.register_command('PROBE', self.cmd_PROBE,
                                desc=self.cmd_PROBE_help)
@@ -69,6 +70,7 @@ class ProbeCommandHelper:
     def get_status(self, eventtime):
         return {'name': self.name,
                 'last_query': self.last_state,
+                'last_probe_position': self.last_probe_position,
                 'last_z_result': self.last_z_result}
     cmd_QUERY_PROBE_help = "Return the status of the z-probe"
     def cmd_QUERY_PROBE(self, gcmd):
@@ -84,8 +86,11 @@ class ProbeCommandHelper:
         pos = run_single_probe(self.probe, gcmd)
         gcmd.respond_info("Result: at %.3f,%.3f estimate contact at z=%.6f"
                           % (pos.bed_x, pos.bed_y, pos.bed_z))
+        gcode = self.printer.lookup_object('gcode')
+        self.last_probe_position = gcode.Coord((pos.bed_x, pos.bed_y,
+                                                pos.bed_z))
         x_offset, y_offset, z_offset = self.probe.get_offsets()
-        self.last_z_result = pos.bed_z + z_offset # XXX
+        self.last_z_result = pos.bed_z + z_offset # Deprecated
     def probe_calibrate_finalize(self, mpresult):
         if mpresult is None:
             return

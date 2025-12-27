@@ -8,6 +8,11 @@ All dates in this document are approximate.
 
 ## Changes
 
+20260109: The status value `{printer.probe.last_z_result}` is
+deprecated; it will be removed in the near future. Use
+`{printer.probe.last_probe_position}` instead, and note that this new
+value already has the probe's configured xyz offsets applied.
+
 20260109: The g-code console text output from the `PROBE`,
 `PROBE_ACCURACY`, and similar commands has changed. Now Z heights are
 reported relative to the nominal bed Z position instead of relative to
