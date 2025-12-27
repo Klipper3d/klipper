@@ -252,12 +252,12 @@ macro. This requires setting up
 Here is a simple macro that can accomplish this. Note that the
 `_HOME_Z_FROM_LAST_PROBE` macro has to be separate because of the way macros
 work. The sub-call is needed so that the `_HOME_Z_FROM_LAST_PROBE` macro can
-see the result of the probe in `printer.probe.last_z_result`.
+see the result of the probe in `printer.probe.last_probe_position`.
 
 ```gcode
 [gcode_macro _HOME_Z_FROM_LAST_PROBE]
 gcode:
-    {% set z_probed = printer.probe.last_z_result %}
+    {% set z_probed = printer.probe.last_probe_position.z %}
     {% set z_position = printer.toolhead.position[2] %}
     {% set z_actual = z_position - z_probed %}
     SET_KINEMATIC_POSITION Z={z_actual}
