@@ -419,10 +419,18 @@ is defined):
   during the last QUERY_PROBE command. Note, if this is used in a
   macro, due to the order of template expansion, the QUERY_PROBE
   command must be run prior to the macro containing this reference.
-- `last_z_result`: Returns the Z result value of the last PROBE
-  command. Note, if this is used in a macro, due to the order of
-  template expansion, the PROBE (or similar) command must be run prior
-  to the macro containing this reference.
+- `last_probe_position`: The results of the last `PROBE` command. This
+  value is encoded as a [coordinate](#accessing-coordinates). The
+  probe hardware estimates that if one were to command the toolhead to
+  XY position `last_probe_position.x`,`last_probe_position.y` and
+  descend then the tip of the toolhead would first contact the bed at
+  a Z height of `last_probe_position.z`. These coordinates are
+  relative to the frame (that is, they use the coordinate system
+  specified in the config file).  Note, if this is used in a macro,
+  due to the order of template expansion, the `PROBE` command must be
+  run prior to the macro containing this reference.
+- `last_z_result`: This value is deprecated; it will be removed in the
+  near future.
 
 ## pwm_cycle_time
 
