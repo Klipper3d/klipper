@@ -192,17 +192,16 @@ class TMCErrorCheck:
         self.printer.get_reactor().unregister_timer(self.check_timer)
         self.check_timer = None
     def start_checks(self):
-        if self.check_timer is not None:
-            self.stop_checks()
+        reactor = self.printer.get_reactor()
+        if self.check_timer is None:
+            self.check_timer = reactor.register_timer(self._do_periodic_check)
         cleared_flags = 0
         self._query_register(self.drv_status_reg_info)
         if self.gstat_reg_info is not None:
             cleared_flags = self._query_register(self.gstat_reg_info,
                                                  try_clear=self.clear_gstat)
-        reactor = self.printer.get_reactor()
         curtime = reactor.monotonic()
-        self.check_timer = reactor.register_timer(self._do_periodic_check,
-                                                  curtime + 1.)
+        reactor.update_timer(self.check_timer, curtime + 1.)
         if cleared_flags:
             reset_mask = self.fields.all_fields["GSTAT"]["reset"]
             if cleared_flags & reset_mask:
@@ -322,6 +321,7 @@ class TMCCommandHelper:
         self.stepper_name = ' '.join(config.get_name().split()[1:])
         self.name = config.get_name().split()[-1]
         self.mcu_tmc = mcu_tmc
+        self.mutex = self.printer.get_reactor().mutex()
         self.current_helper = current_helper
         self.echeck_helper = TMCErrorCheck(config, mcu_tmc)
         self.record_helper = TMCStallguardDump(config, mcu_tmc)
@@ -475,10 +475,10 @@ class TMCCommandHelper:
         # Note pulse duration and step_both_edge optimizations available
         self.stepper.setup_default_pulse_duration(.000000100, True)
     def _handle_stepper_enable(self, print_time, is_enable):
-        if is_enable:
-            cb = (lambda ev: self._do_enable(print_time))
-        else:
-            cb = (lambda ev: self._do_disable(print_time))
+        action = self._do_enable if is_enable else self._do_disable
+        def cb(eventtime):
+            with self.mutex:
+                action(print_time)
         self.printer.get_reactor().register_callback(cb)
     def _handle_connect(self):
         # Check if using step on both edges optimization
