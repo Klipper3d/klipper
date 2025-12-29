@@ -330,6 +330,7 @@ class TMCCommandHelper:
         # Stepper enable/disable tracking
         self.toff = None
         self.stepper_enable = self.printer.load_object(config, "stepper_enable")
+        self.enable_mutex = self.printer.get_reactor().mutex()
         # DUMP_TMC support
         self.read_registers = self.read_translate = None
         # Common tmc helpers
@@ -469,10 +470,11 @@ class TMCCommandHelper:
     def _handle_stepper_enable(self, print_time, is_enable):
         def enable_disable_cb(eventtime):
             try:
-                if is_enable:
-                    self._do_enable(print_time)
-                else:
-                    self._do_disable(print_time)
+                with self.enable_mutex:
+                    if is_enable:
+                        self._do_enable(print_time)
+                    else:
+                        self._do_disable(print_time)
             except self.printer.command_error as e:
                 self.printer.invoke_shutdown(str(e))
         self.printer.get_reactor().register_callback(enable_disable_cb)
