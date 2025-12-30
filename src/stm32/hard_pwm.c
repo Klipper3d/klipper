@@ -299,7 +299,7 @@ static const struct gpio_pwm_info pwm_regs[] = {
 #endif
 };
 
-struct gpio_pwm
+static struct gpio_pwm
 gpio_timer_setup(uint8_t pin, uint32_t cycle_time, uint32_t val,
     int is_clock_out)
 {
