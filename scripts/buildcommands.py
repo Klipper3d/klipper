@@ -483,11 +483,22 @@ def git_version():
     logging.debug("Got git version: %s" % (repr(ver),))
     return ver
 
+# Obtain version info from "klippy/.version" file
+def file_version():
+    if not os.path.exists('klippy/.version'):
+        logging.debug("No 'klippy/.version' file/directory found")
+        return ""
+    ver = check_output("cat klippy/.version").strip()
+    logging.debug("Got klippy version: %s" % (repr(ver),))
+    return ver
+
 def build_version(extra, cleanbuild):
     version = git_version()
     if not version:
         cleanbuild = False
-        version = "?"
+        version = file_version()
+        if not version:
+            version = "?"
     elif 'dirty' in version:
         cleanbuild = False
     if not cleanbuild:
