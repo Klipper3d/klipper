@@ -493,10 +493,12 @@ def file_version():
     return ver
 
 def build_version(extra, cleanbuild):
-    version = git_version() or file_version()
+    version = git_version()
     if not version:
         cleanbuild = False
-        version = "?"
+        version = file_version()
+        if not version:
+            version = "?"
     elif 'dirty' in version:
         cleanbuild = False
     if not cleanbuild:
