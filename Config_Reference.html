@@ -1402,6 +1402,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#static_pwm_clock" class="md-nav__link">
+    [static_pwm_clock]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pwm_tool" class="md-nav__link">
     [pwm_tool]
   </a>
@@ -3547,6 +3554,13 @@
           <li class="md-nav__item">
   <a href="#output_pin" class="md-nav__link">
     [output_pin]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#static_pwm_clock" class="md-nav__link">
+    [static_pwm_clock]
   </a>
   
 </li>
@@ -7270,6 +7284,18 @@ pin:
 #maximum_mcu_duration:
 #static_value:
 #   These options are deprecated and should no longer be specified.
+</code></pre></div>
+
+<h3 id="static_pwm_clock">[static_pwm_clock]<a class="headerlink" href="#static_pwm_clock" title="Permanent link">&para;</a></h3>
+<p>Static configurable output pin (one may define any number of
+sections with an "static_pwm_clock" prefix).
+Pins configured here will be set up as clock output pins.
+Generally used to provide clock input to other hardware on the board.</p>
+<div class="highlight"><pre><span></span><code>[static_pwm_clock my_pin]
+pin:
+#   The pin to configure as an output. This parameter must be provided.
+#frequency: 100
+#   Target output frequency.
 </code></pre></div>
 
 <h3 id="pwm_tool">[pwm_tool]<a class="headerlink" href="#pwm_tool" title="Permanent link">&para;</a></h3>
