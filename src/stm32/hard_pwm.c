@@ -311,52 +311,58 @@ gpio_timer_setup(uint8_t pin, uint32_t cycle_time, uint32_t val,
         if (p->pin == pin)
             break;
     }
+    gpio_peripheral(p->pin, p->function, 0);
 
     // Map cycle_time to pwm clock divisor
     uint32_t pclk = get_pclock_frequency((uint32_t)p->timer);
     uint32_t pclock_div = CONFIG_CLOCK_FREQ / pclk;
     if (pclock_div > 1)
         pclock_div /= 2; // Timers run at twice the normal pclock frequency
-    uint32_t max_pwm = MAX_PWM;
     uint32_t pcycle_time = cycle_time / pclock_div;
-    uint32_t prescaler = pcycle_time / (max_pwm - 1);
-    // CLK output
-    if (is_clock_out) {
-        prescaler = 1;
+
+    // Convert requested cycle time (cycle_time/CLOCK_FREQ) to actual
+    // cycle time (hwpwm_ticks*prescaler*pclock_div/CLOCK_FREQ).
+    uint32_t hwpwm_ticks, prescaler;
+    if (!is_clock_out) {
+        // In normal mode, allow the pulse frequency (cycle_time) to change
+        // in order to maintain the requested duty ratio (val/MAX_PWM).
+        hwpwm_ticks = MAX_PWM;
+        prescaler = pcycle_time / (hwpwm_ticks - 1);
+        if (prescaler > UINT16_MAX + 1)
+            prescaler = UINT16_MAX + 1;
+        else if (prescaler < 1)
+            prescaler = 1;
+    } else {
+        // In clock output mode, allow the pulse width enable duration
+        // (val) to change in order to maintain the requested frequency.
         val = val / pclock_div;
-        while (pcycle_time > UINT16_MAX) {
-            prescaler = prescaler * 2;
-            pcycle_time /= 2;
+        hwpwm_ticks = pcycle_time;
+        prescaler = 1;
+        while (hwpwm_ticks > UINT16_MAX) {
             val /= 2;
+            hwpwm_ticks /= 2;
+            prescaler *= 2;
         }
-        max_pwm = pcycle_time;
-    }
-    if (prescaler > UINT16_MAX) {
-        prescaler = UINT16_MAX;
-    } else if (prescaler > 0) {
-        prescaler -= 1;
     }
 
-    gpio_peripheral(p->pin, p->function, 0);
-
-    // Enable clock
+    // Enable requested pwm hardware block
     if (!is_enabled_pclock((uint32_t) p->timer)) {
         enable_pclock((uint32_t) p->timer);
     }
-
     if (p->timer->CR1 & TIM_CR1_CEN) {
-        if (p->timer->PSC != (uint16_t) prescaler) {
+        if (p->timer->PSC != (uint16_t) (prescaler - 1)) {
             shutdown("PWM already programmed at different speed");
         }
-        if (p->timer->ARR != (uint16_t) max_pwm - 1) {
+        if (p->timer->ARR != (uint16_t) (hwpwm_ticks - 1)) {
             shutdown("PWM already programmed with different pulse duration");
         }
     } else {
-        p->timer->PSC = (uint16_t) prescaler;
-        p->timer->ARR = max_pwm - 1;
+        p->timer->PSC = prescaler - 1;
+        p->timer->ARR = hwpwm_ticks - 1;
         p->timer->EGR |= TIM_EGR_UG;
     }
 
+    // Enable requested channel of hardware pwm block
     struct gpio_pwm channel;
     switch (p->channel) {
         case 1: {
