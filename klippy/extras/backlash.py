@@ -80,7 +80,7 @@ class BacklashCompensation:
             pos[2] -= offset_z
         return pos
 
-    def move(self, newpos, speed) -> None:
+    def move(self, newpos, speed):
         # Get current logical position
         cur_pos = self.get_position()
         start_x, start_y, start_z = cur_pos[0], cur_pos[1], cur_pos[2]
