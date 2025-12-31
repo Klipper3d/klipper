@@ -323,9 +323,11 @@ gpio_timer_setup(uint8_t pin, uint32_t cycle_time, uint32_t val,
     // CLK output
     if (is_clock_out) {
         prescaler = 1;
+        val = val / pclock_div;
         while (pcycle_time > UINT16_MAX) {
             prescaler = prescaler * 2;
             pcycle_time /= 2;
+            val /= 2;
         }
         max_pwm = pcycle_time;
     }
