@@ -340,7 +340,7 @@ class TMCCommandHelper:
         # Register callbacks
         self.printer.register_event_handler("stepper:sync_mcu_position",
                                             self._handle_sync_mcu_pos)
-        self.printer.register_event_handler("stepper:set_sdir_inverted",
+        self.printer.register_event_handler("stepper:set_dir_inverted",
                                             self._handle_sync_mcu_pos)
         self.printer.register_event_handler("klippy:mcu_identify",
                                             self._handle_mcu_identify)
