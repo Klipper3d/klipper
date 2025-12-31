@@ -11,7 +11,7 @@
 #include "internal.h" // GPIO
 #include "sched.h" // sched_shutdown
 
-#define MAX_PWM (256 + 1)
+#define MAX_PWM 256
 DECL_CONSTANT("PWM_MAX", MAX_PWM);
 
 struct gpio_pwm_info {
@@ -327,7 +327,7 @@ gpio_timer_setup(uint8_t pin, uint32_t cycle_time, uint32_t val,
         // In normal mode, allow the pulse frequency (cycle_time) to change
         // in order to maintain the requested duty ratio (val/MAX_PWM).
         hwpwm_ticks = MAX_PWM;
-        prescaler = pcycle_time / (hwpwm_ticks - 1);
+        prescaler = pcycle_time / MAX_PWM;
         if (prescaler > UINT16_MAX + 1)
             prescaler = UINT16_MAX + 1;
         else if (prescaler < 1)
