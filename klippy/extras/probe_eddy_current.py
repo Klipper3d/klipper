@@ -18,6 +18,7 @@ class EddyCalibration:
         # Current calibration data
         self.cal_freqs = []
         self.cal_zpos = []
+        self._cal_zpos_offset = .0
         cal = config.get('calibrate', None)
         if cal is not None:
             cal = [list(map(float, d.strip().split(':', 1)))
@@ -34,6 +35,10 @@ class EddyCalibration:
         gcode.register_command('Z_OFFSET_APPLY_PROBE',
                                self.cmd_Z_OFFSET_APPLY_PROBE,
                                desc=self.cmd_Z_OFFSET_APPLY_PROBE_help)
+        gcode.register_mux_command('PROBE_EDDY_CURRENT_CALIBRATION_OFFSET',
+                                    "CHIP", cname,
+                                    self.cmd_CALIBRATION_OFFSET,
+                                    desc=self.cmd_CALIBRATION_OFFSET_help)
     def is_calibrated(self):
         return len(self.cal_freqs) > 2
     def load_calibration(self, cal):
@@ -58,6 +63,7 @@ class EddyCalibration:
                 gain = (this_zpos - prev_zpos) / (this_freq - prev_freq)
                 offset = prev_zpos - prev_freq * gain
                 zpos = adj_freq * gain + offset
+            zpos += self._cal_zpos_offset
             samples[i] = (samp_time, freq, round(zpos, 6))
     def freq_to_height(self, freq):
         dummy_sample = [(0., freq, 0.)]
@@ -273,6 +279,10 @@ class EddyCalibration:
         z_freq_pairs = zip(cal_zpos, self.cal_freqs)
         z_freq_pairs = sorted(z_freq_pairs)
         self._save_calibration(z_freq_pairs)
+    cmd_CALIBRATION_OFFSET_help = "Runtime curve height adjustment"
+    def cmd_CALIBRATION_OFFSET(self, gcmd):
+        self._cal_zpos_offset = gcmd.get_float("OFFSET", minval=-0.5,
+                                               maxval=0.5)
     def register_drift_compensation(self, comp):
         self.drift_comp = comp
 
