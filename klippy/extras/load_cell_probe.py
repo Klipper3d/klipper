@@ -542,9 +542,11 @@ class TappingMove:
 
 # ProbeSession that implements Tap logic
 class TapSession:
-    def __init__(self, config, tapping_move, probe_params_helper):
+    def __init__(self, config, tapping_move,
+                 probe_offsets, probe_params_helper):
         self._printer = config.get_printer()
         self._tapping_move = tapping_move
+        self._probe_offsets = probe_offsets
         self._probe_params_helper = probe_params_helper
         # Session state
         self._results = []
@@ -558,7 +560,8 @@ class TapSession:
     # probe until a single good sample is returned or retries are exhausted
     def run_probe(self, gcmd):
         epos, is_good = self._tapping_move.run_tap(gcmd)
-        self._results.append(epos)
+        res = self.probe_offsets.create_probe_result(epos)
+        self._results.append(res)
 
     def pull_probed_results(self):
         res = self._results
@@ -630,7 +633,8 @@ class LoadCellPrinterProbe:
             continuous_tare_filter_helper, config_helper)
         self._tapping_move = TappingMove(config, load_cell_probing_move,
             config_helper)
-        tap_session = TapSession(config, self._tapping_move, self._param_helper)
+        tap_session = TapSession(config, self._tapping_move,
+                                 self._probe_offsets, self._param_helper)
         self._probe_session = probe.ProbeSessionHelper(config,
             self._param_helper, tap_session.start_probe_session)
         # printer integration

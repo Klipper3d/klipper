@@ -8,9 +8,29 @@ All dates in this document are approximate.
 
 ## Changes
 
-20251122: An option `axis` has been added to `[carriage <name>]` sections
-for `generic_cartesian` kinematics, allowing arbitrary names for primary
-carriages. Users are encouraged to explicitly specify `axis` option now.
+20260109: The status value `{printer.probe.last_z_result}` is
+deprecated; it will be removed in the near future. Use
+`{printer.probe.last_probe_position}` instead, and note that this new
+value already has the probe's configured xyz offsets applied.
+
+20260109: The g-code console text output from the `PROBE`,
+`PROBE_ACCURACY`, and similar commands has changed. Now Z heights are
+reported relative to the nominal bed Z position instead of relative to
+the probe's configured `z_offset`. Similarly, intermediate probe x and
+y console reports will also have the probe's configured `x_offset` and
+`y_offset` applied.
+
+20260109: The `[screws_tilt_adjust]` module now reports the status
+variable `{printer.screws_tilt_adjust.result.screw1.z}` with the
+probe's `z_offset` applied. That is, one would previously need to
+subtract the probe's configured `z_offset` to find the absolute Z
+deviation at the given screw location and now one must not apply the
+`z_offset`.
+
+20251122: An option `axis` has been added to `[carriage <name>]`
+sections for `generic_cartesian` kinematics, allowing arbitrary names
+for primary carriages. Users are encouraged to explicitly specify
+`axis` option now.
 
 20251106: The status fields `{printer.toolhead.position}`,
 `{printer.gcode_move.position}`,
