@@ -89,6 +89,11 @@ class LDC1612:
         self.ldc1612_setup_home_cmd = self.query_ldc1612_home_state_cmd = None
         self.frequency = config.getint("frequency", DEFAULT_LDC1612_FREQ,
                                        2000000, 40000000)
+        # Coil frequency divider
+        self.frequency_in_div = 1
+        # Always assume that 12MHz is BTT Eddy
+        if self.frequency == DEFAULT_LDC1612_FREQ:
+            self.frequency_in_div = 2
         if config.get('intb_pin', None) is not None:
             ppins = config.get_printer().lookup_object("pins")
             pin_params = ppins.lookup_pin(config.get('intb_pin'))
@@ -143,6 +148,7 @@ class LDC1612:
     def setup_home(self, print_time, trigger_freq,
                    trsync_oid, hit_reason, err_reason):
         clock = self.mcu.print_time_to_clock(print_time)
+        trigger_freq /= self.frequency_in_div
         tfreq = int(trigger_freq * (1<<28) / float(self.frequency) + 0.5)
         self.ldc1612_setup_home_cmd.send(
             [self.oid, clock, tfreq, trsync_oid, hit_reason, err_reason])
@@ -161,6 +167,7 @@ class LDC1612:
             mv = val & 0x0fffffff
             if mv != val:
                 self.last_error_count += 1
+            mv *= self.frequency_in_div
             samples[count] = (round(ptime, 6), round(freq_conv * mv, 3), 999.9)
             count += 1
     # Start, stop, and process message batches
@@ -180,7 +187,7 @@ class LDC1612:
         self.set_reg(REG_RCOUNT0, int(rcount0 + 0.5))
         self.set_reg(REG_OFFSET0, 0)
         self.set_reg(REG_SETTLECOUNT0, int(SETTLETIME*self.frequency/16. + .5))
-        self.set_reg(REG_CLOCK_DIVIDERS0, (1 << 12) | 1)
+        self.set_reg(REG_CLOCK_DIVIDERS0, (self.frequency_in_div << 12) | 1)
         self.set_reg(REG_ERROR_CONFIG, (0x1f << 11) | 1)
         self.set_reg(REG_MUX_CONFIG, 0x0208 | DEGLITCH)
         self.set_reg(REG_CONFIG, 0x001 | (1<<12) | (1<<10) | (1<<9))
