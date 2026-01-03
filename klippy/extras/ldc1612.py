@@ -157,9 +157,33 @@ class LDC1612:
     def _convert_samples(self, samples):
         freq_conv = float(self.frequency) / (1<<28)
         count = 0
+        errors = {}
+        def log_once(msg, warning=False):
+            if errors.get(msg, False):
+                return
+            if warning:
+                logging.warning(msg)
+            else:
+                logging.error(msg)
+            errors[msg] = True
         for ptime, val in samples:
             mv = val & 0x0fffffff
             if mv != val:
+                flags = val >> 28
+                if flags & (0x8 | 0x4) == (0x8 | 0x4):
+                    log_once("LDC1612: I2C IO error")
+                else:
+                    if flags & 0x4 or mv > 0x7ffffff:
+                        log_once("LDC1612: Frequency over valid range")
+                    if flags & 0x8 or mv == 0x0000000:
+                        log_once("LDC1612: Frequency under valid range")
+                if flags & (0x2 | 0x1) == (0x2 | 0x1):
+                    log_once("LDC1612: Zero conversion count")
+                else:
+                    if flags & 0x2:
+                        log_once("LDC1612: Conversion Watchdog timeout")
+                    if flags & 0x1:
+                        log_once("LDC1612: Amplitude Low/High")
                 self.last_error_count += 1
             samples[count] = (round(ptime, 6), round(freq_conv * mv, 3), 999.9)
             count += 1

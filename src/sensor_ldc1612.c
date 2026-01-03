@@ -31,6 +31,7 @@ struct ldc1612 {
     struct trsync *ts;
     uint8_t homing_flags;
     uint8_t trigger_reason, error_reason;
+    uint32_t watchdog_deadline;
     uint32_t trigger_threshold;
     uint32_t homing_clock;
 };
@@ -111,6 +112,57 @@ command_query_ldc1612_home_state(uint32_t *args)
 DECL_COMMAND(command_query_ldc1612_home_state,
              "query_ldc1612_home_state oid=%c");
 
+// Default TRSYNC_TIMEOUT, limits ODR > 40
+#define WATCHDOG_TIMEOUT timer_from_us(25000)
+#define WATCHDOG_TIMEOUT_ERROR (0xf)
+
+static void
+watchdog_check(struct ldc1612 *ld)
+{
+    if (!ld->homing_flags)
+        return;
+    if (timer_is_before(timer_read_time(), ld->watchdog_deadline))
+        return;
+    trsync_do_trigger(ld->ts, ld->error_reason + WATCHDOG_TIMEOUT_ERROR);
+    ld->homing_flags = 0;
+}
+
+static void
+watchdog_reset(struct ldc1612 *ld)
+{
+    ld->watchdog_deadline = timer_read_time() + WATCHDOG_TIMEOUT;
+}
+
+#define DATA_ERROR_AMPLITUDE   (1 << 0)
+#define DATA_ERROR_WATCHDOG    (1 << 1)
+#define DATA_ERROR_OVER_RANGE  (1 << 2)
+#define DATA_ERROR_UNDER_RANGE (1 << 3)
+#define DATA_ERROR_I2C (DATA_ERROR_OVER_RANGE | DATA_ERROR_UNDER_RANGE)
+#define DATA_ERROR_ZERO_COUNT (DATA_ERROR_WATCHDOG | DATA_ERROR_AMPLITUDE)
+
+static uint_fast8_t
+check_data_bits(struct ldc1612 *ld, uint32_t *data) {
+    // Ignore amplitude errors
+    *data &= ~(DATA_ERROR_AMPLITUDE << 28);
+    // Datasheet define valid frequency input as < F_ref / 4
+    // Use half as sanity check
+    if (*data < 0x07ffffff)
+        return 0;
+    // Sensor reports an issue - cancel homing
+    ld->homing_flags = 0;
+    uint8_t error_bits = *data >> 28;
+    uint8_t error_reason = ld->error_reason;
+    uint8_t freq_overflow = (*data & 0x0fffffff) > 0x7fffffff;
+    if ((error_bits & DATA_ERROR_I2C) == DATA_ERROR_I2C)
+        error_reason = ld->error_reason + DATA_ERROR_I2C;
+    else if (freq_overflow || error_bits & DATA_ERROR_OVER_RANGE)
+        error_reason = ld->error_reason + DATA_ERROR_OVER_RANGE;
+    if ((error_bits & DATA_ERROR_ZERO_COUNT) == DATA_ERROR_ZERO_COUNT)
+        error_reason = ld->error_reason + DATA_ERROR_ZERO_COUNT;
+    trsync_do_trigger(ld->ts, error_reason);
+    return 1;
+}
+
 // Check if a sample should trigger a homing event
 static void
 check_home(struct ldc1612 *ld, uint32_t data)
@@ -118,12 +170,8 @@ check_home(struct ldc1612 *ld, uint32_t data)
     uint8_t homing_flags = ld->homing_flags;
     if (!(homing_flags & LH_CAN_TRIGGER))
         return;
-    if (data > 0x0fffffff) {
-        // Sensor reports an issue - cancel homing
-        ld->homing_flags = 0;
-        trsync_do_trigger(ld->ts, ld->error_reason);
+    if (check_data_bits(ld, &data))
         return;
-    }
     uint32_t time = timer_read_time();
     if ((homing_flags & LH_AWAIT_HOMING)
         && timer_is_before(time, ld->homing_clock))
@@ -143,19 +191,25 @@ check_home(struct ldc1612 *ld, uint32_t data)
 #define REG_STATUS    0x18
 
 // Read a register on the ldc1612
-static void
+static int
 read_reg(struct ldc1612 *ld, uint8_t reg, uint8_t *res)
 {
-    int ret = i2c_dev_read(ld->i2c, sizeof(reg), &reg, 2, res);
-    i2c_shutdown_on_err(ret);
+    return i2c_dev_read(ld->i2c, sizeof(reg), &reg, 2, res);
 }
+
+#define STATUS_I2C_ERROR (3 << 4)
+#define STATUS_DRDY (1 << 3)
+#define STATUS_ZERO_COUNT (1 << 8)
 
 // Read the status register on the ldc1612
 static uint16_t
 read_reg_status(struct ldc1612 *ld)
 {
     uint8_t data_status[2];
-    read_reg(ld, REG_STATUS, data_status);
+    int ret = read_reg(ld, REG_STATUS, data_status);
+    // Bits 5:4 are unused, report I2C
+    if (ret != I2C_BUS_SUCCESS)
+        data_status[0] |= STATUS_I2C_ERROR;
     return (data_status[0] << 8) | data_status[1];
 }
 
@@ -165,19 +219,28 @@ read_reg_status(struct ldc1612 *ld)
 static void
 ldc1612_query(struct ldc1612 *ld, uint8_t oid)
 {
+    int ret;
     // Check if data available (and clear INTB line)
     uint16_t status = read_reg_status(ld);
     irq_disable();
     ld->flags &= ~LDC_PENDING;
     irq_enable();
-    if (!(status & 0x08))
+    watchdog_check(ld);
+    // Force data read on I2C error or Zero Count
+    if (!(status & (STATUS_DRDY | STATUS_I2C_ERROR | STATUS_ZERO_COUNT)))
         return;
 
     // Read coil0 frequency
     uint8_t *d = &ld->sb.data[ld->sb.data_count];
-    read_reg(ld, REG_DATA0_MSB, &d[0]);
-    read_reg(ld, REG_DATA0_LSB, &d[2]);
+    ret = read_reg(ld, REG_DATA0_MSB, &d[0]);
+    ret |= read_reg(ld, REG_DATA0_LSB, &d[2]);
     ld->sb.data_count += BYTES_PER_SAMPLE;
+
+    // Forward Zero Count
+    if (status & STATUS_ZERO_COUNT)
+        d[0] |= DATA_ERROR_ZERO_COUNT << 4;
+    if (ret != I2C_BUS_SUCCESS || status & STATUS_I2C_ERROR)
+        d[0] |= DATA_ERROR_I2C << 4;
 
     // Check for endstop trigger
     uint32_t data =   ((uint32_t)d[0] << 24)
@@ -185,6 +248,7 @@ ldc1612_query(struct ldc1612 *ld, uint8_t oid)
                     | ((uint32_t)d[2] << 8)
                     | ((uint32_t)d[3]);
     check_home(ld, data);
+    watchdog_reset(ld);
 
     // Flush local buffer if needed
     if (ld->sb.data_count + BYTES_PER_SAMPLE > ARRAY_SIZE(ld->sb.data))
@@ -208,6 +272,7 @@ command_query_ldc1612(uint32_t *args)
     irq_disable();
     ld->timer.waketime = timer_read_time() + ld->rest_ticks;
     sched_add_timer(&ld->timer);
+    watchdog_reset(ld);
     irq_enable();
 }
 DECL_COMMAND(command_query_ldc1612, "query_ldc1612 oid=%c rest_ticks=%u");
@@ -232,7 +297,10 @@ command_query_status_ldc1612(uint32_t *args)
     uint16_t status = read_reg_status(ld);
     uint32_t time2 = timer_read_time();
 
-    uint32_t fifo = status & 0x08 ? BYTES_PER_SAMPLE : 0;
+    if (status & STATUS_I2C_ERROR)
+        // Query error - don't send response - host will retry
+        return;
+    uint32_t fifo = status & STATUS_DRDY ? BYTES_PER_SAMPLE : 0;
     sensor_bulk_status(&ld->sb, args[0], time1, time2-time1, fifo);
 }
 DECL_COMMAND(command_query_status_ldc1612, "query_status_ldc1612 oid=%c");

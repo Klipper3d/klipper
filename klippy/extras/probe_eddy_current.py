@@ -383,6 +383,8 @@ class EddyGatherSamples:
 # Helper for implementing PROBE style commands (descend until trigger)
 class EddyDescend:
     REASON_SENSOR_ERROR = mcu.MCU_trsync.REASON_COMMS_TIMEOUT + 1
+    REASON_BUS_IO_ERROR = REASON_SENSOR_ERROR + 12
+    REASON_WATCHDOG_TIMEOUT = REASON_SENSOR_ERROR + 15
     def __init__(self, config, sensor_helper, calibration, param_helper):
         self._printer = config.get_printer()
         self._sensor_helper = sensor_helper
@@ -415,6 +417,10 @@ class EddyDescend:
             if res == mcu.MCU_trsync.REASON_COMMS_TIMEOUT:
                 raise self._printer.command_error(
                     "Communication timeout during homing")
+            if res == self.REASON_BUS_IO_ERROR:
+                raise self._printer.command_error("Eddy I2C IO error")
+            if res == self.REASON_WATCHDOG_TIMEOUT:
+                raise self._printer.command_error("Eddy watchdog timeout")
             raise self._printer.command_error("Eddy current sensor error")
         if res != mcu.MCU_trsync.REASON_ENDSTOP_HIT:
             return 0.
