@@ -144,3 +144,38 @@ to perform thermal drift calibration:
 
 As one may conclude, the calibration process outlined above is more challenging
 and time consuming than most other procedures.  It may require practice and several attempts to achieve an optimal calibration.
+
+## Errors description
+
+Possible homing errors and actionables:
+
+- Sensor error
+  - Check logs for detailed error
+- Eddy I2C STATUS/DATA error.
+  - Check loose wiring.
+  - Try software I2C/decrease I2C rate
+- Invalid read data
+  - Same as I2C
+
+Possible sensor errors and actionables:
+- Frequency over valid hard range
+  - Check frequency configuration
+  - Hardware fault
+- Frequency over valid soft range
+  - Check frequency configuration
+- Conversion Watchdog timeout
+  - Hardware fault
+
+Amplitude Low/High warning messages can mean:
+- Sensor close to the bed
+- Sensor far from the bed
+- Higher temperature than was at the current calibration
+- Capacitor missing
+
+On some sensors, it is not possible to completely avoid amplitude
+warning indicator.
+
+You can try to redo the `LDC_CALIBRATE_DRIVE_CURRENT` calibration at work
+temperature or increase `reg_drive_current` by 1-2 from the calibrated value.
+
+Generally, it is like an engine check light. It may indicate an issue.
