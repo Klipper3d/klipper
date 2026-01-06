@@ -201,6 +201,7 @@ PID_SETTLE_SLOPE = .1
 class ControlPID:
     def __init__(self, heater, config):
         self.heater = heater
+        self.config = config
         self.heater_max_power = heater.get_max_power()
         self.Kp = config.getfloat('pid_Kp') / PID_PARAM_BASE
         self.Ki = config.getfloat('pid_Ki') / PID_PARAM_BASE
@@ -213,6 +214,37 @@ class ControlPID:
         self.prev_temp_time = 0.
         self.prev_temp_deriv = 0.
         self.prev_temp_integ = 0.
+        
+        self.printer = config.get_printer()
+        self.gcode = self.printer.lookup_object('gcode')
+        self.gcode.register_mux_command('SET_HEATER_PID', 'HEATER', heater.name, self.cmd_SET_HEATER_PID)
+    
+    def cmd_SET_HEATER_PID(self, gcmd):
+        revert = gcmd.get_int('REVERT', 0)
+        if revert:
+            self.Kp = self.config.getfloat('pid_Kp') / PID_PARAM_BASE
+            self.Ki = self.config.getfloat('pid_Ki') / PID_PARAM_BASE
+            self.Kd = self.config.getfloat('pid_Kd') / PID_PARAM_BASE
+            gcmd.respond_info(f'PID -> ({self.Kp * PID_PARAM_BASE}, {self.Ki * PID_PARAM_BASE}, {self.Kd * PID_PARAM_BASE})')
+            return
+        
+        kP = gcmd.get_float('P', None)
+        kI = gcmd.get_float('I', None)
+        kD = gcmd.get_float('D', None)
+        did_apply_pid = False
+        
+        if kP is not None:
+            self.Kp = kP / PID_PARAM_BASE
+            did_apply_pid = True
+        if kI is not None:
+            self.Ki = kI / PID_PARAM_BASE
+            did_apply_pid = True
+        if kD is not None:
+            self.Kd = kD / PID_PARAM_BASE
+            did_apply_pid = True
+        
+        gcmd.respond_info(f'{"New " if did_apply_pid else ""}PID -> ({self.Kp * PID_PARAM_BASE}, {self.Ki * PID_PARAM_BASE}, {self.Kd * PID_PARAM_BASE})')
+        
     def temperature_update(self, read_time, temp, target_temp):
         time_diff = read_time - self.prev_temp_time
         # Calculate change of temperature
