@@ -31,6 +31,9 @@ class EddyCalibration:
         gcode.register_mux_command("PROBE_EDDY_CURRENT_CALIBRATE", "CHIP",
                                    cname, self.cmd_EDDY_CALIBRATE,
                                    desc=self.cmd_EDDY_CALIBRATE_help)
+        gcode.register_command('Z_OFFSET_APPLY_PROBE',
+                               self.cmd_Z_OFFSET_APPLY_PROBE,
+                               desc=self.cmd_Z_OFFSET_APPLY_PROBE_help)
     def is_calibrated(self):
         return len(self.cal_freqs) > 2
     def load_calibration(self, cal):
@@ -236,13 +239,16 @@ class EddyCalibration:
         if len(filtered) <= 8:
            raise self.printer.command_error(
               "Failed calibration - No usable data")
+        z_freq_pairs = [(pos, freq) for pos, freq, _, _ in filtered]
+        self._save_calibration(z_freq_pairs)
+    def _save_calibration(self, z_freq_pairs):
         gcode = self.printer.lookup_object("gcode")
         gcode.respond_info(
             "The SAVE_CONFIG command will update the printer config file\n"
             "and restart the printer.")
         # Save results
         cal_contents = []
-        for i, (pos, freq, _, _) in enumerate(filtered):
+        for i, (pos, freq) in enumerate(z_freq_pairs):
             if not i % 3:
                 cal_contents.append('\n')
             cal_contents.append("%.6f:%.3f" % (pos, freq))
@@ -256,6 +262,17 @@ class EddyCalibration:
         # Start manual probe
         manual_probe.ManualProbeHelper(self.printer, gcmd,
                                        self.post_manual_probe)
+    cmd_Z_OFFSET_APPLY_PROBE_help = "Adjust the probe's z_offset"
+    def cmd_Z_OFFSET_APPLY_PROBE(self, gcmd):
+        gcode_move = self.printer.lookup_object("gcode_move")
+        offset = gcode_move.get_status()['homing_origin'].z
+        if offset == 0:
+            gcmd.respond_info("Nothing to do: Z Offset is 0")
+            return
+        cal_zpos = [z - offset for z in self.cal_zpos]
+        z_freq_pairs = zip(cal_zpos, self.cal_freqs)
+        z_freq_pairs = sorted(z_freq_pairs)
+        self._save_calibration(z_freq_pairs)
     def register_drift_compensation(self, comp):
         self.drift_comp = comp
 
@@ -519,7 +536,8 @@ class PrinterEddyProbe:
         self.param_helper = probe.ProbeParameterHelper(config)
         self.eddy_descend = EddyDescend(
             config, self.sensor_helper, self.calibration, self.param_helper)
-        self.cmd_helper = probe.ProbeCommandHelper(config, self)
+        self.cmd_helper = probe.ProbeCommandHelper(config, self,
+            replace_z_offset=True)
         self.probe_offsets = probe.ProbeOffsetsHelper(config)
         self.probe_session = probe.ProbeSessionHelper(
             config, self.param_helper, self.eddy_descend.start_probe_session)
