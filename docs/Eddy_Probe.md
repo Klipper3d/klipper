@@ -24,6 +24,7 @@ named `[probe_eddy_current my_eddy_probe]` then one would run
 complete in a few seconds.  After it completes, issue a `SAVE_CONFIG`
 command to save the results to the printer.cfg and restart.
 
+Eddy current is used as a proximity/distance sensor (similar to a laser ruler).
 The second step in calibration is to correlate the sensor readings to
 the corresponding Z heights. Home the printer and navigate the
 toolhead so that the nozzle is near the center of the bed. Then run a
@@ -35,7 +36,17 @@ those steps are complete one can `ACCEPT` the position. The tool will
 then move the toolhead so that the sensor is above the point where the
 nozzle used to be and run a series of movements to correlate the
 sensor to Z positions. This will take a couple of minutes. After the
-tool completes, issue a `SAVE_CONFIG` command to save the results to
+tool completes it will output the sensor performance data:
+```
+probe_eddy_current: noise 0.000642mm, MAD_Hz=11.314 in 2525 queries
+Total frequency range: 45000.012 Hz
+z_offset: 0.250 # noise 0.000200mm, MAD_Hz=11.000
+z_offset: 0.530 # noise 0.000300mm, MAD_Hz=12.000
+z_offset: 1.010 # noise 0.000400mm, MAD_Hz=14.000
+z_offset: 2.010 # noise 0.000600mm, MAD_Hz=12.000
+z_offset: 3.010 # noise 0.000700mm, MAD_Hz=9.000
+```
+issue a `SAVE_CONFIG` command to save the results to
 the printer.cfg and restart.
 
 After initial calibration it is a good idea to verify that the
@@ -102,6 +113,21 @@ if something is between the nozzle and the bed, or if the nozzle
 is too close to the bed before the tap.
 - Too low - can make the toolhead stop in mid-air
 because of the noise.
+
+You can estimate the initial threshold value by analyzing your own
+calibration routine output:
+```
+probe_eddy_current: noise 0.000642mm, MAD_Hz=11.314
+...
+z_offset: 1.010 # noise 0.000400mm, MAD_Hz=14.000
+```
+By use of your reference frequency from the
+[configuration](Config_Reference.md#probe_eddy_current).
+The estimation will be:
+```
+MAD_Hz * 2 * (1<<28) / Reference_frequency
+11.314 * 2 * 268435456 / 12000000 = 506
+```
 
 You can validate the tap precision by measuring the paper thickness
 from the initial calibration guide. It is expected to be ~0.1mm.
