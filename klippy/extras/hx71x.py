@@ -66,7 +66,7 @@ class HX71xBase:
         self.query_hx71x_cmd = self.mcu.lookup_command(
             "query_hx71x oid=%c rest_ticks=%u")
         self.attach_probe_cmd = self.mcu.lookup_command(
-            "hx71x_attach_load_cell_probe oid=%c load_cell_probe_oid=%c")
+            "hx71x_attach_trigger_analog oid=%c trigger_analog_oid=%c")
         self.ffreader.setup_query_command("query_hx71x_status oid=%c",
                                           oid=self.oid,
                                           cq=self.mcu.alloc_command_queue())
@@ -87,8 +87,8 @@ class HX71xBase:
     def add_client(self, callback):
         self.batch_bulk.add_client(callback)
 
-    def attach_load_cell_probe(self, load_cell_probe_oid):
-        self.attach_probe_cmd.send([self.oid, load_cell_probe_oid])
+    def attach_trigger_analog(self, trigger_analog_oid):
+        self.attach_probe_cmd.send([self.oid, trigger_analog_oid])
 
     # Measurement decoding
     def _convert_samples(self, samples):

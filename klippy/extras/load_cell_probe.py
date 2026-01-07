@@ -295,9 +295,9 @@ class LoadCellProbeConfigHelper:
         return sos_filter.to_fixed_32((1. / counts_per_gram), Q2_INT_BITS)
 
 
-# McuLoadCellProbe is the interface to `load_cell_probe` on the MCU
+# MCU_trigger_analog is the interface to `trigger_analog` on the MCU
 # This also manages the SosFilter so all commands use one command queue
-class McuLoadCellProbe:
+class MCU_trigger_analog:
     WATCHDOG_MAX = 3
     ERROR_SAFETY_RANGE = mcu.MCU_trsync.REASON_COMMS_TIMEOUT + 1
     ERROR_OVERFLOW = mcu.MCU_trsync.REASON_COMMS_TIMEOUT + 2
@@ -325,27 +325,27 @@ class McuLoadCellProbe:
     def _config_commands(self):
         self._sos_filter.create_filter()
         self._mcu.add_config_cmd(
-            "config_load_cell_probe oid=%d sos_filter_oid=%d" % (
+            "config_trigger_analog oid=%d sos_filter_oid=%d" % (
                 self._oid, self._sos_filter.get_oid()))
 
     def _build_config(self):
         # Lookup commands
         self._query_cmd = self._mcu.lookup_query_command(
-            "load_cell_probe_query_state oid=%c",
-            "load_cell_probe_state oid=%c is_homing_trigger=%c "
+            "trigger_analog_query_state oid=%c",
+            "trigger_analog_state oid=%c is_homing_trigger=%c "
             "trigger_ticks=%u", oid=self._oid, cq=self._cmd_queue)
         self._set_range_cmd = self._mcu.lookup_command(
-            "load_cell_probe_set_range"
+            "trigger_analog_set_range"
             " oid=%c safety_counts_min=%i safety_counts_max=%i tare_counts=%i"
             " trigger_grams=%u grams_per_count=%i", cq=self._cmd_queue)
         self._home_cmd = self._mcu.lookup_command(
-            "load_cell_probe_home oid=%c trsync_oid=%c trigger_reason=%c"
+            "trigger_analog_home oid=%c trsync_oid=%c trigger_reason=%c"
             " error_reason=%c clock=%u rest_ticks=%u timeout=%u",
             cq=self._cmd_queue)
 
     # the sensor data stream is connected on the MCU at the ready event
     def _on_connect(self):
-        self._sensor.attach_load_cell_probe(self._oid)
+        self._sensor.attach_trigger_analog(self._oid)
 
     def get_oid(self):
         return self._oid
@@ -387,30 +387,30 @@ class McuLoadCellProbe:
         return self._mcu.clock_to_print_time(trigger_ticks)
 
 
-# Execute probing moves using the McuLoadCellProbe
+# Execute probing moves using the MCU_trigger_analog
 class LoadCellProbingMove:
     ERROR_MAP = {
         mcu.MCU_trsync.REASON_COMMS_TIMEOUT: "Communication timeout during "
                                              "homing",
-        McuLoadCellProbe.ERROR_SAFETY_RANGE: "Load Cell Probe Error: load "
-                                             "exceeds safety limit",
-        McuLoadCellProbe.ERROR_OVERFLOW: "Load Cell Probe Error: fixed point "
-                                         "math overflow",
-        McuLoadCellProbe.ERROR_WATCHDOG: "Load Cell Probe Error: timed out "
-                                         "waiting for sensor data"
+        MCU_trigger_analog.ERROR_SAFETY_RANGE: "Load Cell Probe Error: load "
+                                               "exceeds safety limit",
+        MCU_trigger_analog.ERROR_OVERFLOW: "Load Cell Probe Error: fixed point "
+                                           "math overflow",
+        MCU_trigger_analog.ERROR_WATCHDOG: "Load Cell Probe Error: timed out "
+                                           "waiting for sensor data"
     }
 
-    def __init__(self, config, mcu_load_cell_probe, param_helper,
+    def __init__(self, config, mcu_trigger_analog, param_helper,
             continuous_tare_filter_helper, config_helper):
         self._printer = config.get_printer()
-        self._mcu_load_cell_probe = mcu_load_cell_probe
+        self._mcu_trigger_analog = mcu_trigger_analog
         self._param_helper = param_helper
         self._continuous_tare_filter_helper = continuous_tare_filter_helper
         self._config_helper = config_helper
-        self._mcu = mcu_load_cell_probe.get_mcu()
-        self._load_cell = mcu_load_cell_probe.get_load_cell()
+        self._mcu = mcu_trigger_analog.get_mcu()
+        self._load_cell = mcu_trigger_analog.get_load_cell()
         self._z_min_position = probe.lookup_minimum_z(config)
-        self._dispatch = mcu_load_cell_probe.get_dispatch()
+        self._dispatch = mcu_trigger_analog.get_dispatch()
         probe.LookupZSteppers(config, self._dispatch.add_stepper)
         # internal state tracking
         self._tare_counts = 0
@@ -436,12 +436,12 @@ class LoadCellProbingMove:
         tare_counts = np.average(np.array(tare_samples)[:, 2].astype(float))
         # update sos_filter with any gcode parameter changes
         self._continuous_tare_filter_helper.update_from_command(gcmd)
-        self._mcu_load_cell_probe.set_endstop_range(tare_counts, gcmd)
+        self._mcu_trigger_analog.set_endstop_range(tare_counts, gcmd)
 
     def _home_start(self, print_time):
         # start trsync
         trigger_completion = self._dispatch.start(print_time)
-        self._mcu_load_cell_probe.home_start(print_time)
+        self._mcu_trigger_analog.home_start(print_time)
         return trigger_completion
 
     def home_start(self, print_time, sample_time, sample_count, rest_time,
@@ -453,7 +453,7 @@ class LoadCellProbingMove:
         # trigger has happened, now to find out why...
         res = self._dispatch.stop()
         # clear the homing state so it stops processing samples
-        self._last_trigger_time = self._mcu_load_cell_probe.clear_home()
+        self._last_trigger_time = self._mcu_trigger_analog.clear_home()
         if self._mcu.is_fileoutput():
             self._last_trigger_time = home_end_time
         if res >= mcu.MCU_trsync.REASON_COMMS_TIMEOUT:
@@ -468,7 +468,7 @@ class LoadCellProbingMove:
     def get_steppers(self):
         return self._dispatch.get_steppers()
 
-    # Probe towards z_min until the load_cell_probe on the MCU triggers
+    # Probe towards z_min until the trigger_analog on the MCU triggers
     def probing_move(self, gcmd):
         # do not permit probing if the load cell is not calibrated
         if not self._load_cell.is_calibrated():
@@ -627,11 +627,11 @@ class LoadCellPrinterProbe:
         self._param_helper = probe.ProbeParameterHelper(config)
         self._cmd_helper = probe.ProbeCommandHelper(config, self)
         self._probe_offsets = probe.ProbeOffsetsHelper(config)
-        self._mcu_load_cell_probe = McuLoadCellProbe(config, self._load_cell,
+        self._mcu_trigger_analog = MCU_trigger_analog(config, self._load_cell,
             continuous_tare_filter_helper.get_sos_filter(), config_helper,
             trigger_dispatch)
         load_cell_probing_move = LoadCellProbingMove(config,
-            self._mcu_load_cell_probe, self._param_helper,
+            self._mcu_trigger_analog, self._param_helper,
             continuous_tare_filter_helper, config_helper)
         self._tapping_move = TappingMove(config, load_cell_probing_move,
             config_helper)
