@@ -2445,6 +2445,12 @@ axis:
 #   See the "stepper" section for the definition of the above parameters.
 ```
 
+`[dual_carriage]` is also supported with `generic_cartesian` kinematic,
+in which case it can be thought of as any additional carriage of an axis
+that can be moved independently from the primary `[carriage]` of that axis.
+The main difference between `[carriage]` and `[dual_carriage]` is that
+the latter is not activated by default after the printer startup or
+homing, and must be enabled explicitly via `SET_DUAL_CARRIAGE` command.
 For an example of dual carriage configuration with `generic_cartesian`
 kinematic, see the following configuration
 [sample](../config/example-generic-caretesian.cfg).
@@ -2524,9 +2530,12 @@ Note that `SHAPER_TYPE_Y` and `SHAPER_FREQ_Y` must be the same in both
 commands in this case, since the same motors drive Y axis when either
 of the `carriage_x` and `carriage_u` carriages are active.
 
-It is worth noting that `generic_cartesian` kinematic can support two
-dual carriages for X and Y axes. For reference, see for instance a
-[sample](../config/sample-corexyuv.cfg) of CoreXYUV configuration.
+It is worth noting that `generic_cartesian` kinematic can support more
+than a single `[dual_carriage]`, e.g. dual-gantry setups with one or
+two independent carriages per gantry. For reference, see for instance
+[CoreXYUV](../config/sample-corexyuv.cfg) or
+[IQEX](../config/sample-iqex.cfg) (independent quad extruders)
+printers sample configurations.
 
 ### [extruder_stepper]
 

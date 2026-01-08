@@ -8,6 +8,10 @@ All dates in this document are approximate.
 
 ## Changes
 
+20251229: `SET_DUAL_CARRIAGE CARRIAGE=<carriage_name> MODE=<mode>`
+command for modes `COPY` and `MIRROR` now requires that another
+carriage is activated as `PRIMARY` first for the corresponding axis.
+
 20251122: An option `axis` has been added to `[carriage <name>]` sections
 for `generic_cartesian` kinematics, allowing arbitrary names for primary
 carriages. Users are encouraged to explicitly specify `axis` option now.

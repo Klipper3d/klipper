@@ -244,6 +244,7 @@ class DualCarriages:
     cmd_SET_DUAL_CARRIAGE_help = "Configure the dual carriages mode"
     def cmd_SET_DUAL_CARRIAGE(self, gcmd):
         carriage_str = gcmd.get('CARRIAGE', None)
+        index = None
         if carriage_str is None:
             raise gcmd.error('CARRIAGE must be specified')
         if carriage_str in self.dc_rails:
@@ -265,9 +266,6 @@ class DualCarriages:
         if mode not in self.VALID_MODES:
             raise gcmd.error("Invalid mode=%s specified" % (mode,))
         if mode in [COPY, MIRROR]:
-            if self.primary_mode_dcs[dc_rail.axis] in [None, dc_rail]:
-                raise gcmd.error(
-                        "Must activate another carriage as PRIMARY first")
             curtime = self.printer.get_reactor().monotonic()
             kin = self.printer.lookup_object('toolhead').get_kinematics()
             axis = 'xyz'[dc_rail.axis]
@@ -275,6 +273,12 @@ class DualCarriages:
                 raise gcmd.error(
                         "Axis %s must be homed prior to enabling mode=%s" %
                         (axis.upper(), mode))
+            if index is not None:
+                self.toggle_active_dc_rail(
+                        self.get_dc_rail_wrapper(dc_rail.dual_rail))
+            elif self.primary_mode_dcs[dc_rail.axis] in [None, dc_rail]:
+                raise gcmd.error(
+                        "Must activate another carriage as PRIMARY first")
         self.activate_dc_mode(dc_rail, mode)
     cmd_SAVE_DUAL_CARRIAGE_STATE_help = \
             "Save dual carriages modes and positions"
