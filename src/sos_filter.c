@@ -23,7 +23,7 @@ struct sos_filter_section {
 };
 
 struct sos_filter {
-    uint8_t max_sections, n_sections, coeff_frac_bits, is_active;
+    uint8_t max_sections, n_sections, coeff_frac_bits;
     uint32_t coeff_rounding;
     // filter composed of second order sections
     struct sos_filter_section filter[0];
@@ -56,15 +56,6 @@ fixed_mul(struct sos_filter *sf, const fixedQ_coeff_t coeff
 // returns the fixedQ_value_t filtered value
 int32_t
 sosfilt(struct sos_filter *sf, const int32_t unfiltered_value) {
-    if (!sf->is_active) {
-        shutdown("sos_filter not property initialized");
-    }
-
-    // an empty filter performs no filtering
-    if (sf->n_sections == 0) {
-        return unfiltered_value;
-    }
-
     fixedQ_value_t cur_val = unfiltered_value;
     // foreach section
     for (int section_idx = 0; section_idx < sf->n_sections; section_idx++) {
@@ -92,7 +83,6 @@ command_config_sos_filter(uint32_t *args)
     struct sos_filter *sf = oid_alloc(args[0]
                             , command_config_sos_filter, size);
     sf->max_sections = max_sections;
-    sf->is_active = 0;
 }
 DECL_COMMAND(command_config_sos_filter, "config_sos_filter oid=%c"
     " max_sections=%c");
@@ -118,7 +108,7 @@ command_sos_filter_set_section(uint32_t *args)
 {
     struct sos_filter *sf = sos_filter_oid_lookup(args[0]);
     // setting a section marks the filter as inactive
-    sf->is_active = 0;
+    sf->n_sections = 0;
     uint8_t section_idx = args[1];
     validate_section_index(sf, section_idx);
     // copy section data
@@ -137,7 +127,7 @@ command_sos_filter_set_state(uint32_t *args)
 {
     struct sos_filter *sf = sos_filter_oid_lookup(args[0]);
     // setting a section's state marks the filter as inactive
-    sf->is_active = 0;
+    sf->n_sections = 0;
     // copy state data
     uint8_t section_idx = args[1];
     validate_section_index(sf, section_idx);
@@ -160,8 +150,6 @@ command_sos_filter_activate(uint32_t *args)
     const uint8_t coeff_int_bits = args[2];
     sf->coeff_frac_bits = (31 - coeff_int_bits);
     sf->coeff_rounding  = (1 << (sf->coeff_frac_bits - 1));
-    // mark filter as ready to use
-    sf->is_active = 1;
 }
 DECL_COMMAND(command_sos_filter_activate
     , "sos_filter_set_active oid=%c n_sections=%c coeff_int_bits=%c");
