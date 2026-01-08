@@ -67,17 +67,20 @@ class DigitalFilter:
 class MCU_SosFilter:
     # max_sections should be the largest number of sections you expect
     # to use at runtime.
-    def __init__(self, mcu, cmd_queue, max_sections,
-                 coeff_frac_bits=29, value_frac_bits=16):
+    def __init__(self, mcu, cmd_queue, max_sections, coeff_frac_bits=29):
         self._mcu = mcu
         self._cmd_queue = cmd_queue
         self._oid = self._mcu.create_oid()
         self._max_sections = max_sections
         self._coeff_frac_bits = coeff_frac_bits
-        self._value_frac_bits = value_frac_bits
+        self._value_frac_bits = self._scale_frac_bits = 0
         self._design = None
-        self._set_section_cmd = self._set_state_cmd = self._set_active_cmd =None
+        self._offset = 0
+        self._scale = 1
+        self._set_section_cmd = self._set_state_cmd = None
+        self._set_active_cmd = self._set_offset_scale_cmd = None
         self._last_sent_coeffs = [None] * self._max_sections
+        self._last_sent_offset_scale = None
         self._mcu.add_config_cmd("config_sos_filter oid=%d max_sections=%d"
                                  % (self._oid, self._max_sections))
         self._mcu.register_config_callback(self._build_config)
@@ -95,6 +98,9 @@ class MCU_SosFilter:
         self._set_state_cmd = self._mcu.lookup_command(
             "sos_filter_set_state oid=%c section_idx=%c state0=%i state1=%i",
             cq=self._cmd_queue)
+        self._set_offset_scale_cmd = self._mcu.lookup_command(
+            "sos_filter_set_offset_scale oid=%c offset=%i"
+            " scale=%i scale_frac_bits=%c", cq=self._cmd_queue)
         self._set_active_cmd = self._mcu.lookup_command(
             "sos_filter_set_active oid=%c n_sections=%c coeff_frac_bits=%c",
             cq=self._cmd_queue)
@@ -142,6 +148,15 @@ class MCU_SosFilter:
             sos_state.append(fixed_state)
         return sos_state
 
+    # Set conversion of a raw value 1 to a 1.0 value processed by sos filter
+    def set_offset_scale(self, offset, scale, scale_frac_bits=0,
+                         value_frac_bits=0):
+        self._offset = offset
+        self._value_frac_bits = value_frac_bits
+        scale_mult = scale * float(1 << value_frac_bits)
+        self._scale = to_fixed_32(scale_mult, scale_frac_bits)
+        self._scale_frac_bits = scale_frac_bits
+
     # Change the filter coefficients and state at runtime
     def set_filter_design(self, design):
         self._design = design
@@ -170,6 +185,11 @@ class MCU_SosFilter:
         # Send section initial states
         for i, state in enumerate(sos_state):
             self._set_state_cmd.send([self._oid, i, state[0], state[1]])
+        # Send offset/scale (if they have changed)
+        args = (self._oid, self._offset, self._scale, self._scale_frac_bits)
+        if args != self._last_sent_offset_scale:
+            self._set_offset_scale_cmd.send(args)
+            self._last_sent_offset_scale = args
         # Activate filter
         self._set_active_cmd.send([self._oid, num_sections,
                                    self._coeff_frac_bits])

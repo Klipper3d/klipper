@@ -13,25 +13,6 @@
 #include "trigger_analog.h" // trigger_analog_update
 #include "trsync.h" // trsync_do_trigger
 
-// Q2.29
-typedef int32_t fixedQ2_t;
-#define FIXEDQ2 2
-#define FIXEDQ2_FRAC_BITS ((32 - FIXEDQ2) - 1)
-
-// Q32.29 - a Q2.29 value stored in int64
-typedef int64_t fixedQ32_t;
-#define FIXEDQ32_FRAC_BITS FIXEDQ2_FRAC_BITS
-
-// Q16.15
-typedef int32_t fixedQ16_t;
-#define FIXEDQ16 16
-#define FIXEDQ16_FRAC_BITS ((32 - FIXEDQ16) - 1)
-
-// Q48.15 - a Q16.15 value stored in int64
-typedef int64_t fixedQ48_t;
-#define FIXEDQ48_FRAC_BITS FIXEDQ16_FRAC_BITS
-
-#define MAX_TRIGGER_GRAMS ((1L << FIXEDQ16) - 1)
 #define ERROR_SAFETY_RANGE 0
 #define ERROR_OVERFLOW 1
 #define ERROR_WATCHDOG 2
@@ -45,41 +26,14 @@ enum {FLAG_IS_HOMING = 1 << 0
 // Endstop Structure
 struct trigger_analog {
     struct timer time;
-    uint32_t trigger_grams, trigger_ticks, last_sample_ticks, rest_ticks;
+    uint32_t trigger_ticks, last_sample_ticks, rest_ticks;
     uint32_t homing_start_time;
     struct trsync *ts;
-    int32_t safety_counts_min, safety_counts_max, tare_counts;
+    int32_t safety_counts_min, safety_counts_max;
     uint8_t flags, trigger_reason, error_reason, watchdog_max, watchdog_count;
-    fixedQ16_t trigger_grams_fixed;
-    fixedQ2_t grams_per_count;
+    int32_t trigger_value;
     struct sos_filter *sf;
 };
-
-static inline uint8_t
-overflows_int32(int64_t value) {
-    return value > (int64_t)INT32_MAX || value < (int64_t)INT32_MIN;
-}
-
-// returns the integer part of a fixedQ48_t
-static inline int64_t
-round_fixedQ48(const int64_t fixed_value) {
-    return fixed_value >> FIXEDQ48_FRAC_BITS;
-}
-
-// Convert sensor counts to grams
-static inline fixedQ48_t
-counts_to_grams(struct trigger_analog *ta, const int32_t counts) {
-    // tearing ensures readings are referenced to 0.0g
-    const int32_t delta = counts - ta->tare_counts;
-    // convert sensor counts to grams by multiplication: 124 * 0.051 = 6.324
-    // this optimizes to single cycle SMULL instruction
-    const fixedQ32_t product = (int64_t)delta * (int64_t)ta->grams_per_count;
-    // after multiplication there are 30 fraction bits, reduce to 15
-    // caller verifies this wont overflow a 32bit int when truncated
-    const fixedQ48_t grams = product >>
-                                (FIXEDQ32_FRAC_BITS - FIXEDQ48_FRAC_BITS);
-    return grams;
-}
 
 static inline uint8_t
 is_flag_set(const uint8_t mask, struct trigger_analog *ta)
@@ -149,23 +103,16 @@ trigger_analog_update(struct trigger_analog *ta, const int32_t sample)
         return;
     }
 
-    // convert sample to grams
-    const fixedQ48_t raw_grams = counts_to_grams(ta, sample);
-    if (overflows_int32(raw_grams)) {
-        trigger_error(ta, ERROR_OVERFLOW);
-        return;
-    }
-
     // perform filtering
-    int32_t filtered_grams = raw_grams;
-    int ret = sos_filter_apply(ta->sf, &filtered_grams);
+    int32_t filtered_value = sample;
+    int ret = sos_filter_apply(ta->sf, &filtered_value);
     if (ret) {
         trigger_error(ta, ERROR_OVERFLOW);
         return;
     }
 
     // update trigger state
-    if (abs(filtered_grams) >= ta->trigger_grams_fixed) {
+    if (abs(filtered_value) >= ta->trigger_value) {
         try_trigger(ta, ta->last_sample_ticks);
     }
 }
@@ -192,43 +139,13 @@ watchdog_event(struct timer *t)
     return SF_RESCHEDULE;
 }
 
-static void
-set_endstop_range(struct trigger_analog *ta
-                  , int32_t safety_counts_min, int32_t safety_counts_max
-                  , int32_t tare_counts, uint32_t trigger_grams
-                  , fixedQ2_t grams_per_count)
-{
-    if (!(safety_counts_max >= safety_counts_min)) {
-        shutdown("Safety range reversed");
-    }
-    if (trigger_grams > MAX_TRIGGER_GRAMS) {
-        shutdown("trigger_grams too large");
-    }
-    // grams_per_count must be a positive fraction in Q2 format
-    const fixedQ2_t one = 1L << FIXEDQ2_FRAC_BITS;
-    if (grams_per_count < 0 || grams_per_count >= one) {
-        shutdown("grams_per_count is invalid");
-    }
-    ta->safety_counts_min = safety_counts_min;
-    ta->safety_counts_max = safety_counts_max;
-    ta->tare_counts = tare_counts;
-    ta->trigger_grams = trigger_grams;
-    ta->trigger_grams_fixed = trigger_grams << FIXEDQ16_FRAC_BITS;
-    ta->grams_per_count = grams_per_count;
-}
-
 // Create a trigger_analog
 void
 command_config_trigger_analog(uint32_t *args)
 {
     struct trigger_analog *ta = oid_alloc(
         args[0], command_config_trigger_analog, sizeof(*ta));
-    ta->flags = 0;
-    ta->trigger_ticks = 0;
-    ta->watchdog_max = 0;
-    ta->watchdog_count = 0;
     ta->sf = sos_filter_oid_lookup(args[1]);
-    set_endstop_range(ta, 0, 0, 0, 0, 0);
 }
 DECL_COMMAND(command_config_trigger_analog
              , "config_trigger_analog oid=%c sos_filter_oid=%c");
@@ -245,12 +162,12 @@ void
 command_trigger_analog_set_range(uint32_t *args)
 {
     struct trigger_analog *ta = trigger_analog_oid_lookup(args[0]);
-    set_endstop_range(ta, args[1], args[2], args[3], args[4]
-                      , (fixedQ16_t)args[5]);
+    ta->safety_counts_min = args[1];
+    ta->safety_counts_max = args[2];
+    ta->trigger_value = args[3];
 }
 DECL_COMMAND(command_trigger_analog_set_range, "trigger_analog_set_range"
-    " oid=%c safety_counts_min=%i safety_counts_max=%i tare_counts=%i"
-    " trigger_grams=%u grams_per_count=%i");
+    " oid=%c safety_counts_min=%i safety_counts_max=%i trigger_value=%i");
 
 // Home an axis
 void

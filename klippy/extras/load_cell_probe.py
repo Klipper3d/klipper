@@ -210,7 +210,7 @@ class ContinuousTareFilterHelper:
 
     def _create_filter(self, design, cmd_queue):
         sf = sos_filter.MCU_SosFilter(self._sensor.get_mcu(), cmd_queue, 4,
-                                      Q2_29_FRAC_BITS, Q16_15_FRAC_BITS)
+                                      Q2_29_FRAC_BITS)
         sf.set_filter_design(design)
         return sf
 
@@ -280,7 +280,7 @@ class LoadCellProbeConfigHelper:
             raise cmd_err("Load cell force_safety_limit exceeds sensor range!")
         return safety_min, safety_max
 
-    # calculate 1/counts_per_gram in Q2.29 fixed point
+    # calculate 1/counts_per_gram
     def get_grams_per_count(self):
         counts_per_gram = self._load_cell.get_counts_per_gram()
         # The counts_per_gram could be so large that it becomes 0.0 when
@@ -288,7 +288,7 @@ class LoadCellProbeConfigHelper:
         # a few grams which seems very unlikely. Treat this as an error:
         if counts_per_gram >= 2**Q2_29_FRAC_BITS:
             raise OverflowError("counts_per_gram value is too large to filter")
-        return sos_filter.to_fixed_32((1. / counts_per_gram), Q2_29_FRAC_BITS)
+        return 1. / counts_per_gram
 
 
 # MCU_trigger_analog is the interface to `trigger_analog` on the MCU
@@ -330,9 +330,8 @@ class MCU_trigger_analog:
             "trigger_analog_state oid=%c is_homing_trigger=%c "
             "trigger_ticks=%u", oid=self._oid, cq=self._cmd_queue)
         self._set_range_cmd = self._mcu.lookup_command(
-            "trigger_analog_set_range"
-            " oid=%c safety_counts_min=%i safety_counts_max=%i tare_counts=%i"
-            " trigger_grams=%u grams_per_count=%i", cq=self._cmd_queue)
+            "trigger_analog_set_range oid=%c safety_counts_min=%i"
+            " safety_counts_max=%i trigger_value=%i", cq=self._cmd_queue)
         self._home_cmd = self._mcu.lookup_command(
             "trigger_analog_home oid=%c trsync_oid=%c trigger_reason=%c"
             " error_reason=%c clock=%u rest_ticks=%u timeout=%u",
@@ -359,10 +358,13 @@ class MCU_trigger_analog:
         self._load_cell.tare(tare_counts)
         # update internal tare value
         safety_min, safety_max = self._config_helper.get_safety_range(gcmd)
-        args = [self._oid, safety_min, safety_max, int(tare_counts),
-            self._config_helper.get_trigger_force_grams(gcmd),
-            self._config_helper.get_grams_per_count()]
-        self._set_range_cmd.send(args)
+        trigger_val = self._config_helper.get_trigger_force_grams(gcmd)
+        tval32 = sos_filter.to_fixed_32(trigger_val, Q16_15_FRAC_BITS)
+        self._set_range_cmd.send([self._oid, safety_min, safety_max, tval32])
+        gpc = self._config_helper.get_grams_per_count()
+        Q17_14_FRAC_BITS = 14
+        self._sos_filter.set_offset_scale(int(-tare_counts), gpc,
+                                          Q17_14_FRAC_BITS, Q16_15_FRAC_BITS)
         self._sos_filter.reset_filter()
 
     def home_start(self, print_time):

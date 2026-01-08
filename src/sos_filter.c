@@ -20,7 +20,8 @@ struct sos_filter_section {
 };
 
 struct sos_filter {
-    uint8_t max_sections, n_sections, coeff_frac_bits;
+    uint8_t max_sections, n_sections, coeff_frac_bits, scale_frac_bits;
+    int32_t offset, scale;
     // filter composed of second order sections
     struct sos_filter_section filter[0];
 };
@@ -55,9 +56,19 @@ fixed_mul(int32_t coeff, int32_t value, uint_fast8_t frac_bits, int32_t *res)
 int
 sos_filter_apply(struct sos_filter *sf, int32_t *pvalue)
 {
-    int32_t cur_val = *pvalue;
-    uint_fast8_t cfb = sf->coeff_frac_bits;
+    int32_t raw_val = *pvalue;
+
+    // Apply offset and scale
+    int32_t offset = sf->offset, offset_val = raw_val + offset, cur_val;
+    if ((offset >= 0) != (offset_val >= raw_val))
+        // Overflow
+        return -1;
+    int ret = fixed_mul(sf->scale, offset_val, sf->scale_frac_bits, &cur_val);
+    if (ret)
+        return -1;
+
     // foreach section
+    uint_fast8_t cfb = sf->coeff_frac_bits;
     for (int section_idx = 0; section_idx < sf->n_sections; section_idx++) {
         struct sos_filter_section *section = &(sf->filter[section_idx]);
         // apply the section's filter coefficients to input
@@ -143,6 +154,18 @@ command_sos_filter_set_state(uint32_t *args)
 }
 DECL_COMMAND(command_sos_filter_set_state
     , "sos_filter_set_state oid=%c section_idx=%c state0=%i state1=%i");
+
+// Set incoming sample offset/scaling
+void
+command_trigger_analog_set_offset_scale(uint32_t *args)
+{
+    struct sos_filter *sf = sos_filter_oid_lookup(args[0]);
+    sf->offset = args[1];
+    sf->scale = args[2];
+    sf->scale_frac_bits = args[3] & 0x3f;
+}
+DECL_COMMAND(command_trigger_analog_set_offset_scale,
+    "sos_filter_set_offset_scale oid=%c offset=%i scale=%i scale_frac_bits=%c");
 
 // Set one section of the filter
 void
