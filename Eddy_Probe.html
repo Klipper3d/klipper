@@ -1314,6 +1314,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#errors-description" class="md-nav__link">
+    Errors description
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1387,6 +1394,13 @@
         <li class="md-nav__item">
   <a href="#thermal-drift-calibration" class="md-nav__link">
     Thermal Drift Calibration
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#errors-description" class="md-nav__link">
+    Errors description
   </a>
   
 </li>
@@ -1543,6 +1557,51 @@ to perform thermal drift calibration:</p>
 </ul>
 <p>As one may conclude, the calibration process outlined above is more challenging
 and time consuming than most other procedures.  It may require practice and several attempts to achieve an optimal calibration.</p>
+<h2 id="errors-description">Errors description<a class="headerlink" href="#errors-description" title="Permanent link">&para;</a></h2>
+<p>Possible homing errors and actionables:</p>
+<ul>
+<li>Sensor error<ul>
+<li>Check logs for detailed error</li>
+</ul>
+</li>
+<li>Eddy I2C STATUS/DATA error.<ul>
+<li>Check loose wiring.</li>
+<li>Try software I2C/decrease I2C rate</li>
+</ul>
+</li>
+<li>Invalid read data<ul>
+<li>Same as I2C</li>
+</ul>
+</li>
+</ul>
+<p>Possible sensor errors and actionables:</p>
+<ul>
+<li>Frequency over valid hard range<ul>
+<li>Check frequency configuration</li>
+<li>Hardware fault</li>
+</ul>
+</li>
+<li>Frequency over valid soft range<ul>
+<li>Check frequency configuration</li>
+</ul>
+</li>
+<li>Conversion Watchdog timeout<ul>
+<li>Hardware fault</li>
+</ul>
+</li>
+</ul>
+<p>Amplitude Low/High warning messages can mean:</p>
+<ul>
+<li>Sensor close to the bed</li>
+<li>Sensor far from the bed</li>
+<li>Higher temperature than was at the current calibration</li>
+<li>Capacitor missing</li>
+</ul>
+<p>On some sensors, it is not possible to completely avoid amplitude
+warning indicator.</p>
+<p>You can try to redo the <code>LDC_CALIBRATE_DRIVE_CURRENT</code> calibration at work
+temperature or increase <code>reg_drive_current</code> by 1-2 from the calibrated value.</p>
+<p>Generally, it is like an engine check light. It may indicate an issue.</p>
 
               
             </article>
