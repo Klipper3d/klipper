@@ -9,7 +9,7 @@
 #include "board/misc.h" // timer_read_time
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // shutdown
-#include "sos_filter.h" // fixedQ12_t
+#include "sos_filter.h" // sos_filter_apply
 #include "trigger_analog.h" // trigger_analog_update
 #include "trsync.h" // trsync_do_trigger
 
@@ -157,7 +157,12 @@ trigger_analog_update(struct trigger_analog *ta, const int32_t sample)
     }
 
     // perform filtering
-    const fixedQ16_t filtered_grams = sosfilt(ta->sf, (fixedQ16_t)raw_grams);
+    int32_t filtered_grams = raw_grams;
+    int ret = sos_filter_apply(ta->sf, &filtered_grams);
+    if (ret) {
+        trigger_error(ta, ERROR_OVERFLOW);
+        return;
+    }
 
     // update trigger state
     if (abs(filtered_grams) >= ta->trigger_grams_fixed) {

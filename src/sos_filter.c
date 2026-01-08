@@ -9,17 +9,14 @@
 #include "sched.h" // shutdown
 #include "sos_filter.h" // sos_filter
 
-typedef int32_t fixedQ_coeff_t;
-typedef int32_t fixedQ_value_t;
-
 // filter strucutre sizes
 #define SECTION_WIDTH 5
 #define STATE_WIDTH 2
 
 struct sos_filter_section {
     // filter composed of second order sections
-    fixedQ_coeff_t coeff[SECTION_WIDTH]; // aka sos
-    fixedQ_value_t state[STATE_WIDTH];   // aka zi
+    int32_t coeff[SECTION_WIDTH]; // aka sos
+    int32_t state[STATE_WIDTH];   // aka zi
 };
 
 struct sos_filter {
@@ -29,15 +26,15 @@ struct sos_filter {
     struct sos_filter_section filter[0];
 };
 
-static inline uint8_t
+static inline int
 overflows_int32(int64_t value)
 {
     return value > (int64_t)INT32_MAX || value < (int64_t)INT32_MIN;
 }
 
-// Multiply a coefficient in fixedQ_coeff_t by a value fixedQ_value_t
-static inline fixedQ_value_t
-fixed_mul(struct sos_filter *sf, fixedQ_coeff_t coeff, fixedQ_value_t value)
+// Multiply a coeff*value and shift result by coeff_frac_bits
+static inline int
+fixed_mul(struct sos_filter *sf, int32_t coeff, int32_t value, int32_t *res)
 {
     // This optimizes to single cycle SMULL on Arm Coretex M0+
     int64_t product = (int64_t)coeff * (int64_t)value;
@@ -45,35 +42,40 @@ fixed_mul(struct sos_filter *sf, fixedQ_coeff_t coeff, fixedQ_value_t value)
     product += sf->coeff_rounding;
     // shift the decimal right to discard the coefficient fractional bits
     int64_t result = product >> sf->coeff_frac_bits;
-    // check for overflow of int32_t
-    if (overflows_int32(result)) {
-        shutdown("fixed_mul: overflow");
-    }
     // truncate significant 32 bits
-    return (fixedQ_value_t)result;
+    *res = (int32_t)result;
+    // check for overflow of int32_t
+    if (overflows_int32(result))
+        return -1;
+    return 0;
 }
 
 // Apply the sosfilt algorithm to a new datapoint
-// returns the fixedQ_value_t filtered value
-int32_t
-sosfilt(struct sos_filter *sf, int32_t unfiltered_value)
+int
+sos_filter_apply(struct sos_filter *sf, int32_t *pvalue)
 {
-    fixedQ_value_t cur_val = unfiltered_value;
+    int32_t cur_val = *pvalue;
     // foreach section
     for (int section_idx = 0; section_idx < sf->n_sections; section_idx++) {
         struct sos_filter_section *section = &(sf->filter[section_idx]);
         // apply the section's filter coefficients to input
-        fixedQ_value_t next_val = fixed_mul(sf, section->coeff[0], cur_val);
+        int32_t next_val, c1_cur, c2_cur, c3_next, c4_next;
+        int ret = fixed_mul(sf, section->coeff[0], cur_val, &next_val);
         next_val += section->state[0];
-        section->state[0] = fixed_mul(sf, section->coeff[1], cur_val)
-                            - fixed_mul(sf, section->coeff[3], next_val)
-                            + (section->state[1]);
-        section->state[1] = fixed_mul(sf, section->coeff[2], cur_val)
-                            - fixed_mul(sf, section->coeff[4], next_val);
+        ret |= fixed_mul(sf, section->coeff[1], cur_val, &c1_cur);
+        ret |= fixed_mul(sf, section->coeff[3], next_val, &c3_next);
+        ret |= fixed_mul(sf, section->coeff[2], cur_val, &c2_cur);
+        ret |= fixed_mul(sf, section->coeff[4], next_val, &c4_next);
+        if (ret)
+            // Overflow
+            return -1;
+        section->state[0] = c1_cur - c3_next + section->state[1];
+        section->state[1] = c2_cur - c4_next;
         cur_val = next_val;
     }
 
-    return (int32_t)cur_val;
+    *pvalue = cur_val;
+    return 0;
 }
 
 // Create an sos_filter
