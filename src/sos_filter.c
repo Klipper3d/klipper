@@ -30,14 +30,15 @@ struct sos_filter {
 };
 
 static inline uint8_t
-overflows_int32(int64_t value) {
+overflows_int32(int64_t value)
+{
     return value > (int64_t)INT32_MAX || value < (int64_t)INT32_MIN;
 }
 
 // Multiply a coefficient in fixedQ_coeff_t by a value fixedQ_value_t
 static inline fixedQ_value_t
-fixed_mul(struct sos_filter *sf, const fixedQ_coeff_t coeff
-        , const fixedQ_value_t value) {
+fixed_mul(struct sos_filter *sf, fixedQ_coeff_t coeff, fixedQ_value_t value)
+{
     // This optimizes to single cycle SMULL on Arm Coretex M0+
     int64_t product = (int64_t)coeff * (int64_t)value;
     // round up at the last bit to be shifted away
@@ -55,7 +56,8 @@ fixed_mul(struct sos_filter *sf, const fixedQ_coeff_t coeff
 // Apply the sosfilt algorithm to a new datapoint
 // returns the fixedQ_value_t filtered value
 int32_t
-sosfilt(struct sos_filter *sf, const int32_t unfiltered_value) {
+sosfilt(struct sos_filter *sf, int32_t unfiltered_value)
+{
     fixedQ_value_t cur_val = unfiltered_value;
     // foreach section
     for (int section_idx = 0; section_idx < sf->n_sections; section_idx++) {
@@ -112,7 +114,7 @@ command_sos_filter_set_section(uint32_t *args)
     uint8_t section_idx = args[1];
     validate_section_index(sf, section_idx);
     // copy section data
-    const uint8_t arg_base = 2;
+    uint8_t arg_base = 2;
     for (uint8_t i = 0; i < SECTION_WIDTH; i++) {
         sf->filter[section_idx].coeff[i] = args[i + arg_base];
     }
@@ -131,7 +133,7 @@ command_sos_filter_set_state(uint32_t *args)
     // copy state data
     uint8_t section_idx = args[1];
     validate_section_index(sf, section_idx);
-    const uint8_t arg_base = 2;
+    uint8_t arg_base = 2;
     sf->filter[section_idx].state[0] = args[0 + arg_base];
     sf->filter[section_idx].state[1] = args[1 + arg_base];
 }
@@ -147,7 +149,7 @@ command_sos_filter_activate(uint32_t *args)
     if (n_sections > sf->max_sections)
         shutdown("Filter section index larger than max_sections");
     sf->n_sections = n_sections;
-    const uint8_t coeff_int_bits = args[2];
+    uint8_t coeff_int_bits = args[2];
     sf->coeff_frac_bits = (31 - coeff_int_bits);
     sf->coeff_rounding  = (1 << (sf->coeff_frac_bits - 1));
 }

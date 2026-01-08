@@ -5,8 +5,7 @@
 
 struct sos_filter;
 
-int32_t sosfilt(struct sos_filter *sf
-                        , const int32_t unfiltered_value);
+int32_t sosfilt(struct sos_filter *sf, int32_t unfiltered_value);
 struct sos_filter *sos_filter_oid_lookup(uint8_t oid);
 
 #endif // sos_filter.h
