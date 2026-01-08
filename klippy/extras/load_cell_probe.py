@@ -215,8 +215,8 @@ class ContinuousTareFilterHelper:
             buzz_delay, notches, notch_quality)
 
     def _create_filter(self, fixed_filter, cmd_queue):
-        return sos_filter.SosFilter(self._sensor.get_mcu(), cmd_queue,
-            fixed_filter, 4)
+        return sos_filter.MCU_SosFilter(self._sensor.get_mcu(), cmd_queue,
+                                        fixed_filter, 4)
 
     def update_from_command(self, gcmd, cq=None):
         gcmd_filter = self._build_filter(gcmd)
@@ -323,7 +323,6 @@ class MCU_trigger_analog:
         self._printer.register_event_handler("klippy:connect", self._on_connect)
 
     def _config_commands(self):
-        self._sos_filter.create_filter()
         self._mcu.add_config_cmd(
             "config_trigger_analog oid=%d sos_filter_oid=%d" % (
                 self._oid, self._sos_filter.get_oid()))
