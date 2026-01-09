@@ -163,13 +163,9 @@ class ContinuousTareFilter:
 
     # create a filter design from the parameters
     def design_filter(self, error_func):
-        design = sos_filter.DigitalFilter(self.sps, error_func, self.drift,
+        return sos_filter.DigitalFilter(self.sps, error_func, self.drift,
             self.drift_delay, self.buzz, self.buzz_delay, self.notches,
             self.notch_quality)
-        fixed_filter = sos_filter.FixedPointSosFilter(
-            design.get_filter_sections(), design.get_initial_state(),
-            Q2_INT_BITS, Q16_INT_BITS)
-        return fixed_filter
 
 
 # Combine ContinuousTareFilter and SosFilter into an easy-to-use class
@@ -214,9 +210,11 @@ class ContinuousTareFilterHelper:
         return ContinuousTareFilter(self._sps, drift, drift_delay, buzz,
             buzz_delay, notches, notch_quality)
 
-    def _create_filter(self, fixed_filter, cmd_queue):
-        return sos_filter.MCU_SosFilter(self._sensor.get_mcu(), cmd_queue,
-                                        fixed_filter, 4)
+    def _create_filter(self, design, cmd_queue):
+        sf = sos_filter.MCU_SosFilter(self._sensor.get_mcu(), cmd_queue, 4,
+                                      Q2_INT_BITS, Q16_INT_BITS)
+        sf.set_filter_design(design)
+        return sf
 
     def update_from_command(self, gcmd, cq=None):
         gcmd_filter = self._build_filter(gcmd)
@@ -224,8 +222,8 @@ class ContinuousTareFilterHelper:
         if self._active_design == gcmd_filter:
             return
         # update MCU filter from GCode command
-        self._sos_filter.change_filter(
-            self._active_design.design_filter(gcmd.error))
+        design = self._active_design.design_filter(gcmd.error)
+        self._sos_filter.set_filter_design(design)
 
     def get_sos_filter(self):
         return self._sos_filter
