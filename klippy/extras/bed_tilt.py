@@ -58,19 +58,17 @@ class BedTiltCalibrate:
     cmd_BED_TILT_CALIBRATE_help = "Bed tilt calibration script"
     def cmd_BED_TILT_CALIBRATE(self, gcmd):
         self.probe_helper.start_probe(gcmd)
-    def probe_finalize(self, offsets, positions):
+    def probe_finalize(self, positions):
         # Setup for coordinate descent analysis
-        z_offset = offsets[2]
         logging.info("Calculating bed_tilt with: %s", positions)
         params = { 'x_adjust': self.bedtilt.x_adjust,
                    'y_adjust': self.bedtilt.y_adjust,
-                   'z_adjust': z_offset }
+                   'z_adjust': 0. }
         logging.info("Initial bed_tilt parameters: %s", params)
         # Perform coordinate descent
         def adjusted_height(pos, params):
-            x, y, z = pos
-            return (z - x*params['x_adjust'] - y*params['y_adjust']
-                    - params['z_adjust'])
+            return (pos.bed_z - pos.bed_x*params['x_adjust']
+                    - pos.bed_y*params['y_adjust'] - params['z_adjust'])
         def errorfunc(params):
             total_error = 0.
             for pos in positions:
@@ -81,8 +79,7 @@ class BedTiltCalibrate:
         # Update current bed_tilt calculations
         x_adjust = new_params['x_adjust']
         y_adjust = new_params['y_adjust']
-        z_adjust = (new_params['z_adjust'] - z_offset
-                    - x_adjust * offsets[0] - y_adjust * offsets[1])
+        z_adjust = new_params['z_adjust']
         self.bedtilt.update_adjust(x_adjust, y_adjust, z_adjust)
         # Log and report results
         logging.info("Calculated bed_tilt parameters: %s", new_params)
