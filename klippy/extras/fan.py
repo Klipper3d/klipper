@@ -17,7 +17,7 @@ class Fan:
                                          minval=0., maxval=1.)
         cycle_time = config.getfloat('cycle_time', 0.010, above=0.)
         hardware_pwm = config.getboolean('hardware_pwm', False)
-        shutdown_speed = config.getfloat(
+        self.shutdown_speed = shutdown_speed = config.getfloat(
             'shutdown_speed', default_shutdown_speed, minval=0., maxval=1.)
         # Setup pwm object
         ppins = self.printer.lookup_object('pins')
@@ -71,7 +71,7 @@ class Fan:
     def set_speed_from_command(self, value):
         self.gcrq.queue_gcode_request(value)
     def _handle_request_restart(self, print_time):
-        self.set_speed(0., print_time)
+        self.set_speed(self.shutdown_speed, print_time)
 
     def get_status(self, eventtime):
         tachometer_status = self.tachometer.get_status(eventtime)
