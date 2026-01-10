@@ -743,7 +743,7 @@ max_accel:
 
 ```
 
-Then a user must define three carriages for X, Y, and Z axes, e.g.:
+Then a user must define three primary carriages for X, Y, and Z axes, e.g.:
 ```
 [carriage carriage_x]
 axis:
@@ -2445,6 +2445,12 @@ axis:
 #   See the "stepper" section for the definition of the above parameters.
 ```
 
+`[dual_carriage]` is also supported with `generic_cartesian` kinematic,
+in which case it can be thought of as any additional carriage of an axis
+that can be moved independently from the primary `[carriage]` of that axis.
+The main difference between `[carriage]` and `[dual_carriage]` is that
+the latter is not activated by default after the printer startup or
+homing, and must be enabled explicitly via `SET_DUAL_CARRIAGE` command.
 For an example of dual carriage configuration with `generic_cartesian`
 kinematic, see the following configuration
 [sample](../config/example-generic-caretesian.cfg).
@@ -2452,10 +2458,15 @@ Please note that in this case the `[dual_carriage]` configuration deviates
 from the configuration described above:
 ```
 [dual_carriage my_dc_carriage]
-primary_carriage:
-#   Defines the matching primary carriage of this dual carriage and
-#   the corresponding IDEX axis. Must match a name of a defined `[carriage]`.
-#   This parameter must be provided.
+#primary_carriage:
+#   Defines the matching carriage on the same gantry as this dual carriage and
+#   the corresponding dual axis. Must match a name of a defined `[carriage]` or
+#   another independent `[dual_carriage]` (see below).
+#   Either this parameter or the parameter 'axis' must be provided.
+#axis:
+#   Axis of a carriage, either x or y. If provided, defines a dual carriage
+#   independent of a `[carriage]` with the same axis on a different gantry.
+#   Either this parameter or the parameter 'primary_carriage' must be provided.
 #safe_distance:
 #   The minimum distance (in mm) to enforce between the dual and the primary
 #   carriages. If a G-Code command is executed that will bring the carriages
@@ -2464,7 +2475,8 @@ primary_carriage:
 #   position_min and position_max for the dual and primary carriages. If set
 #   to 0 (or safe_distance is unset and position_min and position_max are
 #   identical for the primary and dual carriages), the carriages proximity
-#   checks will be disabled.
+#   checks will be disabled. Only valid for a dual_carriage with a defined
+#   'primary_carriage'.
 endstop_pin:
 #position_min:
 position_endstop:
@@ -2518,9 +2530,12 @@ Note that `SHAPER_TYPE_Y` and `SHAPER_FREQ_Y` must be the same in both
 commands in this case, since the same motors drive Y axis when either
 of the `carriage_x` and `carriage_u` carriages are active.
 
-It is worth noting that `generic_cartesian` kinematic can support two
-dual carriages for X and Y axes. For reference, see for instance a
-[sample](../config/sample-corexyuv.cfg) of CoreXYUV configuration.
+It is worth noting that `generic_cartesian` kinematic can support more
+than a single `[dual_carriage]`, e.g. dual-gantry setups with one or
+two independent carriages per gantry. For reference, see for instance
+[CoreXYUV](../config/sample-corexyuv.cfg) or
+[IQEX](../config/sample-iqex.cfg) (independent quad extruders)
+printers sample configurations.
 
 ### [extruder_stepper]
 
