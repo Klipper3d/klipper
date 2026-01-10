@@ -282,6 +282,9 @@ class EddyGatherSamples:
         self._printer = printer
         self._sensor_helper = sensor_helper
         self._calibration = calibration
+        self._is_scan_probe = False
+        if z_offset is None:
+            self._is_scan_probe = True
         self._z_offset = z_offset
         # Results storage
         self._samples = []
@@ -356,6 +359,11 @@ class EddyGatherSamples:
             if freq:
                 sensor_z = self._calibration.freq_to_height(freq)
             self._probe_results.append((sensor_z, toolhead_pos))
+            if self._is_scan_probe and sensor_z:
+                epos = toolhead_pos
+                gcode = self._printer.lookup_object('gcode')
+                gcode.respond_info("probe at %.3f,%.3f is z=%.6f, freq=%.3f"
+                                   % (epos[0], epos[1], sensor_z, freq))
             self._probe_times.pop(0)
     def pull_probed(self):
         self._await_samples()
@@ -367,6 +375,10 @@ class EddyGatherSamples:
             if sensor_z <= -OUT_OF_RANGE or sensor_z >= OUT_OF_RANGE:
                 raise self._printer.command_error(
                     "probe_eddy_current sensor not in valid range")
+            if self._is_scan_probe:
+                toolhead_pos[2] = sensor_z
+                results.append(toolhead_pos)
+                continue
             # Callers expect position relative to z_offset, so recalculate
             bed_deviation = toolhead_pos[2] - sensor_z
             toolhead_pos[2] = self._z_offset + bed_deviation
@@ -491,7 +503,11 @@ class EddyScanningProbe:
         self._printer = printer
         self._sensor_helper = sensor_helper
         self._calibration = calibration
-        self._z_offset = z_offset
+        self._is_probe = True
+        if gcmd.get_command() in ('BED_MESH_CALIBRATE', 'Z_TILT_ADJUST'):
+            self._is_probe = False
+        else:
+            z_offset = None
         self._gather = EddyGatherSamples(printer, sensor_helper,
                                          calibration, z_offset)
         self._sample_time_delay = 0.050
@@ -503,12 +519,20 @@ class EddyScanningProbe:
             start_time, start_time + self._sample_time, printtime)
     def run_probe(self, gcmd):
         toolhead = self._printer.lookup_object("toolhead")
-        if self._is_rapid:
+        if self._is_rapid and not self._is_probe:
             toolhead.register_lookahead_callback(self._rapid_lookahead_cb)
             return
-        printtime = toolhead.get_last_move_time()
-        toolhead.dwell(self._sample_time_delay + self._sample_time)
-        start_time = printtime + self._sample_time_delay
+        if not self._is_probe:
+            printtime = toolhead.get_last_move_time()
+            toolhead.dwell(self._sample_time_delay + self._sample_time)
+            start_time = printtime + self._sample_time_delay
+        else:
+            reactor = self._printer.get_reactor()
+            curtime = reactor.monotonic()
+            mcu = self._sensor_helper.get_mcu()
+            printtime = mcu.estimated_print_time(curtime)
+            start_time = printtime
+            reactor.pause(curtime + self._sample_time)
         self._gather.note_probe_and_position(
             start_time, start_time + self._sample_time, start_time)
     def pull_probed_results(self):
