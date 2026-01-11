@@ -6,18 +6,17 @@
 
 MAX_INT32 = (2 ** 31)
 MIN_INT32 = -(2 ** 31) - 1
-def assert_is_int32(value, error):
+def assert_is_int32(value, frac_bits):
     if value > MAX_INT32 or value < MIN_INT32:
-        raise OverflowError(error)
+        raise OverflowError("Fixed point Q%d.%d overflow"
+                            % (31-frac_bits, frac_bits))
     return value
 
 # convert a floating point value to a 32 bit fixed point representation
 # checks for overflow
-def to_fixed_32(value, int_bits):
-    fractional_bits = (32 - (1 + int_bits))
-    fixed_val = int(value * (2 ** fractional_bits))
-    return assert_is_int32(fixed_val, "Fixed point Q%i overflow"
-                           % (int_bits,))
+def to_fixed_32(value, frac_bits):
+    fixed_val = int(value * (2**frac_bits))
+    return assert_is_int32(fixed_val, frac_bits)
 
 
 # Digital filter designer and container
@@ -69,13 +68,13 @@ class MCU_SosFilter:
     # max_sections should be the largest number of sections you expect
     # to use at runtime.
     def __init__(self, mcu, cmd_queue, max_sections,
-                 coeff_int_bits=2, value_int_bits=15):
+                 coeff_frac_bits=29, value_frac_bits=16):
         self._mcu = mcu
         self._cmd_queue = cmd_queue
         self._oid = self._mcu.create_oid()
         self._max_sections = max_sections
-        self._coeff_int_bits = coeff_int_bits
-        self._value_int_bits = value_int_bits
+        self._coeff_frac_bits = coeff_frac_bits
+        self._value_frac_bits = value_frac_bits
         self._design = None
         self._set_section_cmd = self._set_state_cmd = self._set_active_cmd =None
         self._last_sent_coeffs = [None] * self._max_sections
@@ -83,11 +82,11 @@ class MCU_SosFilter:
                                  % (self._oid, self._max_sections))
         self._mcu.register_config_callback(self._build_config)
 
-    def _validate_int_bits(self, int_bits):
-        if int_bits < 1 or int_bits > 30:
-            raise ValueError("The number of integer bits (%i) must be a"
-                             " value between 1 and 30" % (int_bits,))
-        return int_bits
+    def _validate_frac_bits(self, frac_bits):
+        if frac_bits < 0 or frac_bits > 31:
+            raise ValueError("The number of fractional bits (%i) must be a"
+                             " value between 0 and 31" % (frac_bits,))
+        return frac_bits
 
     def _build_config(self):
         self._set_section_cmd = self._mcu.lookup_command(
@@ -97,7 +96,7 @@ class MCU_SosFilter:
             "sos_filter_set_state oid=%c section_idx=%c state0=%i state1=%i",
             cq=self._cmd_queue)
         self._set_active_cmd = self._mcu.lookup_command(
-            "sos_filter_set_active oid=%c n_sections=%c coeff_int_bits=%c",
+            "sos_filter_set_active oid=%c n_sections=%c coeff_frac_bits=%c",
             cq=self._cmd_queue)
 
     def get_oid(self):
@@ -117,7 +116,7 @@ class MCU_SosFilter:
             fixed_section = []
             for col, coeff in enumerate(section):
                 if col != 3:  # omit column 3
-                    fixed_coeff = to_fixed_32(coeff, self._coeff_int_bits)
+                    fixed_coeff = to_fixed_32(coeff, self._coeff_frac_bits)
                     fixed_section.append(fixed_coeff)
                 elif coeff != 1.0:  # double check column 3 is always 1.0
                     raise ValueError("Coefficient 3 is expected to be 1.0"
@@ -139,7 +138,7 @@ class MCU_SosFilter:
                     % (nun_states,))
             fixed_state = []
             for col, value in enumerate(section):
-                fixed_state.append(to_fixed_32(value, self._value_int_bits))
+                fixed_state.append(to_fixed_32(value, self._value_frac_bits))
             sos_state.append(fixed_state)
         return sos_state
 
@@ -173,4 +172,4 @@ class MCU_SosFilter:
             self._set_state_cmd.send([self._oid, i, state[0], state[1]])
         # Activate filter
         self._set_active_cmd.send([self._oid, num_sections,
-                                   self._coeff_int_bits])
+                                   self._coeff_frac_bits])

@@ -10,10 +10,8 @@ from . import probe, sos_filter, load_cell, hx71x, ads1220
 np = None  # delay NumPy import until configuration time
 
 # constants for fixed point numbers
-Q2_INT_BITS = 2
-Q2_FRAC_BITS = (32 - (1 + Q2_INT_BITS))
-Q16_INT_BITS = 16
-Q16_FRAC_BITS = (32 - (1 + Q16_INT_BITS))
+Q2_29_FRAC_BITS = 29
+Q16_15_FRAC_BITS = 15
 
 
 class TapAnalysis:
@@ -212,7 +210,7 @@ class ContinuousTareFilterHelper:
 
     def _create_filter(self, design, cmd_queue):
         sf = sos_filter.MCU_SosFilter(self._sensor.get_mcu(), cmd_queue, 4,
-                                      Q2_INT_BITS, Q16_INT_BITS)
+                                      Q2_29_FRAC_BITS, Q16_15_FRAC_BITS)
         sf.set_filter_design(design)
         return sf
 
@@ -282,15 +280,15 @@ class LoadCellProbeConfigHelper:
             raise cmd_err("Load cell force_safety_limit exceeds sensor range!")
         return safety_min, safety_max
 
-    # calculate 1/counts_per_gram in Q2 fixed point
+    # calculate 1/counts_per_gram in Q2.29 fixed point
     def get_grams_per_count(self):
         counts_per_gram = self._load_cell.get_counts_per_gram()
         # The counts_per_gram could be so large that it becomes 0.0 when
-        # converted to Q2 format. This would mean the ADC range only measures a
-        # few grams which seems very unlikely. Treat this as an error:
-        if counts_per_gram >= 2**Q2_FRAC_BITS:
+        # converted to Q2.29 format. This would mean the ADC range only measures
+        # a few grams which seems very unlikely. Treat this as an error:
+        if counts_per_gram >= 2**Q2_29_FRAC_BITS:
             raise OverflowError("counts_per_gram value is too large to filter")
-        return sos_filter.to_fixed_32((1. / counts_per_gram), Q2_INT_BITS)
+        return sos_filter.to_fixed_32((1. / counts_per_gram), Q2_29_FRAC_BITS)
 
 
 # MCU_trigger_analog is the interface to `trigger_analog` on the MCU

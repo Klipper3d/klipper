@@ -21,7 +21,6 @@ struct sos_filter_section {
 
 struct sos_filter {
     uint8_t max_sections, n_sections, coeff_frac_bits;
-    uint32_t coeff_rounding;
     // filter composed of second order sections
     struct sos_filter_section filter[0];
 };
@@ -33,15 +32,17 @@ overflows_int32(int64_t value)
 }
 
 // Multiply a coeff*value and shift result by coeff_frac_bits
-static inline int
-fixed_mul(struct sos_filter *sf, int32_t coeff, int32_t value, int32_t *res)
+static int
+fixed_mul(int32_t coeff, int32_t value, uint_fast8_t frac_bits, int32_t *res)
 {
     // This optimizes to single cycle SMULL on Arm Coretex M0+
-    int64_t product = (int64_t)coeff * (int64_t)value;
-    // round up at the last bit to be shifted away
-    product += sf->coeff_rounding;
-    // shift the decimal right to discard the coefficient fractional bits
-    int64_t result = product >> sf->coeff_frac_bits;
+    int64_t result = (int64_t)coeff * (int64_t)value;
+    if (frac_bits) {
+        // round up at the last bit to be shifted away
+        result += 1 << (frac_bits - 1);
+        // shift the decimal right to discard the coefficient fractional bits
+        result >>= frac_bits;
+    }
     // truncate significant 32 bits
     *res = (int32_t)result;
     // check for overflow of int32_t
@@ -55,17 +56,18 @@ int
 sos_filter_apply(struct sos_filter *sf, int32_t *pvalue)
 {
     int32_t cur_val = *pvalue;
+    uint_fast8_t cfb = sf->coeff_frac_bits;
     // foreach section
     for (int section_idx = 0; section_idx < sf->n_sections; section_idx++) {
         struct sos_filter_section *section = &(sf->filter[section_idx]);
         // apply the section's filter coefficients to input
         int32_t next_val, c1_cur, c2_cur, c3_next, c4_next;
-        int ret = fixed_mul(sf, section->coeff[0], cur_val, &next_val);
+        int ret = fixed_mul(section->coeff[0], cur_val, cfb, &next_val);
         next_val += section->state[0];
-        ret |= fixed_mul(sf, section->coeff[1], cur_val, &c1_cur);
-        ret |= fixed_mul(sf, section->coeff[3], next_val, &c3_next);
-        ret |= fixed_mul(sf, section->coeff[2], cur_val, &c2_cur);
-        ret |= fixed_mul(sf, section->coeff[4], next_val, &c4_next);
+        ret |= fixed_mul(section->coeff[1], cur_val, cfb, &c1_cur);
+        ret |= fixed_mul(section->coeff[3], next_val, cfb, &c3_next);
+        ret |= fixed_mul(section->coeff[2], cur_val, cfb, &c2_cur);
+        ret |= fixed_mul(section->coeff[4], next_val, cfb, &c4_next);
         if (ret)
             // Overflow
             return -1;
@@ -151,9 +153,7 @@ command_sos_filter_activate(uint32_t *args)
     if (n_sections > sf->max_sections)
         shutdown("Filter section index larger than max_sections");
     sf->n_sections = n_sections;
-    uint8_t coeff_int_bits = args[2];
-    sf->coeff_frac_bits = (31 - coeff_int_bits);
-    sf->coeff_rounding  = (1 << (sf->coeff_frac_bits - 1));
+    sf->coeff_frac_bits = args[2] & 0x3f;
 }
 DECL_COMMAND(command_sos_filter_activate
-    , "sos_filter_set_active oid=%c n_sections=%c coeff_int_bits=%c");
+    , "sos_filter_set_active oid=%c n_sections=%c coeff_frac_bits=%c");
