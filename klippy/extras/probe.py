@@ -136,6 +136,10 @@ class ProbeCommandHelper:
             # Probe position
             probe_session.run_probe(fo_gcmd)
             probe_num += 1
+            method = gcmd.get('METHOD', 'automatic').lower()
+            if method in ('scan', 'rapid_scan'):
+                # there is no move and no sense to retract
+                continue
             # Retract
             pos = toolhead.get_position()
             liftpos = [None, None, pos[2] + params['sample_retract_dist']]
