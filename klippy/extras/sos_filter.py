@@ -56,6 +56,9 @@ class DigitalFilter:
         import scipy.signal as signal
         b, a = signal.iirnotch(freq, Q=quality, fs=self.sample_frequency)
         return signal.tf2sos(b, a)[0]
+    def filtfilt(self, data):
+        import scipy.signal as signal
+        return signal.sosfiltfilt(self.filter_sections, data)
 
     def get_filter_sections(self):
         return self.filter_sections

@@ -152,12 +152,12 @@ class DeltaCalibrate:
                            "%.3f,%.3f,%.3f" % tuple(spos1))
             configfile.set(section, "distance%d_pos2" % (i,),
                            "%.3f,%.3f,%.3f" % tuple(spos2))
-    def probe_finalize(self, offsets, positions):
+    def probe_finalize(self, positions):
         # Convert positions into (z_offset, stable_position) pairs
-        z_offset = offsets[2]
         kin = self.printer.lookup_object('toolhead').get_kinematics()
-        delta_params = kin.get_calibration()
-        probe_positions = [(z_offset, delta_params.calc_stable_position(p))
+        csp = kin.get_calibration().calc_stable_position
+        probe_positions = [(p.test_z - p.bed_z,
+                            csp([p.test_x, p.test_y, p.test_z]))
                            for p in positions]
         # Perform analysis
         self.calculate_params(probe_positions, self.last_distances)

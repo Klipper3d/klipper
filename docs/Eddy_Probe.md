@@ -24,6 +24,7 @@ named `[probe_eddy_current my_eddy_probe]` then one would run
 complete in a few seconds.  After it completes, issue a `SAVE_CONFIG`
 command to save the results to the printer.cfg and restart.
 
+Eddy current is used as a proximity/distance sensor (similar to a laser ruler).
 The second step in calibration is to correlate the sensor readings to
 the corresponding Z heights. Home the printer and navigate the
 toolhead so that the nozzle is near the center of the bed. Then run a
@@ -35,7 +36,17 @@ those steps are complete one can `ACCEPT` the position. The tool will
 then move the toolhead so that the sensor is above the point where the
 nozzle used to be and run a series of movements to correlate the
 sensor to Z positions. This will take a couple of minutes. After the
-tool completes, issue a `SAVE_CONFIG` command to save the results to
+tool completes it will output the sensor performance data:
+```
+probe_eddy_current: noise 0.000642mm, MAD_Hz=11.314 in 2525 queries
+Total frequency range: 45000.012 Hz
+z_offset: 0.250 # noise 0.000200mm, MAD_Hz=11.000
+z_offset: 0.530 # noise 0.000300mm, MAD_Hz=12.000
+z_offset: 1.010 # noise 0.000400mm, MAD_Hz=14.000
+z_offset: 2.010 # noise 0.000600mm, MAD_Hz=12.000
+z_offset: 3.010 # noise 0.000700mm, MAD_Hz=9.000
+```
+issue a `SAVE_CONFIG` command to save the results to
 the printer.cfg and restart.
 
 After initial calibration it is a good idea to verify that the
@@ -54,6 +65,84 @@ result in changes in reported Z height. Changes in either the bed
 surface temperature or sensor hardware temperature can skew the
 results. It is important that calibration and probing is only done
 when the printer is at a stable temperature.
+
+## Tap calibration
+
+The Eddy probe measures the resonance frequency of the coil.
+By the absolute value of the frequency and the calibration curve from
+`PROBE_EDDY_CURRENT_CALIBRATE`, it is therefore possible to detect
+where the bed is without physical contact.
+
+By use of the same knowledge, we know that frequency changes with
+the distance. It is possible to track that change in real time and
+detect the time/position where contact happens - a change of frequency
+starts to change in a different way.
+For example, stopped to change because of the collision.
+
+Because eddy output is not perfect: there is sensor noise,
+mechanical oscillation, thermal expansion and other discrepancies,
+it is required to calibrate the stop threshold for your machine.
+Practically, it ensures that the Eddy's output data absolute value
+change per second (velocity) is high enough - higher than the noise level,
+and that upon collision it always decreases by at least this value.
+
+```
+[probe_eddy_current my_probe]
+# eddy probe configuration...
+tap_threshold: 0
+```
+
+Suggested calibration routine works as follows:
+1. Home Z
+2. Place toolhead at the center of the bed.
+3. Move Z far away, 30mm for example.
+4. Run `PROBE METHOD=tap`
+5. If it stops before collision, adjust the `tap_threshold`.
+
+Repeat until nozzle would softly touch the bed.
+It easier to do so with clean nozzle and by visual inspection of the process.
+
+Example sequence of threshold values to test:
+```
+1 -> 100 -> 200 -> 400 -> 800 -> 1200 -> 1600 -> 2000
+2000 -> 1800 -> 1750
+```
+Your value will normally be between those.
+- Too high a value leaves a less safe margin for early collision -
+if something is between the nozzle and the bed, or if the nozzle
+is too close to the bed before the tap.
+- Too low - can make the toolhead stop in mid-air
+because of the noise.
+
+You can estimate the initial threshold value by analyzing your own
+calibration routine output:
+```
+probe_eddy_current: noise 0.000642mm, MAD_Hz=11.314
+...
+z_offset: 1.010 # noise 0.000400mm, MAD_Hz=14.000
+```
+By use of your reference frequency from the
+[configuration](Config_Reference.md#probe_eddy_current).
+The estimation will be:
+```
+MAD_Hz * 2 * (1<<28) / Reference_frequency
+11.314 * 2 * 268435456 / 12000000 = 506
+```
+
+You can validate the tap precision by measuring the paper thickness
+from the initial calibration guide. It is expected to be ~0.1mm.
+
+Tap precision is limited by the sampling frequency and
+the speed of the descent.
+If you take 24 photos per second of the moving train, you can only estimate
+where the train was between photos.
+
+It is possible to reduce the descending speed. It may require decrease of
+absolute `tap_threshold` value.
+
+It is possible to tap over non-conductive surfaces as long as there is metal
+behind it within the sensor's sensitivity range.
+Max distance can be approximated to be about 1.5x of the coil's narrowest part.
 
 ## Thermal Drift Calibration
 
