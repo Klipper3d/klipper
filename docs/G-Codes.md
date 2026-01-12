@@ -350,8 +350,9 @@ reference a defined primary or dual carriage for `generic_cartesian`
 kinematics or be 0 (for primary carriage) or 1 (for dual carriage)
 for all other kinematics supporting IDEX. Setting the mode to `PRIMARY`
 deactivates the other carriage and makes the specified carriage execute
-subsequent G-Code commands as-is. `COPY` and `MIRROR` modes are supported
-only for dual carriages. When set to either of these modes, dual carriage
+subsequent G-Code commands as-is. Before activating `COPY` or `MIRROR`
+mode for a carriage, a different one must be activated as `PRIMARY` on
+the same axis. When set to either of these two modes, the carriage
 will then track the subsequent moves of its primary carriage and either
 copy relative movements of it (in `COPY` mode) or execute them in the
 opposite (mirror) direction (in `MIRROR` mode).
