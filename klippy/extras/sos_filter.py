@@ -108,6 +108,9 @@ class MCU_SosFilter:
     def get_oid(self):
         return self._oid
 
+    def convert_value(self, val):
+        return to_fixed_32(val, self._value_frac_bits)
+
     # convert the SciPi SOS filters to fixed point format
     def _convert_filter(self):
         if self._design is None:

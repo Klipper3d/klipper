@@ -299,18 +299,20 @@ class MCU_trigger_analog:
     ERROR_OVERFLOW = mcu.MCU_trsync.REASON_COMMS_TIMEOUT + 2
     ERROR_WATCHDOG = mcu.MCU_trsync.REASON_COMMS_TIMEOUT + 3
 
-    def __init__(self, config, load_cell_inst, sos_filter_inst, config_helper,
+    def __init__(self, config, sensor_inst, sos_filter_inst, config_helper,
             trigger_dispatch):
         self._printer = config.get_printer()
-        self._load_cell = load_cell_inst
         self._sos_filter = sos_filter_inst
         self._config_helper = config_helper
-        self._sensor = load_cell_inst.get_sensor()
+        self._sensor = sensor_inst
         self._mcu = self._sensor.get_mcu()
         # configure MCU objects
         self._dispatch = trigger_dispatch
         self._cmd_queue = self._dispatch.get_command_queue()
         self._oid = self._mcu.create_oid()
+        self._raw_min = self._raw_max = 0
+        self._last_range_args = None
+        self._trigger_value = 0.
         self._config_commands()
         self._home_cmd = None
         self._query_cmd = None
@@ -347,24 +349,27 @@ class MCU_trigger_analog:
     def get_mcu(self):
         return self._mcu
 
-    def get_load_cell(self):
-        return self._load_cell
+    def get_sos_filter(self):
+        return self._sos_filter
 
     def get_dispatch(self):
         return self._dispatch
 
-    def set_endstop_range(self, tare_counts, gcmd=None):
-        # update the load cell so it reflects the new tare value
-        self._load_cell.tare(tare_counts)
-        # update internal tare value
-        safety_min, safety_max = self._config_helper.get_safety_range(gcmd)
-        trigger_val = self._config_helper.get_trigger_force_grams(gcmd)
-        tval32 = sos_filter.to_fixed_32(trigger_val, Q16_15_FRAC_BITS)
-        self._set_range_cmd.send([self._oid, safety_min, safety_max, tval32])
-        gpc = self._config_helper.get_grams_per_count()
-        Q17_14_FRAC_BITS = 14
-        self._sos_filter.set_offset_scale(int(-tare_counts), gpc,
-                                          Q17_14_FRAC_BITS, Q16_15_FRAC_BITS)
+    def set_trigger_value(self, trigger_value):
+        self._trigger_value = trigger_value
+
+    def set_raw_range(self, raw_min, raw_max):
+        self._raw_min = raw_min
+        self._raw_max = raw_max
+
+    def reset_filter(self):
+        # Update parameters in mcu (if they have changed)
+        tval32 = self._sos_filter.convert_value(self._trigger_value)
+        args = [self._oid, self._raw_min, self._raw_max, tval32]
+        if args != self._last_range_args:
+            self._set_range_cmd.send(args)
+            self._last_range_args = args
+        # Update sos filter in mcu
         self._sos_filter.reset_filter()
 
     def home_start(self, print_time):
@@ -397,15 +402,15 @@ class LoadCellProbingMove:
                                            "waiting for sensor data"
     }
 
-    def __init__(self, config, mcu_trigger_analog, param_helper,
+    def __init__(self, config, load_cell_inst, mcu_trigger_analog, param_helper,
             continuous_tare_filter_helper, config_helper):
         self._printer = config.get_printer()
+        self._load_cell = load_cell_inst
         self._mcu_trigger_analog = mcu_trigger_analog
         self._param_helper = param_helper
         self._continuous_tare_filter_helper = continuous_tare_filter_helper
         self._config_helper = config_helper
         self._mcu = mcu_trigger_analog.get_mcu()
-        self._load_cell = mcu_trigger_analog.get_load_cell()
         self._z_min_position = probe.lookup_minimum_z(config)
         self._dispatch = mcu_trigger_analog.get_dispatch()
         probe.LookupZSteppers(config, self._dispatch.add_stepper)
@@ -433,7 +438,20 @@ class LoadCellProbingMove:
         tare_counts = np.average(np.array(tare_samples)[:, 2].astype(float))
         # update sos_filter with any gcode parameter changes
         self._continuous_tare_filter_helper.update_from_command(gcmd)
-        self._mcu_trigger_analog.set_endstop_range(tare_counts, gcmd)
+        # update the load cell so it reflects the new tare value
+        self._load_cell.tare(tare_counts)
+        # update range and trigger
+        safety_min, safety_max = self._config_helper.get_safety_range(gcmd)
+        self._mcu_trigger_analog.set_raw_range(safety_min, safety_max)
+        trigger_val = self._config_helper.get_trigger_force_grams(gcmd)
+        self._mcu_trigger_analog.set_trigger_value(trigger_val)
+        # update internal tare value
+        gpc = self._config_helper.get_grams_per_count()
+        sos_filter = self._mcu_trigger_analog.get_sos_filter()
+        Q17_14_FRAC_BITS = 14
+        sos_filter.set_offset_scale(int(-tare_counts), gpc,
+                                    Q17_14_FRAC_BITS, Q16_15_FRAC_BITS)
+        self._mcu_trigger_analog.reset_filter()
 
     def _home_start(self, print_time):
         # start trsync
@@ -624,10 +642,10 @@ class LoadCellPrinterProbe:
         self._param_helper = probe.ProbeParameterHelper(config)
         self._cmd_helper = probe.ProbeCommandHelper(config, self)
         self._probe_offsets = probe.ProbeOffsetsHelper(config)
-        self._mcu_trigger_analog = MCU_trigger_analog(config, self._load_cell,
+        self._mcu_trigger_analog = MCU_trigger_analog(config, sensor,
             continuous_tare_filter_helper.get_sos_filter(), config_helper,
             trigger_dispatch)
-        load_cell_probing_move = LoadCellProbingMove(config,
+        load_cell_probing_move = LoadCellProbingMove(config, self._load_cell,
             self._mcu_trigger_analog, self._param_helper,
             continuous_tare_filter_helper, config_helper)
         self._tapping_move = TappingMove(config, load_cell_probing_move,
