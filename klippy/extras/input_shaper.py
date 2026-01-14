@@ -125,7 +125,7 @@ class InputShaper:
             return
         # Configure initial values
         self._update_input_shaping(error=self.printer.config_error)
-    def _get_input_shaper_stepper_kinematics(self, stepper):
+    def get_input_shaper_stepper_kinematics(self, stepper):
         # Lookup stepper kinematics
         sk = stepper.get_stepper_kinematics()
         if sk in self.input_shaper_stepper_kinematics:
@@ -150,7 +150,7 @@ class InputShaper:
         for s in kin.get_steppers():
             if s.get_trapq() is None:
                 continue
-            is_sk = self._get_input_shaper_stepper_kinematics(s)
+            is_sk = self.get_input_shaper_stepper_kinematics(s)
             if is_sk is None:
                 continue
             ffi_lib.input_shaper_update_sk(is_sk)
@@ -164,7 +164,7 @@ class InputShaper:
         for s in kin.get_steppers():
             if s.get_trapq() is None:
                 continue
-            is_sk = self._get_input_shaper_stepper_kinematics(s)
+            is_sk = self.get_input_shaper_stepper_kinematics(s)
             if is_sk is None:
                 continue
             for shaper in self.shapers:

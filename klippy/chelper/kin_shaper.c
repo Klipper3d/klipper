@@ -9,6 +9,7 @@
 #include <stddef.h> // offsetof
 #include <stdlib.h> // malloc
 #include <string.h> // memset
+#include "backlash.h" // calc_backlash_compensation
 #include "compiler.h" // __visible
 #include "itersolve.h" // struct stepper_kinematics
 #include "trapq.h" // struct move
@@ -68,16 +69,19 @@ init_shaper(int n, double a[], double t[], struct shaper_pulses *sp)
  ****************************************************************/
 
 static inline double
-get_axis_position(struct move *m, int axis, double move_time)
+get_axis_position(struct move *m, int axis, double move_time
+                  , struct backlash_compensation *bc)
 {
     double axis_r = m->axes_r.axis[axis - 'x'];
     double start_pos = m->start_pos.axis[axis - 'x'];
     double move_dist = move_get_distance(m, move_time);
-    return start_pos + axis_r * move_dist;
+    return start_pos + axis_r * move_dist
+        + calc_backlash_compensation(bc, m, axis, move_time);
 }
 
 static inline double
-get_axis_position_across_moves(struct move *m, int axis, double time)
+get_axis_position_across_moves(struct move *m, int axis, double time,
+                               struct backlash_compensation *bc)
 {
     while (likely(time < 0.)) {
         m = list_prev_entry(m, node);
@@ -87,23 +91,8 @@ get_axis_position_across_moves(struct move *m, int axis, double time)
         time -= m->move_t;
         m = list_next_entry(m, node);
     }
-    return get_axis_position(m, axis, time);
+    return get_axis_position(m, axis, time, bc);
 }
-
-// Calculate the position from the convolution of the shaper with input signal
-static inline double
-calc_position(struct move *m, int axis, double move_time
-              , struct shaper_pulses *sp)
-{
-    double res = 0.;
-    int num_pulses = sp->num_pulses, i;
-    for (i = 0; i < num_pulses; ++i) {
-        double t = sp->pulses[i].t, a = sp->pulses[i].a;
-        res += a * get_axis_position_across_moves(m, axis, move_time + t);
-    }
-    return res;
-}
-
 
 /****************************************************************
  * Kinematics-related shaper code
@@ -116,7 +105,25 @@ struct input_shaper {
     struct stepper_kinematics *orig_sk;
     struct move m;
     struct shaper_pulses sp[3];
+    struct backlash_compensation bc;
 };
+
+// Calculate the position from the convolution of the shaper with input signal
+static inline double
+calc_position(struct move *m, int axis, double move_time
+              , struct shaper_pulses *sp, struct input_shaper *is)
+{
+    int num_pulses = sp->num_pulses, i;
+    if (!num_pulses)
+        return get_axis_position(m, axis, move_time, &is->bc);
+    double res = 0.;
+    for (i = 0; i < num_pulses; ++i) {
+        double t = sp->pulses[i].t, a = sp->pulses[i].a;
+        res += a * get_axis_position_across_moves(m, axis, move_time + t,
+                                                  &is->bc);
+    }
+    return res;
+}
 
 // Optimized calc_position when only x axis is needed
 static double
@@ -125,9 +132,9 @@ shaper_x_calc_position(struct stepper_kinematics *sk, struct move *m
 {
     struct input_shaper *is = container_of(sk, struct input_shaper, sk);
     struct shaper_pulses *sx = &is->sp[0];
-    if (!sx->num_pulses)
+    if (!sx->num_pulses && !is->bc.half_smooth_time)
         return is->orig_sk->calc_position_cb(is->orig_sk, m, move_time);
-    is->m.start_pos.x = calc_position(m, 'x', move_time, sx);
+    is->m.start_pos.x = calc_position(m, 'x', move_time, sx, is);
     return is->orig_sk->calc_position_cb(is->orig_sk, &is->m, DUMMY_T);
 }
 
@@ -138,9 +145,9 @@ shaper_y_calc_position(struct stepper_kinematics *sk, struct move *m
 {
     struct input_shaper *is = container_of(sk, struct input_shaper, sk);
     struct shaper_pulses *sy = &is->sp[1];
-    if (!sy->num_pulses)
+    if (!sy->num_pulses && !is->bc.half_smooth_time)
         return is->orig_sk->calc_position_cb(is->orig_sk, m, move_time);
-    is->m.start_pos.y = calc_position(m, 'y', move_time, sy);
+    is->m.start_pos.y = calc_position(m, 'y', move_time, sy, is);
     return is->orig_sk->calc_position_cb(is->orig_sk, &is->m, DUMMY_T);
 }
 
@@ -151,9 +158,9 @@ shaper_z_calc_position(struct stepper_kinematics *sk, struct move *m
 {
     struct input_shaper *is = container_of(sk, struct input_shaper, sk);
     struct shaper_pulses *sz = &is->sp[2];
-    if (!sz->num_pulses)
+    if (!sz->num_pulses && !is->bc.half_smooth_time)
         return is->orig_sk->calc_position_cb(is->orig_sk, m, move_time);
-    is->m.start_pos.z = calc_position(m, 'z', move_time, sz);
+    is->m.start_pos.z = calc_position(m, 'z', move_time, sz, is);
     return is->orig_sk->calc_position_cb(is->orig_sk, &is->m, DUMMY_T);
 }
 
@@ -163,15 +170,16 @@ shaper_xyz_calc_position(struct stepper_kinematics *sk, struct move *m
                          , double move_time)
 {
     struct input_shaper *is = container_of(sk, struct input_shaper, sk);
-    if (!is->sp[0].num_pulses && !is->sp[1].num_pulses && !is->sp[2].num_pulses)
+    if (!is->sp[0].num_pulses && !is->sp[1].num_pulses && !is->sp[2].num_pulses
+            && !is->bc.half_smooth_time)
         return is->orig_sk->calc_position_cb(is->orig_sk, m, move_time);
     is->m.start_pos = move_get_coord(m, move_time);
     if (is->sp[0].num_pulses)
-        is->m.start_pos.x = calc_position(m, 'x', move_time, &is->sp[0]);
+        is->m.start_pos.x = calc_position(m, 'x', move_time, &is->sp[0], is);
     if (is->sp[1].num_pulses)
-        is->m.start_pos.y = calc_position(m, 'y', move_time, &is->sp[1]);
+        is->m.start_pos.y = calc_position(m, 'y', move_time, &is->sp[1], is);
     if (is->sp[2].num_pulses)
-        is->m.start_pos.z = calc_position(m, 'z', move_time, &is->sp[2]);
+        is->m.start_pos.z = calc_position(m, 'z', move_time, &is->sp[2], is);
     return is->orig_sk->calc_position_cb(is->orig_sk, &is->m, DUMMY_T);
 }
 
@@ -208,8 +216,8 @@ shaper_note_generation_time(struct input_shaper *is)
         post_active = -sz->pulses[0].t > post_active
             ? -sz->pulses[0].t : post_active;
     }
-    is->sk.gen_steps_pre_active = pre_active;
-    is->sk.gen_steps_post_active = post_active;
+    is->sk.gen_steps_pre_active = pre_active + is->bc.half_smooth_time;
+    is->sk.gen_steps_post_active = post_active + is->bc.half_smooth_time;
 }
 
 void __visible
@@ -271,6 +279,27 @@ input_shaper_set_shaper_params(struct stepper_kinematics *sk, char axis
         shaper_note_generation_time(is);
     }
     return status;
+}
+
+void __visible
+input_shaper_set_backlash_compensation(struct stepper_kinematics *sk
+                                       , double axes_backlash[]
+                                       , double smooth_time)
+{
+    struct input_shaper *is = container_of(sk, struct input_shaper, sk);
+    double hst = 0.5 * smooth_time;
+    if (hst > 0.) {
+        is->bc.half_smooth_time = hst;
+        is->bc.inv_half_smooth_time2 = 1. / (hst * hst);
+    } else
+        is->bc.half_smooth_time = 0.0;
+    int axis_ind;
+    for (axis_ind = 0; axis_ind < ARRAY_SIZE(KIN_FLAGS); ++axis_ind)
+        if (is->orig_sk->active_flags & KIN_FLAGS[axis_ind]) {
+            // Ignore backlash compensation update if the axis is not active
+            is->bc.axis_lag[axis_ind] = 0.5 * axes_backlash[axis_ind];
+        }
+    shaper_note_generation_time(is);
 }
 
 struct stepper_kinematics * __visible
