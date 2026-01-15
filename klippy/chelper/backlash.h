@@ -5,7 +5,7 @@ struct move;
 
 struct backlash_compensation {
     double axis_lag[3];
-    double half_smooth_time, inv_half_smooth_time2;
+    double smooth_time, inv_smooth_time;
 };
 
 double calc_backlash_compensation(struct backlash_compensation *bc

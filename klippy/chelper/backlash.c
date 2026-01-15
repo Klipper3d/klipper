@@ -14,69 +14,63 @@
 
 #define EPS 1e-9
 
-inline static double
-backlash_integrate(double value, double start, double end)
+// Compute the sign of the move direction along the given axis
+inline static int
+get_move_dir(struct move *m, int axis)
 {
-    return value * (end - start);
-}
-
-inline static double
-backlash_integrate_time(double value, double start, double end)
-{
-    return value * (end - start) * (end + start) * 0.5;
-}
-
-inline static double
-backlash_move_integrate(struct move *m, int axis, double start, double end
-                        , double time_offset)
-{
-    if (start < 0.)
-        start = 0.;
-    if (end > m->move_t)
-        end = m->move_t;
     double axis_r = m->axes_r.axis[axis - 'x'];
     if (fabs(axis_r) < EPS ||
             (m->start_v < EPS && fabs(m->half_accel) < EPS)) {
         // The axis is not moving
-        return 0.;
+        return 0;
     }
-    double value = axis_r > 0. ? 1. : -1.;
-    double iext = backlash_integrate(value, start, end);
-    double wgt_ext = backlash_integrate_time(value, start, end);
-    return wgt_ext - time_offset * iext;
+    return axis_r > 0. ? 1 : -1;
 }
 
-// Calculate the definitive integral of the velocity sign over a range of moves
+// Compute the weight function w(x) that gives w(0)=1, w(1)=0, and
+// has zero derivatives of w'(0)=0, w'(1)=0.
 inline static double
-backlash_range_integrate(struct move *m, int axis, double move_time, double hst)
+get_weight(double x)
 {
-    // Calculate integral for the current move
-    double res = 0., start = move_time - hst, end = move_time + hst;
-    res += backlash_move_integrate(m, axis, start, move_time, start);
-    res -= backlash_move_integrate(m, axis, move_time, end, end);
-    // Integrate over previous moves
-    struct move *prev = m;
-    while (unlikely(start < 0.)) {
-        prev = list_prev_entry(prev, node);
-        start += prev->move_t;
-        res += backlash_move_integrate(prev, axis, start, prev->move_t, start);
-    }
-    // Integrate over future moves
-    while (unlikely(end > m->move_t)) {
-        end -= m->move_t;
-        m = list_next_entry(m, node);
-        res -= backlash_move_integrate(m, axis, 0., end, end);
-    }
-    return res;
+    return (2. * x - 3.) * x * x + 1.;
 }
 
 inline double
 calc_backlash_compensation(struct backlash_compensation *bc, struct move *m
                            , int axis, double move_time)
 {
-    double hst = bc->half_smooth_time;
+    double smooth_time = bc->smooth_time;
     double axis_lag = bc->axis_lag[axis - 'x'];
-    if (!hst || !axis_lag) return 0.;
-    double area = backlash_range_integrate(m, axis, move_time, hst);
-    return axis_lag * area * bc->inv_half_smooth_time2;
+    if (!smooth_time || !axis_lag) return 0.;
+    // Find time to the nearest positive and negative motion of the given axis
+    int move_dir = get_move_dir(m, axis);
+    double ttp = move_dir > 0 ? 0. : smooth_time;
+    double ttm = move_dir < 0 ? 0. : smooth_time;
+    // Search through previous moves
+    struct move *prev = m;
+    double move_offset = move_time;
+    while (unlikely(move_offset < ttp || move_offset < ttm)) {
+        prev = list_prev_entry(prev, node);
+        move_dir = get_move_dir(prev, axis);
+        if (move_dir > 0 && move_offset < ttp)
+            ttp = move_offset;
+        if (move_dir < 0 && move_offset < ttm)
+            ttm = move_offset;
+        move_offset += prev->move_t;
+    }
+    // Search through future moves
+    move_offset = m->move_t - move_time;
+    while (unlikely(move_offset < ttp || move_offset < ttm)) {
+        m = list_next_entry(m, node);
+        move_dir = get_move_dir(m, axis);
+        if (move_dir > 0 && move_offset < ttp)
+            ttp = move_offset;
+        if (move_dir < 0 && move_offset < ttm)
+            ttm = move_offset;
+        move_offset += m->move_t;
+    }
+    ttp *= bc->inv_smooth_time;
+    ttm *= bc->inv_smooth_time;
+    double weight = get_weight(ttp) - get_weight(ttm);
+    return axis_lag * weight;
 }
