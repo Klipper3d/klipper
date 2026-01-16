@@ -174,6 +174,13 @@ class VirtualSD:
         if filename.startswith('/'):
             filename = filename[1:]
         self._load_file(gcmd, filename)
+    def _fadvice_willneed(self, f_io, size):
+        if not hasattr(os, 'posix_fadvise'):
+            return
+        # Python 3.3+, advice os to readahead
+        fd = f_io.fileno()
+        offset = f_io.tell()
+        os.posix_fadvise(fd, offset, size, os.POSIX_FADV_WILLNEED)
     def _load_file(self, gcmd, filename, check_subdirs=False):
         files = self.get_file_list(check_subdirs)
         flist = [f[0] for f in files]
@@ -187,6 +194,7 @@ class VirtualSD:
             f.seek(0, os.SEEK_END)
             fsize = f.tell()
             f.seek(0)
+            self._fadvice_willneed(f, 0)
         except:
             logging.exception("virtual_sdcard file open")
             raise gcmd.error("Unable to open file")
@@ -241,6 +249,7 @@ class VirtualSD:
                 # Read more data
                 try:
                     data = self.current_file.read(8192)
+                    self._fadvice_willneed(self.current_file, 8192*2)
                 except:
                     logging.exception("virtual_sdcard read")
                     break
