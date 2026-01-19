@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, pty, fcntl, termios, signal, logging, json, time
 import subprocess, traceback, shlex
+import inspect
 
 
 ######################################################################
@@ -106,6 +107,7 @@ def setup_python2_wrappers():
     sys.modules["queue"] = Queue
     io.StringIO = StringIO.StringIO
     time.process_time = time.clock
+    time.perf_counter = time.clock
 setup_python2_wrappers()
 
 
@@ -234,3 +236,14 @@ def get_git_version(from_file=True):
     if from_file:
         git_info["version"] = get_version_from_file(klippy_src)
     return git_info
+
+def get_python_function_owner(cb):
+    if inspect.isfunction(cb) or inspect.ismethod(cb):
+        ln = inspect.getsourcelines(cb)[1]
+        file = os.path.basename(inspect.getsourcefile(cb))
+        fn_name = cb.__name__
+        if hasattr(cb, "__qualname__"):
+            fn_name = cb.__qualname__
+        return "%s (%s:%d)" % (fn_name, file, ln)
+    else:
+        return repr(cb)
