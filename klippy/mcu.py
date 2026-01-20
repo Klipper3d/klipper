@@ -22,6 +22,20 @@ MAX_NOMINAL_DURATION = 3.0
 # Command transmit helper classes
 ######################################################################
 
+# Generate a dummy response to query commands when in debugging mode
+class DummyResponse:
+    def __init__(self, serial, name, oid=None):
+        params = {}
+        if oid is not None:
+            params['oid'] = oid
+        msgparser = serial.get_msgparser()
+        resp = msgparser.create_dummy_response(name, params)
+        resp['#sent_time'] = 0.
+        resp['#receive_time'] = 0.
+        self._response = resp
+    def get_response(self, cmds, cmd_queue, minclock=0, reqclock=0, retry=True):
+        return dict(self._response)
+
 # Class to retry sending of a query command until a given response is received
 class RetryAsyncCommand:
     TIMEOUT_TIME = 5.0
@@ -69,7 +83,9 @@ class CommandQueryWrapper:
         self._oid = oid
         self._error = conn_helper.get_mcu().get_printer().command_error
         self._xmit_helper = serialhdl.SerialRetryCommand
-        if is_async:
+        if conn_helper.get_mcu().is_fileoutput():
+            self._xmit_helper = DummyResponse
+        elif is_async:
             self._xmit_helper = RetryAsyncCommand
         if cmd_queue is None:
             cmd_queue = serial.get_default_command_queue()

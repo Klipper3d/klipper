@@ -175,6 +175,8 @@ class ADS1220:
         # read startup register state and validate
         val = self.read_reg(0x0, 4)
         if val != RESET_STATE:
+            if self.mcu.is_fileoutput():
+                return
             raise self.printer.command_error(
                 "Invalid ads1220 reset state (got %s vs %s).\n"
                 "This is generally indicative of connection problems\n"
@@ -209,6 +211,8 @@ class ADS1220:
         self.spi.spi_send(write_command)
         stored_val = self.read_reg(reg, len(register_bytes))
         if bytearray(register_bytes) != stored_val:
+            if self.mcu.is_fileoutput():
+                return
             raise self.printer.command_error(
                 "Failed to set ADS1220 register [0x%x] to %s: got %s. "
                 "This may be a connection problem (e.g. faulty wiring)" % (
