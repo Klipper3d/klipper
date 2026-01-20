@@ -138,6 +138,8 @@ class LDC1612:
     def get_mcu(self):
         return self.i2c.get_mcu()
     def read_reg(self, reg):
+        if self.mcu.is_fileoutput():
+            return 0
         params = self.i2c.i2c_read([reg], 2)
         response = bytearray(params['response'])
         return (response[0] << 8) | response[1]
@@ -155,8 +157,6 @@ class LDC1612:
             [self.oid, clock, tfreq, trsync_oid, hit_reason, err_reason])
     def clear_home(self):
         self.ldc1612_setup_home_cmd.send([self.oid, 0, 0, 0, 0, 0])
-        if self.mcu.is_fileoutput():
-            return 0.
         params = self.query_ldc1612_home_state_cmd.send([self.oid])
         tclock = self.mcu.clock32_to_clock64(params['trigger_clock'])
         return self.mcu.clock_to_print_time(tclock)
@@ -200,7 +200,8 @@ class LDC1612:
         # noise or wrong signal as a correctly initialized device
         manuf_id = self.read_reg(REG_MANUFACTURER_ID)
         dev_id = self.read_reg(REG_DEVICE_ID)
-        if manuf_id != LDC1612_MANUF_ID or dev_id != LDC1612_DEV_ID:
+        if ((manuf_id != LDC1612_MANUF_ID or dev_id != LDC1612_DEV_ID)
+            and not self.mcu.is_fileoutput()):
             raise self.printer.command_error(
                 "Invalid ldc1612 id (got %x,%x vs %x,%x).\n"
                 "This is generally indicative of connection problems\n"

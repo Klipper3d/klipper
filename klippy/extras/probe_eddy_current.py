@@ -313,6 +313,13 @@ class EddyGatherSamples:
             if est_print_time > end_time + 1.0:
                 raise self._printer.command_error(
                     "probe_eddy_current sensor outage")
+            if mcu.is_fileoutput():
+                # In debugging mode
+                if pos_time is not None:
+                    toolhead_pos = self._lookup_toolhead_pos(pos_time)
+                self._probe_results.append((toolhead_pos[2], toolhead_pos))
+                self._probe_times.pop(0)
+                continue
             reactor.pause(systime + 0.010)
     def _pull_freq(self, start_time, end_time):
         # Find average sensor frequency between time range
@@ -421,7 +428,7 @@ class EddyDescend:
         if res != mcu.MCU_trsync.REASON_ENDSTOP_HIT:
             return 0.
         if self._mcu.is_fileoutput():
-            return home_end_time
+            trigger_time = home_end_time
         self._trigger_time = trigger_time
         return trigger_time
     # Probe session interface
@@ -437,8 +444,6 @@ class EddyDescend:
         # Perform probing move
         phoming = self._printer.lookup_object('homing')
         trig_pos = phoming.probing_move(self, pos, speed)
-        if not self._trigger_time:
-            return trig_pos
         # Extract samples
         start_time = self._trigger_time + 0.050
         end_time = start_time + 0.100
