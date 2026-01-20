@@ -313,6 +313,8 @@ class LoadCellSampleCollector:
         self._errors = 0
         overflows = self._overflows
         self._overflows = 0
+        if self._mcu.is_fileoutput():
+            samples = [(0., 0., 0.)]
         return samples, (errors, overflows) if errors or overflows else 0
 
     def _collect_until(self, timeout):
@@ -324,6 +326,8 @@ class LoadCellSampleCollector:
                 raise self._printer.command_error(
                     "LoadCellSampleCollector timed out! Errors: %i,"
                     " Overflows: %i" % (self._errors, self._overflows))
+            if self._mcu.is_fileoutput():
+                break
             self._reactor.pause(now + RETRY_DELAY)
         return self._finish_collecting()
 

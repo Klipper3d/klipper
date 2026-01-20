@@ -454,6 +454,8 @@ class LoadCellProbingMove:
         res = self._dispatch.stop()
         # clear the homing state so it stops processing samples
         self._last_trigger_time = self._mcu_load_cell_probe.clear_home()
+        if self._mcu.is_fileoutput():
+            self._last_trigger_time = home_end_time
         if res >= mcu.MCU_trsync.REASON_COMMS_TIMEOUT:
             error = "Load Cell Probe Error: unknown reason code %i" % (res,)
             if res in self.ERROR_MAP:
