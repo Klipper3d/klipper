@@ -178,7 +178,7 @@ hx71x_read_adc(struct hx71x_adc *hx71x, uint8_t oid)
     }
 
     // probe is optional, report if enabled
-    if (hx71x->last_error == 0 && hx71x->ta) {
+    if (hx71x->last_error == 0) {
         trigger_analog_update(hx71x->ta, counts);
     }
 

@@ -76,6 +76,9 @@ trigger_error(struct trigger_analog *ta, uint8_t error_code)
 void
 trigger_analog_update(struct trigger_analog *ta, const int32_t sample)
 {
+    if (!ta)
+        return;
+
     // only process samples when homing
     uint8_t is_homing = is_flag_set(FLAG_IS_HOMING, ta);
     if (!is_homing) {

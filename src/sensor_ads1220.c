@@ -97,9 +97,7 @@ ads1220_read_adc(struct ads1220_adc *ads1220, uint8_t oid)
         counts |= 0xFF000000;
 
     // endstop is optional, report if enabled and no errors
-    if (ads1220->ta) {
-        trigger_analog_update(ads1220->ta, counts);
-    }
+    trigger_analog_update(ads1220->ta, counts);
 
     add_sample(ads1220, oid, counts);
 }
