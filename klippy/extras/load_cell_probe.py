@@ -322,7 +322,7 @@ class LoadCellProbingMove:
         safety_min, safety_max = self._config_helper.get_safety_range(gcmd)
         self._mcu_trigger_analog.set_raw_range(safety_min, safety_max)
         trigger_val = self._config_helper.get_trigger_force_grams(gcmd)
-        self._mcu_trigger_analog.set_trigger_value(trigger_val)
+        self._mcu_trigger_analog.set_trigger("abs_ge", trigger_val)
         # update internal tare value
         gpc = self._config_helper.get_grams_per_count()
         sos_filter = self._mcu_trigger_analog.get_sos_filter()

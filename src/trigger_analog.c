@@ -1,11 +1,13 @@
 // Support homing/probing "trigger" notification from analog sensors
 //
 // Copyright (C) 2025  Gareth Farrington <gareth@waves.ky>
+// Copyright (C) 2024-2026  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <stdlib.h> // abs
 #include "basecmd.h" // oid_alloc
+#include "board/io.h" // writeb
 #include "board/misc.h" // timer_read_time
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // shutdown
@@ -13,133 +15,149 @@
 #include "trigger_analog.h" // trigger_analog_update
 #include "trsync.h" // trsync_do_trigger
 
-#define ERROR_SAFETY_RANGE 0
-#define ERROR_OVERFLOW 1
-#define ERROR_WATCHDOG 2
-
-// Flags
-enum {FLAG_IS_HOMING = 1 << 0
-    , FLAG_IS_HOMING_TRIGGER = 1 << 1
-    , FLAG_AWAIT_HOMING = 1 << 2
-};
-
-// Endstop Structure
+// Main trigger_analog storage
 struct trigger_analog {
-    struct timer time;
-    uint32_t trigger_ticks, last_sample_ticks, rest_ticks;
-    uint32_t homing_start_time;
-    struct trsync *ts;
-    int32_t safety_counts_min, safety_counts_max;
-    uint8_t flags, trigger_reason, error_reason, watchdog_max, watchdog_count;
-    int32_t trigger_value;
+    // Raw value range check
+    int32_t raw_min, raw_max;
+    // Filtering
     struct sos_filter *sf;
+    // Trigger value checking
+    int32_t trigger_value;
+    uint8_t trigger_type;
+    // Trsync triggering
+    uint8_t flags, trigger_reason, error_reason;
+    struct trsync *ts;
+    uint32_t homing_clock, trigger_clock;
+    // Sensor activity monitoring
+    uint8_t monitor_max, monitor_count;
+    struct timer time;
+    uint32_t monitor_ticks;
 };
 
-static inline uint8_t
-is_flag_set(const uint8_t mask, struct trigger_analog *ta)
-{
-    return !!(mask & ta->flags);
-}
+// Homing flags
+enum {
+    TA_AWAIT_HOMING = 1<<1, TA_CAN_TRIGGER = 1<<2
+};
 
-static inline void
-set_flag(uint8_t mask, struct trigger_analog *ta)
-{
-    ta->flags |= mask;
-}
+// Trigger types
+enum {
+    TT_ABS_GE, TT_GT
+};
+DECL_ENUMERATION("trigger_analog_type", "abs_ge", TT_ABS_GE);
+DECL_ENUMERATION("trigger_analog_type", "gt", TT_GT);
 
-static inline void
-clear_flag(uint8_t mask, struct trigger_analog *ta)
-{
-    ta->flags &= ~mask;
-}
+// Sample errors sent via trsync error code
+enum {
+    TE_RAW_RANGE, TE_OVERFLOW, TE_MONITOR, TE_SENSOR_SPECIFIC
+};
+DECL_ENUMERATION("trigger_analog_error:", "RAW_RANGE", TE_RAW_RANGE);
+DECL_ENUMERATION("trigger_analog_error:", "OVERFLOW", TE_OVERFLOW);
+DECL_ENUMERATION("trigger_analog_error:", "MONITOR", TE_MONITOR);
+DECL_ENUMERATION("trigger_analog_error:", "SENSOR_SPECIFIC"
+                 , TE_SENSOR_SPECIFIC);
 
-void
-try_trigger(struct trigger_analog *ta, uint32_t ticks)
+// Timer callback that monitors for sensor timeouts
+static uint_fast8_t
+monitor_event(struct timer *t)
 {
-    uint8_t is_homing_triggered = is_flag_set(FLAG_IS_HOMING_TRIGGER, ta);
-    if (!is_homing_triggered) {
-        // the first triggering sample when homing sets the trigger time
-        ta->trigger_ticks = ticks;
-        // this flag latches until a reset, disabling further triggering
-        set_flag(FLAG_IS_HOMING_TRIGGER, ta);
-        trsync_do_trigger(ta->ts, ta->trigger_reason);
+    struct trigger_analog *ta = container_of(t, struct trigger_analog, time);
+
+    if (!(ta->flags & TA_CAN_TRIGGER))
+        return SF_DONE;
+
+    if (ta->monitor_count > ta->monitor_max) {
+        trsync_do_trigger(ta->ts, ta->error_reason + TE_MONITOR);
+        return SF_DONE;
     }
+
+    // A sample was recently delivered, continue monitoring
+    ta->monitor_count++;
+    ta->time.waketime += ta->monitor_ticks;
+    return SF_RESCHEDULE;
 }
 
-void
-trigger_error(struct trigger_analog *ta, uint8_t error_code)
+// Note recent activity
+static void
+monitor_note_activity(struct trigger_analog *ta)
 {
+    writeb(&ta->monitor_count, 0);
+}
+
+// Check if a value should signal a "trigger" event
+static int
+check_trigger(struct trigger_analog *ta, int32_t value)
+{
+    switch (ta->trigger_type) {
+    case TT_ABS_GE:
+        return abs(value) >= ta->trigger_value;
+    case TT_GT:
+        return value > ta->trigger_value;
+    }
+    return 0;
+}
+
+// Stop homing due to an error
+static void
+cancel_homing(struct trigger_analog *ta, uint8_t error_code)
+{
+    if (!(ta->flags & TA_CAN_TRIGGER))
+        return;
+    ta->flags = 0;
     trsync_do_trigger(ta->ts, ta->error_reason + error_code);
+}
+
+// Handle an error reported by the sensor
+void
+trigger_analog_note_error(struct trigger_analog *ta, uint8_t sensor_code)
+{
+    if (!ta)
+        return;
+    cancel_homing(ta, sensor_code + TE_SENSOR_SPECIFIC);
 }
 
 // Used by Sensors to report new raw ADC sample
 void
-trigger_analog_update(struct trigger_analog *ta, const int32_t sample)
+trigger_analog_update(struct trigger_analog *ta, int32_t sample)
 {
+    // Check homing is active
     if (!ta)
         return;
+    uint8_t flags = ta->flags;
+    if (!(flags & TA_CAN_TRIGGER))
+        return;
 
-    // only process samples when homing
-    uint8_t is_homing = is_flag_set(FLAG_IS_HOMING, ta);
-    if (!is_homing) {
+    // Check if homing has started
+    uint32_t time = timer_read_time();
+    if ((flags & TA_AWAIT_HOMING) && timer_is_before(time, ta->homing_clock))
+        return;
+    flags &= ~TA_AWAIT_HOMING;
+
+    // Reset the sensor timeout checking
+    monitor_note_activity(ta);
+
+    // Check that raw value is in range
+    if (sample < ta->raw_min || sample > ta->raw_max) {
+        cancel_homing(ta, TE_RAW_RANGE);
         return;
     }
 
-    // save new sample
-    uint32_t ticks = timer_read_time();
-    ta->last_sample_ticks = ticks;
-    ta->watchdog_count = 0;
-
-    // do not trigger before homing start time
-    uint8_t await_homing = is_flag_set(FLAG_AWAIT_HOMING, ta);
-    if (await_homing && timer_is_before(ticks, ta->homing_start_time)) {
-        return;
-    }
-    clear_flag(FLAG_AWAIT_HOMING, ta);
-
-    // check for safety limit violations
-    const uint8_t is_safety_trigger = sample <= ta->safety_counts_min
-                                        || sample >= ta->safety_counts_max;
-    // too much force, this is an error while homing
-    if (is_safety_trigger) {
-        trigger_error(ta, ERROR_SAFETY_RANGE);
-        return;
-    }
-
-    // perform filtering
+    // Perform filtering
     int32_t filtered_value = sample;
     int ret = sos_filter_apply(ta->sf, &filtered_value);
     if (ret) {
-        trigger_error(ta, ERROR_OVERFLOW);
+        cancel_homing(ta, TE_OVERFLOW);
         return;
     }
 
-    // update trigger state
-    if (abs(filtered_value) >= ta->trigger_value) {
-        try_trigger(ta, ta->last_sample_ticks);
-    }
-}
-
-// Timer callback that monitors for timeouts
-static uint_fast8_t
-watchdog_event(struct timer *t)
-{
-    struct trigger_analog *ta = container_of(t, struct trigger_analog, time);
-    uint8_t is_homing = is_flag_set(FLAG_IS_HOMING, ta);
-    uint8_t is_homing_trigger = is_flag_set(FLAG_IS_HOMING_TRIGGER, ta);
-    // the watchdog stops when not homing or when trsync becomes triggered
-    if (!is_homing || is_homing_trigger) {
-        return SF_DONE;
+    // Check if this is a "trigger"
+    ret = check_trigger(ta, filtered_value);
+    if (ret) {
+        trsync_do_trigger(ta->ts, ta->trigger_reason);
+        ta->trigger_clock = time;
+        flags = 0;
     }
 
-    if (ta->watchdog_count > ta->watchdog_max) {
-        trigger_error(ta, ERROR_WATCHDOG);
-    }
-    ta->watchdog_count += 1;
-
-    // A sample was recently delivered, continue monitoring
-    ta->time.waketime += ta->rest_ticks;
-    return SF_RESCHEDULE;
+    ta->flags = flags;
 }
 
 // Create a trigger_analog
@@ -160,17 +178,27 @@ trigger_analog_oid_lookup(uint8_t oid)
     return oid_lookup(oid, command_config_trigger_analog);
 }
 
-// Set the triggering range and tare value
+// Set valid raw range
 void
-command_trigger_analog_set_range(uint32_t *args)
+command_trigger_analog_set_raw_range(uint32_t *args)
 {
     struct trigger_analog *ta = trigger_analog_oid_lookup(args[0]);
-    ta->safety_counts_min = args[1];
-    ta->safety_counts_max = args[2];
-    ta->trigger_value = args[3];
+    ta->raw_min = args[1];
+    ta->raw_max = args[2];
 }
-DECL_COMMAND(command_trigger_analog_set_range, "trigger_analog_set_range"
-    " oid=%c safety_counts_min=%i safety_counts_max=%i trigger_value=%i");
+DECL_COMMAND(command_trigger_analog_set_raw_range,
+    "trigger_analog_set_raw_range oid=%c raw_min=%i raw_max=%i");
+
+// Set the triggering type and value
+void
+command_trigger_analog_set_trigger(uint32_t *args)
+{
+    struct trigger_analog *ta = trigger_analog_oid_lookup(args[0]);
+    ta->trigger_type = args[1];
+    ta->trigger_value = args[2];
+}
+DECL_COMMAND(command_trigger_analog_set_trigger, "trigger_analog_set_trigger"
+    " oid=%c trigger_analog_type=%c trigger_value=%i");
 
 // Home an axis
 void
@@ -178,42 +206,33 @@ command_trigger_analog_home(uint32_t *args)
 {
     struct trigger_analog *ta = trigger_analog_oid_lookup(args[0]);
     sched_del_timer(&ta->time);
-    // clear the homing trigger flag
-    clear_flag(FLAG_IS_HOMING_TRIGGER, ta);
-    clear_flag(FLAG_IS_HOMING, ta);
-    ta->trigger_ticks = 0;
-    ta->ts = NULL;
-    // 0 samples indicates homing is finished
-    if (args[3] == 0) {
-        // Disable end stop checking
+    ta->monitor_ticks = args[5];
+    if (!ta->monitor_ticks) {
+        ta->flags = 0;
+        ta->ts = NULL;
         return;
     }
     ta->ts = trsync_oid_lookup(args[1]);
     ta->trigger_reason = args[2];
     ta->error_reason = args[3];
-    ta->time.waketime = args[4];
-    ta->homing_start_time = args[4];
-    ta->rest_ticks = args[5];
-    ta->watchdog_max = args[6];
-    ta->watchdog_count = 0;
-    ta->time.func = watchdog_event;
-    set_flag(FLAG_IS_HOMING, ta);
-    set_flag(FLAG_AWAIT_HOMING, ta);
+    ta->time.waketime = ta->homing_clock = args[4];
+    ta->monitor_max = args[6];
+    ta->monitor_count = 0;
+    ta->time.func = monitor_event;
+    ta->flags = TA_AWAIT_HOMING | TA_CAN_TRIGGER;
     sched_add_timer(&ta->time);
 }
 DECL_COMMAND(command_trigger_analog_home,
              "trigger_analog_home oid=%c trsync_oid=%c trigger_reason=%c"
-             " error_reason=%c clock=%u rest_ticks=%u timeout=%u");
+             " error_reason=%c clock=%u monitor_ticks=%u monitor_max=%u");
 
 void
 command_trigger_analog_query_state(uint32_t *args)
 {
     uint8_t oid = args[0];
     struct trigger_analog *ta = trigger_analog_oid_lookup(args[0]);
-    sendf("trigger_analog_state oid=%c is_homing_trigger=%c trigger_ticks=%u"
-            , oid
-            , is_flag_set(FLAG_IS_HOMING_TRIGGER, ta)
-            , ta->trigger_ticks);
+    sendf("trigger_analog_state oid=%c homing=%c trigger_clock=%u"
+          , oid, !!(ta->flags & TA_CAN_TRIGGER), ta->trigger_clock);
 }
 DECL_COMMAND(command_trigger_analog_query_state
              , "trigger_analog_query_state oid=%c");

@@ -80,6 +80,9 @@ class HX71xBase:
     def get_samples_per_second(self):
         return self.sps
 
+    def lookup_sensor_error(self, error_code):
+        return "Unknown hx71x error %d" % (error_code,)
+
     # returns a tuple of the minimum and maximum value of the sensor, used to
     # detect if a data value is saturated
     def get_range(self):

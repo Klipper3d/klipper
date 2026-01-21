@@ -213,30 +213,28 @@ class MCU_SosFilter:
 # MCU_trigger_analog is the interface to `trigger_analog` on the MCU
 class MCU_trigger_analog:
     MONITOR_MAX = 3
-    ERROR_SAFETY_RANGE = mcu.MCU_trsync.REASON_COMMS_TIMEOUT + 1
-    ERROR_OVERFLOW = mcu.MCU_trsync.REASON_COMMS_TIMEOUT + 2
-    ERROR_WATCHDOG = mcu.MCU_trsync.REASON_COMMS_TIMEOUT + 3
-    ERROR_MAP = {
-        mcu.MCU_trsync.REASON_COMMS_TIMEOUT: "Communication timeout during "
-                                             "homing",
-        ERROR_SAFETY_RANGE: "sensor exceeds safety limit",
-        ERROR_OVERFLOW: "fixed point math overflow",
-        ERROR_WATCHDOG: "timed out waiting for sensor data"
-    }
-
+    REASON_TRIGGER_ANALOG = mcu.MCU_trsync.REASON_COMMS_TIMEOUT + 1
     def __init__(self, sensor_inst):
         self._printer = sensor_inst.get_mcu().get_printer()
         self._sensor = sensor_inst
         self._mcu = self._sensor.get_mcu()
         self._sos_filter = None
-        # configure MCU objects
         self._dispatch = mcu.TriggerDispatch(self._mcu)
-        self._oid = self._mcu.create_oid()
+        self._last_trigger_time = 0.
+        # Raw range checking
         self._raw_min = self._raw_max = 0
         self._last_range_args = None
+        # Trigger type
+        self._trigger_type = "unspecified"
         self._trigger_value = 0.
-        self._last_trigger_time = 0.
-        self._home_cmd = self._query_cmd = self._set_range_cmd = None
+        self._last_trigger_args = None
+        # Error codes from MCU
+        self._error_map = {}
+        self._sensor_specific_error = 0
+        # Configure MCU objects
+        self._oid = self._mcu.create_oid()
+        self._home_cmd = self._query_state_cmd = None
+        self._set_raw_range_cmd = self._set_trigger_cmd = None
         self._mcu.register_config_callback(self._build_config)
 
     def setup_sos_filter(self, sos_filter):
@@ -251,17 +249,24 @@ class MCU_trigger_analog:
             "config_trigger_analog oid=%d sos_filter_oid=%d" % (
                 self._oid, self._sos_filter.get_oid()))
         # Lookup commands
-        self._query_cmd = self._mcu.lookup_query_command(
+        self._query_state_cmd = self._mcu.lookup_query_command(
             "trigger_analog_query_state oid=%c",
-            "trigger_analog_state oid=%c is_homing_trigger=%c "
-            "trigger_ticks=%u", oid=self._oid, cq=cmd_queue)
-        self._set_range_cmd = self._mcu.lookup_command(
-            "trigger_analog_set_range oid=%c safety_counts_min=%i"
-            " safety_counts_max=%i trigger_value=%i", cq=cmd_queue)
+            "trigger_analog_state oid=%c homing=%c trigger_clock=%u",
+            oid=self._oid, cq=cmd_queue)
+        self._set_raw_range_cmd = self._mcu.lookup_command(
+            "trigger_analog_set_raw_range oid=%c raw_min=%i raw_max=%i",
+            cq=cmd_queue)
+        self._set_trigger_cmd = self._mcu.lookup_command(
+            "trigger_analog_set_trigger oid=%c trigger_analog_type=%c"
+            " trigger_value=%i", cq=cmd_queue)
         self._home_cmd = self._mcu.lookup_command(
             "trigger_analog_home oid=%c trsync_oid=%c trigger_reason=%c"
-            " error_reason=%c clock=%u rest_ticks=%u timeout=%u",
+            " error_reason=%c clock=%u monitor_ticks=%u monitor_max=%u",
             cq=cmd_queue)
+        # Load errors from mcu
+        errors = self._mcu.get_enumerations().get("trigger_analog_error:", {})
+        self._error_map = {v: k for k, v in errors.items()}
+        self._sensor_specific_error = errors.get("SENSOR_SPECIFIC", 0)
 
     def get_oid(self):
         return self._oid
@@ -278,7 +283,8 @@ class MCU_trigger_analog:
     def get_last_trigger_time(self):
         return self._last_trigger_time
 
-    def set_trigger_value(self, trigger_value):
+    def set_trigger(self, trigger_type, trigger_value):
+        self._trigger_type = trigger_type
         self._trigger_value = trigger_value
 
     def set_raw_range(self, raw_min, raw_max):
@@ -286,21 +292,24 @@ class MCU_trigger_analog:
         self._raw_max = raw_max
 
     def _reset_filter(self):
-        # Update parameters in mcu (if they have changed)
-        tval32 = self._sos_filter.convert_value(self._trigger_value)
-        args = [self._oid, self._raw_min, self._raw_max, tval32]
+        # Update raw range parameters in mcu (if they have changed)
+        args = [self._oid, self._raw_min, self._raw_max]
         if args != self._last_range_args:
-            self._set_range_cmd.send(args)
+            self._set_raw_range_cmd.send(args)
             self._last_range_args = args
+        # Update trigger in mcu (if it has changed)
+        tval32 = self._sos_filter.convert_value(self._trigger_value)
+        args = [self._oid, self._trigger_type, tval32]
+        if args != self._last_trigger_args:
+            self._set_trigger_cmd.send(args)
+            self._last_trigger_args = args
         # Update sos filter in mcu
         self._sos_filter.reset_filter()
 
     def _clear_home(self):
-        params = self._query_cmd.send([self._oid])
-        # The time of the first sample that triggered is in "trigger_ticks"
-        trigger_ticks = self._mcu.clock32_to_clock64(params['trigger_ticks'])
-        # clear trsync from load_cell_endstop
         self._home_cmd.send([self._oid, 0, 0, 0, 0, 0, 0, 0])
+        params = self._query_state_cmd.send([self._oid])
+        trigger_ticks = self._mcu.clock32_to_clock64(params['trigger_clock'])
         return self._mcu.clock_to_print_time(trigger_ticks)
 
     def get_steppers(self):
@@ -315,8 +324,8 @@ class MCU_trigger_analog:
         sensor_update = 1. / self._sensor.get_samples_per_second()
         sm_ticks = self._mcu.seconds_to_clock(sensor_update)
         self._home_cmd.send([self._oid, self._dispatch.get_oid(),
-            mcu.MCU_trsync.REASON_ENDSTOP_HIT, self.ERROR_SAFETY_RANGE, clock,
-            sm_ticks, self.MONITOR_MAX], reqclock=clock)
+            mcu.MCU_trsync.REASON_ENDSTOP_HIT, self.REASON_TRIGGER_ANALOG,
+            clock, sm_ticks, self.MONITOR_MAX], reqclock=clock)
         return trigger_completion
 
     def home_wait(self, home_end_time):
@@ -326,8 +335,16 @@ class MCU_trigger_analog:
         # clear the homing state so it stops processing samples
         trigger_time = self._clear_home()
         if res >= mcu.MCU_trsync.REASON_COMMS_TIMEOUT:
-            defmsg = "unknown reason code %i" % (res,)
-            error_msg = self.ERROR_MAP.get(res, defmsg)
+            if res == mcu.MCU_trsync.REASON_COMMS_TIMEOUT:
+                raise self._printer.command_error(
+                    "Communication timeout during homing")
+            error_code = res - self.REASON_TRIGGER_ANALOG
+            if error_code >= self._sensor_specific_error:
+                sensor_err = error_code - self._sensor_specific_error
+                error_msg = self._sensor.lookup_sensor_error(sensor_err)
+            else:
+                defmsg = "Unknown code %i" % (error_code,)
+                error_msg = self._error_map.get(error_code, defmsg)
             raise self._printer.command_error("Trigger analog error: %s"
                                               % (error_msg,))
         if res != mcu.MCU_trsync.REASON_ENDSTOP_HIT:
