@@ -5,7 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math, bisect
 import mcu
-from . import ldc1612, probe, manual_probe
+from . import ldc1612, trigger_analog, probe, manual_probe
 
 OUT_OF_RANGE = 99.9
 
@@ -388,9 +388,10 @@ class EddyGatherSamples:
         self._probe_times.append((start_time, end_time, pos_time, None))
         self._check_samples()
 
+MAX_VALID_RAW_VALUE=0x03ffffff
+
 # Helper for implementing PROBE style commands (descend until trigger)
 class EddyDescend:
-    REASON_SENSOR_ERROR = mcu.MCU_trsync.REASON_COMMS_TIMEOUT + 1
     def __init__(self, config, sensor_helper, calibration,
                  probe_offsets, param_helper):
         self._printer = config.get_printer()
@@ -399,43 +400,20 @@ class EddyDescend:
         self._calibration = calibration
         self._probe_offsets = probe_offsets
         self._param_helper = param_helper
+        self._trigger_analog = trigger_analog.MCU_trigger_analog(sensor_helper)
         self._z_min_position = probe.lookup_minimum_z(config)
-        self._dispatch = mcu.TriggerDispatch(self._mcu)
-        self._trigger_time = 0.
         self._gather = None
-        probe.LookupZSteppers(config, self._dispatch.add_stepper)
-    # Interface for phoming.probing_move()
-    def get_steppers(self):
-        return self._dispatch.get_steppers()
-    def home_start(self, print_time, sample_time, sample_count, rest_time,
-                   triggered=True):
-        self._trigger_time = 0.
+        dispatch = self._trigger_analog.get_dispatch()
+        probe.LookupZSteppers(config, dispatch.add_stepper)
+    def _prep_trigger_analog(self):
+        self._trigger_analog.set_raw_range(0, MAX_VALID_RAW_VALUE)
         z_offset = self._probe_offsets.get_offsets()[2]
         trigger_freq = self._calibration.height_to_freq(z_offset)
-        trigger_completion = self._dispatch.start(print_time)
-        self._sensor_helper.setup_home(
-            print_time, trigger_freq, self._dispatch.get_oid(),
-            mcu.MCU_trsync.REASON_ENDSTOP_HIT, self.REASON_SENSOR_ERROR)
-        return trigger_completion
-    def home_wait(self, home_end_time):
-        self._dispatch.wait_end(home_end_time)
-        trigger_time = self._sensor_helper.clear_home()
-        res = self._dispatch.stop()
-        if res >= mcu.MCU_trsync.REASON_COMMS_TIMEOUT:
-            if res == mcu.MCU_trsync.REASON_COMMS_TIMEOUT:
-                raise self._printer.command_error(
-                    "Communication timeout during homing")
-            error_code = res - self.REASON_SENSOR_ERROR
-            error_msg = self._sensor_helper.lookup_sensor_error(error_code)
-            raise self._printer.command_error(error_msg)
-        if res != mcu.MCU_trsync.REASON_ENDSTOP_HIT:
-            return 0.
-        if self._mcu.is_fileoutput():
-            trigger_time = home_end_time
-        self._trigger_time = trigger_time
-        return trigger_time
+        conv_freq = self._sensor_helper.convert_frequency(trigger_freq)
+        self._trigger_analog.set_trigger('gt', conv_freq)
     # Probe session interface
     def start_probe_session(self, gcmd):
+        self._prep_trigger_analog()
         offsets = self._probe_offsets.get_offsets()
         self._gather = EddyGatherSamples(self._printer, self._sensor_helper,
                                          self._calibration, offsets)
@@ -447,9 +425,9 @@ class EddyDescend:
         speed = self._param_helper.get_probe_params(gcmd)['probe_speed']
         # Perform probing move
         phoming = self._printer.lookup_object('homing')
-        trig_pos = phoming.probing_move(self, pos, speed)
+        trig_pos = phoming.probing_move(self._trigger_analog, pos, speed)
         # Extract samples
-        start_time = self._trigger_time + 0.050
+        start_time = self._trigger_analog.get_last_trigger_time() + 0.050
         end_time = start_time + 0.100
         toolhead_pos = toolhead.get_position()
         self._gather.note_probe(start_time, end_time, toolhead_pos)
@@ -472,13 +450,13 @@ class EddyEndstopWrapper:
     def add_stepper(self, stepper):
         pass
     def get_steppers(self):
-        return self._eddy_descend.get_steppers()
+        return self._eddy_descend._trigger_analog.get_steppers()
     def home_start(self, print_time, sample_time, sample_count, rest_time,
                    triggered=True):
-        return self._eddy_descend.home_start(
+        return self._eddy_descend._trigger_analog.home_start(
             print_time, sample_time, sample_count, rest_time, triggered)
     def home_wait(self, home_end_time):
-        return self._eddy_descend.home_wait(home_end_time)
+        return self._eddy_descend._trigger_analog.home_wait(home_end_time)
     def query_endstop(self, print_time):
         return False # XXX
     # Interface for HomingViaProbeHelper
