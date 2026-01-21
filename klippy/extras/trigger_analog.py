@@ -238,12 +238,12 @@ class MCU_trigger_analog:
         self._last_trigger_time = 0.
         self._home_cmd = self._query_cmd = self._set_range_cmd = None
         self._mcu.register_config_callback(self._build_config)
-        self._printer.register_event_handler("klippy:connect", self._on_connect)
 
     def setup_sos_filter(self, sos_filter):
         self._sos_filter = sos_filter
 
     def _build_config(self):
+        self._sensor.setup_trigger_analog(self._oid)
         cmd_queue = self._dispatch.get_command_queue()
         if self._sos_filter is None:
             self.setup_sos_filter(MCU_SosFilter(self._mcu, cmd_queue, 0, 0))
@@ -262,10 +262,6 @@ class MCU_trigger_analog:
             "trigger_analog_home oid=%c trsync_oid=%c trigger_reason=%c"
             " error_reason=%c clock=%u rest_ticks=%u timeout=%u",
             cq=cmd_queue)
-
-    # the sensor data stream is connected on the MCU at the ready event
-    def _on_connect(self):
-        self._sensor.attach_trigger_analog(self._oid)
 
     def get_oid(self):
         return self._oid
