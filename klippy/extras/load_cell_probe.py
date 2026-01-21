@@ -168,8 +168,9 @@ class ContinuousTareFilter:
 
 # Combine ContinuousTareFilter and SosFilter into an easy-to-use class
 class ContinuousTareFilterHelper:
-    def __init__(self, config, sensor, cmd_queue):
+    def __init__(self, config, sensor, sos_filter):
         self._sensor = sensor
+        self._sos_filter = sos_filter
         self._sps = self._sensor.get_samples_per_second()
         max_filter_frequency = math.floor(self._sps / 2.)
         # setup filter parameters
@@ -194,8 +195,8 @@ class ContinuousTareFilterHelper:
         self._config_design = self._build_filter()
         # filter design currently inside the MCU
         self._active_design = self._config_design
-        self._sos_filter = self._create_filter(
-            self._active_design.design_filter(config.error), cmd_queue)
+        design = self._active_design.design_filter(config.error)
+        self._sos_filter.set_filter_design(design)
 
     def _build_filter(self, gcmd=None):
         drift = self._drift_param.get(gcmd)
@@ -208,12 +209,6 @@ class ContinuousTareFilterHelper:
         return ContinuousTareFilter(self._sps, drift, drift_delay, buzz,
             buzz_delay, notches, notch_quality)
 
-    def _create_filter(self, design, cmd_queue):
-        sf = trigger_analog.MCU_SosFilter(self._sensor.get_mcu(), cmd_queue, 4,
-                                          Q2_29_FRAC_BITS)
-        sf.set_filter_design(design)
-        return sf
-
     def update_from_command(self, gcmd, cq=None):
         gcmd_filter = self._build_filter(gcmd)
         # if filters are identical, no change required
@@ -222,9 +217,6 @@ class ContinuousTareFilterHelper:
         # update MCU filter from GCode command
         design = self._active_design.design_filter(gcmd.error)
         self._sos_filter.set_filter_design(design)
-
-    def get_sos_filter(self):
-        return self._sos_filter
 
 
 # check results from the collector for errors and raise an exception is found
@@ -299,8 +291,8 @@ class LoadCellProbingMove:
         self._config_helper = config_helper
         self._mcu = mcu_trigger_analog.get_mcu()
         self._z_min_position = probe.lookup_minimum_z(config)
-        self._dispatch = mcu_trigger_analog.get_dispatch()
-        probe.LookupZSteppers(config, self._dispatch.add_stepper)
+        dispatch = mcu_trigger_analog.get_dispatch()
+        probe.LookupZSteppers(config, dispatch.add_stepper)
         # internal state tracking
         self._tare_counts = 0
 
@@ -492,15 +484,17 @@ class LoadCellPrinterProbe:
         # Read all user configuration and build modules
         config_helper = LoadCellProbeConfigHelper(config, self._load_cell)
         self._mcu = self._load_cell.get_sensor().get_mcu()
-        trigger_dispatch = mcu.TriggerDispatch(self._mcu)
-        continuous_tare_filter_helper = ContinuousTareFilterHelper(config,
-            sensor, trigger_dispatch.get_command_queue())
+        self._mcu_trigger_analog = trigger_analog.MCU_trigger_analog(sensor)
+        cmd_queue = self._mcu_trigger_analog.get_dispatch().get_command_queue()
+        sos_filter = trigger_analog.MCU_SosFilter(self._mcu, cmd_queue, 4,
+                                                  Q2_29_FRAC_BITS)
+        self._mcu_trigger_analog.setup_sos_filter(sos_filter)
+        continuous_tare_filter_helper = ContinuousTareFilterHelper(
+            config, sensor, sos_filter)
         # Probe Interface
         self._param_helper = probe.ProbeParameterHelper(config)
         self._cmd_helper = probe.ProbeCommandHelper(config, self)
         self._probe_offsets = probe.ProbeOffsetsHelper(config)
-        self._mcu_trigger_analog = trigger_analog.MCU_trigger_analog(sensor,
-            continuous_tare_filter_helper.get_sos_filter(), trigger_dispatch)
         load_cell_probing_move = LoadCellProbingMove(config, self._load_cell,
             self._mcu_trigger_analog, self._param_helper,
             continuous_tare_filter_helper, config_helper)

@@ -201,8 +201,9 @@ class MCU_SosFilter:
             self._set_offset_scale_cmd.send(args)
             self._last_sent_offset_scale = args
         # Activate filter
-        self._set_active_cmd.send([self._oid, num_sections,
-                                   self._coeff_frac_bits])
+        if self._max_sections:
+            self._set_active_cmd.send([self._oid, num_sections,
+                                       self._coeff_frac_bits])
 
 
 ######################################################################
@@ -223,44 +224,44 @@ class MCU_trigger_analog:
         ERROR_WATCHDOG: "timed out waiting for sensor data"
     }
 
-    def __init__(self, sensor_inst, sos_filter_inst, trigger_dispatch):
+    def __init__(self, sensor_inst):
         self._printer = sensor_inst.get_mcu().get_printer()
-        self._sos_filter = sos_filter_inst
         self._sensor = sensor_inst
         self._mcu = self._sensor.get_mcu()
+        self._sos_filter = None
         # configure MCU objects
-        self._dispatch = trigger_dispatch
-        self._cmd_queue = self._dispatch.get_command_queue()
+        self._dispatch = mcu.TriggerDispatch(self._mcu)
         self._oid = self._mcu.create_oid()
         self._raw_min = self._raw_max = 0
         self._last_range_args = None
         self._trigger_value = 0.
         self._last_trigger_time = 0.
-        self._config_commands()
-        self._home_cmd = None
-        self._query_cmd = None
-        self._set_range_cmd = None
+        self._home_cmd = self._query_cmd = self._set_range_cmd = None
         self._mcu.register_config_callback(self._build_config)
         self._printer.register_event_handler("klippy:connect", self._on_connect)
 
-    def _config_commands(self):
+    def setup_sos_filter(self, sos_filter):
+        self._sos_filter = sos_filter
+
+    def _build_config(self):
+        cmd_queue = self._dispatch.get_command_queue()
+        if self._sos_filter is None:
+            self.setup_sos_filter(MCU_SosFilter(self._mcu, cmd_queue, 0, 0))
         self._mcu.add_config_cmd(
             "config_trigger_analog oid=%d sos_filter_oid=%d" % (
                 self._oid, self._sos_filter.get_oid()))
-
-    def _build_config(self):
         # Lookup commands
         self._query_cmd = self._mcu.lookup_query_command(
             "trigger_analog_query_state oid=%c",
             "trigger_analog_state oid=%c is_homing_trigger=%c "
-            "trigger_ticks=%u", oid=self._oid, cq=self._cmd_queue)
+            "trigger_ticks=%u", oid=self._oid, cq=cmd_queue)
         self._set_range_cmd = self._mcu.lookup_command(
             "trigger_analog_set_range oid=%c safety_counts_min=%i"
-            " safety_counts_max=%i trigger_value=%i", cq=self._cmd_queue)
+            " safety_counts_max=%i trigger_value=%i", cq=cmd_queue)
         self._home_cmd = self._mcu.lookup_command(
             "trigger_analog_home oid=%c trsync_oid=%c trigger_reason=%c"
             " error_reason=%c clock=%u rest_ticks=%u timeout=%u",
-            cq=self._cmd_queue)
+            cq=cmd_queue)
 
     # the sensor data stream is connected on the MCU at the ready event
     def _on_connect(self):
