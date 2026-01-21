@@ -70,18 +70,19 @@ init_shaper(int n, double a[], double t[], struct shaper_pulses *sp)
 
 static inline double
 get_axis_position(struct move *m, int axis, double move_time
-                  , struct backlash_compensation *bc)
+                  , struct backlash_compensation *bc, double extra_look_back)
 {
     double axis_r = m->axes_r.axis[axis - 'x'];
     double start_pos = m->start_pos.axis[axis - 'x'];
     double move_dist = move_get_distance(m, move_time);
     return start_pos + axis_r * move_dist
-        + calc_backlash_compensation(bc, m, axis, move_time);
+        + calc_backlash_compensation(bc, m, axis, move_time, extra_look_back);
 }
 
 static inline double
 get_axis_position_across_moves(struct move *m, int axis, double time,
-                               struct backlash_compensation *bc)
+                               struct backlash_compensation *bc
+                               , double extra_look_back)
 {
     while (likely(time < 0.)) {
         m = list_prev_entry(m, node);
@@ -91,7 +92,7 @@ get_axis_position_across_moves(struct move *m, int axis, double time,
         time -= m->move_t;
         m = list_next_entry(m, node);
     }
-    return get_axis_position(m, axis, time, bc);
+    return get_axis_position(m, axis, time, bc, extra_look_back);
 }
 
 /****************************************************************
@@ -115,12 +116,13 @@ calc_position(struct move *m, int axis, double move_time
 {
     int num_pulses = sp->num_pulses, i;
     if (!num_pulses)
-        return get_axis_position(m, axis, move_time, &is->bc);
+        return get_axis_position(m, axis, move_time, &is->bc, 0.);
     double res = 0.;
+    double shaper_duration = sp->pulses[num_pulses-1].t - sp->pulses[0].t;
     for (i = 0; i < num_pulses; ++i) {
         double t = sp->pulses[i].t, a = sp->pulses[i].a;
-        res += a * get_axis_position_across_moves(m, axis, move_time + t,
-                                                  &is->bc);
+        res += a * get_axis_position_across_moves(
+                m, axis, move_time + t, &is->bc, shaper_duration);
     }
     return res;
 }
@@ -217,7 +219,7 @@ shaper_note_generation_time(struct input_shaper *is)
             ? -sz->pulses[0].t : post_active;
     }
     is->sk.gen_steps_pre_active = pre_active + is->bc.smooth_time;
-    is->sk.gen_steps_post_active = post_active + is->bc.smooth_time;
+    is->sk.gen_steps_post_active = 2*post_active + is->sk.gen_steps_pre_active;
 }
 
 void __visible

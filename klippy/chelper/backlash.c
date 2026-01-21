@@ -37,7 +37,7 @@ get_weight(double x)
 
 inline double
 calc_backlash_compensation(struct backlash_compensation *bc, struct move *m
-                           , int axis, double move_time)
+                           , int axis, double move_time, double extra_look_back)
 {
     double smooth_time = bc->smooth_time;
     double axis_lag = bc->axis_lag[axis - 'x'];
@@ -49,13 +49,27 @@ calc_backlash_compensation(struct backlash_compensation *bc, struct move *m
     // Search through previous moves
     struct move *prev = m;
     double move_offset = move_time;
-    while (unlikely(move_offset < ttp || move_offset < ttm)) {
+    // Make past motion direction sticky for extra_look_back duration,
+    // but at most up to the next motion in the opposite direction
+    double pstart = 0., mstart = 0.;
+    while (move_offset < smooth_time + extra_look_back) {
         prev = list_prev_entry(prev, node);
-        move_dir = get_move_dir(prev, axis);
-        if (move_dir > 0 && move_offset < ttp)
-            ttp = move_offset;
-        if (move_dir < 0 && move_offset < ttm)
-            ttm = move_offset;
+        int prev_dir = get_move_dir(prev, axis);
+        if (prev_dir != move_dir) {
+            if (move_dir > 0) pstart = move_offset;
+            if (move_dir < 0) mstart = move_offset;
+        }
+        move_dir = prev_dir;
+        if (move_dir > 0) {
+            double new_ttp = move_offset - extra_look_back;
+            if (new_ttp < mstart) new_ttp = mstart;
+            if (ttp > new_ttp) ttp = new_ttp;
+        }
+        if (move_dir < 0) {
+            double new_ttm = move_offset - extra_look_back;
+            if (new_ttm < pstart) new_ttm = pstart;
+            if (ttm > new_ttm) ttm = new_ttm;
+        }
         move_offset += prev->move_t;
     }
     // Search through future moves

@@ -9,6 +9,7 @@ struct backlash_compensation {
 };
 
 double calc_backlash_compensation(struct backlash_compensation *bc
-                                  , struct move *m, int axis, double move_time);
+                                  , struct move *m, int axis, double move_time
+                                  , double extra_look_back);
 
 #endif // backlash.h
