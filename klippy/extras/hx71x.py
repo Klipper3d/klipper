@@ -63,13 +63,14 @@ class HX71xBase:
         mcu.register_config_callback(self._build_config)
 
     def _build_config(self):
+        cmd_queue = self.mcu.alloc_command_queue()
         self.query_hx71x_cmd = self.mcu.lookup_command(
-            "query_hx71x oid=%c rest_ticks=%u")
+            "query_hx71x oid=%c rest_ticks=%u", cq=cmd_queue)
         self.attach_probe_cmd = self.mcu.lookup_command(
-            "hx71x_attach_trigger_analog oid=%c trigger_analog_oid=%c")
+            "hx71x_attach_trigger_analog oid=%c trigger_analog_oid=%c",
+            cq=cmd_queue)
         self.ffreader.setup_query_command("query_hx71x_status oid=%c",
-                                          oid=self.oid,
-                                          cq=self.mcu.alloc_command_queue())
+                                          oid=self.oid, cq=cmd_queue)
 
 
     def get_mcu(self):
