@@ -2293,6 +2293,9 @@ sensor_type: ldc1612
 #samples_tolerance:
 #samples_tolerance_retries:
 #   See the "probe" section for information on these parameters.
+#tap_threshold: 0
+#   Noise cutoff/stop trigger threshold delta Hz per sample
+#   See the Eddy_Probe.md for explanation
 ```
 
 ### [axis_twist_compensation]

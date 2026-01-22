@@ -69,6 +69,18 @@ class DigitalFilter:
     def get_initial_state(self):
         return self.initial_state
 
+# Produce sample to sample difference (derivative) of a DigitalFilter
+class DerivativeFilter:
+    def __init__(self, main_filter):
+        self._main_filter = main_filter
+
+    def get_filter_sections(self):
+        s = list(self._main_filter.get_filter_sections())
+        return s + [(1., -1., 0., 1., 0., 0.)]
+
+    def get_initial_state(self):
+        s = list(self._main_filter.get_initial_state())
+        return s + [(-1., 0.)]
 
 # Control an `sos_filter` object on the MCU
 class MCU_SosFilter:
