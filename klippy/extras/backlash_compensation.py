@@ -25,17 +25,22 @@ class BacklashCompensation:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.input_shaper = self.printer.load_object(config, 'input_shaper')
-        self.printer.register_event_handler("klippy:connect", self.connect)
-        # Register gcode commands
-        gcode = self.printer.lookup_object('gcode')
-        gcode.register_command("SET_BACKLASH_COMPENSATION",
-                               self.cmd_SET_BACKLASH_COMPENSATION,
-                               desc=self.cmd_SET_BACKLASH_COMPENSATION_help)
         self.backlash_configs = [AxisBacklashConfig('x', config),
                                  AxisBacklashConfig('y', config),
                                  AxisBacklashConfig('z', config)]
         self.smooth_time = config.getfloat('smooth_time', 0.005,
                                            above=0.0, maxval=0.1)
+        # Register event handlers
+        self.printer.register_event_handler("klippy:connect", self.connect)
+        self.printer.register_event_handler("homing:homing_move_begin",
+                                            self.handle_homing_move_begin)
+        self.printer.register_event_handler("homing:homing_move_end",
+                                            self.handle_homing_move_end)
+        # Register gcode commands
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_command("SET_BACKLASH_COMPENSATION",
+                               self.cmd_SET_BACKLASH_COMPENSATION,
+                               desc=self.cmd_SET_BACKLASH_COMPENSATION_help)
     def connect(self):
         dual_carriage = self.printer.lookup_object('dual_carriage', None)
         if dual_carriage is not None:
@@ -52,13 +57,24 @@ class BacklashCompensation:
         # backlash compensation parameters
         self.input_shaper.connect()
         # Configure initial values
-        self._update_backlash_compensation()
-    def _update_backlash_compensation(self):
+        self._update_compensation()
+    def handle_homing_move_begin(self, hmove):
+        # Disable backlash compensation during homing moves
+        self._update_compensation(force_smooth_time_only=0.)
+    def handle_homing_move_end(self, hmove):
+        # Restore backlash compensation after a homing move
+        self._update_compensation(force_smooth_time_only=self.smooth_time)
+    def _update_compensation(self, force_smooth_time_only=None):
         toolhead = self.printer.lookup_object("toolhead")
         toolhead.flush_step_generation()
         kin = toolhead.get_kinematics()
-        axes_backlash = [bc.backlash for bc in self.backlash_configs]
         ffi_main, ffi_lib = chelper.get_ffi()
+        if force_smooth_time_only is None:
+            axes_backlash = [bc.backlash for bc in self.backlash_configs]
+            smooth_time = self.smooth_time
+        else:
+            axes_backlash = ffi_main.NULL
+            smooth_time = force_smooth_time_only
         for s in kin.get_steppers():
             if s.get_trapq() is None:
                 continue
@@ -66,7 +82,7 @@ class BacklashCompensation:
             if is_sk is None:
                 continue
             ffi_lib.input_shaper_set_backlash_compensation(
-                    is_sk, axes_backlash, self.smooth_time)
+                    is_sk, axes_backlash, smooth_time)
         motion_queuing = self.printer.lookup_object("motion_queuing")
         motion_queuing.check_step_generation_scan_windows()
     cmd_SET_BACKLASH_COMPENSATION_help = "Set backlash compensation parameters"
@@ -76,7 +92,7 @@ class BacklashCompensation:
                                               minval=0.0, maxval=0.1)
             for bc in self.backlash_configs:
                 bc.update(gcmd)
-            self._update_backlash_compensation()
+            self._update_compensation()
         infos = [' '.join(["%s_%s:%s" % (bc.axis, key, value)
                            for (key, value) in bc.get_status().items()])
                  for bc in self.backlash_configs]

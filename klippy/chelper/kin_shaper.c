@@ -292,12 +292,14 @@ input_shaper_set_backlash_compensation(struct stepper_kinematics *sk
         is->bc.inv_smooth_time = 1. / smooth_time;
     } else
         is->bc.smooth_time = 0.0;
-    int axis_ind;
-    for (axis_ind = 0; axis_ind < ARRAY_SIZE(KIN_FLAGS); ++axis_ind)
-        if (is->orig_sk->active_flags & KIN_FLAGS[axis_ind]) {
-            // Ignore backlash compensation update if the axis is not active
-            is->bc.axis_lag[axis_ind] = 0.5 * axes_backlash[axis_ind];
-        }
+    if (axes_backlash) {
+        int axis_ind;
+        for (axis_ind = 0; axis_ind < ARRAY_SIZE(KIN_FLAGS); ++axis_ind)
+            if (is->orig_sk->active_flags & KIN_FLAGS[axis_ind]) {
+                // Ignore backlash compensation update if the axis is not active
+                is->bc.axis_lag[axis_ind] = 0.5 * axes_backlash[axis_ind];
+            }
+    }
     shaper_note_generation_time(is);
 }
 
