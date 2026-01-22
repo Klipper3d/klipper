@@ -22,12 +22,13 @@ struct trigger_analog {
     // Filtering
     struct sos_filter *sf;
     // Trigger value checking
-    int32_t trigger_value;
+    int32_t trigger_value, trigger_peak;
+    uint32_t trigger_clock;
     uint8_t trigger_type;
     // Trsync triggering
     uint8_t flags, trigger_reason, error_reason;
     struct trsync *ts;
-    uint32_t homing_clock, trigger_clock;
+    uint32_t homing_clock;
     // Sensor activity monitoring
     uint8_t monitor_max, monitor_count;
     struct timer time;
@@ -41,10 +42,11 @@ enum {
 
 // Trigger types
 enum {
-    TT_ABS_GE, TT_GT
+    TT_ABS_GE, TT_GT, TT_DIFF_PEAK_GT
 };
 DECL_ENUMERATION("trigger_analog_type", "abs_ge", TT_ABS_GE);
 DECL_ENUMERATION("trigger_analog_type", "gt", TT_GT);
+DECL_ENUMERATION("trigger_analog_type", "diff_peak_gt", TT_DIFF_PEAK_GT);
 
 // Sample errors sent via trsync error code
 enum {
@@ -85,15 +87,32 @@ monitor_note_activity(struct trigger_analog *ta)
 
 // Check if a value should signal a "trigger" event
 static int
-check_trigger(struct trigger_analog *ta, int32_t value)
+check_trigger(struct trigger_analog *ta, uint32_t time, int32_t value)
 {
     switch (ta->trigger_type) {
     case TT_ABS_GE:
+        ta->trigger_clock = time;
         return abs(value) >= ta->trigger_value;
     case TT_GT:
+        ta->trigger_clock = time;
         return value > ta->trigger_value;
+    case TT_DIFF_PEAK_GT:
+        if (value > ta->trigger_peak) {
+            ta->trigger_clock = time;
+            ta->trigger_peak = value;
+            return 0;
+        }
+        uint32_t delta = ta->trigger_peak - value;
+        return delta > ta->trigger_value;
     }
     return 0;
+}
+
+// Reset fields associated with trigger checking
+static void
+trigger_reset(struct trigger_analog *ta)
+{
+    ta->trigger_peak = INT32_MIN;
 }
 
 // Stop homing due to an error
@@ -150,10 +169,9 @@ trigger_analog_update(struct trigger_analog *ta, int32_t sample)
     }
 
     // Check if this is a "trigger"
-    ret = check_trigger(ta, filtered_value);
+    ret = check_trigger(ta, time, filtered_value);
     if (ret) {
         trsync_do_trigger(ta->ts, ta->trigger_reason);
-        ta->trigger_clock = time;
         flags = 0;
     }
 
@@ -220,6 +238,7 @@ command_trigger_analog_home(uint32_t *args)
     ta->monitor_count = 0;
     ta->time.func = monitor_event;
     ta->flags = TA_AWAIT_HOMING | TA_CAN_TRIGGER;
+    trigger_reset(ta);
     sched_add_timer(&ta->time);
 }
 DECL_COMMAND(command_trigger_analog_home,
