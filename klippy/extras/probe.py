@@ -54,7 +54,7 @@ class ProbeCommandHelper:
         gcode.register_command('PROBE', self.cmd_PROBE,
                                desc=self.cmd_PROBE_help)
         # PROBE_CALIBRATE command
-        self.probe_calibrate_pos = None
+        self.probe_calibrate_info = None
         gcode.register_command('PROBE_CALIBRATE', self.cmd_PROBE_CALIBRATE,
                                desc=self.cmd_PROBE_CALIBRATE_help)
         # Other commands
@@ -89,13 +89,13 @@ class ProbeCommandHelper:
         gcode = self.printer.lookup_object('gcode')
         self.last_probe_position = gcode.Coord((pos.bed_x, pos.bed_y,
                                                 pos.bed_z))
-        x_offset, y_offset, z_offset = self.probe.get_offsets()
+        x_offset, y_offset, z_offset = self.probe.get_offsets(gcmd)
         self.last_z_result = pos.bed_z + z_offset # Deprecated
     def probe_calibrate_finalize(self, mpresult):
         if mpresult is None:
             return
-        x_offset, y_offset, z_offset = self.probe.get_offsets()
-        z_offset += mpresult.bed_z - self.probe_calibrate_pos.bed_z
+        ppos, offsets = self.probe_calibrate_info
+        z_offset = offsets[2] + mpresult.bed_z - ppos.bed_z
         gcode = self.printer.lookup_object('gcode')
         gcode.respond_info(
             "%s: z_offset: %.3f\n"
@@ -108,17 +108,17 @@ class ProbeCommandHelper:
         manual_probe.verify_no_manual_probe(self.printer)
         params = self.probe.get_probe_params(gcmd)
         # Perform initial probe
-        pos = run_single_probe(self.probe, gcmd)
+        ppos = run_single_probe(self.probe, gcmd)
         # Move away from the bed
         curpos = self.printer.lookup_object('toolhead').get_position()
         curpos[2] += 5.
         self._move(curpos, params['lift_speed'])
         # Move the nozzle over the probe point
-        curpos[0] = pos.bed_x
-        curpos[1] = pos.bed_y
+        curpos[0] = ppos.bed_x
+        curpos[1] = ppos.bed_y
         self._move(curpos, params['probe_speed'])
         # Start manual probe
-        self.probe_calibrate_pos = pos
+        self.probe_calibrate_info = (ppos, self.probe.get_offsets(gcmd))
         manual_probe.ManualProbeHelper(self.printer, gcmd,
                                        self.probe_calibrate_finalize)
     cmd_PROBE_ACCURACY_help = "Probe Z-height accuracy at current XY position"
@@ -174,7 +174,7 @@ class ProbeCommandHelper:
         if offset == 0:
             gcmd.respond_info("Nothing to do: Z Offset is 0")
             return
-        z_offset = self.probe.get_offsets()[2]
+        z_offset = self.probe.get_offsets(gcmd)[2]
         new_calibrate = z_offset - offset
         gcmd.respond_info(
             "%s: z_offset: %.3f\n"
@@ -426,7 +426,7 @@ class ProbeOffsetsHelper:
         self.x_offset = config.getfloat('x_offset', 0.)
         self.y_offset = config.getfloat('y_offset', 0.)
         self.z_offset = config.getfloat('z_offset')
-    def get_offsets(self):
+    def get_offsets(self, gcmd=None):
         return self.x_offset, self.y_offset, self.z_offset
     def create_probe_result(self, test_pos):
         return manual_probe.ProbeResult(
@@ -509,7 +509,7 @@ class ProbePointsHelper:
             return
         # Perform automatic probing
         self.lift_speed = probe.get_probe_params(gcmd)['lift_speed']
-        self.probe_offsets = probe.get_offsets()
+        self.probe_offsets = probe.get_offsets(gcmd)
         if self.horizontal_move_z < self.probe_offsets[2]:
             raise gcmd.error("horizontal_move_z can't be less than"
                              " probe's z_offset")
@@ -632,8 +632,8 @@ class PrinterProbe:
             config, self.param_helper, self.homing_helper.start_probe_session)
     def get_probe_params(self, gcmd=None):
         return self.param_helper.get_probe_params(gcmd)
-    def get_offsets(self):
-        return self.probe_offsets.get_offsets()
+    def get_offsets(self, gcmd=None):
+        return self.probe_offsets.get_offsets(gcmd)
     def get_status(self, eventtime):
         return self.cmd_helper.get_status(eventtime)
     def start_probe_session(self, gcmd):

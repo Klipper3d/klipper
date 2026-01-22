@@ -107,8 +107,7 @@ class Calibrater:
         self.gcode = self.printer.lookup_object('gcode')
         self.probe = None
         # probe settings are set to none, until they are available
-        self.lift_speed, self.probe_x_offset, self.probe_y_offset, _ = \
-            None, None, None, None
+        self.lift_speed = None
         self.printer.register_event_handler("klippy:connect",
                                             self._handle_connect)
         self.speed = compensation.speed
@@ -135,8 +134,6 @@ class Calibrater:
             raise self.printer.config_error(
                 "AXIS_TWIST_COMPENSATION requires [probe] to be defined")
         self.lift_speed = self.probe.get_probe_params()['lift_speed']
-        self.probe_x_offset, self.probe_y_offset, _ = \
-            self.probe.get_offsets()
 
     def _register_gcode_handlers(self):
         # register gcode handlers
@@ -154,6 +151,7 @@ class Calibrater:
 
     def cmd_AXIS_TWIST_COMPENSATION_CALIBRATE(self, gcmd):
         self.gcmd = gcmd
+        probe_x_offset, probe_y_offset, _ = self.probe.get_offsets(gcmd)
         sample_count = gcmd.get_int('SAMPLE_COUNT', DEFAULT_SAMPLE_COUNT)
         axis = gcmd.get('AXIS', 'X')
 
@@ -225,7 +223,7 @@ class Calibrater:
                 "Invalid axis.")
 
         probe_points = self._calculate_probe_points(
-            nozzle_points, self.probe_x_offset, self.probe_y_offset)
+            nozzle_points, probe_x_offset, probe_y_offset)
 
         # verify no other manual probe is in progress
         manual_probe.verify_no_manual_probe(self.printer)
@@ -237,7 +235,7 @@ class Calibrater:
         self._calibration(probe_points, nozzle_points, interval_dist)
 
     def _calculate_probe_points(self, nozzle_points,
-        probe_x_offset, probe_y_offset):
+                                probe_x_offset, probe_y_offset):
         # calculate the points to put the nozzle at
         # returned as a list of tuples
         probe_points = []

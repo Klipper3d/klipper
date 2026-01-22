@@ -563,8 +563,8 @@ class PrinterEddyProbe:
         self.sensor_helper.add_client(cb)
     def get_probe_params(self, gcmd=None):
         return self.param_helper.get_probe_params(gcmd)
-    def get_offsets(self):
-        return self.probe_offsets.get_offsets()
+    def get_offsets(self, gcmd=None):
+        return self.probe_offsets.get_offsets(gcmd)
     def get_status(self, eventtime):
         return self.cmd_helper.get_status(eventtime)
     def start_probe_session(self, gcmd):
