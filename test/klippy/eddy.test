@@ -23,7 +23,11 @@ BED_MESH_CALIBRATE METHOD=rapid_scan
 # Move again
 G1 Z5 X0 Y0
 
+# Do "tap" probe
+PROBE METHOD=tap
+
 # Do regular probe
+G1 Z5
 PROBE
 
 # Move again

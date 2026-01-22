@@ -404,6 +404,9 @@ class EddyDescend:
         self._z_min_position = probe.lookup_minimum_z(config)
         self._gather = None
     def _prep_trigger_analog(self):
+        sos_filter = self._trigger_analog.get_sos_filter()
+        sos_filter.set_filter_design(None)
+        sos_filter.set_offset_scale(0, 1.)
         self._trigger_analog.set_raw_range(0, MAX_VALID_RAW_VALUE)
         z_offset = self._probe_offsets.get_offsets()[2]
         trigger_freq = self._calibration.height_to_freq(z_offset)
@@ -472,6 +475,74 @@ class EddyEndstopWrapper:
     def get_position_endstop(self):
         z_offset = self._eddy_descend._probe_offsets.get_offsets()[2]
         return z_offset
+
+# Probing helper for "tap" requests
+class EddyTap:
+    def __init__(self, config, sensor_helper, calibration,
+                 param_helper, trigger_analog):
+        self._printer = config.get_printer()
+        self._sensor_helper = sensor_helper
+        self._calibration = calibration
+        self._param_helper = param_helper
+        self._trigger_analog = trigger_analog
+        self._z_min_position = probe.lookup_minimum_z(config)
+        self._gather = None
+        self._filter_design = None
+        self._tap_threshold = config.getfloat('tap_threshold', 0., minval=0.)
+        if self._tap_threshold:
+            self._setup_tap()
+    # Setup for "tap" probe request
+    def _setup_tap(self):
+        # Create sos filter "design"
+        cfg_error = self._printer.config_error
+        sps = self._sensor_helper.get_samples_per_second()
+        design = trigger_analog.DigitalFilter(sps, cfg_error,
+                                              lowpass=25.0, lowpass_order=4)
+        # Create the derivative (sample to sample difference) post filter
+        self._filter_design = trigger_analog.DerivativeFilter(design)
+        # Create SOS filter
+        cmd_queue = self._trigger_analog.get_dispatch().get_command_queue()
+        mcu = self._sensor_helper.get_mcu()
+        sos_filter = trigger_analog.MCU_SosFilter(mcu, cmd_queue, 5)
+        self._trigger_analog.setup_sos_filter(sos_filter)
+    def _prep_trigger_analog_tap(self):
+        if not self._tap_threshold:
+            raise self._printer.command_error("Tap not configured")
+        sos_filter = self._trigger_analog.get_sos_filter()
+        sos_filter.set_filter_design(self._filter_design)
+        sos_filter.set_offset_scale(0, 1., auto_offset=True)
+        self._trigger_analog.set_raw_range(0, MAX_VALID_RAW_VALUE)
+        convert_frequency = self._sensor_helper.convert_frequency
+        raw_threshold = convert_frequency(self._tap_threshold)
+        self._trigger_analog.set_trigger('diff_peak_gt', raw_threshold)
+    # Measurement analysis to determine "tap" position
+    def _analyze_tap(self, measures, trig_pos):
+        # XXX - for now just use trigger position (this is not very accurate)
+        return manual_probe.ProbeResult(trig_pos[0], trig_pos[1], trig_pos[2],
+                                        trig_pos[0], trig_pos[1], trig_pos[2])
+    # Probe session interface
+    def start_probe_session(self, gcmd):
+        self._prep_trigger_analog_tap()
+        self._gather = EddyGatherSamples(self._printer, self._sensor_helper)
+        return self
+    def run_probe(self, gcmd):
+        toolhead = self._printer.lookup_object('toolhead')
+        pos = toolhead.get_position()
+        pos[2] = self._z_min_position
+        speed = self._param_helper.get_probe_params(gcmd)['probe_speed']
+        # Perform probing move
+        phoming = self._printer.lookup_object('homing')
+        trig_pos = phoming.probing_move(self._trigger_analog, pos, speed)
+        # Extract samples
+        start_time = self._trigger_analog.get_last_trigger_time() - 0.025
+        end_time = start_time + 0.025
+        self._gather.add_probe_request(self._analyze_tap,
+                                       start_time, end_time, trig_pos)
+    def pull_probed_results(self):
+        return self._gather.pull_probed()
+    def end_probe_session(self):
+        self._gather.finish()
+        self._gather = None
 
 # Implementing probing with "METHOD=scan"
 class EddyScanningProbe:
@@ -553,11 +624,14 @@ class PrinterEddyProbe:
         self.cmd_helper = probe.ProbeCommandHelper(config, self,
             replace_z_offset=True)
         self.probe_session = probe.ProbeSessionHelper(
-            config, self.param_helper, self.eddy_descend.start_probe_session)
+            config, self.param_helper, self._start_descend_wrapper)
         # Create wrapper to support Z homing with probe
         mcu_probe = EddyEndstopWrapper(self.sensor_helper, self.eddy_descend)
         probe.HomingViaProbeHelper(
             config, mcu_probe, self.probe_offsets, self.param_helper)
+        # Probing via "tap" interface
+        self.eddy_tap = EddyTap(config, self.sensor_helper, self.calibration,
+                                self.param_helper, trig_analog)
         # Probing via "scan" and "rapid_scan" requests
         self.eddy_scan = EddyScanningProbe(config, self.sensor_helper,
                                            self.calibration, self.probe_offsets)
@@ -568,9 +642,16 @@ class PrinterEddyProbe:
     def get_probe_params(self, gcmd=None):
         return self.param_helper.get_probe_params(gcmd)
     def get_offsets(self, gcmd=None):
+        if gcmd is not None and gcmd.get('METHOD', '').lower() == "tap":
+            return (0., 0., 0.)
         return self.probe_offsets.get_offsets(gcmd)
     def get_status(self, eventtime):
         return self.cmd_helper.get_status(eventtime)
+    def _start_descend_wrapper(self, gcmd):
+        method = gcmd.get('METHOD', 'automatic').lower()
+        if method == "tap":
+            return self.eddy_tap.start_probe_session(gcmd)
+        return self.eddy_descend.start_probe_session(gcmd)
     def start_probe_session(self, gcmd):
         method = gcmd.get('METHOD', 'automatic').lower()
         if method in ('scan', 'rapid_scan'):
