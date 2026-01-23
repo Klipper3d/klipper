@@ -3339,6 +3339,9 @@ information.
 #   The minimum fan speed (expressed as a value from 0.0 to 1.0) that
 #   the fan will be set to for PID temperature fans.
 #   The default is 0.3.
+#invert_control: False
+#   The control output is inverted. Useful for bed fans that
+#   are supposed to increase temperature instead of decreasing it.
 #gcode_id:
 #   If set, the temperature will be reported in M105 queries using the
 #   given id. The default is to not report the temperature via M105.
