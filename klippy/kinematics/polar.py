@@ -43,7 +43,8 @@ class PolarKinematics:
         # Setup boundary checks
         self.max_velocity, self.max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(
-            'max_z_velocity', self.max_velocity, above=0., maxval=self.max_velocity)
+            'max_z_velocity', self.max_velocity, above=0.,
+            maxval=self.max_velocity)
         self.max_z_accel = config.getfloat(
             'max_z_accel', self.max_accel, above=0., maxval=self.max_accel)
         self.critical_radius = config.getfloat(
@@ -125,11 +126,13 @@ class PolarKinematics:
         # Slow down near center
         if move.axes_d[0] or move.axes_d[1]:
             if self.critical_radius != 0:
-                min_dist = distance_line_to_point(move.start_pos[0:2], move.end_pos[0:2])
+                min_dist = distance_line_to_point(move.start_pos[0:2],
+                                                  move.end_pos[0:2])
                 if min_dist <= self.critical_radius:
                     if min_dist != 0:
                         scale_radius = min_dist/self.critical_radius
-                        move.limit_speed(self.max_velocity * scale_radius, self.max_accel * scale_radius)
+                        move.limit_speed(self.max_velocity * scale_radius,
+                                         self.max_accel * scale_radius)
 
     def get_status(self, eventtime):
         xy_home = "xy" if self.limit_xy2 >= 0. else ""
