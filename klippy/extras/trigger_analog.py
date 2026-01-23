@@ -82,6 +82,7 @@ class MCU_SosFilter:
         self._coeff_frac_bits = coeff_frac_bits
         self._value_frac_bits = self._scale_frac_bits = 0
         self._design = None
+        self._start_value = 0.
         self._offset = 0
         self._scale = 1
         self._set_section_cmd = self._set_state_cmd = None
@@ -154,9 +155,15 @@ class MCU_SosFilter:
                     % (nun_states,))
             fixed_state = []
             for col, value in enumerate(section):
-                fixed_state.append(to_fixed_32(value, self._value_frac_bits))
+                adjval = value * self._start_value
+                fixed_state.append(to_fixed_32(adjval, self._value_frac_bits))
             sos_state.append(fixed_state)
         return sos_state
+
+    # Set expected state when filter first starts (avoids filter
+    # "ringing" if sensor data has a known static offset)
+    def set_start_state(self, start_value):
+        self._start_value = start_value
 
     # Set conversion of a raw value 1 to a 1.0 value processed by sos filter
     def set_offset_scale(self, offset, scale, scale_frac_bits=0,
