@@ -38,6 +38,7 @@ class DigitalFilter:
             return
         try:
             import scipy.signal as signal
+            import numpy
         except:
             raise cfg_error("DigitalFilter require the SciPy module")
         if highpass:
@@ -68,6 +69,12 @@ class DigitalFilter:
 
     def get_initial_state(self):
         return self.initial_state
+
+    def filtfilt(self, data):
+        import scipy.signal as signal
+        import numpy
+        data = numpy.array(data)
+        return signal.sosfiltfilt(self.filter_sections, data)
 
 # Produce sample to sample difference (derivative) of a DigitalFilter
 class DerivativeFilter:
