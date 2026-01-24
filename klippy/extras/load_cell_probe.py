@@ -486,8 +486,7 @@ class LoadCellPrinterProbe:
         self._mcu = self._load_cell.get_sensor().get_mcu()
         self._mcu_trigger_analog = trigger_analog.MCU_trigger_analog(sensor)
         cmd_queue = self._mcu_trigger_analog.get_dispatch().get_command_queue()
-        sos_filter = trigger_analog.MCU_SosFilter(self._mcu, cmd_queue, 4,
-                                                  Q2_29_FRAC_BITS)
+        sos_filter = trigger_analog.MCU_SosFilter(self._mcu, cmd_queue, 4)
         self._mcu_trigger_analog.setup_sos_filter(sos_filter)
         continuous_tare_filter_helper = ContinuousTareFilterHelper(
             config, sensor, sos_filter)

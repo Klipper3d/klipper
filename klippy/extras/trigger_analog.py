@@ -74,17 +74,20 @@ class DigitalFilter:
 class MCU_SosFilter:
     # max_sections should be the largest number of sections you expect
     # to use at runtime.
-    def __init__(self, mcu, cmd_queue, max_sections, coeff_frac_bits=29):
+    def __init__(self, mcu, cmd_queue, max_sections):
         self._mcu = mcu
         self._cmd_queue = cmd_queue
-        self._oid = self._mcu.create_oid()
         self._max_sections = max_sections
-        self._coeff_frac_bits = coeff_frac_bits
-        self._value_frac_bits = self._scale_frac_bits = 0
+        # SOS filter "design"
         self._design = None
+        self._coeff_frac_bits = 0
         self._start_value = 0.
+        # Offset and scaling
         self._offset = 0
         self._scale = 1
+        self._value_frac_bits = self._scale_frac_bits = 0
+        # MCU commands
+        self._oid = self._mcu.create_oid()
         self._set_section_cmd = self._set_state_cmd = None
         self._set_active_cmd = self._set_offset_scale_cmd = None
         self._last_sent_coeffs = [None] * self._max_sections
@@ -175,8 +178,9 @@ class MCU_SosFilter:
         self._scale_frac_bits = scale_frac_bits
 
     # Change the filter coefficients and state at runtime
-    def set_filter_design(self, design):
+    def set_filter_design(self, design, coeff_frac_bits=29):
         self._design = design
+        self._coeff_frac_bits = coeff_frac_bits
 
     # Resets the filter state back to initial conditions at runtime
     def reset_filter(self):
@@ -251,7 +255,7 @@ class MCU_trigger_analog:
         self._sensor.setup_trigger_analog(self._oid)
         cmd_queue = self._dispatch.get_command_queue()
         if self._sos_filter is None:
-            self.setup_sos_filter(MCU_SosFilter(self._mcu, cmd_queue, 0, 0))
+            self.setup_sos_filter(MCU_SosFilter(self._mcu, cmd_queue, 0))
         self._mcu.add_config_cmd(
             "config_trigger_analog oid=%d sos_filter_oid=%d" % (
                 self._oid, self._sos_filter.get_oid()))
