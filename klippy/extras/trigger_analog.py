@@ -86,6 +86,7 @@ class MCU_SosFilter:
         self._offset = 0
         self._scale = 1.
         self._scale_frac_bits = 0
+        self._auto_offset = False
         # MCU commands
         self._oid = self._mcu.create_oid()
         self._set_section_cmd = self._set_state_cmd = None
@@ -105,7 +106,7 @@ class MCU_SosFilter:
             cq=self._cmd_queue)
         self._set_offset_scale_cmd = self._mcu.lookup_command(
             "sos_filter_set_offset_scale oid=%c offset=%i"
-            " scale=%i scale_frac_bits=%c", cq=self._cmd_queue)
+            " scale=%i scale_frac_bits=%c auto_offset=%c", cq=self._cmd_queue)
         self._set_active_cmd = self._mcu.lookup_command(
             "sos_filter_set_active oid=%c n_sections=%c coeff_frac_bits=%c",
             cq=self._cmd_queue)
@@ -160,10 +161,12 @@ class MCU_SosFilter:
         self._start_value = start_value
 
     # Set conversion of a raw value 1 to a 1.0 value processed by sos filter
-    def set_offset_scale(self, offset, scale, scale_frac_bits=0):
+    def set_offset_scale(self, offset=0, scale=1., scale_frac_bits=0,
+                         auto_offset=False):
         self._offset = offset
         self._scale = scale
         self._scale_frac_bits = scale_frac_bits
+        self._auto_offset = auto_offset
 
     # Change the filter coefficients and state at runtime
     def set_filter_design(self, design, coeff_frac_bits=29):
@@ -196,8 +199,9 @@ class MCU_SosFilter:
             self._set_state_cmd.send([self._oid, i, state[0], state[1]])
         # Send offset/scale (if they have changed)
         su = to_fixed_32(self._scale, self._scale_frac_bits)
-        args = (self._oid, self._offset, su, self._scale_frac_bits)
-        if args != self._last_sent_offset_scale:
+        args = (self._oid, self._offset, su, self._scale_frac_bits,
+                self._auto_offset)
+        if args != self._last_sent_offset_scale or self._auto_offset:
             self._set_offset_scale_cmd.send(args)
             self._last_sent_offset_scale = args
         # Activate filter

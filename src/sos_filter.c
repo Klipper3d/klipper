@@ -21,6 +21,7 @@ struct sos_filter_section {
 
 struct sos_filter {
     uint8_t max_sections, n_sections, coeff_frac_bits, scale_frac_bits;
+    uint8_t auto_offset;
     int32_t offset, scale;
     // filter composed of second order sections
     struct sos_filter_section filter[0];
@@ -57,6 +58,12 @@ int
 sos_filter_apply(struct sos_filter *sf, int32_t *pvalue)
 {
     int32_t raw_val = *pvalue;
+
+    // Automatically apply offset (if requested)
+    if (sf->auto_offset) {
+        sf->offset = -raw_val;
+        sf->auto_offset = 0;
+    }
 
     // Apply offset and scale
     int32_t offset = sf->offset, offset_val = raw_val + offset, cur_val;
@@ -163,9 +170,11 @@ command_trigger_analog_set_offset_scale(uint32_t *args)
     sf->offset = args[1];
     sf->scale = args[2];
     sf->scale_frac_bits = args[3] & 0x3f;
+    sf->auto_offset = args[4];
 }
 DECL_COMMAND(command_trigger_analog_set_offset_scale,
-    "sos_filter_set_offset_scale oid=%c offset=%i scale=%i scale_frac_bits=%c");
+    "sos_filter_set_offset_scale oid=%c offset=%i scale=%i scale_frac_bits=%c"
+    " auto_offset=%c");
 
 // Set one section of the filter
 void
