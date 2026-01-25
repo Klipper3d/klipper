@@ -6,6 +6,9 @@
 import collections, importlib, logging, math, multiprocessing, traceback
 shaper_defs = importlib.import_module('.shaper_defs', 'extras')
 
+# Improves compatibility with non-RPi Linux distributions.
+multiprocessing.set_start_method("fork", force=True)
+
 MIN_FREQ = 5.
 MAX_FREQ = 200.
 WINDOW_T_SEC = 0.5
