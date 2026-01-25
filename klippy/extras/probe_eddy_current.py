@@ -687,7 +687,7 @@ class PrinterEddyProbe:
                                            self.calibration, self.probe_offsets)
         # Register with main probe interface
         self.cmd_helper = probe.ProbeCommandHelper(config, self,
-                                                   replace_z_offset=True)
+                                                   can_set_z_offset=False)
         self.probe_session = probe.ProbeSessionHelper(
             config, self.param_helper, self._start_descend_wrapper)
         self.printer.add_object('probe', self)
