@@ -21,7 +21,7 @@ def assert_is_int32(value, frac_bits):
 
 # convert a floating point value to a 32 bit fixed point representation
 # checks for overflow
-def to_fixed_32(value, frac_bits):
+def to_fixed_32(value, frac_bits=0):
     fixed_val = int(value * (2**frac_bits))
     return assert_is_int32(fixed_val, frac_bits)
 
@@ -84,8 +84,8 @@ class MCU_SosFilter:
         self._start_value = 0.
         # Offset and scaling
         self._offset = 0
-        self._scale = 1
-        self._value_frac_bits = self._scale_frac_bits = 0
+        self._scale = 1.
+        self._scale_frac_bits = 0
         # MCU commands
         self._oid = self._mcu.create_oid()
         self._set_section_cmd = self._set_state_cmd = None
@@ -95,12 +95,6 @@ class MCU_SosFilter:
         self._mcu.add_config_cmd("config_sos_filter oid=%d max_sections=%d"
                                  % (self._oid, self._max_sections))
         self._mcu.register_config_callback(self._build_config)
-
-    def _validate_frac_bits(self, frac_bits):
-        if frac_bits < 0 or frac_bits > 31:
-            raise ValueError("The number of fractional bits (%i) must be a"
-                             " value between 0 and 31" % (frac_bits,))
-        return frac_bits
 
     def _build_config(self):
         self._set_section_cmd = self._mcu.lookup_command(
@@ -118,9 +112,6 @@ class MCU_SosFilter:
 
     def get_oid(self):
         return self._oid
-
-    def convert_value(self, val):
-        return to_fixed_32(val, self._value_frac_bits)
 
     # convert the SciPi SOS filters to fixed point format
     def _convert_filter(self):
@@ -159,7 +150,7 @@ class MCU_SosFilter:
             fixed_state = []
             for col, value in enumerate(section):
                 adjval = value * self._start_value
-                fixed_state.append(to_fixed_32(adjval, self._value_frac_bits))
+                fixed_state.append(to_fixed_32(adjval))
             sos_state.append(fixed_state)
         return sos_state
 
@@ -169,12 +160,9 @@ class MCU_SosFilter:
         self._start_value = start_value
 
     # Set conversion of a raw value 1 to a 1.0 value processed by sos filter
-    def set_offset_scale(self, offset, scale, scale_frac_bits=0,
-                         value_frac_bits=0):
+    def set_offset_scale(self, offset, scale, scale_frac_bits=0):
         self._offset = offset
-        self._value_frac_bits = value_frac_bits
-        scale_mult = scale * float(1 << value_frac_bits)
-        self._scale = to_fixed_32(scale_mult, scale_frac_bits)
+        self._scale = scale
         self._scale_frac_bits = scale_frac_bits
 
     # Change the filter coefficients and state at runtime
@@ -207,7 +195,8 @@ class MCU_SosFilter:
         for i, state in enumerate(sos_state):
             self._set_state_cmd.send([self._oid, i, state[0], state[1]])
         # Send offset/scale (if they have changed)
-        args = (self._oid, self._offset, self._scale, self._scale_frac_bits)
+        su = to_fixed_32(self._scale, self._scale_frac_bits)
+        args = (self._oid, self._offset, su, self._scale_frac_bits)
         if args != self._last_sent_offset_scale:
             self._set_offset_scale_cmd.send(args)
             self._last_sent_offset_scale = args
@@ -309,8 +298,7 @@ class MCU_trigger_analog:
             self._set_raw_range_cmd.send(args)
             self._last_range_args = args
         # Update trigger in mcu (if it has changed)
-        tval32 = self._sos_filter.convert_value(self._trigger_value)
-        args = [self._oid, self._trigger_type, tval32]
+        args = [self._oid, self._trigger_type, to_fixed_32(self._trigger_value)]
         if args != self._last_trigger_args:
             self._set_trigger_cmd.send(args)
             self._last_trigger_args = args

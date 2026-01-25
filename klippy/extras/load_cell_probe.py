@@ -9,9 +9,8 @@ from . import probe, trigger_analog, load_cell, hx71x, ads1220
 
 np = None  # delay NumPy import until configuration time
 
-# constants for fixed point numbers
-Q2_29_FRAC_BITS = 29
-Q16_15_FRAC_BITS = 15
+# MCU SOS filter scaled to "fractional grams" for consistent sensor precision
+FRAC_GRAMS_CONV = 32768.0
 
 
 class TapAnalysis:
@@ -272,9 +271,9 @@ class LoadCellProbeConfigHelper:
     def get_grams_per_count(self):
         counts_per_gram = self._load_cell.get_counts_per_gram()
         # The counts_per_gram could be so large that it becomes 0.0 when
-        # converted to Q2.29 format. This would mean the ADC range only measures
+        # sent to the mcu. This would mean the ADC range only measures
         # a few grams which seems very unlikely. Treat this as an error:
-        if counts_per_gram >= 2**Q2_29_FRAC_BITS:
+        if counts_per_gram >= (1<<29):
             raise OverflowError("counts_per_gram value is too large to filter")
         return 1. / counts_per_gram
 
@@ -318,17 +317,18 @@ class LoadCellProbingMove:
         self._continuous_tare_filter_helper.update_from_command(gcmd)
         # update the load cell so it reflects the new tare value
         self._load_cell.tare(tare_counts)
-        # update range and trigger
+        # update raw range
         safety_min, safety_max = self._config_helper.get_safety_range(gcmd)
         self._mcu_trigger_analog.set_raw_range(safety_min, safety_max)
-        trigger_val = self._config_helper.get_trigger_force_grams(gcmd)
-        self._mcu_trigger_analog.set_trigger("abs_ge", trigger_val)
         # update internal tare value
-        gpc = self._config_helper.get_grams_per_count()
+        gpc = self._config_helper.get_grams_per_count() * FRAC_GRAMS_CONV
         sos_filter = self._mcu_trigger_analog.get_sos_filter()
         Q17_14_FRAC_BITS = 14
-        sos_filter.set_offset_scale(int(-tare_counts), gpc,
-                                    Q17_14_FRAC_BITS, Q16_15_FRAC_BITS)
+        sos_filter.set_offset_scale(int(-tare_counts), gpc, Q17_14_FRAC_BITS)
+        # update trigger
+        trigger_val = self._config_helper.get_trigger_force_grams(gcmd)
+        trigger_frac_grams = trigger_val * FRAC_GRAMS_CONV
+        self._mcu_trigger_analog.set_trigger("abs_ge", trigger_frac_grams)
 
     # Probe towards z_min until the trigger_analog on the MCU triggers
     def probing_move(self, gcmd):
