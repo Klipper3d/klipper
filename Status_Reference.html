@@ -2529,10 +2529,18 @@ is defined):</p>
   during the last QUERY_PROBE command. Note, if this is used in a
   macro, due to the order of template expansion, the QUERY_PROBE
   command must be run prior to the macro containing this reference.</li>
-<li><code>last_z_result</code>: Returns the Z result value of the last PROBE
-  command. Note, if this is used in a macro, due to the order of
-  template expansion, the PROBE (or similar) command must be run prior
-  to the macro containing this reference.</li>
+<li><code>last_probe_position</code>: The results of the last <code>PROBE</code> command. This
+  value is encoded as a <a href="#accessing-coordinates">coordinate</a>. The
+  probe hardware estimates that if one were to command the toolhead to
+  XY position <code>last_probe_position.x</code>,<code>last_probe_position.y</code> and
+  descend then the tip of the toolhead would first contact the bed at
+  a Z height of <code>last_probe_position.z</code>. These coordinates are
+  relative to the frame (that is, they use the coordinate system
+  specified in the config file).  Note, if this is used in a macro,
+  due to the order of template expansion, the <code>PROBE</code> command must be
+  run prior to the macro containing this reference.</li>
+<li><code>last_z_result</code>: This value is deprecated; it will be removed in the
+  near future.</li>
 </ul>
 <h2 id="pwm_cycle_time">pwm_cycle_time<a class="headerlink" href="#pwm_cycle_time" title="Permanent link">&para;</a></h2>
 <p>The following information is available in
