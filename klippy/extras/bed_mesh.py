@@ -691,7 +691,7 @@ class BedMeshCalibrate:
                     / len(pts)
                 idx_offset += len(pts) - 1
                 start_idx = idx + len(pts)
-                fpt.append(avg_z)
+                fpt = (fpt[0], fpt[1], avg_z)
                 logging.info(
                     "bed_mesh: Replacing value at faulty index %d"
                     " (%.4f, %.4f): avg value = %.6f, avg w/ z_offset = %.6f"
