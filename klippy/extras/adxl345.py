@@ -133,10 +133,12 @@ class AccelCommandHelper:
                                    desc=self.cmd_ACCELEROMETER_DEBUG_WRITE_help)
     cmd_ACCELEROMETER_MEASURE_help = "Start/stop accelerometer"
     def cmd_ACCELEROMETER_MEASURE(self, gcmd):
+        quiet = gcmd.get_int("QUIET", 0, minval=0, maxval=1)
         if self.bg_client is None:
             # Start measurements
             self.bg_client = self.chip.start_internal_client()
-            gcmd.respond_info("accelerometer measurements started")
+            if not quiet:
+                gcmd.respond_info("accelerometer measurements started")
             return
         # End measurements
         name = gcmd.get("NAME", time.strftime("%Y%m%d_%H%M%S"))
@@ -151,8 +153,10 @@ class AccelCommandHelper:
         else:
             filename = "/tmp/%s-%s-%s.csv" % (self.base_name, self.name, name)
         bg_client.write_to_file(filename)
-        gcmd.respond_info("Writing raw accelerometer data to %s file"
-                          % (filename,))
+        if not quiet:
+            gcmd.respond_info(
+                "Writing raw accelerometer data to {} file".format(filename)
+            )
     cmd_ACCELEROMETER_QUERY_help = "Query accelerometer for the current values"
     def cmd_ACCELEROMETER_QUERY(self, gcmd):
         aclient = self.chip.start_internal_client()
