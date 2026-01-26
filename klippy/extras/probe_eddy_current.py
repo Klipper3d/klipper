@@ -394,17 +394,15 @@ MAX_VALID_RAW_VALUE=0x03ffffff
 # Helper for implementing PROBE style commands (descend until trigger)
 class EddyDescend:
     def __init__(self, config, sensor_helper, calibration,
-                 probe_offsets, param_helper):
+                 probe_offsets, param_helper, trigger_analog):
         self._printer = config.get_printer()
         self._sensor_helper = sensor_helper
         self._calibration = calibration
         self._probe_offsets = probe_offsets
         self._param_helper = param_helper
-        self._trigger_analog = trigger_analog.MCU_trigger_analog(sensor_helper)
+        self._trigger_analog = trigger_analog
         self._z_min_position = probe.lookup_minimum_z(config)
         self._gather = None
-        dispatch = self._trigger_analog.get_dispatch()
-        probe.LookupZSteppers(config, dispatch.add_stepper)
     def _prep_trigger_analog(self):
         self._trigger_analog.set_raw_range(0, MAX_VALID_RAW_VALUE)
         z_offset = self._probe_offsets.get_offsets()[2]
@@ -538,12 +536,15 @@ class PrinterEddyProbe:
         sensors = { "ldc1612": ldc1612.LDC1612 }
         sensor_type = config.getchoice('sensor_type', {s: s for s in sensors})
         self.sensor_helper = sensors[sensor_type](config, self.calibration)
+        # Create trigger_analog interface
+        trig_analog = trigger_analog.MCU_trigger_analog(self.sensor_helper)
+        probe.LookupZSteppers(config, trig_analog.get_dispatch().add_stepper)
         # Probe interface
         self.probe_offsets = probe.ProbeOffsetsHelper(config)
         self.param_helper = probe.ProbeParameterHelper(config)
         self.eddy_descend = EddyDescend(
             config, self.sensor_helper, self.calibration, self.probe_offsets,
-            self.param_helper)
+            self.param_helper, trig_analog)
         self.cmd_helper = probe.ProbeCommandHelper(config, self,
             replace_z_offset=True)
         self.probe_session = probe.ProbeSessionHelper(
