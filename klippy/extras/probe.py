@@ -95,7 +95,7 @@ class ProbeCommandHelper:
         if mpresult is None:
             return
         ppos, offsets = self.probe_calibrate_info
-        z_offset = offsets[2] + mpresult.bed_z - ppos.bed_z
+        z_offset = offsets[2] - mpresult.bed_z + ppos.bed_z
         gcode = self.printer.lookup_object('gcode')
         gcode.respond_info(
             "%s: z_offset: %.3f\n"
