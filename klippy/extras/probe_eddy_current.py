@@ -475,17 +475,15 @@ class EddyEndstopWrapper:
 
 # Implementing probing with "METHOD=scan"
 class EddyScanningProbe:
-    def __init__(self, printer, sensor_helper, calibration, probe_offsets,
-                 gcmd):
-        calibration.verify_calibrated()
-        self._printer = printer
+    def __init__(self, config, sensor_helper, calibration, probe_offsets):
+        self._printer = config.get_printer()
         self._sensor_helper = sensor_helper
         self._calibration = calibration
         self._offsets = probe_offsets.get_offsets()
-        self._gather = EddyGatherSamples(printer, sensor_helper)
+        self._gather = None
         self._sample_time_delay = 0.050
-        self._sample_time = gcmd.get_float("SAMPLE_TIME", 0.100, above=0.0)
-        self._is_rapid = gcmd.get("METHOD", "scan") == 'rapid_scan'
+        self._sample_time = 0.
+        self._is_rapid = False
     def _lookup_toolhead_pos(self, pos_time):
         toolhead = self._printer.lookup_object('toolhead')
         kin = toolhead.get_kinematics()
@@ -502,6 +500,13 @@ class EddyScanningProbe:
         end_time = start_time + self._sample_time
         self._gather.add_probe_request(self._analyze_scan, start_time, end_time,
                                        printtime)
+    # Probe session interface
+    def start_probe_session(self, gcmd):
+        self._calibration.verify_calibrated()
+        self._gather = EddyGatherSamples(self._printer, self._sensor_helper)
+        self._sample_time = gcmd.get_float("SAMPLE_TIME", 0.100, above=0.0)
+        self._is_rapid = gcmd.get("METHOD", "scan") == 'rapid_scan'
+        return self
     def run_probe(self, gcmd):
         toolhead = self._printer.lookup_object("toolhead")
         if self._is_rapid:
@@ -539,7 +544,7 @@ class PrinterEddyProbe:
         # Create trigger_analog interface
         trig_analog = trigger_analog.MCU_trigger_analog(self.sensor_helper)
         probe.LookupZSteppers(config, trig_analog.get_dispatch().add_stepper)
-        # Probe interface
+        # Basic probe requests
         self.probe_offsets = probe.ProbeOffsetsHelper(config)
         self.param_helper = probe.ProbeParameterHelper(config)
         self.eddy_descend = EddyDescend(
@@ -549,9 +554,14 @@ class PrinterEddyProbe:
             replace_z_offset=True)
         self.probe_session = probe.ProbeSessionHelper(
             config, self.param_helper, self.eddy_descend.start_probe_session)
+        # Create wrapper to support Z homing with probe
         mcu_probe = EddyEndstopWrapper(self.sensor_helper, self.eddy_descend)
         probe.HomingViaProbeHelper(
             config, mcu_probe, self.probe_offsets, self.param_helper)
+        # Probing via "scan" and "rapid_scan" requests
+        self.eddy_scan = EddyScanningProbe(config, self.sensor_helper,
+                                           self.calibration, self.probe_offsets)
+        # Register with main probe interface
         self.printer.add_object('probe', self)
     def add_client(self, cb):
         self.sensor_helper.add_client(cb)
@@ -564,8 +574,7 @@ class PrinterEddyProbe:
     def start_probe_session(self, gcmd):
         method = gcmd.get('METHOD', 'automatic').lower()
         if method in ('scan', 'rapid_scan'):
-            return EddyScanningProbe(self.printer, self.sensor_helper,
-                                     self.calibration, self.probe_offsets, gcmd)
+            return self.eddy_scan.start_probe_session(gcmd)
         return self.probe_session.start_probe_session(gcmd)
     def register_drift_compensation(self, comp):
         self.calibration.register_drift_compensation(comp)
