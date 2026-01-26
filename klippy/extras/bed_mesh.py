@@ -682,7 +682,7 @@ class BedMeshCalibrate:
             idx_offset = 0
             start_idx = 0
             for i, pts in substitutes.items():
-                fpt = base_points[i][:2]
+                fpt = list(base_points[i][:2])
                 # offset the index to account for additional samples
                 idx = i + idx_offset
                 # Add "normal" points
