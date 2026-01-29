@@ -1,7 +1,7 @@
 // Support for gathering acceleration data from LIS2DW chip
 //
 // Copyright (C) 2023  Zhou.XianMing <zhouxm@biqu3d.com>
-// Copyright (C) 2020-2023  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2020-2025  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -24,6 +24,7 @@
 #define LIS_FIFO_SAMPLES 0x2F
 
 #define BYTES_PER_SAMPLE 6
+#define BYTES_PER_BLOCK 48
 
 struct lis2dw {
     struct timer timer;
@@ -35,6 +36,7 @@ struct lis2dw {
     uint8_t bus_type;
     uint8_t flags;
     uint8_t model;
+    uint8_t fifo_bytes_pending;
     struct sensor_bulk sb;
 };
 
@@ -118,73 +120,94 @@ lis2dw_reschedule_timer(struct lis2dw *ax)
     irq_enable();
 }
 
+// Update local status tracking from newly read fifo status register
+static void
+update_fifo_status(struct lis2dw *ax, uint8_t fifo_status)
+{
+    if (fifo_status & 0x40)
+        ax->sb.possible_overflows++;
+
+    uint_fast8_t pending;
+    if (ax->model == LIS3DH) {
+        if (fifo_status & 0x20)
+            pending = 0;
+        else
+            pending = fifo_status & 0x1F;
+    } else {
+        pending = fifo_status & 0x3F;
+    }
+    ax->fifo_bytes_pending = pending * BYTES_PER_SAMPLE;
+}
+
+// Query fifo status register
+static void
+query_fifo_status(struct lis2dw *ax)
+{
+    uint8_t fifo_status = 0;
+    if (CONFIG_WANT_SPI && ax->bus_type == SPI_SERIAL) {
+        uint8_t fifo[2] = { LIS_FIFO_SAMPLES | LIS_AM_READ, 0x00 };
+        spidev_transfer(ax->spi, 1, sizeof(fifo), fifo);
+        fifo_status = fifo[1];
+    } else if (CONFIG_WANT_I2C && ax->bus_type == I2C_SERIAL) {
+        uint8_t fifo_reg[1] = {LIS_FIFO_SAMPLES};
+        int ret = i2c_dev_read(ax->i2c, sizeof(fifo_reg), fifo_reg
+                               , sizeof(fifo_status), &fifo_status);
+        i2c_shutdown_on_err(ret);
+    }
+    update_fifo_status(ax, fifo_status);
+}
+
+// Read 8 samples from FIFO via SPI
+static void
+read_fifo_block_spi(struct lis2dw *ax)
+{
+    uint8_t msg[BYTES_PER_BLOCK + 1] = {0};
+    msg[0] = LIS_AR_DATAX0 | LIS_AM_READ;
+    if (ax->model == LIS3DH)
+        msg[0] |= LIS_MS_SPI;
+
+    spidev_transfer(ax->spi, 1, sizeof(msg), msg);
+    memcpy(ax->sb.data, &msg[1], BYTES_PER_BLOCK);
+}
+
+// Read 8 samples from FIFO via i2c
+static void
+read_fifo_block_i2c(struct lis2dw *ax)
+{
+    uint8_t msg_reg[] = {LIS_AR_DATAX0};
+    if (ax->model == LIS3DH)
+        msg_reg[0] |= LIS_MS_I2C;
+
+    int ret = i2c_dev_read(ax->i2c, sizeof(msg_reg), msg_reg
+                           , BYTES_PER_BLOCK, ax->sb.data);
+    i2c_shutdown_on_err(ret);
+}
+
+// Read from fifo and transmit data to host
+static void
+read_fifo_block(struct lis2dw *ax, uint8_t oid)
+{
+    if (CONFIG_WANT_SPI && ax->bus_type == SPI_SERIAL)
+        read_fifo_block_spi(ax);
+    else if (CONFIG_WANT_I2C && ax->bus_type == I2C_SERIAL)
+        read_fifo_block_i2c(ax);
+    ax->sb.data_count = BYTES_PER_BLOCK;
+    sensor_bulk_report(&ax->sb, oid);
+    ax->fifo_bytes_pending -= BYTES_PER_BLOCK;
+}
+
 // Query accelerometer data
 static void
 lis2dw_query(struct lis2dw *ax, uint8_t oid)
 {
-    uint8_t fifo_empty = 0;
-    uint8_t fifo_ovrn = 0;
-    uint8_t *d = &ax->sb.data[ax->sb.data_count];
+    if (ax->fifo_bytes_pending < BYTES_PER_BLOCK)
+        query_fifo_status(ax);
 
-    if (CONFIG_WANT_SPI && ax->bus_type == SPI_SERIAL) {
-        uint8_t msg[7] = {0};
-        uint8_t fifo[2] = {LIS_FIFO_SAMPLES | LIS_AM_READ , 0};
-
-        msg[0] = LIS_AR_DATAX0 | LIS_AM_READ;
-        if (ax->model == LIS3DH)
-            msg[0] |= LIS_MS_SPI;
-
-        spidev_transfer(ax->spi, 1, sizeof(msg), msg);
-
-        spidev_transfer(ax->spi, 1, sizeof(fifo), fifo);
-
-        if (ax->model == LIS3DH)
-            fifo_empty = fifo[1] & 0x20;
-        else
-            fifo_empty = fifo[1] & 0x3F;
-
-        fifo_ovrn = fifo[1] & 0x40;
-
-        for (uint32_t i = 0; i < BYTES_PER_SAMPLE; i++)
-            d[i] = msg[i + 1];
-    } else if (CONFIG_WANT_I2C && ax->bus_type == I2C_SERIAL) {
-        uint8_t msg_reg[] = {LIS_AR_DATAX0};
-        if (ax->model == LIS3DH)
-            msg_reg[0] |= LIS_MS_I2C;
-        uint8_t msg[6];
-        uint8_t fifo_reg[1] = {LIS_FIFO_SAMPLES};
-        uint8_t fifo[1];
-
-        int ret;
-        ret = i2c_dev_read(ax->i2c, sizeof(msg_reg), msg_reg
-                    , sizeof(msg), msg);
-        i2c_shutdown_on_err(ret);
-
-        ret = i2c_dev_read(ax->i2c, sizeof(fifo_reg), fifo_reg
-                    , sizeof(fifo), fifo);
-        i2c_shutdown_on_err(ret);
-
-        if (ax->model == LIS3DH)
-            fifo_empty = fifo[0] & 0x20;
-        else
-            fifo_empty = fifo[0] & 0x3F;
-
-        fifo_ovrn = fifo[0] & 0x40;
-
-        for (uint32_t i = 0; i < BYTES_PER_SAMPLE; i++)
-            d[i] = msg[i];
-    }
-
-    ax->sb.data_count += BYTES_PER_SAMPLE;
-    if (ax->sb.data_count + BYTES_PER_SAMPLE > ARRAY_SIZE(ax->sb.data))
-        sensor_bulk_report(&ax->sb, oid);
-
-    // Check fifo status
-    if (fifo_ovrn)
-        ax->sb.possible_overflows++;
+    if (ax->fifo_bytes_pending >= BYTES_PER_BLOCK)
+        read_fifo_block(ax, oid);
 
     // check if we need to run the task again (more packets in fifo?)
-    if (!fifo_empty) {
+    if (ax->fifo_bytes_pending >= BYTES_PER_BLOCK) {
         // More data in fifo - wake this task again
         sched_wake_task(&lis2dw_wake);
     } else {
@@ -207,6 +230,7 @@ command_query_lis2dw(uint32_t *args)
 
     // Start new measurements query
     ax->rest_ticks = args[1];
+    ax->fifo_bytes_pending = 0;
     sensor_bulk_reset(&ax->sb);
     lis2dw_reschedule_timer(ax);
 }
@@ -218,30 +242,26 @@ command_query_lis2dw_status(uint32_t *args)
     struct lis2dw *ax = oid_lookup(args[0], command_config_lis2dw);
     uint32_t time1 = 0;
     uint32_t time2 = 0;
-    uint8_t status = 0;
+    uint8_t fifo_status = 0;
 
     if (CONFIG_WANT_SPI && ax->bus_type == SPI_SERIAL) {
-        uint8_t msg[2] = { LIS_FIFO_SAMPLES | LIS_AM_READ, 0x00 };
+        uint8_t fifo[2] = { LIS_FIFO_SAMPLES | LIS_AM_READ, 0x00 };
         time1 = timer_read_time();
-        spidev_transfer(ax->spi, 1, sizeof(msg), msg);
+        spidev_transfer(ax->spi, 1, sizeof(fifo), fifo);
         time2 = timer_read_time();
-        status = msg[1];
+        fifo_status = fifo[1];
     } else if (CONFIG_WANT_I2C && ax->bus_type == I2C_SERIAL) {
         uint8_t fifo_reg[1] = {LIS_FIFO_SAMPLES};
-        uint8_t fifo[1];
-
         time1 = timer_read_time();
         int ret = i2c_dev_read(ax->i2c, sizeof(fifo_reg), fifo_reg
-                    , sizeof(fifo), fifo);
+                               , sizeof(fifo_status), &fifo_status);
         time2 = timer_read_time();
-
         i2c_shutdown_on_err(ret);
-
-        status = fifo[0];
     }
+    update_fifo_status(ax, fifo_status);
 
     sensor_bulk_status(&ax->sb, args[0], time1, time2-time1
-                       , (status & 0x1f) * BYTES_PER_SAMPLE);
+                       , ax->fifo_bytes_pending);
 }
 DECL_COMMAND(command_query_lis2dw_status, "query_lis2dw_status oid=%c");
 

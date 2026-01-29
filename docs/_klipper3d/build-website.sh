@@ -1,7 +1,8 @@
 #!/bin/bash
-# This script extracts the Klipper translations and builds multiple
-# mdocs sites - one for each supported language.  See the README file
-# for additional details.
+# This script creates the main klipper3d.org website hosted on github.
+# It extracts the Klipper translations and builds multiple mdocs sites
+# - one for each supported language.  See the README file for
+# additional details.
 
 MKDOCS_DIR="docs/_klipper3d/"
 WORK_DIR="work/"
@@ -21,6 +22,11 @@ done < <(egrep -v '^ *(#|$)' ${TRANS_FILE})
 # Build main English website
 echo "building site for en"
 mkdocs build -f ${MKDOCS_MAIN}
+
+# Cleanup files (mkdocs copies _klipper3d dir and its sitemap doesn't work)
+rm -rf ${PWD}/site/_klipper3d/__pycache__
+find ${PWD}/site/_klipper3d ! -name '*.css' -type f -delete
+rm ${PWD}/site/sitemap.xml ${PWD}/site/sitemap.xml.gz
 
 # Build each additional language website
 while IFS="," read dirname langsite langdesc langsearch; do
@@ -81,4 +87,10 @@ while IFS="," read dirname langsite langdesc langsearch; do
   mkdir -p "${PWD}/site/${langsite}/"
   ln -sf "${PWD}/site/${langsite}/" "${WORK_DIR}lang/${langsite}/site"
   mkdocs build -f "${new_mkdocs_file}"
+
+  # Cleanup files (mkdocs copies _klipper3d dir and its sitemap doesn't work)
+  rm -rf "${PWD}/site/${langsite}/_klipper3d/__pycache__"
+  find "${PWD}/site/${langsite}/_klipper3d" ! -name '*.css' -type f -delete
+  rm "${PWD}/site/${langsite}/sitemap.xml" "${PWD}/site/${langsite}/sitemap.xml.gz"
+
 done < <(egrep -v '^ *(#|$)' ${TRANS_FILE})

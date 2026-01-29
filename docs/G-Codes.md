@@ -372,7 +372,7 @@ restored and "MOVE_SPEED" is specified, then the toolhead moves will be
 performed with the given speed (in mm/s); otherwise the toolhead move will
 use the rail homing speed. Note that the carriages restore their positions
 only over their own axis, which may be necessary to correctly restore COPY
-and MIRROR mode of the dual carraige.
+and MIRROR mode of the dual carriage.
 
 ### [endstop_phase]
 
@@ -493,7 +493,7 @@ enabled.
 `SET_FAN_SPEED FAN=config_name SPEED=<speed>` This command sets the
 speed of a fan. "speed" must be between 0.0 and 1.0.
 
-`SET_FAN_SPEED PIN=config_name TEMPLATE=<template_name>
+`SET_FAN_SPEED FAN=config_name TEMPLATE=<template_name>
 [<param_x>=<literal>]`: If `TEMPLATE` is specified then it assigns a
 [display_template](Config_Reference.md#display_template) to the given
 fan. For example, if one defined a `[display_template
@@ -753,11 +753,11 @@ stepper at a time, some sequences of changes can lead to invalid
 intermediate kinematic configurations, even if the final configuration
 is valid. In such cases a user can pass `DISABLE_CHECKS=1` parameters to
 all but the last command to disable intermediate checks. For example,
-if `stepper a` and `stepper b` initially have `x-y` and `x+y` carriages
-correspondingly, then the following sequence of commands will let a user
-effectively swap the carriage controls:
-`SET_STEPPER_CARRIAGES STEPPER=a CARRIAGES=x+y DISABLE_CHECKS=1`
-and `SET_STEPPER_CARRIAGES STEPPER=b CARRIAGES=x-y`, while
+if `stepper a` and `stepper b` initially have `carriage_x-carriage_y` and
+`carriage_x+carriage_y` carriages correspondingly, then the following
+sequence of commands will let a user effectively swap the carriage controls:
+`SET_STEPPER_CARRIAGES STEPPER=a CARRIAGES=carriage_x+carriage_y DISABLE_CHECKS=1`
+and `SET_STEPPER_CARRIAGES STEPPER=b CARRIAGES=carriage_x-carriage_y`, while
 still validating the final kinematics state.
 
 ### [hall_filament_width_sensor]
@@ -828,15 +828,17 @@ been enabled (also see the
 
 #### SET_INPUT_SHAPER
 `SET_INPUT_SHAPER [SHAPER_FREQ_X=<shaper_freq_x>]
-[SHAPER_FREQ_Y=<shaper_freq_y>] [DAMPING_RATIO_X=<damping_ratio_x>]
-[DAMPING_RATIO_Y=<damping_ratio_y>] [SHAPER_TYPE=<shaper>]
-[SHAPER_TYPE_X=<shaper_type_x>] [SHAPER_TYPE_Y=<shaper_type_y>]`:
+[SHAPER_FREQ_Y=<shaper_freq_y>] [SHAPER_FREQ_Y=<shaper_freq_z>]
+[DAMPING_RATIO_X=<damping_ratio_x>] [DAMPING_RATIO_Y=<damping_ratio_y>]
+[DAMPING_RATIO_Z=<damping_ratio_z>] [SHAPER_TYPE=<shaper>]
+[SHAPER_TYPE_X=<shaper_type_x>] [SHAPER_TYPE_Y=<shaper_type_y>]
+[SHAPER_TYPE_Z=<shaper_type_z>]`:
 Modify input shaper parameters. Note that SHAPER_TYPE parameter resets
-input shaper for both X and Y axes even if different shaper types have
+input shaper for all axes even if different shaper types have
 been configured in [input_shaper] section. SHAPER_TYPE cannot be used
-together with either of SHAPER_TYPE_X and SHAPER_TYPE_Y parameters.
-See [config reference](Config_Reference.md#input_shaper) for more
-details on each of these parameters.
+together with any of SHAPER_TYPE_X, SHAPER_TYPE_Y, and SHAPER_TYPE_Z
+parameters. See [config reference](Config_Reference.md#input_shaper)
+for more details on each of these parameters.
 
 ### [led]
 
@@ -1284,13 +1286,14 @@ all enabled accelerometer chips.
 [POINT=x,y,z] [INPUT_SHAPING=<0:1>]`: Runs the resonance
 test in all configured probe points for the requested "axis" and
 measures the acceleration using the accelerometer chips configured for
-the respective axis. "axis" can either be X or Y, or specify an
-arbitrary direction as `AXIS=dx,dy`, where dx and dy are floating
+the respective axis. "axis" can either be X, Y or Z, or specify an
+arbitrary direction as `AXIS=dx,dy[,dz]`, where dx, dy, dz are floating
 point numbers defining a direction vector (e.g. `AXIS=X`, `AXIS=Y`, or
-`AXIS=1,-1` to define a diagonal direction). Note that `AXIS=dx,dy`
-and `AXIS=-dx,-dy` is equivalent. `chip_name` can be one or
-more configured accel chips, delimited with comma, for example
-`CHIPS="adxl345, adxl345 rpi"`. If POINT is specified it will override the point(s)
+`AXIS=1,-1` to define a diagonal direction in XY plane, or `AXIS=0,1,1`
+to define a direction in YZ plane). Note that `AXIS=dx,dy` and `AXIS=-dx,-dy`
+is equivalent. `chip_name` can be one or more configured accel chips,
+delimited with comma, for example `CHIPS="adxl345, adxl345 rpi"`.
+If POINT is specified it will override the point(s)
 configured in `[resonance_tester]`. If `INPUT_SHAPING=0` or not set(default),
 disables input shaping for the resonance testing, because
 it is not valid to run the resonance testing with the input shaper

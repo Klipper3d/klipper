@@ -345,6 +345,17 @@ command_stepper_get_position(uint32_t *args)
 }
 DECL_COMMAND(command_stepper_get_position, "stepper_get_position oid=%c");
 
+void
+command_stepper_stop(uint32_t *args)
+{
+    uint8_t oid = args[0];
+    struct stepper *s = stepper_oid_lookup(oid);
+    irq_disable();
+    move_queue_clear(&s->mq);
+    irq_enable();
+}
+DECL_COMMAND(command_stepper_stop, "stepper_stop oid=%c");
+
 // Stop all moves for a given stepper (caller must disable IRQs)
 static void
 stepper_stop(struct trsync_signal *tss, uint8_t reason)

@@ -76,6 +76,11 @@ cc_binary(
     copts = ["-fPIC"],
     # Incompatible with section garbage collection.
     features = ["-gc_sections"],
+    # Platforms will commonly depend on bootloader components in every
+    # binary via `link_extra_libs`, so we must drop these deps when
+    # building the bootloader binaries themselves in order to avoid a
+    # circular dependency.
+    link_extra_lib = "//bazel:empty_cc_lib",
     linkopts = [
         "-Wl,--no-gc-sections",
         "-nostartfiles",

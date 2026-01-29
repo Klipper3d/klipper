@@ -236,6 +236,8 @@ class PrinterLCD:
         except:
             logging.exception("Error during display screen update")
         self.lcd_chip.flush()
+        if self.redraw_request_pending:
+            return self.redraw_time
         return eventtime + REDRAW_TIME
     def request_redraw(self):
         if self.redraw_request_pending:

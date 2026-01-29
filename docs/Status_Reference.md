@@ -214,17 +214,16 @@ The following information is available in the `gcode_move` object
 (this object is always available):
 - `gcode_position`: The current position of the toolhead relative to
   the current G-Code origin. That is, positions that one might
-  directly send to a `G1` command. It is possible to access the x, y,
-  z, and e components of this position (eg, `gcode_position.x`).
+  directly send to a `G1` command. This value is encoded as a
+  [coordinate](#accessing-coordinates).
 - `position`: The last commanded position of the toolhead using the
-  coordinate system specified in the config file. It is possible to
-  access the x, y, z, and e components of this position (eg,
-  `position.x`).
+  coordinate system specified in the config file. This value is
+  encoded as a [coordinate](#accessing-coordinates).
 - `homing_origin`: The origin of the gcode coordinate system (relative
   to the coordinate system specified in the config file) to use after
   a `G28` command. The `SET_GCODE_OFFSET` command can alter this
-  position. It is possible to access the x, y, and z components of
-  this position (eg, `homing_origin.x`).
+  position. This value is encoded as a
+  [coordinate](#accessing-coordinates).
 - `speed`: The last speed set in a `G1` command (in mm/s).
 - `speed_factor`: The "speed factor override" as set by an `M220`
   command. This is a floating point value such that 1.0 means no
@@ -236,6 +235,10 @@ The following information is available in the `gcode_move` object
   coordinate mode or False if in `G91` relative mode.
 - `absolute_extrude`: This returns True if in `M82` absolute extrude
   mode or False if in `M83` relative mode.
+- `axis_map`: Provides a mechanism for finding the coordinate
+  component for a given G-Code id that is used in `G1` commands. See
+  the [Accessing Coordinates](#accessing-coordinates) section for
+  details.
 
 ## hall_filament_width_sensor
 
@@ -279,6 +282,11 @@ object is available if any heater is defined):
   e.g. `["tmc2240 stepper_x"]`.  While a temperature sensor is always
   available to read, a temperature monitor may not be available and
   will return null in such case.
+- `temperature_wait`: Indicates if G-Code processing is stalled
+  waiting for a requested temperature (typically via
+  `TEMPERATURE_WAIT`, `M109`, or `M190` commands). The value will
+  contain the name of the sensor that is causing the stall or `None`
+  if no wait is in progress.
 
 ## idle_timeout
 
@@ -291,6 +299,9 @@ is always available):
 - `printing_time`: The amount of time (in seconds) the printer has
   been in the "Printing" state (as tracked by the idle_timeout
   module).
+- `idle_timeout`: The current 'timeout' (in seconds)
+   to wait for the gcode to be triggered.
+   (as set by [SET_IDLE_TIMEOUT](G-Codes.md#set_idle_timeout))
 
 ## led
 
@@ -300,7 +311,7 @@ The following information is available for each `[led led_name]`,
 - `color_data`: A list of color lists containing the RGBW values for a
   led in the chain. Each value is represented as a float from 0.0 to
   1.0. Each color list contains 4 items (red, green, blue, white) even
-  if the underyling LED supports fewer color channels. For example,
+  if the underlying LED supports fewer color channels. For example,
   the blue value (3rd item in color list) of the second neopixel in a
   chain could be accessed at
   `printer["neopixel <config_name>"].color_data[1][2]`.
@@ -358,7 +369,8 @@ The following information is available in the `motion_report` object
 (this object is automatically available if any stepper config section
 is defined):
 - `live_position`: The requested toolhead position interpolated to the
-  current time.
+  current time. This value is encoded as a
+  [coordinate](#accessing-coordinates).
 - `live_velocity`: The requested toolhead velocity (in mm/s) at the
   current time.
 - `live_extruder_velocity`: The requested extruder velocity (in mm/s)
@@ -412,10 +424,18 @@ is defined):
   during the last QUERY_PROBE command. Note, if this is used in a
   macro, due to the order of template expansion, the QUERY_PROBE
   command must be run prior to the macro containing this reference.
-- `last_z_result`: Returns the Z result value of the last PROBE
-  command. Note, if this is used in a macro, due to the order of
-  template expansion, the PROBE (or similar) command must be run prior
-  to the macro containing this reference.
+- `last_probe_position`: The results of the last `PROBE` command. This
+  value is encoded as a [coordinate](#accessing-coordinates). The
+  probe hardware estimates that if one were to command the toolhead to
+  XY position `last_probe_position.x`,`last_probe_position.y` and
+  descend then the tip of the toolhead would first contact the bed at
+  a Z height of `last_probe_position.z`. These coordinates are
+  relative to the frame (that is, they use the coordinate system
+  specified in the config file).  Note, if this is used in a macro,
+  due to the order of template expansion, the `PROBE` command must be
+  run prior to the macro containing this reference.
+- `last_z_result`: This value is deprecated; it will be removed in the
+  near future.
 
 ## pwm_cycle_time
 
@@ -547,9 +567,8 @@ objects (eg, `[tmc2208 stepper_x]`):
 The following information is available in the `toolhead` object
 (this object is always available):
 - `position`: The last commanded position of the toolhead relative to
-  the coordinate system specified in the config file. It is possible
-  to access the x, y, z, and e components of this position (eg,
-  `position.x`).
+  the coordinate system specified in the config file. This value is
+  encoded as a [coordinate](#accessing-coordinates).
 - `extruder`: The name of the currently active extruder. For example,
   in a macro one could use `printer[printer.toolhead.extruder].target`
   to get the target temperature of the current extruder.
@@ -557,8 +576,8 @@ The following information is available in the `toolhead` object
   "homed" state. This is a string containing one or more of "x", "y",
   "z".
 - `axis_minimum`, `axis_maximum`: The axis travel limits (mm) after
-  homing.  It is possible to access the x, y, z components of this
-  limit value (eg, `axis_minimum.x`, `axis_maximum.z`).
+  homing. This value is encoded as a
+  [coordinate](#accessing-coordinates).
 - For Delta printers the `cone_start_z` is the max z height at
   maximum radius (`printer.toolhead.cone_start_z`).
 - `max_velocity`, `max_accel`, `minimum_cruise_ratio`,
@@ -568,6 +587,10 @@ The following information is available in the `toolhead` object
 - `stalls`: The total number of times (since the last restart) that
   the printer had to be paused because the toolhead moved faster than
   moves could be read from the G-Code input.
+- `extra_axes`: Provides a mechanism for finding the coordinate
+  component for extra axes available in standard `G1` type move
+  commands. See the [Accessing Coordinates](#accessing-coordinates)
+  section for details.
 
 ## dual_carriage
 
@@ -624,3 +647,29 @@ The following information is available in the `z_tilt` object (this
 object is available if z_tilt is defined):
 - `applied`: True if the z-tilt leveling process has been run and completed
   successfully.
+
+## Accessing Coordinates
+
+Some status fields provide a "coordinate". For macro users these
+fields may be accessed by component name
+(eg,`{printer.toolhead.position.x}`), where the component name may be
+"x", "y", or "z".
+
+For developers using the Klipper API Server these fields are
+transmitted as a list - for example: `{"toolhead": {"position": [1.0,
+2.0, 3.0, 7.3, 19.2]}}` . The first three components of the list
+correspond with the x, y, and z axes.
+
+A coordinate will typically have at least 3 components (x, y, and z),
+however there may also be additional components. Care should be taken
+when accessing any of these additional components as the ordering and
+number of components may change at run-time.
+
+One may use `{printer.gcode_move.axis_map}` and/or
+`{printer.toolhead.extra_axes}` to determine the number of components
+and the ordering of components. For example, to access the "E"
+component one could use
+`{printer.toolhead.position[printer.gcode_move.axis_map.E]}`. Or, if
+one wanted to find the component associated with the "extruder"
+object, one could use
+`{printer.toolhead.position[printer.toolhead.extra_axes.extruder]}`.

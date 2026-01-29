@@ -8,20 +8,6 @@ import logging
 class GCodeMove:
     def __init__(self, config):
         self.printer = printer = config.get_printer()
-        printer.register_event_handler("klippy:ready", self._handle_ready)
-        printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
-        printer.register_event_handler("toolhead:set_position",
-                                       self.reset_last_position)
-        printer.register_event_handler("toolhead:manual_move",
-                                       self.reset_last_position)
-        printer.register_event_handler("toolhead:update_extra_axes",
-                                       self._update_extra_axes)
-        printer.register_event_handler("gcode:command_error",
-                                       self.reset_last_position)
-        printer.register_event_handler("extruder:activate_extruder",
-                                       self._handle_activate_extruder)
-        printer.register_event_handler("homing:home_rails_end",
-                                       self._handle_home_rails_end)
         self.is_printer_ready = False
         # Register g-code commands
         gcode = printer.lookup_object('gcode')
@@ -52,6 +38,23 @@ class GCodeMove:
         self.saved_states = {}
         self.move_transform = self.move_with_transform = None
         self.position_with_transform = (lambda: [0., 0., 0., 0.])
+        # Register callbacks
+        printer.register_event_handler("klippy:ready", self._handle_ready)
+        printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
+        printer.register_event_handler("klippy:analyze_shutdown",
+                                       self._handle_analyze_shutdown)
+        printer.register_event_handler("toolhead:set_position",
+                                       self.reset_last_position)
+        printer.register_event_handler("toolhead:manual_move",
+                                       self.reset_last_position)
+        printer.register_event_handler("toolhead:update_extra_axes",
+                                       self._update_extra_axes)
+        printer.register_event_handler("gcode:command_error",
+                                       self.reset_last_position)
+        printer.register_event_handler("extruder:activate_extruder",
+                                       self._handle_activate_extruder)
+        printer.register_event_handler("homing:home_rails_end",
+                                       self._handle_home_rails_end)
     def _handle_ready(self):
         self.is_printer_ready = True
         if self.move_transform is None:
@@ -60,9 +63,8 @@ class GCodeMove:
             self.position_with_transform = toolhead.get_position
         self.reset_last_position()
     def _handle_shutdown(self):
-        if not self.is_printer_ready:
-            return
         self.is_printer_ready = False
+    def _handle_analyze_shutdown(self, msg, details):
         logging.info("gcode state: absolute_coord=%s absolute_extrude=%s"
                      " base_position=%s last_position=%s homing_position=%s"
                      " speed_factor=%s extrude_factor=%s speed=%s",
@@ -105,9 +107,10 @@ class GCodeMove:
             'extrude_factor': self.extrude_factor,
             'absolute_coordinates': self.absolute_coord,
             'absolute_extrude': self.absolute_extrude,
-            'homing_origin': self.Coord(*self.homing_position[:4]),
-            'position': self.Coord(*self.last_position[:4]),
-            'gcode_position': self.Coord(*move_position[:4]),
+            'homing_origin': self.Coord(self.homing_position),
+            'position': self.Coord(self.last_position),
+            'gcode_position': self.Coord(move_position),
+            'axis_map': self.axis_map,
         }
     def reset_last_position(self):
         if self.is_printer_ready:
@@ -120,7 +123,8 @@ class GCodeMove:
             if ea is None:
                 continue
             gcode_id = ea.get_axis_gcode_id()
-            if gcode_id is None or gcode_id in axis_map or gcode_id in "FN":
+            if (gcode_id is None or len(gcode_id) != 1 or not gcode_id.isupper()
+                or gcode_id in axis_map or gcode_id in "FN"):
                 continue
             axis_map[gcode_id] = index
         self.axis_map = axis_map
@@ -187,7 +191,7 @@ class GCodeMove:
     def cmd_M114(self, gcmd):
         # Get Current Position
         p = self._get_gcode_position()
-        gcmd.respond_raw("X:%.3f Y:%.3f Z:%.3f E:%.3f" % tuple(p))
+        gcmd.respond_raw("X:%.3f Y:%.3f Z:%.3f E:%.3f" % tuple(p[:4]))
     def cmd_M220(self, gcmd):
         # Set speed factor override percentage
         value = gcmd.get_float('S', 100., above=0.) / (60. * 100.)

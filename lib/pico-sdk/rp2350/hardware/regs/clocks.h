@@ -615,7 +615,7 @@
 // Description : Clock control, can be changed on-the-fly (except for auxsrc)
 #define CLOCKS_CLK_SYS_CTRL_OFFSET _u(0x0000003c)
 #define CLOCKS_CLK_SYS_CTRL_BITS   _u(0x000000e1)
-#define CLOCKS_CLK_SYS_CTRL_RESET  _u(0x00000000)
+#define CLOCKS_CLK_SYS_CTRL_RESET  _u(0x00000041)
 // -----------------------------------------------------------------------------
 // Field       : CLOCKS_CLK_SYS_CTRL_AUXSRC
 // Description : Selects the auxiliary clock source, will glitch when switching
@@ -625,7 +625,7 @@
 //               0x3 -> xosc_clksrc
 //               0x4 -> clksrc_gpin0
 //               0x5 -> clksrc_gpin1
-#define CLOCKS_CLK_SYS_CTRL_AUXSRC_RESET  _u(0x0)
+#define CLOCKS_CLK_SYS_CTRL_AUXSRC_RESET  _u(0x2)
 #define CLOCKS_CLK_SYS_CTRL_AUXSRC_BITS   _u(0x000000e0)
 #define CLOCKS_CLK_SYS_CTRL_AUXSRC_MSB    _u(7)
 #define CLOCKS_CLK_SYS_CTRL_AUXSRC_LSB    _u(5)
@@ -642,7 +642,7 @@
 //               fly
 //               0x0 -> clk_ref
 //               0x1 -> clksrc_clk_sys_aux
-#define CLOCKS_CLK_SYS_CTRL_SRC_RESET  _u(0x0)
+#define CLOCKS_CLK_SYS_CTRL_SRC_RESET  _u(0x1)
 #define CLOCKS_CLK_SYS_CTRL_SRC_BITS   _u(0x00000001)
 #define CLOCKS_CLK_SYS_CTRL_SRC_MSB    _u(0)
 #define CLOCKS_CLK_SYS_CTRL_SRC_LSB    _u(0)

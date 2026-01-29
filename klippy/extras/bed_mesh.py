@@ -34,7 +34,7 @@ def constrain(val, min_val, max_val):
 def lerp(t, v0, v1):
     return (1. - t) * v0 + t * v1
 
-# retreive commma separated pair from config
+# retrieve comma separated pair from config
 def parse_config_pair(config, option, default, minval=None, maxval=None):
     pair = config.getintlist(option, (default, default))
     if len(pair) != 2:
@@ -54,7 +54,7 @@ def parse_config_pair(config, option, default, minval=None, maxval=None):
                 % (option, str(maxval)))
     return pair
 
-# retreive commma separated pair from a g-code command
+# retrieve comma separated pair from a g-code command
 def parse_gcmd_pair(gcmd, name, minval=None, maxval=None):
     try:
         pair = [int(v.strip()) for v in gcmd.get(name).split(',')]
@@ -74,7 +74,7 @@ def parse_gcmd_pair(gcmd, name, minval=None, maxval=None):
                              % (name, maxval))
     return pair
 
-# retreive commma separated coordinate from a g-code command
+# retrieve comma separated coordinate from a g-code command
 def parse_gcmd_coord(gcmd, name):
     try:
         v1, v2 = [float(v.strip()) for v in gcmd.get(name).split(',')]
@@ -308,7 +308,7 @@ class BedMesh:
                 result["calibration"] = self.bmc.dump_calibration(gcmd)
         else:
             result["calibration"] = self.bmc.dump_calibration()
-        offsets = [0, 0, 0] if prb is None else prb.get_offsets()
+        offsets = [0, 0, 0] if prb is None else prb.get_offsets(gcmd)
         result["probe_offsets"] = offsets
         result["axis_minimum"] = th_sts["axis_minimum"]
         result["axis_maximum"] = th_sts["axis_maximum"]
@@ -651,9 +651,9 @@ class BedMeshCalibrate:
         except BedMeshError as e:
             raise gcmd.error(str(e))
         self.probe_mgr.start_probe(gcmd)
-    def probe_finalize(self, offsets, positions):
-        z_offset = offsets[2]
-        positions = [[round(p[0], 2), round(p[1], 2), p[2]]
+    def probe_finalize(self, positions):
+        z_offset = 0.
+        positions = [[round(p.bed_x, 2), round(p.bed_y, 2), p.bed_z]
                      for p in positions]
         if self.probe_mgr.get_zero_ref_mode() == ZrefMode.PROBE:
             ref_pos = positions.pop()
@@ -682,7 +682,7 @@ class BedMeshCalibrate:
             idx_offset = 0
             start_idx = 0
             for i, pts in substitutes.items():
-                fpt = [p - o for p, o in zip(base_points[i], offsets[:2])]
+                fpt = list(base_points[i][:2])
                 # offset the index to account for additional samples
                 idx = i + idx_offset
                 # Add "normal" points
@@ -702,7 +702,7 @@ class BedMeshCalibrate:
 
         # validate length of result
         if len(base_points) != len(positions):
-            self._dump_points(probed_pts, positions, offsets)
+            self._dump_points(probed_pts, positions)
             raise self.gcode.error(
                 "bed_mesh: invalid position list size, "
                 "generated count: %d, probed count: %d"
@@ -713,7 +713,7 @@ class BedMeshCalibrate:
         row = []
         prev_pos = base_points[0]
         for pos, result in zip(base_points, positions):
-            offset_pos = [p - o for p, o in zip(pos, offsets[:2])]
+            offset_pos = pos[:2]
             if (
                 not isclose(offset_pos[0], result[0], abs_tol=.5) or
                 not isclose(offset_pos[1], result[1], abs_tol=.5)
@@ -786,7 +786,7 @@ class BedMeshCalibrate:
         self.gcode.respond_info("Mesh Bed Leveling Complete")
         if self._profile_name is not None:
             self.bedmesh.save_profile(self._profile_name)
-    def _dump_points(self, probed_pts, corrected_pts, offsets):
+    def _dump_points(self, probed_pts, corrected_pts):
         # logs generated points with offset applied, points received
         # from the finalize callback, and the list of corrected points
         points = self.probe_mgr.get_base_points()
@@ -797,7 +797,7 @@ class BedMeshCalibrate:
         for i in list(range(max_len)):
             gen_pt = probed_pt = corr_pt = ""
             if i < len(points):
-                off_pt = [p - o for p, o in zip(points[i], offsets[:2])]
+                off_pt = points[i][:2]
                 gen_pt = "(%.2f, %.2f)" % tuple(off_pt)
             if i < len(probed_pts):
                 probed_pt = "(%.2f, %.2f, %.4f)" % tuple(probed_pts[i])
@@ -914,7 +914,7 @@ class ProbeManager:
         for i in range(y_cnt):
             for j in range(x_cnt):
                 if not i % 2:
-                    # move in positive directon
+                    # move in positive direction
                     pos_x = min_x + j * x_dist
                 else:
                     # move in negative direction
@@ -1164,7 +1164,7 @@ class ProbeManager:
 
     def _gen_arc(self, origin, radius, start, step, count):
         end = start + step * count
-        # create a segent for every 3 degress of travel
+        # create a segent for every 3 degrees of travel
         for angle in range(start, end, step):
             rad = math.radians(angle % 360)
             opp = math.sin(rad) * radius
@@ -1209,7 +1209,7 @@ class RapidScanHelper:
         gcmd_params["SAMPLE_TIME"] = half_window * 2
         self._raise_tool(gcmd, scan_height)
         probe_session = pprobe.start_probe_session(gcmd)
-        offsets = pprobe.get_offsets()
+        offsets = pprobe.get_offsets(gcmd)
         initial_move = True
         for pos, is_probe_pt in self.probe_manager.iter_rapid_path():
             pos = self._apply_offsets(pos[:2], offsets)
@@ -1221,7 +1221,7 @@ class RapidScanHelper:
                 probe_session.run_probe(gcmd)
         results = probe_session.pull_probed_results()
         toolhead.get_last_move_time()
-        self.finalize_callback(offsets, results)
+        self.finalize_callback(results)
         probe_session.end_probe_session()
 
     def _raise_tool(self, gcmd, scan_height):

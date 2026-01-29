@@ -158,10 +158,11 @@ class Printer:
             return
         try:
             self._set_state(message_ready)
-            for cb in self.event_handlers.get("klippy:ready", []):
-                if self.state_message is not message_ready:
-                    return
-                cb()
+            with self.reactor.assert_no_pause():
+                for cb in self.event_handlers.get("klippy:ready", []):
+                    if self.state_message is not message_ready:
+                        return
+                    cb()
         except Exception as e:
             logging.exception("Unhandled exception during ready callback")
             self.invoke_shutdown("Internal error during ready callback: %s"
@@ -206,14 +207,17 @@ class Printer:
         logging.error("Transition to shutdown state: %s", msg)
         self.in_shutdown_state = True
         self._set_state(msg)
-        for cb in self.event_handlers.get("klippy:shutdown", []):
-            try:
-                cb()
-            except:
-                logging.exception("Exception during shutdown handler")
-        logging.info("Reactor garbage collection: %s",
-                     self.reactor.get_gc_stats())
-        self.send_event("klippy:notify_mcu_shutdown", msg, details)
+        with self.reactor.assert_no_pause():
+            for cb in self.event_handlers.get("klippy:shutdown", []):
+                try:
+                    cb()
+                except:
+                    logging.exception("Exception during shutdown handler")
+            for cb in self.event_handlers.get("klippy:analyze_shutdown", []):
+                try:
+                    cb(msg, details)
+                except:
+                    logging.exception("Exception in analyze_shutdown handler")
     def invoke_async_shutdown(self, msg, details={}):
         self.reactor.register_async_callback(
             (lambda e: self.invoke_shutdown(msg, details)))
@@ -327,12 +331,16 @@ def main():
     extra_git_desc += "\nTracked URL: %s" % (git_info["url"])
     start_args['software_version'] = git_vers
     start_args['cpu_info'] = util.get_cpu_info()
+    start_args['device'] = util.get_device_info()
+    start_args['linux_version'] = util.get_linux_version()
     if bglogger is not None:
         versions = "\n".join([
             "Args: %s" % (sys.argv,),
             "Git version: %s%s" % (repr(start_args['software_version']),
                                    extra_git_desc),
             "CPU: %s" % (start_args['cpu_info'],),
+            "Device: %s" % (start_args['device']),
+            "Linux: %s" % (start_args['linux_version']),
             "Python: %s" % (repr(sys.version),)])
         logging.info(versions)
     elif not options.debugoutput:

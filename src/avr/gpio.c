@@ -20,6 +20,9 @@ DECL_ENUMERATION_RANGE("pin", "PC0", GPIO('C', 0), 8);
 DECL_ENUMERATION_RANGE("pin", "PD0", GPIO('D', 0), 8);
 #if CONFIG_MACH_atmega328p
 DECL_ENUMERATION_RANGE("pin", "PE0", GPIO('E', 0), 8);
+#elif CONFIG_MACH_lgt8f328p
+DECL_ENUMERATION_RANGE("pin", "PE0", GPIO('E', 0), 8);
+DECL_ENUMERATION_RANGE("pin", "PF0", GPIO('F', 0), 8);
 #endif
 #ifdef PINE
 DECL_ENUMERATION_RANGE("pin", "PE0", GPIO('E', 0), 8);
@@ -42,6 +45,9 @@ volatile uint8_t * const digital_regs[] PROGMEM = {
     &PINB, &PINC, &PIND,
 #if CONFIG_MACH_atmega328p
     &_SFR_IO8(0x0C), // PINE on atmega328pb
+#elif CONFIG_MACH_lgt8f328p
+    &_SFR_IO8(0x0C), // lgt8f328p have PINE and PINF
+    &_SFR_IO8(0x12)
 #endif
 #ifdef PINE
     &PINE, &PINF,
@@ -70,8 +76,10 @@ void
 gpio_out_reset(struct gpio_out g, uint8_t val)
 {
     irqstatus_t flag = irq_save();
-    g.regs->out = val ? (g.regs->out | g.bit) : (g.regs->out & ~g.bit);
-    g.regs->mode |= g.bit;
+    uint8_t newmode = g.regs->mode | g.bit;
+    uint8_t newout = val ? (g.regs->out | g.bit) : (g.regs->out & ~g.bit);
+    g.regs->out = newout;
+    g.regs->mode = newmode;
     irq_restore(flag);
 }
 
@@ -114,8 +122,10 @@ void
 gpio_in_reset(struct gpio_in g, int8_t pull_up)
 {
     irqstatus_t flag = irq_save();
-    g.regs->out = pull_up > 0 ? (g.regs->out | g.bit) : (g.regs->out & ~g.bit);
-    g.regs->mode &= ~g.bit;
+    uint8_t newout = pull_up>0 ? (g.regs->out | g.bit) : (g.regs->out & ~g.bit);
+    uint8_t newmode = g.regs->mode & ~g.bit;
+    g.regs->mode = newmode;
+    g.regs->out = newout;
     irq_restore(flag);
 }
 

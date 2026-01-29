@@ -1,15 +1,26 @@
 # Parse gcode commands
 #
-# Copyright (C) 2016-2024  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, re, logging, collections, shlex
+import os, re, logging, collections, shlex, operator
 
 class CommandError(Exception):
     pass
 
-Coord = collections.namedtuple('Coord', ('x', 'y', 'z', 'e'))
+# Custom "tuple" class for coordinates - add easy access to x, y, z components
+class Coord(tuple):
+    __slots__ = ()
+    def __new__(cls, t):
+        if len(t) < 4:
+            t = tuple(t) + (0,) * (4 - len(t))
+        return tuple.__new__(cls, t)
+    x = property(operator.itemgetter(0))
+    y = property(operator.itemgetter(1))
+    z = property(operator.itemgetter(2))
+    e = property(operator.itemgetter(3))
 
+# Class for handling gcode command parameters (gcmd)
 class GCodeCommand:
     error = CommandError
     def __init__(self, gcode, command, commandline, params, need_ack):
@@ -369,8 +380,6 @@ class GCodeDispatch:
 class GCodeIO:
     def __init__(self, printer):
         self.printer = printer
-        printer.register_event_handler("klippy:ready", self._handle_ready)
-        printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
         self.gcode = printer.lookup_object('gcode')
         self.gcode_mutex = self.gcode.get_mutex()
         self.fd = printer.get_start_args().get("gcode_fd")
@@ -388,12 +397,17 @@ class GCodeIO:
         self.pending_commands = []
         self.bytes_read = 0
         self.input_log = collections.deque([], 50)
+        # Register event handlers
+        printer.register_event_handler("klippy:ready", self._handle_ready)
+        printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
+        printer.register_event_handler("klippy:analyze_shutdown",
+                                       self._handle_analyze_shutdown)
     def _handle_ready(self):
         self.is_printer_ready = True
         if self.is_fileinput and self.fd_handle is None:
             self.fd_handle = self.reactor.register_fd(self.fd,
                                                       self._process_data)
-    def _dump_debug(self):
+    def _handle_analyze_shutdown(self, msg, details):
         out = []
         out.append("Dumping gcode input %d blocks" % (len(self.input_log),))
         for eventtime, data in self.input_log:
@@ -403,7 +417,6 @@ class GCodeIO:
         if not self.is_printer_ready:
             return
         self.is_printer_ready = False
-        self._dump_debug()
         if self.is_fileinput:
             self.printer.request_exit('error_exit')
     m112_r = re.compile(r'^(?:[nN][0-9]+)?\s*[mM]112(?:\s|$)')
@@ -430,18 +443,17 @@ class GCodeIO:
                 self.gcode.request_restart('exit')
             pending_commands.append("")
         # Handle case where multiple commands pending
-        if self.is_processing_data or len(pending_commands) > 1:
-            if len(pending_commands) < 20:
-                # Check for M112 out-of-order
-                for line in lines:
-                    if self.m112_r.match(line) is not None:
-                        self.gcode.cmd_M112(None)
-            if self.is_processing_data:
-                if len(pending_commands) >= 20:
-                    # Stop reading input
-                    self.reactor.unregister_fd(self.fd_handle)
-                    self.fd_handle = None
-                return
+        if len(pending_commands) < 20:
+            # Check for M112 out-of-order
+            for line in lines:
+                if self.m112_r.match(line) is not None:
+                    self.gcode.cmd_M112(None)
+        if self.is_processing_data:
+            if len(pending_commands) >= 20:
+                # Stop reading input
+                self.reactor.unregister_fd(self.fd_handle)
+                self.fd_handle = None
+            return
         # Process commands
         self.is_processing_data = True
         while pending_commands:
