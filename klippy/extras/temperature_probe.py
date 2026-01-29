@@ -221,19 +221,19 @@ class TemperatureProbe:
             % (self.name, cnt, exp_cnt, last_temp, self.next_auto_temp)
         )
 
-    def _manual_probe_finalize(self, kin_pos):
-        if kin_pos is None:
+    def _manual_probe_finalize(self, mpresult):
+        if mpresult is None:
             # Calibration aborted
             self._finalize_drift_cal(False)
             return
         if self.last_zero_pos is not None:
-            z_diff = self.last_zero_pos[2] - kin_pos[2]
+            z_diff = self.last_zero_pos - mpresult.bed_z
             self.total_expansion += z_diff
             logging.info(
                 "Estimated Total Thermal Expansion: %.6f"
                 % (self.total_expansion,)
             )
-        self.last_zero_pos = kin_pos
+        self.last_zero_pos = mpresult.bed_z
         toolhead = self.printer.lookup_object("toolhead")
         tool_zero_z = toolhead.get_position()[2]
         try:

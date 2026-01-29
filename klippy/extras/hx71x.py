@@ -53,7 +53,6 @@ class HX71xBase:
             self._finish_measurements, UPDATE_INTERVAL)
         # Command Configuration
         self.query_hx71x_cmd = None
-        self.attach_probe_cmd = None
         mcu.add_config_cmd(
             "config_hx71x oid=%d gain_channel=%d dout_pin=%s sclk_pin=%s"
             % (self.oid, self.gain_channel, self.dout_pin, self.sclk_pin))
@@ -62,14 +61,17 @@ class HX71xBase:
 
         mcu.register_config_callback(self._build_config)
 
+    def setup_trigger_analog(self, trigger_analog_oid):
+        self.mcu.add_config_cmd(
+            "hx71x_attach_trigger_analog oid=%d trigger_analog_oid=%d"
+            % (self.oid, trigger_analog_oid), is_init=True)
+
     def _build_config(self):
+        cmd_queue = self.mcu.alloc_command_queue()
         self.query_hx71x_cmd = self.mcu.lookup_command(
-            "query_hx71x oid=%c rest_ticks=%u")
-        self.attach_probe_cmd = self.mcu.lookup_command(
-            "hx71x_attach_load_cell_probe oid=%c load_cell_probe_oid=%c")
+            "query_hx71x oid=%c rest_ticks=%u", cq=cmd_queue)
         self.ffreader.setup_query_command("query_hx71x_status oid=%c",
-                                          oid=self.oid,
-                                          cq=self.mcu.alloc_command_queue())
+                                          oid=self.oid, cq=cmd_queue)
 
 
     def get_mcu(self):
@@ -77,6 +79,9 @@ class HX71xBase:
 
     def get_samples_per_second(self):
         return self.sps
+
+    def lookup_sensor_error(self, error_code):
+        return "Unknown hx71x error %d" % (error_code,)
 
     # returns a tuple of the minimum and maximum value of the sensor, used to
     # detect if a data value is saturated
@@ -86,9 +91,6 @@ class HX71xBase:
     # add_client interface, direct pass through to bulk_sensor API
     def add_client(self, callback):
         self.batch_bulk.add_client(callback)
-
-    def attach_load_cell_probe(self, load_cell_probe_oid):
-        self.attach_probe_cmd.send([self.oid, load_cell_probe_oid])
 
     # Measurement decoding
     def _convert_samples(self, samples):

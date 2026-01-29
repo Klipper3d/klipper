@@ -4,16 +4,16 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include <stdint.h>
+#include "basecmd.h" // oid_alloc
 #include "board/irq.h" // irq_disable
 #include "board/gpio.h" // gpio_out_write
 #include "board/misc.h" // timer_read_time
-#include "basecmd.h" // oid_alloc
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // sched_add_timer
 #include "sensor_bulk.h" // sensor_bulk_report
-#include "load_cell_probe.h" // load_cell_probe_report_sample
 #include "spicmds.h" // spidev_transfer
-#include <stdint.h>
+#include "trigger_analog.h" // trigger_analog_update
 
 struct ads1220_adc {
     struct timer timer;
@@ -22,7 +22,7 @@ struct ads1220_adc {
     struct spidev_s *spi;
     uint8_t pending_flag, data_count;
     struct sensor_bulk sb;
-    struct load_cell_probe *lce;
+    struct trigger_analog *ta;
 };
 
 // Flag types
@@ -97,9 +97,7 @@ ads1220_read_adc(struct ads1220_adc *ads1220, uint8_t oid)
         counts |= 0xFF000000;
 
     // endstop is optional, report if enabled and no errors
-    if (ads1220->lce) {
-        load_cell_probe_report_sample(ads1220->lce, counts);
-    }
+    trigger_analog_update(ads1220->ta, counts);
 
     add_sample(ads1220, oid, counts);
 }
@@ -119,13 +117,13 @@ DECL_COMMAND(command_config_ads1220, "config_ads1220 oid=%c"
     " spi_oid=%c data_ready_pin=%u");
 
 void
-ads1220_attach_load_cell_probe(uint32_t *args) {
+ads1220_attach_trigger_analog(uint32_t *args) {
     uint8_t oid = args[0];
     struct ads1220_adc *ads1220 = oid_lookup(oid, command_config_ads1220);
-    ads1220->lce = load_cell_probe_oid_lookup(args[1]);
+    ads1220->ta = trigger_analog_oid_lookup(args[1]);
 }
-DECL_COMMAND(ads1220_attach_load_cell_probe,
-    "ads1220_attach_load_cell_probe oid=%c load_cell_probe_oid=%c");
+DECL_COMMAND(ads1220_attach_trigger_analog,
+    "ads1220_attach_trigger_analog oid=%c trigger_analog_oid=%c");
 
 // start/stop capturing ADC data
 void

@@ -143,16 +143,14 @@ class ZTilt:
         self.z_status.reset()
         self.retry_helper.start(gcmd)
         self.probe_helper.start_probe(gcmd)
-    def probe_finalize(self, offsets, positions):
+    def probe_finalize(self, positions):
         # Setup for coordinate descent analysis
-        z_offset = offsets[2]
         logging.info("Calculating bed tilt with: %s", positions)
-        params = { 'x_adjust': 0., 'y_adjust': 0., 'z_adjust': z_offset }
+        params = { 'x_adjust': 0., 'y_adjust': 0., 'z_adjust': 0. }
         # Perform coordinate descent
         def adjusted_height(pos, params):
-            x, y, z = pos
-            return (z - x*params['x_adjust'] - y*params['y_adjust']
-                    - params['z_adjust'])
+            return (pos.bed_z - pos.bed_x*params['x_adjust']
+                    - pos.bed_y*params['y_adjust'] - params['z_adjust'])
         def errorfunc(params):
             total_error = 0.
             for pos in positions:
@@ -165,8 +163,7 @@ class ZTilt:
         logging.info("Calculated bed tilt parameters: %s", new_params)
         x_adjust = new_params['x_adjust']
         y_adjust = new_params['y_adjust']
-        z_adjust = (new_params['z_adjust'] - z_offset
-                    - x_adjust * offsets[0] - y_adjust * offsets[1])
+        z_adjust = new_params['z_adjust']
         adjustments = [x*x_adjust + y*y_adjust + z_adjust
                        for x, y in self.z_positions]
         self.z_helper.adjust_steppers(adjustments, speed)
