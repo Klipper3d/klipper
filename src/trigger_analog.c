@@ -23,7 +23,6 @@ struct trigger_analog {
     struct sos_filter *sf;
     // Trigger value checking
     int32_t trigger_value, trigger_peak;
-    uint32_t trigger_clock;
     uint8_t trigger_type;
     // Trsync triggering
     uint8_t flags, trigger_reason, error_reason;
@@ -91,14 +90,11 @@ check_trigger(struct trigger_analog *ta, uint32_t time, int32_t value)
 {
     switch (ta->trigger_type) {
     case TT_ABS_GE:
-        ta->trigger_clock = time;
         return abs(value) >= ta->trigger_value;
     case TT_GT:
-        ta->trigger_clock = time;
         return value > ta->trigger_value;
     case TT_DIFF_PEAK_GT:
         if (value > ta->trigger_peak) {
-            ta->trigger_clock = time;
             ta->trigger_peak = value;
             return 0;
         }
@@ -173,6 +169,7 @@ trigger_analog_update(struct trigger_analog *ta, int32_t sample)
     if (ret) {
         trsync_do_trigger(ta->ts, ta->trigger_reason);
         flags = 0;
+        ta->homing_clock = time;
     }
 
     ta->flags = flags;
@@ -250,8 +247,8 @@ command_trigger_analog_query_state(uint32_t *args)
 {
     uint8_t oid = args[0];
     struct trigger_analog *ta = trigger_analog_oid_lookup(args[0]);
-    sendf("trigger_analog_state oid=%c homing=%c trigger_clock=%u"
-          , oid, !!(ta->flags & TA_CAN_TRIGGER), ta->trigger_clock);
+    sendf("trigger_analog_state oid=%c homing=%c homing_clock=%u"
+          , oid, !!(ta->flags & TA_CAN_TRIGGER), ta->homing_clock);
 }
 DECL_COMMAND(command_trigger_analog_query_state
              , "trigger_analog_query_state oid=%c");
