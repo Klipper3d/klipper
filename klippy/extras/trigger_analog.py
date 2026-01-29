@@ -277,7 +277,7 @@ class MCU_trigger_analog:
         # Lookup commands
         self._query_state_cmd = self._mcu.lookup_query_command(
             "trigger_analog_query_state oid=%c",
-            "trigger_analog_state oid=%c homing=%c trigger_clock=%u",
+            "trigger_analog_state oid=%c homing=%c homing_clock=%u",
             oid=self._oid, cq=cmd_queue)
         self._set_raw_range_cmd = self._mcu.lookup_command(
             "trigger_analog_set_raw_range oid=%c raw_min=%i raw_max=%i",
@@ -334,7 +334,7 @@ class MCU_trigger_analog:
     def _clear_home(self):
         self._home_cmd.send([self._oid, 0, 0, 0, 0, 0, 0, 0])
         params = self._query_state_cmd.send([self._oid])
-        trigger_ticks = self._mcu.clock32_to_clock64(params['trigger_clock'])
+        trigger_ticks = self._mcu.clock32_to_clock64(params['homing_clock'])
         return self._mcu.clock_to_print_time(trigger_ticks)
 
     def get_steppers(self):
