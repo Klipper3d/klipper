@@ -185,7 +185,7 @@ class TemperatureProbe:
     def get_temp(self, eventtime=None):
         return self.last_measurement[0], self.target_temp
 
-    def _collect_sample(self, kin_pos, tool_zero_z):
+    def _collect_sample(self, mpresult, tool_zero_z):
         probe = self._get_probe()
         x_offset, y_offset, _ = probe.get_offsets()
         speeds = self._get_speeds()
@@ -198,7 +198,7 @@ class TemperatureProbe:
         cur_pos[0] -= x_offset
         cur_pos[1] -= y_offset
         toolhead.manual_move(cur_pos, move_speed)
-        return self.cal_helper.collect_sample(kin_pos, tool_zero_z, speeds)
+        return self.cal_helper.collect_sample(mpresult, tool_zero_z, speeds)
 
     def _prepare_next_sample(self, last_temp, tool_zero_z):
         # Register our own abort command now that the manual
@@ -237,7 +237,7 @@ class TemperatureProbe:
         toolhead = self.printer.lookup_object("toolhead")
         tool_zero_z = toolhead.get_position()[2]
         try:
-            last_temp = self._collect_sample(kin_pos, tool_zero_z)
+            last_temp = self._collect_sample(mpresult, tool_zero_z)
         except Exception:
             self._finalize_drift_cal(False)
             raise
@@ -562,7 +562,7 @@ class EddyDriftCompensation:
             % (self.name, self.cal_temp)
         )
 
-    def collect_sample(self, kin_pos, tool_zero_z, speeds):
+    def collect_sample(self, mpresult, tool_zero_z, speeds):
         if self.calibration_samples is None:
             self.calibration_samples = [[] for _ in range(DRIFT_SAMPLE_COUNT)]
         move_times = []
@@ -616,7 +616,7 @@ class EddyDriftCompensation:
             zvals = [d[2] for d in data]
             avg_freq = sum(freqs) / len(freqs)
             avg_z = sum(zvals) / len(zvals)
-            kin_z = i * .5 + .05 + kin_pos[2]
+            kin_z = i * .5 + .05 + mpresult.bed_z
             logging.info(
                 "Probe Values at Temp %.2fC, Z %.4fmm: Avg Freq = %.6f, "
                 "Avg Measured Z = %.6f"
