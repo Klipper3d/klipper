@@ -5900,21 +5900,23 @@ information from your slicer to Klipper.</p>
 <a href="Config_Reference.html#bltouch">bltouch config section</a> is enabled (also
 see the <a href="Probe_Calibrate.html">probe calibrate guide</a>).</p>
 <h4 id="probe_1">PROBE<a class="headerlink" href="#probe_1" title="Permanent link">&para;</a></h4>
-<p><code>PROBE [PROBE_SPEED=&lt;mm/s&gt;] [LIFT_SPEED=&lt;mm/s&gt;] [SAMPLES=&lt;count&gt;]
-[SAMPLE_RETRACT_DIST=&lt;mm&gt;] [SAMPLES_TOLERANCE=&lt;mm&gt;]
+<p><code>PROBE [METHOD=&lt;value&gt;] [PROBE_SPEED=&lt;mm/s&gt;] [LIFT_SPEED=&lt;mm/s&gt;]
+[SAMPLES=&lt;count&gt;] [SAMPLE_RETRACT_DIST=&lt;mm&gt;] [SAMPLES_TOLERANCE=&lt;mm&gt;]
 [SAMPLES_TOLERANCE_RETRIES=&lt;count&gt;] [SAMPLES_RESULT=median|average]</code>:
 Move the nozzle downwards until the probe triggers. If any of the
 optional parameters are provided they override their equivalent
-setting in the <a href="Config_Reference.html#probe">probe config section</a>.</p>
+setting in the <a href="Config_Reference.html#probe">probe config section</a>.
+The optional parameter <code>METHOD</code> is probe-specific.</p>
 <h4 id="query_probe">QUERY_PROBE<a class="headerlink" href="#query_probe" title="Permanent link">&para;</a></h4>
 <p><code>QUERY_PROBE</code>: Report the current status of the probe ("triggered" or
 "open").</p>
 <h4 id="probe_accuracy">PROBE_ACCURACY<a class="headerlink" href="#probe_accuracy" title="Permanent link">&para;</a></h4>
-<p><code>PROBE_ACCURACY [PROBE_SPEED=&lt;mm/s&gt;] [SAMPLES=&lt;count&gt;]
+<p><code>PROBE_ACCURACY [METHOD=&lt;value&gt;] [PROBE_SPEED=&lt;mm/s&gt;] [SAMPLES=&lt;count&gt;]
 [SAMPLE_RETRACT_DIST=&lt;mm&gt;]</code>: Calculate the maximum, minimum, average,
 median, and standard deviation of multiple probe samples. By default,
 10 SAMPLES are taken. Otherwise the optional parameters default to
-their equivalent setting in the probe config section.</p>
+their equivalent setting in the probe config section.
+The optional parameter <code>METHOD</code> is probe-specific.</p>
 <h4 id="probe_calibrate">PROBE_CALIBRATE<a class="headerlink" href="#probe_calibrate" title="Permanent link">&para;</a></h4>
 <p><code>PROBE_CALIBRATE [SPEED=&lt;speed&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: Run a
 helper script useful for calibrating the probe's z_offset. See the
@@ -5963,13 +5965,14 @@ SET_PIN command without an explicit CYCLE_TIME parameter will use the
 <a href="Config_Reference.html#quad_gantry_level">quad_gantry_level config section</a>
 is enabled.</p>
 <h4 id="quad_gantry_level_1">QUAD_GANTRY_LEVEL<a class="headerlink" href="#quad_gantry_level_1" title="Permanent link">&para;</a></h4>
-<p><code>QUAD_GANTRY_LEVEL [RETRIES=&lt;value&gt;] [RETRY_TOLERANCE=&lt;value&gt;]
+<p><code>QUAD_GANTRY_LEVEL [METHOD=&lt;value&gt;] [RETRIES=&lt;value&gt;] [RETRY_TOLERANCE=&lt;value&gt;]
 [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command
 will probe the points specified in the config and then make
 independent adjustments to each Z stepper to compensate for tilt. See
 the PROBE command for details on the optional probe parameters. The
 optional <code>RETRIES</code>, <code>RETRY_TOLERANCE</code>, and <code>HORIZONTAL_MOVE_Z</code> values
-override those options specified in the config file.</p>
+override those options specified in the config file.
+The optional parameter <code>METHOD</code> is probe-specific.</p>
 <h3 id="query_adc">[query_adc]<a class="headerlink" href="#query_adc" title="Permanent link">&para;</a></h3>
 <p>The query_adc module is automatically loaded.</p>
 <h4 id="query_adc_1">QUERY_ADC<a class="headerlink" href="#query_adc_1" title="Permanent link">&para;</a></h4>
@@ -6333,13 +6336,14 @@ automatically upon homing.</p>
 <p>The following commands are available when the
 <a href="Config_Reference.html#z_tilt">z_tilt config section</a> is enabled.</p>
 <h4 id="z_tilt_adjust">Z_TILT_ADJUST<a class="headerlink" href="#z_tilt_adjust" title="Permanent link">&para;</a></h4>
-<p><code>Z_TILT_ADJUST [RETRIES=&lt;value&gt;] [RETRY_TOLERANCE=&lt;value&gt;]
+<p><code>Z_TILT_ADJUST [METHOD=&lt;value&gt;] [RETRIES=&lt;value&gt;] [RETRY_TOLERANCE=&lt;value&gt;]
 [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command
 will probe the points specified in the config and then make
 independent adjustments to each Z stepper to compensate for tilt. See
 the PROBE command for details on the optional probe parameters. The
 optional <code>RETRIES</code>, <code>RETRY_TOLERANCE</code>, and <code>HORIZONTAL_MOVE_Z</code> values
-override those options specified in the config file.</p>
+override those options specified in the config file.
+The optional parameter <code>METHOD</code> is probe-specific.</p>
 
               
             </article>

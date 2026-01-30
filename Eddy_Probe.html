@@ -1308,6 +1308,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#tap-calibration" class="md-nav__link">
+    Tap calibration
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#thermal-drift-calibration" class="md-nav__link">
     Thermal Drift Calibration
   </a>
@@ -1392,6 +1399,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#tap-calibration" class="md-nav__link">
+    Tap calibration
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#thermal-drift-calibration" class="md-nav__link">
     Thermal Drift Calibration
   </a>
@@ -1443,7 +1457,8 @@ named <code>[probe_eddy_current my_eddy_probe]</code> then one would run
 <code>LDC_CALIBRATE_DRIVE_CURRENT CHIP=my_eddy_probe</code>. This command should
 complete in a few seconds.  After it completes, issue a <code>SAVE_CONFIG</code>
 command to save the results to the printer.cfg and restart.</p>
-<p>The second step in calibration is to correlate the sensor readings to
+<p>Eddy current is used as a proximity/distance sensor (similar to a laser ruler).
+The second step in calibration is to correlate the sensor readings to
 the corresponding Z heights. Home the printer and navigate the
 toolhead so that the nozzle is near the center of the bed. Then run a
 <code>PROBE_EDDY_CURRENT_CALIBRATE CHIP=my_eddy_probe</code> command. Once the
@@ -1454,7 +1469,17 @@ those steps are complete one can <code>ACCEPT</code> the position. The tool will
 then move the toolhead so that the sensor is above the point where the
 nozzle used to be and run a series of movements to correlate the
 sensor to Z positions. This will take a couple of minutes. After the
-tool completes, issue a <code>SAVE_CONFIG</code> command to save the results to
+tool completes it will output the sensor performance data:</p>
+<div class="highlight"><pre><span></span><code>probe_eddy_current: noise 0.000642mm, MAD_Hz=11.314 in 2525 queries
+Total frequency range: 45000.012 Hz
+z_offset: 0.250 # noise 0.000200mm, MAD_Hz=11.000
+z_offset: 0.530 # noise 0.000300mm, MAD_Hz=12.000
+z_offset: 1.010 # noise 0.000400mm, MAD_Hz=14.000
+z_offset: 2.010 # noise 0.000600mm, MAD_Hz=12.000
+z_offset: 3.010 # noise 0.000700mm, MAD_Hz=9.000
+</code></pre></div>
+
+<p>issue a <code>SAVE_CONFIG</code> command to save the results to
 the printer.cfg and restart.</p>
 <p>After initial calibration it is a good idea to verify that the
 <code>x_offset</code> and <code>y_offset</code> are accurate. Follow the steps to
@@ -1470,6 +1495,81 @@ result in changes in reported Z height. Changes in either the bed
 surface temperature or sensor hardware temperature can skew the
 results. It is important that calibration and probing is only done
 when the printer is at a stable temperature.</p>
+<h2 id="tap-calibration">Tap calibration<a class="headerlink" href="#tap-calibration" title="Permanent link">&para;</a></h2>
+<p>The Eddy probe measures the resonance frequency of the coil.
+By the absolute value of the frequency and the calibration curve from
+<code>PROBE_EDDY_CURRENT_CALIBRATE</code>, it is therefore possible to detect
+where the bed is without physical contact.</p>
+<p>By use of the same knowledge, we know that frequency changes with
+the distance. It is possible to track that change in real time and
+detect the time/position where contact happens - a change of frequency
+starts to change in a different way.
+For example, stopped to change because of the collision.</p>
+<p>Because eddy output is not perfect: there is sensor noise,
+mechanical oscillation, thermal expansion and other discrepancies,
+it is required to calibrate the stop threshold for your machine.
+Practically, it ensures that the Eddy's output data absolute value
+change per second (velocity) is high enough - higher than the noise level,
+and that upon collision it always decreases by at least this value.</p>
+<div class="highlight"><pre><span></span><code>[probe_eddy_current my_probe]
+# eddy probe configuration...
+tap_threshold: 0
+</code></pre></div>
+
+<p>The suggested calibration routine works as follows:</p>
+<ol>
+<li>Home Z</li>
+<li>Place the toolhead at the center of the bed.</li>
+<li>Move the Z axis far away (30 mm, for example).</li>
+<li>Run <code>PROBE METHOD=tap</code></li>
+<li>If it stops before colliding, increase the <code>tap_threshold</code>.</li>
+</ol>
+<p>Repeat until the nozzle softly touches the bed.
+This is easier to do with a clean nozzle and
+by visually inspecting the process.</p>
+<p>You can streamline the process by placing the toolhead in the center once.
+Then, upon config restart, trick the machine into thinking that Z is homed.</p>
+<div class="highlight"><pre><span></span><code>SET_KINEMATIC_POSITION X=&lt;middle&gt; Y=&lt;middle&gt; Z=0
+G0 Z5 # Optional retract
+PROBE METHOD=tap
+</code></pre></div>
+
+<p>Here is an example sequence of threshold values to test:</p>
+<div class="highlight"><pre><span></span><code>1 -&gt; 5 -&gt; 10 -&gt; 20 -&gt; 40 -&gt; 80 -&gt; 160
+160 -&gt; 120 -&gt; 100
+</code></pre></div>
+
+<p>Your value will normally be between those.</p>
+<ul>
+<li>Too high a value leaves a less safe margin for early collision -
+if something is between the nozzle and the bed, or if the nozzle
+is too close to the bed before the tap.</li>
+<li>Too low - can make the toolhead stop in mid-air
+because of the noise.</li>
+</ul>
+<p>You can estimate the initial threshold value by analyzing your own
+calibration routine output:</p>
+<div class="highlight"><pre><span></span><code>probe_eddy_current: noise 0.000642mm, MAD_Hz=11.314
+...
+z_offset: 1.010 # noise 0.000400mm, MAD_Hz=14.000
+</code></pre></div>
+
+<p>The estimation will be:</p>
+<div class="highlight"><pre><span></span><code>MAD_Hz * 2
+11.314 * 2 = 22.628
+</code></pre></div>
+
+<p>You can validate the tap precision by measuring the paper thickness
+from the initial calibration guide. It is expected to be ~0.1mm.</p>
+<p>Tap precision is limited by the sampling frequency and
+the speed of the descent.
+If you take 24 photos per second of the moving train, you can only estimate
+where the train was between photos.</p>
+<p>It is possible to reduce the descending speed. It may require decrease of
+absolute <code>tap_threshold</code> value.</p>
+<p>It is possible to tap over non-conductive surfaces as long as there is metal
+behind it within the sensor's sensitivity range.
+Max distance can be approximated to be about 1.5x of the coil's narrowest part.</p>
 <h2 id="thermal-drift-calibration">Thermal Drift Calibration<a class="headerlink" href="#thermal-drift-calibration" title="Permanent link">&para;</a></h2>
 <p>As with all inductive probes, eddy current probes are subject to
 significant thermal drift.  If the eddy probe has a temperature
