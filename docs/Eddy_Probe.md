@@ -89,7 +89,13 @@ and that upon collision it always decreases by at least this value.
 ```
 [probe_eddy_current my_probe]
 # eddy probe configuration...
-tap_threshold: 0
+tap_threshold: 0 # 0 means tap is disabled
+```
+
+Before setting it to any other value, it is necessary to install `scipy`:
+
+```bash
+~/klippy-env/bin/pip install scipy
 ```
 
 The suggested calibration routine works as follows:
