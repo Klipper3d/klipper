@@ -142,6 +142,11 @@ MAD_Hz * 2
 11.314 * 2 = 22.628
 ```
 
+To further fine tune threshold, one can use `PROBE_ACCURACY METHOD=tap`.
+The range is expected to be about 0.02 mm,
+with the default probe speed of 5 mm/s.
+Elevated coil temperature may increase noise and may require additional tuning.
+
 You can validate the tap precision by measuring the paper thickness
 from the initial calibration guide. It is expected to be ~0.1mm.
 
