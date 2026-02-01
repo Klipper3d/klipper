@@ -89,6 +89,10 @@ and that upon collision it always decreases by at least this value.
 ```
 [probe_eddy_current my_probe]
 # eddy probe configuration...
+# Recommended starting values for the tap
+#samples: 3
+#samples_tolerance: 0.025
+#samples_tolerance_retries: 3
 tap_threshold: 0 # 0 means tap is disabled
 ```
 
