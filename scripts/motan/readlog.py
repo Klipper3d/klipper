@@ -398,6 +398,8 @@ class HandleADXL345:
     ParametersMin = ParametersMax = 2
     DataSets = [
         ('adxl345(<name>,<axis>)', 'Accelerometer for given axis (x, y, or z)'),
+        ('mpu9250(<name>,<axis>)', 'Accelerometer for given axis (x, y, or z)'),
+        ('lis2dw(<name>,<axis>)', 'Accelerometer for given axis (x, y, or z)'),
     ]
     def __init__(self, lmanager, name, name_parts):
         self.name = name
@@ -435,6 +437,8 @@ class HandleADXL345:
             self.next_accel = (x, y, z)
             self.data_pos += 1
 LogHandlers["adxl345"] = HandleADXL345
+LogHandlers["mpu9250"] = HandleADXL345
+LogHandlers["lis2dw"] = HandleADXL345
 
 # Extract positions from magnetic angle sensor
 class HandleAngle:
