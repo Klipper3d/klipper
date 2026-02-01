@@ -1008,15 +1008,16 @@ MOVE=<pos> STOP_ON_ENDSTOP=<check_type>`: If STOP_ON_ENDSTOP is
 specified then the move will end early if an endstop event occurs. The
 `STOP_ON_ENDSTOP` parameter may be set to one of the following values:
 
+* `probe`: The movement will stop when the endstop reports triggered.
 * `home`: The movement will stop when the endstop reports triggered
   and the final position of the manual_stepper will be set such that
   the trigger position matches the position specified in the `MOVE`
   parameter.
-* `inverted_home`: As above, however, the movement will stop when the
-  endstop reports it is in a non-triggered state.
-* `try_home`, `try_inverted_home`: As above, but no error will be
-  reported if the movement fully completes without an endstop event
-  stopping the move early.
+* `inverted_probe`, `inverted_home`: As above, however, the movement
+  will stop when the endstop reports it is in a non-triggered state.
+* `try_probe`, `try_inverted_probe`, `try_home`, `try_inverted_home`:
+  As above, but no error will be reported if the movement fully
+  completes without an endstop event stopping the move early.
 
 `MANUAL_STEPPER STEPPER=config_name GCODE_AXIS=[A-Z]
 [LIMIT_VELOCITY=<velocity>] [LIMIT_ACCEL=<accel>]
