@@ -2455,12 +2455,13 @@ from the configuration described above:
 #primary_carriage:
 #   Defines the matching carriage on the same gantry as this dual carriage and
 #   the corresponding dual axis. Must match a name of a defined `[carriage]` or
-#   another independent `[dual_carriage]` (see below).
-#   Either this parameter or the parameter 'axis' must be provided.
+#   another independent `[dual_carriage]`. If not set, which is a default,
+#   defines a dual carriage independent of a `[carriage]` with the same axis
+#   as this one (e.g. on a different gantry).
 #axis:
-#   Axis of a carriage, either x or y. If provided, defines a dual carriage
-#   independent of a `[carriage]` with the same axis on a different gantry.
-#   Either this parameter or the parameter 'primary_carriage' must be provided.
+#   Axis of a carriage, either x or y. If 'primary_carriage' is defined, then
+#   this parameter defaults to the 'axis' parameter of that primary carriage,
+#   otherwise this parameter must be defined.
 #safe_distance:
 #   The minimum distance (in mm) to enforce between the dual and the primary
 #   carriages. If a G-Code command is executed that will bring the carriages

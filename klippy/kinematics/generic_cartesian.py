@@ -38,10 +38,10 @@ class MainCarriage:
         self.rail = stepper.GenericPrinterRail(config)
         carriage_name = self.rail.get_name(short=True)
         if carriage_name in VALID_AXES:
-            axis_name = config.getchoice('axis', VALID_AXES, carriage_name)
+            self.axis_name = config.getchoice('axis', VALID_AXES, carriage_name)
         else:
-            axis_name = config.getchoice('axis', VALID_AXES)
-        self.axis = ord(axis_name) - ord('x')
+            self.axis_name = config.getchoice('axis', VALID_AXES)
+        self.axis = ord(self.axis_name) - ord('x')
         self.dual_carriage = None
     def get_name(self):
         return self.rail.get_name(short=True)
@@ -79,20 +79,13 @@ class DualCarriage:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.rail = stepper.GenericPrinterRail(config)
-        axis_name = config.getchoice('axis', VALID_AXES + [None], None)
         self.primary_carriage_name = config.get('primary_carriage', None)
-        if axis_name is None and self.primary_carriage_name is None:
-            raise config.error(
-                    "Either 'primary_carriage' or 'axis' must be specified for"
-                    + " dual_carriage '%s'" % self.rail.get_name(short=True))
-        if axis_name is not None and self.primary_carriage_name is not None:
-            raise config.error(
-                    "Only one of 'primary_carriage' or 'axis' can be specified "
-                    + "for dual_carriage '%s'" % self.rail.get_name(short=True))
-        if axis_name is not None:
-            self.axis = ord(axis_name) - ord('x')
+        if self.primary_carriage_name is None:
+            self.axis_name = config.getchoice('axis', VALID_AXES)
+            self.axis = ord(self.axis_name) - ord('x')
             self.safe_dist = None
         else:
+            self.axis_name = config.getchoice('axis', VALID_AXES + [None], None)
             self.safe_dist = config.getfloat('safe_distance', None, minval=0.)
         self.primary_carriage = self.dual_carriage = None
         self.config_error = config.error
@@ -104,6 +97,14 @@ class DualCarriage:
                     "primary_carriage = '%s' for '%s' is not a valid choice"
                     % (self.primary_carriage_name, self.get_name()))
         self.primary_carriage = carriages[self.primary_carriage_name]
+        axis_name = self.axis_name or self.primary_carriage.axis_name
+        if axis_name != self.primary_carriage.axis_name:
+            raise self.config_error("Mismatching axes between carriage '%s' "
+                                    "(axis=%s) and dual_carriage '%s' (axis=%s)"
+                                    % (self.primary_carriage.get_name(),
+                                       self.primary_carriage.axis_name,
+                                       self.get_name(), axis_name))
+        self.axis = ord(axis_name) - ord('x')
         if self.primary_carriage.get_dual_carriage():
             raise self.config_error(
                     "Multiple dual carriages ('%s', '%s') for carriage '%s'" %
