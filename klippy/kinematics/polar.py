@@ -25,6 +25,7 @@ def distance_line_to_point(p1, p2):
         dist = abs(ab_x * ap_y - ab_y * ap_x) / ab_length
     return dist
 
+
 class PolarKinematics:
     def __init__(self, toolhead, config):
         # Setup axis steppers
@@ -47,8 +48,8 @@ class PolarKinematics:
             maxval=self.max_velocity)
         self.max_z_accel = config.getfloat(
             'max_z_accel', self.max_accel, above=0., maxval=self.max_accel)
-        self.critical_radius = config.getfloat(
-            'critical_radius', above=0., default=0)
+        self.v_rad_max = config.getfloat(
+            'max_rad_velocity', above=0., default=0)
         self.limit_z = (1.0, -1.0)
         self.limit_xy2 = -1.
         max_xy = self.rails[0].get_range()[1]
@@ -125,12 +126,13 @@ class PolarKinematics:
                              self.max_z_accel * z_ratio)
         # Slow down near center
         if move.axes_d[0] or move.axes_d[1]:
-            if self.critical_radius != 0:
+            if self.v_rad_max != 0:
                 min_dist = distance_line_to_point(move.start_pos[0:2],
                                                   move.end_pos[0:2])
-                if min_dist <= self.critical_radius:
-                    if min_dist != 0:
-                        scale_radius = min_dist/self.critical_radius
+                if min_dist != 0:
+                    v_rot = math.sqrt(move.max_cruise_v2) / min_dist
+                    if self.v_rad_max < v_rot:
+                        scale_radius = self.v_rad_max/v_rot
                         move.limit_speed(self.max_velocity * scale_radius,
                                          self.max_accel * scale_radius)
 
