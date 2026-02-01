@@ -4,8 +4,10 @@ This document describes how to use an
 [eddy current](https://en.wikipedia.org/wiki/Eddy_current) inductive
 probe in Klipper.
 
-Currently, an eddy current probe can not be used for Z homing. The
-sensor can only be used for Z probing.
+Currently, an eddy current probe can not precisely home Z (i.e., `G28 Z`).
+The sensor can precisely do Z probing (i.e., `PROBE ...`).
+Look at the [homing correction](Eddy_Probe.md#homing-correction-macros)
+for further details.
 
 Start by declaring a
 [probe_eddy_current config section](Config_Reference.md#probe_eddy_current)
@@ -65,6 +67,34 @@ result in changes in reported Z height. Changes in either the bed
 surface temperature or sensor hardware temperature can skew the
 results. It is important that calibration and probing is only done
 when the printer is at a stable temperature.
+
+## Homing correction macros
+
+Because of current limitations, homing and probing
+are implemented differently for the eddy sensors.
+As a result, homing suffers from an offset error,
+while probing handles this correctly.
+
+To correct the homing offset.
+One can use the suggested macro inside the homing override or
+inside the starting G-Code.
+
+[Force move](Config_Reference.md#force_move) section
+have to be defined in the config.
+
+```
+[gcode_macro _RELOAD_Z_OFFSET_FROM_PROBE]
+gcode:
+  {% set Z = printer.toolhead.position.z %}
+  SET_KINEMATIC_POSITION Z={Z - printer.probe.last_probe_position.z}
+
+[gcode_macro SET_Z_FROM_PROBE]
+gcode:
+  {% set METHOD = params.METHOD | default("automatic") %}
+  PROBE METHOD={METHOD}
+  _RELOAD_Z_OFFSET_FROM_PROBE
+  G0 Z5
+```
 
 ## Tap calibration
 
