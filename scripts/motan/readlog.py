@@ -737,6 +737,19 @@ class LogManager:
             self.status_tracker = TrackStatus(self, "status", self.start_status)
             self.jdispatch.add_handler("status", "status")
         return self.status_tracker
+    def get_tip_msg(self, subscription_id):
+        available = []
+        dataset_name = subscription_id.split(":")[0]
+        for k in self.log_subscriptions:
+            if dataset_name in k:
+                # Extract available keys
+                name = k.split(":")[1:]
+                if len(name) == 1:
+                    suggest = "%s(%s,...)" % (dataset_name, name[0])
+                    available.append(suggest)
+                else:
+                    available.append(name)
+        return "Available options: %s" % (", ".join(available))
     def setup_dataset(self, name):
         if name in self.datasets:
             return self.datasets[name]
@@ -750,7 +763,9 @@ class LogManager:
         if cls.SubscriptionIdParts:
             subscription_id = ":".join(name_parts[:cls.SubscriptionIdParts])
             if subscription_id not in self.log_subscriptions:
-                raise error("Dataset '%s' not in capture" % (subscription_id,))
+                tip_msg = self.get_tip_msg(subscription_id)
+                raise error("Dataset '%s' not in capture\n%s" % (
+                            subscription_id, tip_msg))
             self.jdispatch.add_handler(name, subscription_id)
         self.datasets[name] = hdl = cls(self, name, name_parts)
         return hdl
