@@ -13,7 +13,7 @@ COPY = 'COPY'
 MIRROR = 'MIRROR'
 
 class DualCarriages:
-    VALID_MODES = [PRIMARY, COPY, MIRROR]
+    VALID_MODES = [INACTIVE, PRIMARY, COPY, MIRROR]
     def __init__(self, printer, primary_rails, dual_rails, axes, safe_dist):
         self.printer = printer
         self._init_steppers(primary_rails + dual_rails)
@@ -24,15 +24,13 @@ class DualCarriages:
             pc = primary_rails[i]
             safe_dist[i] = min(abs(pc.position_min - dc.position_min),
                                abs(pc.position_max - dc.position_max))
-        self.primary_mode_dcs = [None] * 3
+        activated = [False] * 3
         self.primary_rails = []
         for i, c in enumerate(primary_rails):
-            activate = self.primary_mode_dcs[axes[i]] is None
+            activate, activated[axes[i]] = not activated[axes[i]], True
             dc_rail = DualCarriagesRail(
                     printer, c, dual_rails[i], axes[i], safe_dist[i],
                     active=activate)
-            if activate:
-                self.primary_mode_dcs[axes[i]] = dc_rail
             self.primary_rails.append(dc_rail)
         self.dual_rails = [
                 DualCarriagesRail(printer, c, primary_rails[i],
@@ -83,9 +81,10 @@ class DualCarriages:
     def get_axes(self):
         return self.axes
     def get_primary_rail(self, axis):
-        if self.primary_mode_dcs[axis] is None:
-            return None
-        return self.primary_mode_dcs[axis].rail
+        for dc_rail in self.dc_rails.values():
+            if dc_rail.mode == PRIMARY and dc_rail.axis == axis:
+                return dc_rail.rail
+        return None
     def get_dc_rail_wrapper(self, rail):
         for dc_rail in self.dc_rails.values():
             if dc_rail.rail == rail:
@@ -111,7 +110,6 @@ class DualCarriages:
         if target_dc.mode != PRIMARY:
             newpos = pos[:axis] + [target_dc.get_axis_position(pos)] \
                         + pos[axis+1:]
-            self.primary_mode_dcs[axis] = target_dc
             target_dc.activate(PRIMARY, newpos, old_position=pos)
             toolhead.set_position(newpos)
         kin.update_limits(axis, target_dc.rail.get_range())
@@ -141,30 +139,29 @@ class DualCarriages:
         return status
     def get_kin_range(self, toolhead, axis):
         pos = toolhead.get_position()
-        primary_carriage = self.primary_mode_dcs[axis]
-        if primary_carriage is None:
-            return (1.0, -1.0)
-        primary_pos = primary_carriage.get_axis_position(pos)
-        range_min = primary_carriage.rail.position_min
-        range_max = primary_carriage.rail.position_max
+        axis_pos = pos[axis]
+        range_min, range_max = -1e10, 1e10
         for carriage in self.dc_rails.values():
             if carriage.axis != axis:
                 continue
             dcs = [carriage] + [dc for dc in self.dc_rails.values()
                                 if carriage.rail is dc.dual_rail]
             axes_pos = [dc.get_axis_position(pos) for dc in dcs]
-            # Check how dcs[0] affects the motion range of primary_carriage
+            # Check how dcs[0] affects the motion range
             if not dcs[0].is_active():
                 continue
+            elif dcs[0].mode == PRIMARY:
+                range_min = max(range_min, dcs[0].rail.position_min)
+                range_max = min(range_max, dcs[0].rail.position_max)
             elif dcs[0].mode == COPY:
-                range_min = max(range_min, primary_pos
+                range_min = max(range_min, axis_pos
                                 + dcs[0].rail.position_min - axes_pos[0])
-                range_max = min(range_max, primary_pos
+                range_max = min(range_max, axis_pos
                                 + dcs[0].rail.position_max - axes_pos[0])
             elif dcs[0].mode == MIRROR:
-                range_min = max(range_min, primary_pos
+                range_min = max(range_min, axis_pos
                                 + axes_pos[0] - dcs[0].rail.position_max)
-                range_max = min(range_max, primary_pos
+                range_max = min(range_max, axis_pos
                                 + axes_pos[0] - dcs[0].rail.position_min)
             safe_dist = dcs[0].safe_dist
             if not safe_dist or len(dcs) == 1:
@@ -186,14 +183,14 @@ class DualCarriages:
 
             if dcs[0].mode in (PRIMARY, COPY):
                 if self.get_dc_order(dcs[0], dcs[1]) > 0:
-                    range_min = max(range_min, primary_pos + safe_move_dist)
+                    range_min = max(range_min, axis_pos + safe_move_dist)
                 else:
-                    range_max = min(range_max, primary_pos + safe_move_dist)
+                    range_max = min(range_max, axis_pos + safe_move_dist)
             else:  # dcs[0].mode == MIRROR
                 if self.get_dc_order(dcs[0], dcs[1]) > 0:
-                    range_max = min(range_max, primary_pos - safe_move_dist)
+                    range_max = min(range_max, axis_pos - safe_move_dist)
                 else:
-                    range_min = max(range_min, primary_pos - safe_move_dist)
+                    range_min = max(range_min, axis_pos - safe_move_dist)
 
         if range_min > range_max:
             # During multi-MCU homing it is possible that the carriage
@@ -231,8 +228,6 @@ class DualCarriages:
         axis = dc.axis
         if mode == INACTIVE:
             dc.inactivate(toolhead.get_position())
-            if self.primary_mode_dcs[axis] is dc:
-                self.primary_mode_dcs[axis] = None
         elif mode == PRIMARY:
             self.toggle_active_dc_rail(dc)
         else:
@@ -265,7 +260,7 @@ class DualCarriages:
         if mode not in self.VALID_MODES:
             raise gcmd.error("Invalid mode=%s specified" % (mode,))
         if mode in [COPY, MIRROR]:
-            if self.primary_mode_dcs[dc_rail.axis] in [None, dc_rail]:
+            if self.get_primary_rail(dc_rail.axis) in [None, dc_rail.rail]:
                 raise gcmd.error(
                         "Must activate another carriage as PRIMARY first")
             curtime = self.printer.get_reactor().monotonic()
@@ -275,6 +270,13 @@ class DualCarriages:
                 raise gcmd.error(
                         "Axis %s must be homed prior to enabling mode=%s" %
                         (axis.upper(), mode))
+        if mode == INACTIVE:
+            active_dcs = [dc for dc in self.dc_rails.values()
+                          if dc.is_active() and dc.axis == dc_rail.axis]
+            if active_dcs == [dc_rail]:
+                raise gcmd.error(
+                        "Cannot deactivate the only active carriage for axis %s"
+                        % 'XYZ'[dc_rail.axis])
         self.activate_dc_mode(dc_rail, mode)
     cmd_SAVE_DUAL_CARRIAGE_STATE_help = \
             "Save dual carriages modes and positions"
@@ -286,7 +288,8 @@ class DualCarriages:
         return {'carriage_modes': {dc.get_name() : dc.mode
                                    for dc in self.dc_rails.values()},
                 'carriage_positions': {dc.get_name() : dc.get_axis_position(pos)
-                                       for dc in self.dc_rails.values()}}
+                                       for dc in self.dc_rails.values()},
+                'toolhead_position': tuple(pos)}
     cmd_RESTORE_DUAL_CARRIAGE_STATE_help = \
             "Restore dual carriages modes and positions"
     def cmd_RESTORE_DUAL_CARRIAGE_STATE(self, gcmd):
@@ -300,12 +303,12 @@ class DualCarriages:
     def restore_dual_carriage_state(self, saved_state, move, move_speed=0.):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.flush_step_generation()
+        move_pos = list(toolhead.get_position())
+        dcs = list(self.dc_rails.values())
         if move:
             homing_speed = 99999999.
-            move_pos = list(toolhead.get_position())
             cur_pos = []
             carriage_positions = saved_state['carriage_positions']
-            dcs = list(self.dc_rails.values())
             for dc in dcs:
                 self.toggle_active_dc_rail(dc)
                 homing_speed = min(homing_speed, dc.rail.homing_speed)
@@ -335,9 +338,14 @@ class DualCarriages:
                             cur_pos[primary_ind])
             toolhead.manual_move(move_pos, move_speed or homing_speed)
             toolhead.flush_step_generation()
-            # Make sure the scaling coefficients are restored with the mode
-            for dc in dcs:
-                dc.inactivate(move_pos)
+        # Inactivate all carriages in order to restore scaling coefficients
+        # (if a move was requested) and correctly compute kinematics limits
+        for dc in dcs:
+            dc.inactivate(move_pos)
+        # Restore toolhead position in case some axes have no primary carriages
+        for axis in self.axes:
+            move_pos[axis] = saved_state['toolhead_position'][axis]
+        toolhead.set_position(move_pos)
         saved_modes = saved_state['carriage_modes']
         saved_primary_dcs = [dc for dc in self.dc_rails.values()
                              if saved_modes[dc.get_name()] == PRIMARY]
