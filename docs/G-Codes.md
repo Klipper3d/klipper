@@ -1584,13 +1584,15 @@ The following commands are available when a
 is enabled.
 
 #### TEMPERATURE_PROBE_CALIBRATE
-`TEMPERATURE_PROBE_CALIBRATE [PROBE=<probe name>] [TARGET=<value>] [STEP=<value>]`:
+`TEMPERATURE_PROBE_CALIBRATE [PROBE=<probe name>] [TARGET=<value>] [STEP=<value>]
+[METHOD=<method>]`:
 Initiates probe drift calibration for eddy current based probes.  The `TARGET`
 is a target temperature for the last sample.  When the temperature recorded
 during a sample exceeds the `TARGET` calibration will complete.  The `STEP`
 parameter sets temperature delta (in C) between samples. After a sample has
 been taken, this delta is used to schedule a call to `TEMPERATURE_PROBE_NEXT`.
-The default `STEP` is 2.
+The default `STEP` is 2. The `METHOD` only supports `tap` as an option,
+if specified, probing will be automated.
 
 #### TEMPERATURE_PROBE_NEXT
 `TEMPERATURE_PROBE_NEXT`: After calibration has started this command is run to
