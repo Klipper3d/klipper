@@ -1308,6 +1308,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#homing-correction-macros" class="md-nav__link">
+    Homing correction macros
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#tap-calibration" class="md-nav__link">
     Tap calibration
   </a>
@@ -1399,6 +1406,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#homing-correction-macros" class="md-nav__link">
+    Homing correction macros
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#tap-calibration" class="md-nav__link">
     Tap calibration
   </a>
@@ -1440,8 +1454,10 @@
 <p>This document describes how to use an
 <a href="https://en.wikipedia.org/wiki/Eddy_current">eddy current</a> inductive
 probe in Klipper.</p>
-<p>Currently, an eddy current probe can not be used for Z homing. The
-sensor can only be used for Z probing.</p>
+<p>Currently, an eddy current probe can not precisely home Z (i.e., <code>G28 Z</code>).
+The sensor can precisely do Z probing (i.e., <code>PROBE ...</code>).
+Look at the <a href="Eddy_Probe.html#homing-correction-macros">homing correction</a>
+for further details.</p>
 <p>Start by declaring a
 <a href="Config_Reference.html#probe_eddy_current">probe_eddy_current config section</a>
 in the printer.cfg file. It is recommended to set the <code>z_offset</code> to
@@ -1495,6 +1511,29 @@ result in changes in reported Z height. Changes in either the bed
 surface temperature or sensor hardware temperature can skew the
 results. It is important that calibration and probing is only done
 when the printer is at a stable temperature.</p>
+<h2 id="homing-correction-macros">Homing correction macros<a class="headerlink" href="#homing-correction-macros" title="Permanent link">&para;</a></h2>
+<p>Because of current limitations, homing and probing
+are implemented differently for the eddy sensors.
+As a result, homing suffers from an offset error,
+while probing handles this correctly.</p>
+<p>To correct the homing offset.
+One can use the suggested macro inside the homing override or
+inside the starting G-Code.</p>
+<p><a href="Config_Reference.html#force_move">Force move</a> section
+have to be defined in the config.</p>
+<div class="highlight"><pre><span></span><code>[gcode_macro _RELOAD_Z_OFFSET_FROM_PROBE]
+gcode:
+  {% set Z = printer.toolhead.position.z %}
+  SET_KINEMATIC_POSITION Z={Z - printer.probe.last_probe_position.z}
+
+[gcode_macro SET_Z_FROM_PROBE]
+gcode:
+  {% set METHOD = params.METHOD | default(&quot;automatic&quot;) %}
+  PROBE METHOD={METHOD}
+  _RELOAD_Z_OFFSET_FROM_PROBE
+  G0 Z5
+</code></pre></div>
+
 <h2 id="tap-calibration">Tap calibration<a class="headerlink" href="#tap-calibration" title="Permanent link">&para;</a></h2>
 <p>The Eddy probe measures the resonance frequency of the coil.
 By the absolute value of the frequency and the calibration curve from
@@ -1513,7 +1552,15 @@ change per second (velocity) is high enough - higher than the noise level,
 and that upon collision it always decreases by at least this value.</p>
 <div class="highlight"><pre><span></span><code>[probe_eddy_current my_probe]
 # eddy probe configuration...
-tap_threshold: 0
+# Recommended starting values for the tap
+#samples: 3
+#samples_tolerance: 0.025
+#samples_tolerance_retries: 3
+tap_threshold: 0 # 0 means tap is disabled
+</code></pre></div>
+
+<p>Before setting it to any other value, it is necessary to install <code>scipy</code>:</p>
+<div class="highlight"><pre><span></span><code>~/klippy-env/bin/pip<span class="w"> </span>install<span class="w"> </span>scipy
 </code></pre></div>
 
 <p>The suggested calibration routine works as follows:</p>
@@ -1559,6 +1606,10 @@ z_offset: 1.010 # noise 0.000400mm, MAD_Hz=14.000
 11.314 * 2 = 22.628
 </code></pre></div>
 
+<p>To further fine tune threshold, one can use <code>PROBE_ACCURACY METHOD=tap</code>.
+The range is expected to be about 0.02 mm,
+with the default probe speed of 5 mm/s.
+Elevated coil temperature may increase noise and may require additional tuning.</p>
 <p>You can validate the tap precision by measuring the paper thickness
 from the initial calibration guide. It is expected to be ~0.1mm.</p>
 <p>Tap precision is limited by the sampling frequency and
