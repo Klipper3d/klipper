@@ -116,17 +116,20 @@ class PrinterSensorCombined:
                 if sensor_gas is not None:
                     values_gas.append(sensor_gas)
 
-        humidity = self.apply_mode(values_humidity)
-        if humidity:
-            self.humidity = humidity
+        if values_humidity:
+            humidity = self.apply_mode(values_humidity)
+            if humidity:
+                self.humidity = humidity
 
-        pressure = self.apply_mode(values_pressure)
-        if pressure:
-            self.pressure = pressure
+        if values_pressure:
+            pressure = self.apply_mode(values_pressure)
+            if pressure:
+                self.pressure = pressure
 
-        gas = self.apply_mode(values_gas)
-        if gas:
-            self.gas = gas
+        if values_gas:
+            gas = self.apply_mode(values_gas)
+            if gas:
+                self.gas = gas
 
     def get_status(self, eventtime):
         data = {
