@@ -28,9 +28,13 @@
 #define CHECK_LINES 1
 #define QUEUE_START_SIZE 1024
 
+struct qstep {
+    uint32_t clock32;
+};
+
 struct stepcompress {
     // Buffer management
-    uint32_t *queue, *queue_end, *queue_pos, *queue_next;
+    struct qstep *queue, *queue_end, *queue_pos, *queue_next;
     // Internal tracking
     uint32_t max_error;
     double mcu_time_offset, mcu_freq, last_step_print_time;
@@ -85,10 +89,10 @@ struct points {
 // Given a requested step time, return the minimum and maximum
 // acceptable times
 static inline struct points
-minmax_point(struct stepcompress *sc, uint32_t *pos)
+minmax_point(struct stepcompress *sc, struct qstep *pos)
 {
-    uint32_t lsc = sc->last_step_clock, point = *pos - lsc;
-    uint32_t prevpoint = pos > sc->queue_pos ? *(pos-1) - lsc : 0;
+    uint32_t lsc = sc->last_step_clock, point = pos->clock32 - lsc;
+    uint32_t prevpoint = pos > sc->queue_pos ? (pos-1)->clock32 - lsc : 0;
     uint32_t max_error = (point - prevpoint) / 2;
     if (max_error > sc->max_error)
         max_error = sc->max_error;
@@ -105,7 +109,7 @@ minmax_point(struct stepcompress *sc, uint32_t *pos)
 static struct step_move
 compress_bisect_add(struct stepcompress *sc)
 {
-    uint32_t *qlast = sc->queue_next;
+    struct qstep *qlast = sc->queue_next;
     if (qlast > sc->queue_pos + 65535)
         qlast = sc->queue_pos + 65535;
     struct points point = minmax_point(sc, sc->queue_pos);
@@ -429,7 +433,8 @@ queue_append_far(struct stepcompress *sc)
         return ret;
     if (step_clock >= sc->last_step_clock + CLOCK_DIFF_MAX)
         return stepcompress_flush_far(sc, step_clock);
-    *sc->queue_next++ = step_clock;
+    sc->queue_next->clock32 = step_clock;
+    sc->queue_next++;
     return 0;
 }
 
@@ -439,7 +444,7 @@ queue_append_extend(struct stepcompress *sc)
 {
     if (sc->queue_next - sc->queue_pos > 65535 + 2000) {
         // No point in keeping more than 64K steps in memory
-        uint32_t flush = (*(sc->queue_next-65535)
+        uint32_t flush = ((sc->queue_next-65535)->clock32
                           - (uint32_t)sc->last_step_clock);
         int ret = queue_flush(sc, sc->last_step_clock + flush);
         if (ret)
@@ -466,7 +471,8 @@ queue_append_extend(struct stepcompress *sc)
         sc->queue_next = sc->queue + in_use;
     }
 
-    *sc->queue_next++ = sc->next_step_clock;
+    sc->queue_next->clock32 = sc->next_step_clock;
+    sc->queue_next++;
     sc->next_step_clock = 0;
     return 0;
 }
@@ -484,7 +490,8 @@ queue_append(struct stepcompress *sc)
         return queue_append_far(sc);
     if (unlikely(sc->queue_next >= sc->queue_end))
         return queue_append_extend(sc);
-    *sc->queue_next++ = sc->next_step_clock;
+    sc->queue_next->clock32 = sc->next_step_clock;
+    sc->queue_next++;
     sc->next_step_clock = 0;
     return 0;
 }
