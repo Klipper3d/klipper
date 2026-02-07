@@ -27,12 +27,12 @@ get_move_dir(struct move *m, int axis)
     return axis_r > 0. ? 1 : -1;
 }
 
-// Compute the weight function w(x) that gives w(0)=1, w(1)=0, and
+// Compute smooth weight function w(x) that gives w(0)=1, w(1)=0, and
 // has zero derivatives of w'(0)=0, w'(1)=0.
 inline static double
 get_weight(double x)
 {
-    return (2. * x - 3.) * x * x + 1.;
+    return x < 0.5 ? 1. - 2. * x * x : 2. * (1. - x) * (1. - x);
 }
 
 inline double
