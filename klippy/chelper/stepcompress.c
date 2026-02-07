@@ -383,12 +383,6 @@ step_init_max_error(struct stepcompress *sc, struct qstep *pos)
     pos->max_error = max_error;
 }
 
-static void
-step_update_max_error(struct stepcompress *sc, struct qstep *pos)
-{
-    step_init_max_error(sc, pos);
-}
-
 // Convert previously scheduled steps into commands for the mcu
 static int
 queue_flush(struct stepcompress *sc, uint64_t move_clock)
@@ -396,7 +390,6 @@ queue_flush(struct stepcompress *sc, uint64_t move_clock)
     if (sc->queue_pos >= sc->queue_next)
         return 0;
     while (sc->last_step_clock < move_clock) {
-        step_update_max_error(sc, sc->queue_pos);
         struct step_move move = compress_bisect_add(sc);
         int ret = check_line(sc, move);
         if (ret)
