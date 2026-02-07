@@ -11,7 +11,7 @@
 #include "internal.h" // GPIO
 #include "sched.h" // sched_shutdown
 
-#define MAX_PWM (256 + 1)
+#define MAX_PWM (1<<15)
 DECL_CONSTANT("PWM_MAX", MAX_PWM);
 
 struct gpio_pwm_info {
@@ -21,6 +21,9 @@ struct gpio_pwm_info {
 
 static const struct gpio_pwm_info pwm_regs[] = {
 #if CONFIG_MACH_STM32F0
+  #if CONFIG_MACH_STM32F042
+  {TIM3, GPIO('B', 4), 1, GPIO_FUNCTION(1)},
+  #endif
   #if CONFIG_MACH_STM32F070
     {TIM15, GPIO('A', 2), 1, GPIO_FUNCTION(0)},
     {TIM15, GPIO('A', 3), 2, GPIO_FUNCTION(0)},
@@ -307,37 +310,50 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint32_t val)
         if (p->pin == pin)
             break;
     }
+    gpio_peripheral(p->pin, p->function, 0);
 
     // Map cycle_time to pwm clock divisor
     uint32_t pclk = get_pclock_frequency((uint32_t)p->timer);
     uint32_t pclock_div = CONFIG_CLOCK_FREQ / pclk;
     if (pclock_div > 1)
         pclock_div /= 2; // Timers run at twice the normal pclock frequency
-    uint32_t prescaler = cycle_time / (pclock_div * (MAX_PWM - 1));
-    if (prescaler > UINT16_MAX) {
-        prescaler = UINT16_MAX;
-    } else if (prescaler > 0) {
-        prescaler -= 1;
+    uint32_t pcycle_time = cycle_time / pclock_div;
+
+    // Convert requested cycle time (cycle_time/CLOCK_FREQ) to actual
+    // cycle time (hwpwm_ticks*prescaler*pclock_div/CLOCK_FREQ).
+    uint32_t hwpwm_ticks = pcycle_time, prescaler = 1, shift = 0;
+    while (hwpwm_ticks > UINT16_MAX) {
+        shift += 1;
+        hwpwm_ticks = (pcycle_time + (1 << (shift-1))) >> shift;
+        prescaler = 1 << shift;
     }
+    if (prescaler > UINT16_MAX + 1) {
+        prescaler = UINT16_MAX + 1;
+        hwpwm_ticks = UINT16_MAX;
+    }
+    if (hwpwm_ticks < 2)
+        hwpwm_ticks = 2;
 
-    gpio_peripheral(p->pin, p->function, 0);
-
-    // Enable clock
+    // Enable requested pwm hardware block
     if (!is_enabled_pclock((uint32_t) p->timer)) {
         enable_pclock((uint32_t) p->timer);
     }
-
     if (p->timer->CR1 & TIM_CR1_CEN) {
-        if (p->timer->PSC != (uint16_t) prescaler) {
+        if (p->timer->PSC != (uint16_t) (prescaler - 1)) {
             shutdown("PWM already programmed at different speed");
         }
+        if (p->timer->ARR != (uint16_t) (hwpwm_ticks - 1)) {
+            shutdown("PWM already programmed with different pulse duration");
+        }
     } else {
-        p->timer->PSC = (uint16_t) prescaler;
-        p->timer->ARR = MAX_PWM - 1;
+        p->timer->PSC = prescaler - 1;
+        p->timer->ARR = hwpwm_ticks - 1;
         p->timer->EGR |= TIM_EGR_UG;
     }
 
+    // Enable requested channel of hardware pwm block
     struct gpio_pwm channel;
+    channel.hwpwm_ticks = hwpwm_ticks;
     switch (p->channel) {
         case 1: {
             channel.reg = (void*) &p->timer->CCR1;
@@ -382,15 +398,19 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint32_t val)
         default:
             shutdown("Invalid PWM channel");
     }
+
     // Enable PWM output
     p->timer->CR1 |= TIM_CR1_CEN;
-#if CONFIG_MACH_STM32H7 || CONFIG_MACH_STM32G0
-    p->timer->BDTR |= TIM_BDTR_MOE;
-#endif
+
+    // Advanced timers need MOE enabled.  On standard timers this is a
+    // write to reserved memory, but that seems harmless in practice.
+    p->timer->BDTR = TIM_BDTR_MOE;
+
     return channel;
 }
 
 void
 gpio_pwm_write(struct gpio_pwm g, uint32_t val) {
-    *(volatile uint32_t*) g.reg = val;
+    uint32_t r = DIV_ROUND_CLOSEST(val * g.hwpwm_ticks, MAX_PWM);
+    *(volatile uint32_t*) g.reg = r;
 }

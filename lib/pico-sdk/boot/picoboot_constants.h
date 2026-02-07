@@ -9,11 +9,11 @@
 
 #define REBOOT2_TYPE_MASK  0x0f
 
-// note these match REBOOT_TYPE in pico/bootrom_constants.h (also 0 is used for PC_SP for backwards compatibility with RP2040)
+// note these match REBOOT_TYPE in pico/bootrom_constants.h
 // values 0-7 are secure/non-secure
 #define REBOOT2_FLAG_REBOOT_TYPE_NORMAL       0x0 // param0 = diagnostic partition
-#define REBOOT2_FLAG_REBOOT_TYPE_BOOTSEL      0x2 // param0 = bootsel_flags, param1 = gpio_config
-#define REBOOT2_FLAG_REBOOT_TYPE_RAM_IMAGE    0x3 // param0 = image_base, param1 = image_end
+#define REBOOT2_FLAG_REBOOT_TYPE_BOOTSEL      0x2 // param0 = gpio_pin_number, param1 = flags
+#define REBOOT2_FLAG_REBOOT_TYPE_RAM_IMAGE    0x3 // param0 = image_region_base, param1 = image_region_size
 #define REBOOT2_FLAG_REBOOT_TYPE_FLASH_UPDATE 0x4 // param0 = update_base
 
 // values 8-15 are secure only

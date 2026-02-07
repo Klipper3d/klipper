@@ -178,6 +178,8 @@ class SX1509_pwm(object):
         self._shutdown_value = max(0., min(1., shutdown_value))
         self._sx1509.set_register(self._i_on_reg,
                                   ~int(255 * self._start_value) & 0xFF)
+    def next_aligned_print_time(self, print_time, allow_early=0.):
+        return print_time
     def set_pwm(self, print_time, value):
         self._sx1509.set_register(self._i_on_reg, ~int(255 * value)
                                   if not self._invert

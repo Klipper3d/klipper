@@ -1,9 +1,18 @@
 # Helper script for manual z height probing
 #
-# Copyright (C) 2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2019-2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, bisect
+import logging, bisect, collections
+
+# Main probe results tuple.  The probe estimates that if the toollhead
+# is commanded to xy position (bed_x, bed_y) and then descends, the
+# nozzle will contact the bed at a toolhead z position of bed_z.  The
+# probe test itself was performed while the toolhead was at xyz
+# position (test_x, test_y, test_z).  All coordinates are relative to
+# the frame (the coordinate system used in the config file).
+ProbeResult = collections.namedtuple('probe_result', [
+    'bed_x', 'bed_y', 'bed_z', 'test_x', 'test_y', 'test_z'])
 
 # Helper to lookup the Z stepper config section
 def lookup_z_endstop_config(config):
@@ -62,9 +71,9 @@ class ManualProbe:
                 self.cmd_Z_OFFSET_APPLY_DELTA_ENDSTOPS,
                 desc=self.cmd_Z_OFFSET_APPLY_ENDSTOP_help)
         self.reset_status()
-    def manual_probe_finalize(self, kin_pos):
-        if kin_pos is not None:
-            self.gcode.respond_info("Z position is %.3f" % (kin_pos[2],))
+    def manual_probe_finalize(self, mpresult):
+        if mpresult is not None:
+            self.gcode.respond_info("Z position is %.3f" % (mpresult.bed_z,))
     def reset_status(self):
         self.status = {
             'is_active': False,
@@ -77,10 +86,10 @@ class ManualProbe:
     cmd_MANUAL_PROBE_help = "Start manual probe helper script"
     def cmd_MANUAL_PROBE(self, gcmd):
         ManualProbeHelper(self.printer, gcmd, self.manual_probe_finalize)
-    def z_endstop_finalize(self, kin_pos):
-        if kin_pos is None:
+    def z_endstop_finalize(self, mpresult):
+        if mpresult is None:
             return
-        z_pos = self.z_position_endstop - kin_pos[2]
+        z_pos = self.z_position_endstop - mpresult.bed_z
         self.gcode.respond_info(
             "%s: position_endstop: %.3f\n"
             "The SAVE_CONFIG command will update the printer config file\n"
@@ -271,10 +280,11 @@ class ManualProbeHelper:
         self.gcode.register_command('NEXT', None)
         self.gcode.register_command('ABORT', None)
         self.gcode.register_command('TESTZ', None)
-        kin_pos = None
+        mpresult = None
         if success:
             kin_pos = self.get_kinematics_pos()
-        self.finalize_callback(kin_pos)
+            mpresult = ProbeResult(*(kin_pos[:3] + kin_pos[:3]))
+        self.finalize_callback(mpresult)
 
 def load_config(config):
     return ManualProbe(config)

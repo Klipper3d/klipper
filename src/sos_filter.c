@@ -9,78 +9,93 @@
 #include "sched.h" // shutdown
 #include "sos_filter.h" // sos_filter
 
-typedef int32_t fixedQ_coeff_t;
-typedef int32_t fixedQ_value_t;
-
 // filter strucutre sizes
 #define SECTION_WIDTH 5
 #define STATE_WIDTH 2
 
 struct sos_filter_section {
     // filter composed of second order sections
-    fixedQ_coeff_t coeff[SECTION_WIDTH]; // aka sos
-    fixedQ_value_t state[STATE_WIDTH];   // aka zi
+    int32_t coeff[SECTION_WIDTH]; // aka sos
+    int32_t state[STATE_WIDTH];   // aka zi
 };
 
 struct sos_filter {
-    uint8_t max_sections, n_sections, coeff_frac_bits, is_active;
-    uint32_t coeff_rounding;
+    uint8_t max_sections, n_sections, coeff_frac_bits, scale_frac_bits;
+    uint8_t auto_offset;
+    int32_t offset, scale;
     // filter composed of second order sections
     struct sos_filter_section filter[0];
 };
 
-static inline uint8_t
-overflows_int32(int64_t value) {
+static inline int
+overflows_int32(int64_t value)
+{
     return value > (int64_t)INT32_MAX || value < (int64_t)INT32_MIN;
 }
 
-// Multiply a coefficient in fixedQ_coeff_t by a value fixedQ_value_t
-static inline fixedQ_value_t
-fixed_mul(struct sos_filter *sf, const fixedQ_coeff_t coeff
-        , const fixedQ_value_t value) {
+// Multiply a coeff*value and shift result by coeff_frac_bits
+static int
+fixed_mul(int32_t coeff, int32_t value, uint_fast8_t frac_bits, int32_t *res)
+{
     // This optimizes to single cycle SMULL on Arm Coretex M0+
-    int64_t product = (int64_t)coeff * (int64_t)value;
-    // round up at the last bit to be shifted away
-    product += sf->coeff_rounding;
-    // shift the decimal right to discard the coefficient fractional bits
-    int64_t result = product >> sf->coeff_frac_bits;
-    // check for overflow of int32_t
-    if (overflows_int32(result)) {
-        shutdown("fixed_mul: overflow");
+    int64_t result = (int64_t)coeff * (int64_t)value;
+    if (frac_bits) {
+        // round up at the last bit to be shifted away
+        result += 1 << (frac_bits - 1);
+        // shift the decimal right to discard the coefficient fractional bits
+        result >>= frac_bits;
     }
     // truncate significant 32 bits
-    return (fixedQ_value_t)result;
+    *res = (int32_t)result;
+    // check for overflow of int32_t
+    if (overflows_int32(result))
+        return -1;
+    return 0;
 }
 
 // Apply the sosfilt algorithm to a new datapoint
-// returns the fixedQ_value_t filtered value
-int32_t
-sosfilt(struct sos_filter *sf, const int32_t unfiltered_value) {
-    if (!sf->is_active) {
-        shutdown("sos_filter not property initialized");
+int
+sos_filter_apply(struct sos_filter *sf, int32_t *pvalue)
+{
+    int32_t raw_val = *pvalue;
+
+    // Automatically apply offset (if requested)
+    if (sf->auto_offset) {
+        sf->offset = -raw_val;
+        sf->auto_offset = 0;
     }
 
-    // an empty filter performs no filtering
-    if (sf->n_sections == 0) {
-        return unfiltered_value;
-    }
+    // Apply offset and scale
+    int32_t offset = sf->offset, offset_val = raw_val + offset, cur_val;
+    if ((offset >= 0) != (offset_val >= raw_val))
+        // Overflow
+        return -1;
+    int ret = fixed_mul(sf->scale, offset_val, sf->scale_frac_bits, &cur_val);
+    if (ret)
+        return -1;
 
-    fixedQ_value_t cur_val = unfiltered_value;
     // foreach section
+    uint_fast8_t cfb = sf->coeff_frac_bits;
     for (int section_idx = 0; section_idx < sf->n_sections; section_idx++) {
         struct sos_filter_section *section = &(sf->filter[section_idx]);
         // apply the section's filter coefficients to input
-        fixedQ_value_t next_val = fixed_mul(sf, section->coeff[0], cur_val);
+        int32_t next_val, c1_cur, c2_cur, c3_next, c4_next;
+        int ret = fixed_mul(section->coeff[0], cur_val, cfb, &next_val);
         next_val += section->state[0];
-        section->state[0] = fixed_mul(sf, section->coeff[1], cur_val)
-                            - fixed_mul(sf, section->coeff[3], next_val)
-                            + (section->state[1]);
-        section->state[1] = fixed_mul(sf, section->coeff[2], cur_val)
-                            - fixed_mul(sf, section->coeff[4], next_val);
+        ret |= fixed_mul(section->coeff[1], cur_val, cfb, &c1_cur);
+        ret |= fixed_mul(section->coeff[3], next_val, cfb, &c3_next);
+        ret |= fixed_mul(section->coeff[2], cur_val, cfb, &c2_cur);
+        ret |= fixed_mul(section->coeff[4], next_val, cfb, &c4_next);
+        if (ret)
+            // Overflow
+            return -1;
+        section->state[0] = c1_cur - c3_next + section->state[1];
+        section->state[1] = c2_cur - c4_next;
         cur_val = next_val;
     }
 
-    return (int32_t)cur_val;
+    *pvalue = cur_val;
+    return 0;
 }
 
 // Create an sos_filter
@@ -92,7 +107,6 @@ command_config_sos_filter(uint32_t *args)
     struct sos_filter *sf = oid_alloc(args[0]
                             , command_config_sos_filter, size);
     sf->max_sections = max_sections;
-    sf->is_active = 0;
 }
 DECL_COMMAND(command_config_sos_filter, "config_sos_filter oid=%c"
     " max_sections=%c");
@@ -118,11 +132,11 @@ command_sos_filter_set_section(uint32_t *args)
 {
     struct sos_filter *sf = sos_filter_oid_lookup(args[0]);
     // setting a section marks the filter as inactive
-    sf->is_active = 0;
+    sf->n_sections = 0;
     uint8_t section_idx = args[1];
     validate_section_index(sf, section_idx);
     // copy section data
-    const uint8_t arg_base = 2;
+    uint8_t arg_base = 2;
     for (uint8_t i = 0; i < SECTION_WIDTH; i++) {
         sf->filter[section_idx].coeff[i] = args[i + arg_base];
     }
@@ -137,16 +151,30 @@ command_sos_filter_set_state(uint32_t *args)
 {
     struct sos_filter *sf = sos_filter_oid_lookup(args[0]);
     // setting a section's state marks the filter as inactive
-    sf->is_active = 0;
+    sf->n_sections = 0;
     // copy state data
     uint8_t section_idx = args[1];
     validate_section_index(sf, section_idx);
-    const uint8_t arg_base = 2;
+    uint8_t arg_base = 2;
     sf->filter[section_idx].state[0] = args[0 + arg_base];
     sf->filter[section_idx].state[1] = args[1 + arg_base];
 }
 DECL_COMMAND(command_sos_filter_set_state
     , "sos_filter_set_state oid=%c section_idx=%c state0=%i state1=%i");
+
+// Set incoming sample offset/scaling
+void
+command_trigger_analog_set_offset_scale(uint32_t *args)
+{
+    struct sos_filter *sf = sos_filter_oid_lookup(args[0]);
+    sf->offset = args[1];
+    sf->scale = args[2];
+    sf->scale_frac_bits = args[3] & 0x3f;
+    sf->auto_offset = args[4];
+}
+DECL_COMMAND(command_trigger_analog_set_offset_scale,
+    "sos_filter_set_offset_scale oid=%c offset=%i scale=%i scale_frac_bits=%c"
+    " auto_offset=%c");
 
 // Set one section of the filter
 void
@@ -157,11 +185,7 @@ command_sos_filter_activate(uint32_t *args)
     if (n_sections > sf->max_sections)
         shutdown("Filter section index larger than max_sections");
     sf->n_sections = n_sections;
-    const uint8_t coeff_int_bits = args[2];
-    sf->coeff_frac_bits = (31 - coeff_int_bits);
-    sf->coeff_rounding  = (1 << (sf->coeff_frac_bits - 1));
-    // mark filter as ready to use
-    sf->is_active = 1;
+    sf->coeff_frac_bits = args[2] & 0x3f;
 }
 DECL_COMMAND(command_sos_filter_activate
-    , "sos_filter_set_active oid=%c n_sections=%c coeff_int_bits=%c");
+    , "sos_filter_set_active oid=%c n_sections=%c coeff_frac_bits=%c");

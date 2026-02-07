@@ -323,24 +323,29 @@ class TMCCommandHelper:
         self.name = config.get_name().split()[-1]
         self.mcu_tmc = mcu_tmc
         self.current_helper = current_helper
+        self.fields = mcu_tmc.get_fields()
+        self.stepper = None
+        # Stepper phase tracking
+        self.mcu_phase_offset = None
+        # Stepper enable/disable tracking
+        self.toff = None
+        self.stepper_enable = self.printer.load_object(config, "stepper_enable")
+        self.enable_mutex = self.printer.get_reactor().mutex()
+        # DUMP_TMC support
+        self.read_registers = self.read_translate = None
+        # Common tmc helpers
         self.echeck_helper = TMCErrorCheck(config, mcu_tmc)
         self.record_helper = TMCStallguardDump(config, mcu_tmc)
-        self.fields = mcu_tmc.get_fields()
-        self.read_registers = self.read_translate = None
-        self.toff = None
-        self.mcu_phase_offset = None
-        self.stepper = None
-        self.stepper_enable = self.printer.load_object(config, "stepper_enable")
+        TMCMicrostepHelper(config, mcu_tmc)
+        # Register callbacks
         self.printer.register_event_handler("stepper:sync_mcu_position",
                                             self._handle_sync_mcu_pos)
-        self.printer.register_event_handler("stepper:set_sdir_inverted",
+        self.printer.register_event_handler("stepper:set_dir_inverted",
                                             self._handle_sync_mcu_pos)
         self.printer.register_event_handler("klippy:mcu_identify",
                                             self._handle_mcu_identify)
         self.printer.register_event_handler("klippy:connect",
                                             self._handle_connect)
-        # Set microstep config options
-        TMCMicrostepHelper(config, mcu_tmc)
         # Register commands
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command("SET_TMC_FIELD", "STEPPER", self.name,
@@ -438,48 +443,48 @@ class TMCCommandHelper:
         self.mcu_phase_offset = moff
     # Stepper enable/disable tracking
     def _do_enable(self, print_time):
-        try:
-            if self.toff is not None:
-                # Shared enable via comms handling
-                self.fields.set_field("toff", self.toff)
-            self._init_registers()
-            did_reset = self.echeck_helper.start_checks()
-            if did_reset:
-                self.mcu_phase_offset = None
-            # Calculate phase offset
+        if self.toff is not None:
+            # Shared enable via comms handling
+            self.fields.set_field("toff", self.toff)
+        self._init_registers()
+        did_reset = self.echeck_helper.start_checks()
+        if did_reset:
+            self.mcu_phase_offset = None
+        # Calculate phase offset
+        if self.mcu_phase_offset is not None:
+            return
+        gcode = self.printer.lookup_object("gcode")
+        with gcode.get_mutex():
             if self.mcu_phase_offset is not None:
                 return
-            gcode = self.printer.lookup_object("gcode")
-            with gcode.get_mutex():
-                if self.mcu_phase_offset is not None:
-                    return
-                logging.info("Pausing toolhead to calculate %s phase offset",
-                             self.stepper_name)
-                self.printer.lookup_object('toolhead').wait_moves()
-                self._handle_sync_mcu_pos(self.stepper)
-        except self.printer.command_error as e:
-            self.printer.invoke_shutdown(str(e))
+            logging.info("Pausing toolhead to calculate %s phase offset",
+                         self.stepper_name)
+            self.printer.lookup_object('toolhead').wait_moves()
+            self._handle_sync_mcu_pos(self.stepper)
     def _do_disable(self, print_time):
-        try:
-            if self.toff is not None:
-                val = self.fields.set_field("toff", 0)
-                reg_name = self.fields.lookup_register("toff")
-                self.mcu_tmc.set_register(reg_name, val, print_time)
-            self.echeck_helper.stop_checks()
-        except self.printer.command_error as e:
-            self.printer.invoke_shutdown(str(e))
+        if self.toff is not None:
+            val = self.fields.set_field("toff", 0)
+            reg_name = self.fields.lookup_register("toff")
+            self.mcu_tmc.set_register(reg_name, val, print_time)
+        self.echeck_helper.stop_checks()
+    def _handle_stepper_enable(self, print_time, is_enable):
+        def enable_disable_cb(eventtime):
+            try:
+                with self.enable_mutex:
+                    if is_enable:
+                        self._do_enable(print_time)
+                    else:
+                        self._do_disable(print_time)
+            except self.printer.command_error as e:
+                self.printer.invoke_shutdown(str(e))
+        self.printer.get_reactor().register_callback(enable_disable_cb)
+    # Initial startup handling
     def _handle_mcu_identify(self):
         # Lookup stepper object
         force_move = self.printer.lookup_object("force_move")
         self.stepper = force_move.lookup_stepper(self.stepper_name)
         # Note pulse duration and step_both_edge optimizations available
         self.stepper.setup_default_pulse_duration(.000000100, True)
-    def _handle_stepper_enable(self, print_time, is_enable):
-        if is_enable:
-            cb = (lambda ev: self._do_enable(print_time))
-        else:
-            cb = (lambda ev: self._do_disable(print_time))
-        self.printer.get_reactor().register_callback(cb)
     def _handle_connect(self):
         # Check if using step on both edges optimization
         pulse_duration, step_both_edge = self.stepper.get_pulse_duration()

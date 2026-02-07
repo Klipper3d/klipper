@@ -63,7 +63,7 @@ class ScrewsTiltAdjust:
             'max_deviation': self.max_diff,
             'results': self.results}
 
-    def probe_finalize(self, offsets, positions):
+    def probe_finalize(self, positions):
         self.results = {}
         self.max_diff_error = False
         # Factors used for CW-M3, CCW-M3, CW-M4, CCW-M4, CW-M5, CCW-M5, CW-M6
@@ -79,15 +79,15 @@ class ScrewsTiltAdjust:
                     or (not is_clockwise_thread and self.direction == 'CCW'))
             min_or_max = max if use_max else min
             i_base, z_base = min_or_max(
-                enumerate([pos[2] for pos in positions]), key=lambda v: v[1])
+                enumerate([pos.bed_z for pos in positions]), key=lambda v: v[1])
         else:
             # First screw is the base position used for comparison
-            i_base, z_base = 0, positions[0][2]
+            i_base, z_base = 0, positions[0].bed_z
         # Provide the user some information on how to read the results
         self.gcode.respond_info("01:20 means 1 full turn and 20 minutes, "
                                 "CW=clockwise, CCW=counter-clockwise")
         for i, screw in enumerate(self.screws):
-            z = positions[i][2]
+            z = positions[i].bed_z
             coord, name = screw
             if i == i_base:
                 # Show the results

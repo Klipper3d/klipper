@@ -22,6 +22,20 @@ MAX_NOMINAL_DURATION = 3.0
 # Command transmit helper classes
 ######################################################################
 
+# Generate a dummy response to query commands when in debugging mode
+class DummyResponse:
+    def __init__(self, serial, name, oid=None):
+        params = {}
+        if oid is not None:
+            params['oid'] = oid
+        msgparser = serial.get_msgparser()
+        resp = msgparser.create_dummy_response(name, params)
+        resp['#sent_time'] = 0.
+        resp['#receive_time'] = 0.
+        self._response = resp
+    def get_response(self, cmds, cmd_queue, minclock=0, reqclock=0, retry=True):
+        return dict(self._response)
+
 # Class to retry sending of a query command until a given response is received
 class RetryAsyncCommand:
     TIMEOUT_TIME = 5.0
@@ -60,16 +74,18 @@ class RetryAsyncCommand:
 
 # Wrapper around query commands
 class CommandQueryWrapper:
-    def __init__(self, serial, msgformat, respformat, oid=None,
-                 cmd_queue=None, is_async=False, error=serialhdl.error):
-        self._serial = serial
+    def __init__(self, conn_helper, msgformat, respformat, oid=None,
+                 cmd_queue=None, is_async=False):
+        self._serial = serial = conn_helper.get_serial()
         self._cmd = serial.get_msgparser().lookup_command(msgformat)
         serial.get_msgparser().lookup_command(respformat)
         self._response = respformat.split()[0]
         self._oid = oid
-        self._error = error
+        self._error = conn_helper.get_mcu().get_printer().command_error
         self._xmit_helper = serialhdl.SerialRetryCommand
-        if is_async:
+        if conn_helper.get_mcu().is_fileoutput():
+            self._xmit_helper = DummyResponse
+        elif is_async:
             self._xmit_helper = RetryAsyncCommand
         if cmd_queue is None:
             cmd_queue = serial.get_default_command_queue()
@@ -92,15 +108,15 @@ class CommandQueryWrapper:
 
 # Wrapper around command sending
 class CommandWrapper:
-    def __init__(self, serial, msgformat, cmd_queue=None, debugoutput=False):
-        self._serial = serial
+    def __init__(self, conn_helper, msgformat, cmd_queue=None):
+        self._serial = serial = conn_helper.get_serial()
         msgparser = serial.get_msgparser()
         self._cmd = msgparser.lookup_command(msgformat)
         if cmd_queue is None:
             cmd_queue = serial.get_default_command_queue()
         self._cmd_queue = cmd_queue
         self._msgtag = msgparser.lookup_msgid(msgformat) & 0xffffffff
-        if debugoutput:
+        if conn_helper.get_mcu().is_fileoutput():
             # Can't use send_wait_ack when in debugging mode
             self.send_wait_ack = self.send
     def send(self, data=(), minclock=0, reqclock=0):
@@ -219,12 +235,11 @@ class MCU_trsync:
         self._mcu.register_response(self._handle_trsync_state,
                                     "trsync_state", self._oid)
         self._trsync_start_cmd.send([self._oid, report_clock, report_ticks,
-                                     self.REASON_COMMS_TIMEOUT],
-                                    reqclock=report_clock)
+                                     self.REASON_COMMS_TIMEOUT], reqclock=clock)
         for s in self._steppers:
             self._stepper_stop_cmd.send([s.get_oid(), self._oid])
         self._trsync_set_timeout_cmd.send([self._oid, expire_clock],
-                                          reqclock=expire_clock)
+                                          reqclock=clock)
     def set_home_end_time(self, home_end_time):
         self._home_end_clock = self._mcu.print_time_to_clock(home_end_time)
     def stop(self):
@@ -422,6 +437,7 @@ class MCU_pwm:
         self._invert = pin_params['invert']
         self._start_value = self._shutdown_value = float(self._invert)
         self._last_clock = 0
+        self._last_value = .0
         self._pwm_max = 0.
         self._set_cmd = None
     def get_mcu(self):
@@ -437,6 +453,7 @@ class MCU_pwm:
             shutdown_value = 1. - shutdown_value
         self._start_value = max(0., min(1., start_value))
         self._shutdown_value = max(0., min(1., shutdown_value))
+        self._last_value = self._start_value
     def _build_config(self):
         if self._max_duration and self._start_value != self._shutdown_value:
             raise pins.error("Pin with max duration must have start"
@@ -488,6 +505,20 @@ class MCU_pwm:
             % (self._oid, self._last_clock, svalue), is_init=True)
         self._set_cmd = self._mcu.lookup_command(
             "queue_digital_out oid=%c clock=%u on_ticks=%u", cq=cmd_queue)
+    def next_aligned_print_time(self, print_time, allow_early=0.):
+        # Filter cases where there is no need to sync anything
+        if self._hardware_pwm:
+            return print_time
+        if self._last_value == 1. or self._last_value == .0:
+            return print_time
+        # Simplify the calling and allow scheduling slightly earlier
+        req_ptime = print_time - min(allow_early, 0.5 * self._cycle_time)
+        cycle_ticks = self._mcu.seconds_to_clock(self._cycle_time)
+        req_clock = self._mcu.print_time_to_clock(req_ptime)
+        last_clock = self._last_clock
+        pulses = (req_clock - last_clock + cycle_ticks - 1) // cycle_ticks
+        next_clock = last_clock + pulses * cycle_ticks
+        return self._mcu.clock_to_print_time(next_clock)
     def set_pwm(self, print_time, value):
         if self._invert:
             value = 1. - value
@@ -496,6 +527,7 @@ class MCU_pwm:
         self._set_cmd.send([self._oid, clock, v],
                            minclock=self._last_clock, reqclock=clock)
         self._last_clock = clock
+        self._last_value = value
 
 class MCU_adc:
     def __init__(self, mcu, pin_params):
@@ -1080,12 +1112,11 @@ class MCU:
     def max_nominal_duration(self):
         return MAX_NOMINAL_DURATION
     def lookup_command(self, msgformat, cq=None):
-        return CommandWrapper(self._serial, msgformat, cq,
-                              debugoutput=self.is_fileoutput())
+        return CommandWrapper(self._conn_helper, msgformat, cq)
     def lookup_query_command(self, msgformat, respformat, oid=None,
                              cq=None, is_async=False):
-        return CommandQueryWrapper(self._serial, msgformat, respformat, oid,
-                                   cq, is_async, self._printer.command_error)
+        return CommandQueryWrapper(self._conn_helper, msgformat, respformat,
+                                   oid, cq, is_async)
     def try_lookup_command(self, msgformat):
         try:
             return self.lookup_command(msgformat)

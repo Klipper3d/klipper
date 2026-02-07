@@ -5,15 +5,12 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math
 import mcu
-from . import probe, sos_filter, load_cell, hx71x, ads1220
+from . import probe, trigger_analog, load_cell, hx71x, ads1220
 
 np = None  # delay NumPy import until configuration time
 
-# constants for fixed point numbers
-Q2_INT_BITS = 2
-Q2_FRAC_BITS = (32 - (1 + Q2_INT_BITS))
-Q16_INT_BITS = 16
-Q16_FRAC_BITS = (32 - (1 + Q16_INT_BITS))
+# MCU SOS filter scaled to "fractional grams" for consistent sensor precision
+FRAC_GRAMS_CONV = 32768.0
 
 
 class TapAnalysis:
@@ -163,19 +160,16 @@ class ContinuousTareFilter:
 
     # create a filter design from the parameters
     def design_filter(self, error_func):
-        design = sos_filter.DigitalFilter(self.sps, error_func, self.drift,
+        return trigger_analog.DigitalFilter(self.sps, error_func, self.drift,
             self.drift_delay, self.buzz, self.buzz_delay, self.notches,
             self.notch_quality)
-        fixed_filter = sos_filter.FixedPointSosFilter(
-            design.get_filter_sections(), design.get_initial_state(),
-            Q2_INT_BITS, Q16_INT_BITS)
-        return fixed_filter
 
 
 # Combine ContinuousTareFilter and SosFilter into an easy-to-use class
 class ContinuousTareFilterHelper:
-    def __init__(self, config, sensor, cmd_queue):
+    def __init__(self, config, sensor, sos_filter):
         self._sensor = sensor
+        self._sos_filter = sos_filter
         self._sps = self._sensor.get_samples_per_second()
         max_filter_frequency = math.floor(self._sps / 2.)
         # setup filter parameters
@@ -200,8 +194,8 @@ class ContinuousTareFilterHelper:
         self._config_design = self._build_filter()
         # filter design currently inside the MCU
         self._active_design = self._config_design
-        self._sos_filter = self._create_filter(
-            self._active_design.design_filter(config.error), cmd_queue)
+        design = self._active_design.design_filter(config.error)
+        self._sos_filter.set_filter_design(design)
 
     def _build_filter(self, gcmd=None):
         drift = self._drift_param.get(gcmd)
@@ -214,21 +208,14 @@ class ContinuousTareFilterHelper:
         return ContinuousTareFilter(self._sps, drift, drift_delay, buzz,
             buzz_delay, notches, notch_quality)
 
-    def _create_filter(self, fixed_filter, cmd_queue):
-        return sos_filter.SosFilter(self._sensor.get_mcu(), cmd_queue,
-            fixed_filter, 4)
-
     def update_from_command(self, gcmd, cq=None):
         gcmd_filter = self._build_filter(gcmd)
         # if filters are identical, no change required
         if self._active_design == gcmd_filter:
             return
         # update MCU filter from GCode command
-        self._sos_filter.change_filter(
-            self._active_design.design_filter(gcmd.error))
-
-    def get_sos_filter(self):
-        return self._sos_filter
+        design = self._active_design.design_filter(gcmd.error)
+        self._sos_filter.set_filter_design(design)
 
 
 # check results from the collector for errors and raise an exception is found
@@ -246,7 +233,6 @@ class LoadCellProbeConfigHelper:
         self._printer = config.get_printer()
         self._load_cell = load_cell_inst
         self._sensor = load_cell_inst.get_sensor()
-        self._rest_time = 1. / float(self._sensor.get_samples_per_second())
         # Collect 4 x 60hz power cycles of data to average across power noise
         self._tare_time_param = floatParamHelper(config, 'tare_time',
             default=4. / 60., minval=0.01, maxval=1.0)
@@ -267,9 +253,6 @@ class LoadCellProbeConfigHelper:
     def get_safety_limit_grams(self, gcmd=None):
         return self._force_safety_limit_param.get(gcmd)
 
-    def get_rest_time(self):
-        return self._rest_time
-
     def get_safety_range(self, gcmd=None):
         counts_per_gram = self._load_cell.get_counts_per_gram()
         # calculate the safety band
@@ -284,137 +267,33 @@ class LoadCellProbeConfigHelper:
             raise cmd_err("Load cell force_safety_limit exceeds sensor range!")
         return safety_min, safety_max
 
-    # calculate 1/counts_per_gram in Q2 fixed point
+    # calculate 1/counts_per_gram
     def get_grams_per_count(self):
         counts_per_gram = self._load_cell.get_counts_per_gram()
         # The counts_per_gram could be so large that it becomes 0.0 when
-        # converted to Q2 format. This would mean the ADC range only measures a
-        # few grams which seems very unlikely. Treat this as an error:
-        if counts_per_gram >= 2**Q2_FRAC_BITS:
+        # sent to the mcu. This would mean the ADC range only measures
+        # a few grams which seems very unlikely. Treat this as an error:
+        if counts_per_gram >= (1<<29):
             raise OverflowError("counts_per_gram value is too large to filter")
-        return sos_filter.to_fixed_32((1. / counts_per_gram), Q2_INT_BITS)
+        return 1. / counts_per_gram
 
 
-# McuLoadCellProbe is the interface to `load_cell_probe` on the MCU
-# This also manages the SosFilter so all commands use one command queue
-class McuLoadCellProbe:
-    WATCHDOG_MAX = 3
-    ERROR_SAFETY_RANGE = mcu.MCU_trsync.REASON_COMMS_TIMEOUT + 1
-    ERROR_OVERFLOW = mcu.MCU_trsync.REASON_COMMS_TIMEOUT + 2
-    ERROR_WATCHDOG = mcu.MCU_trsync.REASON_COMMS_TIMEOUT + 3
-
-    def __init__(self, config, load_cell_inst, sos_filter_inst, config_helper,
-            trigger_dispatch):
-        self._printer = config.get_printer()
-        self._load_cell = load_cell_inst
-        self._sos_filter = sos_filter_inst
-        self._config_helper = config_helper
-        self._sensor = load_cell_inst.get_sensor()
-        self._mcu = self._sensor.get_mcu()
-        # configure MCU objects
-        self._dispatch = trigger_dispatch
-        self._cmd_queue = self._dispatch.get_command_queue()
-        self._oid = self._mcu.create_oid()
-        self._config_commands()
-        self._home_cmd = None
-        self._query_cmd = None
-        self._set_range_cmd = None
-        self._mcu.register_config_callback(self._build_config)
-        self._printer.register_event_handler("klippy:connect", self._on_connect)
-
-    def _config_commands(self):
-        self._sos_filter.create_filter()
-        self._mcu.add_config_cmd(
-            "config_load_cell_probe oid=%d sos_filter_oid=%d" % (
-                self._oid, self._sos_filter.get_oid()))
-
-    def _build_config(self):
-        # Lookup commands
-        self._query_cmd = self._mcu.lookup_query_command(
-            "load_cell_probe_query_state oid=%c",
-            "load_cell_probe_state oid=%c is_homing_trigger=%c "
-            "trigger_ticks=%u", oid=self._oid, cq=self._cmd_queue)
-        self._set_range_cmd = self._mcu.lookup_command(
-            "load_cell_probe_set_range"
-            " oid=%c safety_counts_min=%i safety_counts_max=%i tare_counts=%i"
-            " trigger_grams=%u grams_per_count=%i", cq=self._cmd_queue)
-        self._home_cmd = self._mcu.lookup_command(
-            "load_cell_probe_home oid=%c trsync_oid=%c trigger_reason=%c"
-            " error_reason=%c clock=%u rest_ticks=%u timeout=%u",
-            cq=self._cmd_queue)
-
-    # the sensor data stream is connected on the MCU at the ready event
-    def _on_connect(self):
-        self._sensor.attach_load_cell_probe(self._oid)
-
-    def get_oid(self):
-        return self._oid
-
-    def get_mcu(self):
-        return self._mcu
-
-    def get_load_cell(self):
-        return self._load_cell
-
-    def get_dispatch(self):
-        return self._dispatch
-
-    def set_endstop_range(self, tare_counts, gcmd=None):
-        # update the load cell so it reflects the new tare value
-        self._load_cell.tare(tare_counts)
-        # update internal tare value
-        safety_min, safety_max = self._config_helper.get_safety_range(gcmd)
-        args = [self._oid, safety_min, safety_max, int(tare_counts),
-            self._config_helper.get_trigger_force_grams(gcmd),
-            self._config_helper.get_grams_per_count()]
-        self._set_range_cmd.send(args)
-        self._sos_filter.reset_filter()
-
-    def home_start(self, print_time):
-        clock = self._mcu.print_time_to_clock(print_time)
-        rest_time = self._config_helper.get_rest_time()
-        rest_ticks = self._mcu.seconds_to_clock(rest_time)
-        self._home_cmd.send([self._oid, self._dispatch.get_oid(),
-            mcu.MCU_trsync.REASON_ENDSTOP_HIT, self.ERROR_SAFETY_RANGE, clock,
-            rest_ticks, self.WATCHDOG_MAX], reqclock=clock)
-
-    def clear_home(self):
-        params = self._query_cmd.send([self._oid])
-        # The time of the first sample that triggered is in "trigger_ticks"
-        trigger_ticks = self._mcu.clock32_to_clock64(params['trigger_ticks'])
-        # clear trsync from load_cell_endstop
-        self._home_cmd.send([self._oid, 0, 0, 0, 0, 0, 0, 0])
-        return self._mcu.clock_to_print_time(trigger_ticks)
-
-
-# Execute probing moves using the McuLoadCellProbe
+# Execute probing moves using the MCU_trigger_analog
 class LoadCellProbingMove:
-    ERROR_MAP = {
-        mcu.MCU_trsync.REASON_COMMS_TIMEOUT: "Communication timeout during "
-                                             "homing",
-        McuLoadCellProbe.ERROR_SAFETY_RANGE: "Load Cell Probe Error: load "
-                                             "exceeds safety limit",
-        McuLoadCellProbe.ERROR_OVERFLOW: "Load Cell Probe Error: fixed point "
-                                         "math overflow",
-        McuLoadCellProbe.ERROR_WATCHDOG: "Load Cell Probe Error: timed out "
-                                         "waiting for sensor data"
-    }
-
-    def __init__(self, config, mcu_load_cell_probe, param_helper,
+    def __init__(self, config, load_cell_inst, mcu_trigger_analog, param_helper,
             continuous_tare_filter_helper, config_helper):
         self._printer = config.get_printer()
-        self._mcu_load_cell_probe = mcu_load_cell_probe
+        self._load_cell = load_cell_inst
+        self._mcu_trigger_analog = mcu_trigger_analog
         self._param_helper = param_helper
         self._continuous_tare_filter_helper = continuous_tare_filter_helper
         self._config_helper = config_helper
-        self._mcu = mcu_load_cell_probe.get_mcu()
-        self._load_cell = mcu_load_cell_probe.get_load_cell()
+        self._mcu = mcu_trigger_analog.get_mcu()
         self._z_min_position = probe.lookup_minimum_z(config)
-        self._dispatch = mcu_load_cell_probe.get_dispatch()
-        probe.LookupZSteppers(config, self._dispatch.add_stepper)
+        dispatch = mcu_trigger_analog.get_dispatch()
+        probe.LookupZSteppers(config, dispatch.add_stepper)
         # internal state tracking
         self._tare_counts = 0
-        self._last_trigger_time = 0
 
     def _start_collector(self):
         toolhead = self._printer.lookup_object('toolhead')
@@ -436,37 +315,22 @@ class LoadCellProbingMove:
         tare_counts = np.average(np.array(tare_samples)[:, 2].astype(float))
         # update sos_filter with any gcode parameter changes
         self._continuous_tare_filter_helper.update_from_command(gcmd)
-        self._mcu_load_cell_probe.set_endstop_range(tare_counts, gcmd)
+        # update the load cell so it reflects the new tare value
+        self._load_cell.tare(tare_counts)
+        # update raw range
+        safety_min, safety_max = self._config_helper.get_safety_range(gcmd)
+        self._mcu_trigger_analog.set_raw_range(safety_min, safety_max)
+        # update internal tare value
+        gpc = self._config_helper.get_grams_per_count() * FRAC_GRAMS_CONV
+        sos_filter = self._mcu_trigger_analog.get_sos_filter()
+        Q17_14_FRAC_BITS = 14
+        sos_filter.set_offset_scale(int(-tare_counts), gpc, Q17_14_FRAC_BITS)
+        # update trigger
+        trigger_val = self._config_helper.get_trigger_force_grams(gcmd)
+        trigger_frac_grams = trigger_val * FRAC_GRAMS_CONV
+        self._mcu_trigger_analog.set_trigger("abs_ge", trigger_frac_grams)
 
-    def _home_start(self, print_time):
-        # start trsync
-        trigger_completion = self._dispatch.start(print_time)
-        self._mcu_load_cell_probe.home_start(print_time)
-        return trigger_completion
-
-    def home_start(self, print_time, sample_time, sample_count, rest_time,
-            triggered=True):
-        return self._home_start(print_time)
-
-    def home_wait(self, home_end_time):
-        self._dispatch.wait_end(home_end_time)
-        # trigger has happened, now to find out why...
-        res = self._dispatch.stop()
-        # clear the homing state so it stops processing samples
-        self._last_trigger_time = self._mcu_load_cell_probe.clear_home()
-        if res >= mcu.MCU_trsync.REASON_COMMS_TIMEOUT:
-            error = "Load Cell Probe Error: unknown reason code %i" % (res,)
-            if res in self.ERROR_MAP:
-                error = self.ERROR_MAP[res]
-            raise self._printer.command_error(error)
-        if res != mcu.MCU_trsync.REASON_ENDSTOP_HIT:
-            return 0.
-        return self._last_trigger_time
-
-    def get_steppers(self):
-        return self._dispatch.get_steppers()
-
-    # Probe towards z_min until the load_cell_probe on the MCU triggers
+    # Probe towards z_min until the trigger_analog on the MCU triggers
     def probing_move(self, gcmd):
         # do not permit probing if the load cell is not calibrated
         if not self._load_cell.is_calibrated():
@@ -482,20 +346,22 @@ class LoadCellProbingMove:
         # start collector after tare samples are consumed
         collector = self._start_collector()
         # do homing move
-        return phoming.probing_move(self, pos, speed), collector
+        epos = phoming.probing_move(self._mcu_trigger_analog, pos, speed)
+        return epos, collector
 
     # Wait for the MCU to trigger with no movement
     def probing_test(self, gcmd, timeout):
         self._pause_and_tare(gcmd)
         toolhead = self._printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
-        self._home_start(print_time)
-        return self.home_wait(print_time + timeout)
+        self._mcu_trigger_analog.home_start(print_time, 0., 0, 0.)
+        return self._mcu_trigger_analog.home_wait(print_time + timeout)
 
     def get_status(self, eventtime):
+        trig_time = self._mcu_trigger_analog.get_last_trigger_time()
         return {
             'tare_counts': self._tare_counts,
-            'last_trigger_time': self._last_trigger_time,
+            'last_trigger_time': trig_time,
         }
 
 
@@ -542,9 +408,11 @@ class TappingMove:
 
 # ProbeSession that implements Tap logic
 class TapSession:
-    def __init__(self, config, tapping_move, probe_params_helper):
+    def __init__(self, config, tapping_move,
+                 probe_offsets, probe_params_helper):
         self._printer = config.get_printer()
         self._tapping_move = tapping_move
+        self._probe_offsets = probe_offsets
         self._probe_params_helper = probe_params_helper
         # Session state
         self._results = []
@@ -558,7 +426,8 @@ class TapSession:
     # probe until a single good sample is returned or retries are exhausted
     def run_probe(self, gcmd):
         epos, is_good = self._tapping_move.run_tap(gcmd)
-        self._results.append(epos)
+        res = self._probe_offsets.create_probe_result(epos)
+        self._results.append(res)
 
     def pull_probed_results(self):
         res = self._results
@@ -615,22 +484,23 @@ class LoadCellPrinterProbe:
         # Read all user configuration and build modules
         config_helper = LoadCellProbeConfigHelper(config, self._load_cell)
         self._mcu = self._load_cell.get_sensor().get_mcu()
-        trigger_dispatch = mcu.TriggerDispatch(self._mcu)
-        continuous_tare_filter_helper = ContinuousTareFilterHelper(config,
-            sensor, trigger_dispatch.get_command_queue())
+        self._mcu_trigger_analog = trigger_analog.MCU_trigger_analog(sensor)
+        cmd_queue = self._mcu_trigger_analog.get_dispatch().get_command_queue()
+        sos_filter = trigger_analog.MCU_SosFilter(self._mcu, cmd_queue, 4)
+        self._mcu_trigger_analog.setup_sos_filter(sos_filter)
+        continuous_tare_filter_helper = ContinuousTareFilterHelper(
+            config, sensor, sos_filter)
         # Probe Interface
         self._param_helper = probe.ProbeParameterHelper(config)
         self._cmd_helper = probe.ProbeCommandHelper(config, self)
         self._probe_offsets = probe.ProbeOffsetsHelper(config)
-        self._mcu_load_cell_probe = McuLoadCellProbe(config, self._load_cell,
-            continuous_tare_filter_helper.get_sos_filter(), config_helper,
-            trigger_dispatch)
-        load_cell_probing_move = LoadCellProbingMove(config,
-            self._mcu_load_cell_probe, self._param_helper,
+        load_cell_probing_move = LoadCellProbingMove(config, self._load_cell,
+            self._mcu_trigger_analog, self._param_helper,
             continuous_tare_filter_helper, config_helper)
         self._tapping_move = TappingMove(config, load_cell_probing_move,
             config_helper)
-        tap_session = TapSession(config, self._tapping_move, self._param_helper)
+        tap_session = TapSession(config, self._tapping_move,
+                                 self._probe_offsets, self._param_helper)
         self._probe_session = probe.ProbeSessionHelper(config,
             self._param_helper, tap_session.start_probe_session)
         # printer integration
@@ -641,8 +511,8 @@ class LoadCellPrinterProbe:
     def get_probe_params(self, gcmd=None):
         return self._param_helper.get_probe_params(gcmd)
 
-    def get_offsets(self):
-        return self._probe_offsets.get_offsets()
+    def get_offsets(self, gcmd=None):
+        return self._probe_offsets.get_offsets(gcmd)
 
     def start_probe_session(self, gcmd):
         return self._probe_session.start_probe_session(gcmd)

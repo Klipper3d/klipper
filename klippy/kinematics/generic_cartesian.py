@@ -4,10 +4,12 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
-import copy, itertools, logging, math
+import collections, copy, itertools, logging, math
 import gcode, mathutil, stepper
 from . import idex_modes
 from . import kinematic_stepper as ks
+
+VALID_AXES = ['x', 'y', 'z']
 
 def mat_mul(a, b):
     if len(a[0]) != len(b):
@@ -35,13 +37,11 @@ class MainCarriage:
     def __init__(self, config):
         self.rail = stepper.GenericPrinterRail(config)
         carriage_name = self.rail.get_name(short=True)
-        valid_axes = ['x', 'y', 'z']
-        if carriage_name in valid_axes:
-            axis_name = config.getchoice('axis', valid_axes, carriage_name)
+        if carriage_name in VALID_AXES:
+            self.axis_name = config.getchoice('axis', VALID_AXES, carriage_name)
         else:
-            axis_name = config.getchoice('axis', valid_axes)
-        self.axis = ord(axis_name) - ord('x')
-        self.axis_name = axis_name
+            self.axis_name = config.getchoice('axis', VALID_AXES)
+        self.axis = ord(self.axis_name) - ord('x')
         self.dual_carriage = None
     def get_name(self):
         return self.rail.get_name(short=True)
@@ -56,9 +56,7 @@ class MainCarriage:
             return True
         return self.dual_carriage.get_dc_module().is_active(self.rail)
     def set_dual_carriage(self, carriage):
-        old_dc = self.dual_carriage
         self.dual_carriage = carriage
-        return old_dc
     def get_dual_carriage(self):
         return self.dual_carriage
 
@@ -78,23 +76,49 @@ class ExtraCarriage:
                                     self.endstop_pin, self.name)
 
 class DualCarriage:
-    def __init__(self, config, carriages):
+    def __init__(self, config):
         self.printer = config.get_printer()
         self.rail = stepper.GenericPrinterRail(config)
-        self.primary_carriage = config.getchoice('primary_carriage', carriages)
-        if self.primary_carriage.set_dual_carriage(self) is not None:
-            raise config.error(
-                    "Redefinition of dual_carriage for carriage '%s'" %
-                    self.primary_carriage.get_name())
+        self.primary_carriage_name = config.get('primary_carriage', None)
+        if self.primary_carriage_name is None:
+            self.axis_name = config.getchoice('axis', VALID_AXES)
+            self.axis = ord(self.axis_name) - ord('x')
+            self.safe_dist = None
+        else:
+            self.axis_name = config.getchoice('axis', VALID_AXES + [None], None)
+            self.safe_dist = config.getfloat('safe_distance', None, minval=0.)
+        self.primary_carriage = self.dual_carriage = None
+        self.config_error = config.error
+    def resolve_primary_carriage(self, carriages):
+        if self.primary_carriage_name is None:
+            return
+        if self.primary_carriage_name not in carriages:
+            raise self.config_error(
+                    "primary_carriage = '%s' for '%s' is not a valid choice"
+                    % (self.primary_carriage_name, self.get_name()))
+        self.primary_carriage = carriages[self.primary_carriage_name]
+        axis_name = self.axis_name or self.primary_carriage.axis_name
+        if axis_name != self.primary_carriage.axis_name:
+            raise self.config_error("Mismatching axes between carriage '%s' "
+                                    "(axis=%s) and dual_carriage '%s' (axis=%s)"
+                                    % (self.primary_carriage.get_name(),
+                                       self.primary_carriage.axis_name,
+                                       self.get_name(), axis_name))
+        self.axis = ord(axis_name) - ord('x')
+        if self.primary_carriage.get_dual_carriage():
+            raise self.config_error(
+                    "Multiple dual carriages ('%s', '%s') for carriage '%s'" %
+                    (self.primary_carriage.get_dual_carriage().get_name(),
+                     self.get_name(), self.primary_carriage.get_name()))
+        self.primary_carriage.set_dual_carriage(self)
         self.axis = self.primary_carriage.get_axis()
         if self.axis > 1:
-            raise config.error("Invalid axis '%s' for dual_carriage" %
-                               "xyz"[self.axis])
-        self.safe_dist = config.getfloat('safe_distance', None, minval=0.)
+            raise self.config_error("Invalid axis '%s' for dual_carriage '%s'" %
+                                    ("xyz"[self.axis], self.get_name()))
     def get_name(self):
         return self.rail.get_name(short=True)
     def get_axis(self):
-        return self.primary_carriage.get_axis()
+        return self.axis
     def get_rail(self):
         return self.rail
     def get_safe_dist(self):
@@ -103,7 +127,13 @@ class DualCarriage:
         return self.printer.lookup_object('dual_carriage')
     def is_active(self):
         return self.get_dc_module().is_active(self.rail)
+    def set_dual_carriage(self, carriage):
+        self.dual_carriage = carriage
     def get_dual_carriage(self):
+        if self.dual_carriage is not None:
+            return self.dual_carriage
+        return self.primary_carriage
+    def get_primary_carriage(self):
         return self.primary_carriage
     def add_stepper(self, kin_stepper):
         self.rail.add_stepper(kin_stepper.get_stepper())
@@ -116,27 +146,38 @@ class GenericCartesianKinematics:
             s.set_trapq(toolhead.get_trapq())
         self.dc_module = None
         if self.dc_carriages:
-            pcs = [dc.get_dual_carriage() for dc in self.dc_carriages]
+            dc_axes = set(dc.get_axis() for dc in self.dc_carriages)
+            pcs = ([pc for pc in self.primary_carriages
+                    if pc.get_axis() in dc_axes] +
+                   [dc for dc in self.dc_carriages
+                    if dc.get_primary_carriage() is None])
+            dcs = [pc.get_dual_carriage() for pc in pcs]
             primary_rails = [pc.get_rail() for pc in pcs]
-            dual_rails = [dc.get_rail() for dc in self.dc_carriages]
-            axes = [dc.get_axis() for dc in self.dc_carriages]
-            safe_dist = {dc.get_axis() : dc.get_safe_dist()
-                         for dc in self.dc_carriages}
+            dual_rails = [dc.get_rail() if dc else None for dc in dcs]
+            axes = [pc.get_axis() for pc in pcs]
+            safe_dist = [dc.get_safe_dist() if dc else None for dc in dcs]
             self.dc_module = dc_module = idex_modes.DualCarriages(
                     self.printer, primary_rails, dual_rails, axes, safe_dist)
             zero_pos = (0., 0.)
-            for acs in itertools.product(*zip(pcs, self.dc_carriages)):
+            for acs in itertools.product(*zip(pcs, dcs)):
                 for c in acs:
+                    if c is None:
+                        continue
                     dc_module.get_dc_rail_wrapper(c.get_rail()).activate(
                             idex_modes.PRIMARY, zero_pos)
-                    dc_rail = c.get_dual_carriage().get_rail()
-                    dc_module.get_dc_rail_wrapper(dc_rail).inactivate(zero_pos)
+                    dc = c.get_dual_carriage()
+                    if dc is not None:
+                        dc_module.get_dc_rail_wrapper(dc.get_rail()).inactivate(
+                                zero_pos)
                 self._check_kinematics(config.error)
-            for c in pcs:
-                dc_module.get_dc_rail_wrapper(c.get_rail()).activate(
+            for dc in self.dc_carriages:
+                dc_module.get_dc_rail_wrapper(dc.get_rail()).inactivate(
+                        zero_pos)
+            for pc in self.primary_carriages:
+                if pc.get_axis() not in dc_axes:
+                    continue
+                dc_module.get_dc_rail_wrapper(pc.get_rail()).activate(
                         idex_modes.PRIMARY, zero_pos)
-                dc_rail = c.get_dual_carriage().get_rail()
-                dc_module.get_dc_rail_wrapper(dc_rail).inactivate(zero_pos)
         else:
             self._check_kinematics(config.error)
         # Setup boundary checks
@@ -152,25 +193,32 @@ class GenericCartesianKinematics:
                                self.cmd_SET_STEPPER_CARRIAGES,
                                desc=self.cmd_SET_STEPPER_CARRIAGES_help)
     def _load_kinematics(self, config):
-        carriages = {}
+        primary_carriages = []
         for mcconfig in config.get_prefix_sections('carriage '):
-            c = MainCarriage(mcconfig)
-            axis = c.get_axis()
-            dups = [mc for mc in carriages.values() if mc.get_axis() == axis]
-            if dups:
+            primary_carriages.append(MainCarriage(mcconfig))
+        for axis, axis_name in enumerate(VALID_AXES):
+            dups = [pc.get_name() for pc in primary_carriages
+                    if pc.get_axis() == axis]
+            if len(dups) > 1:
                 raise config.error(
-                        "Axis '%s' referenced by multiple carriages (%s, %s)"
-                        % ("xyz"[axis], c.get_name(), dups[0].get_name()))
-            carriages[c.get_name()] = c
+                        "Axis '%s' is set for multiple primary carriages (%s)"
+                        % (axis_name, ', '.join(dups)))
+            elif not dups:
+                raise config.error(
+                        "No carriage defined for axis '%s'" % axis_name)
         dc_carriages = []
         for dcconfig in config.get_prefix_sections('dual_carriage '):
-            dc_carriages.append(DualCarriage(dcconfig, carriages))
-        for dc in dc_carriages:
-            name = dc.get_name()
+            dc_carriages.append(DualCarriage(dcconfig))
+        carriages = {}
+        for carriage in primary_carriages + dc_carriages:
+            name = carriage.get_name()
             if name in carriages:
                 raise config.error("Redefinition of carriage %s" % name)
-            carriages[name] = dc
+            carriages[name] = carriage
+        for dc in dc_carriages:
+            dc.resolve_primary_carriage(carriages)
         self.carriages = dict(carriages)
+        self.primary_carriages = primary_carriages
         self.dc_carriages = dc_carriages
         ec_carriages = []
         for ecconfig in config.get_prefix_sections('extra_carriage '):
@@ -207,16 +255,19 @@ class GenericCartesianKinematics:
     def get_steppers(self):
         return [s.get_stepper() for s in self.kin_steppers]
     def get_primary_carriages(self):
-        carriages = [None] * 3
-        for carriage in self.carriages.values():
-            a = carriage.get_axis()
-            if carriage.get_dual_carriage() is not None:
+        carriages = []
+        for a in range(3):
+            c = None
+            if self.dc_module is not None and a in self.dc_module.get_axes():
                 primary_rail = self.dc_module.get_primary_rail(a)
                 for c in self.carriages.values():
                     if c.get_rail() == primary_rail:
-                        carriages[a] = c
+                        break
             else:
-                carriages[a] = carriage
+                for c in self.primary_carriages:
+                    if c.get_axis() == a:
+                        break
+            carriages.append(c)
         return carriages
     def _get_kinematics_coeffs(self):
         matr = {s.get_name() : list(s.get_kin_coeffs())
@@ -227,9 +278,9 @@ class GenericCartesianKinematics:
                     [0. for s in self.kin_steppers])
         axes = [dc.get_axis() for dc in self.dc_carriages]
         orig_matr = copy.deepcopy(matr)
-        for dc in self.dc_carriages:
-            axis = dc.get_axis()
-            for c in [dc.get_dual_carriage(), dc]:
+        for c in self.carriages.values():
+            axis = c.get_axis()
+            if axis in self.dc_module.get_axes():
                 m, o = self.dc_module.get_transform(c.get_rail())
                 for s in c.get_rail().get_steppers():
                     matr[s.get_name()][axis] *= m
@@ -289,16 +340,14 @@ class GenericCartesianKinematics:
         homing_state.home_rails([rail], forcepos, homepos)
     def home(self, homing_state):
         self._check_kinematics(self.printer.command_error)
+        primary_carriages = self.get_primary_carriages()
         # Each axis is homed independently and in order
         for axis in homing_state.get_axes():
-            for carriage in self.carriages.values():
-                if carriage.get_axis() != axis:
-                    continue
-                if carriage.get_dual_carriage() != None:
-                    self.dc_module.home(homing_state, axis)
-                else:
-                    self.home_axis(homing_state, axis, carriage.get_rail())
-                break
+            if self.dc_module is not None and axis in self.dc_module.get_axes():
+                self.dc_module.home(homing_state, axis)
+            else:
+                carriage = primary_carriages[axis]
+                self.home_axis(homing_state, axis, carriage.get_rail())
     def _check_endstops(self, move):
         end_pos = move.end_pos
         for i in (0, 1, 2):
