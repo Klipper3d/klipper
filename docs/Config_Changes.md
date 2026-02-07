@@ -8,6 +8,11 @@ All dates in this document are approximate.
 
 ## Changes
 
+20260207: The low-level i2c behavior of sx1509 and uc1701 devices has
+changed. Previously an i2c error would result in a shutdown, and now
+i2c errors when communicating with these devices will only generate
+warnings in the log file.
+
 20260109: The status value `{printer.probe.last_z_result}` is
 deprecated; it will be removed in the near future. Use
 `{printer.probe.last_probe_position}` instead, and note that this new
