@@ -1923,6 +1923,39 @@ Support for LIS3DH accelerometers.
 #   See the "adxl345" section for information on this parameter.
 ```
 
+### [bmi160]
+
+BMI160 accelerometer. This sensor can be queried via I2C or SPI bus.
+```
+[bmi160]
+#i2c_address:
+#   Default is 105 (0x69). If SA0 is tied to GND, use 104 (0x68).
+#   Only used for I2C.
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed:
+#   See the "common I2C settings" section for a description of the
+#   above parameters. Only used for I2C.
+#cs_pin:
+#spi_speed:
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the "common SPI settings" section for a description of the
+#   above parameters. Only used for SPI.
+#axes_map: x, y, z
+#   See the "adxl345" section for information on this parameter.
+```
+
+**Important:** Many BMI160 modules use ambiguous pin labels. For SPI:
+- Use **SCL** for clock (not SCX)
+- Use **SDA** for MOSI (not SDX)
+- Use **SA0** for MISO
+- Use **CS** for chip select
+
+The pins labeled SCX/SDX are for the auxiliary magnetometer bus.
+
 ### [mpu9250]
 
 Support for MPU-9250, MPU-9255, MPU-6515, MPU-6050, and MPU-6500
