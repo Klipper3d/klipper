@@ -608,12 +608,20 @@ class TMCVirtualPinHelper:
     def handle_homing_move_begin(self, hmove):
         if self.mcu_endstop not in hmove.get_mcu_endstops():
             return
+        sg4_thrs = 0
+        if self.fields.lookup_register("sg4_thrs", None) is not None:
+            sg4_thrs = self.fields.get_field("sg4_thrs")
         # Enable/disable stealthchop
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
             # On "stallguard4" drivers, "stealthchop" must be enabled
             self._set_field("tpwmthrs", 0)
             self._set_field("en_spreadcycle", 0)
+        elif sg4_thrs:
+            # TMC2240 using SG4, "stealthchop" must be enabled
+            self._set_field("en_pwm_mode", 1)
+            self._set_field("tpwmthrs", 0)
+            self._set_field(self.diag_pin_field, 1)
         else:
             # On earlier drivers, "stealthchop" must be disabled
             self._set_field("en_pwm_mode", 0)
