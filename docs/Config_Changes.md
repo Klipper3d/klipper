@@ -8,6 +8,12 @@ All dates in this document are approximate.
 
 ## Changes
 
+20260207: The `MANUAL_STEPPER` G-Code command `STOP_ON_ENDSTOP`
+parameter has changed. See the
+[MANUAL_STEPPER](G-Codes.md#manual_stepper) documentation for
+details. Using the previously supported integer values (-2, -1, 1, 2)
+is deprecated and will be removed in the near future.
+
 20260109: The status value `{printer.probe.last_z_result}` is
 deprecated; it will be removed in the near future. Use
 `{printer.probe.last_probe_position}` instead, and note that this new

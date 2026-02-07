@@ -468,8 +468,9 @@ class PrinterConfig:
         self.autosave = ConfigAutoSave(printer)
         self.validate = ConfigValidate(printer)
         self.deprecated = {}
-        self.runtime_warnings = []
         self.deprecate_warnings = []
+        self.runtime_warned = {}
+        self.runtime_warnings = []
         self.status_raw_config = {}
         self.status_warnings = []
     def get_printer(self):
@@ -497,10 +498,13 @@ class PrinterConfig:
         self.validate.check_unused(config.fileconfig)
     # Deprecation warnings
     def runtime_warning(self, msg):
+        if msg in self.runtime_warned:
+            return
         logging.warning(msg)
         res = {'type': 'runtime_warning', 'message': msg}
         self.runtime_warnings.append(res)
         self.status_warnings = self.runtime_warnings + self.deprecate_warnings
+        self.runtime_warned[msg] = True
     def deprecate(self, section, option, value=None, msg=None):
         key = (section, option, value)
         if key in self.deprecated and self.deprecated[key] == msg:
