@@ -575,8 +575,8 @@ class TMCVirtualPinHelper:
             self.diag_pin = config.get('diag_pin', None)
             self.diag_pin_field = None
         self.mcu_endstop = None
-        self.en_pwm = False
-        self.pwmthrs = self.coolthrs = self.thigh = 0
+        self._dirty_regs = collections.OrderedDict()
+        self._prev_state = collections.OrderedDict()
         # Register virtual_endstop pin
         name_parts = config.get_name().split()
         ppins = self.printer.lookup_object("pins")
@@ -597,56 +597,43 @@ class TMCVirtualPinHelper:
                                             self.handle_homing_move_end)
         self.mcu_endstop = ppins.setup_pin('endstop', self.diag_pin)
         return self.mcu_endstop
+    def _set_field(self, field_name, value):
+        self._prev_state[field_name] = self.fields.get_field(field_name)
+        reg_name = self.fields.lookup_register(field_name)
+        self._dirty_regs[reg_name] = self.fields.set_field(field_name, value)
+    def _send_fields(self):
+        for reg, val in self._dirty_regs.items():
+            self.mcu_tmc.set_register(reg, val)
+        self._dirty_regs.clear()
     def handle_homing_move_begin(self, hmove):
         if self.mcu_endstop not in hmove.get_mcu_endstops():
             return
         # Enable/disable stealthchop
-        self.pwmthrs = self.fields.get_field("tpwmthrs")
         reg = self.fields.lookup_register("en_pwm_mode", None)
         if reg is None:
             # On "stallguard4" drivers, "stealthchop" must be enabled
-            self.en_pwm = not self.fields.get_field("en_spreadcycle")
-            tp_val = self.fields.set_field("tpwmthrs", 0)
-            self.mcu_tmc.set_register("TPWMTHRS", tp_val)
-            val = self.fields.set_field("en_spreadcycle", 0)
+            self._set_field("tpwmthrs", 0)
+            self._set_field("en_spreadcycle", 0)
         else:
             # On earlier drivers, "stealthchop" must be disabled
-            self.en_pwm = self.fields.get_field("en_pwm_mode")
-            self.fields.set_field("en_pwm_mode", 0)
-            val = self.fields.set_field(self.diag_pin_field, 1)
-        self.mcu_tmc.set_register("GCONF", val)
+            self._set_field("en_pwm_mode", 0)
+            self._set_field(self.diag_pin_field, 1)
         # Enable tcoolthrs (if not already)
-        self.coolthrs = self.fields.get_field("tcoolthrs")
-        if self.coolthrs == 0:
-            tc_val = self.fields.set_field("tcoolthrs", 0xfffff)
-            self.mcu_tmc.set_register("TCOOLTHRS", tc_val)
+        if self.fields.get_field("tcoolthrs") == 0:
+            self._set_field("tcoolthrs", 0xfffff)
         # Disable thigh
         reg = self.fields.lookup_register("thigh", None)
         if reg is not None:
-            self.thigh = self.fields.get_field("thigh")
-            th_val = self.fields.set_field("thigh", 0)
-            self.mcu_tmc.set_register(reg, th_val)
+            self._set_field("thigh", 0)
+        self._send_fields()
     def handle_homing_move_end(self, hmove):
         if self.mcu_endstop not in hmove.get_mcu_endstops():
             return
-        # Restore stealthchop/spreadcycle
-        reg = self.fields.lookup_register("en_pwm_mode", None)
-        if reg is None:
-            tp_val = self.fields.set_field("tpwmthrs", self.pwmthrs)
-            self.mcu_tmc.set_register("TPWMTHRS", tp_val)
-            val = self.fields.set_field("en_spreadcycle", not self.en_pwm)
-        else:
-            self.fields.set_field("en_pwm_mode", self.en_pwm)
-            val = self.fields.set_field(self.diag_pin_field, 0)
-        self.mcu_tmc.set_register("GCONF", val)
-        # Restore tcoolthrs
-        tc_val = self.fields.set_field("tcoolthrs", self.coolthrs)
-        self.mcu_tmc.set_register("TCOOLTHRS", tc_val)
-        # Restore thigh
-        reg = self.fields.lookup_register("thigh", None)
-        if reg is not None:
-            th_val = self.fields.set_field("thigh", self.thigh)
-            self.mcu_tmc.set_register(reg, th_val)
+        # Restore previous state
+        for field, val in list(self._prev_state.items()):
+            self._set_field(field, val)
+        self._send_fields()
+        self._prev_state.clear()
 
 
 ######################################################################
