@@ -28,10 +28,13 @@
 #define CHECK_LINES 1
 #define QUEUE_START_SIZE 1024
 
+// Storage for queuing steps (only lower 32 bits of step clock are stored as
+// optimization to reduce memory, improve cache usage, and reduce 64 bit ops)
 struct qstep {
     uint32_t clock32;
 };
 
+// Main stepcompress object storage
 struct stepcompress {
     // Buffer management
     struct qstep *queue, *queue_end, *queue_pos, *queue_next;
@@ -52,12 +55,14 @@ struct stepcompress {
     struct list_head history_list;
 };
 
+// Parameters of a single queue_step command
 struct step_move {
     uint32_t interval;
     uint16_t count;
     int16_t add;
 };
 
+// Storage for internal history of recently sent queue_step commands
 struct history_steps {
     struct list_node node;
     uint64_t first_clock, last_clock;
