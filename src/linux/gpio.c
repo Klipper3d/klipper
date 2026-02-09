@@ -68,12 +68,16 @@ get_chip_fd(uint8_t chipId)
 struct gpio_out
 gpio_out_setup(uint32_t pin, uint8_t val)
 {
+ if (pin >= ARRAY_SIZE(gpio_lines))
+        goto fail;
     struct gpio_line *line = &gpio_lines[pin];
     line->offset = GPIO2PIN(pin);
     line->chipid = GPIO2PORT(pin);
     struct gpio_out g = { .line = line };
     gpio_out_reset(g,val);
     return g;
+fail:
+    shutdown("Not an output pin");
 }
 
 static void
@@ -132,12 +136,16 @@ gpio_out_toggle(struct gpio_out g)
 struct gpio_in
 gpio_in_setup(uint32_t pin, int8_t pull_up)
 {
+    if (pin >= ARRAY_SIZE(gpio_lines))
+        goto fail;
     struct gpio_line *line = &gpio_lines[pin];
     line->offset = GPIO2PIN(pin);
     line->chipid = GPIO2PORT(pin);
     struct gpio_in g = { .line = line };
     gpio_in_reset(g, pull_up);
     return g;
+fail:
+    shutdown("Not an input pin");
 }
 
 void
