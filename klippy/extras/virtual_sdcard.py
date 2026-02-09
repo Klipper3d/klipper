@@ -103,6 +103,7 @@ class VirtualSD:
                     self.sdcard_dirname, followlinks=True):
                 for name in files:
                     ext = name[name.rfind('.')+1:]
+
                     if ext not in VALID_GCODE_EXTS + VALID_ARCHIVE_EXTS:
                         continue
 
@@ -117,6 +118,7 @@ class VirtualSD:
                         count = 0
                         for entry in entries:
                             entry_ext = entry[entry.rfind('.') + 1:]
+
                             if entry_ext in VALID_GCODE_EXTS:
                                 count += 1
                         if count != 1:

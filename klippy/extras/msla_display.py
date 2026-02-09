@@ -479,6 +479,17 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
                 or (isinstance(self.uvled, output_pin.PrinterOutputPin)
                     and self.uvled.is_pwm))
 
+    def _set_uvled_callback(self, print_time, value, delay=0):
+        """
+        The uvled setter callback for the lookahead function
+        """
+        self.uvled._set_pin(print_time, value)
+        if value > 0 and delay > 0:
+            delay -= self.uvled_response_delay / 1000.
+            if delay < 0:
+                delay = 0
+            self.uvled._set_pin(print_time + delay, 0)
+
     def set_uvled(self, value, delay=0):
         """
         Turns the UV LED on or off.
@@ -502,6 +513,13 @@ class mSLADisplay(framebuffer_display.FramebufferDisplay):
             return
 
         toolhead = self.printer.lookup_object('toolhead')
+
+        #toolhead.register_lookahead_callback(
+        #    lambda print_time: self._set_uvled_callback(print_time,
+        #                                                value, delay))
+        #toolhead.wait_moves()
+        #return
+
         toolhead.register_lookahead_callback(
             lambda print_time: self.uvled._set_pin(print_time, value))
 
