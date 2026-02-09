@@ -25,7 +25,6 @@ REG_LIS2DW_OUT_ZH_ADDR = 0x2D
 REG_LIS2DW_FIFO_CTRL   = 0x2E
 REG_LIS2DW_FIFO_SAMPLES = 0x2F
 REG_MOD_READ = 0x80
-# REG_MOD_MULTI = 0x40
 
 LIS2DW_DEV_ID = 0x44
 LIS3DH_DEV_ID = 0x33
@@ -35,12 +34,11 @@ LIS_I2C_ADDR = 0x19
 # Right shift for left justified registers.
 FREEFALL_ACCEL = 9.80665
 LIS2DW_SCALE = FREEFALL_ACCEL * 1.952 / 4
-LIS3DH_SCALE = FREEFALL_ACCEL * 3.906 / 16
+LIS3DH_SCALE = FREEFALL_ACCEL * 11.718 / 16
 
 BATCH_UPDATES = 0.100
 
 # "Enums" that should be compatible with all python versions
-
 LIS2DW_TYPE = 'LIS2DW'
 LIS3DH_TYPE = 'LIS3DH'
 
@@ -94,7 +92,6 @@ class LIS2DW:
         hdr = ('time', 'x_acceleration', 'y_acceleration', 'z_acceleration')
         self.batch_bulk.add_mux_endpoint("lis2dw/dump_lis2dw", "sensor",
                                          self.name, {'header': hdr})
-
     def _build_config(self):
         cmdqueue = self.bus.get_command_queue()
         self.query_lis2dw_cmd = self.mcu.lookup_command(
@@ -148,6 +145,9 @@ class LIS2DW:
                     "This is generally indicative of connection problems\n"
                     "(e.g. faulty wiring) or a faulty lis2dw chip."
                     % (dev_id, LIS2DW_DEV_ID))
+            if self.bus_type == SPI_SERIAL_TYPE:
+                # Disable I2C
+                self.set_reg(REG_LIS2DW_CTRL_REG2_ADDR, 0x06)
             # Setup chip in requested query rate
             # ODR/2, +-16g, low-pass filter, Low-noise abled
             self.set_reg(REG_LIS2DW_CTRL_REG6_ADDR, 0x34)
@@ -170,8 +170,8 @@ class LIS2DW:
             self.set_reg(REG_LIS2DW_CTRL_REG1_ADDR, 0x97)
             # Disable all filtering
             self.set_reg(REG_LIS2DW_CTRL_REG2_ADDR, 0)
-            # Set +-8g, High Resolution mode
-            self.set_reg(REG_LIS2DW_CTRL_REG4_ADDR, 0x28)
+            # Set +-16g, High Resolution mode
+            self.set_reg(REG_LIS2DW_CTRL_REG4_ADDR, 0x38)
             # Enable FIFO
             self.set_reg(REG_LIS2DW_CTRL_REG5_ADDR, 0x40)
             # Stream mode

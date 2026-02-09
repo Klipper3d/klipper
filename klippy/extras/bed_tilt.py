@@ -24,12 +24,14 @@ class BedTilt:
     def handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
     def get_position(self):
-        x, y, z, e = self.toolhead.get_position()
-        return [x, y, z - x*self.x_adjust - y*self.y_adjust - self.z_adjust, e]
+        pos = self.toolhead.get_position()
+        x, y, z = pos[:3]
+        z -= x*self.x_adjust + y*self.y_adjust + self.z_adjust
+        return [x, y, z] + pos[3:]
     def move(self, newpos, speed):
-        x, y, z, e = newpos
-        self.toolhead.move([x, y, z + x*self.x_adjust + y*self.y_adjust
-                            + self.z_adjust, e], speed)
+        x, y, z = newpos[:3]
+        z += x*self.x_adjust + y*self.y_adjust + self.z_adjust
+        self.toolhead.move([x, y, z] + newpos[3:], speed)
     def update_adjust(self, x_adjust, y_adjust, z_adjust):
         self.x_adjust = x_adjust
         self.y_adjust = y_adjust
@@ -56,19 +58,17 @@ class BedTiltCalibrate:
     cmd_BED_TILT_CALIBRATE_help = "Bed tilt calibration script"
     def cmd_BED_TILT_CALIBRATE(self, gcmd):
         self.probe_helper.start_probe(gcmd)
-    def probe_finalize(self, offsets, positions):
+    def probe_finalize(self, positions):
         # Setup for coordinate descent analysis
-        z_offset = offsets[2]
         logging.info("Calculating bed_tilt with: %s", positions)
         params = { 'x_adjust': self.bedtilt.x_adjust,
                    'y_adjust': self.bedtilt.y_adjust,
-                   'z_adjust': z_offset }
+                   'z_adjust': 0. }
         logging.info("Initial bed_tilt parameters: %s", params)
         # Perform coordinate descent
         def adjusted_height(pos, params):
-            x, y, z = pos
-            return (z - x*params['x_adjust'] - y*params['y_adjust']
-                    - params['z_adjust'])
+            return (pos.bed_z - pos.bed_x*params['x_adjust']
+                    - pos.bed_y*params['y_adjust'] - params['z_adjust'])
         def errorfunc(params):
             total_error = 0.
             for pos in positions:
@@ -79,8 +79,7 @@ class BedTiltCalibrate:
         # Update current bed_tilt calculations
         x_adjust = new_params['x_adjust']
         y_adjust = new_params['y_adjust']
-        z_adjust = (new_params['z_adjust'] - z_offset
-                    - x_adjust * offsets[0] - y_adjust * offsets[1])
+        z_adjust = new_params['z_adjust']
         self.bedtilt.update_adjust(x_adjust, y_adjust, z_adjust)
         # Log and report results
         logging.info("Calculated bed_tilt parameters: %s", new_params)

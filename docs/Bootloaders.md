@@ -194,7 +194,7 @@ Alternatively, one can use a
 
 When using OpenOCD with the SAMC21, extra steps must be taken to first
 put the chip into Cold Plugging mode if the board makes use of the
-SWD pins for other purposes. If using OpenOCD on a Rasberry Pi, this
+SWD pins for other purposes. If using OpenOCD on a Raspberry Pi, this
 can be done by running the following commands before invoking OpenOCD.
 ```
 SWCLK=25

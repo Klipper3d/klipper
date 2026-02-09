@@ -4,16 +4,17 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include <stdbool.h>
+#include <stdint.h>
 #include "autoconf.h" // CONFIG_MACH_AVR
+#include "basecmd.h" // oid_alloc
 #include "board/gpio.h" // gpio_out_write
 #include "board/irq.h" // irq_poll
 #include "board/misc.h" // timer_read_time
-#include "basecmd.h" // oid_alloc
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // sched_add_timer
 #include "sensor_bulk.h" // sensor_bulk_report
-#include <stdbool.h>
-#include <stdint.h>
+#include "trigger_analog.h" // trigger_analog_update
 
 struct hx71x_adc {
     struct timer timer;
@@ -24,6 +25,7 @@ struct hx71x_adc {
     struct gpio_in dout; // pin used to receive data from the hx71x
     struct gpio_out sclk; // pin used to generate clock for the hx71x
     struct sensor_bulk sb;
+    struct trigger_analog *ta;
 };
 
 enum {
@@ -175,6 +177,11 @@ hx71x_read_adc(struct hx71x_adc *hx71x, uint8_t oid)
         counts = hx71x->last_error;
     }
 
+    // probe is optional, report if enabled
+    if (hx71x->last_error == 0) {
+        trigger_analog_update(hx71x->ta, counts);
+    }
+
     // Add measurement to buffer
     add_sample(hx71x, oid, counts, false);
 }
@@ -197,6 +204,15 @@ command_config_hx71x(uint32_t *args)
 }
 DECL_COMMAND(command_config_hx71x, "config_hx71x oid=%c gain_channel=%c"
              " dout_pin=%u sclk_pin=%u");
+
+void
+hx71x_attach_trigger_analog(uint32_t *args) {
+    uint8_t oid = args[0];
+    struct hx71x_adc *hx71x = oid_lookup(oid, command_config_hx71x);
+    hx71x->ta = trigger_analog_oid_lookup(args[1]);
+}
+DECL_COMMAND(hx71x_attach_trigger_analog, "hx71x_attach_trigger_analog oid=%c"
+    " trigger_analog_oid=%c");
 
 // start/stop capturing ADC data
 void

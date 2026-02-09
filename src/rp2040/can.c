@@ -1,6 +1,6 @@
 // Serial over CAN emulation for rp2040 using can2040 software canbus
 //
-// Copyright (C) 2022  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2022-2025  Kevin O'Connor <kevin@koconnor.net>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -39,6 +39,23 @@ void
 canhw_set_filter(uint32_t id)
 {
     // Filter not implemented (and not necessary)
+}
+
+static uint32_t last_tx_retries;
+
+// Report interface status
+void
+canhw_get_status(struct canbus_status *status)
+{
+    struct can2040_stats stats;
+    can2040_get_statistics(&cbus, &stats);
+    uint32_t tx_extra = stats.tx_attempt - stats.tx_total;
+    if (last_tx_retries != tx_extra)
+        last_tx_retries = tx_extra - 1;
+
+    status->rx_error = stats.parse_error;
+    status->tx_retries = last_tx_retries;
+    status->bus_state = CANBUS_STATE_ACTIVE;
 }
 
 // can2040 callback function - handle rx and tx notifications

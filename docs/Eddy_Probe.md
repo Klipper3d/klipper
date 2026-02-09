@@ -4,8 +4,10 @@ This document describes how to use an
 [eddy current](https://en.wikipedia.org/wiki/Eddy_current) inductive
 probe in Klipper.
 
-Currently, an eddy current probe can not be used for Z homing. The
-sensor can only be used for Z probing.
+Currently, an eddy current probe can not precisely home Z (i.e., `G28 Z`).
+The sensor can precisely do Z probing (i.e., `PROBE ...`).
+Look at the [homing correction](Eddy_Probe.md#homing-correction-macros)
+for further details.
 
 Start by declaring a
 [probe_eddy_current config section](Config_Reference.md#probe_eddy_current)
@@ -24,18 +26,29 @@ named `[probe_eddy_current my_eddy_probe]` then one would run
 complete in a few seconds.  After it completes, issue a `SAVE_CONFIG`
 command to save the results to the printer.cfg and restart.
 
+Eddy current is used as a proximity/distance sensor (similar to a laser ruler).
 The second step in calibration is to correlate the sensor readings to
 the corresponding Z heights. Home the printer and navigate the
-toolhead so that the nozzle is near the center of the bed. Then run an
+toolhead so that the nozzle is near the center of the bed. Then run a
 `PROBE_EDDY_CURRENT_CALIBRATE CHIP=my_eddy_probe` command. Once the
 tool starts, follow the steps described at
 ["the paper test"](Bed_Level.md#the-paper-test) to determine the
 actual distance between the nozzle and bed at the given location. Once
 those steps are complete one can `ACCEPT` the position. The tool will
-then move the the toolhead so that the sensor is above the point where
-the nozzle used to be and run a series of movements to correlate the
+then move the toolhead so that the sensor is above the point where the
+nozzle used to be and run a series of movements to correlate the
 sensor to Z positions. This will take a couple of minutes. After the
-tool completes, issue a `SAVE_CONFIG` command to save the results to
+tool completes it will output the sensor performance data:
+```
+probe_eddy_current: noise 0.000642mm, MAD_Hz=11.314 in 2525 queries
+Total frequency range: 45000.012 Hz
+z_offset: 0.250 # noise 0.000200mm, MAD_Hz=11.000
+z_offset: 0.530 # noise 0.000300mm, MAD_Hz=12.000
+z_offset: 1.010 # noise 0.000400mm, MAD_Hz=14.000
+z_offset: 2.010 # noise 0.000600mm, MAD_Hz=12.000
+z_offset: 3.010 # noise 0.000700mm, MAD_Hz=9.000
+```
+issue a `SAVE_CONFIG` command to save the results to
 the printer.cfg and restart.
 
 After initial calibration it is a good idea to verify that the
@@ -54,6 +67,134 @@ result in changes in reported Z height. Changes in either the bed
 surface temperature or sensor hardware temperature can skew the
 results. It is important that calibration and probing is only done
 when the printer is at a stable temperature.
+
+## Homing correction macros
+
+Because of current limitations, homing and probing
+are implemented differently for the eddy sensors.
+As a result, homing suffers from an offset error,
+while probing handles this correctly.
+
+To correct the homing offset.
+One can use the suggested macro inside the homing override or
+inside the starting G-Code.
+
+[Force move](Config_Reference.md#force_move) section
+have to be defined in the config.
+
+```
+[gcode_macro _RELOAD_Z_OFFSET_FROM_PROBE]
+gcode:
+  {% set Z = printer.toolhead.position.z %}
+  SET_KINEMATIC_POSITION Z={Z - printer.probe.last_probe_position.z}
+
+[gcode_macro SET_Z_FROM_PROBE]
+gcode:
+  {% set METHOD = params.METHOD | default("automatic") %}
+  PROBE METHOD={METHOD}
+  _RELOAD_Z_OFFSET_FROM_PROBE
+  G0 Z5
+```
+
+## Tap calibration
+
+The Eddy probe measures the resonance frequency of the coil.
+By the absolute value of the frequency and the calibration curve from
+`PROBE_EDDY_CURRENT_CALIBRATE`, it is therefore possible to detect
+where the bed is without physical contact.
+
+By use of the same knowledge, we know that frequency changes with
+the distance. It is possible to track that change in real time and
+detect the time/position where contact happens - a change of frequency
+starts to change in a different way.
+For example, stopped to change because of the collision.
+
+Because eddy output is not perfect: there is sensor noise,
+mechanical oscillation, thermal expansion and other discrepancies,
+it is required to calibrate the stop threshold for your machine.
+Practically, it ensures that the Eddy's output data absolute value
+change per second (velocity) is high enough - higher than the noise level,
+and that upon collision it always decreases by at least this value.
+
+```
+[probe_eddy_current my_probe]
+# eddy probe configuration...
+# Recommended starting values for the tap
+#samples: 3
+#samples_tolerance: 0.025
+#samples_tolerance_retries: 3
+tap_threshold: 0 # 0 means tap is disabled
+```
+
+Before setting it to any other value, it is necessary to install `scipy`:
+
+```bash
+~/klippy-env/bin/pip install scipy
+```
+
+The suggested calibration routine works as follows:
+1. Home Z
+2. Place the toolhead at the center of the bed.
+3. Move the Z axis far away (30 mm, for example).
+4. Run `PROBE METHOD=tap`
+5. If it stops before colliding, increase the `tap_threshold`.
+
+Repeat until the nozzle softly touches the bed.
+This is easier to do with a clean nozzle and
+by visually inspecting the process.
+
+You can streamline the process by placing the toolhead in the center once.
+Then, upon config restart, trick the machine into thinking that Z is homed.
+```
+SET_KINEMATIC_POSITION X=<middle> Y=<middle> Z=0
+G0 Z5 # Optional retract
+PROBE METHOD=tap
+```
+
+Here is an example sequence of threshold values to test:
+```
+1 -> 5 -> 10 -> 20 -> 40 -> 80 -> 160
+160 -> 120 -> 100
+```
+Your value will normally be between those.
+- Too high a value leaves a less safe margin for early collision -
+if something is between the nozzle and the bed, or if the nozzle
+is too close to the bed before the tap.
+- Too low - can make the toolhead stop in mid-air
+because of the noise.
+
+You can estimate the initial threshold value by analyzing your own
+calibration routine output:
+```
+probe_eddy_current: noise 0.000642mm, MAD_Hz=11.314
+...
+z_offset: 1.010 # noise 0.000400mm, MAD_Hz=14.000
+```
+The estimation will be:
+```
+MAD_Hz * 2
+11.314 * 2 = 22.628
+```
+
+To further fine tune threshold, one can use `PROBE_ACCURACY METHOD=tap`.
+The range is expected to be about 0.02 mm,
+with the default probe speed of 5 mm/s.
+Elevated coil temperature may increase noise and may require additional tuning.
+
+You can validate the tap precision by measuring the paper thickness
+from the initial calibration guide. It is expected to be ~0.1mm.
+
+Tap precision is limited by the sampling frequency and
+the speed of the descent.
+If you take 24 photos per second of the moving train, you can only estimate
+where the train was between photos.
+
+It is possible to reduce the descending speed. It may require decrease of
+absolute `tap_threshold` value.
+
+It is possible to tap over non-conductive surfaces as long as there is metal
+behind it within the sensor's sensitivity range.
+Max distance can be approximated to be about 1.5x of the coil's narrowest part.
 
 ## Thermal Drift Calibration
 
@@ -144,3 +285,38 @@ to perform thermal drift calibration:
 
 As one may conclude, the calibration process outlined above is more challenging
 and time consuming than most other procedures.  It may require practice and several attempts to achieve an optimal calibration.
+
+## Errors description
+
+Possible homing errors and actionables:
+
+- Sensor error
+  - Check logs for detailed error
+- Eddy I2C STATUS/DATA error.
+  - Check loose wiring.
+  - Try software I2C/decrease I2C rate
+- Invalid read data
+  - Same as I2C
+
+Possible sensor errors and actionables:
+- Frequency over valid hard range
+  - Check frequency configuration
+  - Hardware fault
+- Frequency over valid soft range
+  - Check frequency configuration
+- Conversion Watchdog timeout
+  - Hardware fault
+
+Amplitude Low/High warning messages can mean:
+- Sensor close to the bed
+- Sensor far from the bed
+- Higher temperature than was at the current calibration
+- Capacitor missing
+
+On some sensors, it is not possible to completely avoid amplitude
+warning indicator.
+
+You can try to redo the `LDC_CALIBRATE_DRIVE_CURRENT` calibration at work
+temperature or increase `reg_drive_current` by 1-2 from the calibrated value.
+
+Generally, it is like an engine check light. It may indicate an issue.

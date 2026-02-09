@@ -72,7 +72,7 @@ typedef struct {
  
     _REG_(SYSCFG_AUXCTRL_OFFSET) // SYSCFG_AUXCTRL
     // Auxiliary system control register
-    // 0x000000ff [7:0]   AUXCTRL      (0x00) * Bits 7:2: Reserved
+    // 0x000000ff [7:0]   AUXCTRL      (0x00) * Bits 7:3: Reserved
     io_rw_32 auxctrl;
 } syscfg_hw_t;
 

@@ -21,7 +21,6 @@ import util
 import reactor
 import serialhdl
 import clocksync
-import mcu
 
 ###########################################################
 #
@@ -46,7 +45,7 @@ def calc_crc7(data, with_padding=True):
         crc ^= b & 0xFF
         for i in range(8):
             crc = (crc << 1) ^ poly if crc & 0x80 else crc << 1
-    # The sdcard protocol likes the crc left justfied with a
+    # The sdcard protocol likes the crc left justified with a
     # padded bit
     if not with_padding:
         return crc
@@ -112,8 +111,12 @@ SPI_CFG_CMDS = (
     "config_spi oid=%d pin=%s"                      # Original
 )
 SPI_BUS_CMD = "spi_set_bus oid=%d spi_bus=%s mode=%d rate=%d"
-SW_SPI_BUS_CMD = "spi_set_software_bus oid=%d " \
-    "miso_pin=%s mosi_pin=%s sclk_pin=%s mode=%d rate=%d"
+SW_SPI_BUS_CMDS = (
+    "spi_set_sw_bus oid=%d miso_pin=%s mosi_pin=%s "
+    "sclk_pin=%s mode=%d pulse_ticks=%d",
+    "spi_set_software_bus oid=%d miso_pin=%s mosi_pin=%s "
+    "sclk_pin=%s mode=%d rate=%d",
+)
 SPI_SEND_CMD = "spi_send oid=%c data=%*s"
 SPI_XFER_CMD = "spi_transfer oid=%c data=%*s"
 SPI_XFER_RESPONSE = "spi_transfer_response oid=%c response=%*s"
@@ -139,11 +142,38 @@ class SPIFlashError(Exception):
 class MCUConfigError(SPIFlashError):
     pass
 
+# Wrapper around query commands
+class CommandQueryWrapper:
+    def __init__(self, serial, msgformat, respformat, oid=None):
+        self._serial = serial
+        self._cmd = serial.get_msgparser().lookup_command(msgformat)
+        serial.get_msgparser().lookup_command(respformat)
+        self._response = respformat.split()[0]
+        self._oid = oid
+        self._cmd_queue = serial.get_default_command_queue()
+    def send(self, data=(), minclock=0, reqclock=0, retry=True):
+        cmds = [self._cmd.encode(data)]
+        xh = serialhdl.SerialRetryCommand(self._serial, self._response,
+                                          self._oid)
+        reqclock = max(minclock, reqclock)
+        return xh.get_response(cmds, self._cmd_queue, minclock, reqclock, retry)
+
+# Wrapper around command sending
+class CommandWrapper:
+    def __init__(self, serial, msgformat):
+        self._serial = serial
+        msgparser = serial.get_msgparser()
+        self._cmd = msgparser.lookup_command(msgformat)
+        self._cmd_queue = serial.get_default_command_queue()
+    def send(self, data=(), minclock=0, reqclock=0):
+        cmd = self._cmd.encode(data)
+        self._serial.raw_send(cmd, minclock, reqclock, self._cmd_queue)
+
 class SPIDirect:
     def __init__(self, ser):
         self.oid = SPI_OID
-        self._spi_send_cmd = mcu.CommandWrapper(ser, SPI_SEND_CMD)
-        self._spi_transfer_cmd = mcu.CommandQueryWrapper(
+        self._spi_send_cmd = CommandWrapper(ser, SPI_SEND_CMD)
+        self._spi_transfer_cmd = CommandQueryWrapper(
             ser, SPI_XFER_CMD, SPI_XFER_RESPONSE, self.oid)
 
     def spi_send(self, data):
@@ -155,18 +185,18 @@ class SPIDirect:
 class SDIODirect:
     def __init__(self, ser):
         self.oid = SDIO_OID
-        self._sdio_send_cmd = mcu.CommandQueryWrapper(
+        self._sdio_send_cmd = CommandQueryWrapper(
             ser, SDIO_SEND_CMD, SDIO_SEND_CMD_RESPONSE, self.oid)
-        self._sdio_read_data = mcu.CommandQueryWrapper(
+        self._sdio_read_data = CommandQueryWrapper(
             ser, SDIO_READ_DATA, SDIO_READ_DATA_RESPONSE, self.oid)
-        self._sdio_write_data = mcu.CommandQueryWrapper(
+        self._sdio_write_data = CommandQueryWrapper(
             ser, SDIO_WRITE_DATA, SDIO_WRITE_DATA_RESPONSE, self.oid)
-        self._sdio_read_data_buffer = mcu.CommandQueryWrapper(
+        self._sdio_read_data_buffer = CommandQueryWrapper(
             ser, SDIO_READ_DATA_BUFFER, SDIO_READ_DATA_BUFFER_RESPONSE,
             self.oid)
-        self._sdio_write_data_buffer = mcu.CommandWrapper(ser,
+        self._sdio_write_data_buffer = CommandWrapper(ser,
             SDIO_WRITE_DATA_BUFFER)
-        self._sdio_set_speed = mcu.CommandWrapper(ser, SDIO_SET_SPEED)
+        self._sdio_set_speed = CommandWrapper(ser, SDIO_SET_SPEED)
 
     def sdio_send_cmd(self, cmd, argument, wait):
         return self._sdio_send_cmd.send([self.oid, cmd, argument, wait])
@@ -376,7 +406,7 @@ class FatFS:
             (fdate >> 5) & 0xF, fdate & 0x1F, ((fdate >> 9) & 0x7F) + 1980,
             (ftime >> 11) & 0x1F, (ftime >> 5) & 0x3F, ftime & 0x1F)
         return {
-            'name': self.ffi_main.string(finfo.name, 13),
+            'name': self.ffi_main.string(finfo.name, 256),
             'size': finfo.size,
             'modified': dstr,
             'is_dir': bool(finfo.attrs & 0x10),
@@ -562,7 +592,7 @@ class SDCardSPI:
             # At this time MMC is not supported
             if len(resp) == 5:
                 if self.sd_version == 1 and resp[0] == 1:
-                    # Check acceptable volatage range for V1 cards
+                    # Check acceptable voltage range for V1 cards
                     if resp[2] != 0xFF:
                         raise OSError("flash_sdcard: card does not support"
                                       " 3.3v range")
@@ -899,7 +929,7 @@ class SDCardSDIO:
                                   " out of IDLE after reset")
             if len(resp) == 4:
                 if self.sd_version == 1:
-                    # Check acceptable volatage range for V1 cards
+                    # Check acceptable voltage range for V1 cards
                     if resp[1] != 0xFF:
                         raise OSError("flash_sdcard: card does not support"
                                       " 3.3v range")
@@ -1250,7 +1280,7 @@ class MCUConnection:
         # Iterate through backwards compatible response strings
         for response in GET_CFG_RESPONSES:
             try:
-                get_cfg_cmd = mcu.CommandQueryWrapper(
+                get_cfg_cmd = CommandQueryWrapper(
                     self._serial, GET_CFG_CMD, response)
                 break
             except Exception as err:
@@ -1279,6 +1309,8 @@ class MCUConnection:
             'spi_bus', self.enumerations.get('bus'))
         pin_enums = self.enumerations.get('pin')
         if bus == "swspi":
+            mcu_freq = self.clocksync.print_time_to_clock(1)
+            pulse_ticks = mcu_freq//SD_SPI_SPEED
             cfgpins = self.board_config['spi_pins']
             pins = [p.strip().upper() for p in cfgpins.split(',') if p.strip()]
             pin_err_msg = "Invalid Software SPI Pins: %s" % (cfgpins,)
@@ -1287,30 +1319,28 @@ class MCUConnection:
             for p in pins:
                 if p not in pin_enums:
                     raise SPIFlashError(pin_err_msg)
-            bus_cmd = SW_SPI_BUS_CMD % (SPI_OID, pins[0], pins[1], pins[2],
-                                        SPI_MODE, SD_SPI_SPEED)
+            bus_cmds = [
+                SW_SPI_BUS_CMDS[0] % (SPI_OID, pins[0], pins[1], pins[2],
+                                      SPI_MODE, pulse_ticks),
+                SW_SPI_BUS_CMDS[1] % (SPI_OID, pins[0], pins[1], pins[2],
+                                      SPI_MODE, SD_SPI_SPEED)
+            ]
         else:
             if bus not in bus_enums:
                 raise SPIFlashError("Invalid SPI Bus: %s" % (bus,))
-            bus_cmd = SPI_BUS_CMD % (SPI_OID, bus, SPI_MODE, SD_SPI_SPEED)
+            bus_cmds = [
+                SPI_BUS_CMD % (SPI_OID, bus, SPI_MODE, SD_SPI_SPEED),
+            ]
         if cs_pin not in pin_enums:
             raise SPIFlashError("Invalid CS Pin: %s" % (cs_pin,))
-        cfg_cmds = [ALLOC_OIDS_CMD % (1,), bus_cmd]
+        cfg_cmds = [ALLOC_OIDS_CMD % (1,),]
         self._serial.send(cfg_cmds[0])
         spi_cfg_cmds = [
             SPI_CFG_CMDS[0] % (SPI_OID, cs_pin, False),
             SPI_CFG_CMDS[1] % (SPI_OID, cs_pin),
         ]
-        for cmd in spi_cfg_cmds:
-            try:
-                self._serial.send(cmd)
-            except self.proto_error:
-                if cmd == spi_cfg_cmds[-1]:
-                    raise
-            else:
-                cfg_cmds.insert(1, cmd)
-                break
-        self._serial.send(bus_cmd)
+        cfg_cmds.append(self._try_send_command(spi_cfg_cmds))
+        cfg_cmds.append(self._try_send_command(bus_cmds))
         config_crc = zlib.crc32('\n'.join(cfg_cmds).encode()) & 0xffffffff
         self._serial.send(FINALIZE_CFG_CMD % (config_crc,))
         config = self.get_mcu_config()
@@ -1325,6 +1355,16 @@ class MCUConnection:
             logging.exception("SD Card Mount Failure")
             raise SPIFlashError(
                 "Failed to Initialize SD Card. Is it inserted?")
+
+    def _try_send_command(self, cmd_list):
+        for cmd in cmd_list:
+            try:
+                self._serial.send(cmd)
+            except self.proto_error:
+                if cmd == cmd_list[-1]:
+                    raise
+            else:
+                return cmd
 
     def _configure_mcu_sdiobus(self, printfunc=logging.info):
         bus = self.board_config['sdio_bus']
@@ -1366,7 +1406,32 @@ class MCUConnection:
         input_sha = hashlib.sha1()
         sd_sha = hashlib.sha1()
         klipper_bin_path = self.board_config['klipper_bin_path']
+        add_ts = self.board_config.get('requires_unique_fw_name', False)
         fw_path = self.board_config.get('firmware_path', "firmware.bin")
+        if add_ts:
+            fw_dir = os.path.dirname(fw_path)
+            fw_name, fw_ext = os.path.splitext(os.path.basename(fw_path))
+            ts = time.strftime("%Y%m%d%H%M%S")
+            fw_name_ts = f"{ts}{fw_name}{fw_ext}"
+            if fw_dir:
+                fw_path = os.path.join(fw_dir, fw_name_ts)
+            else:
+                fw_path = fw_name_ts
+            list_dir = fw_dir if fw_dir else ""
+            try:
+                output_line("\nSD Card FW Directory Contents:")
+                for f in self.fatfs.list_sd_directory(list_dir):
+                    fname = f['name'].decode('utf-8')
+                    if fname.endswith(fw_ext):
+                        self.fatfs.remove_item(
+                            os.path.join(list_dir, fname)
+                        )
+                        output_line(
+                            "Old firmware file %s found and deleted"
+                            % (fname,)
+                        )
+            except Exception:
+                logging.exception("Error cleaning old firmware files")
         try:
             with open(klipper_bin_path, 'rb') as local_f:
                 with self.fatfs.open_file(fw_path, "wb") as sd_f:
@@ -1629,7 +1694,7 @@ def main():
     logging.basicConfig(level=log_level)
     flash_args = board_defs.lookup_board(args.board)
     if flash_args is None:
-        output_line("Unable to find defintion for board: %s" % (args.board,))
+        output_line("Unable to find definition for board: %s" % (args.board,))
         sys.exit(-1)
     flash_args['device'] = args.device
     flash_args['baud'] = args.baud

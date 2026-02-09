@@ -7,6 +7,7 @@ dirs-y += src/atsamd src/generic lib/fast-hash
 
 MCU := $(shell echo $(CONFIG_MCU) | tr a-z A-Z)
 
+CFLAGS-$(CONFIG_HAVE_LIMITED_CODE_SIZE) += -Os
 CFLAGS-$(CONFIG_MACH_SAMC21) += -mcpu=cortex-m0plus -Ilib/samc21/samc21/include
 CFLAGS-$(CONFIG_MACH_SAMD21) += -mcpu=cortex-m0plus -Ilib/samd21/samd21a/include
 CFLAGS-$(CONFIG_MACH_SAMD51) += -Ilib/samd51/samd51a/include
@@ -27,11 +28,11 @@ canbus-src-y := generic/canserial.c ../lib/fast-hash/fasthash.c
 canbus-src-y += atsamd/fdcan.c atsamd/chipid.c
 src-$(CONFIG_USBCANBUS) += $(canbus-src-y) atsamd/usbserial.c generic/usb_canbus.c
 src-$(CONFIG_CANSERIAL) += $(canbus-src-y) generic/canbus.c
-src-$(CONFIG_HAVE_GPIO_ADC) += atsamd/adc.c
-src-$(CONFIG_HAVE_GPIO_I2C) += atsamd/i2c.c
-src-$(CONFIG_HAVE_GPIO_SPI) += atsamd/spi.c
+src-$(CONFIG_WANT_ADC) += atsamd/adc.c
+src-$(CONFIG_WANT_SPI) += atsamd/spi.c
+src-$(CONFIG_WANT_I2C) += atsamd/i2c.c
 src-$(CONFIG_HAVE_SERCOM) += atsamd/sercom.c
-src-$(CONFIG_HAVE_GPIO_HARD_PWM) += atsamd/hard_pwm.c
+src-$(CONFIG_WANT_HARD_PWM) += atsamd/hard_pwm.c
 src-$(CONFIG_MACH_SAMC21) += atsamd/samd51_watchdog.c
 src-$(CONFIG_MACH_SAMC21) += atsamd/samc21_clock.c atsamd/timer.c generic/timer_irq.c
 src-$(CONFIG_MACH_SAMD21) += atsamd/watchdog.c

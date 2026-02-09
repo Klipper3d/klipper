@@ -107,7 +107,7 @@ taken from the Drivers/CMSIS/Device/ST/STM32H7xx/ directory.
 
 The pico-sdk directory contains code from the pico sdk:
   https://github.com/raspberrypi/pico-sdk.git
-version 2.0.0 (efe2103f9b28458a1615ff096054479743ade236). It has been
+version 2.2.0 (a1438dff1d38bd9c65dbd693f0e5db4b9ae91779). It has been
 modified so that it can build outside of the pico sdk. See
 pico-sdk.patch for the modifications.
 

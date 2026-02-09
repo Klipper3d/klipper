@@ -1,6 +1,6 @@
 # Support for PWM driven LEDs
 #
-# Copyright (C) 2019-2024  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2019-2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
@@ -10,6 +10,7 @@ from . import output_pin
 class LEDHelper:
     def __init__(self, config, update_func, led_count=1):
         self.printer = config.get_printer()
+        self.mutex = self.printer.get_reactor().mutex()
         self.update_func = update_func
         self.led_count = led_count
         self.need_transmit = False
@@ -21,7 +22,7 @@ class LEDHelper:
         self.led_state = [(red, green, blue, white)] * led_count
         # Support setting an led template
         self.template_eval = output_pin.lookup_template_eval(config)
-        self.tcallbacks = [(lambda text, s=self, index=i:
+        self.tcallbacks = [(lambda text, s=self, index=i+1:
                             s._template_update(index, text))
                            for i in range(led_count)]
         # Register commands
@@ -59,11 +60,16 @@ class LEDHelper:
     def _check_transmit(self, print_time=None):
         if not self.need_transmit:
             return
+        # Just avoid any race conditions
+        led_state = self.led_state
         self.need_transmit = False
-        try:
-            self.update_func(self.led_state, print_time)
-        except self.printer.command_error as e:
-            logging.exception("led update transmit error")
+        def reactor_cb(eventtime):
+            try:
+                with self.mutex:
+                    self.update_func(led_state, print_time)
+            except self.printer.command_error as e:
+                logging.exception("led update transmit error")
+        self.printer.get_reactor().register_callback(reactor_cb)
     cmd_SET_LED_help = "Set the color of an LED"
     def cmd_SET_LED(self, gcmd):
         # Parse parameters
@@ -97,17 +103,15 @@ class LEDHelper:
             for i in range(self.led_count):
                 set_template(gcmd, self.tcallbacks[i], self._check_transmit)
 
-PIN_MIN_TIME = 0.100
-MAX_SCHEDULE_TIME = 5.0
-
 # Handler for PWM controlled LEDs
 class PrinterPWMLED:
     def __init__(self, config):
         self.printer = printer = config.get_printer()
         # Configure pwm pins
         ppins = printer.lookup_object('pins')
+        max_duration = printer.lookup_object('mcu').max_nominal_duration()
         cycle_time = config.getfloat('cycle_time', 0.010, above=0.,
-                                     maxval=MAX_SCHEDULE_TIME)
+                                     maxval=max_duration)
         hardware_pwm = config.getboolean('hardware_pwm', False)
         self.pins = []
         for i, name in enumerate(("red", "green", "blue", "white")):
@@ -128,11 +132,12 @@ class PrinterPWMLED:
         for idx, mcu_pin in self.pins:
             mcu_pin.setup_start_value(color[idx], 0.)
     def update_leds(self, led_state, print_time):
+        mcu = self.pins[0][1].get_mcu()
+        min_sched_time = mcu.min_schedule_time()
         if print_time is None:
             eventtime = self.printer.get_reactor().monotonic()
-            mcu = self.pins[0][1].get_mcu()
-            print_time = mcu.estimated_print_time(eventtime) + PIN_MIN_TIME
-        print_time = max(print_time, self.last_print_time + PIN_MIN_TIME)
+            print_time = mcu.estimated_print_time(eventtime) + min_sched_time
+        print_time = max(print_time, self.last_print_time + min_sched_time)
         color = led_state[0]
         for idx, mcu_pin in self.pins:
             if self.prev_color[idx] != color[idx]:

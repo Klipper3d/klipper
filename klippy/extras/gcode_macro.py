@@ -24,9 +24,12 @@ class GetStatusWrapper:
         po = self.printer.lookup_object(sval, None)
         if po is None or not hasattr(po, 'get_status'):
             raise KeyError(val)
+        reactor = self.printer.get_reactor()
         if self.eventtime is None:
-            self.eventtime = self.printer.get_reactor().monotonic()
-        self.cache[sval] = res = copy.deepcopy(po.get_status(self.eventtime))
+            self.eventtime = reactor.monotonic()
+        with reactor.assert_no_pause():
+            sts = po.get_status(self.eventtime)
+        self.cache[sval] = res = copy.deepcopy(sts)
         return res
     def __contains__(self, val):
         try:
@@ -49,6 +52,12 @@ class TemplateWrapper:
         self.create_template_context = gcode_macro.create_template_context
         try:
             self.template = env.from_string(script)
+        except jinja2.exceptions.TemplateSyntaxError as e:
+            lines = script.splitlines()
+            msg = "Error loading template '%s'\nline %s: %s # %s" % (
+                name, e.lineno, lines[e.lineno-1], e.message)
+            logging.exception(msg)
+            raise self.gcode.error(msg)
         except Exception as e:
             msg = "Error loading template '%s': %s" % (
                  name, traceback.format_exception_only(type(e), e)[-1])
@@ -172,8 +181,8 @@ class GCodeMacro:
             literal = ast.literal_eval(value)
             json.dumps(literal, separators=(',', ':'))
         except (SyntaxError, TypeError, ValueError) as e:
-            raise gcmd.error("Unable to parse '%s' as a literal: %s" %
-                             (value, e))
+            raise gcmd.error("Unable to parse '%s' as a literal: %s in '%s'" %
+                             (value, e, gcmd.get_commandline()))
         v = dict(self.variables)
         v[variable] = literal
         self.variables = v

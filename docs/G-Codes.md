@@ -154,19 +154,13 @@ The following commands are available when the
 section](Config_Reference.md#axis_twist_compensation) is enabled.
 
 #### AXIS_TWIST_COMPENSATION_CALIBRATE
-`AXIS_TWIST_COMPENSATION_CALIBRATE [AXIS=<X|Y>] [AUTO=<True|False>]
-[SAMPLE_COUNT=<value>]`
+`AXIS_TWIST_COMPENSATION_CALIBRATE [AXIS=<X|Y>] [SAMPLE_COUNT=<value>]`
 
 Calibrates axis twist compensation by specifying the target axis or
 enabling automatic calibration.
 
 - **AXIS:** Define the axis (`X` or `Y`) for which the twist compensation
 will be calibrated. If not specified, the axis defaults to `'X'`.
-
-- **AUTO:** Enables automatic calibration mode. When `AUTO=True`, the
-calibration will run for both the X and Y axes. In this mode, `AXIS`
-cannot be specified. If both `AXIS` and `AUTO` are provided, an error
-will be raised.
 
 ### [bed_mesh]
 
@@ -180,8 +174,10 @@ The following commands are available when the
 [ADAPTIVE_MARGIN=<value>]`: This command probes the bed using generated points
 specified by the parameters in the config. After probing, a mesh is generated
 and z-movement is adjusted according to the mesh.
+The mesh is immediately active after successful completion of `BED_MESH_CALIBRATE`.
 The mesh will be saved into a profile specified by the `PROFILE` parameter,
-or `default` if unspecified.
+or `default` if unspecified. If ADAPTIVE=1 is specified then the profile
+name will begin with `adaptive-` and should not be saved for reuse.
 See the PROBE command for details on the optional probe parameters. If
 METHOD=manual is specified then the manual probing tool is activated - see the
 MANUAL_PROBE command above for details on the additional commands available
@@ -398,15 +394,19 @@ The following command is available when the
 enabled.
 
 #### SET_DUAL_CARRIAGE
-`SET_DUAL_CARRIAGE CARRIAGE=[0|1] [MODE=[PRIMARY|COPY|MIRROR]]`:
+`SET_DUAL_CARRIAGE CARRIAGE=<carriage> [MODE=[PRIMARY|COPY|MIRROR]]`:
 This command will change the mode of the specified carriage.
-If no `MODE` is provided it defaults to `PRIMARY`. Setting the mode
-to `PRIMARY` deactivates the other carriage and makes the specified
-carriage execute subsequent G-Code commands as-is. `COPY` and `MIRROR`
-modes are supported only for `CARRIAGE=1`. When set to either of these
-modes, carriage 1 will then track the subsequent moves of the carriage 0
-and either copy relative movements of it (in `COPY` mode) or execute them
-in the opposite (mirror) direction (in `MIRROR` mode).
+If no `MODE` is provided it defaults to `PRIMARY`. `<carriage>` must
+reference a defined primary or dual carriage for `generic_cartesian`
+kinematics or be 0 (for primary carriage) or 1 (for dual carriage)
+for all other kinematics supporting IDEX. Setting the mode to `PRIMARY`
+deactivates the other carriage and makes the specified carriage execute
+subsequent G-Code commands as-is. Before activating `COPY` or `MIRROR`
+mode for a carriage, a different one must be activated as `PRIMARY` on
+the same axis. When set to either of these two modes, the carriage
+will then track the subsequent moves of its primary carriage and either
+copy relative movements of it (in `COPY` mode) or execute them in the
+opposite (mirror) direction (in `MIRROR` mode).
 
 #### SAVE_DUAL_CARRIAGE_STATE
 `SAVE_DUAL_CARRIAGE_STATE [NAME=<state_name>]`: Save the current positions
@@ -424,7 +424,7 @@ restored and "MOVE_SPEED" is specified, then the toolhead moves will be
 performed with the given speed (in mm/s); otherwise the toolhead move will
 use the rail homing speed. Note that the carriages restore their positions
 only over their own axis, which may be necessary to correctly restore COPY
-and MIRROR mode of the dual carraige.
+and MIRROR mode of the dual carriage.
 
 ### [endstop_phase]
 
@@ -545,7 +545,7 @@ enabled.
 `SET_FAN_SPEED FAN=config_name SPEED=<speed>` This command sets the
 speed of a fan. "speed" must be between 0.0 and 1.0.
 
-`SET_FAN_SPEED PIN=config_name TEMPLATE=<template_name>
+`SET_FAN_SPEED FAN=config_name TEMPLATE=<template_name>
 [<param_x>=<literal>]`: If `TEMPLATE` is specified then it assigns a
 [display_template](Config_Reference.md#display_template) to the given
 fan. For example, if one defined a `[display_template
@@ -636,18 +636,51 @@ state; issue a G28 afterwards to reset the kinematics. This command is
 intended for low-level diagnostics and debugging.
 
 #### SET_KINEMATIC_POSITION
+
 `SET_KINEMATIC_POSITION [X=<value>] [Y=<value>] [Z=<value>]
-[CLEAR=<[X][Y][Z]>]`: Force the low-level kinematic code to believe the
-toolhead is at the given cartesian position. This is a diagnostic and
-debugging command; use SET_GCODE_OFFSET and/or G92 for regular axis
-transformations. If an axis is not specified then it will default to the
-position that the head was last commanded to. Setting an incorrect or
-invalid position may lead to internal software errors. Use the CLEAR
-parameter to forget the homing state for the given axes. Note that CLEAR
-will not override the previous functionality; if an axis is not specified
-to CLEAR it will have its kinematic position set as per above. This
-command may invalidate future boundary checks; issue a G28 afterwards to
-reset the kinematics.
+[SET_HOMED=<[X][Y][Z]>] [CLEAR_HOMED=<[X][Y][Z]>]`: Force the
+low-level kinematic code to believe the toolhead is at the given
+cartesian position and set/clear homed status. This is a diagnostic
+and debugging command; use SET_GCODE_OFFSET and/or G92 for regular
+axis transformations. Setting an incorrect or invalid position may
+lead to internal software errors.
+
+The `X`, `Y`, and `Z` parameters are used to alter the low-level
+kinematic position tracking. If any of these parameters are not set
+then the position is not changed - for example `SET_KINEMATIC_POSITION
+Z=10` would set all axes as homed, set the internal Z position to 10,
+and leave the X and Y positions unchanged. Changing the internal
+position tracking is not dependent on the internal homing state - one
+may alter the position for both homed and not homed axes, and
+similarly one may set or clear the homing state of an axis without
+altering its internal position.
+
+The `SET_HOMED` parameter defaults to `XYZ` which instructs the
+kinematics to consider all axes as homed. A bare
+`SET_KINEMATIC_POSITION` command will result in all axes being
+considered homed (and not change its current position). If it is not
+desired to change the state of homed axes then assign `SET_HOMED` to
+an empty string - for example:
+`SET_KINEMATIC_POSITION SET_HOMED= X=10`. It is also possible to
+request an individual axis be considered homed (eg, `SET_HOMED=X`),
+but note that non-cartesian style kinematics (such as delta
+kinematics) may not support setting an individual axis as homed.
+
+The `CLEAR_HOMED` parameter instructs the kinematics to consider the
+given axes as not homed. For example, `CLEAR_HOMED=XYZ` would request
+all axes to be considered not homed (and thus require homing prior to
+movement on those axes). The default is `SET_HOMED=XYZ` even if
+`CLEAR_HOMED` is present, so the command `SET_KINEMATIC_POSITION
+CLEAR_HOMED=Z` will set X and Y as homed and clear the homing state
+for Z.  Use `SET_KINEMATIC_POSITION SET_HOMED= CLEAR_HOMED=Z` if the
+goal is to clear only the Z homing state. If an axis is specified in
+neither `SET_HOMED` nor `CLEAR_HOMED` then its homing state is not
+changed and if it is specified in both then `CLEAR_HOMED` has
+precedence. It is possible to request clearing of an individual axis,
+but on non-cartesian style kinematics (such as delta kinematics) doing
+so may result in clearing the homing state of additional axes. Note
+the `CLEAR` parameter is currently an alias for the `CLEAR_HOMED`
+parameter, but this alias will be removed in the future.
 
 ### [gcode]
 
@@ -739,6 +772,46 @@ is specified then the toolhead move will be performed with the given
 speed (in mm/s); otherwise the toolhead move will use the restored
 g-code speed.
 
+### [generic_cartesian]
+The commands in this section become automatically available when
+`kinematics: generic_cartesian` is specified as the printer kinematics.
+
+#### SET_STEPPER_CARRIAGES
+`SET_STEPPER_CARRIAGES STEPPER=<stepper_name> CARRIAGES=<carriages>
+[DISABLE_CHECKS=[0|1]]`: Set or update the stepper carriages.
+`<stepper_name>` must reference an existing stepper defined in `printer.cfg`,
+and `<carriages>` describes the carriages the stepper moves. See
+[Generic Cartesian Kinematics](Config_Reference.md#generic-cartesian-kinematics)
+for a more detailed overview of the `carriages` parameter in the
+stepper configuration section. Note that it is only possible
+to change the coefficients or signs of the carriages with this
+command, but a user cannot add or remove the carriages that the stepper
+controls.
+
+`SET_STEPPER_CARRIAGES` is an advanced tool, and the user is advised
+to exercise an extreme caution using it, since specifying incorrect
+configuration may physically damage the printer.
+
+Note that `SET_STEPPER_CARRIAGES` performs certain internal validations
+of the new printer kinematics after the change. Keep in mind that if it
+detects an issue, it may leave printer kinematics in an invalid state.
+This means that if `SET_STEPPER_CARRIAGES` reports an error, it is unsafe
+to issue other GCode commands, and the user must inspect the error message
+and either fix the problem, or manually restore the previous stepper(s)
+configuration.
+
+Since `SET_STEPPER_CARRIAGES` can update a configuration of a single
+stepper at a time, some sequences of changes can lead to invalid
+intermediate kinematic configurations, even if the final configuration
+is valid. In such cases a user can pass `DISABLE_CHECKS=1` parameters to
+all but the last command to disable intermediate checks. For example,
+if `stepper a` and `stepper b` initially have `carriage_x-carriage_y` and
+`carriage_x+carriage_y` carriages correspondingly, then the following
+sequence of commands will let a user effectively swap the carriage controls:
+`SET_STEPPER_CARRIAGES STEPPER=a CARRIAGES=carriage_x+carriage_y DISABLE_CHECKS=1`
+and `SET_STEPPER_CARRIAGES STEPPER=b CARRIAGES=carriage_x-carriage_y`, while
+still validating the final kinematics state.
+
 ### [hall_filament_width_sensor]
 
 The following commands are available when the
@@ -807,15 +880,127 @@ been enabled (also see the
 
 #### SET_INPUT_SHAPER
 `SET_INPUT_SHAPER [SHAPER_FREQ_X=<shaper_freq_x>]
-[SHAPER_FREQ_Y=<shaper_freq_y>] [DAMPING_RATIO_X=<damping_ratio_x>]
-[DAMPING_RATIO_Y=<damping_ratio_y>] [SHAPER_TYPE=<shaper>]
-[SHAPER_TYPE_X=<shaper_type_x>] [SHAPER_TYPE_Y=<shaper_type_y>]`:
+[SHAPER_FREQ_Y=<shaper_freq_y>] [SHAPER_FREQ_Y=<shaper_freq_z>]
+[DAMPING_RATIO_X=<damping_ratio_x>] [DAMPING_RATIO_Y=<damping_ratio_y>]
+[DAMPING_RATIO_Z=<damping_ratio_z>] [SHAPER_TYPE=<shaper>]
+[SHAPER_TYPE_X=<shaper_type_x>] [SHAPER_TYPE_Y=<shaper_type_y>]
+[SHAPER_TYPE_Z=<shaper_type_z>]`:
 Modify input shaper parameters. Note that SHAPER_TYPE parameter resets
-input shaper for both X and Y axes even if different shaper types have
+input shaper for all axes even if different shaper types have
 been configured in [input_shaper] section. SHAPER_TYPE cannot be used
-together with either of SHAPER_TYPE_X and SHAPER_TYPE_Y parameters.
-See [config reference](Config_Reference.md#input_shaper) for more
-details on each of these parameters.
+together with any of SHAPER_TYPE_X, SHAPER_TYPE_Y, and SHAPER_TYPE_Z
+parameters. See [config reference](Config_Reference.md#input_shaper)
+for more details on each of these parameters.
+
+### [led]
+
+The following command is available when any of the
+[led config sections](Config_Reference.md#leds) are enabled.
+
+#### SET_LED
+`SET_LED LED=<config_name> RED=<value> GREEN=<value> BLUE=<value>
+WHITE=<value> [INDEX=<index>] [TRANSMIT=0] [SYNC=1]`: This sets the
+LED output. Each color `<value>` must be between 0.0 and 1.0. The
+WHITE option is only valid on RGBW LEDs. If the LED supports multiple
+chips in a daisy-chain then one may specify INDEX to alter the color
+of just the given chip (1 for the first chip, 2 for the second,
+etc.). If INDEX is not provided then all LEDs in the daisy-chain will
+be set to the provided color. If TRANSMIT=0 is specified then the
+color change will only be made on the next SET_LED command that does
+not specify TRANSMIT=0; this may be useful in combination with the
+INDEX parameter to batch multiple updates in a daisy-chain. By
+default, the SET_LED command will sync it's changes with other ongoing
+gcode commands.  This can lead to undesirable behavior if LEDs are
+being set while the printer is not printing as it will reset the idle
+timeout. If careful timing is not needed, the optional SYNC=0
+parameter can be specified to apply the changes without resetting the
+idle timeout.
+
+#### SET_LED_TEMPLATE
+`SET_LED_TEMPLATE LED=<led_name> TEMPLATE=<template_name>
+[<param_x>=<literal>] [INDEX=<index>]`: Assign a
+[display_template](Config_Reference.md#display_template) to a given
+[LED](Config_Reference.md#leds). For example, if one defined a
+`[display_template my_led_template]` config section then one could
+assign `TEMPLATE=my_led_template` here. The display_template should
+produce a comma separated string containing four floating point
+numbers corresponding to red, green, blue, and white color settings.
+The template will be continuously evaluated and the LED will be
+automatically set to the resulting colors. One may set
+display_template parameters to use during template evaluation
+(parameters will be parsed as Python literals). If INDEX is not
+specified then all chips in the LED's daisy-chain will be set to the
+template, otherwise only the chip with the given index will be
+updated. If TEMPLATE is an empty string then this command will clear
+any previous template assigned to the LED (one can then use `SET_LED`
+commands to manage the LED's color settings).
+
+### [load_cell]
+
+The following commands are enabled if a
+[load_cell config section](Config_Reference.md#load_cell) has been enabled.
+
+### LOAD_CELL_DIAGNOSTIC
+`LOAD_CELL_DIAGNOSTIC [LOAD_CELL=<config_name>]`: This command collects 10
+seconds of load cell data and reports statistics that can help you verify proper
+operation of the load cell. This command can be run on both calibrated and
+uncalibrated load cells.
+
+### LOAD_CELL_CALIBRATE
+`LOAD_CELL_CALIBRATE [LOAD_CELL=<config_name>]`: Start the guided calibration
+utility. Calibration is a 3 step process:
+1. First you remove all load from the load cell and run the `TARE` command
+2. Next you apply a known load to the load cell and run the
+`CALIBRATE GRAMS=nnn` command
+3. Finally use the `ACCEPT` command to save the results
+
+You can cancel the calibration process at any time with `ABORT`.
+
+### LOAD_CELL_TARE
+`LOAD_CELL_TARE [LOAD_CELL=<config_name>]`: This works just like the tare button
+on digital scale. It sets the current raw reading of the load cell to be the
+zero point reference value. The response is the percentage of the sensors range
+that was read and the raw value in counts. If the load cell is calibrated a
+force in grams is also reported.
+
+### LOAD_CELL_READ load_cell="name"
+`LOAD_CELL_READ [LOAD_CELL=<config_name>]`:
+This command takes a reading from the load cell. The response is the percentage
+of the sensors range that was read and the raw value in counts. If the load cell
+is calibrated a force in grams is also reported.
+
+### [load_cell_probe]
+
+The following commands are enabled if a
+[load_cell config section](Config_Reference.md#load_cell_probe) has been
+enabled.
+
+### LOAD_CELL_TEST_TAP
+`LOAD_CELL_TEST_TAP [TAPS=<taps>] [TIMEOUT=<timeout>]`: Run a testing routine
+that reports taps on the load cell. The toolhead will not move but the load cell
+probe will sense taps just as if it was probing. This can be used as a
+sanity check to make sure that the probe works. This tool replaces
+QUERY_ENDSTOPS and QUERY_PROBE for load cell probes.
+- `TAPS`: the number of taps the tool expects
+- `TIMEOOUT`: the time, in seconds, that the tool waits for each tab before
+  aborting.
+
+### Load Cell Command Extensions
+Commands that perform probes, such as [`PROBE`](#probe),
+[`PROBE_ACCURACY`](#probe_accuracy),
+[`BED_MESH_CALIBRATE`](#bed_mesh_calibrate) etc. will accept additional
+parameters if a `[load_cell_probe]` is defined. The parameters override the
+corresponding settings from the
+[`[load_cell_probe]`](./Config_Reference.md#load_cell_probe) configuration:
+- `FORCE_SAFETY_LIMIT=<grams>`
+- `TRIGGER_FORCE=<grams>`
+- `DRIFT_FILTER_CUTOFF_FREQUENCY=<frequency_hz>`
+- `DRIFT_FILTER_DELAY=<1|2>`
+- `BUZZ_FILTER_CUTOFF_FREQUENCY=<frequency_hz>`
+- `BUZZ_FILTER_DELAY=<1|2>`
+- `NOTCH_FILTER_FREQUENCIES=<list of frequency_hz>`
+- `NOTCH_FILTER_QUALITY=<quality>`
+- `TARE_TIME=<seconds>`
 
 ### [manual_probe]
 
@@ -873,6 +1058,25 @@ scheduled to run after the stepper move completes, however if a manual
 stepper move uses SYNC=0 then future G-Code movement commands may run
 in parallel with the stepper movement.
 
+`MANUAL_STEPPER STEPPER=config_name GCODE_AXIS=[A-Z]
+[LIMIT_VELOCITY=<velocity>] [LIMIT_ACCEL=<accel>]
+[INSTANTANEOUS_CORNER_VELOCITY=<velocity>]`: If the `GCODE_AXIS`
+parameter is specified then it configures the stepper motor as an
+extra axis on `G1` move commands.  For example, if one were to issue a
+`MANUAL_STEPPER ... GCODE_AXIS=R` command then one could issue
+commands like `G1 X10 Y20 R30` to move the stepper motor.  The
+resulting moves will occur synchronously with the associated toolhead
+xyz movements.  If the motor is associated with a `GCODE_AXIS` then
+one may no longer issue movements using the above `MANUAL_STEPPER`
+command - one may unregister the stepper with a `MANUAL_STEPPER
+... GCODE_AXIS=` command to resume manual control of the motor. The
+`LIMIT_VELOCITY` and `LIMIT_ACCEL` parameters allow one to reduce the
+speed of `G1` moves if those moves would result in a velocity or
+acceleration above the specified limits. The
+`INSTANTANEOUS_CORNER_VELOCITY` specifies the maximum instantaneous
+velocity change (in mm/s) of the motor during the junction of two
+moves (the default is 1mm/s).
+
 ### [mcp4018]
 
 The following command is available when a
@@ -886,49 +1090,6 @@ change the current value of the digipot.  This value should typically
 be between 0.0 and 1.0, unless a 'scale' is defined in the config.
 When 'scale' is defined, then this value should be  between 0.0 and
 'scale'.
-
-### [led]
-
-The following command is available when any of the
-[led config sections](Config_Reference.md#leds) are enabled.
-
-#### SET_LED
-`SET_LED LED=<config_name> RED=<value> GREEN=<value> BLUE=<value>
-WHITE=<value> [INDEX=<index>] [TRANSMIT=0] [SYNC=1]`: This sets the
-LED output. Each color `<value>` must be between 0.0 and 1.0. The
-WHITE option is only valid on RGBW LEDs. If the LED supports multiple
-chips in a daisy-chain then one may specify INDEX to alter the color
-of just the given chip (1 for the first chip, 2 for the second,
-etc.). If INDEX is not provided then all LEDs in the daisy-chain will
-be set to the provided color. If TRANSMIT=0 is specified then the
-color change will only be made on the next SET_LED command that does
-not specify TRANSMIT=0; this may be useful in combination with the
-INDEX parameter to batch multiple updates in a daisy-chain. By
-default, the SET_LED command will sync it's changes with other ongoing
-gcode commands.  This can lead to undesirable behavior if LEDs are
-being set while the printer is not printing as it will reset the idle
-timeout. If careful timing is not needed, the optional SYNC=0
-parameter can be specified to apply the changes without resetting the
-idle timeout.
-
-#### SET_LED_TEMPLATE
-`SET_LED_TEMPLATE LED=<led_name> TEMPLATE=<template_name>
-[<param_x>=<literal>] [INDEX=<index>]`: Assign a
-[display_template](Config_Reference.md#display_template) to a given
-[LED](Config_Reference.md#leds). For example, if one defined a
-`[display_template my_led_template]` config section then one could
-assign `TEMPLATE=my_led_template` here. The display_template should
-produce a comma separated string containing four floating point
-numbers corresponding to red, green, blue, and white color settings.
-The template will be continuously evaluated and the LED will be
-automatically set to the resulting colors. One may set
-display_template parameters to use during template evaluation
-(parameters will be parsed as Python literals). If INDEX is not
-specified then all chips in the LED's daisy-chain will be set to the
-template, otherwise only the chip with the given index will be
-updated. If TEMPLATE is an empty string then this command will clear
-any previous template assigned to the LED (one can then use `SET_LED`
-commands to manage the LED's color settings).
 
 ### [output_pin]
 
@@ -992,20 +1153,6 @@ Palette 2 once the loading has been completed. This command is the
 same as pressing **Smart Load** directly on the Palette 2 screen after
 the filament load is complete.
 
-### [pid_calibrate]
-
-The pid_calibrate module is automatically loaded if a heater is defined
-in the config file.
-
-#### PID_CALIBRATE
-`PID_CALIBRATE HEATER=<config_name> TARGET=<temperature>
-[WRITE_FILE=1]`: Perform a PID calibration test. The specified heater
-will be enabled until the specified target temperature is reached, and
-then the heater will be turned off and on for several cycles. If the
-WRITE_FILE parameter is enabled, then the file /tmp/heattest.txt will
-be created with a log of all temperature samples taken during the
-test.
-
 ### [pause_resume]
 
 The following commands are available when the
@@ -1031,6 +1178,20 @@ the paused state is fresh for each print.
 #### CANCEL_PRINT
 `CANCEL_PRINT`: Cancels the current print.
 
+### [pid_calibrate]
+
+The pid_calibrate module is automatically loaded if a heater is defined
+in the config file.
+
+#### PID_CALIBRATE
+`PID_CALIBRATE HEATER=<config_name> TARGET=<temperature>
+[WRITE_FILE=1]`: Perform a PID calibration test. The specified heater
+will be enabled until the specified target temperature is reached, and
+then the heater will be turned off and on for several cycles. If the
+WRITE_FILE parameter is enabled, then the file /tmp/heattest.txt will
+be created with a log of all temperature samples taken during the
+test.
+
 ### [print_stats]
 
 The print_stats module is automatically loaded.
@@ -1051,23 +1212,25 @@ The following commands are available when a
 see the [probe calibrate guide](Probe_Calibrate.md)).
 
 #### PROBE
-`PROBE [PROBE_SPEED=<mm/s>] [LIFT_SPEED=<mm/s>] [SAMPLES=<count>]
-[SAMPLE_RETRACT_DIST=<mm>] [SAMPLES_TOLERANCE=<mm>]
+`PROBE [METHOD=<value>] [PROBE_SPEED=<mm/s>] [LIFT_SPEED=<mm/s>]
+[SAMPLES=<count>] [SAMPLE_RETRACT_DIST=<mm>] [SAMPLES_TOLERANCE=<mm>]
 [SAMPLES_TOLERANCE_RETRIES=<count>] [SAMPLES_RESULT=median|average]`:
 Move the nozzle downwards until the probe triggers. If any of the
 optional parameters are provided they override their equivalent
 setting in the [probe config section](Config_Reference.md#probe).
+The optional parameter `METHOD` is probe-specific.
 
 #### QUERY_PROBE
 `QUERY_PROBE`: Report the current status of the probe ("triggered" or
 "open").
 
 #### PROBE_ACCURACY
-`PROBE_ACCURACY [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
+`PROBE_ACCURACY [METHOD=<value>] [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
 [SAMPLE_RETRACT_DIST=<mm>]`: Calculate the maximum, minimum, average,
 median, and standard deviation of multiple probe samples. By default,
 10 SAMPLES are taken. Otherwise the optional parameters default to
 their equivalent setting in the probe config section.
+The optional parameter `METHOD` is probe-specific.
 
 #### PROBE_CALIBRATE
 `PROBE_CALIBRATE [SPEED=<speed>] [<probe_parameter>=<value>]`: Run a
@@ -1128,13 +1291,14 @@ The following commands are available when the
 is enabled.
 
 #### QUAD_GANTRY_LEVEL
-`QUAD_GANTRY_LEVEL [RETRIES=<value>] [RETRY_TOLERANCE=<value>]
+`QUAD_GANTRY_LEVEL [METHOD=<value>] [RETRIES=<value>] [RETRY_TOLERANCE=<value>]
 [HORIZONTAL_MOVE_Z=<value>] [<probe_parameter>=<value>]`: This command
 will probe the points specified in the config and then make
 independent adjustments to each Z stepper to compensate for tilt. See
 the PROBE command for details on the optional probe parameters. The
 optional `RETRIES`, `RETRY_TOLERANCE`, and `HORIZONTAL_MOVE_Z` values
 override those options specified in the config file.
+The optional parameter `METHOD` is probe-specific.
 
 ### [query_adc]
 
@@ -1177,13 +1341,14 @@ all enabled accelerometer chips.
 [POINT=x,y,z] [INPUT_SHAPING=<0:1>]`: Runs the resonance
 test in all configured probe points for the requested "axis" and
 measures the acceleration using the accelerometer chips configured for
-the respective axis. "axis" can either be X or Y, or specify an
-arbitrary direction as `AXIS=dx,dy`, where dx and dy are floating
+the respective axis. "axis" can either be X, Y or Z, or specify an
+arbitrary direction as `AXIS=dx,dy[,dz]`, where dx, dy, dz are floating
 point numbers defining a direction vector (e.g. `AXIS=X`, `AXIS=Y`, or
-`AXIS=1,-1` to define a diagonal direction). Note that `AXIS=dx,dy`
-and `AXIS=-dx,-dy` is equivalent. `chip_name` can be one or
-more configured accel chips, delimited with comma, for example
-`CHIPS="adxl345, adxl345 rpi"`. If POINT is specified it will override the point(s)
+`AXIS=1,-1` to define a diagonal direction in XY plane, or `AXIS=0,1,1`
+to define a direction in YZ plane). Note that `AXIS=dx,dy` and `AXIS=-dx,-dy`
+is equivalent. `chip_name` can be one or more configured accel chips,
+delimited with comma, for example `CHIPS="adxl345, adxl345 rpi"`.
+If POINT is specified it will override the point(s)
 configured in `[resonance_tester]`. If `INPUT_SHAPING=0` or not set(default),
 disables input shaping for the resonance testing, because
 it is not valid to run the resonance testing with the input shaper
@@ -1252,8 +1417,9 @@ has been enabled.
 
 #### SAVE_VARIABLE
 `SAVE_VARIABLE VARIABLE=<name> VALUE=<value>`: Saves the variable to
-disk so that it can be used across restarts. All stored variables are
-loaded into the `printer.save_variables.variables` dict at startup and
+disk so that it can be used across restarts. The VARIABLE must be lowercase.
+All stored variables are loaded into the
+`printer.save_variables.variables` dict at startup and
 can be used in gcode macros. The provided VALUE is parsed as a Python
 literal.
 
@@ -1397,6 +1563,42 @@ temperature_fan. If a target is not supplied, it is set to the
 specified temperature in the config file. If speeds are not supplied,
 no change is applied.
 
+### [temperature_probe]
+
+The following commands are available when a
+[temperature_probe config section](Config_Reference.md#temperature_probe)
+is enabled.
+
+#### TEMPERATURE_PROBE_CALIBRATE
+`TEMPERATURE_PROBE_CALIBRATE [PROBE=<probe name>] [TARGET=<value>] [STEP=<value>]`:
+Initiates probe drift calibration for eddy current based probes.  The `TARGET`
+is a target temperature for the last sample.  When the temperature recorded
+during a sample exceeds the `TARGET` calibration will complete.  The `STEP`
+parameter sets temperature delta (in C) between samples. After a sample has
+been taken, this delta is used to schedule a call to `TEMPERATURE_PROBE_NEXT`.
+The default `STEP` is 2.
+
+#### TEMPERATURE_PROBE_NEXT
+`TEMPERATURE_PROBE_NEXT`: After calibration has started this command is run to
+take the next sample.  It is automatically scheduled to run when the delta
+specified by `STEP` has been reached, however its also possible to manually run
+this command to force a new sample.  This command is only available during
+calibration.
+
+#### TEMPERATURE_PROBE_COMPLETE:
+`TEMPERATURE_PROBE_COMPLETE`:  Can be used to end calibration and save the
+current result before the `TARGET` temperature is reached.  This command
+is only available during calibration.
+
+#### ABORT
+`ABORT`:  Aborts the calibration process, discarding the current results.
+This command is only available during drift calibration.
+
+### TEMPERATURE_PROBE_ENABLE
+`TEMPERATURE_PROBE_ENABLE ENABLE=[0|1]`: Sets temperature drift
+compensation on or off. If ENABLE is set to 0, drift compensation
+will be disabled, if set to 1 it is enabled.
+
 ### [tmcXXXX]
 
 The following commands are available when any of the
@@ -1525,46 +1727,11 @@ The following commands are available when the
 [z_tilt config section](Config_Reference.md#z_tilt) is enabled.
 
 #### Z_TILT_ADJUST
-`Z_TILT_ADJUST [RETRIES=<value>] [RETRY_TOLERANCE=<value>]
+`Z_TILT_ADJUST [METHOD=<value>] [RETRIES=<value>] [RETRY_TOLERANCE=<value>]
 [HORIZONTAL_MOVE_Z=<value>] [<probe_parameter>=<value>]`: This command
 will probe the points specified in the config and then make
 independent adjustments to each Z stepper to compensate for tilt. See
 the PROBE command for details on the optional probe parameters. The
 optional `RETRIES`, `RETRY_TOLERANCE`, and `HORIZONTAL_MOVE_Z` values
 override those options specified in the config file.
-
-### [temperature_probe]
-
-The following commands are available when a
-[temperature_probe config section](Config_Reference.md#temperature_probe)
-is enabled.
-
-#### TEMPERATURE_PROBE_CALIBRATE
-`TEMPERATURE_PROBE_CALIBRATE [PROBE=<probe name>] [TARGET=<value>] [STEP=<value>]`:
-Initiates probe drift calibration for eddy current based probes.  The `TARGET`
-is a target temperature for the last sample.  When the temperature recorded
-during a sample exceeds the `TARGET` calibration will complete.  The `STEP`
-parameter sets temperature delta (in C) between samples. After a sample has
-been taken, this delta is used to schedule a call to `TEMPERATURE_PROBE_NEXT`.
-The default `STEP` is 2.
-
-#### TEMPERATURE_PROBE_NEXT
-`TEMPERATURE_PROBE_NEXT`: After calibration has started this command is run to
-take the next sample.  It is automatically scheduled to run when the delta
-specified by `STEP` has been reached, however its also possible to manually run
-this command to force a new sample.  This command is only available during
-calibration.
-
-#### TEMPERATURE_PROBE_COMPLETE:
-`TEMPERATURE_PROBE_COMPLETE`:  Can be used to end calibration and save the
-current result before the `TARGET` temperature is reached.  This command
-is only available during calibration.
-
-#### ABORT
-`ABORT`:  Aborts the calibration process, discarding the current results.
-This command is only available during drift calibration.
-
-### TEMPERATURE_PROBE_ENABLE
-`TEMPERATURE_PROBE_ENABLE ENABLE=[0|1]`: Sets temperature drift
-compensation on or off. If ENABLE is set to 0, drift compensation
-will be disabled, if set to 1 it is enabled.
+The optional parameter `METHOD` is probe-specific.

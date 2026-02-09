@@ -11,7 +11,7 @@ class PolarKinematics:
         # Setup axis steppers
         stepper_bed = stepper.PrinterStepper(config.getsection('stepper_bed'),
                                              units_in_radians=True)
-        rail_arm = stepper.PrinterRail(config.getsection('stepper_arm'))
+        rail_arm = stepper.LookupRail(config.getsection('stepper_arm'))
         rail_z = stepper.LookupMultiRail(config.getsection('stepper_z'))
         stepper_bed.setup_itersolve('polar_stepper_alloc', b'a')
         rail_arm.setup_itersolve('polar_stepper_alloc', b'r')
@@ -21,7 +21,6 @@ class PolarKinematics:
                                           for s in r.get_steppers() ]
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
-            toolhead.register_step_generator(s.generate_steps)
         # Setup boundary checks
         max_velocity, max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(
@@ -32,8 +31,8 @@ class PolarKinematics:
         self.limit_xy2 = -1.
         max_xy = self.rails[0].get_range()[1]
         min_z, max_z = self.rails[1].get_range()
-        self.axes_min = toolhead.Coord(-max_xy, -max_xy, min_z, 0.)
-        self.axes_max = toolhead.Coord(max_xy, max_xy, max_z, 0.)
+        self.axes_min = toolhead.Coord((-max_xy, -max_xy, min_z))
+        self.axes_max = toolhead.Coord((max_xy, max_xy, max_z))
     def get_steppers(self):
         return list(self.steppers)
     def calc_position(self, stepper_positions):

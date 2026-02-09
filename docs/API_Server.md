@@ -364,37 +364,42 @@ and might later produce asynchronous messages such as:
 The "header" field in the initial query response is used to describe
 the fields found in later "data" responses.
 
-### hx71x/dump_hx71x
+### load_cell/dump_force
 
-This endpoint is used to subscribe to raw HX711 and HX717 ADC data.
-Obtaining these low-level ADC updates may be useful for diagnostic
-and debugging purposes. Using this endpoint may increase Klipper's
-system load.
+This endpoint is used to subscribe to force data produced by a load_cell.
+Using this endpoint may increase Klipper's system load.
 
 A request may look like:
-`{"id": 123, "method":"hx71x/dump_hx71x",
+`{"id": 123, "method":"load_cell/dump_force",
 "params": {"sensor": "load_cell", "response_template": {}}}`
 and might return:
-`{"id": 123,"result":{"header":["time","counts","value"]}}`
+`{"id": 123,"result":{"header":["time", "force (g)", "counts", "tare_counts"]}}`
 and might later produce asynchronous messages such as:
-`{"params":{"data":[[3292.432935, 562534, 0.067059278],
-[3292.4394937, 5625322, 0.670590639]]}}`
+`{"params":{"data":[[3292.432935, 40.65, 562534, -234467]]}}`
 
-### ads1220/dump_ads1220
+The "header" field in the initial query response is used to describe
+the fields found in later "data" responses.
 
-This endpoint is used to subscribe to raw ADS1220 ADC data.
-Obtaining these low-level ADC updates may be useful for diagnostic
-and debugging purposes. Using this endpoint may increase Klipper's
-system load.
+### load_cell_probe/dump_taps
+
+This endpoint is used to subscribe to details of probing "tap" events.
+Using this endpoint may increase Klipper's system load.
 
 A request may look like:
-`{"id": 123, "method":"ads1220/dump_ads1220",
+`{"id": 123, "method":"load_cell/dump_force",
 "params": {"sensor": "load_cell", "response_template": {}}}`
 and might return:
-`{"id": 123,"result":{"header":["time","counts","value"]}}`
+`{"id": 123,"result":{"header":["probe_tap_event"]}}`
 and might later produce asynchronous messages such as:
-`{"params":{"data":[[3292.432935, 562534, 0.067059278],
-[3292.4394937, 5625322, 0.670590639]]}}`
+```
+{"params":{"tap":'{
+   "time": [118032.28039, 118032.2834, ...],
+   "force": [-459.4213119680034, -458.1640702543264, ...],
+}}}
+```
+
+This data can be used to render:
+* The time/force graph
 
 ### pause_resume/cancel
 

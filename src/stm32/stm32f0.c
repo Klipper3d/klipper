@@ -52,6 +52,8 @@ gpio_clock_enable(GPIO_TypeDef *regs)
     RCC->AHBENR;
 }
 
+// PLL (f0) input: 1 to 24Mhz, output: 16 to 48Mhz
+
 #if !CONFIG_STM32_CLOCK_REF_INTERNAL
 DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PF0,PF1");
 #endif
@@ -186,10 +188,8 @@ armcm_main(void)
     hsi14_setup();
 
     // Support pin remapping USB/CAN pins on low pinout stm32f042
-#ifdef SYSCFG_CFGR1_PA11_PA12_RMP
     if (CONFIG_STM32_USB_PA11_PA12_REMAP || CONFIG_STM32_CANBUS_PA11_PA12_REMAP)
-        SYSCFG->CFGR1 |= SYSCFG_CFGR1_PA11_PA12_RMP;
-#endif
+        SYSCFG->CFGR1 |= 1<<4; // SYSCFG_CFGR1_PA11_PA12_RMP
 
     sched_main();
 }

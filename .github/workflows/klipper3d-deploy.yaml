@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r docs/_klipper3d/mkdocs-requirements.txt
       - name: Build MkDocs Pages
-        run: docs/_klipper3d/build-translations.sh
+        run: docs/_klipper3d/build-website.sh
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4.4.3
         with:

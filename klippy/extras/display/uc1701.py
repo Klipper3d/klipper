@@ -130,7 +130,8 @@ class SPI4wire:
 class I2C:
     def __init__(self, config, default_addr):
         self.i2c = bus.MCU_I2C_from_config(config, default_addr=default_addr,
-                                           default_speed=400000)
+                                           default_speed=400000,
+                                           async_write_only=True)
     def send(self, cmds, is_data=False):
         if is_data:
             hdr = 0x40
@@ -138,7 +139,7 @@ class I2C:
             hdr = 0x00
         cmds = bytearray(cmds)
         cmds.insert(0, hdr)
-        self.i2c.i2c_write(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
+        self.i2c.i2c_write_noack(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
 
 # Helper code for toggling a reset pin on startup
 class ResetHelper:

@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import mcu
+import logging
 
 def resolve_bus_name(mcu, param, bus):
     # Find enumerations for the given bus
@@ -43,6 +44,7 @@ class MCU_SPI:
                  cs_active_high=False):
         self.mcu = mcu
         self.bus = bus
+        self.speed = speed
         # Config SPI object (set all CS pins high before spi_set_bus commands)
         self.oid = mcu.create_oid()
         if pin is None:
@@ -51,11 +53,17 @@ class MCU_SPI:
             mcu.add_config_cmd("config_spi oid=%d pin=%s cs_active_high=%d"
                                % (self.oid, pin, cs_active_high))
         # Generate SPI bus config message
+        self.config_fmt_ticks = None
         if sw_pins is not None:
             self.config_fmt = (
                 "spi_set_software_bus oid=%d"
                 " miso_pin=%s mosi_pin=%s sclk_pin=%s mode=%d rate=%d"
                 % (self.oid, sw_pins[0], sw_pins[1], sw_pins[2], mode, speed))
+            self.config_fmt_ticks = (
+                "spi_set_sw_bus oid=%d"
+                " miso_pin=%s mosi_pin=%s sclk_pin=%s mode=%d pulse_ticks=%%d"
+                % (self.oid, sw_pins[0], sw_pins[1],
+                    sw_pins[2], mode))
         else:
             self.config_fmt = (
                 "spi_set_bus oid=%d spi_bus=%%s mode=%d rate=%d"
@@ -78,6 +86,12 @@ class MCU_SPI:
         if '%' in self.config_fmt:
             bus = resolve_bus_name(self.mcu, "spi_bus", self.bus)
             self.config_fmt = self.config_fmt % (bus,)
+        if self.config_fmt_ticks:
+            if self.mcu.try_lookup_command("spi_set_sw_bus oid=%c miso_pin=%u "
+                                           "mosi_pin=%u sclk_pin=%u "
+                                           "mode=%u pulse_ticks=%u"):
+                pulse_ticks = self.mcu.seconds_to_clock(1./self.speed)
+                self.config_fmt = self.config_fmt_ticks % (pulse_ticks,)
         self.mcu.add_config_cmd(self.config_fmt)
         self.spi_send_cmd = self.mcu.lookup_command(
             "spi_send oid=%c data=%*s", cq=self.cmd_queue)
@@ -142,11 +156,15 @@ def MCU_SPI_from_config(config, mode, pin_option="cs_pin",
 
 # Helper code for working with devices connected to an MCU via an I2C bus
 class MCU_I2C:
-    def __init__(self, mcu, bus, addr, speed, sw_pins=None):
+    def __init__(self, mcu, bus, addr, speed, sw_pins=None,
+                 async_write_only=False):
         self.mcu = mcu
         self.bus = bus
         self.i2c_address = addr
         self.oid = self.mcu.create_oid()
+        self.speed = speed
+        self.async_write_only = async_write_only
+        self.config_fmt_ticks = None
         mcu.add_config_cmd("config_i2c oid=%d" % (self.oid,))
         # Generate I2C bus config message
         if sw_pins is not None:
@@ -154,6 +172,10 @@ class MCU_I2C:
                 "i2c_set_software_bus oid=%d"
                 " scl_pin=%s sda_pin=%s rate=%d address=%d"
                 % (self.oid, sw_pins[0], sw_pins[1], speed, addr))
+            self.config_fmt_ticks = (
+                "i2c_set_sw_bus oid=%d"
+                " scl_pin=%s sda_pin=%s pulse_ticks=%%d address=%d"
+                % (self.oid, sw_pins[0], sw_pins[1], addr))
         else:
             self.config_fmt = (
                 "i2c_set_bus oid=%d i2c_bus=%%s rate=%d address=%d"
@@ -161,6 +183,16 @@ class MCU_I2C:
         self.cmd_queue = self.mcu.alloc_command_queue()
         self.mcu.register_config_callback(self.build_config)
         self.i2c_write_cmd = self.i2c_read_cmd = None
+        self.i2c_transfer_cmd = self.i2c_write_only_cmd = None
+        printer = self.mcu.get_printer()
+        printer.register_event_handler("klippy:connect", self._handle_connect)
+        # backward support i2c_write inside the init section
+        self._to_write = []
+        # Host side I2C error handling
+        self._configured = False
+    def _handle_connect(self):
+        for data in self._to_write:
+            self.i2c_write(data)
     def get_oid(self):
         return self.oid
     def get_mcu(self):
@@ -169,33 +201,96 @@ class MCU_I2C:
         return self.i2c_address
     def get_command_queue(self):
         return self.cmd_queue
+    def _async_write_status(self, params):
+        status = params["i2c_bus_status"]
+        if status == "SUCCESS":
+            return
+        err_msg = "MCU '%s' I2C request to addr %i reports error %s" % (
+            self.mcu.get_name(), self.i2c_address, status)
+        logging.error(err_msg)
     def build_config(self):
         if '%' in self.config_fmt:
             bus = resolve_bus_name(self.mcu, "i2c_bus", self.bus)
             self.config_fmt = self.config_fmt % (bus,)
+        if self.config_fmt_ticks:
+            if self.mcu.try_lookup_command("i2c_set_sw_bus oid=%c"
+                                           " scl_pin=%u sda_pin=%u"
+                                           " pulse_ticks=%u address=%u"):
+                pulse_ticks = self.mcu.seconds_to_clock(1./self.speed/2)
+                self.config_fmt = self.config_fmt_ticks % (pulse_ticks,)
         self.mcu.add_config_cmd(self.config_fmt)
-        self.i2c_write_cmd = self.mcu.lookup_command(
-            "i2c_write oid=%c data=%*s", cq=self.cmd_queue)
-        self.i2c_read_cmd = self.mcu.lookup_query_command(
-            "i2c_read oid=%c reg=%*s read_len=%u",
-            "i2c_read_response oid=%c response=%*s", oid=self.oid,
-            cq=self.cmd_queue)
-    def i2c_write(self, data, minclock=0, reqclock=0):
-        if self.i2c_write_cmd is None:
-            # Send setup message via mcu initialization
-            data_msg = "".join(["%02x" % (x,) for x in data])
-            self.mcu.add_config_cmd("i2c_write oid=%d data=%s" % (
-                self.oid, data_msg), is_init=True)
+        if self.mcu.try_lookup_command("i2c_read oid=%c reg=%*s read_len=%u"):
+            self.i2c_write_cmd = self.mcu.lookup_command(
+                "i2c_write oid=%c data=%*s", cq=self.cmd_queue)
+            self.i2c_write_only_cmd = self.i2c_write_cmd
+            self.i2c_read_cmd = self.mcu.lookup_query_command(
+                "i2c_read oid=%c reg=%*s read_len=%u",
+                "i2c_read_response oid=%c response=%*s", oid=self.oid,
+                cq=self.cmd_queue)
+        else:
+            self.i2c_transfer_cmd = self.mcu.lookup_query_command(
+                "i2c_transfer oid=%c write=%*s read_len=%u",
+                "i2c_response oid=%c i2c_bus_status=%c response=%*s",
+                oid=self.oid, cq=self.cmd_queue)
+            self.i2c_write_only_cmd = self.mcu.lookup_command(
+                "i2c_transfer oid=%c write=%*s read_len=%u",
+                cq=self.cmd_queue)
+            if self.mcu.is_fileoutput():
+                self.i2c_transfer_cmd = self.mcu.lookup_command(
+                    "i2c_transfer oid=%c write=%*s read_len=%u",
+                    cq=self.cmd_queue)
+            if self.async_write_only:
+                self.mcu.register_response(self._async_write_status,
+                                           "i2c_response", self.oid)
+        self._configured = True
+    def i2c_write_noack(self, data, minclock=0, reqclock=0):
+        if self.async_write_only:
+            self.i2c_write_only_cmd.send([self.oid, data, 0],
+                                         minclock=minclock, reqclock=reqclock)
             return
         self.i2c_write_cmd.send([self.oid, data],
                                 minclock=minclock, reqclock=reqclock)
-    def i2c_write_wait_ack(self, data, minclock=0, reqclock=0):
+    def i2c_write(self, data, minclock=0, reqclock=0, retry=True):
+        if not self._configured:
+            self._to_write.append(data)
+            return
+        if self.async_write_only:
+            self.i2c_write_only_cmd.send([self.oid, data, 0],
+                                         minclock=minclock, reqclock=reqclock)
+            return
+        if self.i2c_transfer_cmd is not None:
+            self.i2c_transfer(data, minclock=minclock, reqclock=reqclock,
+                              retry=retry)
+            return
         self.i2c_write_cmd.send_wait_ack([self.oid, data],
-                                minclock=minclock, reqclock=reqclock)
-    def i2c_read(self, write, read_len):
-        return self.i2c_read_cmd.send([self.oid, write, read_len])
+                                         minclock=minclock, reqclock=reqclock)
+    def i2c_read(self, write, read_len, retry=True):
+        if self.async_write_only:
+            raise mcu.error("I2C dev is write only")
+        if self.i2c_transfer_cmd is not None:
+            return self.i2c_transfer(write, read_len, retry=retry)
+        return self.i2c_read_cmd.send([self.oid, write, read_len],
+                                      retry=retry)
+    def i2c_transfer(self, write, read_len=0, minclock=0, reqclock=0,
+                     retry=True):
+        if self.async_write_only:
+            raise mcu.error("I2C dev is write only")
+        cmd = self.i2c_transfer_cmd
+        if self.mcu.is_fileoutput():
+            cmd.send([self.oid, write, read_len],
+                     minclock=minclock, reqclock=reqclock)
+            return
+        param = cmd.send([self.oid, write, read_len],
+                         minclock=minclock, reqclock=reqclock, retry=retry)
+        status = param["i2c_bus_status"]
+        if status == "SUCCESS":
+            return param
+        err_msg = "MCU '%s' I2C request to addr %i reports error %s" % (
+            self.mcu.get_name(), self.i2c_address, status)
+        self.mcu.get_printer().invoke_shutdown(err_msg)
 
-def MCU_I2C_from_config(config, default_addr=None, default_speed=100000):
+def MCU_I2C_from_config(config, default_addr=None, default_speed=100000,
+                        async_write_only=False):
     # Load bus parameters
     printer = config.get_printer()
     i2c_mcu = mcu.get_printer_mcu(printer, config.get('i2c_mcu', 'mcu'))
@@ -211,13 +306,17 @@ def MCU_I2C_from_config(config, default_addr=None, default_speed=100000):
                         for name in ['scl', 'sda']]
         sw_pin_params = [ppins.lookup_pin(config.get(name), share_type=name)
                          for name in sw_pin_names]
+        for pin_params in sw_pin_params:
+            if pin_params['chip'] != i2c_mcu:
+                raise ppins.error("%s: i2c pins must be on same mcu" % (
+                    config.get_name(),))
         sw_pins = tuple([pin_params['pin'] for pin_params in sw_pin_params])
         bus = None
     else:
         bus = config.get('i2c_bus', None)
         sw_pins = None
     # Create MCU_I2C object
-    return MCU_I2C(i2c_mcu, bus, addr, speed, sw_pins)
+    return MCU_I2C(i2c_mcu, bus, addr, speed, sw_pins, async_write_only)
 
 
 ######################################################################

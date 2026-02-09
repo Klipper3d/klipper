@@ -87,8 +87,8 @@ MODE_PERIODIC = 3
 RUN_GAS = 1 << 4
 NB_CONV_0 = 0
 EAS_NEW_DATA = 1 << 7
-GAS_DONE = 1 << 6
-MEASURE_DONE = 1 << 5
+GAS_IN_PROGRESS = 1 << 6
+MEASURE_IN_PROGRESS = 1 << 5
 RESET_CHIP_VALUE = 0xB6
 
 BME_CHIPS = {
@@ -284,7 +284,7 @@ class BME280:
                 self.chip_type, self.i2c.i2c_address))
 
         # Reset chip
-        self.write_register('RESET', [RESET_CHIP_VALUE], wait=True)
+        self.write_register('RESET', [RESET_CHIP_VALUE])
         self.reactor.pause(self.reactor.monotonic() + .5)
 
         # Make sure non-volatile memory has been copied to registers
@@ -394,7 +394,7 @@ class BME280:
                 self.write_register('CTRL_HUM', self.os_hum)
             # Enter normal (periodic) mode
             meas = self.os_temp << 5 | self.os_pres << 2 | MODE_PERIODIC
-            self.write_register('CTRL_MEAS', meas, wait=True)
+            self.write_register('CTRL_MEAS', meas)
 
         if self.chip_type == 'BME680':
             self.write_register('CONFIG', self.iir_filter << 2)
@@ -511,14 +511,6 @@ class BME280:
         return comp_press
 
     def _sample_bme680(self, eventtime):
-        def data_ready(stat, run_gas):
-            new_data = (stat & EAS_NEW_DATA)
-            gas_done = not (stat & GAS_DONE)
-            meas_done = not (stat & MEASURE_DONE)
-            if not run_gas:
-                gas_done = True
-            return new_data and gas_done and meas_done
-
         run_gas = False
         # Check VOC once a while
         if self.reactor.monotonic() - self.last_gas_time > 3:
@@ -528,7 +520,7 @@ class BME280:
 
         # Enter forced mode
         meas = self.os_temp << 5 | self.os_pres << 2 | MODE
-        self.write_register('CTRL_MEAS', meas, wait=True)
+        self.write_register('CTRL_MEAS', meas)
         max_sample_time = self.max_sample_time
         if run_gas:
             max_sample_time += self.gas_heat_duration / 1000
@@ -536,11 +528,14 @@ class BME280:
         try:
             # wait until results are ready
             status = self.read_register('EAS_STATUS_0', 1)[0]
-            while not data_ready(status, run_gas):
+            while status & MEASURE_IN_PROGRESS:
                 self.reactor.pause(
                     self.reactor.monotonic() + self.max_sample_time)
                 status = self.read_register('EAS_STATUS_0', 1)[0]
 
+            # Nothing in progress and no new data
+            if not status & EAS_NEW_DATA:
+                return self.reactor.monotonic() + REPORT_TIME
             data = self.read_register('PRESSURE_MSB', 8)
             gas_data = [0, 0]
             if run_gas:
@@ -776,15 +771,12 @@ class BME280:
         params = self.i2c.i2c_read(regs, read_len)
         return bytearray(params['response'])
 
-    def write_register(self, reg_name, data, wait = False):
+    def write_register(self, reg_name, data):
         if type(data) is not list:
             data = [data]
         reg = self.chip_registers[reg_name]
         data.insert(0, reg)
-        if not wait:
-            self.i2c.i2c_write(data)
-        else:
-            self.i2c.i2c_write_wait_ack(data)
+        self.i2c.i2c_write(data)
 
     def get_status(self, eventtime):
         data = {

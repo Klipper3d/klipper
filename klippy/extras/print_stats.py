@@ -22,6 +22,8 @@ class PrintStats:
         self.gcode.register_command(
             "SET_PRINT_STATS_INFO", self.cmd_SET_PRINT_STATS_INFO,
             desc=self.cmd_SET_PRINT_STATS_INFO_help)
+        printer.register_event_handler("extruder:activate_extruder",
+                                       self._handle_activate_extruder)
     def _init_delayed_stats(self):
         if self.toolhead is None:
             self.toolhead = self.printer.lookup_object('toolhead')
@@ -32,6 +34,9 @@ class PrintStats:
             elif self.toolhead.manufacturing_process in ('SLA', 'mSLA', 'DLP'):
                 self.material_type = 'resin'
                 self.material_unit = 'ml'
+    def _handle_activate_extruder(self):
+        gc_status = self.gcode_move.get_status()
+        self.last_epos = gc_status['position'].e
     def _update_filament_usage(self, eventtime):
         if self.toolhead.manufacturing_process == 'FDM':
             gc_status = self.gcode_move.get_status(eventtime)
