@@ -515,6 +515,20 @@ class PrinterConfig:
         res['section'] = section
         res['option'] = option
         self._add_deprecated(res)
+    def deprecate_gcode(self, cmd, param=None, value=None, msg=None):
+        if param is None:
+            defmsg = "Command '%s' is deprecated." % (cmd,)
+        elif value is None:
+            defmsg = ("Parameter '%s' in command '%s' is deprecated."
+                      % (param, cmd))
+        else:
+            defmsg = ("Value '%s=%s' in command '%s' is deprecated."
+                      % (param, value, cmd))
+        if msg is None:
+            msg = defmsg
+        res = {'type': 'deprecated_gcode', 'message': msg,
+               'command': cmd, 'parameter': param, 'value': str(value)}
+        self._add_deprecated(res)
     # Status reporting
     def _build_status_config(self, config):
         self.status_raw_config = {}
