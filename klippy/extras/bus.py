@@ -92,6 +92,9 @@ class MCU_SPI:
                                            "mode=%u pulse_ticks=%u"):
                 pulse_ticks = self.mcu.seconds_to_clock(1./self.speed)
                 self.config_fmt = self.config_fmt_ticks % (pulse_ticks,)
+            else:
+                configfile = self.mcu.get_printer().lookup_object('configfile')
+                configfile.deprecate_mcu_code(self.mcu, 'spi_set_sw_bus')
         self.mcu.add_config_cmd(self.config_fmt)
         self.spi_send_cmd = self.mcu.lookup_command(
             "spi_send oid=%c data=%*s", cq=self.cmd_queue)
