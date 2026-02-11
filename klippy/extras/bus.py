@@ -233,6 +233,8 @@ class MCU_I2C:
                 "i2c_read oid=%c reg=%*s read_len=%u",
                 "i2c_read_response oid=%c response=%*s", oid=self.oid,
                 cq=self.cmd_queue)
+            configfile = self.mcu.get_printer().lookup_object('configfile')
+            configfile.deprecate_mcu_code(self.mcu, 'i2c_transfer')
         else:
             self.i2c_transfer_cmd = self.mcu.lookup_query_command(
                 "i2c_transfer oid=%c write=%*s read_len=%u",
