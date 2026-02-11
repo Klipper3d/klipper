@@ -100,6 +100,9 @@ class MCU_stepper:
         elif sou:
             # MCU has optimized step/unstep - better to use that
             want_both_edges = False
+        if not ssbe:
+            configfile = self._mcu.get_printer().lookup_object("configfile")
+            configfile.deprecate_mcu_code(self._mcu, 'STEPPER_STEP_BOTH_EDGE')
         if want_both_edges:
             self._step_both_edge = True
             invert_step = -1
