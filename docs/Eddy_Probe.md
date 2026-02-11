@@ -21,7 +21,7 @@ DRIVE_CURRENT for the sensor. Home the printer and navigate the
 toolhead so that the sensor is near the center of the bed and is about
 20mm above the bed. You may need to issue a `SET_KINEMATIC_POSITION Z=<>`
 command (the value of Z does not matter as you will figure it out with the next command)
-if you receive a `Must home axis first:` error. 
+if you receive a `Must home axis first:` error.
 Then issue an `LDC_CALIBRATE_DRIVE_CURRENT
 CHIP=<config_name>` command. For example, if the config section was
 named `[probe_eddy_current my_eddy_probe]` then one would run
@@ -300,7 +300,7 @@ One can utilize the PROBE via the METHOD parameter in:
 1. QUAD_GANTRY_LEVEL
 2. BED_MESH_CALIBRATE
 
-One can also utilize the `SET_Z_FROM_PROBE METHOD=tap` (with tap) or `SET_Z_FROM_PROBE` (without tap) 
+One can also utilize the `SET_Z_FROM_PROBE METHOD=tap` (with tap) or `SET_Z_FROM_PROBE` (without tap)
 macro in their:
 1. [homing_override] for Z
 2. [start_print] for Z offset
