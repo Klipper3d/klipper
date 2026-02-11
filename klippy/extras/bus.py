@@ -221,6 +221,9 @@ class MCU_I2C:
                                            " pulse_ticks=%u address=%u"):
                 pulse_ticks = self.mcu.seconds_to_clock(1./self.speed/2)
                 self.config_fmt = self.config_fmt_ticks % (pulse_ticks,)
+            else:
+                configfile = self.mcu.get_printer().lookup_object('configfile')
+                configfile.deprecate_mcu_code(self.mcu, 'i2c_set_sw_bus')
         self.mcu.add_config_cmd(self.config_fmt)
         if self.mcu.try_lookup_command("i2c_read oid=%c reg=%*s read_len=%u"):
             self.i2c_write_cmd = self.mcu.lookup_command(
