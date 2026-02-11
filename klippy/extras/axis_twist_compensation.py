@@ -52,25 +52,26 @@ class AxisTwistCompensation:
                                             self._update_z_compensation_value)
 
     def _update_z_compensation_value(self, poslist):
-        pos = poslist[0]
-        zo = 0.
-        if self.z_compensations:
-            zo += self._get_interpolated_z_compensation(
-                pos.test_x, self.z_compensations,
-                self.compensation_start_x,
-                self.compensation_end_x
-                )
+        for i in range(len(poslist)):
+            pos = poslist[i]
+            zo = 0.
+            if self.z_compensations:
+                zo += self._get_interpolated_z_compensation(
+                    pos.test_x, self.z_compensations,
+                    self.compensation_start_x,
+                    self.compensation_end_x
+                    )
 
-        if self.zy_compensations:
-            zo += self._get_interpolated_z_compensation(
-                pos.test_y, self.zy_compensations,
-                self.compensation_start_y,
-                self.compensation_end_y
-                )
+            if self.zy_compensations:
+                zo += self._get_interpolated_z_compensation(
+                    pos.test_y, self.zy_compensations,
+                    self.compensation_start_y,
+                    self.compensation_end_y
+                    )
 
-        pos = manual_probe.ProbeResult(pos.bed_x, pos.bed_y, pos.bed_z + zo,
-                                       pos.test_x, pos.test_y, pos.test_z)
-        poslist[0] = pos
+            pos = manual_probe.ProbeResult(pos.bed_x, pos.bed_y, pos.bed_z + zo,
+                                           pos.test_x, pos.test_y, pos.test_z)
+            poslist[i] = pos
 
     def _get_interpolated_z_compensation(
             self, coord, z_compensations,

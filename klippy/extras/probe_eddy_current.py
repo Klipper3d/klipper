@@ -650,8 +650,7 @@ class EddyScanningProbe:
             toolhead.get_last_move_time()
         results = self._gather.pull_probed()
         # Allow axis_twist_compensation to update results
-        for epos in results:
-            self._printer.send_event("probe:update_results", [epos])
+        self._printer.send_event("probe:update_results", results)
         return results
     def end_probe_session(self):
         self._gather.finish()

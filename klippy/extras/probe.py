@@ -379,7 +379,9 @@ class ProbeSessionHelper:
                 reason += HINT_TIMEOUT
             raise self.printer.command_error(reason)
         # Allow axis_twist_compensation to update results
-        self.printer.send_event("probe:update_results", [epos])
+        results = [epos]
+        self.printer.send_event("probe:update_results", results)
+        epos = results[0]
         # Report results
         gcode = self.printer.lookup_object('gcode')
         gcode.respond_info("probe: at %.3f,%.3f bed will contact at z=%.6f"
