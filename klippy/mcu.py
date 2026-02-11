@@ -1,9 +1,9 @@
 # Interface to Klipper micro-controller code
 #
-# Copyright (C) 2016-2025  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2026  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import sys, os, zlib, logging, math
+import sys, os, zlib, logging, math, struct
 import serialhdl, msgproto, pins, chelper, clocksync
 
 class error(Exception):
@@ -541,6 +541,7 @@ class MCU_adc:
         self._oid = self._callback = None
         self._mcu.register_config_callback(self._build_config)
         self._inv_max_adc = 0.
+        self._unpack_from = struct.Struct('<H').unpack_from
     def get_mcu(self):
         return self._mcu
     def setup_adc_sample(self, sample_time, sample_count,
@@ -570,16 +571,42 @@ class MCU_adc:
         min_sample = max(0, min(0xffff, int(self._min_sample * max_adc)))
         max_sample = max(0, min(0xffff, int(
             math.ceil(self._max_sample * max_adc))))
+        # Setup periodic query and register response handler
+        oldcmd = (
+            "query_analog_in oid=%c clock=%u sample_ticks=%u sample_count=%c"
+            " rest_ticks=%u min_value=%hu max_value=%hu range_check_count=%c")
+        if self._mcu.try_lookup_command(oldcmd) is not None:
+            self._mcu.add_config_cmd(
+                "query_analog_in oid=%d clock=%d sample_ticks=%d"
+                " sample_count=%d rest_ticks=%d"
+                " min_value=%d max_value=%d range_check_count=%d" % (
+                    self._oid, clock, sample_ticks, self._sample_count,
+                    self._report_clock, min_sample, max_sample,
+                    self._range_check_count), is_init=True)
+            self._mcu.register_response(self._old_handle_analog_in_state,
+                                        "analog_in_state", self._oid)
+            return
+        BYTES_PER_SAMPLE = 2
         self._mcu.add_config_cmd(
             "query_analog_in oid=%d clock=%d sample_ticks=%d sample_count=%d"
-            " rest_ticks=%d min_value=%d max_value=%d range_check_count=%d" % (
+            " rest_ticks=%d bytes_per_report=%d"
+            " min_value=%d max_value=%d range_check_count=%d" % (
                 self._oid, clock, sample_ticks, self._sample_count,
-                self._report_clock, min_sample, max_sample,
+                self._report_clock, BYTES_PER_SAMPLE, min_sample, max_sample,
                 self._range_check_count), is_init=True)
         self._mcu.register_response(self._handle_analog_in_state,
                                     "analog_in_state", self._oid)
-    def _handle_analog_in_state(self, params):
+    def _old_handle_analog_in_state(self, params):
         last_value = params['value'] * self._inv_max_adc
+        next_clock = self._mcu.clock32_to_clock64(params['next_clock'])
+        last_read_clock = next_clock - self._report_clock
+        last_read_time = self._mcu.clock_to_print_time(last_read_clock)
+        self._last_state = (last_value, last_read_time)
+        if self._callback is not None:
+            self._callback(last_read_time, last_value)
+    def _handle_analog_in_state(self, params):
+        values = self._unpack_from(params['values'])
+        last_value = values[0] * self._inv_max_adc
         next_clock = self._mcu.clock32_to_clock64(params['next_clock'])
         last_read_clock = next_clock - self._report_clock
         last_read_time = self._mcu.clock_to_print_time(last_read_clock)
