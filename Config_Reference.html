@@ -962,6 +962,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#bmi160" class="md-nav__link">
+    [bmi160]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#mpu9250" class="md-nav__link">
     [mpu9250]
   </a>
@@ -3114,6 +3121,13 @@
           <li class="md-nav__item">
   <a href="#lis3dh" class="md-nav__link">
     [lis3dh]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bmi160" class="md-nav__link">
+    [bmi160]
   </a>
   
 </li>
@@ -5756,6 +5770,37 @@ cs_pin:
 #   See the &quot;adxl345&quot; section for information on this parameter.
 </code></pre></div>
 
+<h3 id="bmi160">[bmi160]<a class="headerlink" href="#bmi160" title="Permanent link">&para;</a></h3>
+<p>BMI160 accelerometer. This sensor can be queried via I2C or SPI bus.</p>
+<div class="highlight"><pre><span></span><code>[bmi160]
+#i2c_address:
+#   Default is 105 (0x69). If SA0 is tied to GND, use 104 (0x68).
+#   Only used for I2C.
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed:
+#   See the &quot;common I2C settings&quot; section for a description of the
+#   above parameters. Only used for I2C.
+#cs_pin:
+#spi_speed:
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the &quot;common SPI settings&quot; section for a description of the
+#   above parameters. Only used for SPI.
+#axes_map: x, y, z
+#   See the &quot;adxl345&quot; section for information on this parameter.
+</code></pre></div>
+
+<p><strong>Important:</strong> Many BMI160 modules use ambiguous pin labels. For SPI:</p>
+<ul>
+<li>Use <strong>SCL</strong> for clock (not SCX)</li>
+<li>Use <strong>SDA</strong> for MOSI (not SDX)</li>
+<li>Use <strong>SA0</strong> for MISO</li>
+<li>Use <strong>CS</strong> for chip select</li>
+</ul>
+<p>The pins labeled SCX/SDX are for the auxiliary magnetometer bus.</p>
 <h3 id="mpu9250">[mpu9250]<a class="headerlink" href="#mpu9250" title="Permanent link">&para;</a></h3>
 <p>Support for MPU-9250, MPU-9255, MPU-6515, MPU-6050, and MPU-6500
 accelerometers (one may define any number of sections with an
