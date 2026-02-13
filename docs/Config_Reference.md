@@ -3795,6 +3795,9 @@ run_current:
 #   when the stepper is not moving. Setting a hold_current is not
 #   recommended (see TMC_Drivers.md for details). The default is to
 #   not reduce the current.
+#ready_current:
+#   The amount of current (in amps RMS) to configure the driver to use
+#   when the printer is in ready state - between last move and [idle_timeout].
 #sense_resistor: 0.110
 #   The resistance (in ohms) of the motor sense resistor. The default
 #   is 0.110 ohms.
@@ -3910,6 +3913,9 @@ run_current:
 #   when the stepper is not moving. Setting a hold_current is not
 #   recommended (see TMC_Drivers.md for details). The default is to
 #   not reduce the current.
+#ready_current:
+#   The amount of current (in amps RMS) to configure the driver to use
+#   when the printer is in ready state - between last move and [idle_timeout].
 #sense_resistor: 0.110
 #   The resistance (in ohms) of the motor sense resistor. The default
 #   is 0.110 ohms.
@@ -3955,6 +3961,7 @@ uart_pin:
 #interpolate: True
 run_current:
 #hold_current:
+#ready_current:
 #sense_resistor: 0.110
 #stealthchop_threshold: 0
 #   See the "tmc2208" section for the definition of these parameters.
@@ -4039,10 +4046,10 @@ run_current:
 #sense_resistor:
 #   The resistance (in ohms) of the motor sense resistor. This
 #   parameter must be provided.
-#idle_current_percent: 100
-#   The percentage of the run_current the stepper driver will be
-#   lowered to when the idle timeout expires (you need to set up the
-#   timeout using a [idle_timeout] config section). The current will
+#ready_current:
+#   The amount of current (in amps RMS) to configure the driver to use
+#   when the printer is in ready state - between last move and [idle_timeout].
+#   Upon move, the current will
 #   be raised again once the stepper has to move again. Make sure to
 #   set this to a high enough value such that the steppers do not lose
 #   their position. There is also small delay until the current is
@@ -4116,6 +4123,9 @@ run_current:
 #   when the stepper is not moving. Setting a hold_current is not
 #   recommended (see TMC_Drivers.md for details). The default is to
 #   not reduce the current.
+#ready_current:
+#   The amount of current (in amps RMS) to configure the driver to use
+#   when the printer is in ready state - between last move and [idle_timeout].
 #rref: 12000
 #   The resistance (in ohms) of the resistor between IREF and GND. The
 #   default is 12000.
@@ -4251,6 +4261,9 @@ run_current:
 #   when the stepper is not moving. Setting a hold_current is not
 #   recommended (see TMC_Drivers.md for details). The default is to
 #   not reduce the current.
+#ready_current:
+#   The amount of current (in amps RMS) to configure the driver to use
+#   when the printer is in ready state - between last move and [idle_timeout].
 #sense_resistor: 0.075
 #   The resistance (in ohms) of the motor sense resistor. The default
 #   is 0.075 ohms.
