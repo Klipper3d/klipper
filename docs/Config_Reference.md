@@ -2953,6 +2953,9 @@ sensor_pin:
 #   The above parameters control the sensor parameters of MAX31856
 #   chips. The defaults for each parameter are next to the parameter
 #   name in the above list.
+#tc_report_time: 0.3
+#   Interval in seconds between readings. Minimum is 0.1, maximum
+#   is 1.5
 #rtd_nominal_r: 100
 #rtd_reference_r: 430
 #rtd_num_of_wires: 2
