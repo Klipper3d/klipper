@@ -136,6 +136,10 @@ config WANT_HD44780
     bool
     depends on HAVE_GPIO
     default y
+config WANT_GC9A01
+    bool
+    depends on WANT_SPI
+    default y
 config WANT_ADXL345
     bool
     depends on WANT_SPI
@@ -228,6 +232,9 @@ config WANT_ST7920
 config WANT_HD44780
     bool "Support HD44780 LCD display"
     depends on HAVE_GPIO
+config WANT_GC9A01
+    bool "Support GC9A01 LCD display"
+    depends on WANT_SPI
 comment "Accelerometer chips"
     depends on WANT_SPI || WANT_I2C
 config WANT_ADXL345
