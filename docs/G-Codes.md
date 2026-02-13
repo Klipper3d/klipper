@@ -323,6 +323,12 @@ display data groups in the config, e.g. `[display_data <group>
 command. If DISPLAY is not specified it defaults to "display" (the
 primary display).
 
+#### SET_DISPLAY_SLEEP
+`SET_DISPLAY_SLEEP [DISPLAY=<display>] SLEEP=[0|1]`:
+Set the display to sleep or wake
+If DISPLAY is not specified it defaults to "display" (the
+primary display).
+
 ### [display_status]
 
 The display_status module is automatically loaded if a
