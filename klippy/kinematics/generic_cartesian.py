@@ -254,21 +254,6 @@ class GenericCartesianKinematics:
                 for c in config.get_prefix_sections('stepper ')]
     def get_steppers(self):
         return [s.get_stepper() for s in self.kin_steppers]
-    def get_primary_carriages(self):
-        carriages = []
-        for a in range(3):
-            c = None
-            if self.dc_module is not None and a in self.dc_module.get_axes():
-                primary_rail = self.dc_module.get_primary_rail(a)
-                for c in self.carriages.values():
-                    if c.get_rail() == primary_rail:
-                        break
-            else:
-                for c in self.primary_carriages:
-                    if c.get_axis() == a:
-                        break
-            carriages.append(c)
-        return carriages
     def _get_kinematics_coeffs(self):
         matr = {s.get_name() : list(s.get_kin_coeffs())
                 for s in self.kin_steppers}
@@ -340,7 +325,7 @@ class GenericCartesianKinematics:
         homing_state.home_rails([rail], forcepos, homepos)
     def home(self, homing_state):
         self._check_kinematics(self.printer.command_error)
-        primary_carriages = self.get_primary_carriages()
+        primary_carriages = {c.get_axis(): c for c in self.primary_carriages}
         # Each axis is homed independently and in order
         for axis in homing_state.get_axes():
             if self.dc_module is not None and axis in self.dc_module.get_axes():
@@ -373,8 +358,13 @@ class GenericCartesianKinematics:
             self.max_z_velocity * z_ratio, self.max_z_accel * z_ratio)
     def get_status(self, eventtime):
         axes = [a for a, (l, h) in zip("xyz", self.limits) if l <= h]
-        ranges = [c.get_rail().get_range()
-                  for c in self.get_primary_carriages()]
+        ranges = [(min(c.get_rail().get_range()[0]
+                       for c in self.carriages.values()
+                       if c.get_axis() == axis),
+                   max(c.get_rail().get_range()[1]
+                       for c in self.carriages.values()
+                       if c.get_axis() == axis))
+                 for axis in range(3)]
         axes_min = gcode.Coord([r[0] for r in ranges])
         axes_max = gcode.Coord([r[1] for r in ranges])
         return {

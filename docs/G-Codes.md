@@ -343,19 +343,25 @@ The following command is available when the
 enabled.
 
 #### SET_DUAL_CARRIAGE
-`SET_DUAL_CARRIAGE CARRIAGE=<carriage> [MODE=[PRIMARY|COPY|MIRROR]]`:
+`SET_DUAL_CARRIAGE CARRIAGE=<carriage> [MODE=[PRIMARY|COPY|MIRROR|INACTIVE]]`:
 This command will change the mode of the specified carriage.
 If no `MODE` is provided it defaults to `PRIMARY`. `<carriage>` must
 reference a defined primary or dual carriage for `generic_cartesian`
 kinematics or be 0 (for primary carriage) or 1 (for dual carriage)
 for all other kinematics supporting IDEX. Setting the mode to `PRIMARY`
-deactivates the other carriage and makes the specified carriage execute
-subsequent G-Code commands as-is. Before activating `COPY` or `MIRROR`
-mode for a carriage, a different one must be activated as `PRIMARY` on
-the same axis. When set to either of these two modes, the carriage
-will then track the subsequent moves of its primary carriage and either
-copy relative movements of it (in `COPY` mode) or execute them in the
-opposite (mirror) direction (in `MIRROR` mode).
+deactivates all other carriages on the same axis and makes the specified
+carriage execute subsequent G-Code movement commands as-is. Before activating
+`COPY` or `MIRROR` mode for a carriage, a different one must be activated as
+`PRIMARY` on the same axis. When set to either of these two modes, the carriage
+will track the subsequent G-Code moves and either copy relative movements
+(in `COPY` mode) or execute them in the opposite (mirror) direction (in
+`MIRROR` mode). Setting the mode to `INACTIVE` deactivates the carriage and
+makes it ignore further G-Code moves. Note that deactivating the primary
+carriage on the axis does not disable other carriages working in `COPY` or
+`MIRROR` mode, which can be used to disable printing a failed part by any of
+the tools and park that tool to prevent collisions with an unfinished part, see
+this [sample configuration](../config/sample-corexyuv.cfg) for macros examples.
+
 
 #### SAVE_DUAL_CARRIAGE_STATE
 `SAVE_DUAL_CARRIAGE_STATE [NAME=<state_name>]`: Save the current positions
@@ -366,14 +372,18 @@ to the given string. If NAME is not provided it defaults to "default".
 
 #### RESTORE_DUAL_CARRIAGE_STATE
 `RESTORE_DUAL_CARRIAGE_STATE [NAME=<state_name>] [MOVE=[0|1] [MOVE_SPEED=<speed>]]`:
-Restore the previously saved positions of the dual carriages and their modes,
-unless "MOVE=0" is specified, in which case only the saved modes will be
-restored, but not the positions of the carriages. If positions are being
-restored and "MOVE_SPEED" is specified, then the toolhead moves will be
-performed with the given speed (in mm/s); otherwise the toolhead move will
-use the rail homing speed. Note that the carriages restore their positions
-only over their own axis, which may be necessary to correctly restore COPY
-and MIRROR mode of the dual carriage.
+Restore the previously saved states of all dual and their primary carriages.
+This command restores the modes of the carriages and moves them to their
+previously saved positions, unless "MOVE=0" is specified. If positions are being
+restored and "MOVE_SPEED" is specified, then the carriages will move with at
+most the provided speed (in mm/s); otherwise the homing speeds of the
+corresponding carriages will be used as a reference. Note that the carriages
+restore their positions only over their own axes, which may be necessary to
+correctly restore COPY and MIRROR mode of the dual carriage. In addition, this
+command updates the Klipper toolhead position for each axis that has some dual
+carriages: it is set to match the actual position of the activated primary
+carriage of an axis or, if an axis does not have a saved primary carriage,
+to the axis position when `SAVE_DUAL_CARRIAGE_STATE` command was called.
 
 ### [endstop_phase]
 

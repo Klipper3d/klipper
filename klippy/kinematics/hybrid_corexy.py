@@ -66,9 +66,10 @@ class HybridCoreXYKinematics:
             rail.set_position(newpos)
         for axis_name in homing_axes:
             axis = "xyz".index(axis_name)
+            rail = None
             if self.dc_module and axis == 0:
                 rail = self.dc_module.get_primary_rail(axis)
-            else:
+            if rail is None:
                 rail = self.rails[axis]
             self.limits[axis] = rail.get_range()
     def clear_homing_state(self, clear_axes):
