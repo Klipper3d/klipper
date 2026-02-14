@@ -1412,6 +1412,11 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<p>20260214: The <code>MANUAL_STEPPER</code> G-Code command <code>STOP_ON_ENDSTOP</code>
+parameter has changed. See the
+<a href="G-Codes.html#manual_stepper">MANUAL_STEPPER</a> documentation for
+details. Using the previous integer values (-2, -1, 1, 2) is
+deprecated and support will be removed in the near future.</p>
 <p>20260207: The low-level i2c behavior of sx1509 and uc1701 devices has
 changed. Previously an i2c error would result in a shutdown, and now
 i2c errors when communicating with these devices will only generate
