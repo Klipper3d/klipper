@@ -92,6 +92,9 @@ class MCU_SPI:
                                            "mode=%u pulse_ticks=%u"):
                 pulse_ticks = self.mcu.seconds_to_clock(1./self.speed)
                 self.config_fmt = self.config_fmt_ticks % (pulse_ticks,)
+            else:
+                configfile = self.mcu.get_printer().lookup_object('configfile')
+                configfile.deprecate_mcu_code(self.mcu, 'spi_set_sw_bus')
         self.mcu.add_config_cmd(self.config_fmt)
         self.spi_send_cmd = self.mcu.lookup_command(
             "spi_send oid=%c data=%*s", cq=self.cmd_queue)
@@ -218,6 +221,9 @@ class MCU_I2C:
                                            " pulse_ticks=%u address=%u"):
                 pulse_ticks = self.mcu.seconds_to_clock(1./self.speed/2)
                 self.config_fmt = self.config_fmt_ticks % (pulse_ticks,)
+            else:
+                configfile = self.mcu.get_printer().lookup_object('configfile')
+                configfile.deprecate_mcu_code(self.mcu, 'i2c_set_sw_bus')
         self.mcu.add_config_cmd(self.config_fmt)
         if self.mcu.try_lookup_command("i2c_read oid=%c reg=%*s read_len=%u"):
             self.i2c_write_cmd = self.mcu.lookup_command(
@@ -227,6 +233,8 @@ class MCU_I2C:
                 "i2c_read oid=%c reg=%*s read_len=%u",
                 "i2c_read_response oid=%c response=%*s", oid=self.oid,
                 cq=self.cmd_queue)
+            configfile = self.mcu.get_printer().lookup_object('configfile')
+            configfile.deprecate_mcu_code(self.mcu, 'i2c_transfer')
         else:
             self.i2c_transfer_cmd = self.mcu.lookup_query_command(
                 "i2c_transfer oid=%c write=%*s read_len=%u",
