@@ -535,7 +535,7 @@ class MCU_adc:
         self._pin = pin_params['pin']
         self._min_sample = self._max_sample = 0.
         self._sample_time = self._report_time = 0.
-        self._sample_count = self._range_check_count = 0
+        self._sample_count = self._batch_num = self._range_check_count = 0
         self._report_clock = 0
         self._last_state = (0., 0.)
         self._oid = self._callback = None
@@ -544,15 +544,17 @@ class MCU_adc:
         self._unpack_from = struct.Struct('<H').unpack_from
     def get_mcu(self):
         return self._mcu
-    def setup_adc_sample(self, sample_time, sample_count,
-                         minval=0., maxval=1., range_check_count=0):
+    def setup_adc_sample(self, report_time, sample_time=0., sample_count=1,
+                         batch_num=1, minval=0., maxval=1.,
+                         range_check_count=0):
+        self._report_time = report_time
         self._sample_time = sample_time
         self._sample_count = sample_count
+        self._batch_num = max(1, min(48 // 2, batch_num))
         self._min_sample = minval
         self._max_sample = maxval
         self._range_check_count = range_check_count
-    def setup_adc_callback(self, report_time, callback):
-        self._report_time = report_time
+    def setup_adc_callback(self, callback):
         self._callback = callback
     def get_last_value(self):
         return self._last_state
@@ -560,12 +562,15 @@ class MCU_adc:
         if not self._sample_count:
             return
         self._oid = self._mcu.create_oid()
-        self._mcu.add_config_cmd("config_analog_in oid=%d pin=%s" % (
-            self._oid, self._pin))
+        self._mcu.add_config_cmd("config_analog_in oid=%d pin=%s"
+                                 % (self._oid, self._pin))
         clock = self._mcu.get_query_slot(self._oid)
         sample_ticks = self._mcu.seconds_to_clock(self._sample_time)
         mcu_adc_max = self._mcu.get_constant_float("ADC_MAX")
         max_adc = self._sample_count * mcu_adc_max
+        if max_adc >= (1<<16):
+            raise self._mcu.get_printer().config_error(
+                "ADC sample_count=%d too large for MCU" % (self._sample_count,))
         self._inv_max_adc = 1.0 / max_adc
         self._report_clock = self._mcu.seconds_to_clock(self._report_time)
         min_sample = max(0, min(0xffff, int(self._min_sample * max_adc)))
@@ -575,7 +580,8 @@ class MCU_adc:
         oldcmd = (
             "query_analog_in oid=%c clock=%u sample_ticks=%u sample_count=%c"
             " rest_ticks=%u min_value=%hu max_value=%hu range_check_count=%c")
-        if self._mcu.try_lookup_command(oldcmd) is not None:
+        if (self._batch_num == 1
+            and self._mcu.try_lookup_command(oldcmd) is not None):
             self._mcu.add_config_cmd(
                 "query_analog_in oid=%d clock=%d sample_ticks=%d"
                 " sample_count=%d rest_ticks=%d"
@@ -587,12 +593,13 @@ class MCU_adc:
                                         "analog_in_state", self._oid)
             return
         BYTES_PER_SAMPLE = 2
+        bytes_per_report = self._batch_num * BYTES_PER_SAMPLE
         self._mcu.add_config_cmd(
             "query_analog_in oid=%d clock=%d sample_ticks=%d sample_count=%d"
             " rest_ticks=%d bytes_per_report=%d"
             " min_value=%d max_value=%d range_check_count=%d" % (
                 self._oid, clock, sample_ticks, self._sample_count,
-                self._report_clock, BYTES_PER_SAMPLE, min_sample, max_sample,
+                self._report_clock, bytes_per_report, min_sample, max_sample,
                 self._range_check_count), is_init=True)
         self._mcu.register_response(self._handle_analog_in_state,
                                     "analog_in_state", self._oid)
@@ -603,16 +610,17 @@ class MCU_adc:
         last_read_time = self._mcu.clock_to_print_time(last_read_clock)
         self._last_state = (last_read_time, last_value)
         if self._callback is not None:
-            self._callback(last_read_time, last_value)
+            self._callback([(last_read_time, last_value)])
     def _handle_analog_in_state(self, params):
         values = self._unpack_from(params['values'])
-        last_value = values[0] * self._inv_max_adc
         next_clock = self._mcu.clock32_to_clock64(params['next_clock'])
-        last_read_clock = next_clock - self._report_clock
-        last_read_time = self._mcu.clock_to_print_time(last_read_clock)
-        self._last_state = (last_read_time, last_value)
+        ctpt = self._mcu.clock_to_print_time
+        num = len(values)
+        samples = [(ctpt(next_clock - (num - i)*self._report_clock),
+                    values[i] * self._inv_max_adc) for i in range(num)]
+        self._last_state = samples[-1]
         if self._callback is not None:
-            self._callback(last_read_time, last_value)
+            self._callback(samples)
 
 
 ######################################################################

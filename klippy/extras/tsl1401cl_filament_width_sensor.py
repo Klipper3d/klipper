@@ -33,8 +33,9 @@ class FilamentWidthSensor:
         # Start adc
         self.ppins = self.printer.lookup_object('pins')
         self.mcu_adc = self.ppins.setup_pin('adc', self.pin)
-        self.mcu_adc.setup_adc_sample(ADC_SAMPLE_TIME, ADC_SAMPLE_COUNT)
-        self.mcu_adc.setup_adc_callback(ADC_REPORT_TIME, self.adc_callback)
+        self.mcu_adc.setup_adc_sample(ADC_REPORT_TIME,
+                                      ADC_SAMPLE_TIME, ADC_SAMPLE_COUNT)
+        self.mcu_adc.setup_adc_callback(self.adc_callback)
         # extrude factor updating
         self.extrude_factor_update_timer = self.reactor.register_timer(
             self.extrude_factor_update_event)
@@ -57,8 +58,9 @@ class FilamentWidthSensor:
         self.reactor.update_timer(self.extrude_factor_update_timer,
                                   self.reactor.NOW)
 
-    def adc_callback(self, read_time, read_value):
+    def adc_callback(self, samples):
         # read sensor value
+        read_time, read_value = samples[-1]
         self.lastFilamentWidthReading = round(read_value * 5, 2)
 
     def update_filament_array(self, last_epos):
