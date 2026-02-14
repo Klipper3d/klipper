@@ -122,8 +122,10 @@ ads1220_attach_trigger_analog(uint32_t *args) {
     struct ads1220_adc *ads1220 = oid_lookup(oid, command_config_ads1220);
     ads1220->ta = trigger_analog_oid_lookup(args[1]);
 }
+#if CONFIG_WANT_TRIGGER_ANALOG
 DECL_COMMAND(ads1220_attach_trigger_analog,
     "ads1220_attach_trigger_analog oid=%c trigger_analog_oid=%c");
+#endif
 
 // start/stop capturing ADC data
 void

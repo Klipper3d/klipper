@@ -263,6 +263,11 @@ config WANT_LDC1612
 config WANT_SENSOR_ANGLE
     bool "Support angle sensors"
     depends on WANT_SPI
+comment "Other features"
+    depends on WANT_HX71X || WANT_ADS1220 || WANT_LDC1612
+config WANT_TRIGGER_ANALOG
+    bool "Support for homing/probing events using analog sensors"
+    depends on WANT_HX71X || WANT_ADS1220 || WANT_LDC1612
 endmenu
 
 # Generic configuration options for CANbus
