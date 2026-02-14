@@ -9,6 +9,7 @@
 #include "board/irq.h" // irq_disable
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // DECL_TASK
+#include "trigger_analog.h" // trigger_analog_update
 
 struct analog_in {
     struct timer timer;
@@ -19,6 +20,7 @@ struct analog_in {
     uint8_t state, sample_count;
     uint8_t bytes_per_report, data_count;
     uint8_t data[48];
+    struct trigger_analog *ta;
 };
 
 static struct task_wake analog_wake;
@@ -100,6 +102,16 @@ DECL_COMMAND(command_query_analog_in,
              " rest_ticks=%u bytes_per_report=%c"
              " min_value=%hu max_value=%hu range_check_count=%c");
 
+void
+command_analog_in_attach_trigger_analog(uint32_t *args) {
+    struct analog_in *a = oid_lookup(args[0], command_config_analog_in);
+    a->ta = trigger_analog_oid_lookup(args[1]);
+}
+#if CONFIG_WANT_TRIGGER_ANALOG
+DECL_COMMAND(command_analog_in_attach_trigger_analog,
+    "analog_in_attach_trigger_analog oid=%c trigger_analog_oid=%c");
+#endif
+
 #define BYTES_PER_SAMPLE 2
 
 void
@@ -121,6 +133,7 @@ analog_in_task(void)
         uint32_t next_begin_time = a->next_begin_time;
         a->state++;
         irq_enable();
+        trigger_analog_update(a->ta, value);
         uint8_t *d = &a->data[a->data_count];
         d[0] = value;
         d[1] = value >> 8;
@@ -141,6 +154,7 @@ analog_in_shutdown(void)
     struct analog_in *a;
     foreach_oid(i, a, command_config_analog_in) {
         gpio_adc_cancel_sample(a->pin);
+        a->ta = NULL;
         if (a->sample_count) {
             a->state = a->sample_count + 1;
             a->next_begin_time += a->rest_time;
