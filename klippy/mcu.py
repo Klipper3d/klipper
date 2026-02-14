@@ -601,7 +601,7 @@ class MCU_adc:
         next_clock = self._mcu.clock32_to_clock64(params['next_clock'])
         last_read_clock = next_clock - self._report_clock
         last_read_time = self._mcu.clock_to_print_time(last_read_clock)
-        self._last_state = (last_value, last_read_time)
+        self._last_state = (last_read_time, last_value)
         if self._callback is not None:
             self._callback(last_read_time, last_value)
     def _handle_analog_in_state(self, params):
@@ -610,7 +610,7 @@ class MCU_adc:
         next_clock = self._mcu.clock32_to_clock64(params['next_clock'])
         last_read_clock = next_clock - self._report_clock
         last_read_time = self._mcu.clock_to_print_time(last_read_clock)
-        self._last_state = (last_value, last_read_time)
+        self._last_state = (last_read_time, last_value)
         if self._callback is not None:
             self._callback(last_read_time, last_value)
 
