@@ -361,10 +361,10 @@ class ADS1X1X_pin:
                 self.invalid_count = 0
 
             # Publish result
-            measured_time = self._reactor.monotonic()
-            self._last_state = (target_value, measured_time)
-            self.callback(self.chip.mcu.estimated_print_time(measured_time),
-                        target_value)
+            systime = self._reactor.monotonic()
+            measured_time = self.chip.mcu.estimated_print_time(systime)
+            self._last_state = (measured_time, target_value)
+            self.callback(measured_time, target_value)
         else:
             self.invalid_count = self.invalid_count + 1
             self.check_invalid()

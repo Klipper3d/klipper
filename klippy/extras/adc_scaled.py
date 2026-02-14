@@ -23,7 +23,7 @@ class MCU_scaled_adc:
         max_adc = self._main.last_vref[1]
         min_adc = self._main.last_vssa[1]
         scaled_val = (read_value - min_adc) / (max_adc - min_adc)
-        self._last_state = (scaled_val, read_time)
+        self._last_state = (read_time, scaled_val)
         self._callback(read_time, scaled_val)
     def setup_adc_callback(self, report_time, callback):
         self._callback = callback

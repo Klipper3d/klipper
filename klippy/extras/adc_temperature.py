@@ -57,7 +57,7 @@ class HelperTemperatureDiagnostics:
     def _clarify_adc_range(self, msg, details):
         if self.min_temp is None:
             return None
-        last_value, last_read_time = self.mcu_adc.get_last_value()
+        last_read_time, last_value = self.mcu_adc.get_last_value()
         if not last_read_time:
             return None
         if last_value >= self.min_adc and last_value <= self.max_adc:
