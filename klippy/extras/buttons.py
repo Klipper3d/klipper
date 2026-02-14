@@ -104,8 +104,9 @@ class MCU_ADC_buttons:
         self.max_value = 0.
         ppins = printer.lookup_object('pins')
         self.mcu_adc = ppins.setup_pin('adc', self.pin)
-        self.mcu_adc.setup_adc_sample(ADC_SAMPLE_TIME, ADC_SAMPLE_COUNT)
-        self.mcu_adc.setup_adc_callback(ADC_REPORT_TIME, self.adc_callback)
+        self.mcu_adc.setup_adc_sample(ADC_REPORT_TIME,
+                                      ADC_SAMPLE_TIME, ADC_SAMPLE_COUNT)
+        self.mcu_adc.setup_adc_callback(self.adc_callback)
         query_adc = printer.lookup_object('query_adc')
         query_adc.register_adc('adc_button:' + pin.strip(), self.mcu_adc)
 
@@ -114,7 +115,8 @@ class MCU_ADC_buttons:
         self.max_value = max(self.max_value, max_value)
         self.buttons.append((min_value, max_value, callback))
 
-    def adc_callback(self, read_time, read_value):
+    def adc_callback(self, samples):
+        read_time, read_value = samples[-1]
         adc = max(.00001, min(.99999, read_value))
         value = self.pullup * adc / (1.0 - adc)
 
