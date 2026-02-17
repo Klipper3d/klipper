@@ -531,11 +531,6 @@ max_z_velocity:
 max_z_accel:
 #   This sets the maximum acceleration (in mm/s^2) of movement along
 #   the z axis. The default is to use max_accel for max_z_accel.
-max_rad_velocity:
-#   This limits the maximum rotational velocity (in rad/s) of a move.
-#   Lower values will result in longer print times, but prevents too
-#   fast motions near the center. A value of 0 deactivates the 
-#   scaling. The default is 0.
 
 # The stepper_x section is used to describe the X axis as well as the
 # stepper controlling the X-Z movement.
@@ -574,6 +569,11 @@ max_z_accel:
 #   This sets the maximum acceleration (in mm/s^2) of movement along
 #   the z axis. It limits the acceleration of the z stepper motor. The
 #   default is to use max_accel for max_z_accel.
+# max_angular_velocity: 0
+#   This limits the maximum angular velocity (in rad/s) of a move.
+#   Lower values will result in longer print times, but prevents too
+#   fast motions near the center. A value of 0 deactivates the
+#   scaling. The default is 0.
 
 # The stepper_bed section is used to describe the stepper controlling
 # the bed.

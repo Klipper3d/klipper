@@ -49,7 +49,7 @@ class PolarKinematics:
         self.max_z_accel = config.getfloat(
             'max_z_accel', self.max_accel, above=0., maxval=self.max_accel)
         self.v_rad_max = config.getfloat(
-            'max_rad_velocity', above=0., default=0)
+            'max_angular_velocity', above=0., default=0)
         self.limit_z = (1.0, -1.0)
         self.limit_xy2 = -1.
         max_xy = self.rails[0].get_range()[1]
@@ -130,9 +130,9 @@ class PolarKinematics:
                 min_dist = distance_line_to_point(move.start_pos[0:2],
                                                   move.end_pos[0:2])
                 if min_dist != 0:
-                    v_rot = math.sqrt(move.max_cruise_v2) / min_dist
-                    if self.v_rad_max < v_rot:
-                        scale_radius = self.v_rad_max/v_rot
+                    v_angular = math.sqrt(move.max_cruise_v2) / min_dist
+                    if self.v_rad_max < v_angular:
+                        scale_radius = self.v_rad_max/v_angular
                         move.limit_speed(self.max_velocity * scale_radius,
                                          self.max_accel * scale_radius)
 
