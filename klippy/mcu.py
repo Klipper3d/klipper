@@ -591,6 +591,8 @@ class MCU_adc:
                     self._range_check_count), is_init=True)
             self._mcu.register_response(self._old_handle_analog_in_state,
                                         "analog_in_state", self._oid)
+            pconfig = self._mcu.get_printer().lookup_object('configfile')
+            pconfig.deprecate_mcu_code(self._mcu, "batching adc")
             return
         BYTES_PER_SAMPLE = 2
         bytes_per_report = self._batch_num * BYTES_PER_SAMPLE
