@@ -9,18 +9,17 @@
   *          This file contains:
   *           - Data structures and the address mapping for all peripherals
   *           - Peripheral's registers declarations and bits definition
-  *           - Macros to access peripheral’s registers hardware
+  *           - Macros to access peripheral's registers hardware
   *  
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2017 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2017-2021 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -889,7 +888,15 @@ typedef struct
 /** @addtogroup Exported_constants
   * @{
   */
-  
+
+  /** @addtogroup Hardware_Constant_Definition
+    * @{
+    */
+#define LSI_STARTUP_TIME                85U /*!< LSI Maximum startup time in us */
+  /**
+    * @}
+    */
+
   /** @addtogroup Peripheral_Registers_Bits_Definition
   * @{
   */
@@ -1250,6 +1257,11 @@ typedef struct
 /*                         Reset and Clock Control                            */
 /*                                                                            */
 /******************************************************************************/
+/*
+ * @brief Specific device feature definitions (not present on all devices in the STM32F1 series)
+ */
+#define RCC_PLL2_SUPPORT                                                       /*!< Support PLL2 */
+#define RCC_PLLI2S_SUPPORT 
 
 /********************  Bit definition for RCC_CR register  ********************/
 #define RCC_CR_HSION_Pos                     (0U)                              
@@ -1283,22 +1295,12 @@ typedef struct
 #define RCC_CR_PLLRDY_Msk                    (0x1UL << RCC_CR_PLLRDY_Pos)       /*!< 0x02000000 */
 #define RCC_CR_PLLRDY                        RCC_CR_PLLRDY_Msk                 /*!< PLL clock ready flag */
 
-/*
- * @brief Specific device feature definitions (not present on all devices in the STM32F1 serie)
- */
-#define RCC_PLL2_SUPPORT                                                       /*!< Support PLL2 */
-
 #define RCC_CR_PLL2ON_Pos                    (26U)                             
 #define RCC_CR_PLL2ON_Msk                    (0x1UL << RCC_CR_PLL2ON_Pos)       /*!< 0x04000000 */
 #define RCC_CR_PLL2ON                        RCC_CR_PLL2ON_Msk                 /*!< PLL2 enable */
 #define RCC_CR_PLL2RDY_Pos                   (27U)                             
 #define RCC_CR_PLL2RDY_Msk                   (0x1UL << RCC_CR_PLL2RDY_Pos)      /*!< 0x08000000 */
 #define RCC_CR_PLL2RDY                       RCC_CR_PLL2RDY_Msk                /*!< PLL2 clock ready flag */
-
-/*
- * @brief Specific device feature definitions (not present on all devices in the STM32F1 serie)
- */
-#define RCC_PLLI2S_SUPPORT                                                     /*!< Support PLL3 (PLLI2S)*/
 
 #define RCC_CR_PLL3ON_Pos                    (28U)                             
 #define RCC_CR_PLL3ON_Msk                    (0x1UL << RCC_CR_PLL3ON_Pos)       /*!< 0x10000000 */
@@ -1806,7 +1808,7 @@ typedef struct
 #define RCC_BDCR_RTCSEL_0                    (0x1UL << RCC_BDCR_RTCSEL_Pos)     /*!< 0x00000100 */
 #define RCC_BDCR_RTCSEL_1                    (0x2UL << RCC_BDCR_RTCSEL_Pos)     /*!< 0x00000200 */
 
-/*!< RTC congiguration */
+/*!< RTC configuration */
 #define RCC_BDCR_RTCSEL_NOCLOCK              0x00000000U                       /*!< No clock */
 #define RCC_BDCR_RTCSEL_LSE                  0x00000100U                       /*!< LSE oscillator clock used as RTC clock */
 #define RCC_BDCR_RTCSEL_LSI                  0x00000200U                       /*!< LSI oscillator clock used as RTC clock */
@@ -4069,7 +4071,7 @@ typedef struct
 #define ADC_CR2_DMA                         ADC_CR2_DMA_Msk                    /*!< ADC DMA transfer enable */
 #define ADC_CR2_ALIGN_Pos                   (11U)                              
 #define ADC_CR2_ALIGN_Msk                   (0x1UL << ADC_CR2_ALIGN_Pos)        /*!< 0x00000800 */
-#define ADC_CR2_ALIGN                       ADC_CR2_ALIGN_Msk                  /*!< ADC data alignement */
+#define ADC_CR2_ALIGN                       ADC_CR2_ALIGN_Msk                  /*!< ADC data alignment */
 
 #define ADC_CR2_JEXTSEL_Pos                 (12U)                              
 #define ADC_CR2_JEXTSEL_Msk                 (0x7UL << ADC_CR2_JEXTSEL_Pos)      /*!< 0x00007000 */
@@ -11757,7 +11759,7 @@ typedef struct
 /*                                                                            */
 /******************************************************************************/
 /*
- * @brief Specific device feature definitions (not present on all devices in the STM32F1 serie)
+ * @brief Specific device feature definitions (not present on all devices in the STM32F1 series)
  */
 #define SPI_I2S_SUPPORT       /*!< I2S support */
 #define I2S2_I2S3_CLOCK_FEATURE
@@ -11914,7 +11916,6 @@ typedef struct
 #define SPI_I2SCFGR_I2SMOD_Pos              (11U)                              
 #define SPI_I2SCFGR_I2SMOD_Msk              (0x1UL << SPI_I2SCFGR_I2SMOD_Pos)   /*!< 0x00000800 */
 #define SPI_I2SCFGR_I2SMOD                  SPI_I2SCFGR_I2SMOD_Msk             /*!< I2S mode selection */
-
 /******************  Bit definition for SPI_I2SPR register  *******************/
 #define SPI_I2SPR_I2SDIV_Pos                (0U)                               
 #define SPI_I2SPR_I2SDIV_Msk                (0xFFUL << SPI_I2SPR_I2SDIV_Pos)    /*!< 0x000000FF */
@@ -14092,8 +14093,6 @@ typedef struct
    ((INSTANCE) == TIM4)    || \
    ((INSTANCE) == TIM5))
 
-#define IS_TIM_SYNCHRO_INSTANCE(INSTANCE)  IS_TIM_MASTER_INSTANCE(INSTANCE)
-
 #define IS_TIM_DMABURST_INSTANCE(INSTANCE)\
   (((INSTANCE) == TIM1)    || \
    ((INSTANCE) == TIM2)    || \
@@ -14289,15 +14288,15 @@ typedef struct
 #define DMA2_Channel4_5_IRQn    DMA2_Channel4_IRQn
 #define USBWakeUp_IRQn          OTG_FS_WKUP_IRQn
 #define CEC_IRQn                OTG_FS_WKUP_IRQn
-#define TIM9_IRQn               TIM1_BRK_IRQn
-#define TIM1_BRK_TIM9_IRQn      TIM1_BRK_IRQn
 #define TIM1_BRK_TIM15_IRQn     TIM1_BRK_IRQn
+#define TIM1_BRK_TIM9_IRQn      TIM1_BRK_IRQn
+#define TIM9_IRQn               TIM1_BRK_IRQn
+#define TIM1_TRG_COM_TIM17_IRQn TIM1_TRG_COM_IRQn
 #define TIM1_TRG_COM_TIM11_IRQn TIM1_TRG_COM_IRQn
 #define TIM11_IRQn              TIM1_TRG_COM_IRQn
-#define TIM1_TRG_COM_TIM17_IRQn TIM1_TRG_COM_IRQn
 #define TIM10_IRQn              TIM1_UP_IRQn
-#define TIM1_UP_TIM16_IRQn      TIM1_UP_IRQn
 #define TIM1_UP_TIM10_IRQn      TIM1_UP_IRQn
+#define TIM1_UP_TIM16_IRQn      TIM1_UP_IRQn
 #define TIM6_DAC_IRQn           TIM6_IRQn
 
 
@@ -14310,15 +14309,15 @@ typedef struct
 #define DMA2_Channel4_5_IRQHandler    DMA2_Channel4_IRQHandler
 #define USBWakeUp_IRQHandler          OTG_FS_WKUP_IRQHandler
 #define CEC_IRQHandler                OTG_FS_WKUP_IRQHandler
-#define TIM9_IRQHandler               TIM1_BRK_IRQHandler
-#define TIM1_BRK_TIM9_IRQHandler      TIM1_BRK_IRQHandler
 #define TIM1_BRK_TIM15_IRQHandler     TIM1_BRK_IRQHandler
+#define TIM1_BRK_TIM9_IRQHandler      TIM1_BRK_IRQHandler
+#define TIM9_IRQHandler               TIM1_BRK_IRQHandler
+#define TIM1_TRG_COM_TIM17_IRQHandler TIM1_TRG_COM_IRQHandler
 #define TIM1_TRG_COM_TIM11_IRQHandler TIM1_TRG_COM_IRQHandler
 #define TIM11_IRQHandler              TIM1_TRG_COM_IRQHandler
-#define TIM1_TRG_COM_TIM17_IRQHandler TIM1_TRG_COM_IRQHandler
 #define TIM10_IRQHandler              TIM1_UP_IRQHandler
-#define TIM1_UP_TIM16_IRQHandler      TIM1_UP_IRQHandler
 #define TIM1_UP_TIM10_IRQHandler      TIM1_UP_IRQHandler
+#define TIM1_UP_TIM16_IRQHandler      TIM1_UP_IRQHandler
 #define TIM6_DAC_IRQHandler           TIM6_IRQHandler
 
 
@@ -14338,5 +14337,4 @@ typedef struct
 #endif /* __STM32F105xC_H */
   
   
-  
-  /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+
