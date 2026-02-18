@@ -491,6 +491,32 @@ usb_req_set_line(struct usb_ctrlrequest *req)
 }
 
 static void
+usb_req_get_status(struct usb_ctrlrequest * req)
+{
+    // Basic implementation of GET STATUS. Doesn't handle status requests for
+    // Interfaces or Endpoints
+    typedef uint16_t status_t;
+    if (req->wValue || req->wLength != sizeof(status_t) || req->wIndex
+        || req->bRequest)
+    {
+        usb_do_stall();
+        return;
+    }
+
+    // config descriptor already contains "Self Powered" and
+    // "Remote Wakeup Enabled" flags.
+    const status_t is_self_powered =
+            (cdc_config_descriptor.config.bmAttributes & (1<<6)) != 0;
+    const status_t remote_wakeup =
+            (cdc_config_descriptor.config.bmAttributes & (1<<5)) != 0;
+
+
+    // pack status data and send
+    status_t status = (is_self_powered << 0) | (remote_wakeup << 1);
+    usb_do_xfer(&status, sizeof(status), UX_SEND);
+}
+
+static void
 usb_state_ready(void)
 {
     struct usb_ctrlrequest req;
@@ -498,6 +524,7 @@ usb_state_ready(void)
     if (ret != sizeof(req))
         return;
     switch (req.bRequest) {
+    case USB_REQ_GET_STATUS: usb_req_get_status(&req); break;
     case USB_REQ_GET_DESCRIPTOR: usb_req_get_descriptor(&req); break;
     case USB_REQ_SET_ADDRESS: usb_req_set_address(&req); break;
     case USB_REQ_SET_CONFIGURATION: usb_req_set_configuration(&req); break;
