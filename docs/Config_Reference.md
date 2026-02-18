@@ -2331,6 +2331,31 @@ sensor_type: ldc1612
 #   See the Eddy_Probe.md for explanation
 ```
 
+### [probe_as_z_home]
+
+This tool allows the homing procedure (```G28```) to use probing (i.e. the same as the ```PROBE``` command) so that in some cases the Z axis can be more accurately probed.
+
+You should use this option if you are occasionally experiencing innacurate homing.
+
+Configuring this tool will also cause the ```G28``` G-Code to emit a console message stating the correction that was performed. You can use this to measure the level of benefit that the tool is providing.
+
+To enable this tool, add the following configuration section anywhere before either ```[safe_z_homing]``` section or the ```[homing_override]``` section.
+
+There is no specific G-Code for this command since it simply alters the behavior of the
+existing standard 'G28' G-Code command.
+See [command reference](G-Codes.md#G-Code_commands) for further information.
+
+```
+[probe_as_z_home]
+#g28_probe_cmd_args:
+#   Optional command arguments passed to the PROBE command while homing.
+#   See [g-code PROBE command](G-Codes.md#probe).
+#   Example:
+#      g28_probe_cmd_args: SAMPLES=3 SAMPLES_TOLERANCE_RETRIES=5
+```
+
+_Note: The standing homing procedure is still perofrmed before probing since this is required to ensure safety and compatibility with the probing method since probing requires homing to first be performed_
+
 ### [axis_twist_compensation]
 
 A tool to compensate for inaccurate probe readings due to twist in X or Y
