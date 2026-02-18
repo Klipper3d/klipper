@@ -460,6 +460,13 @@ parameters of an extruder stepper (as defined in an
 If EXTRUDER is not specified, it defaults to the stepper defined in
 the active hotend.
 
+#### SET_NOZZLE_DIAMETER
+`SET_NOZZLE_DIAMETER [EXTRUDER=<config_name>] DIAMETER=<diameter>`:
+Set a new value for the nozzle diameter of the specified extruder
+(as defined in an [extruder](Config_Reference.md#extruder) config section).
+If EXTRUDER is not specified, it defaults to the active hotend.
+Changed settings are not retained on Klipper reset.
+
 #### SET_EXTRUDER_ROTATION_DISTANCE
 `SET_EXTRUDER_ROTATION_DISTANCE EXTRUDER=<config_name>
 [DISTANCE=<distance>]`: Set a new value for the provided extruder
