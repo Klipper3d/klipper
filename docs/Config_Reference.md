@@ -3066,6 +3066,27 @@ sensor_type: SHT3X
 #   See the "common I2C settings" section for a description of the
 #   above parameters.
 ```
+### SHT4x Sensor
+
+SHT4X family two wire interface (I2C) environmental sensor. These sensors
+have a range of -40~125°C, making them suitable for various temperature and
+humidity monitoring applications including chambers.
+They offer improved accuracy and faster response times compared to previous generations,
+while maintaining compatibility for fan/heater control implementations.
+
+```
+#sensor_type: SHT4X
+#i2c_mcu:
+#i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#i2c_address:
+#i2c_speed:
+    # Defaults to 400kHz on RPi, 100kHz elsewhere
+    # See the "common I2C settings" section for a description of the above parameters.
+#precision:
+    # Default: "high" | Options: high, medium, low
+```
 
 ### LM75 temperature sensor
 
