@@ -21,7 +21,7 @@ Entering bootloader on <DEVICE>
 ```
 
 Where `<DEVICE>` is your serial device, such as
-`/dev/serial.by-id/usb-Klipper[...]` or `/dev/ttyACM0`
+`/dev/serial/by-id/usb-Klipper[...]` or `/dev/ttyACM0`
 
 Note that if this fails, no output will be printed, success is indicated by
 printing `Entering bootloader on <DEVICE>`.
@@ -34,7 +34,7 @@ picocom -b 1200 <DEVICE>
 ```
 
 Where `<DEVICE>` is your serial device, such as
-`/dev/serial.by-id/usb-Klipper[...]` or `/dev/ttyACM0`
+`/dev/serial/by-id/usb-Klipper[...]` or `/dev/ttyACM0`
 
 `<Ctrl-A><Ctrl-P>` means
 holding `Ctrl`, pressing and releasing `a`, pressing and releasing `p`, then
@@ -48,8 +48,7 @@ is being used to connect to it), sending the string
 
 `<SPACE>` is an ASCII literal space, 0x20.
 
-`<FS>` is the ASCII File Separator,
-0x1c.
+`<FS>` is the ASCII File Separator, 0x1c.
 
 Note that this is not a valid message as per the
 [MCU Protocol](Protocol.md#micro-controller-interface), but sync characters(`~`)
@@ -69,8 +68,7 @@ echo $'~ \x1c Request Serial Bootloader!! ~' >> /dev/<DEVICE>
 Where `<DEVICE>` is your serial port, such as `/dev/ttyS0`, or
 `/dev/serial/by-id/gpio-serial2`, and
 
-`<BAUD>` is the baud rate of the serial
-port, such as `115200`.
+`<BAUD>` is the baud rate of the serial port, such as `115200`.
 
 ### CANBUS
 
@@ -85,7 +83,7 @@ This method also applies to devices operating in
 #### Katapult's flashtool.py
 
 ```shell
-python3 ./katapult/scripts/flashtool.py -i <CAN_IFACE> -u <UUID> -r
+python3 ~/katapult/scripts/flashtool.py -i <CAN_IFACE> -u <UUID> -r
 ```
 
 Where `<CAN_IFACE>` is the can interface to use. If using `can0`, both the `-i`
@@ -101,13 +99,12 @@ for information on finding the CAN UUID of your devices.
 
 When klipper receives one of the above bootloader requests:
 
-If Katapult (formerly known as CANBoot) is available, klipper will request that
-Katapult stay active on the next boot, then reset the MCU (therefore entering
-Katapult).
+If [Katapult (formerly known as CANBoot)](Bootloaders.md#katapult-bootloader-lpc176x-stm32-rp2040)
+is available, klipper will request that Katapult stay active on the next boot,
+then reset the MCU (therefore entering Katapult).
 
-If Katapult is not available, klipper will then try to enter a
-platform-specific bootloader, such as STM32's DFU
-mode([see note](#stm32-dfu-warning)).
+If Katapult is not available, klipper will then try to enter a platform-specific
+bootloader, such as STM32's DFU mode ([see note](#stm32-dfu-warning)).
 
 In short, Klipper will reboot to Katapult if installed, then a hardware specific
 bootloader if available.
@@ -115,11 +112,16 @@ bootloader if available.
 For details about the specific bootloaders on various platforms see
 [Bootloaders](Bootloaders.md)
 
+---
+
 ## Notes
 
 ### STM32 DFU Warning
 
-Note that on some boards, like the Octopus Pro v1, entering DFU mode can cause
-undesired actions (such as powering the heater while in DFU mode). It is
-recommended to disconnect heaters, and otherwise prevent undesired operations
-when using DFU mode. Consult the documentation for your board for more details.
+!!! danger "STM32 DFU Warning"
+
+    Note that on some boards, like the Octopus Pro v1 or EBB36/42 v1.1, entering
+    DFU mode can cause undesired actions (such as powering the heater while in
+    DFU mode). It is recommended to disconnect heaters, and otherwise prevent
+    undesired operations when using DFU mode. Consult the documentation for your
+    board for more details.
