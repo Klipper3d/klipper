@@ -101,6 +101,16 @@ gcode:
   RESTORE_GCODE_STATE NAME=clean_nozzle_state
 ```
 
+If more advanced math is required than Jinja2 offers natively,
+Python's [math module](https://docs.python.org/3/library/math.html)
+is available for use within Jinja2 expressions in G-Code macros:
+
+```
+[gcode_macro math_example]
+gcode:
+  REPLY MSG="The square root of 4 is {math.sqrt(4)}."
+```
+
 ### Macro parameters
 
 It is often useful to inspect parameters passed to the macro when
