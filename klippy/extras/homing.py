@@ -127,7 +127,33 @@ class HomingMove:
                           for sp in self.stepper_positions}
             trig_steps = {sp.stepper_name: sp.trig_pos - sp.start_pos
                           for sp in self.stepper_positions}
+            
+            # Debug logging (comentado para producción)
+            # logging.info("HomingMove debug:")
+            # for sp in self.stepper_positions:
+            #     logging.info("  %s: start_pos=%d, trig_pos=%d, halt_pos=%d, "
+            #                "trig_steps=%d, halt_steps=%d",
+            #                sp.stepper_name, sp.start_pos, sp.trig_pos, 
+            #                sp.halt_pos, 
+            #                trig_steps.get(sp.stepper_name, 0),
+            #                halt_steps.get(sp.stepper_name, 0))
+            # logging.info("  trigger_times: %s", trigger_times)
+            # logging.info("  move_end_print_time: %.6f", move_end_print_time)
+            
+            # Check if there was no movement detected (start_pos == trig_pos)
+            # This can happen when the endstop triggers immediately
+            no_movement = any(sp.start_pos == sp.trig_pos 
+                            for sp in self.stepper_positions)
+            
+            if no_movement and any(halt_steps.values()):
+                # If we detected no movement but halt_steps shows movement,
+                # use halt positions instead of trigger positions
+                # logging.info("  Detected no_movement but halt_steps has values, using halt positions")
+                trig_steps = halt_steps
+                
             haltpos = trigpos = self.calc_toolhead_pos(kin_spos, trig_steps)
+            # logging.info("  Calculated trigpos: %s", trigpos)
+            
             if trig_steps != halt_steps:
                 haltpos = self.calc_toolhead_pos(kin_spos, halt_steps)
             self.toolhead.set_position(haltpos)
@@ -271,10 +297,21 @@ class PrinterHoming:
                 raise self.printer.command_error(
                     "Probing failed due to printer shutdown")
             raise
-        if hmove.check_no_movement() is not None:
+        # Check if there was no movement detected
+        no_movement_endstop = hmove.check_no_movement()
+        if no_movement_endstop is not None:
+            # Still calculate and store the position for diagnostic purposes
+            # This is useful when the endstop was already triggered but we need
+            # to know where it thinks it is
+            self._last_probe_position = epos
             raise self.printer.command_error(
                 "Probe triggered prior to movement")
         return epos
+    def get_last_probe_position(self):
+        """Get the last calculated probe position, even if the probe failed.
+        This is useful for diagnostics when 'Probe triggered prior to movement'
+        error occurs but we still need to know the calculated position."""
+        return getattr(self, '_last_probe_position', None)
     def cmd_G28(self, gcmd):
         # Move to origin
         axes = []
