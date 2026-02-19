@@ -33,9 +33,9 @@ class BacklashCompensation:
         # Register event handlers
         self.printer.register_event_handler("klippy:connect", self.connect)
         self.printer.register_event_handler("homing:homing_move_begin",
-                                            self.handle_homing_move_begin)
+                                            self.disable_compensation)
         self.printer.register_event_handler("homing:homing_move_end",
-                                            self.handle_homing_move_end)
+                                            self.enable_compensation)
         # Register gcode commands
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("SET_BACKLASH_COMPENSATION",
@@ -58,11 +58,9 @@ class BacklashCompensation:
         self.input_shaper.connect()
         # Configure initial values
         self._update_compensation()
-    def handle_homing_move_begin(self, hmove):
-        # Disable backlash compensation during homing moves
+    def disable_compensation(self, hmove):
         self._update_compensation(force_smooth_time_only=0.)
-    def handle_homing_move_end(self, hmove):
-        # Restore backlash compensation after a homing move
+    def enable_compensation(self, hmove):
         self._update_compensation(force_smooth_time_only=self.smooth_time)
     def _update_compensation(self, force_smooth_time_only=None):
         toolhead = self.printer.lookup_object("toolhead")
