@@ -52,7 +52,8 @@ calc_backlash_compensation(struct backlash_compensation *bc, struct move *m
     // Make past motion direction sticky for extra_look_back duration,
     // but at most up to the next motion in the opposite direction
     double pstart = 0., mstart = 0.;
-    while (move_offset < smooth_time + extra_look_back) {
+    while (move_offset - extra_look_back < smooth_time &&
+            (mstart < ttp || pstart < ttm)) {
         prev = list_prev_entry(prev, node);
         int prev_dir = get_move_dir(prev, axis);
         if (prev_dir != move_dir) {
