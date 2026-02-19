@@ -527,6 +527,10 @@ class ProbePointsHelper:
                 # Caller wants a "retry" - restart probing
                 probe_num = 0
             self._move_next(probe_num)
+            # Make sure that the toolhead is positoned before probing
+            # otherwise this will cause 'homing:homing_move_begin' to trigger
+            # while moving horizontally.
+            self.printer.lookup_object('toolhead').wait_moves()
             probe_session.run_probe(gcmd)
             probe_num += 1
         probe_session.end_probe_session()
