@@ -13,13 +13,17 @@ export KCONFIG_CONFIG     := $(CURDIR)/.config
 
 # Common command definitions
 CC=$(CROSS_PREFIX)gcc
+CXX=$(CROSS_PREFIX)g++
 AS=$(CROSS_PREFIX)as
 LD=$(CROSS_PREFIX)ld
 OBJCOPY=$(CROSS_PREFIX)objcopy
 OBJDUMP=$(CROSS_PREFIX)objdump
 STRIP=$(CROSS_PREFIX)strip
-CPP=cpp
+READELF=$(CROSS_PREFIX)readelf
 PYTHON=python3
+
+# export the cross readelf, for check-gcc to use it
+export READELF
 
 # Source files
 src-y =
@@ -66,7 +70,7 @@ $(OUT)%.o: %.c $(OUT)autoconf.h
 
 $(OUT)%.ld: %.lds.S $(OUT)autoconf.h
 	@echo "  Preprocessing $@"
-	$(Q)$(CPP) -I$(OUT) -P -MD -MT $@ $< -o $@
+	$(Q)$(CC) -E -I$(OUT) -P -MD -MT $@ $< -o $@
 
 $(OUT)klipper.elf: $(OBJS_klipper.elf)
 	@echo "  Linking $@"
