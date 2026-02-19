@@ -661,17 +661,31 @@ class MenuList(MenuContainer):
 
 class MenuVSDList(MenuList):
     def __init__(self, manager, config, **kwargs):
+        self._sort_reverse = kwargs.get('sort_reverse', False)
+        self._sort_by_date = kwargs.get('sort_by_date', False)
         super(MenuVSDList, self).__init__(manager, config, **kwargs)
+        try:
+            self._sort_reverse = config.getboolean('sort_reverse',
+                                                   self._sort_reverse)
+        except config.error:
+            logging.debug("Failed to get sort_reverse from config file")
+            pass
+        try:
+            self._sort_by_date = config.getboolean('sort_by_date',
+                                                   self._sort_by_date)
+        except config.error:
+            logging.debug("Failed to get sort_by_date from config file")
+            pass
 
     def _populate(self):
         super(MenuVSDList, self)._populate()
         sdcard = self.manager.printer.lookup_object('virtual_sdcard', None)
         if sdcard is not None:
-            files = sdcard.get_file_list()
+            files = sdcard.get_file_list(sortByDate=self._sort_by_date,
+                                         sortReverse=self._sort_reverse)
             for fname, fsize in files:
                 self.insert_item(self.manager.menuitem_from(
                     'command', name=repr(fname), gcode='M23 /%s' % str(fname)))
-
 
 menu_items = {
     'disabled': MenuDisabled,
