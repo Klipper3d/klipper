@@ -32,6 +32,8 @@ class PrinterCANBusStats:
         self.mcu = self.printer.lookup_object(mcu_name)
         # Lookup status query command
         if self.mcu.try_lookup_command("get_canbus_status") is None:
+            configfile = self.printer.lookup_object('configfile')
+            configfile.deprecate_mcu_code(self.mcu, 'get_canbus_status')
             return
         self.get_canbus_status_cmd = self.mcu.lookup_query_command(
             "get_canbus_status",

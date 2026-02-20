@@ -529,6 +529,17 @@ class PrinterConfig:
         res = {'type': 'deprecated_gcode', 'message': msg,
                'command': cmd, 'parameter': param, 'value': str(value)}
         self._add_deprecated(res)
+    def deprecate_mcu_code(self, mcu, feature, msg=None):
+        mcu_name = mcu.get_name()
+        if msg is None:
+            vhost = self.printer.start_args['software_version']
+            vmcu = mcu.get_status()['mcu_version']
+            msg = ("MCU '%s' has deprecated code (it is missing feature '%s')."
+                   " Recompiling and flashing is recommended (MCU version '%s',"
+                   " host version '%s')." % (mcu_name, feature, vmcu, vhost))
+        res = {'type': 'deprecated_mcu_code', 'message': msg,
+               'mcu': mcu_name, 'feature': feature}
+        self._add_deprecated(res)
     # Status reporting
     def _build_status_config(self, config):
         self.status_raw_config = {}
