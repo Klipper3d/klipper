@@ -120,6 +120,7 @@ class TemperatureProbe:
         self.last_temp_read_time = 0.
         self.last_measurement = (0., 99999999., 0.,)
         # Calibration State
+        self._method = "manual"
         self.cal_helper = None
         self.next_auto_temp = 99999999.
         self.target_temp = 0
@@ -348,7 +349,20 @@ class TemperatureProbe:
     cmd_TEMPERATURE_PROBE_CALIBRATE_help = (
         "Calibrate probe temperature drift compensation"
     )
+    def _auto_probe(self, gcmd):
+        fo_params = dict(gcmd.get_command_parameters())
+        fo_params['METHOD'] = self._method
+        gcode = self.printer.lookup_object('gcode')
+        fo_gcmd = gcode.create_gcode_command("PROBE", "PROBE", fo_params)
+        pprobe = self.printer.lookup_object("probe")
+        probe_session = pprobe.start_probe_session(fo_gcmd)
+        probe_session.run_probe(fo_gcmd)
+        pos = probe_session.pull_probed_results()[0]
+        probe_session.end_probe_session()
+        mpresult = manual_probe.ProbeResult(*pos)
+        self._manual_probe_finalize(mpresult)
     def cmd_TEMPERATURE_PROBE_CALIBRATE(self, gcmd):
+        self._method = gcmd.get('METHOD', 'manual').lower()
         if self.cal_helper is None:
             raise gcmd.error(
                 "No calibration helper registered for [%s]"
@@ -411,6 +425,9 @@ class TemperatureProbe:
         # Capture start position and begin initial probe
         toolhead = self.printer.lookup_object("toolhead")
         self.start_pos = toolhead.get_position()[:2]
+        if self._method != "manual":
+            self._auto_probe(gcmd)
+            return
         manual_probe.ManualProbeHelper(
             self.printer, gcmd, self._manual_probe_finalize
         )
@@ -433,6 +450,9 @@ class TemperatureProbe:
         curpos[2] = start_z
         toolhead.manual_move(curpos, probe_speed)
         self.gcode.register_command("ABORT", None)
+        if self._method != "manual":
+            self._auto_probe(gcmd)
+            return
         manual_probe.ManualProbeHelper(
             self.printer, gcmd, self._manual_probe_finalize
         )
