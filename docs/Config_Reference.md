@@ -2800,6 +2800,19 @@ temperature sensors that are reported via the M105 command.
 #   parameter.
 ```
 
+### [temperature_monitor]
+
+Special temperature sensors, which could fail and/or
+report temperature under specific circumstances.
+
+```
+[temperature_monitor my_sensor]
+#monitor: tmc
+#  The only currently supported is TMC for TMC2240.
+#stepper: stepper_N
+#  The postfix of TMC2240 definition.
+```
+
 ### [temperature_probe]
 
 Reports probe coil temperature.  Includes optional thermal drift
