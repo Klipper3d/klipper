@@ -211,8 +211,10 @@ hx71x_attach_trigger_analog(uint32_t *args) {
     struct hx71x_adc *hx71x = oid_lookup(oid, command_config_hx71x);
     hx71x->ta = trigger_analog_oid_lookup(args[1]);
 }
+#if CONFIG_WANT_TRIGGER_ANALOG
 DECL_COMMAND(hx71x_attach_trigger_analog, "hx71x_attach_trigger_analog oid=%c"
     " trigger_analog_oid=%c");
+#endif
 
 // start/stop capturing ADC data
 void

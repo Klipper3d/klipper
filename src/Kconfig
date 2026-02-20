@@ -183,7 +183,7 @@ config NEED_SENSOR_BULK
     default y
 config WANT_TRIGGER_ANALOG
     bool
-    depends on WANT_HX71X || WANT_ADS1220 || WANT_LDC1612
+    depends on WANT_ADC || WANT_HX71X || WANT_ADS1220 || WANT_LDC1612
     default y
 config NEED_SOS_FILTER
     bool
@@ -263,6 +263,11 @@ config WANT_LDC1612
 config WANT_SENSOR_ANGLE
     bool "Support angle sensors"
     depends on WANT_SPI
+comment "Other features"
+    depends on WANT_ADC || WANT_HX71X || WANT_ADS1220 || WANT_LDC1612
+config WANT_TRIGGER_ANALOG
+    bool "Support for homing/probing events using analog sensors"
+    depends on WANT_ADC || WANT_HX71X || WANT_ADS1220 || WANT_LDC1612
 endmenu
 
 # Generic configuration options for CANbus

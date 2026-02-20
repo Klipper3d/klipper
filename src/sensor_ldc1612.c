@@ -89,8 +89,10 @@ ldc1612_attach_trigger_analog(uint32_t *args) {
     struct ldc1612 *ld = oid_lookup(args[0], command_config_ldc1612);
     ld->ta = trigger_analog_oid_lookup(args[1]);
 }
+#if CONFIG_WANT_TRIGGER_ANALOG
 DECL_COMMAND(ldc1612_attach_trigger_analog,
     "ldc1612_attach_trigger_analog oid=%c trigger_analog_oid=%c");
+#endif
 
 #define DATA_ERROR_AMPLITUDE (1L << 28)
 
