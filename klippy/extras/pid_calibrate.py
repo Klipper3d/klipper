@@ -29,13 +29,16 @@ class PIDCalibrate:
         write_file = gcmd.get_int('WRITE_FILE', 0)
         pheaters = self.printer.lookup_object('heaters')
         heater = pheaters.lookup_heater(heater_name)
+        cfg_max_power = heater.get_max_power()
+        max_power = gcmd.get_float('MAX_POWER', cfg_max_power,
+                                   maxval=cfg_max_power, above=0.)
         self.printer.lookup_object('toolhead').get_last_move_time()
         reactor = self.printer.get_reactor()
         eventtime = reactor.monotonic()
         ctemp, target_temp = heater.get_temp(eventtime)
         if ctemp > target - TUNE_HYSTERESIS * 2:
            raise gcmd.error("Starting temperature should be less than target")
-        calibrate = ControlAutoTune(heater, target)
+        calibrate = ControlAutoTune(heater, target, max_power)
         old_control = heater.set_control(calibrate)
         try:
             pheaters.set_temperature(heater, target, True)
@@ -63,9 +66,9 @@ class PIDCalibrate:
         configfile.set(cfgname, 'pid_Kd', "%.3f" % (Kd,))
 
 class ControlAutoTune:
-    def __init__(self, heater, target):
+    def __init__(self, heater, target, max_power):
         self.heater = heater
-        self.heater_max_power = heater.get_max_power()
+        self.heater_max_power = max_power
         self.calibrate_temp = target
         # Heating control
         self.heating = False
