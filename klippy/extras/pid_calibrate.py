@@ -22,8 +22,11 @@ class PIDCalibrate:
             heater = pheaters.lookup_heater(heater_name)
         except self.printer.config_error as e:
             raise gcmd.error(str(e))
+        cfg_max_power = heater.get_max_power()
+        max_power = gcmd.get_float('MAX_POWER', cfg_max_power,
+                                   maxval=cfg_max_power, above=0.)
         self.printer.lookup_object('toolhead').get_last_move_time()
-        calibrate = ControlAutoTune(heater, target)
+        calibrate = ControlAutoTune(heater, target, max_power)
         old_control = heater.set_control(calibrate)
         try:
             pheaters.set_temperature(heater, target, True)
@@ -53,9 +56,9 @@ class PIDCalibrate:
 TUNE_PID_DELTA = 5.0
 
 class ControlAutoTune:
-    def __init__(self, heater, target):
+    def __init__(self, heater, target, max_power):
         self.heater = heater
-        self.heater_max_power = heater.get_max_power()
+        self.heater_max_power = max_power
         self.calibrate_temp = target
         # Heating control
         self.heating = False
