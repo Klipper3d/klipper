@@ -609,6 +609,11 @@ class EddyScanningProbe:
         self._sample_time_delay = 0.050
         self._sample_time = 0.
         self._is_rapid = False
+        self._printer.register_event_handler("gcode:command_error",
+                                             self._handle_command_error)
+    def _handle_command_error(self):
+        if self._gather is not None:
+            self.end_probe_session()
     def _lookup_toolhead_pos(self, pos_time):
         toolhead = self._printer.lookup_object('toolhead')
         kin = toolhead.get_kinematics()
