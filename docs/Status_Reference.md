@@ -291,9 +291,11 @@ is always available):
 - `state`: The current state of the printer as tracked by the
   idle_timeout module. It is one of the following strings: "Idle",
   "Printing", "Ready".
-- `printing_time`: The amount of time (in seconds) the printer has
-  been in the "Printing" state (as tracked by the idle_timeout
-  module).
+- `mcu_startup_unixtime`: The amount of time (in seconds) since the unix epoch
+  at mcu startup.
+- `mcu_uptime`: The amount of time (in seconds) since mcu startup.
+- `last_print_start_time`: Timestamp (relative to mcu startup) of when the last
+  print started.
 - `idle_timeout`: The current 'timeout' (in seconds)
    to wait for the gcode to be triggered.
    (as set by [SET_IDLE_TIMEOUT](G-Codes.md#set_idle_timeout))
