@@ -692,9 +692,91 @@ cable winch kinematics. In order to home the printer, manually send
 movement commands until the toolhead is at 0, 0, 0 and then issue a
 `G28` command.
 
+#### Cable Winch Flex Compensation
+
+Use `M666 F0` to disable and `M666 F1` to enable flex compensation at
+runtime without restarting the printer.
+
+When the machine starts, flex compensation is disabled. To enable:
+ 1. Tighten lines so they are just barely not sagging.
+ 2. Issue `M666 F1` (or have it near the top of your .gcode file)
+
+If you don't want/need flex compensation, simply avoid issuing `M666 F1`,
+and the machine will use non-flex-compensating kinematics equations.
+
+
 ```
 [printer]
 kinematics: winch
+# These are all flex compensation related configs.
+winch_mover_weight:
+#   The mover weight in kilograms. The default is 0.
+winch_spring_constant:
+#   Approximate spring constant of the line in Newton per meter.
+#   A rough approximation for Garda 1.1 mm line (unit N/m) is 20000.0 N/m.
+#   The default is 0.
+winch_min_force:
+#   Minimum permitted force per anchor in Newton. Provide one value
+#   per defined anchor (comma separated).
+#   A machine with only one high anchor should typically set this to
+#   9.81 x mover_weight (in kg) on that high anchor
+#   (plus extra pretension if desired).
+#   A SpiderCam-like machine (only high anchors) will typically set zero,
+#   or a few Newtons here, just so lines don't go completely slack.
+#   Desired pretension in non-weight-carrying directions is most
+#   often in the 0-40 N range.
+#   The default is 0 for each anchor.
+winch_max_force:
+#   Maximum permitted force per anchor in Newton. Provide one value
+#   per defined anchor (comma separated).
+#   This can be set fairly close to your axis' max force (incluing
+#   any gearing down from running lines back and forth between
+#   anchor and effector).
+#   A SpiderCam-like machine (only high anchors) will typically set this
+#   to 9.81 x mover_weight (in kg) on all axes.
+#   On machines that work with pretension, it's important that you
+#   don't put it higher than you're comfortable with.
+#   It must however be higher than the corresponding winch_min_force.
+#   The default is 120 for each anchor.
+winch_guy_wire_lengths:
+#   Optional guy wire lengths in millimeters for each anchor.
+#   All line that's not on the spool or suspended between anchor point
+#   and mover point is defined to be "guy wire".
+#   The default is 0 for each anchor.
+winch_mechanical_advantage:
+#   Optional mechanical advantage for each anchor.
+#   If the winch force is geared by winding the line back and forth to the effector
+#   in a block-and-talley system, then tell klipper how many times back plus how many times forth.
+#   The default is 1 for each anchor (no gearing).
+flex_compensation_algorithm:
+#   Solver used when computing how much force is required to counteract
+#   gravity and pretension. Choices are 'tikhonov' and 'qp'.
+#   Both algorithms will respect the max/min limits at all times and
+#   compute the same forces most of the time.
+#   They behave differently near the outskirts of the build volume.
+#
+#   'tikhonov' will treat force equilibrium (perfect gravity/pretension counteraction)
+#   as a "best-effort target", prioritizing making the resulting
+#   forces low, smooth, and safe.
+#
+#   'qp' will use the whole min/max force range to enforce exact force
+#   equilibrium whenever theoretically possible.
+#
+#   The default is 'qp'.
+ignore_gravity:
+#   Tell the flex compensation algorithm to
+#   only solve for pretension forces, not gravity counteracting forces.
+#   This is a special setting used for debugging, testing, and a small subset of machines
+#   that drag their effector on a gravity-supporting surface, eg a Slideprinter.
+#   Choices are 'true' and 'false'.
+#   The default is 'false'.
+ignore_pretension:
+#   Tell the flex compensation algorithm to
+#   only solve for gravity counteracting forces, not pretension forces.
+#   This is a special setting only used for debugging.
+#   It should never be used on any practical machine.
+#   Choices are 'true' and 'false'.
+#   The default is 'false'.
 
 # The stepper_a section describes the stepper connected to the first
 # cable winch. A minimum of 3 and a maximum of 26 cable winches may be
