@@ -12,9 +12,9 @@ ClientInfo = {'program': 'motan_data_logger', 'version': 'v0.1'}
 # Available subscriptions when a given config type is found
 ConfigSubscriptions = [
     # (cfgtype, capture_name, api_request, request_params)
-    ('adxl345', '{ct}:{csn}', '{ct}/dump_{ct}', {'sensor': '{csn}'}),
-    ('lis2dw', '{ct}:{csn}', '{ct}/dump_{ct}', {'sensor': '{csn}'}),
-    ('mpu9250', '{ct}:{csn}', '{ct}/dump_{ct}', {'sensor': '{csn}'}),
+    ('adxl345', 'accelerometer:{csn}', '{ct}/dump_{ct}', {'sensor': '{csn}'}),
+    ('lis2dw', 'accelerometer:{csn}', '{ct}/dump_{ct}', {'sensor': '{csn}'}),
+    ('mpu9250', 'accelerometer:{csn}', '{ct}/dump_{ct}', {'sensor': '{csn}'}),
     ('angle', '{ct}:{csn}', '{ct}/dump_{ct}', {'sensor': '{csn}'}),
     ('probe_eddy_current', 'ldc1612:{csn}', 'ldc1612/dump_ldc1612',
      {'sensor': '{csn}'}),
