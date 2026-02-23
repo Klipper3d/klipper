@@ -1,13 +1,29 @@
 #!/usr/bin/env python
 # Tool to subscribe to motion data and log it to a disk file
 #
-# Copyright (C) 2020-2021  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2020-2026  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import sys, os, optparse, socket, select, json, errno, time, zlib
+import sys, os, optparse, socket, select, json, errno, time, zlib, fnmatch
 
 INDEX_UPDATE_TIME = 5.0
 ClientInfo = {'program': 'motan_data_logger', 'version': 'v0.1'}
+
+# Available subscriptions when a given config type is found
+ConfigSubscriptions = [
+    # (cfgtype, capture_name, api_request, request_params)
+    ('adxl345', '{ct}:{csn}', '{ct}/dump_{ct}', {'sensor': '{csn}'}),
+    ('lis2dw', '{ct}:{csn}', '{ct}/dump_{ct}', {'sensor': '{csn}'}),
+    ('mpu9250', '{ct}:{csn}', '{ct}/dump_{ct}', {'sensor': '{csn}'}),
+    ('angle', '{ct}:{csn}', '{ct}/dump_{ct}', {'sensor': '{csn}'}),
+    ('probe_eddy_current', 'ldc1612:{csn}', 'ldc1612/dump_ldc1612',
+     {'sensor': '{csn}'}),
+    ('tmc2130', 'stallguard:{csn}', 'tmc/stallguard_dump', {'name': '{csn}'}),
+    ('tmc2209', 'stallguard:{csn}', 'tmc/stallguard_dump', {'name': '{csn}'}),
+    ('tmc2260', 'stallguard:{csn}', 'tmc/stallguard_dump', {'name': '{csn}'}),
+    ('tmc2240', 'stallguard:{csn}', 'tmc/stallguard_dump', {'name': '{csn}'}),
+    ('tmc5160', 'stallguard:{csn}', 'tmc/stallguard_dump', {'name': '{csn}'}),
+]
 
 def webhook_socket_create(uds_filename):
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -53,7 +69,7 @@ class LogWriter:
         self.comp = None
 
 class DataLogger:
-    def __init__(self, uds_filename, log_prefix):
+    def __init__(self, uds_filename, log_prefix, want_subscriptions):
         # IO
         self.webhook_socket = webhook_socket_create(uds_filename)
         self.poll = select.poll()
@@ -68,6 +84,9 @@ class DataLogger:
         # get_status databasing
         self.db = {}
         self.next_index_time = 0.
+        # Subscriptions
+        self.want_subscriptions = want_subscriptions
+        self.need_subscriptions = []
         # Start login process
         self.send_query("info", "info", {"client_info": ClientInfo},
                         self.handle_info)
@@ -122,6 +141,48 @@ class DataLogger:
                         self.process_socket()
         except KeyboardInterrupt as e:
             self.finish("Keyboard Interrupt")
+    # Subscription handling
+    def build_subscriptions(self, status):
+        avail = []
+        # trapq and stepq subscriptions from motion_report
+        motion_report = status.get("motion_report", {})
+        for trapq in motion_report.get("trapq", []):
+            avail.append(("trapq:" + trapq, "motion_report/dump_trapq",
+                          {"name": trapq}))
+        for stepper in motion_report.get("steppers", []):
+            avail.append(("stepq:" + stepper, "motion_report/dump_stepper",
+                          {"name": stepper}))
+        # config based subsciriptions
+        config = status["configfile"]["settings"]
+        cfgtypes = {p[0]: p for p in ConfigSubscriptions}
+        for cfgname in config.keys():
+            ct = cfgname.split()[0]
+            if ct not in cfgtypes:
+                continue
+            cfgtype, capture_name, request, params = cfgtypes[ct]
+            cfgparts = cfgname.split()
+            csn = cfgparts[-1]
+            if len(cfgparts) > 1:
+                csn = ' '.join(cfgparts[1:])
+            fill = {'ct':ct, 'csn': csn}
+            capture_name = capture_name.format(**fill)
+            request = request.format(**fill)
+            params = {k: v.format(**fill) for k, v in params.items()}
+            avail.append((capture_name, request, params))
+        # Report available subscriptions
+        capture_names = [a[0] for a in avail]
+        sys.stdout.write("Available subscriptions:\n  %s\n"
+                         % ('\n  '.join(sorted(capture_names)).strip(),))
+        # Limit subscriptions to those desired
+        want_captures = {}
+        for pattern in self.want_subscriptions:
+            m = fnmatch.filter(capture_names, pattern)
+            want_captures.update({cn: 1 for cn in m})
+        want = sorted(list(want_captures.keys()))
+        avail_by_name = {a[0]:a for a in avail}
+        self.need_subscriptions = [avail_by_name[n] for n in want]
+        sys.stdout.write("Subscribing to:\n  %s\n"
+                         % ('\n  '.join(want).strip(),))
     # Query response handlers
     def send_subscribe(self, msg_id, method, params, cb=None, async_cb=None):
         if cb is None:
@@ -142,30 +203,12 @@ class DataLogger:
         result = msg["result"]
         self.next_index_time = result["eventtime"] + INDEX_UPDATE_TIME
         self.db["status"] = status = result["status"]
-        # Subscribe to trapq and stepper queue updates
-        motion_report = status.get("motion_report", {})
-        for trapq in motion_report.get("trapq", []):
-            self.send_subscribe("trapq:" + trapq, "motion_report/dump_trapq",
-                                {"name": trapq})
-        for stepper in motion_report.get("steppers", []):
-            self.send_subscribe("stepq:" + stepper,
-                                "motion_report/dump_stepper", {"name": stepper})
-        # Subscribe to additional sensor data
-        stypes = ["adxl345", "lis2dw", "mpu9250", "angle"]
-        stypes = {st:st for st in stypes}
-        stypes['probe_eddy_current'] = 'ldc1612'
-        config = status["configfile"]["settings"]
-        for cfgname in config.keys():
-            for capprefix, st in sorted(stypes.items()):
-                if cfgname == capprefix or cfgname.startswith(capprefix + " "):
-                    aname = cfgname.split()[-1]
-                    lname = "%s:%s" % (st, aname)
-                    qcmd = "%s/dump_%s" % (st, st)
-                    self.send_subscribe(lname, qcmd, {"sensor": aname})
-            if cfgname.startswith("tmc"):
-                driver = ' '.join(cfgname.split()[1:])
-                self.send_subscribe("stallguard:" + driver,
-                                    "tmc/stallguard_dump", {"name": driver})
+        # Determine available subscriptions
+        self.build_subscriptions(status)
+        # Subscribe
+        for capture_name, request, params in self.need_subscriptions:
+            self.send_subscribe(capture_name, request, params)
+        sys.stdout.write("Starting capture...\n")
     def handle_dump(self, msg, raw_msg):
         msg_id = msg["id"]
         if "result" not in msg:
@@ -197,12 +240,23 @@ def nice():
 def main():
     usage = "%prog [options] <socket filename> <log name>"
     opts = optparse.OptionParser(usage)
+    opts.add_option("-s", "--subscribe", dest="subscribe", default="",
+                    help="comma separated list of subscription patterns")
+    opts.add_option("--no-default", action="store_true",
+                    help="disable default subscriptions")
     options, args = opts.parse_args()
     if len(args) != 2:
         opts.error("Incorrect number of arguments")
 
+    # Determine subscriptions
+    want_subs = ['trapq:*', 'stepq:*']
+    if options.no_default:
+        want_subs = []
+    want_subs.extend([s.strip() for s in options.subscribe.split(',')])
+
+    # Connect and start capture
     nice()
-    dl = DataLogger(args[0], args[1])
+    dl = DataLogger(args[0], args[1], want_subs)
     dl.run()
 
 if __name__ == '__main__':
