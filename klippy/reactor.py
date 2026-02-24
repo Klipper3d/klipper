@@ -6,18 +6,29 @@
 import os, gc, select, math, time, logging, queue
 import greenlet
 import chelper, util
+import inspect
 
 _NOW = 0.
 _NEVER = 9999999999999999.
+_SLOW_TIMER = .050
 
 class ReactorError(Exception):
     pass
 
 class ReactorTimer:
-    def __init__(self, callback, waketime):
+    def __init__(self, callback, waketime, whoami=None):
         self.callback = callback
         self.waketime = waketime
         self.timer_is_running = False
+        self.whoami = whoami
+        if whoami is None:
+            if inspect.isfunction(callback) or inspect.ismethod(callback):
+                fn_name = callback.__name__
+                ln = inspect.getsourcelines(callback)[1]
+                file = os.path.basename(inspect.getsourcefile(callback))
+                self.whoami = "%s:%d:%s" % (file, ln, fn_name)
+            else:
+                self.whoami = repr(callback)
 
 class ReactorCompletion:
     class sentinel: pass
@@ -63,6 +74,11 @@ class ReactorGreenlet(greenlet.greenlet):
     def __init__(self, run):
         greenlet.greenlet.__init__(self, run=run)
         self.timer = None
+        # Time tracking
+        self.tstart = .0
+        self.tstop = .0
+        self.tpause = .0
+        self.whoami = None
 
 class ReactorMutex:
     def __init__(self, reactor, is_locked):
@@ -138,8 +154,8 @@ class SelectReactor:
             return
         timer_handler.waketime = waketime
         self._next_timer = min(self._next_timer, waketime)
-    def register_timer(self, callback, waketime=NEVER):
-        timer_handler = ReactorTimer(callback, waketime)
+    def register_timer(self, callback, waketime=NEVER, whoami=None):
+        timer_handler = ReactorTimer(callback, waketime, whoami)
         timers = list(self._timers)
         timers.append(timer_handler)
         self._timers = timers
@@ -174,9 +190,16 @@ class SelectReactor:
             if eventtime >= waketime:
                 t.waketime = self.NEVER
                 t.timer_is_running = True
+                g_dispatch.tstart = self.monotonic()
+                g_dispatch.whoami = t.whoami
                 t.waketime = waketime = t.callback(eventtime)
+                g_dispatch.tstop = self.monotonic()
                 t.timer_is_running = False
+                time_spend = g_dispatch.tstop - g_dispatch.tstart
+                if time_spend > _SLOW_TIMER and t.whoami != "pause_wrapper":
+                    logging.info("Slow: %s %.6f", t.whoami, time_spend)
                 if g_dispatch is not self._g_dispatch:
+                    g_dispatch.tstart = .0
                     self._next_timer = min(self._next_timer, waketime)
                     self._end_greenlet(g_dispatch)
                     return 0.
@@ -233,6 +256,8 @@ class SelectReactor:
             # Switch to _check_timers (via g.timer.callback return)
             if self._prevent_pause_count:
                 self.verify_can_pause()
+            if g.tstart > .0:
+                g.tpause = self.monotonic()
             return self._g_dispatch.switch(waketime)
         # Pausing the dispatch greenlet - prepare a new greenlet to do dispatch
         if self._prevent_pause_count:
@@ -243,7 +268,17 @@ class SelectReactor:
             g_next = ReactorGreenlet(run=self._dispatch_loop)
             self._all_greenlets.append(g_next)
         g_next.parent = g.parent
-        g.timer = self.register_timer(g.switch, waketime)
+        # Track time spend in pause
+        if g.tstart > .0:
+            g.tpause = self.monotonic()
+        def pause_wrapper(_waketime):
+            _g = g
+            if _g.tpause > .0:
+                pause_time = self.monotonic() - _g.tpause
+                _g.tstart += pause_time
+                _g.tpause = .0
+            return _g.switch(_waketime)
+        g.timer = self.register_timer(pause_wrapper, waketime, "pause_wrapper")
         self._next_timer = self.NOW
         # Switch to _dispatch_loop (via _end_greenlet or direct)
         eventtime = g_next.switch()
