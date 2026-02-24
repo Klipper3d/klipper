@@ -486,7 +486,7 @@ class EddyTap:
         self._z_min_position = probe.lookup_minimum_z(config)
         self._gather = None
         self._filter_design = None
-        self._tap_threshold = config.getfloat('tap_threshold', 0., minval=0.)
+        self._tap_threshold = config.getfloat('tap_threshold', 0., above=0.)
         if self._tap_threshold:
             self._setup_tap()
     # Setup for "tap" probe request
@@ -503,7 +503,7 @@ class EddyTap:
         mcu = self._sensor_helper.get_mcu()
         sos_filter = trigger_analog.MCU_SosFilter(mcu, cmd_queue, 5)
         self._trigger_analog.setup_sos_filter(sos_filter)
-    def _prep_trigger_analog_tap(self):
+    def _prep_trigger_analog_tap(self, gcmd):
         if not self._tap_threshold:
             raise self._printer.command_error("Tap not configured")
         sos_filter = self._trigger_analog.get_sos_filter()
@@ -511,7 +511,9 @@ class EddyTap:
         sos_filter.set_offset_scale(0, 1., auto_offset=True)
         self._trigger_analog.set_raw_range(0, MAX_VALID_RAW_VALUE)
         convert_frequency = self._sensor_helper.convert_frequency
-        raw_threshold = convert_frequency(self._tap_threshold)
+        tap_threshold = gcmd.get_float("TAP_THRESHOLD",
+                                       self._tap_threshold, above=0.)
+        raw_threshold = convert_frequency(tap_threshold)
         self._trigger_analog.set_trigger('diff_peak_gt', raw_threshold)
     # Measurement analysis to determine "tap" position
     def _validate_samples_time(self, measures, start_time, end_time):
@@ -572,7 +574,7 @@ class EddyTap:
                                         trig_pos[0], trig_pos[1], trig_pos[2])
     # Probe session interface
     def start_probe_session(self, gcmd):
-        self._prep_trigger_analog_tap()
+        self._prep_trigger_analog_tap(gcmd)
         self._gather = EddyGatherSamples(self._printer, self._sensor_helper)
         return self
     def run_probe(self, gcmd):

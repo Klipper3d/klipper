@@ -123,7 +123,6 @@ and that upon collision it always decreases by at least this value.
 #samples: 3
 #samples_tolerance: 0.025
 #samples_tolerance_retries: 3
-tap_threshold: 0 # 0 means tap is disabled
 ```
 
 Before setting it to any other value, it is necessary to install `scipy`:

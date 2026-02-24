@@ -1247,6 +1247,9 @@ additional parameters if a `[probe_eddy_current]` section is defined:
   using `METHOD=rapid_scan` this specifies the measurement time window
   at each target. If not specified, the default is 0.100 (which is
   100ms).
+- `TAP_THRESHOLD=<value>`: This overrides the `tap_threshold`
+  specified in the `[probe_eddy_current]` config section when probing
+  using `METHOD=tap`.
 
 #### PROBE_EDDY_CURRENT_CALIBRATE
 `PROBE_EDDY_CURRENT_CALIBRATE CHIP=<config_name>`: This starts a tool

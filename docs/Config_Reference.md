@@ -2326,9 +2326,16 @@ sensor_type: ldc1612
 #samples_tolerance:
 #samples_tolerance_retries:
 #   See the "probe" section for information on these parameters.
-#tap_threshold: 0
-#   Noise cutoff/stop trigger threshold delta Hz per sample
-#   See the Eddy_Probe.md for explanation
+#tap_threshold:
+#   Noise cutoff/stop trigger threshold (in Hz). Specify this value to
+#   enable support for "METHOD=tap" probe commands. See Eddy_Probe.md
+#   for more information. Larger values make the tap detection less
+#   sensitive. That is, larger values make it less likely the toolhead
+#   will incorrectly stop early due to noise, while increasing the
+#   risk of the toolhead not correctly stopping when it first contacts
+#   the bed. If this value is specified then one may override its
+#   value at run-time using the "TAP_THRESHOLD" parameter on probe
+#   commands. The default is to not enable support for "tap" probing.
 ```
 
 ### [axis_twist_compensation]
