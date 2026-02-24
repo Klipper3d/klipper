@@ -600,7 +600,10 @@ class EddyTap:
         toolhead = self._printer.lookup_object('toolhead')
         pos = toolhead.get_position()
         pos[2] = self._z_min_position
-        speed = self._param_helper.get_probe_params(gcmd)['probe_speed']
+        params = self._param_helper.get_probe_params(gcmd)
+        speed = params['probe_speed']
+        lift_speed = params['lift_speed']
+        lift_dist = gcmd.get_float('SAMPLE_RETRACT_DIST', 4., above=0.)
         move_start_time = toolhead.get_last_move_time()
         # Perform probing move
         phoming = self._printer.lookup_object('homing')
@@ -614,6 +617,10 @@ class EddyTap:
         end_time = trigger_time
         self._gather.add_probe_request(self._analyze_tap, start_time, end_time,
                                        start_time, end_time)
+        # Perform lifting move
+        haltpos = toolhead.get_position()
+        haltpos[2] += lift_dist
+        toolhead.manual_move(haltpos, lift_speed)
     def pull_probed_results(self):
         return self._gather.pull_probed()
     def end_probe_session(self):
@@ -704,9 +711,7 @@ class EddyParameterHelper:
         probe_speed = gcmd.get_float("PROBE_SPEED", 5.0, above=0.)
         lift_speed = gcmd.get_float("LIFT_SPEED", 5.0, above=0.)
         samples = gcmd.get_int("SAMPLES", 1, minval=1)
-        samp_retract_dist = gcmd.get_float("SAMPLE_RETRACT_DIST", 2.0, above=0.)
-        if method in ['scan', 'rapid_scan']:
-            samp_retract_dist = 0.
+        samp_retract_dist = 0.
         samp_tolerance = gcmd.get_float("SAMPLES_TOLERANCE", 0.100, minval=0.)
         samp_retries = gcmd.get_int("SAMPLES_TOLERANCE_RETRIES", 0, minval=0)
         samples_result = gcmd.get("SAMPLES_RESULT", 'average')
