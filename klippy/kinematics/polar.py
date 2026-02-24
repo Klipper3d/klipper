@@ -6,6 +6,26 @@
 import logging, math
 import stepper
 
+
+def distance_line_to_point(p1, p2):
+    ab_x = p2[0]-p1[0]
+    ab_y = p2[1]-p1[1]
+    ap_x = -p1[0]
+    ap_y = -p1[1]
+
+    ab_ap_dot_product = ab_x * ap_x + ab_y * ap_y
+    ab_length = math.sqrt(ab_x ** 2 + ab_y ** 2)
+
+    # Check if the projected point lies on the bounded line segment
+    if ab_ap_dot_product <= -0.1:
+        dist = math.sqrt(ap_x ** 2 + ap_y ** 2)
+    elif ab_ap_dot_product >= ab_length ** 2:
+        dist = math.sqrt(p2[0] ** 2 + p2[1] ** 2)
+    else:
+        dist = abs(ab_x * ap_y - ab_y * ap_x) / ab_length
+    return dist
+
+
 class PolarKinematics:
     def __init__(self, toolhead, config):
         # Setup axis steppers
@@ -22,11 +42,14 @@ class PolarKinematics:
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
         # Setup boundary checks
-        max_velocity, max_accel = toolhead.get_max_velocity()
+        self.max_velocity, self.max_accel = toolhead.get_max_velocity()
         self.max_z_velocity = config.getfloat(
-            'max_z_velocity', max_velocity, above=0., maxval=max_velocity)
+            'max_z_velocity', self.max_velocity, above=0.,
+            maxval=self.max_velocity)
         self.max_z_accel = config.getfloat(
-            'max_z_accel', max_accel, above=0., maxval=max_accel)
+            'max_z_accel', self.max_accel, above=0., maxval=self.max_accel)
+        self.v_rad_max = config.getfloat(
+            'max_angular_velocity', above=0., default=0)
         self.limit_z = (1.0, -1.0)
         self.limit_xy2 = -1.
         max_xy = self.rails[0].get_range()[1]
@@ -101,6 +124,20 @@ class PolarKinematics:
             z_ratio = move.move_d / abs(move.axes_d[2])
             move.limit_speed(self.max_z_velocity * z_ratio,
                              self.max_z_accel * z_ratio)
+        # Slow down near center
+        if move.axes_d[0] or move.axes_d[1]:
+            if self.v_rad_max == 0:
+                return
+            min_dist = distance_line_to_point(move.start_pos[0:2],
+                                              move.end_pos[0:2])
+            if min_dist == 0:
+                return
+            v_angular = math.sqrt(move.max_cruise_v2) / min_dist
+            if self.v_rad_max < v_angular:
+                scale_radius = self.v_rad_max/v_angular
+                move.limit_speed(self.max_velocity * scale_radius,
+                                 self.max_accel * scale_radius)
+
     def get_status(self, eventtime):
         xy_home = "xy" if self.limit_xy2 >= 0. else ""
         z_home = "z" if self.limit_z[0] <= self.limit_z[1] else ""
