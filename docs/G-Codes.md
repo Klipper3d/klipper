@@ -1192,8 +1192,9 @@ setting in the [probe config section](Config_Reference.md#probe).
 The optional parameter `METHOD` is probe-specific.
 
 #### QUERY_PROBE
-`QUERY_PROBE`: Report the current status of the probe ("triggered" or
-"open").
+`QUERY_PROBE [NO_OUTPUT=1]`: Report the current status of the probe
+("triggered" or "open"). If NO_OUTPUT=1 is specified then QUERY_PROBE
+will only update the probe state, but not report the status to console.
 
 #### PROBE_ACCURACY
 `PROBE_ACCURACY [METHOD=<value>] [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
