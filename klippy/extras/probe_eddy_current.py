@@ -514,7 +514,25 @@ class EddyTap:
         raw_threshold = convert_frequency(self._tap_threshold)
         self._trigger_analog.set_trigger('diff_peak_gt', raw_threshold)
     # Measurement analysis to determine "tap" position
-    def central_diff(self, times, values):
+    def _validate_samples_time(self, measures, start_time, end_time):
+        cmderr = self._printer.command_error
+        if end_time - start_time < 0.100:
+            raise cmderr("Tap detected too close to start of move")
+        timestamps = [m[0] for m in measures]
+        if len(timestamps) < 2:
+            raise cmderr("Unable to obtain probe_eddy_current sensor readings")
+        ts = [start_time] + timestamps + [end_time]
+        tdiffs = [ts[i] - ts[i-1] for i in range(1, len(ts))]
+        tmax = max(tdiffs)
+        tmin = min(tdiffs[1:-1])
+        cycle_time = 1.0 / self._sensor_helper.get_samples_per_second()
+        if tmax > cycle_time * 1.25:
+            raise cmderr("Eddy: Gaps in the data: %.3f > %.3f"
+                         % (tmax, cycle_time * 1.25))
+        if tmin < cycle_time * 0.75:
+            raise cmderr("Eddy: CLKIN frequency too low: %.3f < %.3f"
+                         % (tmin, cycle_time * 0.75))
+    def _central_diff(self, times, values):
         velocity = [0.0] * len(values)
         for i in range(1, len(values) - 1):
             delta_v = (values[i+1] - values[i-1])
@@ -523,38 +541,19 @@ class EddyTap:
         velocity[0] = (values[1] - values[0]) / (times[1] - times[0])
         velocity[-1] = (values[-1] - values[-2]) / (times[-1] - times[-2])
         return velocity
-    def validate_samples_time(self, timestamps):
-        sps = self._sensor_helper.get_samples_per_second()
-        cycle_time = 1.0 / sps
-        SYNC_SLACK = 0.001
-        for i in range(1, len(timestamps)):
-            tdiff = timestamps[i] - timestamps[i-1]
-            if cycle_time + SYNC_SLACK < tdiff:
-                logging.error("Eddy: Gaps in the data: %.3f < %.3f" % (
-                    (cycle_time + SYNC_SLACK, tdiff)
-                ))
-                break
-            if cycle_time - SYNC_SLACK > tdiff:
-                logging.error(
-                    "Eddy: CLKIN frequency too low: %.3f > %.3f" % (
-                        (cycle_time - SYNC_SLACK, tdiff)
-                    ))
-                break
     def _pull_tap_time(self, measures):
         tap_time = []
         tap_value = []
         for time, freq, z in measures:
             tap_time.append(time)
             tap_value.append(freq)
-        # If samples have gaps this will not produce adequate data
-        self.validate_samples_time(tap_time)
         # Do the same filtering as on the MCU but without induced lag
         main_design = self._filter_design.get_main_filter()
         try:
             fvals = main_design.filtfilt(tap_value)
         except ValueError as e:
             raise self._printer.command_error(str(e))
-        velocity = self.central_diff(tap_time, fvals)
+        velocity = self._central_diff(tap_time, fvals)
         peak_velocity = max(velocity)
         i = velocity.index(peak_velocity)
         return tap_time[i]
@@ -565,7 +564,8 @@ class EddyTap:
                                       s.get_past_mcu_position(pos_time))
                     for s in kin.get_steppers()}
         return kin.calc_position(kin_spos)
-    def _analyze_tap(self, measures):
+    def _analyze_tap(self, measures, start_time, end_time):
+        self._validate_samples_time(measures, start_time, end_time)
         pos_time = self._pull_tap_time(measures)
         trig_pos = self._lookup_toolhead_pos(pos_time)
         return manual_probe.ProbeResult(trig_pos[0], trig_pos[1], trig_pos[2],
@@ -591,7 +591,8 @@ class EddyTap:
             # Filter short move
             start_time = move_start_time
         end_time = trigger_time
-        self._gather.add_probe_request(self._analyze_tap, start_time, end_time)
+        self._gather.add_probe_request(self._analyze_tap, start_time, end_time,
+                                       start_time, end_time)
     def pull_probed_results(self):
         return self._gather.pull_probed()
     def end_probe_session(self):
