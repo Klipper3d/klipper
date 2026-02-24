@@ -167,11 +167,15 @@ class Printer:
             logging.exception("Unhandled exception during ready callback")
             self.invoke_shutdown("Internal error during ready callback: %s"
                                  % (str(e),))
+    def _handle_analyze_shutdown(self, msg, details):
+        logging.info(self.reactor.dump_debug())
     def run(self):
         systime = time.time()
         monotime = self.reactor.monotonic()
         logging.info("Start printer at %s (%.1f %.1f)",
                      time.asctime(time.localtime(systime)), systime, monotime)
+        self.register_event_handler("klippy:analyze_shutdown",
+                                    self._handle_analyze_shutdown)
         # Enter main reactor loop
         try:
             self.reactor.run()
