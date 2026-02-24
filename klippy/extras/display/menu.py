@@ -662,13 +662,33 @@ class MenuList(MenuContainer):
 class MenuVSDList(MenuList):
     def __init__(self, manager, config, **kwargs):
         super(MenuVSDList, self).__init__(manager, config, **kwargs)
+        # set class defaults and attributes from arguments
+        self._sort = kwargs.get('sort', 'name')
+        self._reverse = kwargs.get('reverse', False)
+        if config is not None:
+            # overwrite class attributes from config
+            sort_choices = {'name': 'name', 'date': 'date', 'size': 'size'}
+            self._sort = config.getchoice('sort', sort_choices, self._sort)
+            self._reverse = config.getboolean('reverse', self._reverse)
 
     def _populate(self):
         super(MenuVSDList, self)._populate()
         sdcard = self.manager.printer.lookup_object('virtual_sdcard', None)
         if sdcard is not None:
             files = sdcard.get_file_list()
-            for fname, fsize in files:
+            if self._sort == 'name':
+                files = sorted(
+                    files, key=lambda f: f[0], reverse=self._reverse
+                )
+            elif self._sort == 'date':
+                files = sorted(
+                    files, key=lambda f: f[2], reverse=not self._reverse
+                )
+            elif self._sort == 'size':
+                files = sorted(
+                    files, key=lambda f: f[1], reverse=not self._reverse
+                )
+            for fname, fsize, _mtime in files:
                 self.insert_item(self.manager.menuitem_from(
                     'command', name=repr(fname), gcode='M23 /%s' % str(fname)))
 
