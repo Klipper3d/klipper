@@ -4507,8 +4507,8 @@ Support for a display attached to the micro-controller.
 [display]
 lcd_type:
 #   The type of LCD chip in use. This may be "hd44780", "hd44780_spi",
-#   "aip31068_spi", "st7920", "emulated_st7920", "uc1701", "ssd1306", or
-#   "sh1106".
+#   "aip31068_spi", "st7920", "emulated_st7920", "uc1701", "ssd1306",
+#   "sh1106" or "gc9a01".
 #   See the display sections below for information on each type and
 #   additional parameters they provide. This parameter must be
 #   provided.
@@ -4774,6 +4774,41 @@ lcd_type:
 #x_offset: 0
 #   Set the horizontal offset value on SH1106 displays. The default is
 #   0.
+...
+```
+
+#### Roung gc9a01 display
+
+Information on configuring round gc9a01 display (which may work similar to
+Knomi modules).
+
+```
+[display]
+# GC9A01 circular TFT display (240x240 pixels)
+lcd_type: gc9a01
+spi_bus:
+# The SPI bus to use. See the "common SPI settings" section for a
+# description of this parameter.
+cs_pin:
+# The chip select line for the display. This parameter must be
+# provided.
+dc_pin:
+# The data/command pin for the display. This parameter must be
+# provided.
+reset_pin:
+# The reset pin for the display. This parameter must be provided.
+#width: 240
+# Display width in pixels. Default is 240.
+#height: 240
+# Display height in pixels. Default is 240.
+#fg_color: 63488
+# Foreground color in RGB565 format (16-bit). Default is 65535 (0xFFFF)
+# (white).
+#bg_color: 2016
+# Background color in RGB565 format (16-bit). Default is 0 (black).
+#rotation: 0
+# Display rotation in degrees. Valid values are 0, 90, 180, 270.
+# Default is 0.
 ...
 ```
 
