@@ -248,8 +248,10 @@ class MCU_I2C:
                     "i2c_transfer oid=%c write=%*s read_len=%u",
                     cq=self.cmd_queue)
             if self.async_write_only:
-                self.mcu.register_response(self._async_write_status,
-                                           "i2c_response", self.oid)
+                self.mcu.register_serial_response(
+                    self._async_write_status,
+                    "i2c_response oid=%c i2c_bus_status=%c response=%*s",
+                    self.oid)
         self._configured = True
     def i2c_write_noack(self, data, minclock=0, reqclock=0):
         if self.async_write_only:

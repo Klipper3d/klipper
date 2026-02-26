@@ -52,8 +52,9 @@ class MCU_buttons:
             " rest_ticks=%d retransmit_count=%d invert=%d" % (
                 self.oid, clock, rest_ticks, RETRANSMIT_COUNT,
                 self.invert), is_init=True)
-        self.mcu.register_response(self.handle_buttons_state,
-                                   "buttons_state", self.oid)
+        self.mcu.register_serial_response(
+            self.handle_buttons_state,
+            "buttons_state oid=%c ack_count=%c state=%*s", self.oid)
     def handle_buttons_state(self, params):
         # Expand the message ack_count from 8-bit
         ack_count = self.ack_count
