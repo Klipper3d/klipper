@@ -42,8 +42,6 @@ class HX71xBase:
         # gain/channel choices
         self.gain_channel = int(config.getchoice('gain', gain_options,
                                                  default=default_gain))
-        ## Bulk Sensor Setup
-        self.bulk_queue = bulk_sensor.BulkDataQueue(mcu, oid=self.oid)
         # Clock tracking
         chip_smooth = self.sps * UPDATE_INTERVAL * 2
         self.ffreader = bulk_sensor.FixedFreqReader(mcu, chip_smooth, "<i")
