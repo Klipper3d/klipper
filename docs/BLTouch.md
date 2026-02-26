@@ -223,6 +223,81 @@ far above the nozzle as possible to avoid it touching printed parts.
 If an adjustment is made to the probe position, then rerun the probe
 calibration steps.
 
+## Automatic Z-Offset Calibration
+
+The BLTouch supports automatic z-offset calibration using electrical
+contact detection between the nozzle and a conductive bed surface.
+This feature eliminates the need for manual paper testing and provides
+accurate, repeatable results.
+
+### Hardware Requirements
+
+- **Conductive bed surface**: Aluminum, steel, or exposed metal
+- **GPIO connection**: Bed surface connected to a GPIO pin with pull-up resistor  
+- **Electrical ground**: Nozzle/hotend connected to ground
+- **Clean nozzle**: Free of plastic residue for reliable contact
+
+### Configuration
+
+Add the `nozzle_probe_pin` parameter to your [bltouch] section:
+
+```
+[bltouch]
+# ... existing configuration ...
+nozzle_probe_pin: ^!P1.25    # GPIO pin for bed connection
+calibration_position: 100, 100  # XY position for calibration
+nozzle_temp: 200              # Heating temperature during calibration
+```
+
+### Usage
+
+Basic automatic calibration:
+```
+BLTOUCH_AUTO_Z_OFFSET
+```
+
+With options:
+```
+# Calibration without heating (for testing)
+BLTOUCH_AUTO_Z_OFFSET HEAT_NOZZLE=0
+
+# Calibration at specific position
+BLTOUCH_AUTO_Z_OFFSET POSITION=150,150
+
+# Custom temperature
+BLTOUCH_AUTO_Z_OFFSET NOZZLE_TEMP=210
+```
+
+The calibration process:
+1. Homes all axes if needed
+2. Moves to the calibration position  
+3. Heats the nozzle (if enabled)
+4. Performs BLTouch probing for reference
+5. Detects electrical contact between nozzle and bed
+6. Calculates and updates the z-offset
+
+After calibration, use `SAVE_CONFIG` to make the new z-offset permanent.
+
+### Bed Preparation
+
+**For PEI/PET coated beds**: Carefully scrape away a small 5x5mm area 
+of coating to expose the underlying metal at your calibration position.
+Clean with isopropyl alcohol.
+
+**For non-conductive beds**: Apply copper tape or aluminum foil at the
+calibration position and connect with wire to the GPIO pin.
+
+### Troubleshooting
+
+**"Nozzle probe already triggered" error**: Check GPIO pin configuration 
+(pull-up and inversion), verify wiring with multimeter.
+
+**Inconsistent results**: Clean nozzle thoroughly, check bed conductivity,
+ensure stable electrical connections.
+
+**Large offset errors**: Verify BLTouch mounting security, confirm 
+electrical continuity with multimeter.
+
 ## BL-Touch output mode
 
 * A BL-Touch V3.0 supports setting a 5V or OPEN-DRAIN output mode,

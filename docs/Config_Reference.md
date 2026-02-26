@@ -2232,6 +2232,45 @@ control_pin:
 #samples_tolerance:
 #samples_tolerance_retries:
 #   See the "probe" section for information on these parameters.
+#nozzle_probe_pin:
+#   Pin connected to the conductive bed surface for nozzle contact detection
+#   during automatic z-offset calibration. This parameter enables the
+#   BLTOUCH_AUTO_Z_OFFSET command. The pin should be configured with a
+#   pull-up resistor (prefix with ^) and may need logic inversion (prefix
+#   with !). Example: "^!P1.25" for an inverted pin P1.25 with pull-up.
+#   This parameter is optional; if not specified, auto calibration will
+#   not be available.
+#calibration_position: 5, 5
+#   X, Y coordinates (in mm) where automatic z-offset calibration will be
+#   performed. This should be a position on the bed with good electrical
+#   conductivity and within the probe's reachable area considering the
+#   probe offsets. The default is 5, 5.
+#nozzle_temp: 200
+#   Nozzle temperature (in Celsius) to use during automatic calibration.
+#   Heating ensures any residual filament is soft and won't interfere
+#   with electrical contact detection. The default is 200.
+#calibration_probe_speed: 5.0
+#   Speed (in mm/s) for initial probe movements during calibration.
+#   The default is 5.0.
+#calibration_probe_speed_slow: 1.0
+#   Speed (in mm/s) for final accurate probe movements during calibration.
+#   Lower speeds increase accuracy. The default is 1.0.
+#calibration_lift_speed: 10.0
+#   Speed (in mm/s) for lift movements between probing operations during
+#   calibration. The default is 10.0.
+#calibration_retract_dist: 2.0
+#   Distance (in mm) to lift between BLTouch probe attempts during
+#   calibration. The default is 2.0.
+#calibration_nozzle_retract_dist: 2.0
+#   Distance (in mm) to lift between nozzle touch attempts during
+#   calibration. The default is 2.0.
+#calibration_nozzle_samples: 1
+#   Number of nozzle touch samples to average for increased accuracy.
+#   More samples increase calibration time but may improve consistency.
+#   Must be between 1 and 10. The default is 1.
+#calibration_nozzle_diameter: 0.4
+#   Nozzle diameter (in mm) for informational purposes and future
+#   enhancements to the calibration algorithm. The default is 0.4.
 ```
 
 ### [smart_effector]
