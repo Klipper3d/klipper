@@ -961,6 +961,7 @@ class MCUConfigHelper:
         self._reactor = printer.get_reactor()
         self._name = mcu.get_name()
         # Configuration tracking
+        self._config_finalized = False
         self._oid_count = 0
         self._config_callbacks = []
         self._config_cmds = []
@@ -978,6 +979,7 @@ class MCUConfigHelper:
         # Build config commands
         for cb in self._config_callbacks:
             cb()
+        self._config_finalized = True
         self._config_cmds.insert(0, "allocate_oids count=%d"
                                  % (self._oid_count,))
         # Resolve pin names
@@ -1071,19 +1073,28 @@ class MCUConfigHelper:
                         " to be able to resolve a maximum nominal duration"
                         " of %ds. Max possible duration: %ds"
                         % (self._name, MAX_NOMINAL_DURATION, max_possible))
+    def _verify_not_finalized(self):
+        if self._config_finalized:
+            raise error("Internal error! MCU already configured")
     # Config creation helpers
+    def is_config_finalized(self):
+        return self._config_finalized
     def setup_pin(self, pin_type, pin_params):
+        self._verify_not_finalized()
         pcs = {'endstop': MCU_endstop,
                'digital_out': MCU_digital_out, 'pwm': MCU_pwm, 'adc': MCU_adc}
         if pin_type not in pcs:
             raise pins.error("pin type %s not supported on mcu" % (pin_type,))
         return pcs[pin_type](self._mcu, pin_params)
     def create_oid(self):
+        self._verify_not_finalized()
         self._oid_count += 1
         return self._oid_count - 1
     def register_config_callback(self, cb):
+        self._verify_not_finalized()
         self._config_callbacks.append(cb)
     def add_config_cmd(self, cmd, is_init=False, on_restart=False):
+        self._verify_not_finalized()
         if is_init:
             self._init_cmds.append(cmd)
         elif on_restart:
