@@ -85,8 +85,6 @@ class ADS1220:
         if drdy_pin_mcu != self.mcu:
             raise config.error("ADS1220 config error: SPI communication and"
                                " data_ready_pin must be on the same MCU")
-        # Bulk Sensor Setup
-        self.bulk_queue = bulk_sensor.BulkDataQueue(self.mcu, oid=self.oid)
         # Clock tracking
         chip_smooth = self.sps * UPDATE_INTERVAL * 2
         # Measurement conversion
