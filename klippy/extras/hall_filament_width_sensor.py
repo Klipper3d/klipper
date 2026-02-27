@@ -63,19 +63,36 @@ class HallFilamentWidthSensor:
             self.extrude_factor_update_event)
         # Register commands
         self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_command('QUERY_FILAMENT_WIDTH', self.cmd_M407)
-        self.gcode.register_command('RESET_FILAMENT_WIDTH_SENSOR',
-                                    self.cmd_ClearFilamentArray)
-        self.gcode.register_command('DISABLE_FILAMENT_WIDTH_SENSOR',
-                                    self.cmd_M406)
-        self.gcode.register_command('ENABLE_FILAMENT_WIDTH_SENSOR',
-                                    self.cmd_M405)
-        self.gcode.register_command('QUERY_RAW_FILAMENT_WIDTH',
-                                    self.cmd_Get_Raw_Values)
-        self.gcode.register_command('ENABLE_FILAMENT_WIDTH_LOG',
-                                    self.cmd_log_enable)
-        self.gcode.register_command('DISABLE_FILAMENT_WIDTH_LOG',
-                                    self.cmd_log_disable)
+        self.gcode.register_command(
+            'QUERY_FILAMENT_WIDTH',
+            self.cmd_M407,
+            desc=self.cmd_QUERY_FILAMENT_WIDTH_help
+            )
+        self.gcode.register_command(
+            'RESET_FILAMENT_WIDTH_SENSOR',
+            self.cmd_ClearFilamentArray,
+            desc=self.cmd_RESET_FILAMENT_WIDTH_SENSOR_help
+            )
+        self.gcode.register_command(
+            'DISABLE_FILAMENT_WIDTH_SENSOR',
+            self.cmd_M406,
+            desc=self.cmd_DISABLE_FILAMENT_WIDTH_SENSOR_help)
+        self.gcode.register_command(
+            'ENABLE_FILAMENT_WIDTH_SENSOR',
+            self.cmd_M405,
+            desc=self.cmd_ENABLE_FILAMENT_WIDTH_SENSOR_help)
+        self.gcode.register_command(
+            'QUERY_RAW_FILAMENT_WIDTH',
+            self.cmd_Get_Raw_Values,
+            desc=self.cmd_QUERY_RAW_FILAMENT_WIDTH_help)
+        self.gcode.register_command(
+            'ENABLE_FILAMENT_WIDTH_LOG',
+            self.cmd_log_enable,
+            desc=self.cmd_ENABLE_FILAMENT_WIDTH_LOG_help)
+        self.gcode.register_command(
+            'DISABLE_FILAMENT_WIDTH_LOG',
+            self.cmd_log_disable,
+            desc=self.cmd_DISABLE_FILAMENT_WIDTH_LOG_help)
         self.gcode.register_command(
             'ENABLE_FILAMENT_WIDTH_COMPENSATION',
             self.cmd_flow_comp_enable,
@@ -179,6 +196,7 @@ class HallFilamentWidthSensor:
         else:
             return self.reactor.NEVER
 
+    cmd_QUERY_FILAMENT_WIDTH_help = "Report the filament width in mm"
     def cmd_M407(self, gcmd):
         response = ""
         if self.diameter > 0:
@@ -188,12 +206,15 @@ class HallFilamentWidthSensor:
             response += "Filament NOT present"
         gcmd.respond_info(response)
 
+    cmd_RESET_FILAMENT_WIDTH_SENSOR_help = "Clear all filament width readings"
     def cmd_ClearFilamentArray(self, gcmd):
         self.filament_array = []
         gcmd.respond_info("Filament width measurements cleared!")
         # Set extrude multiplier to 100%
         self.gcode.run_script_from_command("M221 S100")
 
+    cmd_ENABLE_FILAMENT_WIDTH_SENSOR_help = (
+        "Enable the filament width sensor")
     def cmd_M405(self, gcmd):
         response = "Filament width sensor Turned On"
         if self.is_active:
@@ -205,6 +226,8 @@ class HallFilamentWidthSensor:
                                       self.reactor.NOW)
         gcmd.respond_info(response)
 
+    cmd_DISABLE_FILAMENT_WIDTH_SENSOR_help = (
+        "Disable the filament width sensor")
     def cmd_M406(self, gcmd):
         response = "Filament width sensor Turned Off"
         if not self.is_active:
@@ -220,6 +243,8 @@ class HallFilamentWidthSensor:
             self.gcode.run_script_from_command("M221 S100")
         gcmd.respond_info(response)
 
+    cmd_QUERY_RAW_FILAMENT_WIDTH_help = (
+        "Report the raw filament width sensor values")
     def cmd_Get_Raw_Values(self, gcmd):
         response = "ADC1="
         response +=  (" "+str(self.lastFilamentWidthReading))
@@ -228,6 +253,7 @@ class HallFilamentWidthSensor:
                       str(self.lastFilamentWidthReading
                       +self.lastFilamentWidthReading2))
         gcmd.respond_info(response)
+
     def get_status(self, eventtime):
         status = self.runout_helper.get_status(eventtime)
         status.update({'Diameter': self.diameter,
@@ -237,10 +263,15 @@ class HallFilamentWidthSensor:
                 'flow_compensation_enabled':self.enable_flow_compensation
                 })
         return status
+
+    cmd_ENABLE_FILAMENT_WIDTH_LOG_help = (
+        "Enable filament width sensor logging")
     def cmd_log_enable(self, gcmd):
         self.is_log = True
         gcmd.respond_info("Filament width logging Turned On")
 
+    cmd_DISABLE_FILAMENT_WIDTH_LOG_help = (
+        "Disable filament width sensor logging")
     def cmd_log_disable(self, gcmd):
         self.is_log = False
         gcmd.respond_info("Filament width logging Turned Off")
