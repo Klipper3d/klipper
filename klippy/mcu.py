@@ -139,6 +139,7 @@ class AsyncResponseWrapper:
         if cfg_helper.is_config_finalized():
             self._register()
         else:
+            self._serial.register_response((lambda p: None), self._name, oid)
             cfg_helper.register_post_init_callback(self._register)
     def _register(self):
         self._serial.get_msgparser().lookup_command(self._msgformat)
