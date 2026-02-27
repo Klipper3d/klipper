@@ -966,6 +966,7 @@ class MCUConfigHelper:
         self._config_cmds = []
         self._restart_cmds = []
         self._init_cmds = []
+        self._config_crc = 0
         self._mcu_freq = 0.
         self._reserved_move_slots = 0
         # Register handlers
@@ -973,7 +974,7 @@ class MCUConfigHelper:
         printer.register_event_handler("klippy:mcu_identify",
                                        self._mcu_identify)
         printer.register_event_handler("klippy:connect", self._connect)
-    def _send_config(self, prev_crc):
+    def _finalize_config(self):
         # Build config commands
         for cb in self._config_callbacks:
             cb()
@@ -987,24 +988,11 @@ class MCUConfigHelper:
                 cmdlist[i] = pin_resolver.update_command(cmd)
         # Calculate config CRC
         encoded_config = '\n'.join(self._config_cmds).encode()
-        config_crc = zlib.crc32(encoded_config) & 0xffffffff
-        self.add_config_cmd("finalize_config crc=%d" % (config_crc,))
-        if prev_crc is not None and config_crc != prev_crc:
-            restart_helper = self._conn_helper.get_restart_helper()
-            restart_helper.check_restart_on_crc_mismatch()
-            raise error("MCU '%s' CRC does not match config" % (self._name,))
-        # Transmit config messages (if needed)
+        self._config_crc = zlib.crc32(encoded_config) & 0xffffffff
+        self._config_cmds.append("finalize_config crc=%d" % (self._config_crc,))
+    def _send_cfg_init_commands(self, cmds):
         try:
-            if prev_crc is None:
-                logging.info("Sending MCU '%s' printer configuration...",
-                             self._name)
-                for c in self._config_cmds:
-                    self._serial.send(c)
-            else:
-                for c in self._restart_cmds:
-                    self._serial.send(c)
-            # Transmit init messages
-            for c in self._init_cmds:
+            for c in cmds:
                 self._serial.send(c)
         except msgproto.enumeration_error as e:
             enum_name, enum_value = e.get_enum_params()
@@ -1029,12 +1017,17 @@ class MCUConfigHelper:
                 self._name,))
         return config_params
     def _connect(self):
+        # Finalize the config and check if a restart is needed
+        restart_helper = self._conn_helper.get_restart_helper()
         config_params = self._send_get_config()
         if not config_params['is_config']:
-            restart_helper = self._conn_helper.get_restart_helper()
             restart_helper.check_restart_on_send_config()
             # Not configured - send config and issue get_config again
-            self._send_config(None)
+            self._finalize_config()
+            cfg_init_cmds = self._config_cmds + self._init_cmds
+            logging.info("Sending MCU '%s' printer configuration...",
+                         self._name)
+            self._send_cfg_init_commands(cfg_init_cmds)
             config_params = self._send_get_config()
             if not config_params['is_config'] and not self._mcu.is_fileoutput():
                 raise error("Unable to configure MCU '%s'" % (self._name,))
@@ -1044,7 +1037,13 @@ class MCUConfigHelper:
                 raise error("Failed automated reset of MCU '%s'"
                             % (self._name,))
             # Already configured - send init commands
-            self._send_config(config_params['crc'])
+            self._finalize_config()
+            if self._config_crc != config_params['crc']:
+                restart_helper.check_restart_on_crc_mismatch()
+                raise error("MCU '%s' CRC does not match config"
+                            % (self._name,))
+            cfg_init_cmds = self._restart_cmds + self._init_cmds
+            self._send_cfg_init_commands(cfg_init_cmds)
         # Setup steppersync with the move_count returned by get_config
         move_count = config_params['move_count']
         if move_count < self._reserved_move_slots:
