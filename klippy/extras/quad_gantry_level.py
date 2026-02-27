@@ -127,11 +127,12 @@ class QuadGantryLevel:
     def plot(self,f,x):
         return f[0]*x + f[1]
     def get_status(self, eventtime):
-        return {
+        status = {
             'z_height': self.z_height,
             'z_positions': self.z_positions,
-            **self.z_status.get_status(eventtime)
         }
+        status.update(self.z_status.get_status(eventtime))
+        return status
 
 def load_config(config):
     return QuadGantryLevel(config)
