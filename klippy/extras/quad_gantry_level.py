@@ -34,6 +34,8 @@ class QuadGantryLevel:
             raise config.error(
                 "Need exactly 4 probe points for quad_gantry_level")
         self.z_status = z_tilt.ZAdjustStatus(self.printer)
+        self.z_height = [0,0,0,0]
+        self.z_positions = [0,0,0,0]
         self.z_helper = z_tilt.ZAdjustHelper(config, 4)
         self.gantry_corners = config.getlists('gantry_corners', parser=float,
                                               seps=(',', '\n'), count=2)
@@ -89,6 +91,9 @@ class QuadGantryLevel:
         z_height[1] = self.plot(slope_y_s01, self.gantry_corners[1][1])
         z_height[2] = self.plot(slope_y_s23, self.gantry_corners[1][1])
         z_height[3] = self.plot(slope_y_s23, self.gantry_corners[0][1])
+        
+        self.z_height = z_height
+        self.z_positions = z_positions
 
         ainfo = zip(["z","z1","z2","z3"], z_height[0:4])
         apos = " ".join(["%s: %06f" % (x) for x in ainfo])
@@ -122,7 +127,11 @@ class QuadGantryLevel:
     def plot(self,f,x):
         return f[0]*x + f[1]
     def get_status(self, eventtime):
-        return self.z_status.get_status(eventtime)
+        return {
+            'z_height': self.z_height,
+            'z_positions': self.z_positions,
+            **self.z_status.get_status(eventtime)
+        }
 
 def load_config(config):
     return QuadGantryLevel(config)
