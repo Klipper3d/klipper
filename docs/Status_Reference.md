@@ -445,10 +445,10 @@ The following information is available in the `quad_gantry_level` object
 (this object is available if quad_gantry_level is defined):
 - `applied`: True if the gantry leveling process has been run and completed
   successfully.
-- `z_height`: A list of four numbers indicating the Z actuator positions. 
+- `z_height`: A list of four numbers indicating the Z actuator positions.
   Set to `[0,0,0,0]` if the gantry leveling process has not been run.
-- `z_positions`: A list of four numbers indicating the positions at which 
-  the Z probe triggered during a quad gantry level. Set to `[0,0,0,0]` if 
+- `z_positions`: A list of four numbers indicating the positions at which
+  the Z probe triggered during a quad gantry level. Set to `[0,0,0,0]` if
   the gantry leveling process has not been run.
 
 ## query_endstops

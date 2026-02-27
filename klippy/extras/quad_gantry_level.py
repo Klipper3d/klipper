@@ -91,7 +91,7 @@ class QuadGantryLevel:
         z_height[1] = self.plot(slope_y_s01, self.gantry_corners[1][1])
         z_height[2] = self.plot(slope_y_s23, self.gantry_corners[1][1])
         z_height[3] = self.plot(slope_y_s23, self.gantry_corners[0][1])
-        
+
         self.z_height = z_height
         self.z_positions = z_positions
 
