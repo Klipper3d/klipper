@@ -56,6 +56,27 @@ By default, the sensor is disabled at power-on.
 To enable the sensor, issue **ENABLE_FILAMENT_WIDTH_SENSOR** command or
 set the `enable` parameter to `true`.
 
+## Use as a runout switch only
+
+By default, the sensor measures filament diameter and adjusts extrusion multiplier
+to compensate for variations.
+
+If you want to use the sensor as a runout switch only, set the `enable_flow_compensation`
+config parameter to `false`. In this mode, the sensor will only trigger runout
+events when filament is not detected, it will not modify the extrusion multiplier.
+
+This is useful for printers where the filament sensor is not accurate enough for
+flow compensation but can reliably detect filament runout, or when printing with
+flexible filaments which have unstable diameter characteristics.
+
+Issue **ENABLE_FILAMENT_WIDTH_COMPENSATION** to enable flow compensation
+or **DISABLE_FILAMENT_WIDTH_COMPENSATION** to disable it.
+
+Note that disabling filament width compensation automatically resets the extrusion
+multiplier to 100%.
+
+**QUERY_FILAMENT_WIDTH_COMPENSATION** returns the current state of flow compensation.
+
 ## Logging
 
 By default, diameter logging is disabled at power-on.

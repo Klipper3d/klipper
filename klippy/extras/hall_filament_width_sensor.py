@@ -33,6 +33,8 @@ class HallFilamentWidthSensor:
         self.runout_dia_min=config.getfloat('min_diameter', 1.0)
         self.runout_dia_max=config.getfloat('max_diameter', self.max_diameter)
         self.is_log =config.getboolean('logging', False)
+        self.enable_flow_compensation = config.getboolean(
+            'enable_flow_compensation', True)
         # Use the current diameter instead of nominal while the first
         # measurement isn't in place
         self.use_current_dia_while_delay = config.getboolean(
@@ -74,6 +76,18 @@ class HallFilamentWidthSensor:
                                     self.cmd_log_enable)
         self.gcode.register_command('DISABLE_FILAMENT_WIDTH_LOG',
                                     self.cmd_log_disable)
+        self.gcode.register_command(
+            'ENABLE_FILAMENT_WIDTH_COMPENSATION',
+            self.cmd_flow_comp_enable,
+            desc=self.cmd_ENABLE_FILAMENT_WIDTH_COMPENSATION_help)
+        self.gcode.register_command(
+            'DISABLE_FILAMENT_WIDTH_COMPENSATION',
+            self.cmd_flow_comp_disable,
+            desc=self.cmd_DISABLE_FILAMENT_WIDTH_COMPENSATION_help)
+        self.gcode.register_command(
+            'QUERY_FILAMENT_WIDTH_COMPENSATION',
+            self.cmd_flow_comp_query,
+            desc=self.cmd_QUERY_FILAMENT_WIDTH_COMPENSATION_help)
 
         self.runout_helper = filament_switch_sensor.RunoutHelper(config)
     # Initialization
@@ -147,15 +161,17 @@ class HallFilamentWidthSensor:
                         self.filament_width = self.diameter
                     elif  self.firstExtruderUpdatePosition == pending_position:
                         self.filament_width = self.nominal_filament_dia
-                if ((self.filament_width <= self.max_diameter)
-                    and (self.filament_width >= self.min_diameter)):
-                    percentage = round(self.nominal_filament_dia**2
-                                       / self.filament_width**2 * 100)
-                    self.gcode.run_script("M221 S" + str(percentage))
-                else:
-                    self.gcode.run_script("M221 S100")
+                if self.enable_flow_compensation:
+                    if ((self.filament_width <= self.max_diameter)
+                        and (self.filament_width >= self.min_diameter)):
+                        percentage = round(self.nominal_filament_dia**2
+                                        / self.filament_width**2 * 100)
+                        self.gcode.run_script("M221 S" + str(percentage))
+                    else:
+                        self.gcode.run_script("M221 S100")
         else:
-            self.gcode.run_script("M221 S100")
+            if self.enable_flow_compensation:
+                self.gcode.run_script("M221 S100")
             self.filament_array = []
 
         if self.is_active:
@@ -217,7 +233,9 @@ class HallFilamentWidthSensor:
         status.update({'Diameter': self.diameter,
                 'Raw':(self.lastFilamentWidthReading+
                  self.lastFilamentWidthReading2),
-                'is_active':self.is_active})
+                'is_active':self.is_active,
+                'flow_compensation_enabled':self.enable_flow_compensation
+                })
         return status
     def cmd_log_enable(self, gcmd):
         self.is_log = True
@@ -226,6 +244,26 @@ class HallFilamentWidthSensor:
     def cmd_log_disable(self, gcmd):
         self.is_log = False
         gcmd.respond_info("Filament width logging Turned Off")
+
+    cmd_ENABLE_FILAMENT_WIDTH_COMPENSATION_help = (
+        "Enable flow compensation based on filament width")
+    def cmd_flow_comp_enable(self, gcmd):
+        self.enable_flow_compensation = True
+        gcmd.respond_info("Filament width flow compensation Turned On")
+
+    cmd_DISABLE_FILAMENT_WIDTH_COMPENSATION_help = (
+        "Disable flow compensation based on filament width")
+    def cmd_flow_comp_disable(self, gcmd):
+        self.enable_flow_compensation = False
+        # Set extrude multiplier to 100%
+        self.gcode.run_script_from_command("M221 S100")
+        gcmd.respond_info("Filament width flow compensation Turned Off")
+
+    cmd_QUERY_FILAMENT_WIDTH_COMPENSATION_help = (
+        "Report filament width flow compensation status")
+    def cmd_flow_comp_query(self, gcmd):
+        gcmd.respond_info("Filament width flow compensation:"+
+            (" ON" if self.enable_flow_compensation else " OFF"))
 
 def load_config(config):
     return HallFilamentWidthSensor(config)
