@@ -200,8 +200,7 @@ class HallFilamentWidthSensor:
     def cmd_M407(self, gcmd):
         response = ""
         if self.diameter > 0:
-            response += ("Filament dia (measured mm): "
-                         + str(self.diameter))
+            response += ("Filament dia (measured mm): %.4f" % (self.diameter))
         else:
             response += "Filament NOT present"
         gcmd.respond_info(response)
@@ -246,8 +245,7 @@ class HallFilamentWidthSensor:
     cmd_QUERY_RAW_FILAMENT_WIDTH_help = (
         "Report the raw filament width sensor values")
     def cmd_Get_Raw_Values(self, gcmd):
-        response = "ADC1="
-        response +=  (" "+str(self.lastFilamentWidthReading))
+        response = "ADC1="+str(self.lastFilamentWidthReading)
         response +=  (" ADC2="+str(self.lastFilamentWidthReading2))
         response +=  (" RAW="+
                       str(self.lastFilamentWidthReading
