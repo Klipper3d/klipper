@@ -784,11 +784,11 @@ and [Hall Filament Width Sensor](Hall_Filament_Width_Sensor.md)):
 
 #### RESET_FILAMENT_WIDTH_SENSOR
 `RESET_FILAMENT_WIDTH_SENSOR`: Clear all sensor readings. Helpful
-after filament change.
+after filament change. Resets flow rate to 100%.
 
 #### DISABLE_FILAMENT_WIDTH_SENSOR
 `DISABLE_FILAMENT_WIDTH_SENSOR`: Turn off the filament width sensor
-and stop using it for flow control.
+and stop using it for flow control. Resets flow rate to 100%.
 
 #### ENABLE_FILAMENT_WIDTH_SENSOR
 `ENABLE_FILAMENT_WIDTH_SENSOR`: Turn on the filament width sensor and
@@ -803,6 +803,19 @@ and RAW sensor value for calibration points.
 
 #### DISABLE_FILAMENT_WIDTH_LOG
 `DISABLE_FILAMENT_WIDTH_LOG`: Turn off diameter logging.
+
+#### ENABLE_FILAMENT_WIDTH_COMPENSATION
+`ENABLE_FILAMENT_WIDTH_COMPENSATION`: Turn on flow compensation based
+on filament width sensor readings.
+
+#### DISABLE_FILAMENT_WIDTH_COMPENSATION
+`DISABLE_FILAMENT_WIDTH_COMPENSATION`: Turn off flow compensation based
+on filament width sensor readings. Does not disable the sensor itself or
+the filament runout switch. Resets flow rate to 100%.
+
+#### QUERY_FILAMENT_WIDTH_COMPENSATION
+`QUERY_FILAMENT_WIDTH_COMPENSATION`: Query the state of filament width sensor
+flow compensation.
 
 ### [heaters]
 
