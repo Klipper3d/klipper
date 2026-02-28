@@ -930,9 +930,26 @@ is calibrated a force in grams is also reported.
 
 ### [load_cell_probe]
 
-The following commands are enabled if a
+The commands below are enabled if a
 [load_cell config section](Config_Reference.md#load_cell_probe) has been
 enabled.
+
+In addition, commands that perform probes, such as [`PROBE`](#probe),
+[`PROBE_ACCURACY`](#probe_accuracy),
+[`BED_MESH_CALIBRATE`](#bed_mesh_calibrate) etc. will accept
+additional parameters if a `[load_cell_probe]` is defined. The
+parameters override the corresponding settings from the
+[`[load_cell_probe]`](./Config_Reference.md#load_cell_probe)
+configuration:
+- `FORCE_SAFETY_LIMIT=<grams>`
+- `TRIGGER_FORCE=<grams>`
+- `DRIFT_FILTER_CUTOFF_FREQUENCY=<frequency_hz>`
+- `DRIFT_FILTER_DELAY=<1|2>`
+- `BUZZ_FILTER_CUTOFF_FREQUENCY=<frequency_hz>`
+- `BUZZ_FILTER_DELAY=<1|2>`
+- `NOTCH_FILTER_FREQUENCIES=<list of frequency_hz>`
+- `NOTCH_FILTER_QUALITY=<quality>`
+- `TARE_TIME=<seconds>`
 
 ### LOAD_CELL_TEST_TAP
 `LOAD_CELL_TEST_TAP [TAPS=<taps>] [TIMEOUT=<timeout>]`: Run a testing routine
@@ -943,23 +960,6 @@ QUERY_ENDSTOPS and QUERY_PROBE for load cell probes.
 - `TAPS`: the number of taps the tool expects
 - `TIMEOOUT`: the time, in seconds, that the tool waits for each tab before
   aborting.
-
-### Load Cell Command Extensions
-Commands that perform probes, such as [`PROBE`](#probe),
-[`PROBE_ACCURACY`](#probe_accuracy),
-[`BED_MESH_CALIBRATE`](#bed_mesh_calibrate) etc. will accept additional
-parameters if a `[load_cell_probe]` is defined. The parameters override the
-corresponding settings from the
-[`[load_cell_probe]`](./Config_Reference.md#load_cell_probe) configuration:
-- `FORCE_SAFETY_LIMIT=<grams>`
-- `TRIGGER_FORCE=<grams>`
-- `DRIFT_FILTER_CUTOFF_FREQUENCY=<frequency_hz>`
-- `DRIFT_FILTER_DELAY=<1|2>`
-- `BUZZ_FILTER_CUTOFF_FREQUENCY=<frequency_hz>`
-- `BUZZ_FILTER_DELAY=<1|2>`
-- `NOTCH_FILTER_FREQUENCIES=<list of frequency_hz>`
-- `NOTCH_FILTER_QUALITY=<quality>`
-- `TARE_TIME=<seconds>`
 
 ### [manual_probe]
 
@@ -1183,25 +1183,23 @@ The following commands are available when a
 see the [probe calibrate guide](Probe_Calibrate.md)).
 
 #### PROBE
-`PROBE [METHOD=<value>] [PROBE_SPEED=<mm/s>] [LIFT_SPEED=<mm/s>]
-[SAMPLES=<count>] [SAMPLE_RETRACT_DIST=<mm>] [SAMPLES_TOLERANCE=<mm>]
+`PROBE [PROBE_SPEED=<mm/s>] [LIFT_SPEED=<mm/s>] [SAMPLES=<count>]
+[SAMPLE_RETRACT_DIST=<mm>] [SAMPLES_TOLERANCE=<mm>]
 [SAMPLES_TOLERANCE_RETRIES=<count>] [SAMPLES_RESULT=median|average]`:
 Move the nozzle downwards until the probe triggers. If any of the
 optional parameters are provided they override their equivalent
 setting in the [probe config section](Config_Reference.md#probe).
-The optional parameter `METHOD` is probe-specific.
 
 #### QUERY_PROBE
 `QUERY_PROBE`: Report the current status of the probe ("triggered" or
 "open").
 
 #### PROBE_ACCURACY
-`PROBE_ACCURACY [METHOD=<value>] [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
+`PROBE_ACCURACY [PROBE_SPEED=<mm/s>] [SAMPLES=<count>]
 [SAMPLE_RETRACT_DIST=<mm>]`: Calculate the maximum, minimum, average,
 median, and standard deviation of multiple probe samples. By default,
 10 SAMPLES are taken. Otherwise the optional parameters default to
 their equivalent setting in the probe config section.
-The optional parameter `METHOD` is probe-specific.
 
 #### PROBE_CALIBRATE
 `PROBE_CALIBRATE [SPEED=<speed>] [<probe_parameter>=<value>]`: Run a
@@ -1220,9 +1218,35 @@ Requires a `SAVE_CONFIG` to take effect.
 
 ### [probe_eddy_current]
 
-The following commands are available when a
+The commands below are available when a
 [probe_eddy_current config section](Config_Reference.md#probe_eddy_current)
 is enabled.
+
+In addition, commands that perform probes, such as [`PROBE`](#probe),
+[`PROBE_ACCURACY`](#probe_accuracy),
+[`BED_MESH_CALIBRATE`](#bed_mesh_calibrate) etc. will accept
+additional parameters if a `[probe_eddy_current]` section is defined:
+- `METHOD=<scan|rapid_scan|tap>`: This alters the probing mechanism:
+  - `METHOD=scan`: The toolhead does not descend. Instead the toolhead
+    will pause briefly above each target location and return the
+    measured height at that position.
+  - `METHOD=rapid_scan`: The toolhead does not descend and does not
+    pause at each target location. The value returned is the measured
+    height around the time that the toolhead was near each target
+    position.
+  - `METHOD=tap`: The toolhead will descend until the nozzle makes
+    contact with the bed. This method is only available if
+    `tap_threshold` is specified in the `[probe_eddy_current]` config
+    section.
+  - default: If no `METHOD` parameter is specified then the default
+    behavior is for the toolhead to descend until the sensor detects
+    that the distance to the bed is at or below the `z_offset`
+    parameter specified in the `[probe_eddy_current]` config section.
+- `SAMPLE_TIME=<time>`: When using `METHOD=scan` probing, this
+  specifies the time (in seconds) to pause at each target point. When
+  using `METHOD=rapid_scan` this specifies the measurement time window
+  at each target. If not specified, the default is 0.100 (which is
+  100ms).
 
 #### PROBE_EDDY_CURRENT_CALIBRATE
 `PROBE_EDDY_CURRENT_CALIBRATE CHIP=<config_name>`: This starts a tool
@@ -1262,14 +1286,13 @@ The following commands are available when the
 is enabled.
 
 #### QUAD_GANTRY_LEVEL
-`QUAD_GANTRY_LEVEL [METHOD=<value>] [RETRIES=<value>] [RETRY_TOLERANCE=<value>]
+`QUAD_GANTRY_LEVEL [RETRIES=<value>] [RETRY_TOLERANCE=<value>]
 [HORIZONTAL_MOVE_Z=<value>] [<probe_parameter>=<value>]`: This command
 will probe the points specified in the config and then make
 independent adjustments to each Z stepper to compensate for tilt. See
 the PROBE command for details on the optional probe parameters. The
 optional `RETRIES`, `RETRY_TOLERANCE`, and `HORIZONTAL_MOVE_Z` values
 override those options specified in the config file.
-The optional parameter `METHOD` is probe-specific.
 
 ### [query_adc]
 
@@ -1698,11 +1721,10 @@ The following commands are available when the
 [z_tilt config section](Config_Reference.md#z_tilt) is enabled.
 
 #### Z_TILT_ADJUST
-`Z_TILT_ADJUST [METHOD=<value>] [RETRIES=<value>] [RETRY_TOLERANCE=<value>]
+`Z_TILT_ADJUST [RETRIES=<value>] [RETRY_TOLERANCE=<value>]
 [HORIZONTAL_MOVE_Z=<value>] [<probe_parameter>=<value>]`: This command
 will probe the points specified in the config and then make
 independent adjustments to each Z stepper to compensate for tilt. See
 the PROBE command for details on the optional probe parameters. The
 optional `RETRIES`, `RETRY_TOLERANCE`, and `HORIZONTAL_MOVE_Z` values
 override those options specified in the config file.
-The optional parameter `METHOD` is probe-specific.
