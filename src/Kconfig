@@ -74,6 +74,10 @@ config USB_SERIAL_NUMBER_CHIPID
     default y
 config USB_SERIAL_NUMBER
     default "12345"
+config USE_KATAPULT_FLASHTOOL
+    depends on USB
+    bool "Use Katapult flashtool for flashing"
+    default n
 
 menu "USB ids"
     depends on USB && LOW_LEVEL_OPTIONS

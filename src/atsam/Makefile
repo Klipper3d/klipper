@@ -59,6 +59,12 @@ lib/bossac/bin/bossac:
 	@echo "  Building bossac"
 	$(Q)make -C lib/bossac bin/bossac
 
+ifeq ($(CONFIG_USE_KATAPULT_FLASHTOOL),y)
+flash: $(OUT)klipper.bin
+	@echo "  Flashing $< to $(FLASH_DEVICE)"
+	$(Q)$(PYTHON) ./lib/katapult/flashtool.py -d "$(FLASH_DEVICE)" -f $(OUT)klipper.bin
+else
 flash: $(OUT)klipper.bin lib/bossac/bin/bossac
 	@echo "  Flashing $< to $(FLASH_DEVICE)"
 	$(Q)$(PYTHON) ./scripts/flash_usb.py -t $(CONFIG_MCU) -d "$(FLASH_DEVICE)" $(OUT)klipper.bin
+endif
