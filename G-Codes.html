@@ -1719,13 +1719,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#load-cell-command-extensions" class="md-nav__link">
-    Load Cell Command Extensions
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#manual_probe" class="md-nav__link">
     [manual_probe]
   </a>
@@ -4056,13 +4049,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#load-cell-command-extensions" class="md-nav__link">
-    Load Cell Command Extensions
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#manual_probe" class="md-nav__link">
     [manual_probe]
   </a>
@@ -5704,27 +5690,16 @@ This command takes a reading from the load cell. The response is the percentage
 of the sensors range that was read and the raw value in counts. If the load cell
 is calibrated a force in grams is also reported.</p>
 <h3 id="load_cell_probe">[load_cell_probe]<a class="headerlink" href="#load_cell_probe" title="Permanent link">&para;</a></h3>
-<p>The following commands are enabled if a
+<p>The commands below are enabled if a
 <a href="Config_Reference.html#load_cell_probe">load_cell config section</a> has been
 enabled.</p>
-<h3 id="load_cell_test_tap">LOAD_CELL_TEST_TAP<a class="headerlink" href="#load_cell_test_tap" title="Permanent link">&para;</a></h3>
-<p><code>LOAD_CELL_TEST_TAP [TAPS=&lt;taps&gt;] [TIMEOUT=&lt;timeout&gt;]</code>: Run a testing routine
-that reports taps on the load cell. The toolhead will not move but the load cell
-probe will sense taps just as if it was probing. This can be used as a
-sanity check to make sure that the probe works. This tool replaces
-QUERY_ENDSTOPS and QUERY_PROBE for load cell probes.</p>
-<ul>
-<li><code>TAPS</code>: the number of taps the tool expects</li>
-<li><code>TIMEOOUT</code>: the time, in seconds, that the tool waits for each tab before
-  aborting.</li>
-</ul>
-<h3 id="load-cell-command-extensions">Load Cell Command Extensions<a class="headerlink" href="#load-cell-command-extensions" title="Permanent link">&para;</a></h3>
-<p>Commands that perform probes, such as <a href="#probe"><code>PROBE</code></a>,
+<p>In addition, commands that perform probes, such as <a href="#probe"><code>PROBE</code></a>,
 <a href="#probe_accuracy"><code>PROBE_ACCURACY</code></a>,
-<a href="#bed_mesh_calibrate"><code>BED_MESH_CALIBRATE</code></a> etc. will accept additional
-parameters if a <code>[load_cell_probe]</code> is defined. The parameters override the
-corresponding settings from the
-<a href="Config_Reference.html#load_cell_probe"><code>[load_cell_probe]</code></a> configuration:</p>
+<a href="#bed_mesh_calibrate"><code>BED_MESH_CALIBRATE</code></a> etc. will accept
+additional parameters if a <code>[load_cell_probe]</code> is defined. The
+parameters override the corresponding settings from the
+<a href="Config_Reference.html#load_cell_probe"><code>[load_cell_probe]</code></a>
+configuration:</p>
 <ul>
 <li><code>FORCE_SAFETY_LIMIT=&lt;grams&gt;</code></li>
 <li><code>TRIGGER_FORCE=&lt;grams&gt;</code></li>
@@ -5735,6 +5710,17 @@ corresponding settings from the
 <li><code>NOTCH_FILTER_FREQUENCIES=&lt;list of frequency_hz&gt;</code></li>
 <li><code>NOTCH_FILTER_QUALITY=&lt;quality&gt;</code></li>
 <li><code>TARE_TIME=&lt;seconds&gt;</code></li>
+</ul>
+<h3 id="load_cell_test_tap">LOAD_CELL_TEST_TAP<a class="headerlink" href="#load_cell_test_tap" title="Permanent link">&para;</a></h3>
+<p><code>LOAD_CELL_TEST_TAP [TAPS=&lt;taps&gt;] [TIMEOUT=&lt;timeout&gt;]</code>: Run a testing routine
+that reports taps on the load cell. The toolhead will not move but the load cell
+probe will sense taps just as if it was probing. This can be used as a
+sanity check to make sure that the probe works. This tool replaces
+QUERY_ENDSTOPS and QUERY_PROBE for load cell probes.</p>
+<ul>
+<li><code>TAPS</code>: the number of taps the tool expects</li>
+<li><code>TIMEOOUT</code>: the time, in seconds, that the tool waits for each tab before
+  aborting.</li>
 </ul>
 <h3 id="manual_probe">[manual_probe]<a class="headerlink" href="#manual_probe" title="Permanent link">&para;</a></h3>
 <p>The manual_probe module is automatically loaded.</p>
@@ -5922,23 +5908,21 @@ information from your slicer to Klipper.</p>
 <a href="Config_Reference.html#bltouch">bltouch config section</a> is enabled (also
 see the <a href="Probe_Calibrate.html">probe calibrate guide</a>).</p>
 <h4 id="probe_1">PROBE<a class="headerlink" href="#probe_1" title="Permanent link">&para;</a></h4>
-<p><code>PROBE [METHOD=&lt;value&gt;] [PROBE_SPEED=&lt;mm/s&gt;] [LIFT_SPEED=&lt;mm/s&gt;]
-[SAMPLES=&lt;count&gt;] [SAMPLE_RETRACT_DIST=&lt;mm&gt;] [SAMPLES_TOLERANCE=&lt;mm&gt;]
+<p><code>PROBE [PROBE_SPEED=&lt;mm/s&gt;] [LIFT_SPEED=&lt;mm/s&gt;] [SAMPLES=&lt;count&gt;]
+[SAMPLE_RETRACT_DIST=&lt;mm&gt;] [SAMPLES_TOLERANCE=&lt;mm&gt;]
 [SAMPLES_TOLERANCE_RETRIES=&lt;count&gt;] [SAMPLES_RESULT=median|average]</code>:
 Move the nozzle downwards until the probe triggers. If any of the
 optional parameters are provided they override their equivalent
-setting in the <a href="Config_Reference.html#probe">probe config section</a>.
-The optional parameter <code>METHOD</code> is probe-specific.</p>
+setting in the <a href="Config_Reference.html#probe">probe config section</a>.</p>
 <h4 id="query_probe">QUERY_PROBE<a class="headerlink" href="#query_probe" title="Permanent link">&para;</a></h4>
 <p><code>QUERY_PROBE</code>: Report the current status of the probe ("triggered" or
 "open").</p>
 <h4 id="probe_accuracy">PROBE_ACCURACY<a class="headerlink" href="#probe_accuracy" title="Permanent link">&para;</a></h4>
-<p><code>PROBE_ACCURACY [METHOD=&lt;value&gt;] [PROBE_SPEED=&lt;mm/s&gt;] [SAMPLES=&lt;count&gt;]
+<p><code>PROBE_ACCURACY [PROBE_SPEED=&lt;mm/s&gt;] [SAMPLES=&lt;count&gt;]
 [SAMPLE_RETRACT_DIST=&lt;mm&gt;]</code>: Calculate the maximum, minimum, average,
 median, and standard deviation of multiple probe samples. By default,
 10 SAMPLES are taken. Otherwise the optional parameters default to
-their equivalent setting in the probe config section.
-The optional parameter <code>METHOD</code> is probe-specific.</p>
+their equivalent setting in the probe config section.</p>
 <h4 id="probe_calibrate">PROBE_CALIBRATE<a class="headerlink" href="#probe_calibrate" title="Permanent link">&para;</a></h4>
 <p><code>PROBE_CALIBRATE [SPEED=&lt;speed&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: Run a
 helper script useful for calibrating the probe's z_offset. See the
@@ -5953,9 +5937,41 @@ babystepping), and subtract if from the probe's z_offset.  This acts
 to take a frequently used babystepping value, and "make it permanent".
 Requires a <code>SAVE_CONFIG</code> to take effect.</p>
 <h3 id="probe_eddy_current">[probe_eddy_current]<a class="headerlink" href="#probe_eddy_current" title="Permanent link">&para;</a></h3>
-<p>The following commands are available when a
+<p>The commands below are available when a
 <a href="Config_Reference.html#probe_eddy_current">probe_eddy_current config section</a>
 is enabled.</p>
+<p>In addition, commands that perform probes, such as <a href="#probe"><code>PROBE</code></a>,
+<a href="#probe_accuracy"><code>PROBE_ACCURACY</code></a>,
+<a href="#bed_mesh_calibrate"><code>BED_MESH_CALIBRATE</code></a> etc. will accept
+additional parameters if a <code>[probe_eddy_current]</code> section is defined:</p>
+<ul>
+<li><code>METHOD=&lt;scan|rapid_scan|tap&gt;</code>: This alters the probing mechanism:<ul>
+<li><code>METHOD=scan</code>: The toolhead does not descend. Instead the toolhead
+  will pause briefly above each target location and return the
+  measured height at that position.</li>
+<li><code>METHOD=rapid_scan</code>: The toolhead does not descend and does not
+  pause at each target location. The value returned is the measured
+  height around the time that the toolhead was near each target
+  position.</li>
+<li><code>METHOD=tap</code>: The toolhead will descend until the nozzle makes
+  contact with the bed. This method is only available if
+  <code>tap_threshold</code> is specified in the <code>[probe_eddy_current]</code> config
+  section.</li>
+<li>default: If no <code>METHOD</code> parameter is specified then the default
+  behavior is for the toolhead to descend until the sensor detects
+  that the distance to the bed is at or below the <code>z_offset</code>
+  parameter specified in the <code>[probe_eddy_current]</code> config section.</li>
+</ul>
+</li>
+<li><code>SAMPLE_TIME=&lt;time&gt;</code>: When using <code>METHOD=scan</code> probing, this
+  specifies the time (in seconds) to pause at each target point. When
+  using <code>METHOD=rapid_scan</code> this specifies the measurement time window
+  at each target. If not specified, the default is 0.100 (which is
+  100ms).</li>
+<li><code>TAP_THRESHOLD=&lt;value&gt;</code>: This overrides the <code>tap_threshold</code>
+  specified in the <code>[probe_eddy_current]</code> config section when probing
+  using <code>METHOD=tap</code>.</li>
+</ul>
 <h4 id="probe_eddy_current_calibrate">PROBE_EDDY_CURRENT_CALIBRATE<a class="headerlink" href="#probe_eddy_current_calibrate" title="Permanent link">&para;</a></h4>
 <p><code>PROBE_EDDY_CURRENT_CALIBRATE CHIP=&lt;config_name&gt;</code>: This starts a tool
 that calibrates the sensor resonance frequencies to corresponding Z
@@ -5987,14 +6003,13 @@ SET_PIN command without an explicit CYCLE_TIME parameter will use the
 <a href="Config_Reference.html#quad_gantry_level">quad_gantry_level config section</a>
 is enabled.</p>
 <h4 id="quad_gantry_level_1">QUAD_GANTRY_LEVEL<a class="headerlink" href="#quad_gantry_level_1" title="Permanent link">&para;</a></h4>
-<p><code>QUAD_GANTRY_LEVEL [METHOD=&lt;value&gt;] [RETRIES=&lt;value&gt;] [RETRY_TOLERANCE=&lt;value&gt;]
+<p><code>QUAD_GANTRY_LEVEL [RETRIES=&lt;value&gt;] [RETRY_TOLERANCE=&lt;value&gt;]
 [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command
 will probe the points specified in the config and then make
 independent adjustments to each Z stepper to compensate for tilt. See
 the PROBE command for details on the optional probe parameters. The
 optional <code>RETRIES</code>, <code>RETRY_TOLERANCE</code>, and <code>HORIZONTAL_MOVE_Z</code> values
-override those options specified in the config file.
-The optional parameter <code>METHOD</code> is probe-specific.</p>
+override those options specified in the config file.</p>
 <h3 id="query_adc">[query_adc]<a class="headerlink" href="#query_adc" title="Permanent link">&para;</a></h3>
 <p>The query_adc module is automatically loaded.</p>
 <h4 id="query_adc_1">QUERY_ADC<a class="headerlink" href="#query_adc_1" title="Permanent link">&para;</a></h4>
@@ -6358,14 +6373,13 @@ automatically upon homing.</p>
 <p>The following commands are available when the
 <a href="Config_Reference.html#z_tilt">z_tilt config section</a> is enabled.</p>
 <h4 id="z_tilt_adjust">Z_TILT_ADJUST<a class="headerlink" href="#z_tilt_adjust" title="Permanent link">&para;</a></h4>
-<p><code>Z_TILT_ADJUST [METHOD=&lt;value&gt;] [RETRIES=&lt;value&gt;] [RETRY_TOLERANCE=&lt;value&gt;]
+<p><code>Z_TILT_ADJUST [RETRIES=&lt;value&gt;] [RETRY_TOLERANCE=&lt;value&gt;]
 [HORIZONTAL_MOVE_Z=&lt;value&gt;] [&lt;probe_parameter&gt;=&lt;value&gt;]</code>: This command
 will probe the points specified in the config and then make
 independent adjustments to each Z stepper to compensate for tilt. See
 the PROBE command for details on the optional probe parameters. The
 optional <code>RETRIES</code>, <code>RETRY_TOLERANCE</code>, and <code>HORIZONTAL_MOVE_Z</code> values
-override those options specified in the config file.
-The optional parameter <code>METHOD</code> is probe-specific.</p>
+override those options specified in the config file.</p>
 
               
             </article>
