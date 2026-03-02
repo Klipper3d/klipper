@@ -95,6 +95,9 @@ class ADXL355:
         reg_addr = ((reg & 0x7f) << 1) & ~REG_MOD_READ
         self.spi.spi_send([reg_addr, val & 0xFF], minclock=minclock)
         stored_val = self.read_reg(reg)
+        # Some ADXL355 boards always read POWER_CTL.STANDBY back as 0.
+        if reg == REG_POWER_CTL and stored_val == (val & ~POWER_CTL_STANDBY):
+            return
         if stored_val != val:
             raise self.printer.command_error(
                 "Failed to set ADXL355 register [0x%x] to 0x%x: got 0x%x. "
