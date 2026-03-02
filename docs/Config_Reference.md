@@ -1836,6 +1836,35 @@ cs_pin:
 #   measurements.
 ```
 
+### [adxl355]
+
+Support for ADXL355 accelerometers. This support allows one to query
+accelerometer measurements from the sensor. This enables an
+ACCELEROMETER_MEASURE command (see [G-Codes](G-Codes.md#adxl345) for
+more information). The default chip name is "default", but one may
+specify an explicit name (eg, [adxl355 my_chip_name]).
+
+```
+[adxl355]
+cs_pin:
+#   The SPI enable pin for the sensor. This parameter must be provided.
+#spi_speed: 5000000
+#   The SPI speed (in hz) to use when communicating with the chip.
+#   The default is 5000000.
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the "common SPI settings" section for a description of the
+#   above parameters.
+#axes_map: x, y, z
+#   See the "adxl345" section for information on this parameter.
+#rate: 4000
+#   Output data rate for ADXL355. ADXL355 supports the following data
+#   rates: 4000, 2000, 1000, 500, 250, 125, 62.5, 31.25, 15.625,
+#   7.813, and 3.906. The default is 4000.
+```
+
 ### [icm20948]
 
 Support for icm20948 accelerometers.
@@ -1958,8 +1987,9 @@ section of the measuring resonances guide for more information on
 #   are reachable by the toolhead.
 #accel_chip:
 #   A name of the accelerometer chip to use for measurements. If
-#   adxl345 chip was defined without an explicit name, this parameter
-#   can simply reference it as "accel_chip: adxl345", otherwise an
+#   an accelerometer chip was defined without an explicit name, this
+#   parameter can simply reference it by section name (for example,
+#   "accel_chip: adxl345" or "accel_chip: adxl355"), otherwise an
 #   explicit name must be supplied as well, e.g. "accel_chip: adxl345
 #   my_chip_name". Either this, or the next two parameters must be
 #   set.

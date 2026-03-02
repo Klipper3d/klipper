@@ -345,6 +345,26 @@ and might later produce asynchronous messages such as:
 The "header" field in the initial query response is used to describe
 the fields found in later "data" responses.
 
+### adxl355/dump_adxl355
+
+This endpoint is used to subscribe to ADXL355 accelerometer data.
+Obtaining these low-level motion updates may be useful for diagnostic
+and debugging purposes. Using this endpoint may increase Klipper's
+system load.
+
+A request may look like:
+`{"id": 123, "method":"adxl355/dump_adxl355",
+"params": {"sensor": "adxl355", "response_template": {}}}`
+and might return:
+`{"id": 123,"result":{"header":["time","x_acceleration","y_acceleration",
+"z_acceleration"]}}`
+and might later produce asynchronous messages such as:
+`{"params":{"overflows":0,"data":[[3292.432935,-535.44309,-1529.8374,9561.4],
+[3292.433256,-382.45935,-1606.32927,9561.48375]]}}`
+
+The "header" field in the initial query response is used to describe
+the fields found in later "data" responses.
+
 ### angle/dump_angle
 
 This endpoint is used to subscribe to

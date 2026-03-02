@@ -71,40 +71,47 @@ modules are automatically loaded.
 ### [adxl345]
 
 The following commands are available when an
-[adxl345 config section](Config_Reference.md#adxl345) is enabled.
+[adxl345 config section](Config_Reference.md#adxl345) or
+[adxl355 config section](Config_Reference.md#adxl355) is enabled.
 
 #### ACCELEROMETER_MEASURE
 `ACCELEROMETER_MEASURE [CHIP=<config_name>] [NAME=<value>]`: Starts
 accelerometer measurements at the requested number of samples per
-second. If CHIP is not specified it defaults to "adxl345". The command
+second. If CHIP is not specified, Klipper uses the default configured
+accelerometer chip. The command
 works in a start-stop mode: when executed for the first time, it
 starts the measurements, next execution stops them. The results of
 measurements are written to a file named
-`/tmp/adxl345-<chip>-<name>.csv` where `<chip>` is the name of the
-accelerometer chip (`my_chip_name` from `[adxl345 my_chip_name]`) and
+`/tmp/<chip_type>-<chip>-<name>.csv` where `<chip_type>` is the
+accelerometer section type (for example, `adxl345` or `adxl355`) and
+`<chip>` is the name of the accelerometer chip (`my_chip_name` from
+`[adxl345 my_chip_name]` or `[adxl355 my_chip_name]`) and
 `<name>` is the optional NAME parameter. If NAME is not specified it
 defaults to the current time in "YYYYMMDD_HHMMSS" format. If the
 accelerometer does not have a name in its config section (simply
-`[adxl345]`) then `<chip>` part of the name is not generated.
+`[adxl345]` or `[adxl355]`) then `<chip>` part of the
+name is not generated.
 
 #### ACCELEROMETER_QUERY
 `ACCELEROMETER_QUERY [CHIP=<config_name>] [RATE=<value>]`: queries
-accelerometer for the current value. If CHIP is not specified it
-defaults to "adxl345". If RATE is not specified, the default value is
-used. This command is useful to test the connection to the ADXL345
+accelerometer for the current value. If CHIP is not specified,
+Klipper uses the default configured accelerometer chip. If RATE is
+not specified, the default value is used. This command is useful
+to test the connection to the configured
 accelerometer: one of the returned values should be a free-fall
 acceleration (+/- some noise of the chip).
 
 #### ACCELEROMETER_DEBUG_READ
 `ACCELEROMETER_DEBUG_READ [CHIP=<config_name>] REG=<register>`:
-queries ADXL345 register "register" (e.g. 44 or 0x2C). Can be useful
+queries accelerometer register "register" (e.g. 44 or 0x2C). Can be
+useful
 for debugging purposes.
 
 #### ACCELEROMETER_DEBUG_WRITE
 `ACCELEROMETER_DEBUG_WRITE [CHIP=<config_name>] REG=<register>
 VAL=<value>`: Writes raw "value" into a register "register". Both
 "value" and "register" can be a decimal or a hexadecimal integer. Use
-with care, and refer to ADXL345 data sheet for the reference.
+with care, and refer to the accelerometer data sheet for the reference.
 
 ### [angle]
 
