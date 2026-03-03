@@ -2348,6 +2348,12 @@ sensor_type: ldc1612
 #   the bed. If this value is specified then one may override its
 #   value at run-time using the "TAP_THRESHOLD" parameter on probe
 #   commands. The default is to not enable support for "tap" probing.
+#tap_z_offset: 0.0
+#   The Z height (in mm) of the nozzle relative to the bed at the
+#   contact point detected during "tap" probing. Nominally this would
+#   be 0.0 to indicate the contact point has zero distance, but one
+#   may set this to account for backlash, thermal expansion, a
+#   systemic probing bias, or similar. The default is zero.
 ```
 
 ### [axis_twist_compensation]

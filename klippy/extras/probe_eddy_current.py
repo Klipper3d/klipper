@@ -260,6 +260,19 @@ class EddyCalibration:
         cal_contents.pop()
         configfile = self.printer.lookup_object('configfile')
         configfile.set(self.name, 'calibrate', ''.join(cal_contents))
+    def _save_tap_z_offset(self, gcmd, homing_z):
+        eventtime = self.printer.get_reactor().monotonic()
+        configfile = self.printer.lookup_object('configfile')
+        cstatus = configfile.get_status(eventtime)
+        csettings = cstatus.get('settings', {}).get(self.name, {})
+        tap_z_offset = csettings.get('tap_z_offset', 0.)
+        new_calibrate = tap_z_offset - homing_z
+        gcmd.respond_info(
+            "%s: tap_z_offset: %.3f\n"
+            "The SAVE_CONFIG command will update the printer config file\n"
+            "with the above and restart the printer."
+            % (self.name, new_calibrate))
+        configfile.set(self.name, 'tap_z_offset', "%.3f" % (new_calibrate,))
     cmd_EDDY_CALIBRATE_help = "Calibrate eddy current probe"
     def cmd_EDDY_CALIBRATE(self, gcmd):
         self.probe_speed = gcmd.get_float("PROBE_SPEED", 5., above=0.)
@@ -272,6 +285,9 @@ class EddyCalibration:
         offset = gcode_move.get_status()['homing_origin'].z
         if offset == 0:
             gcmd.respond_info("Nothing to do: Z Offset is 0")
+            return
+        if gcmd.get("METHOD", "").lower() == "tap":
+            self._save_tap_z_offset(gcmd, offset)
             return
         cal_zpos = [z - offset for z in self.cal_zpos]
         z_freq_pairs = zip(cal_zpos, self.cal_freqs)
@@ -488,6 +504,7 @@ class EddyTap:
         self._z_min_position = probe.lookup_minimum_z(config)
         self._gather = None
         self._filter_design = None
+        self._tap_z_offset = config.getfloat('tap_z_offset', 0.)
         self._tap_threshold = config.getfloat('tap_threshold', 0., above=0.)
         if self._tap_threshold:
             self._setup_tap()
@@ -572,7 +589,8 @@ class EddyTap:
         self._validate_samples_time(measures, start_time, end_time)
         pos_time = self._pull_tap_time(measures)
         trig_pos = self._lookup_toolhead_pos(pos_time)
-        return manual_probe.create_probe_result(trig_pos)
+        return manual_probe.create_probe_result(trig_pos,
+                                                (0., 0., self._tap_z_offset))
     # Probe session interface
     def start_probe_session(self, gcmd):
         self._prep_trigger_analog_tap(gcmd)
