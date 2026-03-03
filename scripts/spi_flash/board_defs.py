@@ -50,6 +50,17 @@ BOARD_DEFS = {
         "firmware_path": "Robin_e3.bin",
         "current_firmware_path": "Robin_e3.cur"
     },
+    # twotrees sapphire 5 v1.1 using mks robin nano 1.2 board
+    'mks-robin-v12': {
+        'mcu': "stm32f103xe",
+        'spi_bus': "swspi",
+        'spi_pins': "PC8,PD2,PC12",
+        'cs_pin': "PC11",
+        'skip_verify': True,
+        "conversion_script": "scripts/update_mks_robin.py",
+        "firmware_path": "ROBIN_NANO35.BIN",
+        "current_firmware_path": "ROBIN_NANO35.BIN"
+    },
     'btt-octopus-f407-v1': {
         'mcu': "stm32f407xx",
         'spi_bus': "swspi",
@@ -112,7 +123,8 @@ BOARD_DEFS = {
         'spi_bus': "swspi",
         'spi_pins': "PC8,PD2,PC12",
         'cs_pin': "PC11",
-        'skip_verify': True
+        'skip_verify': True,
+        'requires_unique_fw_name': True
     },
     'monster8': {
         'mcu': "stm32f407xx",
@@ -151,6 +163,29 @@ BOARD_DEFS = {
         "conversion_script": "scripts/update_chitu.py",
         "firmware_path": "update.cbd",
         'skip_verify': True
+    },
+    'znp-robin-nano-dw-v2.2': {
+        'mcu': "stm32f401xc",
+        'spi_bus': "spi2",
+        "cs_pin": "PB12",
+        "firmware_path": "ZNP_ROBIN_NANO.bin",
+        "current_firmware_path": "ZNP_ROBIN_NANO.CUR"
+    },
+    'qidi-x6': {
+        'mcu': "stm32f401xc",
+        'spi_bus': "spi2",
+        'cs_pin': "PB12",
+        'skip_verify': False,
+        'firmware_path': 'X_4.bin',
+        'current_firmware_path': 'X_4.CUR'
+    },
+    'qidi-x7': {
+        'mcu': "stm32f401xc",
+        'spi_bus': "spi2",
+        'cs_pin': "PB12",
+        'skip_verify': False,
+        'firmware_path': 'qd_mcu.bin',
+        'current_firmware_path': 'qd_mcu.CUR'
     }
 }
 
@@ -201,7 +236,12 @@ BOARD_ALIASES = {
     'fysetc-s6-v2': BOARD_DEFS['fysetc-spider'],
     'robin_v3': BOARD_DEFS['monster8'],
     'btt-skrat-v1.0': BOARD_DEFS['btt-skrat'],
-    'chitu-v6': BOARD_DEFS['chitu-v6']
+    'chitu-v6': BOARD_DEFS['chitu-v6'],
+    'qidi-x-smart3': BOARD_DEFS['qidi-x6'],
+    'qidi-x-plus3': BOARD_DEFS['qidi-x6'],
+    'qidi-x-max3': BOARD_DEFS['qidi-x6'],
+    'qidi-q1-pro': BOARD_DEFS['qidi-x7'],
+    'qidi-plus4': BOARD_DEFS['qidi-x7']
 }
 
 def list_boards():

@@ -12,7 +12,7 @@ except ImportError:
     import json
 
     # Json decodes strings as unicode types in Python 2.x.  This doesn't
-    # play well with some parts of Klipper (particuarly displays), so we
+    # play well with some parts of Klipper (particularly displays), so we
     # need to create an object hook. This solution borrowed from:
     #
     # https://stackoverflow.com/questions/956867/
@@ -136,7 +136,7 @@ class ServerSocket:
         printer.register_event_handler(
             'klippy:disconnect', self._handle_disconnect)
         printer.register_event_handler(
-            "klippy:shutdown", self._handle_shutdown)
+            "klippy:analyze_shutdown", self._handle_analyze_shutdown)
 
     def _handle_accept(self, eventtime):
         try:
@@ -157,7 +157,7 @@ class ServerSocket:
             except socket.error:
                 pass
 
-    def _handle_shutdown(self):
+    def _handle_analyze_shutdown(self, msg, details):
         for client in self.clients.values():
             client.dump_request_log()
 
@@ -491,41 +491,42 @@ class QueryStatusHelper:
         self.pending_queries = []
         msglist.extend(self.clients.values())
         # Generate get_status() info for each client
-        for cconn, subscription, send_func, template in msglist:
-            is_query = cconn is None
-            if not is_query and cconn.is_closed():
-                del self.clients[cconn]
-                continue
-            # Query each requested printer object
-            cquery = {}
-            for obj_name, req_items in subscription.items():
-                res = query.get(obj_name, None)
-                if res is None:
-                    po = self.printer.lookup_object(obj_name, None)
-                    if po is None or not hasattr(po, 'get_status'):
-                        res = query[obj_name] = {}
-                    else:
-                        res = query[obj_name] = po.get_status(eventtime)
-                if req_items is None:
-                    req_items = list(res.keys())
-                    if req_items:
-                        subscription[obj_name] = req_items
-                lres = last_query.get(obj_name, {})
-                cres = {}
-                for ri in req_items:
-                    rd = res.get(ri, None)
-                    if is_query or rd != lres.get(ri):
-                        cres[ri] = rd
-                if cres or is_query:
-                    cquery[obj_name] = cres
-            # Send data
-            if cquery or is_query:
-                tmp = dict(template)
-                tmp['params'] = {'eventtime': eventtime, 'status': cquery}
-                send_func(tmp)
+        reactor = self.printer.get_reactor()
+        with reactor.assert_no_pause():
+            for cconn, subscription, send_func, template in msglist:
+                is_query = cconn is None
+                if not is_query and cconn.is_closed():
+                    del self.clients[cconn]
+                    continue
+                # Query each requested printer object
+                cquery = {}
+                for obj_name, req_items in subscription.items():
+                    res = query.get(obj_name, None)
+                    if res is None:
+                        po = self.printer.lookup_object(obj_name, None)
+                        if po is None or not hasattr(po, 'get_status'):
+                            res = query[obj_name] = {}
+                        else:
+                            res = query[obj_name] = po.get_status(eventtime)
+                    if req_items is None:
+                        req_items = list(res.keys())
+                        if req_items:
+                            subscription[obj_name] = req_items
+                    lres = last_query.get(obj_name, {})
+                    cres = {}
+                    for ri in req_items:
+                        rd = res.get(ri, None)
+                        if is_query or rd != lres.get(ri):
+                            cres[ri] = rd
+                    if cres or is_query:
+                        cquery[obj_name] = cres
+                # Send data
+                if cquery or is_query:
+                    tmp = dict(template)
+                    tmp['params'] = {'eventtime': eventtime, 'status': cquery}
+                    send_func(tmp)
         if not query:
             # Unregister timer if there are no longer any subscriptions
-            reactor = self.printer.get_reactor()
             reactor.unregister_timer(self.query_timer)
             self.query_timer = None
             return reactor.NEVER

@@ -32,7 +32,8 @@ FATFS_CDEFS = """
         uint16_t modified_date;
         uint16_t modified_time;
         uint8_t  attrs;
-        char     name[13];
+        char     name_sfn[13];
+        char     name[256];
     };
 
     struct ff_disk_info {

@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # Script to parse a logging file, extract the stats, and graph them
 #
-# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import optparse, datetime
 import matplotlib
 
 MAXBANDWIDTH=25000.
-MAXBUFFER=2.
+MAXBUFFER=1.
 STATS_INTERVAL=5.
 TASK_MAX=0.0025
 

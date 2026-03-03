@@ -28,22 +28,15 @@ command_i2c_set_sw_bus(uint32_t *args)
     struct i2c_software *is = alloc_chunk(sizeof(*is));
     is->ticks = args[3];
     is->addr = (args[4] & 0x7f) << 1; // address format shifted
-    is->scl_in = gpio_in_setup(args[1], 1);
     is->scl_out = gpio_out_setup(args[1], 1);
-    is->sda_in = gpio_in_setup(args[2], 1);
+    is->scl_in = gpio_in_setup(args[1], 1);
     is->sda_out = gpio_out_setup(args[2], 1);
+    is->sda_in = gpio_in_setup(args[2], 1);
     i2cdev_set_software_bus(i2c, is);
 }
 DECL_COMMAND(command_i2c_set_sw_bus,
              "i2c_set_sw_bus oid=%c scl_pin=%u sda_pin=%u"
              " pulse_ticks=%u address=%u");
-
-// The AVR micro-controllers require specialized timing
-#if CONFIG_MACH_AVR
-
-#define i2c_delay(ticks) (void)(ticks)
-
-#else
 
 static void
 i2c_delay(uint32_t ticks)
@@ -52,8 +45,6 @@ i2c_delay(uint32_t ticks)
     while (timer_is_before(timer_read_time(), end))
         ;
 }
-
-#endif
 
 static void
 i2c_software_send_ack(struct i2c_software *is, const uint8_t ack)

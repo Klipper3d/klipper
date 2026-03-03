@@ -52,7 +52,6 @@ class RotaryDeltaKinematics:
                               math.radians(a), ua, la)
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
-            toolhead.register_step_generator(s.generate_steps)
         # Setup boundary checks
         self.need_home = True
         self.limit_xy2 = -1.
@@ -72,8 +71,8 @@ class RotaryDeltaKinematics:
             "Delta max build height %.2fmm (radius tapered above %.2fmm)"
             % (self.max_z, self.limit_z))
         max_xy = math.sqrt(self.max_xy2)
-        self.axes_min = toolhead.Coord(-max_xy, -max_xy, self.min_z, 0.)
-        self.axes_max = toolhead.Coord(max_xy, max_xy, self.max_z, 0.)
+        self.axes_min = toolhead.Coord((-max_xy, -max_xy, self.min_z))
+        self.axes_max = toolhead.Coord((max_xy, max_xy, self.max_z))
         self.set_position([0., 0., 0.], "")
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]

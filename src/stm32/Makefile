@@ -94,7 +94,7 @@ src-$(CONFIG_HAVE_GPIO_SDIO) += stm32/sdio.c
 target-y += $(OUT)klipper.bin
 
 $(OUT)klipper.bin: $(OUT)klipper.elf
-	@echo "  Creating hex file $@"
+	@echo "  Creating bin file $@"
 	$(Q)$(OBJCOPY) -O binary $< $@
 
 # Flash rules

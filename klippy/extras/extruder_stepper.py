@@ -15,6 +15,8 @@ class PrinterExtruderStepper:
                                             self.handle_connect)
     def handle_connect(self):
         self.extruder_stepper.sync_to_extruder(self.extruder_name)
+    def find_past_position(self, print_time):
+        return self.extruder_stepper.find_past_position(print_time)
     def get_status(self, eventtime):
         return self.extruder_stepper.get_status(eventtime)
 

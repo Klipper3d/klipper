@@ -15,7 +15,8 @@
 
 DECL_ENUMERATION("i2c_bus", "twi", 0);
 
-#if CONFIG_MACH_atmega168 || CONFIG_MACH_atmega328 || CONFIG_MACH_atmega328p
+#if CONFIG_MACH_atmega168 || CONFIG_MACH_atmega328 \
+      || CONFIG_MACH_atmega328p || CONFIG_MACH_lgt8f328p
 static const uint8_t SCL = GPIO('C', 5), SDA = GPIO('C', 4);
 DECL_CONSTANT_STR("BUS_PINS_twi", "PC5,PC4");
 #elif CONFIG_MACH_atmega644p || CONFIG_MACH_atmega1284p

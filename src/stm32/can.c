@@ -127,7 +127,7 @@ canhw_send(struct canbus_msg *msg)
     else
         tir = (msg->id & 0x7ff) << CAN_TI0R_STID_Pos;
     tir |= msg->id & CANMSG_ID_RTR ? CAN_TI0R_RTR : 0;
-    mb->TIR = (msg->id << CAN_TI0R_STID_Pos) | CAN_TI0R_TXRQ;
+    mb->TIR = tir | CAN_TI0R_TXRQ;
     return CANMSG_DATA_LEN(msg);
 }
 

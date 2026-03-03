@@ -33,7 +33,7 @@ DECL_ENUMERATION_RANGE("pin", "PH0", GPIO('H', 0), 16);
 DECL_ENUMERATION_RANGE("pin", "PI0", GPIO('I', 0), 16);
 #endif
 
-GPIO_TypeDef * const digital_regs[] = {
+static GPIO_TypeDef * const digital_regs[] = {
     ['A' - 'A'] = GPIOA, GPIOB, GPIOC,
 #ifdef GPIOD
     ['D' - 'A'] = GPIOD,
@@ -66,12 +66,14 @@ regs_to_pin(GPIO_TypeDef *regs, uint32_t bit)
     return 0;
 }
 
-// Verify that a gpio is a valid pin
-static int
-gpio_valid(uint32_t pin)
+// Verify that a gpio is a valid pin and return its hardware register
+GPIO_TypeDef *
+gpio_pin_to_regs(uint32_t pin)
 {
     uint32_t port = GPIO2PORT(pin);
-    return port < ARRAY_SIZE(digital_regs) && digital_regs[port];
+    if (port >= ARRAY_SIZE(digital_regs) || !digital_regs[port])
+        shutdown("Not a valid pin");
+    return digital_regs[port];
 }
 
 // The stm32h7 has very slow read access to the gpio registers.  Cache
@@ -83,10 +85,7 @@ static struct odr_cache {
 struct gpio_out
 gpio_out_setup(uint32_t pin, uint32_t val)
 {
-    if (!gpio_valid(pin))
-        shutdown("Not an output pin");
-    uint32_t port = GPIO2PORT(pin);
-    GPIO_TypeDef *regs = digital_regs[port];
+    GPIO_TypeDef *regs = gpio_pin_to_regs(pin);
     gpio_clock_enable(regs);
 
     struct gpio_out g = { .regs=regs, .oc=&ODR_CACHE[pin] };
@@ -141,9 +140,7 @@ gpio_out_write(struct gpio_out g, uint32_t val)
 struct gpio_in
 gpio_in_setup(uint32_t pin, int32_t pull_up)
 {
-    if (!gpio_valid(pin))
-        shutdown("Not a valid input pin");
-    GPIO_TypeDef *regs = digital_regs[GPIO2PORT(pin)];
+    GPIO_TypeDef *regs = gpio_pin_to_regs(pin);
     struct gpio_in g = { .regs=regs, .bit=GPIO2BIT(pin) };
     gpio_in_reset(g, pull_up);
     return g;

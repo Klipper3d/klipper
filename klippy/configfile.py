@@ -130,14 +130,8 @@ class ConfigWrapper:
     def deprecate(self, option, value=None):
         if not self.fileconfig.has_option(self.section, option):
             return
-        if value is None:
-            msg = ("Option '%s' in section '%s' is deprecated."
-                   % (option, self.section))
-        else:
-            msg = ("Value '%s' in option '%s' in section '%s' is deprecated."
-                   % (value, option, self.section))
         pconfig = self.printer.lookup_object("configfile")
-        pconfig.deprecate(self.section, option, value, msg)
+        pconfig.deprecate(self.section, option, value)
 
 
 ######################################################################
@@ -468,8 +462,6 @@ class PrinterConfig:
         self.autosave = ConfigAutoSave(printer)
         self.validate = ConfigValidate(printer)
         self.deprecated = {}
-        self.runtime_warnings = []
-        self.deprecate_warnings = []
         self.status_raw_config = {}
         self.status_warnings = []
     def get_printer(self):
@@ -496,27 +488,58 @@ class PrinterConfig:
     def check_unused_options(self, config):
         self.validate.check_unused(config.fileconfig)
     # Deprecation warnings
+    def _add_deprecated(self, data):
+        key = tuple(list(data.items()))
+        if key in self.deprecated:
+            return False
+        self.deprecated[key] = True
+        self.status_warnings = self.status_warnings + [data]
+        return True
     def runtime_warning(self, msg):
-        logging.warning(msg)
         res = {'type': 'runtime_warning', 'message': msg}
-        self.runtime_warnings.append(res)
-        self.status_warnings = self.runtime_warnings + self.deprecate_warnings
+        did_add = self._add_deprecated(res)
+        if did_add:
+            logging.warning(msg)
     def deprecate(self, section, option, value=None, msg=None):
-        key = (section, option, value)
-        if key in self.deprecated and self.deprecated[key] == msg:
-            return
-        self.deprecated[key] = msg
-        self.deprecate_warnings = []
-        for (section, option, value), msg in self.deprecated.items():
-            if value is None:
-                res = {'type': 'deprecated_option'}
-            else:
-                res = {'type': 'deprecated_value', 'value': value}
-            res['message'] = msg
-            res['section'] = section
-            res['option'] = option
-            self.deprecate_warnings.append(res)
-        self.status_warnings = self.runtime_warnings + self.deprecate_warnings
+        if value is None:
+            res = {'type': 'deprecated_option'}
+            defmsg = ("Option '%s' in section '%s' is deprecated."
+                   % (option, self.section))
+        else:
+            res = {'type': 'deprecated_value', 'value': value}
+            defmsg = ("Value '%s' in option '%s' in section '%s' is deprecated."
+                      % (value, option, self.section))
+        if msg is None:
+            msg = defmsg
+        res['message'] = msg
+        res['section'] = section
+        res['option'] = option
+        self._add_deprecated(res)
+    def deprecate_gcode(self, cmd, param=None, value=None, msg=None):
+        if param is None:
+            defmsg = "Command '%s' is deprecated." % (cmd,)
+        elif value is None:
+            defmsg = ("Parameter '%s' in command '%s' is deprecated."
+                      % (param, cmd))
+        else:
+            defmsg = ("Value '%s=%s' in command '%s' is deprecated."
+                      % (param, value, cmd))
+        if msg is None:
+            msg = defmsg
+        res = {'type': 'deprecated_gcode', 'message': msg,
+               'command': cmd, 'parameter': param, 'value': str(value)}
+        self._add_deprecated(res)
+    def deprecate_mcu_code(self, mcu, feature, msg=None):
+        mcu_name = mcu.get_name()
+        if msg is None:
+            vhost = self.printer.start_args['software_version']
+            vmcu = mcu.get_status()['mcu_version']
+            msg = ("MCU '%s' has deprecated code (it is missing feature '%s')."
+                   " Recompiling and flashing is recommended (MCU version '%s',"
+                   " host version '%s')." % (mcu_name, feature, vmcu, vhost))
+        res = {'type': 'deprecated_mcu_code', 'message': msg,
+               'mcu': mcu_name, 'feature': feature}
+        self._add_deprecated(res)
     # Status reporting
     def _build_status_config(self, config):
         self.status_raw_config = {}

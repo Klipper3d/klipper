@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, collections
 import stepper
+from . import bulk_sensor
 
 
 ######################################################################
@@ -220,6 +221,96 @@ class TMCErrorCheck:
             self.last_drv_fields = {n: v for n, v in fields.items() if v}
         return {'drv_status': self.last_drv_fields, 'temperature': temp}
 
+######################################################################
+# Record driver status
+######################################################################
+
+class TMCStallguardDump:
+    def __init__(self, config, mcu_tmc):
+        self.printer = config.get_printer()
+        self.stepper_name = ' '.join(config.get_name().split()[1:])
+        self.mcu_tmc = mcu_tmc
+        self.mcu = self.mcu_tmc.get_mcu()
+        self.fields = self.mcu_tmc.get_fields()
+        self.sg2_supp = False
+        self.sg4_reg_name = None
+        # It is possible to support TMC2660, just disable it for now
+        if not self.fields.all_fields.get("DRV_STATUS", None):
+            return
+        # Collect driver capabilities
+        if self.fields.all_fields["DRV_STATUS"].get("sg_result", None):
+            self.sg2_supp = True
+        # New drivers have separate register for SG4 result
+        if self.mcu_tmc.name_to_reg.get("SG_RESULT", 0):
+            self.sg4_reg_name = "SG_RESULT"
+        # 2240 supports both SG2 & SG4
+        if self.sg4_reg_name is None:
+            if self.mcu_tmc.name_to_reg.get("SG4_RESULT", 0):
+                self.sg4_reg_name = "SG4_RESULT"
+        # TMC2208
+        if self.sg2_supp is None and self.sg4_reg_name is None:
+            return
+        self.optimized_spi = False
+        # Bulk API
+        self.samples = []
+        self.query_timer = None
+        self.error = None
+        self.batch_bulk = bulk_sensor.BatchBulkHelper(
+            self.printer, self._dump, self._start, self._stop)
+        api_resp = {'header': ('time', 'sg_result', 'cs_actual')}
+        self.batch_bulk.add_mux_endpoint("tmc/stallguard_dump", "name",
+                                         self.stepper_name, api_resp)
+    def _start(self):
+        self.error = None
+        status = self.mcu_tmc.get_register_raw("DRV_STATUS")
+        if status.get("spi_status"):
+            self.optimized_spi = True
+        reactor = self.printer.get_reactor()
+        self.query_timer = reactor.register_timer(self._query_tmc,
+                                                  reactor.NOW)
+    def _stop(self):
+        self.printer.get_reactor().unregister_timer(self.query_timer)
+        self.query_timer = None
+        self.samples = []
+    def _query_tmc(self, eventtime):
+        sg_result = -1
+        cs_actual = -1
+        recv_time = eventtime
+        try:
+            if self.optimized_spi or self.sg4_reg_name == "SG4_RESULT":
+                #TMC2130/TMC5160/TMC2240
+                status = self.mcu_tmc.get_register_raw("DRV_STATUS")
+                reg_val = status["data"]
+                cs_actual = self.fields.get_field("cs_actual", reg_val)
+                sg_result = self.fields.get_field("sg_result", reg_val)
+                is_stealth = self.fields.get_field("stealth", reg_val)
+                recv_time = status["#receive_time"]
+                if is_stealth and self.sg4_reg_name == "SG4_RESULT":
+                    sg4_ret = self.mcu_tmc.get_register_raw("SG4_RESULT")
+                    sg_result = sg4_ret["data"]
+                    recv_time = sg4_ret["#receive_time"]
+            else:
+                # TMC2209
+                if self.sg4_reg_name == "SG_RESULT":
+                    sg4_ret = self.mcu_tmc.get_register_raw("SG_RESULT")
+                    sg_result = sg4_ret["data"]
+                    recv_time = sg4_ret["#receive_time"]
+        except self.printer.command_error as e:
+            self.error = e
+            return self.printer.get_reactor().NEVER
+        print_time = self.mcu.estimated_print_time(recv_time)
+        self.samples.append((print_time, sg_result, cs_actual))
+        if self.optimized_spi:
+            return eventtime + 0.001
+        # UART queried as fast as possible
+        return eventtime + 0.005
+    def _dump(self, eventtime):
+            if self.error:
+                raise self.error
+            samples = self.samples
+            self.samples = []
+            return {"data": samples}
+
 
 ######################################################################
 # G-Code command helpers
@@ -232,23 +323,29 @@ class TMCCommandHelper:
         self.name = config.get_name().split()[-1]
         self.mcu_tmc = mcu_tmc
         self.current_helper = current_helper
-        self.echeck_helper = TMCErrorCheck(config, mcu_tmc)
         self.fields = mcu_tmc.get_fields()
-        self.read_registers = self.read_translate = None
-        self.toff = None
-        self.mcu_phase_offset = None
         self.stepper = None
+        # Stepper phase tracking
+        self.mcu_phase_offset = None
+        # Stepper enable/disable tracking
+        self.toff = None
         self.stepper_enable = self.printer.load_object(config, "stepper_enable")
+        self.enable_mutex = self.printer.get_reactor().mutex()
+        # DUMP_TMC support
+        self.read_registers = self.read_translate = None
+        # Common tmc helpers
+        self.echeck_helper = TMCErrorCheck(config, mcu_tmc)
+        self.record_helper = TMCStallguardDump(config, mcu_tmc)
+        TMCMicrostepHelper(config, mcu_tmc)
+        # Register callbacks
         self.printer.register_event_handler("stepper:sync_mcu_position",
                                             self._handle_sync_mcu_pos)
-        self.printer.register_event_handler("stepper:set_sdir_inverted",
+        self.printer.register_event_handler("stepper:set_dir_inverted",
                                             self._handle_sync_mcu_pos)
         self.printer.register_event_handler("klippy:mcu_identify",
                                             self._handle_mcu_identify)
         self.printer.register_event_handler("klippy:connect",
                                             self._handle_connect)
-        # Set microstep config options
-        TMCMicrostepHelper(config, mcu_tmc)
         # Register commands
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command("SET_TMC_FIELD", "STEPPER", self.name,
@@ -346,48 +443,48 @@ class TMCCommandHelper:
         self.mcu_phase_offset = moff
     # Stepper enable/disable tracking
     def _do_enable(self, print_time):
-        try:
-            if self.toff is not None:
-                # Shared enable via comms handling
-                self.fields.set_field("toff", self.toff)
-            self._init_registers()
-            did_reset = self.echeck_helper.start_checks()
-            if did_reset:
-                self.mcu_phase_offset = None
-            # Calculate phase offset
+        if self.toff is not None:
+            # Shared enable via comms handling
+            self.fields.set_field("toff", self.toff)
+        self._init_registers()
+        did_reset = self.echeck_helper.start_checks()
+        if did_reset:
+            self.mcu_phase_offset = None
+        # Calculate phase offset
+        if self.mcu_phase_offset is not None:
+            return
+        gcode = self.printer.lookup_object("gcode")
+        with gcode.get_mutex():
             if self.mcu_phase_offset is not None:
                 return
-            gcode = self.printer.lookup_object("gcode")
-            with gcode.get_mutex():
-                if self.mcu_phase_offset is not None:
-                    return
-                logging.info("Pausing toolhead to calculate %s phase offset",
-                             self.stepper_name)
-                self.printer.lookup_object('toolhead').wait_moves()
-                self._handle_sync_mcu_pos(self.stepper)
-        except self.printer.command_error as e:
-            self.printer.invoke_shutdown(str(e))
+            logging.info("Pausing toolhead to calculate %s phase offset",
+                         self.stepper_name)
+            self.printer.lookup_object('toolhead').wait_moves()
+            self._handle_sync_mcu_pos(self.stepper)
     def _do_disable(self, print_time):
-        try:
-            if self.toff is not None:
-                val = self.fields.set_field("toff", 0)
-                reg_name = self.fields.lookup_register("toff")
-                self.mcu_tmc.set_register(reg_name, val, print_time)
-            self.echeck_helper.stop_checks()
-        except self.printer.command_error as e:
-            self.printer.invoke_shutdown(str(e))
+        if self.toff is not None:
+            val = self.fields.set_field("toff", 0)
+            reg_name = self.fields.lookup_register("toff")
+            self.mcu_tmc.set_register(reg_name, val, print_time)
+        self.echeck_helper.stop_checks()
+    def _handle_stepper_enable(self, print_time, is_enable):
+        def enable_disable_cb(eventtime):
+            try:
+                with self.enable_mutex:
+                    if is_enable:
+                        self._do_enable(print_time)
+                    else:
+                        self._do_disable(print_time)
+            except self.printer.command_error as e:
+                self.printer.invoke_shutdown(str(e))
+        self.printer.get_reactor().register_callback(enable_disable_cb)
+    # Initial startup handling
     def _handle_mcu_identify(self):
         # Lookup stepper object
         force_move = self.printer.lookup_object("force_move")
         self.stepper = force_move.lookup_stepper(self.stepper_name)
         # Note pulse duration and step_both_edge optimizations available
         self.stepper.setup_default_pulse_duration(.000000100, True)
-    def _handle_stepper_enable(self, print_time, is_enable):
-        if is_enable:
-            cb = (lambda ev: self._do_enable(print_time))
-        else:
-            cb = (lambda ev: self._do_disable(print_time))
-        self.printer.get_reactor().register_callback(cb)
     def _handle_connect(self):
         # Check if using step on both edges optimization
         pulse_duration, step_both_edge = self.stepper.get_pulse_duration()

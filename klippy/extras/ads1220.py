@@ -96,7 +96,6 @@ class ADS1220:
             self.printer, self._process_batch, self._start_measurements,
             self._finish_measurements, UPDATE_INTERVAL)
         # Command Configuration
-        self.attach_probe_cmd = None
         mcu.add_config_cmd(
             "config_ads1220 oid=%d spi_oid=%d data_ready_pin=%s"
             % (self.oid, self.spi.get_oid(), self.data_ready_pin))
@@ -105,12 +104,15 @@ class ADS1220:
         mcu.register_config_callback(self._build_config)
         self.query_ads1220_cmd = None
 
+    def setup_trigger_analog(self, trigger_analog_oid):
+        self.mcu.add_config_cmd(
+            "ads1220_attach_trigger_analog oid=%d trigger_analog_oid=%d"
+            % (self.oid, trigger_analog_oid), is_init=True)
+
     def _build_config(self):
         cmdqueue = self.spi.get_command_queue()
         self.query_ads1220_cmd = self.mcu.lookup_command(
             "query_ads1220 oid=%c rest_ticks=%u", cq=cmdqueue)
-        self.attach_probe_cmd = self.mcu.lookup_command(
-            "ads1220_attach_load_cell_probe oid=%c load_cell_probe_oid=%c")
         self.ffreader.setup_query_command("query_ads1220_status oid=%c",
                                           oid=self.oid, cq=cmdqueue)
 
@@ -120,6 +122,9 @@ class ADS1220:
     def get_samples_per_second(self):
         return self.sps
 
+    def lookup_sensor_error(self, error_code):
+        return "Unknown ads1220 error" % (error_code,)
+
     # returns a tuple of the minimum and maximum value of the sensor, used to
     # detect if a data value is saturated
     def get_range(self):
@@ -128,9 +133,6 @@ class ADS1220:
     # add_client interface, direct pass through to bulk_sensor API
     def add_client(self, callback):
         self.batch_bulk.add_client(callback)
-
-    def attach_load_cell_probe(self, load_cell_probe_oid):
-        self.attach_probe_cmd.send([self.oid, load_cell_probe_oid])
 
     # Measurement decoding
     def _convert_samples(self, samples):
@@ -175,6 +177,8 @@ class ADS1220:
         # read startup register state and validate
         val = self.read_reg(0x0, 4)
         if val != RESET_STATE:
+            if self.mcu.is_fileoutput():
+                return
             raise self.printer.command_error(
                 "Invalid ads1220 reset state (got %s vs %s).\n"
                 "This is generally indicative of connection problems\n"
@@ -209,6 +213,8 @@ class ADS1220:
         self.spi.spi_send(write_command)
         stored_val = self.read_reg(reg, len(register_bytes))
         if bytearray(register_bytes) != stored_val:
+            if self.mcu.is_fileoutput():
+                return
             raise self.printer.command_error(
                 "Failed to set ADS1220 register [0x%x] to %s: got %s. "
                 "This may be a connection problem (e.g. faulty wiring)" % (

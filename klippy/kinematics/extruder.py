@@ -39,8 +39,6 @@ class ExtruderStepper:
                                    self.name, self.cmd_SYNC_EXTRUDER_MOTION,
                                    desc=self.cmd_SYNC_EXTRUDER_MOTION_help)
     def _handle_connect(self):
-        toolhead = self.printer.lookup_object('toolhead')
-        toolhead.register_step_generator(self.stepper.generate_steps)
         self._set_pressure_advance(self.config_pa, self.config_smooth_time)
     def get_status(self, eventtime):
         return {'pressure_advance': self.pressure_advance,
@@ -52,9 +50,11 @@ class ExtruderStepper:
     def sync_to_extruder(self, extruder_name):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.flush_step_generation()
+        motion_queuing = self.printer.lookup_object('motion_queuing')
         if not extruder_name:
             self.stepper.set_trapq(None)
             self.motion_queue = None
+            motion_queuing.check_step_generation_scan_windows()
             return
         extruder = self.printer.lookup_object(extruder_name, None)
         if extruder is None or not isinstance(extruder, PrinterExtruder):
@@ -63,6 +63,7 @@ class ExtruderStepper:
         self.stepper.set_position([extruder.last_position, 0., 0.])
         self.stepper.set_trapq(extruder.get_trapq())
         self.motion_queue = extruder_name
+        motion_queuing.check_step_generation_scan_windows()
     def _set_pressure_advance(self, pressure_advance, smooth_time):
         old_smooth_time = self.pressure_advance_smooth_time
         if not self.pressure_advance:
@@ -71,14 +72,18 @@ class ExtruderStepper:
         if not pressure_advance:
             new_smooth_time = 0.
         toolhead = self.printer.lookup_object("toolhead")
-        if new_smooth_time != old_smooth_time:
-            toolhead.note_step_generation_scan_time(
-                    new_smooth_time * .5, old_delay=old_smooth_time * .5)
         ffi_main, ffi_lib = chelper.get_ffi()
         espa = ffi_lib.extruder_set_pressure_advance
-        toolhead.register_lookahead_callback(
-            lambda print_time: espa(self.sk_extruder, print_time,
-                                    pressure_advance, new_smooth_time))
+        if new_smooth_time != old_smooth_time:
+            # Need full kinematic flush to change the smooth time
+            toolhead.flush_step_generation()
+            espa(self.sk_extruder, 0., pressure_advance, new_smooth_time)
+            motion_queuing = self.printer.lookup_object('motion_queuing')
+            motion_queuing.check_step_generation_scan_windows()
+        else:
+            toolhead.register_lookahead_callback(
+                lambda print_time: espa(self.sk_extruder, print_time,
+                                        pressure_advance, new_smooth_time))
         self.pressure_advance = pressure_advance
         self.pressure_advance_smooth_time = smooth_time
     cmd_SET_PRESSURE_ADVANCE_help = "Set pressure advance parameters"
@@ -165,10 +170,9 @@ class PrinterExtruder:
         self.instant_corner_v = config.getfloat(
             'instantaneous_corner_velocity', 1., minval=0.)
         # Setup extruder trapq (trapezoidal motion queue)
-        ffi_main, ffi_lib = chelper.get_ffi()
-        self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
-        self.trapq_append = ffi_lib.trapq_append
-        self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
+        self.motion_queuing = self.printer.load_object(config, 'motion_queuing')
+        self.trapq = self.motion_queuing.allocate_trapq()
+        self.trapq_append = self.motion_queuing.lookup_trapq_append()
         # Setup extruder stepper
         self.extruder_stepper = None
         if (config.get('step_pin', None) is not None

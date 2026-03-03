@@ -1,5 +1,5 @@
 #!/bin/bash
-#  This script launches flash_sdcard.py, a utitlity that enables
+#  This script launches flash_sdcard.py, a utility that enables
 #  unattended firmware updates on boards with "SD Card" bootloaders
 
 # Non-standard installations may need to change this location

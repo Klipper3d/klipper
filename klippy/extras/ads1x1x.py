@@ -210,28 +210,28 @@ class ADS1X1X_chip:
                 raise pins.error('ADS1x1x pin %s is not valid' % \
                                  pin_params['pin'])
 
-            config = 0
-            config |= (ADS1X1X_OS['OS_SINGLE'] & \
-                       ADS1X1X_REG_CONFIG['OS_MASK'])
-            config |= (ADS1X1X_MUX[pin_params['pin']] & \
-                       ADS1X1X_REG_CONFIG['MULTIPLEXER_MASK'])
-            config |= (self.pga & ADS1X1X_REG_CONFIG['PGA_MASK'])
+            pcfg = 0
+            pcfg |= (ADS1X1X_OS['OS_SINGLE'] & \
+                     ADS1X1X_REG_CONFIG['OS_MASK'])
+            pcfg |= (ADS1X1X_MUX[pin_params['pin']] & \
+                     ADS1X1X_REG_CONFIG['MULTIPLEXER_MASK'])
+            pcfg |= (self.pga & ADS1X1X_REG_CONFIG['PGA_MASK'])
             # Have to use single mode, because in continuous, it never reaches
             # idle state, which we use to determine if the sampling is done.
-            config |= (ADS1X1X_MODE['single'] & \
+            pcfg |= (ADS1X1X_MODE['single'] & \
                        ADS1X1X_REG_CONFIG['MODE_MASK'])
             # lowest sample rate per default, until report time has been set in
             # setup_adc_sample
-            config |= (self.comp_mode \
-                & ADS1X1X_REG_CONFIG['COMPARATOR_MODE_MASK'])
-            config |= (self.comp_polarity \
-                & ADS1X1X_REG_CONFIG['COMPARATOR_POLARITY_MASK'])
-            config |= (self.comp_latching \
-                & ADS1X1X_REG_CONFIG['COMPARATOR_LATCHING_MASK'])
-            config |= (self.comp_queue \
-                & ADS1X1X_REG_CONFIG['COMPARATOR_QUEUE_MASK'])
+            pcfg |= (self.comp_mode \
+                     & ADS1X1X_REG_CONFIG['COMPARATOR_MODE_MASK'])
+            pcfg |= (self.comp_polarity \
+                     & ADS1X1X_REG_CONFIG['COMPARATOR_POLARITY_MASK'])
+            pcfg |= (self.comp_latching \
+                     & ADS1X1X_REG_CONFIG['COMPARATOR_LATCHING_MASK'])
+            pcfg |= (self.comp_queue \
+                     & ADS1X1X_REG_CONFIG['COMPARATOR_QUEUE_MASK'])
 
-            pin_obj = ADS1X1X_pin(self, config)
+            pin_obj = ADS1X1X_pin(self, pcfg)
             if pin in self._pins:
                 raise pins.error(
                     'pin %s for chip %s is used multiple times' \
@@ -250,8 +250,8 @@ class ADS1X1X_chip:
             logging.exception("ADS1X1X: error while resetting device")
 
     def is_ready(self):
-        config = self._read_register(ADS1X1X_REG_POINTER['CONFIG'])
-        return bool((config & ADS1X1X_REG_CONFIG['OS_MASK']) == \
+        cfg = self._read_register(ADS1X1X_REG_POINTER['CONFIG'])
+        return bool((cfg & ADS1X1X_REG_CONFIG['OS_MASK']) == \
                     ADS1X1X_OS['OS_IDLE'])
 
     def calculate_sample_rate(self):
@@ -281,7 +281,7 @@ class ADS1X1X_chip:
         (sample_rate, sample_rate_bits) = self.calculate_sample_rate()
 
         for pin in self._pins.values():
-            pin.config = (pin.config & ~ADS1X1X_REG_CONFIG['DATA_RATE_MASK']) \
+            pin.pcfg = (pin.pcfg & ~ADS1X1X_REG_CONFIG['DATA_RATE_MASK']) \
                 | (sample_rate_bits & ADS1X1X_REG_CONFIG['DATA_RATE_MASK'])
 
         self.delay = 1 / float(sample_rate)
@@ -289,7 +289,7 @@ class ADS1X1X_chip:
     def sample(self, pin):
         with self._mutex:
             try:
-                self._write_register(ADS1X1X_REG_POINTER['CONFIG'], pin.config)
+                self._write_register(ADS1X1X_REG_POINTER['CONFIG'], pin.pcfg)
                 self._reactor.pause(self._reactor.monotonic() + self.delay)
                 start_time = self._reactor.monotonic()
                 while not self.is_ready():
@@ -318,10 +318,11 @@ class ADS1X1X_chip:
         self._i2c.i2c_write(data)
 
 class ADS1X1X_pin:
-    def __init__(self, chip, config):
+    def __init__(self, chip, pcfg):
         self.mcu = chip.mcu
         self.chip = chip
-
+        self.pcfg = pcfg
+        self._last_state = (0., 0.)
         self.invalid_count = 0
 
         self.chip._printer.register_event_handler("klippy:connect", \
@@ -360,9 +361,10 @@ class ADS1X1X_pin:
                 self.invalid_count = 0
 
             # Publish result
-            measured_time = self._reactor.monotonic()
-            self.callback(self.chip.mcu.estimated_print_time(measured_time),
-                        target_value)
+            systime = self._reactor.monotonic()
+            measured_time = self.chip.mcu.estimated_print_time(systime)
+            self._last_state = (measured_time, target_value)
+            self.callback([(measured_time, target_value)])
         else:
             self.invalid_count = self.invalid_count + 1
             self.check_invalid()
@@ -377,16 +379,20 @@ class ADS1X1X_pin:
     def get_mcu(self):
         return self.mcu
 
-    def setup_adc_callback(self, report_time, callback):
-        self.report_time = report_time
+    def setup_adc_callback(self, callback):
         self.callback = callback
-        self.chip.handle_report_time_update()
 
-    def setup_adc_sample(self, sample_time, sample_count,
-                         minval=0., maxval=1., range_check_count=0):
+    def setup_adc_sample(self, report_time, sample_time=0., sample_count=1,
+                         batch_num=1, minval=0., maxval=1.,
+                         range_check_count=0):
+        self.report_time = report_time
         self.minval = minval
         self.maxval = maxval
         self.range_check_count = range_check_count
+        self.chip.handle_report_time_update()
+
+    def get_last_value(self):
+        return self._last_state
 
 def load_config_prefix(config):
     return ADS1X1X_chip(config)

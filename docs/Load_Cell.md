@@ -36,7 +36,7 @@ Things you can check with this data:
 * 'Unique values' should be a large percentage of the 'Samples
   Collected' value. If 'Unique values' is 1 it is very likely a wiring issue.
 * Tap or push on the sensor while `LOAD_CELL_DIAGNOSTIC` runs. If
-  things are working correctly ths should increase the 'Sample range'.
+  things are working correctly this should increase the 'Sample range'.
 
 ## Calibrating a Load Cell
 
@@ -189,7 +189,7 @@ Multiple cycles of this will result in ever-increasing force on the toolhead.
 `force_safety_limit` stops this cycle from running out of control.
 
 Another way this run-away can happen is damage to a strain gauge. If the metal
-part is permanently bent it wil change the `reference_tare_counts` of the
+part is permanently bent it will change the `reference_tare_counts` of the
 device. This puts the starting tare value much closer to the limit making it
 more likely to be violated. You want to be notified if this is happening
 because your hardware has been permanently damaged.
@@ -252,12 +252,12 @@ macro. This requires setting up
 Here is a simple macro that can accomplish this. Note that the
 `_HOME_Z_FROM_LAST_PROBE` macro has to be separate because of the way macros
 work. The sub-call is needed so that the `_HOME_Z_FROM_LAST_PROBE` macro can
-see the result of the probe in `printer.probe.last_z_result`.
+see the result of the probe in `printer.probe.last_probe_position`.
 
 ```gcode
 [gcode_macro _HOME_Z_FROM_LAST_PROBE]
 gcode:
-    {% set z_probed = printer.probe.last_z_result %}
+    {% set z_probed = printer.probe.last_probe_position.z %}
     {% set z_position = printer.toolhead.position[2] %}
     {% set z_actual = z_position - z_probed %}
     SET_KINEMATIC_POSITION Z={z_actual}

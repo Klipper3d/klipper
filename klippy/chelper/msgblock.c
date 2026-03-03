@@ -207,3 +207,14 @@ clock_from_time(struct clock_estimate *ce, double time)
 {
     return (int64_t)((time - ce->conv_time)*ce->est_freq + .5) + ce->conv_clock;
 }
+
+// Fill the fields of a 'struct clock_estimate'
+void
+clock_fill(struct clock_estimate *ce, double est_freq, double conv_time
+           , uint64_t conv_clock, uint64_t last_clock)
+{
+    ce->est_freq = est_freq;
+    ce->conv_time = conv_time;
+    ce->conv_clock = conv_clock;
+    ce->last_clock = last_clock;
+}

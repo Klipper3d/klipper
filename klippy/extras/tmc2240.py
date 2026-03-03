@@ -58,8 +58,9 @@ Registers = {
 ReadRegisters = [
     "GCONF", "GSTAT", "IOIN", "DRV_CONF", "GLOBALSCALER", "IHOLD_IRUN",
     "TPOWERDOWN", "TSTEP", "TPWMTHRS", "TCOOLTHRS", "THIGH", "ADC_VSUPPLY_AIN",
-    "ADC_TEMP", "MSCNT", "MSCURACT", "CHOPCONF", "COOLCONF", "DRV_STATUS",
-    "PWMCONF", "PWM_SCALE", "PWM_AUTO", "SG4_THRS", "SG4_RESULT", "SG4_IND"
+    "ADC_TEMP", "OTW_OV_VTH", "MSCNT", "MSCURACT", "CHOPCONF", "COOLCONF",
+    "DRV_STATUS", "PWMCONF", "PWM_SCALE", "PWM_AUTO", "SG4_THRS", "SG4_RESULT",
+    "SG4_IND"
 ]
 
 Fields = {}
@@ -261,6 +262,9 @@ FieldFormatters.update({
     "adc_temp":         (lambda v: "0x%04x(%.1fC)" % (v, ((v - 2038) / 7.7))),
     "adc_vsupply":      (lambda v: "0x%04x(%.3fV)" % (v, v * 0.009732)),
     "adc_ain":          (lambda v: "0x%04x(%.3fmV)" % (v, v * 0.3052)),
+    "overvoltage_vth":  (lambda v: "0x%04x(%.3fV)" % (v, v * 0.009732)),
+    "overtempprewarning_vth": (lambda v:
+                               "0x%04x(%.1fC)" % (v, ((v - 2038) / 7.7))),
 })
 
 

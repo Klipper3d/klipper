@@ -234,6 +234,64 @@ class HandleStepQ:
                 step_data.append((step_time, step_halfpos, step_pos))
 LogHandlers["stepq"] = HandleStepQ
 
+# Extract tmc current and stallguard data from the log
+class HandleStallguard:
+    SubscriptionIdParts = 2
+    ParametersMin = 2
+    ParametersMax = 2
+    DataSets = [
+        ('stallguard(<stepper>,sg_result)',
+         'Stallguard result of the given stepper driver'),
+        ('stallguard(<stepper>,cs_actual)',
+         'Current level result of the given stepper driver'),
+    ]
+    def __init__(self, lmanager, name, name_parts):
+        self.name = name
+        self.stepper_name = name_parts[1]
+        self.filter = name_parts[2]
+        self.jdispatch = lmanager.get_jdispatch()
+        self.data = []
+        self.ret = None
+        self.driver_name = ""
+        for k in lmanager.get_initial_status()['configfile']['settings']:
+            if not k.startswith("tmc"):
+                continue
+            if k.endswith(self.stepper_name):
+                self.driver_name = k
+                break
+        # Current decode
+        self.status_tracker = lmanager.get_status_tracker()
+        self.next_status_time = 0.
+        self.irun = 0
+    def get_label(self):
+        label = '%s %s %s' % (self.driver_name, self.stepper_name,
+                              self.filter)
+        if self.filter == "sg_result":
+            return {'label': label, 'units': 'Stallguard'}
+        elif self.filter == "cs_actual":
+            return {'label': label, 'units': 'CS Actual'}
+    # Search datapoint in dataset extrapolate in between
+    def pull_data(self, req_time):
+        while 1:
+            if len(self.data) == 0:
+                jmsg = self.jdispatch.pull_msg(req_time, self.name)
+                if jmsg is None:
+                    return
+                self.data = jmsg["data"]
+            if self.ret is None and len(self.data) > 0:
+                time, sg_result, cs_actual = self.data.pop(0)
+                self.ret = {
+                    "time": time,
+                    "sg_result": sg_result,
+                    "cs_actual": cs_actual,
+                }
+            if self.ret:
+                time = self.ret["time"]
+                if req_time <= time:
+                    return self.ret[self.filter]
+                self.ret = None
+LogHandlers["stallguard"] = HandleStallguard
+
 # Extract stepper motor phase position
 class HandleStepPhase:
     SubscriptionIdParts = 0
@@ -335,25 +393,26 @@ class HandleStepPhase:
 LogHandlers["step_phase"] = HandleStepPhase
 
 # Extract accelerometer data
-class HandleADXL345:
+class HandleAccelerometer:
     SubscriptionIdParts = 2
     ParametersMin = ParametersMax = 2
     DataSets = [
-        ('adxl345(<name>,<axis>)', 'Accelerometer for given axis (x, y, or z)'),
+        ('accelerometer(<name>,<axis>)',
+         'Accelerometer for given axis (x, y, or z)'),
     ]
     def __init__(self, lmanager, name, name_parts):
         self.name = name
-        self.adxl_name = name_parts[1]
+        self.accel_name = name_parts[1]
         self.jdispatch = lmanager.get_jdispatch()
         self.next_accel_time = self.last_accel_time = 0.
         self.next_accel = self.last_accel = (0., 0., 0.)
         self.cur_data = []
         self.data_pos = 0
         if name_parts[2] not in 'xyz':
-            raise error("Unknown adxl345 data selection '%s'" % (name,))
+            raise error("Unknown accelerometer data selection '%s'" % (name,))
         self.axis = 'xyz'.index(name_parts[2])
     def get_label(self):
-        label = '%s %s acceleration' % (self.adxl_name, 'xyz'[self.axis])
+        label = '%s %s acceleration' % (self.accel_name, 'xyz'[self.axis])
         return {'label': label, 'units': 'Acceleration\n(mm/s^2)'}
     def pull_data(self, req_time):
         axis = self.axis
@@ -376,7 +435,8 @@ class HandleADXL345:
             self.next_accel_time, x, y, z = self.cur_data[self.data_pos]
             self.next_accel = (x, y, z)
             self.data_pos += 1
-LogHandlers["adxl345"] = HandleADXL345
+LogHandlers["accelerometer"] = HandleAccelerometer
+LogHandlers["adxl345"] = HandleAccelerometer # XXX - old capture name
 
 # Extract positions from magnetic angle sensor
 class HandleAngle:
@@ -679,6 +739,19 @@ class LogManager:
             self.status_tracker = TrackStatus(self, "status", self.start_status)
             self.jdispatch.add_handler("status", "status")
         return self.status_tracker
+    def get_tip_msg(self, subscription_id):
+        available = []
+        dataset_name = subscription_id.split(":")[0]
+        for k in self.log_subscriptions:
+            if dataset_name in k:
+                # Extract available keys
+                name = k.split(":")[1:]
+                if len(name) == 1:
+                    suggest = "%s(%s,...)" % (dataset_name, name[0])
+                    available.append(suggest)
+                else:
+                    available.append(name)
+        return "Available options: %s" % (", ".join(available))
     def setup_dataset(self, name):
         if name in self.datasets:
             return self.datasets[name]
@@ -692,7 +765,9 @@ class LogManager:
         if cls.SubscriptionIdParts:
             subscription_id = ":".join(name_parts[:cls.SubscriptionIdParts])
             if subscription_id not in self.log_subscriptions:
-                raise error("Dataset '%s' not in capture" % (subscription_id,))
+                tip_msg = self.get_tip_msg(subscription_id)
+                raise error("Dataset '%s' not in capture\n%s" % (
+                            subscription_id, tip_msg))
             self.jdispatch.add_handler(name, subscription_id)
         self.datasets[name] = hdl = cls(self, name, name_parts)
         return hdl

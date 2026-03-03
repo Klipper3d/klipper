@@ -115,7 +115,7 @@ stm32f1_alternative_remap(uint32_t mapr_mask, uint32_t mapr_value)
 void
 gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
 {
-    GPIO_TypeDef *regs = digital_regs[GPIO2PORT(gpio)];
+    GPIO_TypeDef *regs = gpio_pin_to_regs(gpio);
 
     // Enable GPIO clock
     gpio_clock_enable(regs);

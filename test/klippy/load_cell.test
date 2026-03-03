@@ -2,4 +2,23 @@
 DICTIONARY atmega2560.dict
 CONFIG load_cell.cfg
 
-G4 P1000
+# Start by homing the printer.
+G28
+G1 F6000
+
+# Z / X / Y moves
+G1 Z1
+G1 X1
+G1 Y1
+
+# Run bed_mesh_calibrate
+BED_MESH_CALIBRATE
+
+# Move again
+G1 Z5 X0 Y0
+
+# Do regular probe
+PROBE
+
+# Move again
+G1 Z9

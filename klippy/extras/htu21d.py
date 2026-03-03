@@ -158,7 +158,7 @@ class HTU21D:
 
     def _sample_htu21d(self, eventtime):
         try:
-            # Read Temeprature
+            # Read Temperature
             if self.hold_master_mode:
                 params = self.i2c.i2c_write([HTU21D_COMMANDS['HTU21D_TEMP']])
             else:

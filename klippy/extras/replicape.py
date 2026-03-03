@@ -67,6 +67,8 @@ class pca9685_pwm:
         cmd_queue = self._mcu.alloc_command_queue()
         self._set_cmd = self._mcu.lookup_command(
             "queue_pca9685_out oid=%c clock=%u value=%hu", cq=cmd_queue)
+    def next_aligned_print_time(self, print_time, allow_early=0.):
+        return print_time
     def set_pwm(self, print_time, value):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._invert:

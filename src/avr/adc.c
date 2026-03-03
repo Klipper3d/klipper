@@ -30,6 +30,10 @@ static const uint8_t adc_pins[] PROGMEM = {
     GPIO('F', 4), GPIO('F', 5), GPIO('F', 6), GPIO('F', 7),
     GPIO('K', 0), GPIO('K', 1), GPIO('K', 2), GPIO('K', 3),
     GPIO('K', 4), GPIO('K', 5), GPIO('K', 6), GPIO('K', 7),
+#elif CONFIG_MACH_lgt8f328p
+    GPIO('C', 0), GPIO('C', 1), GPIO('C', 2), GPIO('C', 3),
+    GPIO('C', 4), GPIO('C', 5), GPIO('E', 1), GPIO('E', 3),
+    GPIO('C', 7), GPIO('F', 0), GPIO('E', 6), GPIO('E', 7),
 #endif
 };
 
@@ -41,7 +45,11 @@ DECL_ENUMERATION_RANGE("pin", "PE2", GPIO('E', 2), 2);
 enum { ADMUX_DEFAULT = 0x40 };
 enum { ADC_ENABLE = (1<<ADPS0)|(1<<ADPS1)|(1<<ADPS2)|(1<<ADEN)|(1<<ADIF) };
 
+#if CONFIG_MACH_lgt8f328p
+DECL_CONSTANT("ADC_MAX", 4095);
+#else
 DECL_CONSTANT("ADC_MAX", 1023);
+#endif
 
 struct gpio_adc
 gpio_adc_setup(uint8_t pin)
@@ -59,9 +67,26 @@ gpio_adc_setup(uint8_t pin)
     ADCSRA = ADC_ENABLE;
 
     // Disable digital input for this pin
-#ifdef DIDR2
+#if defined(DIDR2)
     if (chan >= 8)
         DIDR2 |= 1 << (chan & 0x07);
+    else
+#elif CONFIG_MACH_lgt8f328p
+    if (chan >= 8)
+        switch (chan) {
+        case 8:
+            DIDR1 |= (1 << 2);
+            break;
+        case 9:
+            DIDR1 |= (1 << 3);
+            break;
+        case 10:
+            DIDR1 |= (1 << 6);
+            break;
+        case 11:
+            DIDR1 |= (1 << 7);
+            break;
+        }
     else
 #endif
         DIDR0 |= 1 << chan;
