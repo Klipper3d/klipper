@@ -206,7 +206,7 @@ class EddyCalibration:
         for pos, _, mad_hz, mad_mm in filtered:
             if len(points) and points[0] <= pos:
                 points.pop(0)
-                msg = "z_offset: %.3f # noise %.6fmm, MAD_Hz=%.3f\n" % (
+                msg = "z: %.3f # noise %.6fmm, MAD_Hz=%.3f\n" % (
                     pos, mad_mm, mad_hz)
                 gcode.respond_info(msg)
         return filtered
@@ -399,6 +399,12 @@ class EddyDescend:
         self._probe_offsets = probe_offsets
         self._param_helper = param_helper
         self._trigger_analog = trigger_analog
+        if (config.get('z_offset', None, note_valid=False) is not None
+            and config.get('descend_z', None, note_valid=False) is None):
+            config.deprecate('z_offset')
+            self._descend_z = config.getfloat('z_offset', above=0.)
+        else:
+            self._descend_z = config.getfloat('descend_z', above=0.)
         self._z_min_position = probe.lookup_minimum_z(config)
         self._gather = None
     def _prep_trigger_analog(self):
@@ -406,8 +412,7 @@ class EddyDescend:
         sos_filter.set_filter_design(None)
         sos_filter.set_offset_scale(0, 1.)
         self._trigger_analog.set_raw_range(0, MAX_VALID_RAW_VALUE)
-        z_offset = self._probe_offsets.get_offsets()[2]
-        trigger_freq = self._calibration.height_to_freq(z_offset)
+        trigger_freq = self._calibration.height_to_freq(self._descend_z)
         conv_freq = self._sensor_helper.convert_frequency(trigger_freq)
         self._trigger_analog.set_trigger('gt', conv_freq)
     # Probe session interface
@@ -471,8 +476,7 @@ class EddyEndstopWrapper:
     def probe_finish(self, hmove):
         pass
     def get_position_endstop(self):
-        z_offset = self._eddy_descend._probe_offsets.get_offsets()[2]
-        return z_offset
+        return self._eddy_descend._descend_z
 
 # Probing helper for "tap" requests
 class EddyTap:
@@ -661,6 +665,14 @@ class EddyScanningProbe:
         self._gather.finish()
         self._gather = None
 
+# Eddy specific ProbeOffsets class (does not store z_offset)
+class EddyProbeOffsets:
+    def __init__(self, config):
+        self.x_offset = config.getfloat('x_offset', 0.)
+        self.y_offset = config.getfloat('y_offset', 0.)
+    def get_offsets(self, gcmd=None):
+        return self.x_offset, self.y_offset, 0.
+
 # Main "printer object"
 class PrinterEddyProbe:
     def __init__(self, config):
@@ -674,7 +686,7 @@ class PrinterEddyProbe:
         trig_analog = trigger_analog.MCU_trigger_analog(self.sensor_helper)
         probe.LookupZSteppers(config, trig_analog.get_dispatch().add_stepper)
         # Basic probe requests
-        self.probe_offsets = probe.ProbeOffsetsHelper(config)
+        self.probe_offsets = EddyProbeOffsets(config)
         self.param_helper = probe.ProbeParameterHelper(config)
         self.eddy_descend = EddyDescend(
             config, self.sensor_helper, self.calibration, self.probe_offsets,
