@@ -154,8 +154,9 @@ class ADXL355:
         # In case of miswiring, test ADXL355 device IDs before measuring.
         self._check_device_id()
         # Setup chip in standby and configure output data rate and range.
-        self.set_reg(REG_POWER_CTL,
-                     POWER_CTL_STANDBY | POWER_CTL_TEMP_OFF | POWER_CTL_DRDY_OFF)
+        self.set_reg(
+            REG_POWER_CTL,
+            POWER_CTL_STANDBY | POWER_CTL_TEMP_OFF | POWER_CTL_DRDY_OFF)
         self.set_reg(REG_RANGE, RANGE_2G)
         self.set_reg(REG_FILTER, self.filter_rate_bits)
         # Start bulk reading
@@ -169,8 +170,9 @@ class ADXL355:
 
     def _finish_measurements(self):
         # Halt bulk reading
-        self.set_reg(REG_POWER_CTL,
-                     POWER_CTL_STANDBY | POWER_CTL_TEMP_OFF | POWER_CTL_DRDY_OFF)
+        self.set_reg(
+            REG_POWER_CTL,
+            POWER_CTL_STANDBY | POWER_CTL_TEMP_OFF | POWER_CTL_DRDY_OFF)
         self.query_adxl355_cmd.send_wait_ack([self.oid, 0])
         self.ffreader.note_end()
         logging.info("ADXL355 finished '%s' measurements", self.name)
