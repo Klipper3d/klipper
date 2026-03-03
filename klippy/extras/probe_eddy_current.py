@@ -657,7 +657,7 @@ class EddyScanningProbe:
         self._calibration.verify_calibrated()
         self._gather = EddyGatherSamples(self._printer, self._sensor_helper)
         self._sample_time = gcmd.get_float("SAMPLE_TIME", 0.100, above=0.0)
-        self._is_rapid = gcmd.get("METHOD", "scan") == 'rapid_scan'
+        self._is_rapid = gcmd.get("METHOD", "scan").lower() == 'rapid_scan'
         return self
     def run_probe(self, gcmd):
         toolhead = self._printer.lookup_object("toolhead")
@@ -691,6 +691,33 @@ class EddyProbeOffsets:
     def get_offsets(self, gcmd=None):
         return self.x_offset, self.y_offset, 0.
 
+# Wrapper around ProbeParameterHelper
+class EddyParameterHelper:
+    def __init__(self, config):
+        self._param_helper = probe.ProbeParameterHelper(config)
+    def get_probe_params(self, gcmd=None):
+        method = None
+        if gcmd is not None:
+            method = gcmd.get('METHOD', '').lower()
+        if method not in ['scan', 'rapid_scan', 'tap']:
+            return self._param_helper.get_probe_params(gcmd)
+        probe_speed = gcmd.get_float("PROBE_SPEED", 5.0, above=0.)
+        lift_speed = gcmd.get_float("LIFT_SPEED", 5.0, above=0.)
+        samples = gcmd.get_int("SAMPLES", 1, minval=1)
+        samp_retract_dist = gcmd.get_float("SAMPLE_RETRACT_DIST", 2.0, above=0.)
+        if method in ['scan', 'rapid_scan']:
+            samp_retract_dist = 0.
+        samp_tolerance = gcmd.get_float("SAMPLES_TOLERANCE", 0.100, minval=0.)
+        samp_retries = gcmd.get_int("SAMPLES_TOLERANCE_RETRIES", 0, minval=0)
+        samples_result = gcmd.get("SAMPLES_RESULT", 'average')
+        return {'probe_speed': probe_speed,
+                'lift_speed': lift_speed,
+                'samples': samples,
+                'sample_retract_dist': samp_retract_dist,
+                'samples_tolerance': samp_tolerance,
+                'samples_tolerance_retries': samp_retries,
+                'samples_result': samples_result}
+
 # Main "printer object"
 class PrinterEddyProbe:
     def __init__(self, config):
@@ -705,7 +732,7 @@ class PrinterEddyProbe:
         probe.LookupZSteppers(config, trig_analog.get_dispatch().add_stepper)
         # Basic probe requests
         self.probe_offsets = EddyProbeOffsets(config)
-        self.param_helper = probe.ProbeParameterHelper(config)
+        self.param_helper = EddyParameterHelper(config)
         self.eddy_descend = EddyDescend(
             config, self.sensor_helper, self.calibration, self.probe_offsets,
             self.param_helper, trig_analog)
