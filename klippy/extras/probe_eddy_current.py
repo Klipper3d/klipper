@@ -357,7 +357,7 @@ class EddyGatherSamples:
                     "probe_eddy_current sensor outage")
             if mcu.is_fileoutput():
                 # In debugging mode - just create dummy response
-                dummy_pr = manual_probe.ProbeResult(0., 0., 0., 0., 0., 0.)
+                dummy_pr = manual_probe.create_probe_result((0., 0., 0.,))
                 self._analysis_results.append((dummy_pr, None))
                 self._probe_requests.pop(0)
                 continue
@@ -384,10 +384,8 @@ def probe_results_from_avg(measures, toolhead_pos, calibration, offsets):
     sensor_z = calibration.freq_to_height(freq_avg)
     if sensor_z <= -OUT_OF_RANGE or sensor_z >= OUT_OF_RANGE:
         raise cmderr("probe_eddy_current sensor not in valid range")
-    return manual_probe.ProbeResult(
-        toolhead_pos[0] + offsets[0], toolhead_pos[1] + offsets[1],
-        toolhead_pos[2] - sensor_z,
-        toolhead_pos[0], toolhead_pos[1], toolhead_pos[2])
+    return manual_probe.create_probe_result(toolhead_pos,
+                                            (offsets[0], offsets[1], sensor_z))
 
 MAX_VALID_RAW_VALUE=0x03ffffff
 
@@ -570,8 +568,7 @@ class EddyTap:
         self._validate_samples_time(measures, start_time, end_time)
         pos_time = self._pull_tap_time(measures)
         trig_pos = self._lookup_toolhead_pos(pos_time)
-        return manual_probe.ProbeResult(trig_pos[0], trig_pos[1], trig_pos[2],
-                                        trig_pos[0], trig_pos[1], trig_pos[2])
+        return manual_probe.create_probe_result(trig_pos)
     # Probe session interface
     def start_probe_session(self, gcmd):
         self._prep_trigger_analog_tap(gcmd)
