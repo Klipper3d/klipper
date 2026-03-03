@@ -116,15 +116,6 @@ Practically, it ensures that the Eddy's output data absolute value
 change per second (velocity) is high enough - higher than the noise level,
 and that upon collision it always decreases by at least this value.
 
-```
-[probe_eddy_current my_probe]
-# eddy probe configuration...
-# Recommended starting values for the tap
-#samples: 3
-#samples_tolerance: 0.025
-#samples_tolerance_retries: 3
-```
-
 Before setting it to any other value, it is necessary to install `scipy`:
 
 ```bash

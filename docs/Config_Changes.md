@@ -8,6 +8,15 @@ All dates in this document are approximate.
 
 ## Changes
 
+20260318: The `[probe_eddy_current]` config options `speed`,
+`lift_speed`, `samples`, `sample_retract_dist`, `samples_result`,
+`samples_tolerance`, and `samples_tolerance_retries` no longer apply
+to probe commands using `METHOD=scan`, `METHOD=rapid_scan`, nor
+`METHOD=tap`. To use different settings, supply the equivalent
+`PROBE_SPEED`, `LIFT_SPEED`, `SAMPLES`, `SAMPLE_RETRACT_DIST`,
+`SAMPLES_RESULT`, `SAMPLES_TOLERANCE`, or `SAMPLES_TOLERANCE_RETRIES`
+parameter with the probe command.
+
 20260318: The `[probe_eddy_current]` config option `z_offset` has been
 renamed to `descend_z`. Using the old name is deprecated and it will
 be removed in the near future.
