@@ -8,6 +8,10 @@ All dates in this document are approximate.
 
 ## Changes
 
+20260318: The `[probe_eddy_current]` config option `z_offset` has been
+renamed to `descend_z`. Using the old name is deprecated and it will
+be removed in the near future.
+
 20260214: The `MANUAL_STEPPER` G-Code command `STOP_ON_ENDSTOP`
 parameter has changed. See the
 [MANUAL_STEPPER](G-Codes.md#manual_stepper) documentation for
