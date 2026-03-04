@@ -504,11 +504,11 @@ class PrinterConfig:
         if value is None:
             res = {'type': 'deprecated_option'}
             defmsg = ("Option '%s' in section '%s' is deprecated."
-                   % (option, self.section))
+                   % (option, section))
         else:
             res = {'type': 'deprecated_value', 'value': value}
             defmsg = ("Value '%s' in option '%s' in section '%s' is deprecated."
-                      % (value, option, self.section))
+                      % (value, option, section))
         if msg is None:
             msg = defmsg
         res['message'] = msg
