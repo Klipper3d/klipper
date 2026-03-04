@@ -553,31 +553,6 @@ class EddyTap:
         if tmin < cycle_time * 0.75:
             raise cmderr("Eddy: CLKIN frequency too low: %.3f < %.3f"
                          % (tmin, cycle_time * 0.75))
-    def _central_diff(self, times, values):
-        velocity = [0.0] * len(values)
-        for i in range(1, len(values) - 1):
-            delta_v = (values[i+1] - values[i-1])
-            delta_t = (times[i+1] - times[i-1])
-            velocity[i] = delta_v / delta_t
-        velocity[0] = (values[1] - values[0]) / (times[1] - times[0])
-        velocity[-1] = (values[-1] - values[-2]) / (times[-1] - times[-2])
-        return velocity
-    def _pull_tap_time(self, measures):
-        tap_time = []
-        tap_value = []
-        for time, freq, z in measures:
-            tap_time.append(time)
-            tap_value.append(freq)
-        # Do the same filtering as on the MCU but without induced lag
-        main_design = self._filter_design.get_main_filter()
-        try:
-            fvals = main_design.filtfilt(tap_value)
-        except ValueError as e:
-            raise self._printer.command_error(str(e))
-        velocity = self._central_diff(tap_time, fvals)
-        peak_velocity = max(velocity)
-        i = velocity.index(peak_velocity)
-        return tap_time[i]
     def _lookup_toolhead_pos(self, pos_time):
         toolhead = self._printer.lookup_object('toolhead')
         kin = toolhead.get_kinematics()
@@ -585,12 +560,88 @@ class EddyTap:
                                       s.get_past_mcu_position(pos_time))
                     for s in kin.get_steppers()}
         return kin.calc_position(kin_spos)
-    def _analyze_tap(self, measures, start_time, end_time):
+    def _calc_least_squares(self, eqs, ans, est_z_contact):
+        # XXX - this implementation is not efficient
+        len_data = len(eqs)
+        import numpy
+        for i in range(len_data):
+            eq = eqs[i]
+            step_z = eq[1]
+            if step_z < est_z_contact:
+                eq[2] = eq[3] = 0.
+                continue
+            eq[2] = (step_z - est_z_contact)
+            eq[3] = (step_z - est_z_contact)**2
+        res = numpy.linalg.lstsq(eqs, ans, rcond=None)
+        coeffs = list(res[0])
+        if coeffs[3] < 0.:
+            # z**2 factor can't be negative - retry using only linear
+            res = numpy.linalg.lstsq(eqs[:][:,:3], ans, rcond=None)
+            coeffs = list(res[0]) + [0.]
+        if not res[1]:
+            err = 99999999999999999.99
+        else:
+            err = res[1][0]
+        #logging.info("z=%.6f err=%.3f coeffs=%s", est_z_contact, err, coeffs)
+        return err, coeffs
+    def _find_least_squares(self, data):
+        len_data = len(data)
+        import numpy
+        # Populate initial numpy linear least squares arrays
+        eqs = numpy.zeros((len_data, 4))
+        ans = numpy.zeros((len_data,))
+        for i, (sensor_freq, tool_pos) in enumerate(data):
+            ans[i] = sensor_freq
+            eq = eqs[i]
+            eq[0] = 1.
+            eq[1] = tool_pos[2]
+            #logging.info("sample: freq=%.3f z=%.6f", sensor_freq, tool_pos[2])
+        # Run least squares with various z values to reduce residual error
+        min_z = best_z = eqs[0][1]
+        max_z = eqs[-1][1]
+        best_err = 99999999999999999.99
+        best_coeffs = [0., 0., 0., 0.]
+        while max_z - min_z > 0.000250:
+            # Select z value to check
+            mid_z = (min_z + max_z) * .5
+            if best_z < mid_z:
+                guess_z = (best_z + max_z) * .5
+            else:
+                guess_z = (min_z + best_z) * .5
+            # Calculate least squares error for given z
+            guess_err, coeffs = self._calc_least_squares(eqs, ans, guess_z)
+            # Update search bounds
+            if guess_err < best_err:
+                if guess_z > best_z:
+                    min_z = best_z
+                else:
+                    max_z = best_z
+                best_z = guess_z
+                best_err = guess_err
+                best_coeffs = coeffs
+            else:
+                if guess_z > best_z:
+                    max_z = guess_z
+                else:
+                    min_z = guess_z
+        best_coeffs = [float(v) for v in best_coeffs]
+        #logging.info("best: z=%.6f err=%.6f coeffs=%s",
+        #             best_z, best_err, best_coeffs)
+        return float(best_z), best_coeffs
+    def _analyze_pullback(self, measures, start_time, end_time):
         self._validate_samples_time(measures, start_time, end_time)
-        pos_time = self._pull_tap_time(measures)
-        trig_pos = self._lookup_toolhead_pos(pos_time)
-        return manual_probe.create_probe_result(trig_pos,
-                                                (0., 0., self._tap_z_offset))
+        # Correlate measurements to toolhead position at time of measurement
+        data = [(sensor_freq, self._lookup_toolhead_pos(samp_time))
+                for samp_time, sensor_freq, sensor_z in measures]
+        # Find best fit for extracted measurements
+        z_contact, coeffs = self._find_least_squares(data)
+        # Report probe position
+        trig_idx = len(data)-1
+        while trig_idx > 0 and data[trig_idx-1][1][2] > z_contact:
+            trig_idx -= 1
+        trig_pos = data[trig_idx][1]
+        return manual_probe.ProbeResult(trig_pos[0], trig_pos[1], z_contact,
+                                        trig_pos[0], trig_pos[1], trig_pos[2])
     # Probe session interface
     def start_probe_session(self, gcmd):
         self._prep_trigger_analog_tap(gcmd)
@@ -604,23 +655,19 @@ class EddyTap:
         speed = params['probe_speed']
         lift_speed = params['lift_speed']
         lift_dist = gcmd.get_float('SAMPLE_RETRACT_DIST', 4., above=0.)
-        move_start_time = toolhead.get_last_move_time()
         # Perform probing move
         phoming = self._printer.lookup_object('homing')
         trig_pos = phoming.probing_move(self._trigger_analog, pos, speed)
-        # Extract samples
-        trigger_time = self._trigger_analog.get_last_trigger_time()
-        start_time = trigger_time - 0.250
-        if start_time < move_start_time:
-            # Filter short move
-            start_time = move_start_time
-        end_time = trigger_time
-        self._gather.add_probe_request(self._analyze_tap, start_time, end_time,
-                                       start_time, end_time)
         # Perform lifting move
         haltpos = toolhead.get_position()
         haltpos[2] += lift_dist
+        retract_start_time = toolhead.get_last_move_time()
         toolhead.manual_move(haltpos, lift_speed)
+        # Extract retract samples
+        start_time = retract_start_time - 0.010
+        end_time = retract_start_time + 0.150
+        self._gather.add_probe_request(self._analyze_pullback, start_time,
+                                       end_time, start_time, end_time)
     def pull_probed_results(self):
         return self._gather.pull_probed()
     def end_probe_session(self):
