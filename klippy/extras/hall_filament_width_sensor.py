@@ -39,6 +39,14 @@ class HallFilamentWidthSensor:
         # measurement isn't in place
         self.use_current_dia_while_delay = config.getboolean(
             'use_current_dia_while_delay', False)
+        if self.rawdia1 == self.rawdia2:
+            raise config.error(
+                "hall_filament_width_sensor: raw_dia1 and raw_dia2 must be"
+                " different")
+        if self.min_diameter <= 0:
+            raise config.error(
+                "hall_filament_width_sensor: max_difference must be less than"
+                " default_nominal_filament_diameter")
         # filament array [position, filamentWidth]
         self.filament_array = []
         self.lastFilamentWidthReading = 0
