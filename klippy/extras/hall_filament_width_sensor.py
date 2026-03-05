@@ -94,6 +94,7 @@ class HallFilamentWidthSensor:
             desc=self.cmd_DISABLE_FILAMENT_WIDTH_LOG_help)
 
         self.runout_helper = filament_switch_sensor.RunoutHelper(config)
+        self.runout_helper.sensor_enabled = self.is_active
     # Initialization
     def handle_ready(self):
         # Load printer objects
@@ -112,12 +113,15 @@ class HallFilamentWidthSensor:
         # read sensor value
         read_time, read_value = samples[-1]
         self.lastFilamentWidthReading2 = round(read_value * 10000)
-        # calculate diameter
-        diameter_new = round((self.dia2 - self.dia1)/
-            (self.rawdia2-self.rawdia1)*
-          ((self.lastFilamentWidthReading+self.lastFilamentWidthReading2)
-           -self.rawdia1)+self.dia1,2)
-        self.diameter=(5.0 * self.diameter + diameter_new)/6
+        if self.is_active:
+            # calculate diameter
+            diameter_new = round((self.dia2 - self.dia1)/
+                (self.rawdia2-self.rawdia1)*
+            ((self.lastFilamentWidthReading+self.lastFilamentWidthReading2)
+            -self.rawdia1)+self.dia1,2)
+            self.diameter=(5.0 * self.diameter + diameter_new)/6
+        else:
+            self.diameter = self.nominal_filament_dia
 
     def update_filament_array(self, last_epos):
         # Fill array
@@ -150,7 +154,7 @@ class HallFilamentWidthSensor:
         self.runout_helper.note_filament_present(eventtime,
             self.runout_dia_min <= self.diameter <= self.runout_dia_max)
         # Does filament exists
-        if self.diameter > 0.5:
+        if self.diameter > self.runout_dia_min:
             if len(self.filament_array) > 0:
                 # Get first position in filament array
                 pending_position = self.filament_array[0][0]
@@ -224,6 +228,7 @@ class HallFilamentWidthSensor:
 
         was_active = self.is_active
         self.is_active = True
+        self.runout_helper.sensor_enabled = True
         response = ("Filament width sensor: ON"
             + "\nFlow compensation: "
             + ("ON" if self.enable_flow_compensation else "OFF"))
@@ -239,11 +244,14 @@ class HallFilamentWidthSensor:
     def cmd_M406(self, gcmd):
         response = "Filament width sensor: OFF"
         self.is_active = False
+        self.runout_helper.sensor_enabled = False
         # Stop extrude factor update timer
         self.reactor.update_timer(self.extrude_factor_update_timer,
                                     self.reactor.NEVER)
         # Clear filament array
         self.filament_array = []
+        # Tell the filament sensor that there is filament present
+        self.runout_helper.note_filament_present(self.reactor.NOW, True)
         # Set extrude multiplier to 100%
         self.gcode.run_script_from_command("M221 S100")
         gcmd.respond_info(response)
