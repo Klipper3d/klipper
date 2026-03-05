@@ -5,7 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math
 import mcu
-from . import probe, trigger_analog, load_cell, hx71x, ads1220
+from . import probe, manual_probe, trigger_analog, load_cell, hx71x, ads1220
 
 np = None  # delay NumPy import until configuration time
 
@@ -426,7 +426,8 @@ class TapSession:
     # probe until a single good sample is returned or retries are exhausted
     def run_probe(self, gcmd):
         epos, is_good = self._tapping_move.run_tap(gcmd)
-        res = self._probe_offsets.create_probe_result(epos)
+        offsets = self._probe_offsets.get_offsets()
+        res = manual_probe.create_probe_result(epos, offsets)
         self._results.append(res)
 
     def pull_probed_results(self):

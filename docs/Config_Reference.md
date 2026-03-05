@@ -2137,32 +2137,44 @@ z_offset:
 #   The distance (in mm) between the bed and the nozzle when the probe
 #   triggers. This parameter must be provided.
 #speed: 5.0
-#   Speed (in mm/s) of the Z axis when probing. The default is 5mm/s.
+#   Speed (in mm/s) of the Z axis when probing. It may be possible to
+#   change this value at runtime via a "PROBE_SPEED" command
+#   parameter. The default is 5mm/s.
 #samples: 1
 #   The number of times to probe each point. The probed z-values will
-#   be averaged. The default is to probe 1 time.
+#   be averaged. It may be possible to change this value at runtime
+#   via a "SAMPLES" command parameter. The default is to probe 1 time.
 #sample_retract_dist: 2.0
 #   The distance (in mm) to lift the toolhead between each sample (if
-#   sampling more than once). The default is 2mm.
+#   sampling more than once). It may be possible to change this value
+#   at runtime via a "SAMPLE_RETRACT_DIST" command parameter. The
+#   default is 2mm.
 #lift_speed:
 #   Speed (in mm/s) of the Z axis when lifting the probe between
-#   samples. The default is to use the same value as the 'speed'
-#   parameter.
+#   samples. It may be possible to change this value at runtime via a
+#   "LIFT_SPEED" command parameter. The default is to use the same
+#   value as the 'speed' parameter.
 #samples_result: average
 #   The calculation method when sampling more than once - either
-#   "median" or "average". The default is average.
+#   "median" or "average". It may be possible to change this value at
+#   runtime via a "SAMPLES_RESULT" command parameter. The default is
+#   average.
 #samples_tolerance: 0.100
 #   The maximum Z distance (in mm) that a sample may differ from other
 #   samples. If this tolerance is exceeded then either an error is
 #   reported or the attempt is restarted (see
-#   samples_tolerance_retries). The default is 0.100mm.
+#   samples_tolerance_retries). It may be possible to change this
+#   value at runtime via a "SAMPLES_TOLERANCE" command parameter. The
+#   default is 0.100mm.
 #samples_tolerance_retries: 0
 #   The number of times to retry if a sample is found that exceeds
 #   samples_tolerance. On a retry, all current samples are discarded
 #   and the probe attempt is restarted. If a valid set of samples are
 #   not obtained in the given number of retries then an error is
-#   reported. The default is zero which causes an error to be reported
-#   on the first sample that exceeds samples_tolerance.
+#   reported. It may be possible to change this value at runtime via a
+#   "SAMPLES_TOLERANCE_RETRIES" command parameter. The default is zero
+#   which causes an error to be reported on the first sample that
+#   exceeds samples_tolerance.
 #activate_gcode:
 #   A list of G-Code commands to execute prior to each probe attempt.
 #   See docs/Command_Templates.md for G-Code format. This may be
@@ -2305,7 +2317,7 @@ sensor_type: ldc1612
 #intb_pin:
 #   MCU gpio pin connected to the ldc1612 sensor's INTB pin (if
 #   available). The default is to not use the INTB pin.
-#z_offset:
+#descend_z:
 #   The nominal distance (in mm) between the nozzle and bed that a
 #   probing attempt should stop at. This parameter must be provided.
 #i2c_address:
@@ -2318,6 +2330,8 @@ sensor_type: ldc1612
 #   settings" section for a description of the above parameters.
 #x_offset:
 #y_offset:
+#   The distance (in mm) between the probe and the nozzle along the
+#   x and y axes. The default is 0.
 #speed:
 #lift_speed:
 #samples:
@@ -2325,7 +2339,10 @@ sensor_type: ldc1612
 #samples_result:
 #samples_tolerance:
 #samples_tolerance_retries:
-#   See the "probe" section for information on these parameters.
+#   See the "probe" section for information on these parameters. Note
+#   that the settings here apply only to regular probe commands. These
+#   settings do not have an effect if using a probe "METHOD" of
+#   "scan", "rapid_scan", or "tap".
 #tap_threshold:
 #   Noise cutoff/stop trigger threshold (in Hz). Specify this value to
 #   enable support for "METHOD=tap" probe commands. See Eddy_Probe.md
@@ -2336,6 +2353,12 @@ sensor_type: ldc1612
 #   the bed. If this value is specified then one may override its
 #   value at run-time using the "TAP_THRESHOLD" parameter on probe
 #   commands. The default is to not enable support for "tap" probing.
+#tap_z_offset: 0.0
+#   The Z height (in mm) of the nozzle relative to the bed at the
+#   contact point detected during "tap" probing. Nominally this would
+#   be 0.0 to indicate the contact point has zero distance, but one
+#   may set this to account for backlash, thermal expansion, a
+#   systemic probing bias, or similar. The default is zero.
 ```
 
 ### [axis_twist_compensation]
