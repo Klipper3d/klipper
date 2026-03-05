@@ -470,7 +470,7 @@ The first time CanBoot has been flashed it should detect that no application
 is present and enter the bootloader.  If this doesn't occur it is possible to
 enter the bootloader by pressing the reset button twice in succession.
 
-The `flash_can.py` utility supplied in the `lib/canboot` folder may be used to
+The `flashtool.py` utility supplied in the `lib/katapult` folder may be used to
 upload Klipper firmware.  The device UUID is necessary to flash.  If you do not
 have a UUID it is possible to query nodes currently running the bootloader:
 ```
