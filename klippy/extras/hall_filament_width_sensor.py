@@ -33,6 +33,8 @@ class HallFilamentWidthSensor:
         self.runout_dia_min=config.getfloat('min_diameter', 1.0)
         self.runout_dia_max=config.getfloat('max_diameter', self.max_diameter)
         self.is_log =config.getboolean('logging', False)
+        self.enable_flow_compensation = config.getboolean(
+            'enable_flow_compensation', True)
         # Use the current diameter instead of nominal while the first
         # measurement isn't in place
         self.use_current_dia_while_delay = config.getboolean(
@@ -147,15 +149,17 @@ class HallFilamentWidthSensor:
                         self.filament_width = self.diameter
                     elif  self.firstExtruderUpdatePosition == pending_position:
                         self.filament_width = self.nominal_filament_dia
-                if ((self.filament_width <= self.max_diameter)
-                    and (self.filament_width >= self.min_diameter)):
-                    percentage = round(self.nominal_filament_dia**2
-                                       / self.filament_width**2 * 100)
-                    self.gcode.run_script("M221 S" + str(percentage))
-                else:
-                    self.gcode.run_script("M221 S100")
+                if self.enable_flow_compensation:
+                    if ((self.filament_width <= self.max_diameter)
+                        and (self.filament_width >= self.min_diameter)):
+                        percentage = round(self.nominal_filament_dia**2
+                                        / self.filament_width**2 * 100)
+                        self.gcode.run_script("M221 S" + str(percentage))
+                    else:
+                        self.gcode.run_script("M221 S100")
         else:
-            self.gcode.run_script("M221 S100")
+            if self.enable_flow_compensation:
+                self.gcode.run_script("M221 S100")
             self.filament_array = []
 
         if self.is_active:
@@ -164,12 +168,23 @@ class HallFilamentWidthSensor:
             return self.reactor.NEVER
 
     def cmd_M407(self, gcmd):
-        response = ""
-        if self.diameter > 0:
-            response += ("Filament dia (measured mm): "
-                         + str(self.diameter))
+        response = "Filament diameter: "
+        if self.is_active:
+            response += "%.3f mm" % (self.diameter)
         else:
-            response += "Filament NOT present"
+            response += "sensor disabled"
+        response += "\nFilament state:"
+        if self.is_active:
+            if self.runout_helper.filament_present:
+                response += " present"
+            else:
+                response += " not present"
+        else:
+            response += " sensor disabled"
+        response += ("\nWidth sensor:"
+            + (" ON" if self.is_active else " OFF"))
+        response += ("\nFlow compensation:"
+            + (" ON" if self.enable_flow_compensation else " OFF"))
         gcmd.respond_info(response)
 
     def cmd_ClearFilamentArray(self, gcmd):
@@ -179,53 +194,58 @@ class HallFilamentWidthSensor:
         self.gcode.run_script_from_command("M221 S100")
 
     def cmd_M405(self, gcmd):
-        response = "Filament width sensor Turned On"
-        if self.is_active:
-            response = "Filament width sensor is already On"
-        else:
-            self.is_active = True
-            # Start extrude factor update timer
+        flow_comp = gcmd.get_int("FLOW_COMPENSATION", None, minval=0, maxval=1)
+        if flow_comp is not None:
+            self.enable_flow_compensation = flow_comp
+            if not flow_comp:
+                self.gcode.run_script_from_command("M221 S100")
+
+        was_active = self.is_active
+        self.is_active = True
+        response = ("Filament width sensor: ON"
+            + "\nFlow compensation: "
+            + ("ON" if self.enable_flow_compensation else "OFF"))
+
+        # Only start/restart timer if sensor was previously inactive
+        if not was_active:
             self.reactor.update_timer(self.extrude_factor_update_timer,
-                                      self.reactor.NOW)
+                                        self.reactor.NOW)
         gcmd.respond_info(response)
 
     def cmd_M406(self, gcmd):
-        response = "Filament width sensor Turned Off"
-        if not self.is_active:
-            response = "Filament width sensor is already Off"
-        else:
-            self.is_active = False
-            # Stop extrude factor update timer
-            self.reactor.update_timer(self.extrude_factor_update_timer,
-                                      self.reactor.NEVER)
-            # Clear filament array
-            self.filament_array = []
-            # Set extrude multiplier to 100%
-            self.gcode.run_script_from_command("M221 S100")
+        response = "Filament width sensor: OFF"
+        self.is_active = False
+        # Stop extrude factor update timer
+        self.reactor.update_timer(self.extrude_factor_update_timer,
+                                    self.reactor.NEVER)
+        # Clear filament array
+        self.filament_array = []
+        # Set extrude multiplier to 100%
+        self.gcode.run_script_from_command("M221 S100")
         gcmd.respond_info(response)
 
     def cmd_Get_Raw_Values(self, gcmd):
-        response = "ADC1="
-        response +=  (" "+str(self.lastFilamentWidthReading))
-        response +=  (" ADC2="+str(self.lastFilamentWidthReading2))
-        response +=  (" RAW="+
-                      str(self.lastFilamentWidthReading
-                      +self.lastFilamentWidthReading2))
+        response =  ("ADC1="+str(self.lastFilamentWidthReading))
+        response += (" ADC2="+str(self.lastFilamentWidthReading2))
+        response += (" RAW="+
+                     str(self.lastFilamentWidthReading
+                     +self.lastFilamentWidthReading2))
         gcmd.respond_info(response)
     def get_status(self, eventtime):
         status = self.runout_helper.get_status(eventtime)
         status.update({'Diameter': self.diameter,
                 'Raw':(self.lastFilamentWidthReading+
                  self.lastFilamentWidthReading2),
-                'is_active':self.is_active})
+                'is_active':self.is_active,
+                'flow_compensation_enabled':self.enable_flow_compensation})
         return status
     def cmd_log_enable(self, gcmd):
         self.is_log = True
-        gcmd.respond_info("Filament width logging Turned On")
+        gcmd.respond_info("Filament width logging: ON")
 
     def cmd_log_disable(self, gcmd):
         self.is_log = False
-        gcmd.respond_info("Filament width logging Turned Off")
+        gcmd.respond_info("Filament width logging: OFF")
 
 def load_config(config):
     return HallFilamentWidthSensor(config)

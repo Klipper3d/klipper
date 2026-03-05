@@ -5083,6 +5083,10 @@ adc2:
 #enable: False
 #   Sensor enabled or disabled after power on. The default is to
 #   disable.
+#enable_flow_compensation: True
+#   Flow compensation enabled or disabled. If set to False, the sensor
+#   will not modify the extrusion multiplier and will only trigger
+#   runout events. The default is True.
 #measurement_interval: 10
 #   The approximate distance (in mm) between sensor readings. The
 #   default is 10mm.
