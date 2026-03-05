@@ -640,7 +640,8 @@ class EddyTap:
         while trig_idx > 0 and data[trig_idx-1][1][2] > z_contact:
             trig_idx -= 1
         trig_pos = data[trig_idx][1]
-        return manual_probe.ProbeResult(trig_pos[0], trig_pos[1], z_contact,
+        adj_z_contact = z_contact - self._tap_z_offset
+        return manual_probe.ProbeResult(trig_pos[0], trig_pos[1], adj_z_contact,
                                         trig_pos[0], trig_pos[1], trig_pos[2])
     # Probe session interface
     def start_probe_session(self, gcmd):
