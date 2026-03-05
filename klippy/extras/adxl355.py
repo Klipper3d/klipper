@@ -1,7 +1,6 @@
 # Support for reading acceleration data from an ADXL355 chip
 #
-# Copyright (C) 2026  Sven
-# Copyright (C) 2020-2023  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2026 Sven Thiele <thiele61@gmx.de>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
@@ -26,10 +25,10 @@ QUERY_RATES = [
 ADXL355_DEV_ID = (0xAD, 0x1D, 0xED)
 
 POWER_CTL_STANDBY = 0x01
-POWER_CTL_TEMP_OFF = 0x02
-POWER_CTL_DRDY_OFF = 0x04
 
 RANGE_2G = 0x01
+RANGE_MASK = 0x03
+FILTER_ODR_MASK = 0x0F
 
 FREEFALL_ACCEL = 9.80665 * 1000.
 SCALE = FREEFALL_ACCEL / 256000.
@@ -55,7 +54,8 @@ class ADXL355:
         self.axes_map = adxl345.read_axes_map(config, SCALE, SCALE, SCALE)
         self.data_rate, self.filter_rate_bits = _lookup_query_rate(config)
         # Setup mcu sensor_adxl355 bulk query code
-        self.spi = bus.MCU_SPI_from_config(config, 3, default_speed=5000000)
+        # ADXL355 requires SPI mode 0 (CPOL=0, CPHA=0).
+        self.spi = bus.MCU_SPI_from_config(config, 0, default_speed=5000000)
         self.mcu = mcu = self.spi.get_mcu()
         self.oid = oid = mcu.create_oid()
         self.query_adxl355_cmd = None
@@ -95,8 +95,16 @@ class ADXL355:
         reg_addr = ((reg & 0x7f) << 1) & ~REG_MOD_READ
         self.spi.spi_send([reg_addr, val & 0xFF], minclock=minclock)
         stored_val = self.read_reg(reg)
-        # Some ADXL355 boards always read POWER_CTL.STANDBY back as 0.
-        if reg == REG_POWER_CTL and stored_val == (val & ~POWER_CTL_STANDBY):
+        # Some ADXL355 bits are read-only/reserved and may not round-trip.
+        if reg == REG_POWER_CTL and (
+                (stored_val & POWER_CTL_STANDBY)
+                == (val & POWER_CTL_STANDBY)):
+            return
+        if reg == REG_RANGE and (stored_val & RANGE_MASK) == (val & RANGE_MASK):
+            return
+        if reg == REG_FILTER and (
+                (stored_val & FILTER_ODR_MASK)
+                == (val & FILTER_ODR_MASK)):
             return
         if stored_val != val:
             raise self.printer.command_error(
@@ -122,13 +130,24 @@ class ADXL355:
         (x_pos, x_scale), (y_pos, y_scale), (z_pos, z_scale) = self.axes_map
         count = 0
         for ptime, x3, x2, x1, y3, y2, y1, z3, z2, z1 in samples:
-            if (x1 & 0x0f) or (y1 & 0x0f) or (z1 & 0x0f):
-                # Invalid framing in the 20-bit sample payload.
+            # FIFO entries contain a 2-bit marker in the low nibble:
+            # bit0 marks x-axis entries, bit1 marks empty FIFO reads.
+            entries = ((x3, x2, x1), (y3, y2, y1), (z3, z2, z1))
+            markers = [(e[2] & 0x03) for e in entries]
+            if any(m & 0x02 for m in markers):
                 self.last_error_count += 1
                 continue
-            rx = self._decode_axis(x3, x2, x1)
-            ry = self._decode_axis(y3, y2, y1)
-            rz = self._decode_axis(z3, z2, z1)
+            xmarkers = [i for i, m in enumerate(markers) if m & 0x01]
+            if len(xmarkers) != 1:
+                self.last_error_count += 1
+                continue
+            xidx = xmarkers[0]
+            xraw = entries[xidx]
+            yraw = entries[(xidx + 1) % 3]
+            zraw = entries[(xidx + 2) % 3]
+            rx = self._decode_axis(*xraw)
+            ry = self._decode_axis(*yraw)
+            rz = self._decode_axis(*zraw)
             raw_xyz = (rx, ry, rz)
             x = round(raw_xyz[x_pos] * x_scale, 6)
             y = round(raw_xyz[y_pos] * y_scale, 6)
@@ -154,15 +173,13 @@ class ADXL355:
         # In case of miswiring, test ADXL355 device IDs before measuring.
         self._check_device_id()
         # Setup chip in standby and configure output data rate and range.
-        self.set_reg(
-            REG_POWER_CTL,
-            POWER_CTL_STANDBY | POWER_CTL_TEMP_OFF | POWER_CTL_DRDY_OFF)
+        self.set_reg(REG_POWER_CTL, POWER_CTL_STANDBY)
         self.set_reg(REG_RANGE, RANGE_2G)
         self.set_reg(REG_FILTER, self.filter_rate_bits)
         # Start bulk reading
-        rest_ticks = self.mcu.seconds_to_clock(1. / self.data_rate)
+        rest_ticks = self.mcu.seconds_to_clock(5. / self.data_rate)
         self.query_adxl355_cmd.send([self.oid, rest_ticks])
-        self.set_reg(REG_POWER_CTL, POWER_CTL_TEMP_OFF | POWER_CTL_DRDY_OFF)
+        self.set_reg(REG_POWER_CTL, 0x00)
         logging.info("ADXL355 starting '%s' measurements", self.name)
         # Initialize clock tracking
         self.ffreader.note_start()
@@ -170,9 +187,7 @@ class ADXL355:
 
     def _finish_measurements(self):
         # Halt bulk reading
-        self.set_reg(
-            REG_POWER_CTL,
-            POWER_CTL_STANDBY | POWER_CTL_TEMP_OFF | POWER_CTL_DRDY_OFF)
+        self.set_reg(REG_POWER_CTL, POWER_CTL_STANDBY)
         self.query_adxl355_cmd.send_wait_ack([self.oid, 0])
         self.ffreader.note_end()
         logging.info("ADXL355 finished '%s' measurements", self.name)

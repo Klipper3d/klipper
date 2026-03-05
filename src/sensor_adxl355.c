@@ -1,7 +1,6 @@
 // Support for gathering acceleration data from ADXL355 chip
 //
-// Copyright (C) 2026  Sven
-// Copyright (C) 2020-2023  Kevin O'Connor <kevin@koconnor.net>
+// Copyright (C) 2026  Sven Thiele <thiele61@gmx.de>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
@@ -18,6 +17,7 @@ struct adxl355 {
     struct timer timer;
     uint32_t rest_ticks;
     struct spidev_s *spi;
+    uint16_t fifo_bytes_pending;
     uint8_t flags;
     struct sensor_bulk sb;
 };
@@ -60,36 +60,68 @@ adxl355_reschedule_timer(struct adxl355 *ax)
 
 // Chip registers
 #define AR_STATUS 0x04
-#define AR_XDATA3 0x08
+#define AR_FIFO_ENTRIES 0x05
+#define AR_FIFO_DATA 0x11
 
 #define AM_READ(reg) ((((reg) & 0x7f) << 1) | 0x01)
 
-#define BYTES_PER_SAMPLE 9
+#define BYTES_PER_FIFO_ENTRY 3
+#define BYTES_PER_BLOCK 45
+#define MAX_FIFO_ENTRIES 96
+
+// Update local status tracking from newly read fifo registers
+static int
+update_fifo_status(struct adxl355 *ax, uint8_t status, uint8_t fifo_entries)
+{
+    if (status & (1<<2))
+        ax->sb.possible_overflows++;
+    if (fifo_entries > MAX_FIFO_ENTRIES)
+        return -1;
+    ax->fifo_bytes_pending = fifo_entries * BYTES_PER_FIFO_ENTRY;
+    return 0;
+}
+
+// Query fifo status registers
+static int
+query_fifo_status(struct adxl355 *ax)
+{
+    uint8_t msg[3] = { AM_READ(AR_STATUS), 0x00, 0x00 };
+    spidev_transfer(ax->spi, 1, sizeof(msg), msg);
+    return update_fifo_status(ax, msg[1], msg[2]);
+}
+
+// Read 15 fifo entries (5 complete xyz samples)
+static void
+read_fifo_block(struct adxl355 *ax, uint8_t oid)
+{
+    uint8_t msg[BYTES_PER_BLOCK + 1] = {0};
+    msg[0] = AM_READ(AR_FIFO_DATA);
+    spidev_transfer(ax->spi, 1, sizeof(msg), msg);
+    memcpy(ax->sb.data, &msg[1], BYTES_PER_BLOCK);
+    ax->sb.data_count = BYTES_PER_BLOCK;
+    sensor_bulk_report(&ax->sb, oid);
+    ax->fifo_bytes_pending -= BYTES_PER_BLOCK;
+}
 
 // Query accelerometer data
 static void
 adxl355_query(struct adxl355 *ax, uint8_t oid)
 {
-    // Read x, y, z measurements from XDATA3..ZDATA1
-    uint8_t msg[10] = { AM_READ(AR_XDATA3), 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-    spidev_transfer(ax->spi, 1, sizeof(msg), msg);
+    if (ax->fifo_bytes_pending < BYTES_PER_BLOCK && query_fifo_status(ax))
+        ax->fifo_bytes_pending = 0;
 
-    uint8_t *d = &ax->sb.data[ax->sb.data_count];
-    // Each axis is 20-bit left-justified in 3 bytes, so low nibble should be 0.
-    if ((msg[3] & 0x0f) || (msg[6] & 0x0f) || (msg[9] & 0x0f)) {
-        // Data error - may be a CS, MISO, MOSI, or SCLK glitch
-        d[0] = d[1] = d[2] = d[3] = d[4] = d[5] = d[6] = d[7] = d[8] = 0xff;
+    if (ax->fifo_bytes_pending >= BYTES_PER_BLOCK)
+        read_fifo_block(ax, oid);
+
+    // check if we need to run the task again (more packets in fifo?)
+    if (ax->fifo_bytes_pending >= BYTES_PER_BLOCK) {
+        // More data in fifo - wake this task again
+        sched_wake_task(&adxl355_wake);
     } else {
-        memcpy(d, &msg[1], BYTES_PER_SAMPLE);
+        // Sleep until next check time
+        ax->flags &= ~AX_PENDING;
+        adxl355_reschedule_timer(ax);
     }
-
-    ax->sb.data_count += BYTES_PER_SAMPLE;
-    if (ax->sb.data_count + BYTES_PER_SAMPLE > ARRAY_SIZE(ax->sb.data))
-        sensor_bulk_report(&ax->sb, oid);
-
-    // Sleep until next check time
-    ax->flags &= ~AX_PENDING;
-    adxl355_reschedule_timer(ax);
 }
 
 void
@@ -105,6 +137,7 @@ command_query_adxl355(uint32_t *args)
 
     // Start new measurements query
     ax->rest_ticks = args[1];
+    ax->fifo_bytes_pending = 0;
     sensor_bulk_reset(&ax->sb);
     adxl355_reschedule_timer(ax);
 }
@@ -114,16 +147,17 @@ void
 command_query_adxl355_status(uint32_t *args)
 {
     struct adxl355 *ax = oid_lookup(args[0], command_config_adxl355);
-    uint8_t msg[2] = { AM_READ(AR_STATUS), 0x00 };
+    uint8_t msg[3] = { AM_READ(AR_STATUS), 0x00, 0x00 };
 
     uint32_t time1 = timer_read_time();
     spidev_transfer(ax->spi, 1, sizeof(msg), msg);
     uint32_t time2 = timer_read_time();
 
-    // STATUS[2] indicates FIFO overrun.
-    if (msg[1] & (1<<2))
-        ax->sb.possible_overflows++;
-    sensor_bulk_status(&ax->sb, args[0], time1, time2-time1, 0);
+    if (update_fifo_status(ax, msg[1], msg[2]))
+        // Query error - don't send response - host will retry
+        return;
+    sensor_bulk_status(&ax->sb, args[0], time1, time2-time1
+                       , ax->fifo_bytes_pending);
 }
 DECL_COMMAND(command_query_adxl355_status, "query_adxl355_status oid=%c");
 

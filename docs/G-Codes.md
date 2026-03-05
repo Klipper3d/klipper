@@ -83,13 +83,13 @@ works in a start-stop mode: when executed for the first time, it
 starts the measurements, next execution stops them. The results of
 measurements are written to a file named
 `/tmp/<chip_type>-<chip>-<name>.csv` where `<chip_type>` is the
-accelerometer section type (for example, `adxl345` or `adxl355`) and
+accelerometer section type (for example, `adxl345`) and
 `<chip>` is the name of the accelerometer chip (`my_chip_name` from
-`[adxl345 my_chip_name]` or `[adxl355 my_chip_name]`) and
+`[adxl345 my_chip_name]`) and
 `<name>` is the optional NAME parameter. If NAME is not specified it
 defaults to the current time in "YYYYMMDD_HHMMSS" format. If the
 accelerometer does not have a name in its config section (simply
-`[adxl345]` or `[adxl355]`) then `<chip>` part of the
+`[adxl345]`) then `<chip>` part of the
 name is not generated.
 
 #### ACCELEROMETER_QUERY
