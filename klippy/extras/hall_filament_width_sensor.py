@@ -47,6 +47,10 @@ class HallFilamentWidthSensor:
             raise config.error(
                 "hall_filament_width_sensor: max_difference must be less than"
                 " default_nominal_filament_diameter")
+        # Flags for deferred actions
+        self.sensor_disable_pending = False
+        self.flow_comp_disable_pending = False
+        self.array_clear_pending = False
         # filament array [position, filamentWidth]
         self.filament_array = []
         self.lastFilamentWidthReading = 0
@@ -145,6 +149,23 @@ class HallFilamentWidthSensor:
                                                 + last_epos)
 
     def extrude_factor_update_event(self, eventtime):
+        # Handle any pending disable/clear operations
+        if (self.sensor_disable_pending or
+            self.flow_comp_disable_pending or
+            self.array_clear_pending):
+            self.gcode.run_script("M221 S100")
+        if self.array_clear_pending:
+            self.array_clear_pending = False
+            self.filament_array = []
+        if self.flow_comp_disable_pending:
+            self.flow_comp_disable_pending = False
+        if self.sensor_disable_pending:
+            self.sensor_disable_pending = False
+            self.filament_array = []
+            self.is_active = False
+            self.runout_helper.sensor_enabled = False
+            self.runout_helper.note_filament_present(eventtime, True)
+            return self.reactor.NEVER
         # Update extrude factor
         pos = self.toolhead.get_position()
         last_epos = pos[3]
@@ -212,9 +233,11 @@ class HallFilamentWidthSensor:
     cmd_RESET_FILAMENT_WIDTH_SENSOR_help = "Clear all filament width readings"
     def cmd_ClearFilamentArray(self, gcmd):
         self.filament_array = []
+        if self.is_active:
+            self.array_clear_pending = True
+        else:
+            self.gcode.run_script_from_command("M221 S100")
         gcmd.respond_info("Filament width measurements cleared!")
-        # Set extrude multiplier to 100%
-        self.gcode.run_script_from_command("M221 S100")
 
     cmd_ENABLE_FILAMENT_WIDTH_SENSOR_help = (
         "Enable the filament width sensor and enable or disable flow "
@@ -222,9 +245,12 @@ class HallFilamentWidthSensor:
     def cmd_M405(self, gcmd):
         flow_comp = gcmd.get_int("FLOW_COMPENSATION", None, minval=0, maxval=1)
         if flow_comp is not None:
-            self.enable_flow_compensation = flow_comp
-            if not flow_comp:
-                self.gcode.run_script_from_command("M221 S100")
+            if self.enable_flow_compensation and not flow_comp:
+                self.flow_comp_disable_pending = True
+                self.enable_flow_compensation = False
+            elif not self.enable_flow_compensation and flow_comp:
+                self.flow_comp_disable_pending = False
+                self.enable_flow_compensation = True
 
         was_active = self.is_active
         self.is_active = True
@@ -232,9 +258,8 @@ class HallFilamentWidthSensor:
         response = ("Filament width sensor: ON"
             + "\nFlow compensation: "
             + ("ON" if self.enable_flow_compensation else "OFF"))
-
-        # Only start/restart timer if sensor was previously inactive
         if not was_active:
+            self.sensor_disable_pending = False
             self.reactor.update_timer(self.extrude_factor_update_timer,
                                         self.reactor.NOW)
         gcmd.respond_info(response)
@@ -243,17 +268,13 @@ class HallFilamentWidthSensor:
         "Disable the filament width sensor")
     def cmd_M406(self, gcmd):
         response = "Filament width sensor: OFF"
-        self.is_active = False
-        self.runout_helper.sensor_enabled = False
-        # Stop extrude factor update timer
-        self.reactor.update_timer(self.extrude_factor_update_timer,
-                                    self.reactor.NEVER)
-        # Clear filament array
-        self.filament_array = []
-        # Tell the filament sensor that there is filament present
-        self.runout_helper.note_filament_present(self.reactor.NOW, True)
-        # Set extrude multiplier to 100%
-        self.gcode.run_script_from_command("M221 S100")
+        if self.is_active:
+            self.sensor_disable_pending = True
+        else:
+            self.filament_array = []
+            self.runout_helper.sensor_enabled = False
+            self.runout_helper.note_filament_present(self.reactor.NOW, True)
+            self.gcode.run_script_from_command("M221 S100")
         gcmd.respond_info(response)
 
     cmd_QUERY_RAW_FILAMENT_WIDTH_help = (
