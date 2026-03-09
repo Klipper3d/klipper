@@ -115,15 +115,6 @@ class ZMaxHomingAlt:
             return trigger_pos
         except self.printer.command_error as e:
             if "No trigger" in str(e):
-                # Create flag file for MicLoop obstacle recovery
-                import logging
-                try:
-                    flag_file = '/tmp/homing_obstacle_flag'
-                    with open(flag_file, 'w') as flag:
-                        flag.write('TIMEOUT_OBSTACLE')
-                    logging.info(f"ZMaxHoming: Obstacle flag created at {flag_file} (timeout detected)")
-                except Exception as flag_err:
-                    logging.warning(f"ZMaxHoming: Could not create flag file: {flag_err}")
                 raise self.printer.command_error(
                     f"El endstop Y no se activó durante el movimiento hacia Z={target_pos[2]:.3f}. "
                     "Verifica que la plataforma pueda alcanzar el final de carrera.")
