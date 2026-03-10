@@ -87,7 +87,10 @@ class Heater:
             time_diff = read_time - self.last_temp_time
             self.last_temp = temp
             self.last_temp_time = read_time
-            self.control.temperature_update(read_time, temp, self.target_temp)
+            co = self.control.temperature_update(read_time, temp,
+                                                 self.target_temp)
+            bounded_co = max(.0, co)
+            self.set_pwm(read_time, bounded_co)
             temp_diff = temp - self.smoothed_temp
             adj_time = min(time_diff * self.inv_smooth_time, 1.)
             self.smoothed_temp += temp_diff * adj_time
@@ -173,9 +176,9 @@ class ControlBangBang:
         elif not self.heating and temp <= target_temp-self.max_delta:
             self.heating = True
         if self.heating:
-            self.heater.set_pwm(read_time, self.heater_max_power)
+            return self.heater_max_power
         else:
-            self.heater.set_pwm(read_time, 0.)
+            return 0.
     def check_busy(self, eventtime, smoothed_temp, target_temp):
         return smoothed_temp < target_temp-self.max_delta
 
@@ -219,14 +222,16 @@ class ControlPID:
         co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
         #logging.debug("pid: %f@%.3f -> diff=%f deriv=%f err=%f integ=%f co=%d",
         #    temp, read_time, temp_diff, temp_deriv, temp_err, temp_integ, co)
-        bounded_co = max(0., min(self.heater_max_power, co))
-        self.heater.set_pwm(read_time, bounded_co)
+        max_power = self.heater_max_power
+        bounded_co = max(-max_power, min(max_power, co))
         # Store state for next measurement
         self.prev_temp = temp
         self.prev_temp_time = read_time
         self.prev_temp_deriv = temp_deriv
-        if co == bounded_co:
+        # Keep the previous wind-down behavior
+        if co == bounded_co and bounded_co >= 0:
             self.prev_temp_integ = temp_integ
+        return bounded_co
     def check_busy(self, eventtime, smoothed_temp, target_temp):
         temp_diff = target_temp - smoothed_temp
         return (abs(temp_diff) > PID_SETTLE_DELTA
