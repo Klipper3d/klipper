@@ -13,6 +13,7 @@ ClientInfo = {'program': 'motan_data_logger', 'version': 'v0.1'}
 ConfigSubscriptions = [
     # (cfgtype, capture_name, api_request, request_params)
     ('adxl345', 'accelerometer:{csn}', '{ct}/dump_{ct}', {'sensor': '{csn}'}),
+    ('adxl355', 'accelerometer:{csn}', '{ct}/dump_{ct}', {'sensor': '{csn}'}),
     ('lis2dw', 'accelerometer:{csn}', '{ct}/dump_{ct}', {'sensor': '{csn}'}),
     ('mpu9250', 'accelerometer:{csn}', '{ct}/dump_{ct}', {'sensor': '{csn}'}),
     ('bmi160', 'accelerometer:{csn}', '{ct}/dump_{ct}', {'sensor': '{csn}'}),
