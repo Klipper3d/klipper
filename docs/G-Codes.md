@@ -780,19 +780,22 @@ is enabled (also see [TSLl401CL Filament Width Sensor](TSL1401CL_Filament_Width_
 and [Hall Filament Width Sensor](Hall_Filament_Width_Sensor.md)):
 
 #### QUERY_FILAMENT_WIDTH
-`QUERY_FILAMENT_WIDTH`: Return the current measured filament width.
+`QUERY_FILAMENT_WIDTH`: Return the current measured filament width, the
+state of the width sensor, the state of the filament sensor and the state
+of flow compensation.
 
 #### RESET_FILAMENT_WIDTH_SENSOR
 `RESET_FILAMENT_WIDTH_SENSOR`: Clear all sensor readings. Helpful
-after filament change.
+after filament change. Resets flow rate to 100%.
 
 #### DISABLE_FILAMENT_WIDTH_SENSOR
 `DISABLE_FILAMENT_WIDTH_SENSOR`: Turn off the filament width sensor
-and stop using it for flow control.
+and stop using it for flow compensation. Resets flow rate to 100%.
 
 #### ENABLE_FILAMENT_WIDTH_SENSOR
-`ENABLE_FILAMENT_WIDTH_SENSOR`: Turn on the filament width sensor and
-start using it for flow control.
+`ENABLE_FILAMENT_WIDTH_SENSOR [FLOW_COMPENSATION=[0|1]`: Turn on the filament
+width sensor and enable or disable flow compensation. If `FLOW_COMPENSATION`
+is not specified, the current flow compensation state is preserved.
 
 #### QUERY_RAW_FILAMENT_WIDTH
 `QUERY_RAW_FILAMENT_WIDTH`: Return the current ADC channel readings
