@@ -201,6 +201,9 @@ class ZMaxHomingAlt:
             final_retract = self.final_retract
         else:
             final_retract = bool(final_retract)
+        # En mediciones de fábrica necesitamos preservar la posición detectada
+        # por el endstop, sin "pegarla" a la config anterior.
+        snap_to_config = bool(gcmd.get_int('SNAP_TO_CONFIG', 1))
         measure_travel = gcmd.get_int('MEASURE', 0, minval=0, maxval=1)
         # Máximo recorrido de búsqueda (por defecto 150mm, suficiente para cualquier impresora)
         max_travel = gcmd.get_float('MAX_TRAVEL', 150.0, above=0.)
@@ -316,12 +319,20 @@ class ZMaxHomingAlt:
 
             # --- Establecer posición final ---
             final_pos = list(final_trigger_pos)
-            # Usar z_max_cfg si está cerca, sino usar el valor detectado
-            if abs(final_z_max - z_max_cfg) < 5.0:
+            # En operación normal permitimos "enganchar" a la config previa si
+            # la diferencia es pequeña. En modo de medición cruda preservamos
+            # siempre el valor detectado por el endstop.
+            if snap_to_config and abs(final_z_max - z_max_cfg) < 5.0:
                 final_pos[2] = z_max_cfg
             else:
                 final_pos[2] = final_z_max
-                logging.warning(f"ZMAX_HOME: Z-max detectado ({final_z_max:.3f}mm) difiere de config ({z_max_cfg:.3f}mm)")
+                if snap_to_config:
+                    logging.warning(f"ZMAX_HOME: Z-max detectado ({final_z_max:.3f}mm) difiere de config ({z_max_cfg:.3f}mm)")
+                else:
+                    logging.info(
+                        f"ZMAX_HOME: preservando Z-max detectado ({final_z_max:.3f}mm) "
+                        f"sin snap a config ({z_max_cfg:.3f}mm)"
+                    )
 
             if not z_homed:
                 self.toolhead.set_position(final_pos, homing_axes=('z',))
