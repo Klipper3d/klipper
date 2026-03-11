@@ -9,15 +9,20 @@ import chelper, util
 
 _NOW = 0.
 _NEVER = 9999999999999999.
+_UNPAUSE_NAME = "__unpause"
+_HISTORY_SIZE = 100
 
 class ReactorError(Exception):
     pass
 
 class ReactorTimer:
-    def __init__(self, callback, waketime):
+    def __init__(self, callback, waketime, whoami=None):
         self.callback = callback
         self.waketime = waketime
         self.timer_is_running = False
+        self.whoami = whoami
+        if whoami is None:
+            self.whoami = util.get_python_function_owner(callback)
 
 class ReactorCompletion:
     class sentinel: pass
@@ -44,7 +49,8 @@ class ReactorCompletion:
 class ReactorCallback:
     def __init__(self, reactor, callback, waketime):
         self.reactor = reactor
-        self.timer = reactor.register_timer(self.invoke, waketime)
+        whoami = util.get_python_function_owner(callback)
+        self.timer = reactor.register_timer(self.invoke, waketime, whoami)
         self.callback = callback
         self.completion = ReactorCompletion(reactor)
     def invoke(self, eventtime):
@@ -56,13 +62,34 @@ class ReactorCallback:
 class ReactorFileHandler:
     def __init__(self, fd, read_callback, write_callback):
         self.fd = fd
+        self.read_whoami = util.get_python_function_owner(read_callback)
         self.read_callback = read_callback
+        self.write_whoami = util.get_python_function_owner(write_callback)
         self.write_callback = write_callback
 
 class ReactorGreenlet(greenlet.greenlet):
     def __init__(self, run):
         greenlet.greenlet.__init__(self, run=run)
         self.timer = None
+        # Time tracking
+        self.record = []
+        self.tpause = .0
+    def unpause(self, waketime):
+        pause_time = time.perf_counter() - self.tpause
+        self.record[1] += pause_time
+        self.tpause = .0
+        self.record[3] = "running"
+        return self.switch(waketime)
+    def note_start_time(self):
+        self.record[3] = "started"
+        self.record[1] = time.perf_counter()
+    def note_end_time(self):
+        self.record[3] = ""
+        self.record[1] = time.perf_counter() - self.record[1]
+        self.record = []
+    def note_pause_time(self):
+        self.record[3] = "paused"
+        self.tpause = time.perf_counter()
 
 class ReactorMutex:
     def __init__(self, reactor, is_locked):
@@ -113,6 +140,9 @@ class SelectReactor:
         self._last_gc_times = [0., 0., 0.]
         # Timers
         self._timers = []
+        self._timers_history_index = 0
+        def_history = [[-1, i, "name", "state"] for i in range(_HISTORY_SIZE)]
+        self._timers_history = def_history
         self._next_timer = self.NEVER
         # Callbacks
         self._pipe_fds = None
@@ -133,13 +163,29 @@ class SelectReactor:
     def get_gc_stats(self):
         return tuple(self._last_gc_times)
     # Timers
+    def _timers_history_next(self):
+        i = self._timers_history_index
+        self._timers_history_index = (i + 1) % _HISTORY_SIZE
+        return self._timers_history[i]
+    def dump_debug(self):
+        out = []
+        index = self._timers_history_index
+        for i in range(index, len(self._timers_history) + index):
+            i = i % len(self._timers_history)
+            eventtime, duration, name, state = self._timers_history[i]
+            if eventtime < 0:
+                continue
+            line = "%3.d: %.6f %.6f %s %s" % (
+                i, eventtime, duration, name, state)
+            out.append(line)
+        return '\n'.join(out)
     def update_timer(self, timer_handler, waketime):
         if timer_handler.timer_is_running:
             return
         timer_handler.waketime = waketime
         self._next_timer = min(self._next_timer, waketime)
-    def register_timer(self, callback, waketime=NEVER):
-        timer_handler = ReactorTimer(callback, waketime)
+    def register_timer(self, callback, waketime=NEVER, whoami=None):
+        timer_handler = ReactorTimer(callback, waketime, whoami)
         timers = list(self._timers)
         timers.append(timer_handler)
         self._timers = timers
@@ -173,9 +219,16 @@ class SelectReactor:
             waketime = t.waketime
             if eventtime >= waketime:
                 t.waketime = self.NEVER
+                if t.whoami != _UNPAUSE_NAME:
+                    g_dispatch.record = self._timers_history_next()
+                    g_dispatch.record[0] = eventtime
+                    g_dispatch.record[2] = t.whoami
+                    g_dispatch.note_start_time()
                 t.timer_is_running = True
                 t.waketime = waketime = t.callback(eventtime)
                 t.timer_is_running = False
+                if t.whoami != _UNPAUSE_NAME:
+                    g_dispatch.note_end_time()
                 if g_dispatch is not self._g_dispatch:
                     self._next_timer = min(self._next_timer, waketime)
                     self._end_greenlet(g_dispatch)
@@ -227,9 +280,11 @@ class SelectReactor:
         return self.monotonic()
     def pause(self, waketime):
         g = greenlet.getcurrent()
+        # Pause in the main greenlet
+        if self._g_dispatch is None:
+            return self._sys_pause(waketime)
+        g.note_pause_time()
         if g is not self._g_dispatch:
-            if self._g_dispatch is None:
-                return self._sys_pause(waketime)
             # Switch to _check_timers (via g.timer.callback return)
             if self._prevent_pause_count:
                 self.verify_can_pause()
@@ -243,7 +298,7 @@ class SelectReactor:
             g_next = ReactorGreenlet(run=self._dispatch_loop)
             self._all_greenlets.append(g_next)
         g_next.parent = g.parent
-        g.timer = self.register_timer(g.switch, waketime)
+        g.timer = self.register_timer(g.unpause, waketime, _UNPAUSE_NAME)
         self._next_timer = self.NOW
         # Switch to _dispatch_loop (via _end_greenlet or direct)
         eventtime = g_next.switch()
@@ -293,12 +348,22 @@ class SelectReactor:
         for fd, event in hdls:
             hdl = self._fds.get(fd, self._dummy_fd_hdl)
             if event & self._READ:
+                g_dispatch.record = self._timers_history_next()
+                g_dispatch.record[0] = eventtime
+                g_dispatch.record[2] = hdl.read_whoami
+                g_dispatch.note_start_time()
                 hdl.read_callback(eventtime)
+                g_dispatch.note_end_time()
                 if g_dispatch is not self._g_dispatch:
                     self._end_greenlet(g_dispatch)
                     return self.monotonic()
             if event & self._WRITE:
+                g_dispatch.record = self._timers_history_next()
+                g_dispatch.record[0] = eventtime
+                g_dispatch.record[2] = hdl.write_whoami
+                g_dispatch.note_start_time()
                 hdl.write_callback(eventtime)
+                g_dispatch.note_end_time()
                 if g_dispatch is not self._g_dispatch:
                     self._end_greenlet(g_dispatch)
                     return self.monotonic()
