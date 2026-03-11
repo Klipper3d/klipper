@@ -73,6 +73,12 @@ lib/rp2040_flash/rp2040_flash:
 	@echo "  Building rp2040_flash"
 	$(Q)make -C lib/rp2040_flash rp2040_flash
 
+ifeq ($(CONFIG_USE_KATAPULT_FLASHTOOL),y)
+flash: $(OUT)klipper.bin
+	@echo "  Flashing $< to $(FLASH_DEVICE)"
+	$(Q)$(PYTHON) ./lib/katapult/flashtool.py -d "$(FLASH_DEVICE)" -f $(OUT)klipper.bin
+else
 flash: $(rptarget-y) lib/rp2040_flash/rp2040_flash
 	@echo "  Flashing $< to $(FLASH_DEVICE)"
 	$(Q)$(PYTHON) ./scripts/flash_usb.py -t $(CONFIG_MCU) -d "$(FLASH_DEVICE)" $(if $(NOSUDO),--no-sudo) $(rptarget-y)
+endif

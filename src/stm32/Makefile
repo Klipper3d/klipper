@@ -102,9 +102,15 @@ lib/hidflash/hid-flash:
 	@echo "  Building hid-flash"
 	$(Q)make -C lib/hidflash
 
+ifeq ($(CONFIG_USE_KATAPULT_FLASHTOOL),y)
+flash: $(OUT)klipper.bin
+	@echo "  Flashing $< to $(FLASH_DEVICE)"
+	$(Q)$(PYTHON) ./lib/katapult/flashtool.py -d "$(FLASH_DEVICE)" -f $(OUT)klipper.bin
+else
 flash: $(OUT)klipper.bin lib/hidflash/hid-flash
 	@echo "  Flashing $< to $(FLASH_DEVICE)"
 	$(Q)$(PYTHON) ./scripts/flash_usb.py -t $(CONFIG_MCU) -d "$(FLASH_DEVICE)" -s "$(CONFIG_FLASH_APPLICATION_ADDRESS)" $(if $(NOSUDO),--no-sudo) $(OUT)klipper.bin
+endif
 
 serialflash: $(OUT)klipper.bin
 	@echo "  Flashing $< to $(FLASH_DEVICE) via stm32flash"
