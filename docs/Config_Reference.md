@@ -1442,6 +1442,48 @@ See also: [extended g-code commands](G-Codes.md#z_thermal_adjust).
 #   parameter.
 ```
 
+### [backlash]
+
+Backlash compensation for mechanical play in axis drive systems. This module
+compensates for the small amount of lost motion that occurs when an axis
+reverses direction, which is common in lead screw and belt drive systems.
+The compensation is applied in real-time during moves.
+
+Two kinematics modes are supported:
+- **Cartesian**: Independent X, Y, Z axis compensation
+- **CoreXY**: Compensation for A and B diagonal motors (where A=X+Y, B=X-Y)
+
+```
+[backlash]
+#kinematics: cartesian
+#   The kinematics type for backlash compensation. Must be either
+#   "cartesian" or "corexy". Default is "cartesian".
+
+# For Cartesian kinematics:
+#x: 0.0
+#   Backlash compensation for the X axis in mm. Applied when the X axis
+#   changes direction from negative to positive. Default is 0.0 (disabled).
+#y: 0.0
+#   Backlash compensation for the Y axis in mm. Applied when the Y axis
+#   changes direction from negative to positive. Default is 0.0 (disabled).
+
+# For CoreXY kinematics:
+#a: 0.0
+#   Backlash compensation for the A motor in mm. The A motor controls the
+#   X+Y diagonal motion. Applied when the A motor changes direction from
+#   negative to positive. Default is 0.0 (disabled).
+#b: 0.0
+#   Backlash compensation for the B motor in mm. The B motor controls the
+#   X-Y diagonal motion. Applied when the B motor changes direction from
+#   negative to positive. Default is 0.0 (disabled).
+
+# Common to all kinematics:
+#z: 0.0
+#   Backlash compensation for the Z axis in mm. Applied when the Z axis
+#   changes direction from negative to positive (moving up). Default is
+#   0.0 (disabled).
+```
+
 ## Customized homing
 
 ### [safe_z_home]
