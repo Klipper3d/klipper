@@ -1,6 +1,8 @@
 # Printer stepper support
 #
 # Copyright (C) 2016-2025  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2025  Hans-Albert Maritz <maritz.hans@gmail.com>
+# Copyright (C) 2026  Michael Atzmueller <michael.atzmueller98@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import math, logging, collections
@@ -35,7 +37,14 @@ class MCU_stepper:
         self._step_pin = step_pin_params['pin']
         self._invert_step = step_pin_params['invert']
         printer = mcu.get_printer()
-        if dir_pin_params['chip'] is not mcu:
+        self._dir_pin_sreg_oid = 0
+        if hasattr(dir_pin_params['chip'], 'is_sreg'):
+            self._dir_pin_sreg_oid = dir_pin_params['chip'].get_oid()
+            if dir_pin_params['chip'].get_mcu() is not mcu:
+                raise mcu.get_printer().config_error(
+                    "Stepper dir pin must be on same mcu/shift register "
+                    "as step pin")
+        elif dir_pin_params['chip'] is not mcu:
             raise printer.config_error(
                 "Stepper dir pin must be on same mcu as step pin")
         self._dir_pin = dir_pin_params['pin']
@@ -111,6 +120,9 @@ class MCU_stepper:
                 self._step_pulse_duration = 0.
         # Configure stepper object
         step_pulse_ticks = self._mcu.seconds_to_clock(self._step_pulse_duration)
+        if self._dir_pin_sreg_oid:
+            self._dir_pin = \
+                str((self._dir_pin_sreg_oid << 8) | int(self._dir_pin))
         self._mcu.add_config_cmd(
             "config_stepper oid=%d step_pin=%s dir_pin=%s invert_step=%d"
             " step_pulse_ticks=%u" % (self._oid, self._step_pin, self._dir_pin,
