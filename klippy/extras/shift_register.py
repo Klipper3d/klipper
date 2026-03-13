@@ -1,7 +1,10 @@
+# Handle shift register pins
+#
+# Copyright (C) 2026  <Name> <<email>>
+#
+# This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
-
 from klippy import mcu
-
 
 class ShiftRegisterPin:
     def __init__(self, pin_params):
@@ -29,15 +32,15 @@ class ShiftRegisterPin:
         self._start_value = (not not start_value) ^ self._invert
         self._shutdown_value = (not not shutdown_value) ^ self._invert
 
-
     def get_mcu(self):
         return self._mcu
     
     def _build_config(self):
         self._oid = self._mcu.create_oid()
+        pin = str((self._sr_oid << 8) | int(self._pin_num))
         self._mcu.add_config_cmd(
-            "config_digital_out oid=%d pin=%s value=%d default_value=%d max_duration=%d shift_register_oid=%d"
-            % (self._oid, self._pin_num, self._start_value, self._shutdown_value, 0, self._sr_oid))
+            "config_digital_out oid=%d pin=%s value=%d default_value=%d max_duration=%d"
+            % (self._oid, pin, self._start_value, self._shutdown_value, 0))
         cmd_queue = self._mcu.alloc_command_queue()
         self._set_cmd = self._mcu.lookup_command(
             "queue_digital_out oid=%c clock=%u on_ticks=%u", cq=cmd_queue)
@@ -66,15 +69,24 @@ class ShiftRegister:
             # oid of 0 indicates no shift register and normal pins should be used, force oid > 0
             self._oid = self._mcu.create_oid()
 
-        # self._mcu.register_post_handler("klippy:mcu_identify", self._add_sr_pin_enums)
+        # Register shift register pin enums early so they are available for
+        # config command encoding (pin names like "259" need to be valid).
+        self._add_sr_pin_enums()
+
         self._mcu.register_config_callback(self._build_config)
         
     def _add_sr_pin_enums(self):
         logging.info("Adding shift register pin enums")
         shift_register_enums = {}
+        # Add regular pin numbers for compatibility
         for i in range(self._num_registers * 8):
             shift_register_enums['%d' % i] = i
-        self._mcu.add_enumerations({
+        # Add encoded pins (sr_oid<<8 | pin_index) so the host can send them
+        # without needing a separate shift_register_oid field.
+        for i in range(self._num_registers * 8):
+            encoded = (self._oid << 8) | i
+            shift_register_enums['%d' % encoded] = encoded
+        self._mcu._serial.get_msgparser().fill_enumerations({
             'pin': shift_register_enums
         })
         
