@@ -24,12 +24,18 @@ struct shift_register_pin {
     uint8_t pin;
 };
 
-struct shift_register *shift_register_setup(uint8_t oid, uint8_t data_pin, 
-                                           uint8_t clock_pin, uint8_t latch_pin, 
-                                           uint8_t num_registers);
+struct shift_register *shift_register_setup(
+    uint8_t oid, uint8_t data_pin,
+    uint8_t clock_pin, uint8_t latch_pin,
+    uint8_t num_registers);
+
 struct shift_register *shift_register_oid_lookup(uint8_t oid);
+
 void shift_register_update(struct shift_register *sr);
-void shift_register_set_pin(struct shift_register *sr, uint8_t pin, uint8_t value);
+
+void
+shift_register_set_pin(struct shift_register *sr, uint8_t pin, uint8_t value);
+
 uint8_t shift_register_get_pin(struct shift_register *sr, uint8_t pin);
 
 void

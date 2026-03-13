@@ -1,7 +1,7 @@
 # Handle shift register pins
 #
-# Copyright (C) 2025  Hans-Albert Maritz <Freakazo> <maritz.hans@gmail.com>
-# Copyright (C) 2026  Michael Atzmüller <ErdbeermarmeladebrotmitHonig> <michael.atzmueller98@gmail.com>
+# Copyright (C) 2025  Hans-Albert Maritz <maritz.hans@gmail.com>
+# Copyright (C) 2026  Michael Atzmüller <michael.atzmueller98@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
@@ -35,12 +35,13 @@ class ShiftRegisterPin:
 
     def get_mcu(self):
         return self._mcu
-    
+
     def _build_config(self):
         self._oid = self._mcu.create_oid()
         pin = str((self._sr_oid << 8) | int(self._pin_num))
         self._mcu.add_config_cmd(
-            "config_digital_out oid=%d pin=%s value=%d default_value=%d max_duration=%d"
+            "config_digital_out oid=%d pin=%s value=%d default_value=%d "
+            "max_duration=%d"
             % (self._oid, pin, self._start_value, self._shutdown_value, 0))
         cmd_queue = self._mcu.alloc_command_queue()
         self._set_cmd = self._mcu.lookup_command(
@@ -67,7 +68,7 @@ class ShiftRegister:
 
         self._oid = self._mcu.create_oid()
         if self._oid == 0:
-            # oid of 0 indicates no shift register and normal pins should be used, force oid > 0
+            # oid of 0 indicates no shift register and normal pins should be used
             self._oid = self._mcu.create_oid()
 
         # Register shift register pin enums early so they are available for
@@ -75,7 +76,7 @@ class ShiftRegister:
         self._add_sr_pin_enums()
 
         self._mcu.register_config_callback(self._build_config)
-        
+
     def _add_sr_pin_enums(self):
         logging.info("Adding shift register pin enums")
         shift_register_enums = {}
@@ -90,13 +91,14 @@ class ShiftRegister:
         self._mcu._serial.get_msgparser().fill_enumerations({
             'pin': shift_register_enums
         })
-        
 
     def _build_config(self):
         self._mcu.add_config_cmd(
-            "config_shift_register oid=%d data_pin=%s clock_pin=%s latch_pin=%s num_registers=%d"
-            % (self._oid, self._data_pin_params['pin'], self._clock_pin_params['pin'],
-                                  self._latch_pin_params['pin'], self._num_registers))
+            "config_shift_register oid=%d data_pin=%s clock_pin=%s "
+            "latch_pin=%s num_registers=%d"
+            % (self._oid, self._data_pin_params['pin'],
+                    self._clock_pin_params['pin'],
+                    self._latch_pin_params['pin'], self._num_registers))
         self._add_sr_pin_enums()
 
     def setup_pin(self, pin_type, pin_params):

@@ -209,7 +209,8 @@ command_config_stepper(uint32_t *args)
     uint32_t dir_encoded = args[2];
     uint8_t dir_sr_oid = dir_encoded >> 8;
     uint8_t dir_bit = dir_encoded & 0xFF;
-    s->step_pin = gpio_out_sr_setup(step_bit, s->flags & SF_INVERT_STEP, step_sr_oid);
+    s->step_pin = gpio_out_sr_setup(step_bit, s->flags & SF_INVERT_STEP,
+        step_sr_oid);
     s->dir_pin = gpio_out_sr_setup(dir_bit, 0, dir_sr_oid);
     s->position = -POSITION_BIAS;
     s->step_pulse_ticks = args[4];
