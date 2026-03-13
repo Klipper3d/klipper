@@ -17,7 +17,7 @@ def distance_to_center(p1, p2):
     ab_length = math.sqrt(ab_x ** 2 + ab_y ** 2)
 
     # Check if the projected point lies on the bounded line segment
-    if ab_ap_dot_product <= -0.1:
+    if ab_ap_dot_product <= 0:
         dist = math.sqrt(ap_x ** 2 + ap_y ** 2)
     elif ab_ap_dot_product >= ab_length ** 2:
         dist = math.sqrt(p2[0] ** 2 + p2[1] ** 2)
