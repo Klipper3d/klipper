@@ -573,7 +573,7 @@ max_z_accel:
 #   This limits the maximum angular velocity (in rad/s) of a move.
 #   Lower values will result in longer print times, but prevents too
 #   fast motions near the center. A value of 0 deactivates the
-#   scaling. The default is 0.
+#   scaling. The default is to not apply maximum angular velocity limits.
 
 # The stepper_bed section is used to describe the stepper controlling
 # the bed.
