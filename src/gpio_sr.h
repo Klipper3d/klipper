@@ -1,6 +1,7 @@
 // Generic GPIO with shift register support
 //
-// Copyright (C) 2023  <Your Name>
+// Copyright (C) 2025  Hans-Albert Maritz <maritz.hans@gmail.com>
+// Copyright (C) 2026  Michael Atzmüller <michael.atzmueller98@gmail.com>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
