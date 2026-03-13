@@ -10,7 +10,7 @@
 #include "board/misc.h" // timer_is_before
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // sched_add_timer
-#include "board/gpio_sr.h" // gpio_out_sr_setup
+#include "gpio_sr.h" // gpio_out_sr_setup
 
 struct digital_out_s {
     struct timer timer;
@@ -117,7 +117,10 @@ digital_load_event(struct timer *timer)
 void
 command_config_digital_out(uint32_t *args)
 {
-    struct gpio_out_extended pin = gpio_out_sr_setup(args[1], !!args[2], args[5]);
+    uint32_t encoded_pin = args[1];
+    uint8_t sr_oid = encoded_pin >> 8;
+    uint8_t bit = encoded_pin & 0xFF;
+    struct gpio_out_extended pin = gpio_out_sr_setup(bit, !!args[2], sr_oid);
     struct digital_out_s *d = oid_alloc(args[0], command_config_digital_out
                                         , sizeof(*d));
     d->pin = pin;
@@ -127,7 +130,7 @@ command_config_digital_out(uint32_t *args)
 }
 DECL_COMMAND(command_config_digital_out,
              "config_digital_out oid=%c pin=%u value=%c"
-             " default_value=%c max_duration=%u shift_register_oid=%c");
+             " default_value=%c max_duration=%u");
 
 void
 command_set_digital_out_pwm_cycle(uint32_t *args)

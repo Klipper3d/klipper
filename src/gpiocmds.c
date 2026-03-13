@@ -126,7 +126,7 @@ command_config_digital_out(uint32_t *args)
 }
 DECL_COMMAND(command_config_digital_out,
              "config_digital_out oid=%c pin=%u value=%c"
-             " default_value=%c max_duration=%u shift_register_oid=%c");
+             " default_value=%c max_duration=%u");
 
 void
 command_set_digital_out_pwm_cycle(uint32_t *args)

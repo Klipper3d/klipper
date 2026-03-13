@@ -5,11 +5,11 @@ src-$(CONFIG_HAVE_GPIO) += initial_pins.c endstop.c \
     trsync.c
 
 # If GPIO support is enabled, select which gpiocmds source to build:
-# - build gpiocmds_sr.c when shift registers are present
+# - build gpiocmds_sr.c when shift registers are wanted
 # - otherwise build the regular gpiocmds.c
 ifeq ($(CONFIG_HAVE_GPIO),y)
-ifeq ($(CONFIG_HAVE_SHIFT_REG),y)
-src-$(CONFIG_HAVE_GPIO) += gpiocmds_sr.c shift_register.c stepper_sr.c
+ifeq ($(CONFIG_WANT_SHIFT_REG),y)
+src-$(CONFIG_HAVE_GPIO) += gpiocmds_sr.c shift_register.c stepper_sr.c gpio_sr.c
 else
 src-$(CONFIG_HAVE_GPIO) += gpiocmds.c stepper.c
 endif

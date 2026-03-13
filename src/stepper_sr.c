@@ -13,7 +13,7 @@
 #include "sched.h" // struct timer
 #include "stepper.h" // stepper_event
 #include "trsync.h" // trsync_add_signal
-#include "board/gpio_sr.h" // gpio_out_sr_setup
+#include "gpio_sr.h" // gpio_out_sr_setup
 
 DECL_CONSTANT("STEPPER_STEP_BOTH_EDGE", 1);
 
@@ -201,8 +201,14 @@ command_config_stepper(uint32_t *args)
         s->flags = SF_INVERT_STEP;
     else if (invert_step < 0)
         s->flags = SF_SINGLE_SCHED;
-    s->step_pin = gpio_out_sr_setup(args[1], s->flags & SF_INVERT_STEP, args[5]);
-    s->dir_pin = gpio_out_sr_setup(args[2], 0, args[6]);
+    uint32_t step_encoded = args[1];
+    uint8_t step_sr_oid = step_encoded >> 8;
+    uint8_t step_bit = step_encoded & 0xFF;
+    uint32_t dir_encoded = args[2];
+    uint8_t dir_sr_oid = dir_encoded >> 8;
+    uint8_t dir_bit = dir_encoded & 0xFF;
+    s->step_pin = gpio_out_sr_setup(step_bit, s->flags & SF_INVERT_STEP, step_sr_oid);
+    s->dir_pin = gpio_out_sr_setup(dir_bit, 0, dir_sr_oid);
     s->position = -POSITION_BIAS;
     s->step_pulse_ticks = args[4];
     move_queue_setup(&s->mq, sizeof(struct stepper_move));
@@ -220,9 +226,8 @@ command_config_stepper(uint32_t *args)
         s->time.func = stepper_event_full;
     }
 }
-DECL_COMMAND(command_config_stepper, "config_stepper oid=%c step_pin=%c"
-             " dir_pin=%c invert_step=%c step_pulse_ticks=%u"
-             " step_sr_oid=%c dir_sr_oid=%c");
+DECL_COMMAND(command_config_stepper, "config_stepper oid=%c step_pin=%u"
+             " dir_pin=%u invert_step=%c step_pulse_ticks=%u");
 
 // Return the 'struct stepper' for a given stepper oid
 static struct stepper *
