@@ -5,12 +5,12 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "gpio_sr.h"           // self
-#include "board/gpio.h"        // gpio_out_setup, gpio_out_write, gpio_out_toggle
-#include "board/irq.h"         // irq_save, irq_restore
-#include "command.h"           // shutdown
-#include "sched.h"             // sched_shutdown
-#include "shift_register.h"    // shift_register_oid_lookup, shift_register_set_pin
+#include "gpio_sr.h"        // self
+#include "board/gpio.h"     // gpio_out_setup, gpio_out_write, gpio_out_toggle
+#include "board/irq.h"      // irq_save, irq_restore
+#include "command.h"        // shutdown
+#include "sched.h"          // sched_shutdown
+#include "shift_register.h" // shift_register_oid_lookup, shift_register_set_pin
 
 // Setup a GPIO output pin, potentially on a shift register
 struct gpio_out_extended
