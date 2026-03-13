@@ -1,6 +1,7 @@
 # Handle shift register pins
 #
-# Copyright (C) 2026  <Name> <<email>>
+# Copyright (C) 2025  Hans-Albert Maritz <Freakazo> <maritz.hans@gmail.com>
+# Copyright (C) 2026  Michael Atzmüller <ErdbeermarmeladebrotmitHonig> <michael.atzmueller98@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
