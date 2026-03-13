@@ -68,7 +68,7 @@ class ShiftRegister:
 
         self._oid = self._mcu.create_oid()
         if self._oid == 0:
-            # oid of 0 indicates no shift register and normal pins should be used
+            # oid of 0 indicates no shift register, normal pins should be used
             self._oid = self._mcu.create_oid()
 
         # Register shift register pin enums early so they are available for
