@@ -7,7 +7,7 @@ import logging, math
 import stepper
 
 
-def distance_line_to_point(p1, p2):
+def distance_to_center(p1, p2):
     ab_x = p2[0]-p1[0]
     ab_y = p2[1]-p1[1]
     ap_x = -p1[0]
@@ -128,7 +128,7 @@ class PolarKinematics:
         if move.axes_d[0] or move.axes_d[1]:
             if self.v_rad_max == 0:
                 return
-            min_dist = distance_line_to_point(move.start_pos[0:2],
+            min_dist = distance_to_center(move.start_pos[0:2],
                                               move.end_pos[0:2])
             if min_dist == 0:
                 return
