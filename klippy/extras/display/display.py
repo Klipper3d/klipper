@@ -86,6 +86,38 @@ class DisplayGroup:
             display.draw_text(row, col, text.replace('\n', ''), eventtime)
         context.clear() # Remove circular references for better gc
 
+#Storage of [display_font my_font] sections (one instance per font name)
+class DisplayFont:
+    def __init__(self, config):
+        self.printer = config.get_printer()
+        name_parts = config.get_name().split()
+        if len(name_parts) != 2:
+            raise config.error("Section name '%s' is not valid"
+                               % (config.get_name(),))
+        self.name = name_parts[1]
+        self.format = config.getchoice('format', ['bdf'], default='bdf')
+        self.font_file = self._resolve_font_file(config.get('font_file'))
+        self.cell_width = config.getint('cell_width', minval=1)
+        self.cell_height = config.getint('cell_height', minval=1)
+        self.baseline = config.getint('baseline', minval=0)
+        self.charset = config.getchoice('charset', ['ascii'], default='ascii')
+        self.rows_override = config.getint('rows_override', None, minval=1)
+
+        if self.baseline >= self.cell_height:
+            raise config.error("Option 'baseline' in section '%s' must be less than 'cell_height'" % (config.get_name()))
+        if not os.path.exists(self.font_file):
+            raise config.error("Option 'font_file' in section '%s' does not exist: '%s'" % (config.get_name(), self.font_file))
+
+
+    def _resolve_font_file(self, font_file):
+        path = os.path.expanduser(font_file)
+        if os.path.isabs(path):
+            return path
+        
+        cfg_file = self.printer.get_start_args()['config_file'] 
+        cfg_dir = os.path.dirname(os.path.abspath(cfg_file))
+        return os.path.normpath(os.path.join(cfg_dir, path))
+
 # Global cache of DisplayTemplate, DisplayGroup, and glyphs
 class PrinterDisplayTemplate:
     def __init__(self, config):
@@ -93,6 +125,7 @@ class PrinterDisplayTemplate:
         self.display_templates = {}
         self.display_data_groups = {}
         self.display_glyphs = {}
+        self.display_fonts = {}
         self.load_config(config)
     def get_display_templates(self):
         return self.display_templates
@@ -100,6 +133,8 @@ class PrinterDisplayTemplate:
         return self.display_data_groups
     def get_display_glyphs(self):
         return self.display_glyphs
+    def get_display_fonts(self):
+        return self.display_fonts
     def _parse_glyph(self, config, glyph_name, data, width, height):
         glyph_data = []
         for line in data.split('\n'):
@@ -144,6 +179,11 @@ class PrinterDisplayTemplate:
         for group_name, data_configs in groups.items():
             dg = DisplayGroup(config, group_name, data_configs)
             self.display_data_groups[group_name] = dg
+        # Load display_font sections
+        df_main = config.get_prefix_sections('display_font ')
+        for c in df_main:
+            df = DisplayFont(c)
+            self.display_fonts[df.name] = df
         # Load display glyphs
         dg_prefix = 'display_glyph '
         self.display_glyphs = icons = {}
@@ -189,6 +229,13 @@ class PrinterLCD:
         # Configurable display
         templates = lookup_display_templates(config)
         self.display_templates = templates.get_display_templates()
+        self.display_fonts = templates.get_display_fonts()
+        font_name = config.get('font', None)
+        self.font_profile = None
+        if font_name is not None:
+            self.font_profile = self.display_fonts.get(font_name)
+            if self.font_profile is None:
+                raise config.error("Unknown display font '%s'" % (font_name))
         self.display_data_groups = templates.get_display_data_groups()
         self.lcd_chip.set_glyphs(templates.get_display_glyphs())
         dgroup = "_default_16x4"
