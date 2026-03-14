@@ -9,6 +9,8 @@ import os
 import time
 import json
 
+MAX_REASONABLE_STEP_LOSS_MM = 1.0
+
 class MonitoredMove:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -329,16 +331,35 @@ class MonitoredMove:
             z_rail = kin.rails[2]  # Rail Z
             z_min, z_max = z_rail.get_range()
             diferencia = final_pos[2] - z_max
+            expected_z_max = float(f"{z_max:.6f}")
+            detected_z_pos = float(f"{final_pos[2]:.6f}")
+            delta_to_config = float(f"{diferencia:.6f}")
+            measurement_type = "step_loss"
+            step_loss_value = delta_to_config
+            reference_mismatch_mm = None
+
+            if abs(delta_to_config) > MAX_REASONABLE_STEP_LOSS_MM:
+                measurement_type = "reference_mismatch"
+                step_loss_value = None
+                reference_mismatch_mm = delta_to_config
             
             # Reporte con posición absoluta y diferencia para base de datos
-            gcmd.respond_info(f"Posición Z detectada: {final_pos[2]:.6f}mm")
+            gcmd.respond_info(f"Posición Z detectada: {detected_z_pos:.6f}mm")
             
-            if diferencia > 0:
-                gcmd.respond_info(f"Pérdida de pasos BAJANDO: {diferencia:.6f}mm")
-            elif diferencia < 0:
-                gcmd.respond_info(f"Pérdida de pasos SUBIENDO: {diferencia:.6f}mm")
+            if measurement_type == "reference_mismatch":
+                gcmd.respond_info(
+                    f"⚠️ Desfase grande respecto a position_max ({expected_z_max:.6f}mm): "
+                    f"{delta_to_config:+.6f}mm"
+                )
+                gcmd.respond_info(
+                    "⚠️ Se registra como mismatch de referencia, no como pérdida de pasos real"
+                )
+            elif delta_to_config > 0:
+                gcmd.respond_info(f"Pérdida de pasos BAJANDO: {delta_to_config:.6f}mm")
+            elif delta_to_config < 0:
+                gcmd.respond_info(f"Pérdida de pasos SUBIENDO: {delta_to_config:.6f}mm")
             else:
-                gcmd.respond_info(f"Pérdida de pasos: {diferencia:.6f}mm")
+                gcmd.respond_info(f"Pérdida de pasos: {delta_to_config:.6f}mm")
             
             # Escribir los valores en un archivo para nanodlp
             try:
@@ -365,8 +386,12 @@ class MonitoredMove:
                 measurement = {
                     "timestamp": time.time(),
                     "datetime": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "step_loss": float(f"{diferencia:.6f}"),
-                    "z_position": float(f"{final_pos[2]:.6f}"),
+                    "measurement_type": measurement_type,
+                    "step_loss": step_loss_value,
+                    "reference_mismatch_mm": reference_mismatch_mm,
+                    "expected_z_max": expected_z_max,
+                    "z_position": detected_z_pos,
+                    "delta_to_config": delta_to_config,
                     "plate_id": plate_id
                 }
                 
