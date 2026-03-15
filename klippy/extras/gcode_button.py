@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 
+WARN_PENDING = 25
 
 class GCodeButton:
     def __init__(self, config):
@@ -12,6 +13,7 @@ class GCodeButton:
         self.name = config.get_name().split(' ')[-1]
         self.pin = config.get('pin')
         self.last_state = 0
+        self._queued = 0
         buttons = self.printer.load_object(config, "buttons")
         if config.get('analog_range', None) is None:
             buttons.register_debounce_button(self.pin, self.button_callback
@@ -43,9 +45,13 @@ class GCodeButton:
             commands = template.render()
             if len(commands) == 0:
                 return
+            self._queued += 1
+            if self._queued > WARN_PENDING:
+                logging.warning("gcode_button: too many pending requests")
             self.gcode.run_script(commands)
         except:
             logging.exception("Script running error")
+        self._queued -= 1
 
     def get_status(self, eventtime=None):
         if self.last_state:
