@@ -1,5 +1,5 @@
 // Continuous bed scanning with binary probe - GPIO monitor with timestamped
-// state transitions streamed to host.
+// state transitions streamed to host via bulk sensor subsystem.
 //
 // Copyright (C) 2026  Matti Airas <matti.airas@hatlabs.fi>
 //
@@ -11,19 +11,14 @@
 #include "board/misc.h" // timer_read_time
 #include "command.h" // DECL_COMMAND
 #include "sched.h" // struct timer
+#include "sensor_bulk.h" // sensor_bulk_reset
 
 // Per-event record: MCU clock (4 bytes) + state (1 byte)
 #define EVENT_SIZE 5
-#define MAX_EVENTS 16
 
-// Retransmit state machine (following buttons.c pattern)
-// Values >= RT_NO_RETRANSMIT are "idle" states
-// Values < RT_NO_RETRANSMIT are countdown ticks until retransmit
-enum {
-    RT_NO_RETRANSMIT = 0x80,
-    RT_PENDING = 0xff,  // New data waiting to be sent
-    RT_ACKED = 0xfe     // All data acknowledged
-};
+// Flush buffered events after this many poll ticks without a send.
+// At 50us poll interval: 1000 ticks = 50ms.
+#define FLUSH_TICKS 1000
 
 struct probe_scan {
     struct timer time;
@@ -31,13 +26,8 @@ struct probe_scan {
     uint32_t rest_ticks;
     uint8_t invert;
     uint8_t last_state;
-    // Event buffer — written by timer ISR, read by task after gating
-    uint8_t event_count;
-    uint8_t ack_count;
-    uint8_t overflow;
-    uint8_t retransmit_state;
-    uint8_t retransmit_count;  // Configured countdown value for retransmit
-    uint8_t events[MAX_EVENTS * EVENT_SIZE];
+    uint16_t flush_countdown;
+    struct sensor_bulk sb;
 };
 
 static struct task_wake probe_scan_wake;
@@ -45,20 +35,19 @@ static struct task_wake probe_scan_wake;
 static void
 record_event(struct probe_scan *ps, uint32_t clock, uint8_t state)
 {
-    if (ps->event_count >= MAX_EVENTS) {
-        if (ps->overflow < 255)
-            ps->overflow++;
+    if (ps->sb.data_count + EVENT_SIZE > sizeof(ps->sb.data)) {
+        ps->sb.possible_overflows++;
         return;
     }
-    uint8_t *p = &ps->events[ps->event_count * EVENT_SIZE];
-    p[0] = clock & 0xff;
-    p[1] = (clock >> 8) & 0xff;
-    p[2] = (clock >> 16) & 0xff;
-    p[3] = (clock >> 24) & 0xff;
-    p[4] = state;
-    ps->event_count++;
-    sched_wake_task(&probe_scan_wake);
-    ps->retransmit_state = RT_PENDING;
+    uint8_t *d = &ps->sb.data[ps->sb.data_count];
+    d[0] = clock;
+    d[1] = clock >> 8;
+    d[2] = clock >> 16;
+    d[3] = clock >> 24;
+    d[4] = state;
+    ps->sb.data_count += EVENT_SIZE;
+    if (ps->sb.data_count + EVENT_SIZE > sizeof(ps->sb.data))
+        sched_wake_task(&probe_scan_wake);
 }
 
 static uint_fast8_t
@@ -72,16 +61,14 @@ probe_scan_event(struct timer *t)
         uint32_t clock = timer_read_time();
         ps->last_state = state;
         record_event(ps, clock, state);
+        ps->flush_countdown = FLUSH_TICKS;
     }
 
-    // Retransmit countdown (fires every poll tick)
-    uint8_t rs = ps->retransmit_state;
-    if (!(rs & RT_NO_RETRANSMIT)) {
-        rs--;
-        if (rs & RT_NO_RETRANSMIT)
-            // Countdown expired — trigger retransmit
+    // Periodic flush for sparse events
+    if (ps->sb.data_count && ps->flush_countdown) {
+        ps->flush_countdown--;
+        if (!ps->flush_countdown)
             sched_wake_task(&probe_scan_wake);
-        ps->retransmit_state = rs;
     }
 
     ps->time.waketime += ps->rest_ticks;
@@ -107,13 +94,9 @@ command_probe_scan_start(uint32_t *args)
     ps->time.waketime = args[1];
     ps->rest_ticks = args[2];
     ps->invert = args[3];
-    ps->retransmit_count = args[4];
-    if (ps->retransmit_count >= RT_NO_RETRANSMIT)
-        shutdown("Invalid probe_scan retransmit count");
-    ps->event_count = 0;
-    ps->ack_count = 0;
-    ps->overflow = 0;
-    ps->retransmit_state = RT_ACKED;
+    ps->flush_countdown = 0;
+
+    sensor_bulk_reset(&ps->sb);
 
     uint8_t val = gpio_in_read(ps->pin) ? 1 : 0;
     ps->last_state = val ^ ps->invert;
@@ -122,48 +105,28 @@ command_probe_scan_start(uint32_t *args)
     sched_add_timer(&ps->time);
 }
 DECL_COMMAND(command_probe_scan_start,
-             "probe_scan_start oid=%c clock=%u rest_ticks=%u"
-             " invert=%c retransmit_count=%c");
+             "probe_scan_start oid=%c clock=%u rest_ticks=%u invert=%c");
 
 void
 command_probe_scan_stop(uint32_t *args)
 {
     struct probe_scan *ps = oid_lookup(args[0], command_config_probe_scan);
     sched_del_timer(&ps->time);
-    // Wake task to flush remaining events
-    if (ps->event_count > 0)
-        ps->retransmit_state = RT_PENDING;
-    sched_wake_task(&probe_scan_wake);
+    if (ps->sb.data_count > 0)
+        sched_wake_task(&probe_scan_wake);
 }
 DECL_COMMAND(command_probe_scan_stop, "probe_scan_stop oid=%c");
 
 void
-command_probe_scan_ack(uint32_t *args)
+command_query_probe_scan_status(uint32_t *args)
 {
     struct probe_scan *ps = oid_lookup(args[0], command_config_probe_scan);
-    uint8_t count = args[1];
-    uint8_t need_wake = 0;
-    irq_disable();
-    ps->ack_count += count;
-    if (count >= ps->event_count) {
-        ps->event_count = 0;
-        ps->retransmit_state = RT_ACKED;
-    } else {
-        uint8_t pending = ps->event_count - count;
-        uint8_t i;
-        for (i = 0; i < pending * EVENT_SIZE; i++)
-            ps->events[i] = ps->events[(count * EVENT_SIZE) + i];
-        ps->event_count = pending;
-        // More data pending — schedule transmission
-        ps->retransmit_state = RT_PENDING;
-        need_wake = 1;
-    }
-    irq_enable();
-
-    if (need_wake)
-        sched_wake_task(&probe_scan_wake);
+    uint32_t time1 = timer_read_time();
+    uint32_t time2 = timer_read_time();
+    sensor_bulk_status(&ps->sb, args[0], time1, time2 - time1, 0);
 }
-DECL_COMMAND(command_probe_scan_ack, "probe_scan_ack oid=%c count=%c");
+DECL_COMMAND(command_query_probe_scan_status,
+             "query_probe_scan_status oid=%c");
 
 void
 probe_scan_task(void)
@@ -173,32 +136,22 @@ probe_scan_task(void)
     uint8_t oid;
     struct probe_scan *ps;
     foreach_oid(oid, ps, command_config_probe_scan) {
-        if (ps->retransmit_state != RT_PENDING)
-            continue;
-
+        uint8_t buf[sizeof(ps->sb.data)];
+        uint8_t count;
+        uint16_t seq;
         irq_disable();
-        uint8_t count = ps->event_count;
-        uint8_t overflow = ps->overflow;
-        if (!count && !overflow) {
-            irq_enable();
-            continue;
+        count = ps->sb.data_count;
+        if (count > 0) {
+            __builtin_memcpy(buf, ps->sb.data, count);
+            seq = ps->sb.sequence;
+            ps->sb.data_count = 0;
+            ps->sb.sequence++;
+            ps->flush_countdown = FLUSH_TICKS;
         }
-        // Reset overflow after capturing — prevents duplicate reports
-        ps->overflow = 0;
-        // Set retransmit countdown — if ack doesn't arrive in time,
-        // the timer callback will re-wake this task
-        ps->retransmit_state = ps->retransmit_count;
-        // Copy events under IRQ protection
-        uint8_t send_buf[MAX_EVENTS * EVENT_SIZE];
-        uint8_t send_bytes = count * EVENT_SIZE;
-        uint8_t i;
-        for (i = 0; i < send_bytes; i++)
-            send_buf[i] = ps->events[i];
         irq_enable();
-
-        sendf("probe_scan_state oid=%c ack_count=%c overflow=%c events=%*s"
-              , oid, ps->ack_count, overflow
-              , send_bytes, send_buf);
+        if (count > 0)
+            sendf("sensor_bulk_data oid=%c sequence=%hu data=%*s"
+                  , oid, seq, count, buf);
     }
 }
 DECL_TASK(probe_scan_task);

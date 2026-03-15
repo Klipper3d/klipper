@@ -4,6 +4,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import collections, logging, math, os, struct
+from . import bulk_sensor
 
 # Compatible with manual_probe.ProbeResult
 ProbeResult = collections.namedtuple('probe_result', [
@@ -14,16 +15,14 @@ HYSTERESIS_LIFT_CLEARANCE = 5.  # mm above z_offset for hysteresis cal
 MIN_TRIGGER_EVENTS = 3
 POST_SCAN_LIFT = 10.            # mm to raise after scan completes
 FINAL_EVENT_DELAY = 0.1         # seconds to wait for trailing events
-# Retransmit countdown: number of poll ticks before re-sending unacked data.
-# At 50us poll interval, 50 ticks = 2.5ms timeout.
-RETRANSMIT_COUNT = 50
 DEFAULT_HYSTERESIS = 0.2          # mm, fallback when not measured
 HYST_Z_ABOVE = 2.0               # mm above trigger to guarantee untrigger
 HYST_Z_BELOW = 0.5               # mm below trigger (already triggered zone)
 POLL_TIMEOUT = 120.               # seconds wall-clock timeout for event polling
 
 
-# MCU communication helper - manages probe_scan firmware module
+# MCU communication helper - manages probe_scan firmware module.
+# Uses the bulk sensor subsystem for MCU-to-host event streaming.
 class ProbeScanHelper:
     def __init__(self, config, mcu, pin_params):
         self._printer = config.get_printer()
@@ -32,12 +31,10 @@ class ProbeScanHelper:
         self._pullup = pin_params['pullup']
         self._invert = pin_params['invert']
         self._oid = self._mcu.create_oid()
-        # Events accumulate across entire scan. Appends from the serial
-        # callback and reads from the scan loop are safe under CPython's GIL
-        # (list.append is atomic, slicing copies).
         self._all_events = []
-        self._ack_count = 0
-        self._start_cmd = self._stop_cmd = self._ack_cmd = None
+        self._last_sequence = 0
+        self._start_cmd = self._stop_cmd = None
+        self._bulk_queue = None
         self._mcu.register_config_callback(self._build_config)
 
     def _build_config(self):
@@ -46,79 +43,61 @@ class ProbeScanHelper:
             % (self._oid, self._pin, self._pullup))
         cmd_queue = self._mcu.alloc_command_queue()
         self._start_cmd = self._mcu.lookup_command(
-            "probe_scan_start oid=%c clock=%u rest_ticks=%u"
-            " invert=%c retransmit_count=%c", cq=cmd_queue)
+            "probe_scan_start oid=%c clock=%u rest_ticks=%u invert=%c",
+            cq=cmd_queue)
         self._stop_cmd = self._mcu.lookup_command(
             "probe_scan_stop oid=%c", cq=cmd_queue)
-        self._ack_cmd = self._mcu.lookup_command(
-            "probe_scan_ack oid=%c count=%c", cq=cmd_queue)
-        self._mcu.register_serial_response(
-            self._handle_probe_scan_state,
-            "probe_scan_state", self._oid)
+        self._bulk_queue = bulk_sensor.BulkDataQueue(self._mcu,
+                                                     oid=self._oid)
 
-    def _handle_probe_scan_state(self, params):
-        logging.info("probe_scan: MCU response: ack_count=%d overflow=%d "
-                     "events_bytes=%d recv_time=%.3f"
-                     % (params['ack_count'], params['overflow'],
-                        len(params['events']),
-                        params.get('#receive_time', 0.)))
-        overflow = params['overflow']
-        if overflow:
-            logging.warning("probe_scan: MCU event buffer overflow "
-                            "(%d events lost)" % overflow)
-        # Deduplication: skip already-processed events on retransmit
-        # (follows buttons.py ack_count pattern)
-        ack_count = self._ack_count
-        ack_diff = (params['ack_count'] - ack_count) & 0xff
-        ack_diff -= (ack_diff & 0x80) << 1
-        msg_ack_count = ack_count + ack_diff
-        data = params['events']
+    def _flush_events(self):
+        raw_samples = self._bulk_queue.pull_queue()
         event_size = 5
-        count = len(data) // event_size
-        new_count = msg_ack_count + count - self._ack_count
-        if new_count <= 0:
-            return
-        # Clamp: can't process more events than are in this message
-        if new_count > count:
-            new_count = count
-        start = count - new_count
-        for i in range(start, count):
-            offset = i * event_size
-            clock32 = struct.unpack_from('<I', data, offset)[0]
-            state = data[offset + 4]
-            clock64 = self._mcu.clock32_to_clock64(clock32)
-            print_time = self._mcu.clock_to_print_time(clock64)
-            logging.info("probe_scan: event state=%d print_time=%.4f "
-                         "clock32=%u" % (state, print_time, clock32))
-            self._all_events.append((print_time, state))
-        self._ack_cmd.send([self._oid, new_count])
-        self._ack_count += new_count
+        for params in raw_samples:
+            seq = params['sequence']
+            seq_diff = (seq - self._last_sequence) & 0xffff
+            if seq_diff > 1 and self._last_sequence != 0:
+                logging.warning("probe_scan: sequence gap detected: "
+                                "expected %d, got %d (missed %d messages)"
+                                % (self._last_sequence + 1, seq,
+                                   seq_diff - 1))
+            self._last_sequence = (self._last_sequence + seq_diff) & 0xffff
+            data = params['data']
+            count = len(data) // event_size
+            for i in range(count):
+                offset = i * event_size
+                clock32 = struct.unpack_from('<I', data, offset)[0]
+                state = data[offset + 4]
+                clock64 = self._mcu.clock32_to_clock64(clock32)
+                print_time = self._mcu.clock_to_print_time(clock64)
+                logging.info("probe_scan: event state=%d print_time=%.4f "
+                             "clock32=%u" % (state, print_time, clock32))
+                self._all_events.append((print_time, state))
 
     def start_collection(self, print_time, poll_us):
         self._all_events = []
-        self._ack_count = 0
+        self._last_sequence = 0
+        self._bulk_queue.clear_queue()
         clock = self._mcu.print_time_to_clock(print_time)
         rest_ticks = self._mcu.seconds_to_clock(poll_us / 1e6)
         logging.info("probe_scan: start_collection oid=%d clock=%d "
-                     "rest_ticks=%d invert=%d "
-                     "retransmit=%d pin=%s pullup=%d"
+                     "rest_ticks=%d invert=%d pin=%s pullup=%d"
                      % (self._oid, clock, rest_ticks,
-                        self._invert, RETRANSMIT_COUNT,
-                        self._pin, self._pullup))
+                        self._invert, self._pin, self._pullup))
         self._start_cmd.send(
-            [self._oid, clock, rest_ticks, self._invert,
-             RETRANSMIT_COUNT],
+            [self._oid, clock, rest_ticks, self._invert],
             reqclock=clock)
 
     def stop_collection(self):
         self._stop_cmd.send([self._oid])
+        self._flush_events()
 
     def get_new_events_since(self, index):
-        """Return events from index onward (non-destructive)."""
+        self._flush_events()
         return self._all_events[index:]
 
     def get_all_events(self):
-        """Return all accumulated events for post-scan correlation."""
+        self._flush_events()
         return list(self._all_events)
 
 
