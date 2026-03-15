@@ -25,6 +25,9 @@ class DisplayBase:
         self.font = [self._swizzle_bits(bytearray(c))
                      for c in font8x14.VGA_FONT]
         self.icons = {}
+        self.font_profile = None
+        self.font_profile_glyphs = None
+        self.font_profile_fallback = None
     def flush(self):
         # Find all differences in the framebuffers and send them to the chip
         for new_data, old_data, page in self.all_framebuffers:
@@ -61,6 +64,16 @@ class DisplayBase:
         bits_top = [(top >> s) & 0xff for s in range(0, 64, 8)]
         bits_bot = [(bot >> s) & 0xff for s in range(0, 64, 8)]
         return (bytearray(bits_top), bytearray(bits_bot))
+    def set_font_profile(self, profile):
+        # set the font profile to use for text rendering.
+        self.font_profile = profile
+        self.font_profile_glyphs = None
+        self.font_profile_fallback = None
+        if profile is not None:
+            return 
+        if profile.format != 'bdf':
+            raise RuntimeError("Unsupported diaply font profile format '%s'" % (profile.format))
+        self.font_profile_glyphs, self.font_profile_fallback = self._load_bdf_font(profile)
     def set_glyphs(self, glyphs):
         for glyph_name, glyph_data in glyphs.items():
             icon = glyph_data.get('icon16x16')
