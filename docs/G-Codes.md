@@ -181,10 +181,14 @@ name will begin with `adaptive-` and should not be saved for reuse.
 See the PROBE command for details on the optional probe parameters. If
 METHOD=manual is specified then the manual probing tool is activated - see the
 MANUAL_PROBE command above for details on the additional commands available
-while this tool is active. The optional `HORIZONTAL_MOVE_Z` value overrides the
-`horizontal_move_z` option specified in the config file. If ADAPTIVE=1 is
-specified then the objects defined by the Gcode file being printed will be used
-to define the probed area. The optional `ADAPTIVE_MARGIN` value overrides the
+while this tool is active. If METHOD=probe_scan is specified and a
+`[probe_scan]` section is configured, the bed is scanned using
+continuous motion instead of point-by-point probing - see the
+[probe_scan documentation](Probe_Scan.md) for details. The optional
+`HORIZONTAL_MOVE_Z` value overrides the `horizontal_move_z` option
+specified in the config file. If ADAPTIVE=1 is specified then the objects
+defined by the Gcode file being printed will be used to define the probed
+area. The optional `ADAPTIVE_MARGIN` value overrides the
 `adaptive_margin` option specified in the config file.
 
 #### BED_MESH_OUTPUT
@@ -1215,6 +1219,19 @@ direction as well as Z.
 babystepping), and subtract if from the probe's z_offset.  This acts
 to take a frequently used babystepping value, and "make it permanent".
 Requires a `SAVE_CONFIG` to take effect.
+
+### [probe_scan]
+
+The following commands are available when a
+[probe_scan config section](Config_Reference.md#probe_scan) is enabled.
+See the [probe_scan documentation](Probe_Scan.md) for further information.
+
+#### PROBE_SCAN_CALIBRATE
+`PROBE_SCAN_CALIBRATE`: Measures the probe hysteresis by oscillating Z
+at the calibration point. The measured hysteresis is cached for the
+duration of the Klipper session and reused by subsequent scans. This
+command is run automatically by `BED_MESH_CALIBRATE METHOD=probe_scan`
+if no cached value exists.
 
 ### [probe_eddy_current]
 

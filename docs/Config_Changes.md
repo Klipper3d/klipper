@@ -8,6 +8,11 @@ All dates in this document are approximate.
 
 ## Changes
 
+20260315: A new `[probe_scan]` config section has been added that
+enables continuous-motion bed mesh scanning with binary (on/off)
+inductive probes. Use `BED_MESH_CALIBRATE METHOD=probe_scan` to
+invoke. See the [probe_scan documentation](Probe_Scan.md) for details.
+
 20260318: The `[probe_eddy_current]` config options `speed`,
 `lift_speed`, `samples`, `sample_retract_dist`, `samples_result`,
 `samples_tolerance`, and `samples_tolerance_retries` no longer apply

@@ -2300,6 +2300,65 @@ z_offset:
 #   See the "probe" section for more information on the parameters above.
 ```
 
+### [probe_scan]
+
+Support for continuous-motion bed mesh scanning with a binary (on/off)
+inductive probe. Instead of stopping at each mesh point, the toolhead
+traverses the bed in a serpentine pattern while oscillating Z, collecting
+probe events in real time. See the
+[probe_scan documentation](Probe_Scan.md) for further information.
+
+```
+[probe_scan]
+pin:
+#   GPIO pin for the probe. Supports ^ (pullup) and ! (invert)
+#   prefixes. Use the same physical pin as [probe]. This parameter
+#   must be provided.
+#x_offset: 0
+#   The distance (in mm) between the probe and the nozzle along
+#   the x-axis. The default is 0.
+#y_offset: 0
+#   The distance (in mm) between the probe and the nozzle along
+#   the y-axis. The default is 0.
+#speed: 50
+#   XY movement speed (in mm/s) during scanning. The default is 50.
+#z_speed: 5
+#   Z oscillation speed (in mm/s) during scanning and probing speed
+#   during hysteresis measurement. The default is 5.
+#z_margin: 0.1
+#   Z margin (in mm) above and below the oscillation range. Larger
+#   values increase the oscillation amplitude and produce more trigger
+#   events, at the cost of slower scanning. The default is 0.1.
+#segment_length: 2.0
+#   XY distance (in mm) per motion segment. Smaller values produce
+#   smoother Z oscillation but increase motion planner load. The
+#   minimum is 0.5. The default is 2.0.
+#poll_us: 50
+#   MCU GPIO polling interval in microseconds. Lower values increase
+#   timing resolution but increase MCU load. The default is 50.
+#max_hysteresis: 0.5
+#   Maximum acceptable hysteresis (in mm). An error is raised if the
+#   measured hysteresis exceeds this value. The default is 0.5.
+#probe_z_min: 0
+#   Lowest Z position (in mm) for probing moves. The default is 0.
+#calibration_point:
+#   X,Y coordinates for hysteresis measurement. If not specified,
+#   uses the center of the bed_mesh area.
+#search_radius: 35
+#   IDW interpolation search radius (in mm). Probe data points beyond
+#   this distance from a grid point are ignored. The default is 35.
+#cross_hatch: False
+#   When enabled, scans the bed in both X and Y directions instead of
+#   X-only serpentine. Produces more uniform coverage at the cost of
+#   longer scan time. The default is False.
+#cross_hatch_rows: 7
+#   Number of X-direction scan rows for cross-hatch mode. The
+#   default is 7.
+#cross_hatch_cols: 7
+#   Number of Y-direction scan columns for cross-hatch mode. The
+#   default is 7.
+```
+
 ### [probe_eddy_current]
 
 Support for eddy current inductive probes. One may define this section
