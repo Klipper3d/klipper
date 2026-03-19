@@ -226,17 +226,16 @@ class SelectReactor:
             time.sleep(delay)
         return self.monotonic()
     def pause(self, waketime):
-        g = greenlet.getcurrent()
-        if g is not self._g_dispatch:
-            if self._g_dispatch is None:
-                return self._sys_pause(waketime)
-            # Switch to _check_timers (via g.timer.callback return)
-            if self._prevent_pause_count:
-                self.verify_can_pause()
-            return self._g_dispatch.switch(waketime)
-        # Pausing the dispatch greenlet - prepare a new greenlet to do dispatch
+        if self._g_dispatch is None:
+            # The reactor is not running - use a system pause instead
+            return self._sys_pause(waketime)
         if self._prevent_pause_count:
             self.verify_can_pause()
+        g = greenlet.getcurrent()
+        if g is not self._g_dispatch:
+            # Switch to _check_timers (via g.timer.callback return)
+            return self._g_dispatch.switch(waketime)
+        # Pausing the dispatch greenlet - prepare a new greenlet to do dispatch
         if self._greenlets:
             g_next = self._greenlets.pop()
         else:
