@@ -1,9 +1,10 @@
 # Simple math helper functions
 #
 # Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2025-2026  Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import math, logging, multiprocessing, traceback
+import copy, math, logging, multiprocessing, traceback
 import queuelogger
 
 
@@ -137,16 +138,64 @@ def matrix_mul(m1, s):
     return [m1[0]*s, m1[1]*s, m1[2]*s]
 
 ######################################################################
-# Matrix helper functions for 3x3 matrices
+# Matrix helper functions for NxM matrices
 ######################################################################
 
-def matrix_det(a):
-    x0, x1, x2 = a
-    return matrix_dot(x0, matrix_cross(x1, x2))
+def mat_mat_mul(a, b):
+    if len(a[0]) != len(b):
+        return None
+    res = []
+    for i in range(len(a)):
+        res.append([])
+        for j in range(len(b[0])):
+            res[i].append(sum(a[i][k] * b[k][j] for k in range(len(b))))
+    return res
 
-def matrix_inv(a):
-    x0, x1, x2 = a
-    inv_det = 1. / matrix_det(a)
-    return [matrix_mul(matrix_cross(x1, x2), inv_det),
-            matrix_mul(matrix_cross(x2, x0), inv_det),
-            matrix_mul(matrix_cross(x0, x1), inv_det)]
+def mat_transp(a):
+    res = []
+    for i in range(len(a[0])):
+        res.append([a[j][i] for j in range(len(a))])
+    return res
+
+def gaussian_solve(a, rhs):
+    res = copy.deepcopy(rhs)
+    m = copy.deepcopy(a)
+    n = len(m)
+    # Perform the LU-decomposition through Gaussian elimination
+    for i in range(n):
+        # Find a pivot and swap the corresponding rows
+        abs_col = [abs(m[j][i]) for j in range(i, n)]
+        j = abs_col.index(max(abs_col)) + i
+        if i != j:
+            m[i], m[j] = m[j], m[i]
+            res[i], res[j] = res[j], res[i]
+
+        if abs(m[i][i]) < 1e-10:
+            return None
+        # Scale the i-th row
+        recipr = 1. / m[i][i]
+        for j in range(i+1, n):
+            m[i][j] *= recipr
+        for j in range(len(res[i])):
+            res[i][j] *= recipr
+        m[i][i] = 1.
+
+        # Zero-out the i-th column after the row i
+        for j in range(i+1, n):
+            c = m[j][i]
+            for k in range(i, n):
+                m[j][k] -= c * m[i][k]
+            for k in range(len(res[j])):
+                res[j][k] -= c * res[i][k]
+
+    # Solve the system with the upper-triangular matrix
+    for i in range(n-2, -1, -1):
+        for j in range(i+1, n):
+            for k in range(len(res[j])):
+                res[i][k] -= m[i][j] * res[j][k]
+    return res
+
+def pseudo_inverse(m):
+    mt = mat_transp(m)
+    mtm = mat_mat_mul(mt, m)
+    return gaussian_solve(mtm, mt)
