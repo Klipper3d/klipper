@@ -86,23 +86,19 @@ class AccelQueryHelper:
         del samples[count:]
         return self.samples
     def write_to_file(self, filename):
-        def write_impl():
-            try:
-                # Try to re-nice writing process
-                os.nice(20)
-            except:
-                pass
-            f = open(filename, "w")
-            f.write("#time,accel_x,accel_y,accel_z\n")
-            samples = self.samples or self.get_samples()
-            for t, accel_x, accel_y, accel_z in samples:
-                f.write("%.6f,%.6f,%.6f,%.6f\n" % (
-                    t, accel_x, accel_y, accel_z))
-            f.close()
-        write_proc = multiprocessing.Process(target=write_impl)
-        write_proc.daemon = True
-        write_proc.start()
-
+        aio = self.printer.lookup_object('aio_executor')
+        try:
+            with aio.get_wrapper(open, filename, "w") as f:
+                samples = self.samples or self.get_samples()
+                fd = f.get_fd()
+                def single_call(samples):
+                    fd.write("#time,accel_x,accel_y,accel_z\n")
+                    for t, accel_x, accel_y, accel_z in samples:
+                        fd.write("%.6f,%.6f,%.6f,%.6f\n" % (
+                                 t, accel_x, accel_y, accel_z))
+                f.submit(single_call, samples)
+        except OSError as e:
+            raise self.printer.command_error(e)
 # Helper class for G-Code commands
 class AccelCommandHelper:
     def __init__(self, config, chip):
@@ -112,6 +108,7 @@ class AccelCommandHelper:
         name_parts = config.get_name().split()
         self.base_name = name_parts[0]
         self.name = name_parts[-1]
+        self.printer.load_object(config, 'aio_executor')
         self.register_commands(self.name)
         if len(name_parts) == 1:
             if self.name == "adxl345" or not config.has_section("adxl345"):
