@@ -30,6 +30,8 @@ class VirtualSD:
         self.work_timer = None
         # Error handling
         gcode_macro = self.printer.load_object(config, 'gcode_macro')
+        aio = self.printer.load_object(config, 'aio_executor')
+        self.executor = aio.allocate_executor("virtual_sdcard")
         self.on_error_gcode = gcode_macro.load_template(
             config, 'on_error_gcode', DEFAULT_ERROR_GCODE)
         # Register commands
@@ -188,10 +190,13 @@ class VirtualSD:
             if fname not in flist:
                 fname = files_by_lower[fname.lower()]
             fname = os.path.join(self.sdcard_dirname, fname)
-            f = io.open(fname, 'r', newline='')
+            f = self.executor.submit(io.open, fname, 'rb', buffering=0)
+            f = self.executor.wrap_obj(f)
+            f = io.BufferedReader(f)
             f.seek(0, os.SEEK_END)
             fsize = f.tell()
             f.seek(0)
+            f = io.TextIOWrapper(f, newline='')
         except:
             logging.exception("virtual_sdcard file open")
             raise gcmd.error("Unable to open file")
