@@ -46,14 +46,6 @@ def shift_pulses(shaper):
     for i in range(n):
         T[i] -= ts
 
-# Shaper selection
-def get_shaper(shaper_name, shaper_freq, damping_ratio):
-    for s in shaper_defs.INPUT_SHAPERS:
-        if shaper_name.lower() == s.name:
-            return s.init_func(shaper_freq, damping_ratio)
-    return shaper_defs.get_none_shaper()
-
-
 ######################################################################
 # Plotting and startup
 ######################################################################
@@ -142,9 +134,13 @@ def gen_shaped_step_function(shaper, shaper_freq,
     return time, result, legend
 
 
-def plot_shaper(shaper_name, shaper_freq, damping_ratio, test_damping_ratios,
-                system_freq, system_damping_ratio):
-    shaper = get_shaper(shaper_name, shaper_freq, damping_ratio)
+def plot_shaper(opts, shaper_name, shaper_freq, damping_ratio,
+                test_damping_ratios, system_freq, system_damping_ratio):
+    try:
+        shaper = shaper_defs.init_shaper(shaper_name.lower(),
+                                         shaper_freq, damping_ratio)
+    except Exception as e:
+        opts.error("Invalid --shaper=%s specified. %s" % (shaper_name, str(e)))
     shift_pulses(shaper)
     freqs, response, response_legend = gen_shaper_response(
             shaper, shaper_freq, test_damping_ratios)
@@ -213,10 +209,6 @@ def main():
     if len(args) != 0:
         opts.error("Incorrect number of arguments")
 
-    if options.shaper.lower() not in [
-            s.name for s in shaper_defs.INPUT_SHAPERS]:
-        opts.error("Invalid --shaper=%s specified" % options.shaper)
-
     if options.test_damping_ratios:
         try:
             test_damping_ratios = [float(s) for s in
@@ -229,7 +221,7 @@ def main():
 
     # Draw graph
     setup_matplotlib(options.output is not None)
-    fig = plot_shaper(options.shaper, options.shaper_freq,
+    fig = plot_shaper(opts, options.shaper, options.shaper_freq,
                       options.damping_ratio, test_damping_ratios,
                       options.system_freq, options.system_damping_ratio)
 
