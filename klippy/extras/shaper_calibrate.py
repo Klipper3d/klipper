@@ -247,7 +247,7 @@ class ShaperCalibrate:
         offset_180 *= inv_D
         return max(offset_90, offset_180)
 
-    def fit_shaper(self, shaper_cfg, calibration_data, shaper_freqs,
+    def fit_shaper(self, shaper_name, calibration_data, shaper_freqs,
                    damping_ratio, scv, max_smoothing, test_damping_ratios,
                    max_freq):
         np = self.numpy
@@ -259,7 +259,8 @@ class ShaperCalibrate:
             shaper_freqs = (None, None, None)
         if isinstance(shaper_freqs, tuple):
             freq_end = shaper_freqs[1] or MAX_SHAPER_FREQ
-            freq_start = min(shaper_freqs[0] or shaper_cfg.min_freq,
+            freq_start = min(shaper_freqs[0] or
+                             shaper_defs.get_shaper_cfg(shaper_name).min_freq,
                              freq_end - 1e-7)
             freq_step = shaper_freqs[2] or .2
             test_freqs = np.arange(freq_start, freq_end, freq_step)
@@ -275,7 +276,8 @@ class ShaperCalibrate:
             min_freq = min(min_freq, data.freq_bins.min())
         for test_freq in test_freqs[::-1]:
             shaper_vibrations = 0.
-            shaper = shaper_cfg.init_func(test_freq, damping_ratio)
+            shaper = shaper_defs.init_shaper(shaper_name, test_freq,
+                                             damping_ratio)
             shaper_smoothing = self._get_shaper_smoothing(shaper, scv=scv)
             if max_smoothing and shaper_smoothing > max_smoothing and best_res:
                 return [best_res] + results
@@ -310,7 +312,7 @@ class ShaperCalibrate:
                                                freq_bins, vals))
             results.append(
                     CalibrationResult(
-                        name=shaper_cfg.name, freq=test_freq,
+                        name=shaper_name, freq=test_freq,
                         freq_bins=shaper_freq_bins, vals=shaper_vals,
                         vibrs=shaper_vibrations, smoothing=shaper_smoothing,
                         score=shaper_score, max_accel=max_accel))
@@ -359,11 +361,22 @@ class ShaperCalibrate:
         best_shaper = None
         all_shapers = []
         shapers = shapers or AUTOTUNE_SHAPERS
-        for shaper_cfg in shaper_defs.INPUT_SHAPERS:
-            if shaper_cfg.name not in shapers:
+        for shaper_name in shapers:
+            shaper_cfg = shaper_defs.get_shaper_cfg(shaper_name)
+            if shaper_defs.get_shaper_cfg(shaper_name) is None:
+                if logger is not None:
+                    logger("Unknown shaper %s" % shaper_name)
                 continue
+            try:
+                shaper_defs.init_shaper(shaper_name, shaper_cfg.min_freq,
+                                        shaper_defs.DEFAULT_DAMPING_RATIO)
+            except Exception as e:
+                if logger is not None:
+                    logger("Cannot initialize shaper %s: %s" % (shaper_name,
+                                                                str(e)))
+                    continue
             fit_results = self.background_process_exec(self.fit_shaper, (
-                shaper_cfg, calibration_data, shaper_freqs, damping_ratio,
+                shaper_name, calibration_data, shaper_freqs, damping_ratio,
                 scv, max_smoothing, test_damping_ratios, max_freq))
             shaper = fit_results[0]
             results = fit_results[1:]

@@ -3,7 +3,7 @@
 # Copyright (C) 2020-2026  Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import collections, copy, math
+import collections, copy, math, re
 import mathutil
 
 SHAPER_VIBRATION_REDUCTION=20.
@@ -151,3 +151,38 @@ INPUT_SHAPERS = [
     InputShaperCfg(name='3hump_ei', init_func=get_3hump_ei_shaper,
                    min_freq=48., max_damping_ratio=0.2),
 ]
+
+def get_shaper_cfg(shaper_name):
+    m = re.match(r"(\w+)\s*\((.*)\)$", shaper_name)
+    if m:
+        shaper_name = m.group(1)
+    for s in INPUT_SHAPERS:
+        if shaper_name == s.name:
+            return s
+    return None
+
+def init_shaper(shaper_name, shaper_freq, damping_ratio, error=None):
+    try:
+        m = re.match(r"(\w+)\s*\((.*)\)$", shaper_name)
+        args_l = []
+        args_kv = {}
+        if m:
+            shaper_name = m.group(1)
+            args = m.group(2)
+            if args:
+                parsed_args = re.findall(r"(?:(\w+)\s*=\s*)?\s*([\d.]+)", args)
+                def parse_val(s):
+                    if '.' in s:
+                        return float(s)
+                    return int(s)
+                args_l = [parse_val(v) for k, v in parsed_args if not k]
+                args_kv = {k: parse_val(v) for k, v in parsed_args if k}
+        for s in INPUT_SHAPERS:
+            if shaper_name == s.name:
+                return s.init_func(shaper_freq, damping_ratio,
+                                   *args_l, **args_kv)
+    except ShaperError as e:
+        if error is None:
+            raise
+        raise error("Failed to initialize shaper: %s" % str(e))
+    return None

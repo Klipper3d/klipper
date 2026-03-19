@@ -6,7 +6,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from __future__ import print_function
-import csv, importlib, optparse, os, sys
+import csv, importlib, optparse, os, re, sys
 from textwrap import wrap
 import numpy as np, matplotlib
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),
@@ -255,7 +255,7 @@ def main():
     if options.shapers is None:
         shapers = None
     else:
-        shapers = options.shapers.lower().split(',')
+        shapers = re.split(r",(?![^(]*\))", options.shapers.lower())
 
     # Parse data
     datas = [parse_log(fn) for fn in args]
