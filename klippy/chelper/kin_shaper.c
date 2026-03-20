@@ -21,10 +21,10 @@
 static const int KIN_FLAGS[3] = { AF_X, AF_Y, AF_Z };
 
 struct shaper_pulses {
-    int num_pulses;
+    int num_pulses, p_ind;
     struct {
         double t, a;
-    } pulses[5];
+    } pulses[10];
 };
 
 // Shift pulses around 'mid-point' t=0 so that the input shaper is an identity
@@ -38,6 +38,10 @@ shift_pulses(struct shaper_pulses *sp)
         ts += sp->pulses[i].a * sp->pulses[i].t;
     for (i = 0; i < sp->num_pulses; ++i)
         sp->pulses[i].t -= ts;
+    // Find the first pulse with positive time
+    for (i = 0; i < sp->num_pulses; ++i)
+        if (sp->pulses[i].t > 0) break;
+    sp->p_ind = i;
 }
 
 static int
@@ -48,6 +52,10 @@ init_shaper(int n, double a[], double t[], struct shaper_pulses *sp)
         return -1;
     }
     int i;
+    // Check that pulses go in pulse time increasing order
+    for (i = 1; i < n; ++i)
+        if (t[i-1] >= t[i])
+            return -1;
     double sum_a = 0.;
     for (i = 0; i < n; ++i)
         sum_a += a[i];
@@ -76,20 +84,6 @@ get_axis_position(struct move *m, int axis, double move_time)
     return start_pos + axis_r * move_dist;
 }
 
-static inline double
-get_axis_position_across_moves(struct move *m, int axis, double time)
-{
-    while (likely(time < 0.)) {
-        m = list_prev_entry(m, node);
-        time += m->move_t;
-    }
-    while (likely(time > m->move_t)) {
-        time -= m->move_t;
-        m = list_next_entry(m, node);
-    }
-    return get_axis_position(m, axis, time);
-}
-
 // Calculate the position from the convolution of the shaper with input signal
 static inline double
 calc_position(struct move *m, int axis, double move_time
@@ -97,9 +91,26 @@ calc_position(struct move *m, int axis, double move_time
 {
     double res = 0.;
     int num_pulses = sp->num_pulses, i;
-    for (i = 0; i < num_pulses; ++i) {
-        double t = sp->pulses[i].t, a = sp->pulses[i].a;
-        res += a * get_axis_position_across_moves(m, axis, move_time + t);
+    struct move *prev = m;
+    double t = move_time;
+    for (i = sp->p_ind - 1; i >= 0; --i) {
+        t += sp->pulses[i].t;
+        while (likely(t < 0.)) {
+            prev = list_prev_entry(prev, node);
+            t += prev->move_t;
+        }
+        res += sp->pulses[i].a * get_axis_position(prev, axis, t);
+        t -= sp->pulses[i].t;
+    }
+    t = move_time;
+    for (i = sp->p_ind; i < num_pulses; ++i) {
+        t += sp->pulses[i].t;
+        while (likely(t > m->move_t)) {
+            t -= m->move_t;
+            m = list_next_entry(m, node);
+        }
+        res += sp->pulses[i].a * get_axis_position(m, axis, t);
+        t -= sp->pulses[i].t;
     }
     return res;
 }
