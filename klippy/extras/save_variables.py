@@ -11,6 +11,7 @@ class SaveVariables:
         self.printer = config.get_printer()
         self.filename = os.path.expanduser(config.get('filename'))
         self.allVariables = {}
+        self.printer.load_object(config, 'aio_executor')
         try:
             if not os.path.exists(self.filename):
                 open(self.filename, "w").close()
@@ -23,8 +24,10 @@ class SaveVariables:
     def loadVariables(self):
         allvars = {}
         varfile = configparser.ConfigParser()
+        aio = self.printer.lookup_object('aio_executor')
         try:
-            varfile.read(self.filename)
+            with aio.get_executor() as executor:
+                executor.submit(varfile.read, self.filename)
             if varfile.has_section('Variables'):
                 for name, val in varfile.items('Variables'):
                     allvars[name] = ast.literal_eval(val)
@@ -50,10 +53,13 @@ class SaveVariables:
         varfile.add_section('Variables')
         for name, val in sorted(newvars.items()):
             varfile.set('Variables', name, repr(val))
+        aio = self.printer.lookup_object('aio_executor')
         try:
-            f = open(self.filename, "w")
-            varfile.write(f)
-            f.close()
+            def write_out():
+                with open(self.filename, "w") as f:
+                    varfile.write(f)
+            with aio.get_executor() as executor:
+                executor.submit(write_out)
         except:
             msg = "Unable to save variable"
             logging.exception(msg)

@@ -84,6 +84,20 @@ class FileAIO:
     def __exit__(self, *args):
         self.close()
 
+class BareExecutor:
+    def __init__(self, pool):
+        self.pool = pool
+        self.executor = self.pool.pop()
+    def submit(self, fn, *args, **kwargs):
+        return self.executor.submit(fn, *args, **kwargs)
+    def finish(self):
+        self.pool.append(self.executor)
+        self.executor = None
+    def __enter__(self):
+        return self
+    def __exit__(self, *args):
+        self.finish()
+
 class Dispatcher:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -106,6 +120,9 @@ class Dispatcher:
     def get_wrapper(self, open_call, *args, **kwargs):
         self._ensure_one_available()
         return FileAIO(self._free_executors, open_call, *args, **kwargs)
+    def get_executor(self):
+        self._ensure_one_available()
+        return BareExecutor(self._free_executors)
 
 def load_config(config):
     return Dispatcher(config)
