@@ -116,6 +116,10 @@ config WANT_BUTTONS
     bool
     depends on HAVE_GPIO
     default y
+config WANT_SHIFT_REG
+    bool
+    depends on HAVE_GPIO && HAVE_SHIFT_REG
+    default n
 config WANT_TMCUART
     bool
     depends on HAVE_GPIO
@@ -212,6 +216,9 @@ config WANT_HARD_PWM
 config WANT_BUTTONS
     bool "Support GPIO based button reading"
     depends on HAVE_GPIO
+config WANT_SHIFT_REG
+    bool "Support shift register chips for GPIO expansion"
+    depends on HAVE_GPIO && HAVE_SHIFT_REG
 config WANT_TMCUART
     bool "Support Trinamic stepper motor driver UART communication"
     depends on HAVE_GPIO
@@ -319,6 +326,8 @@ config INITIAL_PINS
 # The HAVE_x options allow boards to disable support for some commands
 # if the hardware does not support the feature.
 config HAVE_GPIO
+    bool
+config HAVE_SHIFT_REG
     bool
 config HAVE_GPIO_ADC
     bool
