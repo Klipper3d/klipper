@@ -17,6 +17,7 @@ class SaveVariables:
             self.loadVariables()
         except self.printer.command_error as e:
             raise config.error(str(e))
+        self.printer.load_object(config, 'aio_executor')
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command('SAVE_VARIABLE', self.cmd_SAVE_VARIABLE,
                                desc=self.cmd_SAVE_VARIABLE_help)
@@ -50,10 +51,11 @@ class SaveVariables:
         varfile.add_section('Variables')
         for name, val in sorted(newvars.items()):
             varfile.set('Variables', name, repr(val))
+        aio = self.printer.lookup_object('aio_executor')
         try:
-            f = open(self.filename, "w")
-            varfile.write(f)
-            f.close()
+            with aio.get_wrapper(open, self.filename, "w") as f:
+                fd = f.get_fd()
+                f.submit(varfile.write, fd)
         except:
             msg = "Unable to save variable"
             logging.exception(msg)
