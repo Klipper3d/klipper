@@ -127,7 +127,7 @@ class SelectReactor:
         self._WRITE = 2
         # Greenlets
         self._g_dispatch = None
-        self._greenlets = []
+        self._cached_dispatch_greenlets = []
         self._all_greenlets = []
         self._prevent_pause_count = 0
     # Python garbage collection
@@ -247,9 +247,9 @@ class SelectReactor:
         # Pausing the dispatch greenlet - setup timer to resume this greenlet
         g.timer = self.register_timer(g.switch, waketime)
         self._next_timer = self.NOW
-        if self._greenlets:
+        if self._cached_dispatch_greenlets:
             # Switch to _end_greenlet to activate cached dispatch greenlet
-            g_next = self._greenlets.pop()
+            g_next = self._cached_dispatch_greenlets.pop()
             eventtime = g_next.switch()
         else:
             # No cached greenlets, switch to run() to create new dispatcher
@@ -257,10 +257,12 @@ class SelectReactor:
         # This greenlet activated from g.timer.callback (via _check_timers)
         return eventtime
     def _end_greenlet(self, g_old):
-        # Cache this greenlet for later use
-        self._greenlets.append(g_old)
+        # A timer/io event that called pause() has completed.
+        # Cleanup the internal timer associated with this greenlet.
         self.unregister_timer(g_old.timer)
         g_old.timer = None
+        # Cache this greenlet for later use
+        self._cached_dispatch_greenlets.append(g_old)
         # Switch to _check_timers (via g_old.timer.callback return)
         self._g_dispatch.switch(self.NEVER)
         # This greenlet reactivated from pause() - return to main dispatch loop
@@ -343,7 +345,7 @@ class SelectReactor:
         self._process = False
     def finalize(self):
         self._g_dispatch = None
-        self._greenlets = []
+        self._cached_dispatch_greenlets = []
         for g in self._all_greenlets:
             try:
                 g.throw()
