@@ -650,6 +650,24 @@ class BedMeshCalibrate:
             self.update_config(gcmd)
         except BedMeshError as e:
             raise gcmd.error(str(e))
+        method = gcmd.get("METHOD", "automatic").lower()
+        if method == "probe_scan":
+            probe_scan = self.printer.lookup_object("probe_scan", None)
+            if probe_scan is None:
+                raise gcmd.error(
+                    "bed_mesh: METHOD=probe_scan requires "
+                    "[probe_scan] configuration")
+            zero_ref_pos = None
+            if self.probe_mgr.get_zero_ref_mode() == ZrefMode.PROBE:
+                zero_ref_pos = self.probe_mgr.get_zero_ref_pos()
+            probe_scan.perform_scan_mesh(
+                gcmd,
+                list(self.probe_mgr.get_base_points()),
+                self.mesh_config['x_count'],
+                self.mesh_config['y_count'],
+                zero_ref_pos,
+                self.probe_finalize)
+            return
         self.probe_mgr.start_probe(gcmd)
     def probe_finalize(self, positions):
         z_offset = 0.
