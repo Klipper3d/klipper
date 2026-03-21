@@ -13,11 +13,12 @@
 #include "hardware/structs/iobank0.h" // iobank0_hw
 #include "hardware/regs/resets.h" // RESETS_RESET_PWM_BITS
 
-#define MAX_PWM 255
+#define MAX_PWM 256
 DECL_CONSTANT("PWM_MAX", MAX_PWM);
 
 struct gpio_pwm
-gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val) {
+gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint32_t val)
+{
     if(pin >= 30)
         shutdown("invalid gpio pin");
 
@@ -88,6 +89,7 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val) {
 }
 
 void
-gpio_pwm_write(struct gpio_pwm g, uint32_t val) {
+gpio_pwm_write(struct gpio_pwm g, uint32_t val)
+{
     hw_write_masked((uint32_t*)g.reg, val << g.shift, g.mask);
 }
