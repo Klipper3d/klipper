@@ -13,6 +13,10 @@ DEFAULT_ERROR_GCODE = """
 {% endif %}
 """
 
+PAGE_SIZE = 8192
+DATA_PREV = 1024
+DATA_NEXT = 128
+
 class VirtualSD:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -21,6 +25,7 @@ class VirtualSD:
         self.sdcard_dirname = os.path.normpath(os.path.expanduser(sd))
         self.current_file = None
         self.file_position = self.file_size = 0
+        self.pages = {}
         # Print Stat Tracking
         self.print_stats = self.printer.load_object(config, 'print_stats')
         # Work timer
@@ -49,11 +54,15 @@ class VirtualSD:
     def _handle_analyze_shutdown(self, msg, details):
         if self.work_timer is not None:
             self.must_pause_work = True
+            readpos = max(self.file_position - DATA_PREV, 0)
+            readcount = self.file_position - readpos
+            page_num = readpos // PAGE_SIZE
+            offset_in_page = readpos % PAGE_SIZE
             try:
-                readpos = max(self.file_position - 1024, 0)
-                readcount = self.file_position - readpos
-                self.current_file.seek(readpos)
-                data = self.current_file.read(readcount + 128)
+                data = self.pages.get(page_num, "")
+                data = data[offset_in_page:]
+                data += self.pages.get(page_num+1,"")
+                data = data[:readcount + DATA_NEXT]
             except:
                 logging.exception("virtual_sdcard shutdown read")
                 return
@@ -195,6 +204,7 @@ class VirtualSD:
         self.current_file = f
         self.file_position = 0
         self.file_size = fsize
+        self.pages = {}
         self.print_stats.set_current_file(filename)
     def cmd_M24(self, gcmd):
         # Start/resume SD print
@@ -221,6 +231,19 @@ class VirtualSD:
         self.next_file_position = pos
     def is_cmd_from_sd(self):
         return self.cmd_from_sd
+    def page_is_buffered(self, offset):
+        page_num = offset // PAGE_SIZE
+        if self.pages.get(page_num, None) is None:
+            try:
+                data = self.current_file.read(PAGE_SIZE)
+                self.pages[page_num] = data
+            except:
+                logging.exception("virtual_sdcard read")
+                return False
+        # Recycle
+        if self.pages.get(page_num - 2, None) is not None:
+            del self.pages[page_num - 2]
+        return True
     # Background work timer
     def work_handler(self, eventtime):
         logging.info("Starting SD card print (position %d)", self.file_position)
@@ -235,27 +258,29 @@ class VirtualSD:
         gcode_mutex = self.gcode.get_mutex()
         partial_input = ""
         lines = []
+        page_num = self.file_position // PAGE_SIZE
         error_message = None
+        if not self.page_is_buffered(self.file_position):
+            self.must_pause_work = True
         while not self.must_pause_work:
+            if not self.page_is_buffered(self.file_position + DATA_NEXT):
+                break
             if not lines:
-                # Read more data
-                try:
-                    data = self.current_file.read(8192)
-                except:
-                    logging.exception("virtual_sdcard read")
-                    break
-                if not data:
+                self.page_is_buffered(page_num * PAGE_SIZE)
+                if not self.pages.get(page_num, ""):
                     # End of file
                     self.current_file.close()
                     self.current_file = None
                     logging.info("Finished SD card print")
                     self.gcode.respond_raw("Done printing file")
                     break
+                data = self.pages[page_num]
                 lines = data.split('\n')
                 lines[0] = partial_input + lines[0]
                 partial_input = lines.pop()
                 lines.reverse()
                 self.reactor.pause(self.reactor.NOW)
+                page_num += 1
                 continue
             # Pause if any other request is pending in the gcode class
             if gcode_mutex.test():
