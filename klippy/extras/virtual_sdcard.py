@@ -47,19 +47,24 @@ class VirtualSD:
         self.printer.register_event_handler("klippy:analyze_shutdown",
                                             self._handle_analyze_shutdown)
     def _handle_analyze_shutdown(self, msg, details):
-        if self.work_timer is not None:
-            self.must_pause_work = True
+        if self.work_timer is None:
+            return
+        file_position = self.file_position
+        current_file = self.current_file
+        self.must_pause_work = True
+        def log_debug_data(eventtime):
             try:
-                readpos = max(self.file_position - 1024, 0)
-                readcount = self.file_position - readpos
-                self.current_file.seek(readpos)
-                data = self.current_file.read(readcount + 128)
+                readpos = max(file_position - 1024, 0)
+                readcount = file_position - readpos
+                current_file.seek(readpos)
+                data = current_file.read(readcount + 128)
             except:
                 logging.exception("virtual_sdcard shutdown read")
                 return
             logging.info("Virtual sdcard (%d): %s\nUpcoming (%d): %s",
                          readpos, repr(data[:readcount]),
-                         self.file_position, repr(data[readcount:]))
+                         file_position, repr(data[readcount:]))
+        self.reactor.register_callback(log_debug_data)
     def stats(self, eventtime):
         if self.work_timer is None:
             return False, ""
