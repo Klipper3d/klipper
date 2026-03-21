@@ -1,6 +1,6 @@
 # Helper script for manual z height probing
 #
-# Copyright (C) 2019-2025  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2019-2026  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, bisect, collections
@@ -13,6 +13,13 @@ import logging, bisect, collections
 # the frame (the coordinate system used in the config file).
 ProbeResult = collections.namedtuple('probe_result', [
     'bed_x', 'bed_y', 'bed_z', 'test_x', 'test_y', 'test_z'])
+
+# Helper to create a ProbeResult from a test position and probe offsets
+def create_probe_result(test_pos, offsets=(0., 0., 0.)):
+    x_offset, y_offset, z_offset = offsets
+    return ProbeResult(
+        test_pos[0]+x_offset, test_pos[1]+y_offset, test_pos[2]-z_offset,
+        test_pos[0], test_pos[1], test_pos[2])
 
 # Helper to lookup the Z stepper config section
 def lookup_z_endstop_config(config):
@@ -283,7 +290,7 @@ class ManualProbeHelper:
         mpresult = None
         if success:
             kin_pos = self.get_kinematics_pos()
-            mpresult = ProbeResult(*(kin_pos[:3] + kin_pos[:3]))
+            mpresult = create_probe_result(kin_pos)
         self.finalize_callback(mpresult)
 
 def load_config(config):
