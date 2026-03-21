@@ -31,28 +31,20 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint8_t val) {
     // cycle time into that. The cycle_time we receive from Klippy is in
     // relation to the crystal frequency and so we need to scale it up to match
     // the PWM clock.
-    // For better precision, we introduce a scale factor such that pclk * scale
-    // doesn't overflow. We then multiply by this scale factor at the beginning
-    // and divide by it at the end.
     uint32_t pclk = get_pclock_frequency(RESETS_RESET_PWM_BITS);
-    uint32_t scale = 1 << __builtin_clz(pclk);
-    uint32_t clock_mult = (scale * get_pclock_frequency(RESETS_RESET_PWM_BITS))
-                          / CONFIG_CLOCK_FREQ;
-    uint32_t cycle_clocks = clock_mult * cycle_time;
-    uint32_t div_int = cycle_clocks / MAX_PWM / scale;
-    uint32_t div_frac = (cycle_clocks - div_int * MAX_PWM * scale) * 16
-                        / MAX_PWM / scale;
+    uint32_t mult_16ticks = 16ULL * pclk / CONFIG_CLOCK_FREQ;
+    uint64_t cycle_16ticks_64 = (uint64_t)cycle_time * mult_16ticks;
+    if (cycle_16ticks_64 > 0x80000000)
+        // Host never sends large cycle_time, so no need for elaborate handling
+        cycle_16ticks_64 = 0x80000000;
+    uint32_t cycle_16ticks = cycle_16ticks_64;
+    uint32_t pwm_div = cycle_16ticks / MAX_PWM;
 
     // Clamp range of the divider
-    if(div_int > 255) {
-        div_int = 255;
-        div_frac = 15;
-    } else if(div_int < 1) {
-        div_int = 1;
-        div_frac = 0;
-    }
-
-    uint32_t pwm_div = div_int << 4 | div_frac;
+    if (pwm_div > 0xfff)
+        pwm_div = 0xfff;
+    else if (pwm_div < 0x10)
+        pwm_div = 0x10;
 
     // Enable clock
     if (!is_enabled_pclock(RESETS_RESET_PWM_BITS))
