@@ -248,8 +248,8 @@ class ShaperCalibrate:
         return max(offset_90, offset_180)
 
     def fit_shaper(self, shaper_name, calibration_data, shaper_freqs,
-                   damping_ratio, scv, max_smoothing, test_damping_ratios,
-                   max_freq):
+                   damping_ratio, scv, max_smoothing, max_vibrations,
+                   test_damping_ratios, max_freq):
         np = self.numpy
 
         damping_ratio = damping_ratio or shaper_defs.DEFAULT_DAMPING_RATIO
@@ -323,8 +323,10 @@ class ShaperCalibrate:
         # much worse than the 'best' one, but gives much less smoothing
         selected = best_res
         for res in results[::-1]:
-            if res.vibrs < best_res.vibrs * 1.1 + .0005 \
-                    and res.score < selected.score:
+            if res.vibrs < best_res.vibrs * 1.1 + .0005 and (
+                    res.score < selected.score
+                    or (max_vibrations is not None and
+                        best_res.vibrs > max_vibrations)):
                 selected = res
         return [selected] + results
 
@@ -356,8 +358,8 @@ class ShaperCalibrate:
 
     def find_best_shaper(self, calibration_data, shapers=None,
                          damping_ratio=None, scv=None, shaper_freqs=None,
-                         max_smoothing=None, test_damping_ratios=None,
-                         max_freq=None, logger=None):
+                         max_smoothing=None, max_vibrations=None,
+                         test_damping_ratios=None, max_freq=None, logger=None):
         best_shaper = None
         all_shapers = []
         shapers = shapers or AUTOTUNE_SHAPERS
@@ -377,14 +379,20 @@ class ShaperCalibrate:
                     continue
             fit_results = self.background_process_exec(self.fit_shaper, (
                 shaper_name, calibration_data, shaper_freqs, damping_ratio,
-                scv, max_smoothing, test_damping_ratios, max_freq))
+                scv, max_smoothing, max_vibrations, test_damping_ratios,
+                max_freq))
             shaper = fit_results[0]
             results = fit_results[1:]
             if (best_shaper is None or shaper.score * 1.2 < best_shaper.score or
                     (shaper.score * 1.05 < best_shaper.score and
-                        shaper.smoothing * 1.1 < best_shaper.smoothing)):
+                        shaper.smoothing * 1.1 < best_shaper.smoothing) or
+                    (max_vibrations is not None and
+                     best_shaper.vibrs > max_vibrations and
+                        shaper.vibrs < best_shaper.vibrs)):
                 # Either the shaper significantly improves the score (by 20%),
-                # or it improves the score and smoothing (by 5% and 10% resp.)
+                # or it improves the score and smoothing (by 5% and 10% resp.),
+                # or the previous shaper was giving more remaining vibrations
+                # and the current one improves them.
                 best_shaper = shaper
             for s in results[::-1]:
                 if s.vibrs < best_shaper.vibrs and \
