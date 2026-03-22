@@ -1794,8 +1794,9 @@ the [command reference](G-Codes.md#input_shaper).
 #   value is 0, which disables input shaping for Z axis.
 #shaper_type: mzv
 #   A type of the input shaper to use for all axes. Supported
-#   shapers are zv, mzv, zvd, ei, 2hump_ei, and 3hump_ei. The default
-#   is mzv input shaper.
+#   shapers are zv, mzv, zvd, ei, 2hump_ei, and 3hump_ei. Some shapers
+#   support optional additional parameters, e.g. mzv(n=4,t=0.9) or
+#   ei(v_tol=0.1). The default is mzv input shaper (without parameters).
 #shaper_type_x:
 #shaper_type_y:
 #shaper_type_z:
