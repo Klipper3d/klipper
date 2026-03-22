@@ -42,8 +42,8 @@ def get_mzv_coeffs(n, t):
         raise ShaperError("Too large t=%.6f for n=%d, must be less than %.6f" %
                           (t, n, 0.5 * (n - 1)))
     # Projected shaper duration with n -> \infinity for computing shaper zeros
-    tau = t * (n - 2) / (n - 2 * t - 1)
-    T = [i * t / (n-1) for i in range(n)]
+    tau = t * (n - 2.) / (n - 2. * t - 1.)
+    T = [i * t / (n - 1.) for i in range(n)]
     # Build a system of equations for A. The first equation is sum(A) = 1
     M = [[1.] * n]
     F = [1.]
@@ -63,7 +63,13 @@ def get_mzv_coeffs(n, t):
         raise ShaperError("Negative-valued shaper with n=%d, t=%.6f" % (n, t))
     return (A, T)
 
-def get_mzv_shaper(shaper_freq, damping_ratio, n=3, t=0.75):
+def get_mzv_shaper(shaper_freq, damping_ratio, n=3, t=0.0, tau=0.0):
+    if not tau and not t:
+        t = 0.75
+    elif tau:
+        # Infer total shaper duration from a projected shaper duration with
+        # n -> \infinity
+        t = tau * (n - 1.) / (n + 2. * tau - 2.)
     A, T = get_mzv_coeffs(n, t)
     # Apply damping
     df = math.sqrt(1. - damping_ratio**2)
@@ -76,8 +82,8 @@ def get_mzv_shaper(shaper_freq, damping_ratio, n=3, t=0.75):
         Kp *= K
     return (A, T)
 
-def get_ei_shaper(shaper_freq, damping_ratio):
-    v_tol = 1. / SHAPER_VIBRATION_REDUCTION # vibration tolerance
+def get_ei_shaper(shaper_freq, damping_ratio,
+                  v_tol=1./SHAPER_VIBRATION_REDUCTION):
     df = math.sqrt(1. - damping_ratio**2)
     t_d = 1. / (shaper_freq * df)
     dr = damping_ratio
@@ -177,6 +183,9 @@ def init_shaper(shaper_name, shaper_freq, damping_ratio, error=None):
                     return int(s)
                 args_l = [parse_val(v) for k, v in parsed_args if not k]
                 args_kv = {k: parse_val(v) for k, v in parsed_args if k}
+                if args_l and args_kv:
+                    raise ShaperError("Mixing named and non-named shaper"
+                                      " parameters is not supported")
         for s in INPUT_SHAPERS:
             if shaper_name == s.name:
                 return s.init_func(shaper_freq, damping_ratio,
