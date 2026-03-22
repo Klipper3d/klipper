@@ -14,8 +14,6 @@ config RPXXXX_SELECT
     select HAVE_GPIO_HARD_PWM
     select HAVE_STEPPER_OPTIMIZED_BOTH_EDGE
     select HAVE_BOOTLOADER_REQUEST
-    # Software divide needed on rp2040 for rate calculation in i2c.c
-    select HAVE_SOFTWARE_DIVIDE_REQUIRED if MACH_RP2040
 
 config BOARD_DIRECTORY
     string
