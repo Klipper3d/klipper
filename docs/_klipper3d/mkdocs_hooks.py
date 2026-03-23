@@ -21,11 +21,11 @@ def transform(markdown: str, page, config, files):
     for i in range(len(lines)):
         line_out = lines[i]
         in_code_block = (in_code_block +
-            len(re.findall("\s*[`]{3,}", line_out))) % 2
+            len(re.findall(r"\s*[`]{3,}", line_out))) % 2
         if not in_code_block:
             line_out = line_out.replace('](../',
                                         f"]({config['repo_url']}blob/master/")
-            line_out = re.sub("\\\s*$", "<br>", line_out)
+            line_out = re.sub(r"\\\s*$", "<br>", line_out)
             # check that lists at level 0 are not indented
             # (no space before *|-|1.)
             if re.match(r"^[^-*0-9 ]", line_out):
