@@ -350,6 +350,7 @@ class ResonanceTester:
                 self.executor.run_test(test_seq, axis, gcmd)
                 for chip_axis, aclient, chip_name in raw_values:
                     aclient.finish_measurements()
+                for chip_axis, aclient, chip_name in raw_values:
                     if raw_name_suffix is not None:
                         raw_name = self.get_filename(
                                 'raw_data', raw_name_suffix, axis,
