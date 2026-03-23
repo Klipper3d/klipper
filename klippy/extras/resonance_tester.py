@@ -357,10 +357,10 @@ class ResonanceTester:
                                 point if len(test_points) > 1 else None,
                                 chip_name if (accel_chips is not None
                                               or len(raw_values) > 1) else None)
-                        aclient.write_to_file(raw_name)
                         gcmd.respond_info(
                                 "Writing raw accelerometer data to "
                                 "%s file" % (raw_name,))
+                        aclient.write_to_file(raw_name, wait=True)
                 if helper is None:
                     continue
                 for chip_axis, aclient, chip_name in raw_values:
