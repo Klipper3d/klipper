@@ -795,7 +795,9 @@ rotation_distance:
 #   moves towards the cable winch for each full rotation of the
 #   stepper motor. This parameter must be provided.
 #   For buildup compensation, set this to the effective distance at the
-#   origin, which is 2*pi times the effective spool radius.
+#   origin. If winch_mechanical_advantage is used, divide the physical
+#   origin circumference by that factor (for example, a 2:1 tackle halves
+#   the configured value for the same spool radius).
 #   There is no separate spool_radius config option; Klipper derives the
 #   internal radius from rotation_distance.
 #   If the spool itself is geared, use the regular stepper gear_ratio

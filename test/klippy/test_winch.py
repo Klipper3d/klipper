@@ -94,7 +94,7 @@ class WinchFlexHelperTests(unittest.TestCase):
     def expected_motor_to_line_pos(self, motor_pos, rotation_distance,
                                    steps_per_rotation, buildup_factor,
                                    mechanical_advantage=1):
-        radius = rotation_distance / (2.0 * math.pi)
+        radius = rotation_distance * float(mechanical_advantage) / (2.0 * math.pi)
         steps_per_mm = steps_per_rotation / rotation_distance
         k2 = -float(buildup_factor) * float(mechanical_advantage)
         if abs(k2) <= 1.0e-12 or steps_per_mm <= 0.0:
@@ -157,6 +157,23 @@ class WinchFlexHelperTests(unittest.TestCase):
         actual = helper.motor_to_line_pos(0, motor_pos)
         expected = self.expected_motor_to_line_pos(
             motor_pos, rotation_distance, steps_per_rotation, buildup, 1)
+        self.assertAlmostEqual(actual, expected, places=12)
+
+    def test_buildup_model_scales_with_mechanical_advantage(self):
+        buildup = 0.6366197723675814
+        rotation_distance = 123.10
+        steps_per_rotation = 3200.0 * 12.75
+        helper = self.build_helper(((0.0, 0.0, 0.0),),
+                                   mover_weight=0.0,
+                                   spring=0.0,
+                                   target=0.0,
+                                   buildup_factor=buildup,
+                                   mechanical_advantage=[2])
+        helper.set_spool_params(0, rotation_distance, steps_per_rotation)
+        motor_pos = 18.5
+        actual = helper.motor_to_line_pos(0, motor_pos)
+        expected = self.expected_motor_to_line_pos(
+            motor_pos, rotation_distance, steps_per_rotation, buildup, 2)
         self.assertAlmostEqual(actual, expected, places=12)
 
     def test_four_anchor_near_singularity(self):
