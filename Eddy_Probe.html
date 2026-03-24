@@ -1460,7 +1460,7 @@ Look at the <a href="Eddy_Probe.html#homing-correction-macros">homing correction
 for further details.</p>
 <p>Start by declaring a
 <a href="Config_Reference.html#probe_eddy_current">probe_eddy_current config section</a>
-in the printer.cfg file. It is recommended to set the <code>z_offset</code> to
+in the printer.cfg file. It is recommended to set <code>descend_z</code> to
 0.5mm. It is typical for the sensor to require an <code>x_offset</code> and
 <code>y_offset</code>. If these values are not known, one should estimate the
 values during initial calibration.</p>
@@ -1488,11 +1488,11 @@ sensor to Z positions. This will take a couple of minutes. After the
 tool completes it will output the sensor performance data:</p>
 <div class="highlight"><pre><span></span><code>probe_eddy_current: noise 0.000642mm, MAD_Hz=11.314 in 2525 queries
 Total frequency range: 45000.012 Hz
-z_offset: 0.250 # noise 0.000200mm, MAD_Hz=11.000
-z_offset: 0.530 # noise 0.000300mm, MAD_Hz=12.000
-z_offset: 1.010 # noise 0.000400mm, MAD_Hz=14.000
-z_offset: 2.010 # noise 0.000600mm, MAD_Hz=12.000
-z_offset: 3.010 # noise 0.000700mm, MAD_Hz=9.000
+z: 0.250 # noise 0.000200mm, MAD_Hz=11.000
+z: 0.530 # noise 0.000300mm, MAD_Hz=12.000
+z: 1.010 # noise 0.000400mm, MAD_Hz=14.000
+z: 2.010 # noise 0.000600mm, MAD_Hz=12.000
+z: 3.010 # noise 0.000700mm, MAD_Hz=9.000
 </code></pre></div>
 
 <p>issue a <code>SAVE_CONFIG</code> command to save the results to
@@ -1550,14 +1550,6 @@ it is required to calibrate the stop threshold for your machine.
 Practically, it ensures that the Eddy's output data absolute value
 change per second (velocity) is high enough - higher than the noise level,
 and that upon collision it always decreases by at least this value.</p>
-<div class="highlight"><pre><span></span><code>[probe_eddy_current my_probe]
-# eddy probe configuration...
-# Recommended starting values for the tap
-#samples: 3
-#samples_tolerance: 0.025
-#samples_tolerance_retries: 3
-</code></pre></div>
-
 <p>Before setting it to any other value, it is necessary to install <code>scipy</code>:</p>
 <div class="highlight"><pre><span></span><code>~/klippy-env/bin/pip<span class="w"> </span>install<span class="w"> </span>scipy
 </code></pre></div>
@@ -1597,7 +1589,7 @@ because of the noise.</li>
 calibration routine output:</p>
 <div class="highlight"><pre><span></span><code>probe_eddy_current: noise 0.000642mm, MAD_Hz=11.314
 ...
-z_offset: 1.010 # noise 0.000400mm, MAD_Hz=14.000
+z: 1.010 # noise 0.000400mm, MAD_Hz=14.000
 </code></pre></div>
 
 <p>The estimation will be:</p>

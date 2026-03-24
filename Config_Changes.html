@@ -1412,6 +1412,17 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<p>20260318: The <code>[probe_eddy_current]</code> config options <code>speed</code>,
+<code>lift_speed</code>, <code>samples</code>, <code>sample_retract_dist</code>, <code>samples_result</code>,
+<code>samples_tolerance</code>, and <code>samples_tolerance_retries</code> no longer apply
+to probe commands using <code>METHOD=scan</code>, <code>METHOD=rapid_scan</code>, nor
+<code>METHOD=tap</code>. To use different settings, supply the equivalent
+<code>PROBE_SPEED</code>, <code>LIFT_SPEED</code>, <code>SAMPLES</code>, <code>SAMPLE_RETRACT_DIST</code>,
+<code>SAMPLES_RESULT</code>, <code>SAMPLES_TOLERANCE</code>, or <code>SAMPLES_TOLERANCE_RETRIES</code>
+parameter with the probe command.</p>
+<p>20260318: The <code>[probe_eddy_current]</code> config option <code>z_offset</code> has been
+renamed to <code>descend_z</code>. Using the old name is deprecated and it will
+be removed in the near future.</p>
 <p>20260214: The <code>MANUAL_STEPPER</code> G-Code command <code>STOP_ON_ENDSTOP</code>
 parameter has changed. See the
 <a href="G-Codes.html#manual_stepper">MANUAL_STEPPER</a> documentation for
