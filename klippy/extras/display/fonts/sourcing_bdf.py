@@ -5,8 +5,9 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from .strategy import FontSourceStrategy, FontDataObject, FontStrategyError
 from typing import Dict, List
+import logging
 
-class BdfFontSourcingStrategy(FontSourceStrategy):
+class BdfFontSource(FontSourceStrategy):
   
     def __init__(self, font_file: str, cell_width: int, cell_height: int, charset: str = 'ascii', fallback_codepoint: int = ord('?')):
         self.font_file = font_file
@@ -39,6 +40,7 @@ class BdfFontSourcingStrategy(FontSourceStrategy):
         try:
             with open(self.font_file, "r", encoding='ascii', errors='strict') as ff:
                 lines = [ ln.rstrip("\n") for ln in ff]
+            logging.debug("Loaded font %s with %d lines" % (self.font_file, len(lines)))
         except OSError as e:
             raise FontStrategyError("Could not open BDF file '%s', error was: %s" % (self.font_file, str(e)))        
         glyph_rows = self._read_lines(lines)
@@ -88,8 +90,8 @@ class BdfFontSourcingStrategy(FontSourceStrategy):
             if (encoding is not None and encoding in allowed and bbx is not None):
                 bw, bh, bx, by = bbx
                 if ((bw, bh, bx, by) != (self.font_src.width, self.font_src.height, 0, 0)):
-                    raise FontStrategyError("Glyph %d bitmap mismatch of rows=%d expected was %d."
-                                            % (encoding, len(bitmap_rows), self.font_src.height))
+                    raise FontStrategyError("Bounding Box does not match: (%d, %d, %d, %d) instead of (%d, %d, 0 ,0)"
+                                            % (bw, bh, bx, by , len(bitmap_rows), self.font_src.height))
                 glyph_rows[encoding] = [self._hex_row_to_width_bits(r) for r in bitmap_rows]
             i += 1
 

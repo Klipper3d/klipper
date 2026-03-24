@@ -6,28 +6,34 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 from .. import bus
-from . import font8x14
+from .fonts import FontCacheBuilder, BuiltinVGAFontSource, PageSwizzleStrategy, DisplayFont, DISPLAY_FONT_SourcingStrategies
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
 TextGlyphs = { 'right_arrow': b'\x1a', 'degrees': b'\xf8' }
 
 class DisplayBase:
-    def __init__(self, io, columns=128, x_offset=0):
+    def __init__(self, io, columns=128, x_offset=0, height=64):
         self.send = io.send
         # framebuffers
         self.columns = columns
+        #Panel geometry (hardware facts)
+        if height % 8 != 0:
+            raise ValueError("display height must be a multiple of 8")
+        self.height = height
+        self.page_count = height // 8
+
         self.x_offset = x_offset
-        self.vram = [bytearray(self.columns) for i in range(8)]
+        self.vram = [bytearray(self.columns) for i in range(self.page_count)]
         self.all_framebuffers = [(self.vram[i], bytearray(b'~'*self.columns), i)
-                                 for i in range(8)]
+                                 for i in range(self.page_count)]
         # Cache fonts and icons in display byte order
-        self.font = [self._swizzle_bits(bytearray(c))
-                     for c in font8x14.VGA_FONT]
+        builtin_font_src = BuiltinVGAFontSource()
+        self.font_swizzler = PageSwizzleStrategy()
+        font_cache = FontCacheBuilder(builtin_font_src, self.font_swizzler)
+        self.font = font_cache.build()
+        self.max_char = int((self.columns - x_offset) / self.font.width)
         self.icons = {}
-        self.font_profile = None
-        self.font_profile_glyphs = None
-        self.font_profile_fallback = None
     def flush(self):
         # Find all differences in the framebuffers and send them to the chip
         for new_data, old_data, page in self.all_framebuffers:
@@ -64,16 +70,21 @@ class DisplayBase:
         bits_top = [(top >> s) & 0xff for s in range(0, 64, 8)]
         bits_bot = [(bot >> s) & 0xff for s in range(0, 64, 8)]
         return (bytearray(bits_top), bytearray(bits_bot))
-    def set_font_profile(self, profile):
+    def set_font_profile(self, profile: DisplayFont):
         # set the font profile to use for text rendering.
-        self.font_profile = profile
-        self.font_profile_glyphs = None
-        self.font_profile_fallback = None
-        if profile is not None:
+        if profile is None:
             return 
-        if profile.format != 'bdf':
-            raise RuntimeError("Unsupported diaply font profile format '%s'" % (profile.format))
-        self.font_profile_glyphs, self.font_profile_fallback = self._load_bdf_font(profile)
+        if profile.format not in DISPLAY_FONT_SourcingStrategies.keys():
+            raise RuntimeError("Unsupported display font profile format '%s'" % (profile.format))
+        Strategy = DISPLAY_FONT_SourcingStrategies[profile.format]
+        sourcing_strategy = Strategy(profile.font_file, 
+                                     profile.cell_width,
+                                     profile.cell_height,
+                                     profile.charset,
+                                     '?')
+        font_cache = FontCacheBuilder(sourcing_strategy, self.font_swizzler)
+        self.font = font_cache.build()
+        self.max_char = int((self.columns - self.x_offset) / self.font.width)
     def set_glyphs(self, glyphs):
         for glyph_name, glyph_data in glyphs.items():
             icon = glyph_data.get('icon16x16')
@@ -82,17 +93,14 @@ class DisplayBase:
                 top2, bot2 = self._swizzle_bits(icon[1])
                 self.icons[glyph_name] = (top1 + top2, bot1 + bot2)
     def write_text(self, x, y, data):
-        if x + len(data) > 16:
-            data = data[:16 - min(x, 16)]
-        pix_x = x * 8
+        if x + len(data) > self.max_char:
+            data = data[:self.max_char - min(x, self.max_char)]
+        pix_x = x * self.font.width
         pix_x += self.x_offset
-        page_top = self.vram[y * 2]
-        page_bot = self.vram[y * 2 + 1]
         for c in bytearray(data):
-            bits_top, bits_bot = self.font[c]
-            page_top[pix_x:pix_x+8] = bits_top
-            page_bot[pix_x:pix_x+8] = bits_bot
-            pix_x += 8
+            for p, page in enumerate(self.font(c)):
+                self.vram[y * self.font.pages + p][pix_x:pix_x+self.font.width] = page
+            pix_x += self.font.width
     def write_graphics(self, x, y, data):
         if x >= 16 or y >= 4 or len(data) != 16:
             return
@@ -125,7 +133,14 @@ class DisplayBase:
         for page in self.vram:
             page[:] = zeros
     def get_dimensions(self):
-        return (16, 4)
+        # active font metrics (builtin or custom)
+        cell_w = self.font.width
+        font_pages = self.font.height // 8
+        cols = self.columns // cell_w
+        rows = self.page_count // font_pages
+        logging.debug("Dimensions: %d, %d (vram=%d, pages=%d)" % (cols, rows, len(self.vram), font_pages))
+        # optional profile cap
+        return (cols, 1)
 
 # IO wrapper for "4 wire" spi bus (spi bus with an extra data/control line)
 class SPI4wire:
@@ -219,23 +234,26 @@ class SSD1306(DisplayBase):
             io = SPI4wire(config, "dc_pin")
             io_bus = io.spi
         self.reset = ResetHelper(config.get("reset_pin", None), io_bus)
-        DisplayBase.__init__(self, io, columns, x_offset)
+        height = config.getchoice('height', [32,64], 64)
+        DisplayBase.__init__(self, io, columns, x_offset, height)
         self.contrast = config.getint('contrast', 239, minval=0, maxval=255)
         self.vcomh = config.getint('vcomh', 0, minval=0, maxval=63)
         self.invert = config.getboolean('invert', False)
     def init(self):
         self.reset.init()
+        mux = 0x1f if self.height == 32 else 0x3f
+        compins = 0x02 if self.height == 32 else 0x12
         init_cmds = [
             0xAE,       # Display off
             0xD5, 0x80, # Set oscillator frequency
-            0xA8, 0x3f, # Set multiplex ratio
+            0xA8, mux, # Set multiplex ratio
             0xD3, 0x00, # Set display offset
             0x40,       # Set display start line
             0x8D, 0x14, # Charge pump setting
             0x20, 0x02, # Set Memory addressing mode
             0xA1,       # Set Segment re-map
             0xC8,       # Set COM output scan direction
-            0xDA, 0x12, # Set COM pins hardware configuration
+            0xDA, compins, # Set COM pins hardware configuration
             0x81, self.contrast, # Set contrast control
             0xD9, 0xA1, # Set pre-charge period
             0xDB, self.vcomh, # Set VCOMH deselect level

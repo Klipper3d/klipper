@@ -7,6 +7,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, os, ast
 from . import aip31068_spi, hd44780, hd44780_spi, st7920, uc1701, menu
+from .fonts import DisplayFont
 
 # Normal time between each screen redraw
 REDRAW_TIME = 0.500
@@ -85,38 +86,6 @@ class DisplayGroup:
             text = template.render(context)
             display.draw_text(row, col, text.replace('\n', ''), eventtime)
         context.clear() # Remove circular references for better gc
-
-#Storage of [display_font my_font] sections (one instance per font name)
-class DisplayFont:
-    def __init__(self, config):
-        self.printer = config.get_printer()
-        name_parts = config.get_name().split()
-        if len(name_parts) != 2:
-            raise config.error("Section name '%s' is not valid"
-                               % (config.get_name(),))
-        self.name = name_parts[1]
-        self.format = config.getchoice('format', ['bdf'], default='bdf')
-        self.font_file = self._resolve_font_file(config.get('font_file'))
-        self.cell_width = config.getint('cell_width', minval=1)
-        self.cell_height = config.getint('cell_height', minval=1)
-        self.baseline = config.getint('baseline', minval=0)
-        self.charset = config.getchoice('charset', ['ascii'], default='ascii')
-        self.rows_override = config.getint('rows_override', None, minval=1)
-
-        if self.baseline >= self.cell_height:
-            raise config.error("Option 'baseline' in section '%s' must be less than 'cell_height'" % (config.get_name()))
-        if not os.path.exists(self.font_file):
-            raise config.error("Option 'font_file' in section '%s' does not exist: '%s'" % (config.get_name(), self.font_file))
-
-
-    def _resolve_font_file(self, font_file):
-        path = os.path.expanduser(font_file)
-        if os.path.isabs(path):
-            return path
-        
-        cfg_file = self.printer.get_start_args()['config_file'] 
-        cfg_dir = os.path.dirname(os.path.abspath(cfg_file))
-        return os.path.normpath(os.path.join(cfg_dir, path))
 
 # Global cache of DisplayTemplate, DisplayGroup, and glyphs
 class PrinterDisplayTemplate:
@@ -236,6 +205,11 @@ class PrinterLCD:
             self.font_profile = self.display_fonts.get(font_name)
             if self.font_profile is None:
                 raise config.error("Unknown display font '%s'" % (font_name))
+        if hasattr(self.lcd_chip, "set_font_profile") and self.font_profile is not None:
+            logging.info("Setting font profile for %s" % (self.font_profile.name))
+            self.lcd_chip.set_font_profile(self.font_profile)
+        elif self.font_profile is not None:
+            raise config.error("Option 'font' is only supported on OLED displays")
         self.display_data_groups = templates.get_display_data_groups()
         self.lcd_chip.set_glyphs(templates.get_display_glyphs())
         dgroup = "_default_16x4"
