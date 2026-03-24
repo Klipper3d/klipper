@@ -24,6 +24,10 @@ def list_str(values):
     return ', '.join(f"{v:.6f}" for v in values)
 
 
+def int_list_str(values):
+    return ', '.join(str(int(v)) for v in values)
+
+
 class DummyPrinter:
     def lookup_object(self, name, default=None):
         if default is not None:
@@ -57,12 +61,15 @@ FIVE_ANCHORS_DEFAULT = (
 class WinchFlexHelperTests(unittest.TestCase):
     def build_helper(self, anchors, mover_weight=2.0, spring=20000.0,
                      target=20.0, min_force=None, max_force=None,
-                     guy_wires=None):
+                     guy_wires=None, buildup_factor=0.0,
+                     mechanical_advantage=None):
         num = len(anchors)
         if min_force is None:
             min_force = [0.0] * num
         if max_force is None:
             max_force = [120.0] * num
+        if mechanical_advantage is None:
+            mechanical_advantage = [1] * num
         cfg = configparser.ConfigParser()
         options = {
             'winch_mover_weight': f"{mover_weight}",
@@ -70,6 +77,8 @@ class WinchFlexHelperTests(unittest.TestCase):
             'winch_target_force': f"{target}",
             'winch_min_force': list_str(min_force),
             'winch_max_force': list_str(max_force),
+            'winch_buildup_factor': f"{buildup_factor}",
+            'winch_mechanical_advantage': int_list_str(mechanical_advantage),
         }
         if guy_wires is not None:
             options['winch_guy_wire_lengths'] = list_str(guy_wires)
@@ -81,6 +90,19 @@ class WinchFlexHelperTests(unittest.TestCase):
         distances, flex = helper.calc_arrays(pos)
         lengths = [d + f for d, f in zip(distances, flex)]
         return lengths, distances, flex
+
+    def expected_motor_to_line_pos(self, motor_pos, rotation_distance,
+                                   steps_per_rotation, buildup_factor,
+                                   mechanical_advantage=1):
+        radius = rotation_distance / (2.0 * math.pi)
+        steps_per_mm = steps_per_rotation / rotation_distance
+        k2 = -float(buildup_factor) * float(mechanical_advantage)
+        if abs(k2) <= 1.0e-12 or steps_per_mm <= 0.0:
+            return motor_pos
+        k0 = 2.0 * steps_per_mm * radius / k2
+        motor_steps = motor_pos * steps_per_mm
+        term = motor_steps / k0 + radius
+        return ((term * term) - (radius * radius)) / k2
 
     def test_disabled_flex_matches_geometry(self):
         helper = self.build_helper(FOUR_ANCHORS_DEFAULT,
@@ -119,6 +141,23 @@ class WinchFlexHelperTests(unittest.TestCase):
             self.assertGreaterEqual(abs(left[i] - nominal[i]), 0.0)
             self.assertGreaterEqual(abs(right[i] - nominal[i]), 0.0)
             self.assertGreaterEqual(abs(left[i] - right[i]), 0.0)
+
+    def test_buildup_model_matches_closed_form_with_gearing(self):
+        buildup = 0.6366197723675814
+        rotation_distance = 246.20
+        steps_per_rotation = 3200.0 * 12.75
+        helper = self.build_helper(((0.0, 0.0, 0.0),),
+                                   mover_weight=0.0,
+                                   spring=0.0,
+                                   target=0.0,
+                                   buildup_factor=buildup,
+                                   mechanical_advantage=[1])
+        helper.set_spool_params(0, rotation_distance, steps_per_rotation)
+        motor_pos = 18.5
+        actual = helper.motor_to_line_pos(0, motor_pos)
+        expected = self.expected_motor_to_line_pos(
+            motor_pos, rotation_distance, steps_per_rotation, buildup, 1)
+        self.assertAlmostEqual(actual, expected, places=12)
 
     def test_four_anchor_near_singularity(self):
         helper = self.build_helper(FOUR_ANCHORS_PROBLEM)
