@@ -743,10 +743,18 @@ winch_guy_wire_lengths:
 #   All line that's not on the spool or suspended between anchor point
 #   and mover point is defined to be "guy wire".
 #   The default is 0 for each anchor.
+winch_buildup_factor:
+#   Optional spool buildup factor for the whole machine.
+#   This is the change in spool radius, in millimeters, per millimeter
+#   of line wound onto the spool. Set this to 0 to use the constant
+#   radius spool model.
+#   The default is 0.
 winch_mechanical_advantage:
 #   Optional mechanical advantage for each anchor.
-#   If the winch force is geared by winding the line back and forth to the effector
-#   in a block-and-talley system, then tell klipper how many times back plus how many times forth.
+#   If the winch force is geared by winding the line back and forth to the
+#   effector in a block-and-tackle system, then tell Klipper how many times
+#   back plus how many times forth.
+#   This factor is used by the flex compensation and buildup model.
 #   The default is 1 for each anchor (no gearing).
 flex_compensation_algorithm:
 #   Solver used when computing how much force is required to counteract
@@ -786,6 +794,13 @@ rotation_distance:
 #   The rotation_distance is the nominal distance (in mm) the toolhead
 #   moves towards the cable winch for each full rotation of the
 #   stepper motor. This parameter must be provided.
+#   For buildup compensation, set this to the effective distance at the
+#   origin, which is 2*pi times the effective spool radius.
+#   There is no separate spool_radius config option; Klipper derives the
+#   internal radius from rotation_distance.
+#   If the spool itself is geared, use the regular stepper gear_ratio
+#   option in the stepper section. The winch buildup code already sees
+#   the geared step count via the stepper's steps_per_rotation value.
 anchor_x:
 anchor_y:
 anchor_z:
