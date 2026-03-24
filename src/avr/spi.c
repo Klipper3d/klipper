@@ -4,6 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include <avr/io.h> // SPCR
 #include "autoconf.h" // CONFIG_MACH_atmega644p
 #include "command.h" // shutdown
 #include "gpio.h" // spi_setup
