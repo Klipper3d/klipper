@@ -198,8 +198,8 @@ class I2CRouter:
                     "pca9548a ") else f"pca9548a {mux}"
                 exists = self._printer.lookup_object(objname, None) is not None
                 lines.append(
-                    f"    {k} = {mux}:{ch}  ({
-                        'ok' if exists else 'MISSING'})")
+                    "    %s = %s:%s  (%s)"
+                    % (k, mux, ch, "ok" if exists else "MISSING"))
         gcmd.respond_info("\n".join(lines))
 
 

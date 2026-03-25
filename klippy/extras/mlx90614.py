@@ -118,9 +118,8 @@ class MLX90614:
             expect = _crc8_smbus(bytes([sa_w, reg & 0xFF, sa_r, lsb, msb]))
             if pec != expect:
                 raise self.printer.command_error(
-                    f"mlx90614: PEC mismatch (got=0x{
-                        pec:02X}, expect=0x{
-                        expect:02X})")
+                    "mlx90614: PEC mismatch (got=0x%02X, expect=0x%02X)"
+                    % (pec, expect))
 
         return (msb << 8) | lsb
 
