@@ -377,7 +377,7 @@ class I2CScanner:
         safe to read on MLX90614, BME280, SHT3x, etc.).
 
         Custom probe parameters (user-specified WRITE= or READ_LEN=) are passed
-        through unchanged — no fallback.
+        through unchanged - no fallback.
         """
         ok, st = self._probe(addr, write_bytes, read_len)
         if ok:

@@ -64,7 +64,7 @@ class CanbusScan:
         return struct.pack(CAN_FRAME_FMT, can_id, dlc, _to_bytes(data[:8]))
 
     def _parse_frame(self, raw):
-        """Unpack a CAN frame → (can_id, dlc, data_bytes)."""
+        """Unpack a CAN frame to (can_id, dlc, data_bytes)."""
         can_id, dlc, data = struct.unpack(CAN_FRAME_FMT, raw)
         can_id &= 0x1FFFFFFF          # strip flags
         return can_id, dlc, bytearray(data[:dlc])
