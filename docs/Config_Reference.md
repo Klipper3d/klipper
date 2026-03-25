@@ -4525,6 +4525,10 @@ lcd_type:
 #   controls the content of the screen (see the "display_data" section
 #   for more information). The default is _default_20x4 for hd44780 or
 #   aip31068_spi displays and _default_16x4 for other displays.
+#font:
+#   The name of a [display_font <name>] section to use for text
+#   rendering on supported OLED displays (currently ssd1306 and
+#   sh1106). If not specified, the built-in display font is used.
 #menu_timeout:
 #   Timeout for menu. Being inactive this amount of seconds will
 #   trigger menu exit or return to root menu when having autorun
@@ -4779,6 +4783,9 @@ lcd_type:
 #invert: False
 #   TRUE inverts the pixels on certain OLED displays.  The default is
 #   False.
+#height: 64
+#   Display height in pixels. Valid values are 32 or 64. The default
+#   is 64.
 #x_offset: 0
 #   Set the horizontal offset value on SH1106 displays. The default is
 #   0.
@@ -4872,6 +4879,42 @@ examples.
 #   multiple distinct images use the same slot then make sure to only
 #   use one of those images in any given screen. This parameter is
 #   required if hd44780_data is specified.
+```
+
+### [display_font]
+
+Configures a named custom text font profile for OLED displays. One may
+define any number of display_font sections and select one using the
+`font` option in the [display] section. See
+[sample-display-font.cfg](../config/sample-display-font.cfg) for a
+complete example.
+
+```
+[display_font my_font]
+#format: bdf
+#   Font source format. Currently, only "bdf" is supported. The
+#   default is "bdf".
+font_file:
+#   Path to the font file. Relative paths are resolved from the main
+#   printer.cfg directory. This parameter must be provided.
+cell_width:
+#   Character cell width in pixels. This parameter must be provided.
+cell_height:
+#   Character cell height in pixels. This parameter must be provided.
+#   It must be a multiple of 8.
+baseline:
+#   Baseline row index inside the character cell. Must be less than
+#   cell_height. This parameter must be provided.
+#charset: ascii
+#   Character set coverage requirement for the font. Currently, only
+#   "ascii" is supported. The default is "ascii".
+#rows_override:
+#   Optional maximum number of text rows when this font profile is in
+#   use. If omitted, the renderer will use its normal row calculation.
+#   For "bdf" format, the BDF file must include all glyphs required by
+#   the selected charset. For `charset: ascii` this is codepoints
+#   32..126. The BDF glyph BBX must match `cell_width`, `cell_height`,
+#   and offsets (0, 0).
 ```
 
 ### [display my_extra_display]

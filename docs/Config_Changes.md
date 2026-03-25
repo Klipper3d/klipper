@@ -8,6 +8,11 @@ All dates in this document are approximate.
 
 ## Changes
 
+20260325: Added optional `[display_font <name>]` config sections for
+OLED text rendering and a `[display]` `font` option to select them.
+Added a `[display]` `height` option (`32` or `64`) for `ssd1306` and
+`sh1106` displays.
+
 20260214: The `MANUAL_STEPPER` G-Code command `STOP_ON_ENDSTOP`
 parameter has changed. See the
 [MANUAL_STEPPER](G-Codes.md#manual_stepper) documentation for
