@@ -169,11 +169,11 @@ class PCA9548A:
     def _lookup_mux_instance(self, mux_name):
         # Accept "mux0" or full "pca9548a mux0"
         objname = mux_name if mux_name.startswith(
-            "pca9548a ") else f"pca9548a {mux_name}"
+            "pca9548a ") else "pca9548a %s" % (mux_name,)
         mux = self._printer.lookup_object(objname, None)
         if mux is None:
             raise self._printer.config_error(
-                f"IIC_MUX_*: mux '{objname}' not found")
+                "IIC_MUX_*: mux '%s' not found" % (objname,))
         return mux
 
     def _cmd_IIC_MUX_SELECT(self, gcmd):
@@ -184,13 +184,14 @@ class PCA9548A:
         mux = self._lookup_mux_instance(mux_name)
         with mux._lock:
             mux._set_channel_nolock(channel)
-        gcmd.respond_info(f"{mux_name}: selected channel {channel}")
+        gcmd.respond_info("%s: selected channel %s" % (mux_name, channel))
 
     def _cmd_IIC_MUX_STATUS(self, gcmd):
         mux_name = gcmd.get("MUX", None)
         if mux_name:
             mux = self._lookup_mux_instance(mux_name)
-            gcmd.respond_info(f"{mux_name}: selected channel {mux._selected}")
+            gcmd.respond_info(
+                "%s: selected channel %s" % (mux_name, mux._selected))
             return
 
         gcmd.respond_info(

@@ -27,7 +27,7 @@ _LSB_KELVIN = 0.02
 _KELVIN_TO_C = -273.15
 
 
-def _crc8_smbus(data: bytes) -> int:
+def _crc8_smbus(data):
     """SMBus PEC CRC-8: poly 0x07, init 0x00, MSB-first."""
     crc = 0x00
     for b in data:
@@ -100,13 +100,13 @@ class MLX90614:
     def _handle_connect(self):
         self.reactor.update_timer(self._sample_timer, self.reactor.NOW)
 
-    def _read_word_with_pec(self, reg: int) -> int:
+    def _read_word_with_pec(self, reg):
         # SMBus "Read Word" style: command=reg, response=LSB,MSB,PEC
         params = self.i2c.i2c_read([reg & 0xFF], 3)
         resp = bytearray(params["response"])
         if len(resp) != 3:
             raise self.printer.command_error(
-                f"mlx90614: short read (len={len(resp)})"
+                "mlx90614: short read (len=%d)" % (len(resp),)
             )
 
         lsb, msb, pec = resp[0], resp[1], resp[2]
@@ -115,7 +115,8 @@ class MLX90614:
             addr7 = self.i2c.get_i2c_address() & 0x7F
             sa_w = ((addr7 << 1) | 0) & 0xFF
             sa_r = ((addr7 << 1) | 1) & 0xFF
-            expect = _crc8_smbus(bytes([sa_w, reg & 0xFF, sa_r, lsb, msb]))
+            expect = _crc8_smbus(
+                bytearray([sa_w, reg & 0xFF, sa_r, lsb, msb]))
             if pec != expect:
                 raise self.printer.command_error(
                     "mlx90614: PEC mismatch (got=0x%02X, expect=0x%02X)"
@@ -124,7 +125,7 @@ class MLX90614:
         return (msb << 8) | lsb
 
     @staticmethod
-    def _raw_to_c(raw: int) -> float:
+    def _raw_to_c(raw):
         # Datasheet: MSB may be an error flag
         if raw & 0x8000:
             raise ValueError("mlx90614: error flag set in reading")

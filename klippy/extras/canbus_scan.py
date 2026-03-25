@@ -12,6 +12,8 @@ import socket
 import struct
 import select
 import logging
+import time
+import sys
 
 # SocketCAN constants
 CAN_RAW = 1
@@ -28,6 +30,12 @@ CAN_FRAME_SIZE = struct.calcsize(CAN_FRAME_FMT)
 CANBUS_ID_ADMIN = 0x00   # broadcast query goes to ID 0
 CANBUS_ID_ADMIN_RESP = 0x01   # nodes respond on ID 1
 KLIPPER_ADMIN_QUERY = 0x00   # query command byte
+
+
+def _to_bytes(data):
+    if sys.version_info[0] >= 3:
+        return bytes(data)
+    return ''.join([chr(b) for b in data])
 
 
 class CanbusScan:
@@ -47,17 +55,19 @@ class CanbusScan:
     #  Low-level SocketCAN helpers                                         #
     # ------------------------------------------------------------------ #
 
-    def _build_frame(self, can_id, data: bytes) -> bytes:
+    def _build_frame(self, can_id, data):
         """Pack a CAN frame."""
+        data = bytearray(data)
         dlc = len(data)
-        data = data.ljust(8, b'\x00')
-        return struct.pack(CAN_FRAME_FMT, can_id, dlc, data)
+        if dlc < 8:
+            data.extend([0] * (8 - dlc))
+        return struct.pack(CAN_FRAME_FMT, can_id, dlc, _to_bytes(data[:8]))
 
-    def _parse_frame(self, raw: bytes):
+    def _parse_frame(self, raw):
         """Unpack a CAN frame → (can_id, dlc, data_bytes)."""
         can_id, dlc, data = struct.unpack(CAN_FRAME_FMT, raw)
         can_id &= 0x1FFFFFFF          # strip flags
-        return can_id, dlc, data[:dlc]
+        return can_id, dlc, bytearray(data[:dlc])
 
     def _set_filter(self, sock, can_id, mask=0x7FF):
         """Apply a receive filter so we only get frames matching can_id."""
@@ -68,7 +78,7 @@ class CanbusScan:
     #  Core scanner                                                        #
     # ------------------------------------------------------------------ #
 
-    def _scan(self, iface: str, timeout: float):
+    def _scan(self, iface, timeout):
         """
         Send Klipper admin query, collect UUID responses.
         Returns list of UUID hex strings.
@@ -86,18 +96,17 @@ class CanbusScan:
             sock.setblocking(False)
 
             # Send query frame to admin ID 0x00
-            query_frame = self._build_frame(CANBUS_ID_ADMIN,
-                                            bytes([KLIPPER_ADMIN_QUERY]))
+            query_frame = self._build_frame(
+                CANBUS_ID_ADMIN, bytearray([KLIPPER_ADMIN_QUERY]))
             sock.send(query_frame)
             logging.info("canbus_scan: query sent on %s", iface)
 
             # Collect responses until timeout
-            deadline = None
-            import time
-            start = time.monotonic()
+            monotonic = getattr(time, 'monotonic', time.time)
+            start = monotonic()
 
             while True:
-                remaining = timeout - (time.monotonic() - start)
+                remaining = timeout - (monotonic() - start)
                 if remaining <= 0:
                     break
 

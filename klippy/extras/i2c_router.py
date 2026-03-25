@@ -11,7 +11,7 @@ _LOG = logging.getLogger(__name__)
 _ORIG_MCU_I2C_FROM_CONFIG = None
 
 
-def _strip_comment(line: str) -> str:
+def _strip_comment(line):
     for sep in ("#", ";"):
         idx = line.find(sep)
         if idx >= 0:
@@ -19,7 +19,7 @@ def _strip_comment(line: str) -> str:
     return line.strip()
 
 
-def _parse_int_auto(s: str) -> int:
+def _parse_int_auto(s):
     # Accept "118", "0x76", "0X76"
     return int(s.strip(), 0)
 
@@ -88,14 +88,14 @@ class I2CRouter:
             desc="Show IIC(I2C) router mappings and mux resolution.",
         )
 
-    def _lookup_mux(self, mux_name: str):
+    def _lookup_mux(self, mux_name):
         # Allow either "mux0" or "pca9548a mux0"
         objname = mux_name if mux_name.startswith(
-            "pca9548a ") else f"pca9548a {mux_name}"
+            "pca9548a ") else "pca9548a %s" % (mux_name,)
         mux = self._printer.lookup_object(objname, None)
         if mux is None:
             raise self._printer.config_error(
-                f"i2c_router: mux '{objname}' not found")
+                "i2c_router: mux '%s' not found" % (objname,))
         return mux
 
     def _effective_i2c_params(self, config, default_addr):
@@ -115,14 +115,14 @@ class I2CRouter:
         return section, mcu, bus_name, addr
 
     @staticmethod
-    def _name_alias(section: str):
+    def _name_alias(section):
         # "temperature_sensor chamber_1" -> "chamber_1"
         parts = section.split(None, 1)
         if len(parts) == 2:
             return parts[1].strip()
         return None
 
-    def _wrap(self, mux_name: str, ch: int, dev, why: str, section: str):
+    def _wrap(self, mux_name, ch, dev, why, section):
         mux = self._lookup_mux(mux_name)
         if self._debug:
             _LOG.info(
@@ -153,8 +153,8 @@ class I2CRouter:
 
         # 2) Triplet mapping (when bus_name exists)
         if bus_name:
-            trip_dec = f"{mcu}/{bus_name}/{addr}"
-            trip_hex = f"{mcu}/{bus_name}/0x{addr:02x}"
+            trip_dec = "%s/%s/%s" % (mcu, bus_name, addr)
+            trip_hex = "%s/%s/0x%02x" % (mcu, bus_name, addr)
 
             if trip_dec in self._map:
                 mux_name, ch = self._map[trip_dec]
@@ -187,15 +187,15 @@ class I2CRouter:
     def cmd_IIC_ROUTER_STATUS(self, gcmd):
         lines = []
         lines.append("IIC_ROUTER_STATUS:")
-        lines.append(f"  strict: {self._strict}")
-        lines.append(f"  debug: {self._debug}")
+        lines.append("  strict: %s" % (self._strict,))
+        lines.append("  debug: %s" % (self._debug,))
         if not self._map:
             lines.append("  map: (empty)")
         else:
             lines.append("  map:")
             for k, (mux, ch) in sorted(self._map.items(), key=lambda x: x[0]):
                 objname = mux if mux.startswith(
-                    "pca9548a ") else f"pca9548a {mux}"
+                    "pca9548a ") else "pca9548a %s" % (mux,)
                 exists = self._printer.lookup_object(objname, None) is not None
                 lines.append(
                     "    %s = %s:%s  (%s)"
