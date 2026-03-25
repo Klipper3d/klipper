@@ -14,26 +14,27 @@ import select
 import logging
 
 # SocketCAN constants
-CAN_RAW         = 1
-PF_CAN          = 29
-SOL_CAN_BASE    = 100
-SOL_CAN_RAW     = SOL_CAN_BASE + CAN_RAW
-CAN_RAW_FILTER  = 1
+CAN_RAW = 1
+PF_CAN = 29
+SOL_CAN_BASE = 100
+SOL_CAN_RAW = SOL_CAN_BASE + CAN_RAW
+CAN_RAW_FILTER = 1
 
 # Frame format: id (4B), dlc (1B), pad (3B), data (8B)
-CAN_FRAME_FMT   = "<IB3x8s"
-CAN_FRAME_SIZE  = struct.calcsize(CAN_FRAME_FMT)
+CAN_FRAME_FMT = "<IB3x8s"
+CAN_FRAME_SIZE = struct.calcsize(CAN_FRAME_FMT)
 
 # Klipper CAN admin protocol
-CANBUS_ID_ADMIN         = 0x00   # broadcast query goes to ID 0
-CANBUS_ID_ADMIN_RESP    = 0x01   # nodes respond on ID 1
-KLIPPER_ADMIN_QUERY     = 0x00   # query command byte
+CANBUS_ID_ADMIN = 0x00   # broadcast query goes to ID 0
+CANBUS_ID_ADMIN_RESP = 0x01   # nodes respond on ID 1
+KLIPPER_ADMIN_QUERY = 0x00   # query command byte
+
 
 class CanbusScan:
     def __init__(self, config):
-        self.printer   = config.get_printer()
-        self.iface     = config.get('interface', 'can0')
-        self.timeout   = config.getfloat('timeout', 2.0, minval=0.5, maxval=10.0)
+        self.printer = config.get_printer()
+        self.iface = config.get('interface', 'can0')
+        self.timeout = config.getfloat('timeout', 2.0, minval=0.5, maxval=10.0)
 
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
@@ -48,7 +49,7 @@ class CanbusScan:
 
     def _build_frame(self, can_id, data: bytes) -> bytes:
         """Pack a CAN frame."""
-        dlc  = len(data)
+        dlc = len(data)
         data = data.ljust(8, b'\x00')
         return struct.pack(CAN_FRAME_FMT, can_id, dlc, data)
 
@@ -113,7 +114,7 @@ class CanbusScan:
                 # Klipper UUID response: ID=0x01, 6 bytes UUID
                 if can_id == CANBUS_ID_ADMIN_RESP and dlc >= 6:
                     uuid_bytes = data[:6]
-                    uuid_str   = ''.join('%02x' % b for b in uuid_bytes)
+                    uuid_str = ''.join('%02x' % b for b in uuid_bytes)
                     if uuid_str not in found:
                         found[uuid_str] = True
                         logging.info("canbus_scan: found UUID %s", uuid_str)
@@ -128,7 +129,7 @@ class CanbusScan:
     # ------------------------------------------------------------------ #
 
     def cmd_SCAN_CANBUS(self, gcmd):
-        iface   = gcmd.get('IFACE',   self.iface)
+        iface = gcmd.get('IFACE', self.iface)
         timeout = gcmd.get_float('TIMEOUT', self.timeout,
                                  minval=0.5, maxval=10.0)
 
@@ -144,7 +145,9 @@ class CanbusScan:
         if not uuids:
             self.gcode.respond_info(
                 "No CAN nodes found.\n"
-                "Check wiring, power, and that the CAN interface '%s' is correct." % iface)
+                "Check wiring, power, and that the CAN "
+                "interface '%s' is correct." %
+                iface)
         else:
             lines = ["Found %d CAN node(s):" % len(uuids)]
             for i, uid in enumerate(uuids, 1):

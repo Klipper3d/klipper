@@ -1,8 +1,10 @@
 # I2C bus scanner/prober for MCU (STM32, etc)
 #
 # Provides:
-#   SCAN_IIC  NAME=<name> [START=<addr>] [END=<addr>] [READ_LEN=<n>] [WRITE=<hexbytes>]
-#            [MUX=<0|1>] [MUX_ADDR=<addr>] [MUX_CH=<n|ALL|list>] [MUX_ONLY=<0|1>]
+#   SCAN_IIC  NAME=<name> [START=<addr>] [END=<addr>]
+#            [READ_LEN=<n>] [WRITE=<hexbytes>]
+#            [MUX=<0|1>] [MUX_ADDR=<addr>]
+#            [MUX_CH=<n|ALL|list>] [MUX_ONLY=<0|1>]
 #
 # PCA9548A/TCA9548A mux scan support (opt-in via config or MUX=1)
 #
@@ -99,8 +101,10 @@ def _cfg_int_anybase(config, key, default):
 
 class _NullContext:
     """No-op context manager used when no pca9548a lock is available."""
+
     def __enter__(self):
         return self
+
     def __exit__(self, *_):
         pass
 
@@ -132,13 +136,16 @@ class I2CScanner:
             sclp = ppins.lookup_pin(scl, share_type="i2c_software_scl_pin")
             sdap = ppins.lookup_pin(sda, share_type="i2c_software_sda_pin")
             if sclp["chip"] != self.mcu or sdap["chip"] != self.mcu:
-                raise config.error("i2c software pins must be on same mcu (%s)" % (mcu_name,))
+                raise config.error(
+                    "i2c software pins must be on same mcu (%s)" %
+                    (mcu_name,))
             self._scl_pin = sclp["pin"]
             self._sda_pin = sdap["pin"]
         else:
             self._bus_name = config.get("i2c_bus", None)
             if self._bus_name is None:
-                raise config.error("Must specify i2c_bus or i2c_software_* pins")
+                raise config.error(
+                    "Must specify i2c_bus or i2c_software_* pins")
 
         # ---- Mux options (safe defaults) ----
         self.mux_enable_default = config.getboolean("mux_enable", False)
@@ -149,7 +156,9 @@ class I2CScanner:
         else:
             addrs = _parse_int_list(mux_addrs_txt, minval=0, maxval=127)
             seen = set()
-            self.mux_addresses = [a for a in addrs if not (a in seen or seen.add(a))]
+            self.mux_addresses = [
+                a for a in addrs if not (
+                    a in seen or seen.add(a))]
 
         mux_ch_txt = config.get("mux_channels", "0,1,2,3,4,5,6,7")
         chans = _parse_mux_channels(mux_ch_txt)
@@ -162,20 +171,26 @@ class I2CScanner:
         # probing it causes every channel to be skipped (nothing ACKs) and can
         # lock the I2C hardware on RP2040/STM32.  Default is now False.
         self.mux_health_check = config.getboolean("mux_health_check", False)
-        self.mux_health_addr = _cfg_int_anybase(config, "mux_health_addr", 0x70) & 0x7F
+        self.mux_health_addr = _cfg_int_anybase(
+            config, "mux_health_addr", 0x70) & 0x7F
 
         # Disable mux between channels (helps isolate "bad" channels).
-        self.mux_disable_between_channels = config.getboolean("mux_disable_between_channels", True)
+        self.mux_disable_between_channels = config.getboolean(
+            "mux_disable_between_channels", True)
 
         # Small delays to avoid hammering the MCU / bus.
-        self.mux_channel_settle_s = config.getfloat("mux_channel_settle", 0.002, minval=0.0, maxval=0.5)
-        self.mux_post_disable_s = config.getfloat("mux_post_disable", 0.001, minval=0.0, maxval=0.5)
+        self.mux_channel_settle_s = config.getfloat(
+            "mux_channel_settle", 0.002, minval=0.0, maxval=0.5)
+        self.mux_post_disable_s = config.getfloat(
+            "mux_post_disable", 0.001, minval=0.0, maxval=0.5)
 
         # Rate-limit repeated scans (prevents "spam scan" from killing MCU).
-        self.scan_min_interval_s = config.getfloat("scan_min_interval", 0.25, minval=0.0, maxval=10.0)
+        self.scan_min_interval_s = config.getfloat(
+            "scan_min_interval", 0.25, minval=0.0, maxval=10.0)
         self._last_scan_time = 0.0
 
-        # ---- PCA9548A coordination (prevents race with sensor timer callbacks) ----
+        # ---- PCA9548A coordination ----
+        # Prevent races with sensor timer callbacks.
         # List the PCA9548A section names (without the "pca9548a " prefix) that
         # share the same mux ICs as this scanner.  The scanner will hold the
         # pca9548a reactor-mutex while scanning each channel so that sensor
@@ -207,7 +222,8 @@ class I2CScanner:
         self.last_mux = []
 
         self.mcu.register_config_callback(self._build_config)
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect)
 
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command(
@@ -217,13 +233,15 @@ class I2CScanner:
         self.printer.add_object("i2c_scanner " + self.name, self)
 
     def _handle_connect(self):
-        """Look up PCA9548A objects for mux coordination after all modules load."""
+        """Look up PCA9548A objects after all modules load."""
         for name in self._mux_section_names:
             full = "pca9548a " + name
             obj = self.printer.lookup_object(full, None)
             if obj is None:
-                _LOG.warning("i2c_scanner %s: mux_sections entry '%s' not found",
-                             self.name, full)
+                _LOG.warning(
+                    "i2c_scanner %s: mux_sections entry '%s' not found",
+                    self.name,
+                    full)
                 continue
             try:
                 addr = obj._i2c.i2c_address & 0x7F
@@ -244,30 +262,33 @@ class I2CScanner:
     def _build_config(self):
         if self._is_sw:
             if self.mcu.try_lookup_command(
-                "i2c_set_sw_bus oid=%c scl_pin=%u sda_pin=%u pulse_ticks=%u address=%u"
+                "i2c_set_sw_bus oid=%c scl_pin=%u "
+                "sda_pin=%u pulse_ticks=%u address=%u"
             ):
-                pulse_ticks = self.mcu.seconds_to_clock(1.0 / self.i2c_speed / 2.0)
+                pulse_ticks = self.mcu.seconds_to_clock(
+                    1.0 / self.i2c_speed / 2.0)
                 self.mcu.add_config_cmd(
-                    "i2c_set_sw_bus oid=%d scl_pin=%s sda_pin=%s pulse_ticks=%d address=%d"
-                    % (self.oid, self._scl_pin, self._sda_pin, pulse_ticks, 0)
-                )
+                    "i2c_set_sw_bus oid=%d scl_pin=%s "
+                    "sda_pin=%s pulse_ticks=%d address=%d" %
+                    (self.oid, self._scl_pin, self._sda_pin, pulse_ticks, 0))
                 self._set_bus_cmd = self.mcu.lookup_command(
-                    "i2c_set_sw_bus oid=%c scl_pin=%u sda_pin=%u pulse_ticks=%u address=%u",
-                    cq=self.cmd_queue
-                )
+                    "i2c_set_sw_bus oid=%c scl_pin=%u "
+                    "sda_pin=%u pulse_ticks=%u address=%u",
+                    cq=self.cmd_queue)
                 self._sw_pulse_ticks = pulse_ticks
             else:
                 self.mcu.add_config_cmd(
-                    "i2c_set_software_bus oid=%d scl_pin=%s sda_pin=%s rate=%d address=%d"
-                    % (self.oid, self._scl_pin, self._sda_pin, self.i2c_speed, 0)
-                )
+                    "i2c_set_software_bus oid=%d scl_pin=%s "
+                    "sda_pin=%s rate=%d address=%d" %
+                    (self.oid, self._scl_pin, self._sda_pin, self.i2c_speed, 0))
                 self._set_bus_cmd = self.mcu.lookup_command(
-                    "i2c_set_software_bus oid=%c scl_pin=%u sda_pin=%u rate=%u address=%u",
-                    cq=self.cmd_queue
-                )
+                    "i2c_set_software_bus oid=%c scl_pin=%u "
+                    "sda_pin=%u rate=%u address=%u",
+                    cq=self.cmd_queue)
                 self._sw_rate = self.i2c_speed
         else:
-            self._bus_id = bus.resolve_bus_name(self.mcu, "i2c_bus", self._bus_name)
+            self._bus_id = bus.resolve_bus_name(
+                self.mcu, "i2c_bus", self._bus_name)
             self.mcu.add_config_cmd(
                 "i2c_set_bus oid=%d i2c_bus=%s rate=%d address=%d"
                 % (self.oid, self._bus_id, self.i2c_speed, 0)
@@ -278,7 +299,8 @@ class I2CScanner:
             )
 
         # Safe transfer path
-        if self.mcu.try_lookup_command("i2c_transfer oid=%c write=%*s read_len=%u"):
+        if self.mcu.try_lookup_command(
+                "i2c_transfer oid=%c write=%*s read_len=%u"):
             self._xfer_qcmd = self.mcu.lookup_query_command(
                 "i2c_transfer oid=%c write=%*s read_len=%u",
                 "i2c_response oid=%c i2c_bus_status=%c response=%*s",
@@ -304,20 +326,23 @@ class I2CScanner:
                 self._set_bus_cmd.send([self.oid, self._scl_pin, self._sda_pin,
                                         self._sw_rate, addr])
         else:
-            self._set_bus_cmd.send([self.oid, self._bus_id, self.i2c_speed, addr])
+            self._set_bus_cmd.send(
+                [self.oid, self._bus_id, self.i2c_speed, addr])
 
     def _xfer(self, addr, write_bytes, read_len):
         self._set_addr(addr)
         try:
             if self._xfer_qcmd is not None:
-                params = self._xfer_qcmd.send([self.oid, write_bytes, read_len], retry=False)
+                params = self._xfer_qcmd.send(
+                    [self.oid, write_bytes, read_len], retry=False)
                 status = params.get("i2c_bus_status", "UNKNOWN")
                 resp = params.get("response", b"")
                 return (status == "SUCCESS"), status, resp
 
             # Fallback
             if read_len > 0:
-                params = self._read_qcmd.send([self.oid, write_bytes, read_len], retry=False)
+                params = self._read_qcmd.send(
+                    [self.oid, write_bytes, read_len], retry=False)
                 resp = params.get("response", b"")
                 return True, "SUCCESS", resp
             self._write_cmd.send([self.oid, write_bytes], retry=False)
@@ -358,7 +383,8 @@ class I2CScanner:
         if ok:
             return True, st
 
-        # Only attempt fallback when using the default probe (empty write, zero read).
+        # Only attempt fallback when using the default probe
+        # (empty write, zero read).
         # If the caller supplied explicit write bytes or a specific read length,
         # respect those and don't override.
         if not self._is_fatal_status(st) and not write_bytes and read_len == 0:
@@ -387,7 +413,8 @@ class I2CScanner:
         if status is None:
             return False
         s = str(status)
-        return s.startswith("ERROR:CommandError") or s.startswith("ERROR:TimeoutError")
+        return s.startswith("ERROR:CommandError") or s.startswith(
+            "ERROR:TimeoutError")
 
     def _scan_behind_mux(self, gcmd, mux_addr, channels, start, end,
                          write_bytes, read_len, avoid_addrs):
@@ -409,7 +436,8 @@ class I2CScanner:
                     pca._selected = ch  # keep pca cache in sync
 
                 if not ok_sel:
-                    mux_results["channels"][str(ch)] = {"found": [], "error": st_sel}
+                    mux_results["channels"][str(ch)] = {
+                        "found": [], "error": st_sel}
                     if self._is_fatal_status(st_sel):
                         mux_results["error"] = st_sel
                     # Isolate the channel before releasing the lock
@@ -427,9 +455,11 @@ class I2CScanner:
 
                 # Optional health check (1 transfer only)
                 if self.mux_health_check:
-                    ok_h, st_h = self._probe(self.mux_health_addr, bytearray(), 0)
+                    ok_h, st_h = self._probe(
+                        self.mux_health_addr, bytearray(), 0)
                     if not ok_h:
-                        mux_results["channels"][str(ch)] = {"found": [], "error": st_h}
+                        mux_results["channels"][str(ch)] = {
+                            "found": [], "error": st_h}
                         if self.mux_disable_between_channels:
                             self._mux_disable(mux_addr, pca)
                             self._sleep(self.mux_post_disable_s)
@@ -444,7 +474,8 @@ class I2CScanner:
                 for addr in range(start, end + 1):
                     if addr in avoid_addrs:
                         continue
-                    ok2, st2 = self._probe_with_fallback(addr, write_bytes, read_len)
+                    ok2, st2 = self._probe_with_fallback(
+                        addr, write_bytes, read_len)
                     if ok2:
                         found.append(addr)
                     else:
@@ -453,7 +484,8 @@ class I2CScanner:
                             mux_results["error"] = st2
                             break
 
-                mux_results["channels"][str(ch)] = {"found": found, "error": ch_error}
+                mux_results["channels"][str(ch)] = {
+                    "found": found, "error": ch_error}
 
                 # Disable between channels to isolate problematic branches
                 if self.mux_disable_between_channels:
@@ -474,30 +506,50 @@ class I2CScanner:
         try:
             # Rate limit (prevents scan-spam from killing MCU)
             now = self.reactor.monotonic()
-            if self.scan_min_interval_s > 0.0 and (now - self._last_scan_time) < self.scan_min_interval_s:
-                raise gcmd.error("SCAN_IIC throttled: wait %.2fs"
-                                 % (self.scan_min_interval_s - (now - self._last_scan_time),))
+            if self.scan_min_interval_s > 0.0 and (
+                    now - self._last_scan_time) < self.scan_min_interval_s:
+                raise gcmd.error("SCAN_IIC throttled: wait %.2fs" % (
+                    self.scan_min_interval_s - (now - self._last_scan_time),))
             self._last_scan_time = now
 
-            start = _parse_int(gcmd, "START", default=0x03, minval=0, maxval=127)
+            start = _parse_int(
+                gcmd,
+                "START",
+                default=0x03,
+                minval=0,
+                maxval=127)
             end = _parse_int(gcmd, "END", default=0x77, minval=0, maxval=127)
             if end < start:
                 raise gcmd.error("END must be >= START")
-            read_len = _parse_int(gcmd, "READ_LEN", default=0, minval=0, maxval=32)
+            read_len = _parse_int(
+                gcmd, "READ_LEN", default=0, minval=0, maxval=32)
 
             write_bytes = _parse_hex_bytes(gcmd.get("WRITE", None))
 
             mux_enable = self.mux_enable_default
             if _has_param(gcmd, "MUX"):
-                mux_enable = bool(_parse_int(gcmd, "MUX", default=0, minval=0, maxval=1))
+                mux_enable = bool(
+                    _parse_int(
+                        gcmd,
+                        "MUX",
+                        default=0,
+                        minval=0,
+                        maxval=1))
 
             mux_only = False
             if _has_param(gcmd, "MUX_ONLY"):
-                mux_only = bool(_parse_int(gcmd, "MUX_ONLY", default=0, minval=0, maxval=1))
+                mux_only = bool(
+                    _parse_int(
+                        gcmd,
+                        "MUX_ONLY",
+                        default=0,
+                        minval=0,
+                        maxval=1))
 
             mux_addr_forced = None
             if _has_param(gcmd, "MUX_ADDR"):
-                mux_addr_forced = _parse_int(gcmd, "MUX_ADDR", default=None, minval=0, maxval=127)
+                mux_addr_forced = _parse_int(
+                    gcmd, "MUX_ADDR", default=None, minval=0, maxval=127)
 
             mux_channels = self.mux_channels
             if _has_param(gcmd, "MUX_CH"):
@@ -506,7 +558,8 @@ class I2CScanner:
                     mux_channels = chans
 
             if mux_enable and self._xfer_qcmd is None:
-                raise gcmd.error("MUX scanning requires MCU command i2c_transfer.")
+                raise gcmd.error(
+                    "MUX scanning requires MCU command i2c_transfer.")
 
             found = []
             mux_results = []
@@ -520,7 +573,9 @@ class I2CScanner:
             if mux_enable:
                 for mux_addr_pre in self.mux_addresses:
                     pca_pre = self._pca_objects.get(mux_addr_pre & 0x7F)
-                    lock_pre = pca_pre._lock if pca_pre is not None else _NULL_CTX
+                    lock_pre = (
+                        pca_pre._lock if pca_pre is not None else _NULL_CTX
+                    )
                     with lock_pre:
                         self._mux_disable(mux_addr_pre, pca_pre)
                 self._sleep(self.mux_post_disable_s)
@@ -532,7 +587,9 @@ class I2CScanner:
                     if ok:
                         found.append(addr)
                     elif self._is_fatal_status(st):
-                        raise gcmd.error("I2C transport error during base scan: %s" % (st,))
+                        raise gcmd.error(
+                            "I2C transport error during base scan: %s" %
+                            (st,))
 
             # --- Mux scan ---
             if mux_enable:
@@ -543,7 +600,9 @@ class I2CScanner:
 
                 # de-dup keep order
                 seen = set()
-                mux_to_scan = [a for a in mux_to_scan if not (a in seen or seen.add(a))]
+                mux_to_scan = [
+                    a for a in mux_to_scan if not (
+                        a in seen or seen.add(a))]
 
                 # avoid_addrs: skip the mux ICs themselves AND any device
                 # already found on the main bus (prevents ghost readings).
@@ -554,28 +613,32 @@ class I2CScanner:
                 for ma in mux_to_scan:
                     okm, stm = self._probe(ma, bytearray(), 0)
                     if not okm:
-                        mux_results.append({"addr": ma, "error": stm, "channels": {}})
+                        mux_results.append(
+                            {"addr": ma, "error": stm, "channels": {}})
                         if self._is_fatal_status(stm):
                             break
                         continue
 
                     mr = self._scan_behind_mux(
-                        gcmd, ma, mux_channels, start, end, write_bytes, read_len, avoid_addrs
-                    )
+                        gcmd, ma, mux_channels, start, end,
+                        write_bytes, read_len, avoid_addrs)
                     mux_results.append(mr)
-                    if mr.get("error") is not None and self._is_fatal_status(mr["error"]):
+                    if mr.get("error") is not None and self._is_fatal_status(
+                            mr["error"]):
                         break
 
-                # If we saw fatal transport errors, stop now (prevents alloc_chunk spiral)
+                # If we saw fatal transport errors, stop now (prevents
+                # alloc_chunk spiral)
                 for mr in mux_results:
                     ferr = mr.get("error")
                     if ferr is not None and self._is_fatal_status(ferr):
                         raise gcmd.error(
-                            "I2C transport error while scanning mux 0x%02X: %s. "
-                            "This usually means a bad mux channel (SDA/SCL held) -> fix wiring or "
-                            "exclude channels via mux_channels / MUX_CH. Then run FIRMWARE_RESTART."
-                            % (mr["addr"], ferr)
-                        )
+                            "I2C transport error while scanning mux "
+                            "0x%02X: %s. This usually means a bad mux "
+                            "channel (SDA/SCL held) -> fix wiring or "
+                            "exclude channels via mux_channels / MUX_CH. "
+                            "Then run FIRMWARE_RESTART." %
+                            (mr["addr"], ferr))
 
             self.last_found = found
             self.last_range = (start, end)
@@ -586,9 +649,9 @@ class I2CScanner:
             if not mux_only:
                 if found:
                     lines.append(
-                        "SCAN_IIC name=%s range=0x%02X..0x%02X found=%s"
-                        % (self.name, start, end, " ".join(["0x%02X" % a for a in found]))
-                    )
+                        "SCAN_IIC name=%s range=0x%02X..0x%02X found=%s" % (
+                            self.name, start, end,
+                            " ".join(["0x%02X" % a for a in found])))
                 else:
                     lines.append(
                         "SCAN_IIC name=%s range=0x%02X..0x%02X found=none"
@@ -602,22 +665,31 @@ class I2CScanner:
                     for mr in mux_results:
                         ma = mr["addr"]
                         if mr.get("error") and not mr.get("channels"):
-                            lines.append("MUX_SCAN mux=0x%02X error=%s" % (ma, mr["error"]))
+                            lines.append(
+                                "MUX_SCAN mux=0x%02X error=%s" %
+                                (ma, mr["error"]))
                             continue
                         chmap = mr.get("channels", {}) or {}
                         for ch_s, info in chmap.items():
                             err = info.get("error")
                             fnd = info.get("found", [])
                             if err:
-                                lines.append("MUX_SCAN mux=0x%02X ch=%s error=%s" % (ma, ch_s, err))
+                                lines.append(
+                                    "MUX_SCAN mux=0x%02X ch=%s error=%s" %
+                                    (ma, ch_s, err))
                             else:
                                 if fnd:
                                     lines.append(
                                         "MUX_SCAN mux=0x%02X ch=%s found=%s"
-                                        % (ma, ch_s, " ".join(["0x%02X" % a for a in fnd]))
-                                    )
+                                        % (
+                                            ma, ch_s,
+                                            " ".join(
+                                                ["0x%02X" % a for a in fnd]
+                                            )))
                                 else:
-                                    lines.append("MUX_SCAN mux=0x%02X ch=%s found=none" % (ma, ch_s))
+                                    lines.append(
+                                        "MUX_SCAN mux=0x%02X ch=%s found=none" %
+                                        (ma, ch_s))
 
             gcmd.respond_info("\n".join(lines))
 
@@ -629,11 +701,17 @@ class I2CScanner:
         mux_status = []
         for mr in self.last_mux:
             ma = mr.get("addr", 0)
-            entry = {"addr": "0x%02X" % (ma,), "error": mr.get("error", None), "channels": {}}
+            entry = {
+                "addr": "0x%02X" %
+                (ma,), "error": mr.get(
+                    "error", None), "channels": {}}
             chs = mr.get("channels", {}) or {}
             for ch_s, info in chs.items():
                 entry["channels"][str(ch_s)] = {
-                    "found": ["0x%02X" % a for a in (info.get("found", []) or [])],
+                    "found": [
+                        "0x%02X" % a
+                        for a in (info.get("found", []) or [])
+                    ],
                     "error": info.get("error", None),
                 }
             mux_status.append(entry)

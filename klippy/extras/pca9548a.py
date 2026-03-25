@@ -17,11 +17,12 @@ _GCODE_REGISTERED = False
 
 
 def _patch_i2c_no_shutdown(dev, printer):
-    """Patch dev.i2c_transfer (instance override) to raise instead of invoke_shutdown.
+    """Patch dev.i2c_transfer to raise instead of invoke_shutdown.
 
     bus.py's i2c_transfer calls printer.invoke_shutdown() on any non-SUCCESS I2C
-    status (NACK, timeout, etc.).  invoke_shutdown does NOT raise a Python exception
-    — it queues a Klipper restart.  Sensor drivers' `except Exception:` blocks
+    status (NACK, timeout, etc.). invoke_shutdown does NOT raise a
+    Python exception. It queues a Klipper restart. Sensor drivers'
+    `except Exception:` blocks
     cannot protect against it.
 
     For devices behind a mux, transient NACKs on the first read after a channel
@@ -30,7 +31,8 @@ def _patch_i2c_no_shutdown(dev, printer):
 
     IMPORTANT: i2c_transfer_cmd is None at config-load time (set only during MCU
     _build_config at klippy:connect).  The lookup is done lazily inside
-    safe_transfer so the patch works even though wrap_device is called at config time.
+    safe_transfer so the patch works even though wrap_device is called
+    at config time.
     """
     def safe_transfer(write, read_len=0, minclock=0, reqclock=0, retry=True):
         cmd = getattr(dev, 'i2c_transfer_cmd', None)
@@ -56,7 +58,7 @@ def _patch_i2c_no_shutdown(dev, printer):
 
 
 class _MuxedI2CDevice:
-    """Wrap an MCU_I2C device so that a mux channel is selected before each transfer."""
+    """Wrap an MCU_I2C device and select the mux channel per transfer."""
 
     def __init__(self, printer, mux, channel, dev):
         self._printer = printer
@@ -66,7 +68,8 @@ class _MuxedI2CDevice:
 
         self._pending = []
         self._connected = False
-        self._printer.register_event_handler("klippy:connect", self._handle_connect)
+        self._printer.register_event_handler(
+            "klippy:connect", self._handle_connect)
 
     def _handle_connect(self):
         self._connected = True
@@ -81,8 +84,9 @@ class _MuxedI2CDevice:
         if not self._connected:
             self._pending.append((method_name, args, kwargs))
             return None
-        return self._mux._with_channel(self._channel, getattr(self._dev, method_name),
-                                       *args, **kwargs)
+        return self._mux._with_channel(
+            self._channel, getattr(
+                self._dev, method_name), *args, **kwargs)
 
     def i2c_write(self, *args, **kwargs):
         return self._call("i2c_write", *args, **kwargs)
@@ -101,12 +105,14 @@ class PCA9548A:
     def __init__(self, config):
         self._printer = config.get_printer()
         self._section_name = config.get_name()          # e.g. "pca9548a mux0"
-        self._mux_name = self._section_name.split(None, 1)[1] if " " in self._section_name else self._section_name
+        self._mux_name = self._section_name.split(
+            None, 1)[1] if " " in self._section_name else self._section_name
 
         self._lock = self._printer.get_reactor().mutex()
         self._selected = None
 
-        # IMPORTANT: mux control device must be direct and never routed through itself.
+        # IMPORTANT: mux control device must be direct and never routed through
+        # itself.
         self._i2c = bus.MCU_I2C_from_config(
             config,
             default_addr=_DEFAULT_MUX_I2C_ADDR,
@@ -121,8 +127,10 @@ class PCA9548A:
             gcode.register_command(
                 "IIC_MUX_SELECT",
                 self._cmd_IIC_MUX_SELECT,
-                desc="Select mux channel: IIC_MUX_SELECT MUX=<name> CHANNEL=<0..7>"
-            )
+                desc=(
+                    "Select mux channel: IIC_MUX_SELECT "
+                    "MUX=<name> CHANNEL=<0..7>"
+                ))
             gcode.register_command(
                 "IIC_MUX_STATUS",
                 self._cmd_IIC_MUX_STATUS,
@@ -133,15 +141,18 @@ class PCA9548A:
         if channel < 0 or channel > 7:
             raise ValueError("PCA9548A channel must be 0..7")
         mask = 1 << channel
-        # PCA9548A: writing a byte selects exactly those channels whose bits are set.
-        # Writing 0x01 for ch0 implicitly deselects ch1-7; no separate 0x00 write needed.
+        # PCA9548A: writing a byte selects exactly those channels whose
+        # bits are set.
+        # Writing 0x01 for ch0 implicitly deselects ch1-7; no separate 0x00
+        # write needed.
         self._i2c.i2c_write([mask])
         self._selected = channel
 
     def _with_channel(self, channel, fn, *args, **kwargs):
         with self._lock:
             # Skip the mux write if the channel is already selected.
-            # PCA9548A retains its register across reads, so this is safe as long
+            # PCA9548A retains its register across reads, so this is safe
+            # as long
             # as _lock prevents concurrent channel switches.
             if self._selected != channel:
                 self._set_channel_nolock(channel)
@@ -157,10 +168,12 @@ class PCA9548A:
 
     def _lookup_mux_instance(self, mux_name):
         # Accept "mux0" or full "pca9548a mux0"
-        objname = mux_name if mux_name.startswith("pca9548a ") else f"pca9548a {mux_name}"
+        objname = mux_name if mux_name.startswith(
+            "pca9548a ") else f"pca9548a {mux_name}"
         mux = self._printer.lookup_object(objname, None)
         if mux is None:
-            raise self._printer.config_error(f"IIC_MUX_*: mux '{objname}' not found")
+            raise self._printer.config_error(
+                f"IIC_MUX_*: mux '{objname}' not found")
         return mux
 
     def _cmd_IIC_MUX_SELECT(self, gcmd):
@@ -180,7 +193,8 @@ class PCA9548A:
             gcmd.respond_info(f"{mux_name}: selected channel {mux._selected}")
             return
 
-        gcmd.respond_info("IIC_MUX_STATUS: specify MUX=<name>, e.g. IIC_MUX_STATUS MUX=mux0")
+        gcmd.respond_info(
+            "IIC_MUX_STATUS: specify MUX=<name>, e.g. IIC_MUX_STATUS MUX=mux0")
 
 
 def load_config_prefix(config):

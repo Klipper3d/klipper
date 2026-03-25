@@ -65,7 +65,8 @@ class MLX90614:
             )
 
         # Polling interval (seconds)
-        self.report_time = config.getfloat("mlx90614_report_time", 0.5, minval=0.05)
+        self.report_time = config.getfloat(
+            "mlx90614_report_time", 0.5, minval=0.05)
 
         # Validate SMBus PEC byte returned by the device
         self.verify_pec = config.getboolean("mlx90614_verify_pec", True)
@@ -81,7 +82,8 @@ class MLX90614:
         if self.printer.get_start_args().get("debugoutput") is not None:
             return
 
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect)
 
     # --- Klipper temperature-sensor interface ---
     def setup_minmax(self, min_temp, max_temp):
@@ -116,8 +118,9 @@ class MLX90614:
             expect = _crc8_smbus(bytes([sa_w, reg & 0xFF, sa_r, lsb, msb]))
             if pec != expect:
                 raise self.printer.command_error(
-                    f"mlx90614: PEC mismatch (got=0x{pec:02X}, expect=0x{expect:02X})"
-                )
+                    f"mlx90614: PEC mismatch (got=0x{
+                        pec:02X}, expect=0x{
+                        expect:02X})")
 
         return (msb << 8) | lsb
 

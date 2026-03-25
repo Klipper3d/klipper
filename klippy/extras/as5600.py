@@ -6,13 +6,13 @@
 # It can be accessed via regular polling.
 #
 # Configuration:
-#[as5600 my_sensor]
-#i2c_mcu: mcu
-#i2c_software_scl_pin: PA8
-#i2c_software_sda_pin: PC9
-#i2c_address: 54
-#report_time: 0.1
-#stepper: stepper_x 
+# [as5600 my_sensor]
+# i2c_mcu: mcu
+# i2c_software_scl_pin: PA8
+# i2c_software_sda_pin: PC9
+# i2c_address: 54
+# report_time: 0.1
+# stepper: stepper_x
 
 import logging
 from . import bus
@@ -25,9 +25,10 @@ except ImportError:
 # AS5600 Registers
 _REG_RAW_ANGLE_H = 0x0C
 _REG_RAW_ANGLE_L = 0x0D
-_REG_ANGLE_H     = 0x0E
-_REG_ANGLE_L     = 0x0F
-_REG_STATUS      = 0x0B
+_REG_ANGLE_H = 0x0E
+_REG_ANGLE_L = 0x0F
+_REG_STATUS = 0x0B
+
 
 class AS5600:
     def __init__(self, config):
@@ -53,7 +54,8 @@ class AS5600:
             if AngleCalibration is not None:
                 self.calibration = AngleCalibration(config)
             else:
-                raise config.error("AngleCalibration not available. Cannot link stepper.")
+                raise config.error(
+                    "AngleCalibration not available. Cannot link stepper.")
 
         self._sample_timer = self.reactor.register_timer(self._sample)
 
@@ -61,8 +63,9 @@ class AS5600:
         if self.printer.get_start_args().get("debugoutput") is not None:
             return
 
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
-        
+        self.printer.register_event_handler(
+            "klippy:connect", self._handle_connect)
+
         # Register a GCode command for querying the current angle
         gcode = self.printer.lookup_object('gcode')
         gcode.register_mux_command(
@@ -89,28 +92,31 @@ class AS5600:
         measured_time = self.reactor.monotonic()
 
         try:
-            # Read STATUS (0x0B) to verify magnet presence (optional) and RAW_ANGLE (0x0C-0x0D)
+            # Read STATUS (0x0B) to verify magnet presence (optional)
+            # and RAW_ANGLE (0x0C-0x0D).
             # Actually, to keep it simple, we just read RAW_ANGLE
             resp = self._read_registers(_REG_RAW_ANGLE_H, 2)
-            
+
             # Combine 12-bit value: bits 8-11 in high byte, bits 0-7 in low byte
             self.raw_angle = ((resp[0] & 0x0F) << 8) | resp[1]
-            
+
             # Calculate angle in degrees (0 to 360)
             self.angle_deg = (self.raw_angle / 4096.0) * 360.0
 
             if self._clients:
-                print_time = self.i2c.get_mcu().estimated_print_time(measured_time)
-                
-                # AS5600 is 12-bit (0-4095). Klipper AngleCalibration expects 16-bit angles.
+                print_time = self.i2c.get_mcu().estimated_print_time(
+                    measured_time)
+
+                # AS5600 is 12-bit (0-4095). Klipper AngleCalibration
+                # expects 16-bit angles.
                 # Shift by 4 to map 0x0FFF to 0xFFF0.
                 klipper_angle = self.raw_angle << 4
                 samples = [(print_time, klipper_angle)]
-                
+
                 offset = None
                 if self.calibration is not None:
                     offset = self.calibration.apply_calibration(samples)
-                
+
                 msg = {
                     'data': samples,
                     'errors': 0,
@@ -120,7 +126,9 @@ class AS5600:
                     client(msg)
 
         except Exception:
-            logging.exception("as5600: error reading from sensor '%s'", self.name)
+            logging.exception(
+                "as5600: error reading from sensor '%s'",
+                self.name)
             return next_time
 
         return next_time
@@ -137,13 +145,15 @@ class AS5600:
         gcmd.respond_info("AS5600 %s: raw_angle=%d angle=%.2f deg" % (
             self.name, self.raw_angle, self.angle_deg))
 
-    # --- Client interface (optional but useful for streaming/analysis plugins) ---
+    # --- Client interface (optional but useful for streaming/analysis
+    # plugins) ---
     def add_client(self, callback):
         self._clients.append(callback)
+
 
 def load_config(config):
     return AS5600(config)
 
+
 def load_config_prefix(config):
     return AS5600(config)
-

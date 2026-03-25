@@ -24,7 +24,10 @@ def _parse_int_auto(s: str) -> int:
     return int(s.strip(), 0)
 
 
-def _patched_MCU_I2C_from_config(config, default_addr=None, default_speed=100000):
+def _patched_MCU_I2C_from_config(
+        config,
+        default_addr=None,
+        default_speed=100000):
     dev = _ORIG_MCU_I2C_FROM_CONFIG(config, default_addr, default_speed)
     printer = config.get_printer()
     router = printer.lookup_object("i2c_router", None)
@@ -65,10 +68,12 @@ class I2CRouter:
             if not line:
                 continue
             if "=" not in line:
-                raise config.error("i2c_router: each map line must be 'KEY = muxname:channel'")
+                raise config.error(
+                    "i2c_router: each map line must be 'KEY = muxname:channel'")
             key, val = [p.strip() for p in line.split("=", 1)]
             if ":" not in val:
-                raise config.error("i2c_router: map value must be 'muxname:channel'")
+                raise config.error(
+                    "i2c_router: map value must be 'muxname:channel'")
             mux_name, ch_str = [p.strip() for p in val.split(":", 1)]
             ch = _parse_int_auto(ch_str)
             if ch < 0 or ch > 7:
@@ -85,10 +90,12 @@ class I2CRouter:
 
     def _lookup_mux(self, mux_name: str):
         # Allow either "mux0" or "pca9548a mux0"
-        objname = mux_name if mux_name.startswith("pca9548a ") else f"pca9548a {mux_name}"
+        objname = mux_name if mux_name.startswith(
+            "pca9548a ") else f"pca9548a {mux_name}"
         mux = self._printer.lookup_object(objname, None)
         if mux is None:
-            raise self._printer.config_error(f"i2c_router: mux '{objname}' not found")
+            raise self._printer.config_error(
+                f"i2c_router: mux '{objname}' not found")
         return mux
 
     def _effective_i2c_params(self, config, default_addr):
@@ -118,7 +125,12 @@ class I2CRouter:
     def _wrap(self, mux_name: str, ch: int, dev, why: str, section: str):
         mux = self._lookup_mux(mux_name)
         if self._debug:
-            _LOG.info("i2c_router: routing '%s' via %s:%d (%s)", section, mux_name, ch, why)
+            _LOG.info(
+                "i2c_router: routing '%s' via %s:%d (%s)",
+                section,
+                mux_name,
+                ch,
+                why)
         return mux.wrap_device(dev, ch)
 
     def route_device(self, config, dev, default_addr):
@@ -131,7 +143,8 @@ class I2CRouter:
         if section_name == "i2c_router":
             return dev
 
-        section, mcu, bus_name, addr = self._effective_i2c_params(config, default_addr)
+        section, mcu, bus_name, addr = self._effective_i2c_params(
+            config, default_addr)
 
         # 1) Exact section mapping (handles duplicates)
         if section in self._map:
@@ -159,11 +172,14 @@ class I2CRouter:
 
         if self._strict:
             raise config.error(
-                f"i2c_router(strict): no route for '{section}' (mcu={mcu} bus={bus_name} addr=0x{addr:02x})"
-            )
+                "i2c_router(strict): no route for '%s' "
+                "(mcu=%s bus=%s addr=0x%02x)"
+                % (section, mcu, bus_name, addr))
 
         if self._debug:
-            _LOG.info("i2c_router: no route for '%s' (passing through)", section)
+            _LOG.info(
+                "i2c_router: no route for '%s' (passing through)",
+                section)
 
         return dev
 
@@ -178,9 +194,12 @@ class I2CRouter:
         else:
             lines.append("  map:")
             for k, (mux, ch) in sorted(self._map.items(), key=lambda x: x[0]):
-                objname = mux if mux.startswith("pca9548a ") else f"pca9548a {mux}"
+                objname = mux if mux.startswith(
+                    "pca9548a ") else f"pca9548a {mux}"
                 exists = self._printer.lookup_object(objname, None) is not None
-                lines.append(f"    {k} = {mux}:{ch}  ({'ok' if exists else 'MISSING'})")
+                lines.append(
+                    f"    {k} = {mux}:{ch}  ({
+                        'ok' if exists else 'MISSING'})")
         gcmd.respond_info("\n".join(lines))
 
 

@@ -8,6 +8,7 @@ import logging
 import struct
 from . import bus
 
+
 def sensirion_crc(data):
     crc = 0xFF
     for byte in data:
@@ -19,6 +20,7 @@ def sensirion_crc(data):
                 crc = (crc << 1) & 0xFF
     return crc
 
+
 class SCD30:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -26,7 +28,8 @@ class SCD30:
         self.reactor = self.printer.get_reactor()
 
         # default SCD30 addr is 0x61 (97)
-        self.i2c = bus.MCU_I2C_from_config(config, default_addr=0x61, default_speed=100000)
+        self.i2c = bus.MCU_I2C_from_config(
+            config, default_addr=0x61, default_speed=100000)
         self.report_time = config.getfloat('report_time', 2.0, minval=0.5)
 
         self.co2 = 0.0
@@ -44,7 +47,8 @@ class SCD30:
         # via REST API: GET /printer/objects/query?scd30 <name>
         self.printer.add_object("scd30 " + self.name, self)
 
-        self.printer.register_event_handler("klippy:connect", self.handle_connect)
+        self.printer.register_event_handler(
+            "klippy:connect", self.handle_connect)
 
         gcode = self.printer.lookup_object('gcode')
         gcode.register_mux_command(
@@ -58,7 +62,8 @@ class SCD30:
 
     def _i2c_read_cmd(self, cmd_bytes, read_len):
         # SCD30 requires a full STOP after the command write before reading.
-        # Using i2c_read([cmd], n) sends a repeated-START which the SCD30 ignores.
+        # Using i2c_read([cmd], n) sends a repeated-START which the
+        # SCD30 ignores.
         # Firmware reference (CO2_SENSORS_TEMP.py):
         #   i2c.writeto(ADDR, cmd)   <- STOP
         #   i2c.readfrom(ADDR, n)    <- new START
@@ -76,7 +81,8 @@ class SCD30:
             elif self.state == "request_ready":
                 params = self._i2c_read_cmd([0x02, 0x02], 3)
                 resp = bytearray(params["response"])
-                if len(resp) == 3 and sensirion_crc(resp[0:2]) == resp[2] and resp[1] == 1:
+                if len(resp) == 3 and sensirion_crc(
+                        resp[0:2]) == resp[2] and resp[1] == 1:
                     self.state = "read_data"
                     return eventtime + 0.010
                 return eventtime + self.report_time
@@ -87,8 +93,8 @@ class SCD30:
                 if len(resp) == 18:
                     data = bytearray()
                     for i in range(6):
-                        word = resp[i*3 : i*3+2]
-                        crc  = resp[i*3+2]
+                        word = resp[i * 3: i * 3 + 2]
+                        crc = resp[i * 3 + 2]
                         if sensirion_crc(word) == crc:
                             data.extend(word)
                         else:
@@ -96,8 +102,8 @@ class SCD30:
                             self.state = "request_ready"
                             return eventtime + self.report_time
                     if len(data) == 12:
-                        self.co2      = struct.unpack(">f", data[0:4])[0]
-                        self.temp     = struct.unpack(">f", data[4:8])[0]
+                        self.co2 = struct.unpack(">f", data[0:4])[0]
+                        self.temp = struct.unpack(">f", data[4:8])[0]
                         self.humidity = struct.unpack(">f", data[8:12])[0]
                         self.is_ready = True
                         if self.temp_callback is not None:
@@ -126,9 +132,9 @@ class SCD30:
     # --- Printer object status (REST API + G-code) ---
     def get_status(self, eventtime):
         return {
-            'co2':         round(self.co2, 1),
+            'co2': round(self.co2, 1),
             'temperature': round(self.temp, 2),
-            'humidity':    round(self.humidity, 1),
+            'humidity': round(self.humidity, 1),
         }
 
     def cmd_QUERY_SCD30(self, gcmd):
@@ -138,11 +144,15 @@ class SCD30:
                 (self.name, self.co2, self.temp, self.humidity)
             )
         else:
-            gcmd.respond_info("SCD30 %s: Not ready or error reading data" % self.name)
+            gcmd.respond_info(
+                "SCD30 %s: Not ready or error reading data" %
+                self.name)
+
 
 def load_config(config):
     pheaters = config.get_printer().load_object(config, 'heaters')
     pheaters.add_sensor_factory("SCD30", SCD30)
+
 
 def load_config_prefix(config):
     return SCD30(config)
