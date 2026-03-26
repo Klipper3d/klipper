@@ -435,10 +435,13 @@ class ToolHead:
         last_move = self.lookahead.get_last()
         if last_move is not None:
             last_move.limit_next_junction_speed(speed)
-    def move(self, newpos, speed):
+    def move(self, newpos, speed, target_orientation=None):
         move = Move(self, self.commanded_pos, newpos, speed)
         if not move.move_d:
             return
+        # 附加目标姿态信息（用于前向传递到check_move）
+        if target_orientation is not None:
+            move.target_orientation = target_orientation
         if move.is_kinematic_move:
             self.kin.check_move(move)
         for e_index, ea in enumerate(self.extra_axes):
