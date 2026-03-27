@@ -1,5 +1,8 @@
-# Support for UC1701 (and similar) 128x64 graphics LCD displays
+# Support for SSD1363 256x128 OLED display
+# Based off uc1701 klipper implementation and
+# U8G2 orginal implementation for ssd1363
 #
+# Copyright holders are preserved as i consider this a derivative work of both implementations.
 # Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 # Copyright (C) 2018  Eric Callahan  <arksine.code@gmail.com>
 #
