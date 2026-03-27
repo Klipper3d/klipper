@@ -47,12 +47,16 @@ radius.
 
 In order to perform this calibration the initial delta parameters (arm
 lengths, radius, and endstop positions) must be provided and they
-should have an accuracy to within a few millimeters. Most delta
-printer kits will provide these parameters - configure the printer
-with these initial defaults and then go on to run the DELTA_CALIBRATE
-command as described below. If no defaults are available then search
-online for a delta calibration guide that can provide a basic starting
-point.
+should have an accuracy to within a few millimeters. Specifically,
+ensure your config file has the minimum values specified in the
+printer, stepper_a, and delta_calibrate sections, as described in the
+kinematics section of the [Config_Reference](https://www.klipper3d.org/Config_Reference.html#common-kinematic-settings).
+
+Most delta printer kits will provide exact values for these parameters
+- configure the printer with these initial defaults and then run
+the DELTA_CALIBRATE command as described below. If no defaults are available
+then search online for a delta calibration guide that can provide a basic starting
+point, such as the [RepRap project's Delta Geometry page](https://reprap.org/wiki/Delta_geometry).
 
 During the delta calibration process it may be necessary for the
 printer to probe below what would otherwise be considered the plane of
@@ -91,6 +95,12 @@ delta parameters such that the nozzle is the correct distance from the
 bed. However, it does not attempt to calibrate X and Y dimensional
 accuracy. It's a good idea to perform an enhanced delta calibration to
 verify dimensional accuracy.
+
+If your X and Y dimensions are incorrect by
+more than a few percent, this may indicate an error in the initial
+parameters you supplied before running the basic delta calibration.
+In that situation, review the parameters and ensure you understand
+the geometery behind delta kinematics design.
 
 This calibration procedure requires printing a test object and
 measuring parts of that test object with digital calipers.
