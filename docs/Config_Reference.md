@@ -4538,8 +4538,8 @@ Support for a display attached to the micro-controller.
 [display]
 lcd_type:
 #   The type of LCD chip in use. This may be "hd44780", "hd44780_spi",
-#   "aip31068_spi", "st7920", "emulated_st7920", "uc1701", "ssd1306", or
-#   "sh1106".
+#   "aip31068_spi", "st7920", "emulated_st7920", "uc1701", "ssd1306",
+#   "ssd1363", "sh1106".
 #   See the display sections below for information on each type and
 #   additional parameters they provide. This parameter must be
 #   provided.
@@ -4807,6 +4807,56 @@ lcd_type:
 #   0.
 ...
 ```
+
+#### ssd1363 display
+
+Information on configuring ssd1363 display.
+
+```
+[display]
+lcd_type: ssd1363
+#i2c_mcu:
+#i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#i2c_speed:
+#   Optional parameters available for displays connected via an i2c
+#   bus. See the "common I2C settings" section for a description of
+#   the above parameters.
+#cs_pin:
+#dc_pin:
+#spi_speed:
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   The pins connected to the lcd when in "4-wire" spi mode. See the
+#   "common SPI settings" section for a description of the parameters
+#   that start with "spi_". The default is to use i2c mode for the
+#   display.
+#reset_pin:
+#   A reset pin may be specified on the display. If it is not
+#   specified then the hardware must have a pull-up on the
+#   corresponding lcd line.
+#contrast:
+#   The contrast to set. The value may range from 0 to 256 and the
+#   default is 239.
+#vcomh: 0
+#   Set the Vcomh value on the display. This value is associated with
+#   a "smearing" effect on some OLED displays. The value may range
+#   from 0 to 7. Default is 0.
+#invert: False
+#   TRUE inverts the pixels on certain OLED displays.  The default is
+#   False.
+#x_offset: 8
+#   Set the horizontal offset value on SH1106 displays. The valid range
+#   is between 0 and 79 The default is 8. 
+#effect: emboss
+#   Gives a 3d like feel to icons/text and other graphics on the display. 
+#   Possible options are emboss or none. Default is emboss
+...
+```
+
 
 ### [display_data]
 
