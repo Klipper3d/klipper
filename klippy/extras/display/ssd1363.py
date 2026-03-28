@@ -369,7 +369,7 @@ class SSD1363(DisplayBase):
                 old_data[:] = new_data
                 continue
             # Coalesce into runs: merge tile j into current run if the gap is
-            # <= 3 tiles (re-sending <= 96 unchanged bytes saves 7 transactions).
+            # <= 3 tiles
             runs = []
             run_start = run_end = dirty[0]
             for j in dirty[1:]:
