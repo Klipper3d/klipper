@@ -4,17 +4,17 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from .strategy import FontSourceStrategy, FontDataObject, FontStrategyError
-from typing import Dict, List
+import io
 import logging
 
 class BdfFontSource(FontSourceStrategy):
 
     def __init__(self,
-                 font_file: str,
-                 cell_width: int,
-                 cell_height: int,
-                 charset: str = 'ascii',
-                 fallback_codepoint: int = ord('?')):
+                 font_file,
+                 cell_width,
+                 cell_height,
+                 charset = 'ascii',
+                 fallback_codepoint = ord('?')):
         self.font_file = font_file
         self.charset = charset
         self.font_src = FontDataObject(cell_width,
@@ -27,7 +27,7 @@ class BdfFontSource(FontSourceStrategy):
             return set(range(0x20, 0x7F))
         raise FontStrategyError("Unsupported charset '%s'" % (self.charset))
     # parse the single BBX lines: BBX w h xoff yoff
-    def _parse_bbx(self, line: str):
+    def _parse_bbx(self, line):
         parts = line.split()
         if len(parts) != 5:
           raise FontStrategyError('Invalid BBX line: %s', (line))
@@ -44,12 +44,12 @@ class BdfFontSource(FontSourceStrategy):
         row_bits = self.font_src.width
         return row_value & ((1 << row_bits) - 1)
     #Font Loading Routine
-    def load(self)-> FontDataObject:
+    def load(self):
         # open the font file
         try:
-            with open(self.font_file, "r",
-                      encoding='ascii',
-                      errors='strict') as ff:
+            with io.open(self.font_file, "r",
+                         encoding='ascii',
+                         errors='strict') as ff:
                 lines = [ ln.rstrip("\n") for ln in ff]
             logging.debug("Loaded font %s with %d lines"
                           % (self.font_file, len(lines)))
@@ -75,7 +75,7 @@ class BdfFontSource(FontSourceStrategy):
 
         return self.font_src
     #iterate through lines and build glyphs
-    def _read_lines(self, lines)->Dict[int, List[int]]:
+    def _read_lines(self, lines):
         allowed = self._allowed_codepoints()
         glyph_rows = {}
         i=0

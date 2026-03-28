@@ -3,15 +3,11 @@
 # Copyright (C) 2036  Christian Hofbauer <chof@gmx.at>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-from .strategy import FontDataObject, SwizzleStrategy, SwizzleStrategyError
-from typing import Dict, List, Tuple
-import logging
+from .strategy import SwizzleStrategy, SwizzleStrategyError
 
 class PageSwizzleStrategy(SwizzleStrategy):
   #swizzling font data from row major bits to pages for display
-  def swizzle_glyph(self,
-                    font_data: FontDataObject) -> Tuple[
-                        Dict[int, List[bytearray]], int]:
+  def swizzle_glyph(self, font_data):
       if (font_data.height % 8 != 0):
           raise SwizzleStrategyError(
               'Invalid font glyph height: %d, expect multiples of 8'

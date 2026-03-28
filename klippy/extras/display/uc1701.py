@@ -77,7 +77,7 @@ class DisplayBase:
         bits_top = [(top >> s) & 0xff for s in range(0, 64, 8)]
         bits_bot = [(bot >> s) & 0xff for s in range(0, 64, 8)]
         return (bytearray(bits_top), bytearray(bits_bot))
-    def set_font_profile(self, profile: DisplayFont):
+    def set_font_profile(self, profile):
         # set the font profile to use for text rendering.
         if profile is None:
             return
