@@ -4850,9 +4850,9 @@ lcd_type: ssd1363
 #   False.
 #x_offset: 8
 #   Set the horizontal offset value on SH1106 displays. The valid range
-#   is between 0 and 79 The default is 8. 
+#   is between 0 and 79 The default is 8.
 #effect: emboss
-#   Gives a 3d like feel to icons/text and other graphics on the display. 
+#   Gives a 3d like feel to icons/text and other graphics on the display.
 #   Possible options are emboss or none. Default is emboss
 ...
 ```
