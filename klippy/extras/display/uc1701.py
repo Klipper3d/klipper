@@ -6,7 +6,13 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 from .. import bus
-from .fonts import FontCacheBuilder, BuiltinVGAFontSource, PageSwizzleStrategy, DisplayFont, DISPLAY_FONT_SourcingStrategies
+from .fonts import (
+  FontCacheBuilder,
+  BuiltinVGAFontSource,
+  PageSwizzleStrategy,
+  DisplayFont,
+  DISPLAY_FONT_SourcingStrategies
+)
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
 
@@ -25,8 +31,9 @@ class DisplayBase:
 
         self.x_offset = x_offset
         self.vram = [bytearray(self.columns) for i in range(self.page_count)]
-        self.all_framebuffers = [(self.vram[i], bytearray(b'~'*self.columns), i)
-                                 for i in range(self.page_count)]
+        self.all_framebuffers = [
+            (self.vram[i], bytearray(b'~'*self.columns), i)
+                for i in range(self.page_count)]
         # Cache fonts and icons in display byte order
         builtin_font_src = BuiltinVGAFontSource()
         self.font_swizzler = PageSwizzleStrategy()
@@ -73,11 +80,12 @@ class DisplayBase:
     def set_font_profile(self, profile: DisplayFont):
         # set the font profile to use for text rendering.
         if profile is None:
-            return 
+            return
         if profile.format not in DISPLAY_FONT_SourcingStrategies.keys():
-            raise RuntimeError("Unsupported display font profile format '%s'" % (profile.format))
+            raise RuntimeError("Unsupported display font profile format '%s'"
+                               % (profile.format))
         Strategy = DISPLAY_FONT_SourcingStrategies[profile.format]
-        sourcing_strategy = Strategy(profile.font_file, 
+        sourcing_strategy = Strategy(profile.font_file,
                                      profile.cell_width,
                                      profile.cell_height,
                                      profile.charset,
@@ -99,7 +107,9 @@ class DisplayBase:
         pix_x += self.x_offset
         for c in bytearray(data):
             for p, page in enumerate(self.font(c)):
-                self.vram[y * self.font.pages + p][pix_x:pix_x+self.font.width] = page
+                self.vram[
+                    y * self.font.pages + p][
+                    pix_x:pix_x+self.font.width] = page
             pix_x += self.font.width
     def write_graphics(self, x, y, data):
         if x >= 16 or y >= 4 or len(data) != 16:
@@ -138,7 +148,8 @@ class DisplayBase:
         font_pages = self.font.height // 8
         cols = self.columns // cell_w
         rows = self.page_count // font_pages
-        logging.debug("Dimensions: %d, %d (vram=%d, pages=%d)" % (cols, rows, len(self.vram), font_pages))
+        logging.debug("Dimensions: %d, %d (vram=%d, pages=%d)"
+                      % (cols, rows, len(self.vram), font_pages))
         # optional profile cap
         return (cols, 1)
 

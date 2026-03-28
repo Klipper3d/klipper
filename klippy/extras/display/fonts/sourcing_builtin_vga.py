@@ -16,7 +16,8 @@ class BuiltinVGAFontSource(FontSourceStrategy):
         for c, glyph in enumerate(VGA_FONT):
             if (len(glyph) != self.font_src.height):
                 raise FontStrategyError(
-                    "Buildin font data (font8x14.py) is corrupted at entry %d: %d instead of %d bytes!" 
+                    "Buildin font data (font8x14.py) is corrupted at entry %d:"
+                    " %d instead of %d bytes!"
                     % (c, len(glyph), self.font_src.height))
             glyph_rows[c] = [b for b in bytearray(glyph)]
         if (self.font_src.fallback_codepoint not in glyph_rows):
@@ -32,4 +33,3 @@ class BuiltinVGAFontSource(FontSourceStrategy):
             self.font_src.fallback_codepoint = fallback
         self.font_src.glyph_rows = glyph_rows
         return self.font_src
-        

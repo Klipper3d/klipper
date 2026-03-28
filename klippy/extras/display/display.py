@@ -205,11 +205,14 @@ class PrinterLCD:
             self.font_profile = self.display_fonts.get(font_name)
             if self.font_profile is None:
                 raise config.error("Unknown display font '%s'" % (font_name))
-        if hasattr(self.lcd_chip, "set_font_profile") and self.font_profile is not None:
-            logging.info("Setting font profile for %s" % (self.font_profile.name))
+        if (hasattr(self.lcd_chip, "set_font_profile")
+            and self.font_profile is not None):
+            logging.info("Setting font profile for %s"
+                         % (self.font_profile.name))
             self.lcd_chip.set_font_profile(self.font_profile)
         elif self.font_profile is not None:
-            raise config.error("Option 'font' is only supported on OLED displays")
+            raise config.error(
+                "Option 'font' is only supported on OLED displays")
         self.display_data_groups = templates.get_display_data_groups()
         self.lcd_chip.set_glyphs(templates.get_display_glyphs())
         dgroup = "_default_16x4"

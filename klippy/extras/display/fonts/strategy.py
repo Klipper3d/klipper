@@ -40,16 +40,20 @@ class FontSourceStrategy(object):
 # Swizzle strategy to convert font files into format needed for the display
 class SwizzleStrategy(object):
     # Convert from "rows of pixels" format to display native format
-    def swizzle_glyph(self, font_data: FontDataObject) -> Dict[int, List[bytearray]]:
+    def swizzle_glyph(self,
+                      font_data: FontDataObject) -> Dict[int, List[bytearray]]:
         raise NotImplementedError
-    
-# Font Cache builder class combining logic for Source and Swizzle strategies to build the font cache
+
+# Font Cache builder class combining logic for Source and Swizzle strategies
+# to build the font cache
 class FontCacheBuilder(object):
 
-    def __init__(self, source_strategy: FontSourceStrategy, swizzle_strategy: SwizzleStrategy):
+    def __init__(self,
+                 source_strategy: FontSourceStrategy,
+                 swizzle_strategy: SwizzleStrategy):
         self.source_strategy = source_strategy
         self.swizzle_strategy = swizzle_strategy
-    # building routine sourcing the font and swizzling it into the format for the display    
+    # sourcing the font and swizzling it into the format for the display
     def build(self) ->FontObject:
         font_src = self.source_strategy.load()
         glyphs, pages = self.swizzle_strategy.swizzle_glyph(font_src)
@@ -58,5 +62,5 @@ class FontCacheBuilder(object):
             height = font_src.height,
             pages = pages,
             glyphs = glyphs,
-            fallback=glyphs[font_src.fallback_codepoint]    
+            fallback=glyphs[font_src.fallback_codepoint]
         )

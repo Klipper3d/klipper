@@ -9,23 +9,31 @@ import logging
 
 class PageSwizzleStrategy(SwizzleStrategy):
   #swizzling font data from row major bits to pages for display
-  def swizzle_glyph(self, font_data: FontDataObject)-> Tuple[Dict[int, List[bytearray]], int]:
+  def swizzle_glyph(self,
+                    font_data: FontDataObject) -> Tuple[
+                        Dict[int, List[bytearray]], int]:
       if (font_data.height % 8 != 0):
-          raise SwizzleStrategyError('Invalid font glyph height: %d, expect multiples of 8' % (font_data.height))
+          raise SwizzleStrategyError(
+              'Invalid font glyph height: %d, expect multiples of 8'
+              % (font_data.height))
       pages = font_data.height // 8
       max_row_mask = (1 << font_data.width) - 1
-      #swizzle from horizontal rows of pixels into vetical 8-byte  column of bytes per page
+      #swizzle from horizontal rows of pixels into
+      #vetical 8-byte  column of bytes per page
       swizzled = {}
       for c, rows in font_data.glyph_rows.items():
           if (len(rows) != font_data.height):
-              raise ValueError("The bitmap for character '%s' has a wrong number of rows: expected %d, got %d."
-                              % (chr(c), font_data.height, len(rows)))
+              raise ValueError(
+                  "The bitmap for character '%s' has a wrong number of rows:"
+                  " expected %d, got %d."
+                  % (chr(c), font_data.height, len(rows)))
           for i, r in enumerate(rows):
               if (r < 0 or r > max_row_mask):
-                  raise ValueError("For character '%s'  row %d is out of range: %d"
-                                % (chr(c), i, r))
+                  raise ValueError(
+                      "For character '%s'  row %d is out of range: %d"
+                      % (chr(c), i, r))
           out = [bytearray(font_data.width) for _ in range(pages)]
-          #transform the glyph data from row-major to column-major in the page size
+          #transform the glyph data from row-major to column-major in page size
           for p in range(pages):
               y_start = p * 8
               for x in range(font_data.width):
@@ -39,4 +47,3 @@ class PageSwizzleStrategy(SwizzleStrategy):
           swizzled[c] = out
 
       return (swizzled, pages)
-
