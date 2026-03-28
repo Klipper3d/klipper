@@ -12,6 +12,12 @@
 #include "irq.h" // irq_enable
 #include "sched.h" // sched_main
 
+// Newer avr-libc headers expose the stack pointer as SP instead of the
+// older AVR_STACK_POINTER_REG alias used by Klipper.
+#ifndef AVR_STACK_POINTER_REG
+#define AVR_STACK_POINTER_REG SP
+#endif
+
 DECL_CONSTANT_STR("MCU", CONFIG_MCU);
 
 

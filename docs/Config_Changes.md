@@ -12,6 +12,18 @@ All dates in this document are approximate.
 OLED text rendering and a `[display]` `font` option to select them.
 Added a `[display]` `height` option (`32` or `64`) for `ssd1306` and
 `sh1106` displays.
+20260318: The `[probe_eddy_current]` config options `speed`,
+`lift_speed`, `samples`, `sample_retract_dist`, `samples_result`,
+`samples_tolerance`, and `samples_tolerance_retries` no longer apply
+to probe commands using `METHOD=scan`, `METHOD=rapid_scan`, nor
+`METHOD=tap`. To use different settings, supply the equivalent
+`PROBE_SPEED`, `LIFT_SPEED`, `SAMPLES`, `SAMPLE_RETRACT_DIST`,
+`SAMPLES_RESULT`, `SAMPLES_TOLERANCE`, or `SAMPLES_TOLERANCE_RETRIES`
+parameter with the probe command.
+
+20260318: The `[probe_eddy_current]` config option `z_offset` has been
+renamed to `descend_z`. Using the old name is deprecated and it will
+be removed in the near future.
 
 20260214: The `MANUAL_STEPPER` G-Code command `STOP_ON_ENDSTOP`
 parameter has changed. See the

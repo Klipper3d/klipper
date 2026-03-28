@@ -1251,6 +1251,14 @@ additional parameters if a `[probe_eddy_current]` section is defined:
   specified in the `[probe_eddy_current]` config section when probing
   using `METHOD=tap`.
 
+The `Z_OFFSET_APPLY_PROBE` command is also extended to support a
+`METHOD=tap` parameter. When no METHOD parameter is provided, the
+`Z_OFFSET_APPLY_PROBE` command alters the probe calibration to apply
+the current Z G-Code offset to future `scan`, `rapid_scan`, and
+default probes. If `METHOD=tap` is specified then the command instead
+applies the change to `tap_z_offset` so that future `tap` probes are
+updated to use the current Z G-Code offset.
+
 #### PROBE_EDDY_CURRENT_CALIBRATE
 `PROBE_EDDY_CURRENT_CALIBRATE CHIP=<config_name>`: This starts a tool
 that calibrates the sensor resonance frequencies to corresponding Z

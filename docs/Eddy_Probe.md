@@ -11,7 +11,7 @@ for further details.
 
 Start by declaring a
 [probe_eddy_current config section](Config_Reference.md#probe_eddy_current)
-in the printer.cfg file. It is recommended to set the `z_offset` to
+in the printer.cfg file. It is recommended to set `descend_z` to
 0.5mm. It is typical for the sensor to require an `x_offset` and
 `y_offset`. If these values are not known, one should estimate the
 values during initial calibration.
@@ -42,11 +42,11 @@ tool completes it will output the sensor performance data:
 ```
 probe_eddy_current: noise 0.000642mm, MAD_Hz=11.314 in 2525 queries
 Total frequency range: 45000.012 Hz
-z_offset: 0.250 # noise 0.000200mm, MAD_Hz=11.000
-z_offset: 0.530 # noise 0.000300mm, MAD_Hz=12.000
-z_offset: 1.010 # noise 0.000400mm, MAD_Hz=14.000
-z_offset: 2.010 # noise 0.000600mm, MAD_Hz=12.000
-z_offset: 3.010 # noise 0.000700mm, MAD_Hz=9.000
+z: 0.250 # noise 0.000200mm, MAD_Hz=11.000
+z: 0.530 # noise 0.000300mm, MAD_Hz=12.000
+z: 1.010 # noise 0.000400mm, MAD_Hz=14.000
+z: 2.010 # noise 0.000600mm, MAD_Hz=12.000
+z: 3.010 # noise 0.000700mm, MAD_Hz=9.000
 ```
 issue a `SAVE_CONFIG` command to save the results to
 the printer.cfg and restart.
@@ -116,15 +116,6 @@ Practically, it ensures that the Eddy's output data absolute value
 change per second (velocity) is high enough - higher than the noise level,
 and that upon collision it always decreases by at least this value.
 
-```
-[probe_eddy_current my_probe]
-# eddy probe configuration...
-# Recommended starting values for the tap
-#samples: 3
-#samples_tolerance: 0.025
-#samples_tolerance_retries: 3
-```
-
 Before setting it to any other value, it is necessary to install `scipy`:
 
 ```bash
@@ -167,7 +158,7 @@ calibration routine output:
 ```
 probe_eddy_current: noise 0.000642mm, MAD_Hz=11.314
 ...
-z_offset: 1.010 # noise 0.000400mm, MAD_Hz=14.000
+z: 1.010 # noise 0.000400mm, MAD_Hz=14.000
 ```
 The estimation will be:
 ```
