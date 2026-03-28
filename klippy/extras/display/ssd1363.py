@@ -28,14 +28,14 @@ class DisplayBase:
         self.font = [self._swizzle_bits(bytearray(c))
                      for c in font8x14.VGA_FONT]
         self.icons = {}
-        # Large font mode (2× width and height): 16px wide × 28px tall,
-        # giving a 16-column × 4-row grid.  Font is precomputed at init time.
+        # Large font mode (2x width and height): 16px wide x 28px tall,
+        # giving a 16-column x 4-row grid.  Font is precomputed at init time.
         self._large_font = False
         self.font_large = self._build_font_large()
         self.icons_large = {}
     @staticmethod
     def _double_bits(b):
-        # Expand 8 input bits to 16 output bits: bit i → bits 2i and 2i+1.
+        # Expand 8 input bits to 16 output bits: bit i -> bits 2i and 2i+1.
         # Uses a sequence of spread-and-mask steps (no loop needed).
         x = b & 0xFF
         x = (x | (x << 4)) & 0x0F0F
@@ -43,7 +43,7 @@ class DisplayBase:
         x = (x | (x << 1)) & 0x5555
         return (x | (x << 1)) & 0xFFFF
     def _build_font_large(self):
-        # Pre-compute 2× scaled glyphs (16px wide × 32px tall in 4 VRAM pages).
+        # Pre-compute 2x scaled glyphs (16px wide x 32px tall in 4 VRAM pages).
         # Source glyph: (top, bot) each 8 bytes = 8 source columns.
         # Output: (p0, p1, p2, p3) each 16 bytes = 16 output columns.
         font_large = []
@@ -53,8 +53,8 @@ class DisplayBase:
             p2 = bytearray(16)
             p3 = bytearray(16)
             for k in range(8):
-                dt = self._double_bits(top[k])   # rows 0-7 → rows 0-15
-                db = self._double_bits(bot[k])   # rows 8-15 → rows 16-31
+                dt = self._double_bits(top[k])   # rows 0-7 -> rows 0-15
+                db = self._double_bits(bot[k])   # rows 8-15 -> rows 16-31
                 p0[k*2] = p0[k*2+1] = dt & 0xFF
                 p1[k*2] = p1[k*2+1] = (dt >> 8) & 0xFF
                 p2[k*2] = p2[k*2+1] = db & 0xFF
@@ -62,7 +62,7 @@ class DisplayBase:
             font_large.append((p0, p1, p2, p3))
         return font_large
     def _build_icon_large(self, icon_top, icon_bot):
-        # Pre-compute 2× scaled icon from 16-byte (top, bot) column arrays.
+        # Pre-compute 2x scaled icon from 16-byte (top, bot) column arrays.
         # Output: (p0, p1, p2, p3) each 32 bytes = 32 output columns.
         p0 = bytearray(32)
         p1 = bytearray(32)
@@ -114,7 +114,7 @@ class DisplayBase:
             page_bot[pix_x:pix_x+8] = bits_bot
             pix_x += 8
     def _write_text_large(self, x, y, data):
-        # Large font path: 16px wide × 28px tall chars, 16 cols × 4 rows grid.
+        # Large font path: 16px wide x 28px tall chars, 16 cols x 4 rows grid.
         if x + len(data) > 16:
             data = data[:16 - min(x, 16)]
         pix_x = x * 16 + self.x_offset
@@ -294,8 +294,8 @@ class SSD1363(DisplayBase):
         # Matches u8g2 default_x_offset=8.  Override via x_offset in [display].
         self.chip_col_offset = config.getint('x_offset', 8, minval=0, maxval=79)
         # effect: selects the greyscale 3D rendering mode.
-        # 'emboss' — raised look
-        # 'none'   — original behaviour
+        # 'emboss' -- raised look
+        # 'none'   -- original behaviour
         self._effect = config.get('effect', 'emboss')
         if self._effect not in ('emboss', 'none'):
             raise config.error(
@@ -311,9 +311,9 @@ class SSD1363(DisplayBase):
         # Reference: u8g2-src/clib/u8x8_d_ssd1363.c
         #
         # CAD=011 I2C protocol (u8x8_cad_011_ssd13xx_i2c):
-        #   command → own I2C transaction [0x00, cmd]
-        #   arg     → own I2C transaction [0x40, arg]   (one per byte)
-        #   data    → I2C transaction(s)  [0x40, ...data] (chunked at 32 bytes)
+        #   command -> own I2C transaction [0x00, cmd]
+        #   arg     -> own I2C transaction [0x40, arg]   (one per byte)
+        #   data    -> I2C transaction(s)  [0x40, ...data] (chunked at 32 bytes)
         # Unlock display
         io.send_cmd(0xFD); io.send_arg(0x12)
         # Display off
@@ -369,7 +369,7 @@ class SSD1363(DisplayBase):
                 old_data[:] = new_data
                 continue
             # Coalesce into runs: merge tile j into current run if the gap is
-            # ≤ 3 tiles (re-sending ≤ 96 unchanged bytes saves 7 transactions).
+            # <= 3 tiles (re-sending <= 96 unchanged bytes saves 7 transactions).
             runs = []
             run_start = run_end = dirty[0]
             for j in dirty[1:]:
@@ -391,8 +391,8 @@ class SSD1363(DisplayBase):
     def _8to32(self, ptr, left_col=0, right_col=0):
         """Convert 8 bytes of 1bpp tile data to 32 bytes of 4bpp SSD1363 format.
 
-        effect='none'  — every ON pixel at full brightness 0xF.
-        effect='emboss'— per-pixel brightness from top-left edge detection:
+        effect='none'  -- every ON pixel at full brightness 0xF.
+        effect='emboss'-- per-pixel brightness from top-left edge detection:
                          highlight(0xF) / interior(0xC) / shadow(0x8).
         left_col / right_col: VRAM column bytes bordering this tile (cross-tile
         edge detection for emboss).
@@ -401,7 +401,7 @@ class SSD1363(DisplayBase):
         if not any(ptr):
             return dest
         effect = getattr(self, '_effect', 'none')
-        # Column index → dest byte offset within each 4-byte row group.
+        # Column index -> dest byte offset within each 4-byte row group.
         #   col:  0  1  2  3  4  5  6  7
         _bo = (1, 1, 0, 0, 3, 3, 2, 2)
         if effect == 'none':
