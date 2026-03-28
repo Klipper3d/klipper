@@ -2,7 +2,8 @@
 # Based off uc1701 klipper implementation and
 # U8G2 orginal implementation for ssd1363
 #
-# Copyright holders are preserved as i consider this a derivative work of both implementations.
+# Copyright holders are preserved as i consider this a derivative
+# work of both implementations.
 # Copyright (C) 2018-2019  Kevin O'Connor <kevin@koconnor.net>
 # Copyright (C) 2018  Eric Callahan  <arksine.code@gmail.com>
 #
@@ -183,7 +184,7 @@ class DisplayBase:
             return 1
         return 0
     def _write_glyph_large(self, x, y, glyph_name):
-        # Large font path: icons are 32px wide (2 large cols), 4 VRAM pages tall.
+        # Large font path: Icons are double in size
         icon = self.icons_large.get(glyph_name)
         if icon is not None and x < 15:
             pix_x = x * 16 + self.x_offset
@@ -238,15 +239,12 @@ class I2C:
         cmds.insert(0, hdr)
         self.i2c.i2c_write_noack(cmds, reqclock=BACKGROUND_PRIORITY_CLOCK)
     def send_cmd(self, cmd):
-        # CAD=011: command byte in its own I2C transaction with 0x00 control byte
         self.i2c.i2c_write_noack(bytearray([0x00, cmd]),
                                   reqclock=BACKGROUND_PRIORITY_CLOCK)
     def send_arg(self, arg):
-        # CAD=011: each argument byte in its own I2C transaction with 0x40 control byte
         self.i2c.i2c_write_noack(bytearray([0x40, arg]),
                                   reqclock=BACKGROUND_PRIORITY_CLOCK)
     def send_data(self, data):
-        # CAD=011: data chunked at 32 bytes per I2C transaction with 0x40 control byte
         data = bytearray(data)
         pos = 0
         while pos < len(data):
@@ -296,8 +294,8 @@ class SSD1363(DisplayBase):
         # Matches u8g2 default_x_offset=8.  Override via x_offset in [display].
         self.chip_col_offset = config.getint('x_offset', 8, minval=0, maxval=79)
         # effect: selects the greyscale 3D rendering mode.
-        #   'emboss' — raised look, light from top-left (highlight/interior/shadow)
-        #   'none'   — flat full-white, original behaviour
+        # 'emboss' — raised look
+        # 'none'   — original behaviour
         self._effect = config.get('effect', 'emboss')
         if self._effect not in ('emboss', 'none'):
             raise config.error(
@@ -311,31 +309,49 @@ class SSD1363(DisplayBase):
         io = self.io
         # Init sequence synced with u8g2 u8x8_d_ssd1363_256x128_init_seq.
         # Reference: u8g2-src/clib/u8x8_d_ssd1363.c
-        # Datasheet: https://admin.osptek.com/uploads/SSD_1363_0_10_to_Ri_Tdisplay_withcommandtable_aa469a71c2.pdf
         #
         # CAD=011 I2C protocol (u8x8_cad_011_ssd13xx_i2c):
         #   command → own I2C transaction [0x00, cmd]
         #   arg     → own I2C transaction [0x40, arg]   (one per byte)
         #   data    → I2C transaction(s)  [0x40, ...data] (chunked at 32 bytes)
-        io.send_cmd(0xFD); io.send_arg(0x12)        # Unlock display
-        io.send_cmd(0xAE)                            # Display off
-        io.send_cmd(0xB3); io.send_arg(0x30)        # Clock divide ratio / oscillator freq
-        io.send_cmd(0xCA); io.send_arg(127)          # Multiplex ratio (3..159)
-        io.send_cmd(0xA2); io.send_arg(0x20)        # Display offset
-        io.send_cmd(0xA1); io.send_arg(0x00)        # Display start line
-        io.send_cmd(0xA0); io.send_arg(0x32); io.send_arg(0x00)  # Re-Map / Dual COM
-        io.send_cmd(0xB4); io.send_arg(0x32); io.send_arg(0x0C) # Display Enhancement A
-        io.send_cmd(0xC1); io.send_arg(self.contrast)            # Contrast
-        io.send_cmd(0xBA); io.send_arg(0x03)        # Voltage config (Vp cap)
-        io.send_cmd(0xB9)                            # Linear greyscale table
-        io.send_cmd(0xAD); io.send_arg(0x90)        # Internal IREF (0x80 = external)
-        io.send_cmd(0xB1); io.send_arg(0x74)        # Phase 1/2 period adjustment
-        io.send_cmd(0xBB); io.send_arg(0x0C)        # Pre-charge voltage
-        io.send_cmd(0xB6); io.send_arg(0xC8)        # 2nd pre-charge period
-        io.send_cmd(0xBE); io.send_arg(0x04)        # VCOMH deselect level
-        io.send_cmd(0xA7 if self.invert else 0xA6)  # Invert / normal display
-        io.send_cmd(0xA9)                            # Exit partial display
-        io.send_cmd(0xAF)                            # Display on
+        # Unlock display
+        io.send_cmd(0xFD); io.send_arg(0x12)
+        # Display off
+        io.send_cmd(0xAE)
+        # Clock divide ratio / oscillator freq
+        io.send_cmd(0xB3); io.send_arg(0x30)
+        # Multiplex ratio (3..159)
+        io.send_cmd(0xCA); io.send_arg(127)
+        # Display offset
+        io.send_cmd(0xA2); io.send_arg(0x20)
+        # Display start line
+        io.send_cmd(0xA1); io.send_arg(0x00)
+        # Re-Map / Dual COM
+        io.send_cmd(0xA0); io.send_arg(0x32); io.send_arg(0x00)
+        # Display Enhancement A
+        io.send_cmd(0xB4); io.send_arg(0x32); io.send_arg(0x0C)
+        # Contrast
+        io.send_cmd(0xC1); io.send_arg(self.contrast)
+        # Voltage config (Vp cap)
+        io.send_cmd(0xBA); io.send_arg(0x03)
+        # Linear greyscale table
+        io.send_cmd(0xB9)
+        # Internal IREF (0x80 = external)
+        io.send_cmd(0xAD); io.send_arg(0x90)
+        # Phase 1/2 period adjustment
+        io.send_cmd(0xB1); io.send_arg(0x74)
+        # Pre-charge voltage
+        io.send_cmd(0xBB); io.send_arg(0x0C)
+        # 2nd pre-charge period
+        io.send_cmd(0xB6); io.send_arg(0xC8)
+        # VCOMH deselect level
+        io.send_cmd(0xBE); io.send_arg(0x04)
+        # Invert / normal display
+        io.send_cmd(0xA7 if self.invert else 0xA6)
+        # Exit partial display
+        io.send_cmd(0xA9)
+        # Display on
+        io.send_cmd(0xAF)
         self.flush()
 
     def flush(self):
@@ -411,8 +427,10 @@ class SSD1363(DisplayBase):
                         continue
                     above = (ptr[c] >> (r - 1)) & 1 if r > 0 else 0
                     below = (ptr[c] >> (r + 1)) & 1 if r < 7 else 0
-                    left  = (left_col  >> r) & 1 if c == 0 else (ptr[c - 1] >> r) & 1
-                    right = (right_col >> r) & 1 if c == 7 else (ptr[c + 1] >> r) & 1
+                    left  = ((left_col  >> r) & 1 if c == 0
+                             else (ptr[c - 1] >> r) & 1)
+                    right = ((right_col >> r) & 1 if c == 7
+                             else (ptr[c + 1] >> r) & 1)
                     if not above or not left:
                         grey = 0xF
                     elif not below or not right:
@@ -434,10 +452,12 @@ class SSD1363(DisplayBase):
         left_col / right_col: VRAM column bytes bordering the first/last tile
         (cross-tile edge detection for emboss).
         """
-        x = x_pos * 2 + self.chip_col_offset  # each tile = 2 SSD1363 column addresses (8 pixels)
-        y = y_pos * 8                   # each tile = 8 rows
-
-        # Set row address once for all tiles in this row (CAD=011: cmd + 2 args)
+        # each tile = 2 SSD1363 column addresses (8 pixels)
+        x = x_pos * 2 + self.chip_col_offset
+        # each tile = 8 rows
+        y = y_pos * 8
+        # Set row address once for all tiles in this row
+        # (CAD=011: cmd + 2 args)
         self.io.send_cmd(0x75)
         self.io.send_arg(y)
         self.io.send_arg(y + 7)
@@ -455,8 +475,9 @@ class SSD1363(DisplayBase):
             lc = tiles[idx - 1][7] if idx > 0 else left_col
             rc = tiles[idx + 1][0] if idx < len(tiles) - 1 else right_col
             converted.append(self._8to32(tile, lc, rc))
-        # SSD1363 uses row-major addressing: for each row, all column bytes must
-        # be consecutive across tiles before advancing to the next row.
+        # SSD1363 uses row-major addressing:
+        # for each row, all column bytes must be consecutive
+        # across tiles before advancing to the next row.
         buf = bytearray()
         for r in range(8):
             for tile_data in converted:
