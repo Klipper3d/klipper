@@ -72,6 +72,8 @@ class ControlAutoTune:
         self.last_pwm = 0.
         self.pwm_samples = []
         self.temp_samples = []
+        # Track dead time
+        self.dead_time = []
     # Heater control
     def set_pwm(self, read_time, value):
         if value != self.last_pwm:
@@ -105,13 +107,29 @@ class ControlAutoTune:
         if self.heating or len(self.peaks) < 12:
             return True
         return False
+    def track_dead_time(self):
+        if not self.pwm_samples:
+            return
+        last_pwm = self.pwm_samples[-1]
+        # We can only forcefully add power to the system
+        if last_pwm[1] == 0:
+            return
+        peak_time = self.peaks[-1][0]
+        control_time = last_pwm[0]
+        dead_time = max(peak_time - control_time, self.heater.get_pwm_delay())
+        self.dead_time.append((control_time, dead_time))
     # Analysis
     def check_peaks(self):
-        self.peaks.append((self.peak_time, self.peak))
+        # Filter initial dummy 0, 0 peak
+        if self.peak_time:
+            self.peaks.append((self.peak_time, self.peak))
         if self.heating:
             self.peak = 9999999.
         else:
             self.peak = -9999999.
+        if len(self.peaks) < 2:
+            return
+        self.track_dead_time()
         if len(self.peaks) < 4:
             return
         self.calc_pid(len(self.peaks)-1)
