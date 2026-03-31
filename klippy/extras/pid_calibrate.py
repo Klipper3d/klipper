@@ -106,7 +106,7 @@ class ControlAutoTune:
         return False
     # Analysis
     def check_peaks(self):
-        self.peaks.append((self.peak, self.peak_time))
+        self.peaks.append((self.peak_time, self.peak))
         if self.heating:
             self.peak = 9999999.
         else:
@@ -115,8 +115,8 @@ class ControlAutoTune:
             return
         self.calc_pid(len(self.peaks)-1)
     def calc_pid(self, pos):
-        temp_diff = self.peaks[pos][0] - self.peaks[pos-1][0]
-        time_diff = self.peaks[pos][1] - self.peaks[pos-2][1]
+        temp_diff = self.peaks[pos][1] - self.peaks[pos-1][1]
+        time_diff = self.peaks[pos][0] - self.peaks[pos-2][0]
         # Use Astrom-Hagglund method to estimate Ku and Tu
         amplitude = .5 * abs(temp_diff)
         Ku = 4. * self.heater_max_power / (math.pi * amplitude)
@@ -131,7 +131,7 @@ class ControlAutoTune:
                      temp_diff, self.heater_max_power, Ku, Tu, Kp, Ki, Kd)
         return Kp, Ki, Kd
     def calc_final_pid(self):
-        cycle_times = [(self.peaks[pos][1] - self.peaks[pos-2][1], pos)
+        cycle_times = [(self.peaks[pos][0] - self.peaks[pos-2][0], pos)
                        for pos in range(4, len(self.peaks))]
         midpoint_pos = sorted(cycle_times)[len(cycle_times)//2][1]
         return self.calc_pid(midpoint_pos)
