@@ -82,6 +82,10 @@ class ControlAutoTune:
         self.dead_time = []
         # Track initial heat-up curve
         self.heatup_samples = []
+        # First Order Plus Dead Time model params
+        self.gain = .0
+        self.tau = .0
+        self.dead_time_avg = .0
     # Heater control
     def set_pwm(self, read_time, value):
         if value != self.last_pwm:
@@ -159,10 +163,24 @@ class ControlAutoTune:
                 min_temp = temp
         while self.heatup_samples[0][0] < min_time:
             self.heatup_samples.pop(0)
+        _, start_temp = self.heatup_samples[0]
+        _, end_temp = self.heatup_samples[-1]
+        self.gain = end_temp - start_temp
+        # Tau is the time when the temperature reaches 63.2% of plateau
+        # Describes how dynamic the system is
+        temp_at_tau = start_temp + self.gain * 0.632
+        for sample in self.heatup_samples:
+            if sample[1] > temp_at_tau:
+                self.tau = sample[0] - self.heatup_samples[0][0]
+                break
         return self.heatup_samples
     def calc_pid(self, pos):
         temp_diff = self.peaks[pos][1] - self.peaks[pos-1][1]
         time_diff = self.peaks[pos][0] - self.peaks[pos-2][0]
+        self.initial_heatup()
+        # dead time is theta
+        dead_time = [dtime for _, dtime in self.dead_time]
+        self.dead_time_avg = max(0.6, sum(dead_time)/len(dead_time))
         # Use Astrom-Hagglund method to estimate Ku and Tu
         amplitude = .5 * abs(temp_diff)
         Ku = 4. * self.heater_max_power / (math.pi * amplitude)
