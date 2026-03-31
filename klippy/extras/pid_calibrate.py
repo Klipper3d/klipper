@@ -6,6 +6,8 @@
 import math, logging
 from . import heaters
 
+TUNE_HYSTERESIS = 5.0
+
 class PIDCalibrate:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -26,6 +28,11 @@ class PIDCalibrate:
         max_power = gcmd.get_float('MAX_POWER', cfg_max_power,
                                    maxval=cfg_max_power, above=0.)
         self.printer.lookup_object('toolhead').get_last_move_time()
+        reactor = self.printer.get_reactor()
+        eventtime = reactor.monotonic()
+        ctemp, target_temp = heater.get_temp(eventtime)
+        if ctemp > target - TUNE_HYSTERESIS:
+           raise gcmd.error("Starting temperature should be less than target")
         calibrate = ControlAutoTune(heater, target, max_power)
         old_control = heater.set_control(calibrate)
         try:
@@ -53,8 +60,6 @@ class PIDCalibrate:
         configfile.set(cfgname, 'pid_Ki', "%.3f" % (Ki,))
         configfile.set(cfgname, 'pid_Kd', "%.3f" % (Kd,))
 
-TUNE_PID_DELTA = 5.0
-
 class ControlAutoTune:
     def __init__(self, heater, target, max_power):
         self.heater = heater
@@ -64,6 +69,7 @@ class ControlAutoTune:
         self.heating = False
         self.peak = 0.
         self.peak_time = 0.
+        self.hysteresis = TUNE_HYSTERESIS
         # Peak recording
         self.peaks = []
         # Sample recording
@@ -86,7 +92,7 @@ class ControlAutoTune:
         if self.heating and temp >= target_temp:
             self.heating = False
             self.check_peaks()
-            self.heater.alter_target(self.calibrate_temp - TUNE_PID_DELTA)
+            self.heater.alter_target(self.calibrate_temp - self.hysteresis)
         elif not self.heating and temp <= target_temp:
             self.heating = True
             self.check_peaks()
