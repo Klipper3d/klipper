@@ -80,6 +80,8 @@ class ControlAutoTune:
         self.temp_samples = []
         # Track dead time
         self.dead_time = []
+        # Track initial heat-up curve
+        self.heatup_samples = []
     # Heater control
     def set_pwm(self, read_time, value):
         if value != self.last_pwm:
@@ -139,6 +141,25 @@ class ControlAutoTune:
         if len(self.peaks) < 4:
             return
         self.calc_pid(len(self.peaks)-1)
+    def initial_heatup(self):
+        if self.heatup_samples:
+            return self.heatup_samples
+        self.heatup_samples = self.temp_samples[:]
+        end_time, _ = self.pwm_samples[1]
+        while self.heatup_samples[-1][0] > end_time:
+            self.heatup_samples.pop(-1)
+        start_time, _ = self.pwm_samples[0]
+        while self.heatup_samples[0][0] < start_time:
+            self.heatup_samples.pop(0)
+        # Find minimum temperature as a start point
+        min_time, min_temp = self.heatup_samples[0]
+        for time, temp in self.heatup_samples:
+            if temp <= min_temp:
+                min_time = time
+                min_temp = temp
+        while self.heatup_samples[0][0] < min_time:
+            self.heatup_samples.pop(0)
+        return self.heatup_samples
     def calc_pid(self, pos):
         temp_diff = self.peaks[pos][1] - self.peaks[pos-1][1]
         time_diff = self.peaks[pos][0] - self.peaks[pos-2][0]
