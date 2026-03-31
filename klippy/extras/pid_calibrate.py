@@ -42,6 +42,20 @@ class PIDCalibrate:
         old_control = heater.set_control(calibrate)
         try:
             pheaters.set_temperature(heater, target, True)
+            if self.printer.is_shutdown():
+                raise self.printer.command_error("shutdown")
+            calibrate.initial_heatup()
+            calibrate.fit(self.printer)
+            gcmd.respond_info(
+                "Expected temperature +%.1f C at 100%% power\n"
+                "Time constant: %.1f s" % (
+                    calibrate.gain, calibrate.tau
+                )
+            )
+            time_step = heater.get_pwm_delay()
+            while calibrate.check_busy(0., 0., 0.):
+                now = reactor.monotonic()
+                reactor.pause(now + time_step)
         except self.printer.command_error as e:
             heater.set_control(old_control)
             raise
@@ -51,10 +65,10 @@ class PIDCalibrate:
         if calibrate.check_busy(0., 0., 0.):
             raise gcmd.error("pid_calibrate interrupted")
         # Log and report results
-        calibrate.initial_heatup()
-        calibrate.fit(self.printer)
         Kp, Ki, Kd = calibrate.calc_final_pid()
         logging.info("Autotune: final: Kp=%f Ki=%f Kd=%f", Kp, Ki, Kd)
+        gcmd.respond_info(
+            "Heater to thermistor lag: %.3f s" % (calibrate.dead_time_avg))
         gcmd.respond_info(
             "PID parameters: pid_Kp=%.3f pid_Ki=%.3f pid_Kd=%.3f\n"
             "The SAVE_CONFIG command will update the printer config file\n"
@@ -122,6 +136,12 @@ class ControlAutoTune:
                 self.peak = temp
                 self.peak_time = read_time
     def check_busy(self, eventtime, smoothed_temp, target_temp):
+        # Heat up stage
+        if self.heating or len(self.peaks) <= 2:
+            return True
+        if not self.heatup_samples:
+            return False
+        # Oscillation stage
         if self.heating or len(self.peaks) < 12:
             return True
         return False
