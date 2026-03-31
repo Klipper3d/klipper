@@ -121,7 +121,7 @@ class ICM20948:
         dev_id = self.read_reg(REG_DEVID)
         if dev_id not in ICM_DEV_IDS.keys():
             raise self.printer.command_error(
-                "Invalid mpu id (got %x).\n"
+                "Invalid icm20948 id (got %x).\n"
                 "This is generally indicative of connection problems\n"
                 "(e.g. faulty wiring) or a faulty chip."
                 % (dev_id))
