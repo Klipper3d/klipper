@@ -33,7 +33,7 @@ class PIDCalibrate:
         ctemp, target_temp = heater.get_temp(eventtime)
         if ctemp > target - TUNE_HYSTERESIS:
            raise gcmd.error("Starting temperature should be less than target")
-        calibrate = ControlAutoTune(heater, target, max_power)
+        calibrate = ControlAutoTune(heater, target, ctemp, max_power)
         old_control = heater.set_control(calibrate)
         try:
             pheaters.set_temperature(heater, target, True)
@@ -61,7 +61,7 @@ class PIDCalibrate:
         configfile.set(cfgname, 'pid_Kd', "%.3f" % (Kd,))
 
 class ControlAutoTune:
-    def __init__(self, heater, target, max_power):
+    def __init__(self, heater, target, start_temp, max_power):
         self.heater = heater
         self.heater_max_power = max_power
         self.calibrate_temp = target
@@ -78,6 +78,9 @@ class ControlAutoTune:
         self.temp_samples = []
         # Track dead time
         self.dead_time = []
+        # Track initial heat-up curve
+        self.start_temp = start_temp + TUNE_HYSTERESIS / 2
+        self.heatup_samples = []
     # Heater control
     def set_pwm(self, read_time, value):
         if value != self.last_pwm:
@@ -137,6 +140,19 @@ class ControlAutoTune:
         if len(self.peaks) < 4:
             return
         self.calc_pid(len(self.peaks)-1)
+    def initial_heatup(self):
+        if self.heatup_samples:
+            return self.heatup_samples
+        start_time = .0
+        for sample in self.temp_samples:
+            if sample[1] > self.start_temp:
+                start_time = sample[0]
+                break
+        end_time = self.pwm_samples[1][0]
+        for sample in self.temp_samples:
+            if start_time < sample[0] < end_time:
+                self.heatup_samples.append(sample)
+        return self.heatup_samples
     def calc_pid(self, pos):
         temp_diff = self.peaks[pos][1] - self.peaks[pos-1][1]
         time_diff = self.peaks[pos][0] - self.peaks[pos-2][0]
