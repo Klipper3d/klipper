@@ -6,7 +6,7 @@
 import math, mathutil, logging
 from . import heaters
 
-TUNE_HYSTERESIS = 5.0
+TUNE_HYSTERESIS = 2.5
 
 class PIDCalibrate:
     def __init__(self, config):
@@ -142,7 +142,7 @@ class ControlAutoTune:
         if not self.heatup_samples:
             return False
         # Oscillation stage
-        if self.heating or len(self.peaks) < 12:
+        if self.heating or len(self.peaks) < 9:
             return True
         return False
     def track_dead_time(self):
