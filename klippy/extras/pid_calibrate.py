@@ -6,7 +6,7 @@
 import math, logging
 from . import heaters
 
-TUNE_HYSTERESIS = 5.0
+TUNE_HYSTERESIS = 2.5
 
 class PIDCalibrate:
     def __init__(self, config):
@@ -88,7 +88,7 @@ class ControlAutoTune:
         # Track dead time
         self.dead_time = []
         # Track initial heat-up curve
-        self.start_temp = start_temp + TUNE_HYSTERESIS / 2
+        self.start_temp = start_temp + self.hysteresis
         self.heatup_samples = []
         # Model FIT
         self.ys = []
@@ -220,7 +220,7 @@ class ControlAutoTune:
         return A, tau
     def calc_pid(self, pos, final=False):
         peak_temp = max([temp for time, temp in self.peaks])
-        self.min_gain = peak_temp - self.start_temp + TUNE_HYSTERESIS/2
+        self.min_gain = peak_temp - self.start_temp + TUNE_HYSTERESIS
         self.initial_heatup()
         # dead time is theta
         dead_time = [dtime for _, dtime in self.dead_time]
