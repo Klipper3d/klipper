@@ -49,6 +49,15 @@ class PIDCalibrate:
         Kp, Ki, Kd = calibrate.calc_final_pid()
         logging.info("Autotune: final: Kp=%f Ki=%f Kd=%f", Kp, Ki, Kd)
         gcmd.respond_info(
+            "Expected temperature +%.1f C at 100%% power\n"
+            "Time constant: %.1f s\n"
+            "Heater to thermistor lag: %.3fs" % (
+                calibrate.gain, calibrate.tau, calibrate.dead_time_avg
+            )
+        )
+        if calibrate.min_gain > calibrate.gain:
+            gcmd.respond_raw("!! Fit can be suboptimal")
+        gcmd.respond_info(
             "PID parameters: pid_Kp=%.3f pid_Ki=%.3f pid_Kd=%.3f\n"
             "The SAVE_CONFIG command will update the printer config file\n"
             "with these parameters and restart the printer." % (Kp, Ki, Kd))
