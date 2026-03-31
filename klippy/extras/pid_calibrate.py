@@ -158,8 +158,6 @@ class ControlAutoTune:
                 self.heatup_samples.append(sample)
         return self.heatup_samples
     def calc_pid(self, pos):
-        temp_diff = self.peaks[pos][1] - self.peaks[pos-1][1]
-        time_diff = self.peaks[pos][0] - self.peaks[pos-2][0]
         peak_temp = max([temp for time, temp in self.peaks])
         self.min_gain = peak_temp - self.start_temp + TUNE_HYSTERESIS/2
         self.initial_heatup()
@@ -172,18 +170,24 @@ class ControlAutoTune:
         # dead time is theta
         dead_time = [dtime for _, dtime in self.dead_time]
         self.dead_time_avg = max(0.3, sum(dead_time)/len(dead_time))
-        # Use Astrom-Hagglund method to estimate Ku and Tu
-        amplitude = .5 * abs(temp_diff)
-        Ku = 4. * self.heater_max_power / (math.pi * amplitude)
-        Tu = time_diff
-        # Use Ziegler-Nichols method to generate PID parameters
-        Ti = 0.5 * Tu
-        Td = 0.125 * Tu
-        Kp = 0.6 * Ku * heaters.PID_PARAM_BASE
+        # Use Skogestad IMC to estimate Kc, Ti
+        # Lambda/tau constant adjustment coefficient, stabilization time target
+        # Must be >= dead_time
+        tau_const = max(self.dead_time_avg, 1.0)
+        gain = self.min_gain
+        tau = self.min_tau
+        theta = self.dead_time_avg
+        Kc = (1 / gain) * tau / (theta + tau_const)
+        Ti = min(tau, 4 * (theta + tau_const))
+        # Use IMC PID to estimate the Td
+        Td = (tau * theta) / (2 * tau + theta)
+        Kp = Kc * heaters.PID_PARAM_BASE
         Ki = Kp / Ti
         Kd = Kp * Td
-        logging.info("Autotune: raw=%f/%f Ku=%f Tu=%f  Kp=%f Ki=%f Kd=%f",
-                     temp_diff, self.heater_max_power, Ku, Tu, Kp, Ki, Kd)
+        msg = "Autotune: %.3fC/%.3f | " % (peak_temp, self.heater_max_power)
+        msg += "Gain=%.3f Tau=%.3f DeadT=%.3f | " % (gain, tau, theta)
+        msg += "Kp=%f Ki=%f Kd=%f" % (Kp, Ki, Kd)
+        logging.info(msg)
         return Kp, Ki, Kd
     def calc_final_pid(self):
         cycle_times = [(self.peaks[pos][0] - self.peaks[pos-2][0], pos)
