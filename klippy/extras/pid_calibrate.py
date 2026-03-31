@@ -81,9 +81,15 @@ class ControlAutoTune:
         # Track initial heat-up curve
         self.start_temp = start_temp + TUNE_HYSTERESIS / 2
         self.heatup_samples = []
+        # Model FIT
+        self.ys = []
+        # Time constant fit
+        self.L = 0.001
+        self.R = 3600
         # First Order Plus Dead Time model params
         self.min_gain = .0
-        self.min_tau = .0
+        self.gain = .0
+        self.tau = .0
         self.dead_time_avg = .0
     # Heater control
     def set_pwm(self, read_time, value):
@@ -157,16 +163,56 @@ class ControlAutoTune:
             if start_time < sample[0] < end_time:
                 self.heatup_samples.append(sample)
         return self.heatup_samples
-    def calc_pid(self, pos):
+    def _populate_ys(self, samples):
+        if self.ys:
+            return self.ys
+        T0 = samples[0][1]
+        ys = [.0]
+        for t, temp in samples[1:]:
+            ys.append(temp - T0)
+        self.ys = ys
+        return self.ys
+    def calc_eval_error(self, samples, tau_candidate):
+        start_time = samples[0][0]
+        # We work with part of the asymptote
+        # Let's imagine the "full/real" one and fit over it
+        xs = [.0]
+        ys = self._populate_ys(samples)
+        for t, temp in samples[1:]:
+            dt = t - start_time
+            e = math.exp(-dt/tau_candidate)
+            xs.append(1.0 - e)
+        sum_xy = .0
+        sum_xx = .0
+        for x, y in zip(xs, ys):
+            sum_xy += x * y
+            sum_xx += x * x
+        A = sum_xy / sum_xx
+        err = .0
+        for x, y in zip(xs, ys):
+            err += (A * x - y) ** 2
+        return err, A
+    def fit_model(self, samples, final=False):
+        # ternary search
+        while abs(self.R - self.L) > 0.01:
+            L_third = self.L + (self.R - self.L) / 3
+            R_third = self.R - (self.R - self.L) / 3
+            L_err, _ = self.calc_eval_error(samples, L_third)
+            R_err, _ = self.calc_eval_error(samples, R_third)
+            if L_err < R_err:
+                self.R = R_third
+            else:
+                self.L = L_third
+            # Fit over several calls
+            if not final:
+                break
+        tau = (self.L + self.R) / 2
+        _, A = self.calc_eval_error(samples, tau)
+        return A, tau
+    def calc_pid(self, pos, final=False):
         peak_temp = max([temp for time, temp in self.peaks])
         self.min_gain = peak_temp - self.start_temp + TUNE_HYSTERESIS/2
         self.initial_heatup()
-        # Tau is the time when the temperature reaches 63.2% of plateau
-        # Describes how dynamic the system is
-        temp_at_tau = self.start_temp + self.min_gain * 0.632
-        for sample in self.heatup_samples:
-            if sample[1] > temp_at_tau:
-                self.min_tau = sample[0] - self.heatup_samples[0][0]
         # dead time is theta
         dead_time = [dtime for _, dtime in self.dead_time]
         self.dead_time_avg = max(0.3, sum(dead_time)/len(dead_time))
@@ -174,8 +220,12 @@ class ControlAutoTune:
         # Lambda/tau constant adjustment coefficient, stabilization time target
         # Must be >= dead_time
         tau_const = max(self.dead_time_avg, 1.0)
-        gain = self.min_gain
-        tau = self.min_tau
+        # Guess "real" params
+        A, self.tau = self.fit_model(self.heatup_samples, final)
+        self.gain = A / self.heater_max_power
+        # Fallback
+        gain = max(self.gain, self.min_gain)
+        tau = self.tau
         theta = self.dead_time_avg
         Kc = (1 / gain) * tau / (theta + tau_const)
         Ti = min(tau, 4 * (theta + tau_const))
@@ -193,7 +243,7 @@ class ControlAutoTune:
         cycle_times = [(self.peaks[pos][0] - self.peaks[pos-2][0], pos)
                        for pos in range(4, len(self.peaks))]
         midpoint_pos = sorted(cycle_times)[len(cycle_times)//2][1]
-        return self.calc_pid(midpoint_pos)
+        return self.calc_pid(midpoint_pos, final=True)
     # Offline analysis helper
     def write_file(self, filename):
         pwm = ["pwm: %.3f %.3f" % (time, value)
