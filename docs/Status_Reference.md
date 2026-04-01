@@ -248,7 +248,9 @@ object:
 - all items from
   [filament_switch_sensor](Status_Reference.md#filament_switch_sensor)
 - `is_active`: Returns True if the sensor is currently active.
-- `Diameter`: The last reading from the sensor in mm.
+- `flow_compensation_enabled`: Returns True if flow compensation is enabled.
+- `Diameter`: Returns the last width reading in mm if the sensor is active or
+  the nominal filament diameter if it is not.
 - `Raw`: The last raw ADC reading from the sensor.
 
 ## heater
