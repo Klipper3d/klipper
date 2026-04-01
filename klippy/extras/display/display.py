@@ -6,7 +6,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, os, ast
-from . import aip31068_spi, hd44780, hd44780_spi, st7920, uc1701, menu
+from . import aip31068_spi, hd44780, hd44780_spi, st7920, uc1701, menu, ssd1363
 
 # Normal time between each screen redraw
 REDRAW_TIME = 0.500
@@ -17,6 +17,7 @@ LCD_chips = {
     'st7920': st7920.ST7920, 'emulated_st7920': st7920.EmulatedST7920,
     'hd44780': hd44780.HD44780, 'uc1701': uc1701.UC1701,
     'ssd1306': uc1701.SSD1306, 'sh1106': uc1701.SH1106,
+    'ssd1363': ssd1363.SSD1363,
     'hd44780_spi': hd44780_spi.hd44780_spi,
     'aip31068_spi':aip31068_spi.aip31068_spi
 }
@@ -194,6 +195,11 @@ class PrinterLCD:
         dgroup = "_default_16x4"
         if self.lcd_chip.get_dimensions()[0] == 20:
             dgroup = "_default_20x4"
+        elif self.lcd_chip.get_dimensions()[0] == 32:
+            if hasattr(self.lcd_chip, 'set_large_font'):
+                dgroup = "_default_home_large"
+            else:
+                dgroup = "_default_32x8"
         dgroup = config.get('display_group', dgroup)
         self.show_data_group = self.display_data_groups.get(dgroup)
         if self.show_data_group is None:
@@ -231,10 +237,15 @@ class PrinterLCD:
                 self.lcd_chip.flush()
                 return eventtime + REDRAW_TIME
         # Update normal display
+        set_lf = getattr(self.lcd_chip, 'set_large_font', None)
+        if set_lf is not None:
+            set_lf(True)
         try:
             self.show_data_group.show(self, self.display_templates, eventtime)
         except:
             logging.exception("Error during display screen update")
+        if set_lf is not None:
+            set_lf(False)
         self.lcd_chip.flush()
         if self.redraw_request_pending:
             return self.redraw_time
