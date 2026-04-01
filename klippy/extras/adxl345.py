@@ -112,10 +112,22 @@ class AccelCommandHelper:
         name_parts = config.get_name().split()
         self.base_name = name_parts[0]
         self.name = name_parts[-1]
-        self.register_commands(self.name)
+        try:
+            self.register_commands(self.name)
+        except config.error:
+            raise config.error("Accelerometer with name '%s' already defined"
+                               % self.name)
         if len(name_parts) == 1:
-            if self.name == "adxl345" or not config.has_section("adxl345"):
+            # Try to register default mux commands for the accelerometer
+            # without explicit name. If default accelerometer has already
+            # been registered, raise an error.
+            try:
                 self.register_commands(None)
+            except config.error:
+                raise config.error(
+                    "Default accelerometer already defined; section '%s' must "
+                    "include an additional name, e.g. '%s second_accelerometer'"
+                    % (self.base_name, self.base_name))
     def register_commands(self, name):
         # Register commands
         gcode = self.printer.lookup_object('gcode')
