@@ -73,6 +73,7 @@ class ControlAutoTune:
     def __init__(self, heater, target, start_temp, max_power):
         self.heater = heater
         self.heater_max_power = max_power
+        self.heatup_max_power = max_power
         self.calibrate_temp = target
         # Heating control
         self.heating = False
@@ -151,11 +152,18 @@ class ControlAutoTune:
         # Filter initial dummy 0, 0 peak
         if self.peak_time:
             self.peaks.append((self.peak_time, self.peak))
-            self.track_dead_time()
         if self.heating:
             self.peak = 9999999.
         else:
             self.peak = -9999999.
+        if len(self.peaks) <= 2:
+            return
+        # Heater heat loss has an inertia, and with reduced MAX_POWER
+        # Makes dead time longer than it should be
+        max_power = self.heater.get_max_power()
+        # Keep the balance between too aggressive and sluggish
+        self.heater_max_power = (self.heatup_max_power + max_power) / 2
+        self.track_dead_time()
         if len(self.peaks) < 4:
             return
         self.calc_pid(len(self.peaks)-1)
@@ -231,7 +239,7 @@ class ControlAutoTune:
         tau_const = max(self.dead_time_avg, 1.0)
         # Guess "real" params
         A, self.tau = self.fit_model(self.heatup_samples, final)
-        self.gain = A / self.heater_max_power
+        self.gain = A / self.heatup_max_power
         # Fallback
         gain = max(self.gain, self.min_gain)
         tau = self.tau
@@ -243,7 +251,7 @@ class ControlAutoTune:
         Kp = Kc * heaters.PID_PARAM_BASE
         Ki = Kp / Ti
         Kd = Kp * Td
-        msg = "Autotune: %.3fC/%.3f | " % (peak_temp, self.heater_max_power)
+        msg = "Autotune: %.3fC/%.3f | " % (peak_temp, self.heatup_max_power)
         msg += "Gain=%.3f Tau=%.3f DeadT=%.3f | " % (gain, tau, theta)
         msg += "Kp=%f Ki=%f Kd=%f" % (Kp, Ki, Kd)
         logging.info(msg)
