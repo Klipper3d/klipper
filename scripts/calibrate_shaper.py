@@ -6,7 +6,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from __future__ import print_function
-import csv, importlib, optparse, os, sys
+import csv, importlib, optparse, os, re, sys
 from textwrap import wrap
 import numpy as np, matplotlib
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),
@@ -62,8 +62,8 @@ def parse_log(logname):
 
 # Find the best shaper parameters
 def calibrate_shaper(datas, csv_output, *, shapers, damping_ratio, scv,
-                     shaper_freqs, max_smoothing, test_damping_ratios,
-                     max_freq):
+                     shaper_freqs, max_smoothing, max_vibrations,
+                     test_damping_ratios, max_freq):
     # Combine accelerometer data
     calibration_data = datas[0]
     for data in datas[1:]:
@@ -75,6 +75,7 @@ def calibrate_shaper(datas, csv_output, *, shapers, damping_ratio, scv,
     shaper, all_shapers = helper.find_best_shaper(
             calibration_data, shapers=shapers, damping_ratio=damping_ratio,
             scv=scv, shaper_freqs=shaper_freqs, max_smoothing=max_smoothing,
+            max_vibrations=max_vibrations,
             test_damping_ratios=test_damping_ratios, max_freq=max_freq,
             logger=print)
     if not shaper:
@@ -190,6 +191,9 @@ def main():
                     help="maximum frequency to plot")
     opts.add_option("-s", "--max_smoothing", type="float", dest="max_smoothing",
                     default=None, help="maximum shaper smoothing to allow")
+    opts.add_option("-v", "--max_vibrs_pcnt", type="float",
+                    dest="max_vibrs_pcnt", default=None, help="maximum " +
+                    "remaining shaper vibrations score to allow (in percents)")
     opts.add_option("--scv", "--square_corner_velocity", type="float",
                     dest="scv", default=5., help="square corner velocity")
     opts.add_option("--shaper_freq", type="string", dest="shaper_freq",
@@ -209,6 +213,8 @@ def main():
         opts.error("Incorrect number of arguments")
     if options.max_smoothing is not None and options.max_smoothing < 0.05:
         opts.error("Too small max_smoothing specified (must be at least 0.05)")
+    if options.max_vibrs_pcnt is not None and options.max_vibrs_pcnt < 0.1:
+        opts.error("Too small max_smoothing specified (must be at least 0.1)")
 
     max_freq = options.max_freq
     if options.shaper_freq is None:
@@ -255,7 +261,7 @@ def main():
     if options.shapers is None:
         shapers = None
     else:
-        shapers = options.shapers.lower().split(',')
+        shapers = re.split(r",(?![^(]*\))", options.shapers.lower())
 
     # Parse data
     datas = [parse_log(fn) for fn in args]
@@ -266,6 +272,7 @@ def main():
             damping_ratio=options.damping_ratio,
             scv=options.scv, shaper_freqs=shaper_freqs,
             max_smoothing=options.max_smoothing,
+            max_vibrations=options.max_vibrs_pcnt * 0.01,
             test_damping_ratios=test_damping_ratios,
             max_freq=max_freq)
     if selected_shaper is None:

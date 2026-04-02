@@ -11,28 +11,6 @@ from . import kinematic_stepper as ks
 
 VALID_AXES = ['x', 'y', 'z']
 
-def mat_mul(a, b):
-    if len(a[0]) != len(b):
-        return None
-    res = []
-    for i in range(len(a)):
-        res.append([])
-        for j in range(len(b[0])):
-            res[i].append(sum(a[i][k] * b[k][j] for k in range(len(b))))
-    return res
-
-def mat_transp(a):
-    res = []
-    for i in range(len(a[0])):
-        res.append([a[j][i] for j in range(len(a))])
-    return res
-
-def mat_pseudo_inverse(m):
-    mt = mat_transp(m)
-    mtm = mat_mul(mt, m)
-    pinv = mat_mul(mathutil.matrix_inv(mtm), mt)
-    return pinv
-
 class MainCarriage:
     def __init__(self, config):
         self.rail = stepper.GenericPrinterRail(config)
@@ -276,8 +254,9 @@ class GenericCartesianKinematics:
                  for s in self.kin_steppers])
     def _check_kinematics(self, report_error):
         matr, _ = self._get_kinematics_coeffs()
-        det = mathutil.matrix_det(mat_mul(mat_transp(matr), matr))
-        if abs(det) < 0.00001:
+        mtm = mathutil.mat_mat_mul(mathutil.mat_transp(matr), matr)
+        res = mathutil.gaussian_solve(mtm, [[]] * len(mtm))
+        if res is None:
             raise report_error(
                     "Verify configured stepper(s) and their 'carriages' "
                     "specifications, the current configuration does not "
@@ -285,9 +264,10 @@ class GenericCartesianKinematics:
     def calc_position(self, stepper_positions):
         matr, offs = self._get_kinematics_coeffs()
         spos = [stepper_positions[s.get_name()] for s in self.kin_steppers]
-        pinv = mat_pseudo_inverse(matr)
-        pos = mat_mul([[sp-o for sp, o in zip(spos, offs)]], mat_transp(pinv))
-        for i in range(3):
+        pinv = mathutil.pseudo_inverse(matr)
+        pos = mathutil.mat_mat_mul([[sp-o for sp, o in zip(spos, offs)]],
+                                   mathutil.mat_transp(pinv))
+        for i in range(len(pinv)):
             if not any(pinv[i]):
                 pos[0][i] = None
         return pos[0]
