@@ -1159,7 +1159,7 @@ in the config file.
 
 #### PID_CALIBRATE
 `PID_CALIBRATE HEATER=<config_name> TARGET=<temperature> [WRITE_FILE=1]
-[MAX_POWER=1.0]`: Perform a PID calibration test. The specified heater
+[MAX_POWER=0.75]`: Perform a PID calibration test. The specified heater
 will be enabled until the specified target temperature is reached, and
 then the heater will be turned off and on for several cycles. If the
 WRITE_FILE parameter is enabled, then the file /tmp/heattest.txt will
