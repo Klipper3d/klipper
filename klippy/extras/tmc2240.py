@@ -280,17 +280,6 @@ class TMC2240CurrentHelper:
         self.fields = mcu_tmc.get_fields()
         self.Rref = config.getfloat('rref', 12000.,
                                     minval=12000., maxval=60000.)
-        max_cur = self._get_ifs_rms(3)
-        run_current = config.getfloat('run_current', above=0., maxval=max_cur)
-        hold_current = config.getfloat('hold_current', max_cur,
-                                       above=0., maxval=max_cur)
-        self.req_hold_current = hold_current
-        current_range = self._calc_current_range(run_current)
-        self.fields.set_field("current_range", current_range)
-        gscaler, irun, ihold = self._calc_current(run_current, hold_current)
-        self.fields.set_field("globalscaler", gscaler)
-        self.fields.set_field("ihold", ihold)
-        self.fields.set_field("irun", irun)
     def _get_ifs_rms(self, current_range=None):
         if current_range is None:
             current_range = self.fields.get_field("current_range")
@@ -327,12 +316,15 @@ class TMC2240CurrentHelper:
         bits = self.fields.get_field(field_name)
         return globalscaler * (bits + 1) * ifs_rms / (256. * 32.)
     def get_current(self):
-        ifs_rms = self._get_ifs_rms()
+        ifs_rms = self._get_ifs_rms(3)
         run_current = self._calc_current_from_field("irun")
         hold_current = self._calc_current_from_field("ihold")
-        return (run_current, hold_current, self.req_hold_current, ifs_rms)
+        return (run_current, hold_current, ifs_rms)
     def set_current(self, run_current, hold_current, print_time):
-        self.req_hold_current = hold_current
+        current_range = self._calc_current_range(run_current)
+        if current_range != self.fields.get_field("current_range"):
+            val = self.fields.set_field("current_range", current_range)
+            self.mcu_tmc.set_register("DRV_CONF", val, print_time)
         gscaler, irun, ihold = self._calc_current(run_current, hold_current)
         val = self.fields.set_field("globalscaler", gscaler)
         self.mcu_tmc.set_register("GLOBALSCALER", val, print_time)
