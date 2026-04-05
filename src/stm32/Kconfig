@@ -171,6 +171,10 @@ config HAVE_STM32_USBCANBUS
     depends on HAVE_STM32_CANBUS || HAVE_STM32_FDCANBUS
     depends on !MACH_STM32F1
     default y
+config HAVE_STM32_SLCAN
+    bool
+    depends on HAVE_STM32_CANBUS || HAVE_STM32_FDCANBUS
+    default y
 
 config MCU
     string
@@ -400,50 +404,133 @@ choice
         bool "USB (on PB14/PB15)"
         depends on MACH_STM32H743 || MACH_STM32H750
         select USBSERIAL
-    config STM32_SERIAL_USART1
+    config STM32_DIRECT_SERIAL_USART1
         bool "Serial (on USART1 PA10/PA9)"
         select SERIAL
-    config STM32_SERIAL_USART1_ALT_PB7_PB6
+        select STM32_SERIAL_USART1
+    config STM32_DIRECT_SERIAL_USART1_ALT_PB7_PB6
         bool "Serial (on USART1 PB7/PB6)" if LOW_LEVEL_OPTIONS
         select SERIAL
-    config STM32_SERIAL_USART2
+        select STM32_SERIAL_USART1_ALT_PB7_PB6
+    config STM32_DIRECT_SERIAL_USART2
         bool "Serial (on USART2 PA3/PA2)" if LOW_LEVEL_OPTIONS
         select SERIAL
-    config STM32_SERIAL_USART2_ALT_PA15_PA14
+        select STM32_SERIAL_USART2
+    config STM32_DIRECT_SERIAL_USART2_ALT_PA15_PA14
         bool "Serial (on USART2 PA15/PA14)" if LOW_LEVEL_OPTIONS && (MACH_STM32F0 || MACH_STM32G4)
         select SERIAL
-    config STM32_SERIAL_USART2_ALT_PB4_PB3
+        select STM32_SERIAL_USART2_ALT_PA15_PA14
+    config STM32_DIRECT_SERIAL_USART2_ALT_PB4_PB3
         bool "Serial (on USART2 PB4/PB3)" if LOW_LEVEL_OPTIONS && MACH_STM32G4
         select SERIAL
-    config STM32_SERIAL_USART2_ALT_PD6_PD5
+        select STM32_SERIAL_USART2_ALT_PB4_PB3
+    config STM32_DIRECT_SERIAL_USART2_ALT_PD6_PD5
         bool "Serial (on USART2 PD6/PD5)" if LOW_LEVEL_OPTIONS && !MACH_STM32F0
         select SERIAL
-    config STM32_SERIAL_USART3
+        select STM32_SERIAL_USART2_ALT_PD6_PD5
+    config STM32_DIRECT_SERIAL_USART3
         bool "Serial (on USART3 PB11/PB10)" if LOW_LEVEL_OPTIONS
         depends on !MACH_STM32F0 && !MACH_STM32F401
         select SERIAL
-    config STM32_SERIAL_USART3_ALT_PD9_PD8
+        select STM32_SERIAL_USART3
+    config STM32_DIRECT_SERIAL_USART3_ALT_PD9_PD8
         bool "Serial (on USART3 PD9/PD8)" if LOW_LEVEL_OPTIONS
         depends on !MACH_STM32F0 && !MACH_STM32F401
         select SERIAL
-    config STM32_SERIAL_USART3_ALT_PC11_PC10
+        select STM32_SERIAL_USART3_ALT_PD9_PD8
+    config STM32_DIRECT_SERIAL_USART3_ALT_PC11_PC10
         bool "Serial (on USART3 PC11/PC10)" if LOW_LEVEL_OPTIONS
         depends on MACH_STM32G474
         select SERIAL
-    config STM32_SERIAL_UART4
+        select STM32_SERIAL_USART3_ALT_PC11_PC10
+    config STM32_DIRECT_SERIAL_UART4
         bool "Serial (on UART4 PA0/PA1)"
         depends on MACH_STM32H7
         select SERIAL
-    config STM32_SERIAL_USART5
+        select STM32_SERIAL_UART4
+    config STM32_DIRECT_SERIAL_USART5
         bool "Serial (on USART5 PD2/PD3)" if LOW_LEVEL_OPTIONS
         depends on MACH_STM32G0Bx
         select SERIAL
-    config STM32_SERIAL_USART6
+        select STM32_SERIAL_USART5
+    config STM32_DIRECT_SERIAL_USART6
         bool "Serial (on USART6 PA12/PA11)" if LOW_LEVEL_OPTIONS && MACH_STM32F401
         select SERIAL
-    config STM32_SERIAL_USART6_ALT_PC7_PC6
+        select STM32_SERIAL_USART6
+    config STM32_DIRECT_SERIAL_USART6_ALT_PC7_PC6
         bool "Serial (on USART6 PC7/PC6)" if LOW_LEVEL_OPTIONS && MACH_STM32F401
         select SERIAL
+        select STM32_SERIAL_USART6_ALT_PC7_PC6
+    config STM32_SLCAN_USART1
+        bool "SLCAN bus bridge (Serial on USART1 PA10/PA9)"
+        depends on HAVE_STM32_SLCAN
+        select SERIAL_CANBUS
+        select STM32_SERIAL_USART1
+    config STM32_SLCAN_USART1_ALT_PB7_PB6
+        bool "SLCAN bus bridge (Serial on USART1 PB7/PB6)" if LOW_LEVEL_OPTIONS
+        depends on HAVE_STM32_SLCAN
+        select SERIAL_CANBUS
+        select STM32_SERIAL_USART1_ALT_PB7_PB6
+    config STM32_SLCAN_USART2
+        bool "SLCAN bus bridge (Serial on USART2 PA3/PA2)" if LOW_LEVEL_OPTIONS
+        depends on HAVE_STM32_SLCAN
+        select SERIAL_CANBUS
+        select STM32_SERIAL_USART2
+    config STM32_SLCAN_USART2_ALT_PA15_PA14
+        bool "SLCAN bus bridge (Serial on USART2 PA15/PA14)" if LOW_LEVEL_OPTIONS && (MACH_STM32F0 || MACH_STM32G4)
+        depends on HAVE_STM32_SLCAN
+        select SERIAL_CANBUS
+        select STM32_SERIAL_USART2_ALT_PA15_PA14
+    config STM32_SLCAN_USART2_ALT_PB4_PB3
+        bool "SLCAN bus bridge (Serial on USART2 PB4/PB3)" if LOW_LEVEL_OPTIONS && MACH_STM32G4
+        depends on HAVE_STM32_SLCAN
+        select SERIAL_CANBUS
+        select STM32_SERIAL_USART2_ALT_PB4_PB3
+    config STM32_SLCAN_USART2_ALT_PD6_PD5
+        bool "SLCAN bus bridge (Serial on USART2 PD6/PD5)" if LOW_LEVEL_OPTIONS && !MACH_STM32F0
+        depends on HAVE_STM32_SLCAN
+        select SERIAL_CANBUS
+        select STM32_SERIAL_USART2_ALT_PD6_PD5
+    config STM32_SLCAN_USART3
+        bool "SLCAN bus bridge (Serial on USART3 PB11/PB10)" if LOW_LEVEL_OPTIONS
+        depends on HAVE_STM32_SLCAN
+        select SERIAL_CANBUS
+        depends on !MACH_STM32F0 && !MACH_STM32F401
+        select STM32_SERIAL_USART3
+    config STM32_SLCAN_USART3_ALT_PD9_PD8
+        bool "SLCAN bus bridge (Serial on USART3 PD9/PD8)" if LOW_LEVEL_OPTIONS
+        depends on HAVE_STM32_SLCAN
+        depends on !MACH_STM32F0 && !MACH_STM32F401
+        select SERIAL_CANBUS
+        select STM32_SERIAL_USART3_ALT_PD9_PD8
+    config STM32_SLCAN_USART3_ALT_PC11_PC10
+        bool "SLCAN bus bridge (Serial on USART3 PC11/PC10)" if LOW_LEVEL_OPTIONS
+        depends on HAVE_STM32_SLCAN
+        depends on MACH_STM32G474
+        select SERIAL_CANBUS
+        select STM32_SERIAL_USART3_ALT_PC11_PC10
+    config STM32_SLCAN_UART4
+        bool "SLCAN bus bridge (Serial on UART4 PA0/PA1)"
+        depends on HAVE_STM32_SLCAN
+        depends on MACH_STM32H7
+        select SERIAL_CANBUS
+        select STM32_SERIAL_UART4
+    config STM32_SLCAN_USART5
+        bool "SLCAN bus bridge (Serial on USART5 PD2/PD3)" if LOW_LEVEL_OPTIONS
+        depends on HAVE_STM32_SLCAN
+        depends on MACH_STM32G0Bx
+        select SERIAL_CANBUS
+        select STM32_SERIAL_USART5
+    config STM32_SLCAN_USART6
+        bool "SLCAN bus bridge (Serial on USART6 PA12/PA11)" if LOW_LEVEL_OPTIONS && MACH_STM32F401
+        depends on HAVE_STM32_SLCAN
+        select SERIAL_CANBUS
+        select STM32_SERIAL_USART6
+    config STM32_SLCAN_USART6_ALT_PC7_PC6
+        bool "SLCAN bus bridge (Serial on USART6 PC7/PC6)" if LOW_LEVEL_OPTIONS && MACH_STM32F401
+        depends on HAVE_STM32_SLCAN
+        select SERIAL_CANBUS
+        select STM32_SERIAL_USART6_ALT_PC7_PC6
     config STM32_CANBUS_PA11_PA12
         bool "CAN bus (on PA11/PA12)"
         depends on HAVE_STM32_CANBUS || HAVE_STM32_FDCANBUS
@@ -498,7 +585,7 @@ choice
         select USBCANBUS
 endchoice
 choice
-    prompt "CAN bus interface" if USBCANBUS
+    prompt "CAN bus interface" if USBCANBUS || SERIAL_CANBUS
     config STM32_CMENU_CANBUS_PB8_PB9
         bool "CAN bus (on PB8/PB9)"
     config STM32_CMENU_CANBUS_PI9_PH13
@@ -527,6 +614,37 @@ choice
         depends on HAVE_STM32_FDCANBUS
 endchoice
 
+config STM32_SERIAL_USART1
+    bool
+config STM32_SERIAL_USART1_ALT_PB7_PB6
+    bool
+config STM32_SERIAL_USART2
+    bool
+config STM32_SERIAL_USART2_ALT_PA15_PA14
+    bool
+config STM32_SERIAL_USART2_ALT_PB4_PB3
+    bool
+config STM32_SERIAL_USART2_ALT_PD6_PD5
+    bool
+config STM32_SERIAL_USART3
+    bool
+    depends on !MACH_STM32F0 && !MACH_STM32F401
+config STM32_SERIAL_USART3_ALT_PD9_PD8
+    bool
+    depends on !MACH_STM32F0 && !MACH_STM32F401
+config STM32_SERIAL_USART3_ALT_PC11_PC10
+    bool
+    depends on MACH_STM32G474
+config STM32_SERIAL_UART4
+    bool
+    depends on MACH_STM32H7
+config STM32_SERIAL_USART5
+    bool
+    depends on MACH_STM32G0Bx
+config STM32_SERIAL_USART6
+    bool
+config STM32_SERIAL_USART6_ALT_PC7_PC6
+    bool
 
 config STM32_CANBUS_PB8_PB9
     bool
