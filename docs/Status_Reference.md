@@ -432,6 +432,15 @@ is defined):
 - `last_z_result`: This value is deprecated; it will be removed in the
   near future.
 
+## probe_scan
+
+The following information is available in the
+[probe_scan](Config_Reference.md#probe_scan) object:
+- `hysteresis`: The last measured probe hysteresis value (in mm), or 0
+  if not yet measured.
+- `z_offset`: The probe Z offset (in mm) as read from the `[probe]`
+  config section.
+
 ## pwm_cycle_time
 
 The following information is available in
