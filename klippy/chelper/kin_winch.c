@@ -928,12 +928,12 @@ calc_position_common(struct winch_stepper *ws, struct move *m, double move_time)
     double dz = ws->anchor.z - pos.z;
     double dist = hypot3(dx, dy, dz);
     struct winch_flex *wf = ws->wf;
-    double line_pos = dist;
+    double line_pos = dist - wf->distances_origin[ws->index];
     if (wf && ws->index < wf->num_anchors && wf->enabled) {
         double distances[WINCH_MAX_ANCHORS];
         double flex[WINCH_MAX_ANCHORS];
         compute_flex(wf, pos.x, pos.y, pos.z, distances, flex);
-        line_pos = dist - wf->distances_origin[ws->index] + flex[ws->index];
+        line_pos += flex[ws->index];
     }
     if (!wf || ws->index >= wf->num_anchors)
         return line_pos;
