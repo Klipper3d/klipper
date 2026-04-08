@@ -161,7 +161,6 @@ class WinchKinematics:
         self._halley_tol = 1e-3
         self._halley_max_iters = 30
         self._halley_hybrid_iters = 3
-        self._last_forward = None
     def get_steppers(self):
         return list(self.steppers)
     def calc_position(self, stepper_positions):
