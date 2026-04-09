@@ -263,11 +263,8 @@ class WinchKinematics:
             self.flex_helper.motor_to_line_pos(idx, s.get_commanded_position())
             for idx, s in enumerate(self.steppers)
         ]
-        if requested:
-            actual = (self.flex_helper.config_valid()
-                      and self.flex_helper.set_active(True))
-        else:
-            actual = self.flex_helper.set_active(False)
+        actual = (self.flex_helper.config_valid()
+                  and self.flex_helper.set_active(requested))
         if requested and not actual:
             gcmd.respond_info(
                 "Unable to enable flex compensation; check winch configuration parameters.")
