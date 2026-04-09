@@ -14,6 +14,12 @@ class WinchFlexHelper:
     def __init__(self, anchors, config):
         self._anchors = tuple(anchors)
         self.num = len(self._anchors)
+        self.origin_distances = tuple(
+            math.sqrt(anchor[0] * anchor[0]
+                      + anchor[1] * anchor[1]
+                      + anchor[2] * anchor[2])
+            for anchor in self._anchors
+        )
         self.ptr = None
         self.enabled = False
         self.flex_compensation_algorithm_name = 'qp'
@@ -219,7 +225,9 @@ class WinchKinematics:
         moves = []
         for idx in range(anchor_count):
             prev_length = prev_lengths[idx]
-            target_length = distances[idx] + flex[idx]
+            target_length = (distances[idx]
+                             - self.flex_helper.origin_distances[idx]
+                             + flex[idx])
             delta = target_length - prev_length
             if abs(delta) <= self.pretension_min_delta:
                 continue

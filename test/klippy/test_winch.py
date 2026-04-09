@@ -114,7 +114,7 @@ class WinchFlexHelperTests(unittest.TestCase):
         self.assertTrue(ptr)
         stepper = ffi.gc(lib.winch_stepper_alloc(ptr, 0), lib.free)
         dist = lib.itersolve_calc_position_from_coord(stepper, 0.0, 0.0, 0.0)
-        expected = math.sqrt(sum(v * v for v in FOUR_ANCHORS_DEFAULT[0]))
+        expected = 0.0
         self.assertAlmostEqual(dist, expected, places=6)
         for pos in ((0.0, 0.0, 0.0), (100.0, -50.0, 10.0), (-200.0, 150.0, 75.0)):
             lengths, distances, flex = self.spool_lengths(helper, pos)
@@ -175,6 +175,29 @@ class WinchFlexHelperTests(unittest.TestCase):
         expected = self.expected_motor_to_line_pos(
             motor_pos, rotation_distance, steps_per_rotation, buildup, 2)
         self.assertAlmostEqual(actual, expected, places=12)
+
+    def test_immediate_flex_transition_uses_origin_relative_lengths(self):
+        helper = self.build_helper(
+            FOUR_ANCHORS_DEFAULT,
+            mover_weight=0.006,
+            spring=20000.0,
+            buildup_factor=0.6366197723675814,
+            guy_wires=[528.3, 528.3, 528.3, 528.3],
+            mechanical_advantage=[1, 1, 1, 1],
+        )
+        for idx in range(4):
+            helper.set_spool_params(idx, 246.20, 3200.0)
+        current_pos = (0.0, 0.0, 0.0)
+        distances, flex = helper.calc_arrays(current_pos)
+        prev_lengths = [helper.motor_to_line_pos(idx, 0.0) for idx in range(4)]
+        deltas = []
+        for idx in range(4):
+            target_length = (distances[idx]
+                             - helper.origin_distances[idx]
+                             + flex[idx])
+            deltas.append(target_length - prev_lengths[idx])
+        for delta in deltas:
+            self.assertLess(abs(delta), 1.0)
 
     def test_four_anchor_near_singularity(self):
         helper = self.build_helper(FOUR_ANCHORS_PROBLEM)
