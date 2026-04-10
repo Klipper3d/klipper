@@ -121,12 +121,12 @@ class WinchFlexHelper:
                 [flex[i] for i in range(self.num)])
 
 
-def _parse_m569_address(raw_value, fallback_can_address):
+def _parse_m569_address(raw_value):
     if raw_value is None:
-        return {'can_address': fallback_can_address, 'driver': 0}
+        return None
     text = str(raw_value).strip()
     if not text:
-        return {'can_address': fallback_can_address, 'driver': 0}
+        return None
     parts = text.split('.', 1)
     can_address = int(parts[0])
     driver = 0
@@ -150,9 +150,11 @@ class WinchKinematics:
             stepper_config = config.getsection(name)
             s = stepper.PrinterStepper(stepper_config)
             self.steppers.append(s)
-            self.m569_driver_descriptors.append(_parse_m569_address(
-                stepper_config.get('m569_address', None),
-                40 + i))
+            self.m569_driver_descriptors.append({
+                'stepper_name': name,
+                'motor_address': _parse_m569_address(
+                    stepper_config.get('m569_address', None)),
+            })
             a = tuple(stepper_config.getfloat('anchor_' + n) for n in 'xyz')
             self.anchors.append(a)
         self.flex_helper = WinchFlexHelper(self.anchors, config)

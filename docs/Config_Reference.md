@@ -812,7 +812,8 @@ m569_address:
 #   Optional RepRapFirmware-style motor address used by the Hangprinter
 #   M569 compatibility layer in this repository. For example, the hp3
 #   example maps the four winch steppers to 40.0, 41.0, 42.0, and 43.0.
-#   If omitted, the integration falls back to the legacy stepper order.
+#   If omitted, M569.3 and M569.4 match steppers by their section names
+#   such as stepper_a, stepper_b, stepper_c, and stepper_d.
 anchor_x:
 anchor_y:
 anchor_z:
