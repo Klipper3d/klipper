@@ -808,6 +808,11 @@ rotation_distance:
 #   If the spool itself is geared, use the regular stepper gear_ratio
 #   option in the stepper section. The winch buildup code already sees
 #   the geared step count via the stepper's steps_per_rotation value.
+m569_address:
+#   Optional RepRapFirmware-style motor address used by the Hangprinter
+#   M569 compatibility layer in this repository. For example, the hp3
+#   example maps the four winch steppers to 40.0, 41.0, 42.0, and 43.0.
+#   If omitted, the integration falls back to the legacy stepper order.
 anchor_x:
 anchor_y:
 anchor_z:

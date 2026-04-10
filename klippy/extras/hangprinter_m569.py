@@ -1,8 +1,4 @@
 # Minimal Hangprinter compatibility helpers for RepRapFirmware-style M569 gcodes.
-#
-# Copyright (C) 2026
-#
-# This file may be distributed under the terms of the GNU GPLv3 license.
 import math
 
 
@@ -57,11 +53,16 @@ class HangprinterM569:
             return {}
         kin = toolhead.get_kinematics()
         steppers = list(kin.get_steppers())
+        motor_descriptors = list(getattr(kin, 'm569_driver_descriptors', []))
         flex_helper = getattr(kin, 'flex_helper', None)
         mechanical_advantage = list(getattr(flex_helper, 'mechanical_advantage', []))
         driver_configs = {}
         for index, stepper in enumerate(steppers):
-            can_address = FIRST_HANGPRINTER_DRIVER_ADDRESS + index
+            descriptor = motor_descriptors[index] if index < len(motor_descriptors) else {
+                'can_address': FIRST_HANGPRINTER_DRIVER_ADDRESS + index,
+                'driver': 0,
+            }
+            can_address = descriptor['can_address']
             rotation_distance_mm, _steps_per_rotation = stepper.get_rotation_distance()
             invert_dir, _orig_invert_dir = stepper.get_dir_inverted()
             mech_adv = 1
@@ -69,6 +70,7 @@ class HangprinterM569:
                 mech_adv = mechanical_advantage[index]
             driver_configs[can_address] = {
                 'can_address': can_address,
+                'driver': descriptor.get('driver', 0),
                 'mechanical_advantage': mech_adv,
                 'rotation_distance_mm': rotation_distance_mm,
                 'invert_dir': bool(invert_dir),
