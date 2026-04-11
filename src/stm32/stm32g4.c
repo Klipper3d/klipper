@@ -6,6 +6,7 @@
 
 #include "autoconf.h" // CONFIG_CLOCK_REF_FREQ
 #include "board/armcm_boot.h" // VectorTable
+#include "board/armcm_reset.h" // try_request_canboot
 #include "board/irq.h" // irq_disable
 #include "board/misc.h" // bootloader_request
 #include "command.h" // DECL_CONSTANT_STR
@@ -162,6 +163,7 @@ clock_setup(void)
 void
 bootloader_request(void)
 {
+    try_request_canboot();
     dfu_reboot();
 }
 
