@@ -14,6 +14,7 @@ ConfigSubscriptions = [
     # (cfgtype, capture_name, api_request, request_params)
     ('adxl345', 'accelerometer:{csn}', '{ct}/dump_{ct}', {'sensor': '{csn}'}),
     ('lis2dw', 'accelerometer:{csn}', '{ct}/dump_{ct}', {'sensor': '{csn}'}),
+    ('lis3dh', 'accelerometer:{csn}', 'lis2dw/dump_lis2dw', {'sensor':'{csn}'}),
     ('mpu9250', 'accelerometer:{csn}', '{ct}/dump_{ct}', {'sensor': '{csn}'}),
     ('bmi160', 'accelerometer:{csn}', '{ct}/dump_{ct}', {'sensor': '{csn}'}),
     ('icm20948', 'accelerometer:{csn}', '{ct}/dump_{ct}', {'sensor': '{csn}'}),

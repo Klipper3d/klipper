@@ -284,9 +284,9 @@ programmer - see [Bootloaders](Bootloaders.md) for further details.
 ## Will the heaters be left on if the Raspberry Pi crashes?
 
 The software has been designed to prevent that. Once the host enables
-a heater, the host software needs to confirm that enablement every 5
+a heater, the host software needs to confirm that enablement every 3
 seconds. If the micro-controller does not receive a confirmation every
-5 seconds it goes into a "shutdown" state which is designed to turn
+3 seconds it goes into a "shutdown" state which is designed to turn
 off all heaters and stepper motors.
 
 See the "config_digital_out" command in the

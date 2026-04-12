@@ -8,10 +8,18 @@ All dates in this document are approximate.
 
 ## Changes
 
+20260408: The script `lib/canboot/flash_can.py` has been updated to
+the most current version from
+[Katapult](https://github.com/Arksine/katapult) and as such renamed to
+`lib/katapult/flashtool.py`.  If you call this script directly instead
+of using the existing Makefiles, you will need to change the path to
+the script to `lib/katapult/flashtool.py`.
+
 20260325: Added optional `[display_font <name>]` config sections for
 OLED text rendering and a `[display]` `font` option to select them.
 Added a `[display]` `height` option (`32` or `64`) for `ssd1306` and
 `sh1106` displays.
+
 20260318: The `[probe_eddy_current]` config options `speed`,
 `lift_speed`, `samples`, `sample_retract_dist`, `samples_result`,
 `samples_tolerance`, and `samples_tolerance_retries` no longer apply
