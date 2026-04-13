@@ -221,7 +221,9 @@ class HangprinterM569:
         if not drivers:
             gcmd.respond_raw("Error: M569: missing parameter 'P'")
             return
-        if len(forces) != len(drivers):
+        if len(forces) == 1 and len(drivers) > 1:
+            forces = forces * len(drivers)
+        elif len(forces) != len(drivers):
             gcmd.respond_raw("M569.4 requires one T value per P")
             return
         driver_lookup = self._get_driver_lookup()
