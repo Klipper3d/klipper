@@ -318,11 +318,6 @@ def get_ffi():
         FFI_main = cffi.FFI()
         for d in defs_all:
             FFI_main.cdef(d)
-        FFI_lib = FFI_main.dlopen(destlib)
-        # Setup error logging
-        pyhelper_logging_callback = FFI_main.callback("void func(const char *)",
-                                                      logging_callback)
-        FFI_lib.set_python_logging_callback(pyhelper_logging_callback)
     return FFI_main, FFI_lib
 
 
