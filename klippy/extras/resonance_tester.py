@@ -200,6 +200,10 @@ class ResonanceTestExecutor:
             gcmd.respond_info("Disabled [input_shaper] for resonance testing")
         else:
             input_shaper = None
+        backlash_compensation = self.printer.lookup_object(
+                'backlash_compensation', None)
+        if backlash_compensation is not None:
+            backlash_compensation.disable_compensation()
         last_v = last_t = last_freq = 0.
         for next_t, accel, freq in test_seq:
             t_seg = next_t - last_t
@@ -257,6 +261,8 @@ class ResonanceTestExecutor:
         if input_shaper is not None:
             input_shaper.enable_shaping()
             gcmd.respond_info("Re-enabled [input_shaper]")
+        if backlash_compensation is not None:
+            backlash_compensation.enable_compensation()
 
 class ResonanceTester:
     def __init__(self, config):
