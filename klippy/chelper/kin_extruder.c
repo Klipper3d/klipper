@@ -8,9 +8,11 @@
 #include <stdlib.h> // malloc
 #include <string.h> // memset
 #include "compiler.h" // __visible
+#include "integrate.h" // move_integrate
 #include "itersolve.h" // struct stepper_kinematics
 #include "list.h" // list_node
 #include "pyhelper.h" // errorf
+#include "stepcorr.h" // stepcorr_update_gen_steps_window
 #include "trapq.h" // move_get_distance
 
 struct pa_params {
@@ -30,31 +32,6 @@ struct pa_params {
 //         definitive_integral(pa_position(x) * (smooth_time/2 - abs(t-x)) * dx,
 //                             from=t-smooth_time/2, to=t+smooth_time/2)
 //         / ((smooth_time/2)**2))
-
-// Calculate the definitive integral of the motion formula:
-//   position(t) = base + t * (start_v + t * half_accel)
-static double
-extruder_integrate(double base, double start_v, double half_accel
-                   , double start, double end)
-{
-    double half_v = .5 * start_v, sixth_a = (1. / 3.) * half_accel;
-    double si = start * (base + start * (half_v + start * sixth_a));
-    double ei = end * (base + end * (half_v + end * sixth_a));
-    return ei - si;
-}
-
-// Calculate the definitive integral of time weighted position:
-//   weighted_position(t) = t * (base + t * (start_v + t * half_accel))
-static double
-extruder_integrate_time(double base, double start_v, double half_accel
-                        , double start, double end)
-{
-    double half_b = .5 * base, third_v = (1. / 3.) * start_v;
-    double eighth_a = .25 * half_accel;
-    double si = start * start * (half_b + start * (third_v + start * eighth_a));
-    double ei = end * end * (half_b + end * (third_v + end * eighth_a));
-    return ei - si;
-}
 
 // Calculate the definitive integral of extruder for a given move
 static double
@@ -81,9 +58,7 @@ pa_move_integrate(struct move *m, struct list_head *pa_list
     double start_v = m->start_v + pressure_advance * 2. * m->half_accel;
     // Calculate definitive integral
     double ha = m->half_accel;
-    double iext = extruder_integrate(base, start_v, ha, start, end);
-    double wgt_ext = extruder_integrate_time(base, start_v, ha, start, end);
-    return wgt_ext - time_offset * iext;
+    return move_integrate_weighted(base, start_v, ha, start, end, time_offset);
 }
 
 // Calculate the definitive integral of the extruder over a range of moves
@@ -143,6 +118,7 @@ extruder_set_pressure_advance(struct stepper_kinematics *sk, double print_time
     double hst = smooth_time * .5, old_hst = es->half_smooth_time;
     es->half_smooth_time = hst;
     es->sk.gen_steps_pre_active = es->sk.gen_steps_post_active = hst;
+    stepcorr_update_gen_steps_window(&es->sk);
 
     // Cleanup old pressure advance parameters
     double cleanup_time = sk->last_flush_time - (old_hst > hst ? old_hst : hst);

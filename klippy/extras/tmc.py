@@ -701,23 +701,36 @@ def TMCtstepHelper(mcu_tmc, velocity, pstepper=None, config=None):
     return max(0, min(0xfffff, threshold))
 
 # Helper to configure stealthChop-spreadCycle transition velocity
-def TMCStealthchopHelper(config, mcu_tmc):
-    fields = mcu_tmc.get_fields()
-    en_pwm_mode = False
-    velocity = config.getfloat('stealthchop_threshold', None, minval=0.)
-    tpwmthrs = 0xfffff
+class TMCStealthchopHelper:
+    def __init__(self, config, mcu_tmc):
+        fields = mcu_tmc.get_fields()
+        en_pwm_mode = False
+        velocity = config.getfloat('stealthchop_threshold', None, minval=0.)
+        tpwmthrs = 0xfffff
 
-    if velocity is not None:
-        en_pwm_mode = True
-        tpwmthrs = TMCtstepHelper(mcu_tmc, velocity, config=config)
-    fields.set_field("tpwmthrs", tpwmthrs)
+        if velocity is not None:
+            en_pwm_mode = True
+            tpwmthrs = TMCtstepHelper(mcu_tmc, velocity, config=config)
+        fields.set_field("tpwmthrs", tpwmthrs)
 
-    reg = fields.lookup_register("en_pwm_mode", None)
-    if reg is not None:
-        fields.set_field("en_pwm_mode", en_pwm_mode)
-    else:
-        # TMC2208 uses en_spreadCycle
-        fields.set_field("en_spreadcycle", not en_pwm_mode)
+        reg = fields.lookup_register("en_pwm_mode", None)
+        if reg is not None:
+            fields.set_field("en_pwm_mode", en_pwm_mode)
+        else:
+            # TMC2208 uses en_spreadCycle
+            fields.set_field("en_spreadcycle", not en_pwm_mode)
+
+        self.velocity, self.tpwmthrs = velocity, tpwmthrs
+    def get_velocity_threshold(self):
+        # Returns a threshold velocity when the stepper is switching
+        # to spreadcycle mode. Returns None when no such threshold
+        # exists (i.e. the stepper always run in stealthchop mode).
+        if self.tpwmthrs == 0xfffff:
+            return 0
+        if self.tpwmthrs == 0:
+            return None
+        return self.velocity
+
 
 # Helper to configure StallGuard and CoolStep minimum velocity
 def TMCVcoolthrsHelper(config, mcu_tmc):

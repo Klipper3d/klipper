@@ -11,6 +11,7 @@
 #include "itersolve.h" // itersolve_generate_steps
 #include "pyhelper.h" // errorf
 #include "stepcompress.h" // queue_append_start
+#include "stepcorr.h" // stepcorr_calc_position
 #include "trapq.h" // struct move
 
 
@@ -29,7 +30,6 @@ static int32_t
 itersolve_gen_steps_range(struct stepper_kinematics *sk, struct stepcompress *sc
                           , struct move *m, double abs_start, double abs_end)
 {
-    sk_calc_callback calc_position_cb = sk->calc_position_cb;
     double half_step = .5 * sk->step_dist;
     double start = abs_start - m->print_time, end = abs_end - m->print_time;
     if (start < 0.)
@@ -69,7 +69,7 @@ itersolve_gen_steps_range(struct stepper_kinematics *sk, struct stepcompress *sc
         // Calculate position at next_time guess
         old_guess = guess;
         guess.time = next_time;
-        guess.position = calc_position_cb(sk, m, next_time);
+        guess.position = stepcorr_calc_position(sk, m, next_time);
         guess_dist = guess.position - target;
         if (fabs(guess_dist) > .000000001) {
             // Guess does not look close enough - update bounds

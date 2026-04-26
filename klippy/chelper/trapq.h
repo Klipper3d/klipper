@@ -34,6 +34,7 @@ struct pull_move {
 struct move *move_alloc(void);
 double move_get_distance(struct move *m, double move_time);
 struct coord move_get_coord(struct move *m, double move_time);
+double move_get_velocity(struct move *m, double move_time);
 struct trapq *trapq_alloc(void);
 void trapq_free(struct trapq *tq);
 void trapq_check_sentinels(struct trapq *tq);
