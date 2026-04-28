@@ -2079,17 +2079,29 @@ supported input shapers. Input shapers used in Klipper are rather standard,
 with the exception of MZV, and one can find more in-depth overview in
 the articles describing the corresponding shapers.</p>
 <p>MZV stands for a Modified-ZV input shaper. The classic definition of ZV shaper
-assumes the duration Ts equal to 1/2 of the damped period of oscillations Td and
-has two pulses. However, ZV input shaper has a generalized form for an arbitrary
-duration in the range (0, Td] with three pulses (Specified-Duration ZV, see also
-SNA-ZV), with a negative middle pulse if Ts &lt; Td and a positive one if Ts &gt; Td.
-The MZV shaper was designed as an intermediate shaper between ZV and ZVD,
+assumes two pulses and the total duration <code>t</code> equal to 1/2 of the damped period
+of oscillations <code>Td</code>. However, it is possible to construct a generalized form
+of ZV input shaper with <code>n &gt;= 3</code> pulses and an arbitrary total duration
+<code>t &gt;= 0.5 * Td</code> (with the maximum of <code>t</code> depending on <code>n</code> value), see for
+instance SNA-ZV and MIS-ZV input shapers, which can be seen as special cases
+of a more generalized implementation of MZV input shaper in Klipper.
+The default MZV parameters in Klipper are <code>n=3</code>, <code>t=0.75</code> (of <code>Td</code>), and this
+shaper was designed to serve as an intermediate shaper between ZV and ZVD,
 offering better vibrations suppression than ZV when the determined (measured)
 shaper parameters deviate from the ones actually required by the printer,
-and smaller smoothing than ZVD. Effectively, it is a SD-ZV shaper with the
-specific duration Ts = 3/4 Td, exactly between ZV (Ts = 1/2 Td) and
-ZVD (Ts = Td), and it happens to work well for many real-life 3D printers.</p>
-<p>The table below shows some (usually approximate) parameters of each shaper.</p>
+and smaller smoothing than ZVD. Effectively, its specific duration <code>t=0.75</code>,
+exactly between ZV (with <code>t=0.5</code> of <code>Td</code>) and ZVD (<code>t=1</code> of <code>Td</code>), and it
+happens to work well for many real-life 3D printers. However, experienced
+users can modify the default parameters of the MZV input shaper and try other
+variations that may work better for their specific printers (with these
+non-default variations specified as, e.g. <code>mzv(n=3,t=0.8)</code> or <code>mzv(n=5,t=1.1)</code>
+in the <code>[input_shaper]</code> section or as a parameter to <code>SET_INPUT_SHAPER</code> command,
+as well as in a parameter to <code>~/klipper/scripts/calibrate_shaper.py</code> script,
+e.g. as <code>--shapers='2hump_ei,3hump_ei,mzv(n=6,t=1.0)'</code>. These custom parameters
+of the shapers are supported by <code>~/klipper/scripts/graph_shaper.py</code> scripts via
+e.g. <code>--shaper='mzv(n=3,t=0.6666666666)'</code> parameter.</p>
+<p>The table below shows some (usually approximate) parameters of each shaper with
+their default parameters.</p>
 <table>
 <thead>
 <tr>
@@ -2144,10 +2156,13 @@ configured more precisely and it will then reduce the resonances in a bit wider
 range of frequencies. However, the damping ratio is usually unknown and is hard
 to estimate without a special equipment, so Klipper uses 0.1 value by default,
 which is a good all-round value. The frequency ranges in the table cover a
-number of different possible damping ratios around that value (approx. from 0.05
-to 0.2).</p>
+number of different possible damping ratios around that value (approx. from 0.075
+to 0.15).</p>
 <p>Also note that EI, 2HUMP_EI, and 3HUMP_EI are tuned to reduce vibrations to 5%,
-so the values for 10% vibration tolerance are provided only for the reference.</p>
+so the values for 10% vibration tolerance are provided only for the reference.
+However, a user can force a desired vibration tolerance for EI input shaper in
+a manner similar to MZV input shaper as, e.g. <code>ei(v_tol=0.02)</code> or
+<code>ei(v_tol=0.1)</code>, in which case the vibration reduction range will be different.</p>
 <p><strong>How to use this table:</strong></p>
 <ul>
 <li>Shaper duration affects the smoothing in parts - the larger it is, the more
