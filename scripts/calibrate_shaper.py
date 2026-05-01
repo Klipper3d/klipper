@@ -62,12 +62,13 @@ def parse_log(logname):
 
 # Find the best shaper parameters
 def calibrate_shaper(datas, csv_output, *, shapers, damping_ratio, scv,
-                     shaper_freqs, max_smoothing, max_vibrations,
+                     shaper_freqs, max_smoothing, max_vibrs_pcnt,
                      test_damping_ratios, max_freq):
     # Combine accelerometer data
     calibration_data = datas[0]
     for data in datas[1:]:
         calibration_data.add_data(data)
+    max_vibrations = None if max_vibrs_pcnt is None else max_vibrs_pcnt * 0.01
 
     print("Processing resonances from %s"
           % ",".join(d.name for d in calibration_data.get_datasets()))
@@ -272,7 +273,7 @@ def main():
             damping_ratio=options.damping_ratio,
             scv=options.scv, shaper_freqs=shaper_freqs,
             max_smoothing=options.max_smoothing,
-            max_vibrations=options.max_vibrs_pcnt * 0.01,
+            max_vibrs_pcnt=options.max_vibrs_pcnt,
             test_damping_ratios=test_damping_ratios,
             max_freq=max_freq)
     if selected_shaper is None:
