@@ -242,9 +242,9 @@ class LoadCellProbeConfigHelper:
         self._tare_time_param = floatParamHelper(config, 'tare_time',
             default=4. / 60., minval=0.01, maxval=1.0)
         # triggering options
-        self._trigger_force_param = intParamHelper(config, 'trigger_force',
+        self._trigger_force_param = floatParamHelper(config, 'trigger_force',
             default=75, minval=10, maxval=250)
-        self._force_safety_limit_param = intParamHelper(config,
+        self._force_safety_limit_param = floatParamHelper(config,
             'force_safety_limit', minval=100, maxval=5000, default=2000)
 
     def get_tare_samples(self, gcmd=None):
