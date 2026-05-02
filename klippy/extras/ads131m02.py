@@ -42,9 +42,10 @@ OSR_TO_REG = {
     16256: 7,  # OSR code 111b
 }
 
-DEFAULT_CLOCK_FREQ = 8192000
-UPDATE_INTERVAL = 0.100
 ADS131M02_ID = 0x22
+UPDATE_INTERVAL = 0.100
+MIN_CLOCK_FREQ = 300000
+MAX_CLOCK_FREQ = 8400000
 
 class ADS131M02:
     def __init__(self, config):
@@ -63,8 +64,21 @@ class ADS131M02:
                                     default='1024')
 
         # Clock frequency
-        self.clock_freq = config.getint('clock_freq', DEFAULT_CLOCK_FREQ,
-                                        minval=1000000, maxval=16000000)
+        pwm_clock_name = config.get('pwm_clock', None)
+        if pwm_clock_name is not None:
+            pwm_config = config.getsection(' '.join(pwm_clock_name.split()))
+            self.clock_freq = pwm_config.getfloat('frequency', None,
+                                                  note_valid=False,
+                                                  minval=MIN_CLOCK_FREQ,
+                                                  maxval=MAX_CLOCK_FREQ)
+            if self.clock_freq is None:
+                raise config.error(
+                        "pwm_clock '%s' must support and specify a 'frequency'"
+                        " parameter" % (pwm_clock_name,))
+        else:
+            self.clock_freq = config.getint('clock_freq',
+                                            minval=MIN_CLOCK_FREQ,
+                                            maxval=MAX_CLOCK_FREQ)
 
         # Calculate data rate: fCLKIN / (2 * OSR)
         self.sps = self.clock_freq / (2. * self.osr)
