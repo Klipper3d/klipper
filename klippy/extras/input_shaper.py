@@ -45,6 +45,7 @@ class InputShaperParams:
                         gcmd.error)
         self.damping_ratio = damping_ratio
         self.shaper_type = shaper_type.lower()
+        self.shaper_freq = shaper_freq
     def get_shaper(self, shaper_type=None, shaper_freq=None,
                    damping_ratio=None, error=None):
         if not self.shaper_freq:
