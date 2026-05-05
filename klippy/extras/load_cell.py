@@ -115,7 +115,8 @@ class LoadCellCommandHelper:
         samples, errors = collector.stop_collecting()
         if errors:
             gcmd.respond_info("Sensor reported errors: %i errors,"
-                              " %i overflows" % (errors[0], errors[1]))
+                              " %i overflows, %i transmission errors"
+                              % (errors[0], errors[1], errors[2]))
         else:
             gcmd.respond_info("Sensor reported no errors")
         if not samples:
@@ -286,12 +287,14 @@ class LoadCellSampleCollector:
         self._samples = []
         self._errors = 0
         self._overflows = 0
+        self._transmission_errors = 0
 
     def _on_samples(self, msg):
         if not self.is_started:
             return False  # already stopped, ignore
         self._errors += msg['errors']
         self._overflows += msg['overflows']
+        self._transmission_errors += msg.get('transmission_errors', 0)
         samples = msg['data']
         for sample in samples:
             time = sample[0]
@@ -314,19 +317,24 @@ class LoadCellSampleCollector:
         self._errors = 0
         overflows = self._overflows
         self._overflows = 0
+        transmission_errors = self._transmission_errors
+        self._transmission_errors = 0
         if self._mcu.is_fileoutput():
             samples = [(0., 0., 0.)]
-        return samples, (errors, overflows) if errors or overflows else 0
+        return samples, (errors, overflows, transmission_errors) \
+            if errors or overflows or transmission_errors else 0
 
     def _collect_until(self, timeout):
         self.start_collecting()
         while self.is_started:
             now = self._reactor.monotonic()
             if self._mcu.estimated_print_time(now) > timeout:
+                error_msg = ("LoadCellSampleCollector timed out! Errors: %i,"
+                             " overflows: %i, transmission errors: %i"
+                             % (self._errors, self._overflows,
+                                self._transmission_errors))
                 self._finish_collecting()
-                raise self._printer.command_error(
-                    "LoadCellSampleCollector timed out! Errors: %i,"
-                    " Overflows: %i" % (self._errors, self._overflows))
+                raise self._printer.command_error(error_msg)
             if self._mcu.is_fileoutput():
                 break
             self._reactor.pause(now + RETRY_DELAY)
@@ -404,6 +412,7 @@ class LoadCell:
         data = msg.get("data")
         errors = msg.get("errors")
         overflows = msg.get("overflows")
+        transmission_errors = msg.get("transmission_errors", 0)
         if data is None:
             return None
         samples = []
@@ -411,7 +420,8 @@ class LoadCell:
             # [time, grams, counts, tare_counts]
             samples.append([row[0], self.counts_to_grams(row[1]), row[1],
                             self.tare_counts])
-        msg = {'data': samples, 'errors': errors, 'overflows': overflows}
+        msg = {'data': samples, 'errors': errors, 'overflows': overflows,
+               'transmission_errors': transmission_errors}
         self.clients.send(msg)
         return True
 
@@ -461,8 +471,8 @@ class LoadCell:
         samples, errors = self.get_collector().collect_min(num_samples)
         if errors:
             raise self.printer.command_error(
-                "Sensor reported %i errors while sampling"
-                    % (errors[0] + errors[1]))
+                "Sensor reported %i errors, %i overflows,"
+                " %i transmission errors" % (errors[0], errors[1], errors[2]))
         # check samples for saturated readings
         range_min, range_max = self.saturation_range()
         for sample in samples:
@@ -525,7 +535,7 @@ def load_config(config):
     sensors = {}
     sensors.update(hx71x.HX71X_SENSOR_TYPES)
     sensors.update(ads1220.ADS1220_SENSOR_TYPE)
-    sensors.update(ads131m02.ADS131M02_SENSOR_TYPE)
+    sensors.update(ads131m02.ADS131M0X_SENSOR_TYPES)
     sensor_class = config.getchoice('sensor_type', sensors)
     return LoadCell(config, sensor_class(config))
 

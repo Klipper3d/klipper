@@ -1,4 +1,4 @@
-# ADS131M02 2-Channel, Simultaneously-Sampling, 24-Bit ADC
+# ADS131M0X support (ADS131M02, ADS131M04)
 #
 # Copyright (C) 2026  Dmitry Butyugin <dmbutyugin@google.com>
 #
@@ -42,23 +42,38 @@ OSR_TO_REG = {
     16256: 7,  # OSR code 111b
 }
 
-ADS131M02_ID = 0x22
+# GAIN settings and corresponding GAIN1 register values
+GAIN_TO_REG = {
+    1:   0x00,
+    2:   0x01,
+    4:   0x02,
+    8:   0x03,
+    16:  0x04,
+    32:  0x05,
+    64:  0x06,
+    128: 0x07,
+}
+
 UPDATE_INTERVAL = 0.100
 MIN_CLOCK_FREQ = 300000
 MAX_CLOCK_FREQ = 8400000
 
-class ADS131M02:
-    def __init__(self, config):
+class ADS131M0X:
+    def __init__(self, config, sensor_type, num_channels):
         self.printer = printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.last_error_count = 0
         self.consecutive_fails = 0
+        self.sensor_type = sensor_type
+        self.sensor_id = 0x20 | num_channels
+        self._sensor_errors = {}
 
         # Channel selection
-        self.channel = config.getint('adc_channel', 0, minval=0, maxval=1)
+        self.num_channels = num_channels
+        self.channel = config.getint('adc_channel', 0,
+                                     minval=0, maxval=num_channels-1)
 
         # OSR setting
-        osr_choices = {str(k): v for k, v in OSR_TO_REG.items()}
         self.osr = config.getchoice('oversampling_ratio',
                                     {str(k): k for k in OSR_TO_REG},
                                     default='1024')
@@ -84,9 +99,8 @@ class ADS131M02:
         self.sps = self.clock_freq / (2. * self.osr)
 
         # Gain setting
-        self.gain_options = {'1': 0x00, '2': 0x01, '4': 0x02, '8': 0x03,
-                             '16': 0x04, '32': 0x05, '64': 0x06, '128': 0x07}
-        self.gain = config.getchoice('gain', self.gain_options, default='1')
+        self.gain = config.getchoice('gain', {str(k): k for k in GAIN_TO_REG},
+                                     default='1')
 
         # SPI Setup
         self.spi = bus.MCU_SPI_from_config(config, mode=1,
@@ -101,8 +115,9 @@ class ADS131M02:
         self.data_ready_pin = drdy_ppin['pin']
         drdy_pin_mcu = drdy_ppin['chip']
         if drdy_pin_mcu != self.mcu:
-            raise config.error("ADS131M02 config error: SPI communication and"
-                               " data_ready_pin must be on the same MCU")
+            raise config.error("%s config error: SPI communication and"
+                               " data_ready_pin must be on the same MCU"
+                               % (self.sensor_type,))
 
         # Clock tracking
         chip_smooth = self.sps * UPDATE_INTERVAL * 2
@@ -115,24 +130,28 @@ class ADS131M02:
 
         # Command Configuration
         mcu.add_config_cmd(
-            "config_ads131m02 oid=%d spi_oid=%d channel=%d data_ready_pin=%s"
-            % (self.oid, self.spi.get_oid(), self.channel, self.data_ready_pin))
-        mcu.add_config_cmd("query_ads131m02 oid=%d rest_ticks=0"
+            "config_ads131m0x oid=%d spi_oid=%d channel=%d num_channels=%d "
+            "data_ready_pin=%s"
+            % (self.oid, self.spi.get_oid(), self.channel, self.num_channels,
+               self.data_ready_pin))
+        mcu.add_config_cmd("query_ads131m0x oid=%d rest_ticks=0"
                            % (self.oid,), on_restart=True)
         mcu.register_config_callback(self._build_config)
-        self.query_ads131m02_cmd = None
+        self.query_ads131m0x_cmd = None
 
     def setup_trigger_analog(self, trigger_analog_oid):
         self.mcu.add_config_cmd(
-            "ads131m02_attach_trigger_analog oid=%d trigger_analog_oid=%d"
+            "ads131m0x_attach_trigger_analog oid=%d trigger_analog_oid=%d"
             % (self.oid, trigger_analog_oid), is_init=True)
 
     def _build_config(self):
         cmdqueue = self.spi.get_command_queue()
-        self.query_ads131m02_cmd = self.mcu.lookup_command(
-            "query_ads131m02 oid=%c rest_ticks=%u", cq=cmdqueue)
-        self.ffreader.setup_query_command("query_ads131m02_status oid=%c",
+        self.query_ads131m0x_cmd = self.mcu.lookup_command(
+            "query_ads131m0x oid=%c rest_ticks=%u", cq=cmdqueue)
+        self.ffreader.setup_query_command("query_ads131m0x_status oid=%c",
                                           oid=self.oid, cq=cmdqueue)
+        errors = self.mcu.get_enumerations().get("ads131m0x_error:", {})
+        self._sensor_errors = {v: k for k, v in errors.items()}
 
     def get_mcu(self):
         return self.mcu
@@ -141,7 +160,8 @@ class ADS131M02:
         return round(self.sps)
 
     def lookup_sensor_error(self, error_code):
-        return "Unknown ads131m02 error"
+        return self._sensor_errors.get(error_code,
+                                       "Unknown %s error" % (self.sensor_type,))
 
     # Returns a tuple of the minimum and maximum value of the sensor,
     # used to detect if a data value is saturated
@@ -169,8 +189,9 @@ class ADS131M02:
         self.reset_chip()
         self.setup_chip()
         rest_ticks = self.mcu.seconds_to_clock(1. / (10. * self.sps))
-        self.query_ads131m02_cmd.send([self.oid, rest_ticks])
-        logging.info("ADS131M02 starting '%s' measurements", self.name)
+        self.query_ads131m0x_cmd.send([self.oid, rest_ticks])
+        logging.info("%s starting '%s' measurements",
+                     self.sensor_type, self.name)
         # Initialize clock tracking
         self.ffreader.note_start()
 
@@ -179,15 +200,18 @@ class ADS131M02:
         if self.printer.is_shutdown():
             return
         # Halt bulk reading
-        self.query_ads131m02_cmd.send_wait_ack([self.oid, 0])
+        self.query_ads131m0x_cmd.send_wait_ack([self.oid, 0])
         self.ffreader.note_end()
-        logging.info("ADS131M02 finished '%s' measurements", self.name)
+        logging.info("%s finished '%s' measurements",
+                     self.sensor_type, self.name)
 
     def _process_batch(self, eventtime):
         samples = self.ffreader.pull_samples()
         self._convert_samples(samples)
         return {'data': samples, 'errors': self.last_error_count,
-                'overflows': self.ffreader.get_last_overflows()}
+                'overflows': self.ffreader.get_last_overflows(),
+                'transmission_errors':
+                    self.ffreader.get_last_transmission_errors()}
 
     def _convert_to_spi_frame(self, vals_16):
         result = []
@@ -199,25 +223,25 @@ class ADS131M02:
         return result
 
     def reset_chip(self):
-        # Read ID register to validate the sensor (upper byte = 0x22)
+        # Read ID register to validate the sensor type (upper byte)
         id_val = self.read_reg(REG_ID)
-        if (id_val >> 8) != ADS131M02_ID:
+        if (id_val >> 8) != self.sensor_id:
             if self.mcu.is_fileoutput():
                 return
             raise self.printer.command_error(
-                    "Invalid ads131m02 ID register (got 0x%x vs 0x22xx).\n"
+                    "Invalid %s ID register (got 0x%x vs 0x%xxx).\n"
                     "This is generally indicative of connection problems\n"
-                    "(e.g. faulty wiring) or a faulty ADS131M02 chip."
-                    % (id_val,))
+                    "(e.g. faulty wiring) or a faulty chip."
+                    % (self.sensor_type, id_val, self.sensor_id))
         # Send RESET command and check acknowledgment
         self.send_command_16(RESET_CMD)
         ack = self.send_command_16(NULL_CMD)
         if ack != RESET_ACK:
             raise self.printer.command_error(
-                    "Failed to reset ads131m02 (got 0x%x vs 0x%x).\n"
+                    "Failed to reset %s (got 0x%x vs 0x%x).\n"
                     "This is generally indicative of connection problems\n"
-                    "(e.g. faulty wiring) or a faulty ADS131M02 chip."
-                % (ack, RESET_ACK))
+                    "(e.g. faulty wiring) or a faulty chip."
+                    % (self.sensor_type, ack, RESET_ACK))
 
     def setup_chip(self):
         self.write_reg(REG_MODE, MODE_VAL)
@@ -228,9 +252,9 @@ class ADS131M02:
                     % (MODE_VAL, actual_mode_val))
 
         # Configure CLOCK register
-        # Bit 9: CH1_EN, bit 8: CH0_EN, bit 5: TBM, bits 4:2: OSR, bits 1:0: PWR
+        # Bits 11-8: channel mask, bit 5: TBM, bits 4:2: OSR, bits 1:0: PWR
         osr_code = OSR_TO_REG[self.osr]
-        ch_en = 0x200 if self.channel else 0x100
+        ch_en = 1 << (self.channel + 8)
         clock_val = (osr_code << 2) | ch_en | PWR_MODE
         self.write_reg(REG_CLOCK, clock_val)
         actual_clock_val = self.read_reg(REG_CLOCK)
@@ -240,7 +264,9 @@ class ADS131M02:
                     % (clock_val, actual_clock_val))
 
         # Configure GAIN1 register
-        gain_val = (self.gain << 4) | self.gain
+        gain_val = 0
+        for i in range(self.num_channels):
+            gain_val |= GAIN_TO_REG[self.gain] << (i * 4)
         self.write_reg(REG_GAIN1, gain_val)
         actual_gain_val = self.read_reg(REG_GAIN1)
         if actual_gain_val != gain_val:
@@ -276,4 +302,14 @@ class ADS131M02:
         return (resp[0] << 8) | resp[1]
 
 
-ADS131M02_SENSOR_TYPE = {"ads131m02": ADS131M02}
+def ADS131M02(config):
+    return ADS131M0X(config, sensor_type="ADS131M02", num_channels=2)
+
+def ADS131M04(config):
+    return ADS131M0X(config, sensor_type="ADS131M04", num_channels=4)
+
+
+ADS131M0X_SENSOR_TYPES = {
+    "ads131m02": ADS131M02,
+    "ads131m04": ADS131M04,
+}

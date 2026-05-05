@@ -1,5 +1,6 @@
-// Support for ADS131M02 ADC Chip
+// Support for ADS131M0X ADC Chips
 //
+// Copyright (C) 2024-2025 Gareth Farrington <gareth@waves.ky>
 // Copyright (C) 2026  Dmitry Butyugin <dmbutyugin@google.com>
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
@@ -15,165 +16,210 @@
 #include "spicmds.h" // spidev_transfer
 #include "trigger_analog.h" // trigger_analog_update
 
-struct ads131m02_adc {
+struct ads131m0x_adc {
     struct timer timer;
     uint32_t rest_ticks;
     struct gpio_in data_ready;
     struct spidev_s *spi;
     uint8_t pending_flag, data_count;
-    uint8_t channel;
+    uint8_t channel, num_channels;
     struct sensor_bulk sb;
     struct trigger_analog *ta;
 };
 
-#define BYTES_PER_SAMPLE 4
-#define ADS131M02_FRAME_SIZE 12
+// Internal errors transmitted to trigger_analog
+enum {
+    SE_CRC_ERROR
+};
 
-static struct task_wake wake_ads131m02;
+DECL_ENUMERATION("ads131m0x_error:", "CRC_ERROR", SE_CRC_ERROR);
+
+#define BYTES_PER_SAMPLE 4
+#define ADS131M0X_WORD_SIZE 3
+#define ADS131M0X_STATUS_WORDS 1
+#define ADS131M0X_CRC_WORDS 1
+#define ADS131M0X_MAX_CHANNELS 4
+#define ADS131M0X_MAX_FRAME_SIZE \
+    ((ADS131M0X_STATUS_WORDS + ADS131M0X_MAX_CHANNELS \
+        + ADS131M0X_CRC_WORDS) * ADS131M0X_WORD_SIZE)
+
+static struct task_wake wake_ads131m0x;
 
 /****************************************************************
- * ADS131M02 Sensor Support
+ * ADS131M0X Sensor Support
  ****************************************************************/
 
-int8_t
-ads131m02_is_data_ready(struct ads131m02_adc *ads131m02) {
-    return gpio_in_read(ads131m02->data_ready) == 0;
+static inline uint_fast8_t
+ads131m0x_is_data_ready(struct ads131m0x_adc *ads131m0x) {
+    return gpio_in_read(ads131m0x->data_ready) == 0;
+}
+
+// CCITT CRC-16 calculation (polynomial 0x1021, init 0xFFFF, optimized version)
+static uint16_t
+ads131m0x_crc16_ccitt(const uint8_t *data, uint8_t len)
+{
+    uint16_t crc = 0xFFFF;
+    while (len--) {
+        uint8_t x = (crc >> 8) ^ *data++;
+        x ^= x >> 4;
+        crc = (crc << 8) ^ ((uint16_t)x << 12) ^ ((uint16_t)x << 5)
+            ^ (uint16_t)x;
+    }
+    return crc;
+}
+
+static inline uint_fast8_t
+ads131m0x_has_crc_error(uint8_t *msg, uint8_t frame_size)
+{
+    uint_fast8_t crc_offset = frame_size - ADS131M0X_WORD_SIZE;
+    uint16_t calc_crc = ads131m0x_crc16_ccitt(msg, crc_offset);
+    uint16_t frame_crc = ((uint16_t)msg[crc_offset] << 8) | msg[crc_offset + 1];
+    return calc_crc != frame_crc;
 }
 
 // Event handler that periodically wakes the capture task
 static uint_fast8_t
-ads131m02_event(struct timer *timer)
+ads131m0x_event(struct timer *timer)
 {
-    struct ads131m02_adc *ads131m02 = container_of(
-            timer, struct ads131m02_adc, timer);
-    uint32_t rest_ticks = ads131m02->rest_ticks;
-    if (ads131m02->pending_flag) {
-        ads131m02->sb.possible_overflows++;
+    struct ads131m0x_adc *ads131m0x = container_of(
+            timer, struct ads131m0x_adc, timer);
+    uint32_t rest_ticks = ads131m0x->rest_ticks;
+    if (ads131m0x->pending_flag) {
+        ads131m0x->sb.possible_overflows++;
         rest_ticks *= 4;
-    } else if (ads131m02_is_data_ready(ads131m02)) {
-        ads131m02->pending_flag = 1;
-        sched_wake_task(&wake_ads131m02);
+    } else if (ads131m0x_is_data_ready(ads131m0x)) {
+        ads131m0x->pending_flag = 1;
+        sched_wake_task(&wake_ads131m0x);
         rest_ticks *= 8;
     }
-    ads131m02->timer.waketime += rest_ticks;
+    ads131m0x->timer.waketime += rest_ticks;
     return SF_RESCHEDULE;
 }
 
-// Send a NULL command frame and read conversion data from both channels.
+// Send a NULL command frame and read conversion data from all channels.
 // Returns sample from the configured channel.
 static void
-ads131m02_read_adc(struct ads131m02_adc *ads131m02, uint8_t oid)
+ads131m0x_read_adc(struct ads131m0x_adc *ads131m0x, uint8_t oid)
 {
-    uint8_t msg[ADS131M02_FRAME_SIZE] = {0};
-    spidev_transfer(ads131m02->spi, 1, sizeof(msg), msg);
-    ads131m02->pending_flag = 0;
+    uint8_t frame_size = (ADS131M0X_STATUS_WORDS + ads131m0x->num_channels
+                          + ADS131M0X_CRC_WORDS) * ADS131M0X_WORD_SIZE;
+    uint8_t msg[ADS131M0X_MAX_FRAME_SIZE] = {0};
+    spidev_transfer(ads131m0x->spi, 1, frame_size, msg);
+    ads131m0x->pending_flag = 0;
     barrier();
 
-    // Frame layout: status(3), ch0(3), ch1(3), crc(3)
-    // Data is 24-bit two's complement, MSB first
-    uint32_t raw;
-    if (ads131m02->channel == 0) {
-        raw = ((uint32_t)msg[3] << 16)
-            | ((uint32_t)msg[4] << 8)
-            | ((uint32_t)msg[5]);
-    } else {
-        raw = ((uint32_t)msg[6] << 16)
-            | ((uint32_t)msg[7] << 8)
-            | ((uint32_t)msg[8]);
+    // Validate CRC
+    if (ads131m0x_has_crc_error(msg, frame_size)) {
+        ads131m0x->sb.transmission_errors++;
+        trigger_analog_note_error(ads131m0x->ta, SE_CRC_ERROR);
+        return;
     }
+
+    // Frame layout: status(3), channel[0](3), channel[1](3), ..., crc(3)
+    // Data is 24-bit two's complement, MSB first
+    uint8_t data_offset = ADS131M0X_STATUS_WORDS * ADS131M0X_WORD_SIZE
+        + ads131m0x->channel * ADS131M0X_WORD_SIZE;
+    uint32_t raw = ((uint32_t)msg[data_offset] << 16)
+        | ((uint32_t)msg[data_offset + 1] << 8)
+        | ((uint32_t)msg[data_offset + 2]);
 
     // Extend 24-bit two's complement to 32-bit
     if (raw & 0x800000)
         raw |= 0xFF000000;
 
-    trigger_analog_update(ads131m02->ta, raw);
+    trigger_analog_update(ads131m0x->ta, raw);
 
     // Add sample to bulk buffer
-    ads131m02->sb.data[ads131m02->sb.data_count] = raw;
-    ads131m02->sb.data[ads131m02->sb.data_count + 1] = raw >> 8;
-    ads131m02->sb.data[ads131m02->sb.data_count + 2] = raw >> 16;
-    ads131m02->sb.data[ads131m02->sb.data_count + 3] = raw >> 24;
-    ads131m02->sb.data_count += BYTES_PER_SAMPLE;
+    ads131m0x->sb.data[ads131m0x->sb.data_count] = raw;
+    ads131m0x->sb.data[ads131m0x->sb.data_count + 1] = raw >> 8;
+    ads131m0x->sb.data[ads131m0x->sb.data_count + 2] = raw >> 16;
+    ads131m0x->sb.data[ads131m0x->sb.data_count + 3] = raw >> 24;
+    ads131m0x->sb.data_count += BYTES_PER_SAMPLE;
 
-    if ((ads131m02->sb.data_count + BYTES_PER_SAMPLE) >
-            ARRAY_SIZE(ads131m02->sb.data)) {
-        sensor_bulk_report(&ads131m02->sb, oid);
+    if ((ads131m0x->sb.data_count + BYTES_PER_SAMPLE) >
+            ARRAY_SIZE(ads131m0x->sb.data)) {
+        sensor_bulk_report(&ads131m0x->sb, oid);
     }
 }
 
-// Create an ads131m02 sensor
+// Create an ads131m0x sensor
 void
-command_config_ads131m02(uint32_t *args)
+command_config_ads131m0x(uint32_t *args)
 {
-    struct ads131m02_adc *ads131m02 = oid_alloc(args[0]
-                 , command_config_ads131m02, sizeof(*ads131m02));
-    ads131m02->timer.func = ads131m02_event;
-    ads131m02->pending_flag = 0;
-    ads131m02->spi = spidev_oid_lookup(args[1]);
-    ads131m02->channel = (uint8_t)(args[2] & 0xFF);
-    ads131m02->data_ready = gpio_in_setup(args[3], 0);
+    struct ads131m0x_adc *ads131m0x = oid_alloc(args[0]
+            , command_config_ads131m0x, sizeof(*ads131m0x));
+    ads131m0x->timer.func = ads131m0x_event;
+    ads131m0x->pending_flag = 0;
+    ads131m0x->spi = spidev_oid_lookup(args[1]);
+    ads131m0x->channel = (uint8_t)(args[2] & 0xFF);
+    ads131m0x->num_channels = (uint8_t)(args[3] & 0xFF);
+    if (ads131m0x->num_channels < 2 ||
+            ads131m0x->num_channels > ADS131M0X_MAX_CHANNELS ||
+            ads131m0x->channel >= ads131m0x->num_channels)
+        shutdown("Invalid ads131m0x channels configuration");
+    ads131m0x->data_ready = gpio_in_setup(args[4], 0);
 }
-DECL_COMMAND(command_config_ads131m02, "config_ads131m02 oid=%c"
-    " spi_oid=%c channel=%c data_ready_pin=%u");
+DECL_COMMAND(command_config_ads131m0x, "config_ads131m0x oid=%c"
+    " spi_oid=%c channel=%c num_channels=%c data_ready_pin=%u");
 
 void
-ads131m02_attach_trigger_analog(uint32_t *args) {
+ads131m0x_attach_trigger_analog(uint32_t *args) {
     uint8_t oid = args[0];
-    struct ads131m02_adc *ads131m02 = oid_lookup(oid, command_config_ads131m02);
-    ads131m02->ta = trigger_analog_oid_lookup(args[1]);
+    struct ads131m0x_adc *ads131m0x = oid_lookup(oid, command_config_ads131m0x);
+    ads131m0x->ta = trigger_analog_oid_lookup(args[1]);
 }
 #if CONFIG_WANT_TRIGGER_ANALOG
-DECL_COMMAND(ads131m02_attach_trigger_analog,
-    "ads131m02_attach_trigger_analog oid=%c trigger_analog_oid=%c");
+DECL_COMMAND(ads131m0x_attach_trigger_analog,
+    "ads131m0x_attach_trigger_analog oid=%c trigger_analog_oid=%c");
 #endif
 
 // Start/stop capturing ADC data
 void
-command_query_ads131m02(uint32_t *args)
+command_query_ads131m0x(uint32_t *args)
 {
     uint8_t oid = args[0];
-    struct ads131m02_adc *ads131m02 = oid_lookup(oid, command_config_ads131m02);
-    sched_del_timer(&ads131m02->timer);
-    ads131m02->pending_flag = 0;
-    ads131m02->rest_ticks = args[1];
-    if (!ads131m02->rest_ticks) {
+    struct ads131m0x_adc *ads131m0x = oid_lookup(oid, command_config_ads131m0x);
+    sched_del_timer(&ads131m0x->timer);
+    ads131m0x->pending_flag = 0;
+    ads131m0x->rest_ticks = args[1];
+    if (!ads131m0x->rest_ticks) {
         // End measurements
         return;
     }
     // Start new measurements
-    sensor_bulk_reset(&ads131m02->sb);
+    sensor_bulk_reset(&ads131m0x->sb);
     irq_disable();
-    ads131m02->timer.waketime = timer_read_time() + ads131m02->rest_ticks;
-    sched_add_timer(&ads131m02->timer);
+    ads131m0x->timer.waketime = timer_read_time() + ads131m0x->rest_ticks;
+    sched_add_timer(&ads131m0x->timer);
     irq_enable();
 }
-DECL_COMMAND(command_query_ads131m02, "query_ads131m02 oid=%c rest_ticks=%u");
+DECL_COMMAND(command_query_ads131m0x, "query_ads131m0x oid=%c rest_ticks=%u");
 
 void
-command_query_ads131m02_status(const uint32_t *args)
+command_query_ads131m0x_status(const uint32_t *args)
 {
     uint8_t oid = args[0];
-    struct ads131m02_adc *ads131m02 = oid_lookup(oid, command_config_ads131m02);
+    struct ads131m0x_adc *ads131m0x = oid_lookup(oid, command_config_ads131m0x);
     irq_disable();
     const uint32_t start_t = timer_read_time();
-    uint8_t is_data_ready = ads131m02_is_data_ready(ads131m02);
+    uint8_t is_data_ready = ads131m0x_is_data_ready(ads131m0x);
     irq_enable();
     uint8_t pending_bytes = is_data_ready ? BYTES_PER_SAMPLE : 0;
-    sensor_bulk_status(&ads131m02->sb, oid, start_t, 0, pending_bytes);
+    sensor_bulk_status(&ads131m0x->sb, oid, start_t, 0, pending_bytes);
 }
-DECL_COMMAND(command_query_ads131m02_status, "query_ads131m02_status oid=%c");
+DECL_COMMAND(command_query_ads131m0x_status, "query_ads131m0x_status oid=%c");
 
 // Background task that performs measurements
 void
-ads131m02_capture_task(void)
+ads131m0x_capture_task(void)
 {
-    if (!sched_check_wake(&wake_ads131m02))
+    if (!sched_check_wake(&wake_ads131m0x))
         return;
     uint8_t oid;
-    struct ads131m02_adc *ads131m02;
-    foreach_oid(oid, ads131m02, command_config_ads131m02) {
-        if (ads131m02->pending_flag)
-            ads131m02_read_adc(ads131m02, oid);
+    struct ads131m0x_adc *ads131m0x;
+    foreach_oid(oid, ads131m0x, command_config_ads131m0x) {
+        if (ads131m0x->pending_flag)
+            ads131m0x_read_adc(ads131m0x, oid);
     }
 }
-DECL_TASK(ads131m02_capture_task);
+DECL_TASK(ads131m0x_capture_task);

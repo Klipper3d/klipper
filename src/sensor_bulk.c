@@ -13,6 +13,7 @@ sensor_bulk_reset(struct sensor_bulk *sb)
 {
     sb->sequence = 0;
     sb->possible_overflows = 0;
+    sb->transmission_errors = 0;
     sb->data_count = 0;
 }
 
@@ -32,7 +33,8 @@ sensor_bulk_status(struct sensor_bulk *sb, uint8_t oid
                    , uint32_t time1, uint32_t query_ticks, uint32_t fifo)
 {
     sendf("sensor_bulk_status oid=%c clock=%u query_ticks=%u next_sequence=%hu"
-          " buffered=%u possible_overflows=%hu"
+          " buffered=%u possible_overflows=%hu transmission_errors=%hu"
           , oid, time1, query_ticks, sb->sequence
-          , sb->data_count + fifo, sb->possible_overflows);
+          , sb->data_count + fifo, sb->possible_overflows
+          , sb->transmission_errors);
 }

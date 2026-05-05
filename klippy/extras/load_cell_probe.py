@@ -231,8 +231,9 @@ def check_sensor_errors(results, printer):
     samples, errors = results
     if errors:
         raise printer.command_error("Load cell sensor reported errors while"
-                                    " probing: %i errors, %i overflows" % (
-                                        errors[0], errors[1]))
+                                    " probing: %i errors, %i overflows,"
+                                    " %i transmission errors" % (
+                                        errors[0], errors[1], errors[2]))
     return samples
 
 
@@ -486,7 +487,7 @@ class LoadCellPrinterProbe:
         sensors = {}
         sensors.update(hx71x.HX71X_SENSOR_TYPES)
         sensors.update(ads1220.ADS1220_SENSOR_TYPE)
-        sensors.update(ads131m02.ADS131M02_SENSOR_TYPE)
+        sensors.update(ads131m02.ADS131M0X_SENSOR_TYPES)
         sensor_class = config.getchoice('sensor_type', sensors)
         sensor = sensor_class(config)
         self._load_cell = load_cell.LoadCell(config, sensor)
