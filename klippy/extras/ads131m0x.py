@@ -272,11 +272,10 @@ class ADS131M0X:
         return result
 
     def reset_chip(self):
-        if self.mcu.is_fileoutput():
-            return
+        is_batch_mode = self.mcu.is_fileoutput()
         # Read ID register to validate the sensor type (upper byte)
         id_val = self.read_reg(REG_ID)
-        if (id_val >> 8) != self.sensor_id:
+        if not is_batch_mode and (id_val >> 8) != self.sensor_id:
             raise self.printer.command_error(
                     "Invalid %s ID register (got 0x%x vs 0x%x).\n"
                     "This is generally indicative of connection problems\n"
@@ -289,7 +288,7 @@ class ADS131M0X:
         print_time = self.mcu.estimated_print_time(curtime)
         minclock = self.mcu.print_time_to_clock(print_time + T_REGACQ)
         ack = self.send_command_16(NULL_CMD, minclock=minclock)
-        if ack != RESET_ACK:
+        if not is_batch_mode and ack != RESET_ACK:
             raise self.printer.command_error(
                     "Failed to reset %s (got 0x%x vs 0x%x).\n"
                     "This is generally indicative of connection problems\n"
@@ -297,10 +296,11 @@ class ADS131M0X:
                     % (self.sensor_type, ack, RESET_ACK))
 
     def setup_chip(self):
+        is_batch_mode = self.mcu.is_fileoutput()
         mode_val = WORD24_MODE
         self.write_reg(REG_MODE, mode_val)
         actual_mode_val = self.read_reg(REG_MODE)
-        if actual_mode_val != mode_val:
+        if not is_batch_mode and actual_mode_val != mode_val:
             raise self.printer.command_error(
                     "Failed to set MODE register to %x, got %x"
                     % (mode_val, actual_mode_val))
@@ -312,7 +312,7 @@ class ADS131M0X:
         clock_val = (osr_code << 2) | ch_en | PWR_MODE
         self.write_reg(REG_CLOCK, clock_val)
         actual_clock_val = self.read_reg(REG_CLOCK)
-        if actual_clock_val != clock_val:
+        if not is_batch_mode and actual_clock_val != clock_val:
             raise self.printer.command_error(
                     "Failed to set CLOCK register to %x, got %x"
                     % (clock_val, actual_clock_val))
@@ -323,7 +323,7 @@ class ADS131M0X:
             gain_val |= GAIN_TO_REG[self.gain] << (i * 4)
         self.write_reg(REG_GAIN1, gain_val)
         actual_gain_val = self.read_reg(REG_GAIN1)
-        if actual_gain_val != gain_val:
+        if not is_batch_mode and actual_gain_val != gain_val:
             raise self.printer.command_error(
                     "Failed to set GAIN1 register to %x, got %x"
                     % (gain_val, actual_gain_val))
@@ -334,14 +334,15 @@ class ADS131M0X:
             cfg_val = GC_DLY_TO_REG[self.gc_dly] << 9 | GC_MODE
         self.write_reg(REG_CFG, cfg_val)
         actual_cfg_val = self.read_reg(REG_CFG)
-        if actual_cfg_val != cfg_val:
+        if not is_batch_mode and actual_cfg_val != cfg_val:
             raise self.printer.command_error(
                     "Failed to set CFG register to %x, got %x"
                     % (cfg_val, actual_cfg_val))
 
         # Validate STATUS register
         actual_status_val = self.read_reg(REG_STATUS)
-        if (actual_status_val & STATUS_REG_MASK) != WORD24_MODE:
+        if not is_batch_mode and \
+                (actual_status_val & STATUS_REG_MASK) != WORD24_MODE:
             raise self.printer.command_error(
                     "Invalid STATUS register value %x" % actual_status_val)
         # NULL_CMD being the last sent command during initialization sequence
@@ -369,6 +370,8 @@ class ADS131M0X:
         cmd_bytes = self._convert_to_spi_frame([cmd])
         response = self.spi.spi_transfer(cmd_bytes, minclock=minclock)
         resp = response['response']
+        if not resp:
+            return None
         return (resp[0] << 8) | resp[1]
 
 
