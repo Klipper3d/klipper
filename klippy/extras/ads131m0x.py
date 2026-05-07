@@ -1,4 +1,4 @@
-# ADS131M0X support (ADS131M02, ADS131M04)
+# ADS131M0x support (ADS131M02, ADS131M04)
 #
 # Copyright (C) 2024-2025 Gareth Farrington <gareth@waves.ky>
 # Copyright (C) 2026  Dmitry Butyugin <dmbutyugin@google.com>
