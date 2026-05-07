@@ -5268,6 +5268,67 @@ data_ready_pin:
 #   and 'analog_supply'. Default is 'internal'.
 ```
 
+#### ADS131M0x
+The ADS131M0x is a family of 24-bit, delta-sigma ADCs. Two sensors are supported
+from this family: ADS131M02 with two simultaneously-sampling differential
+channels and ADS131M04 with four channels. They feature a programmable gain
+amplifier (PGA) with gains up to 128, configurable oversampling ratios from
+64 to 16384, and require an external clock input (300 kHz to 8.4 MHz).
+```
+[load_cell]
+sensor_type: ads131m02
+#   Select 'ads131m02' for the 2-channel variant or 'ads131m04' for the
+#   4-channel variant. This parameter must be provided.
+cs_pin:
+#   The pin connected to the chip select line. This parameter must be
+#   provided.
+#spi_speed: 4000000
+#   The SPI bus speed. The default is 4 MHz.
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the "common SPI settings" section for a description of the
+#   above parameters.
+data_ready_pin:
+#   Pin connected to the data ready (DRDY) line. This parameter must be
+#   provided.
+#adc_channel: 0
+#   The ADC channel to read. For the ADS131M02, valid values are 0 and 1.
+#   For the ADS131M04, valid values are 0, 1, 2, and 3. The default is 0.
+#clock_freq:
+#   The external clock frequency fCLKIN in Hz supplied to the CLKIN pin.
+#   Valid range is from 300000 to 8400000. Either clock_freq or pwm_clock
+#   must be provided.
+#pwm_clock:
+#   Reference to a [static_pwm_clock] section that generates the clock signal
+#   for the CLKIN pin that defines the supplied clock frequency fCLKIN.
+#   Either clock_freq or pwm_clock must be provided.
+#oversampling_ratio: 1024
+#   The oversampling ratio determines the output data rate and noise
+#   performance. This is the ratio between the sensor high-speed internal
+#   sampling frequency and its lower, final output data rate. Higher values
+#   reduce noise while also giving lower data rates. The final sampling rate
+#   is fCLKIN / (2 * oversampling_ratio) when global-chop mode is enabled
+#   (which is the default, see enable_global_chop parameter below), and
+#   approximately fCLKIN / (6 * oversampling_ratio) when enabled. One can check
+#   the actual sampling rate via LOAD_CELL_DIAGNOSTIC command. Valid values are:
+#   64, 128, 256, 512, 1024, 2048, 4096, 8192, and 16384. The default is 1024.
+#gain: 1
+#   The PGA gain setting. Valid values are: 1, 2, 4, 8, 16, 32, 64, and
+#   128. The default is 1.
+#enable_global_chop: False
+#   Enable global-chop mode to reduce internal system offset errors by averaging
+#   two conversions with opposite input polarities. This also improves the noise
+#   by a factor of sqrt(2) at the cost of longer conversion times and lower
+#   effective sampling rates. The default is False.
+#global_chop_delay: 16
+#   The global-chop delay in modulator clock periods, only used when
+#   enable_global_chop is True. Higher values allow more settling time
+#   between input swaps. Valid values are all powers of 2 from 2 to 65536.
+#   The default is 16.
+```
+
 ### [load_cell_probe]
 Load Cell Probe. This combines the functionality of a [probe] and a [load_cell].
 
