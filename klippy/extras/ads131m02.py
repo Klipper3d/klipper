@@ -1,5 +1,6 @@
 # ADS131M0X support (ADS131M02, ADS131M04)
 #
+# Copyright (C) 2024-2025 Gareth Farrington <gareth@waves.ky>
 # Copyright (C) 2026  Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
@@ -24,10 +25,12 @@ REG_STATUS = 0x01
 REG_MODE   = 0x02
 REG_CLOCK  = 0x03
 REG_GAIN1  = 0x04
+REG_CFG    = 0x06
 
 # Sensor configuration parameters
-MODE_VAL = 0x100  # 24-bit words, CRC and timeout disabled
+MODE_VAL = 0x100  # 24-bit words, CRC (input+registers) and timeout disabled
 PWR_MODE = 0x2    # High-resolution mode
+GC_MODE  = 0x100  # Global-chop mode
 
 # OSR settings and corresponding CLOCK register values
 OSR_TO_REG = {
@@ -52,6 +55,26 @@ GAIN_TO_REG = {
     32:  0x05,
     64:  0x06,
     128: 0x07,
+}
+
+# Global-chop delay settings (modulator clock periods)
+GC_DLY_TO_REG = {
+    2:     0x00,
+    4:     0x01,
+    8:     0x02,
+    16:    0x03,
+    32:    0x04,
+    64:    0x05,
+    128:   0x06,
+    256:   0x07,
+    512:   0x08,
+    1024:  0x09,
+    2048:  0x0a,
+    4096:  0x0b,
+    8192:  0x0c,
+    16384: 0x0d,
+    32768: 0x0e,
+    65536: 0x0f,
 }
 
 UPDATE_INTERVAL = 0.100
@@ -95,12 +118,25 @@ class ADS131M0X:
                                             minval=MIN_CLOCK_FREQ,
                                             maxval=MAX_CLOCK_FREQ)
 
-        # Calculate data rate: fCLKIN / (2 * OSR)
-        self.sps = self.clock_freq / (2. * self.osr)
-
         # Gain setting
         self.gain = config.getchoice('gain', {str(k): k for k in GAIN_TO_REG},
                                      default='1')
+
+        # Global-chop configuration
+        self.enable_global_chop = config.getboolean('enable_global_chop', False)
+        if self.enable_global_chop:
+            self.gc_dly = config.getchoice('global_chop_delay',
+                                           {str(k): k for k in GC_DLY_TO_REG},
+                                           default='16')
+        else:
+            self.gc_dly = None
+
+        # Calculate data rate: fCLKIN / (2 * OSR)
+        # With global chop: fCLKIN / (2 * (gc_dly + 3 * OSR))
+        if self.enable_global_chop:
+            self.sps = self.clock_freq / (2. * (self.gc_dly + 3. * self.osr))
+        else:
+            self.sps = self.clock_freq / (2. * self.osr)
 
         # SPI Setup
         self.spi = bus.MCU_SPI_from_config(config, mode=1,
@@ -273,6 +309,17 @@ class ADS131M0X:
             raise self.printer.command_error(
                     "Failed to set GAIN1 register to %x, got %x"
                     % (gain_val, actual_gain_val))
+
+        # Configure CFG register (global chop settings)
+        cfg_val = 0
+        if self.enable_global_chop:
+            cfg_val = GC_DLY_TO_REG[self.gc_dly] << 9 | GC_MODE
+        self.write_reg(REG_CFG, cfg_val)
+        actual_cfg_val = self.read_reg(REG_CFG)
+        if actual_cfg_val != cfg_val:
+            raise self.printer.command_error(
+                    "Failed to set CFG register to %x, got %x"
+                    % (cfg_val, actual_cfg_val))
 
         # Start conversions
         self.send_command_16(WAKEUP_CMD)
