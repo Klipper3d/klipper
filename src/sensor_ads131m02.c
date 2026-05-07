@@ -21,7 +21,7 @@ struct ads131m0x_adc {
     uint32_t rest_ticks;
     struct gpio_in data_ready;
     struct spidev_s *spi;
-    uint8_t pending_flag, data_count;
+    uint8_t pending_flag, data_count, was_reset;
     uint8_t channel, num_channels;
     struct sensor_bulk sb;
     struct trigger_analog *ta;
@@ -29,10 +29,12 @@ struct ads131m0x_adc {
 
 // Internal errors transmitted to trigger_analog
 enum {
-    SE_CRC_ERROR
+    SE_ERROR_CRC = 1,
+    SE_ERROR_RESET = 2
 };
 
-DECL_ENUMERATION("ads131m0x_error:", "CRC_ERROR", SE_CRC_ERROR);
+DECL_ENUMERATION("ads131m0x_error:", "SENSOR_ERROR_CRC", SE_ERROR_CRC);
+DECL_ENUMERATION("ads131m0x_error:", "SENSOR_ERROR_RESET", SE_ERROR_RESET);
 
 #define BYTES_PER_SAMPLE 4
 #define ADS131M0X_WORD_SIZE 3
@@ -43,7 +45,20 @@ DECL_ENUMERATION("ads131m0x_error:", "CRC_ERROR", SE_CRC_ERROR);
     ((ADS131M0X_STATUS_WORDS + ADS131M0X_MAX_CHANNELS \
         + ADS131M0X_CRC_WORDS) * ADS131M0X_WORD_SIZE)
 
+// Bit 10 of 16-bit status, in byte 0 (bits 15:8)
+#define STATUS_RESET_BIT 4
+
 static struct task_wake wake_ads131m0x;
+
+static void
+buffer_append_int32(struct sensor_bulk *sb, int32_t val)
+{
+    sb->data[sb->data_count] = val;
+    sb->data[sb->data_count + 1] = val >> 8;
+    sb->data[sb->data_count + 2] = val >> 16;
+    sb->data[sb->data_count + 3] = val >> 24;
+    sb->data_count += BYTES_PER_SAMPLE;
+}
 
 /****************************************************************
  * ADS131M0X Sensor Support
@@ -96,6 +111,26 @@ ads131m0x_event(struct timer *timer)
     return SF_RESCHEDULE;
 }
 
+static void
+ads131m0x_flush_buffer(struct ads131m0x_adc *ads131m0x, uint8_t oid)
+{
+    if ((ads131m0x->sb.data_count + BYTES_PER_SAMPLE) >
+            ARRAY_SIZE(ads131m0x->sb.data)) {
+        sensor_bulk_report(&ads131m0x->sb, oid);
+    }
+}
+
+static void
+ads131m0x_publish_error(struct ads131m0x_adc *ads131m0x, uint8_t oid
+                        , uint8_t error_code)
+{
+    ads131m0x->sb.transmission_errors++;
+    trigger_analog_note_error(ads131m0x->ta, error_code);
+    int32_t err_value = (int32_t)((uint32_t)error_code << 24);
+    buffer_append_int32(&ads131m0x->sb, err_value);
+    ads131m0x_flush_buffer(ads131m0x, oid);
+}
+
 // Send a NULL command frame and read conversion data from all channels.
 // Returns sample from the configured channel.
 static void
@@ -110,8 +145,16 @@ ads131m0x_read_adc(struct ads131m0x_adc *ads131m0x, uint8_t oid)
 
     // Validate CRC
     if (ads131m0x_has_crc_error(msg, frame_size)) {
-        ads131m0x->sb.transmission_errors++;
-        trigger_analog_note_error(ads131m0x->ta, SE_CRC_ERROR);
+        ads131m0x_publish_error(ads131m0x, oid, SE_ERROR_CRC);
+        return;
+    }
+
+    // Check for unexpected sensor reset
+    if (msg[0] & STATUS_RESET_BIT) {
+        ads131m0x->was_reset = 1;
+    }
+    if (ads131m0x->was_reset) {
+        ads131m0x_publish_error(ads131m0x, oid, SE_ERROR_RESET);
         return;
     }
 
@@ -128,18 +171,8 @@ ads131m0x_read_adc(struct ads131m0x_adc *ads131m0x, uint8_t oid)
         raw |= 0xFF000000;
 
     trigger_analog_update(ads131m0x->ta, raw);
-
-    // Add sample to bulk buffer
-    ads131m0x->sb.data[ads131m0x->sb.data_count] = raw;
-    ads131m0x->sb.data[ads131m0x->sb.data_count + 1] = raw >> 8;
-    ads131m0x->sb.data[ads131m0x->sb.data_count + 2] = raw >> 16;
-    ads131m0x->sb.data[ads131m0x->sb.data_count + 3] = raw >> 24;
-    ads131m0x->sb.data_count += BYTES_PER_SAMPLE;
-
-    if ((ads131m0x->sb.data_count + BYTES_PER_SAMPLE) >
-            ARRAY_SIZE(ads131m0x->sb.data)) {
-        sensor_bulk_report(&ads131m0x->sb, oid);
-    }
+    buffer_append_int32(&ads131m0x->sb, raw);
+    ads131m0x_flush_buffer(ads131m0x, oid);
 }
 
 // Create an ads131m0x sensor
@@ -187,6 +220,7 @@ command_query_ads131m0x(uint32_t *args)
         return;
     }
     // Start new measurements
+    ads131m0x->was_reset = 0;
     sensor_bulk_reset(&ads131m0x->sb);
     irq_disable();
     ads131m0x->timer.waketime = timer_read_time() + ads131m0x->rest_ticks;

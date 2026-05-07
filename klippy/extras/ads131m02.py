@@ -19,6 +19,8 @@ WAKEUP_CMD  = 0x33
 
 RESET_ACK = 0xFF22
 
+T_REGACQ = 5e-6  # 5us minimum delay after RESET
+
 # Register addresses
 REG_ID     = 0x00
 REG_STATUS = 0x01
@@ -28,9 +30,12 @@ REG_GAIN1  = 0x04
 REG_CFG    = 0x06
 
 # Sensor configuration parameters
-MODE_VAL = 0x100  # 24-bit words, CRC (input+registers) and timeout disabled
-PWR_MODE = 0x2    # High-resolution mode
-GC_MODE  = 0x100  # Global-chop mode
+WORD24_MODE = 0x100  # 24-bit words
+PWR_MODE    = 0x2    # High-resolution mode
+GC_MODE     = 0x100  # Global-chop mode
+
+# A mask for STATUS fields to validate
+STATUS_REG_MASK = 0xBFFC  # Ignore F_RESYNC and DRDYx bits
 
 # OSR settings and corresponding CLOCK register values
 OSR_TO_REG = {
@@ -213,6 +218,12 @@ class ADS131M0X:
         adc_factor = 1. / (1 << 23)
         count = 0
         for ptime, val in samples:
+            top_byte = (val >> 24) & 0xFF
+            if top_byte != 0x00 and top_byte != 0xFF:
+                logging.error("'%s' sample error: %s"
+                              % (self.name,
+                                 self.lookup_sensor_error(top_byte)))
+                continue
             samples[count] = (round(ptime, 6), val, round(val * adc_factor, 9))
             count += 1
         del samples[count:]
@@ -221,9 +232,11 @@ class ADS131M0X:
     def _start_measurements(self):
         self.last_error_count = 0
         self.consecutive_fails = 0
-        # Start bulk reading
+        # Be sure to halt bulk reading before resetting
+        self.query_ads131m0x_cmd.send_wait_ack([self.oid, 0])
         self.reset_chip()
         self.setup_chip()
+        # Start bulk reading
         rest_ticks = self.mcu.seconds_to_clock(1. / (10. * self.sps))
         self.query_ads131m0x_cmd.send([self.oid, rest_ticks])
         logging.info("%s starting '%s' measurements",
@@ -259,19 +272,23 @@ class ADS131M0X:
         return result
 
     def reset_chip(self):
+        if self.mcu.is_fileoutput():
+            return
         # Read ID register to validate the sensor type (upper byte)
         id_val = self.read_reg(REG_ID)
         if (id_val >> 8) != self.sensor_id:
-            if self.mcu.is_fileoutput():
-                return
             raise self.printer.command_error(
-                    "Invalid %s ID register (got 0x%x vs 0x%xxx).\n"
+                    "Invalid %s ID register (got 0x%x vs 0x%x).\n"
                     "This is generally indicative of connection problems\n"
                     "(e.g. faulty wiring) or a faulty chip."
                     % (self.sensor_type, id_val, self.sensor_id))
-        # Send RESET command and check acknowledgment
+        # Send RESET command
         self.send_command_16(RESET_CMD)
-        ack = self.send_command_16(NULL_CMD)
+        # Wait for tREGACQ after RESET before reading acknowledgment
+        curtime = self.printer.get_reactor().monotonic()
+        print_time = self.mcu.estimated_print_time(curtime)
+        minclock = self.mcu.print_time_to_clock(print_time + T_REGACQ)
+        ack = self.send_command_16(NULL_CMD, minclock=minclock)
         if ack != RESET_ACK:
             raise self.printer.command_error(
                     "Failed to reset %s (got 0x%x vs 0x%x).\n"
@@ -280,12 +297,13 @@ class ADS131M0X:
                     % (self.sensor_type, ack, RESET_ACK))
 
     def setup_chip(self):
-        self.write_reg(REG_MODE, MODE_VAL)
+        mode_val = WORD24_MODE
+        self.write_reg(REG_MODE, mode_val)
         actual_mode_val = self.read_reg(REG_MODE)
-        if actual_mode_val != MODE_VAL:
+        if actual_mode_val != mode_val:
             raise self.printer.command_error(
                     "Failed to set MODE register to %x, got %x"
-                    % (MODE_VAL, actual_mode_val))
+                    % (mode_val, actual_mode_val))
 
         # Configure CLOCK register
         # Bits 11-8: channel mask, bit 5: TBM, bits 4:2: OSR, bits 1:0: PWR
@@ -321,8 +339,13 @@ class ADS131M0X:
                     "Failed to set CFG register to %x, got %x"
                     % (cfg_val, actual_cfg_val))
 
-        # Start conversions
-        self.send_command_16(WAKEUP_CMD)
+        # Validate STATUS register
+        actual_status_val = self.read_reg(REG_STATUS)
+        if (actual_status_val & STATUS_REG_MASK) != WORD24_MODE:
+            raise self.printer.command_error(
+                    "Invalid STATUS register value %x" % actual_status_val)
+        # NULL_CMD being the last sent command during initialization sequence
+        # ensures subsequent data reads by MCU will always read STATUS register
 
     def read_reg(self, reg):
         # RREG command: 101a aaaa annn nnnn
@@ -341,10 +364,10 @@ class ADS131M0X:
         data = self._convert_to_spi_frame([cmd, value])
         self.spi.spi_send(data)
 
-    def send_command_16(self, cmd):
+    def send_command_16(self, cmd, minclock=0):
         # Send 16-bit command as a full-frame SPI transaction
         cmd_bytes = self._convert_to_spi_frame([cmd])
-        response = self.spi.spi_transfer(cmd_bytes)
+        response = self.spi.spi_transfer(cmd_bytes, minclock=minclock)
         resp = response['response']
         return (resp[0] << 8) | resp[1]
 
