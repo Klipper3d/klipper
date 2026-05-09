@@ -198,7 +198,7 @@ class ADS131M0X:
         return self.mcu
 
     def get_samples_per_second(self):
-        return round(self.sps)
+        return self.sps
 
     def lookup_sensor_error(self, error_code):
         return self._sensor_errors.get(error_code,
