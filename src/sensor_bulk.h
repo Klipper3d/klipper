@@ -2,7 +2,7 @@
 #define __SENSOR_BULK_H
 
 struct sensor_bulk {
-    uint16_t sequence, possible_overflows, transmission_errors;
+    uint16_t sequence, possible_overflows;
     uint8_t data_count;
     uint8_t data[51];
 };

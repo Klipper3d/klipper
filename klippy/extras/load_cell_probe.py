@@ -231,9 +231,8 @@ def check_sensor_errors(results, printer):
     samples, errors = results
     if errors:
         raise printer.command_error("Load cell sensor reported errors while"
-                                    " probing: %i errors, %i overflows,"
-                                    " %i transmission errors" % (
-                                        errors[0], errors[1], errors[2]))
+                                    " probing: %i errors, %i overflows" % (
+                                        errors[0], errors[1]))
     return samples
 
 

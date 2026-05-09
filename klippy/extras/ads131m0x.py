@@ -220,6 +220,7 @@ class ADS131M0X:
         for ptime, val in samples:
             top_byte = (val >> 24) & 0xFF
             if top_byte != 0x00 and top_byte != 0xFF:
+                self.last_error_count += 1
                 logging.error("'%s' sample error: %s"
                               % (self.name,
                                  self.lookup_sensor_error(top_byte)))
@@ -258,9 +259,7 @@ class ADS131M0X:
         samples = self.ffreader.pull_samples()
         self._convert_samples(samples)
         return {'data': samples, 'errors': self.last_error_count,
-                'overflows': self.ffreader.get_last_overflows(),
-                'transmission_errors':
-                    self.ffreader.get_last_transmission_errors()}
+                'overflows': self.ffreader.get_last_overflows()}
 
     def _convert_to_spi_frame(self, vals_16):
         result = []

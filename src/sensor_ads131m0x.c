@@ -124,7 +124,6 @@ static void
 ads131m0x_publish_error(struct ads131m0x_adc *ads131m0x, uint8_t oid
                         , uint8_t error_code)
 {
-    ads131m0x->sb.transmission_errors++;
     trigger_analog_note_error(ads131m0x->ta, error_code);
     int32_t err_value = (int32_t)((uint32_t)error_code << 24);
     buffer_append_int32(&ads131m0x->sb, err_value);

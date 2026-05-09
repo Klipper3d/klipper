@@ -214,28 +214,23 @@ class FixedFreqReader:
         self.samples_per_block = MAX_BULK_MSG_SIZE // self.bytes_per_sample
         self.last_sequence = self.max_query_duration = 0
         self.last_overflows = 0
-        self.last_transmission_errors = 0
         self.bulk_queue = self.oid = self.query_status_cmd = None
     def setup_query_command(self, msgformat, oid, cq):
         # Lookup sensor query command (that responds with sensor_bulk_status)
         self.oid = oid
         self.query_status_cmd = self.mcu.lookup_query_command(
             msgformat, "sensor_bulk_status oid=%c clock=%u query_ticks=%u"
-            " next_sequence=%hu buffered=%u possible_overflows=%hu"
-            " transmission_errors=%hu",
+            " next_sequence=%hu buffered=%u possible_overflows=%hu",
             oid=oid, cq=cq)
         # Read sensor_bulk_data messages and store in a queue
         self.bulk_queue = BulkDataQueue(self.mcu, oid=oid)
     def get_last_overflows(self):
         return self.last_overflows
-    def get_last_transmission_errors(self):
-        return self.last_transmission_errors
     def _clear_duration_filter(self):
         self.max_query_duration = 1 << 31
     def note_start(self):
         self.last_sequence = 0
         self.last_overflows = 0
-        self.last_transmission_errors = 0
         # Clear local queue (clear any stale samples from previous session)
         self.bulk_queue.clear_queue()
         # Set initial clock
@@ -253,9 +248,6 @@ class FixedFreqReader:
         buffered = params['buffered']
         po_diff = (params['possible_overflows'] - self.last_overflows) & 0xffff
         self.last_overflows += po_diff
-        te_diff = (params['transmission_errors']
-                   - self.last_transmission_errors) & 0xffff
-        self.last_transmission_errors += te_diff
         duration = params['query_ticks']
         if duration > self.max_query_duration:
             # Skip measurement as a high query time could skew clock tracking
