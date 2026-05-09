@@ -5304,7 +5304,7 @@ data_ready_pin:
 #   Reference to a [static_pwm_clock] section that generates the clock signal
 #   for the CLKIN pin that defines the supplied clock frequency fCLKIN.
 #   Either clock_freq or pwm_clock must be provided.
-#oversampling_ratio: 1024
+#oversampling_ratio: 4096
 #   The oversampling ratio determines the output data rate and noise
 #   performance. This is the ratio between the sensor high-speed internal
 #   sampling frequency and its lower, final output data rate. Higher values
@@ -5313,7 +5313,7 @@ data_ready_pin:
 #   (which is the default, see enable_global_chop parameter below), and
 #   approximately fCLKIN / (6 * oversampling_ratio) when enabled. One can check
 #   the actual sampling rate via LOAD_CELL_DIAGNOSTIC command. Valid values are:
-#   64, 128, 256, 512, 1024, 2048, 4096, 8192, and 16384. The default is 1024.
+#   64, 128, 256, 512, 1024, 2048, 4096, 8192, and 16384. The default is 4096.
 #gain: 1
 #   The PGA gain setting. Valid values are: 1, 2, 4, 8, 16, 32, 64, and
 #   128. The default is 1.

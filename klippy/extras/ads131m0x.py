@@ -104,7 +104,7 @@ class ADS131M0X:
         # OSR setting
         self.osr = config.getchoice('oversampling_ratio',
                                     {str(k): k for k in OSR_TO_REG},
-                                    default='1024')
+                                    default='4096')
 
         # Clock frequency
         pwm_clock_name = config.get('pwm_clock', None)
