@@ -369,7 +369,7 @@ class LoadCell:
         self.config_name = config.get_name()
         self.name = config.get_name().split()[-1]
         self.sensor = sensor   # must implement BulkSensorAdc
-        buffer_size = sensor.get_samples_per_second() // 2
+        buffer_size = int(sensor.get_samples_per_second() / 2)
         self._force_buffer = collections.deque(maxlen=buffer_size)
         self.reference_tare_counts = config.getint('reference_tare_counts',
                                                    default=None)
@@ -456,7 +456,7 @@ class LoadCell:
     # performs safety checks for saturation
     def avg_counts(self, num_samples=None):
         if num_samples is None:
-            num_samples = self.sensor.get_samples_per_second()
+            num_samples = int(self.sensor.get_samples_per_second())
         samples, errors = self.get_collector().collect_min(num_samples)
         if errors:
             raise self.printer.command_error(
