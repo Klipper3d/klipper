@@ -90,6 +90,8 @@ console_sendf(const struct command_encoder *ce, va_list args)
 static struct task_wake usb_bulk_out_wake;
 static uint8_t receive_buf[128], receive_pos;
 
+DECL_CONSTANT("RECEIVE_WINDOW", sizeof(receive_buf));
+
 void
 usb_notify_bulk_out(void)
 {
