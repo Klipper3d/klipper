@@ -1,6 +1,6 @@
 # Z-Probe support
 #
-# Copyright (C) 2017-2024  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2017-2026  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
@@ -229,20 +229,38 @@ class HomingViaProbeHelper:
                                             self._handle_home_rails_end)
         self.printer.register_event_handler("gcode:command_error",
                                             self._handle_command_error)
+    # MCU_endstop interface
+    def get_mcu(self):
+        return self.mcu_probe.get_mcu()
+    def add_stepper(self, stepper):
+        self.mcu_probe.add_stepper(stepper)
+    def get_steppers(self):
+        return self.mcu_probe.get_steppers()
+    def home_start(self, print_time, sample_time, sample_count, rest_time,
+                   triggered=True):
+        return self.mcu_probe.home_start(print_time, sample_time, sample_count,
+                                         rest_time, triggered)
+    def home_wait(self, home_end_time):
+        return self.mcu_probe.home_wait(home_end_time)
+    def query_endstop(self, print_time):
+        return self.mcu_probe.query_endstop(print_time)
+    def get_position_endstop(self):
+        return self.mcu_probe.get_position_endstop()
+    # Printer pins module setup_pin() interface
     def _handle_homing_move_begin(self, hmove):
-        if self.mcu_probe in hmove.get_mcu_endstops():
+        if self in hmove.get_mcu_endstops():
             self.mcu_probe.probe_prepare(hmove)
     def _handle_homing_move_end(self, hmove):
-        if self.mcu_probe in hmove.get_mcu_endstops():
+        if self in hmove.get_mcu_endstops():
             self.mcu_probe.probe_finish(hmove)
     def _handle_home_rails_begin(self, homing_state, rails):
         endstops = [es for rail in rails for es, name in rail.get_endstops()]
-        if self.mcu_probe in endstops:
+        if self in endstops:
             self.mcu_probe.multi_probe_begin()
             self.multi_probe_pending = True
     def _handle_home_rails_end(self, homing_state, rails):
         endstops = [es for rail in rails for es, name in rail.get_endstops()]
-        if self.multi_probe_pending and self.mcu_probe in endstops:
+        if self.multi_probe_pending and self in endstops:
             self.multi_probe_pending = False
             self.mcu_probe.multi_probe_end()
     def _handle_command_error(self):
@@ -257,7 +275,7 @@ class HomingViaProbeHelper:
             raise pins.error("Probe virtual endstop only useful as endstop pin")
         if pin_params['invert'] or pin_params['pullup']:
             raise pins.error("Can not pullup/invert probe virtual endstop")
-        return self.mcu_probe
+        return self
     # Helper to convert probe based commands to use homing module
     def start_probe_session(self, gcmd):
         self.mcu_probe.multi_probe_begin()
@@ -269,7 +287,7 @@ class HomingViaProbeHelper:
         pos[2] = self.z_min_position
         speed = self.param_helper.get_probe_params(gcmd)['probe_speed']
         phoming = self.printer.lookup_object('homing')
-        ppos = phoming.probing_move(self.mcu_probe, pos, speed)
+        ppos = phoming.probing_move(self, pos, speed)
         offsets = self.probe_offsets.get_offsets()
         res = manual_probe.create_probe_result(ppos, offsets)
         self.results.append(res)
