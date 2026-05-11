@@ -5172,6 +5172,10 @@ sensor_type:
 #   Change the sensor's orientation. Can be either 'normal' or 'inverted'.
 #   The default is 'normal'. Use 'inverted' if the sensor reports a
 #   decreasing force value when placed under load.
+#track_force:
+#   Whether the load cell should be tracking the force after startup.
+#   Force tracking can be enabled or disabled at runtime using the
+#   LOAD_CELL_TRACK_FORCE command. The default is False.
 ```
 
 #### HX711

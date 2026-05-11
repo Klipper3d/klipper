@@ -8,6 +8,11 @@ All dates in this document are approximate.
 
 ## Changes
 
+20260610: `[load_cell]` and `[load_cell_probe]` do not track the force
+data after startup by default anymore. Users can restore the previous
+behavior via `track_force: True` configuration option, or by running
+`LOAD_CELL_TRACK_FORCE` G-Code command during runtime.
+
 20260525: The internal implementation of "probe:z_virtual_endstop" has
 changed. Most users will not observe a change in behavior. Previously
 it was technically possible to mix "probe:z_virtual_endstop" with
