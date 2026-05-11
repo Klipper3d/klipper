@@ -1046,25 +1046,27 @@ class PrinterEddyProbe:
         # Basic probe requests
         self.probe_offsets = EddyProbeOffsets(config)
         self.param_helper = EddyParameterHelper(config)
-        self.eddy_descend = EddyDescend(
+        eddy_descend = EddyDescend(
             config, self.sensor_helper, self.calibration, self.probe_offsets,
             self.param_helper, trig_analog)
+        self.eddy_descend_session = probe.ProbeSessionHelper(
+            config, self.param_helper, eddy_descend.start_probe_session)
         # Create wrapper to support Z homing with probe
-        mcu_probe = EddyEndstopWrapper(self.sensor_helper, self.eddy_descend)
+        mcu_probe = EddyEndstopWrapper(self.sensor_helper, eddy_descend)
         probe.HomingViaProbeHelper(config, mcu_probe,
                                    self.probe_offsets, self.param_helper)
         # Probing via "tap" interface
-        self.eddy_tap = EddyTap(config, self.sensor_helper,
-                                self.param_helper, trig_analog)
-        EddyTapCalibration(config, self.calibration, self.eddy_tap)
+        eddy_tap = EddyTap(config, self.sensor_helper,
+                           self.param_helper, trig_analog)
+        EddyTapCalibration(config, self.calibration, eddy_tap)
+        self.eddy_tap_session = probe.ProbeSessionHelper(
+            config, self.param_helper, eddy_tap.start_probe_session)
         # Probing via "scan" and "rapid_scan" requests
         self.eddy_scan = EddyScanningProbe(config, self.sensor_helper,
                                            self.calibration, self.probe_offsets)
         # Register with main probe interface
         self.cmd_helper = probe.ProbeCommandHelper(config, self,
                                                    can_set_z_offset=False)
-        self.probe_session = probe.ProbeSessionHelper(
-            config, self.param_helper, self._start_descend_wrapper)
         self.printer.add_object('probe', self)
     def add_client(self, cb):
         self.sensor_helper.add_client(cb)
@@ -1076,17 +1078,13 @@ class PrinterEddyProbe:
         return self.probe_offsets.get_offsets(gcmd)
     def get_status(self, eventtime):
         return self.cmd_helper.get_status(eventtime)
-    def _start_descend_wrapper(self, gcmd):
-        method = gcmd.get('METHOD', 'automatic').lower()
-        if method == "tap":
-            return self.eddy_tap.start_probe_session(gcmd)
-        return self.eddy_descend.start_probe_session(gcmd)
     def start_probe_session(self, gcmd):
         method = gcmd.get('METHOD', 'automatic').lower()
         if method in ('scan', 'rapid_scan'):
             return self.eddy_scan.start_probe_session(gcmd)
-        # For "tap" and normal, probe_session can average multiple attempts
-        return self.probe_session.start_probe_session(gcmd)
+        elif method == 'tap':
+            return self.eddy_tap_session.start_probe_session(gcmd)
+        return self.eddy_descend_session.start_probe_session(gcmd)
     def register_drift_compensation(self, comp):
         self.calibration.register_drift_compensation(comp)
 
