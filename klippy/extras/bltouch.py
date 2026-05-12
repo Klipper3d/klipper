@@ -67,28 +67,28 @@ class BLTouchProbe:
                                     desc=self.cmd_BLTOUCH_STORE_help)
         # Register events
         self.printer.register_event_handler("klippy:connect",
-                                            self.handle_connect)
-    def handle_connect(self):
-        self.sync_mcu_print_time()
+                                            self._handle_connect)
+    def _handle_connect(self):
+        self._sync_mcu_print_time()
         self.next_cmd_time += 0.200
-        self.set_output_mode(self.output_mode)
+        self._set_output_mode(self.output_mode)
         try:
-            self.raise_probe()
-            self.verify_raise_probe()
+            self._raise_probe()
+            self._verify_raise_probe()
         except self.printer.command_error as e:
             logging.warning("BLTouch raise probe error: %s", str(e))
-    def sync_mcu_print_time(self):
+    def _sync_mcu_print_time(self):
         curtime = self.printer.get_reactor().monotonic()
         est_time = self.mcu_pwm.get_mcu().estimated_print_time(curtime)
         self.next_cmd_time = max(self.next_cmd_time, est_time + MIN_CMD_TIME)
-    def sync_print_time(self):
+    def _sync_print_time(self):
         toolhead = self.printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
         if self.next_cmd_time > print_time:
             toolhead.dwell(self.next_cmd_time - print_time)
         else:
             self.next_cmd_time = print_time
-    def send_cmd(self, cmd, duration=MIN_CMD_TIME):
+    def _send_cmd(self, cmd, duration=MIN_CMD_TIME):
         # Translate duration to ticks to avoid any secondary mcu clock skew
         mcu = self.mcu_pwm.get_mcu()
         cmd_clock = mcu.print_time_to_clock(self.next_cmd_time)
@@ -101,7 +101,7 @@ class BLTouchProbe:
         # Update time tracking
         self.action_end_time = self.next_cmd_time + duration
         self.next_cmd_time = max(self.action_end_time, end_time + MIN_CMD_TIME)
-    def verify_state(self, triggered):
+    def _verify_state(self, triggered):
         # Perform endstop check to verify bltouch reports desired state
         self.mcu_endstop.home_start(self.action_end_time, ENDSTOP_SAMPLE_TIME,
                                     ENDSTOP_SAMPLE_COUNT, ENDSTOP_REST_TIME,
@@ -112,17 +112,17 @@ class BLTouchProbe:
         except self.printer.command_error as e:
             return False
         return trigger_time > 0.
-    def raise_probe(self):
-        self.sync_mcu_print_time()
+    def _raise_probe(self):
+        self._sync_mcu_print_time()
         if not self.pin_up_not_triggered:
-            self.send_cmd('reset')
-        self.send_cmd('pin_up', duration=self.pin_move_time)
-    def verify_raise_probe(self):
+            self._send_cmd('reset')
+        self._send_cmd('pin_up', duration=self.pin_move_time)
+    def _verify_raise_probe(self):
         if not self.pin_up_not_triggered:
             # No way to verify raise attempt
             return
         for retry in range(3):
-            success = self.verify_state(False)
+            success = self._verify_state(False)
             if success:
                 # The "probe raised" test completed successfully
                 break
@@ -131,16 +131,16 @@ class BLTouchProbe:
                     "BLTouch failed to raise probe")
             msg = "Failed to verify BLTouch probe is raised; retrying."
             self.gcode.respond_info(msg)
-            self.sync_mcu_print_time()
-            self.send_cmd('reset', duration=RETRY_RESET_TIME)
-            self.send_cmd('pin_up', duration=self.pin_move_time)
-    def lower_probe(self):
-        self.test_sensor()
-        self.sync_print_time()
-        self.send_cmd('pin_down', duration=self.pin_move_time)
+            self._sync_mcu_print_time()
+            self._send_cmd('reset', duration=RETRY_RESET_TIME)
+            self._send_cmd('pin_up', duration=self.pin_move_time)
+    def _lower_probe(self):
+        self._test_sensor()
+        self._sync_print_time()
+        self._send_cmd('pin_down', duration=self.pin_move_time)
         if self.probe_touch_mode:
-            self.send_cmd('touch_mode')
-    def test_sensor(self):
+            self._send_cmd('touch_mode')
+    def _test_sensor(self):
         if not self.pin_up_touch_triggered:
             # Nothing to test
             return
@@ -150,12 +150,12 @@ class BLTouchProbe:
             self.next_test_time = print_time + TEST_TIME
             return
         # Raise the bltouch probe and test if probe is raised
-        self.sync_print_time()
+        self._sync_print_time()
         for retry in range(3):
-            self.send_cmd('pin_up', duration=self.pin_move_time)
-            self.send_cmd('touch_mode')
-            success = self.verify_state(True)
-            self.sync_print_time()
+            self._send_cmd('pin_up', duration=self.pin_move_time)
+            self._send_cmd('touch_mode')
+            success = self._verify_state(True)
+            self._sync_print_time()
             if success:
                 # The "bltouch connection" test completed successfully
                 self.next_test_time = print_time + TEST_TIME
@@ -164,7 +164,7 @@ class BLTouchProbe:
             if retry >= 2:
                 raise self.printer.command_error(msg)
             self.gcode.respond_info(msg + '; retrying.')
-            self.send_cmd('reset', duration=RETRY_RESET_TIME)
+            self._send_cmd('reset', duration=RETRY_RESET_TIME)
     def multi_probe_begin(self):
         if self.stow_on_each_sample:
             return
@@ -172,17 +172,17 @@ class BLTouchProbe:
     def multi_probe_end(self):
         if self.stow_on_each_sample:
             return
-        self.sync_print_time()
-        self.raise_probe()
-        self.verify_raise_probe()
-        self.sync_print_time()
+        self._sync_print_time()
+        self._raise_probe()
+        self._verify_raise_probe()
+        self._sync_print_time()
         self.multi = 'OFF'
     def probe_prepare(self):
         if self.multi == 'OFF' or self.multi == 'FIRST':
-            self.lower_probe()
+            self._lower_probe()
             if self.multi == 'FIRST':
                 self.multi = 'ON'
-        self.sync_print_time()
+        self._sync_print_time()
     def home_start(self, print_time, sample_time, sample_count, rest_time,
                    triggered=True):
         rest_time = min(rest_time, ENDSTOP_REST_TIME)
@@ -190,18 +190,18 @@ class BLTouchProbe:
             print_time, sample_time, sample_count, rest_time, triggered)
         # Schedule wait_for_trigger callback
         r = self.printer.get_reactor()
-        self.wait_trigger_complete = r.register_callback(self.wait_for_trigger)
+        self.wait_trigger_complete = r.register_callback(self._wait_for_trigger)
         return self.finish_home_complete
-    def wait_for_trigger(self, eventtime):
+    def _wait_for_trigger(self, eventtime):
         self.finish_home_complete.wait()
         if self.multi == 'OFF':
-            self.raise_probe()
+            self._raise_probe()
     def probe_finish(self):
         self.wait_trigger_complete.wait()
         if self.multi == 'OFF':
-            self.verify_raise_probe()
-        self.sync_print_time()
-    def set_output_mode(self, mode):
+            self._verify_raise_probe()
+        self._sync_print_time()
+    def _set_output_mode(self, mode):
         # If this is inadvertently/purposely issued for a
         # BLTOUCH pre V3.0 and clones:
         #   No reaction at all.
@@ -210,12 +210,12 @@ class BLTouchProbe:
         if mode is None:
             return
         logging.info("BLTouch set output mode: %s", mode)
-        self.sync_mcu_print_time()
+        self._sync_mcu_print_time()
         if mode == '5V':
-            self.send_cmd('set_5V_output_mode')
+            self._send_cmd('set_5V_output_mode')
         if mode == 'OD':
-            self.send_cmd('set_OD_output_mode')
-    def store_output_mode(self, mode):
+            self._send_cmd('set_OD_output_mode')
+    def _store_output_mode(self, mode):
         # If this command is inadvertently/purposely issued for a
         # BLTOUCH pre V3.0 and clones:
         #   No reaction at all to this sequence apart from a pin-down/pin-up
@@ -226,18 +226,18 @@ class BLTouchProbe:
         #   This will set the mode and store it in the eeprom.
         #   The pin-up is not needed but does not hurt
         logging.info("BLTouch store output mode: %s", mode)
-        self.sync_print_time()
-        self.send_cmd('pin_down')
+        self._sync_print_time()
+        self._send_cmd('pin_down')
         if mode == '5V':
-            self.send_cmd('set_5V_output_mode')
+            self._send_cmd('set_5V_output_mode')
         else:
-            self.send_cmd('set_OD_output_mode')
-        self.send_cmd('output_mode_store')
+            self._send_cmd('set_OD_output_mode')
+        self._send_cmd('output_mode_store')
         if mode == '5V':
-            self.send_cmd('set_5V_output_mode')
+            self._send_cmd('set_5V_output_mode')
         else:
-            self.send_cmd('set_OD_output_mode')
-        self.send_cmd('pin_up')
+            self._send_cmd('set_OD_output_mode')
+        self._send_cmd('pin_up')
     cmd_BLTOUCH_DEBUG_help = "Send a command to the bltouch for debugging"
     def cmd_BLTOUCH_DEBUG(self, gcmd):
         cmd = gcmd.get('COMMAND', None)
@@ -246,9 +246,9 @@ class BLTouchProbe:
                 ", ".join(sorted([c for c in Commands if c is not None]))))
             return
         gcmd.respond_info("Sending BLTOUCH_DEBUG COMMAND=%s" % (cmd,))
-        self.sync_print_time()
-        self.send_cmd(cmd, duration=self.pin_move_time)
-        self.sync_print_time()
+        self._sync_print_time()
+        self._send_cmd(cmd, duration=self.pin_move_time)
+        self._sync_print_time()
     cmd_BLTOUCH_STORE_help = "Store an output mode in the BLTouch EEPROM"
     def cmd_BLTOUCH_STORE(self, gcmd):
         cmd = gcmd.get('MODE', None)
@@ -256,9 +256,9 @@ class BLTouchProbe:
             gcmd.respond_info("BLTouch output modes: 5V, OD")
             return
         gcmd.respond_info("Storing BLTouch output mode: %s" % (cmd,))
-        self.sync_print_time()
-        self.store_output_mode(cmd)
-        self.sync_print_time()
+        self._sync_print_time()
+        self._store_output_mode(cmd)
+        self._sync_print_time()
 
 # Main external probe interface
 class PrinterBLTouch:
