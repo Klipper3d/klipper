@@ -593,7 +593,9 @@ class EddyDescend:
         speed = self._param_helper.get_probe_params(gcmd)['probe_speed']
         # Perform probing move
         phoming = self._printer.lookup_object('homing')
-        trig_pos = phoming.probing_move(self._trigger_analog, pos, speed)
+        check_movement = not phoming.check_probe_first_home(gcmd)
+        trig_pos = phoming.probing_move(self._trigger_analog, pos, speed,
+                                        check_movement=check_movement)
         # Extract samples
         start_time = self._trigger_analog.get_last_trigger_time() + 0.050
         end_time = start_time + 0.100

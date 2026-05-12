@@ -316,7 +316,10 @@ class PrinterHoming:
                     "Homing failed due to printer shutdown")
             raise
         return epos
-    def probing_move(self, mcu_probe, pos, speed):
+    def check_probe_first_home(self, gcmd):
+        return (gcmd.get_command() == 'G28'
+                and gcmd.get("HOME_ATTEMPT_NUM", None) == '1')
+    def probing_move(self, mcu_probe, pos, speed, check_movement=True):
         endstops = [(mcu_probe, "probe")]
         hmove = HomingMove(self.printer, endstops)
         try:
@@ -326,7 +329,7 @@ class PrinterHoming:
                 raise self.printer.command_error(
                     "Probing failed due to printer shutdown")
             raise
-        if hmove.check_no_movement() is not None:
+        if check_movement and hmove.check_no_movement() is not None:
             raise self.printer.command_error(
                 "Probe triggered prior to movement")
         return epos

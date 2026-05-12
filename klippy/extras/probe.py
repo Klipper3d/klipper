@@ -239,11 +239,13 @@ class HomingViaProbeHelper:
 
 # Support for probes that trigger via mcu_endstop
 class DescendToEndstopHelper:
-    def __init__(self, config, mcu_probe, probe_offsets, param_helper):
+    def __init__(self, config, mcu_probe, probe_offsets, param_helper,
+                 always_check_movement=False):
         self.printer = config.get_printer()
         self.mcu_probe = mcu_probe
         self.probe_offsets = probe_offsets
         self.param_helper = param_helper
+        self.always_check_movement = always_check_movement
         self.z_min_position = lookup_minimum_z(config)
         self.results = []
         LookupZSteppers(config, self.mcu_probe.add_stepper)
@@ -258,9 +260,12 @@ class DescendToEndstopHelper:
         pos[2] = self.z_min_position
         speed = self.param_helper.get_probe_params(gcmd)['probe_speed']
         phoming = self.printer.lookup_object('homing')
+        check_movement = (self.always_check_movement
+                          or not phoming.check_probe_first_home(gcmd))
         self.mcu_probe.probe_prepare()
         try:
-            ppos = phoming.probing_move(self.mcu_probe, pos, speed)
+            ppos = phoming.probing_move(self.mcu_probe, pos, speed,
+                                        check_movement=check_movement)
         except self.printer.command_error as e:
             self.mcu_probe.probe_finish()
             raise

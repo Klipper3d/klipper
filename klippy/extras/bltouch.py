@@ -66,7 +66,8 @@ class BLTouchProbe:
         self.probe_offsets = probe.ProbeOffsetsHelper(config)
         self.param_helper = probe.ProbeParameterHelper(config)
         self.homing_helper = probe.DescendToEndstopHelper(
-            config, self, self.probe_offsets, self.param_helper)
+            config, self, self.probe_offsets, self.param_helper,
+            always_check_movement=True)
         self.probe_session = probe.ProbeSessionHelper(
             config, self.param_helper, self.homing_helper.start_probe_session)
         # Register BLTOUCH_DEBUG command
