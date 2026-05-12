@@ -185,37 +185,43 @@ class Homing:
         return thcoord
     def set_homed_position(self, pos):
         self.toolhead.set_position(self._fill_coord(pos))
+    def _set_start_position(self, forcepos):
+        homing_axes = "".join(["xyz"[axis] for axis in range(3)
+                               if forcepos[axis] is not None])
+        startpos = self._fill_coord(forcepos)
+        self.toolhead.set_position(startpos, homing_axes=homing_axes)
+    def _retract_move(self, homing_info, forcepos, movepos):
+        # Determine retract position and move to it
+        startpos = self._fill_coord(forcepos)
+        homepos = self._fill_coord(movepos)
+        axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
+        move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
+        retract_r = min(1., homing_info.retract_dist / move_d)
+        retractpos = [hp - ad * retract_r
+                      for hp, ad in zip(homepos, axes_d)]
+        self.toolhead.move(retractpos, homing_info.retract_speed)
+        # Force new kinematic position
+        startpos = [rp - ad * retract_r
+                    for rp, ad in zip(retractpos, axes_d)]
+        self.toolhead.set_position(startpos)
+        return homepos
     def home_rails(self, rails, forcepos, movepos):
         # Notify of upcoming homing operation
         self.printer.send_event("homing:home_rails_begin", self, rails)
         # Alter kinematics class to think printer is at forcepos
-        force_axes = [axis for axis in range(3) if forcepos[axis] is not None]
-        homing_axes = "".join(["xyz"[i] for i in force_axes])
-        startpos = self._fill_coord(forcepos)
         homepos = self._fill_coord(movepos)
-        self.toolhead.set_position(startpos, homing_axes=homing_axes)
+        self._set_start_position(forcepos)
         # Perform first home
         endstops = [es for rail in rails for es in rail.get_endstops()]
-        hi = rails[0].get_homing_info()
+        homing_info = rails[0].get_homing_info()
         hmove = HomingMove(self.printer, endstops)
-        hmove.homing_move(homepos, hi.speed)
+        hmove.homing_move(homepos, homing_info.speed)
         # Perform second home
-        if hi.retract_dist:
-            # Retract
-            startpos = self._fill_coord(forcepos)
-            homepos = self._fill_coord(movepos)
-            axes_d = [hp - sp for hp, sp in zip(homepos, startpos)]
-            move_d = math.sqrt(sum([d*d for d in axes_d[:3]]))
-            retract_r = min(1., hi.retract_dist / move_d)
-            retractpos = [hp - ad * retract_r
-                          for hp, ad in zip(homepos, axes_d)]
-            self.toolhead.move(retractpos, hi.retract_speed)
+        if homing_info.retract_dist:
+            homepos = self._retract_move(homing_info, forcepos, movepos)
             # Home again
-            startpos = [rp - ad * retract_r
-                        for rp, ad in zip(retractpos, axes_d)]
-            self.toolhead.set_position(startpos)
             hmove = HomingMove(self.printer, endstops)
-            hmove.homing_move(homepos, hi.second_homing_speed)
+            hmove.homing_move(homepos, homing_info.second_homing_speed)
             if hmove.check_no_movement() is not None:
                 raise self.printer.command_error(
                     "Endstop %s still triggered after retract"
