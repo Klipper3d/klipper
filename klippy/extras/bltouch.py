@@ -26,7 +26,6 @@ Commands = {
 class BLTouchProbe:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.position_endstop = config.getfloat('z_offset', minval=0.)
         self.stow_on_each_sample = config.getboolean('stow_on_each_sample',
                                                      True)
         self.probe_touch_mode = config.getboolean('probe_with_touch_mode',
@@ -220,8 +219,6 @@ class BLTouchProbe:
         if self.multi == 'OFF':
             self.verify_raise_probe()
         self.sync_print_time()
-    def get_position_endstop(self):
-        return self.position_endstop
     def set_output_mode(self, mode):
         # If this is inadvertently/purposely issued for a
         # BLTOUCH pre V3.0 and clones:

@@ -207,28 +207,33 @@ class LookupZSteppers:
 
 # Support homing via probe using the probe:z_virtual_endstop pseudo-pin
 class HomingViaProbeHelper:
-    def __init__(self, config, mcu_probe):
+    def __init__(self, config, position_endstop, query_endstop_cb=None):
         self.printer = config.get_printer()
-        self.mcu_probe = mcu_probe
+        self.position_endstop = position_endstop
+        self.query_endstop_cb = query_endstop_cb
         # Register z_virtual_endstop pin
         self.printer.lookup_object('pins').register_chip('probe', self)
+    def _raise_error(self):
+        raise self.printer.command_error(
+            "Internal error. Can't home via HomingViaProbeHelper.")
     # MCU_endstop interface
     def get_mcu(self):
-        return self.mcu_probe.get_mcu()
+        self._raise_error()
     def add_stepper(self, stepper):
-        self.mcu_probe.add_stepper(stepper)
+        pass
     def get_steppers(self):
-        return self.mcu_probe.get_steppers()
+        return []
     def home_start(self, print_time, sample_time, sample_count, rest_time,
                    triggered=True):
-        return self.mcu_probe.home_start(print_time, sample_time, sample_count,
-                                         rest_time, triggered)
+        self._raise_error()
     def home_wait(self, home_end_time):
-        return self.mcu_probe.home_wait(home_end_time)
+        self._raise_error()
     def query_endstop(self, print_time):
-        return self.mcu_probe.query_endstop(print_time)
+        if self.query_endstop_cb is None:
+            return False
+        return self.query_endstop_cb(print_time)
     def get_position_endstop(self):
-        return self.mcu_probe.get_position_endstop()
+        return self.position_endstop
     # Printer pins module setup_pin() interface
     def setup_pin(self, pin_type, pin_params):
         if pin_type != 'endstop' or pin_params['pin'] != 'z_virtual_endstop':
@@ -249,7 +254,8 @@ class DescendToEndstopHelper:
         self.z_min_position = lookup_minimum_z(config)
         self.results = []
         LookupZSteppers(config, self.mcu_probe.add_stepper)
-        HomingViaProbeHelper(config, mcu_probe)
+        HomingViaProbeHelper(config, probe_offsets.get_offsets()[2],
+                             mcu_probe.query_endstop)
     def start_probe_session(self, gcmd):
         self.mcu_probe.multi_probe_begin()
         self.results = []
@@ -563,7 +569,6 @@ def run_single_probe(probe, gcmd):
 class ProbeEndstopWrapper:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.position_endstop = config.getfloat('z_offset')
         self.stow_on_each_sample = config.getboolean(
             'deactivate_on_each_sample', True)
         gcode_macro = self.printer.load_object(config, 'gcode_macro')
@@ -614,8 +619,6 @@ class ProbeEndstopWrapper:
     def probe_finish(self):
         if self.multi == 'OFF':
             self._raise_probe()
-    def get_position_endstop(self):
-        return self.position_endstop
 
 # Main external probe interface
 class PrinterProbe:
