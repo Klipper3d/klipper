@@ -10,11 +10,6 @@ coil within the sensor. The closer that coil is to a metal bed the
 higher the coil's resonant frequency. The frequency measurements can
 thus be used to estimate the distance between sensor and bed.
 
-The Klipper eddy current sensor support is primarily intended for bed
-probing. It is possible to "home" the Z axis with an eddy current
-probe, but see the [homing correction](#homing-correction-macros)
-section for important information.
-
 ## Probing mechanisms
 
 Unlike traditional bed probes an eddy current sensor supports four
@@ -363,43 +358,11 @@ as a starting point for manual attempts. Once a successful probe
 attempt is completed then one can return to the main steps described
 above starting at the "refine" stage.
 
-## Homing correction macros
-
-It is possible to use an eddy current probe to home a Z axis. However,
-due to software limitations, the homing operation does not provide an
-accurate result and it is therefore necessary to perform a multi-step
-process to achieve acceptable accuracy.
-
-To use this process, make sure the `[stepper_z]` config section has
-the `endstop_pin` set to `probe:z_virtual_endstop`. Also make sure the
-[force move](Config_Reference.md#force_move) section is defined and
-ensure its `enable_force_move` option is present and set to true.
-Finally, define the following macros:
-
-```
-[gcode_macro _RELOAD_Z_OFFSET_FROM_PROBE]
-gcode:
-  {% set Z = printer.toolhead.position.z %}
-  SET_KINEMATIC_POSITION Z={Z - printer.probe.last_probe_position.z}
-
-[gcode_macro SET_Z_FROM_PROBE]
-gcode:
-  PROBE
-  _RELOAD_Z_OFFSET_FROM_PROBE
-```
-
-To home the Z axis, perform an initial Z home using a `G28 Z0` command
-and then run `SET_Z_FROM_PROBE` to obtain an accurate Z position.
-
-It is important that the `SET_Z_FROM_PROBE` macro is used after every
-`G28 Z0` (and similar) homing command. If the Z axis is ever homed
-without running the correction macro then the internal Z positions
-will not be accurate which could lead to nozzle/bed collisions and
-very poor print results. One may wish to consider using a
-`[homing_override]` config section to ensure the correction macro is
-always run.
-
 ### Performing initial calibration when homing with probe
+
+It is possible to use an eddy current probe to home a Z axis. To use
+this process, set the `[stepper_z]` config section `endstop_pin` to
+`probe:z_virtual_endstop`.
 
 In order to home with an eddy probe it is necessary to first calibrate
 the probe via the `PROBE_EDDY_CURRENT_CALIBRATE` command. However,
@@ -411,9 +374,9 @@ the very first calibration:
 1. Define a `[probe_eddy_current]` config section in the printer.cfg
    file as described in the [configuration section](#configuration).
 
-2. Setup the macros and config sections for Z homing with a probe as
-   described in the main
-   [homing correction macros](#homing-correction-macros) section.
+2. Make sure a [force move](Config_Reference.md#force_move) section is
+   defined and ensure its `enable_force_move` option is present and
+   set to true.
 
 3. Manually adjust the carriages so that the toolhead is near the
    center of the bed and roughly 20mm away from the bed. Issue
