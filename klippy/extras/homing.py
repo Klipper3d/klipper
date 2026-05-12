@@ -1,6 +1,6 @@
 # Helper code for implementing homing operations
 #
-# Copyright (C) 2016-2024  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2026  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math
@@ -205,7 +205,7 @@ class Homing:
                     for rp, ad in zip(retractpos, axes_d)]
         self.toolhead.set_position(startpos)
         return homepos
-    def home_rails(self, rails, forcepos, movepos):
+    def _do_home_rails(self, rails, forcepos, movepos):
         # Notify of upcoming homing operation
         self.printer.send_event("homing:home_rails_begin", self, rails)
         # Alter kinematics class to think printer is at forcepos
@@ -247,6 +247,55 @@ class Homing:
                             "axis %s after homing" % "xyz"[axis])
                 homepos[axis] = newpos[axis]
             self.toolhead.set_position(homepos)
+    def _create_probe_gcmd(self, attempt_num, probe_speed):
+        gcode = self.printer.lookup_object('gcode')
+        params = {'HOME_ATTEMPT_NUM': str(attempt_num), 'SAMPLES': '1',
+                  'PROBE_SPEED': str(probe_speed)}
+        return gcode.create_gcode_command("G28", "", params)
+    def _probing_home(self, probe_session, attempt_num, probe_speed):
+        # Run probe
+        gcmd = self._create_probe_gcmd(attempt_num, probe_speed)
+        probe_session.run_probe(gcmd)
+        ppos = probe_session.pull_probed_results()[0]
+        # Update toolhead position
+        curpos = self.toolhead.get_position()
+        curpos[2] -= ppos.bed_z
+        self.toolhead.set_position(curpos)
+    def _do_home_z_via_probe(self, rails, forcepos, movepos):
+        if movepos[0] is not None or movepos[1] is not None:
+            raise self.printer.command_error(
+                "Can only home Z with probe:z_virtual_endstop")
+        endstops = [es for rail in rails for es in rail.get_endstops()]
+        homing_info = rails[0].get_homing_info()
+        # Create probe session
+        probe = self.printer.lookup_object("probe")
+        gcmd = self._create_probe_gcmd(1, homing_info.speed)
+        probe_session = probe.start_probe_session(gcmd)
+        # Alter kinematics class to think printer is at forcepos
+        self._set_start_position(forcepos)
+        # Perform first home
+        self._probing_home(probe_session, 1, homing_info.speed)
+        # Perform second home
+        if homing_info.retract_dist:
+            self._retract_move(homing_info, forcepos, movepos)
+            # Home again
+            self._probing_home(probe_session, 2,
+                               homing_info.second_homing_speed)
+        probe_session.end_probe_session()
+    def home_rails(self, rails, forcepos, movepos):
+        # Check if this is actually a Z home via probe request
+        endstops = [es for rail in rails for es in rail.get_endstops()]
+        probe_endstops = [hasattr(e[0], "get_position_endstop")
+                          for e in endstops]
+        if len(probe_endstops) == 1 and probe_endstops[0]:
+            # Perform Z home via probe
+            self._do_home_z_via_probe(rails, forcepos, movepos)
+            return
+        if any(probe_endstops):
+            raise self.printer.command_error(
+                "Can't home to mix of probe:z_virtual_endstop rails")
+        # Perform normal home to endstops
+        self._do_home_rails(rails, forcepos, movepos)
 
 class PrinterHoming:
     def __init__(self, config):
