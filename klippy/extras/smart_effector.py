@@ -96,9 +96,9 @@ class SmartEffectorProbe:
         return self.cmd_helper.get_status(eventtime)
     def start_probe_session(self, gcmd):
         return self.probe_session.start_probe_session(gcmd)
-    def probe_prepare(self, hmove):
+    def probe_prepare(self):
         toolhead = self.printer.lookup_object('toolhead')
-        self.probe_wrapper.probe_prepare(hmove)
+        self.probe_wrapper.probe_prepare()
         if self.probe_accel:
             systime = self.printer.get_reactor().monotonic()
             toolhead_info = toolhead.get_status(systime)
@@ -107,11 +107,11 @@ class SmartEffectorProbe:
                     "M204 S%.3f" % (self.probe_accel,))
         if self.recovery_time:
             toolhead.dwell(self.recovery_time)
-    def probe_finish(self, hmove):
+    def probe_finish(self):
         if self.probe_accel:
             self.gcode.run_script_from_command(
                     "M204 S%.3f" % (self.old_max_accel,))
-        self.probe_wrapper.probe_finish(hmove)
+        self.probe_wrapper.probe_finish()
     def _send_command(self, buf):
         # Each byte is sent to the SmartEffector as
         # [0 0 1 0 b7 b6 b5 b4 !b4 b3 b2 b1 b0 !b0]

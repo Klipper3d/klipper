@@ -636,9 +636,9 @@ class EddyEndstopWrapper:
     def multi_probe_end(self):
         self._hw_probe_session.end_probe_session()
         self._hw_probe_session = None
-    def probe_prepare(self, hmove):
+    def probe_prepare(self):
         pass
-    def probe_finish(self, hmove):
+    def probe_finish(self):
         pass
     def get_position_endstop(self):
         return self._eddy_descend._descend_z

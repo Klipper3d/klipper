@@ -212,23 +212,11 @@ class HomingViaProbeHelper:
         self.mcu_probe = mcu_probe
         self.probe_offsets = probe_offsets
         self.param_helper = param_helper
-        self.multi_probe_pending = False
         self.z_min_position = lookup_minimum_z(config)
         self.results = []
         LookupZSteppers(config, self.mcu_probe.add_stepper)
         # Register z_virtual_endstop pin
         self.printer.lookup_object('pins').register_chip('probe', self)
-        # Register event handlers
-        self.printer.register_event_handler("homing:homing_move_begin",
-                                            self._handle_homing_move_begin)
-        self.printer.register_event_handler("homing:homing_move_end",
-                                            self._handle_homing_move_end)
-        self.printer.register_event_handler("homing:home_rails_begin",
-                                            self._handle_home_rails_begin)
-        self.printer.register_event_handler("homing:home_rails_end",
-                                            self._handle_home_rails_end)
-        self.printer.register_event_handler("gcode:command_error",
-                                            self._handle_command_error)
     # MCU_endstop interface
     def get_mcu(self):
         return self.mcu_probe.get_mcu()
@@ -247,29 +235,6 @@ class HomingViaProbeHelper:
     def get_position_endstop(self):
         return self.mcu_probe.get_position_endstop()
     # Printer pins module setup_pin() interface
-    def _handle_homing_move_begin(self, hmove):
-        if self in hmove.get_mcu_endstops():
-            self.mcu_probe.probe_prepare(hmove)
-    def _handle_homing_move_end(self, hmove):
-        if self in hmove.get_mcu_endstops():
-            self.mcu_probe.probe_finish(hmove)
-    def _handle_home_rails_begin(self, homing_state, rails):
-        endstops = [es for rail in rails for es, name in rail.get_endstops()]
-        if self in endstops:
-            self.mcu_probe.multi_probe_begin()
-            self.multi_probe_pending = True
-    def _handle_home_rails_end(self, homing_state, rails):
-        endstops = [es for rail in rails for es, name in rail.get_endstops()]
-        if self.multi_probe_pending and self in endstops:
-            self.multi_probe_pending = False
-            self.mcu_probe.multi_probe_end()
-    def _handle_command_error(self):
-        if self.multi_probe_pending:
-            self.multi_probe_pending = False
-            try:
-                self.mcu_probe.multi_probe_end()
-            except:
-                logging.exception("Homing multi-probe end")
     def setup_pin(self, pin_type, pin_params):
         if pin_type != 'endstop' or pin_params['pin'] != 'z_virtual_endstop':
             raise pins.error("Probe virtual endstop only useful as endstop pin")
@@ -287,7 +252,13 @@ class HomingViaProbeHelper:
         pos[2] = self.z_min_position
         speed = self.param_helper.get_probe_params(gcmd)['probe_speed']
         phoming = self.printer.lookup_object('homing')
-        ppos = phoming.probing_move(self, pos, speed)
+        self.mcu_probe.probe_prepare()
+        try:
+            ppos = phoming.probing_move(self.mcu_probe, pos, speed)
+        except self.printer.command_error as e:
+            self.mcu_probe.probe_finish()
+            raise
+        self.mcu_probe.probe_finish()
         offsets = self.probe_offsets.get_offsets()
         res = manual_probe.create_probe_result(ppos, offsets)
         self.results.append(res)
@@ -624,12 +595,12 @@ class ProbeEndstopWrapper:
             return
         self._raise_probe()
         self.multi = 'OFF'
-    def probe_prepare(self, hmove):
+    def probe_prepare(self):
         if self.multi == 'OFF' or self.multi == 'FIRST':
             self._lower_probe()
             if self.multi == 'FIRST':
                 self.multi = 'ON'
-    def probe_finish(self, hmove):
+    def probe_finish(self):
         if self.multi == 'OFF':
             self._raise_probe()
     def get_position_endstop(self):

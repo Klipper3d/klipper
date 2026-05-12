@@ -195,7 +195,7 @@ class BLTouchProbe:
         self.verify_raise_probe()
         self.sync_print_time()
         self.multi = 'OFF'
-    def probe_prepare(self, hmove):
+    def probe_prepare(self):
         if self.multi == 'OFF' or self.multi == 'FIRST':
             self.lower_probe()
             if self.multi == 'FIRST':
@@ -214,13 +214,11 @@ class BLTouchProbe:
         self.finish_home_complete.wait()
         if self.multi == 'OFF':
             self.raise_probe()
-    def probe_finish(self, hmove):
+    def probe_finish(self):
         self.wait_trigger_complete.wait()
         if self.multi == 'OFF':
             self.verify_raise_probe()
         self.sync_print_time()
-        if hmove.check_no_movement() is not None:
-            raise self.printer.command_error("BLTouch failed to deploy")
     def get_position_endstop(self):
         return self.position_endstop
     def set_output_mode(self, mode):
