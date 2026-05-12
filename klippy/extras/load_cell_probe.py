@@ -514,7 +514,7 @@ class LoadCellPrinterProbe:
             self._param_helper, tap_session.start_probe_session)
         # printer integration
         LoadCellProbeCommands(config, load_cell_probing_move)
-        probe.ProbeVirtualEndstopDeprecation(config)
+        probe.HomingViaProbeHelper(config, self.get_offsets()[2])
         self._printer.add_object('probe', self)
 
     def get_probe_params(self, gcmd=None):

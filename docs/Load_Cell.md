@@ -238,57 +238,6 @@ carefully to look for issues.
 Load cell probes don't support the `QUERY_ENDSTOPS` or `QUERY_PROBE`
 commands. Use `LOAD_CELL_TEST_TAP` for testing functionality before probing.
 
-### Homing Macros
-
-Load cell probe is not an endstop and doesn't support `endstop:
-prove:z_virtual_endstop`. For the time being you'll need to configure your z
-axis with an MCU pin as its endstop. You won't actually be using the pin but
-for the time being you have to configure something.
-
-To home the axis with just the probe you need to set up a custom homing
-macro. This requires setting up
-[homing_override](Config_Reference.md#homing_override).
-
-Here is a simple macro that can accomplish this. Note that the
-`_HOME_Z_FROM_LAST_PROBE` macro has to be separate because of the way macros
-work. The sub-call is needed so that the `_HOME_Z_FROM_LAST_PROBE` macro can
-see the result of the probe in `printer.probe.last_probe_position`.
-
-```gcode
-[gcode_macro _HOME_Z_FROM_LAST_PROBE]
-gcode:
-    {% set z_probed = printer.probe.last_probe_position.z %}
-    {% set z_position = printer.toolhead.position[2] %}
-    {% set z_actual = z_position - z_probed %}
-    SET_KINEMATIC_POSITION Z={z_actual}
-
-[gcode_macro _HOME_Z]
-gcode:
-    SET_GCODE_OFFSET Z=0  # load cell probes dont need a Z offset
-    # position toolhead for homing Z, edit for your printers size
-    #G90  # absolute move
-    #G1 Y50 X50 F{5 * 60}  # move to X/Y position for homing
-
-    # soft home the z axis to its limit so it can be moved:
-    SET_KINEMATIC_POSITION Z={printer.toolhead.axis_maximum[2]}
-
-    # Fast approach and tap
-    PROBE PROBE_SPEED={5 * 60}  # override the speed for faster homing
-    _HOME_Z_FROM_LAST_PROBE
-
-    # lift z to 2mm
-    G91  # relative move
-    G1 Z2 F{5 * 60}
-
-    # probe at standard speed
-    PROBE
-    _HOME_Z_FROM_LAST_PROBE
-
-    # lift z to 10mm for clearance
-    G91  # relative move
-    G1 Z10 F{5 * 60}
-```
-
 ### Suggested Probing Temperature
 
 Currently, we suggest keeping the nozzle temperature below the level that causes
