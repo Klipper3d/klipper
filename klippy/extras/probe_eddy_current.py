@@ -1053,8 +1053,7 @@ class PrinterEddyProbe:
             config, self.param_helper, eddy_descend.start_probe_session)
         # Create wrapper to support Z homing with probe
         mcu_probe = EddyEndstopWrapper(self.sensor_helper, eddy_descend)
-        probe.HomingViaProbeHelper(config, mcu_probe,
-                                   self.probe_offsets, self.param_helper)
+        probe.HomingViaProbeHelper(config, mcu_probe)
         # Probing via "tap" interface
         eddy_tap = EddyTap(config, self.sensor_helper,
                            self.param_helper, trig_analog)

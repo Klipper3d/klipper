@@ -205,16 +205,11 @@ class LookupZSteppers:
             if stepper.is_active_axis('z'):
                 self.add_stepper_cb(stepper)
 
-# Homing via probe:z_virtual_endstop
+# Support homing via probe using the probe:z_virtual_endstop pseudo-pin
 class HomingViaProbeHelper:
-    def __init__(self, config, mcu_probe, probe_offsets, param_helper):
+    def __init__(self, config, mcu_probe):
         self.printer = config.get_printer()
         self.mcu_probe = mcu_probe
-        self.probe_offsets = probe_offsets
-        self.param_helper = param_helper
-        self.z_min_position = lookup_minimum_z(config)
-        self.results = []
-        LookupZSteppers(config, self.mcu_probe.add_stepper)
         # Register z_virtual_endstop pin
         self.printer.lookup_object('pins').register_chip('probe', self)
     # MCU_endstop interface
@@ -241,7 +236,18 @@ class HomingViaProbeHelper:
         if pin_params['invert'] or pin_params['pullup']:
             raise pins.error("Can not pullup/invert probe virtual endstop")
         return self
-    # Helper to convert probe based commands to use homing module
+
+# Support for probes that trigger via mcu_endstop
+class DescendToEndstopHelper:
+    def __init__(self, config, mcu_probe, probe_offsets, param_helper):
+        self.printer = config.get_printer()
+        self.mcu_probe = mcu_probe
+        self.probe_offsets = probe_offsets
+        self.param_helper = param_helper
+        self.z_min_position = lookup_minimum_z(config)
+        self.results = []
+        LookupZSteppers(config, self.mcu_probe.add_stepper)
+        HomingViaProbeHelper(config, mcu_probe)
     def start_probe_session(self, gcmd):
         self.mcu_probe.multi_probe_begin()
         self.results = []
@@ -615,7 +621,7 @@ class PrinterProbe:
                                              self.mcu_probe.query_endstop)
         self.probe_offsets = ProbeOffsetsHelper(config)
         self.param_helper = ProbeParameterHelper(config)
-        self.homing_helper = HomingViaProbeHelper(
+        self.homing_helper = DescendToEndstopHelper(
             config, self.mcu_probe, self.probe_offsets, self.param_helper)
         self.probe_session = ProbeSessionHelper(
             config, self.param_helper, self.homing_helper.start_probe_session)
