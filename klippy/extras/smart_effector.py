@@ -64,15 +64,6 @@ class SmartEffectorProbe:
         self.query_endstop = self.probe_wrapper.query_endstop
         self.multi_probe_begin = self.probe_wrapper.multi_probe_begin
         self.multi_probe_end = self.probe_wrapper.multi_probe_end
-        # Common probe implementation helpers
-        self.cmd_helper = probe.ProbeCommandHelper(
-            config, self, self.probe_wrapper.query_endstop)
-        self.probe_offsets = probe.ProbeOffsetsHelper(config)
-        self.param_helper = probe.ProbeParameterHelper(config)
-        self.homing_helper = probe.DescendToEndstopHelper(
-            config, self, self.probe_offsets, self.param_helper)
-        self.probe_session = probe.ProbeSessionHelper(
-            config, self.param_helper, self.homing_helper.start_probe_session)
         # SmartEffector control
         control_pin = config.get('control_pin', None)
         if control_pin:
@@ -87,14 +78,6 @@ class SmartEffectorProbe:
         self.gcode.register_command("SET_SMART_EFFECTOR",
                                     self.cmd_SET_SMART_EFFECTOR,
                                     desc=self.cmd_SET_SMART_EFFECTOR_help)
-    def get_probe_params(self, gcmd=None):
-        return self.param_helper.get_probe_params(gcmd)
-    def get_offsets(self, gcmd=None):
-        return self.probe_offsets.get_offsets(gcmd)
-    def get_status(self, eventtime):
-        return self.cmd_helper.get_status(eventtime)
-    def start_probe_session(self, gcmd):
-        return self.probe_session.start_probe_session(gcmd)
     def probe_prepare(self):
         toolhead = self.printer.lookup_object('toolhead')
         self.probe_wrapper.probe_prepare()
@@ -164,7 +147,28 @@ class SmartEffectorProbe:
         self._send_command(buf)
         gcmd.respond_info('SmartEffector sensitivity was reset')
 
+class PrinterSmartEffector:
+    def __init__(self, config):
+        self.printer = config.get_printer()
+        self.mcu_probe = SmartEffectorProbe(config)
+        self.cmd_helper = probe.ProbeCommandHelper(config, self,
+                                                   self.mcu_probe.query_endstop)
+        self.probe_offsets = probe.ProbeOffsetsHelper(config)
+        self.param_helper = probe.ProbeParameterHelper(config)
+        self.homing_helper = probe.DescendToEndstopHelper(
+            config, self.mcu_probe, self.probe_offsets, self.param_helper)
+        self.probe_session = probe.ProbeSessionHelper(
+            config, self.param_helper, self.homing_helper.start_probe_session)
+    def get_probe_params(self, gcmd=None):
+        return self.param_helper.get_probe_params(gcmd)
+    def get_offsets(self, gcmd=None):
+        return self.probe_offsets.get_offsets(gcmd)
+    def get_status(self, eventtime):
+        return self.cmd_helper.get_status(eventtime)
+    def start_probe_session(self, gcmd):
+        return self.probe_session.start_probe_session(gcmd)
+
 def load_config(config):
-    smart_effector = SmartEffectorProbe(config)
+    smart_effector = PrinterSmartEffector(config)
     config.get_printer().add_object('probe', smart_effector)
     return smart_effector
