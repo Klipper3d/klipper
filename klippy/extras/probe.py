@@ -402,9 +402,10 @@ class ProbeSessionHelper:
         self.printer.send_event("probe:update_results", results)
         epos = results[0]
         # Report results
-        gcode = self.printer.lookup_object('gcode')
-        gcode.respond_info("probe: at %.3f,%.3f bed will contact at z=%.6f"
-                           % (epos.bed_x, epos.bed_y, epos.bed_z))
+        if gcmd.get_command() != "G28":
+            gcode = self.printer.lookup_object('gcode')
+            gcode.respond_info("probe: at %.3f,%.3f bed will contact at z=%.6f"
+                               % (epos.bed_x, epos.bed_y, epos.bed_z))
         return epos
     def run_probe(self, gcmd):
         if self.hw_probe_session is None:
