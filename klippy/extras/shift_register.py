@@ -210,7 +210,4 @@ class ShiftRegisterStepperDir:
 
 
 def load_config_prefix(config):
-    name = config.get_name()
-    if name.startswith('shift_register_stepper_dir '):
-        return ShiftRegisterStepperDir(config)
     return ShiftRegister74HC595(config)
