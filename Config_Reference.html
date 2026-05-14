@@ -6139,6 +6139,12 @@ sensor_type: ldc1612
 #intb_pin:
 #   MCU gpio pin connected to the ldc1612 sensor&#39;s INTB pin (if
 #   available). The default is to not use the INTB pin.
+#max_sensor_hz:
+#   Maximum expected resonant frequency reported by the sensor (in
+#   Hz). This is used during internal clock rate configuration. This
+#   value is typically only configured if the software reports a
+#   warning suggesting the value should be increased. The default is
+#   5000000.
 #descend_z:
 #   The nominal distance (in mm) between the nozzle and bed that a
 #   probing attempt should stop at. This parameter must be provided.
