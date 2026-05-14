@@ -5432,6 +5432,27 @@ latch_pin:
 #   above parameters.
 ```
 
+### [shift_register_stepper_dir]
+
+Map a manual_stepper's direction pin to a shift register pin. This
+automatically updates the shift register direction bit before each
+move, allowing stepper direction control through a 74HC595 without
+modifying macros or higher-level code. The stepper's config should
+use a dummy dir_pin (any unused MCU GPIO), while the actual direction
+signal is routed through the shift register.
+
+```
+[shift_register_stepper_dir my_stepper_dir]
+manual_stepper:
+#   The name of the manual_stepper section to hook into (e.g.
+#   "gear_stepper" for [manual_stepper gear_stepper]). This
+#   parameter must be provided.
+dir_pin:
+#   The shift register pin to use for direction control (e.g.
+#   "mmu2:PIN_0"). Supports the "!" invert prefix. This parameter
+#   must be provided.
+```
+
 ### [samd_sercom]
 
 SAMD SERCOM configuration to specify which pins to use on a given
