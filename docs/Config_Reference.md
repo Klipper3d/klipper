@@ -5393,6 +5393,45 @@ i2c_address:
 #   above parameters.
 ```
 
+### [shift_register]
+
+Configure a 74HC595 shift register as a GPIO expander. Due to the
+delay incurred by SPI communication you should NOT use shift register
+pins as stepper step pins or endstop pins. They are suitable for
+stepper enable, direction, LEDs, or other pins that do not require
+high-frequency updates. Multiple 74HC595 chips may be daisy-chained
+by connecting QH' of one chip to SER of the next. One may define any
+number of sections with a "shift_register" prefix. Each section
+provides a set of pins (PIN_0 to PIN_N) which can be used in the
+printer configuration.
+
+```
+[shift_register my_sr]
+latch_pin:
+#   The pin connected to the RCLK (latch/storage clock) pin of the
+#   74HC595. This pin is used as the SPI chip-select and latches the
+#   shifted data to the output pins on the rising edge after each
+#   SPI transfer. This parameter must be provided.
+#chain_count: 1
+#   The number of daisy-chained 74HC595 chips. Each chip provides
+#   8 output pins. For example, 2 chained chips provide PIN_0
+#   through PIN_15. The default is 1 (8 pins: PIN_0 to PIN_7).
+#output_enable_pin:
+#   The pin connected to the OE (output enable) pin of the 74HC595.
+#   The OE pin is active-low. If provided, it will be driven low to
+#   enable outputs. If not provided, OE must be wired to GND on the
+#   board. This parameter is optional.
+#spi_speed: 4000000
+#   The SPI speed (in hz) to use when communicating with the shift
+#   register. The default is 4000000.
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the "common SPI settings" section for a description of the
+#   above parameters.
+```
+
 ### [samd_sercom]
 
 SAMD SERCOM configuration to specify which pins to use on a given
