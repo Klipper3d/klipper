@@ -5393,6 +5393,34 @@ i2c_address:
 #   above parameters.
 ```
 
+### [hc595]
+
+Configure a 74HC595 shift register with firmware-level GPIO support.
+This provides virtual GPIO pins (PG0-PG7 for the first chip,
+PH0-PH7 for the second) that can be used directly as stepper
+dir_pin and enable_pin in the printer configuration. Unlike the
+host-side [shift_register] approach, direction and enable changes
+happen entirely within the MCU firmware, eliminating SPI bus traffic
+and USB contention issues. Requires firmware compiled with
+CONFIG_HAVE_HC595_SHIFT_REG=y (currently ATmega32u4 only).
+
+```
+[hc595 my_sr]
+data_pin:
+#   The pin connected to the SER (serial data input) pin of the
+#   74HC595. This parameter must be provided.
+latch_pin:
+#   The pin connected to the RCLK (latch/storage clock) pin of the
+#   74HC595. Data is latched to outputs on the rising edge. This
+#   parameter must be provided.
+clock_pin:
+#   The pin connected to the SRCLK (shift register clock) pin of
+#   the 74HC595. This parameter must be provided.
+#chain_count: 2
+#   The number of daisy-chained 74HC595 chips. Must match the
+#   CONFIG_HC595_LENGTH setting in the firmware. The default is 2.
+```
+
 ### [shift_register]
 
 Configure a 74HC595 shift register as a GPIO expander. Due to the

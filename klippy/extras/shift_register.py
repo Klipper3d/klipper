@@ -74,12 +74,19 @@ class ShiftRegister74HC595:
             self._oe = ppins.setup_pin('digital_out', oe_pin)
             self._oe.setup_max_duration(0.)
             self._oe.setup_start_value(0, 0)
-        # Finalize shutdown and initial state after all pins are configured
+        # Send initial state (all zeros) as MCU init command.
+        # At this point spi_send_cmd is None, so this queues an init
+        # command that runs after MCU config is complete.
+        self._spi.spi_send(self._state)
+        # After connect, send the actual configured state (with
+        # start values set by setup_start_value calls from other modules)
         self._printer.register_event_handler(
             "klippy:connect", self._handle_connect)
     def _handle_connect(self):
-        self._spi.setup_shutdown_msg(self._shutdown_state)
-        self._spi.spi_send(self._state)
+        reactor = self._mcu.get_printer().get_reactor()
+        curtime = reactor.monotonic()
+        print_time = self._mcu.estimated_print_time(curtime)
+        self.send_state(print_time)
     def get_mcu(self):
         return self._mcu
     def get_name(self):

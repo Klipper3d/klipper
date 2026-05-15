@@ -159,6 +159,17 @@ config SIMULAVR
          instead of for real hardware. This disables support for "U2X
          baud" mode which is not supported on simulavr.
 
+config HAVE_HC595_SHIFT_REG
+    bool "Include SNx4HC595 shift register support (MMU2)"
+    depends on MACH_atmega32u4
+    default n
+
+config HC595_LENGTH
+    int "Number of chained HC595 ICs"
+    depends on HAVE_HC595_SHIFT_REG
+    default 2
+    range 1 4
+
          If unsure, select "N".
 
 endif
