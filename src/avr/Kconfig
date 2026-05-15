@@ -170,6 +170,4 @@ config HC595_LENGTH
     default 2
     range 1 4
 
-         If unsure, select "N".
-
 endif
