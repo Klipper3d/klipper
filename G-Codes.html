@@ -6268,13 +6268,15 @@ no change is applied.</p>
 <a href="Config_Reference.html#temperature_probe">temperature_probe config section</a>
 is enabled.</p>
 <h4 id="temperature_probe_calibrate">TEMPERATURE_PROBE_CALIBRATE<a class="headerlink" href="#temperature_probe_calibrate" title="Permanent link">&para;</a></h4>
-<p><code>TEMPERATURE_PROBE_CALIBRATE [PROBE=&lt;probe name&gt;] [TARGET=&lt;value&gt;] [STEP=&lt;value&gt;]</code>:
+<p><code>TEMPERATURE_PROBE_CALIBRATE [PROBE=&lt;probe name&gt;] [TARGET=&lt;value&gt;] [STEP=&lt;value&gt;]
+[METHOD=&lt;method&gt;]</code>:
 Initiates probe drift calibration for eddy current based probes.  The <code>TARGET</code>
 is a target temperature for the last sample.  When the temperature recorded
 during a sample exceeds the <code>TARGET</code> calibration will complete.  The <code>STEP</code>
 parameter sets temperature delta (in C) between samples. After a sample has
 been taken, this delta is used to schedule a call to <code>TEMPERATURE_PROBE_NEXT</code>.
-The default <code>STEP</code> is 2.</p>
+The default <code>STEP</code> is 2. The <code>METHOD</code> only supports <code>tap</code> as an option,
+if specified, probing will be automated.</p>
 <h4 id="temperature_probe_next">TEMPERATURE_PROBE_NEXT<a class="headerlink" href="#temperature_probe_next" title="Permanent link">&para;</a></h4>
 <p><code>TEMPERATURE_PROBE_NEXT</code>: After calibration has started this command is run to
 take the next sample.  It is automatically scheduled to run when the delta
