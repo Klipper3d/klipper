@@ -4,7 +4,7 @@
 # Copyright (C) 2025-2026  Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import copy, math, logging, multiprocessing, traceback
+import math, logging, multiprocessing, traceback
 import queuelogger
 
 
@@ -154,7 +154,8 @@ def mat_mat_mul(a, b):
     cols_b = len(b[0])
     if cols_a != rows_b:
         return None
-    return [[sum([a[i][k] * b[k][j] for k in range(rows_b)])
+    bt = mat_transp(b)
+    return [[sum([aik * bkj for aik, bkj in zip(a[i], bt[j])])
              for j in range(cols_b)]
             for i in range(rows_a)]
 
@@ -166,18 +167,24 @@ def mat_transp_mul(a, b):
     cols_b = len(b[0])
     if cols_at != rows_b:
         return None
+    at = mat_transp(a)
+    bt = mat_transp(b) if a is not b else at
     res = [[0.] * cols_b for i in range(rows_at)]
     for i in range(rows_at):
-        for j in range(cols_b):
-            if a is b and j < i:
-                res[i][j] = res[j][i]
-                continue
-            res[i][j] = sum([a[k][i] * b[k][j] for k in range(rows_b)])
+        if a is b:
+            res[i][:i] = [r[i] for r in res[:i]]
+            j_start = i
+        else:
+            j_start = 0
+        axi = at[i]
+        for j in range(j_start, cols_b):
+            bxj = bt[j]
+            res[i][j] = sum([aki * bkj for aki, bkj in zip(axi, bxj)])
     return res
 
 def gaussian_solve(a, rhs, allow_underdetermined=False):
-    res = copy.deepcopy(rhs)
-    m = copy.deepcopy(a)
+    res = [row[:] for row in rhs]
+    m = [row[:] for row in a]
     n = len(m)
     # Perform the LU-decomposition through Gaussian elimination
     for i in range(n):
@@ -195,25 +202,28 @@ def gaussian_solve(a, rhs, allow_underdetermined=False):
             recipr = 0.
         else:
             recipr = 1. / m[i][i]
-        for j in range(i+1, n):
-            m[i][j] *= recipr
-        for j in range(len(res[i])):
-            res[i][j] *= recipr
+        m[i][i+1:] = [mij * recipr for mij in m[i][i+1:]]
+        res[i][:] = [rij * recipr for rij in res[i]]
         m[i][i] = 1.
 
         # Zero-out the i-th column after the row i
+        mi = m[i]
+        ri = res[i]
         for j in range(i+1, n):
-            c = m[j][i]
-            for k in range(i, n):
-                m[j][k] -= c * m[i][k]
-            for k in range(len(res[j])):
-                res[j][k] -= c * res[i][k]
+            mj = m[j]
+            c = mj[i]
+            mj[i:] = [mjk - c * mik for mjk, mik in zip(mj[i:], mi[i:])]
+            rj = res[j]
+            rj[:] = [rjk - c * rik for rjk, rik in zip(rj, ri)]
 
     # Solve the system with the upper-triangular matrix
     for i in range(n-2, -1, -1):
+        mi = m[i]
+        ri = res[i]
         for j in range(i+1, n):
-            for k in range(len(res[j])):
-                res[i][k] -= m[i][j] * res[j][k]
+            c = mi[j]
+            rj = res[j]
+            ri[:] = [rik - c * rjk for rik, rjk in zip(ri, rj)]
     return res
 
 def pseudo_inverse(m):
