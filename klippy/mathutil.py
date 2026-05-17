@@ -4,7 +4,7 @@
 # Copyright (C) 2025-2026  Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import copy, operator, math, logging, multiprocessing, traceback
+import operator, math, logging, multiprocessing, traceback
 import queuelogger
 
 
@@ -167,45 +167,45 @@ def mat_mul_transp(a):
     return res
 
 def gaussian_solve(a, rhs, allow_underdetermined=False):
-    res = copy.deepcopy(rhs)
-    m = copy.deepcopy(a)
-    n = len(m)
+    res = list(rhs)
+    m = list(a)
+    rows_m = len(m)
     # Perform the LU-decomposition through Gaussian elimination
-    for i in range(n):
+    for i in range(rows_m-1, -1, -1):
         # Find a pivot and swap the corresponding rows
-        abs_col = [abs(m[j][i]) for j in range(i, n)]
-        j = abs_col.index(max(abs_col)) + i
+        abs_col = [abs(m_j[i]) for m_j in m[:i+1]]
+        j = abs_col.index(max(abs_col))
         if i != j:
             m[i], m[j] = m[j], m[i]
             res[i], res[j] = res[j], res[i]
 
-        # Scale the i-th row
-        if abs(m[i][i]) < 1e-10:
+        # Scale the i-th row (and drop last column)
+        m_i = m[i]
+        if abs(m_i[i]) < 1e-10:
             if not allow_underdetermined:
                 return None
             recipr = 0.
         else:
-            recipr = 1. / m[i][i]
-        for j in range(i+1, n):
-            m[i][j] *= recipr
-        for j in range(len(res[i])):
-            res[i][j] *= recipr
-        m[i][i] = 1.
+            recipr = 1. / m_i[i]
+        m[i] = m_i = [m_i_j * recipr for m_i_j in m_i[:i]]
+        res[i] = res_i = [res_i_k * recipr for res_i_k in res[i]]
 
-        # Zero-out the i-th column after the row i
-        for j in range(i+1, n):
-            c = m[j][i]
-            for k in range(i, n):
-                m[j][k] -= c * m[i][k]
-            for k in range(len(res[j])):
-                res[j][k] -= c * res[i][k]
+        # Zero-out the last column in rows prior to i, and remove last column
+        for j in range(i):
+            m_j = m[j]
+            c = m_j[i]
+            m[j] = [m_j_k - c * m_i_k for m_j_k, m_i_k in zip(m_j, m_i)]
+            res[j] = [res_j_k - c * res_i_k
+                      for res_j_k, res_i_k in zip(res[j], res_i)]
 
-    # Solve the system with the upper-triangular matrix
-    for i in range(n-2, -1, -1):
-        for j in range(i+1, n):
-            for k in range(len(res[j])):
-                res[i][k] -= m[i][j] * res[j][k]
-    return res
+    # Solve the system with the lower-triangular matrix
+    rest = mat_transp(res)
+    if not rest:
+        return res
+    for rest_k in rest:
+        for i in range(1, rows_m):
+            rest_k[i] -= sum(map(operator.mul, m[i], rest_k[:i]))
+    return mat_transp(rest)
 
 def pseudo_inverse(m):
     mt = mat_transp(m)
