@@ -1017,13 +1017,13 @@ class PrinterEddyProbe:
         eddy_descend = EddyDescend(
             config, self.sensor_helper, self.calibration, self.probe_offsets,
             self.param_helper, trig_analog)
-        self.eddy_descend_session = probe.ProbeSessionHelper(
+        self.eddy_descend_session = probe.SampleAveragingHelper(
             config, self.param_helper, eddy_descend.start_probe_session)
         # Probing via "tap" interface
         eddy_tap = EddyTap(config, self.sensor_helper,
                            self.param_helper, trig_analog)
         EddyTapCalibration(config, self.calibration, eddy_tap)
-        self.eddy_tap_session = probe.ProbeSessionHelper(
+        self.eddy_tap_session = probe.SampleAveragingHelper(
             config, self.param_helper, eddy_tap.start_probe_session)
         # Probing via "scan" and "rapid_scan" requests
         self.eddy_scan = EddyScanningProbe(config, self.sensor_helper,

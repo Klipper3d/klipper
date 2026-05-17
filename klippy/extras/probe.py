@@ -317,7 +317,7 @@ class ProbeParameterHelper:
                 'samples_result': samples_result}
 
 # Helper to track multiple probe attempts in a single command
-class ProbeSessionHelper:
+class SampleAveragingHelper:
     def __init__(self, config, param_helper, start_session_cb):
         self.printer = config.get_printer()
         self.param_helper = param_helper
@@ -614,7 +614,7 @@ class PrinterProbe:
         self.param_helper = ProbeParameterHelper(config)
         self.mcu_probe = ProbeEndstopWrapper(config, self.probe_offsets,
                                              self.param_helper)
-        self.probe_session = ProbeSessionHelper(
+        self.probe_session = SampleAveragingHelper(
             config, self.param_helper, self.mcu_probe.start_probe_session)
         self.cmd_helper = ProbeCommandHelper(config, self,
                                              self.mcu_probe.query_endstop)

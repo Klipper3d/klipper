@@ -162,7 +162,7 @@ class PrinterSmartEffector:
         self.param_helper = probe.ProbeParameterHelper(config)
         self.mcu_probe = SmartEffectorProbe(config, self.probe_offsets,
                                             self.param_helper)
-        self.probe_session = probe.ProbeSessionHelper(
+        self.probe_session = probe.SampleAveragingHelper(
             config, self.param_helper, self.mcu_probe.start_probe_session)
         self.cmd_helper = probe.ProbeCommandHelper(config, self,
                                                    self.mcu_probe.query_endstop)
