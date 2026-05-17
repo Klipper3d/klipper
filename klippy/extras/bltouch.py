@@ -24,7 +24,7 @@ Commands = {
 
 # BLTouch "endstop" wrapper
 class BLTouchProbe:
-    def __init__(self, config):
+    def __init__(self, config, probe_offsets, param_helper):
         self.printer = config.get_printer()
         self.stow_on_each_sample = config.getboolean('stow_on_each_sample',
                                                      True)
@@ -57,6 +57,10 @@ class BLTouchProbe:
         self.get_steppers = self.mcu_endstop.get_steppers
         self.home_wait = self.mcu_endstop.home_wait
         self.query_endstop = self.mcu_endstop.query_endstop
+        # Probing via homing to endstop
+        self.homing_helper = probe.DescendToEndstopHelper(
+            config, self, probe_offsets, param_helper,
+            always_check_movement=True)
         # multi probes state
         self.multi = 'OFF'
         # Register BLTOUCH_DEBUG command
@@ -165,19 +169,13 @@ class BLTouchProbe:
                 raise self.printer.command_error(msg)
             self.gcode.respond_info(msg + '; retrying.')
             self._send_cmd('reset', duration=RETRY_RESET_TIME)
-    def multi_probe_begin(self):
-        if self.stow_on_each_sample:
-            return
-        self.multi = 'FIRST'
-    def multi_probe_end(self):
-        if self.stow_on_each_sample:
-            return
-        self._sync_print_time()
-        self._raise_probe()
-        self._verify_raise_probe()
-        self._sync_print_time()
-        self.multi = 'OFF'
-    def probe_prepare(self):
+    # Probe session
+    def start_probe_session(self, gcmd):
+        self.homing_helper.clear_trigger_positions()
+        if not self.stow_on_each_sample:
+            self.multi = 'FIRST'
+        return self
+    def _probe_prepare(self):
         if self.multi == 'OFF' or self.multi == 'FIRST':
             self._lower_probe()
             if self.multi == 'FIRST':
@@ -196,11 +194,30 @@ class BLTouchProbe:
         self.finish_home_complete.wait()
         if self.multi == 'OFF':
             self._raise_probe()
-    def probe_finish(self):
+    def _probe_finish(self):
         self.wait_trigger_complete.wait()
         if self.multi == 'OFF':
             self._verify_raise_probe()
         self._sync_print_time()
+    def run_probe(self, gcmd):
+        self._probe_prepare()
+        try:
+            self.homing_helper.descend_until_trigger(gcmd)
+        except self.printer.command_error as e:
+            self._probe_finish()
+            raise
+        self._probe_finish()
+    def pull_probed_results(self):
+        return self.homing_helper.pull_trigger_positions()
+    def end_probe_session(self):
+        self.homing_helper.clear_trigger_positions()
+        if not self.stow_on_each_sample:
+            self._sync_print_time()
+            self._raise_probe()
+            self._verify_raise_probe()
+            self._sync_print_time()
+            self.multi = 'OFF'
+    # Output mode setting
     def _set_output_mode(self, mode):
         # If this is inadvertently/purposely issued for a
         # BLTOUCH pre V3.0 and clones:
@@ -264,16 +281,14 @@ class BLTouchProbe:
 class PrinterBLTouch:
     def __init__(self, config):
         self.printer = config.get_printer()
-        self.mcu_probe = BLTouchProbe(config)
-        self.cmd_helper = probe.ProbeCommandHelper(config, self,
-                                                   self.mcu_probe.query_endstop)
         self.probe_offsets = probe.ProbeOffsetsHelper(config)
         self.param_helper = probe.ProbeParameterHelper(config)
-        self.homing_helper = probe.DescendToEndstopHelper(
-            config, self.mcu_probe, self.probe_offsets, self.param_helper,
-            always_check_movement=True)
+        self.mcu_probe = BLTouchProbe(config, self.probe_offsets,
+                                      self.param_helper)
         self.probe_session = probe.ProbeSessionHelper(
-            config, self.param_helper, self.homing_helper.start_probe_session)
+            config, self.param_helper, self.mcu_probe.start_probe_session)
+        self.cmd_helper = probe.ProbeCommandHelper(config, self,
+                                                   self.mcu_probe.query_endstop)
     def get_probe_params(self, gcmd=None):
         return self.param_helper.get_probe_params(gcmd)
     def get_offsets(self, gcmd=None):
