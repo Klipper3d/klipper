@@ -189,8 +189,7 @@ def gaussian_solve(a, rhs, allow_underdetermined=False):
     # Perform the LU-decomposition through Gaussian elimination
     for i in range(n):
         # Find a pivot and swap the corresponding rows
-        abs_col = [abs(m[j][i]) for j in range(i, n)]
-        j = abs_col.index(max(abs_col)) + i
+        j = max(range(i, n), key=lambda jj: abs(m[jj][i]))
         if i != j:
             m[i], m[j] = m[j], m[i]
             res[i], res[j] = res[j], res[i]
@@ -202,19 +201,23 @@ def gaussian_solve(a, rhs, allow_underdetermined=False):
             recipr = 0.
         else:
             recipr = 1. / m[i][i]
-        m[i][i+1:] = [mij * recipr for mij in m[i][i+1:]]
-        res[i][:] = [rij * recipr for rij in res[i]]
-        m[i][i] = 1.
-
-        # Zero-out the i-th column after the row i
         mi = m[i]
         ri = res[i]
         for j in range(i+1, n):
+            mi[j] *= recipr
+        for j in range(len(res[i])):
+            ri[j] *= recipr
+        mi[i] = 1.
+
+        # Zero-out the i-th column after the row i
+        for j in range(i+1, n):
             mj = m[j]
             c = mj[i]
-            mj[i:] = [mjk - c * mik for mjk, mik in zip(mj[i:], mi[i:])]
+            for k in range(i, n):
+                mj[k] -= c * mi[k]
             rj = res[j]
-            rj[:] = [rjk - c * rik for rjk, rik in zip(rj, ri)]
+            for k in range(len(rj)):
+                rj[k] -= c * ri[k]
 
     # Solve the system with the upper-triangular matrix
     for i in range(n-2, -1, -1):
@@ -223,7 +226,8 @@ def gaussian_solve(a, rhs, allow_underdetermined=False):
         for j in range(i+1, n):
             c = mi[j]
             rj = res[j]
-            ri[:] = [rik - c * rjk for rik, rjk in zip(ri, rj)]
+            for k in range(len(ri)):
+                ri[k] -= c * rj[k]
     return res
 
 def pseudo_inverse(m):
