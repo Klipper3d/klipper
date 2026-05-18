@@ -4,7 +4,7 @@
 # Copyright (C) 2025-2026  Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import copy, math, logging, multiprocessing, traceback
+import copy, operator, math, logging, multiprocessing, traceback
 import queuelogger
 
 
@@ -143,36 +143,27 @@ def matrix_mul(m1, s):
 
 # Transpose a matrix
 def mat_transp(a):
-    return [[a[j][i] for j in range(len(a))]
+    return [[a_j[i] for a_j in a]
             for i in range(len(a[0]))]
 
 # Multiply two matrices
 def mat_mat_mul(a, b):
-    rows_a = len(a)
-    cols_a = len(a[0])
-    rows_b = len(b)
-    cols_b = len(b[0])
-    if cols_a != rows_b:
+    if len(a[0]) != len(b):
         return None
-    return [[sum([a[i][k] * b[k][j] for k in range(rows_b)])
-             for j in range(cols_b)]
-            for i in range(rows_a)]
+    bt = mat_transp(b)
+    return [[sum(map(operator.mul, a_i, bt_j))
+             for bt_j in bt]
+            for a_i in a]
 
-# Optimized version of mat_mat_mul(mat_transp(a), b)
-def mat_transp_mul(a, b):
-    rows_at = len(a[0])
-    cols_at = len(a)
-    rows_b = len(b)
-    cols_b = len(b[0])
-    if cols_at != rows_b:
-        return None
-    res = [[0.] * cols_b for i in range(rows_at)]
-    for i in range(rows_at):
-        for j in range(cols_b):
-            if a is b and j < i:
-                res[i][j] = res[j][i]
-                continue
-            res[i][j] = sum([a[k][i] * b[k][j] for k in range(rows_b)])
+# Optimized version of mat_mat_mul(a, mat_transp(a))
+def mat_mul_transp(a):
+    # Resulting matrix is symmetric - compute lower-left
+    res = [[sum(map(operator.mul, a_i, a_j))
+            for a_j in a[:i+1]]
+           for i, a_i in enumerate(a)]
+    # Fill in upper right of matrix
+    for i, res_i in enumerate(res):
+        res_i.extend([res_j[i] for res_j in res[i+1:]])
     return res
 
 def gaussian_solve(a, rhs, allow_underdetermined=False):
@@ -217,12 +208,13 @@ def gaussian_solve(a, rhs, allow_underdetermined=False):
     return res
 
 def pseudo_inverse(m):
-    mtm = mat_transp_mul(m, m)
     mt = mat_transp(m)
+    mtm = mat_mul_transp(mt)
     return gaussian_solve(mtm, mt)
 
 # Find least squares solution for a set of linear equations
 def solve_linear_equations(eqs, ans, allow_underdetermined=False):
-    eqst_eqs = mat_transp_mul(eqs, eqs)
-    eqst_ans = mat_transp_mul(eqs, ans)
+    eqst = mat_transp(eqs)
+    eqst_eqs = mat_mul_transp(eqst)
+    eqst_ans = mat_mat_mul(eqst, ans)
     return gaussian_solve(eqst_eqs, eqst_ans, allow_underdetermined)
