@@ -5297,12 +5297,13 @@ data_ready_pin:
 #   The ADC channel to read. For the ADS131M02, valid values are 0 and 1.
 #   For the ADS131M04, valid values are 0, 1, 2, and 3. The default is 0.
 #clock_freq:
-#   The external clock frequency fCLKIN in Hz supplied to the CLKIN pin.
-#   Valid range is from 300000 to 8400000. Either clock_freq or pwm_clock
-#   must be provided.
+#   The external clock frequency (fCLKIN) in Hz supplied to the CLKIN pin.
+#   The valid range is 300000 to 8400000. The nominal clock frequency for the
+#   ADS131M0x is 8192000 Hz; it is recommended to use a clock source near
+#   this frequency. Either clock_freq or pwm_clock must be provided.
 #pwm_clock:
 #   Reference to a [static_pwm_clock] section that generates the clock signal
-#   for the CLKIN pin that defines the supplied clock frequency fCLKIN.
+#   for the CLKIN pin. The frequency of this clock is used as fCLKIN.
 #   Either clock_freq or pwm_clock must be provided.
 #oversampling_ratio: 4096
 #   The oversampling ratio determines the output data rate and noise
