@@ -125,7 +125,7 @@ class ADS131M0X:
 
         # Gain setting
         self.gain = config.getchoice('gain', {str(k): k for k in GAIN_TO_REG},
-                                     default='1')
+                                     default='128')
 
         # Global-chop configuration
         self.enable_global_chop = config.getboolean('enable_global_chop', False)

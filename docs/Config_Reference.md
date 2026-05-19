@@ -5314,9 +5314,9 @@ data_ready_pin:
 #   approximately fCLKIN / (6 * oversampling_ratio) when enabled. One can check
 #   the actual sampling rate via LOAD_CELL_DIAGNOSTIC command. Valid values are:
 #   64, 128, 256, 512, 1024, 2048, 4096, 8192, and 16384. The default is 4096.
-#gain: 1
+#gain: 128
 #   The PGA gain setting. Valid values are: 1, 2, 4, 8, 16, 32, 64, and
-#   128. The default is 1.
+#   128. The default is 128.
 #enable_global_chop: False
 #   Enable global-chop mode to reduce internal system offset errors by averaging
 #   two conversions with opposite input polarities. This also improves the noise
