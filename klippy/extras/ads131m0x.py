@@ -47,7 +47,7 @@ OSR_TO_REG = {
     2048:  4,  # OSR code 100b
     4096:  5,  # OSR code 101b
     8192:  6,  # OSR code 110b
-    16256: 7,  # OSR code 111b
+    16384: 7,  # OSR code 111b
 }
 
 # GAIN settings and corresponding GAIN1 register values
@@ -83,8 +83,9 @@ GC_DLY_TO_REG = {
 }
 
 UPDATE_INTERVAL = 0.100
-MIN_CLOCK_FREQ = 300000
-MAX_CLOCK_FREQ = 8400000
+MINIMUM_CLOCK_FREQ = 300000
+MAXIMUM_CLOCK_FREQ = 8400000
+NOMINAL_CLOCK_FREQ = 8192000
 
 class ADS131M0X:
     def __init__(self, config, sensor_type, num_channels):
@@ -99,12 +100,15 @@ class ADS131M0X:
         # Channel selection
         self.num_channels = num_channels
         self.channel = config.getint('adc_channel', 0,
-                                     minval=0, maxval=num_channels-1)
+                                    minval=0, maxval=num_channels-1)
 
-        # OSR setting
-        self.osr = config.getchoice('oversampling_ratio',
-                                    {str(k): k for k in OSR_TO_REG},
-                                    default='4096')
+        # Sample rate settings (expressed at nominal clock frequency)
+        sample_rate_to_osr = {}
+        for osr in OSR_TO_REG:
+            sample_rate_to_osr[NOMINAL_CLOCK_FREQ // (2 * osr)] = osr
+        self.config_sample_rate = config.getchoice('sample_rate',
+            {str(k): k for k in sample_rate_to_osr}, default='500')
+        self.osr = sample_rate_to_osr[self.config_sample_rate]
 
         # Clock frequency
         pwm_clock_name = config.get('pwm_clock', None)
@@ -112,16 +116,16 @@ class ADS131M0X:
             pwm_config = config.getsection(' '.join(pwm_clock_name.split()))
             self.clock_freq = pwm_config.getfloat('frequency', None,
                                                   note_valid=False,
-                                                  minval=MIN_CLOCK_FREQ,
-                                                  maxval=MAX_CLOCK_FREQ)
+                                                  minval=MINIMUM_CLOCK_FREQ,
+                                                  maxval=MAXIMUM_CLOCK_FREQ)
             if self.clock_freq is None:
                 raise config.error(
                         "pwm_clock '%s' must support and specify a 'frequency'"
                         " parameter" % (pwm_clock_name,))
         else:
             self.clock_freq = config.getint('clock_freq',
-                                            minval=MIN_CLOCK_FREQ,
-                                            maxval=MAX_CLOCK_FREQ)
+                                            minval=MINIMUM_CLOCK_FREQ,
+                                            maxval=MAXIMUM_CLOCK_FREQ)
 
         # Gain setting
         self.gain = config.getchoice('gain', {str(k): k for k in GAIN_TO_REG},
@@ -136,7 +140,7 @@ class ADS131M0X:
         else:
             self.gc_dly = None
 
-        # Calculate data rate: fCLKIN / (2 * OSR)
+        # Calculate the actual data rate: fCLKIN / (2 * OSR)
         # With global chop: fCLKIN / (2 * (gc_dly + 3 * OSR))
         if self.enable_global_chop:
             self.sps = self.clock_freq / (2. * (self.gc_dly + 3. * self.osr))

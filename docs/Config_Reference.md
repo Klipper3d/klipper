@@ -5269,11 +5269,12 @@ data_ready_pin:
 ```
 
 #### ADS131M0x
-The ADS131M0x is a family of 24-bit, delta-sigma ADCs. Two sensors are supported
-from this family: ADS131M02 with two simultaneously-sampling differential
-channels and ADS131M04 with four channels. They feature a programmable gain
-amplifier (PGA) with gains up to 128, configurable oversampling ratios from
-64 to 16384, and require an external clock input (300 kHz to 8.4 MHz).
+The ADS131M0x is a family of fast, 24-bit, delta-sigma ADCs. Two sensors
+are supported from this family: ADS131M02 with two simultaneously-sampling
+differential channels and ADS131M04 with four channels. They feature a
+programmable gain amplifier (PGA) with gains up to 128, configurable
+sampling rates up to 64000 samples per second, and require an external
+clock input (300 kHz to 8.4 MHz, 8.192 MHz nominal).
 ```
 [load_cell]
 sensor_type: ads131m02
@@ -5305,24 +5306,25 @@ data_ready_pin:
 #   Reference to a [static_pwm_clock] section that generates the clock signal
 #   for the CLKIN pin. The frequency of this clock is used as fCLKIN.
 #   Either clock_freq or pwm_clock must be provided.
-#oversampling_ratio: 4096
-#   The oversampling ratio determines the output data rate and noise
-#   performance. This is the ratio between the sensor high-speed internal
-#   sampling frequency and its lower, final output data rate. Higher values
-#   reduce noise while also giving lower data rates. The final sampling rate
-#   is fCLKIN / (2 * oversampling_ratio) when global-chop mode is enabled
-#   (which is the default, see enable_global_chop parameter below), and
-#   approximately fCLKIN / (6 * oversampling_ratio) when enabled. One can check
-#   the actual sampling rate via LOAD_CELL_DIAGNOSTIC command. Valid values are:
-#   64, 128, 256, 512, 1024, 2048, 4096, 8192, and 16384. The default is 4096.
+#sample_rate:
+#   The desired output sampling rate in samples per second, expressed at
+#   the nominal clock frequency of 8192000 Hz. Higher sampling rates
+#   result in higher noise; prefer lower rates for better noise
+#   performance. The valid values are: 250, 500, 1000, 2000, 4000, 8000,
+#   16000, 32000, and 64000. The default is 500. When global-chop mode
+#   is enabled (see enable_global_chop), the effective sampling rate
+#   is reduced by approximately a factor of three. The effective sampling
+#   rate (after adjustments for the configured clock frequency and the
+#   global-chop mode) and the actual measured sampling rate can be checked
+#   via the LOAD_CELL_DIAGNOSTIC command.
 #gain: 128
 #   The PGA gain setting. Valid values are: 1, 2, 4, 8, 16, 32, 64, and
 #   128. The default is 128.
 #enable_global_chop: False
 #   Enable global-chop mode to reduce internal system offset errors by averaging
-#   two conversions with opposite input polarities. This also improves the noise
-#   by a factor of sqrt(2) at the cost of longer conversion times and lower
-#   effective sampling rates. The default is False.
+#   two conversions with opposite input polarities. This also reduces noise
+#   by a factor of sqrt(2) and the effective sampling rate by a factor of 3.
+#   The default is False.
 #global_chop_delay: 16
 #   The global-chop delay in modulator clock periods, only used when
 #   enable_global_chop is True. Higher values allow more settling time
