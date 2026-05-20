@@ -354,7 +354,9 @@ class HandleCommandGeneration:
             max_size = min(msgproto.MESSAGE_MAX,
                            (msgproto.MESSAGE_MIN + msgid_size
                             + sum([t.max_length for t in param_types])))
-            out += "    .max_size=%d," % (max_size,)
+            min_size = min(msgproto.MESSAGE_MAX,
+                           msgproto.MESSAGE_MIN + msgid_size + len(param_types))
+            out += "    .max_size=%d,\n    .min_size=%d" % (max_size, min_size)
         return out
     def generate_responses_code(self):
         encoder_defs = []

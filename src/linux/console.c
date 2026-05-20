@@ -170,7 +170,9 @@ console_sendf(const struct command_encoder *ce, va_list args)
 {
     // Generate message
     uint8_t buf[MESSAGE_MAX];
-    uint_fast8_t msglen = command_encode_and_frame(buf, ce, args);
+    uint_fast8_t msglen = command_encode_and_frame(buf, sizeof(buf), ce, args);
+    if (!msglen)
+        return;
 
     // Transmit message
     int ret = write(main_pfd[MP_TTY_IDX].fd, buf, msglen);
