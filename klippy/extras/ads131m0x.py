@@ -86,6 +86,7 @@ UPDATE_INTERVAL = 0.100
 MINIMUM_CLOCK_FREQ = 300000
 MAXIMUM_CLOCK_FREQ = 8400000
 NOMINAL_CLOCK_FREQ = 8192000
+MAX_SAMPLE_RATE_DEVIATION = 0.5
 
 class ADS131M0X:
     def __init__(self, config, sensor_type, num_channels):
@@ -101,14 +102,6 @@ class ADS131M0X:
         self.num_channels = num_channels
         self.channel = config.getint('adc_channel', 0,
                                     minval=0, maxval=num_channels-1)
-
-        # Sample rate settings (expressed at nominal clock frequency)
-        sample_rate_to_osr = {}
-        for osr in OSR_TO_REG:
-            sample_rate_to_osr[NOMINAL_CLOCK_FREQ // (2 * osr)] = osr
-        self.config_sample_rate = config.getchoice('sample_rate',
-            {str(k): k for k in sample_rate_to_osr}, default='500')
-        self.osr = sample_rate_to_osr[self.config_sample_rate]
 
         # Clock frequency
         pwm_clock_name = config.get('pwm_clock', None)
@@ -140,12 +133,24 @@ class ADS131M0X:
         else:
             self.gc_dly = None
 
-        # Calculate the actual data rate: fCLKIN / (2 * OSR)
-        # With global chop: fCLKIN / (2 * (gc_dly + 3 * OSR))
-        if self.enable_global_chop:
-            self.sps = self.clock_freq / (2. * (self.gc_dly + 3. * self.osr))
-        else:
-            self.sps = self.clock_freq / (2. * self.osr)
+        # Sample rate setting
+        config_sample_rate = config.getfloat('sample_rate', above=0.0,
+                                             default=500.0)
+
+        # Find OSR that produces SPS closest to requested sample rate
+        best_osr = best_sps = None
+        for osr in OSR_TO_REG:
+            sps = self._calc_sample_rate(osr)
+            if best_sps is None or abs(sps - config_sample_rate) < \
+                    abs(best_sps - config_sample_rate):
+                best_osr, best_sps = osr, sps
+        if abs(best_sps - config_sample_rate) >= \
+                MAX_SAMPLE_RATE_DEVIATION * config_sample_rate:
+            raise config.error(
+                "Requested sample rate %.1f Hz is not available with"
+                " the configured parameters" % config_sample_rate)
+        self.osr = best_osr
+        self.sps = best_sps
 
         # SPI Setup
         self.spi = bus.MCU_SPI_from_config(config, mode=1,
@@ -212,6 +217,12 @@ class ADS131M0X:
     # used to detect if a data value is saturated
     def get_range(self):
         return -0x800000, 0x7FFFFF
+
+    def _calc_sample_rate(self, osr):
+        if self.enable_global_chop:
+            return self.clock_freq / (2. * (self.gc_dly + 3. * osr))
+        else:
+            return self.clock_freq / (2. * osr)
 
     # add_client interface, direct pass through to bulk_sensor API
     def add_client(self, callback):
