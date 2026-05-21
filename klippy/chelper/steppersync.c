@@ -393,7 +393,7 @@ steppersyncmgr_alloc_steppersync(struct steppersyncmgr *ssm)
 }
 
 // Generate and flush steps
-int32_t __visible
+struct syncemitter * __visible
 steppersyncmgr_gen_steps(struct steppersyncmgr *ssm, double flush_time
                          , double gen_steps_time, double clear_history_time)
 {
@@ -419,18 +419,18 @@ steppersyncmgr_gen_steps(struct steppersyncmgr *ssm, double flush_time
         }
     }
     // Wait for step generation threads to complete
-    int32_t res = 0;
+    struct syncemitter *failed_se = NULL;
     list_for_each_entry(ss, &ssm->ss_list, ssm_node) {
         struct syncemitter *se;
         list_for_each_entry(se, &ss->se_list, ss_node) {
             int32_t ret = se_finalize_gen_steps(se);
             if (ret)
-                res = ret;
+                failed_se = se;
         }
-        if (res)
+        if (failed_se)
             continue;
         uint64_t flush_clock = clock_from_time(&ss->ce, flush_time);
         steppersync_flush(ss, flush_clock);
     }
-    return res;
+    return failed_se;
 }

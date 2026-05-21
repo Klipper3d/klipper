@@ -69,7 +69,7 @@ defs_steppersync = """
     void steppersyncmgr_free(struct steppersyncmgr *ssm);
     struct steppersync *steppersyncmgr_alloc_steppersync(
         struct steppersyncmgr *ssm);
-    int32_t steppersyncmgr_gen_steps(struct steppersyncmgr *ssm
+    struct syncemitter *steppersyncmgr_gen_steps(struct steppersyncmgr *ssm
         , double flush_time, double gen_steps_time, double clear_history_time);
 """
 
