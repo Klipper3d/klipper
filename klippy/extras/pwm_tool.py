@@ -16,10 +16,9 @@ class MCU_queued_pwm:
         self._max_duration = 2.
         self._oid = mcu.create_oid()
         printer = mcu.get_printer()
-        sname = config.get_name().split()[-1]
         self._motion_queuing = printer.load_object(config, 'motion_queuing')
         self._syncemitter = self._motion_queuing.allocate_syncemitter(
-            mcu, sname, alloc_stepcompress=False)
+            mcu, config.get_name(), alloc_stepcompress=False)
         ffi_main, ffi_lib = chelper.get_ffi()
         self._syncemitter_queue_msg = ffi_lib.syncemitter_queue_msg
         mcu.register_config_callback(self._build_config)
