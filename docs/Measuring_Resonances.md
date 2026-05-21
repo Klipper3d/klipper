@@ -1,10 +1,10 @@
 # Measuring Resonances
 
-Klipper has built-in support for the ADXL345, MPU-9250, LIS2DW and LIS3DH compatible
+Klipper has built-in support for the ADXL345, ADXL355, MPU-9250, LIS2DW and LIS3DH compatible
 accelerometers which can be used to measure resonance frequencies of the printer
 for different axes, and auto-tune [input shapers](Resonance_Compensation.md) to
 compensate for resonances. Note that using accelerometers requires some
-soldering and crimping. The ADXL345 can be connected to the SPI interface
+soldering and crimping. The ADXL345 and ADXL355 can be connected to the SPI interface
 of a Raspberry Pi or MCU board (it needs to be reasonably fast). The MPU family can
 be connected to the I2C interface of a Raspberry Pi directly, or to an I2C
 interface of an MCU board that supports 400kbit/s *fast mode* in Klipper. The
@@ -15,7 +15,7 @@ When sourcing accelerometers, be aware that there are a variety of different PCB
 board designs and different clones of them. If it is going to be connected to a
 5V printer MCU ensure it has a voltage regulator and level shifters.
 
-For ADXL345s, make sure that the board supports SPI mode (a small number of
+For ADXL345 and ADXL355 boards, make sure that the board supports SPI mode (a small number of
 boards appear to be hard-configured for I2C by pulling SDO to GND).
 
 For MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948s and LIS2DW/LIS3DH there
@@ -256,6 +256,23 @@ probe_points:
 ```
 It is advised to start with 1 probe point, in the middle of the print bed,
 slightly above it.
+
+For ADXL355 over SPI on the Raspberry Pi, use the same setup with an
+`[adxl355]` section:
+
+```
+[mcu rpi]
+serial: /tmp/klipper_host_mcu
+
+[adxl355]
+cs_pin: rpi:None
+#rate: 4000
+
+[resonance_tester]
+accel_chip: adxl355
+probe_points:
+    100, 100, 20  # an example
+```
 
 #### Configure ADXL345 With Pi Pico
 

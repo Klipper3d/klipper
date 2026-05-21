@@ -140,6 +140,10 @@ config WANT_ADXL345
     bool
     depends on WANT_SPI
     default y
+config WANT_ADXL355
+    bool
+    depends on WANT_SPI
+    default y
 config WANT_LIS2DW
     bool
     depends on WANT_SPI || WANT_I2C
@@ -178,7 +182,7 @@ config WANT_SENSOR_ANGLE
     default y
 config NEED_SENSOR_BULK
     bool
-    depends on WANT_ADXL345 || WANT_LIS2DW || WANT_BMI160 || WANT_MPU9250 || WANT_ICM20948 \
+    depends on WANT_ADXL345 || WANT_ADXL355 || WANT_LIS2DW || WANT_MPU9250 || WANT_ICM20948 \
         || WANT_HX71X || WANT_ADS1220 || WANT_LDC1612 || WANT_SENSOR_ANGLE
     default y
 config WANT_TRIGGER_ANALOG
@@ -231,7 +235,10 @@ config WANT_HD44780
 comment "Accelerometer chips"
     depends on WANT_SPI || WANT_I2C
 config WANT_ADXL345
-    bool "Support adxl accelerometers"
+    bool "Support adxl345 accelerometers"
+    depends on WANT_SPI
+config WANT_ADXL355
+    bool "Support adxl355 accelerometers"
     depends on WANT_SPI
 config WANT_LIS2DW
     bool "Support lis2dw and lis3dh 3-axis accelerometers"
