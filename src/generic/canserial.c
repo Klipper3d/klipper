@@ -35,7 +35,7 @@ static struct canbus_data {
 
     // Transfer buffers
     struct canbus_msg admin_queue[8];
-    uint8_t transmit_buf[96];
+    uint8_t transmit_buf[192];
     uint8_t receive_buf[192];
 } CanData;
 
