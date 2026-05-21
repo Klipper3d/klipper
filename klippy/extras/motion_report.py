@@ -185,27 +185,19 @@ class PrinterMotionReport:
         self.last_status['steppers'] = list(sorted(self.steppers.keys()))
         self.last_status['trapq'] = list(sorted(self.dtrapqs.keys()))
     # Shutdown handling
-    def _handle_analyze_shutdown(self, msg, details):
-        if msg != "MCU shutdown":
-            return
-        mcu = self.printer.lookup_object(details.get("mcu"), None)
-        if mcu is None or details.get("shutdown_clock") is None:
-            return
-        shutdown_clock = details["shutdown_clock"]
-        shutdown_time = mcu.clock_to_print_time(shutdown_clock)
-        clock_100ms = mcu.seconds_to_clock(0.100)
-        start_clock = max(0, shutdown_clock - clock_100ms)
-        end_clock = shutdown_clock + clock_100ms
+    def _dump_shutdown(self, dsteppers, shutdown_time, duration=0.100):
         # Log stepper queue_steps on mcu that started shutdown (if any)
-        for dstepper in self.steppers.values():
-            if dstepper.mcu_stepper.get_mcu() is not mcu:
-                continue
+        start_time = shutdown_time - duration
+        end_time = shutdown_time + duration
+        for dstepper in dsteppers:
+            mcu = dstepper.mcu_stepper.get_mcu()
+            start_clock = max(0, mcu.print_time_to_clock(start_time))
+            end_clock = mcu.print_time_to_clock(end_time)
             data, cdata = dstepper.get_step_queue(start_clock, end_clock)
             dstepper.log_steps(data)
         # Log trapqs around time of shutdown
         for dtrapq in self.dtrapqs.values():
-            data, cdata = dtrapq.extract_trapq(shutdown_time - .100,
-                                               shutdown_time + .100)
+            data, cdata = dtrapq.extract_trapq(start_time, end_time)
             dtrapq.log_trapq(data)
         # Log estimated toolhead position at time of shutdown
         dtrapq = self.dtrapqs.get('toolhead')
@@ -215,6 +207,27 @@ class PrinterMotionReport:
         if pos is not None:
             logging.info("Requested toolhead position at shutdown time %.6f: %s"
                          , shutdown_time, pos)
+    def _handle_analyze_shutdown(self, msg, details):
+        if msg == "MCU shutdown":
+            mcu = self.printer.lookup_object(details.get("mcu"), None)
+            shutdown_clock = details.get("shutdown_clock")
+            if mcu is None or shutdown_clock is None:
+                return
+            shutdown_time = mcu.clock_to_print_time(shutdown_clock)
+            dsteppers = [dstepper for dstepper in self.steppers.values()
+                         if dstepper.mcu_stepper.get_mcu() is mcu]
+            self._dump_shutdown(dsteppers, shutdown_time)
+            return
+        if msg == "Internal error in stepcompress":
+            logging.info('stepcompress error info: %s', details)
+            step_gen_time = details.get("step_gen_time")
+            if step_gen_time is None:
+                return
+            dsteppers = []
+            stepper = self.steppers.get(details.get("queue_name"))
+            if stepper is not None:
+                dsteppers = [stepper]
+            self._dump_shutdown(dsteppers, step_gen_time, 1.0)
     # Status reporting
     def get_status(self, eventtime):
         if eventtime < self.next_status_time or not self.dtrapqs:
