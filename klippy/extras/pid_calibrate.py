@@ -7,6 +7,7 @@ import math, mathutil, logging
 from . import heaters
 
 TUNE_HYSTERESIS = 2.5
+HIGH_AMBIENT = 50.0
 
 class PIDCalibrate:
     def __init__(self, config):
@@ -40,6 +41,9 @@ class PIDCalibrate:
         ctemp, target_temp = heater.get_temp(eventtime)
         if ctemp > target - TUNE_HYSTERESIS * 2:
            raise gcmd.error("Starting temperature should be less than target")
+        if ctemp > 50.0:
+            gcmd.respond_raw("!! Test may be inaccurate, start temperature "
+                             "%.1fC > %.1fC\n" % (ctemp, HIGH_AMBIENT))
         calibrate = ControlAutoTune(heater, target, max_power)
         old_control = heater.set_control(calibrate)
         try:
