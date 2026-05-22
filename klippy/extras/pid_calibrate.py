@@ -74,7 +74,8 @@ class PIDCalibrate:
         Kp, Ki, Kd = calibrate.calc_final_pid()
         logging.info("Autotune: final: Kp=%f Ki=%f Kd=%f", Kp, Ki, Kd)
         gcmd.respond_info(
-            "Heater to thermistor lag: %.3f s" % (calibrate.dead_time_avg))
+            "Heater to thermistor lag: %.3f s, %.3f s" % (
+                calibrate.dead_time_avg, calibrate.tau_b))
         gcmd.respond_info(
             "PID parameters: pid_Kp=%.3f pid_Ki=%.3f pid_Kd=%.3f\n"
             "The SAVE_CONFIG command will update the printer config file\n"
@@ -260,7 +261,8 @@ class ControlAutoTune:
         theta = self.dead_time_avg
         Kc = (1 / gain) * tau / (theta + theta)
         Ti = min(tau, 8 * theta)
-        Td = theta / 2
+        # Real dead time can be less than what we can measure
+        Td = min(theta / 2, self.tau_b)
         Kp = Kc * heaters.PID_PARAM_BASE
         Ki = Kp / Ti
         Kd = Kp * Td
