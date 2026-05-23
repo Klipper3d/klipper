@@ -121,15 +121,13 @@ class ADS131M0X:
                                             maxval=MAXIMUM_CLOCK_FREQ)
 
         # Gain setting
-        self.gain = config.getchoice('gain', {str(k): k for k in GAIN_TO_REG},
-                                     default='128')
+        self.gain = config.getchoice('gain', list(GAIN_TO_REG.keys()), 128)
 
         # Global-chop configuration
         self.enable_global_chop = config.getboolean('enable_global_chop', False)
         if self.enable_global_chop:
             self.gc_dly = config.getchoice('global_chop_delay',
-                                           {str(k): k for k in GC_DLY_TO_REG},
-                                           default='16')
+                                           list(GC_DLY_TO_REG.keys()), 16)
         else:
             self.gc_dly = None
 
