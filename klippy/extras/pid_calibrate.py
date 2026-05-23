@@ -9,19 +9,24 @@ from . import heaters
 class PIDCalibrate:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.printer.register_event_handler("klippy:connect",
+                                            self._handle_connect)
+    def _handle_connect(self):
         gcode = self.printer.lookup_object('gcode')
-        gcode.register_command('PID_CALIBRATE', self.cmd_PID_CALIBRATE,
-                               desc=self.cmd_PID_CALIBRATE_help)
+        pheaters = self.printer.lookup_object('heaters')
+        all_heaters = pheaters.get_all_heaters()
+        for name in all_heaters:
+            short_name = name.split()[-1]
+            gcode.register_mux_command('PID_CALIBRATE', 'HEATER', short_name,
+                                       self.cmd_PID_CALIBRATE,
+                                       desc=self.cmd_PID_CALIBRATE_help)
     cmd_PID_CALIBRATE_help = "Run PID calibration test"
     def cmd_PID_CALIBRATE(self, gcmd):
         heater_name = gcmd.get('HEATER')
         target = gcmd.get_float('TARGET')
         write_file = gcmd.get_int('WRITE_FILE', 0)
         pheaters = self.printer.lookup_object('heaters')
-        try:
-            heater = pheaters.lookup_heater(heater_name)
-        except self.printer.config_error as e:
-            raise gcmd.error(str(e))
+        heater = pheaters.lookup_heater(heater_name)
         self.printer.lookup_object('toolhead').get_last_move_time()
         calibrate = ControlAutoTune(heater, target)
         old_control = heater.set_control(calibrate)
