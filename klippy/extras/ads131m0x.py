@@ -149,6 +149,8 @@ class ADS131M0X:
             raise config.error(
                 "Requested sample rate %.1f Hz is not available with"
                 " the configured parameters" % config_sample_rate)
+        logging.info("%s '%s' configured sample_rate = %.1f SPS",
+                     self.sensor_type, self.name, best_sps)
         self.osr = best_osr
         self.sps = best_sps
 
