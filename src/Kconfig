@@ -164,6 +164,10 @@ config WANT_HX71X
     bool
     depends on HAVE_GPIO
     default y
+config WANT_ADS131M0X
+    bool
+    depends on WANT_SPI
+    default y
 config WANT_ADS1220
     bool
     depends on WANT_SPI
@@ -179,11 +183,11 @@ config WANT_SENSOR_ANGLE
 config NEED_SENSOR_BULK
     bool
     depends on WANT_ADXL345 || WANT_LIS2DW || WANT_BMI160 || WANT_MPU9250 || WANT_ICM20948 \
-        || WANT_HX71X || WANT_ADS1220 || WANT_LDC1612 || WANT_SENSOR_ANGLE
+        || WANT_HX71X || WANT_ADS1220 || WANT_ADS131M0X || WANT_LDC1612 || WANT_SENSOR_ANGLE
     default y
 config WANT_TRIGGER_ANALOG
     bool
-    depends on WANT_ADC || WANT_HX71X || WANT_ADS1220 || WANT_LDC1612
+    depends on WANT_ADC || WANT_HX71X || WANT_ADS1220 || WANT_ADS131M0X || WANT_LDC1612
     default y
 config NEED_SOS_FILTER
     bool
@@ -252,6 +256,9 @@ config WANT_THERMOCOUPLE
 config WANT_HX71X
     bool "Support HX711 and HX717 ADC chips"
     depends on HAVE_GPIO
+config WANT_ADS131M0X
+    bool "Support ADS 131M02/M04 ADC chips"
+    depends on WANT_SPI
 config WANT_ADS1220
     bool "Support ADS 1220 ADC chip"
     depends on WANT_SPI
@@ -264,10 +271,10 @@ config WANT_SENSOR_ANGLE
     bool "Support angle sensors"
     depends on WANT_SPI
 comment "Other features"
-    depends on WANT_ADC || WANT_HX71X || WANT_ADS1220 || WANT_LDC1612
+    depends on WANT_ADC || WANT_HX71X || WANT_ADS1220 || WANT_ADS131M0X || WANT_LDC1612
 config WANT_TRIGGER_ANALOG
     bool "Support for homing/probing events using analog sensors"
-    depends on WANT_ADC || WANT_HX71X || WANT_ADS1220 || WANT_LDC1612
+    depends on WANT_ADC || WANT_HX71X || WANT_ADS1220 || WANT_ADS131M0X || WANT_LDC1612
 endmenu
 
 # Generic configuration options for CANbus
