@@ -323,10 +323,12 @@ class LoadCellSampleCollector:
         while self.is_started:
             now = self._reactor.monotonic()
             if self._mcu.estimated_print_time(now) > timeout:
-                _, (errors, overflows) = self._finish_collecting()
+                samples, err = self._finish_collecting()
+                errors, overflows = err if err else (0, 0)
                 raise self._printer.command_error(
-                    "LoadCellSampleCollector timed out! Errors: %i,"
-                    " Overflows: %i" % (errors, overflows))
+                    "LoadCellSampleCollector timed out! Collected %i samples,"
+                    " Errors: %i, Overflows: %i" % (len(samples), errors,
+                                                    overflows))
             if self._mcu.is_fileoutput():
                 break
             self._reactor.pause(now + RETRY_DELAY)
