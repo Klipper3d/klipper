@@ -120,6 +120,13 @@ class ADS1220:
     def get_samples_per_second(self):
         return self.sps
 
+    def get_status(self, eventtime):
+        return {
+            'errors': self.last_error_count,
+            'overflows': self.ffreader.get_last_overflows(),
+            'sample_rate': self.get_samples_per_second(),
+        }
+
     def lookup_sensor_error(self, error_code):
         return "Unknown ads1220 error" % (error_code,)
 
