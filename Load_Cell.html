@@ -1685,52 +1685,6 @@ tap, if no taps are detected the command will time out.</p>
 carefully to look for issues.</p>
 <p>Load cell probes don't support the <code>QUERY_ENDSTOPS</code> or <code>QUERY_PROBE</code>
 commands. Use <code>LOAD_CELL_TEST_TAP</code> for testing functionality before probing.</p>
-<h3 id="homing-macros">Homing Macros<a class="headerlink" href="#homing-macros" title="Permanent link">&para;</a></h3>
-<p>Load cell probe is not an endstop and doesn't support <code>endstop:
-prove:z_virtual_endstop</code>. For the time being you'll need to configure your z
-axis with an MCU pin as its endstop. You won't actually be using the pin but
-for the time being you have to configure something.</p>
-<p>To home the axis with just the probe you need to set up a custom homing
-macro. This requires setting up
-<a href="Config_Reference.html#homing_override">homing_override</a>.</p>
-<p>Here is a simple macro that can accomplish this. Note that the
-<code>_HOME_Z_FROM_LAST_PROBE</code> macro has to be separate because of the way macros
-work. The sub-call is needed so that the <code>_HOME_Z_FROM_LAST_PROBE</code> macro can
-see the result of the probe in <code>printer.probe.last_probe_position</code>.</p>
-<div class="highlight"><pre><span></span><code>[gcode_macro _HOME_Z_FROM_LAST_PROBE]
-gcode:
-<span class="w">    </span>{% set z_probed = printer.probe.last_probe_position.z %}
-<span class="w">    </span>{% set z_position = printer.toolhead.position[2] %}
-<span class="w">    </span>{% set z_actual = z_position - z_probed %}
-<span class="w">    </span>SET_KINEMATIC_POSITION Z={z_actual}
-
-[gcode_macro _HOME_Z]
-gcode:
-<span class="w">    </span>SET_GCODE_OFFSET Z=0  # load cell probes dont need a Z offset
-<span class="w">    </span># position toolhead for homing Z, edit for your printers size
-<span class="w">    </span>#G90  # absolute move
-<span class="w">    </span>#G1 Y50 X50 F{5 * 60}  # move to X/Y position for homing
-
-<span class="w">    </span># soft home the z axis to its limit so it can be moved:
-<span class="w">    </span>SET_KINEMATIC_POSITION Z={printer.toolhead.axis_maximum[2]}
-
-<span class="w">    </span># Fast approach and tap
-<span class="w">    </span>PROBE PROBE_SPEED={5 * 60}  # override the speed for faster homing
-<span class="w">    </span>_HOME_Z_FROM_LAST_PROBE
-
-<span class="w">    </span># lift z to 2mm
-<span class="w">    </span>G91  # relative move
-<span class="w">    </span>G1 Z2 F{5 * 60}
-
-<span class="w">    </span># probe at standard speed
-<span class="w">    </span>PROBE
-<span class="w">    </span>_HOME_Z_FROM_LAST_PROBE
-
-<span class="w">    </span># lift z to 10mm for clearance
-<span class="w">    </span>G91  # relative move
-<span class="w">    </span>G1 Z10 F{5 * 60}
-</code></pre></div>
-
 <h3 id="suggested-probing-temperature">Suggested Probing Temperature<a class="headerlink" href="#suggested-probing-temperature" title="Permanent link">&para;</a></h3>
 <p>Currently, we suggest keeping the nozzle temperature below the level that causes
 the filament to ooze while homing and probing. 140C is a good starting
