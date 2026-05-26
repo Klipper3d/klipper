@@ -164,8 +164,10 @@ class PrinterSmartEffector:
                                             self.param_helper)
         self.probe_session = probe.SampleAveragingHelper(
             config, self.param_helper, self.mcu_probe.start_probe_session)
-        self.cmd_helper = probe.ProbeCommandHelper(config, self,
-                                                   self.mcu_probe.query_endstop)
+        query_endstop = self.mcu_probe.query_endstop
+        self.cmd_helper = probe.ProbeCommandHelper(config, self, query_endstop)
+        probe.HomingViaProbeHelper(config, self.probe_offsets.get_offsets()[2],
+                                   query_endstop)
     def get_probe_params(self, gcmd=None):
         return self.param_helper.get_probe_params(gcmd)
     def get_offsets(self, gcmd=None):
