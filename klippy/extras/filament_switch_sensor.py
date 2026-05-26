@@ -28,7 +28,8 @@ class RunoutHelper:
         self.pause_delay = config.getfloat('pause_delay', .5, above=.0)
         self.event_delay = config.getfloat('event_delay', 3., minval=.0)
         # Distance configuration
-        self.runout_distance = config.getfloat('runout_distance', 0., minval=0.)
+        self.runout_distance = config.getfloat(
+            'runout_distance', 0., minval=0.)
         self.extruder_name = config.get('extruder', 'extruder')
         self.feature_history = [(0., 0)]
         self.deferred_runout = False
@@ -38,7 +39,8 @@ class RunoutHelper:
         self.filament_present = False
         self.sensor_enabled = True
         # Register commands and event handlers
-        self.printer.register_event_handler("klippy:ready", self._handle_ready)
+        self.printer.register_event_handler(
+            "klippy:ready", self._handle_ready)
         self.printer.register_event_handler("filament_sensor:set_feature",
                                             self._handle_set_feature)
         try:
@@ -66,7 +68,8 @@ class RunoutHelper:
         feature = gcmd.get_int('FEATURE', 0)
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.register_lookahead_callback(
-            lambda pt: self.printer.send_event("filament_sensor:set_feature", pt, feature))
+            lambda pt: self.printer.send_event(
+                "filament_sensor:set_feature", pt, feature))
     def _handle_set_feature(self, pt, feature):
         self.feature_history.append((pt, feature))
         if len(self.feature_history) > 100:
@@ -85,7 +88,8 @@ class RunoutHelper:
         print_time = self.estimated_print_time(eventtime)
         current_feature = self._get_feature_at_time(print_time)
         if current_feature == 2:
-            logging.info("Filament Sensor %s: Deferred runout pausing now on infill" % (self.name,))
+            logging.info("Filament Sensor %s: Deferred runout pausing "
+                         "now on infill" % (self.name,))
             self.deferred_runout = False
             self.reactor.register_callback(self._runout_event_handler)
             return self.reactor.NEVER
@@ -93,7 +97,8 @@ class RunoutHelper:
         diff = current_pos - self.runout_trigger_pos
         if diff >= self.runout_distance:
             logging.info(
-                "Filament Sensor %s: runout distance limit reached (%.2f / %.2f). Pausing now." %
+                "Filament Sensor %s: runout distance limit reached "
+                "(%.2f / %.2f). Pausing now." %
                 (self.name, diff, self.runout_distance))
             self.deferred_runout = False
             self.reactor.register_callback(self._runout_event_handler)
@@ -136,7 +141,8 @@ class RunoutHelper:
             if self.deferred_runout:
                 self.deferred_runout = False
                 logging.info(
-                    "Filament Sensor %s: filament reinserted, clearing deferred runout" % (self.name,))
+                    "Filament Sensor %s: filament reinserted, "
+                    "clearing deferred runout" % (self.name,))
             if not is_printing and self.insert_gcode is not None:
                 # insert detected
                 self.min_event_systime = self.reactor.NEVER
@@ -155,14 +161,17 @@ class RunoutHelper:
             current_feature = self._get_feature_at_time(print_time)
             if current_feature == 1 and self.runout_distance > 0.:
                 self.deferred_runout = True
-                self.runout_trigger_pos = self.extruder.find_past_position(print_time)
+                self.runout_trigger_pos = (
+                    self.extruder.find_past_position(print_time))
                 logging.info(
-                    "Filament Sensor %s: outer wall detected, deferring runout. Start position: %.2f" %
+                    "Filament Sensor %s: outer wall detected, deferring "
+                    "runout. Start position: %.2f" %
                     (self.name, self.runout_trigger_pos))
                 if self.runout_check_timer is None:
                     self.runout_check_timer = self.reactor.register_timer(
                         self._runout_distance_check_event)
-                self.reactor.update_timer(self.runout_check_timer, self.reactor.NOW)
+                self.reactor.update_timer(self.runout_check_timer,
+                                          self.reactor.NOW)
             else:
                 self.reactor.register_callback(self._runout_event_handler)
     def get_status(self, eventtime):
