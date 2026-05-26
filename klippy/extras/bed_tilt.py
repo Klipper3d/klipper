@@ -24,12 +24,14 @@ class BedTilt:
     def handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
     def get_position(self):
-        x, y, z, e = self.toolhead.get_position()
-        return [x, y, z - x*self.x_adjust - y*self.y_adjust - self.z_adjust, e]
+        pos = self.toolhead.get_position()
+        x, y, z = pos[:3]
+        z -= x*self.x_adjust + y*self.y_adjust + self.z_adjust
+        return [x, y, z] + pos[3:]
     def move(self, newpos, speed):
-        x, y, z, e = newpos
-        self.toolhead.move([x, y, z + x*self.x_adjust + y*self.y_adjust
-                            + self.z_adjust, e], speed)
+        x, y, z = newpos[:3]
+        z += x*self.x_adjust + y*self.y_adjust + self.z_adjust
+        self.toolhead.move([x, y, z] + newpos[3:], speed)
     def update_adjust(self, x_adjust, y_adjust, z_adjust):
         self.x_adjust = x_adjust
         self.y_adjust = y_adjust
@@ -56,37 +58,23 @@ class BedTiltCalibrate:
     cmd_BED_TILT_CALIBRATE_help = "Bed tilt calibration script"
     def cmd_BED_TILT_CALIBRATE(self, gcmd):
         self.probe_helper.start_probe(gcmd)
-    def probe_finalize(self, offsets, positions):
-        # Setup for coordinate descent analysis
-        z_offset = offsets[2]
+    def probe_finalize(self, positions):
         logging.info("Calculating bed_tilt with: %s", positions)
-        params = { 'x_adjust': self.bedtilt.x_adjust,
-                   'y_adjust': self.bedtilt.y_adjust,
-                   'z_adjust': z_offset }
-        logging.info("Initial bed_tilt parameters: %s", params)
-        # Perform coordinate descent
-        def adjusted_height(pos, params):
-            x, y, z = pos
-            return (z - x*params['x_adjust'] - y*params['y_adjust']
-                    - params['z_adjust'])
-        def errorfunc(params):
-            total_error = 0.
-            for pos in positions:
-                total_error += adjusted_height(pos, params)**2
-            return total_error
-        new_params = mathutil.coordinate_descent(
-            params.keys(), params, errorfunc)
+        # Find best fit for: a + b*bed_x + c*bed_y = bed_z
+        eqs = []
+        ans = []
+        for pos in positions:
+            eqs.append([1., pos.bed_x, pos.bed_y])
+            ans.append([pos.bed_z])
+        res = mathutil.solve_linear_equations(eqs, ans)
+        if res is None:
+            raise self.gcode.error("Unable to calculate tilt")
+        z_adjust = res[0][0]
+        x_adjust = res[1][0]
+        y_adjust = res[2][0]
         # Update current bed_tilt calculations
-        x_adjust = new_params['x_adjust']
-        y_adjust = new_params['y_adjust']
-        z_adjust = (new_params['z_adjust'] - z_offset
-                    - x_adjust * offsets[0] - y_adjust * offsets[1])
         self.bedtilt.update_adjust(x_adjust, y_adjust, z_adjust)
         # Log and report results
-        logging.info("Calculated bed_tilt parameters: %s", new_params)
-        for pos in positions:
-            logging.info("orig: %s new: %s", adjusted_height(pos, params),
-                         adjusted_height(pos, new_params))
         msg = "x_adjust: %.6f y_adjust: %.6f z_adjust: %.6f" % (
             x_adjust, y_adjust, z_adjust)
         self.printer.set_rollover_info("bed_tilt", "bed_tilt: %s" % (msg,))

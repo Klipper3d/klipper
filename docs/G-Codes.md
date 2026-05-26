@@ -154,19 +154,13 @@ The following commands are available when the
 section](Config_Reference.md#axis_twist_compensation) is enabled.
 
 #### AXIS_TWIST_COMPENSATION_CALIBRATE
-`AXIS_TWIST_COMPENSATION_CALIBRATE [AXIS=<X|Y>] [AUTO=<True|False>]
-[SAMPLE_COUNT=<value>]`
+`AXIS_TWIST_COMPENSATION_CALIBRATE [AXIS=<X|Y>] [SAMPLE_COUNT=<value>]`
 
 Calibrates axis twist compensation by specifying the target axis or
 enabling automatic calibration.
 
 - **AXIS:** Define the axis (`X` or `Y`) for which the twist compensation
 will be calibrated. If not specified, the axis defaults to `'X'`.
-
-- **AUTO:** Enables automatic calibration mode. When `AUTO=True`, the
-calibration will run for both the X and Y axes. In this mode, `AXIS`
-cannot be specified. If both `AXIS` and `AUTO` are provided, an error
-will be raised.
 
 ### [bed_mesh]
 
@@ -180,8 +174,10 @@ The following commands are available when the
 [ADAPTIVE_MARGIN=<value>]`: This command probes the bed using generated points
 specified by the parameters in the config. After probing, a mesh is generated
 and z-movement is adjusted according to the mesh.
+The mesh is immediately active after successful completion of `BED_MESH_CALIBRATE`.
 The mesh will be saved into a profile specified by the `PROFILE` parameter,
-or `default` if unspecified.
+or `default` if unspecified. If ADAPTIVE=1 is specified then the profile
+name will begin with `adaptive-` and should not be saved for reuse.
 See the PROBE command for details on the optional probe parameters. If
 METHOD=manual is specified then the manual probing tool is activated - see the
 MANUAL_PROBE command above for details on the additional commands available
@@ -347,15 +343,25 @@ The following command is available when the
 enabled.
 
 #### SET_DUAL_CARRIAGE
-`SET_DUAL_CARRIAGE CARRIAGE=[0|1] [MODE=[PRIMARY|COPY|MIRROR]]`:
+`SET_DUAL_CARRIAGE CARRIAGE=<carriage> [MODE=[PRIMARY|COPY|MIRROR|INACTIVE]]`:
 This command will change the mode of the specified carriage.
-If no `MODE` is provided it defaults to `PRIMARY`. Setting the mode
-to `PRIMARY` deactivates the other carriage and makes the specified
-carriage execute subsequent G-Code commands as-is. `COPY` and `MIRROR`
-modes are supported only for `CARRIAGE=1`. When set to either of these
-modes, carriage 1 will then track the subsequent moves of the carriage 0
-and either copy relative movements of it (in `COPY` mode) or execute them
-in the opposite (mirror) direction (in `MIRROR` mode).
+If no `MODE` is provided it defaults to `PRIMARY`. `<carriage>` must
+reference a defined primary or dual carriage for `generic_cartesian`
+kinematics or be 0 (for primary carriage) or 1 (for dual carriage)
+for all other kinematics supporting IDEX. Setting the mode to `PRIMARY`
+deactivates all other carriages on the same axis and makes the specified
+carriage execute subsequent G-Code movement commands as-is. Before activating
+`COPY` or `MIRROR` mode for a carriage, a different one must be activated as
+`PRIMARY` on the same axis. When set to either of these two modes, the carriage
+will track the subsequent G-Code moves and either copy relative movements
+(in `COPY` mode) or execute them in the opposite (mirror) direction (in
+`MIRROR` mode). Setting the mode to `INACTIVE` deactivates the carriage and
+makes it ignore further G-Code moves. Note that deactivating the primary
+carriage on the axis does not disable other carriages working in `COPY` or
+`MIRROR` mode, which can be used to disable printing a failed part by any of
+the tools and park that tool to prevent collisions with an unfinished part, see
+this [sample configuration](../config/sample-corexyuv.cfg) for macros examples.
+
 
 #### SAVE_DUAL_CARRIAGE_STATE
 `SAVE_DUAL_CARRIAGE_STATE [NAME=<state_name>]`: Save the current positions
@@ -366,14 +372,18 @@ to the given string. If NAME is not provided it defaults to "default".
 
 #### RESTORE_DUAL_CARRIAGE_STATE
 `RESTORE_DUAL_CARRIAGE_STATE [NAME=<state_name>] [MOVE=[0|1] [MOVE_SPEED=<speed>]]`:
-Restore the previously saved positions of the dual carriages and their modes,
-unless "MOVE=0" is specified, in which case only the saved modes will be
-restored, but not the positions of the carriages. If positions are being
-restored and "MOVE_SPEED" is specified, then the toolhead moves will be
-performed with the given speed (in mm/s); otherwise the toolhead move will
-use the rail homing speed. Note that the carriages restore their positions
-only over their own axis, which may be necessary to correctly restore COPY
-and MIRROR mode of the dual carraige.
+Restore the previously saved states of all dual and their primary carriages.
+This command restores the modes of the carriages and moves them to their
+previously saved positions, unless "MOVE=0" is specified. If positions are being
+restored and "MOVE_SPEED" is specified, then the carriages will move with at
+most the provided speed (in mm/s); otherwise the homing speeds of the
+corresponding carriages will be used as a reference. Note that the carriages
+restore their positions only over their own axes, which may be necessary to
+correctly restore COPY and MIRROR mode of the dual carriage. In addition, this
+command updates the Klipper toolhead position for each axis that has some dual
+carriages: it is set to match the actual position of the activated primary
+carriage of an axis or, if an axis does not have a saved primary carriage,
+to the axis position when `SAVE_DUAL_CARRIAGE_STATE` command was called.
 
 ### [endstop_phase]
 
@@ -494,7 +504,7 @@ enabled.
 `SET_FAN_SPEED FAN=config_name SPEED=<speed>` This command sets the
 speed of a fan. "speed" must be between 0.0 and 1.0.
 
-`SET_FAN_SPEED PIN=config_name TEMPLATE=<template_name>
+`SET_FAN_SPEED FAN=config_name TEMPLATE=<template_name>
 [<param_x>=<literal>]`: If `TEMPLATE` is specified then it assigns a
 [display_template](Config_Reference.md#display_template) to the given
 fan. For example, if one defined a `[display_template
@@ -585,18 +595,51 @@ state; issue a G28 afterwards to reset the kinematics. This command is
 intended for low-level diagnostics and debugging.
 
 #### SET_KINEMATIC_POSITION
+
 `SET_KINEMATIC_POSITION [X=<value>] [Y=<value>] [Z=<value>]
-[CLEAR=<[X][Y][Z]>]`: Force the low-level kinematic code to believe the
-toolhead is at the given cartesian position. This is a diagnostic and
-debugging command; use SET_GCODE_OFFSET and/or G92 for regular axis
-transformations. If an axis is not specified then it will default to the
-position that the head was last commanded to. Setting an incorrect or
-invalid position may lead to internal software errors. Use the CLEAR
-parameter to forget the homing state for the given axes. Note that CLEAR
-will not override the previous functionality; if an axis is not specified
-to CLEAR it will have its kinematic position set as per above. This
-command may invalidate future boundary checks; issue a G28 afterwards to
-reset the kinematics.
+[SET_HOMED=<[X][Y][Z]>] [CLEAR_HOMED=<[X][Y][Z]>]`: Force the
+low-level kinematic code to believe the toolhead is at the given
+cartesian position and set/clear homed status. This is a diagnostic
+and debugging command; use SET_GCODE_OFFSET and/or G92 for regular
+axis transformations. Setting an incorrect or invalid position may
+lead to internal software errors.
+
+The `X`, `Y`, and `Z` parameters are used to alter the low-level
+kinematic position tracking. If any of these parameters are not set
+then the position is not changed - for example `SET_KINEMATIC_POSITION
+Z=10` would set all axes as homed, set the internal Z position to 10,
+and leave the X and Y positions unchanged. Changing the internal
+position tracking is not dependent on the internal homing state - one
+may alter the position for both homed and not homed axes, and
+similarly one may set or clear the homing state of an axis without
+altering its internal position.
+
+The `SET_HOMED` parameter defaults to `XYZ` which instructs the
+kinematics to consider all axes as homed. A bare
+`SET_KINEMATIC_POSITION` command will result in all axes being
+considered homed (and not change its current position). If it is not
+desired to change the state of homed axes then assign `SET_HOMED` to
+an empty string - for example:
+`SET_KINEMATIC_POSITION SET_HOMED= X=10`. It is also possible to
+request an individual axis be considered homed (eg, `SET_HOMED=X`),
+but note that non-cartesian style kinematics (such as delta
+kinematics) may not support setting an individual axis as homed.
+
+The `CLEAR_HOMED` parameter instructs the kinematics to consider the
+given axes as not homed. For example, `CLEAR_HOMED=XYZ` would request
+all axes to be considered not homed (and thus require homing prior to
+movement on those axes). The default is `SET_HOMED=XYZ` even if
+`CLEAR_HOMED` is present, so the command `SET_KINEMATIC_POSITION
+CLEAR_HOMED=Z` will set X and Y as homed and clear the homing state
+for Z.  Use `SET_KINEMATIC_POSITION SET_HOMED= CLEAR_HOMED=Z` if the
+goal is to clear only the Z homing state. If an axis is specified in
+neither `SET_HOMED` nor `CLEAR_HOMED` then its homing state is not
+changed and if it is specified in both then `CLEAR_HOMED` has
+precedence. It is possible to request clearing of an individual axis,
+but on non-cartesian style kinematics (such as delta kinematics) doing
+so may result in clearing the homing state of additional axes. Note
+the `CLEAR` parameter is currently an alias for the `CLEAR_HOMED`
+parameter, but this alias will be removed in the future.
 
 ### [gcode]
 
@@ -688,6 +731,46 @@ is specified then the toolhead move will be performed with the given
 speed (in mm/s); otherwise the toolhead move will use the restored
 g-code speed.
 
+### [generic_cartesian]
+The commands in this section become automatically available when
+`kinematics: generic_cartesian` is specified as the printer kinematics.
+
+#### SET_STEPPER_CARRIAGES
+`SET_STEPPER_CARRIAGES STEPPER=<stepper_name> CARRIAGES=<carriages>
+[DISABLE_CHECKS=[0|1]]`: Set or update the stepper carriages.
+`<stepper_name>` must reference an existing stepper defined in `printer.cfg`,
+and `<carriages>` describes the carriages the stepper moves. See
+[Generic Cartesian Kinematics](Config_Reference.md#generic-cartesian-kinematics)
+for a more detailed overview of the `carriages` parameter in the
+stepper configuration section. Note that it is only possible
+to change the coefficients or signs of the carriages with this
+command, but a user cannot add or remove the carriages that the stepper
+controls.
+
+`SET_STEPPER_CARRIAGES` is an advanced tool, and the user is advised
+to exercise an extreme caution using it, since specifying incorrect
+configuration may physically damage the printer.
+
+Note that `SET_STEPPER_CARRIAGES` performs certain internal validations
+of the new printer kinematics after the change. Keep in mind that if it
+detects an issue, it may leave printer kinematics in an invalid state.
+This means that if `SET_STEPPER_CARRIAGES` reports an error, it is unsafe
+to issue other GCode commands, and the user must inspect the error message
+and either fix the problem, or manually restore the previous stepper(s)
+configuration.
+
+Since `SET_STEPPER_CARRIAGES` can update a configuration of a single
+stepper at a time, some sequences of changes can lead to invalid
+intermediate kinematic configurations, even if the final configuration
+is valid. In such cases a user can pass `DISABLE_CHECKS=1` parameters to
+all but the last command to disable intermediate checks. For example,
+if `stepper a` and `stepper b` initially have `carriage_x-carriage_y` and
+`carriage_x+carriage_y` carriages correspondingly, then the following
+sequence of commands will let a user effectively swap the carriage controls:
+`SET_STEPPER_CARRIAGES STEPPER=a CARRIAGES=carriage_x+carriage_y DISABLE_CHECKS=1`
+and `SET_STEPPER_CARRIAGES STEPPER=b CARRIAGES=carriage_x-carriage_y`, while
+still validating the final kinematics state.
+
 ### [hall_filament_width_sensor]
 
 The following commands are available when the
@@ -697,19 +780,22 @@ is enabled (also see [TSLl401CL Filament Width Sensor](TSL1401CL_Filament_Width_
 and [Hall Filament Width Sensor](Hall_Filament_Width_Sensor.md)):
 
 #### QUERY_FILAMENT_WIDTH
-`QUERY_FILAMENT_WIDTH`: Return the current measured filament width.
+`QUERY_FILAMENT_WIDTH`: Return the current measured filament width, the
+state of the width sensor, the state of the filament sensor and the state
+of flow compensation.
 
 #### RESET_FILAMENT_WIDTH_SENSOR
 `RESET_FILAMENT_WIDTH_SENSOR`: Clear all sensor readings. Helpful
-after filament change.
+after filament change. Resets flow rate to 100%.
 
 #### DISABLE_FILAMENT_WIDTH_SENSOR
 `DISABLE_FILAMENT_WIDTH_SENSOR`: Turn off the filament width sensor
-and stop using it for flow control.
+and stop using it for flow compensation. Resets flow rate to 100%.
 
 #### ENABLE_FILAMENT_WIDTH_SENSOR
-`ENABLE_FILAMENT_WIDTH_SENSOR`: Turn on the filament width sensor and
-start using it for flow control.
+`ENABLE_FILAMENT_WIDTH_SENSOR [FLOW_COMPENSATION=[0|1]`: Turn on the filament
+width sensor and enable or disable flow compensation. If `FLOW_COMPENSATION`
+is not specified, the current flow compensation state is preserved.
 
 #### QUERY_RAW_FILAMENT_WIDTH
 `QUERY_RAW_FILAMENT_WIDTH`: Return the current ADC channel readings
@@ -756,85 +842,17 @@ been enabled (also see the
 
 #### SET_INPUT_SHAPER
 `SET_INPUT_SHAPER [SHAPER_FREQ_X=<shaper_freq_x>]
-[SHAPER_FREQ_Y=<shaper_freq_y>] [DAMPING_RATIO_X=<damping_ratio_x>]
-[DAMPING_RATIO_Y=<damping_ratio_y>] [SHAPER_TYPE=<shaper>]
-[SHAPER_TYPE_X=<shaper_type_x>] [SHAPER_TYPE_Y=<shaper_type_y>]`:
+[SHAPER_FREQ_Y=<shaper_freq_y>] [SHAPER_FREQ_Y=<shaper_freq_z>]
+[DAMPING_RATIO_X=<damping_ratio_x>] [DAMPING_RATIO_Y=<damping_ratio_y>]
+[DAMPING_RATIO_Z=<damping_ratio_z>] [SHAPER_TYPE=<shaper>]
+[SHAPER_TYPE_X=<shaper_type_x>] [SHAPER_TYPE_Y=<shaper_type_y>]
+[SHAPER_TYPE_Z=<shaper_type_z>]`:
 Modify input shaper parameters. Note that SHAPER_TYPE parameter resets
-input shaper for both X and Y axes even if different shaper types have
+input shaper for all axes even if different shaper types have
 been configured in [input_shaper] section. SHAPER_TYPE cannot be used
-together with either of SHAPER_TYPE_X and SHAPER_TYPE_Y parameters.
-See [config reference](Config_Reference.md#input_shaper) for more
-details on each of these parameters.
-
-### [manual_probe]
-
-The manual_probe module is automatically loaded.
-
-#### MANUAL_PROBE
-`MANUAL_PROBE [SPEED=<speed>]`: Run a helper script useful for
-measuring the height of the nozzle at a given location. If SPEED is
-specified, it sets the speed of TESTZ commands (the default is
-5mm/s). During a manual probe, the following additional commands are
-available:
-- `ACCEPT`: This command accepts the current Z position and concludes
-  the manual probing tool.
-- `ABORT`: This command terminates the manual probing tool.
-- `TESTZ Z=<value>`: This command moves the nozzle up or down by the
-  amount specified in "value". For example, `TESTZ Z=-.1` would move
-  the nozzle down .1mm while `TESTZ Z=.1` would move the nozzle up
-  .1mm. The value may also be `+`, `-`, `++`, or `--` to move the
-  nozzle up or down an amount relative to previous attempts.
-
-#### Z_ENDSTOP_CALIBRATE
-`Z_ENDSTOP_CALIBRATE [SPEED=<speed>]`: Run a helper script useful for
-calibrating a Z position_endstop config setting. See the MANUAL_PROBE
-command for details on the parameters and the additional commands
-available while the tool is active.
-
-#### Z_OFFSET_APPLY_ENDSTOP
-`Z_OFFSET_APPLY_ENDSTOP`: Take the current Z Gcode offset (aka,
-babystepping), and subtract it from the stepper_z endstop_position.
-This acts to take a frequently used babystepping value, and "make it
-permanent". Requires a `SAVE_CONFIG` to take effect.
-
-### [manual_stepper]
-
-The following command is available when a
-[manual_stepper config section](Config_Reference.md#manual_stepper) is
-enabled.
-
-#### MANUAL_STEPPER
-`MANUAL_STEPPER STEPPER=config_name [ENABLE=[0|1]]
-[SET_POSITION=<pos>] [SPEED=<speed>] [ACCEL=<accel>] [MOVE=<pos>
-[STOP_ON_ENDSTOP=[1|2|-1|-2]] [SYNC=0]]`: This command will alter the
-state of the stepper. Use the ENABLE parameter to enable/disable the
-stepper. Use the SET_POSITION parameter to force the stepper to think
-it is at the given position. Use the MOVE parameter to request a
-movement to the given position. If SPEED and/or ACCEL is specified
-then the given values will be used instead of the defaults specified
-in the config file. If an ACCEL of zero is specified then no
-acceleration will be performed. If STOP_ON_ENDSTOP=1 is specified then
-the move will end early should the endstop report as triggered (use
-STOP_ON_ENDSTOP=2 to complete the move without error even if the
-endstop does not trigger, use -1 or -2 to stop when the endstop
-reports not triggered). Normally future G-Code commands will be
-scheduled to run after the stepper move completes, however if a manual
-stepper move uses SYNC=0 then future G-Code movement commands may run
-in parallel with the stepper movement.
-
-### [mcp4018]
-
-The following command is available when a
-[mcp4018 config section](Config_Reference.md#mcp4018) is
-enabled.
-
-#### SET_DIGIPOT
-
-`SET_DIGIPOT DIGIPOT=config_name WIPER=<value>`: This command will
-change the current value of the digipot.  This value should typically
-be between 0.0 and 1.0, unless a 'scale' is defined in the config.
-When 'scale' is defined, then this value should be  between 0.0 and
-'scale'.
+together with any of SHAPER_TYPE_X, SHAPER_TYPE_Y, and SHAPER_TYPE_Z
+parameters. See [config reference](Config_Reference.md#input_shaper)
+for more details on each of these parameters.
 
 ### [led]
 
@@ -878,6 +896,174 @@ template, otherwise only the chip with the given index will be
 updated. If TEMPLATE is an empty string then this command will clear
 any previous template assigned to the LED (one can then use `SET_LED`
 commands to manage the LED's color settings).
+
+### [load_cell]
+
+The following commands are enabled if a
+[load_cell config section](Config_Reference.md#load_cell) has been enabled.
+
+### LOAD_CELL_DIAGNOSTIC
+`LOAD_CELL_DIAGNOSTIC [LOAD_CELL=<config_name>]`: This command collects 10
+seconds of load cell data and reports statistics that can help you verify proper
+operation of the load cell. This command can be run on both calibrated and
+uncalibrated load cells.
+
+### LOAD_CELL_CALIBRATE
+`LOAD_CELL_CALIBRATE [LOAD_CELL=<config_name>]`: Start the guided calibration
+utility. Calibration is a 3 step process:
+1. First you remove all load from the load cell and run the `TARE` command
+2. Next you apply a known load to the load cell and run the
+`CALIBRATE GRAMS=nnn` command
+3. Finally use the `ACCEPT` command to save the results
+
+You can cancel the calibration process at any time with `ABORT`.
+
+### LOAD_CELL_TARE
+`LOAD_CELL_TARE [LOAD_CELL=<config_name>]`: This works just like the tare button
+on digital scale. It sets the current raw reading of the load cell to be the
+zero point reference value. The response is the percentage of the sensors range
+that was read and the raw value in counts. If the load cell is calibrated a
+force in grams is also reported.
+
+### LOAD_CELL_READ load_cell="name"
+`LOAD_CELL_READ [LOAD_CELL=<config_name>]`:
+This command takes a reading from the load cell. The response is the percentage
+of the sensors range that was read and the raw value in counts. If the load cell
+is calibrated a force in grams is also reported.
+
+### [load_cell_probe]
+
+The commands below are enabled if a
+[load_cell config section](Config_Reference.md#load_cell_probe) has been
+enabled.
+
+In addition, commands that perform probes, such as [`PROBE`](#probe),
+[`PROBE_ACCURACY`](#probe_accuracy),
+[`BED_MESH_CALIBRATE`](#bed_mesh_calibrate) etc. will accept
+additional parameters if a `[load_cell_probe]` is defined. The
+parameters override the corresponding settings from the
+[`[load_cell_probe]`](./Config_Reference.md#load_cell_probe)
+configuration:
+- `FORCE_SAFETY_LIMIT=<grams>`
+- `TRIGGER_FORCE=<grams>`
+- `DRIFT_FILTER_CUTOFF_FREQUENCY=<frequency_hz>`
+- `DRIFT_FILTER_DELAY=<1|2>`
+- `BUZZ_FILTER_CUTOFF_FREQUENCY=<frequency_hz>`
+- `BUZZ_FILTER_DELAY=<1|2>`
+- `NOTCH_FILTER_FREQUENCIES=<list of frequency_hz>`
+- `NOTCH_FILTER_QUALITY=<quality>`
+- `TARE_TIME=<seconds>`
+
+### LOAD_CELL_TEST_TAP
+`LOAD_CELL_TEST_TAP [TAPS=<taps>] [TIMEOUT=<timeout>]`: Run a testing routine
+that reports taps on the load cell. The toolhead will not move but the load cell
+probe will sense taps just as if it was probing. This can be used as a
+sanity check to make sure that the probe works. This tool replaces
+QUERY_ENDSTOPS and QUERY_PROBE for load cell probes.
+- `TAPS`: the number of taps the tool expects
+- `TIMEOOUT`: the time, in seconds, that the tool waits for each tab before
+  aborting.
+
+### [manual_probe]
+
+The manual_probe module is automatically loaded.
+
+#### MANUAL_PROBE
+`MANUAL_PROBE [SPEED=<speed>]`: Run a helper script useful for
+measuring the height of the nozzle at a given location. If SPEED is
+specified, it sets the speed of TESTZ commands (the default is
+5mm/s). During a manual probe, the following additional commands are
+available:
+- `ACCEPT`: This command accepts the current Z position and concludes
+  the manual probing tool.
+- `ABORT`: This command terminates the manual probing tool.
+- `TESTZ Z=<value>`: This command moves the nozzle up or down by the
+  amount specified in "value". For example, `TESTZ Z=-.1` would move
+  the nozzle down .1mm while `TESTZ Z=.1` would move the nozzle up
+  .1mm. The value may also be `+`, `-`, `++`, or `--` to move the
+  nozzle up or down an amount relative to previous attempts.
+
+#### Z_ENDSTOP_CALIBRATE
+`Z_ENDSTOP_CALIBRATE [SPEED=<speed>]`: Run a helper script useful for
+calibrating a Z position_endstop config setting. See the MANUAL_PROBE
+command for details on the parameters and the additional commands
+available while the tool is active.
+
+#### Z_OFFSET_APPLY_ENDSTOP
+`Z_OFFSET_APPLY_ENDSTOP`: Take the current Z Gcode offset (aka,
+babystepping), and subtract it from the stepper_z endstop_position.
+This acts to take a frequently used babystepping value, and "make it
+permanent". Requires a `SAVE_CONFIG` to take effect.
+
+### [manual_stepper]
+
+The following command is available when a
+[manual_stepper config section](Config_Reference.md#manual_stepper) is
+enabled.
+
+#### MANUAL_STEPPER
+`MANUAL_STEPPER STEPPER=config_name [ENABLE=[0|1]]
+[SET_POSITION=<pos>] [SPEED=<speed>] [ACCEL=<accel>] [MOVE=<pos>]
+[SYNC=0]]`: This command will alter the state of the stepper. Use the
+ENABLE parameter to enable/disable the stepper. Use the SET_POSITION
+parameter to force the stepper to think it is at the given
+position. Use the MOVE parameter to request a movement to the given
+position. If SPEED and/or ACCEL is specified then the given values
+will be used instead of the defaults specified in the config file. If
+an ACCEL of zero is specified then no acceleration will be
+performed. Normally future G-Code commands will be scheduled to run
+after the stepper move completes, however if a manual stepper move
+uses SYNC=0 then future G-Code movement commands may run in parallel
+with the stepper movement.
+
+`MANUAL_STEPPER STEPPER=config_name [SPEED=<speed>] [ACCEL=<accel>]
+MOVE=<pos> STOP_ON_ENDSTOP=<check_type>`: If STOP_ON_ENDSTOP is
+specified then the move will end early if an endstop event occurs. The
+`STOP_ON_ENDSTOP` parameter may be set to one of the following values:
+
+* `probe`: The movement will stop when the endstop reports triggered.
+* `home`: The movement will stop when the endstop reports triggered
+  and the final position of the manual_stepper will be set such that
+  the trigger position matches the position specified in the `MOVE`
+  parameter.
+* `inverted_probe`, `inverted_home`: As above, however, the movement
+  will stop when the endstop reports it is in a non-triggered state.
+* `try_probe`, `try_inverted_probe`, `try_home`, `try_inverted_home`:
+  As above, but no error will be reported if the movement fully
+  completes without an endstop event stopping the move early.
+
+`MANUAL_STEPPER STEPPER=config_name GCODE_AXIS=[A-Z]
+[LIMIT_VELOCITY=<velocity>] [LIMIT_ACCEL=<accel>]
+[INSTANTANEOUS_CORNER_VELOCITY=<velocity>]`: If the `GCODE_AXIS`
+parameter is specified then it configures the stepper motor as an
+extra axis on `G1` move commands.  For example, if one were to issue a
+`MANUAL_STEPPER ... GCODE_AXIS=R` command then one could issue
+commands like `G1 X10 Y20 R30` to move the stepper motor.  The
+resulting moves will occur synchronously with the associated toolhead
+xyz movements.  If the motor is associated with a `GCODE_AXIS` then
+one may no longer issue movements using the above `MANUAL_STEPPER`
+command - one may unregister the stepper with a `MANUAL_STEPPER
+... GCODE_AXIS=` command to resume manual control of the motor. The
+`LIMIT_VELOCITY` and `LIMIT_ACCEL` parameters allow one to reduce the
+speed of `G1` moves if those moves would result in a velocity or
+acceleration above the specified limits. The
+`INSTANTANEOUS_CORNER_VELOCITY` specifies the maximum instantaneous
+velocity change (in mm/s) of the motor during the junction of two
+moves (the default is 1mm/s).
+
+### [mcp4018]
+
+The following command is available when a
+[mcp4018 config section](Config_Reference.md#mcp4018) is
+enabled.
+
+#### SET_DIGIPOT
+
+`SET_DIGIPOT DIGIPOT=config_name WIPER=<value>`: This command will
+change the current value of the digipot.  This value should typically
+be between 0.0 and 1.0, unless a 'scale' is defined in the config.
+When 'scale' is defined, then this value should be  between 0.0 and
+'scale'.
 
 ### [output_pin]
 
@@ -941,20 +1127,6 @@ Palette 2 once the loading has been completed. This command is the
 same as pressing **Smart Load** directly on the Palette 2 screen after
 the filament load is complete.
 
-### [pid_calibrate]
-
-The pid_calibrate module is automatically loaded if a heater is defined
-in the config file.
-
-#### PID_CALIBRATE
-`PID_CALIBRATE HEATER=<config_name> TARGET=<temperature>
-[WRITE_FILE=1]`: Perform a PID calibration test. The specified heater
-will be enabled until the specified target temperature is reached, and
-then the heater will be turned off and on for several cycles. If the
-WRITE_FILE parameter is enabled, then the file /tmp/heattest.txt will
-be created with a log of all temperature samples taken during the
-test.
-
 ### [pause_resume]
 
 The following commands are available when the
@@ -979,6 +1151,20 @@ the paused state is fresh for each print.
 
 #### CANCEL_PRINT
 `CANCEL_PRINT`: Cancels the current print.
+
+### [pid_calibrate]
+
+The pid_calibrate module is automatically loaded if a heater is defined
+in the config file.
+
+#### PID_CALIBRATE
+`PID_CALIBRATE HEATER=<config_name> TARGET=<temperature>
+[WRITE_FILE=1]`: Perform a PID calibration test. The specified heater
+will be enabled until the specified target temperature is reached, and
+then the heater will be turned off and on for several cycles. If the
+WRITE_FILE parameter is enabled, then the file /tmp/heattest.txt will
+be created with a log of all temperature samples taken during the
+test.
 
 ### [print_stats]
 
@@ -1035,9 +1221,46 @@ Requires a `SAVE_CONFIG` to take effect.
 
 ### [probe_eddy_current]
 
-The following commands are available when a
+The commands below are available when a
 [probe_eddy_current config section](Config_Reference.md#probe_eddy_current)
 is enabled.
+
+In addition, commands that perform probes, such as [`PROBE`](#probe),
+[`PROBE_ACCURACY`](#probe_accuracy),
+[`BED_MESH_CALIBRATE`](#bed_mesh_calibrate) etc. will accept
+additional parameters if a `[probe_eddy_current]` section is defined:
+- `METHOD=<scan|rapid_scan|tap>`: This alters the probing mechanism:
+  - `METHOD=scan`: The toolhead does not descend. Instead the toolhead
+    will pause briefly above each target location and return the
+    measured height at that position.
+  - `METHOD=rapid_scan`: The toolhead does not descend and does not
+    pause at each target location. The value returned is the measured
+    height around the time that the toolhead was near each target
+    position.
+  - `METHOD=tap`: The toolhead will descend until the nozzle makes
+    contact with the bed. This method is only available if
+    `tap_threshold` is specified in the `[probe_eddy_current]` config
+    section.
+  - default: If no `METHOD` parameter is specified then the default
+    behavior is for the toolhead to descend until the sensor detects
+    that the distance to the bed is at or below the `z_offset`
+    parameter specified in the `[probe_eddy_current]` config section.
+- `SAMPLE_TIME=<time>`: When using `METHOD=scan` probing, this
+  specifies the time (in seconds) to pause at each target point. When
+  using `METHOD=rapid_scan` this specifies the measurement time window
+  at each target. If not specified, the default is 0.100 (which is
+  100ms).
+- `TAP_THRESHOLD=<value>`: This overrides the `tap_threshold`
+  specified in the `[probe_eddy_current]` config section when probing
+  using `METHOD=tap`.
+
+The `Z_OFFSET_APPLY_PROBE` command is also extended to support a
+`METHOD=tap` parameter. When no METHOD parameter is provided, the
+`Z_OFFSET_APPLY_PROBE` command alters the probe calibration to apply
+the current Z G-Code offset to future `scan`, `rapid_scan`, and
+default probes. If `METHOD=tap` is specified then the command instead
+applies the change to `tap_z_offset` so that future `tap` probes are
+updated to use the current Z G-Code offset.
 
 #### PROBE_EDDY_CURRENT_CALIBRATE
 `PROBE_EDDY_CURRENT_CALIBRATE CHIP=<config_name>`: This starts a tool
@@ -1045,6 +1268,12 @@ that calibrates the sensor resonance frequencies to corresponding Z
 heights. The tool will take a couple of minutes to complete. After
 completion, use the SAVE_CONFIG command to store the results in the
 printer.cfg file.
+
+#### PROBE_EDDY_CURRENT_TAP_CALIBRATE
+`PROBE_EDDY_CURRENT_TAP_CALIBRATE [TAP=guess|refine|verify]`: This
+starts a tool that can calibrate the probe's "tap_threshold"
+parameter. See the
+[eddy probe documentation](Eddy_Probe.md#tap-calibration) for details.
 
 #### LDC_CALIBRATE_DRIVE_CURRENT
 `LDC_CALIBRATE_DRIVE_CURRENT CHIP=<config_name>` This tool will
@@ -1126,13 +1355,14 @@ all enabled accelerometer chips.
 [POINT=x,y,z] [INPUT_SHAPING=<0:1>]`: Runs the resonance
 test in all configured probe points for the requested "axis" and
 measures the acceleration using the accelerometer chips configured for
-the respective axis. "axis" can either be X or Y, or specify an
-arbitrary direction as `AXIS=dx,dy`, where dx and dy are floating
+the respective axis. "axis" can either be X, Y or Z, or specify an
+arbitrary direction as `AXIS=dx,dy[,dz]`, where dx, dy, dz are floating
 point numbers defining a direction vector (e.g. `AXIS=X`, `AXIS=Y`, or
-`AXIS=1,-1` to define a diagonal direction). Note that `AXIS=dx,dy`
-and `AXIS=-dx,-dy` is equivalent. `chip_name` can be one or
-more configured accel chips, delimited with comma, for example
-`CHIPS="adxl345, adxl345 rpi"`. If POINT is specified it will override the point(s)
+`AXIS=1,-1` to define a diagonal direction in XY plane, or `AXIS=0,1,1`
+to define a direction in YZ plane). Note that `AXIS=dx,dy` and `AXIS=-dx,-dy`
+is equivalent. `chip_name` can be one or more configured accel chips,
+delimited with comma, for example `CHIPS="adxl345, adxl345 rpi"`.
+If POINT is specified it will override the point(s)
 configured in `[resonance_tester]`. If `INPUT_SHAPING=0` or not set(default),
 disables input shaping for the resonance testing, because
 it is not valid to run the resonance testing with the input shaper
@@ -1347,6 +1577,44 @@ temperature_fan. If a target is not supplied, it is set to the
 specified temperature in the config file. If speeds are not supplied,
 no change is applied.
 
+### [temperature_probe]
+
+The following commands are available when a
+[temperature_probe config section](Config_Reference.md#temperature_probe)
+is enabled.
+
+#### TEMPERATURE_PROBE_CALIBRATE
+`TEMPERATURE_PROBE_CALIBRATE [PROBE=<probe name>] [TARGET=<value>] [STEP=<value>]
+[METHOD=<method>]`:
+Initiates probe drift calibration for eddy current based probes.  The `TARGET`
+is a target temperature for the last sample.  When the temperature recorded
+during a sample exceeds the `TARGET` calibration will complete.  The `STEP`
+parameter sets temperature delta (in C) between samples. After a sample has
+been taken, this delta is used to schedule a call to `TEMPERATURE_PROBE_NEXT`.
+The default `STEP` is 2. The `METHOD` only supports `tap` as an option,
+if specified, probing will be automated.
+
+#### TEMPERATURE_PROBE_NEXT
+`TEMPERATURE_PROBE_NEXT`: After calibration has started this command is run to
+take the next sample.  It is automatically scheduled to run when the delta
+specified by `STEP` has been reached, however its also possible to manually run
+this command to force a new sample.  This command is only available during
+calibration.
+
+#### TEMPERATURE_PROBE_COMPLETE:
+`TEMPERATURE_PROBE_COMPLETE`:  Can be used to end calibration and save the
+current result before the `TARGET` temperature is reached.  This command
+is only available during calibration.
+
+#### ABORT
+`ABORT`:  Aborts the calibration process, discarding the current results.
+This command is only available during drift calibration.
+
+### TEMPERATURE_PROBE_ENABLE
+`TEMPERATURE_PROBE_ENABLE ENABLE=[0|1]`: Sets temperature drift
+compensation on or off. If ENABLE is set to 0, drift compensation
+will be disabled, if set to 1 it is enabled.
+
 ### [tmcXXXX]
 
 The following commands are available when any of the
@@ -1482,39 +1750,3 @@ independent adjustments to each Z stepper to compensate for tilt. See
 the PROBE command for details on the optional probe parameters. The
 optional `RETRIES`, `RETRY_TOLERANCE`, and `HORIZONTAL_MOVE_Z` values
 override those options specified in the config file.
-
-### [temperature_probe]
-
-The following commands are available when a
-[temperature_probe config section](Config_Reference.md#temperature_probe)
-is enabled.
-
-#### TEMPERATURE_PROBE_CALIBRATE
-`TEMPERATURE_PROBE_CALIBRATE [PROBE=<probe name>] [TARGET=<value>] [STEP=<value>]`:
-Initiates probe drift calibration for eddy current based probes.  The `TARGET`
-is a target temperature for the last sample.  When the temperature recorded
-during a sample exceeds the `TARGET` calibration will complete.  The `STEP`
-parameter sets temperature delta (in C) between samples. After a sample has
-been taken, this delta is used to schedule a call to `TEMPERATURE_PROBE_NEXT`.
-The default `STEP` is 2.
-
-#### TEMPERATURE_PROBE_NEXT
-`TEMPERATURE_PROBE_NEXT`: After calibration has started this command is run to
-take the next sample.  It is automatically scheduled to run when the delta
-specified by `STEP` has been reached, however its also possible to manually run
-this command to force a new sample.  This command is only available during
-calibration.
-
-#### TEMPERATURE_PROBE_COMPLETE:
-`TEMPERATURE_PROBE_COMPLETE`:  Can be used to end calibration and save the
-current result before the `TARGET` temperature is reached.  This command
-is only available during calibration.
-
-#### ABORT
-`ABORT`:  Aborts the calibration process, discarding the current results.
-This command is only available during drift calibration.
-
-### TEMPERATURE_PROBE_ENABLE
-`TEMPERATURE_PROBE_ENABLE ENABLE=[0|1]`: Sets temperature drift
-compensation on or off. If ENABLE is set to 0, drift compensation
-will be disabled, if set to 1 it is enabled.

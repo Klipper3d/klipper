@@ -22,7 +22,8 @@ struct gpio_pwm_info {
 enum { GP_8BIT=1, GP_AFMT=2 };
 
 static const struct gpio_pwm_info pwm_regs[] PROGMEM = {
-#if CONFIG_MACH_atmega168 || CONFIG_MACH_atmega328 || CONFIG_MACH_atmega328p
+#if CONFIG_MACH_atmega168 || CONFIG_MACH_atmega328 \
+      || CONFIG_MACH_atmega328p || CONFIG_MACH_lgt8f328p
     { GPIO('D', 6), &OCR0A, &TCCR0A, &TCCR0B, 1<<COM0A1, GP_8BIT },
     { GPIO('D', 5), &OCR0B, &TCCR0A, &TCCR0B, 1<<COM0B1, GP_8BIT },
     { GPIO('B', 1), &OCR1A, &TCCR1A, &TCCR1B, 1<<COM1A1, 0 },

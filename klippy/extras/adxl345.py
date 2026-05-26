@@ -112,10 +112,22 @@ class AccelCommandHelper:
         name_parts = config.get_name().split()
         self.base_name = name_parts[0]
         self.name = name_parts[-1]
-        self.register_commands(self.name)
+        try:
+            self.register_commands(self.name)
+        except config.error:
+            raise config.error("Accelerometer with name '%s' already defined"
+                               % self.name)
         if len(name_parts) == 1:
-            if self.name == "adxl345" or not config.has_section("adxl345"):
+            # Try to register default mux commands for the accelerometer
+            # without explicit name. If default accelerometer has already
+            # been registered, raise an error.
+            try:
                 self.register_commands(None)
+            except config.error:
+                raise config.error(
+                    "Default accelerometer already defined; section '%s' must "
+                    "include an additional name, e.g. '%s second_accelerometer'"
+                    % (self.base_name, self.base_name))
     def register_commands(self, name):
         # Register commands
         gcode = self.printer.lookup_object('gcode')
@@ -166,12 +178,12 @@ class AccelCommandHelper:
                           % (accel_x, accel_y, accel_z))
     cmd_ACCELEROMETER_DEBUG_READ_help = "Query register (for debugging)"
     def cmd_ACCELEROMETER_DEBUG_READ(self, gcmd):
-        reg = gcmd.get("REG", minval=0, maxval=126, parser=lambda x: int(x, 0))
+        reg = gcmd.get("REG", minval=0, maxval=127, parser=lambda x: int(x, 0))
         val = self.chip.read_reg(reg)
         gcmd.respond_info("Accelerometer REG[0x%x] = 0x%x" % (reg, val))
     cmd_ACCELEROMETER_DEBUG_WRITE_help = "Set register (for debugging)"
     def cmd_ACCELEROMETER_DEBUG_WRITE(self, gcmd):
-        reg = gcmd.get("REG", minval=0, maxval=126, parser=lambda x: int(x, 0))
+        reg = gcmd.get("REG", minval=0, maxval=127, parser=lambda x: int(x, 0))
         val = gcmd.get("VAL", minval=0, maxval=255, parser=lambda x: int(x, 0))
         self.chip.set_reg(reg, val)
 

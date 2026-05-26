@@ -29,6 +29,7 @@ class PrinterFanGeneric:
             value = float(text)
         except ValueError as e:
             logging.exception("fan_generic template render error")
+            value = 0.
         self.fan.set_speed(value)
     def cmd_SET_FAN_SPEED(self, gcmd):
         speed = gcmd.get_float('SPEED', None, 0.)

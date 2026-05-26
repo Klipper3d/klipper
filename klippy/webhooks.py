@@ -3,28 +3,40 @@
 # Copyright (C) 2020 Eric Callahan <arksine.code@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license
-import logging, socket, os, sys, errno, json, collections
+import logging, socket, os, sys, errno, collections
 import gcode
 
-REQUEST_LOG_SIZE = 20
+try:
+    import msgspec
+except ImportError:
+    import json
 
-# Json decodes strings as unicode types in Python 2.x.  This doesn't
-# play well with some parts of Klipper (particuarly displays), so we
-# need to create an object hook. This solution borrowed from:
-#
-# https://stackoverflow.com/questions/956867/
-#
-json_loads_byteify = None
-if sys.version_info.major < 3:
-    def json_loads_byteify(data, ignore_dicts=False):
-        if isinstance(data, unicode):
-            return data.encode('utf-8')
-        if isinstance(data, list):
-            return [json_loads_byteify(i, True) for i in data]
-        if isinstance(data, dict) and not ignore_dicts:
-            return {json_loads_byteify(k, True): json_loads_byteify(v, True)
-                    for k, v in data.items()}
-        return data
+    # Json decodes strings as unicode types in Python 2.x.  This doesn't
+    # play well with some parts of Klipper (particularly displays), so we
+    # need to create an object hook. This solution borrowed from:
+    #
+    # https://stackoverflow.com/questions/956867/
+    #
+    json_loads_byteify = None
+    if sys.version_info.major < 3:
+        def json_loads_byteify(data, ignore_dicts=False):
+            if isinstance(data, unicode):
+                return data.encode('utf-8')
+            if isinstance(data, list):
+                return [json_loads_byteify(i, True) for i in data]
+            if isinstance(data, dict) and not ignore_dicts:
+                return {json_loads_byteify(k, True): json_loads_byteify(v, True)
+                        for k, v in data.items()}
+            return data
+    def json_dumps(obj):
+        return json.dumps(obj, separators=(',', ':')).encode()
+    def json_loads(data):
+        return json.loads(data, object_hook=json_loads_byteify)
+else:
+    json_dumps = msgspec.json.encode
+    json_loads = msgspec.json.decode
+
+REQUEST_LOG_SIZE = 20
 
 class WebRequestError(gcode.CommandError):
     def __init__(self, message,):
@@ -42,7 +54,7 @@ class WebRequest:
     error = WebRequestError
     def __init__(self, client_conn, request):
         self.client_conn = client_conn
-        base_request = json.loads(request, object_hook=json_loads_byteify)
+        base_request = json_loads(request)
         if type(base_request) != dict:
             raise ValueError("Not a top-level dictionary")
         self.id = base_request.get('id', None)
@@ -124,7 +136,7 @@ class ServerSocket:
         printer.register_event_handler(
             'klippy:disconnect', self._handle_disconnect)
         printer.register_event_handler(
-            "klippy:shutdown", self._handle_shutdown)
+            "klippy:analyze_shutdown", self._handle_analyze_shutdown)
 
     def _handle_accept(self, eventtime):
         try:
@@ -145,7 +157,7 @@ class ServerSocket:
             except socket.error:
                 pass
 
-    def _handle_shutdown(self):
+    def _handle_analyze_shutdown(self, msg, details):
         for client in self.clients.values():
             client.dump_request_log()
 
@@ -269,8 +281,8 @@ class ClientConnection:
 
     def send(self, data):
         try:
-            jmsg = json.dumps(data, separators=(',', ':'))
-            self.send_buffer += jmsg.encode() + b"\x03"
+            jmsg = json_dumps(data)
+            self.send_buffer += jmsg + b"\x03"
         except (TypeError, ValueError) as e:
             msg = ("json encoding error: %s" % (str(e),))
             logging.exception(msg)
@@ -479,41 +491,42 @@ class QueryStatusHelper:
         self.pending_queries = []
         msglist.extend(self.clients.values())
         # Generate get_status() info for each client
-        for cconn, subscription, send_func, template in msglist:
-            is_query = cconn is None
-            if not is_query and cconn.is_closed():
-                del self.clients[cconn]
-                continue
-            # Query each requested printer object
-            cquery = {}
-            for obj_name, req_items in subscription.items():
-                res = query.get(obj_name, None)
-                if res is None:
-                    po = self.printer.lookup_object(obj_name, None)
-                    if po is None or not hasattr(po, 'get_status'):
-                        res = query[obj_name] = {}
-                    else:
-                        res = query[obj_name] = po.get_status(eventtime)
-                if req_items is None:
-                    req_items = list(res.keys())
-                    if req_items:
-                        subscription[obj_name] = req_items
-                lres = last_query.get(obj_name, {})
-                cres = {}
-                for ri in req_items:
-                    rd = res.get(ri, None)
-                    if is_query or rd != lres.get(ri):
-                        cres[ri] = rd
-                if cres or is_query:
-                    cquery[obj_name] = cres
-            # Send data
-            if cquery or is_query:
-                tmp = dict(template)
-                tmp['params'] = {'eventtime': eventtime, 'status': cquery}
-                send_func(tmp)
+        reactor = self.printer.get_reactor()
+        with reactor.assert_no_pause():
+            for cconn, subscription, send_func, template in msglist:
+                is_query = cconn is None
+                if not is_query and cconn.is_closed():
+                    del self.clients[cconn]
+                    continue
+                # Query each requested printer object
+                cquery = {}
+                for obj_name, req_items in subscription.items():
+                    res = query.get(obj_name, None)
+                    if res is None:
+                        po = self.printer.lookup_object(obj_name, None)
+                        if po is None or not hasattr(po, 'get_status'):
+                            res = query[obj_name] = {}
+                        else:
+                            res = query[obj_name] = po.get_status(eventtime)
+                    if req_items is None:
+                        req_items = list(res.keys())
+                        if req_items:
+                            subscription[obj_name] = req_items
+                    lres = last_query.get(obj_name, {})
+                    cres = {}
+                    for ri in req_items:
+                        rd = res.get(ri, None)
+                        if is_query or rd != lres.get(ri):
+                            cres[ri] = rd
+                    if cres or is_query:
+                        cquery[obj_name] = cres
+                # Send data
+                if cquery or is_query:
+                    tmp = dict(template)
+                    tmp['params'] = {'eventtime': eventtime, 'status': cquery}
+                    send_func(tmp)
         if not query:
             # Unregister timer if there are no longer any subscriptions
-            reactor = self.printer.get_reactor()
             reactor.unregister_timer(self.query_timer)
             self.query_timer = None
             return reactor.NEVER

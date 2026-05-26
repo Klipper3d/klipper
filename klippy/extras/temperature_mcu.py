@@ -31,12 +31,13 @@ class PrinterTemperatureMCU:
         ppins = config.get_printer().lookup_object('pins')
         self.mcu_adc = ppins.setup_pin('adc',
                                        '%s:ADC_TEMPERATURE' % (mcu_name,))
-        self.mcu_adc.setup_adc_callback(REPORT_TIME, self.adc_callback)
+        self.mcu_adc.setup_adc_callback(self.adc_callback)
         self.diag_helper = adc_temperature.HelperTemperatureDiagnostics(
             config, self.mcu_adc, self.calc_temp)
         # Register callbacks
         if self.printer.get_start_args().get('debugoutput') is not None:
-            self.mcu_adc.setup_adc_sample(SAMPLE_TIME, SAMPLE_COUNT)
+            self.mcu_adc.setup_adc_sample(REPORT_TIME,
+                                          SAMPLE_TIME, SAMPLE_COUNT)
             return
         self.printer.register_event_handler("klippy:mcu_identify",
                                             self.handle_mcu_identify)
@@ -49,7 +50,8 @@ class PrinterTemperatureMCU:
         self.min_temp = min_temp
         self.max_temp = max_temp
     # Internal code
-    def adc_callback(self, read_time, read_value):
+    def adc_callback(self, samples):
+        read_time, read_value = samples[-1]
         temp = self.base_temperature + read_value * self.slope
         self.temperature_callback(read_time + SAMPLE_COUNT * SAMPLE_TIME, temp)
     def calc_temp(self, adc):
@@ -95,7 +97,7 @@ class PrinterTemperatureMCU:
         # Setup min/max checks
         arange = [self.calc_adc(t) for t in [self.min_temp, self.max_temp]]
         min_adc, max_adc = sorted(arange)
-        self.mcu_adc.setup_adc_sample(SAMPLE_TIME, SAMPLE_COUNT,
+        self.mcu_adc.setup_adc_sample(REPORT_TIME, SAMPLE_TIME, SAMPLE_COUNT,
                                       minval=min_adc, maxval=max_adc,
                                       range_check_count=RANGE_CHECK_COUNT)
         self.diag_helper.setup_diag_minmax(self.min_temp, self.max_temp,

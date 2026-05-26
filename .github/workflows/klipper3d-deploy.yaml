@@ -12,12 +12,12 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - name: Setup python
         uses: actions/setup-python@v4
         with:
           python-version: '3.8'
-      - uses: actions/cache@v3
+      - uses: actions/cache@v5
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('docs/_klipper3d/mkdocs-requirements.txt') }}
@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r docs/_klipper3d/mkdocs-requirements.txt
       - name: Build MkDocs Pages
-        run: docs/_klipper3d/build-translations.sh
+        run: docs/_klipper3d/build-website.sh
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4.4.3
         with:

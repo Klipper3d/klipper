@@ -86,7 +86,7 @@
 //               In addition the following custom extensions are configured:
 //               Xh3bm, Xh3power, Xh3irq, Xh3pmpm
 #define RVCSR_MISA_OFFSET _u(0x00000301)
-#define RVCSR_MISA_BITS   _u(0xc0901107)
+#define RVCSR_MISA_BITS   _u(0xc0b511bf)
 #define RVCSR_MISA_RESET  _u(0x40901105)
 // -----------------------------------------------------------------------------
 // Field       : RVCSR_MISA_MXL
@@ -106,6 +106,14 @@
 #define RVCSR_MISA_X_LSB    _u(23)
 #define RVCSR_MISA_X_ACCESS "RO"
 // -----------------------------------------------------------------------------
+// Field       : RVCSR_MISA_V
+// Description : Vector extension (not implemented).
+#define RVCSR_MISA_V_RESET  _u(0x0)
+#define RVCSR_MISA_V_BITS   _u(0x00200000)
+#define RVCSR_MISA_V_MSB    _u(21)
+#define RVCSR_MISA_V_LSB    _u(21)
+#define RVCSR_MISA_V_ACCESS "RO"
+// -----------------------------------------------------------------------------
 // Field       : RVCSR_MISA_U
 // Description : Value of 1 indicates U-mode is implemented.
 #define RVCSR_MISA_U_RESET  _u(0x1)
@@ -113,6 +121,22 @@
 #define RVCSR_MISA_U_MSB    _u(20)
 #define RVCSR_MISA_U_LSB    _u(20)
 #define RVCSR_MISA_U_ACCESS "RO"
+// -----------------------------------------------------------------------------
+// Field       : RVCSR_MISA_S
+// Description : Supervisor extension (not implemented).
+#define RVCSR_MISA_S_RESET  _u(0x0)
+#define RVCSR_MISA_S_BITS   _u(0x00040000)
+#define RVCSR_MISA_S_MSB    _u(18)
+#define RVCSR_MISA_S_LSB    _u(18)
+#define RVCSR_MISA_S_ACCESS "RO"
+// -----------------------------------------------------------------------------
+// Field       : RVCSR_MISA_Q
+// Description : Quad-precision floating point extension (not implemented).
+#define RVCSR_MISA_Q_RESET  _u(0x0)
+#define RVCSR_MISA_Q_BITS   _u(0x00010000)
+#define RVCSR_MISA_Q_MSB    _u(16)
+#define RVCSR_MISA_Q_LSB    _u(16)
+#define RVCSR_MISA_Q_ACCESS "RO"
 // -----------------------------------------------------------------------------
 // Field       : RVCSR_MISA_M
 // Description : Value of 1 indicates the M extension (integer multiply/divide)
@@ -131,6 +155,39 @@
 #define RVCSR_MISA_I_MSB    _u(8)
 #define RVCSR_MISA_I_LSB    _u(8)
 #define RVCSR_MISA_I_ACCESS "RO"
+// -----------------------------------------------------------------------------
+// Field       : RVCSR_MISA_H
+// Description : Hypervisor extension (not implemented, I agree it would be
+//               pretty cool on a microcontroller through).
+#define RVCSR_MISA_H_RESET  _u(0x0)
+#define RVCSR_MISA_H_BITS   _u(0x00000080)
+#define RVCSR_MISA_H_MSB    _u(7)
+#define RVCSR_MISA_H_LSB    _u(7)
+#define RVCSR_MISA_H_ACCESS "RO"
+// -----------------------------------------------------------------------------
+// Field       : RVCSR_MISA_F
+// Description : Single-precision floating point extension (not implemented).
+#define RVCSR_MISA_F_RESET  _u(0x0)
+#define RVCSR_MISA_F_BITS   _u(0x00000020)
+#define RVCSR_MISA_F_MSB    _u(5)
+#define RVCSR_MISA_F_LSB    _u(5)
+#define RVCSR_MISA_F_ACCESS "RO"
+// -----------------------------------------------------------------------------
+// Field       : RVCSR_MISA_E
+// Description : RV32E/64E base ISA (not implemented).
+#define RVCSR_MISA_E_RESET  _u(0x0)
+#define RVCSR_MISA_E_BITS   _u(0x00000010)
+#define RVCSR_MISA_E_MSB    _u(4)
+#define RVCSR_MISA_E_LSB    _u(4)
+#define RVCSR_MISA_E_ACCESS "RO"
+// -----------------------------------------------------------------------------
+// Field       : RVCSR_MISA_D
+// Description : Double-precision floating point extension (not implemented).
+#define RVCSR_MISA_D_RESET  _u(0x0)
+#define RVCSR_MISA_D_BITS   _u(0x00000008)
+#define RVCSR_MISA_D_MSB    _u(3)
+#define RVCSR_MISA_D_LSB    _u(3)
+#define RVCSR_MISA_D_ACCESS "RO"
 // -----------------------------------------------------------------------------
 // Field       : RVCSR_MISA_C
 // Description : Value of 1 indicates the C extension (compressed instructions)
@@ -207,7 +264,7 @@
 // Description : Timer interrupt enable. The processor transfers to the timer
 //               interrupt vector when `mie.mtie`, `mip.mtip` and `mstatus.mie`
 //               are all 1, unless a software or external interrupt request is
-//               also valid at this time.
+//               also both pending and enabled at this time.
 #define RVCSR_MIE_MTIE_RESET  _u(0x0)
 #define RVCSR_MIE_MTIE_BITS   _u(0x00000080)
 #define RVCSR_MIE_MTIE_MSB    _u(7)
@@ -216,9 +273,9 @@
 // -----------------------------------------------------------------------------
 // Field       : RVCSR_MIE_MSIE
 // Description : Software interrupt enable. The processor transfers to the
-//               software interrupt vector `mie.msie`, `mip.msip` and
+//               software interrupt vector when `mie.msie`, `mip.msip` and
 //               `mstatus.mie` are all 1, unless an external interrupt request
-//               is also valid at this time.
+//               is also both pending and enabled at this time.
 #define RVCSR_MIE_MSIE_RESET  _u(0x0)
 #define RVCSR_MIE_MSIE_BITS   _u(0x00000008)
 #define RVCSR_MIE_MSIE_MSB    _u(3)
@@ -336,7 +393,7 @@
 #define RVCSR_MENVCFGH_RESET  _u(0x00000000)
 #define RVCSR_MENVCFGH_MSB    _u(31)
 #define RVCSR_MENVCFGH_LSB    _u(0)
-#define RVCSR_MENVCFGH_ACCESS "RW"
+#define RVCSR_MENVCFGH_ACCESS "-"
 // =============================================================================
 // Register    : RVCSR_MCOUNTINHIBIT
 // Description : Count inhibit register for `mcycle`/`minstret`
@@ -732,7 +789,7 @@
 // Description : Timer interrupt pending. The processor transfers to the timer
 //               interrupt vector when `mie.mtie`, `mip.mtip` and `mstatus.mie`
 //               are all 1, unless a software or external interrupt request is
-//               also valid at this time.
+//               also both pending and enabled at this time.
 #define RVCSR_MIP_MTIP_RESET  _u(0x0)
 #define RVCSR_MIP_MTIP_BITS   _u(0x00000080)
 #define RVCSR_MIP_MTIP_MSB    _u(7)
@@ -741,9 +798,9 @@
 // -----------------------------------------------------------------------------
 // Field       : RVCSR_MIP_MSIP
 // Description : Software interrupt pending. The processor transfers to the
-//               software interrupt vector `mie.msie`, `mip.msip` and
+//               software interrupt vector when `mie.msie`, `mip.msip` and
 //               `mstatus.mie` are all 1, unless an external interrupt request
-//               is also valid at this time.
+//               is also both pending and enabled at this time.
 #define RVCSR_MIP_MSIP_RESET  _u(0x0)
 #define RVCSR_MIP_MSIP_BITS   _u(0x00000008)
 #define RVCSR_MIP_MSIP_MSB    _u(3)
@@ -3099,14 +3156,18 @@
 #define RVCSR_MVENDORID_RESET  _u(0x00000000)
 // -----------------------------------------------------------------------------
 // Field       : RVCSR_MVENDORID_BANK
-#define RVCSR_MVENDORID_BANK_RESET  "-"
+// Description : Value of 9 indicates 9 continuation codes, which is JEP106 bank
+//               10.
+#define RVCSR_MVENDORID_BANK_RESET  _u(0x0000009)
 #define RVCSR_MVENDORID_BANK_BITS   _u(0xffffff80)
 #define RVCSR_MVENDORID_BANK_MSB    _u(31)
 #define RVCSR_MVENDORID_BANK_LSB    _u(7)
 #define RVCSR_MVENDORID_BANK_ACCESS "RO"
 // -----------------------------------------------------------------------------
 // Field       : RVCSR_MVENDORID_OFFSET
-#define RVCSR_MVENDORID_OFFSET_RESET  "-"
+// Description : ID 0x13 in bank 10 is the JEP106 ID for Raspberry Pi Ltd, the
+//               vendor of RP2350.
+#define RVCSR_MVENDORID_OFFSET_RESET  _u(0x13)
 #define RVCSR_MVENDORID_OFFSET_BITS   _u(0x0000007f)
 #define RVCSR_MVENDORID_OFFSET_MSB    _u(6)
 #define RVCSR_MVENDORID_OFFSET_LSB    _u(0)
@@ -3122,10 +3183,11 @@
 #define RVCSR_MARCHID_ACCESS "RO"
 // =============================================================================
 // Register    : RVCSR_MIMPID
-// Description : Implementation ID
+// Description : Implementation ID. On RP2350 this reads as 0x86fc4e3f, which is
+//               release v1.0-rc1 of Hazard3.
 #define RVCSR_MIMPID_OFFSET _u(0x00000f13)
 #define RVCSR_MIMPID_BITS   _u(0xffffffff)
-#define RVCSR_MIMPID_RESET  "-"
+#define RVCSR_MIMPID_RESET  _u(0x86fc4e3f)
 #define RVCSR_MIMPID_MSB    _u(31)
 #define RVCSR_MIMPID_LSB    _u(0)
 #define RVCSR_MIMPID_ACCESS "RO"

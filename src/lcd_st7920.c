@@ -22,19 +22,19 @@ struct st7920 {
  * Transmit functions
  ****************************************************************/
 
-static uint32_t
+static __always_inline uint32_t
 nsecs_to_ticks(uint32_t ns)
 {
     return timer_from_us(ns * 1000) / 1000000;
 }
 
-static inline void
-ndelay(uint32_t nsecs)
+static void
+ndelay(uint32_t ticks)
 {
     if (CONFIG_MACH_AVR)
         // Slower MCUs don't require a delay
         return;
-    uint32_t end = timer_read_time() + nsecs_to_ticks(nsecs);
+    uint32_t end = timer_read_time() + ticks;
     while (timer_is_before(timer_read_time(), end))
         irq_poll();
 }
@@ -53,9 +53,9 @@ st7920_xmit_byte(struct st7920 *s, uint8_t data)
             gpio_out_toggle(sid);
             data = ~data;
         }
-        ndelay(200);
+        ndelay(nsecs_to_ticks(200));
         gpio_out_toggle(sclk);
-        ndelay(200);
+        ndelay(nsecs_to_ticks(200));
         data <<= 1;
         gpio_out_toggle(sclk);
     }

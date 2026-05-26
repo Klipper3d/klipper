@@ -51,6 +51,8 @@ gpio_clock_enable(GPIO_TypeDef *regs)
     RCC->APB2ENR;
 }
 
+// PLL (f103) input: 1 to 25Mhz, output: 16 to 72Mhz
+
 // Main clock setup called at chip startup
 static void
 clock_setup(void)
@@ -113,7 +115,7 @@ stm32f1_alternative_remap(uint32_t mapr_mask, uint32_t mapr_value)
 void
 gpio_peripheral(uint32_t gpio, uint32_t mode, int pullup)
 {
-    GPIO_TypeDef *regs = digital_regs[GPIO2PORT(gpio)];
+    GPIO_TypeDef *regs = gpio_pin_to_regs(gpio);
 
     // Enable GPIO clock
     gpio_clock_enable(regs);

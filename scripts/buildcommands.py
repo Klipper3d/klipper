@@ -354,7 +354,9 @@ class HandleCommandGeneration:
             max_size = min(msgproto.MESSAGE_MAX,
                            (msgproto.MESSAGE_MIN + msgid_size
                             + sum([t.max_length for t in param_types])))
-            out += "    .max_size=%d," % (max_size,)
+            min_size = min(msgproto.MESSAGE_MAX,
+                           msgproto.MESSAGE_MIN + msgid_size + len(param_types))
+            out += "    .max_size=%d,\n    .min_size=%d" % (max_size, min_size)
         return out
     def generate_responses_code(self):
         encoder_defs = []
@@ -483,11 +485,22 @@ def git_version():
     logging.debug("Got git version: %s" % (repr(ver),))
     return ver
 
+# Obtain version info from "klippy/.version" file
+def file_version():
+    if not os.path.exists('klippy/.version'):
+        logging.debug("No 'klippy/.version' file/directory found")
+        return ""
+    ver = check_output("cat klippy/.version").strip()
+    logging.debug("Got klippy version: %s" % (repr(ver),))
+    return ver
+
 def build_version(extra, cleanbuild):
     version = git_version()
     if not version:
         cleanbuild = False
-        version = "?"
+        version = file_version()
+        if not version:
+            version = "?"
     elif 'dirty' in version:
         cleanbuild = False
     if not cleanbuild:

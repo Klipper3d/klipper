@@ -299,6 +299,13 @@ command_get_uptime(uint32_t *args)
 }
 DECL_COMMAND_FLAGS(command_get_uptime, HF_IN_SHUTDOWN, "get_uptime");
 
+// Similar to timer_is_before(), but handles full 32bit duration
+static int
+timer_has_elapsed(uint32_t start, uint32_t cur, uint32_t duration)
+{
+    return (uint32_t)(cur - start) >= duration;
+}
+
 #define SUMSQ_BASE 256
 DECL_CONSTANT("STATS_SUMSQ_BASE", SUMSQ_BASE);
 
@@ -322,7 +329,7 @@ stats_update(uint32_t start, uint32_t cur)
         nextsumsq = 0xffffffff;
     sumsq = nextsumsq;
 
-    if (timer_is_before(cur, stats_send_time + timer_from_us(5000000)))
+    if (!timer_has_elapsed(stats_send_time, cur, timer_from_us(5000000)))
         return;
     sendf("stats count=%u sum=%u sumsq=%u", count, sum, sumsq);
     if (cur < stats_send_time)

@@ -353,6 +353,27 @@ class MessageParser:
             #logging.exception("Unable to encode")
             self._error("Unable to encode: %s", msgname)
         return cmd
+    def create_dummy_response(self, msgname, params={}):
+        mp = self.messages_by_name.get(msgname)
+        if mp is None:
+            self._error("Unknown response: %s", msgname)
+        argparts = dict(params)
+        for name, t in mp.name_to_type.items():
+            if name not in argparts:
+                tval = 0
+                if t.is_dynamic_string:
+                    tval = ()
+                argparts[name] = tval
+        try:
+            msg = mp.encode_by_name(**argparts)
+        except error as e:
+            raise
+        except:
+            #logging.exception("Unable to encode")
+            self._error("Unable to encode: %s", msgname)
+        res, pos = mp.parse(msg, 0)
+        res['#name'] = msgname
+        return res
     def fill_enumerations(self, enumerations):
         for add_name, add_enums in enumerations.items():
             enums = self.enumerations.setdefault(add_name, {})

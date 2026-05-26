@@ -63,7 +63,7 @@ class EncoderSensor:
     def _extruder_pos_update_event(self, eventtime):
         extruder_pos = self._get_extruder_pos(eventtime)
         # Check for filament runout
-        self.runout_helper.note_filament_present(
+        self.runout_helper.note_filament_present(eventtime,
                 extruder_pos < self.filament_runout_pos)
         return eventtime + CHECK_RUNOUT_TIMEOUT
     def encoder_event(self, eventtime, state):
@@ -71,7 +71,7 @@ class EncoderSensor:
             self._update_filament_runout_pos(eventtime)
             # Check for filament insertion
             # Filament is always assumed to be present on an encoder event
-            self.runout_helper.note_filament_present(True)
+            self.runout_helper.note_filament_present(eventtime, True)
 
 def load_config_prefix(config):
     return EncoderSensor(config)

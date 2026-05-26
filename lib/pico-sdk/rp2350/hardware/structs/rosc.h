@@ -35,9 +35,9 @@ typedef struct {
     // 0xffff0000 [31:16] PASSWD       (0x0000) Set to 0x9696 to apply the settings +
     // 0x00007000 [14:12] DS3          (0x0) Stage 3 drive strength
     // 0x00000700 [10:8]  DS2          (0x0) Stage 2 drive strength
-    // 0x00000080 [7]     DS1_RANDOM   (0) Randomises the stage 1 drive strength
+    // 0x00000080 [7]     DS1_RANDOM   (1) Randomises the stage 1 drive strength
     // 0x00000070 [6:4]   DS1          (0x0) Stage 1 drive strength
-    // 0x00000008 [3]     DS0_RANDOM   (0) Randomises the stage 0 drive strength
+    // 0x00000008 [3]     DS0_RANDOM   (1) Randomises the stage 0 drive strength
     // 0x00000007 [2:0]   DS0          (0x0) Stage 0 drive strength
     io_rw_32 freqa;
  

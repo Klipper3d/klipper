@@ -115,7 +115,7 @@ void
 console_sendf(const struct command_encoder *ce, va_list args)
 {
     uint8_t buf[MESSAGE_MAX];
-    uint_fast8_t msglen = command_encode_and_frame(buf, ce, args);
+    uint_fast8_t msglen = command_encode_and_frame(buf, sizeof(buf), ce, args);
 
     for(int i=0; i<msglen; i++) {
         r_uart_putc(buf[i]);

@@ -11,7 +11,7 @@ config AVR_SELECT
     select HAVE_GPIO_I2C
     select HAVE_GPIO_HARD_PWM
     select HAVE_STRICT_TIMING
-    select HAVE_LIMITED_CODE_SIZE if MACH_atmega168 || MACH_atmega328 || MACH_atmega328p || MACH_atmega32u4
+    select HAVE_LIMITED_CODE_SIZE if MACH_atmega168 || MACH_atmega328 || MACH_atmega328p || MACH_atmega32u4 || MACH_lgt8f328p
 
 config BOARD_DIRECTORY
     string
@@ -39,6 +39,8 @@ choice
         bool "atmega328"
     config MACH_atmega168
         bool "atmega168"
+    config MACH_lgt8f328p
+        bool "lgt8f328p"
 endchoice
 
 config MCU
@@ -53,6 +55,12 @@ config MCU
     default "atmega32u4" if MACH_atmega32u4
     default "atmega1280" if MACH_atmega1280
     default "atmega2560" if MACH_atmega2560
+    default "lgt8f328p" if MACH_lgt8f328p
+
+config AVR_BUILD_MCU
+    string
+    default MCU if !MACH_lgt8f328p
+    default "atmega328p" if MACH_lgt8f328p
 
 config AVRDUDE_PROTOCOL
     string
@@ -62,6 +70,9 @@ config AVRDUDE_PROTOCOL
 
 choice
     prompt "Processor speed" if LOW_LEVEL_OPTIONS
+    config AVR_FREQ_32000000
+        bool "32Mhz"
+        depends on MACH_lgt8f328p
     config AVR_FREQ_16000000
         bool "16Mhz"
     config AVR_FREQ_20000000
@@ -75,11 +86,12 @@ config CLOCK_FREQ
     int
     default 8000000 if AVR_FREQ_8000000
     default 20000000 if AVR_FREQ_20000000
+    default 32000000 if AVR_FREQ_32000000
     default 16000000
 
 config CLEAR_PRESCALER
     bool "Manually clear the CPU prescaler field at startup" if LOW_LEVEL_OPTIONS
-    depends on MACH_at90usb1286 || MACH_at90usb646 || MACH_atmega32u4
+    depends on MACH_at90usb1286 || MACH_at90usb646 || MACH_atmega32u4 || MACH_lgt8f328p
     default y
     help
          Some AVR chips ship with a "clock prescaler" that causes the

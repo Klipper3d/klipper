@@ -68,6 +68,8 @@ gpio_clock_enable(GPIO_TypeDef *regs)
     RCC->AHB2ENR;
 }
 
+// PLL (L412) input: 4 to 16Mhz, vco: 96 to 344Mhz, output: 12 to 80Mhz
+
 #if !CONFIG_STM32_CLOCK_REF_INTERNAL
 DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PC14,PC15");
 #endif

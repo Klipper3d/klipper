@@ -406,7 +406,7 @@ class APIStream:
         return self.api_stream
 
 stats_r = re.compile(r"^Stats " + time_s + ": ")
-mcu_r = re.compile(r"MCU '(?P<mcu>[^']+)' (is_)?shutdown: (?P<reason>.*)$")
+mcu_r = re.compile(r"MCU '(?P<mcu>[^']+)' (is_)?shutdown:(?P<reason>.*)$")
 stepper_r = re.compile(r"^Dumping stepper '(?P<name>[^']*)' \((?P<mcu>[^)]+)\) "
                        + count_s + r" queue_step:$")
 trapq_r = re.compile(r"^Dumping trapq '(?P<name>[^']*)' " + count_s

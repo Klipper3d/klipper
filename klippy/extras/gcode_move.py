@@ -1,6 +1,6 @@
 # G-Code G1 movement commands (and associated coordinate manipulation)
 #
-# Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
@@ -8,18 +8,6 @@ import logging
 class GCodeMove:
     def __init__(self, config):
         self.printer = printer = config.get_printer()
-        printer.register_event_handler("klippy:ready", self._handle_ready)
-        printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
-        printer.register_event_handler("toolhead:set_position",
-                                       self.reset_last_position)
-        printer.register_event_handler("toolhead:manual_move",
-                                       self.reset_last_position)
-        printer.register_event_handler("gcode:command_error",
-                                       self.reset_last_position)
-        printer.register_event_handler("extruder:activate_extruder",
-                                       self._handle_activate_extruder)
-        printer.register_event_handler("homing:home_rails_end",
-                                       self._handle_home_rails_end)
         self.is_printer_ready = False
         # Register g-code commands
         gcode = printer.lookup_object('gcode')
@@ -42,6 +30,7 @@ class GCodeMove:
         self.base_position = [0.0, 0.0, 0.0, 0.0]
         self.last_position = [0.0, 0.0, 0.0, 0.0]
         self.homing_position = [0.0, 0.0, 0.0, 0.0]
+        self.axis_map = {'X':0, 'Y': 1, 'Z': 2, 'E': 3}
         self.speed = 25.
         self.speed_factor = 1. / 60.
         self.extrude_factor = 1.
@@ -49,6 +38,23 @@ class GCodeMove:
         self.saved_states = {}
         self.move_transform = self.move_with_transform = None
         self.position_with_transform = (lambda: [0., 0., 0., 0.])
+        # Register callbacks
+        printer.register_event_handler("klippy:ready", self._handle_ready)
+        printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
+        printer.register_event_handler("klippy:analyze_shutdown",
+                                       self._handle_analyze_shutdown)
+        printer.register_event_handler("toolhead:set_position",
+                                       self.reset_last_position)
+        printer.register_event_handler("toolhead:manual_move",
+                                       self.reset_last_position)
+        printer.register_event_handler("toolhead:update_extra_axes",
+                                       self._update_extra_axes)
+        printer.register_event_handler("gcode:command_error",
+                                       self.reset_last_position)
+        printer.register_event_handler("extruder:activate_extruder",
+                                       self._handle_activate_extruder)
+        printer.register_event_handler("homing:home_rails_end",
+                                       self._handle_home_rails_end)
     def _handle_ready(self):
         self.is_printer_ready = True
         if self.move_transform is None:
@@ -57,9 +63,8 @@ class GCodeMove:
             self.position_with_transform = toolhead.get_position
         self.reset_last_position()
     def _handle_shutdown(self):
-        if not self.is_printer_ready:
-            return
         self.is_printer_ready = False
+    def _handle_analyze_shutdown(self, msg, details):
         logging.info("gcode state: absolute_coord=%s absolute_extrude=%s"
                      " base_position=%s last_position=%s homing_position=%s"
                      " speed_factor=%s extrude_factor=%s speed=%s",
@@ -102,35 +107,48 @@ class GCodeMove:
             'extrude_factor': self.extrude_factor,
             'absolute_coordinates': self.absolute_coord,
             'absolute_extrude': self.absolute_extrude,
-            'homing_origin': self.Coord(*self.homing_position),
-            'position': self.Coord(*self.last_position),
-            'gcode_position': self.Coord(*move_position),
+            'homing_origin': self.Coord(self.homing_position),
+            'position': self.Coord(self.last_position),
+            'gcode_position': self.Coord(move_position),
+            'axis_map': self.axis_map,
         }
     def reset_last_position(self):
         if self.is_printer_ready:
             self.last_position = self.position_with_transform()
+    def _update_extra_axes(self):
+        toolhead = self.printer.lookup_object('toolhead')
+        axis_map = {'X':0, 'Y': 1, 'Z': 2, 'E': 3}
+        extra_axes = toolhead.get_extra_axes()
+        for index, ea in enumerate(extra_axes):
+            if ea is None:
+                continue
+            gcode_id = ea.get_axis_gcode_id()
+            if (gcode_id is None or len(gcode_id) != 1 or not gcode_id.isupper()
+                or gcode_id in axis_map or gcode_id in "FN"):
+                continue
+            axis_map[gcode_id] = index
+        self.axis_map = axis_map
+        self.base_position[4:] = [0.] * (len(extra_axes) - 4)
+        self.reset_last_position()
     # G-Code movement commands
     def cmd_G1(self, gcmd):
         # Move
         params = gcmd.get_command_parameters()
         try:
-            for pos, axis in enumerate('XYZ'):
+            for axis, pos in self.axis_map.items():
                 if axis in params:
                     v = float(params[axis])
-                    if not self.absolute_coord:
+                    absolute_coord = self.absolute_coord
+                    if axis == 'E':
+                        v *= self.extrude_factor
+                        if not self.absolute_extrude:
+                            absolute_coord = False
+                    if not absolute_coord:
                         # value relative to position of last move
                         self.last_position[pos] += v
                     else:
                         # value relative to base coordinate position
                         self.last_position[pos] = v + self.base_position[pos]
-            if 'E' in params:
-                v = float(params['E']) * self.extrude_factor
-                if not self.absolute_coord or not self.absolute_extrude:
-                    # value relative to position of last move
-                    self.last_position[3] += v
-                else:
-                    # value relative to base coordinate position
-                    self.last_position[3] = v + self.base_position[3]
             if 'F' in params:
                 gcode_speed = float(params['F'])
                 if gcode_speed <= 0.:
@@ -169,11 +187,11 @@ class GCodeMove:
                     offset *= self.extrude_factor
                 self.base_position[i] = self.last_position[i] - offset
         if offsets == [None, None, None, None]:
-            self.base_position = list(self.last_position)
+            self.base_position[:4] = self.last_position[:4]
     def cmd_M114(self, gcmd):
         # Get Current Position
         p = self._get_gcode_position()
-        gcmd.respond_raw("X:%.3f Y:%.3f Z:%.3f E:%.3f" % tuple(p))
+        gcmd.respond_raw("X:%.3f Y:%.3f Z:%.3f E:%.3f" % tuple(p[:4]))
     def cmd_M220(self, gcmd):
         # Set speed factor override percentage
         value = gcmd.get_float('S', 100., above=0.) / (60. * 100.)
@@ -227,7 +245,7 @@ class GCodeMove:
         # Restore state
         self.absolute_coord = state['absolute_coord']
         self.absolute_extrude = state['absolute_extrude']
-        self.base_position = list(state['base_position'])
+        self.base_position[:4] = state['base_position'][:4]
         self.homing_position = list(state['homing_position'])
         self.speed = state['speed']
         self.speed_factor = state['speed_factor']
@@ -255,7 +273,7 @@ class GCodeMove:
         kinfo = zip("XYZ", kin.calc_position(dict(cinfo)))
         kin_pos = " ".join(["%s:%.6f" % (a, v) for a, v in kinfo])
         toolhead_pos = " ".join(["%s:%.6f" % (a, v) for a, v in zip(
-            "XYZE", toolhead.get_position())])
+            "XYZE", toolhead.get_position()[:4])])
         gcode_pos = " ".join(["%s:%.6f"  % (a, v)
                               for a, v in zip("XYZE", self.last_position)])
         base_pos = " ".join(["%s:%.6f"  % (a, v)

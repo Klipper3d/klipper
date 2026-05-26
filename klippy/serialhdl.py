@@ -12,12 +12,17 @@ class error(Exception):
     pass
 
 class SerialReader:
-    def __init__(self, reactor, warn_prefix=""):
+    def __init__(self, reactor, mcu_name=""):
         self.reactor = reactor
-        self.warn_prefix = warn_prefix
+        self.warn_prefix = ""
+        self.mcu_name = mcu_name
+        if self.mcu_name:
+            self.warn_prefix = "mcu '%s': " % (self.mcu_name)
+        sq_name = ("serialq %s" % (self.mcu_name))[:15]
+        self.sq_name = sq_name.encode("utf-8")
         # Serial port
         self.serial_dev = None
-        self.msgparser = msgproto.MessageParser(warn_prefix=warn_prefix)
+        self.msgparser = msgproto.MessageParser(warn_prefix=self.warn_prefix)
         # C interface
         self.ffi_main, self.ffi_lib = chelper.get_ffi()
         self.serialqueue = None
@@ -34,6 +39,8 @@ class SerialReader:
         self.last_notify_id = 0
         self.pending_notifications = {}
     def _bg_thread(self):
+        name_short = ("serialhdl %s" % (self.mcu_name))[:15]
+        self.ffi_lib.set_thread_name(name_short.encode('utf-8'))
         response = self.ffi_main.new('struct pull_queue_message *')
         while 1:
             self.ffi_lib.serialqueue_pull(self.serialqueue, response)
@@ -80,7 +87,8 @@ class SerialReader:
         self.serial_dev = serial_dev
         self.serialqueue = self.ffi_main.gc(
             self.ffi_lib.serialqueue_alloc(serial_dev.fileno(),
-                                           serial_fd_type, client_id),
+                                           serial_fd_type, client_id,
+                                           self.sq_name),
             self.ffi_lib.serialqueue_free)
         self.background_thread = threading.Thread(target=self._bg_thread)
         self.background_thread.start()
@@ -200,7 +208,8 @@ class SerialReader:
         self.serial_dev = debugoutput
         self.msgparser.process_identify(dictionary, decompress=False)
         self.serialqueue = self.ffi_main.gc(
-            self.ffi_lib.serialqueue_alloc(self.serial_dev.fileno(), b'f', 0),
+            self.ffi_lib.serialqueue_alloc(self.serial_dev.fileno(), b'f', 0,
+                                           self.sq_name),
             self.ffi_lib.serialqueue_free)
     def set_clock_est(self, freq, conv_time, conv_clock, last_clock):
         self.ffi_lib.serialqueue_set_clock_est(
@@ -310,9 +319,12 @@ class SerialRetryCommand:
         self.serial.register_response(self.handle_callback, name, oid)
     def handle_callback(self, params):
         self.last_params = params
-    def get_response(self, cmds, cmd_queue, minclock=0, reqclock=0):
+    def get_response(self, cmds, cmd_queue, minclock=0, reqclock=0,
+                     retry=True):
         retries = 5
         retry_delay = .010
+        if not retry:
+            retries = 0
         while 1:
             for cmd in cmds[:-1]:
                 self.serial.raw_send(cmd, minclock, reqclock, cmd_queue)

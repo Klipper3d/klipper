@@ -37,8 +37,7 @@
 #define GLITCH_DETECTOR_ARM_VALUE_YES _u(0x0000)
 // =============================================================================
 // Register    : GLITCH_DETECTOR_DISARM
-// Description : None
-//               Forcibly disarm the glitch detectors, if they are armed by OTP.
+// Description : Forcibly disarm the glitch detectors, if they are armed by OTP.
 //               Ignored if ARM is YES.
 //
 //               This register is Secure read/write only.
@@ -142,8 +141,7 @@
 #define GLITCH_DETECTOR_SENSITIVITY_DET0_ACCESS "RW"
 // =============================================================================
 // Register    : GLITCH_DETECTOR_LOCK
-// Description : None
-//               Write any nonzero value to disable writes to ARM, DISARM,
+// Description : Write any nonzero value to disable writes to ARM, DISARM,
 //               SENSITIVITY and LOCK. This register is Secure read/write only.
 #define GLITCH_DETECTOR_LOCK_OFFSET _u(0x0000000c)
 #define GLITCH_DETECTOR_LOCK_BITS   _u(0x000000ff)

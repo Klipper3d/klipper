@@ -52,6 +52,8 @@ gpio_clock_enable(GPIO_TypeDef *regs)
     RCC->AHBENR;
 }
 
+// PLL (f0) input: 1 to 24Mhz, output: 16 to 48Mhz
+
 #if !CONFIG_STM32_CLOCK_REF_INTERNAL
 DECL_CONSTANT_STR("RESERVE_PINS_crystal", "PF0,PF1");
 #endif

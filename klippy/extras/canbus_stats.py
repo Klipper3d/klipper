@@ -32,14 +32,17 @@ class PrinterCANBusStats:
         self.mcu = self.printer.lookup_object(mcu_name)
         # Lookup status query command
         if self.mcu.try_lookup_command("get_canbus_status") is None:
+            configfile = self.printer.lookup_object('configfile')
+            configfile.deprecate_mcu_code(self.mcu, 'get_canbus_status')
             return
         self.get_canbus_status_cmd = self.mcu.lookup_query_command(
             "get_canbus_status",
             "canbus_status rx_error=%u tx_error=%u tx_retries=%u"
             " canbus_bus_state=%u")
         # Register usb_canbus_state message handling (for usb to canbus bridge)
-        self.mcu.register_response(self.handle_usb_canbus_state,
-                                   "usb_canbus_state")
+        if self.mcu.check_valid_response("usb_canbus_state discard=%u"):
+            self.mcu.register_serial_response(self.handle_usb_canbus_state,
+                                              "usb_canbus_state discard=%u")
         # Register periodic query timer
         self.reactor.register_timer(self.query_event, self.reactor.NOW)
     def handle_usb_canbus_state(self, params):

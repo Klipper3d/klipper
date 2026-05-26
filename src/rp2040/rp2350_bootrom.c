@@ -5,10 +5,10 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <stdint.h> // uint32_t
-#include "boot/picoboot_constants.h" // REBOOT2_FLAG_REBOOT_TYPE_BOOTSEL
 #include "hardware/address_mapped.h" // static_assert
+#include "boot/bootrom_constants.h" // RT_FLAG_FUNC_ARM_NONSEC
+#include "boot/picoboot_constants.h" // REBOOT2_FLAG_REBOOT_TYPE_BOOTSEL
 #include "internal.h" // bootrom_read_unique_id
-#include "pico/bootrom_constants.h" // RT_FLAG_FUNC_ARM_NONSEC
 
 static void *
 rom_func_lookup(uint32_t code)

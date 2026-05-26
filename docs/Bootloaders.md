@@ -194,7 +194,7 @@ Alternatively, one can use a
 
 When using OpenOCD with the SAMC21, extra steps must be taken to first
 put the chip into Cold Plugging mode if the board makes use of the
-SWD pins for other purposes. If using OpenOCD on a Rasberry Pi, this
+SWD pins for other purposes. If using OpenOCD on a Raspberry Pi, this
 can be done by running the following commands before invoking OpenOCD.
 ```
 SWCLK=25
@@ -470,7 +470,7 @@ The first time CanBoot has been flashed it should detect that no application
 is present and enter the bootloader.  If this doesn't occur it is possible to
 enter the bootloader by pressing the reset button twice in succession.
 
-The `flash_can.py` utility supplied in the `lib/canboot` folder may be used to
+The `flashtool.py` utility supplied in the `lib/katapult` folder may be used to
 upload Klipper firmware.  The device UUID is necessary to flash.  If you do not
 have a UUID it is possible to query nodes currently running the bootloader:
 ```

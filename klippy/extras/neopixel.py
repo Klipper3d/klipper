@@ -16,7 +16,6 @@ MAX_MCU_SIZE = 500  # Sanity check on LED chain length
 class PrinterNeoPixel:
     def __init__(self, config):
         self.printer = printer = config.get_printer()
-        self.mutex = printer.get_reactor().mutex()
         # Configure neopixel
         ppins = printer.lookup_object('pins')
         pin_params = ppins.lookup_pin(config.get('pin'))
@@ -99,11 +98,8 @@ class PrinterNeoPixel:
         else:
             logging.info("Neopixel update did not succeed")
     def update_leds(self, led_state, print_time):
-        def reactor_bgfunc(eventtime):
-            with self.mutex:
-                self.update_color_data(led_state)
-                self.send_data(print_time)
-        self.printer.get_reactor().register_callback(reactor_bgfunc)
+        self.update_color_data(led_state)
+        self.send_data(print_time)
     def get_status(self, eventtime=None):
         return self.led_helper.get_status(eventtime)
 

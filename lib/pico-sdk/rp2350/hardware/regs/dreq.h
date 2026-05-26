@@ -121,8 +121,8 @@ typedef enum dreq_num_rp2350 {
     DREQ_PWM_WRAP7 = 39, ///< Select PWM Counter 7's Wrap Value as DREQ
     DREQ_PWM_WRAP8 = 40, ///< Select PWM Counter 8's Wrap Value as DREQ
     DREQ_PWM_WRAP9 = 41, ///< Select PWM Counter 9's Wrap Value as DREQ
-    DREQ_PWM_WRAP10 = 42, ///< Select PWM Counter 0's Wrap Value as DREQ
-    DREQ_PWM_WRAP11 = 43, ///< Select PWM Counter 1's Wrap Value as DREQ
+    DREQ_PWM_WRAP10 = 42, ///< Select PWM Counter 10's Wrap Value as DREQ
+    DREQ_PWM_WRAP11 = 43, ///< Select PWM Counter 11's Wrap Value as DREQ
     DREQ_I2C0_TX = 44, ///< Select I2C0's TX FIFO as DREQ
     DREQ_I2C0_RX = 45, ///< Select I2C0's RX FIFO as DREQ
     DREQ_I2C1_TX = 46, ///< Select I2C1's TX FIFO as DREQ
@@ -135,8 +135,8 @@ typedef enum dreq_num_rp2350 {
     DREQ_CORESIGHT = 53, ///< Select CORESIGHT as DREQ
     DREQ_SHA256 = 54, ///< Select SHA256 as DREQ
     DREQ_DMA_TIMER0 = 59, ///< Select DMA_TIMER0 as DREQ
-    DREQ_DMA_TIMER1 = 60, ///< Select DMA_TIMER0 as DREQ
-    DREQ_DMA_TIMER2 = 61, ///< Select DMA_TIMER1 as DREQ
+    DREQ_DMA_TIMER1 = 60, ///< Select DMA_TIMER1 as DREQ
+    DREQ_DMA_TIMER2 = 61, ///< Select DMA_TIMER2 as DREQ
     DREQ_DMA_TIMER3 = 62, ///< Select DMA_TIMER3 as DREQ
     DREQ_FORCE = 63, ///< Select FORCE as DREQ
     DREQ_COUNT

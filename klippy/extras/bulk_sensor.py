@@ -112,14 +112,16 @@ class BatchWebhooksClient:
         self.cconn.send(tmp)
         return True
 
+SENSOR_BULK_FMT = "sensor_bulk_data oid=%c sequence=%hu data=%*s"
+
 # Helper class to store incoming messages in a queue
 class BulkDataQueue:
-    def __init__(self, mcu, msg_name="sensor_bulk_data", oid=None):
+    def __init__(self, mcu, msg_fmt=SENSOR_BULK_FMT, oid=None):
         # Measurement storage (accessed from background thread)
         self.lock = threading.Lock()
         self.raw_samples = []
         # Register callback with mcu
-        mcu.register_response(self._handle_data, msg_name, oid)
+        mcu.register_serial_response(self._handle_data, msg_fmt, oid)
     def _handle_data(self, params):
         with self.lock:
             self.raw_samples.append(params)

@@ -97,7 +97,8 @@ check_can_send(void)
         }
         // Encode and build message
         uint8_t *data = get_transmit_ptr(&ce);
-        int msglen = command_encode_and_frame(data, &ce, (void*)local_args);
+        int msglen = command_encode_and_frame(data, ce.max_size
+                                              , &ce, (void*)local_args);
         if (readl(&SHARED_MEM->next_encoder) != rce)
             continue;
         writel(&SHARED_MEM->next_encoder, 0);
@@ -244,7 +245,7 @@ void
 console_sendf(const struct command_encoder *ce, va_list args)
 {
     uint8_t *data = get_transmit_ptr(ce);
-    int msglen = command_encode_and_frame(data, ce, args);
+    int msglen = command_encode_and_frame(data, ce->max_size, ce, args);
     finalize_transmit(msglen);
 }
 

@@ -1,0 +1,13 @@
+# Test case for bed_mesh tests
+CONFIG bed_mesh.cfg
+DICTIONARY atmega2560.dict
+
+# Start by homing the printer.
+G28
+G1 F6000
+G1 X60 Y60 Z10
+
+# Run bed_mesh_calibrate
+BED_MESH_CALIBRATE
+
+G1 Z10

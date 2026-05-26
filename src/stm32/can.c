@@ -127,7 +127,7 @@ canhw_send(struct canbus_msg *msg)
     else
         tir = (msg->id & 0x7ff) << CAN_TI0R_STID_Pos;
     tir |= msg->id & CANMSG_ID_RTR ? CAN_TI0R_RTR : 0;
-    mb->TIR = (msg->id << CAN_TI0R_STID_Pos) | CAN_TI0R_TXRQ;
+    mb->TIR = tir | CAN_TI0R_TXRQ;
     return CANMSG_DATA_LEN(msg);
 }
 
@@ -333,6 +333,6 @@ can_init(void)
         armcm_enable_irq(CAN_IRQHandler, CAN_TX_IRQn, 0);
     if (CAN_RX0_IRQn != CAN_SCE_IRQn)
         armcm_enable_irq(CAN_IRQHandler, CAN_SCE_IRQn, 0);
-    SOC_CAN->IER = CAN_IER_FMPIE0 | CAN_IER_ERRIE;
+    SOC_CAN->IER = CAN_IER_FMPIE0 | CAN_IER_ERRIE | CAN_IER_LECIE;
 }
 DECL_INIT(can_init);

@@ -1,11 +1,8 @@
 # Handle pwm output pins with variable frequency
 #
-# Copyright (C) 2017-2023  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2017-2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-
-PIN_MIN_TIME = 0.100
-MAX_SCHEDULE_TIME = 5.0
 
 class MCU_pwm_cycle:
     def __init__(self, pin_params, cycle_time, start_value, shutdown_value):
@@ -22,6 +19,8 @@ class MCU_pwm_cycle:
         self._shutdown_value = max(0., min(1., shutdown_value))
         self._last_clock = self._cycle_ticks = 0
         self._set_cmd = self._set_cycle_ticks = None
+    def get_mcu(self):
+        return self._mcu
     def _build_config(self):
         cmd_queue = self._mcu.alloc_command_queue()
         curtime = self._mcu.get_printer().get_reactor().monotonic()
@@ -77,9 +76,6 @@ class PrinterOutputPWMCycle:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.last_print_time = 0.
-        cycle_time = config.getfloat('cycle_time', 0.100, above=0.,
-                                     maxval=MAX_SCHEDULE_TIME)
-        self.last_cycle_time = self.default_cycle_time = cycle_time
         # Determine start and shutdown values
         self.scale = config.getfloat('scale', 1., above=0.)
         self.last_value = config.getfloat(
@@ -89,8 +85,12 @@ class PrinterOutputPWMCycle:
         # Create pwm pin object
         ppins = self.printer.lookup_object('pins')
         pin_params = ppins.lookup_pin(config.get('pin'), can_invert=True)
+        max_duration = pin_params['chip'].max_nominal_duration()
+        cycle_time = config.getfloat('cycle_time', 0.100, above=0.,
+                                     maxval=max_duration)
         self.mcu_pin = MCU_pwm_cycle(pin_params, cycle_time,
                                      self.last_value, self.shutdown_value)
+        self.last_cycle_time = self.default_cycle_time = cycle_time
         # Register commands
         pin_name = config.get_name().split()[1]
         gcode = self.printer.lookup_object('gcode')
@@ -102,7 +102,8 @@ class PrinterOutputPWMCycle:
     def _set_pin(self, print_time, value, cycle_time):
         if value == self.last_value and cycle_time == self.last_cycle_time:
             return
-        print_time = max(print_time, self.last_print_time + PIN_MIN_TIME)
+        min_sched_time = self.mcu_pin.get_mcu().min_schedule_time()
+        print_time = max(print_time, self.last_print_time + min_sched_time)
         self.mcu_pin.set_pwm_cycle(print_time, value, cycle_time)
         self.last_value = value
         self.last_cycle_time = cycle_time
@@ -112,8 +113,9 @@ class PrinterOutputPWMCycle:
         # Read requested value
         value = gcmd.get_float('VALUE', minval=0., maxval=self.scale)
         value /= self.scale
+        max_duration = self.mcu_pin.get_mcu().max_nominal_duration()
         cycle_time = gcmd.get_float('CYCLE_TIME', self.default_cycle_time,
-                                    above=0., maxval=MAX_SCHEDULE_TIME)
+                                    above=0., maxval=max_duration)
         # Obtain print_time and apply requested settings
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.register_lookahead_callback(

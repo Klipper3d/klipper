@@ -30,10 +30,16 @@ pico_register_common_scope_var(PICO_DEFAULT_BOOT_STAGE2_FILE)
 # needed by function below
 set(PICO_BOOT_STAGE2_DIR "${CMAKE_CURRENT_LIST_DIR}" CACHE INTERNAL "")
 
-add_library(boot_stage2_headers INTERFACE)
+pico_add_library(boot_stage2_headers)
 target_include_directories(boot_stage2_headers SYSTEM INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
 
-# by convention the first source file name without extension is used for the binary info name
+# pico_define_boot_stage2(NAME SOURCES)
+# \brief\ Define a boot stage 2 target.
+#
+# By convention the first source file name without extension is used for the binary info name
+#
+# \param\ NAME The name of the boot stage 2 target
+# \param\ SOURCES The source files to link into the boot stage 2
 function(pico_define_boot_stage2 NAME SOURCES)
     add_executable(${NAME}
             ${SOURCES}
@@ -66,15 +72,12 @@ function(pico_define_boot_stage2 NAME SOURCES)
     add_custom_command(OUTPUT ${ORIGINAL_BIN} DEPENDS ${NAME} COMMAND ${CMAKE_OBJCOPY} -Obinary $<TARGET_FILE:${NAME}> ${ORIGINAL_BIN}
         VERBATIM)
 
-    add_custom_target(${NAME}_padded_checksummed_asm DEPENDS ${PADDED_CHECKSUMMED_ASM})
     add_custom_command(OUTPUT ${PADDED_CHECKSUMMED_ASM} DEPENDS ${ORIGINAL_BIN}
             COMMAND ${Python3_EXECUTABLE} ${PICO_BOOT_STAGE2_DIR}/pad_checksum -s 0xffffffff ${ORIGINAL_BIN} ${PADDED_CHECKSUMMED_ASM}
             VERBATIM)
 
-    add_library(${NAME}_library INTERFACE)
-    add_dependencies(${NAME}_library ${NAME}_padded_checksummed_asm)
-    # not strictly (or indeed actually) a link library, but this avoids dependency cycle
-    target_link_libraries(${NAME}_library INTERFACE ${PADDED_CHECKSUMMED_ASM})
+    add_library(${NAME}_library OBJECT ${PADDED_CHECKSUMMED_ASM})
+    target_link_libraries(${NAME}_library INTERFACE "$<TARGET_OBJECTS:${NAME}_library>")
     target_link_libraries(${NAME}_library INTERFACE boot_stage2_headers)
 
     list(GET SOURCES 0 FIRST_SOURCE)
@@ -100,7 +103,12 @@ endmacro()
 
 pico_define_boot_stage2(bs2_default ${PICO_DEFAULT_BOOT_STAGE2_FILE})
 
+# pico_clone_default_boot_stage2(NAME)
+# \brief_nodesc\ Clone the default boot stage 2 target.
+#
 # Create a new boot stage 2 target using the default implementation for the current build (PICO_BOARD derived)
+#
+# \param\ NAME The name of the new boot stage 2 target
 function(pico_clone_default_boot_stage2 NAME)
     pico_define_boot_stage2(${NAME} ${PICO_DEFAULT_BOOT_STAGE2_FILE})
 endfunction()

@@ -10,14 +10,14 @@ class RotaryDeltaKinematics:
     def __init__(self, toolhead, config):
         # Setup tower rails
         stepper_configs = [config.getsection('stepper_' + a) for a in 'abc']
-        rail_a = stepper.PrinterRail(
+        rail_a = stepper.LookupRail(
             stepper_configs[0], need_position_minmax=False,
             units_in_radians=True)
         a_endstop = rail_a.get_homing_info().position_endstop
-        rail_b = stepper.PrinterRail(
+        rail_b = stepper.LookupRail(
             stepper_configs[1], need_position_minmax=False,
             default_position_endstop=a_endstop, units_in_radians=True)
-        rail_c = stepper.PrinterRail(
+        rail_c = stepper.LookupRail(
             stepper_configs[2], need_position_minmax=False,
             default_position_endstop=a_endstop, units_in_radians=True)
         self.rails = [rail_a, rail_b, rail_c]
@@ -52,7 +52,6 @@ class RotaryDeltaKinematics:
                               math.radians(a), ua, la)
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
-            toolhead.register_step_generator(s.generate_steps)
         # Setup boundary checks
         self.need_home = True
         self.limit_xy2 = -1.
@@ -72,8 +71,8 @@ class RotaryDeltaKinematics:
             "Delta max build height %.2fmm (radius tapered above %.2fmm)"
             % (self.max_z, self.limit_z))
         max_xy = math.sqrt(self.max_xy2)
-        self.axes_min = toolhead.Coord(-max_xy, -max_xy, self.min_z, 0.)
-        self.axes_max = toolhead.Coord(max_xy, max_xy, self.max_z, 0.)
+        self.axes_min = toolhead.Coord((-max_xy, -max_xy, self.min_z))
+        self.axes_max = toolhead.Coord((max_xy, max_xy, self.max_z))
         self.set_position([0., 0., 0.], "")
     def get_steppers(self):
         return [s for rail in self.rails for s in rail.get_steppers()]

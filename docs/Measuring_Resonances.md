@@ -18,9 +18,9 @@ board designs and different clones of them. If it is going to be connected to a
 For ADXL345s, make sure that the board supports SPI mode (a small number of
 boards appear to be hard-configured for I2C by pulling SDO to GND).
 
-For MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500s and LIS2DW/LIS3DH there are also
-a variety of board designs and clones with different I2C pull-up resistors which
-will need supplementing.
+For MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948s and LIS2DW/LIS3DH there
+are also a variety of board designs and clones with different I2C pull-up resistors
+which will need supplementing.
 
 ## MCUs with Klipper I2C *fast-mode* Support
 
@@ -136,7 +136,7 @@ GND+SCL
 
 Note that unlike a cable shield, any GND(s) should be connected at both ends.
 
-#### MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500
+#### MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948
 
 These accelerometers have been tested to work over I2C on the RPi, RP2040 (Pico)
 and AVR at 400kbit/s (*fast mode*). Some MPU accelerometer modules include
@@ -152,7 +152,7 @@ Recommended connection scheme for I2C on the Raspberry Pi:
 | SDA | 03 | GPIO02 (SDA1) |
 | SCL | 05 | GPIO03 (SCL1) |
 
-The RPi has buit-in 1.8K pull-ups on both SCL and SDA.
+The RPi has built-in 1.8K pull-ups on both SCL and SDA.
 
 ![MPU-9250 connected to Pi](img/mpu9250-PI-fritzing.png)
 
@@ -355,6 +355,7 @@ accel_chip: mpu9250
 probe_points:
     100, 100, 20  # an example
 ```
+If you are using the ICM20948, replace instances of "mpu9250" with "icm20948".
 
 #### Configure MPU-9520 Compatibles With Pico
 
@@ -377,6 +378,7 @@ probe_points:
 [static_digital_output pico_3V3pwm] # Improve power stability
 pins: pico:gpio23
 ```
+If you are using the ICM20948, replace instances of "mpu9250" with "icm20948".
 
 #### Configure MPU-9520 Compatibles with AVR
 
@@ -395,6 +397,7 @@ accel_chip: mpu9250
 probe_points:
     100, 100, 20  # an example
 ```
+If you are using the ICM20948, replace instances of "mpu9250" with "icm20948".
 
 Restart Klipper via the `RESTART` command.
 
@@ -693,6 +696,95 @@ to specify it explicitly.
 If you are doing a shaper re-calibration and the reported smoothing for the
 suggested shaper configuration is almost the same as what you got during the
 previous calibration, this step can be skipped.
+
+### Measuring the resonances of Z axis
+
+Measuring the resonances of Z axis is similar in many aspects to measuring
+resonances of X and Y axes, with some subtle differences. Similarly to other
+axes measurements, you will need to have an accelerometer mounted on the
+moving parts of Z axis - either the bed itself (if the bed moves over Z axis),
+or the toolhead (if the toolhead/gantry moves over Z). You will need to
+add the appropriate chip configuration to `printer.cfg` and also add it to
+`[resonance_tester]` section, e.g.
+```
+[resonance_tester]
+accel_chip_z: <accelerometer full name>
+```
+Also make sure that `probe_points` configured in `[resonance_tester]` allow
+sufficient clearance for Z axis movements (20 mm above bed surface should
+provide enough clearance with the default test parameters).
+
+The next consideration is that Z axis can typically reach lower maximum
+speeds and accelerations that X and Y axes. Default parameters of the test
+take that into consideration and are much less agressive, but it may still
+be necessary to increase `max_z_accel` and `max_z_velocity`. If you have
+them configured in `[printer]` section, make sure to set them to at least
+```
+[printer]
+max_z_velocity: 20
+max_z_accel: 1550
+```
+but only for the duration of the test, afterwards you can revert them back
+to their original values if necessary. And if you use custom test parameters
+for Z axis, `TEST_RESONANCES` and `SHAPER_CALIBRATE` will provide the minimum
+required limits if necessary for your specific case.
+
+After all changes to `printer.cfg` have been made, restart Klipper and run
+either
+```
+TEST_RESONANCES AXIS=Z
+```
+or
+```
+SHAPER_CALIBRATE AXIS=Z
+```
+and proceed from there accordingly how you would for other axes.
+For example, after `TEST_RESONANCES` command you can run
+`calibrate_shaper.py` script and get shaper recommendations and
+the chart of resonance response:
+
+![Resonances](img/calibrate-z.png)
+
+After the calibration, the shaper parameters can be stored in the
+`printer.cfg`, e.g. from the example above:
+```
+[input_shaper]
+...
+shaper_type_z: mzv
+shaper_freq_z: 42.6
+```
+
+Also, given the movements of Z axis are slow, you can easily consider
+more aggressive input shapers, e.g.
+```
+[input_shaper]
+...
+shaper_type_z: 2hump_ei
+shaper_freq_z: 63.0
+```
+
+If the test produces bogus results, you may try to increase
+`accel_per_hz_z` parameter in `[resonance_tester]` from its
+default value 15 to a larger value in the range of 20-30, e.g.
+```
+[resonance_tester]
+accel_per_hz_z: 25
+```
+and repeat the test. Increasing this value will likely require
+increasing `max_z_accel` and `max_z_velocity` parameters as well.
+You can run `TEST_RESONANCES AXIS=Z` command to get the required
+minimum values.
+
+However, if you are unable to measure the resonances of Z axis,
+you can consider just using
+```
+[input_shaper]
+...
+shaper_type_z: 3hump_ei
+shaper_freq_z: 65
+```
+as an acceptable all-round choice, given that the smoothing of
+Z axis movements is not of particular concerns.
 
 ### Unreliable measurements of resonance frequencies
 

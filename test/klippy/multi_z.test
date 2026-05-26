@@ -18,7 +18,15 @@ BED_TILT_CALIBRATE
 G1 Z5 X0 Y0
 
 # Run Z_TILT_ADJUST
-Z_TILT_ADJUST
+Z_TILT_ADJUST method=manual
+TESTZ Z=-.2
+accept
+TESTZ Z=-.3
+accept
+TESTZ Z=-.4
+accept
+TESTZ Z=-.1
+accept
 
 # Move again
 G1 Z2 X2 Y3

@@ -154,7 +154,6 @@ static struct timer wrap_timer = {
     .waketime = 0x8000,
 };
 
-#define TIMER_IDLE_REPEAT_TICKS 8000
 #define TIMER_REPEAT_TICKS 3000
 
 #define TIMER_MIN_ENTRY_TICKS 44
@@ -202,7 +201,7 @@ ISR(TIMER1_COMPA_vect)
                 next = now + TIMER_DEFER_REPEAT_TICKS;
                 goto done;
             }
-            timer_repeat_set(now + TIMER_IDLE_REPEAT_TICKS);
+            timer_repeat_set(now + TIMER_REPEAT_TICKS);
             timer_set(now);
         }
     }

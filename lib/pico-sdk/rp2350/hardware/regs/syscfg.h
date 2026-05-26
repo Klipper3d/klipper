@@ -255,7 +255,10 @@
 // =============================================================================
 // Register    : SYSCFG_AUXCTRL
 // Description : Auxiliary system control register
-//               * Bits 7:2: Reserved
+//               * Bits 7:3: Reserved
+//
+//               * Bit 2: Set to mask OTP power analogue power supply detection
+//               from resetting OTP controller and PSM
 //
 //               * Bit 1: When clear, the LPOSC output is XORed into the TRNG
 //               ROSC output as an additional, uncorrelated entropy source. When

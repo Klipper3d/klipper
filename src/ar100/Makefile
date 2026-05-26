@@ -1,4 +1,4 @@
-CROSS_PREFIX=or1k-linux-musl-
+CROSS_PREFIX=or1k-elf-
 dirs-y += src/generic src/ar100 lib/ar100
 
 CFLAGS		+= -O3

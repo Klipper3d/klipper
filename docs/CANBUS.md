@@ -125,10 +125,14 @@ iface can0 can static
   frequency. As a result, it is recommended to use a CAN bus frequency
   of 1000000 when using "USB to CAN bus bridge mode".
 
-  Even at a CAN bus frequency of 1000000, there may not be sufficient
-  bandwidth to run a `SHAPER_CALIBRATE` test if both the XY steppers
-  and the accelerometer all communicate via a single "USB to CAN bus"
-  interface.
+* It is only valid to use USB to CAN bridge mode if there is a
+  functioning CAN bus with at least one other node available (in
+  addition to the bridge node itself). Use a standard USB
+  configuration if the goal is to communicate only with the single USB
+  device. Using USB to CAN bridge mode without a fully functioning CAN
+  bus (including terminating resistors and an additional node) may
+  result in sporadic errors even when communicating with the bridge
+  node.
 
 * A USB to CAN bridge board will not appear as a USB serial device, it
   will not show up when running `ls /dev/serial/by-id`, and it can not

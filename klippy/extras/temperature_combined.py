@@ -26,6 +26,7 @@ class PrinterSensorCombined:
         self.apply_mode = config.getchoice('combination_method', algos)
         # set default values
         self.last_temp = self.min_temp = self.max_temp = 0.0
+        self.humidity = self.pressure = self.gas = None
         # add object
         self.printer.add_object("temperature_combined " + self.name, self)
         # time-controlled sensor update
@@ -41,19 +42,29 @@ class PrinterSensorCombined:
             sensor = self.printer.lookup_object(sensor_name)
             # check if sensor has get_status function and
             # get_status has a 'temperature' value
-            if (hasattr(sensor, 'get_status') and
-                    'temperature' in sensor.get_status(
-                            self.reactor.monotonic())):
-                self.sensors.append(sensor)
-            else:
+            if not hasattr(sensor, 'get_status'):
+                raise self.printer.config_error(
+                        "'%s' does not have a status."
+                        % (sensor_name,))
+            status = sensor.get_status(self.reactor.monotonic())
+            if 'temperature' not in status:
                 raise self.printer.config_error(
                         "'%s' does not report a temperature."
                         % (sensor_name,))
+            # Handle temperature monitors
+            if status["temperature"] is None:
+                raise self.printer.config_error(
+                        "Temperature monitor '%s' is not supported"
+                        % (sensor_name,))
+
+            self.sensors.append(sensor)
 
     def _handle_ready(self):
         # Start temperature update timer
+        # There is a race condition with sensors where they can be not ready,
+        # and return 0 or None - initialize a little bit later.
         self.reactor.update_timer(self.temperature_update_timer,
-                                  self.reactor.NOW)
+                                  self.reactor.monotonic() + 1.)
 
     def setup_minmax(self, min_temp, max_temp):
         self.min_temp = min_temp
@@ -86,13 +97,56 @@ class PrinterSensorCombined:
     def get_temp(self, eventtime):
         return self.last_temp, 0.
 
+    def update_additional(self, eventtime):
+        values_humidity = []
+        values_pressure = []
+        values_gas = []
+        for sensor in self.sensors:
+            sensor_status = sensor.get_status(eventtime)
+            if 'humidity' in sensor_status:
+                sensor_humidity = sensor_status['humidity']
+                if sensor_humidity is not None:
+                    values_humidity.append(sensor_humidity)
+            if 'pressure' in sensor_status:
+                sensor_pressure = sensor_status['pressure']
+                if sensor_pressure is not None:
+                    values_pressure.append(sensor_pressure)
+            if 'gas' in sensor_status:
+                sensor_gas = sensor_status['gas']
+                if sensor_gas is not None:
+                    values_gas.append(sensor_gas)
+
+        if values_humidity:
+            humidity = self.apply_mode(values_humidity)
+            if humidity:
+                self.humidity = humidity
+
+        if values_pressure:
+            pressure = self.apply_mode(values_pressure)
+            if pressure:
+                self.pressure = pressure
+
+        if values_gas:
+            gas = self.apply_mode(values_gas)
+            if gas:
+                self.gas = gas
+
     def get_status(self, eventtime):
-        return {'temperature': round(self.last_temp, 2),
-                }
+        data = {
+            'temperature': round(self.last_temp, 2),
+        }
+        if self.humidity is not None:
+            data['humidity'] = self.humidity
+        if self.pressure is not None:
+            data['pressure'] = self.pressure
+        if self.gas is not None:
+            data['gas'] = self.gas
+        return data
 
     def _temperature_update_event(self, eventtime):
         # update sensor value
         self.update_temp(eventtime)
+        self.update_additional(eventtime)
 
         # check min / max temp values
         if self.last_temp < self.min_temp:

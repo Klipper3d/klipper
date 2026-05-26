@@ -21,7 +21,7 @@ class QueryADC:
             msg = "Available ADC objects: %s" % (', '.join(objs),)
             gcmd.respond_info(msg)
             return
-        value, timestamp = self.adc[name].get_last_value()
+        timestamp, value = self.adc[name].get_last_value()
         msg = 'ADC object "%s" has value %.6f (timestamp %.3f)' % (
             name, value, timestamp)
         pullup = gcmd.get_float('PULLUP', None, above=0.)

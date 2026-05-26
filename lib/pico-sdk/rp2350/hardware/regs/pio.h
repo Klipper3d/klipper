@@ -461,8 +461,7 @@
 // =============================================================================
 // Register    : PIO_DBG_PADOUT
 // Description : Read to sample the pad output values PIO is currently driving
-//               to the GPIOs. On RP2040 there are 30 GPIOs, so the two most
-//               significant bits are hardwired to 0.
+//               to the GPIOs.
 #define PIO_DBG_PADOUT_OFFSET _u(0x0000003c)
 #define PIO_DBG_PADOUT_BITS   _u(0xffffffff)
 #define PIO_DBG_PADOUT_RESET  _u(0x00000000)
@@ -472,8 +471,7 @@
 // =============================================================================
 // Register    : PIO_DBG_PADOE
 // Description : Read to sample the pad output enables (direction) PIO is
-//               currently driving to the GPIOs. On RP2040 there are 30 GPIOs,
-//               so the two most significant bits are hardwired to 0.
+//               currently driving to the GPIOs.
 #define PIO_DBG_PADOE_OFFSET _u(0x00000040)
 #define PIO_DBG_PADOE_BITS   _u(0xffffffff)
 #define PIO_DBG_PADOE_RESET  _u(0x00000000)

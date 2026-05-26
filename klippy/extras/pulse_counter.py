@@ -28,8 +28,10 @@ class MCU_counter:
         self._mcu.add_config_cmd(
             "query_counter oid=%d clock=%d poll_ticks=%d sample_ticks=%d"
             % (self._oid, clock, self._poll_ticks, sample_ticks), is_init=True)
-        self._mcu.register_response(self._handle_counter_state,
-                                    "counter_state", self._oid)
+        self._mcu.register_serial_response(
+            self._handle_counter_state,
+            "counter_state oid=%c next_clock=%u count=%u count_clock=%u",
+            self._oid)
 
     # Callback is called periodically every sample_time
     def setup_callback(self, cb):

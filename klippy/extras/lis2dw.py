@@ -25,7 +25,6 @@ REG_LIS2DW_OUT_ZH_ADDR = 0x2D
 REG_LIS2DW_FIFO_CTRL   = 0x2E
 REG_LIS2DW_FIFO_SAMPLES = 0x2F
 REG_MOD_READ = 0x80
-# REG_MOD_MULTI = 0x40
 
 LIS2DW_DEV_ID = 0x44
 LIS3DH_DEV_ID = 0x33
@@ -35,12 +34,11 @@ LIS_I2C_ADDR = 0x19
 # Right shift for left justified registers.
 FREEFALL_ACCEL = 9.80665
 LIS2DW_SCALE = FREEFALL_ACCEL * 1.952 / 4
-LIS3DH_SCALE = FREEFALL_ACCEL * 3.906 / 16
+LIS3DH_SCALE = FREEFALL_ACCEL * 11.718 / 16
 
 BATCH_UPDATES = 0.100
 
 # "Enums" that should be compatible with all python versions
-
 LIS2DW_TYPE = 'LIS2DW'
 LIS3DH_TYPE = 'LIS3DH'
 
@@ -94,7 +92,6 @@ class LIS2DW:
         hdr = ('time', 'x_acceleration', 'y_acceleration', 'z_acceleration')
         self.batch_bulk.add_mux_endpoint("lis2dw/dump_lis2dw", "sensor",
                                          self.name, {'header': hdr})
-
     def _build_config(self):
         cmdqueue = self.bus.get_command_queue()
         self.query_lis2dw_cmd = self.mcu.lookup_command(
@@ -140,7 +137,7 @@ class LIS2DW:
         # In case of miswiring, testing LIS2DW device ID prevents treating
         # noise or wrong signal as a correctly initialized device
         dev_id = self.read_reg(REG_LIS2DW_WHO_AM_I_ADDR)
-        logging.info("lis2dw_dev_id: %x", dev_id)
+        logging.info("%s_dev_id: %x", self.lis_type, dev_id)
         if self.lis_type == LIS2DW_TYPE:
             if dev_id != LIS2DW_DEV_ID:
                 raise self.printer.command_error(
@@ -148,6 +145,9 @@ class LIS2DW:
                     "This is generally indicative of connection problems\n"
                     "(e.g. faulty wiring) or a faulty lis2dw chip."
                     % (dev_id, LIS2DW_DEV_ID))
+            if self.bus_type == SPI_SERIAL_TYPE:
+                # Disable I2C
+                self.set_reg(REG_LIS2DW_CTRL_REG2_ADDR, 0x06)
             # Setup chip in requested query rate
             # ODR/2, +-16g, low-pass filter, Low-noise abled
             self.set_reg(REG_LIS2DW_CTRL_REG6_ADDR, 0x34)
@@ -170,8 +170,8 @@ class LIS2DW:
             self.set_reg(REG_LIS2DW_CTRL_REG1_ADDR, 0x97)
             # Disable all filtering
             self.set_reg(REG_LIS2DW_CTRL_REG2_ADDR, 0)
-            # Set +-8g, High Resolution mode
-            self.set_reg(REG_LIS2DW_CTRL_REG4_ADDR, 0x28)
+            # Set +-16g, High Resolution mode
+            self.set_reg(REG_LIS2DW_CTRL_REG4_ADDR, 0x38)
             # Enable FIFO
             self.set_reg(REG_LIS2DW_CTRL_REG5_ADDR, 0x40)
             # Stream mode
@@ -183,7 +183,7 @@ class LIS2DW:
             self.set_reg(REG_LIS2DW_FIFO_CTRL, 0xC0)
         else:
             self.set_reg(REG_LIS2DW_FIFO_CTRL, 0x80)
-        logging.info("LIS2DW starting '%s' measurements", self.name)
+        logging.info("%s starting '%s' measurements", self.lis_type, self.name)
         # Initialize clock tracking
         self.ffreader.note_start()
         self.last_error_count = 0
@@ -192,7 +192,7 @@ class LIS2DW:
         self.set_reg(REG_LIS2DW_FIFO_CTRL, 0x00)
         self.query_lis2dw_cmd.send_wait_ack([self.oid, 0])
         self.ffreader.note_end()
-        logging.info("LIS2DW finished '%s' measurements", self.name)
+        logging.info("%s finished '%s' measurements", self.lis_type, self.name)
         self.set_reg(REG_LIS2DW_FIFO_CTRL, 0x00)
     def _process_batch(self, eventtime):
         samples = self.ffreader.pull_samples()
