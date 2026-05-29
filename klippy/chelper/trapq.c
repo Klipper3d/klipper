@@ -228,6 +228,71 @@ trapq_set_position(struct trapq *tq, double print_time
     list_add_head(&m->node, &tq->history);
 }
 
+// Truncate the trapq at the given print_time and remove all later moves.
+// Returns 0 on success and stores the position at print_time in *pos_*.
+// Returns -1 if there are no moves to truncate.
+int __visible
+trapq_truncate_after(struct trapq *tq, double print_time
+                     , double *pos_x, double *pos_y, double *pos_z)
+{
+    struct move *head_sentinel = list_first_entry(&tq->moves, struct move, node);
+    struct move *tail_sentinel = list_last_entry(&tq->moves, struct move, node);
+    struct move *m, *found = NULL;
+    struct coord pos;
+    double local_t = 0.;
+    
+    m = list_next_entry(head_sentinel, node);
+    if (m == tail_sentinel)
+        return -1;
+
+    for (; m != tail_sentinel; m = list_next_entry(m, node)) {
+        if (print_time < m->print_time) {
+            // Splice is before this move - drop it and all later moves
+            pos = m->start_pos;
+            while (m != tail_sentinel) {
+                struct move *next = list_next_entry(m, node);
+                list_del(&m->node);
+                free(m);
+                m = next;
+            }
+            goto done;
+        }
+        if (print_time <= m->print_time + m->move_t) {
+            found = m;
+            local_t = print_time - m->print_time;
+            break;
+        }
+    }
+
+    if (found) {
+        pos = move_get_coord(found, local_t);
+        if (local_t < found->move_t)
+            found->move_t = local_t;
+        for (;;) {
+            struct move *next = list_next_entry(found, node);
+            if (next == tail_sentinel)
+                break;
+            list_del(&next->node);
+            free(next);
+        }
+    } else {
+        // print_time is after all moves - keep moves, return end position
+        found = list_prev_entry(tail_sentinel, node);
+        if (found == head_sentinel)
+            return -1;
+        pos = move_get_coord(found, found->move_t);
+    }
+
+done:
+    *pos_x = pos.x;
+    *pos_y = pos.y;
+    *pos_z = pos.z;
+
+    tail_sentinel->print_time = 0.;
+    trapq_check_sentinels(tq);
+    return 0;
+}
+
 // Copy the info in a 'struct move' to a 'struct pull_move'
 static void
 copy_pull_move(struct pull_move *p, struct move *m)

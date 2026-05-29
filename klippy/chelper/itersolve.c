@@ -273,6 +273,18 @@ itersolve_set_position(struct stepper_kinematics *sk
     sk->commanded_pos = itersolve_calc_position_from_coord(sk, x, y, z);
 }
 
+// Reset the iterative solver's "already generated steps up to" pointer.
+// Required after wipe_trapq() if the next move's print_time will be earlier
+// than the end of any previously processed (now wiped) trapq move - otherwise
+// itersolve_generate_steps() will skip the early portion of the next move
+// because last_flush_time still points past it.
+void __visible
+itersolve_reset_flush_time(struct stepper_kinematics *sk, double flush_time)
+{
+    sk->last_flush_time = flush_time;
+    sk->last_move_time = flush_time;
+}
+
 double __visible
 itersolve_get_commanded_pos(struct stepper_kinematics *sk)
 {

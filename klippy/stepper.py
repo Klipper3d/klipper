@@ -43,6 +43,7 @@ class MCU_stepper:
         self._step_both_edge = self._req_step_both_edge = False
         self._mcu_position_offset = 0.
         self._reset_cmd_tag = self._get_position_cmd = None
+        self._cancel_ctl = None
         self._active_callbacks = []
         motion_queuing = printer.load_object(config, 'motion_queuing')
         sname = self._name.split()[-1]
@@ -126,6 +127,7 @@ class MCU_stepper:
         self._get_position_cmd = self._mcu.lookup_query_command(
             "stepper_get_position oid=%c",
             "stepper_position oid=%c pos=%i", oid=self._oid)
+        self._cancel_ctl = self._mcu.create_stepper_cancel(self)
         max_error_ticks = self._mcu.seconds_to_clock(MAX_STEPCOMPRESS_ERROR)
         ffi_main, ffi_lib = chelper.get_ffi()
         ffi_lib.stepcompress_fill(self._stepqueue, self._oid, max_error_ticks,
@@ -210,6 +212,138 @@ class MCU_stepper:
         data = (self._reset_cmd_tag, self._oid, 0)
         ffi_lib.syncemitter_queue_msg(self._syncemitter, 0, data, len(data))
         self._query_mcu_position()
+    def get_cancel_controller(self):
+        return self._cancel_ctl
+    def is_cancel_protocol_supported(self):
+        return self._cancel_ctl is not None and self._cancel_ctl.is_supported()
+    def cancel_drain_host_pipeline(self):
+        # Discard any host-side step generation results that have not yet
+        # reached the MCU's step queue. Two distinct buffers must be cleared:
+        #   1) stepcompress's internal pending step (sc->next_step_clock)
+        #      and unflushed compressed-move queue (sc->queue).
+        #   2) The syncemitter msg_queue holding queue_step/dir messages
+        #      that were generated but not yet dispatched to serialqueue.
+        # If either is left in place, a background flush after stepper_cancel
+        # will emit those stale messages with intervals computed against the
+        # OLD last_step_clock; once the MCU has reset next_step_time to the
+        # cancel anchor, those intervals translate to step times in the past
+        # and the MCU shuts down with "Timer too close".
+        ffi_main, ffi_lib = chelper.get_ffi()
+        ffi_lib.stepcompress_discard_pending(self._stepqueue)
+        ffi_lib.syncemitter_drop_pending_msgs(self._syncemitter)
+    def retarget_reanchor_host(self, splice_time):
+        # Re-anchor host stepcompress and itersolve after a trapq splice
+        # without stopping the MCU (no reset_step_clock / cancel_finish).
+        # Must run after cancel_drain_host_pipeline().
+        ffi_main, ffi_lib = chelper.get_ffi()
+        splice_clock = self._mcu.print_time_to_clock(splice_time)
+        ret = ffi_lib.stepcompress_reset(self._stepqueue, splice_clock)
+        if ret:
+            raise error("Internal error in stepcompress")
+        sk = self._stepper_kinematics
+        if self._mcu.is_fileoutput():
+            ffi_lib.itersolve_reset_flush_time(sk, splice_time)
+            return self.get_commanded_position()
+        params = self._get_position_cmd.send([self._oid])
+        last_pos = params['pos']
+        if self._invert_dir:
+            last_pos = -last_pos
+        query_time = self._mcu.estimated_print_time(
+            params['#receive_time'])
+        pos_clock = self._mcu.print_time_to_clock(query_time)
+        ret = ffi_lib.stepcompress_set_last_position(
+            self._stepqueue, pos_clock, last_pos)
+        if ret:
+            raise error("Internal error in stepcompress")
+        physical_pos = (last_pos * self._step_dist) - self._mcu_position_offset
+        ffi_lib.itersolve_set_position(sk, physical_pos, 0., 0.)
+        ffi_lib.itersolve_reset_flush_time(sk, splice_time)
+        self._mcu.get_printer().send_event("stepper:sync_mcu_position", self)
+        return physical_pos
+    def reanchor_step_clock(self, clock, print_time):
+        # Re-anchor host stepcompress + MCU s->next_step_time + itersolve
+        # last_flush_time to a FRESH clock chosen "now" rather than the
+        # stale value committed at stepper_cancel_finish time. The
+        # reset_step_clock MCU command is queued via syncemitter with
+        # req_clock=0 so it is dispatched ahead of any subsequent
+        # queue_step messages produced from the next move. Without this
+        # re-anchor, an arbitrarily long gap between CANCEL_STEP and the
+        # next MANUAL_STEPPER MOVE leaves MCU s->next_step_time pointing
+        # in the past, and the very first queue_step's absolute step time
+        # (next_step_time + interval) is also in the past -> MCU shuts
+        # down with "Timer too close". Calling this just before the next
+        # move's first step is generated bounds the host->MCU latency
+        # window to a single BG flush + serial transmit, comfortably
+        # within CANCEL_RESYNC_GUARD.
+        ffi_main, ffi_lib = chelper.get_ffi()
+        ret = ffi_lib.stepcompress_reset(self._stepqueue, clock)
+        if ret:
+            raise error("Internal error in stepcompress")
+        # Queue reset_step_clock directly into the syncemitter msg_queue
+        # (mirrors the note_homing_end() pattern). req_clock=0 guarantees
+        # this command is transmitted before any pending queue_step.
+        data = (self._reset_cmd_tag, self._oid, clock & 0xffffffff)
+        ffi_lib.syncemitter_queue_msg(self._syncemitter, 0, data, len(data))
+        sk = self._stepper_kinematics
+        ffi_lib.itersolve_reset_flush_time(sk, print_time)
+    def cancel_start(self):
+        if self._cancel_ctl is not None:
+            self._cancel_ctl.start()
+    def cancel_trigger(self):
+        if self._cancel_ctl is not None:
+            self._cancel_ctl.trigger()
+    def cancel_status(self):
+        if self._cancel_ctl is None:
+            return None
+        return self._cancel_ctl.status()
+    def cancel_finish(self, clock):
+        if self._cancel_ctl is None:
+            return None
+        return self._cancel_ctl.finish(clock)
+    def cancel_reconcile(self, clock):
+        finish = self.cancel_finish(clock)
+        if not finish or not finish.get('ok', 0):
+            # MCU rejected the finish/reset; leave host state untouched so
+            # host and MCU clock epochs do not diverge.
+            return finish, None
+        # The MCU set s->next_step_time = clock in command_stepper_cancel_finish
+        # (the clock we just passed). Mirror that exact value in stepcompress
+        # so future queue_step intervals are anchored to the same epoch.
+        ffi_main, ffi_lib = chelper.get_ffi()
+        ret = ffi_lib.stepcompress_reset(self._stepqueue, clock)
+        if ret:
+            raise error("Internal error in stepcompress")
+        if self._mcu.is_fileoutput():
+            return finish, self.get_commanded_position()
+        # Query the MCU's actual step count after stop and re-anchor the
+        # iterative solver to the *physical* position. The previous offset
+        # (established by the most recent SET_POSITION) is preserved so the
+        # logical-to-MCU mapping for subsequent moves is unchanged. Without
+        # this, itersolve still reports the END of the canceled move (where
+        # step generation had already advanced to), causing the next move
+        # request to compute distance=0 and silently produce no motion.
+        params = self._get_position_cmd.send([self._oid])
+        last_pos = params['pos']
+        if self._invert_dir:
+            last_pos = -last_pos
+        print_time = self._mcu.estimated_print_time(params['#receive_time'])
+        pos_clock = self._mcu.print_time_to_clock(print_time)
+        ret = ffi_lib.stepcompress_set_last_position(self._stepqueue,
+                                                    pos_clock, last_pos)
+        if ret:
+            raise error("Internal error in stepcompress")
+        physical_pos = (last_pos * self._step_dist) - self._mcu_position_offset
+        sk = self._stepper_kinematics
+        ffi_lib.itersolve_set_position(sk, physical_pos, 0., 0.)
+        # Reset the iterative solver's "already-flushed-up-to" pointer.
+        # Otherwise, when the next move is appended to the trapq starting at
+        # `clock`'s print_time, itersolve will skip over its early portion
+        # because last_flush_time still points at the END of the now-wiped
+        # canceled move - producing barely any (or no) steps for the new move.
+        flush_print_time = self._mcu.clock_to_print_time(clock)
+        ffi_lib.itersolve_reset_flush_time(sk, flush_print_time)
+        self._mcu.get_printer().send_event("stepper:sync_mcu_position", self)
+        return finish, physical_pos
     def _query_mcu_position(self):
         if self._mcu.is_fileoutput():
             return

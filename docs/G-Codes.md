@@ -1004,7 +1004,7 @@ enabled.
 #### MANUAL_STEPPER
 `MANUAL_STEPPER STEPPER=config_name [ENABLE=[0|1]]
 [SET_POSITION=<pos>] [SPEED=<speed>] [ACCEL=<accel>] [MOVE=<pos>]
-[SYNC=0]]`: This command will alter the state of the stepper. Use the
+[RETARGET=<pos>] [SYNC=0]]`: This command will alter the state of the stepper. Use the
 ENABLE parameter to enable/disable the stepper. Use the SET_POSITION
 parameter to force the stepper to think it is at the given
 position. Use the MOVE parameter to request a movement to the given
@@ -1015,6 +1015,17 @@ performed. Normally future G-Code commands will be scheduled to run
 after the stepper move completes, however if a manual stepper move
 uses SYNC=0 then future G-Code movement commands may run in parallel
 with the stepper movement.
+
+`MANUAL_STEPPER STEPPER=config_name [SPEED=<speed>] [ACCEL=<accel>]
+RETARGET=<pos>`: While a `MOVE` with `SYNC=0` is active, change the
+remaining motion toward a new target position and speed without stopping
+the motor (trapq splice). Direction is determined by the sign of
+`RETARGET` relative to the current position at the splice time (same as
+`MOVE`). `SPEED` is a positive magnitude. `RETARGET` cannot be combined
+with `MOVE`, `ENABLE`, `SET_POSITION`, or `STOP_ON_ENDSTOP` in the same
+command. Use `CANCEL_STEP` for a hard stop instead. See
+[Manual_Stepper_Retarget.md](Manual_Stepper_Retarget.md) for timing,
+delays, and flywheel usage.
 
 `MANUAL_STEPPER STEPPER=config_name [SPEED=<speed>] [ACCEL=<accel>]
 MOVE=<pos> STOP_ON_ENDSTOP=<check_type>`: If STOP_ON_ENDSTOP is
@@ -1050,6 +1061,13 @@ acceleration above the specified limits. The
 `INSTANTANEOUS_CORNER_VELOCITY` specifies the maximum instantaneous
 velocity change (in mm/s) of the motor during the junction of two
 moves (the default is 1mm/s).
+
+#### CANCEL_STEP
+`CANCEL_STEP STEPPER=config_name`: Cancel an active `MANUAL_STEPPER`
+`MOVE` command for the given stepper. This command only applies to
+`MANUAL_STEPPER` moves issued with `SYNC=0` and only when the stepper
+is in manual mode (not registered as `GCODE_AXIS`). If there is no
+active SYNC=0 move, then this command has no effect.
 
 ### [mcp4018]
 

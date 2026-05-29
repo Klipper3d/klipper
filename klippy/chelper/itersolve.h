@@ -39,5 +39,7 @@ void itersolve_set_position(struct stepper_kinematics *sk
 double itersolve_get_commanded_pos(struct stepper_kinematics *sk);
 double itersolve_get_gen_steps_pre_active(struct stepper_kinematics *sk);
 double itersolve_get_gen_steps_post_active(struct stepper_kinematics *sk);
+void itersolve_reset_flush_time(struct stepper_kinematics *sk
+    , double flush_time);
 
 #endif // itersolve.h

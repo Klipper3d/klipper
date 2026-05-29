@@ -2649,6 +2649,11 @@ printer kinematics.
 #   acceleration of zero will result in no acceleration. This value
 #   will be used if a MANUAL_STEPPER command does not specify an ACCEL
 #   parameter. The default is zero.
+#splice_delay:
+#   Time in seconds between the estimated print time and the trapq
+#   splice point for MANUAL_STEPPER RETARGET commands. If not
+#   specified then the motion_queuing kinematic flush delay is used.
+#   See docs/Manual_Stepper_Retarget.md for timing details.
 #endstop_pin:
 #   Endstop switch detection pin. If specified, then one may perform
 #   "homing moves" by adding a STOP_ON_ENDSTOP parameter to

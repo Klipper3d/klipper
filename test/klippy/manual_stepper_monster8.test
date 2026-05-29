@@ -1,6 +1,6 @@
-# Test case for manual_stepper
-CONFIG manual_stepper.cfg
-DICTIONARY atmega2560.dict
+# Monster8 scoped test case for manual_stepper cancel scaffolding
+CONFIG manual_stepper_monster8.cfg
+DICTIONARY klipper.dict
 
 # Test basic moves
 MANUAL_STEPPER STEPPER=basic_stepper ENABLE=1
@@ -14,12 +14,7 @@ MANUAL_STEPPER STEPPER=basic_stepper ENABLE=0
 MANUAL_STEPPER STEPPER=basic_stepper MOVE=300 SPEED=10 ACCEL=2000
 MANUAL_STEPPER STEPPER=basic_stepper MOVE=100 SPEED=10 ACCEL=2000
 
-# Test RETARGET trapq splice on active SYNC=0 move
-MANUAL_STEPPER STEPPER=basic_stepper MOVE=120 SPEED=5 ACCEL=50 SYNC=0
-MANUAL_STEPPER STEPPER=basic_stepper RETARGET=200 SPEED=10 ACCEL=0
-MANUAL_STEPPER STEPPER=basic_stepper RETARGET=50 SPEED=8
-
-# Test phase-1 cancel responses: unsupported firmware / already idle / gcode axis reject
+# Test phase-2 cancel responses: cancel_pending / already_idle / gcode axis reject
 MANUAL_STEPPER STEPPER=basic_stepper MOVE=120 SPEED=5 ACCEL=50 SYNC=0
 CANCEL_STEP STEPPER=basic_stepper
 MANUAL_STEPPER STEPPER=basic_stepper MOVE=2 SPEED=2

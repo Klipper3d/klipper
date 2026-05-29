@@ -47,8 +47,11 @@ struct stepper {
     uint32_t position;
     struct move_queue_head mq;
     struct trsync_signal stop_signal;
+    uint32_t cancel_clock;
     // gcc (pre v6) does better optimization when uint8_t are bitfields
     uint8_t flags : 8;
+    uint8_t cancel_flags : 8;
+    uint8_t cancel_reason : 8;
 };
 
 enum { POSITION_BIAS=0x40000000 };
@@ -57,6 +60,8 @@ enum {
     SF_LAST_DIR=1<<0, SF_NEXT_DIR=1<<1, SF_INVERT_STEP=1<<2, SF_NEED_RESET=1<<3,
     SF_SINGLE_SCHED=1<<4, SF_OPTIMIZED_PATH=1<<5, SF_HAVE_ADD=1<<6
 };
+enum { SCF_ARMED=1<<0 };
+enum { SCR_NONE=0, SCR_HOST_REQUEST=1 };
 
 // Setup a stepper for the next move in its queue
 static uint_fast8_t
@@ -344,6 +349,77 @@ command_stepper_get_position(uint32_t *args)
     sendf("stepper_position oid=%c pos=%i", oid, position - POSITION_BIAS);
 }
 DECL_COMMAND(command_stepper_get_position, "stepper_get_position oid=%c");
+
+// Stop all moves for a given stepper (caller must disable IRQs)
+static void stepper_stop(struct trsync_signal *tss, uint8_t reason);
+
+void
+command_stepper_cancel_start(uint32_t *args)
+{
+    struct stepper *s = stepper_oid_lookup(args[0]);
+    irq_disable();
+    s->cancel_flags |= SCF_ARMED;
+    s->cancel_reason = SCR_NONE;
+    irq_enable();
+}
+DECL_COMMAND(command_stepper_cancel_start, "stepper_cancel_start oid=%c");
+
+void
+command_stepper_cancel_trigger(uint32_t *args)
+{
+    struct stepper *s = stepper_oid_lookup(args[0]);
+    irq_disable();
+    if (s->cancel_flags & SCF_ARMED) {
+        s->cancel_clock = timer_read_time();
+        s->cancel_reason = SCR_HOST_REQUEST;
+        s->cancel_flags &= ~SCF_ARMED;
+        stepper_stop(&s->stop_signal, s->cancel_reason);
+    }
+    irq_enable();
+}
+DECL_COMMAND(command_stepper_cancel_trigger, "stepper_cancel_trigger oid=%c");
+
+void
+command_stepper_cancel_status(uint32_t *args)
+{
+    uint8_t oid = args[0];
+    struct stepper *s = stepper_oid_lookup(oid);
+    irq_disable();
+    uint8_t active = !!s->count;
+    uint8_t can_reset = !active && !!(s->flags & SF_NEED_RESET);
+    uint32_t cancel_clock = s->cancel_clock;
+    uint8_t cancel_reason = s->cancel_reason;
+    irq_enable();
+    sendf("stepper_cancel_state oid=%c active=%c can_reset=%c"
+          " last_cancel_clock=%u reason=%c",
+          oid, active, can_reset, cancel_clock, cancel_reason);
+}
+DECL_COMMAND(command_stepper_cancel_status, "stepper_cancel_status oid=%c");
+
+void
+command_stepper_cancel_finish(uint32_t *args)
+{
+    uint8_t oid = args[0];
+    uint32_t waketime = args[1];
+    struct stepper *s = stepper_oid_lookup(oid);
+    irq_disable();
+    uint8_t active = !!s->count;
+    uint8_t can_reset = !active && !!(s->flags & SF_NEED_RESET);
+    uint8_t ok = 0;
+    if (can_reset) {
+        s->next_step_time = s->time.waketime = waketime;
+        s->flags &= ~SF_NEED_RESET;
+        ok = 1;
+    }
+    uint32_t cancel_clock = s->cancel_clock;
+    uint8_t cancel_reason = s->cancel_reason;
+    irq_enable();
+    sendf("stepper_cancel_finish_state oid=%c ok=%c active=%c can_reset=%c"
+          " last_cancel_clock=%u reason=%c",
+          oid, ok, active, can_reset, cancel_clock, cancel_reason);
+}
+DECL_COMMAND(command_stepper_cancel_finish,
+             "stepper_cancel_finish oid=%c clock=%u");
 
 // Stop all moves for a given stepper (caller must disable IRQs)
 static void

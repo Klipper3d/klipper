@@ -78,6 +78,15 @@ syncemitter_queue_msg(struct syncemitter *se, uint64_t req_clock
     list_add_tail(&qm->node, &se->msg_queue);
 }
 
+// Drop all queued (but not yet dispatched to the serial queue) messages.
+// Used during cancel reconcile to avoid sending stale queue_step/dir
+// commands that were generated for a move that has since been wiped.
+void __visible
+syncemitter_drop_pending_msgs(struct syncemitter *se)
+{
+    message_queue_free(&se->msg_queue);
+}
+
 // Generate steps (via itersolve) and flush
 static int32_t
 se_generate_steps(struct syncemitter *se)

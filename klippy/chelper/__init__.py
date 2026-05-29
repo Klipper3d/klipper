@@ -42,6 +42,7 @@ defs_stepcompress = """
     void stepcompress_set_invert_sdir(struct stepcompress *sc
         , uint32_t invert_sdir);
     int stepcompress_reset(struct stepcompress *sc, uint64_t last_step_clock);
+    void stepcompress_discard_pending(struct stepcompress *sc);
     int stepcompress_set_last_position(struct stepcompress *sc
         , uint64_t clock, int64_t last_position);
     int64_t stepcompress_find_past_position(struct stepcompress *sc
@@ -59,6 +60,7 @@ defs_steppersync = """
         struct syncemitter *se);
     void syncemitter_queue_msg(struct syncemitter *se, uint64_t req_clock
         , uint32_t *data, int len);
+    void syncemitter_drop_pending_msgs(struct syncemitter *se);
     struct syncemitter *steppersync_alloc_syncemitter(struct steppersync *ss
         , char name[16], int alloc_stepcompress);
     void steppersync_setup_movequeue(struct steppersync *ss
@@ -87,6 +89,8 @@ defs_itersolve = """
     double itersolve_get_commanded_pos(struct stepper_kinematics *sk);
     double itersolve_get_gen_steps_pre_active(struct stepper_kinematics *sk);
     double itersolve_get_gen_steps_post_active(struct stepper_kinematics *sk);
+    void itersolve_reset_flush_time(struct stepper_kinematics *sk
+        , double flush_time);
 """
 
 defs_trapq = """
@@ -108,6 +112,8 @@ defs_trapq = """
         , double clear_history_time);
     void trapq_set_position(struct trapq *tq, double print_time
         , double pos_x, double pos_y, double pos_z);
+    int trapq_truncate_after(struct trapq *tq, double print_time
+        , double *pos_x, double *pos_y, double *pos_z);
     int trapq_extract_old(struct trapq *tq, struct pull_move *p, int max
         , double start_time, double end_time);
 """

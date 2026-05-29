@@ -276,6 +276,69 @@ class MCU_trsync:
             s.note_homing_end()
         return params['trigger_reason']
 
+class MCU_stepper_cancel:
+    def __init__(self, mcu, mcu_stepper):
+        self._mcu = mcu
+        self._stepper = mcu_stepper
+        self._oid = mcu_stepper.get_oid()
+        self._cmd_queue = mcu.alloc_command_queue()
+        self._start_cmd = self._trigger_cmd = None
+        self._status_cmd = self._finish_cmd = None
+        self._supported = False
+        mcu.register_config_callback(self._build_config)
+    def _build_config(self):
+        mcu = self._mcu
+        msgparser = mcu._serial.get_msgparser()
+        required_cmds = [
+            "stepper_cancel_start oid=%c",
+            "stepper_cancel_trigger oid=%c",
+            "stepper_cancel_status oid=%c",
+            "stepper_cancel_state oid=%c active=%c can_reset=%c"
+            " last_cancel_clock=%u reason=%c",
+            "stepper_cancel_finish oid=%c clock=%u",
+            "stepper_cancel_finish_state oid=%c ok=%c active=%c can_reset=%c"
+            " last_cancel_clock=%u reason=%c"
+        ]
+        for cmd in required_cmds:
+            try:
+                msgparser.lookup_command(cmd)
+            except msgparser.error:
+                self._supported = False
+                return
+        self._start_cmd = mcu.lookup_command(
+            "stepper_cancel_start oid=%c", cq=self._cmd_queue)
+        self._trigger_cmd = mcu.lookup_command(
+            "stepper_cancel_trigger oid=%c", cq=self._cmd_queue)
+        self._status_cmd = mcu.lookup_query_command(
+            "stepper_cancel_status oid=%c",
+            "stepper_cancel_state oid=%c active=%c can_reset=%c"
+            " last_cancel_clock=%u reason=%c",
+            oid=self._oid, cq=self._cmd_queue)
+        self._finish_cmd = mcu.lookup_query_command(
+            "stepper_cancel_finish oid=%c clock=%u",
+            "stepper_cancel_finish_state oid=%c ok=%c active=%c can_reset=%c"
+            " last_cancel_clock=%u reason=%c",
+            oid=self._oid, cq=self._cmd_queue)
+        self._supported = True
+    def is_supported(self):
+        return self._supported
+    def start(self):
+        if not self._supported:
+            return
+        self._start_cmd.send([self._oid])
+    def trigger(self):
+        if not self._supported:
+            return
+        self._trigger_cmd.send([self._oid])
+    def status(self):
+        if not self._supported:
+            return None
+        return self._status_cmd.send([self._oid])
+    def finish(self, clock):
+        if not self._supported:
+            return None
+        return self._finish_cmd.send([self._oid, clock])
+
 TRSYNC_TIMEOUT = 0.025
 TRSYNC_SINGLE_MCU_TIMEOUT = 0.250
 
@@ -1173,6 +1236,8 @@ class MCU:
         return self._config_helper.setup_pin(pin_type, pin_params)
     def create_oid(self):
         return self._config_helper.create_oid()
+    def create_stepper_cancel(self, mcu_stepper):
+        return MCU_stepper_cancel(self, mcu_stepper)
     def register_config_callback(self, cb):
         self._config_helper.register_config_callback(cb)
     def add_config_cmd(self, cmd, is_init=False, on_restart=False):
