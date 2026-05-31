@@ -1,7 +1,8 @@
 # Generic Filament Sensor Module
 #
 # Copyright (C) 2019  Eric Callahan <arksine.code@gmail.com>
-# Region-Aware Filament Runout Pause Feature Concept & Implementation Copyright (C) 2026 Famtory <famtory@gmail.com>
+# Region-Aware Filament Runout Pause Feature Concept & Implementation
+# Copyright (C) 2026 Famtory <famtory@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
