@@ -23,6 +23,7 @@ class Temperature_HOST:
             return
         self.sample_timer = self.reactor.register_timer(
             self._sample_pi_temperature)
+        self.printer.load_object(config, 'aio_executor')
         try:
             self.file_handle = open(self.path, "r")
         except:
@@ -31,9 +32,14 @@ class Temperature_HOST:
 
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
+        self.printer.register_event_handler("klippy:disconnect",
+                                            self.handle_disconnect)
 
     def handle_connect(self):
         self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
+
+    def handle_disconnect(self):
+        self.file_handle.close()
 
     def setup_minmax(self, min_temp, max_temp):
         self.min_temp = min_temp
@@ -45,10 +51,15 @@ class Temperature_HOST:
     def get_report_time_delta(self):
         return HOST_REPORT_TIME
 
+    def _get_sample(self):
+        self.file_handle.seek(0)
+        return float(self.file_handle.read())/1000.0
+
     def _sample_pi_temperature(self, eventtime):
         try:
-            self.file_handle.seek(0)
-            self.temp = float(self.file_handle.read())/1000.0
+            aio = self.printer.lookup_object('aio_executor')
+            with aio.get_executor() as executor:
+                self.temp = executor.submit(self._get_sample)
         except Exception:
             logging.exception("temperature_host: Error reading data")
             self.temp = 0.0
