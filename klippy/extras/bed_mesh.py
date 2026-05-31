@@ -1,7 +1,8 @@
 # Mesh Bed Leveling
 #
 # Copyright (C) 2018-2019 Eric Callahan <arksine.code@gmail.com>
-# Wandering Probe Points (WPP) Feature Concept & Implementation Copyright (C) 2026 Famtory <famtory@gmail.com>
+# Wandering Probe Points (WPP) Feature Concept & Implementation
+# Copyright (C) 2026 Famtory <famtory@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math, json, collections
@@ -627,12 +628,14 @@ class BedMeshCalibrate:
             dx, dy = grid[self.wandering_state % 9]
             if is_calibrating:
                 self.wandering_state += 1
-                logging.info("bed_mesh: wandering step=%.2f, offset=(%.2f, %.2f)" % 
-                             (step, dx, dy))
-                             
+                logging.info("bed_mesh: wandering step=%.2f, "
+                             "offset=(%.2f, %.2f)" % (step, dx, dy))
+
         shifted_min = (self.mesh_min[0] + dx, self.mesh_min[1] + dy)
         shifted_max = (self.mesh_max[0] + dx, self.mesh_max[1] + dy)
-        shifted_orig = (self.origin[0] + dx, self.origin[1] + dy) if self.origin else None
+        shifted_orig = None
+        if self.origin:
+            shifted_orig = (self.origin[0] + dx, self.origin[1] + dy)
 
         if need_cfg_update:
             self._verify_algorithm(gcmd.error)
