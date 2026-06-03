@@ -319,6 +319,7 @@ class TMCStallguardDump:
 class TMCCommandHelper:
     def __init__(self, config, mcu_tmc, current_helper):
         self.printer = config.get_printer()
+        self.config_name = config.get_name()
         self.stepper_name = ' '.join(config.get_name().split()[1:])
         self.name = config.get_name().split()[-1]
         self.mcu_tmc = mcu_tmc
@@ -357,6 +358,13 @@ class TMCCommandHelper:
         gcode.register_mux_command("SET_TMC_CURRENT", "STEPPER", self.name,
                                    self.cmd_SET_TMC_CURRENT,
                                    desc=self.cmd_SET_TMC_CURRENT_help)
+        # Enable only for Stallguard2 drivers
+        fields = self.mcu_tmc.get_fields()
+        if fields.lookup_register("sgt", None) is None:
+            return
+        gcode.register_mux_command("TMC_CALIBRATE", "STEPPER", self.name,
+                                   self.cmd_TMC_CALIBRATE,
+                                   desc=self.cmd_TMC_CALIBRATE_help)
     def _init_registers(self, print_time=None):
         # Send registers
         for reg_name in list(self.fields.registers.keys()):
@@ -552,7 +560,199 @@ class TMCCommandHelper:
                 if self.read_translate is not None:
                     reg_name, val = self.read_translate(reg_name, val)
                 gcmd.respond_info(self.fields.pretty_format(reg_name, val))
+    cmd_TMC_CALIBRATE_help = "Calibrate TMC parameters"
+    def cmd_TMC_CALIBRATE(self, gcmd):
+        target = gcmd.get('TARGET')
+        if target == "sgt" or target == "sgt_velocity":
+            calibrator = TMCStallGuardHelper(self, gcmd)
+            calibrator.start()
+        else:
+            raise gcmd.error("Unknown target name '%s'" % (target))
 
+######################################################################
+# TMC Calibration helpers
+######################################################################
+
+class TMCStallGuardHelper:
+    def __init__(self, tmc_command_helper, gcmd):
+        self.printer = tmc_command_helper.printer
+        self.mcu_tmc = tmc_command_helper.mcu_tmc
+        self.config_name = tmc_command_helper.config_name
+        self.record_helper = tmc_command_helper.record_helper
+        self.toolhead = self.printer.lookup_object('toolhead')
+        self.respond_info = gcmd.respond_info
+        self.target = gcmd.get('TARGET')
+        if self.target == "sgt_velocity":
+            self.respond_info(
+                "Move motor and slowly increase velocity")
+        # Prepare
+        stepper_name = tmc_command_helper.stepper_name
+        fmove = self.printer.lookup_object('force_move')
+        self.mcu_stepper = fmove.lookup_stepper(stepper_name)
+        # Max speed is 10 RPM
+        _, steps_per_rotation = self.mcu_stepper.get_rotation_distance()
+        max_rpm = 10
+        min_rpm = 2
+        if self.target == "sgt":
+            self.respond_info(
+                "Move stepper/toolhead at %d RPM < low velocity < %d RPM" % (
+                    min_rpm, max_rpm))
+        # Steps per second limits
+        self.fullstep_window = steps_per_rotation / 200
+        self.max_sps = steps_per_rotation * (max_rpm / 60)
+        self.min_sps = steps_per_rotation * (min_rpm / 60)
+        # Registers state
+        self.fields = self.mcu_tmc.get_fields()
+        self._dirty_regs = collections.OrderedDict()
+        self._prev_state = collections.OrderedDict()
+        # Measurements
+        self.reactor = self.printer.get_reactor()
+        self.msgs = []
+        self.is_running = True
+        self._timer = None
+        self.sgt = 0
+        self.respond_info("Use ABORT to exit")
+        gcode = self.printer.lookup_object("gcode")
+        try:
+            gcode.register_command("ABORT", self._cmd_abort,
+                                   desc=self._cmd_abort_help)
+        except self.printer.config_error:
+            raise gcmd.error("Another calibration in progress")
+    _cmd_abort_help = "Abort stallguard calibration"
+    def _cmd_abort(self, gcmd):
+        self.is_running = False
+        gcode = self.printer.lookup_object("gcode")
+        gcode.register_command("ABORT", None)
+        if self._timer is not None:
+            self.reactor.unregister_timer(self._timer)
+            self._timer = None
+        self.toolhead.wait_moves()
+        self._restore_fields()
+    def handle_batch(self, msg):
+        self.msgs.append(msg)
+        return self.is_running
+    def _set_runtime_field(self, field_name, value):
+        reg_name = self.fields.lookup_register(field_name)
+        self._dirty_regs[reg_name] = self.fields.set_field(field_name, value)
+    def _set_field(self, field_name, value):
+        self._prev_state[field_name] = self.fields.get_field(field_name)
+        reg_name = self.fields.lookup_register(field_name)
+        self._dirty_regs[reg_name] = self.fields.set_field(field_name, value)
+    def _send_fields(self):
+        for reg, val in self._dirty_regs.items():
+            self.mcu_tmc.set_register(reg, val)
+        self._dirty_regs.clear()
+    def _restore_fields(self):
+        for field, val in list(self._prev_state.items()):
+            self._set_field(field, val)
+        self._send_fields()
+        self._prev_state.clear()
+    def start(self):
+        self.toolhead.wait_moves()
+        # On earlier drivers, "stealthchop" must be disabled
+        self._set_field("en_pwm_mode", 0)
+        # Enable stallguard filtering
+        self._set_field("sfilt", 1)
+        if self.target == "sgt":
+            self._set_field("sgt", self.sgt)
+        # Disable thigh
+        reg = self.fields.lookup_register("thigh", None)
+        if reg is not None:
+            self._set_field("thigh", 0)
+        self._send_fields()
+        # Start recording
+        self.record_helper.batch_bulk.add_client(self.handle_batch)
+        # Run handler
+        self._timer = self.reactor.register_timer(self._event, self.reactor.NOW)
+    def _stepper_sps(self, ptime, tdiff):
+        pos_now = self.mcu_stepper.get_past_mcu_position(ptime)
+        pos_prev = self.mcu_stepper.get_past_mcu_position(ptime - tdiff)
+        avg_sps = abs(pos_now - pos_prev) / tdiff
+        return int(avg_sps)
+    def _event(self, eventtime):
+        pairs = []
+        tdiff = 0.004
+        while self.msgs:
+            msg = self.msgs.pop(0)
+            samples = msg["data"]
+            for ptime, sg, _ in samples:
+                sps = self._stepper_sps(ptime, tdiff)
+                pairs.append((ptime, sps, sg))
+        if len(pairs) == 0:
+            return eventtime + 1.0
+        if self.target == "sgt":
+            return self._sgt_calibration_event(eventtime, pairs)
+        return self._sgt_velocity_event(eventtime, pairs)
+    def _filter_stable_window(self, pairs, width=5):
+        wsize = self.fullstep_window * width
+        for L in range(0, len(pairs) - 1):
+            ptime, sps, _ = pairs[L]
+            if sps == 0:
+                continue
+            twindow = wsize / sps
+            ptime_end = ptime + twindow
+            R = L + 1
+            while R < len(pairs) and pairs[R][0] <= ptime_end:
+                R += 1
+            W = pairs[L:R+1]
+            # Not enough samples
+            if W[-1][0] - W[0][0] < twindow:
+                break
+            sps_is_ok = all([sps > self.min_sps for _, sps, _ in W])
+            if not sps_is_ok:
+                continue
+            sg_is_zero = all([sg == 0 for _, _, sg in W])
+            sg_is_positive = all([sg > 0 for _, _, sg in W])
+            if sg_is_zero != sg_is_positive:
+                return W
+        return []
+    def _sgt_calibration_event(self, eventtime, pairs):
+        max_sps = max([sps for _, sps, _ in pairs])
+        if max_sps > self.max_sps:
+            step_dist = self.mcu_stepper.get_step_dist()
+            self.respond_info(
+                "Stepper velocity too high: %.1f > %.1f mm/s" % (
+                    max_sps * step_dist, self.max_sps * step_dist))
+            return eventtime + 1.0
+        W = self._filter_stable_window(pairs)
+        if len(W) == 0:
+            return eventtime + 1.0
+        sg_is_zero = all([sg == 0 for _, _, sg in W])
+        results = [sg for _, _, sg in W]
+        avg_result = sum(results) / len(results)
+        if sg_is_zero:
+            self.sgt += 1
+            self._set_runtime_field("sgt", self.sgt)
+            self._send_fields()
+            self.msgs = []
+            self.respond_info("Test sgt: %d" % (self.sgt))
+            return eventtime + 1.0
+        # Finish
+        self.respond_info("Avg sg_result: %.1f" % (avg_result))
+        self.sgt -= 1
+        configfile = self.printer.lookup_object('configfile')
+        configfile.set(self.config_name, 'driver_SGT',
+                       self.sgt)
+        self.respond_info("driver_SGT: %d" % (self.sgt))
+        self.respond_info(
+            "The SAVE_CONFIG command will update the printer config file\n"
+            "with these parameters and restart the printer.")
+        self._cmd_abort(None)
+        return self.reactor.NEVER
+    def _sgt_velocity_event(self, eventtime, pairs):
+        W = self._filter_stable_window(pairs)
+        sg_is_zero = all([sg == 0 for _, _, sg in W])
+        if sg_is_zero:
+            return eventtime + 1.0
+        min_sps = min([sps for _, sps, _ in W])
+        min_sg = min([sg for _, _, sg in W])
+        step_dist = self.mcu_stepper.get_step_dist()
+        min_vel = min_sps * step_dist
+        self.respond_info("Stall detection velocity must be above %.1f mm/s" % (
+                          min_vel))
+        self.respond_info("Min sg_result: %.1f" % (min_sg))
+        self._cmd_abort(None)
+        return self.reactor.NEVER
 
 ######################################################################
 # TMC virtual pins
