@@ -212,6 +212,30 @@ the frame in multiple places. Anodized aluminum extrusions do not conduct
 electricity well. You might need to sand the area where the grounding wire
 is attached to make good electrical contact.
 
+#### Interpolation
+
+To increase the precision of the probing result, the position of the first
+contact between nozzle and bed can be estimated by fitting a piecewise function
+to the measured data. The data will consist of two regions: while the nozzle is
+above the bed, the force will be constant (at the tare value). When the nozzle
+is in contact with the bed, the force will increase linearly with decreasing z
+position. When interpolation is enabled by setting the parameter
+`interpolate_enable`, such piecewise function is fitted to the data and the
+optimal z position of the split point is found by minimising the error squared.
+This enables a resolution finer than the distance between the sampling points
+and hence helps when using slower ADCs (like the HX711).
+
+Due to both physical and technical reasons, the interpolation uses data
+collected during an additional ascending movement after the initial descending
+move. The ascending move must be long enough to have a sufficient number of
+tare samples for the fit (minimum 3 samples, ideally 6). It can be configured
+through the `interpolate_lift_dist` parameter.
+
+It is recommended to use a relative high trigger force for the probe if the
+interpolation is enabled, so enough samples are available for the fit below the
+contact position (also minimum 3 samples, ideally 6).
+
+
 ## Load Cell Probe Setup
 
 This section covers the process for commissioning a load cell probe.
@@ -437,3 +461,6 @@ supply chain. However, this is a sensor with some drawbacks:
 * The sample rate on the HX71x cannot be set from klipper's config. If you have
   the 10SPS version of the sensor (which is widely distributed) it needs to
   be physically re-wired to run at 80SPS.
+* Due to the limited sampling rate, it is recommended to enable interpolation
+  to increase the precision. With the interpolation enabled, a 80SPS HX711 ADC
+  should deliver well usable results.

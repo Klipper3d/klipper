@@ -3,8 +3,10 @@
 # Copyright (C) 2025  Gareth Farrington <gareth@waves.ky>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, math
-import mcu
+import math, sys
+from klippy import gcode
+import mathutil
+
 from . import hx71x
 from . import ads1220
 from . import ads131m0x
@@ -14,6 +16,9 @@ np = None  # delay NumPy import until configuration time
 
 # MCU SOS filter scaled to "fractional grams" for consistent sensor precision
 FRAC_GRAMS_CONV = 32768.0
+
+# Minimum ascent samples needed for piecewise least-squares fit
+FIT_MIN_POINTS = 3
 
 
 class TapAnalysis:
@@ -109,6 +114,11 @@ class ParamHelper:
             self._validate_float_list(gcmd, float_list, above, below)
         return float_list
 
+    def _get_bool(self, config, gcmd):
+        if gcmd:
+            return gcmd.get_int(self._get_name(gcmd), self.value, 0, 1)
+        return config.getboolean(self._get_name(gcmd), self.value)
+
     def get(self, gcmd=None, minval=None, maxval=None, above=None, below=None,
             config=None):
         if config is None and gcmd is None:
@@ -117,6 +127,8 @@ class ParamHelper:
             return self._get_int(config, gcmd, minval, maxval)
         elif self._type_name == 'float':
             return self._get_float(config, gcmd, minval, maxval, above, below)
+        elif self._type_name == 'bool':
+            return self._get_bool(config, gcmd)
         else:
             return self._get_float_list(config, gcmd, above, below)
 
@@ -124,6 +136,10 @@ class ParamHelper:
 def intParamHelper(config, name, default=None, minval=None, maxval=None):
     return ParamHelper(config, name, 'int', default, minval=minval,
         maxval=maxval)
+
+
+def boolParamHelper(config, name, default=None):
+    return ParamHelper(config, name, 'bool', default)
 
 
 def floatParamHelper(config, name, default=None, minval=None, maxval=None,
@@ -236,6 +252,16 @@ def check_sensor_errors(results, printer):
     return samples
 
 
+# compute Z position at a given print_time using stepper history
+def _lookup_z_pos(toolhead, pos_time):
+    kin = toolhead.get_kinematics()
+    steppers = kin.get_steppers()
+    kin_spos = {s.get_name(): s.mcu_to_commanded_position(
+                                s.get_past_mcu_position(pos_time))
+                for s in steppers}
+    return kin.calc_position(kin_spos)[2]
+
+
 class LoadCellProbeConfigHelper:
     def __init__(self, config, load_cell_inst):
         self._printer = config.get_printer()
@@ -248,7 +274,11 @@ class LoadCellProbeConfigHelper:
         self._trigger_force_param = floatParamHelper(config, 'trigger_force',
             default=75, minval=10, maxval=250)
         self._force_safety_limit_param = floatParamHelper(config,
-            'force_safety_limit', minval=100, maxval=5000, default=2000)
+            'force_safety_limit', minval=100, maxval=10000, default=2000)
+        self._interpolate_enable_param = boolParamHelper(config,
+            'interpolate_enable', default=False)
+        self._interpolate_lift_dist_param = floatParamHelper(config,
+            'interpolate_lift_dist', minval=0.1, maxval=5.0, default=0.5)
 
     def get_tare_samples(self, gcmd=None):
         tare_time = self._tare_time_param.get(gcmd)
@@ -285,6 +315,11 @@ class LoadCellProbeConfigHelper:
             raise OverflowError("counts_per_gram value is too large to filter")
         return 1. / counts_per_gram
 
+    def get_interpolate_enable(self, gcmd=None):
+        return self._interpolate_enable_param.get(gcmd)
+
+    def get_interpolate_lift_dist(self, gcmd=None):
+        return self._interpolate_lift_dist_param.get(gcmd)
 
 # Execute probing moves using the MCU_trigger_analog
 class LoadCellProbingMove:
@@ -387,21 +422,48 @@ class TappingMove:
         header = {"header": ["probe_tap_event"]}
         self._clients.add_mux_endpoint("load_cell_probe/dump_taps",
             "load_cell_probe", name, header)
+        self._best_fit = LCBestFit()
 
-    # perform a probing move and a pullback move
     def run_tap(self, gcmd):
         # do the descending move
         epos, collector = self._load_cell_probing_move.probing_move(gcmd)
         # collect samples from the tap
         toolhead = self._printer.lookup_object('toolhead')
+
+        interpolate = self._config_helper.get_interpolate_enable(gcmd)
+        lift_dist = self._config_helper.get_interpolate_lift_dist(gcmd)
+
+        if interpolate:
+            # Lift the toolhead while collecting the samples we will use for
+            # the fit. The ascent data shall cover both the contact region
+            # (force still applied) and free-air region (no force = tare).
+            toolhead.flush_step_generation()
+            trigger_time = toolhead.get_last_move_time()
+
+            params = self._load_cell_probing_move._param_helper \
+                         .get_probe_params(gcmd)
+            lift_pos = toolhead.get_position()
+            lift_pos[2] += lift_dist
+            toolhead.manual_move(lift_pos, params['lift_speed'])
+
+        # Collect all samples through the end of all moves
         toolhead.flush_step_generation()
         move_end = toolhead.get_last_move_time()
         results = collector.collect_until(move_end)
         samples = check_sensor_errors(results, self._printer)
+
+        if interpolate:
+            # Perform fit on the ascent data
+            corrected_z = self._analyze_ascent(gcmd, samples, trigger_time,
+                                               toolhead, epos[2])
+            # Replace the probe result with the fitted Z position
+            epos[2] = corrected_z
+
         # Analyze the tap data
         ppa = TapAnalysis(samples)
         # broadcast tap event data:
         self._clients.send({'tap': ppa.to_dict()})
+
         self._is_last_result_valid = True
         self._last_result = epos[2]
         return epos, self._is_last_result_valid
@@ -412,6 +474,126 @@ class TappingMove:
             'is_last_tap_valid': self._is_last_result_valid
         }
 
+    def _analyze_ascent(self, gcmd, all_samples, trigger_time, toolhead,
+                        raw_z):
+        # Collect samples actually belonging to the ascent
+        data = []
+        is_first = True
+        for s in all_samples:
+            if s[0] >= trigger_time:
+                # discard the first sample (recorded before starting ascent)
+                if is_first:
+                    is_first = False
+                    continue
+                data.append((s[1], _lookup_z_pos(toolhead, s[0])))
+
+        if len(data) < 2*FIT_MIN_POINTS :
+            raise gcode.CommandError(
+                "Insufficient ascent samples (%d, need >= %d) for "
+                "piecewise fit" % (len(data), 2*FIT_MIN_POINTS + 1))
+
+        # Perform the actual fit
+        z_contact, below_count, above_count = \
+            self._best_fit.find_best_fit(data)
+
+        gcmd.respond_info("Load cell probe fit: n_below=%d n_above=%d"
+                          " z_contact=%.4f raw=%.4f delta=%.4f" % (
+                          below_count, above_count, z_contact, raw_z,
+                          raw_z - z_contact))
+
+        return z_contact
+
+
+# Given a list of (grams, z) pairs, find the coefficients z_contact,
+# grams_contact, depress_slope, slope that best fit the data to the
+# formulas `grams = grams_contact + depress_slope*(z-z_contact)` when
+# z<=z_contact and `grams = grams_contact` when z>=z_contact. This
+# implements a form of non-linear least squares.
+class LCBestFit:
+    def _calc_least_squares(self, samples, est_z_contact):
+        len_samples = len(samples)
+        eqs = [[0.] * 2 for i in range(len_samples)]
+        ans = [[0.] for i in range(len_samples)]
+        for i, (step_z, sensor_grams) in enumerate(samples):
+            a = ans[i]
+            eq = eqs[i]
+            if step_z <= est_z_contact:
+                # 1*c0 + (z-ezc)*c1 = grams
+                eq[0] = 1.
+                eq[1] = step_z - est_z_contact
+            else:
+                # 1*c0 = grams
+                eq[0] = 1.
+                eq[1] = 0.
+            a[0] = sensor_grams
+        eqst = mathutil.mat_transp(eqs)
+        eqst_eqs = mathutil.mat_mat_mul(eqst, eqs)
+        eqst_ans = mathutil.mat_mat_mul(eqst, ans)
+        coeffs = mathutil.gaussian_solve(eqst_eqs, eqst_ans)
+        if coeffs is None:
+            return sys.float_info.max, [[0.]] * 2
+        rel_err = -sum([c[0]*a[0] for c, a in zip(coeffs, eqst_ans)])
+        return rel_err
+
+    def find_best_fit(self, data):
+        # Change base of grams/z measurements to improve numerical stability
+        base_z = .5 * (data[0][1] + data[-1][1])
+        base_grams = .5 * (data[0][0] + data[-1][0])
+        samples = [(d[1] - base_z, d[0] - base_grams) for d in data]
+
+        def _run_fit(sample_set):
+            """Run the binary search fit on the given sample set."""
+            min_z = best_z = sample_set[0][0]
+            max_z = sample_set[-1][0]
+            best_err = sys.float_info.max
+            while max_z - min_z > 0.000050:
+                mid_z = (min_z + max_z) * .5
+                if best_z < mid_z:
+                    guess_z = (best_z + max_z) * .5
+                else:
+                    guess_z = (min_z + best_z) * .5
+                guess_err = self._calc_least_squares(sample_set, guess_z)
+                if guess_err < best_err:
+                    if guess_z > best_z:
+                        min_z = best_z
+                    else:
+                        max_z = best_z
+                    best_z = guess_z
+                    best_err = guess_err
+                else:
+                    if guess_z > best_z:
+                        max_z = guess_z
+                    else:
+                        min_z = guess_z
+            return best_z
+
+        # Run the fit in two passes. The first pass uses all samples to get a
+        # rough estimate of the contact point. The second pass selects the 12
+        # samples closest to the first estimate. This will reduce the influence
+        # of baseline wandering, since we only use samples in a short time
+        # window.
+        # First pass: use all samples
+        est_z = _run_fit(samples)
+
+        # Second pass: select max. 12 samples closest to the first estimate
+        # Max. 6 closest below, max. 6 closest above result from first pass.
+        below = sorted([s for s in samples if s[0] <= est_z],
+                       key=lambda s: abs(s[0] - est_z))
+        above = sorted([s for s in samples if s[0] > est_z],
+                       key=lambda s: abs(s[0] - est_z))
+        if len(below) < FIT_MIN_POINTS or len(above) < FIT_MIN_POINTS:
+            # We require at least 3 samples on each side, although 6 is
+            # preferred
+            raise gcode.CommandError(
+                "Insufficient ascent samples (%d below, %d above, need >= %d "
+                "each) for piecewise fit" % (len(below), len(above),
+                                             FIT_MIN_POINTS))
+        selected = below[:2*FIT_MIN_POINTS] + above[:2*FIT_MIN_POINTS]
+        selected.sort(key=lambda s: s[0])
+
+        final_z = _run_fit(selected)
+
+        return base_z + final_z, len(below), len(above)
 
 # ProbeSession that implements Tap logic
 class TapSession:

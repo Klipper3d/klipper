@@ -5372,6 +5372,14 @@ sensor_type:
 #   The rime in seconds used for taring the load_cell before each probe. The
 #   default value is: 4 / 60 = 0.066. This collects samples from 4 cycles of
 #   60Hz mains power to cancel power line noise.
+#interpolate_enable:
+#   Enable interpolation of the probe result by fitting a piecewise function
+#   to the measured force data. This improves the resolution especially for
+#   slow ADCs. Default: False
+#interpolate_lift_dist:
+#   Distance of the ascending move used to measure data for the interpolation.
+#   Must be adjusted if the number of recorded samples is not enough.
+#   Default: 0.5mm
 #z_offset:
 #speed:
 #samples:
