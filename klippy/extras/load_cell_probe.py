@@ -3,8 +3,11 @@
 # Copyright (C) 2025  Gareth Farrington <gareth@waves.ky>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, math
-import mcu
+import json
+import logging
+import math, sys
+import mathutil
+
 from . import hx71x
 from . import ads1220
 from . import ads131m0x
@@ -14,6 +17,12 @@ np = None  # delay NumPy import until configuration time
 
 # MCU SOS filter scaled to "fractional grams" for consistent sensor precision
 FRAC_GRAMS_CONV = 32768.0
+
+# Minimum ascent samples needed for piecewise least-squares fit
+FIT_MIN_POINTS = 3
+
+# Time window for collecting ascent data in seconds
+ASCENT_DATA_WINDOW_SECONDS = 0.3
 
 
 class TapAnalysis:
@@ -236,6 +245,16 @@ def check_sensor_errors(results, printer):
     return samples
 
 
+# compute Z position at a given print_time using stepper history
+def _lookup_z_pos(toolhead, pos_time):
+    kin = toolhead.get_kinematics()
+    steppers = kin.get_steppers()
+    kin_spos = {s.get_name(): s.mcu_to_commanded_position(
+                                s.get_past_mcu_position(pos_time))
+                for s in steppers}
+    return kin.calc_position(kin_spos)[2]
+
+
 class LoadCellProbeConfigHelper:
     def __init__(self, config, load_cell_inst):
         self._printer = config.get_printer()
@@ -248,7 +267,7 @@ class LoadCellProbeConfigHelper:
         self._trigger_force_param = floatParamHelper(config, 'trigger_force',
             default=75, minval=10, maxval=250)
         self._force_safety_limit_param = floatParamHelper(config,
-            'force_safety_limit', minval=100, maxval=5000, default=2000)
+            'force_safety_limit', minval=100, maxval=10000, default=2000)
 
     def get_tare_samples(self, gcmd=None):
         tare_time = self._tare_time_param.get(gcmd)
@@ -387,21 +406,44 @@ class TappingMove:
         header = {"header": ["probe_tap_event"]}
         self._clients.add_mux_endpoint("load_cell_probe/dump_taps",
             "load_cell_probe", name, header)
+        self._best_fit = LCBestFit(self._printer)
 
-    # perform a probing move and a pullback move
     def run_tap(self, gcmd):
         # do the descending move
         epos, collector = self._load_cell_probing_move.probing_move(gcmd)
         # collect samples from the tap
         toolhead = self._printer.lookup_object('toolhead')
-        toolhead.flush_step_generation()
+
+        # Lift the toolhead while collecting the samples we will use for
+        # the fit. The ascent data shall cover both the contact region
+        # (force still applied) and free-air region (no force = tare).
+        ascent_start_time = toolhead.get_last_move_time()
+
+        # load_cell_retract_dist is mapped to sample_retract_dist in
+        # LoadCellParameterHelper
+        params = \
+            self._load_cell_probing_move._param_helper.get_probe_params(gcmd)
+        lift_dist = params['load_cell_retract_dist']
+        lift_pos = toolhead.get_position()
+        lift_pos[2] += lift_dist
+        toolhead.manual_move(lift_pos, params['lift_speed'])
+
+        # Collect samples until the end of the ascent
         move_end = toolhead.get_last_move_time()
         results = collector.collect_until(move_end)
         samples = check_sensor_errors(results, self._printer)
+
+        # Perform fit on the ascent data
+        corrected_z = self._analyze_ascent(gcmd, samples, ascent_start_time,
+                                            toolhead, epos[2])
+        # Replace the probe result with the fitted Z position
+        epos[2] = corrected_z
+
         # Analyze the tap data
         ppa = TapAnalysis(samples)
         # broadcast tap event data:
         self._clients.send({'tap': ppa.to_dict()})
+
         self._is_last_result_valid = True
         self._last_result = epos[2]
         return epos, self._is_last_result_valid
@@ -412,6 +454,134 @@ class TappingMove:
             'is_last_tap_valid': self._is_last_result_valid
         }
 
+    def _analyze_ascent(self, gcmd, all_samples, ascent_start_time, toolhead,
+                        raw_z):
+        # Collect samples actually belonging to the ascent. We use a limited
+        # time window to minimise the influence of baseline wandering.
+        data = []
+        for s in all_samples:
+            if s[0] >= ascent_start_time and \
+               s[0] <= ascent_start_time + ASCENT_DATA_WINDOW_SECONDS:
+                data.append((s[1], _lookup_z_pos(toolhead, s[0])))
+
+        if self._load_cell_probing_move._mcu.is_fileoutput():
+            # In debugging mode: inject dummy data
+            data = [(0.0, 0.0), (10.0, 0.1), (20.0, 0.2), (25.0, 0.3),
+                    (25.0, 0.4), (25.0, 0.5)]
+
+        # Log ascent data in JSON format for easy debugging
+        #logging.info("Load cell probe ascent data: %s", json.dumps(data))
+
+        # Check that we have enough samples early to avoid exceptions
+        if len(data) < 2*FIT_MIN_POINTS:
+            raise self._printer.command_error(
+                "Insufficient ascent samples (%d total, need >= %d "
+                "each) for piecewise fit" % (len(data), 2*FIT_MIN_POINTS))
+
+        # Perform the actual fit
+        z_contact, below_count, above_count, depress_slope = \
+            self._best_fit.find_best_fit(data)
+
+        # We require at least 3 samples on each side of the split point to
+        # ensure a good fit and precise tare compensation.
+        if below_count < FIT_MIN_POINTS or above_count < FIT_MIN_POINTS:
+            raise self._printer.command_error(
+                "Insufficient ascent samples (%d below, %d above, need >= %d "
+                "each) for piecewise fit" % (below_count, above_count,
+                                             FIT_MIN_POINTS))
+
+        gcmd.respond_info("Load cell probe fit: n_below=%d n_above=%d"
+                          " z_contact=%.4f raw=%.4f delta=%.4f"
+                          " depress_slope=%.4f" % (
+                          below_count, above_count, z_contact, raw_z,
+                          raw_z - z_contact, depress_slope))
+
+        if self._load_cell_probing_move._mcu.is_fileoutput():
+            # In debugging mode: check fit result
+            if abs(z_contact - 0.25) > 0.01:
+                raise self._printer.command_error(
+                    "Load cell probe fit result incorrect")
+
+        return z_contact
+
+
+# Given a list of (grams, z) pairs, find the coefficients z_contact,
+# grams_contact, depress_slope, slope that best fit the data to the
+# formulas `grams = grams_contact + depress_slope*(z-z_contact)` when
+# z<=z_contact and `grams = grams_contact` when z>=z_contact. This
+# implements a form of non-linear least squares.
+class LCBestFit:
+    def __init__(self, printer):
+        self._printer = printer
+
+    def _calc_least_squares(self, samples, est_z_contact):
+        len_samples = len(samples)
+        eqs = [[0.] * 2 for i in range(len_samples)]
+        ans = [[0.] for i in range(len_samples)]
+        for i, (step_z, sensor_grams) in enumerate(samples):
+            a = ans[i]
+            eq = eqs[i]
+            if step_z <= est_z_contact:
+                # 1*c0 + (z-ezc)*c1 = grams
+                eq[0] = 1.
+                eq[1] = step_z - est_z_contact
+            else:
+                # 1*c0 = grams
+                eq[0] = 1.
+                eq[1] = 0.
+            a[0] = sensor_grams
+        eqst = mathutil.mat_transp(eqs)
+        eqst_eqs = mathutil.mat_mat_mul(eqst, eqs)
+        eqst_ans = mathutil.mat_mat_mul(eqst, ans)
+        coeffs = mathutil.gaussian_solve(eqst_eqs, eqst_ans)
+        if coeffs is None:
+            return sys.float_info.max, [[0.]] * 2
+        rel_err = -sum([c[0]*a[0] for c, a in zip(coeffs, eqst_ans)])
+        return rel_err, coeffs
+
+    def find_best_fit(self, data):
+        # Change base of grams/z measurements to improve numerical stability
+        base_z = .5 * (data[0][1] + data[-1][1])
+        base_grams = .5 * (data[0][0] + data[-1][0])
+        samples = [(d[1] - base_z, d[0] - base_grams) for d in data]
+
+        def _run_fit(sample_set):
+            """Run the binary search fit on the given sample set."""
+            min_z = best_z = sample_set[0][0]
+            max_z = sample_set[-1][0]
+            best_err = sys.float_info.max
+            best_coeffs = [[0.]]*2
+            while max_z - min_z > 0.000050:
+                mid_z = (min_z + max_z) * .5
+                if best_z < mid_z:
+                    guess_z = (best_z + max_z) * .5
+                else:
+                    guess_z = (min_z + best_z) * .5
+                guess_err, guess_coeffs = \
+                    self._calc_least_squares(sample_set, guess_z)
+                if guess_err < best_err:
+                    if guess_z > best_z:
+                        min_z = best_z
+                    else:
+                        max_z = best_z
+                    best_z = guess_z
+                    best_err = guess_err
+                    best_coeffs = guess_coeffs
+                else:
+                    if guess_z > best_z:
+                        max_z = guess_z
+                    else:
+                        min_z = guess_z
+            return best_z, best_coeffs
+
+        est_z, coeffs = _run_fit(samples)
+
+        # Count number of samples below the estimated z_contact
+        n_below = len(sorted([s for s in samples if s[0] <= est_z],
+                       key=lambda s: abs(s[0] - est_z)))
+        depress_slope = coeffs[1][0]
+
+        return base_z + est_z, n_below, len(samples) - n_below, depress_slope
 
 # ProbeSession that implements Tap logic
 class TapSession:
@@ -473,6 +643,17 @@ class LoadCellProbeCommands:
         gcmd.respond_info("Test complete, %s taps detected" % (taps,))
 
 
+class LoadCellParameterHelper:
+    def __init__(self, config):
+        self._param_helper = probe.ProbeParameterHelper(config)
+    def get_probe_params(self, gcmd=None):
+        params = self._param_helper.get_probe_params(gcmd)
+        # Disable lift in calling code as it is done within tap process
+        params['load_cell_retract_dist'] = params['sample_retract_dist']
+        params['sample_retract_dist'] = 0.
+        return params
+
+
 class LoadCellPrinterProbe:
     def __init__(self, config):
         cfg_error = config.error
@@ -500,7 +681,7 @@ class LoadCellPrinterProbe:
         continuous_tare_filter_helper = ContinuousTareFilterHelper(
             config, sensor, sos_filter)
         # Probe Interface
-        self._param_helper = probe.ProbeParameterHelper(config)
+        self._param_helper = LoadCellParameterHelper(config)
         self._cmd_helper = probe.ProbeCommandHelper(config, self)
         self._probe_offsets = probe.ProbeOffsetsHelper(config)
         load_cell_probing_move = LoadCellProbingMove(config, self._load_cell,
