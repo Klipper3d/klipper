@@ -3390,9 +3390,14 @@ short time after those conditions are no longer met.
 #   See the "fan" section for a description of the above parameters.
 #fan_speed: 1.0
 #   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
-#   will be set to when a selected heater or stepper driver is active,
-#   or when a selected heater remains above `heater_temp`. The default
-#   is 1.0
+#   will be set to when both a selected heater and a selected stepper
+#   driver are active, or when one is active and
+#   `single_active_speed` is left at its default. The default is 1.0.
+#single_active_speed:
+#   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
+#   will be set to when only selected heaters are active, only selected
+#   stepper drivers are active, or only heat above `heater_temp`
+#   remains. The default is `fan_speed`.
 #idle_timeout:
 #   The amount of time (in seconds) after a watched stepper driver or
 #   heater was active that the fan should be kept running. The default

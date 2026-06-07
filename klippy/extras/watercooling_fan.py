@@ -25,6 +25,9 @@ class WatercoolingFan:
         self.fan = fan.Fan(config, default_shutdown_speed=1.)
         self.fan_speed = config.getfloat('fan_speed', default=1.,
                                          minval=0., maxval=1.)
+        self.single_active_speed = config.getfloat(
+            'single_active_speed', default=self.fan_speed,
+            minval=0., maxval=1.)
         self.idle_speed = config.getfloat(
             'idle_speed', default=0., minval=0., maxval=1.)
         self.idle_timeout = config.getint("idle_timeout", default=30, minval=0)
@@ -54,16 +57,21 @@ class WatercoolingFan:
 
     def callback(self, eventtime):
         speed = 0.
-        active = False
+        stepper_active = False
+        heater_active = False
         for name in self.stepper_names:
-            active |= self.stepper_enable.lookup_enable(name).is_motor_enabled()
+            stepper_active |= self.stepper_enable.lookup_enable(
+                name).is_motor_enabled()
         for heater in self.heaters:
             current_temp, target_temp = heater.get_temp(eventtime)
             if target_temp or current_temp > self.heater_temp:
-                active = True
-        if active:
+                heater_active = True
+        if stepper_active and heater_active:
             self.last_on = 0
             speed = self.fan_speed
+        elif stepper_active or heater_active:
+            self.last_on = 0
+            speed = self.single_active_speed
         elif self.last_on < self.idle_timeout:
             speed = self.idle_speed
             self.last_on += 1
