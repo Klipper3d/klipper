@@ -33,6 +33,13 @@ class WatercoolingFan:
         self.idle_timeout = config.getint("idle_timeout", default=30, minval=0)
         self.last_on = self.idle_timeout
         self.last_speed = 0.
+        fan_name = config.get_name().split()[-1]
+        status_name = "controller_fan " + fan_name
+        if (config.has_section(status_name)
+                or self.printer.lookup_object(status_name, None) is not None):
+            raise config.error("Printer object '%s' already created"
+                               % (status_name,))
+        self.printer.add_object(status_name, self)
 
     def handle_connect(self):
         pheaters = self.printer.lookup_object('heaters')

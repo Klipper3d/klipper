@@ -3374,6 +3374,10 @@ temperature threshold, or whenever one of its associated stepper
 drivers is active. The fan may continue to run at an idle speed for a
 short time after those conditions are no longer met.
 
+The fan status is also exposed as "controller_fan <name>" so that
+clients can display it as an automatically controlled fan. A
+watercooling_fan and controller_fan may not use the same name.
+
 ```
 [watercooling_fan my_watercooling_fan]
 #pin:
