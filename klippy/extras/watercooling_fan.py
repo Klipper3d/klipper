@@ -2,7 +2,7 @@
 # steppers are active, a heater has a target temperature, or a heater
 # remains above a configured threshold.
 #
-# Copyright (C) 2026
+# Copyright (C) 2026 Steven Kretzschmar <privat.06.steven@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 from . import fan
