@@ -2426,22 +2426,29 @@ is always available):</p>
 <h2 id="load_cell">load_cell<a class="headerlink" href="#load_cell" title="Permanent link">&para;</a></h2>
 <p>The following information is available for each <code>[load_cell name]</code>:</p>
 <ul>
-<li>'is_calibrated': True/False is the load cell calibrated</li>
-<li>'counts_per_gram': The number of raw sensor counts that equals 1 gram of force</li>
-<li>'reference_tare_counts': The reference number of raw sensor counts for 0 force</li>
-<li>'tare_counts': The current number of raw sensor counts for 0 force</li>
-<li>'force_g': The force in grams, averaged over the last polling period.</li>
-<li>'min_force_g': The minimum force in grams, over the last polling period.</li>
-<li>'max_force_g': The maximum force in grams, over the last polling period.</li>
+<li><code>is_calibrated</code>: True/False whether the load cell is calibrated.</li>
+<li><code>counts_per_gram</code>: The number of raw sensor counts that equals 1 gram of force.</li>
+<li><code>reference_tare_counts</code>: The reference number of raw sensor counts for 0 force.</li>
+<li><code>tare_counts</code>: The current number of raw sensor counts for 0 force.</li>
+<li><code>force_g</code>: The force in grams, averaged over the last polling period.</li>
+<li><code>min_force_g</code>: The minimum force in grams, over the last polling period.</li>
+<li><code>max_force_g</code>: The maximum force in grams, over the last polling period.</li>
+<li><code>errors</code>: The number of sensor errors detected since the last start
+  of measurements.</li>
+<li><code>overflows</code>: The number of data buffer overflows detected since the last
+  start of measurements.</li>
+<li><code>sample_rate</code>: The sensor's sample rate in samples per second.</li>
 </ul>
 <h2 id="load_cell_probe">load_cell_probe<a class="headerlink" href="#load_cell_probe" title="Permanent link">&para;</a></h2>
 <p>The following information is available for <code>[load_cell_probe]</code>:</p>
 <ul>
 <li>all items from <a href="Status_Reference.html#load_cell">load_cell</a></li>
 <li>all items from <a href="Status_Reference.html#probe">probe</a></li>
-<li>'endstop_tare_counts': the load cell probe keeps a tare value independent of
-the load cell. This re-set at the start of each probe.</li>
-<li>'last_trigger_time': timestamp of the last homing trigger</li>
+<li><code>endstop_tare_counts</code>: The load cell probe keeps a tare value independent of
+  the load cell. This is re-set at the start of each probe.</li>
+<li><code>last_trigger_time</code>: Timestamp of the last homing trigger.</li>
+<li><code>last_z_result</code>: The Z position result of the last tap.</li>
+<li><code>is_last_tap_valid</code>: True if the last tap result is valid.</li>
 </ul>
 <h2 id="manual_probe">manual_probe<a class="headerlink" href="#manual_probe" title="Permanent link">&para;</a></h2>
 <p>The following information is available in the
