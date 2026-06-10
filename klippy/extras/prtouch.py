@@ -73,10 +73,10 @@ class PRTouchConfig:
 
 class PRTouchState:
     """Mutable probe state; reset explicitly before each probe sequence."""
-    def __init__(self):
-        self.reset()
+    def __init__(self, config):
+        self.reset(config)
 
-    def reset(self):
+    def reset(self, config):
         self.out_index = 0
         self.out_state_mm = 0.
         self.re_probe_cnt = 0
