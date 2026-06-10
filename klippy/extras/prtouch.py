@@ -281,12 +281,11 @@ class PRTouchZOffsetWrapper:
         # =========================
         # 1. BED HEAT (PID SAFE)
         # =========================
-        g.run_script_from_command(f"M140 S{bed_max_temp}")
+        g.run_script_from_command(f"M190 S{bed_max_temp}")
 
         # =========================
         # 2. HOTEND PREHEAT (STABLE)
         # =========================
-        g.run_script_from_command(f"M104 S{hot_min_temp}")
         g.run_script_from_command(f"M109 S{hot_min_temp}")  # WAIT PID STABLE
 
         self._ck_g28ed(False)
@@ -312,7 +311,6 @@ class PRTouchZOffsetWrapper:
         # =========================
         # 5. HOT MAX (PID SAFE)
         # =========================
-        g.run_script_from_command(f"M104 S{hot_max_temp}")
         g.run_script_from_command(f"M109 S{hot_max_temp}")  # WAIT FULL STABLE
 
         self.obj.hx711s.delay_s(1.0)  # thermal settle (IMPORTANT)
@@ -390,6 +388,7 @@ class PRTouchZOffsetWrapper:
         # =========================
         # 13. COOLING MOVE
         # =========================
+        g.run_script_from_command("M106 S255")
         g.run_script_from_command(f"M104 S{hot_min_temp}")
 
         g.run_script_from_command(
@@ -404,7 +403,8 @@ class PRTouchZOffsetWrapper:
         # =========================
         # 15. FINAL HOME Z
         # =========================
-        g.run_script_from_command("G28 Z")
+        g.run_script_from_command("M106 S0")
+        g.run_script_from_command("G28")
 
         self.pnt_msg("=== NOZZLE CLEAN END ===")
         pass
