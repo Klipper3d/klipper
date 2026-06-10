@@ -260,36 +260,97 @@ class PRTouchZOffsetWrapper:
         return o_mm
     
     def clear_nozzle(self, hot_min_temp, hot_max_temp, bed_max_temp, min_hold, max_hold):
-        min_x, min_y = self.cfg.clr_noz_start_x, self.cfg.clr_noz_start_y
-        max_x, max_y = self.cfg.clr_noz_start_x + self.cfg.clr_noz_len_x, self.cfg.clr_noz_start_y + self.cfg.clr_noz_len_y
-        self._set_bed_temps(temp=bed_max_temp, wait=False)
-        self._set_hot_temps(temp=hot_min_temp, fan_spd=0, wait=False, err=10)
+
+        self.pnt_msg("=== NOZZLE CLEAN START ===")
+
+        min_x = self.cfg.clr_noz_start_x
+        min_y = self.cfg.clr_noz_start_y
+        max_x = min_x + self.cfg.clr_noz_len_x
+        max_y = min_y + self.cfg.clr_noz_len_y
+
+        # 1. safe preheat
+        self._set_bed_temps(bed_max_temp, wait=False)
+        self._set_hot_temps(hot_min_temp, fan_spd=0, wait=True, err=10)
+
         self._ck_g28ed(False)
-        random.seed(time.time())  
-        cur_pos = self.obj.toolhead.get_position()
-        src_pos = [min_x, min_y, self.cfg.bed_max_err + 1, cur_pos[3]]
-        end_pos = [max_x, max_y, src_pos[2], src_pos[3]]
-        self._set_hot_temps(temp=hot_min_temp, fan_spd=0, wait=True, err=10)   
-        src_pos[2] = self._probe_times(3, [src_pos[0], src_pos[1], src_pos[2]], self.cfg.probe_speed, 10, 0.2, min_hold, max_hold)
-        self._set_hot_temps(temp=hot_min_temp + 40, fan_spd=0, wait=False, err=10)
-        end_pos[2] = self._probe_times(3, [end_pos[0], end_pos[1], end_pos[2]], self.cfg.probe_speed, 10, 0.2, min_hold, max_hold)     
-        self._move(src_pos[:2] + [self.cfg.bed_max_err + 1], self.cfg.g29_xy_speed) 
-        self._move(src_pos[:2] + [src_pos[2] + 0.1], self.cfg.g29_rdy_speed) 
-        self._set_hot_temps(temp=hot_max_temp, fan_spd=0, wait=True, err=10)
-        self._set_hot_temps(temp=hot_min_temp, fan_spd=0, wait=False)
-        # retract filament
+
+        # 2. safe Z height
+        safe_z = self.cfg.bed_max_err + 5
+
+        cur = self.obj.toolhead.get_position()
+
+        src = [min_x, min_y, safe_z, cur[3]]
+        end = [max_x, max_y, safe_z, cur[3]]
+
+        # 3. stabilize nozzle temp
+        self._set_hot_temps(hot_min_temp, fan_spd=0, wait=True, err=5)
+
+        # 4. probing start point
+        src[2] = self._probe_times(
+            3,
+            [src[0], src[1], safe_z],
+            self.cfg.probe_speed,
+            10,
+            0.2,
+            min_hold,
+            max_hold
+        )
+
+        # 5. slightly hotter for flow control
+        self._set_hot_temps(hot_min_temp + 30, fan_spd=0, wait=True, err=5)
+
+        # 6. probing end point
+        end[2] = self._probe_times(
+            3,
+            [end[0], end[1], safe_z],
+            self.cfg.probe_speed,
+            10,
+            0.2,
+            min_hold,
+            max_hold
+        )
+
+        # 7. move above start
+        self._move([src[0], src[1], safe_z], self.cfg.g29_xy_speed)
+        self._move([src[0], src[1], src[2] + 0.2], self.cfg.g29_rdy_speed)
+
+        # 8. purge BEFORE wipe (IMPORTANT FIX)
+        self.obj.gcode.run_script_from_command('G91')
+        self.obj.gcode.run_script_from_command('G1 E3 F300')  # small purge
+        self.obj.gcode.run_script_from_command('G90')
+
+        # 9. full hot wipe temp
+        self._set_hot_temps(hot_max_temp, fan_spd=0, wait=True, err=5)
+
+        # 10. main wipe pass (slow + stable)
+        wipe_z = end[2] + self.cfg.pa_clr_down_mm
+
+        self._move([end[0], end[1], wipe_z], self.cfg.probe_speed)
+
+        # 11. second pass (improves cleaning)
+        self._move([src[0], src[1], wipe_z], self.cfg.probe_speed)
+        self._move([end[0], end[1], wipe_z], self.cfg.probe_speed)
+
+        # 12. controlled retract (reduce stringing)
         if self.cfg.wipe_retract_distance > 0:
             self.obj.gcode.run_script_from_command('G91')
-            self.obj.gcode.run_script_from_command('G1 E-%.2f F600' % self.cfg.wipe_retract_distance)
+            self.obj.gcode.run_script_from_command(
+                'G1 E-%.2f F600' % self.cfg.wipe_retract_distance
+            )
             self.obj.gcode.run_script_from_command('G90')
-        self._move(end_pos[:2] + [end_pos[2] + self.cfg.pa_clr_down_mm], self.cfg.probe_speed)
-        self._set_hot_temps(temp=hot_min_temp, fan_spd=255, wait=True, err=5)
-        self._move([end_pos[0], end_pos[1] + 10, end_pos[2] + 10], self.cfg.probe_speed)
-        self._set_hot_temps(temp=hot_min_temp, fan_spd=0, wait=False) 
-        self._set_bed_temps(temp=bed_max_temp, wait=True, err=5)
 
-        self._move(self.val.home_xy + [10], self.cfg.g29_xy_speed)
+        # 13. cool down while moving away
+        self._set_hot_temps(hot_min_temp, fan_spd=255, wait=False)
+
+        self._move([max_x, max_y + 10, safe_z + 5], self.cfg.g29_xy_speed)
+
+        # 14. final bed stabilization
+        self._set_bed_temps(bed_max_temp, wait=True, err=5)
+
+        # 15. final home Z
         self.obj.gcode.run_script_from_command('G28 Z')
+
+        self.pnt_msg("=== NOZZLE CLEAN END ===")
         pass
 
     def probe_z_offset(self, x, y):
