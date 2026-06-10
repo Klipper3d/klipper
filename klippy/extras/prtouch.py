@@ -25,42 +25,42 @@ class PRTouchConfig:
 
     def __init__(self, config):
         # Основные параметры датчика
-        self.base_count = config.getint('base_count', default=40, minstate=10, maxstate=100)
-        self.pi_count = config.getint('pi_count', default=32, minstate=16, maxstate=128)
-        self.min_hold = config.getint('min_hold', default=3000, minstate=100, maxstate=50000)
-        self.max_hold = config.getint('max_hold', default=50000, minstate=100, maxstate=100000)
+        self.base_count = config.getint('base_count', default=40, minval=10, maxval=100)
+        self.pi_count = config.getint('pi_count', default=32, minval=16, maxval=128)
+        self.min_hold = config.getint('min_hold', default=3000, minval=100, maxval=50000)
+        self.max_hold = config.getint('max_hold', default=50000, minval=100, maxval=100000)
 
         # Позиция датчика
-        self.sensor_x = config.getfloat('sensor_x', minstate=0, maxstate=300)
-        self.sensor_y = config.getfloat('sensor_y', minstate=0, maxstate=300)
-        self.random_offset = config.getfloat('sensor_random_offset', default=5, minstate=0, maxstate=10)
+        self.sensor_x = config.getfloat('sensor_x', minval=0, maxval=300)
+        self.sensor_y = config.getfloat('sensor_y', minval=0, maxval=300)
+        self.random_offset = config.getfloat('sensor_random_offset', default=5, minval=0, maxval=10)
 
         # Температуры
-        self.nozzle_clean_min_temp = config.getfloat('s_nozzle_clean_min_temp', default=140, minstate=80, maxstate=200)
-        self.nozzle_clean_max_temp = config.getfloat('s_nozzle_clean_max_temp', default=180, minstate=170, maxstate=300)
-        self.bed_max_temp = config.getfloat('s_bed_max_temp', default=60, minstate=45, maxstate=100)
+        self.nozzle_clean_min_temp = config.getfloat('s_nozzle_clean_min_temp', default=140, minval=80, maxval=200)
+        self.nozzle_clean_max_temp = config.getfloat('s_nozzle_clean_max_temp', default=180, minval=170, maxval=300)
+        self.bed_max_temp = config.getfloat('s_bed_max_temp', default=60, minval=45, maxval=100)
 
         # Очистка сопла
-        self.pa_clr_dis_mm = config.getint('pa_clr_dis_mm', default=5, minstate=2, maxstate=100)
-        self.pa_clr_down_mm = config.getfloat('pa_clr_down_mm', default=-0.1, minstate=-1, maxstate=1)
+        self.pa_clr_dis_mm = config.getint('pa_clr_dis_mm', default=5, minval=2, maxval=100)
+        self.pa_clr_down_mm = config.getfloat('pa_clr_down_mm', default=-0.1, minval=-1, maxval=1)
 
-        self.nozzle_clean_start_pos_x = config.getfloat('nozzle_clean_start_pos_x', default=0, minstate=-8, maxstate=220)
-        self.nozzle_clean_start_pos_y = config.getfloat('nozzle_clean_start_pos_y', default=0, minstate=-5, maxstate=220)
+        self.nozzle_clean_start_pos_x = config.getfloat('nozzle_clean_start_pos_x', default=0, minval=-8, maxval=220)
+        self.nozzle_clean_start_pos_y = config.getfloat('nozzle_clean_start_pos_y', default=0, minval=-5, maxval=220)
 
-        self.nozzle_clean_len_x = config.getfloat('nozzle_clean_len_x', default=0, minstate=0, maxstate=200)
-        self.nozzle_clean_len_y = config.getfloat('nozzle_clean_len_y', default=0, minstate=0, maxstate=200)
-        self.nozzle_clean_speed = config.getfloat('nozzle_clean_speed', default=30, minstate=10, maxstate=100)
+        self.nozzle_clean_len_x = config.getfloat('nozzle_clean_len_x', default=0, minval=0, maxval=200)
+        self.nozzle_clean_len_y = config.getfloat('nozzle_clean_len_y', default=0, minval=0, maxval=200)
+        self.nozzle_clean_speed = config.getfloat('nozzle_clean_speed', default=30, minval=10, maxval=100)
 
         # Дополнительные параметры
-        self.bed_max_err = config.getint('bed_max_err', default=4, minstate=2, maxstate=10)
-        self.max_z = config.getsection('stepper_z').getfloat('position_max', default=300, minstate=100, maxstate=500)
-        self.g29_xy_speed = config.getfloat('g29_xy_speed', default=150, minstate=10, maxstate=1000)
-        self.g29_rdy_speed = config.getfloat('g29_rdy_speed', default=2.5, minstate=0.1, maxstate=10)
-        self.probe_speed = config.getfloat('probe_speed', default=2.0, minstate=0.1, maxstate=10)
+        self.bed_max_err = config.getint('bed_max_err', default=4, minval=2, maxval=10)
+        self.max_z = config.getsection('stepper_z').getfloat('position_max', default=300, minval=100, maxval=500)
+        self.g29_xy_speed = config.getfloat('g29_xy_speed', default=150, minval=10, maxval=1000)
+        self.g29_rdy_speed = config.getfloat('g29_rdy_speed', default=2.5, minval=0.1, maxval=10)
+        self.probe_speed = config.getfloat('probe_speed', default=2.0, minval=0.1, maxval=10)
 
         self.show_msg = config.getboolean('show_msg', default=False)
-        self.check_bed_mesh_max_err = config.getfloat('check_bed_mesh_max_err', default=0.2, minstate=0.01, maxstate=1)
-        self.wipe_retract_distance = config.getfloat('wipe_retract_distance', default=0, minstate=0, maxstate=50)
+        self.check_bed_mesh_max_err = config.getfloat('check_bed_mesh_max_err', default=0.2, minval=0.01, maxval=1)
+        self.wipe_retract_distance = config.getfloat('wipe_retract_distance', default=0, minval=0, maxval=50)
         self.probe_name = config.get('probe_name', default='bltouch')
 
         # Сохранённые профили
