@@ -2,7 +2,7 @@
 
 src-y += sched.c command.c basecmd.c debugcmds.c
 src-$(CONFIG_HAVE_GPIO) += initial_pins.c gpiocmds.c stepper.c endstop.c \
-    trsync.c
+    trsync.c dirzctl.c hx711s.c
 src-$(CONFIG_WANT_ADC) += adccmds.c
 src-$(CONFIG_WANT_SPI) += spicmds.c
 src-$(CONFIG_WANT_I2C) += i2ccmds.c
