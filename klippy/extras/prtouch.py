@@ -18,6 +18,7 @@ class PRTouchCFG:
         self.pi_count = config.getint('pi_count', default=32, minval=16, maxval=128)
         self.min_hold = config.getint('min_hold', default=3000, minval=100, maxval=50000)
         self.max_hold = config.getint('max_hold', default=50000, minval=100, maxval=100000)
+        self.probe_sample_count = config.getint('probe_sample_count', default=3, minval=1, maxval=10)
 
         # Позиция датчика
         self.sensor_x = config.getfloat('sensor_x', minval=0, maxval=300)
@@ -431,7 +432,7 @@ class PRTouchZOffsetWrapper:
         probe_y = y - probe_y_offset
         self.pnt_msg("Checking z-position of probe (%.2f, %.2f)" % (probe_x, probe_y))
         self._move([probe_x, probe_y, self.cfg.bed_max_err + 1.], self.cfg.g29_xy_speed)
-        probe_gcmd = self.obj.gcode.create_gcode_command("PROBE", "PROBE", {'SAMPLES': '2'})
+        probe_gcmd = self.obj.gcode.create_gcode_command("PROBE", "PROBE", {'SAMPLES': self.cfg.probe_sample_count})
         z_probe = probe.run_single_probe(self.obj.probe, probe_gcmd)
         self.pnt_msg('Probe at sensor: %.3f' % z_probe[2])
 
