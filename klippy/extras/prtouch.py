@@ -20,7 +20,7 @@ class PRTouchCFG:
         self.sensor_y = config.getfloat('sensor_y', minval=0, maxval=300)
         self.random_offset = config.getfloat('sensor_random_offset', default=5, minval=0, maxval=10)
         self.hot_min_temp = config.getfloat('s_hot_min_temp', default=140, minval=80, maxval=200)
-        self.hot_max_temp = config.getfloat('s_hot_max_temp', default=200, minval=180, maxval=300)
+        self.hot_max_temp = config.getfloat('s_hot_max_temp', default=180, minval=140, maxval=300)
         self.bed_max_temp = config.getfloat('s_bed_max_temp', default=60, minval=45, maxval=100)
         self.pa_clr_dis_mm = config.getint('pa_clr_dis_mm', default=5, minval=2, maxval=100)
         self.pa_clr_down_mm = config.getfloat('pa_clr_down_mm', default=-0.1, minval=-1, maxval=1)
