@@ -33,8 +33,8 @@ class PRTouchCFG:
         self.pa_clr_dis_mm = config.getint('pa_clr_dis_mm', default=5, minval=2, maxval=100)
         self.pa_clr_down_mm = config.getfloat('pa_clr_down_mm', default=-0.1, minval=-1, maxval=1)
 
-        self.nozzle_clean_start_pos_x = config.getfloat('nozzle_clean_start_pos_x', default=-8, minval=0, maxval=220)
-        self.nozzle_clean_start_pos_y = config.getfloat('nozzle_clean_start_pos_y', default=-5, minval=0, maxval=220)
+        self.nozzle_clean_start_pos_x = config.getfloat('nozzle_clean_start_pos_x', default=0, minval=-8, maxval=220)
+        self.nozzle_clean_start_pos_y = config.getfloat('nozzle_clean_start_pos_y', default=0, minval=-5, maxval=220)
 
         self.nozzle_clean_len_x = config.getfloat('nozzle_clean_len_x', default=0, minval=0, maxval=1000)
         self.nozzle_clean_len_y = config.getfloat('nozzle_clean_len_y', default=0, minval=self.pa_clr_dis_mm + 5, maxval=1000)
