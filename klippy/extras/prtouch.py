@@ -281,6 +281,7 @@ class PRTouchZOffsetWrapper:
         # =========================
         # 1. BED HEAT (PID SAFE)
         # =========================
+        g.run_script_from_command(f"M104 S{hot_min_temp}")
         g.run_script_from_command(f"M190 S{bed_max_temp}")
 
         # =========================
@@ -389,7 +390,7 @@ class PRTouchZOffsetWrapper:
         # 13. COOLING MOVE
         # =========================
         g.run_script_from_command("M106 S255")
-        g.run_script_from_command(f"M104 S{hot_min_temp}")
+        g.run_script_from_command(f"M109 S{hot_min_temp}")
 
         g.run_script_from_command(
             f"G0 F{int(self.cfg.g29_xy_speed * 60)} X{max_x} Y{max_y + 10} Z{safe_z + 5}"
@@ -398,12 +399,12 @@ class PRTouchZOffsetWrapper:
         # =========================
         # 14. BED FINAL STABILIZATION
         # =========================
+        g.run_script_from_command("M106 S0")
         g.run_script_from_command(f"M190 S{bed_max_temp}")
 
         # =========================
         # 15. FINAL HOME Z
         # =========================
-        g.run_script_from_command("M106 S0")
         g.run_script_from_command("G28")
 
         self.pnt_msg("=== NOZZLE CLEAN END ===")
