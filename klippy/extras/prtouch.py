@@ -269,6 +269,13 @@ class PRTouchZOffsetWrapper:
         max_x = min_x + self.cfg.clr_noz_len_x
         max_y = min_y + self.cfg.clr_noz_len_y
 
+        # 1. safe preheat
+        self._set_hot_temps(hot_min_temp, fan_spd=0, wait=True, err=10)
+        self._set_bed_temps(bed_max_temp, wait=True, err=10)
+
+        self._ck_g28ed(False)
+
+        # 2. safe Z height
         safe_z = self.cfg.bed_max_err + 5
 
         cur = self.obj.toolhead.get_position()
@@ -276,29 +283,10 @@ class PRTouchZOffsetWrapper:
         src = [min_x, min_y, safe_z, cur[3]]
         end = [max_x, max_y, safe_z, cur[3]]
 
-        g = self.obj.gcode
+        # 3. stabilize nozzle temp
+        self._set_hot_temps(hot_min_temp, fan_spd=0, wait=True, err=5)
 
-        # =========================
-        # 1. BED HEAT (PID SAFE)
-        # =========================
-        g.run_script_from_command(f"M104 S{hot_min_temp}")
-        g.run_script_from_command(f"M190 S{bed_max_temp}")
-
-        # =========================
-        # 2. HOTEND PREHEAT (STABLE)
-        # =========================
-        g.run_script_from_command(f"M109 S{hot_min_temp}")  # WAIT PID STABLE
-
-        self._ck_g28ed(False)
-
-        # =========================
-        # 3. STABILIZE (extra safety)
-        # =========================
-        self.obj.hx711s.delay_s(0.5)
-
-        # =========================
-        # 4. PROBE START POINT
-        # =========================
+        # 4. probing start point
         src[2] = self._probe_times(
             3,
             [src[0], src[1], safe_z],
@@ -309,16 +297,10 @@ class PRTouchZOffsetWrapper:
             max_hold
         )
 
-        # =========================
-        # 5. HOT MAX (PID SAFE)
-        # =========================
-        g.run_script_from_command(f"M109 S{hot_max_temp}")  # WAIT FULL STABLE
+        # 5. slightly hotter for flow control
+        self._set_hot_temps(hot_max_temp, fan_spd=0, wait=True, err=5)
 
-        self.obj.hx711s.delay_s(1.0)  # thermal settle (IMPORTANT)
-
-        # =========================
-        # 6. PROBE END POINT
-        # =========================
+        # 6. probing end point
         end[2] = self._probe_times(
             3,
             [end[0], end[1], safe_z],
@@ -329,83 +311,45 @@ class PRTouchZOffsetWrapper:
             max_hold
         )
 
-        # =========================
-        # 7. MOVE TO START (GCODE)
-        # =========================
-        g.run_script_from_command(
-            f"G0 F{int(self.cfg.g29_xy_speed * 60)} X{src[0]} Y{src[1]} Z{safe_z}"
-        )
+        # 7. move above start
+        self._move([src[0], src[1], safe_z], self.cfg.g29_xy_speed)
+        self._move([src[0], src[1], src[2] + 0.2], self.cfg.g29_rdy_speed)
 
-        g.run_script_from_command(
-            f"G0 F{int(self.cfg.g29_rdy_speed * 60)} X{src[0]} Y{src[1]} Z{src[2] + 0.2}"
-        )
+        # 8. purge BEFORE wipe (IMPORTANT FIX)
+        self.obj.gcode.run_script_from_command('G91')
+        self.obj.gcode.run_script_from_command('G1 E3 F300')  # small purge
+        self.obj.gcode.run_script_from_command('G90')
 
-        # =========================
-        # 8. PURGE (IMPORTANT)
-        # =========================
-        g.run_script_from_command("G91")
-        g.run_script_from_command("G1 E3 F300")
-        g.run_script_from_command("G90")
+        # 9. full hot wipe temp
+        self._set_hot_temps(hot_max_temp, fan_spd=0, wait=True, err=5)
 
-        # =========================
-        # 9. WIPING TEMPERATURE (ensure stable)
-        # =========================
-        g.run_script_from_command(f"M109 S{hot_max_temp}")
-        self.obj.hx711s.delay_s(0.5)
-
+        # 10. main wipe pass (slow + stable)
         wipe_z = end[2] + self.cfg.pa_clr_down_mm
-        wipe_speed = self.cfg.wipe_speed
 
-        # =========================
-        # 10. WIPE PASS 1
-        # =========================
-        g.run_script_from_command(
-            f"G1 F{int(wipe_speed * 60)} X{end[0]} Y{end[1]} Z{wipe_z}"
-        )
+        self._move([end[0], end[1], wipe_z], self.cfg.wipe_speed)
 
-        # =========================
-        # 11. WIPE PASS 2
-        # =========================
-        g.run_script_from_command(
-            f"G1 F{int(wipe_speed * 60)} X{src[0]} Y{src[1]} Z{wipe_z}"
-        )
+        # 11. second pass (improves cleaning)
+        self._move([src[0], src[1], wipe_z], self.cfg.wipe_speed)
+        self._move([end[0], end[1], wipe_z], self.cfg.wipe_speed)
 
-        g.run_script_from_command(
-            f"G1 F{int(wipe_speed * 60)} X{end[0]} Y{end[1]} Z{wipe_z}"
-        )
-
-        # =========================
-        # 12. RETRACT (SAFE LIFT FIRST)
-        # =========================
+        # 12. controlled retract (reduce stringing)
         if self.cfg.wipe_retract_distance > 0:
-            g.run_script_from_command(f"G0 Z{wipe_z + 2}")  # lift first
-
-            g.run_script_from_command("G91")
-            g.run_script_from_command(
-                f"G1 E-{self.cfg.wipe_retract_distance:.2f} F600"
+            self.obj.gcode.run_script_from_command('G91')
+            self.obj.gcode.run_script_from_command(
+                'G1 E-%.2f F600' % self.cfg.wipe_retract_distance
             )
-            g.run_script_from_command("G90")
+            self.obj.gcode.run_script_from_command('G90')
 
-        # =========================
-        # 13. COOLING MOVE
-        # =========================
-        g.run_script_from_command("M106 S255")
-        g.run_script_from_command(f"M109 S{hot_min_temp}")
+        # 13. cool down while moving away
+        self._set_hot_temps(hot_min_temp, fan_spd=255, wait=False)
 
-        g.run_script_from_command(
-            f"G0 F{int(self.cfg.g29_xy_speed * 60)} X{max_x} Y{max_y + 10} Z{safe_z + 5}"
-        )
+        self._move([max_x, max_y + 10, safe_z + 5], self.cfg.g29_xy_speed)
 
-        # =========================
-        # 14. BED FINAL STABILIZATION
-        # =========================
-        g.run_script_from_command("M106 S0")
-        g.run_script_from_command(f"M190 S{bed_max_temp}")
+        # 14. final bed stabilization
+        self._set_bed_temps(bed_max_temp, wait=True, err=5)
 
-        # =========================
-        # 15. FINAL HOME Z
-        # =========================
-        g.run_script_from_command("G28")
+        # 15. final home Z
+        self.obj.gcode.run_script_from_command('G28 Z')
 
         self.pnt_msg("=== NOZZLE CLEAN END ===")
         pass
