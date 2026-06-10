@@ -1,4 +1,4 @@
-Welcome to the Klipper project!
+Welcome to the Klipper project for Ender 3 V3 SE!
 
 [![Klipper](docs/img/klipper-logo-small.png)](https://www.klipper3d.org/)
 
