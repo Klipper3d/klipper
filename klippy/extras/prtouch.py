@@ -48,14 +48,14 @@ class PRTouchConfig:
         self.random_offset = gf('sensor_random_offset', default=5, minval=0, maxval=10)
 
         self.hot_min_temp = gf('s_hot_min_temp', default=140, minval=80,  maxval=200)
-        self.hot_max_temp = gf('s_hot_max_temp', default=200, minval=180, maxval=300)
+        self.hot_max_temp = gf('s_hot_max_temp', default=200, minval=170, maxval=300)
         self.bed_max_temp = gf('s_bed_max_temp', default=60,  minval=45,  maxval=100)
 
         self.pa_clr_dis_mm   = gi('pa_clr_dis_mm',  default=5,    minval=2, maxval=100)
         self.pa_clr_down_mm  = gf('pa_clr_down_mm', default=-0.1, minval=-1, maxval=1)
 
-        self.clr_noz_start_x    = gf('clr_noz_start_x',    default=0, minval=0, maxval=1000)
-        self.clr_noz_start_y    = gf('clr_noz_start_y',    default=0, minval=0, maxval=1000)
+        self.clr_noz_start_x    = gf('clr_noz_start_x',    default=0, minval=-5, maxval=1000)
+        self.clr_noz_start_y    = gf('clr_noz_start_y',    default=0, minval=-5, maxval=1000)
         self.clr_noz_len_x      = gf('clr_noz_len_x',      default=0, minval=0, maxval=1000)
         self.clr_noz_len_y      = gf('clr_noz_len_y',      default=0,
                                       minval=self.pa_clr_dis_mm + 5, maxval=1000)
