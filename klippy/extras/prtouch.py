@@ -11,26 +11,56 @@ import mcu
 import time
 from . import probe
 
+
+# ---------------------------------------------------------------------------
+# Configuration
+# --------------------------------------------------------------------------- 
+
 class PRTouchCFG:
     def __init__(self, config):
-        # Основные параметры датчика
-        self.base_count = config.getint('base_count', default=40, minval=10, maxval=100)
-        self.pi_count = config.getint('pi_count', default=32, minval=16, maxval=128)
-        self.min_hold = config.getint('min_hold', default=3000, minval=100, maxval=50000)
-        self.max_hold = config.getint('max_hold', default=50000, minval=100, maxval=100000)
+
+        # =========================
+        # Probe / Z-offset logic
+        # =========================
+        self.probe_name = config.get('probe_name', default='bltouch')
+
         self.probe_sample_count = config.getint('probe_sample_count', default=3, minval=1, maxval=10)
 
-        # Позиция датчика
+        self.z_offset_samples = config.getint('z_offset_samples', default=2, minval=2, maxval=10)
+        self.z_offset_samples_speed = config.getfloat('z_offset_samples_speed', default=2.5, minval=0.1, maxval=10)
+
+        self.bed_max_err = config.getint('bed_max_err', default=4, minval=2, maxval=10)
+        self.check_bed_mesh_max_err = config.getfloat('check_bed_mesh_max_err', default=0.2, minval=0.01, maxval=1)
+
+        # =========================
+        # Probe motion speeds
+        # =========================
+        self.probe_xy_travel_speed = config.getfloat('probe_xy_travel_speed', default=150, minval=60, maxval=250)
+        self.probe_approach_speed = config.getfloat('probe_approach_speed', default=2.5, minval=0.1, maxval=10)
+
+        # =========================
+        # Sensor / calibration
+        # =========================
+        self.tare_samples = config.getint('tare_samples', default=40, minval=10, maxval=100)
+        self.filter_window = config.getint('filter_window', default=32, minval=16, maxval=128)
+        self.min_hold = config.getint('min_hold', default=3000, minval=100, maxval=50000)
+        self.max_hold = config.getint('max_hold', default=50000, minval=100, maxval=100000)
+
         self.sensor_x = config.getfloat('sensor_x', minval=0, maxval=300)
         self.sensor_y = config.getfloat('sensor_y', minval=0, maxval=300)
-        self.random_offset = config.getfloat('sensor_random_offset', default=5, minval=0, maxval=10)
+        self.sensor_random_offset = config.getfloat('sensor_random_offset', default=5, minval=0, maxval=10)
         
-        # Температуры
+
+        # =========================
+        # Temperature limits
+        # =========================
         self.nozzle_clean_min_temp = config.getfloat('s_nozzle_clean_min_temp', default=140, minval=80, maxval=200)
         self.nozzle_clean_max_temp = config.getfloat('s_nozzle_clean_max_temp', default=200, minval=180, maxval=300)
         self.bed_max_temp = config.getfloat('s_bed_max_temp', default=60, minval=45, maxval=100)
 
-        # Очистка сопла
+        # =========================
+        # Nozzle cleaning
+        # =========================
         self.pa_clr_dis_mm = config.getint('pa_clr_dis_mm', default=5, minval=2, maxval=100)
         self.pa_clr_down_mm = config.getfloat('pa_clr_down_mm', default=-0.1, minval=-1, maxval=1)
 
@@ -39,34 +69,37 @@ class PRTouchCFG:
 
         self.nozzle_clean_len_x = config.getfloat('nozzle_clean_len_x', default=0, minval=0, maxval=1000)
         self.nozzle_clean_len_y = config.getfloat('nozzle_clean_len_y', default=0, minval=self.pa_clr_dis_mm + 5, maxval=1000)
+
         self.nozzle_clean_speed = config.getfloat('nozzle_clean_speed', default=30, minval=10, maxval=100)
 
-        # Дополнительные параметры
-        self.bed_max_err = config.getint('bed_max_err', default=4, minval=2, maxval=10)
-        self.max_z = config.getsection('stepper_z').getfloat('position_max', default=300, minval=100, maxval=500)
-        self.g29_xy_speed = config.getfloat('g29_xy_speed', default=150, minval=10, maxval=1000)
-        self.g29_rdy_speed = config.getfloat('g29_rdy_speed', default=2.5, minval=0.1, maxval=10)
-        self.probe_speed = config.getfloat('probe_speed', default=2.0, minval=0.1, maxval=10)
-
-        self.show_msg = config.getboolean('show_msg', default=False)
-        self.check_bed_mesh_max_err = config.getfloat('check_bed_mesh_max_err', default=0.2, minval=0.01, maxval=1)
         self.wipe_retract_distance = config.getfloat('wipe_retract_distance', default=0, minval=0, maxval=50)
-        self.probe_name = config.get('probe_name', default='bltouch')
 
-        # Сохранённые профили
+        # =========================
+        # Machine limits
+        # =========================
+        self.max_z = config.getsection('stepper_z').getfloat('position_max', default=300, minval=100, maxval=500)
+
+        # =========================
+        # Runtime / debug
+        # =========================
+        self.show_msg = config.getboolean('show_msg', default=False)
+
+        # =========================
+        # Stored profiles
+        # =========================
         self.stored_profs = config.get_prefix_sections('prtouch')
         self.stored_profs = self.stored_profs[1] if (len(self.stored_profs) == 2) else None
-        pass
 
 
-class PRTouchVAL:
+class PRTouchState:
     def __init__(self, config):
+        self.reset(config)
+
+    def reset(self, config):
         self.out_index = 0
         self.out_val_mm = 0.
         self.re_probe_cnt = 0
         self.home_xy = None
-        pass
-
 
 class PRTouchOBJ:
     def __init__(self, config):
@@ -103,7 +136,7 @@ class PRTouchOBJ:
 class PRTouchZOffsetWrapper:
     def __init__(self, config):
         self.cfg = PRTouchCFG(config)
-        self.val = PRTouchVAL(config)
+        self.val = PRTouchState(config)
         self.obj = PRTouchOBJ(config)
 
         self.obj.printer.register_event_handler('klippy:mcu_identify', self._handle_mcu_identify)
@@ -163,14 +196,14 @@ class PRTouchZOffsetWrapper:
             self._pnt_tri_msg(arg_index, 'Tri by Dirzctl run over!', fit_vals)
             return True
         fit_vals_t = [x for x in fit_vals]
-        self.val.out_index = self.cfg.pi_count - 1
-        if len(fit_vals) >= (self.cfg.pi_count / 2) and math.fabs(fit_vals[-1]) >= max_hold and \
+        self.val.out_index = self.cfg.filter_window - 1
+        if len(fit_vals) >= (self.cfg.filter_window / 2) and math.fabs(fit_vals[-1]) >= max_hold and \
                 math.fabs(fit_vals[-2]) >= max_hold and math.fabs(fit_vals[-3]) >= max_hold:
             self._pnt_tri_msg(arg_index, 'Tri by out max_hold!', fit_vals)
             return True
-        if len(fit_vals) != self.cfg.pi_count:
+        if len(fit_vals) != self.cfg.filter_window:
             return False           
-        for i in range(1, self.cfg.pi_count - 1):
+        for i in range(1, self.cfg.filter_window - 1):
             if fit_vals_t[i] >= max_hold and fit_vals_t[i - 1] < (max_hold / 2) and fit_vals_t[i + 1] < (max_hold / 2):
                 fit_vals_t[i] = fit_vals_t[i - 1]
         
@@ -187,21 +220,21 @@ class PRTouchZOffsetWrapper:
             vals_p[i] = (i - 0) * sin_angle + (vals_p[i] - 0) * cos_angle + 0
         self.val.out_index = vals_p.index(min(vals_p))
         if(self.val.out_index > 0):
-            for i in range(self.val.out_index, self.cfg.pi_count):
+            for i in range(self.val.out_index, self.cfg.filter_window):
                 fit_vals_t[self.val.out_index] = fit_vals_t[self.val.out_index] * (self.obj.filter.lft_k1_oft / 2) + fit_vals_t[self.val.out_index - 1] * (1 - (self.obj.filter.lft_k1_oft / 2))
         vals_p = [x for x in fit_vals_t]
 
         if not (fit_vals_t[-1] > fit_vals_t[-2] > fit_vals_t[-3]):
             return False
-        max_val = max(fit_vals_t[0:(self.cfg.pi_count - 3)])
+        max_val = max(fit_vals_t[0:(self.cfg.filter_window - 3)])
         if not ((fit_vals_t[-1] > max_val) and (fit_vals_t[-2] > max_val) and (fit_vals_t[-3] > max_val)):
             return False
         max_val = max(fit_vals_t)
         min_val = min(fit_vals_t)
-        for i in range(0, self.cfg.pi_count):
+        for i in range(0, self.cfg.filter_window):
             fit_vals_t[i] = (fit_vals_t[i] - min_val) / (max_val - min_val)
-        for i in range(0, self.cfg.pi_count - 1):
-            if (fit_vals_t[-1] - fit_vals_t[i]) / ((self.cfg.pi_count - i) * 1. / self.cfg.pi_count) < 0.8:
+        for i in range(0, self.cfg.filter_window - 1):
+            if (fit_vals_t[-1] - fit_vals_t[i]) / ((self.cfg.filter_window - i) * 1. / self.cfg.filter_window) < 0.8:
                 return False
         if fit_vals[-1] < min_hold or fit_vals[-2] < (min_hold / 2) or fit_vals[-3] < (min_hold / 3):
             return False
@@ -256,29 +289,79 @@ class PRTouchZOffsetWrapper:
             self.pnt_msg(st + ']')
         pass
 
-    def _probe_times(self, max_times, rdy_pos, speed_mm, min_dis_mm, max_z_err, min_hold, max_hold):
+
+    def _probe_times(self, max_times, rdy_pos, speed_mm, min_dis_mm, 
+                 max_z_err, min_hold, max_hold):
+    
         o_mm = 0
         rdy_pos_z = rdy_pos[2]
+        
         now_pos = self.obj.toolhead.get_position()
-        self._move(now_pos[:2] + [rdy_pos[2]], self.cfg.g29_rdy_speed)        
-        self._move(rdy_pos, self.cfg.g29_xy_speed)
+        self._move(now_pos[:2] + [rdy_pos[2]], self.cfg.probe_approach_speed)
+        self._move(rdy_pos, self.cfg.probe_xy_travel_speed)
+        
         for i in range(max_times):
-            o_index0, o_mm0, deal_sta = self.probe_by_step(rdy_pos[:2] + [rdy_pos_z], speed_mm, min_dis_mm, min_hold, max_hold, True)
-            if not deal_sta and rdy_pos_z == rdy_pos[2]:
-                rdy_pos_z += 2
+            values = []
+            need_repeat = False
+            
+            for _ in range(self.cfg.z_offset_samples):
+                _, o_mm_i, deal_sta = self.probe_by_step(
+                    rdy_pos[:2] + [rdy_pos_z],
+                    speed_mm, min_dis_mm, min_hold, max_hold, True
+                )
+                
+                # Если измерение не удалось - перезапускаем ВСЮ серию
+                if not deal_sta:
+                    if rdy_pos_z == rdy_pos[2]:
+                        rdy_pos_z += 2
+                    need_repeat = True
+                    break  # Выход из внутреннего цикла
+                
+                values.append(o_mm_i)
+            
+            # Если была ошибка - перезапускаем внешний цикл
+            if need_repeat:
+                self.pnt_msg(f'***_probe_times: probe failed, retrying with z={rdy_pos_z}')
                 continue
-            o_index1, o_mm1, deal_sta = self.probe_by_step(rdy_pos[:2] + [rdy_pos_z], speed_mm, min_dis_mm, min_hold, max_hold, True)
-            o_mm = (o_mm0 + o_mm1) / 2
-            if math.fabs(o_mm0 - o_mm1) <= max_z_err or not self.ck_sys_sta():
+            
+            # Проверка, что есть успешные измерения
+            if not values:
+                self.pnt_msg('***_probe_times: no valid measurements, retrying')
+                continue
+            
+            # Усредняем успешные измерения
+            o_mm0 = sum(values) / len(values)
+            spread = max(values) - min(values)
+            
+            # Логируем результаты
+            self.pnt_msg(f'***_probe_times: attempt {i+1}, values={values}, '
+                        f'avg={o_mm0:.3f}, spread={spread:.3f}')
+            
+            # Проверяем стабильность
+            if spread <= max_z_err or not self.ck_sys_sta():
+                o_mm = o_mm0
+                self.pnt_msg(f'***_probe_times: success, final value={o_mm:.3f}')
                 break
+            
+            # Если не прошли проверку - повторяем
             self.val.re_probe_cnt += 1
-            self.pnt_msg('***_probe_times must be reprobe= o_mm0=%.2f, o_mm1=%.2f' % (o_mm0, o_mm1))
+            self.pnt_msg(f'***_probe_times: spread too high ({spread:.3f} > {max_z_err}), reprobing')
+        
+        # Если цикл завершился без успешного измерения
+        if o_mm == 0 and values:
+            # Возвращаем последнее усреднённое значение как fallback
+            o_mm = sum(values) / len(values)
+            self.pnt_msg(f'***_probe_times: warning, using fallback value={o_mm:.3f}')
+        
         return o_mm
+
     
     def clear_nozzle(self, nozzle_clean_min_temp, nozzle_clean_max_temp, bed_max_temp, min_hold, max_hold):
         min_x, min_y = self.cfg.nozzle_clean_start_pos_x, self.cfg.nozzle_clean_start_pos_y
-        max_x, max_y = self.cfg.nozzle_clean_start_pos_x + self.cfg.nozzle_clean_len_x,
-        self.cfg.nozzle_clean_start_pos_y + self.cfg.nozzle_clean_len_y
+
+        max_x = self.cfg.nozzle_clean_start_pos_x + self.cfg.nozzle_clean_len_x
+        max_y = self.cfg.nozzle_clean_start_pos_y + self.cfg.nozzle_clean_len_y
+
         self._set_bed_temps(temp=bed_max_temp, wait=False)
 
         self._set_hot_temps(temp=nozzle_clean_min_temp, fan_spd=0, wait=False, err=10)
@@ -288,11 +371,11 @@ class PRTouchZOffsetWrapper:
         src_pos = [min_x, min_y, self.cfg.bed_max_err + 1, cur_pos[3]]
         end_pos = [max_x, max_y, src_pos[2], src_pos[3]]
         self._set_hot_temps(temp=nozzle_clean_min_temp, fan_spd=0, wait=True, err=10)   
-        src_pos[2] = self._probe_times(3, [src_pos[0], src_pos[1], src_pos[2]], self.cfg.probe_speed, 10, 0.2, min_hold, max_hold)
+        src_pos[2] = self._probe_times(3, [src_pos[0], src_pos[1], src_pos[2]], self.cfg.z_offset_samples_speed, 10, 0.2, min_hold, max_hold)
         self._set_hot_temps(temp=nozzle_clean_min_temp + 40, fan_spd=0, wait=False, err=10)
-        end_pos[2] = self._probe_times(3, [end_pos[0], end_pos[1], end_pos[2]], self.cfg.probe_speed, 10, 0.2, min_hold, max_hold)     
-        self._move(src_pos[:2] + [self.cfg.bed_max_err + 1], self.cfg.g29_xy_speed) 
-        self._move(src_pos[:2] + [src_pos[2] + 0.1], self.cfg.g29_rdy_speed) 
+        end_pos[2] = self._probe_times(3, [end_pos[0], end_pos[1], end_pos[2]], self.cfg.z_offset_samples_speed, 10, 0.2, min_hold, max_hold)     
+        self._move(src_pos[:2] + [self.cfg.bed_max_err + 1], self.cfg.probe_xy_travel_speed) 
+        self._move(src_pos[:2] + [src_pos[2] + 0.1], self.cfg.probe_approach_speed) 
         self._set_hot_temps(temp=nozzle_clean_max_temp, fan_spd=0, wait=True, err=10)
         self._set_hot_temps(temp=nozzle_clean_min_temp, fan_spd=0, wait=False)
         # retract filament
@@ -306,13 +389,13 @@ class PRTouchZOffsetWrapper:
         self._set_hot_temps(temp=nozzle_clean_min_temp, fan_spd=0, wait=False) 
         self._set_bed_temps(temp=bed_max_temp, wait=True, err=5)
 
-        self._move(self.val.home_xy + [10], self.cfg.g29_xy_speed)
+        self._move(self.val.home_xy + [10], self.cfg.probe_xy_travel_speed)
         self.obj.gcode.run_script_from_command('G28 Z')
         pass
 
     def probe_z_offset(self, x, y):
         self._ck_g28ed()
-        z_offset = self._probe_times(3, [x, y, self.cfg.bed_max_err + 1.], self.cfg.probe_speed, 10, self.cfg.check_bed_mesh_max_err, self.cfg.min_hold, self.cfg.max_hold)
+        z_offset = self._probe_times(3, [x, y, self.cfg.bed_max_err + 1.], self.cfg.z_offset_samples_speed, 10, self.cfg.check_bed_mesh_max_err, self.cfg.min_hold, self.cfg.max_hold)
         return z_offset
 
     def _cal_min_z(self, start_z, hx711_vals):
@@ -320,10 +403,10 @@ class PRTouchZOffsetWrapper:
         dirzctl_params, dirzctl_start_tick = self.obj.dirzctl.get_params()
         if dirzctl_params is None or len(dirzctl_params) != 2:     
             raise self.obj.printer.command_error("""{"code":"key502", "msg":"probe_by_step: Can not recv stepper-z status."}""")
-        if len(hx711_vals) < self.cfg.pi_count or len(hx711_params) < self.cfg.pi_count:
+        if len(hx711_vals) < self.cfg.filter_window or len(hx711_params) < self.cfg.filter_window:
             up_all_cnt = dirzctl_params[0]['step'] - dirzctl_params[1]['step'] + 1
             return up_all_cnt, up_all_cnt, False
-        del hx711_params[0:(len(hx711_params) - self.cfg.pi_count)]
+        del hx711_params[0:(len(hx711_params) - self.cfg.filter_window)]
 
         vals_p = [x for x in hx711_vals]
         max_val = max(vals_p)
@@ -352,10 +435,10 @@ class PRTouchZOffsetWrapper:
         return (up_min_cnt if up_min_cnt >= 0 else 0), up_all_cnt, True
 
     def probe_by_step(self, rdy_pos, speed_mm, min_dis_mm, min_hold, max_hold, up_after=True):
-        self.obj.hx711s.read_base(int(self.cfg.base_count / 2), max_hold)
+        self.obj.hx711s.read_base(int(self.cfg.tare_samples / 2), max_hold)
         step_cnt = int(min_dis_mm / (self.obj.dirzctl.steppers[0].get_step_dist() * self.obj.dirzctl.step_base))
         step_us = int(((min_dis_mm / speed_mm) * 1000 * 1000) / step_cnt)
-        self.obj.hx711s.query_start(self.cfg.pi_count * 2, int(65535), del_dirty=True, show_msg=False, is_ck_con=True)        
+        self.obj.hx711s.query_start(self.cfg.filter_window * 2, int(65535), del_dirty=True, show_msg=False, is_ck_con=True)        
         self.obj.dirzctl.check_and_run(0, int(step_us), int(step_cnt), wait_finish=False, is_ck_con=True)
         self.obj.hx711s.delay_s(0.015)
         self.pnt_msg('*********************************************************')
@@ -367,21 +450,21 @@ class PRTouchZOffsetWrapper:
             if all_valss is None or len(all_valss[0]) == 0:
                 self.obj.hx711s.delay_s(0.005)
                 continue
-            unfit_vals, tmp_unfit_vals = self.obj.filter.cal_offset_by_vals(self.obj.hx711s.s_count, all_valss, self.obj.filter.lft_k1_oft, self.cfg.pi_count)
-            fit_vals, tmp_fit_vals = self.obj.filter.cal_filter_by_vals(self.obj.hx711s.s_count, all_valss, self.obj.filter.hft_hz, self.obj.filter.lft_k1, self.cfg.pi_count)
+            unfit_vals, tmp_unfit_vals = self.obj.filter.cal_offset_by_vals(self.obj.hx711s.s_count, all_valss, self.obj.filter.lft_k1_oft, self.cfg.filter_window)
+            fit_vals, tmp_fit_vals = self.obj.filter.cal_filter_by_vals(self.obj.hx711s.s_count, all_valss, self.obj.filter.hft_hz, self.obj.filter.lft_k1, self.cfg.filter_window)
             
             for i in range(self.obj.hx711s.s_count):
                 if not self._check_trigger(i, tmp_fit_vals[i], tmp_unfit_vals[i], min_hold, max_hold):
                     continue
                 self.obj.dirzctl.check_and_run(0, 0, 0, wait_finish=False)
-                self.obj.hx711s.query_start(self.cfg.pi_count * 2, int(0), del_dirty=False, show_msg=False)
+                self.obj.hx711s.query_start(self.cfg.filter_window * 2, int(0), del_dirty=False, show_msg=False)
                 self.obj.hx711s.delay_s(0.015)
                 for j in range(int(self.obj.hx711s.s_count)):
                     self.pnt_array('TRIGGER_USE_CH=%d, FIT_VALS=' % (j), tmp_fit_vals[j], 16)
                 self.obj.hx711s.delay_s(0.2)
                 all_valss = self.obj.hx711s.get_vals()
                 self.pnt_array('WAIT_AND_CAL_CH=%d, ARY=' % (i), all_valss[i])
-                hx711_vals, tmp_hx711_vs = self.obj.filter.cal_filter_by_vals(self.obj.hx711s.s_count, all_valss, self.obj.filter.hft_hz, self.obj.filter.lft_k1_cal, self.cfg.pi_count)
+                hx711_vals, tmp_hx711_vs = self.obj.filter.cal_filter_by_vals(self.obj.hx711s.s_count, all_valss, self.obj.filter.hft_hz, self.obj.filter.lft_k1_cal, self.cfg.filter_window)
                 self.pnt_array('WAIT_AND_CAL_CH=%d, ARY=' % (i), tmp_hx711_vs[i])
                 up_min_cnt, up_all_cnt, deal_sta = self._cal_min_z(rdy_pos[2], tmp_hx711_vs[i])
                 if up_after:
@@ -425,13 +508,13 @@ class PRTouchZOffsetWrapper:
             self.clear_nozzle(self.cfg.nozzle_clean_min_temp, self.cfg.nozzle_clean_max_temp, self.cfg.bed_max_temp,
                             self.cfg.min_hold, self.cfg.max_hold)
 
-        x = self.cfg.sensor_x + random.uniform(-self.cfg.random_offset, self.cfg.random_offset)
-        y = self.cfg.sensor_y + random.uniform(-self.cfg.random_offset, self.cfg.random_offset)
+        x = self.cfg.sensor_x + random.uniform(-self.cfg.sensor_random_offset, self.cfg.sensor_random_offset)
+        y = self.cfg.sensor_y + random.uniform(-self.cfg.sensor_random_offset, self.cfg.sensor_random_offset)
         probe_x_offset, probe_y_offset = self.obj.probe.get_offsets()[:2]
         probe_x = x - probe_x_offset
         probe_y = y - probe_y_offset
         self.pnt_msg("Checking z-position of probe (%.2f, %.2f)" % (probe_x, probe_y))
-        self._move([probe_x, probe_y, self.cfg.bed_max_err + 1.], self.cfg.g29_xy_speed)
+        self._move([probe_x, probe_y, self.cfg.bed_max_err + 1.], self.cfg.probe_xy_travel_speed)
         probe_gcmd = self.obj.gcode.create_gcode_command("PROBE", "PROBE", {'SAMPLES': self.cfg.probe_sample_count})
         z_probe = probe.run_single_probe(self.obj.probe, probe_gcmd)
         self.pnt_msg('Probe at sensor: %.3f' % z_probe[2])
@@ -454,7 +537,7 @@ class PRTouchZOffsetWrapper:
     cmd_PRTOUCH_ACCURACY_help = "Probe Z-height accuracy at sensoor position"
     def cmd_PRTOUCH_ACCURACY(self, gcmd):
         self._ck_g28ed()
-        speed = gcmd.get_float("PROBE_SPEED", self.cfg.probe_speed, above=0.)
+        speed = gcmd.get_float("z_offset_samples_speed", self.cfg.z_offset_samples_speed, above=0.)
         sample_count = gcmd.get_int("SAMPLES", 10, minval=1)
         gcmd.respond_info("PRTOUCH_ACCURACY at X:%.3f Y:%.3f"
                           " (samples=%d speed=%.1f)\n"
@@ -462,7 +545,7 @@ class PRTouchZOffsetWrapper:
                              sample_count, speed))
         sensor_pos = [self.cfg.sensor_x, self.cfg.sensor_y, self.cfg.bed_max_err]
         # Move to sensor location
-        self._move(sensor_pos, self.cfg.g29_xy_speed)
+        self._move(sensor_pos, self.cfg.probe_xy_travel_speed)
         # Probe bed sample_count times
         positions = []
         while len(positions) < sample_count:
@@ -496,13 +579,5 @@ def load_config(config):
 
 # PRTOUCH_PROBE_ZOFFSET APPLY_Z_ADJUST=1
 
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
- 
-_PROBE_SAMPLES   = 2               # default probe samples for Z-reference
 
-# ---------------------------------------------------------------------------
-# Configuration
-# --------------------------------------------------------------------------- 
 
