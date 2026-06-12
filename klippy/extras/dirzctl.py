@@ -77,12 +77,12 @@ class DirZCtl:
         pass
 
     def _handle_debug_dirzctl(self, params):
-        self.printer.lookup_object('prtouch').pnt_msg(str(params))
+        self.printer.lookup_object('prtouch')._log_info(str(params))
         pass
 
     def _handle_result_dirzctl(self, params):
         self.all_params.append(params)
-        # self.printer.lookup_object('prtouch').pnt_msg(str(params))
+        # self.printer.lookup_object('prtouch')._log_info(str(params))
         pass
 
     def get_params(self):

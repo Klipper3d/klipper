@@ -75,7 +75,7 @@ class HX711S:
         pass
 
     def _handle_debug_hx711s(self, params):
-        self.printer.lookup_object('prtouch').pnt_msg(str(params))
+        self.printer.lookup_object('prtouch')._log_info(str(params))
         pass
 
     def _handle_shutdown(self):
@@ -180,7 +180,7 @@ class HX711S:
                 rvs[j].append(sum(vals[j]) / len(vals[j]))
                 rvs[j].append(max(vals[j]))
                 avgs[j] = sum(vals[j]) / len(vals[j])
-                self.printer.lookup_object('prtouch').pnt_msg('READ_BASE ch=%d min=%.2f avg=%.2f max=%.2f' % (j, rvs[j][-3], avgs[j], rvs[j][-1]))
+                self.printer.lookup_object('prtouch')._log_info('READ_BASE ch=%d min=%.2f avg=%.2f max=%.2f' % (j, rvs[j][-3], avgs[j], rvs[j][-1]))
             if reset_zero:
                 self.base_avgs = avgs
 
