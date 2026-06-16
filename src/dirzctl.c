@@ -33,6 +33,8 @@ struct dirzctl
     uint32_t a_finish;
     uint32_t a_steps;
     uint32_t a_ticks;
+
+    uint32_t start_tick;
 };
 
 struct task_wake dirzctl_wake;
@@ -66,31 +68,27 @@ deal_steps(struct dirzctl *d)
         gpio_out_toggle_noirq(d->steps[i]);
 }
 
-static void 
-send_status(struct dirzctl *d)
+static void send_status(struct dirzctl *d, uint8_t is_start)
 {
-    d->a_ticks = timer_read_time();
+    d->a_ticks = is_start ? d->start_tick : timer_read_time();
     d->a_steps = (d->r_steps - (d->r_steps % 2)) / 2;
     d->a_finish = 1;
 }
 
-static uint_fast8_t 
-dirzctl_event(struct timer *t)
+static uint_fast8_t dirzctl_event(struct timer *t)
 {
-	struct dirzctl *d = container_of(t,struct dirzctl,time);
-
+    struct dirzctl *d = container_of(t, struct dirzctl, time);
     sched_wake_task(&dirzctl_wake);
-	deal_steps(d);
+    deal_steps(d);
     d->r_steps--;
-    if((d->r_steps == 0) || ((d->r_steps % 2 == 0) && (d->r_stop == 1)))
-    {
+    if ((d->r_steps == 0) || ((d->r_steps % 2 == 0) && (d->r_stop == 1))) {
         sched_del_timer(&d->time);
-        send_status(d);
-        deal_dirs(d,0, 0);
+        send_status(d, 0);     // <-- финальный пакет
+        deal_dirs(d, 0, 0);
         d->r_stop = 0;
-        return SF_DONE;        
-    }else if(d->r_steps == d->r_steps_fix - 1)
-        send_status(d);
+        return SF_DONE;
+    } else if (d->r_steps == d->r_steps_fix - 1)
+        send_status(d, 1);     // <-- стартовый пакет с правильным tick
     d->time.waketime = timer_read_time() + d->n_ticks;
     return SF_RESCHEDULE;
 }
@@ -148,7 +146,8 @@ command_run_dirzctl(uint32_t *args)
     d->n_ticks = (uint32_t)(((double)args[2] / 1000000) * CONFIG_CLOCK_FREQ) / 2; 
     d->r_steps = args[3] * 2;
     d->r_steps_fix = d->r_steps;
-    d->time.waketime = timer_read_time() + d->n_ticks;
+    d->start_tick = timer_read_time();           // <-- сохраняем стартовый tick
+    d->time.waketime = d->start_tick + d->n_ticks;
     sched_add_timer(&d->time);
 }
 DECL_COMMAND(command_run_dirzctl, "run_dirzctl oid=%c direct=%c step_us=%u step_cnt=%u");
