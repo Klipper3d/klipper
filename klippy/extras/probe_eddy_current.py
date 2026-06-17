@@ -549,144 +549,19 @@ def probe_results_from_avg(measures, toolhead_pos, calibration, offsets):
 
 
 ######################################################################
-# Probe sessions
+# Data fitting for "tap"
 ######################################################################
 
-MAX_VALID_RAW_VALUE=0x03ffffff
-
-# Helper for implementing PROBE style commands (descend until trigger)
-class EddyDescend:
-    def __init__(self, config, sensor_helper, calibration,
-                 probe_offsets, param_helper, trigger_analog):
-        self._printer = config.get_printer()
-        self._sensor_helper = sensor_helper
-        self._calibration = calibration
-        self._probe_offsets = probe_offsets
-        self._param_helper = param_helper
-        self._trigger_analog = trigger_analog
-        if (config.get('z_offset', None, note_valid=False) is not None
-            and config.get('descend_z', None, note_valid=False) is None):
-            config.deprecate('z_offset')
-            self._descend_z = config.getfloat('z_offset', above=0.)
-        else:
-            self._descend_z = config.getfloat('descend_z', above=0.)
-        self._z_min_position = probe.lookup_minimum_z(config)
-        self._gather = None
-        probe.HomingViaProbeHelper(config, self._descend_z)
-    def _prep_trigger_analog(self):
-        sos_filter = self._trigger_analog.get_sos_filter()
-        sos_filter.set_filter_design(None)
-        sos_filter.set_offset_scale(0, 1.)
-        self._trigger_analog.set_raw_range(0, MAX_VALID_RAW_VALUE)
-        trigger_freq = self._calibration.height_to_freq(self._descend_z)
-        conv_freq = self._sensor_helper.convert_frequency_to_raw(trigger_freq)
-        self._trigger_analog.set_trigger('gt', conv_freq)
-    # Probe session interface
-    def start_probe_session(self, gcmd):
-        self._calibration.verify_calibrated()
-        self._prep_trigger_analog()
-        self._gather = EddyGatherSamples(self._printer, self._sensor_helper)
-        return self
-    def run_probe(self, gcmd):
-        toolhead = self._printer.lookup_object('toolhead')
-        pos = toolhead.get_position()
-        pos[2] = self._z_min_position
-        speed = self._param_helper.get_probe_params(gcmd)['probe_speed']
-        # Perform probing move
-        phoming = self._printer.lookup_object('homing')
-        check_movement = not phoming.check_probe_first_home(gcmd)
-        trig_pos = phoming.probing_move(self._trigger_analog, pos, speed,
-                                        check_movement=check_movement)
-        # Extract samples
-        start_time = self._trigger_analog.get_last_trigger_time() + 0.050
-        end_time = start_time + 0.100
-        toolhead_pos = toolhead.get_position()
-        offsets = self._probe_offsets.get_offsets()
-        self._gather.add_probe_request(probe_results_from_avg,
-                                       start_time, end_time,
-                                       toolhead_pos, self._calibration, offsets)
-    def pull_probed_results(self):
-        return self._gather.pull_probed()
-    def end_probe_session(self):
-        self._gather.finish()
-        self._gather = None
-
-# Probing helper for "tap" requests
-class EddyTap:
-    def __init__(self, config, sensor_helper, param_helper, trigger_analog):
-        self._printer = config.get_printer()
-        self._sensor_helper = sensor_helper
-        self._param_helper = param_helper
-        self._trigger_analog = trigger_analog
-        self._z_min_position = probe.lookup_minimum_z(config)
-        self._gather = None
-        self._filter_design = None
-        self._tap_z_offset = config.getfloat('tap_z_offset', 0.)
-        self._tap_threshold = config.getfloat('tap_threshold', 0., above=0.)
+# Given a list of (frequency, z) pairs, find the coefficients
+# z_contact, freq_contact, depress_slope, slope, and slope2 that best
+# fit the data to the formulas `frequency = freq_contact +
+# depress_slope*(z-z_contact)` when z<=z_contact and `frequency =
+# freq_contact + slope*(z-z_contact) + slope2*(z-z_contact)*(z-z_contact)`
+# when z>=z_contact.  This implements a form of non-linear least
+# squares.
+class TapBestFit:
+    def __init__(self):
         self._least_squares_cache = {}
-        self._current_tap_threshold = 0.
-        self._setup_tap()
-        self._last_tap = None
-    # Setup for "tap" probe request
-    def _setup_tap(self):
-        # Create sos filter "design"
-        cfg_error = self._printer.config_error
-        sps = self._sensor_helper.get_samples_per_second()
-        design = trigger_analog.DigitalFilter(sps, cfg_error)
-        design.add_lowpass(25.0, 4)
-        design.add_derivative()
-        self._filter_design = design
-        # Create SOS filter
-        cmd_queue = self._trigger_analog.get_dispatch().get_command_queue()
-        mcu = self._sensor_helper.get_mcu()
-        filter_size = design.get_size()
-        sos_filter = trigger_analog.MCU_SosFilter(mcu, cmd_queue, filter_size)
-        self._trigger_analog.setup_sos_filter(sos_filter)
-    def _prep_trigger_analog_tap(self, gcmd):
-        tap_threshold = gcmd.get_float("TAP_THRESHOLD",
-                                       self._tap_threshold, above=0.)
-        if not tap_threshold:
-            raise self._printer.command_error("Tap not configured")
-        params = self._param_helper.get_probe_params(gcmd)
-        # Setup mcu filter (scale internal values to milli-hz)
-        sos_filter = self._trigger_analog.get_sos_filter()
-        sos_filter.set_filter_design(self._filter_design)
-        FRAC_HZ = 1000.
-        s = FRAC_HZ * self._sensor_helper.convert_raw_to_frequency(1)
-        sos_filter.set_offset_scale(0, s, auto_offset=True)
-        self._trigger_analog.set_raw_range(0, MAX_VALID_RAW_VALUE)
-        # Set mcu trigger to tap_threshold
-        sps = self._sensor_helper.get_samples_per_second()
-        adj_thresh = tap_threshold * params['probe_speed'] / sps
-        samp_thresh = int(FRAC_HZ * adj_thresh + 0.5)
-        self._trigger_analog.set_trigger('diff_peak_gt', samp_thresh)
-        self._current_tap_threshold = tap_threshold
-    # Measurement analysis to determine "tap" position
-    def _validate_samples_time(self, measures, start_time, end_time):
-        cmderr = self._printer.command_error
-        if end_time - start_time < 0.100:
-            raise cmderr("Tap detected too close to start of move")
-        timestamps = [m[0] for m in measures]
-        if len(timestamps) < 2:
-            raise cmderr("Unable to obtain probe_eddy_current sensor readings")
-        ts = [start_time] + timestamps + [end_time]
-        tdiffs = [ts[i] - ts[i-1] for i in range(1, len(ts))]
-        tmax = max(tdiffs)
-        tmin = min(tdiffs[1:-1])
-        cycle_time = 1.0 / self._sensor_helper.get_samples_per_second()
-        if tmax > cycle_time * 1.25:
-            raise cmderr("Eddy: Gaps in the data: %.3f > %.3f"
-                         % (tmax, cycle_time * 1.25))
-        if tmin < cycle_time * 0.75:
-            raise cmderr("Eddy: CLKIN frequency too low: %.3f < %.3f"
-                         % (tmin, cycle_time * 0.75))
-    def _lookup_toolhead_pos(self, pos_time):
-        toolhead = self._printer.lookup_object('toolhead')
-        kin = toolhead.get_kinematics()
-        kin_spos = {s.get_name(): s.mcu_to_commanded_position(
-                                      s.get_past_mcu_position(pos_time))
-                    for s in kin.get_steppers()}
-        return kin.calc_position(kin_spos)
     def _build_ls_matrix(self, samples, est_z_contact):
         # The function here is only a reference for the optimized version below
         len_samples = len(samples)
@@ -778,7 +653,7 @@ class EddyTap:
             return sys.float_info.max, [[0.]] * 4
         rel_err = -sum([c[0]*a[0] for c, a in zip(coeffs, eqst_ans)])
         return rel_err, coeffs
-    def _find_least_squares(self, data):
+    def find_best_fit(self, data):
         #for d in data:
         #    logging.info("sample: freq=%.3f z=%.6f", d[0], d[1][2])
         self._least_squares_cache.clear()
@@ -817,11 +692,154 @@ class EddyTap:
         self._least_squares_cache.clear()
         # Return to original freq/z measurement base
         bc = [v[0] for v in best_coeffs]
-        final_coeffs = (base_z + best_z,
-                        base_freq + bc[0] + best_z*bc[2] + best_z*best_z*bc[3],
-                        bc[1], bc[2] + 2.*best_z*bc[3], bc[3])
-        #logging.info("probe_analysis: coeffs=%s", final_coeffs)
-        return final_coeffs
+        z_contact = base_z + best_z
+        freq_contact = base_freq + bc[0] + best_z*bc[2] + best_z*best_z*bc[3]
+        depress_slope = bc[1]
+        slope = bc[2] + 2.*best_z*bc[3]
+        slope2 = bc[3]
+        #logging.info("probe_analysis: coeffs=%s",
+        #             (z_contact, freq_contact, depress_slope, slope, slope2))
+        return z_contact, freq_contact, depress_slope, slope, slope2
+
+
+######################################################################
+# Probe sessions
+######################################################################
+
+MAX_VALID_RAW_VALUE=0x03ffffff
+
+# Helper for implementing PROBE style commands (descend until trigger)
+class EddyDescend:
+    def __init__(self, config, sensor_helper, calibration,
+                 probe_offsets, param_helper, trigger_analog):
+        self._printer = config.get_printer()
+        self._sensor_helper = sensor_helper
+        self._calibration = calibration
+        self._probe_offsets = probe_offsets
+        self._param_helper = param_helper
+        self._trigger_analog = trigger_analog
+        if (config.get('z_offset', None, note_valid=False) is not None
+            and config.get('descend_z', None, note_valid=False) is None):
+            config.deprecate('z_offset')
+            self._descend_z = config.getfloat('z_offset', above=0.)
+        else:
+            self._descend_z = config.getfloat('descend_z', above=0.)
+        self._z_min_position = probe.lookup_minimum_z(config)
+        self._gather = None
+        probe.HomingViaProbeHelper(config, self._descend_z)
+    def _prep_trigger_analog(self):
+        sos_filter = self._trigger_analog.get_sos_filter()
+        sos_filter.set_filter_design(None)
+        sos_filter.set_offset_scale(0, 1.)
+        self._trigger_analog.set_raw_range(0, MAX_VALID_RAW_VALUE)
+        trigger_freq = self._calibration.height_to_freq(self._descend_z)
+        conv_freq = self._sensor_helper.convert_frequency_to_raw(trigger_freq)
+        self._trigger_analog.set_trigger('gt', conv_freq)
+    # Probe session interface
+    def start_probe_session(self, gcmd):
+        self._calibration.verify_calibrated()
+        self._prep_trigger_analog()
+        self._gather = EddyGatherSamples(self._printer, self._sensor_helper)
+        return self
+    def run_probe(self, gcmd):
+        toolhead = self._printer.lookup_object('toolhead')
+        pos = toolhead.get_position()
+        pos[2] = self._z_min_position
+        speed = self._param_helper.get_probe_params(gcmd)['probe_speed']
+        # Perform probing move
+        phoming = self._printer.lookup_object('homing')
+        check_movement = not phoming.check_probe_first_home(gcmd)
+        trig_pos = phoming.probing_move(self._trigger_analog, pos, speed,
+                                        check_movement=check_movement)
+        # Extract samples
+        start_time = self._trigger_analog.get_last_trigger_time() + 0.050
+        end_time = start_time + 0.100
+        toolhead_pos = toolhead.get_position()
+        offsets = self._probe_offsets.get_offsets()
+        self._gather.add_probe_request(probe_results_from_avg,
+                                       start_time, end_time,
+                                       toolhead_pos, self._calibration, offsets)
+    def pull_probed_results(self):
+        return self._gather.pull_probed()
+    def end_probe_session(self):
+        self._gather.finish()
+        self._gather = None
+
+# Probing helper for "tap" requests
+class EddyTap:
+    def __init__(self, config, sensor_helper, param_helper, trigger_analog):
+        self._printer = config.get_printer()
+        self._sensor_helper = sensor_helper
+        self._param_helper = param_helper
+        self._trigger_analog = trigger_analog
+        self._z_min_position = probe.lookup_minimum_z(config)
+        self._gather = None
+        self._filter_design = None
+        self._tap_z_offset = config.getfloat('tap_z_offset', 0.)
+        self._tap_threshold = config.getfloat('tap_threshold', 0., above=0.)
+        self._current_tap_threshold = 0.
+        self._setup_tap()
+        self._last_tap = None
+    # Setup for "tap" probe request
+    def _setup_tap(self):
+        # Create sos filter "design"
+        cfg_error = self._printer.config_error
+        sps = self._sensor_helper.get_samples_per_second()
+        design = trigger_analog.DigitalFilter(sps, cfg_error)
+        design.add_lowpass(25.0, 4)
+        design.add_derivative()
+        self._filter_design = design
+        # Create SOS filter
+        cmd_queue = self._trigger_analog.get_dispatch().get_command_queue()
+        mcu = self._sensor_helper.get_mcu()
+        filter_size = design.get_size()
+        sos_filter = trigger_analog.MCU_SosFilter(mcu, cmd_queue, filter_size)
+        self._trigger_analog.setup_sos_filter(sos_filter)
+    def _prep_trigger_analog_tap(self, gcmd):
+        tap_threshold = gcmd.get_float("TAP_THRESHOLD",
+                                       self._tap_threshold, above=0.)
+        if not tap_threshold:
+            raise self._printer.command_error("Tap not configured")
+        params = self._param_helper.get_probe_params(gcmd)
+        # Setup mcu filter (scale internal values to milli-hz)
+        sos_filter = self._trigger_analog.get_sos_filter()
+        sos_filter.set_filter_design(self._filter_design)
+        FRAC_HZ = 1000.
+        s = FRAC_HZ * self._sensor_helper.convert_raw_to_frequency(1)
+        sos_filter.set_offset_scale(0, s, auto_offset=True)
+        self._trigger_analog.set_raw_range(0, MAX_VALID_RAW_VALUE)
+        # Set mcu trigger to tap_threshold
+        sps = self._sensor_helper.get_samples_per_second()
+        adj_thresh = tap_threshold * params['probe_speed'] / sps
+        samp_thresh = int(FRAC_HZ * adj_thresh + 0.5)
+        self._trigger_analog.set_trigger('diff_peak_gt', samp_thresh)
+        self._current_tap_threshold = tap_threshold
+    # Measurement analysis to determine "tap" position
+    def _validate_samples_time(self, measures, start_time, end_time):
+        cmderr = self._printer.command_error
+        if end_time - start_time < 0.100:
+            raise cmderr("Tap detected too close to start of move")
+        timestamps = [m[0] for m in measures]
+        if len(timestamps) < 2:
+            raise cmderr("Unable to obtain probe_eddy_current sensor readings")
+        ts = [start_time] + timestamps + [end_time]
+        tdiffs = [ts[i] - ts[i-1] for i in range(1, len(ts))]
+        tmax = max(tdiffs)
+        tmin = min(tdiffs[1:-1])
+        cycle_time = 1.0 / self._sensor_helper.get_samples_per_second()
+        if tmax > cycle_time * 1.25:
+            raise cmderr("Eddy: Gaps in the data: %.3f > %.3f"
+                         % (tmax, cycle_time * 1.25))
+        if tmin < cycle_time * 0.75:
+            raise cmderr("Eddy: CLKIN frequency too low: %.3f < %.3f"
+                         % (tmin, cycle_time * 0.75))
+    def _lookup_toolhead_pos(self, pos_time):
+        toolhead = self._printer.lookup_object('toolhead')
+        kin = toolhead.get_kinematics()
+        kin_spos = {s.get_name(): s.mcu_to_commanded_position(
+                                      s.get_past_mcu_position(pos_time))
+                    for s in kin.get_steppers()}
+        return kin.calc_position(kin_spos)
     def _error_detect(self, msg):
         raise self._printer.command_error("Unable to detect tap: %s" % (msg,))
     def _analyze_pullback(self, measures, start_time, end_time):
@@ -838,7 +856,8 @@ class EddyTap:
             self._error_detect("insufficient lift (%.6f vs %.6f)"
                                % (max_z - min_z, 0.350))
         # Find best fit for extracted measurements
-        coeffs = self._find_least_squares(data)
+        tap_fit = TapBestFit()
+        coeffs = tap_fit.find_best_fit(data)
         z_contact, freq_contact, depress_slope, slope, slope2 = coeffs
         self._last_tap = ("fail", z_contact - min_z, coeffs)
         reactor.pause(0.)
