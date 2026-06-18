@@ -43,6 +43,11 @@ enum gs_usb_breq {
     GS_USB_BREQ_BT_CONST_EXT,
 };
 
+enum gs_can_mode {
+    GS_CAN_MODE_RESET = 0,
+    GS_CAN_MODE_START
+};
+
 struct gs_host_config {
     uint32_t byte_order;
 } __packed;
@@ -133,6 +138,8 @@ enum {
     HS_TX_HW = 2,
     HS_TX_LOCAL = 4,
 };
+
+uint32_t canbus_frequency = CONFIG_CANBUS_FREQUENCY;
 
 // Send a message to the Linux host
 static int
@@ -551,6 +558,7 @@ enum {
 
 static void *usb_xfer_data;
 static uint8_t usb_xfer_size, usb_xfer_flags;
+static void (*usb_xfer_complete)();
 
 // Set the USB "stall" condition
 static void
@@ -562,7 +570,8 @@ usb_do_stall(void)
 
 // Transfer data on the usb endpoint 0
 static void
-usb_do_xfer(void *data, uint_fast8_t size, uint_fast8_t flags)
+usb_do_xfer2(void *data, uint_fast8_t size, uint_fast8_t flags
+             , void (*complete)())
 {
     for (;;) {
         uint_fast8_t xs = size;
@@ -590,7 +599,11 @@ usb_do_xfer(void *data, uint_fast8_t size, uint_fast8_t flags)
                     // Must send zero-length-packet
                     continue;
                 usb_xfer_flags = 0;
+                usb_xfer_complete = NULL;
                 usb_notify_ep0();
+                if (complete) {
+                    complete();
+                }
                 return;
             }
             continue;
@@ -600,12 +613,19 @@ usb_do_xfer(void *data, uint_fast8_t size, uint_fast8_t flags)
             usb_xfer_data = data;
             usb_xfer_size = size;
             usb_xfer_flags = flags;
+            usb_xfer_complete = complete;
             return;
         }
         // Error
         usb_do_stall();
         return;
     }
+}
+
+static void
+usb_do_xfer(void *data, uint_fast8_t size, uint_fast8_t flags)
+{
+    usb_do_xfer2(data, size, flags, NULL);
 }
 
 static void
@@ -710,19 +730,36 @@ gs_breq_bt_const(struct usb_ctrlrequest *req)
 struct gs_device_bittiming device_bittiming;
 
 static void
+gs_breq_bittiming_complete(void)
+{
+    uint32_t bit_time = 1 + device_bittiming.prop_seg +
+        device_bittiming.phase_seg1 + device_bittiming.phase_seg2;
+    canbus_frequency = bt_const.fclk_can / (device_bittiming.brp * bit_time);
+}
+
+static void
 gs_breq_bittiming(struct usb_ctrlrequest *req)
 {
-    // Bit timing is ignored for now
-    usb_do_xfer(&device_bittiming, sizeof(device_bittiming), UX_READ);
+    usb_do_xfer2(&device_bittiming, sizeof(device_bittiming), UX_READ
+                 , gs_breq_bittiming_complete);
 }
 
 struct gs_device_mode device_mode;
 
 static void
+gs_breq_mode_complete(void)
+{
+    if (device_mode.mode == GS_CAN_MODE_START)
+        canhw_start(canbus_frequency);
+    else if (device_mode.mode == GS_CAN_MODE_RESET)
+        canhw_stop();
+}
+
+static void
 gs_breq_mode(struct usb_ctrlrequest *req)
 {
-    // Mode is ignored for now
-    usb_do_xfer(&device_mode, sizeof(device_mode), UX_READ);
+    usb_do_xfer2(&device_mode, sizeof(device_mode), UX_READ
+                 , gs_breq_mode_complete);
 }
 
 static void
@@ -769,7 +806,8 @@ usb_ep0_task(void)
     if (!sched_check_wake(&usb_ep0_wake))
         return;
     if (usb_xfer_flags)
-        usb_do_xfer(usb_xfer_data, usb_xfer_size, usb_xfer_flags);
+        usb_do_xfer2(usb_xfer_data, usb_xfer_size, usb_xfer_flags
+                     , usb_xfer_complete);
     else
         usb_state_ready();
 }
