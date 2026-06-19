@@ -113,13 +113,16 @@ $(OUT)autoconf.h: $(KCONFIG_CONFIG)
 $(KCONFIG_CONFIG) olddefconfig: src/Kconfig
 	$(Q)$(PYTHON) lib/kconfiglib/olddefconfig.py src/Kconfig
 
+savedefconfig:
+	$(Q)$(PYTHON) lib/kconfiglib/savedefconfig.py src/Kconfig
+
 menuconfig:
 	$(Q)$(PYTHON) lib/kconfiglib/menuconfig.py src/Kconfig
 
 ################ Generic rules
 
 # Make definitions
-.PHONY : all clean distclean olddefconfig menuconfig create-board-link FORCE
+.PHONY : all clean distclean olddefconfig savedefconfig menuconfig create-board-link FORCE
 .DELETE_ON_ERROR:
 
 all: $(target-y)
