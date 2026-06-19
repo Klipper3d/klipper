@@ -91,6 +91,7 @@ struct neopixel_s {
     neopixel_time_t bit_max_ticks;
     uint32_t last_req_time, reset_min_ticks;
     uint16_t data_size;
+    uint16_t diff;
     uint8_t data[0];
 };
 
@@ -105,6 +106,7 @@ command_config_neopixel(uint32_t *args)
                                      , sizeof(*n) + data_size);
     n->pin = pin;
     n->data_size = data_size;
+    n->diff = data_size;
     n->bit_max_ticks = args[3];
     n->reset_min_ticks = args[4];
 }
@@ -124,7 +126,7 @@ send_data(struct neopixel_s *n)
 
     // Transmit data
     uint8_t *data = n->data;
-    uint_fast16_t data_len = n->data_size;
+    uint_fast16_t data_len = n->diff;
     struct gpio_out pin = n->pin;
     neopixel_time_t last_start = neopixel_get_time();
     neopixel_time_t bit_max_ticks = n->bit_max_ticks;
@@ -169,6 +171,7 @@ send_data(struct neopixel_s *n)
         }
     }
     n->last_req_time = timer_read_time();
+    n->diff = 0;
     return 0;
 fail:
     // A hardware irq messed up the transmission - report a failure
@@ -188,6 +191,8 @@ command_neopixel_update(uint32_t *args)
     if (pos & 0x8000 || pos + data_len > n->data_size)
         shutdown("Invalid neopixel update command");
     memcpy(&n->data[pos], data, data_len);
+    if (pos + data_len > n->diff)
+        n->diff = pos + data_len;
 }
 DECL_COMMAND(command_neopixel_update,
              "neopixel_update oid=%c pos=%hu data=%*s");
