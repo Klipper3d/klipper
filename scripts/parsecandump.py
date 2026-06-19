@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # Check for out of order timestamps in the output of candump
 #
 # Copyright (C) 2023  Kevin O'Connor <kevin@koconnor.net>

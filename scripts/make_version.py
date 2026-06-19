@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # Get the version number for klippy
 #
 # Copyright (C) 2018  Lucas Fink <software@lfcode.ca>
