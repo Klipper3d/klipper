@@ -112,6 +112,7 @@ CONFIG ../../config/generic-ruramps-v1.3.cfg
 # Printers using the sam4s8c
 DICTIONARY sam4s8c.dict
 CONFIG ../../config/generic-duet2-maestro.cfg
+CONFIG ../../config/printer-crazy3dprint-cz-300-2018.cfg
 
 # Printers using the sam4e8e
 DICTIONARY sam4e8e.dict
