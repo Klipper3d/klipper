@@ -218,18 +218,21 @@ class Palette2:
         if self._check_P2(gcmd):
             self.write_queue.put(gcmd.get_commandline())
 
-    def _wait_for_heartbeat(self):
-        startTs = self.reactor.monotonic()
-        currTs = startTs
-        while self.heartbeat is None or (self.heartbeat < (
-            currTs - SETUP_TIMEOUT) and startTs > (
-                currTs - SETUP_TIMEOUT)):
-            currTs = self.reactor.pause(currTs + 1.)
-
-        if self.heartbeat < (currTs - SETUP_TIMEOUT):
+def _wait_for_heartbeat(self):
+    startTs = self.reactor.monotonic()
+    currTs = startTs
+    while True:
+        currTs = self.reactor.pause(currTs + 1.0)
+        if (
+            self.heartbeat is not None
+            and self.heartbeat >= (currTs - SETUP_TIMEOUT)
+        ):
+            break
+        if currTs - startTs > SETUP_TIMEOUT:
             self.signal_disconnect = True
             raise self.printer.command_error(
-                "No response from Palette 2")
+                "No response from Palette 2"
+            )
 
     cmd_O1_help = (
         "Initialize the print, and check connection with the Palette 2")
