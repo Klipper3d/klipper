@@ -4,6 +4,7 @@
 
 #include <signal.h> // sigset_t
 #include <stdint.h> // uint32_t
+#include <sys/types.h> // mode_t gid_t
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
 
 #define MAX_GPIO_LINES    288
@@ -18,7 +19,7 @@
 void report_errno(char *where, int rc);
 int set_non_blocking(int fd);
 int set_close_on_exec(int fd);
-int console_setup(char *name);
+int console_setup(char *name, mode_t mode, gid_t group);
 void console_sleep(sigset_t *sigset);
 
 // timer.c
