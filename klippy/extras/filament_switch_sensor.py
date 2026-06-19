@@ -24,6 +24,7 @@ class RunoutHelper:
         if config.get('insert_gcode', None) is not None:
             self.insert_gcode = gcode_macro.load_template(
                 config, 'insert_gcode')
+        self.run_always = config.getboolean('run_always', False)
         self.pause_delay = config.getfloat('pause_delay', .5, above=.0)
         self.event_delay = config.getfloat('event_delay', 3., minval=.0)
         # Internal state
@@ -76,14 +77,15 @@ class RunoutHelper:
         is_printing = idle_timeout.get_status(now)["state"] == "Printing"
         # Perform filament action associated with status change (if any)
         if is_filament_present:
-            if not is_printing and self.insert_gcode is not None:
+            if ((not is_printing or self.run_always) and
+                    self.insert_gcode is not None):
                 # insert detected
                 self.min_event_systime = self.reactor.NEVER
                 logging.info(
                     "Filament Sensor %s: insert event detected, Time %.2f" %
                     (self.name, now))
                 self.reactor.register_callback(self._insert_event_handler)
-        elif is_printing and self.runout_gcode is not None:
+        elif (is_printing or self.run_always) and self.runout_gcode is not None:
             # runout detected
             self.min_event_systime = self.reactor.NEVER
             logging.info(
