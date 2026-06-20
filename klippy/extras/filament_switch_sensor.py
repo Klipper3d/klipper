@@ -1,19 +1,13 @@
 # Generic Filament Sensor Module
 #
 # Copyright (C) 2019  Eric Callahan <arksine.code@gmail.com>
-# Region-Aware Filament Runout Pause Feature Concept & Implementation
-# Copyright (C) 2026 Famtory <famtory@gmail.com>
+# Copyright (C) 2026  Hwang Younsang <famtory@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
 
 
 class RunoutHelper:
-    FEATURE_OTHER = 0
-    FEATURE_OUTER_WALL = 1
-    FEATURE_INFILL = 2
-    POLL_INTERVAL = 0.100
-
     def __init__(self, config):
         self.name = config.get_name().split()[-1]
         self.printer = config.get_printer()
@@ -34,29 +28,25 @@ class RunoutHelper:
         self.pause_delay = config.getfloat('pause_delay', .5, above=.0)
         self.event_delay = config.getfloat('event_delay', 3., minval=.0)
         # Distance configuration
-        self.runout_distance = config.getfloat(
-            'runout_distance', 0., minval=0.)
+        self.runout_distance = config.getfloat('runout_distance', 0., minval=0.)
         self.extruder_name = config.get('extruder', 'extruder')
-        self.feature_history = [(0., self.FEATURE_OTHER)]
+        self.feature_history = [(0., 0)]
         self.deferred_runout = False
-        self.runout_trigger_pos = 0.
         self.runout_check_timer = None
         # Internal state
         self.min_event_systime = self.reactor.NEVER
         self.filament_present = False
         self.sensor_enabled = True
         # Register commands and event handlers
-        self.printer.register_event_handler(
-            "klippy:ready", self._handle_ready)
+        self.printer.register_event_handler("klippy:ready", self._handle_ready)
         self.printer.register_event_handler("filament_sensor:set_feature",
                                             self._handle_set_feature)
         try:
             self.gcode.register_command(
                 "SET_PRINT_FEATURE", self.cmd_SET_PRINT_FEATURE,
                 desc="Set current print feature for runout sensors")
-        except self.printer.config_error as e:
-            if "already registered" not in str(e):
-                raise
+        except self.printer.config_error:
+            pass
         self.gcode.register_mux_command(
             "QUERY_FILAMENT_SENSOR", "SENSOR", self.name,
             self.cmd_QUERY_FILAMENT_SENSOR,
@@ -70,11 +60,10 @@ class RunoutHelper:
         self.extruder = self.printer.lookup_object(self.extruder_name)
         self.estimated_print_time = (
             self.printer.lookup_object('mcu').estimated_print_time)
-        # Reset state on restart
-        self.feature_history = [(0., self.FEATURE_OTHER)]
+        self.feature_history = [(0., 0)]
         self.deferred_runout = False
     def cmd_SET_PRINT_FEATURE(self, gcmd):
-        feature = gcmd.get_int('FEATURE', self.FEATURE_OTHER)
+        feature = gcmd.get_int('FEATURE', 0)
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.register_lookahead_callback(
             lambda pt: self.printer.send_event(
@@ -84,7 +73,7 @@ class RunoutHelper:
         if len(self.feature_history) > 100:
             self.feature_history.pop(0)
     def _get_feature_at_time(self, print_time):
-        current_feature = self.FEATURE_OTHER
+        current_feature = 0
         for pt, feature in self.feature_history:
             if pt <= print_time:
                 current_feature = feature
@@ -96,9 +85,10 @@ class RunoutHelper:
             return self.reactor.NEVER
         print_time = self.estimated_print_time(eventtime)
         current_feature = self._get_feature_at_time(print_time)
-        if current_feature == self.FEATURE_INFILL:
-            logging.info("Filament Sensor %s: Deferred runout pausing "
-                         "now on infill" % (self.name,))
+        if current_feature == 2:
+            logging.info(
+                "Filament Sensor %s: Deferred runout pausing "
+                "now on infill" % (self.name,))
             self.deferred_runout = False
             self.reactor.register_callback(self._runout_event_handler)
             return self.reactor.NEVER
@@ -106,13 +96,13 @@ class RunoutHelper:
         diff = current_pos - self.runout_trigger_pos
         if diff >= self.runout_distance:
             logging.info(
-                "Filament Sensor %s: runout distance limit reached "
-                "(%.2f / %.2f). Pausing now." %
+                "Filament Sensor %s: runout distance limit "
+                "reached (%.2f / %.2f). Pausing now." %
                 (self.name, diff, self.runout_distance))
             self.deferred_runout = False
             self.reactor.register_callback(self._runout_event_handler)
             return self.reactor.NEVER
-        return eventtime + self.POLL_INTERVAL
+        return eventtime + 0.100
     def _runout_event_handler(self, eventtime):
         # Pausing from inside an event requires that the pause portion
         # of pause_resume execute immediately.
@@ -136,13 +126,6 @@ class RunoutHelper:
             return
         self.filament_present = is_filament_present
 
-        if is_filament_present and self.deferred_runout:
-            self.deferred_runout = False
-            logging.info(
-                "Filament Sensor %s: filament reinserted, "
-                "clearing deferred runout" % (self.name,))
-            return
-
         if eventtime < self.min_event_systime or not self.sensor_enabled:
             # do not process during the initialization time, duplicates,
             # during the event delay time, while an event is running, or
@@ -154,6 +137,11 @@ class RunoutHelper:
         is_printing = idle_timeout.get_status(now)["state"] == "Printing"
         # Perform filament action associated with status change (if any)
         if is_filament_present:
+            if self.deferred_runout:
+                self.deferred_runout = False
+                logging.info(
+                    "Filament Sensor %s: filament reinserted, "
+                    "clearing deferred runout" % (self.name,))
             if not is_printing and self.insert_gcode is not None:
                 # insert detected
                 self.min_event_systime = self.reactor.NEVER
@@ -170,7 +158,7 @@ class RunoutHelper:
             # Check if we should defer (current feature is 1 - Outer Wall)
             print_time = self.estimated_print_time(now)
             current_feature = self._get_feature_at_time(print_time)
-            if current_feature == self.FEATURE_OUTER_WALL and self.runout_distance > 0.:
+            if current_feature == 1 and self.runout_distance > 0.:
                 self.deferred_runout = True
                 self.runout_trigger_pos = (
                     self.extruder.find_past_position(print_time))
@@ -181,8 +169,8 @@ class RunoutHelper:
                 if self.runout_check_timer is None:
                     self.runout_check_timer = self.reactor.register_timer(
                         self._runout_distance_check_event)
-                self.reactor.update_timer(self.runout_check_timer,
-                                          self.reactor.NOW)
+                self.reactor.update_timer(
+                    self.runout_check_timer, self.reactor.NOW)
             else:
                 self.reactor.register_callback(self._runout_event_handler)
     def get_status(self, eventtime):
