@@ -1,8 +1,6 @@
 # Mesh Bed Leveling
 #
 # Copyright (C) 2018-2019 Eric Callahan <arksine.code@gmail.com>
-# Wandering Probe Points (WPP) Feature Concept & Implementation
-# Copyright (C) 2026 Famtory <famtory@gmail.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math, json, collections
@@ -627,9 +625,9 @@ class BedMeshCalibrate:
             ]
             dx, dy = grid[self.wandering_state % 9]
             if is_calibrating:
-                self.wandering_state += 1
-                logging.info("bed_mesh: wandering step=%.2f, "
-                             "offset=(%.2f, %.2f)" % (step, dx, dy))
+                # Diagonal points are distance step * sqrt(2) (~1.41 * step)
+                logging.debug("bed_mesh: wandering step=%.2f, "
+                              "offset=(%.2f, %.2f)" % (step, dx, dy))
 
         shifted_min = (self.mesh_min[0] + dx, self.mesh_min[1] + dy)
         shifted_max = (self.mesh_max[0] + dx, self.mesh_max[1] + dy)
@@ -808,6 +806,13 @@ class BedMeshCalibrate:
             zero_ref_pos = self.probe_mgr.get_zero_ref_pos()
             z_mesh.set_zero_reference(*zero_ref_pos)
         self.bedmesh.set_mesh(z_mesh)
+        if self.wandering_step > 0.0:
+            self.wandering_state += 1
+            if self.svv is not None:
+                gcode = self.printer.lookup_object('gcode')
+                gcode.run_script(
+                    "SAVE_VARIABLE VARIABLE=bed_mesh_wandering_state VALUE=%d"
+                    % (self.wandering_state,))
         self.gcode.respond_info("Mesh Bed Leveling Complete")
         if self._profile_name is not None:
             self.bedmesh.save_profile(self._profile_name)
@@ -1748,6 +1753,13 @@ class ProfileManager:
         except BedMeshError as e:
             raise self.gcode.error(str(e))
         self.bedmesh.set_mesh(z_mesh)
+        if self.wandering_step > 0.0:
+            self.wandering_state += 1
+            if self.svv is not None:
+                gcode = self.printer.lookup_object('gcode')
+                gcode.run_script(
+                    "SAVE_VARIABLE VARIABLE=bed_mesh_wandering_state VALUE=%d"
+                    % (self.wandering_state,))
     def remove_profile(self, prof_name):
         if prof_name in self.profiles:
             configfile = self.printer.lookup_object('configfile')
