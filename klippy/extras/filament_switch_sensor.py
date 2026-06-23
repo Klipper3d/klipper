@@ -8,6 +8,11 @@ import logging
 
 
 class RunoutHelper:
+    FEATURE_UNKNOWN = 0
+    FEATURE_OUTER_WALL = 1
+    FEATURE_INFILL = 2
+    FEATURE_BRIDGE = 3
+
     def __init__(self, config):
         self.name = config.get_name().split()[-1]
         self.printer = config.get_printer()
@@ -85,7 +90,7 @@ class RunoutHelper:
             return self.reactor.NEVER
         print_time = self.estimated_print_time(eventtime)
         current_feature = self._get_feature_at_time(print_time)
-        if current_feature == 2:
+        if current_feature == self.FEATURE_INFILL:
             logging.info(
                 "Filament Sensor %s: Deferred runout pausing "
                 "now on infill" % (self.name,))
@@ -158,13 +163,15 @@ class RunoutHelper:
             # Check if we should defer (current feature is 1 - Outer Wall)
             print_time = self.estimated_print_time(now)
             current_feature = self._get_feature_at_time(print_time)
-            if current_feature == 1 and self.runout_distance > 0.:
+            if current_feature in (self.FEATURE_OUTER_WALL,
+                                   self.FEATURE_BRIDGE) \
+                    and self.runout_distance > 0.:
                 self.deferred_runout = True
                 self.runout_trigger_pos = (
                     self.extruder.find_past_position(print_time))
                 logging.info(
-                    "Filament Sensor %s: outer wall detected, deferring "
-                    "runout. Start position: %.2f" %
+                    "Filament Sensor %s: critical feature detected, "
+                    "deferring runout. Start position: %.2f" %
                     (self.name, self.runout_trigger_pos))
                 if self.runout_check_timer is None:
                     self.runout_check_timer = self.reactor.register_timer(
