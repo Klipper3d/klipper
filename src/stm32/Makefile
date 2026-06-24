@@ -90,6 +90,8 @@ src-$(CONFIG_USBCANBUS) += stm32/chipid.c generic/usb_canbus.c
 src-$(CONFIG_WANT_HARD_PWM) += stm32/hard_pwm.c
 src-$(CONFIG_HAVE_GPIO_SDIO) += stm32/sdio.c
 
+src-$(CONFIG_SERIAL_BRIDGE) += stm32/serial_bridge.c generic/serial_bridge_irq.c
+
 # Binary output file rules
 target-y += $(OUT)klipper.bin
 
