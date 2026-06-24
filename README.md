@@ -1,4 +1,4 @@
-<!-- markdownlint-disable-next-line MD041 -->
+1<!-- markdownlint-disable-next-line MD041 -->
 [![Build Firmware](https://github.com/Atomique13/ender3-v3-se-klipper-with-display/actions/workflows/build-firmware.yaml/badge.svg)](https://github.com/Atomique13/ender3-v3-se-klipper-with-display/actions/workflows/build-firmware.yaml)
 
 # Modified Klipper for the Creality Ender 3 V3 SE with display support
