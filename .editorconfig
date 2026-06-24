@@ -1,0 +1,9 @@
+# https://editorconfig.org/
+
+# top-most EditorConfig file
+root = true
+
+[*.md]
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true 
