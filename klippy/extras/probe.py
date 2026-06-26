@@ -254,8 +254,6 @@ class DescendToEndstopHelper:
         self.z_min_position = lookup_minimum_z(config)
         self.results = []
         LookupZSteppers(config, self.mcu_probe.add_stepper)
-        HomingViaProbeHelper(config, probe_offsets.get_offsets()[2],
-                             mcu_probe.query_endstop)
     def descend_until_trigger(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
         pos = toolhead.get_position()
@@ -616,8 +614,10 @@ class PrinterProbe:
                                              self.param_helper)
         self.probe_session = SampleAveragingHelper(
             config, self.param_helper, self.mcu_probe.start_probe_session)
-        self.cmd_helper = ProbeCommandHelper(config, self,
-                                             self.mcu_probe.query_endstop)
+        query_endstop = self.mcu_probe.query_endstop
+        self.cmd_helper = ProbeCommandHelper(config, self, query_endstop)
+        HomingViaProbeHelper(config, self.probe_offsets.get_offsets()[2],
+                             query_endstop)
     def get_probe_params(self, gcmd=None):
         return self.param_helper.get_probe_params(gcmd)
     def get_offsets(self, gcmd=None):

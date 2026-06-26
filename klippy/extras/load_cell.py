@@ -286,12 +286,14 @@ class LoadCellSampleCollector:
         self._samples = []
         self._errors = 0
         self._overflows = 0
+        self._start_errors = 0
+        self._start_overflows = 0
 
     def _on_samples(self, msg):
         if not self.is_started:
             return False  # already stopped, ignore
-        self._errors += msg['errors']
-        self._overflows += msg['overflows']
+        self._errors = msg['errors']
+        self._overflows = msg['overflows']
         samples = msg['data']
         for sample in samples:
             time = sample[0]
@@ -310,9 +312,9 @@ class LoadCellSampleCollector:
         self.min_count = float("inf")  # In Python 3.5 math.inf is better
         samples = self._samples
         self._samples = []
-        errors = self._errors
+        errors = max(0, self._errors - self._start_errors)
         self._errors = 0
-        overflows = self._overflows
+        overflows = max(0, self._overflows - self._start_overflows)
         self._overflows = 0
         if self._mcu.is_fileoutput():
             samples = [(0., 0., 0.)]
@@ -323,10 +325,12 @@ class LoadCellSampleCollector:
         while self.is_started:
             now = self._reactor.monotonic()
             if self._mcu.estimated_print_time(now) > timeout:
-                _, (errors, overflows) = self._finish_collecting()
+                samples, err = self._finish_collecting()
+                errors, overflows = err if err else (0, 0)
                 raise self._printer.command_error(
-                    "LoadCellSampleCollector timed out! Errors: %i,"
-                    " Overflows: %i" % (errors, overflows))
+                    "LoadCellSampleCollector timed out! Collected %i samples,"
+                    " Errors: %i, Overflows: %i" % (len(samples), errors,
+                                                    overflows))
             if self._mcu.is_fileoutput():
                 break
             self._reactor.pause(now + RETRY_DELAY)
@@ -338,6 +342,10 @@ class LoadCellSampleCollector:
             return
         self.min_time = min_time if min_time is not None else self.min_time
         self.is_started = True
+        sensor_status = self._load_cell.sensor.get_status(
+            self._reactor.monotonic())
+        self._start_errors = sensor_status['errors']
+        self._start_overflows = sensor_status['overflows']
         self._load_cell.add_client(self._on_samples)
 
     # stop collecting immediately and return results
@@ -517,6 +525,7 @@ class LoadCell:
                        'counts_per_gram': self.counts_per_gram,
                        'reference_tare_counts': self.reference_tare_counts,
                        'tare_counts': self.tare_counts})
+        status.update(self.sensor.get_status(eventtime))
         return status
 
 

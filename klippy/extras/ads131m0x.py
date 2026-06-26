@@ -209,6 +209,13 @@ class ADS131M0X:
     def get_samples_per_second(self):
         return self.sps
 
+    def get_status(self, eventtime):
+        return {
+            'errors': self.last_error_count,
+            'overflows': self.ffreader.get_last_overflows(),
+            'sample_rate': self.get_samples_per_second(),
+        }
+
     def lookup_sensor_error(self, error_code):
         return self._sensor_errors.get(error_code,
                                        "Unknown %s error" % (self.sensor_type,))

@@ -240,12 +240,13 @@ class Homing:
                                        + self.adjust_pos.get(s.get_name(), 0.))
                         for s in kin.get_steppers()}
             newpos = kin.calc_position(kin_spos)
-            for axis in force_axes:
-                if newpos[axis] is None:
-                    raise self.printer.command_error(
+            for axis in range(3):
+                if forcepos[axis] is not None:
+                    if newpos[axis] is None:
+                        raise self.printer.command_error(
                             "Cannot determine position of toolhead on "
                             "axis %s after homing" % "xyz"[axis])
-                homepos[axis] = newpos[axis]
+                    homepos[axis] = newpos[axis]
             self.toolhead.set_position(homepos)
     def _create_probe_gcmd(self, attempt_num, probe_speed):
         gcode = self.printer.lookup_object('gcode')
