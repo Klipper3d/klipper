@@ -1,0 +1,6 @@
+# Missing font_file should fail config validation
+DICTIONARY atmega2560.dict
+CONFIG display_font_missing_file.cfg
+SHOULD_FAIL
+
+STATUS
