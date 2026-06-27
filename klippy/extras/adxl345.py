@@ -85,7 +85,7 @@ class AccelQueryHelper:
                 count += 1
         del samples[count:]
         return self.samples
-    def write_to_file(self, filename):
+    def write_to_file(self, filename, wait=False):
         def write_impl():
             try:
                 # Try to re-nice writing process
@@ -102,6 +102,11 @@ class AccelQueryHelper:
         write_proc = multiprocessing.Process(target=write_impl)
         write_proc.daemon = True
         write_proc.start()
+        if wait:
+            reactor = self.printer.get_reactor()
+            while wait and write_proc.is_alive():
+                reactor.pause(reactor.monotonic() + 0.025)
+            write_proc.join()
 
 # Helper class for G-Code commands
 class AccelCommandHelper:
