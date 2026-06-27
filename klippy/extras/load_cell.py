@@ -25,10 +25,11 @@ def avg(data):
 
 # Helper for event driven webhooks and subscription based API clients
 class ApiClientHelper(object):
-    def __init__(self, printer):
+    def __init__(self, printer, start_cb=None):
         self.printer = printer
         self.client_cbs = []
         self.webhooks_start_resp = {}
+        self.start_cb = start_cb
 
     # send data to clients
     def send(self, msg):
@@ -37,10 +38,19 @@ class ApiClientHelper(object):
             if not res:
                 # This client no longer needs updates - unregister it
                 self.client_cbs.remove(client_cb)
+        return self.is_active()
 
     # Add a client that gets data callbacks
     def add_client(self, client_cb):
+        was_active = self.is_active()
         self.client_cbs.append(client_cb)
+        if not was_active:
+            # No clients previously - sensor data collection was stopped
+            self.start_cb()
+
+    # Check whether there are active measurements running
+    def is_active(self):
+        return not not self.client_cbs
 
     # Add Webhooks client and send header
     def _add_webhooks_client(self, web_request):
@@ -80,6 +90,9 @@ class LoadCellCommandHelper:
         gcode.register_mux_command("LOAD_CELL_DIAGNOSTIC", "LOAD_CELL", name,
                                    self.cmd_LOAD_CELL_DIAGNOSTIC,
                                    desc=self.cmd_LOAD_CELL_DIAGNOSTIC_help)
+        gcode.register_mux_command("LOAD_CELL_TRACK_FORCE", "LOAD_CELL", name,
+                                   self.cmd_LOAD_CELL_TRACK_FORCE,
+                                   desc=self.cmd_LOAD_CELL_TRACK_FORCE_help)
 
     cmd_LOAD_CELL_TARE_help = "Set the Zero point of the load cell"
     def cmd_LOAD_CELL_TARE(self, gcmd):
@@ -144,6 +157,19 @@ class LoadCellCommandHelper:
                           % (min_pct, max_pct))
         gcmd.respond_info("Sample range / sensor capacity: %.5f%%"
                           % ((max_pct - min_pct) / 2.))
+
+    cmd_LOAD_CELL_TRACK_FORCE_help = "Start/stop continuous force tracking"
+    def cmd_LOAD_CELL_TRACK_FORCE(self, gcmd):
+        tracking = gcmd.get("TRACKING", "START").upper()
+        if tracking not in ("START", "STOP"):
+            raise gcmd.error("TRACKING must be START or STOP")
+        if tracking == "START":
+            self.load_cell._start_tracking()
+            gcmd.respond_info("Load cell force tracking started")
+        else:
+            self.load_cell._stop_tracking()
+            gcmd.respond_info("Load cell force tracking stopped")
+
 
 # Class to guide the user through calibrating a load cell
 class LoadCellGuidedCalibrationHelper:
@@ -389,16 +415,18 @@ class LoadCell:
                         {'normal': 1., 'inverted': -1.}, default="normal")
         LoadCellCommandHelper(config, self)
         # Client support:
-        self.clients = ApiClientHelper(printer)
+        self.clients = ApiClientHelper(printer,
+                                       start_cb=self._start_sensor_data)
         header = {"header": ["time", "force (g)", "counts", "tare_counts"]}
         self.clients.add_mux_endpoint("load_cell/dump_force",
                                       "load_cell", self.name, header)
-        # startup, when klippy is ready, start capturing data
+        # startup, when klippy is ready, start capturing data if requested
+        self._is_tracking = config.getboolean("track_force", False)
         printer.register_event_handler("klippy:ready", self._handle_ready)
 
     def _handle_do_ready(self, eventtime):
-        self.sensor.add_client(self._sensor_data_event)
-        self.add_client(self._track_force)
+        if self._is_tracking:
+            self.add_client(self._track_force)
         # announce calibration status on ready
         if self.is_calibrated():
             self.printer.send_event("load_cell:calibrate", self)
@@ -406,6 +434,8 @@ class LoadCell:
             self.printer.send_event("load_cell:tare", self)
     def _handle_ready(self):
         self.printer.get_reactor().register_callback(self._handle_do_ready)
+    def _start_sensor_data(self):
+        self.sensor.add_client(self._sensor_data_event)
 
     # convert raw counts to grams and broadcast to clients
     def _sensor_data_event(self, msg):
@@ -420,8 +450,7 @@ class LoadCell:
             samples.append([row[0], self.counts_to_grams(row[1]), row[1],
                             self.tare_counts])
         msg = {'data': samples, 'errors': errors, 'overflows': overflows}
-        self.clients.send(msg)
-        return True
+        return self.clients.send(msg)
 
     # get internal events of force data
     def add_client(self, callback):
@@ -481,6 +510,8 @@ class LoadCell:
 
     # Provide ongoing force tracking/averaging for status updates
     def _track_force(self, msg):
+        if not self._is_tracking:
+            return False
         if not (self.is_calibrated() and self.is_tared()):
             return True
         samples = msg['data']
@@ -488,6 +519,16 @@ class LoadCell:
         for sample in samples:
             self._force_buffer.append(sample[1])
         return True
+
+    def _start_tracking(self):
+        if self._is_tracking:
+            return
+        self._is_tracking = True
+        self.add_client(self._track_force)
+
+    def _stop_tracking(self):
+        self._is_tracking = False
+        self._force_buffer.clear()
 
     def _force_g(self):
         if (self.is_calibrated() and self.is_tared()
@@ -524,7 +565,8 @@ class LoadCell:
         status.update({'is_calibrated': self.is_calibrated(),
                        'counts_per_gram': self.counts_per_gram,
                        'reference_tare_counts': self.reference_tare_counts,
-                       'tare_counts': self.tare_counts})
+                       'tare_counts': self.tare_counts,
+                       'is_active': self.clients.is_active()})
         status.update(self.sensor.get_status(eventtime))
         return status
 
