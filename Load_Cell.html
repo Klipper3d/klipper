@@ -1738,11 +1738,12 @@ Expect to have to move the nozzle further away as it gets longer when hot.</p>
 <h4 id="configure-z_thermal_adjust">Configure <code>[z_thermal_adjust]</code><a class="headerlink" href="#configure-z_thermal_adjust" title="Permanent link">&para;</a></h4>
 <p>Set up z_thermal_adjust to reference the <code>extruder</code> as the source of temperature
 data. E.g.:</p>
-<div class="highlight"><pre><span></span><code>[z_thermal_adjust nozzle]
+<div class="highlight"><pre><span></span><code>[z_thermal_adjust]
 temp_coeff=-0.00045455
 sensor_type: temperature_combined
 sensor_list: extruder
 combination_method: max
+maximum_deviation: 999
 min_temp: 0
 max_temp: 400
 max_z_adjustment: 0.1
