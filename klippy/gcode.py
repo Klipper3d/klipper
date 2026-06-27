@@ -447,7 +447,12 @@ class GCodeIO:
         self.pipe_is_active = True
         # Special handling for debug file input EOF
         if not data and self.is_fileinput:
-            if not self.is_processing_data:
+            # Workaround virtual_sdcard
+            obj = self.printer.lookup_object("virtual_sdcard", None)
+            wait_virtual_input = False
+            if obj is not None:
+                wait_virtual_input = obj.get_status(eventtime)["is_active"]
+            if not self.is_processing_data and not wait_virtual_input:
                 self.reactor.unregister_fd(self.fd_handle)
                 self.fd_handle = None
                 self.gcode.request_restart('exit')

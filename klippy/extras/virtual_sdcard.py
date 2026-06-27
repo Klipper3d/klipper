@@ -3,7 +3,7 @@
 # Copyright (C) 2018-2024  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, sys, logging, io
+import os, sys, logging, io, collections
 
 VALID_GCODE_EXTS = ['gcode', 'g', 'gco']
 
@@ -12,6 +12,47 @@ DEFAULT_ERROR_GCODE = """
    TURN_OFF_HEATERS
 {% endif %}
 """
+
+PAGE_SIZE = 8192
+CACHE_SIZE = 3
+DATA_PREV = 1024
+DATA_NEXT = 128
+
+class FilePager:
+    def __init__(self, file_object):
+        self.file_object = file_object
+        self.pages = collections.OrderedDict()
+        self._pos = file_object.tell()
+    def seek(self, pos):
+        self._pos = pos
+    def tell(self):
+        return self._pos
+    def page_index(self, pos):
+        return pos // PAGE_SIZE
+    def page_offset(self, pos):
+        return pos % PAGE_SIZE
+    def cache_offset(self, offset):
+        offset = max(offset, 0)
+        page_num = self.page_index(offset)
+        if self.pages.get(page_num, None) is not None:
+            return
+        data_offset = page_num * PAGE_SIZE
+        if offset != data_offset:
+            self.file_object.seek(data_offset)
+        self.pages[page_num] = self.file_object.read(PAGE_SIZE)
+    def read(self):
+        self.cache_offset(self._pos)
+        page_num = self.page_index(self._pos)
+        page_offset = self.page_offset(self._pos)
+        data = self.pages[page_num][page_offset:]
+        self._pos += len(data)
+        # Recycle
+        if len(self.pages) > CACHE_SIZE:
+            self.pages.popitem(last=False)
+        return data
+    def __getattr__(self, name):
+        attr = getattr(self.file_object, name)
+        return attr
 
 class VirtualSD:
     def __init__(self, config):
@@ -30,6 +71,7 @@ class VirtualSD:
         self.work_timer = None
         # Error handling
         gcode_macro = self.printer.load_object(config, 'gcode_macro')
+        self.printer.load_object(config, 'aio_executor')
         self.on_error_gcode = gcode_macro.load_template(
             config, 'on_error_gcode', DEFAULT_ERROR_GCODE)
         # Register commands
@@ -49,11 +91,15 @@ class VirtualSD:
     def _handle_analyze_shutdown(self, msg, details):
         if self.work_timer is not None:
             self.must_pause_work = True
+            readpos = max(self.file_position - DATA_PREV, 0)
+            readcount = self.file_position - readpos
+            page_num = self.current_file.page_index(readpos)
+            offset_in_page = self.current_file.page_offset(readpos)
             try:
-                readpos = max(self.file_position - 1024, 0)
-                readcount = self.file_position - readpos
-                self.current_file.seek(readpos)
-                data = self.current_file.read(readcount + 128)
+                data = self.current_file.pages.get(page_num, "")
+                data = data[offset_in_page:]
+                data += self.current_file.pages.get(page_num + 1, "")
+                data = data[:readcount + DATA_NEXT]
             except:
                 logging.exception("virtual_sdcard shutdown read")
                 return
@@ -179,11 +225,12 @@ class VirtualSD:
         flist = [f[0] for f in files]
         files_by_lower = { fname.lower(): fname for fname, fsize in files }
         fname = filename
+        aio = self.printer.lookup_object('aio_executor')
         try:
             if fname not in flist:
                 fname = files_by_lower[fname.lower()]
             fname = os.path.join(self.sdcard_dirname, fname)
-            f = io.open(fname, 'r', newline='')
+            f = aio.get_wrapper(io.open, fname, 'r', newline='')
             f.seek(0, os.SEEK_END)
             fsize = f.tell()
             f.seek(0)
@@ -192,7 +239,7 @@ class VirtualSD:
             raise gcmd.error("Unable to open file")
         gcmd.respond_raw("File opened:%s Size:%d" % (filename, fsize))
         gcmd.respond_raw("File selected")
-        self.current_file = f
+        self.current_file = FilePager(f)
         self.file_position = 0
         self.file_size = fsize
         self.print_stats.set_current_file(filename)
@@ -240,7 +287,7 @@ class VirtualSD:
             if not lines:
                 # Read more data
                 try:
-                    data = self.current_file.read(8192)
+                    data = self.current_file.read()
                 except:
                     logging.exception("virtual_sdcard read")
                     break
