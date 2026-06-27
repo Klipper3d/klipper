@@ -212,10 +212,18 @@ the following commands:
 sudo apt update
 sudo apt install python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev
 ```
-
+If you are using a Trixie version of Debian, please use:
+```
+sudo apt update
+sudo apt install python3-numpy python3-matplotlib libopenblas-dev
+```
 Next, in order to install NumPy in the Klipper environment, run the command:
 ```
 ~/klippy-env/bin/pip install -v "numpy<1.26"
+```
+If you are using a Trixie version of Debian, please use:
+```
+~/klippy-env/bin/pip install -v numpy
 ```
 Note that, depending on the performance of the CPU, it may take *a lot*
 of time, up to 10-20 minutes. Be patient and wait for the completion of
