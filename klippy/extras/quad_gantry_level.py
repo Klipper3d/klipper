@@ -30,16 +30,16 @@ class QuadGantryLevel:
         self.max_adjust = config.getfloat("max_adjust", 4, above=0)
         self.horizontal_move_z = config.getfloat("horizontal_move_z", 5.0)
         self.probe_helper = probe.ProbePointsHelper(config, self.probe_finalize)
-        if len(self.probe_helper.probe_points) != 4:
+        if len(set(self.probe_helper.probe_points)) != 4:
             raise config.error(
-                "Need exactly 4 probe points for quad_gantry_level")
+                "Need exactly 4 unique probe points for quad_gantry_level")
         self.z_status = z_tilt.ZAdjustStatus(self.printer)
         self.z_helper = z_tilt.ZAdjustHelper(config, 4)
         self.gantry_corners = config.getlists('gantry_corners', parser=float,
                                               seps=(',', '\n'), count=2)
-        if len(self.gantry_corners) < 2:
+        if len(set(self.gantry_corners)) < 2:
             raise config.error(
-                "quad_gantry_level requires at least two gantry_corners")
+                "quad_gantry_level requires at least two unique gantry_corners")
         # Register QUAD_GANTRY_LEVEL command
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
