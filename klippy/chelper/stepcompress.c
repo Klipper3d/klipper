@@ -32,6 +32,7 @@
 // optimization to reduce memory, improve cache usage, and reduce 64 bit ops)
 struct qstep {
     uint32_t clock32;
+    uint32_t max_error;
 };
 
 // Main stepcompress object storage
@@ -96,11 +97,8 @@ struct points {
 static inline struct points
 minmax_point(struct stepcompress *sc, struct qstep *pos)
 {
-    uint32_t lsc = sc->last_step_clock, point = pos->clock32 - lsc;
-    uint32_t prevpoint = pos > sc->queue_pos ? (pos-1)->clock32 - lsc : 0;
-    uint32_t max_error = (point - prevpoint) / 2;
-    if (max_error > sc->max_error)
-        max_error = sc->max_error;
+    uint32_t max_error = pos->max_error;
+    uint32_t point = pos->clock32 - sc->last_step_clock;
     return (struct points){ point - max_error, point };
 }
 
@@ -374,6 +372,17 @@ add_move(struct stepcompress *sc, uint64_t first_clock, struct step_move *move)
     list_add_head(&hs->node, &sc->history_list);
 }
 
+static void
+step_init_max_error(struct stepcompress *sc, struct qstep *pos)
+{
+    uint32_t lsc = sc->last_step_clock, point = pos->clock32 - lsc;
+    uint32_t prevpoint = pos > sc->queue_pos ? (pos-1)->clock32 - lsc : 0;
+    uint32_t max_error = (point - prevpoint) / 2;
+    if (max_error > sc->max_error)
+        max_error = sc->max_error;
+    pos->max_error = max_error;
+}
+
 // Convert previously scheduled steps into commands for the mcu
 static int
 queue_flush(struct stepcompress *sc, uint64_t move_clock)
@@ -439,6 +448,7 @@ queue_append_far(struct stepcompress *sc)
     if (step_clock >= sc->last_step_clock + CLOCK_DIFF_MAX)
         return stepcompress_flush_far(sc, step_clock);
     sc->queue_next->clock32 = step_clock;
+    step_init_max_error(sc, sc->queue_next);
     sc->queue_next++;
     return 0;
 }
@@ -477,6 +487,7 @@ queue_append_extend(struct stepcompress *sc)
     }
 
     sc->queue_next->clock32 = sc->next_step_clock;
+    step_init_max_error(sc, sc->queue_next);
     sc->queue_next++;
     sc->next_step_clock = 0;
     return 0;
@@ -496,6 +507,7 @@ queue_append(struct stepcompress *sc)
     if (unlikely(sc->queue_next >= sc->queue_end))
         return queue_append_extend(sc);
     sc->queue_next->clock32 = sc->next_step_clock;
+    step_init_max_error(sc, sc->queue_next);
     sc->queue_next++;
     sc->next_step_clock = 0;
     return 0;
