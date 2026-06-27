@@ -98,6 +98,7 @@ class PrinterSkew:
     def cmd_SET_SKEW(self, gcmd):
         if gcmd.get_int("CLEAR", 0):
             self._update_skew(0., 0., 0.)
+            self.current_profile_name = ""
             return
         planes = ["XY", "XZ", "YZ"]
         for plane in planes:
