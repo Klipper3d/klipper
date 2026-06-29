@@ -6,6 +6,7 @@
 
 #include "autoconf.h" // CONFIG_USB_SERIAL_NUMBER_CHIPID
 #include "generic/irq.h" // irq_disable
+#include "generic/canserial.h" // canserial_set_uuid
 #include "generic/usb_cdc.h" // usb_fill_serial
 #include "generic/usbstd.h" // usb_string_descriptor
 #include "sched.h" // DECL_INIT
@@ -30,7 +31,7 @@ usbserial_get_serialid(void)
 void
 chipid_init(void)
 {
-    if (!CONFIG_USB_SERIAL_NUMBER_CHIPID)
+    if (!CONFIG_USB_SERIAL_NUMBER_CHIPID && !CONFIG_CANBUS)
         return;
 
     uint32_t iap_cmd_uid[5] = {IAP_CMD_READ_UID, 0, 0, 0, 0};
@@ -40,7 +41,11 @@ chipid_init(void)
     iap_entry(iap_cmd_uid, iap_resp);
     irq_enable();
 
-    usb_fill_serial(&cdc_chipid.desc, ARRAY_SIZE(cdc_chipid.data)
-                    , &iap_resp[1]);
+    if (CONFIG_USB_SERIAL_NUMBER_CHIPID)
+        usb_fill_serial(&cdc_chipid.desc, ARRAY_SIZE(cdc_chipid.data)
+                        , &iap_resp[1]);
+
+    if (CONFIG_CANBUS)
+        canserial_set_uuid((void*)&iap_resp[1], IAP_UID_LEN);
 }
 DECL_INIT(chipid_init);
