@@ -18,7 +18,12 @@ class HomingHeaters:
         self.disable_heaters = config.getlist("heaters", None)
         self.flaky_steppers = config.getlist("steppers", None)
         self.pheaters = self.printer.load_object(config, 'heaters')
+        self.threshold = config.getfloat("threshold", None)
         self.target_save = {}
+        self.gcode = self.printer.lookup_object('gcode')
+        self.gcode.register_command("SET_HOMING_HEATERS",
+                                    self.cmd_SET_HOMING_HEATERS,
+                                    desc=self.cmd_SET_HOMING_HEATERS_desc)
 
     def handle_connect(self):
         # heaters to disable
@@ -56,9 +61,32 @@ class HomingHeaters:
     def handle_homing_move_end(self, hmove):
         if not self.check_eligible(hmove.get_mcu_endstops()):
             return
+
+        # Switch all the heaters back on first
         for heater_name in self.disable_heaters:
             heater = self.pheaters.lookup_heater(heater_name)
             heater.set_temp(self.target_save[heater_name])
+
+        if self.threshold is None:
+            return
+
+        # Now wait for them to re-heat if we need to
+        for heater_name in self.disable_heaters:
+            heater = self.pheaters.lookup_heater(heater_name)
+            heater_target = self.target_save[heater_name]
+            heater_threshold = heater_target - self.threshold
+            current_temp = heater.get_temp(
+                self.printer.get_reactor().monotonic())[0]
+            if current_temp < heater_threshold:
+                self.gcode.respond_raw(
+                    "echo: Waiting for '%s' to reheat" % heater_name)
+                self.pheaters.set_temperature(heater, heater_target, True)
+
+    cmd_SET_HOMING_HEATERS_desc = "Set the reheat threshold for homing heaters"
+    def cmd_SET_HOMING_HEATERS(self, gcmd):
+        self.threshold = gcmd.get("THRESHOLD", None)
+        if self.threshold is not None:
+            self.threshold = float(self.threshold)
 
 def load_config(config):
     return HomingHeaters(config)
