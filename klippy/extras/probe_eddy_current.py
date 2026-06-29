@@ -565,7 +565,8 @@ class EddyDiagnosticsHelper:
                                    self.cmd_EDDY_ESTIMATE_BACKLASH,
                                    desc=self.cmd_EDDY_ESTIMATE_BACKLASH_help)
 
-    cmd_EDDY_QUERY_help = "Report current probe_eddy_current frequency and height"
+    cmd_EDDY_QUERY_help = (
+        "Report current probe_eddy_current frequency and height")
     cmd_EDDY_ESTIMATE_BACKLASH_help = (
         "Estimate Z backlash using repeated opposite-direction approaches")
 
@@ -626,14 +627,16 @@ class EddyDiagnosticsHelper:
         freq_avg, sensor_z, min_z, max_z = self._collect_height(
             sample_count, sample_time)
         gcmd.respond_info(
-            "%s: freq=%.3fHz height=%.6fmm samples=%d range=%.6f..%.6fmm status=ok"
+            "%s: freq=%.3fHz height=%.6fmm samples=%d "
+            "range=%.6f..%.6fmm status=ok"
             % (self.name, freq_avg, sensor_z, sample_count, min_z, max_z))
 
     def cmd_EDDY_ESTIMATE_BACKLASH(self, gcmd):
         self.calibration.verify_calibrated()
         reactor = self.printer.get_reactor()
         toolhead = self.printer.lookup_object('toolhead')
-        homed_axes = toolhead.get_status(reactor.monotonic()).get('homed_axes', '')
+        homed_axes = toolhead.get_status(
+            reactor.monotonic()).get('homed_axes', '')
         if 'z' not in homed_axes:
             raise self.printer.command_error("Must home axis first")
 
@@ -700,7 +703,8 @@ class EddyDiagnosticsHelper:
             "%s backlash: target_z=%.6fmm cycles=%d from_above_avg=%.6fmm "
             "from_below_avg=%.6fmm estimate_avg=%.6fmm estimate_median=%.6fmm "
             "estimate_min=%.6fmm estimate_max=%.6fmm estimate_std=%.6fmm "
-            "travel=%.3fmm speed=%.1fmm/s samples=%d range=%.6f..%.6fmm status=ok"
+                "travel=%.3fmm speed=%.1fmm/s samples=%d "
+                "range=%.6f..%.6fmm status=ok"
             % (self.name, target_z, cycles,
                avg_from_above, avg_from_below,
                avg_backlash, median_backlash,
