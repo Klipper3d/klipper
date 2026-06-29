@@ -548,6 +548,166 @@ def probe_results_from_avg(measures, toolhead_pos, calibration, offsets):
                                             (offsets[0], offsets[1], sensor_z))
 
 
+# Implement diagnostics commands for probe_eddy_current
+class EddyDiagnosticsHelper:
+    def __init__(self, config, sensor_helper, calibration):
+        self.printer = config.get_printer()
+        self.name = config.get_name()
+        self.sensor_helper = sensor_helper
+        self.calibration = calibration
+        cname = self.name.split()[-1]
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_mux_command("PROBE_EDDY_CURRENT_QUERY", "CHIP",
+                                   cname, self.cmd_EDDY_QUERY,
+                                   desc=self.cmd_EDDY_QUERY_help)
+        gcode.register_mux_command("PROBE_EDDY_CURRENT_ESTIMATE_BACKLASH",
+                                   "CHIP", cname,
+                                   self.cmd_EDDY_ESTIMATE_BACKLASH,
+                                   desc=self.cmd_EDDY_ESTIMATE_BACKLASH_help)
+
+    cmd_EDDY_QUERY_help = "Report current probe_eddy_current frequency and height"
+    cmd_EDDY_ESTIMATE_BACKLASH_help = (
+        "Estimate Z backlash using repeated opposite-direction approaches")
+
+    def _collect_height(self, sample_count, sample_time):
+        samples = []
+        is_querying = True
+
+        def handle_batch(msg):
+            if not is_querying:
+                return False
+            for eventtime, freq, dummy_z in msg.get('data', []):
+                samples.append((eventtime, freq))
+            return len(samples) < sample_count
+
+        self.sensor_helper.add_client(handle_batch)
+        toolhead = self.printer.lookup_object('toolhead')
+        samples_per_second = self.sensor_helper.get_samples_per_second()
+        min_dwell = float(sample_count) / samples_per_second + 0.100
+        dwell_time = max(sample_time, min_dwell)
+        toolhead.dwell(dwell_time)
+        toolhead.wait_moves()
+        is_querying = False
+        toolhead.dwell(0.110)
+        toolhead.wait_moves()
+        if not samples:
+            raise self.printer.command_error(
+                "Unable to obtain probe_eddy_current sensor readings")
+
+        samples = samples[:sample_count]
+        freq_avg = sum([freq for eventtime, freq in samples]) / len(samples)
+        sensor_z = self.calibration.freq_to_height(freq_avg)
+        dummy_freqs, cal_zpos = self.calibration.get_calibration()
+        min_z = min(cal_zpos)
+        max_z = max(cal_zpos)
+        if sensor_z <= -OUT_OF_RANGE or sensor_z >= OUT_OF_RANGE:
+            if sensor_z >= OUT_OF_RANGE:
+                hint = "move nozzle closer to bed (decrease Z)"
+            else:
+                hint = "move nozzle away from bed (increase Z)"
+            raise self.printer.command_error(
+                "probe_eddy_current sensor not in valid range: "
+                "freq=%.3fHz height=%.6fmm calibrated=%.6f..%.6fmm hint=%s"
+                % (freq_avg, sensor_z, min_z, max_z, hint))
+        return freq_avg, sensor_z, min_z, max_z
+
+    def _calc_median(self, values):
+        sorted_values = sorted(values)
+        center = len(sorted_values) // 2
+        if len(sorted_values) % 2:
+            return sorted_values[center]
+        return 0.5 * (sorted_values[center - 1] + sorted_values[center])
+
+    def cmd_EDDY_QUERY(self, gcmd):
+        self.calibration.verify_calibrated()
+        sample_count = gcmd.get_int("SAMPLES", 40, minval=1, maxval=400)
+        sample_time = gcmd.get_float("SAMPLE_TIME", 0.100,
+                                     minval=0.020, maxval=2.000)
+        freq_avg, sensor_z, min_z, max_z = self._collect_height(
+            sample_count, sample_time)
+        gcmd.respond_info(
+            "%s: freq=%.3fHz height=%.6fmm samples=%d range=%.6f..%.6fmm status=ok"
+            % (self.name, freq_avg, sensor_z, sample_count, min_z, max_z))
+
+    def cmd_EDDY_ESTIMATE_BACKLASH(self, gcmd):
+        self.calibration.verify_calibrated()
+        reactor = self.printer.get_reactor()
+        toolhead = self.printer.lookup_object('toolhead')
+        homed_axes = toolhead.get_status(reactor.monotonic()).get('homed_axes', '')
+        if 'z' not in homed_axes:
+            raise self.printer.command_error("Must home axis first")
+
+        travel = gcmd.get_float("TRAVEL", 0.500, minval=0.050, maxval=5.000)
+        speed = gcmd.get_float("SPEED", 10.0, minval=1.0, maxval=80.0)
+        cycles = gcmd.get_int("CYCLES", 5, minval=1, maxval=20)
+        sample_count = gcmd.get_int("SAMPLES", 20, minval=1, maxval=400)
+        sample_time = gcmd.get_float("SAMPLE_TIME", 0.100,
+                                     minval=0.020, maxval=2.000)
+
+        pos = list(toolhead.get_position())
+        target_z = gcmd.get_float("TARGET_Z", pos[2])
+        pos[2] = target_z
+        toolhead.manual_move(pos, speed)
+
+        cycle_backlash = []
+        cycle_from_above = []
+        cycle_from_below = []
+        min_z = max_z = 0.
+        for i in range(cycles):
+            pos[2] = target_z + travel
+            toolhead.manual_move(pos, speed)
+            pos[2] = target_z
+            toolhead.manual_move(pos, speed)
+            toolhead.wait_moves()
+            freq_from_above, z_from_above, min_z, max_z = self._collect_height(
+                sample_count, sample_time)
+
+            pos[2] = target_z - travel
+            toolhead.manual_move(pos, speed)
+            pos[2] = target_z
+            toolhead.manual_move(pos, speed)
+            toolhead.wait_moves()
+            freq_from_below, z_from_below, min_z, max_z = self._collect_height(
+                sample_count, sample_time)
+
+            cycle_from_above.append(z_from_above)
+            cycle_from_below.append(z_from_below)
+            cycle_backlash.append(abs(z_from_above - z_from_below))
+            gcmd.respond_info(
+                "%s backlash cycle %d/%d: "
+                "above=%.3fHz/%.6fmm below=%.3fHz/%.6fmm estimate=%.6fmm"
+                % (self.name, i + 1, cycles,
+                   freq_from_above, z_from_above,
+                   freq_from_below, z_from_below,
+                   cycle_backlash[-1]))
+
+        avg_backlash = sum(cycle_backlash) / len(cycle_backlash)
+        min_backlash = min(cycle_backlash)
+        max_backlash = max(cycle_backlash)
+        std_backlash = 0.
+        if len(cycle_backlash) > 1:
+            variance = sum([(b - avg_backlash) ** 2
+                            for b in cycle_backlash]) / len(cycle_backlash)
+            std_backlash = math.sqrt(variance)
+        median_backlash = self._calc_median(cycle_backlash)
+        avg_from_above = sum(cycle_from_above) / len(cycle_from_above)
+        avg_from_below = sum(cycle_from_below) / len(cycle_from_below)
+        estimates_text = ','.join(['%.6f' % (b,) for b in cycle_backlash])
+        gcmd.respond_info(
+            "%s backlash detail: estimates_mm=[%s]"
+            % (self.name, estimates_text))
+        gcmd.respond_info(
+            "%s backlash: target_z=%.6fmm cycles=%d from_above_avg=%.6fmm "
+            "from_below_avg=%.6fmm estimate_avg=%.6fmm estimate_median=%.6fmm "
+            "estimate_min=%.6fmm estimate_max=%.6fmm estimate_std=%.6fmm "
+            "travel=%.3fmm speed=%.1fmm/s samples=%d range=%.6f..%.6fmm status=ok"
+            % (self.name, target_z, cycles,
+               avg_from_above, avg_from_below,
+               avg_backlash, median_backlash,
+               min_backlash, max_backlash, std_backlash,
+               travel, speed, sample_count, min_z, max_z))
+
+
 ######################################################################
 # Data fitting for "tap"
 ######################################################################
@@ -1027,6 +1187,7 @@ class PrinterEddyProbe:
         sensors = { "ldc1612": ldc1612.LDC1612 }
         sensor_type = config.getchoice('sensor_type', {s: s for s in sensors})
         self.sensor_helper = sensors[sensor_type](config, self.calibration)
+        EddyDiagnosticsHelper(config, self.sensor_helper, self.calibration)
         # Create trigger_analog interface
         trig_analog = trigger_analog.MCU_trigger_analog(self.sensor_helper)
         probe.LookupZSteppers(config, trig_analog.get_dispatch().add_stepper)

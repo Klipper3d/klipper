@@ -267,6 +267,23 @@ hardware temperature can alter the results. Therefore, for best
 results the calibration done here and the subsequent probing that
 utilizes that calibration should be done at the same temperature.
 
+### Diagnostics commands
+
+After calibration, the following commands may be useful for live
+diagnostics:
+
+- `PROBE_EDDY_CURRENT_QUERY CHIP=<config_name>`
+  - Reports current sensor frequency and corresponding calibrated
+    height at the current toolhead position.
+- `PROBE_EDDY_CURRENT_ESTIMATE_BACKLASH CHIP=<config_name>`
+  - Runs repeated above/below approaches to the same Z target and
+    reports cycle-by-cycle backlash estimates plus aggregate
+    statistics (`avg`, `median`, `min`, `max`, `std`).
+
+For both commands, keep the nozzle inside the calibrated Z range.
+If outside that range, the command will return an out-of-range error
+with movement guidance.
+
 ### Tap calibration
 
 In order to utilize "tap" probing it is necessary to configure some
