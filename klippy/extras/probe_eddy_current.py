@@ -596,8 +596,9 @@ class EddyDiagnosticsHelper:
                 "Unable to obtain probe_eddy_current sensor readings")
 
         samples = samples[:sample_count]
-        freq_avg = sum([freq for eventtime, freq in samples]) / len(samples)
-        sensor_z = self.calibration.freq_to_height(freq_avg)
+        sample_freqs = [freq for eventtime, freq in samples]
+        freq_median = self._calc_median(sample_freqs)
+        sensor_z = self.calibration.freq_to_height(freq_median)
         dummy_freqs, cal_zpos = self.calibration.get_calibration()
         min_z = min(cal_zpos)
         max_z = max(cal_zpos)
@@ -609,8 +610,8 @@ class EddyDiagnosticsHelper:
             raise self.printer.command_error(
                 "probe_eddy_current sensor not in valid range: "
                 "freq=%.3fHz height=%.6fmm calibrated=%.6f..%.6fmm hint=%s"
-                % (freq_avg, sensor_z, min_z, max_z, hint))
-        return freq_avg, sensor_z, min_z, max_z
+                % (freq_median, sensor_z, min_z, max_z, hint))
+        return freq_median, sensor_z, min_z, max_z
 
     def _calc_median(self, values):
         sorted_values = sorted(values)
@@ -624,12 +625,12 @@ class EddyDiagnosticsHelper:
         sample_count = gcmd.get_int("SAMPLES", 40, minval=1, maxval=400)
         sample_time = gcmd.get_float("SAMPLE_TIME", 0.100,
                                      minval=0.020, maxval=2.000)
-        freq_avg, sensor_z, min_z, max_z = self._collect_height(
+        freq_median, sensor_z, min_z, max_z = self._collect_height(
             sample_count, sample_time)
         gcmd.respond_info(
-            "%s: freq=%.3fHz height=%.6fmm samples=%d "
+            "%s: freq_median=%.3fHz height=%.6fmm samples=%d "
             "range=%.6f..%.6fmm status=ok"
-            % (self.name, freq_avg, sensor_z, sample_count, min_z, max_z))
+            % (self.name, freq_median, sensor_z, sample_count, min_z, max_z))
 
     def cmd_EDDY_ESTIMATE_BACKLASH(self, gcmd):
         self.calibration.verify_calibrated()
@@ -653,8 +654,6 @@ class EddyDiagnosticsHelper:
         toolhead.manual_move(pos, speed)
 
         cycle_backlash = []
-        cycle_from_above = []
-        cycle_from_below = []
         min_z = max_z = 0.
         for i in range(cycles):
             pos[2] = target_z + travel
@@ -673,8 +672,6 @@ class EddyDiagnosticsHelper:
             freq_from_below, z_from_below, min_z, max_z = self._collect_height(
                 sample_count, sample_time)
 
-            cycle_from_above.append(z_from_above)
-            cycle_from_below.append(z_from_below)
             cycle_backlash.append(abs(z_from_above - z_from_below))
             gcmd.respond_info(
                 "%s backlash cycle %d/%d: "
@@ -684,31 +681,23 @@ class EddyDiagnosticsHelper:
                    freq_from_below, z_from_below,
                    cycle_backlash[-1]))
 
-        avg_backlash = sum(cycle_backlash) / len(cycle_backlash)
         min_backlash = min(cycle_backlash)
         max_backlash = max(cycle_backlash)
-        std_backlash = 0.
-        if len(cycle_backlash) > 1:
-            variance = sum([(b - avg_backlash) ** 2
-                            for b in cycle_backlash]) / len(cycle_backlash)
-            std_backlash = math.sqrt(variance)
         median_backlash = self._calc_median(cycle_backlash)
-        avg_from_above = sum(cycle_from_above) / len(cycle_from_above)
-        avg_from_below = sum(cycle_from_below) / len(cycle_from_below)
+        backlash_mad = self._calc_median(
+            [abs(b - median_backlash) for b in cycle_backlash])
         estimates_text = ','.join(['%.6f' % (b,) for b in cycle_backlash])
         gcmd.respond_info(
             "%s backlash detail: estimates_mm=[%s]"
             % (self.name, estimates_text))
         gcmd.respond_info(
-            "%s backlash: target_z=%.6fmm cycles=%d from_above_avg=%.6fmm "
-            "from_below_avg=%.6fmm estimate_avg=%.6fmm estimate_median=%.6fmm "
-            "estimate_min=%.6fmm estimate_max=%.6fmm estimate_std=%.6fmm "
+            "%s backlash: target_z=%.6fmm cycles=%d estimate_median=%.6fmm "
+            "estimate_mad=%.6fmm estimate_min=%.6fmm estimate_max=%.6fmm "
                 "travel=%.3fmm speed=%.1fmm/s samples=%d "
                 "range=%.6f..%.6fmm status=ok"
             % (self.name, target_z, cycles,
-               avg_from_above, avg_from_below,
-               avg_backlash, median_backlash,
-               min_backlash, max_backlash, std_backlash,
+               median_backlash, backlash_mad,
+               min_backlash, max_backlash,
                travel, speed, sample_count, min_z, max_z))
 
 

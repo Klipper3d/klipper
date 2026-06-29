@@ -1279,9 +1279,11 @@ parameter. See the
 `PROBE_EDDY_CURRENT_QUERY CHIP=<config_name> [SAMPLES=<count>]`
 `[SAMPLE_TIME=<seconds>]`: Report the current eddy frequency and
 corresponding calibrated height at the current toolhead position.
-`SAMPLES` defaults to 40 and `SAMPLE_TIME` defaults to 0.100 seconds.
-If the measured point is outside the calibrated range, the command
-returns an error with a hint on how to move back into range.
+The command uses the live eddy sensor stream and reports the median
+frequency from the requested sample window. `SAMPLES` defaults to 40
+and `SAMPLE_TIME` defaults to 0.100 seconds. If the measured point is
+outside the calibrated range, the command returns an error with a
+hint on how to move back into range.
 
 #### PROBE_EDDY_CURRENT_ESTIMATE_BACKLASH
 `PROBE_EDDY_CURRENT_ESTIMATE_BACKLASH CHIP=<config_name>`
@@ -1289,7 +1291,7 @@ returns an error with a hint on how to move back into range.
 `[SAMPLES=<count>] [SAMPLE_TIME=<seconds>]`: Estimate Z backlash by
 repeatedly approaching the same target Z from above and below. The
 command prints one line per cycle and then an aggregate summary with
-`avg`, `median`, `min`, `max`, and `std` statistics. Defaults are:
+`median`, `mad`, `min`, and `max` statistics. Defaults are:
 `TRAVEL=0.500`, `SPEED=10.0`, `CYCLES=5`, `SAMPLES=20`, and
 `SAMPLE_TIME=0.100`.
 
