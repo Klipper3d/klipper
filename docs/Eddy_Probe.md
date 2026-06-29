@@ -455,23 +455,6 @@ steps outlined below.  If the printer to be calibrated is enclosed, it
 is strongly recommended to set the `max_validation_temp` option to a value
 between 100 and 120.
 
-Some users monitor a toolhead board temperature (for example, MCU
-temperature from a SHT36 board) and ask if that can be used for eddy drift
-compensation. It may be useful for general monitoring, but it is not a
-replacement for a probe coil temperature sensor.
-
-For example, one may monitor toolhead MCU temperature with:
-
-```
-[temperature_sensor toolhead_mcu_temp]
-sensor_type: temperature_mcu
-sensor_mcu: my_toolhead_mcu
-```
-
-This reports board MCU temperature. Thermal drift compensation in this
-section requires a `[temperature_probe]` that reports probe coil
-temperature and is linked to the same name as `[probe_eddy_current]`.
-
 Eddy probe manufacturers may offer a stock drift calibration that can be
 manually added to `drift_calibration` option of the `[probe_eddy_current]`
 section. If they do not, or if the stock calibration does not perform well on
