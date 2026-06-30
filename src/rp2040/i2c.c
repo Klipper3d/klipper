@@ -71,7 +71,7 @@ static const struct i2c_info i2c_bus[] = {
 struct i2c_config
 i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
 {
-    if (bus > ARRAY_SIZE(i2c_bus))
+    if (bus >= ARRAY_SIZE(i2c_bus))
         shutdown("Invalid i2c bus");
 
     const struct i2c_info *info = &i2c_bus[bus];
