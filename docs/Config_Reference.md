@@ -3088,6 +3088,38 @@ sensor_type:
 #   Interval in seconds between readings. Default is 30
 ```
 
+### SGP40 sensor
+
+SGP40 two wire interface (I2C) VOC (volatile organic compounds) gas sensor.
+It reports an air quality VOC index rather than a temperature. Optional
+reference temperature and humidity sensors can be supplied to improve the
+VOC compensation.
+
+```
+sensor_type: SGP40
+#i2c_address:
+#   Default is 89 (0x59).
+#i2c_mcu:
+#i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#i2c_speed:
+#   See the "common I2C settings" section for a description of the
+#   above parameters.
+#sgp40_report_time:
+#   Interval in seconds between readings. Default is 1.
+#ref_temp_sensor:
+#   Name of a configured sensor used as temperature reference for the
+#   VOC compensation. When unset the temperature is not compensated.
+#ref_humidity_sensor:
+#   Name of a configured sensor used as humidity reference for the VOC
+#   compensation. When unset humidity is estimated from the reference
+#   temperature.
+#soft_reset_on_startup:
+#   If enabled, sends a soft reset command to the sensor on startup to
+#   put it into a defined initial state. Default is False.
+```
+
 ### SHT3X sensor
 
 SHT3X family two wire interface (I2C) environmental sensor. These sensors
