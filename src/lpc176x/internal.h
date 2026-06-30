@@ -14,6 +14,8 @@
 #define PCLK_I2C0 7
 #define PCLK_SSP1 10
 #define PCLK_ADC 12
+#define PCLK_CAN1 13
+#define PCLK_CAN2 14
 #define PCLK_I2C1 19
 #define PCLK_SSP0 21
 #define PCLK_UART3 25
