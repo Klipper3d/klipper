@@ -518,6 +518,7 @@ The following information is available in
 
 [bme280 config_section_name](Config_Reference.md#bmp280bme280bme680-temperature-sensor),
 [htu21d config_section_name](Config_Reference.md#htu21d-sensor),
+[sgp40 config_section_name](Config_Reference.md#sgp40-sensor),
 [sht3x config_section_name](Config_Reference.md#sht31-sensor),
 [lm75 config_section_name](Config_Reference.md#lm75-temperature-sensor),
 [temperature_host config_section_name](Config_Reference.md#host-temperature-sensor)
@@ -526,7 +527,8 @@ and
 objects:
 - `temperature`: The last read temperature from the sensor.
 - `humidity`, `pressure`, `gas`: The last read values from the sensor
-  (only on bme280, htu21d, sht3x and lm75 sensors).
+  (only on bme280, htu21d, sgp40, sht3x and lm75 sensors).
+- `gas_raw`: The last raw VOC reading (only on sgp40 sensors).
 
 ## temperature_fan
 
