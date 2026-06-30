@@ -3364,6 +3364,69 @@ watched component.
 #   default stepper is all of them.
 ```
 
+### [watercooling_fan]
+
+Watercooling fan (one may define any number of sections with a
+"watercooling_fan" prefix). A "watercooling fan" is a fan that will be
+enabled whenever one of its associated heaters has a non-zero target,
+whenever one of its associated heaters remains above a configured
+temperature threshold, or whenever one of its associated stepper
+drivers is active. The fan may continue to run at an idle speed for a
+short time after those conditions are no longer met.
+
+The fan status is also exposed as "controller_fan <name>" so that
+clients can display it as an automatically controlled fan. A
+watercooling_fan and controller_fan may not use the same name.
+
+```
+[watercooling_fan my_watercooling_fan]
+#pin:
+#max_power:
+#shutdown_speed:
+#cycle_time:
+#hardware_pwm:
+#kick_start_time:
+#off_below:
+#tachometer_pin:
+#tachometer_ppr:
+#tachometer_poll_interval:
+#enable_pin:
+#   See the "fan" section for a description of the above parameters.
+#fan_speed: 1.0
+#   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
+#   will be set to when both a selected heater and a selected stepper
+#   driver are active, or when one is active and
+#   `single_active_speed` is left at its default. The default is 1.0.
+#single_active_speed:
+#   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
+#   will be set to when only selected heaters are active, only selected
+#   stepper drivers are active, or only heat above `heater_temp`
+#   remains. The default is `fan_speed`.
+#idle_timeout:
+#   The amount of time (in seconds) after a watched stepper driver or
+#   heater was active that the fan should be kept running. The default
+#   is 30 seconds.
+#idle_speed: 0.0
+#   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
+#   will be set to after activity stops and before the idle_timeout is
+#   reached. The default is 0.0.
+#heater: extruder
+#   Name of the config section defining the heater that this fan is
+#   associated with. If a comma separated list of heater names is
+#   provided here, then the fan will react when any of the given
+#   heaters are active or remain above `heater_temp`. The default is
+#   "extruder".
+#heater_temp: 50.0
+#   A temperature (in Celsius) that a watched heater must drop below
+#   before heat alone stops keeping the fan active. The default is 50
+#   Celsius.
+#stepper:
+#   The names of the stepper drivers this fan is associated with. If
+#   no stepper names are provided, then the fan will be associated
+#   with all of the stepper drivers in the config. The default
+#   is to associate with all of the stepper drivers.
+```
+
 ### [temperature_fan]
 
 Temperature-triggered cooling fans (one may define any number of
