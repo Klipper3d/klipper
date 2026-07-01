@@ -76,16 +76,21 @@ class VirtualSD:
                     full_path = os.path.join(root, name)
                     r_path = full_path[len(self.sdcard_dirname) + 1:]
                     size = os.path.getsize(full_path)
-                    flist.append((r_path, size))
+                    mtime = os.path.getmtime(full_path)
+                    flist.append((r_path, size, mtime))
             return sorted(flist, key=lambda f: f[0].lower())
         else:
             dname = self.sdcard_dirname
             try:
                 filenames = os.listdir(self.sdcard_dirname)
-                return [(fname, os.path.getsize(os.path.join(dname, fname)))
-                        for fname in sorted(filenames, key=str.lower)
-                        if not fname.startswith('.')
-                        and os.path.isfile((os.path.join(dname, fname)))]
+                flist = []
+                for fname in sorted(filenames, key=str.lower):
+                    full_path = os.path.join(dname, fname)
+                    if not fname.startswith('.') and os.path.isfile(full_path):
+                        size = os.path.getsize(full_path)
+                        mtime = os.path.getmtime(full_path)
+                        flist.append((fname, size, mtime))
+                return flist
             except:
                 logging.exception("virtual_sdcard get_file_list")
                 raise self.gcode.error("Unable to get file list")
@@ -159,7 +164,7 @@ class VirtualSD:
         # List SD card
         files = self.get_file_list()
         gcmd.respond_raw("Begin file list")
-        for fname, fsize in files:
+        for fname, fsize, _mtime in files:
             gcmd.respond_raw("%s %d" % (fname, fsize))
         gcmd.respond_raw("End file list")
     def cmd_M21(self, gcmd):
@@ -177,7 +182,9 @@ class VirtualSD:
     def _load_file(self, gcmd, filename, check_subdirs=False):
         files = self.get_file_list(check_subdirs)
         flist = [f[0] for f in files]
-        files_by_lower = { fname.lower(): fname for fname, fsize in files }
+        files_by_lower = {
+            fname.lower(): fname for fname, fsize, _mtime in files
+        }
         fname = filename
         try:
             if fname not in flist:
