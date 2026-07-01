@@ -441,12 +441,16 @@ class TMCCommandHelper:
             logging.warning("Stepper %s phase change (was %d now %d)",
                             self.stepper_name, self.mcu_phase_offset, moff)
         self.mcu_phase_offset = moff
+    def _apply_toff_field(self, toff_val, print_time):
+        reg_name = self.fields.lookup_register("toff")
+        reg_val = self.fields.set_field("toff", toff_val)
+        self.mcu_tmc.set_register(reg_name, reg_val, print_time)
     # Stepper enable/disable tracking
     def _do_enable(self, print_time):
+        self._init_registers()
         if self.toff is not None:
             # Shared enable via comms handling
-            self.fields.set_field("toff", self.toff)
-        self._init_registers()
+            self._apply_toff_field(self.toff, print_time)
         did_reset = self.echeck_helper.start_checks()
         if did_reset:
             self.mcu_phase_offset = None
@@ -463,9 +467,7 @@ class TMCCommandHelper:
             self._handle_sync_mcu_pos(self.stepper)
     def _do_disable(self, print_time):
         if self.toff is not None:
-            val = self.fields.set_field("toff", 0)
-            reg_name = self.fields.lookup_register("toff")
-            self.mcu_tmc.set_register(reg_name, val, print_time)
+            self._apply_toff_field(0, print_time)
         self.echeck_helper.stop_checks()
     def _handle_stepper_enable(self, print_time, is_enable):
         def enable_disable_cb(eventtime):
