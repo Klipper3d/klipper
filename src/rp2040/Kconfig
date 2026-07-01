@@ -41,6 +41,12 @@ config CLOCK_FREQ
     default 12000000 if MACH_RP2040
     default 150000000 if MACH_RP2350
 
+config RP2040_LEGACY_CLOCK_SETUP
+    bool "Use legacy RP2040 clock setup" if LOW_LEVEL_OPTIONS && MACH_RP2040
+    help
+        Use the older 125MHz RP2040 clock setup for compatibility with
+        boards that do not reliably restart with the default clock setup.
+
 config FLASH_SIZE
     hex
     default 0x200000

@@ -60,14 +60,19 @@ bootloader_request(void)
  ****************************************************************/
 
 #define FREQ_XOSC 12000000
-#define FREQ_SYS (CONFIG_MACH_RP2040 ? 200000000 : CONFIG_CLOCK_FREQ)
+#define FREQ_SYS (CONFIG_MACH_RP2040                    \
+                  ? (CONFIG_RP2040_LEGACY_CLOCK_SETUP   \
+                     ? 125000000 : 200000000)            \
+                  : CONFIG_CLOCK_FREQ)
 #define FBDIV (FREQ_SYS == 200000000 ? 100 : 125)
 #define FREQ_USB 48000000
+#define USB_PLL_FBDIV (CONFIG_MACH_RP2040 && CONFIG_RP2040_LEGACY_CLOCK_SETUP \
+                       ? 40 : 80)
 
 void set_vsel(void)
 {
     // Set internal voltage regulator output to 1.15V on rp2040
-#if CONFIG_MACH_RP2040
+#if CONFIG_MACH_RP2040 && !CONFIG_RP2040_LEGACY_CLOCK_SETUP
     uint32_t cval = vreg_and_chip_reset_hw->vreg;
     uint32_t vref = VREG_AND_CHIP_RESET_VREG_VSEL_RESET + 1;
     cval &= ~VREG_AND_CHIP_RESET_VREG_VSEL_BITS;
@@ -168,7 +173,7 @@ clock_setup(void)
 
     // Setup pll_usb
     enable_pclock(RESETS_RESET_PLL_USB_BITS);
-    pll_setup(pll_usb_hw, 80, 80*FREQ_XOSC/FREQ_USB);
+    pll_setup(pll_usb_hw, USB_PLL_FBDIV, USB_PLL_FBDIV*FREQ_XOSC/FREQ_USB);
 
     // Setup peripheral clocks
     clk_aux_setup(clk_peri, CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLK_SYS);
