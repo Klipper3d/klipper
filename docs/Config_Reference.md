@@ -5040,6 +5040,17 @@ more information.
 #   switch gcode. The switch must he held in a single state for at least
 #   this long to activate. If the switch is toggled on/off during this delay,
 #   the event is ignored. Default is 0.
+#extruder: extruder
+#   The name of the extruder or extruder_stepper section this sensor
+#   is associated with. This parameter is used to track the extrusion
+#   distance when using the runout_distance feature. The default is
+#   'extruder'.
+#runout_distance: 0.0
+#   The amount of filament (in mm) extruded after a runout is detected
+#   before a pause is enforced. When combined with SET_PRINT_FEATURE,
+#   this allows the pause to be deferred until the toolhead is in an
+#   infill area, protecting the cosmetic quality of the outer wall.
+#   A value of 0.0 disables this safety margin. Default is 0.0.
 #switch_pin:
 #   The pin on which the switch is connected. This parameter must be
 #   provided.
@@ -5069,6 +5080,7 @@ switch_pin:
 #insert_gcode:
 #event_delay:
 #pause_delay:
+#runout_distance:
 #   See the "filament_switch_sensor" section for a description of the
 #   above parameters.
 ```
