@@ -1,6 +1,7 @@
 out
 *.so
 *.pyc
+.idea
 .config
 .config.old
 klippy/.version
