@@ -19,6 +19,8 @@ class PrinterTemperatureMCU:
         self.temp1 = self.adc1 = self.temp2 = self.adc2 = None
         self.min_temp = self.max_temp = 0.
         self.debug_read_cmd = None
+        self.smoothed_temp = self.last_temp = 0.
+        self.last_temp_time = 0.
         # Read config
         mcu_name = config.get('sensor_mcu', 'mcu')
         self.temp1 = config.getfloat('sensor_temperature1', None)
@@ -27,6 +29,9 @@ class PrinterTemperatureMCU:
             self.temp2 = config.getfloat('sensor_temperature2', None)
             if self.temp2 is not None:
                 self.adc2 = config.getfloat('sensor_adc2', minval=0., maxval=1.)
+        self.smooth_time = config.getfloat('smooth_time', 0.01, above=0.)
+        self.inv_smooth_time = 1. / self.smooth_time
+        self.ignore_spike_size = config.getfloat('ignore_spike_size', 2., minval=2.)
         # Setup ADC port
         ppins = config.get_printer().lookup_object('pins')
         self.mcu_adc = ppins.setup_pin('adc',
@@ -51,9 +56,25 @@ class PrinterTemperatureMCU:
         self.max_temp = max_temp
     # Internal code
     def adc_callback(self, samples):
+
         read_time, read_value = samples[-1]
-        temp = self.base_temperature + read_value * self.slope
-        self.temperature_callback(read_time + SAMPLE_COUNT * SAMPLE_TIME, temp)
+        temp = self.base_temperature + (read_value * self.slope)
+        temp_diff = temp - self.last_temp
+
+        # Ignore spikes caused by bad PCB layout of the board. Of which we dont have control over.
+        # Also disregard the startup reading of 0 which will cause a "spike" to the actual temp.
+        if ( abs(temp_diff) > self.ignore_spike_size ) and (self.last_temp):
+            self.last_temp_time = read_time
+        else:
+            # Smooth as required.
+            time_diff = read_time - self.last_temp_time
+            self.last_temp_time = read_time
+            adj_time = min(time_diff * self.inv_smooth_time, 1.)
+            self.smoothed_temp += temp_diff * adj_time
+            self.last_temp = self.smoothed_temp
+        # Pass on to temperature_sensor and/or temperature_fan etc..
+        self.temperature_callback(read_time + (SAMPLE_COUNT * SAMPLE_TIME), self.last_temp)
+
     def calc_temp(self, adc):
         return self.base_temperature + adc * self.slope
     def calc_adc(self, temp):
@@ -82,7 +103,7 @@ class PrinterTemperatureMCU:
             ('stm32l4', self.config_stm32g0),
             ('stm32h723', self.config_stm32h723),
             ('stm32h7', self.config_stm32h7),
-            ('gd32f303xe', self.config_gd32f303xe),
+            ('gd32f303', self.config_gd32f303),
             ('', self.config_unknown)]
         for name, func in cfg_funcs:
             if self.mcu_type.startswith(name):
@@ -167,7 +188,7 @@ class PrinterTemperatureMCU:
         cal_adc_110 = self.read16(0x1FF1E840) / 65535.
         self.slope = (110. - 30.) / (cal_adc_110 - cal_adc_30)
         self.base_temperature = self.calc_base(30., cal_adc_30)
-    def config_gd32f303xe(self):
+    def config_gd32f303(self):
         self.slope = 3.3 / -.004100
         self.base_temperature = self.calc_base(25., 1.45 / 3.3)
     def read16(self, addr):
