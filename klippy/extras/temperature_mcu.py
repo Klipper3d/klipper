@@ -31,7 +31,8 @@ class PrinterTemperatureMCU:
                 self.adc2 = config.getfloat('sensor_adc2', minval=0., maxval=1.)
         self.smooth_time = config.getfloat('smooth_time', 0.01, above=0.)
         self.inv_smooth_time = 1. / self.smooth_time
-        self.ignore_spike_size = config.getfloat('ignore_spike_size', 2., minval=2.)
+        self.ignore_spike_size = config.getfloat('ignore_spike_size',
+                                                  2., minval=2.)
         # Setup ADC port
         ppins = config.get_printer().lookup_object('pins')
         self.mcu_adc = ppins.setup_pin('adc',
@@ -61,8 +62,9 @@ class PrinterTemperatureMCU:
         temp = self.base_temperature + (read_value * self.slope)
         temp_diff = temp - self.last_temp
 
-        # Ignore spikes caused by bad PCB layout of the board. Of which we dont have control over.
-        # Also disregard the startup reading of 0 which will cause a "spike" to the actual temp.
+        # Ignore spikes caused by bad PCB layout of the board. Of which we
+        # dont have control over. Also disregard the startup reading of 0
+        # which will cause a "spike" to the actual temp.
         if ( abs(temp_diff) > self.ignore_spike_size ) and (self.last_temp):
             self.last_temp_time = read_time
         else:
@@ -73,7 +75,8 @@ class PrinterTemperatureMCU:
             self.smoothed_temp += temp_diff * adj_time
             self.last_temp = self.smoothed_temp
         # Pass on to temperature_sensor and/or temperature_fan etc..
-        self.temperature_callback(read_time + (SAMPLE_COUNT * SAMPLE_TIME), self.last_temp)
+        self.temperature_callback(read_time + (SAMPLE_COUNT * SAMPLE_TIME),
+                                   self.last_temp)
 
     def calc_temp(self, adc):
         return self.base_temperature + adc * self.slope
