@@ -3133,7 +3133,7 @@ sensor_type: LM75
 
 ### Builtin micro-controller temperature sensor
 
-The atsam, atsamd, stm32 and rp2040 micro-controllers contain an internal
+The atsam, atsamd, stm32, gd32 and rp2040 micro-controllers contain an internal
 temperature sensor. One can use the "temperature_mcu" sensor to
 monitor these temperatures.
 
@@ -3163,6 +3163,18 @@ sensor_type: temperature_mcu
 #   default is to use the factory calibration data on the
 #   micro-controller (if applicable) or the nominal values from the
 #   micro-controller specification.
+#smooth_time:
+#   A time value (in seconds) over which temperature measurements will
+#   be smoothed to reduce the impact of measurement noise.
+#   This could be necessary because we do not always have control over
+#   the design of proprietary boards.
+#   The default is 0.01, which effectively disables the feature.
+#ignore_spike_size:
+#   Use this to ignore large random spikes that cannot be smoothed out
+#   without introducing too much lag.
+#   Unit of measure is degrees Celsius relative to the last measurement.
+#   Default is 2.0, minimum is 2.0.  This should be sufficient for the
+#   slow heating and cooling rate of MCUs.
 ```
 
 ### Host temperature sensor
