@@ -94,16 +94,6 @@ def format_mcu_name(mcu):
         mcu = mcu[:-2]
     return mcu
 
-def get_canbus_iface_mcu(canbus_iface):
-    devpath = os.path.realpath("/sys/class/net/%s/device" % (canbus_iface,))
-    for path in (devpath, os.path.dirname(devpath)):
-        try:
-            with open(os.path.join(path, "product"), "r") as f:
-                return format_mcu_name(f.read().strip())
-        except OSError:
-            pass
-    return None
-
 class SocketCan:
     def __init__(self, canbus_iface, can_filter=None):
         self.sock = socket.socket(socket.PF_CAN, socket.SOCK_RAW,
@@ -308,12 +298,53 @@ def get_firmware_info(canbus_iface, uuid, canbus_nodeid, connect_timeout):
         processor = format_mcu_name(conn.msgparser.config.get("MCU",
                                                               "Unknown"))
         firmware = conn.msgparser.version or "Unknown"
-        return {"processor": processor, "firmware": firmware}, conn
-    except Exception:
+        return {"processor": processor, "firmware": firmware}
+    finally:
+        try:
+            conn.reset()
+        except Exception:
+            pass
         conn.close()
-        raise
 
-def query_unassigned(canbus_iface, canbus_nodeid, connect_timeout):
+def wait_can_iface(canbus_iface, timeout):
+    deadline = time.time() + timeout
+    sys_path = "/sys/class/net/%s" % (canbus_iface,)
+    while time.time() < deadline:
+        if os.path.exists(sys_path):
+            try:
+                test_sock = socket.socket(socket.PF_CAN, socket.SOCK_RAW,
+                                          socket.CAN_RAW)
+                test_sock.bind((canbus_iface,))
+                test_sock.close()
+                return True
+            except OSError:
+                pass
+        time.sleep(.100)
+    return False
+
+def get_firmware_info_with_retry(canbus_iface, uuid, canbus_nodeid,
+                                 connect_timeout, iface_timeout):
+    endtime = time.time() + iface_timeout
+    last_error = None
+    try:
+        return get_firmware_info(canbus_iface, uuid, canbus_nodeid,
+                                 connect_timeout)
+    except OSError as e:
+        last_error = e
+    while time.time() < endtime:
+        remaining = endtime - time.time()
+        if not wait_can_iface(canbus_iface, remaining):
+            break
+        time.sleep(.250)
+        try:
+            return get_firmware_info(canbus_iface, uuid, canbus_nodeid,
+                                     connect_timeout)
+        except OSError as e:
+            last_error = e
+    raise last_error
+
+def query_unassigned(canbus_iface, canbus_nodeid, connect_timeout,
+                     iface_timeout):
     bus = SocketCan(canbus_iface, CANBUS_ID_ADMIN + 1)
     try:
         bus.send(CANBUS_ID_ADMIN, [CMD_QUERY_UNASSIGNED])
@@ -349,39 +380,26 @@ def query_unassigned(canbus_iface, canbus_nodeid, connect_timeout):
     finally:
         bus.close()
 
-    reset_conns = []
-    iface_mcu = get_canbus_iface_mcu(canbus_iface)
-    try:
-        for uuid, app_id, app_name in found_devices:
-            if app_id != CMD_SET_KLIPPER_NODEID:
-                output_line("Found canbus_uuid=%012x, Application: %s"
-                            % (uuid, app_name))
-                continue
-            try:
-                info, conn = get_firmware_info(canbus_iface, uuid,
-                                               canbus_nodeid,
-                                               connect_timeout)
-                processor = info["processor"]
-                reset_conns.append((processor == iface_mcu, conn))
-                output_line("Found canbus_uuid=%012x, Application: %s,"
-                            " Processor: %s,"
-                            " Firmware: %s"
-                            % (uuid, app_name, processor,
-                               info["firmware"]))
-            except error as e:
-                output_line("Found canbus_uuid=%012x, Application: %s"
-                            % (uuid, app_name))
-                output_line("Unable to query firmware info: %s" % (str(e),))
-        output_line("Total %d uuids found" % (len(found_ids,)))
-    finally:
-        reset_conns.sort(key=lambda item: item[0])
-        for _is_iface_mcu, conn in reset_conns:
-            try:
-                conn.reset()
-            except Exception:
-                pass
-        for _is_iface_mcu, conn in reset_conns:
-            conn.close()
+    for uuid, app_id, app_name in found_devices:
+        if app_id != CMD_SET_KLIPPER_NODEID:
+            output_line("Found canbus_uuid=%012x, Application: %s"
+                        % (uuid, app_name))
+            continue
+        try:
+            info = get_firmware_info_with_retry(canbus_iface, uuid,
+                                                canbus_nodeid,
+                                                connect_timeout,
+                                                iface_timeout)
+            output_line("Found canbus_uuid=%012x, Application: %s,"
+                        " Processor: %s,"
+                        " Firmware: %s"
+                        % (uuid, app_name, info["processor"],
+                           info["firmware"]))
+        except (error, OSError) as e:
+            output_line("Found canbus_uuid=%012x, Application: %s"
+                        % (uuid, app_name))
+            output_line("Unable to query firmware info: %s" % (str(e),))
+    output_line("Total %d uuids found" % (len(found_ids,)))
 
 def main():
     usage = "%prog [options] <can interface>"
@@ -393,10 +411,14 @@ def main():
     opts.add_option("-t", "--connect-timeout", type="float",
                     dest="connect_timeout", default=10.,
                     help="CAN connect timeout per Klipper node (default 10)")
+    opts.add_option("--iface-timeout", type="float", dest="iface_timeout",
+                    default=5., help="CAN interface recovery timeout after"
+                    " reset (default 5)")
     options, args = opts.parse_args()
     if len(args) != 1:
         opts.error("Incorrect number of arguments")
-    query_unassigned(args[0], options.canbus_nodeid, options.connect_timeout)
+    query_unassigned(args[0], options.canbus_nodeid, options.connect_timeout,
+                     options.iface_timeout)
 
 if __name__ == '__main__':
     main()
