@@ -28,7 +28,7 @@ It is also necessary to configure the host operating system to use the
 adapter. The configuration method depends on the network manager used
 by the host operating system.
 
-For systems using ifupdown, create a file named
+For systems using `ifupdown`, create a file named
 `/etc/network/interfaces.d/can0` with the following contents:
 ```
 allow-hotplug can0
@@ -36,6 +36,10 @@ iface can0 can static
     bitrate 1000000
     up ip link set $IFACE txqueuelen 128
 ```
+
+Note that some Linux distributions use `systemd-networkd` or
+`NetworkManager` instead of `ifupdown`. On those systems, the
+`/etc/network/interfaces.d/can0` file may be ignored.
 
 For systems using `systemd-networkd`, create a file named
 `/etc/systemd/network/80-can.network` with the following contents:
@@ -68,9 +72,6 @@ networkctl status can0
 ip -details link show can0
 ```
 
-Note that some Linux distributions use `systemd-networkd` or
-`NetworkManager` instead of ifupdown. On those systems, the
-`/etc/network/interfaces.d/can0` file may be ignored.
 
 ## Terminating Resistors
 
