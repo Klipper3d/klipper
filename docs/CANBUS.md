@@ -147,7 +147,7 @@ Some important notes when using this mode:
   FIRMWARE_RESTART and RESTART commands, make sure the host operating
   system is configured to automatically bring the CAN interface back
   up after a hotplug event. See the [Host Hardware](#host-hardware)
-  section above for examples using ifupdown or `systemd-networkd`.
+  section above for examples using `ifupdown` or `systemd-networkd`.
 
 * The "bridge mcu" is not actually on the CAN bus. Messages to and
   from the bridge mcu will not be seen by other adapters that may be
