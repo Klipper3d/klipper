@@ -4,9 +4,9 @@ This document describes Klipper's CAN bus support.
 
 ## Device Hardware
 
-Klipper currently supports CAN on stm32, SAME5x, and rp2040 chips. In
-addition, the micro-controller chip must be on a board that has a CAN
-transceiver.
+Klipper currently supports CAN on stm32, SAME5x, rp2040, and lpc176x
+chips. In addition, the micro-controller chip must be on a board that
+has a CAN transceiver.
 
 To compile for CAN, run `make menuconfig` and select "CAN bus" as the
 communication interface. Finally, compile the micro-controller code
@@ -25,7 +25,10 @@ mode") or that run the
 [candlelight firmware](https://github.com/candle-usb/candleLight_fw).
 
 It is also necessary to configure the host operating system to use the
-adapter. This is typically done by creating a new file named
+adapter. The configuration method depends on the network manager used
+by the host operating system.
+
+For systems using ifupdown, create a file named
 `/etc/network/interfaces.d/can0` with the following contents:
 ```
 allow-hotplug can0
@@ -33,6 +36,41 @@ iface can0 can static
     bitrate 1000000
     up ip link set $IFACE txqueuelen 128
 ```
+
+For systems using `systemd-networkd`, create a file named
+`/etc/systemd/network/80-can.network` with the following contents:
+```
+[Match]
+Name=can0
+
+[CAN]
+BitRate=1000000
+```
+
+And create a file named `/etc/systemd/network/99-can.link` with the
+following contents:
+```
+[Match]
+OriginalName=can*
+
+[Link]
+TransmitQueueLength=128
+```
+
+Then enable and start `systemd-networkd`:
+```
+sudo systemctl enable --now systemd-networkd
+```
+
+The CAN interface can be checked with:
+```
+networkctl status can0
+ip -details link show can0
+```
+
+Note that some Linux distributions use `systemd-networkd` or
+`NetworkManager` instead of ifupdown. On those systems, the
+`/etc/network/interfaces.d/can0` file may be ignored.
 
 ## Terminating Resistors
 
@@ -106,15 +144,10 @@ Some important notes when using this mode:
 
 * Whenever the "bridge mcu" is reset, Linux will disable the
   corresponding `can0` interface. To ensure proper handling of
-  FIRMWARE_RESTART and RESTART commands, it is recommended to use
-  `allow-hotplug` in the `/etc/network/interfaces.d/can0` file. For
-  example:
-```
-allow-hotplug can0
-iface can0 can static
-    bitrate 1000000
-    up ip link set $IFACE txqueuelen 128
-```
+  FIRMWARE_RESTART and RESTART commands, make sure the host operating
+  system is configured to automatically bring the CAN interface back
+  up after a hotplug event. See the [Host Hardware](#host-hardware)
+  section above for examples using ifupdown or `systemd-networkd`.
 
 * The "bridge mcu" is not actually on the CAN bus. Messages to and
   from the bridge mcu will not be seen by other adapters that may be
