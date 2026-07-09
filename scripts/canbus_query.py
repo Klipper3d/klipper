@@ -4,7 +4,7 @@
 # Copyright (C) 2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import json, optparse, select, socket, struct, sys, time, zlib
+import json, optparse, os, select, socket, struct, sys, time, zlib
 
 CANBUS_ID_ADMIN = 0x3f0
 CMD_QUERY_UNASSIGNED = 0x00
@@ -93,6 +93,16 @@ def format_mcu_name(mcu):
     if mcu.endswith("XX"):
         mcu = mcu[:-2]
     return mcu
+
+def get_canbus_iface_mcu(canbus_iface):
+    devpath = os.path.realpath("/sys/class/net/%s/device" % (canbus_iface,))
+    for path in (devpath, os.path.dirname(devpath)):
+        try:
+            with open(os.path.join(path, "product"), "r") as f:
+                return format_mcu_name(f.read().strip())
+        except OSError:
+            pass
+    return None
 
 class SocketCan:
     def __init__(self, canbus_iface, can_filter=None):
@@ -298,13 +308,10 @@ def get_firmware_info(canbus_iface, uuid, canbus_nodeid, connect_timeout):
         processor = format_mcu_name(conn.msgparser.config.get("MCU",
                                                               "Unknown"))
         firmware = conn.msgparser.version or "Unknown"
-        return {"processor": processor, "firmware": firmware}
-    finally:
-        try:
-            conn.reset()
-        except Exception:
-            pass
+        return {"processor": processor, "firmware": firmware}, conn
+    except Exception:
         conn.close()
+        raise
 
 def query_unassigned(canbus_iface, canbus_nodeid, connect_timeout):
     bus = SocketCan(canbus_iface, CANBUS_ID_ADMIN + 1)
@@ -342,24 +349,39 @@ def query_unassigned(canbus_iface, canbus_nodeid, connect_timeout):
     finally:
         bus.close()
 
-    for uuid, app_id, app_name in found_devices:
-        if app_id != CMD_SET_KLIPPER_NODEID:
-            output_line("Found canbus_uuid=%012x, Application: %s"
-                        % (uuid, app_name))
-            continue
-        try:
-            info = get_firmware_info(canbus_iface, uuid, canbus_nodeid,
-                                     connect_timeout)
-            output_line("Found canbus_uuid=%012x, Application: %s,"
-                        " Processor: %s,"
-                        " Firmware: %s"
-                        % (uuid, app_name, info["processor"],
-                           info["firmware"]))
-        except error as e:
-            output_line("Found canbus_uuid=%012x, Application: %s"
-                        % (uuid, app_name))
-            output_line("Unable to query firmware info: %s" % (str(e),))
-    output_line("Total %d uuids found" % (len(found_ids,)))
+    reset_conns = []
+    iface_mcu = get_canbus_iface_mcu(canbus_iface)
+    try:
+        for uuid, app_id, app_name in found_devices:
+            if app_id != CMD_SET_KLIPPER_NODEID:
+                output_line("Found canbus_uuid=%012x, Application: %s"
+                            % (uuid, app_name))
+                continue
+            try:
+                info, conn = get_firmware_info(canbus_iface, uuid,
+                                               canbus_nodeid,
+                                               connect_timeout)
+                processor = info["processor"]
+                reset_conns.append((processor == iface_mcu, conn))
+                output_line("Found canbus_uuid=%012x, Application: %s,"
+                            " Processor: %s,"
+                            " Firmware: %s"
+                            % (uuid, app_name, processor,
+                               info["firmware"]))
+            except error as e:
+                output_line("Found canbus_uuid=%012x, Application: %s"
+                            % (uuid, app_name))
+                output_line("Unable to query firmware info: %s" % (str(e),))
+        output_line("Total %d uuids found" % (len(found_ids,)))
+    finally:
+        reset_conns.sort(key=lambda item: item[0])
+        for _is_iface_mcu, conn in reset_conns:
+            try:
+                conn.reset()
+            except Exception:
+                pass
+        for _is_iface_mcu, conn in reset_conns:
+            conn.close()
 
 def main():
     usage = "%prog [options] <can interface>"
