@@ -243,7 +243,8 @@ class ResonanceTestExecutor:
             last_v = v
             last_freq = freq
         if last_v:
-            d_decel = -.5 * last_v2 / old_max_accel
+            # Decelerate to a stop, continuing in the direction of motion
+            d_decel = .5 * last_v * abs(last_v) / old_max_accel
             decel_X, decel_Y, decel_Z = axis.get_point(d_decel)
             toolhead.set_max_velocities(None, old_max_accel, None, None)
             toolhead.move([X + decel_X, Y + decel_Y, Z + decel_Z] + tpos[3:],
