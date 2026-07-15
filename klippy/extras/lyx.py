@@ -26,6 +26,8 @@ class FieldHelper:
         self.field_to_register = { f: r for r, fields in self.all_fields.items()
                                    for f in fields }
 
+        print("DEBUG field_to_register keys:", list(self.field_to_register.keys()))
+
     def lookup_register(self, field_name, default=None):
         return self.field_to_register.get(field_name, default)
 
@@ -55,15 +57,17 @@ class FieldHelper:
         return new_value & 0xFFFF
 
     def set_config_field(self, config, field_name, default):
-        config_name = "driver_" + field_name.upper()
+        # 统一小写，和 Klipper 配置系统内部归一化规则保持一致
+        config_name = "driver_" + field_name
         reg_name = self.field_to_register[field_name]
         mask = self.all_fields[reg_name][field_name]
         maxval = mask >> ffs(mask)
+
         if maxval == 1:
             val = config.getboolean(config_name, default)
         elif field_name in self.signed_fields:
             val = config.getint(config_name, default,
-                                minval=-(maxval//2 + 1), maxval=maxval//2)
+                                minval=-(maxval // 2 + 1), maxval=maxval // 2)
         else:
             val = config.getint(config_name, default, minval=0, maxval=maxval)
         return self.set_field(field_name, val)
@@ -88,33 +92,42 @@ class LYXCurrentHelper:
         self.printer = config.get_printer()
         self.mcu_lyx = mcu_lyx
         self.fields = mcu_lyx.get_fields()
-        # Sense resistor value (mOhm), default 50mOhm per spec example
-        self.sense_resistor = config.getfloat('sense_resistor', 0.050,
-                                              above=0.)
-        # Max current formula from spec:
-        # I = reg_val / 2048 * 25mOhm / R_sense * 6.4A
-        self._current_scale = (25.0 / self.sense_resistor) * 6.4 / 2048.0
-        self.max_current = 1900 * self._current_scale  # reg max 1900
+
+        # 显式读取驱动级配置（必须显式读，否则Klipper报未使用错误）
+        self.sense_resistor = config.getfloat('sense_resistor', 0.050, above=0.)
+        run_current = config.getfloat('run_current', 1.4, above=0.)
+        hold_current = config.getfloat('hold_current', None, above=0.)
+        if hold_current is None:
+            hold_current = run_current * 0.5
+
+        # 电流换算公式（规格书6.2节）：I = reg / 2048 * 0.025Ω / R_sense * 6.4A
+        self._current_scale = (0.025 / self.sense_resistor) * 6.4 / 2048.0
+        self.max_current = 1900 * self._current_scale
+
+        # 将配置的电流值写入寄存器字段
+        self.set_current(run_current, hold_current, None)
 
     def get_current(self):
-        run_reg = self.fields.get_field("RUN_CURRENT")
+        run_reg = self.fields.get_field("run_current")
         run_current = run_reg * self._current_scale
-        half_ratio = self.fields.get_field("HALF_CUR_RATIO") / 128.0
+        half_ratio = self.fields.get_field("half_cur_ratio") / 128.0
         hold_current = run_current * half_ratio
         return run_current, hold_current, hold_current, self.max_current
 
     def set_current(self, run_current, hold_current, print_time):
         run_reg = int(run_current / self._current_scale + 0.5)
         run_reg = max(50, min(1900, run_reg))
-        self.fields.set_field("RUN_CURRENT", run_reg)
-        # Calculate hold ratio
+        self.fields.set_field("run_current", run_reg)
+
         half_ratio = int(hold_current / run_current * 128.0 + 0.5)
         half_ratio = max(0, min(128, half_ratio))
-        self.fields.set_field("HALF_CUR_RATIO", half_ratio)
-        reg_name = self.fields.lookup_register("RUN_CURRENT")
-        self.mcu_lyx.set_register(reg_name,
-                                  self.fields.registers[reg_name],
-                                  print_time)
+        self.fields.set_field("half_cur_ratio", half_ratio)
+
+        if print_time is not None:
+            reg_name = self.fields.lookup_register("run_current")
+            self.mcu_lyx.set_register(reg_name,
+                                      self.fields.registers[reg_name],
+                                      print_time)
 
 ######################################################################
 # G-Code command helpers
