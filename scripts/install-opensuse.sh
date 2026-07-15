@@ -19,7 +19,7 @@ install_packages()
     # AVR chip installation and building
     PKGLIST="${PKGLIST} avrdude cross-avr-gcc15-bootstrap cross-avr-binutils avr-libc"
     # ARM chip installation and building
-    PKGLIST="${PKGLIST} cross-arm-none-gcc15-bootstrap cross-arm-binutils cross-arm-linux-glibc-devel stm32flash"
+    PKGLIST="${PKGLIST} cross-arm-none-gcc15-bootstrap cross-arm-binutils cross-arm-linux-glibc-devel cross-arm-none-newlib-devel stm32flash"
 
     # Install desired packages
     report_status "Installing packages..."
