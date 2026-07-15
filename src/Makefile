@@ -11,6 +11,7 @@ src-$(CONFIG_HAVE_GPIO_SDIO) += sdiocmds.c
 
 src-$(CONFIG_WANT_BUTTONS) += buttons.c
 src-$(CONFIG_WANT_TMCUART) += tmcuart.c
+src-$(CONFIG_WANT_MODBUSUART) += modbus_uart.c
 src-$(CONFIG_WANT_NEOPIXEL) += neopixel.c
 src-$(CONFIG_WANT_PULSE_COUNTER) += pulse_counter.c
 src-$(CONFIG_WANT_ST7920) += lcd_st7920.c
