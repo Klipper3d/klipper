@@ -205,7 +205,7 @@ class MCU_LYX_uart:
             # Delay for chip register refresh cycle
             time.sleep(0.005)
             # Limited readback retry to verify write success
-            for retry in range(200):
+            for retry in range(500):
                 print(retry)
                 readback = self.mcu_uart.reg_read(self.addr, reg)
                 if readback['data'] == val:
