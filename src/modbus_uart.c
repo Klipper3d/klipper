@@ -76,7 +76,7 @@ modbus_uart_reset_line(struct modbus_uart_s *m)
 static uint_fast8_t
 modbus_uart_finalize(struct modbus_uart_s *m)
 {
-    uint8_t actual_bytes = m->rx_bit_count / 8;
+    __attribute__((unused)) uint8_t actual_bytes = m->rx_bit_count / 8;
     DBG_PRINT("finalize: expected=%d bytes, actual=%d bytes", m->rx_total, actual_bytes);
 
 #if MODBUS_UART_DEBUG

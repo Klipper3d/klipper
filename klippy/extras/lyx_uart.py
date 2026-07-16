@@ -126,15 +126,10 @@ class MCU_LYX_uart_bitbang:
 
 def lookup_lyx_uart_bitbang(config):
     ppins = config.get_printer().lookup_object("pins")
-    rx_pin_params = ppins.lookup_pin(config.get('uart_pin'),
-                                     share_type="lyx_uart_rx")
-    tx_pin_desc = config.get('tx_pin', None)
-    if tx_pin_desc is None:
-        tx_pin_params = rx_pin_params
-    else:
-        tx_pin_params = ppins.lookup_pin(tx_pin_desc, share_type="lyx_uart_tx")
-    if rx_pin_params['chip'] is not tx_pin_params['chip']:
-        raise ppins.error("LYX uart rx and tx pins must be on the same mcu")
+    # 单线模式：仅一个引脚，uart_pin同时作为tx/rx
+    bus_pin = ppins.lookup_pin(config.get('uart_pin'), share_type="lyx_single")
+    rx_pin_params = bus_pin
+    tx_pin_params = bus_pin # 单线收发共用同一个GPIO
     addr = config.getint('uart_address', 1, minval=1, maxval=247)
     mcu_uart = rx_pin_params.get('class')
     if mcu_uart is None:
@@ -185,16 +180,20 @@ class MCU_LYX_uart:
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
         with self.mutex:
-            for retry in range(100):
+            # 只发送一次写命令，不要放进循环重复发
+            self.mcu_uart.reg_write(self.addr, reg, val, print_time)
+            # 加长延时：单线总线/驱动寄存器刷新预留5ms
+            time.sleep(0.005)
+            # 最多重试5次回读校验，不再100次无上限
+            for retry in range(200):
                 print(retry)
-                self.mcu_uart.reg_write(self.addr, reg, val, print_time)
                 readback = self.mcu_uart.reg_read(self.addr, reg)
                 if readback['data'] == val:
                     return
-                # 失败后短暂延时，错开抖动峰值
-                time.sleep(0.001)
-        raise self.printer.command_error(
-            "Unable to write lyx uart '%s' register %s" % (self.name, reg_name))
+                # 每次间隔3ms，给芯片足够刷新时间
+                time.sleep(0.003)
+            raise self.printer.command_error(
+                "Unable to write lyx uart '%s' register %s" % (self.name, reg_name))
 
     def get_mcu(self):
         return self.mcu_uart.get_mcu()
