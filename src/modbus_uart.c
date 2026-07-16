@@ -1,8 +1,7 @@
 // Standard 8N1 UART bitbang for Modbus RTU
-// 修复：每字节采样后自动跳过停止位+起始位，保证数据位采样点始终居中
+// 稳定基线版：单次同步 + 逐字节对齐，适配Linux用户态软串口
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include <stdio.h>
 #include <string.h>
 #include "board/gpio.h"
 #include "board/irq.h"
@@ -10,6 +9,16 @@
 #include "basecmd.h"
 #include "command.h"
 #include "sched.h"
+
+// 调试开关：需要看日志时改成1，正常使用改成0，printf会加剧抖动
+#define MODBUS_UART_DEBUG 0
+
+#if MODBUS_UART_DEBUG
+#include <stdio.h>
+#define DBG_PRINT(fmt, ...) printf("[DBG] " fmt "\n", ##__VA_ARGS__)
+#else
+#define DBG_PRINT(fmt, ...) do {} while(0)
+#endif
 
 /****************************************************************
  * 数据结构定义
@@ -34,8 +43,8 @@ struct modbus_uart_s {
     uint8_t tx_bit_idx;
     uint32_t bit_time;
     uint8_t tx_total;
-    uint8_t rx_total;        // 期望接收的总字节数
-    uint8_t rx_bit_count;    // 已采样的数据位总数（仅计数数据位，不含控制位）
+    uint8_t rx_total;
+    uint8_t rx_bit_count;    // 已采样的数据位总数（仅数据位）
     uint8_t data[16];
     uint16_t sync_counter;
 };
@@ -67,16 +76,17 @@ modbus_uart_reset_line(struct modbus_uart_s *m)
 static uint_fast8_t
 modbus_uart_finalize(struct modbus_uart_s *m)
 {
-    // 调试日志：接收结果
-    printf("[DBG] finalize: rx_expected=%d bytes, rx_data_bits=%d\n",
-           m->rx_total, m->rx_bit_count);
     uint8_t actual_bytes = m->rx_bit_count / 8;
+    DBG_PRINT("finalize: expected=%d bytes, actual=%d bytes", m->rx_total, actual_bytes);
+
+#if MODBUS_UART_DEBUG
     if (actual_bytes > 0) {
-        printf("[DBG] rx data hex: ");
+        printf("[DBG] rx hex: ");
         for (int i = 0; i < actual_bytes; i++)
             printf("%02x ", m->data[i]);
         printf("\n");
     }
+#endif
 
     modbus_uart_reset_line(m);
     m->flags |= MU_REPORT;
@@ -85,12 +95,8 @@ modbus_uart_finalize(struct modbus_uart_s *m)
 }
 
 /****************************************************************
- * 接收逻辑：单次同步 + 每字节自动跳过控制位（核心修复点）
+ * 接收逻辑：单次同步 + 每字节跳2位（核心时序和成功版本完全一致）
  ****************************************************************/
-
-/**
- * @brief  同步状态：只检测一次整帧起始位
- */
 static uint_fast8_t
 modbus_uart_rx_sync_event(struct timer *timer)
 {
@@ -98,26 +104,28 @@ modbus_uart_rx_sync_event(struct timer *timer)
     uint8_t v = gpio_in_read(m->rx_pin);
 
     if (v) {
-        // 先检测到高电平，标记同步就绪
+        // 高电平：标记就绪，等待下降沿
         m->flags |= MU_RX_SYNC;
     } else if (m->flags & MU_RX_SYNC) {
-        // 检测到高→低下降沿：第一个字节的起始位
-        printf("[DBG] rx sync: start bit detected, sync_counter=%d\n", m->sync_counter);
+        // 检测到高→低跳变：确认起始位
+        DBG_PRINT("sync: start bit detected, counter=%d", m->sync_counter);
 
         // 初始化接收状态
         m->rx_bit_count = 0;
         memset(m->data, 0, sizeof(m->data));
 
-        // 切换到连续采样状态
+        // 切换到数据采样状态
         m->timer.func = modbus_uart_rx_event;
-        // 偏移1.5位时间：跳过起始位，对准第一个数据位的中心
+        // 偏移1.5位时间：跳过起始位，对准第一个数据位中心
+        // 这是经过验证的正确相位，绝对不要随便改
         m->timer.waketime += m->bit_time + m->bit_time / 2;
         return SF_RESCHEDULE;
     }
 
     m->sync_counter++;
-    if (m->sync_counter >= 200) {
-        printf("[DBG] rx sync timeout after %d counts\n", m->sync_counter);
+    // 超时从200位加到300位，约7.8ms@38400，留足应答时间
+    if (m->sync_counter >= 300) {
+        DBG_PRINT("sync timeout after %d bits", m->sync_counter);
         return modbus_uart_finalize(m);
     }
 
@@ -125,10 +133,6 @@ modbus_uart_rx_sync_event(struct timer *timer)
     return SF_RESCHEDULE;
 }
 
-/**
- * @brief  连续采样状态：每采完1字节自动跳过停止位+下一起始位
- * @note   保证每个数据位的采样点都精准落在电平中心，消除逐字节累积偏移
- */
 static uint_fast8_t
 modbus_uart_rx_event(struct timer *timer)
 {
@@ -136,7 +140,7 @@ modbus_uart_rx_event(struct timer *timer)
     uint8_t v = gpio_in_read(m->rx_pin);
     uint8_t bit_pos = m->rx_bit_count;
 
-    // 计算当前位属于第几个字节、第几位，写入对应比特（LSB 在前）
+    // 写入当前位（LSB 在前）
     uint8_t byte_idx = bit_pos / 8;
     uint8_t bit_in_byte = bit_pos % 8;
     if (v && byte_idx < sizeof(m->data))
@@ -144,20 +148,17 @@ modbus_uart_rx_event(struct timer *timer)
 
     m->rx_bit_count++;
 
-    // 收满所有数据位，结束接收
+    // 收满所有数据位，结束
     if (m->rx_bit_count >= m->rx_total * 8) {
-        printf("[DBG] rx all done: %d bits = %d bytes\n",
-               m->rx_bit_count, m->rx_total);
+        DBG_PRINT("rx all done: %d bits = %d bytes", m->rx_bit_count, m->rx_total);
         return modbus_uart_finalize(m);
     }
 
-    // ========== 核心修复：刚采完一个完整字节，跳过停止位和下一个起始位 ==========
+    // 每采完1字节，额外跳2位时间（停止位 + 下一字节起始位）
+    // 保证下一个采样点对准下一字节数据位中心
     if (m->rx_bit_count % 8 == 0) {
-        // 正常步进1位 + 额外跳过2位（停止位 + 下一字节起始位） = 总共步进3位时间
-        // 确保下一个采样点直接对准下一字节数据位0的中心
-        m->timer.waketime += m->bit_time * 3;
+        m->timer.waketime += m->bit_time * 3; // 本步1位 + 跳2位 = 共3位
     } else {
-        // 普通数据位，步进1位时间
         m->timer.waketime += m->bit_time;
     }
 
@@ -165,7 +166,7 @@ modbus_uart_rx_event(struct timer *timer)
 }
 
 /****************************************************************
- * 发送逻辑（保持不变，已验证正确）
+ * 发送逻辑（保持不变，仅微调收发延迟）
  ****************************************************************/
 static uint_fast8_t
 modbus_uart_tx_event(struct timer *timer)
@@ -178,7 +179,7 @@ modbus_uart_tx_event(struct timer *timer)
     if (bit_idx == 0) {
         bit_val = 0; // 起始位
     } else if (bit_idx <= 8) {
-        bit_val = (m->data[byte_idx] >> (bit_idx - 1)) & 0x01; // 数据位 LSB 在前
+        bit_val = (m->data[byte_idx] >> (bit_idx - 1)) & 0x01; // LSB在前
     } else {
         bit_val = 1; // 停止位
     }
@@ -193,8 +194,7 @@ modbus_uart_tx_event(struct timer *timer)
     if (bit_idx >= 10) {
         byte_idx++;
         if (byte_idx >= m->tx_total) {
-            printf("[DBG] tx all done: tx_total=%d, rx_total=%d\n",
-                   m->tx_total, m->rx_total);
+            DBG_PRINT("tx done: %d bytes", m->tx_total);
 
             if (m->rx_total == 0)
                 return modbus_uart_finalize(m);
@@ -205,8 +205,12 @@ modbus_uart_tx_event(struct timer *timer)
             m->sync_counter = 0;
             m->flags &= ~MU_RX_SYNC;
             m->timer.func = modbus_uart_rx_sync_event;
-            // 发送结束后延迟20位再开始接收，给芯片处理时间
-            m->timer.waketime += m->bit_time * 20;
+
+            // 收发延迟微调：双线模式12位，单线模式20位
+            // 既不早到错过应答，也不晚到漏检起始位
+            uint32_t rx_delay = (m->flags & MU_SINGLE_WIRE) ?
+                                m->bit_time * 20 : m->bit_time * 12;
+            m->timer.waketime += rx_delay;
             return SF_RESCHEDULE;
         }
         bit_idx = 0;
@@ -236,8 +240,8 @@ command_config_modbus_uart(uint32_t *args)
     m->flags = (MU_LINE_HIGH | (pull_up ? MU_PULLUP : 0)
                 | (rx_pin == tx_pin ? MU_SINGLE_WIRE : 0));
 
-    printf("[DBG] config: oid=%d rx=%u tx=%u pullup=%d bit_time=%u\n",
-           args[0], rx_pin, tx_pin, pull_up, m->bit_time);
+    DBG_PRINT("config: oid=%d rx=%u tx=%u pullup=%d bit_time=%u",
+              args[0], rx_pin, tx_pin, pull_up, m->bit_time);
 }
 DECL_COMMAND(command_config_modbus_uart,
              "config_modbus_uart oid=%c rx_pin=%u pull_up=%c"
@@ -248,7 +252,7 @@ command_modbus_uart_send(uint32_t *args)
 {
     struct modbus_uart_s *m = oid_lookup(args[0], command_config_modbus_uart);
     if (m->flags & MU_ACTIVE) {
-        printf("[DBG] send: busy, drop\n");
+        DBG_PRINT("send: busy drop");
         return;
     }
 
@@ -256,11 +260,7 @@ command_modbus_uart_send(uint32_t *args)
     uint8_t *write = command_decode_ptr(args[2]);
     uint8_t read_len = args[3];
 
-    printf("[DBG] send cmd: write_len=%d read_len=%d\n", write_len, read_len);
-    printf("[DBG] write hex: ");
-    for (int i = 0; i < write_len; i++)
-        printf("%02x ", write[i]);
-    printf("\n");
+    DBG_PRINT("send cmd: wr=%d rd=%d", write_len, read_len);
 
     if (write_len > sizeof(m->data) || read_len > sizeof(m->data))
         shutdown("modbus_uart data too large");
@@ -303,8 +303,6 @@ modbus_uart_task(void)
         irq_enable();
 
         uint8_t actual_bytes = m->rx_bit_count / 8;
-        printf("[DBG] report to host: oid=%d bytes=%d\n", oid, actual_bytes);
-
         sendf("modbus_uart_response oid=%c read=%*s",
               oid, actual_bytes, m->data);
     }

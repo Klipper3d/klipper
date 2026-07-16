@@ -42,22 +42,15 @@ Registers = {
     "OP_MODE":           0x21,
     "STALL_ANGLE":       0x22,
     "STALL_OUT_EN":      0x23,
-    "FOLLOW_ERR_ANGLE":  0x24,
-    "FOLLOW_ERR_EN":     0x25,
+    # "FOLLOW_ERR_ANGLE":  0x24,
+    # "FOLLOW_ERR_EN":     0x25,
     "MIN_SPEED":         0x26,
-    "BASE_CURRENT":      0x27,
-    "POS_LEAD_COEFF":    0x28,
-    "ENC_PULSES":        0x29,
-    "MAG_ENC_TYPE":      0x2A,
-    "POS_INTEG":         0x2B,
-    "SUPER_FILT":        0x2C,
-    "START_SPEED":       0x3A,
-    "MAX_SPEED":         0x3B,
-    "ACCEL":             0x3C,
-    "PULSE_CNT_H":       0x3D,
-    "PULSE_CNT_L":       0x3E,
-    "MOTION_MODE":       0x3F,
-    "MOTION_START":      0x40,
+    # "BASE_CURRENT":      0x27,
+    # "POS_LEAD_COEFF":    0x28,
+    # "ENC_PULSES":        0x29,
+    # "MAG_ENC_TYPE":      0x2A,
+    # "POS_INTEG":         0x2B,
+    # "SUPER_FILT":        0x2C,
     "NOISE_EN":          0x41,
 }
 
@@ -96,11 +89,12 @@ class LYX9231:
 
         self.fields = lyx.FieldHelper(Fields, SignedFields, FieldFormatters)
         self.mcu_lyx = lyx_uart.MCU_LYX_uart(config, Registers, self.fields)
+        self._set_defaults(config)
+
         self.current_helper = lyx.LYXCurrentHelper(config, self.mcu_lyx)
         self.cmd_helper = lyx.LYXCommandHelper(config, self.mcu_lyx, self.current_helper)
         self.cmd_helper.setup_register_dump(ReadRegisters)
 
-        self._set_defaults(config)
         self.printer.register_event_handler("klippy:connect", self._handle_connect)
 
         self.gcode = self.printer.lookup_object('gcode')
@@ -122,8 +116,6 @@ class LYX9231:
         s(config, "boost_level", 1)
         s(config, "stall_angle", 200)
         s(config, "stall_out_en", 0)
-        s(config, "follow_err_angle", 1024)
-        s(config, "follow_err_en", 0)
         s(config, "noise_en", 0)
 
     def _handle_connect(self):
