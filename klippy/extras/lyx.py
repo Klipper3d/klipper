@@ -43,10 +43,10 @@ class FieldHelper:
         """Write raw value to target register field"""
         reg_name = self.field_to_register[field_name]
         reg_val = self.registers.get(reg_name, 0)
-        mask = self.all_fields[reg_name]
+        mask = self.all_fields[reg_name][field_name]
         value = int(value) & 0xFFFF
         new_val = (reg_val & ~mask) | ((value << ffs(mask)) & mask)
-        self.registers[reg_name] = new_val
+        self.registers[reg_name] = new_val & 0xFFFF
         return new_val & 0xFFFF
 
     def set_config_field(self, config, field_name, default):
@@ -83,6 +83,7 @@ class LYXCurrentHelper:
     def __init__(self, config, mcu_lyx):
         self.printer = config.get_printer()
         self.fields = mcu_lyx.get_fields()
+
         self.sense_resistor = config.getfloat('sense_resistor', 0.050, above=0.)
         run_current = config.getfloat('run_current', 1.4, above=0.)
         hold_current = config.getfloat('hold_current', None, above=0.)
@@ -91,6 +92,7 @@ class LYXCurrentHelper:
         # Scale factor to convert register value to physical current (Amps)
         self._current_scale = (0.025 / self.sense_resistor) * 6.4 / 2048.0
         self.max_current = 1900 * self._current_scale
+
         self.set_current(run_current, hold_current, None)
 
     def get_current(self):
@@ -137,7 +139,7 @@ class LYXCommandHelper:
         value = gcmd.get_int('VALUE')
         self.fields.set_field(field_name, value)
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
-        self.mcu_lyx.set_register(reg_name, value)
+        self.mcu_lyx.set_register(reg_name, value, print_time)
 
     def cmd_SET_LYX_CURRENT(self, gcmd):
         """G-code: Adjust motor run/hold current in Amps"""
@@ -150,7 +152,7 @@ class LYXCommandHelper:
             return
         run = run if run is not None else prev_run
         hold = hold if hold is not None else prev_hold
-        print_time = self.printer.lookup_object('toolhead')
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         ch.set_current(run, hold, print_time)
         gcmd.respond_info(f"Run: {run:.2f}A  Hold: {hold:.2f}A")
 

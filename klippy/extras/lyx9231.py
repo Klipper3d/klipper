@@ -80,13 +80,17 @@ class LYX9231:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
+
         self.fields = lyx.FieldHelper(Fields, SignedFields, FieldFormatters)
         self.mcu_lyx = lyx_uart.MCU_LYX_uart(config, Registers, self.fields)
         self._set_defaults(config)
+
         self.current_helper = lyx.LYXCurrentHelper(config, self.mcu_lyx)
         self.cmd_helper = lyx.LYXCommandHelper(config, self.mcu_lyx, self.current_helper)
         self.cmd_helper.setup_register_dump(ReadRegisters)
+
         self.printer.register_event_handler("klippy:connect", self._handle_connect)
+
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command('LYX_READ_REG', self.cmd_LYX_READ_REG)
         self.gcode.register_command('LYX_WRITE_REG', self.cmd_LYX_WRITE_REG)

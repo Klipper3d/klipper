@@ -95,16 +95,21 @@ class MCU_LYX_uart_bitbang:
         crc = self._crc16(msg)
         msg.append(crc & 0xFF)
         msg.append((crc >> 8) & 0xFF)
+
         import logging
         logging.info(f"[LYX HOST] send: len={len(msg)} hex={msg.hex()}")
+
         params = self.send_cmd.send([self.oid, bytes(msg), 7])
+
         logging.info(f"[LYX HOST] recv params: {params}")
         raw = params['read']
         logging.info(f"[LYX HOST] raw: len={len(raw)} hex={raw.hex()}")
+
         if len(raw) < 7 or raw[1] & 0x80:
             return {'data': None, '#receive_time': params.get('#receive_time', 0)}
         if self._crc16(raw[:-2]) != (raw[-1] << 8 | raw[-2]):
             return {'data': None, '#receive_time': params.get('#receive_time', 0)}
+
         value = (raw[3] << 8) | raw[4]
         return {'data': value, '#receive_time': params.get('#receive_time', 0)}
 
@@ -113,6 +118,7 @@ class MCU_LYX_uart_bitbang:
         minclock = 0
         if print_time is not None:
             minclock = self.mcu.print_time_to_clock(print_time)
+
         msg = bytearray([
             slave_addr, 0x06,
             (reg_addr >> 8) & 0xFF, reg_addr & 0xFF,
@@ -121,6 +127,7 @@ class MCU_LYX_uart_bitbang:
         crc = self._crc16(msg)
         msg.append(crc & 0xFF)
         msg.append((crc >> 8) & 0xFF)
+
         self.send_cmd.send([self.oid, bytes(msg), 8], minclock=minclock)
 
     def get_mcu(self):
