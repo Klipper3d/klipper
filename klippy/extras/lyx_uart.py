@@ -140,7 +140,7 @@ def lookup_lyx_uart_bitbang(config):
     if mcu_uart is None:
         mcu_uart = MCU_LYX_uart_bitbang(rx_pin_params, tx_pin_params)
         rx_pin_params['class'] = mcu_uart
-    mcu_uart.register_instance(rx_pin_params, tx_pin_params)
+    mcu_uart.register_instance(rx_pin_params, tx_pin_params, addr)
     return addr, mcu_uart
 
 
@@ -194,7 +194,7 @@ class MCU_LYX_uart:
             return
         with self.mutex:
             # Transmit write frame only once per register update
-            self.mcu_uart.reg_write(self.addr, val, print_time)
+            self.mcu_uart.reg_write(self.addr, reg, val, print_time)
             # Delay for chip register refresh cycle
             time.sleep(0.005)
             # Limited readback retry to verify write success
