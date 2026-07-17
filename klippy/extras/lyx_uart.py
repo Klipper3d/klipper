@@ -211,8 +211,7 @@ class MCU_LYX_uart:
                 if readback['data'] == val:
                     return
                 time.sleep(0.003)
-            raise self.printer.command_error(
-                "Unable to write lyx uart '%s' register %s" % (self.name, reg_name))
+            self.printer.invoke_shutdown("Unable to write lyx uart '%s' register %s due to transmission delay, try to reboot Klipper Service to retry" % (self.name, reg_name))
 
     def get_mcu(self):
         """Return bound MCU reference"""
