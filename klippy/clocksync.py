@@ -15,18 +15,21 @@ class ClockSync:
         self.serial = None
         self.get_clock_timer = reactor.register_timer(self._get_clock_event)
         self.get_clock_cmd = self.cmd_queue = None
-        self.queries_pending = 0
         self.mcu_freq = 1.
+        # Tracking of background requests (updated in bg thread)
+        self.queries_pending = 0
+        # 32bit to 64bit clock conversions (updated in bg thread)
         self.last_clock = 0
-        self.clock_est = (0., 0., 0.)
-        # Minimum round-trip-time tracking
-        self.min_half_rtt = 999999999.9
-        self.min_rtt_time = 0.
-        # Linear regression of mcu clock and system sent_time
+        # Linear regression of mcu clock and system sent_time (bg thread)
         self.time_avg = self.time_variance = 0.
         self.clock_avg = self.clock_covariance = 0.
         self.prediction_variance = 0.
         self.last_prediction_time = 0.
+        # Minimum round-trip-time tracking (bg thread)
+        self.min_half_rtt = 999999999.9
+        self.min_rtt_time = 0.
+        # System clock to mcu clock estimation (updated in bg thread)
+        self.clock_est = (0., 0., 0.)
     def connect(self, serial):
         self.serial = serial
         self.mcu_freq = serial.msgparser.get_constant_float('CLOCK_FREQ')
@@ -62,39 +65,23 @@ class ClockSync:
         # Use an unusual time for the next event so clock messages
         # don't resonate with other periodic events.
         return eventtime + .9839
-    def _handle_clock(self, params):
-        self.queries_pending = 0
-        # Extend clock to 64bit
-        last_clock = self.last_clock
-        clock_delta = (params['clock'] - last_clock) & 0xffffffff
-        self.last_clock = clock = last_clock + clock_delta
-        # Check if this is the best round-trip-time seen so far
-        sent_time = params['#sent_time']
-        if not sent_time:
-            return
-        receive_time = params['#receive_time']
-        half_rtt = .5 * (receive_time - sent_time)
-        aged_rtt = (sent_time - self.min_rtt_time) * RTT_AGE
-        if half_rtt < self.min_half_rtt + aged_rtt:
-            self.min_half_rtt = half_rtt
-            self.min_rtt_time = sent_time
-            logging.debug("new minimum rtt %.3f: hrtt=%.6f freq=%d",
-                          sent_time, half_rtt, self.clock_est[2])
-        # Filter out samples that are extreme outliers
-        exp_clock = ((sent_time - self.time_avg) * self.clock_est[2]
-                     + self.clock_avg)
+    def _update_regression(self, sent_time, clock):
+        # Calculate expected clock using existing time/clock regression
+        old_freq = self.clock_est[2] # self.clock_covariance/self.time_variance
+        exp_clock = (sent_time - self.time_avg) * old_freq + self.clock_avg
+        # Track prediction accuracy and filter out extreme outliers
         clock_diff2 = (clock - exp_clock)**2
         if (clock_diff2 > 25. * self.prediction_variance
             and clock_diff2 > (.000500 * self.mcu_freq)**2):
             if clock > exp_clock and sent_time < self.last_prediction_time+10.:
                 logging.debug("Ignoring clock sample %.3f:"
                               " freq=%d diff=%d stddev=%.3f",
-                              sent_time, self.clock_est[2], clock - exp_clock,
+                              sent_time, old_freq, clock - exp_clock,
                               math.sqrt(self.prediction_variance))
-                return
+                return False
             logging.info("Resetting prediction variance %.3f:"
                          " freq=%d diff=%d stddev=%.3f",
-                         sent_time, self.clock_est[2], clock - exp_clock,
+                         sent_time, old_freq, clock - exp_clock,
                          math.sqrt(self.prediction_variance))
             self.prediction_variance = (.001 * self.mcu_freq)**2
         else:
@@ -110,15 +97,42 @@ class ClockSync:
         self.clock_avg += DECAY * diff_clock
         self.clock_covariance = (1. - DECAY) * (
             self.clock_covariance + diff_sent_time * diff_clock * DECAY)
-        # Update prediction from linear regression
+        return True
+    def _update_best_rtt(self, sent_time, receive_time):
+        # Check if this is the best round-trip-time seen so far
+        half_rtt = .5 * (receive_time - sent_time)
+        aged_rtt = (sent_time - self.min_rtt_time) * RTT_AGE
+        if half_rtt < self.min_half_rtt + aged_rtt:
+            self.min_half_rtt = half_rtt
+            self.min_rtt_time = sent_time
+            logging.debug("new minimum rtt %.3f: hrtt=%.6f freq=%d",
+                          sent_time, half_rtt, self.clock_est[2])
+    def _handle_clock(self, params):
+        self.queries_pending = 0
+        # Extend clock to 64bit
+        last_clock = self.last_clock
+        clock_delta = (params['clock'] - last_clock) & 0xffffffff
+        self.last_clock = clock = last_clock + clock_delta
+        # Determine message timing
+        sent_time = params['#sent_time']
+        receive_time = params['#receive_time']
+        if not sent_time:
+            # sent_time unknown because of 'get_clock' retransmit
+            return
+        # Update sent_time to clock regression
+        ret = self._update_regression(sent_time, clock)
+        if not ret:
+            # Message is an "outlier" and should be discarded
+            return
+        # Update serialqueue message release timing
         new_freq = self.clock_covariance / self.time_variance
         pred_stddev = math.sqrt(self.prediction_variance)
         self.serial.set_clock_est(new_freq, self.time_avg + TRANSMIT_EXTRA,
                                   int(self.clock_avg - 3. * pred_stddev))
+        # Update time translation (mainly for multi-mcu synchronization)
+        self._update_best_rtt(sent_time, receive_time)
         self.clock_est = (self.time_avg + self.min_half_rtt,
                           self.clock_avg, new_freq)
-        #logging.debug("regr %.3f: freq=%.3f d=%d(%.3f)",
-        #              sent_time, new_freq, clock - exp_clock, pred_stddev)
     # clock frequency conversions
     def print_time_to_clock(self, print_time):
         return int(print_time * self.mcu_freq)
