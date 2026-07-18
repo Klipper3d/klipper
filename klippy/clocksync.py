@@ -80,39 +80,41 @@ class ClockSync:
         # Use an unusual time for the next event so clock messages
         # don't resonate with other periodic events.
         return eventtime + .9839
-    def _update_regression(self, sent_time, clock):
+    def _update_regression(self, sent_time, rtt, clock):
         # Calculate expected clock using existing time/clock regression
         old_freq = self.clock_est[2] # self.clock_covariance/self.time_variance
-        exp_clock = (sent_time - self.time_avg) * old_freq + self.clock_avg
+        remote_time = sent_time + rtt / 2.0
+        exp_clock = (remote_time - self.time_avg) * old_freq + self.clock_avg
         # Track prediction accuracy and filter out extreme outliers
         clock_diff2 = (clock - exp_clock)**2
         if (clock_diff2 > 25. * self.prediction_variance
             and clock_diff2 > (.000500 * self.mcu_freq)**2):
-            if clock > exp_clock and sent_time < self.last_prediction_time+10.:
+            if (clock > exp_clock
+                and remote_time < self.last_prediction_time+10.):
                 logging.debug("Ignoring clock sample %.3f:"
                               " freq=%d diff=%d stddev=%.3f",
-                              sent_time, old_freq, clock - exp_clock,
+                              remote_time, old_freq, clock - exp_clock,
                               math.sqrt(self.prediction_variance))
-                return False
+                return (clock - exp_clock) / old_freq, False
             logging.info("Resetting prediction variance %.3f:"
                          " freq=%d diff=%d stddev=%.3f",
-                         sent_time, old_freq, clock - exp_clock,
+                         remote_time, old_freq, clock - exp_clock,
                          math.sqrt(self.prediction_variance))
             self.prediction_variance = (.001 * self.mcu_freq)**2
         else:
-            self.last_prediction_time = sent_time
+            self.last_prediction_time = remote_time
             self.prediction_variance = (
                 (1. - DECAY) * (self.prediction_variance + clock_diff2 * DECAY))
-        # Add clock and sent_time to linear regression
-        diff_sent_time = sent_time - self.time_avg
-        self.time_avg += DECAY * diff_sent_time
+        # Add remote clock and time to linear regression
+        diff_remote_time = remote_time - self.time_avg
+        self.time_avg += DECAY * diff_remote_time
         self.time_variance = (1. - DECAY) * (
-            self.time_variance + diff_sent_time**2 * DECAY)
+            self.time_variance + diff_remote_time**2 * DECAY)
         diff_clock = clock - self.clock_avg
         self.clock_avg += DECAY * diff_clock
         self.clock_covariance = (1. - DECAY) * (
-            self.clock_covariance + diff_sent_time * diff_clock * DECAY)
-        return True
+            self.clock_covariance + diff_remote_time * diff_clock * DECAY)
+        return (clock - exp_clock) / old_freq, True
     def _update_best_rtt(self, sent_time, receive_time):
         # Check if this is the best round-trip-time seen so far
         half_rtt = .5 * (receive_time - sent_time)
@@ -140,7 +142,7 @@ class ClockSync:
         if rtt > threshold and sent_time - self.last_prediction_time < 10.:
             return
         # Update sent_time to clock regression
-        ret = self._update_regression(sent_time, clock)
+        offset, ret = self._update_regression(sent_time, rtt, clock)
         if not ret:
             # Message is an "outlier" and should be discarded
             return
@@ -151,7 +153,7 @@ class ClockSync:
                                   int(self.clock_avg - 3. * pred_stddev))
         # Update time translation (mainly for multi-mcu synchronization)
         self._update_best_rtt(sent_time, receive_time)
-        self.clock_est = (self.time_avg + self.min_half_rtt,
+        self.clock_est = (self.time_avg,
                           self.clock_avg, new_freq)
     # clock frequency conversions
     def print_time_to_clock(self, print_time):
