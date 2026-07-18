@@ -18,6 +18,72 @@ class PercentileFilter:
         threshold = heapq.nlargest(threshold_pos, self._samples)[-1]
         return threshold
 
+class BestOfNFilter:
+    def __init__(self, size):
+        self._size = size
+        self._samples = [(.1, .1)] * size
+        self._next_free = 0
+        self._last_min_place = 0
+        self._last_max_place = 0
+    def insert(self, half_rtt, offset):
+        sample = (half_rtt, offset)
+        self._samples[self._next_free % self._size] = sample
+        if self._samples[self._last_min_place % self._size][0] > sample[0]:
+            self._last_min_place = self._next_free
+        if self._samples[self._last_max_place % self._size][0] < sample[0]:
+            self._last_max_place = self._next_free
+        self._next_free += 1
+        if self._next_free - self._last_min_place > self._size:
+            next_min = self._last_min_place + 1
+            for i in range(next_min, self._next_free):
+                ii = i % self._size
+                nb = next_min % self._size
+                if self._samples[ii][0] < self._samples[nb][0]:
+                    next_min = i
+            self._last_min_place = next_min
+        if self._next_free - self._last_max_place > self._size:
+            next_max = self._last_max_place + 1
+            for i in range(next_max, self._next_free):
+                ii = i % self._size
+                nb = next_max % self._size
+                if self._samples[ii][0] > self._samples[nb][0]:
+                    next_max = i
+            self._last_max_place = next_max
+    def get_min(self):
+        return self._samples[self._last_min_place % self._size]
+    def get_max(self):
+        return self._samples[self._last_max_place % self._size]
+
+class RTTRatio:
+    def __init__(self, decay):
+        self.decay = decay
+        self.bon_filter = BestOfNFilter(10)
+        self.min_x = 0.0001
+        self.min_y = 0.0
+        self.max_x = 0.0005
+        self.max_y = 0.0
+        self.last_min = ()
+        self.last_max = ()
+        self._ratio = 1.0
+    def insert(self, half_rtt, offset):
+        self.bon_filter.insert(half_rtt, offset)
+        min_sample = self.bon_filter.get_min()
+        if min_sample != self.last_min:
+            self.last_min = min_sample
+            half_rtt, offset = min_sample
+            self.min_x = (1 - self.decay) * self.min_x + self.decay * half_rtt
+            self.min_y = (1 - self.decay) * self.min_y + self.decay * offset
+        max_sample = self.bon_filter.get_max()
+        if max_sample != self.last_max:
+            self.last_max = max_sample
+            half_rtt, offset = max_sample
+            self.max_x = (1 - self.decay) * self.max_x + self.decay * half_rtt
+            self.max_y = (1 - self.decay) * self.max_y + self.decay * offset
+    def get_ratio(self):
+        # Vector (y - y0) / (x - x0)
+        divisor = (self.max_x - self.min_x)
+        return (self.max_y - self.min_y) / divisor + 1
+
 RTT_AGE = .000010 / (60. * 60.)
 DECAY = 1. / 30.
 TRANSMIT_EXTRA = .001
@@ -45,6 +111,8 @@ class ClockSync:
         self.clock_est = (0., 0., 0.)
         # Input filtering
         self.rtt_filter = PercentileFilter(30)
+        # Center the RTT compensation
+        self.rtt_tracker = RTTRatio(1/180)
     def connect(self, serial):
         self.serial = serial
         self.mcu_freq = serial.msgparser.get_constant_float('CLOCK_FREQ')
@@ -83,7 +151,7 @@ class ClockSync:
     def _update_regression(self, sent_time, rtt, clock):
         # Calculate expected clock using existing time/clock regression
         old_freq = self.clock_est[2] # self.clock_covariance/self.time_variance
-        remote_time = sent_time + rtt / 2.0
+        remote_time = sent_time + self.rtt_tracker.get_ratio() * rtt / 2.0
         exp_clock = (remote_time - self.time_avg) * old_freq + self.clock_avg
         # Track prediction accuracy and filter out extreme outliers
         clock_diff2 = (clock - exp_clock)**2
@@ -143,6 +211,7 @@ class ClockSync:
             return
         # Update sent_time to clock regression
         offset, ret = self._update_regression(sent_time, rtt, clock)
+        self.rtt_tracker.insert(rtt / 2.0, offset)
         if not ret:
             # Message is an "outlier" and should be discarded
             return
