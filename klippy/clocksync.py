@@ -3,7 +3,20 @@
 # Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, math
+import logging, math, heapq
+
+class PercentileFilter:
+    def __init__(self, size):
+        self._size = size
+        self._samples = [999999999.9] * size
+        self._next_free = 0
+    def insert(self, sample):
+        self._samples[self._next_free % self._size] = sample
+        self._next_free += 1
+    def get_threshold_for_ratio(self, ratio):
+        threshold_pos = self._size - int(self._size * ratio) + 1
+        threshold = heapq.nlargest(threshold_pos, self._samples)[-1]
+        return threshold
 
 RTT_AGE = .000010 / (60. * 60.)
 DECAY = 1. / 30.
@@ -30,6 +43,8 @@ class ClockSync:
         self.min_rtt_time = 0.
         # System clock to mcu clock estimation (updated in bg thread)
         self.clock_est = (0., 0., 0.)
+        # Input filtering
+        self.rtt_filter = PercentileFilter(30)
     def connect(self, serial):
         self.serial = serial
         self.mcu_freq = serial.msgparser.get_constant_float('CLOCK_FREQ')
@@ -118,6 +133,11 @@ class ClockSync:
         receive_time = params['#receive_time']
         if not sent_time:
             # sent_time unknown because of 'get_clock' retransmit
+            return
+        threshold = self.rtt_filter.get_threshold_for_ratio(0.9)
+        rtt = receive_time - sent_time
+        self.rtt_filter.insert(rtt)
+        if rtt > threshold and sent_time - self.last_prediction_time < 10.:
             return
         # Update sent_time to clock regression
         ret = self._update_regression(sent_time, clock)
