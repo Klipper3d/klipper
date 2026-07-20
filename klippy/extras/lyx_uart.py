@@ -200,17 +200,21 @@ class MCU_LYX_uart:
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
         with self.mutex:
-            # Transmit write frame only once per register update
-            self.mcu_uart.reg_write(self.addr, reg, val, print_time)
-            # Delay for chip register refresh cycle
-            time.sleep(0.005)
-            # Limited readback retry to verify write success
-            for retry in range(500):
-                print(retry)
-                readback = self.mcu_uart.reg_read(self.addr, reg)
-                if readback['data'] == val:
-                    return
-                time.sleep(0.003)
+            for write_retry in range(5):
+                # Transmit write frame only once per register update
+                self.mcu_uart.reg_write(self.addr, reg, val, print_time)
+                # Delay for chip register refresh cycle
+                time.sleep(0.005)
+                # Limited readback retry to verify write success
+                for retry in range(500):
+                    print(retry)
+                    readback = self.mcu_uart.reg_read(self.addr, reg)
+                    if readback['data'] == val:
+                        return
+                    time.sleep(0.003)
+
+            # raise self.printer.command_error(
+            #     "Unable to write lyx uart '%s' register %s" % (self.name, reg_name))
             self.printer.invoke_shutdown("Unable to write lyx uart '%s' register %s due to transmission delay, try to reboot Klipper Service to retry" % (self.name, reg_name))
 
     def get_mcu(self):
