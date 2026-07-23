@@ -102,7 +102,7 @@ get_pclock_frequency(uint32_t reset_bit)
 static void
 xosc_setup(void)
 {
-    xosc_hw->startup = DIV_ROUND_UP(FREQ_XOSC, 1000 * 256); // 1ms
+    xosc_hw->startup = DIV_ROUND_UP(FREQ_XOSC, 1000 * 256) * 6; // 1ms
     xosc_hw->ctrl = (XOSC_CTRL_FREQ_RANGE_VALUE_1_15MHZ
                      | (XOSC_CTRL_ENABLE_VALUE_ENABLE << XOSC_CTRL_ENABLE_LSB));
     while (!(xosc_hw->status & XOSC_STATUS_STABLE_BITS))
