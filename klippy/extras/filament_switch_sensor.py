@@ -43,6 +43,8 @@ class RunoutHelper:
     def _handle_ready(self):
         self.min_event_systime = self.reactor.monotonic() + 2.
     def _runout_event_handler(self, eventtime):
+        # Notify clients (KlipperScreen) that pause is due to filament runout
+        self.gcode.respond_info("action:filament_runout")
         # Pausing from inside an event requires that the pause portion
         # of pause_resume execute immediately.
         pause_prefix = ""
