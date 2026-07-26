@@ -22,7 +22,7 @@ CFLAGS += $(CFLAGS-y) -D__$(MCU)__ -mthumb -Ilib/cmsis-core -Ilib/fast-hash
 
 samlink-y := $(OUT)src/generic/armcm_link.ld
 samlink-$(CONFIG_MACH_SAME70) := $(OUT)src/atsam/same70_link.ld
-CFLAGS_klipper.elf += -nostdlib -lgcc -lc_nano -T $(samlink-y)
+CFLAGS_klipper.elf += -nostdlib -lgcc $(LIBC_LDFLAG) -T $(samlink-y)
 $(OUT)klipper.elf: $(samlink-y)
 
 # Add source files
