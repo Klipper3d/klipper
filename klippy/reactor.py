@@ -297,7 +297,11 @@ class SelectReactor:
                 self._write_fds.remove(fd)
         elif is_writeable:
             self._write_fds.append(fd)
-    def _check_fds(self, eventtime, hdls):
+    def _check_fd_activity(self, timeout):
+        res = select.select(self._read_fds, self._write_fds, [], timeout)
+        return ([(fd, self._READ) for fd in res[0]]
+                + [(fd, self._WRITE) for fd in res[1]])
+    def _dispatch_fd_events(self, eventtime, hdls):
         g_dispatch = self._g_dispatch
         for fd, event in hdls:
             hdl = self._fds.get(fd, self._dummy_fd_hdl)
@@ -319,13 +323,11 @@ class SelectReactor:
         while self._process:
             timeout = self._check_timers(eventtime, busy)
             busy = False
-            res = select.select(self._read_fds, self._write_fds, [], timeout)
+            hdls = self._check_fd_activity(timeout)
             eventtime = self.monotonic()
-            if res[0] or res[1]:
+            if hdls:
                 busy = True
-                hdls = ([(fd, self._READ) for fd in res[0]]
-                        + [(fd, self._WRITE) for fd in res[1]])
-                eventtime = self._check_fds(eventtime, hdls)
+                eventtime = self._dispatch_fd_events(eventtime, hdls)
     def run(self):
         if self._pipe_fds is None:
             self._setup_async_callbacks()
@@ -379,18 +381,8 @@ class PollReactor(SelectReactor):
         if is_writeable:
             flags |= select.POLLOUT
         self._poll.modify(file_handler.fd, flags)
-    # Main loop
-    def _dispatch_loop(self):
-        busy = True
-        eventtime = self.monotonic()
-        while self._process:
-            timeout = self._check_timers(eventtime, busy)
-            busy = False
-            res = self._poll.poll(int(math.ceil(timeout * 1000.)))
-            eventtime = self.monotonic()
-            if res:
-                busy = True
-                eventtime = self._check_fds(eventtime, res)
+    def _check_fd_activity(self, timeout):
+        return self._poll.poll(int(math.ceil(timeout * 1000.)))
 
 class EPollReactor(SelectReactor):
     def __init__(self, gc_checking=False):
@@ -414,18 +406,8 @@ class EPollReactor(SelectReactor):
         if is_writeable:
             flags |= select.EPOLLOUT
         self._epoll.modify(file_handler.fd, flags)
-    # Main loop
-    def _dispatch_loop(self):
-        busy = True
-        eventtime = self.monotonic()
-        while self._process:
-            timeout = self._check_timers(eventtime, busy)
-            busy = False
-            res = self._epoll.poll(timeout)
-            eventtime = self.monotonic()
-            if res:
-                busy = True
-                eventtime = self._check_fds(eventtime, res)
+    def _check_fd_activity(self, timeout):
+        return self._epoll.poll(timeout)
 
 # Use the poll based reactor if it is available
 try:
