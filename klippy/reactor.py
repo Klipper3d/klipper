@@ -129,6 +129,11 @@ class SelectReactor:
         self._cached_dispatch_greenlets = []
         self._all_greenlets = []
         self._prevent_pause_count = 0
+        # Tracking of high latency
+        self._latency_warning = self.NEVER
+        self._latency_callback = (lambda e, pe, rc: None)
+        self._recent_eventtime = 0.
+        self._recent_callbacks = []
     # Timers
     def update_timer(self, timer_handler, waketime):
         if timer_handler.timer_is_running:
@@ -155,6 +160,7 @@ class SelectReactor:
             if eventtime >= waketime:
                 t.waketime = self.NEVER
                 t.timer_is_running = True
+                self._recent_callbacks.append(t.callback)
                 t.waketime = waketime = t.callback(eventtime)
                 t.timer_is_running = False
                 if g_dispatch is not self._g_dispatch:
@@ -166,6 +172,7 @@ class SelectReactor:
     def set_idle_notifier(self, callback):
         self._idle_callback = callback
     def _calc_sleep_time(self, eventtime):
+        self._recent_callbacks.append(self._idle_callback)
         self._prevent_pause_count += 1
         busy = self._idle_callback(eventtime)
         self._prevent_pause_count -= 1
@@ -289,16 +296,28 @@ class SelectReactor:
         for fd, event in hdls:
             hdl = self._fds.get(fd, self._dummy_fd_hdl)
             if event & self._READ:
+                self._recent_callbacks.append(hdl.read_callback)
                 hdl.read_callback(eventtime)
                 if g_dispatch is not self._g_dispatch:
                     self._end_greenlet(g_dispatch)
                     return True
             if event & self._WRITE:
+                self._recent_callbacks.append(hdl.write_callback)
                 hdl.write_callback(eventtime)
                 if g_dispatch is not self._g_dispatch:
                     self._end_greenlet(g_dispatch)
                     return True
         return False
+    # High latency checking
+    def set_latency_notifier(self, latency, latency_callback):
+        self._latency_warning = latency
+        self._latency_callback = latency_callback
+    def _dispatch_latency_callback(self, eventtime, prev_eventtime):
+        prev_cbs = self._recent_callbacks
+        self._recent_callbacks = [self._latency_callback]
+        self._prevent_pause_count += 1
+        self._latency_callback(eventtime, prev_eventtime, prev_cbs)
+        self._prevent_pause_count -= 1
     # Main loop
     def _dispatch_loop(self):
         eventtime = 0.
@@ -312,6 +331,14 @@ class SelectReactor:
             hdls = self._check_fd_activity(timeout)
             eventtime = self.monotonic()
             busy = False
+            # Check for high latency
+            prev_etime = self._recent_eventtime
+            self._recent_eventtime = eventtime
+            if not timeout and eventtime - prev_etime >= self._latency_warning:
+                busy = True
+                self._dispatch_latency_callback(eventtime, prev_etime)
+            else:
+                del self._recent_callbacks[:]
             # Dispatch file events
             if hdls:
                 busy = True
@@ -327,6 +354,8 @@ class SelectReactor:
             self._setup_async_callbacks()
         self._process = True
         self._prevent_pause_count = 0
+        self._recent_eventtime = self.monotonic()
+        self._recent_callbacks = []
         try:
             while self._process:
                 # Create new greenlet to dispatch timers and events
@@ -337,6 +366,7 @@ class SelectReactor:
                 # Control returns here on end() request or switch from pause()
         finally:
             self._g_dispatch = None
+        self._recent_callbacks = []
     def end(self):
         self._process = False
     def finalize(self):
