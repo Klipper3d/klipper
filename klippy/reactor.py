@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2026  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, gc, select, math, time, logging, queue
+import os, select, math, time, logging, queue
 import greenlet
 import chelper, util
 
@@ -104,16 +104,15 @@ class ReactorPreventPause:
 class SelectReactor:
     NOW = _NOW
     NEVER = _NEVER
-    def __init__(self, gc_checking=False):
+    def __init__(self):
         # Main code
         self._process = False
         self.monotonic = chelper.get_ffi()[1].get_monotonic
-        # Python garbage collection
-        self._gc_checking = gc_checking
-        self._last_gc_times = [0., 0., 0.]
         # Timers
         self._timers = []
         self._next_timer = self.NEVER
+        # Idle notifier callback
+        self._idle_callback = (lambda e: False)
         # Callbacks
         self._pipe_fds = None
         self._async_queue = queue.Queue()
@@ -130,24 +129,6 @@ class SelectReactor:
         self._cached_dispatch_greenlets = []
         self._all_greenlets = []
         self._prevent_pause_count = 0
-    # Python garbage collection
-    def get_gc_stats(self):
-        return tuple(self._last_gc_times)
-    def _check_gc(self, eventtime):
-        if not self._gc_checking:
-            return False
-        gi = gc.get_count()
-        if gi[0] < 700:
-            return False
-        # Reactor looks idle and gc is due - run it
-        gc_level = 0
-        if gi[1] >= 10:
-            gc_level = 1
-            if gi[2] >= 10:
-                gc_level = 2
-        self._last_gc_times[gc_level] = eventtime
-        gc.collect(gc_level)
-        return True
     # Timers
     def update_timer(self, timer_handler, waketime):
         if timer_handler.timer_is_running:
@@ -166,14 +147,7 @@ class SelectReactor:
         timers = list(self._timers)
         timers.pop(timers.index(timer_handler))
         self._timers = timers
-    def _check_timers(self, eventtime, busy):
-        if eventtime < self._next_timer:
-            if busy:
-                return 0.
-            gc_busy = self._check_gc(eventtime)
-            if gc_busy:
-                return 0.
-            return min(1., max(.001, self._next_timer - eventtime))
+    def _check_timers(self, eventtime):
         self._next_timer = self.NEVER
         g_dispatch = self._g_dispatch
         for t in self._timers:
@@ -186,9 +160,18 @@ class SelectReactor:
                 if g_dispatch is not self._g_dispatch:
                     self._next_timer = min(self._next_timer, waketime)
                     self._end_greenlet(g_dispatch)
-                    return 0.
+                    return
             self._next_timer = min(self._next_timer, waketime)
-        return 0.
+    # Idle notifiers
+    def set_idle_notifier(self, callback):
+        self._idle_callback = callback
+    def _calc_sleep_time(self, eventtime):
+        self._prevent_pause_count += 1
+        busy = self._idle_callback(eventtime)
+        self._prevent_pause_count -= 1
+        if busy:
+            return 0.
+        return min(1., max(.001, self._next_timer - eventtime))
     # Callbacks and Completions
     def completion(self):
         return ReactorCompletion(self)
@@ -309,25 +292,36 @@ class SelectReactor:
                 hdl.read_callback(eventtime)
                 if g_dispatch is not self._g_dispatch:
                     self._end_greenlet(g_dispatch)
-                    return self.monotonic()
+                    return True
             if event & self._WRITE:
                 hdl.write_callback(eventtime)
                 if g_dispatch is not self._g_dispatch:
                     self._end_greenlet(g_dispatch)
-                    return self.monotonic()
-        return eventtime
+                    return True
+        return False
     # Main loop
     def _dispatch_loop(self):
+        eventtime = 0.
         busy = True
-        eventtime = self.monotonic()
         while self._process:
-            timeout = self._check_timers(eventtime, busy)
-            busy = False
+            # Check if can sleep
+            timeout = 0.
+            if not busy:
+                timeout = self._calc_sleep_time(eventtime)
+            # Check for file activity
             hdls = self._check_fd_activity(timeout)
             eventtime = self.monotonic()
+            busy = False
+            # Dispatch file events
             if hdls:
                 busy = True
-                eventtime = self._dispatch_fd_events(eventtime, hdls)
+                did_switch = self._dispatch_fd_events(eventtime, hdls)
+                if did_switch:
+                    continue
+            # Dispatch pending timers
+            if eventtime >= self._next_timer:
+                busy = True
+                self._check_timers(eventtime)
     def run(self):
         if self._pipe_fds is None:
             self._setup_async_callbacks()
@@ -360,8 +354,8 @@ class SelectReactor:
             self._pipe_fds = None
 
 class PollReactor(SelectReactor):
-    def __init__(self, gc_checking=False):
-        SelectReactor.__init__(self, gc_checking)
+    def __init__(self):
+        SelectReactor.__init__(self)
         self._poll = select.poll()
         self._READ = select.POLLIN | select.POLLHUP
         self._WRITE = select.POLLOUT
@@ -385,8 +379,8 @@ class PollReactor(SelectReactor):
         return self._poll.poll(int(math.ceil(timeout * 1000.)))
 
 class EPollReactor(SelectReactor):
-    def __init__(self, gc_checking=False):
-        SelectReactor.__init__(self, gc_checking)
+    def __init__(self):
+        SelectReactor.__init__(self)
         self._epoll = select.epoll()
         self._READ = select.EPOLLIN | select.EPOLLHUP
         self._WRITE = select.EPOLLOUT
