@@ -15,7 +15,7 @@ class ReactorError(Exception):
 
 class ReactorTimer:
     def __init__(self, callback, waketime):
-        self.callback = callback
+        self.callback = self.underlying_callback = callback
         self.waketime = waketime
         self.timer_is_running = False
 
@@ -45,6 +45,7 @@ class ReactorCallback:
     def __init__(self, reactor, callback, waketime):
         self.reactor = reactor
         self.timer = reactor.register_timer(self.invoke, waketime)
+        self.timer.underlying_callback = callback
         self.callback = callback
         self.completion = ReactorCompletion(reactor)
     def invoke(self, eventtime):
@@ -160,7 +161,7 @@ class SelectReactor:
             if eventtime >= waketime:
                 t.waketime = self.NEVER
                 t.timer_is_running = True
-                self._recent_callbacks.append(t.callback)
+                self._recent_callbacks.append(t.underlying_callback)
                 t.waketime = waketime = t.callback(eventtime)
                 t.timer_is_running = False
                 if g_dispatch is not self._g_dispatch:
@@ -236,6 +237,8 @@ class SelectReactor:
             return self._g_dispatch.switch(waketime)
         # Pausing the dispatch greenlet - setup timer to resume this greenlet
         g.timer = self.register_timer(g.switch, waketime)
+        if self._recent_callbacks:
+            g.timer.underlying_callback = self._recent_callbacks[-1]
         self._next_timer = self.NOW
         if self._cached_dispatch_greenlets:
             # Switch to _end_greenlet to activate cached dispatch greenlet
