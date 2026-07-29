@@ -114,21 +114,43 @@ class LYXCurrentHelper:
 
 
 ######################################################################
+# Microstep subdivision conversion helper
+######################################################################
+class LYXMicrostepHelper:
+    def __init__(self, config, mcu_lyx):
+        self.fields = mcu_lyx.get_fields()
+        # 25600 / microstep = register raw value
+        self.base_div = 25600
+        target_micro = config.getint('microstep', 16, minval=1, max=256)
+        self.set_microstep(target_micro, None)
+
+    def get_microstep(self):
+        reg_val = self.fields.get_field("microstep_ratio")
+        return int(self.base_div / reg_val)
+
+    def set_microstep(self, micro_step, print_time):
+        reg_raw = int(self.base_div // micro_step)
+        reg_raw = max(128, min(25600, reg_raw))
+        self.fields.set_field("microstep_ratio", reg_raw)
+
+######################################################################
 # G-code command management helper
 ######################################################################
 class LYXCommandHelper:
     """Register and handle LYX custom G-code commands"""
 
-    def __init__(self, config, mcu_lyx, current_helper):
+    def __init__(self, config, mcu_lyx, current_helper, micro_helper):
         self.printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.mcu_lyx = mcu_lyx
         self.current_helper = current_helper
+        self.micro_helper = micro_helper
         self.fields = mcu_lyx.get_fields()
         self.read_registers = []
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command("SET_LYX_FIELD", "STEPPER", self.name, self.cmd_SET_LYX_FIELD)
         gcode.register_mux_command("SET_LYX_CURRENT", "STEPPER", self.name, self.cmd_SET_LYX_CURRENT)
+        gcode.register_mux_command("SET_LYX_MICROSTEP", "STEPPER", self.name, self.cmd_SET_LYX_MICROSTEP)
 
     def cmd_SET_LYX_FIELD(self, gcmd):
         """G-code: Modify single register field raw value"""
@@ -156,6 +178,21 @@ class LYXCommandHelper:
         ch.set_current(run, hold, print_time)
         gcmd.respond_info(f"Run: {run:.2f}A  Hold: {hold:.2f}A")
 
+    def cmd_SET_LYX_MICROSTEP(self, gcmd):
+        mh = self.micro_helper
+        prev_micro = mh.get_microstep()
+        microstep = gcmd.get_int('MICROSTEP', None, minval=1, max=256)
+        if microstep is None:
+            gcmd.respond_info(f"Current microstep: {prev_micro}")
+            return
+        print_time = self.printer.lookup_object('toolhead').get_last_move_time()
+        mh.set_microstep(microstep, print_time)
+        reg_name = self.fields.field_to_register["microstep_ratio"]
+        self.mcu_lyx.set_register(reg_name, self.fields.get_field("microstep_ratio"), print_time)
+        gcmd.respond_info(f"Set microstep = {microstep}, "
+                          f"raw value={self.micro_helper.base_div // microstep}, "
+                          f"register raw={self.fields.get_field('microstep_ratio')}")
+
     def setup_register_dump(self, read_registers):
         """Register DUMP_LYX diagnostic command"""
         self.read_registers = read_registers
@@ -176,7 +213,9 @@ class LYXCommandHelper:
     def get_status(self, eventtime=None):
         """Expose current values for printer status query"""
         cur = self.current_helper.get_current()
+        microstep = self.micro_helper.get_microstep()
         return {
             'run_current': cur[0],
             'hold_current': cur[1],
+            'microstep': microstep
         }
