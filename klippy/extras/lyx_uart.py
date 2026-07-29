@@ -52,7 +52,13 @@ class MCU_LYX_uart_bitbang:
 
     def build_config(self):
         """Generate MCU config_modbus_uart command on startup"""
-        bit_ticks = self.mcu.seconds_to_clock(1. / LYX_DEFAULT_BAUD)
+
+        systime = self.mcu._stats_helper._reactor.monotonic()
+        get_clock = self.mcu._clocksync.get_clock
+        calc_freq = get_clock(systime + 1) - get_clock(systime)
+
+        # bit_ticks = self.mcu.seconds_to_clock(1. / LYX_DEFAULT_BAUD)
+        bit_ticks = int(1. / LYX_DEFAULT_BAUD * calc_freq)  # using actual mcu freq instead of what mcu claimed
         self.mcu.add_config_cmd(
             "config_modbus_uart oid=%d rx_pin=%s pull_up=%d tx_pin=%s bit_time=%d"
             % (self.oid, self.rx_pin, 1, self.tx_pin, bit_ticks))
