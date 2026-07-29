@@ -101,16 +101,11 @@ class LYX9231:
         s(config, "motor_type", 1)
         s(config, "op_mode", 1)
         s(config, "run_current", 434)
-        s(config, "half_cur_en", 1)
+        s(config, "half_cur_en", 0)
         s(config, "half_cur_time", 3000)
         s(config, "half_cur_ratio", 64)
-        s(config, "microstep_ratio", 12800)
-        s(config, "dead_time", 30)
-        s(config, "ocl_threshold", 200)
-        s(config, "ocl_filter", 6)
+        s(config, "microstep_ratio", 1600)
         s(config, "boost_level", 1)
-        s(config, "stall_angle", 200)
-        s(config, "stall_out_en", 0)
         s(config, "noise_en", 0)
 
     def _handle_connect(self):
