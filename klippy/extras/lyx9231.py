@@ -99,8 +99,8 @@ class LYX9231:
         """Populate default register values from printer config"""
         s = self.fields.set_config_field
         s(config, "motor_type", 1)
-        s(config, "op_mode", 1)
-        s(config, "run_current", 434)
+        s(config, "op_mode", 2)
+        s(config, "run_current", 868)
         s(config, "half_cur_en", 0)
         s(config, "half_cur_time", 3000)
         s(config, "half_cur_ratio", 64)
