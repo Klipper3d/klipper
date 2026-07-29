@@ -86,7 +86,8 @@ class LYX9231:
         self._set_defaults(config)
 
         self.current_helper = lyx.LYXCurrentHelper(config, self.mcu_lyx)
-        self.cmd_helper = lyx.LYXCommandHelper(config, self.mcu_lyx, self.current_helper)
+        self.micro_helper = lyx.LYXMicrostepHelper(config, self.mcu_lyx)
+        self.cmd_helper = lyx.LYXCommandHelper(config, self.mcu_lyx, self.current_helper, self.micro_helper)
         self.cmd_helper.setup_register_dump(ReadRegisters)
 
         self.printer.register_event_handler("klippy:connect", self._handle_connect)
