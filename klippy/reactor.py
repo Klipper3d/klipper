@@ -113,7 +113,8 @@ class SelectReactor:
         self._timers = []
         self._next_timer = self.NEVER
         # Idle notifier callback
-        self._idle_callback = (lambda e: False)
+        self._start_busy_time = 0.
+        self._idle_callback = (lambda e, sbt: False)
         # Callbacks
         self._pipe_fds = None
         self._async_queue = queue.Queue()
@@ -175,7 +176,7 @@ class SelectReactor:
     def _calc_sleep_time(self, eventtime):
         self._recent_callbacks.append(self._idle_callback)
         self._prevent_pause_count += 1
-        busy = self._idle_callback(eventtime)
+        busy = self._idle_callback(eventtime, self._start_busy_time)
         self._prevent_pause_count -= 1
         if busy:
             return 0.
@@ -333,6 +334,8 @@ class SelectReactor:
             # Check for file activity
             hdls = self._check_fd_activity(timeout)
             eventtime = self.monotonic()
+            if timeout:
+                self._start_busy_time = eventtime
             busy = False
             # Check for high latency
             prev_etime = self._recent_eventtime
@@ -357,7 +360,7 @@ class SelectReactor:
             self._setup_async_callbacks()
         self._process = True
         self._prevent_pause_count = 0
-        self._recent_eventtime = self.monotonic()
+        self._recent_eventtime = self._start_busy_time = self.monotonic()
         self._recent_callbacks = []
         try:
             while self._process:

@@ -27,7 +27,7 @@ class GarbageCollection:
     def _handle_analyze_shutdown(self, msg, details):
         logging.info("Reactor garbage collection: %s", self._last_gc_times)
 
-    def _handle_idle(self, eventtime):
+    def _handle_idle(self, eventtime, start_busy_time):
         gi = gc.get_count()
         if gi[0] < 700:
             return False
