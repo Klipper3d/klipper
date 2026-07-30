@@ -121,7 +121,7 @@ class LYXMicrostepHelper:
         self.fields = mcu_lyx.get_fields()
         # 25600 / microstep = register raw value
         self.base_div = 25600
-        target_micro = config.getint('microstep', 16, minval=1, max=256)
+        target_micro = config.getint('microstep', 16, minval=1, maxval=256)
         self.set_microstep(target_micro, None)
 
     def get_microstep(self):
