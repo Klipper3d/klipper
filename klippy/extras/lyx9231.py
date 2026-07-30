@@ -93,8 +93,8 @@ class LYX9231:
         self.printer.register_event_handler("klippy:connect", self._handle_connect)
 
         self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_command('LYX_READ_REG', self.cmd_LYX_READ_REG)
-        self.gcode.register_command('LYX_WRITE_REG', self.cmd_LYX_WRITE_REG)
+        self.gcode.register_mux_command('LYX_READ_REG', "STEPPER", self.name, self.cmd_LYX_READ_REG)
+        self.gcode.register_mux_command('LYX_WRITE_REG', "STEPPER", self.name, self.cmd_LYX_WRITE_REG)
 
     def _set_defaults(self, config):
         """Populate default register values from printer config"""
