@@ -828,6 +828,8 @@ serialqueue_free(struct serialqueue *sq)
     pthread_mutex_unlock(&sq->transmit_requests.lock);
     pthread_mutex_unlock(&sq->lock);
     pollreactor_free(sq->pr);
+    close(sq->transmit_requests.pipe_fds[0]);
+    close(sq->transmit_requests.pipe_fds[1]);
     free(sq);
 }
 
