@@ -48,6 +48,8 @@ class Executor:
             except Exception as e:
                 self.reactor.async_complete(completion, (None, e))
     def submit(self, fn, *args, **kwargs):
+        if not self._wait_for_work:
+            return fn(*args, **kwargs)
         completion = self.reactor.completion()
         self._queue.put_nowait((completion, fn, args, kwargs))
         result, exc = completion.wait()
