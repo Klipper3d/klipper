@@ -101,11 +101,10 @@ class LYX9231:
         s = self.fields.set_config_field
         s(config, "motor_type", 1)
         s(config, "op_mode", 2)
-        s(config, "run_current", 868)
+        s(config, "run_current", 896)
         s(config, "half_cur_en", 0)
         s(config, "half_cur_time", 3000)
         s(config, "half_cur_ratio", 64)
-        s(config, "microstep_ratio", 1600)
         s(config, "boost_level", 1)
         s(config, "noise_en", 0)
 

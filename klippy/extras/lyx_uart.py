@@ -180,8 +180,8 @@ class MCU_LYX_uart:
         reg = self.name_to_reg[reg_name]
         if self.printer.get_start_args().get('debugoutput') is not None:
             return {'data': 0, '#receive_time': 0.}
-        for retry in range(100):
-            print(retry)
+        for retry in range(1000):
+            print('R', reg_name, retry)
             ret = self.mcu_uart.reg_read(self.addr, reg)
             if ret['data'] is not None:
                 return ret
@@ -206,18 +206,18 @@ class MCU_LYX_uart:
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
         with self.mutex:
-            for write_retry in range(5):
+            for write_retry in range(100):
                 # Transmit write frame only once per register update
                 self.mcu_uart.reg_write(self.addr, reg, val, print_time)
                 # Delay for chip register refresh cycle
                 time.sleep(0.005)
                 # Limited readback retry to verify write success
-                for retry in range(500):
-                    print(retry)
+                for retry in range(100):
+                    print('W', reg_name, val, write_retry, retry)
                     readback = self.mcu_uart.reg_read(self.addr, reg)
                     if readback['data'] == val:
                         return
-                    time.sleep(0.003)
+                    time.sleep(0.001)
 
             # raise self.printer.command_error(
             #     "Unable to write lyx uart '%s' register %s" % (self.name, reg_name))
