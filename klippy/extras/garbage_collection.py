@@ -6,6 +6,24 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import gc
 import logging
+from types import FunctionType, MethodType
+
+THRESHOLD = 0.05
+
+def get_function_owner(cb):
+    if type(cb) in (FunctionType, MethodType):
+        code = cb.__code__
+        fn_name = getattr(cb, "__qualname__", None) or cb.__name__
+        file = code.co_filename.rpartition("/")[2]
+        line = code.co_firstlineno
+        return "\'%s (%s:%d)\'" % (fn_name, file, line)
+    return repr(cb)
+
+def _analyze_callback(eventtime, prev_eventtime, cbs):
+    duration = eventtime - prev_eventtime
+    pretty_cbs = [get_function_owner(cb) for cb in cbs]
+    logging.warning("Reactor %.3f busy for %.3f with:\n- %s" % (
+        eventtime, duration, ',\n- '.join(pretty_cbs)))
 
 class GarbageCollection:
     def __init__(self, config):
@@ -23,6 +41,8 @@ class GarbageCollection:
             printer.register_event_handler("klippy:ready", self._handle_ready)
             printer.register_event_handler("klippy:disconnect",
                                            self._handle_disconnect)
+        printer.register_event_handler("klippy:ready",
+                                       self._handle_ready_latency)
 
     def _handle_analyze_shutdown(self, msg, details):
         logging.info("Reactor garbage collection: %s", self._last_gc_times)
@@ -46,6 +66,12 @@ class GarbageCollection:
         for n in range(3):
             gc.collect(n)
         gc.freeze()
+
+    def _handle_ready_latency(self):
+        reactor = self.printer.get_reactor()
+        def set_latency_notifier(eventtime):
+            reactor.set_latency_notifier(THRESHOLD, _analyze_callback)
+        reactor.register_callback(set_latency_notifier)
 
     def _handle_disconnect(self):
         logging.debug("Unfreezing garbage collection")
