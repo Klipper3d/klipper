@@ -309,8 +309,11 @@ def main():
     logging.info("Starting Klippy...")
     git_info = util.get_git_version()
     git_vers = git_info["version"]
+    repo = os.path.join(os.path.dirname(__file__), '..')
     extra_files = [fname for code, fname in git_info["file_status"]
-                   if (code in ('??', '!!') and fname.endswith('.py')
+                   if (code in ('??', '!!')
+                       and (fname.endswith('.py')
+                            or os.path.islink(os.path.join(repo, fname)))
                        and (fname.startswith('klippy/kinematics/')
                             or fname.startswith('klippy/extras/')))]
     modified_files = [fname for code, fname in git_info["file_status"]
