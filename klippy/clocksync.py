@@ -61,9 +61,11 @@ class ClockSync:
         self.queries_pending += 1
         # Use an unusual time for the next event so clock messages
         # don't resonate with other periodic events.
-        return eventtime + .9839
+        next_eventtime = eventtime + .9839
+        self.reactor.update_timer(self.get_clock_timer, next_eventtime)
+        return next_eventtime
     def _handle_clock(self, params):
-        self.queries_pending = 0
+        self.queries_pending = max(0, self.queries_pending - 1)
         # Extend clock to 64bit
         last_clock = self.last_clock
         clock_delta = (params['clock'] - last_clock) & 0xffffffff
@@ -85,8 +87,9 @@ class ClockSync:
                      + self.clock_avg)
         clock_diff2 = (clock - exp_clock)**2
         if (clock_diff2 > 25. * self.prediction_variance
-            and clock_diff2 > (.000500 * self.mcu_freq)**2):
-            if clock > exp_clock and sent_time < self.last_prediction_time+10.:
+                and clock_diff2 > (.000500 * self.mcu_freq)**2):
+            if (clock > exp_clock and
+                    sent_time < self.last_prediction_time+10.):
                 logging.debug("Ignoring clock sample %.3f:"
                               " freq=%d diff=%d stddev=%.3f",
                               sent_time, self.clock_est[2], clock - exp_clock,
@@ -193,25 +196,29 @@ class SecondarySync(ClockSync):
         adjusted_offset, adjusted_freq = self.clock_adj
         return "%s adj=%d" % (ClockSync.stats(self, eventtime), adjusted_freq)
     def calibrate_clock(self, print_time, eventtime):
-        # Calculate: est_print_time = main_sync.estimatated_print_time()
+        # Unpack primary MCU clock estimate
         ser_time, ser_clock, ser_freq = self.main_sync.clock_est
         main_mcu_freq = self.main_sync.mcu_freq
-        est_main_clock = (eventtime - ser_time) * ser_freq + ser_clock
+        # Estimate current print time of the primary MCU
+        event_time_diff = eventtime - ser_time
+        est_main_clock = event_time_diff * ser_freq + ser_clock
         est_print_time = est_main_clock / main_mcu_freq
-        # Determine sync1_print_time and sync2_print_time
+        # Calculate synchronization points
         sync1_print_time = max(print_time, est_print_time)
-        sync2_print_time = max(sync1_print_time + 4., self.last_sync_time,
-                               print_time + 2.5 * (print_time - est_print_time))
-        # Calc sync2_sys_time (inverse of main_sync.estimatated_print_time)
+        time_diff = print_time - est_print_time
+        sync2_print_time = max(sync1_print_time + 4.,
+                               self.last_sync_time,
+                               print_time + 2.5 * time_diff)
+        # Calculate system time for sync2
         sync2_main_clock = sync2_print_time * main_mcu_freq
         sync2_sys_time = ser_time + (sync2_main_clock - ser_clock) / ser_freq
-        # Adjust freq so estimated print_time will match at sync2_print_time
+        # Determine frequency and offset adjustments
         sync1_clock = self.print_time_to_clock(sync1_print_time)
         sync2_clock = self.get_clock(sync2_sys_time)
-        adjusted_freq = ((sync2_clock - sync1_clock)
-                         / (sync2_print_time - sync1_print_time))
-        adjusted_offset = sync1_print_time - sync1_clock / adjusted_freq
-        # Apply new values
+        time_span = sync2_print_time - sync1_print_time
+        adjusted_freq = (sync2_clock - sync1_clock) / time_span
+        adjusted_offset = sync1_print_time - (sync1_clock / adjusted_freq)
+        # Apply new adjustments
         self.clock_adj = (adjusted_offset, adjusted_freq)
         self.last_sync_time = sync2_print_time
         return self.clock_adj
