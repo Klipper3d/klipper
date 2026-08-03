@@ -133,17 +133,27 @@ class AccelCommandHelper:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_mux_command("ACCELEROMETER_MEASURE", "CHIP", name,
                                    self.cmd_ACCELEROMETER_MEASURE,
-                                   desc=self.cmd_ACCELEROMETER_MEASURE_help)
+                                   desc=self.cmd_ACCELEROMETER_MEASURE_help,
+                                   params=self.cmd_ACCELEROMETER_MEASURE_params)
         gcode.register_mux_command("ACCELEROMETER_QUERY", "CHIP", name,
                                    self.cmd_ACCELEROMETER_QUERY,
-                                   desc=self.cmd_ACCELEROMETER_QUERY_help)
-        gcode.register_mux_command("ACCELEROMETER_DEBUG_READ", "CHIP", name,
-                                   self.cmd_ACCELEROMETER_DEBUG_READ,
-                                   desc=self.cmd_ACCELEROMETER_DEBUG_READ_help)
-        gcode.register_mux_command("ACCELEROMETER_DEBUG_WRITE", "CHIP", name,
-                                   self.cmd_ACCELEROMETER_DEBUG_WRITE,
-                                   desc=self.cmd_ACCELEROMETER_DEBUG_WRITE_help)
+                                   desc=self.cmd_ACCELEROMETER_QUERY_help,
+                                   params=self.cmd_ACCELEROMETER_QUERY_params)
+        gcode.register_mux_command(
+            "ACCELEROMETER_DEBUG_READ", "CHIP", name,
+            self.cmd_ACCELEROMETER_DEBUG_READ,
+            desc=self.cmd_ACCELEROMETER_DEBUG_READ_help,
+            params=self.cmd_ACCELEROMETER_DEBUG_READ_params)
+        gcode.register_mux_command(
+            "ACCELEROMETER_DEBUG_WRITE", "CHIP", name,
+            self.cmd_ACCELEROMETER_DEBUG_WRITE,
+            desc=self.cmd_ACCELEROMETER_DEBUG_WRITE_help,
+            params=self.cmd_ACCELEROMETER_DEBUG_WRITE_params)
     cmd_ACCELEROMETER_MEASURE_help = "Start/stop accelerometer"
+    cmd_ACCELEROMETER_MEASURE_params = {
+        "CHIP": {"type": "string", "required": True},
+        "NAME": {"type": "string", "required": False},
+    }
     def cmd_ACCELEROMETER_MEASURE(self, gcmd):
         if self.bg_client is None:
             # Start measurements
@@ -166,6 +176,9 @@ class AccelCommandHelper:
         gcmd.respond_info("Writing raw accelerometer data to %s file"
                           % (filename,))
     cmd_ACCELEROMETER_QUERY_help = "Query accelerometer for the current values"
+    cmd_ACCELEROMETER_QUERY_params = {
+        "CHIP": {"type": "string", "required": True},
+    }
     def cmd_ACCELEROMETER_QUERY(self, gcmd):
         aclient = self.chip.start_internal_client()
         self.printer.lookup_object('toolhead').dwell(1.)
@@ -177,11 +190,20 @@ class AccelCommandHelper:
         gcmd.respond_info("accelerometer values (x, y, z): %.6f, %.6f, %.6f"
                           % (accel_x, accel_y, accel_z))
     cmd_ACCELEROMETER_DEBUG_READ_help = "Query register (for debugging)"
+    cmd_ACCELEROMETER_DEBUG_READ_params = {
+        "CHIP": {"type": "string", "required": True},
+        "REG": {"type": "int", "required": True},
+    }
     def cmd_ACCELEROMETER_DEBUG_READ(self, gcmd):
         reg = gcmd.get("REG", minval=0, maxval=127, parser=lambda x: int(x, 0))
         val = self.chip.read_reg(reg)
         gcmd.respond_info("Accelerometer REG[0x%x] = 0x%x" % (reg, val))
     cmd_ACCELEROMETER_DEBUG_WRITE_help = "Set register (for debugging)"
+    cmd_ACCELEROMETER_DEBUG_WRITE_params = {
+        "CHIP": {"type": "string", "required": True},
+        "REG": {"type": "int", "required": True},
+        "VAL": {"type": "int", "required": True},
+    }
     def cmd_ACCELEROMETER_DEBUG_WRITE(self, gcmd):
         reg = gcmd.get("REG", minval=0, maxval=127, parser=lambda x: int(x, 0))
         val = gcmd.get("VAL", minval=0, maxval=255, parser=lambda x: int(x, 0))

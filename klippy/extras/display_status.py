@@ -18,7 +18,8 @@ class DisplayStatus:
         gcode.register_command('M117', self.cmd_M117)
         gcode.register_command(
             'SET_DISPLAY_TEXT', self.cmd_SET_DISPLAY_TEXT,
-            desc=self.cmd_SET_DISPLAY_TEXT_help)
+            desc=self.cmd_SET_DISPLAY_TEXT_help,
+            params=self.cmd_SET_DISPLAY_TEXT_params)
     def get_status(self, eventtime):
         progress = self.progress
         if progress is not None and eventtime > self.expire_progress:
@@ -43,6 +44,9 @@ class DisplayStatus:
         msg = gcmd.get_raw_command_parameters() or None
         self.message = msg
     cmd_SET_DISPLAY_TEXT_help = "Set or clear the display message"
+    cmd_SET_DISPLAY_TEXT_params = {
+        "MSG": {"type": "string", "required": False},
+    }
     def cmd_SET_DISPLAY_TEXT(self, gcmd):
         self.message = gcmd.get("MSG", None)
 

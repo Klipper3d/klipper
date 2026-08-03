@@ -112,13 +112,15 @@ class TemperatureProbe:
         self.gcode.register_mux_command(
             "TEMPERATURE_PROBE_CALIBRATE", "PROBE", pname,
             self.cmd_TEMPERATURE_PROBE_CALIBRATE,
-            desc=self.cmd_TEMPERATURE_PROBE_CALIBRATE_help
+            desc=self.cmd_TEMPERATURE_PROBE_CALIBRATE_help,
+            params=self.cmd_TEMPERATURE_PROBE_CALIBRATE_params
         )
 
         self.gcode.register_mux_command(
             "TEMPERATURE_PROBE_ENABLE", "PROBE", pname,
             self.cmd_TEMPERATURE_PROBE_ENABLE,
-            desc=self.cmd_TEMPERATURE_PROBE_ENABLE_help
+            desc=self.cmd_TEMPERATURE_PROBE_ENABLE_help,
+            params=self.cmd_TEMPERATURE_PROBE_ENABLE_params
         )
 
         # Register Drift Compensation Helper with probe
@@ -324,6 +326,12 @@ class TemperatureProbe:
     cmd_TEMPERATURE_PROBE_CALIBRATE_help = (
         "Calibrate probe temperature drift compensation"
     )
+    cmd_TEMPERATURE_PROBE_CALIBRATE_params = {
+        "PROBE": {"type": "string", "required": True},
+        "METHOD": {"type": "string", "default": "manual"},
+        "TARGET": {"type": "float", "required": True},
+        "STEP": {"type": "float", "default": 2.0},
+    }
     def _auto_probe(self, gcmd):
         fo_params = dict(gcmd.get_command_parameters())
         fo_params['METHOD'] = self._method
@@ -443,6 +451,10 @@ class TemperatureProbe:
     cmd_TEMPERATURE_PROBE_ENABLE_help = (
         "Set adjustment factor applied to drift correction"
     )
+    cmd_TEMPERATURE_PROBE_ENABLE_params = {
+        "PROBE": {"type": "string", "required": True},
+        "ENABLE": {"type": "int", "required": True},
+    }
     def cmd_TEMPERATURE_PROBE_ENABLE(self, gcmd):
         if self.cal_helper is not None:
             self.cal_helper.set_enabled(gcmd)

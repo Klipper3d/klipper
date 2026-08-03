@@ -111,10 +111,12 @@ class EddyCalibrationTool:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_mux_command("PROBE_EDDY_CURRENT_CALIBRATE", "CHIP",
                                    cname, self.cmd_EDDY_CALIBRATE,
-                                   desc=self.cmd_EDDY_CALIBRATE_help)
+                                   desc=self.cmd_EDDY_CALIBRATE_help,
+                                   params=self.cmd_EDDY_CALIBRATE_params)
         gcode.register_command('Z_OFFSET_APPLY_PROBE',
                                self.cmd_Z_OFFSET_APPLY_PROBE,
-                               desc=self.cmd_Z_OFFSET_APPLY_PROBE_help)
+                               desc=self.cmd_Z_OFFSET_APPLY_PROBE_help,
+                               params=self.cmd_Z_OFFSET_APPLY_PROBE_params)
     def _save_calibration(self, z_freq_pairs):
         gcode = self.printer.lookup_object("gcode")
         gcode.respond_info(
@@ -293,6 +295,10 @@ class EddyCalibrationTool:
         z_freq_pairs = [(pos, freq) for pos, freq, _, _ in filtered]
         self._save_calibration(z_freq_pairs)
     cmd_EDDY_CALIBRATE_help = "Calibrate eddy current probe"
+    cmd_EDDY_CALIBRATE_params = {
+        "CHIP": {"type": "string", "required": True},
+        "PROBE_SPEED": {"type": "float", "default": 5.0},
+    }
     def cmd_EDDY_CALIBRATE(self, gcmd):
         self.probe_speed = gcmd.get_float("PROBE_SPEED", 5., above=0.)
         # Start manual probe
@@ -313,6 +319,9 @@ class EddyCalibrationTool:
             % (self.name, new_calibrate))
         configfile.set(self.name, 'tap_z_offset', "%.3f" % (new_calibrate,))
     cmd_Z_OFFSET_APPLY_PROBE_help = "Adjust the probe's z_offset"
+    cmd_Z_OFFSET_APPLY_PROBE_params = {
+        "METHOD": {"type": "string", "default": ""},
+    }
     def cmd_Z_OFFSET_APPLY_PROBE(self, gcmd):
         gcode_move = self.printer.lookup_object("gcode_move")
         offset = gcode_move.get_status()['homing_origin'].z
@@ -339,7 +348,8 @@ class EddyTapCalibration:
         gcode = self._printer.lookup_object("gcode")
         gcode.register_command("PROBE_EDDY_CURRENT_TAP_CALIBRATE",
                                self.cmd_TAP_CALIBRATE,
-                               desc=self.cmd_TAP_CALIBRATE_help)
+                               desc=self.cmd_TAP_CALIBRATE_help,
+                               params=self.cmd_TAP_CALIBRATE_params)
     def _analyze_main_calibration(self):
         freqs, zpos = self._calibration.get_calibration()
         if len(freqs) < 2:
@@ -399,6 +409,9 @@ class EddyTapCalibration:
             % (self._name, tap_threshold))
         configfile.set(self._name, 'tap_threshold', "%.3f" % (tap_threshold,))
     cmd_TAP_CALIBRATE_help = "Calibrate tap_threshold for 'tap' probing"
+    cmd_TAP_CALIBRATE_params = {
+        "TAP": {"type": "string", "required": False},
+    }
     def cmd_TAP_CALIBRATE(self, gcmd):
         mc_coeffs = self._analyze_main_calibration()
         last_tap = self._eddy_tap.get_last_tap_info()

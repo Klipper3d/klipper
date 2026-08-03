@@ -111,7 +111,8 @@ class BedMesh:
         # register gcodes
         self.gcode.register_command(
             'BED_MESH_OUTPUT', self.cmd_BED_MESH_OUTPUT,
-            desc=self.cmd_BED_MESH_OUTPUT_help)
+            desc=self.cmd_BED_MESH_OUTPUT_help,
+            params=self.cmd_BED_MESH_OUTPUT_params)
         self.gcode.register_command(
             'BED_MESH_MAP', self.cmd_BED_MESH_MAP,
             desc=self.cmd_BED_MESH_MAP_help)
@@ -120,7 +121,8 @@ class BedMesh:
             desc=self.cmd_BED_MESH_CLEAR_help)
         self.gcode.register_command(
             'BED_MESH_OFFSET', self.cmd_BED_MESH_OFFSET,
-            desc=self.cmd_BED_MESH_OFFSET_help)
+            desc=self.cmd_BED_MESH_OFFSET_help,
+            params=self.cmd_BED_MESH_OFFSET_params)
         # Register dump webhooks
         webhooks = self.printer.lookup_object('webhooks')
         webhooks.register_endpoint(
@@ -251,6 +253,9 @@ class BedMesh:
     def get_mesh(self):
         return self.z_mesh
     cmd_BED_MESH_OUTPUT_help = "Retrieve interpolated grid of probed z-points"
+    cmd_BED_MESH_OUTPUT_params = {
+        "PGP": {"type": "int", "default": 0},
+    }
     def cmd_BED_MESH_OUTPUT(self, gcmd):
         if gcmd.get_int('PGP', 0):
             # Print Generated Points instead of mesh
@@ -275,6 +280,11 @@ class BedMesh:
     def cmd_BED_MESH_CLEAR(self, gcmd):
         self.set_mesh(None)
     cmd_BED_MESH_OFFSET_help = "Add X/Y offsets to the mesh lookup"
+    cmd_BED_MESH_OFFSET_params = {
+        "X": {"type": "float", "required": False},
+        "Y": {"type": "float", "required": False},
+        "ZFADE": {"type": "float", "required": False},
+    }
     def cmd_BED_MESH_OFFSET(self, gcmd):
         if self.z_mesh is not None:
             offsets = [None, None]
@@ -346,7 +356,8 @@ class BedMeshCalibrate:
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
             'BED_MESH_CALIBRATE', self.cmd_BED_MESH_CALIBRATE,
-            desc=self.cmd_BED_MESH_CALIBRATE_help)
+            desc=self.cmd_BED_MESH_CALIBRATE_help,
+            params=self.cmd_BED_MESH_CALIBRATE_params)
     def print_generated_points(self, print_func, truncate=False):
         x_offset = y_offset = 0.
         probe = self.printer.lookup_object('probe', None)
@@ -641,6 +652,22 @@ class BedMeshCalibrate:
             "rapid_path": list(self.probe_mgr.iter_rapid_path())
         }
     cmd_BED_MESH_CALIBRATE_help = "Perform Mesh Bed Leveling"
+    cmd_BED_MESH_CALIBRATE_params = {
+        "PROFILE": {"type": "string", "default": "default"},
+        "MESH_RADIUS": {"type": "float", "required": False},
+        "MESH_ORIGIN": {"type": "string", "required": False},
+        "ROUND_PROBE_COUNT": {"type": "int", "required": False},
+        "MESH_MIN": {"type": "string", "required": False},
+        "MESH_MAX": {"type": "string", "required": False},
+        "PROBE_COUNT": {"type": "string", "required": False},
+        "MESH_PPS": {"type": "string", "required": False},
+        "ALGORITHM": {"type": "string", "required": False},
+        "ADAPTIVE": {"type": "int", "default": 0},
+        "ADAPTIVE_MARGIN": {"type": "float", "required": False},
+        "METHOD": {"type": "string", "default": "automatic"},
+        "HORIZONTAL_MOVE_Z": {"type": "float", "required": False},
+        "SCAN_SPEED": {"type": "float", "required": False},
+    }
     def cmd_BED_MESH_CALIBRATE(self, gcmd):
         self._profile_name = gcmd.get('PROFILE', "default")
         if not self._profile_name.strip():
@@ -1661,7 +1688,8 @@ class ProfileManager:
         # Register GCode
         self.gcode.register_command(
             'BED_MESH_PROFILE', self.cmd_BED_MESH_PROFILE,
-            desc=self.cmd_BED_MESH_PROFILE_help)
+            desc=self.cmd_BED_MESH_PROFILE_help,
+            params=self.cmd_BED_MESH_PROFILE_params)
     def get_profiles(self):
         return self.profiles
     def _check_incompatible_profiles(self):
@@ -1739,6 +1767,11 @@ class ProfileManager:
             self.gcode.respond_info(
                 "No profile named [%s] to remove" % (prof_name))
     cmd_BED_MESH_PROFILE_help = "Bed Mesh Persistent Storage management"
+    cmd_BED_MESH_PROFILE_params = {
+        "LOAD": {"type": "string", "required": False},
+        "SAVE": {"type": "string", "required": False},
+        "REMOVE": {"type": "string", "required": False},
+    }
     def cmd_BED_MESH_PROFILE(self, gcmd):
         options = collections.OrderedDict({
             'LOAD': self.load_profile,

@@ -41,6 +41,15 @@ finish_test check_whitespace "Check whitespace"
 
 
 ######################################################################
+# Check that declared gcode command params match their handlers
+######################################################################
+
+start_test check_gcode_params "Check gcode command params"
+./scripts/check_gcode_params.sh
+finish_test check_gcode_params "Check gcode command params"
+
+
+######################################################################
 # Run compile tests for several different MCU types
 ######################################################################
 
