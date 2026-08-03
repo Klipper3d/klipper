@@ -48,12 +48,8 @@ class QuadGantryLevel:
             params=self.cmd_QUAD_GANTRY_LEVEL_params)
     cmd_QUAD_GANTRY_LEVEL_help = (
         "Conform a moving, twistable gantry to the shape of a stationary bed")
-    cmd_QUAD_GANTRY_LEVEL_params = {
-        "RETRIES": {"type": "int", "required": False},
-        "RETRY_TOLERANCE": {"type": "float", "required": False},
-        "METHOD": {"type": "string", "default": "automatic"},
-        "HORIZONTAL_MOVE_Z": {"type": "float", "required": False},
-    }
+    cmd_QUAD_GANTRY_LEVEL_params = dict(
+        probe.PROBE_POINTS_HELPER_PARAMS, **z_tilt.RETRY_HELPER_PARAMS)
     def cmd_QUAD_GANTRY_LEVEL(self, gcmd):
         self.z_status.reset()
         self.retry_helper.start(gcmd)

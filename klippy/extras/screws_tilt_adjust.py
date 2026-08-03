@@ -45,12 +45,10 @@ class ScrewsTiltAdjust:
     cmd_SCREWS_TILT_CALCULATE_help = "Tool to help adjust bed leveling " \
                                      "screws by calculating the number " \
                                      "of turns to level it."
-    cmd_SCREWS_TILT_CALCULATE_params = {
-        "MAX_DEVIATION": {"type": "float", "required": False},
-        "DIRECTION": {"type": "string", "required": False},
-        "METHOD": {"type": "string", "default": "automatic"},
-        "HORIZONTAL_MOVE_Z": {"type": "float", "required": False},
-    }
+    cmd_SCREWS_TILT_CALCULATE_params = dict(
+        probe.PROBE_POINTS_HELPER_PARAMS,
+        MAX_DEVIATION={"type": "float", "required": False},
+        DIRECTION={"type": "string", "required": False})
 
     def cmd_SCREWS_TILT_CALCULATE(self, gcmd):
         self.max_diff = gcmd.get_float("MAX_DEVIATION", None)

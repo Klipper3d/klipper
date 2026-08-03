@@ -176,6 +176,7 @@ class GCodeDispatch:
                 "mux command %s %s %s already registered (%s)" % (
                     cmd, key, value, prev_values))
         prev_values[value] = func
+        self._build_status_commands()
     def get_command_help(self):
         return dict(self.gcode_help)
     def get_status(self, eventtime):
@@ -188,6 +189,18 @@ class GCodeDispatch:
         for cmd in self.gcode_params:
             if cmd in commands:
                 commands[cmd]['params'] = self.gcode_params[cmd]
+        # Surface each mux key's registered values as an enum. Copy-on-write
+        # so this never mutates the (possibly class-shared) static dict.
+        for cmd, (key, values) in self.mux_commands.items():
+            if cmd not in commands:
+                continue
+            params = dict(commands[cmd].get('params', {}))
+            key_param = dict(params.get(key, {}))
+            key_param.setdefault('type', 'string')
+            key_param['required'] = None not in values
+            key_param['enum'] = sorted(v for v in values if v is not None)
+            params[key] = key_param
+            commands[cmd]['params'] = params
         self.status_commands = commands
     def register_output_handler(self, cb):
         self.output_callbacks.append(cb)

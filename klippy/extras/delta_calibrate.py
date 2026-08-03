@@ -221,10 +221,7 @@ class DeltaCalibrate:
             "The SAVE_CONFIG command will update the printer config file\n"
             "with these parameters and restart the printer.")
     cmd_DELTA_CALIBRATE_help = "Delta calibration script"
-    cmd_DELTA_CALIBRATE_params = {
-        "METHOD": {"type": "string", "default": "automatic"},
-        "HORIZONTAL_MOVE_Z": {"type": "float", "required": False},
-    }
+    cmd_DELTA_CALIBRATE_params = dict(probe.PROBE_POINTS_HELPER_PARAMS)
     def cmd_DELTA_CALIBRATE(self, gcmd):
         self.probe_helper.start_probe(gcmd)
     def add_manual_height(self, height):

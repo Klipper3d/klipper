@@ -35,6 +35,25 @@ def calc_probe_z_average(positions, method='average'):
 # Probe device implementation helpers
 ######################################################################
 
+# Params read by ProbeParameterHelper.get_probe_params() - merge into a
+# command's own cmd_XXX_params instead of duplicating.
+PROBE_PARAMS = {
+    "PROBE_SPEED": {"type": "float", "required": False},
+    "LIFT_SPEED": {"type": "float", "required": False},
+    "SAMPLES": {"type": "int", "required": False},
+    "SAMPLE_RETRACT_DIST": {"type": "float", "required": False},
+    "SAMPLES_TOLERANCE": {"type": "float", "required": False},
+    "SAMPLES_TOLERANCE_RETRIES": {"type": "int", "required": False},
+    "SAMPLES_RESULT": {"type": "string", "required": False},
+}
+
+# Params additionally read by ProbePointsHelper.start_probe()
+PROBE_POINTS_HELPER_PARAMS = dict(
+    PROBE_PARAMS,
+    METHOD={"type": "string", "default": "automatic"},
+    HORIZONTAL_MOVE_Z={"type": "float", "required": False},
+)
+
 # Helper to implement common probing commands
 class ProbeCommandHelper:
     def __init__(self, config, probe, query_endstop=None,
@@ -85,15 +104,7 @@ class ProbeCommandHelper:
         self.last_state = res
         gcmd.respond_info("probe: %s" % (["open", "TRIGGERED"][not not res],))
     cmd_PROBE_help = "Probe Z-height at current XY position"
-    cmd_PROBE_params = {
-        "PROBE_SPEED": {"type": "float", "required": False},
-        "LIFT_SPEED": {"type": "float", "required": False},
-        "SAMPLES": {"type": "int", "required": False},
-        "SAMPLE_RETRACT_DIST": {"type": "float", "required": False},
-        "SAMPLES_TOLERANCE": {"type": "float", "required": False},
-        "SAMPLES_TOLERANCE_RETRIES": {"type": "int", "required": False},
-        "SAMPLES_RESULT": {"type": "string", "required": False},
-    }
+    cmd_PROBE_params = dict(PROBE_PARAMS)
     def cmd_PROBE(self, gcmd):
         pos = run_single_probe(self.probe, gcmd)
         gcmd.respond_info("Result: at %.3f,%.3f estimate contact at z=%.6f"
@@ -116,16 +127,8 @@ class ProbeCommandHelper:
         configfile = self.printer.lookup_object('configfile')
         configfile.set(self.name, 'z_offset', "%.3f" % (z_offset,))
     cmd_PROBE_CALIBRATE_help = "Calibrate the probe's z_offset"
-    cmd_PROBE_CALIBRATE_params = {
-        "PROBE_SPEED": {"type": "float", "required": False},
-        "LIFT_SPEED": {"type": "float", "required": False},
-        "SAMPLES": {"type": "int", "required": False},
-        "SAMPLE_RETRACT_DIST": {"type": "float", "required": False},
-        "SAMPLES_TOLERANCE": {"type": "float", "required": False},
-        "SAMPLES_TOLERANCE_RETRIES": {"type": "int", "required": False},
-        "SAMPLES_RESULT": {"type": "string", "required": False},
-        "SPEED": {"type": "float", "default": 5.0},
-    }
+    cmd_PROBE_CALIBRATE_params = dict(
+        PROBE_PARAMS, SPEED={"type": "float", "default": 5.0})
     def cmd_PROBE_CALIBRATE(self, gcmd):
         manual_probe.verify_no_manual_probe(self.printer)
         params = self.probe.get_probe_params(gcmd)
@@ -144,15 +147,8 @@ class ProbeCommandHelper:
         manual_probe.ManualProbeHelper(self.printer, gcmd,
                                        self.probe_calibrate_finalize)
     cmd_PROBE_ACCURACY_help = "Probe Z-height accuracy at current XY position"
-    cmd_PROBE_ACCURACY_params = {
-        "SAMPLES": {"type": "int", "default": 10},
-        "PROBE_SPEED": {"type": "float", "required": False},
-        "LIFT_SPEED": {"type": "float", "required": False},
-        "SAMPLE_RETRACT_DIST": {"type": "float", "required": False},
-        "SAMPLES_TOLERANCE": {"type": "float", "required": False},
-        "SAMPLES_TOLERANCE_RETRIES": {"type": "int", "required": False},
-        "SAMPLES_RESULT": {"type": "string", "required": False},
-    }
+    cmd_PROBE_ACCURACY_params = dict(
+        PROBE_PARAMS, SAMPLES={"type": "int", "default": 10})
     def cmd_PROBE_ACCURACY(self, gcmd):
         params = self.probe.get_probe_params(gcmd)
         sample_count = gcmd.get_int("SAMPLES", 10, minval=1)
@@ -450,19 +446,6 @@ class ProbeOffsetsHelper:
 ######################################################################
 # Tools for utilizing the probe
 ######################################################################
-
-# Parameters read directly by ProbePointsHelper.start_probe() below.
-# Shared by every command that delegates its probing to start_probe()
-# (Z_TILT_ADJUST, QUAD_GANTRY_LEVEL, SCREWS_TILT_CALCULATE,
-# BED_TILT_CALIBRATE, DELTA_CALIBRATE, and so on) - those commands each
-# list these same entries in their own cmd_XXX_params (a dict-unpacking
-# merge here would defeat the static literal-dict check in
-# scripts/check_gcode_params.py, so it is spelled out at each call site
-# instead).
-PROBE_POINTS_HELPER_PARAMS = {
-    "METHOD": {"type": "string", "default": "automatic"},
-    "HORIZONTAL_MOVE_Z": {"type": "float", "required": False},
-}
 
 # Helper code that can probe a series of points and report the
 # position at each point.

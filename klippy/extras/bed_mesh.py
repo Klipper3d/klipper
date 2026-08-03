@@ -652,22 +652,20 @@ class BedMeshCalibrate:
             "rapid_path": list(self.probe_mgr.iter_rapid_path())
         }
     cmd_BED_MESH_CALIBRATE_help = "Perform Mesh Bed Leveling"
-    cmd_BED_MESH_CALIBRATE_params = {
-        "PROFILE": {"type": "string", "default": "default"},
-        "MESH_RADIUS": {"type": "float", "required": False},
-        "MESH_ORIGIN": {"type": "string", "required": False},
-        "ROUND_PROBE_COUNT": {"type": "int", "required": False},
-        "MESH_MIN": {"type": "string", "required": False},
-        "MESH_MAX": {"type": "string", "required": False},
-        "PROBE_COUNT": {"type": "string", "required": False},
-        "MESH_PPS": {"type": "string", "required": False},
-        "ALGORITHM": {"type": "string", "required": False},
-        "ADAPTIVE": {"type": "int", "default": 0},
-        "ADAPTIVE_MARGIN": {"type": "float", "required": False},
-        "METHOD": {"type": "string", "default": "automatic"},
-        "HORIZONTAL_MOVE_Z": {"type": "float", "required": False},
-        "SCAN_SPEED": {"type": "float", "required": False},
-    }
+    cmd_BED_MESH_CALIBRATE_params = dict(
+        probe.PROBE_POINTS_HELPER_PARAMS,
+        PROFILE={"type": "string", "default": "default"},
+        MESH_RADIUS={"type": "float", "required": False},
+        MESH_ORIGIN={"type": "string", "required": False},
+        ROUND_PROBE_COUNT={"type": "int", "required": False},
+        MESH_MIN={"type": "string", "required": False},
+        MESH_MAX={"type": "string", "required": False},
+        PROBE_COUNT={"type": "string", "required": False},
+        MESH_PPS={"type": "string", "required": False},
+        ALGORITHM={"type": "string", "required": False},
+        ADAPTIVE={"type": "int", "default": 0},
+        ADAPTIVE_MARGIN={"type": "float", "required": False},
+        SCAN_SPEED={"type": "float", "required": False})
     def cmd_BED_MESH_CALIBRATE(self, gcmd):
         self._profile_name = gcmd.get('PROFILE', "default")
         if not self._profile_name.strip():
