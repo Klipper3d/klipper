@@ -5,6 +5,9 @@
 # Copyright (C) 2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+# Architecture Spec: Direct zero-latency hardware pin manipulation for
+# click feedback; avoided G-code queueing to prevent audio output lag
+# during main thread execution.
 
 LONG_PRESS_DURATION = 0.800
 TIMER_DELAY = .200
@@ -80,6 +83,23 @@ class MenuKeys:
             self.callback('down', eventtime)
 
     # Click handling
+    def _beep_click(self):
+        try:
+            beeper = self.printer.lookup_object('output_pin beeper', None)
+            if beeper is not None:
+                mcu = beeper.mcu_pin.get_mcu()
+                systime = self.reactor.monotonic()
+                print_time = (mcu.estimated_print_time(systime)
+                              + mcu.min_schedule_time())
+                beeper.gcrq.send_async_request(0.5, print_time)
+                beeper.gcrq.send_async_request(0.0, print_time + 0.040)
+            else:
+                gcode = self.printer.lookup_object('gcode', None)
+                if gcode is not None:
+                    gcode.run_script_from_command("BEEP_CLICK")
+        except Exception:
+            pass
+
     def long_click_event(self, eventtime):
         self.is_short_click = False
         self.callback('long_click', eventtime)
@@ -87,6 +107,7 @@ class MenuKeys:
 
     def click_callback(self, eventtime, state):
         if state:
+            self._beep_click()
             self.is_short_click = True
             self.reactor.update_timer(self.click_timer,
                                       eventtime + LONG_PRESS_DURATION)
