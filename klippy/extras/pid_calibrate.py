@@ -41,12 +41,16 @@ class PIDCalibrate:
         if calibrate.check_busy(0., 0., 0.):
             raise gcmd.error("pid_calibrate interrupted")
         # Log and report results
-        Kp, Ki, Kd = calibrate.calc_final_pid()
-        logging.info("Autotune: final: Kp=%f Ki=%f Kd=%f", Kp, Ki, Kd)
+        algo = gcmd.get('ALGORITHM', 'classic-zn').strip().lower()
+        Kp, Ki, Kd = calibrate.calc_final_pid(algo)
+        logging.info("Autotune (%s): final: Kp=%f Ki=%f Kd=%f",
+                     algo, Kp, Ki, Kd)
         gcmd.respond_info(
-            "PID parameters: pid_Kp=%.3f pid_Ki=%.3f pid_Kd=%.3f\n"
-            "The SAVE_CONFIG command will update the printer config file\n"
-            "with these parameters and restart the printer." % (Kp, Ki, Kd))
+            "PID parameters (%s): "
+            "pid_Kp=%.3f pid_Ki=%.3f pid_Kd=%.3f\n"
+            "The SAVE_CONFIG command will update the printer config "
+            "file\nwith these parameters and restart the printer." % (
+                algo, Kp, Ki, Kd))
         # Store results for SAVE_CONFIG
         cfgname = heater.get_name()
         configfile = self.printer.lookup_object('configfile')
@@ -116,7 +120,7 @@ class ControlAutoTune:
         if len(self.peaks) < 4:
             return
         self.calc_pid(len(self.peaks)-1)
-    def calc_pid(self, pos):
+    def calc_pid(self, pos, algo='classic-zn'):
         temp_diff = self.peaks[pos][1] - self.peaks[pos-1][1]
         time_diff = self.peaks[pos][0] - self.peaks[pos-2][0]
         # Use Astrom-Hagglund method to estimate Ku and Tu
@@ -124,20 +128,44 @@ class ControlAutoTune:
         power_amplitude = .5 * self.heater_max_power
         Ku = 4. * power_amplitude / (math.pi * amplitude)
         Tu = time_diff
-        # Use Ziegler-Nichols method to generate PID parameters
-        Ti = 0.5 * Tu
-        Td = 0.125 * Tu
-        Kp = 0.6 * Ku * heaters.PID_PARAM_BASE
+
+        if algo == 'classic-zn':
+            # Original 1942 Ziegler-Nichols (25% Overshoot)
+            Ti = 0.5 * Tu
+            Td = 0.125 * Tu
+            Kp = 0.6 * Ku * heaters.PID_PARAM_BASE
+        elif algo == 'tyreus-luyben':
+            # Tyreus-Luyben (Conservative, zero overshoot)
+            Ti = 2.2 * Tu
+            Td = Tu / 6.3
+            Kp = 0.31 * Ku * heaters.PID_PARAM_BASE
+        elif algo == 'no-overshoot':
+            # Pesen No-Overshoot method
+            Ti = 0.5 * Tu
+            Td = 0.33 * Tu
+            Kp = 0.2 * Ku * heaters.PID_PARAM_BASE
+        elif algo == 'fast':
+            # Fast response tuning (High Kp, low Td)
+            Ti = 0.4 * Tu
+            Td = 0.04 * Tu
+            Kp = 1.5 * Ku * heaters.PID_PARAM_BASE
+        else:
+            # Default to Ziegler-Nichols
+            Ti = 0.5 * Tu
+            Td = 0.125 * Tu
+            Kp = 0.6 * Ku * heaters.PID_PARAM_BASE
+
         Ki = Kp / Ti
         Kd = Kp * Td
-        logging.info("Autotune: raw=%f/%f Ku=%f Tu=%f  Kp=%f Ki=%f Kd=%f",
-                     temp_diff, self.heater_max_power, Ku, Tu, Kp, Ki, Kd)
+        logging.info("Autotune (%s): raw=%f/%f Ku=%f Tu=%f  Kp=%f Ki=%f Kd=%f",
+                     algo, temp_diff, self.heater_max_power, Ku, Tu, Kp, Ki, Kd)
         return Kp, Ki, Kd
-    def calc_final_pid(self):
+
+    def calc_final_pid(self, algo='classic-zn'):
         cycle_times = [(self.peaks[pos][0] - self.peaks[pos-2][0], pos)
                        for pos in range(4, len(self.peaks))]
         midpoint_pos = sorted(cycle_times)[len(cycle_times)//2][1]
-        return self.calc_pid(midpoint_pos)
+        return self.calc_pid(midpoint_pos, algo)
     # Offline analysis helper
     def write_file(self, filename):
         pwm = ["pwm: %.3f %.3f" % (time, value)
