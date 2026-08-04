@@ -6,11 +6,11 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, os, ast
-from . import aip31068_spi, hd44780, hd44780_spi, st7920, uc1701, menu
+from . import (aip31068_spi, hd44780, hd44780_spi, hd44780_i2c,
+               st7920, uc1701, menu)
 
 # Normal time between each screen redraw
 REDRAW_TIME = 0.500
-# Minimum time between screen redraws
 REDRAW_MIN_TIME = 0.100
 
 LCD_chips = {
@@ -18,6 +18,7 @@ LCD_chips = {
     'hd44780': hd44780.HD44780, 'uc1701': uc1701.UC1701,
     'ssd1306': uc1701.SSD1306, 'sh1106': uc1701.SH1106,
     'hd44780_spi': hd44780_spi.hd44780_spi,
+    'hd44780_i2c': hd44780_i2c.hd44780_i2c,
     'aip31068_spi':aip31068_spi.aip31068_spi
 }
 
