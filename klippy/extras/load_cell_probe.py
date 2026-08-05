@@ -549,7 +549,8 @@ class LCBestFit:
                     guess_z = (best_z + max_z) * .5
                 else:
                     guess_z = (min_z + best_z) * .5
-                guess_err, guess_coeffs = self._calc_least_squares(sample_set, guess_z)
+                guess_err, guess_coeffs = \
+                    self._calc_least_squares(sample_set, guess_z)
                 if guess_err < best_err:
                     if guess_z > best_z:
                         min_z = best_z
