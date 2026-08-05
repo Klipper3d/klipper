@@ -29,7 +29,8 @@ realtime_setup(void)
     sp.sched_priority = sched_get_priority_max(SCHED_FIFO) / 2;
     int ret = sched_setscheduler(0, SCHED_FIFO, &sp);
     if (ret < 0) {
-        report_errno("sched_setscheduler (ignored)", ret);
+        report_errno("sched_setscheduler", ret);
+        return -1;
     }
     // Lock ourselves into memory
     ret = mlockall(MCL_CURRENT | MCL_FUTURE);
