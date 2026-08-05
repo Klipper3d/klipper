@@ -191,6 +191,9 @@ class TMCErrorCheck:
             return
         self.printer.get_reactor().unregister_timer(self.check_timer)
         self.check_timer = None
+    def get_query_slot(self):
+        oid = self.mcu_tmc.get_oid()
+        return oid * 0.01
     def start_checks(self):
         if self.check_timer is not None:
             self.stop_checks()
@@ -201,8 +204,9 @@ class TMCErrorCheck:
                                                  try_clear=self.clear_gstat)
         reactor = self.printer.get_reactor()
         curtime = reactor.monotonic()
+        slot = self.get_query_slot()
         self.check_timer = reactor.register_timer(self._do_periodic_check,
-                                                  curtime + 1.)
+                                                  curtime + 1. + slot)
         if cleared_flags:
             reset_mask = self.fields.all_fields["GSTAT"]["reset"]
             if cleared_flags & reset_mask:
