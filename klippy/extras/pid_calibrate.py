@@ -68,12 +68,11 @@ class ControlAutoTune:
         self.pwm_samples = []
         self.temp_samples = []
     # Heater control
-    def set_pwm(self, read_time, value):
+    def record_pwm(self, read_time, value):
         if value != self.last_pwm:
             self.pwm_samples.append(
                 (read_time + self.heater.get_pwm_delay(), value))
             self.last_pwm = value
-        self.heater.set_pwm(read_time, value)
     def temperature_update(self, read_time, temp, target_temp):
         self.temp_samples.append((read_time, temp))
         # Check if the temperature has crossed the target and
@@ -88,15 +87,17 @@ class ControlAutoTune:
             self.heater.alter_target(self.calibrate_temp)
         # Check if this temperature is a peak and record it if so
         if self.heating:
-            self.set_pwm(read_time, self.heater_max_power)
+            self.record_pwm(read_time, self.heater_max_power)
             if temp < self.peak:
                 self.peak = temp
                 self.peak_time = read_time
+            return self.heater_max_power
         else:
-            self.set_pwm(read_time, 0.)
+            self.record_pwm(read_time, 0.)
             if temp > self.peak:
                 self.peak = temp
                 self.peak_time = read_time
+            return 0.
     def check_busy(self, eventtime, smoothed_temp, target_temp):
         if self.heating or len(self.peaks) < 12:
             return True
