@@ -138,92 +138,95 @@ class ConfigWrapper:
 # Config file parsing (with include file support)
 ######################################################################
 
-class ConfigFileReader:
-    def read_config_file(self, filename):
-        try:
-            f = open(filename, 'r')
+def read_config_file(filename):
+    try:
+        with open(filename, 'r') as f:
             data = f.read()
-            f.close()
-        except:
-            msg = "Unable to open config file %s" % (filename,)
-            logging.exception(msg)
-            raise error(msg)
-        return data.replace('\r\n', '\n')
-    def build_config_string(self, fileconfig):
-        sfile = io.StringIO()
-        fileconfig.write(sfile)
-        return sfile.getvalue().strip()
-    def append_fileconfig(self, fileconfig, data, filename):
-        if not data:
-            return
-        # Strip trailing comments
-        lines = data.split('\n')
-        for i, line in enumerate(lines):
-            pos = line.find('#')
-            if pos >= 0:
-                lines[i] = line[:pos]
-        sbuffer = io.StringIO('\n'.join(lines))
-        if sys.version_info.major >= 3:
-            fileconfig.read_file(sbuffer, filename)
+    except:
+        msg = "Unable to open config file %s" % (filename,)
+        logging.exception(msg)
+        raise error(msg)
+    return data.replace('\r\n', '\n')
+
+def build_config_string(fileconfig):
+    sfile = io.StringIO()
+    fileconfig.write(sfile)
+    return sfile.getvalue().strip()
+
+def append_fileconfig(fileconfig, data, filename):
+    if not data:
+        return
+    # Strip trailing comments
+    lines = data.split('\n')
+    for i, line in enumerate(lines):
+        pos = line.find('#')
+        if pos >= 0:
+            lines[i] = line[:pos]
+    sbuffer = io.StringIO('\n'.join(lines))
+    if sys.version_info.major >= 3:
+        fileconfig.read_file(sbuffer, filename)
+    else:
+        fileconfig.readfp(sbuffer, filename)
+
+def _create_fileconfig():
+    if sys.version_info.major >= 3:
+        fileconfig = configparser.RawConfigParser(
+            strict=False, inline_comment_prefixes=(';', '#'))
+    else:
+        fileconfig = configparser.RawConfigParser()
+    return fileconfig
+
+def build_fileconfig(data, filename):
+    fileconfig = _create_fileconfig()
+    append_fileconfig(fileconfig, data, filename)
+    return fileconfig
+
+def _resolve_include(source_filename, include_spec, fileconfig, visited):
+    dirname = os.path.dirname(source_filename)
+    include_spec = include_spec.strip()
+    include_glob = os.path.join(dirname, include_spec)
+    include_filenames = glob.glob(include_glob)
+    if not include_filenames and not glob.has_magic(include_glob):
+        # Empty set is OK if wildcard but not for direct file reference
+        raise error("Include file '%s' does not exist" % (include_glob,))
+    include_filenames.sort()
+    for include_filename in include_filenames:
+        include_data = read_config_file(include_filename)
+        _parse_config(include_data, include_filename, fileconfig, visited)
+    return include_filenames
+
+def _parse_config(data, filename, fileconfig, visited):
+    path = os.path.abspath(filename)
+    if path in visited:
+        raise error("Recursive include of config file '%s'" % filename)
+    visited.add(path)
+    lines = data.split('\n')
+    # Buffer lines between includes and parse as a unit so that overrides
+    # in includes apply linearly as they do within a single file
+    buf = []
+    for line in lines:
+        # Strip trailing comment
+        pos = line.find('#')
+        if pos >= 0:
+            line = line[:pos]
+        # Process include or buffer line
+        mo = configparser.RawConfigParser.SECTCRE.match(line)
+        header = mo and mo.group('header')
+        if header and header.startswith('include '):
+            append_fileconfig(fileconfig, '\n'.join(buf), filename)
+            del buf[:]
+            include_spec = header[8:].strip()
+            _resolve_include(filename, include_spec, fileconfig,
+                                  visited)
         else:
-            fileconfig.readfp(sbuffer, filename)
-    def _create_fileconfig(self):
-        if sys.version_info.major >= 3:
-            fileconfig = configparser.RawConfigParser(
-                strict=False, inline_comment_prefixes=(';', '#'))
-        else:
-            fileconfig = configparser.RawConfigParser()
-        return fileconfig
-    def build_fileconfig(self, data, filename):
-        fileconfig = self._create_fileconfig()
-        self.append_fileconfig(fileconfig, data, filename)
-        return fileconfig
-    def _resolve_include(self, source_filename, include_spec, fileconfig,
-                         visited):
-        dirname = os.path.dirname(source_filename)
-        include_spec = include_spec.strip()
-        include_glob = os.path.join(dirname, include_spec)
-        include_filenames = glob.glob(include_glob)
-        if not include_filenames and not glob.has_magic(include_glob):
-            # Empty set is OK if wildcard but not for direct file reference
-            raise error("Include file '%s' does not exist" % (include_glob,))
-        include_filenames.sort()
-        for include_filename in include_filenames:
-            include_data = self.read_config_file(include_filename)
-            self._parse_config(include_data, include_filename, fileconfig,
-                               visited)
-        return include_filenames
-    def _parse_config(self, data, filename, fileconfig, visited):
-        path = os.path.abspath(filename)
-        if path in visited:
-            raise error("Recursive include of config file '%s'" % (filename))
-        visited.add(path)
-        lines = data.split('\n')
-        # Buffer lines between includes and parse as a unit so that overrides
-        # in includes apply linearly as they do within a single file
-        buf = []
-        for line in lines:
-            # Strip trailing comment
-            pos = line.find('#')
-            if pos >= 0:
-                line = line[:pos]
-            # Process include or buffer line
-            mo = configparser.RawConfigParser.SECTCRE.match(line)
-            header = mo and mo.group('header')
-            if header and header.startswith('include '):
-                self.append_fileconfig(fileconfig, '\n'.join(buf), filename)
-                del buf[:]
-                include_spec = header[8:].strip()
-                self._resolve_include(filename, include_spec, fileconfig,
-                                      visited)
-            else:
-                buf.append(line)
-        self.append_fileconfig(fileconfig, '\n'.join(buf), filename)
-        visited.remove(path)
-    def build_fileconfig_with_includes(self, data, filename):
-        fileconfig = self._create_fileconfig()
-        self._parse_config(data, filename, fileconfig, set())
-        return fileconfig
+            buf.append(line)
+    append_fileconfig(fileconfig, '\n'.join(buf), filename)
+    visited.remove(path)
+
+def build_fileconfig_with_includes(data, filename):
+    fileconfig = _create_fileconfig()
+    _parse_config(data, filename, fileconfig, set())
+    return fileconfig
 
 
 ######################################################################
@@ -294,16 +297,15 @@ class ConfigAutoSave:
         return "\n".join(lines)
     def load_main_config(self):
         filename = self.printer.get_start_args()['config_file']
-        cfgrdr = ConfigFileReader()
-        data = cfgrdr.read_config_file(filename)
+        data = read_config_file(filename)
         regular_data, autosave_data = self._find_autosave_data(data)
-        regular_fileconfig = cfgrdr.build_fileconfig_with_includes(
+        regular_fileconfig = build_fileconfig_with_includes(
             regular_data, filename)
         autosave_data = self._strip_duplicates(autosave_data,
                                                regular_fileconfig)
-        self.fileconfig = cfgrdr.build_fileconfig(autosave_data, filename)
-        cfgrdr.append_fileconfig(regular_fileconfig,
-                                 autosave_data, '*AUTOSAVE*')
+        self.fileconfig = build_fileconfig(autosave_data, filename)
+        append_fileconfig(regular_fileconfig,
+                          autosave_data, '*AUTOSAVE*')
         return regular_fileconfig, self.fileconfig
     def get_status(self, eventtime):
         return {'save_config_pending': self.save_config_pending,
@@ -347,8 +349,7 @@ class ConfigAutoSave:
         if not self.fileconfig.sections():
             return
         # Create string containing autosave data
-        cfgrdr = ConfigFileReader()
-        autosave_data = cfgrdr.build_config_string(self.fileconfig)
+        autosave_data = build_config_string(self.fileconfig)
         lines = [('#*# ' + l).strip()
                  for l in autosave_data.split('\n')]
         lines.insert(0, "\n" + AUTOSAVE_HEADER.rstrip())
@@ -357,7 +358,7 @@ class ConfigAutoSave:
         # Read in and validate current config file
         cfgname = self.printer.get_start_args()['config_file']
         try:
-            data = cfgrdr.read_config_file(cfgname)
+            data = read_config_file(cfgname)
         except error as e:
             msg = "Unable to read existing config on SAVE_CONFIG"
             logging.exception(msg)
@@ -371,7 +372,7 @@ class ConfigAutoSave:
                 "Existing config autosave is corrupted."
                 " Can't complete SAVE_CONFIG")
         try:
-            regular_fileconfig = cfgrdr.build_fileconfig_with_includes(
+            regular_fileconfig = build_fileconfig_with_includes(
                 new_regular_data, cfgname)
         except error as e:
             msg = "Unable to parse existing config on SAVE_CONFIG"
@@ -389,9 +390,8 @@ class ConfigAutoSave:
         logging.info("SAVE_CONFIG to '%s' (backup in '%s')",
                      cfgname, backup_name)
         try:
-            f = open(temp_name, 'w')
-            f.write(data)
-            f.close()
+            with open(temp_name, 'w') as f:
+                f.write(data)
             os.rename(cfgname, backup_name)
             os.rename(temp_name, cfgname)
         except:
@@ -467,9 +467,8 @@ class PrinterConfig:
     def get_printer(self):
         return self.printer
     def read_config(self, filename):
-        cfgrdr = ConfigFileReader()
-        data = cfgrdr.read_config_file(filename)
-        fileconfig = cfgrdr.build_fileconfig(data, filename)
+        data = read_config_file(filename)
+        fileconfig = build_fileconfig(data, filename)
         return ConfigWrapper(self.printer, fileconfig, {}, 'printer')
     def read_main_config(self):
         fileconfig, autosave_fileconfig = self.autosave.load_main_config()
@@ -480,10 +479,11 @@ class PrinterConfig:
         self._build_status_config(config)
         return config
     def log_config(self, config):
-        cfgrdr = ConfigFileReader()
-        lines = ["===== Config file =====",
-                 cfgrdr.build_config_string(config.fileconfig),
-                 "======================="]
+        lines = [
+            "===== Config file =====",
+            build_config_string(config.fileconfig),
+            "======================="
+        ]
         self.printer.set_rollover_info("config", "\n".join(lines))
     def check_unused_options(self, config):
         self.validate.check_unused(config.fileconfig)
