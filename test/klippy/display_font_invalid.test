@@ -1,0 +1,8 @@
+# Test case for invalid display font detection
+DICTIONARY atmega2560.dict
+CONFIG display_font_invalid.cfg
+SHOULD_FAIL
+
+STATUS
+HELP
+RESTART
