@@ -439,7 +439,6 @@ class TappingMove:
         toolhead.manual_move(lift_pos, params['lift_speed'])
 
         # Collect samples until the end of the ascent
-        toolhead.flush_step_generation()
         move_end = toolhead.get_last_move_time()
         results = collector.collect_until(move_end)
         samples = check_sensor_errors(results, self._printer)
@@ -475,18 +474,43 @@ class TappingMove:
                s[0] <= ascent_start_time + ASCENT_DATA_WINDOW_SECONDS:
                 data.append((s[1], _lookup_z_pos(toolhead, s[0])))
 
+        if self._load_cell_probing_move._mcu.is_fileoutput():
+            # In debugging mode: inject dummy data
+            data = [(0.0, 0.0), (10.0, 0.1), (20.0, 0.2), (25.0, 0.3),
+                    (25.0, 0.4), (25.0, 0.5)]
+
         # Log ascent data in JSON format for easy debugging
-        logging.info("Load cell probe ascent data: %s", json.dumps(data))
+        #logging.info("Load cell probe ascent data: %s", json.dumps(data))
+
+        # Check that we have enough samples early to avoid exceptions
+        if len(data) < 2*FIT_MIN_POINTS:
+            raise self._printer.command_error(
+                "Insufficient ascent samples (%d total, need >= %d "
+                "each) for piecewise fit" % (len(data), 2*FIT_MIN_POINTS))
 
         # Perform the actual fit
         z_contact, below_count, above_count, depress_slope = \
             self._best_fit.find_best_fit(data)
+
+        # We require at least 3 samples on each side of the split point to
+        # ensure a good fit and precise tare compensation.
+        if below_count < FIT_MIN_POINTS or above_count < FIT_MIN_POINTS:
+            raise self._printer.command_error(
+                "Insufficient ascent samples (%d below, %d above, need >= %d "
+                "each) for piecewise fit" % (below_count, above_count,
+                                             FIT_MIN_POINTS))
 
         gcmd.respond_info("Load cell probe fit: n_below=%d n_above=%d"
                           " z_contact=%.4f raw=%.4f delta=%.4f"
                           " depress_slope=%.4f" % (
                           below_count, above_count, z_contact, raw_z,
                           raw_z - z_contact, depress_slope))
+
+        if self._load_cell_probing_move._mcu.is_fileoutput():
+            # In debugging mode: check fit result
+            if abs(z_contact - 0.25) > 0.01:
+                raise self._printer.command_error(
+                    "Load cell probe fit result incorrect")
 
         return z_contact
 
@@ -526,12 +550,6 @@ class LCBestFit:
         return rel_err, coeffs
 
     def find_best_fit(self, data):
-        if len(data) < 2*FIT_MIN_POINTS:
-            # Check that we have enough samples early to avoid exceptions
-            raise self._printer.command_error(
-                "Insufficient ascent samples (%d total, need >= %d "
-                "each) for piecewise fit" % (len(data), 2*FIT_MIN_POINTS))
-
         # Change base of grams/z measurements to improve numerical stability
         base_z = .5 * (data[0][1] + data[-1][1])
         base_grams = .5 * (data[0][0] + data[-1][0])
@@ -571,13 +589,6 @@ class LCBestFit:
         # Count number of samples below the estimated z_contact
         n_below = len(sorted([s for s in samples if s[0] <= est_z],
                        key=lambda s: abs(s[0] - est_z)))
-        if n_below < FIT_MIN_POINTS or len(samples) - n_below < FIT_MIN_POINTS:
-            # We require at least 3 samples on each side of the split point to
-            # ensure a good fit and precise tare compensation.
-            raise self._printer.command_error(
-                "Insufficient ascent samples (%d below, %d above, need >= %d "
-                "each) for piecewise fit" % (n_below, len(samples) - n_below,
-                                             FIT_MIN_POINTS))
         depress_slope = coeffs[1][0]
 
         return base_z + est_z, n_below, len(samples) - n_below, depress_slope
