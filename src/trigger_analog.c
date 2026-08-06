@@ -89,8 +89,11 @@ static int
 check_trigger(struct trigger_analog *ta, uint32_t time, int32_t value)
 {
     switch (ta->trigger_type) {
-    case TT_ABS_GE:
-        return abs(value) >= ta->trigger_value;
+    case TT_ABS_GE: {
+        // Note: stdlib's abs() is int(16) on AVR; use a 32-bit safe form.
+        int32_t mag = value < 0 ? -value : value;
+        return mag >= ta->trigger_value;
+    }
     case TT_GT:
         return value > ta->trigger_value;
     case TT_DIFF_PEAK_GT:
