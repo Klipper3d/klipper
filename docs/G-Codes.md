@@ -536,6 +536,14 @@ depend on the sensor type defined in the configuration.
 filament sensor on/off. If ENABLE is set to 0, the filament sensor
 will be disabled, if set to 1 it is enabled.
 
+#### SET_PRINT_FEATURE
+`SET_PRINT_FEATURE FEATURE=<feature_code>`: Notifies the runout sensor of
+the current printing feature when combined with `runout_distance`. This
+allows pausing to be safely deferred until the toolhead reaches an
+infill area. `<feature_code>` must be `1` (Outer Wall), `2` (Infill),
+`3` (Bridge), or `0` (Other). This command is typically injected by the
+slicer on role changes.
+
 ### [firmware_retraction]
 
 The following standard G-Code commands are available when the
