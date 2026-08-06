@@ -5,7 +5,6 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include <stdlib.h> // abs
 #include "basecmd.h" // oid_alloc
 #include "board/io.h" // writeb
 #include "board/misc.h" // timer_read_time
@@ -90,7 +89,8 @@ check_trigger(struct trigger_analog *ta, uint32_t time, int32_t value)
 {
     switch (ta->trigger_type) {
     case TT_ABS_GE:
-        return abs(value) >= ta->trigger_value;
+        uint32_t abs_value = value < 0 ? -value : value;
+        return abs_value >= ta->trigger_value;
     case TT_GT:
         return value > ta->trigger_value;
     case TT_DIFF_PEAK_GT:
