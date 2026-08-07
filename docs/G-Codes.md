@@ -1275,6 +1275,26 @@ starts a tool that can calibrate the probe's "tap_threshold"
 parameter. See the
 [eddy probe documentation](Eddy_Probe.md#tap-calibration) for details.
 
+#### PROBE_EDDY_CURRENT_QUERY
+`PROBE_EDDY_CURRENT_QUERY CHIP=<config_name> [SAMPLES=<count>]`
+`[SAMPLE_TIME=<seconds>]`: Report the current eddy frequency and
+corresponding calibrated height at the current toolhead position.
+The command uses the live eddy sensor stream and reports the median
+frequency from the requested sample window. `SAMPLES` defaults to 40
+and `SAMPLE_TIME` defaults to 0.100 seconds. If the measured point is
+outside the calibrated range, the command returns an error with a
+hint on how to move back into range.
+
+#### PROBE_EDDY_CURRENT_ESTIMATE_BACKLASH
+`PROBE_EDDY_CURRENT_ESTIMATE_BACKLASH CHIP=<config_name>`
+`[TARGET_Z=<mm>] [TRAVEL=<mm>] [SPEED=<mm/s>] [CYCLES=<count>]`
+`[SAMPLES=<count>] [SAMPLE_TIME=<seconds>]`: Estimate Z backlash by
+repeatedly approaching the same target Z from above and below. The
+command prints one line per cycle and then an aggregate summary with
+`median`, `mad`, `min`, and `max` statistics. Defaults are:
+`TRAVEL=0.500`, `SPEED=10.0`, `CYCLES=5`, `SAMPLES=20`, and
+`SAMPLE_TIME=0.100`.
+
 #### LDC_CALIBRATE_DRIVE_CURRENT
 `LDC_CALIBRATE_DRIVE_CURRENT CHIP=<config_name>` This tool will
 calibrate the ldc1612 DRIVE_CURRENT0 register. Prior to using this
