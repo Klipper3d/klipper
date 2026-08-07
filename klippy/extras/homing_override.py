@@ -15,8 +15,27 @@ class HomingOverride:
         self.in_script = False
         self.printer.load_object(config, 'homing')
         self.gcode = self.printer.lookup_object('gcode')
+        self.rename_existing = config.get('rename_existing', None)
         self.prev_G28 = self.gcode.register_command("G28", None)
+        if self.rename_existing is not None:
+            # Verify that the alias is also a traditional G-Code command
+            if not self.gcode.is_traditional_gcode(self.rename_existing):
+                raise config.error("Homing override: rename command '%s' is"
+                                   "not a traditional G-Code command"
+                                   % self.rename_existing)
+            # Register connect handler to rename the existing command
+            self.printer.register_event_handler("klippy:connect",
+                                                self.handle_connect)
+
+        else:
+            self.gcode.register_command("G28", self.cmd_G28)
+
+    def handle_connect(self):
+        pdesc = "Renamed builtin of 'G28'"
+        self.gcode.register_command(self.rename_existing,
+                                    self.prev_G28, desc=pdesc)
         self.gcode.register_command("G28", self.cmd_G28)
+
     def cmd_G28(self, gcmd):
         if self.in_script:
             # Was called recursively - invoke the real G28 command
