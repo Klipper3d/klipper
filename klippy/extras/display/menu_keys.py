@@ -38,6 +38,7 @@ class MenuKeys:
         # Register click button
         self.is_short_click = False
         self.click_timer = self.reactor.register_timer(self.long_click_event)
+        self.beep_timer = self.reactor.register_timer(self._do_beep_click)
         self.register_button(config, 'click_pin', self.click_callback, False)
         # Register other buttons
         self.register_button(config, 'back_pin', self.back_callback)
@@ -65,8 +66,7 @@ class MenuKeys:
 
     # Rotary encoder callbacks
     def encoder_cw_callback(self, eventtime):
-        fast_rate = ((eventtime - self.last_encoder_cw_eventtime)
-                     <= self.encoder_fast_rate)
+        fast_rate = eventtime < self.last_encoder_cw_eventtime + self.encoder_fast_rate
         self.last_encoder_cw_eventtime = eventtime
         if fast_rate:
             self.callback('fast_up', eventtime)
@@ -74,8 +74,7 @@ class MenuKeys:
             self.callback('up', eventtime)
 
     def encoder_ccw_callback(self, eventtime):
-        fast_rate = ((eventtime - self.last_encoder_ccw_eventtime)
-                     <= self.encoder_fast_rate)
+        fast_rate = eventtime < self.last_encoder_ccw_eventtime + self.encoder_fast_rate
         self.last_encoder_ccw_eventtime = eventtime
         if fast_rate:
             self.callback('fast_down', eventtime)
@@ -111,7 +110,7 @@ class MenuKeys:
     def _beep_click(self):
         # Defer beep execution to avoid blocking the main thread
         # and dropping button events during high-speed printing
-        self.reactor.register_timer(self._do_beep_click, self.reactor.NOW)
+        self.reactor.update_timer(self.beep_timer, self.reactor.NOW)
 
     def long_click_event(self, eventtime):
         self.is_short_click = False
