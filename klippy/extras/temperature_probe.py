@@ -209,9 +209,10 @@ class TemperatureProbe:
                 "Estimated Total Thermal Expansion: %.6f"
                 % (self.total_expansion,)
             )
-        self.last_zero_pos = mpresult.bed_z
-        toolhead = self.printer.lookup_object("toolhead")
-        tool_zero_z = toolhead.get_position()[2]
+        # Use the probe result, not the live toolhead position, as the bed
+        # reference: a "tap" probe retracts once contact is made, so the
+        # toolhead no longer sits at the bed height when this runs.
+        self.last_zero_pos = tool_zero_z = mpresult.bed_z
         try:
             last_temp = self._collect_sample(mpresult, tool_zero_z)
         except Exception:
