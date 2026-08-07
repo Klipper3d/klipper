@@ -123,7 +123,8 @@ class ControlAutoTune:
         time_diff = self.peaks[pos][1] - self.peaks[pos-2][1]
         # Use Astrom-Hagglund method to estimate Ku and Tu
         amplitude = .5 * abs(temp_diff)
-        Ku = 4. * self.heater_max_power / (math.pi * amplitude)
+        power_amplitude = .5 * self.heater_max_power
+        Ku = 4. * power_amplitude / (math.pi * amplitude)
         Tu = time_diff
 
         if algo == 'classic-zn':
