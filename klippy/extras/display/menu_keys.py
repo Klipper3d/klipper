@@ -93,8 +93,8 @@ class MenuKeys:
                     # Use systime_to_print_time to bypass motion queue and execute immediately
                     print_time = (mcu.systime_to_print_time(systime)
                                   + mcu.min_schedule_time())
-                except AttributeError:
-                    # Fallback for CI Mock test environments where mcu_pin is absent
+                except Exception:
+                    # Fallback for CI Mock test environments where mcu or timing methods are absent
                     toolhead = self.printer.lookup_object('toolhead')
                     print_time = toolhead.get_last_move_time()
                     
