@@ -29,6 +29,34 @@ sudo cp ./scripts/klipper-mcu.service /etc/systemd/system/
 sudo systemctl enable klipper-mcu.service
 ```
 
+At this point, in some Armbian or Ubuntu arm64 distributions, the path `/tmp/klipper_host_mcu` may not be generated or the `klipper-mcu.service` may fail to start with the error `Got error -1 in sched_setscheduler: (1)Operation not permitted`.
+
+This occurs when the Linux kernel is compiled with `CONFIG_RT_GROUP_SCHED=y`, which enforces real-time scheduling group limits that prevent the host MCU from running in real-time mode.
+
+To verify if this is the issue, check the service status:
+```
+sudo systemctl status klipper-mcu.service
+```
+
+If you see the scheduling error, apply the following fix:
+
+1. Temporarily disable the real-time group limit:
+```
+sudo sysctl -w kernel.sched_rt_runtime_us=-1
+```
+
+2. Make the change persistent across reboots:
+```
+echo "kernel.sched_rt_runtime_us = -1" | sudo tee /etc/sysctl.d/10-disable-rt-group-limit.conf
+```
+
+3. Restart the klipper-mcu service:
+```
+sudo systemctl restart klipper-mcu.service
+```
+
+Note: This issue is specific to certain kernel configurations. Raspberry Pi OS and standard Ubuntu distributions typically do not require this fix.
+
 ## Building the micro-controller code
 
 To compile the Klipper micro-controller code, start by configuring it
