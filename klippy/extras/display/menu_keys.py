@@ -83,28 +83,19 @@ class MenuKeys:
 
     # Click handling
     def _do_beep_click(self, eventtime):
-        try:
-            beeper = self.printer.lookup_object('output_pin beeper', None)
-            if beeper is not None:
-                try:
-                    mcu = beeper.mcu_pin.get_mcu()
-                    systime = self.reactor.monotonic()
-                    # Use systime_to_print_time to bypass motion queue and execute immediately
-                    print_time = (mcu.systime_to_print_time(systime)
-                                  + mcu.min_schedule_time())
-                except Exception:
-                    # Fallback for CI Mock test environments where mcu or timing methods are absent
-                    toolhead = self.printer.lookup_object('toolhead')
-                    print_time = toolhead.get_last_move_time()
-                    
-                beeper.gcrq.send_async_request(0.5, print_time)
-                beeper.gcrq.send_async_request(0.0, print_time + 0.040)
-            else:
-                gcode = self.printer.lookup_object('gcode', None)
-                if gcode is not None:
-                    gcode.run_script_from_command("BEEP_CLICK")
-        except Exception:
-            pass
+        beeper = self.printer.lookup_object('output_pin beeper', None)
+        if beeper is not None:
+            mcu = beeper.mcu_pin.get_mcu()
+            systime = self.reactor.monotonic()
+            # Use systime_to_print_time to bypass motion queue and execute immediately
+            print_time = (mcu.systime_to_print_time(systime)
+                          + mcu.min_schedule_time())
+            beeper.gcrq.send_async_request(0.5, print_time)
+            beeper.gcrq.send_async_request(0.0, print_time + 0.040)
+        else:
+            gcode = self.printer.lookup_object('gcode', None)
+            if gcode is not None:
+                gcode.run_script_from_command("BEEP_CLICK")
         return self.reactor.NEVER
 
     def _beep_click(self):
