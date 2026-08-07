@@ -89,10 +89,10 @@ class MenuKeys:
             if beeper is not None:
                 mcu = beeper.mcu_pin.get_mcu()
                 systime = self.reactor.monotonic()
-                # Add 0.1s buffer to avoid blocking on congested
-                # MCU queues during high-speed printing
+                # Scheduling via reactor timer already prevents menu blocking.
+                # No extra buffer needed here to avoid elongated beep duration.
                 print_time = (mcu.estimated_print_time(systime)
-                              + mcu.min_schedule_time() + 0.100)
+                              + mcu.min_schedule_time())
                 beeper.gcrq.send_async_request(0.5, print_time)
                 beeper.gcrq.send_async_request(0.0, print_time + 0.040)
             else:
