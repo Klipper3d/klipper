@@ -96,6 +96,7 @@ class TemperatureProbe:
         self.last_measurement = (0., 99999999., 0.,)
         # Calibration State
         self._method = "manual"
+        self.tap_lift_dist = 4.
         self.cal_helper = None
         self.next_auto_temp = 99999999.
         self.target_temp = 0
@@ -361,6 +362,8 @@ class TemperatureProbe:
         cur_temp = self.last_measurement[0]
         target_temp = gcmd.get_float("TARGET", above=cur_temp)
         step = gcmd.get_float("STEP", 2., minval=1.0)
+        self.tap_lift_dist = gcmd.get_float("SAMPLE_RETRACT_DIST", 4.,
+                                            above=0.)
         expected_count = int(
             (target_temp - cur_temp) / step + .5
         )
@@ -422,12 +425,17 @@ class TemperatureProbe:
         curpos[0] = self.start_pos[0]
         curpos[1] = self.start_pos[1]
         toolhead.manual_move(curpos, move_speed)
-        curpos[2] = start_z
-        toolhead.manual_move(curpos, probe_speed)
         self.gcode.register_command("ABORT", None)
         if self._method == "tap":
+            # Do not descend back to the resting height, it is only resting_z
+            # above the bed. Start the tap from the same distance the tap
+            # itself retracts by.
+            curpos[2] = self.last_zero_pos + self.tap_lift_dist
+            toolhead.manual_move(curpos, lift_speed)
             self._auto_probe(gcmd)
             return
+        curpos[2] = start_z
+        toolhead.manual_move(curpos, probe_speed)
         manual_probe.ManualProbeHelper(
             self.printer, gcmd, self._manual_probe_finalize
         )
