@@ -1,0 +1,475 @@
+# Printer stepper support
+#
+# Copyright (C) 2016-2025  Kevin O'Connor <kevin@koconnor.net>
+#
+# This file may be distributed under the terms of the GNU GPLv3 license.
+import math, logging, collections
+import chelper
+
+class error(Exception):
+    pass
+
+
+######################################################################
+# Steppers
+######################################################################
+
+MIN_BOTH_EDGE_DURATION = 0.000000500
+MIN_OPTIMIZED_BOTH_EDGE_DURATION = 0.000000150
+MAX_STEPCOMPRESS_ERROR = 0.000025
+
+# Interface to low-level mcu and chelper code
+class MCU_stepper:
+    def __init__(self, config, step_pin_params, dir_pin_params,
+                 rotation_dist, steps_per_rotation,
+                 step_pulse_duration=None, units_in_radians=False):
+        self._name = config.get_name()
+        self._rotation_dist = rotation_dist
+        self._steps_per_rotation = steps_per_rotation
+        self._step_pulse_duration = step_pulse_duration
+        self._units_in_radians = units_in_radians
+        self._step_dist = rotation_dist / steps_per_rotation
+        self._mcu = mcu = step_pin_params['chip']
+        self._oid = mcu.create_oid()
+        mcu.register_config_callback(self._build_config)
+        self._step_pin = step_pin_params['pin']
+        self._invert_step = step_pin_params['invert']
+        printer = mcu.get_printer()
+        if dir_pin_params['chip'] is not mcu:
+            raise printer.config_error(
+                "Stepper dir pin must be on same mcu as step pin")
+        self._dir_pin = dir_pin_params['pin']
+        self._invert_dir = self._orig_invert_dir = dir_pin_params['invert']
+        self._step_both_edge = self._req_step_both_edge = False
+        self._mcu_position_offset = 0.
+        self._reset_cmd_tag = self._get_position_cmd = None
+        self._active_callbacks = []
+        motion_queuing = printer.load_object(config, 'motion_queuing')
+        self._syncemitter = motion_queuing.allocate_syncemitter(mcu, self._name)
+        ffi_main, ffi_lib = chelper.get_ffi()
+        self._stepqueue = ffi_lib.syncemitter_get_stepcompress(
+            self._syncemitter)
+        ffi_lib.stepcompress_set_invert_sdir(self._stepqueue, self._invert_dir)
+        self._stepper_kinematics = None
+        self._itersolve_check_active = ffi_lib.itersolve_check_active
+        self._trapq = ffi_main.NULL
+        printer.register_event_handler('klippy:connect',
+                                       self._query_mcu_position)
+    def get_mcu(self):
+        return self._mcu
+    def get_name(self, short=False):
+        if short and self._name.startswith('stepper'):
+            # Skip an extra symbol after 'stepper'
+            return self._name[8:]
+        return self._name
+    def units_in_radians(self):
+        # Returns true if distances are in radians instead of millimeters
+        return self._units_in_radians
+    def get_pulse_duration(self):
+        return self._step_pulse_duration, self._step_both_edge
+    def setup_default_pulse_duration(self, pulse_duration, step_both_edge):
+        if self._step_pulse_duration is None:
+            self._step_pulse_duration = pulse_duration
+        self._req_step_both_edge = step_both_edge
+    def setup_itersolve(self, alloc_func, *params):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        sk = ffi_main.gc(getattr(ffi_lib, alloc_func)(*params), ffi_lib.free)
+        self.set_stepper_kinematics(sk)
+    def _build_config(self):
+        if self._step_pulse_duration is None:
+            self._step_pulse_duration = .000002
+        invert_step = self._invert_step
+        # Check if can enable "step on both edges"
+        constants = self._mcu.get_constants()
+        ssbe = int(constants.get('STEPPER_STEP_BOTH_EDGE', '0'))
+        sbe = int(constants.get('STEPPER_BOTH_EDGE', '0'))
+        sou = int(constants.get('STEPPER_OPTIMIZED_UNSTEP', '0'))
+        want_both_edges = self._req_step_both_edge
+        if self._step_pulse_duration > MIN_BOTH_EDGE_DURATION:
+            # If user has requested a very large step pulse duration
+            # then disable step on both edges (rise and fall times may
+            # not be symmetric)
+            want_both_edges = False
+        elif sbe and self._step_pulse_duration>MIN_OPTIMIZED_BOTH_EDGE_DURATION:
+            # Older MCU and user has requested large pulse duration
+            want_both_edges = False
+        elif not sbe and not ssbe:
+            # Older MCU that doesn't support step on both edges
+            want_both_edges = False
+        elif sou:
+            # MCU has optimized step/unstep - better to use that
+            want_both_edges = False
+        if not ssbe:
+            configfile = self._mcu.get_printer().lookup_object("configfile")
+            configfile.deprecate_mcu_code(self._mcu, 'STEPPER_STEP_BOTH_EDGE')
+        if want_both_edges:
+            self._step_both_edge = True
+            invert_step = -1
+            if sbe:
+                # Older MCU requires setting step_pulse_ticks=0 to enable
+                self._step_pulse_duration = 0.
+        # Configure stepper object
+        step_pulse_ticks = self._mcu.seconds_to_clock(self._step_pulse_duration)
+        self._mcu.add_config_cmd(
+            "config_stepper oid=%d step_pin=%s dir_pin=%s invert_step=%d"
+            " step_pulse_ticks=%u" % (self._oid, self._step_pin, self._dir_pin,
+                                      invert_step, step_pulse_ticks))
+        self._mcu.add_config_cmd("reset_step_clock oid=%d clock=0"
+                                 % (self._oid,), on_restart=True)
+        step_cmd_tag = self._mcu.lookup_command(
+            "queue_step oid=%c interval=%u count=%hu add=%hi").get_command_tag()
+        dir_cmd_tag = self._mcu.lookup_command(
+            "set_next_step_dir oid=%c dir=%c").get_command_tag()
+        self._reset_cmd_tag = self._mcu.lookup_command(
+            "reset_step_clock oid=%c clock=%u").get_command_tag()
+        self._get_position_cmd = self._mcu.lookup_query_command(
+            "stepper_get_position oid=%c",
+            "stepper_position oid=%c pos=%i", oid=self._oid)
+        max_error_ticks = self._mcu.seconds_to_clock(MAX_STEPCOMPRESS_ERROR)
+        ffi_main, ffi_lib = chelper.get_ffi()
+        ffi_lib.stepcompress_fill(self._stepqueue, self._oid, max_error_ticks,
+                                  step_cmd_tag, dir_cmd_tag)
+    def get_oid(self):
+        return self._oid
+    def get_step_dist(self):
+        return self._step_dist
+    def get_rotation_distance(self):
+        return self._rotation_dist, self._steps_per_rotation
+    def set_rotation_distance(self, rotation_dist):
+        mcu_pos = self.get_mcu_position()
+        self._rotation_dist = rotation_dist
+        self._step_dist = rotation_dist / self._steps_per_rotation
+        self.set_trapq(self._trapq)
+        self._set_mcu_position(mcu_pos)
+    def get_dir_inverted(self):
+        return self._invert_dir, self._orig_invert_dir
+    def set_dir_inverted(self, invert_dir):
+        invert_dir = not not invert_dir
+        if invert_dir == self._invert_dir:
+            return
+        self._invert_dir = invert_dir
+        ffi_main, ffi_lib = chelper.get_ffi()
+        ffi_lib.stepcompress_set_invert_sdir(self._stepqueue, invert_dir)
+        self._mcu.get_printer().send_event("stepper:set_dir_inverted", self)
+    def calc_position_from_coord(self, coord):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        return ffi_lib.itersolve_calc_position_from_coord(
+            self._stepper_kinematics, coord[0], coord[1], coord[2])
+    def set_position(self, coord):
+        mcu_pos = self.get_mcu_position()
+        sk = self._stepper_kinematics
+        ffi_main, ffi_lib = chelper.get_ffi()
+        ffi_lib.itersolve_set_position(sk, coord[0], coord[1], coord[2])
+        self._set_mcu_position(mcu_pos)
+    def get_commanded_position(self):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        return ffi_lib.itersolve_get_commanded_pos(self._stepper_kinematics)
+    def get_mcu_position(self, cmd_pos=None):
+        if cmd_pos is None:
+            cmd_pos = self.get_commanded_position()
+        mcu_pos_dist = cmd_pos + self._mcu_position_offset
+        mcu_pos = mcu_pos_dist / self._step_dist
+        if mcu_pos >= 0.:
+            return int(mcu_pos + 0.5)
+        return int(mcu_pos - 0.5)
+    def _set_mcu_position(self, mcu_pos):
+        mcu_pos_dist = mcu_pos * self._step_dist
+        self._mcu_position_offset = mcu_pos_dist - self.get_commanded_position()
+    def get_past_mcu_position(self, print_time):
+        clock = self._mcu.print_time_to_clock(print_time)
+        ffi_main, ffi_lib = chelper.get_ffi()
+        pos = ffi_lib.stepcompress_find_past_position(self._stepqueue, clock)
+        return int(pos)
+    def mcu_to_commanded_position(self, mcu_pos):
+        return mcu_pos * self._step_dist - self._mcu_position_offset
+    def dump_steps(self, count, start_clock, end_clock):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        data = ffi_main.new('struct pull_history_steps[]', count)
+        count = ffi_lib.stepcompress_extract_old(self._stepqueue, data, count,
+                                                 start_clock, end_clock)
+        return (data, count)
+    def get_stepper_kinematics(self):
+        return self._stepper_kinematics
+    def set_stepper_kinematics(self, sk):
+        old_sk = self._stepper_kinematics
+        mcu_pos = 0
+        if old_sk is not None:
+            mcu_pos = self.get_mcu_position()
+        self._stepper_kinematics = sk
+        ffi_main, ffi_lib = chelper.get_ffi()
+        ffi_lib.syncemitter_set_stepper_kinematics(self._syncemitter, sk);
+        self.set_trapq(self._trapq)
+        self._set_mcu_position(mcu_pos)
+        return old_sk
+    def note_homing_end(self):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        ret = ffi_lib.stepcompress_reset(self._stepqueue, 0)
+        if ret:
+            raise error("Internal error in stepcompress")
+        data = (self._reset_cmd_tag, self._oid, 0)
+        ffi_lib.syncemitter_queue_msg(self._syncemitter, 0, data, len(data))
+        self._query_mcu_position()
+    def _query_mcu_position(self):
+        if self._mcu.is_fileoutput():
+            return
+        params = self._get_position_cmd.send([self._oid])
+        last_pos = params['pos']
+        if self._invert_dir:
+            last_pos = -last_pos
+        print_time = self._mcu.estimated_print_time(params['#receive_time'])
+        clock = self._mcu.print_time_to_clock(print_time)
+        ffi_main, ffi_lib = chelper.get_ffi()
+        ret = ffi_lib.stepcompress_set_last_position(self._stepqueue, clock,
+                                                     last_pos)
+        if ret:
+            raise error("Internal error in stepcompress")
+        self._set_mcu_position(last_pos)
+        self._mcu.get_printer().send_event("stepper:sync_mcu_position", self)
+    def get_trapq(self):
+        return self._trapq
+    def set_trapq(self, tq):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        if tq is None:
+            tq = ffi_main.NULL
+        ffi_lib.itersolve_set_trapq(self._stepper_kinematics,
+                                    tq, self._step_dist)
+        old_tq = self._trapq
+        self._trapq = tq
+        return old_tq
+    def add_active_callback(self, cb):
+        self._active_callbacks.append(cb)
+        if len(self._active_callbacks) == 1:
+            printer = self._mcu.get_printer()
+            motion_queuing = printer.lookup_object('motion_queuing')
+            motion_queuing.register_flush_callback(self._check_active)
+    def _check_active(self, must_flush_time, max_step_gen_time):
+        sk = self._stepper_kinematics
+        ret = self._itersolve_check_active(sk, max_step_gen_time)
+        if not ret:
+            # Stepper motor still not active
+            return
+        # Motor is active, disable future checking
+        printer = self._mcu.get_printer()
+        motion_queuing = printer.lookup_object('motion_queuing')
+        motion_queuing.unregister_flush_callback(self._check_active)
+        cbs = self._active_callbacks
+        self._active_callbacks = []
+        # Invoke callbacks
+        for cb in cbs:
+            cb(ret)
+    def is_active_axis(self, axis):
+        ffi_main, ffi_lib = chelper.get_ffi()
+        a = axis.encode()
+        return ffi_lib.itersolve_is_active_axis(self._stepper_kinematics, a)
+
+# Helper code to build a stepper object from a config section
+def PrinterStepper(config, units_in_radians=False):
+    printer = config.get_printer()
+    # Stepper definition
+    ppins = printer.lookup_object('pins')
+    step_pin = config.get('step_pin')
+    step_pin_params = ppins.lookup_pin(step_pin, can_invert=True)
+    dir_pin = config.get('dir_pin')
+    dir_pin_params = ppins.lookup_pin(dir_pin, can_invert=True)
+    rotation_dist, steps_per_rotation = parse_step_distance(
+        config, units_in_radians, True)
+    step_pulse_duration = config.getfloat('step_pulse_duration', None,
+                                          minval=0., maxval=.001)
+    mcu_stepper = MCU_stepper(config, step_pin_params, dir_pin_params,
+                              rotation_dist, steps_per_rotation,
+                              step_pulse_duration, units_in_radians)
+    # Register with helper modules
+    for mname in ['stepper_enable', 'force_move', 'motion_report']:
+        m = printer.load_object(config, mname)
+        m.register_stepper(config, mcu_stepper)
+    return mcu_stepper
+
+# Parse stepper gear_ratio config parameter
+def parse_gear_ratio(config, note_valid):
+    gear_ratio = config.getlists('gear_ratio', (), seps=(':', ','), count=2,
+                                 parser=float, note_valid=note_valid)
+    result = 1.
+    for g1, g2 in gear_ratio:
+        result *= g1 / g2
+    return result
+
+# Obtain "step distance" information from a config section
+def parse_step_distance(config, units_in_radians=None, note_valid=False):
+    # Check rotation_distance and gear_ratio
+    if units_in_radians is None:
+        # Caller doesn't know if units are in radians - infer it
+        rd = config.get('rotation_distance', None, note_valid=False)
+        gr = config.get('gear_ratio', None, note_valid=False)
+        units_in_radians = rd is None and gr is not None
+    if units_in_radians:
+        rotation_dist = 2. * math.pi
+        config.get('gear_ratio', note_valid=note_valid)
+    else:
+        rotation_dist = config.getfloat('rotation_distance', above=0.,
+                                        note_valid=note_valid)
+    # Check microsteps and full_steps_per_rotation
+    microsteps = config.getint('microsteps', minval=1, note_valid=note_valid)
+    full_steps = config.getint('full_steps_per_rotation', 200, minval=1,
+                               note_valid=note_valid)
+    if full_steps % 4:
+        raise config.error("full_steps_per_rotation invalid in section '%s'"
+                           % (config.get_name(),))
+    gearing = parse_gear_ratio(config, note_valid)
+    return rotation_dist, full_steps * microsteps * gearing
+
+
+######################################################################
+# Stepper controlled rails
+######################################################################
+
+# A motor control carriage with one (or more) steppers and one (or more)
+# endstops.
+class GenericPrinterRail:
+    def __init__(self, config, need_position_minmax=True,
+                 default_position_endstop=None, units_in_radians=False):
+        self.stepper_units_in_radians = units_in_radians
+        self.printer = config.get_printer()
+        self.name = config.get_name()
+        self.steppers = []
+        self.endstops = []
+        self.endstop_map = {}
+        self.endstop_pin = config.get('endstop_pin')
+        # Primary endstop position
+        self.query_endstops = self.printer.load_object(config, 'query_endstops')
+        mcu_endstop = self.lookup_endstop(self.endstop_pin, self.name)
+        if hasattr(mcu_endstop, "get_position_endstop"):
+            self.position_endstop = mcu_endstop.get_position_endstop()
+        elif default_position_endstop is None:
+            self.position_endstop = config.getfloat('position_endstop')
+        else:
+            self.position_endstop = config.getfloat(
+                'position_endstop', default_position_endstop)
+        # Axis range
+        if need_position_minmax:
+            self.position_min = config.getfloat('position_min', 0.)
+            self.position_max = config.getfloat(
+                'position_max', above=self.position_min)
+        else:
+            self.position_min = 0.
+            self.position_max = self.position_endstop
+        if (self.position_endstop < self.position_min
+            or self.position_endstop > self.position_max):
+            raise config.error(
+                "position_endstop in section '%s' must be between"
+                " position_min and position_max" % config.get_name())
+        # Homing mechanics
+        self.homing_speed = config.getfloat('homing_speed', 5.0, above=0.)
+        self.second_homing_speed = config.getfloat(
+            'second_homing_speed', self.homing_speed/2., above=0.)
+        self.homing_retract_speed = config.getfloat(
+            'homing_retract_speed', self.homing_speed, above=0.)
+        self.homing_retract_dist = config.getfloat(
+            'homing_retract_dist', 5., minval=0.)
+        self.homing_positive_dir = config.getboolean(
+            'homing_positive_dir', None)
+        if self.homing_positive_dir is None:
+            axis_len = self.position_max - self.position_min
+            if self.position_endstop <= self.position_min + axis_len / 4.:
+                self.homing_positive_dir = False
+            elif self.position_endstop >= self.position_max - axis_len / 4.:
+                self.homing_positive_dir = True
+            else:
+                raise config.error(
+                    "Unable to infer homing_positive_dir in section '%s'"
+                    % (config.get_name(),))
+            config.getboolean('homing_positive_dir', self.homing_positive_dir)
+        elif ((self.homing_positive_dir
+               and self.position_endstop == self.position_min)
+              or (not self.homing_positive_dir
+                  and self.position_endstop == self.position_max)):
+            raise config.error(
+                "Invalid homing_positive_dir / position_endstop in '%s'"
+                % (config.get_name(),))
+    def get_name(self, short=False):
+        if short:
+            if self.name.startswith('stepper'):
+                # Skip an extra symbol after 'stepper'
+                return self.name[8:]
+            return self.name.split()[-1]
+        return self.name
+    def get_range(self):
+        return self.position_min, self.position_max
+    def get_homing_info(self):
+        homing_info = collections.namedtuple('homing_info', [
+            'speed', 'position_endstop', 'retract_speed', 'retract_dist',
+            'positive_dir', 'second_homing_speed'])(
+                self.homing_speed, self.position_endstop,
+                self.homing_retract_speed, self.homing_retract_dist,
+                self.homing_positive_dir, self.second_homing_speed)
+        return homing_info
+    def get_steppers(self):
+        return list(self.steppers)
+    def get_endstops(self):
+        return list(self.endstops)
+    def lookup_endstop(self, endstop_pin, name):
+        ppins = self.printer.lookup_object('pins')
+        pin_params = ppins.parse_pin(endstop_pin, True, True)
+        # Normalize pin name
+        pin_name = "%s:%s" % (pin_params['chip_name'], pin_params['pin'])
+        # Look for already-registered endstop
+        endstop = self.endstop_map.get(pin_name, None)
+        if endstop is None:
+            # New endstop, register it
+            mcu_endstop = ppins.setup_pin('endstop', endstop_pin)
+            self.endstop_map[pin_name] = {'endstop': mcu_endstop,
+                                          'invert': pin_params['invert'],
+                                          'pullup': pin_params['pullup']}
+            self.endstops.append((mcu_endstop, name))
+            self.query_endstops.register_endstop(mcu_endstop, name)
+        else:
+            mcu_endstop = endstop['endstop']
+            changed_invert = pin_params['invert'] != endstop['invert']
+            changed_pullup = pin_params['pullup'] != endstop['pullup']
+            if changed_invert or changed_pullup:
+                raise self.printer.config_error(
+                        "Printer rail %s shared endstop pin %s "
+                        "must specify the same pullup/invert settings" % (
+                            self.get_name(), pin_name))
+        return mcu_endstop
+    def add_stepper(self, stepper, endstop_pin=None, endstop_name=None):
+        if not self.steppers:
+            self.get_commanded_position = stepper.get_commanded_position
+            self.calc_position_from_coord = stepper.calc_position_from_coord
+        self.steppers.append(stepper)
+        if endstop_pin is not None:
+            mcu_endstop = self.lookup_endstop(
+                    endstop_pin, endstop_name or stepper.get_name(short=True))
+        else:
+            mcu_endstop = self.lookup_endstop(self.endstop_pin, self.name)
+        mcu_endstop.add_stepper(stepper)
+    def add_stepper_from_config(self, config):
+        stepper = PrinterStepper(config, self.stepper_units_in_radians)
+        self.add_stepper(stepper, config.get('endstop_pin', None))
+    def setup_itersolve(self, alloc_func, *params):
+        for stepper in self.steppers:
+            stepper.setup_itersolve(alloc_func, *params)
+    def set_trapq(self, trapq):
+        for stepper in self.steppers:
+            stepper.set_trapq(trapq)
+    def set_position(self, coord):
+        for stepper in self.steppers:
+            stepper.set_position(coord)
+
+def LookupRail(config, need_position_minmax=True,
+               default_position_endstop=None, units_in_radians=False):
+    rail = GenericPrinterRail(config, need_position_minmax,
+                              default_position_endstop, units_in_radians)
+    rail.add_stepper_from_config(config)
+    return rail
+
+# Wrapper for dual stepper motor support
+def LookupMultiRail(config, need_position_minmax=True,
+                    default_position_endstop=None, units_in_radians=False):
+    rail = LookupRail(config, need_position_minmax,
+                      default_position_endstop, units_in_radians)
+    for i in range(1, 99):
+        if not config.has_section(config.get_name() + str(i)):
+            break
+        rail.add_stepper_from_config(
+                config.getsection(config.get_name() + str(i)))
+    return rail

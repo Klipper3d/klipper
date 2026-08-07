@@ -88,9 +88,13 @@ monitor_note_activity(struct trigger_analog *ta)
 static int
 check_trigger(struct trigger_analog *ta, uint32_t time, int32_t value)
 {
+    uint32_t abs_value;
+    uint32_t delta;
+
     switch (ta->trigger_type) {
     case TT_ABS_GE:
-        return abs(value) >= ta->trigger_value;
+        abs_value = value < 0 ? -value : value;
+        return abs_value >= ta->trigger_value;
     case TT_GT:
         return value > ta->trigger_value;
     case TT_DIFF_PEAK_GT:
@@ -98,7 +102,7 @@ check_trigger(struct trigger_analog *ta, uint32_t time, int32_t value)
             ta->trigger_peak = value;
             return 0;
         }
-        uint32_t delta = ta->trigger_peak - value;
+        delta = ta->trigger_peak - value;
         return delta > ta->trigger_value;
     }
     return 0;
