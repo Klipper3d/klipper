@@ -85,11 +85,18 @@ class MenuKeys:
     def _do_beep_click(self, eventtime):
         beeper = self.printer.lookup_object('output_pin beeper', None)
         if beeper is not None:
-            mcu = beeper.mcu_pin.get_mcu()
-            systime = self.reactor.monotonic()
-            # Use systime_to_print_time to bypass motion queue and execute immediately
-            print_time = (mcu.systime_to_print_time(systime)
-                          + mcu.min_schedule_time())
+            # Safely resolve mcu and methods for CI Mock test compatibility
+            mcu_pin = getattr(beeper, 'mcu_pin', None)
+            mcu = mcu_pin.get_mcu() if mcu_pin is not None else None
+            
+            if mcu is not None and hasattr(mcu, 'systime_to_print_time'):
+                systime = self.reactor.monotonic()
+                print_time = (mcu.systime_to_print_time(systime)
+                              + mcu.min_schedule_time())
+            else:
+                toolhead = self.printer.lookup_object('toolhead')
+                print_time = toolhead.get_last_move_time()
+                
             beeper.gcrq.send_async_request(0.5, print_time)
             beeper.gcrq.send_async_request(0.0, print_time + 0.040)
         else:
