@@ -53,7 +53,7 @@ class PIDCalibrate:
             heater.set_control(old_control)
             if write_file:
                 calibrate.write_file('/tmp/heattest_%.0f.txt' % target)
-            if calibrate.check_busy(0., 0., 0.):
+            if calibrate.check_busy(0., 0.):
                 raise gcmd.error("pid_calibrate interrupted")
                 
             Kp, Ki, Kd = calibrate.calc_final_pid(algo)
@@ -118,7 +118,7 @@ class ControlAutoTune:
             self.pwm_samples.append(
                 (read_time + self.heater.get_pwm_delay(), value))
             self.last_pwm = value
-        self.heater.set_pwm(read_time, value)
+        return value
     def temperature_update(self, read_time, temp, target_temp):
         self.temp_samples.append((read_time, temp))
         # Check if the temperature has crossed the target and
@@ -133,16 +133,17 @@ class ControlAutoTune:
             self.heater.alter_target(self.calibrate_temp)
         # Check if this temperature is a peak and record it if so
         if self.heating:
-            self.set_pwm(read_time, self.heater_max_power)
+            pwm_value = self.set_pwm(read_time, self.heater_max_power)
             if temp < self.peak:
                 self.peak = temp
                 self.peak_time = read_time
         else:
-            self.set_pwm(read_time, 0.)
+            pwm_value = self.set_pwm(read_time, 0.)
             if temp > self.peak:
                 self.peak = temp
                 self.peak_time = read_time
-    def check_busy(self, eventtime, smoothed_temp, target_temp):
+        return pwm_value
+    def check_busy(self, smoothed_temp, target_temp):
         if self.heating or len(self.peaks) < 12:
             return True
         return False
