@@ -237,7 +237,7 @@ the `lift_speed` is too small, there will be too few samples above the contact
 point due to the 300ms window.
 
 The distance of the ascending move can be configured through the
-`sample_retract_dist` parameter. 
+`sample_retract_dist` parameter.
 
 
 ## Load Cell Probe Setup
