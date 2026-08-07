@@ -522,6 +522,7 @@ class EddyDriftCompensation:
                 "disabling temperature drift compensation."
                 % (self.name,)
             )
+        self.pre_cal_enabled = self.enabled
 
     def is_enabled(self):
         return self.enabled
@@ -620,6 +621,7 @@ class EddyDriftCompensation:
         return sample_temp
 
     def start_calibration(self):
+        self.pre_cal_enabled = self.enabled
         self.enabled = False
         self.calibration_samples = [[] for _ in range(DRIFT_SAMPLE_COUNT)]
 
@@ -627,6 +629,11 @@ class EddyDriftCompensation:
         cal_samples = self.calibration_samples
         self.calibration_samples = None
         if not success:
+            # Restore the prior enabled state rather than forcing it on:
+            # compensation may have already been disabled (via ENABLE=0,
+            # no drift_calibration configured, or no calibration_temp
+            # set), and an aborted or failed run should not change that.
+            self.enabled = self.pre_cal_enabled
             return
         gcode = self.printer.lookup_object("gcode")
         if len(cal_samples) < 3:
