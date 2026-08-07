@@ -87,11 +87,17 @@ class MenuKeys:
         try:
             beeper = self.printer.lookup_object('output_pin beeper', None)
             if beeper is not None:
-                mcu = beeper.mcu_pin.get_mcu()
-                systime = self.reactor.monotonic()
-                # Use systime_to_print_time to bypass motion queue and execute immediately
-                print_time = (mcu.systime_to_print_time(systime)
-                              + mcu.min_schedule_time())
+                try:
+                    mcu = beeper.mcu_pin.get_mcu()
+                    systime = self.reactor.monotonic()
+                    # Use systime_to_print_time to bypass motion queue and execute immediately
+                    print_time = (mcu.systime_to_print_time(systime)
+                                  + mcu.min_schedule_time())
+                except AttributeError:
+                    # Fallback for CI Mock test environments where mcu_pin is absent
+                    toolhead = self.printer.lookup_object('toolhead')
+                    print_time = toolhead.get_last_move_time()
+                    
                 beeper.gcrq.send_async_request(0.5, print_time)
                 beeper.gcrq.send_async_request(0.0, print_time + 0.040)
             else:
