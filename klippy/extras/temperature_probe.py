@@ -400,7 +400,11 @@ class TemperatureProbe:
         toolhead = self.printer.lookup_object("toolhead")
         self.start_pos = toolhead.get_position()[:2]
         if self._method == "tap":
-            self._auto_probe(gcmd)
+            try:
+                self._auto_probe(gcmd)
+            except self.printer.command_error:
+                self._finalize_drift_cal(False)
+                raise
             return
         manual_probe.ManualProbeHelper(
             self.printer, gcmd, self._manual_probe_finalize
@@ -425,7 +429,10 @@ class TemperatureProbe:
         toolhead.manual_move(curpos, probe_speed)
         self.gcode.register_command("ABORT", None)
         if self._method == "tap":
-            self._auto_probe(gcmd)
+            try:
+                self._auto_probe(gcmd)
+            except self.printer.command_error as e:
+                self._finalize_drift_cal(False, str(e))
             return
         manual_probe.ManualProbeHelper(
             self.printer, gcmd, self._manual_probe_finalize
