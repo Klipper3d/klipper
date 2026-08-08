@@ -5,7 +5,6 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include <stdlib.h> // abs
 #include "basecmd.h" // oid_alloc
 #include "board/io.h" // writeb
 #include "board/misc.h" // timer_read_time
@@ -88,12 +87,9 @@ monitor_note_activity(struct trigger_analog *ta)
 static int
 check_trigger(struct trigger_analog *ta, uint32_t time, int32_t value)
 {
-    uint32_t abs_value;
-    uint32_t delta;
-
     switch (ta->trigger_type) {
-    case TT_ABS_GE:
-        abs_value = value < 0 ? -value : value;
+    case TT_ABS_GE: ;
+        uint32_t abs_value = value < 0 ? -value : value;
         return abs_value >= ta->trigger_value;
     case TT_GT:
         return value > ta->trigger_value;
@@ -102,7 +98,7 @@ check_trigger(struct trigger_analog *ta, uint32_t time, int32_t value)
             ta->trigger_peak = value;
             return 0;
         }
-        delta = ta->trigger_peak - value;
+        uint32_t delta = ta->trigger_peak - value;
         return delta > ta->trigger_value;
     }
     return 0;
