@@ -17,7 +17,7 @@ class Move:
         self.start_pos = tuple(start_pos)
         self.end_pos = tuple(end_pos)
         self.accel = toolhead.max_accel
-        self.junction_deviation = toolhead.junction_deviation
+        self.equilateral_corner_v2 = toolhead.equilateral_corner_v2
         self.timing_callbacks = []
         velocity = min(speed, toolhead.max_velocity)
         self.is_kinematic_move = True
@@ -84,8 +84,8 @@ class Move:
         one_minus_sin_theta_d2 = 1. - sin_theta_d2
         if one_minus_sin_theta_d2 > 0. and cos_theta_d2 > 0.:
             R_jd = sin_theta_d2 / one_minus_sin_theta_d2
-            move_jd_v2 = R_jd * self.junction_deviation * self.accel
-            pmove_jd_v2 = R_jd * prev_move.junction_deviation * prev_move.accel
+            move_jd_v2 = R_jd * self.equilateral_corner_v2
+            pmove_jd_v2 = R_jd * prev_move.equilateral_corner_v2
             # Approximated circle must contact moves no further than mid-move
             #   centripetal_v2 = .5 * self.move_d * self.accel * tan_theta_d2
             quarter_tan_theta_d2 = .25 * sin_theta_d2 / cos_theta_d2
@@ -212,7 +212,7 @@ class ToolHead:
                                                 0.5, below=1., minval=0.)
         self.square_corner_velocity = config.getfloat(
             'square_corner_velocity', 5., minval=0.)
-        self.junction_deviation = self.mcr_pseudo_accel = 0.
+        self.equilateral_corner_v2 = self.mcr_pseudo_accel = 0.
         self._calc_junction_deviation()
         # Input stall detection
         self.check_stall_time = 0.
@@ -533,7 +533,7 @@ class ToolHead:
         return self.max_velocity, self.max_accel
     def _calc_junction_deviation(self):
         scv2 = self.square_corner_velocity**2
-        self.junction_deviation = scv2 * (math.sqrt(2.) - 1.) / self.max_accel
+        self.equilateral_corner_v2 = scv2 * (math.sqrt(2.) - 1.)
         self.mcr_pseudo_accel = self.max_accel * (1. - self.min_cruise_ratio)
     def set_max_velocities(self, max_velocity, max_accel,
                            square_corner_velocity, min_cruise_ratio):
