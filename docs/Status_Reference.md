@@ -320,14 +320,17 @@ The following information is available for each `[load_cell name]`:
 - `counts_per_gram`: The number of raw sensor counts that equals 1 gram of force.
 - `reference_tare_counts`: The reference number of raw sensor counts for 0 force.
 - `tare_counts`: The current number of raw sensor counts for 0 force.
-- `force_g`: The force in grams, averaged over the last polling period.
-- `min_force_g`: The minimum force in grams, over the last polling period.
-- `max_force_g`: The maximum force in grams, over the last polling period.
+- `is_active`: Returns True if the sensor is currently active.
 - `errors`: The number of sensor errors detected since the last start
   of measurements.
 - `overflows`: The number of data buffer overflows detected since the last
   start of measurements.
 - `sample_rate`: The sensor's sample rate in samples per second.
+
+The following information is available if tracking of force is enabled:
+- `force_g`: The force in grams, averaged over the last polling period.
+- `min_force_g`: The minimum force in grams, over the last polling period.
+- `max_force_g`: The maximum force in grams, over the last polling period.
 
 ## load_cell_probe
 

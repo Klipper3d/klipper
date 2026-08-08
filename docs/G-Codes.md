@@ -931,6 +931,14 @@ This command takes a reading from the load cell. The response is the percentage
 of the sensors range that was read and the raw value in counts. If the load cell
 is calibrated a force in grams is also reported.
 
+### LOAD_CELL_TRACK_FORCE
+`LOAD_CELL_TRACK_FORCE [LOAD_CELL=<config_name>] [TRACKING=START|STOP]`:
+This command enables (with `TRACKING=START`, which is the default) or disables
+continuous tracking of the force by the load cell. The tracking results are
+exported in the load_cell [status](./Status_Reference.md#load_cell) and can be
+used by the user macros. Note that this does not affect the regular load cell
+functionality, such as probing (see `[load_cell_probe]` below), etc.
+
 ### [load_cell_probe]
 
 The commands below are enabled if a
