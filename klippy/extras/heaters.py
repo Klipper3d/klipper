@@ -88,7 +88,8 @@ class Heater:
             return
         pwm_time = read_time + self.pwm_delay
         self.next_pwm_time = (pwm_time + MAX_HEAT_TIME
-                              - (3. * self.pwm_delay + self._pwm_cycle_time + 0.001))
+                              - (3. * self.pwm_delay +
+                                 self._pwm_cycle_time + 0.001))
         self.last_pwm_value = value
         if self._last_pwm_time and self._last_pwm_time < pwm_time:
             delta_pwm_time = pwm_time - self._last_pwm_time
@@ -106,7 +107,7 @@ class Heater:
             time_diff = read_time - self.last_temp_time
             self.last_temp = temp
             self.last_temp_time = read_time
-            
+
             next_read_time = read_time + self.sensor.get_report_time_delta()
             next_control_time = self._last_control_time + self._pwm_cycle_time
             if next_read_time > next_control_time:
@@ -114,7 +115,7 @@ class Heater:
                 pwm_value = self.control.temperature_update(
                     read_time, temp, self.target_temp)
                 self.set_pwm(read_time, pwm_value)
-                
+
             temp_diff = temp - self.smoothed_temp
             adj_time = min(time_diff * self.inv_smooth_time, 1.)
             self.smoothed_temp += temp_diff * adj_time
@@ -295,7 +296,7 @@ class ControlPID:
         # Calculate accumulated temperature "error"
         temp_err = target_temp - temp
         temp_integ = self.prev_temp_integ + temp_err * time_diff
-        
+
         # Get PID parameters (fixed or interpolated)
         Kp, Ki, Kd = self._get_pid_params(target_temp)
 
@@ -303,7 +304,7 @@ class ControlPID:
             temp_integ_max = self.heater_max_power / Ki if Ki else 0.
         else:
             temp_integ_max = self.temp_integ_max
-            
+
         temp_integ = max(0., min(temp_integ_max, temp_integ))
         # Calculate output
         co = Kp*temp_err + Ki*temp_integ - Kd*temp_deriv

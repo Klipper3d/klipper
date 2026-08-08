@@ -49,7 +49,7 @@ class MenuKeys:
         self.beeper_last_print_time = 0.
         self.beeper_last_value = 0.
         self.beeper_last_cycle_time = 0.001
-        
+
         if self.buzzer_pin is not None:
             ppins = self.printer.lookup_object('pins')
             if self.buzzer_pwm:
@@ -58,13 +58,15 @@ class MenuKeys:
                     pin_params, 0.001, 0., 0.)
                 self.beeper_mcu = self.beeper_mcu_pin.get_mcu()
             else:
-                self.beeper_mcu_pin = ppins.setup_pin('digital_out', self.buzzer_pin)
+                self.beeper_mcu_pin = ppins.setup_pin(
+            'digital_out', self.buzzer_pin)
                 self.beeper_mcu_pin.setup_max_duration(0.)
                 self.beeper_mcu_pin.setup_start_value(0., 0.)
                 self.beeper_mcu = self.beeper_mcu_pin.get_mcu()
-            
+
             gcode = self.printer.lookup_object('gcode')
-            gcode.register_command("M300", self.cmd_M300, desc="Play tone on display buzzer")
+            gcode.register_command(
+            "M300", self.cmd_M300, desc="Play tone on display buzzer")
 
         # Register other buttons
         self.register_button(config, 'back_pin', self.back_callback)
@@ -127,7 +129,7 @@ class MenuKeys:
                 # Safely resolve mcu and methods for CI Mock test compatibility
                 mcu_pin = getattr(beeper, 'mcu_pin', None)
                 mcu = mcu_pin.get_mcu() if mcu_pin is not None else None
-                
+
                 if mcu is not None and hasattr(mcu, 'systime_to_print_time'):
                     systime = self.reactor.monotonic()
                     print_time = (mcu.systime_to_print_time(systime)
@@ -135,7 +137,7 @@ class MenuKeys:
                 else:
                     toolhead = self.printer.lookup_object('toolhead')
                     print_time = toolhead.get_last_move_time()
-                    
+
                 beeper.gcrq.send_async_request(0.5, print_time)
                 beeper.gcrq.send_async_request(0.0, print_time + 0.040)
             else:
@@ -153,7 +155,7 @@ class MenuKeys:
                 lambda pt: self._queue_beep(pt, duration, frequency))
 
     def _set_beeper(self, print_time, value, cycle_time):
-        if (value == self.beeper_last_value and 
+        if (value == self.beeper_last_value and
             cycle_time == self.beeper_last_cycle_time):
             return
         min_sched = self.beeper_mcu.min_schedule_time()

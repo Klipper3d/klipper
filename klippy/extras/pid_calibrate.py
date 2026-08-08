@@ -38,7 +38,7 @@ class PIDCalibrate:
         except self.printer.config_error as e:
             raise gcmd.error(str(e))
         self.printer.lookup_object('toolhead').get_last_move_time()
-        
+
         results = []
         algo = gcmd.get('ALGORITHM', 'classic-zn').strip().lower()
 
@@ -55,7 +55,7 @@ class PIDCalibrate:
                 calibrate.write_file('/tmp/heattest_%.0f.txt' % target)
             if calibrate.check_busy(0., 0.):
                 raise gcmd.error("pid_calibrate interrupted")
-                
+
             Kp, Ki, Kd = calibrate.calc_final_pid(algo)
             results.append((target, Kp, Ki, Kd))
 
@@ -63,7 +63,7 @@ class PIDCalibrate:
         cfgname = heater.get_name()
         configfile = self.printer.lookup_object('configfile')
         configfile.set(cfgname, 'control', 'pid')
-        
+
         if len(results) == 1:
             Kp, Ki, Kd = results[0][1:]
             configfile.set(cfgname, 'pid_Kp', "%.3f" % (Kp,))
@@ -90,7 +90,8 @@ class PIDCalibrate:
 
         gcmd.respond_info(
             "PID parameters (%s):\n%s\n"
-            "The SAVE_CONFIG command will update the printer config file with these "
+            "The SAVE_CONFIG command will update the printer "
+                 "config file with these "
             "parameters and restart the printer."
             % (algo, '\n'.join(msg_lines))
         )
