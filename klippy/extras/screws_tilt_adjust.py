@@ -38,12 +38,17 @@ class ScrewsTiltAdjust:
         self.probe_helper.minimum_points(3)
         # Register command
         self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_command("SCREWS_TILT_CALCULATE",
-                                    self.cmd_SCREWS_TILT_CALCULATE,
-                                    desc=self.cmd_SCREWS_TILT_CALCULATE_help)
+        self.gcode.register_command(
+            "SCREWS_TILT_CALCULATE", self.cmd_SCREWS_TILT_CALCULATE,
+            desc=self.cmd_SCREWS_TILT_CALCULATE_help,
+            params=self.cmd_SCREWS_TILT_CALCULATE_params)
     cmd_SCREWS_TILT_CALCULATE_help = "Tool to help adjust bed leveling " \
                                      "screws by calculating the number " \
                                      "of turns to level it."
+    cmd_SCREWS_TILT_CALCULATE_params = dict(
+        probe.PROBE_POINTS_HELPER_PARAMS,
+        MAX_DEVIATION={"type": "float", "required": False},
+        DIRECTION={"type": "string", "required": False})
 
     def cmd_SCREWS_TILT_CALCULATE(self, gcmd):
         self.max_diff = gcmd.get_float("MAX_DEVIATION", None)

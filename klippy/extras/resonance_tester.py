@@ -288,13 +288,16 @@ class ResonanceTester:
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("MEASURE_AXES_NOISE",
                                     self.cmd_MEASURE_AXES_NOISE,
-                                    desc=self.cmd_MEASURE_AXES_NOISE_help)
+                                    desc=self.cmd_MEASURE_AXES_NOISE_help,
+                                    params=self.cmd_MEASURE_AXES_NOISE_params)
         self.gcode.register_command("TEST_RESONANCES",
                                     self.cmd_TEST_RESONANCES,
-                                    desc=self.cmd_TEST_RESONANCES_help)
+                                    desc=self.cmd_TEST_RESONANCES_help,
+                                    params=self.cmd_TEST_RESONANCES_params)
         self.gcode.register_command("SHAPER_CALIBRATE",
                                     self.cmd_SHAPER_CALIBRATE,
-                                    desc=self.cmd_SHAPER_CALIBRATE_help)
+                                    desc=self.cmd_SHAPER_CALIBRATE_help,
+                                    params=self.cmd_SHAPER_CALIBRATE_params)
         self.printer.register_event_handler("klippy:connect", self.connect)
 
     def connect(self):
@@ -394,6 +397,19 @@ class ResonanceTester:
     def _get_max_calibration_freq(self):
         return 1.5 * self.generator.get_max_freq()
     cmd_TEST_RESONANCES_help = ("Runs the resonance test for a specified axis")
+    cmd_TEST_RESONANCES_params = {
+        "AXIS": {"type": "string", "required": True},
+        "CHIPS": {"type": "string", "required": False},
+        "POINT": {"type": "string", "required": False},
+        "OUTPUT": {"type": "string", "default": "resonances"},
+        "NAME": {"type": "string", "required": False},
+        "FREQ_START": {"type": "float", "required": False},
+        "FREQ_END": {"type": "float", "required": False},
+        "ACCEL_PER_HZ": {"type": "float", "required": False},
+        "HZ_PER_SEC": {"type": "float", "required": False},
+        "SWEEPING_ACCEL": {"type": "float", "required": False},
+        "SWEEPING_PERIOD": {"type": "float", "required": False},
+    }
     def cmd_TEST_RESONANCES(self, gcmd):
         # Parse parameters
         axis = _parse_axis(gcmd, gcmd.get("AXIS").lower())
@@ -444,6 +460,18 @@ class ResonanceTester:
                     "Resonances data written to %s file" % (csv_name,))
     cmd_SHAPER_CALIBRATE_help = (
         "Similar to TEST_RESONANCES but suggest input shaper config")
+    cmd_SHAPER_CALIBRATE_params = {
+        "AXIS": {"type": "string", "required": False},
+        "CHIPS": {"type": "string", "required": False},
+        "MAX_SMOOTHING": {"type": "float", "required": False},
+        "NAME": {"type": "string", "required": False},
+        "FREQ_START": {"type": "float", "required": False},
+        "FREQ_END": {"type": "float", "required": False},
+        "ACCEL_PER_HZ": {"type": "float", "required": False},
+        "HZ_PER_SEC": {"type": "float", "required": False},
+        "SWEEPING_ACCEL": {"type": "float", "required": False},
+        "SWEEPING_PERIOD": {"type": "float", "required": False},
+    }
     def cmd_SHAPER_CALIBRATE(self, gcmd):
         # Parse parameters
         axis = gcmd.get("AXIS", None)
@@ -505,6 +533,9 @@ class ResonanceTester:
             "with these parameters and restart the printer.")
     cmd_MEASURE_AXES_NOISE_help = (
         "Measures noise of all enabled accelerometer chips")
+    cmd_MEASURE_AXES_NOISE_params = {
+        "MEAS_TIME": {"type": "float", "default": 2.},
+    }
     def cmd_MEASURE_AXES_NOISE(self, gcmd):
         meas_time = gcmd.get_float("MEAS_TIME", 2., above=0.)
         raw_values = [(chip_axis, chip.start_internal_client())

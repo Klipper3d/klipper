@@ -57,7 +57,8 @@ class ZThermalAdjuster:
         # Register gcode commands
         self.gcode.register_command('SET_Z_THERMAL_ADJUST',
                                     self.cmd_SET_Z_THERMAL_ADJUST,
-                                    desc=self.cmd_SET_Z_THERMAL_ADJUST_help)
+                                    desc=self.cmd_SET_Z_THERMAL_ADJUST_help,
+                                    params=self.cmd_SET_Z_THERMAL_ADJUST_params)
 
     def handle_connect(self):
         'Called after all printer objects are instantiated'
@@ -183,6 +184,11 @@ class ZThermalAdjuster:
         gcmd.respond_info(msg)
 
     cmd_SET_Z_THERMAL_ADJUST_help = 'Set/query Z Thermal Adjust parameters.'
+    cmd_SET_Z_THERMAL_ADJUST_params = {
+        "ENABLE": {"type": "int", "required": False},
+        "TEMP_COEFF": {"type": "float", "required": False},
+        "REF_TEMP": {"type": "float", "required": False},
+    }
 
 def load_config(config):
     return ZThermalAdjuster(config)

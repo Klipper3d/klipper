@@ -453,9 +453,14 @@ class LoadCellProbeCommands:
         # Register commands
         gcode = self._printer.lookup_object('gcode')
         gcode.register_command("LOAD_CELL_TEST_TAP",
-            self.cmd_LOAD_CELL_TEST_TAP, desc=self.cmd_LOAD_CELL_TEST_TAP_help)
+            self.cmd_LOAD_CELL_TEST_TAP, desc=self.cmd_LOAD_CELL_TEST_TAP_help,
+            params=self.cmd_LOAD_CELL_TEST_TAP_params)
 
     cmd_LOAD_CELL_TEST_TAP_help = "Tap the load cell probe to verify operation"
+    cmd_LOAD_CELL_TEST_TAP_params = {
+        "TAPS": {"type": "int", "default": 3},
+        "TIMEOUT": {"type": "float", "default": 30.},
+    }
 
     def cmd_LOAD_CELL_TEST_TAP(self, gcmd):
         taps = gcmd.get_int("TAPS", 3, minval=1, maxval=10)

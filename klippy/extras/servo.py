@@ -42,7 +42,8 @@ class PrinterServo:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_mux_command("SET_SERVO", "SERVO", servo_name,
                                    self.cmd_SET_SERVO,
-                                   desc=self.cmd_SET_SERVO_help)
+                                   desc=self.cmd_SET_SERVO_help,
+                                   params=self.cmd_SET_SERVO_params)
     def get_status(self, eventtime):
         return {'value': self.last_value}
     def _set_pwm(self, print_time, value):
@@ -63,6 +64,11 @@ class PrinterServo:
             width = max(self.min_width, min(self.max_width, width))
         return width * self.width_to_value
     cmd_SET_SERVO_help = "Set servo angle"
+    cmd_SET_SERVO_params = {
+        "SERVO": {"type": "string", "required": True},
+        "WIDTH": {"type": "float", "required": False},
+        "ANGLE": {"type": "float", "required": True},
+    }
     def cmd_SET_SERVO(self, gcmd):
         width = gcmd.get_float('WIDTH', None)
         if width is not None:

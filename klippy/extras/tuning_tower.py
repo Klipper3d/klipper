@@ -19,8 +19,19 @@ class TuningTower:
         # Register command
         self.gcode = self.printer.lookup_object("gcode")
         self.gcode.register_command("TUNING_TOWER", self.cmd_TUNING_TOWER,
-                                    desc=self.cmd_TUNING_TOWER_help)
+                                    desc=self.cmd_TUNING_TOWER_help,
+                                    params=self.cmd_TUNING_TOWER_params)
     cmd_TUNING_TOWER_help = "Tool to adjust a parameter at each Z height"
+    cmd_TUNING_TOWER_params = {
+        "COMMAND": {"type": "string", "required": True},
+        "PARAMETER": {"type": "string", "required": True},
+        "START": {"type": "float", "default": 0.0},
+        "FACTOR": {"type": "float", "default": 0.0},
+        "BAND": {"type": "float", "default": 0.0},
+        "STEP_DELTA": {"type": "float", "default": 0.0},
+        "STEP_HEIGHT": {"type": "float", "default": 0.0},
+        "SKIP": {"type": "float", "default": 0.0},
+    }
     def cmd_TUNING_TOWER(self, gcmd):
         if self.normal_transform is not None:
             self.end_test()

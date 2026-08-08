@@ -10,10 +10,15 @@ class QueryADC:
         self.adc = {}
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("QUERY_ADC", self.cmd_QUERY_ADC,
-                               desc=self.cmd_QUERY_ADC_help)
+                               desc=self.cmd_QUERY_ADC_help,
+                               params=self.cmd_QUERY_ADC_params)
     def register_adc(self, name, mcu_adc):
         self.adc[name] = mcu_adc
     cmd_QUERY_ADC_help = "Report the last value of an analog pin"
+    cmd_QUERY_ADC_params = {
+        "NAME": {"type": "string", "required": False},
+        "PULLUP": {"type": "float", "required": False},
+    }
     def cmd_QUERY_ADC(self, gcmd):
         name = gcmd.get('NAME', None)
         if name not in self.adc:

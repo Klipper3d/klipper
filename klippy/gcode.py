@@ -114,6 +114,7 @@ class GCodeDispatch:
         self.ready_gcode_handlers = {}
         self.mux_commands = {}
         self.gcode_help = {}
+        self.gcode_params = {}
         self.status_commands = {}
         # Register commands needed before config file is loaded
         handlers = ['M110', 'M112', 'M115',
@@ -130,7 +131,8 @@ class GCodeDispatch:
             return cmd[0].isupper() and cmd[1].isdigit()
         except:
             return False
-    def register_command(self, cmd, func, when_not_ready=False, desc=None):
+    def register_command(self, cmd, func, when_not_ready=False, desc=None,
+                         params=None):
         if func is None:
             old_cmd = self.ready_gcode_handlers.get(cmd)
             if cmd in self.ready_gcode_handlers:
@@ -154,12 +156,15 @@ class GCodeDispatch:
             self.base_gcode_handlers[cmd] = func
         if desc is not None:
             self.gcode_help[cmd] = desc
+        if params is not None:
+            self.gcode_params[cmd] = params
         self._build_status_commands()
-    def register_mux_command(self, cmd, key, value, func, desc=None):
+    def register_mux_command(self, cmd, key, value, func, desc=None,
+                             params=None):
         prev = self.mux_commands.get(cmd)
         if prev is None:
             handler = lambda gcmd: self._cmd_mux(cmd, gcmd)
-            self.register_command(cmd, handler, desc=desc)
+            self.register_command(cmd, handler, desc=desc, params=params)
             self.mux_commands[cmd] = prev = (key, {})
         prev_key, prev_values = prev
         if prev_key != key:
@@ -171,6 +176,7 @@ class GCodeDispatch:
                 "mux command %s %s %s already registered (%s)" % (
                     cmd, key, value, prev_values))
         prev_values[value] = func
+        self._build_status_commands()
     def get_command_help(self):
         return dict(self.gcode_help)
     def get_status(self, eventtime):
@@ -180,6 +186,21 @@ class GCodeDispatch:
         for cmd in self.gcode_help:
             if cmd in commands:
                 commands[cmd]['help'] = self.gcode_help[cmd]
+        for cmd in self.gcode_params:
+            if cmd in commands:
+                commands[cmd]['params'] = self.gcode_params[cmd]
+        # Surface each mux key's registered values as an enum. Copy-on-write
+        # so this never mutates the (possibly class-shared) static dict.
+        for cmd, (key, values) in self.mux_commands.items():
+            if cmd not in commands:
+                continue
+            params = dict(commands[cmd].get('params', {}))
+            key_param = dict(params.get(key, {}))
+            key_param.setdefault('type', 'string')
+            key_param['required'] = None not in values
+            key_param['enum'] = sorted(v for v in values if v is not None)
+            params[key] = key_param
+            commands[cmd]['params'] = params
         self.status_commands = commands
     def register_output_handler(self, cb):
         self.output_callbacks.append(cb)
