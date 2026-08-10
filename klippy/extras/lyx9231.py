@@ -126,9 +126,10 @@ class LYX9231:
         """G-code: Read single Modbus register and print value"""
         reg_name = gcmd.get('REGISTER').upper()
         if reg_name not in Registers:
-            raise gcmd.error(f"Unknown register: {reg_name}")
+            raise gcmd.error("Unknown register: {}".format(reg_name))
         val = self.mcu_lyx.get_register(reg_name)
-        gcmd.respond_info(f"{reg_name} (0x{Registers[reg_name]:02X}) = {val}")
+        gcmd.respond_info("{} (0x{:02X}) = {}"
+                          .format(reg_name, Registers[reg_name], val))
 
     def cmd_LYX_WRITE_REG(self, gcmd):
         """G-code: Write raw value to
@@ -136,11 +137,13 @@ class LYX9231:
         reg_name = gcmd.get('REGISTER').upper()
         value = gcmd.get_int('VALUE', minval=0, maxval=65535)
         if reg_name not in Registers:
-            raise gcmd.error(f"Unknown register: {reg_name}")
+            raise gcmd.error("Unknown register: {}".format(reg_name))
         self.mcu_lyx.set_register(reg_name, value)
         read_back = self.mcu_lyx.get_register(reg_name)
-        status = "OK" if read_back == value else f"mismatch: {read_back}"
-        gcmd.respond_info(f"{reg_name} write {value} -> {status}")
+        status = "OK" \
+            if read_back == value else "mismatch: {}".format(read_back)
+        gcmd.respond_info("{} write {} -> {}"
+                          .format(reg_name, value, status))
 
     def get_status(self, eventtime=None):
         """Provide driver state for printer status reporting"""

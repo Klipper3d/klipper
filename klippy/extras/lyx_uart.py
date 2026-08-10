@@ -4,6 +4,7 @@
 
 import logging
 import time
+import binascii
 
 
 ######################################################################
@@ -106,13 +107,15 @@ class MCU_LYX_uart_bitbang:
         msg.append((crc >> 8) & 0xFF)
 
         import logging
-        logging.info(f"[LYX HOST] send: len={len(msg)} hex={msg.hex()}")
+        logging.info("[LYX HOST] send: len={} hex={}".
+                     format(len(msg), binascii.hexlify(msg)))
 
         params = self.send_cmd.send([self.oid, bytes(msg), 7])
 
-        logging.info(f"[LYX HOST] recv params: {params}")
+        logging.info("[LYX HOST] recv params: {}".format(params))
         raw = params['read']
-        logging.info(f"[LYX HOST] raw: len={len(raw)} hex={raw.hex()}")
+        logging.info("[LYX HOST] raw: len={} hex={}".
+                     format(len(raw), binascii.hexlify(raw)))
 
         if len(raw) < 7 or raw[1] & 0x80:
             return {'data': None,
@@ -219,8 +222,8 @@ class MCU_LYX_uart:
                 # Limited readback retry to verify write success
                 for retry in range(100):
                     logging.debug(
-                        'W, {}, {}, {}, {}'.format(reg_name, val, write_retry,
-                                                   retry))
+                        'W, {}, {}, {}, {}'
+                        .format(reg_name, val, write_retry, retry))
                     readback = self.mcu_uart.reg_read(self.addr, reg)
                     if readback['data'] == val:
                         return

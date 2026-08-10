@@ -73,7 +73,7 @@ class FieldHelper:
             val = self.get_field(field_name)
             sval = self.field_formatters.get(field_name, str)(val)
             if sval and sval != "0":
-                fields.append(f" {field_name}={sval}")
+                fields.append(" {}={}".format(field_name, sval))
         return "%-12s %04x%s" % (reg_name + ":", reg_value, "".join(fields))
 
 
@@ -165,7 +165,7 @@ class LYXCommandHelper:
         field_name = gcmd.get('FIELD').lower()
         reg_name = self.fields.field_to_register.get(field_name)
         if reg_name is None:
-            raise gcmd.error(f"Unknown field: {field_name}")
+            raise gcmd.error("Unknown field: {}".format(field_name))
         value = gcmd.get_int('VALUE')
         self.fields.set_field(field_name, value)
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
@@ -178,20 +178,22 @@ class LYXCommandHelper:
         run = gcmd.get_float('CURRENT', None, minval=0., maxval=max_cur)
         hold = gcmd.get_float('HOLDCURRENT', None, above=0., maxval=max_cur)
         if run is None and hold is None:
-            gcmd.respond_info(f"Run: {prev_run:.2f}A  Hold: {prev_hold:.2f}A")
+            gcmd.respond_info("Run: {:.2f}A  Hold: {:.2f}A"
+                              .format(prev_run, prev_hold))
             return
         run = run if run is not None else prev_run
         hold = hold if hold is not None else prev_hold
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         ch.set_current(run, hold, print_time)
-        gcmd.respond_info(f"Run: {run:.2f}A  Hold: {hold:.2f}A")
+        gcmd.respond_info("Run: {:.2f}A  Hold: {:.2f}A"
+                          .format(run, hold))
 
     def cmd_SET_LYX_MICROSTEP(self, gcmd):
         mh = self.micro_helper
         prev_micro = mh.get_microstep()
         microstep = gcmd.get_int('MICROSTEP', None, minval=1, max=256)
         if microstep is None:
-            gcmd.respond_info(f"Current microstep: {prev_micro}")
+            gcmd.respond_info("Current microstep: {}".format(prev_micro))
             return
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         mh.set_microstep(microstep, print_time)
@@ -199,11 +201,12 @@ class LYXCommandHelper:
         self.mcu_lyx.set_register(reg_name,
                                   self.fields.get_field("microstep_ratio"),
                                   print_time)
-        gcmd.respond_info(f"Set microstep = {microstep}, "
-                          f"raw value="
-                          f"{self.micro_helper.base_div // microstep}, "
-                          f"register raw="
-                          f"{self.fields.get_field('microstep_ratio')}")
+        gcmd.respond_info("Set microstep = {}, "
+                          "raw value={}, "
+                          "register raw={}"
+                          .format(microstep,
+                                  self.micro_helper.base_div // microstep,
+                                  self.fields.get_field('microstep_ratio')))
 
     def setup_register_dump(self, read_registers):
         """Register DUMP_LYX diagnostic command"""
