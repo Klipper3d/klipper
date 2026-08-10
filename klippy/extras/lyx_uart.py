@@ -181,7 +181,7 @@ class MCU_LYX_uart:
         if self.printer.get_start_args().get('debugoutput') is not None:
             return {'data': 0, '#receive_time': 0.}
         for retry in range(1000):
-            print('R', reg_name, retry)
+            logging.debug('R, {}, {}'.format(reg_name, retry))
             ret = self.mcu_uart.reg_read(self.addr, reg)
             if ret['data'] is not None:
                 return ret
@@ -213,7 +213,7 @@ class MCU_LYX_uart:
                 time.sleep(0.005)
                 # Limited readback retry to verify write success
                 for retry in range(100):
-                    print('W', reg_name, val, write_retry, retry)
+                    logging.debug('W, {}, {}, {}, {}'.format(reg_name, val, write_retry, retry))
                     readback = self.mcu_uart.reg_read(self.addr, reg)
                     if readback['data'] == val:
                         return
