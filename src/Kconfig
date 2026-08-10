@@ -223,7 +223,7 @@ config WANT_BUTTONS
 config WANT_TMCUART
     bool "Support Trinamic stepper motor driver UART communication"
     depends on HAVE_GPIO
-config WANT_WANT_MODBUSUART
+config WANT_MODBUSUART
     bool "Support Generic software Modbus RTU UART communication"
     depends on HAVE_GPIO
 config WANT_NEOPIXEL
