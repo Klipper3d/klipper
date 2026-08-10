@@ -58,9 +58,11 @@ class MCU_LYX_uart_bitbang:
         calc_freq = get_clock(systime + 1) - get_clock(systime)
 
         # bit_ticks = self.mcu.seconds_to_clock(1. / LYX_DEFAULT_BAUD)
-        bit_ticks = int(1. / LYX_DEFAULT_BAUD * calc_freq)  # using actual mcu freq instead of what mcu claimed
+        # using actual mcu freq instead of what mcu claimed
+        bit_ticks = int(1. / LYX_DEFAULT_BAUD * calc_freq)
         self.mcu.add_config_cmd(
-            "config_modbus_uart oid=%d rx_pin=%s pull_up=%d tx_pin=%s bit_time=%d"
+            "config_modbus_uart oid=%d "
+            "rx_pin=%s pull_up=%d tx_pin=%s bit_time=%d"
             % (self.oid, self.rx_pin, 1, self.tx_pin, bit_ticks))
         self.send_cmd = self.mcu.lookup_query_command(
             "modbus_uart_send oid=%c write=%*s read=%c",
@@ -92,7 +94,8 @@ class MCU_LYX_uart_bitbang:
         return crc & 0xFFFF
 
     def reg_read(self, slave_addr, reg_addr):
-        """Send Modbus 0x03 read holding register request, validate CRC response"""
+        """Send Modbus 0x03 read holding register request,
+        validate CRC response"""
         msg = bytearray([
             slave_addr, 0x03,
             (reg_addr >> 8) & 0xFF, reg_addr & 0xFF,
@@ -112,9 +115,11 @@ class MCU_LYX_uart_bitbang:
         logging.info(f"[LYX HOST] raw: len={len(raw)} hex={raw.hex()}")
 
         if len(raw) < 7 or raw[1] & 0x80:
-            return {'data': None, '#receive_time': params.get('#receive_time', 0)}
+            return {'data': None,
+                    '#receive_time': params.get('#receive_time', 0)}
         if self._crc16(raw[:-2]) != (raw[-1] << 8 | raw[-2]):
-            return {'data': None, '#receive_time': params.get('#receive_time', 0)}
+            return {'data': None,
+                    '#receive_time': params.get('#receive_time', 0)}
 
         value = (raw[3] << 8) | raw[4]
         return {'data': value, '#receive_time': params.get('#receive_time', 0)}
@@ -213,15 +218,22 @@ class MCU_LYX_uart:
                 time.sleep(0.005)
                 # Limited readback retry to verify write success
                 for retry in range(100):
-                    logging.debug('W, {}, {}, {}, {}'.format(reg_name, val, write_retry, retry))
+                    logging.debug(
+                        'W, {}, {}, {}, {}'.format(reg_name, val, write_retry,
+                                                   retry))
                     readback = self.mcu_uart.reg_read(self.addr, reg)
                     if readback['data'] == val:
                         return
                     time.sleep(0.001)
 
             # raise self.printer.command_error(
-            #     "Unable to write lyx uart '%s' register %s" % (self.name, reg_name))
-            self.printer.invoke_shutdown("Unable to write lyx uart '%s' register %s due to transmission delay, try to reboot Klipper Service to retry" % (self.name, reg_name))
+            #     "Unable to write lyx uart '%s'
+            #     register %s" % (self.name, reg_name))
+            self.printer.invoke_shutdown(
+                "Unable to write lyx uart '%s' register %s "
+                "due to transmission delay, "
+                "try to reboot Klipper Service to retry" % (
+                    self.name, reg_name))
 
     def get_mcu(self):
         """Return bound MCU reference"""

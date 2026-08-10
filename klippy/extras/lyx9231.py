@@ -87,14 +87,19 @@ class LYX9231:
 
         self.current_helper = lyx.LYXCurrentHelper(config, self.mcu_lyx)
         self.micro_helper = lyx.LYXMicrostepHelper(config, self.mcu_lyx)
-        self.cmd_helper = lyx.LYXCommandHelper(config, self.mcu_lyx, self.current_helper, self.micro_helper)
+        self.cmd_helper = lyx.LYXCommandHelper(config, self.mcu_lyx,
+                                               self.current_helper,
+                                               self.micro_helper)
         self.cmd_helper.setup_register_dump(ReadRegisters)
 
-        self.printer.register_event_handler("klippy:connect", self._handle_connect)
+        self.printer.register_event_handler("klippy:connect",
+                                            self._handle_connect)
 
         self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_mux_command('LYX_READ_REG', "STEPPER", self.name, self.cmd_LYX_READ_REG)
-        self.gcode.register_mux_command('LYX_WRITE_REG', "STEPPER", self.name, self.cmd_LYX_WRITE_REG)
+        self.gcode.register_mux_command('LYX_READ_REG', "STEPPER", self.name,
+                                        self.cmd_LYX_READ_REG)
+        self.gcode.register_mux_command('LYX_WRITE_REG', "STEPPER", self.name,
+                                        self.cmd_LYX_WRITE_REG)
 
     def _set_defaults(self, config):
         """Populate default register values from printer config"""
@@ -126,7 +131,8 @@ class LYX9231:
         gcmd.respond_info(f"{reg_name} (0x{Registers[reg_name]:02X}) = {val}")
 
     def cmd_LYX_WRITE_REG(self, gcmd):
-        """G-code: Write raw value to target Modbus register with readback verify"""
+        """G-code: Write raw value to
+        target Modbus register with readback verify"""
         reg_name = gcmd.get('REGISTER').upper()
         value = gcmd.get_int('VALUE', minval=0, maxval=65535)
         if reg_name not in Registers:

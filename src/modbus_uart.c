@@ -32,18 +32,18 @@ enum {
 
 // Per-instance UART state storage
 struct modbus_uart_s {
-    struct timer timer;             // Scheduler timer for bit timing
-    struct gpio_out tx_pin;         // Transmit output pin handle
-    struct gpio_in rx_pin;          // Receive input pin handle
-    uint8_t flags;                  // Combined state bitmask
-    uint8_t tx_byte_idx;            // Current transmit byte index
-    uint8_t tx_bit_idx;             // Current bit position inside transmit byte
-    uint32_t bit_time;              // Clock ticks per single UART bit
-    uint8_t tx_total;               // Total transmit byte count of current frame
-    uint8_t rx_total;               // Expected receive byte count of current frame
-    uint8_t rx_bit_count;           // Total sampled data bits received
-    uint8_t data[16];               // Shared tx/rx data buffer (max 16 bytes)
-    uint16_t sync_counter;          // Timeout counter for rx sync detection
+    struct timer timer;         // Scheduler timer for bit timing
+    struct gpio_out tx_pin;     // Transmit output pin handle
+    struct gpio_in rx_pin;      // Receive input pin handle
+    uint8_t flags;              // Combined state bitmask
+    uint8_t tx_byte_idx;        // Current transmit byte index
+    uint8_t tx_bit_idx;         // Current bit position inside transmit byte
+    uint32_t bit_time;          // Clock ticks per single UART bit
+    uint8_t tx_total;           // Total transmit byte count of current frame
+    uint8_t rx_total;           // Expected receive byte count of current frame
+    uint8_t rx_bit_count;       // Total sampled data bits received
+    uint8_t data[16];           // Shared tx/rx data buffer (max 16 bytes)
+    uint16_t sync_counter;      // Timeout counter for rx sync detection
 };
 /****************************************************************
  * Forward function prototypes
@@ -79,7 +79,8 @@ static uint_fast8_t
 modbus_uart_finalize(struct modbus_uart_s *m)
 {
     __attribute__((unused)) uint8_t actual_bytes = m->rx_bit_count / 8;
-    DBG_PRINT("finalize: expected=%d bytes, actual=%d bytes", m->rx_total, actual_bytes);
+    DBG_PRINT("finalize: expected=%d bytes, actual=%d bytes",
+    m->rx_total, actual_bytes);
 #if MODBUS_UART_DEBUG
     if (actual_bytes > 0) {
         printf("[DBG] rx hex: ");
@@ -152,10 +153,12 @@ modbus_uart_rx_event(struct timer *timer)
     m->rx_bit_count++;
     // Stop sampling if total expected data bits are captured
     if (m->rx_bit_count >= m->rx_total * 8) {
-        DBG_PRINT("rx all done: %d bits = %d bytes", m->rx_bit_count, m->rx_total);
+        DBG_PRINT("rx all done: %d bits = %d bytes",
+        m->rx_bit_count, m->rx_total);
         return modbus_uart_finalize(m);
     }
-    // After each full byte: skip stop bit + next start bit (2 extra bit periods)
+    // After each full byte:
+    // skip stop bit + next start bit (2 extra bit periods)
     if (m->rx_bit_count % 8 == 0) {
         m->timer.waketime += m->bit_time * 3; // Current 1bit + skip 2bits
     } else {
@@ -181,7 +184,8 @@ modbus_uart_tx_event(struct timer *timer)
     if (bit_idx == 0) {
         bit_val = 0; // Start bit (logic low)
     } else if (bit_idx <= 8) {
-        bit_val = (m->data[byte_idx] >> (bit_idx - 1)) & 0x01; // Data bits LSB first
+        // Data bits LSB first
+        bit_val = (m->data[byte_idx] >> (bit_idx - 1)) & 0x01;
     } else {
         bit_val = 1; // Stop bit (logic high)
     }

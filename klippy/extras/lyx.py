@@ -16,7 +16,8 @@ def ffs(mask):
 # Register field access abstraction
 ######################################################################
 class FieldHelper:
-    """Manage register field read/write, signed value conversion and formatting"""
+    """Manage register field read/write,
+    signed value conversion and formatting"""
 
     def __init__(self, all_fields, signed_fields=[], field_formatters={}):
         self.all_fields = all_fields
@@ -58,13 +59,15 @@ class FieldHelper:
         if maxval == 1:
             val = config.getboolean(config_name, default)
         elif field_name in self.signed_fields:
-            val = config.getint(config_name, default, minval=-32768, maxval=32767)
+            val = config.getint(config_name, default, minval=-32768,
+                                maxval=32767)
         else:
             val = config.getint(config_name, default, minval=0, maxval=maxval)
         return self.set_field(field_name, val)
 
     def pretty_format(self, reg_name, reg_value):
-        """Format register value with human-readable field labels for dump output"""
+        """Format register value with
+        human-readable field labels for dump output"""
         fields = []
         for field_name, mask in self.all_fields.get(reg_name, {}).items():
             val = self.get_field(field_name)
@@ -84,7 +87,8 @@ class LYXCurrentHelper:
         self.printer = config.get_printer()
         self.fields = mcu_lyx.get_fields()
 
-        self.sense_resistor = config.getfloat('sense_resistor', 0.050, above=0.)
+        self.sense_resistor = config.getfloat('sense_resistor',
+                                              0.050, above=0.)
         run_current = config.getfloat('run_current', 1.4, above=0.)
         hold_current = config.getfloat('hold_current', None, above=0.)
         if hold_current is None:
@@ -133,6 +137,7 @@ class LYXMicrostepHelper:
         reg_raw = max(128, min(25600, reg_raw))
         self.fields.set_field("microstep_ratio", reg_raw)
 
+
 ######################################################################
 # G-code command management helper
 ######################################################################
@@ -148,9 +153,12 @@ class LYXCommandHelper:
         self.fields = mcu_lyx.get_fields()
         self.read_registers = []
         gcode = self.printer.lookup_object("gcode")
-        gcode.register_mux_command("SET_LYX_FIELD", "STEPPER", self.name, self.cmd_SET_LYX_FIELD)
-        gcode.register_mux_command("SET_LYX_CURRENT", "STEPPER", self.name, self.cmd_SET_LYX_CURRENT)
-        gcode.register_mux_command("SET_LYX_MICROSTEP", "STEPPER", self.name, self.cmd_SET_LYX_MICROSTEP)
+        gcode.register_mux_command("SET_LYX_FIELD", "STEPPER", self.name,
+                                   self.cmd_SET_LYX_FIELD)
+        gcode.register_mux_command("SET_LYX_CURRENT", "STEPPER", self.name,
+                                   self.cmd_SET_LYX_CURRENT)
+        gcode.register_mux_command("SET_LYX_MICROSTEP", "STEPPER", self.name,
+                                   self.cmd_SET_LYX_MICROSTEP)
 
     def cmd_SET_LYX_FIELD(self, gcmd):
         """G-code: Modify single register field raw value"""
@@ -188,16 +196,21 @@ class LYXCommandHelper:
         print_time = self.printer.lookup_object('toolhead').get_last_move_time()
         mh.set_microstep(microstep, print_time)
         reg_name = self.fields.field_to_register["microstep_ratio"]
-        self.mcu_lyx.set_register(reg_name, self.fields.get_field("microstep_ratio"), print_time)
+        self.mcu_lyx.set_register(reg_name,
+                                  self.fields.get_field("microstep_ratio"),
+                                  print_time)
         gcmd.respond_info(f"Set microstep = {microstep}, "
-                          f"raw value={self.micro_helper.base_div // microstep}, "
-                          f"register raw={self.fields.get_field('microstep_ratio')}")
+                          f"raw value="
+                          f"{self.micro_helper.base_div // microstep}, "
+                          f"register raw="
+                          f"{self.fields.get_field('microstep_ratio')}")
 
     def setup_register_dump(self, read_registers):
         """Register DUMP_LYX diagnostic command"""
         self.read_registers = read_registers
         gcode = self.printer.lookup_object("gcode")
-        gcode.register_mux_command("DUMP_LYX", "STEPPER", self.name, self.cmd_DUMP_LYX)
+        gcode.register_mux_command("DUMP_LYX", "STEPPER", self.name,
+                                   self.cmd_DUMP_LYX)
 
     def cmd_DUMP_LYX(self, gcmd):
         """G-code: Print all cached and live register values"""
