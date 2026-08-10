@@ -274,6 +274,8 @@ class SerialReader:
                                 self.ffi_lib.serialqueue_free_commandqueue)
     # Dumping debug lists
     def dump_debug(self):
+        if self.serialqueue is None:
+            return ""
         out = []
         out.append("Dumping serial stats: %s" % (
             self.stats(self.reactor.monotonic()),))
@@ -287,13 +289,13 @@ class SerialReader:
         for i in range(scount):
             msg = sdata[i]
             cmds = self.msgparser.dump(msg.msg[0:msg.len])
-            out.append("Sent %d %f %f %d: %s" % (
+            out.append("Sent %02d %f %f %02d: %s" % (
                 i, msg.receive_time, msg.sent_time, msg.len, ', '.join(cmds)))
         out.append("Dumping receive queue %d messages" % (rcount,))
         for i in range(rcount):
             msg = rdata[i]
             cmds = self.msgparser.dump(msg.msg[0:msg.len])
-            out.append("Receive: %d %f %f %d: %s" % (
+            out.append("Receive: %02d %f %f %02d: %s" % (
                 i, msg.receive_time, msg.sent_time, msg.len, ', '.join(cmds)))
         return '\n'.join(out)
     # Default message handlers
