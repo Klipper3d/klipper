@@ -329,7 +329,8 @@ The display_status module is automatically loaded if a
 [display config section](Config_Reference.md#display) is enabled. It
 provides the following standard G-Code commands:
 - Display Message: `M117 <message>`
-- Set build percentage: `M73 P<percent>`
+- Set build percentage and/or remaining print time:
+  `M73 [P<percent>] [R<minutes>]`
 
 Also provided is the following extended G-Code command:
 - `SET_DISPLAY_TEXT MSG=<message>`: Performs the equivalent of M117,

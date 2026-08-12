@@ -87,6 +87,8 @@ The following information is available in the `display_status` object
 [display](Config_Reference.md#display) config section is defined):
 - `progress`: The progress value of the last `M73` G-Code command (or
   `virtual_sdcard.progress` if no recent `M73` received).
+- `remaining_time`: The remaining print time in seconds from the last
+  `M73 R` parameter, or `None` if no remaining time was supplied.
 - `message`: The message contained in the last `M117` G-Code command.
 
 ## endstop_phase
