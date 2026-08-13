@@ -75,7 +75,8 @@ class AccelQueryHelper:
         total = sum([len(m['data']) for m in self.msgs])
         count = 0
         self.samples = samples = [None] * total
-        for msg in self.msgs:
+        while self.msgs:
+            msg = self.msgs.pop(0)
             for samp_time, x, y, z in msg['data']:
                 if samp_time < self.request_start_time:
                     continue
