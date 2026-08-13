@@ -1667,6 +1667,29 @@ case and pint bed should all be connected to ground. You may need to ground
 the frame in multiple places. Anodized aluminum extrusions do not conduct
 electricity well. You might need to sand the area where the grounding wire
 is attached to make good electrical contact.</p>
+<h4 id="interpolation">Interpolation<a class="headerlink" href="#interpolation" title="Permanent link">&para;</a></h4>
+<p>To increase the precision of the probing result, the position of the first
+contact between nozzle and bed can be estimated by fitting a piecewise function
+to the measured data. The data will consist of two regions: while the nozzle is
+above the bed, the force will be constant (at the tare value). When the nozzle
+is in contact with the bed, the force will increase linearly with decreasing z
+position. A piecewise function is fitted to the data and the optimal z position
+of the split point is found by minimising the error squared. This enables a
+resolution finer than the distance between the sampling points and will also be
+less sensitive to noise.</p>
+<p>Due to both physical and technical reasons, the interpolation uses data
+collected during an additional ascending movement after the initial descending
+move. The first 300ms of data collected during the ascending move will
+be used for the fit (this minimises the influence of tare drifts). The
+collected data must contain enough samples for the fit: at least 3 samples each
+below and above the contact point are required.</p>
+<p>It is recommended to use a relatively high trigger force for the probe to have
+a strong enough signal. If you have too few samples below the contact point,
+try increasing the <code>trigger_force</code> or reducing the <code>lift_speed</code>. However, if
+the <code>lift_speed</code> is too small, there will be too few samples above the contact
+point due to the 300ms window.</p>
+<p>The distance of the ascending move can be configured through the
+<code>sample_retract_dist</code> parameter.</p>
 <h2 id="load-cell-probe-setup">Load Cell Probe Setup<a class="headerlink" href="#load-cell-probe-setup" title="Permanent link">&para;</a></h2>
 <p>This section covers the process for commissioning a load cell probe.</p>
 <h3 id="verify-the-load-cell-first">Verify the Load Cell First<a class="headerlink" href="#verify-the-load-cell-first" title="Permanent link">&para;</a></h3>
