@@ -95,7 +95,7 @@ class TemperatureProbe:
         self.last_temp_read_time = 0.
         self.last_measurement = (0., 99999999., 0.,)
         # Calibration State
-        self._method = "manual"
+        self._gcode_params = ""
         self.cal_helper = None
         self.next_auto_temp = 99999999.
         self.target_temp = 0
@@ -156,7 +156,10 @@ class TemperatureProbe:
         smoothed_temp = self.last_measurement[0]
         if self.in_calibration and smoothed_temp >= self.next_auto_temp:
             self.next_auto_temp = 99999999.
-            self.gcode.run_script("TEMPERATURE_PROBE_NEXT")
+            cmd = "TEMPERATURE_PROBE_NEXT"
+            if self._gcode_params:
+                cmd += " " + self._gcode_params
+            self.gcode.run_script(cmd)
 
     def get_temp(self, eventtime=None):
         return self.last_measurement[0], self.target_temp
@@ -238,6 +241,7 @@ class TemperatureProbe:
         self.last_zero_pos = None
         self.total_expansion = 0
         self.start_pos = []
+        self._gcode_params = ""
         # Unregister Temporary Commands
         self.gcode.register_command("ABORT", None)
         self.gcode.register_command("TEMPERATURE_PROBE_NEXT", None)
@@ -324,7 +328,6 @@ class TemperatureProbe:
     )
     def _auto_probe(self, gcmd):
         fo_params = dict(gcmd.get_command_parameters())
-        fo_params['METHOD'] = self._method
         gcode = self.printer.lookup_object('gcode')
         fo_gcmd = gcode.create_gcode_command("PROBE", "PROBE", fo_params)
         pprobe = self.printer.lookup_object("probe")
@@ -334,7 +337,12 @@ class TemperatureProbe:
         probe_session.end_probe_session()
         self._manual_probe_finalize(pos)
     def cmd_TEMPERATURE_PROBE_CALIBRATE(self, gcmd):
-        self._method = gcmd.get('METHOD', 'manual').lower()
+        method = gcmd.get('METHOD', 'manual').lower()
+        # Formward gcmd paras
+        if method == "tap":
+            param_pairs = dict(gcmd.get_command_parameters()).items()
+            gcode_params = " ".join(["%s=%s" % (k, v) for k, v in param_pairs])
+            self._gcode_params = gcode_params
         if self.cal_helper is None:
             raise gcmd.error(
                 "No calibration helper registered for [%s]"
@@ -397,7 +405,7 @@ class TemperatureProbe:
         # Capture start position and begin initial probe
         toolhead = self.printer.lookup_object("toolhead")
         self.start_pos = toolhead.get_position()[:2]
-        if self._method == "tap":
+        if method == "tap":
             try:
                 self._auto_probe(gcmd)
             except self.printer.command_error:
@@ -410,6 +418,7 @@ class TemperatureProbe:
 
     cmd_TEMPERATURE_PROBE_NEXT_help = "Sample next probe drift temperature"
     def cmd_TEMPERATURE_PROBE_NEXT(self, gcmd):
+        method = gcmd.get('METHOD', 'manual').lower()
         manual_probe.verify_no_manual_probe(self.printer)
         self.next_auto_temp = 99999999.
         toolhead = self.printer.lookup_object("toolhead")
@@ -426,7 +435,7 @@ class TemperatureProbe:
         curpos[2] = start_z
         toolhead.manual_move(curpos, probe_speed)
         self.gcode.register_command("ABORT", None)
-        if self._method == "tap":
+        if method == "tap":
             try:
                 self._auto_probe(gcmd)
             except self.printer.command_error as e:
