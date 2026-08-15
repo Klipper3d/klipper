@@ -95,7 +95,7 @@ class TemperatureProbe:
         self.last_temp_read_time = 0.
         self.last_measurement = (0., 99999999., 0.,)
         # Calibration State
-        self._method = "manual"
+        self._gcode_params = ""
         self.cal_helper = None
         self.next_auto_temp = 99999999.
         self.target_temp = 0
@@ -156,7 +156,9 @@ class TemperatureProbe:
         smoothed_temp = self.last_measurement[0]
         if self.in_calibration and smoothed_temp >= self.next_auto_temp:
             self.next_auto_temp = 99999999.
-            cmd = "TEMPERATURE_PROBE_NEXT MANUAL_METHOD=%s" % (self._method)
+            cmd = "TEMPERATURE_PROBE_NEXT"
+            if self._gcode_params:
+                cmd += " " + self._gcode_params
             self.gcode.run_script(cmd)
 
     def get_temp(self, eventtime=None):
@@ -239,6 +241,7 @@ class TemperatureProbe:
         self.last_zero_pos = None
         self.total_expansion = 0
         self.start_pos = []
+        self._gcode_params = ""
         # Unregister Temporary Commands
         self.gcode.register_command("ABORT", None)
         self.gcode.register_command("TEMPERATURE_PROBE_NEXT", None)
@@ -324,7 +327,10 @@ class TemperatureProbe:
         "Calibrate probe temperature drift compensation"
     )
     def cmd_TEMPERATURE_PROBE_CALIBRATE(self, gcmd):
-        self._method = gcmd.get('MANUAL_METHOD', 'manual').lower()
+        method = gcmd.get('MANUAL_METHOD', 'manual').lower()
+        # Formward gcmd paras
+        if method == "tap":
+            self._gcode_params = gcmd.get_raw_command_parameters()
         if self.cal_helper is None:
             raise gcmd.error(
                 "No calibration helper registered for [%s]"
