@@ -316,7 +316,7 @@ handle_message(struct serialqueue *sq, double eventtime, int len)
         // Release main lock and invoke callback
         pthread_mutex_lock(&sq->fast_reader_dispatch_lock);
         pthread_mutex_unlock(&sq->lock);
-        fr->func(fr, sq->input_buf, len);
+        fr->func(fr, eventtime, sq->input_buf, len);
         pthread_mutex_unlock(&sq->fast_reader_dispatch_lock);
         return;
     }
@@ -828,6 +828,8 @@ serialqueue_free(struct serialqueue *sq)
     pthread_mutex_unlock(&sq->transmit_requests.lock);
     pthread_mutex_unlock(&sq->lock);
     pollreactor_free(sq->pr);
+    close(sq->transmit_requests.pipe_fds[0]);
+    close(sq->transmit_requests.pipe_fds[1]);
     free(sq);
 }
 
@@ -1008,11 +1010,10 @@ serialqueue_set_receive_window(struct serialqueue *sq, int receive_window)
 // serial port
 void __visible
 serialqueue_set_clock_est(struct serialqueue *sq, double est_freq
-                          , double conv_time, uint64_t conv_clock
-                          , uint64_t last_clock)
+                          , double conv_time, uint64_t conv_clock)
 {
     pthread_mutex_lock(&sq->lock);
-    clock_fill(&sq->ce, est_freq, conv_time, conv_clock, last_clock);
+    clock_fill(&sq->ce, est_freq, conv_time, conv_clock);
     pthread_mutex_unlock(&sq->lock);
 }
 

@@ -23,17 +23,24 @@ class Temperature_HOST:
             return
         self.sample_timer = self.reactor.register_timer(
             self._sample_pi_temperature)
+        aio = self.printer.load_object(config, 'aio_executor')
+        self.executor = aio.allocate_executor("temperature_host")
         try:
-            self.file_handle = open(self.path, "r")
+            self.file_handle = self.executor.submit(open, self.path, "r")
         except:
             raise config.error("Unable to open temperature file '%s'"
                                % (self.path,))
 
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
+        self.printer.register_event_handler("klippy:disconnect",
+                                            self.handle_disconnect)
 
     def handle_connect(self):
         self.reactor.update_timer(self.sample_timer, self.reactor.NOW)
+
+    def handle_disconnect(self):
+        self.file_handle.close()
 
     def setup_minmax(self, min_temp, max_temp):
         self.min_temp = min_temp
@@ -46,9 +53,12 @@ class Temperature_HOST:
         return HOST_REPORT_TIME
 
     def _sample_pi_temperature(self, eventtime):
-        try:
+        def _get_sample():
             self.file_handle.seek(0)
-            self.temp = float(self.file_handle.read())/1000.0
+            return self.file_handle.read()
+        try:
+            raw_value = self.executor.submit(_get_sample)
+            self.temp = float(raw_value)/1000.0
         except Exception:
             logging.exception("temperature_host: Error reading data")
             self.temp = 0.0

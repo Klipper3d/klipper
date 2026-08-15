@@ -944,6 +944,8 @@ class EddyScanningProbe:
         return probe_results_from_avg(measures, toolhead_pos,
                                       self._calibration, self._offsets)
     def _rapid_lookahead_cb(self, printtime):
+        if self._gather is None:
+            return
         start_time = printtime - self._sample_time / 2
         end_time = start_time + self._sample_time
         self._gather.add_probe_request(self._analyze_scan, start_time, end_time,
