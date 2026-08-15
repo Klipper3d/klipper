@@ -161,7 +161,7 @@ class TemperatureProbe:
     def get_temp(self, eventtime=None):
         return self.last_measurement[0], self.target_temp
 
-    def _collect_sample(self, mpresult, tool_zero_z):
+    def _collect_sample(self, mpresult):
         probe = self._get_probe()
         x_offset, y_offset, _ = probe.get_offsets()
         speeds = self._get_speeds()
@@ -174,7 +174,7 @@ class TemperatureProbe:
         cur_pos[0] -= x_offset
         cur_pos[1] -= y_offset
         toolhead.manual_move(cur_pos, move_speed)
-        return self.cal_helper.collect_sample(mpresult, tool_zero_z, speeds)
+        return self.cal_helper.collect_sample(mpresult, speeds)
 
     def _prepare_next_sample(self, last_temp, tool_zero_z):
         # Register our own abort command now that the manual
@@ -210,10 +210,8 @@ class TemperatureProbe:
                 % (self.total_expansion,)
             )
         self.last_zero_pos = mpresult.bed_z
-        toolhead = self.printer.lookup_object("toolhead")
-        tool_zero_z = toolhead.get_position()[2]
         try:
-            last_temp = self._collect_sample(mpresult, tool_zero_z)
+            last_temp = self._collect_sample(mpresult)
         except Exception:
             self._finalize_drift_cal(False)
             raise
@@ -223,7 +221,7 @@ class TemperatureProbe:
             self._finalize_drift_cal(True)
         else:
             try:
-                self._prepare_next_sample(last_temp, tool_zero_z)
+                self._prepare_next_sample(last_temp, mpresult.bed_z)
                 if self.sample_count == 1:
                     self._set_bed_temp(self.cal_bed_temp)
             except Exception:
@@ -563,7 +561,7 @@ class EddyDriftCompensation:
             % (self.name, self.cal_temp)
         )
 
-    def collect_sample(self, mpresult, tool_zero_z, speeds):
+    def collect_sample(self, mpresult, speeds):
         if self.calibration_samples is None:
             self.calibration_samples = [[] for _ in range(DRIFT_SAMPLE_COUNT)]
         move_times = []
@@ -594,7 +592,7 @@ class EddyDriftCompensation:
         for i in range(DRIFT_SAMPLE_COUNT):
             if i == 0:
                 # Move down to first sample location
-                cur_pos[2] = tool_zero_z + .05
+                cur_pos[2] = mpresult.bed_z + .05
             else:
                 # Sample each .5mm in z
                 cur_pos[2] += 1.
