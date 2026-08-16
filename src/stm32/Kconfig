@@ -152,7 +152,10 @@ config MACH_N32G45x
 config HAVE_STM32_USBFS
     bool
     default y if MACH_STM32F0x2 || MACH_STM32G0Bx || MACH_STM32L4 || MACH_STM32G4
-    default y if (MACH_STM32F1 || MACH_STM32F070) && !STM32_CLOCK_REF_INTERNAL
+    default y if (MACH_STM32F103 || MACH_STM32F070) && !STM32_CLOCK_REF_INTERNAL
+    # The n32g45x usb clock needs an exact 96Mhz pll output, which only
+    # some reference crystals can produce
+    default y if MACH_N32G45x && (STM32_CLOCK_REF_8M || STM32_CLOCK_REF_12M || STM32_CLOCK_REF_16M || STM32_CLOCK_REF_24M)
 config HAVE_STM32_USBOTG
     bool
     default y if MACH_STM32F2 || MACH_STM32F4 || MACH_STM32F7 || MACH_STM32H7
@@ -220,7 +223,13 @@ config CLOCK_FREQ
     # The n32g45x usb clock is PLLCLK divided by 1, 1.5, 2 or 3 - only a
     # limited number of system clock rates can produce the required 48Mhz
     default 96000000 if MACH_N32G45x && USB
-    default 128000000 if MACH_N32G45x
+    # The n32g45x PLL multiplies the crystal (or its half) by an integer,
+    # so only rates that are an exact multiple of crystal / 2 can be
+    # generated - default to the highest rate each crystal produces exactly
+    default 128000000 if MACH_N32G45x && (STM32_CLOCK_REF_8M || STM32_CLOCK_REF_16M)
+    default 144000000 if MACH_N32G45x && (STM32_CLOCK_REF_12M || STM32_CLOCK_REF_24M)
+    default 140000000 if MACH_N32G45x && STM32_CLOCK_REF_20M
+    default 125000000 if MACH_N32G45x && STM32_CLOCK_REF_25M
 
 config FLASH_SIZE
     hex
