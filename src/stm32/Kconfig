@@ -215,7 +215,11 @@ config CLOCK_FREQ
     default 400000000 if MACH_STM32H743
     default 480000000 if MACH_STM32H750
     default 80000000 if MACH_STM32L412
+    # The n32g45x PLL input is HSI/2 (4Mhz) when using the internal oscillator
     default 64000000 if MACH_N32G45x && STM32_CLOCK_REF_INTERNAL
+    # The n32g45x usb clock is PLLCLK divided by 1, 1.5, 2 or 3 - only a
+    # limited number of system clock rates can produce the required 48Mhz
+    default 96000000 if MACH_N32G45x && USB
     default 128000000 if MACH_N32G45x
 
 config FLASH_SIZE
