@@ -110,6 +110,16 @@ n32g45x_pll_multiplier_bits(uint32_t mul)
     return (mul - 2) << RCC_CFGR_PLLMULL_Pos;
 }
 
+#if CONFIG_MACH_N32G45x
+  #if !CONFIG_STM32_CLOCK_REF_INTERNAL \
+      && (2 * CONFIG_CLOCK_FREQ) % CONFIG_CLOCK_REF_FREQ
+    #error "Unable to generate the requested clock rate from this crystal"
+  #endif
+  #if CONFIG_USB && CONFIG_CLOCK_FREQ != 96000000
+    #error "Unable to generate a 48Mhz usb clock at this system clock rate"
+  #endif
+#endif
+
 // The n32g45x is register compatible with the stm32f103, but has its
 // own clock tree: PCLK2 is limited to 72Mhz and PCLK1 to 36Mhz, and
 // flash wait states scale with HCLK in 32Mhz steps
@@ -141,6 +151,11 @@ clock_setup_n32g45x(void)
         cfgr |= RCC_CFGR_PPRE1_DIV4 | RCC_CFGR_PPRE2_DIV4;
     else if (CONFIG_CLOCK_FREQ > 36000000)
         cfgr |= RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV2;
+    // The n32g45x usb clock is PLLCLK divided by 1.5, 1, 2 or 3.  The
+    // clock defaults select 96Mhz when usb is enabled, which produces
+    // the 48Mhz the usb peripheral needs through the /2 divisor.
+    if (CONFIG_CLOCK_FREQ == 96000000)
+        cfgr |= 2 << 22;
     RCC->CFGR = cfgr;
     RCC->CR |= RCC_CR_PLLON;
 
