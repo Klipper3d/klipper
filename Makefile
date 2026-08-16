@@ -10,6 +10,7 @@ OUT=out/
 # Kconfig includes
 export KCONFIG_CONFIG     := $(CURDIR)/.config
 -include $(KCONFIG_CONFIG)
+DEFCONFIG ?= defconfig
 
 # Common command definitions
 CC=$(CROSS_PREFIX)gcc
@@ -116,10 +117,18 @@ $(KCONFIG_CONFIG) olddefconfig: src/Kconfig
 menuconfig:
 	$(Q)$(PYTHON) lib/kconfiglib/menuconfig.py src/Kconfig
 
+$(OUT)defconfig: FORCE
+	@echo "  Building $@"
+	$(Q)mkdir -p $(OUT)
+	$(Q)$(PYTHON) lib/kconfiglib/savedefconfig.py --kconfig src/Kconfig --out $@
+
+savedefconfig:
+	$(Q)$(PYTHON) lib/kconfiglib/savedefconfig.py --kconfig src/Kconfig --out $(DEFCONFIG)
+
 ################ Generic rules
 
 # Make definitions
-.PHONY : all clean distclean olddefconfig menuconfig create-board-link FORCE
+.PHONY : all clean distclean olddefconfig menuconfig create-board-link FORCE savedefconfig
 .DELETE_ON_ERROR:
 
 all: $(target-y)
@@ -128,6 +137,6 @@ clean:
 	$(Q)rm -rf $(OUT)
 
 distclean: clean
-	$(Q)rm -f .config .config.old
+	$(Q)rm -f .config .config.old $(DEFCONFIG)
 
 -include $(OUT)*.d $(patsubst %,$(OUT)%/*.d,$(dirs-y))
