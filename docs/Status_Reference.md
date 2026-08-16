@@ -366,6 +366,10 @@ The following information is available in
 - `mcu_constants.<constant_name>`: Compile time constants reported by
   the micro-controller. The available constants may differ between
   micro-controller architectures and with each code revision.
+- `mcu_kconfig.defconfig`: The minimal build configuration (`savedefconfig`
+  output) the micro-controller firmware was compiled from, as reported by
+  the micro-controller. `None` if the firmware predates this feature or does
+  not provide it.
 - `last_stats.<statistics_name>`: Statistics information on the
   micro-controller connection.
 

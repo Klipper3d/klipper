@@ -946,6 +946,7 @@ class MCUStatsHelper:
         self._get_status_info['mcu_version'] = version
         self._get_status_info['mcu_build_versions'] = build_versions
         self._get_status_info['mcu_constants'] = msgparser.get_constants()
+        self._get_status_info['mcu_kconfig'] = msgparser.get_kconfig()
         self._serial.register_response(self._handle_mcu_stats, 'stats')
     def _ready(self):
         if self._mcu.is_fileoutput():
