@@ -11,8 +11,11 @@ Klipper supports the following standard G-Code commands:
 - Move to origin: `G28 [X] [Y] [Z]`
 - Turn off motors: `M18` or `M84`
 - Wait for current moves to finish: `M400`
-- Use absolute/relative distances for extrusion: `M82`, `M83`
 - Use absolute/relative coordinates: `G90`, `G91`
+- Force relative distances for extrusion: `M83`, `M82`
+  - Note: `M83` forces extrusions to use relative coordinates even if
+    `G90` absolute mode is selected. `M82` disables that forced mode
+    (it does not force the extruder to use absolute coordinates).
 - Set position: `G92 [X<pos>] [Y<pos>] [Z<pos>] [E<pos>]`
 - Set speed factor override percentage: `M220 S<percent>`
 - Set extrude factor override percentage: `M221 S<percent>`
