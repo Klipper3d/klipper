@@ -1502,7 +1502,7 @@
   
     <li class="md-nav__item">
       <a href="Load_Cell.html" class="md-nav__link">
-        Load Cells
+        压力传感器
       </a>
     </li>
   
@@ -1845,7 +1845,7 @@ bossac -U -p /dev/ttyACM0 -R
 
 <h2 id="samdc21duet3d1lc">SAMDC21微控制器(Duet3D工具板1LC)<a class="headerlink" href="#samdc21duet3d1lc" title="Permanent link">&para;</a></h2>
 <p>SAMC21通过ARM串行线调试(SWD)接口进行刷新。这通常是通过专用的社署硬件加密狗来完成的。或者，人们可以使用带有<a href="#running-openocd-on-the-raspberry-pi">Raspberry Pi的 OpenOCD</a>.</p>
-<p>当将OpenOCD与SAMC21一起使用时，如果主板将SWD引脚用于其他目的，则必须采取额外步骤，首先将芯片置于冷插拔模式。如果在Rasberry PI上使用OpenOCD，可以通过在调用OpenOCD之前运行以下命令来完成。</p>
+<p>When using OpenOCD with the SAMC21, extra steps must be taken to first put the chip into Cold Plugging mode if the board makes use of the SWD pins for other purposes. If using OpenOCD on a Raspberry Pi, this can be done by running the following commands before invoking OpenOCD.</p>
 <div class="highlight"><pre><span></span><code>SWCLK=25
 SWDIO=24
 SRST=18
@@ -2007,7 +2007,7 @@ make
 <p><a href="https://github.com/Arksine/CanBoot">CanBoot</a>引导程序提供了一个通过CANBUS上传Klipper固件的选项。该引导程序本身来自Klipper的源代码。目前CanBoot支持STM32F103、STM32F042和STM32F072型号。</p>
 <p>建议使用ST-Link编程器来刷写CanBoot，然而，在STM32F103设备上使用<code>stm32flash</code> ，在STM32F042/STM32F072设备上使用<code>dfu-util</code> ，应该也是可以刷写的。关于这些刷写方法的说明，请参见本文档的前几节，在适当的地方用<code>canboot.bin</code> 代替文件名。上面链接的CanBoot资源库提供了构建引导程序的说明。</p>
 <p>在CanBoot第一次被写入时，应该检测到没有应用程序，并进入引导程序。如果没有出现这种情况，可以通过连续按两次复位按钮进入引导程序。</p>
-<p><code>flash_can.py</code>在<code>lib/canboot</code>文件夹中提供的工具可以用来上传Klipper固件。设备的UUID对于写入固件来说是必要的。如果你没有UUID可以查询当前运行引导程序的节点：</p>
+<p>The <code>flashtool.py</code> utility supplied in the <code>lib/katapult</code> folder may be used to upload Klipper firmware. The device UUID is necessary to flash. If you do not have a UUID it is possible to query nodes currently running the bootloader:</p>
 <div class="highlight"><pre><span></span><code>python3 flash_can.py -q
 </code></pre></div>
 

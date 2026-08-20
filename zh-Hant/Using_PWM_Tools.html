@@ -954,13 +954,6 @@
       
         <li class="md-nav__item">
   <a href="#_2" class="md-nav__link">
-    電流限制
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
     命令
   </a>
   
@@ -1414,13 +1407,6 @@
       
         <li class="md-nav__item">
   <a href="#_2" class="md-nav__link">
-    電流限制
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
     命令
   </a>
   
@@ -1451,14 +1437,12 @@
 
 
 <h1 id="pwm">使用 PWM 工具<a class="headerlink" href="#pwm" title="Permanent link">&para;</a></h1>
-<p>該文件介紹如何配置 <code>output_pin</code> 和宏命令以實現使用 PWM 訊號對鐳射器或主軸進行控制。</p>
+<p>This document describes how to setup a PWM-controlled laser or spindle using <code>pwm_tool</code> and some macros.</p>
 <h2 id="_1">它如何運作？<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>通過重用列印頭模型風扇(part fan)的PWM輸出訊號，我們可以實現對鐳射頭或轉軸的控制。對使用可更換列印頭的裝置，如E3D toolchanger 或其他DIY專案，這是十分有用的功能。通常，cam軟體，例如LaserWeb，會使用<code>M3-M5</code>命令，它們分別是 主軸順時針轉速<em>spindle speed CW</em> (<code>M3 S[0-255]</code>)， 主軸逆時針轉速<em>spindle speed CCW</em> (<code>M4 S[0-255]</code>) 和轉軸停止 <em>spindle stop</em> (<code>M5</code>)。</p>
 <p><strong>警告：</strong> 在驅動鐳射器時，應採用一切可能的預防措施。二極管鐳射一般是使用反訊號的，即當微控制器重啟時，鐳射將會<em>全功率輸出</em>，直至微處理器恢復正常運作。 慎重而言，建議在鐳射器上電期間<em>始終</em>佩戴合適波長的護目鏡；並在不使用鐳射時對鐳射器斷電。同時，應該為鐳射器設定安全定時，保證在上位機和微控制器發生錯誤時，鐳射器能自動停止。</p>
 <p>有關示例配置，請參閱 <a href="/config/sample-pwm-tool.cfg">config/sample-pwm-tool.cfg</a>。</p>
-<h2 id="_2">電流限制<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
-<p>PWM脈衝發生的頻率存在上限。儘管相當精確，但每隔0.1秒才能產生一個PWM脈衝，因而幾乎無法用作光柵蝕刻。相對地，可使用以下<a href="https://github.com/Cirromulus/klipper/tree/laser_tool">測試分支</a> 。它與主分支各有考量。長期計劃中將上述功能加入到 Klipper 的主分支中。</p>
-<h2 id="_3">命令<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<h2 id="_2">命令<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p><code>M3/M4 S&lt;值&gt;</code> ：設定 PWM 占空比。占空比數值應在0和255之間。 <code>M5</code> : 停止 PWM 訊號輸出。</p>
 <h2 id="laserweb">LaserWeb 端配置<a class="headerlink" href="#laserweb" title="Permanent link">&para;</a></h2>
 <p>如果你使用的是 LaserWeb 軟體，一個可用的配置為：</p>

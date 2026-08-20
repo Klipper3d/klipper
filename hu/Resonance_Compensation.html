@@ -858,6 +858,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#should-i-enable-and-tune-input-shaper-for-z-axis" class="md-nav__link">
+    Should I enable and tune input shaper for Z axis?
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1614,6 +1621,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#should-i-enable-and-tune-input-shaper-for-z-axis" class="md-nav__link">
+    Should I enable and tune input shaper for Z axis?
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1837,13 +1851,18 @@ gcode:
    SET_INPUT_SHAPER SHAPER_TYPE_X=&lt;primary_carriage_shaper&gt; SHAPER_FREQ_X=&lt;elsődleges_kocsi_gyakoriság&gt; SHAPER_TYPE_Y=&lt;y_shaper&gt; SHAPER_FREQ_Y=&lt;y_freq&gt;
 </code></pre></div>
 
-<p>Vegye figyelembe, hogy a <code>SHAPER_TYPE_Y</code> és <code>SHAPER_FREQ_Y</code> mindkét parancsban azonosnak kell lennie. A szeletelőben a kezdő g-kódba is be lehet helyezni egy hasonló részletet, azonban ekkor a formáló nem lesz engedélyezve, amíg a nyomtatás el nem indul.</p>
+<p>However, users of <code>generic_cartesian</code> kinematics should specify carriage names in <code>CARRIAGE=</code> parameters of <code>SET_DUAL_CARRIAGE</code> instead of their numbers. Note that <code>SHAPER_TYPE_Y</code> and <code>SHAPER_FREQ_Y</code> should be the same in both commands. If you need to configure an input shaper for Z axis, include its parameters in both <code>SET_INPUT_SHAPER</code> commands.</p>
+<p>Besides <code>delayed_gcode</code>, it is also possible to put a similar snippet into the start g-code in the slicer, however then the shaper will not be enabled until any print is started.</p>
 <p>Vegye figyelembe, hogy a bemeneti alakítót csak egyszer kell konfigurálni. A kocsik vagy módozataik<code>SET_DUAL_CARRIAGE</code>paranccsal történő későbbi módosítása megőrzi a konfigurált bemeneti alakformáló paramétereket.</p>
 <h3 id="az-input_shaper-befolyasolja-a-nyomtatasi-idot">Az input_shaper befolyásolja a nyomtatási időt?<a class="headerlink" href="#az-input_shaper-befolyasolja-a-nyomtatasi-idot" title="Permanent link">&para;</a></h3>
 <p>Nem, a <code>input_shaper</code> funkció önmagában nincs hatással a nyomtatási időre. A <code>max_accel</code> értéke azonban bizonyosan befolyásolja (ennek a paraméternek a hangolása <a href="#a-max_accel-kivalasztasa">ebben a szakaszban</a> le van írva).</p>
+<h3 id="should-i-enable-and-tune-input-shaper-for-z-axis">Should I enable and tune input shaper for Z axis?<a class="headerlink" href="#should-i-enable-and-tune-input-shaper-for-z-axis" title="Permanent link">&para;</a></h3>
+<p>Most of the users are not likely to see improvements in the quality of the prints directly, much unlike X and Y shapers. However, users of delta printers, printers with flying gantry, or printers with heavy moving beds may be able to increase the <code>max_z_accel</code> and <code>max_z_velocity</code> kinematics limits and thus get faster Z movements. This can be especially useful e.g. for toolchangers, but also when Z-hops are enabled in slicer. And in general, after enabling Z input shaper many users will hear that Z axis operates more smoothly, which may increase the comfort of printer operation, and may somewhat extend lifespan of Z axis parts.</p>
 <h2 id="muszaki-reszletek">Műszaki részletek<a class="headerlink" href="#muszaki-reszletek" title="Permanent link">&para;</a></h2>
 <h3 id="bemeneti-valtozok">Bemeneti változók<a class="headerlink" href="#bemeneti-valtozok" title="Permanent link">&para;</a></h3>
-<p>A Klipper-ben használt bemeneti formázók meglehetősen szabványosak, és részletesebb áttekintést a megfelelő formázókat leíró cikkekben találhatunk. Ez a szakasz a támogatott bemeneti formázók néhány technikai szempontjának rövid áttekintését tartalmazza. Az alábbi táblázat az egyes shaperek néhány (általában hozzávetőleges) paraméterét mutatja.</p>
+<p>This section contains a brief overview of some technical aspects of the supported input shapers. Input shapers used in Klipper are rather standard, with the exception of MZV, and one can find more in-depth overview in the articles describing the corresponding shapers.</p>
+<p>MZV stands for a Modified-ZV input shaper. The classic definition of ZV shaper assumes two pulses and the total duration <code>t</code> equal to 1/2 of the damped period of oscillations <code>Td</code>. However, it is possible to construct a generalized form of ZV input shaper with <code>n &gt;= 3</code> pulses and an arbitrary total duration <code>t &gt;= 0.5 * Td</code> (with the maximum of <code>t</code> depending on <code>n</code> value), see for instance SNA-ZV and MIS-ZV input shapers, which can be seen as special cases of a more generalized implementation of MZV input shaper in Klipper. The default MZV parameters in Klipper are <code>n=3</code>, <code>t=0.75</code> (of <code>Td</code>), and this shaper was designed to serve as an intermediate shaper between ZV and ZVD, offering better vibrations suppression than ZV when the determined (measured) shaper parameters deviate from the ones actually required by the printer, and smaller smoothing than ZVD. Effectively, its specific duration <code>t=0.75</code>, exactly between ZV (with <code>t=0.5</code> of <code>Td</code>) and ZVD (<code>t=1</code> of <code>Td</code>), and it happens to work well for many real-life 3D printers. However, experienced users can modify the default parameters of the MZV input shaper and try other variations that may work better for their specific printers (with these non-default variations specified as, e.g. <code>mzv(n=3,t=0.8)</code> or <code>mzv(n=5,t=1.1)</code> in the <code>[input_shaper]</code> section or as a parameter to <code>SET_INPUT_SHAPER</code> command, as well as in a parameter to <code>~/klipper/scripts/calibrate_shaper.py</code> script, e.g. as <code>--shapers='2hump_ei,3hump_ei,mzv(n=6,t=1.0)'</code>. These custom parameters of the shapers are supported by <code>~/klipper/scripts/graph_shaper.py</code> scripts via e.g. <code>--shaper='mzv(n=3,t=0.6666666666)'</code> parameter.</p>
+<p>The table below shows some (usually approximate) parameters of each shaper with their default parameters.</p>
 <table>
 <thead>
 <tr>
@@ -1881,24 +1900,24 @@ gcode:
 <tr>
 <td align="center">2HUMP_EI</td>
 <td align="center">1.5 / shaper_freq</td>
-<td align="center">± 35% shaper_freq</td>
-<td align="center">± 40 shaper_freq</td>
+<td align="center">-40...+45% shaper_freq</td>
+<td align="center">-45..+50% shaper_freq</td>
 </tr>
 <tr>
 <td align="center">3HUMP_EI</td>
 <td align="center">2 / shaper_freq</td>
-<td align="center">-45...+50% shaper_freq</td>
-<td align="center">-50%...+55% shaper_freq</td>
+<td align="center">-50...+60% shaper_freq</td>
+<td align="center">-55%...+65% shaper_freq</td>
 </tr>
 </tbody>
 </table>
-<p>Megjegyzés a rezonancia csökkentéssel kapcsolatban: a fenti táblázatban szereplő értékek hozzávetőlegesek. Ha a nyomtató csillapítási aránya minden egyes tengely esetében ismert, akkor a formázó pontosabban konfigurálható, és ekkor a rezonanciákat egy kicsit szélesebb frekvenciatartományban csökkenti. A csillapítási arány azonban általában ismeretlen, és speciális berendezés nélkül nehéz megbecsülni, ezért a Klipper alapértelmezés szerint 0,1 értéket használ, ami egy jó általános érték. A táblázatban szereplő frekvenciatartományok számos különböző lehetséges csillapítási arányt fednek le ezen érték körül (kb. 0,05-től 0,2-ig).</p>
-<p>Vedd figyelembe azt is, hogy az EI, 2HUMP_EI és 3HUMP_EI úgy van beállítva, hogy a rezonanciákat 5%-ra csökkentse, ezért a 10%-os rezonanciára vonatkozó értékek csak referenciaként szolgálnak.</p>
+<p>A note on vibration reduction: the values in the table above are approximate. If the damping ratio of the printer is known for each axis, the shaper can be configured more precisely and it will then reduce the resonances in a bit wider range of frequencies. However, the damping ratio is usually unknown and is hard to estimate without a special equipment, so Klipper uses 0.1 value by default, which is a good all-round value. The frequency ranges in the table cover a number of different possible damping ratios around that value (approx. from 0.075 to 0.15).</p>
+<p>Also note that EI, 2HUMP_EI, and 3HUMP_EI are tuned to reduce vibrations to 5%, so the values for 10% vibration tolerance are provided only for the reference. However, a user can force a desired vibration tolerance for EI input shaper in a manner similar to MZV input shaper as, e.g. <code>ei(v_tol=0.02)</code> or <code>ei(v_tol=0.1)</code>, in which case the vibration reduction range will be different.</p>
 <p><strong>Hogyan használjuk ezt a táblázatot:</strong></p>
 <ul>
 <li>A formázó időtartama befolyásolja az alkatrészek simítását - minél nagyobb, annál simábbak az alkatrészek. Ez a függés nem lineáris, de érzékelteti, hogy ugyanazon frekvencia esetén melyik shaper 'simító' simít jobban. A simítás szerinti sorrend így néz ki: ZV &lt; MZV &lt; ZVD ≈ EI &lt; 2HUMP_EI &lt; 3HUMP_EI. Továbbá, a 2HUMP_EI és 3HUMP_EI alakítók esetében ritkán praktikus a shaper_freq = rezonancia frekvencia értéket beállítani (ezeket több frekvencia rezgéseinek csökkentésére kell használni).</li>
 <li>Megbecsülhető az a frekvenciatartomány, amelyben a formázó csökkenti a rezgéseket. Például a shaper_freq = 35 Hz-es MZV a [33,6, 36,4] Hz-es frekvencián 5%-ra csökkenti a rezgéseket. A 3HUMP_EI shaper_freq = 50 Hz esetén a [27,5, 75] Hz tartományban 5%-ra csökkenti a rezgéseket.</li>
-<li>A táblázat segítségével ellenőrizheted, hogy melyik változót kell használni, ha több frekvencián kell csökkenteni a rezgéseket. Például, ha ugyanazon a tengelyen 35 Hz-es és 60 Hz-es rezonanciák vannak: a) az EI alakítónak a shaper_freq = 35 / (1 - 0,2) = 43,75 Hz-re van szüksége, és 43,75 * (1 + 0,2) = 52-ig csökkenti a rezonanciákat tehát az 52.5 Hz, nem elegendő. b) a 2HUMP_EI alakítónak shaper_freq = 35 / (1 - 0,35) = 53,85 Hz-nek kell lennie, és 53,85 * (1 + 0,35) = 72,7 Hz-ig csökkenti a rezgéseket - tehát ez egy elfogadható konfiguráció. Mindig próbálj meg minél magasabb shaper_freq értéket használni egy adott shaper-hez (esetleg némi biztonsági tartalékkal, így ebben a példában a shaper_freq ≈ 50-52 Hz lenne a legjobb), és próbálj meg minél kisebb shaper időtartamú értéket használni.</li>
+<li>One can use this table to check which shaper they should be using if they need to reduce vibrations at several frequencies. For example, if one has resonances at 35 Hz and 60 Hz on the same axis: a) EI shaper needs to have shaper_freq = 35 / (1 - 0.2) = 43.75 Hz, and it will reduce resonances until 43.75 * (1 + 0.2) = 52.5 Hz, so it is not sufficient; b) 2HUMP_EI shaper needs to have shaper_freq = 35 / (1 - 0.4) = 58.3 Hz and will reduce vibrations until 58.3 * (1 + 0.45) = 84.5 Hz - so this is an acceptable configuration. Always try to use as high shaper_freq as possible for a given shaper (perhaps with some safety margin, so in this example shaper_freq ≈ 55 Hz would work best), and try to use a shaper with as small shaper duration as possible.</li>
 <li>Ha több nagyon különböző frekvencián (mondjuk 30 Hz és 100 Hz) kell csökkenteni a rezgéseket, láthatod, hogy a fenti táblázat nem nyújt elegendő információt. Ebben az esetben több szerencsénk lehet a <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/graph_shaper.py">scripts/graph_shaper.py</a> szkripttel, amely rugalmasabb.</li>
 </ul>
 

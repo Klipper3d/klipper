@@ -1431,7 +1431,7 @@
 <li>支援使用「輸入整形」來減少振動對列印質量的影響。這項功能可以減少或消除列印件的「振紋(ringing)」（又名「ghosting」，「echoing」，或「rippling」）。在一些情況下它可以在保持列印質量的同時提高列印速度。</li>
 <li>Klipper 使用「迭代求解器」從簡單的運動學方程中計算精準的步進時間。這降低了移植Klipper到新的機械結構的難度並保證了精確的步進計時（而不需要「線段化」）。</li>
 <li>Klipper 與硬體無關。無論低階電子硬體為何，皆能獲得相同精確的計時。Klipper 的微控制器程式設計旨在忠實遵循 Klipper 主機軟體提供的計劃表（或在無法執行時顯著警告使用者）。這讓使用現有硬體、更換新硬體更加容易，同時也增強了對硬體的信心。</li>
-<li>易移植的程式碼。Klipper 可以在 ARM、AVR，和PRU架構的微控制器上執行。現有的「reprap」類印表機不需要改動任何硬體就可以執行 Klipper，只需要加一個樹莓派。Klipper 的內部程式碼結構使它能夠被簡單的移植到其他架構。</li>
+<li>Portable code. Klipper works on ARM, AVR, PRU, and other micro-controllers. Existing "reprap" style printers can run Klipper without hardware modification - just add a Raspberry Pi. Klipper's internal code layout makes it easier to support other micro-controller architectures as well.</li>
 <li>簡潔的程式碼。大部分 Klipper 程式碼使用一個極高級程式語言（Python），這包括了運動演算法，G程式碼解析，加熱，溫度感測器演算法和其他，降低了開發新功能的難度。</li>
 <li>自定義可程式設計指令碼。可以在印表機配置檔案中定義新的G程式碼命令（而不需要修改任何程式碼）。這些命令都是可程式設計的，可以能根據印表機的狀態做出不同的響應。</li>
 <li>內建API伺服器。除了標準G程式碼介面，Klipper也支援富JSON API。使程式設計師能編寫對印表機進行精細控制的外接程式。</li>
@@ -1446,10 +1446,10 @@
 <li>Automatic bed leveling support. Klipper can be configured for basic bed tilt detection or full mesh bed leveling. The bed mesh can be customized to the print size (adaptive bed mesh). If the bed uses multiple Z steppers then Klipper can also level by independently manipulating the Z steppers. Most Z height probes are supported, including BL-Touch probes and servo activated probes. Probes may be calibrated for axis twist compensation. If using an "eddy current probe" then one can utilize fast bed mesh scanning,</li>
 <li>支援自動delta校準。校準工具可以進行基本的高度校準，以及增強的X和Y尺寸校準。校準可以用Z型高度探頭或通過手動探測來完成。</li>
 <li>列印時支援“排除物件”。當啟用此模組時，可在多件列印中僅取消指定的單一物件。</li>
-<li>Support for common temperature sensors (eg, common thermistors, AD595, AD597, AD849x, PT100, PT1000, MAX6675, MAX31855, MAX31856, MAX31865, BME280, HTU21D, DS18B20, AHT10, SHT3x, and LM75). Custom thermistors and custom analog temperature sensors can also be configured. One can monitor the internal micro-controller temperature sensor and the internal temperature sensor of a Raspberry Pi.</li>
+<li>Support for common temperature sensors (eg, common thermistors, AD595, AD597, AD849x, PT100, PT1000, MAX6675, MAX31855, MAX31856, MAX31865, BME280, HTU21D, DS18B20, AHT1X, AHT2X, AHT3X, SHT3x, and LM75). Custom thermistors and custom analog temperature sensors can also be configured. One can monitor the internal micro-controller temperature sensor and the internal temperature sensor of a Raspberry Pi.</li>
 <li>預設啟用基本加熱器保護。</li>
 <li>Support for standard fans, nozzle fans, and temperature controlled fans. No need to keep fans running when the printer is idle. Fan speed can be monitored on fans that have a tachometer. One can assign a "math formula" to a fan for automatic fan speed updating.</li>
-<li>支援運行時配置 TMC2130、TMC2208/TMC2224、TMC2209、TMC2660 和 TMC5160 步進馬達驅動器。此外，也支援透過 AD5206、DAC084S085、MCP4451、MCP4728、MCP4018 和 PWM 腳位對傳統步進驅動器進行電流控制。</li>
+<li>Support for run-time configuration of TMC2130, TMC2208/TMC2224, TMC2209, TMC2240, TMC2660, and TMC5160 stepper motor drivers. There is also support for current control of traditional stepper drivers via AD5206, DAC084S085, MCP4451, MCP4728, MCP4018, and PWM pins.</li>
 <li>支援直接連線到印表機的普通LCD顯示器。還提供了一個預設的菜單。顯示器和菜單的內容可以通過配置檔案完全定製。</li>
 <li>恒定加速和「look-ahead」（前瞻）支援。所有印表機移動將從靜止逐漸加速到巡航速度，然後減速回到靜止。對傳入的 G 程式碼移動命令流進行排隊和分析 - 將優化類似方向上的移動之間的加速度，以減少列印停頓並改善整體列印時間。</li>
 <li>Klipper 實現了一種「步進相位限位」演算法，可以提高典型限位開關的精度。如果調整得當，它可以提高列印件首層和列印床的附著力。</li>

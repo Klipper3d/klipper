@@ -739,19 +739,6 @@
     Configuring the zero reference position
   </a>
   
-    <nav class="md-nav" aria-label="Configuring the zero reference position">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-deprecated-relative_reference_index" class="md-nav__link">
-    The deprecated relative_reference_index
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
           <li class="md-nav__item">
@@ -1684,19 +1671,6 @@
     Configuring the zero reference position
   </a>
   
-    <nav class="md-nav" aria-label="Configuring the zero reference position">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-deprecated-relative_reference_index" class="md-nav__link">
-    The deprecated relative_reference_index
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
           <li class="md-nav__item">
@@ -1940,7 +1914,7 @@ bicubic_tension: 0.2
 </code></pre></div>
 
 <ul>
-<li><code>mesh_pps: 2,3</code> <em>預設值：2,2</em><code>mesh_pps</code> 選項是每段的網格點數的簡寫。 此選項指定沿 x 軸和 y 軸為每個線段插值的點數。 「段」被視為每個探測點之間的間隔。 與 <code>probe_count</code> 一樣，<code>mesh_pps</code> 可以是 X, Y 整數對，也可以是同時應用於兩個軸的單個整數。 在此示例中，沿 X 軸有 4 個線段，沿 Y 軸有 2 個線段。 這計算為沿 X 的 8 個插值點，沿 Y 的 6 個插值點，從而產生 13x8 網格。 請注意，如果 mesh_pps 設定為 0，則禁用網格插值，並且將直接對探測網格進行採樣。</li>
+<li><code>mesh_pps: 2, 3</code> <em>Default Value: 2, 2</em> The <code>mesh_pps</code> option is shorthand for Mesh Points Per Segment. This option specifies how many points to interpolate for each segment along the X and Y axes. Consider a 'segment' to be the space between each probed point. Like <code>probe_count</code>, <code>mesh_pps</code> is specified as an X, Y integer pair, and also may be specified a single integer that is applied to both axes. In this example there are 4 segments along the X axis and 2 segments along the Y axis. This evaluates to 8 interpolated points along X, 6 interpolated points along Y, which results in a 13x9 mesh. Note that if mesh_pps is set to 0 then mesh interpolation is disabled and the probed matrix will be sampled directly.</li>
 <li><code>algorithm: lagrange</code> <em>預設值：lagrange</em> 用於插入網格的演算法。 可能是 <code>lagrange</code> or <code>bicubic</code>。 拉格朗日插值最多為 6 個探測點，因為大量樣本容易發生振盪。 雙三次插值要求沿每個軸至少有 4 個探測點，如果指定的點少於 4 個，則強制拉格朗日採樣。 如果 <code>mesh_pps</code> 設定為 0，則該值將被忽略，因為沒有進行網格插值。</li>
 <li><code>bicubic_tension: 0.2</code> <em>預設值：0.2</em> 雙三次插值的張力值。如果<code>algorithm</code> 選項設定為雙三次，則可以指定張力值。 張力越高，內插的斜率越大。 調整時要小心，因為較高的值也會產生更多的過沖，這將導致插值高於或低於探測點。</li>
 </ul>
@@ -1982,7 +1956,7 @@ fade_target: 0
 <li><code>fade_target: 0</code> <em>Default Value: The average Z value of the mesh</em> The <code>fade_target</code> can be thought of as an additional Z offset applied to the entire bed after fade completes. Generally speaking we would like this value to be 0, however there are circumstances where it should not be. For example, lets assume your homing position on the bed is an outlier, its .2 mm lower than the average probed height of the bed. If the <code>fade_target</code> is 0, fade will shrink the print by an average of .2 mm across the bed. By setting the <code>fade_target</code> to .2, the homed area will expand by .2 mm, however, the rest of the bed will be accurately sized. Generally its a good idea to leave <code>fade_target</code> out of the configuration so the average height of the mesh is used, however it may be desirable to manually adjust the fade target if one wants to print on a specific portion of the bed.</li>
 </ul>
 <h3 id="configuring-the-zero-reference-position">Configuring the zero reference position<a class="headerlink" href="#configuring-the-zero-reference-position" title="Permanent link">&para;</a></h3>
-<p>Many probes are susceptible to "drift", ie: inaccuracies in probing introduced by heat or interference. This can make calculating the probe's z-offset challenging, particularly at different bed temperatures. As such, some printers use an endstop for homing the Z axis and a probe for calibrating the mesh. In this configuration it is possible offset the mesh so that the (X, Y) <code>reference position</code> applies zero adjustment. The <code>reference postion</code> should be the location on the bed where a <a href="Manual_Level.html#calibrating-a-z-endstop">Z_ENDSTOP_CALIBRATE</a> paper test is performed. The bed_mesh module provides the <code>zero_reference_position</code> option for specifying this coordinate:</p>
+<p>Many probes are susceptible to "drift", ie: inaccuracies in probing introduced by heat or interference. This can make calculating the probe's z-offset challenging, particularly at different bed temperatures. As such, some printers use an endstop for homing the Z axis and a probe for calibrating the mesh. In this configuration it is possible offset the mesh so that the (X, Y) <code>reference position</code> applies zero adjustment. The <code>reference position</code> should be the location on the bed where a <a href="Manual_Level.html#calibrating-a-z-endstop">Z_ENDSTOP_CALIBRATE</a> paper test is performed. The bed_mesh module provides the <code>zero_reference_position</code> option for specifying this coordinate:</p>
 <div class="highlight"><pre><span></span><code>[bed_mesh]
 speed: 120
 horizontal_move_z: 5
@@ -1995,20 +1969,6 @@ probe_count: 5, 3
 <ul>
 <li><code>zero_reference_position:</code> <em>Default Value: None (disabled)</em> The <code>zero_reference_position</code> expects an (X, Y) coordinate matching that of the <code>reference position</code> described above. If the coordinate lies within the mesh then the mesh will be offset so the reference position applies zero adjustment. If the coordinate lies outside of the mesh then the coordinate will be probed after calibration, with the resulting z-value used as the z-offset. Note that this coordinate must NOT be in a location specified as a <code>faulty_region</code> if a probe is necessary.</li>
 </ul>
-<h4 id="the-deprecated-relative_reference_index">The deprecated relative_reference_index<a class="headerlink" href="#the-deprecated-relative_reference_index" title="Permanent link">&para;</a></h4>
-<p>Existing configurations using the <code>relative_reference_index</code> option must be updated to use the <code>zero_reference_position</code>. The response to the <a href="#output">BED_MESH_OUTPUT PGP=1</a> gcode command will include the (X, Y) coordinate associated with the index; this position may be used as the value for the <code>zero_reference_position</code>. The output will look similar to the following:</p>
-<div class="highlight"><pre><span></span><code>// bed_mesh: generated points
-// Index | Tool Adjusted | Probe
-// 0 | (1.0, 1.0) | (24.0, 6.0)
-// 1 | (36.7, 1.0) | (59.7, 6.0)
-// 2 | (72.3, 1.0) | (95.3, 6.0)
-// 3 | (108.0, 1.0) | (131.0, 6.0)
-... (additional generated points)
-// bed_mesh: relative_reference_index 24 is (131.5, 108.0)
-</code></pre></div>
-
-<p><em>Note: The above output is also printed in <code>klippy.log</code> during initialization.</em></p>
-<p>Using the example above we see that the <code>relative_reference_index</code> is printed along with its coordinate. Thus the <code>zero_reference_position</code> is <code>131.5, 108</code>.</p>
 <h3 id="_9">故障區域<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h3>
 <p>由於特定位置的「故障」，熱床的某些區域在探測時可能會報告不準確的結果。 最好的例子是帶有用彈簧鋼板的磁鐵熱床。 這些磁鐵處和周圍的磁場可能干擾探針觸發的高度，從而導致網格無法準確表示這些位置的表面。 <strong>注意：不要與探頭位置偏差導致探測結果不準確的結果混淆。</strong></p>
 <p>可以配置 <code>faulty_region</code> 選項來避免這種影響。 如果產生的點位於故障區域內，熱床網格將嘗試在該區域的邊界處探測最多 4 個點。 這些探測的平均值將插入網床中作為產生的 (X, Y) 座標處的 Z 值。</p>

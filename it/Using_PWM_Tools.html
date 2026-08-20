@@ -953,13 +953,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#limitazioni-attuali" class="md-nav__link">
-    Limitazioni attuali
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#comandi" class="md-nav__link">
     Comandi
   </a>
@@ -1413,13 +1406,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#limitazioni-attuali" class="md-nav__link">
-    Limitazioni attuali
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#comandi" class="md-nav__link">
     Comandi
   </a>
@@ -1451,13 +1437,11 @@
 
 
 <h1 id="utilizzo-dei-strumenti-pwm">Utilizzo dei strumenti PWM<a class="headerlink" href="#utilizzo-dei-strumenti-pwm" title="Permanent link">&para;</a></h1>
-<p>Questo documento descrive come impostare un laser o un mandrino controllato da PWM usando <code>output_pin</code> e alcune macro.</p>
+<p>This document describes how to setup a PWM-controlled laser or spindle using <code>pwm_tool</code> and some macros.</p>
 <h2 id="come-funziona">Come funziona?<a class="headerlink" href="#come-funziona" title="Permanent link">&para;</a></h2>
 <p>Riutilizzando l'output pwm della ventola della testina di stampa, è possibile controllare laser o mandrini. Ciò è utile se si utilizzano testine di stampa intercambiabili, ad esempio il cambio utensile E3D o una soluzione fai-da-te. Di solito, gli strumenti cam come LaserWeb possono essere configurati per utilizzare i comandi <code>M3-M5</code>, che stanno per <em>velocità mandrino CW</em> (<code>M3 S[0-255]</code>), <em>velocità mandrino CCW</em> (<code>M4 S[ 0-255]</code>) e <em>arresto mandrino</em> (<code>M5</code>).</p>
 <p><strong>Attenzione:</strong> Quando utilizzi un laser, mantieni tutte le precauzioni di sicurezza che ti vengono in mente! I laser a diodi sono generalmente invertiti. Ciò significa che quando l'MCU si riavvia, il laser sarà <em>completamente acceso</em> per il tempo necessario al riavvio dell'MCU. Per buona misura, si raccomanda di indossare <em>sempre</em> occhiali laser appropriati della giusta lunghezza d'onda se il laser è alimentato e per disconnettere il laser quando non è necessario. Inoltre, dovresti configurare un timeout di sicurezza, in modo che quando l'host o l'MCU riscontrano un errore, lo strumento si arresti.</p>
 <p>Per un esempio di configurazione, vedere <a href="/config/sample-pwm-tool.cfg">config/sample-pwm-tool.cfg</a>.</p>
-<h2 id="limitazioni-attuali">Limitazioni attuali<a class="headerlink" href="#limitazioni-attuali" title="Permanent link">&para;</a></h2>
-<p>Esiste una limitazione della frequenza degli aggiornamenti PWM. Pur essendo molto preciso, un aggiornamento PWM può verificarsi solo ogni 0,1 secondi, rendendolo quasi inutile per l'incisione raster. Tuttavia, esiste un <a href="https://github.com/Cirromulus/klipper/tree/laser_tool">ramo sperimentale</a> con i propri compromessi. A lungo termine, si prevede di aggiungere questa funzionalità al klipper principale.</p>
 <h2 id="comandi">Comandi<a class="headerlink" href="#comandi" title="Permanent link">&para;</a></h2>
 <p><code>M3/M4 S&lt;value&gt;</code> : Imposta il duty-cycle PWM. Valori compresi tra 0 e 255. <code>M5</code> : Arresta l'uscita PWM al valore di spegnimento.</p>
 <h2 id="configurazione-laserweb">Configurazione Laserweb<a class="headerlink" href="#configurazione-laserweb" title="Permanent link">&para;</a></h2>

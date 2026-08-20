@@ -1335,7 +1335,7 @@
   
     <li class="md-nav__item">
       <a href="Load_Cell.html" class="md-nav__link">
-        Load Cells
+        压力传感器
       </a>
     </li>
   
@@ -1431,7 +1431,7 @@
 <li>支持使用“输入整形”来减少振动对打印质量的影响。这项功能可以减少或消除打印件的“振纹(ringing)”（又名“ghosting”，“echoing”，或“rippling”）。在一些情况下它可以在保持打印质量的同时提高打印速度。</li>
 <li>Klipper 使用“迭代求解器”从简单的运动学方程中计算精准的步进时间。这降低了移植Klipper到新的机械结构的难度并保证了精确的步进计时（而不需要“线段化”）。</li>
 <li>Klipper 不受硬件影响。所有运行Klipper的打印机都有底层硬件无关的相同精确时序。Klipper 微控制器代码旨在忠实地遵循 Klipper 主机软件提供的时间表（或在无法遵循时突出显示提醒用户）。这样可以放心、轻松的使用和升级硬件。</li>
-<li>易移植的代码。Klipper 可以在 ARM，AVR，和PRU架构的微控制器上运行。现有的“reprap”类打印机不需要改动任何硬件就可以运行 Klipper，只需要加一个树莓派。Klipper 的内部代码结构使它能够被简单的移植到其他架构。</li>
+<li>Portable code. Klipper works on ARM, AVR, PRU, and other micro-controllers. Existing "reprap" style printers can run Klipper without hardware modification - just add a Raspberry Pi. Klipper's internal code layout makes it easier to support other micro-controller architectures as well.</li>
 <li>简洁的代码。大部分 Klipper 代码使用一个极高级编程语言（Python），这包括了运动算法，G代码解析，加热，温度传感器算法和其他，降低了开发新功能的难度。</li>
 <li>自定义可编程脚本。可以在打印机配置文件中定义新的G代码命令（而不需要修改任何代码）。这些命令都是可编程的，可以能根据打印机的状态做出不同的响应。</li>
 <li>内置API服务器。除了标准G代码接口，Klipper也支持富JSON API。使程序员能编写对打印机进行精细控制的外置程序。</li>
@@ -1446,10 +1446,10 @@
 <li>Automatic bed leveling support. Klipper can be configured for basic bed tilt detection or full mesh bed leveling. The bed mesh can be customized to the print size (adaptive bed mesh). If the bed uses multiple Z steppers then Klipper can also level by independently manipulating the Z steppers. Most Z height probes are supported, including BL-Touch probes and servo activated probes. Probes may be calibrated for axis twist compensation. If using an "eddy current probe" then one can utilize fast bed mesh scanning,</li>
 <li>支持自动delta校准。校准工具可以进行基本的高度校准，以及增强的X和Y尺寸校准。校准可以用Z型高度探头或通过手动探测来完成。</li>
 <li>支持打印时“排除对象”。配置后，此模块可以取消多零件打印中的一个对象。</li>
-<li>Support for common temperature sensors (eg, common thermistors, AD595, AD597, AD849x, PT100, PT1000, MAX6675, MAX31855, MAX31856, MAX31865, BME280, HTU21D, DS18B20, AHT10, SHT3x, and LM75). Custom thermistors and custom analog temperature sensors can also be configured. One can monitor the internal micro-controller temperature sensor and the internal temperature sensor of a Raspberry Pi.</li>
+<li>Support for common temperature sensors (eg, common thermistors, AD595, AD597, AD849x, PT100, PT1000, MAX6675, MAX31855, MAX31856, MAX31865, BME280, HTU21D, DS18B20, AHT1X, AHT2X, AHT3X, SHT3x, and LM75). Custom thermistors and custom analog temperature sensors can also be configured. One can monitor the internal micro-controller temperature sensor and the internal temperature sensor of a Raspberry Pi.</li>
 <li>默认启用基本加热器保护。</li>
 <li>Support for standard fans, nozzle fans, and temperature controlled fans. No need to keep fans running when the printer is idle. Fan speed can be monitored on fans that have a tachometer. One can assign a "math formula" to a fan for automatic fan speed updating.</li>
-<li>支持TMC2130、TMC2208/TMC2224、TMC2209、TMC2660和TMC5160步进电机驱动器的运行时配置。还支持通过AD5206、DAC084S085、MCP4451、MCP4728、MCP4018和PWM引脚对传统步进驱动器进行电流控制。</li>
+<li>Support for run-time configuration of TMC2130, TMC2208/TMC2224, TMC2209, TMC2240, TMC2660, and TMC5160 stepper motor drivers. There is also support for current control of traditional stepper drivers via AD5206, DAC084S085, MCP4451, MCP4728, MCP4018, and PWM pins.</li>
 <li>支持直接连接到打印机的普通LCD显示器。还提供了一个默认的菜单。显示器和菜单的内容可以通过配置文件完全定制。</li>
 <li>恒定加速和“look-ahead”（前瞻）支持。所有打印机移动将从静止逐渐加速到巡航速度，然后减速回到静止。对传入的 G 代码移动命令流进行排队和分析 - 将优化类似方向上的移动之间的加速度，以减少打印停顿并改善整体打印时间。</li>
 <li>Klipper 实现了一种“步进相位限位”算法，可以提高典型限位开关的精度。如果调整得当，它可以提高打印件首层和打印床的附着力。</li>

@@ -1558,7 +1558,7 @@ make
 <h2 id="mozgaselemzes-es-adatnaplozas">Mozgáselemzés és adatnaplózás<a class="headerlink" href="#mozgaselemzes-es-adatnaplozas" title="Permanent link">&para;</a></h2>
 <p>A Klipper támogatja a belső mozgástörténet naplózását, amely később elemezhető. Ennek a funkciónak a használatához a Klippert az <a href="API_Server.html">API Szerver</a> engedélyezésével kell elindítani.</p>
 <p>Az adatnaplózást a <code>data_logger.py</code> eszközzel lehet engedélyezni. Például:</p>
-<div class="highlight"><pre><span></span><code>~/klipper/scripts/motan/data_logger.py /tmp/klippy_uds mylog
+<div class="highlight"><pre><span></span><code>~/klipper/scripts/motan/data_logger.py /tmp/klippy_uds mylog -s &#39;*&#39;
 </code></pre></div>
 
 <p>Ez a parancs csatlakozik a Klipper API-kiszolgálóhoz, feliratkozik az állapot- és mozgásinformációkra, és naplózza az eredményeket. Két fájl jön létre. Egy tömörített adatfájl és egy indexfájl (pl. <code>mylog.json.gz</code> és <code>mylog.index.gz</code>). A naplózás elindítása után lehetőség van nyomtatások és egyéb műveletek elvégzésére. A naplózás a háttérben folytatódik. Ha befejeztük a naplózást, nyomjuk meg a <code>ctrl-c</code> billentyűkombinációt a <code>data_logger.py</code> eszközből való kilépéshez.</p>

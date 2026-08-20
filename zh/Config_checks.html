@@ -1386,7 +1386,7 @@
   
     <li class="md-nav__item">
       <a href="Load_Cell.html" class="md-nav__link">
-        Load Cells
+        压力传感器
       </a>
     </li>
   
@@ -1534,7 +1534,7 @@
 <p>验证所有打印机轴是否可以手动自由移动（步进电机已禁用）。如果没有，则发出M84命令以禁用电机。如果任何轴仍然不能自由移动，则验证给定轴的步进器“enable_pin”配置。在大多数商用步进电机驱动器上，电机启用引脚为“低激活”，因此启用引脚应在引脚之前有一个“！”（例如，“enable_pin:!PA1”）。</p>
 <h2 id="_4">验证限位开关<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <p>手动移动所有打印机轴，使其不与端挡接触。通过命令控制台发送QUERY_ENDSTOPS命令。它应该以所有配置的端站的当前状态进行响应，并且它们都应该报告“打开”状态。对于每个endstop，在手动触发endstop的同时重新运行QUERY_endstops命令。QUERY_ENDSTOPS命令应将endstop报告为“TRIGGERED”。</p>
-<p>如果endstop出现反转（触发时报告“打开”，反之亦然），则在端号定义中添加一个“！”（例如，“endstop_pin:^PA2”），或者如果已经存在“！”，则删除该“！”。</p>
+<p>If the endstop appears inverted (it reports "open" when triggered and vice-versa) then add a "!" to the pin definition (for example, "endstop_pin: ^!PA2"), or remove the "!" if there is already one present.</p>
 <p>如果限位状态根本没有变化，则通常表示限位器连接到不同的引脚。 但是，它也可能表示需要更改引脚的上拉设置（endstop_pin 名称开头的“^” - 大多数打印机需要使用上拉电阻并且应该存在“^”）。</p>
 <h2 id="_5">验证步进电机<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <p>使用STEPPER_BUZZ命令验证每个步进电机的连接。首先手动将给定轴定位到中间点，然后在命令控制台中运行<code>STEPPER_BUZZ STEPPER=stepper_x</code> 。STEPPER_BUZZ命令将使给定的步进器向正方向移动一毫米，然后返回其起始位置。（如果在position_endstop=0处定义了端止点，则在每次移动开始时，步进器将远离端止点。）它将执行十次此振荡。</p>

@@ -1845,7 +1845,7 @@ bossac -U -p /dev/ttyACM0 -R
 
 <h2 id="samdc21-micro-controllers-duet3d-toolboard-1lc">SAMDC21 micro-controllers (Duet3D Toolboard 1LC)<a class="headerlink" href="#samdc21-micro-controllers-duet3d-toolboard-1lc" title="Permanent link">&para;</a></h2>
 <p>The SAMC21 is flashed via the ARM Serial Wire Debug (SWD) interface. This is commonly done with a dedicated SWD hardware dongle. Alternatively, one can use a <a href="#running-openocd-on-the-raspberry-pi">Raspberry Pi with OpenOCD</a>.</p>
-<p>When using OpenOCD with the SAMC21, extra steps must be taken to first put the chip into Cold Plugging mode if the board makes use of the SWD pins for other purposes. If using OpenOCD on a Rasberry Pi, this can be done by running the following commands before invoking OpenOCD.</p>
+<p>When using OpenOCD with the SAMC21, extra steps must be taken to first put the chip into Cold Plugging mode if the board makes use of the SWD pins for other purposes. If using OpenOCD on a Raspberry Pi, this can be done by running the following commands before invoking OpenOCD.</p>
 <div class="highlight"><pre><span></span><code>SWCLK=25
 SWDIO=24
 SRST=18
@@ -2007,7 +2007,7 @@ make
 <p>The <a href="https://github.com/Arksine/CanBoot">CanBoot</a> bootloader provides an option for uploading Klipper firmware over the CANBUS. The bootloader itself is derived from Klipper's source code. Currently CanBoot supports the STM32F103, STM32F042, and STM32F072 models.</p>
 <p>It is recommended to use a ST-Link Programmer to flash CanBoot, however it should be possible to flash using <code>stm32flash</code> on STM32F103 devices, and <code>dfu-util</code> on STM32F042/STM32F072 devices. See the previous sections in this document for instructions on these flashing methods, substituting <code>canboot.bin</code> for the file name where appropriate. The CanBoot repository linked above provides instructions for building the bootloader.</p>
 <p>The first time CanBoot has been flashed it should detect that no application is present and enter the bootloader. If this doesn't occur it is possible to enter the bootloader by pressing the reset button twice in succession.</p>
-<p>The <code>flash_can.py</code> utility supplied in the <code>lib/canboot</code> folder may be used to upload Klipper firmware. The device UUID is necessary to flash. If you do not have a UUID it is possible to query nodes currently running the bootloader:</p>
+<p>The <code>flashtool.py</code> utility supplied in the <code>lib/katapult</code> folder may be used to upload Klipper firmware. The device UUID is necessary to flash. If you do not have a UUID it is possible to query nodes currently running the bootloader:</p>
 <div class="highlight"><pre><span></span><code>python3 flash_can.py -q
 </code></pre></div>
 

@@ -953,13 +953,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#limites-actuelles" class="md-nav__link">
-    Limites actuelles
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#commandes" class="md-nav__link">
     Commandes
   </a>
@@ -1211,7 +1204,7 @@
   
     <li class="md-nav__item">
       <a href="SDCard_Updates.html" class="md-nav__link">
-        Mises à jour via la carte SD
+        Mises à jour de la SDCard
       </a>
     </li>
   
@@ -1351,7 +1344,7 @@
   
     <li class="md-nav__item">
       <a href="Load_Cell.html" class="md-nav__link">
-        Load Cells
+        Cellules de charge
       </a>
     </li>
   
@@ -1413,13 +1406,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#limites-actuelles" class="md-nav__link">
-    Limites actuelles
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#commandes" class="md-nav__link">
     Commandes
   </a>
@@ -1451,13 +1437,11 @@
 
 
 <h1 id="utilisation-des-outils-pwm">Utilisation des outils PWM<a class="headerlink" href="#utilisation-des-outils-pwm" title="Permanent link">&para;</a></h1>
-<p>Ce document décrit comment configurer un laser ou une broche contrôlée par PWM en utilisant <code>output_pin</code> et quelques macros.</p>
+<p>This document describes how to setup a PWM-controlled laser or spindle using <code>pwm_tool</code> and some macros.</p>
 <h2 id="comment-cela-fonctionne-t-il">Comment cela fonctionne-t-il ?<a class="headerlink" href="#comment-cela-fonctionne-t-il" title="Permanent link">&para;</a></h2>
 <p>En ré-utilisant la sortie pwm du ventilateur de la tête d'impression, vous pouvez contrôler des lasers ou des broches. Ceci est utile si vous utilisez des têtes d'impression commutables, par exemple le changeur d'outils E3D ou une solution DIY. Habituellement, les outils à came tels que LaserWeb peuvent être configurés pour utiliser les commandes <code>M3-M5</code>, qui correspondent à <em>vitesse de broche CW</em> (<code>M3 S[0-255]</code>), <em>vitesse de broche CCW</em> (<code>M4 S[0-255]</code>) et <em>arrêt de broche</em> (<code>M5</code>).</p>
 <p><strong>Avertissement :</strong> Lorsque vous pilotez un laser, prenez toutes les précautions de sécurité auxquelles vous pouvez penser ! Les lasers à diodes sont généralement inversés. Cela signifie que lorsque l'unité centrale redémarre, le laser sera <em>complètement allumé</em> pendant le temps nécessaire à l'unité centrale pour redémarrer. Pour faire bonne mesure, il est recommandé de <em>toujours</em> porter des lunettes laser appropriées de la bonne longueur d'onde si le laser est alimenté ; et de déconnecter le laser lorsqu'il n'est pas nécessaire. Vous devriez également configurer un délai de sécurité, de sorte que lorsque votre hôte ou votre MCU rencontre une erreur, l'outil s'arrête.</p>
 <p>Pour un exemple de configuration, voir <a href="/config/sample-pwm-tool.cfg">config/sample-pwm-tool.cfg</a>.</p>
-<h2 id="limites-actuelles">Limites actuelles<a class="headerlink" href="#limites-actuelles" title="Permanent link">&para;</a></h2>
-<p>La fréquence des mises à jour PWM est limitée. Bien qu'elle soit très précise, une mise à jour PWM ne peut se produire que toutes les 0,1 seconde, ce qui la rend presque inutile pour la gravure tramée. Cependant, il existe une <a href="https://github.com/Cirromulus/klipper/tree/laser_tool">branche expérimentale</a> avec ses propres compromis. A long terme, il est prévu d'ajouter cette fonctionnalité au klipper principal.</p>
 <h2 id="commandes">Commandes<a class="headerlink" href="#commandes" title="Permanent link">&para;</a></h2>
 <p><code>M3/M4 S&lt;valeur&gt;</code> : Définit le cycle de travail PWM. Valeurs comprises entre 0 et 255. <code>M5</code> : Arrête la sortie PWM à la valeur d'arrêt.</p>
 <h2 id="configuration-de-laserweb">Configuration de Laserweb<a class="headerlink" href="#configuration-de-laserweb" title="Permanent link">&para;</a></h2>

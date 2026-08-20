@@ -962,6 +962,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#bmi160" class="md-nav__link">
+    [bmi160]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#mpu9250" class="md-nav__link">
     [mpu9250]
   </a>
@@ -1402,6 +1409,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#static_pwm_clock" class="md-nav__link">
+    [static_pwm_clock]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pwm_tool" class="md-nav__link">
     [pwm_tool]
   </a>
@@ -1714,6 +1728,13 @@
           <li class="md-nav__item">
   <a href="#ads1220" class="md-nav__link">
     ADS1220
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ads131m0x" class="md-nav__link">
+    ADS131M0x
   </a>
   
 </li>
@@ -3112,6 +3133,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#bmi160" class="md-nav__link">
+    [bmi160]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#mpu9250" class="md-nav__link">
     [mpu9250]
   </a>
@@ -3552,6 +3580,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#static_pwm_clock" class="md-nav__link">
+    [static_pwm_clock]
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pwm_tool" class="md-nav__link">
     [pwm_tool]
   </a>
@@ -3868,6 +3903,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#ads131m0x" class="md-nav__link">
+    ADS131M0x
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4062,7 +4104,8 @@ kinematics:
 #   This parameter must be specified.
 max_velocity:
 #   Maximum velocity (in mm/s) of the toolhead (relative to the
-#   print). This parameter must be specified.
+#   print). This value may be changed at runtime using the
+#   SET_VELOCITY_LIMIT command. This parameter must be specified.
 max_accel:
 #   Maximum acceleration (in mm/s^2) of the toolhead (relative to the
 #   print). Although this parameter is described as a &quot;maximum&quot;
@@ -4098,8 +4141,6 @@ max_accel:
 #   decelerate to zero at each corner. The value specified here may be
 #   changed at runtime using the SET_VELOCITY_LIMIT command. The
 #   default is 5mm/s.
-#max_accel_to_decel:
-#   This parameter is deprecated and should no longer be used.
 </code></pre></div>
 
 <h3 id="stepper">[stepper]<a class="headerlink" href="#stepper" title="Permanent link">&para;</a></h3>
@@ -4473,32 +4514,35 @@ max_z_accel:
 <div class="highlight"><pre><span></span><code>[printer]
 kinematics: polar
 max_z_velocity:
-#   Imposta la velocità massima (in mm/s) di movimento lungo l&#39;asse z.
-#   Questa impostazione può essere utilizzata per limitare la velocità
-#   massima del motore passo-passo z. L&#39;impostazione predefinita è
-#   utilizzare max_velocity per max_z_velocity.
+#   This sets the maximum velocity (in mm/s) of movement along the z
+#   axis. This setting can be used to restrict the maximum speed of
+#   the z stepper motor. The default is to use max_velocity for
+#   max_z_velocity.
 max_z_accel:
-#   Questo imposta l&#39;accelerazione massima (in mm/s^2) del
-#   movimento lungo l&#39;asse z. Limita l&#39;accelerazione del motore
-#   passo-passo z. L&#39;impostazione predefinita è utilizzare max_accel
-#   per max_z_accel.
+#   This sets the maximum acceleration (in mm/s^2) of movement along
+#   the z axis. It limits the acceleration of the z stepper motor. The
+#   default is to use max_accel for max_z_accel.
+# max_angular_velocity: 0
+#   This limits the maximum angular velocity (in rad/s) of a move.
+#   Lower values will result in longer print times, but prevents too
+#   fast motions near the center. A value of 0 deactivates the
+#   scaling. The default is to not apply maximum angular velocity limits.
 
-# La sezione stepper_bed viene utilizzata per descrivere lo stepper
-# che controlla il piatto
+# The stepper_bed section is used to describe the stepper controlling
+# the bed.
 [stepper_bed]
 gear_ratio:
-#   È necessario specificare un gear_ratio e rotation_distance
-#   potrebbe non essere specificato. Ad esempio, se il piatto ha una
-#   ruota a 80 denti azionata da uno stepper con una ruota a 16
-#   denti, si dovrebbe specificare un rapporto di trasmissione di &quot;80:16&quot;.
-#   Questo parametro deve essere fornito.
+#   A gear_ratio must be specified and rotation_distance may not be
+#   specified. For example, if the bed has an 80 toothed pulley driven
+#   by a stepper with a 16 toothed pulley then one would specify a
+#   gear ratio of &quot;80:16&quot;. This parameter must be provided.
 
-# La sezione stepper_arm è usata per descrivere lo stepper che
-# controlla il carrello sul braccio.
+# The stepper_arm section is used to describe the stepper controlling
+# the carriage on the arm.
 [stepper_arm]
 
-# La sezione stepper_z viene utilizzata per descrivere lo stepper che
-# controlla l&#39;asse Z.
+# The stepper_z section is used to describe the stepper controlling
+# the Z axis.
 [stepper_z]
 </code></pre></div>
 
@@ -4615,13 +4659,15 @@ max_velocity:
 max_accel:
 #minimum_cruise_ratio:
 #square_corner_velocity:
-#max_accel_to_decel:
 #max_z_velocity:
 #max_z_accel:
 </code></pre></div>
 
-<p>Then a user must define the following three carriages: <code>[carriage x]</code>, <code>[carriage y]</code>, and <code>[carriage z]</code>, e.g.</p>
-<div class="highlight"><pre><span></span><code>[carriage x]
+<p>Then a user must define three primary carriages for X, Y, and Z axes, e.g.:</p>
+<div class="highlight"><pre><span></span><code>[carriage carriage_x]
+axis:
+#   Axis of a carriage, either x, y, or z. This parameter must be provided,
+#   unless a carriage name is x, y, or z itself.
 endstop_pin:
 #   Endstop switch detection pin. If this endstop pin is on a
 #   different mcu than the stepper motor(s) moving this carriage,
@@ -4661,7 +4707,8 @@ position_max:
 carriages:
 #   A string describing the carriages the stepper moves. All defined
 #   carriages can be specified here, as well as their linear combinations,
-#   e.g. x, x+y, y-0.5*z, x-z, etc. This parameter must be provided.
+#   e.g. carriage_x, carriage_x+carriage_y, carriage_y-0.5*carriage_z,
+#   carriage_x-carriage_z, etc. This parameter must be provided.
 step_pin:
 dir_pin:
 enable_pin:
@@ -4672,18 +4719,18 @@ microsteps:
 #step_pulse_duration:
 </code></pre></div>
 
-<p>See <a href="#stepper">stepper</a> section for more information on the regular stepper parameters. The <code>carriages</code> parameter defines how the stepper affects the motion of the carriages. For example, <code>x+y</code> indicates that the motion of the stepper in the positive direction by the distance <code>d</code> moves the carriages <code>x</code> and <code>y</code> by the same distance <code>d</code> in the positive direction, while <code>x-0.5*y</code> means the motion of the stepper in the positive direction by the distance <code>d</code> moves the carriage <code>x</code> by the distance <code>d</code> in the positive direction, but the carriage <code>y</code> will travel distance <code>d/2</code> in the negative direction.</p>
+<p>See <a href="#stepper">stepper</a> section for more information on the regular stepper parameters. The <code>carriages</code> parameter defines how the stepper affects the motion of the carriages. For example, <code>carriage_x+carriage_y</code> indicates that the motion of the stepper in the positive direction by the distance <code>d</code> moves the carriages <code>carriage_x</code> and <code>carriage_y</code> by the same distance <code>d</code> in the positive direction, while <code>carriage_x-0.5*carriage_y</code> means the motion of the stepper in the positive direction by the distance <code>d</code> moves the carriage <code>carriage_x</code> by the distance <code>d</code> in the positive direction, but the carriage <code>carriage_y</code> will travel distance <code>d/2</code> in the negative direction.</p>
 <p>More than a single stepper motor can be defined to drive the same axis or belt. For example, on a CoreXY AWD setups two motors driving the same belt can be defined as</p>
-<div class="highlight"><pre><span></span><code>[carriage x]
+<div class="highlight"><pre><span></span><code>[carriage carriage_x]
 endstop_pin: ...
 ...
 
-[carriage y]
+[carriage carriage_y]
 endstop_pin: ...
 ...
 
 [stepper a0]
-carriages: x-y
+carriages: carriage_x-carriage_y
 step_pin: ...
 dir_pin: ...
 enable_pin: ...
@@ -4691,7 +4738,7 @@ rotation_distance: ...
 ...
 
 [stepper a1]
-carriages: x-y
+carriages: carriage_x-carriage_y
 step_pin: ...
 dir_pin: ...
 enable_pin: ...
@@ -4700,7 +4747,7 @@ rotation_distance: ...
 </code></pre></div>
 
 <p>with <code>a0</code> and <code>a1</code> steppers having their own control pins, but sharing the same <code>carriages</code> and corresponding endstops.</p>
-<p>There are situations when a user wants to have more than one endstop per axis. Examples of such configurations include Y axis driven by two independent stepper motors with belts attached to both ends of the X beam, with effectively two carriages on Y axis each having an independent endstop, and multi-stepper Z axis with each stepper having its own endstop (not to be confused with the configurations with multiple Z motors but only a single endstop). These configurations can be declared by specifying additional carriage(s) with their endstops:</p>
+<p>There are situations when a user wants to have more than one endstop per axis. Examples of such configurations include Y axis driven by two independent stepper motors with belts attached to both ends of the X gantry, with effectively two carriages on Y axis each having an independent endstop, and multi-stepper Z axis with each stepper having its own endstop (not to be confused with the configurations with multiple Z motors but only a single endstop). These configurations can be declared by specifying additional carriage(s) with their endstops:</p>
 <div class="highlight"><pre><span></span><code>[extra_carriage my_carriage]
 primary_carriage:
 #   The name of the primary carriage this carriage corresponds to.
@@ -4711,12 +4758,12 @@ endstop_pin:
 </code></pre></div>
 
 <p>and the corresponding stepper motors, for example:</p>
-<div class="highlight"><pre><span></span><code>[extra_carriage y1]
-primary_carriage: y
+<div class="highlight"><pre><span></span><code>[extra_carriage carriage_y1]
+primary_carriage: carriage_y
 endstop_pin: ...
 
 [stepper sy1]
-carriages: y1
+carriages: carriage_y1
 ...
 </code></pre></div>
 
@@ -5442,38 +5489,40 @@ I#   l valore predefinito è 0 mm.
 <p>Abilita <a href="Resonance_Compensation.html">compensazione della risonanza</a>. Vedere anche il <a href="G-Codes.html#input_shaper">command reference</a>.</p>
 <div class="highlight"><pre><span></span><code>[input_shaper]
 #shaper_freq_x: 0
-#   Una frequenza (in Hz) dell&#39;input shaper per l&#39;asse X. Questa è
-#   solitamente una frequenza di risonanza dell&#39;asse X che l&#39;input
-#   shaper dovrebbe sopprimere. Per shaper più complessi, come
-#   shaper di input EI a 2 e 3 gobbe, questo parametro può essere
-#   impostato in base a diverse considerazioni.
-#   Il valore predefinito è 0, che disabilita la modellatura dell&#39;input
-#   per l&#39;asse X.
+#   A frequency (in Hz) of the input shaper for X axis. This is
+#   usually a resonance frequency of X axis that the input shaper
+#   should suppress. For more complex shapers, like 2- and 3-hump EI
+#   input shapers, this parameter can be set from different
+#   considerations. The default value is 0, which disables input
+#   shaping for X axis.
 #shaper_freq_y: 0
-#   Una frequenza (in Hz) dell&#39;input shaper per l&#39;asse Y. Questa è
-#   solitamente una frequenza di risonanza dell&#39;asse Y che l&#39;input
-#   shaper dovrebbe sopprimere. Per shaper più complessi, come
-#   shaper di input EI a 2 e 3 gobbe, questo parametro può essere
-#   impostato in base a diverse considerazioni. Il valore predefinito
-#   è 0, che disabilita la modellatura dell&#39;input per l&#39;asse Y.
+#   A frequency (in Hz) of the input shaper for Y axis. This is
+#   usually a resonance frequency of Y axis that the input shaper
+#   should suppress. For more complex shapers, like 2- and 3-hump EI
+#   input shapers, this parameter can be set from different
+#   considerations. The default value is 0, which disables input
+#   shaping for Y axis.
+#shaper_freq_z: 0
+#   A frequency (in Hz) of the input shaper for Z axis. The default
+#   value is 0, which disables input shaping for Z axis.
 #shaper_type: mzv
-#   Un tipo di input shaper da utilizzare per entrambi gli assi X e Y.
-#   Gli shaper supportati sono zv, mzv, zvd, ei, 2hump_ei e
-#   3hump_ei. L&#39;impostazione predefinita è mzv input shaper.
+#   A type of the input shaper to use for all axes. Supported
+#   shapers are zv, mzv, zvd, ei, 2hump_ei, and 3hump_ei. Some shapers
+#   support optional additional parameters, e.g. mzv(n=4,t=0.9) or
+#   ei(v_tol=0.1). The default is mzv input shaper (without parameters).
 #shaper_type_x:
 #shaper_type_y:
-#   Se shaper_type non è impostato, questi due parametri possono
-#   essere utilizzati per configurare diversi shaper di input per gli
-#   assi X e Y. Sono supportati gli stessi valori del parametro
-#   shaper_type.
+#shaper_type_z:
+#   If shaper_type is not set, these parameters can be used to
+#   configure different input shapers for X, Y, and Z axes. The same
+#   values are supported as for shaper_type parameter.
 #damping_ratio_x: 0.1
 #damping_ratio_y: 0.1
-#   Rapporti di smorzamento delle vibrazioni degli assi X e Y
-#   utilizzati dagli shaper di input per migliorare la soppressione
-#   delle vibrazioni. Il valore predefinito è 0,1, un buon valore per la
-#   maggior parte delle stampanti. Nella maggior parte dei casi
-#   questo parametro non richiede ottimizzazione e
-#   non deve essere modificato.
+#damping_ratio_z: 0.1
+#   Damping ratios of vibrations of X and Y axes used by input shapers
+#   to improve vibration suppression. Default value is 0.1 which is a
+#   good all-round value for most printers. In most circumstances this
+#   parameter requires no tuning and should not be changed.
 </code></pre></div>
 
 <h3 id="adxl345">[adxl345]<a class="headerlink" href="#adxl345" title="Permanent link">&para;</a></h3>
@@ -5577,6 +5626,37 @@ cs_pin:
 #   See the &quot;adxl345&quot; section for information on this parameter.
 </code></pre></div>
 
+<h3 id="bmi160">[bmi160]<a class="headerlink" href="#bmi160" title="Permanent link">&para;</a></h3>
+<p>BMI160 accelerometer. This sensor can be queried via I2C or SPI bus.</p>
+<div class="highlight"><pre><span></span><code>[bmi160]
+#i2c_address:
+#   Default is 105 (0x69). If SA0 is tied to GND, use 104 (0x68).
+#   Only used for I2C.
+#i2c_mcu:
+#i2c_bus:
+#i2c_speed:
+#   See the &quot;common I2C settings&quot; section for a description of the
+#   above parameters. Only used for I2C.
+#cs_pin:
+#spi_speed:
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the &quot;common SPI settings&quot; section for a description of the
+#   above parameters. Only used for SPI.
+#axes_map: x, y, z
+#   See the &quot;adxl345&quot; section for information on this parameter.
+</code></pre></div>
+
+<p><strong>Important:</strong> Many BMI160 modules use ambiguous pin labels. For SPI:</p>
+<ul>
+<li>Use <strong>SCL</strong> for clock (not SCX)</li>
+<li>Use <strong>SDA</strong> for MOSI (not SDX)</li>
+<li>Use <strong>SA0</strong> for MISO</li>
+<li>Use <strong>CS</strong> for chip select</li>
+</ul>
+<p>The pins labeled SCX/SDX are for the auxiliary magnetometer bus.</p>
 <h3 id="mpu9250">[mpu9250]<a class="headerlink" href="#mpu9250" title="Permanent link">&para;</a></h3>
 <p>Supporto per accelerometri MPU-9250, MPU-9255, MPU-6515, MPU-6050 e MPU-6500 (è possibile definire un numero qualsiasi di sezioni con un prefisso "mpu9250").</p>
 <div class="highlight"><pre><span></span><code>[mpu9250 my_accelerometer]
@@ -5603,11 +5683,10 @@ cs_pin:
 #   are reachable by the toolhead.
 #accel_chip:
 #   A name of the accelerometer chip to use for measurements. If
-#   adxl345 chip was defined without an explicit name, this parameter
-#   can simply reference it as &quot;accel_chip: adxl345&quot;, otherwise an
-#   explicit name must be supplied as well, e.g. &quot;accel_chip: adxl345
-#   my_chip_name&quot;. Either this, or the next two parameters must be
-#   set.
+#   an accelerometer was defined without an explicit name, this parameter
+#   can simply reference it by type, e.g. &quot;accel_chip: adxl345&quot;, otherwise
+#   a full name must be supplied, e.g. &quot;accel_chip: adxl345 my_chip_name&quot;.
+#   Either this, or the next two parameters must be set.
 #accel_chip_x:
 #accel_chip_y:
 #   Names of the accelerometer chips to use for measurements for each
@@ -5616,6 +5695,10 @@ cs_pin:
 #   and on the toolhead (for X axis). These parameters have the same
 #   format as &#39;accel_chip&#39; parameter. Only &#39;accel_chip&#39; or these two
 #   parameters must be provided.
+#accel_chip_z:
+#   A name of the accelerometer chip to use for measurements of Z axis.
+#   This parameter has the same format as &#39;accel_chip&#39;. The default is
+#   not to configure an accelerometer for Z axis.
 #max_smoothing:
 #   Maximum input shaper smoothing to allow for each axis during shaper
 #   auto-calibration (with &#39;SHAPER_CALIBRATE&#39; command). By default no
@@ -5626,16 +5709,20 @@ cs_pin:
 #   during the calibration. The default is 50.
 #min_freq: 5
 #   Minimum frequency to test for resonances. The default is 5 Hz.
-#max_freq: 133.33
-#   Maximum frequency to test for resonances. The default is 133.33 Hz.
+#max_freq: 135
+#   Maximum frequency to test for resonances. The default is 135 Hz.
+#max_freq_z: 100
+#   Maximum frequency to test Z axis for resonances. The default is 100 Hz.
 #accel_per_hz: 60
 #   This parameter is used to determine which acceleration to use to
 #   test a specific frequency: accel = accel_per_hz * freq. Higher the
 #   value, the higher is the energy of the oscillations. Can be set to
 #   a lower than the default value if the resonances get too strong on
-#   the printer. However, lower values make measurements of
-#   high-frequency resonances less precise. The default value is 75
-#   (mm/sec).
+#   the printer. However, lower values make measurements of high-frequency
+#   resonances less precise. The default value is 60 (mm/sec).
+#accel_per_hz_z: 15
+#   This parameter has the same meaning as accel_per_hz, but applies to
+#   Z axis specifically. The default is 15 (mm/sec).
 #hz_per_sec: 1
 #   Determines the speed of the test. When testing all frequencies in
 #   range [min_freq, max_freq], each second the frequency increases by
@@ -5644,6 +5731,8 @@ cs_pin:
 #   (Hz/sec == sec^-2).
 #sweeping_accel: 400
 #   An acceleration of slow sweeping moves. The default is 400 mm/sec^2.
+#sweeping_accel_z: 50
+#   Same as sweeping_accel above, but for Z axis. The default is 50 mm/sec^2.
 #sweeping_period: 1.2
 #   A period of slow sweeping moves. Setting this parameter to 0
 #   disables slow sweeping moves. Avoid setting it to a too small
@@ -5687,65 +5776,72 @@ pins:
 <p>Sonda di altezza Z. Si può definire questa sezione per abilitare l'hardware di rilevamento dell'altezza Z. Quando questa sezione è abilitata, i comandi estesi PROBE e QUERY_PROBE  <a href="G-Codes.html#probe">comandi g-code</a> diventano disponibili. Inoltre, vedere la <a href="Probe_Calibrate.html">Guida alla calibrazione della sonda</a>. La sezione probe crea anche un pin virtuale "probe:z_virtual_endstop". Si può impostare stepper_z endstop_pin su questo pin virtuale su stampanti in stile cartesiano che utilizzano la sonda al posto di un endstop z. Se si utilizza "probe:z_virtual_endstop", non definire un position_endstop nella sezione di configurazione stepper_z.</p>
 <div class="highlight"><pre><span></span><code>[probe]
 pin:
-#   Pin di rilevamento della sonda. Se il pin si trova su un
-#   microcontrollore diverso rispetto agli stepper Z, abilita
-#   &quot;homing multi-mcu&quot;. Questo parametro deve essere fornito.
+#   Probe detection pin. If the pin is on a different microcontroller
+#   than the Z steppers then it enables &quot;multi-mcu homing&quot;. This
+#   parameter must be provided.
 #deactivate_on_each_sample: True
-#   Questo determina se Klipper deve eseguire la disattivazione
-#   gcode tra ogni tentativo di esplorazione durante l&#39;esecuzione di
-#   una sequenza di probe multiple. L&#39;impostazione predefinita è True.
+#   This determines if Klipper should execute deactivation gcode
+#   between each probe attempt when performing a multiple probe
+#   sequence. The default is True.
 #x_offset: 0.0
-#   La distanza (in mm) tra la sonda e l&#39;ugello lungo l&#39;asse x.
-#   Il valore predefinito è 0.
+#   The distance (in mm) between the probe and the nozzle along the
+#   x-axis. The default is 0.
 #y_offset: 0.0
-#   La distanza (in mm) tra la sonda e l&#39;ugello lungo l&#39;asse y.
-#   Il valore predefinito è 0.
+#   The distance (in mm) between the probe and the nozzle along the
+#   y-axis. The default is 0.
 z_offset:
-#   La distanza (in mm) tra il piatto e l&#39;ugello quando la sonda si attiva.
-#   Questo parametro deve essere fornito.
+#   The distance (in mm) between the bed and the nozzle when the probe
+#   triggers. This parameter must be provided.
 #speed: 5.0
-#   Velocità (in mm/s) dell&#39;asse Z durante probing.
-#   Il valore predefinito è 5 mm/s.
+#   Speed (in mm/s) of the Z axis when probing. It may be possible to
+#   change this value at runtime via a &quot;PROBE_SPEED&quot; command
+#   parameter. The default is 5mm/s.
 #samples: 1
-#   Il numero di volte in cui sondare ciascun punto. I valori z sondati
-#   verranno mediati. L&#39;impostazione predefinita è sondare 1 volta.
+#   The number of times to probe each point. The probed z-values will
+#   be averaged. It may be possible to change this value at runtime
+#   via a &quot;SAMPLES&quot; command parameter. The default is to probe 1 time.
 #sample_retract_dist: 2.0
-#   La distanza (in mm) per sollevare la testa di stampa tra ciascun
-#   campione (se si esegue il campionamento più di una volta).
-#   Il valore predefinito è 2 mm.
+#   The distance (in mm) to lift the toolhead between each sample (if
+#   sampling more than once). It may be possible to change this value
+#   at runtime via a &quot;SAMPLE_RETRACT_DIST&quot; command parameter. The
+#   default is 2mm.
 #lift_speed:
-#   Velocità (in mm/s) dell&#39;asse Z durante il sollevamento della sonda
-#   tra i campioni. L&#39;impostazione predefinita prevede l&#39;utilizzo dello
-#   stesso valore del parametro &#39;speed&#39;.
+#   Speed (in mm/s) of the Z axis when lifting the probe between
+#   samples. It may be possible to change this value at runtime via a
+#   &quot;LIFT_SPEED&quot; command parameter. The default is to use the same
+#   value as the &#39;speed&#39; parameter.
 #samples_result: average
-#   Il metodo di calcolo durante il campionamento più di una volta:
-#   &quot;median&quot; o &quot;average&quot;. L&#39;impostazione predefinita è average.
+#   The calculation method when sampling more than once - either
+#   &quot;median&quot; or &quot;average&quot;. It may be possible to change this value at
+#   runtime via a &quot;SAMPLES_RESULT&quot; command parameter. The default is
+#   average.
 #samples_tolerance: 0.100
-#   La distanza Z massima (in mm) che un campione può differire da
-#   altri campioni. Se questa tolleranza viene superata, viene segnalato
-#   un errore o il tentativo viene riavviato
-#   (vedere samples_tolerance_retries). Il valore predefinito è 0,100 mm.
+#   The maximum Z distance (in mm) that a sample may differ from other
+#   samples. If this tolerance is exceeded then either an error is
+#   reported or the attempt is restarted (see
+#   samples_tolerance_retries). It may be possible to change this
+#   value at runtime via a &quot;SAMPLES_TOLERANCE&quot; command parameter. The
+#   default is 0.100mm.
 #samples_tolerance_retries: 0
-#   Il numero di tentativi per riprovare se viene trovato un campione che
-#   supera samples_tolerance. In un nuovo tentativo, tutti i campioni
-#   correnti vengono eliminati e il tentativo di sonda viene riavviato.
-#   Se non si ottiene un insieme valido di campioni nel numero di tentativi
-#   specificato, viene segnalato un errore. Il valore predefinito è zero che
-#   causa la segnalazione di un errore sul primo campione che supera
-#   samples_tolerance.
+#   The number of times to retry if a sample is found that exceeds
+#   samples_tolerance. On a retry, all current samples are discarded
+#   and the probe attempt is restarted. If a valid set of samples are
+#   not obtained in the given number of retries then an error is
+#   reported. It may be possible to change this value at runtime via a
+#   &quot;SAMPLES_TOLERANCE_RETRIES&quot; command parameter. The default is zero
+#   which causes an error to be reported on the first sample that
+#   exceeds samples_tolerance.
 #activate_gcode:
-#   Un elenco di comandi G-Code da eseguire prima di ogni tentativo di
-#   esplorazione. Vedi docs/Command_Templates.md per il formato
-#   G-Code. Questo può essere utile se la sonda deve essere attivata in
-#   qualche modo. Non impartire qui alcun comando che sposti la testa
-#   di stampa (ad es. G1). L&#39;impostazione predefinita è di non eseguire
-#   alcun comando G-Code speciale all&#39;attivazione.
+#   A list of G-Code commands to execute prior to each probe attempt.
+#   See docs/Command_Templates.md for G-Code format. This may be
+#   useful if the probe needs to be activated in some way. Do not
+#   issue any commands here that move the toolhead (eg, G1). The
+#   default is to not run any special G-Code commands on activation.
 #deactivate_gcode:
-#   Un elenco di comandi G-Code da eseguire dopo il completamento di
-#   ogni tentativo di esplorazione. Vedi docs/Command_Templates.md
-#   per il formato G-Code. Non impartire qui alcun comando che sposti
-#   la testina. L&#39;impostazione predefinita è di non eseguire alcun
-#   comando G-Code speciale alla disattivazione.
+#   A list of G-Code commands to execute after each probe attempt
+#   completes. See docs/Command_Templates.md for G-Code format. Do not
+#   issue any commands here that move the toolhead. The default is to
+#   not run any special G-Code commands on deactivation.
 </code></pre></div>
 
 <h3 id="bltouch">[bltouch]<a class="headerlink" href="#bltouch" title="Permanent link">&para;</a></h3>
@@ -5860,7 +5956,13 @@ sensor_type: ldc1612
 #intb_pin:
 #   MCU gpio pin connected to the ldc1612 sensor&#39;s INTB pin (if
 #   available). The default is to not use the INTB pin.
-#z_offset:
+#max_sensor_hz:
+#   Maximum expected resonant frequency reported by the sensor (in
+#   Hz). This is used during internal clock rate configuration. This
+#   value is typically only configured if the software reports a
+#   warning suggesting the value should be increased. The default is
+#   5000000.
+#descend_z:
 #   The nominal distance (in mm) between the nozzle and bed that a
 #   probing attempt should stop at. This parameter must be provided.
 #i2c_address:
@@ -5873,6 +5975,8 @@ sensor_type: ldc1612
 #   settings&quot; section for a description of the above parameters.
 #x_offset:
 #y_offset:
+#   The distance (in mm) between the probe and the nozzle along the
+#   x and y axes. The default is 0.
 #speed:
 #lift_speed:
 #samples:
@@ -5880,7 +5984,24 @@ sensor_type: ldc1612
 #samples_result:
 #samples_tolerance:
 #samples_tolerance_retries:
-#   See the &quot;probe&quot; section for information on these parameters.
+#   See the &quot;probe&quot; section for information on these parameters. Note
+#   that the settings here apply only to regular probe commands. These
+#   settings do not have an effect if using a probe &quot;METHOD&quot; of
+#   &quot;scan&quot;, &quot;rapid_scan&quot;, or &quot;tap&quot;.
+#tap_threshold:
+#   Descent stop threshold (in Hz/mm) for &quot;tap&quot; probing. Larger values
+#   reduce the chance of the toolhead incorrectly stopping early due
+#   to noise, while increasing the risk of the toolhead not correctly
+#   stopping when it first contacts the bed. See Eddy_Probe.md for
+#   more information. This value may be overridden at run-time using
+#   the &quot;TAP_THRESHOLD&quot; parameter on probe commands.  The default is
+#   to not enable &quot;tap&quot; probing.
+#tap_z_offset: 0.0
+#   The Z height (in mm) of the nozzle relative to the bed at the
+#   contact point detected during &quot;tap&quot; probing. Nominally this would
+#   be 0.0 to indicate the contact point has zero distance, but one
+#   may set this to account for backlash, thermal expansion, a
+#   systemic probing bias, or similar. The default is zero.
 </code></pre></div>
 
 <h3 id="axis_twist_compensation">[axis_twist_compensation]<a class="headerlink" href="#axis_twist_compensation" title="Permanent link">&para;</a></h3>
@@ -5985,10 +6106,16 @@ axis:
 
 <p>For an example of dual carriage configuration with <code>generic_cartesian</code> kinematic, see the following configuration <a href="https://github.com/Klipper3d/klipper/blob/master/config/example-generic-caretesian.cfg">sample</a>. Please note that in this case the <code>[dual_carriage]</code> configuration deviates from the configuration described above:</p>
 <div class="highlight"><pre><span></span><code>[dual_carriage my_dc_carriage]
-primary_carriage:
-#   Defines the matching primary carriage of this dual carriage and
-#   the corresponding IDEX axis. Valid choices are x, y, z.
-#   This parameter must be provided.
+#primary_carriage:
+#   Defines the matching carriage on the same gantry as this dual carriage and
+#   the corresponding dual axis. Must match a name of a defined `[carriage]` or
+#   another independent `[dual_carriage]`. If not set, which is a default,
+#   defines a dual carriage independent of a `[carriage]` with the same axis
+#   as this one (e.g. on a different gantry).
+#axis:
+#   Axis of a carriage, either x or y. If &#39;primary_carriage&#39; is defined, then
+#   this parameter defaults to the &#39;axis&#39; parameter of that primary carriage,
+#   otherwise this parameter must be defined.
 #safe_distance:
 #   The minimum distance (in mm) to enforce between the dual and the primary
 #   carriages. If a G-Code command is executed that will bring the carriages
@@ -5997,7 +6124,8 @@ primary_carriage:
 #   position_min and position_max for the dual and primary carriages. If set
 #   to 0 (or safe_distance is unset and position_min and position_max are
 #   identical for the primary and dual carriages), the carriages proximity
-#   checks will be disabled.
+#   checks will be disabled. Only valid for a dual_carriage with a defined
+#   &#39;primary_carriage&#39;.
 endstop_pin:
 #position_min:
 position_endstop:
@@ -6012,18 +6140,18 @@ position_max:
 
 <p>Refer to <a href="#generic-cartesian">generic cartesian</a> section for more information on the regular <code>carriage</code> parameters.</p>
 <p>Then a user must define one or more stepper motors moving the dual carriage (and other carriages as appropriate), for instance</p>
-<div class="highlight"><pre><span></span><code>[carriage x]
+<div class="highlight"><pre><span></span><code>[carriage carriage_x]
 ...
 
-[carriage y]
+[carriage carriage_y]
 ...
 
-[dual_carriage u]
-primary_carriage: x
+[dual_carriage carriage_u]
+primary_carriage: carriage_x
 ...
 
 [stepper dc_stepper]
-carriages: u-y
+carriages: carriage_u-carriage_y
 ...
 </code></pre></div>
 
@@ -6034,13 +6162,13 @@ carriages: u-y
 [delayed_gcode init_shaper]
 initial_duration: 0.1
 gcode:
-  SET_DUAL_CARRIAGE CARRIAGE=u
-  SET_INPUT_SHAPER SHAPER_TYPE_X=&lt;dual_carriage_x_shaper&gt; SHAPER_FREQ_X=&lt;dual_carriage_x_freq&gt; SHAPER_TYPE_Y=&lt;y_shaper&gt; SHAPER_FREQ_Y=&lt;y_freq&gt;
-  SET_DUAL_CARRIAGE CARRIAGE=x
-  SET_INPUT_SHAPER SHAPER_TYPE_X=&lt;primary_carriage_x_shaper&gt; SHAPER_FREQ_X=&lt;primary_carriage_x_freq&gt; SHAPER_TYPE_Y=&lt;y_shaper&gt; SHAPER_FREQ_Y=&lt;y_freq&gt;
+  SET_DUAL_CARRIAGE CARRIAGE=carriage_u
+  SET_INPUT_SHAPER SHAPER_TYPE_X=&lt;carriage_u_shaper&gt; SHAPER_FREQ_X=&lt;carriage_x_freq&gt; SHAPER_TYPE_Y=&lt;carriage_y_shaper&gt; SHAPER_FREQ_Y=&lt;carriage_y_freq&gt;
+  SET_DUAL_CARRIAGE CARRIAGE=carriage_x
+  SET_INPUT_SHAPER SHAPER_TYPE_X=&lt;carriage_x_shaper&gt; SHAPER_FREQ_X=&lt;carriage_x_freq&gt; SHAPER_TYPE_Y=&lt;carriage_y_shaper&gt; SHAPER_FREQ_Y=&lt;carriage_y_freq&gt;
 </code></pre></div>
 
-<p>Note that <code>SHAPER_TYPE_Y</code> and <code>SHAPER_FREQ_Y</code> must be the same in both commands in this case, since the same motors drive Y axis when either of the <code>x</code> and <code>u</code> carriages are active.</p>
+<p>Note that <code>SHAPER_TYPE_Y</code> and <code>SHAPER_FREQ_Y</code> must be the same in both commands in this case, since the same motors drive Y axis when either of the <code>carriage_x</code> and <code>carriage_u</code> carriages are active.</p>
 <p>It is worth noting that <code>generic_cartesian</code> kinematic can support two dual carriages for X and Y axes. For reference, see for instance a <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-corexyuv.cfg">sample</a> of CoreXYUV configuration.</p>
 <h3 id="extruder_stepper">[extruder_stepper]<a class="headerlink" href="#extruder_stepper" title="Permanent link">&para;</a></h3>
 <p>Supporto per stepper aggiuntivi sincronizzati al movimento di un estrusore (si può definire un numero qualsiasi di sezioni con un prefisso "extruder_stepper").</p>
@@ -6368,9 +6496,10 @@ sensor_pin:
 </code></pre></div>
 
 <h3 id="sensore-temperatura-aht10aht20aht21">Sensore temperatura AHT10/AHT20/AHT21<a class="headerlink" href="#sensore-temperatura-aht10aht20aht21" title="Permanent link">&para;</a></h3>
-<p>Sensori ambientali con interfaccia a due fili (I2C) AHT10/AHT20/AHT21. Si noti che questi sensori non sono destinati all'uso con estrusori e letti riscaldanti, ma piuttosto per il monitoraggio della temperatura ambiente (C) e dell'umidità relativa. Vedi <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> per un gcode_macro che può essere utilizzato per segnalare l'umidità oltre alla temperatura.</p>
-<div class="highlight"><pre><span></span><code>sensor_type: AHT10
-#   Also use AHT10 for AHT20 and AHT21 sensors.
+<p>AHT10/AHT15/AHT20/AHT21/AHT30 two wire interface (I2C) environmental sensors. Note that these sensors are not intended for use with extruders and heater beds, but rather for monitoring ambient temperature (C) and relative humidity. See <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> for a gcode_macro that may be used to report humidity in addition to temperature.</p>
+<div class="highlight"><pre><span></span><code>sensor_type: AHT1X
+#   Must be &quot;AHT1X&quot; , &quot;AHT2X&quot;, &quot;AHT3X&quot;
+#   Some AHT20 sensors can use &quot;AHT1X&quot;
 #i2c_address:
 #   Default is 56 (0x38). Some AHT10 sensors give the option to use
 #   57 (0x39) by moving a resistor.
@@ -6446,7 +6575,7 @@ sensor_pin:
 </code></pre></div>
 
 <h3 id="sensore-di-temperatura-integrato-nel-microcontrollore">Sensore di temperatura integrato nel microcontrollore<a class="headerlink" href="#sensore-di-temperatura-integrato-nel-microcontrollore" title="Permanent link">&para;</a></h3>
-<p>I microcontrollori atsam, atsamd e stm32 contengono un sensore di temperatura interno. È possibile utilizzare il sensore "temperature_mcu" per monitorare queste temperature.</p>
+<p>The atsam, atsamd, stm32 and rp2040 micro-controllers contain an internal temperature sensor. One can use the "temperature_mcu" sensor to monitor these temperatures.</p>
 <div class="highlight"><pre><span></span><code>sensor_type: temperature_mcu
 #sensor_mcu: mcu
 #   Il microcontrollore da cui leggere. L&#39;impostazione predefinita è &quot;mcu&quot;.
@@ -6827,11 +6956,6 @@ clock_pin:
 #i2c_speed:
 #   See the &quot;common I2C settings&quot; section for a description of the
 #   above parameters.
-#scl_pin:
-#sda_pin:
-#   Alternatively, if the pca9632 is not connected to a hardware I2C
-#   bus, then one may specify the &quot;clock&quot; (scl_pin) and &quot;data&quot;
-#   (sda_pin) pins. The default is to use hardware I2C.
 #color_order: RGBW
 #   Set the pixel order of the LED (using a string containing the
 #   letters R, G, B, W). The default is RGBW.
@@ -6934,6 +7058,15 @@ pin:
 #maximum_mcu_duration:
 #static_value:
 #   These options are deprecated and should no longer be specified.
+</code></pre></div>
+
+<h3 id="static_pwm_clock">[static_pwm_clock]<a class="headerlink" href="#static_pwm_clock" title="Permanent link">&para;</a></h3>
+<p>Static configurable output pin (one may define any number of sections with an "static_pwm_clock" prefix). Pins configured here will be set up as clock output pins. Generally used to provide clock input to other hardware on the board.</p>
+<div class="highlight"><pre><span></span><code>[static_pwm_clock my_pin]
+pin:
+#   The pin to configure as an output. This parameter must be provided.
+#frequency: 100
+#   Target output frequency.
 </code></pre></div>
 
 <h3 id="pwm_tool">[pwm_tool]<a class="headerlink" href="#pwm_tool" title="Permanent link">&para;</a></h3>
@@ -7398,6 +7531,7 @@ run_current:
 #driver_SEDN: 0
 #driver_SEIMIN: 0
 #driver_SFILT: 0
+#driver_SG4_THRS: 0
 #driver_SG4_ANGLE_OFFSET: 1
 #driver_SLOPE_CONTROL: 0
 #   Set the given register during the configuration of the TMC2240
@@ -7411,8 +7545,8 @@ run_current:
 #   is &quot;active low&quot; and is thus normally prefaced with &quot;^!&quot;. Setting
 #   this creates a &quot;tmc2240_stepper_x:virtual_endstop&quot; virtual pin
 #   which may be used as the stepper&#39;s endstop_pin. Doing this enables
-#   &quot;sensorless homing&quot;. (Be sure to also set driver_SGT to an
-#   appropriate sensitivity value.) The default is to not enable
+#   &quot;sensorless homing&quot;. (Be sure to also set driver_SGT OR driver_SG4_THRS
+#   to an appropriate sensitivity value.) The default is to not enable
 #   sensorless homing.
 </code></pre></div>
 
@@ -7646,28 +7780,33 @@ i2c_address:
 </code></pre></div>
 
 <h3 id="mcp4018">[mcp4018]<a class="headerlink" href="#mcp4018" title="Permanent link">&para;</a></h3>
-<p>Digipot MCP4018 configurato staticamente collegato tramite due pin gpio "bit banging" (si può definire un numero qualsiasi di sezioni con un prefisso "mcp4018").</p>
+<p>Statically configured MCP4018 digipot connected via i2c (one may define any number of sections with an "mcp4018" prefix).</p>
 <div class="highlight"><pre><span></span><code>[mcp4018 my_digipot]
-scl_pin:
-#   Il pin &quot;clock&quot; SCL. Questo parametro deve essere fornito.
-sda_pin:
-#   Il pin &quot;dati&quot; SDA. Questo parametro deve essere fornito.
+#i2c_address: 47
+#   The i2c address that the chip is using on the i2c bus. The default
+#   is 47.
+#i2c_mcu:
+#i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#i2c_speed:
+#   See the &quot;common I2C settings&quot; section for a description of the
+#   above parameters.
 wiper:
-#   Il valore su cui impostare staticamente il &quot;Wiper&quot; MCP4018
-#   specificato. Questo è in genere impostato su un numero compreso
-#   tra 0,0 e 1,0 con 1,0 come resistenza più alta e 0,0 come resistenza
-#   più bassa. Tuttavia, l&#39;intervallo può essere modificato con il
-#   parametro &#39;scale&#39; (vedi sotto). Questo parametro deve essere fornito.
+#   The value to statically set the given MCP4018 &quot;wiper&quot; to. This is
+#   typically set to a number between 0.0 and 1.0 with 1.0 being the
+#   highest resistance and 0.0 being the lowest resistance. However,
+#   the range may be changed with the &#39;scale&#39; parameter (see below).
+#   This parameter must be provided.
 #scale:
-#   Questo parametro può essere utilizzato per modificare il modo in
-#   cui viene interpretato il parametro &#39;wiper&#39;. Se fornito, il parametro
-#   &#39;wiper&#39; dovrebbe essere compreso tra 0.0 e &#39;scale&#39;. Questo può essere
-#   utile quando l&#39;MCP4018 viene utilizzato per impostare i riferimenti di
-#   tensione stepper. La &quot;scala&quot; può essere impostata sull&#39;amperaggio
-#   stepper equivalente se l&#39;MCP4018 è alla sua massima resistenza,
-#   quindi è possibile specificare il parametro &quot;wiper&quot; utilizzando il
-#   valore di amperaggio desiderato per lo stepper. L&#39;impostazione
-#   predefinita è di non ridimensionare il parametro &#39;wiper&#39;.
+#   This parameter can be used to alter how the &#39;wiper&#39; parameter is
+#   interpreted. If provided, then the &#39;wiper&#39; parameter should be
+#   between 0.0 and &#39;scale&#39;. This may be useful when the MCP4018 is
+#   used to set stepper voltage references. The &#39;scale&#39; can be set to
+#   the equivalent stepper amperage if the MCP4018 is at its highest
+#   resistance, and then the &#39;wiper&#39; parameter can be specified using
+#   the desired amperage value for the stepper. The default is to not
+#   scale the &#39;wiper&#39; parameter.
 </code></pre></div>
 
 <h2 id="supporto-display">Supporto display<a class="headerlink" href="#supporto-display" title="Permanent link">&para;</a></h2>
@@ -8094,20 +8233,20 @@ text:
 <p>Per ulteriori informazioni, vedere <a href="G-Codes.html#filament_switch_sensor">command reference</a>.</p>
 <div class="highlight"><pre><span></span><code>[filament_motion_sensor my_sensor]
 detection_length: 7.0
-#   La lunghezza minima di filamento tirato attraverso il sensore
-#   per attivare un cambio di stato su switch_pin
-#   Il default è 7 mm.
+#   The minimum length of filament pulled through the sensor to trigger
+#   a state change on the switch_pin
+#   Default is 7 mm.
 extruder:
-#   Nome della sezione extruder section con cui questo sensore è associato.
-#   Questo parametro deve essere fornito.
+#   The name of the extruder or extruder_stepper section this sensor
+#   is associated with. This parameter must be provided.
 switch_pin:
 #pause_on_runout:
 #runout_gcode:
 #insert_gcode:
 #event_delay:
 #pause_delay:
-#   Vedere la sezione &quot;filament_switch_sensor&quot; per la descrizione dei
-#   parametri riportati sopra.
+#   See the &quot;filament_switch_sensor&quot; section for a description of the
+#   above parameters.
 </code></pre></div>
 
 <h3 id="tsl1401cl_filament_width_sensor">[tsl1401cl_filament_width_sensor]<a class="headerlink" href="#tsl1401cl_filament_width_sensor" title="Permanent link">&para;</a></h3>
@@ -8126,53 +8265,59 @@ switch_pin:
 <div class="highlight"><pre><span></span><code>[hall_filament_width_sensor]
 adc1:
 adc2:
-#   Pin di ingresso analogico collegati al sensore.
-#   Questi parametri devono essere forniti.
+#   Analog input pins connected to the sensor. These parameters must
+#   be provided.
 #cal_dia1: 1.50
 #cal_dia2: 2.00
-#   I valori di calibrazione (in mm) per i sensori. Il valore predefinito
-#   è 1.50 per cal_dia1 e 2.00 per cal_dia2.
+#   The calibration values (in mm) for the sensors. The default is
+#   1.50 for cal_dia1 and 2.00 for cal_dia2.
 #raw_dia1: 9500
 #raw_dia2: 10500
-#   I valori di calibrazione grezzi per i sensori. Il valore predefinito è
-#   9500 per raw_dia1 e 10500 per raw_dia2.
+#   The raw calibration values for the sensors. The values must be
+#   different. The default is 9500 for raw_dia1 and 10500 for raw_dia2.
 #default_nominal_filament_diameter: 1.75
-#   Il diametro nominale del filamento.
-#   Questo parametro deve essere fornito.
+#   The nominal filament diameter. This parameter must be provided.
 #max_difference: 0.200
-#   Differenza massima consentita del diametro del filamento in
-#   millimetri (mm). Se la differenza tra il diametro nominale del
-#   filamento e l&#39;uscita del sensore è maggiore di +- max_difference,
-#   il moltiplicatore di estrusione viene riportato a %100.
-#   Il valore predefinito è 0,200.
+#   Maximum allowed filament diameter difference in millimeters (mm).
+#   If difference between nominal filament diameter and sensor output
+#   is more than +- max_difference, extrusion multiplier is set back
+#   to 100%. Must be less than default_nominal_filament_diameter.
+#   The default is 0.200.
 #measurement_delay: 70
-#   La distanza dal sensore alla camera di fusione/hot-end in
-#   millimetri (mm). Il filamento tra il sensore e l&#39;hot-end verrà
-#   trattato come default_nominal_filament_diameter. Il modulo
-#   host funziona con la logica FIFO. Mantiene ogni valore e posizione
-#   del sensore in un array e li riporta nella posizione corretta.
-#   Questo parametro deve essere fornito.
+#   The distance from sensor to the melting chamber/hot-end in
+#   millimeters (mm). The filament between the sensor and the hot-end
+#   will be treated as the default_nominal_filament_diameter. Host
+#   module works with FIFO logic. It keeps each sensor value and
+#   position in an array and POP them back in correct position. This
+#   parameter must be provided.
 #enable: False
-#   Sensore abilitato o disabilitato dopo l&#39;accensione.
-L&#39;impostazione predefinita è disabilitare.
+#   Sensor enabled or disabled after power on. The default is to
+#   disable.
+#enable_flow_compensation: True
+#   Flow compensation enabled or disabled. If set to False, the sensor
+#   will not modify the extrusion multiplier and will only trigger
+#   runout events. The default is True.
 #measurement_interval: 10
-#   La distanza approssimativa (in mm) tra le letture del sensore.
-#   Il valore predefinito è 10 mm.
+#   The approximate distance (in mm) between sensor readings. The
+#   default is 10mm.
 #logging: False
-#   Il log esterno al terminale e klipper.log può essere 
-#   attivato|off tramite comando.
+#   Out diameter to terminal and klipper.log can be turn on|of by
+#   command.
 #min_diameter: 1.0
-#   Diametro minimo per trigger filament_switch_sensor virtuale.
+#   Minimal diameter for trigger virtual filament_switch_sensor.
+#max_diameter:
+#   Maximum diameter for triggering virtual filament_switch_sensor.
+#   The default is default_nominal_filament_diameter + max_difference.
 #use_current_dia_while_delay: False
-#   Utilizzare il diametro attuale invece del diametro nominale
-#   mentre il ritardo di misurazione non è trascorso.
+#   Use the current diameter instead of the nominal diameter while
+#   the measurement delay has not run through.
 #pause_on_runout:
 #runout_gcode:
 #insert_gcode:
 #event_delay:
 #pause_delay:
-#   Vedere la sezione &quot;filament_switch_sensor&quot; per una
-#   descrizione dei parametri di cui sopra.
+#   See the &quot;filament_switch_sensor&quot; section for a description of the
+#   above parameters.
 </code></pre></div>
 
 <h2 id="load-cells">Load Cells<a class="headerlink" href="#load-cells" title="Permanent link">&para;</a></h2>
@@ -8282,6 +8427,58 @@ data_ready_pin:
 #   and &#39;analog_supply&#39;. Default is &#39;internal&#39;.
 </code></pre></div>
 
+<h4 id="ads131m0x">ADS131M0x<a class="headerlink" href="#ads131m0x" title="Permanent link">&para;</a></h4>
+<p>The ADS131M0x is a family of fast, 24-bit, delta-sigma ADCs. Two sensors are supported from this family: ADS131M02 with two simultaneously-sampling differential channels and ADS131M04 with four channels. They feature a programmable gain amplifier (PGA) with gains up to 128, configurable sampling rates up to 64000 samples per second, and require an external clock input (300 kHz to 8.4 MHz, 8.192 MHz nominal).</p>
+<div class="highlight"><pre><span></span><code>[load_cell]
+sensor_type: ads131m02
+#   Select &#39;ads131m02&#39; for the 2-channel variant or &#39;ads131m04&#39; for the
+#   4-channel variant. This parameter must be provided.
+cs_pin:
+#   The pin connected to the chip select line. This parameter must be
+#   provided.
+#spi_speed: 4000000
+#   The SPI bus speed. The default is 4 MHz.
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the &quot;common SPI settings&quot; section for a description of the
+#   above parameters.
+data_ready_pin:
+#   Pin connected to the data ready (DRDY) line. This parameter must be
+#   provided.
+#adc_channel: 0
+#   The ADC channel to read. For the ADS131M02, valid values are 0 and 1.
+#   For the ADS131M04, valid values are 0, 1, 2, and 3. The default is 0.
+#clock_freq:
+#   The external clock frequency (fCLKIN) in Hz supplied to the CLKIN pin.
+#   The valid range is 300000 to 8400000. The nominal clock frequency for the
+#   ADS131M0x is 8192000 Hz; it is recommended to use a clock source near
+#   this frequency. Either clock_freq or pwm_clock must be provided.
+#pwm_clock:
+#   Reference to a [static_pwm_clock] section that generates the clock signal
+#   for the CLKIN pin. The frequency of this clock is used as fCLKIN.
+#   Either clock_freq or pwm_clock must be provided.
+#sample_rate: 500.0
+#   The desired output sampling rate in samples per second. The firmware will
+#   select the closest available rate, if possible. When the nominal clock
+#   frequency of 8192000 Hz is used and global-chop mode is disabled, the
+#   following rates are available: 250, 500, 1000, 2000, 4000, 8000, 16000,
+#   32000, and 64000. The actual effective sampling rate can be checked via
+#   the LOAD_CELL_DIAGNOSTIC command. The default is 500.
+#gain: 128
+#   The PGA gain setting. Valid values are: 1, 2, 4, 8, 16, 32, 64, and
+#   128. The default is 128.
+#enable_global_chop: False
+#   Enable global-chop mode to reduce internal system offset errors by averaging
+#   two conversions with opposite input polarities. The default is False.
+#global_chop_delay: 16
+#   The global-chop delay in modulator clock periods, only used when
+#   enable_global_chop is True. Higher values allow more settling time
+#   between input swaps. Valid values are all powers of 2 from 2 to 65536.
+#   The default is 16.
+</code></pre></div>
+
 <h3 id="load_cell_probe">[load_cell_probe]<a class="headerlink" href="#load_cell_probe" title="Permanent link">&para;</a></h3>
 <p>Load Cell Probe. This combines the functionality of a [probe] and a [load_cell].</p>
 <div class="highlight"><pre><span></span><code>[load_cell_probe]
@@ -8311,7 +8508,7 @@ sensor_type:
 #   load cell will be igfiltered outnored. This option requires the SciPy
 #   library. Default: None
 #buzz_filter_delay: 2
-#   The delay, or &#39;order&#39;, of the buzz filter. This controle the number of
+#   The delay, or &#39;order&#39;, of the buzz filter. This controls the number of
 #   samples required to make a trigger detection. Can be 1 or 2, the default
 #   is 2.
 #notch_filter_frequencies: 50, 60
@@ -8407,7 +8604,7 @@ chip: ADS1115
 #   scales all values read from the ADC. Options are: 6.144V, 4.096V, 2.048V,
 #   1.024V, 0.512V, 0.256V
 #adc_voltage: 3.3
-#   The suppy voltage for the device. This allows additional software scaling
+#   The supply voltage for the device. This allows additional software scaling
 #   for all values read from the ADC.
 i2c_mcu: host
 i2c_bus: i2c.1
@@ -8424,7 +8621,7 @@ sensor_pin: my_ads1x1x:AIN0
 #   A combination of the name of the ads1x1x chip and the pin. Possible
 #   pin values are AIN0, AIN1, AIN2 and AIN3 for single ended lines and
 #   DIFF01, DIFF03, DIFF13 and DIFF23 for differential between their
-#   correspoding lines. For example
+#   corresponding lines. For example
 #   DIFF03 measures the differential between line 0 and 3. Only specific
 #   combinations for the differentials are allowed.
 </code></pre></div>

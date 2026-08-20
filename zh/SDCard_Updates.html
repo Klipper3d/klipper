@@ -1196,6 +1196,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#failure-to-initialize" class="md-nav__link">
+    Failure to Initialize
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#_3" class="md-nav__link">
     注意事项
   </a>
@@ -1385,7 +1392,7 @@
   
     <li class="md-nav__item">
       <a href="Load_Cell.html" class="md-nav__link">
-        Load Cells
+        压力传感器
       </a>
     </li>
   
@@ -1449,6 +1456,13 @@
         <li class="md-nav__item">
   <a href="#_2" class="md-nav__link">
     高级用法
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#failure-to-initialize" class="md-nav__link">
+    Failure to Initialize
   </a>
   
 </li>
@@ -1541,21 +1555,22 @@ sudo service klipper start
 <h2 id="_2">高级用法<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>上述命令假设您的 MCU 以默认波特率 250000 连接并且固件位于<code>~/klipper/out/klipper.bin</code>。 <code>flash-sdcard.sh</code> 脚本提供了更改这些默认值的选项。 所有选项都可以通过帮助画面查看：</p>
 <div class="highlight"><pre><span></span><code>./scripts/flash-sdcard.sh -h
-Klipper SD卡上传工具
+SD Card upload utility for Klipper
 
-usage: flash_sdcard.sh [-h] [-l] [-c] [-b &lt;波特率&gt;] [-f &lt;固件&gt;]
-                       &lt;设备&gt; &lt;控制板&gt;
+usage: flash_sdcard.sh [-h] [-l] [-c] [-s] [-b &lt;baud&gt;] [-f &lt;firmware&gt;]
+                       &lt;device&gt; &lt;board&gt;
 
-位置参数：
-  &lt;设备&gt;        设备串口
-  &lt;控制板&gt;         控制板类型
+positional arguments:
+  &lt;device&gt;        device serial port
+  &lt;board&gt;         board type
 
-可选参数：
-  -h              显示此信息
-  -l              列出可用控制板
-  -c              进行闪存检查/仅验证（跳过上传）
-  -b &lt;波特率&gt;      串口波特率 (默认为250000)
-  -f &lt;firmware&gt;   klipper.bin文件路径
+optional arguments:
+  -h              show this message
+  -l              list available boards
+  -c              run flash check/verify only (skip upload)
+  -s              use fast SPI speed (4MHz)
+  -b &lt;baud&gt;       serial baud rate (default is 250000)
+  -f &lt;firmware&gt;   path to klipper.bin
 </code></pre></div>
 
 <p>如果您的电路板使用以自定义波特率连接的固件刷新，则可以通过指定 <code>-b</code> 选项进行升级：</p>
@@ -1568,6 +1583,17 @@ usage: flash_sdcard.sh [-h] [-l] [-c] [-b &lt;波特率&gt;] [-f &lt;固件&gt;]
 
 <p>请注意，升级 MKS Robin E3 时，无需手动运行 <code>update_mks_robin.py</code> 并将生成的二进制文件提供给 <code>flash-sdcard.sh</code>。 此过程在上传过程中自动执行。</p>
 <p><code>-c</code> 选项用于执行检查或只验证的操作，以测试控制板是否正确运行指定的固件。这个选项主要是针对需要手动断电来完成刷写程序的情况，比如使用SDIO模式而不是SPI来访问SD卡的引导程序。(见下面的注意事项）但是，它也可以在任何时候用来验证在任何支持的板子上刷入板子的固件是否与你的构建文件夹中的版本一致。</p>
+<h2 id="failure-to-initialize">Failure to Initialize<a class="headerlink" href="#failure-to-initialize" title="Permanent link">&para;</a></h2>
+<p>Some SD cards may fail to initialize at the default SPI speed of 400KHz. In this situation it is possible to use <code>-s</code> to drive the SPI peripheral at 4MHz. For example:</p>
+<div class="highlight"><pre><span></span><code>./scripts/flash-sdcard.sh -s /dev/ttyACM0 btt-skr-v1.3
+</code></pre></div>
+
+<p>If the device still fails to initialize then cause of the failure is unrelated to the speed and likely a result of one of the following conditions:</p>
+<ul>
+<li>The SD card is improperly formatted. Must be <code>fat</code> or <code>fat32</code>.</li>
+<li>Attempt to initialize a card using the SPI interface that has already been initialized over SDIO.</li>
+<li>The SD card has failed or is corrupt.</li>
+</ul>
 <h2 id="_3">注意事项<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <ul>
 <li>如介绍中所述，此方法仅适用于升级固件。 初始刷鞋程序必须按照适用于您的控制器板的说明手动完成。</li>
@@ -1607,7 +1633,7 @@ usage: flash_sdcard.sh [-h] [-l] [-c] [-b &lt;波特率&gt;] [-f &lt;固件&gt;]
 <span class="p">}</span>
 </code></pre></div>
 
-<p>如果您需要一个新的电路板定义并且您对上述过程感到不舒服，建议您在 <a href="Contact.html#discord">Klipper Community Discord</a> 中请求一个。</p>
+<p>If you need a new board definition and you are uncomfortable with the procedure outlined above it is recommended that you request one in the <a href="Contact.html">Klipper Discord</a>.</p>
 <h2 id="sdio">刷写使用SDIO的控制板<a class="headerlink" href="#sdio" title="Permanent link">&para;</a></h2>
 <p><a href="#caveats">正如在注意事项中提到的那样</a>，引导程序使用SDIO模式访问它们的SD卡的控制板需要对控制板进行电源循环，特别是SD卡本身，以便从将文件写入SD卡时使用的SPI模式切换回SDIO模式，以便引导程序将其刷写到板子上。这些板子的定义将使用<code>skip_verify</code> 标志，它告诉刷写工具在将固件写入SD卡后停止，以便控制板可以手动断电并推迟验证步骤直到完成。</p>
 <p>有两种情况 - 一种是RPi主机在独立电源上运行，另一种是RPi主机与被刷写的主板在同一电源上运行。区别在于是否有必要同时关闭RPi，然后在刷写完成后再次<code>ssh</code> ，以进行验证步骤，或者是否可以立即进行验证。下面是这两种情况的例子：</p>

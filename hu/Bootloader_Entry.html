@@ -1630,7 +1630,7 @@ Bootloader<span class="w"> </span>belépése<span class="w"> </span>a<span class
 <p>Ahol <code>&lt;DEVICE&gt;</code> a soros eszköz, például <code>/dev/serial.by-id/usb-Klipper[...]</code> vagy <code>/dev/ttyACM0</code></p>
 <p><code>&lt;Ctrl-A&gt;&lt;Ctrl-P&gt;</code> azt jelenti, hogy lenyomva tartjuk a "Ctrl"-t, megnyomjuk és elengedjük az "a"-t, megnyomjuk és elengedjük a "p"-t, majd elengedjük a "Ctrl"-t</p>
 <h3 id="fizikai-sorszam">Fizikai sorszám<a class="headerlink" href="#fizikai-sorszam" title="Permanent link">&para;</a></h3>
-<p>Ha az MCU-n fizikai soros portot használunk (még akkor is, ha USB soros adaptert használunk a csatlakozáshoz), akkor a <code>&lt;SPACE&gt;&lt;FS&gt;&lt;SPACE&gt;Request Serial Bootloader!!&lt;SPACE&gt;~</code> karakterlánc elküldése szükséges.</p>
+<p>If a physical serial port is being used on the MCU (even if a USB serial adapter is being used to connect to it), sending the string <code>&lt;SPACE&gt;&lt;FS&gt;&lt;SPACE&gt;Request Serial Bootloader!!&lt;SPACE&gt;~</code> requests the bootloader.</p>
 <p>A <code>&lt;SPACE&gt;</code> egy ASCII szóköz, 0x20.</p>
 <p>A <code>&lt;FS&gt;</code> az ASCII fájlelválasztó, 0x1c.</p>
 <p>Vedd figyelembe, hogy ez nem érvényes üzenet az <a href="Protocol.html#micro-controller-interface">MCU protokoll</a> szerint, de a szinkronizáló karaktereket (<code>~</code>) továbbra is tiszteletben kell tartani.</p>

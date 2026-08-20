@@ -1378,7 +1378,7 @@
   
     <li class="md-nav__item">
       <a href="Load_Cell.html" class="md-nav__link">
-        Load Cells
+        压力传感器
       </a>
     </li>
   
@@ -1532,7 +1532,7 @@ resistors</a> on the CAN bus. If the resistors are not properly installed then m
 
 <p>作为其正常应用程序级消息重传系统的一部分，Klipper 将自动重传丢失的消息。因此，此日志消息是警告，并不表示不可恢复的错误。</p>
 <p>如果发生 CAN 总线完全故障（例如 CAN 线路断线），则 Linux 将无法在 CAN 总线上传输任何消息，并且通常会在 Klipper 日志中找到上述消息。在这种情况下，日志消息是更大问题的征兆（无法传输任何消息），与 Linux <code>txqueuelen</code> 没有直接关系。</p>
-<p>可以通过运行 Linux 命令“ip link show can0”来检查当前队列大小。它应该会报告一堆文本，包括代码片段“qlen 128”。如果看到类似“qlen 10”的内容，则表明 CAN 设备尚未正确配置。</p>
+<p>可以通过运行 Linux 命令<code>ip link show can0</code>来检查当前队列大小。它应该会报告一堆文本，包括代码片段<code>qlen 128</code>。如果看到类似<code>qlen 10</code>的内容，则表明 CAN 设备尚未正确配置。</p>
 <p>不建议使用明显大于 128 的 <code>txqueuelen</code>。以 1000000 频率运行的 CAN 总线通常需要大约 120us 来传输 CAN 数据包。因此，128 个数据包的队列可能需要大约 15-20ms 才能耗尽。大得多的队列可能会导致消息往返时间出现过度峰值，从而导致无法恢复的错误。换句话说，如果 Klipper 的应用程序重传系统不必等待 Linux 耗尽可能过时的过大队列，它会更加强大。这类似于互联网路由器上的 <a href="https://en.wikipedia.org/wiki/Bufferbloat">bufferbloat</a> 问题。</p>
 <p>在正常情况下，Klipper 可能每个 MCU 使用约 25 个队列槽 - 通常仅在重传期间使用更多槽。（具体而言，Klipper 主机可能向每个 Klipper MCU 传输最多 192 个字节，然后才会收到该 MCU 的确认。）如果单个 CAN 总线上有 5 个或更多 Klipper MCU，则可能需要将<code>txqueuelen</code>增加到建议值 128 以上。但是，如上所述，选择新值时应小心谨慎，以避免过长的往返时间延迟。</p>
 <h2 id="use-canbus_querypy-only-to-identify-nodes-never-previously-seen">Use <code>canbus_query.py</code> only to identify nodes never previously seen<a class="headerlink" href="#use-canbus_querypy-only-to-identify-nodes-never-previously-seen" title="Permanent link">&para;</a></h2>
@@ -1563,7 +1563,7 @@ id</a>. It is a hexadecimal number. The id <code>108</code> is assigned by Klipp
 <h2 id="canbus_1">在CanBus接线上使用逻辑分析仪<a class="headerlink" href="#canbus_1" title="Permanent link">&para;</a></h2>
 <p><a href="https://sigrok.org/wiki/PulseView">Sigrok Pulseview</a>软件和低成本的<a href="https://en.wikipedia.org/wiki/Logic_analyzer">逻辑分析</a>]可用于诊断CAN总线信号。这是一个可能只有专家才感兴趣的高级话题。</p>
 <p>人们经常可以找到价格低于15美元的“USB逻辑分析仪”(截至2023年美国定价)。这些设备通常被列为“Saleae逻辑克隆”或“24 MHz 8通道USB逻辑分析仪”。</p>
-<p><img alt="pulseview-canbus" src="img/pulseview-canbus.png" /></p>
+<p><img alt="CANbus脉冲视图" src="img/pulseview-canbus.png" /></p>
 <p>上图是在使用Pulseview和“Saleae Clone”逻辑分析仪时拍摄的。Sigrok和Pulseview软件安装在台式计算机上(如果单独打包，还应安装“fx2lafw”固件)。逻辑分析仪上的CH0引脚被布线到CAN Rx线路，CH1引脚被布线到CAN Tx引脚，GND被布线到GND。Pulseview配置为仅显示D0和D1线(红色“探头”图标中央顶部工具栏)。采样数设置为500万(顶部工具栏)，采样率设置为24 Mhz(顶部工具栏)。添加了CAN解码器(右上工具栏黄绿相间的“气泡图标”)。D0通道被标记为RX并设置为在下降沿触发(点击左侧的黑色D0标签)。将d1通道标记为Tx(点击左侧棕色的d1标签)。CAN解码器配置为1Mbit速率(点击左侧绿色的CAN标签)。CAN解码器被移到显示屏顶部(单击并拖动绿色的CAN标签)。最后，开始捕获(点击左上角的“Run”(运行))，并在CAN总线上传输一个包(<code>cansend can0 123#121212121212</code>)。</p>
 <p>逻辑分析器提供了用于捕获数据包和验证位时序的独立工具。</p>
 

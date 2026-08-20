@@ -858,6 +858,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#should-i-enable-and-tune-input-shaper-for-z-axis" class="md-nav__link">
+    Should I enable and tune input shaper for Z axis?
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1614,6 +1621,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#should-i-enable-and-tune-input-shaper-for-z-axis" class="md-nav__link">
+    Should I enable and tune input shaper for Z axis?
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1837,13 +1851,18 @@ gcode:
   SET_INPUT_SHAPER SHAPER_TYPE_X=&lt;primary_carriage_shaper&gt; SHAPER_FREQ_X=&lt;primary_carriage_freq&gt; SHAPER_TYPE_Y=&lt;y_shaper&gt; SHAPER_FREQ_Y=&lt;y_freq&gt;
 </code></pre></div>
 
-<p>Note that <code>SHAPER_TYPE_Y</code> and <code>SHAPER_FREQ_Y</code> should be the same in both commands. It is also possible to put a similar snippet into the start g-code in the slicer, however then the shaper will not be enabled until any print is started.</p>
+<p>However, users of <code>generic_cartesian</code> kinematics should specify carriage names in <code>CARRIAGE=</code> parameters of <code>SET_DUAL_CARRIAGE</code> instead of their numbers. Note that <code>SHAPER_TYPE_Y</code> and <code>SHAPER_FREQ_Y</code> should be the same in both commands. If you need to configure an input shaper for Z axis, include its parameters in both <code>SET_INPUT_SHAPER</code> commands.</p>
+<p>Besides <code>delayed_gcode</code>, it is also possible to put a similar snippet into the start g-code in the slicer, however then the shaper will not be enabled until any print is started.</p>
 <p>Note that the input shaper only needs to be configured once. Subsequent changes of the carriages or their modes via <code>SET_DUAL_CARRIAGE</code> command will preserve the configured input shaper parameters.</p>
 <h3 id="input_shaper_1">input_shaper 會影響打印時間嗎？<a class="headerlink" href="#input_shaper_1" title="Permanent link">&para;</a></h3>
 <p>不，<code>input_shaper</code> 功能本身對打印時間幾乎沒有影響。但是，<code>max_accel</code> 的值肯定會起作用（在 <a href="#selecting-max_accel">this section</a> 中描述了此參數的調整）。</p>
+<h3 id="should-i-enable-and-tune-input-shaper-for-z-axis">Should I enable and tune input shaper for Z axis?<a class="headerlink" href="#should-i-enable-and-tune-input-shaper-for-z-axis" title="Permanent link">&para;</a></h3>
+<p>Most of the users are not likely to see improvements in the quality of the prints directly, much unlike X and Y shapers. However, users of delta printers, printers with flying gantry, or printers with heavy moving beds may be able to increase the <code>max_z_accel</code> and <code>max_z_velocity</code> kinematics limits and thus get faster Z movements. This can be especially useful e.g. for toolchangers, but also when Z-hops are enabled in slicer. And in general, after enabling Z input shaper many users will hear that Z axis operates more smoothly, which may increase the comfort of printer operation, and may somewhat extend lifespan of Z axis parts.</p>
 <h2 id="_9">技術細節<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <h3 id="input-shapers">input shapers<a class="headerlink" href="#input-shapers" title="Permanent link">&para;</a></h3>
-<p>Klipper 中使用的 input shaper相當標準，可以在描述相應整形器的文章中找到更深入的概述。本節簡要概述了受支持的input shaper的一些技術方面。下表顯示了每個整形器的一些（通常是近似的）參數。</p>
+<p>This section contains a brief overview of some technical aspects of the supported input shapers. Input shapers used in Klipper are rather standard, with the exception of MZV, and one can find more in-depth overview in the articles describing the corresponding shapers.</p>
+<p>MZV stands for a Modified-ZV input shaper. The classic definition of ZV shaper assumes two pulses and the total duration <code>t</code> equal to 1/2 of the damped period of oscillations <code>Td</code>. However, it is possible to construct a generalized form of ZV input shaper with <code>n &gt;= 3</code> pulses and an arbitrary total duration <code>t &gt;= 0.5 * Td</code> (with the maximum of <code>t</code> depending on <code>n</code> value), see for instance SNA-ZV and MIS-ZV input shapers, which can be seen as special cases of a more generalized implementation of MZV input shaper in Klipper. The default MZV parameters in Klipper are <code>n=3</code>, <code>t=0.75</code> (of <code>Td</code>), and this shaper was designed to serve as an intermediate shaper between ZV and ZVD, offering better vibrations suppression than ZV when the determined (measured) shaper parameters deviate from the ones actually required by the printer, and smaller smoothing than ZVD. Effectively, its specific duration <code>t=0.75</code>, exactly between ZV (with <code>t=0.5</code> of <code>Td</code>) and ZVD (<code>t=1</code> of <code>Td</code>), and it happens to work well for many real-life 3D printers. However, experienced users can modify the default parameters of the MZV input shaper and try other variations that may work better for their specific printers (with these non-default variations specified as, e.g. <code>mzv(n=3,t=0.8)</code> or <code>mzv(n=5,t=1.1)</code> in the <code>[input_shaper]</code> section or as a parameter to <code>SET_INPUT_SHAPER</code> command, as well as in a parameter to <code>~/klipper/scripts/calibrate_shaper.py</code> script, e.g. as <code>--shapers='2hump_ei,3hump_ei,mzv(n=6,t=1.0)'</code>. These custom parameters of the shapers are supported by <code>~/klipper/scripts/graph_shaper.py</code> scripts via e.g. <code>--shaper='mzv(n=3,t=0.6666666666)'</code> parameter.</p>
+<p>The table below shows some (usually approximate) parameters of each shaper with their default parameters.</p>
 <table>
 <thead>
 <tr>
@@ -1881,24 +1900,24 @@ gcode:
 <tr>
 <td align="center">2HUMP_EI</td>
 <td align="center">1.5 / shaper_freq</td>
-<td align="center">± 35% shaper_freq</td>
-<td align="center">± 40 shaper_freq</td>
+<td align="center">-40...+45% shaper_freq</td>
+<td align="center">-45..+50% shaper_freq</td>
 </tr>
 <tr>
 <td align="center">3HUMP_EI</td>
 <td align="center">2 / shaper_freq</td>
-<td align="center">-45...+50% shaper_freq</td>
-<td align="center">-50%...+55% shaper_freq</td>
+<td align="center">-50...+60% shaper_freq</td>
+<td align="center">-55%...+65% shaper_freq</td>
 </tr>
 </tbody>
 </table>
-<p>關於減振的說明：上表中的值是近似值。如果打印機的阻尼比對於每個軸都是已知的，那麼整形器可以更精確地配置，然後它將在更寬的頻率範圍內減少共振。但是阻尼比通常是未知的，如果沒有特殊的設備很難估計，所以 Klipper 默認使用 0.1 值，這是一個很好的綜合值。表中的頻率範圍涵蓋了該值附近的許多不同可能的阻尼比（大約從 0.05 到 0.2）。</p>
-<p>另請注意，EI、2HUMP_EI 和 3HUMP_EI 已調整為將振動降低到 5%，因此 10% 振動容限的值僅供參考。</p>
+<p>A note on vibration reduction: the values in the table above are approximate. If the damping ratio of the printer is known for each axis, the shaper can be configured more precisely and it will then reduce the resonances in a bit wider range of frequencies. However, the damping ratio is usually unknown and is hard to estimate without a special equipment, so Klipper uses 0.1 value by default, which is a good all-round value. The frequency ranges in the table cover a number of different possible damping ratios around that value (approx. from 0.075 to 0.15).</p>
+<p>Also note that EI, 2HUMP_EI, and 3HUMP_EI are tuned to reduce vibrations to 5%, so the values for 10% vibration tolerance are provided only for the reference. However, a user can force a desired vibration tolerance for EI input shaper in a manner similar to MZV input shaper as, e.g. <code>ei(v_tol=0.02)</code> or <code>ei(v_tol=0.1)</code>, in which case the vibration reduction range will be different.</p>
 <p><strong>如何使用此表：</strong></p>
 <ul>
 <li>Shaper 持續時間會影響零件的平滑度 - 它越大，零件越平滑。這種依賴性不是線性的，但可以讓您了解對於相同頻率哪些整形器更“平滑”。平滑排序是這樣的：ZV &lt; MZV &lt; ZVD ≈ EI &lt; 2HUMP_EI &lt; 3HUMP_EI。此外，為整形器 2HUMP_EI 和 3HUMP_EI 設置 shaper_freq = 共振頻率很少實用（它們應該用於減少多個頻率的振動）。</li>
 <li>人們可以估計整形器減少振動的頻率範圍。例如，shaper_freq = 35 Hz 的 MZV 將頻率 [33.6, 36.4] Hz 的振動降低到 5%。 shaper_freq = 50 Hz 的 3HUMP_EI 在 [27.5, 75] Hz 範圍內將振動降低到 5%。</li>
-<li>如果他們需要減少多個頻率的振動，可以使用此表來檢查他們應該使用哪個整形器。例如，如果在同一軸上有 35 Hz 和 60 Hz 的共振： a) EI 整形器需要 shaper_freq = 35 / (1 - 0.2) = 43.75 Hz，它將減少共振直到 43.75 * (1 + 0.2 ) = 52.5 Hz，因此還不夠； b) 2HUMP_EI shaper 需要 shaper_freq = 35 / (1 - 0.35) = 53.85 Hz 並且會減少振動直到 53.85 * (1 + 0.35) = 72.7 Hz - 所以這是一個可接受的配置。對於給定的整形器，始終嘗試使用盡可能高的 shaper_freq（可能有一些安全餘量，因此在本例中 shaper_freq ≈ 50-52 Hz 效果最佳），並嘗試使用整形器持續時間盡可能短的整形器。</li>
+<li>One can use this table to check which shaper they should be using if they need to reduce vibrations at several frequencies. For example, if one has resonances at 35 Hz and 60 Hz on the same axis: a) EI shaper needs to have shaper_freq = 35 / (1 - 0.2) = 43.75 Hz, and it will reduce resonances until 43.75 * (1 + 0.2) = 52.5 Hz, so it is not sufficient; b) 2HUMP_EI shaper needs to have shaper_freq = 35 / (1 - 0.4) = 58.3 Hz and will reduce vibrations until 58.3 * (1 + 0.45) = 84.5 Hz - so this is an acceptable configuration. Always try to use as high shaper_freq as possible for a given shaper (perhaps with some safety margin, so in this example shaper_freq ≈ 55 Hz would work best), and try to use a shaper with as small shaper duration as possible.</li>
 <li>如果需要減少幾個非常不同的頻率（例如 30 Hz 和 100 Hz）的振動，他們可能會發現上表沒有提供足夠的信息。在這種情況下，使用更靈活的 <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/graph_shaper.py">scripts/graph_shaper.py</a> 腳本可能會更幸運。</li>
 </ul>
 

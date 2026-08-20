@@ -954,13 +954,6 @@
       
         <li class="md-nav__item">
   <a href="#_2" class="md-nav__link">
-    电流限制
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
     命令
   </a>
   
@@ -1351,7 +1344,7 @@
   
     <li class="md-nav__item">
       <a href="Load_Cell.html" class="md-nav__link">
-        Load Cells
+        压力传感器
       </a>
     </li>
   
@@ -1414,13 +1407,6 @@
       
         <li class="md-nav__item">
   <a href="#_2" class="md-nav__link">
-    电流限制
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#_3" class="md-nav__link">
     命令
   </a>
   
@@ -1451,14 +1437,12 @@
 
 
 <h1 id="pwm">使用 PWM 工具<a class="headerlink" href="#pwm" title="Permanent link">&para;</a></h1>
-<p>该文档介绍如何配置 <code>output_pin</code> 和宏命令以实现使用 PWM 信号对激光器或主轴进行控制。</p>
+<p>This document describes how to setup a PWM-controlled laser or spindle using <code>pwm_tool</code> and some macros.</p>
 <h2 id="_1">它如何运作？<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <p>通过重用打印头模型风扇(part fan)的PWM输出信号，我们可以实现对激光头或转轴的控制。对使用可更换打印头的设备，如E3D toolchanger 或其他DIY项目，这是十分有用的功能。通常，cam软件，例如LaserWeb，会使用<code>M3-M5</code>命令，它们分别是 主轴顺时针转速<em>spindle speed CW</em> (<code>M3 S[0-255]</code>)， 主轴逆时针转速<em>spindle speed CCW</em> (<code>M4 S[0-255]</code>) 和转轴停止 <em>spindle stop</em> (<code>M5</code>)。</p>
 <p><strong>警告：</strong> 在驱动激光器时，应采用一切可能的预防措施。二极管激光一般是使用反信号的，即当微控制器重启时，激光将会<em>全功率输出</em>，直至微处理器恢复正常运作。 慎重而言，建议在激光器上电期间<em>始终</em>佩戴合适波长的护目镜；并在不使用激光时对激光器断电。同时，应该为激光器设置安全定时，保证在上位机和微控制器发生错误时，激光器能自动停止。</p>
 <p>有关示例配置，请参阅 <a href="/config/sample-pwm-tool.cfg">config/sample-pwm-tool.cfg</a>。</p>
-<h2 id="_2">电流限制<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
-<p>PWM脉冲发生的频率存在上限。尽管相当精确，但每隔0.1秒才能生成一个PWM脉冲，因而几乎无法用作光栅蚀刻。相对地，可使用以下<a href="https://github.com/Cirromulus/klipper/tree/laser_tool">测试分支</a> 。它与主分支各有考量。长期计划中将上述功能加入到 Klipper 的主分支中。</p>
-<h2 id="_3">命令<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<h2 id="_2">命令<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p><code>M3/M4 S&lt;值&gt;</code> ：设置 PWM 占空比。占空比数值应在0和255之间。 <code>M5</code> : 停止 PWM 信号输出。</p>
 <h2 id="laserweb">LaserWeb 端配置<a class="headerlink" href="#laserweb" title="Permanent link">&para;</a></h2>
 <p>如果你使用的是 LaserWeb 软件，一个可用的配置为：</p>

@@ -1358,7 +1358,7 @@
   
     <li class="md-nav__item">
       <a href="Load_Cell.html" class="md-nav__link">
-        Load Cells
+        压力传感器
       </a>
     </li>
   
@@ -1473,7 +1473,7 @@
 <p><code>[skew_correction]</code> 模块要求对您想要校正的每个平面进行 3 次测量；从角 A 到角 C 的长度、从角 B 到角 D 的长度以及从角 A 到角 D 的长度。测量长度 AD 时不包括某些测试对象提供的角落上的平面。</p>
 <p><img alt="skew_lengths" src="img/skew_lengths.png" /></p>
 <h2 id="_4">配置偏斜<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
-<p>确保 <code>[skew_correction]</code> 已经在 printer.cfg 中。现在可以使用<code>SET_SKEW</code> G-Code 来配置 skew_correcton。例如，如果对 XY 平面测量的距离结果如下：</p>
+<p>Make sure <code>[skew_correction]</code> is in printer.cfg. You may now use the <code>SET_SKEW</code> gcode to configure skew_correction. For example, if your measured lengths along XY are as follows:</p>
 <div class="highlight"><pre><span></span><code>Length AC = 140.4
 Length BD = 142.8
 Length AD = 99.8

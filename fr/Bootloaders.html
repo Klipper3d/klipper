@@ -1149,7 +1149,7 @@
   
     <li class="md-nav__item">
       <a href="SDCard_Updates.html" class="md-nav__link">
-        Mises à jour via la carte SD
+        Mises à jour de la SDCard
       </a>
     </li>
   
@@ -1502,7 +1502,7 @@
   
     <li class="md-nav__item">
       <a href="Load_Cell.html" class="md-nav__link">
-        Load Cells
+        Cellules de charge
       </a>
     </li>
   
@@ -1759,11 +1759,11 @@
 <p>Ce document tente de décrire les chargeurs de démarrage courants, les étapes nécessaires pour flasher un chargeur de démarrage et les étapes nécessaires pour flasher une application. Ce document n'est pas une référence faisant autorité ; il est conçu comme une collection d'informations utiles que les développeurs de Klipper ont accumulées.</p>
 <h2 id="micro-controleurs-avr">Micro-contrôleurs AVR<a class="headerlink" href="#micro-controleurs-avr" title="Permanent link">&para;</a></h2>
 <p>De manière générale, le projet Arduino est une bonne référence pour les chargeurs de démarrage et les procédures de flashage sur les microcontrôleurs Atmel Atmega 8 bits. En particulier, le fichier "boards.txt" : <a href="https://github.com/arduino/Arduino/blob/1.8.5/hardware/arduino/avr/boards.txt">https://github.com/arduino/Arduino/blob/1.8.5/hardware/arduino/avr/boards.txt</a> est une référence utile.</p>
-<p>Pour flasher le chargeur de démarrage, les puces AVR nécessitent un outil de flashage matériel externe (qui communique avec la puce à l'aide de SPI). Cet outil peut être acheté (par exemple, effectuez une recherche sur internet avec "avr isp", "arduino isp" ou "usb tiny isp"). Il est également possible d'utiliser un autre Arduino ou Raspberry Pi pour flasher un chargeur de démarrage AVR (par exemple, faites une recherche sur le internet pour "programmer un avr à l'aide de raspberry pi"). Les exemples ci-dessous sont écrits en supposant qu'un appareil de type "AVR ISP Mk2" est utilisé.</p>
-<p>Le logiciel "avrdude" est l'outil le plus utilisé pour flasher les puces atmega (à la fois pour flasher le chargeur de démarrage et l'application).</p>
+<p>Pour flasher un bootloader lui-même, les puces AVR nécessitent un outil de flashage matériel externe (qui communique avec la puce en utilisant SPI). Cet outil peut être acheté (par exemple, faites une recherche sur le web avec "avr isp", "arduino isp", ou "usb tiny isp"). Il est également possible d'utiliser un autre Arduino ou Raspberry Pi pour flasher un bootloader AVR (par exemple, faites une recherche sur le web pour "programmer un avr en utilisant un raspberry pi"). Les exemples ci-dessous sont écrits en supposant qu'un dispositif de type "AVR ISP Mk2" est utilisé.</p>
+<p>Le logiciel "avrdude" est l'outil le plus communément utilisé pour flasher les puces atmega (à la fois pour le bootloader et pour les programmes).</p>
 <h3 id="atmega2560">Atmega2560<a class="headerlink" href="#atmega2560" title="Permanent link">&para;</a></h3>
 <p>Cette puce se trouve généralement dans les "Arduino Mega" qui sont très courante parmi les cartes d'imprimante 3d.</p>
-<p>Pour flasher le chargeur de démarrage lui-même, utilisez quelque chose comme :</p>
+<p>Pour flasher le bootloader lui-même, utilisez quelque chose comme :</p>
 <div class="highlight"><pre><span></span><code>wget &#39;https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/stk500v2/stk500boot_v2_mega2560.hex&#39;
 
 avrdude -cavrispv2 -patmega2560 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xFD:m -U hfuse:w:0xD8:m -U lfuse:w:0xFF:m
@@ -1777,7 +1777,7 @@ avrdude -cavrispv2 -patmega2560 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
 
 <h3 id="atmega1280">Atmega1280<a class="headerlink" href="#atmega1280" title="Permanent link">&para;</a></h3>
 <p>Cette puce se trouve généralement dans les anciennes versions de "l'Arduino Mega".</p>
-<p>Pour flasher le chargeur de démarrage lui-même, utilisez quelque chose comme :</p>
+<p>Pour flasher le bootloader lui-même, utilisez quelque chose comme :</p>
 <div class="highlight"><pre><span></span><code>wget &#39;https://github.com/arduino/Arduino/raw/1.8.5/hardware/arduino/avr/bootloaders/atmega/ATmegaBOOT_168_atmega1280.hex&#39;
 
 avrdude -cavrispv2 -patmega1280 -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xF5:m -U hfuse:w:0xDA:m -U lfuse:w:0xFF:m
@@ -1791,7 +1791,7 @@ avrdude -cavrispv2 -patmega1280 -P/dev/ttyACM0 -b115200 -U lock:w:0x0F:m
 
 <h3 id="atmega1284p">Atmega1284p<a class="headerlink" href="#atmega1284p" title="Permanent link">&para;</a></h3>
 <p>Cette puce se trouve couramment dans les cartes d'imprimante 3d de style "Melzi".</p>
-<p>Pour flasher le chargeur de démarrage lui-même, utilisez quelque chose comme :</p>
+<p>Pour flasher le bootloader lui-même, utilisez quelque chose comme :</p>
 <div class="highlight"><pre><span></span><code>wget &#39;https://github.com/Lauszus/Sanguino/raw/1.0.2/bootloaders/optiboot/optiboot_atmega1284p.hex&#39;
 
 avrdude -cavrispv2 -patmega1284p -P/dev/ttyACM0 -b115200 -e -u -U lock:w:0x3F:m -U efuse:w:0xFD:m -U hfuse:w:0xDE:m -U lfuse:w:0xFF:m
@@ -1845,7 +1845,7 @@ bossac -U -p /dev/ttyACM0 -R
 
 <h2 id="samdc21-micro-controllers-duet3d-toolboard-1lc">SAMDC21 micro-controllers (Duet3D Toolboard 1LC)<a class="headerlink" href="#samdc21-micro-controllers-duet3d-toolboard-1lc" title="Permanent link">&para;</a></h2>
 <p>The SAMC21 is flashed via the ARM Serial Wire Debug (SWD) interface. This is commonly done with a dedicated SWD hardware dongle. Alternatively, one can use a <a href="#running-openocd-on-the-raspberry-pi">Raspberry Pi with OpenOCD</a>.</p>
-<p>When using OpenOCD with the SAMC21, extra steps must be taken to first put the chip into Cold Plugging mode if the board makes use of the SWD pins for other purposes. If using OpenOCD on a Rasberry Pi, this can be done by running the following commands before invoking OpenOCD.</p>
+<p>When using OpenOCD with the SAMC21, extra steps must be taken to first put the chip into Cold Plugging mode if the board makes use of the SWD pins for other purposes. If using OpenOCD on a Raspberry Pi, this can be done by running the following commands before invoking OpenOCD.</p>
 <div class="highlight"><pre><span></span><code>SWCLK=25
 SWDIO=24
 SRST=18
@@ -2007,7 +2007,7 @@ make
 <p>Le chargeur de démarrage <a href="https://github.com/Arksine/CanBoot">CanBoot</a> offre une option pour télécharger le micrologiciel Klipper via le CANBUS. Le chargeur de démarrage lui-même est dérivé du code source de Klipper. Actuellement, CanBoot prend en charge les modèles STM32F103, STM32F042 et STM32F072.</p>
 <p>Il est préférable d'utiliser un programmeur ST-Link pour flasher CanBoot, mais il est possible de le flasher en utilisant <code>stm32flash</code> sur les appareils STM32F103 et <code>dfu-util</code> sur les appareils STM32F042/STM32F072. Consultez les sections précédentes de ce document pour obtenir des instructions sur ces méthodes de flash, en remplaçant <code>canboot.bin</code> par le nom de fichier, le cas échéant. Le référentiel CanBoot lié ci-dessus fournit des instructions pour créer le chargeur de démarrage.</p>
 <p>La première fois que CanBoot a été flashé, il devrait détecter qu'aucune application n'est présente et entrer dans le chargeur de démarrage. Si cela ne se produit pas, il est possible d'entrer dans le chargeur de démarrage en appuyant deux fois de suite sur le bouton de réinitialisation.</p>
-<p>L'utilitaire <code>flash_can.py</code> fourni dans le dossier <code>lib/canboot</code> peut être utilisé pour télécharger le firmware Klipper. L'UUID de l'appareil doit clignoter. Si vous n'avez pas d'UUID, il est possible d'interroger les nœuds exécutant actuellement le chargeur de démarrage :</p>
+<p>The <code>flashtool.py</code> utility supplied in the <code>lib/katapult</code> folder may be used to upload Klipper firmware. The device UUID is necessary to flash. If you do not have a UUID it is possible to query nodes currently running the bootloader:</p>
 <div class="highlight"><pre><span></span><code>python3 flash_can.py -q
 </code></pre></div>
 

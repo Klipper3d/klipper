@@ -1195,7 +1195,7 @@
   
     <li class="md-nav__item">
       <a href="SDCard_Updates.html" class="md-nav__link">
-        Mises à jour via la carte SD
+        Mises à jour de la SDCard
       </a>
     </li>
   
@@ -1335,7 +1335,7 @@
   
     <li class="md-nav__item">
       <a href="Load_Cell.html" class="md-nav__link">
-        Load Cells
+        Cellules de charge
       </a>
     </li>
   
@@ -1431,7 +1431,7 @@
 <li>Klipper prend en charge la fonction "Input Shaping" pour réduire l'impact des vibrations sur la qualité d'impression. Cela peut réduire ou éliminer le "ringing" (également appelé "ghosting", "echoing" ou "rippling") des impressions. Cela peut également permettre d'obtenir des vitesses d'impression plus rapides tout en maintenant une qualité d'impression élevée.</li>
 <li>Klipper utilise un "solveur itératif" pour calculer des temps de pas précis à partir d'équations cinématiques simples. Cela facilite le portage de Klipper sur de nouveaux types de robots et permet de conserver un timing précis même avec une cinématique complexe (aucune "segmentation de ligne" n'est nécessaire).</li>
 <li>Klipper est agnostique vis-à-vis du matériel. On doit obtenir le même timing précis indépendamment du matériel électronique de bas niveau. Le code du microcontrôleur de Klipper est conçu pour suivre fidèlement l’ordonnancement fourni par le logiciel hôte de Klipper (ou pour alerter l'utilisateur de manière évidente s'il n'y parvient pas). Il est ainsi plus facile d'utiliser le matériel disponible, de mettre à niveau vers un nouveau matériel et d'être confiant dans ce matériel.</li>
-<li>Code portable. Klipper fonctionne sur les micro-contrôleurs basés sur ARM, AVR et PRU. Les imprimantes existantes de type "reprap" peuvent utiliser Klipper sans modification matérielle - il suffit d'ajouter un Raspberry Pi. La conception interne du code de Klipper facilite le support d'autres architectures de micro-contrôleurs.</li>
+<li>Portable code. Klipper works on ARM, AVR, PRU, and other micro-controllers. Existing "reprap" style printers can run Klipper without hardware modification - just add a Raspberry Pi. Klipper's internal code layout makes it easier to support other micro-controller architectures as well.</li>
 <li>Un code plus simple. Klipper utilise un langage de très haut niveau (Python) pour la plupart du code. Les algorithmes cinématiques, l'analyse du code G, les algorithmes de chauffage et de thermistance, etc. sont tous écrits en Python. Il est donc plus facile de développer de nouvelles fonctionnalités.</li>
 <li>Macros programmables personnalisées. De nouvelles commandes G-Code peuvent être définies dans le fichier de configuration de l'imprimante (aucune modification du code n'est alors nécessaire). Ces commandes sont programmables - ce qui leur permet de produire différentes actions selon l'état de l'imprimante.</li>
 <li>Serveur d’API intégré. En plus de l’interface G-Code standard, Klipper prend en charge une interface d’application en JSON. Cela permet aux programmeurs de créer des applications externes avec un contrôle précis de l’imprimante.</li>
@@ -1446,10 +1446,10 @@
 <li>Automatic bed leveling support. Klipper can be configured for basic bed tilt detection or full mesh bed leveling. The bed mesh can be customized to the print size (adaptive bed mesh). If the bed uses multiple Z steppers then Klipper can also level by independently manipulating the Z steppers. Most Z height probes are supported, including BL-Touch probes and servo activated probes. Probes may be calibrated for axis twist compensation. If using an "eddy current probe" then one can utilize fast bed mesh scanning,</li>
 <li>Prise en charge du calibrage delta automatique. L'outil d'étalonnage peut effectuer un étalonnage de base de la hauteur ainsi qu'un avancé des dimensions X et Y. L'étalonnage peut être effectué avec un palpeur de l'axe Z ou manuellement.</li>
 <li>Prise en charge de l'option "exclure un objet" lors de l'impression. Lorsqu'il est configuré, ce module peut faciliter l'annulation d'un seul objet dans une impression en plusieurs parties.</li>
-<li>Support for common temperature sensors (eg, common thermistors, AD595, AD597, AD849x, PT100, PT1000, MAX6675, MAX31855, MAX31856, MAX31865, BME280, HTU21D, DS18B20, AHT10, SHT3x, and LM75). Custom thermistors and custom analog temperature sensors can also be configured. One can monitor the internal micro-controller temperature sensor and the internal temperature sensor of a Raspberry Pi.</li>
+<li>Support for common temperature sensors (eg, common thermistors, AD595, AD597, AD849x, PT100, PT1000, MAX6675, MAX31855, MAX31856, MAX31865, BME280, HTU21D, DS18B20, AHT1X, AHT2X, AHT3X, SHT3x, and LM75). Custom thermistors and custom analog temperature sensors can also be configured. One can monitor the internal micro-controller temperature sensor and the internal temperature sensor of a Raspberry Pi.</li>
 <li>Protection thermique basique de l'appareil activée par défaut.</li>
 <li>Support for standard fans, nozzle fans, and temperature controlled fans. No need to keep fans running when the printer is idle. Fan speed can be monitored on fans that have a tachometer. One can assign a "math formula" to a fan for automatic fan speed updating.</li>
-<li>Prise en charge de la configuration en temps réel des pilotes de moteurs pas à pas TMC2130, TMC2208/TMC2224, TMC2209, TMC2660 et TMC5160. Il existe également un support pour le contrôle du courant des pilotes de moteurs pas à pas traditionnels via AD5206, DAC084S085, MCP4451, MCP4728, MCP4018, et les broches PWM.</li>
+<li>Support for run-time configuration of TMC2130, TMC2208/TMC2224, TMC2209, TMC2240, TMC2660, and TMC5160 stepper motor drivers. There is also support for current control of traditional stepper drivers via AD5206, DAC084S085, MCP4451, MCP4728, MCP4018, and PWM pins.</li>
 <li>Prise en charge des écrans LCD courants fixés directement à l'imprimante. Un menu par défaut est également disponible. Le contenu de l'écran et du menu peut être entièrement personnalisé via le fichier de configuration.</li>
 <li>Accélération constante et prise en charge du "look-ahead". Tous les mouvements de l'imprimante s'accélèrent progressivement de l'arrêt à la vitesse de croisière, puis décélèrent pour revenir à l'arrêt. Le flux entrant de commandes de mouvement en G-Code est mis en file d'attente et analysé - l'accélération entre les mouvements dans une direction similaire sera optimisée pour réduire les blocages d'impression et améliorer le temps d'impression global.</li>
 <li>Klipper met en œuvre un algorithme de "fin de phase pas à pas" qui peut améliorer la précision des interrupteurs de butée. Lorsqu'il est correctement réglé, il peut améliorer l'adhérence de la première couche d'une impression.</li>

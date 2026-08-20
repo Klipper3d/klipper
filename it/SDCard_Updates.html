@@ -1196,6 +1196,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#failure-to-initialize" class="md-nav__link">
+    Failure to Initialize
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#avvertenze" class="md-nav__link">
     Avvertenze
   </a>
@@ -1454,6 +1461,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#failure-to-initialize" class="md-nav__link">
+    Failure to Initialize
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#avvertenze" class="md-nav__link">
     Avvertenze
   </a>
@@ -1543,7 +1557,7 @@ sudo service klipper start
 <div class="highlight"><pre><span></span><code>./scripts/flash-sdcard.sh -h
 SD Card upload utility for Klipper
 
-usage: flash_sdcard.sh [-h] [-l] [-c] [-b &lt;baud&gt;] [-f &lt;firmware&gt;]
+usage: flash_sdcard.sh [-h] [-l] [-c] [-s] [-b &lt;baud&gt;] [-f &lt;firmware&gt;]
                        &lt;device&gt; &lt;board&gt;
 
 positional arguments:
@@ -1554,6 +1568,7 @@ optional arguments:
   -h              show this message
   -l              list available boards
   -c              run flash check/verify only (skip upload)
+  -s              use fast SPI speed (4MHz)
   -b &lt;baud&gt;       serial baud rate (default is 250000)
   -f &lt;firmware&gt;   path to klipper.bin
 </code></pre></div>
@@ -1568,6 +1583,17 @@ optional arguments:
 
 <p>Nota che quando si aggiorna un MKS Robin E3 non è necessario eseguire manualmente <code>update_mks_robin.py</code> e fornire il binario risultante a <code>flash-sdcard.sh</code>. Questa procedura è automatizzata durante il processo di caricamento.</p>
 <p>L'opzione <code>-c</code> viene utilizzata per eseguire un controllo o un'operazione di sola verifica per testare se la scheda esegue correttamente il firmware specificato. Questa opzione è destinata principalmente ai casi in cui è necessario un ciclo di alimentazione manuale per completare la procedura di flashing, ad esempio con i bootloader che utilizzano la modalità SDIO anziché SPI per accedere alle proprie schede SD. (Vedi avvertenze di seguito) Ma può anche essere utilizzato in qualsiasi momento per verificare se il codice visualizzato nella scheda corrisponde alla versione nella cartella build su qualsiasi scheda supportata.</p>
+<h2 id="failure-to-initialize">Failure to Initialize<a class="headerlink" href="#failure-to-initialize" title="Permanent link">&para;</a></h2>
+<p>Some SD cards may fail to initialize at the default SPI speed of 400KHz. In this situation it is possible to use <code>-s</code> to drive the SPI peripheral at 4MHz. For example:</p>
+<div class="highlight"><pre><span></span><code>./scripts/flash-sdcard.sh -s /dev/ttyACM0 btt-skr-v1.3
+</code></pre></div>
+
+<p>If the device still fails to initialize then cause of the failure is unrelated to the speed and likely a result of one of the following conditions:</p>
+<ul>
+<li>The SD card is improperly formatted. Must be <code>fat</code> or <code>fat32</code>.</li>
+<li>Attempt to initialize a card using the SPI interface that has already been initialized over SDIO.</li>
+<li>The SD card has failed or is corrupt.</li>
+</ul>
 <h2 id="avvertenze">Avvertenze<a class="headerlink" href="#avvertenze" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Come accennato nell'introduzione, questo metodo funziona solo per l'aggiornamento del firmware. La procedura di flashing iniziale deve essere eseguita manualmente secondo le istruzioni che si applicano alla scheda del controller.</li>
@@ -1607,7 +1633,7 @@ optional arguments:
 <span class="p">}</span>
 </code></pre></div>
 
-<p>Se hai bisogno di una nuova definizione di scheda e ti senti a disagio con la procedura descritta sopra, ti consigliamo di rivolgerti a <a href="Contact.html#discord">Klipper Community Discord</a>.</p>
+<p>If you need a new board definition and you are uncomfortable with the procedure outlined above it is recommended that you request one in the <a href="Contact.html">Klipper Discord</a>.</p>
 <h2 id="flashing-di-schede-che-utilizzano-sdio">Flashing di schede che utilizzano SDIO<a class="headerlink" href="#flashing-di-schede-che-utilizzano-sdio" title="Permanent link">&para;</a></h2>
 <p><a href="#caveats">Come menzionato nelle avvertenze</a>, le schede il cui bootloader utilizza la modalità SDIO per accedere alla scheda SD richiedono un ciclo di alimentazione della scheda, e in particolare della scheda SD stessa, per passare dalla modalità SPI utilizzata durante la scrittura il file sulla scheda SD di nuovo in modalità SDIO affinché il bootloader lo inserisca nella scheda. Queste definizioni della scheda utilizzeranno il flag <code>skip_verify</code>, che indica allo strumento di flashing di interrompersi dopo aver scritto il firmware sulla scheda SD in modo che la scheda possa essere spenta e riaccesa manualmente e il passaggio di verifica posticipato fino al completamento.</p>
 <p>Esistono due scenari -- uno con l'host RPi in esecuzione su un alimentatore separato e l'altro quando l'host RPi è in esecuzione con lo stesso alimentatore della scheda principale sottoposta a flashing. La differenza è se è necessario o meno spegnere anche l'RPi e quindi <code>ssh</code>di nuovo dopo che il flashing è completo per eseguire il passaggio di verifica, o se la verifica può essere eseguita immediatamente. Ecco alcuni esempi dei due scenari:</p>

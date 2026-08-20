@@ -1149,7 +1149,7 @@
   
     <li class="md-nav__item">
       <a href="SDCard_Updates.html" class="md-nav__link">
-        Mises à jour via la carte SD
+        Mises à jour de la SDCard
       </a>
     </li>
   
@@ -1430,7 +1430,7 @@
   
     <li class="md-nav__item">
       <a href="Load_Cell.html" class="md-nav__link">
-        Load Cells
+        Cellules de charge
       </a>
     </li>
   
@@ -1630,7 +1630,7 @@ Entering<span class="w"> </span>bootloader<span class="w"> </span>on<span class=
 <p>Où <code>&lt;DEVICE&gt;</code> est votre périphérique série, tel que <code>/dev/serial.by-id/usb-Klipper[...]</code> ou <code>/dev/ttyACM0</code></p>
 <p><code>&lt;Ctrl-A&gt;&lt;Ctrl-P&gt;</code> means holding <code>Ctrl</code>, pressing and releasing <code>a</code>, pressing and releasing <code>p</code>, then releasing <code>Ctrl</code></p>
 <h3 id="serie-physique">Série physique<a class="headerlink" href="#serie-physique" title="Permanent link">&para;</a></h3>
-<p>If a physical serial port is being used on the MCU (even if a USB serial adapter is being used to connect to it), sending the string <code>&lt;SPACE&gt;&lt;FS&gt;&lt;SPACE&gt;Request Serial Bootloader!!&lt;SPACE&gt;~</code>.</p>
+<p>If a physical serial port is being used on the MCU (even if a USB serial adapter is being used to connect to it), sending the string <code>&lt;SPACE&gt;&lt;FS&gt;&lt;SPACE&gt;Request Serial Bootloader!!&lt;SPACE&gt;~</code> requests the bootloader.</p>
 <p><code>&lt;SPACE&gt;</code> is an ASCII literal space, 0x20.</p>
 <p><code>&lt;FS&gt;</code> is the ASCII File Separator, 0x1c.</p>
 <p>Note that this is not a valid message as per the <a href="Protocol.html#micro-controller-interface">MCU Protocol</a>, but sync characters(<code>~</code>) are still respected.</p>

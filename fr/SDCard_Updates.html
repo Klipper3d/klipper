@@ -13,7 +13,7 @@
     
     
       
-        <title>Mises à jour via la carte SD - Documentation Klipper</title>
+        <title>Mises à jour de la SDCard - Documentation Klipper</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#mises-a-jour-via-la-carte-sd" class="md-skip">
+        <a href="#mises-a-jour-de-la-sdcard" class="md-skip">
           Aller au contenu
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Mises à jour via la carte SD
+              Mises à jour de la SDCard
             
           </span>
         </div>
@@ -1158,12 +1158,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Mises à jour via la carte SD
+          Mises à jour de la SDCard
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="SDCard_Updates.html" class="md-nav__link md-nav__link--active">
-        Mises à jour via la carte SD
+        Mises à jour de la SDCard
       </a>
       
         
@@ -1196,6 +1196,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#failure-to-initialize" class="md-nav__link">
+    Failure to Initialize
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#avertissements" class="md-nav__link">
     Avertissements
   </a>
@@ -1203,18 +1210,18 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#definitions-des-cartes" class="md-nav__link">
-    Définitions des cartes
+  <a href="#caracteristiques-des-cartes" class="md-nav__link">
+    Caractéristiques des cartes
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#flashage-des-cartes-utilisant-sdio" class="md-nav__link">
-    Flashage des cartes utilisant SDIO
+  <a href="#flashage-des-cartes-qui-utilisent-sdio" class="md-nav__link">
+    Flashage des cartes qui utilisent SDIO
   </a>
   
-    <nav class="md-nav" aria-label="Flashage des cartes utilisant SDIO">
+    <nav class="md-nav" aria-label="Flashage des cartes qui utilisent SDIO">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1385,7 +1392,7 @@
   
     <li class="md-nav__item">
       <a href="Load_Cell.html" class="md-nav__link">
-        Load Cells
+        Cellules de charge
       </a>
     </li>
   
@@ -1454,6 +1461,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#failure-to-initialize" class="md-nav__link">
+    Failure to Initialize
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#avertissements" class="md-nav__link">
     Avertissements
   </a>
@@ -1461,18 +1475,18 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#definitions-des-cartes" class="md-nav__link">
-    Définitions des cartes
+  <a href="#caracteristiques-des-cartes" class="md-nav__link">
+    Caractéristiques des cartes
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#flashage-des-cartes-utilisant-sdio" class="md-nav__link">
-    Flashage des cartes utilisant SDIO
+  <a href="#flashage-des-cartes-qui-utilisent-sdio" class="md-nav__link">
+    Flashage des cartes qui utilisent SDIO
   </a>
   
-    <nav class="md-nav" aria-label="Flashage des cartes utilisant SDIO">
+    <nav class="md-nav" aria-label="Flashage des cartes qui utilisent SDIO">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1518,7 +1532,7 @@
 </a>
 
 
-<h1 id="mises-a-jour-via-la-carte-sd">Mises à jour via la carte SD<a class="headerlink" href="#mises-a-jour-via-la-carte-sd" title="Permanent link">&para;</a></h1>
+<h1 id="mises-a-jour-de-la-sdcard">Mises à jour de la SDCard<a class="headerlink" href="#mises-a-jour-de-la-sdcard" title="Permanent link">&para;</a></h1>
 <p>La plupart des microcontrôleurs actuels sont livrés avec un programme d'amorçage capable de mettre à jour le micrologiciel via une carte SD. Bien que cela soit pratique dans de nombreux cas, ces programmes d'amorçage ne fournissent généralement aucun autre moyen de mettre à jour le micrologiciel. Cela peut s'avérer gênant si votre carte est installée dans un endroit difficile d'accès ou si vous avez besoin de mettre à jour le firmware régulièrement. Après avoir initialement flashé Klipper sur un microcontrôleur, il est possible de transférer le nouveau micrologiciel sur la carte SD et de lancer le processus de mise à jour via ssh.</p>
 <h2 id="procedure-de-mise-a-jour-classique">Procédure de mise à jour classique<a class="headerlink" href="#procedure-de-mise-a-jour-classique" title="Permanent link">&para;</a></h2>
 <p>La procédure pour mettre à jour le firmware du MCU en utilisant la carte SD est similaire à celle des autres méthodes. Au lieu d'utiliser <code>make flash</code>, il est nécessaire d'exécuter un script d'aide, <code>flash-sdcard.sh</code>. La mise à jour d'un BigTreeTech SKR 1.3 pourrait ressembler à ce qui suit :</p>
@@ -1543,7 +1557,7 @@ sudo service klipper start
 <div class="highlight"><pre><span></span><code>./scripts/flash-sdcard.sh -h
 SD Card upload utility for Klipper
 
-usage: flash_sdcard.sh [-h] [-l] [-c] [-b &lt;baud&gt;] [-f &lt;firmware&gt;]
+usage: flash_sdcard.sh [-h] [-l] [-c] [-s] [-b &lt;baud&gt;] [-f &lt;firmware&gt;]
                        &lt;device&gt; &lt;board&gt;
 
 positional arguments:
@@ -1554,11 +1568,12 @@ optional arguments:
   -h              show this message
   -l              list available boards
   -c              run flash check/verify only (skip upload)
+  -s              use fast SPI speed (4MHz)
   -b &lt;baud&gt;       serial baud rate (default is 250000)
   -f &lt;firmware&gt;   path to klipper.bin
 </code></pre></div>
 
-<p>Si votre carte est flashée avec un micro logiciel qui se connecte à une vitesse (baud rate) personnalisée, il est possible de mettre à jour en spécifiant l'option <code>-b</code> :</p>
+<p>Si votre carte est flashée avec un firmware qui se connecte à un taux de transfert personnalisé, il est possible de mettre à jour en spécifiant l'option <code>-b</code> :</p>
 <div class="highlight"><pre><span></span><code>./scripts/flash-sdcard.sh -b 115200 /dev/ttyAMA0 btt-skr-v1.3
 </code></pre></div>
 
@@ -1567,15 +1582,26 @@ optional arguments:
 </code></pre></div>
 
 <p>Notez que lors de la mise à jour d'un MKS Robin E3, il n'est pas nécessaire d'exécuter manuellement <code>update_mks_robin.py</code> et de fournir le binaire résultant à <code>flash-sdcard.sh</code>. Cette procédure est automatisée pendant le processus de téléversement.</p>
-<p>L'option <code>-c</code> est utilisée pour effectuer une opération de contrôle ou de vérification uniquement pour tester si la carte exécute correctement le firmware spécifié. Cette option est principalement destinée aux cas où un cycle d'alimentation manuel est nécessaire pour compléter la procédure de flashage, comme avec des chargeurs de démarrage utilisant le mode SDIO au lieu de SPI pour accéder à leurs cartes SD. (Voir Caveats ci-dessous) Mais, elle peut également être utilisée à tout moment pour vérifier si le code flashé dans la carte correspond à la version dans votre dossier de construction sur toute carte supportée.</p>
+<p>L'option <code>-c</code> est utilisée pour effectuer une opération de contrôle ou de vérification uniquement pour tester si la carte exécute correctement le firmware spécifié. Cette option est principalement destinée aux cas où un cycle d'alimentation manuel est nécessaire pour compléter la procédure de flashage, comme avec les chargeurs de démarrage qui utilisent le mode SDIO au lieu de SPI pour accéder à leurs cartes SD. (Voir Caveats ci-dessous) Mais, elle peut également être utilisée à tout moment pour vérifier si le code flashé dans la carte correspond à la version dans votre dossier de compilation sur toute carte supportée.</p>
+<h2 id="failure-to-initialize">Failure to Initialize<a class="headerlink" href="#failure-to-initialize" title="Permanent link">&para;</a></h2>
+<p>Some SD cards may fail to initialize at the default SPI speed of 400KHz. In this situation it is possible to use <code>-s</code> to drive the SPI peripheral at 4MHz. For example:</p>
+<div class="highlight"><pre><span></span><code>./scripts/flash-sdcard.sh -s /dev/ttyACM0 btt-skr-v1.3
+</code></pre></div>
+
+<p>If the device still fails to initialize then cause of the failure is unrelated to the speed and likely a result of one of the following conditions:</p>
+<ul>
+<li>The SD card is improperly formatted. Must be <code>fat</code> or <code>fat32</code>.</li>
+<li>Attempt to initialize a card using the SPI interface that has already been initialized over SDIO.</li>
+<li>The SD card has failed or is corrupt.</li>
+</ul>
 <h2 id="avertissements">Avertissements<a class="headerlink" href="#avertissements" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Comme mentionné dans l'introduction, cette méthode ne fonctionne que pour la mise à jour du firmware. La procédure de flashage initial doit être effectuée manuellement selon les instructions qui s'appliquent à votre carte contrôleur.</li>
-<li>Bien qu'il soit possible de flasher un build qui change le Baud série ou l'interface de connexion (par exemple, de USB à UART), la vérification échouera toujours car le script ne pourra pas se reconnecter au MCU pour vérifier la version actuelle.</li>
-<li>Seules les cartes utilisant SPI pour la communication avec la carte SD sont supportées. Les cartes utiliaent SDIO, comme la Flymaker Flyboard et la MKS Robin Nano V1/V2, ne fonctionneront pas en mode SDIO. Cependant, il est généralement possible de flasher ces cartes en utilisant le mode SPI logiciel. Mais si le chargeur d'amorçage de la carte n'utilise que le mode SDIO pour accéder à la carte SD, un cycle d'alimentation de la carte et de la carte SD sera nécessaire pour que le mode puisse passer de SPI à SDIO pour terminer le flashage. De telles cartes devraient être définies avec <code>skip_verify</code> activé pour sauter l'étape de vérification immédiatement après le flashage. Ensuite, après le power-cycle manuel, vous pouvez ré-exécuter exactement la même commande <code>./scripts/flash-sdcard.sh</code>, mais ajouter l'option <code>-c</code> pour compléter l'opération de vérification. Voir <a href="#flashing-boards-that-use-sdio">Flasher des cartes utilisant SDIO</a> pour des exemples.</li>
+<li>Bien qu'il soit possible de flasher une image qui change le taux de transfert série (Serial Baud) ou l'interface de connexion (par exemple, de USB à UART), la vérification échouera toujours car le script ne pourra pas se reconnecter au MCU pour vérifier la version actuelle.</li>
+<li>Seules les cartes qui utilisent SPI pour la communication avec la carte SD sont supportées. Les cartes qui utilisent SDIO, comme la Flymaker Flyboard et la MKS Robin Nano V1/V2, ne fonctionneront pas en mode SDIO. Cependant, il est généralement possible de flasher ces cartes en utilisant le mode SPI logiciel. Mais si le bootloader de la carte n'utilise que le mode SDIO pour accéder à la carte SD, un cycle d'alimentation de la carte et de la carte SD sera nécessaire pour que le mode puisse passer de SPI à SDIO pour terminer le flashage. De telles cartes devraient être définies avec <code>skip_verify</code> activé pour sauter l'étape de vérification immédiatement après le flashage. Ensuite, après le redémarrage manuel, vous pouvez réexécuter exactement la même commande <code>./scripts/flash-sdcard.sh</code>, mais ajouter l'option <code>-c</code> pour terminer l'opération de vérification. Voir <a href="#flashing-boards-that-use-sdio">Flashing Boards that use SDIO</a> pour des exemples.</li>
 </ul>
-<h2 id="definitions-des-cartes">Définitions des cartes<a class="headerlink" href="#definitions-des-cartes" title="Permanent link">&para;</a></h2>
-<p>La plupart des cartes courantes devraient être disponibles, mais il est possible d'ajouter une nouvelle définition de carte si nécessaire. Les définitions des cartes sont situées dans <code>~/klipper/scripts/spi_flash/board_defs.py</code>. Les définitions sont stockées dans un dictionnaire, par exemple :</p>
+<h2 id="caracteristiques-des-cartes">Caractéristiques des cartes<a class="headerlink" href="#caracteristiques-des-cartes" title="Permanent link">&para;</a></h2>
+<p>Les cartes les plus courantes devraient être disponibles, mais il est possible d'ajouter une nouvelle définition de carte si nécessaire. Les définitions de cartes sont situées dans <code>~/klipper/scripts/spi_flash/board_defs.py</code>. Les définitions sont stockées dans un dictionnaire, par exemple :</p>
 <div class="highlight"><pre><span></span><code><span class="n">BOARD_DEFS</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s1">&#39;generic-lpc1768&#39;</span><span class="p">:</span> <span class="p">{</span>
         <span class="s1">&#39;mcu&#39;</span><span class="p">:</span> <span class="s2">&quot;lpc1768&quot;</span><span class="p">,</span>
@@ -1586,29 +1612,29 @@ optional arguments:
 <span class="p">}</span>
 </code></pre></div>
 
-<p>Les champs suivants peuvent être précisés :</p>
+<p>Les champs suivants peuvent être spécifiés :</p>
 <ul>
 <li><code>mcu</code> : le type de mcu. Il peut être récupéré après avoir configuré la construction via <code>make menuconfig</code> en exécutant <code>cat .config | grepCONFIG_MCU</code>. Ce champ est obligatoire.</li>
 <li><code>spi_bus</code> : Le bus SPI connecté à la carte SD. Cette information doit être récupérée à partir du schéma de la carte. Ce champ est obligatoire.</li>
 <li><code>cs_pin</code> : La broche de sélection de puce connectée à la carte SD. Cette information doit être récupérée à partir du schéma de la carte. Ce champ est obligatoire.</li>
-<li><code>firmware_path</code> : Le chemin sur la carte SD où le firmware doit être transféré. La valeur par défaut est <code>firmware.bin</code>.</li>
-<li><code>current_firmware_path</code> : Le chemin sur la carte SD où le fichier du firmware renommé est situé après un flash réussi. La valeur par défaut est <code>firmware.cur</code>.</li>
-<li><code>skip_verify</code> : définit une valeur booléenne indiquant aux scripts d'ignorer l'étape de vérification du firmware pendant le processus de flashage. La valeur par défaut est <code>False</code>. Peut être défini à <code>True</code> pour les cartes nécessitant un cycle d'alimentation manuel pour terminer le flashage. Pour vérifier le firmware par la suite, exécutez à nouveau le script avec l'option <code>-c</code> pour effectuer l'étape de vérification. <a href="#caveats">Voir les avertissements avec les cartes SDIO</a></li>
+<li><code>firmware_path</code> : Le chemin de la carte SD où le firmware doit être transféré. La valeur par défaut est <code>firmware.bin</code>.</li>
+<li><code>current_firmware_path</code> : Le chemin sur la carte SD où le fichier du firmware renommé est situé après un flash réussi. La valeur par défaut est <code>firmware.cur</code>.</li>
+<li><code>skip_verify</code> : Ceci définit une valeur booléenne qui indique aux scripts d'ignorer l'étape de vérification du firmware pendant le processus de flashage. La valeur par défaut est <code>False</code>. Il peut être défini à <code>True</code> pour les cartes qui nécessitent un cycle d'alimentation manuel pour terminer le flashage. Pour vérifier le firmware par la suite, exécutez à nouveau le script avec l'option <code>-c</code> pour effectuer l'étape de vérification. <a href="#caveats">Voir les avertissements avec les cartes SDIO</a></li>
 </ul>
-<p>Si le SPI logiciel est requis, le champ <code>spi_bus</code> doit être réglé sur <code>swspi</code> et le champ supplémentaire suivant doit être spécifié :</p>
+<p>Si le logiciel SPI est requis, le champ <code>spi_bus</code> doit être réglé sur <code>swspi</code> et le champ supplémentaire suivant doit être spécifié :</p>
 <ul>
 <li><code>spi_pins</code> : Ceci devrait être 3 broches séparées par des virgules qui sont connectées à la carte SD dans le format de <code>miso,mosi,sclk</code>.</li>
 </ul>
-<p>Il devrait être extrêmement rare que le SPI logiciel soit nécessaire, typiquement seules les cartes avec des erreurs de conception ou les cartes ne supportant que le mode SDIO pour leur carte SD en auront besoin. La définition de la carte <code>btt-skr-pro</code> fournit un exemple du premier cas, et la définition de la carte <code>btt-octopus-f446-v1</code> fournit un exemple du second.</p>
-<p>Avant de créer une nouvelle définition de carte, il faut vérifier si la définition d'une carte existante répond aux critères nécessaires pour la nouvelle carte. Si c'est le cas, un <code>BOARD_ALIAS</code> peut être utilisé. Par exemple, l'alias suivant peut être ajouté pour spécifier <code>my-new-board</code> comme alias de <code>generic-lpc1768</code> :</p>
+<p>Il devrait être extrêmement rare que le logiciel SPI soit nécessaire, typiquement seules les cartes avec des erreurs de conception ou les cartes qui ne supportent normalement que le mode SDIO pour leur carte SD en auront besoin. La définition de la carte <code>btt-skr-pro</code> fournit un exemple du premier cas, et la définition de la carte <code>btt-octopus-f446-v1</code> fournit un exemple du seconde cas.</p>
+<p>Avant de créer une nouvelle définition de carte, il faut vérifier si une définition de carte existante répond aux critères nécessaires pour la nouvelle carte. Si c'est le cas, un <code>BOARD_ALIAS</code> peut être spécifié. Par exemple, l'alias suivant peut être ajouté pour spécifier "ma nouvelle carte" comme alias de "générique-lpc1768" :</p>
 <div class="highlight"><pre><span></span><code><span class="n">BOARD_ALIASES</span> <span class="o">=</span> <span class="p">{</span>
     <span class="o">...&lt;</span><span class="n">previous</span> <span class="n">aliases</span><span class="o">&gt;</span><span class="p">,</span>
     <span class="s1">&#39;my-new-board&#39;</span><span class="p">:</span> <span class="n">BOARD_DEFS</span><span class="p">[</span><span class="s1">&#39;generic-lpc1768&#39;</span><span class="p">],</span>
 <span class="p">}</span>
 </code></pre></div>
 
-<p>Si vous avez besoin d'une nouvelle définition de carte et que vous n'êtes pas à l'aise avec la procédure décrite ci-dessus, il est recommandé d'en demander une sur le <a href="Contact.html#discord">Discord de la communauté Klipper</a>.</p>
-<h2 id="flashage-des-cartes-utilisant-sdio">Flashage des cartes utilisant SDIO<a class="headerlink" href="#flashage-des-cartes-utilisant-sdio" title="Permanent link">&para;</a></h2>
+<p>If you need a new board definition and you are uncomfortable with the procedure outlined above it is recommended that you request one in the <a href="Contact.html">Klipper Discord</a>.</p>
+<h2 id="flashage-des-cartes-qui-utilisent-sdio">Flashage des cartes qui utilisent SDIO<a class="headerlink" href="#flashage-des-cartes-qui-utilisent-sdio" title="Permanent link">&para;</a></h2>
 <p>Comme mentionné dans les <a href="#caveats">Caveats</a>, les cartes dont le chargeur de démarrage utilise le mode SDIO pour l'accès à leur carte SD nécessitent un power-cycle de la carte, et plus particulièrement de la carte SD elle-même, afin de passer du mode SPI utilisé lors de l'écriture du fichier sur la carte SD au mode SDIO pour que le chargeur de démarrage puisse le flasher sur la carte. Ces définitions de cartes utiliseront le drapeau <code>skip_verify</code>, qui indique à l'outil de flashage de s'arrêter après l'écriture du firmware sur la carte SD afin que la carte puisse être mise sous tension manuellement et que l'étape de vérification soit reportée jusqu'à ce qu'elle soit terminée.</p>
 <p>Il y a deux scénarios : l'un avec l'hôte RPi fonctionnant sur une alimentation séparée et l'autre lorsque l'hôte RPi fonctionne sur la même alimentation que la carte principale à flasher. La différence est de savoir s'il est nécessaire ou non d'éteindre le RPi et ensuite <code>ssh</code> de nouveau après que le flashage soit terminé afin de faire l'étape de vérification, ou si la vérification peut être faite immédiatement. Voici des exemples des deux scénarios :</p>
 <h3 id="programmation-sdio-avec-rpi-sur-alimentation-separee">Programmation SDIO avec RPi sur alimentation séparée<a class="headerlink" href="#programmation-sdio-avec-rpi-sur-alimentation-separee" title="Permanent link">&para;</a></h3>

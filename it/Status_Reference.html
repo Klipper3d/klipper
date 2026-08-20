@@ -948,6 +948,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#gcode" class="md-nav__link">
+    gcode
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#gcode_button" class="md-nav__link">
     gcode_button
   </a>
@@ -1195,6 +1202,13 @@
         <li class="md-nav__item">
   <a href="#z_tilt" class="md-nav__link">
     z_tilt
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accessing-coordinates" class="md-nav__link">
+    Accessing Coordinates
   </a>
   
 </li>
@@ -1814,6 +1828,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#gcode" class="md-nav__link">
+    gcode
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#gcode_button" class="md-nav__link">
     gcode_button
   </a>
@@ -2065,6 +2086,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#accessing-coordinates" class="md-nav__link">
+    Accessing Coordinates
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2201,6 +2229,11 @@
 <ul>
 <li><code>retract_length</code>, <code>retract_speed</code>, <code>unretract_extra_length</code>, <code>unretract_speed</code>: le impostazioni correnti per il modulo firmware_retraction. Queste impostazioni possono differire dal file di configurazione se un comando <code>SET_RETRACTION</code> le altera.</li>
 </ul>
+<h2 id="gcode">gcode<a class="headerlink" href="#gcode" title="Permanent link">&para;</a></h2>
+<p>The following information is available in the <code>gcode</code> object:</p>
+<ul>
+<li><code>commands</code>: Returns a list of all currently available commands. For each command, if a help string is defined it will also be provided.</li>
+</ul>
 <h2 id="gcode_button">gcode_button<a class="headerlink" href="#gcode_button" title="Permanent link">&para;</a></h2>
 <p>The following information is available in <a href="Config_Reference.html#gcode_button">gcode_button some_name</a> objects:</p>
 <ul>
@@ -2214,21 +2247,23 @@
 <h2 id="gcode_move">gcode_move<a class="headerlink" href="#gcode_move" title="Permanent link">&para;</a></h2>
 <p>Le seguenti informazioni sono disponibili nell'oggetto <code>gcode_move</code> (questo oggetto è sempre disponibile):</p>
 <ul>
-<li><code>gcode_position</code>: la posizione corrente della testa di stampa rispetto all'origine del Gcode corrente. Cioè, posizioni che si potrebbero inviare direttamente a un comando <code>G1</code>. È possibile accedere ai componenti x, y, z ed e di questa posizione (ad esempio, <code>gcode_position.x</code>).</li>
-<li><code>position</code>: l'ultima posizione comandata della testina utilizzando il sistema di coordinate specificato nel file di configurazione. È possibile accedere alle componenti x, y, z ed e di questa posizione (ad esempio, <code>position.x</code>).</li>
-<li><code>homing_origin</code>: l'origine del sistema di coordinate gcode (relativo al sistema di coordinate specificato nel file di configurazione) da utilizzare dopo un comando <code>G28</code>. Il comando <code>SET_GCODE_OFFSET</code> può alterare questa posizione. È possibile accedere ai componenti x, y e z di questa posizione (ad esempio, <code>homing_origin.x</code>).</li>
+<li><code>gcode_position</code>: The current position of the toolhead relative to the current G-Code origin. That is, positions that one might directly send to a <code>G1</code> command. This value is encoded as a <a href="#accessing-coordinates">coordinate</a>.</li>
+<li><code>position</code>: The last commanded position of the toolhead using the coordinate system specified in the config file. This value is encoded as a <a href="#accessing-coordinates">coordinate</a>.</li>
+<li><code>homing_origin</code>: The origin of the gcode coordinate system (relative to the coordinate system specified in the config file) to use after a <code>G28</code> command. The <code>SET_GCODE_OFFSET</code> command can alter this position. This value is encoded as a <a href="#accessing-coordinates">coordinate</a>.</li>
 <li><code>speed</code>: l'ultima velocità impostata in un comando <code>G1</code> (in mm/s).</li>
 <li><code>speed_factor</code>: La"speed factor override" come impostato da un comando <code>M220</code>. Questo è un valore in virgola mobile tale che 1,0 significa nessun override e, ad esempio, 2,0 raddoppierebbe la velocità richiesta.</li>
 <li><code>extrude_factor</code>: L'"extrude factor override" come impostato da un comando <code>M221</code>. Questo è un valore in virgola mobile tale che 1,0 significa nessun override ad esempio 2,0 raddoppierebbe le estrusioni richieste.</li>
 <li><code>absolute_coordinates</code>: restituisce True se in modalità coordinate assolute <code>G90</code> o False se in modalità relativa <code>G91</code>.</li>
 <li><code>absolute_extrude</code>: restituisce True se in modalità di estrusione assoluta <code>M82</code> o False se in modalità relativa <code>M83</code>.</li>
+<li><code>axis_map</code>: Provides a mechanism for finding the coordinate component for a given G-Code id that is used in <code>G1</code> commands. See the <a href="#accessing-coordinates">Accessing Coordinates</a> section for details.</li>
 </ul>
 <h2 id="hall_filament_width_sensor">hall_filament_width_sensor<a class="headerlink" href="#hall_filament_width_sensor" title="Permanent link">&para;</a></h2>
 <p>Le seguenti informazioni sono disponibili nell'oggetto <a href="Config_Reference.html#hall_filament_width_sensor">hall_filament_width_sensor</a>:</p>
 <ul>
 <li>all items from <a href="Status_Reference.html#filament_switch_sensor">filament_switch_sensor</a></li>
 <li><code>is_active</code>: Restituisce True se il sensore è attualmente attivo.</li>
-<li><code>Diameter</code>: l'ultima lettura dal sensore in mm.</li>
+<li><code>flow_compensation_enabled</code>: Returns True if flow compensation is enabled.</li>
+<li><code>Diameter</code>: Returns the last width reading in mm if the sensor is active or the nominal filament diameter if it is not.</li>
 <li><code>Raw</code>: l'ultima lettura grezza dell'ADC dal sensore.</li>
 </ul>
 <h2 id="riscaldatore">Riscaldatore<a class="headerlink" href="#riscaldatore" title="Permanent link">&para;</a></h2>
@@ -2251,30 +2286,36 @@
 <ul>
 <li><code>state</code>: lo stato corrente della stampante monitorato dal modulo idle_timeout. È una delle seguenti stringhe: "Idle", "Printing", "Ready".</li>
 <li><code>printing_time</code>: la quantità di tempo (in secondi) in cui la stampante è rimasta nello stato "Printing" (come tracciato dal modulo idle_timeout).</li>
+<li><code>idle_timeout</code>: The current 'timeout' (in seconds) to wait for the gcode to be triggered. (as set by <a href="G-Codes.html#set_idle_timeout">SET_IDLE_TIMEOUT</a>)</li>
 </ul>
 <h2 id="led">led<a class="headerlink" href="#led" title="Permanent link">&para;</a></h2>
 <p>Le seguenti informazioni sono disponibili per ogni sezione di configurazione <code>[led led_name]</code>, <code>[neopixel led_name]</code>, <code>[dotstar led_name]</code>, <code>[pca9533 led_name]</code> e <code>[pca9632 led_name]</code> definita in printer.cfg:</p>
 <ul>
-<li><code>color_data</code>: un elenco di lista di colori contenenti i valori RGBW per ogni led nella catena. Ogni valore è rappresentato come un float da 0,0 a 1,0. Ciascuna lista di colori contiene 4 voci (rosso, verde, blu, bianco) anche se il LED sottostante supporta meno canali di colore. Ad esempio, è possibile accedere al valore blu (3° elemento nell'elenco dei colori) del secondo neopixel in una catena in <code>printer["neopixel &lt;config_name&gt;"].color_data[1][2]</code>.</li>
+<li><code>color_data</code>: A list of color lists containing the RGBW values for a led in the chain. Each value is represented as a float from 0.0 to 1.0. Each color list contains 4 items (red, green, blue, white) even if the underlying LED supports fewer color channels. For example, the blue value (3rd item in color list) of the second neopixel in a chain could be accessed at <code>printer["neopixel &lt;config_name&gt;"].color_data[1][2]</code>.</li>
 </ul>
 <h2 id="load_cell">load_cell<a class="headerlink" href="#load_cell" title="Permanent link">&para;</a></h2>
 <p>The following information is available for each <code>[load_cell name]</code>:</p>
 <ul>
-<li>'is_calibrated': True/False is the load cell calibrated</li>
-<li>'counts_per_gram': The number of raw sensor counts that equals 1 gram of force</li>
-<li>'reference_tare_counts': The reference number of raw sensor counts for 0 force</li>
-<li>'tare_counts': The current number of raw sensor counts for 0 force</li>
-<li>'force_g': The force in grams, averaged over the last polling period.</li>
-<li>'min_force_g': The minimum force in grams, over the last polling period.</li>
-<li>'max_force_g': The maximum force in grams, over the last polling period.</li>
+<li><code>is_calibrated</code>: True/False whether the load cell is calibrated.</li>
+<li><code>counts_per_gram</code>: The number of raw sensor counts that equals 1 gram of force.</li>
+<li><code>reference_tare_counts</code>: The reference number of raw sensor counts for 0 force.</li>
+<li><code>tare_counts</code>: The current number of raw sensor counts for 0 force.</li>
+<li><code>force_g</code>: The force in grams, averaged over the last polling period.</li>
+<li><code>min_force_g</code>: The minimum force in grams, over the last polling period.</li>
+<li><code>max_force_g</code>: The maximum force in grams, over the last polling period.</li>
+<li><code>errors</code>: The number of sensor errors detected since the last start of measurements.</li>
+<li><code>overflows</code>: The number of data buffer overflows detected since the last start of measurements.</li>
+<li><code>sample_rate</code>: The sensor's sample rate in samples per second.</li>
 </ul>
 <h2 id="load_cell_probe">load_cell_probe<a class="headerlink" href="#load_cell_probe" title="Permanent link">&para;</a></h2>
 <p>The following information is available for <code>[load_cell_probe]</code>:</p>
 <ul>
 <li>all items from <a href="Status_Reference.html#load_cell">load_cell</a></li>
 <li>all items from <a href="Status_Reference.html#probe">probe</a></li>
-<li>'endstop_tare_counts': the load cell probe keeps a tare value independent of the load cell. This re-set at the start of each probe.</li>
-<li>'last_trigger_time': timestamp of the last homing trigger</li>
+<li><code>endstop_tare_counts</code>: The load cell probe keeps a tare value independent of the load cell. This is re-set at the start of each probe.</li>
+<li><code>last_trigger_time</code>: Timestamp of the last homing trigger.</li>
+<li><code>last_z_result</code>: The Z position result of the last tap.</li>
+<li><code>is_last_tap_valid</code>: True if the last tap result is valid.</li>
 </ul>
 <h2 id="manual_probe">manual_probe<a class="headerlink" href="#manual_probe" title="Permanent link">&para;</a></h2>
 <p>Le seguenti informazioni sono disponibili nell'oggetto <code>manual_probe</code>:</p>
@@ -2295,12 +2336,12 @@
 <h2 id="motion_report">motion_report<a class="headerlink" href="#motion_report" title="Permanent link">&para;</a></h2>
 <p>Le seguenti informazioni sono disponibili nell'oggetto <code>motion_report</code> (questo oggetto è automaticamente disponibile se è definita una sezione di configurazione stepper):</p>
 <ul>
-<li><code>live_position</code>: la posizione richiesta della testa di stampa interpolata all'ora corrente.</li>
+<li><code>live_position</code>: The requested toolhead position interpolated to the current time. This value is encoded as a <a href="#accessing-coordinates">coordinate</a>.</li>
 <li><code>live_velocity</code>: la velocità della testa di stampa richiesta (in mm/s) al momento attuale.</li>
 <li><code>live_extruder_velocity</code>: la velocità dell'estrusore richiesta (in mm/s) al momento attuale.</li>
 </ul>
 <h2 id="output_pin">output_pin<a class="headerlink" href="#output_pin" title="Permanent link">&para;</a></h2>
-<p>Le seguenti informazioni sono disponibili negli oggetti <a href="Config_Reference.html#output_pin">output_pin some_name</a>:</p>
+<p>The following information is available in <a href="Config_Reference.html#output_pin">output_pin some_name</a> and <a href="Config_Reference.html#pwm_tool">pwm_tool some_name</a> objects:</p>
 <ul>
 <li><code>value</code>: Il "valore" del pin, come impostato da un comando <code>SET_PIN</code>.</li>
 </ul>
@@ -2328,7 +2369,8 @@
 <ul>
 <li><code>name</code>: restituisce il nome della sonda in uso.</li>
 <li><code>last_query</code>: Restituisce True se il probe è stato segnalato come "attivato" durante l'ultimo comando QUERY_PROBE. Nota, se questo viene utilizzato in una macro, a causa dell'ordine di espansione del modello, il comando QUERY_PROBE deve essere eseguito prima della macro contenente questo riferimento.</li>
-<li><code>last_z_result</code>: Restituisce il valore del risultato Z dell'ultimo comando PROBE. Nota, se questo viene utilizzato in una macro, a causa dell'ordine di espansione del modello, il comando PROBE (o simile) deve essere eseguito prima della macro contenente questo riferimento.</li>
+<li><code>last_probe_position</code>: The results of the last <code>PROBE</code> command. This value is encoded as a <a href="#accessing-coordinates">coordinate</a>. The probe hardware estimates that if one were to command the toolhead to XY position <code>last_probe_position.x</code>,<code>last_probe_position.y</code> and descend then the tip of the toolhead would first contact the bed at a Z height of <code>last_probe_position.z</code>. These coordinates are relative to the frame (that is, they use the coordinate system specified in the config file). Note, if this is used in a macro, due to the order of template expansion, the <code>PROBE</code> command must be run prior to the macro containing this reference.</li>
+<li><code>last_z_result</code>: This value is deprecated; it will be removed in the near future.</li>
 </ul>
 <h2 id="pwm_cycle_time">pwm_cycle_time<a class="headerlink" href="#pwm_cycle_time" title="Permanent link">&para;</a></h2>
 <p>The following information is available in <a href="Config_Reference.html#pwm_cycle_time">pwm_cycle_time some_name</a> objects:</p>
@@ -2410,13 +2452,14 @@
 <h2 id="toolhead">toolhead<a class="headerlink" href="#toolhead" title="Permanent link">&para;</a></h2>
 <p>Le seguenti informazioni sono disponibili nell'oggetto <code>toolhead</code> (questo oggetto è sempre disponibile):</p>
 <ul>
-<li><code>position</code>: l'ultima posizione comandata della testa di stampa relativa al sistema di coordinate specificato nel file di configurazione. È possibile accedere alle componenti x, y, z di questa posizione (ad esempio, <code>position.x</code>).</li>
+<li><code>position</code>: The last commanded position of the toolhead relative to the coordinate system specified in the config file. This value is encoded as a <a href="#accessing-coordinates">coordinate</a>.</li>
 <li><code>extruder</code>: il nome dell'estrusore attualmente attivo. Ad esempio, in una macro si potrebbe usare <code>printer[printer.toolhead.extruder].target</code> per ottenere la temperatura target dell'estrusore corrente.</li>
 <li><code>homed_axes</code>: Gli assi cartesiani correnti considerati in uno stato "homed". Questa è una stringa contenente uno o più di "x", "y", "z".</li>
-<li><code>axis_minimum</code>, <code>axis_maximum</code>: i limiti di corsa dell'asse (mm) dopo la corsa di homing. È possibile accedere alle componenti x, y, z di questo valore limite (ad es. <code>axis_minimum.x</code>, <code>axis_minimum.z</code>).</li>
+<li><code>axis_minimum</code>, <code>axis_maximum</code>: The axis travel limits (mm) after homing. This value is encoded as a <a href="#accessing-coordinates">coordinate</a>.</li>
 <li>Per le stampanti Delta, <code>cone_start_z</code> è l'altezza z massima al raggio massimo (<code>printer.toolhead.cone_start_z</code>).</li>
 <li><code>max_velocity</code>, <code>max_accel</code>, <code>minimum_cruise_ratio</code>, <code>square_corner_velocity</code>: The current printing limits that are in effect. This may differ from the config file settings if a <code>SET_VELOCITY_LIMIT</code> (or <code>M204</code>) command alters them at run-time.</li>
 <li><code>stalls</code>: il numero totale di volte (dall'ultimo riavvio) che la stampante ha dovuto essere messa in pausa perché la testina si muoveva più velocemente di quanto fosse possibile leggere i movimenti dall'input del G-code.</li>
+<li><code>extra_axes</code>: Provides a mechanism for finding the coordinate component for extra axes available in standard <code>G1</code> type move commands. See the <a href="#accessing-coordinates">Accessing Coordinates</a> section for details.</li>
 </ul>
 <h2 id="dual_carriage">dual_carriage<a class="headerlink" href="#dual_carriage" title="Permanent link">&para;</a></h2>
 <p>The following information is available in <a href="Config_Reference.html#dual_carriage">dual_carriage</a> on a cartesian, hybrid_corexy or hybrid_corexz robot</p>
@@ -2458,6 +2501,11 @@
 <ul>
 <li><code>applied</code>: Vero se il processo di livellamento z-tilt è stato eseguito e completato con successo.</li>
 </ul>
+<h2 id="accessing-coordinates">Accessing Coordinates<a class="headerlink" href="#accessing-coordinates" title="Permanent link">&para;</a></h2>
+<p>Some status fields provide a "coordinate". For macro users these fields may be accessed by component name (eg,<code>{printer.toolhead.position.x}</code>), where the component name may be "x", "y", or "z".</p>
+<p>For developers using the Klipper API Server these fields are transmitted as a list - for example: <code>{"toolhead": {"position": [1.0, 2.0, 3.0, 7.3, 19.2]}}</code> . The first three components of the list correspond with the x, y, and z axes.</p>
+<p>A coordinate will typically have at least 3 components (x, y, and z), however there may also be additional components. Care should be taken when accessing any of these additional components as the ordering and number of components may change at run-time.</p>
+<p>One may use <code>{printer.gcode_move.axis_map}</code> and/or <code>{printer.toolhead.extra_axes}</code> to determine the number of components and the ordering of components. For example, to access the "E" component one could use <code>{printer.toolhead.position[printer.gcode_move.axis_map.E]}</code>. Or, if one wanted to find the component associated with the "extruder" object, one could use <code>{printer.toolhead.position[printer.toolhead.extra_axes.extruder]}</code>.</p>
 
               
             </article>

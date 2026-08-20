@@ -1196,6 +1196,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#failure-to-initialize" class="md-nav__link">
+    Failure to Initialize
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ovintezkedesek" class="md-nav__link">
     Óvintézkedések
   </a>
@@ -1454,6 +1461,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#failure-to-initialize" class="md-nav__link">
+    Failure to Initialize
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ovintezkedesek" class="md-nav__link">
     Óvintézkedések
   </a>
@@ -1541,21 +1555,22 @@ sudo service klipper start
 <h2 id="fejlett-felhasznalas">Fejlett felhasználás<a class="headerlink" href="#fejlett-felhasznalas" title="Permanent link">&para;</a></h2>
 <p>A fenti parancsok feltételezik, hogy az MCU az alapértelmezett 250000-es átviteli sebességgel csatlakozik, és a firmware a <code>~/klipper/out/klipper.bin</code> címen található. A <code>flash-sdcard.sh</code> szkript lehetőséget biztosít ezen alapértelmezések megváltoztatására. Az összes opciót a súgó képernyőn lehet megtekinteni:</p>
 <div class="highlight"><pre><span></span><code>./scripts/flash-sdcard.sh -h
-SD-kártya feltöltő segédprogram Klipperhez
+SD Card upload utility for Klipper
 
-használat: flash_sdcard.sh [-h] [-l] [-c] [-b &lt;baud&gt;] [-f &lt;firmware&gt;]
+usage: flash_sdcard.sh [-h] [-l] [-c] [-s] [-b &lt;baud&gt;] [-f &lt;firmware&gt;]
                        &lt;device&gt; &lt;board&gt;
 
-pozicionális argumentumok:
-  &lt;device&gt;         eszköz soros port
-  &lt;board&gt;          alaplap típus
+positional arguments:
+  &lt;device&gt;        device serial port
+  &lt;board&gt;         board type
 
-opcionális argumentumok:
-  -h              mutatja az üzenetet
-  -l              listázza a rendelkezésre álló kártyákat
-  -c              csak a flash ellenőrzés/ellenőrzés futtatása (a feltöltést kihagyja)
-  -b &lt;baud&gt;       soros átviteli sebesség (alapértelmezett 250000)
-  -f &lt;firmware&gt;   a klipper.bin elérési útja
+optional arguments:
+  -h              show this message
+  -l              list available boards
+  -c              run flash check/verify only (skip upload)
+  -s              use fast SPI speed (4MHz)
+  -b &lt;baud&gt;       serial baud rate (default is 250000)
+  -f &lt;firmware&gt;   path to klipper.bin
 </code></pre></div>
 
 <p>Ha az alaplapod olyan firmware-el égetted, amely egyéni átviteli sebesség mellett csatlakozik, akkor a <code>-b</code> opció megadásával frissítheted:</p>
@@ -1568,6 +1583,17 @@ opcionális argumentumok:
 
 <p>Ne feledd, hogy az MKS Robin E3 frissítésekor nem szükséges manuálisan futtatni az <code>update_mks_robin.py</code> fájlt, és az így kapott bináris állományt a <code>flash-sdcard.sh</code> fájlba táplálni. Ez az eljárás a feltöltési folyamat során automatikusan megtörténik.</p>
 <p>A <code>-c</code> opcióval egy ellenőrző vagy csak ellenőrzésre szolgáló műveletet végezhetsz, amellyel tesztelheted, hogy a kártya helyesen futtatja-e a megadott firmware-t. Ezt az opciót elsősorban olyan esetekre szánjuk, amikor kézi bekapcsolás szükséges az égetési eljárás befejezéséhez, például olyan bootloaderek esetében, amelyek SDIO módot használnak SPI helyett az SD-kártyák elérésekor. (Lásd a figyelmeztetéseket alább.) De bármikor használható annak ellenőrzésére is, hogy a kártyára égetett kód megegyezik-e a build mappában lévő verzióval bármely támogatott kártyán.</p>
+<h2 id="failure-to-initialize">Failure to Initialize<a class="headerlink" href="#failure-to-initialize" title="Permanent link">&para;</a></h2>
+<p>Some SD cards may fail to initialize at the default SPI speed of 400KHz. In this situation it is possible to use <code>-s</code> to drive the SPI peripheral at 4MHz. For example:</p>
+<div class="highlight"><pre><span></span><code>./scripts/flash-sdcard.sh -s /dev/ttyACM0 btt-skr-v1.3
+</code></pre></div>
+
+<p>If the device still fails to initialize then cause of the failure is unrelated to the speed and likely a result of one of the following conditions:</p>
+<ul>
+<li>The SD card is improperly formatted. Must be <code>fat</code> or <code>fat32</code>.</li>
+<li>Attempt to initialize a card using the SPI interface that has already been initialized over SDIO.</li>
+<li>The SD card has failed or is corrupt.</li>
+</ul>
 <h2 id="ovintezkedesek">Óvintézkedések<a class="headerlink" href="#ovintezkedesek" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Ahogy a bevezetőben említettük, ez a módszer csak a firmware frissítésére alkalmas. A kezdeti égetési eljárást kézzel kell elvégezni az alaplapra vonatkozó utasítások szerint.</li>
@@ -1607,7 +1633,7 @@ opcionális argumentumok:
 <span class="p">}</span>
 </code></pre></div>
 
-<p>Ha új alaplap definícióra van szükséged, és nem tetszik a fent leírt eljárás, akkor ajánlott, hogy a <a href="Contact.html#discord">Klipper Közösségi Discord</a> segítségével kérj egyet.</p>
+<p>If you need a new board definition and you are uncomfortable with the procedure outlined above it is recommended that you request one in the <a href="Contact.html">Klipper Discord</a>.</p>
 <h2 id="sdio-val-egeto-alaplapok">SDIO-val égető alaplapok<a class="headerlink" href="#sdio-val-egeto-alaplapok" title="Permanent link">&para;</a></h2>
 <p><a href="#caveats">Ahogyan a figyelmeztetések</a> is említik, azok az alaplapok, amelyek bootloadere SDIO módot használ az SD-kártyához való hozzáféréshez, az alaplapot, és különösen magát az SD-kártyát ki kell kapcsolni, hogy a fájl SD-kártyára írása közben használt SPI módból vissza lehessen váltani SDIO módba, hogy a bootloader be tudja égetni az alaplapra. Ezek az alaplap definíciók a <code>skip_verify</code> flag-et használják, amely azt mondja az égető eszköznek, hogy álljon le a firmware SD-kártyára írása után, hogy az alaplapot kézzel lehessen bekapcsolni, és az ellenőrzés lépését elhalasztani, amíg ez be nem fejeződik.</p>
 <p>Két forgatókönyv van -- az egyik, amikor az RPi Gazdagép külön tápegységről megy, a másik, amikor az RPi Gazdagép ugyanazon tápegységről megy, mint az égetni kívánt alaplap. A különbség az, hogy az égetés befejezése után le kell-e kapcsolni az RPi-t is, majd újra <code>ssh</code>, hogy elvégezhessük az ellenőrző lépést, vagy az ellenőrzés azonnal elvégezhető. Íme példák a két forgatókönyvre:</p>

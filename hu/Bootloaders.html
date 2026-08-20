@@ -1845,7 +1845,7 @@ bossac -U -p /dev/ttyACM0 -R
 
 <h2 id="samdc21-mikrovezerlok-duet3d-toolboard-1lc">SAMDC21 mikrovezérlők (Duet3D Toolboard 1LC)<a class="headerlink" href="#samdc21-mikrovezerlok-duet3d-toolboard-1lc" title="Permanent link">&para;</a></h2>
 <p>A SAMC21 égetése az ARM Serial Wire Debug (SWD) interfészen keresztül történik. Ez általában egy dedikált SWD hardver dongle segítségével történik. Alternatívaként használhatunk egy <a href="#running-openocd-on-the-raspberry-pi">Raspberry Pi-t az OpenOCD-vel</a>.</p>
-<p>Ha az OpenOCD-t a SAMC21-gyel együtt használjuk, extra lépéseket kell tenni, hogy a chipet először Cold Plugging üzemmódba helyezzük, ha a kártya az SWD-tüskéket más célokra használja. Ha az OpenOCD-t Rasberry Pi-n használjuk, akkor ezt az OpenOCD meghívása előtt a következő parancsok futtatásával tehetjük meg.</p>
+<p>When using OpenOCD with the SAMC21, extra steps must be taken to first put the chip into Cold Plugging mode if the board makes use of the SWD pins for other purposes. If using OpenOCD on a Raspberry Pi, this can be done by running the following commands before invoking OpenOCD.</p>
 <div class="highlight"><pre><span></span><code>SWCLK=25
 SWDIO=24
 SRST=18
@@ -2007,7 +2007,7 @@ make
 <p>A <a href="https://github.com/Arksine/CanBoot">CanBoot</a> bootloader lehetőséget biztosít a Klipper firmware feltöltésére CANBUS-on keresztül. Maga a bootloader a Klipper forráskódjából származik. A CanBoot jelenleg az STM32F103, STM32F042 és STM32F072 modelleket támogatja.</p>
 <p>A CanBoot égetéséhez ajánlott ST-Link programozót használni, azonban STM32F103 eszközökön az <code>stm32flash</code>, STM32F103 eszközökön a <code>dfu-util</code>, STM32F042/STM32F072 eszközökön pedig a dfu-util segítségével is lehet égetni. Lásd a dokumentum előző szakaszait az égetési módszerekre vonatkozó utasításokért, adott esetben a <code>canboot.bin</code> fájlnévvel helyettesítve. A fent hivatkozott CanBoot tároló tartalmaz utasításokat a bootloader elkészítéséhez.</p>
 <p>A CanBoot első égetésénél észlelned kell, hogy nincs jelen alkalmazás, és be kell lépned a bootloaderbe. Ha ez nem történik meg, akkor a reset gomb kétszer egymás utáni megnyomásával lehet belépni a bootloaderbe.</p>
-<p>A Klipper firmware feltöltéséhez a <code>flash_can.py</code> segédprogram használható, amely a <code>lib/canboot</code> mappában található. Az égetéshez szükséges az eszköz UUID azonosítója. Ha nincs meg az UUID, akkor a bootloadert jelenleg futtató csomópontok lekérdezése lehetséges:</p>
+<p>The <code>flashtool.py</code> utility supplied in the <code>lib/katapult</code> folder may be used to upload Klipper firmware. The device UUID is necessary to flash. If you do not have a UUID it is possible to query nodes currently running the bootloader:</p>
 <div class="highlight"><pre><span></span><code>python3 flash_can.py -q
 </code></pre></div>
 

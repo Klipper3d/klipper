@@ -1385,7 +1385,7 @@
   
     <li class="md-nav__item">
       <a href="Load_Cell.html" class="md-nav__link">
-        Load Cells
+        压力传感器
       </a>
     </li>
   
@@ -1558,7 +1558,7 @@ make
 <h2 id="_4">运动分析和数据记录<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <p>Klipper支持记录其内部运动历史，稍后可以对其进行分析。若要使用此功能，Klipper必须在启用<a href="API_Server.html">API服务器</a>的情况下启动。</p>
 <p>使用 <code>data_logger.py</code> 工具启用数据日志记录。例如：</p>
-<div class="highlight"><pre><span></span><code>~/klipper/scripts/motan/data_logger.py /tmp/klippy_uds mylog
+<div class="highlight"><pre><span></span><code>~/klipper/scripts/motan/data_logger.py /tmp/klippy_uds mylog -s &#39;*&#39;
 </code></pre></div>
 
 <p>此命令将连接到Klipper API服务器，订阅状态和运动信息，并记录结果。生成两个文件-一个压缩数据文件和一个索引文件（例如<code>mylog.json.gz</code>和<code>mylog.index.gz</code>）。启动日志记录后，可以完成打印和其他操作-日志记录将在后台继续。完成日志记录后，点击 <code>ctrl-c</code>退出 <code>data_logger.py</code> 工具。</p>

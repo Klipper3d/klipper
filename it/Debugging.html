@@ -1558,7 +1558,7 @@ make
 <h2 id="analisi-del-movimento-e-registrazione-dei-dati">Analisi del movimento e registrazione dei dati<a class="headerlink" href="#analisi-del-movimento-e-registrazione-dei-dati" title="Permanent link">&para;</a></h2>
 <p>Klipper supporta la registrazione della cronologia dei movimenti interni, che può essere analizzata in seguito. Per utilizzare questa funzione, Klipper deve essere avviato con <a href="API_Server.html">Server API</a> abilitato.</p>
 <p>La registrazione dei dati è abilitata con lo strumento <code>data_logger.py</code>. Per esempio:</p>
-<div class="highlight"><pre><span></span><code>~/klipper/scripts/motan/data_logger.py /tmp/klippy_uds mylog
+<div class="highlight"><pre><span></span><code>~/klipper/scripts/motan/data_logger.py /tmp/klippy_uds mylog -s &#39;*&#39;
 </code></pre></div>
 
 <p>Questo comando si collegherà al Klipper API Server, sottoscriverà le informazioni sullo stato e sul movimento e registrerà i risultati. Vengono generati due file: un file di dati compresso e un file di indice (ad esempio, <code>mylog.json.gz</code> e <code>mylog.index.gz</code>). Dopo aver avviato la registrazione, è possibile completare le stampe e altre azioni: la registrazione continuerà in background. Al termine della registrazione, premi <code>ctrl-c</code> per uscire dallo strumento <code>data_logger.py</code>.</p>

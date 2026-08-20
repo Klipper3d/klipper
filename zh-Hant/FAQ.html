@@ -1767,8 +1767,8 @@ baud: 250000
 <p>OctoPrint 網頁上顯示的波特率對內部 Klipper 微控制器的波特率沒有影響。使用 Klipper 時，始終將 OctoPrint 的波特率設定為250000。</p>
 <p>Klipper 微控制器的波特率與微控制器啟動載入程式的波特率無關。有關啟動載入程式的額外資訊請參閱<a href="Bootloaders.html">啟動載入程式文件</a>。</p>
 <h2 id="raspberry-pi-3-klipper">我可以在 Raspberry Pi 3 以外的其他裝置上執行 Klipper 嗎？<a class="headerlink" href="#raspberry-pi-3-klipper" title="Permanent link">&para;</a></h2>
-<p>推薦的硬體是 Raspberry Pi 2、Raspberry Pi 3 或 Raspberry Pi 4。</p>
-<p>Klipper 可以在 Raspberry Pi 1和Raspberry Pi Zero上執行，但這些板子沒有足夠的處理能力來執行 OctoPrint。在這些較慢的機器上直接從 OctoPrint 列印時，經常會出現列印停滯。(印表機的移動速度可能比 OctoPrint 發送移動命令的速度快。)如果你希望在這些較慢的板子上執行，請考慮在列印時使用 "virtual_sdcard "功能(詳情請參見<a href="Config_Reference.html#virtual_sdcard">配置參考</a>)。</p>
+<p>The recommended hardware is a Raspberry Pi Zero2w, Raspberry Pi 3, Raspberry Pi 4 or Raspberry Pi 5. Klipper will also run on other SBC devices as well as x86 hardware, as described below.</p>
+<p>Klipper will run on a Raspberry Pi 1, 2 and on the Raspberry Pi Zero1, but these boards don't have enough processing power to run Klipper well. It is common for print stalls to occur on these slower machines when printing (The printer may move faster than Klipper can send movement commands.) It is not reccomended to run Klipper on these older machines.</p>
 <p>要在Beaglebone上執行，請參閱<a href="Beaglebone.html">Beaglebone特別安裝說明</a>。</p>
 <p>Klipper 可以在其他計算機上執行。Klipper 主機軟體只需要在Linux（或類似）系統的計算機上執行 Python。然而，如果你想在其他計算機上執行它，你將需要一些 Linux 管理知識來安裝該計算機上系統的依賴包。參見 <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/install-octopi.sh">install-octopi.sh</a> 指令碼，以進一步瞭解必要的 Linux 安裝方法。</p>
 <p>如果你想在低端處理器上執行 Klipper 主機軟體，請注意，你至少需要一臺具有 "雙精度浮點 "運算硬體的計算機。</p>
@@ -1814,7 +1814,7 @@ baud: 250000
 <p>一些舊版本的AVR載入程式在看門狗事件處理方面有一個已知的錯誤。這通常表現在printer.cfg檔案中的restart_method設定為 "command"的時候。當這個錯誤發生時，AVR裝置會宕機直到電源被移除並重新上電（電源或狀態LED也可能不停的閃爍直到斷電）。</p>
 <p>解決辦法是使用 "command "以外的重啟方法，或者在AVR裝置上刷寫一個新的載入程式。刷寫一個新的載入程式是一個一次性的步驟，通常需要一個外部程式設計器--更多細節請參見<a href="Bootloaders.html">Bootloaders</a>。</p>
 <h2 id="raspberry-pi">如果 Raspberry Pi 崩潰了，加熱器會一直加熱嗎？<a class="headerlink" href="#raspberry-pi" title="Permanent link">&para;</a></h2>
-<p>Klipper 的設計防止了這種情況。一旦主機啟用了一個加熱器，主機軟體需要每 5 秒鐘確認一次啟用狀態。如果微控制器沒有收到每 5 秒的確認，它就會進入"關閉"狀態，該狀態會關閉所有加熱器和步進電機。</p>
+<p>The software has been designed to prevent that. Once the host enables a heater, the host software needs to confirm that enablement every 3 seconds. If the micro-controller does not receive a confirmation every 3 seconds it goes into a "shutdown" state which is designed to turn off all heaters and stepper motors.</p>
 <p>詳情請見<a href="MCU_Commands.html">MCU 命令</a>文件中的 "config_digital_out" 命令。</p>
 <p>此外，微控制器軟體在啟動時為每個加熱器配置了最低和最高溫度範圍（詳見<a href="Config_Reference.html#extruder">配置參考</a>中的min_temp和max_temp參數）。如果微控制器檢測到溫度超出了該範圍，那麼它也將進入 "關機 "狀態。</p>
 <p>另外，主機軟體還實現了檢查加熱器和溫度感測器是否正常工作的程式碼。詳情見<a href="Config_Reference.html#verify_heater">配置參考</a> 。</p>

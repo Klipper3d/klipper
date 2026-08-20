@@ -1473,7 +1473,7 @@
 <p>The <code>[skew_correction]</code> module requires 3 measurements for each plane you want to correct; the length from Corner A to Corner C, the length from Corner B to Corner D, and the length from Corner A to Corner D. When measuring length AD do not include the flats on the corners that some test objects provide.</p>
 <p><img alt="skew_lengths" src="img/skew_lengths.png" /></p>
 <h2 id="_4">配置偏斜<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
-<p>確保 <code>[skew_correction]</code> 已經在 printer.cfg 中。現在可以使用<code>SET_SKEW</code> G-Code 來配置 skew_correcton。例如，如果對 XY 平面測量的距離結果如下：</p>
+<p>Make sure <code>[skew_correction]</code> is in printer.cfg. You may now use the <code>SET_SKEW</code> gcode to configure skew_correction. For example, if your measured lengths along XY are as follows:</p>
 <div class="highlight"><pre><span></span><code>Length AC = 140.4
 Length BD = 142.8
 Length AD = 99.8

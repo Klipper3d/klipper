@@ -715,15 +715,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#basic-usage-x-axis-calibration" class="md-nav__link">
-    Basic Usage: X-Axis Calibration
+  <a href="#x" class="md-nav__link">
+    基础用途：X轴校准
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#for-y-axis-calibration" class="md-nav__link">
-    For Y-Axis Calibration
+  <a href="#y" class="md-nav__link">
+    对于Y轴校准
   </a>
   
 </li>
@@ -1359,7 +1359,7 @@
   
     <li class="md-nav__item">
       <a href="Load_Cell.html" class="md-nav__link">
-        Load Cells
+        压力传感器
       </a>
     </li>
   
@@ -1422,15 +1422,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#basic-usage-x-axis-calibration" class="md-nav__link">
-    Basic Usage: X-Axis Calibration
+  <a href="#x" class="md-nav__link">
+    基础用途：X轴校准
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#for-y-axis-calibration" class="md-nav__link">
-    For Y-Axis Calibration
+  <a href="#y" class="md-nav__link">
+    对于Y轴校准
   </a>
   
 </li>
@@ -1474,9 +1474,9 @@ bias</a>. It may result in probe operations such as <a href="Bed_Mesh.html">Bed 
 <blockquote>
 <p><strong>提示：</strong>请确保正确设置<a href="Config_Reference.html#Probe">Probe X和Y Offset</a>，因为它们对校准影响很大。</p>
 </blockquote>
-<h3 id="basic-usage-x-axis-calibration">Basic Usage: X-Axis Calibration<a class="headerlink" href="#basic-usage-x-axis-calibration" title="Permanent link">&para;</a></h3>
+<h3 id="x">基础用途：X轴校准<a class="headerlink" href="#x" title="Permanent link">&para;</a></h3>
 <ol>
-<li>After setting up the <code>[axis_twist_compensation]</code> module, run:</li>
+<li>在设置完毕<code>[axis_twist_compensation]</code>模块后，运行：</li>
 </ol>
 <div class="highlight"><pre><span></span><code>AXIS_TWIST_COMPENSATION_CALIBRATE
 </code></pre></div>
@@ -1488,25 +1488,25 @@ bias</a>. It may result in probe operations such as <a href="Bed_Mesh.html">Bed 
 </ul>
 <ol>
 <li><strong>Adjust Your Z Offset:</strong> After completing the calibration, be sure to <a href="Probe_Calibrate.html#calibrating-probe-z-offset">adjust your Z offset</a>.</li>
-<li><strong>Perform Bed Leveling Operations:</strong> Use probe-based operations as needed, such as:</li>
+<li><strong>进行打印床调平操作：</strong>使用基于探针的操作（如果需要），如下：</li>
 </ol>
 <ul>
 <li><a href="G-Codes.html#screws_tilt_adjust">Screws Tilt Adjust</a></li>
-<li><a href="G-Codes.html#z_tilt_adjust">Z Tilt Adjust</a></li>
+<li><a href="G-Codes.html#z_tilt_adjust">Z轴倾斜校正</a></li>
 </ul>
 <ol>
-<li><strong>Finalize the Setup:</strong></li>
+<li><strong>结束设置：</strong></li>
 </ol>
 <ul>
-<li>Home all axes, and perform a <a href="Bed_Mesh.html">Bed Mesh</a> if necessary.</li>
-<li>Run a test print, followed by any <a href="Axis_Twist_Compensation.html#fine-tuning">fine-tuning</a> if needed.</li>
+<li>归零所有轴，并进行一次<a href="Bed_Mesh.html">床网</a>（如果需要）。</li>
+<li>进行测试打印，并进行<a href="Axis_Twist_Compensation.html#fine-tuning">精细调整</a>如果需要。</li>
 </ul>
-<h3 id="for-y-axis-calibration">For Y-Axis Calibration<a class="headerlink" href="#for-y-axis-calibration" title="Permanent link">&para;</a></h3>
-<p>The calibration process for the Y-axis is similar to the X-axis. To calibrate the Y-axis, use:</p>
+<h3 id="y">对于Y轴校准<a class="headerlink" href="#y" title="Permanent link">&para;</a></h3>
+<p>Y轴的校准流程与X轴接近。如果要校准Y轴，使用一下方法：</p>
 <div class="highlight"><pre><span></span><code>AXIS_TWIST_COMPENSATION_CALIBRATE AXIS=Y
 </code></pre></div>
 
-<p>This will guide you through the same measuring process as for the X-axis.</p>
+<p>这将会进行与X轴相同的测量流程。</p>
 <blockquote>
 <p><strong>提示：</strong>床温、喷嘴温度和尺寸似乎对校准过程没有影响。</p>
 </blockquote>

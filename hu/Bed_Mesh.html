@@ -739,19 +739,6 @@
     A nulla referenciapozíció beállítása
   </a>
   
-    <nav class="md-nav" aria-label="A nulla referenciapozíció beállítása">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#az-elavult-relative_reference_index" class="md-nav__link">
-    Az elavult relative_reference_index
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
           <li class="md-nav__item">
@@ -1684,19 +1671,6 @@
     A nulla referenciapozíció beállítása
   </a>
   
-    <nav class="md-nav" aria-label="A nulla referenciapozíció beállítása">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#az-elavult-relative_reference_index" class="md-nav__link">
-    Az elavult relative_reference_index
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
           <li class="md-nav__item">
@@ -1940,7 +1914,7 @@ bicubic_tension: 0.2
 </code></pre></div>
 
 <ul>
-<li><code>mesh_pps: 2, 3</code> <em>Alapértelmezett érték: 2, 2</em> A <code>mesh_pps</code> opció a Hálópontok szegmensenkénti rövidítése. Ez az opció azt adja meg, hogy hány pontot interpoláljon minden egyes szegmenshez az X és Y tengely mentén. Tekintsük egy 'szegmensnek' az egyes mért pontok közötti teret. A <code>probe_count</code>-hoz hasonlóan a <code>mesh_pps</code> is X, Y egész számpárként adható meg, de megadható egyetlen egész szám is, amely mindkét tengelyre vonatkozik. Ebben a példában 4 szegmens van az X tengely mentén és 2 szegmens az Y tengely mentén. Ez 8 interpolált pontot jelent az X mentén, 6 interpolált pontot az Y mentén, ami egy 13x8-as hálót eredményez. Vedd figyelembe, hogy ha a mesh_pps értéke 0, akkor a hálóinterpoláció le van tiltva, és a mért mátrixot közvetlenül mintavételezi a rendszer.</li>
+<li><code>mesh_pps: 2, 3</code> <em>Default Value: 2, 2</em> The <code>mesh_pps</code> option is shorthand for Mesh Points Per Segment. This option specifies how many points to interpolate for each segment along the X and Y axes. Consider a 'segment' to be the space between each probed point. Like <code>probe_count</code>, <code>mesh_pps</code> is specified as an X, Y integer pair, and also may be specified a single integer that is applied to both axes. In this example there are 4 segments along the X axis and 2 segments along the Y axis. This evaluates to 8 interpolated points along X, 6 interpolated points along Y, which results in a 13x9 mesh. Note that if mesh_pps is set to 0 then mesh interpolation is disabled and the probed matrix will be sampled directly.</li>
 <li><code>algorithm: lagrange</code> * Alapértelmezett érték: lagrange* A háló interpolálásához használt algoritmus. Lehet <code>lagrange</code> vagy <code>bicubic</code>. A Lagrange-interpoláció 6 szondázott pontnál van korlátozva, mivel nagyobb számú minta esetén oszcilláció lép fel. A bikubik interpolációhoz mindkét tengely mentén legalább 4 szondázott pont szükséges, ha 4 pontnál kevesebb van megadva, akkor a Lagrange mintavételezés kikényszerül. Ha a <code>mesh_pps</code> 0-ra van állítva, akkor ez az érték figyelmen kívül marad, mivel nem történik hálóinterpoláció.</li>
 <li><code>bicubic_tension: 0.2</code> <em>Alapértelmezett érték: 0.2</em> Ha az <code>algorithm</code> opció bicubic-ra van állítva, akkor lehet megadni a feszültség értékét. Minél nagyobb a feszültség, annál nagyobb meredekséget interpolál. Legyél óvatos ennek beállításakor, mivel a magasabb értékek több túlhúzást is eredményeznek, ami a mért pontoknál magasabb vagy alacsonyabb interpolált értékeket eredményez.</li>
 </ul>
@@ -1982,7 +1956,7 @@ fade_target: 0
 <li><code>fade_target: 0</code> <em>Alapértelmezett érték: A háló átlagos Z-értéke</em> A <code>fade_target</code> úgy tekinthető, mint egy további Z-eltolás, amelyet a teljes ágyra alkalmaznak a fade befejezése után. Általánosságban azt szeretnénk, ha ez az érték 0 lenne, azonban vannak olyan körülmények, amikor ez nem kell, hogy így legyen. Tegyük fel például, hogy az ágyon a kezdőpont pozíciója egy kiugró érték, amely 0,2 mm-rel alacsonyabb, mint az ágy átlagos mért magassága. Ha a <code>fade_target</code> értéke 0, akkor a fade átlagosan 0,2 mm-rel zsugorítja a nyomtatást az ágyon. Ha a <code>fade_target</code> értéket .2-re állítja, a homed terület .2 mm-rel fog tágulni, azonban az ágy többi része pontosan lesz mérve. Általában jó ötlet a <code>fade_target</code> elhagyása a konfigurációból, így a háló átlagos magassága kerül felhasználásra, azonban kívánatos lehet a fade target kézi beállítása, ha az ágy egy bizonyos részére szeretnénk nyomtatni.</li>
 </ul>
 <h3 id="a-nulla-referenciapozicio-beallitasa">A nulla referenciapozíció beállítása<a class="headerlink" href="#a-nulla-referenciapozicio-beallitasa" title="Permanent link">&para;</a></h3>
-<p>Sok szonda hajlamos a „csúszásra”, azaz: a hő vagy interferencia által okozott pontatlanságokra. Ez kihívássá teheti a szonda Z-eltolásának kiszámítását, különösen különböző ágyhőmérsékleteken. Ezért egyes nyomtatók a Z tengely beállításához végállást, a háló kalibrálásához pedig szondát használnak. Ebben a konfigurációban lehetséges a háló eltolása úgy, hogy az (X, Y) <code>referenciapozíció</code> nullpontbeállításra vonatkozik. A <code>referenciapozíciónak</code> az ágyon annak a helynek kell lennie, ahol a <a href="Manual_Level.html#calibrating-a-z-endstop">Z_ENDSTOP_CALIBRATE</a> papírpróbát végzik. A bed_mesh modul biztosítja a <code>zero_reference_position</code> opciót e koordináta megadásához:</p>
+<p>Many probes are susceptible to "drift", ie: inaccuracies in probing introduced by heat or interference. This can make calculating the probe's z-offset challenging, particularly at different bed temperatures. As such, some printers use an endstop for homing the Z axis and a probe for calibrating the mesh. In this configuration it is possible offset the mesh so that the (X, Y) <code>reference position</code> applies zero adjustment. The <code>reference position</code> should be the location on the bed where a <a href="Manual_Level.html#calibrating-a-z-endstop">Z_ENDSTOP_CALIBRATE</a> paper test is performed. The bed_mesh module provides the <code>zero_reference_position</code> option for specifying this coordinate:</p>
 <div class="highlight"><pre><span></span><code>[bed_mesh]
 speed: 120
 horizontal_move_z: 5
@@ -1995,20 +1969,6 @@ probe_count: 5, 3
 <ul>
 <li><code>zero_reference_position:</code> *Alapértelmezett érték: A <code>zero_reference_position</code> egy olyan (X, Y) koordinátát vár el, amely megfelel a fent leírt <code>reference position</code> koordinátának. Ha a koordináta a hálóban van, akkor a háló eltolódik, így a referenciapozíció nulla korrekciót alkalmaz. Ha a koordináta a hálón kívül esik, akkor a koordinátát a kalibrálás után meg kell vizsgálni, és az így kapott Z-értéket kell Z-eltolásként használni. Vedd figyelembe, hogy ez a koordináta NEM lehet olyan helyen, amelyet <code>faulty_region</code>-ként határoztak meg, ahol mérésre van szükség.</li>
 </ul>
-<h4 id="az-elavult-relative_reference_index">Az elavult relative_reference_index<a class="headerlink" href="#az-elavult-relative_reference_index" title="Permanent link">&para;</a></h4>
-<p>A <code>relative_reference_index</code> opciót használó meglévő konfigurációkat frissíteni kell a <code>zero_reference_position</code> használatához. A <a href="#output">BED_MESH_OUTPUT PGP=1</a> G-kód parancsra adott válasz tartalmazza az indexhez tartozó (X, Y) koordinátát; ez a pozíció használható a <code>zero_reference_position</code> értékeként. A kimenet az alábbiakhoz hasonlóan fog kinézni:</p>
-<div class="highlight"><pre><span></span><code>// bed_mesh: generált pontok
-// Index | Szerszámbeállítás | Szonda
-// 0 | (1.0, 1.0) | (24.0, 6.0)
-// 1 | (36.7, 1.0) | (59.7, 6.0)
-// 2 | (72.3, 1.0) | (95.3, 6.0)
-// 3 | (108.0, 1.0) | (131.0, 6.0)
-... (további generált pontok)
-// bed_mesh: relative_reference_index 24 is (131.5, 108.0)
-</code></pre></div>
-
-<p><em>Figyelem: A fenti kimenet az inicializálás során a <code>klippy.log</code>-ban is megjelenik.</em></p>
-<p>A fenti példa alapján láthatjuk, hogy a <code>relative_reference_index</code> a koordinátával együtt kerül kiírásra. Így a <code>zero_reference_position</code> a <code>131.5, 108</code>.</p>
 <h3 id="hibas-regiok">Hibás régiók<a class="headerlink" href="#hibas-regiok" title="Permanent link">&para;</a></h3>
 <p>Előfordulhat, hogy a tárgyasztal egyes területei pontatlan eredményeket jeleznek a mérés során, mivel bizonyos helyeken "hiba" van. Erre a legjobb példa a levehető acéllemezek rögzítésére használt integrált mágnesek sorozatával ellátott tárgyasztalok. Ezeknél a mágneseknél és körülöttük lévő mágneses mező hatására az induktív szonda magasabb vagy alacsonyabb távolságban mérhet, mint egyébként tenné, ami azt eredményezi, hogy a háló nem pontosan reprezentálja a felületet ezeken a helyeken. <strong>Figyelem: Ez nem tévesztendő össze a szonda helyének torzításával, amely pontatlan eredményeket eredményez az egész tárgyasztalon.</strong></p>
 <p>A <code>faulty_region</code> opciókat úgy lehet beállítani, hogy kompenzálják ezt a hatást. Ha egy generált pont egy hibás régióba esik, akkor a bed mesh megpróbál akár 4 pontot is megvizsgálni a régió határainál. Ezeket a mért értékeket átlagolja és beilleszti a hálóba Z értékben a generált (X, Y) koordinátán.</p>

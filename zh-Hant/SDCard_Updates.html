@@ -1196,6 +1196,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#failure-to-initialize" class="md-nav__link">
+    Failure to Initialize
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#_3" class="md-nav__link">
     注意事項
   </a>
@@ -1454,6 +1461,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#failure-to-initialize" class="md-nav__link">
+    Failure to Initialize
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#_3" class="md-nav__link">
     注意事項
   </a>
@@ -1543,7 +1557,7 @@ sudo service klipper start
 <div class="highlight"><pre><span></span><code>./scripts/flash-sdcard.sh -h
 SD Card upload utility for Klipper
 
-usage: flash_sdcard.sh [-h] [-l] [-c] [-b &lt;baud&gt;] [-f &lt;firmware&gt;]
+usage: flash_sdcard.sh [-h] [-l] [-c] [-s] [-b &lt;baud&gt;] [-f &lt;firmware&gt;]
                        &lt;device&gt; &lt;board&gt;
 
 positional arguments:
@@ -1554,6 +1568,7 @@ optional arguments:
   -h              show this message
   -l              list available boards
   -c              run flash check/verify only (skip upload)
+  -s              use fast SPI speed (4MHz)
   -b &lt;baud&gt;       serial baud rate (default is 250000)
   -f &lt;firmware&gt;   path to klipper.bin
 </code></pre></div>
@@ -1568,6 +1583,17 @@ optional arguments:
 
 <p>請注意，升級 MKS Robin E3 時，無需手動執行 <code>update_mks_robin.py</code> 並將產生的二進制檔案提供給 <code>flash-sdcard.sh</code>。 此過程在上傳過程中自動執行。</p>
 <p>The <code>-c</code> option is used to perform a check or verify-only operation to test if the board is running the specified firmware correctly. This option is primarily intended for cases where a manual power-cycle is necessary to complete the flashing procedure, such as with bootloaders that use SDIO mode instead of SPI to access their SD Cards. (See Caveats below) But, it can also be used anytime to verify if the code flashed into the board matches the version in your build folder on any supported board.</p>
+<h2 id="failure-to-initialize">Failure to Initialize<a class="headerlink" href="#failure-to-initialize" title="Permanent link">&para;</a></h2>
+<p>Some SD cards may fail to initialize at the default SPI speed of 400KHz. In this situation it is possible to use <code>-s</code> to drive the SPI peripheral at 4MHz. For example:</p>
+<div class="highlight"><pre><span></span><code>./scripts/flash-sdcard.sh -s /dev/ttyACM0 btt-skr-v1.3
+</code></pre></div>
+
+<p>If the device still fails to initialize then cause of the failure is unrelated to the speed and likely a result of one of the following conditions:</p>
+<ul>
+<li>The SD card is improperly formatted. Must be <code>fat</code> or <code>fat32</code>.</li>
+<li>Attempt to initialize a card using the SPI interface that has already been initialized over SDIO.</li>
+<li>The SD card has failed or is corrupt.</li>
+</ul>
 <h2 id="_3">注意事項<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <ul>
 <li>如介紹中所述，此方法僅適用於升級韌體。 初始刷鞋程式必須按照適用於您的控制器板的說明手動完成。</li>
@@ -1607,7 +1633,7 @@ optional arguments:
 <span class="p">}</span>
 </code></pre></div>
 
-<p>如果您需要一個新的電路板定義並且您對上述過程感到不舒服，建議您在 <a href="Contact.html#discord">Klipper Community Discord</a> 中請求一個。</p>
+<p>If you need a new board definition and you are uncomfortable with the procedure outlined above it is recommended that you request one in the <a href="Contact.html">Klipper Discord</a>.</p>
 <h2 id="flashing-boards-that-use-sdio">Flashing Boards that use SDIO<a class="headerlink" href="#flashing-boards-that-use-sdio" title="Permanent link">&para;</a></h2>
 <p><a href="#caveats">As mentioned in the Caveats</a>, boards whose bootloader uses SDIO mode to access their SD Card require a power-cycle of the board, and specifically the SD Card itself, in order to switch from the SPI Mode used while writing the file to the SD Card back to SDIO mode for the bootloader to flash it into the board. These board definitions will use the <code>skip_verify</code> flag, which tells the flashing tool to stop after writing the firmware to the SD Card so that the board can be manually power-cycled and the verification step deferred until that's complete.</p>
 <p>There are two scenarios -- one with the RPi Host running on a separate power supply and the other when the RPi Host is running on the same power supply as the main board being flashed. The difference is whether or not it's necessary to also shutdown the RPi and then <code>ssh</code> again after the flashing is complete in order to do the verification step, or if the verification can be done immediately. Here's examples of the two scenarios:</p>

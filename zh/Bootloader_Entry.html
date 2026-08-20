@@ -1430,7 +1430,7 @@
   
     <li class="md-nav__item">
       <a href="Load_Cell.html" class="md-nav__link">
-        Load Cells
+        压力传感器
       </a>
     </li>
   
@@ -1630,7 +1630,7 @@
 <p>其中<code>&lt;Device&gt;</code>为您的串口设备，如<code>/dev/seral.by-id/usb-klipper[...]</code>或<code>/dev/ttyACM0</code></p>
 <p><code>&lt;Ctrl-A&gt;&lt;Ctrl-P&gt;</code>表示按住<code>Ctrl</code>，按住并松开<code>a</code>，按住并松开<code>p</code>，然后松开<code>Ctrl</code></p>
 <h3 id="_4">物理序列<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h3>
-<p>如果MCU上正在使用物理串口(即使使用USB串口适配器连接)，则发送字符串<code>&lt;space&gt;&lt;FS&gt;&lt;space&gt;RequestSerial BootLoader！！&lt;space&gt;~</code>。</p>
+<p>If a physical serial port is being used on the MCU (even if a USB serial adapter is being used to connect to it), sending the string <code>&lt;SPACE&gt;&lt;FS&gt;&lt;SPACE&gt;Request Serial Bootloader!!&lt;SPACE&gt;~</code> requests the bootloader.</p>
 <p><code>&lt;space&gt;</code>是ASCII文字空格，0x20。</p>
 <p><code>&lt;FS&gt;</code>是ASCII文件分隔符0x1c。</p>
 <p>请注意，根据<a href="Protocol.html#micro-controller-interface">MCU Protocol</a>，，这不是一个有效的消息，但仍然尊重同步字符(<code>~</code>)。</p>

@@ -1322,6 +1322,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#use-as-a-runout-switch-only" class="md-nav__link">
+    Use as a runout switch only
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#_6" class="md-nav__link">
     記錄
   </a>
@@ -1441,6 +1448,13 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#use-as-a-runout-switch-only" class="md-nav__link">
+    Use as a runout switch only
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#_6" class="md-nav__link">
     記錄
   </a>
@@ -1494,6 +1508,13 @@ index: 1
 <h2 id="_5">如何啟用感測器<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <p>感測器在開機時預設被禁用。</p>
 <p>要啟用感測器，發送<strong>ENABLE_FILAMENT_WIDTH_SENSOR</strong>命令或將<code>enable</code>參數改為<code>true</code>。</p>
+<h2 id="use-as-a-runout-switch-only">Use as a runout switch only<a class="headerlink" href="#use-as-a-runout-switch-only" title="Permanent link">&para;</a></h2>
+<p>By default, the sensor measures filament diameter and adjusts the extrusion multiplier to compensate for variations.</p>
+<p>If you want to use the sensor as a runout switch only, set the <code>enable_flow_compensation</code> config parameter to <code>false</code>. In this mode, the sensor will only trigger runout events when filament is not detected, it will not modify the extrusion multiplier.</p>
+<p>This is useful for printers where the filament sensor is not accurate enough for flow compensation but can reliably detect filament runout, or when printing with flexible filaments which have unstable diameter characteristics.</p>
+<p>Issue <strong>ENABLE_FILAMENT_WIDTH_SENSOR FLOW_COMPENSATION=1</strong> to enable flow compensation or <strong>ENABLE_FILAMENT_WIDTH_SENSOR FLOW_COMPENSATION=0</strong> to disable it.</p>
+<p>Note that disabling filament width compensation automatically resets the extrusion multiplier to 100%.</p>
+<p><strong>QUERY_FILAMENT_WIDTH</strong> includes the current state of flow compensation in its output.</p>
 <h2 id="_6">記錄<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <p>直徑記錄在開機時預設被禁用。</p>
 <p>發送<strong>ENABLE_FILAMENT_WIDTH_LOG</strong>命令開始記錄，發送<strong>DISABLE_FILAMENT_WIDTH_LOG</strong>命令停止記錄。如果想在開機時啟用日誌記錄，請將<code>logging</code>配置參數設定為<code>true</code>。</p>

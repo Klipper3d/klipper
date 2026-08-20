@@ -1473,7 +1473,7 @@
 <p>A <code>[skew_correction]</code> modul minden egyes korrigálandó síkhoz 3 mérést igényel: az A saroktól a C sarokig tartó hossz, a B saroktól a D sarokig tartó hossz, és az A saroktól a D sarokig tartó hossz. Az AD hosszmérésnél ne vedd figyelembe a sarkokon lévő síkokat, amelyeket néhány tesztobjektum biztosít.</p>
 <p><img alt="skew_lengths" src="img/skew_lengths.png" /></p>
 <h2 id="konfigurald-a-ferdeseget">Konfiguráld a ferdeséget<a class="headerlink" href="#konfigurald-a-ferdeseget" title="Permanent link">&para;</a></h2>
-<p>Győződj meg róla, hogy a <code>[skew_correction]</code> szerepel a printer.cfg fájlban. Most már használhatod a <code>SET_SKEW</code> G-kódot a skew_correction beállításához. Például, ha az X-Y mentén mért hosszok a következők:</p>
+<p>Make sure <code>[skew_correction]</code> is in printer.cfg. You may now use the <code>SET_SKEW</code> gcode to configure skew_correction. For example, if your measured lengths along XY are as follows:</p>
 <div class="highlight"><pre><span></span><code>Length AC = 140.4
 Length BD = 142.8
 Length AD = 99.8
