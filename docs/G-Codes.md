@@ -718,12 +718,12 @@ specified G-Code speed.
 `SAVE_GCODE_STATE [NAME=<state_name>]`: Save the current g-code
 coordinate parsing state. Saving and restoring the g-code state is
 useful in scripts and macros. This command saves the current g-code
-absolute coordinate mode (G90/G91), absolute extrude mode (M82/M83),
-origin (G92), offset (SET_GCODE_OFFSET), speed override (M220),
-extruder override (M221), move speed, current XYZ position, and
-relative extruder "E" position. If NAME is provided it allows one to
-name the saved state to the given string. If NAME is not provided it
-defaults to "default".
+absolute coordinate mode (G90/G91), force relative extrude mode
+(M83/M82), origin (G92), offset (SET_GCODE_OFFSET), speed override
+(M220), extruder override (M221), move speed, current XYZ position,
+and relative extruder "E" position. If NAME is provided it allows one
+to name the saved state to the given string. If NAME is not provided
+it defaults to "default".
 
 #### RESTORE_GCODE_STATE
 `RESTORE_GCODE_STATE [NAME=<state_name>] [MOVE=1
