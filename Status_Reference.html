@@ -2343,8 +2343,10 @@ objects:</p>
   override and, for example, 2.0 would double requested extrusions.</li>
 <li><code>absolute_coordinates</code>: This returns True if in <code>G90</code> absolute
   coordinate mode or False if in <code>G91</code> relative mode.</li>
-<li><code>absolute_extrude</code>: This returns True if in <code>M82</code> absolute extrude
-  mode or False if in <code>M83</code> relative mode.</li>
+<li><code>absolute_extrude</code>: Returns True if absolute extrusions are
+  permitted. An <code>M83</code> force relative extrusion mode command causes
+  this value to return False. An <code>M82</code> command returns this value to
+  True.</li>
 <li><code>axis_map</code>: Provides a mechanism for finding the coordinate
   component for a given G-Code id that is used in <code>G1</code> commands. See
   the <a href="#accessing-coordinates">Accessing Coordinates</a> section for

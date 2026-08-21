@@ -4925,8 +4925,13 @@ commands that one may enter into the OctoPrint terminal tab.</p>
 <li>Move to origin: <code>G28 [X] [Y] [Z]</code></li>
 <li>Turn off motors: <code>M18</code> or <code>M84</code></li>
 <li>Wait for current moves to finish: <code>M400</code></li>
-<li>Use absolute/relative distances for extrusion: <code>M82</code>, <code>M83</code></li>
 <li>Use absolute/relative coordinates: <code>G90</code>, <code>G91</code></li>
+<li>Force relative distances for extrusion: <code>M83</code>, <code>M82</code><ul>
+<li>Note: <code>M83</code> forces extrusions to use relative coordinates even if
+  <code>G90</code> absolute mode is selected. <code>M82</code> disables that forced mode
+  (it does not force the extruder to use absolute coordinates).</li>
+</ul>
+</li>
 <li>Set position: <code>G92 [X&lt;pos&gt;] [Y&lt;pos&gt;] [Z&lt;pos&gt;] [E&lt;pos&gt;]</code></li>
 <li>Set speed factor override percentage: <code>M220 S&lt;percent&gt;</code></li>
 <li>Set extrude factor override percentage: <code>M221 S&lt;percent&gt;</code></li>
