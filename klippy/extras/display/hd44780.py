@@ -13,6 +13,9 @@ LINE_LENGTH_OPTIONS=[16, 20]
 TextGlyphs = { 'right_arrow': b'\x7e' }
 
 HD44780_DELAY = .000040
+# The mcu busy-waits for this delay between bytes, so keep the user
+# configurable value within a small, safe range.
+HD44780_DELAY_MAX = .000060
 
 class HD44780:
     def __init__(self, config):
@@ -25,6 +28,8 @@ class HD44780:
                                                        True)
         self.line_length = config.getchoice('line_length', LINE_LENGTH_OPTIONS,
                                             LINE_LENGTH_DEFAULT)
+        self.hd44780_delay = config.getfloat('hd44780_delay', HD44780_DELAY,
+                                             above=0., maxval=HD44780_DELAY_MAX)
         mcu = None
         for pin_params in pins:
             if mcu is not None and pin_params['chip'] != mcu:
@@ -54,7 +59,7 @@ class HD44780:
             " d4_pin=%s d5_pin=%s d6_pin=%s d7_pin=%s delay_ticks=%d" % (
                 self.oid, self.pins[0], self.pins[1],
                 self.pins[2], self.pins[3], self.pins[4], self.pins[5],
-                self.mcu.seconds_to_clock(HD44780_DELAY)))
+                self.mcu.seconds_to_clock(self.hd44780_delay)))
         cmd_queue = self.mcu.alloc_command_queue()
         self.send_cmds_cmd = self.mcu.lookup_command(
             "hd44780_send_cmds oid=%c cmds=%*s", cq=cmd_queue)
