@@ -413,6 +413,12 @@ class TappingMove:
         epos, collector = self._load_cell_probing_move.probing_move(gcmd)
         # collect samples from the tap
         toolhead = self._printer.lookup_object('toolhead')
+        # Homing workaround
+        phoming = self._printer.lookup_object('homing')
+        if phoming.check_probe_first_home(gcmd):
+            curpos = toolhead.get_position()
+            curpos[2] -= epos[2]
+            toolhead.set_position(curpos)
 
         # Lift the toolhead while collecting the samples we will use for
         # the fit. The ascent data shall cover both the contact region
