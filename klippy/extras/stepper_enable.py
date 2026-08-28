@@ -86,7 +86,8 @@ class PrinterStepperEnable:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_mux_command('SET_STEPPER_ENABLE', "STEPPER", name,
                                    self.cmd_SET_STEPPER_ENABLE,
-                                   desc=self.cmd_SET_STEPPER_ENABLE_help)
+                                   desc=self.cmd_SET_STEPPER_ENABLE_help,
+                                   params=self.cmd_SET_STEPPER_ENABLE_params)
         enable = setup_enable_pin(self.printer, config.get('enable_pin', None))
         self.enable_lines[name] = EnableTracking(mcu_stepper, enable)
     def set_motors_enable(self, stepper_names, enable):
@@ -128,6 +129,10 @@ class PrinterStepperEnable:
         # Turn off motors
         self.motor_off()
     cmd_SET_STEPPER_ENABLE_help = "Enable/disable individual stepper by name"
+    cmd_SET_STEPPER_ENABLE_params = {
+        "STEPPER": {"type": "string", "required": True},
+        "ENABLE": {"type": "int", "default": 1},
+    }
     def cmd_SET_STEPPER_ENABLE(self, gcmd):
         stepper_name = gcmd.get('STEPPER')
         stepper_enable = gcmd.get_int('ENABLE', 1)

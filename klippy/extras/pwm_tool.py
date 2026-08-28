@@ -163,7 +163,8 @@ class PrinterOutputPin:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_mux_command("SET_PIN", "PIN", pin_name,
                                    self.cmd_SET_PIN,
-                                   desc=self.cmd_SET_PIN_help)
+                                   desc=self.cmd_SET_PIN_help,
+                                   params=self.cmd_SET_PIN_params)
     def get_status(self, eventtime):
         return {'value': self.last_value}
     def _set_pin(self, print_time, value):
@@ -174,6 +175,10 @@ class PrinterOutputPin:
         self.last_value = value
         self.last_print_time = print_time
     cmd_SET_PIN_help = "Set the value of an output pin"
+    cmd_SET_PIN_params = {
+        "PIN": {"type": "string", "required": True},
+        "VALUE": {"type": "float", "required": True},
+    }
     def cmd_SET_PIN(self, gcmd):
         # Read requested value
         value = gcmd.get_float('VALUE', minval=0., maxval=self.scale)

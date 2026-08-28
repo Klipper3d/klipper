@@ -24,13 +24,16 @@ class ExcludeObject:
         self._reset_state()
         self.gcode.register_command(
             'EXCLUDE_OBJECT_START', self.cmd_EXCLUDE_OBJECT_START,
-            desc=self.cmd_EXCLUDE_OBJECT_START_help)
+            desc=self.cmd_EXCLUDE_OBJECT_START_help,
+            params=self.cmd_EXCLUDE_OBJECT_START_params)
         self.gcode.register_command(
             'EXCLUDE_OBJECT_END', self.cmd_EXCLUDE_OBJECT_END,
-            desc=self.cmd_EXCLUDE_OBJECT_END_help)
+            desc=self.cmd_EXCLUDE_OBJECT_END_help,
+            params=self.cmd_EXCLUDE_OBJECT_END_params)
         self.gcode.register_command(
             'EXCLUDE_OBJECT', self.cmd_EXCLUDE_OBJECT,
-            desc=self.cmd_EXCLUDE_OBJECT_help)
+            desc=self.cmd_EXCLUDE_OBJECT_help,
+            params=self.cmd_EXCLUDE_OBJECT_params)
         self.gcode.register_command(
             'EXCLUDE_OBJECT_DEFINE', self.cmd_EXCLUDE_OBJECT_DEFINE,
             desc=self.cmd_EXCLUDE_OBJECT_DEFINE_help)
@@ -196,6 +199,9 @@ class ExcludeObject:
 
     cmd_EXCLUDE_OBJECT_START_help = "Marks the beginning the current object" \
                                     " as labeled"
+    cmd_EXCLUDE_OBJECT_START_params = {
+        "NAME": {"type": "string", "required": True},
+    }
     def cmd_EXCLUDE_OBJECT_START(self, gcmd):
         name = gcmd.get('NAME').upper()
         if not any(obj["name"] == name for obj in self.objects):
@@ -204,6 +210,9 @@ class ExcludeObject:
         self.was_excluded_at_start = self._test_in_excluded_region()
 
     cmd_EXCLUDE_OBJECT_END_help = "Marks the end the current object"
+    cmd_EXCLUDE_OBJECT_END_params = {
+        "NAME": {"type": "string", "required": False},
+    }
     def cmd_EXCLUDE_OBJECT_END(self, gcmd):
         if self.current_object == None and self.next_transform:
             gcmd.respond_info("EXCLUDE_OBJECT_END called, but no object is"
@@ -218,6 +227,11 @@ class ExcludeObject:
         self.current_object = None
 
     cmd_EXCLUDE_OBJECT_help = "Cancel moves inside a specified objects"
+    cmd_EXCLUDE_OBJECT_params = {
+        "RESET": {"type": "string", "required": False},
+        "CURRENT": {"type": "string", "required": False},
+        "NAME": {"type": "string", "default": ""},
+    }
     def cmd_EXCLUDE_OBJECT(self, gcmd):
         reset = gcmd.get('RESET', None)
         current = gcmd.get('CURRENT', None)

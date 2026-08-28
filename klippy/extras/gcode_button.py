@@ -28,9 +28,13 @@ class GCodeButton:
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_mux_command("QUERY_BUTTON", "BUTTON", self.name,
                                         self.cmd_QUERY_BUTTON,
-                                        desc=self.cmd_QUERY_BUTTON_help)
+                                        desc=self.cmd_QUERY_BUTTON_help,
+                                        params=self.cmd_QUERY_BUTTON_params)
 
     cmd_QUERY_BUTTON_help = "Report on the state of a button"
+    cmd_QUERY_BUTTON_params = {
+        "BUTTON": {"type": "string", "required": True},
+    }
     def cmd_QUERY_BUTTON(self, gcmd):
         gcmd.respond_info(self.name + ": " + self.get_status()['state'])
 

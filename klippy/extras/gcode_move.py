@@ -19,7 +19,8 @@ class GCodeMove:
         for cmd in handlers:
             func = getattr(self, 'cmd_' + cmd)
             desc = getattr(self, 'cmd_' + cmd + '_help', None)
-            gcode.register_command(cmd, func, False, desc)
+            params = getattr(self, 'cmd_' + cmd + '_params', None)
+            gcode.register_command(cmd, func, False, desc, params=params)
         gcode.register_command('G0', self.cmd_G1)
         gcode.register_command('M114', self.cmd_M114, True)
         gcode.register_command('GET_POSITION', self.cmd_GET_POSITION, True,
@@ -205,6 +206,18 @@ class GCodeMove:
         self.base_position[3] = last_e_pos - e_value * new_extrude_factor
         self.extrude_factor = new_extrude_factor
     cmd_SET_GCODE_OFFSET_help = "Set a virtual offset to g-code positions"
+    cmd_SET_GCODE_OFFSET_params = {
+        "X": {"type": "float", "required": False},
+        "Y": {"type": "float", "required": False},
+        "Z": {"type": "float", "required": False},
+        "E": {"type": "float", "required": False},
+        "X_ADJUST": {"type": "float", "required": False},
+        "Y_ADJUST": {"type": "float", "required": False},
+        "Z_ADJUST": {"type": "float", "required": False},
+        "E_ADJUST": {"type": "float", "required": False},
+        "MOVE": {"type": "int", "default": 0},
+        "MOVE_SPEED": {"type": "float", "required": False},
+    }
     def cmd_SET_GCODE_OFFSET(self, gcmd):
         move_delta = [0., 0., 0., 0.]
         for pos, axis in enumerate('XYZE'):
@@ -225,6 +238,9 @@ class GCodeMove:
                 self.last_position[pos] += delta
             self.move_with_transform(self.last_position, speed)
     cmd_SAVE_GCODE_STATE_help = "Save G-Code coordinate state"
+    cmd_SAVE_GCODE_STATE_params = {
+        "NAME": {"type": "string", "default": "default"},
+    }
     def cmd_SAVE_GCODE_STATE(self, gcmd):
         state_name = gcmd.get('NAME', 'default')
         self.saved_states[state_name] = {
@@ -237,6 +253,11 @@ class GCodeMove:
             'extrude_factor': self.extrude_factor,
         }
     cmd_RESTORE_GCODE_STATE_help = "Restore a previously saved G-Code state"
+    cmd_RESTORE_GCODE_STATE_params = {
+        "NAME": {"type": "string", "default": "default"},
+        "MOVE": {"type": "int", "default": 0},
+        "MOVE_SPEED": {"type": "float", "required": False},
+    }
     def cmd_RESTORE_GCODE_STATE(self, gcmd):
         state_name = gcmd.get('NAME', 'default')
         state = self.saved_states.get(state_name)

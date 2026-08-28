@@ -64,9 +64,11 @@ class Heater:
         self.printer.load_object(config, "verify_heater %s" % (short_name,))
         self.printer.load_object(config, "pid_calibrate")
         gcode = self.printer.lookup_object("gcode")
-        gcode.register_mux_command("SET_HEATER_TEMPERATURE", "HEATER",
-                                   short_name, self.cmd_SET_HEATER_TEMPERATURE,
-                                   desc=self.cmd_SET_HEATER_TEMPERATURE_help)
+        gcode.register_mux_command(
+            "SET_HEATER_TEMPERATURE", "HEATER", short_name,
+            self.cmd_SET_HEATER_TEMPERATURE,
+            desc=self.cmd_SET_HEATER_TEMPERATURE_help,
+            params=self.cmd_SET_HEATER_TEMPERATURE_params)
         self.printer.register_event_handler("klippy:shutdown",
                                             self._handle_shutdown)
     def set_pwm(self, read_time, value):
@@ -153,6 +155,10 @@ class Heater:
         return {'temperature': round(smoothed_temp, 2), 'target': target_temp,
                 'power': last_pwm_value}
     cmd_SET_HEATER_TEMPERATURE_help = "Sets a heater temperature"
+    cmd_SET_HEATER_TEMPERATURE_params = {
+        "HEATER": {"type": "string", "required": True},
+        "TARGET": {"type": "float", "default": 0.},
+    }
     def cmd_SET_HEATER_TEMPERATURE(self, gcmd):
         temp = gcmd.get_float('TARGET', 0.)
         pheaters = self.printer.lookup_object('heaters')
@@ -304,7 +310,8 @@ class PrinterHeaters:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_mux_command('TEMPERATURE_WAIT', "SENSOR", sensor_name,
                                    self.cmd_TEMPERATURE_WAIT,
-                                   desc=self.cmd_TEMPERATURE_WAIT_help)
+                                   desc=self.cmd_TEMPERATURE_WAIT_help,
+                                   params=self.cmd_TEMPERATURE_WAIT_params)
         if gcode_id is None:
             gcode_id = config.get('gcode_id', None)
             if gcode_id is None:
@@ -364,6 +371,11 @@ class PrinterHeaters:
         if wait and temp:
             self._wait_for_temperature(heater)
     cmd_TEMPERATURE_WAIT_help = "Wait for a temperature on a sensor"
+    cmd_TEMPERATURE_WAIT_params = {
+        "SENSOR": {"type": "string", "required": True},
+        "MINIMUM": {"type": "float", "required": False},
+        "MAXIMUM": {"type": "float", "required": False},
+    }
     def cmd_TEMPERATURE_WAIT(self, gcmd):
         sensor_name = gcmd.get('SENSOR')
         min_temp = gcmd.get_float('MINIMUM', float('-inf'))

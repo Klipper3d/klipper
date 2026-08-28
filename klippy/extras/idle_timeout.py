@@ -28,7 +28,8 @@ class IdleTimeout:
                                                     DEFAULT_IDLE_GCODE)
         self.gcode.register_command('SET_IDLE_TIMEOUT',
                                     self.cmd_SET_IDLE_TIMEOUT,
-                                    desc=self.cmd_SET_IDLE_TIMEOUT_help)
+                                    desc=self.cmd_SET_IDLE_TIMEOUT_help,
+                                    params=self.cmd_SET_IDLE_TIMEOUT_params)
         self.state = "Idle"
         self.last_print_start_systime = 0.
     def get_status(self, eventtime):
@@ -106,6 +107,9 @@ class IdleTimeout:
         self.printer.send_event("idle_timeout:printing",
                                 est_print_time + PIN_MIN_TIME)
     cmd_SET_IDLE_TIMEOUT_help = "Set the idle timeout in seconds"
+    cmd_SET_IDLE_TIMEOUT_params = {
+        "TIMEOUT": {"type": "float", "required": False},
+    }
     def cmd_SET_IDLE_TIMEOUT(self, gcmd):
         timeout = gcmd.get_float('TIMEOUT', self.idle_timeout, above=0.)
         self.idle_timeout = timeout

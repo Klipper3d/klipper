@@ -54,8 +54,10 @@ class BedTiltCalibrate:
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command(
             'BED_TILT_CALIBRATE', self.cmd_BED_TILT_CALIBRATE,
-            desc=self.cmd_BED_TILT_CALIBRATE_help)
+            desc=self.cmd_BED_TILT_CALIBRATE_help,
+            params=self.cmd_BED_TILT_CALIBRATE_params)
     cmd_BED_TILT_CALIBRATE_help = "Bed tilt calibration script"
+    cmd_BED_TILT_CALIBRATE_params = dict(probe.PROBE_POINTS_HELPER_PARAMS)
     def cmd_BED_TILT_CALIBRATE(self, gcmd):
         self.probe_helper.start_probe(gcmd)
     def probe_finalize(self, positions):

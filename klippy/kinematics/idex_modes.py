@@ -48,15 +48,18 @@ class DualCarriages:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command(
                    'SET_DUAL_CARRIAGE', self.cmd_SET_DUAL_CARRIAGE,
-                   desc=self.cmd_SET_DUAL_CARRIAGE_help)
+                   desc=self.cmd_SET_DUAL_CARRIAGE_help,
+                   params=self.cmd_SET_DUAL_CARRIAGE_params)
         gcode.register_command(
                    'SAVE_DUAL_CARRIAGE_STATE',
                    self.cmd_SAVE_DUAL_CARRIAGE_STATE,
-                   desc=self.cmd_SAVE_DUAL_CARRIAGE_STATE_help)
+                   desc=self.cmd_SAVE_DUAL_CARRIAGE_STATE_help,
+                   params=self.cmd_SAVE_DUAL_CARRIAGE_STATE_params)
         gcode.register_command(
                    'RESTORE_DUAL_CARRIAGE_STATE',
                    self.cmd_RESTORE_DUAL_CARRIAGE_STATE,
-                   desc=self.cmd_RESTORE_DUAL_CARRIAGE_STATE_help)
+                   desc=self.cmd_RESTORE_DUAL_CARRIAGE_STATE_help,
+                   params=self.cmd_RESTORE_DUAL_CARRIAGE_STATE_params)
     def _init_steppers(self, rails):
         ffi_main, ffi_lib = chelper.get_ffi()
         self.dc_stepper_kinematics = []
@@ -237,6 +240,10 @@ class DualCarriages:
         for dc_rail in self.dc_rails.values():
             dc_rail.apply_transform()
     cmd_SET_DUAL_CARRIAGE_help = "Configure the dual carriages mode"
+    cmd_SET_DUAL_CARRIAGE_params = {
+        "CARRIAGE": {"type": "string", "required": False},
+        "MODE": {"type": "string", "default": "PRIMARY"},
+    }
     def cmd_SET_DUAL_CARRIAGE(self, gcmd):
         carriage_str = gcmd.get('CARRIAGE', None)
         if carriage_str is None:
@@ -280,6 +287,9 @@ class DualCarriages:
         self.activate_dc_mode(dc_rail, mode)
     cmd_SAVE_DUAL_CARRIAGE_STATE_help = \
             "Save dual carriages modes and positions"
+    cmd_SAVE_DUAL_CARRIAGE_STATE_params = {
+        "NAME": {"type": "string", "default": "default"},
+    }
     def cmd_SAVE_DUAL_CARRIAGE_STATE(self, gcmd):
         state_name = gcmd.get('NAME', 'default')
         self.saved_states[state_name] = self.save_dual_carriage_state()
@@ -292,6 +302,11 @@ class DualCarriages:
                 'toolhead_position': tuple(pos)}
     cmd_RESTORE_DUAL_CARRIAGE_STATE_help = \
             "Restore dual carriages modes and positions"
+    cmd_RESTORE_DUAL_CARRIAGE_STATE_params = {
+        "NAME": {"type": "string", "default": "default"},
+        "MOVE_SPEED": {"type": "float", "default": 0.},
+        "MOVE": {"type": "int", "default": 1},
+    }
     def cmd_RESTORE_DUAL_CARRIAGE_STATE(self, gcmd):
         state_name = gcmd.get('NAME', 'default')
         saved_state = self.saved_states.get(state_name)
