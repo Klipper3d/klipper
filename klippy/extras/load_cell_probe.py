@@ -283,7 +283,7 @@ class LoadCellProbeConfigHelper:
     def get_safety_range(self, gcmd=None):
         counts_per_gram = self._load_cell.get_counts_per_gram()
         # calculate the safety band
-        zero = self._load_cell.get_reference_tare_counts()
+        zero = self._load_cell.get_tare_counts()
         safety_counts = int(counts_per_gram * self.get_safety_limit_grams(gcmd))
         safety_min = int(zero - safety_counts)
         safety_max = int(zero + safety_counts)
