@@ -123,12 +123,6 @@ class TMCErrorCheck:
                 if f in err_fields:
                     err_mask |= self.fields.all_fields[reg_name][f]
         self.drv_status_reg_info = [0, reg_name, mask, err_mask, cs_actual_mask]
-        # Setup for temperature query
-        self.adc_temp = None
-        self.adc_temp_reg = self.fields.lookup_register("adc_temp")
-        if self.adc_temp_reg is not None:
-            pheaters = self.printer.load_object(config, 'heaters')
-            pheaters.register_monitor(config)
     def _query_register(self, reg_info, try_clear=False):
         last_value, reg_name, mask, err_mask, cs_actual_mask = reg_info
         cleared_flags = 0
@@ -168,20 +162,11 @@ class TMCErrorCheck:
                 cleared_flags |= val & err_mask
                 self.mcu_tmc.set_register(reg_name, val & err_mask)
         return cleared_flags
-    def _query_temperature(self):
-        try:
-            self.adc_temp = self.mcu_tmc.get_register(self.adc_temp_reg)
-        except self.printer.command_error as e:
-            # Ignore comms error for temperature
-            self.adc_temp = None
-            return
     def _do_periodic_check(self, eventtime):
         try:
             self._query_register(self.drv_status_reg_info)
             if self.gstat_reg_info is not None:
                 self._query_register(self.gstat_reg_info)
-            if self.adc_temp_reg is not None:
-                self._query_temperature()
         except self.printer.command_error as e:
             self.printer.invoke_shutdown(str(e))
             return self.printer.get_reactor().NEVER
@@ -210,16 +195,13 @@ class TMCErrorCheck:
         return False
     def get_status(self, eventtime=None):
         if self.check_timer is None:
-            return {'drv_status': None, 'temperature': None}
-        temp = None
-        if self.adc_temp is not None:
-            temp = round((self.adc_temp - 2038) / 7.7, 2)
+            return {'drv_status': None}
         last_value, reg_name = self.drv_status_reg_info[:2]
         if last_value != self.last_drv_status:
             self.last_drv_status = last_value
             fields = self.fields.get_reg_fields(reg_name, last_value)
             self.last_drv_fields = {n: v for n, v in fields.items() if v}
-        return {'drv_status': self.last_drv_fields, 'temperature': temp}
+        return {'drv_status': self.last_drv_fields}
 
 ######################################################################
 # Record driver status
