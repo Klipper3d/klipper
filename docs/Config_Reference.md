@@ -4557,7 +4557,9 @@ lcd_type:
 #   The name of the display_data group to show on the display. This
 #   controls the content of the screen (see the "display_data" section
 #   for more information). The default is _default_20x4 for hd44780 or
-#   aip31068_spi displays and _default_16x4 for other displays.
+#   aip31068_spi displays and _default_16x4 for other displays. The
+#   optional _print_time_20x4 group displays elapsed and remaining time
+#   on a 20x4 display.
 #menu_timeout:
 #   Timeout for menu. Being inactive this amount of seconds will
 #   trigger menu exit or return to root menu when having autorun
