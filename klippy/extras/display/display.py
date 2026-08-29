@@ -7,6 +7,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, os, ast
 from . import aip31068_spi, hd44780, hd44780_spi, st7920, uc1701, menu
+from .fonts import DisplayFont
 
 # Normal time between each screen redraw
 REDRAW_TIME = 0.500
@@ -93,6 +94,7 @@ class PrinterDisplayTemplate:
         self.display_templates = {}
         self.display_data_groups = {}
         self.display_glyphs = {}
+        self.display_fonts = {}
         self.load_config(config)
     def get_display_templates(self):
         return self.display_templates
@@ -100,6 +102,8 @@ class PrinterDisplayTemplate:
         return self.display_data_groups
     def get_display_glyphs(self):
         return self.display_glyphs
+    def get_display_fonts(self):
+        return self.display_fonts
     def _parse_glyph(self, config, glyph_name, data, width, height):
         glyph_data = []
         for line in data.split('\n'):
@@ -144,6 +148,11 @@ class PrinterDisplayTemplate:
         for group_name, data_configs in groups.items():
             dg = DisplayGroup(config, group_name, data_configs)
             self.display_data_groups[group_name] = dg
+        # Load display_font sections
+        df_main = config.get_prefix_sections('display_font ')
+        for c in df_main:
+            df = DisplayFont(c)
+            self.display_fonts[df.name] = df
         # Load display glyphs
         dg_prefix = 'display_glyph '
         self.display_glyphs = icons = {}
@@ -189,6 +198,21 @@ class PrinterLCD:
         # Configurable display
         templates = lookup_display_templates(config)
         self.display_templates = templates.get_display_templates()
+        self.display_fonts = templates.get_display_fonts()
+        font_name = config.get('font', None)
+        self.font_profile = None
+        if font_name is not None:
+            self.font_profile = self.display_fonts.get(font_name)
+            if self.font_profile is None:
+                raise config.error("Unknown display font '%s'" % (font_name))
+        if (hasattr(self.lcd_chip, "set_font_profile")
+            and self.font_profile is not None):
+            logging.info("Setting font profile for %s"
+                         % (self.font_profile.name))
+            self.lcd_chip.set_font_profile(self.font_profile)
+        elif self.font_profile is not None:
+            raise config.error(
+                "Option 'font' is only supported on OLED displays")
         self.display_data_groups = templates.get_display_data_groups()
         self.lcd_chip.set_glyphs(templates.get_display_glyphs())
         dgroup = "_default_16x4"
