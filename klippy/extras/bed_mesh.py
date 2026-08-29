@@ -329,6 +329,8 @@ class BedMeshCalibrate:
         self.radius = self.origin = None
         self.mesh_min = self.mesh_max = (0., 0.)
         self.adaptive_margin = config.getfloat('adaptive_margin', 0.0)
+        self.wandering_step = config.getfloat('wandering_step', 0.0)
+        self.wandering_state = 0
         self.bedmesh = bedmesh
         self.mesh_config = collections.OrderedDict()
         self._init_mesh_config(config)
@@ -560,7 +562,7 @@ class BedMeshCalibrate:
             self.mesh_config["y_count"] = new_y_probe_count
         self._profile_name = None
         return True
-    def update_config(self, gcmd):
+    def update_config(self, gcmd, is_calibrating=False):
         # reset default configuration
         self.radius = self.orig_config['radius']
         self.origin = self.orig_config['origin']
@@ -612,19 +614,40 @@ class BedMeshCalibrate:
         need_cfg_update |= self.set_adaptive_mesh(gcmd)
         probe_method = gcmd.get("METHOD", "automatic")
 
+        # Wandering Probe offset calculation
+        step = gcmd.get_float("WANDERING_STEP", self.wandering_step)
+        dx = dy = 0.0
+        if step > 0.0:
+            grid = [
+                (0.0, 0.0), (step, 0.0), (step, step), (0.0, step),
+                (-step, step), (-step, 0.0), (-step, -step),
+                (0.0, -step), (step, -step)
+            ]
+            dx, dy = grid[self.wandering_state % 9]
+            if is_calibrating:
+                # Diagonal points are distance step * sqrt(2) (~1.41 * step)
+                logging.debug("bed_mesh: wandering step=%.2f, "
+                              "offset=(%.2f, %.2f)" % (step, dx, dy))
+
+        shifted_min = (self.mesh_min[0] + dx, self.mesh_min[1] + dy)
+        shifted_max = (self.mesh_max[0] + dx, self.mesh_max[1] + dy)
+        shifted_orig = None
+        if self.origin:
+            shifted_orig = (self.origin[0] + dx, self.origin[1] + dy)
+
         if need_cfg_update:
             self._verify_algorithm(gcmd.error)
             self.probe_mgr.generate_points(
-                self.mesh_config, self.mesh_min, self.mesh_max,
-                self.radius, self.origin, probe_method
+                self.mesh_config, shifted_min, shifted_max,
+                self.radius, shifted_orig, probe_method
             )
             msg = "\n".join(["%s: %s" % (k, v)
                              for k, v in self.mesh_config.items()])
             logging.info("Updated Mesh Configuration:\n" + msg)
         else:
             self.probe_mgr.generate_points(
-                self.mesh_config, self.mesh_min, self.mesh_max,
-                self.radius, self.origin, probe_method
+                self.mesh_config, shifted_min, shifted_max,
+                self.radius, shifted_orig, probe_method
             )
     def dump_calibration(self, gcmd=None):
         if gcmd is not None and gcmd.get_command_parameters():
@@ -647,7 +670,7 @@ class BedMeshCalibrate:
             raise gcmd.error("Value for parameter 'PROFILE' must be specified")
         self.bedmesh.set_mesh(None)
         try:
-            self.update_config(gcmd)
+            self.update_config(gcmd, is_calibrating=True)
         except BedMeshError as e:
             raise gcmd.error(str(e))
         self.probe_mgr.start_probe(gcmd)
@@ -783,6 +806,13 @@ class BedMeshCalibrate:
             zero_ref_pos = self.probe_mgr.get_zero_ref_pos()
             z_mesh.set_zero_reference(*zero_ref_pos)
         self.bedmesh.set_mesh(z_mesh)
+        if self.wandering_step > 0.0:
+            self.wandering_state += 1
+            if self.svv is not None:
+                gcode = self.printer.lookup_object('gcode')
+                gcode.run_script(
+                    "SAVE_VARIABLE VARIABLE=bed_mesh_wandering_state VALUE=%d"
+                    % (self.wandering_state,))
         self.gcode.respond_info("Mesh Bed Leveling Complete")
         if self._profile_name is not None:
             self.bedmesh.save_profile(self._profile_name)
@@ -1723,6 +1753,13 @@ class ProfileManager:
         except BedMeshError as e:
             raise self.gcode.error(str(e))
         self.bedmesh.set_mesh(z_mesh)
+        if self.wandering_step > 0.0:
+            self.wandering_state += 1
+            if self.svv is not None:
+                gcode = self.printer.lookup_object('gcode')
+                gcode.run_script(
+                    "SAVE_VARIABLE VARIABLE=bed_mesh_wandering_state VALUE=%d"
+                    % (self.wandering_state,))
     def remove_profile(self, prof_name):
         if prof_name in self.profiles:
             configfile = self.printer.lookup_object('configfile')
