@@ -3,6 +3,7 @@
 # Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import logging
 from . import fan
 
 PIN_MIN_TIME = 0.100
@@ -19,6 +20,11 @@ class PrinterHeaterFan:
         self.fan_speed = config.getfloat("fan_speed", 1., minval=0., maxval=1.)
         self.last_speed = 0.
     def handle_ready(self):
+        if not self.fan.mcu_fan.is_initial_pin():
+            logging.warning(
+                "Heater fan's pin '%s' is not among initial pins of MCU '%s'. "
+                "Consider adding it for safety."
+                % (self.fan.mcu_fan.raw_pin_string(), self.fan.get_mcu()._name))
         pheaters = self.printer.lookup_object('heaters')
         self.heaters = [pheaters.lookup_heater(n) for n in self.heater_names]
         reactor = self.printer.get_reactor()
