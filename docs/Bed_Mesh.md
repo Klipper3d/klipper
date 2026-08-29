@@ -61,7 +61,7 @@ The illustration below demonstrates how the `mesh_min`, `mesh_max`, and
 `probe_count` options are used to generate probe points.  The arrows indicate
 the direction of the probing procedure, beginning at `mesh_min`.  For reference,
 when the probe is at `mesh_min` the nozzle will be at (11, 1), and when the probe
-is at `mesh_max`, the nozzle will be at (206, 193).
+is at `mesh_max`, the nozzle will be at (216, 193).
 
 ![bedmesh_rect_basic](img/bedmesh_rect_basic.svg)
 
