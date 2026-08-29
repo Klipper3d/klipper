@@ -39,7 +39,6 @@ OBJS_klipper.elf = $(patsubst %.c, $(OUT)src/%.o,$(src-y))
 OBJS_klipper.elf += $(OUT)compile_time_request.o
 CFLAGS_klipper.elf = $(CFLAGS) -Wl,--gc-sections
 
-CPPFLAGS = -I$(OUT) -P -MD -MT $@
 
 # Default targets
 target-y := $(OUT)klipper.elf
