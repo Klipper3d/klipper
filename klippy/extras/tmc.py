@@ -129,6 +129,20 @@ class TMCErrorCheck:
         if self.adc_temp_reg is not None:
             pheaters = self.printer.load_object(config, 'heaters')
             pheaters.register_monitor(config)
+    def _debug_drv_status(self):
+        # Try to quickly get the DRV_STATUS to describe GSTAT drv_err
+        reg_info = self.drv_status_reg_info
+        last_value, reg_name, mask, err_mask, cs_actual_mask = reg_info
+        try:
+            val = self.mcu_tmc.get_register(reg_name)
+            if val & mask != last_value & mask:
+                fmt = self.fields.pretty_format(reg_name, val)
+                msg = "TMC '%s' reports %s" % (self.stepper_name, fmt)
+                logging.error(msg)
+                return '\n' + msg
+        except:
+            pass
+        return ""
     def _query_register(self, reg_info, try_clear=False):
         last_value, reg_name, mask, err_mask, cs_actual_mask = reg_info
         cleared_flags = 0
@@ -183,7 +197,11 @@ class TMCErrorCheck:
             if self.adc_temp_reg is not None:
                 self._query_temperature()
         except self.printer.command_error as e:
-            self.printer.invoke_shutdown(str(e))
+            error_string = str(e)
+            if "drv_err" in error_string:
+                describe = self._debug_drv_status()
+                error_string += describe
+            self.printer.invoke_shutdown(error_string)
             return self.printer.get_reactor().NEVER
         return eventtime + 1.
     def stop_checks(self):
