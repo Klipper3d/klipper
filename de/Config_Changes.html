@@ -1,0 +1,1639 @@
+
+<!doctype html>
+<html lang="de" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.4, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>Konfigurationsänderungen - Klipper-Dokumentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-VEN1PGNQL4"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){this.value&&gtag("event","search",{search_term:this.value})}),"undefined"!=typeof location$&&location$.subscribe(function(e){gtag("config","G-VEN1PGNQL4",{page_path:e.pathname})})})</script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-VEN1PGNQL4"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#konfigurationsanderungen" class="md-skip">
+          Zum Inhalt
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="Klipper-Dokumentation" class="md-header__button md-logo" aria-label="Klipper-Dokumentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Klipper-Dokumentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Konfigurationsänderungen
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Sprache wechseln">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/de/" hreflang="de" class="md-select__link">
+                    Deutsch
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/it/" hreflang="it" class="md-select__link">
+                    Italiano
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/fr/" hreflang="fr" class="md-select__link">
+                    Français
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Suche" placeholder="Suche" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Suche">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Teilen" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Zurücksetzen" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Suche wird initialisiert
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Quellcode" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Klipper-Dokumentation" class="md-nav__button md-logo" aria-label="Klipper-Dokumentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Klipper-Dokumentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Quellcode" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        Übersicht
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        Funktionen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        Häufig gestellte Fragen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        Veröffentlichungen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Konfigurationsänderungen
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="Config_Changes.html" class="md-nav__link md-nav__link--active">
+        Konfigurationsänderungen
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Inhaltsverzeichnis">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Inhaltsverzeichnis
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#anderungen" class="md-nav__link">
+    Änderungen
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        Kontakt
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation und Konfiguration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation und Konfiguration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation und Konfiguration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_1" type="checkbox" id="__nav_7_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_1">
+          Installation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_1">
+          <span class="md-nav__icon md-icon"></span>
+          Installation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="OctoPrint.html" class="md-nav__link">
+        OctoPrint für Klipper
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Konfigurationsreferenz
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Konfigurationsreferenz" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Konfigurationsreferenz
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        Konfigurationsreferenz
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        Rotationsdistanz
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        Überprüfung der Konfiguration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Bettnivellierung
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Bettnivellierung" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Bettnivellierung
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        Bett Nivellierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        Deltakalibrierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        Sondenkalibrierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        Manuelle Nivellierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        Bettgitter
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        Endstop Phase
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Axis_Twist_Compensation.html" class="md-nav__link">
+        Kompensation der Achsenverdrehung
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Resonanz-Kompensation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Resonanz-Kompensation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Resonanz-Kompensation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        Resonanz-Kompensation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        Resonanzen messen
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Druckvorschub
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Befehlsvorlagen
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Befehlsvorlagen" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Befehlsvorlagen
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        Befehlsvorlagen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        Statusreferenz
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        TMC Treiber
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        Homing und Probing mit mehreren Mikrocontrollern
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        Slicer
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        Schräglagenkorrektur
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Objekte ausschließen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        Verwendung von PWM-Tools
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Entwicklerdokumentation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Entwicklerdokumentation" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Entwicklerdokumentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        Code Überblick
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        Kinematik
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        Protokoll
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        API Server
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        MCU Befehle
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        CANBUS Protokoll
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        Fehlersuche
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        Benchmarks
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        Zu Klipper beitragen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        Klipper paketieren
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Geräteabhängige Dokumente
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Geräteabhängige Dokumente" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Geräteabhängige Dokumente
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        Beispielkonfigurationen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        SD-Karten Aktualisierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        RPi Mikrocontroller
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        Bootloader
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloader_Entry.html" class="md-nav__link">
+        Bootloader-Eintrag
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
+        CANBUS-Fehlerbehebung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        TSL1401CL Filamentbreitensensor
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        Filament-Dicken Hallsensor
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Eddy_Probe.html" class="md-nav__link">
+        Induktive Wirbelstromsonde
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Load_Cell.html" class="md-nav__link">
+        Zellen laden
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Sponsors.html" class="md-nav__link">
+        Förderer
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Inhaltsverzeichnis">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Inhaltsverzeichnis
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#anderungen" class="md-nav__link">
+    Änderungen
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Config_Changes.md" title="Seite editieren" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="konfigurationsanderungen">Konfigurationsänderungen<a class="headerlink" href="#konfigurationsanderungen" title="Permanent link">&para;</a></h1>
+<p>Dieses Dokument behandelt die jüngsten Softwareänderungen an der Konfigurationsdatei, die nicht abwärtskompatibel sind. Es ist eine gute Idee, dieses Dokument zu lesen, wenn Sie die Klipper-Software aktualisieren.</p>
+<p>Alle Daten in diesem Dokument sind ungefähre Angaben.</p>
+<h2 id="anderungen">Änderungen<a class="headerlink" href="#anderungen" title="Permanent link">&para;</a></h2>
+<p>20260525: Die interne Implementierung von "probe:z_virtual_endstop" hat sich geändert. Die meisten Benutzer werden keine Verhaltensänderung feststellen. Bisher war es technisch möglich, "probe:z_virtual_endstop" mit anderen Arten von Z-Endschaltern zu kombinieren; dieses Verhalten ist nicht mehr zulässig.</p>
+<p>20260501: Die Behandlung der <code>[probe_eddy_current]</code>-Konfigurationsoption <code>tap_threshold</code> und des zugehörigen G-Code-Parameters <code>TAP_THRESHOLD</code> hat sich geändert. Der Wert muss neu kalibriert werden. Eine Anleitung zur Kalibrierung finden Sie in der <a href="Eddy_Probe.html">Dokumentation zur Wirbelstromsonde</a>.</p>
+<p>20260408: Das Skript <code>lib/canboot/flash_can.py</code> wurde auf die aktuelle Version aus <a href="https://github.com/Arksine/katapult">Katapult</a> aktualisiert und dabei in <code>lib/katapult/flashtool.py</code> umbenannt. Wenn Sie dieses Skript direkt aufrufen, statt die vorhandenen Makefiles zu verwenden, müssen Sie den Pfad zum Skript auf <code>lib/katapult/flashtool.py</code> ändern.</p>
+<p>20260318: Die <code>[probe_eddy_current]</code>-Konfigurationsoptionen <code>speed</code>, <code>lift_speed</code>, <code>samples</code>, <code>sample_retract_dist</code>, <code>samples_result</code>, <code>samples_tolerance</code> und <code>samples_tolerance_retries</code> gelten nicht mehr für Messbefehle mit <code>METHOD=scan</code>, <code>METHOD=rapid_scan</code> oder <code>METHOD=tap</code>. Um abweichende Einstellungen zu verwenden, übergeben Sie dem Messbefehl den entsprechenden Parameter <code>PROBE_SPEED</code>, <code>LIFT_SPEED</code>, <code>SAMPLES</code>, <code>SAMPLE_RETRACT_DIST</code>, <code>SAMPLES_RESULT</code>, <code>SAMPLES_TOLERANCE</code> bzw. <code>SAMPLES_TOLERANCE_RETRIES</code>.</p>
+<p>20260318: Die <code>[probe_eddy_current]</code>-Konfigurationsoption <code>z_offset</code> wurde in <code>descend_z</code> umbenannt. Die Verwendung des alten Namens ist veraltet und wird in naher Zukunft entfernt.</p>
+<p>20260214: Der Parameter <code>STOP_ON_ENDSTOP</code> des G-Code-Befehls <code>MANUAL_STEPPER</code> hat sich geändert. Einzelheiten finden Sie in der Dokumentation zu <a href="G-Codes.html#manual_stepper">MANUAL_STEPPER</a>. Die Verwendung der bisherigen Ganzzahlwerte (-2, -1, 1, 2) ist veraltet und die Unterstützung wird in naher Zukunft entfernt.</p>
+<p>20260207: Das Low-Level-I2C-Verhalten von sx1509- und uc1701-Geräten hat sich geändert. Bisher führte ein I2C-Fehler zu einer Abschaltung; nun erzeugen I2C-Fehler bei der Kommunikation mit diesen Geräten lediglich Warnungen in der Protokolldatei.</p>
+<p>20260109: Der Statuswert <code>{printer.probe.last_z_result}</code> ist veraltet; er wird in naher Zukunft entfernt. Verwenden Sie stattdessen <code>{printer.probe.last_probe_position}</code> und beachten Sie, dass bei diesem neuen Wert die konfigurierten XYZ-Versätze der Sonde bereits berücksichtigt sind.</p>
+<p>20260109: Die Textausgabe der Befehle <code>PROBE</code>, <code>PROBE_ACCURACY</code> und ähnlicher Befehle in der G-Code-Konsole hat sich geändert. Z-Höhen werden nun relativ zur nominellen Z-Position des Betts gemeldet statt relativ zum konfigurierten <code>z_offset</code> der Sonde. Ebenso werden bei den Zwischenausgaben der X- und Y-Werte in der Konsole die konfigurierten Versätze <code>x_offset</code> und <code>y_offset</code> der Sonde berücksichtigt.</p>
+<p>20260109: Das Modul <code>[screws_tilt_adjust]</code> meldet die Statusvariable <code>{printer.screws_tilt_adjust.result.screw1.z}</code> nun mit berücksichtigtem <code>z_offset</code> der Sonde. Das heißt: Bisher musste man den konfigurierten <code>z_offset</code> der Sonde abziehen, um die absolute Z-Abweichung an der jeweiligen Schraubenposition zu erhalten - nun darf der <code>z_offset</code> nicht mehr angewendet werden.</p>
+<p>20251122: Den Abschnitten <code>[carriage &lt;name&gt;]</code> der <code>generic_cartesian</code>-Kinematik wurde eine Option <code>axis</code> hinzugefügt, die beliebige Namen für primäre Schlitten erlaubt. Benutzern wird empfohlen, die Option <code>axis</code> nun explizit anzugeben.</p>
+<p>20251106: Die Statusfelder <code>{printer.toolhead.position}</code>, <code>{printer.gcode_move.position}</code>, <code>{printer.gcode_move.gcode_position}</code> und <code>{printer.motion_report.live_position}</code> ändern sich. Diese Koordinaten enthielten bisher stets vier Komponenten, können nun aber zusätzliche Komponenten enthalten. Reihenfolge und Anzahl der Komponenten können sich zur Laufzeit ändern - wichtige Einzelheiten finden Sie in der <a href="Status_Reference.html#accessing-coordinates">Statusreferenz</a>. Der Zugriff auf diese Koordinaten in Makros über den Accessor ".e" ist veraltet - verwenden Sie stattdessen etwas wie <code>{printer.toolhead.position[printer.gcode_move.axis_map.E]}</code>.</p>
+<p>20251106: Die Statusfelder <code>{printer.gcode_move.homing_origin}</code>, <code>{printer.toolhead.axis_min}</code> und <code>{printer.toolhead.axis_max}</code> enthalten derzeit vier Komponenten, wobei die vierte Komponente stets null ist. Dieses Verhalten ist veraltet. Künftig können diese Koordinaten nur noch drei Komponenten enthalten. Weitere Informationen finden Sie in der <a href="Status_Reference.html#accessing-coordinates">Statusreferenz</a>.</p>
+<p>20251010: Während des normalen Druckens versucht die Befehlsverarbeitung nun, der Druckerbewegung eine Sekunde vorauszulaufen (reduziert von bisher zwei Sekunden).</p>
+<p>20251003: Die Unterstützung für die undokumentierte Option <code>max_stepper_error</code> im Konfigurationsabschnitt <code>[printer]</code> wurde entfernt.</p>
+<p>20250916: Die Definitionen der Input Shaper EI, 2HUMP_EI und 3HUMP_EI wurden aktualisiert. Für optimale Ergebnisse wird empfohlen, die Input Shaper neu zu kalibrieren, insbesondere wenn einer dieser Shaper derzeit verwendet wird.</p>
+<p>20250811: Die Unterstützung für den Parameter <code>max_accel_to_decel</code> im Konfigurationsabschnitt <code>[printer]</code> sowie für den Parameter <code>ACCEL_TO_DECEL</code> im Befehl <code>SET_VELOCITY_LIMIT</code> wurde entfernt. Diese Funktionen waren seit 20240313 veraltet.</p>
+<p>20250721: Die Module <code>[pca9632]</code> und <code>[mcp4018]</code> akzeptieren die Optionen <code>scl_pin</code> und <code>sda_pin</code> nicht mehr. Verwenden Sie stattdessen <code>i2c_software_scl_pin</code> und <code>i2c_software_sda_pin</code>.</p>
+<p>20250428: Die maximale <code>cycle_time</code> für PWM-Abschnitte <code>[output_pin]</code>, <code>[pwm_cycle_time]</code>, <code>[pwm_tool]</code> und ähnliche beträgt nun 3 Sekunden (reduziert von 5 Sekunden). Auch <code>maximum_mcu_duration</code> in <code>[pwm_tool]</code> beträgt nun 3 Sekunden.</p>
+<p>20250418: Die Funktion <code>STOP_ON_ENDSTOP</code> von manual_stepper kann nun weniger Zeit bis zum Abschluss benötigen. Bisher wartete der Befehl die gesamte mögliche Dauer der Bewegung ab, selbst wenn der Endschalter früher auslöste. Nun endet der Befehl kurz nach dem Auslösen des Endschalters.</p>
+<p>20250417: SPI-Geräte mit "Software-SPI" werden nun in der Rate begrenzt. Bisher wurde die <code>spi_speed</code> aus der Konfiguration ignoriert und die Übertragungsgeschwindigkeit war nur durch die Verarbeitungsgeschwindigkeit des Mikrocontrollers begrenzt. Nun werden die Geschwindigkeiten durch den Konfigurationsparameter <code>spi_speed</code> begrenzt (die tatsächlichen Hardwaregeschwindigkeiten liegen aufgrund des Software-Overheads wahrscheinlich unter dem konfigurierten Wert).</p>
+<p>20250411: Klipper v0.13.0 veröffentlicht.</p>
+<p>20250308: Der Parameter <code>AUTO</code> des Befehls <code>AXIS_TWIST_COMPENSATION_CALIBRATE</code> wurde entfernt.</p>
+<p>20250131: Die Option <code>VARIABLE=&lt;name&gt;</code> in <code>SAVE_VARIABLE</code> erfordert einen Wert in Kleinbuchstaben. Zum Beispiel <code>extruder</code> statt <code>Extruder</code> in gemischter Schreibweise oder <code>EXTRUDER</code> in Großbuchstaben. Die Verwendung eines Großbuchstabens löst einen Fehler aus.</p>
+<p>20241203: Der Resonanztest wurde um langsame Sweep-Bewegungen erweitert. Diese Änderung setzt voraus, dass die Testpunkte in der X-/Y-Ebene etwas Freiraum haben (bei den Standardeinstellungen sollten +/- 30 mm um den Testpunkt genügen). Der neue Test liefert in der Regel genauere und zuverlässigere Ergebnisse. Bei Bedarf lässt sich das bisherige Testverhalten jedoch wiederherstellen, indem dem Konfigurationsabschnitt <code>[resonance_tester]</code> die Optionen <code>sweeping_period: 0</code> und <code>accel_per_hz: 75</code> hinzugefügt werden.</p>
+<p>20241201: In manchen Fällen hat Klipper führende Zeichen oder Leerzeichen in einem klassischen G-Code-Befehl ignoriert. So wurde "99M123" möglicherweise als "M123" und "M 321" als "M321" interpretiert. Klipper meldet diese Fälle nun mit der Warnung "Unknown command".</p>
+<p>20241112: Die Option <code>CHIPS=&lt;chip_name&gt;</code> in <code>TEST_RESONANCES</code> und <code>SHAPER_CALIBRATE</code> erfordert die Angabe der vollständigen Namen der Beschleunigungssensor-Chips. Zum Beispiel <code>adxl345 rpi</code> statt des Kurznamens <code>rpi</code>.</p>
+<p>20240912: Die Befehle <code>SET_PIN</code>, <code>SET_SERVO</code>, <code>SET_FAN_SPEED</code>, <code>M106</code> und <code>M107</code> werden nun zusammengefasst. Wurden bisher viele Aktualisierungen desselben Objekts schneller abgesetzt als die minimale Planungszeit (typischerweise 100 ms), konnten die tatsächlichen Aktualisierungen weit in die Zukunft eingereiht werden. Werden nun viele Aktualisierungen in schneller Folge abgesetzt, kann es sein, dass nur die letzte Anforderung angewendet wird. Wird das bisherige Verhalten benötigt, fügen Sie zwischen den Aktualisierungen explizite <code>G4</code>-Verzögerungsbefehle ein.</p>
+<p>20240912: Die Unterstützung für die Parameter <code>maximum_mcu_duration</code> und <code>static_value</code> in <code>[output_pin]</code>-Konfigurationsabschnitten wurde entfernt. Diese Optionen waren seit 20240123 veraltet.</p>
+<p>20240415: Der Parameter <code>on_error_gcode</code> im Konfigurationsabschnitt <code>[virtual_sdcard]</code> hat nun einen Standardwert. Wird dieser Parameter nicht angegeben, lautet der Standardwert nun <code>TURN_OFF_HEATERS</code>. Wird das bisherige Verhalten gewünscht (bei einem Fehler während eines virtual_sdcard-Drucks keine Standardaktion ausführen), definieren Sie <code>on_error_gcode</code> mit einem leeren Wert.</p>
+<p>20240313: Der Parameter <code>max_accel_to_decel</code> im Konfigurationsabschnitt <code>[printer]</code> ist veraltet. Der Parameter <code>ACCEL_TO_DECEL</code> des Befehls <code>SET_VELOCITY_LIMIT</code> ist veraltet. Der Status <code>printer.toolhead.max_accel_to_decel</code> wurde entfernt. Verwenden Sie stattdessen den <a href="Config_Reference.html#printer">Parameter minimum_cruise_ratio</a>. Die veralteten Funktionen werden in naher Zukunft entfernt; ihre Verwendung in der Zwischenzeit kann zu leicht abweichendem Verhalten führen.</p>
+<p>20240215: Mehrere veraltete Funktionen wurden entfernt. Die Verwendung von "NTC 100K beta 3950" als Thermistorname wurde entfernt (veraltet seit 20211110). Die Befehle <code>SYNC_STEPPER_TO_EXTRUDER</code> und <code>SET_EXTRUDER_STEP_DISTANCE</code> wurden entfernt, ebenso die Extruder-Konfigurationsoption <code>shared_heater</code> (veraltet seit 20220210). Die bed_mesh-Option <code>relative_reference_index</code> wurde entfernt (veraltet seit 20230619).</p>
+<p>20240123: Der Parameter CYCLE_TIME des Befehls SET_PIN für output_pin wurde entfernt. Verwenden Sie das neue Modul <a href="Config_Reference.html#pwm_cycle_time">pwm_cycle_time</a>, wenn die Zykluszeit eines PWM-Pins dynamisch geändert werden muss.</p>
+<p>20240123: Der output_pin-Parameter <code>maximum_mcu_duration</code> ist veraltet. Verwenden Sie stattdessen einen <a href="Config_Reference.html#pwm_tool">pwm_tool-Konfigurationsabschnitt</a>. Die Option wird in naher Zukunft entfernt.</p>
+<p>20240123: Der output_pin-Parameter <code>static_value</code> ist veraltet. Ersetzen Sie ihn durch die Parameter <code>value</code> und <code>shutdown_value</code>. Die Option wird in naher Zukunft entfernt.</p>
+<p>20231216: The <code>[hall_filament_width_sensor]</code> is changed to trigger filament runout when the thickness of the filament exceeds <code>max_diameter</code>. The maximum diameter defaults to <code>default_nominal_filament_diameter + max_difference</code>. See <a href="Config_Reference.html#hall_filament_width_sensor">[hall_filament_width_sensor] configuration
+reference</a> for more details.</p>
+<p>20231207: Mehrere undokumentierte Konfigurationsparameter im Abschnitt <code>[printer]</code> wurden entfernt (die Parameter buffer_time_low, buffer_time_high, buffer_time_start und move_flush_time).</p>
+<p>10.11.2023: Klipper v0.12.0 veröffentlicht.</p>
+<p>20230826: Wenn <code>safe_distance</code> in <code>[dual_carriage]</code> auf 0 gesetzt oder zu 0 berechnet wird, werden die Abstandsprüfungen zwischen den Schlitten laut Dokumentation deaktiviert. Es kann sinnvoll sein, <code>safe_distance</code> explizit zu konfigurieren, um versehentliche Kollisionen der Schlitten untereinander zu verhindern. Zusätzlich ändert sich in manchen Konfigurationen die Homing-Reihenfolge von primärem und zweitem Schlitten (bestimmte Konfigurationen, in denen beide Schlitten in dieselbe Richtung homen; weitere Einzelheiten siehe <a href="Config_Reference.html#dual_carriage">Konfigurationsreferenz [dual_carriage]</a>).</p>
+<p>20230810: Das Skript flash-sdcard.sh unterstützt nun beide Varianten des Bigtreetech SKR-3, STM32H743 und STM32H723. Das bisherige Tag btt-skr-3 heißt daher nun entweder btt-skr-3-h743 oder btt-skr-3-h723.</p>
+<p>20230729: Der exportierte Status für <code>dual_carriage</code> hat sich geändert. Statt <code>mode</code> und <code>active_carriage</code> werden die einzelnen Modi der beiden Schlitten als <code>printer.dual_carriage.carriage_0</code> und <code>printer.dual_carriage.carriage_1</code> exportiert.</p>
+<p>20230619: Die Option <code>relative_reference_index</code> ist veraltet und wurde durch die Option <code>zero_reference_position</code> ersetzt. Einzelheiten zur Anpassung der Konfiguration finden Sie in der <a href="Bed_Mesh.html#the-deprecated-relative_reference_index">Bed-Mesh-Dokumentation</a>. Mit dieser Abkündigung steht <code>RELATIVE_REFERENCE_INDEX</code> nicht mehr als Parameter des G-Code-Befehls <code>BED_MESH_CALIBRATE</code> zur Verfügung.</p>
+<p>20230530: Die Standard-CAN-Bus-Frequenz in "make menuconfig" beträgt nun 1000000. Wird CAN-Bus mit einer anderen Frequenz benötigt, wählen Sie beim Kompilieren und Flashen des Mikrocontrollers unbedingt "Enable extra low-level configuration options" und geben Sie die gewünschte "CAN bus speed" in "make menuconfig" an.</p>
+<p>20230525: Der Befehl <code>SHAPER_CALIBRATE</code> wendet die Input-Shaper-Parameter nun sofort an, sofern <code>[input_shaper]</code> bereits aktiviert war.</p>
+<p>20230407: Der Zähler <code>stalled_bytes</code> im Protokoll und im Feld <code>printer.mcu.last_stats</code> wurde in <code>upcoming_bytes</code> umbenannt.</p>
+<p>20230323: Bei tmc5160-Treibern ist <code>multistep_filt</code> nun standardmäßig aktiviert. Setzen Sie <code>driver_MULTISTEP_FILT: False</code> in der tmc5160-Konfiguration, um das bisherige Verhalten zu erhalten.</p>
+<p>20230304: Der Befehl <code>SET_TMC_CURRENT</code> passt nun bei Treibern, die darüber verfügen, das Register globalscaler korrekt an. Damit entfällt die Einschränkung, dass sich die Ströme beim tmc5160 mit <code>SET_TMC_CURRENT</code> nicht über den in der Konfigurationsdatei gesetzten Wert <code>run_current</code> hinaus erhöhen ließen. Das hat jedoch einen Nebeneffekt: Nach dem Ausführen von <code>SET_TMC_CURRENT</code> muss der Schrittmotor bei Verwendung von StealthChop2 mehr als 130 ms im Stillstand gehalten werden, damit der Treiber die AT#1-Kalibrierung durchführt.</p>
+<p>20230202: Das Format der Statusinformation <code>printer.screws_tilt_adjust</code> hat sich geändert. Die Information wird nun als Dictionary der Schrauben mit den zugehörigen Messwerten gespeichert. Einzelheiten finden Sie in der <a href="Status_Reference.html#screws_tilt_adjust">Statusreferenz</a>.</p>
+<p>20230201: Das Modul <code>[bed_mesh]</code> lädt beim Start nicht mehr das Profil <code>default</code>. Benutzern, die das Profil <code>default</code> verwenden, wird empfohlen, <code>BED_MESH_PROFILE LOAD=default</code> in ihr Makro <code>START_PRINT</code> aufzunehmen (oder gegebenenfalls in die Konfiguration "Start G-Code" ihres Slicers).</p>
+<p>20230103: Mit dem Skript flash-sdcard.sh lassen sich nun beide Varianten des Bigtreetech SKR-2 flashen, STM32F407 und STM32F429. Das bisherige Tag btt-skr2 heißt daher nun entweder btt-skr-2-f407 oder btt-skr-2-f429.</p>
+<p>28.11.2022: Klipper v0.11.0 veröffentlicht.</p>
+<p>20221122: Bisher konnte es bei safe_z_home vorkommen, dass der z_hop nach dem G28-Homing in negativer Z-Richtung erfolgte. Nun wird ein z_hop nach G28 nur dann ausgeführt, wenn er zu einer positiven Anhebung führt - entsprechend dem Verhalten des z_hop, der vor dem G28-Homing erfolgt.</p>
+<p>20220616: Bisher war es möglich, einen rp2040 im Bootloader-Modus mit <code>make flash FLASH_DEVICE=first</code> zu flashen. Der entsprechende Befehl lautet nun <code>make flash FLASH_DEVICE=2e8a:0003</code>.</p>
+<p>20220612: Der Mikrocontroller rp2040 enthält nun eine Umgehung für die USB-Errata "rp2040-e5". Dadurch sollten erste USB-Verbindungen zuverlässiger zustande kommen. Es kann jedoch zu einem geänderten Verhalten des Pins gpio15 kommen. Es ist unwahrscheinlich, dass diese Verhaltensänderung bei gpio15 bemerkbar ist.</p>
+<p>20220407: Die temperature_fan-Konfigurationsoption <code>pid_integral_max</code> wurde entfernt (sie war seit 20210612 veraltet).</p>
+<p>20220407: Die Standard-Farbreihenfolge für pca9632-LEDs lautet nun "RGBW". Fügen Sie dem pca9632-Konfigurationsabschnitt eine explizite Einstellung <code>color_order: RBGW</code> hinzu, um das bisherige Verhalten zu erhalten.</p>
+<p>20220330: Das Format der Statusinformation <code>printer.neopixel.color_data</code> für die Module neopixel und dotstar hat sich geändert. Die Information wird nun als Liste von Farblisten gespeichert (statt als Liste von Dictionaries). Einzelheiten finden Sie in der <a href="Status_Reference.html#led">Statusreferenz</a>.</p>
+<p>20220307: <code>M73</code> setzt den Druckfortschritt nicht mehr auf 0, wenn <code>P</code> fehlt.</p>
+<p>20220304: Für den Parameter <code>extruder</code> in <a href="Config_Reference.html#extruder_stepper">extruder_stepper</a>-Konfigurationsabschnitten gibt es keinen Standardwert mehr. Geben Sie bei Bedarf explizit <code>extruder: extruder</code> an, um den Schrittmotor beim Start der Bewegungswarteschlange "extruder" zuzuordnen.</p>
+<p>20220210: Der Befehl <code>SYNC_STEPPER_TO_EXTRUDER</code> ist veraltet; der Befehl <code>SET_EXTRUDER_STEP_DISTANCE</code> ist veraltet; die <a href="Config_Reference.html#extruder">extruder</a>-Konfigurationsoption <code>shared_heater</code> ist veraltet. Diese Funktionen werden in naher Zukunft entfernt. Ersetzen Sie <code>SET_EXTRUDER_STEP_DISTANCE</code> durch <code>SET_EXTRUDER_ROTATION_DISTANCE</code>. Ersetzen Sie <code>SYNC_STEPPER_TO_EXTRUDER</code> durch <code>SYNC_EXTRUDER_MOTION</code>. Ersetzen Sie Extruder-Konfigurationsabschnitte mit <code>shared_heater</code> durch <a href="Config_Reference.html#extruder_stepper">extruder_stepper</a>-Abschnitte und passen Sie Aktivierungsmakros auf <a href="G-Codes.html#sync_extruder_motion">SYNC_EXTRUDER_MOTION</a> an.</p>
+<p>20220116: Der Code zur Berechnung von <code>run_current</code> bei tmc2130, tmc2208, tmc2209 und tmc2660 hat sich geändert. Bei manchen <code>run_current</code>-Einstellungen werden die Treiber nun anders konfiguriert. Diese neue Konfiguration sollte genauer sein, kann jedoch eine bisherige Abstimmung der TMC-Treiber ungültig machen.</p>
+<p>20211230: Die Skripte zur Abstimmung des Input Shapers (<code>scripts/calibrate_shaper.py</code> und <code>scripts/graph_accelerometer.py</code>) wurden auf Python 3 als Standard umgestellt. Benutzer müssen daher Python-3-Versionen bestimmter Pakete installieren (z. B. <code>sudo apt install python3-numpy python3-matplotlib</code>), um diese Skripte weiterhin zu verwenden. Weitere Einzelheiten finden Sie unter <a href="Measuring_Resonances.html#software-installation">Softwareinstallation</a>. Alternativ können Benutzer die Ausführung dieser Skripte vorübergehend unter Python 2 erzwingen, indem sie den Python-2-Interpreter in der Konsole explizit aufrufen: <code>python2 ~/klipper/scripts/calibrate_shaper.py ...</code></p>
+<p>20211110: Der Temperatursensor "NTC 100K beta 3950" ist veraltet. Dieser Sensor wird in naher Zukunft entfernt. Für die meisten Benutzer ist der Temperatursensor "Generic 3950" genauer. Um die ältere (in der Regel ungenauere) Definition weiterhin zu verwenden, definieren Sie einen benutzerdefinierten <a href="Config_Reference.html#thermistor">Thermistor</a> mit <code>temperature1: 25</code>, <code>resistance1: 100000</code> und <code>beta: 3950</code>.</p>
+<p>20211104: Die Option "step pulse duration" in "make menuconfig" wurde entfernt. Die Standard-Schrittdauer für TMC-Treiber im UART- oder SPI-Modus beträgt nun 100 ns. Für alle Schrittmotoren, die eine abweichende Impulsdauer benötigen, sollte die neue Einstellung <code>step_pulse_duration</code> im <a href="Config_Reference.html#stepper">Schrittmotor-Konfigurationsabschnitt</a> gesetzt werden.</p>
+<p>20211102: Mehrere veraltete Funktionen wurden entfernt. Die Schrittmotoroption <code>step_distance</code> wurde entfernt (veraltet seit 20201222). Der Sensor-Alias <code>rpi_temperature</code> wurde entfernt (veraltet seit 20210219). Die MCU-Option <code>pin_map</code> wurde entfernt (veraltet seit 20210325). Die gcode_macro-Option <code>default_parameter_&lt;name&gt;</code> sowie der Zugriff auf Befehlsparameter in Makros auf anderem Weg als über die Pseudo-Variable <code>params</code> wurden entfernt (veraltet seit 20210503). Die Heizungsoption <code>pid_integral_max</code> wurde entfernt (veraltet seit 20210612).</p>
+<p>29.09.2021: Klipper v0.10.0 veröffentlicht.</p>
+<p>20210903: Der Standardwert für <a href="Config_Reference.html#extruder"><code>smooth_time</code></a> bei Heizungen wurde auf 1 Sekunde geändert (von 2 Sekunden). Bei den meisten Druckern führt das zu einer stabileren Temperaturregelung.</p>
+<p>20210830: Der Standardname für den adxl345 lautet nun "adxl345". Der Standardwert des Parameters CHIP für <code>ACCELEROMETER_MEASURE</code> und <code>ACCELEROMETER_QUERY</code> lautet nun ebenfalls "adxl345".</p>
+<p>20210830: Der Befehl ACCELEROMETER_MEASURE des adxl345 unterstützt den Parameter RATE nicht mehr. Um die Abfragerate zu ändern, passen Sie die Datei printer.cfg an und setzen Sie einen RESTART-Befehl ab.</p>
+<p>20210821: Mehrere Konfigurationseinstellungen in <code>printer.configfile.settings</code> werden nun als Listen statt als reine Zeichenketten gemeldet. Wird die tatsächliche Rohzeichenkette benötigt, verwenden Sie stattdessen <code>printer.configfile.config</code>.</p>
+<p>20210819: In manchen Fällen kann eine <code>G28</code>-Homing-Bewegung an einer Position enden, die nominell außerhalb des gültigen Bewegungsbereichs liegt. In seltenen Fällen kann dies nach dem Homing zu verwirrenden Fehlern "Move out of range" führen. Ändern Sie in diesem Fall Ihre Startskripte so, dass der Druckkopf unmittelbar nach dem Homing an eine gültige Position gefahren wird.</p>
+<p>20210814: Die rein analogen Pseudo-Pins auf dem atmega168 und atmega328 wurden von PE0/PE1 in PE2/PE3 umbenannt.</p>
+<p>20210720: Ein controller_fan-Abschnitt überwacht nun standardmäßig alle Schrittmotoren (nicht nur die kinematischen Schrittmotoren). Wird das bisherige Verhalten gewünscht, siehe die Konfigurationsoption <code>stepper</code> in der <a href="Config_Reference.html#controller_fan">Konfigurationsreferenz</a>.</p>
+<p>20210703: Ein Konfigurationsabschnitt <code>samd_sercom</code> muss den von ihm konfigurierten Sercom-Bus nun über die Option <code>sercom</code> angeben.</p>
+<p>20210612: Die Konfigurationsoption <code>pid_integral_max</code> in heater- und temperature_fan-Abschnitten ist veraltet. Die Option wird in naher Zukunft entfernt.</p>
+<p>20210503: The gcode_macro <code>default_parameter_&lt;name&gt;</code> config option is deprecated. Use the <code>params</code> pseudo-variable to access macro parameters. Other methods for accessing macro parameters will be removed in the near future. Most users can replace a <code>default_parameter_NAME: VALUE</code> config option with a line like the following in the start of the macro: <code>{% set NAME = params.NAME|default(VALUE)|float %}</code>. See the <a href="Command_Templates.html#macro-parameters">Command Templates
+document</a> for examples.</p>
+<p>20210430: Der Befehl SET_VELOCITY_LIMIT (und M204) kann nun eine Geschwindigkeit, Beschleunigung und square_corner_velocity setzen, die größer sind als die in der Konfigurationsdatei angegebenen Werte.</p>
+<p>20210325: Die Unterstützung für die Konfigurationsoption <code>pin_map</code> ist veraltet. Verwenden Sie die Datei <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-aliases.cfg">sample-aliases.cfg</a>, um auf die tatsächlichen Pin-Namen des Mikrocontrollers zu übersetzen. Die Konfigurationsoption <code>pin_map</code> wird in naher Zukunft entfernt.</p>
+<p>20210313: Klippers Unterstützung für Mikrocontroller, die über CAN-Bus kommunizieren, hat sich geändert. Bei Verwendung von CAN-Bus müssen alle Mikrocontroller neu geflasht und die <a href="CANBUS.html">Klipper-Konfiguration muss aktualisiert werden</a>.</p>
+<p>20210310: Der Standardwert für driver_SFILT beim TMC2660 wurde von 1 auf 0 geändert.</p>
+<p>20210227: TMC-Schrittmotortreiber im UART- oder SPI-Modus werden nun einmal pro Sekunde abgefragt, solange sie aktiviert sind - kann der Treiber nicht erreicht werden oder meldet er einen Fehler, geht Klipper in den Abschaltzustand über.</p>
+<p>20210219: Das Modul <code>rpi_temperature</code> wurde in <code>temperature_host</code> umbenannt. Ersetzen Sie alle Vorkommen von <code>sensor_type: rpi_temperature</code> durch <code>sensor_type: temperature_host</code>. Der Pfad zur Temperaturdatei kann in der Konfigurationsvariablen <code>sensor_path</code> angegeben werden. Der Name <code>rpi_temperature</code> ist veraltet und wird in naher Zukunft entfernt.</p>
+<p>20210201: Der Befehl <code>TEST_RESONANCES</code> deaktiviert nun das Input Shaping, sofern es zuvor aktiviert war (und aktiviert es nach dem Test wieder). Um dieses Verhalten zu überschreiben und das Input Shaping aktiviert zu lassen, kann dem Befehl der zusätzliche Parameter <code>INPUT_SHAPING=1</code> übergeben werden.</p>
+<p>20210201: Der <code>ACCELEROMETER_MEASURE</code> Befehl fügt nun den Namen des Beschleunigungssensors dem Dateinamen hinzu, wenn der Chip in der dazugehörigen ADXL345 Konfigurations Sektion innerhalb der printer.cfg Datei einen Namen zugewiesen bekommen hat.</p>
+<p>20201222: Die Einstellung <code>step_distance</code> in den Schrittmotor-Konfigurationsabschnitten ist veraltet. Es wird empfohlen, die Konfiguration auf die Einstellung <a href="Rotation_Distance.html"><code>rotation_distance</code></a> umzustellen. Die Unterstützung für <code>step_distance</code> wird in naher Zukunft entfernt.</p>
+<p>20201218: Die <code>endstop_phase</code> Einstellungen im endstop_phase Modul wurden gegen <code>trigger_phase</code> ersetzt. Sobald das endstop Phase Modul genutzt wird, ist es notwendig auf <a href="Rotation_Distance.html"><code>rotation_distance</code></a> zu konvertieren und eine neu Kalibrierung aller Endschalter Phasen mit dem Befehl ENDSTOP_PHASE_CALIBRATE durchzuführen.</p>
+<p>20201218: Rotary-Delta- und Polardrucker müssen für ihre rotatorischen Schrittmotoren nun ein <code>gear_ratio</code> angeben und dürfen keinen Parameter <code>step_distance</code> mehr angeben. Das Format des neuen Parameters gear_ratio finden Sie in der <a href="Config_Reference.html#stepper">Konfigurationsreferenz</a>.</p>
+<p>20201213: Es ist nicht zulässig, bei Verwendung von "probe:z_virtual_endstop" einen Z-"position_endstop" anzugeben. Wird ein Z-"position_endstop" zusammen mit "probe:z_virtual_endstop" angegeben, wird nun ein Fehler ausgelöst. Entfernen Sie die Definition des Z-"position_endstop", um den Fehler zu beheben.</p>
+<p>20201120: Der Konfigurationsabschnitt <code>[board_pins]</code> gibt den MCU-Namen nun in einem expliziten Parameter <code>mcu:</code> an. Wird board_pins für einen zweiten MCU verwendet, muss die Konfiguration angepasst werden, um diesen Namen anzugeben. Weitere Einzelheiten finden Sie in der <a href="Config_Reference.html#board_pins">Konfigurationsreferenz</a>.</p>
+<p>20201112: Die von <code>print_stats.print_duration</code> gemeldete Zeit hat sich geändert. Die Dauer vor der ersten erkannten Extrusion wird nun ausgeschlossen.</p>
+<p>20201029: Die Neopixel-Konfigurationsoption <code>color_order_GRB</code> wurde entfernt. Passen Sie die Konfiguration gegebenenfalls an und setzen Sie die neue Option <code>color_order</code> auf RGB, GRB, RGBW oder GRBW.</p>
+<p>20201029: Die Option serial im Konfigurationsabschnitt mcu hat nicht mehr den Standardwert /dev/ttyS0. In dem seltenen Fall, dass /dev/ttyS0 der gewünschte serielle Port ist, muss er explizit angegeben werden.</p>
+<p>20.10.2020: Klipper v0.9.0 veröffentlicht.</p>
+<p>20200902: Die Berechnung von Widerstand zu Temperatur für RTDs bei MAX31865-Wandlern wurde korrigiert, sodass sie nicht mehr zu niedrig ausfällt. Wenn Sie ein solches Gerät verwenden, sollten Sie Ihre Drucktemperatur und die PID-Einstellungen neu kalibrieren.</p>
+<p>20200816: Das G-Code-Makro-Objekt <code>printer.gcode</code> wurde in <code>printer.gcode_move</code> umbenannt. Mehrere undokumentierte Variablen in <code>printer.toolhead</code> und <code>printer.gcode</code> wurden entfernt. Eine Liste der verfügbaren Vorlagenvariablen finden Sie in docs/Command_Templates.md.</p>
+<p>20200816: Das "action_"-System für G-Code-Makros hat sich geändert. Ersetzen Sie alle Aufrufe von <code>printer.gcode.action_emergency_stop()</code> durch <code>action_emergency_stop()</code>, <code>printer.gcode.action_respond_info()</code> durch <code>action_respond_info()</code> und <code>printer.gcode.action_respond_error()</code> durch <code>action_raise_error()</code>.</p>
+<p>20200809: Das Menüsystem wurde neu geschrieben. Wurde das Menü angepasst, ist eine Umstellung auf die neue Konfiguration erforderlich. Konfigurationsdetails finden Sie in config/example-menu.cfg, Beispiele in klippy/extras/display/menu.cfg.</p>
+<p>20200731: Das Verhalten des vom Druckerobjekt <code>virtual_sdcard</code> gemeldeten Attributs <code>progress</code> hat sich geändert. Der Fortschritt wird beim Pausieren eines Drucks nicht mehr auf 0 zurückgesetzt. Er wird nun stets anhand der internen Dateiposition gemeldet, bzw. als 0, wenn derzeit keine Datei geladen ist.</p>
+<p>20200725: Der Servo-Konfigurationsparameter <code>enable</code> und der SET_SERVO-Parameter <code>ENABLE</code> wurden entfernt. Passen Sie Makros so an, dass sie <code>SET_SERVO SERVO=my_servo WIDTH=0</code> verwenden, um einen Servo zu deaktivieren.</p>
+<p>20200608: In der LCD-Display-Unterstützung wurden die Namen einiger interner "Glyphen" geändert. Wurde ein eigenes Display-Layout umgesetzt, kann eine Anpassung an die neuen Glyphennamen erforderlich sein (eine Liste der verfügbaren Glyphen finden Sie in klippy/extras/display/display.cfg).</p>
+<p>20200606: Die Pin-Namen am Linux-MCU haben sich geändert. Pins haben nun Namen der Form <code>gpiochip&lt;chipid&gt;/gpio&lt;gpio&gt;</code>. Für gpiochip0 kann auch die Kurzform <code>gpio&lt;gpio&gt;</code> verwendet werden. Was zuvor beispielsweise als <code>P20</code> bezeichnet wurde, heißt nun <code>gpio20</code> oder <code>gpiochip0/gpio20</code>.</p>
+<p>20200603: Das Standard-Layout für 16x4-LCDs zeigt die geschätzte Restzeit eines Drucks nicht mehr an. (Es wird nur noch die verstrichene Zeit angezeigt.) Wird das alte Verhalten gewünscht, kann man die Menüanzeige um diese Information erweitern (Einzelheiten siehe die Beschreibung von display_data in config/example-extras.cfg).</p>
+<p>20200531: Die Standard-USB-Vendor-/Product-ID lautet nun 0x1d50/0x614e. Diese neuen IDs sind für Klipper reserviert (mit Dank an das openmoko-Projekt). Diese Änderung sollte keine Konfigurationsanpassungen erfordern, die neuen IDs können jedoch in Systemprotokollen auftauchen.</p>
+<p>20200524: Der Standardwert des Feldes pwm_freq beim tmc5160 ist nun null (statt eins).</p>
+<p>20200425: Die Vorlagenvariable <code>printer.heater</code> für gcode_macro-Befehle wurde in <code>printer.heaters</code> umbenannt.</p>
+<p>20200313: Das Standard-LCD-Layout für Drucker mit mehreren Extrudern und 16x4-Display hat sich geändert. Das Layout für einen einzelnen Extruder ist nun Standard und zeigt den aktuell aktiven Extruder an. Um das bisherige Anzeigelayout zu verwenden, setzen Sie "display_group: _multiextruder_16x4" im Abschnitt [display] der Datei printer.cfg.</p>
+<p>20200308: Der Standard-Menüeintrag <code>__test</code> wurde entfernt. Enthält die Konfigurationsdatei ein eigenes Menü, entfernen Sie unbedingt alle Verweise auf diesen Menüeintrag <code>__test</code>.</p>
+<p>20200308: Die Menüoptionen "deck" und "card" wurden entfernt. Um das Layout eines LCD-Bildschirms anzupassen, verwenden Sie die neuen Konfigurationsabschnitte display_data (Einzelheiten siehe config/example-extras.cfg).</p>
+<p>20200109: Das Modul bed_mesh bezieht sich für die Mesh-Konfiguration nun auf die Position der Sonde. Daher wurden einige Konfigurationsoptionen umbenannt, um ihre Funktion treffender wiederzugeben. Bei rechteckigen Betten wurden <code>min_point</code> und <code>max_point</code> in <code>mesh_min</code> bzw. <code>mesh_max</code> umbenannt. Bei runden Betten wurde <code>bed_radius</code> in <code>mesh_radius</code> umbenannt. Für runde Betten wurde außerdem eine neue Option <code>mesh_origin</code> ergänzt. Beachten Sie, dass diese Änderungen auch mit zuvor gespeicherten Mesh-Profilen unvereinbar sind. Wird ein unvereinbares Profil erkannt, wird es ignoriert und zur Entfernung vorgemerkt. Der Entfernungsvorgang lässt sich durch Absetzen des Befehls SAVE_CONFIG abschließen. Der Benutzer muss jedes Profil neu kalibrieren.</p>
+<p>20191218: Der Konfigurationsabschnitt display unterstützt "lcd_type: st7567" nicht mehr. Verwenden Sie stattdessen den Displaytyp "uc1701" - setzen Sie "lcd_type: uc1701" und ändern Sie "rs_pin: some_pin" in "rst_pin: some_pin". Unter Umständen ist zusätzlich die Konfigurationseinstellung "contrast: 60" erforderlich.</p>
+<p>20191210: Die eingebauten Befehle T0, T1, T2, ... wurden entfernt. Die Extruder-Konfigurationsoptionen activate_gcode und deactivate_gcode wurden entfernt. Werden diese Befehle (und Skripte) benötigt, definieren Sie einzelne Makros im Stil von [gcode_macro T0], die den Befehl ACTIVATE_EXTRUDER aufrufen. Beispiele finden Sie in den Dateien config/sample-idex.cfg und sample-multi-extruder.cfg.</p>
+<p>20191210: Die Unterstützung für den Befehl M206 wurde entfernt. Ersetzen Sie ihn durch Aufrufe von SET_GCODE_OFFSET. Wird Unterstützung für M206 benötigt, fügen Sie einen Konfigurationsabschnitt [gcode_macro M206] hinzu, der SET_GCODE_OFFSET aufruft. (Zum Beispiel "SET_GCODE_OFFSET Z=-{params.Z}".)</p>
+<p>20191202: Die Unterstützung für den undokumentierten Parameter "S" des Befehls "G4" wurde entfernt. Ersetzen Sie alle Vorkommen von S durch den Standardparameter "P" (die Verzögerung in Millisekunden).</p>
+<p>20191126: Die USB-Namen haben sich bei Mikrocontrollern mit nativer USB-Unterstützung geändert. Sie verwenden nun standardmäßig eine eindeutige Chip-ID (sofern verfügbar). Verwendet ein Konfigurationsabschnitt "mcu" eine Einstellung "serial", die mit "/dev/serial/by-id/" beginnt, kann eine Anpassung der Konfiguration erforderlich sein. Führen Sie in einem SSH-Terminal "ls /dev/serial/by-id/*" aus, um die neue ID zu ermitteln.</p>
+<p>20191121: Der Parameter pressure_advance_lookahead_time wurde entfernt. Alternative Konfigurationseinstellungen finden Sie in example.cfg.</p>
+<p>20191112: Die virtuelle Enable-Funktion der TMC-Schrittmotortreiber wird nun automatisch aktiviert, wenn der Schrittmotor keinen eigenen Enable-Pin besitzt. Entfernen Sie Verweise auf tmcXXXX:virtual_enable aus der Konfiguration. Die Möglichkeit, in enable_pin eines Schrittmotors mehrere Pins zu steuern, wurde entfernt. Werden mehrere Pins benötigt, verwenden Sie einen Konfigurationsabschnitt multi_pin.</p>
+<p>20191107: Der primäre Extruder-Konfigurationsabschnitt muss als "extruder" angegeben werden und darf nicht mehr als "extruder0" angegeben werden. G-Code-Befehlsvorlagen, die den Extruderstatus abfragen, greifen nun über "{printer.extruder}" darauf zu.</p>
+<p>21.10.2019: Klipper v0.8.0 veröffentlicht</p>
+<p>20191003: Die Option move_to_previous in [safe_z_homing] hat nun den Standardwert False. (Vor dem 20190918 war sie faktisch False.)</p>
+<p>20190918: Die Option zhop in [safe_z_homing] wird nach Abschluss des Z-Achsen-Homings stets erneut angewendet. Dies kann es erforderlich machen, dass Benutzer eigene Skripte anpassen, die auf diesem Modul beruhen.</p>
+<p>20190806: Der Befehl SET_NEOPIXEL wurde in SET_LED umbenannt.</p>
+<p>20190726: Der Code für den Digital-Analog-Wandler mcp4728 hat sich geändert. Die Standard-i2c_address lautet nun 0x60 und die Referenzspannung bezieht sich nun auf die interne 2,048-Volt-Referenz des mcp4728.</p>
+<p>20190710: Die Option z_hop wurde aus dem Konfigurationsabschnitt [firmware_retract] entfernt. Die z_hop-Unterstützung war unvollständig und konnte bei mehreren verbreiteten Slicern zu fehlerhaftem Verhalten führen.</p>
+<p>20190710: Die optionalen Parameter des Befehls PROBE_ACCURACY haben sich geändert. Unter Umständen müssen Makros oder Skripte angepasst werden, die diesen Befehl verwenden.</p>
+<p>20190628: Alle Konfigurationsoptionen wurden aus dem Abschnitt [skew_correction] entfernt. Die Konfiguration von skew_correction erfolgt nun über den G-Code SET_SKEW. Empfehlungen zur Verwendung finden Sie unter <a href="Skew_Correction.html">Skew Correction</a>.</p>
+<p>20190607: Die Parameter "variable_X" von gcode_macro (sowie der Parameter VALUE von SET_GCODE_VARIABLE) werden nun als Python-Literale ausgewertet. Soll einem Wert eine Zeichenkette zugewiesen werden, setzen Sie den Wert in Anführungszeichen, damit er als Zeichenkette ausgewertet wird.</p>
+<p>20190606: Die Konfigurationsoptionen "samples", "samples_result" und "sample_retract_dist" wurden in den Konfigurationsabschnitt "probe" verschoben. Diese Optionen werden in den Abschnitten "delta_calibrate", "bed_tilt", "bed_mesh", "screws_tilt_adjust", "z_tilt" und "quad_gantry_level" nicht mehr unterstützt.</p>
+<p>20190528: Die magische Variable "status" bei der Auswertung von gcode_macro-Vorlagen wurde in "printer" umbenannt.</p>
+<p>20190520: Der Befehl SET_GCODE_OFFSET hat sich geändert; passen Sie G-Code-Makros entsprechend an. Der Befehl wendet den angeforderten Versatz nicht mehr auf den nächsten G1-Befehl an. Das alte Verhalten lässt sich näherungsweise über den neuen Parameter "MOVE=1" erreichen.</p>
+<p>20190404: Die Python-Pakete der Host-Software wurden aktualisiert. Benutzer müssen das Skript ~/klipper/scripts/install-octopi.sh erneut ausführen (oder die Python-Abhängigkeiten anderweitig aktualisieren, sofern keine Standard-OctoPi-Installation verwendet wird).</p>
+<p>20190404: Die Parameter i2c_bus und spi_bus (in verschiedenen Konfigurationsabschnitten) erwarten nun einen Busnamen statt einer Nummer.</p>
+<p>20190404: Die Konfigurationsparameter des sx1509 haben sich geändert. Der Parameter 'address' heißt nun 'i2c_address' und muss als Dezimalzahl angegeben werden. Wo zuvor 0x3E verwendet wurde, geben Sie 62 an.</p>
+<p>20190328: Der Wert min_speed in der Konfiguration [temperature_fan] wird nun berücksichtigt; der Lüfter läuft im PID-Modus stets mit dieser oder einer höheren Drehzahl.</p>
+<p>20190322: Der Standardwert für "driver_HEND" in [tmc2660]-Konfigurationsabschnitten wurde von 6 auf 3 geändert. Das Feld "driver_VSENSE" wurde entfernt (es wird nun automatisch aus run_current berechnet).</p>
+<p>20190310: Der Konfigurationsabschnitt [controller_fan] erwartet nun stets einen Namen (etwa [controller_fan my_controller_fan]).</p>
+<p>20190308: Das Feld "driver_BLANK_TIME_SELECT" in den Konfigurationsabschnitten [tmc2130] und [tmc2208] wurde in "driver_TBL" umbenannt.</p>
+<p>20190308: Der Konfigurationsabschnitt [tmc2660] hat sich geändert. Es muss nun ein neuer Konfigurationsparameter sense_resistor angegeben werden. Die Bedeutung mehrerer driver_XXX-Parameter hat sich geändert.</p>
+<p>20190228: Benutzer von SPI oder I2C auf SAMD21-Platinen müssen die Bus-Pins nun über einen Konfigurationsabschnitt [samd_sercom] angeben.</p>
+<p>20190224: Die Option bed_shape wurde aus bed_mesh entfernt. Die Option radius wurde in bed_radius umbenannt. Benutzer mit runden Betten sollten die Optionen bed_radius und round_probe_count angeben.</p>
+<p>20190107: Der Parameter i2c_address im Konfigurationsabschnitt mcp4451 hat sich geändert. Dies ist eine übliche Einstellung auf Smoothieboards. Der neue Wert ist die Hälfte des alten Werts (aus 88 wird 44, aus 90 wird 45).</p>
+<p>20.12.2018: Klipper v0.7.0 veröffentlicht</p>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Zurück zum Seitenanfang
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="Releases.html" class="md-footer__link md-footer__link--prev" aria-label="Zurück: Veröffentlichungen" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Zurück
+              </span>
+              Veröffentlichungen
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="Contact.html" class="md-footer__link md-footer__link--next" aria-label="Weiter: Kontakt" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Weiter
+              </span>
+              Kontakt
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "In Zwischenablage kopieren", "clipboard.copied": "In Zwischenablage kopiert", "search.config.lang": "de", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Suche", "search.result.placeholder": "Suchbegriff eingeben", "search.result.none": "Keine Suchergebnisse", "search.result.one": "1 Suchergebnis", "search.result.other": "# Suchergebnisse", "search.result.more.one": "1 weiteres Suchergebnis auf dieser Seite", "search.result.more.other": "# weitere Suchergebnisse auf dieser Seite", "search.result.term.missing": "Es fehlt", "select.version.title": "Version ausw\u00e4hlen"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

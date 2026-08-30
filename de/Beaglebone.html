@@ -1,0 +1,1812 @@
+
+<!doctype html>
+<html lang="de" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.4, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>Beaglebone - Klipper-Dokumentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-VEN1PGNQL4"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){this.value&&gtag("event","search",{search_term:this.value})}),"undefined"!=typeof location$&&location$.subscribe(function(e){gtag("config","G-VEN1PGNQL4",{page_path:e.pathname})})})</script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-VEN1PGNQL4"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#beaglebone" class="md-skip">
+          Zum Inhalt
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="Klipper-Dokumentation" class="md-header__button md-logo" aria-label="Klipper-Dokumentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Klipper-Dokumentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Beaglebone
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Sprache wechseln">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/de/" hreflang="de" class="md-select__link">
+                    Deutsch
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/it/" hreflang="it" class="md-select__link">
+                    Italiano
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/fr/" hreflang="fr" class="md-select__link">
+                    Français
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Suche" placeholder="Suche" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Suche">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Teilen" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Zurücksetzen" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Suche wird initialisiert
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Quellcode" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Klipper-Dokumentation" class="md-nav__button md-logo" aria-label="Klipper-Dokumentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Klipper-Dokumentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Quellcode" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        Übersicht
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        Funktionen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        Häufig gestellte Fragen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        Veröffentlichungen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        Konfigurationsänderungen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        Kontakt
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation und Konfiguration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation und Konfiguration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation und Konfiguration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_1" type="checkbox" id="__nav_7_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_1">
+          Installation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_1">
+          <span class="md-nav__icon md-icon"></span>
+          Installation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="OctoPrint.html" class="md-nav__link">
+        OctoPrint für Klipper
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Konfigurationsreferenz
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Konfigurationsreferenz" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Konfigurationsreferenz
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        Konfigurationsreferenz
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        Rotationsdistanz
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        Überprüfung der Konfiguration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Bettnivellierung
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Bettnivellierung" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Bettnivellierung
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        Bett Nivellierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        Deltakalibrierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        Sondenkalibrierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        Manuelle Nivellierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        Bettgitter
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        Endstop Phase
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Axis_Twist_Compensation.html" class="md-nav__link">
+        Kompensation der Achsenverdrehung
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Resonanz-Kompensation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Resonanz-Kompensation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Resonanz-Kompensation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        Resonanz-Kompensation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        Resonanzen messen
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Druckvorschub
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Befehlsvorlagen
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Befehlsvorlagen" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Befehlsvorlagen
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        Befehlsvorlagen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        Statusreferenz
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        TMC Treiber
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        Homing und Probing mit mehreren Mikrocontrollern
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        Slicer
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        Schräglagenkorrektur
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Objekte ausschließen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        Verwendung von PWM-Tools
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Entwicklerdokumentation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Entwicklerdokumentation" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Entwicklerdokumentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        Code Überblick
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        Kinematik
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        Protokoll
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        API Server
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        MCU Befehle
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        CANBUS Protokoll
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        Fehlersuche
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        Benchmarks
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        Zu Klipper beitragen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        Klipper paketieren
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Geräteabhängige Dokumente
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Geräteabhängige Dokumente" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Geräteabhängige Dokumente
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        Beispielkonfigurationen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        SD-Karten Aktualisierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        RPi Mikrocontroller
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Beaglebone
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="Beaglebone.html" class="md-nav__link md-nav__link--active">
+        Beaglebone
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Inhaltsverzeichnis">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Inhaltsverzeichnis
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#erstellen-eines-betriebssystem-images" class="md-nav__link">
+    Erstellen eines Betriebssystem-Images
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#octoprint-installieren" class="md-nav__link">
+    Octoprint installieren
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#den-pru-mikrocontroller-code-des-beaglebone-erstellen-pru-firmware" class="md-nav__link">
+    Den PRU-Mikrocontroller-Code des BeagleBone erstellen (PRU-Firmware)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#erstellen-und-installieren-des-linux-host-mikrocontroller-codes" class="md-nav__link">
+    Erstellen und Installieren des Linux-Host-Mikrocontroller-Codes
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#restliche-konfiguration" class="md-nav__link">
+    Restliche Konfiguration
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drucken-auf-einem-beaglebone" class="md-nav__link">
+    Drucken auf einem Beaglebone
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#erstellen-des-avr-mikrocontroller-codes" class="md-nav__link">
+    Erstellen des AVR-Mikrocontroller-Codes
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zuordnung-der-hardware-pins" class="md-nav__link">
+    Zuordnung der Hardware-Pins
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hardware-spi-aktivieren" class="md-nav__link">
+    Hardware-SPI aktivieren
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hardware-i2c-aktivieren" class="md-nav__link">
+    Hardware-I2C aktivieren
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hardware-uart-seriellcan-aktivieren" class="md-nav__link">
+    Hardware-UART (Seriell)/CAN aktivieren
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        Bootloader
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloader_Entry.html" class="md-nav__link">
+        Bootloader-Eintrag
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
+        CANBUS-Fehlerbehebung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        TSL1401CL Filamentbreitensensor
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        Filament-Dicken Hallsensor
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Eddy_Probe.html" class="md-nav__link">
+        Induktive Wirbelstromsonde
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Load_Cell.html" class="md-nav__link">
+        Zellen laden
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Sponsors.html" class="md-nav__link">
+        Förderer
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Inhaltsverzeichnis">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Inhaltsverzeichnis
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#erstellen-eines-betriebssystem-images" class="md-nav__link">
+    Erstellen eines Betriebssystem-Images
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#octoprint-installieren" class="md-nav__link">
+    Octoprint installieren
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#den-pru-mikrocontroller-code-des-beaglebone-erstellen-pru-firmware" class="md-nav__link">
+    Den PRU-Mikrocontroller-Code des BeagleBone erstellen (PRU-Firmware)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#erstellen-und-installieren-des-linux-host-mikrocontroller-codes" class="md-nav__link">
+    Erstellen und Installieren des Linux-Host-Mikrocontroller-Codes
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#restliche-konfiguration" class="md-nav__link">
+    Restliche Konfiguration
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#drucken-auf-einem-beaglebone" class="md-nav__link">
+    Drucken auf einem Beaglebone
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#erstellen-des-avr-mikrocontroller-codes" class="md-nav__link">
+    Erstellen des AVR-Mikrocontroller-Codes
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zuordnung-der-hardware-pins" class="md-nav__link">
+    Zuordnung der Hardware-Pins
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hardware-spi-aktivieren" class="md-nav__link">
+    Hardware-SPI aktivieren
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hardware-i2c-aktivieren" class="md-nav__link">
+    Hardware-I2C aktivieren
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hardware-uart-seriellcan-aktivieren" class="md-nav__link">
+    Hardware-UART (Seriell)/CAN aktivieren
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Beaglebone.md" title="Seite editieren" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="beaglebone">Beaglebone<a class="headerlink" href="#beaglebone" title="Permanent link">&para;</a></h1>
+<p>Dieses Dokument beschreibt den Prozess der Ausführung von Klipper auf einer Beaglebone PRU.</p>
+<h2 id="erstellen-eines-betriebssystem-images">Erstellen eines Betriebssystem-Images<a class="headerlink" href="#erstellen-eines-betriebssystem-images" title="Permanent link">&para;</a></h2>
+<p>Beginnen Sie mit der Installation des Images <a href="https://beagleboard.org/latest-images">Debian 11.7 2023-09-02 4GB microSD IoT</a>. Sie können das Image entweder von einer microSD-Karte oder vom eingebauten eMMC ausführen. Wenn Sie den eMMC verwenden, installieren Sie es jetzt auf dem eMMC, indem Sie den Anweisungen unter dem obigen Link folgen.</p>
+<p>Melden Sie sich anschließend per ssh auf dem Beaglebone-Rechner an (<code>ssh debian@beaglebone</code> -- das Passwort lautet <code>temppwd</code>).</p>
+<p>Bevor Sie mit der Installation von Klipper beginnen, müssen Sie zusätzlichen Speicherplatz freigeben. Dafür gibt es 3 Möglichkeiten:</p>
+<ol>
+<li>einige "Demo"-Ressourcen des BeagleBone entfernen</li>
+<li>wenn Sie von einer SD-Karte gebootet haben und diese größer als 4 GB ist, können Sie das aktuelle Dateisystem auf den gesamten Speicherplatz der Karte erweitern</li>
+<li>Option #1 und #2 zusammen ausführen.</li>
+</ol>
+<p>Um einige "Demo"-Ressourcen des BeagleBone zu entfernen, führen Sie diese Befehle aus</p>
+<div class="highlight"><pre><span></span><code>sudo apt remove bb-node-red-installer
+sudo apt remove bb-code-server
+</code></pre></div>
+
+<p>Um das Dateisystem auf die volle Größe Ihrer SD-Karte zu erweitern, führen Sie diesen Befehl aus; ein Neustart ist nicht erforderlich.</p>
+<div class="highlight"><pre><span></span><code>sudo growpart /dev/mmcblk0 1
+sudo resize2fs /dev/mmcblk0p1
+</code></pre></div>
+
+<p>Installieren Sie Klipper, indem Sie die folgenden Befehle ausführen:</p>
+<div class="highlight"><pre><span></span><code>git clone https://github.com/Klipper3d/klipper.git
+./klipper/scripts/install-beaglebone.sh
+</code></pre></div>
+
+<p>Nach der Installation von Klipper müssen Sie entscheiden, welche Art von Bereitstellung Sie benötigen. Beachten Sie dabei, dass der BeagleBone auf 3,3 V basierende Hardware ist und Sie die Pins in den meisten Fällen nicht ohne Wandlerplatinen direkt mit auf 5 V oder 12 V basierender Hardware verbinden können.</p>
+<p>Da Klipper auf dem BeagleBone eine Multimodul-Architektur besitzt, können Sie viele verschiedene Anwendungsfälle umsetzen; die gängigsten sind die folgenden:</p>
+<p>Anwendungsfall 1: Verwenden Sie den BeagleBone nur als Host-System, um Klipper und zusätzliche Software wie OctoPrint/Fluidd + Moonraker/... auszuführen. In dieser Konfiguration steuert er externe Mikrocontroller über serielle, USB- oder CAN-Bus-Verbindungen an.</p>
+<p>Anwendungsfall 2: Verwenden Sie den BeagleBone mit einer Erweiterungsplatine (Cape) wie der CRAMPS-Platine. In dieser Konfiguration betreibt der BeagleBone Klipper plus zusätzliche Software und steuert die Erweiterungsplatine mit den PRU-Kernen des BeagleBone an (2 zusätzliche Kerne, 200 MHz, 32 Bit).</p>
+<p>Anwendungsfall 3: Entspricht "Anwendungsfall 1", zusätzlich möchten Sie jedoch die GPIOs des BeagleBone mit hoher Geschwindigkeit ansteuern und dazu die PRU-Kerne nutzen, um die Haupt-CPU zu entlasten.</p>
+<h2 id="octoprint-installieren">Octoprint installieren<a class="headerlink" href="#octoprint-installieren" title="Permanent link">&para;</a></h2>
+<p>Anschließend können Sie Octoprint installieren oder diesen Abschnitt vollständig überspringen, wenn Sie andere Software bevorzugen:</p>
+<div class="highlight"><pre><span></span><code>git clone https://github.com/foosel/OctoPrint.git
+cd OctoPrint/
+virtualenv venv
+./venv/bin/python setup.py install
+</code></pre></div>
+
+<p>Und richten Sie OctoPrint so ein, dass es beim Hochfahren startet:</p>
+<div class="highlight"><pre><span></span><code>sudo cp ~/OctoPrint/scripts/octoprint.init /etc/init.d/octoprint
+sudo chmod +x /etc/init.d/octoprint
+sudo cp ~/OctoPrint/scripts/octoprint.default /etc/default/octoprint
+sudo update-rc.d octoprint defaults
+</code></pre></div>
+
+<p>Es ist notwendig, die Konfigurationsdatei <strong>/etc/default/octoprint</strong> von OctoPrint zu ändern. Man muss den Benutzer <code>OCTOPRINT_USER</code> auf <code>debian</code> ändern, <code>NICELEVEL</code> auf <code>0</code> setzen, die Einstellungen <code>BASEDIR</code>, <code>CONFIGFILE</code> und <code>DAEMON</code> auskommentieren (das Kommentarzeichen entfernen) und die Verweise von <code>/home/pi/</code> auf <code>/home/debian/</code> ändern:</p>
+<div class="highlight"><pre><span></span><code>sudo nano /etc/default/octoprint
+</code></pre></div>
+
+<p>Starten Sie dann den Octoprint-Dienst:</p>
+<div class="highlight"><pre><span></span><code>sudo systemctl start octoprint
+</code></pre></div>
+
+<p>Warten Sie 1-2 Minuten und stellen Sie sicher, dass der OctoPrint-Webserver erreichbar ist - er sollte unter <a href="http://beaglebone:5000/">http://beaglebone:5000/</a> zu finden sein</p>
+<h2 id="den-pru-mikrocontroller-code-des-beaglebone-erstellen-pru-firmware">Den PRU-Mikrocontroller-Code des BeagleBone erstellen (PRU-Firmware)<a class="headerlink" href="#den-pru-mikrocontroller-code-des-beaglebone-erstellen-pru-firmware" title="Permanent link">&para;</a></h2>
+<p>Dieser Abschnitt ist für die oben genannten "Anwendungsfall 2" und "Anwendungsfall 3" erforderlich; für "Anwendungsfall 1" sollten Sie ihn überspringen.</p>
+<p>Prüfen, ob die erforderlichen Geräte vorhanden sind</p>
+<div class="highlight"><pre><span></span><code>sudo beagle-version
+</code></pre></div>
+
+<p>Sie sollten prüfen, ob die Ausgabe das erfolgreiche Laden der "remoteproc"-Treiber sowie das Vorhandensein der PRU-Kerne enthält; in Kernel 5.10 sollten diese "remoteproc1" und "remoteproc2" heißen (4a334000.pru, 4a338000.pru). Prüfen Sie außerdem, ob viele GPIOs geladen wurden - sie sehen wie "Allocated GPIO id=0 name='P8_03'" aus. Normalerweise ist alles in Ordnung und es ist keine Hardware-Konfiguration erforderlich. Falls etwas fehlt, versuchen Sie es mit den Optionen "uboot overlays" oder mit den Cape-Overlays. Zur Orientierung hier einige Ausgaben einer funktionierenden BeagleBone-Black-Konfiguration mit CRAMPS-Platine:</p>
+<div class="highlight"><pre><span></span><code>model:[TI_AM335x_BeagleBone_Black]
+UBOOT: Booted Device-Tree:[am335x-boneblack-uboot-univ.dts]
+UBOOT: Loaded Overlay:[BB-ADC-00A0.bb.org-overlays]
+UBOOT: Loaded Overlay:[BB-BONE-eMMC1-01-00A0.bb.org-overlays]
+kernel:[5.10.168-ti-r71]
+/boot/uEnv.txt Settings:
+uboot_overlay_options:[enable_uboot_overlays=1]
+uboot_overlay_options:[disable_uboot_overlay_video=0]
+uboot_overlay_options:[disable_uboot_overlay_audio=1]
+uboot_overlay_options:[disable_uboot_overlay_wireless=1]
+uboot_overlay_options:[enable_uboot_cape_universal=1]
+pkg:[bb-cape-overlays]:[4.14.20210821.0-0~bullseye+20210821]
+pkg:[bb-customizations]:[1.20230720.1-0~bullseye+20230720]
+pkg:[bb-usb-gadgets]:[1.20230414.0-0~bullseye+20230414]
+pkg:[bb-wl18xx-firmware]:[1.20230414.0-0~bullseye+20230414]
+.............
+.............
+</code></pre></div>
+
+<p>Um den Mikrocontroller-Code von Klipper zu kompilieren, konfigurieren Sie ihn zunächst für die "Beaglebone PRU". Deaktivieren Sie für das "BeagleBone Black" zusätzlich die Optionen "Support GPIO Bit-banging devices" und "Support LCD devices" innerhalb der "Optional features", da diese nicht in die 8 KB große PRU-Firmware passen; beenden Sie dann die Konfiguration und speichern Sie sie:</p>
+<div class="highlight"><pre><span></span><code>cd ~/klipper/
+make menuconfig
+</code></pre></div>
+
+<p>Um den neuen PRU-Mikrocontroller-Code zu erstellen und zu installieren, führen Sie aus:</p>
+<div class="highlight"><pre><span></span><code>sudo service klipper stop
+make flash
+sudo service klipper start
+</code></pre></div>
+
+<p>Nach Ausführung der vorherigen Befehle sollte Ihre PRU-Firmware bereit und gestartet sein. Um zu prüfen, ob alles in Ordnung ist, können Sie folgenden Befehl ausführen</p>
+<div class="highlight"><pre><span></span><code>dmesg
+</code></pre></div>
+
+<p>und die letzten Meldungen mit einem Beispiel vergleichen, das anzeigt, dass alles korrekt gestartet wurde:</p>
+<div class="highlight"><pre><span></span><code>[   71.105499] remoteproc remoteproc1: 4a334000.pru is available
+[   71.157155] remoteproc remoteproc2: 4a338000.pru is available
+[   73.256287] remoteproc remoteproc1: powering up 4a334000.pru
+[   73.279246] remoteproc remoteproc1: Booting fw image am335x-pru0-fw, size 97112
+[   73.285807]  remoteproc1#vdev0buffer: registered virtio0 (type 7)
+[   73.285836] remoteproc remoteproc1: remote processor 4a334000.pru is now up
+[   73.286322] remoteproc remoteproc2: powering up 4a338000.pru
+[   73.313717] remoteproc remoteproc2: Booting fw image am335x-pru1-fw, size 188560
+[   73.313753] remoteproc remoteproc2: header-less resource table
+[   73.329964] remoteproc remoteproc2: header-less resource table
+[   73.348321] remoteproc remoteproc2: remote processor 4a338000.pru is now up
+[   73.443355] virtio_rpmsg_bus virtio0: creating channel rpmsg-pru addr 0x1e
+[   73.443727] virtio_rpmsg_bus virtio0: msg received with no recipient
+[   73.444352] virtio_rpmsg_bus virtio0: rpmsg host is online
+[   73.540993] rpmsg_pru virtio0.rpmsg-pru.-1.30: new rpmsg_pru device: /dev/rpmsg_pru30
+</code></pre></div>
+
+<p>Merken Sie sich "/dev/rpmsg_pru30" - dies wird Ihr künftiges serielles Gerät für die Konfiguration des Haupt-MCU. Dieses Gerät muss vorhanden sein - fehlt es, sind Ihre PRU-Kerne nicht korrekt gestartet.</p>
+<h2 id="erstellen-und-installieren-des-linux-host-mikrocontroller-codes">Erstellen und Installieren des Linux-Host-Mikrocontroller-Codes<a class="headerlink" href="#erstellen-und-installieren-des-linux-host-mikrocontroller-codes" title="Permanent link">&para;</a></h2>
+<p>Dieser Abschnitt ist für "Anwendungsfall 2" erforderlich und für den oben genannten "Anwendungsfall 3" optional</p>
+<p>Außerdem ist es notwendig, den Mikrocontroller-Code für einen Linux-Host-Prozess zu kompilieren und zu installieren. Konfigurieren Sie ihn ein zweites Mal für einen "Linux process":</p>
+<div class="highlight"><pre><span></span><code>make menuconfig
+</code></pre></div>
+
+<p>Installieren Sie anschließend auch diesen Mikrokontroller Code:</p>
+<div class="highlight"><pre><span></span><code>sudo service klipper stop
+make flash
+sudo service klipper start
+</code></pre></div>
+
+<p>Merken Sie sich "/tmp/klipper_host_mcu" - dies wird Ihr künftiges serielles Gerät für den "MCU Host". Existiert diese Datei nicht, prüfen Sie die Datei "scripts/klipper-mcu.service", die durch die vorherigen Befehle installiert wurde und dafür zuständig ist.</p>
+<p>Für "Anwendungsfall 2" beachten Sie Folgendes: Bei der Definition der Druckerkonfiguration sollten Sie stets Temperatursensoren des "MCU Host" verwenden, da im Standard-"MCU" (PRU-Kerne) keine ADCs vorhanden sind. Eine Beispielkonfiguration von "sensor_pin" für Extruder und beheiztes Bett finden Sie in "generic-cramps.cfg". Sie können auch jeden anderen GPIO direkt vom "MCU Host" verwenden, indem Sie ihn auf diese Weise referenzieren: "host:gpiochip1/gpio17" - dies sollte jedoch vermieden werden, da dadurch zusätzliche Last auf der Haupt-CPU entsteht und Sie diese höchstwahrscheinlich nicht zur Schrittmotorsteuerung verwenden können.</p>
+<h2 id="restliche-konfiguration">Restliche Konfiguration<a class="headerlink" href="#restliche-konfiguration" title="Permanent link">&para;</a></h2>
+<p>Schließen Sie die Installation ab, indem Sie Klipper gemäß den Anweisungen im Hauptdokument <a href="Installation.html#configuring-octoprint-to-use-klipper">Installation</a> konfigurieren.</p>
+<h2 id="drucken-auf-einem-beaglebone">Drucken auf einem Beaglebone<a class="headerlink" href="#drucken-auf-einem-beaglebone" title="Permanent link">&para;</a></h2>
+<p>Leider kann der Beaglebone-Prozessor manchmal Schwierigkeiten haben, OctoPrint zuverlässig auszuführen. Bei komplexen Drucken ist es bekannt, dass es zu Druckstockungen kommen kann (der Drucker bewegt sich unter Umständen schneller, als OctoPrint Bewegungsbefehle senden kann). Erwägen Sie in diesem Fall die Verwendung der Funktion "virtual_sdcard" (Details siehe <a href="Config_Reference.html#virtual_sdcard">Konfigurationsreferenz</a>), um direkt von Klipper aus zu drucken, und deaktivieren Sie etwaige DEBUG- oder VERBOSE-Protokollierungsoptionen, falls diese aktiviert waren.</p>
+<h2 id="erstellen-des-avr-mikrocontroller-codes">Erstellen des AVR-Mikrocontroller-Codes<a class="headerlink" href="#erstellen-des-avr-mikrocontroller-codes" title="Permanent link">&para;</a></h2>
+<p>Diese Umgebung enthält alles, was zum Erstellen des notwendigen Mikrocontroller-Codes benötigt wird, mit Ausnahme von AVR - AVR-Pakete wurden aufgrund eines Konflikts mit PRU-Paketen entfernt. Wenn Sie in dieser Umgebung dennoch AVR-Mikrocontroller-Code erstellen möchten, müssen Sie die PRU-Pakete entfernen und die AVR-Pakete durch Ausführen folgender Befehle installieren</p>
+<div class="highlight"><pre><span></span><code>sudo apt-get remove gcc-pru
+sudo apt-get install avrdude gcc-avr binutils-avr avr-libc
+</code></pre></div>
+
+<p>Falls Sie später die PRU-Pakete wiederherstellen müssen, entfernen Sie zuvor die AVR-Pakete</p>
+<div class="highlight"><pre><span></span><code>sudo apt-get remove avrdude gcc-avr binutils-avr avr-libc
+sudo apt-get install gcc-pru
+</code></pre></div>
+
+<h2 id="zuordnung-der-hardware-pins">Zuordnung der Hardware-Pins<a class="headerlink" href="#zuordnung-der-hardware-pins" title="Permanent link">&para;</a></h2>
+<p>BeagleBone ist bei der Pin-Zuordnung sehr flexibel; derselbe Pin kann für unterschiedliche Funktionen konfiguriert werden, jedoch immer nur eine Funktion pro Pin, während dieselbe Funktion auf verschiedenen Pins verfügbar sein kann. Sie können also nicht mehrere Funktionen auf einem einzelnen Pin oder dieselbe Funktion auf mehreren Pins gleichzeitig nutzen. Beispiel: P9_20 - i2c2_sda/can0_tx/spi1_cs0/gpio0_12/uart1_ctsn P9_19 - i2c2_scl/can0_rx/spi1_cs1/gpio0_13/uart1_rtsn P9_24 - i2c1_scl/can1_rx/gpio0_15/uart1_tx P9_26 - i2c1_sda/can1_tx/gpio0_14/uart1_rx</p>
+<p>Die Pin-Zuordnung wird über spezielle "Overlays" festgelegt, die beim Linux-Boot geladen werden. Sie werden konfiguriert, indem die Datei /boot/uEnv.txt mit erhöhten Rechten bearbeitet wird</p>
+<div class="highlight"><pre><span></span><code>sudo editor /boot/uEnv.txt
+</code></pre></div>
+
+<p>und festgelegt wird, welche Funktionalität geladen werden soll - um beispielsweise CAN1 zu aktivieren, müssen Sie das entsprechende Overlay definieren</p>
+<div class="highlight"><pre><span></span><code>uboot_overlay_addr4=/lib/firmware/BB-CAN1-00A0.dtbo
+</code></pre></div>
+
+<p>Dieses Overlay BB-CAN1-00A0.dtbo konfiguriert alle benötigten Pins für CAN1 neu und erstellt das CAN-Gerät unter Linux. Jede Änderung an Overlays erfordert einen Systemneustart, damit sie wirksam wird. Wenn Sie herausfinden müssen, welche Pins in einem bestimmten Overlay verwendet werden, können Sie die Quelldateien unter /opt/sources/bb.org-overlays/src/arm/ analysieren oder in den BeagleBone-Foren nach Informationen suchen.</p>
+<h2 id="hardware-spi-aktivieren">Hardware-SPI aktivieren<a class="headerlink" href="#hardware-spi-aktivieren" title="Permanent link">&para;</a></h2>
+<p>BeagleBone verfügt üblicherweise über mehrere Hardware-SPI-Busse - BeagleBone Black kann zum Beispiel über 2 davon verfügen. Sie können mit bis zu 48 MHz arbeiten, sind jedoch üblicherweise durch den Kernel-Device-Tree auf 16 MHz begrenzt. Standardmäßig sind bei BeagleBone Black einige SPI1-Pins für die HDMI-Audio-Ausgabe konfiguriert. Um 4-Draht-SPI1 vollständig zu aktivieren, müssen Sie HDMI-Audio deaktivieren und SPI1 aktivieren. Bearbeiten Sie dazu die Datei /boot/uEnv.txt mit erhöhten Rechten</p>
+<div class="highlight"><pre><span></span><code>sudo editor /boot/uEnv.txt
+</code></pre></div>
+
+<p>Kommentieren Sie die Variable aus</p>
+<div class="highlight"><pre><span></span><code>disable_uboot_overlay_audio=1
+</code></pre></div>
+
+<p>kommentieren Sie als Nächstes die Variable aus und definieren Sie sie wie folgt</p>
+<div class="highlight"><pre><span></span><code>uboot_overlay_addr4=/lib/firmware/BB-SPIDEV1-00A0.dtbo
+</code></pre></div>
+
+<p>Speichern Sie die Änderungen in /boot/uEnv.txt und starten Sie die Platine neu. Nun ist SPI1 aktiviert; führen Sie zur Überprüfung folgenden Befehl aus</p>
+<div class="highlight"><pre><span></span><code>ls /dev/spidev1.*
+</code></pre></div>
+
+<p>Beachten Sie, dass BeagleBone üblicherweise auf 3,3V-Hardware basiert und Sie zur Verwendung von 5V-SPI-Geräten einen Pegelwandler-Chip benötigen, zum Beispiel SN74CBTD3861, SN74LVC1G34 oder ähnlich. Wenn Sie ein CRAMPS-Board verwenden, enthält dieses bereits einen Pegelwandler-Chip, und die SPI1-Pins stehen dann am P503-Anschluss zur Verfügung und akzeptieren 5V-Hardware - Pin-Referenzen finden Sie im Schaltplan des CRAMPS-Boards.</p>
+<h2 id="hardware-i2c-aktivieren">Hardware-I2C aktivieren<a class="headerlink" href="#hardware-i2c-aktivieren" title="Permanent link">&para;</a></h2>
+<p>BeagleBone verfügt üblicherweise über mehrere Hardware-I2C-Busse - BeagleBone Black kann zum Beispiel über 3 davon verfügen, die einen Fast-Mode mit bis zu 400 kbit unterstützen. Standardmäßig sind bei BeagleBone Black zwei davon (i2c-1 und i2c-2) üblicherweise bereits konfiguriert und an P9 verfügbar; das dritte, i2c-0, ist üblicherweise für den internen Gebrauch reserviert. Wenn Sie ein CRAMPS-Board verwenden, ist i2c-2 am P303-Anschluss mit 3,3V-Pegel verfügbar. Wenn Sie i2c-1 beim CRAMPS-Board nutzen möchten, finden Sie es an den Pins Extruder1.Step und Extruder1.Dir, die ebenfalls auf 3,3V basieren - Pin-Referenzen finden Sie im Schaltplan des CRAMPS-Boards. Zugehörige Overlays für die <a href="#hardware-pin-designation">Zuordnung der Hardware-Pins</a>: I2C1(100 kbit): BB-I2C1-00A0.dtbo I2C1(400 kbit): BB-I2C1-FAST-00A0.dtbo I2C2(100 kbit): BB-I2C2-00A0.dtbo I2C2(400 kbit): BB-I2C2-FAST-00A0.dtbo</p>
+<h2 id="hardware-uart-seriellcan-aktivieren">Hardware-UART (Seriell)/CAN aktivieren<a class="headerlink" href="#hardware-uart-seriellcan-aktivieren" title="Permanent link">&para;</a></h2>
+<p>BeagleBone verfügt über bis zu 6 Hardware-UART (Seriell)-Busse (bis zu 3 MBit) und bis zu 2 Hardware-CAN (1 MBit)-Busse. UART1(RX,TX) und CAN1(TX,RX) sowie I2C2(SDA,SCL) verwenden dieselben Pins - Sie müssen sich also entscheiden, welche Funktion genutzt wird. UART1(CTSN,RTSN), CAN0(TX,RX) und I2C1(SDA,SCL) verwenden ebenfalls dieselben Pins - auch hier müssen Sie sich entscheiden. Alle UART-/CAN-bezogenen Pins basieren auf 3,3V, daher benötigen Sie Transceiver-Chips/-Boards wie SN74LVC2G241DCUR (für UART), SN65HVD230 (für CAN), TTL-RS485 (für RS-485) oder Ähnliches, um 3,3V-Signale in die passenden Pegel umzuwandeln.</p>
+<p>Zugehörige Overlays für die <a href="#hardware-pin-designation">Zuordnung der Hardware-Pins</a> CAN0: BB-CAN0-00A0.dtbo CAN1: BB-CAN1-00A0.dtbo UART0: - wird für die Konsole verwendet UART1(RX,TX): BB-UART1-00A0.dtbo UART1(RTS,CTS): BB-UART1-RTSCTS-00A0.dtbo UART2(RX,TX): BB-UART2-00A0.dtbo UART3(RX,TX): BB-UART3-00A0.dtbo UART4(RS-485): BB-UART4-RS485-00A0.dtbo UART5(RX,TX): BB-UART5-00A0.dtbo</p>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Zurück zum Seitenanfang
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="RPi_microcontroller.html" class="md-footer__link md-footer__link--prev" aria-label="Zurück: RPi Mikrocontroller" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Zurück
+              </span>
+              RPi Mikrocontroller
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="Bootloaders.html" class="md-footer__link md-footer__link--next" aria-label="Weiter: Bootloader" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Weiter
+              </span>
+              Bootloader
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "In Zwischenablage kopieren", "clipboard.copied": "In Zwischenablage kopiert", "search.config.lang": "de", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Suche", "search.result.placeholder": "Suchbegriff eingeben", "search.result.none": "Keine Suchergebnisse", "search.result.one": "1 Suchergebnis", "search.result.other": "# Suchergebnisse", "search.result.more.one": "1 weiteres Suchergebnis auf dieser Seite", "search.result.more.other": "# weitere Suchergebnisse auf dieser Seite", "search.result.term.missing": "Es fehlt", "select.version.title": "Version ausw\u00e4hlen"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

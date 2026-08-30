@@ -1,0 +1,1746 @@
+
+<!doctype html>
+<html lang="de" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.4, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>Code Überblick - Klipper-Dokumentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-VEN1PGNQL4"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){this.value&&gtag("event","search",{search_term:this.value})}),"undefined"!=typeof location$&&location$.subscribe(function(e){gtag("config","G-VEN1PGNQL4",{page_path:e.pathname})})})</script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-VEN1PGNQL4"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#code-uberblick" class="md-skip">
+          Zum Inhalt
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="Klipper-Dokumentation" class="md-header__button md-logo" aria-label="Klipper-Dokumentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Klipper-Dokumentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Code Überblick
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Sprache wechseln">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/de/" hreflang="de" class="md-select__link">
+                    Deutsch
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/it/" hreflang="it" class="md-select__link">
+                    Italiano
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/fr/" hreflang="fr" class="md-select__link">
+                    Français
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Suche" placeholder="Suche" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Suche">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Teilen" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Zurücksetzen" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Suche wird initialisiert
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Quellcode" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Klipper-Dokumentation" class="md-nav__button md-logo" aria-label="Klipper-Dokumentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Klipper-Dokumentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Quellcode" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        Übersicht
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        Funktionen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        Häufig gestellte Fragen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        Veröffentlichungen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        Konfigurationsänderungen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        Kontakt
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation und Konfiguration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation und Konfiguration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation und Konfiguration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_1" type="checkbox" id="__nav_7_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_1">
+          Installation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_1">
+          <span class="md-nav__icon md-icon"></span>
+          Installation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="OctoPrint.html" class="md-nav__link">
+        OctoPrint für Klipper
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Konfigurationsreferenz
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Konfigurationsreferenz" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Konfigurationsreferenz
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        Konfigurationsreferenz
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        Rotationsdistanz
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        Überprüfung der Konfiguration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Bettnivellierung
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Bettnivellierung" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Bettnivellierung
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        Bett Nivellierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        Deltakalibrierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        Sondenkalibrierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        Manuelle Nivellierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        Bettgitter
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        Endstop Phase
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Axis_Twist_Compensation.html" class="md-nav__link">
+        Kompensation der Achsenverdrehung
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Resonanz-Kompensation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Resonanz-Kompensation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Resonanz-Kompensation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        Resonanz-Kompensation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        Resonanzen messen
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Druckvorschub
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Befehlsvorlagen
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Befehlsvorlagen" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Befehlsvorlagen
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        Befehlsvorlagen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        Statusreferenz
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        TMC Treiber
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        Homing und Probing mit mehreren Mikrocontrollern
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        Slicer
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        Schräglagenkorrektur
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Objekte ausschließen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        Verwendung von PWM-Tools
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Entwicklerdokumentation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Entwicklerdokumentation" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Entwicklerdokumentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Code Überblick
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="Code_Overview.html" class="md-nav__link md-nav__link--active">
+        Code Überblick
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Inhaltsverzeichnis">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Inhaltsverzeichnis
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#verzeichnis-layout" class="md-nav__link">
+    Verzeichnis-Layout
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ablauf-des-mikrocontroller-codes" class="md-nav__link">
+    Ablauf des Mikrocontroller-Codes
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klippy-code-ubersicht" class="md-nav__link">
+    Klippy Code Übersicht
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ablauf-des-codes-bei-einem-bewegungsbefehl" class="md-nav__link">
+    Ablauf des Codes bei einem Bewegungsbefehl
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hinzufugen-eines-hostmoduls" class="md-nav__link">
+    Hinzufügen eines Hostmoduls
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hinzufugen-neuer-kinematiken" class="md-nav__link">
+    Hinzufügen neuer Kinematiken
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#portierung-auf-einen-neuen-mikrocontroller" class="md-nav__link">
+    Portierung auf einen neuen Mikrocontroller
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koordinatensysteme" class="md-nav__link">
+    Koordinatensysteme
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zeit" class="md-nav__link">
+    Zeit
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        Kinematik
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        Protokoll
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        API Server
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        MCU Befehle
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        CANBUS Protokoll
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        Fehlersuche
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        Benchmarks
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        Zu Klipper beitragen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        Klipper paketieren
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Geräteabhängige Dokumente
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Geräteabhängige Dokumente" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Geräteabhängige Dokumente
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        Beispielkonfigurationen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        SD-Karten Aktualisierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        RPi Mikrocontroller
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        Bootloader
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloader_Entry.html" class="md-nav__link">
+        Bootloader-Eintrag
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
+        CANBUS-Fehlerbehebung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        TSL1401CL Filamentbreitensensor
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        Filament-Dicken Hallsensor
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Eddy_Probe.html" class="md-nav__link">
+        Induktive Wirbelstromsonde
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Load_Cell.html" class="md-nav__link">
+        Zellen laden
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Sponsors.html" class="md-nav__link">
+        Förderer
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Inhaltsverzeichnis">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Inhaltsverzeichnis
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#verzeichnis-layout" class="md-nav__link">
+    Verzeichnis-Layout
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ablauf-des-mikrocontroller-codes" class="md-nav__link">
+    Ablauf des Mikrocontroller-Codes
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#klippy-code-ubersicht" class="md-nav__link">
+    Klippy Code Übersicht
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ablauf-des-codes-bei-einem-bewegungsbefehl" class="md-nav__link">
+    Ablauf des Codes bei einem Bewegungsbefehl
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hinzufugen-eines-hostmoduls" class="md-nav__link">
+    Hinzufügen eines Hostmoduls
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hinzufugen-neuer-kinematiken" class="md-nav__link">
+    Hinzufügen neuer Kinematiken
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#portierung-auf-einen-neuen-mikrocontroller" class="md-nav__link">
+    Portierung auf einen neuen Mikrocontroller
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#koordinatensysteme" class="md-nav__link">
+    Koordinatensysteme
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#zeit" class="md-nav__link">
+    Zeit
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Code_Overview.md" title="Seite editieren" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="code-uberblick">Code Überblick<a class="headerlink" href="#code-uberblick" title="Permanent link">&para;</a></h1>
+<p>Dieses Dokument beschreibt das allgemeine Codelayout und den Hauptcodefluss von Klipper.</p>
+<h2 id="verzeichnis-layout">Verzeichnis-Layout<a class="headerlink" href="#verzeichnis-layout" title="Permanent link">&para;</a></h2>
+<p>Das Verzeichnis <strong>src/</strong> enthält den C-Quellcode für den Mikrocontroller-Code. Die Verzeichnisse <strong>src/atsam/</strong>, <strong>src/atsamd/</strong>, <strong>src/avr/</strong>, <strong>src/linux/</strong>, <strong>src/lpc176x/</strong>, <strong>src/pru/</strong> und <strong>src/stm32/</strong> enthalten architekturspezifischen Mikrocontroller-Code. Das Verzeichnis <strong>src/simulator/</strong> enthält Code-Stubs, die es ermöglichen, den Mikrocontroller auf anderen Architekturen testweise zu kompilieren. Das Verzeichnis <strong>src/generic/</strong> enthält Hilfscode, der für verschiedene Architekturen nützlich sein kann. Der Build sorgt dafür, dass "board/somefile.h"-Includes zuerst im aktuellen Architektur-Verzeichnis (z.B. src/avr/somefile.h) und dann im generischen Verzeichnis (z.B. src/generic/somefile.h) gesucht werden.</p>
+<p>Das Verzeichnis <strong>klippy/</strong> enthält die Host-Software. Der größte Teil der Host-Software ist in Python geschrieben, das Verzeichnis <strong>klippy/chelper/</strong> enthält jedoch einige C-Hilfsfunktionen. Das Verzeichnis <strong>klippy/kinematics/</strong> enthält den Code für die Roboter-Kinematik. Das Verzeichnis <strong>klippy/extras/</strong> enthält die erweiterbaren "Module" des Host-Codes.</p>
+<p>Das Verzeichnis <strong>lib/</strong> enthält externen Bibliothekscode von Drittanbietern, der zum Erstellen einiger Ziele benötigt wird.</p>
+<p>Das <strong>config/</strong> Verzeichnis enthält Beispiel Druckerkonfigurationsdateien.</p>
+<p>Das Verzeichnis <strong>scripts/</strong> enthält Skripte für die Erstellungszeit, die beim Kompilieren des Mikrocontroller-Codes nützlich sind.</p>
+<p>Das Verzeichnis <strong>test/</strong> enthält automatisierte Testverfahren.</p>
+<p>Während der Kompilierung kann der Build ein Verzeichnis <strong>out/</strong> anlegen. Dieses enthält temporäre Objekte der Erstellungszeit. Das endgültige erzeugte Mikrocontroller-Objekt ist <strong>out/klipper.elf.hex</strong> auf AVR und <strong>out/klipper.bin</strong> auf ARM.</p>
+<h2 id="ablauf-des-mikrocontroller-codes">Ablauf des Mikrocontroller-Codes<a class="headerlink" href="#ablauf-des-mikrocontroller-codes" title="Permanent link">&para;</a></h2>
+<p>Die Ausführung des Mikrocontroller-Codes beginnt in architekturspezifischem Code (z. B. <strong>src/avr/main.c</strong>), der letztlich sched_main() in <strong>src/sched.c</strong> aufruft. Der Code von sched_main() führt zunächst alle Funktionen aus, die mit dem Makro DECL_INIT() markiert wurden. Anschließend führt er wiederholt alle Funktionen aus, die mit dem Makro DECL_TASK() markiert sind.</p>
+<p>Eine der wichtigsten Task-Funktionen ist command_dispatch() in <strong>src/command.c</strong>. Diese Funktion wird vom platinenspezifischen Ein-/Ausgabecode aufgerufen (z. B. <strong>src/avr/serial.c</strong>, <strong>src/generic/serial_irq.c</strong>) und führt die Befehlsfunktionen aus, die den im Eingabestrom gefundenen Befehlen zugeordnet sind. Befehlsfunktionen werden mit dem Makro DECL_COMMAND() deklariert (weitere Informationen finden Sie im Dokument <a href="Protocol.html">Protokoll</a>).</p>
+<p>Task-, Init- und Befehlsfunktionen laufen stets mit aktivierten Interrupts (sie können diese jedoch bei Bedarf vorübergehend deaktivieren). Diese Funktionen sollten lange Pausen, Verzögerungen oder Arbeiten vermeiden, die erheblich Zeit beanspruchen. (Lange Verzögerungen in diesen "Task"-Funktionen führen zu Scheduling-Jitter für andere "Tasks" - Verzögerungen über 100 µs können spürbar werden, Verzögerungen über 500 µs können zu erneuten Befehlsübertragungen führen, Verzögerungen über 100 ms können zu Watchdog-Neustarts führen.) Diese Funktionen planen Arbeit zu bestimmten Zeitpunkten, indem sie Timer einplanen.</p>
+<p>Timer-Funktionen werden durch den Aufruf von sched_add_timer() (in <strong>src/sched.c</strong>) eingeplant. Der Code der Ablaufplanung sorgt dafür, dass die angegebene Funktion zur gewünschten Taktzeit aufgerufen wird. Timer-Interrupts werden zunächst in einem architekturspezifischen Interrupt-Handler behandelt (z. B. <strong>src/avr/timer.c</strong>), der sched_timer_dispatch() in <strong>src/sched.c</strong> aufruft. Der Timer-Interrupt führt zur Ausführung der eingeplanten Timer-Funktionen. Timer-Funktionen laufen stets mit deaktivierten Interrupts. Die Timer-Funktionen sollten immer innerhalb weniger Mikrosekunden abgeschlossen sein. Nach Abschluss des Timer-Ereignisses kann die Funktion sich selbst erneut einplanen.</p>
+<p>Wird ein Fehler erkannt, kann der Code shutdown() aufrufen (ein Makro, das sched_shutdown() in <strong>src/sched.c</strong> aufruft). Der Aufruf von shutdown() bewirkt, dass alle mit dem Makro DECL_SHUTDOWN() markierten Funktionen ausgeführt werden. Shutdown-Funktionen laufen stets mit deaktivierten Interrupts.</p>
+<p>Ein großer Teil der Funktionalität des Mikrocontrollers besteht in der Arbeit mit General-Purpose-Input/Output-Pins (GPIO). Um den hardwarenahen, architekturspezifischen Code vom übergeordneten Task-Code zu abstrahieren, werden alle GPIO-Ereignisse in architekturspezifischen Wrappern implementiert (z. B. <strong>src/avr/gpio.c</strong>). Der Code wird mit der gcc-Optimierung "-flto -fwhole-program" kompiliert, die Funktionen über Übersetzungseinheiten hinweg hervorragend inlinet, sodass die meisten dieser winzigen GPIO-Funktionen in ihre Aufrufer eingebettet werden und ihre Verwendung zur Laufzeit keine Kosten verursacht.</p>
+<h2 id="klippy-code-ubersicht">Klippy Code Übersicht<a class="headerlink" href="#klippy-code-ubersicht" title="Permanent link">&para;</a></h2>
+<p>Der Host-Code (Klippy) ist dafür vorgesehen, auf einem kostengünstigen Computer (etwa einem Raspberry Pi) zusammen mit dem Mikrocontroller zu laufen. Der Code ist überwiegend in Python geschrieben, verwendet jedoch CFFI, um einen Teil der Funktionalität in C-Code umzusetzen.</p>
+<p>Die anfängliche Ausführung beginnt in <strong>klippy/klippy.py</strong>. Dies liest die Kommandozeilenargumente ein, öffnet die Drucker-Konfigurationsdatei, instanziiert die Haupt-printer-objects und startet die serielle Verbindung. Die Hauptausführung der G-Code-Befehle erfolgt in der Methode _process_commands() in <strong>klippy/gcode.py</strong>. Dieser Code übersetzt die G-Code-Befehle in Aufrufe der printer objects, die die Aktionen häufig in Befehle übersetzen, welche auf dem Mikrocontroller ausgeführt werden (wie über das Makro DECL_COMMAND im Mikrocontroller-Code deklariert).</p>
+<p>Im Klipper-Host-Code gibt es mehrere Threads:</p>
+<ul>
+<li>Es gibt einen Python-"Hauptthread", der eingehende G-Code-Befehle verarbeitet und der Ausgangspunkt für die meisten Aktionen ist. Dieser Thread führt den <a href="https://en.wikipedia.org/wiki/Reactor_pattern">Reactor</a> (<strong>klippy/reactor.py</strong>) aus, und die meisten übergeordneten Aktionen stammen aus IO- und Timer-Event-Callbacks dieses Reactors.</li>
+<li>Ein Thread zum Schreiben von Nachrichten ins Log, damit die anderen Threads nicht durch Log-Schreibvorgänge blockiert werden. Dieser Thread befindet sich im Code <strong>klippy/queuelogger.py</strong>, und seine Multithreading-Natur ist dem Haupt-Python-Thread nicht sichtbar.</li>
+<li>Ein Thread pro Mikrocontroller, der das Low-Level-Lesen und -Schreiben von Nachrichten an diesen Mikrocontroller übernimmt. Er befindet sich im C-Code <strong>klippy/chelper/serialqueue.c</strong>, und seine Multithreading-Natur ist dem Python-Code nicht sichtbar.</li>
+<li>Ein Thread pro Mikrocontroller zur Verarbeitung der von diesem Mikrocontroller empfangenen Nachrichten im Python-Code. Dieser Thread wird in <strong>klippy/serialhdl.py</strong> erzeugt. Bei aus diesem Thread aufgerufenen Python-Callbacks ist Vorsicht geboten, da dieser Thread direkt mit dem Haupt-Python-Thread interagieren kann.</li>
+<li>Ein Thread pro Schrittmotor, der das Timing der Schrittmotor-Schrittimpulse berechnet und diese Zeiten komprimiert. Dieser Thread befindet sich im C-Code <strong>klippy/chelper/steppersync.c</strong>, und seine Multithreading-Natur ist dem Python-Code nicht sichtbar.</li>
+</ul>
+<h2 id="ablauf-des-codes-bei-einem-bewegungsbefehl">Ablauf des Codes bei einem Bewegungsbefehl<a class="headerlink" href="#ablauf-des-codes-bei-einem-bewegungsbefehl" title="Permanent link">&para;</a></h2>
+<p>Eine typische Druckerbewegung beginnt, wenn ein "G1"-Befehl an den Klippy-Host gesendet wird, und ist abgeschlossen, wenn die entsprechenden Schrittimpulse auf dem Mikrocontroller erzeugt werden. Dieser Abschnitt beschreibt den Ablauf des Codes bei einem typischen Bewegungsbefehl. Das Dokument <a href="Kinematics.html">Kinematik</a> enthält weitere Informationen zur Mechanik von Bewegungen.</p>
+<ul>
+<li>Die Verarbeitung eines Bewegungsbefehls beginnt in gcode.py. Ziel von gcode.py ist es, G-Code in interne Aufrufe zu übersetzen. Ein G1-Befehl ruft cmd_G1() in klippy/extras/gcode_move.py auf. Der Code in gcode_move.py behandelt Änderungen des Ursprungs (z. B. G92), Wechsel zwischen relativen und absoluten Positionen (z. B. G90) sowie Einheitenwechsel (z. B. F6000=100mm/s). Der Codepfad für eine Bewegung lautet: <code>_process_data() -&gt; _process_commands() -&gt; cmd_G1()</code>. Letztlich wird die Klasse ToolHead aufgerufen, um die eigentliche Anforderung auszuführen: <code>cmd_G1() -&gt; ToolHead.move()</code></li>
+<li>
+<p>Die Klasse ToolHead (in toolhead.py) verwaltet das "Look-ahead" und verfolgt das Timing der Druckvorgänge. Der Hauptcodepfad für eine Bewegung lautet: <code>ToolHead.move() -&gt; LookAheadQueue.add_move()</code>, dann <code>ToolHead.move() -&gt; ToolHead._process_lookahead() -&gt; LookAheadQueue.flush() -&gt; Move.set_junction()</code>, und anschließend <code>ToolHead._process_lookahead() -&gt; trapq_append()</code>.</p>
+<ul>
+<li>ToolHead.move() erzeugt ein Move()-Objekt mit den Parametern der Bewegung (im kartesischen Raum und in Einheiten von Sekunden und Millimetern).</li>
+<li>Die Kinematik-Klasse erhält die Gelegenheit, jede Bewegung zu prüfen (<code>ToolHead.move() -&gt; kin.check_move()</code>). Die Kinematik-Klassen befinden sich im Verzeichnis klippy/kinematics/. Der Code von check_move() kann einen Fehler auslösen, wenn die Bewegung ungültig ist. Wird check_move() erfolgreich abgeschlossen, muss die zugrunde liegende Kinematik die Bewegung ausführen können.</li>
+<li>LookAheadQueue.add_move() legt das Bewegungsobjekt in der "Look-ahead"-Warteschlange ab.</li>
+<li>LookAheadQueue.flush() bestimmt die Start- und Endgeschwindigkeiten jeder Bewegung.</li>
+<li>Move.set_junction() implementiert den "Trapezgenerator" für eine Bewegung. Der "Trapezgenerator" zerlegt jede Bewegung in drei Teile: eine Phase konstanter Beschleunigung, gefolgt von einer Phase konstanter Geschwindigkeit, gefolgt von einer Phase konstanter Verzögerung. Jede Bewegung enthält diese drei Phasen in dieser Reihenfolge, einzelne Phasen können jedoch die Dauer null haben.</li>
+<li>Wenn ToolHead._process_lookahead() fortgesetzt wird, sind alle Informationen zur Bewegung bekannt - ihre Startposition, ihre Endposition, ihre Beschleunigung, ihre Start-/Fahr-/Endgeschwindigkeit sowie die während Beschleunigung/Fahrt/Verzögerung zurückgelegte Strecke. Alle Informationen werden in der Klasse Move() gespeichert und liegen im kartesischen Raum in den Einheiten Millimeter und Sekunden vor.</li>
+<li>Die Bewegungen werden anschließend über trapq_append() (in klippy/chelper/trapq.c) in eine "Trapez-Bewegungswarteschlange" eingereiht. Die trapq speichert alle Informationen der Klasse Move() in einer für den Host-C-Code zugänglichen C-Struktur.</li>
+<li>Beachten Sie, dass der Extruder in einer eigenen Kinematik-Klasse behandelt wird: <code>ToolHead._process_lookahead() -&gt; PrinterExtruder.process_move()</code>. Da die Klasse Move() die genaue Bewegungszeit festlegt und Schrittimpulse mit einem bestimmten Timing an den Mikrocontroller gesendet werden, sind die von der Extruder-Klasse erzeugten Schrittmotorbewegungen synchron mit der Kopfbewegung, obwohl der Code getrennt gehalten wird.</li>
+<li>Aus Effizienzgründen wird die Schrittmotorbewegung im C-Code in einem Thread pro Schrittmotor erzeugt. Die Threads werden vom motion_queuing-Modul (klippy/extras/motion_queuing.py) benachrichtigt, wenn Schritte erzeugt werden sollen: <code>PrinterMotionQueuing._flush_handler() -&gt; PrinterMotionQueuing._advance_move_time() -&gt; steppersyncmgr_gen_steps() -&gt; se_start_gen_steps()</code>.</li>
+<li>Klipper verwendet einen <a href="https://en.wikipedia.org/wiki/Root-finding_algorithm">iterativen Löser</a>, um die Schrittzeiten für jeden Schrittmotor zu erzeugen. Die Schrittzeiten werden im Hintergrundthread erzeugt (klippy/chelper/steppersync.c): <code>se_background_thread() -&gt; se_generate_steps() -&gt; itersolve_generate_steps() -&gt; itersolve_gen_steps_range()</code> (in klippy/chelper/itersolve.c). Ziel des iterativen Lösers ist es, anhand einer Funktion, die aus einer Zeit eine Schrittmotorposition berechnet, die Schrittzeiten zu ermitteln. Dies geschieht, indem wiederholt verschiedene Zeiten "geraten" werden, bis die Positionsformel des Schrittmotors die gewünschte Position des nächsten Schritts liefert. Die Rückmeldung jedes Versuchs wird genutzt, um künftige Versuche zu verbessern, sodass der Prozess rasch zur gewünschten Zeit konvergiert. Die kinematischen Formeln zur Schrittmotorpositionsberechnung befinden sich im Verzeichnis klippy/chelper/ (z. B. kin_cart.c, kin_corexy.c, kin_delta.c, kin_extruder.c).</li>
+<li>Nachdem der iterative Löser die Schrittzeiten berechnet hat, werden sie einem Array hinzugefügt: <code>itersolve_gen_steps_range() -&gt; stepcompress_append()</code> (in klippy/chelper/stepcompress.c). Das Array (struct stepcompress.queue) speichert für jeden Schritt die zugehörigen Zählerstände des Mikrocontroller-Takts. Der Wert des "Mikrocontroller-Taktzählers" entspricht dabei unmittelbar dem Hardwarezähler des Mikrocontrollers – er ist relativ zum letzten Einschaltzeitpunkt des Mikrocontrollers.</li>
+<li>Der nächste wichtige Schritt ist das Komprimieren der Schritte: <code>stepcompress_flush() -&gt; compress_bisect_add()</code> (in klippy/chelper/stepcompress.c). Dieser Code erzeugt und kodiert eine Reihe von "queue_step"-Befehlen des Mikrocontrollers, die der in der vorherigen Phase erstellten Liste der Schrittmotor-Schrittzeiten entsprechen. Diese "queue_step"-Befehle werden anschließend in eine Warteschlange eingereiht, priorisiert und an den Mikrocontroller gesendet (über steppersync.c:steppersync und serialqueue.c:serialqueue).</li>
+<li>Die Verarbeitung der queue_step-Befehle auf dem Mikrocontroller beginnt in src/command.c, wo der Befehl geparst und <code>command_queue_step()</code> aufgerufen wird. Der Code von command_queue_step() (in src/stepper.c) hängt lediglich die Parameter jedes queue_step-Befehls an eine Warteschlange pro Schrittmotor an. Im Normalbetrieb wird der queue_step-Befehl mindestens 100 ms vor dem Zeitpunkt seines ersten Schritts geparst und eingereiht. Die Erzeugung der Schrittmotor-Ereignisse erfolgt schließlich in <code>stepper_event()</code>. Diese Funktion wird vom Hardware-Timer-Interrupt zum geplanten Zeitpunkt des ersten Schritts aufgerufen. Der Code von stepper_event() erzeugt einen Schrittimpuls und plant sich dann selbst erneut für den Zeitpunkt des nächsten Schrittimpulses gemäß den gegebenen queue_step-Parametern ein. Die Parameter jedes queue_step-Befehls sind "interval", "count" und "add". Auf hoher Ebene führt stepper_event() 'count'-mal Folgendes aus: <code>do_step(); next_wake_time = last_wake_time + interval; interval += add;</code></li>
+</ul>
+</li>
+</ul>
+<p>Das Obige mag nach einem hohen Aufwand für die Ausführung einer Bewegung aussehen. Wirklich interessant sind jedoch nur die Teile in den Klassen ToolHead und Kinematik. Dieser Teil des Codes legt die Bewegungen und ihre Zeitpunkte fest. Die übrige Verarbeitung besteht größtenteils nur aus Kommunikation und Verbindungslogik.</p>
+<h2 id="hinzufugen-eines-hostmoduls">Hinzufügen eines Hostmoduls<a class="headerlink" href="#hinzufugen-eines-hostmoduls" title="Permanent link">&para;</a></h2>
+<p>Der Klippy-Host-Code verfügt über eine Funktion zum dynamischen Laden von Modulen. Wird in der Druckerkonfigurationsdatei ein Konfigurationsabschnitt namens "[my_module]" gefunden, versucht die Software automatisch, das Python-Modul klippy/extras/my_module.py zu laden. Dieses Modulsystem ist die bevorzugte Methode, um Klipper um neue Funktionalität zu erweitern.</p>
+<p>Am einfachsten fügt man ein neues Modul hinzu, indem man ein vorhandenes Modul als Vorlage verwendet – siehe <strong>klippy/extras/servo.py</strong> als Beispiel.</p>
+<p>Die folgenden Informationen könnten ebenfalls nützlich sein:</p>
+<ul>
+<li>Die Ausführung des Moduls beginnt in der modulweiten Funktion <code>load_config()</code> (für Konfigurationsabschnitte der Form [my_module]) oder in <code>load_config_prefix()</code> (für Konfigurationsabschnitte der Form [my_module my_name]). Dieser Funktion wird ein "config"-Objekt übergeben, und sie muss ein neues "printer object" zurückgeben, das mit dem jeweiligen Konfigurationsabschnitt verknüpft ist.</li>
+<li>Während der Instanziierung eines neuen printer object kann das config-Objekt verwendet werden, um Parameter aus dem jeweiligen Konfigurationsabschnitt zu lesen. Dies geschieht mit den Methoden <code>config.get()</code>, <code>config.getfloat()</code>, <code>config.getint()</code> usw. Achten Sie darauf, während der Konstruktion des printer object alle Werte aus der Konfiguration zu lesen - gibt der Anwender einen Konfigurationsparameter an, der in dieser Phase nicht gelesen wird, wird angenommen, dass es sich um einen Tippfehler in der Konfiguration handelt, und es wird ein Fehler ausgelöst.</li>
+<li>Verwenden Sie die Methode <code>config.get_printer()</code>, um eine Referenz auf die Hauptklasse "printer" zu erhalten. Diese "printer"-Klasse speichert Referenzen auf alle bereits instanziierten "printer objects". Verwenden Sie die Methode <code>printer.lookup_object()</code>, um Referenzen auf andere printer objects zu finden. Nahezu die gesamte Funktionalität (selbst zentrale Kinematik-Module) ist in einem dieser printer objects gekapselt. Beachten Sie jedoch, dass bei der Instanziierung eines neuen Moduls noch nicht alle anderen printer objects instanziiert sein müssen. Die Module "gcode" und "pins" sind stets verfügbar, bei anderen Modulen empfiehlt es sich jedoch, das Lookup zu verzögern.</li>
+<li>Registrieren Sie mit der Methode <code>printer.register_event_handler()</code> Event-Handler, wenn Ihr Code bei "Events" aufgerufen werden muss, die von anderen printer objects ausgelöst werden. Jeder Eventname ist ein String und ist üblicherweise der Name des Hauptmoduls, das das Event auslöst, zusammen mit einem kurzen Namen für die stattfindende Aktion (z. B. "klippy:connect"). Die an jeden Event-Handler übergebenen Parameter sind spezifisch für das jeweilige Event (ebenso wie Exception-Handling und Ausführungskontext). Zwei gängige Start-Events sind:<ul>
+<li>klippy:connect - Dieses Event wird ausgelöst, nachdem alle printer objects instanziiert wurden. Es wird üblicherweise verwendet, um andere printer objects zu finden, Konfigurationseinstellungen zu prüfen und einen ersten "Handshake" mit der Drucker-Hardware durchzuführen.</li>
+<li>klippy:ready - Dieses Event wird ausgelöst, nachdem alle Connect-Handler erfolgreich abgeschlossen wurden. Es zeigt an, dass der Drucker in einen Zustand übergeht, in dem er für den normalen Betrieb bereit ist. Lösen Sie in diesem Callback keinen Fehler aus.</li>
+</ul>
+</li>
+<li>Liegt ein Fehler in der Konfiguration des Anwenders vor, achten Sie darauf, ihn während der Phase <code>load_config()</code> oder "connect event" auszulösen. Verwenden Sie entweder <code>raise config.error("my error")</code> oder <code>raise printer.config_error("my error")</code>, um den Fehler zu melden.</li>
+<li>Speichern Sie keine Referenz auf das <code>config</code>-Objekt in einer Klassen-Member-Variable (noch an einer ähnlichen Stelle, die über das anfängliche Laden des Moduls hinaus bestehen bleibt). Das <code>config</code>-Objekt ist eine Referenz auf eine Klasse der "Konfigurationsladephase", und es ist nicht zulässig, ihre Methoden nach Abschluss dieser "Konfigurationsladephase" aufzurufen.</li>
+<li>Verwenden Sie das Modul "pins", um einen Pin an einem Mikrocontroller zu konfigurieren. Dies geschieht typischerweise mit etwas Ähnlichem wie <code>printer.lookup_object("pins").setup_pin("pwm", config.get("my_pin"))</code>. Das zurückgegebene Objekt kann anschließend zur Laufzeit angesteuert werden.</li>
+<li>Definiert das printer object eine Methode <code>get_status()</code>, kann das Modul <a href="Status_Reference.html">Statusinformationen</a> über <a href="Command_Templates.html">Makros</a> sowie über den <a href="API_Server.html">API-Server</a> exportieren. Die Methode <code>get_status()</code> muss ein Python-Dictionary zurückgeben, dessen Schlüssel Strings sind und dessen Werte Ganzzahlen, Fließkommazahlen, Strings, Listen, Dictionaries, True, False oder None sind. Tupel (und benannte Tupel) können ebenfalls verwendet werden (diese erscheinen beim Zugriff über den API-Server als Listen). Exportierte Listen und Dictionaries müssen als "unveränderlich" behandelt werden - ändert sich ihr Inhalt, muss <code>get_status()</code> ein neues Objekt zurückgeben, da der API-Server diese Änderungen sonst nicht erkennt.</li>
+<li>Benötigt das Modul Zugriff auf System-Timing oder externe Datei-Deskriptoren, verwenden Sie <code>printer.get_reactor()</code>, um Zugriff auf die globale "Event-Reactor"-Klasse zu erhalten. Diese Reactor-Klasse ermöglicht es, Timer zu planen, auf Eingaben von Datei-Deskriptoren zu warten und den Host-Code "schlafen zu legen".</li>
+<li>Verwenden Sie keine globalen Variablen. Der gesamte Zustand sollte im printer object gespeichert werden, das von der Funktion <code>load_config()</code> zurückgegeben wird. Dies ist wichtig, da sonst der Befehl RESTART möglicherweise nicht wie erwartet funktioniert. Aus ähnlichen Gründen sollten Sie außerdem, falls externe Dateien (oder Sockets) geöffnet werden, unbedingt einen "klippy:disconnect"-Event-Handler registrieren und diese in dessen Callback schließen.</li>
+<li>Vermeiden Sie den Zugriff auf interne Member-Variablen (oder das Aufrufen von Methoden, die mit einem Unterstrich beginnen) anderer printer objects. Die Einhaltung dieser Konvention erleichtert die Verwaltung zukünftiger Änderungen.</li>
+<li>Es wird empfohlen, im Python-Konstruktor von Python-Klassen allen Member-Variablen einen Wert zuzuweisen. (Und dadurch die Möglichkeit von Python zu vermeiden, dynamisch neue Member-Variablen zu erzeugen.)</li>
+<li>Soll eine Python-Variable einen Fließkommawert speichern, wird empfohlen, diese Variable stets mit Fließkomma-Konstanten zuzuweisen und zu bearbeiten (und niemals mit Ganzzahl-Konstanten). Bevorzugen Sie beispielsweise <code>self.speed = 1.</code> gegenüber <code>self.speed = 1</code> und <code>self.speed = 2. * x</code> gegenüber <code>self.speed = 2 * x</code>. Die konsistente Verwendung von Fließkommawerten kann schwer zu debuggende Eigenheiten bei Python-Typumwandlungen vermeiden.</li>
+<li>Wenn Sie das Modul zur Aufnahme in den Haupt-Klipper-Code einreichen, achten Sie darauf, oben im Modul einen Copyright-Hinweis anzugeben. Das bevorzugte Format finden Sie in den bestehenden Modulen.</li>
+</ul>
+<h2 id="hinzufugen-neuer-kinematiken">Hinzufügen neuer Kinematiken<a class="headerlink" href="#hinzufugen-neuer-kinematiken" title="Permanent link">&para;</a></h2>
+<p>Dieser Abschnitt gibt einige Tipps zum Hinzufügen der Unterstützung weiterer Kinematik-Arten zu Klipper. Diese Art von Arbeit erfordert ein hervorragendes Verständnis der mathematischen Formeln der jeweiligen Kinematik. Zudem sind Softwareentwicklungskenntnisse erforderlich - allerdings muss in der Regel nur die Host-Software angepasst werden.</p>
+<p>Nützliche Schritte:</p>
+<ol>
+<li>Beginnen Sie mit dem Studium des Abschnitts "<a href="#code-flow-of-a-move-command">Code-Ablauf eines Bewegungsbefehls</a>" und des <a href="Kinematics.html">Kinematik-Dokuments</a>.</li>
+<li>Sehen Sie sich die bestehenden Kinematik-Klassen im Verzeichnis klippy/kinematics/ an. Die Kinematik-Klassen haben die Aufgabe, eine Bewegung in kartesischen Koordinaten in die Bewegung jedes einzelnen Schrittmotors umzuwandeln. Eine dieser Dateien lässt sich in der Regel als Ausgangspunkt kopieren.</li>
+<li>Implementieren Sie für jeden Schrittmotor die C-Funktionen zur Kinematik-Positionsberechnung, falls diese nicht bereits verfügbar sind (siehe kin_cart.c, kin_corexy.c und kin_delta.c in klippy/chelper/). Die Funktion sollte <code>move_get_coord()</code> aufrufen, um eine gegebene Bewegungszeit (in Sekunden) in eine kartesische Koordinate (in Millimetern) umzuwandeln, und daraus anschließend die gewünschte Schrittmotorposition (in Millimetern) berechnen.</li>
+<li>Implementieren Sie die Methode <code>calc_position()</code> in der neuen Kinematik-Klasse. Diese Methode berechnet die Position des Werkzeugkopfs in kartesischen Koordinaten aus der Position jedes Schrittmotors. Sie muss nicht besonders effizient sein, da sie typischerweise nur bei Homing- und Sondierungsvorgängen aufgerufen wird.</li>
+<li>Weitere Methoden. Implementieren Sie die Methoden <code>check_move()</code>, <code>get_status()</code>, <code>get_steppers()</code>, <code>home()</code>, <code>clear_homing_state()</code> und <code>set_position()</code>. Diese Funktionen werden typischerweise verwendet, um kinematikspezifische Prüfungen bereitzustellen. Zu Beginn der Entwicklung kann hier jedoch Boilerplate-Code verwendet werden.</li>
+<li>Implementieren Sie Testfälle. Erstellen Sie eine G-Code-Datei mit einer Reihe von Bewegungen, die wichtige Fälle für die jeweilige Kinematik abdecken. Folgen Sie der <a href="Debugging.html">Debugging-Dokumentation</a>, um diese G-Code-Datei in Mikrocontroller-Befehle umzuwandeln. Dies ist nützlich, um Grenzfälle zu testen und Regressionen zu erkennen.</li>
+</ol>
+<h2 id="portierung-auf-einen-neuen-mikrocontroller">Portierung auf einen neuen Mikrocontroller<a class="headerlink" href="#portierung-auf-einen-neuen-mikrocontroller" title="Permanent link">&para;</a></h2>
+<p>Dieser Abschnitt gibt einige Tipps zum Portieren von Klippers Mikrocontroller-Code auf eine neue Architektur. Diese Art von Arbeit erfordert gute Kenntnisse der Embedded-Entwicklung sowie praktischen Zugriff auf den Ziel-Mikrocontroller.</p>
+<p>Nützliche Schritte:</p>
+<ol>
+<li>Beginnen Sie damit, alle Drittanbieter-Bibliotheken zu identifizieren, die während der Portierung verwendet werden. Gängige Beispiele sind "CMSIS"-Wrapper und herstellerspezifische "HAL"-Bibliotheken. Der gesamte Drittanbieter-Code muss mit der GNU GPLv3 kompatibel sein. Der Drittanbieter-Code sollte in das Klipper-Verzeichnis lib/ eingebracht werden. Aktualisieren Sie die Datei lib/README mit Informationen darüber, woher und wann die Bibliothek bezogen wurde. Es ist bevorzugt, den Code unverändert in das Klipper-Repository zu kopieren; sind jedoch Änderungen erforderlich, sollten diese explizit in der Datei lib/README aufgeführt werden.</li>
+<li>Legen Sie im Verzeichnis src/ ein neues Unterverzeichnis für die Architektur an und fügen Sie die anfängliche Kconfig- und Makefile-Unterstützung hinzu. Orientieren Sie sich dabei an den bestehenden Architekturen. Das Verzeichnis src/simulator bietet ein einfaches Beispiel für einen minimalen Ausgangspunkt.</li>
+<li>Die erste zentrale Programmieraufgabe besteht darin, die Kommunikationsunterstützung für die Zielplatine zum Laufen zu bringen. Dies ist der schwierigste Schritt bei einer neuen Portierung. Sobald die grundlegende Kommunikation funktioniert, sind die verbleibenden Schritte in der Regel deutlich einfacher. Während der ersten Entwicklung wird typischerweise ein serielles UART-Gerät verwendet, da diese Art von Hardware im Allgemeinen leichter zu aktivieren und anzusteuern ist. Nutzen Sie in dieser Phase großzügig den Hilfscode aus dem Verzeichnis src/generic/ (prüfen Sie, wie src/simulator/Makefile den generischen C-Code in den Build einbindet). In dieser Phase ist es außerdem notwendig, timer_read_time() zu definieren (welches die aktuelle Systemuhr zurückgibt), eine vollständige Unterstützung der Timer-IRQ-Behandlung ist jedoch noch nicht erforderlich.</li>
+<li>Machen Sie sich mit dem Werkzeug console.py vertraut (wie im <a href="Debugging.html">Debugging-Dokument</a> beschrieben) und prüfen Sie damit die Verbindung zum Mikrocontroller. Dieses Werkzeug übersetzt das Low-Level-Kommunikationsprotokoll des Mikrocontrollers in eine menschenlesbare Form.</li>
+<li>Fügen Sie Unterstützung für Timer-Dispatch über Hardware-Interrupts hinzu. Siehe Klipper-<a href="https://github.com/Klipper3d/klipper/commit/970831ee0d3b91897196e92270d98b2a3067427f">Commit 970831ee</a> als Beispiel für die Schritte 1-5 am Beispiel der LPC176x-Architektur.</li>
+<li>Bringen Sie grundlegende GPIO-Ein- und -Ausgabeunterstützung zum Laufen. Siehe Klipper-<a href="https://github.com/Klipper3d/klipper/commit/c78b90767f19c9e8510c3155b89fb7ad64ca3c54">Commit c78b9076</a> als Beispiel hierfür.</li>
+<li>Bringen Sie weitere Peripheriegeräte zum Laufen - siehe zum Beispiel die Klipper-Commits <a href="https://github.com/Klipper3d/klipper/commit/65613aeddfb9ef86905cb1dade9e773a02ef3c27">65613aed</a>, <a href="https://github.com/Klipper3d/klipper/commit/c812a40a3782415e454b04bf7bd2158a6f0ec8b5">c812a40a</a> und <a href="https://github.com/Klipper3d/klipper/commit/c381d03aad5c3ee761169b7c7bced519cc14da29">c381d03a</a>.</li>
+<li>Erstellen Sie im Verzeichnis config/ eine Beispiel-Konfigurationsdatei für Klipper. Testen Sie den Mikrocontroller mit dem Hauptprogramm klippy.py.</li>
+<li>Erwägen Sie, im Verzeichnis test/ Build-Testfälle hinzuzufügen.</li>
+</ol>
+<p>Zusätzliche Tipps zur Programmierung:</p>
+<ol>
+<li>Vermeiden Sie die Verwendung von "C-Bitfeldern" für den Zugriff auf IO-Register; bevorzugen Sie stattdessen direkte Lese- und Schreiboperationen von 32-Bit-, 16-Bit- oder 8-Bit-Ganzzahlen. Die C-Sprachspezifikation legt nicht eindeutig fest, wie der Compiler C-Bitfelder implementieren muss (z. B. Byte-Reihenfolge und Bit-Layout), und es ist schwer vorherzusagen, welche IO-Operationen bei einem Lese- oder Schreibzugriff auf ein C-Bitfeld tatsächlich stattfinden.</li>
+<li>Bevorzugen Sie das Schreiben expliziter Werte in IO-Register gegenüber Read-Modify-Write-Operationen. Das heißt, wenn ein Feld in einem IO-Register aktualisiert wird, dessen andere Felder bekannte Werte haben, ist es vorzuziehen, den vollständigen Inhalt des Registers explizit zu schreiben. Explizite Schreibvorgänge erzeugen Code, der kleiner, schneller und leichter zu debuggen ist.</li>
+</ol>
+<h2 id="koordinatensysteme">Koordinatensysteme<a class="headerlink" href="#koordinatensysteme" title="Permanent link">&para;</a></h2>
+<p>Intern verfolgt Klipper die Position des Werkzeugkopfs vorrangig in kartesischen Koordinaten, die relativ zum in der Konfigurationsdatei angegebenen Koordinatensystem sind. Das heißt, der Großteil des Klipper-Codes erlebt niemals einen Wechsel des Koordinatensystems. Fordert der Anwender eine Änderung des Ursprungs an (z. B. über einen <code>G92</code>-Befehl), wird dieser Effekt dadurch erzielt, dass zukünftige Befehle in das primäre Koordinatensystem übersetzt werden.</p>
+<p>In manchen Fällen ist es jedoch nützlich, die Position des Werkzeugkopfs in einem anderen Koordinatensystem zu ermitteln, und Klipper bietet dafür mehrere Werkzeuge. Dies lässt sich mit dem Befehl GET_POSITION beobachten. Zum Beispiel:</p>
+<div class="highlight"><pre><span></span><code>Send: GET_POSITION
+Recv: // mcu: stepper_a:-2060 stepper_b:-1169 stepper_c:-1613
+Recv: // stepper: stepper_a:457.254159 stepper_b:466.085669 stepper_c:465.382132
+Recv: // kinematic: X:8.339144 Y:-3.131558 Z:233.347121
+Recv: // toolhead: X:8.338078 Y:-3.123175 Z:233.347878 E:0.000000
+Recv: // gcode: X:8.338078 Y:-3.123175 Z:233.347878 E:0.000000
+Recv: // gcode base: X:0.000000 Y:0.000000 Z:0.000000 E:0.000000
+Recv: // gcode homing: X:0.000000 Y:0.000000 Z:0.000000
+</code></pre></div>
+
+<p>Die "mcu"-Position (<code>stepper.get_mcu_position()</code> im Code) ist die Gesamtzahl der vom Mikrocontroller in positiver Richtung ausgegebenen Schritte abzüglich der in negativer Richtung ausgegebenen Schritte seit dem letzten Zurücksetzen des Mikrocontrollers. Befindet sich der Roboter zum Zeitpunkt der Abfrage in Bewegung, enthält der gemeldete Wert auf dem Mikrocontroller gepufferte Bewegungen, jedoch nicht die Bewegungen in der Look-ahead-Warteschlange.</p>
+<p>Die "stepper"-Position (<code>stepper.get_commanded_position()</code>) ist die Position des jeweiligen Schrittmotors, wie sie vom Kinematik-Code nachverfolgt wird. Sie entspricht in der Regel der Position (in mm) des Schlittens entlang seiner Schiene, relativ zum in der Konfigurationsdatei angegebenen position_endstop. (Manche Kinematiken verfolgen Schrittmotorpositionen in Radiant statt in Millimetern.) Befindet sich der Roboter zum Zeitpunkt der Abfrage in Bewegung, enthält der gemeldete Wert auf dem Mikrocontroller gepufferte Bewegungen, jedoch nicht die Bewegungen in der Look-ahead-Warteschlange. Mit den Aufrufen <code>toolhead.flush_step_generation()</code> oder <code>toolhead.wait_moves()</code> lässt sich die Look-ahead- und Schritterzeugung vollständig leeren.</p>
+<p>Die "kinematische" Position (<code>kin.calc_position()</code>) ist die kartesische Position des Werkzeugkopfs, wie sie aus den "stepper"-Positionen abgeleitet wird, relativ zum in der Konfigurationsdatei angegebenen Koordinatensystem. Diese kann aufgrund der Granularität der Schrittmotoren von der angeforderten kartesischen Position abweichen. Befindet sich der Roboter in Bewegung, wenn die "stepper"-Positionen erfasst werden, enthält der gemeldete Wert auf dem Mikrocontroller gepufferte Bewegungen, jedoch nicht die Bewegungen in der Look-ahead-Warteschlange. Mit den Aufrufen <code>toolhead.flush_step_generation()</code> oder <code>toolhead.wait_moves()</code> lässt sich die Look-ahead- und Schritterzeugung vollständig leeren.</p>
+<p>Die "toolhead"-Position (<code>toolhead.get_position()</code>) ist die zuletzt angeforderte Position des Werkzeugkopfs in kartesischen Koordinaten, relativ zum in der Konfigurationsdatei angegebenen Koordinatensystem. Befindet sich der Roboter zum Zeitpunkt der Abfrage in Bewegung, enthält der gemeldete Wert alle angeforderten Bewegungen (auch solche, die noch in Puffern auf die Übergabe an die Schrittmotortreiber warten).</p>
+<p>Die "gcode"-Position ist die zuletzt angeforderte Position eines <code>G1</code>- (oder <code>G0</code>-)Befehls in kartesischen Koordinaten, relativ zum in der Konfigurationsdatei angegebenen Koordinatensystem. Diese kann von der "toolhead"-Position abweichen, wenn eine G-Code-Transformation (z. B. bed_mesh, bed_tilt, skew_correction) aktiv ist. Sie kann auch von den tatsächlich im letzten <code>G1</code>-Befehl angegebenen Koordinaten abweichen, wenn der G-Code-Ursprung geändert wurde (z. B. durch <code>G92</code>, <code>SET_GCODE_OFFSET</code>, <code>M221</code>). Der Befehl <code>M114</code> (<code>gcode_move.get_status()['gcode_position']</code>) meldet die letzte G-Code-Position relativ zum aktuellen G-Code-Koordinatensystem.</p>
+<p>Die "gcode base" ist die Position des G-Code-Ursprungs in kartesischen Koordinaten, relativ zum in der Konfigurationsdatei angegebenen Koordinatensystem. Befehle wie <code>G92</code>, <code>SET_GCODE_OFFSET</code> und <code>M221</code> verändern diesen Wert.</p>
+<p>Das "gcode homing" ist die Position, die nach einem Homing-Befehl <code>G28</code> als G-Code-Ursprung verwendet wird (in kartesischen Koordinaten, relativ zum in der Konfigurationsdatei angegebenen Koordinatensystem). Der Befehl <code>SET_GCODE_OFFSET</code> kann diesen Wert verändern.</p>
+<h2 id="zeit">Zeit<a class="headerlink" href="#zeit" title="Permanent link">&para;</a></h2>
+<p>Grundlegend für die Funktionsweise von Klipper ist der Umgang mit Uhren, Zeiten und Zeitstempeln. Klipper führt Aktionen am Drucker aus, indem es Ereignisse für die nahe Zukunft plant. Um beispielsweise einen Lüfter einzuschalten, plant der Code möglicherweise eine Änderung eines GPIO-Pins in 100 ms. Es kommt selten vor, dass der Code versucht, eine sofortige Aktion auszuführen. Die Behandlung von Zeit innerhalb von Klipper ist daher entscheidend für den korrekten Betrieb.</p>
+<p>Intern werden in der Klipper-Host-Software drei Arten von Zeiten nachverfolgt:</p>
+<ul>
+<li>Systemzeit. Die Systemzeit verwendet die monotone Uhr des Systems - sie ist eine Fließkommazahl, die als Sekunden gespeichert wird, und ist (im Allgemeinen) relativ zum letzten Start des Host-Computers. Systemzeiten haben in der Software nur begrenzten Nutzen - sie werden vor allem bei der Interaktion mit dem Betriebssystem verwendet. Im Host-Code werden Systemzeiten häufig in Variablen namens <em>eventtime</em> oder <em>curtime</em> gespeichert.</li>
+<li>Druckzeit. Die Druckzeit ist mit der Haupt-Mikrocontroller-Uhr synchronisiert (dem im Konfigurationsabschnitt "[mcu]" definierten Mikrocontroller). Sie ist eine Fließkommazahl, die als Sekunden gespeichert wird, und ist relativ zum letzten Neustart des Haupt-MCU. Eine "Druckzeit" lässt sich in die Hardware-Uhr des Haupt-Mikrocontrollers umrechnen, indem die Druckzeit mit der statisch konfigurierten Taktrate des MCU multipliziert wird. Der übergeordnete Host-Code verwendet Druckzeiten, um nahezu alle physischen Aktionen zu berechnen (z. B. Kopfbewegung, Heizungsänderungen usw.). Im Host-Code werden Druckzeiten in der Regel in Variablen namens <em>print_time</em> oder <em>move_time</em> gespeichert.</li>
+<li>MCU-Takt. Dies ist der Hardware-Taktzähler auf jedem Mikrocontroller. Er wird als Ganzzahl gespeichert, und seine Aktualisierungsrate ist relativ zur Frequenz des jeweiligen Mikrocontrollers. Die Host-Software übersetzt ihre internen Zeiten vor der Übertragung an den MCU in Taktwerte. Der MCU-Code verfolgt Zeit ausschließlich in Takt-Ticks. Im Host-Code werden Taktwerte als 64-Bit-Ganzzahlen verfolgt, während der MCU-Code 32-Bit-Ganzzahlen verwendet. Im Host-Code werden Taktwerte in der Regel in Variablen gespeichert, deren Namen <em>clock</em> oder <em>ticks</em> enthalten.</li>
+</ul>
+<p>Die Umrechnung zwischen den verschiedenen Zeitformaten ist hauptsächlich im Code <strong>klippy/clocksync.py</strong> implementiert.</p>
+<p>Einige Dinge, auf die beim Lesen des Codes zu achten ist:</p>
+<ul>
+<li>32-Bit- und 64-Bit-Takte: Um die Bandbreite zu reduzieren und die Effizienz des Mikrocontrollers zu verbessern, werden Taktwerte auf dem Mikrocontroller als 32-Bit-Ganzzahlen verfolgt. Beim Vergleich zweier Taktwerte im MCU-Code muss stets die Funktion <code>timer_is_before()</code> verwendet werden, um sicherzustellen, dass Ganzzahlüberläufe korrekt behandelt werden. Die Host-Software wandelt 32-Bit-Taktwerte in 64-Bit-Taktwerte um, indem sie die höherwertigen Bits des zuletzt vom MCU empfangenen Zeitstempels anhängt - keine Nachricht vom MCU liegt jemals mehr als 2^31 Takt-Ticks in der Zukunft oder Vergangenheit, sodass diese Umrechnung nie mehrdeutig ist. Der Host wandelt 64-Bit-Taktwerte in 32-Bit-Taktwerte um, indem er einfach die höherwertigen Bits abschneidet. Um Mehrdeutigkeiten bei dieser Umrechnung auszuschließen, puffert der Code in <strong>klippy/chelper/serialqueue.c</strong> Nachrichten, bis sie sich innerhalb von 2^31 Takt-Ticks ihrer Zielzeit befinden.</li>
+<li>Mehrere Mikrocontroller: Die Host-Software unterstützt die Verwendung mehrerer Mikrocontroller an einem einzigen Drucker. In diesem Fall wird der "MCU-Takt" jedes Mikrocontrollers separat verfolgt. Der Code in clocksync.py behandelt Taktdrift zwischen Mikrocontrollern, indem er die Art und Weise anpasst, wie "Druckzeit" in "MCU-Takt" umgerechnet wird. Auf sekundären MCUs wird die für diese Umrechnung verwendete MCU-Frequenz regelmäßig aktualisiert, um die gemessene Drift zu berücksichtigen.</li>
+</ul>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Zurück zum Seitenanfang
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="Using_PWM_Tools.html" class="md-footer__link md-footer__link--prev" aria-label="Zurück: Verwendung von PWM-Tools" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Zurück
+              </span>
+              Verwendung von PWM-Tools
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="Kinematics.html" class="md-footer__link md-footer__link--next" aria-label="Weiter: Kinematik" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Weiter
+              </span>
+              Kinematik
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "In Zwischenablage kopieren", "clipboard.copied": "In Zwischenablage kopiert", "search.config.lang": "de", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Suche", "search.result.placeholder": "Suchbegriff eingeben", "search.result.none": "Keine Suchergebnisse", "search.result.one": "1 Suchergebnis", "search.result.other": "# Suchergebnisse", "search.result.more.one": "1 weiteres Suchergebnis auf dieser Seite", "search.result.more.other": "# weitere Suchergebnisse auf dieser Seite", "search.result.term.missing": "Es fehlt", "select.version.title": "Version ausw\u00e4hlen"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

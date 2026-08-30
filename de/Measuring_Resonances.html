@@ -1,0 +1,2763 @@
+
+<!doctype html>
+<html lang="de" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.4, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>Resonanzen messen - Klipper-Dokumentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-VEN1PGNQL4"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){this.value&&gtag("event","search",{search_term:this.value})}),"undefined"!=typeof location$&&location$.subscribe(function(e){gtag("config","G-VEN1PGNQL4",{page_path:e.pathname})})})</script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-VEN1PGNQL4"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#resonanzen-messen" class="md-skip">
+          Zum Inhalt
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="Klipper-Dokumentation" class="md-header__button md-logo" aria-label="Klipper-Dokumentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Klipper-Dokumentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Resonanzen messen
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Sprache wechseln">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/de/" hreflang="de" class="md-select__link">
+                    Deutsch
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/it/" hreflang="it" class="md-select__link">
+                    Italiano
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/fr/" hreflang="fr" class="md-select__link">
+                    Français
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Suche" placeholder="Suche" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Suche">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Teilen" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Zurücksetzen" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Suche wird initialisiert
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Quellcode" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Klipper-Dokumentation" class="md-nav__button md-logo" aria-label="Klipper-Dokumentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Klipper-Dokumentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Quellcode" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        Übersicht
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        Funktionen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        Häufig gestellte Fragen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        Veröffentlichungen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        Konfigurationsänderungen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        Kontakt
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation und Konfiguration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation und Konfiguration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation und Konfiguration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_1" type="checkbox" id="__nav_7_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_1">
+          Installation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_1">
+          <span class="md-nav__icon md-icon"></span>
+          Installation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="OctoPrint.html" class="md-nav__link">
+        OctoPrint für Klipper
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Konfigurationsreferenz
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Konfigurationsreferenz" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Konfigurationsreferenz
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        Konfigurationsreferenz
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        Rotationsdistanz
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        Überprüfung der Konfiguration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Bettnivellierung
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Bettnivellierung" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Bettnivellierung
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        Bett Nivellierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        Deltakalibrierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        Sondenkalibrierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        Manuelle Nivellierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        Bettgitter
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        Endstop Phase
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Axis_Twist_Compensation.html" class="md-nav__link">
+        Kompensation der Achsenverdrehung
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Resonanz-Kompensation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Resonanz-Kompensation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Resonanz-Kompensation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        Resonanz-Kompensation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Resonanzen messen
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="Measuring_Resonances.html" class="md-nav__link md-nav__link--active">
+        Resonanzen messen
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Inhaltsverzeichnis">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Inhaltsverzeichnis
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#mcus-mit-klipper-i2c-fast-mode-unterstutzung" class="md-nav__link">
+    MCUs mit Klipper I2C fast-mode Unterstützung
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installationsanleitung" class="md-nav__link">
+    Installationsanleitung
+  </a>
+  
+    <nav class="md-nav" aria-label="Installationsanleitung">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#verkabelung" class="md-nav__link">
+    Verkabelung
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spi-beschleunigungsmesser" class="md-nav__link">
+    SPI Beschleunigungsmesser
+  </a>
+  
+    <nav class="md-nav" aria-label="SPI Beschleunigungsmesser">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adxl345" class="md-nav__link">
+    ADXL345
+  </a>
+  
+    <nav class="md-nav" aria-label="ADXL345">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#direkt-zum-raspberry-pi" class="md-nav__link">
+    Direkt zum Raspberry Pi
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verwendung-raspberry-pi-pico" class="md-nav__link">
+    Verwendung Raspberry Pi Pico
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#i2c-beschleunigungsmesser" class="md-nav__link">
+    I2C Beschleunigungsmesser
+  </a>
+  
+    <nav class="md-nav" aria-label="I2C Beschleunigungsmesser">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500icm20948" class="md-nav__link">
+    MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948
+  </a>
+  
+    <nav class="md-nav" aria-label="MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#empfohlenes-anschlussschema-fur-i2c-twi-am-avr-atmega328p-arduino-nano" class="md-nav__link">
+    Empfohlenes Anschlussschema für I2C (TWI) am AVR ATmega328P Arduino Nano:
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#befestigung-des-beschleunigungssensors" class="md-nav__link">
+    Befestigung des Beschleunigungssensors
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#software-installation" class="md-nav__link">
+    Software Installation
+  </a>
+  
+    <nav class="md-nav" aria-label="Software Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adxl345-mit-rpi-konfigurieren" class="md-nav__link">
+    ADXL345 mit RPi konfigurieren
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adxl345-mit-pi-pico-konfigurieren" class="md-nav__link">
+    ADXL345 mit Pi Pico konfigurieren
+  </a>
+  
+    <nav class="md-nav" aria-label="ADXL345 mit Pi Pico konfigurieren">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#flashen-der-pico-firmware" class="md-nav__link">
+    Flashen der Pico Firmware
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#konfigurieren-sie-die-verbindung" class="md-nav__link">
+    Konfigurieren Sie die Verbindung
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lis2dw-serie-uber-spi-konfigurieren" class="md-nav__link">
+    LIS2DW-Serie über SPI konfigurieren
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#konfigurieren-der-mpu-60009000-serie-mit-rpi" class="md-nav__link">
+    Konfigurieren der MPU-6000/9000 Serie mit RPi
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#konfigurieren-von-mpu-9520-kompatible-mit-pico" class="md-nav__link">
+    Konfigurieren von MPU-9520 Kompatible mit Pico
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#konfigurieren-von-mpu-9520-kompatible-mit-avr" class="md-nav__link">
+    Konfigurieren von MPU-9520 Kompatible mit AVR
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resonanzenmessen" class="md-nav__link">
+    Resonanzenmessen
+  </a>
+  
+    <nav class="md-nav" aria-label="Resonanzenmessen">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#uberprufung-der-einrichtung" class="md-nav__link">
+    Überprüfung der Einrichtung
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resonanzenmessen_1" class="md-nav__link">
+    Resonanzenmessen
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bed-slinger-drucker" class="md-nav__link">
+    Bed-slinger Drucker
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#max-smoothing" class="md-nav__link">
+    Max smoothing
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auswahl-von-max_accel" class="md-nav__link">
+    Auswahl von max_accel
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#messung-der-resonanzen-der-z-achse" class="md-nav__link">
+    Messung der Resonanzen der Z-Achse
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unzuverlassige-messungen-der-resonanzfrequenzen" class="md-nav__link">
+    Unzuverlässige Messungen der Resonanzfrequenzen
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testen-benutzerdefinierter-achsen" class="md-nav__link">
+    Testen benutzerdefinierter Achsen
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#input-shaper-autokalibrierung" class="md-nav__link">
+    Input Shaper Autokalibrierung
+  </a>
+  
+    <nav class="md-nav" aria-label="Input Shaper Autokalibrierung">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#input-shaper-rekalibrierung" class="md-nav__link">
+    Input Shaper Rekalibrierung
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#offline-verarbeitung-der-beschleunigungsmesser-daten" class="md-nav__link">
+    Offline Verarbeitung der Beschleunigungsmesser Daten
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Druckvorschub
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Befehlsvorlagen
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Befehlsvorlagen" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Befehlsvorlagen
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        Befehlsvorlagen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        Statusreferenz
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        TMC Treiber
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        Homing und Probing mit mehreren Mikrocontrollern
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        Slicer
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        Schräglagenkorrektur
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Objekte ausschließen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        Verwendung von PWM-Tools
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Entwicklerdokumentation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Entwicklerdokumentation" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Entwicklerdokumentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        Code Überblick
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        Kinematik
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        Protokoll
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        API Server
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        MCU Befehle
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        CANBUS Protokoll
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        Fehlersuche
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        Benchmarks
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        Zu Klipper beitragen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        Klipper paketieren
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Geräteabhängige Dokumente
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Geräteabhängige Dokumente" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Geräteabhängige Dokumente
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        Beispielkonfigurationen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        SD-Karten Aktualisierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        RPi Mikrocontroller
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        Bootloader
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloader_Entry.html" class="md-nav__link">
+        Bootloader-Eintrag
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
+        CANBUS-Fehlerbehebung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        TSL1401CL Filamentbreitensensor
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        Filament-Dicken Hallsensor
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Eddy_Probe.html" class="md-nav__link">
+        Induktive Wirbelstromsonde
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Load_Cell.html" class="md-nav__link">
+        Zellen laden
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Sponsors.html" class="md-nav__link">
+        Förderer
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Inhaltsverzeichnis">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Inhaltsverzeichnis
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#mcus-mit-klipper-i2c-fast-mode-unterstutzung" class="md-nav__link">
+    MCUs mit Klipper I2C fast-mode Unterstützung
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installationsanleitung" class="md-nav__link">
+    Installationsanleitung
+  </a>
+  
+    <nav class="md-nav" aria-label="Installationsanleitung">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#verkabelung" class="md-nav__link">
+    Verkabelung
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spi-beschleunigungsmesser" class="md-nav__link">
+    SPI Beschleunigungsmesser
+  </a>
+  
+    <nav class="md-nav" aria-label="SPI Beschleunigungsmesser">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adxl345" class="md-nav__link">
+    ADXL345
+  </a>
+  
+    <nav class="md-nav" aria-label="ADXL345">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#direkt-zum-raspberry-pi" class="md-nav__link">
+    Direkt zum Raspberry Pi
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verwendung-raspberry-pi-pico" class="md-nav__link">
+    Verwendung Raspberry Pi Pico
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#i2c-beschleunigungsmesser" class="md-nav__link">
+    I2C Beschleunigungsmesser
+  </a>
+  
+    <nav class="md-nav" aria-label="I2C Beschleunigungsmesser">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500icm20948" class="md-nav__link">
+    MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948
+  </a>
+  
+    <nav class="md-nav" aria-label="MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#empfohlenes-anschlussschema-fur-i2c-twi-am-avr-atmega328p-arduino-nano" class="md-nav__link">
+    Empfohlenes Anschlussschema für I2C (TWI) am AVR ATmega328P Arduino Nano:
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#befestigung-des-beschleunigungssensors" class="md-nav__link">
+    Befestigung des Beschleunigungssensors
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#software-installation" class="md-nav__link">
+    Software Installation
+  </a>
+  
+    <nav class="md-nav" aria-label="Software Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adxl345-mit-rpi-konfigurieren" class="md-nav__link">
+    ADXL345 mit RPi konfigurieren
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adxl345-mit-pi-pico-konfigurieren" class="md-nav__link">
+    ADXL345 mit Pi Pico konfigurieren
+  </a>
+  
+    <nav class="md-nav" aria-label="ADXL345 mit Pi Pico konfigurieren">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#flashen-der-pico-firmware" class="md-nav__link">
+    Flashen der Pico Firmware
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#konfigurieren-sie-die-verbindung" class="md-nav__link">
+    Konfigurieren Sie die Verbindung
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lis2dw-serie-uber-spi-konfigurieren" class="md-nav__link">
+    LIS2DW-Serie über SPI konfigurieren
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#konfigurieren-der-mpu-60009000-serie-mit-rpi" class="md-nav__link">
+    Konfigurieren der MPU-6000/9000 Serie mit RPi
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#konfigurieren-von-mpu-9520-kompatible-mit-pico" class="md-nav__link">
+    Konfigurieren von MPU-9520 Kompatible mit Pico
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#konfigurieren-von-mpu-9520-kompatible-mit-avr" class="md-nav__link">
+    Konfigurieren von MPU-9520 Kompatible mit AVR
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resonanzenmessen" class="md-nav__link">
+    Resonanzenmessen
+  </a>
+  
+    <nav class="md-nav" aria-label="Resonanzenmessen">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#uberprufung-der-einrichtung" class="md-nav__link">
+    Überprüfung der Einrichtung
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resonanzenmessen_1" class="md-nav__link">
+    Resonanzenmessen
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bed-slinger-drucker" class="md-nav__link">
+    Bed-slinger Drucker
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#max-smoothing" class="md-nav__link">
+    Max smoothing
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auswahl-von-max_accel" class="md-nav__link">
+    Auswahl von max_accel
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#messung-der-resonanzen-der-z-achse" class="md-nav__link">
+    Messung der Resonanzen der Z-Achse
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unzuverlassige-messungen-der-resonanzfrequenzen" class="md-nav__link">
+    Unzuverlässige Messungen der Resonanzfrequenzen
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testen-benutzerdefinierter-achsen" class="md-nav__link">
+    Testen benutzerdefinierter Achsen
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#input-shaper-autokalibrierung" class="md-nav__link">
+    Input Shaper Autokalibrierung
+  </a>
+  
+    <nav class="md-nav" aria-label="Input Shaper Autokalibrierung">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#input-shaper-rekalibrierung" class="md-nav__link">
+    Input Shaper Rekalibrierung
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#offline-verarbeitung-der-beschleunigungsmesser-daten" class="md-nav__link">
+    Offline Verarbeitung der Beschleunigungsmesser Daten
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Measuring_Resonances.md" title="Seite editieren" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="resonanzen-messen">Resonanzen messen<a class="headerlink" href="#resonanzen-messen" title="Permanent link">&para;</a></h1>
+<p>Klipper bietet integrierte Unterstützung für die kompatiblen Beschleunigungssensoren ADXL345, MPU-9250, LIS2DW und LIS3DH, mit denen sich die Resonanzfrequenzen des Druckers für verschiedene Achsen messen und <a href="Resonance_Compensation.html">Input Shaper</a> zur Kompensation von Resonanzen automatisch abstimmen lassen. Beachten Sie, dass die Verwendung von Beschleunigungssensoren etwas Löten und Crimpen erfordert. Der ADXL345 kann an die SPI-Schnittstelle eines Raspberry Pi oder einer MCU-Platine angeschlossen werden (diese muss ausreichend schnell sein). Die MPU-Familie kann direkt an die I2C-Schnittstelle eines Raspberry Pi angeschlossen werden, oder an eine I2C-Schnittstelle einer MCU-Platine, die den <em>Fast Mode</em> mit 400 kbit/s in Klipper unterstützt. Der LIS2DW und der LIS3DH können mit denselben Überlegungen wie oben entweder an SPI oder I2C angeschlossen werden.</p>
+<p>Achten Sie bei der Beschaffung von Beschleunigungssensoren darauf, dass es eine Vielzahl unterschiedlicher Platinendesigns und Klone davon gibt. Soll der Sensor an einen 5V-Drucker-MCU angeschlossen werden, stellen Sie sicher, dass er über einen Spannungsregler und Pegelwandler verfügt.</p>
+<p>Stellen Sie bei ADXL345-Sensoren sicher, dass die Platine den SPI-Modus unterstützt (eine kleine Anzahl von Platinen scheint durch das Ziehen von SDO auf GND fest auf I2C konfiguriert zu sein).</p>
+<p>Auch für MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948 sowie LIS2DW/LIS3DH gibt es eine Vielzahl von Platinendesigns und Klonen mit unterschiedlichen I2C-Pull-up-Widerständen, die möglicherweise ergänzt werden müssen.</p>
+<h2 id="mcus-mit-klipper-i2c-fast-mode-unterstutzung">MCUs mit Klipper I2C <em>fast-mode</em> Unterstützung<a class="headerlink" href="#mcus-mit-klipper-i2c-fast-mode-unterstutzung" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th align="center">MCU Familie</th>
+<th align="left">Getestete MCU(s)</th>
+<th align="left">MCU(s) mit Unterstützung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">Eine Microcomputer Marke</td>
+<td align="left">3B+, Pico</td>
+<td align="left">3A, 3A+, 3B, 4</td>
+</tr>
+<tr>
+<td align="center">AVR ATmega</td>
+<td align="left">ATmega328p</td>
+<td align="left">ATmega32u4, ATmega128, ATmega168, ATmega328, ATmega644p, ATmega1280, ATmega1284, ATmega2560</td>
+</tr>
+<tr>
+<td align="center">AVR AT90</td>
+<td align="left">-</td>
+<td align="left">AT90usb646, AT90usb1286</td>
+</tr>
+<tr>
+<td align="center">SAMD</td>
+<td align="left">SAMC21G18</td>
+<td align="left">SAMC21G18, SAMD21G18, SAMD21E18, SAMD21J18, SAMD21E15, SAMD51G19, SAMD51J19, SAMD51N19, SAMD51P20, SAME51J19, SAME51N19, SAME54P20</td>
+</tr>
+</tbody>
+</table>
+<h2 id="installationsanleitung">Installationsanleitung<a class="headerlink" href="#installationsanleitung" title="Permanent link">&para;</a></h2>
+<h3 id="verkabelung">Verkabelung<a class="headerlink" href="#verkabelung" title="Permanent link">&para;</a></h3>
+<p>Für die Signalintegrität über eine längere Distanz wird ein Ethernet-Kabel mit geschirmten verdrillten Adernpaaren (Cat5e oder besser) empfohlen. Falls weiterhin Probleme mit der Signalintegrität auftreten (SPI-/I2C-Fehler):</p>
+<ul>
+<li>Überprüfen Sie die Verkabelung sorgfältig mit einem digitalen Multimeter auf:<ul>
+<li>Korrekte Verbindungen im ausgeschalteten Zustand (Durchgang)</li>
+<li>Korrekte Versorgungsspannung und Erdung</li>
+</ul>
+</li>
+<li>Nur I2C:<ul>
+<li>Prüfen Sie, dass die Widerstände der SCL- und SDA-Leitungen gegen 3,3V im Bereich von 900 Ohm bis 1,8K liegen</li>
+<li>Vollständige technische Details finden Sie in <a href="https://www.pololu.com/file/0J435/UM10204.pdf">Kapitel 7 der I2C-Bus-Spezifikation und des Benutzerhandbuchs UM10204</a> für den <em>Fast-Mode</em></li>
+</ul>
+</li>
+<li>Kürzen Sie das Kabel</li>
+</ul>
+<p>Verbinden Sie die Schirmung des Ethernet-Kabels nur mit der Masse der MCU-Platine/des Pi.</p>
+<p><strong><em>Überprüfen Sie Ihre Verkabelung sorgfältig, bevor Sie die Spannung einschalten, um eine Beschädigung Ihres MCU/Raspberry Pi oder des Beschleunigungssensors zu vermeiden.</em></strong></p>
+<h3 id="spi-beschleunigungsmesser">SPI Beschleunigungsmesser<a class="headerlink" href="#spi-beschleunigungsmesser" title="Permanent link">&para;</a></h3>
+<p>Empfohlene Reihenfolge der Aderpaare für drei verdrillte Adernpaare:</p>
+<div class="highlight"><pre><span></span><code>GND+MISO
+3.3V+MOSI
+SCLK+CS
+</code></pre></div>
+
+<p>Beachten Sie, dass anders als bei einer Kabelschirmung GND an beiden Enden verbunden sein muss.</p>
+<h4 id="adxl345">ADXL345<a class="headerlink" href="#adxl345" title="Permanent link">&para;</a></h4>
+<h5 id="direkt-zum-raspberry-pi">Direkt zum Raspberry Pi<a class="headerlink" href="#direkt-zum-raspberry-pi" title="Permanent link">&para;</a></h5>
+<p><strong>Hinweis: Viele MCUs funktionieren mit einem ADXL345 im SPI-Modus (z. B. Pi Pico); Verkabelung und Konfiguration hängen von Ihrer jeweiligen Platine und den verfügbaren Pins ab.</strong></p>
+<p>Sie müssen den ADXL345 über SPI mit Ihrem Raspberry Pi verbinden. Beachten Sie, dass die I2C-Verbindung, die in der ADXL345-Dokumentation vorgeschlagen wird, einen zu geringen Durchsatz hat und <strong>nicht funktionieren wird</strong>. Das empfohlene Anschlussschema:</p>
+<table>
+<thead>
+<tr>
+<th align="center">ADXL345 Pin</th>
+<th align="center">RPi Pin</th>
+<th align="center">RPi Pin Name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">3V3 (oder VCC)</td>
+<td align="center">01</td>
+<td align="center">3.3V DC power</td>
+</tr>
+<tr>
+<td align="center">GND</td>
+<td align="center">06</td>
+<td align="center">Masse (-)</td>
+</tr>
+<tr>
+<td align="center">CS</td>
+<td align="center">24</td>
+<td align="center">GPIO08 (SPI0_CE0_N)</td>
+</tr>
+<tr>
+<td align="center">SDO</td>
+<td align="center">21</td>
+<td align="center">GPIO09 (SPI0_MISO)</td>
+</tr>
+<tr>
+<td align="center">SDA</td>
+<td align="center">19</td>
+<td align="center">GPIO10 (SPI0_MOSI)</td>
+</tr>
+<tr>
+<td align="center">SCl</td>
+<td align="center">23</td>
+<td align="center">GPIO11 (SPI0_SCLK)</td>
+</tr>
+</tbody>
+</table>
+<p>Anschlussbeispiele für diverse ADXL345 Boards (Bilder bereitgestellt von Fritzing):</p>
+<p><img alt="ADXL345-Rpi" src="img/adxl345-fritzing.png" /></p>
+<h5 id="verwendung-raspberry-pi-pico">Verwendung Raspberry Pi Pico<a class="headerlink" href="#verwendung-raspberry-pi-pico" title="Permanent link">&para;</a></h5>
+<p>Sie können den ADXL345 an Ihren Raspberry Pi Pico anschließen und den Pico anschließend per USB mit Ihrem Raspberry Pi verbinden. Dadurch lässt sich der Beschleunigungssensor leicht an anderen Klipper-Geräten wiederverwenden, da die Verbindung per USB statt über GPIO erfolgt. Der Pico verfügt nicht über viel Rechenleistung, stellen Sie daher sicher, dass er ausschließlich für den Beschleunigungssensor genutzt wird und keine anderen Aufgaben übernimmt.</p>
+<p>Um eine Beschädigung Ihres RPi zu vermeiden, verbinden Sie den ADXL345 ausschließlich mit 3,3V. Je nach Platinenlayout kann ein Pegelwandler vorhanden sein, wodurch 5V für Ihren RPi gefährlich werden.</p>
+<table>
+<thead>
+<tr>
+<th align="center">ADXL345 Pin</th>
+<th align="center">Pico pin</th>
+<th align="center">Pico pin name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">3V3 (oder VCC)</td>
+<td align="center">36</td>
+<td align="center">3.3V DC power</td>
+</tr>
+<tr>
+<td align="center">GND</td>
+<td align="center">38</td>
+<td align="center">Masse (-)</td>
+</tr>
+<tr>
+<td align="center">CS</td>
+<td align="center">2</td>
+<td align="center">GP1 (SPI0_CSn)</td>
+</tr>
+<tr>
+<td align="center">SDO</td>
+<td align="center">1</td>
+<td align="center">GP0 (SPI0_RX)</td>
+</tr>
+<tr>
+<td align="center">SDA</td>
+<td align="center">5</td>
+<td align="center">GP3 (SPI0_TX)</td>
+</tr>
+<tr>
+<td align="center">SCl</td>
+<td align="center">4</td>
+<td align="center">GP2 (SPI0_SCK)</td>
+</tr>
+</tbody>
+</table>
+<p>Verkabelungsdiagramme für einige der ADXL345-Platinen:</p>
+<p><img alt="ADXL345-Pico" src="img/adxl345-pico.png" /></p>
+<h3 id="i2c-beschleunigungsmesser">I2C Beschleunigungsmesser<a class="headerlink" href="#i2c-beschleunigungsmesser" title="Permanent link">&para;</a></h3>
+<p>Empfohlene Reihenfolge der Aderpaare für drei Paare (bevorzugt):</p>
+<div class="highlight"><pre><span></span><code>3.3V+GND
+SDA+GND
+SCL+GND
+</code></pre></div>
+
+<p>Oder für zwei Paare:</p>
+<div class="highlight"><pre><span></span><code>3.3V+SDA
+GND+SCL
+</code></pre></div>
+
+<p>Beachten Sie, dass anders als bei einer Kabelschirmung alle GND-Leitungen an beiden Enden verbunden sein sollten.</p>
+<h4 id="mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500icm20948">MPU-9250/MPU-9255/MPU-6515/MPU-6050/MPU-6500/ICM20948<a class="headerlink" href="#mpu-9250mpu-9255mpu-6515mpu-6050mpu-6500icm20948" title="Permanent link">&para;</a></h4>
+<p>Diese Beschleunigungssensoren wurden getestet und funktionieren über I2C auf dem RPi, RP2040 (Pico) und AVR mit 400 kbit/s (<em>Fast Mode</em>). Einige MPU-Beschleunigungssensormodule enthalten bereits Pull-up-Widerstände, manche sind mit 10K jedoch zu groß und müssen ausgetauscht oder durch kleinere parallel geschaltete Widerstände ergänzt werden.</p>
+<p>Empfohlenes Anschlussschema für I2C am Raspberry Pi:</p>
+<table>
+<thead>
+<tr>
+<th align="center">MPU-9250 pin</th>
+<th align="center">RPi Pin</th>
+<th align="center">RPi Pin Name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">VCC</td>
+<td align="center">01</td>
+<td align="center">3.3V DC Spannung</td>
+</tr>
+<tr>
+<td align="center">GND</td>
+<td align="center">09</td>
+<td align="center">Masse (-)</td>
+</tr>
+<tr>
+<td align="center">SDA</td>
+<td align="center">03</td>
+<td align="center">GPIO02 (SDA1)</td>
+</tr>
+<tr>
+<td align="center">SCl</td>
+<td align="center">05</td>
+<td align="center">GPIO03 (SCL1)</td>
+</tr>
+</tbody>
+</table>
+<p>Der RPi verfügt über eingebaute 1,8K-Pull-up-Widerstände an SCL und SDA.</p>
+<p><img alt="MPU-9250 connected to Pi" src="img/mpu9250-PI-fritzing.png" /></p>
+<p>Empfohlenes Anschlussschema für I2C (i2c0a) am RP2040:</p>
+<table>
+<thead>
+<tr>
+<th align="center">MPU-9250 pin</th>
+<th align="center">RP2040 pin</th>
+<th align="center">RP2040 Pin Name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">VCC</td>
+<td align="center">36</td>
+<td align="center">3v3</td>
+</tr>
+<tr>
+<td align="center">GND</td>
+<td align="center">38</td>
+<td align="center">Masse (-)</td>
+</tr>
+<tr>
+<td align="center">SDA</td>
+<td align="center">01</td>
+<td align="center">GP0 (I2C0 SDA)</td>
+</tr>
+<tr>
+<td align="center">SCl</td>
+<td align="center">02</td>
+<td align="center">GP1 (I2C0 SCL)</td>
+</tr>
+</tbody>
+</table>
+<p>Der Pico verfügt über keine eingebauten I2C-Pull-up-Widerstände.</p>
+<p><img alt="MPU-9250 connected to Pico" src="img/mpu9250-PICO-fritzing.png" /></p>
+<h5 id="empfohlenes-anschlussschema-fur-i2c-twi-am-avr-atmega328p-arduino-nano">Empfohlenes Anschlussschema für I2C (TWI) am AVR ATmega328P Arduino Nano:<a class="headerlink" href="#empfohlenes-anschlussschema-fur-i2c-twi-am-avr-atmega328p-arduino-nano" title="Permanent link">&para;</a></h5>
+<table>
+<thead>
+<tr>
+<th align="center">MPU-9250 pin</th>
+<th align="center">Atmega328P TQFP32 pin</th>
+<th align="center">Atmega328P pin name</th>
+<th align="center">Arduino Nano pin</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">VCC</td>
+<td align="center">39</td>
+<td align="center">-</td>
+<td align="center">-</td>
+</tr>
+<tr>
+<td align="center">GND</td>
+<td align="center">38</td>
+<td align="center">Masse (-)</td>
+<td align="center">GND</td>
+</tr>
+<tr>
+<td align="center">SDA</td>
+<td align="center">27</td>
+<td align="center">SDA</td>
+<td align="center">A4</td>
+</tr>
+<tr>
+<td align="center">SCl</td>
+<td align="center">28</td>
+<td align="center">SCl</td>
+<td align="center">A5</td>
+</tr>
+</tbody>
+</table>
+<p>Der Arduino Nano verfügt weder über eingebaute Pull-up-Widerstände noch über einen 3,3V-Spannungspin.</p>
+<h3 id="befestigung-des-beschleunigungssensors">Befestigung des Beschleunigungssensors<a class="headerlink" href="#befestigung-des-beschleunigungssensors" title="Permanent link">&para;</a></h3>
+<p>Der Beschleunigungssensor muss am Druckkopf befestigt werden. Es sollte eine passende Befestigungslösung für den jeweiligen, eigenen 3D Drucker benutzt werden. Es emfpiehlt sich die Achsen des Beschleunigungssensors so auszurichten, dass diese mit den Achsen des 3D Druckers übereinstimmen (aber falls es einfacher ist, lassen sich die Achsen auch tauschen - zum Beispiel kann die z-Achse des Beschleunigungssensors auch zum Messen der Resonanz für die x-Achse des Drucker verwendet werden, usw.).</p>
+<p>Ein Beispiel der Befestigung des ADXL345 am SmartEffector:</p>
+<p><img alt="ADXL345 on SmartEffector" src="img/adxl345-mount.jpg" /></p>
+<p>Beachte das bei Cartesian Druckern (Bettschubser) zwei Befestigungen benötigt werden: eine für den Druckkopf und eine für das Druckbett. Zudem müssen die Messungen separat für die jeweiligen Achsen durchgeführt werden. Siehe hierzu auch <a href="#bed-slinger-printers">section</a> für weitere Details.</p>
+<p><strong>ACHTUNG:</strong> Stelle sicher, dass weder der Beschleunigungssensor noch die Schrauben, mit denen er befestigt wurde, irgendein metallenes Teil des Druckers berühren. Grundsätzlich muss die Befestigung so gewählt werden, dass eine elektrische Isolation des Beschleunigungssensors gegenüber dem Drucker jederzeit gewährleistet ist. Wird dies nicht eingehalten, kann es zu einer Masseschleife im System kommen, welche die Elektronik beschädigen kann.</p>
+<h3 id="software-installation">Software Installation<a class="headerlink" href="#software-installation" title="Permanent link">&para;</a></h3>
+<p>Beachten Sie, dass Resonanzmessungen und die automatische Shaper-Kalibrierung zusätzliche Softwareabhängigkeiten benötigen, die nicht standardmäßig installiert sind. Führen Sie zunächst auf Ihrem Raspberry Pi die folgenden Befehle aus:</p>
+<div class="highlight"><pre><span></span><code>sudo apt update
+sudo apt install python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev
+</code></pre></div>
+
+<p>Um anschließend NumPy in der Klipper-Umgebung zu installieren, führen Sie den folgenden Befehl aus:</p>
+<div class="highlight"><pre><span></span><code>~/klippy-env/bin/pip install -v &quot;numpy&lt;1.26&quot;
+</code></pre></div>
+
+<p>Beachten Sie, dass dies je nach Leistung der CPU <em>sehr</em> lange dauern kann, bis zu 10-20 Minuten. Haben Sie Geduld und warten Sie den Abschluss der Installation ab. In manchen Fällen kann die Installation fehlschlagen, wenn die Platine zu wenig RAM besitzt, sodass Sie Swap aktivieren müssen. Beachten Sie außerdem die erzwungene Version, da neuere NumPy-Versionen Anforderungen haben, die in manchen Klipper-Python-Umgebungen möglicherweise nicht erfüllt werden können.</p>
+<p>Prüfen Sie nach der Installation, dass der folgende Befehl keine Fehler anzeigt:</p>
+<div class="highlight"><pre><span></span><code>~/klippy-env/bin/python -c &#39;import numpy;&#39;
+</code></pre></div>
+
+<p>Die korrekte Ausgabe sollte einfach eine neue Zeile sein.</p>
+<h4 id="adxl345-mit-rpi-konfigurieren">ADXL345 mit RPi konfigurieren<a class="headerlink" href="#adxl345-mit-rpi-konfigurieren" title="Permanent link">&para;</a></h4>
+<p>Prüfen und befolgen Sie zunächst die Anweisungen im <a href="RPi_microcontroller.html">Dokument RPi-Mikrocontroller</a>, um den "Linux MCU" auf dem Raspberry Pi einzurichten. Dadurch wird eine zweite Klipper-Instanz konfiguriert, die auf Ihrem Pi läuft.</p>
+<p>Vergewissern Sie sich, dass der Linux-SPI-Treiber aktiviert ist, indem Sie <code>sudo raspi-config</code> ausführen und SPI im Menü "Interfacing options" aktivieren.</p>
+<p>Fügen Sie Folgendes zur Datei printer.cfg hinzu:</p>
+<div class="highlight"><pre><span></span><code>[mcu rpi]
+serial: /tmp/klipper_host_mcu
+
+[adxl345]
+cs_pin: rpi:None
+
+[resonance_tester]
+accel_chip: adxl345
+probe_points:
+    100, 100, 20  # an example
+</code></pre></div>
+
+<p>Es empfiehlt sich, mit einem Messpunkt in der Mitte des Druckbetts, leicht darüber, zu beginnen.</p>
+<h4 id="adxl345-mit-pi-pico-konfigurieren">ADXL345 mit Pi Pico konfigurieren<a class="headerlink" href="#adxl345-mit-pi-pico-konfigurieren" title="Permanent link">&para;</a></h4>
+<h5 id="flashen-der-pico-firmware">Flashen der Pico Firmware<a class="headerlink" href="#flashen-der-pico-firmware" title="Permanent link">&para;</a></h5>
+<p>Kompilieren Sie auf Ihrem Raspberry Pi die Firmware für den Pico.</p>
+<div class="highlight"><pre><span></span><code>cd ~/klipper
+make clean
+make menuconfig
+</code></pre></div>
+
+<p><img alt="Pico menuconfig" src="img/klipper_pico_menuconfig.png" /></p>
+<p>Halten Sie nun die Taste <code>BOOTSEL</code> am Pico gedrückt und verbinden Sie den Pico per USB mit dem Raspberry Pi. Kompilieren und flashen Sie die Firmware.</p>
+<div class="highlight"><pre><span></span><code>make flash FLASH_DEVICE=first
+</code></pre></div>
+
+<p>Falls dies fehlschlägt, wird Ihnen mitgeteilt, welches <code>FLASH_DEVICE</code> verwendet werden soll. In diesem Beispiel wäre das <code>make flash FLASH_DEVICE=2e8a:0003</code>. <img alt="Flash-Gerät bestimmen" src="img/flash_rp2040_FLASH_DEVICE.png" /></p>
+<h5 id="konfigurieren-sie-die-verbindung">Konfigurieren Sie die Verbindung<a class="headerlink" href="#konfigurieren-sie-die-verbindung" title="Permanent link">&para;</a></h5>
+<p>Der Pico startet nun mit der neuen Firmware neu und sollte als serielles Gerät erscheinen. Finden Sie das serielle Pico-Gerät mit <code>ls /dev/serial/by-id/*</code>. Sie können nun eine Datei <code>adxl.cfg</code> mit den folgenden Einstellungen anlegen:</p>
+<div class="highlight"><pre><span></span><code>[mcu adxl]
+# Change &lt;mySerial&gt; to whatever you found above. For example,
+# usb-Klipper_rp2040_E661640843545B2E-if00
+serial: /dev/serial/by-id/usb-Klipper_rp2040_&lt;mySerial&gt;
+
+[adxl345]
+cs_pin: adxl:gpio1
+spi_bus: spi0a
+axes_map: x,z,y
+
+[resonance_tester]
+accel_chip: adxl345
+probe_points:
+    # Somewhere slightly above the middle of your print bed
+    147,154, 20
+
+[output_pin power_mode] # Improve power stability
+pin: adxl:gpio23
+</code></pre></div>
+
+<p>Wenn Sie die ADXL345-Konfiguration wie oben gezeigt in einer separaten Datei einrichten, müssen Sie auch Ihre Datei <code>printer.cfg</code> anpassen, um Folgendes einzubinden:</p>
+<div class="highlight"><pre><span></span><code>[include adxl.cfg] # Comment this out when you disconnect the accelerometer
+</code></pre></div>
+
+<p>Klipper über den <code>RESTART</code> Befehl neustarten.</p>
+<h4 id="lis2dw-serie-uber-spi-konfigurieren">LIS2DW-Serie über SPI konfigurieren<a class="headerlink" href="#lis2dw-serie-uber-spi-konfigurieren" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>[mcu lis]
+# Change &lt;mySerial&gt; to whatever you found above. For example,
+# usb-Klipper_rp2040_E661640843545B2E-if00
+serial: /dev/serial/by-id/usb-Klipper_rp2040_&lt;mySerial&gt;
+
+[lis2dw]
+cs_pin: lis:gpio1
+spi_bus: spi0a
+axes_map: x,z,y
+
+[resonance_tester]
+accel_chip: lis2dw
+probe_points:
+    # Somewhere slightly above the middle of your print bed
+    147,154, 20
+</code></pre></div>
+
+<h4 id="konfigurieren-der-mpu-60009000-serie-mit-rpi">Konfigurieren der MPU-6000/9000 Serie mit RPi<a class="headerlink" href="#konfigurieren-der-mpu-60009000-serie-mit-rpi" title="Permanent link">&para;</a></h4>
+<p>Stellen Sie sicher, dass der Linux-I2C-Treiber aktiviert und die Baudrate auf 400000 eingestellt ist (weitere Details finden Sie im Abschnitt <a href="RPi_microcontroller.html#optional-enabling-i2c">I2C aktivieren</a>). Fügen Sie dann Folgendes zur printer.cfg hinzu:</p>
+<div class="highlight"><pre><span></span><code>[mcu rpi]
+serial: /tmp/klipper_host_mcu
+
+[mpu9250]
+i2c_mcu: rpi
+i2c_bus: i2c.1
+
+[resonance_tester]
+accel_chip: mpu9250
+probe_points:
+    100, 100, 20  # an example
+</code></pre></div>
+
+<p>Wenn Sie das ICM20948 verwenden, ersetzen Sie alle Vorkommen von "mpu9250" durch "icm20948".</p>
+<h4 id="konfigurieren-von-mpu-9520-kompatible-mit-pico">Konfigurieren von MPU-9520 Kompatible mit Pico<a class="headerlink" href="#konfigurieren-von-mpu-9520-kompatible-mit-pico" title="Permanent link">&para;</a></h4>
+<p>Pico-I2C ist standardmäßig auf 400000 eingestellt. Fügen Sie einfach Folgendes zur printer.cfg hinzu:</p>
+<div class="highlight"><pre><span></span><code>[mcu pico]
+serial: /dev/serial/by-id/&lt;your Pico&#39;s serial ID&gt;
+
+[mpu9250]
+i2c_mcu: pico
+i2c_bus: i2c0a
+
+[resonance_tester]
+accel_chip: mpu9250
+probe_points:
+    100, 100, 20  # an example
+
+[static_digital_output pico_3V3pwm] # Improve power stability
+pins: pico:gpio23
+</code></pre></div>
+
+<p>Wenn Sie das ICM20948 verwenden, ersetzen Sie alle Vorkommen von "mpu9250" durch "icm20948".</p>
+<h4 id="konfigurieren-von-mpu-9520-kompatible-mit-avr">Konfigurieren von MPU-9520 Kompatible mit AVR<a class="headerlink" href="#konfigurieren-von-mpu-9520-kompatible-mit-avr" title="Permanent link">&para;</a></h4>
+<p>AVR-I2C wird durch die Option mpu9250 auf 400000 gesetzt. Fügen Sie einfach Folgendes zur printer.cfg hinzu:</p>
+<div class="highlight"><pre><span></span><code>[mcu nano]
+serial: /dev/serial/by-id/&lt;your nano&#39;s serial ID&gt;
+
+[mpu9250]
+i2c_mcu: nano
+
+[resonance_tester]
+accel_chip: mpu9250
+probe_points:
+    100, 100, 20  # an example
+</code></pre></div>
+
+<p>Wenn Sie das ICM20948 verwenden, ersetzen Sie alle Vorkommen von "mpu9250" durch "icm20948".</p>
+<p>Klipper über den <code>RESTART</code> Befehl neustarten.</p>
+<h2 id="resonanzenmessen">Resonanzenmessen<a class="headerlink" href="#resonanzenmessen" title="Permanent link">&para;</a></h2>
+<h3 id="uberprufung-der-einrichtung">Überprüfung der Einrichtung<a class="headerlink" href="#uberprufung-der-einrichtung" title="Permanent link">&para;</a></h3>
+<p>Jetzt können Sie eine Verbindung testen.</p>
+<ul>
+<li>Geben Sie für "Non-Bed-Slinger" (d. h. ein Beschleunigungssensor) in Octoprint <code>ACCELEROMETER_QUERY</code> ein.</li>
+<li>Geben Sie für "Bed-Slinger" (d. h. mehr als ein Beschleunigungssensor) <code>ACCELEROMETER_QUERY CHIP=&lt;chip&gt;</code> ein, wobei <code>&lt;chip&gt;</code> der Name des Chips ist, so wie er eingetragen wurde, z. B. <code>CHIP=bed</code> (siehe: <a href="#bed-slinger-printers">Bed-Slinger</a>), und zwar für alle installierten Beschleunigungssensor-Chips.</li>
+</ul>
+<p>Sie sollten die aktuellen Messwerte des Beschleunigungssensors sehen, einschließlich der Erdbeschleunigung, z. B.</p>
+<div class="highlight"><pre><span></span><code>Recv: // adxl345 values (x, y, z): 470.719200, 941.438400, 9728.196800
+</code></pre></div>
+
+<p>Wenn Sie eine Fehlermeldung wie <code>Invalid adxl345 id (got xx vs e5)</code> erhalten, wobei <code>xx</code> eine andere ID ist, versuchen Sie es sofort erneut. Es liegt ein Problem mit der SPI-Initialisierung vor. Erhalten Sie weiterhin einen Fehler, deutet dies auf ein Verbindungsproblem mit dem ADXL345 oder einen fehlerhaften Sensor hin. Überprüfen Sie sorgfältig die Stromversorgung, die Verkabelung (ob sie dem Schaltplan entspricht, kein Kabel gebrochen oder lose ist usw.) und die Lötqualität.</p>
+<p><strong>Wenn Sie einen MPU-9250-kompatiblen Beschleunigungssensor verwenden und dieser als <code>mpu-unknown</code> erscheint, gehen Sie vorsichtig vor! Es handelt sich dabei wahrscheinlich um überholte/generalüberholte Chips!</strong></p>
+<p>Versuchen Sie als Nächstes, <code>MEASURE_AXES_NOISE</code> in Octoprint auszuführen. Sie sollten einige Basiswerte für das Rauschen des Beschleunigungssensors auf den Achsen erhalten (sie sollten etwa im Bereich von ~1-100 liegen). Ein zu hohes Achsrauschen (z. B. 1000 und mehr) kann auf Probleme mit dem Sensor, mit seiner Stromversorgung oder auf zu laute, unwuchtige Lüfter am 3D-Drucker hinweisen.</p>
+<h3 id="resonanzenmessen_1">Resonanzenmessen<a class="headerlink" href="#resonanzenmessen_1" title="Permanent link">&para;</a></h3>
+<p>Nun können Sie einige praxisnahe Tests durchführen. Führen Sie den folgenden Befehl aus:</p>
+<div class="highlight"><pre><span></span><code>TEST_RESONANCES AXIS=X
+</code></pre></div>
+
+<p>Beachten Sie, dass dadurch Vibrationen auf der X-Achse erzeugt werden. Außerdem wird das Input Shaping deaktiviert, falls es zuvor aktiviert war, da die Resonanzmessung bei aktiviertem Input Shaper nicht zulässig ist.</p>
+<p><strong>Achtung!</strong> Beobachten Sie den Drucker beim ersten Mal unbedingt, um sicherzustellen, dass die Vibrationen nicht zu heftig werden (mit dem Befehl <code>M112</code> können Sie den Test im Notfall abbrechen; hoffentlich wird es aber nicht so weit kommen). Falls die Vibrationen doch zu stark werden, können Sie versuchen, für den Parameter <code>accel_per_hz</code> im Abschnitt <code>[resonance_tester]</code> einen niedrigeren als den Standardwert anzugeben, z. B.</p>
+<div class="highlight"><pre><span></span><code>[resonance_tester]
+accel_chip: adxl345
+accel_per_hz: 50  # default is 75
+probe_points: ...
+</code></pre></div>
+
+<p>Wenn es für die X-Achse funktioniert, führen Sie es auch für die Y-Achse aus:</p>
+<div class="highlight"><pre><span></span><code>TEST_RESONANCES AXIS=Y
+</code></pre></div>
+
+<p>Dadurch werden 2 CSV-Dateien erzeugt (<code>/tmp/resonances_x_*.csv</code> und <code>/tmp/resonances_y_*.csv</code>). Diese Dateien können mit dem eigenständigen Skript auf einem Raspberry Pi verarbeitet werden. Dieses Skript ist dafür vorgesehen, mit jeweils einer CSV-Datei pro gemessener Achse ausgeführt zu werden, kann aber auch mit mehreren CSV-Dateien verwendet werden, wenn Sie die Ergebnisse mitteln möchten. Das Mitteln der Ergebnisse kann zum Beispiel sinnvoll sein, wenn Resonanztests an mehreren Testpunkten durchgeführt wurden. Löschen Sie die zusätzlichen CSV-Dateien, wenn Sie diese nicht mitteln möchten.</p>
+<div class="highlight"><pre><span></span><code>~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png
+~/klipper/scripts/calibrate_shaper.py /tmp/resonances_y_*.csv -o /tmp/shaper_calibrate_y.png
+</code></pre></div>
+
+<p>Dieses Skript erzeugt die Diagramme <code>/tmp/shaper_calibrate_x.png</code> und <code>/tmp/shaper_calibrate_y.png</code> mit den Frequenzgängen. Sie erhalten außerdem die vorgeschlagenen Frequenzen für jeden Input Shaper sowie die Angabe, welcher Input Shaper für Ihren Aufbau empfohlen wird. Zum Beispiel:</p>
+<p><img alt="Resonances" src="img/calibrate-y.png" /></p>
+<div class="highlight"><pre><span></span><code>Fitted shaper &#39;zv&#39; frequency = 34.4 Hz (vibrations = 4.0%, smoothing ~= 0.132)
+To avoid too much smoothing with &#39;zv&#39;, suggested max_accel &lt;= 4500 mm/sec^2
+Fitted shaper &#39;mzv&#39; frequency = 34.6 Hz (vibrations = 0.0%, smoothing ~= 0.170)
+To avoid too much smoothing with &#39;mzv&#39;, suggested max_accel &lt;= 3500 mm/sec^2
+Fitted shaper &#39;ei&#39; frequency = 41.4 Hz (vibrations = 0.0%, smoothing ~= 0.188)
+To avoid too much smoothing with &#39;ei&#39;, suggested max_accel &lt;= 3200 mm/sec^2
+Fitted shaper &#39;2hump_ei&#39; frequency = 51.8 Hz (vibrations = 0.0%, smoothing ~= 0.201)
+To avoid too much smoothing with &#39;2hump_ei&#39;, suggested max_accel &lt;= 3000 mm/sec^2
+Fitted shaper &#39;3hump_ei&#39; frequency = 61.8 Hz (vibrations = 0.0%, smoothing ~= 0.215)
+To avoid too much smoothing with &#39;3hump_ei&#39;, suggested max_accel &lt;= 2800 mm/sec^2
+Recommended shaper is mzv @ 34.6 Hz
+</code></pre></div>
+
+<p>Die vorgeschlagene Konfiguration kann in den Abschnitt <code>[input_shaper]</code> der <code>printer.cfg</code> eingefügt werden, z. B.:</p>
+<div class="highlight"><pre><span></span><code>[input_shaper]
+shaper_freq_x: ...
+shaper_type_x: ...
+shaper_freq_y: 34.6
+shaper_type_y: mzv
+
+[printer]
+max_accel: 3000  # should not exceed the estimated max_accel for X and Y axes
+</code></pre></div>
+
+<p>oder Sie wählen anhand der erzeugten Diagramme selbst eine andere Konfiguration: Spitzen in der spektralen Leistungsdichte in den Diagrammen entsprechen den Resonanzfrequenzen des Druckers.</p>
+<p>Beachten Sie, dass Sie die automatische Kalibrierung des Input Shapers alternativ auch <a href="#input-shaper-auto-calibration">direkt</a> aus Klipper heraus ausführen können, was zum Beispiel für die <a href="#input-shaper-re-calibration">Neukalibrierung</a> des Input Shapers praktisch sein kann.</p>
+<h3 id="bed-slinger-drucker">Bed-slinger Drucker<a class="headerlink" href="#bed-slinger-drucker" title="Permanent link">&para;</a></h3>
+<p>Wenn Ihr Drucker ein Bed-Slinger ist, müssen Sie die Position des Beschleunigungssensors zwischen den Messungen für die X- und die Y-Achse ändern: Messen Sie die Resonanzen der X-Achse mit dem am Druckkopf befestigten Beschleunigungssensor und die Resonanzen der Y-Achse mit dem am Bett befestigten Sensor (der übliche Bed-Slinger-Aufbau).</p>
+<p>Sie können jedoch auch zwei Beschleunigungssensoren gleichzeitig anschließen, wobei der ADXL345 an unterschiedliche Platinen angeschlossen werden muss (etwa an einen RPi und eine Drucker-MCU-Platine) oder an zwei unterschiedliche physische SPI-Schnittstellen auf derselben Platine (selten verfügbar). Sie können dann wie folgt konfiguriert werden:</p>
+<div class="highlight"><pre><span></span><code>[adxl345 hotend]
+# Assuming `hotend` chip is connected to an RPi
+cs_pin: rpi:None
+
+[adxl345 bed]
+# Assuming `bed` chip is connected to a printer MCU board
+cs_pin: ...  # Printer board SPI chip select (CS) pin
+
+[resonance_tester]
+# Assuming the typical setup of the bed slinger printer
+accel_chip_x: adxl345 hotend
+accel_chip_y: adxl345 bed
+probe_points: ...
+</code></pre></div>
+
+<p>Zwei MPUs können sich einen I2C-Bus teilen, können aber <strong>nicht</strong> gleichzeitig messen, da der I2C-Bus mit 400 kbit/s dafür nicht schnell genug ist. Bei einem muss der AD0-Pin auf 0V gezogen werden (Adresse 104) und beim anderen auf 3,3V (Adresse 105):</p>
+<div class="highlight"><pre><span></span><code>[mpu9250 hotend]
+i2c_mcu: rpi
+i2c_bus: i2c.1
+i2c_address: 104 # This MPU has pin AD0 pulled low
+
+[mpu9250 bed]
+i2c_mcu: rpi
+i2c_bus: i2c.1
+i2c_address: 105 # This MPU has pin AD0 pulled high
+
+[resonance_tester]
+# Assuming the typical setup of the bed slinger printer
+accel_chip_x: mpu9250 hotend
+accel_chip_y: mpu9250 bed
+probe_points: ...
+</code></pre></div>
+
+<p>[Testen Sie jede MPU einzeln, bevor Sie beide zur einfacheren Fehlersuche an den Bus anschließen.]</p>
+<p>Dann verwenden die Befehle <code>TEST_RESONANCES AXIS=X</code> und <code>TEST_RESONANCES AXIS=Y</code> den jeweils richtigen Beschleunigungssensor für jede Achse.</p>
+<h3 id="max-smoothing">Max smoothing<a class="headerlink" href="#max-smoothing" title="Permanent link">&para;</a></h3>
+<p>Bedenken Sie, dass der Input Shaper eine gewisse Glättung an den Teilen erzeugen kann. Die automatische Abstimmung des Input Shapers durch das Skript <code>calibrate_shaper.py</code> oder den Befehl <code>SHAPER_CALIBRATE</code> versucht, die Glättung nicht zu verstärken, gleichzeitig aber die verbleibenden Vibrationen zu minimieren. Manchmal treffen sie eine suboptimale Wahl der Shaper-Frequenz, oder Sie bevorzugen einfach weniger Glättung an den Teilen zulasten größerer verbleibender Vibrationen. In diesen Fällen können Sie verlangen, die maximale Glättung des Input Shapers zu begrenzen.</p>
+<p>Betrachten wir die folgenden Ergebnisse der automatischen Abstimmung:</p>
+<p><img alt="Resonances" src="img/calibrate-x.png" /></p>
+<div class="highlight"><pre><span></span><code>Fitted shaper &#39;zv&#39; frequency = 57.8 Hz (vibrations = 20.3%, smoothing ~= 0.053)
+To avoid too much smoothing with &#39;zv&#39;, suggested max_accel &lt;= 13000 mm/sec^2
+Fitted shaper &#39;mzv&#39; frequency = 34.8 Hz (vibrations = 3.6%, smoothing ~= 0.168)
+To avoid too much smoothing with &#39;mzv&#39;, suggested max_accel &lt;= 3600 mm/sec^2
+Fitted shaper &#39;ei&#39; frequency = 48.8 Hz (vibrations = 4.9%, smoothing ~= 0.135)
+To avoid too much smoothing with &#39;ei&#39;, suggested max_accel &lt;= 4400 mm/sec^2
+Fitted shaper &#39;2hump_ei&#39; frequency = 45.2 Hz (vibrations = 0.1%, smoothing ~= 0.264)
+To avoid too much smoothing with &#39;2hump_ei&#39;, suggested max_accel &lt;= 2200 mm/sec^2
+Fitted shaper &#39;3hump_ei&#39; frequency = 48.0 Hz (vibrations = 0.0%, smoothing ~= 0.356)
+To avoid too much smoothing with &#39;3hump_ei&#39;, suggested max_accel &lt;= 1500 mm/sec^2
+Recommended shaper is 2hump_ei @ 45.2 Hz
+</code></pre></div>
+
+<p>Beachten Sie, dass die angegebenen <code>smoothing</code>-Werte abstrakte, prognostizierte Werte sind. Diese Werte können zum Vergleich verschiedener Konfigurationen verwendet werden: Je höher der Wert, desto mehr Glättung erzeugt ein Shaper. Diese Glättungswerte stellen jedoch kein echtes Maß für die Glättung dar, da die tatsächliche Glättung von den Parametern <a href="#selecting-max-accel"><code>max_accel</code></a> und <code>square_corner_velocity</code> abhängt. Daher sollten Sie einige Testdrucke anfertigen, um zu sehen, wie viel Glättung eine gewählte Konfiguration tatsächlich erzeugt.</p>
+<p>Im obigen Beispiel sind die vorgeschlagenen Shaper-Parameter nicht schlecht, aber was, wenn Sie weniger Glättung auf der X-Achse erhalten möchten? Sie können versuchen, die maximale Shaper-Glättung mit dem folgenden Befehl zu begrenzen:</p>
+<div class="highlight"><pre><span></span><code>~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png --max_smoothing=0.2
+</code></pre></div>
+
+<p>was die Glättung auf einen Wert von 0,2 begrenzt. Nun können Sie das folgende Ergebnis erhalten:</p>
+<p><img alt="Resonances" src="img/calibrate-x-max-smoothing.png" /></p>
+<div class="highlight"><pre><span></span><code>Fitted shaper &#39;zv&#39; frequency = 55.4 Hz (vibrations = 19.7%, smoothing ~= 0.057)
+To avoid too much smoothing with &#39;zv&#39;, suggested max_accel &lt;= 12000 mm/sec^2
+Fitted shaper &#39;mzv&#39; frequency = 34.6 Hz (vibrations = 3.6%, smoothing ~= 0.170)
+To avoid too much smoothing with &#39;mzv&#39;, suggested max_accel &lt;= 3500 mm/sec^2
+Fitted shaper &#39;ei&#39; frequency = 48.2 Hz (vibrations = 4.8%, smoothing ~= 0.139)
+To avoid too much smoothing with &#39;ei&#39;, suggested max_accel &lt;= 4300 mm/sec^2
+Fitted shaper &#39;2hump_ei&#39; frequency = 52.0 Hz (vibrations = 2.7%, smoothing ~= 0.200)
+To avoid too much smoothing with &#39;2hump_ei&#39;, suggested max_accel &lt;= 3000 mm/sec^2
+Fitted shaper &#39;3hump_ei&#39; frequency = 72.6 Hz (vibrations = 1.4%, smoothing ~= 0.155)
+To avoid too much smoothing with &#39;3hump_ei&#39;, suggested max_accel &lt;= 3900 mm/sec^2
+Recommended shaper is 3hump_ei @ 72.6 Hz
+</code></pre></div>
+
+<p>Im Vergleich zu den zuvor vorgeschlagenen Parametern sind die Vibrationen etwas größer, die Glättung ist jedoch deutlich geringer als zuvor, was eine höhere maximale Beschleunigung ermöglicht.</p>
+<p>Bei der Entscheidung, welchen <code>max_smoothing</code>-Parameter Sie wählen, können Sie nach dem Prinzip von Versuch und Irrtum vorgehen. Probieren Sie einige verschiedene Werte aus und sehen Sie, welche Ergebnisse Sie erhalten. Beachten Sie, dass die vom Input Shaper erzeugte tatsächliche Glättung in erster Linie von der niedrigsten Resonanzfrequenz des Druckers abhängt: Je höher die Frequenz der niedrigsten Resonanz, desto geringer die Glättung. Wenn Sie das Skript daher anweisen, eine Konfiguration des Input Shapers mit unrealistisch geringer Glättung zu finden, geht das zulasten eines verstärkten Ringings bei den niedrigsten Resonanzfrequenzen (die typischerweise auch in Drucken deutlicher sichtbar sind). Überprüfen Sie deshalb immer die vom Skript prognostizierten verbleibenden Vibrationen und stellen Sie sicher, dass sie nicht zu hoch sind.</p>
+<p>Beachten Sie: Wenn Sie für beide Achsen einen guten <code>max_smoothing</code>-Wert gewählt haben, können Sie ihn in der <code>printer.cfg</code> hinterlegen, und zwar als</p>
+<div class="highlight"><pre><span></span><code>[resonance_tester]
+accel_chip: ...
+probe_points: ...
+max_smoothing: 0.25  # an example
+</code></pre></div>
+
+<p>Wenn Sie die automatische Abstimmung des Input Shapers später mit dem Klipper-Befehl <code>SHAPER_CALIBRATE</code> <a href="#input-shaper-re-calibration">erneut ausführen</a>, wird der gespeicherte <code>max_smoothing</code>-Wert als Referenz verwendet.</p>
+<h3 id="auswahl-von-max_accel">Auswahl von max_accel<a class="headerlink" href="#auswahl-von-max_accel" title="Permanent link">&para;</a></h3>
+<p>Da der Input Shaper eine gewisse Glättung an den Teilen erzeugen kann, insbesondere bei hohen Beschleunigungen, müssen Sie dennoch einen <code>max_accel</code>-Wert wählen, der nicht zu viel Glättung an den gedruckten Teilen verursacht. Ein Kalibrierungsskript liefert eine Schätzung für den Parameter <code>max_accel</code>, bei der nicht zu viel Glättung entstehen sollte. Beachten Sie, dass der vom Kalibrierungsskript angezeigte <code>max_accel</code>-Wert nur ein theoretisches Maximum ist, bei dem der jeweilige Shaper noch arbeiten kann, ohne zu viel Glättung zu erzeugen. Er ist keinesfalls eine Empfehlung, diese Beschleunigung zum Drucken einzustellen. Die maximale Beschleunigung, die Ihr Drucker verkraften kann, hängt von seinen mechanischen Eigenschaften und vom maximalen Drehmoment der verwendeten Schrittmotoren ab. Daher wird empfohlen, <code>max_accel</code> im Abschnitt <code>[printer]</code> so zu setzen, dass die geschätzten Werte für die X- und Y-Achse nicht überschritten werden, wahrscheinlich mit einer konservativen Sicherheitsreserve.</p>
+<p>Alternativ können Sie <a href="Resonance_Compensation.html#selecting-max_accel">diesem</a> Teil der Anleitung zur Input-Shaper-Abstimmung folgen und das Testmodell drucken, um den Parameter <code>max_accel</code> experimentell zu bestimmen.</p>
+<p>Der gleiche Hinweis gilt für die <a href="#input-shaper-auto-calibration">Autokalibrierung</a> des Input Shapers mit dem Befehl <code>SHAPER_CALIBRATE</code>: Es ist auch danach notwendig, den richtigen <code>max_accel</code>-Wert zu wählen, und die vorgeschlagenen Beschleunigungsgrenzen werden nicht automatisch übernommen.</p>
+<p>Beachten Sie, dass die maximale Beschleunigung ohne übermäßige Glättung von <code>square_corner_velocity</code> abhängt. Es wird generell empfohlen, den Standardwert von 5,0 nicht zu ändern, da dieser Wert auch standardmäßig vom Skript <code>calibrate_shaper.py</code> verwendet wird. Falls Sie ihn dennoch geändert haben, sollten Sie dies dem Skript über den Parameter <code>--square_corner_velocity=...</code> mitteilen, z. B.</p>
+<div class="highlight"><pre><span></span><code>~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png --square_corner_velocity=10.0
+</code></pre></div>
+
+<p>damit die maximalen Beschleunigungsempfehlungen korrekt berechnet werden können. Beachten Sie, dass der Befehl <code>SHAPER_CALIBRATE</code> den konfigurierten Parameter <code>square_corner_velocity</code> bereits berücksichtigt und eine explizite Angabe nicht erforderlich ist.</p>
+<p>Wenn Sie eine erneute Shaper-Kalibrierung durchführen und die angegebene Glättung für die vorgeschlagene Shaper-Konfiguration nahezu dieselbe ist wie bei der vorherigen Kalibrierung, kann dieser Schritt übersprungen werden.</p>
+<h3 id="messung-der-resonanzen-der-z-achse">Messung der Resonanzen der Z-Achse<a class="headerlink" href="#messung-der-resonanzen-der-z-achse" title="Permanent link">&para;</a></h3>
+<p>Die Messung der Resonanzen der Z-Achse ähnelt in vielen Aspekten der Messung der Resonanzen der X- und Y-Achse, mit einigen feinen Unterschieden. Wie bei den anderen Achsmessungen benötigen Sie einen Beschleunigungssensor, der an den beweglichen Teilen der Z-Achse montiert ist - entweder am Bett selbst (falls sich das Bett über die Z-Achse bewegt) oder am Werkzeugkopf (falls sich Werkzeugkopf/Portal über Z bewegt). Sie müssen die entsprechende Chip-Konfiguration zur <code>printer.cfg</code> hinzufügen und sie auch in den Abschnitt <code>[resonance_tester]</code> eintragen, z. B.</p>
+<div class="highlight"><pre><span></span><code>[resonance_tester]
+accel_chip_z: &lt;accelerometer full name&gt;
+</code></pre></div>
+
+<p>Stellen Sie außerdem sicher, dass die in <code>[resonance_tester]</code> konfigurierten <code>probe_points</code> ausreichend Freiraum für Bewegungen der Z-Achse bieten (20 mm über der Bettoberfläche sollten mit den Standard-Testparametern ausreichend Freiraum bieten).</p>
+<p>Der nächste zu beachtende Punkt ist, dass die Z-Achse in der Regel niedrigere maximale Geschwindigkeiten und Beschleunigungen erreicht als die X- und Y-Achse. Die Standardparameter des Tests berücksichtigen dies und sind deutlich weniger aggressiv, dennoch kann es nötig sein, <code>max_z_accel</code> und <code>max_z_velocity</code> zu erhöhen. Falls diese im Abschnitt <code>[printer]</code> konfiguriert sind, stellen Sie sicher, dass sie mindestens auf folgenden Wert gesetzt sind</p>
+<div class="highlight"><pre><span></span><code>[printer]
+max_z_velocity: 20
+max_z_accel: 1550
+</code></pre></div>
+
+<p>jedoch nur für die Dauer des Tests - anschließend können Sie sie bei Bedarf wieder auf ihre ursprünglichen Werte zurücksetzen. Und wenn Sie für die Z-Achse benutzerdefinierte Testparameter verwenden, liefern <code>TEST_RESONANCES</code> und <code>SHAPER_CALIBRATE</code> bei Bedarf die für Ihren konkreten Fall erforderlichen Mindestgrenzwerte.</p>
+<p>Nachdem alle Änderungen an der <code>printer.cfg</code> vorgenommen wurden, starten Sie Klipper neu und führen Sie entweder</p>
+<div class="highlight"><pre><span></span><code>TEST_RESONANCES AXIS=Z
+</code></pre></div>
+
+<p>oder</p>
+<div class="highlight"><pre><span></span><code>SHAPER_CALIBRATE AXIS=Z
+</code></pre></div>
+
+<p>aus und gehen Sie von dort aus wie bei den anderen Achsen vor. Nach dem Befehl <code>TEST_RESONANCES</code> können Sie beispielsweise das Skript <code>calibrate_shaper.py</code> ausführen, um Shaper-Empfehlungen sowie das Diagramm der Resonanzantwort zu erhalten:</p>
+<p><img alt="Resonanzen" src="img/calibrate-z.png" /></p>
+<p>Nach der Kalibrierung können die Shaper-Parameter in der <code>printer.cfg</code> gespeichert werden, z. B. aus dem obigen Beispiel:</p>
+<div class="highlight"><pre><span></span><code>[input_shaper]
+...
+shaper_type_z: mzv
+shaper_freq_z: 42.6
+</code></pre></div>
+
+<p>Da sich die Z-Achse zudem nur langsam bewegt, können Sie ohne Weiteres auch aggressivere Input Shaper in Betracht ziehen, z. B.</p>
+<div class="highlight"><pre><span></span><code>[input_shaper]
+...
+shaper_type_z: 2hump_ei
+shaper_freq_z: 63.0
+</code></pre></div>
+
+<p>Liefert der Test fehlerhafte Ergebnisse, können Sie versuchen, den Parameter <code>accel_per_hz_z</code> in <code>[resonance_tester]</code> von seinem Standardwert 15 auf einen größeren Wert im Bereich von 20-30 zu erhöhen, z. B.</p>
+<div class="highlight"><pre><span></span><code>[resonance_tester]
+accel_per_hz_z: 25
+</code></pre></div>
+
+<p>und den Test wiederholen. Eine Erhöhung dieses Werts erfordert wahrscheinlich auch eine Erhöhung der Parameter <code>max_z_accel</code> und <code>max_z_velocity</code>. Mit dem Befehl <code>TEST_RESONANCES AXIS=Z</code> erhalten Sie die dafür erforderlichen Mindestwerte.</p>
+<p>Falls Sie jedoch nicht in der Lage sind, die Resonanzen der Z-Achse zu messen, können Sie einfach</p>
+<div class="highlight"><pre><span></span><code>[input_shaper]
+...
+shaper_type_z: 3hump_ei
+shaper_freq_z: 65
+</code></pre></div>
+
+<p>als eine akzeptable Allround-Wahl in Betracht ziehen, da die Glättung der Z-Achsenbewegungen hier keine besondere Rolle spielt.</p>
+<h3 id="unzuverlassige-messungen-der-resonanzfrequenzen">Unzuverlässige Messungen der Resonanzfrequenzen<a class="headerlink" href="#unzuverlassige-messungen-der-resonanzfrequenzen" title="Permanent link">&para;</a></h3>
+<p>Manchmal können die Resonanzmessungen fehlerhafte Ergebnisse liefern, was zu falschen Vorschlägen für die Input Shaper führt. Dies kann verschiedene Ursachen haben, unter anderem laufende Lüfter am Werkzeugkopf, eine falsche Position oder nicht starre Montage des Beschleunigungssensors, oder mechanische Probleme wie lose Riemen oder eine klemmende oder unruhig laufende Achse. Beachten Sie, dass für die Resonanzmessung alle Lüfter deaktiviert sein sollten, insbesondere die lauten, und dass der Beschleunigungssensor starr auf dem entsprechenden beweglichen Teil montiert sein sollte (z. B. direkt auf dem Bett bei einem Bed Slinger oder am Extruder des Druckers selbst statt am Schlitten - manche Anwender erzielen bessere Ergebnisse, wenn der Sensor direkt an der Düse montiert wird). Bei mechanischen Problemen sollte der Anwender prüfen, ob es Mängel an einer bewegten Achse gibt, die behoben werden können (z. B. Linearführungsschienen reinigen und schmieren sowie die Spannung der V-Slot-Rollen korrekt einstellen). Hilft das alles nicht, kann ein Anwender einen der anderen in der Liste ausgegebenen Shaper anstelle des standardmäßig empfohlenen ausprobieren.</p>
+<h3 id="testen-benutzerdefinierter-achsen">Testen benutzerdefinierter Achsen<a class="headerlink" href="#testen-benutzerdefinierter-achsen" title="Permanent link">&para;</a></h3>
+<p>Der Befehl <code>TEST_RESONANCES</code> unterstützt benutzerdefinierte Achsen. Auch wenn das für die Kalibrierung des Input Shapers nicht wirklich nützlich ist, kann es verwendet werden, um die Druckerresonanzen eingehend zu untersuchen und zum Beispiel die Riemenspannung zu prüfen.</p>
+<p>Um die Riemenspannung an CoreXY-Druckern zu prüfen, führen Sie Folgendes aus</p>
+<div class="highlight"><pre><span></span><code>TEST_RESONANCES AXIS=1,1 OUTPUT=raw_data
+TEST_RESONANCES AXIS=1,-1 OUTPUT=raw_data
+</code></pre></div>
+
+<p>und verwenden Sie <code>graph_accelerometer.py</code>, um die erzeugten Dateien zu verarbeiten, z. B.</p>
+<div class="highlight"><pre><span></span><code>~/klipper/scripts/graph_accelerometer.py -c /tmp/raw_data_axis*.csv -o /tmp/resonances.png
+</code></pre></div>
+
+<p>wodurch die Datei <code>/tmp/resonances.png</code> erzeugt wird, in der die Resonanzen verglichen werden.</p>
+<p>Führen Sie bei Delta-Druckern mit der Standardanordnung der Türme (Turm A ~= 210 Grad, B ~= 330 Grad und C ~= 90 Grad) Folgendes aus</p>
+<div class="highlight"><pre><span></span><code>TEST_RESONANCES AXIS=0,1 OUTPUT=raw_data
+TEST_RESONANCES AXIS=-0.866025404,-0.5 OUTPUT=raw_data
+TEST_RESONANCES AXIS=0.866025404,-0.5 OUTPUT=raw_data
+</code></pre></div>
+
+<p>und dann den gleichen befehl verwenden</p>
+<div class="highlight"><pre><span></span><code>~/klipper/scripts/graph_accelerometer.py -c /tmp/raw_data_axis*.csv -o /tmp/resonances.png
+</code></pre></div>
+
+<p>um die Datei <code>/tmp/resonances.png</code> zu erstellen, in der die Resonanzen verglichen werden.</p>
+<h2 id="input-shaper-autokalibrierung">Input Shaper Autokalibrierung<a class="headerlink" href="#input-shaper-autokalibrierung" title="Permanent link">&para;</a></h2>
+<p>Neben der manuellen Wahl der passenden Parameter für die Input-Shaper-Funktion ist es auch möglich, die automatische Abstimmung des Input Shapers direkt aus Klipper heraus auszuführen. Führen Sie den folgenden Befehl über das Octoprint-Terminal aus:</p>
+<div class="highlight"><pre><span></span><code>SHAPER_CALIBRATE
+</code></pre></div>
+
+<p>Damit wird der vollständige Test für beide Achsen ausgeführt und eine CSV-Ausgabe (standardmäßig <code>/tmp/calibration_data_*.csv</code>) für den Frequenzgang und die vorgeschlagenen Input Shaper erzeugt. In der Octoprint-Konsole erhalten Sie außerdem die vorgeschlagenen Frequenzen für jeden Input Shaper sowie die Angabe, welcher Input Shaper für Ihren Aufbau empfohlen wird. Zum Beispiel:</p>
+<div class="highlight"><pre><span></span><code>Calculating the best input shaper parameters for y axis
+Fitted shaper &#39;zv&#39; frequency = 39.0 Hz (vibrations = 13.2%, smoothing ~= 0.105)
+To avoid too much smoothing with &#39;zv&#39;, suggested max_accel &lt;= 5900 mm/sec^2
+Fitted shaper &#39;mzv&#39; frequency = 36.8 Hz (vibrations = 1.7%, smoothing ~= 0.150)
+To avoid too much smoothing with &#39;mzv&#39;, suggested max_accel &lt;= 4000 mm/sec^2
+Fitted shaper &#39;ei&#39; frequency = 36.6 Hz (vibrations = 2.2%, smoothing ~= 0.240)
+To avoid too much smoothing with &#39;ei&#39;, suggested max_accel &lt;= 2500 mm/sec^2
+Fitted shaper &#39;2hump_ei&#39; frequency = 48.0 Hz (vibrations = 0.0%, smoothing ~= 0.234)
+To avoid too much smoothing with &#39;2hump_ei&#39;, suggested max_accel &lt;= 2500 mm/sec^2
+Fitted shaper &#39;3hump_ei&#39; frequency = 59.0 Hz (vibrations = 0.0%, smoothing ~= 0.235)
+To avoid too much smoothing with &#39;3hump_ei&#39;, suggested max_accel &lt;= 2500 mm/sec^2
+Recommended shaper_type_y = mzv, shaper_freq_y = 36.8 Hz
+</code></pre></div>
+
+<p>Wenn Sie mit den vorgeschlagenen Parametern einverstanden sind, können Sie nun <code>SAVE_CONFIG</code> ausführen, um sie zu speichern und Klipper neu zu starten. Beachten Sie, dass dabei der Wert <code>max_accel</code> im Abschnitt <code>[printer]</code> nicht aktualisiert wird. Sie sollten ihn manuell anpassen und dabei die Hinweise im Abschnitt <a href="#selecting-max_accel">Auswahl von max_accel</a> beachten.</p>
+<p>Wenn Ihr Drucker ein Bed-Slinger ist, können Sie angeben, welche Achse getestet werden soll, damit Sie den Montagepunkt des Beschleunigungssensors zwischen den Tests wechseln können (standardmäßig wird der Test für beide Achsen durchgeführt):</p>
+<div class="highlight"><pre><span></span><code>SHAPER_CALIBRATE AXIS=Y
+</code></pre></div>
+
+<p>Sie können <code>SAVE_CONFIG</code> zweimal ausführen – jeweils nach der Kalibrierung einer Achse.</p>
+<p>Wenn Sie jedoch zwei Beschleunigungssensoren gleichzeitig angeschlossen haben, führen Sie einfach <code>SHAPER_CALIBRATE</code> ohne Angabe einer Achse aus, um den Input Shaper für beide Achsen in einem Durchgang zu kalibrieren.</p>
+<h3 id="input-shaper-rekalibrierung">Input Shaper Rekalibrierung<a class="headerlink" href="#input-shaper-rekalibrierung" title="Permanent link">&para;</a></h3>
+<p>Der Befehl <code>SHAPER_CALIBRATE</code> kann auch verwendet werden, um den Input Shaper zu einem späteren Zeitpunkt neu zu kalibrieren, insbesondere wenn Änderungen am Drucker vorgenommen wurden, die seine Kinematik beeinflussen können. Sie können entweder die vollständige Kalibrierung mit dem Befehl <code>SHAPER_CALIBRATE</code> erneut ausführen oder die Autokalibrierung mit dem Parameter <code>AXIS=</code> auf eine einzelne Achse beschränken, etwa so</p>
+<div class="highlight"><pre><span></span><code>SHAPER_CALIBRATE AXIS=X
+</code></pre></div>
+
+<p><strong>Warnung!</strong> Es wird nicht empfohlen, die automatische Shaper-Kalibrierung sehr häufig auszuführen (z. B. vor jedem Druck oder täglich). Um die Resonanzfrequenzen zu bestimmen, erzeugt die automatische Kalibrierung intensive Vibrationen auf jeder der Achsen. 3D-Drucker sind im Allgemeinen nicht dafür ausgelegt, längere Vibrationen nahe den Resonanzfrequenzen auszuhalten. Dies kann den Verschleiß der Druckerkomponenten erhöhen und deren Lebensdauer verkürzen. Zudem besteht ein erhöhtes Risiko, dass sich Teile lösen oder lockern. Prüfen Sie nach jeder automatischen Kalibrierung stets, dass alle Teile des Druckers (auch solche, die sich normalerweise nicht bewegen) sicher befestigt sind.</p>
+<p>Aufgrund von Rauschen in den Messungen ist es außerdem möglich, dass die Abstimmungsergebnisse von einem Kalibrierungsdurchlauf zum nächsten leicht abweichen. Dennoch ist nicht zu erwarten, dass das Rauschen die Druckqualität zu stark beeinflusst. Es wird jedoch weiterhin empfohlen, die vorgeschlagenen Parameter zu überprüfen und einige Testdrucke anzufertigen, bevor Sie sie verwenden, um sicherzustellen, dass sie gut sind.</p>
+<h2 id="offline-verarbeitung-der-beschleunigungsmesser-daten">Offline Verarbeitung der Beschleunigungsmesser Daten<a class="headerlink" href="#offline-verarbeitung-der-beschleunigungsmesser-daten" title="Permanent link">&para;</a></h2>
+<p>Es ist möglich, die Rohdaten des Beschleunigungssensors zu erzeugen und offline zu verarbeiten (z. B. auf einem Host-Rechner), etwa um Resonanzen zu finden. Führen Sie dazu die folgenden Befehle über das Octoprint-Terminal aus:</p>
+<div class="highlight"><pre><span></span><code>SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0
+TEST_RESONANCES AXIS=X OUTPUT=raw_data
+</code></pre></div>
+
+<p>Etwaige Fehler des Befehls <code>SET_INPUT_SHAPER</code> können Sie dabei ignorieren. Geben Sie für den Befehl <code>TEST_RESONANCES</code> die gewünschte Testachse an. Die Rohdaten werden in das Verzeichnis <code>/tmp</code> auf dem RPi geschrieben.</p>
+<p>Die Rohdaten können auch ermittelt werden, indem der Befehl <code>ACCELEROMETER_MEASURE</code> während einer normalen Druckeraktivität zweimal ausgeführt wird - einmal, um die Messung zu starten, und ein weiteres Mal, um sie zu beenden und die Ausgabedatei zu schreiben. Weitere Details finden Sie unter <a href="G-Codes.html#adxl345">G-Codes</a>.</p>
+<p>Die Daten können später mit den folgenden Skripten verarbeitet werden: <code>scripts/graph_accelerometer.py</code> und <code>scripts/calibrate_shaper.py</code>. Beide akzeptieren je nach Modus eine oder mehrere Roh-CSV-Dateien als Eingabe. Das Skript graph_accelerometer.py unterstützt mehrere Betriebsmodi:</p>
+<ul>
+<li>Darstellung der Rohdaten des Beschleunigungssensors (Parameter <code>-r</code> verwenden), es wird nur eine Eingabedatei unterstützt;</li>
+<li>Darstellung eines Frequenzgangs (keine zusätzlichen Parameter erforderlich); werden mehrere Eingabedateien angegeben, wird der mittlere Frequenzgang berechnet;</li>
+<li>Vergleich des Frequenzgangs zwischen mehreren Eingabedateien (Parameter <code>-c</code> verwenden); zusätzlich können Sie mit dem Parameter <code>-a x</code>, <code>-a y</code> oder <code>-a z</code> angeben, welche Achse des Beschleunigungssensors berücksichtigt werden soll (ohne Angabe wird die Summe der Vibrationen aller Achsen verwendet);</li>
+<li>Darstellung des Spektrogramms (Parameter <code>-s</code> verwenden), es wird nur eine Eingabedatei unterstützt; zusätzlich können Sie mit dem Parameter <code>-a x</code>, <code>-a y</code> oder <code>-a z</code> angeben, welche Achse des Beschleunigungssensors berücksichtigt werden soll (ohne Angabe wird die Summe der Vibrationen aller Achsen verwendet).</li>
+</ul>
+<p>Beachten Sie, dass das Skript graph_accelerometer.py nur die Dateien raw_data*.csv unterstützt und nicht die Dateien resonances*.csv oder calibration_data*.csv.</p>
+<p>Zum Beispiel,</p>
+<div class="highlight"><pre><span></span><code>~/klipper/scripts/graph_accelerometer.py /tmp/raw_data_x_*.csv -o /tmp/resonances_x.png -c -a z
+</code></pre></div>
+
+<p>zeichnet den Vergleich mehrerer <code>/tmp/raw_data_x_*.csv</code>-Dateien für die Z-Achse in die Datei <code>/tmp/resonances_x.png</code>.</p>
+<p>Das Skript shaper_calibrate.py akzeptiert eine oder mehrere Eingabedateien, kann eine automatische Abstimmung des Input Shapers durchführen und die besten Parameter vorschlagen, die für alle bereitgestellten Eingaben gut funktionieren. Es gibt die vorgeschlagenen Parameter auf der Konsole aus und kann zusätzlich ein Diagramm erzeugen, wenn der Parameter <code>-o output.png</code> angegeben wird, oder eine CSV-Datei, wenn der Parameter <code>-c output.csv</code> angegeben wird.</p>
+<p>Mehrere Eingabedateien an das Skript shaper_calibrate.py zu übergeben, kann bei einer fortgeschrittenen Abstimmung der Input Shaper nützlich sein, zum Beispiel:</p>
+<ul>
+<li><code>TEST_RESONANCES AXIS=X OUTPUT=raw_data</code> (und für die <code>Y</code>-Achse) für eine einzelne Achse zweimal an einem Bed-Slinger auszuführen – beim ersten Mal mit dem Beschleunigungssensor am Druckkopf, beim zweiten Mal mit dem Sensor am Bett –, um Kreuzresonanzen der Achsen zu erkennen und zu versuchen, sie mit Input Shapern zu unterdrücken.</li>
+<li><code>TEST_RESONANCES AXIS=Y OUTPUT=raw_data</code> zweimal an einem Bed-Slinger mit einem Glasbett und einer magnetischen Oberfläche (die leichter ist) auszuführen, um die Input-Shaper-Parameter zu finden, die für jede Druckoberflächen-Konfiguration gut funktionieren.</li>
+<li>Zusammenführung der Resonanzdaten von mehreren Testpunkten.</li>
+<li>Die Resonanzdaten von zwei Achsen zu kombinieren (z. B. an einem Bed-Slinger, um den <code>input_shaper</code> der X-Achse anhand der Resonanzen sowohl der X- als auch der Y-Achse zu konfigurieren und so Vibrationen des <em>Betts</em> zu unterdrücken, falls die Düse bei Bewegungen in X-Richtung an einem Druck "hängen bleibt").</li>
+</ul>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Zurück zum Seitenanfang
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="Resonance_Compensation.html" class="md-footer__link md-footer__link--prev" aria-label="Zurück: Resonanz-Kompensation" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Zurück
+              </span>
+              Resonanz-Kompensation
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="Pressure_Advance.html" class="md-footer__link md-footer__link--next" aria-label="Weiter: Druckvorschub" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Weiter
+              </span>
+              Druckvorschub
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "In Zwischenablage kopieren", "clipboard.copied": "In Zwischenablage kopiert", "search.config.lang": "de", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Suche", "search.result.placeholder": "Suchbegriff eingeben", "search.result.none": "Keine Suchergebnisse", "search.result.one": "1 Suchergebnis", "search.result.other": "# Suchergebnisse", "search.result.more.one": "1 weiteres Suchergebnis auf dieser Seite", "search.result.more.other": "# weitere Suchergebnisse auf dieser Seite", "search.result.term.missing": "Es fehlt", "select.version.title": "Version ausw\u00e4hlen"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

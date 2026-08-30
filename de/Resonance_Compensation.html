@@ -1,0 +1,2006 @@
+
+<!doctype html>
+<html lang="de" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.4, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>Resonanz-Kompensation - Klipper-Dokumentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-VEN1PGNQL4"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){this.value&&gtag("event","search",{search_term:this.value})}),"undefined"!=typeof location$&&location$.subscribe(function(e){gtag("config","G-VEN1PGNQL4",{page_path:e.pathname})})})</script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-VEN1PGNQL4"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#resonanz-kompensation" class="md-skip">
+          Zum Inhalt
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="Klipper-Dokumentation" class="md-header__button md-logo" aria-label="Klipper-Dokumentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Klipper-Dokumentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Resonanz-Kompensation
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Sprache wechseln">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/de/" hreflang="de" class="md-select__link">
+                    Deutsch
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/it/" hreflang="it" class="md-select__link">
+                    Italiano
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/fr/" hreflang="fr" class="md-select__link">
+                    Français
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Suche" placeholder="Suche" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Suche">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Teilen" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Zurücksetzen" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Suche wird initialisiert
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Quellcode" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Klipper-Dokumentation" class="md-nav__button md-logo" aria-label="Klipper-Dokumentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Klipper-Dokumentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Quellcode" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        Übersicht
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        Funktionen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        Häufig gestellte Fragen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        Veröffentlichungen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        Konfigurationsänderungen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        Kontakt
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation und Konfiguration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation und Konfiguration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation und Konfiguration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_1" type="checkbox" id="__nav_7_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_1">
+          Installation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_1">
+          <span class="md-nav__icon md-icon"></span>
+          Installation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="OctoPrint.html" class="md-nav__link">
+        OctoPrint für Klipper
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Konfigurationsreferenz
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Konfigurationsreferenz" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Konfigurationsreferenz
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        Konfigurationsreferenz
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        Rotationsdistanz
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        Überprüfung der Konfiguration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Bettnivellierung
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Bettnivellierung" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Bettnivellierung
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        Bett Nivellierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        Deltakalibrierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        Sondenkalibrierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        Manuelle Nivellierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        Bettgitter
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        Endstop Phase
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Axis_Twist_Compensation.html" class="md-nav__link">
+        Kompensation der Achsenverdrehung
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Resonanz-Kompensation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Resonanz-Kompensation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Resonanz-Kompensation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Resonanz-Kompensation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="Resonance_Compensation.html" class="md-nav__link md-nav__link--active">
+        Resonanz-Kompensation
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Inhaltsverzeichnis">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Inhaltsverzeichnis
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#abstimmung-tuning" class="md-nav__link">
+    Abstimmung (Tuning)
+  </a>
+  
+    <nav class="md-nav" aria-label="Abstimmung (Tuning)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ringing-frequenz" class="md-nav__link">
+    Ringing-Frequenz
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-shaper-konfiguration" class="md-nav__link">
+    Input shaper Konfiguration
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-shaper-auswahlen" class="md-nav__link">
+    Input shaper Auswählen
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auswahl-von-max_accel" class="md-nav__link">
+    Auswahl von max_accel
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#feinabstimmung-der-resonanzfrequenzen" class="md-nav__link">
+    Feinabstimmung der Resonanzfrequenzen
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pressure-advance" class="md-nav__link">
+    Pressure Advance
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unzuverlassige-messungen-der-ringing-frequenzen" class="md-nav__link">
+    Unzuverlässige Messungen der Ringing-Frequenzen
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fehlerbehebung-und-faq" class="md-nav__link">
+    Fehlerbehebung und FAQ
+  </a>
+  
+    <nav class="md-nav" aria-label="Fehlerbehebung und FAQ">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ich-erhalte-keine-zuverlassigen-messungen-der-resonanzfrequenzen" class="md-nav__link">
+    Ich erhalte keine zuverlässigen Messungen der Resonanzfrequenzen
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nach-dem-aktivieren-von-input_shaper-werden-meine-druckteile-zu-stark-geglattet-und-feine-details-gehen-verloren" class="md-nav__link">
+    Nach dem Aktivieren von [input_shaper] werden meine Druckteile zu stark geglättet und feine Details gehen verloren
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nachdem-ich-einige-zeit-erfolgreich-ohne-ringing-gedruckt-habe-scheint-es-zuruckzukehren" class="md-nav__link">
+    Nachdem ich einige Zeit erfolgreich ohne Ringing gedruckt habe, scheint es zurückzukehren
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wird-ein-aufbau-mit-zwei-schlitten-dual-carriage-mit-input-shapern-unterstutzt" class="md-nav__link">
+    Wird ein Aufbau mit zwei Schlitten (Dual Carriage) mit Input Shapern unterstützt?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#beeinflusst-input_shaper-die-druckzeit" class="md-nav__link">
+    Beeinflusst input_shaper die Druckzeit?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sollte-ich-den-input-shaper-fur-die-z-achse-aktivieren-und-kalibrieren" class="md-nav__link">
+    Sollte ich den Input Shaper für die Z-Achse aktivieren und kalibrieren?
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#technische-details" class="md-nav__link">
+    Technische Details
+  </a>
+  
+    <nav class="md-nav" aria-label="Technische Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#input-shapers" class="md-nav__link">
+    Input shapers
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        Resonanzen messen
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Druckvorschub
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Befehlsvorlagen
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Befehlsvorlagen" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Befehlsvorlagen
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        Befehlsvorlagen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        Statusreferenz
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TMC_Drivers.html" class="md-nav__link">
+        TMC Treiber
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        Homing und Probing mit mehreren Mikrocontrollern
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        Slicer
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        Schräglagenkorrektur
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Objekte ausschließen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        Verwendung von PWM-Tools
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Entwicklerdokumentation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Entwicklerdokumentation" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Entwicklerdokumentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        Code Überblick
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        Kinematik
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        Protokoll
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        API Server
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        MCU Befehle
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        CANBUS Protokoll
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        Fehlersuche
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        Benchmarks
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        Zu Klipper beitragen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        Klipper paketieren
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Geräteabhängige Dokumente
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Geräteabhängige Dokumente" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Geräteabhängige Dokumente
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        Beispielkonfigurationen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        SD-Karten Aktualisierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        RPi Mikrocontroller
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        Bootloader
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloader_Entry.html" class="md-nav__link">
+        Bootloader-Eintrag
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
+        CANBUS-Fehlerbehebung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        TSL1401CL Filamentbreitensensor
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        Filament-Dicken Hallsensor
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Eddy_Probe.html" class="md-nav__link">
+        Induktive Wirbelstromsonde
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Load_Cell.html" class="md-nav__link">
+        Zellen laden
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Sponsors.html" class="md-nav__link">
+        Förderer
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Inhaltsverzeichnis">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Inhaltsverzeichnis
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#abstimmung-tuning" class="md-nav__link">
+    Abstimmung (Tuning)
+  </a>
+  
+    <nav class="md-nav" aria-label="Abstimmung (Tuning)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ringing-frequenz" class="md-nav__link">
+    Ringing-Frequenz
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-shaper-konfiguration" class="md-nav__link">
+    Input shaper Konfiguration
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#input-shaper-auswahlen" class="md-nav__link">
+    Input shaper Auswählen
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auswahl-von-max_accel" class="md-nav__link">
+    Auswahl von max_accel
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#feinabstimmung-der-resonanzfrequenzen" class="md-nav__link">
+    Feinabstimmung der Resonanzfrequenzen
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pressure-advance" class="md-nav__link">
+    Pressure Advance
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unzuverlassige-messungen-der-ringing-frequenzen" class="md-nav__link">
+    Unzuverlässige Messungen der Ringing-Frequenzen
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fehlerbehebung-und-faq" class="md-nav__link">
+    Fehlerbehebung und FAQ
+  </a>
+  
+    <nav class="md-nav" aria-label="Fehlerbehebung und FAQ">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ich-erhalte-keine-zuverlassigen-messungen-der-resonanzfrequenzen" class="md-nav__link">
+    Ich erhalte keine zuverlässigen Messungen der Resonanzfrequenzen
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nach-dem-aktivieren-von-input_shaper-werden-meine-druckteile-zu-stark-geglattet-und-feine-details-gehen-verloren" class="md-nav__link">
+    Nach dem Aktivieren von [input_shaper] werden meine Druckteile zu stark geglättet und feine Details gehen verloren
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nachdem-ich-einige-zeit-erfolgreich-ohne-ringing-gedruckt-habe-scheint-es-zuruckzukehren" class="md-nav__link">
+    Nachdem ich einige Zeit erfolgreich ohne Ringing gedruckt habe, scheint es zurückzukehren
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wird-ein-aufbau-mit-zwei-schlitten-dual-carriage-mit-input-shapern-unterstutzt" class="md-nav__link">
+    Wird ein Aufbau mit zwei Schlitten (Dual Carriage) mit Input Shapern unterstützt?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#beeinflusst-input_shaper-die-druckzeit" class="md-nav__link">
+    Beeinflusst input_shaper die Druckzeit?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sollte-ich-den-input-shaper-fur-die-z-achse-aktivieren-und-kalibrieren" class="md-nav__link">
+    Sollte ich den Input Shaper für die Z-Achse aktivieren und kalibrieren?
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#technische-details" class="md-nav__link">
+    Technische Details
+  </a>
+  
+    <nav class="md-nav" aria-label="Technische Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#input-shapers" class="md-nav__link">
+    Input shapers
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/Resonance_Compensation.md" title="Seite editieren" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="resonanz-kompensation">Resonanz-Kompensation<a class="headerlink" href="#resonanz-kompensation" title="Permanent link">&para;</a></h1>
+<p>Klipper unterstützt Input Shaping - eine Technik, die verwendet werden kann, um Ringing (auch bekannt als Echoing, Ghosting oder Rippling) in Drucken zu reduzieren. Ringing ist ein Fehler beim Flächendruck, bei dem sich typischerweise Elemente wie Kanten als subtiles "Echo" auf einer gedruckten Oberfläche wiederholen:</p>
+<p>|<img alt="Vibrationstest" src="img/ringing-test.jpg" />|<img alt="3D Benchy" src="img/ringing-3dbenchy.jpg" />|</p>
+<p>Ringing entsteht durch mechanische Schwingungen im Drucker infolge schneller Richtungswechsel beim Drucken. Beachten Sie, dass Ringing meist mechanische Ursachen hat: ein zu wenig steifer Druckerrahmen, lose oder zu elastische Riemen, Ausrichtungsprobleme mechanischer Bauteile, hohe bewegte Masse usw. Diese sollten nach Möglichkeit zuerst geprüft und behoben werden.</p>
+<p><a href="https://en.wikipedia.org/wiki/Input_shaping">Input Shaping</a> ist ein Steuerungsverfahren ohne Rückführung, das ein Stellsignal erzeugt, welches seine eigenen Schwingungen auslöscht. Input Shaping erfordert vor der Aktivierung einige Abstimmung und Messungen. Neben Ringing reduziert Input Shaping in der Regel Schwingungen und Rütteln des Druckers allgemein und kann auch die Zuverlässigkeit des stealthChop-Modus von Trinamic-Schrittmotortreibern verbessern.</p>
+<h2 id="abstimmung-tuning">Abstimmung (Tuning)<a class="headerlink" href="#abstimmung-tuning" title="Permanent link">&para;</a></h2>
+<p>Die grundlegende Abstimmung erfordert, die Ringing-Frequenzen des Druckers durch den Druck eines Testmodells zu messen.</p>
+<p>Slicen Sie das Ringing-Testmodell, das Sie unter <a href="prints/ringing_tower.stl">docs/prints/ringing_tower.stl</a> finden, im Slicer:</p>
+<ul>
+<li>Empfohlene Schichthöhe ist 0,2 oder 0,25 mm.</li>
+<li>Infill und obere Schichten können auf 0 gesetzt werden.</li>
+<li>Verwenden Sie 1-2 Perimeter oder besser noch den Vasenmodus mit 1-2 mm Basis.</li>
+<li>Verwenden Sie für die <strong>äußeren</strong> Perimeter eine ausreichend hohe Geschwindigkeit von etwa 80-100 mm/s.</li>
+<li>Stellen Sie sicher, dass die minimale Schichtzeit <strong>höchstens</strong> 3 Sekunden beträgt.</li>
+<li>Stellen Sie sicher, dass jede "dynamische Beschleunigungsregelung" im Slicer deaktiviert ist.</li>
+<li>Drehen Sie das Modell nicht. Das Modell hat auf der Rückseite Markierungen für X und Y. Beachten Sie die ungewöhnliche Lage der Markierungen im Verhältnis zu den Achsen des Druckers - das ist kein Fehler. Die Markierungen können später im Abstimmungsprozess als Referenz dienen, da sie zeigen, welcher Achse die Messungen zuzuordnen sind.</li>
+</ul>
+<h3 id="ringing-frequenz">Ringing-Frequenz<a class="headerlink" href="#ringing-frequenz" title="Permanent link">&para;</a></h3>
+<p>Messen Sie zunächst die <strong>Ringing-Frequenz</strong>.</p>
+<ol>
+<li>Wurde der Parameter <code>square_corner_velocity</code> verändert, setzen Sie ihn auf 5.0 zurück. Bei Verwendung eines Input Shapers wird von einer Erhöhung abgeraten, da sie zu stärkerer Glättung der Teile führen kann - besser ist es, stattdessen einen höheren Beschleunigungswert zu verwenden.</li>
+<li>Deaktivieren Sie die Funktion <code>minimum_cruise_ratio</code>, indem Sie folgenden Befehl ausführen: <code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
+<li>Pressure Advance deaktivieren: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
+<li>Wenn Sie der printer.cfg bereits einen Abschnitt <code>[input_shaper]</code> hinzugefügt haben, führen Sie den Befehl <code>SET_INPUT_SHAPER SHAPER_FREQ_X=0 SHAPER_FREQ_Y=0</code> aus. Erhalten Sie den Fehler "Unknown command", können Sie ihn an dieser Stelle bedenkenlos ignorieren und mit den Messungen fortfahren.</li>
+<li>Führen Sie den Befehl aus: <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code> Im Wesentlichen versuchen wir, das Ringing deutlicher hervortreten zu lassen, indem wir für die Beschleunigung unterschiedliche, große Werte setzen. Dieser Befehl erhöht die Beschleunigung alle 5 mm, beginnend bei 1500 mm/s²: 1500 mm/s², 2000 mm/s², 2500 mm/s² und so weiter bis 7000 mm/s² beim letzten Abschnitt.</li>
+<li>Drucken Sie das mit den empfohlenen Parametern geslicete Testmodell.</li>
+<li>Sie können den Druck früher abbrechen, wenn das Ringing deutlich sichtbar ist und Sie feststellen, dass die Beschleunigung für Ihren Drucker zu hoch wird (wenn der Drucker z. B. zu stark schwingt oder Schritte zu verlieren beginnt).</li>
+<li>
+<p>Nutzen Sie die Markierungen X und Y auf der Rückseite des Modells als Referenz. Die Messungen an der Seite mit der X-Markierung sind für die <em>Konfiguration</em> der X-Achse zu verwenden, die mit der Y-Markierung für die Konfiguration der Y-Achse. Messen Sie den Abstand <em>D</em> (in mm) zwischen mehreren Schwingungen an dem Teil mit der X-Markierung, nahe den Kerben, und lassen Sie dabei möglichst die erste oder die ersten beiden Schwingungen aus. Um den Abstand zwischen den Schwingungen leichter zu messen, markieren Sie die Schwingungen zunächst und messen Sie dann den Abstand zwischen den Markierungen mit einem Lineal oder Messschieber:</p>
+<p>|<img alt="Mark ringing" src="img/ringing-mark.jpg" />|<img alt="Measure ringing" src="img/ringing-measure.jpg" />|</p>
+</li>
+<li>
+<p>Zählen Sie, wie vielen Schwingungen <em>N</em> der gemessene Abstand <em>D</em> entspricht. Wenn Sie unsicher sind, wie zu zählen ist, orientieren Sie sich am obigen Bild, das <em>N</em> = 6 Schwingungen zeigt.</p>
+</li>
+<li>Berechnen Sie die Ringing-Frequenz der X-Achse als <em>V</em> &middot; <em>N</em> / <em>D</em> (Hz), wobei <em>V</em> die Geschwindigkeit der äußeren Perimeter ist (mm/s). Im obigen Beispiel haben wir 6 Schwingungen markiert und der Test wurde mit 100 mm/s gedruckt, die Frequenz beträgt also 100 * 6 / 12,14 ≈ 49,4 Hz.</li>
+<li>Führen Sie (8) - (10) auch für die Y-Markierung durch.</li>
+</ol>
+<p>Beachten Sie, dass das Ringing auf dem Testdruck dem Muster der gekrümmten Kerben folgen sollte, wie im obigen Bild. Ist das nicht der Fall, handelt es sich bei diesem Defekt nicht wirklich um Ringing, sondern er hat eine andere Ursache - entweder mechanisch oder am Extruder. Diese sollte zuerst behoben werden, bevor Input Shaper aktiviert und abgestimmt werden.</p>
+<p>Sind die Messungen unzuverlässig, weil zum Beispiel der Abstand zwischen den Schwingungen nicht gleichmäßig ist, kann das bedeuten, dass der Drucker auf derselben Achse mehrere Resonanzfrequenzen hat. Man kann stattdessen versuchen, dem im Abschnitt <a href="#unreliable-measurements-of-ringing-frequencies">Unzuverlässige Messungen der Ringing-Frequenzen</a> beschriebenen Abstimmungsprozess zu folgen, und dennoch von der Input-Shaping-Technik profitieren.</p>
+<p>Die Ringing-Frequenz kann von der Position des Modells auf dem Druckbett und von der Z-Höhe abhängen, <em>insbesondere bei Delta-Druckern</em>; Sie können prüfen, ob sich die Frequenzen an verschiedenen Positionen entlang der Seiten des Testmodells und in verschiedenen Höhen unterscheiden. Ist das der Fall, können Sie die mittleren Ringing-Frequenzen über die X- und die Y-Achse berechnen.</p>
+<p>Ist die gemessene Ringing-Frequenz sehr niedrig (unter etwa 20-25 Hz), kann es sinnvoll sein, zunächst in eine Versteifung des Druckers oder eine Verringerung der bewegten Masse zu investieren - je nachdem, was in Ihrem Fall möglich ist -, bevor Sie mit der weiteren Abstimmung des Input Shapings fortfahren und die Frequenzen anschließend erneut messen. Für viele verbreitete Druckermodelle gibt es dafür bereits fertige Lösungen.</p>
+<p>Beachten Sie, dass sich die Ringing-Frequenzen ändern können, wenn am Drucker Änderungen vorgenommen werden, die die bewegte Masse oder die Steifigkeit des Systems beeinflussen, zum Beispiel:</p>
+<ul>
+<li>Am Druckkopf werden Komponenten montiert, entfernt oder ausgetauscht, die seine Masse verändern, z. B. ein neuer (schwererer oder leichterer) Schrittmotor für einen Direktextruder, ein neues Hotend, ein schwerer Lüfter mit Luftführung usw.</li>
+<li>Die Riemen gespannt sind.</li>
+<li>Es werden Erweiterungen zur Erhöhung der Rahmensteifigkeit montiert.</li>
+<li>An einem Drucker mit bewegtem Bett wird ein anderes Bett eingebaut, Glas ergänzt usw.</li>
+</ul>
+<p>Werden solche Änderungen vorgenommen, ist es ratsam, zumindest die Ringing-Frequenzen zu messen, um zu prüfen, ob sie sich verändert haben.</p>
+<h3 id="input-shaper-konfiguration">Input shaper Konfiguration<a class="headerlink" href="#input-shaper-konfiguration" title="Permanent link">&para;</a></h3>
+<p>Nachdem die Ringing-Frequenzen für die X- und die Y-Achse gemessen wurden, können Sie Ihrer <code>printer.cfg</code> den folgenden Abschnitt hinzufügen:</p>
+<div class="highlight"><pre><span></span><code>[input_shaper]
+shaper_freq_x: ...  # frequency for the X mark of the test model
+shaper_freq_y: ...  # frequency for the Y mark of the test model
+</code></pre></div>
+
+<p>Für das obige Beispiel erhalten wir shaper_freq_x/y = 49.4.</p>
+<h3 id="input-shaper-auswahlen">Input shaper Auswählen<a class="headerlink" href="#input-shaper-auswahlen" title="Permanent link">&para;</a></h3>
+<p>Klipper unterstützt mehrere Input Shaper. Sie unterscheiden sich in ihrer Empfindlichkeit gegenüber Fehlern bei der Bestimmung der Resonanzfrequenz und darin, wie stark sie die gedruckten Teile glätten. Außerdem sollten manche Shaper wie 2HUMP_EI und 3HUMP_EI in der Regel nicht mit shaper_freq = Resonanzfrequenz verwendet werden - sie werden nach anderen Gesichtspunkten konfiguriert, um mehrere Resonanzen gleichzeitig zu dämpfen.</p>
+<p>Für die meisten Drucker sind entweder der MZV- oder der EI-Shaper zu empfehlen. Dieser Abschnitt beschreibt ein Testverfahren, um zwischen beiden zu wählen und einige weitere zugehörige Parameter zu bestimmen.</p>
+<p>Drucken Sie das Ringing-Testmodell wie folgt:</p>
+<ol>
+<li>Die Firmware neu starten <code>RESTART</code></li>
+<li>Vorbereitung für den Test: <code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
+<li>Pressure Advance deaktivieren: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
+<li>Führe: <code>SET_INPUT_SHAPER SHAPER_TYPE=MZV</code> aus</li>
+<li>Führen Sie den Befehl aus: <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
+<li>Drucken Sie das mit den empfohlenen Parametern geslicete Testmodell.</li>
+</ol>
+<p>Wenn Sie an dieser Stelle kein Ringing feststellen, ist der MZV-Shaper für den Einsatz zu empfehlen.</p>
+<p>Stellen Sie doch Ringing fest, messen Sie die Frequenzen mit den Schritten (8)-(10) aus dem Abschnitt <a href="#ringing-frequency">Ringing-Frequenz</a> erneut. Weichen die Frequenzen deutlich von den zuvor ermittelten Werten ab, ist eine komplexere Input-Shaper-Konfiguration erforderlich. Sehen Sie dazu die technischen Details im Abschnitt <a href="#input-shapers">Input Shaper</a>. Andernfalls fahren Sie mit dem nächsten Schritt fort.</p>
+<p>Probieren Sie nun den EI-Input-Shaper aus. Wiederholen Sie dazu die Schritte (1)-(6) von oben, führen Sie jedoch in Schritt 4 stattdessen folgenden Befehl aus: <code>SET_INPUT_SHAPER SHAPER_TYPE=EI</code>.</p>
+<p>Vergleichen Sie zwei Drucke mit MZV- und mit EI-Input-Shaper. Liefert EI deutlich bessere Ergebnisse als MZV, verwenden Sie den EI-Shaper, andernfalls ist MZV vorzuziehen. Beachten Sie, dass der EI-Shaper die gedruckten Teile stärker glättet (weitere Einzelheiten im nächsten Abschnitt). Fügen Sie dem Abschnitt [input_shaper] den Parameter <code>shaper_type: mzv</code> (oder ei) hinzu, z. B.:</p>
+<div class="highlight"><pre><span></span><code>[input_shaper]
+shaper_freq_x: ...
+shaper_freq_y: ...
+shaper_type: mzv
+</code></pre></div>
+
+<p>Ein paar Notizen zur "shaper" auswahl:</p>
+<ul>
+<li>Der EI-Shaper kann für Drucker mit bewegtem Bett besser geeignet sein (sofern Resonanzfrequenz und resultierende Glättung es zulassen): Da auf dem bewegten Bett immer mehr Filament abgelegt wird, steigt dessen Masse und die Resonanzfrequenz sinkt. Weil der EI-Shaper robuster gegenüber Änderungen der Resonanzfrequenz ist, kann er beim Druck großer Teile besser funktionieren.</li>
+<li>Aufgrund der Eigenheiten der Delta-Kinematik können die Resonanzfrequenzen in verschiedenen Bereichen des Bauraums stark voneinander abweichen. Daher kann der EI-Shaper für Delta-Drucker besser geeignet sein als MZV oder ZV und sollte in Betracht gezogen werden. Ist die Resonanzfrequenz ausreichend hoch (mehr als 50-60 Hz), kann man sogar den 2HUMP_EI-Shaper testen (indem man den oben vorgeschlagenen Test mit <code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI</code> ausführt); prüfen Sie vor der Aktivierung jedoch die Hinweise im <a href="#selecting-max_accel">Abschnitt weiter unten</a>.</li>
+</ul>
+<h3 id="auswahl-von-max_accel">Auswahl von max_accel<a class="headerlink" href="#auswahl-von-max_accel" title="Permanent link">&para;</a></h3>
+<p>Sie sollten bereits einen gedruckten Test für den im vorherigen Schritt gewählten Shaper haben (falls nicht, drucken Sie das mit den <a href="#tuning">empfohlenen Parametern</a> geslicete Testmodell mit deaktiviertem Pressure Advance <code>SET_PRESSURE_ADVANCE ADVANCE=0</code> und aktiviertem Tuning Tower als <code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code>). Beachten Sie, dass bei sehr hohen Beschleunigungen, abhängig von der Resonanzfrequenz und dem gewählten Input Shaper (z. B. erzeugt der EI-Shaper mehr Glättung als MZV), Input Shaping zu übermäßiger Glättung und Verrundung der Teile führen kann. max_accel sollte daher so gewählt werden, dass dies verhindert wird. Ein weiterer Parameter, der die Glättung beeinflussen kann, ist <code>square_corner_velocity</code>; es wird daher nicht empfohlen, diesen über den Standardwert von 5 mm/s zu erhöhen, um eine erhöhte Glättung zu vermeiden.</p>
+<p>Um einen geeigneten Wert für max_accel zu wählen, begutachten Sie das Modell für den gewählten Input Shaper. Halten Sie zunächst fest, bei welcher Beschleunigung das Ringing noch gering ist - also für Sie akzeptabel.</p>
+<p>Prüfen Sie anschließend die Glättung. Dafür hat das Testmodell einen kleinen Spalt in der Wand (0,15 mm):</p>
+<p><img alt="Test gap" src="img/smoothing-test.png" /></p>
+<p>Mit steigender Beschleunigung nimmt die Glättung zu und der tatsächliche Spalt im Druck wird breiter:</p>
+<p><img alt="Shaper smoothing" src="img/shaper-smoothing.jpg" /></p>
+<p>In diesem Bild nimmt die Beschleunigung von links nach rechts zu, und der Spalt beginnt ab 3500 mm/s^2 zu wachsen (fünftes Band von links). Ein guter Wert für max_accel ist in diesem Fall also 3000 (mm/s^2), um übermäßige Glättung zu vermeiden.</p>
+<p>Halten Sie die Beschleunigung fest, bei der der Spalt in Ihrem Testdruck noch sehr klein ist. Sehen Sie Wülste, aber selbst bei hohen Beschleunigungen überhaupt keinen Spalt in der Wand, kann das an deaktiviertem Pressure Advance liegen, insbesondere bei Bowden-Extrudern. Wiederholen Sie den Druck in diesem Fall mit aktiviertem PA. Es kann auch die Folge eines falsch kalibrierten (zu hohen) Filamentflusses sein; das sollten Sie ebenfalls prüfen.</p>
+<p>Wählen Sie den kleineren der beiden Beschleunigungswerte (aus Ringing und Glättung) und tragen Sie ihn als <code>max_accel</code> in die printer.cfg ein.</p>
+<p>Als Hinweis: Es kann vorkommen - insbesondere bei niedrigen Ringing-Frequenzen -, dass der EI-Shaper selbst bei niedrigeren Beschleunigungen zu viel Glättung verursacht. In diesem Fall kann MZV die bessere Wahl sein, da er höhere Beschleunigungswerte erlaubt.</p>
+<p>Bei sehr niedrigen Ringing-Frequenzen (etwa 25 Hz und darunter) kann selbst der MZV-Shaper zu viel Glättung erzeugen. Ist das der Fall, können Sie die Schritte im Abschnitt <a href="#choosing-input-shaper">Auswahl des Input Shapers</a> auch mit dem ZV-Shaper wiederholen, indem Sie stattdessen den Befehl <code>SET_INPUT_SHAPER SHAPER_TYPE=ZV</code> verwenden. Der ZV-Shaper sollte noch weniger Glättung erzeugen als MZV, reagiert jedoch empfindlicher auf Fehler bei der Messung der Ringing-Frequenzen.</p>
+<p>Weiter ist zu bedenken: Ist eine Resonanzfrequenz zu niedrig (unter 20-25 Hz), kann es sinnvoll sein, die Steifigkeit des Druckers zu erhöhen oder die bewegte Masse zu verringern. Andernfalls können Beschleunigung und Druckgeschwindigkeit nun statt durch Ringing durch zu starke Glättung begrenzt sein.</p>
+<h3 id="feinabstimmung-der-resonanzfrequenzen">Feinabstimmung der Resonanzfrequenzen<a class="headerlink" href="#feinabstimmung-der-resonanzfrequenzen" title="Permanent link">&para;</a></h3>
+<p>Beachten Sie, dass die Genauigkeit der mit dem Ringing-Testmodell ermittelten Resonanzfrequenzen für die meisten Zwecke ausreicht; eine weitergehende Abstimmung wird daher nicht empfohlen. Wenn Sie Ihre Ergebnisse dennoch gegenprüfen möchten (z. B. weil Sie nach dem Druck eines Testmodells mit dem gewählten Input Shaper und den zuvor gemessenen Frequenzen weiterhin Ringing sehen), können Sie die Schritte in diesem Abschnitt befolgen. Beachten Sie: Wenn Sie nach dem Aktivieren von [input_shaper] Ringing bei anderen Frequenzen feststellen, hilft dieser Abschnitt nicht weiter.</p>
+<p>Unter der Annahme, dass Sie das Ringing-Modell mit den empfohlenen Parametern gesliced haben, führen Sie für jede der Achsen X und Y folgende Schritte durch:</p>
+<ol>
+<li>Vorbereitung für den Test: <code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
+<li>Vergewissern Sie sich, dass Pressure Advance deaktiviert ist: <code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
+<li>Führe: <code>SET_INPUT_SHAPER SHAPER_TYPE=ZV</code>aus</li>
+<li>Wählen Sie aus dem vorhandenen Ringing-Testmodell mit dem von Ihnen gewählten Input Shaper die Beschleunigung, bei der Ringing ausreichend deutlich sichtbar ist, und setzen Sie sie mit: <code>SET_VELOCITY_LIMIT ACCEL=...</code></li>
+<li>Berechnen Sie die für den Befehl <code>TUNING_TOWER</code> erforderlichen Parameter zur Abstimmung von <code>shaper_freq_x</code> wie folgt: start = shaper_freq_x * 83 / 132 und factor = shaper_freq_x / 66, wobei <code>shaper_freq_x</code> hier der aktuelle Wert aus der <code>printer.cfg</code> ist.</li>
+<li>Führen Sie den Befehl aus: <code>TUNING_TOWER COMMAND=SET_INPUT_SHAPER PARAMETER=SHAPER_FREQ_X START=start FACTOR=factor BAND=5</code> unter Verwendung der in Schritt (5) berechneten Werte für <code>start</code> und <code>factor</code>.</li>
+<li>Drucken Sie das Testmodell.</li>
+<li>Setzen Sie den ursprünglichen Frequenzwert zurück: <code>SET_INPUT_SHAPER SHAPER_FREQ_X=...</code>.</li>
+<li>Suchen Sie das Band mit dem geringsten Ringing und zählen Sie seine Nummer von unten beginnend bei 1.</li>
+<li>Berechnen Sie den neuen Wert für shaper_freq_x über alter shaper_freq_x * (39 + 5 * Bandnummer) / 66.</li>
+</ol>
+<p>Wiederholen Sie diese Schritte in gleicher Weise für die Y-Achse und ersetzen Sie dabei die Bezüge auf die X-Achse durch die Y-Achse (ersetzen Sie also in den Formeln und im Befehl <code>TUNING_TOWER</code> <code>shaper_freq_x</code> durch <code>shaper_freq_y</code>).</p>
+<p>Nehmen wir als Beispiel an, Sie hätten für eine der Achsen eine Ringing-Frequenz von 45 Hz gemessen. Daraus ergeben sich für den Befehl <code>TUNING_TOWER</code> die Werte start = 45 * 83 / 132 = 28.30 und factor = 45 / 66 = 0.6818. Nehmen wir weiter an, dass nach dem Druck des Testmodells das vierte Band von unten das geringste Ringing zeigt. Daraus ergibt sich der aktualisierte Wert shaper_freq_? von 45 * (39 + 5 * 4) / 66 ≈ 40,23.</p>
+<p>Nachdem beide neuen Parameter <code>shaper_freq_x</code> und <code>shaper_freq_y</code> berechnet wurden, können Sie den Abschnitt <code>[input_shaper]</code> in der <code>printer.cfg</code> mit den neuen Werten für <code>shaper_freq_x</code> und <code>shaper_freq_y</code> aktualisieren.</p>
+<h3 id="pressure-advance">Pressure Advance<a class="headerlink" href="#pressure-advance" title="Permanent link">&para;</a></h3>
+<p>Falls Sie Pressure Advance verwenden, muss dieses möglicherweise neu kalibriert werden. Folgen Sie den <a href="Pressure_Advance.html#tuning-pressure-advance">Anweisungen</a>, um den neuen Wert zu ermitteln, falls er vom vorherigen abweicht. Starten Sie Klipper vor der Kalibrierung von Pressure Advance unbedingt neu.</p>
+<h3 id="unzuverlassige-messungen-der-ringing-frequenzen">Unzuverlässige Messungen der Ringing-Frequenzen<a class="headerlink" href="#unzuverlassige-messungen-der-ringing-frequenzen" title="Permanent link">&para;</a></h3>
+<p>Wenn Sie die Ringing-Frequenzen nicht messen können, etwa weil der Abstand zwischen den Schwingungen nicht gleichmäßig ist, können Sie Input-Shaping-Techniken möglicherweise dennoch nutzen; die Ergebnisse sind jedoch unter Umständen nicht so gut wie bei sauberen Messungen und erfordern etwas mehr Abstimmung und weitere Testdrucke. Eine weitere Möglichkeit ist, einen Beschleunigungssensor zu beschaffen, zu installieren und die Resonanzen damit zu messen (siehe die <a href="Measuring_Resonances.html">Dokumentation</a> zur benötigten Hardware und zum Einrichtungsablauf) - diese Variante erfordert allerdings etwas Crimpen und Löten.</p>
+<p>Fügen Sie zur Kalibrierung einen leeren Abschnitt <code>[input_shaper]</code> zu Ihrer <code>printer.cfg</code> hinzu. Unter der Annahme, dass Sie das Ringing-Modell mit den empfohlenen Parametern gesliced haben, drucken Sie das Testmodell anschließend wie folgt dreimal. Führen Sie vor dem ersten Druck Folgendes aus</p>
+<ol>
+<li><code>RESTART</code></li>
+<li><code>SET_VELOCITY_LIMIT MINIMUM_CRUISE_RATIO=0</code></li>
+<li><code>SET_PRESSURE_ADVANCE ADVANCE=0</code></li>
+<li><code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI SHAPER_FREQ_X=60 SHAPER_FREQ_Y=60</code></li>
+<li><code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
+</ol>
+<p>und drucken Sie das Modell. Drucken Sie das Modell anschließend erneut, führen Sie vor dem Druck jedoch stattdessen Folgendes aus</p>
+<ol>
+<li><code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI SHAPER_FREQ_X=50 SHAPER_FREQ_Y=50</code></li>
+<li><code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
+</ol>
+<p>Drucken Sie das Modell dann ein drittes Mal, führen Sie nun jedoch Folgendes aus</p>
+<ol>
+<li><code>SET_INPUT_SHAPER SHAPER_TYPE=2HUMP_EI SHAPER_FREQ_X=40 SHAPER_FREQ_Y=40</code></li>
+<li><code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
+</ol>
+<p>Im Kern drucken wir das Ringing-Testmodell mit TUNING_TOWER und dem 2HUMP_EI-Shaper mit shaper_freq = 60 Hz, 50 Hz und 40 Hz.</p>
+<p>Zeigt keines der Modelle eine Verbesserung beim Ringing, sieht es leider nicht danach aus, als könnten Input-Shaping-Techniken in Ihrem Fall helfen.</p>
+<p>Andernfalls kann es sein, dass alle Modelle kein Ringing zeigen oder einige mehr und andere weniger. Wählen Sie das Testmodell mit der höchsten Frequenz, das noch eine deutliche Verbesserung beim Ringing zeigt. Zeigen zum Beispiel die Modelle mit 40 Hz und 50 Hz nahezu kein Ringing, das Modell mit 60 Hz jedoch bereits wieder etwas mehr, bleiben Sie bei 50 Hz.</p>
+<p>Prüfen Sie nun, ob der EI-Shaper in Ihrem Fall ausreichend wäre. Wählen Sie die Frequenz des EI-Shapers anhand der von Ihnen gewählten Frequenz des 2HUMP_EI-Shapers:</p>
+<ul>
+<li>Für den 2HUMP_EI-Shaper mit 60 Hz verwenden Sie den EI-Shaper mit shaper_freq = 50 Hz.</li>
+<li>Für den 2HUMP_EI-Shaper mit 50 Hz verwenden Sie den EI-Shaper mit shaper_freq = 40 Hz.</li>
+<li>Für den 2HUMP_EI-Shaper mit 40 Hz verwenden Sie den EI-Shaper mit shaper_freq = 33 Hz.</li>
+</ul>
+<p>Drucken Sie nun das Testmodell ein weiteres Mal und führen Sie dabei Folgendes aus</p>
+<ol>
+<li><code>SET_INPUT_SHAPER SHAPER_TYPE=EI SHAPER_FREQ_X=... SHAPER_FREQ_Y=...</code></li>
+<li><code>TUNING_TOWER COMMAND=SET_VELOCITY_LIMIT PARAMETER=ACCEL START=1500 STEP_DELTA=500 STEP_HEIGHT=5</code></li>
+</ol>
+<p>wobei Sie shaper_freq_x=... und shaper_freq_y=... wie zuvor ermittelt angeben.</p>
+<p>Liefert der EI-Shaper sehr vergleichbar gute Ergebnisse wie der 2HUMP_EI-Shaper, bleiben Sie beim EI-Shaper und der zuvor ermittelten Frequenz; andernfalls verwenden Sie den 2HUMP_EI-Shaper mit der entsprechenden Frequenz. Tragen Sie die Ergebnisse in die <code>printer.cfg</code> ein, z. B.:</p>
+<div class="highlight"><pre><span></span><code>[input_shaper]
+shaper_freq_x: 50
+shaper_freq_y: 50
+shaper_type: 2hump_ei
+</code></pre></div>
+
+<p>Setzen Sie die Abstimmung mit dem Abschnitt <a href="#selecting-max_accel">Auswahl von max_accel</a> fort.</p>
+<h2 id="fehlerbehebung-und-faq">Fehlerbehebung und FAQ<a class="headerlink" href="#fehlerbehebung-und-faq" title="Permanent link">&para;</a></h2>
+<h3 id="ich-erhalte-keine-zuverlassigen-messungen-der-resonanzfrequenzen">Ich erhalte keine zuverlässigen Messungen der Resonanzfrequenzen<a class="headerlink" href="#ich-erhalte-keine-zuverlassigen-messungen-der-resonanzfrequenzen" title="Permanent link">&para;</a></h3>
+<p>Vergewissern Sie sich zunächst, dass es sich nicht um ein anderes Problem des Druckers statt um Ringing handelt. Sind die Messungen unzuverlässig, weil zum Beispiel der Abstand zwischen den Schwingungen nicht gleichmäßig ist, kann das bedeuten, dass der Drucker auf derselben Achse mehrere Resonanzfrequenzen hat. Man kann dem im Abschnitt <a href="#unreliable-measurements-of-ringing-frequencies">Unzuverlässige Messungen der Ringing-Frequenzen</a> beschriebenen Abstimmungsprozess folgen und dennoch von der Input-Shaping-Technik profitieren. Eine weitere Möglichkeit ist, einen Beschleunigungssensor zu installieren, die Resonanzen damit zu <a href="Measuring_Resonances.html">messen</a> und den Input Shaper anhand dieser Messergebnisse automatisch abzustimmen.</p>
+<h3 id="nach-dem-aktivieren-von-input_shaper-werden-meine-druckteile-zu-stark-geglattet-und-feine-details-gehen-verloren">Nach dem Aktivieren von [input_shaper] werden meine Druckteile zu stark geglättet und feine Details gehen verloren<a class="headerlink" href="#nach-dem-aktivieren-von-input_shaper-werden-meine-druckteile-zu-stark-geglattet-und-feine-details-gehen-verloren" title="Permanent link">&para;</a></h3>
+<p>Beachten Sie die Hinweise im Abschnitt <a href="#selecting-max_accel">Auswahl von max_accel</a>. Ist die Resonanzfrequenz niedrig, sollte man max_accel nicht zu hoch setzen und den Parameter square_corner_velocity nicht erhöhen. Zudem kann es besser sein, den MZV- oder sogar den ZV-Shaper dem EI-Shaper (bzw. 2HUMP_EI und 3HUMP_EI) vorzuziehen.</p>
+<h3 id="nachdem-ich-einige-zeit-erfolgreich-ohne-ringing-gedruckt-habe-scheint-es-zuruckzukehren">Nachdem ich einige Zeit erfolgreich ohne Ringing gedruckt habe, scheint es zurückzukehren<a class="headerlink" href="#nachdem-ich-einige-zeit-erfolgreich-ohne-ringing-gedruckt-habe-scheint-es-zuruckzukehren" title="Permanent link">&para;</a></h3>
+<p>Es ist möglich, dass sich die Resonanzfrequenzen nach einiger Zeit verändert haben. Vielleicht hat sich zum Beispiel die Riemenspannung verändert (die Riemen sind lockerer geworden) usw. Es ist ratsam, die Ringing-Frequenzen wie im Abschnitt <a href="#ringing-frequency">Ringing-Frequenz</a> beschrieben erneut zu prüfen und zu messen und die Konfigurationsdatei bei Bedarf zu aktualisieren.</p>
+<h3 id="wird-ein-aufbau-mit-zwei-schlitten-dual-carriage-mit-input-shapern-unterstutzt">Wird ein Aufbau mit zwei Schlitten (Dual Carriage) mit Input Shapern unterstützt?<a class="headerlink" href="#wird-ein-aufbau-mit-zwei-schlitten-dual-carriage-mit-input-shapern-unterstutzt" title="Permanent link">&para;</a></h3>
+<p>Ja. In diesem Fall sollten die Resonanzen für jeden Schlitten zweimal gemessen werden. Ist beispielsweise der zweite (Dual-)Schlitten auf der X-Achse installiert, ist es möglich, für die X-Achse unterschiedliche Input Shaper für den primären und den Dual-Schlitten festzulegen. Der Input Shaper für die Y-Achse sollte jedoch für beide Schlitten gleich sein (da diese Achse letztlich von einem oder mehreren Schrittmotoren angetrieben wird, die jeweils exakt dieselben Schritte ausführen). Eine Möglichkeit, den Input Shaper für solche Konfigurationen einzurichten, besteht darin, den Abschnitt <code>[input_shaper]</code> leer zu lassen und zusätzlich einen Abschnitt <code>[delayed_gcode]</code> wie folgt in der <code>printer.cfg</code> zu definieren:</p>
+<div class="highlight"><pre><span></span><code>[input_shaper]
+# Intentionally empty
+
+[delayed_gcode init_shaper]
+initial_duration: 0.1
+gcode:
+  SET_DUAL_CARRIAGE CARRIAGE=1
+  SET_INPUT_SHAPER SHAPER_TYPE_X=&lt;dual_carriage_shaper&gt; SHAPER_FREQ_X=&lt;dual_carriage_freq&gt; SHAPER_TYPE_Y=&lt;y_shaper&gt; SHAPER_FREQ_Y=&lt;y_freq&gt;
+  SET_DUAL_CARRIAGE CARRIAGE=0
+  SET_INPUT_SHAPER SHAPER_TYPE_X=&lt;primary_carriage_shaper&gt; SHAPER_FREQ_X=&lt;primary_carriage_freq&gt; SHAPER_TYPE_Y=&lt;y_shaper&gt; SHAPER_FREQ_Y=&lt;y_freq&gt;
+</code></pre></div>
+
+<p>Anwender der <code>generic_cartesian</code>-Kinematik sollten jedoch Schlittennamen in den <code>CARRIAGE=</code>-Parametern von <code>SET_DUAL_CARRIAGE</code> angeben statt deren Nummern. Beachten Sie, dass <code>SHAPER_TYPE_Y</code> und <code>SHAPER_FREQ_Y</code> in beiden Befehlen identisch sein sollten. Falls Sie einen Input Shaper für die Z-Achse konfigurieren müssen, geben Sie dessen Parameter in beiden <code>SET_INPUT_SHAPER</code>-Befehlen an.</p>
+<p>Neben <code>delayed_gcode</code> ist es auch möglich, einen ähnlichen Codeschnipsel in den Start-G-Code im Slicer einzufügen; in diesem Fall wird der Shaper jedoch erst aktiviert, wenn ein Druck gestartet wird.</p>
+<p>Beachten Sie, dass der Input Shaper nur einmal konfiguriert werden muss. Spätere Änderungen der Schlitten oder ihrer Modi über den Befehl <code>SET_DUAL_CARRIAGE</code> behalten die konfigurierten Input-Shaper-Parameter bei.</p>
+<h3 id="beeinflusst-input_shaper-die-druckzeit">Beeinflusst input_shaper die Druckzeit?<a class="headerlink" href="#beeinflusst-input_shaper-die-druckzeit" title="Permanent link">&para;</a></h3>
+<p>Nein, die Funktion <code>input_shaper</code> hat für sich genommen praktisch keinen Einfluss auf die Druckzeiten. Der Wert von <code>max_accel</code> hat ihn allerdings sehr wohl (die Abstimmung dieses Parameters ist in <a href="#selecting-max_accel">diesem Abschnitt</a> beschrieben).</p>
+<h3 id="sollte-ich-den-input-shaper-fur-die-z-achse-aktivieren-und-kalibrieren">Sollte ich den Input Shaper für die Z-Achse aktivieren und kalibrieren?<a class="headerlink" href="#sollte-ich-den-input-shaper-fur-die-z-achse-aktivieren-und-kalibrieren" title="Permanent link">&para;</a></h3>
+<p>Die meisten Anwender werden im Gegensatz zu den X- und Y-Shapern wahrscheinlich keine direkte Verbesserung der Druckqualität feststellen. Anwender von Delta-Druckern, Druckern mit fliegendem Portal oder Druckern mit schweren beweglichen Betten können jedoch möglicherweise die Kinematikgrenzwerte <code>max_z_accel</code> und <code>max_z_velocity</code> erhöhen und so schnellere Z-Bewegungen erzielen. Dies kann besonders bei Werkzeugwechslern nützlich sein, aber auch, wenn im Slicer Z-Hops aktiviert sind. Im Allgemeinen berichten viele Anwender nach Aktivierung des Z-Input-Shapers von einem ruhigeren Lauf der Z-Achse, was den Betriebskomfort des Druckers erhöhen und die Lebensdauer der Z-Achsen-Komponenten etwas verlängern kann.</p>
+<h2 id="technische-details">Technische Details<a class="headerlink" href="#technische-details" title="Permanent link">&para;</a></h2>
+<h3 id="input-shapers">Input shapers<a class="headerlink" href="#input-shapers" title="Permanent link">&para;</a></h3>
+<p>Dieser Abschnitt bietet einen kurzen Überblick über einige technische Aspekte der unterstützten Input Shaper. Die in Klipper verwendeten Input Shaper sind mit Ausnahme von MZV recht standardmäßig; eine ausführlichere Übersicht findet sich in den Artikeln, die die jeweiligen Shaper beschreiben.</p>
+<p>MZV steht für einen Modified-ZV-Input-Shaper. Die klassische Definition des ZV-Shapers geht von zwei Impulsen und einer Gesamtdauer <code>t</code> aus, die 1/2 der gedämpften Schwingungsperiode <code>Td</code> entspricht. Es ist jedoch möglich, eine verallgemeinerte Form des ZV-Input-Shapers mit <code>n &gt;= 3</code> Impulsen und einer beliebigen Gesamtdauer <code>t &gt;= 0.5 * Td</code> zu konstruieren (wobei das Maximum von <code>t</code> vom Wert <code>n</code> abhängt) - siehe beispielsweise die SNA-ZV- und MIS-ZV-Input-Shaper, die als Spezialfälle einer allgemeineren Implementierung des MZV-Input-Shapers in Klipper betrachtet werden können. Die Standardparameter von MZV in Klipper sind <code>n=3</code>, <code>t=0.75</code> (von <code>Td</code>); dieser Shaper wurde als Zwischenstufe zwischen ZV und ZVD entwickelt und bietet eine bessere Schwingungsunterdrückung als ZV, wenn die ermittelten (gemessenen) Shaper-Parameter von den tatsächlich benötigten Werten des Druckers abweichen, sowie eine geringere Glättung als ZVD. Seine spezifische Dauer <code>t=0.75</code> liegt effektiv genau zwischen ZV (mit <code>t=0.5</code> von <code>Td</code>) und ZVD (<code>t=1</code> von <code>Td</code>) und funktioniert bei vielen realen 3D-Druckern gut. Erfahrene Anwender können jedoch die Standardparameter des MZV-Input-Shapers anpassen und andere Varianten ausprobieren, die für ihren spezifischen Drucker besser geeignet sein könnten (diese abweichenden Varianten werden z. B. als <code>mzv(n=3,t=0.8)</code> oder <code>mzv(n=5,t=1.1)</code> im Abschnitt <code>[input_shaper]</code> oder als Parameter des Befehls <code>SET_INPUT_SHAPER</code> angegeben, ebenso als Parameter für das Skript <code>~/klipper/scripts/calibrate_shaper.py</code>, z. B. als <code>--shapers='2hump_ei,3hump_ei,mzv(n=6,t=1.0)'</code>). Diese benutzerdefinierten Shaper-Parameter werden auch vom Skript <code>~/klipper/scripts/graph_shaper.py</code> über z. B. den Parameter <code>--shaper='mzv(n=3,t=0.6666666666)'</code> unterstützt.</p>
+<p>Die folgende Tabelle zeigt einige (meist ungefähre) Parameter jedes Shapers mit ihren Standardwerten.</p>
+<table>
+<thead>
+<tr>
+<th align="center">Input <br> shaper</th>
+<th align="center">Shaper <br> duration</th>
+<th align="center">Vibrationsreduzierung 20x <br> (5% Vibrationstoleranz)</th>
+<th align="center">Vibrationsreduzierung 10x <br> (10% Vibrationstoleranz)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">ZV</td>
+<td align="center">0.5 / shaper_freq</td>
+<td align="center">N/A</td>
+<td align="center">± 5% shaper_freq</td>
+</tr>
+<tr>
+<td align="center">MZV</td>
+<td align="center">0.75 / shaper_freq</td>
+<td align="center">± 4% shaper_freq</td>
+<td align="center">-10%...+15% shaper_freq</td>
+</tr>
+<tr>
+<td align="center">ZVD</td>
+<td align="center">1 / shaper_freq</td>
+<td align="center">± 15% shaper_freq</td>
+<td align="center">± 22% shaper_freq</td>
+</tr>
+<tr>
+<td align="center">EI</td>
+<td align="center">1 / shaper_freq</td>
+<td align="center">± 20% shaper_freq</td>
+<td align="center">± 25% shaper_freq</td>
+</tr>
+<tr>
+<td align="center">2HUMP_EI</td>
+<td align="center">1.5 / shaper_freq</td>
+<td align="center">-40...+45% shaper_freq</td>
+<td align="center">-45..+50% shaper_freq</td>
+</tr>
+<tr>
+<td align="center">3HUMP_EI</td>
+<td align="center">2 / shaper_freq</td>
+<td align="center">-50...+60% shaper_freq</td>
+<td align="center">-55%...+65% shaper_freq</td>
+</tr>
+</tbody>
+</table>
+<p>Ein Hinweis zur Schwingungsreduzierung: Die Werte in der obigen Tabelle sind Näherungswerte. Ist das Dämpfungsverhältnis des Druckers für jede Achse bekannt, kann der Shaper präziser konfiguriert werden und reduziert die Resonanzen dann über einen etwas breiteren Frequenzbereich. Das Dämpfungsverhältnis ist jedoch üblicherweise unbekannt und ohne spezielle Ausrüstung schwer zu schätzen, weshalb Klipper standardmäßig den Wert 0,1 verwendet, der einen guten Allround-Wert darstellt. Die Frequenzbereiche in der Tabelle decken eine Reihe unterschiedlicher möglicher Dämpfungsverhältnisse um diesen Wert herum ab (ca. von 0,075 bis 0,15).</p>
+<p>Beachten Sie außerdem, dass EI, 2HUMP_EI und 3HUMP_EI darauf abgestimmt sind, Schwingungen auf 5% zu reduzieren; die Werte für 10% Schwingungstoleranz dienen daher nur als Referenz. Ein Anwender kann jedoch, ähnlich wie beim MZV-Input-Shaper, eine gewünschte Schwingungstoleranz für den EI-Input-Shaper erzwingen, z. B. als <code>ei(v_tol=0.02)</code> oder <code>ei(v_tol=0.1)</code>; in diesem Fall unterscheidet sich der Bereich der Schwingungsreduzierung.</p>
+<p><strong>Verwendung dieser Tabelle:</strong></p>
+<ul>
+<li>Die Dauer des Shapers beeinflusst die Glättung der Teile - je größer sie ist, desto stärker werden die Teile geglättet. Dieser Zusammenhang ist nicht linear, vermittelt aber ein Gefühl dafür, welche Shaper bei gleicher Frequenz stärker glätten. Sortiert nach zunehmender Glättung: ZV &lt; MZV &lt; ZVD ≈ EI &lt; 2HUMP_EI &lt; 3HUMP_EI. Außerdem ist es bei den Shapern 2HUMP_EI und 3HUMP_EI selten sinnvoll, shaper_freq = Resonanzfrequenz zu setzen (sie sollten dazu dienen, Schwingungen bei mehreren Frequenzen zu reduzieren).</li>
+<li>Man kann den Frequenzbereich abschätzen, in dem der Shaper Schwingungen reduziert. So reduziert zum Beispiel MZV mit shaper_freq = 35 Hz die Schwingungen im Bereich [33,6; 36,4] Hz auf 5 %. 3HUMP_EI mit shaper_freq = 50 Hz reduziert die Schwingungen im Bereich [27,5; 75] Hz auf 5 %.</li>
+<li>Anhand dieser Tabelle lässt sich prüfen, welcher Shaper verwendet werden sollte, wenn Schwingungen bei mehreren Frequenzen reduziert werden müssen. Hat man beispielsweise Resonanzen bei 35 Hz und 60 Hz auf derselben Achse: a) Der EI-Shaper benötigt shaper_freq = 35 / (1 - 0.2) = 43,75 Hz und reduziert Resonanzen bis 43,75 * (1 + 0.2) = 52,5 Hz - das reicht also nicht aus; b) Der 2HUMP_EI-Shaper benötigt shaper_freq = 35 / (1 - 0.4) = 58,3 Hz und reduziert Schwingungen bis 58,3 * (1 + 0.45) = 84,5 Hz - dies ist also eine akzeptable Konfiguration. Versuchen Sie stets, für einen gegebenen Shaper eine möglichst hohe shaper_freq zu verwenden (eventuell mit etwas Sicherheitsspanne - in diesem Beispiel wäre shaper_freq ≈ 55 Hz am besten geeignet), und versuchen Sie, einen Shaper mit möglichst geringer Shaper-Dauer zu verwenden.</li>
+<li>Muss man Schwingungen bei mehreren sehr unterschiedlichen Frequenzen reduzieren (etwa 30 Hz und 100 Hz), reichen die Angaben in der obigen Tabelle möglicherweise nicht aus. In diesem Fall kommt man mit dem flexibleren Skript <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/graph_shaper.py">scripts/graph_shaper.py</a> eher zum Ziel.</li>
+</ul>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Zurück zum Seitenanfang
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="Axis_Twist_Compensation.html" class="md-footer__link md-footer__link--prev" aria-label="Zurück: Kompensation der Achsenverdrehung" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Zurück
+              </span>
+              Kompensation der Achsenverdrehung
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="Measuring_Resonances.html" class="md-footer__link md-footer__link--next" aria-label="Weiter: Resonanzen messen" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Weiter
+              </span>
+              Resonanzen messen
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "In Zwischenablage kopieren", "clipboard.copied": "In Zwischenablage kopiert", "search.config.lang": "de", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Suche", "search.result.placeholder": "Suchbegriff eingeben", "search.result.none": "Keine Suchergebnisse", "search.result.one": "1 Suchergebnis", "search.result.other": "# Suchergebnisse", "search.result.more.one": "1 weiteres Suchergebnis auf dieser Seite", "search.result.more.other": "# weitere Suchergebnisse auf dieser Seite", "search.result.term.missing": "Es fehlt", "select.version.title": "Version ausw\u00e4hlen"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>

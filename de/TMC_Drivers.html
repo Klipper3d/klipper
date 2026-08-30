@@ -1,0 +1,2110 @@
+
+<!doctype html>
+<html lang="de" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="img/favicon.ico">
+      <meta name="generator" content="mkdocs-1.2.4, mkdocs-material-8.1.3">
+    
+    
+      
+        <title>TMC Treiber - Klipper-Dokumentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.edf004c2.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="_klipper3d/css/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-VEN1PGNQL4"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){this.value&&gtag("event","search",{search_term:this.value})}),"undefined"!=typeof location$&&location$.subscribe(function(e){gtag("config","G-VEN1PGNQL4",{page_path:e.pathname})})})</script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-VEN1PGNQL4"></script>
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tmc-treiber" class="md-skip">
+          Zum Inhalt
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="Klipper-Dokumentation" class="md-header__button md-logo" aria-label="Klipper-Dokumentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Klipper-Dokumentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              TMC Treiber
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="grey" data-md-color-accent="light-blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+      <div class="md-header__option">
+        <div class="md-select">
+          
+          <button class="md-header__button md-icon" aria-label="Sprache wechseln">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2 0-.68.06-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.923 7.923 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8.008 8.008 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.65 15.65 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2z"/></svg>
+          </button>
+          <div class="md-select__inner">
+            <ul class="md-select__list">
+              
+                <li class="md-select__item">
+                  <a href="/" hreflang="en" class="md-select__link">
+                    English
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh/" hreflang="zh" class="md-select__link">
+                    简体中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/zh-Hant/" hreflang="zh-Hant" class="md-select__link">
+                    繁體中文
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/hu/" hreflang="hu" class="md-select__link">
+                    Magyar
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/de/" hreflang="de" class="md-select__link">
+                    Deutsch
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/it/" hreflang="it" class="md-select__link">
+                    Italiano
+                  </a>
+                </li>
+                
+                <li class="md-select__item">
+                  <a href="/fr/" hreflang="fr" class="md-select__link">
+                    Français
+                  </a>
+                </li>
+                
+            </ul>
+          </div>
+        </div>
+      </div>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Suche" placeholder="Suche" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Suche">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Teilen" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Zurücksetzen" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Suche wird initialisiert
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Klipper3d/klipper/" title="Quellcode" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="Klipper-Dokumentation" class="md-nav__button md-logo" aria-label="Klipper-Dokumentation" data-md-component="logo">
+      
+  <img src="img/klipper.svg" alt="logo">
+
+    </a>
+    Klipper-Dokumentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Klipper3d/klipper/" title="Quellcode" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Klipper3d/klipper
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Overview.html" class="md-nav__link">
+        Übersicht
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Features.html" class="md-nav__link">
+        Funktionen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="FAQ.html" class="md-nav__link">
+        Häufig gestellte Fragen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Releases.html" class="md-nav__link">
+        Veröffentlichungen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Changes.html" class="md-nav__link">
+        Konfigurationsänderungen
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Contact.html" class="md-nav__link">
+        Kontakt
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7">
+          Installation und Konfiguration
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation und Konfiguration" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          Installation und Konfiguration
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_1" type="checkbox" id="__nav_7_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_1">
+          Installation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Installation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_1">
+          <span class="md-nav__icon md-icon"></span>
+          Installation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Installation.html" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="OctoPrint.html" class="md-nav__link">
+        OctoPrint für Klipper
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_2" type="checkbox" id="__nav_7_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_2">
+          Konfigurationsreferenz
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Konfigurationsreferenz" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_2">
+          <span class="md-nav__icon md-icon"></span>
+          Konfigurationsreferenz
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_Reference.html" class="md-nav__link">
+        Konfigurationsreferenz
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Rotation_Distance.html" class="md-nav__link">
+        Rotationsdistanz
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Config_checks.html" class="md-nav__link">
+        Überprüfung der Konfiguration
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_4" type="checkbox" id="__nav_7_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_4">
+          Bettnivellierung
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Bettnivellierung" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_4">
+          <span class="md-nav__icon md-icon"></span>
+          Bettnivellierung
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Level.html" class="md-nav__link">
+        Bett Nivellierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Delta_Calibrate.html" class="md-nav__link">
+        Deltakalibrierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Probe_Calibrate.html" class="md-nav__link">
+        Sondenkalibrierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="BLTouch.html" class="md-nav__link">
+        BL-Touch
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Manual_Level.html" class="md-nav__link">
+        Manuelle Nivellierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bed_Mesh.html" class="md-nav__link">
+        Bettgitter
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Endstop_Phase.html" class="md-nav__link">
+        Endstop Phase
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Axis_Twist_Compensation.html" class="md-nav__link">
+        Kompensation der Achsenverdrehung
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_5" type="checkbox" id="__nav_7_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_5">
+          Resonanz-Kompensation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Resonanz-Kompensation" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_5">
+          <span class="md-nav__icon md-icon"></span>
+          Resonanz-Kompensation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Resonance_Compensation.html" class="md-nav__link">
+        Resonanz-Kompensation
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Measuring_Resonances.html" class="md-nav__link">
+        Resonanzen messen
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Pressure_Advance.html" class="md-nav__link">
+        Druckvorschub
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="G-Codes.html" class="md-nav__link">
+        G-Codes
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7_8" type="checkbox" id="__nav_7_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_7_8">
+          Befehlsvorlagen
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Befehlsvorlagen" data-md-level="2">
+        <label class="md-nav__title" for="__nav_7_8">
+          <span class="md-nav__icon md-icon"></span>
+          Befehlsvorlagen
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Command_Templates.html" class="md-nav__link">
+        Befehlsvorlagen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Status_Reference.html" class="md-nav__link">
+        Statusreferenz
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          TMC Treiber
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="TMC_Drivers.html" class="md-nav__link md-nav__link--active">
+        TMC Treiber
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Inhaltsverzeichnis">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Inhaltsverzeichnis
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#motorstrom-abstimmen-tunen" class="md-nav__link">
+    Motorstrom abstimmen (Tunen)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vorzugsweise-keinen-haltestrom-angeben" class="md-nav__link">
+    Vorzugsweise keinen Haltestrom angeben
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#einstellung-spreadcycle-vs-stealthchop-modus" class="md-nav__link">
+    Einstellung "spreadCycle" vs "stealthChop" Modus
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#die-tmc-interpolate-einstellung-fuhrt-zu-geringen-positionsabweichungen" class="md-nav__link">
+    Die TMC interpolate einstellung führt zu geringen Positionsabweichungen
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sensorloses-homing" class="md-nav__link">
+    Sensorloses Homing
+  </a>
+  
+    <nav class="md-nav" aria-label="Sensorloses Homing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#beschrankungen-begriff-bezieht-sich-auf-beschrankungen-grenzen-oder-einschrankungen" class="md-nav__link">
+    Beschränkungen (Begriff bezieht sich auf Beschränkungen, Grenzen oder Einschränkungen)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#voraussetzungen" class="md-nav__link">
+    Voraussetzungen
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#abstimmung-tuning" class="md-nav__link">
+    Abstimmung (Tuning)
+  </a>
+  
+    <nav class="md-nav" aria-label="Abstimmung (Tuning)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#geschwindigkeit-der-referenzfahrt-wahlen" class="md-nav__link">
+    Geschwindigkeit der Referenzfahrt wählen
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#konfigurieren-sie-die-printercfg-fur-die-sensorlose-referenzfahrt" class="md-nav__link">
+    Konfigurieren sie die printer.cfg für die sensorlose Referenzfahrt
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#finden-sie-die-hochste-empfindlichkeit-fur-eine-erfolgreiche-referenzfahrt" class="md-nav__link">
+    Finden Sie die höchste Empfindlichkeit, für eine erfolgreiche Referenzfahrt
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#finden-sie-die-niedrigste-empfindlichkeit-fur-die-home-beruhrung" class="md-nav__link">
+    Finden Sie die niedrigste Empfindlichkeit, für die Home Berührung
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#printercfg-mit-empfindlichkeitswert-aktualisieren" class="md-nav__link">
+    printer.cfg mit Empfindlichkeitswert aktualisieren
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verwenden-sie-macros-fur-die-referenzfahrt" class="md-nav__link">
+    Verwenden sie Macros für die Referenzfahrt
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tipps-zur-sensorlosen-referenzfahrt-mit-corexy" class="md-nav__link">
+    Tipps zur sensorlosen Referenzfahrt mit CoreXY
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#abfrage-und-diagnose-der-treibereinstellungen" class="md-nav__link">
+    Abfrage und Diagnose der Treibereinstellungen
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#konfigurieren-der-einstellungen-von-driver_xxx" class="md-nav__link">
+    Konfigurieren der Einstellungen von driver_XXX
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#allgemeine-fragen" class="md-nav__link">
+    Allgemeine Fragen
+  </a>
+  
+    <nav class="md-nav" aria-label="Allgemeine Fragen">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#kann-ich-den-stealthchop-modus-bei-einem-extruder-mit-druckvorschubpa-verwenden" class="md-nav__link">
+    Kann ich den stealthChop-Modus bei einem Extruder mit Druckvorschub(PA) verwenden?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ich-erhalte-standig-die-fehlermeldung-unable-to-read-tmc-uart-stepper_x-register-ifcnt" class="md-nav__link">
+    Ich erhalte ständig die Fehlermeldung "Unable to read tmc uart 'stepper_x' register IFCNT"?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#andernfalls-ist-dieser-fehler-typischerweise-das-ergebnis-einer-falschen-uart-pin-verkabelung-oder-einer-falschen-klipper-konfiguration-der-uart-pin-einstellungeni-keep-getting-unable-to-write-tmc-spi-stepper_x-register-errors" class="md-nav__link">
+    Andernfalls ist dieser Fehler typischerweise das Ergebnis einer falschen UART-Pin-Verkabelung oder einer falschen Klipper-Konfiguration der UART-Pin-Einstellungen.I keep getting "Unable to write tmc spi 'stepper_x' register ..." errors?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#warum-erhielt-ich-die-fehlermeldung-tmc-meldet-fehler" class="md-nav__link">
+    Warum erhielt ich die Fehlermeldung "TMC meldet Fehler: ..."?
+  </a>
+  
+    <nav class="md-nav" aria-label="Warum erhielt ich die Fehlermeldung "TMC meldet Fehler: ..."?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tmc-meldet-fehler-ot1overtemperror" class="md-nav__link">
+    TMC meldet Fehler: ... ot=1(OvertempError!)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tmc-meldet-fehler-shorttognd-oder-shorttosupply" class="md-nav__link">
+    TMC meldet Fehler: ... ShortToGND ODER ShortToSupply
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tmc-meldet-fehler-reset1reset-oder-cs_actual0reset-oder-se0reset" class="md-nav__link">
+    TMC meldet Fehler: ... reset=1(Reset) ODER CS_ACTUAL=0(Reset?) ODER SE=0(Reset?)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tmc-meldet-fehler-uv_cp1unterspannung" class="md-nav__link">
+    TMC meldet Fehler: ... uv_cp=1(Unterspannung!)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wie-stelle-ich-den-spreadcyclecoolstepetc-modus-fur-meine-treiber-ein" class="md-nav__link">
+    Wie stelle ich den spreadCycle/coolStep/etc.-Modus für meine Treiber ein?
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Multi_MCU_Homing.html" class="md-nav__link">
+        Homing und Probing mit mehreren Mikrocontrollern
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Slicers.html" class="md-nav__link">
+        Slicer
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Skew_Correction.html" class="md-nav__link">
+        Schräglagenkorrektur
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Exclude_Object.html" class="md-nav__link">
+        Objekte ausschließen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Using_PWM_Tools.html" class="md-nav__link">
+        Verwendung von PWM-Tools
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_8">
+          Entwicklerdokumentation
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Entwicklerdokumentation" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Entwicklerdokumentation
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Code_Overview.html" class="md-nav__link">
+        Code Überblick
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Kinematics.html" class="md-nav__link">
+        Kinematik
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Protocol.html" class="md-nav__link">
+        Protokoll
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="API_Server.html" class="md-nav__link">
+        API Server
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="MCU_Commands.html" class="md-nav__link">
+        MCU Befehle
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_protocol.html" class="md-nav__link">
+        CANBUS Protokoll
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Debugging.html" class="md-nav__link">
+        Fehlersuche
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Benchmarks.html" class="md-nav__link">
+        Benchmarks
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        Zu Klipper beitragen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Packaging.html" class="md-nav__link">
+        Klipper paketieren
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_9" type="checkbox" id="__nav_9" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_9">
+          Geräteabhängige Dokumente
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Geräteabhängige Dokumente" data-md-level="1">
+        <label class="md-nav__title" for="__nav_9">
+          <span class="md-nav__icon md-icon"></span>
+          Geräteabhängige Dokumente
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Example_Configs.html" class="md-nav__link">
+        Beispielkonfigurationen
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="SDCard_Updates.html" class="md-nav__link">
+        SD-Karten Aktualisierung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="RPi_microcontroller.html" class="md-nav__link">
+        RPi Mikrocontroller
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Beaglebone.html" class="md-nav__link">
+        Beaglebone
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloaders.html" class="md-nav__link">
+        Bootloader
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Bootloader_Entry.html" class="md-nav__link">
+        Bootloader-Eintrag
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS.html" class="md-nav__link">
+        CANBUS
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CANBUS_Troubleshooting.html" class="md-nav__link">
+        CANBUS-Fehlerbehebung
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="TSL1401CL_Filament_Width_Sensor.html" class="md-nav__link">
+        TSL1401CL Filamentbreitensensor
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hall_Filament_Width_Sensor.html" class="md-nav__link">
+        Filament-Dicken Hallsensor
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Eddy_Probe.html" class="md-nav__link">
+        Induktive Wirbelstromsonde
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Load_Cell.html" class="md-nav__link">
+        Zellen laden
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Sponsors.html" class="md-nav__link">
+        Förderer
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Inhaltsverzeichnis">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Inhaltsverzeichnis
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#motorstrom-abstimmen-tunen" class="md-nav__link">
+    Motorstrom abstimmen (Tunen)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vorzugsweise-keinen-haltestrom-angeben" class="md-nav__link">
+    Vorzugsweise keinen Haltestrom angeben
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#einstellung-spreadcycle-vs-stealthchop-modus" class="md-nav__link">
+    Einstellung "spreadCycle" vs "stealthChop" Modus
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#die-tmc-interpolate-einstellung-fuhrt-zu-geringen-positionsabweichungen" class="md-nav__link">
+    Die TMC interpolate einstellung führt zu geringen Positionsabweichungen
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sensorloses-homing" class="md-nav__link">
+    Sensorloses Homing
+  </a>
+  
+    <nav class="md-nav" aria-label="Sensorloses Homing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#beschrankungen-begriff-bezieht-sich-auf-beschrankungen-grenzen-oder-einschrankungen" class="md-nav__link">
+    Beschränkungen (Begriff bezieht sich auf Beschränkungen, Grenzen oder Einschränkungen)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#voraussetzungen" class="md-nav__link">
+    Voraussetzungen
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#abstimmung-tuning" class="md-nav__link">
+    Abstimmung (Tuning)
+  </a>
+  
+    <nav class="md-nav" aria-label="Abstimmung (Tuning)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#geschwindigkeit-der-referenzfahrt-wahlen" class="md-nav__link">
+    Geschwindigkeit der Referenzfahrt wählen
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#konfigurieren-sie-die-printercfg-fur-die-sensorlose-referenzfahrt" class="md-nav__link">
+    Konfigurieren sie die printer.cfg für die sensorlose Referenzfahrt
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#finden-sie-die-hochste-empfindlichkeit-fur-eine-erfolgreiche-referenzfahrt" class="md-nav__link">
+    Finden Sie die höchste Empfindlichkeit, für eine erfolgreiche Referenzfahrt
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#finden-sie-die-niedrigste-empfindlichkeit-fur-die-home-beruhrung" class="md-nav__link">
+    Finden Sie die niedrigste Empfindlichkeit, für die Home Berührung
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#printercfg-mit-empfindlichkeitswert-aktualisieren" class="md-nav__link">
+    printer.cfg mit Empfindlichkeitswert aktualisieren
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verwenden-sie-macros-fur-die-referenzfahrt" class="md-nav__link">
+    Verwenden sie Macros für die Referenzfahrt
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tipps-zur-sensorlosen-referenzfahrt-mit-corexy" class="md-nav__link">
+    Tipps zur sensorlosen Referenzfahrt mit CoreXY
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#abfrage-und-diagnose-der-treibereinstellungen" class="md-nav__link">
+    Abfrage und Diagnose der Treibereinstellungen
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#konfigurieren-der-einstellungen-von-driver_xxx" class="md-nav__link">
+    Konfigurieren der Einstellungen von driver_XXX
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#allgemeine-fragen" class="md-nav__link">
+    Allgemeine Fragen
+  </a>
+  
+    <nav class="md-nav" aria-label="Allgemeine Fragen">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#kann-ich-den-stealthchop-modus-bei-einem-extruder-mit-druckvorschubpa-verwenden" class="md-nav__link">
+    Kann ich den stealthChop-Modus bei einem Extruder mit Druckvorschub(PA) verwenden?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ich-erhalte-standig-die-fehlermeldung-unable-to-read-tmc-uart-stepper_x-register-ifcnt" class="md-nav__link">
+    Ich erhalte ständig die Fehlermeldung "Unable to read tmc uart 'stepper_x' register IFCNT"?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#andernfalls-ist-dieser-fehler-typischerweise-das-ergebnis-einer-falschen-uart-pin-verkabelung-oder-einer-falschen-klipper-konfiguration-der-uart-pin-einstellungeni-keep-getting-unable-to-write-tmc-spi-stepper_x-register-errors" class="md-nav__link">
+    Andernfalls ist dieser Fehler typischerweise das Ergebnis einer falschen UART-Pin-Verkabelung oder einer falschen Klipper-Konfiguration der UART-Pin-Einstellungen.I keep getting "Unable to write tmc spi 'stepper_x' register ..." errors?
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#warum-erhielt-ich-die-fehlermeldung-tmc-meldet-fehler" class="md-nav__link">
+    Warum erhielt ich die Fehlermeldung "TMC meldet Fehler: ..."?
+  </a>
+  
+    <nav class="md-nav" aria-label="Warum erhielt ich die Fehlermeldung "TMC meldet Fehler: ..."?">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tmc-meldet-fehler-ot1overtemperror" class="md-nav__link">
+    TMC meldet Fehler: ... ot=1(OvertempError!)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tmc-meldet-fehler-shorttognd-oder-shorttosupply" class="md-nav__link">
+    TMC meldet Fehler: ... ShortToGND ODER ShortToSupply
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tmc-meldet-fehler-reset1reset-oder-cs_actual0reset-oder-se0reset" class="md-nav__link">
+    TMC meldet Fehler: ... reset=1(Reset) ODER CS_ACTUAL=0(Reset?) ODER SE=0(Reset?)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tmc-meldet-fehler-uv_cp1unterspannung" class="md-nav__link">
+    TMC meldet Fehler: ... uv_cp=1(Unterspannung!)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wie-stelle-ich-den-spreadcyclecoolstepetc-modus-fur-meine-treiber-ein" class="md-nav__link">
+    Wie stelle ich den spreadCycle/coolStep/etc.-Modus für meine Treiber ein?
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/Klipper3d/klipper/blob/master/docs/TMC_Drivers.md" title="Seite editieren" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+<h1 id="tmc-treiber">TMC Treiber<a class="headerlink" href="#tmc-treiber" title="Permanent link">&para;</a></h1>
+<p>Dieses Dokument enthält Informationen zur Verwendung von Trinamic-Schrittmotortreibern im SPI/UART-Modus auf Klipper.</p>
+<p>Klipper kann die Trinamic-Treiber auch in ihrem "Standalone-Modus" verwenden. Wenn sich die Treiber jedoch in diesem Modus befinden, ist keine spezielle Klipper-Konfiguration erforderlich und die in diesem Dokument besprochenen erweiterten Klipper-Funktionen sind nicht verfügbar.</p>
+<p>Zusätzlich zu diesem Dokument sollten Sie auch die <a href="Config_Reference.html#tmc-stepper-driver-configuration">TMC driver config reference</a> lesen.</p>
+<h2 id="motorstrom-abstimmen-tunen">Motorstrom abstimmen (Tunen)<a class="headerlink" href="#motorstrom-abstimmen-tunen" title="Permanent link">&para;</a></h2>
+<p>Ein höherer Treiberstrom erhöht die Positioniergenauigkeit und das Drehmoment. Ein höherer Strom erhöht jedoch auch die vom Schrittmotor und dem Schrittmotortreiber erzeugte Wärme. Wenn der Schrittmotortreiber zu heiß wird, schaltet er sich ab und Klipper meldet einen Fehler. Wenn der Schrittmotor zu heiß wird, verliert er an Drehmoment und Positioniergenauigkeit. (Wenn er sehr heiß wird, kann er auch Kunststoffteile schmelzen, die an ihm oder in seiner Nähe angebracht sind.)</p>
+<p>Als allgemeiner Tuning-Tipp sollten Sie höhere Stromwerte bevorzugen, solange der Schrittmotor nicht zu heiß wird und der Schrittmotortreiber keine Warnungen oder Fehler meldet. Im Allgemeinen ist es in Ordnung, wenn sich der Schrittmotor warm anfühlt, aber er sollte nicht so heiß werden, dass es schmerzhaft ist, ihn zu berühren.</p>
+<h2 id="vorzugsweise-keinen-haltestrom-angeben">Vorzugsweise keinen Haltestrom angeben<a class="headerlink" href="#vorzugsweise-keinen-haltestrom-angeben" title="Permanent link">&para;</a></h2>
+<p>Wird <code>hold_current</code> konfiguriert, kann der TMC-Treiber den Strom zum Schrittmotor reduzieren, sobald er erkennt, dass sich der Schrittmotor nicht bewegt. Eine Änderung des Motorstroms kann jedoch selbst eine Motorbewegung auslösen. Dies kann durch "Rastmomente" (Detent Forces) im Schrittmotor geschehen (der Permanentmagnet im Rotor wird zu den Eisenzähnen im Stator gezogen) oder durch externe Kräfte auf den Achsschlitten.</p>
+<p>Bei den meisten Schrittmotoren bringt eine Stromreduzierung während normaler Drucke keinen nennenswerten Vorteil, da nur wenige Druckbewegungen einen Schrittmotor lange genug im Leerlauf lassen, um die <code>hold_current</code>-Funktion zu aktivieren. Zudem ist es unwahrscheinlich, dass man bei den wenigen Bewegungen, die einen Schrittmotor tatsächlich ausreichend lange im Leerlauf lassen, subtile Druckartefakte in Kauf nehmen möchte.</p>
+<p>Möchten Sie den Motorstrom während der Druckstart-Routinen reduzieren, können Sie in einem <a href="Slicers.html#klipper-gcode_macro">START_PRINT-Makro</a> <a href="G-Codes.html#set_tmc_current">SET_TMC_CURRENT</a>-Befehle ausgeben, um den Strom vor und nach den normalen Druckbewegungen anzupassen.</p>
+<p>Bei manchen Druckern mit dedizierten Z-Motoren, die während normaler Druckbewegungen im Leerlauf sind (kein bed_mesh, kein bed_tilt, keine Z-skew_correction, keine Drucke im "Vasenmodus" usw.), kann <code>hold_current</code> dazu führen, dass die Z-Motoren kühler laufen. Wird dies implementiert, sollte diese Art unkommandierter Z-Achsenbewegung während Bettnivellierung, Bettsondierung, Sondenkalibrierung und Ähnlichem berücksichtigt werden. Auch <code>driver_TPOWERDOWN</code> und <code>driver_IHOLDDELAY</code> sollten entsprechend kalibriert werden. Im Zweifelsfall sollte auf die Angabe von <code>hold_current</code> verzichtet werden.</p>
+<h2 id="einstellung-spreadcycle-vs-stealthchop-modus">Einstellung "spreadCycle" vs "stealthChop" Modus<a class="headerlink" href="#einstellung-spreadcycle-vs-stealthchop-modus" title="Permanent link">&para;</a></h2>
+<p>Standardmäßig setzt Klipper die TMC-Treiber in den "spreadCycle"-Modus. Wenn der Treiber "stealthChop" unterstützt, kann er durch Hinzufügen von <code>stealthchop_threshold: 999999</code>in den TMC-Konfigurationsabschnitt einfügt.</p>
+<p>Im Allgemeinen bietet der spreadCycle-Modus ein höheres Drehmoment und eine höhere Positionsgenauigkeit als der stealthChop-Modus. Der stealthChop-Modus kann jedoch bei manchen Druckern zu einer deutlich geringeren Geräuschentwicklung führen.</p>
+<p>Tests, die die Modi vergleichen, haben bei Bewegungen mit konstanter Geschwindigkeit im stealthChop-Modus einen erhöhten "Positionsverzug" von etwa 75% eines Vollschritts gezeigt (bei einem Drucker mit 40 mm rotation_distance und 200 steps_per_rotation erhöhte sich die Positionsabweichung bei Bewegungen mit konstanter Geschwindigkeit beispielsweise um ca. 0,150 mm). Diese "Verzögerung beim Erreichen der angeforderten Position" muss sich jedoch nicht als deutlicher Druckfehler bemerkbar machen, sodass das leisere Verhalten des stealthChop-Modus bevorzugt werden kann.</p>
+<p>Es wird empfohlen, immer den "spreadCycle"-Modus zu verwenden (indem <code>stealthchop_threshold</code> nicht angegeben wird) oder immer den "stealthChop"-Modus (indem <code>stealthchop_threshold</code> auf 999999 gesetzt wird). Leider liefern die Treiber oft schlechte und verwirrende Ergebnisse, wenn sich der Modus ändert, während der Motor eine Geschwindigkeit ungleich Null hat.</p>
+<p>Beachten Sie, dass die Konfigurationsoption <code>stealthchop_threshold</code> das sensorlose Homing nicht beeinflusst, da Klipper den TMC-Treiber während sensorloser Homing-Vorgänge automatisch in einen geeigneten Modus versetzt.</p>
+<h2 id="die-tmc-interpolate-einstellung-fuhrt-zu-geringen-positionsabweichungen">Die TMC interpolate einstellung führt zu geringen Positionsabweichungen<a class="headerlink" href="#die-tmc-interpolate-einstellung-fuhrt-zu-geringen-positionsabweichungen" title="Permanent link">&para;</a></h2>
+<p>Die <code>interpolate</code>-Einstellung des TMC-Treibers kann die Geräuschentwicklung der Druckerbewegung verringern, auf Kosten eines kleinen systematischen Positionsfehlers. Dieser systematische Positionsfehler entsteht durch die Verzögerung, mit der der Treiber die von Klipper gesendeten "Schritte" ausführt. Bei Bewegungen mit konstanter Geschwindigkeit führt diese Verzögerung zu einem Positionsfehler von nahezu einem halben konfigurierten Mikroschritt (genauer gesagt entspricht der Fehler einem halben Mikroschritt abzüglich eines 512tel eines Vollschritts). Bei einer Achse mit 40 mm rotation_distance, 200 steps_per_rotation und 16 Mikroschritten beträgt der bei Bewegungen mit konstanter Geschwindigkeit entstehende systematische Fehler beispielsweise ca. 0,006 mm.</p>
+<p>Für die beste Positionsgenauigkeit sollten Sie den spreadCycle-Modus verwenden und die Interpolation deaktivieren (setzen Sie <code>interpolate: False</code> in der TMC-Treiberkonfiguration). Bei dieser Konfiguration kann die <code>microstep</code>-Einstellung erhöht werden, um die Geräuschentwicklung bei Schrittmotorbewegungen zu verringern. Üblicherweise erzeugt eine microstep-Einstellung von <code>64</code> oder <code>128</code> eine ähnlich geringe Geräuschentwicklung wie die Interpolation, jedoch ohne einen systematischen Positionsfehler zu verursachen.</p>
+<p>Bei Verwendung des stealthChop-Modus ist die durch Interpolation verursachte Positionsungenauigkeit gering im Vergleich zur durch den stealthChop-Modus selbst verursachten Positionsungenauigkeit. Eine Anpassung der Interpolation gilt daher im stealthChop-Modus als nicht sinnvoll, und die Interpolation kann in ihrem Standardzustand belassen werden.</p>
+<h2 id="sensorloses-homing">Sensorloses Homing<a class="headerlink" href="#sensorloses-homing" title="Permanent link">&para;</a></h2>
+<p>Sensorloses Homing ermöglicht das Einrichten einer Achse ohne die Notwendigkeit eines physischen Endschalters. Stattdessen wird der Schlitten an der Achse in den mechanischen Anschlag bewegt, wodurch der Schrittmotor Schritte verliert. Der Schrittmotortreiber erfasst die verlorenen Schritte und gibt dies an die steuernde MCU (Klipper) weiter, indem er einen Pin umschaltet. Diese Informationen können von Klipper als Endanschlag für die Achse verwendet werden.</p>
+<p>Dieser Leitfaden beschreibt die Einrichtung von sensorlosem Homing für die X-Achse Ihres (kartesischen) Druckers. Es funktioniert jedoch genauso mit allen anderen Achsen (die einen Endanschlag benötigen). Sie sollten es für eine Achse nach der anderen konfigurieren und abstimmen.</p>
+<h3 id="beschrankungen-begriff-bezieht-sich-auf-beschrankungen-grenzen-oder-einschrankungen">Beschränkungen (Begriff bezieht sich auf Beschränkungen, Grenzen oder Einschränkungen)<a class="headerlink" href="#beschrankungen-begriff-bezieht-sich-auf-beschrankungen-grenzen-oder-einschrankungen" title="Permanent link">&para;</a></h3>
+<p>Stellen Sie sicher, dass Ihre mechanischen Komponenten die Belastung aushalten können, wenn der Wagen wiederholt an die Grenze der Achse stößt. Insbesondere können Gewindestangen viel Kraft erzeugen. Es ist möglicherweise keine gute Idee, eine Z-Achse zu homen, indem die Düse gegen die Druckoberfläche stößt. Für beste Ergebnisse überprüfen Sie, ob der Achskarren fest mit der Achsgrenze in Kontakt kommen wird.</p>
+<p>Darüber hinaus ist das sensorlose Homing möglicherweise nicht genau genug für Ihren Drucker. Während das Anfahren der X- und Y-Achsen auf einer kartesischen Maschine gut funktionieren kann, ist das Anfahren der Z-Achse im Allgemeinen nicht genau genug und kann zu einer inkonsistenten Höhe der ersten Schicht führen. Das sensorlose Homing eines Delta-Druckers ist aufgrund mangelnder Genauigkeit nicht ratsam.</p>
+<p>Darüber hinaus hängt die Stalldetektion des Schrittmotortreibers von der mechanischen Last am Motor, dem Motorenstrom und der Motortemperatur (Spulenwiderstand) ab.</p>
+<p>Sensorloses Homing funktioniert am besten bei mittleren Motorgeschwindigkeiten. Bei sehr langsamen Geschwindigkeiten (weniger als 10 U/min) erzeugt der Motor keine signifikante Gegen-EMK und die TMC kann Motorstillstände nicht zuverlässig erkennen. Darüber hinaus nähert sich bei sehr hohen Geschwindigkeiten die Gegen-EMK des Motors der Versorgungsspannung des Motors an, sodass die TMC keine Stillstände mehr erkennen kann. Es wird empfohlen, einen Blick in das Datenblatt Ihrer spezifischen TMCs zu werfen. Dort finden Sie auch weitere Details zu den Einschränkungen dieses Setups.</p>
+<h3 id="voraussetzungen">Voraussetzungen<a class="headerlink" href="#voraussetzungen" title="Permanent link">&para;</a></h3>
+<p>Einige Voraussetzungen sind erforderlich, um das sensorlose Homing zu verwenden:</p>
+<ol>
+<li>Ein stallGuard-fähiger TMC-Schrittmachertreiber (tmc2130, tmc2209, tmc2660 oder tmc5160).</li>
+<li>SPI / UART-Schnittstelle des TMC-Treibers mit Mikrocontroller verdrahtet (Stand-alone-Modus funktioniert nicht).</li>
+<li>Der entsprechende "DIAG"- oder "SG_TST"-Pin des TMC-Treibers ist mit dem Mikrocontroller verbunden.</li>
+<li>Die Schritte im Dokument <a href="Config_checks.html">config checks</a> müssen ausgeführt werden, um sicherzustellen, dass die Schrittmotoren konfiguriert sind und ordnungsgemäß funktionieren.</li>
+</ol>
+<h3 id="abstimmung-tuning">Abstimmung (Tuning)<a class="headerlink" href="#abstimmung-tuning" title="Permanent link">&para;</a></h3>
+<p>Das hier beschriebene Verfahren umfasst sechs Hauptschritte:</p>
+<ol>
+<li>Wählen Sie eine Referenzfahrtgeschwindigkeit.</li>
+<li>Konfigurieren Sie die Datei <code>printer.cfg</code>, um die sensorlose Referenzfahrt zu aktivieren.</li>
+<li>Finden Sie die Einstellung des Stallwächters mit der höchsten Empfindlichkeit, die erfolgreich zu Hause ist.</li>
+<li>Finden Sie die Einstellung des Stallwächters mit der geringsten Empfindlichkeit, die mit einer einzigen Berührung zum Erfolg führt.</li>
+<li>Aktualisieren Sie die Datei <code>printer.cfg</code> mit der gewünschten Stallguard-Einstellung.</li>
+<li>Erstellen oder aktualisieren Sie Makros in der Datei <code>printer.cfg</code>, um sie konsistent zu verwenden.</li>
+</ol>
+<h4 id="geschwindigkeit-der-referenzfahrt-wahlen">Geschwindigkeit der Referenzfahrt wählen<a class="headerlink" href="#geschwindigkeit-der-referenzfahrt-wahlen" title="Permanent link">&para;</a></h4>
+<p>Die Referenzfahrtgeschwindigkeit ist ein wichtiger Faktor bei der sensorlosen Referenzfahrt. Es ist wünschenswert, eine langsame Referenzfahrtgeschwindigkeit zu verwenden, damit der Wagen keine übermäßige Kraft auf den Rahmen ausübt, wenn er das Ende der Schiene berührt. Allerdings können die TMC-Treiber bei sehr langsamen Geschwindigkeiten einen Strömungsabriss nicht zuverlässig erkennen.</p>
+<p>Ein guter Ausgangspunkt für die Referenzfahrtgeschwindigkeit ist, dass der Schrittmotor alle zwei Sekunden eine volle Umdrehung macht. Bei vielen Achsen ist dies der <code>Rotation_distance</code> geteilt durch zwei. Zum Beispiel:</p>
+<div class="highlight"><pre><span></span><code>[stepper_x]
+rotation_distance: 40
+homing_speed:20
+in English schrreiben
+</code></pre></div>
+
+<h4 id="konfigurieren-sie-die-printercfg-fur-die-sensorlose-referenzfahrt">Konfigurieren sie die printer.cfg für die sensorlose Referenzfahrt<a class="headerlink" href="#konfigurieren-sie-die-printercfg-fur-die-sensorlose-referenzfahrt" title="Permanent link">&para;</a></h4>
+<p>Die Einstellung <code>homing_retract_dist</code> muss im Konfigurationsabschnitt <code>stepper_x</code> auf Null gesetzt werden, um die zweite Referenzfahrt zu deaktivieren. Der zweite Referenzfahrtversuch ist bei sensorloser Referenzfahrt nicht sinnvoll, funktioniert nicht zuverlässig und verwirrt den Abstimmungsprozess.</p>
+<p>Vergewissern Sie sich, dass in der TMC-Treiber-Sektion der Konfiguration keine <code>hold_current</code>-Einstellung angegeben ist (wenn eine hold_current-Einstellung vorgenommen wird, stoppt der Motor, nachdem der Kontakt hergestellt wurde, während der Schlitten gegen das Ende der Schiene gedrückt wird, und eine Reduzierung des Stroms in dieser Position kann dazu führen, dass sich der Schlitten bewegt - das führt zu einer schlechten Leistung und verwirrt den Abstimmungsprozess.)</p>
+<p>Es ist notwendig, die Pins für die sensorlose Referenzfahrt zu konfigurieren und die anfänglichen "stallguard"-Einstellungen zu konfigurieren. Eine tmc2209 Beispielkonfiguration für eine X-Achse könnte wie folgt aussehen:</p>
+<div class="highlight"><pre><span></span><code>[tmc2209 stepper_x]
+diag_pin: ^PA1 # Einstellung auf MCU-Pin, der mit dem TMC DIAG-Pin verbunden ist
+driver_SGTHRS: 255 # 255 ist der empfindlichste Wert, 0 der am wenigsten empfindliche
+...
+
+[stepper_x]
+endstop_pin: tmc2209_stepper_x:virtual_endstop
+homing_retract_dist: 0
+...
+</code></pre></div>
+
+<p>Eine tmc2130- oder tmc5160-Konfiguration könnte beispielsweise so aussehen:</p>
+<div class="highlight"><pre><span></span><code>[tmc2130 stepper_x]
+diag1_pin: ^!PA1 # Pin verbunden mit TMC DIAG1 Pin (oder diag0_pin / DIAG0 Pin verwenden)
+driver_SGT: -64 # -64 ist der empfindlichste Wert, 63 der unempfindlichste
+...
+
+[stepper_x]
+endstop_pin: tmc2130_stepper_x:virtual_endstop
+homing_retract_dist: 0
+...
+</code></pre></div>
+
+<p>Eine Beispielkonfiguration des tmc2660 könnte wie folgt aussehen:</p>
+<div class="highlight"><pre><span></span><code>[tmc2660 stepper_x]
+driver_SGT: -64 # -64 ist der empfindlichste Wert, 63 ist am wenigsten empfindlich
+...
+
+[stepper_x]
+endstop_pin: ^PA1 # Pin verbunden mit TMC SG_TST Pin
+homing_retract_dist: 0
+...
+</code></pre></div>
+
+<p>Die obigen Beispiele zeigen nur die Einstellungen für die sensorlose Referenzfahrt. Siehe die <a href="Config_Reference.html#tmc-stepper-driver-configuration">config reference</a> für alle verfügbaren Optionen.</p>
+<h4 id="finden-sie-die-hochste-empfindlichkeit-fur-eine-erfolgreiche-referenzfahrt">Finden Sie die höchste Empfindlichkeit, für eine erfolgreiche Referenzfahrt<a class="headerlink" href="#finden-sie-die-hochste-empfindlichkeit-fur-eine-erfolgreiche-referenzfahrt" title="Permanent link">&para;</a></h4>
+<p>Platzieren Sie den Schlitten in der Nähe der Mitte der Schiene. Verwenden Sie den Befehl SET_TMC_FIELD, um die höchste Empfindlichkeit einzustellen. Für tmc2209:</p>
+<div class="highlight"><pre><span></span><code>SET_TMC_FIELD STEPPER=stepper_x FIELD=SGTHRS VALUE=255
+</code></pre></div>
+
+<p>Für tmc2130, tmc5160, und tmc2660:</p>
+<div class="highlight"><pre><span></span><code>SET_TMC_FIELD STEPPER=stepper_x FIELD=sgt VALUE=-64
+</code></pre></div>
+
+<p>Geben Sie anschließend einen Befehl <code>G28 X0</code> aus und prüfen Sie, dass sich die Achse überhaupt nicht bewegt oder schnell zum Stillstand kommt. Stoppt die Achse nicht, geben Sie ein <code>M112</code> aus, um den Drucker anzuhalten - dann stimmt etwas mit der Verkabelung oder Konfiguration des diag/sg_tst-Pins nicht, und dies muss vor dem Fortfahren korrigiert werden.</p>
+<p>Verringern Sie dann kontinuierlich die Empfindlichkeit der <code>VALUE</code> Einstellung und führen Sie die <code>SET_TMC_FIELD</code> <code>G28 X0</code>-Befehle erneut aus, um die höchste Empfindlichkeit zu finden, die dazu führt, dass der Schlitten erfolgreich bis zum Endanschlag fährt und anhält. (Bei tmc2209-Treibern ist dies die Verringerung von SGTHRS, bei anderen Treibern die Erhöhung von sgt). Stellen Sie sicher, dass Sie jeden Versuch mit dem Wagen in der Nähe der Mitte der Schiene beginnen (geben Sie bei Bedarf <code>M84</code> aus und bewegen Sie den Wagen dann manuell in die Mitte). Es sollte möglich sein, die höchste Empfindlichkeit zu finden, die zuverlässig funktioniert (Einstellungen mit höherer Empfindlichkeit führen zu geringer oder keiner Bewegung). Notieren Sie den gefundenen Wert als <em>maximum_sensitivity</em>. (Wenn die kleinstmögliche Empfindlichkeit (SGTHRS=0 oder sgt=63) erreicht wird, ohne dass sich der Schlitten bewegt, stimmt etwas mit der Verdrahtung oder Konfiguration des diag/sg_tst-Pins nicht und muss korrigiert werden, bevor Sie fortfahren.)</p>
+<p>Bei der Suche nach der maximalen Empfindlichkeit kann es sinnvoll sein, zu verschiedenen VALUE-Einstellungen zu springen (um den VALUE-Parameter zu halbieren). Wenn Sie dies tun, sollten Sie darauf vorbereitet sein, einen <code>M112</code>Befehl zu erteilen, um den Drucker anzuhalten, da eine Einstellung mit einer sehr niedrigen Empfindlichkeit dazu führen kann, dass die Achse wiederholt gegen das Ende der Schiene "knallt".</p>
+<p>Achten Sie darauf, dass Sie zwischen den einzelnen Referenzfahrtversuchen ein paar Sekunden warten. Nachdem der TMC-Treiber einen Strömungsabriss erkannt hat, kann es einige Zeit dauern, bis er seine interne Anzeige löscht und in der Lage ist, einen weiteren Strömungsabriss zu erkennen.</p>
+<p>Wenn während dieser Abstimmungstests ein <code>G28 X0</code>-Befehl nicht bis zur Achsengrenze fährt, dann seien Sie vorsichtig mit der Ausgabe von regulären Fahrbefehlen (z.B. <code>G1</code>). Klipper kann die Position des Schlittens nicht richtig einschätzen und ein Fahrbefehl kann zu unerwünschten und verwirrenden Ergebnissen führen.</p>
+<h4 id="finden-sie-die-niedrigste-empfindlichkeit-fur-die-home-beruhrung">Finden Sie die niedrigste Empfindlichkeit, für die Home Berührung<a class="headerlink" href="#finden-sie-die-niedrigste-empfindlichkeit-fur-die-home-beruhrung" title="Permanent link">&para;</a></h4>
+<p>Bei der Referenzfahrt mit dem gefundenen Wert <em>maximum_sensitivity</em> sollte sich die Achse bis zum Ende der Schiene bewegen und mit einer "einzigen Berührung" stoppen - das heißt, es sollte kein "Klicken" oder "Knallen" zu hören sein. (Wenn bei maximaler_Empfindlichkeit ein Knall- oder Klickgeräusch zu hören ist, ist die Referenzfahrtgeschwindigkeit möglicherweise zu niedrig, der Treiberstrom zu gering oder die sensorlose Referenzfahrt ist keine gute Wahl für die Achse.)</p>
+<p>Der nächste Schritt besteht darin, den Schlitten wieder kontinuierlich in eine Position nahe der Mitte der Schiene zu bewegen, die Empfindlichkeit zu verringern und die Befehle <code>SET_TMC_FIELD</code> <code>G28 X0</code> auszuführen - das Ziel ist nun, die niedrigste Empfindlichkeit zu finden, die immer noch dazu führt, dass der Schlitten mit einer "einzigen Berührung" erfolgreich referenziert. Das heißt, er "knallt" oder "klickt" nicht, wenn er das Ende der Schiene berührt. Notieren Sie den gefundenen Wert als <em>minimum_sensitivity</em>.</p>
+<h4 id="printercfg-mit-empfindlichkeitswert-aktualisieren">printer.cfg mit Empfindlichkeitswert aktualisieren<a class="headerlink" href="#printercfg-mit-empfindlichkeitswert-aktualisieren" title="Permanent link">&para;</a></h4>
+<p>Nachdem Sie <em>maximale_Empfindlichkeit</em> und <em>minimale_Empfindlichkeit</em> ermittelt haben, verwenden Sie einen Taschenrechner, um die empfohlene Empfindlichkeit als <em>minimale_Empfindlichkeit + (maximale_Empfindlichkeit - minimale_Empfindlichkeit)/3</em> zu berechnen. Die empfohlene Empfindlichkeit sollte im Bereich zwischen dem Minimum und dem Maximum liegen, aber etwas näher am Minimum. Runden Sie den endgültigen Wert auf den nächsten ganzzahligen Wert.</p>
+<p>Für tmc2209 setzen Sie dies in der Konfiguration als <code>driver_SGTHRS</code>, für andere TMC-Treiber setzen Sie dies in der Konfiguration als <code>driver_SGT</code>.</p>
+<p>Wenn der Bereich zwischen <em>maximum_sensitivity</em> und <em>minimum_sensitivity</em> klein ist (z. B. weniger als 5), kann dies zu einer instabilen Referenzfahrt führen. Eine schnellere Referenzfahrtgeschwindigkeit kann den Bereich vergrößern und den Betrieb stabiler machen.</p>
+<p>Beachten Sie, dass bei Änderungen des Treiberstroms, der Referenzfahrtgeschwindigkeit oder bei wesentlichen Änderungen an der Druckerhardware der Abstimmungsprozess erneut durchgeführt werden muss.</p>
+<h4 id="verwenden-sie-macros-fur-die-referenzfahrt">Verwenden sie Macros für die Referenzfahrt<a class="headerlink" href="#verwenden-sie-macros-fur-die-referenzfahrt" title="Permanent link">&para;</a></h4>
+<p>Nach Abschluss der sensorlosen Referenzfahrt wird der Schlitten gegen das Ende der Schiene gedrückt und der Stepper übt eine Kraft auf den Rahmen aus, bis der Schlitten weggefahren ist. Es ist eine gute Idee, ein Makro zu erstellen, um die Achse zu referenzieren und den Schlitten sofort vom Ende der Schiene weg zu bewegen.</p>
+<p>Es ist ratsam, dass das Makro vor dem Start der sensorlosen Referenzfahrt mindestens 2 Sekunden pausiert (oder auf andere Weise sicherstellt, dass der Stepper 2 Sekunden lang nicht bewegt wurde). Ohne eine Verzögerung ist es möglich, dass das interne "stall"-Flag des Treibers noch von einer vorherigen Bewegung gesetzt ist.</p>
+<p>Es kann außerdem nützlich sein, in diesem Makro den Treiberstrom vor dem Homing zu setzen und nach dem Wegfahren des Schlittens einen neuen Strom festzulegen.</p>
+<p>Ein Beispielmakro könnte so aussehen:</p>
+<div class="highlight"><pre><span></span><code>[gcode_macro SENSORLESS_HOME_X]
+gcode:
+    {% set HOME_CUR = 0.700 %}
+    {% set driver_config = printer.configfile.settings[&#39;tmc2209 stepper_x&#39;] %}
+    {% set RUN_CUR = driver_config.run_current %}
+    # Set current for sensorless homing
+    SET_TMC_CURRENT STEPPER=stepper_x CURRENT={HOME_CUR}
+    # Pause to ensure driver stall flag is clear
+    G4 P2000
+    # Home
+    G28 X0
+    # Move away
+    G90
+    G1 X5 F1200
+    # Set current during print
+    SET_TMC_CURRENT STEPPER=stepper_x CURRENT={RUN_CUR}
+</code></pre></div>
+
+<p>Das resultierende Makro kann von einem <a href="Config_Reference.html#homing_override">homing_override config section</a> oder von einem <a href="Slicers.html#klipper-gcode_macro">START_PRINT macro</a> aufgerufen werden.</p>
+<p>Wenn der Treiberstrom während der Referenzfahrt geändert wird, sollte der Abstimmungsprozess erneut durchgeführt werden.</p>
+<h3 id="tipps-zur-sensorlosen-referenzfahrt-mit-corexy">Tipps zur sensorlosen Referenzfahrt mit CoreXY<a class="headerlink" href="#tipps-zur-sensorlosen-referenzfahrt-mit-corexy" title="Permanent link">&para;</a></h3>
+<p>Es ist möglich, die sensorlose Referenzfahrt auf den X- und Y-Schlitten eines CoreXY-Druckers zu verwenden. Klipper verwendet den <code>[stepper_x]</code> Stepper, um bei der Referenzfahrt des X-Schlittens einen Stillstand zu erkennen, und den <code>[stepper_y]</code> Stepper, um bei der Referenzfahrt des Y-Schlittens einen Stillstand zu erkennen.</p>
+<p>Verwenden Sie die oben beschriebene Abstimmungsanleitung, um die geeignete "Überzieh-Empfindlichkeit" für jeden Wagen zu finden, aber beachten Sie die folgenden Einschränkungen:</p>
+<ol>
+<li>Bei Verwendung von sensorlosen Homing auf CoreXY, stellen Sie sicher, dass kein <code>hold_current</code> für die Stepper konfiguriert wurde.</li>
+<li>Vergewissern Sie sich bei der Einstellung, dass sich sowohl der X- als auch der Y-Wagen vor jedem Startversuch in der Mitte ihrer Schienen befinden.</li>
+<li>Verwenden Sie nach Abschluss der Abstimmung bei der Referenzfahrt von X und Y Makros, um sicherzustellen, dass zuerst eine Achse referenziert wird, bewegen Sie dann diesen Schlitten von der Achsengrenze weg, halten Sie mindestens 2 Sekunden lang inne und starten Sie dann die Referenzfahrt des anderen Schlittens. Durch die Bewegung von der Achse weg wird vermieden, dass eine Achse referenziert wird, während die andere gegen die Achsengrenze gedrückt wird (was die Erkennung des Stillstands verfälschen könnte). Die Pause ist notwendig, um sicherzustellen, dass das Blockierflag des Fahrers vor der erneuten Referenzfahrt gelöscht wird.</li>
+</ol>
+<p>Ein CoreXY Homing-Makro könnte beispielsweise so aussehen:</p>
+<div class="highlight"><pre><span></span><code>[gcode_macro HOME]
+gcode:
+    G90
+    # Home Z
+    G28 Z0
+    G1 Z10 F1200
+    # Home Y
+    G28 Y0
+    G1 Y5 F1200
+    # Home X
+    G4 P2000
+    G28 X0
+    G1 X5 F1200
+</code></pre></div>
+
+<h2 id="abfrage-und-diagnose-der-treibereinstellungen">Abfrage und Diagnose der Treibereinstellungen<a class="headerlink" href="#abfrage-und-diagnose-der-treibereinstellungen" title="Permanent link">&para;</a></h2>
+<p>Der Befehl <a href="G-Codes.html#dump_tmc">DUMP_TMC</a> ist ein nützliches Werkzeug bei der Konfiguration und Diagnose der Treiber. Er meldet alle von Klipper konfigurierten Felder sowie alle Felder, die vom Treiber abgefragt werden können.</p>
+<p>Alle angegebenen Felder sind im Trinamic-Datenblatt für jeden Treiber definiert. Diese Datenblätter finden Sie auf der <a href="https://www.trinamic.com/">Trinamic-Website</a>. Besorgen Sie sich das Trinamic Datenblatt für den Treiber und prüfen Sie es, um die Ergebnisse von DUMP_TMC zu interpretieren.</p>
+<h2 id="konfigurieren-der-einstellungen-von-driver_xxx">Konfigurieren der Einstellungen von driver_XXX<a class="headerlink" href="#konfigurieren-der-einstellungen-von-driver_xxx" title="Permanent link">&para;</a></h2>
+<p>Klipper unterstützt die Konfiguration vieler Low-Level-Treiberfelder mit <code>driver_XXX</code> Einstellungen. Die <a href="Config_Reference.html#tmc-stepper-driver-configuration">TMC driver config reference</a> enthält die vollständige Liste der Felder, die für jede Art von Treiber verfügbar sind.</p>
+<p>Zudem lassen sich fast alle Felder zur Laufzeit mit dem Befehl <a href="G-Codes.html#set_tmc_field">SET_TMC_FIELD</a> ändern.</p>
+<p>Jedes dieser Felder ist im Trinamic Datenblatt für jeden Treiber definiert. Diese Datenblätter finden Sie auf der <a href="https://www.trinamic.com/">Trinamic website</a>.</p>
+<p>Beachten Sie, dass in den Datenblättern von Trinamic manchmal Formulierungen verwendet werden, die eine High-Level-Einstellung (z. B. "Hysteresis End") mit einem Low-Level-Feldwert (z. B. "HEND") verwechseln können. In Klipper setzen <code>driver_XXX</code> und SET_TMC_FIELD immer den Low-Level-Feldwert, der tatsächlich in den Treiber geschrieben wird. Wenn also zum Beispiel das Trinamic-Datenblatt besagt, dass ein Wert von 3 in das HEND-Feld geschrieben werden muss, um ein "Hysterese-Ende" von 0 zu erhalten, dann setzen Sie <code>driver_HEND=3</code>, um den High-Level-Wert von 0 zu erhalten.</p>
+<h2 id="allgemeine-fragen">Allgemeine Fragen<a class="headerlink" href="#allgemeine-fragen" title="Permanent link">&para;</a></h2>
+<h3 id="kann-ich-den-stealthchop-modus-bei-einem-extruder-mit-druckvorschubpa-verwenden">Kann ich den stealthChop-Modus bei einem Extruder mit Druckvorschub(PA) verwenden?<a class="headerlink" href="#kann-ich-den-stealthchop-modus-bei-einem-extruder-mit-druckvorschubpa-verwenden" title="Permanent link">&para;</a></h3>
+<p>Viele Leute verwenden erfolgreich den "stealthChop"-Modus mit dem Druckvorschub(PA) von Klipper. Klipper implementiert <a href="Kinematics.html#pressure-advance">smooth pressure advance</a>, was keine momentanen Geschwindigkeitsänderungen mit sich bringt.</p>
+<p>Der "stealthChop"-Modus kann jedoch ein geringeres Motordrehmoment und/oder eine höhere Motorwärme erzeugen. Dieser Modus kann für Ihren speziellen Drucker geeignet sein, muss es aber nicht.</p>
+<h3 id="ich-erhalte-standig-die-fehlermeldung-unable-to-read-tmc-uart-stepper_x-register-ifcnt">Ich erhalte ständig die Fehlermeldung "Unable to read tmc uart 'stepper_x' register IFCNT"?<a class="headerlink" href="#ich-erhalte-standig-die-fehlermeldung-unable-to-read-tmc-uart-stepper_x-register-ifcnt" title="Permanent link">&para;</a></h3>
+<p>Dies tritt auf, wenn Klipper nicht in der Lage ist, mit einem tmc2208 oder tmc2209 Treiber zu kommunizieren.</p>
+<p>Vergewissern Sie sich, dass die Motorspannung eingeschaltet ist, da der Schrittmotortreiber in der Regel Motorspannung benötigt, bevor er mit dem Mikrocontroller kommunizieren kann.</p>
+<p>Wenn dieser Fehler nach dem ersten Flashen von Klipper auftritt, kann es sein, dass der Steppertreiber zuvor in einem Zustand programmiert wurde, der nicht mit Klipper kompatibel ist. Um den Status zurückzusetzen, trennen Sie den Drucker für einige Sekunden von der Stromversorgung (ziehen Sie sowohl den USB- als auch den Netzstecker).</p>
+<p>Andernfalls ist dieser Fehler typischerweise das Ergebnis einer falschen UART-Pin-Verdrahtung oder einer falschen Klipper-Konfiguration der UART-Pin-Einstellungen.</p>
+<h3 id="andernfalls-ist-dieser-fehler-typischerweise-das-ergebnis-einer-falschen-uart-pin-verkabelung-oder-einer-falschen-klipper-konfiguration-der-uart-pin-einstellungeni-keep-getting-unable-to-write-tmc-spi-stepper_x-register-errors">Andernfalls ist dieser Fehler typischerweise das Ergebnis einer falschen UART-Pin-Verkabelung oder einer falschen Klipper-Konfiguration der UART-Pin-Einstellungen.I keep getting "Unable to write tmc spi 'stepper_x' register ..." errors?<a class="headerlink" href="#andernfalls-ist-dieser-fehler-typischerweise-das-ergebnis-einer-falschen-uart-pin-verkabelung-oder-einer-falschen-klipper-konfiguration-der-uart-pin-einstellungeni-keep-getting-unable-to-write-tmc-spi-stepper_x-register-errors" title="Permanent link">&para;</a></h3>
+<p>Dies tritt auf, wenn Klipper nicht mit einem tmc2130 oder tmc5160 Treiber kommunizieren kann.</p>
+<p>Vergewissern Sie sich, dass die Motorspannung eingeschaltet ist, da der Schrittmotortreiber in der Regel Motorspannung benötigt, bevor er mit dem Mikrocontroller kommunizieren kann.</p>
+<p>Andernfalls ist dieser Fehler typischerweise das Ergebnis einer falschen SPI-Verdrahtung, einer falschen Klipper-Konfiguration der SPI-Einstellungen oder einer unvollständigen Konfiguration von Geräten auf einem SPI-Bus.</p>
+<p>Beachten Sie, dass, wenn der Treiber auf einem gemeinsamen SPI-Bus mit mehreren Geräten ist, stellen Sie sicher, dass Sie jedes Gerät auf diesem gemeinsamen SPI-Bus in Klipper vollständig konfigurieren. Wenn ein Gerät auf einem gemeinsam genutzten SPI-Bus nicht konfiguriert ist, kann es fälschlicherweise auf Befehle reagieren, die nicht für es bestimmt sind, und die Kommunikation mit dem vorgesehenen Gerät stören. Wenn es ein Gerät auf einem gemeinsamen SPI-Bus gibt, das nicht in Klipper konfiguriert werden kann, dann verwenden Sie einen <a href="Config_Reference.html#static_digital_output">static_digital_output config section</a>, um den CS-Pin des unbenutzten Geräts auf High zu setzen (so dass es nicht versucht, den SPI-Bus zu benutzen). Der Schaltplan des Boards ist oft eine nützliche Referenz, um herauszufinden, welche Geräte an einem SPI-Bus angeschlossen sind und welche Pins ihnen zugeordnet sind.</p>
+<h3 id="warum-erhielt-ich-die-fehlermeldung-tmc-meldet-fehler">Warum erhielt ich die Fehlermeldung "TMC meldet Fehler: ..."?<a class="headerlink" href="#warum-erhielt-ich-die-fehlermeldung-tmc-meldet-fehler" title="Permanent link">&para;</a></h3>
+<p>Diese Art von Fehler zeigt an, dass der TMC-Treiber ein Problem erkannt und sich selbst deaktiviert hat. Das heißt, der Treiber hat aufgehört, seine Position zu halten und ignoriert Bewegungsbefehle. Wenn Klipper feststellt, dass ein aktiver Treiber sich selbst deaktiviert hat, wird der Drucker in einen "Shutdown"-Zustand versetzt.</p>
+<p>Es ist auch möglich, dass ein <strong>TMC meldet Fehler</strong> Shutdown aufgrund von SPI-Fehlern auftritt, welche die Kommunikation mit dem Treiber verhindern oder Stöhren (bei tmc2130, tmc5160 oder tmc2660). Wenn dies geschieht, zeigt der gemeldete Treiberstatus üblicherweise <code>00000000</code> oder <code>ffffffff</code> zum Beispiel: <code>TMC reports error: DRV_STATUS: ffffffff ...</code> ODER <code>TMC meldet Fehler: READRSP@RDSEL2: 00000000 ...</code>. Ein solcher Fehler kann auf ein SPI Verdrahtungsproblem, auf einen Selbst Reset oder einen Fehler des TMC Treibers zurückzuführen sein.</p>
+<p>Einige häufige Fehler und Tipps zu deren Diagnose:</p>
+<h4 id="tmc-meldet-fehler-ot1overtemperror">TMC meldet Fehler: <code>... ot=1(OvertempError!)</code><a class="headerlink" href="#tmc-meldet-fehler-ot1overtemperror" title="Permanent link">&para;</a></h4>
+<p>Dies bedeutet, dass sich der Motortreiber selbst deaktiviert hat, weil er zu heiß geworden ist. Typische Lösungen sind die Verringerung des Schrittmotorstroms, die Erhöhung der Kühlung des Schrittmotortreibers und/oder die Erhöhung der Kühlung des Schrittmotors.</p>
+<h4 id="tmc-meldet-fehler-shorttognd-oder-shorttosupply">TMC meldet Fehler: <code>... ShortToGND</code> ODER <code>ShortToSupply</code><a class="headerlink" href="#tmc-meldet-fehler-shorttognd-oder-shorttosupply" title="Permanent link">&para;</a></h4>
+<p>Dies bedeutet, dass der Treiber sich selbst deaktiviert hat, weil er einen sehr hohen Stromfluss durch den Treiber festgestellt hat. Dies kann auf ein loses oder kurzgeschlossenes Kabel zum Schrittmotor oder im Schrittmotor selbst hinweisen.</p>
+<p>Dieser Fehler kann auch auftreten, wenn Sie den StealthChop-Modus verwenden und der TMC-Treiber die mechanische Belastung des Motors nicht genau vorhersagen kann. (Wenn der Treiber eine schlechte Vorhersage macht, kann er zu viel Strom durch den Motor schicken und seine eigene Überstromerkennung auslösen.) Um dies zu testen, deaktivieren Sie den StealthChop-Modus und prüfen Sie, ob die Fehler weiterhin auftreten.</p>
+<h4 id="tmc-meldet-fehler-reset1reset-oder-cs_actual0reset-oder-se0reset">TMC meldet Fehler: <code>... reset=1(Reset)</code> ODER <code>CS_ACTUAL=0(Reset?)</code> ODER <code>SE=0(Reset?)</code><a class="headerlink" href="#tmc-meldet-fehler-reset1reset-oder-cs_actual0reset-oder-se0reset" title="Permanent link">&para;</a></h4>
+<p>Dies bedeutet, dass sich der Treiber mitten im Druckvorgang zurückgesetzt hat. Dies kann auf Spannungs- oder Verdrahtungsprobleme zurückzuführen sein.</p>
+<h4 id="tmc-meldet-fehler-uv_cp1unterspannung">TMC meldet Fehler: <code>... uv_cp=1(Unterspannung!)</code><a class="headerlink" href="#tmc-meldet-fehler-uv_cp1unterspannung" title="Permanent link">&para;</a></h4>
+<p>Dies zeigt an, dass der Treiber ein Unterspannungsereignis erkannt und sich selbst deaktiviert hat. Dies kann auf Verdrahtungs- oder Stromversorgungsprobleme zurückzuführen sein.</p>
+<h3 id="wie-stelle-ich-den-spreadcyclecoolstepetc-modus-fur-meine-treiber-ein">Wie stelle ich den spreadCycle/coolStep/etc.-Modus für meine Treiber ein?<a class="headerlink" href="#wie-stelle-ich-den-spreadcyclecoolstepetc-modus-fur-meine-treiber-ein" title="Permanent link">&para;</a></h3>
+<p>Auf der <a href="https://www.trinamic.com/">Trinamic-Website</a> finden Sie Anleitungen zur Konfiguration der Treiber. Diese Anleitungen sind oft technisch anspruchsvoll und können spezielle Hardware erfordern. Unabhängig davon sind sie die beste Informationsquelle.</p>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Zurück zum Seitenanfang
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="Status_Reference.html" class="md-footer__link md-footer__link--prev" aria-label="Zurück: Statusreferenz" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Zurück
+              </span>
+              Statusreferenz
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="Multi_MCU_Homing.html" class="md-footer__link md-footer__link--next" aria-label="Weiter: Homing und Probing mit mehreren Mikrocontrollern" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Weiter
+              </span>
+              Homing und Probing mit mehreren Mikrocontrollern
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.top", "search.suggest", "search.highlight", "search.share"], "translations": {"clipboard.copy": "In Zwischenablage kopieren", "clipboard.copied": "In Zwischenablage kopiert", "search.config.lang": "de", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Suche", "search.result.placeholder": "Suchbegriff eingeben", "search.result.none": "Keine Suchergebnisse", "search.result.one": "1 Suchergebnis", "search.result.other": "# Suchergebnisse", "search.result.more.one": "1 weiteres Suchergebnis auf dieser Seite", "search.result.more.other": "# weitere Suchergebnisse auf dieser Seite", "search.result.term.missing": "Es fehlt", "select.version.title": "Version ausw\u00e4hlen"}, "search": "assets/javascripts/workers/search.0bbba5b5.min.js"}</script>
+    
+    
+      <script src="assets/javascripts/bundle.e1a181d9.min.js"></script>
+      
+    
+  </body>
+</html>
