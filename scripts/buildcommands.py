@@ -5,7 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, subprocess, optparse, logging, shlex, socket, time, traceback
-import json, zlib
+import bz2, json
 sys.path.append('./klippy')
 import msgproto
 
@@ -598,7 +598,7 @@ class HandleIdentify:
             f.close()
 
         # Format compressed info into C code
-        zdatadict = bytearray(zlib.compress(datadict.encode(), 9))
+        zdatadict = bytearray(bz2.compress(datadict.encode(), 9))
         out = []
         for i in range(len(zdatadict)):
             if i % 8 == 0:

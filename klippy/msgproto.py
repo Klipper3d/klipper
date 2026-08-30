@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2024  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import json, zlib, logging
+import bz2, json, zlib, logging
 
 DefaultMessages = {
     "identify_response offset=%u data=%.*s": 0,
@@ -414,7 +414,10 @@ class MessageParser:
     def process_identify(self, data, decompress=True):
         try:
             if decompress:
-                data = zlib.decompress(data)
+                if data.startswith(b'BZh'):
+                    data = bz2.decompress(data)
+                else:
+                    data = zlib.decompress(data)
             self.raw_identify_data = data
             data = json.loads(data)
             self.fill_enumerations(data.get('enumerations', {}))
