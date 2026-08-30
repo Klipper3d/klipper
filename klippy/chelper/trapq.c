@@ -249,9 +249,12 @@ int __visible
 trapq_extract_old(struct trapq *tq, struct pull_move *p, int max
                   , double start_time, double end_time)
 {
+    struct move *tail_sentinel = list_last_entry(&tq->moves, struct move, node);
     int res = 0;
     struct move *m;
     list_for_each_entry_reverse(m, &tq->moves, node) {
+        if (m == tail_sentinel)
+            continue;
         if (start_time >= m->print_time + m->move_t || res >= max)
             break;
         if (end_time <= m->print_time || (!m->start_v && !m->half_accel))
