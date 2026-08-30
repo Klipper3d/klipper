@@ -5,7 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, subprocess, optparse, logging, shlex, socket, time, traceback
-import json, zlib
+import bz2, json
 sys.path.append('./klippy')
 import msgproto
 
@@ -559,6 +559,21 @@ class HandleVersions:
 Handlers.append(HandleVersions())
 
 
+class HandleKConfig:
+    def __init__(self):
+        self.ctr_dispatch = {}
+        self.defconfig = ""
+    def update_data_dictionary(self, data):
+        data['kconfig'] = {'defconfig': self.defconfig}
+    def generate_code(self, options):
+        f = open(options.kconfig)
+        self.defconfig = f.read()
+        f.close()
+        return ""
+
+Handlers.append(HandleKConfig())
+
+
 ######################################################################
 # Identify data dictionary generation
 ######################################################################
@@ -583,7 +598,7 @@ class HandleIdentify:
             f.close()
 
         # Format compressed info into C code
-        zdatadict = bytearray(zlib.compress(datadict.encode(), 9))
+        zdatadict = bytearray(bz2.compress(datadict.encode(), 9))
         out = []
         for i in range(len(zdatadict)):
             if i % 8 == 0:
@@ -613,6 +628,9 @@ def main():
                     help="extra version string to append to version")
     opts.add_option("-d", dest="write_dictionary",
                     help="file to write mcu protocol dictionary")
+    opts.add_option("-k", dest="kconfig",
+                    help="file containing the minimal (savedefconfig) build "
+                    "configuration")
     opts.add_option("-t", "--tools", dest="tools", default="",
                     help="list of build programs to extract version from")
     opts.add_option("-v", action="store_true", dest="verbose",

@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2024  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import json, zlib, logging
+import bz2, json, zlib, logging
 
 DefaultMessages = {
     "identify_response offset=%u data=%.*s": 0,
@@ -235,6 +235,7 @@ class MessageParser:
         self.msgid_by_format = {}
         self.msgid_parser = PT_int32()
         self.config = {}
+        self.kconfig = None
         self.version = self.build_versions = ""
         self.raw_identify_data = ""
         self._init_messages(DefaultMessages)
@@ -413,7 +414,10 @@ class MessageParser:
     def process_identify(self, data, decompress=True):
         try:
             if decompress:
-                data = zlib.decompress(data)
+                if data.startswith(b'BZh'):
+                    data = bz2.decompress(data)
+                else:
+                    data = zlib.decompress(data)
             self.raw_identify_data = data
             data = json.loads(data)
             self.fill_enumerations(data.get('enumerations', {}))
@@ -426,6 +430,7 @@ class MessageParser:
             self._init_messages(all_messages, commands.values(),
                                 output.values())
             self.config.update(data.get('config', {}))
+            self.kconfig = data.get('kconfig')
             self.version = data.get('version', '')
             self.build_versions = data.get('build_versions', '')
         except error as e:
@@ -443,6 +448,10 @@ class MessageParser:
         return dict(self.enumerations)
     def get_constants(self):
         return dict(self.config)
+    def get_kconfig(self):
+        if self.kconfig is None:
+            return None
+        return dict(self.kconfig)
     class sentinel: pass
     def get_constant(self, name, default=sentinel, parser=str):
         if name not in self.config:

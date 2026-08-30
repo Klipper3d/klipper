@@ -10,6 +10,7 @@ OUT=out/
 # Kconfig includes
 export KCONFIG_CONFIG     := $(CURDIR)/.config
 -include $(KCONFIG_CONFIG)
+DEFCONFIG ?= defconfig
 
 # Common command definitions
 CC=$(CROSS_PREFIX)gcc
@@ -78,10 +79,10 @@ $(OUT)klipper.elf: $(OBJS_klipper.elf)
 $(OUT)%.o.ctr: $(OUT)%.o
 	$(Q)$(OBJCOPY) -j '.compile_time_request' -O binary $^ $@
 
-$(OUT)compile_time_request.o: $(patsubst %.c, $(OUT)src/%.o.ctr,$(src-y)) ./scripts/buildcommands.py
+$(OUT)compile_time_request.o: $(patsubst %.c, $(OUT)src/%.o.ctr,$(src-y)) $(OUT)defconfig ./scripts/buildcommands.py
 	@echo "  Building $@"
 	$(Q)cat $(patsubst %.c, $(OUT)src/%.o.ctr,$(src-y)) | tr -s '\0' '\n' > $(OUT)compile_time_request.txt
-	$(Q)$(PYTHON) ./scripts/buildcommands.py -d $(OUT)klipper.dict -t "$(CC);$(AS);$(LD);$(OBJCOPY);$(OBJDUMP);$(STRIP)" $(OUT)compile_time_request.txt $(OUT)compile_time_request.c
+	$(Q)$(PYTHON) ./scripts/buildcommands.py -d $(OUT)klipper.dict -k $(OUT)defconfig -t "$(CC);$(AS);$(LD);$(OBJCOPY);$(OBJDUMP);$(STRIP)" $(OUT)compile_time_request.txt $(OUT)compile_time_request.c
 	$(Q)$(CC) $(CFLAGS) -c $(OUT)compile_time_request.c -o $@
 
 ################ Auto generation of "board/" include file link
@@ -116,10 +117,18 @@ $(KCONFIG_CONFIG) olddefconfig: src/Kconfig
 menuconfig:
 	$(Q)$(PYTHON) lib/kconfiglib/menuconfig.py src/Kconfig
 
+$(OUT)defconfig: FORCE
+	@echo "  Building $@"
+	$(Q)mkdir -p $(OUT)
+	$(Q)$(PYTHON) lib/kconfiglib/savedefconfig.py --kconfig src/Kconfig --out $@
+
+savedefconfig:
+	$(Q)$(PYTHON) lib/kconfiglib/savedefconfig.py --kconfig src/Kconfig --out $(DEFCONFIG)
+
 ################ Generic rules
 
 # Make definitions
-.PHONY : all clean distclean olddefconfig menuconfig create-board-link FORCE
+.PHONY : all clean distclean olddefconfig menuconfig create-board-link FORCE savedefconfig
 .DELETE_ON_ERROR:
 
 all: $(target-y)
@@ -128,6 +137,6 @@ clean:
 	$(Q)rm -rf $(OUT)
 
 distclean: clean
-	$(Q)rm -f .config .config.old
+	$(Q)rm -f .config .config.old $(DEFCONFIG)
 
 -include $(OUT)*.d $(patsubst %,$(OUT)%/*.d,$(dirs-y))
