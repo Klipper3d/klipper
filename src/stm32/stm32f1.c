@@ -99,6 +99,10 @@ clock_setup(void)
         ;
 }
 
+// The stm32f103 PWR block has just two registers; the n32g45x adds a
+// third one holding the "ex mode" enable bit
+#define N32_PWR_CTRL3 (*(volatile uint32_t *)(PWR_BASE + 0x0c))
+
 // Return the RCC_CFGR bits that select the given PLL multiplier on the
 // n32g45x, whose PLLMUL field is five bits wide (PLLMUL[4] is bit 27)
 static uint32_t
@@ -126,6 +130,14 @@ n32g45x_pll_multiplier_bits(uint32_t mul)
 static void
 clock_setup_n32g45x(void)
 {
+    // The n32g45x keeps its adc, sdio, qspi, opamp, comp and can2 behind
+    // the "ex mode" bit: while it is clear their RCC enable bits read back
+    // as zero and the peripherals stay unclocked.  The vendor SystemInit()
+    // sets it before configuring any clock, so do the same here.
+    RCC->APB1ENR |= RCC_APB1ENR_PWREN;
+    N32_PWR_CTRL3 |= 1;
+    RCC->APB1ENR &= ~RCC_APB1ENR_PWREN;
+
     // Configure and enable PLL
     uint32_t cfgr;
     if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
