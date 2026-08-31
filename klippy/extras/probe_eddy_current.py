@@ -414,7 +414,7 @@ class EddyTapCalibration:
             if mc_coeffs is None:
                 raise gcmd.error(
                     "Must complete PROBE_EDDY_CURRENT_CALIBRATE first")
-            self._try_tap(gcmd, mc_coeffs[1][0] * -0.10)
+            self._try_tap(gcmd, mc_coeffs[1][0] * -0.15)
         elif tap_test == 'refine':
             # Attempt tap based on change in slope observed during last tap
             self._refine_tap_threshold = None
