@@ -424,6 +424,9 @@ class EddyTapCalibration:
             z_contact, freq_contact, depress_slope, slope, slope2 = coeffs
             contact_slope_delta = depress_slope - slope
             try_tap_threshold = contact_slope_delta * 0.20
+            max_safe_threshold = contact_slope_delta * 0.90
+            gcmd.respond_info("Max safe tap threshold %.3f" % (
+                max_safe_threshold))
             self._try_tap(gcmd, try_tap_threshold)
             self._refine_tap_threshold = try_tap_threshold
         elif tap_test == 'verify':
