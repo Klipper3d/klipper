@@ -39,6 +39,15 @@ lookup_clock_line(uint32_t periph_base)
 uint32_t
 get_pclock_frequency(uint32_t periph_base)
 {
+    if (CONFIG_MACH_N32G45x) {
+        // Both APB busses run at the same rate, using PCLK1's tighter
+        // 36Mhz limit to choose the divisor
+        if (CONFIG_CLOCK_FREQ > 72000000)
+            return CONFIG_CLOCK_FREQ / 4;
+        if (CONFIG_CLOCK_FREQ > 36000000)
+            return CONFIG_CLOCK_FREQ / 2;
+        return CONFIG_CLOCK_FREQ;
+    }
     return FREQ_PERIPH;
 }
 
@@ -81,6 +90,92 @@ clock_setup(void)
 
     // Set flash latency
     FLASH->ACR = (2 << FLASH_ACR_LATENCY_Pos) | FLASH_ACR_PRFTBE;
+
+    // Wait for PLL lock
+    while (!(RCC->CR & RCC_CR_PLLRDY))
+        ;
+
+    // Switch system clock to PLL
+    RCC->CFGR = cfgr | RCC_CFGR_SW_PLL;
+    while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL)
+        ;
+}
+
+// The stm32f103 PWR block has just two registers; the n32g45x adds a
+// third one holding the "ex mode" enable bit
+#define N32_PWR_CTRL3 (*(volatile uint32_t *)(PWR_BASE + 0x0c))
+
+// Return the RCC_CFGR bits that select the given PLL multiplier on the
+// n32g45x, whose PLLMUL field is five bits wide (PLLMUL[4] is bit 27)
+static uint32_t
+n32g45x_pll_multiplier_bits(uint32_t mul)
+{
+    if (mul > 16)
+        // Multipliers above 16 are encoded with PLLMUL[4] (bit 27) set
+        return ((mul - 17) << RCC_CFGR_PLLMULL_Pos) | (1 << 27);
+    return (mul - 2) << RCC_CFGR_PLLMULL_Pos;
+}
+
+// The n32g45x is register compatible with the stm32f103, but has its
+// own clock tree: PCLK2 is limited to 72Mhz and PCLK1 to 36Mhz, and
+// flash wait states scale with HCLK in 32Mhz steps
+static void
+clock_setup_n32g45x(void)
+{
+#if !CONFIG_STM32_CLOCK_REF_INTERNAL \
+    && (2 * CONFIG_CLOCK_FREQ) % CONFIG_CLOCK_REF_FREQ \
+    && CONFIG_MACH_N32G45x
+    #error "Unable to generate the requested clock rate from this crystal"
+#endif
+    // The n32g45x keeps its adc, sdio, qspi, opamp, comp and can2 behind
+    // the "ex mode" bit: while it is clear their RCC enable bits read back
+    // as zero and the peripherals stay unclocked.  The vendor SystemInit()
+    // sets it before configuring any clock, so do the same here.
+    RCC->APB1ENR |= RCC_APB1ENR_PWREN;
+    N32_PWR_CTRL3 |= 1;
+    RCC->APB1ENR &= ~RCC_APB1ENR_PWREN;
+
+    // Configure and enable PLL
+    uint32_t cfgr;
+    if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
+        // Configure PLL from external crystal (HSE)
+        RCC->CR |= RCC_CR_HSEON;
+        uint32_t div = CONFIG_CLOCK_FREQ / (CONFIG_CLOCK_REF_FREQ / 2);
+        cfgr = 1 << RCC_CFGR_PLLSRC_Pos;
+        if ((div & 1) && div <= 32)
+            cfgr |= RCC_CFGR_PLLXTPRE_HSE_DIV2;
+        else
+            div /= 2;
+        cfgr |= n32g45x_pll_multiplier_bits(div);
+    } else {
+        // Configure PLL from internal 8Mhz oscillator (HSI)
+        uint32_t div2 = (CONFIG_CLOCK_FREQ / 8000000) * 2;
+        cfgr = (0 << RCC_CFGR_PLLSRC_Pos) | n32g45x_pll_multiplier_bits(div2);
+    }
+    // Divide both APB busses by the same amount, using PCLK1's tighter
+    // 36Mhz limit to choose the divisor (RCC_CFGR bits 15:14 are
+    // reserved on the n32g45x - the adc clock is configured separately
+    // in n32g45x_adc.c via RCC_CFG2)
+    if (CONFIG_CLOCK_FREQ > 72000000)
+        cfgr |= RCC_CFGR_PPRE1_DIV4 | RCC_CFGR_PPRE2_DIV4;
+    else if (CONFIG_CLOCK_FREQ > 36000000)
+        cfgr |= RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV2;
+    // The n32g45x usb clock is PLLCLK divided by 1.5, 1, 2 or 3.  The
+    // clock defaults select 96Mhz when usb is enabled, which produces
+    // the 48Mhz the usb peripheral needs through the /2 divisor.
+    if (CONFIG_CLOCK_FREQ == 96000000)
+        cfgr |= 2 << 22;
+#if CONFIG_USB && CONFIG_CLOCK_FREQ != 96000000 \
+    && CONFIG_MACH_N32G45x
+    #error "Unable to generate a 48Mhz usb clock at this system clock rate"
+#endif
+    RCC->CFGR = cfgr;
+    RCC->CR |= RCC_CR_PLLON;
+
+    // Set flash latency (0: <=32Mhz, 1: <=64Mhz, 2: <=96Mhz, 3: <=128Mhz,
+    // 4: <=144Mhz)
+    uint32_t latency = (CONFIG_CLOCK_FREQ - 1) / 32000000;
+    FLASH->ACR = (latency << FLASH_ACR_LATENCY_Pos) | FLASH_ACR_PRFTBE;
 
     // Wait for PLL lock
     while (!(RCC->CR & RCC_CR_PLLRDY))
@@ -272,7 +367,10 @@ armcm_main(void)
     RCC->APB2ENR = 0;
 
     // Setup clocks
-    clock_setup();
+    if (CONFIG_MACH_N32G45x)
+        clock_setup_n32g45x();
+    else
+        clock_setup();
 
     // Disable JTAG to free PA15, PB3, PB4
     enable_pclock(AFIO_BASE);
