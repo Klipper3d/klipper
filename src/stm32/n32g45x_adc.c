@@ -131,36 +131,33 @@ gpio_adc_setup(uint32_t pin)
     }
 
     // Determine which ADC block to use
-    ADC_Module *adc;
-    if ((chan >> 5) == 0)
-        adc = NS_ADC1;
-    if ((chan >> 5) == 1)
-        adc = NS_ADC2;
-    if ((chan >> 5) == 2)
-        adc = NS_ADC3;
-    if ((chan >> 5) == 3)
-        adc = NS_ADC4;
+    static ADC_Module * const adc_blocks[] = {
+        NS_ADC1, NS_ADC2, NS_ADC3, NS_ADC4
+    };
+    uint32_t block = chan >> 5;
+    ADC_Module *adc = adc_blocks[block];
+    uint32_t adc_clock_bit = RCC_AHB_PERIPH_ADC1 << block;
     chan &= 0x1F;
 
-    // Enable the ADC
-    uint32_t reg_temp;
-    reg_temp = ADC_RCC_AHBPCLKEN;
-    reg_temp |= (RCC_AHB_PERIPH_ADC1 | RCC_AHB_PERIPH_ADC2 |
-                RCC_AHB_PERIPH_ADC3 | RCC_AHB_PERIPH_ADC4);
-    ADC_RCC_AHBPCLKEN = reg_temp;
+    // Enable and calibrate each adc block only the first time one of its
+    // channels is configured.  Several pins can share a block, and
+    // recalibrating one that is already running leaves it unable to
+    // complete a conversion for any of its other channels.
+    if (!(ADC_RCC_AHBPCLKEN & adc_clock_bit)) {
+        adc_clock_setup();
+        ADC_RCC_AHBPCLKEN |= adc_clock_bit;
 
-    adc_clock_setup();
+        ADC_InitType ADC_InitStructure;
+        ADC_InitStructure.WorkMode       = ADC_WORKMODE_INDEPENDENT;
+        ADC_InitStructure.MultiChEn      = 0;
+        ADC_InitStructure.ContinueConvEn = 0;
+        ADC_InitStructure.ExtTrigSelect  = ADC_EXT_TRIGCONV_NONE;
+        ADC_InitStructure.DatAlign       = ADC_DAT_ALIGN_R;
+        ADC_InitStructure.ChsNumber      = 1;
+        ADC_Init(adc, &ADC_InitStructure);
 
-    ADC_InitType ADC_InitStructure;
-    ADC_InitStructure.WorkMode       = ADC_WORKMODE_INDEPENDENT;
-    ADC_InitStructure.MultiChEn      = 0;
-    ADC_InitStructure.ContinueConvEn = 0;
-    ADC_InitStructure.ExtTrigSelect  = ADC_EXT_TRIGCONV_NONE;
-    ADC_InitStructure.DatAlign       = ADC_DAT_ALIGN_R;
-    ADC_InitStructure.ChsNumber      = 1;
-    ADC_Init(adc, &ADC_InitStructure);
-
-    adc_calibrate(adc);
+        adc_calibrate(adc);
+    }
 
     if (pin == ADC_TEMPERATURE_PIN) {
         NS_ADC1->CTRL2 |= CTRL2_TSVREFE_SET;
