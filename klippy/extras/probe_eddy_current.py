@@ -847,8 +847,15 @@ class EddyTap:
         reactor = self._printer.get_reactor()
         self._validate_samples_time(measures, start_time, end_time)
         # Correlate measurements to toolhead position at time of measurement
-        data = [(sensor_freq, self._lookup_toolhead_pos(samp_time))
-                for samp_time, sensor_freq, sensor_z in measures]
+        i = 0
+        data = [None] * len(measures)
+        for samp_time, sensor_freq, sensor_z in measures:
+            sample = (sensor_freq, self._lookup_toolhead_pos(samp_time))
+            data[i] = sample
+            i += 1
+            if sample[1][2] - data[0][1][2] > 0.500:
+                break
+        data = data[:i]
         reactor.pause(0.)
         min_z = data[0][1][2]
         max_z = data[-1][1][2]
@@ -905,9 +912,11 @@ class EddyTap:
         haltpos[2] += lift_dist
         retract_start_time = toolhead.get_last_move_time()
         toolhead.manual_move(haltpos, lift_speed)
+        retract_end_time = toolhead.get_last_move_time()
+        lift_duration = retract_end_time - retract_start_time
         # Extract retract samples
         start_time = retract_start_time - 0.010
-        end_time = retract_start_time + 0.150
+        end_time = retract_start_time + lift_duration * 0.5
         self._gather.add_probe_request(self._analyze_pullback, start_time,
                                        end_time, start_time, end_time)
     def pull_probed_results(self):
