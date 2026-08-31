@@ -4,6 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "autoconf.h" // CONFIG_CLOCK_FREQ
 #include "board/irq.h" // irq_save
 #include "board/misc.h" // timer_from_us
 #include "command.h" // shutdown
@@ -62,16 +63,57 @@ static const uint8_t adc_pins[] = {
 #endif
 };
 
+// The adc needs both a conversion clock (ADCHCLK, derived from HCLK)
+// and a separate 1Mhz reference clock (ADC1M).  Neither has a usable
+// reset default at the clock rates this chip runs at, so configure
+// both before enabling an adc.
+static void
+adc_clock_setup(void)
+{
+    // Pick the smallest divisor that keeps ADCHCLK at or below 9Mhz
+    static const uint8_t adchclk_divs[] = { 1, 2, 4, 6, 8, 10, 12, 16, 32 };
+    uint32_t adchclk_pres = ARRAY_SIZE(adchclk_divs) - 1;
+    uint32_t i;
+    for (i = 0; i < ARRAY_SIZE(adchclk_divs); i++) {
+        if (CONFIG_CLOCK_FREQ / adchclk_divs[i] <= 9000000) {
+            adchclk_pres = i;
+            break;
+        }
+    }
+    // ADC1M is divided down from the same oscillator the pll uses: the
+    // crystal when there is one, otherwise the 8Mhz internal oscillator
+    uint32_t adc1m_src = (CONFIG_STM32_CLOCK_REF_INTERNAL
+                          ? RCC_ADC1MCLK_SRC_HSI : RCC_ADC1MCLK_SRC_HSE);
+    uint32_t adc1m_freq = (CONFIG_STM32_CLOCK_REF_INTERNAL
+                           ? 8000000 : CONFIG_CLOCK_REF_FREQ);
+    uint32_t adc1m_pres = (adc1m_freq / 1000000 - 1) << 11;
+
+    uint32_t reg_temp = ADC_RCC_CFG2;
+    // Run the adc from HCLK, leaving the pll sourced adc clock disabled
+    reg_temp &= CFG2_ADCPLLPRES_RESET_MASK;
+    reg_temp &= RCC_ADCPLLCLK_DISABLE;
+    reg_temp &= CFG2_ADCHPRES_RESET_MASK;
+    reg_temp |= adchclk_pres;
+    reg_temp &= CFG2_ADC1MSEL_RESET_MASK;
+    reg_temp &= CFG2_ADC1MPRES_RESET_MASK;
+    reg_temp |= adc1m_src | adc1m_pres;
+    ADC_RCC_CFG2 = reg_temp;
+}
+
 // Perform calibration
 static void
 adc_calibrate(ADC_Module *adc)
 {
-    adc->CTRL2 = CTRL2_AD_ON_SET;
+    // Match the adc to the HCLK sourced clock selected in adc_clock_setup()
+    adc->CTRL3 &= ~ADC_CTRL3_CKMOD_MSK;
+    // Wake the adc from power down mode and let its input settle
+    adc->CTRL2 |= CTRL2_AD_ON_SET;
+    udelay(10);
     while (!(adc->CTRL3 & ADC_FLAG_RDY))
         ;
     adc->CTRL3 &= (~ADC_CTRL3_BPCAL_MSK);
     udelay(10);
-    adc->CTRL2 = CTRL2_AD_ON_SET | CTRL2_CAL_SET;
+    adc->CTRL2 |= CTRL2_CAL_SET;
     while (adc->CTRL2 & CTRL2_CAL_SET)
         ;
 }
@@ -107,16 +149,7 @@ gpio_adc_setup(uint32_t pin)
                 RCC_AHB_PERIPH_ADC3 | RCC_AHB_PERIPH_ADC4);
     ADC_RCC_AHBPCLKEN = reg_temp;
 
-    reg_temp = ADC_RCC_CFG2;
-    reg_temp &= CFG2_ADCPLLPRES_RESET_MASK;
-    reg_temp |= RCC_ADCPLLCLK_DIV1;
-    reg_temp &= RCC_ADCPLLCLK_DISABLE;
-    ADC_RCC_CFG2 = reg_temp;
-
-    reg_temp = ADC_RCC_CFG2;
-    reg_temp &= CFG2_ADCHPRES_RESET_MASK;
-    reg_temp |= RCC_ADCHCLK_DIV16;
-    ADC_RCC_CFG2 = reg_temp;
+    adc_clock_setup();
 
     ADC_InitType ADC_InitStructure;
     ADC_InitStructure.WorkMode       = ADC_WORKMODE_INDEPENDENT;
