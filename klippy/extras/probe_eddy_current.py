@@ -817,8 +817,6 @@ class EddyTap:
     # Measurement analysis to determine "tap" position
     def _validate_samples_time(self, measures, start_time, end_time):
         cmderr = self._printer.command_error
-        if end_time - start_time < 0.100:
-            raise cmderr("Tap detected too close to start of move")
         timestamps = [m[0] for m in measures]
         if len(timestamps) < 2:
             raise cmderr("Unable to obtain probe_eddy_current sensor readings")
@@ -871,6 +869,9 @@ class EddyTap:
         sps = self._sensor_helper.get_samples_per_second()
         contact_slope_delta = depress_slope - slope
         if contact_slope_delta < self._current_tap_threshold:
+            _, _, min_sensor_z = measures[0]
+            if min_sensor_z > 0.3:
+                self._error_detect("Tap detected in mid air")
             self._error_detect("insufficient slope delta (%.6f vs %.6f)"
                                % (contact_slope_delta,
                                   self._current_tap_threshold))
