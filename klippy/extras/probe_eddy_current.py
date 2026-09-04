@@ -817,8 +817,6 @@ class EddyTap:
     # Measurement analysis to determine "tap" position
     def _validate_samples_time(self, measures, start_time, end_time):
         cmderr = self._printer.command_error
-        if end_time - start_time < 0.100:
-            raise cmderr("Tap detected too close to start of move")
         timestamps = [m[0] for m in measures]
         if len(timestamps) < 2:
             raise cmderr("Unable to obtain probe_eddy_current sensor readings")
@@ -847,8 +845,15 @@ class EddyTap:
         reactor = self._printer.get_reactor()
         self._validate_samples_time(measures, start_time, end_time)
         # Correlate measurements to toolhead position at time of measurement
-        data = [(sensor_freq, self._lookup_toolhead_pos(samp_time))
-                for samp_time, sensor_freq, sensor_z in measures]
+        i = 0
+        data = [None] * len(measures)
+        for samp_time, sensor_freq, sensor_z in measures:
+            sample = (sensor_freq, self._lookup_toolhead_pos(samp_time))
+            data[i] = sample
+            i += 1
+            if sample[1][2] - data[0][1][2] > 0.500:
+                break
+        data = data[:i]
         reactor.pause(0.)
         min_z = data[0][1][2]
         max_z = data[-1][1][2]
@@ -864,6 +869,9 @@ class EddyTap:
         sps = self._sensor_helper.get_samples_per_second()
         contact_slope_delta = depress_slope - slope
         if contact_slope_delta < self._current_tap_threshold:
+            _, _, min_sensor_z = measures[0]
+            if min_sensor_z > 0.3:
+                self._error_detect("Tap detected in mid air")
             self._error_detect("insufficient slope delta (%.6f vs %.6f)"
                                % (contact_slope_delta,
                                   self._current_tap_threshold))
@@ -905,9 +913,11 @@ class EddyTap:
         haltpos[2] += lift_dist
         retract_start_time = toolhead.get_last_move_time()
         toolhead.manual_move(haltpos, lift_speed)
+        retract_end_time = toolhead.get_last_move_time()
+        lift_duration = retract_end_time - retract_start_time
         # Extract retract samples
         start_time = retract_start_time - 0.010
-        end_time = retract_start_time + 0.150
+        end_time = retract_start_time + lift_duration * 0.5
         self._gather.add_probe_request(self._analyze_pullback, start_time,
                                        end_time, start_time, end_time)
     def pull_probed_results(self):
