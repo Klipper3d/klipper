@@ -1053,6 +1053,19 @@ class PrinterEddyProbe:
         self.cmd_helper = probe.ProbeCommandHelper(config, self,
                                                    can_set_z_offset=False)
         self.printer.add_object('probe', self)
+        # Register tap as a manual probe provider
+        mprobe = self.printer.load_object(config, 'manual_probe')
+        mprobe.register_manual_method("tap", self._auto_probe)
+    def _auto_probe(self, gcmd):
+        fo_params = dict(gcmd.get_command_parameters())
+        fo_params["METHOD"] = "tap"
+        gcode = self.printer.lookup_object('gcode')
+        fo_gcmd = gcode.create_gcode_command("PROBE", "PROBE", fo_params)
+        probe_session = self.eddy_tap_session.start_probe_session(fo_gcmd)
+        probe_session.run_probe(fo_gcmd)
+        pos = probe_session.pull_probed_results()[0]
+        probe_session.end_probe_session()
+        return pos
     def add_client(self, cb):
         self.sensor_helper.add_client(cb)
     def get_probe_params(self, gcmd=None):
