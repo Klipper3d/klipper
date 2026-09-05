@@ -157,7 +157,8 @@ The following commands are available when the
 section](Config_Reference.md#axis_twist_compensation) is enabled.
 
 #### AXIS_TWIST_COMPENSATION_CALIBRATE
-`AXIS_TWIST_COMPENSATION_CALIBRATE [AXIS=<X|Y>] [SAMPLE_COUNT=<value>]`
+`AXIS_TWIST_COMPENSATION_CALIBRATE [AXIS=<X|Y>] [SAMPLE_COUNT=<value>]
+[MANUAL_METHOD=manual]`
 
 Calibrates axis twist compensation by specifying the target axis or
 enabling automatic calibration.

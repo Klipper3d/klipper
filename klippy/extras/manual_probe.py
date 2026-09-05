@@ -40,6 +40,7 @@ class ManualProbe:
         self.gcode_move = self.printer.load_object(config, "gcode_move")
         self.gcode.register_command('MANUAL_PROBE', self.cmd_MANUAL_PROBE,
                                     desc=self.cmd_MANUAL_PROBE_help)
+        self._manual_methods = {}
         # Endstop value for cartesian printers with separate Z axis
         zconfig = lookup_z_endstop_config(config)
         if zconfig is not None:
@@ -78,6 +79,15 @@ class ManualProbe:
                 self.cmd_Z_OFFSET_APPLY_DELTA_ENDSTOPS,
                 desc=self.cmd_Z_OFFSET_APPLY_ENDSTOP_help)
         self.reset_status()
+    def register_manual_method(self, key, callback):
+        if callback:
+            self._manual_methods[key] = callback
+        else:
+            del self._manual_methods[key]
+    def get_manual_method(self, key):
+        if key not in self._manual_methods:
+            raise self.printer.command_error("Not supported manual method")
+        return self._manual_methods[key]
     def manual_probe_finalize(self, mpresult):
         if mpresult is not None:
             self.gcode.respond_info("Z position is %.3f" % (mpresult.bed_z,))
@@ -169,6 +179,12 @@ class ManualProbeHelper:
         self.toolhead = self.printer.lookup_object('toolhead')
         self.manual_probe = self.printer.lookup_object('manual_probe')
         self.speed = gcmd.get_float("SPEED", 5.)
+        method = gcmd.get("MANUAL_METHOD", "manual")
+        if method != "manual":
+            callback = self.manual_probe.get_manual_method(method)
+            pos = callback(gcmd)
+            finalize_callback(pos)
+            return
         self.past_positions = []
         self.last_toolhead_pos = self.last_kinematics_pos = None
         # Register commands
