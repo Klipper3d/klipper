@@ -40,6 +40,7 @@ class ManualProbe:
         self.gcode_move = self.printer.load_object(config, "gcode_move")
         self.gcode.register_command('MANUAL_PROBE', self.cmd_MANUAL_PROBE,
                                     desc=self.cmd_MANUAL_PROBE_help)
+        self._manual_methods = {}
         # Endstop value for cartesian printers with separate Z axis
         zconfig = lookup_z_endstop_config(config)
         if zconfig is not None:
@@ -78,6 +79,15 @@ class ManualProbe:
                 self.cmd_Z_OFFSET_APPLY_DELTA_ENDSTOPS,
                 desc=self.cmd_Z_OFFSET_APPLY_ENDSTOP_help)
         self.reset_status()
+    def register_manual_method(self, key, callback):
+        if callback:
+            self._manual_methods[key] = callback
+        else:
+            del self._manual_methods[key]
+    def get_manual_method(self, key):
+        if key not in self._manual_methods:
+            raise self.printer.command_error("Not supported manual method")
+        return self._manual_methods[key]
     def manual_probe_finalize(self, mpresult):
         if mpresult is not None:
             self.gcode.respond_info("Z position is %.3f" % (mpresult.bed_z,))
@@ -157,6 +167,24 @@ def verify_no_manual_probe(printer):
             "Already in a manual Z probe. Use ABORT to abort it.")
     gcode.register_command('ACCEPT', None)
 
+# Helper to handle nozzle probe calls
+class AutoProbeHelper:
+    def __init__(self, printer, finalize_callback, pos):
+        self.gcode = printer.lookup_object('gcode')
+        self.command_error = printer.command_error
+        self.pos = pos
+        self.finalize_callback = finalize_callback
+        self.gcode.register_command('ACCEPT', self.cmd_callback)
+    def cmd_callback(self, gcmd):
+        self.gcode.register_command('ACCEPT', None)
+        self.finalize_callback(self.pos)
+    def callback(self, eventtime):
+        try:
+            self.gcode.run_script("ACCEPT")
+        # Necessary error output happened inside run_script
+        except self.command_error:
+            pass
+
 Z_BOB_MINIMUM = 0.500
 BISECT_MAX = 0.200
 
@@ -173,6 +201,14 @@ class ManualProbeHelper:
         self.last_toolhead_pos = self.last_kinematics_pos = None
         # Register commands
         verify_no_manual_probe(printer)
+        method = gcmd.get("MANUAL_METHOD", "manual")
+        if method != "manual":
+            callback = self.manual_probe.get_manual_method(method)
+            pos = callback(gcmd)
+            aph = AutoProbeHelper(printer, finalize_callback, pos)
+            reactor = self.printer.get_reactor()
+            reactor.register_callback(aph.callback)
+            return
         self.gcode.register_command('ACCEPT', self.cmd_ACCEPT,
                                     desc=self.cmd_ACCEPT_help)
         self.gcode.register_command('NEXT', self.cmd_ACCEPT)
