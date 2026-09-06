@@ -28,7 +28,8 @@ def configure_optional_field(config, fields, field_name):
     if config.get(option, None) is None:
         return
     register = fields.lookup_register(field_name)
-    if register not in fields.registers and register in OPTIONAL_REGISTER_DEFAULTS:
+    if (register not in fields.registers
+            and register in OPTIONAL_REGISTER_DEFAULTS):
         fields.registers[register] = OPTIONAL_REGISTER_DEFAULTS[register]
     fields.set_config_field(config, field_name, 0)
 
