@@ -1,0 +1,27 @@
+# Tests for the TMC5262 driver
+CONFIG tmc5262.cfg
+DICTIONARY atmega2560.dict
+
+# Exercise virtual endstop homing
+G28
+
+# Basic register and initialization paths
+DUMP_TMC STEPPER=stepper_x
+DUMP_TMC STEPPER=stepper_x REGISTER=SGP_BEMF
+DUMP_TMC STEPPER=stepper_x REGISTER=COOLSTEPPLUS_CONF
+DUMP_TMC STEPPER=stepper_x REGISTER=DO_SCOPE_CONF
+DUMP_TMC STEPPER=stepper_x REGISTER=TSGP_LOW_VEL_THRS
+DUMP_TMC STEPPER=stepper_x REGISTER=ADC_VSUPPLY_TEMP
+INIT_TMC STEPPER=stepper_x
+
+# Integrated current sense current calculation
+SET_TMC_CURRENT STEPPER=stepper_x CURRENT=0
+SET_TMC_CURRENT STEPPER=stepper_x CURRENT=1.0
+SET_TMC_CURRENT STEPPER=stepper_x CURRENT=1.5
+
+# Common and TMC5262-specific configuration fields
+SET_TMC_FIELD STEPPER=stepper_x FIELD=sgt VALUE=3
+SET_TMC_FIELD STEPPER=stepper_x FIELD=sgp_thrs VALUE=8
+SET_TMC_FIELD STEPPER=stepper_x FIELD=cool_cur_div VALUE=3
+SET_TMC_FIELD STEPPER=stepper_x FIELD=coolstep_p VALUE=160
+SET_TMC_FIELD STEPPER=stepper_x FIELD=do1_scope_sel VALUE=20
