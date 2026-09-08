@@ -55,13 +55,24 @@ f4: *p++ = v & 0x7f;
 
 // Parse an integer that was encoded as a "variable length quantity"
 static uint32_t
-parse_int(uint8_t **pp)
+parse_int(uint8_t **pp, uint8_t *maxend)
 {
-    uint8_t *p = *pp, c = *p++;
+    uint8_t *p = *pp;
+    if (p >= maxend) {
+        // No bytes remain for this argument; signal an incomplete message
+        *pp = maxend + 1;
+        return 0;
+    }
+    uint8_t c = *p++;
     uint32_t v = c & 0x7f;
     if ((c & 0x60) == 0x60)
         v |= -0x20;
     while (c & 0x80) {
+        if (p >= maxend) {
+            // VLQ continues past the end of the message
+            *pp = maxend + 1;
+            return 0;
+        }
         c = *p++;
         v = (v<<7) | (c & 0x7f);
     }
@@ -109,7 +120,7 @@ command_parsef(uint8_t *p, uint8_t *maxend
         case PT_uint16:
         case PT_int16:
         case PT_byte:
-            *args++ = parse_int(&p);
+            *args++ = parse_int(&p, maxend);
             break;
         case PT_buffer: {
             uint_fast8_t len = *p++;
@@ -124,6 +135,8 @@ command_parsef(uint8_t *p, uint8_t *maxend
             goto error;
         }
     }
+    if (p > maxend)
+        goto error;
     return p;
 error:
     shutdown("Command parser error");
