@@ -857,9 +857,14 @@ class EddyTap:
         reactor.pause(0.)
         min_z = data[0][1][2]
         max_z = data[-1][1][2]
-        if max_z - min_z < 0.350:
+        z_distance = max_z - min_z
+        if z_distance < 0.350:
             self._error_detect("insufficient lift (%.6f vs %.6f)"
                                % (max_z - min_z, 0.350))
+        if z_distance/(measures[i-1][0] - measures[0][0]) < 2.0:
+            speed = z_distance/(measures[i-1][0] - measures[0][0])
+            msg = "lift speed %.3f mm/s (or acceleration) too low" % (speed)
+            self._error_detect(msg)
         # Find best fit for extracted measurements
         tap_fit = TapBestFit()
         coeffs = tap_fit.find_best_fit(data)
