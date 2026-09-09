@@ -817,8 +817,6 @@ class EddyTap:
     # Measurement analysis to determine "tap" position
     def _validate_samples_time(self, measures, start_time, end_time):
         cmderr = self._printer.command_error
-        if end_time - start_time < 0.100:
-            raise cmderr("Tap detected too close to start of move")
         timestamps = [m[0] for m in measures]
         if len(timestamps) < 2:
             raise cmderr("Unable to obtain probe_eddy_current sensor readings")
