@@ -836,7 +836,9 @@ class MCUConnectHelper:
             % (self._name, message_count, version, build_versions),
             "MCU '%s' config: %s" % (self._name, " ".join(
                 ["%s=%s" % (k, v)
-                 for k, v in msgparser.get_constants().items()]))]
+                 for k, v in msgparser.get_constants().items()])),
+            "MCU '%s' kconfig: %s" % (self._name, repr(msgparser.get_kconfig()))
+        ]
         return "\n".join(log_info)
     def _attach_file(self):
         # In a debugging mode.  Open debug output file and read data dictionary
