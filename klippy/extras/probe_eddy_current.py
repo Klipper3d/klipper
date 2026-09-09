@@ -871,9 +871,10 @@ class EddyTap:
         sps = self._sensor_helper.get_samples_per_second()
         contact_slope_delta = depress_slope - slope
         if contact_slope_delta < self._current_tap_threshold:
-            self._error_detect("insufficient slope delta (%.6f vs %.6f)"
-                               % (contact_slope_delta,
-                                  self._current_tap_threshold))
+            min_z = data[0][1][2]
+            msg = "no contact found at z=%.3f (slope delta %.6f vs %.6f)" % (
+                min_z, contact_slope_delta, self._current_tap_threshold)
+            self._error_detect(msg)
         if slope >= 0. or slope2 < 0.:
             self._error_detect("invalid free air slope (s=%.6f s2=%.6f)"
                                % (slope, slope2))
