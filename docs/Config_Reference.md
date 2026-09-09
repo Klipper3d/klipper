@@ -5174,6 +5174,24 @@ sensor_type:
 #   decreasing force value when placed under load.
 ```
 
+#### CS1237
+
+The CS1237 sensor backend supports both `[load_cell]` and
+`[load_cell_probe]`.
+
+```
+[load_cell my_cs1237]
+sensor_type: cs1237
+sclk_pin:
+dout_pin:
+#sample_rate: 640
+#gain: 128
+#reference_output: True
+```
+
+Both pins must be on the same MCU. `sample_rate` is 10, 40, 640, or 1280;
+`gain` is 1, 2, 64, or 128. DOUT is bidirectional during configuration.
+
 #### HX711
 This is a 24 bit low sample rate chip using "bit-bang" communications. It is
 suitable for filament scales.
