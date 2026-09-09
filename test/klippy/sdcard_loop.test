@@ -4,6 +4,8 @@ DICTIONARY atmega2560.dict
 CONFIG sdcard_loop.cfg
 
 G28
+M73 P25 R90
+M73 R89
 SDCARD_LOOP_DESIST
 ; Verify long-name functions
 SDCARD_PRINT_FILE FILENAME=big.gcode
