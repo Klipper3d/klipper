@@ -98,9 +98,12 @@ command_parsef(uint8_t *p, uint8_t *maxend
 {
     uint_fast8_t num_params = READP(cp->num_params);
     const uint8_t *param_types = READP(cp->param_types);
-    while (num_params--) {
+    for (;;) {
         if (p > maxend)
             goto error;
+        if (! num_params)
+            return p;
+        num_params--;
         uint_fast8_t t = READP(*param_types);
         param_types++;
         switch (t) {
@@ -113,8 +116,6 @@ command_parsef(uint8_t *p, uint8_t *maxend
             break;
         case PT_buffer: {
             uint_fast8_t len = *p++;
-            if (p + len > maxend)
-                goto error;
             *args++ = len;
             *args++ = command_encode_ptr(p);
             p += len;
@@ -124,9 +125,6 @@ command_parsef(uint8_t *p, uint8_t *maxend
             goto error;
         }
     }
-    if (p > maxend)
-        goto error;
-    return p;
 error:
     shutdown("Command parser error");
 }
