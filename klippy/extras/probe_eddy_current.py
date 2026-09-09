@@ -463,6 +463,10 @@ class EddyGatherSamples:
         return True
     def finish(self):
         self._need_stop = True
+    def __enter__(self):
+        return self
+    def __exit__(self, type=None, exc_val=None, exc_tb=None):
+        self.finish()
     def _pull_measurements(self, start_time, end_time):
         # Extract measurements from sensor messages for given time range
         measures = []
@@ -1019,6 +1023,27 @@ class EddyParameterHelper:
                 'samples_tolerance_retries': samp_retries,
                 'samples_result': samples_result}
 
+# Auxiliary QUERY_PROBE implementation
+class EddyQueryProbe:
+    def __init__(self, config, sensor_helper, calibration):
+        self.printer = config.get_printer()
+        self.sensor_helper = sensor_helper
+        self.calibration = calibration
+        if (config.get('z_offset', None, note_valid=False) is not None
+                and config.get('descend_z', None, note_valid=False) is None):
+            self._descend_z = config.getfloat('z_offset', above=0.)
+        else:
+            self._descend_z = config.getfloat('descend_z', above=0.)
+    def query_probe(self, print_time):
+        bed_z = OUT_OF_RANGE
+        with EddyGatherSamples(self.printer, self.sensor_helper) as gather:
+            gather.add_probe_request(probe_results_from_avg,
+                                     print_time, print_time + 0.50,
+                                     (.0,.0,.0), self.calibration, (.0,.0,.0))
+            probe_res = gather.pull_probed()[0]
+            bed_z = -probe_res.bed_z
+        return bed_z <= self._descend_z
+
 # Main "printer object"
 class PrinterEddyProbe:
     def __init__(self, config):
@@ -1049,8 +1074,10 @@ class PrinterEddyProbe:
         # Probing via "scan" and "rapid_scan" requests
         self.eddy_scan = EddyScanningProbe(config, self.sensor_helper,
                                            self.calibration, self.probe_offsets)
+        eqp = EddyQueryProbe(config, self.sensor_helper, self.calibration)
         # Register with main probe interface
         self.cmd_helper = probe.ProbeCommandHelper(config, self,
+                                                   eqp.query_probe,
                                                    can_set_z_offset=False)
         self.printer.add_object('probe', self)
     def add_client(self, cb):
