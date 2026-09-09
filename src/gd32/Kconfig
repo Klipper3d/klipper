@@ -1,0 +1,146 @@
+# Kconfig settings for GigaDevice GD32 processors
+
+if MACH_GD32
+
+config GD32_SELECT
+    bool
+    default y
+    select HAVE_GPIO
+    select HAVE_GPIO_ADC
+    select HAVE_GPIO_SPI
+    select HAVE_GPIO_I2C
+    select HAVE_GPIO_BITBANGING
+    select HAVE_STRICT_TIMING
+    select HAVE_CHIPID if MACH_GD32F303XX
+    select HAVE_STEPPER_OPTIMIZED_BOTH_EDGE
+
+config BOARD_DIRECTORY
+    string
+    default "gd32"
+
+choice
+    prompt "Processor model"
+    config MACH_GD32F303XB
+        bool "GD32F303xB"
+        select MACH_GD32F303XX
+        select MACH_GD32F30X
+    config MACH_GD32F303XC
+        bool "GD32F303xC"
+        select MACH_GD32F303XX
+        select MACH_GD32F30X
+    config MACH_GD32F303XE
+        bool "GD32F303xE"
+        select MACH_GD32F303XX
+        select MACH_GD32F30X
+    config MACH_GD32E230X6
+        bool "GD32E230x6"
+        select MACH_GD32E23X
+        select HAVE_LIMITED_CODE_SIZE
+    config MACH_GD32E230X8
+        bool "GD32E230x8"
+        select MACH_GD32E23X
+        select HAVE_LIMITED_CODE_SIZE
+endchoice
+
+config MACH_GD32F303XX
+    bool
+
+config MACH_GD32F30X
+    bool
+
+config MACH_GD32E23X
+    bool
+
+config MCU
+    string
+    default "gd32f303xb" if MACH_GD32F303XB
+    default "gd32f303xc" if MACH_GD32F303XC
+    default "gd32f303xe" if MACH_GD32F303XE
+    default "gd32e230x6" if MACH_GD32E230X6
+    default "gd32e230x8" if MACH_GD32E230X8
+
+config CLOCK_FREQ
+    int
+    default 120000000 if MACH_GD32F30X
+    default 72000000 if MACH_GD32E23X
+
+config FLASH_SIZE
+    hex
+    default 0x00020000 if MACH_GD32F303XB
+    default 0x00040000 if MACH_GD32F303XC
+    default 0x00080000 if MACH_GD32F303XE
+    default 0x00008000 if MACH_GD32E230X6
+    default 0x00010000 if MACH_GD32E230X8
+
+config FLASH_BOOT_ADDRESS
+    hex
+    default 0x08000000
+
+config RAM_START
+    hex
+    default 0x20000000
+
+config RAM_SIZE
+    hex
+    default 0x00008000 if MACH_GD32F303XB
+    default 0x0000c000 if MACH_GD32F303XC
+    default 0x00010000 if MACH_GD32F303XE
+    default 0x00001800 if MACH_GD32E230X6
+    default 0x00002000 if MACH_GD32E230X8
+
+config STACK_SIZE
+    int
+    default 512
+
+choice
+    prompt "Bootloader offset"
+    config GD32_FLASH_START_0000
+        bool "No bootloader"
+    config GD32_FLASH_START_2000
+        bool "8 KiB bootloader (Katapult)"
+    config GD32_FLASH_START_3000
+        bool "12 KiB bootloader"
+    config GD32_FLASH_START_5000
+        bool "20 KiB bootloader"
+    config GD32_FLASH_START_7000
+        bool "28 KiB bootloader"
+    config GD32_FLASH_START_8000
+        bool "32 KiB bootloader"
+endchoice
+
+config FLASH_APPLICATION_ADDRESS
+    hex
+    default 0x08002000 if GD32_FLASH_START_2000
+    default 0x08003000 if GD32_FLASH_START_3000
+    default 0x08005000 if GD32_FLASH_START_5000
+    default 0x08007000 if GD32_FLASH_START_7000
+    default 0x08008000 if GD32_FLASH_START_8000
+    default 0x08000000
+
+choice
+    prompt "Communication interface"
+    config GD32_SERIAL_USART0_PA9_PA10
+        bool "Serial (USART0 PA9/PA10)"
+        select SERIAL
+    config GD32_SERIAL_USART1_PA2_PA3
+        bool "Serial (USART1 PA2/PA3)"
+        select SERIAL
+    config GD32_USB
+        bool "USB (PA11/PA12)"
+        depends on MACH_GD32F303XX
+        select USBSERIAL
+    config GD32_CANBUS_PA11_PA12
+        bool "CAN bus (CAN0 on PA11/PA12)"
+        depends on MACH_GD32F303XX
+        select CANSERIAL
+    config GD32_CANBUS_PB8_PB9
+        bool "CAN bus (CAN0 on PB8/PB9 remap)"
+        depends on MACH_GD32F303XX
+        select CANSERIAL
+    config GD32_CANBUS_PD0_PD1
+        bool "CAN bus (CAN0 on PD0/PD1 remap)"
+        depends on MACH_GD32F303XX
+        select CANSERIAL
+endchoice
+
+endif
