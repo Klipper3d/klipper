@@ -20,6 +20,8 @@ choice
         bool "LPC176x"
     config MACH_STM32
         bool "STMicroelectronics STM32"
+    config MACH_GD32
+        bool "GigaDevice GD32"
     config MACH_HC32F460
         bool "Huada Semiconductor HC32F460"
     config MACH_RPXXXX
@@ -39,6 +41,7 @@ source "src/atsam/Kconfig"
 source "src/atsamd/Kconfig"
 source "src/lpc176x/Kconfig"
 source "src/stm32/Kconfig"
+source "src/gd32/Kconfig"
 source "src/hc32f460/Kconfig"
 source "src/rp2040/Kconfig"
 source "src/pru/Kconfig"
