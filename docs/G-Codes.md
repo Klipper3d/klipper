@@ -1590,7 +1590,7 @@ is enabled.
 
 #### TEMPERATURE_PROBE_CALIBRATE
 `TEMPERATURE_PROBE_CALIBRATE [PROBE=<probe name>] [TARGET=<value>] [STEP=<value>]
-[METHOD=<method>]`:
+[MANUAL_METHOD=<method>]`:
 Initiates probe drift calibration for eddy current based probes.  The `TARGET`
 is a target temperature for the last sample.  When the temperature recorded
 during a sample exceeds the `TARGET` calibration will complete.  The `STEP`
