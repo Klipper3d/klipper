@@ -998,13 +998,18 @@ class EddyProbeOffsets:
 class EddyParameterHelper:
     def __init__(self, config):
         self._param_helper = probe.ProbeParameterHelper(config)
+        # The "tap" method does not use the section's "speed" option (that
+        # applies to the default descend probing).  Allow the tap probing
+        # speed to be configured; the default preserves previous behavior.
+        self.tap_speed = config.getfloat('tap_speed', 5.0, above=0.)
     def get_probe_params(self, gcmd=None):
         method = None
         if gcmd is not None:
             method = gcmd.get('METHOD', '').lower()
         if method not in ['scan', 'rapid_scan', 'tap']:
             return self._param_helper.get_probe_params(gcmd)
-        probe_speed = gcmd.get_float("PROBE_SPEED", 5.0, above=0.)
+        default_speed = self.tap_speed if method == 'tap' else 5.0
+        probe_speed = gcmd.get_float("PROBE_SPEED", default_speed, above=0.)
         lift_speed = gcmd.get_float("LIFT_SPEED", 5.0, above=0.)
         samples = gcmd.get_int("SAMPLES", 1, minval=1)
         samp_retract_dist = 0.
