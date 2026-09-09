@@ -211,7 +211,17 @@ class TemperatureProbe:
             )
         self.last_zero_pos = mpresult.bed_z
         toolhead = self.printer.lookup_object("toolhead")
-        tool_zero_z = toolhead.get_position()[2]
+        # A "tap" probe retracts after detecting contact, so the current
+        # toolhead position is not the bed contact position.  Using it as the
+        # drift sample reference shifts every sample up by the retract
+        # distance (~4mm), collecting them in the sensor's far field where
+        # sensitivity is low.  The resulting compensation is ineffective.
+        # Note that collect_sample() already reports the sample heights
+        # relative to mpresult.bed_z, so that is the intended reference.
+        if self._method == "tap":
+            tool_zero_z = mpresult.bed_z
+        else:
+            tool_zero_z = toolhead.get_position()[2]
         try:
             last_temp = self._collect_sample(mpresult, tool_zero_z)
         except Exception:
