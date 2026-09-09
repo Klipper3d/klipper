@@ -183,3 +183,11 @@ version 2.2 DDL minus example directory, empty/extra files
 The n32g45x directory contains parts of code from:
   https://github.com/RT-Thread/rt-thread/tree/master/bsp/n32g452xx/Libraries/N32_Std_Driver
 version v1.0.1 (77638c17877c4b6b0b81e189a36bb08b3384923b)
+
+The gd32f30x directory contains device and peripheral headers from the
+GigaDevice GD32F30x firmware library.  The imported headers carry the
+2020-09-30 V2.1.0 revision and GigaDevice's BSD-3-Clause license.
+
+The gd32e23x directory contains device and peripheral headers from the
+GigaDevice GD32E23x firmware library.  The imported headers carry the
+2020-12-12 V1.1.0 revision and GigaDevice's BSD-3-Clause license.

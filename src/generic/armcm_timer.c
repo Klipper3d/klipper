@@ -36,7 +36,9 @@ timer_set_diff(uint32_t value)
 {
     SysTick->LOAD = value;
     SysTick->VAL = 0;
+#if !CONFIG_MACH_GD32F303XX
     SysTick->LOAD = 0;
+#endif
 }
 
 // Return the current time (in absolute clock ticks).
