@@ -12,7 +12,9 @@
 #define __always_inline inline __attribute__((always_inline))
 #endif
 #define __visible __attribute__((externally_visible))
+#ifndef __noreturn
 #define __noreturn __attribute__((noreturn))
+#endif
 
 #define PACKED __attribute__((packed))
 #ifndef __aligned
