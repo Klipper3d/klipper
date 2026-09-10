@@ -7,7 +7,7 @@ import math, logging
 import stepper
 
 TRINAMIC_DRIVERS = ["tmc2130", "tmc2208", "tmc2209", "tmc2240", "tmc2660",
-    "tmc5160"]
+    "tmc5160", "tmc5262"]
 
 # Calculate the trigger phase of a stepper motor
 class PhaseCalc:

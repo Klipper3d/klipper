@@ -30,6 +30,7 @@ ConfigSubscriptions = [
     ('tmc2260', 'stallguard:{csn}', 'tmc/stallguard_dump', {'name': '{csn}'}),
     ('tmc2240', 'stallguard:{csn}', 'tmc/stallguard_dump', {'name': '{csn}'}),
     ('tmc5160', 'stallguard:{csn}', 'tmc/stallguard_dump', {'name': '{csn}'}),
+    ('tmc5262', 'stallguard:{csn}', 'tmc/stallguard_dump', {'name': '{csn}'}),
 ]
 
 def webhook_socket_create(uds_filename):

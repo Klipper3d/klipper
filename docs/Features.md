@@ -134,7 +134,7 @@ Klipper supports many standard 3d printer features:
   assign a "math formula" to a fan for automatic fan speed updating.
 
 * Support for run-time configuration of TMC2130, TMC2208/TMC2224,
-  TMC2209, TMC2240, TMC2660, and TMC5160 stepper motor drivers. There
+  TMC2209, TMC2240, TMC2660, TMC5160, and TMC5262 stepper motor drivers. There
   is also support for current control of traditional stepper drivers
   via AD5206, DAC084S085, MCP4451, MCP4728, MCP4018, and PWM pins.
 

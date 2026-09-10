@@ -87,6 +87,10 @@ Note that the `stealthchop_threshold` config option does not impact
 sensorless homing as Klipper automatically switches the TMC driver to
 an appropriate mode during sensorless homing operations.
 
+On a TMC5262, enabling StealthChop+ also requires `driver_COIL_INDUCT`
+to be configured with the motor coil inductance. See the TMC5262
+section of the [config reference](Config_Reference.md#tmc5262).
+
 ## TMC interpolate setting introduces small position deviation
 
 The TMC driver `interpolate` setting may reduce the audible noise of
@@ -160,7 +164,7 @@ also find more details on limitations of this setup.
 A few prerequisites are needed to use sensorless homing:
 
 1. A stallGuard capable TMC stepper driver (tmc2130, tmc2209, tmc2660,
-   or tmc5160).
+   tmc5160, or tmc5262).
 2. SPI / UART interface of the TMC driver wired to micro-controller
    (stand-alone mode does not work).
 3. The appropriate "DIAG" or "SG_TST" pin of TMC driver connected to
@@ -242,6 +246,20 @@ homing_retract_dist: 0
 ...
 ```
 
+A TMC5262 uses the same `driver_SGT` sensitivity range, but its
+sensorless stall output is routed through DO0 or DO1:
+```
+[tmc5262 stepper_x]
+diag0_pin: ^!PA1 # Pin connected to TMC5262 DO0 (or use diag1_pin / DO1)
+driver_SGT: -64  # -64 is most sensitive value, 63 is least sensitive
+...
+
+[stepper_x]
+endstop_pin: tmc5262_stepper_x:virtual_endstop
+homing_retract_dist: 0
+...
+```
+
 An example tmc2660 config might look like:
 ```
 [tmc2660 stepper_x]
@@ -266,7 +284,7 @@ command to set the highest sensitivity. For tmc2209:
 ```
 SET_TMC_FIELD STEPPER=stepper_x FIELD=SGTHRS VALUE=255
 ```
-For tmc2130, tmc5160, and tmc2660:
+For tmc2130, tmc5160, tmc5262, and tmc2660:
 ```
 SET_TMC_FIELD STEPPER=stepper_x FIELD=sgt VALUE=-64
 ```
