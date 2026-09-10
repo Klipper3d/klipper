@@ -29,10 +29,12 @@ class LEDHelper:
         name = config.get_name().split()[-1]
         gcode = self.printer.lookup_object('gcode')
         gcode.register_mux_command("SET_LED", "LED", name, self.cmd_SET_LED,
-                                   desc=self.cmd_SET_LED_help)
+                                   desc=self.cmd_SET_LED_help,
+                                   params=self.cmd_SET_LED_params)
         gcode.register_mux_command("SET_LED_TEMPLATE", "LED", name,
                                    self.cmd_SET_LED_TEMPLATE,
-                                   desc=self.cmd_SET_LED_TEMPLATE_help)
+                                   desc=self.cmd_SET_LED_TEMPLATE_help,
+                                   params=self.cmd_SET_LED_TEMPLATE_params)
     def get_status(self, eventtime=None):
         return {'color_data': self.led_state}
     def _set_color(self, index, color):
@@ -71,6 +73,16 @@ class LEDHelper:
                 logging.exception("led update transmit error")
         self.printer.get_reactor().register_callback(reactor_cb)
     cmd_SET_LED_help = "Set the color of an LED"
+    cmd_SET_LED_params = {
+        "LED": {"type": "string", "required": True},
+        "RED": {"type": "float", "default": 0.},
+        "GREEN": {"type": "float", "default": 0.},
+        "BLUE": {"type": "float", "default": 0.},
+        "WHITE": {"type": "float", "default": 0.},
+        "INDEX": {"type": "int", "required": False},
+        "TRANSMIT": {"type": "int", "default": 1},
+        "SYNC": {"type": "int", "default": 1},
+    }
     def cmd_SET_LED(self, gcmd):
         # Parse parameters
         red = gcmd.get_float('RED', 0., minval=0., maxval=1.)
@@ -94,6 +106,10 @@ class LEDHelper:
             #Send update now (so as not to wake toolhead and reset idle_timeout)
             lookahead_bgfunc(None)
     cmd_SET_LED_TEMPLATE_help = "Assign a display_template to an LED"
+    cmd_SET_LED_TEMPLATE_params = {
+        "LED": {"type": "string", "required": True},
+        "INDEX": {"type": "int", "required": False},
+    }
     def cmd_SET_LED_TEMPLATE(self, gcmd):
         index = gcmd.get_int("INDEX", None, minval=1, maxval=self.led_count)
         set_template = self.template_eval.set_template

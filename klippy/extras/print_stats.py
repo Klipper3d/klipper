@@ -14,7 +14,8 @@ class PrintStats:
         self.gcode = printer.lookup_object('gcode')
         self.gcode.register_command(
             "SET_PRINT_STATS_INFO", self.cmd_SET_PRINT_STATS_INFO,
-            desc=self.cmd_SET_PRINT_STATS_INFO_help)
+            desc=self.cmd_SET_PRINT_STATS_INFO_help,
+            params=self.cmd_SET_PRINT_STATS_INFO_params)
         printer.register_event_handler("extruder:activate_extruder",
                                        self._handle_activate_extruder)
     def _handle_activate_extruder(self):
@@ -71,6 +72,10 @@ class PrintStats:
         self.print_start_time = None
     cmd_SET_PRINT_STATS_INFO_help = "Pass slicer info like layer act and " \
                                     "total to klipper"
+    cmd_SET_PRINT_STATS_INFO_params = {
+        "TOTAL_LAYER": {"type": "int", "required": False},
+        "CURRENT_LAYER": {"type": "int", "required": False},
+    }
     def cmd_SET_PRINT_STATS_INFO(self, gcmd):
         total_layer = gcmd.get_int("TOTAL_LAYER", self.info_total_layer, \
                                    minval=0)

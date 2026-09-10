@@ -41,7 +41,8 @@ class ManualStepper:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_mux_command('MANUAL_STEPPER', "STEPPER",
                                    stepper_name, self.cmd_MANUAL_STEPPER,
-                                   desc=self.cmd_MANUAL_STEPPER_help)
+                                   desc=self.cmd_MANUAL_STEPPER_help,
+                                   params=self.cmd_MANUAL_STEPPER_params)
     def get_name(self):
         return self.name
     def sync_print_time(self):
@@ -91,6 +92,20 @@ class ManualStepper:
                             probe_pos, triggered, check_trigger)
         self.sync_print_time()
     cmd_MANUAL_STEPPER_help = "Command a manually configured stepper"
+    cmd_MANUAL_STEPPER_params = {
+        "STEPPER": {"type": "string", "required": True},
+        "GCODE_AXIS": {"type": "string", "required": False},
+        "ENABLE": {"type": "int", "required": False},
+        "SET_POSITION": {"type": "float", "required": False},
+        "SPEED": {"type": "float", "required": False},
+        "ACCEL": {"type": "float", "required": False},
+        "STOP_ON_ENDSTOP": {"type": "string", "required": False},
+        "MOVE": {"type": "float", "required": False},
+        "SYNC": {"type": "int", "required": False},
+        "INSTANTANEOUS_CORNER_VELOCITY": {"type": "float", "default": 1.},
+        "LIMIT_VELOCITY": {"type": "float", "default": 999999.9},
+        "LIMIT_ACCEL": {"type": "float", "default": 999999.9},
+    }
     def cmd_MANUAL_STEPPER(self, gcmd):
         if gcmd.get('GCODE_AXIS', None) is not None:
             return self.command_with_gcode_axis(gcmd)

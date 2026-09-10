@@ -21,7 +21,8 @@ class SaveVariables:
             raise config.error(str(e))
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command('SAVE_VARIABLE', self.cmd_SAVE_VARIABLE,
-                               desc=self.cmd_SAVE_VARIABLE_help)
+                               desc=self.cmd_SAVE_VARIABLE_help,
+                               params=self.cmd_SAVE_VARIABLE_params)
     def loadVariables(self):
         allvars = {}
         varfile = configparser.ConfigParser()
@@ -36,6 +37,10 @@ class SaveVariables:
             raise self.printer.command_error(msg)
         self.allVariables = allvars
     cmd_SAVE_VARIABLE_help = "Save arbitrary variables to disk"
+    cmd_SAVE_VARIABLE_params = {
+        "VARIABLE": {"type": "string", "required": True},
+        "VALUE": {"type": "string", "required": True},
+    }
     def cmd_SAVE_VARIABLE(self, gcmd):
         varname = gcmd.get('VARIABLE')
         if (varname.lower() != varname):

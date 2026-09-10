@@ -121,9 +121,11 @@ class DeltaCalibrate:
         # Register gcode commands
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command('DELTA_CALIBRATE', self.cmd_DELTA_CALIBRATE,
-                                    desc=self.cmd_DELTA_CALIBRATE_help)
+                                    desc=self.cmd_DELTA_CALIBRATE_help,
+                                    params=self.cmd_DELTA_CALIBRATE_params)
         self.gcode.register_command('DELTA_ANALYZE', self.cmd_DELTA_ANALYZE,
-                                    desc=self.cmd_DELTA_ANALYZE_help)
+                                    desc=self.cmd_DELTA_ANALYZE_help,
+                                    params=self.cmd_DELTA_ANALYZE_params)
     def handle_connect(self):
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         if not hasattr(kin, "get_calibration"):
@@ -219,6 +221,7 @@ class DeltaCalibrate:
             "The SAVE_CONFIG command will update the printer config file\n"
             "with these parameters and restart the printer.")
     cmd_DELTA_CALIBRATE_help = "Delta calibration script"
+    cmd_DELTA_CALIBRATE_params = dict(probe.PROBE_POINTS_HELPER_PARAMS)
     def cmd_DELTA_CALIBRATE(self, gcmd):
         self.probe_helper.start_probe(gcmd)
     def add_manual_height(self, height):
@@ -254,6 +257,15 @@ class DeltaCalibrate:
         # Perform analysis
         self.calculate_params(self.last_probe_positions, distances)
     cmd_DELTA_ANALYZE_help = "Extended delta calibration tool"
+    cmd_DELTA_ANALYZE_params = {
+        "MANUAL_HEIGHT": {"type": "float", "required": False},
+        "CENTER_DISTS": {"type": "string", "required": False},
+        "CENTER_PILLAR_WIDTHS": {"type": "string", "required": False},
+        "OUTER_DISTS": {"type": "string", "required": False},
+        "OUTER_PILLAR_WIDTHS": {"type": "string", "required": False},
+        "SCALE": {"type": "string", "required": False},
+        "CALIBRATE": {"type": "string", "required": False},
+    }
     def cmd_DELTA_ANALYZE(self, gcmd):
         # Check for manual height entry
         mheight = gcmd.get_float('MANUAL_HEIGHT', None)

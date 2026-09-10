@@ -71,7 +71,8 @@ class SmartEffectorProbe:
             self.control_pin = None
         self.gcode.register_command("SET_SMART_EFFECTOR",
                                     self.cmd_SET_SMART_EFFECTOR,
-                                    desc=self.cmd_SET_SMART_EFFECTOR_help)
+                                    desc=self.cmd_SET_SMART_EFFECTOR_help,
+                                    params=self.cmd_SET_SMART_EFFECTOR_params)
     def _probe_prepare(self):
         toolhead = self.printer.lookup_object('toolhead')
         if self.probe_accel:
@@ -124,6 +125,11 @@ class SmartEffectorProbe:
         toolhead.dwell(end_time - start_time)
         toolhead.wait_moves()
     cmd_SET_SMART_EFFECTOR_help = 'Set SmartEffector parameters'
+    cmd_SET_SMART_EFFECTOR_params = {
+        "SENSITIVITY": {"type": "int", "required": False},
+        "ACCEL": {"type": "float", "required": False},
+        "RECOVERY_TIME": {"type": "float", "required": False},
+    }
     def cmd_SET_SMART_EFFECTOR(self, gcmd):
         sensitivity = gcmd.get_int('SENSITIVITY', None, minval=0, maxval=255)
         respond_info = []

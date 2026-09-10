@@ -66,9 +66,11 @@ class BLTouchProbe:
         # Register BLTOUCH_DEBUG command
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("BLTOUCH_DEBUG", self.cmd_BLTOUCH_DEBUG,
-                                    desc=self.cmd_BLTOUCH_DEBUG_help)
+                                    desc=self.cmd_BLTOUCH_DEBUG_help,
+                                    params=self.cmd_BLTOUCH_DEBUG_params)
         self.gcode.register_command("BLTOUCH_STORE", self.cmd_BLTOUCH_STORE,
-                                    desc=self.cmd_BLTOUCH_STORE_help)
+                                    desc=self.cmd_BLTOUCH_STORE_help,
+                                    params=self.cmd_BLTOUCH_STORE_params)
         # Register events
         self.printer.register_event_handler("klippy:connect",
                                             self._handle_connect)
@@ -256,6 +258,9 @@ class BLTouchProbe:
             self._send_cmd('set_OD_output_mode')
         self._send_cmd('pin_up')
     cmd_BLTOUCH_DEBUG_help = "Send a command to the bltouch for debugging"
+    cmd_BLTOUCH_DEBUG_params = {
+        "COMMAND": {"type": "string", "required": False},
+    }
     def cmd_BLTOUCH_DEBUG(self, gcmd):
         cmd = gcmd.get('COMMAND', None)
         if cmd is None or cmd not in Commands:
@@ -267,6 +272,9 @@ class BLTouchProbe:
         self._send_cmd(cmd, duration=self.pin_move_time)
         self._sync_print_time()
     cmd_BLTOUCH_STORE_help = "Store an output mode in the BLTouch EEPROM"
+    cmd_BLTOUCH_STORE_params = {
+        "MODE": {"type": "string", "required": False},
+    }
     def cmd_BLTOUCH_STORE(self, gcmd):
         cmd = gcmd.get('MODE', None)
         if cmd is None or cmd not in ['5V', 'OD']:

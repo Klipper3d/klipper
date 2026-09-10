@@ -35,11 +35,13 @@ class RunoutHelper:
         self.gcode.register_mux_command(
             "QUERY_FILAMENT_SENSOR", "SENSOR", self.name,
             self.cmd_QUERY_FILAMENT_SENSOR,
-            desc=self.cmd_QUERY_FILAMENT_SENSOR_help)
+            desc=self.cmd_QUERY_FILAMENT_SENSOR_help,
+            params=self.cmd_QUERY_FILAMENT_SENSOR_params)
         self.gcode.register_mux_command(
             "SET_FILAMENT_SENSOR", "SENSOR", self.name,
             self.cmd_SET_FILAMENT_SENSOR,
-            desc=self.cmd_SET_FILAMENT_SENSOR_help)
+            desc=self.cmd_SET_FILAMENT_SENSOR_help,
+            params=self.cmd_SET_FILAMENT_SENSOR_params)
     def _handle_ready(self):
         self.min_event_systime = self.reactor.monotonic() + 2.
     def _runout_event_handler(self, eventtime):
@@ -95,6 +97,9 @@ class RunoutHelper:
             "filament_detected": bool(self.filament_present),
             "enabled": bool(self.sensor_enabled)}
     cmd_QUERY_FILAMENT_SENSOR_help = "Query the status of the Filament Sensor"
+    cmd_QUERY_FILAMENT_SENSOR_params = {
+        "SENSOR": {"type": "string", "required": True},
+    }
     def cmd_QUERY_FILAMENT_SENSOR(self, gcmd):
         if self.filament_present:
             msg = "Filament Sensor %s: filament detected" % (self.name)
@@ -102,6 +107,10 @@ class RunoutHelper:
             msg = "Filament Sensor %s: filament not detected" % (self.name)
         gcmd.respond_info(msg)
     cmd_SET_FILAMENT_SENSOR_help = "Sets the filament sensor on/off"
+    cmd_SET_FILAMENT_SENSOR_params = {
+        "SENSOR": {"type": "string", "required": True},
+        "ENABLE": {"type": "int", "default": 1},
+    }
     def cmd_SET_FILAMENT_SENSOR(self, gcmd):
         self.sensor_enabled = gcmd.get_int("ENABLE", 1)
 

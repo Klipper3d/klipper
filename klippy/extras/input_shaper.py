@@ -118,7 +118,8 @@ class InputShaper:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("SET_INPUT_SHAPER",
                                self.cmd_SET_INPUT_SHAPER,
-                               desc=self.cmd_SET_INPUT_SHAPER_help)
+                               desc=self.cmd_SET_INPUT_SHAPER_help,
+                               params=self.cmd_SET_INPUT_SHAPER_params)
     def get_shapers(self):
         return self.shapers
     def connect(self):
@@ -197,6 +198,18 @@ class InputShaper:
             shaper.enable_shaping()
         self._update_input_shaping()
     cmd_SET_INPUT_SHAPER_help = "Set cartesian parameters for input shaper"
+    cmd_SET_INPUT_SHAPER_params = {
+        "SHAPER_TYPE": {"type": "string", "required": False},
+        "SHAPER_TYPE_X": {"type": "string", "required": False},
+        "SHAPER_TYPE_Y": {"type": "string", "required": False},
+        "SHAPER_TYPE_Z": {"type": "string", "required": False},
+        "DAMPING_RATIO_X": {"type": "float", "required": False},
+        "DAMPING_RATIO_Y": {"type": "float", "required": False},
+        "DAMPING_RATIO_Z": {"type": "float", "required": False},
+        "SHAPER_FREQ_X": {"type": "float", "required": False},
+        "SHAPER_FREQ_Y": {"type": "float", "required": False},
+        "SHAPER_FREQ_Z": {"type": "float", "required": False},
+    }
     def cmd_SET_INPUT_SHAPER(self, gcmd):
         if gcmd.get_command_parameters():
             for shaper in self.shapers:

@@ -169,7 +169,8 @@ class GenericCartesianKinematics:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command("SET_STEPPER_CARRIAGES",
                                self.cmd_SET_STEPPER_CARRIAGES,
-                               desc=self.cmd_SET_STEPPER_CARRIAGES_help)
+                               desc=self.cmd_SET_STEPPER_CARRIAGES_help,
+                               params=self.cmd_SET_STEPPER_CARRIAGES_params)
     def _load_kinematics(self, config):
         primary_carriages = []
         for mcconfig in config.get_prefix_sections('carriage '):
@@ -353,6 +354,11 @@ class GenericCartesianKinematics:
             'axis_maximum': axes_max,
         }
     cmd_SET_STEPPER_CARRIAGES_help = "Set stepper carriages"
+    cmd_SET_STEPPER_CARRIAGES_params = {
+        "STEPPER": {"type": "string", "required": True},
+        "CARRIAGES": {"type": "string", "required": True},
+        "DISABLE_CHECKS": {"type": "int", "default": 0},
+    }
     def cmd_SET_STEPPER_CARRIAGES(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.flush_step_generation()

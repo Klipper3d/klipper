@@ -26,18 +26,24 @@ class ExtruderStepper:
                                             self._handle_connect)
         gcode = self.printer.lookup_object('gcode')
         if self.name == 'extruder':
-            gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER", None,
-                                       self.cmd_default_SET_PRESSURE_ADVANCE,
-                                       desc=self.cmd_SET_PRESSURE_ADVANCE_help)
+            gcode.register_mux_command(
+                "SET_PRESSURE_ADVANCE", "EXTRUDER", None,
+                self.cmd_default_SET_PRESSURE_ADVANCE,
+                desc=self.cmd_SET_PRESSURE_ADVANCE_help,
+                params=self.cmd_SET_PRESSURE_ADVANCE_params)
         gcode.register_mux_command("SET_PRESSURE_ADVANCE", "EXTRUDER",
                                    self.name, self.cmd_SET_PRESSURE_ADVANCE,
-                                   desc=self.cmd_SET_PRESSURE_ADVANCE_help)
-        gcode.register_mux_command("SET_EXTRUDER_ROTATION_DISTANCE", "EXTRUDER",
-                                   self.name, self.cmd_SET_E_ROTATION_DISTANCE,
-                                   desc=self.cmd_SET_E_ROTATION_DISTANCE_help)
+                                   desc=self.cmd_SET_PRESSURE_ADVANCE_help,
+                                   params=self.cmd_SET_PRESSURE_ADVANCE_params)
+        gcode.register_mux_command(
+            "SET_EXTRUDER_ROTATION_DISTANCE", "EXTRUDER", self.name,
+            self.cmd_SET_E_ROTATION_DISTANCE,
+            desc=self.cmd_SET_E_ROTATION_DISTANCE_help,
+            params=self.cmd_SET_E_ROTATION_DISTANCE_params)
         gcode.register_mux_command("SYNC_EXTRUDER_MOTION", "EXTRUDER",
                                    self.name, self.cmd_SYNC_EXTRUDER_MOTION,
-                                   desc=self.cmd_SYNC_EXTRUDER_MOTION_help)
+                                   desc=self.cmd_SYNC_EXTRUDER_MOTION_help,
+                                   params=self.cmd_SYNC_EXTRUDER_MOTION_params)
     def _handle_connect(self):
         self._set_pressure_advance(self.config_pa, self.config_smooth_time)
     def get_status(self, eventtime):
@@ -87,6 +93,11 @@ class ExtruderStepper:
         self.pressure_advance = pressure_advance
         self.pressure_advance_smooth_time = smooth_time
     cmd_SET_PRESSURE_ADVANCE_help = "Set pressure advance parameters"
+    cmd_SET_PRESSURE_ADVANCE_params = {
+        "EXTRUDER": {"type": "string", "required": False},
+        "ADVANCE": {"type": "float", "required": False},
+        "SMOOTH_TIME": {"type": "float", "required": False},
+    }
     def cmd_default_SET_PRESSURE_ADVANCE(self, gcmd):
         extruder = self.printer.lookup_object('toolhead').get_extruder()
         if extruder.extruder_stepper is None:
@@ -108,6 +119,10 @@ class ExtruderStepper:
         self.printer.set_rollover_info(self.name, "%s: %s" % (self.name, msg))
         gcmd.respond_info(msg, log=False)
     cmd_SET_E_ROTATION_DISTANCE_help = "Set extruder rotation distance"
+    cmd_SET_E_ROTATION_DISTANCE_params = {
+        "EXTRUDER": {"type": "string", "required": True},
+        "DISTANCE": {"type": "float", "required": False},
+    }
     def cmd_SET_E_ROTATION_DISTANCE(self, gcmd):
         rotation_dist = gcmd.get_float('DISTANCE', None)
         if rotation_dist is not None:
@@ -130,6 +145,10 @@ class ExtruderStepper:
         gcmd.respond_info("Extruder '%s' rotation distance set to %0.6f"
                           % (self.name, rotation_dist))
     cmd_SYNC_EXTRUDER_MOTION_help = "Set extruder stepper motion queue"
+    cmd_SYNC_EXTRUDER_MOTION_params = {
+        "EXTRUDER": {"type": "string", "required": True},
+        "MOTION_QUEUE": {"type": "string", "required": True},
+    }
     def cmd_SYNC_EXTRUDER_MOTION(self, gcmd):
         ename = gcmd.get('MOTION_QUEUE')
         self.sync_to_extruder(ename)
@@ -188,7 +207,8 @@ class PrinterExtruder:
             gcode.register_command("M109", self.cmd_M109)
         gcode.register_mux_command("ACTIVATE_EXTRUDER", "EXTRUDER",
                                    self.name, self.cmd_ACTIVATE_EXTRUDER,
-                                   desc=self.cmd_ACTIVATE_EXTRUDER_help)
+                                   desc=self.cmd_ACTIVATE_EXTRUDER_help,
+                                   params=self.cmd_ACTIVATE_EXTRUDER_params)
     def get_status(self, eventtime):
         sts = self.heater.get_status(eventtime)
         sts['can_extrude'] = self.heater.can_extrude
@@ -278,6 +298,9 @@ class PrinterExtruder:
         # Set Extruder Temperature and Wait
         self.cmd_M104(gcmd, wait=True)
     cmd_ACTIVATE_EXTRUDER_help = "Change the active extruder"
+    cmd_ACTIVATE_EXTRUDER_params = {
+        "EXTRUDER": {"type": "string", "required": True},
+    }
     def cmd_ACTIVATE_EXTRUDER(self, gcmd):
         toolhead = self.printer.lookup_object('toolhead')
         if toolhead.get_extruder() is self:

@@ -39,7 +39,8 @@ class ManualProbe:
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode_move = self.printer.load_object(config, "gcode_move")
         self.gcode.register_command('MANUAL_PROBE', self.cmd_MANUAL_PROBE,
-                                    desc=self.cmd_MANUAL_PROBE_help)
+                                    desc=self.cmd_MANUAL_PROBE_help,
+                                    params=self.cmd_MANUAL_PROBE_params)
         # Endstop value for cartesian printers with separate Z axis
         zconfig = lookup_z_endstop_config(config)
         if zconfig is not None:
@@ -66,7 +67,8 @@ class ManualProbe:
         if self.z_position_endstop is not None:
             self.gcode.register_command(
                 'Z_ENDSTOP_CALIBRATE', self.cmd_Z_ENDSTOP_CALIBRATE,
-                desc=self.cmd_Z_ENDSTOP_CALIBRATE_help)
+                desc=self.cmd_Z_ENDSTOP_CALIBRATE_help,
+                params=self.cmd_Z_ENDSTOP_CALIBRATE_params)
             self.gcode.register_command(
                 'Z_OFFSET_APPLY_ENDSTOP',
                 self.cmd_Z_OFFSET_APPLY_ENDSTOP,
@@ -91,6 +93,9 @@ class ManualProbe:
     def get_status(self, eventtime):
         return self.status
     cmd_MANUAL_PROBE_help = "Start manual probe helper script"
+    cmd_MANUAL_PROBE_params = {
+        "SPEED": {"type": "float", "default": 5.0},
+    }
     def cmd_MANUAL_PROBE(self, gcmd):
         ManualProbeHelper(self.printer, gcmd, self.manual_probe_finalize)
     def z_endstop_finalize(self, mpresult):
@@ -106,6 +111,9 @@ class ManualProbe:
         configfile.set(self.z_endstop_config_name, 'position_endstop',
                        "%.3f" % (z_pos,))
     cmd_Z_ENDSTOP_CALIBRATE_help = "Calibrate a Z endstop"
+    cmd_Z_ENDSTOP_CALIBRATE_params = {
+        "SPEED": {"type": "float", "default": 5.0},
+    }
     def cmd_Z_ENDSTOP_CALIBRATE(self, gcmd):
         ManualProbeHelper(self.printer, gcmd, self.z_endstop_finalize)
     def cmd_Z_OFFSET_APPLY_ENDSTOP(self,gcmd):
@@ -179,7 +187,8 @@ class ManualProbeHelper:
         self.gcode.register_command('ABORT', self.cmd_ABORT,
                                     desc=self.cmd_ABORT_help)
         self.gcode.register_command('TESTZ', self.cmd_TESTZ,
-                                    desc=self.cmd_TESTZ_help)
+                                    desc=self.cmd_TESTZ_help,
+                                    params=self.cmd_TESTZ_params)
         self.gcode.respond_info(
             "Starting manual Z probe. Use TESTZ to adjust position.\n"
             "Finish with ACCEPT or ABORT command.")
@@ -252,6 +261,9 @@ class ManualProbeHelper:
     def cmd_ABORT(self, gcmd):
         self.finalize(False)
     cmd_TESTZ_help = "Move to new Z height"
+    cmd_TESTZ_params = {
+        "Z": {"type": "string", "required": True},
+    }
     def cmd_TESTZ(self, gcmd):
         # Store current position for later reference
         kin_pos = self.get_kinematics_pos()

@@ -560,7 +560,8 @@ class ToolHeadCommandHelper:
         gcode.register_command('M400', self.cmd_M400)
         gcode.register_command('SET_VELOCITY_LIMIT',
                                self.cmd_SET_VELOCITY_LIMIT,
-                               desc=self.cmd_SET_VELOCITY_LIMIT_help)
+                               desc=self.cmd_SET_VELOCITY_LIMIT_help,
+                               params=self.cmd_SET_VELOCITY_LIMIT_params)
         gcode.register_command('M204', self.cmd_M204)
     def cmd_G4(self, gcmd):
         # Dwell
@@ -570,6 +571,12 @@ class ToolHeadCommandHelper:
         # Wait for current moves to finish
         self.toolhead.wait_moves()
     cmd_SET_VELOCITY_LIMIT_help = "Set printer velocity limits"
+    cmd_SET_VELOCITY_LIMIT_params = {
+        "VELOCITY": {"type": "float", "required": False},
+        "ACCEL": {"type": "float", "required": False},
+        "SQUARE_CORNER_VELOCITY": {"type": "float", "required": False},
+        "MINIMUM_CRUISE_RATIO": {"type": "float", "required": False},
+    }
     def cmd_SET_VELOCITY_LIMIT(self, gcmd):
         max_velocity = gcmd.get_float('VELOCITY', None, above=0.)
         max_accel = gcmd.get_float('ACCEL', None, above=0.)

@@ -35,11 +35,14 @@ class PrinterSkew:
                                desc=self.cmd_GET_CURRENT_SKEW_help)
         gcode.register_command('CALC_MEASURED_SKEW',
                                self.cmd_CALC_MEASURED_SKEW,
-                               desc=self.cmd_CALC_MEASURED_SKEW_help)
+                               desc=self.cmd_CALC_MEASURED_SKEW_help,
+                               params=self.cmd_CALC_MEASURED_SKEW_params)
         gcode.register_command('SET_SKEW', self.cmd_SET_SKEW,
-                               desc=self.cmd_SET_SKEW_help)
+                               desc=self.cmd_SET_SKEW_help,
+                               params=self.cmd_SET_SKEW_params)
         gcode.register_command('SKEW_PROFILE', self.cmd_SKEW_PROFILE,
-                               desc=self.cmd_SKEW_PROFILE_help)
+                               desc=self.cmd_SKEW_PROFILE_help,
+                               params=self.cmd_SKEW_PROFILE_params)
     def _handle_connect(self):
         gcode_move = self.printer.lookup_object('gcode_move')
         self.next_transform = gcode_move.set_move_transform(self, force=True)
@@ -87,6 +90,11 @@ class PrinterSkew:
                 fac, math.degrees(fac))
         gcmd.respond_info(out)
     cmd_CALC_MEASURED_SKEW_help = "Calculate skew from measured print"
+    cmd_CALC_MEASURED_SKEW_params = {
+        "AC": {"type": "float", "required": True},
+        "BD": {"type": "float", "required": True},
+        "AD": {"type": "float", "required": True},
+    }
     def cmd_CALC_MEASURED_SKEW(self, gcmd):
         ac = gcmd.get_float("AC", above=0.)
         bd = gcmd.get_float("BD", above=0.)
@@ -95,6 +103,12 @@ class PrinterSkew:
         gcmd.respond_info("Calculated Skew: %.6f radians, %.2f degrees"
                           % (factor, math.degrees(factor)))
     cmd_SET_SKEW_help = "Set skew based on lengths of measured object"
+    cmd_SET_SKEW_params = {
+        "CLEAR": {"type": "int", "default": 0},
+        "XY": {"type": "string", "required": False},
+        "XZ": {"type": "string", "required": False},
+        "YZ": {"type": "string", "required": False},
+    }
     def cmd_SET_SKEW(self, gcmd):
         if gcmd.get_int("CLEAR", 0):
             self._update_skew(0., 0., 0.)
@@ -115,6 +129,11 @@ class PrinterSkew:
                 factor = plane.lower() + '_factor'
                 setattr(self, factor, calc_skew_factor(*lengths))
     cmd_SKEW_PROFILE_help = "Profile management for skew_correction"
+    cmd_SKEW_PROFILE_params = {
+        "LOAD": {"type": "string", "required": False},
+        "SAVE": {"type": "string", "required": False},
+        "REMOVE": {"type": "string", "required": False},
+    }
     def cmd_SKEW_PROFILE(self, gcmd):
         if gcmd.get('LOAD', None) is not None:
             name = gcmd.get('LOAD')

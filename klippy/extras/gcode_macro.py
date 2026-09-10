@@ -145,9 +145,10 @@ class GCodeMacro:
         else:
             self.gcode.register_command(self.alias, self.cmd,
                                         desc=self.cmd_desc)
-        self.gcode.register_mux_command("SET_GCODE_VARIABLE", "MACRO",
-                                        name, self.cmd_SET_GCODE_VARIABLE,
-                                        desc=self.cmd_SET_GCODE_VARIABLE_help)
+        self.gcode.register_mux_command(
+            "SET_GCODE_VARIABLE", "MACRO", name, self.cmd_SET_GCODE_VARIABLE,
+            desc=self.cmd_SET_GCODE_VARIABLE_help,
+            params=self.cmd_SET_GCODE_VARIABLE_params)
         self.in_script = False
         self.variables = {}
         prefix = 'variable_'
@@ -172,6 +173,11 @@ class GCodeMacro:
     def get_status(self, eventtime):
         return self.variables
     cmd_SET_GCODE_VARIABLE_help = "Set the value of a G-Code macro variable"
+    cmd_SET_GCODE_VARIABLE_params = {
+        "MACRO": {"type": "string", "required": True},
+        "VARIABLE": {"type": "string", "required": True},
+        "VALUE": {"type": "string", "required": True},
+    }
     def cmd_SET_GCODE_VARIABLE(self, gcmd):
         variable = gcmd.get('VARIABLE')
         value = gcmd.get('VALUE')

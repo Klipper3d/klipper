@@ -24,11 +24,17 @@ class HostResponder:
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command('M118', self.cmd_M118, True)
         gcode.register_command('RESPOND', self.cmd_RESPOND, True,
-                               desc=self.cmd_RESPOND_help)
+                               desc=self.cmd_RESPOND_help,
+                               params=self.cmd_RESPOND_params)
     def cmd_M118(self, gcmd):
         msg = gcmd.get_raw_command_parameters()
         gcmd.respond_raw("%s %s" % (self.default_prefix, msg))
     cmd_RESPOND_help = ("Echo the message prepended with a prefix")
+    cmd_RESPOND_params = {
+        "TYPE": {"type": "string", "required": False},
+        "PREFIX": {"type": "string", "required": False},
+        "MSG": {"type": "string", "default": ""},
+    }
     def cmd_RESPOND(self, gcmd):
         no_space = False
         respond_type = gcmd.get('TYPE', None)

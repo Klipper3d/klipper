@@ -135,9 +135,10 @@ class EndstopPhases:
         self.printer.register_event_handler("homing:home_rails_end",
                                             self.handle_home_rails_end)
         self.gcode = self.printer.lookup_object('gcode')
-        self.gcode.register_command("ENDSTOP_PHASE_CALIBRATE",
-                                    self.cmd_ENDSTOP_PHASE_CALIBRATE,
-                                    desc=self.cmd_ENDSTOP_PHASE_CALIBRATE_help)
+        self.gcode.register_command(
+            "ENDSTOP_PHASE_CALIBRATE", self.cmd_ENDSTOP_PHASE_CALIBRATE,
+            desc=self.cmd_ENDSTOP_PHASE_CALIBRATE_help,
+            params=self.cmd_ENDSTOP_PHASE_CALIBRATE_params)
     def update_stepper(self, stepper, trig_mcu_pos, is_primary):
         stepper_name = stepper.get_name()
         phase_calc = self.tracking.get(stepper_name)
@@ -168,6 +169,9 @@ class EndstopPhases:
                 self.update_stepper(stepper, trig_mcu_pos, is_primary)
                 is_primary = False
     cmd_ENDSTOP_PHASE_CALIBRATE_help = "Calibrate stepper phase"
+    cmd_ENDSTOP_PHASE_CALIBRATE_params = {
+        "STEPPER": {"type": "string", "required": False},
+    }
     def cmd_ENDSTOP_PHASE_CALIBRATE(self, gcmd):
         stepper_name = gcmd.get('STEPPER', None)
         if stepper_name is None:

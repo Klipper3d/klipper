@@ -86,7 +86,8 @@ class HallFilamentWidthSensor:
             desc=self.cmd_DISABLE_FILAMENT_WIDTH_SENSOR_help)
         self.gcode.register_command('ENABLE_FILAMENT_WIDTH_SENSOR',
             self.cmd_M405,
-            desc=self.cmd_ENABLE_FILAMENT_WIDTH_SENSOR_help)
+            desc=self.cmd_ENABLE_FILAMENT_WIDTH_SENSOR_help,
+            params=self.cmd_M405_params)
         self.gcode.register_command('QUERY_RAW_FILAMENT_WIDTH',
             self.cmd_Get_Raw_Values,
             desc=self.cmd_QUERY_RAW_FILAMENT_WIDTH_help)
@@ -242,6 +243,9 @@ class HallFilamentWidthSensor:
     cmd_ENABLE_FILAMENT_WIDTH_SENSOR_help = (
         "Enable the filament width sensor and enable or disable flow "
         + "compensation")
+    cmd_M405_params = {
+        "FLOW_COMPENSATION": {"type": "int", "required": False},
+    }
     def cmd_M405(self, gcmd):
         flow_comp = gcmd.get_int("FLOW_COMPENSATION", None, minval=0, maxval=1)
         if flow_comp is not None:

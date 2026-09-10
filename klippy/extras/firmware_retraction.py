@@ -17,7 +17,8 @@ class FirmwareRetraction:
         self.is_retracted = False
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command('SET_RETRACTION', self.cmd_SET_RETRACTION,
-                                    desc=self.cmd_SET_RETRACTION_help)
+                                    desc=self.cmd_SET_RETRACTION_help,
+                                    params=self.cmd_SET_RETRACTION_params)
         self.gcode.register_command('GET_RETRACTION', self.cmd_GET_RETRACTION,
                                     desc=self.cmd_GET_RETRACTION_help)
         self.gcode.register_command('G10', self.cmd_G10)
@@ -31,6 +32,12 @@ class FirmwareRetraction:
             "unretract_speed": self.unretract_speed,
         }
     cmd_SET_RETRACTION_help = ("Set firmware retraction parameters")
+    cmd_SET_RETRACTION_params = {
+        "RETRACT_LENGTH": {"type": "float", "required": False},
+        "RETRACT_SPEED": {"type": "float", "required": False},
+        "UNRETRACT_EXTRA_LENGTH": {"type": "float", "required": False},
+        "UNRETRACT_SPEED": {"type": "float", "required": False},
+    }
     def cmd_SET_RETRACTION(self, gcmd):
         self.retract_length = gcmd.get_float('RETRACT_LENGTH',
                                              self.retract_length, minval=0.)
