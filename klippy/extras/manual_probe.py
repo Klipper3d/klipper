@@ -169,19 +169,30 @@ def verify_no_manual_probe(printer):
 
 # Helper to handle nozzle probe calls
 class AutoProbeHelper:
-    def __init__(self, printer, finalize_callback, pos):
+    def __init__(self, printer, probe_callback, gcmd, finalize_callback):
         self.gcode = printer.lookup_object('gcode')
         self.command_error = printer.command_error
-        self.pos = pos
+        self.probe_callback = probe_callback
+        self.gcmd = gcmd
+        self.pos = None
         self.finalize_callback = finalize_callback
-        self.gcode.register_command('ACCEPT', self.cmd_callback)
-    def cmd_callback(self, gcmd):
+        self.gcode.register_command('NEXT', self.cmd_next)
+        self.gcode.register_command('ACCEPT', self.cmd_accept)
+    def cmd_next(self, gcmd):
+        self.gcode.register_command('NEXT', None)
+        pos = self.probe_callback(self.gcmd)
+        self.pos = pos
+    def cmd_accept(self, gcmd):
         self.gcode.register_command('ACCEPT', None)
         self.finalize_callback(self.pos)
     def callback(self, eventtime):
         try:
-            self.gcode.run_script("ACCEPT")
+            self.gcode.run_script("NEXT")
         # Necessary error output happened inside run_script
+        except self.command_error:
+            pass
+        try:
+            self.gcode.run_script("ACCEPT")
         except self.command_error:
             pass
 
@@ -204,8 +215,7 @@ class ManualProbeHelper:
         method = gcmd.get("MANUAL_METHOD", "manual")
         if method != "manual":
             callback = self.manual_probe.get_manual_method(method)
-            pos = callback(gcmd)
-            aph = AutoProbeHelper(printer, finalize_callback, pos)
+            aph = AutoProbeHelper(printer, callback, gcmd, finalize_callback)
             reactor = self.printer.get_reactor()
             reactor.register_callback(aph.callback)
             return
