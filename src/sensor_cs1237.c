@@ -17,9 +17,9 @@
 struct cs1237_adc {
     struct timer timer;
     uint32_t rest_ticks;
-    uint32_t last_error;
     uint8_t config;
     uint8_t flags;
+    uint8_t is_configured;
     struct gpio_in dout;
     struct gpio_out dout_out;
     struct gpio_out sclk;
@@ -41,12 +41,12 @@ enum {
 static struct task_wake wake_cs1237;
 
 // The data sheet specifies at least 455ns for each SCLK high/low pulse.
-#define MIN_PULSE_TIME nsecs_to_ticks(600)
+#define MIN_PULSE_TIME nsecs_to_ticks(455)
 
 static uint32_t
 nsecs_to_ticks(uint32_t ns)
 {
-    return timer_from_us(ns * 1000) / 1000000;
+    return DIV_ROUND_UP(timer_from_us(ns * 1000), 1000000);
 }
 
 static void
@@ -73,8 +73,8 @@ cs1237_read_bits(struct cs1237_adc *cs, uint_fast8_t num_bits)
         irq_disable();
         gpio_out_write(cs->sclk, 1);
         cs1237_delay_noirq();
-        gpio_out_write(cs->sclk, 0);
         uint_fast8_t bit = gpio_in_read(cs->dout);
+        gpio_out_write(cs->sclk, 0);
         irq_enable();
         cs1237_delay();
         value = (value << 1) | bit;
@@ -99,10 +99,13 @@ static void
 cs1237_write_bits(struct cs1237_adc *cs, uint32_t value, uint32_t mask)
 {
     while (mask) {
-        gpio_out_write(cs->sclk, 1);
         gpio_out_write(cs->dout_out, !!(value & mask));
         cs1237_delay();
+        irq_disable();
+        gpio_out_write(cs->sclk, 1);
+        cs1237_delay_noirq();
         gpio_out_write(cs->sclk, 0);
+        irq_enable();
         cs1237_delay();
         mask >>= 1;
     }
@@ -116,9 +119,11 @@ cs1237_write_config(struct cs1237_adc *cs)
 {
     cs1237_clock_pulses(cs, 5);
     gpio_out_reset(cs->dout_out, 0);
-    cs1237_write_bits(cs, CS1237_WRITE_CONFIG << 1, 0x80);
-    cs1237_write_bits(cs, (uint16_t)cs->config << 1, 0x100);
+    cs1237_write_bits(cs, CS1237_WRITE_CONFIG, 0x40);
+    cs1237_clock_pulses(cs, 1);
+    cs1237_write_bits(cs, cs->config, 0x80);
     gpio_in_reset(cs->dout, 0);
+    cs1237_clock_pulses(cs, 1);
 }
 
 static uint_fast8_t
@@ -173,6 +178,7 @@ cs1237_read_adc(struct cs1237_adc *cs, uint8_t oid)
     }
 
     irq_disable();
+    old_flags |= cs->flags;
     cs->flags &= ~(CS_PENDING | CS_OVERFLOW);
     if (old_flags & CS_CONFIG_PENDING) {
         cs->flags &= ~CS_CONFIG_PENDING;
@@ -188,20 +194,25 @@ cs1237_read_adc(struct cs1237_adc *cs, uint8_t oid)
     if (counts & 0x800000)
         counts |= 0xff000000;
 
+    uint32_t error = 0;
     if ((status & 0x03) != 0x01)
-        cs->last_error = SAMPLE_ERROR_DESYNC;
+        error = SAMPLE_ERROR_DESYNC;
     else if ((old_flags & CS_CONFIG_VERIFY) && !(status & 0x04))
-        cs->last_error = SAMPLE_ERROR_CONFIG;
+        error = SAMPLE_ERROR_CONFIG;
     else if (old_flags & CS_OVERFLOW)
-        cs->last_error = SAMPLE_ERROR_READ_TOO_LONG;
+        error = SAMPLE_ERROR_READ_TOO_LONG;
 
     if (old_flags & CS_CONFIG_VERIFY) {
         irq_disable();
         cs->flags &= ~CS_CONFIG_VERIFY;
+        if (error)
+            cs->flags |= CS_CONFIG_PENDING;
+        else
+            cs->is_configured = 1;
         irq_enable();
     }
-    if (cs->last_error)
-        counts = cs->last_error;
+    if (error)
+        counts = error;
     else
         trigger_analog_update(cs->ta, counts);
     add_sample(cs, oid, counts);
@@ -213,9 +224,7 @@ command_config_cs1237(uint32_t *args)
     struct cs1237_adc *cs = oid_alloc(args[0], command_config_cs1237,
                                       sizeof(*cs));
     cs->timer.func = cs1237_event;
-    cs->config = args[1];
-    if (cs->config & 0x80)
-        shutdown("CS1237 reserved config bit must be zero");
+    cs->config = args[1] & 0x7f;
     cs->dout = gpio_in_setup(args[2], 0);
     cs->dout_out = gpio_out_setup(args[2], 0);
     gpio_in_reset(cs->dout, 0);
@@ -242,7 +251,6 @@ command_query_cs1237(uint32_t *args)
     struct cs1237_adc *cs = oid_lookup(args[0], command_config_cs1237);
     sched_del_timer(&cs->timer);
     cs->flags = 0;
-    cs->last_error = 0;
     cs->rest_ticks = args[1];
     if (!cs->rest_ticks) {
         gpio_out_write(cs->sclk, 1);
@@ -250,7 +258,8 @@ command_query_cs1237(uint32_t *args)
     }
     gpio_in_reset(cs->dout, 0);
     gpio_out_write(cs->sclk, 0);
-    cs->flags = CS_CONFIG_PENDING;
+    if (!cs->is_configured)
+        cs->flags = CS_CONFIG_PENDING;
     sensor_bulk_reset(&cs->sb);
     irq_disable();
     cs->timer.waketime = timer_read_time() + cs->rest_ticks;

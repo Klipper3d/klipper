@@ -17,7 +17,6 @@ class CS1237:
         self.printer = printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.last_error_count = 0
-        self.consecutive_fails = 0
 
         rate_options = {'10': 0, '40': 1, '640': 2, '1280': 3}
         gain_options = {'1': 0, '2': 1, '64': 2, '128': 3}
@@ -99,14 +98,13 @@ class CS1237:
         for ptime, value in samples:
             if value in errors:
                 self.last_error_count += 1
-                break
+                continue
             samples[count] = (round(ptime, 6), value,
                               round(value * adc_factor, 9))
             count += 1
         del samples[count:]
 
     def _start_measurements(self):
-        self.consecutive_fails = 0
         rest_ticks = self.mcu.seconds_to_clock(1. / (10. * self.sps))
         self.query_cmd.send([self.oid, rest_ticks])
         logging.info("CS1237 starting '%s' measurements at %d SPS",
@@ -121,28 +119,10 @@ class CS1237:
         logging.info("CS1237 finished '%s' measurements", self.name)
 
     def _process_batch(self, eventtime):
-        prev_overflows = self.ffreader.get_last_overflows()
-        prev_errors = self.last_error_count
         samples = self.ffreader.pull_samples()
         self._convert_samples(samples)
-        # Keep the error visible to load_cell even when restarting the reader.
-        # FixedFreqReader resets overflow accounting on a new capture.
-        total_overflows = self.ffreader.get_last_overflows()
-        overflows = self.ffreader.get_last_overflows() - prev_overflows
-        errors = self.last_error_count - prev_errors
-        if errors:
-            logging.error("%s: restarting CS1237 after sensor error", self.name)
-            self._finish_measurements()
-            self._start_measurements()
-        elif overflows:
-            self.consecutive_fails += 1
-            if self.consecutive_fails > 4:
-                self._finish_measurements()
-                self._start_measurements()
-        else:
-            self.consecutive_fails = 0
         return {'data': samples, 'errors': self.last_error_count,
-                'overflows': total_overflows}
+                'overflows': self.ffreader.get_last_overflows()}
 
 
 CS1237_SENSOR_TYPE = {'cs1237': CS1237}
