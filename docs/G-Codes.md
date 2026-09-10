@@ -157,7 +157,8 @@ The following commands are available when the
 section](Config_Reference.md#axis_twist_compensation) is enabled.
 
 #### AXIS_TWIST_COMPENSATION_CALIBRATE
-`AXIS_TWIST_COMPENSATION_CALIBRATE [AXIS=<X|Y>] [SAMPLE_COUNT=<value>]`
+`AXIS_TWIST_COMPENSATION_CALIBRATE [AXIS=<X|Y>] [SAMPLE_COUNT=<value>]
+[MANUAL_METHOD=manual]`
 
 Calibrates axis twist compensation by specifying the target axis or
 enabling automatic calibration.
@@ -1266,7 +1267,8 @@ applies the change to `tap_z_offset` so that future `tap` probes are
 updated to use the current Z G-Code offset.
 
 #### PROBE_EDDY_CURRENT_CALIBRATE
-`PROBE_EDDY_CURRENT_CALIBRATE CHIP=<config_name>`: This starts a tool
+`PROBE_EDDY_CURRENT_CALIBRATE CHIP=<config_name> [MANUAL_METHOD=manual]`:
+This starts a tool
 that calibrates the sensor resonance frequencies to corresponding Z
 heights. The tool will take a couple of minutes to complete. After
 completion, use the SAVE_CONFIG command to store the results in the
@@ -1588,7 +1590,7 @@ is enabled.
 
 #### TEMPERATURE_PROBE_CALIBRATE
 `TEMPERATURE_PROBE_CALIBRATE [PROBE=<probe name>] [TARGET=<value>] [STEP=<value>]
-[METHOD=<method>]`:
+[MANUAL_METHOD=<method>]`:
 Initiates probe drift calibration for eddy current based probes.  The `TARGET`
 is a target temperature for the last sample.  When the temperature recorded
 during a sample exceeds the `TARGET` calibration will complete.  The `STEP`
