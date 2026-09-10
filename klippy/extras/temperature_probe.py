@@ -387,13 +387,9 @@ class TemperatureProbe:
         # Capture start position and begin initial probe
         toolhead = self.printer.lookup_object("toolhead")
         self.start_pos = toolhead.get_position()[:2]
-        try:
-            manual_probe.ManualProbeHelper(
-                self.printer, gcmd, self._manual_probe_finalize
-            )
-        except self.printer.command_error:
-            self._finalize_drift_cal(False)
-            raise
+        manual_probe.ManualProbeHelper(
+            self.printer, gcmd, self._manual_probe_finalize
+        )
 
     cmd_TEMPERATURE_PROBE_NEXT_help = "Sample next probe drift temperature"
     def cmd_TEMPERATURE_PROBE_NEXT(self, gcmd):
@@ -413,12 +409,9 @@ class TemperatureProbe:
         curpos[2] = start_z
         toolhead.manual_move(curpos, probe_speed)
         self.gcode.register_command("ABORT", None)
-        try:
-            manual_probe.ManualProbeHelper(
-                self.printer, gcmd, self._manual_probe_finalize
-            )
-        except self.printer.command_error as e:
-            self._finalize_drift_cal(False, str(e))
+        manual_probe.ManualProbeHelper(
+            self.printer, gcmd, self._manual_probe_finalize
+        )
 
     cmd_TEMPERATURE_PROBE_COMPLETE_help = "Finish Probe Drift Calibration"
     def cmd_TEMPERATURE_PROBE_COMPLETE(self, gcmd):
