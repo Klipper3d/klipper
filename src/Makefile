@@ -15,6 +15,7 @@ src-$(CONFIG_WANT_NEOPIXEL) += neopixel.c
 src-$(CONFIG_WANT_PULSE_COUNTER) += pulse_counter.c
 src-$(CONFIG_WANT_ST7920) += lcd_st7920.c
 src-$(CONFIG_WANT_HD44780) += lcd_hd44780.c
+src-$(CONFIG_WANT_GC9A01) += lcd_gc9a01.c
 src-$(CONFIG_WANT_SOFTWARE_SPI) += spi_software.c
 src-$(CONFIG_WANT_SOFTWARE_I2C) += i2c_software.c
 src-$(CONFIG_WANT_THERMOCOUPLE) += thermocouple.c
