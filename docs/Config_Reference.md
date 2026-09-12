@@ -3347,6 +3347,11 @@ watched component.
 #   The fan speed (expressed as a value from 0.0 to 1.0) that the fan
 #   will be set to when a heater or stepper driver is active.
 #   The default is 1.0
+#heater_temp: 50.0
+#   A temperature (in Celsius) that the heater must drop below before
+#   the fan is disabled. If omitted, the controller fan will only stay on
+#   while the heater is actively being heated (i.e. as long as TARGET is set).
+#   The default is to ignore heater_temp and only watch heater activity.
 #idle_timeout:
 #   The amount of time (in seconds) after a stepper driver or heater
 #   was active and the fan should be kept running. The default
