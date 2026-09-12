@@ -1,0 +1,7 @@
+#Test of a valid display_font and display configuration
+DICTIONARY atmega2560.dict
+CONFIG display_font_valid.cfg
+
+STATUS
+HELP
+RESTART
