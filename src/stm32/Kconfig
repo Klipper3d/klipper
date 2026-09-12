@@ -216,6 +216,7 @@ config CLOCK_FREQ
     default 480000000 if MACH_STM32H750
     default 80000000 if MACH_STM32L412
     default 64000000 if MACH_N32G45x && STM32_CLOCK_REF_INTERNAL
+    default 96000000 if MACH_N32G45x && USB
     default 128000000 if MACH_N32G45x
 
 config FLASH_SIZE
@@ -306,7 +307,7 @@ choice
     config STM32_FLASH_START_C000
         bool "48KiB bootloader" if MACH_STM32F4x5 || MACH_STM32F401
     config STM32_FLASH_START_10000
-        bool "64KiB bootloader" if MACH_STM32F103 || MACH_STM32F4 || MACH_N32G45x
+        bool "64KiB bootloader" if MACH_STM32F1 || MACH_STM32F4
 
     config STM32_FLASH_START_800
         bool "2KiB bootloader" if MACH_STM32F103

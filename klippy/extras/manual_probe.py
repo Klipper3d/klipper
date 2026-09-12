@@ -5,11 +5,11 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, bisect, collections
 
-# Main probe results tuple.  The probe estimates that if the toollhead
-# is commanded to xy position (bed_x, bed_y) and then descends, the
+# Main probe results tuple.  The probe estimates that if the toolhead
+# is commanded to xy position [bed_x, bed_y] and then descends, the
 # nozzle will contact the bed at a toolhead z position of bed_z.  The
 # probe test itself was performed while the toolhead was at xyz
-# position (test_x, test_y, test_z).  All coordinates are relative to
+# position [test_x, test_y, test_z].  All coordinates are relative to
 # the frame (the coordinate system used in the config file).
 ProbeResult = collections.namedtuple('probe_result', [
     'bed_x', 'bed_y', 'bed_z', 'test_x', 'test_y', 'test_z'])

@@ -836,7 +836,9 @@ class MCUConnectHelper:
             % (self._name, message_count, version, build_versions),
             "MCU '%s' config: %s" % (self._name, " ".join(
                 ["%s=%s" % (k, v)
-                 for k, v in msgparser.get_constants().items()]))]
+                 for k, v in msgparser.get_constants().items()])),
+            "MCU '%s' kconfig: %s" % (self._name, repr(msgparser.get_kconfig()))
+        ]
         return "\n".join(log_info)
     def _attach_file(self):
         # In a debugging mode.  Open debug output file and read data dictionary
@@ -946,6 +948,7 @@ class MCUStatsHelper:
         self._get_status_info['mcu_version'] = version
         self._get_status_info['mcu_build_versions'] = build_versions
         self._get_status_info['mcu_constants'] = msgparser.get_constants()
+        self._get_status_info['mcu_kconfig'] = msgparser.get_kconfig()
         self._serial.register_response(self._handle_mcu_stats, 'stats')
     def _ready(self):
         if self._mcu.is_fileoutput():

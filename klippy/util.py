@@ -110,6 +110,20 @@ setup_python2_wrappers()
 
 
 ######################################################################
+# Python3 hacks
+######################################################################
+
+def setup_multiprocess_fork_method():
+    if sys.version_info.major < 3:
+        return
+    if sys.version_info.major >= 3 and sys.version_info.minor < 14:
+        return
+    import multiprocessing
+    multiprocessing.set_start_method("fork")
+setup_multiprocess_fork_method()
+
+
+######################################################################
 # General system and software information
 ######################################################################
 
@@ -206,7 +220,8 @@ def get_git_version(from_file=True):
     gitdir = os.path.join(klippy_src, '..')
     prog_desc = ('git', '-C', gitdir, 'describe', '--always',
                  '--tags', '--long', '--dirty')
-    prog_status = ('git', '-C', gitdir, 'status', '--porcelain', '--ignored')
+    prog_status = ('git', '-C', gitdir, 'status', '--porcelain', '--ignored',
+                   '--untracked-files=all')
     try:
         process = subprocess.Popen(prog_desc, stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)

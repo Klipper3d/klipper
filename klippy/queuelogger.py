@@ -59,6 +59,12 @@ MainQueueHandler = None
 
 def setup_bg_logging(filename, debuglevel):
     global MainQueueHandler
+    logging._srcfile = None             # filename, funcName, lineno, module
+    logging.logThreads = False          # thread, threadName
+    logging.logProcesses = False        # process
+    logging.logMultiprocessing = False  # processName
+    if hasattr(logging, "logAsyncioTasks"):
+        logging.logAsyncioTasks = False # taskName, python 3.12+
     ql = QueueListener(filename)
     MainQueueHandler = QueueHandler(ql.bg_queue)
     root = logging.getLogger()

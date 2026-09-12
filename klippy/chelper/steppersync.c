@@ -262,7 +262,7 @@ void __visible
 steppersync_set_time(struct steppersync *ss, double time_offset
                      , double mcu_freq)
 {
-    clock_fill(&ss->ce, mcu_freq, time_offset, 0, 0);
+    clock_fill(&ss->ce, mcu_freq, time_offset, 0);
     struct syncemitter *se;
     list_for_each_entry(se, &ss->se_list, ss_node) {
         if (se->sc)

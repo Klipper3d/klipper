@@ -35,7 +35,7 @@ struct queue_message {
 };
 
 struct clock_estimate {
-    uint64_t last_clock, conv_clock;
+    uint64_t conv_clock;
     double conv_time, est_freq;
 };
 
@@ -47,10 +47,10 @@ struct queue_message *message_fill(uint8_t *data, int len);
 struct queue_message *message_alloc_and_encode(uint32_t *data, int len);
 void message_free(struct queue_message *qm);
 void message_queue_free(struct list_head *root);
-uint64_t clock_from_clock32(struct clock_estimate *ce, uint32_t clock32);
+uint64_t clock_from_clock32(uint64_t last_clock, uint32_t clock32);
 double clock_to_time(struct clock_estimate *ce, uint64_t clock);
 uint64_t clock_from_time(struct clock_estimate *ce, double time);
 void clock_fill(struct clock_estimate *ce, double est_freq, double conv_time
-                , uint64_t conv_clock, uint64_t last_clock);
+                , uint64_t conv_clock);
 
 #endif // msgblock.h

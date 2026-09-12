@@ -11,8 +11,11 @@ Klipper supports the following standard G-Code commands:
 - Move to origin: `G28 [X] [Y] [Z]`
 - Turn off motors: `M18` or `M84`
 - Wait for current moves to finish: `M400`
-- Use absolute/relative distances for extrusion: `M82`, `M83`
 - Use absolute/relative coordinates: `G90`, `G91`
+- Force relative distances for extrusion: `M83`, `M82`
+  - Note: `M83` forces extrusions to use relative coordinates even if
+    `G90` absolute mode is selected. `M82` disables that forced mode
+    (it does not force the extruder to use absolute coordinates).
 - Set position: `G92 [X<pos>] [Y<pos>] [Z<pos>] [E<pos>]`
 - Set speed factor override percentage: `M220 S<percent>`
 - Set extrude factor override percentage: `M221 S<percent>`
@@ -715,12 +718,12 @@ specified G-Code speed.
 `SAVE_GCODE_STATE [NAME=<state_name>]`: Save the current g-code
 coordinate parsing state. Saving and restoring the g-code state is
 useful in scripts and macros. This command saves the current g-code
-absolute coordinate mode (G90/G91), absolute extrude mode (M82/M83),
-origin (G92), offset (SET_GCODE_OFFSET), speed override (M220),
-extruder override (M221), move speed, current XYZ position, and
-relative extruder "E" position. If NAME is provided it allows one to
-name the saved state to the given string. If NAME is not provided it
-defaults to "default".
+absolute coordinate mode (G90/G91), force relative extrude mode
+(M83/M82), origin (G92), offset (SET_GCODE_OFFSET), speed override
+(M220), extruder override (M221), move speed, current XYZ position,
+and relative extruder "E" position. If NAME is provided it allows one
+to name the saved state to the given string. If NAME is not provided
+it defaults to "default".
 
 #### RESTORE_GCODE_STATE
 `RESTORE_GCODE_STATE [NAME=<state_name>] [MOVE=1

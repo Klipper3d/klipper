@@ -233,8 +233,10 @@ The following information is available in the `gcode_move` object
   override and, for example, 2.0 would double requested extrusions.
 - `absolute_coordinates`: This returns True if in `G90` absolute
   coordinate mode or False if in `G91` relative mode.
-- `absolute_extrude`: This returns True if in `M82` absolute extrude
-  mode or False if in `M83` relative mode.
+- `absolute_extrude`: Returns True if absolute extrusions are
+  permitted. An `M83` force relative extrusion mode command causes
+  this value to return False. An `M82` command returns this value to
+  True.
 - `axis_map`: Provides a mechanism for finding the coordinate
   component for a given G-Code id that is used in `G1` commands. See
   the [Accessing Coordinates](#accessing-coordinates) section for
@@ -364,6 +366,10 @@ The following information is available in
 - `mcu_constants.<constant_name>`: Compile time constants reported by
   the micro-controller. The available constants may differ between
   micro-controller architectures and with each code revision.
+- `mcu_kconfig`: The minimal build configuration (`savedefconfig` output)
+  that the micro-controller firmware was compiled from, as reported by the
+  micro-controller. `None` if the firmware predates this feature or does not
+  provide it.
 - `last_stats.<statistics_name>`: Statistics information on the
   micro-controller connection.
 

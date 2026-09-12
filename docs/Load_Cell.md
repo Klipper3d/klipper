@@ -212,6 +212,34 @@ the frame in multiple places. Anodized aluminum extrusions do not conduct
 electricity well. You might need to sand the area where the grounding wire
 is attached to make good electrical contact.
 
+#### Interpolation
+To increase the precision of the probing result, the position of the first
+contact between nozzle and bed can be estimated by fitting a piecewise function
+to the measured data. The data will consist of two regions: while the nozzle is
+above the bed, the force will be constant (at the tare value). When the nozzle
+is in contact with the bed, the force will increase linearly with decreasing z
+position. A piecewise function is fitted to the data and the optimal z position
+of the split point is found by minimising the error squared. This enables a
+resolution finer than the distance between the sampling points and will also be
+less sensitive to noise.
+
+Due to both physical and technical reasons, the interpolation uses data
+collected during an additional ascending movement after the initial descending
+move. The first 300ms of data collected during the ascending move will
+be used for the fit (this minimises the influence of tare drifts). The
+collected data must contain enough samples for the fit: at least 3 samples each
+below and above the contact point are required.
+
+It is recommended to use a relatively high trigger force for the probe to have
+a strong enough signal. If you have too few samples below the contact point,
+try increasing the `trigger_force` or reducing the `lift_speed`. However, if
+the `lift_speed` is too small, there will be too few samples above the contact
+point due to the 300ms window.
+
+The distance of the ascending move can be configured through the
+`sample_retract_dist` parameter.
+
+
 ## Load Cell Probe Setup
 
 This section covers the process for commissioning a load cell probe.
