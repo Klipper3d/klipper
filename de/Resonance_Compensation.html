@@ -13,7 +13,7 @@
     
     
       
-        <title>Resonanz-Kompensation - Klipper-Dokumentation</title>
+        <title>Resonanz Kompensation - Klipper-Dokumentation</title>
       
     
     
@@ -106,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Resonanz-Kompensation
+              Resonanz Kompensation
             
           </span>
         </div>
@@ -709,14 +709,14 @@
       
       
         <label class="md-nav__link" for="__nav_7_5">
-          Resonanz-Kompensation
+          Resonanz Kompensation
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="Resonanz-Kompensation" data-md-level="2">
+      <nav class="md-nav" aria-label="Resonanz Kompensation" data-md-level="2">
         <label class="md-nav__title" for="__nav_7_5">
           <span class="md-nav__icon md-icon"></span>
-          Resonanz-Kompensation
+          Resonanz Kompensation
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
           
@@ -736,12 +736,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Resonanz-Kompensation
+          Resonanz Kompensation
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="Resonance_Compensation.html" class="md-nav__link md-nav__link--active">
-        Resonanz-Kompensation
+        Resonanz Kompensation
       </a>
       
         
@@ -775,8 +775,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#input-shaper-konfiguration" class="md-nav__link">
-    Input shaper Konfiguration
+  <a href="#input-shaper-konfiguration-resonanz-messung" class="md-nav__link">
+    Input shaper Konfiguration (Resonanz-Messung)
   </a>
   
 </li>
@@ -1538,8 +1538,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#input-shaper-konfiguration" class="md-nav__link">
-    Input shaper Konfiguration
+  <a href="#input-shaper-konfiguration-resonanz-messung" class="md-nav__link">
+    Input shaper Konfiguration (Resonanz-Messung)
   </a>
   
 </li>
@@ -1676,7 +1676,7 @@
 </a>
 
 
-<h1 id="resonanz-kompensation">Resonanz-Kompensation<a class="headerlink" href="#resonanz-kompensation" title="Permanent link">&para;</a></h1>
+<h1 id="resonanz-kompensation">Resonanz Kompensation<a class="headerlink" href="#resonanz-kompensation" title="Permanent link">&para;</a></h1>
 <p>Klipper unterstützt Input Shaping - eine Technik, die verwendet werden kann, um Ringing (auch bekannt als Echoing, Ghosting oder Rippling) in Drucken zu reduzieren. Ringing ist ein Fehler beim Flächendruck, bei dem sich typischerweise Elemente wie Kanten als subtiles "Echo" auf einer gedruckten Oberfläche wiederholen:</p>
 <p>|<img alt="Vibrationstest" src="img/ringing-test.jpg" />|<img alt="3D Benchy" src="img/ringing-3dbenchy.jpg" />|</p>
 <p>Ringing entsteht durch mechanische Schwingungen im Drucker infolge schneller Richtungswechsel beim Drucken. Beachten Sie, dass Ringing meist mechanische Ursachen hat: ein zu wenig steifer Druckerrahmen, lose oder zu elastische Riemen, Ausrichtungsprobleme mechanischer Bauteile, hohe bewegte Masse usw. Diese sollten nach Möglichkeit zuerst geprüft und behoben werden.</p>
@@ -1717,7 +1717,7 @@
 <p>Sind die Messungen unzuverlässig, weil zum Beispiel der Abstand zwischen den Schwingungen nicht gleichmäßig ist, kann das bedeuten, dass der Drucker auf derselben Achse mehrere Resonanzfrequenzen hat. Man kann stattdessen versuchen, dem im Abschnitt <a href="#unreliable-measurements-of-ringing-frequencies">Unzuverlässige Messungen der Ringing-Frequenzen</a> beschriebenen Abstimmungsprozess zu folgen, und dennoch von der Input-Shaping-Technik profitieren.</p>
 <p>Die Ringing-Frequenz kann von der Position des Modells auf dem Druckbett und von der Z-Höhe abhängen, <em>insbesondere bei Delta-Druckern</em>; Sie können prüfen, ob sich die Frequenzen an verschiedenen Positionen entlang der Seiten des Testmodells und in verschiedenen Höhen unterscheiden. Ist das der Fall, können Sie die mittleren Ringing-Frequenzen über die X- und die Y-Achse berechnen.</p>
 <p>Ist die gemessene Ringing-Frequenz sehr niedrig (unter etwa 20-25 Hz), kann es sinnvoll sein, zunächst in eine Versteifung des Druckers oder eine Verringerung der bewegten Masse zu investieren - je nachdem, was in Ihrem Fall möglich ist -, bevor Sie mit der weiteren Abstimmung des Input Shapings fortfahren und die Frequenzen anschließend erneut messen. Für viele verbreitete Druckermodelle gibt es dafür bereits fertige Lösungen.</p>
-<p>Beachten Sie, dass sich die Ringing-Frequenzen ändern können, wenn am Drucker Änderungen vorgenommen werden, die die bewegte Masse oder die Steifigkeit des Systems beeinflussen, zum Beispiel:</p>
+<p>Beachten Sie, dass sich die Ringing-Frequenzen ändern können, wenn am Drucker Änderungen vorgenommen werden, die bewegte Masse oder die Steifigkeit des Systems beeinflussen, zum Beispiel:</p>
 <ul>
 <li>Am Druckkopf werden Komponenten montiert, entfernt oder ausgetauscht, die seine Masse verändern, z. B. ein neuer (schwererer oder leichterer) Schrittmotor für einen Direktextruder, ein neues Hotend, ein schwerer Lüfter mit Luftführung usw.</li>
 <li>Die Riemen gespannt sind.</li>
@@ -1725,7 +1725,7 @@
 <li>An einem Drucker mit bewegtem Bett wird ein anderes Bett eingebaut, Glas ergänzt usw.</li>
 </ul>
 <p>Werden solche Änderungen vorgenommen, ist es ratsam, zumindest die Ringing-Frequenzen zu messen, um zu prüfen, ob sie sich verändert haben.</p>
-<h3 id="input-shaper-konfiguration">Input shaper Konfiguration<a class="headerlink" href="#input-shaper-konfiguration" title="Permanent link">&para;</a></h3>
+<h3 id="input-shaper-konfiguration-resonanz-messung">Input shaper Konfiguration (Resonanz-Messung)<a class="headerlink" href="#input-shaper-konfiguration-resonanz-messung" title="Permanent link">&para;</a></h3>
 <p>Nachdem die Ringing-Frequenzen für die X- und die Y-Achse gemessen wurden, können Sie Ihrer <code>printer.cfg</code> den folgenden Abschnitt hinzufügen:</p>
 <div class="highlight"><pre><span></span><code>[input_shaper]
 shaper_freq_x: ...  # frequency for the X mark of the test model
@@ -1768,7 +1768,7 @@ shaper_type: mzv
 <p>Mit steigender Beschleunigung nimmt die Glättung zu und der tatsächliche Spalt im Druck wird breiter:</p>
 <p><img alt="Shaper smoothing" src="img/shaper-smoothing.jpg" /></p>
 <p>In diesem Bild nimmt die Beschleunigung von links nach rechts zu, und der Spalt beginnt ab 3500 mm/s^2 zu wachsen (fünftes Band von links). Ein guter Wert für max_accel ist in diesem Fall also 3000 (mm/s^2), um übermäßige Glättung zu vermeiden.</p>
-<p>Halten Sie die Beschleunigung fest, bei der der Spalt in Ihrem Testdruck noch sehr klein ist. Sehen Sie Wülste, aber selbst bei hohen Beschleunigungen überhaupt keinen Spalt in der Wand, kann das an deaktiviertem Pressure Advance liegen, insbesondere bei Bowden-Extrudern. Wiederholen Sie den Druck in diesem Fall mit aktiviertem PA. Es kann auch die Folge eines falsch kalibrierten (zu hohen) Filamentflusses sein; das sollten Sie ebenfalls prüfen.</p>
+<p>Halten Sie die Beschleunigung fest, bei der Spalt in Ihrem Testdruck noch sehr klein ist. Sehen Sie Wülste, aber selbst bei hohen Beschleunigungen überhaupt keinen Spalt in der Wand, kann das an deaktiviertem Pressure Advance liegen, insbesondere bei Bowden-Extrudern. Wiederholen Sie den Druck in diesem Fall mit aktiviertem PA. Es kann auch die Folge eines falsch kalibrierten (zu hohen) Filamentflusses sein; das sollten Sie ebenfalls prüfen.</p>
 <p>Wählen Sie den kleineren der beiden Beschleunigungswerte (aus Ringing und Glättung) und tragen Sie ihn als <code>max_accel</code> in die printer.cfg ein.</p>
 <p>Als Hinweis: Es kann vorkommen - insbesondere bei niedrigen Ringing-Frequenzen -, dass der EI-Shaper selbst bei niedrigeren Beschleunigungen zu viel Glättung verursacht. In diesem Fall kann MZV die bessere Wahl sein, da er höhere Beschleunigungswerte erlaubt.</p>
 <p>Bei sehr niedrigen Ringing-Frequenzen (etwa 25 Hz und darunter) kann selbst der MZV-Shaper zu viel Glättung erzeugen. Ist das der Fall, können Sie die Schritte im Abschnitt <a href="#choosing-input-shaper">Auswahl des Input Shapers</a> auch mit dem ZV-Shaper wiederholen, indem Sie stattdessen den Befehl <code>SET_INPUT_SHAPER SHAPER_TYPE=ZV</code> verwenden. Der ZV-Shaper sollte noch weniger Glättung erzeugen als MZV, reagiert jedoch empfindlicher auf Fehler bei der Messung der Ringing-Frequenzen.</p>
@@ -1866,7 +1866,7 @@ gcode:
 <p>Die meisten Anwender werden im Gegensatz zu den X- und Y-Shapern wahrscheinlich keine direkte Verbesserung der Druckqualität feststellen. Anwender von Delta-Druckern, Druckern mit fliegendem Portal oder Druckern mit schweren beweglichen Betten können jedoch möglicherweise die Kinematikgrenzwerte <code>max_z_accel</code> und <code>max_z_velocity</code> erhöhen und so schnellere Z-Bewegungen erzielen. Dies kann besonders bei Werkzeugwechslern nützlich sein, aber auch, wenn im Slicer Z-Hops aktiviert sind. Im Allgemeinen berichten viele Anwender nach Aktivierung des Z-Input-Shapers von einem ruhigeren Lauf der Z-Achse, was den Betriebskomfort des Druckers erhöhen und die Lebensdauer der Z-Achsen-Komponenten etwas verlängern kann.</p>
 <h2 id="technische-details">Technische Details<a class="headerlink" href="#technische-details" title="Permanent link">&para;</a></h2>
 <h3 id="input-shapers">Input shapers<a class="headerlink" href="#input-shapers" title="Permanent link">&para;</a></h3>
-<p>Dieser Abschnitt bietet einen kurzen Überblick über einige technische Aspekte der unterstützten Input Shaper. Die in Klipper verwendeten Input Shaper sind mit Ausnahme von MZV recht standardmäßig; eine ausführlichere Übersicht findet sich in den Artikeln, die die jeweiligen Shaper beschreiben.</p>
+<p>Dieser Abschnitt bietet einen kurzen Überblick über einige technische Aspekte der unterstützten Input Shaper. Die in Klipper verwendeten Input Shaper sind mit Ausnahme von MZV recht standardmäßig; eine ausführlichere Übersicht findet sich in den Artikeln, die jeweiligen Shaper beschreiben.</p>
 <p>MZV steht für einen Modified-ZV-Input-Shaper. Die klassische Definition des ZV-Shapers geht von zwei Impulsen und einer Gesamtdauer <code>t</code> aus, die 1/2 der gedämpften Schwingungsperiode <code>Td</code> entspricht. Es ist jedoch möglich, eine verallgemeinerte Form des ZV-Input-Shapers mit <code>n &gt;= 3</code> Impulsen und einer beliebigen Gesamtdauer <code>t &gt;= 0.5 * Td</code> zu konstruieren (wobei das Maximum von <code>t</code> vom Wert <code>n</code> abhängt) - siehe beispielsweise die SNA-ZV- und MIS-ZV-Input-Shaper, die als Spezialfälle einer allgemeineren Implementierung des MZV-Input-Shapers in Klipper betrachtet werden können. Die Standardparameter von MZV in Klipper sind <code>n=3</code>, <code>t=0.75</code> (von <code>Td</code>); dieser Shaper wurde als Zwischenstufe zwischen ZV und ZVD entwickelt und bietet eine bessere Schwingungsunterdrückung als ZV, wenn die ermittelten (gemessenen) Shaper-Parameter von den tatsächlich benötigten Werten des Druckers abweichen, sowie eine geringere Glättung als ZVD. Seine spezifische Dauer <code>t=0.75</code> liegt effektiv genau zwischen ZV (mit <code>t=0.5</code> von <code>Td</code>) und ZVD (<code>t=1</code> von <code>Td</code>) und funktioniert bei vielen realen 3D-Druckern gut. Erfahrene Anwender können jedoch die Standardparameter des MZV-Input-Shapers anpassen und andere Varianten ausprobieren, die für ihren spezifischen Drucker besser geeignet sein könnten (diese abweichenden Varianten werden z. B. als <code>mzv(n=3,t=0.8)</code> oder <code>mzv(n=5,t=1.1)</code> im Abschnitt <code>[input_shaper]</code> oder als Parameter des Befehls <code>SET_INPUT_SHAPER</code> angegeben, ebenso als Parameter für das Skript <code>~/klipper/scripts/calibrate_shaper.py</code>, z. B. als <code>--shapers='2hump_ei,3hump_ei,mzv(n=6,t=1.0)'</code>). Diese benutzerdefinierten Shaper-Parameter werden auch vom Skript <code>~/klipper/scripts/graph_shaper.py</code> über z. B. den Parameter <code>--shaper='mzv(n=3,t=0.6666666666)'</code> unterstützt.</p>
 <p>Die folgende Tabelle zeigt einige (meist ungefähre) Parameter jedes Shapers mit ihren Standardwerten.</p>
 <table>
