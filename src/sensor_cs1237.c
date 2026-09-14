@@ -32,10 +32,16 @@ enum {
     CS_CONFIG_PENDING = 1<<2, CS_CONFIG_VERIFY = 1<<3,
 };
 
+// Internal errors transmitted in sample reports
+enum {
+    SE_DESYNC = 1, SE_READ_TOO_LONG, SE_CONFIG
+};
+
+DECL_ENUMERATION("cs1237_error:", "SERIAL_DATA_DESYNCHRONISED", SE_DESYNC);
+DECL_ENUMERATION("cs1237_error:", "READ_TOOK_TOO_LONG", SE_READ_TOO_LONG);
+DECL_ENUMERATION("cs1237_error:", "CONFIG_NOT_ACCEPTED", SE_CONFIG);
+
 #define BYTES_PER_SAMPLE 4
-#define SAMPLE_ERROR_DESYNC (1L << 31)
-#define SAMPLE_ERROR_READ_TOO_LONG (1L << 30)
-#define SAMPLE_ERROR_CONFIG (1L << 29)
 #define CS1237_WRITE_CONFIG 0x65
 
 static struct task_wake wake_cs1237;
@@ -194,13 +200,13 @@ cs1237_read_adc(struct cs1237_adc *cs, uint8_t oid)
     if (counts & 0x800000)
         counts |= 0xff000000;
 
-    uint32_t error = 0;
+    uint_fast8_t error = 0;
     if ((status & 0x03) != 0x01)
-        error = SAMPLE_ERROR_DESYNC;
+        error = SE_DESYNC;
     else if ((old_flags & CS_CONFIG_VERIFY) && !(status & 0x04))
-        error = SAMPLE_ERROR_CONFIG;
+        error = SE_CONFIG;
     else if (old_flags & CS_OVERFLOW)
-        error = SAMPLE_ERROR_READ_TOO_LONG;
+        error = SE_READ_TOO_LONG;
 
     if (old_flags & CS_CONFIG_VERIFY) {
         irq_disable();
@@ -212,7 +218,7 @@ cs1237_read_adc(struct cs1237_adc *cs, uint8_t oid)
         irq_enable();
     }
     if (error)
-        counts = error;
+        counts = (uint32_t)error << 24;
     else
         trigger_analog_update(cs->ta, counts);
     add_sample(cs, oid, counts);

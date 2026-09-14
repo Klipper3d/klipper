@@ -7,9 +7,6 @@ import logging
 from . import bulk_sensor
 
 UPDATE_INTERVAL = 0.10
-SAMPLE_ERROR_DESYNC = -0x80000000
-SAMPLE_ERROR_LONG_READ = 0x40000000
-SAMPLE_ERROR_CONFIG = 0x20000000
 
 
 class CS1237:
@@ -17,6 +14,7 @@ class CS1237:
         self.printer = printer = config.get_printer()
         self.name = config.get_name().split()[-1]
         self.last_error_count = 0
+        self._sensor_errors = {}
 
         rate_options = {'10': 0, '40': 1, '640': 2, '1280': 3}
         gain_options = {'1': 0, '2': 1, '64': 2, '128': 3}
@@ -61,6 +59,8 @@ class CS1237:
             "query_cs1237 oid=%c rest_ticks=%u", cq=cmd_queue)
         self.ffreader.setup_query_command("query_cs1237_status oid=%c",
                                           oid=self.oid, cq=cmd_queue)
+        errors = self.mcu.get_enumerations().get("cs1237_error:", {})
+        self._sensor_errors = {v: k for k, v in errors.items()}
 
     def setup_trigger_analog(self, trigger_analog_oid):
         self.mcu.add_config_cmd(
@@ -82,10 +82,7 @@ class CS1237:
                 'sample_rate': self.sps}
 
     def lookup_sensor_error(self, error_code):
-        errors = {SAMPLE_ERROR_DESYNC: "CS1237 serial data desynchronised",
-                  SAMPLE_ERROR_LONG_READ: "CS1237 read took too long",
-                  SAMPLE_ERROR_CONFIG: "CS1237 configuration was not accepted"}
-        return errors.get(error_code, "Unknown CS1237 error %d" % error_code)
+        return self._sensor_errors.get(error_code, "Unknown CS1237 error")
 
     def add_client(self, callback):
         self.batch_bulk.add_client(callback)
@@ -93,10 +90,9 @@ class CS1237:
     def _convert_samples(self, samples):
         adc_factor = 1. / (1 << 23)
         count = 0
-        errors = (SAMPLE_ERROR_DESYNC, SAMPLE_ERROR_LONG_READ,
-                  SAMPLE_ERROR_CONFIG)
         for ptime, value in samples:
-            if value in errors:
+            top_byte = (value >> 24) & 0xff
+            if top_byte != 0x00 and top_byte != 0xff:
                 self.last_error_count += 1
                 continue
             samples[count] = (round(ptime, 6), value,
