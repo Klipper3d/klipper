@@ -1418,6 +1418,9 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<p>20260915: Support for the <code>TEMPERATURE_PROBE_CALIBRATE</code> <code>METHOD=tap</code>
+parameter has been removed. Use
+<code>TEMPERATURE_PROBE_CALIBRATE MANUAL_METHOD=tap</code> instead.</p>
 <p>20260525: The internal implementation of "probe:z_virtual_endstop" has
 changed. Most users will not observe a change in behavior. Previously
 it was technically possible to mix "probe:z_virtual_endstop" with
