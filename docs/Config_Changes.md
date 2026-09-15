@@ -8,6 +8,10 @@ All dates in this document are approximate.
 
 ## Changes
 
+20260915: Support for the `TEMPERATURE_PROBE_CALIBRATE` `METHOD=tap`
+parameter has been removed. Use
+`TEMPERATURE_PROBE_CALIBRATE MANUAL_METHOD=tap` instead.
+
 20260525: The internal implementation of "probe:z_virtual_endstop" has
 changed. Most users will not observe a change in behavior. Previously
 it was technically possible to mix "probe:z_virtual_endstop" with
