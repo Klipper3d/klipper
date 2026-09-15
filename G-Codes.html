@@ -5066,7 +5066,8 @@ available for tle5012b chips.</p>
 <a href="Config_Reference.html#axis_twist_compensation">axis_twist_compensation config
 section</a> is enabled.</p>
 <h4 id="axis_twist_compensation_calibrate">AXIS_TWIST_COMPENSATION_CALIBRATE<a class="headerlink" href="#axis_twist_compensation_calibrate" title="Permanent link">&para;</a></h4>
-<p><code>AXIS_TWIST_COMPENSATION_CALIBRATE [AXIS=&lt;X|Y&gt;] [SAMPLE_COUNT=&lt;value&gt;]</code></p>
+<p><code>AXIS_TWIST_COMPENSATION_CALIBRATE [AXIS=&lt;X|Y&gt;] [SAMPLE_COUNT=&lt;value&gt;]
+[MANUAL_METHOD=manual]</code></p>
 <p>Calibrates axis twist compensation by specifying the target axis or
 enabling automatic calibration.</p>
 <ul>
@@ -6008,7 +6009,8 @@ default probes. If <code>METHOD=tap</code> is specified then the command instead
 applies the change to <code>tap_z_offset</code> so that future <code>tap</code> probes are
 updated to use the current Z G-Code offset.</p>
 <h4 id="probe_eddy_current_calibrate">PROBE_EDDY_CURRENT_CALIBRATE<a class="headerlink" href="#probe_eddy_current_calibrate" title="Permanent link">&para;</a></h4>
-<p><code>PROBE_EDDY_CURRENT_CALIBRATE CHIP=&lt;config_name&gt;</code>: This starts a tool
+<p><code>PROBE_EDDY_CURRENT_CALIBRATE CHIP=&lt;config_name&gt; [MANUAL_METHOD=manual]</code>:
+This starts a tool
 that calibrates the sensor resonance frequencies to corresponding Z
 heights. The tool will take a couple of minutes to complete. After
 completion, use the SAVE_CONFIG command to store the results in the
@@ -6280,7 +6282,7 @@ no change is applied.</p>
 is enabled.</p>
 <h4 id="temperature_probe_calibrate">TEMPERATURE_PROBE_CALIBRATE<a class="headerlink" href="#temperature_probe_calibrate" title="Permanent link">&para;</a></h4>
 <p><code>TEMPERATURE_PROBE_CALIBRATE [PROBE=&lt;probe name&gt;] [TARGET=&lt;value&gt;] [STEP=&lt;value&gt;]
-[METHOD=&lt;method&gt;]</code>:
+[MANUAL_METHOD=&lt;method&gt;]</code>:
 Initiates probe drift calibration for eddy current based probes.  The <code>TARGET</code>
 is a target temperature for the last sample.  When the temperature recorded
 during a sample exceeds the <code>TARGET</code> calibration will complete.  The <code>STEP</code>
