@@ -1,7 +1,7 @@
 # GD32E23x device headers
 
 `include/` contains the vendor/CMSIS-compatible GD32E23x device headers used by
-the Klipper platform code.  Runtime implementations belong in `src/gd32`.
+the Klipper platform code.  Runtime specializations belong in `src/stm32`.
 
 The headers were copied without content changes from
 https://github.com/CrealityOfficial/Ender-3_V3_KE_Klipper at commit

@@ -25,6 +25,71 @@
 
 #define OSC_STARTUP_TIMEOUT         ((uint32_t)0x000FFFFFU)
 
+#if CONFIG_CLOCK_REF_FREQ != 8000000
+#error "GD32E230 currently requires an 8Mhz external crystal"
+#endif
+
+uint32_t
+get_pclock_frequency(uint32_t periph_base)
+{
+    (void)periph_base;
+    return CONFIG_CLOCK_FREQ;
+}
+
+uint32_t
+is_enable_pclock(uint32_t pclk)
+{
+    if (pclk == SPI0)
+        pclk = RCU_SPI0;
+    else if (pclk == SPI1)
+        pclk = RCU_SPI1;
+    else if (pclk == USART0)
+        pclk = RCU_USART0;
+    else if (pclk == USART1)
+        pclk = RCU_USART1;
+    else if (pclk == I2C0)
+        pclk = RCU_I2C0;
+    else if (pclk == I2C1)
+        pclk = RCU_I2C1;
+    return RCU_REG_VAL(pclk) & BIT(RCU_BIT_POS(pclk));
+}
+
+int
+is_enabled_pclock(uint32_t pclk)
+{
+    return is_enable_pclock(pclk);
+}
+
+void
+enable_pclock(uint32_t pclk)
+{
+    if (pclk == SPI0)
+        pclk = RCU_SPI0;
+    else if (pclk == SPI1)
+        pclk = RCU_SPI1;
+    else if (pclk == USART0)
+        pclk = RCU_USART0;
+    else if (pclk == USART1)
+        pclk = RCU_USART1;
+    else if (pclk == I2C0)
+        pclk = RCU_I2C0;
+    else if (pclk == I2C1)
+        pclk = RCU_I2C1;
+    RCU_REG_VAL(pclk) |= BIT(RCU_BIT_POS(pclk));
+    RCU_REG_VAL(pclk);
+}
+
+void
+gpio_clock_enable(GPIO_TypeDef *regs)
+{
+    static const uint32_t gpio_clocks[] = {
+        RCU_GPIOA, RCU_GPIOB, RCU_GPIOC, 0, 0, RCU_GPIOF
+    };
+    uint32_t port = ((uint32_t)regs - GPIO_BASE) / 0x400;
+    if (port < ARRAY_SIZE(gpio_clocks) && gpio_clocks[port])
+        enable_pclock(gpio_clocks[port]);
+}
+
 void
 watchdog_task(void)
 {
@@ -107,7 +172,7 @@ watchdog_init(void)
 DECL_INIT(watchdog_init);
 
 
-uint32_t SystemCoreClock = SYSTEM_CLOCK_PLL_HXTAL;
+uint32_t SystemCoreClock = CONFIG_CLOCK_FREQ;
 
 static void systemClock72mHxtal(void)
 {
