@@ -1,4 +1,4 @@
-// Hardware I2C support for GD32F30x and GD32E23x
+// Hardware I2C support for GD32E23x
 //
 // Copyright (C) 2026  Xiaoyue Cui <2508041672@qq.com>
 //
@@ -21,22 +21,10 @@ struct i2c_info {
 DECL_ENUMERATION("i2c_bus", "i2c0", 0);
 DECL_CONSTANT_STR("BUS_PINS_i2c0", "PB6,PB7");
 
-#if CONFIG_MACH_GD32F30X
-DECL_ENUMERATION("i2c_bus", "i2c0a", 1);
-DECL_CONSTANT_STR("BUS_PINS_i2c0a", "PB8,PB9");
-DECL_ENUMERATION("i2c_bus", "i2c1", 2);
-DECL_CONSTANT_STR("BUS_PINS_i2c1", "PB10,PB11");
-static const struct i2c_info i2c_bus[] = {
-    { I2C0, RCU_I2C0, GPIO('B', 6), GPIO('B', 7), 0 },
-    { I2C0, RCU_I2C0, GPIO('B', 8), GPIO('B', 9), 1 },
-    { I2C1, RCU_I2C1, GPIO('B', 10), GPIO('B', 11), 0 },
-};
-#else
 // GD32E230 PB6/PB7 use AF1 for I2C0.
 static const struct i2c_info i2c_bus[] = {
     { I2C0, RCU_I2C0, GPIO('B', 6), GPIO('B', 7), 1 },
 };
-#endif
 
 static const struct i2c_info *active_bus[2];
 static uint32_t active_rate[2];
@@ -44,21 +32,12 @@ static uint32_t active_rate[2];
 static void
 i2c_gpio_setup(const struct i2c_info *ii)
 {
-#if CONFIG_MACH_GD32F30X
-    enable_pclock(RCU_AF);
-    if (ii->i2c == I2C0)
-        gpio_pin_remap_config(GPIO_I2C0_REMAP,
-                              ii->alternate ? ENABLE : DISABLE);
-    gpio_peripheral(ii->scl_pin, 3, 0);
-    gpio_peripheral(ii->sda_pin, 3, 0);
-#else
     gpio_init_af_set(ii->scl_pin, ii->alternate);
     gpio_init_af_set(ii->sda_pin, ii->alternate);
     gpio_init_mode_set(ii->scl_pin, GPIO_MODE_AF, GPIO_PUPD_PULLUP);
     gpio_init_mode_set(ii->sda_pin, GPIO_MODE_AF, GPIO_PUPD_PULLUP);
     gpio_init_output_options_set(ii->scl_pin, GPIO_OTYPE_OD);
     gpio_init_output_options_set(ii->sda_pin, GPIO_OTYPE_OD);
-#endif
 }
 
 static const struct i2c_info *
@@ -90,15 +69,10 @@ i2c_recover(uint32_t i2c)
     uint32_t ctl1 = I2C_CTL1(i2c), ckcfg = I2C_CKCFG(i2c), rt = I2C_RT(i2c);
     uint32_t scl = GPIO2BIT(ii->scl_pin), sda = GPIO2BIT(ii->sda_pin);
     I2C_CTL0(i2c) = 0;
-#if CONFIG_MACH_GD32F30X
-    gpio_peripheral(ii->scl_pin, 0, 0);
-    gpio_peripheral(ii->sda_pin, 0, 0);
-#else
     gpio_init_mode_set(ii->scl_pin, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP);
     gpio_init_mode_set(ii->sda_pin, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP);
     gpio_init_output_options_set(ii->scl_pin, GPIO_OTYPE_OD);
     gpio_init_output_options_set(ii->sda_pin, GPIO_OTYPE_OD);
-#endif
     GPIO_BOP(GPIOB) = scl | sda;
     i2c_delay();
     uint_fast8_t pulses;

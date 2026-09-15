@@ -1,4 +1,4 @@
-// Hardware serial support for GD32F30x and GD32E23x
+// Hardware serial support for GD32E23x
 //
 // Copyright (C) 2026  Xiaoyue Cui <2508041672@qq.com>
 //
@@ -45,11 +45,7 @@ USARTx_IRQHandler(void)
     if(USART_REG_VAL2(USARTx, USART_INT_FLAG_RBNE)
        & BIT(USART_BIT_POS2(USART_INT_FLAG_RBNE)))
     {
-#if CONFIG_MACH_GD32E23X
         serial_rx_byte(GET_BITS(USART_RDATA(USARTx), 0U, 8U));
-#elif CONFIG_MACH_GD32F303XX
-        serial_rx_byte(GET_BITS(USART_DATA(USARTx), 0U, 8U));
-#endif
     }
 
     if(USART_REG_VAL2(USARTx, USART_INT_FLAG_TBE)
@@ -64,11 +60,7 @@ USARTx_IRQHandler(void)
         }
            else
         {
-#if CONFIG_MACH_GD32E23X
             USART_TDATA(USARTx) = (USART_TDATA_TDATA & data);
-#elif CONFIG_MACH_GD32F303XX
-            USART_DATA(USARTx) = (USART_DATA_DATA & data);
-#endif
         }
     }
 }
@@ -93,35 +85,19 @@ serial_init(void)
 
     uint32_t baudval = CONFIG_SERIAL_BAUD;
 
-#if CONFIG_MACH_GD32F303XX
-
-    gpio_peripheral(gpio, 1, 3);
-
-#elif CONFIG_MACH_GD32E23X
-
     gpio_init_af_set(gpio, USARTx_AF);
 
     gpio_init_mode_set(gpio,GPIO_MODE_AF, GPIO_PUPD_PULLUP);
 
     gpio_init_output_options_set(gpio,GPIO_OTYPE_PP);
-
-#endif
 
     gpio = GPIO_Tx;
 
-#if CONFIG_MACH_GD32F303XX
-
-    gpio_peripheral(gpio, 3, 1);
-
-#elif CONFIG_MACH_GD32E23X
-
     gpio_init_af_set(gpio, USARTx_AF);
 
     gpio_init_mode_set(gpio,GPIO_MODE_AF, GPIO_PUPD_PULLUP);
 
     gpio_init_output_options_set(gpio,GPIO_OTYPE_PP);
-
-#endif
 
     enable_pclock(USARTx_PCLK);
 
@@ -138,8 +114,6 @@ serial_init(void)
     USART_CTL0(USARTx) &= ~(USART_CTL0_PM | USART_CTL0_PCEN);
 
     USART_CTL0(USARTx) |= USART_PM_NONE;
-
-#if CONFIG_MACH_GD32E23X
 
     if(USART_CTL0(USARTx) & USART_CTL0_OVSMOD)
     {
@@ -165,20 +139,6 @@ serial_init(void)
         USART_BAUD(USARTx) = ((USART_BAUD_FRADIV | USART_BAUD_INTDIV)
                               & (intdiv | fradiv));
     }
-
-#elif CONFIG_MACH_GD32F303XX
-
-    /* oversampling by 16, configure the value of USART_BAUD */
-    udiv = (uclk + baudval / 2U) / baudval;
-
-    intdiv = udiv & 0x0000fff0U;
-
-    fradiv = udiv & 0x0000000fU;
-
-    USART_BAUD(USARTx) = ((USART_BAUD_FRADIV | USART_BAUD_INTDIV)
-                          & (intdiv | fradiv));
-
-#endif
 
     USART_CTL0(USARTx) &= ~USART_CTL0_REN;
 

@@ -111,6 +111,18 @@ choice
         bool "Nation N32G455"
         select MACH_N32G45x
         select MACH_STM32F1
+    config MACH_GD32F303XB
+        bool "GigaDevice GD32F303xB"
+        select MACH_GD32F303XX
+        select MACH_STM32F1
+    config MACH_GD32F303XC
+        bool "GigaDevice GD32F303xC"
+        select MACH_GD32F303XX
+        select MACH_STM32F1
+    config MACH_GD32F303XE
+        bool "GigaDevice GD32F303xE"
+        select MACH_GD32F303XX
+        select MACH_STM32F1
 endchoice
 
 config MACH_STM32F103x6
@@ -148,6 +160,8 @@ config MACH_STM32F4x5 # F405, F407, F429 series
 config MACH_STM32L4
     bool
 config MACH_N32G45x
+    bool
+config MACH_GD32F303XX
     bool
 config HAVE_STM32_USBFS
     bool
@@ -197,6 +211,8 @@ config MCU
     default "stm32h750xx" if MACH_STM32H750
     default "stm32l412xx" if MACH_STM32L412
     default "stm32f103xe" if MACH_N32G45x
+    default "stm32f103xb" if MACH_GD32F303XB
+    default "stm32f103xe" if MACH_GD32F303XC || MACH_GD32F303XE
 
 config CLOCK_FREQ
     int
@@ -218,6 +234,7 @@ config CLOCK_FREQ
     default 64000000 if MACH_N32G45x && STM32_CLOCK_REF_INTERNAL
     default 96000000 if MACH_N32G45x && USB
     default 128000000 if MACH_N32G45x
+    default 120000000 if MACH_GD32F303XX
 
 config FLASH_SIZE
     hex
@@ -231,6 +248,9 @@ config FLASH_SIZE
     default 0x20000 if MACH_STM32H750
     default 0x200000 if MACH_STM32H743 || MACH_STM32F765
     default 0x20000 if MACH_N32G45x
+    default 0x20000 if MACH_GD32F303XB
+    default 0x40000 if MACH_GD32F303XC
+    default 0x80000 if MACH_GD32F303XE
 
 config FLASH_BOOT_ADDRESS
     hex
@@ -259,6 +279,9 @@ config RAM_SIZE
     default 0x24000 if MACH_STM32G0Bx
     default 0x20000 if MACH_STM32H7
     default 0x10000 if MACH_N32G45x
+    default 0x8000 if MACH_GD32F303XB
+    default 0xc000 if MACH_GD32F303XC
+    default 0x10000 if MACH_GD32F303XE
 
 config STACK_SIZE
     int
@@ -266,7 +289,7 @@ config STACK_SIZE
 
 config STM32F103GD_DISABLE_SWD
     bool "Disable SWD at startup (for GigaDevice stm32f103 clones)"
-    depends on MACH_STM32F103 && LOW_LEVEL_OPTIONS
+    depends on (MACH_STM32F103 || MACH_GD32F303XX) && LOW_LEVEL_OPTIONS
     default n
     help
         The GigaDevice clone of the STM32F103 may not be able to
@@ -292,6 +315,8 @@ choice
     prompt "Bootloader offset"
     config STM32_FLASH_START_2000
         bool "8KiB bootloader" if MACH_STM32F1 || MACH_STM32F070 || MACH_STM32G0 || MACH_STM32G4 || MACH_STM32F0x2
+    config STM32_FLASH_START_3000
+        bool "12KiB bootloader" if MACH_GD32F303XX
     config STM32_FLASH_START_5000
         bool "20KiB bootloader" if MACH_STM32F103
     config STM32_FLASH_START_7000
@@ -326,6 +351,7 @@ config FLASH_APPLICATION_ADDRESS
     default 0x8000800 if STM32_FLASH_START_800
     default 0x8001000 if STM32_FLASH_START_1000
     default 0x8002000 if STM32_FLASH_START_2000
+    default 0x8003000 if STM32_FLASH_START_3000
     default 0x8004000 if STM32_FLASH_START_4000
     default 0x8005000 if STM32_FLASH_START_5000
     default 0x8007000 if STM32_FLASH_START_7000
