@@ -1,4 +1,4 @@
-// Hardware SPI support for GD32F30x and GD32E23x
+// Hardware SPI support for GD32E23x
 //
 // Copyright (C) 2026  Xiaoyue Cui <2508041672@qq.com>
 //
@@ -53,11 +53,6 @@ spi_wait_status(uint32_t spi, uint32_t mask, uint8_t want_set,
 static void
 spi_gpio_setup(const struct spi_info *si)
 {
-#if CONFIG_MACH_GD32F30X
-    gpio_peripheral(si->miso_pin, 1, -1);
-    gpio_peripheral(si->mosi_pin, 3, 1);
-    gpio_peripheral(si->sck_pin, 3, 1);
-#else
     gpio_init_af_set(si->miso_pin, si->function);
     gpio_init_af_set(si->mosi_pin, si->function);
     gpio_init_af_set(si->sck_pin, si->function);
@@ -67,7 +62,6 @@ spi_gpio_setup(const struct spi_info *si)
     gpio_init_output_options_set(si->miso_pin, GPIO_OTYPE_PP);
     gpio_init_output_options_set(si->mosi_pin, GPIO_OTYPE_PP);
     gpio_init_output_options_set(si->sck_pin, GPIO_OTYPE_PP);
-#endif
 }
 
 struct spi_config

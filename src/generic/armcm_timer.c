@@ -37,6 +37,8 @@ timer_set_diff(uint32_t value)
     SysTick->LOAD = value;
     SysTick->VAL = 0;
 #if !CONFIG_MACH_GD32F303XX
+    // Most chips generate a one-shot interrupt after clearing LOAD here.
+    // GD32F303 requires LOAD to remain set for the interrupt to trigger.
     SysTick->LOAD = 0;
 #endif
 }

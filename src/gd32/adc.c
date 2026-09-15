@@ -16,7 +16,6 @@
 DECL_CONSTANT("ADC_MAX",4095);
 #define ADC_TEMPERATURE_PIN 0xfe
 DECL_ENUMERATION("pin", "ADC_TEMPERATURE", ADC_TEMPERATURE_PIN);
-#if CONFIG_MACH_GD32E23X
 static const uint8_t adc_pin[] = {
     GPIO('A',0),GPIO('A',1),GPIO('A',2),GPIO('A',3),
     GPIO('A',4),GPIO('A',5),GPIO('A',6),GPIO('A',7),
@@ -46,51 +45,9 @@ static const uint8_t adc_pin[] = {
 #define _ADC_RDATA    ADC_RDATA
 #define _ADC_OVSAMPCTL    ADC_OVSAMPCTL
 
-#elif CONFIG_MACH_GD32F303XX
-static const uint8_t adc_pin[] = {
-    GPIO('A',0),GPIO('A',1),GPIO('A',2),GPIO('A',3),
-    GPIO('A',4),GPIO('A',5),GPIO('A',6),GPIO('A',7),
-    GPIO('B',0),GPIO('B',1),GPIO('C',0),GPIO('C',1),
-    GPIO('C',2),GPIO('C',3),GPIO('C',4),GPIO('C',5),
-    ADC_TEMPERATURE_PIN
-};
-
-#define ADCx        ADC0
-#define _ADC_STAT     ADC_STAT(ADCx)
-#define _ADC_CTL0    ADC_CTL0(ADCx)
-#define _ADC_CTL1    ADC_CTL1(ADCx)
-#define _ADC_SAMPT0    ADC_SAMPT0(ADCx)
-#define _ADC_SAMPT1    ADC_SAMPT1(ADCx)
-#define _ADC_IOFF0    ADC_IOFF0(ADCx)
-#define _ADC_IOFF1    ADC_IOFF1(ADCx)
-#define _ADC_IOFF2    ADC_IOFF2(ADCx)
-#define _ADC_IOFF3    ADC_IOFF3(ADCx)
-#define _ADC_WDHT    ADC_WDHT(ADCx)
-#define _ADC_WDLT    ADC_WDLT(ADCx)
-#define _ADC_RSQ0    ADC_RSQ0(ADCx)
-#define _ADC_RSQ1    ADC_RSQ1(ADCx)
-#define _ADC_RSQ2    ADC_RSQ2(ADCx)
-#define _ADC_ISQ    ADC_ISQ(ADCx)
-#define _ADC_IDATA0    ADC_IDATA0(ADCx)
-#define _ADC_IDATA1    ADC_IDATA1(ADCx)
-#define _ADC_IDATA2    ADC_IDATA2(ADCx)
-#define _ADC_IDATA3    ADC_IDATA3(ADCx)
-#define _ADC_RDATA    ADC_RDATA(ADCx)
-#define _ADC_OVSAMPCTL    ADC_OVSAMPCTL(ADCx)
-
-#define ADC_EXTTRIG_REGULAR_NONE    ADC0_1_2_EXTTRIG_REGULAR_NONE
-#define RCU_ADC                     RCU_ADC0
-#define RCU_ADC_PSC_OFFSET          ((uint32_t)14U)
-#else
-#error "Invalid MCU type"
-#endif
-
-
 static void
 adcClockConfig(void)
 {
-#if CONFIG_MACH_GD32E23X
-
     RCU_CFG0 &= ~RCU_CFG0_ADCPSC;
 
     RCU_CFG2 &= ~(RCU_CFG2_ADCSEL | RCU_CFG2_IRC28MDIV | RCU_CFG2_ADCPSC2);
@@ -98,24 +55,6 @@ adcClockConfig(void)
     RCU_CFG0 |= RCU_ADC_CKAPB2_DIV6;
 
     RCU_CFG2 |= RCU_CFG2_ADCSEL;
-
-#elif CONFIG_MACH_GD32F303XX
-
-    uint32_t reg0 = RCU_CFG0;
-
-    uint32_t reg1 = RCU_CFG1;
-
-    reg0 &= ~(RCU_CFG0_ADCPSC_2 | RCU_CFG0_ADCPSC);
-
-    reg0 |= (RCU_CKADC_CKAPB2_DIV6 << RCU_ADC_PSC_OFFSET);
-
-    reg1 &= ~RCU_CFG1_ADCPSC_3;
-
-    RCU_CFG0 = reg0;
-
-    RCU_CFG1 = reg1;
-
-#endif
 }
 
 
@@ -211,8 +150,6 @@ struct gpio_adc gpio_adc_setup(uint8_t pin)
 
     enable_pclock(RCU_ADC);
 
-#if CONFIG_MACH_GD32E23X
-
     if(pin == ADC_TEMPERATURE_PIN)
     {
         _ADC_CTL1 |= ADC_CTL1_TSVREN;
@@ -221,20 +158,6 @@ struct gpio_adc gpio_adc_setup(uint8_t pin)
     {
         gpio_init_mode_set(pin, GPIO_MODE_ANALOG, GPIO_PUPD_NONE);
     }
-
-#elif CONFIG_MACH_GD32F303XX
-    if(pin == ADC_TEMPERATURE_PIN)
-    {
-        _ADC_CTL1 |= ADC_CTL1_TSVREN;
-    }
-    else
-    {
-        gpio_peripheral(pin, 2, 0);
-    }
-
-    _ADC_CTL0 |= ADC_MODE_FREE;
-
-#endif
 
     adcClockConfig();
 
