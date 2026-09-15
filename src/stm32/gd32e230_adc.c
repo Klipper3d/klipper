@@ -125,7 +125,7 @@ adcRegularChannelConfig(uint8_t rank, uint8_t channel, uint32_t sample_time)
     }
 }
 
-struct gpio_adc gpio_adc_setup(uint8_t pin)
+struct gpio_adc gpio_adc_setup(uint32_t pin)
 {
     uint32_t chan;
 
@@ -156,7 +156,7 @@ struct gpio_adc gpio_adc_setup(uint8_t pin)
     }
     else
     {
-        gpio_init_mode_set(pin, GPIO_MODE_ANALOG, GPIO_PUPD_NONE);
+        gpio_peripheral(pin, GPIO_ANALOG, 0);
     }
 
     adcClockConfig();
@@ -192,6 +192,7 @@ struct gpio_adc gpio_adc_setup(uint8_t pin)
             shutdown("ADC calibration timeout");
     }
 
+    gpio_adc_rt.adc = (void *)ADC;
     return gpio_adc_rt;
 }
 
