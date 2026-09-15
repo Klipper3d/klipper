@@ -267,6 +267,72 @@ hardware temperature can alter the results. Therefore, for best
 results the calibration done here and the subsequent probing that
 utilizes that calibration should be done at the same temperature.
 
+### Diagnostics commands
+
+After calibration, the following commands may be useful for live
+diagnostics:
+
+- `PROBE_EDDY_CURRENT_QUERY CHIP=<config_name>`
+  - Reports the live sensor frequency median and corresponding calibrated
+    height at the current toolhead position.
+- `PROBE_EDDY_CURRENT_ESTIMATE_BACKLASH CHIP=<config_name>`
+  - Runs repeated above/below approaches to the same Z target and
+    reports cycle-by-cycle backlash estimates plus aggregate
+    statistics (`median`, `mad`, `min`, `max`).
+
+For both commands, keep the nozzle inside the calibrated Z range.
+If outside that range, the command will return an out-of-range error
+with movement guidance.
+
+In practice, these commands are most useful when they are run at a
+repeatable reference position and compared against a known baseline.
+They are intended to answer questions such as:
+
+- Is the sensor output currently stable?
+- Has repeatability changed after a config or hardware change?
+- Is Z backlash (or directional hysteresis) getting worse?
+
+Suggested practical workflow:
+
+1. Prepare a repeatable test position.
+   - Home XY (and Z if appropriate for your setup), move to a fixed XY
+     point near bed center, then move to a known Z (for example, near
+     1-3mm above bed).
+   - Reuse this same position for all future checks.
+
+2. Capture a baseline query result.
+   - Run `PROBE_EDDY_CURRENT_QUERY CHIP=<config_name>` several times
+     (for example, 3-5 runs).
+   - Record `freq_median` and `height` values and keep them with the
+     printer's current temperature conditions.
+   - Use this as your "known good" reference after calibration.
+
+3. Measure directional repeatability.
+   - Run `PROBE_EDDY_CURRENT_ESTIMATE_BACKLASH CHIP=<config_name>`.
+   - Record `estimate_median` and `estimate_mad`.
+   - Repeat this test after mechanical changes, speed changes, lead
+     screw service, or if first-layer consistency regresses.
+
+4. Compare against your own baseline over time.
+   - If query values at the same XY/Z drift significantly across
+     similar temperatures, suspect thermal effects or stale
+     calibration.
+   - If backlash `estimate_median` grows or `estimate_mad` becomes
+     erratic, suspect mechanical hysteresis, looseness, or motion
+     profile effects.
+
+What to do with results:
+
+- Stable query + stable backlash: keep current settings.
+- Stable query + rising backlash: inspect Z mechanics and approach
+  strategy (motion speed/accel/path), then re-test.
+- Query drift at same position/temperature: warm up to consistent
+  conditions, re-check, then consider re-running
+  `PROBE_EDDY_CURRENT_CALIBRATE`.
+- Frequent out-of-range in diagnostics: keep test positions within
+  calibration range and verify calibration was performed with the
+  current frequency/clock settings.
+
 ### Tap calibration
 
 In order to utilize "tap" probing it is necessary to configure some
