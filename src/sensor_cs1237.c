@@ -5,6 +5,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include <stdint.h>
+#include "autoconf.h" // CONFIG_MACH_AVR
 #include "basecmd.h" // oid_alloc
 #include "board/gpio.h" // gpio_out_write
 #include "board/irq.h" // irq_poll
@@ -58,6 +59,12 @@ nsecs_to_ticks(uint32_t ns)
 static void
 cs1237_delay_noirq(void)
 {
+    if (CONFIG_MACH_AVR) {
+        // Avoid slow timer calculations for this sub-microsecond delay.
+        asm("nop\n    nop\n    nop\n    nop\n    nop\n"
+            "    nop\n    nop\n    nop\n    nop\n    nop");
+        return;
+    }
     uint32_t end = timer_read_time() + MIN_PULSE_TIME;
     while (timer_is_before(timer_read_time(), end))
         ;
@@ -66,6 +73,9 @@ cs1237_delay_noirq(void)
 static void
 cs1237_delay(void)
 {
+    if (CONFIG_MACH_AVR)
+        // Pin and interrupt operations provide the remaining low pulse time.
+        return;
     uint32_t end = timer_read_time() + MIN_PULSE_TIME;
     while (timer_is_before(timer_read_time(), end))
         irq_poll();
@@ -217,10 +227,12 @@ cs1237_read_adc(struct cs1237_adc *cs, uint8_t oid)
             cs->is_configured = 1;
         irq_enable();
     }
-    if (error)
+    if (error) {
+        trigger_analog_note_error(cs->ta, error);
         counts = (uint32_t)error << 24;
-    else
+    } else {
         trigger_analog_update(cs->ta, counts);
+    }
     add_sample(cs, oid, counts);
 }
 
