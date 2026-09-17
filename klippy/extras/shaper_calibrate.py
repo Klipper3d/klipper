@@ -9,7 +9,7 @@ shaper_defs = importlib.import_module('.shaper_defs', 'extras')
 MIN_FREQ = 5.
 MAX_FREQ = 200.
 WINDOW_T_SEC = 0.5
-MAX_SHAPER_FREQ = 150.
+MAX_SHAPER_FREQ = 200.
 
 TEST_DAMPING_RATIOS=[0.075, 0.1, 0.15]
 

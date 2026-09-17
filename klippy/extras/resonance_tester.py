@@ -57,7 +57,7 @@ def _parse_axis(gcmd, raw_axis):
 class VibrationPulseTestGenerator:
     def __init__(self, config):
         self.min_freq = config.getfloat('min_freq', 5., minval=1.)
-        self.max_freq = config.getfloat('max_freq', 135.,
+        self.max_freq = config.getfloat('max_freq', 200.,
                                         minval=self.min_freq, maxval=300.)
         self.max_freq_z = config.getfloat('max_freq_z', 100.,
                                           minval=self.min_freq, maxval=300.)
