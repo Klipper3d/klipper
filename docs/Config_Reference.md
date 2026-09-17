@@ -333,6 +333,13 @@ radius:
 #horizontal_move_z: 5
 #   The height (in mm) that the head should be commanded to move to
 #   just prior to starting a probe operation. The default is 5.
+#wandering_step: 0.0
+#   The distance (in mm) to shift the mesh points in a 3x3 grid pattern
+#   on successive measurement cycles. This feature spreads probe wear
+#   across a wider area. Note that the grid will expand the probed area
+#   by up to ~1.41 * wandering_step; ensure your mesh_min, mesh_max, or
+#   mesh_radius leaves a safe margin from the physical limits to prevent
+#   "out of range" errors. Default is 0.0 (disabled).
 ```
 
 ### Deltesian Kinematics
@@ -681,6 +688,13 @@ radius:
 #horizontal_move_z: 5
 #   The height (in mm) that the head should be commanded to move to
 #   just prior to starting a probe operation. The default is 5.
+#wandering_step: 0.0
+#   The distance (in mm) to shift the mesh points in a 3x3 grid pattern
+#   on successive measurement cycles. This feature spreads probe wear
+#   across a wider area. Note that the grid will expand the probed area
+#   by up to ~1.41 * wandering_step; ensure your mesh_min, mesh_max, or
+#   mesh_radius leaves a safe margin from the physical limits to prevent
+#   "out of range" errors. Default is 0.0 (disabled).
 ```
 
 ### Cable winch Kinematics
@@ -1092,6 +1106,13 @@ Visual Examples:
 #horizontal_move_z: 5
 #   The height (in mm) that the head should be commanded to move to
 #   just prior to starting a probe operation. The default is 5.
+#wandering_step: 0.0
+#   The distance (in mm) to shift the mesh points in a 3x3 grid pattern
+#   on successive measurement cycles. This feature spreads probe wear
+#   across a wider area. Note that the grid will expand the probed area
+#   by up to ~1.41 * wandering_step; ensure your mesh_min, mesh_max, or
+#   mesh_radius leaves a safe margin from the physical limits to prevent
+#   "out of range" errors. Default is 0.0 (disabled).
 #mesh_radius:
 #   Defines the radius of the mesh to probe for round beds. Note that
 #   the radius is relative to the coordinate specified by the
@@ -1215,6 +1236,13 @@ information.
 #horizontal_move_z: 5
 #   The height (in mm) that the head should be commanded to move to
 #   just prior to starting a probe operation. The default is 5.
+#wandering_step: 0.0
+#   The distance (in mm) to shift the mesh points in a 3x3 grid pattern
+#   on successive measurement cycles. This feature spreads probe wear
+#   across a wider area. Note that the grid will expand the probed area
+#   by up to ~1.41 * wandering_step; ensure your mesh_min, mesh_max, or
+#   mesh_radius leaves a safe margin from the physical limits to prevent
+#   "out of range" errors. Default is 0.0 (disabled).
 ```
 
 ### [bed_screws]
@@ -1295,6 +1323,13 @@ information.
 #horizontal_move_z: 5
 #   The height (in mm) that the head should be commanded to move to
 #   just prior to starting a probe operation. The default is 5.
+#wandering_step: 0.0
+#   The distance (in mm) to shift the mesh points in a 3x3 grid pattern
+#   on successive measurement cycles. This feature spreads probe wear
+#   across a wider area. Note that the grid will expand the probed area
+#   by up to ~1.41 * wandering_step; ensure your mesh_min, mesh_max, or
+#   mesh_radius leaves a safe margin from the physical limits to prevent
+#   "out of range" errors. Default is 0.0 (disabled).
 #screw_thread: CW-M3
 #   The type of screw used for bed leveling, M3, M4, or M5, and the
 #   rotation direction of the knob that is used to level the bed.
@@ -1333,6 +1368,13 @@ extended [G-Code command](G-Codes.md#z_tilt) becomes available.
 #horizontal_move_z: 5
 #   The height (in mm) that the head should be commanded to move to
 #   just prior to starting a probe operation. The default is 5.
+#wandering_step: 0.0
+#   The distance (in mm) to shift the mesh points in a 3x3 grid pattern
+#   on successive measurement cycles. This feature spreads probe wear
+#   across a wider area. Note that the grid will expand the probed area
+#   by up to ~1.41 * wandering_step; ensure your mesh_min, mesh_max, or
+#   mesh_radius leaves a safe margin from the physical limits to prevent
+#   "out of range" errors. Default is 0.0 (disabled).
 #retries: 0
 #   Number of times to retry if the probed points aren't within
 #   tolerance.
@@ -1384,6 +1426,13 @@ Where x is the 0, 0 point on the bed
 #horizontal_move_z: 5
 #   The height (in mm) that the head should be commanded to move to
 #   just prior to starting a probe operation. The default is 5.
+#wandering_step: 0.0
+#   The distance (in mm) to shift the mesh points in a 3x3 grid pattern
+#   on successive measurement cycles. This feature spreads probe wear
+#   across a wider area. Note that the grid will expand the probed area
+#   by up to ~1.41 * wandering_step; ensure your mesh_min, mesh_max, or
+#   mesh_radius leaves a safe margin from the physical limits to prevent
+#   "out of range" errors. Default is 0.0 (disabled).
 #max_adjust: 4
 #   Safety limit if an adjustment greater than this value is requested
 #   quad_gantry_level will abort.
@@ -2385,6 +2434,13 @@ for more detailed information regarding symptoms, configuration and setup.
 #horizontal_move_z: 5
 #   The height (in mm) that the head should be commanded to move to
 #   just prior to starting a probe operation. The default is 5.
+#wandering_step: 0.0
+#   The distance (in mm) to shift the mesh points in a 3x3 grid pattern
+#   on successive measurement cycles. This feature spreads probe wear
+#   across a wider area. Note that the grid will expand the probed area
+#   by up to ~1.41 * wandering_step; ensure your mesh_min, mesh_max, or
+#   mesh_radius leaves a safe margin from the physical limits to prevent
+#   "out of range" errors. Default is 0.0 (disabled).
 calibrate_start_x: 20
 #   Defines the minimum X coordinate of the calibration
 #   This should be the X coordinate that positions the nozzle at the starting
