@@ -367,6 +367,30 @@ steppers, heaters, fans, Z probes, servos, LEDs, common hd44780/st7920
 LCD displays, the Trinamic UART control line may be wired to any
 general purpose IO pin.
 
+## How do I troubleshoot custom OLED display fonts?
+
+If text appears compressed into the upper half of an OLED display,
+verify the panel height in your [display](Config_Reference.md#display)
+config:
+
+```
+[display]
+lcd_type: ssd1306
+height: 32   # or 64, must match your physical panel
+```
+
+If Klipper fails to start after enabling a
+[display_font](Config_Reference.md#display_font), check:
+
+- The `font` name in `[display]` exactly matches a defined
+  `[display_font <name>]` section.
+- `font_file` exists and is readable by the Klipper service user.
+- `cell_height` is a multiple of 8.
+- For `charset: ascii`, the BDF contains all glyphs from codepoint 32
+  to 126.
+- BDF glyph `BBX` matches configured `cell_width` and `cell_height`
+  with offsets `(0, 0)`.
+
 ## How do I cancel an M109/M190 "wait for temperature" request?
 
 Navigate to the OctoPrint terminal tab and issue an M112 command in
