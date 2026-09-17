@@ -8,6 +8,9 @@ All dates in this document are approximate.
 
 ## Changes
 
+20261001: The `PID_CALIBRATE` now reports PID values at half their
+previous magnitude due to a correction in the underlying PID math.
+
 20260915: Support for the `TEMPERATURE_PROBE_CALIBRATE` `METHOD=tap`
 parameter has been removed. Use
 `TEMPERATURE_PROBE_CALIBRATE MANUAL_METHOD=tap` instead.
