@@ -21,6 +21,8 @@ struct i2c_software {
     uint32_t ticks;
 };
 
+#define I2C_SW_STRETCH_TIMEOUT_US 5000
+
 void
 command_i2c_set_sw_bus(uint32_t *args)
 {
@@ -46,34 +48,52 @@ i2c_delay(uint32_t ticks)
         ;
 }
 
-static void
-i2c_software_send_ack(struct i2c_software *is, const uint8_t ack)
+static int
+scl_release_wait(struct gpio_in g, uint32_t timeout)
+{
+    gpio_in_reset(g, 1);
+    int is_high = gpio_in_read(g);
+    while (timer_is_before(timer_read_time(), timeout) && !is_high)
+        is_high = gpio_in_read(g);
+    return is_high ? I2C_BUS_SUCCESS : I2C_BUS_TIMEOUT;
+}
+
+static int
+i2c_software_send_ack(struct i2c_software *is, const uint8_t ack
+                      , uint32_t timeout)
 {
     if (!ack) {
         gpio_out_reset(is->sda_out, 0);
     }
     i2c_delay(is->ticks);
-    gpio_in_reset(is->scl_in, 1);
+    int ret = scl_release_wait(is->scl_in, timeout);
+    if (ret != I2C_BUS_SUCCESS)
+        return ret;
     i2c_delay(is->ticks);
     gpio_out_reset(is->scl_out, 0);
+    return I2C_BUS_SUCCESS;
 }
 
-static uint8_t
-i2c_software_read_ack(struct i2c_software *is, uint_fast8_t state)
+static int
+i2c_software_read_ack(struct i2c_software *is, uint_fast8_t state
+                      , uint32_t timeout)
 {
     uint8_t nack = 0;
     if (state == 0)
         gpio_in_reset(is->sda_in, 1);
     i2c_delay(is->ticks);
-    gpio_in_reset(is->scl_in, 1);
+    int ret = scl_release_wait(is->scl_in, timeout);
+    if (ret != I2C_BUS_SUCCESS)
+        return ret;
     nack = gpio_in_read(is->sda_in);
     i2c_delay(is->ticks);
     gpio_out_reset(is->scl_out, 0);
-    return nack;
+    return nack ? I2C_BUS_NACK : I2C_BUS_SUCCESS;
 }
 
 static int
-i2c_software_send_byte(struct i2c_software *is, uint8_t b)
+i2c_software_send_byte(struct i2c_software *is, uint8_t b
+                       , uint32_t timeout)
 {
     uint_fast8_t state = 2;
     for (uint_fast8_t i = 0; i < 8; i++) {
@@ -88,59 +108,65 @@ i2c_software_send_byte(struct i2c_software *is, uint8_t b)
         }
         b <<= 1;
         i2c_delay(is->ticks);
-        gpio_in_reset(is->scl_in, 1);
+        int ret = scl_release_wait(is->scl_in, timeout);
+        if (ret != I2C_BUS_SUCCESS)
+            return ret;
         i2c_delay(is->ticks);
         gpio_out_reset(is->scl_out, 0);
     }
 
-    if (i2c_software_read_ack(is, state)) {
-        return I2C_BUS_NACK;
-    }
-
-    return I2C_BUS_SUCCESS;
+    return i2c_software_read_ack(is, state, timeout);
 }
 
-static uint8_t
-i2c_software_read_byte(struct i2c_software *is, uint8_t remaining)
+static int
+i2c_software_read_byte(struct i2c_software *is, uint8_t remaining, uint8_t *out
+                       , uint32_t timeout)
 {
     uint8_t b = 0;
     gpio_in_reset(is->sda_in, 1);
     for (uint_fast8_t i = 0; i < 8; i++) {
         i2c_delay(is->ticks);
-        gpio_in_reset(is->scl_in, 1);
+        int ret = scl_release_wait(is->scl_in, timeout);
+        if (ret != I2C_BUS_SUCCESS)
+            return ret;
         i2c_delay(is->ticks);
         b <<= 1;
         b |= gpio_in_read(is->sda_in);
         gpio_out_reset(is->scl_out, 0);
     }
-    i2c_software_send_ack(is, remaining == 0);
-    return b;
+    int ret = i2c_software_send_ack(is, remaining == 0, timeout);
+    if (ret != I2C_BUS_SUCCESS)
+        return ret;
+    *out = b;
+    return I2C_BUS_SUCCESS;
 }
 
 static int
-i2c_software_start(struct i2c_software *is, uint8_t addr)
+i2c_software_start(struct i2c_software *is, uint8_t addr, uint32_t timeout)
 {
     int ret;
     i2c_delay(is->ticks);
     gpio_in_reset(is->sda_in, 1);
-    gpio_in_reset(is->scl_in, 1);
+    ret = scl_release_wait(is->scl_in, timeout);
+    if (ret != I2C_BUS_SUCCESS)
+        return ret;
     i2c_delay(is->ticks);
     gpio_out_reset(is->sda_out, 0);
     i2c_delay(is->ticks);
     gpio_out_reset(is->scl_out, 0);
 
-    ret = i2c_software_send_byte(is, addr);
+    ret = i2c_software_send_byte(is, addr, timeout);
     if (ret == I2C_BUS_NACK)
         return I2C_BUS_START_NACK;
     return ret;
 }
 
 static void
-i2c_software_stop(struct i2c_software *is)
+i2c_software_stop(struct i2c_software *is, uint32_t timeout)
 {
     gpio_out_reset(is->sda_out, 0);
     i2c_delay(is->ticks);
-    gpio_in_reset(is->scl_in, 1);
+    scl_release_wait(is->scl_in, timeout);
     i2c_delay(is->ticks);
     gpio_in_reset(is->sda_in, 1);
 }
@@ -148,18 +174,20 @@ i2c_software_stop(struct i2c_software *is)
 int
 i2c_software_write(struct i2c_software *is, uint8_t write_len, uint8_t *write)
 {
-    int ret = i2c_software_start(is, is->addr);
+    uint32_t timeout = timer_read_time()
+        + timer_from_us(I2C_SW_STRETCH_TIMEOUT_US);
+    int ret = i2c_software_start(is, is->addr, timeout);
     if (ret != I2C_BUS_SUCCESS)
         goto out;
 
     while (write_len--) {
-        ret = i2c_software_send_byte(is, *write++);
+        ret = i2c_software_send_byte(is, *write++, timeout);
         if (ret != I2C_BUS_SUCCESS)
             break;
     }
 
 out:
-    i2c_software_stop(is);
+    i2c_software_stop(is, timeout);
     return ret;
 }
 
@@ -168,29 +196,33 @@ i2c_software_read(struct i2c_software *is, uint8_t reg_len, uint8_t *reg
                   , uint8_t read_len, uint8_t *read)
 {
     int ret;
+    uint32_t timeout = timer_read_time()
+        + timer_from_us(I2C_SW_STRETCH_TIMEOUT_US);
     if (reg_len) {
         // write the register
-        ret = i2c_software_start(is, is->addr);
+        ret = i2c_software_start(is, is->addr, timeout);
         if (ret != I2C_BUS_SUCCESS)
             goto out;
         while(reg_len--) {
-            ret = i2c_software_send_byte(is, *reg++);
+            ret = i2c_software_send_byte(is, *reg++, timeout);
             if (ret != I2C_BUS_SUCCESS)
                 goto out;
         }
 
     }
     // start/re-start and read data
-    ret = i2c_software_start(is, is->addr | 0x01);
+    ret = i2c_software_start(is, is->addr | 0x01, timeout);
     if (ret != I2C_BUS_SUCCESS) {
         ret = I2C_BUS_START_READ_NACK;
         goto out;
     }
     while(read_len--) {
-        *read = i2c_software_read_byte(is, read_len);
+        ret = i2c_software_read_byte(is, read_len, read, timeout);
+        if (ret != I2C_BUS_SUCCESS)
+            goto out;
         read++;
     }
 out:
-    i2c_software_stop(is);
+    i2c_software_stop(is, timeout);
     return ret;
 }
