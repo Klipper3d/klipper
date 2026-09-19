@@ -63,7 +63,7 @@ rptarget-$(CONFIG_RPXXXX_HAVE_BOOTLOADER) := $(OUT)klipper.bin
 
 # Set klipper.elf linker rules
 target-y += $(rptarget-y)
-CFLAGS_klipper.elf += -nostdlib -lgcc -lc_nano
+CFLAGS_klipper.elf += -nostdlib -lgcc $(LIBC_LDFLAG)
 CFLAGS_klipper.elf += -T $(OUT)src/rp2040/rpxxxx_link.ld
 OBJS_klipper.elf += $(stage2-y)
 $(OUT)klipper.elf: $(stage2-y) $(OUT)src/rp2040/rpxxxx_link.ld
