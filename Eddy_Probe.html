@@ -1407,6 +1407,26 @@
     Errors description
   </a>
   
+    <nav class="md-nav" aria-label="Errors description">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#possible-homing-errors-and-actionables" class="md-nav__link">
+    Possible homing errors and actionables:
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#possible-tap-errors-and-actionables" class="md-nav__link">
+    Possible TAP errors and actionables:
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -1572,6 +1592,26 @@
   <a href="#errors-description" class="md-nav__link">
     Errors description
   </a>
+  
+    <nav class="md-nav" aria-label="Errors description">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#possible-homing-errors-and-actionables" class="md-nav__link">
+    Possible homing errors and actionables:
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#possible-tap-errors-and-actionables" class="md-nav__link">
+    Possible TAP errors and actionables:
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2070,7 +2110,7 @@ to perform thermal drift calibration:</p>
 <p>As one may conclude, the calibration process outlined above is more challenging
 and time consuming than most other procedures.  It may require practice and several attempts to achieve an optimal calibration.</p>
 <h2 id="errors-description">Errors description<a class="headerlink" href="#errors-description" title="Permanent link">&para;</a></h2>
-<p>Possible homing errors and actionables:</p>
+<h3 id="possible-homing-errors-and-actionables">Possible homing errors and actionables:<a class="headerlink" href="#possible-homing-errors-and-actionables" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Sensor error<ul>
 <li>Check logs for detailed error</li>
@@ -2114,6 +2154,42 @@ warning indicator.</p>
 <p>You can try to redo the <code>LDC_CALIBRATE_DRIVE_CURRENT</code> calibration at work
 temperature or increase <code>reg_drive_current</code> by 1-2 from the calibrated value.</p>
 <p>Generally, it is like an engine check light. It may indicate an issue.</p>
+<h3 id="possible-tap-errors-and-actionables">Possible TAP errors and actionables:<a class="headerlink" href="#possible-tap-errors-and-actionables" title="Permanent link">&para;</a></h3>
+<ul>
+<li>insufficient lift (A vs B) - too small Z window received by the code<ul>
+<li>LIFT_SPEED/printer.max_z_velocity too low - must be at least 2.5
+  Recommended &gt;0.5 RPS. For motor cogging reasons.</li>
+<li>printer.max_z_accel too low - must be larger 35 mm/s^2.
+  Recommended 300 mm/s^2.</li>
+<li>SAMPLE_RETRACT_DIST too low
+  Recommended &gt;2 mm.</li>
+</ul>
+</li>
+<li>no contact found at z=Z (slope delta A vs B) - retraction analysis outputs
+  not expected data. Often toolhead has stopped in mid-air
+  because of the measurement noise.<ul>
+<li>Too high printer.max_z_accel - Z resonances, consider Z input shaper</li>
+<li>Mechanical vibrations - ex. toolhead fan</li>
+<li>Sensor noise (elevated chamber/bed temperature)</li>
+<li>Increase of tap_threshold normally allows to alleviate symptoms</li>
+</ul>
+</li>
+<li>invalid depress distance (Z vs A:B)<ul>
+<li>if Z &lt; A<ul>
+<li>tap_threshold too low</li>
+<li>PROBE_SPEED too low</li>
+<li>printer.max_z_accel too low</li>
+</ul>
+</li>
+<li>if Z &gt; B<ul>
+<li>Large toolhead tilt (mechanical/installation issue)</li>
+<li>PROBE_SPEED too high</li>
+<li>tap_threshold too high</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
 
               
             </article>
