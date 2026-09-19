@@ -12,7 +12,23 @@
 #include "sched.h" // DECL_INIT
 
 // Select the configured serial port
-#if CONFIG_STM32_SERIAL_USART1
+#if CONFIG_MACH_GD32E23X && CONFIG_STM32_SERIAL_USART1
+  DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA10,PA9");
+  #define GPIO_Rx GPIO('A', 10)
+  #define GPIO_Tx GPIO('A', 9)
+  #define USARTx_FUNCTION GPIO_FUNCTION(1)
+  #define USARTx ((USART_TypeDef *)USART0)
+  #define USARTx_IRQn USART0_IRQn
+  #define USARTx_IRQHandler USART0_IRQHandler
+#elif CONFIG_MACH_GD32E23X && CONFIG_STM32_SERIAL_USART2
+  DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA3,PA2");
+  #define GPIO_Rx GPIO('A', 3)
+  #define GPIO_Tx GPIO('A', 2)
+  #define USARTx_FUNCTION GPIO_FUNCTION(1)
+  #define USARTx ((USART_TypeDef *)USART1)
+  #define USARTx_IRQn USART1_IRQn
+  #define USARTx_IRQHandler USART1_IRQHandler
+#elif CONFIG_STM32_SERIAL_USART1
   DECL_CONSTANT_STR("RESERVE_PINS_serial", "PA10,PA9");
   #define GPIO_Rx GPIO('A', 10)
   #define GPIO_Tx GPIO('A', 9)

@@ -99,10 +99,10 @@ clock_setup(void)
         ;
 }
 
-// Return the RCC_CFGR bits that select the given PLL multiplier on the
-// n32g45x, whose PLLMUL field is five bits wide (PLLMUL[4] is bit 27)
+// Return the RCC_CFGR bits that select a PLL multiplier on STM32F1-compatible
+// chips with an extended PLLMUL field (PLLMUL[4] is bit 27).
 static uint32_t
-n32g45x_pll_multiplier_bits(uint32_t mul)
+extended_pll_multiplier_bits(uint32_t mul)
 {
     if (mul > 16)
         // Multipliers above 16 are encoded with PLLMUL[4] (bit 27) set
@@ -116,6 +116,16 @@ n32g45x_pll_multiplier_bits(uint32_t mul)
     #error "Unable to generate the requested clock rate from this crystal"
   #endif
   #if CONFIG_USB && CONFIG_CLOCK_FREQ != 96000000
+    #error "Unable to generate a 48Mhz usb clock at this system clock rate"
+  #endif
+#endif
+
+#if CONFIG_MACH_GD32F303XX
+  #if !CONFIG_STM32_CLOCK_REF_INTERNAL \
+      && (2 * CONFIG_CLOCK_FREQ) % CONFIG_CLOCK_REF_FREQ
+    #error "Unable to generate the requested clock rate from this crystal"
+  #endif
+  #if CONFIG_USB && CONFIG_CLOCK_FREQ != 120000000
     #error "Unable to generate a 48Mhz usb clock at this system clock rate"
   #endif
 #endif
@@ -137,11 +147,12 @@ clock_setup_n32g45x(void)
             cfgr |= RCC_CFGR_PLLXTPRE_HSE_DIV2;
         else
             div /= 2;
-        cfgr |= n32g45x_pll_multiplier_bits(div);
+        cfgr |= extended_pll_multiplier_bits(div);
     } else {
         // Configure PLL from internal 8Mhz oscillator (HSI)
         uint32_t div2 = (CONFIG_CLOCK_FREQ / 8000000) * 2;
-        cfgr = (0 << RCC_CFGR_PLLSRC_Pos) | n32g45x_pll_multiplier_bits(div2);
+        cfgr = ((0 << RCC_CFGR_PLLSRC_Pos)
+                | extended_pll_multiplier_bits(div2));
     }
     // Divide both APB busses by the same amount, using PCLK1's tighter
     // 36Mhz limit to choose the divisor (RCC_CFGR bits 15:14 are
@@ -169,6 +180,60 @@ clock_setup_n32g45x(void)
         ;
 
     // Switch system clock to PLL
+    RCC->CFGR = cfgr | RCC_CFGR_SW_PLL;
+    while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL)
+        ;
+}
+
+// The GD32F303 is register compatible with the STM32F103, but supports a
+// 120Mhz system clock and has an extended USB clock divider.
+#define GD32F303_USB_DIV2_5        (2 << 22)
+#define GD32F303_PWR_LDO_HIGH      (3 << 14)
+#define GD32F303_PWR_HIGHDR_ENABLE (1 << 16)
+#define GD32F303_PWR_HIGHDR_READY  (1 << 16)
+#define GD32F303_PWR_HIGHDR_SWITCH (1 << 17)
+#define GD32F303_PWR_SWITCH_READY  (1 << 17)
+
+static void
+clock_setup_gd32f303(void)
+{
+    uint32_t cfgr;
+    if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
+        RCC->CR |= RCC_CR_HSEON;
+        uint32_t div = CONFIG_CLOCK_FREQ / (CONFIG_CLOCK_REF_FREQ / 2);
+        cfgr = 1 << RCC_CFGR_PLLSRC_Pos;
+        if ((div & 1) && div <= 32)
+            cfgr |= RCC_CFGR_PLLXTPRE_HSE_DIV2;
+        else
+            div /= 2;
+        cfgr |= extended_pll_multiplier_bits(div);
+    } else {
+        uint32_t div2 = (CONFIG_CLOCK_FREQ / 8000000) * 2;
+        cfgr = ((0 << RCC_CFGR_PLLSRC_Pos)
+                | extended_pll_multiplier_bits(div2));
+    }
+    cfgr |= RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV2 | RCC_CFGR_ADCPRE_DIV8;
+    if (CONFIG_USB)
+        // The GD32F303 encoding 2 selects PLLCLK / 2.5 (120Mhz / 2.5=48Mhz).
+        cfgr |= GD32F303_USB_DIV2_5;
+    RCC->CFGR = cfgr;
+
+    // Select the high performance LDO mode before switching to 120Mhz.
+    RCC->APB1ENR |= RCC_APB1ENR_PWREN;
+    PWR->CR |= GD32F303_PWR_LDO_HIGH;
+
+    RCC->CR |= RCC_CR_PLLON;
+    FLASH->ACR = (2 << FLASH_ACR_LATENCY_Pos) | FLASH_ACR_PRFTBE;
+    while (!(RCC->CR & RCC_CR_PLLRDY))
+        ;
+
+    PWR->CR |= GD32F303_PWR_HIGHDR_ENABLE;
+    while (!(PWR->CSR & GD32F303_PWR_HIGHDR_READY))
+        ;
+    PWR->CR |= GD32F303_PWR_HIGHDR_SWITCH;
+    while (!(PWR->CSR & GD32F303_PWR_SWITCH_READY))
+        ;
+
     RCC->CFGR = cfgr | RCC_CFGR_SW_PLL;
     while ((RCC->CFGR & RCC_CFGR_SWS_Msk) != RCC_CFGR_SWS_PLL)
         ;
@@ -354,7 +419,9 @@ armcm_main(void)
     RCC->APB2ENR = 0;
 
     // Setup clocks
-    if (CONFIG_MACH_N32G45x)
+    if (CONFIG_MACH_GD32F303XX)
+        clock_setup_gd32f303();
+    else if (CONFIG_MACH_N32G45x)
         clock_setup_n32g45x();
     else
         clock_setup();
