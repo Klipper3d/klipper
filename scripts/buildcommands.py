@@ -222,7 +222,7 @@ class Handle_arm_irq:
             # The ResetHandler was not defined - don't build VectorTable
             return ""
         max_irq = max(self.irqs.keys())
-        table = ["    DefaultHandler,\n"] * (max_irq + armcm_offset + 1)
+        table = ["    DefaultHandler,\n"] * (max_irq + armcm_offset + 2)
         defs = []
         for num, func in self.irqs.items():
             if num < 1 - armcm_offset:
@@ -230,6 +230,7 @@ class Handle_arm_irq:
             defs.append("extern void %s(void);\n" % (func,))
             table[num + armcm_offset] = "    %s,\n" % (func,)
         table[0] = "    &_stack_end,\n"
+        table[-1] = "    (void*)0x55AA11EE,\n"
         fmt = """
 extern void DefaultHandler(void);
 extern uint32_t _stack_end;
