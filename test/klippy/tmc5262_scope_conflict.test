@@ -1,0 +1,6 @@
+# RT-OCSI may not replace a configured TMC5262 virtual endstop output
+CONFIG tmc5262.cfg
+DICTIONARY atmega2560.dict
+SHOULD_FAIL
+
+SET_TMC_FIELD STEPPER=stepper_x FIELD=do0_scope_en VALUE=1
