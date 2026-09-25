@@ -189,8 +189,11 @@ cs1237_read_adc(struct cs1237_adc *cs, uint8_t oid)
         raw = cs1237_read_bits(cs, 24);
         cs1237_write_config(cs);
     } else {
-        // Bits 25-27 are update1, reserved zero, and forced high.
-        raw = cs1237_read_bits(cs, 27);
+        // Bits 25-26 are update1 and a reserved zero.  Clock 27 only
+        // forces DOUT high until the next conversion is ready - its
+        // level depends on when the chip drives the line, not on the
+        // conversion, so discard it instead of checking it.
+        raw = cs1237_read_bits(cs, 27) >> 1;
     }
 
     irq_disable();
@@ -205,15 +208,15 @@ cs1237_read_adc(struct cs1237_adc *cs, uint8_t oid)
     if (old_flags & CS_CONFIG_PENDING)
         return;
 
-    uint_fast8_t status = raw & 0x07;
-    uint32_t counts = raw >> 3;
+    uint_fast8_t status = raw & 0x03;
+    uint32_t counts = raw >> 2;
     if (counts & 0x800000)
         counts |= 0xff000000;
 
     uint_fast8_t error = 0;
-    if ((status & 0x03) != 0x01)
+    if (status & 0x01)
         error = SE_DESYNC;
-    else if ((old_flags & CS_CONFIG_VERIFY) && !(status & 0x04))
+    else if ((old_flags & CS_CONFIG_VERIFY) && !(status & 0x02))
         error = SE_CONFIG;
     else if (old_flags & CS_OVERFLOW)
         error = SE_READ_TOO_LONG;
