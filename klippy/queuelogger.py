@@ -46,7 +46,10 @@ class QueueListener(logging.handlers.TimedRotatingFileHandler):
     def clear_rollover_info(self):
         self.rollover_info.clear()
     def doRollover(self):
+        before = self.rolloverAt
         logging.handlers.TimedRotatingFileHandler.doRollover(self)
+        if self.rolloverAt <= before:
+            return
         lines = [self.rollover_info[name]
                  for name in sorted(self.rollover_info)]
         lines.append(
