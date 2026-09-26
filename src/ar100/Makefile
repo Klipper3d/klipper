@@ -1,7 +1,7 @@
 CROSS_PREFIX=or1k-elf-
 dirs-y += src/generic src/ar100 lib/ar100
 
-CFLAGS		+= -O3
+CFLAGS		+= -O2
 CFLAGS		+= -fno-builtin
 CFLAGS		+= -fno-pie
 CFLAGS		+= -ffreestanding
