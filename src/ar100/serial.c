@@ -41,7 +41,7 @@ uint32_t r_uart_fifo_rcv(void){
 }
 
 void r_uart_putc(char c){
-  while(!(read_reg(R_UART_LSR) & 1<<5))
+  while(!(read_reg(R_UART_USR) & 1<<1))
     ;
   write_reg(R_UART_THR, c);
 }
