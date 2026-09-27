@@ -47,6 +47,8 @@ irq_disable(void)
 void
 irq_enable(void)
 {
+    if (r_uart_fifo_rcv())
+        sched_wake_task(&console_wake);
 }
 
 irqstatus_t
