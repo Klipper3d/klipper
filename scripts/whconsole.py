@@ -5,25 +5,46 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import sys, os, optparse, socket, fcntl, select, json, errno, time
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 
 # Set a file-descriptor as non-blocking
 def set_nonblock(fd):
     fcntl.fcntl(fd, fcntl.F_SETFL
                 , fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
 
-def webhook_socket_create(uds_filename):
-    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    sock.setblocking(0)
-    sys.stderr.write("Waiting for connect to %s\n" % (uds_filename,))
+def webhook_socket_create(server_address):
+    server_url = urlparse(server_address, allow_fragments=False)
+    if server_url.scheme == 'unix' or server_url.scheme == '':
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.setblocking(0)
+        server_address = server_url.path
+        sys.stderr.write("Waiting for connect to %s\n" % (server_url.path,))
+    elif server_url.scheme == 'tcp':
+        if server_url.netloc.startswith('['):
+            # IPv6 address
+            sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        else:
+            # IPv4 address
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_address = (server_url.hostname,
+                          server_url.port if server_url.port else 7120)
+        sys.stderr.write("Waiting for connect to %s:%d\n" % (server_address[0],
+                                                             server_address[1]))
+    else:
+        sys.stderr.write("Unknown scheme %s\n" % (server_url.scheme,))
+        sys.exit(-1)
     while 1:
         try:
-            sock.connect(uds_filename)
+            sock.connect(server_address)
         except socket.error as e:
             if e.errno == errno.ECONNREFUSED:
                 time.sleep(0.1)
                 continue
             sys.stderr.write("Unable to connect socket %s [%d,%s]\n"
-                             % (uds_filename, e.errno,
+                             % (server_address, e.errno,
                                 errno.errorcode[e.errno]))
             sys.exit(-1)
         break
@@ -31,10 +52,10 @@ def webhook_socket_create(uds_filename):
     return sock
 
 class KeyboardReader:
-    def __init__(self, uds_filename):
+    def __init__(self, server_address):
         self.kbd_fd = sys.stdin.fileno()
         set_nonblock(self.kbd_fd)
-        self.webhook_socket = webhook_socket_create(uds_filename)
+        self.webhook_socket = webhook_socket_create(server_address)
         self.poll = select.poll()
         self.poll.register(sys.stdin, select.POLLIN | select.POLLHUP)
         self.poll.register(self.webhook_socket, select.POLLIN | select.POLLHUP)
@@ -76,7 +97,7 @@ class KeyboardReader:
                     self.process_socket()
 
 def main():
-    usage = "%prog [options] <socket filename>"
+    usage = "%prog [options] <server address>"
     opts = optparse.OptionParser(usage)
     options, args = opts.parse_args()
     if len(args) != 1:
