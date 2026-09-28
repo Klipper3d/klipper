@@ -8,6 +8,12 @@ All dates in this document are approximate.
 
 ## Changes
 
+20260929: `[load_cell]` and `[load_cell_probe]` no longer read the
+sensor continuously after startup. The sensor is read while a probe,
+a `LOAD_CELL_*` command or an API client needs it, and the `force_g`,
+`min_force_g` and `max_force_g` status values are only reported while
+it is read. Use `LOAD_CELL_TRACK_FORCE` to keep it running.
+
 20260915: Support for the `TEMPERATURE_PROBE_CALIBRATE` `METHOD=tap`
 parameter has been removed. Use
 `TEMPERATURE_PROBE_CALIBRATE MANUAL_METHOD=tap` instead.

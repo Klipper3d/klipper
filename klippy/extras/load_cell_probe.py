@@ -322,6 +322,7 @@ class LoadCellProbingMove:
         probe.LookupZSteppers(config, dispatch.add_stepper)
         # internal state tracking
         self._tare_counts = 0
+        self._is_testing = False
 
     def _start_collector(self):
         toolhead = self._printer.lookup_object('toolhead')
@@ -378,11 +379,20 @@ class LoadCellProbingMove:
 
     # Wait for the MCU to trigger with no movement
     def probing_test(self, gcmd, timeout):
-        self._pause_and_tare(gcmd)
-        toolhead = self._printer.lookup_object('toolhead')
-        print_time = toolhead.get_last_move_time()
-        self._mcu_trigger_analog.home_start(print_time, 0., 0, 0.)
-        return self._mcu_trigger_analog.home_wait(print_time + timeout)
+        # keep the sensor running while waiting for a tap
+        self._is_testing = True
+        self._load_cell.add_client(self._test_cb)
+        try:
+            self._pause_and_tare(gcmd)
+            toolhead = self._printer.lookup_object('toolhead')
+            print_time = toolhead.get_last_move_time()
+            self._mcu_trigger_analog.home_start(print_time, 0., 0, 0.)
+            return self._mcu_trigger_analog.home_wait(print_time + timeout)
+        finally:
+            self._is_testing = False
+
+    def _test_cb(self, msg):
+        return self._is_testing
 
     def get_status(self, eventtime):
         trig_time = self._mcu_trigger_analog.get_last_trigger_time()
@@ -593,19 +603,29 @@ class LCBestFit:
 # ProbeSession that implements Tap logic
 class TapSession:
     def __init__(self, config, tapping_move,
-                 probe_offsets, probe_params_helper):
+                 probe_offsets, probe_params_helper, load_cell_inst):
         self._printer = config.get_printer()
         self._tapping_move = tapping_move
+        self._load_cell = load_cell_inst
         self._probe_offsets = probe_offsets
         self._probe_params_helper = probe_params_helper
         # Session state
         self._results = []
+        self._in_session = False
+
+    # keep the sensor running for the whole session
+    def _session_cb(self, msg):
+        return self._in_session
 
     def start_probe_session(self, gcmd):
+        if not self._in_session:
+            self._in_session = True
+            self._load_cell.add_client(self._session_cb)
         return self
 
     def end_probe_session(self):
         self._results = []
+        self._in_session = False
 
     # probe until a single good sample is returned or retries are exhausted
     def run_probe(self, gcmd):
@@ -698,7 +718,8 @@ class LoadCellPrinterProbe:
         self._tapping_move = TappingMove(config, load_cell_probing_move,
             config_helper)
         tap_session = TapSession(config, self._tapping_move,
-                                 self._probe_offsets, self._param_helper)
+                                 self._probe_offsets, self._param_helper,
+                                 self._load_cell)
         self._probe_session = probe.SampleAveragingHelper(config,
             self._param_helper, tap_session.start_probe_session)
         # printer integration
