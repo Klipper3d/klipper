@@ -99,21 +99,9 @@ cs1237_read_bits(struct cs1237_adc *cs, uint_fast8_t num_bits)
 }
 
 static void
-cs1237_clock_pulses(struct cs1237_adc *cs, uint_fast8_t count)
+cs1237_write_bits(struct cs1237_adc *cs, uint32_t value, uint_fast8_t num_bits)
 {
-    while (count--) {
-        irq_disable();
-        gpio_out_write(cs->sclk, 1);
-        cs1237_delay_noirq();
-        gpio_out_write(cs->sclk, 0);
-        irq_enable();
-        cs1237_delay();
-    }
-}
-
-static void
-cs1237_write_bits(struct cs1237_adc *cs, uint32_t value, uint32_t mask)
-{
+    uint32_t mask = 1 << (num_bits - 1);
     while (mask) {
         gpio_out_write(cs->dout_out, !!(value & mask));
         cs1237_delay();
@@ -133,13 +121,12 @@ cs1237_write_bits(struct cs1237_adc *cs, uint32_t value, uint32_t mask)
 static void
 cs1237_write_config(struct cs1237_adc *cs)
 {
-    cs1237_clock_pulses(cs, 5);
+    cs1237_read_bits(cs, 5);
+    uint32_t cmd = (CS1237_WRITE_CONFIG << 9) | (1 << 8) | cs->config;
     gpio_out_reset(cs->dout_out, 0);
-    cs1237_write_bits(cs, CS1237_WRITE_CONFIG, 0x40);
-    cs1237_clock_pulses(cs, 1);
-    cs1237_write_bits(cs, cs->config, 0x80);
+    cs1237_write_bits(cs, cmd, 7 + 1 + 8);
     gpio_in_reset(cs->dout, 0);
-    cs1237_clock_pulses(cs, 1);
+    cs1237_read_bits(cs, 1);
 }
 
 static uint_fast8_t
