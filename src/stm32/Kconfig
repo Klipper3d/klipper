@@ -216,8 +216,7 @@ config CLOCK_FREQ
     default 480000000 if MACH_STM32H750
     default 80000000 if MACH_STM32L412
     default 64000000 if MACH_N32G45x && STM32_CLOCK_REF_INTERNAL
-    default 96000000 if MACH_N32G45x && USB
-    default 128000000 if MACH_N32G45x
+    default 144000000 if MACH_N32G45x
 
 config FLASH_SIZE
     hex

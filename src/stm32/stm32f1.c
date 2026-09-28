@@ -119,7 +119,7 @@ n32g45x_pll_multiplier_bits(uint32_t mul)
       && (2 * CONFIG_CLOCK_FREQ) % CONFIG_CLOCK_REF_FREQ
     #error "Unable to generate the requested clock rate from this crystal"
   #endif
-  #if CONFIG_USB && CONFIG_CLOCK_FREQ != 96000000
+  #if CONFIG_USB && CONFIG_CLOCK_FREQ != 144000000
     #error "Unable to generate a 48Mhz usb clock at this system clock rate"
   #endif
 #endif
@@ -163,11 +163,10 @@ clock_setup_n32g45x(void)
         cfgr |= RCC_CFGR_PPRE1_DIV4 | RCC_CFGR_PPRE2_DIV4;
     else if (CONFIG_CLOCK_FREQ > 36000000)
         cfgr |= RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV2;
-    // The n32g45x usb clock is PLLCLK divided by 1.5, 1, 2 or 3.  The
-    // clock defaults select 96Mhz when usb is enabled, which produces
-    // the 48Mhz the usb peripheral needs through the /2 divisor.
-    if (CONFIG_CLOCK_FREQ == 96000000)
-        cfgr |= 2 << 22;
+    // The n32g45x usb clock is PLLCLK divided by 1.5, 1, 2 or 3 - at
+    // 144Mhz the /3 divisor produces the 48Mhz the usb peripheral needs
+    if (CONFIG_CLOCK_FREQ == 144000000)
+        cfgr |= 3 << 22;
     RCC->CFGR = cfgr;
     RCC->CR |= RCC_CR_PLLON;
 
