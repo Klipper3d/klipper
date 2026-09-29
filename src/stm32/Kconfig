@@ -221,8 +221,9 @@ config MCU
     default "stm32h750xx" if MACH_STM32H750
     default "stm32l412xx" if MACH_STM32L412
     default "stm32f103xe" if MACH_N32G45x
-    default "stm32f103xb" if MACH_GD32F303XB
-    default "stm32f103xe" if MACH_GD32F303XC || MACH_GD32F303XE
+    default "gd32f303xb" if MACH_GD32F303XB
+    default "gd32f303xc" if MACH_GD32F303XC
+    default "gd32f303xe" if MACH_GD32F303XE
     default "gd32e230x6" if MACH_GD32E230X6
     default "gd32e230x8" if MACH_GD32E230X8
 

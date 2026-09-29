@@ -16,8 +16,13 @@ dirs-$(CONFIG_MACH_STM32G4) += lib/stm32g4
 dirs-$(CONFIG_MACH_STM32H7) += lib/stm32h7
 dirs-$(CONFIG_MACH_STM32L4) += lib/stm32l4
 
-MCU := $(shell echo $(CONFIG_MCU))
-MCU_UPPER := $(shell echo $(CONFIG_MCU) | tr a-z A-Z | tr X x)
+MCU_CONFIG := $(shell echo $(CONFIG_MCU))
+MCU-y := $(MCU_CONFIG)
+MCU-$(CONFIG_MACH_GD32F303XB) := stm32f103xe
+MCU-$(CONFIG_MACH_GD32F303XC) := stm32f103xe
+MCU-$(CONFIG_MACH_GD32F303XE) := stm32f103xe
+MCU := $(MCU-y)
+MCU_UPPER := $(shell echo $(MCU) | tr a-z A-Z | tr X x)
 
 CFLAGS-$(CONFIG_HAVE_LIMITED_CODE_SIZE) += -Os
 CFLAGS-$(CONFIG_MACH_STM32F0) += -mcpu=cortex-m0 -Ilib/stm32f0/include
@@ -114,7 +119,7 @@ lib/hidflash/hid-flash:
 
 flash: $(OUT)klipper.bin lib/hidflash/hid-flash
 	@echo "  Flashing $< to $(FLASH_DEVICE)"
-	$(Q)$(PYTHON) ./scripts/flash_usb.py -t $(CONFIG_MCU) -d "$(FLASH_DEVICE)" -s "$(CONFIG_FLASH_APPLICATION_ADDRESS)" $(if $(NOSUDO),--no-sudo) $(OUT)klipper.bin
+	$(Q)$(PYTHON) ./scripts/flash_usb.py -t $(MCU) -d "$(FLASH_DEVICE)" -s "$(CONFIG_FLASH_APPLICATION_ADDRESS)" $(if $(NOSUDO),--no-sudo) $(OUT)klipper.bin
 
 serialflash: $(OUT)klipper.bin
 	@echo "  Flashing $< to $(FLASH_DEVICE) via stm32flash"
