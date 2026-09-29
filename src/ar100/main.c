@@ -39,6 +39,13 @@ dynmem_end(void)
     return &dynmem_pool[sizeof(dynmem_pool)];
 }
 
+static void
+check_serial_pending(void)
+{
+    if(r_uart_fifo_rcv())
+        sched_wake_task(&console_wake);
+}
+
 void
 irq_disable(void)
 {
@@ -67,15 +74,25 @@ irq_wait(void)
 }
 
 void
+timer_dispatch_irq_poll(void)
+{
+}
+
+void
+timer_dispatch_task_poll(void)
+{
+    check_serial_pending();
+}
+
+void
 irq_poll(void)
 {
     if(timer_interrupt_pending()) {
         timer_clear_interrupt();
-        uint32_t next = timer_dispatch_many();
+        uint32_t next = timer_dispatch_many_polling();
         timer_set(next);
     }
-    if(r_uart_fifo_rcv())
-        sched_wake_task(&console_wake);
+    check_serial_pending();
 }
 
 /****************************************************************
