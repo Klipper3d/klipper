@@ -292,9 +292,14 @@ class HeaterPowerBudget:
                 "budget_exceeded": False,
             }
 
+        extruder_status = self.extruder.get_status(eventtime)
+        bed_status = self.bed.get_status(eventtime)
+
         extruder_share, bed_share = self._base_shares()
-        extruder_actual_pwm = self._clamp01(self.extruder.last_pwm_value)
-        bed_actual_pwm = self._clamp01(self.bed.last_pwm_value)
+        extruder_actual_pwm = self._clamp01(
+            extruder_status["power"])
+        bed_actual_pwm = self._clamp01(
+            bed_status["power"])
         extruder_requested_power = (
             self.extruder_requested_pwm * self.extruder_nominal_power)
         bed_requested_power = (
@@ -308,13 +313,13 @@ class HeaterPowerBudget:
         total_power = extruder_actual_power + bed_actual_power
 
         extruder_limited = (
-            self.extruder.target_temp > 0.0
+            extruder_status["target"] > 0.0
             and self.extruder_allowed_pwm
                 < self.extruder_config_max_pwm - EPSILON
             and self.extruder_requested_pwm
                 >= self.extruder_allowed_pwm - EPSILON)
         bed_limited = (
-            self.bed.target_temp > 0.0
+            bed_status["target"] > 0.0
             and self.bed_allowed_pwm < self.bed_config_max_pwm - EPSILON
             and self.bed_requested_pwm >= self.bed_allowed_pwm - EPSILON)
 
