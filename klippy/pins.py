@@ -78,7 +78,9 @@ class PrinterPins:
         if ':' not in desc:
             chip_name, pin = 'mcu', desc
         else:
-            chip_name, pin = [s.strip() for s in desc.split(':', 1)]
+            # A registered virtual chip may have a namespace (bridge:sync).
+            # Physical pin names still cannot contain a colon.
+            chip_name, pin = [s.strip() for s in desc.rsplit(':', 1)]
         if chip_name not in self.chips:
             raise error("Unknown pin chip name '%s'" % (chip_name,))
         if [c for c in '^~!:' if c in pin] or ''.join(pin.split()) != pin:

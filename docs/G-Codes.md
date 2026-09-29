@@ -937,6 +937,11 @@ is calibrated a force in grams is also reported.
 
 ### [load_cell_probe]
 
+The `[endstop_bridge name]` extension provides
+`TEST_ENDSTOP_BRIDGE BRIDGE=<name>` to check both levels of a shared trigger
+wire while stationary. See [Endstop Bridge](Endstop_Bridge.md) for wiring,
+limitations and configuration. This command does not test force calibration.
+
 The commands below are enabled if a
 [load_cell config section](Config_Reference.md#load_cell_probe) has been
 enabled.

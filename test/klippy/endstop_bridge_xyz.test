@@ -1,0 +1,8 @@
+DICTIONARY atmega2560.dict nozzle_mcu=atmega2560.dict
+CONFIG endstop_bridge_xyz.cfg
+QUERY_ENDSTOPS
+G28 X
+G28 Y
+G28 Z
+G28
+TEST_ENDSTOP_BRIDGE BRIDGE=sync

@@ -348,6 +348,7 @@ class MCU_endstop:
         self._mcu.register_config_callback(self._build_config)
         self._rest_ticks = 0
         self._dispatch = TriggerDispatch(mcu)
+        self._homing = False
     def get_mcu(self):
         return self._mcu
     def add_stepper(self, stepper):
@@ -378,6 +379,7 @@ class MCU_endstop:
         rest_ticks = self._mcu.print_time_to_clock(print_time+rest_time) - clock
         self._rest_ticks = rest_ticks
         trigger_completion = self._dispatch.start(print_time)
+        self._homing = True
         self._home_cmd.send(
             [self._oid, clock, self._mcu.seconds_to_clock(sample_time),
              sample_count, rest_ticks, triggered ^ self._invert,
@@ -388,6 +390,7 @@ class MCU_endstop:
         self._dispatch.wait_end(home_end_time)
         self._home_cmd.send([self._oid, 0, 0, 0, 0, 0, 0, 0])
         res = self._dispatch.stop()
+        self._homing = False
         if res >= MCU_trsync.REASON_COMMS_TIMEOUT:
             cmderr = self._mcu.get_printer().command_error
             raise cmderr("Communication timeout during homing")
@@ -398,6 +401,13 @@ class MCU_endstop:
         params = self._query_cmd.send([self._oid])
         next_clock = self._mcu.clock32_to_clock64(params['next_clock'])
         return self._mcu.clock_to_print_time(next_clock - self._rest_ticks)
+    def abort_home(self):
+        if self._homing:
+            self._homing = False
+            try:
+                self._home_cmd.send([self._oid, 0, 0, 0, 0, 0, 0, 0])
+            finally:
+                self._dispatch.stop()
     def query_endstop(self, print_time):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._mcu.is_fileoutput():
