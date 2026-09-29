@@ -2385,6 +2385,11 @@ for more detailed information regarding symptoms, configuration and setup.
 #horizontal_move_z: 5
 #   The height (in mm) that the head should be commanded to move to
 #   just prior to starting a probe operation. The default is 5.
+#calculation_method: average
+#   The calculation method after difference between probe and manual probe -
+#   either "median" or "average" or "direct". It may be possible to change at
+#   start calibration via a "CALCULATION_METHOD" command parameter.
+#   The default is average.
 calibrate_start_x: 20
 #   Defines the minimum X coordinate of the calibration
 #   This should be the X coordinate that positions the nozzle at the starting

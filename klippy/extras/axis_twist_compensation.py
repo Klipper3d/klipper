@@ -25,6 +25,10 @@ class AxisTwistCompensation:
         self.horizontal_move_z = config.getfloat('horizontal_move_z',
                                                  DEFAULT_HORIZONTAL_MOVE_Z)
         self.speed = config.getfloat('speed', DEFAULT_SPEED)
+        self.calculation_methods = ['average', 'median', 'direct']
+        self.calculation_method = config.getchoice('calculation_method',
+                                                self.calculation_methods, 'average')
+
         self.calibrate_start_x = config.getfloat('calibrate_start_x',
                                                 default=None)
         self.calibrate_end_x = config.getfloat('calibrate_end_x', default=None)
@@ -117,6 +121,8 @@ class Calibrater:
         self.printer.register_event_handler("klippy:connect",
                                             self._handle_connect)
         self.speed = compensation.speed
+        self.calculation_methods = compensation.calculation_methods
+        self.calculation_method = compensation.calculation_method
         self.horizontal_move_z = compensation.horizontal_move_z
         self.x_start_point = (compensation.calibrate_start_x,
                             compensation.calibrate_y)
@@ -160,6 +166,10 @@ class Calibrater:
         probe_x_offset, probe_y_offset, _ = self.probe.get_offsets(gcmd)
         sample_count = gcmd.get_int('SAMPLE_COUNT', DEFAULT_SAMPLE_COUNT)
         axis = gcmd.get('AXIS', 'X')
+        calculation_method = gcmd.get('CALCULATION_METHOD', 'average').lower()
+        if calculation_method not in self.calculation_methods:
+            raise self.printer.command_error("Not supported calculation method")
+        self.calculation_method = calculation_method
 
         # check for valid sample_count
         if sample_count < 2:
@@ -314,13 +324,24 @@ class Calibrater:
                 self._calibration(test_points, bed_points, interval)
         return callback
 
+    def _calc_points_average(self):
+        if self.calculation_method == 'direct':
+            return 0
+        if self.calculation_method != 'median':
+            return sum(self.results) / len(self.result)
+        values = sorted(self.results)
+        n = len(values)
+        if n % 2 == 0:
+            return (values[n//2 - 1] + values[n//2]) / 2.0
+        return values[n // 2]
+
     def _finalize_calibration(self):
         # finalize the calibration process
         # calculate average of results
-        avg = sum(self.results) / len(self.results)
+        avg_result = self._calc_points_average()
         # subtract average from each result
         # so that they are independent of z_offset
-        self.results = [avg - x for x in self.results]
+        self.results = [avg_result - x for x in self.results]
         # save the config
         configfile = self.printer.lookup_object('configfile')
         values_as_str = ', '.join(["{:.6f}".format(x)
@@ -357,8 +378,8 @@ class Calibrater:
         # output result
         self.gcmd.respond_info(
             "AXIS_TWIST_COMPENSATION_CALIBRATE: Calibration complete, "
-            "offsets: %s, mean z_offset: %f"
-            % (self.results, avg))
+            "offsets: %s, calc method: %s, mean z_offset: %f"
+            % (self.results, self.calculation_method, avg_result))
 
 
 # klipper's entry point using [axis_twist_compensation] section in printer.cfg
