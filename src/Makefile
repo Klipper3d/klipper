@@ -2,7 +2,8 @@
 
 src-y += sched.c command.c basecmd.c debugcmds.c
 src-$(CONFIG_HAVE_GPIO) += initial_pins.c gpiocmds.c stepper.c endstop.c \
-    trsync.c endstop_bridge.c
+    trsync.c
+src-$(CONFIG_WANT_ENDSTOP_BRIDGE) += endstop_bridge.c
 src-$(CONFIG_WANT_ADC) += adccmds.c
 src-$(CONFIG_WANT_SPI) += spicmds.c
 src-$(CONFIG_WANT_I2C) += i2ccmds.c

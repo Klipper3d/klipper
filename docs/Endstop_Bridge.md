@@ -59,6 +59,13 @@ signals at once. There is no fixed three-input limit.
 - Reserve the bridge pins for this feature; do not assign them to another
   output, probe module, or direct endstop configuration.
 - Both MCUs and Klippy must run versions that include Endstop Bridge.
+- The sending MCU firmware needs `CONFIG_WANT_ENDSTOP_BRIDGE`. This is
+  enabled by default except on code-size-limited targets such as AR100.
+  On those targets, enable "Support GPIO endstop trigger forwarding" in
+  the "Optional features (to reduce code size)" menu of `make menuconfig`,
+  and disable other optional features if needed to fit the firmware.
+  The receiving MCU uses the normal endstop implementation and does not
+  need the forwarding option enabled.
 
 ## Example: X, Y and Z sharing one wire
 
