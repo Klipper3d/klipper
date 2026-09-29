@@ -1590,14 +1590,20 @@ is enabled.
 
 #### TEMPERATURE_PROBE_CALIBRATE
 `TEMPERATURE_PROBE_CALIBRATE [PROBE=<probe name>] [TARGET=<value>] [STEP=<value>]
-[MANUAL_METHOD=<method>]`:
+[MANUAL_METHOD=<method>] [WAIT=<0|1>]`:
 Initiates probe drift calibration for eddy current based probes.  The `TARGET`
 is a target temperature for the last sample.  When the temperature recorded
 during a sample exceeds the `TARGET` calibration will complete.  The `STEP`
 parameter sets temperature delta (in C) between samples. After a sample has
 been taken, this delta is used to schedule a call to `TEMPERATURE_PROBE_NEXT`.
-The default `STEP` is 2. The `METHOD` only supports `tap` as an option,
-if specified, probing will be automated.
+The default `STEP` is 2. The `MANUAL_METHOD` parameter defaults to `manual`.
+If `MANUAL_METHOD=tap` is specified, nozzle probing is automated. The
+`WAIT` parameter defaults to 0. If `WAIT=1` is specified with
+`MANUAL_METHOD=tap`, the command waits until calibration completes.
+Other G-Code commands are queued while waiting, except for a standalone
+`ABORT` command sent separately to cancel the calibration. An active
+measurement finishes before the calibration is aborted and its results
+are discarded. `WAIT=1` is not supported with manual probing.
 
 #### TEMPERATURE_PROBE_NEXT
 `TEMPERATURE_PROBE_NEXT`: After calibration has started this command is run to

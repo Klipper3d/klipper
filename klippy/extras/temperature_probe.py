@@ -96,6 +96,9 @@ class TemperatureProbe:
         self.last_measurement = (0., 99999999., 0.,)
         # Calibration State
         self._tap_probe = None
+        self._wait = False
+        self._abort_requested = False
+        self._gcode_params = ""
         self.cal_helper = None
         self.next_auto_temp = 99999999.
         self.target_temp = 0
@@ -147,7 +150,7 @@ class TemperatureProbe:
         measured_min = min(measured_min, smoothed_temp)
         measured_max = max(measured_max, smoothed_temp)
         self.last_measurement = (smoothed_temp, measured_min, measured_max)
-        if (self.in_calibration and self._tap_probe is None
+        if (self.in_calibration and not self._wait
             and smoothed_temp >= self.next_auto_temp):
             self.printer.get_reactor().register_async_callback(
                 self._check_kick_next
@@ -155,10 +158,11 @@ class TemperatureProbe:
 
     def _check_kick_next(self, eventtime):
         smoothed_temp = self.last_measurement[0]
-        if (self.in_calibration and self._tap_probe is None
+        if (self.in_calibration and not self._wait
             and smoothed_temp >= self.next_auto_temp):
             self.next_auto_temp = 99999999.
-            self.gcode.run_script("TEMPERATURE_PROBE_NEXT")
+            self.gcode.run_script(
+                "TEMPERATURE_PROBE_NEXT " + self._gcode_params)
 
     def get_temp(self, eventtime=None):
         return self.last_measurement[0], self.target_temp
@@ -200,6 +204,7 @@ class TemperatureProbe:
         )
 
     def _manual_probe_finalize(self, mpresult):
+        self._check_abort()
         if mpresult is None:
             # Calibration aborted
             self._finalize_drift_cal(False)
@@ -214,6 +219,7 @@ class TemperatureProbe:
         self.last_zero_pos = mpresult.bed_z
         try:
             last_temp = self._collect_sample(mpresult)
+            self._check_abort()
         except Exception:
             self._finalize_drift_cal(False)
             raise
@@ -231,6 +237,11 @@ class TemperatureProbe:
                 raise
 
     def _finalize_drift_cal(self, success, msg=None):
+        if self._wait:
+            self.gcode.register_async_command("ABORT", None)
+        self._wait = False
+        self._abort_requested = False
+        self._gcode_params = ""
         self.next_auto_temp = 99999999.
         self.target_temp = 0
         self.expected_count = 0
@@ -273,7 +284,17 @@ class TemperatureProbe:
             "SET_HEATER_TEMPERATURE HEATER=%s TARGET=%f"
             % (extr_name, temp)
         )
-        if wait:
+        if wait and self._wait:
+            heater = toolhead.get_extruder().get_heater()
+            reactor = self.printer.get_reactor()
+            eventtime = reactor.monotonic()
+            while heater.get_temp(eventtime)[0] < temp:
+                self._check_abort()
+                if self.printer.is_shutdown():
+                    raise self.gcode.error("Probe drift calibration interrupted")
+                toolhead.get_last_move_time()
+                eventtime = reactor.pause(eventtime + 1.)
+        elif wait:
             self.gcode.run_script_from_command(
                 "TEMPERATURE_WAIT SENSOR=%s MINIMUM=%f"
                 % (extr_name, temp)
@@ -327,6 +348,9 @@ class TemperatureProbe:
     )
     def cmd_TEMPERATURE_PROBE_CALIBRATE(self, gcmd):
         method = gcmd.get('MANUAL_METHOD', 'manual').lower()
+        wait = gcmd.get_int('WAIT', 0, minval=0, maxval=1)
+        if wait and method != "tap":
+            raise gcmd.error("WAIT=1 requires MANUAL_METHOD=tap")
         if self.cal_helper is None:
             raise gcmd.error(
                 "No calibration helper registered for [%s]"
@@ -380,6 +404,8 @@ class TemperatureProbe:
             )
         self.in_calibration = True
         self._tap_probe = tap_probe
+        self._gcode_params = (gcmd.get_raw_command_parameters()
+                              if tap_probe is not None else "")
         self.cal_helper.start_calibration()
         self.target_temp = target_temp
         self.step = step
@@ -387,16 +413,15 @@ class TemperatureProbe:
         self.expected_count = expected_count
         # If configured move to heating position and turn on extruder
         try:
+            if wait:
+                self.gcode.register_async_command("ABORT", self._request_abort)
+                self._wait = True
             self._move_to_start()
-        except self.printer.command_error:
-            self._finalize_drift_cal(False, "Error during initial move")
-            raise
-        # Capture start position and begin initial probe
-        toolhead = self.printer.lookup_object("toolhead")
-        self.start_pos = toolhead.get_position()[:2]
-        try:
+            # Capture start position and begin initial probe
+            toolhead = self.printer.lookup_object("toolhead")
+            self.start_pos = toolhead.get_position()[:2]
             self._start_probe(gcmd)
-            if tap_probe is not None:
+            if wait:
                 self._wait_for_calibration(gcmd)
         except Exception:
             if self.in_calibration:
@@ -404,7 +429,8 @@ class TemperatureProbe:
             raise
 
     def _start_probe(self, gcmd):
-        if self._tap_probe is not None:
+        self._check_abort()
+        if self._wait:
             # Run in the current command, which already holds the G-Code
             # mutex. AutoProbeHelper's callbacks would wait on that mutex.
             self._manual_probe_finalize(self._tap_probe(gcmd))
@@ -413,10 +439,18 @@ class TemperatureProbe:
                 self.printer, gcmd, self._manual_probe_finalize
             )
 
+    def _request_abort(self):
+        self._abort_requested = True
+
+    def _check_abort(self):
+        if self._abort_requested:
+            raise self.gcode.error("Probe drift calibration aborted")
+
     def _wait_for_calibration(self, gcmd):
         reactor = self.printer.get_reactor()
         toolhead = self.printer.lookup_object("toolhead")
         while self.in_calibration:
+            self._check_abort()
             if self.printer.is_shutdown():
                 raise gcmd.error("Probe drift calibration interrupted")
             if self.last_measurement[0] >= self.next_auto_temp:
