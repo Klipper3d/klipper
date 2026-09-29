@@ -49,8 +49,6 @@ class HeaterPowerBudget:
         self.bed_requested_pwm = 0.0
         self.extruder_allowed_pwm = 1.0
         self.bed_allowed_pwm = 1.0
-        self.extruder_safety_pwm = 1.0
-        self.bed_safety_pwm = 1.0
         self._extruder_set_pwm_original = None
         self._bed_set_pwm_original = None
         self._extruder_temp_cb_original = None
@@ -236,12 +234,12 @@ class HeaterPowerBudget:
             0.0, self.max_total_power - other_actual_power)
         safety_pwm = self._power_to_pwm(
             remaining_power, nominal_power, config_max_pwm)
-        final_pwm = min(
+
+        return min(
             self._clamp01(requested_pwm),
             ideal_allowed_pwm,
             safety_pwm,
             config_max_pwm)
-        return final_pwm, safety_pwm
 
     def _set_pwm_common(self, heater_name, read_time, value):
         requested_pwm = self._clamp01(value)
@@ -267,12 +265,8 @@ class HeaterPowerBudget:
             original = self._bed_set_pwm_original
             ideal_allowed_pwm = self.bed_allowed_pwm
 
-        final_pwm, safety_pwm = self._calculate_safe_pwm(
+        final_pwm = self._calculate_safe_pwm(
             heater_name, requested_pwm, ideal_allowed_pwm)
-        if heater_name == "extruder":
-            self.extruder_safety_pwm = safety_pwm
-        else:
-            self.bed_safety_pwm = safety_pwm
 
         force_reduction = heater.last_pwm_value > final_pwm + EPSILON
         old_min_pwm_change = heater.min_pwm_change
