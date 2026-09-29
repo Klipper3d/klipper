@@ -1050,6 +1050,147 @@ max_temp:
 #   See the "extruder" section for a description of the above parameters.
 ```
 
+### [heater_power_budget]
+
+Optional heater power budget control. This section limits the combined
+commanded average power of an extruder heater and heated bed while allowing
+unused power capacity to be shared dynamically between them.
+
+This can be useful when the combined maximum heater load approaches the power
+supply capacity, but that maximum load is only required under some operating
+conditions, such as the initial warm-up period.
+
+Unlike setting a permanently reduced `max_power` on an individual heater, this
+section allows each heater to use its full available output whenever the
+combined heater demand is below the configured budget. A limit is applied only
+when the combined requested heater power would exceed `max_total_power`.
+
+Power is estimated from the configured nominal heater power multiplied by the
+commanded PWM duty. This is not a measurement of actual electrical power.
+
+```
+[heater_power_budget]
+#max_total_power: 300.0
+#   The maximum combined commanded average power (in watts) available
+#   to the managed heaters.
+#
+#   This value is the heater power budget, not necessarily the total
+#   rated output of the printer power supply. Suitable capacity should
+#   be reserved for the MCU, stepper drivers, motors, fans, LEDs, and
+#   other printer loads.
+#
+#   For example, a printer with a 350W power supply may choose a 300W
+#   heater budget and reserve the remaining capacity for other printer
+#   loads.
+#
+#   The default is 300.0.
+#extruder_nominal_power: 100.0
+#   The nominal full-power wattage of the extruder heater.
+#
+#   The module estimates the commanded extruder heater power as this
+#   value multiplied by the current PWM duty.
+#
+#   For example, a 100W heater at a PWM duty of 0.5 is treated as
+#   requesting approximately 50W.
+#
+#   The default is 100.0.
+#bed_nominal_power: 220.0
+#   The nominal full-power wattage of the heated bed.
+#
+#   The module estimates the commanded bed power as this value
+#   multiplied by the current PWM duty.
+#
+#   The default is 220.0.
+#extruder_priority: 30.0
+#bed_priority: 70.0
+#   Relative priority weights used when the combined requested heater
+#   power exceeds max_total_power.
+#
+#   Priority values are normalized. For example, the following values
+#   all represent the same 30/70 distribution:
+#
+#       extruder_priority: 30
+#       bed_priority: 70
+#
+#       extruder_priority: 3
+#       bed_priority: 7
+#
+#       extruder_priority: 0.3
+#       bed_priority: 0.7
+#
+#   The priority values define how the available budget is distributed
+#   when both heaters compete for power. They are not fixed power
+#   reservations.
+#
+#   If one heater does not use all of the power available from its
+#   weighted share, the unused capacity may be used by the other
+#   heater.
+#
+#   A priority value of zero does not disable a heater. It means that
+#   the other heater receives first access to the available power
+#   budget when the combined demand exceeds max_total_power.
+#
+#   For example:
+#
+#       extruder_priority: 100
+#       bed_priority: 0
+#
+#   gives the extruder full priority. If the extruder does not require
+#   the entire budget, the remaining capacity is still available to
+#   the bed.
+#
+#   At least one of the priority values must be greater than zero.
+#
+#   The defaults are 30.0 for the extruder and 70.0 for the bed.
+#extruder: extruder
+#   The name of the heater to manage as the extruder heater.
+#   The default is "extruder".
+#bed: heater_bed
+#   The name of the heater to manage as the heated bed.
+#   The default is "heater_bed".
+```
+
+The existing `max_power` setting of each heater is still respected. The power
+budget controller may reduce the currently available heater output, but it
+never increases a heater above its configured `max_power`.
+
+For example, with:
+
+```
+[extruder]
+max_power: 1.0
+
+[heater_bed]
+max_power: 1.0
+
+[heater_power_budget]
+max_total_power: 300
+extruder_nominal_power: 100
+bed_nominal_power: 220
+extruder_priority: 100
+bed_priority: 0
+```
+
+if both heaters request full output, their nominal combined request is 320W.
+The extruder receives its requested 100W and the bed is limited to
+approximately 200W.
+
+If the bed is not heating, the extruder may still use its full 100W output. If
+the extruder later requires only 40W, the bed may again use its full 220W
+because the combined requested power is below the configured 300W budget.
+
+This differs from permanently lowering an individual heater's `max_power`,
+which would continue to restrict that heater even when sufficient unused PSU
+capacity is available.
+
+The budget limits combined **commanded average heater power**. The managed
+heaters retain independent PWM outputs, so their individual ON periods may
+overlap and instantaneous electrical power may exceed `max_total_power`.
+
+Applications requiring a strict instantaneous current or power limit require
+appropriate hardware power measurement, coordinated switching, or other power
+management hardware.
+
 ## Bed level support
 
 ### [bed_mesh]
