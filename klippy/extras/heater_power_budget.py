@@ -157,17 +157,6 @@ class HeaterPowerBudget:
         if hasattr(control, "heater_max_power"):
             control.heater_max_power = allowed_pwm
 
-        if (hasattr(control, "Ki")
-                and hasattr(control, "temp_integ_max")
-                and hasattr(control, "prev_temp_integ")):
-            if control.Ki:
-                integ_max = allowed_pwm / control.Ki
-            else:
-                integ_max = 0.0
-            control.temp_integ_max = integ_max
-            control.prev_temp_integ = max(
-                0.0, min(integ_max, control.prev_temp_integ))
-
     def _refresh_control_limits(self):
         extruder_power, bed_power = self._calculate_allowed_powers()
         self.extruder_allowed_pwm = self._power_to_pwm(
