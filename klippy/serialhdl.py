@@ -38,6 +38,7 @@ class SerialReader:
         # Sent message notification tracking
         self.last_notify_id = 0
         self.pending_notifications = {}
+        self.is_communication_lost = False
     def _bg_thread(self):
         name_short = ("serialhdl %s" % (self.mcu_name))[:15]
         self.ffi_lib.set_thread_name(name_short.encode('utf-8'))
@@ -226,6 +227,10 @@ class SerialReader:
         for pn in self.pending_notifications.values():
             pn.complete(None)
         self.pending_notifications.clear()
+    def note_lost_communication(self):
+        self.is_communication_lost = True
+        for pn in list(self.pending_notifications.values()):
+            pn.complete(None)
     def stats(self, eventtime):
         if self.serialqueue is None:
             return ""
@@ -252,6 +257,8 @@ class SerialReader:
         self.ffi_lib.serialqueue_send(self.serialqueue, cmd_queue,
                                       cmd, len(cmd), minclock, reqclock, 0)
     def raw_send_wait_ack(self, cmd, minclock, reqclock, cmd_queue):
+        if self.is_communication_lost:
+            self._error("Lost communication with mcu")
         self.last_notify_id += 1
         nid = self.last_notify_id
         completion = self.reactor.completion()
@@ -260,6 +267,8 @@ class SerialReader:
                                       cmd, len(cmd), minclock, reqclock, nid)
         params = completion.wait()
         if params is None:
+            if self.is_communication_lost:
+                self._error("Lost communication with mcu")
             self._error("Serial connection closed")
         return params
     def send(self, msg, minclock=0, reqclock=0):
