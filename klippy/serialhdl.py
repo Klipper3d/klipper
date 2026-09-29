@@ -3,7 +3,7 @@
 # Copyright (C) 2016-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, threading, os
+import logging, threading, os, termios
 import serial
 
 import msgproto, chelper, util
@@ -221,6 +221,11 @@ class SerialReader:
                 self.background_thread.join()
             self.background_thread = self.serialqueue = None
         if self.serial_dev is not None:
+            if isinstance(self.serial_dev, serial.Serial):
+                try:
+                    termios.tcflush(self.serial_dev.fileno(), termios.TCOFLUSH)
+                except termios.error:
+                    pass
             self.serial_dev.close()
             self.serial_dev = None
         for pn in self.pending_notifications.values():
