@@ -291,7 +291,8 @@ class TemperatureProbe:
             while heater.get_temp(eventtime)[0] < temp:
                 self._check_abort()
                 if self.printer.is_shutdown():
-                    raise self.gcode.error("Probe drift calibration interrupted")
+                    raise self.gcode.error(
+                        "Probe drift calibration interrupted")
                 toolhead.get_last_move_time()
                 eventtime = reactor.pause(eventtime + 1.)
         elif wait:
