@@ -1070,7 +1070,7 @@ commanded PWM duty. This is not a measurement of actual electrical power.
 
 ```
 [heater_power_budget]
-#max_total_power: 300.0
+max_total_power:
 #   The maximum combined commanded average power (in watts) available
 #   to the managed heaters.
 #
@@ -1083,8 +1083,8 @@ commanded PWM duty. This is not a measurement of actual electrical power.
 #   heater budget and reserve the remaining capacity for other printer
 #   loads.
 #
-#   The default is 300.0.
-#extruder_nominal_power: 100.0
+#   This parameter must be provided.
+extruder_nominal_power:
 #   The nominal full-power wattage of the extruder heater.
 #
 #   The module estimates the commanded extruder heater power as this
@@ -1093,14 +1093,14 @@ commanded PWM duty. This is not a measurement of actual electrical power.
 #   For example, a 100W heater at a PWM duty of 0.5 is treated as
 #   requesting approximately 50W.
 #
-#   The default is 100.0.
-#bed_nominal_power: 220.0
+#   This parameter must be provided.
+bed_nominal_power:
 #   The nominal full-power wattage of the heated bed.
 #
 #   The module estimates the commanded bed power as this value
 #   multiplied by the current PWM duty.
 #
-#   The default is 220.0.
+#   This parameter must be provided.
 #extruder_priority: 30.0
 #bed_priority: 70.0
 #   Relative priority weights used when the combined requested heater

@@ -23,15 +23,15 @@ class HeaterPowerBudget:
         self.printer = config.get_printer()
 
         self.max_total_power = config.getfloat(
-            "max_total_power", 300.0, above=0.0
+            "max_total_power", above=0.0
         )
 
         self.extruder_nominal_power = config.getfloat(
-            "extruder_nominal_power", 100.0, above=0.0
+            "extruder_nominal_power", above=0.0
         )
 
         self.bed_nominal_power = config.getfloat(
-            "bed_nominal_power", 220.0, above=0.0
+            "bed_nominal_power", above=0.0
         )
 
         self.extruder_priority = config.getfloat(
