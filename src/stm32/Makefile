@@ -84,6 +84,7 @@ src-$(CONFIG_USBSERIAL) += $(usb-src-y) stm32/chipid.c generic/usb_cdc.c
 canbus-src-y := generic/canserial.c ../lib/fast-hash/fasthash.c
 canbus-src-$(CONFIG_HAVE_STM32_CANBUS) += stm32/can.c
 canbus-src-$(CONFIG_HAVE_STM32_FDCANBUS) += stm32/fdcan.c
+src-$(CONFIG_SERIAL_CANBUS) += $(serial-src-y) $(canbus-src-y) generic/slcan.c stm32/chipid.c
 src-$(CONFIG_CANSERIAL) += $(canbus-src-y) generic/canbus.c stm32/chipid.c
 src-$(CONFIG_USBCANBUS) += $(usb-src-y) $(canbus-src-y)
 src-$(CONFIG_USBCANBUS) += stm32/chipid.c generic/usb_canbus.c
