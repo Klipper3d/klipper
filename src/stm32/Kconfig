@@ -111,24 +111,12 @@ choice
         bool "Nation N32G455"
         select MACH_N32G45x
         select MACH_STM32F1
-    config MACH_GD32F303XB
-        bool "GigaDevice GD32F303xB"
+    config MACH_GD32F303
+        bool "GigaDevice GD32F303"
         select MACH_GD32F303XX
         select MACH_STM32F1
-    config MACH_GD32F303XC
-        bool "GigaDevice GD32F303xC"
-        select MACH_GD32F303XX
-        select MACH_STM32F1
-    config MACH_GD32F303XE
-        bool "GigaDevice GD32F303xE"
-        select MACH_GD32F303XX
-        select MACH_STM32F1
-    config MACH_GD32E230X6
-        bool "GigaDevice GD32E230x6"
-        select MACH_GD32E23X
-        select HAVE_LIMITED_CODE_SIZE
-    config MACH_GD32E230X8
-        bool "GigaDevice GD32E230x8"
+    config MACH_GD32E230
+        bool "GigaDevice GD32E230"
         select MACH_GD32E23X
         select HAVE_LIMITED_CODE_SIZE
 endchoice
@@ -221,11 +209,8 @@ config MCU
     default "stm32h750xx" if MACH_STM32H750
     default "stm32l412xx" if MACH_STM32L412
     default "stm32f103xe" if MACH_N32G45x
-    default "gd32f303xb" if MACH_GD32F303XB
-    default "gd32f303xc" if MACH_GD32F303XC
-    default "gd32f303xe" if MACH_GD32F303XE
-    default "gd32e230x6" if MACH_GD32E230X6
-    default "gd32e230x8" if MACH_GD32E230X8
+    default "gd32f303" if MACH_GD32F303
+    default "gd32e230" if MACH_GD32E230
 
 config CLOCK_FREQ
     int
@@ -262,11 +247,8 @@ config FLASH_SIZE
     default 0x20000 if MACH_STM32H750
     default 0x200000 if MACH_STM32H743 || MACH_STM32F765
     default 0x20000 if MACH_N32G45x
-    default 0x20000 if MACH_GD32F303XB
-    default 0x40000 if MACH_GD32F303XC
-    default 0x80000 if MACH_GD32F303XE
-    default 0x8000 if MACH_GD32E230X6
-    default 0x10000 if MACH_GD32E230X8
+    default 0x20000 if MACH_GD32F303
+    default 0x10000 if MACH_GD32E230
 
 config FLASH_BOOT_ADDRESS
     hex
@@ -295,11 +277,8 @@ config RAM_SIZE
     default 0x24000 if MACH_STM32G0Bx
     default 0x20000 if MACH_STM32H7
     default 0x10000 if MACH_N32G45x
-    default 0x8000 if MACH_GD32F303XB
-    default 0xc000 if MACH_GD32F303XC
-    default 0x10000 if MACH_GD32F303XE
-    default 0x1800 if MACH_GD32E230X6
-    default 0x2000 if MACH_GD32E230X8
+    default 0x8000 if MACH_GD32F303
+    default 0x2000 if MACH_GD32E230
 
 config STACK_SIZE
     int

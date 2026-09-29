@@ -18,9 +18,7 @@ dirs-$(CONFIG_MACH_STM32L4) += lib/stm32l4
 
 MCU_CONFIG := $(shell echo $(CONFIG_MCU))
 MCU-y := $(MCU_CONFIG)
-MCU-$(CONFIG_MACH_GD32F303XB) := stm32f103xe
-MCU-$(CONFIG_MACH_GD32F303XC) := stm32f103xe
-MCU-$(CONFIG_MACH_GD32F303XE) := stm32f103xe
+MCU-$(CONFIG_MACH_GD32F303) := stm32f103xe
 MCU := $(MCU-y)
 MCU_UPPER := $(shell echo $(MCU) | tr a-z A-Z | tr X x)
 
