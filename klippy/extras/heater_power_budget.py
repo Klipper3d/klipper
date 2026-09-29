@@ -7,6 +7,7 @@
 # Weighted, borrowable heater power budget:
 # - Priorities define guaranteed shares only while the budget is contended.
 # - Unused share of one heater may be borrowed by the other.
+# - PID autotune receives reserved priority while it is active.
 # - No cross-heater PWM scheduling is performed.
 # - Both PID control ceilings and final PWM outputs are constrained.
 #
@@ -14,6 +15,9 @@
 # It is not a real electrical power measurement.
 
 import logging
+
+from . import pid_calibrate
+
 
 EPSILON = 1.0e-6
 
@@ -122,7 +126,43 @@ class HeaterPowerBudget:
         return (self._clamp01(self.bed.last_pwm_value)
                 * self.bed_nominal_power)
 
+    def _get_autotune_heater(self):
+        extruder_tuning = isinstance(
+            self.extruder.control, pid_calibrate.ControlAutoTune)
+        bed_tuning = isinstance(
+            self.bed.control, pid_calibrate.ControlAutoTune)
+
+        if extruder_tuning == bed_tuning:
+            return None
+        if extruder_tuning:
+            return "extruder"
+        return "bed"
+
+    def _calculate_autotune_allowed_powers(self, heater_name):
+        extruder_max = self._configured_max_power("extruder")
+        bed_max = self._configured_max_power("bed")
+
+        if heater_name == "extruder":
+            extruder_allowed = min(
+                extruder_max, self.max_total_power)
+            bed_allowed = min(
+                bed_max,
+                max(0.0, self.max_total_power - extruder_allowed))
+        else:
+            bed_allowed = min(
+                bed_max, self.max_total_power)
+            extruder_allowed = min(
+                extruder_max,
+                max(0.0, self.max_total_power - bed_allowed))
+
+        return extruder_allowed, bed_allowed
+
     def _calculate_allowed_powers(self):
+        autotune_heater = self._get_autotune_heater()
+        if autotune_heater is not None:
+            return self._calculate_autotune_allowed_powers(
+                autotune_heater)
+
         extruder_share, bed_share = self._base_shares()
         extruder_request = min(
             self._requested_power("extruder"),
