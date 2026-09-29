@@ -27,7 +27,7 @@ class AxisTwistCompensation:
         self.speed = config.getfloat('speed', DEFAULT_SPEED)
         self.calculation_methods = ['average', 'median', 'direct']
         self.calculation_method = config.getchoice('calculation_method',
-                                                self.calculation_methods, 'average')
+                                            self.calculation_methods, 'average')
 
         self.calibrate_start_x = config.getfloat('calibrate_start_x',
                                                 default=None)
