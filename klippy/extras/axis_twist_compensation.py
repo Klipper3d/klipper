@@ -172,12 +172,12 @@ class Calibrater:
         if axis == 'X':
 
             self.compensation.clear_compensations('X')
-
-            if not all([
-                self.x_start_point[0],
-                self.x_end_point[0],
-                self.x_start_point[1]
-                ]):
+            check_points = [
+                    self.x_start_point[0],
+                    self.x_end_point[0],
+                    self.x_start_point[1]
+                    ]
+            if any(p is None for p in check_points):
                 raise self.gcmd.error(
                     """AXIS_TWIST_COMPENSATION for X axis requires
                     calibrate_start_x, calibrate_end_x and calibrate_y
@@ -199,12 +199,13 @@ class Calibrater:
         elif axis == 'Y':
 
             self.compensation.clear_compensations('Y')
+            check_points = [
+                    self.y_start_point[0],
+                    self.y_end_point[0],
+                    self.y_start_point[1]
+                    ]
 
-            if not all([
-                self.y_start_point[0],
-                self.y_end_point[0],
-                self.y_start_point[1]
-                ]):
+            if any(p is None for p in check_points):
                 raise self.gcmd.error(
                     """AXIS_TWIST_COMPENSATION for Y axis requires
                     calibrate_start_y, calibrate_end_y and calibrate_x
