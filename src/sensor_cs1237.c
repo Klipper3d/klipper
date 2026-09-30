@@ -271,6 +271,10 @@ command_query_cs1237(uint32_t *args)
     cs->flags = 0;
     cs->rest_ticks = args[1];
     if (!cs->rest_ticks) {
+        // A ready sample would take the SCLK rise below as its first data
+        // clock and leave the chip mid-frame - read it out first
+        if (cs1237_is_data_ready(cs))
+            cs1237_read_bits(cs, 27);
         gpio_out_write(cs->sclk, 1);
         return;
     }
