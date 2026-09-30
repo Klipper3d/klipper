@@ -935,6 +935,12 @@ This command takes a reading from the load cell. The response is the percentage
 of the sensors range that was read and the raw value in counts. If the load cell
 is calibrated a force in grams is also reported.
 
+### LOAD_CELL_TRACK_FORCE
+`LOAD_CELL_TRACK_FORCE [LOAD_CELL=<config_name>] [ENABLE=<0|1>]`: Keep reading
+the load cell so that `force_g`, `min_force_g` and `max_force_g` are reported in
+its [status](Status_Reference.md#load_cell). `ENABLE=0` stops it again. By
+default the load cell is only read while a probe or command needs it.
+
 ### [load_cell_probe]
 
 The commands below are enabled if a

@@ -325,6 +325,9 @@ The following information is available for each `[load_cell name]`:
 - `force_g`: The force in grams, averaged over the last polling period.
 - `min_force_g`: The minimum force in grams, over the last polling period.
 - `max_force_g`: The maximum force in grams, over the last polling period.
+  The `force_g`, `min_force_g` and `max_force_g` values are only reported
+  while the load cell is being read (see
+  [LOAD_CELL_TRACK_FORCE](G-Codes.md#load_cell_track_force)).
 - `errors`: The number of sensor errors detected since the last start
   of measurements.
 - `overflows`: The number of data buffer overflows detected since the last
