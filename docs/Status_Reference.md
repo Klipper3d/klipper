@@ -89,6 +89,16 @@ The following information is available in the `display_status` object
   `virtual_sdcard.progress` if no recent `M73` received).
 - `message`: The message contained in the last `M117` G-Code command.
 
+## endstop_bridge
+
+The following information is available in
+[endstop_bridge some_name](Config_Reference.md#endstop_bridge) objects:
+
+- `active_source`: The source currently owning the bridge, or `None` when
+  idle. A digital input is reported as `<bridge_name>:<input_name>`; a
+  load-cell probe is reported by its configuration section name. During
+  `TEST_ENDSTOP_BRIDGE`, this field contains the bridge name.
+
 ## endstop_phase
 
 The following information is available in the
