@@ -384,6 +384,14 @@ config STM32F0_TRIM
         Default is 16 (use factory default). Each increment increases
         the clock rate by ~240KHz.
 
+config STM32F4_GD32_USB
+    bool "GD32F4 USB compatibility" if LOW_LEVEL_OPTIONS
+    depends on MACH_STM32F4x5 && USBSERIAL
+    default n
+    help
+        Enable USB changes needed by GD32F4 chips (eg, GD32F425)
+        running an stm32f4 build.
+
 
 ######################################################################
 # Communication inteface
