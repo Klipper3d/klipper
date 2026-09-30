@@ -9,10 +9,15 @@ config AR100_SELECT
     select HAVE_GPIO_SPI
     select HAVE_STEPPER_OPTIMIZED_BOTH_EDGE
     select HAVE_LIMITED_CODE_SIZE
+    select SERIAL
 
 config BOARD_DIRECTORY
     string
     default "ar100"
+
+config SERIAL_BAUD
+    int
+    default 1500000
 
 config CLOCK_FREQ
     int

@@ -40,14 +40,10 @@ uint32_t r_uart_fifo_rcv(void){
   return read_reg(R_UART_RFL);
 }
 
-void r_uart_putc(char c){
-  while(!(read_reg(R_UART_LSR) & 1<<5))
-    ;
-  write_reg(R_UART_THR, c);
+uint32_t r_uart_fifo_cantx(void){
+  return read_reg(R_UART_USR) & 1<<1;
 }
 
-void r_uart_puts(char *s){
-  while(*s){
-    r_uart_putc(*s++);
-  }
+void r_uart_putc(char c){
+  write_reg(R_UART_THR, c);
 }
