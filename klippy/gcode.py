@@ -109,6 +109,7 @@ class GCodeDispatch:
         # Command handling
         self.is_printer_ready = False
         self.mutex = printer.get_reactor().mutex()
+        self.async_command_handlers = {}
         self.output_callbacks = []
         self.base_gcode_handlers = self.gcode_handlers = {}
         self.ready_gcode_handlers = {}
@@ -237,8 +238,31 @@ class GCodeDispatch:
     def run_script_from_command(self, script):
         self._process_commands(script.split('\n'), need_ack=False)
     def run_script(self, script):
+        if self.try_async_command(script):
+            return
         with self.mutex:
             self._process_commands(script.split('\n'), need_ack=False)
+    def register_async_command(self, cmd, callback):
+        # These handlers may only signal a request, not run G-Code or yield.
+        if callback is None:
+            self.async_command_handlers.pop(cmd, None)
+        else:
+            if cmd in self.async_command_handlers:
+                raise self.printer.config_error(
+                    "Async command '%s' already registered" % (cmd,))
+            self.async_command_handlers[cmd] = callback
+    def try_async_command(self, script):
+        # Only intercept a standalone command, preserving script ordering.
+        lines = [line.split(';', 1)[0].strip().upper()
+                 for line in script.split('\n')]
+        lines = [line for line in lines if line]
+        if len(lines) != 1 or not self.is_printer_ready:
+            return False
+        callback = self.async_command_handlers.get(lines[0])
+        if callback is None:
+            return False
+        callback()
+        return True
     def get_mutex(self):
         return self.mutex
     def create_gcode_command(self, command, commandline, params):
@@ -446,6 +470,14 @@ class GCodeIO:
         lines = data.split('\n')
         lines[0] = self.partial_input + lines[0]
         self.partial_input = lines.pop()
+        if not self.is_fileinput:
+            remaining = []
+            for line in lines:
+                if self.gcode.try_async_command(line):
+                    self.gcode.respond_raw('ok')
+                else:
+                    remaining.append(line)
+            lines = remaining
         pending_commands = self.pending_commands
         pending_commands.extend(lines)
         self.pipe_is_active = True
