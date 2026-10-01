@@ -9,6 +9,7 @@
 #include "board/misc.h" // dynmem_start
 #include "board/irq.h"  // irq_disable
 #include "command.h"    // shutdown
+#include "generic/serial_irq.h" // serial_enable_tx_irq
 #include "generic/timer_irq.h"  // timer_dispatch_many
 #include "sched.h"      // sched_main
 
@@ -39,6 +40,30 @@ dynmem_end(void)
     return &dynmem_pool[sizeof(dynmem_pool)];
 }
 
+static int need_serial_tx;
+
+static void
+check_serial_pending(void)
+{
+    while (r_uart_fifo_rcv())
+        serial_rx_byte(r_uart_getc());
+    while (need_serial_tx && r_uart_fifo_cantx()) {
+        uint8_t b;
+        int ret = serial_get_tx_byte(&b);
+        if (ret < 0)
+            need_serial_tx = 0;
+        else
+            r_uart_putc(b);
+    }
+}
+
+void
+serial_enable_tx_irq(void)
+{
+    need_serial_tx = 1;
+    check_serial_pending();
+}
+
 void
 irq_disable(void)
 {
@@ -67,59 +92,25 @@ irq_wait(void)
 }
 
 void
+timer_dispatch_irq_poll(void)
+{
+}
+
+void
+timer_dispatch_task_poll(void)
+{
+    check_serial_pending();
+}
+
+void
 irq_poll(void)
 {
     if(timer_interrupt_pending()) {
         timer_clear_interrupt();
-        uint32_t next = timer_dispatch_many();
+        uint32_t next = timer_dispatch_many_polling();
         timer_set(next);
     }
-    if(r_uart_fifo_rcv())
-        sched_wake_task(&console_wake);
-}
-
-/****************************************************************
-* Console IO
-****************************************************************/
-
-// Process any incoming commands
-void
-console_task(void)
-{
-    if (!sched_check_wake(&console_wake))
-        return;
-
-    int ret = 0;
-    for(int i=0; i<r_uart_fifo_rcv(); i++) {
-        receive_buf[receive_pos + ret++] = r_uart_getc();
-    }
-    if(!ret)
-        return;
-
-    int len = receive_pos + ret;
-    uint_fast8_t pop_count, msglen = len > MESSAGE_MAX ? MESSAGE_MAX : len;
-    ret = command_find_and_dispatch(receive_buf, msglen, &pop_count);
-    if (ret) {
-        len -= pop_count;
-        if (len) {
-            memcpy(receive_buf, &receive_buf[pop_count], len);
-            sched_wake_task(&console_wake);
-        }
-    }
-    receive_pos = len;
-}
-DECL_TASK(console_task);
-
-// Encode and transmit a "response" message
-void
-console_sendf(const struct command_encoder *ce, va_list args)
-{
-    uint8_t buf[MESSAGE_MAX];
-    uint_fast8_t msglen = command_encode_and_frame(buf, sizeof(buf), ce, args);
-
-    for(int i=0; i<msglen; i++) {
-        r_uart_putc(buf[i]);
-    }
+    check_serial_pending();
 }
 
 void restore_data(void)

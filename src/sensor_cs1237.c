@@ -99,21 +99,9 @@ cs1237_read_bits(struct cs1237_adc *cs, uint_fast8_t num_bits)
 }
 
 static void
-cs1237_clock_pulses(struct cs1237_adc *cs, uint_fast8_t count)
+cs1237_write_bits(struct cs1237_adc *cs, uint32_t value, uint_fast8_t num_bits)
 {
-    while (count--) {
-        irq_disable();
-        gpio_out_write(cs->sclk, 1);
-        cs1237_delay_noirq();
-        gpio_out_write(cs->sclk, 0);
-        irq_enable();
-        cs1237_delay();
-    }
-}
-
-static void
-cs1237_write_bits(struct cs1237_adc *cs, uint32_t value, uint32_t mask)
-{
+    uint32_t mask = 1 << (num_bits - 1);
     while (mask) {
         gpio_out_write(cs->dout_out, !!(value & mask));
         cs1237_delay();
@@ -133,13 +121,12 @@ cs1237_write_bits(struct cs1237_adc *cs, uint32_t value, uint32_t mask)
 static void
 cs1237_write_config(struct cs1237_adc *cs)
 {
-    cs1237_clock_pulses(cs, 5);
+    cs1237_read_bits(cs, 5);
+    uint32_t cmd = (CS1237_WRITE_CONFIG << 9) | (1 << 8) | cs->config;
     gpio_out_reset(cs->dout_out, 0);
-    cs1237_write_bits(cs, CS1237_WRITE_CONFIG, 0x40);
-    cs1237_clock_pulses(cs, 1);
-    cs1237_write_bits(cs, cs->config, 0x80);
+    cs1237_write_bits(cs, cmd, 7 + 1 + 8);
     gpio_in_reset(cs->dout, 0);
-    cs1237_clock_pulses(cs, 1);
+    cs1237_read_bits(cs, 1);
 }
 
 static uint_fast8_t
@@ -189,8 +176,11 @@ cs1237_read_adc(struct cs1237_adc *cs, uint8_t oid)
         raw = cs1237_read_bits(cs, 24);
         cs1237_write_config(cs);
     } else {
-        // Bits 25-27 are update1, reserved zero, and forced high.
-        raw = cs1237_read_bits(cs, 27);
+        // Bits 25-26 are update1 and a reserved zero.  Clock 27 only
+        // forces DOUT high until the next conversion is ready - its
+        // level depends on when the chip drives the line, not on the
+        // conversion, so discard it instead of checking it.
+        raw = cs1237_read_bits(cs, 27) >> 1;
     }
 
     irq_disable();
@@ -205,15 +195,15 @@ cs1237_read_adc(struct cs1237_adc *cs, uint8_t oid)
     if (old_flags & CS_CONFIG_PENDING)
         return;
 
-    uint_fast8_t status = raw & 0x07;
-    uint32_t counts = raw >> 3;
+    uint_fast8_t status = raw & 0x03;
+    uint32_t counts = raw >> 2;
     if (counts & 0x800000)
         counts |= 0xff000000;
 
     uint_fast8_t error = 0;
-    if ((status & 0x03) != 0x01)
+    if (status & 0x01)
         error = SE_DESYNC;
-    else if ((old_flags & CS_CONFIG_VERIFY) && !(status & 0x04))
+    else if ((old_flags & CS_CONFIG_VERIFY) && !(status & 0x02))
         error = SE_CONFIG;
     else if (old_flags & CS_OVERFLOW)
         error = SE_READ_TOO_LONG;

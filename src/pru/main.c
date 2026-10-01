@@ -78,6 +78,21 @@ timer_kick(void)
     PRU_INTC.SECR0 = 1 << IEP_EVENT;
 }
 
+void
+timer_dispatch_irq_poll(void)
+{
+}
+
+void
+timer_dispatch_task_poll(void)
+{
+    uint32_t secr0 = PRU_INTC.SECR0;
+    if (secr0 & (1 << KICK_PRU1_EVENT)) {
+        PRU_INTC.SECR0 = 1 << KICK_PRU1_EVENT;
+        sched_wake_tasks();
+    }
+}
+
 static uint32_t in_timer_dispatch;
 
 static void
@@ -91,7 +106,7 @@ _irq_poll(void)
     if (secr0 & (1 << IEP_EVENT)) {
         CT_IEP.TMR_CMP_STS = 0xff;
         in_timer_dispatch = 1;
-        uint32_t next = timer_dispatch_many();
+        uint32_t next = timer_dispatch_many_polling();
         timer_set(next);
         PRU_INTC.SECR0 = 1 << IEP_EVENT;
         in_timer_dispatch = 0;
