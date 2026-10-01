@@ -5364,6 +5364,21 @@ data_ready_pin:
 #   The default is 16.
 ```
 
+#### Host load cell
+
+Load cell connected to the machine running the host software.
+
+```
+[load_cell spool_weight]
+sensor_type: load_cell_host
+sensor_path:
+#   The path to a file containing the load cell count. This parameter must be provided.
+min_count:
+#   The minimum count the sensor reports. This parameter must be provided.
+max_count:
+#   The maximum count the sensor reports. This parameter must be provided.
+```
+
 ### [load_cell_probe]
 Load Cell Probe. This combines the functionality of a [probe] and a [load_cell].
 
