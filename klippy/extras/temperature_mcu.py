@@ -146,7 +146,17 @@ class PrinterTemperatureMCU:
         self.slope = (110. - 30.) / (cal_adc_110 - cal_adc_30)
         self.base_temperature = self.calc_base(30., cal_adc_30)
     def config_stm32f0x2(self):
-        self.config_stm32f4(addr1=0x1FFFF7B8, addr2=0x1FFFF7C2)
+        cal1 = self.read16(0x1FFFF7B8)
+        cal2 = self.read16(0x1FFFF7C2)
+        if (cal1 and cal2 and cal1 != cal2
+                and cal1 <= 4095 and cal2 <= 4095):
+            self.config_stm32f4(addr1=0x1FFFF7B8, addr2=0x1FFFF7C2)
+            return
+        self.slope = 3.3 / -.004300
+        if cal1 and cal1 <= 4095:
+            self.base_temperature = self.calc_base(25., cal1 / 4095.)
+        else:
+            self.base_temperature = self.calc_base(25., 1.43 / 3.3)
     def config_stm32f070(self):
         self.slope = 3.3 / -.004300
         cal_adc_30 = self.read16(0x1FFFF7B8) / 4095.
