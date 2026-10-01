@@ -12,10 +12,16 @@
 #include "pgm.h" // PROGMEM
 #include "sched.h" // sched_shutdown
 
+#define ADC_TEMPERATURE_PIN 0xfe
+DECL_ENUMERATION("pin", "ADC_TEMPERATURE", ADC_TEMPERATURE_PIN);
+
 static const uint8_t adc_pins[] PROGMEM = {
-#if CONFIG_MACH_atmega168 || CONFIG_MACH_atmega328 || CONFIG_MACH_atmega328p
+#if CONFIG_MACH_atmega168
     GPIO('C', 0), GPIO('C', 1), GPIO('C', 2), GPIO('C', 3),
     GPIO('C', 4), GPIO('C', 5), GPIO('E', 2), GPIO('E', 3),
+#elif CONFIG_MACH_atmega328 || CONFIG_MACH_atmega328p
+    GPIO('C', 0), GPIO('C', 1), GPIO('C', 2), GPIO('C', 3),
+    GPIO('C', 4), GPIO('C', 5), GPIO('E', 2), GPIO('E', 3),ADC_TEMPERATURE_PIN,
 #elif CONFIG_MACH_atmega644p || CONFIG_MACH_atmega1284p
     GPIO('A', 0), GPIO('A', 1), GPIO('A', 2), GPIO('A', 3),
     GPIO('A', 4), GPIO('A', 5), GPIO('A', 6), GPIO('A', 7),
@@ -90,6 +96,8 @@ gpio_adc_setup(uint8_t pin)
         }
     else
 #endif
+    // The internal temperature sensor is not connected to a digital input.
+    if (chan < 8)
         DIDR0 |= 1 << chan;
 
     return (struct gpio_adc){ chan };
@@ -120,6 +128,12 @@ gpio_adc_sample(struct gpio_adc g)
     // The MUX5 bit of ADCSRB selects whether we're reading from
     // channels 0 to 7 (MUX5 low) or 8 to 15 (MUX5 high).
     ADCSRB = ((g.chan >> 3) & 0x01) << MUX5;
+#endif
+#if CONFIG_MACH_atmega328 || CONFIG_MACH_atmega328p
+    // Select the internal temperature sensor with the 1.1V reference.
+    if (g.chan == 8)
+        ADMUX = 0xC0 | g.chan;
+    else
 #endif
     ADMUX = ADMUX_DEFAULT | (g.chan & 0x07);
 
