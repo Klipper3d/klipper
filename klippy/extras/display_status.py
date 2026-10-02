@@ -11,7 +11,7 @@ class DisplayStatus:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.expire_progress = 0.
-        self.progress = self.message = None
+        self.progress = self.remaining_time = self.message = None
         # Register commands
         gcode = self.printer.lookup_object('gcode')
         gcode.register_command('M73', self.cmd_M73)
@@ -21,22 +21,29 @@ class DisplayStatus:
             desc=self.cmd_SET_DISPLAY_TEXT_help)
     def get_status(self, eventtime):
         progress = self.progress
-        if progress is not None and eventtime > self.expire_progress:
+        if ((progress is not None or self.remaining_time is not None)
+                and eventtime > self.expire_progress):
             idle_timeout = self.printer.lookup_object('idle_timeout')
             idle_timeout_info = idle_timeout.get_status(eventtime)
             if idle_timeout_info['state'] != "Printing":
                 self.progress = progress = None
+                self.remaining_time = None
         if progress is None:
             progress = 0.
             sdcard = self.printer.lookup_object('virtual_sdcard', None)
             if sdcard is not None:
                 progress = sdcard.get_status(eventtime)['progress']
-        return { 'progress': progress, 'message': self.message }
+        return { 'progress': progress, 'remaining_time': self.remaining_time,
+                 'message': self.message }
     def cmd_M73(self, gcmd):
         progress = gcmd.get_float('P', None)
+        remaining = gcmd.get_float('R', None, minval=0.)
         if progress is not None:
             progress = progress / 100.
             self.progress = min(1., max(0., progress))
+        if remaining is not None:
+            self.remaining_time = remaining * 60.
+        if progress is not None or remaining is not None:
             curtime = self.printer.get_reactor().monotonic()
             self.expire_progress = curtime + M73_TIMEOUT
     def cmd_M117(self, gcmd):
