@@ -333,9 +333,6 @@ class TemperatureProbe:
     )
     def cmd_TEMPERATURE_PROBE_CALIBRATE(self, gcmd):
         method = gcmd.get('MANUAL_METHOD', 'manual').lower()
-        # Formward gcmd paras
-        if method == "tap":
-            self._gcode_params = gcmd.get_raw_command_parameters()
         if self.cal_helper is None:
             raise gcmd.error(
                 "No calibration helper registered for [%s]"
@@ -383,6 +380,9 @@ class TemperatureProbe:
                 "Auxiliary Probe Drift Commands already registered. Use "
                 "TEMPERATURE_PROBE_COMPLETE or ABORT to exit."
             )
+        # Forward gcmd params
+        if method == "tap":
+            self._gcode_params = gcmd.get_raw_command_parameters()
         self.in_calibration = True
         self.cal_helper.start_calibration()
         self.target_temp = target_temp
