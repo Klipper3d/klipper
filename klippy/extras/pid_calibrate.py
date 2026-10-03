@@ -3,6 +3,9 @@
 # Copyright (C) 2016-2018  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+# Architecture Spec: Extends PID autotuning with selectable ALGORITHM
+# parameters (classic-zn, tyreus-luyben, no-overshoot, fast) while
+# defaulting to classic-zn for upstream compatibility.
 import math, logging
 from . import heaters
 
@@ -15,7 +18,19 @@ class PIDCalibrate:
     cmd_PID_CALIBRATE_help = "Run PID calibration test"
     def cmd_PID_CALIBRATE(self, gcmd):
         heater_name = gcmd.get('HEATER')
-        target = gcmd.get_float('TARGET')
+        targets = []
+
+        if gcmd.get('TARGETS', None) is not None:
+            targets = [
+                float(x)
+                for x in gcmd.get('TARGETS').split(',')
+                if x.strip()
+            ][:20]
+            if len(targets) < 2:
+                raise gcmd.error("You must specify minimum two temp targets")
+        else:
+            targets = [gcmd.get_float('TARGET')]
+
         write_file = gcmd.get_int('WRITE_FILE', 0)
         pheaters = self.printer.lookup_object('heaters')
         try:
@@ -23,32 +38,63 @@ class PIDCalibrate:
         except self.printer.config_error as e:
             raise gcmd.error(str(e))
         self.printer.lookup_object('toolhead').get_last_move_time()
-        calibrate = ControlAutoTune(heater, target)
-        old_control = heater.set_control(calibrate)
-        try:
-            pheaters.set_temperature(heater, target, True)
-        except self.printer.command_error as e:
+
+        results = []
+        algo = gcmd.get('ALGORITHM', 'classic-zn').strip().lower()
+
+        for target in targets:
+            calibrate = ControlAutoTune(heater, target)
+            old_control = heater.set_control(calibrate)
+            try:
+                pheaters.set_temperature(heater, target, True)
+            except self.printer.command_error as e:
+                heater.set_control(old_control)
+                raise
             heater.set_control(old_control)
-            raise
-        heater.set_control(old_control)
-        if write_file:
-            calibrate.write_file('/tmp/heattest.txt')
-        if calibrate.check_busy(0., 0., 0.):
-            raise gcmd.error("pid_calibrate interrupted")
-        # Log and report results
-        Kp, Ki, Kd = calibrate.calc_final_pid()
-        logging.info("Autotune: final: Kp=%f Ki=%f Kd=%f", Kp, Ki, Kd)
-        gcmd.respond_info(
-            "PID parameters: pid_Kp=%.3f pid_Ki=%.3f pid_Kd=%.3f\n"
-            "The SAVE_CONFIG command will update the printer config file\n"
-            "with these parameters and restart the printer." % (Kp, Ki, Kd))
+            if write_file:
+                calibrate.write_file('/tmp/heattest_%.0f.txt' % target)
+            if calibrate.check_busy(0., 0.):
+                raise gcmd.error("pid_calibrate interrupted")
+
+            Kp, Ki, Kd = calibrate.calc_final_pid(algo)
+            results.append((target, Kp, Ki, Kd))
+
         # Store results for SAVE_CONFIG
         cfgname = heater.get_name()
         configfile = self.printer.lookup_object('configfile')
         configfile.set(cfgname, 'control', 'pid')
-        configfile.set(cfgname, 'pid_Kp', "%.3f" % (Kp,))
-        configfile.set(cfgname, 'pid_Ki', "%.3f" % (Ki,))
-        configfile.set(cfgname, 'pid_Kd', "%.3f" % (Kd,))
+
+        if len(results) == 1:
+            Kp, Ki, Kd = results[0][1:]
+            configfile.set(cfgname, 'pid_Kp', "%.3f" % (Kp,))
+            configfile.set(cfgname, 'pid_Ki', "%.3f" % (Ki,))
+            configfile.set(cfgname, 'pid_Kd', "%.3f" % (Kd,))
+        else:
+            for i in range(len(results), 20):
+                configfile.remove_option(cfgname, 'pid_table_%d' % i)
+
+            for i, (temp, Kp, Ki, Kd) in enumerate(results):
+                configfile.set(cfgname, 'pid_table_%d' % i,
+                        "%.1f:%.3f:%.3f:%.3f" % (temp, Kp, Ki, Kd))
+
+        # Log and report results
+        msg_lines = []
+        for i, (temp, Kp, Ki, Kd) in enumerate(results):
+            logging.info(
+                "Autotune (%s) %.1f C: Kp=%.3f Ki=%.3f Kd=%.3f",
+                algo, temp, Kp, Ki, Kd
+            )
+            msg_lines.append(
+                "%.0f C: Kp=%.3f Ki=%.3f Kd=%.3f" % (temp, Kp, Ki, Kd)
+            )
+
+        gcmd.respond_info(
+            "PID parameters (%s):\n%s\n"
+            "The SAVE_CONFIG command will update the printer "
+                 "config file with these "
+            "parameters and restart the printer."
+            % (algo, '\n'.join(msg_lines))
+        )
 
 TUNE_PID_DELTA = 5.0
 
@@ -73,7 +119,7 @@ class ControlAutoTune:
             self.pwm_samples.append(
                 (read_time + self.heater.get_pwm_delay(), value))
             self.last_pwm = value
-        self.heater.set_pwm(read_time, value)
+        return value
     def temperature_update(self, read_time, temp, target_temp):
         self.temp_samples.append((read_time, temp))
         # Check if the temperature has crossed the target and
@@ -88,16 +134,17 @@ class ControlAutoTune:
             self.heater.alter_target(self.calibrate_temp)
         # Check if this temperature is a peak and record it if so
         if self.heating:
-            self.set_pwm(read_time, self.heater_max_power)
+            pwm_value = self.set_pwm(read_time, self.heater_max_power)
             if temp < self.peak:
                 self.peak = temp
                 self.peak_time = read_time
         else:
-            self.set_pwm(read_time, 0.)
+            pwm_value = self.set_pwm(read_time, 0.)
             if temp > self.peak:
                 self.peak = temp
                 self.peak_time = read_time
-    def check_busy(self, eventtime, smoothed_temp, target_temp):
+        return pwm_value
+    def check_busy(self, smoothed_temp, target_temp):
         if self.heating or len(self.peaks) < 12:
             return True
         return False
@@ -111,27 +158,52 @@ class ControlAutoTune:
         if len(self.peaks) < 4:
             return
         self.calc_pid(len(self.peaks)-1)
-    def calc_pid(self, pos):
+    def calc_pid(self, pos, algo='classic-zn'):
         temp_diff = self.peaks[pos][0] - self.peaks[pos-1][0]
         time_diff = self.peaks[pos][1] - self.peaks[pos-2][1]
         # Use Astrom-Hagglund method to estimate Ku and Tu
         amplitude = .5 * abs(temp_diff)
-        Ku = 4. * self.heater_max_power / (math.pi * amplitude)
+        power_amplitude = .5 * self.heater_max_power
+        Ku = 4. * power_amplitude / (math.pi * amplitude)
         Tu = time_diff
-        # Use Ziegler-Nichols method to generate PID parameters
-        Ti = 0.5 * Tu
-        Td = 0.125 * Tu
-        Kp = 0.6 * Ku * heaters.PID_PARAM_BASE
+
+        if algo == 'classic-zn':
+            # Original 1942 Ziegler-Nichols (25% Overshoot)
+            Ti = 0.5 * Tu
+            Td = 0.125 * Tu
+            Kp = 0.6 * Ku * heaters.PID_PARAM_BASE
+        elif algo == 'tyreus-luyben':
+            # Tyreus-Luyben (Conservative, zero overshoot)
+            Ti = 2.2 * Tu
+            Td = Tu / 6.3
+            Kp = 0.31 * Ku * heaters.PID_PARAM_BASE
+        elif algo == 'no-overshoot':
+            # Pesen No-Overshoot method
+            Ti = 0.5 * Tu
+            Td = 0.33 * Tu
+            Kp = 0.2 * Ku * heaters.PID_PARAM_BASE
+        elif algo == 'fast':
+            # Fast response tuning (High Kp, low Td)
+            Ti = 0.4 * Tu
+            Td = 0.04 * Tu
+            Kp = 1.5 * Ku * heaters.PID_PARAM_BASE
+        else:
+            # Default to Ziegler-Nichols
+            Ti = 0.5 * Tu
+            Td = 0.125 * Tu
+            Kp = 0.6 * Ku * heaters.PID_PARAM_BASE
+
         Ki = Kp / Ti
         Kd = Kp * Td
-        logging.info("Autotune: raw=%f/%f Ku=%f Tu=%f  Kp=%f Ki=%f Kd=%f",
-                     temp_diff, self.heater_max_power, Ku, Tu, Kp, Ki, Kd)
+        logging.info("Autotune (%s): raw=%f/%f Ku=%f Tu=%f  Kp=%f Ki=%f Kd=%f",
+                     algo, temp_diff, self.heater_max_power, Ku, Tu, Kp, Ki, Kd)
         return Kp, Ki, Kd
-    def calc_final_pid(self):
+
+    def calc_final_pid(self, algo='classic-zn'):
         cycle_times = [(self.peaks[pos][1] - self.peaks[pos-2][1], pos)
                        for pos in range(4, len(self.peaks))]
         midpoint_pos = sorted(cycle_times)[len(cycle_times)//2][1]
-        return self.calc_pid(midpoint_pos)
+        return self.calc_pid(midpoint_pos, algo)
     # Offline analysis helper
     def write_file(self, filename):
         pwm = ["pwm: %.3f %.3f" % (time, value)

@@ -3,6 +3,9 @@
 # Copyright (C) 2016-2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+# Architecture Spec: Implements robust custom macro command parsing
+# for macro names containing digits (e.g. SET_D3_LED) while
+# preserving standard G/M-code splitting logic.
 import os, re, logging, collections, shlex, operator
 
 class CommandError(Exception):
@@ -199,6 +202,7 @@ class GCodeDispatch:
         self._respond_state("Ready")
     # Parse input into commands
     args_r = re.compile('([A-Z_]+|[A-Z*])')
+    standard_gcode_re = re.compile(r'^[GMTND]\d+(\.\d+)?$', re.IGNORECASE)
     def _process_commands(self, commands, need_ack=True):
         for line in commands:
             # Ignore comments and leading/trailing spaces
@@ -206,16 +210,31 @@ class GCodeDispatch:
             cpos = line.find(';')
             if cpos >= 0:
                 line = line[:cpos]
-            # Break line into parts and determine command
-            parts = self.args_r.split(line.upper())
-            if ''.join(parts[:2]) == 'N':
-                # Skip line number at start of command
-                cmd = ''.join(parts[3:5]).strip()
+            if not line:
+                continue
+            # If first word is not a standard G/M/T code, handle
+            # custom macro command with digits
+            words = line.split(None, 1)
+            first_word = words[0]
+            if not self.standard_gcode_re.match(first_word):
+                cmd = first_word.upper()
+                params = {}
+                if len(words) > 1:
+                    rest = words[1].upper()
+                    parts = self.args_r.split(rest)
+                    params = { parts[i]: parts[i+1].strip()
+                               for i in range(1, len(parts), 2) }
             else:
-                cmd = ''.join(parts[:3]).strip()
-            # Build gcode "params" dictionary
-            params = { parts[i]: parts[i+1].strip()
-                       for i in range(1, len(parts), 2) }
+                # Break line into parts and determine command
+                parts = self.args_r.split(line.upper())
+                if ''.join(parts[:2]) == 'N':
+                    # Skip line number at start of command
+                    cmd = ''.join(parts[3:5]).strip()
+                else:
+                    cmd = ''.join(parts[:3]).strip()
+                # Build gcode "params" dictionary
+                params = { parts[i]: parts[i+1].strip()
+                           for i in range(1, len(parts), 2) }
             gcmd = GCodeCommand(self, cmd, origline, params, need_ack)
             # Invoke handler for command
             handler = self.gcode_handlers.get(cmd, self.cmd_default)
