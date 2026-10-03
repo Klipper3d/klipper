@@ -631,7 +631,7 @@ class EddyDriftCompensation:
                 "calibration error, not enough samples"
             )
         min_temp, _ = cal_samples[0][0]
-        max_temp, _ = cal_samples[-1][0]
+        max_temp, _ = cal_samples[0][-1]
         polynomials = []
         for i, coords in enumerate(cal_samples):
             height = .05 + i * .5
