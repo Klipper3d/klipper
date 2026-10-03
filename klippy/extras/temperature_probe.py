@@ -54,6 +54,8 @@ class Polynomial2d:
             eqs.append([1., x, x*x])
             ans.append([y])
         res = mathutil.solve_linear_equations(eqs, ans)
+        if res is None:
+            return None
         return cls(res[0][0], res[1][0], res[2][0])
 
 class TemperatureProbe:
@@ -631,6 +633,10 @@ class EddyDriftCompensation:
         for i, coords in enumerate(cal_samples):
             height = .05 + i * .5
             poly = Polynomial2d.fit(coords)
+            if poly is None:
+                raise gcode.error(
+                    "calibration error, unable to fit polynomial at Z=%.2f"
+                    % (height,))
             polynomials.append(poly)
             logging.info("Polynomial at Z=%.2f: %s" % (height, repr(poly)))
         end_vld_temp = max(self.max_valid_temp, max_temp)
