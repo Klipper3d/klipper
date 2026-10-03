@@ -589,8 +589,12 @@ class EddyDriftCompensation:
         toolhead.wait_moves()
         # Wait for sample collection to finish
         reactor = self.printer.get_reactor()
+        mcu = self.printer.lookup_object('mcu')
         evttime = reactor.monotonic()
         while move_times:
+            if mcu.estimated_print_time(evttime) > move_times[-1][2] + 1.0:
+                raise self.printer.command_error(
+                    "%s: sensor outage during drift calibration" % (self.name,))
             evttime = reactor.pause(evttime + .1)
         sample_temp = sum(temps) / len(temps)
         for i, data in enumerate(probe_samples):
