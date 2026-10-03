@@ -563,7 +563,7 @@ class EddyDriftCompensation:
                     while ptime > end_time:
                         move_times.pop(0)
                         if not move_times:
-                            return idx >= DRIFT_SAMPLE_COUNT - 1
+                            return idx < DRIFT_SAMPLE_COUNT - 1
                         idx, start_time, end_time = move_times[0]
                     if ptime < start_time:
                         continue
