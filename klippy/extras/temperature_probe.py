@@ -621,7 +621,7 @@ class EddyDriftCompensation:
         if not success:
             return
         gcode = self.printer.lookup_object("gcode")
-        if len(cal_samples) < 3:
+        if len(cal_samples[0]) < 3:
             raise gcode.error(
                 "calibration error, not enough samples"
             )
