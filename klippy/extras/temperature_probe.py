@@ -161,7 +161,10 @@ class TemperatureProbe:
             cmd = "TEMPERATURE_PROBE_NEXT"
             if self._gcode_params:
                 cmd += " " + self._gcode_params
-            self.gcode.run_script(cmd)
+            try:
+                self.gcode.run_script(cmd)
+            except Exception:
+                logging.exception("%s: error running %s" % (self.name, cmd))
 
     def get_temp(self, eventtime=None):
         return self.last_measurement[0], self.target_temp
