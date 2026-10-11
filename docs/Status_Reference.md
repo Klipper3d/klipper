@@ -522,9 +522,9 @@ The following information is available in the `system_stats` object
 
 The following information is available in
 
-[bme280 config_section_name](Config_Reference.md#bmp280bme280bme680-temperature-sensor),
+[bme280 config_section_name](Config_Reference.md#bmp180bmp280bme280bmp388bme680-temperature-sensor),
 [htu21d config_section_name](Config_Reference.md#htu21d-sensor),
-[sht3x config_section_name](Config_Reference.md#sht31-sensor),
+[sht3x config_section_name](Config_Reference.md#sht3x-sensor),
 [lm75 config_section_name](Config_Reference.md#lm75-temperature-sensor),
 [temperature_host config_section_name](Config_Reference.md#host-temperature-sensor)
 and
