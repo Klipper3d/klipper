@@ -883,7 +883,7 @@ inherits them from the specified `primary_carriage`, thus sharing
 the same range of motion with the primary carriage.
 
 For the references on how to configure IDEX setups, see the
-[dual carriage](#dual-carriage) section.
+[dual carriage](#dual_carriage) section.
 
 ### None Kinematics
 
@@ -1757,7 +1757,7 @@ Enables support to exclude or cancel individual objects during the printing
 process.
 
 See the [exclude objects guide](Exclude_Object.md) and
-[command reference](G-Codes.md#excludeobject)
+[command reference](G-Codes.md#exclude_object)
 for additional information. See the
 [sample-macros.cfg](../config/sample-macros.cfg) file for a
 Marlin/RepRapFirmware compatible M486 G-Code macro.
@@ -2559,7 +2559,7 @@ position_max:
 #homing_positive_dir:
 ...
 ```
-Refer to [generic cartesian](#generic-cartesian) section for more information
+Refer to [generic cartesian](#generic-cartesian-kinematics) section for more information
 on the regular `carriage` parameters.
 
 Then a user must define one or more stepper motors moving the dual carriage
