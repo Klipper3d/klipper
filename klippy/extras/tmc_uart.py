@@ -189,6 +189,8 @@ class MCU_TMC_uart_bitbang:
         self.tmcuart_send_cmd.send([self.oid, msg, 0], minclock=minclock)
     def get_mcu(self):
         return self.mcu
+    def get_oid(self):
+        return self.oid
 
 # Lookup a (possibly shared) tmc uart
 def lookup_tmc_uart_bitbang(config, max_addr):
@@ -265,3 +267,5 @@ class MCU_TMC_uart:
         return self.tmc_frequency
     def get_mcu(self):
         return self.mcu_uart.get_mcu()
+    def get_oid(self):
+        return self.mcu_uart.get_oid()
