@@ -8,6 +8,8 @@ to cut-and-paste them into a printer config file. See the
 [installation document](Installation.md) for information on setting up
 Klipper and choosing an initial config file.
 
+For any objects that may be referenced by other configuration sections (such as [multi_pin](Config_Reference.html#multi_pin), [adxl345](Config_Reference.html#adxl345), [probe](Config_Reference.html#probe)([bed_mesh](Config_Reference.html#bed_mesh), [z_tilt](Config_Reference.html#z_tilt), [quad_gantry_level](Config_Reference.html#quad_gantry_level), etc. needs a probe defined), etc.), their definitions must appear before any sections that reference them. Klipper processes the configuration file in order and cannot resolve references to objects that have not yet been defined, and potentially throw an error during startup, such as ```Unknown pin chip name 'multi_pin'```.
+
 ## Micro-controller configuration
 
 ### Format of micro-controller pin names
