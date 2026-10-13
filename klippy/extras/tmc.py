@@ -319,12 +319,14 @@ class TMCStallguardDump:
 ######################################################################
 
 class TMCCommandHelper:
-    def __init__(self, config, mcu_tmc, current_helper, temp_from_adc=None):
+    def __init__(self, config, mcu_tmc, current_helper, temp_from_adc=None,
+                 init_callback=None):
         self.printer = config.get_printer()
         self.stepper_name = ' '.join(config.get_name().split()[1:])
         self.name = config.get_name().split()[-1]
         self.mcu_tmc = mcu_tmc
         self.current_helper = current_helper
+        self.init_callback = init_callback
         self.fields = mcu_tmc.get_fields()
         self.stepper = None
         # Stepper phase tracking
@@ -360,6 +362,8 @@ class TMCCommandHelper:
                                    self.cmd_SET_TMC_CURRENT,
                                    desc=self.cmd_SET_TMC_CURRENT_help)
     def _init_registers(self, print_time=None):
+        if self.init_callback is not None:
+            self.init_callback()
         # Send registers
         for reg_name in list(self.fields.registers.keys()):
             val = self.fields.registers[reg_name] # Val may change during loop
@@ -413,6 +417,8 @@ class TMCCommandHelper:
     # Stepper phase tracking
     def _get_phases(self):
         return (256 >> self.fields.get_field("mres")) * 4
+    def clear_mcu_phase_offset(self):
+        self.mcu_phase_offset = None
     def get_phase_offset(self):
         return self.mcu_phase_offset, self._get_phases()
     def _query_phase(self):
