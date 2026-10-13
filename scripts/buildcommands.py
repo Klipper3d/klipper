@@ -25,6 +25,13 @@ def error(msg):
 
 Handlers = []
 
+# Search a "substring" in a "string"
+def find_sub(pool, types):
+    n = len(types)
+    for i in range(len(pool) - n + 1):
+        if tuple(pool[i:i+n]) == types:
+            return i
+    return -1
 
 ######################################################################
 # C call list generation
@@ -260,6 +267,8 @@ class HandleCommandGeneration:
             '_DECL_ENCODER': self.decl_encoder,
             '_DECL_OUTPUT': self.decl_output
         }
+        self.param_pool = []
+        self.param_offsets = {}
     def decl_command(self, req):
         funcname, flags, msgname = req.split()[1:4]
         if msgname in self.commands:
@@ -321,6 +330,41 @@ class HandleCommandGeneration:
                   if msgid not in command_ids and msgid not in response_ids}
         if output:
             data['output'] = output
+    def lookup_types(self, msgformat, msgtype):
+        if msgtype == "output":
+            param_types = msgproto.lookup_output_params(msgformat)
+        else:
+            param_types = [t for name, t in msgproto.lookup_params(msgformat)]
+        return tuple([t.__class__.__name__ for t in param_types])
+    def build_param_pool(self):
+        keys = []
+        for msgname, msg in self.encoders:
+            msgtype = 'command'
+            if msgname is None:
+                msgtype = 'output'
+            t = self.lookup_types(msg, msgtype)
+            if t:
+                keys.append(t)
+        for msgname in self.commands:
+            t = self.lookup_types(self.messages_by_name[msgname], 'response')
+            if t:
+                keys.append(t)
+        pool = []
+        # Longest first, so shorter lists are likely to be found inside
+        for key in sorted(keys, key=lambda k: (-len(k), k)):
+            off = find_sub(pool, key)
+            if off < 0:
+                # Append, but share bytes with the tail of the pool if
+                # the tail matches the start of this list
+                overlap = 0
+                for k in range(min(len(pool), len(key) - 1), 0, -1):
+                    if tuple(pool[-k:]) == key[:k]:
+                        overlap = k
+                        break
+                off = len(pool) - overlap
+                pool.extend(key[overlap:])
+            self.param_offsets[key] = off
+        self.param_pool = pool
     def build_parser(self, encoded_msgid, msgformat, msgtype):
         if msgtype == "output":
             param_types = msgproto.lookup_output_params(msgformat)
@@ -331,18 +375,14 @@ class HandleCommandGeneration:
         params = '0'
         types = tuple([t.__class__.__name__ for t in param_types])
         if types:
-            paramid = self.all_param_types.get(types)
-            if paramid is None:
-                paramid = len(self.all_param_types)
-                self.all_param_types[types] = paramid
-            params = 'command_parameters%d' % (paramid,)
+            params = '&command_param_pool[%d]' % (self.param_offsets[types],)
         out = """
     // %s
     .encoded_msgid=%d, // msgid=%d
     .num_params=%d,
-    .param_types = %s,
+    .param_types = %s, // %s
 """ % (comment, encoded_msgid, self.encid_to_msgid[encoded_msgid],
-       len(types), params)
+       len(types), params, ", ".join(types))
         if msgtype == 'response':
             num_args = (len(types) + types.count('PT_progmem_buffer')
                         + types.count('PT_buffer'))
@@ -433,18 +473,17 @@ const uint16_t command_index_size PROGMEM = ARRAY_SIZE(command_index);
 """
         return fmt % (externs, index)
     def generate_param_code(self):
-        sorted_param_types = sorted(
-            [(i, a) for a, i in self.all_param_types.items()])
-        params = ['']
-        for paramid, argtypes in sorted_param_types:
-            params.append(
-                'static const uint8_t command_parameters%d[] PROGMEM = {\n'
-                '    %s };' % (
-                    paramid, ', '.join(argtypes),))
-        params.append('')
-        return "\n".join(params)
+        pool = self.param_pool
+        rows = ["    " + ", ".join(pool[i:i+8]) + ","
+                for i in range(0, len(pool), 8)]
+        output = "// Shared parameter type lists\n"
+        output += "static const uint8_t command_param_pool[] PROGMEM = {\n"
+        output += "\n".join(rows)
+        output += "\n};"
+        return output
     def generate_code(self, options):
         self.create_message_ids()
+        self.build_param_pool()
         parsercode = self.generate_responses_code()
         cmdcode = self.generate_commands_code()
         paramcode = self.generate_param_code()
