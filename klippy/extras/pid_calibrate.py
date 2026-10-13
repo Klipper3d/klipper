@@ -22,8 +22,11 @@ class PIDCalibrate:
             heater = pheaters.lookup_heater(heater_name)
         except self.printer.config_error as e:
             raise gcmd.error(str(e))
+        cfg_max_power = heater.get_max_power()
+        max_power = gcmd.get_float('MAX_POWER', cfg_max_power,
+                                   maxval=cfg_max_power, above=0.)
         self.printer.lookup_object('toolhead').get_last_move_time()
-        calibrate = ControlAutoTune(heater, target)
+        calibrate = ControlAutoTune(heater, target, max_power)
         old_control = heater.set_control(calibrate)
         try:
             pheaters.set_temperature(heater, target, True)
@@ -42,6 +45,27 @@ class PIDCalibrate:
             "PID parameters: pid_Kp=%.3f pid_Ki=%.3f pid_Kd=%.3f\n"
             "The SAVE_CONFIG command will update the printer config file\n"
             "with these parameters and restart the printer." % (Kp, Ki, Kd))
+        heating = calibrate.final_heating_time
+        cooling = calibrate.final_cooling_time
+        ratio = heating/(cooling+heating)
+        if ratio < 0.49:
+            gcmd.respond_info(
+                "Heating takes (%.2f) less than 50%% of the calibration time\n"
+                "One may consider decreasing calibration power and "
+                "rerun the calibration\n"
+                "Suggested MAX_POWER=%.3f" % (ratio * 100,
+                                              ratio * 2 * max_power)
+            )
+        if ratio > 0.66:
+            gcmd.respond_info(
+                "Heating takes more than twice of cooling time\n"
+                "One may decrease the TARGET temperature and "
+                "rerun the calibration"
+            )
+        if ratio > 0.66 and max_power < 1.0:
+            gcmd.respond_info(
+                "Or consider increasing the max power"
+            )
         # Store results for SAVE_CONFIG
         cfgname = heater.get_name()
         configfile = self.printer.lookup_object('configfile')
@@ -53,9 +77,9 @@ class PIDCalibrate:
 TUNE_PID_DELTA = 5.0
 
 class ControlAutoTune:
-    def __init__(self, heater, target):
+    def __init__(self, heater, target, max_power):
         self.heater = heater
-        self.heater_max_power = heater.get_max_power()
+        self.heater_max_power = max_power
         self.calibrate_temp = target
         # Heating control
         self.heating = False
@@ -63,6 +87,8 @@ class ControlAutoTune:
         self.peak_time = 0.
         # Peak recording
         self.peaks = []
+        self.final_heating_time = .0
+        self.final_cooling_time = .0
         # Sample recording
         self.last_pwm = 0.
         self.pwm_samples = []
@@ -127,10 +153,20 @@ class ControlAutoTune:
         logging.info("Autotune: raw=%f/%f Ku=%f Tu=%f  Kp=%f Ki=%f Kd=%f",
                      temp_diff, self.heater_max_power, Ku, Tu, Kp, Ki, Kd)
         return Kp, Ki, Kd
+    def track_heating_ratio(self, pos):
+        # Track heating/cooling ratio to make advices
+        self.final_heating_time = self.peaks[pos][1] - self.peaks[pos-1][1]
+        self.final_cooling_time = self.peaks[pos-1][1] - self.peaks[pos-2][1]
+        # middle is high
+        if self.peaks[pos][0] < self.peaks[pos-1][0]:
+            old = self.final_heating_time
+            self.final_heating_time = self.final_cooling_time
+            self.final_cooling_time = old
     def calc_final_pid(self):
         cycle_times = [(self.peaks[pos][1] - self.peaks[pos-2][1], pos)
                        for pos in range(4, len(self.peaks))]
         midpoint_pos = sorted(cycle_times)[len(cycle_times)//2][1]
+        self.track_heating_ratio(midpoint_pos)
         return self.calc_pid(midpoint_pos)
     # Offline analysis helper
     def write_file(self, filename):
