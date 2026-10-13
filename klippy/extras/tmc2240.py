@@ -345,6 +345,9 @@ class TMC2240CurrentHelper:
 # TMC2240 printer object
 ######################################################################
 
+def _adc_to_celsius(adc_value):
+    return (adc_value - 2038) / 7.7
+
 class TMC2240:
     def __init__(self, config):
         # Setup mcu communication
@@ -361,7 +364,8 @@ class TMC2240:
         tmc.TMCVirtualPinHelper(config, self.mcu_tmc)
         # Register commands
         current_helper = TMC2240CurrentHelper(config, self.mcu_tmc)
-        cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper)
+        cmdhelper = tmc.TMCCommandHelper(config, self.mcu_tmc, current_helper,
+                                         _adc_to_celsius)
         cmdhelper.setup_register_dump(ReadRegisters)
         self.get_phase_offset = cmdhelper.get_phase_offset
         self.get_status = cmdhelper.get_status
