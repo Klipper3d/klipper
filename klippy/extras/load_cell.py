@@ -8,7 +8,7 @@ from . import hx71x
 from . import ads1220
 from . import cs1237
 from . import ads131m0x
-from .bulk_sensor import BatchWebhooksClient
+from .bulk_sensor import BatchWebhooksClient, BatchBulkHelper
 import collections, itertools
 # We want either Python 3's zip() or Python 2's izip() but NOT 2's zip():
 zip_impl = zip
@@ -81,6 +81,9 @@ class LoadCellCommandHelper:
         gcode.register_mux_command("LOAD_CELL_DIAGNOSTIC", "LOAD_CELL", name,
                                    self.cmd_LOAD_CELL_DIAGNOSTIC,
                                    desc=self.cmd_LOAD_CELL_DIAGNOSTIC_help)
+        gcode.register_mux_command("LOAD_CELL_TRACK_FORCE", "LOAD_CELL", name,
+                                   self.cmd_LOAD_CELL_TRACK_FORCE,
+                                   desc=self.cmd_LOAD_CELL_TRACK_FORCE_help)
 
     cmd_LOAD_CELL_TARE_help = "Set the Zero point of the load cell"
     def cmd_LOAD_CELL_TARE(self, gcmd):
@@ -105,6 +108,13 @@ class LoadCellCommandHelper:
             gcmd.respond_info("---.-g (%.2f%%)" % (percent,))
         else:
             gcmd.respond_info("%.1fg (%.2f%%)" % (force, percent))
+
+    cmd_LOAD_CELL_TRACK_FORCE_help = "Keep the load cell reporting force"
+    def cmd_LOAD_CELL_TRACK_FORCE(self, gcmd):
+        enable = gcmd.get_int("ENABLE", 1, minval=0, maxval=1)
+        self.load_cell.set_track_force(enable)
+        gcmd.respond_info("Load cell force tracking %s"
+                          % ("enabled" if enable else "disabled",))
 
     cmd_LOAD_CELL_DIAGNOSTIC_help = "Check the health of the load cell"
     def cmd_LOAD_CELL_DIAGNOSTIC(self, gcmd):
@@ -372,6 +382,8 @@ class LoadCellSampleCollector:
         return self._collect_until(self.max_time + 1.)
 
 # Printer class that controls the load cell
+# Probing waits on these samples, so keep the batch delay short
+UPDATE_INTERVAL = 0.02
 MIN_COUNTS_PER_GRAM = 1.
 class LoadCell:
     def __init__(self, config, sensor):
@@ -389,17 +401,20 @@ class LoadCell:
         self.invert = config.getchoice('sensor_orientation',
                         {'normal': 1., 'inverted': -1.}, default="normal")
         LoadCellCommandHelper(config, self)
-        # Client support:
-        self.clients = ApiClientHelper(printer)
+        # Client support, the sensor only runs while a client needs data
+        self._sensor_msgs = []
+        self._sensor_session = 0
+        self._track_force_on = False
+        self.batch_bulk = BatchBulkHelper(printer, self._process_batch,
+                                          self._start_sensor,
+                                          self._finish_sensor, UPDATE_INTERVAL)
         header = {"header": ["time", "force (g)", "counts", "tare_counts"]}
-        self.clients.add_mux_endpoint("load_cell/dump_force",
-                                      "load_cell", self.name, header)
+        self.batch_bulk.add_mux_endpoint("load_cell/dump_force",
+                                         "load_cell", self.name, header)
         # startup, when klippy is ready, start capturing data
         printer.register_event_handler("klippy:ready", self._handle_ready)
 
     def _handle_do_ready(self, eventtime):
-        self.sensor.add_client(self._sensor_data_event)
-        self.add_client(self._track_force)
         # announce calibration status on ready
         if self.is_calibrated():
             self.printer.send_event("load_cell:calibrate", self)
@@ -408,25 +423,52 @@ class LoadCell:
     def _handle_ready(self):
         self.printer.get_reactor().register_callback(self._handle_do_ready)
 
-    # convert raw counts to grams and broadcast to clients
-    def _sensor_data_event(self, msg):
-        data = msg.get("data")
-        errors = msg.get("errors")
-        overflows = msg.get("overflows")
-        if data is None:
-            return None
-        samples = []
-        for row in data:
-            # [time, grams, counts, tare_counts]
-            samples.append([row[0], self.counts_to_grams(row[1]), row[1],
-                            self.tare_counts])
-        msg = {'data': samples, 'errors': errors, 'overflows': overflows}
-        self.clients.send(msg)
+    # subscribe to the sensor while load cell clients exist
+    def _start_sensor(self):
+        self._sensor_session += 1
+        session = self._sensor_session
+        del self._sensor_msgs[:]
+        self.sensor.add_client(
+            lambda msg: self._sensor_data_event(session, msg))
+    def _finish_sensor(self):
+        # the sensor client unsubscribes on its next callback
+        self._sensor_session += 1
+        del self._sensor_msgs[:]
+        self._force_buffer.clear()
+    def _sensor_data_event(self, session, msg):
+        if session != self._sensor_session:
+            return False
+        self._sensor_msgs.append(msg)
         return True
+
+    # convert raw counts to grams and broadcast to clients
+    def _process_batch(self, eventtime):
+        if not self._sensor_msgs:
+            return {}
+        msgs = self._sensor_msgs
+        self._sensor_msgs = []
+        samples = []
+        for msg in msgs:
+            for row in msg['data']:
+                # [time, grams, counts, tare_counts]
+                samples.append([row[0], self.counts_to_grams(row[1]), row[1],
+                                self.tare_counts])
+        msg = {'data': samples, 'errors': msgs[-1]['errors'],
+               'overflows': msgs[-1]['overflows']}
+        self._track_force(msg)
+        return msg
+
+    # Keep reporting force_g until disabled (LOAD_CELL_TRACK_FORCE)
+    def _track_force_cb(self, msg):
+        return self._track_force_on
+    def set_track_force(self, enable):
+        if enable and not self._track_force_on:
+            self.add_client(self._track_force_cb)
+        self._track_force_on = bool(enable)
 
     # get internal events of force data
     def add_client(self, callback):
-        self.clients.add_client(callback)
+        self.batch_bulk.add_client(callback)
 
     def tare(self, tare_counts):
         self.tare_counts = int(tare_counts)

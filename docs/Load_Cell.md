@@ -96,8 +96,9 @@ LOAD_CELL_READ
 // 10.6g (1.94%)
 ```
 
-Data is also continuously read and can be consumed from the load_cell printer
-object in a macro:
+The load cell is only read while it is needed (probing, the `LOAD_CELL_*`
+commands, API clients). To keep reading it, run `LOAD_CELL_TRACK_FORCE`. The
+data can then be consumed from the load_cell printer object in a macro:
 
 ```
 {% set grams = printer.load_cell.force_g %}
