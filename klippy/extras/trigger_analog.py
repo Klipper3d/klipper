@@ -277,6 +277,8 @@ class MCU_trigger_analog:
         self._mcu = self._sensor.get_mcu()
         self._sos_filter = None
         self._dispatch = mcu.TriggerDispatch(self._mcu)
+        self._trigger_callback = None
+        self._homing = False
         self._last_trigger_time = 0.
         # Raw range checking
         self._raw_min = self._raw_max = 0
@@ -296,6 +298,12 @@ class MCU_trigger_analog:
 
     def setup_sos_filter(self, sos_filter):
         self._sos_filter = sos_filter
+
+    def setup_trigger_callback(self, callback):
+        self._trigger_callback = callback
+
+    def prepare_homing(self):
+        pass
 
     def _build_config(self):
         self._sensor.setup_trigger_analog(self._oid)
@@ -363,7 +371,7 @@ class MCU_trigger_analog:
         self._sos_filter.reset_filter()
 
     def _clear_home(self):
-        self._home_cmd.send([self._oid, 0, 0, 0, 0, 0, 0, 0])
+        self._home_cmd.send([self._oid, 0, 0, 0, 0, 0, 0])
         params = self._query_state_cmd.send([self._oid])
         trigger_ticks = self._mcu.clock32_to_clock64(params['homing_clock'])
         return self._mcu.clock_to_print_time(trigger_ticks)
@@ -376,18 +384,34 @@ class MCU_trigger_analog:
         self._last_trigger_time = 0.
         self._reset_filter()
         trigger_completion = self._dispatch.start(print_time)
+        self._homing = True
         clock = self._mcu.print_time_to_clock(print_time)
         sensor_update = 1. / self._sensor.get_samples_per_second()
         sm_ticks = self._mcu.seconds_to_clock(sensor_update)
-        self._home_cmd.send([self._oid, self._dispatch.get_oid(),
-            mcu.MCU_trsync.REASON_ENDSTOP_HIT, self.REASON_TRIGGER_ANALOG,
-            clock, sm_ticks, self.MONITOR_MAX], reqclock=clock)
+        try:
+            if self._trigger_callback is not None:
+                self._trigger_callback(self._dispatch)
+            self._home_cmd.send([self._oid, self._dispatch.get_oid(),
+                mcu.MCU_trsync.REASON_ENDSTOP_HIT, self.REASON_TRIGGER_ANALOG,
+                clock, sm_ticks, self.MONITOR_MAX], reqclock=clock)
+        except Exception:
+            self.abort_home()
+            raise
         return trigger_completion
+
+    def abort_home(self):
+        if self._homing:
+            self._homing = False
+            try:
+                self._dispatch.stop()
+            finally:
+                self._clear_home()
 
     def home_wait(self, home_end_time):
         self._dispatch.wait_end(home_end_time)
         # trigger has happened, now to find out why...
         res = self._dispatch.stop()
+        self._homing = False
         # clear the homing state so it stops processing samples
         trigger_time = self._clear_home()
         if res >= mcu.MCU_trsync.REASON_COMMS_TIMEOUT:

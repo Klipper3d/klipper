@@ -88,6 +88,10 @@ config USB_SERIAL_NUMBER
 endmenu
 
 # Optional features that can be disabled (for devices with small flash sizes)
+config WANT_ENDSTOP_BRIDGE
+    bool
+    depends on HAVE_GPIO
+    default y if !HAVE_LIMITED_CODE_SIZE
 config WANT_ADC
     bool
     depends on HAVE_GPIO_ADC
@@ -222,6 +226,13 @@ config WANT_HARD_PWM
 config WANT_BUTTONS
     bool "Support GPIO based button reading"
     depends on HAVE_GPIO
+config WANT_ENDSTOP_BRIDGE
+    bool "Support GPIO endstop trigger forwarding"
+    depends on HAVE_GPIO
+    help
+        Forward a selected endstop or analog trigger to another MCU over
+        a GPIO wire. This is disabled by default on code-size-limited
+        targets. Enable it on the sending MCU when using endstop_bridge.
 config WANT_TMCUART
     bool "Support Trinamic stepper motor driver UART communication"
     depends on HAVE_GPIO

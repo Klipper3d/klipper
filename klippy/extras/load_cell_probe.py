@@ -379,6 +379,7 @@ class LoadCellProbingMove:
     # Wait for the MCU to trigger with no movement
     def probing_test(self, gcmd, timeout):
         self._pause_and_tare(gcmd)
+        self._mcu_trigger_analog.prepare_homing()
         toolhead = self._printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
         self._mcu_trigger_analog.home_start(print_time, 0., 0, 0.)
@@ -686,6 +687,13 @@ class LoadCellPrinterProbe:
         cmd_queue = self._mcu_trigger_analog.get_dispatch().get_command_queue()
         sos_filter = trigger_analog.MCU_SosFilter(self._mcu, cmd_queue, 4)
         self._mcu_trigger_analog.setup_sos_filter(sos_filter)
+        trigger_bridge = config.get('trigger_bridge', None)
+        if trigger_bridge is not None:
+            from .endstop_bridge import HardwareAnalogTrigger
+            bridge = self._printer.load_object(
+                config, 'endstop_bridge ' + trigger_bridge)
+            self._mcu_trigger_analog = HardwareAnalogTrigger(
+                config, bridge, self._mcu_trigger_analog)
         continuous_tare_filter_helper = ContinuousTareFilterHelper(
             config, sensor, sos_filter)
         # Probe Interface

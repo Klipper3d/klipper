@@ -114,6 +114,7 @@ nav:
       - Status_Reference.md
     - TMC_Drivers.md
     - Multi_MCU_Homing.md
+    - Endstop_Bridge.md
     - Slicers.md
     - Skew_Correction.md
     - Exclude_Object.md

@@ -52,6 +52,8 @@ communication with the Klipper developers.
 - [TMC Drivers](TMC_Drivers.md): Using Trinamic stepper motor drivers
   with Klipper.
 - [Multi-MCU Homing](Multi_MCU_Homing.md): Homing and probing using multiple micro-controllers.
+- [Endstop Bridge](Endstop_Bridge.md): Share a GPIO trigger wire between
+  MCUs for sequential homing and probing.
 - [Slicers](Slicers.md): Configure "slicer" software for Klipper.
 - [Skew correction](Skew_Correction.md): Adjustments for axes not
   perfectly square.

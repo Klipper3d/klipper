@@ -5364,11 +5364,46 @@ data_ready_pin:
 #   The default is 16.
 ```
 
+### [endstop_bridge]
+
+Forward one selected endstop or load-cell trigger to another MCU over a
+shared GPIO wire. See [Endstop Bridge](Endstop_Bridge.md) for wiring,
+sequential homing requirements and limitations.
+
+```ini
+[endstop_bridge sync]
+input_x_pin:
+#input_y_pin:
+#input_aux_pin:
+#   Digital source pins on the sending MCU. Use input_<name>_pin for each
+#   source; there is no fixed XYZ list. Omit all inputs for an analog-only
+#   bridge. Reference a digital source as endstop_pin: bridge:sync:x.
+output_pin:
+#   Sending MCU output GPIO, required.
+receive_pin:
+#   Receiving MCU input GPIO, required. Its MCU must control the steppers.
+#   Configure physical inversion/pullups on these options, not virtual pins.
+#period: 0.000050
+#filter_count: 2
+#   Advanced sender settings for all digital inputs; normally omit them.
+#   Period range is 0.000010..0.010 seconds; filter_count range is 1..255.
+#poll_interval: 0.000050
+#   Advanced receiver sampling interval, 0.000010..0.010 seconds.
+```
+
 ### [load_cell_probe]
 Load Cell Probe. This combines the functionality of a [probe] and a [load_cell].
 
+Optional
+[shared GPIO trigger forwarding](Endstop_Bridge.md), configured with
+`[endstop_bridge name]` with `input_<name>_pin` options and the probe's
+`trigger_bridge` option, provides a hardware trigger path between MCUs.
+
 ```
 [load_cell_probe]
+#trigger_bridge:
+#   Name of an endstop_bridge for MCU-local hardware stop signaling.
+#   Omit to retain native synchronization. See Endstop_Bridge.md.
 sensor_type:
 #   This must be one of the supported bulk ADC sensor types and support
 #   load cell endstops on the mcu.
