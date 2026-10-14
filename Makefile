@@ -29,6 +29,13 @@ dirs-y = src
 cc-option=$(shell if test -z "`$(1) $(2) -S -o /dev/null -xc /dev/null 2>&1`" \
     ; then echo "$(2)"; else echo "$(3)"; fi ;)
 
+# Newlib provides "libc_nano".
+# Other libraries such as picolibc only provide the standard "libc".
+# Prefer newlib when it is available.
+check-libc-nano=$(shell if test "`$(1) -print-file-name=libc_nano.a`" != "libc_nano.a" \
+    ; then echo "-lc_nano"; else echo "-lc"; fi ;)
+LIBC_LDFLAG = $(call check-libc-nano,$(CC))
+
 CFLAGS := -iquote $(OUT) -iquote src -iquote $(OUT)board-generic/ \
 		-std=gnu11 -O2 -MD -Wall \
 		-Wold-style-definition $(call cc-option,$(CC),-Wtype-limits,) \
