@@ -57,7 +57,11 @@ class SensorBase:
         if params['fault']:
             self.handle_fault(params['value'], params['fault'])
             return
-        temp = self.calc_temp(params['value'])
+        value = params['value']
+        if value < self.min_sample_value or value > self.max_sample_value:
+            # Invalid sample (mcu tracks consecutive invalid count)
+            return
+        temp = self.calc_temp(value)
         next_clock      = self.mcu.clock32_to_clock64(params['next_clock'])
         last_read_clock = next_clock - self._report_clock
         last_read_time  = self.mcu.clock_to_print_time(last_read_clock)
