@@ -1,0 +1,16 @@
+# Test case for the FAN_CALIBRATE command
+#
+# Calibration requires tachometer feedback from a real fan, which the
+# virtual test mcu can not provide, so the error paths are verified.
+CONFIG fan_calibrate.cfg
+DICTIONARY atmega2560.dict
+SHOULD_FAIL
+
+# Smoke test the fans used below
+M106 S255
+M107
+SET_FAN_SPEED FAN=aux_fan SPEED=0.5
+SET_FAN_SPEED FAN=aux_fan SPEED=0.
+
+# The aux_fan has no tachometer_pin - calibration must fail
+FAN_CALIBRATE FAN=aux_fan
