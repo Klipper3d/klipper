@@ -8,6 +8,7 @@ from . import hx71x
 from . import ads1220
 from . import cs1237
 from . import ads131m0x
+from . import load_cell_host
 from .bulk_sensor import BatchWebhooksClient
 import collections, itertools
 # We want either Python 3's zip() or Python 2's izip() but NOT 2's zip():
@@ -379,7 +380,7 @@ class LoadCell:
         self.config_name = config.get_name()
         self.name = config.get_name().split()[-1]
         self.sensor = sensor   # must implement BulkSensorAdc
-        buffer_size = int(sensor.get_samples_per_second() / 2)
+        buffer_size = max(int(sensor.get_samples_per_second() / 2), 1)
         self._force_buffer = collections.deque(maxlen=buffer_size)
         self.reference_tare_counts = config.getint('reference_tare_counts',
                                                    default=None)
@@ -537,6 +538,7 @@ def load_config(config):
     sensors.update(ads1220.ADS1220_SENSOR_TYPE)
     sensors.update(cs1237.CS1237_SENSOR_TYPE)
     sensors.update(ads131m0x.ADS131M0X_SENSOR_TYPES)
+    sensors.update(load_cell_host.LOAD_CELL_HOST_SENSOR_TYPE)
     sensor_class = config.getchoice('sensor_type', sensors)
     return LoadCell(config, sensor_class(config))
 
