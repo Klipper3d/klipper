@@ -1,0 +1,33 @@
+name: Upstream Sync
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # Run daily at midnight UTC
+  workflow_dispatch:   # Enable manual trigger from GitHub UI
+
+jobs:
+  sync_latest_from_upstream:
+    name: Sync latest commits from upstream
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout target repo
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Sync upstream
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git remote add upstream https://github.com/Klipper3d/klipper.git
+          git fetch upstream master
+          
+          # Rebase your patches on top of upstream master
+          git rebase upstream/master
+          
+          # Force push to personal fork
+          git push origin master --force
