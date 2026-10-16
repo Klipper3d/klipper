@@ -9,19 +9,24 @@ from . import heaters
 class PIDCalibrate:
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.printer.register_event_handler("klippy:connect",
+                                            self._handle_connect)
+    def _handle_connect(self):
         gcode = self.printer.lookup_object('gcode')
-        gcode.register_command('PID_CALIBRATE', self.cmd_PID_CALIBRATE,
-                               desc=self.cmd_PID_CALIBRATE_help)
+        pheaters = self.printer.lookup_object('heaters')
+        all_heaters = pheaters.get_all_heaters()
+        for name in all_heaters:
+            short_name = name.split()[-1]
+            gcode.register_mux_command('PID_CALIBRATE', 'HEATER', short_name,
+                                       self.cmd_PID_CALIBRATE,
+                                       desc=self.cmd_PID_CALIBRATE_help)
     cmd_PID_CALIBRATE_help = "Run PID calibration test"
     def cmd_PID_CALIBRATE(self, gcmd):
         heater_name = gcmd.get('HEATER')
         target = gcmd.get_float('TARGET')
         write_file = gcmd.get_int('WRITE_FILE', 0)
         pheaters = self.printer.lookup_object('heaters')
-        try:
-            heater = pheaters.lookup_heater(heater_name)
-        except self.printer.config_error as e:
-            raise gcmd.error(str(e))
+        heater = pheaters.lookup_heater(heater_name)
         self.printer.lookup_object('toolhead').get_last_move_time()
         calibrate = ControlAutoTune(heater, target)
         old_control = heater.set_control(calibrate)
@@ -50,7 +55,7 @@ class PIDCalibrate:
         configfile.set(cfgname, 'pid_Ki', "%.3f" % (Ki,))
         configfile.set(cfgname, 'pid_Kd', "%.3f" % (Kd,))
 
-TUNE_PID_DELTA = 5.0
+TUNE_PID_DELTA = 2.5
 
 class ControlAutoTune:
     def __init__(self, heater, target):
@@ -103,7 +108,7 @@ class ControlAutoTune:
         return False
     # Analysis
     def check_peaks(self):
-        self.peaks.append((self.peak, self.peak_time))
+        self.peaks.append((self.peak_time, self.peak))
         if self.heating:
             self.peak = 9999999.
         else:
@@ -112,11 +117,12 @@ class ControlAutoTune:
             return
         self.calc_pid(len(self.peaks)-1)
     def calc_pid(self, pos):
-        temp_diff = self.peaks[pos][0] - self.peaks[pos-1][0]
-        time_diff = self.peaks[pos][1] - self.peaks[pos-2][1]
+        temp_diff = self.peaks[pos][1] - self.peaks[pos-1][1]
+        time_diff = self.peaks[pos][0] - self.peaks[pos-2][0]
         # Use Astrom-Hagglund method to estimate Ku and Tu
         amplitude = .5 * abs(temp_diff)
-        Ku = 4. * self.heater_max_power / (math.pi * amplitude)
+        power_amplitude = .5 * self.heater_max_power
+        Ku = 4. * power_amplitude / (math.pi * amplitude)
         Tu = time_diff
         # Use Ziegler-Nichols method to generate PID parameters
         Ti = 0.5 * Tu
@@ -128,7 +134,7 @@ class ControlAutoTune:
                      temp_diff, self.heater_max_power, Ku, Tu, Kp, Ki, Kd)
         return Kp, Ki, Kd
     def calc_final_pid(self):
-        cycle_times = [(self.peaks[pos][1] - self.peaks[pos-2][1], pos)
+        cycle_times = [(self.peaks[pos][0] - self.peaks[pos-2][0], pos)
                        for pos in range(4, len(self.peaks))]
         midpoint_pos = sorted(cycle_times)[len(cycle_times)//2][1]
         return self.calc_pid(midpoint_pos)
