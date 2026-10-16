@@ -55,7 +55,7 @@ class PIDCalibrate:
         configfile.set(cfgname, 'pid_Ki', "%.3f" % (Ki,))
         configfile.set(cfgname, 'pid_Kd', "%.3f" % (Kd,))
 
-TUNE_PID_DELTA = 5.0
+TUNE_PID_DELTA = 2.5
 
 class ControlAutoTune:
     def __init__(self, heater, target):
