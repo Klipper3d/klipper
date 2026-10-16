@@ -75,7 +75,8 @@ class AccelQueryHelper:
         total = sum([len(m['data']) for m in self.msgs])
         count = 0
         self.samples = samples = [None] * total
-        for msg in self.msgs:
+        while self.msgs:
+            msg = self.msgs.pop(0)
             for samp_time, x, y, z in msg['data']:
                 if samp_time < self.request_start_time:
                     continue
@@ -87,21 +88,27 @@ class AccelQueryHelper:
         return self.samples
     def write_to_file(self, filename):
         def write_impl():
+            with open(filename, "w") as f:
+                f.write("#time,accel_x,accel_y,accel_z\n")
+                if not self.msgs:
+                    for samp_time, accel_x, accel_y, accel_z in self.samples:
+                        f.write("%.6f,%.6f,%.6f,%.6f\n" % (
+                            samp_time, accel_x, accel_y, accel_z))
+                    return
+                for msg in self.msgs:
+                    for samp_time, accel_x, accel_y, accel_z in msg['data']:
+                        if samp_time < self.request_start_time:
+                            continue
+                        if samp_time > self.request_end_time:
+                            break
+                        f.write("%.6f,%.6f,%.6f,%.6f\n" % (
+                            samp_time, accel_x, accel_y, accel_z))
+        aio = self.printer.lookup_object('aio_executor')
+        with aio.allocate_executor("aclient") as executor:
             try:
-                # Try to re-nice writing process
-                os.nice(20)
-            except:
-                pass
-            f = open(filename, "w")
-            f.write("#time,accel_x,accel_y,accel_z\n")
-            samples = self.samples or self.get_samples()
-            for t, accel_x, accel_y, accel_z in samples:
-                f.write("%.6f,%.6f,%.6f,%.6f\n" % (
-                    t, accel_x, accel_y, accel_z))
-            f.close()
-        write_proc = multiprocessing.Process(target=write_impl)
-        write_proc.daemon = True
-        write_proc.start()
+                executor.submit(write_impl)
+            except Exception as e:
+                raise self.printer.command_error(str(e))
 
 # Helper class for G-Code commands
 class AccelCommandHelper:
@@ -109,6 +116,8 @@ class AccelCommandHelper:
         self.printer = config.get_printer()
         self.chip = chip
         self.bg_client = None
+        # Ensure executor is loaded for AccelQueryHelper
+        self.printer.load_object(config, 'aio_executor')
         name_parts = config.get_name().split()
         self.base_name = name_parts[0]
         self.name = name_parts[-1]
@@ -162,9 +171,9 @@ class AccelCommandHelper:
             filename = "/tmp/%s-%s.csv" % (self.base_name, name)
         else:
             filename = "/tmp/%s-%s-%s.csv" % (self.base_name, self.name, name)
-        bg_client.write_to_file(filename)
         gcmd.respond_info("Writing raw accelerometer data to %s file"
                           % (filename,))
+        bg_client.write_to_file(filename)
     cmd_ACCELEROMETER_QUERY_help = "Query accelerometer for the current values"
     def cmd_ACCELEROMETER_QUERY(self, gcmd):
         aclient = self.chip.start_internal_client()

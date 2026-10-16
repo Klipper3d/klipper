@@ -58,10 +58,19 @@ class Executor:
         return result
     def wrap_obj(self, object):
         return WrapperAIO(self, object)
+    def __enter__(self):
+        return self
+    def __exit__(self, exc_type=None, exc_val=None, exc_tb=None):
+        self.join()
     def join(self):
+        if not self._wait_for_work:
+            return
         self._wait_for_work = False
         self._queue.put_nowait(self.sentinel)
         self._thread.join()
+        self._queue = None
+        self._thread = None
+        self.reactor = None
 
 class Dispatcher:
     def __init__(self, config):
