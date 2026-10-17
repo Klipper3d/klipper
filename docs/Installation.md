@@ -107,7 +107,7 @@ If the comments at the top of the
 [printer configuration file](#obtain-a-klipper-configuration-file)
 describe custom steps for "flashing" the final image to the printer
 control board, then follow those steps and then proceed to
-[configuring OctoPrint](#configuring-octoprint-to-use-klipper).
+[configuring OctoPrint](OctoPrint.md#configuring-octoprint-to-use-klipper).
 
 Otherwise, the following steps are often used to "flash" the printer
 control board. First, it is necessary to determine the serial port

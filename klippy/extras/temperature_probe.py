@@ -54,6 +54,8 @@ class Polynomial2d:
             eqs.append([1., x, x*x])
             ans.append([y])
         res = mathutil.solve_linear_equations(eqs, ans)
+        if res is None:
+            return None
         return cls(res[0][0], res[1][0], res[2][0])
 
 class TemperatureProbe:
@@ -159,7 +161,10 @@ class TemperatureProbe:
             cmd = "TEMPERATURE_PROBE_NEXT"
             if self._gcode_params:
                 cmd += " " + self._gcode_params
-            self.gcode.run_script(cmd)
+            try:
+                self.gcode.run_script(cmd)
+            except Exception:
+                logging.exception("%s: error running %s" % (self.name, cmd))
 
     def get_temp(self, eventtime=None):
         return self.last_measurement[0], self.target_temp
@@ -328,9 +333,6 @@ class TemperatureProbe:
     )
     def cmd_TEMPERATURE_PROBE_CALIBRATE(self, gcmd):
         method = gcmd.get('MANUAL_METHOD', 'manual').lower()
-        # Formward gcmd paras
-        if method == "tap":
-            self._gcode_params = gcmd.get_raw_command_parameters()
         if self.cal_helper is None:
             raise gcmd.error(
                 "No calibration helper registered for [%s]"
@@ -378,6 +380,9 @@ class TemperatureProbe:
                 "Auxiliary Probe Drift Commands already registered. Use "
                 "TEMPERATURE_PROBE_COMPLETE or ABORT to exit."
             )
+        # Forward gcmd params
+        if method == "tap":
+            self._gcode_params = gcmd.get_raw_command_parameters()
         self.in_calibration = True
         self.cal_helper.start_calibration()
         self.target_temp = target_temp
@@ -563,7 +568,7 @@ class EddyDriftCompensation:
                     while ptime > end_time:
                         move_times.pop(0)
                         if not move_times:
-                            return idx >= DRIFT_SAMPLE_COUNT - 1
+                            return idx < DRIFT_SAMPLE_COUNT - 1
                         idx, start_time, end_time = move_times[0]
                     if ptime < start_time:
                         continue
@@ -589,8 +594,12 @@ class EddyDriftCompensation:
         toolhead.wait_moves()
         # Wait for sample collection to finish
         reactor = self.printer.get_reactor()
+        mcu = self.printer.lookup_object('mcu')
         evttime = reactor.monotonic()
         while move_times:
+            if mcu.estimated_print_time(evttime) > move_times[-1][2] + 1.0:
+                raise self.printer.command_error(
+                    "%s: sensor outage during drift calibration" % (self.name,))
             evttime = reactor.pause(evttime + .1)
         sample_temp = sum(temps) / len(temps)
         for i, data in enumerate(probe_samples):
@@ -617,16 +626,20 @@ class EddyDriftCompensation:
         if not success:
             return
         gcode = self.printer.lookup_object("gcode")
-        if len(cal_samples) < 3:
+        if len(cal_samples[0]) < 3:
             raise gcode.error(
                 "calibration error, not enough samples"
             )
         min_temp, _ = cal_samples[0][0]
-        max_temp, _ = cal_samples[-1][0]
+        max_temp, _ = cal_samples[0][-1]
         polynomials = []
         for i, coords in enumerate(cal_samples):
             height = .05 + i * .5
             poly = Polynomial2d.fit(coords)
+            if poly is None:
+                raise gcode.error(
+                    "calibration error, unable to fit polynomial at Z=%.2f"
+                    % (height,))
             polynomials.append(poly)
             logging.info("Polynomial at Z=%.2f: %s" % (height, repr(poly)))
         end_vld_temp = max(self.max_valid_temp, max_temp)
