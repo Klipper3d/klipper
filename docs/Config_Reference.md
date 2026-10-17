@@ -5540,6 +5540,7 @@ i2c_bus: i2c.1
 ```
 
 The chip provides pins that can be used on other sensors.
+Remeber to define the section for ads1x1x before the sections using its pins.
 
 ```
 sensor_type: ...
