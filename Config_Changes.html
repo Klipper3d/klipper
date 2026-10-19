@@ -1418,6 +1418,8 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
+<p>20261001: The <code>PID_CALIBRATE</code> now reports PID values at half their
+previous magnitude due to a correction in the underlying PID math.</p>
 <p>20260915: Support for the <code>TEMPERATURE_PROBE_CALIBRATE</code> <code>METHOD=tap</code>
 parameter has been removed. Use
 <code>TEMPERATURE_PROBE_CALIBRATE MANUAL_METHOD=tap</code> instead.</p>
