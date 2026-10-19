@@ -84,7 +84,18 @@ class AccelQueryHelper:
                 samples[count] = Accel_Measurement(samp_time, x, y, z)
                 count += 1
         del samples[count:]
+        self.msgs = []
         return self.samples
+    def clear(self):
+        reactor = self.printer.get_reactor()
+        while self.msgs:
+            del self.msgs[-16:]
+            now = reactor.monotonic()
+            reactor.pause(now + 0.001)
+        while self.samples:
+            del self.samples[-1000:]
+            now = reactor.monotonic()
+            reactor.pause(now + 0.001)
     def write_to_file(self, filename):
         def write_impl():
             try:
@@ -163,6 +174,7 @@ class AccelCommandHelper:
         else:
             filename = "/tmp/%s-%s-%s.csv" % (self.base_name, self.name, name)
         bg_client.write_to_file(filename)
+        bg_client.clear()
         gcmd.respond_info("Writing raw accelerometer data to %s file"
                           % (filename,))
     cmd_ACCELEROMETER_QUERY_help = "Query accelerometer for the current values"

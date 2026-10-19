@@ -378,6 +378,9 @@ class ResonanceTester:
                         calibration_data[axis] = new_data
                     else:
                         calibration_data[axis].add_data(new_data)
+                # Manual cleanup
+                for _, aclient, _ in raw_values:
+                    aclient.clear()
         return calibration_data
     def _parse_chips(self, accel_chips):
         parsed_chips = []
