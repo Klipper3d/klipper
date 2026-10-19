@@ -121,6 +121,7 @@ class ICM20948:
     def _start_measurements(self):
         # In case of miswiring, testing ICM20948 device ID prevents treating
         # noise or wrong signal as a correctly initialized device
+        self.set_reg(REG_BANK_SEL, SET_BANK_0)
         dev_id = self.read_reg(REG_DEVID)
         if dev_id not in ICM_DEV_IDS.keys():
             raise self.printer.command_error(
