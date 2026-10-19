@@ -1418,8 +1418,15 @@ are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.</p>
 <p>All dates in this document are approximate.</p>
 <h2 id="changes">Changes<a class="headerlink" href="#changes" title="Permanent link">&para;</a></h2>
-<p>20261001: The <code>PID_CALIBRATE</code> now reports PID values at half their
-previous magnitude due to a correction in the underlying PID math.</p>
+<p>20261018: An error in the <code>PID_CALIBRATE</code> calculations has been
+corrected. Previously, the code would recommend PID values that were
+twice their desired values (relative to the standard "Astrom-Hagglund
+method"). The new <code>PID_CALIBRATE</code> code corrects this error and it may
+produce PID values that are less likely to cause heating
+oscillations. If you are happy with your current heater performance
+than no changes are necessary. If you are experiencing persistent
+heating osculations then you may wish to rerun <code>PID_CALIBRATE</code> and
+apply the updated PID recommendations.</p>
 <p>20260915: Support for the <code>TEMPERATURE_PROBE_CALIBRATE</code> <code>METHOD=tap</code>
 parameter has been removed. Use
 <code>TEMPERATURE_PROBE_CALIBRATE MANUAL_METHOD=tap</code> instead.</p>
