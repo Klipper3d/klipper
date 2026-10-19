@@ -135,9 +135,9 @@ class ICM20948:
         self.set_reg(REG_PWR_MGMT_2, SET_PWR_MGMT_2_ACCEL_ON)
         # Don't add 20ms pause for accelerometer chip wake up
         self.read_reg(REG_DEVID) # Dummy read to ensure queues flushed
+        self.set_reg(REG_BANK_SEL, SET_BANK_2)
         self.set_reg(REG_ACCEL_SMPLRT_DIV1, SAMPLE_RATE_DIVS[self.data_rate])
         self.set_reg(REG_ACCEL_SMPLRT_DIV2, SAMPLE_RATE_DIVS[self.data_rate])
-        self.set_reg(REG_BANK_SEL, SET_BANK_2)
         self.set_reg(REG_ACCEL_CONFIG, SET_ACCEL_CONFIG)
         self.set_reg(REG_BANK_SEL, SET_BANK_0)
         # Reset fifo
