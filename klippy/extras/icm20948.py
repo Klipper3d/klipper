@@ -29,6 +29,7 @@ REG_USER_CTRL =         0x03
 REG_PWR_MGMT_1 =        0x06
 REG_PWR_MGMT_2 =        0x07
 REG_INT_STATUS =        0x19
+REG_INT_STATUS_2 =      0x1B
 REG_BANK_SEL =          0x7F
 
 SAMPLE_RATE_DIVS = { 4500: 0x00 }
@@ -141,7 +142,7 @@ class ICM20948:
         self.set_reg(REG_FIFO_EN, SET_DISABLE_FIFO)
         self.set_reg(REG_USER_CTRL, SET_USER_FIFO_RESET)
         self.set_reg(REG_USER_CTRL, SET_USER_FIFO_EN)
-        self.read_reg(REG_INT_STATUS) # clear FIFO overflow flag
+        self.read_reg(REG_INT_STATUS_2) # clear FIFO overflow flag
         # Start bulk reading
         rest_ticks = self.mcu.seconds_to_clock(4. / self.data_rate)
         self.query_icm20948_cmd.send([self.oid, rest_ticks])
