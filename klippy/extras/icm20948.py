@@ -30,6 +30,7 @@ REG_PWR_MGMT_1 =        0x06
 REG_PWR_MGMT_2 =        0x07
 REG_INT_STATUS =        0x19
 REG_INT_STATUS_2 =      0x1B
+REG_FIFO_RST =          0x68
 REG_BANK_SEL =          0x7F
 
 SAMPLE_RATE_DIVS = { 4500: 0x00 }
@@ -43,10 +44,11 @@ SET_PWR_MGMT_1_WAKE =   0x01
 SET_PWR_MGMT_1_SLEEP =  0x41
 SET_PWR_MGMT_2_ACCEL_ON = 0x07
 SET_PWR_MGMT_2_OFF =    0x3F
-SET_USER_FIFO_RESET =   0x0E
 SET_USER_FIFO_EN =      0x40
 SET_ENABLE_FIFO  =      0x10
 SET_DISABLE_FIFO =      0x00
+SET_FIFO_RST_ASSERT =   0x1F
+SET_FIFO_RST_DEASSERT = 0x00
 
 FREEFALL_ACCEL = 9.80665 * 1000.
 # SCALE = 1/2048 g/LSB @16g scale * Earth gravity in mm/s**2
@@ -140,7 +142,8 @@ class ICM20948:
         self.set_reg(REG_BANK_SEL, SET_BANK_0)
         # Reset fifo
         self.set_reg(REG_FIFO_EN, SET_DISABLE_FIFO)
-        self.set_reg(REG_USER_CTRL, SET_USER_FIFO_RESET)
+        self.set_reg(REG_FIFO_RST, SET_FIFO_RST_ASSERT)
+        self.set_reg(REG_FIFO_RST, SET_FIFO_RST_DEASSERT)
         self.set_reg(REG_USER_CTRL, SET_USER_FIFO_EN)
         self.read_reg(REG_INT_STATUS_2) # clear FIFO overflow flag
         # Start bulk reading
