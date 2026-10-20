@@ -10,8 +10,8 @@ montagens, outros materiais nem uma reinstalação completa.
 
 | Arquivo | Conteúdo |
 | --- | --- |
-| `klippy/extras/bmcu_integracao_ender.py` | Carga, retirada, troca durante a impressão e adaptação do Orca |
-| `klippy/extras/bmcu_medicao.py` | Medição até o switch e testes assistidos usados na calibração |
+| `integrations/bmcu/bmcu_integracao_ender.py` | Carga, retirada, troca durante a impressão e adaptação do Orca |
+| `integrations/bmcu/bmcu_medicao.py` | Medição até o switch e testes assistidos usados na calibração |
 | `config/ender3-v3-se-validada/bmcu-multicor-ender.cfg` | Parâmetros de troca e macros de início/fim multicolor |
 | `config/ender3-v3-se-validada/bmcu-switch.cfg` | Switch e MCU Linux da Orange Pi |
 | `config/ender3-v3-se-validada/impressao.cfg` | Últimas macros conhecidas de início/fim, usadas pela integração |
@@ -21,7 +21,8 @@ montagens, outros materiais nem uma reinstalação completa.
 
 Os módulos nativos de BMCU-Klipper continuam sendo fornecidos pelo projeto
 [BMCU-Klipper v1.0.6](https://github.com/jarczakpawel/BMCU-Klipper/tree/v1.0.6).
-O instalador modifica somente os métodos de contrato genérico, pré-captura
+Os módulos opcionais são copiados para `klippy/extras/` pelo instalador;
+o checkout genérico não exige BMCU para importar o Klipper. O instalador modifica somente os métodos de contrato genérico, pré-captura
 e leitura do sensor gerenciado necessários para esta montagem. Ele verifica
 a estrutura antes de alterar, aceita uma instalação repetida e preserva os
 demais caminhos nativos. Os trechos de teste em `test/bmcu_integracao/fixtures/`

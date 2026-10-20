@@ -8,7 +8,6 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-
 RAIZ = Path(__file__).resolve().parents[2]
 
 
@@ -29,27 +28,40 @@ class BackupTest(unittest.TestCase):
     def criar(self, pasta):
         origem = pasta / 'config'
         origem.mkdir()
-        (origem / 'printer.cfg').write_text('[bltouch]\n#*# z_offset = 1.887\n')
+        (origem / 'printer.cfg').write_text(
+            '[bltouch]\n#*# z_offset = 1.887\n'
+        )
         (origem / '.moonraker.secrets').write_text('senha=privada\n')
         (origem / 'bmcu_state.json').write_text('{"loaded_tool": 4}')
         (origem / 'backup-antigo.tar.gz').write_bytes(b'backup antigo')
         arquivo = pasta / 'backup.tar.gz'
         coleta = captura.Captura(arquivo)
         coleta.pasta(origem, 'config', ('.tar.gz',))
-        coleta.concluir({'home_original': '/home/pi', 'criado_utc': '2026-10-20'})
+        coleta.concluir(
+            {'home_original': '/home/pi', 'criado_utc': '2026-10-20'}
+        )
         coleta.tar.close()
         return arquivo
 
-    def test_conserva_calibracao_estado_e_segredos_apenas_no_backup_privado(self):
+    def test_conserva_calibracao_estado_e_segredos_apenas_no_backup_privado(
+        self,
+    ):
         with tempfile.TemporaryDirectory() as temp:
             pasta = Path(temp)
             arquivo = self.criar(pasta)
             destino = pasta / 'revisao'
             manifesto = verificador.verificar(arquivo, destino)
-            self.assertEqual((destino / 'config/printer.cfg').read_bytes(),
-                             (pasta / 'config/printer.cfg').read_bytes())
-            self.assertEqual((destino / 'config/.moonraker.secrets').read_text(), 'senha=privada\n')
-            self.assertFalse((destino / 'config/backup-antigo.tar.gz').exists())
+            self.assertEqual(
+                (destino / 'config/printer.cfg').read_bytes(),
+                (pasta / 'config/printer.cfg').read_bytes(),
+            )
+            self.assertEqual(
+                (destino / 'config/.moonraker.secrets').read_text(),
+                'senha=privada\n',
+            )
+            self.assertFalse(
+                (destino / 'config/backup-antigo.tar.gz').exists()
+            )
             self.assertEqual(len(manifesto['arquivos']), 3)
             with self.assertRaises(FileExistsError):
                 verificador.verificar(arquivo, destino)
@@ -59,7 +71,9 @@ class BackupTest(unittest.TestCase):
             pasta = Path(temp)
             arquivo = self.criar(pasta)
             with tarfile.open(arquivo) as tar:
-                conteudo = {m.name: tar.extractfile(m).read() for m in tar.getmembers()}
+                conteudo = {
+                    m.name: tar.extractfile(m).read() for m in tar.getmembers()
+                }
             conteudo['config/printer.cfg'] += b'alterado'
             with tarfile.open(arquivo, 'w:gz') as tar:
                 for nome, dados in conteudo.items():
@@ -73,12 +87,18 @@ class BackupTest(unittest.TestCase):
     def test_rejeita_caminhos_externos_e_links(self):
         with tempfile.TemporaryDirectory() as temp:
             arquivo = Path(temp) / 'malicioso.tar.gz'
-            for nome, tipo in [('../fora', tarfile.REGTYPE), ('/absoluto', tarfile.REGTYPE),
-                               ('link', tarfile.SYMTYPE), ('link', tarfile.LNKTYPE)]:
+            for nome, tipo in [
+                ('../fora', tarfile.REGTYPE),
+                ('/absoluto', tarfile.REGTYPE),
+                ('link', tarfile.SYMTYPE),
+                ('link', tarfile.LNKTYPE),
+            ]:
                 with tarfile.open(arquivo, 'w:gz') as tar:
                     item = tarfile.TarInfo(nome)
                     item.type = tipo
-                    item.linkname = '/etc/passwd' if tipo != tarfile.REGTYPE else ''
+                    item.linkname = (
+                        '/etc/passwd' if tipo != tarfile.REGTYPE else ''
+                    )
                     tar.addfile(item, io.BytesIO(b''))
                 with self.assertRaisesRegex(ValueError, 'inválida'):
                     verificador.verificar(arquivo)
@@ -106,30 +126,55 @@ class BackupTest(unittest.TestCase):
             (runtime / 'manager.py').chmod(0o750)
             extras = pasta / 'klippy/extras'
             extras.mkdir(parents=True)
-            (extras / 'bmcu_core').symlink_to(runtime, target_is_directory=True)
+            (extras / 'bmcu_core').symlink_to(
+                runtime, target_is_directory=True
+            )
             arquivo = pasta / 'backup.tar.gz'
             coleta = captura.Captura(arquivo)
             try:
-                coleta.pasta(pasta / 'klippy', 'klippy-instalado', seguir_vinculos=True)
-                coleta.concluir({'home_original': '/home/pi', 'criado_utc': '2026-10-20'})
+                coleta.pasta(
+                    pasta / 'klippy', 'klippy-instalado', seguir_vinculos=True
+                )
+                coleta.concluir(
+                    {'home_original': '/home/pi', 'criado_utc': '2026-10-20'}
+                )
             finally:
                 coleta.tar.close()
             manifesto = verificador.verificar(arquivo, pasta / 'revisao')
             nome = 'klippy-instalado/extras/bmcu_core/manager.py'
-            self.assertEqual((pasta / 'revisao' / nome).read_text(), 'conteudo em uso')
+            self.assertEqual(
+                (pasta / 'revisao' / nome).read_text(), 'conteudo em uso'
+            )
             self.assertEqual(manifesto['arquivos'][nome]['modo'], 0o750)
 
     def test_nao_captura_durante_impressao_ou_movimento(self):
-        for estado, bmcu in [('printing', {}), ('paused', {}),
-                              ('standby', {'active_operations': {'bmcu0': {}}}),
-                              ('standby', {'devices': [{'channels': [{'motion': 3}]}]})]:
-            with patch.object(captura, 'objeto', side_effect=lambda n: {'state': estado} if n == 'print_stats' else bmcu):
+        for estado, bmcu in [
+            ('printing', {}),
+            ('paused', {}),
+            ('standby', {'active_operations': {'bmcu0': {}}}),
+            ('standby', {'devices': [{'channels': [{'motion': 3}]}]}),
+        ]:
+            with patch.object(
+                captura,
+                'objeto',
+                side_effect=lambda n: (
+                    {'state': estado} if n == 'print_stats' else bmcu
+                ),
+            ):
                 with self.assertRaises(RuntimeError):
                     captura.conferir_ocioso()
 
     def test_backup_nao_e_simulado_como_maquina_estacionada(self):
-        bmcu = {'devices': [{'channels': [{'motion': 0}], 'loaded_channels': [3]}]}
-        with patch.object(captura, 'objeto', side_effect=lambda n: {'state': 'standby'} if n == 'print_stats' else bmcu):
+        bmcu = {
+            'devices': [{'channels': [{'motion': 0}], 'loaded_channels': [3]}]
+        }
+        with patch.object(
+            captura,
+            'objeto',
+            side_effect=lambda n: (
+                {'state': 'standby'} if n == 'print_stats' else bmcu
+            ),
+        ):
             self.assertEqual(captura.conferir_ocioso(), bmcu)
 
 

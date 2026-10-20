@@ -200,7 +200,7 @@ class MedicaoChegada:
             self.gerenciador.gcode.run_script_from_command(
                 'G1 E%.9f F%.9f' % (avanco / quantidade, velocidade))
 
-    def _capturar_extrusora_primeiro(self, dispositivo, destino, canal, avanco, velocidade, sensor_gerenciado=False):
+    def _capturar_extrusora_primeiro(self, dispositivo, destino, canal, avanco, velocidade):
         gerenciador = self.gerenciador
         executar = gerenciador.gcode.run_script_from_command
         cabecote = gerenciador.printer.lookup_object('toolhead')
@@ -232,7 +232,7 @@ class MedicaoChegada:
             if cabecote.mcu.estimated_print_time(agora) >= tempos[1]:
                 raise RuntimeError('A janela de giro terminou antes da assistência da BMCU.')
             sensor = destino.sensor_status('entry_sensor')
-            if (not sensor or (not sensor_gerenciado and not sensor.get('enabled', True))
+            if (not sensor or not sensor.get('enabled', True)
                     or sensor.get('filament_detected') is not True):
                 raise RuntimeError('O switch deixou de detectar o filamento durante a captura.')
             dispositivo.set_motion(canal, protocol.MOTION_BEFORE_ON_USE)
