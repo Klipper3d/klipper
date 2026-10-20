@@ -8,6 +8,16 @@ All dates in this document are approximate.
 
 ## Changes
 
+20261018: An error in the `PID_CALIBRATE` calculations has been
+corrected. Previously, the code would recommend PID values that were
+twice their desired values (relative to the standard "Astrom-Hagglund
+method"). The new `PID_CALIBRATE` code corrects this error and it may
+produce PID values that result in fewer heating oscillations. If you
+are happy with your current heater performance then no changes are
+necessary. If you are experiencing persistent heating osculations then
+you may wish to rerun `PID_CALIBRATE` and apply the updated PID
+recommendations.
+
 20260915: Support for the `TEMPERATURE_PROBE_CALIBRATE` `METHOD=tap`
 parameter has been removed. Use
 `TEMPERATURE_PROBE_CALIBRATE MANUAL_METHOD=tap` instead.
