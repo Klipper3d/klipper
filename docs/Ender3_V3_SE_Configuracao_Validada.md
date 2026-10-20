@@ -65,14 +65,32 @@ executar `/usr/local/bin/klipper_mcu -I /tmp/klipper_host_mcu`. Não reutilize
 esses números GPIO em outra imagem sem conferir `gpiodetect` e `gpioinfo`.
 PC9 não é o pino do switch desta montagem.
 
-## Capturar o estado atual antes de reinstalar
+## Snapshot real recebido
 
-**Pendente:** ainda não há no repositório um snapshot completo da Orange Pi.
-O Z-offset e a malha atuais precisam vir da máquina; valores antigos da conversa
-não substituem essa captura. O coletor inclui os `.cfg`, `SAVE_CONFIG`, JSON de
-estado da BMCU, módulos Klippy instalados, fonte Git do commit, alterações locais,
-artefatos de compilação disponíveis, unidades systemd, overlays e inventário de
-versões. Ele não altera configurações, não movimenta motores e não reinicia serviços.
+O backup capturado em 20/10/2026 às 03:47 UTC foi verificado: 371 arquivos
+íntegros. A configuração pública revisada está em
+[`machines/ender3-v3-se-zero3/2026-10-20/`](../machines/ender3-v3-se-zero3/2026-10-20/),
+com instruções em [Recuperação desta máquina](../machines/ender3-v3-se-zero3/README.md).
+O Z-offset real é **1,940 mm**, a malha salva tem **9×9 pontos** e a extrusora
+usa `rotation_distance: 7.589`. O `SAVE_CONFIG` foi preservado byte a byte.
+
+O host estava no commit `eff16d2a5b08503e089e7ebaabb3462771b09191`, versão
+`v0.13.0-810-geff16d2a5`, em Armbian 26.8.3 / Debian 13. O estado persistente
+BMCU confirma velocidades 10/10/4 mm/s, endpoint `extruder` e quatro canais.
+Os módulos capturados e os módulos opcionais deste repositório têm AST idêntica.
+
+A primeira versão do coletor não incluiu `printer_data/systemd/*.env`.
+Esse complemento permanece pendente. O coletor agora captura essa pasta e aceita
+`--complemento` para enviar apenas esses arquivos. O binário encontrado no build
+é da versão `v0.13.0-782-geb5fb15e3`, anterior ao host; ele não comprova qual
+firmware está gravado. Não é usado automaticamente pela restauração.
+
+## Fazer uma nova captura antes de reinstalar
+
+O coletor inclui os `.cfg`, `SAVE_CONFIG`, JSON de estado da BMCU, módulos
+Klippy instalados, fonte Git do commit, alterações locais, artefatos disponíveis,
+unidades systemd, arquivos de ambiente, overlays e inventário de versões.
+Ele não altera configurações, não movimenta motores e não reinicia serviços.
 
 Com a impressora ociosa, execute no SSH, a partir deste checkout:
 
@@ -128,9 +146,11 @@ fonte/release. Os binários capturados servem como evidência do build disponív
 não comprovam por si só qual firmware está gravado na placa. Calibrações internas
 da BMCU também devem ser conferidas se houver troca ou regravação da controladora.
 
-Esta etapa ainda depende da captura para fechar caminhos de instalação, PID,
-Z-offset, malha e painel reais. Não existe um comando de restauração automática
-validado em uma instalação nova neste momento.
+Os arquivos ativos, PID, Z-offset, malha e painel já foram capturados. Falta o
+complemento dos arquivos `.env` para fechar a configuração dos serviços. A
+restauração da configuração pública tem simulação e backup, mas ainda não foi
+validada fisicamente após uma reinstalação completa. Ela pressupõe Klipper e
+BMCU instalados; não provisiona o sistema operacional nem regrava controladoras.
 
 ## Instalar apenas a integração em uma máquina já configurada
 

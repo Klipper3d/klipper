@@ -1,0 +1,21 @@
+#Systemd klipper linux mcu Service
+
+[Unit]
+Description=Starts the MCU Linux firmware for klipper on startup
+Documentation=https://www.klipper3d.org/RPi_microcontroller.html
+Before=klipper.service
+ConditionFileIsExecutable=/usr/local/bin/klipper_mcu
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=simple
+Environment=KLIPPER_HOST_MCU_SERIAL=/tmp/klipper_host_mcu
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/klipper_mcu -r -I ${KLIPPER_HOST_MCU_SERIAL}
+ExecStop=sh -c 'echo "FORCE_SHUTDOWN" > ${KLIPPER_HOST_MCU_SERIAL}'
+ExecStop=sleep 1
+TimeoutStopSec=2
+Restart=always
+RestartSec=5
