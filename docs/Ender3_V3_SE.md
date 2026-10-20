@@ -172,5 +172,5 @@ values, and file navigation. They do not replace physical validation.
 
 ## BMCU and display languages
 
-See [BMCU 1.0.6 integration](Ender3_V3_SE_BMCU.md) for UART1, the PC9 switch,
+See [BMCU 1.0.6 integration](Ender3_V3_SE_BMCU.md) for UART1, the PC15 switch,
 filament sequences, language selection and physical display acceptance tests.

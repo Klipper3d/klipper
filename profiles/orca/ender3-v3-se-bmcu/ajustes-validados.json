@@ -1,0 +1,129 @@
+{
+  "printer_settings_id": "Ender-3 V3 SE Klipper BMCU PETG",
+  "gcode_flavor": "klipper",
+  "machine_start_gcode": "BMCU_PRINT_BEGIN SCHEMA=1 RESET=1\n{if is_extruder_used[0]}\nBMCU_PRINT_MAP TOOL=1 UID=CDAB42A1D0BEDF0B39E339E3 CHANNEL=0 MATERIAL=\"{filament_type[0]}\" COLOR=\"{filament_colour[0]}\"\n{endif}\n{if is_extruder_used[1]}\nBMCU_PRINT_MAP TOOL=2 UID=CDAB42A1D0BEDF0B39E339E3 CHANNEL=1 MATERIAL=\"{filament_type[1]}\" COLOR=\"{filament_colour[1]}\"\n{endif}\n{if is_extruder_used[2]}\nBMCU_PRINT_MAP TOOL=3 UID=CDAB42A1D0BEDF0B39E339E3 CHANNEL=2 MATERIAL=\"{filament_type[2]}\" COLOR=\"{filament_colour[2]}\"\n{endif}\n{if is_extruder_used[3]}\nBMCU_PRINT_MAP TOOL=4 UID=CDAB42A1D0BEDF0B39E339E3 CHANNEL=3 MATERIAL=\"{filament_type[3]}\" COLOR=\"{filament_colour[3]}\"\n{endif}\nBMCU_PRINT_COMMIT\nENDER_INICIAR_MULTICOR TEMP_MESA=[bed_temperature_initial_layer_single] TEMP_BICO=[nozzle_temperature_initial_layer] FERRAMENTA={initial_tool+1}\nT{initial_tool} B{initial_tool+1}",
+  "machine_end_gcode": "ENDER_FINALIZAR_MULTICOR",
+  "change_filament_gcode": "T{next_extruder} B{next_extruder+1}",
+  "before_layer_change_gcode": ";BEFORE_LAYER_CHANGE\n;[layer_z]\nG92 E0\n",
+  "layer_change_gcode": "",
+  "manual_filament_change": "0",
+  "enable_prime_tower": "0",
+  "single_extruder_multi_material": "1",
+  "nozzle_temperature": [
+    "230",
+    "230",
+    "230",
+    "230"
+  ],
+  "nozzle_temperature_initial_layer": [
+    "230",
+    "230",
+    "230",
+    "230"
+  ],
+  "hot_plate_temp": [
+    "75",
+    "75",
+    "75",
+    "75"
+  ],
+  "hot_plate_temp_initial_layer": [
+    "80",
+    "80",
+    "80",
+    "80"
+  ],
+  "textured_plate_temp": [
+    "75",
+    "75",
+    "75",
+    "75"
+  ],
+  "textured_plate_temp_initial_layer": [
+    "80",
+    "80",
+    "80",
+    "80"
+  ],
+  "filament_flow_ratio": [
+    "1",
+    "1",
+    "1",
+    "1"
+  ],
+  "pressure_advance": [
+    "0.04",
+    "0.04",
+    "0.04",
+    "0.04"
+  ],
+  "enable_pressure_advance": [
+    "1",
+    "1",
+    "1",
+    "1"
+  ],
+  "filament_max_volumetric_speed": [
+    "20",
+    "20",
+    "20",
+    "20"
+  ],
+  "filament_retraction_length": [
+    "1",
+    "1",
+    "1",
+    "1"
+  ],
+  "filament_retraction_speed": [
+    "40",
+    "40",
+    "40",
+    "40"
+  ],
+  "filament_multitool_ramming": [
+    "0",
+    "0",
+    "0",
+    "0"
+  ],
+  "filament_ramming_parameters": [
+    "120 100 6.6 6.8 7.2 7.6 7.9 8.2 8.7 9.4 9.9 10.0| 0.05 6.6 0.45 6.8 0.95 7.8 1.45 8.3 1.95 9.7 2.45 10 2.95 7.6 3.45 7.6 3.95 7.6 4.45 7.6 4.95 7.6",
+    "120 100 6.6 6.8 7.2 7.6 7.9 8.2 8.7 9.4 9.9 10.0| 0.05 6.6 0.45 6.8 0.95 7.8 1.45 8.3 1.95 9.7 2.45 10 2.95 7.6 3.45 7.6 3.95 7.6 4.45 7.6 4.95 7.6",
+    "120 100 6.6 6.8 7.2 7.6 7.9 8.2 8.7 9.4 9.9 10.0| 0.05 6.6 0.45 6.8 0.95 7.8 1.45 8.3 1.95 9.7 2.45 10 2.95 7.6 3.45 7.6 3.95 7.6 4.45 7.6 4.95 7.6",
+    "120 100 6.6 6.8 7.2 7.6 7.9 8.2 8.7 9.4 9.9 10.0| 0.05 6.6 0.45 6.8 0.95 7.8 1.45 8.3 1.95 9.7 2.45 10 2.95 7.6 3.45 7.6 3.95 7.6 4.45 7.6 4.95 7.6"
+  ],
+  "filament_cooling_moves": [
+    "0",
+    "0",
+    "0",
+    "0"
+  ],
+  "filament_loading_speed": [
+    "28",
+    "28",
+    "28",
+    "28"
+  ],
+  "filament_unloading_speed": [
+    "90",
+    "90",
+    "90",
+    "90"
+  ],
+  "filament_minimal_purge_on_wipe_tower": [
+    "0",
+    "0",
+    "0",
+    "0"
+  ],
+  "retract_length_toolchange": [
+    "0"
+  ],
+  "retract_restart_extra_toolchange": [
+    "0"
+  ],
+  "cooling_tube_retraction": "0",
+  "cooling_tube_length": "0",
+  "extra_loading_move": "0"
+}

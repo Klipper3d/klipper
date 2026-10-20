@@ -1,5 +1,10 @@
 # Ender 3 V3 SE: BMCU 1.0.6 and stock display
 
+For the physically validated switch-based integration and restoration of the
+owner's machine, see [Configuração validada](Ender3_V3_SE_Configuracao_Validada.md).
+The remainder of this page describes the original, uncommissioned v0.2.0 template.
+Do not run `BMCU_SETUP_ENDER` over the validated endpoint `extruder`.
+
 This integration uses **one physical extruder** (`extruder`) and four channels
 routed to endpoint `main`, with driver `generic_single_extruder`.
 Use the official [v1.0.6 installer](https://github.com/jarczakpawel/BMCU-Klipper/tree/v1.0.6)
@@ -28,10 +33,10 @@ Preserve the installer's configuration, services and persistent state.
 Pin multiplexing reference:
 [Orange Pi Zero 3 DTS](https://github.com/orangepi-xunlong/orangepi-build/blob/next/external/packages/pack-uboot/sun50iw9/bin/dts/orangepizero3-u-boot-current.dts).
 
-The switch is **after BMCU**: COM connects to physical pin **9/GND**, NO to
-physical pin **7/PC9**. Set up the Linux MCU per
+The switch is **after BMCU**: COM connects to physical pin **6/GND**, NO to
+physical pin **16/PC15**. Set up the Linux MCU per
 [RPi_microcontroller.md](RPi_microcontroller.md). On the host run `gpiodetect`
-and `gpioinfo`, identify PC9's chip/offset and confirm the line is unused.
+and `gpioinfo`, identify PC15's chip/offset and confirm the line is unused.
 Uncomment `bmcu-sensor.cfg`, replacing `N` and `O` in
 `^!host:gpiochipN/gpioO` with the actual indices. Reuse any existing
 `[mcu host]`. Pull-up plus inversion detects NO closing to GND.
@@ -66,7 +71,7 @@ uncertain. Do not nest it inside `BMCU_TOOLHEAD_PREPARE`.
 Choose and physically validate `_ENDER_BMCU_SETTINGS.arrival_mode`:
 
 - `"contact"`: BMCU continues feeding to contact at the gears, using its own
-  transport/buffer logic. A distant PC9 switch is diagnostic, not
+  transport/buffer logic. A distant PC15 switch is diagnostic, not
   `ENTRY_SENSOR`. Verify contact occurs at the gears without bending filament
   or meeting an intermediate PTFE obstruction.
 - `"sensor"`: only if triggering the switch guarantees the tip is already
@@ -78,7 +83,7 @@ configures `main`, assigns four channels and clears incompatible endpoint
 sensors. It does not run at startup or erase package state.
 Set `arrival_validated: 1` after physical verification. The initial mode is
 `"unconfigured"`; the display cannot start transport before validation.
-Sensor mode requires a configured and verified PC9 sensor object.
+Sensor mode requires a configured and verified PC15 sensor object.
 
 ## Complete load and cutter-free unload
 
