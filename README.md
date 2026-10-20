@@ -17,6 +17,22 @@ support isolated in a small MCU bridge, a Klippy extra, modular configuration,
 tests, and documentation. It does not include the historical PRTouch/HX711
 auto-Z implementation; probing uses Klipper's upstream CR-Touch support.
 
+## Configuração validada e recuperação da máquina
+
+A integração validada nesta Ender, com Orange Pi Zero3 e PETG, está descrita em
+[Configuração validada e backup](docs/Ender3_V3_SE_Configuracao_Validada.md).
+Ela preserva captura de 20 mm, avanço de 80 mm, purga de 70 mm, retirada pelo
+switch e mais 55 mm confirmados pelo encoder, além do mapeamento do Orca 2.4.2.
+A troca entre os canais físicos 2 e 4 e uma impressão de duas cores foram
+confirmadas na máquina pelo proprietário.
+
+O snapshot completo dos arquivos atuais, PID, Z-offset, malha e estado
+persistente ainda precisa ser coletado na Orange Pi. Os arquivos em
+`config/ender3-v3-se-validada/` são os ajustes conhecidos desta montagem;
+**não são um substituto completo do `printer.cfg` em uso**. Não copie o modelo
+inicial abaixo sobre uma instalação calibrada. Use o coletor e preserve o
+bloco `SAVE_CONFIG` do backup real.
+
 ## Version 0.2.0 pre-release
 
 - BMCU-Klipper **1.0.6**, with BMCU firmware **1.0.1**, using
@@ -91,7 +107,7 @@ Install BMCU modules/services with the
 This repository provides endpoint callbacks and configuration; it does not
 install or replace BMCU's modules. Do not duplicate `[bmcu]`.
 
-Before enabling filament transport, identify the Linux UART device and PC9
+Before enabling filament transport, identify the Linux UART device and PC15
 GPIO chip/line, measure switch-to-gear and complete route distances, and tune
 tip formation. The integration deliberately leaves these machine-specific
 values unset. A switch far from the gears stops sensor-based BMCU feeding

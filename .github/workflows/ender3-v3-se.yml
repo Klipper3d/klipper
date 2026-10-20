@@ -24,6 +24,9 @@ jobs:
     - name: Test display module
       run: ci_build/venv/bin/python -m unittest discover -s test/e3v3se_display -p 'test_*.py'
 
+    - name: Test validated BMCU integration and backup
+      run: ci_build/venv/bin/python -m unittest discover -s test/bmcu_integracao -p 'test_*.py'
+
     - name: Build GD32F303 target
       run: |
         cp test/configs/e3v3se-gd32f303.config .config
