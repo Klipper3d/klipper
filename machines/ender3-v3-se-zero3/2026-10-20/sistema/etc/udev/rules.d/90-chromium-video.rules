@@ -1,0 +1,21 @@
+# This is qcom venus v4l2 stateful decoder, tested on sm8250
+SUBSYSTEM=="video4linux", ATTR{name}=="qcom-venus-decoder", SYMLINK+="video-dec%n"
+
+# This is qcom venus v4l2 stateful encoder, not tested yet, but chromium did query /dev/video-enc* devives for v4l2 encoding.
+SUBSYSTEM=="video4linux", ATTR{name}=="qcom-venus-encoder", SYMLINK+="video-enc%n"
+
+# These rules are for hantro v4l2 stateless decoders found on rk3328, rk3399, rk3568 and rk3588
+SUBSYSTEM=="video4linux", ATTR{name}=="rockchip,rk3328-vpu-dec", SYMLINK+="video-dec%n"
+SUBSYSTEM=="video4linux", ATTR{name}=="rockchip,rk3399-vpu-dec", SYMLINK+="video-dec%n"
+SUBSYSTEM=="video4linux", ATTR{name}=="rockchip,rk3568-vpu-dec", SYMLINK+="video-dec%n"
+# AV1 decoder on rk3588 is still not well supported, so disable it now
+#SUBSYSTEM=="video4linux", ATTR{name}=="rockchip,rk3588-av1-vpu-dec", SYMLINK+="video-dec%n"
+SUBSYSTEM=="media", ATTR{model}=="hantro-vpu", SYMLINK+="media-dec%n"
+
+# These rules are for rkvdec v4l2 stateless decoder found on rk3399
+SUBSYSTEM=="video4linux", ATTR{name}=="rkvdec", SYMLINK+="video-dec%n"
+SUBSYSTEM=="media", ATTR{model}=="rkvdec", SYMLINK+="media-dec%n"
+
+# These rules are for rkvdec2 v4l2 stateless decoder found on rk35xx
+SUBSYSTEM=="video4linux", ATTR{name}=="rkvdec2", SYMLINK+="video-dec%n"
+SUBSYSTEM=="media", ATTR{model}=="rkvdec2", SYMLINK+="media-dec%n"

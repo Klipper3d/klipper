@@ -175,6 +175,7 @@ def capturar(casa, saida):
             'config',
             ('.tar.gz', '.tar', '.zip', '.3mf', '.gcode', '.pyc', '.parcial'),
         )
+        coleta.pasta(casa / 'printer_data/systemd', 'ambiente-servicos')
         coleta.pasta(
             raiz_klipper / 'klippy',
             'klippy-instalado',
@@ -299,10 +300,50 @@ def capturar(casa, saida):
     return coleta.avisos
 
 
+def capturar_complemento(casa, saida):
+    origem = casa / 'printer_data/systemd'
+    if not (origem / 'klipper.env').is_file():
+        raise RuntimeError('klipper.env não encontrado em ' + str(origem))
+    if saida.exists():
+        raise RuntimeError('O destino já existe: ' + str(saida))
+    saida.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        dir=saida.parent, suffix='.parcial', delete=False
+    ) as temp:
+        temporario = Path(temp.name)
+    coleta = Captura(temporario)
+    try:
+        coleta.pasta(origem, 'ambiente-servicos')
+        for nome in ('mcu', 'mcu host'):
+            try:
+                estado = objeto(nome)
+                coleta.adicionar(
+                    'diagnostico/' + nome.replace(' ', '-') + '.json',
+                    json.dumps(estado, indent=2).encode(),
+                )
+            except (OSError, KeyError, ValueError) as erro:
+                coleta.avisos.append(nome + ': ' + str(erro))
+        coleta.concluir(
+            {
+                'criado_utc': datetime.now(timezone.utc).isoformat(),
+                'home_original': str(casa),
+                'tipo': 'complemento-ambiente-servicos',
+            }
+        )
+        coleta.tar.close()
+        temporario.chmod(0o600)
+        os.replace(temporario, saida)
+    finally:
+        coleta.tar.close()
+        temporario.unlink(missing_ok=True)
+    return coleta.avisos
+
+
 def principal():
     parser = argparse.ArgumentParser()
     parser.add_argument('--home', type=Path)
     parser.add_argument('--saida', type=Path)
+    parser.add_argument('--complemento', action='store_true')
     args = parser.parse_args()
     usuario = (
         pwd.getpwnam(os.environ['SUDO_USER'])
@@ -311,12 +352,17 @@ def principal():
     )
     casa = args.home or Path(usuario.pw_dir)
     nome = (
-        'backup-restauracao-'
+        (
+            'complemento-restauracao-'
+            if args.complemento
+            else 'backup-restauracao-'
+        )
         + datetime.now().strftime('%Y%m%d-%H%M%S')
         + '.tar.gz'
     )
     saida = args.saida or casa / 'printer_data/config' / nome
-    avisos = capturar(casa, saida)
+    funcao = capturar_complemento if args.complemento else capturar
+    avisos = funcao(casa, saida)
     if os.geteuid() == 0:
         os.chown(saida, usuario.pw_uid, usuario.pw_gid)
     print('Backup criado:', saida)

@@ -26,12 +26,17 @@ switch e mais 55 mm confirmados pelo encoder, além do mapeamento do Orca 2.4.2.
 A troca entre os canais físicos 2 e 4 e uma impressão de duas cores foram
 confirmadas na máquina pelo proprietário.
 
-O snapshot completo dos arquivos atuais, PID, Z-offset, malha e estado
-persistente ainda precisa ser coletado na Orange Pi. Os arquivos em
-`config/ender3-v3-se-validada/` são os ajustes conhecidos desta montagem;
-**não são um substituto completo do `printer.cfg` em uso**. Não copie o modelo
-inicial abaixo sobre uma instalação calibrada. Use o coletor e preserve o
-bloco `SAVE_CONFIG` do backup real.
+O [snapshot real de 20/10/2026](machines/ender3-v3-se-zero3/README.md) preserva
+os includes ativos, PID, **Z-offset 1,940**, malha **9×9**, extrusora **7,589**,
+macros e estado persistente da BMCU. O token do painel foi retirado da cópia
+pública e é gerado localmente na restauração. Os arquivos `.env` dos serviços
+precisam do complemento indicado no guia; a imagem inteira do SD e os presets
+pessoais do Orca não fazem parte deste snapshot público.
+
+Não copie o modelo inicial abaixo sobre uma instalação calibrada. A ferramenta
+`scripts/ender3-v3-se/restaurar_snapshot.py` prepara a configuração capturada e
+aplica somente com `--aplicar`, depois de conferir as dependências. A recuperação
+completa em uma instalação nova ainda requer validação física.
 
 ## Version 0.2.0 pre-release
 

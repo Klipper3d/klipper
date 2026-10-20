@@ -1,0 +1,11 @@
+PRETTY_NAME="Armbian 26.8.3 trixie"
+NAME="Debian GNU/Linux"
+VERSION_ID="13"
+VERSION="13 (trixie)"
+VERSION_CODENAME=trixie
+DEBIAN_VERSION_FULL=13.6
+ID=debian
+HOME_URL="https://www.armbian.com"
+SUPPORT_URL="https://forum.armbian.com"
+BUG_REPORT_URL="https://www.armbian.com/bugs"
+ARMBIAN_PRETTY_NAME="Armbian 26.8.3 trixie"

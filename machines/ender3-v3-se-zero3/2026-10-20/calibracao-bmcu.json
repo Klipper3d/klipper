@@ -1,0 +1,42 @@
+{
+  "uid": "CDAB42A1D0BEDF0B39E339E3",
+  "firmware": "1.0.1",
+  "calibracoes": [
+    {
+      "channel": 0,
+      "valid": true,
+      "polarity": 1,
+      "offset": 0.02055501937866211,
+      "minimum": 1.139754056930542,
+      "neutral": 1.649999976158142,
+      "maximum": 2.1788170337677
+    },
+    {
+      "channel": 1,
+      "valid": true,
+      "polarity": -1,
+      "offset": -0.01190030574798584,
+      "minimum": 1.1645801067352295,
+      "neutral": 1.649999976158142,
+      "maximum": 2.1710658073425293
+    },
+    {
+      "channel": 2,
+      "valid": true,
+      "polarity": -1,
+      "offset": 0.04213690757751465,
+      "minimum": 1.2425341606140137,
+      "neutral": 1.649999976158142,
+      "maximum": 2.104764461517334
+    },
+    {
+      "channel": 3,
+      "valid": true,
+      "polarity": -1,
+      "offset": 0.07014930248260498,
+      "minimum": 1.1142585277557373,
+      "neutral": 1.649999976158142,
+      "maximum": 2.1604766845703125
+    }
+  ]
+}
