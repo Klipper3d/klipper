@@ -14,7 +14,8 @@
     "versao_dicionario": "v0.13.0-782-geb5fb15e3",
     "bytes": 42696,
     "sha256": "ba1be08e27a65c99fc5000c2e141d478d9ab0ecfca67563ef8a4aec2390d3091",
-    "gravado_na_placa": "nao_confirmado"
+    "gravado_na_placa": "hash_nao_verificavel_por_status",
+    "versao_corresponde_ao_status": true
   },
   "calibracoes": {
     "z_offset": 1.94,
@@ -28,14 +29,20 @@
     "config/bmcu/bmcu_panel.cfg: token substituído por marcador; gerar token local na restauração."
   ],
   "pendencias": [
-    "Arquivos printer_data/systemd/*.env ausentes na primeira captura.",
     "Presets pessoais do Orca: exportação no computador ainda não recebida.",
-    "Versões efetivamente informadas pelas MCUs Ender e Linux: coletar no complemento."
+    "Restauração completa em cartão novo: validação física ainda não realizada."
   ],
   "observacoes": [
     "A ausência de /boot/overlay-user é compatível com armbianEnv.txt sem user_overlays.",
-    "Artefato de firmware disponível é anterior ao checkout do host. Não é prova do firmware gravado.",
+    "A MCU Ender informa a mesma versão do artefato capturado; o status não permite comprovar o hash do binário gravado. Klippy v810, MCU Ender v782 e MCU Linux v794 são a combinação observada, sem atualização automática de firmware.",
     "O snapshot preserva atalhos antigos do painel: malha 7x7 e avanço adicional de 60 mm; sequência multicolor ativa usa 80 mm.",
     "compilacao/defconfig corresponde ao compilacao/out/defconfig do backup."
-  ]
+  ],
+  "complemento": {
+    "capturado_utc": "2026-10-20T04:56:13.999606+00:00",
+    "backup_sha256": "063f5fb108de24820b0ecdf0d4ddc6ad2ae78e01811f9837ffb19bf6271e48f5",
+    "arquivos": 6
+  },
+  "mcu_ender_versao_reportada": "v0.13.0-782-geb5fb15e3",
+  "mcu_linux_versao_reportada": "v0.13.0-794-gceb442eb6"
 }

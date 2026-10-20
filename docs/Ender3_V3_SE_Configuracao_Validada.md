@@ -79,11 +79,13 @@ O host estava no commit `eff16d2a5b08503e089e7ebaabb3462771b09191`, versão
 BMCU confirma velocidades 10/10/4 mm/s, endpoint `extruder` e quatro canais.
 Os módulos capturados e os módulos opcionais deste repositório têm AST idêntica.
 
-A primeira versão do coletor não incluiu `printer_data/systemd/*.env`.
-Esse complemento permanece pendente. O coletor agora captura essa pasta e aceita
-`--complemento` para enviar apenas esses arquivos. O binário encontrado no build
-é da versão `v0.13.0-782-geb5fb15e3`, anterior ao host; ele não comprova qual
-firmware está gravado. Não é usado automaticamente pela restauração.
+O complemento de 20/10/2026 às 04:56 UTC foi verificado: seis arquivos íntegros.
+Os quatro arquivos `printer_data/systemd/*.env` estão preservados em
+`ambiente-servicos/` e são preparados pelo restaurador. A Ender reporta
+`v0.13.0-782-geb5fb15e3`; o MCU Linux reporta `v0.13.0-794-gceb442eb6`.
+As versões e constantes estão em `versoes-mcus.json`. O binário do backup privado
+tem a mesma versão informada pela Ender; o status não permite verificar o hash
+da flash. Nenhum firmware é regravado automaticamente.
 
 ## Fazer uma nova captura antes de reinstalar
 
@@ -130,7 +132,8 @@ impresso pelo coletor também deve ser guardado para conferir o transporte.
    As unidades e seus overrides ficam em `sistema/`; compare seus `ExecStart` para
    identificar eventuais diretórios de transporte externos ao checkout Klipper
    que ainda precisem ser copiados. O coletor não faz imagem completa do SD.
-4. Com os serviços parados, restaure a pasta `config/` completa, incluindo includes
+4. Com os serviços parados, restaure `ambiente-servicos/*.env` para
+   `/home/pi/printer_data/systemd/` e a pasta `config/` completa, incluindo includes
    e `SAVE_CONFIG`, com proprietário `pi`. Recupere também o estado BMCU externo,
    se o manifesto indicar um `state_file` fora dessa pasta. Não substitua esses
    arquivos pelos modelos genéricos de `config/ender3-v3-se/`.
@@ -146,9 +149,11 @@ fonte/release. Os binários capturados servem como evidência do build disponív
 não comprovam por si só qual firmware está gravado na placa. Calibrações internas
 da BMCU também devem ser conferidas se houver troca ou regravação da controladora.
 
-Os arquivos ativos, PID, Z-offset, malha e painel já foram capturados. Falta o
-complemento dos arquivos `.env` para fechar a configuração dos serviços. A
-restauração da configuração pública tem simulação e backup, mas ainda não foi
+Os arquivos ativos, PID, Z-offset, malha, painel e os quatro arquivos `.env` dos
+serviços já foram capturados e revisados. As versões distintas de Klippy e MCUs
+foram registradas como evidência da máquina funcional; a recuperação da
+configuração não força uma atualização para igualá-las. A restauração da
+configuração pública tem simulação e backup, mas ainda não foi
 validada fisicamente após uma reinstalação completa. Ela pressupõe Klipper e
 BMCU instalados; não provisiona o sistema operacional nem regrava controladoras.
 

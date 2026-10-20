@@ -72,6 +72,9 @@ def preparar(casa, snapshot=SNAPSHOT):
         if relativo.as_posix() == 'bmcu/bmcu_panel.cfg':
             dados = dados.replace(MARCADOR.encode(), token.encode())
         alteracoes[configuracoes / relativo] = dados
+    for origem in sorted((snapshot / 'ambiente-servicos').glob('*.env')):
+        destino = casa / 'printer_data/systemd' / origem.name
+        alteracoes[destino] = origem.read_bytes()
     instalacao = runtime / 'INSTALLATION.json'
     if instalacao.is_file():
         dados_instalacao = json.loads(instalacao.read_text())
@@ -170,7 +173,10 @@ def aplicar(casa, alteracoes, usuario):
     instalador.servico('stop')
     try:
         for caminho, dados in alteracoes.items():
-            modo = 0o600 if caminho.name == 'bmcu_panel.cfg' else 0o644
+            privado = (
+                caminho.name == 'bmcu_panel.cfg' or caminho.suffix == '.env'
+            )
+            modo = 0o600 if privado else 0o644
             instalador.gravar(caminho, dados, usuario, modo)
     except Exception:
         for item in registros:
@@ -207,7 +213,7 @@ def principal():
     casa = args.home or Path(usuario.pw_dir)
     metadados = verificar(args.snapshot)
     alteracoes = preparar(casa, args.snapshot)
-    print('Arquivos de configuração e módulos preparados:', len(alteracoes))
+    print('Configuração, ambiente e módulos preparados:', len(alteracoes))
     print('Z-offset 1,940; malha 9×9; extrusora 7,589 mm/volta.')
     if not args.aplicar:
         print('Simulação: nenhum arquivo ou serviço foi alterado.')

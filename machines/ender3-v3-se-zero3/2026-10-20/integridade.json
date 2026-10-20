@@ -1,5 +1,9 @@
 {
-  ".gitattributes": "be7302a3457325000fe0715d8f861c744a0b7eca71b9893fd505a06294f4590f",
+  ".gitattributes": "1fcde6bf2f43751ed5e4dc5f68409aa58e8d7b381f4d9681c18b1ad665632571",
+  "ambiente-servicos/crowsnest.env": "a73a7e15efedb1957304765a80fc801d04549af92cdec486e0c1a10208bf3e4c",
+  "ambiente-servicos/klipper.env": "016b04828f685c8a8d4d2d40c9b660fa939b41c46f277ac18209514ff29e4d20",
+  "ambiente-servicos/moonraker.env": "6aca8065690ebbdba98b49e3c394f1ed3c6eab5d7b6364ef0a17dd2cc1012cf9",
+  "ambiente-servicos/sonar.env": "f8e44c21910ebb3eae6426d7c0ae0ed42ad400faed94950b5311a7540a6fa66f",
   "calibracao-bmcu.json": "6915c3c75da707005a82be06e980fb60ab0488faa46da44fe221b3c39e1ff007",
   "compilacao/config": "f35ffd839705fef2750566b541b9dc79a16e4e3d689180717a8e7fc46ebfba54",
   "compilacao/defconfig": "ea4bfb033d45826e28658999849e2e03404e55af04bff41c655ac47be5d59872",
@@ -23,7 +27,7 @@
   "config/printer.cfg": "afec5a2bda65f416f9fe35383c5d582e69aa283cac3cd27964a84c339a09fed0",
   "config/sonar.conf": "7143af7389d931b2b6e82af00c77e6b795d63d7be3cc7684855a9b41c4a4f8da",
   "config/timelapse.cfg": "120b214b9263c47704c401b3f8f571e183ca443b14fabc04aebf300204402d7b",
-  "metadados.json": "efca8bacf5a54eb6c92b735e7d0d9ae994b054e281da7e33fd4f72cd06eb853e",
+  "metadados.json": "79ad41301af917851ab5e065d7bd58de43575e9265ff2cf13591b57bdac0414f",
   "requirements-klippy.txt": "0b4478f8466bb96c2467078239b79cd3c195c9bb56908c786a095f0a129a5d4c",
   "sistema/boot/armbianEnv.txt": "9f1795108b9c2a71cbddb47356fa0bc25c6cdeba397ed503ffa56fd61c073725",
   "sistema/etc/armbian-release": "9935cf69d16dcc5973687cb6a9074d4eeb7a5626e8d8996f7939fc458faba8ef",
@@ -38,5 +42,6 @@
   "sistema/etc/udev/rules.d/10-can.rules": "61ec16e0a89c29ead0f339f8b77cc89861c4c35487621659f5672a3561b4859b",
   "sistema/etc/udev/rules.d/10-wifi-disable-powermanagement.rules": "492c131f3172a1bc81777718db9b2fa3cae38b63e6f5221f2a1cdcb98a2d12db",
   "sistema/etc/udev/rules.d/50-usb-realtek-net.rules": "dd088ade43729272932f0cd6a2e6efd7bba1fe333713e1ed5116f44053eb63a0",
-  "sistema/etc/udev/rules.d/90-chromium-video.rules": "7d6b298dc428c8aa23ec0f2bd567e7a9829dff200aa4b739476c1b42a9b90185"
+  "sistema/etc/udev/rules.d/90-chromium-video.rules": "7d6b298dc428c8aa23ec0f2bd567e7a9829dff200aa4b739476c1b42a9b90185",
+  "versoes-mcus.json": "9743db66a59c17d9db35b017571662c0066cf4ff58d567817be9a1f8be7340cd"
 }
