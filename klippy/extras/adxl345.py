@@ -98,11 +98,7 @@ class AccelQueryHelper:
             reactor.pause(now + 0.001)
     def write_to_file(self, filename):
         def write_impl():
-            try:
-                # Try to re-nice writing process
-                os.nice(20)
-            except:
-                pass
+
             f = open(filename, "w")
             f.write("#time,accel_x,accel_y,accel_z\n")
             samples = self.samples or self.get_samples()
@@ -113,6 +109,69 @@ class AccelQueryHelper:
         write_proc = multiprocessing.Process(target=write_impl)
         write_proc.daemon = True
         write_proc.start()
+
+class ExternalAccelClient:
+    def __init__(self, printer):
+        print_time = printer.lookup_object('toolhead').get_last_move_time()
+        self.request_start_time = self.request_end_time = print_time
+        self._msgs_data = []
+        self._in_q = multiprocessing.Queue()
+        self._out_q = multiprocessing.Queue()
+        proc = multiprocessing.Process(target=self.worker)
+        proc.daemon = True
+        proc.start()
+        self._finished = False
+        # Don't share complex types with child
+        self._proc = proc
+        self.printer = printer
+    def handle_batch(self, msg):
+        if self._finished:
+            return False
+        self._in_q.put(('samples', msg['data']))
+        return True
+    def write_to_file(self, filename):
+        self._in_q.put(('write_to_file', filename))
+    def _write_to_file(self, filename):
+        with open(filename, "w") as f:
+            f.write("#time,accel_x,accel_y,accel_z\n")
+            for samples in self._msgs_data:
+                for t, accel_x, accel_y, accel_z in samples:
+                    if t < self.request_start_time:
+                        continue
+                    if t > self.request_end_time:
+                        break
+                    f.write("%.6f,%.6f,%.6f,%.6f\n" % (
+                        t, accel_x, accel_y, accel_z))
+    def worker(self):
+        import os, gc, traceback
+        try:
+            # Try to re-nice writing process
+            os.nice(20)
+            gc.enable()
+            gc.unfreeze()
+        except:
+            pass
+        try:
+            while True:
+                msg = self._in_q.get()
+                if msg[0] == 'samples':
+                    self._msgs_data.append(msg[1])
+                elif msg[0] == 'end_time':
+                    self.request_end_time = msg[1]
+                elif msg[0] == 'write_to_file':
+                    self._write_to_file(msg[1])
+                elif msg[0] == 'stop':
+                    return
+        except Exception:
+            self._out_q.put(('error', traceback.format_exc()))
+    def finish_measurements(self):
+        toolhead = self.printer.lookup_object('toolhead')
+        self.request_end_time = toolhead.get_last_move_time()
+        toolhead.wait_moves()
+        self._finished = True
+        self._in_q.put(('end_time', self.request_end_time))
+    def stop(self):
+        self._in_q.put(('stop',))
 
 # Helper class for G-Code commands
 class AccelCommandHelper:
@@ -158,7 +217,8 @@ class AccelCommandHelper:
     def cmd_ACCELEROMETER_MEASURE(self, gcmd):
         if self.bg_client is None:
             # Start measurements
-            self.bg_client = self.chip.start_internal_client()
+            self.bg_client = ExternalAccelClient(self.printer)
+            self.chip.add_client(self.bg_client.handle_batch)
             gcmd.respond_info("accelerometer measurements started")
             return
         # End measurements
@@ -174,7 +234,7 @@ class AccelCommandHelper:
         else:
             filename = "/tmp/%s-%s-%s.csv" % (self.base_name, self.name, name)
         bg_client.write_to_file(filename)
-        bg_client.clear()
+        bg_client.stop()
         gcmd.respond_info("Writing raw accelerometer data to %s file"
                           % (filename,))
     cmd_ACCELEROMETER_QUERY_help = "Query accelerometer for the current values"
@@ -264,6 +324,8 @@ class ADXL345:
         aqh = AccelQueryHelper(self.printer)
         self.batch_bulk.add_client(aqh.handle_batch)
         return aqh
+    def add_client(self, callback):
+        self.batch_bulk.add_client(callback)
     # Measurement decoding
     def _convert_samples(self, samples):
         (x_pos, x_scale), (y_pos, y_scale), (z_pos, z_scale) = self.axes_map
