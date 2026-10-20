@@ -29,9 +29,9 @@ confirmadas na máquina pelo proprietário.
 O [snapshot real de 20/10/2026](machines/ender3-v3-se-zero3/README.md) preserva
 os includes ativos, PID, **Z-offset 1,940**, malha **9×9**, extrusora **7,589**,
 macros e estado persistente da BMCU. O token do painel foi retirado da cópia
-pública e é gerado localmente na restauração. Os arquivos `.env` dos serviços
-precisam do complemento indicado no guia; a imagem inteira do SD e os presets
-pessoais do Orca não fazem parte deste snapshot público.
+pública e é gerado localmente na restauração. Os quatro arquivos `.env` dos
+serviços e as versões reportadas pelas MCUs também estão preservados. A imagem
+inteira do SD e os presets pessoais do Orca não fazem parte deste snapshot público.
 
 Não copie o modelo inicial abaixo sobre uma instalação calibrada. A ferramenta
 `scripts/ender3-v3-se/restaurar_snapshot.py` prepara a configuração capturada e

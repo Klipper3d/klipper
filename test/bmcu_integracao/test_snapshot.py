@@ -116,6 +116,42 @@ class SnapshotTest(unittest.TestCase):
             ).read_text()
             self.assertIn(restaurador.MARCADOR, referencia)
 
+    def test_prepara_ambiente_dos_servicos_sem_alterar_destino(self):
+        with tempfile.TemporaryDirectory() as temp:
+            casa = Path(temp)
+            self.bancada(casa)
+            destino = casa / 'printer_data/systemd'
+            destino.mkdir()
+            anterior = destino / 'klipper.env'
+            anterior.write_text('configuracao anterior')
+            plano = restaurador.preparar(casa)
+            origem = restaurador.SNAPSHOT / 'ambiente-servicos'
+            self.assertEqual(len(list(origem.glob('*.env'))), 4)
+            for arquivo in origem.glob('*.env'):
+                self.assertEqual(
+                    plano[destino / arquivo.name], arquivo.read_bytes()
+                )
+            self.assertEqual(anterior.read_text(), 'configuracao anterior')
+            self.assertEqual(list(destino.iterdir()), [anterior])
+
+    def test_registra_versoes_reportadas_sem_confundir_com_binario(self):
+        metadados = restaurador.verificar(restaurador.SNAPSHOT)
+        arquivo = restaurador.SNAPSHOT / 'versoes-mcus.json'
+        versoes = json.loads(arquivo.read_text())
+        self.assertEqual(
+            versoes['mcu']['mcu_version'], 'v0.13.0-782-geb5fb15e3'
+        )
+        self.assertEqual(
+            versoes['mcu host']['mcu_version'], 'v0.13.0-794-gceb442eb6'
+        )
+        self.assertEqual(
+            versoes['mcu']['mcu_constants']['E3V3SE_DISPLAY_BRIDGE'], 1
+        )
+        self.assertEqual(
+            metadados['firmware_bin_capturado']['gravado_na_placa'],
+            'hash_nao_verificavel_por_status',
+        )
+
     def test_rejeita_alteracao_ou_arquivo_adicional(self):
         with tempfile.TemporaryDirectory() as temp:
             snapshot = Path(temp) / 'snapshot'
