@@ -70,12 +70,17 @@ class ZThermalAdjuster:
         # Pull Z step distance for minimum adjustment increment
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         steppers = [s.get_name() for s in kin.get_steppers()]
-        if "stepper_z" not in steppers:
+        stepper_z_name = "stepper_z"
+        if stepper_z_name not in steppers:
             if " " not in steppers[0]:
                 raise self.printer.config_error("Kinematic is not supported")
-            raise self.printer.config_error(
-                "Kinematic generic_cartesian is not supported")
-        z_stepper = kin.get_steppers()[steppers.index("stepper_z")]
+            for name in steppers:
+                if "z" in name:
+                    stepper_z_name = name
+            if " " not in stepper_z_name:
+                raise self.printer.config_error(
+                    "Kinematic generic_cartesian: cannot detect Z stepper")
+        z_stepper = kin.get_steppers()[steppers.index(stepper_z_name)]
         self.z_step_dist = z_stepper.get_step_dist()
 
     def get_status(self, eventtime):
