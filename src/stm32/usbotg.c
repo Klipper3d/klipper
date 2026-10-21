@@ -323,6 +323,11 @@ usb_read_ep0_setup(void *data, uint_fast8_t max_len)
         OTG->GRSTCTL = USB_OTG_GRSTCTL_TXFFLSH;
         while (OTG->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH)
             ;
+    } else if (CONFIG_STM32F4_GD32_USB) {
+        // GD32F4 may clear EPENA with a packet still in the tx fifo
+        OTG->GRSTCTL = USB_OTG_GRSTCTL_TXFFLSH;
+        while (OTG->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH)
+            ;
     }
     enable_rx_endpoint(0);
     EPOUT(0)->DOEPINT = USB_OTG_DOEPINT_STUP;
