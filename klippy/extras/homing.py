@@ -229,7 +229,7 @@ class Homing:
         self.trigger_mcu_pos = {sp.stepper_name: sp.trig_pos
                                 for sp in hmove.stepper_positions}
         self.adjust_pos = {}
-        self.printer.send_event("homing:home_rails_end", self, rails)
+        self.printer.send_event("homing:home_rails_adjust", self, rails)
         self.printer.send_event("homing:home_axes", self)
         if any(self.adjust_pos.values()):
             # Apply any homing offsets
