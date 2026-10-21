@@ -288,15 +288,16 @@ class Homing:
         endstops = [es for rail in rails for es in rail.get_endstops()]
         probe_endstops = [hasattr(e[0], "get_position_endstop")
                           for e in endstops]
-        if len(probe_endstops) == 1 and probe_endstops[0]:
-            # Perform Z home via probe
-            self._do_home_z_via_probe(rails, forcepos, movepos)
-            return
         if any(probe_endstops):
-            raise self.printer.command_error(
-                "Can't home to mix of probe:z_virtual_endstop rails")
-        # Perform normal home to endstops
-        self._do_home_rails(rails, forcepos, movepos)
+            # Perform Z home via probe
+            if len(probe_endstops) != 1:
+                raise self.printer.command_error(
+                    "Can't home to mix of probe:z_virtual_endstop rails")
+            self._do_home_z_via_probe(rails, forcepos, movepos)
+        else:
+            # Perform normal home to endstops
+            self._do_home_rails(rails, forcepos, movepos)
+        self.printer.send_event("homing:home_axes", self)
 
 class PrinterHoming:
     def __init__(self, config):

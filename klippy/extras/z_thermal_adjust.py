@@ -26,8 +26,8 @@ class ZThermalAdjuster:
         # Register printer events
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
-        self.printer.register_event_handler("homing:home_rails_end",
-                                            self.handle_homing_move_end)
+        self.printer.register_event_handler("homing:home_axes",
+                                            self.handle_homing_home_axes)
 
         # Setup temperature sensor
         self.smooth_time = config.getfloat('smooth_time', 2., above=0.)
@@ -83,7 +83,7 @@ class ZThermalAdjuster:
             'enabled': self.adjust_enable
         }
 
-    def handle_homing_move_end(self, homing_state, rails):
+    def handle_homing_home_axes(self, homing_state):
         'Set reference temperature after Z homing.'
         if 2 in homing_state.get_axes():
             self.ref_temperature = self.smoothed_temp
