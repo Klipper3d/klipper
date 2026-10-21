@@ -700,7 +700,8 @@ class LoadCellPrinterProbe:
         tap_session = TapSession(config, self._tapping_move,
                                  self._probe_offsets, self._param_helper)
         self._probe_session = probe.SampleAveragingHelper(config,
-            self._param_helper, tap_session.start_probe_session)
+            self._param_helper, tap_session.start_probe_session,
+            nozzle_probe=True)
         # printer integration
         LoadCellProbeCommands(config, load_cell_probing_move)
         probe.HomingViaProbeHelper(config, self.get_offsets()[2])
