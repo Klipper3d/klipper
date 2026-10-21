@@ -473,6 +473,11 @@ usb_init(void)
     OTGD->DCFG |= (3 << USB_OTG_DCFG_DSPD_Pos);
 #if CONFIG_MACH_STM32F446 || CONFIG_MACH_STM32H7 || CONFIG_MACH_STM32F7
     OTG->GOTGCTL = USB_OTG_GOTGCTL_BVALOEN | USB_OTG_GOTGCTL_BVALOVAL;
+#elif CONFIG_STM32F4_GD32_USB
+    // GD32F4 needs the VBUS comparators enabled even with VBUS sensing
+    // disabled (the GigaDevice usb_core_init() enables them as well)
+    OTG->GCCFG |= (USB_OTG_GCCFG_NOVBUSSENS
+                   | USB_OTG_GCCFG_VBUSASEN | USB_OTG_GCCFG_VBUSBSEN);
 #else
     OTG->GCCFG |= USB_OTG_GCCFG_NOVBUSSENS;
 #endif
