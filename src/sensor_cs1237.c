@@ -121,8 +121,7 @@ cs1237_write_bits(struct cs1237_adc *cs, uint32_t value, uint_fast8_t num_bits)
 static void
 cs1237_write_config(struct cs1237_adc *cs)
 {
-    cs1237_read_bits(cs, 24);
-    cs1237_read_bits(cs, 5);
+    cs1237_read_bits(cs, 24 + 5);
     uint32_t cmd = (CS1237_WRITE_CONFIG << 9) | (1 << 8) | cs->config;
     gpio_out_reset(cs->dout_out, 0);
     cs1237_write_bits(cs, cmd, 7 + 1 + 8);
