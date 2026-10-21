@@ -206,8 +206,6 @@ class Homing:
         self.toolhead.set_position(startpos)
         return homepos
     def _do_home_rails(self, rails, forcepos, movepos):
-        # Notify of upcoming homing operation
-        self.printer.send_event("homing:home_rails_begin", self, rails)
         # Alter kinematics class to think printer is at forcepos
         homepos = self._fill_coord(movepos)
         self._set_start_position(forcepos)
@@ -231,7 +229,8 @@ class Homing:
         self.trigger_mcu_pos = {sp.stepper_name: sp.trig_pos
                                 for sp in hmove.stepper_positions}
         self.adjust_pos = {}
-        self.printer.send_event("homing:home_rails_end", self, rails)
+        self.printer.send_event("homing:home_rails_adjust", self, rails)
+        self.printer.send_event("homing:home_axes", self)
         if any(self.adjust_pos.values()):
             # Apply any homing offsets
             kin = self.toolhead.get_kinematics()
@@ -282,6 +281,7 @@ class Homing:
             # Home again
             self._probing_home(probe_session, 2,
                                homing_info.second_homing_speed)
+        self.printer.send_event("homing:home_axes", self)
         probe_session.end_probe_session()
     def home_rails(self, rails, forcepos, movepos):
         # Check if this is actually a Z home via probe request

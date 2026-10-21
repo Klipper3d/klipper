@@ -62,8 +62,8 @@ class EndstopPhase:
         # Register event handlers
         self.printer.register_event_handler("klippy:connect",
                                             self.phase_calc.lookup_tmc)
-        self.printer.register_event_handler("homing:home_rails_end",
-                                            self.handle_home_rails_end)
+        self.printer.register_event_handler("homing:home_rails_adjust",
+                                            self.handle_home_rails_adjust)
         self.printer.load_object(config, "endstop_phase")
         # Read config
         self.endstop_phase = None
@@ -116,7 +116,7 @@ class EndstopPhase:
                 "Endstop %s incorrect phase (got %d vs %d)" % (
                     self.name, phase, self.endstop_phase))
         return delta * self.step_dist
-    def handle_home_rails_end(self, homing_state, rails):
+    def handle_home_rails_adjust(self, homing_state, rails):
         for rail in rails:
             stepper = rail.get_endstops()[0][0].get_steppers()[0]
             if stepper.get_name() == self.name:
@@ -132,8 +132,8 @@ class EndstopPhases:
         self.printer = config.get_printer()
         self.tracking = {}
         # Register handlers
-        self.printer.register_event_handler("homing:home_rails_end",
-                                            self.handle_home_rails_end)
+        self.printer.register_event_handler("homing:home_rails_adjust",
+                                            self.handle_home_rails_adjust)
         self.gcode = self.printer.lookup_object('gcode')
         self.gcode.register_command("ENDSTOP_PHASE_CALIBRATE",
                                     self.cmd_ENDSTOP_PHASE_CALIBRATE,
@@ -159,7 +159,7 @@ class EndstopPhases:
             phase_calc.is_primary = True
         if phase_calc.stats_only:
             phase_calc.calc_phase(stepper, trig_mcu_pos)
-    def handle_home_rails_end(self, homing_state, rails):
+    def handle_home_rails_adjust(self, homing_state, rails):
         for rail in rails:
             is_primary = True
             for stepper in rail.get_steppers():

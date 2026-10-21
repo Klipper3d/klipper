@@ -26,8 +26,8 @@ class ZThermalAdjuster:
         # Register printer events
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
-        self.printer.register_event_handler("homing:home_rails_end",
-                                            self.handle_homing_move_end)
+        self.printer.register_event_handler("homing:home_axes",
+                                            self.handle_homing_home_axes)
 
         # Setup temperature sensor
         self.smooth_time = config.getfloat('smooth_time', 2., above=0.)
@@ -70,7 +70,17 @@ class ZThermalAdjuster:
         # Pull Z step distance for minimum adjustment increment
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         steppers = [s.get_name() for s in kin.get_steppers()]
-        z_stepper = kin.get_steppers()[steppers.index("stepper_z")]
+        stepper_z_name = "stepper_z"
+        if stepper_z_name not in steppers:
+            if " " not in steppers[0]:
+                raise self.printer.config_error("Kinematic is not supported")
+            for name in steppers:
+                if "z" in name:
+                    stepper_z_name = name
+            if " " not in stepper_z_name:
+                raise self.printer.config_error(
+                    "Kinematic generic_cartesian: cannot detect Z stepper")
+        z_stepper = kin.get_steppers()[steppers.index(stepper_z_name)]
         self.z_step_dist = z_stepper.get_step_dist()
 
     def get_status(self, eventtime):
@@ -83,7 +93,7 @@ class ZThermalAdjuster:
             'enabled': self.adjust_enable
         }
 
-    def handle_homing_move_end(self, homing_state, rails):
+    def handle_homing_home_axes(self, homing_state):
         'Set reference temperature after Z homing.'
         if 2 in homing_state.get_axes():
             self.ref_temperature = self.smoothed_temp
