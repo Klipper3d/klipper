@@ -169,8 +169,7 @@ add_sample(struct cs1237_adc *cs, uint8_t oid, uint32_t counts)
 static void
 cs1237_handle_startup(struct cs1237_adc *cs)
 {
-    uint8_t old_flags = cs->flags;
-    if (old_flags & CS_DID_RESTART) {
+    if (cs->flags & CS_DID_RESTART) {
         // Discard the first sample (as the read may not have been synchronized)
         cs1237_read_bits(cs, 27);
         irq_disable();
@@ -188,11 +187,21 @@ cs1237_handle_startup(struct cs1237_adc *cs)
 }
 
 static void
+cs1237_handle_config_verify(struct cs1237_adc *cs, uint_fast8_t error)
+{
+    irq_disable();
+    cs->flags &= ~CS_CONFIG_VERIFY;
+    if (error)
+        cs->flags |= CS_CONFIG_PENDING;
+    else
+        cs->is_configured = 1;
+    irq_enable();
+}
+
+static void
 cs1237_read_adc(struct cs1237_adc *cs, uint8_t oid)
 {
-    uint8_t old_flags = cs->flags;
-
-    if (old_flags & (CS_DID_RESTART|CS_CONFIG_PENDING)) {
+    if (cs->flags & (CS_DID_RESTART|CS_CONFIG_PENDING)) {
         // Handle initial startup
         cs1237_handle_startup(cs);
         return;
@@ -205,8 +214,8 @@ cs1237_read_adc(struct cs1237_adc *cs, uint8_t oid)
     uint32_t raw = cs1237_read_bits(cs, 27) >> 1;
 
     irq_disable();
-    old_flags |= cs->flags;
-    cs->flags &= ~(CS_PENDING | CS_OVERFLOW);
+    uint_fast8_t old_flags = cs->flags;
+    cs->flags = old_flags & ~(CS_PENDING | CS_OVERFLOW);
     irq_enable();
 
     uint_fast8_t status = raw & 0x03;
@@ -222,15 +231,9 @@ cs1237_read_adc(struct cs1237_adc *cs, uint8_t oid)
     else if (old_flags & CS_OVERFLOW)
         error = SE_READ_TOO_LONG;
 
-    if (old_flags & CS_CONFIG_VERIFY) {
-        irq_disable();
-        cs->flags &= ~CS_CONFIG_VERIFY;
-        if (error)
-            cs->flags |= CS_CONFIG_PENDING;
-        else
-            cs->is_configured = 1;
-        irq_enable();
-    }
+    if (old_flags & CS_CONFIG_VERIFY)
+        cs1237_handle_config_verify(cs, error);
+
     if (error) {
         trigger_analog_note_error(cs->ta, error);
         counts = (uint32_t)error << 24;
