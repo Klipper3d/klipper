@@ -70,6 +70,9 @@ class ZThermalAdjuster:
         # Pull Z step distance for minimum adjustment increment
         kin = self.printer.lookup_object('toolhead').get_kinematics()
         steppers = [s.get_name() for s in kin.get_steppers()]
+        if "stepper_z" not in steppers:
+            raise self.printer.config_error(
+                "z_thermal_adjust requires a stepper_z definition")
         z_stepper = kin.get_steppers()[steppers.index("stepper_z")]
         self.z_step_dist = z_stepper.get_step_dist()
 
