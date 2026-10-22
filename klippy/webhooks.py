@@ -487,12 +487,14 @@ class QueryStatusHelper:
     def _do_query(self, eventtime):
         last_query = self.last_query
         query = self.last_query = {}
-        msglist = self.pending_queries
+        pq_list = self.pending_queries
         self.pending_queries = []
-        msglist.extend(self.clients.values())
         # Determine full list of printer objects to query
+        cl_list = list(self.clients.values())
         need_objs = {}
-        for cconn, subscription, send_func, template in msglist:
+        for subscription, completion in pq_list:
+            need_objs.update(subscription)
+        for subscription, cconn, template in cl_list:
             need_objs.update(subscription)
         # Query get_status() info for each requested printer object
         reactor = self.printer.get_reactor()
@@ -503,12 +505,25 @@ class QueryStatusHelper:
                     query[obj_name] = {}
                 else:
                     query[obj_name] = po.get_status(eventtime)
-        # Send response to each client
-        for cconn, subscription, send_func, template in msglist:
-            is_query = cconn is None
-            if not is_query and cconn.is_closed():
+        # Generate query responses
+        for subscription, completion in pq_list:
+            # Build objs and fields requested by this client
+            cquery = {}
+            for obj_name, req_items in subscription.items():
+                res = query[obj_name]
+                if req_items is None:
+                    req_items = list(res.keys())
+                    if req_items:
+                        subscription[obj_name] = req_items
+                cquery[obj_name] = {ri: res.get(ri, None) for ri in req_items}
+            # Send data
+            completion.complete({'eventtime': eventtime, 'status': cquery})
+        # Send updates on subscriptions
+        for subscription, cconn, template in cl_list:
+            if cconn.is_closed():
                 del self.clients[cconn]
                 continue
+            # Determine objs and fields to send to this client
             cquery = {}
             for obj_name, req_items in subscription.items():
                 res = query[obj_name]
@@ -520,15 +535,15 @@ class QueryStatusHelper:
                 cres = {}
                 for ri in req_items:
                     rd = res.get(ri, None)
-                    if is_query or rd != lres.get(ri):
+                    if rd != lres.get(ri):
                         cres[ri] = rd
-                if cres or is_query:
+                if cres:
                     cquery[obj_name] = cres
             # Send data
-            if cquery or is_query:
+            if cquery:
                 tmp = dict(template)
                 tmp['params'] = {'eventtime': eventtime, 'status': cquery}
-                send_func(tmp)
+                cconn.send(tmp)
         if not query:
             # Unregister timer if there are no longer any subscriptions
             reactor.unregister_timer(self.query_timer)
@@ -552,16 +567,16 @@ class QueryStatusHelper:
             del self.clients[cconn]
         reactor = self.printer.get_reactor()
         complete = reactor.completion()
-        self.pending_queries.append((None, objects, complete.complete, {}))
+        self.pending_queries.append((objects, complete))
         # Start timer if needed
         if self.query_timer is None:
             qt = reactor.register_timer(self._do_query, reactor.NOW)
             self.query_timer = qt
         # Wait for data to be queried
         msg = complete.wait()
-        web_request.send(msg['params'])
+        web_request.send(msg)
         if is_subscribe:
-            self.clients[cconn] = (cconn, objects, cconn.send, template)
+            self.clients[cconn] = (objects, cconn, template)
     def _handle_subscribe(self, web_request):
         self._handle_query(web_request, is_subscribe=True)
 
