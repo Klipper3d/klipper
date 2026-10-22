@@ -493,32 +493,54 @@ class QueryStatusHelper:
         # Generate get_status() info for each client
         reactor = self.printer.get_reactor()
         with reactor.assert_no_pause():
-            for cconn, subscription, send_func, template in msglist:
-                is_query = cconn is None
-                if not is_query and cconn.is_closed():
+            # Query each printer object any client wants once, and note which
+            # ones may have changed.  An object returning the same status
+            # dict as last time has the same values too, so it is skipped.
+            live = []
+            for msg in msglist:
+                cconn = msg[0]
+                if cconn is not None and cconn.is_closed():
                     del self.clients[cconn]
                     continue
-                # Query each requested printer object
+                live.append(msg)
+            names = set()
+            for msg in live:
+                names.update(msg[1])
+            changed = []
+            for obj_name in names:
+                po = self.printer.lookup_object(obj_name, None)
+                if po is None or not hasattr(po, 'get_status'):
+                    res = query[obj_name] = {}
+                else:
+                    res = query[obj_name] = po.get_status(eventtime)
+                if res is not last_query.get(obj_name):
+                    changed.append(obj_name)
+            for cconn, subscription, send_func, template in live:
+                is_query = cconn is None
                 cquery = {}
-                for obj_name, req_items in subscription.items():
-                    res = query.get(obj_name, None)
-                    if res is None:
-                        po = self.printer.lookup_object(obj_name, None)
-                        if po is None or not hasattr(po, 'get_status'):
-                            res = query[obj_name] = {}
-                        else:
-                            res = query[obj_name] = po.get_status(eventtime)
+                if is_query:
+                    obj_names = list(subscription)
+                else:
+                    obj_names = [n for n in changed if n in subscription]
+                for obj_name in obj_names:
+                    res = query[obj_name]
+                    req_items = subscription[obj_name]
                     if req_items is None:
                         req_items = list(res.keys())
                         if req_items:
                             subscription[obj_name] = req_items
+                    if is_query:
+                        cquery[obj_name] = {ri: res.get(ri, None)
+                                            for ri in req_items}
+                        continue
                     lres = last_query.get(obj_name, {})
                     cres = {}
                     for ri in req_items:
                         rd = res.get(ri, None)
-                        if is_query or rd != lres.get(ri):
+                        lrd = lres.get(ri)
+                        if rd is not lrd and rd != lrd:
                             cres[ri] = rd
-                    if cres or is_query:
+                    if cres:
                         cquery[obj_name] = cres
                 # Send data
                 if cquery or is_query:
