@@ -70,6 +70,13 @@ class Fan:
         self.gcrq.send_async_request(value, print_time)
     def set_speed_from_command(self, value):
         self.gcrq.queue_gcode_request(value)
+    def set_startup_params(self, off_below, kick_start_time):
+        # Allow calibration tools to temporarily alter the startup
+        # behavior; returns the previous settings
+        prev = (self.off_below, self.kick_start_time)
+        self.off_below = off_below
+        self.kick_start_time = kick_start_time
+        return prev
     def _handle_request_restart(self, print_time):
         self.set_speed(0., print_time)
 
@@ -84,15 +91,21 @@ class FanTachometer:
     def __init__(self, config):
         printer = config.get_printer()
         self._freq_counter = None
+        self.sample_time = None
 
         pin = config.get('tachometer_pin', None)
         if pin is not None:
             self.ppr = config.getint('tachometer_ppr', 2, minval=1)
             poll_time = config.getfloat('tachometer_poll_interval',
                                         0.0015, above=0.)
-            sample_time = 1.
+            self.sample_time = config.getfloat('tachometer_sample_time', 1.,
+                                               above=0.)
             self._freq_counter = pulse_counter.FrequencyCounter(
-                printer, pin, sample_time, poll_time)
+                printer, pin, self.sample_time, poll_time)
+
+    def get_sample_time(self):
+        # Returns None if no tachometer is configured
+        return self.sample_time
 
     def get_status(self, eventtime):
         if self._freq_counter is not None:
