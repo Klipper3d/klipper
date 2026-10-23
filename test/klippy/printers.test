@@ -15,6 +15,7 @@ CONFIG ../../config/example-winch.cfg
 
 # Printers using the atmega2560
 DICTIONARY atmega2560.dict
+CONFIG ../../config/generic-azteeg-x3-pro.cfg
 CONFIG ../../config/generic-einsy-rambo.cfg
 CONFIG ../../config/generic-fysetc-f6.cfg
 CONFIG ../../config/generic-gt2560.cfg
