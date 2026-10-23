@@ -3,7 +3,7 @@
 # Copyright (C) 2018-2024  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import os, sys, logging, io
+import os, sys, logging, io, threading
 
 VALID_GCODE_EXTS = ['gcode', 'g', 'gco']
 
@@ -12,6 +12,113 @@ DEFAULT_ERROR_GCODE = """
    TURN_OFF_HEATERS
 {% endif %}
 """
+
+# Asynchronous prefetching reader for virtual_sdcard files
+try:
+    os_pread = os.pread
+except AttributeError:
+    def os_pread(fd, count, offset):
+        os.lseek(fd, offset, os.SEEK_SET)
+        return os.read(fd, count)
+
+class GCodePrefetchReader(io.RawIOBase):
+    def __init__(self, fname, buf_size=512*1024, chunk_size=32*1024):
+        self.fd = os.open(fname, os.O_RDONLY)
+        self.fsize = os.fstat(self.fd).st_size
+        self.buf_size = buf_size
+        self.chunk_size = chunk_size
+        self.buf = bytearray()
+        self.read_pos = 0
+        self.fp_pos = 0
+        self.lock = threading.Lock()
+        self.cond = threading.Condition(self.lock)
+        self._is_closed = False
+        self.eof = False
+        self.thread = threading.Thread(target=self._worker)
+        self.thread.daemon = True
+        self.thread.start()
+    def _worker(self):
+        while not self._is_closed:
+            with self.lock:
+                while len(self.buf) >= self.buf_size and not self._is_closed:
+                    self.cond.wait(timeout=0.100)
+                if self._is_closed:
+                    break
+                if self.fp_pos >= self.fsize:
+                    self.eof = True
+                    self.cond.wait(timeout=0.100)
+                    continue
+                cur_pos = self.fp_pos
+            try:
+                chunk = os_pread(self.fd, self.chunk_size, cur_pos)
+            except OSError:
+                chunk = b""
+            with self.lock:
+                if cur_pos == self.fp_pos:
+                    if chunk:
+                        self.buf.extend(chunk)
+                        self.fp_pos += len(chunk)
+                    else:
+                        self.eof = True
+                    self.cond.notify_all()
+    def readinto(self, b):
+        with self.lock:
+            while not self.buf and not self.eof and not self._is_closed:
+                self.cond.wait(timeout=0.050)
+            if not self.buf:
+                return 0
+            n = min(len(b), len(self.buf))
+            b[:n] = self.buf[:n]
+            del self.buf[:n]
+            self.read_pos += n
+            self.cond.notify_all()
+            return n
+    def seek(self, offset, whence=io.SEEK_SET):
+        with self.lock:
+            if whence == io.SEEK_SET:
+                target = offset
+            elif whence == io.SEEK_CUR:
+                target = self.read_pos + offset
+            elif whence == io.SEEK_END:
+                target = self.fsize + offset
+            else:
+                raise ValueError("Invalid whence")
+            target = max(0, min(self.fsize, target))
+            buf_start = self.read_pos
+            buf_end = self.read_pos + len(self.buf)
+            if buf_start <= target <= buf_end:
+                del self.buf[:target - buf_start]
+                self.read_pos = target
+            else:
+                del self.buf[:]
+                self.read_pos = target
+                self.fp_pos = target
+                self.eof = (target >= self.fsize)
+            self.cond.notify_all()
+            return self.read_pos
+    def tell(self):
+        with self.lock:
+            return self.read_pos
+    def get_size(self):
+        return self.fsize
+    def readable(self):
+        return True
+    def seekable(self):
+        return True
+    def writable(self):
+        return False
+    def close(self):
+        with self.lock:
+            if self._is_closed:
+                return
+            self._is_closed = True
+            self.cond.notify_all()
+        self.thread.join(timeout=0.500)
+        try:
+            os.close(self.fd)
+        except OSError:
+            pass
+        super(GCodePrefetchReader, self).close()
 
 class VirtualSD:
     def __init__(self, config):
@@ -30,8 +137,6 @@ class VirtualSD:
         self.work_timer = None
         # Error handling
         gcode_macro = self.printer.load_object(config, 'gcode_macro')
-        aio = self.printer.load_object(config, 'aio_executor')
-        self.executor = aio.allocate_executor("virtual_sdcard")
         self.on_error_gcode = gcode_macro.load_template(
             config, 'on_error_gcode', DEFAULT_ERROR_GCODE)
         # Register commands
@@ -48,6 +153,8 @@ class VirtualSD:
             desc=self.cmd_SDCARD_PRINT_FILE_help)
         self.printer.register_event_handler("klippy:analyze_shutdown",
                                             self._handle_analyze_shutdown)
+        self.printer.register_event_handler("klippy:disconnect",
+                                            self._handle_disconnect)
         self.printer.register_event_handler("gcode:debuginput_exit",
                                             self._handle_debuginput_exit)
     def _handle_analyze_shutdown(self, msg, details):
@@ -72,6 +179,8 @@ class VirtualSD:
     def _handle_debuginput_exit(self):
         # When in batch debugging mode, wait until sdcard idle before exiting
         return self.work_timer is None
+    def _handle_disconnect(self):
+        self._reset_file()
     def stats(self, eventtime):
         if self.work_timer is None:
             return False, ""
@@ -195,12 +304,9 @@ class VirtualSD:
             if fname not in flist:
                 fname = files_by_lower[fname.lower()]
             fname = os.path.join(self.sdcard_dirname, fname)
-            f = self.executor.submit(io.open, fname, 'rb', buffering=0)
-            f = self.executor.wrap_obj(f)
-            f = io.BufferedReader(f)
-            f.seek(0, os.SEEK_END)
-            fsize = f.tell()
-            f.seek(0)
+            raw = GCodePrefetchReader(fname)
+            fsize = raw.get_size()
+            f = io.BufferedReader(raw)
             f = io.TextIOWrapper(f, newline='')
         except:
             logging.exception("virtual_sdcard file open")
