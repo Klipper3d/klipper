@@ -423,7 +423,7 @@ class TappingMove:
             # an unfinished collector would buffer every sample forever
             collector.stop_collecting()
             raise
-            
+
     def _finish_tap(self, gcmd, epos, collector):
         # collect samples from the tap
         toolhead = self._printer.lookup_object('toolhead')
