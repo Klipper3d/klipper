@@ -424,7 +424,7 @@ class TappingMove:
             collector.stop_collecting()
             raise
             
-    def _finish_tap(self, gcmd, epos, collector):        
+    def _finish_tap(self, gcmd, epos, collector):
         # collect samples from the tap
         toolhead = self._printer.lookup_object('toolhead')
         # Homing workaround
