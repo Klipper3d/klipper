@@ -373,7 +373,12 @@ class LoadCellProbingMove:
         # start collector after tare samples are consumed
         collector = self._start_collector()
         # do homing move
-        epos = phoming.probing_move(self._mcu_trigger_analog, pos, speed)
+        try:
+            epos = phoming.probing_move(self._mcu_trigger_analog, pos, speed)
+        except:
+            # an unfinished collector would buffer every sample forever
+            collector.stop_collecting()
+            raise
         return epos, collector
 
     # Wait for the MCU to trigger with no movement
@@ -412,6 +417,14 @@ class TappingMove:
     def run_tap(self, gcmd):
         # do the descending move
         epos, collector = self._load_cell_probing_move.probing_move(gcmd)
+        try:
+            return self._finish_tap(gcmd, epos, collector)
+        except:
+            # an unfinished collector would buffer every sample forever
+            collector.stop_collecting()
+            raise
+            
+    def _finish_tap(self, gcmd, epos, collector):        
         # collect samples from the tap
         toolhead = self._printer.lookup_object('toolhead')
         # Homing workaround
