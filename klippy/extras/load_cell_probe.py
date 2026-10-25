@@ -323,7 +323,7 @@ class LoadCellProbingMove:
         # internal state tracking
         self._tare_counts = 0
 
-    def _start_collector(self):
+    def start_collector(self):
         toolhead = self._printer.lookup_object('toolhead')
         # homing uses the toolhead last move time which gets special handling
         # to significantly buffer print_time if the move queue has drained
@@ -334,8 +334,7 @@ class LoadCellProbingMove:
 
     # pauses for the last move to complete and then
     # sets the endstop tare value and range
-    def _pause_and_tare(self, gcmd):
-        collector = self._start_collector()
+    def pause_and_tare(self, gcmd, collector):
         num_samples = self._config_helper.get_tare_samples(gcmd)
         # use collect_min collected samples are not wasted
         results = collector.collect_min(num_samples)
@@ -362,23 +361,18 @@ class LoadCellProbingMove:
         # do not permit probing if the load cell is not calibrated
         if not self._load_cell.is_calibrated():
             raise self._printer.command_error("Load Cell not calibrated")
-        # tare the sensor just before probing
-        self._pause_and_tare(gcmd)
         # get params for the homing move
         toolhead = self._printer.lookup_object('toolhead')
         pos = toolhead.get_position()
         pos[2] = self._z_min_position
         speed = self._param_helper.get_probe_params(gcmd)['probe_speed']
         phoming = self._printer.lookup_object('homing')
-        # start collector after tare samples are consumed
-        collector = self._start_collector()
         # do homing move
         epos = phoming.probing_move(self._mcu_trigger_analog, pos, speed)
-        return epos, collector
+        return epos
 
     # Wait for the MCU to trigger with no movement
     def probing_test(self, gcmd, timeout):
-        self._pause_and_tare(gcmd)
         toolhead = self._printer.lookup_object('toolhead')
         print_time = toolhead.get_last_move_time()
         self._mcu_trigger_analog.home_start(print_time, 0., 0, 0.)
@@ -411,7 +405,12 @@ class TappingMove:
 
     def run_tap(self, gcmd):
         # do the descending move
-        epos, collector = self._load_cell_probing_move.probing_move(gcmd)
+        # tare the sensor just before probing
+        collector = self._load_cell_probing_move.start_collector()
+        self._load_cell_probing_move.pause_and_tare(gcmd, collector)
+        # start collector after tare samples are consumed
+        collector = self._load_cell_probing_move.start_collector()
+        epos = self._load_cell_probing_move.probing_move(gcmd)
         # collect samples from the tap
         toolhead = self._printer.lookup_object('toolhead')
         # Homing workaround
@@ -640,8 +639,11 @@ class LoadCellProbeCommands:
         gcmd.respond_info("Tap the load cell %s times:" % (taps,))
         reactor = self._printer.get_reactor()
         for i in range(0, taps):
+            collector = self._load_cell_probing_move.start_collector()
+            self._load_cell_probing_move.pause_and_tare(gcmd, collector)
             result = self._load_cell_probing_move.probing_test(gcmd, timeout)
             if result == 0.:
+                collector.stop_collecting()
                 # notify of error, likely due to timeout
                 raise gcmd.error("Test timeout out")
             gcmd.respond_info("Tap Detected!")
