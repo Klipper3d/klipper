@@ -401,10 +401,12 @@ class TappingMove:
             "load_cell_probe", name, header)
         self._best_fit = LCBestFit(self._printer)
 
-    def run_tap(self, gcmd):
+    def get_collector(self):
+        return self._load_cell_probing_move.start_collector()
+
+    def run_tap(self, gcmd, collector):
         # do the descending move
         # tare the sensor just before probing
-        collector = self._load_cell_probing_move.start_collector()
         self._load_cell_probing_move.pause_and_tare(gcmd, collector)
         # collect samples from the tap
         toolhead = self._printer.lookup_object('toolhead')
@@ -435,7 +437,6 @@ class TappingMove:
         move_end = toolhead.get_last_move_time()
         results = collector.collect_range(descend_start_time, move_end)
         samples = check_sensor_errors(results, self._printer)
-        collector.finish()
 
         # Perform fit on the ascent data
         corrected_z = self._analyze_ascent(gcmd, samples, ascent_start_time,
@@ -597,16 +598,21 @@ class TapSession:
         self._probe_params_helper = probe_params_helper
         # Session state
         self._results = []
+        self._collector = None
 
     def start_probe_session(self, gcmd):
+        self._collector = self._tapping_move.get_collector()
         return self
 
     def end_probe_session(self):
         self._results = []
+        if self._collector is not None:
+            self._collector.finish()
+            self._collector = None
 
     # probe until a single good sample is returned or retries are exhausted
     def run_probe(self, gcmd):
-        epos, is_good = self._tapping_move.run_tap(gcmd)
+        epos, is_good = self._tapping_move.run_tap(gcmd, self._collector)
         offsets = self._probe_offsets.get_offsets()
         res = manual_probe.create_probe_result(epos, offsets)
         self._results.append(res)
