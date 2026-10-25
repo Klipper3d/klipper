@@ -324,17 +324,15 @@ class LoadCellProbingMove:
         self._tare_counts = 0
 
     def start_collector(self):
-        toolhead = self._printer.lookup_object('toolhead')
-        # homing uses the toolhead last move time which gets special handling
-        # to significantly buffer print_time if the move queue has drained
-        print_time = toolhead.get_last_move_time()
         collector = self._load_cell.get_collector()
-        collector.start_collecting(min_time=print_time)
         return collector
 
     # pauses for the last move to complete and then
     # sets the endstop tare value and range
     def pause_and_tare(self, gcmd, collector):
+        toolhead = self._printer.lookup_object('toolhead')
+        print_time = toolhead.get_last_move_time()
+        collector.discard_before(print_time)
         num_samples = self._config_helper.get_tare_samples(gcmd)
         # use collect_min collected samples are not wasted
         results = collector.collect_min(num_samples)
@@ -408,11 +406,10 @@ class TappingMove:
         # tare the sensor just before probing
         collector = self._load_cell_probing_move.start_collector()
         self._load_cell_probing_move.pause_and_tare(gcmd, collector)
-        # start collector after tare samples are consumed
-        collector = self._load_cell_probing_move.start_collector()
-        epos = self._load_cell_probing_move.probing_move(gcmd)
         # collect samples from the tap
         toolhead = self._printer.lookup_object('toolhead')
+        descend_start_time = toolhead.get_last_move_time()
+        epos = self._load_cell_probing_move.probing_move(gcmd)
         # Homing workaround
         phoming = self._printer.lookup_object('homing')
         if phoming.check_probe_first_home(gcmd):
@@ -436,8 +433,9 @@ class TappingMove:
 
         # Collect samples until the end of the ascent
         move_end = toolhead.get_last_move_time()
-        results = collector.collect_until(move_end)
+        results = collector.collect_range(descend_start_time, move_end)
         samples = check_sensor_errors(results, self._printer)
+        collector.finish()
 
         # Perform fit on the ascent data
         corrected_z = self._analyze_ascent(gcmd, samples, ascent_start_time,
@@ -641,9 +639,9 @@ class LoadCellProbeCommands:
         for i in range(0, taps):
             collector = self._load_cell_probing_move.start_collector()
             self._load_cell_probing_move.pause_and_tare(gcmd, collector)
+            collector.finish()
             result = self._load_cell_probing_move.probing_test(gcmd, timeout)
             if result == 0.:
-                collector.stop_collecting()
                 # notify of error, likely due to timeout
                 raise gcmd.error("Test timeout out")
             gcmd.respond_info("Tap Detected!")
