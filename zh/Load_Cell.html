@@ -1505,7 +1505,7 @@
 <li><a href="Status_Reference.html#load_cell">load_cell状态参考</a></li>
 </ul>
 <h2 id="load_cell_diagnostic">使用 <code>LOAD_CELL_DIAGNOSTIC</code><a class="headerlink" href="#load_cell_diagnostic" title="Permanent link">&para;</a></h2>
-<p>当你第一次连接好压力传感器的时候，最好使用<code>LOAD_CELL_DIAGNOSTIC</code>来检测压力传感器的状态。这个工具会收集压力传感器10秒钟内的数据并且报告状态。</p>
+<p>When you first connect a load cell its good practice to check for issues by running <code>LOAD_CELL_DIAGNOSTIC</code>. This tool collects 10 seconds of data from the load cell and reports statistics:</p>
 <div class="highlight"><pre><span></span><code>$ LOAD_CELL_DIAGNOSTIC
 // Collecting load cell data for 10 seconds...
 // Samples Collected: 3211
@@ -1581,13 +1581,13 @@ Total capacity: +/- 29.14Kg
 <p>这是在<code>LOAD_CELL_CALIBRATE</code>时设置的参考归零值。这个数值与<code>force_safety_limit</code>一起工作，用于限制工具头的最大受力。</p>
 <h4 id="force_safety_limit"><code>force_safety_limit（力安全限值）</code><a class="headerlink" href="#force_safety_limit" title="Permanent link">&para;</a></h4>
 <p>这是在探测过程中允许的，相对于<code>reference_tare_counts</code>的最大绝对受力。如果MCU发现这个受力大于这个值，打印机会被停止并报错<code>!! Load cell endstop: too much force!</code>。由多种方式可以出发这个保护措施：</p>
-<p>第一个风险是选择过大的 <code>drift_filter_cutoff_frequency</code>值。这可能会导致偏移过滤器错误的过滤掉一个探针事件并继续归位移动。在这种情况下，<code>force_safety_limit</code>将会作为最后保护措施。</p>
+<p>The first risk this protects against is picking too large of a value for <code>drift_filter_cutoff_frequency</code>. This can cause the drift filter to filter out a probe event and continue the homing move. If this happens, the <code>force_safety_limit</code> acts as a backup protection.</p>
 <p>第二种情况是在一个位置重复探测。Klipper不会在单独的<code>PROBE</code>命令中收回探针。这可能导致探测结束时对工具头的受力。由于外部力在探测过程中可以非常大，<code>load_cell_probe</code>对象会在每次探测时归零受力值。如果您重复<code>PROBE</code>指令，load_cell_probe对象会将限位触发的力归零。多次循环这个过程会导致工具头上不断增加的力。 <code>force_safety_limit</code>会在这种情况不受控制时停止循环。</p>
-<p>Another way this run-away can happen is damage to a strain gauge. If the metal part is permanently bent it will change the <code>reference_tare_counts</code> of the device. This puts the starting tare value much closer to the limit making it more likely to be violated. You want to be notified if this is happening because your hardware has been permanently damaged.</p>
+<p>Another way this runaway can happen is damage to a strain gauge. If the metal part is permanently bent it will change the <code>reference_tare_counts</code> of the device. This puts the starting tare value much closer to the limit making it more likely to be violated. You want to be notified if this is happening because your hardware has been permanently damaged.</p>
 <p>最后一种触发方式是温度变化。如果你的应变片被加热，它们的<code>reference_tare_counts</code>可能与室温下不同。这种情况下，适度增加<code>force_safety_limit</code>以允许温度变化。</p>
 <h4 id="_11">压力传感器限位的看门狗<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h4>
 <p>当归位时，load_cell_endstop对象会在MCU上启动一个看门狗任务以监控传感器的读数。如果传感器在两个连续的采样周期中都没有发送数据，看门狗将会停止打印机并报错<code>!! LoadCell Endstop timed out waiting on ADC data</code>。</p>
-<p>如果这发生了，很有可能ADC有问题。不可靠的打印机接地可能会导致问题。框架，电源外壳，以及打印机热床都应可靠地接地。你可能需要在框架的不同部位接地。阳极氧化的铝型材导电性能不佳，你可能需要打磨一个区域来连接地线以获得良好的电气接触。</p>
+<p>If this happens, the most likely cause is a fault from the ADC. Inadequate grounding of your printer can be the root cause. The frame, power supply case and print bed should all be connected to ground. You may need to ground the frame in multiple places. Anodized aluminum extrusions do not conduct electricity well. You might need to sand the area where the grounding wire is attached to make good electrical contact.</p>
 <h4 id="interpolation">Interpolation<a class="headerlink" href="#interpolation" title="Permanent link">&para;</a></h4>
 <p>To increase the precision of the probing result, the position of the first contact between nozzle and bed can be estimated by fitting a piecewise function to the measured data. The data will consist of two regions: while the nozzle is above the bed, the force will be constant (at the tare value). When the nozzle is in contact with the bed, the force will increase linearly with decreasing z position. A piecewise function is fitted to the data and the optimal z position of the split point is found by minimising the error squared. This enables a resolution finer than the distance between the sampling points and will also be less sensitive to noise.</p>
 <p>Due to both physical and technical reasons, the interpolation uses data collected during an additional ascending movement after the initial descending move. The first 300ms of data collected during the ascending move will be used for the fit (this minimises the influence of tare drifts). The collected data must contain enough samples for the fit: at least 3 samples each below and above the contact point are required.</p>
@@ -1602,10 +1602,10 @@ Total capacity: +/- 29.14Kg
 <p>如果测试失败，检查你的配置并运行 <code>LOAD_CELL_DIAGNOSTIC</code>来寻找问题。</p>
 <p>压力传感器不支持<code>QUERY_ENDSTOPS</code>或 <code>QUERY_PROBE</code>指令。使用<code>LOAD_CELL_TEST_TAP</code>来在探测前测试功能。</p>
 <h3 id="_14">建议探测温度<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h3>
-<p>目前，我们推荐在归位和探测时将喷嘴温度保持在耗材会溢料的温度下。140摄氏度是一个不错的起始点。这个温度同时也不会伤害PEI构件表面。</p>
+<p>Currently, we suggest keeping the nozzle temperature below the level that causes the filament to ooze while homing and probing. 140°C is a good starting point. This temperature is also low enough not to scar PEI build surfaces.</p>
 <p>溢料导致的喷嘴及热床污染是压力传感器探测错误的头号原因。Klipper目前没有检测低质量结果的通用解决方案。现有的代码会将低质量的探测结果作为有效的探测点。识别这些低质量结果是目前的研究方向。</p>
 <p>目前，由于溢料污染，自动更换探测位置的功能还没有被Klipper支持。类似于<code>quad_gantry_level</code>的模块会反复在同一个坐标探测，即使前一次探测失败。</p>
-<p>由于以上这些原因，极度不推荐在打印温度探测。</p>
+<p>Given the above it is strongly suggested not to probe at printing temperatures.</p>
 <h3 id="_15">高温喷嘴保护<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h3>
 <p>The Voron project has a great macro for protecting your print surface from the hot nozzle. See <a href="https://github.com/VoronDesign/Voron-Tap/blob/main/config/tap_klipper_instructions.md">Voron Tap's
 <code>activate_gcode</code></a></p>
@@ -1622,7 +1622,7 @@ Total capacity: +/- 29.14Kg
 <h3 id="_17">喷嘴热胀冷缩的温度补偿<a class="headerlink" href="#_17" title="Permanent link">&para;</a></h3>
 <p>如果在安全温度探测，喷嘴会在到达打印温度时略微膨胀。这将会导致喷嘴距离构件表面更近。可以使用<a href="Config_Reference.html#z_thermal_adjust">[z_thermal_adjust]</a>来补偿。该补偿工具会补偿一系列打印温度，从PLA到PC。</p>
 <h4 id="z_thermal_adjusttemp_coeff">计算 <code>[z_thermal_adjust]</code>的<code>temp_coeff</code><a class="headerlink" href="#z_thermal_adjusttemp_coeff" title="Permanent link">&para;</a></h4>
-<p>最简单的方法是在两个不同的温度测量。理想情况下，这应该涵盖打印温度的下限和上限（比如，180C和290C）。你可以在两个温度分别执行<code>PROBE_ACCURACY</code>并计算 <code>average z</code>的差值。</p>
+<p>The easiest way to do this is to measure at 2 different temperatures. Ideally these should be the upper and lower limits of the printing temperature range. E.g. 180°C and 290°C. You can perform a <code>PROBE_ACCURACY</code> at both temperatures and then calculate the difference of the <code>average z</code> at both.</p>
 <p>调整值即是喷嘴长度除以温度变化。比如。</p>
 <div class="highlight"><pre><span></span><code>temp_coeff = -0.05 / (290 - 180) = -0.00045455
 </code></pre></div>
@@ -1644,8 +1644,8 @@ max_z_adjustment: 0.1
 <h2 id="_18">对工具头压力传感器的连续归零过滤器<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h2>
 <p>Klipper在MCU上实现了一个可配置的IIR过滤器来预防在探测时连续的归零。连续归零指的是0值随着外部因素（比如进料管或者温度变化）而变化。这是瞄准工具头传感器和动床结构开发的，这种结构会遭受大量外部因素的影响。</p>
 <h3 id="scipy">安装SciPy<a class="headerlink" href="#scipy" title="Permanent link">&para;</a></h3>
-<p>过滤器的代码使用绝佳的<a href="https://scipy.org/">SciPy</a>库基于配置值来计算过滤器的参数。</p>
-<p>预编译的SciPi构建在32位Raspberry Pi上的Python 3可用。极度推荐32位+Python 3的组合，因为这可以流水线化你的安装流程。可以使用Python 2，但是安装过程将话费30+分钟，并且需要安装额外工具。</p>
+<p>The filtering code uses the excellent <a href="https://scipy.org/">SciPy</a> library to compute the filter coefficients based on the values you enter into the config.</p>
+<p>Pre-compiled SciPi builds are available for Python 3 on 32-bit and 64-bit Raspberry Pi systems. 32-bit/64-bit + Python 3 is strongly recommended because it will streamline your installation experience. It does work with Python 2 but installation can take 30+ minutes and requires installing additional tools.</p>
 <div class="highlight"><pre><span></span><code>~/klippy-env/bin/pip<span class="w"> </span>install<span class="w"> </span>scipy
 </code></pre></div>
 

@@ -2503,7 +2503,7 @@ A túl nagy simítás elkerülése érdekében a &#39;3hump_ei&#39; esetében ja
 Az ajánlott alakító 2hump_ei @ 45,2 Hz.
 </code></pre></div>
 
-<p>Vedd figyelembe, hogy a bejelentett <code>simítás</code> értékek absztrakt vetített értékek. Ezek az értékek különböző konfigurációk összehasonlítására használhatók: minél magasabb az érték, annál nagyobb simítást hoz létre a formázó. Ezek a simítási értékek azonban nem jelentik a simítás valódi mértékét, mivel a tényleges simítás a <a href="#a-max_accel-kivalasztasa"><code>max_accel</code></a> és <code>square_corner_velocity</code> paraméterektől függ. Ezért érdemes néhány tesztnyomatot nyomtatni, hogy lássuk, pontosan mekkora simítást hoz létre a kiválasztott konfiguráció.</p>
+<p>Note that the reported <code>smoothing</code> values are some abstract projected values. These values can be used to compare different configurations: the higher the value, the more smoothing a shaper will create. However, these smoothing scores do not represent any real measure of smoothing, because the actual smoothing depends on <a href="#selecting-max_accel"><code>max_accel</code></a> and <code>square_corner_velocity</code> parameters. Therefore, you should print some test prints to see how much smoothing exactly a chosen configuration creates.</p>
 <p>A fenti példában a javasolt alakító paraméterek nem rosszak, de mi van akkor, ha az X tengelyen kevesebb simítást szeretnél elérni? Megpróbálhatod korlátozni a maximális alakító simítást a következő paranccsal:</p>
 <div class="highlight"><pre><span></span><code>~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png --max_smoothing=0.2
 </code></pre></div>

@@ -1455,7 +1455,7 @@
 <li>Support for common temperature sensors (eg, common thermistors, AD595, AD597, AD849x, PT100, PT1000, MAX6675, MAX31855, MAX31856, MAX31865, BME280, HTU21D, DS18B20, AHT1X, AHT2X, AHT3X, SHT3x, and LM75). Custom thermistors and custom analog temperature sensors can also be configured. One can monitor the internal micro-controller temperature sensor and the internal temperature sensor of a Raspberry Pi.</li>
 <li>預設啟用基本加熱器保護。</li>
 <li>Support for standard fans, nozzle fans, and temperature controlled fans. No need to keep fans running when the printer is idle. Fan speed can be monitored on fans that have a tachometer. One can assign a "math formula" to a fan for automatic fan speed updating.</li>
-<li>Support for run-time configuration of TMC2130, TMC2208/TMC2224, TMC2209, TMC2240, TMC2660, and TMC5160 stepper motor drivers. There is also support for current control of traditional stepper drivers via AD5206, DAC084S085, MCP4451, MCP4728, MCP4018, and PWM pins.</li>
+<li>Support for run-time configuration of TMC2130, TMC2208/TMC2224, TMC2209, TMC2240, TMC2660, TMC5160, and TMC5262 stepper motor drivers. There is also support for current control of traditional stepper drivers via AD5206, DAC084S085, MCP4451, MCP4728, MCP4018, and PWM pins.</li>
 <li>支援直接連線到印表機的普通LCD顯示器。還提供了一個預設的菜單。顯示器和菜單的內容可以通過配置檔案完全定製。</li>
 <li>恒定加速和「look-ahead」（前瞻）支援。所有印表機移動將從靜止逐漸加速到巡航速度，然後減速回到靜止。對傳入的 G 程式碼移動命令流進行排隊和分析 - 將優化類似方向上的移動之間的加速度，以減少列印停頓並改善整體列印時間。</li>
 <li>Klipper 實現了一種「步進相位限位」演算法，可以提高典型限位開關的精度。如果調整得當，它可以提高列印件首層和列印床的附著力。</li>

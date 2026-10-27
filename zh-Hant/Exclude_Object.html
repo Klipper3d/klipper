@@ -1470,7 +1470,7 @@
 
 <h1 id="exclude-objects">Exclude Objects<a class="headerlink" href="#exclude-objects" title="Permanent link">&para;</a></h1>
 <p>The <code>[exclude_object]</code> module allows Klipper to exclude objects while a print is in progress. To enable this feature include an <a href="Config_Reference.html#exclude_object">exclude_object config
-section</a> (also see the <a href="G-Codes.html#exclude-object">command
+section</a> (also see the <a href="G-Codes.html#exclude_object">command
 reference</a> and <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> file for a Marlin/RepRapFirmware compatible M486 G-Code macro.)</p>
 <p>Unlike other 3D printer firmware options, a printer running Klipper utilizes a suite of components and users have many options to choose from. Therefore, in order to provide a a consistent user experience, the <code>[exclude_object]</code> module will establish a contract or API of sorts. The contract covers the contents of the gcode file, how the internal state of the module is controlled, and how that state is provided to clients.</p>
 <h2 id="workflow-overview">Workflow Overview<a class="headerlink" href="#workflow-overview" title="Permanent link">&para;</a></h2>
@@ -1491,7 +1491,7 @@ reference</a> and <a href="https://github.com/Klipper3d/klipper/blob/master/conf
 <p>The <code>EXCLUDE_OBJECT_DEFINE</code> command is used to provide a summary of each object in the gcode file to be printed. Provides a summary of an object in the file. Objects don't need to be defined in order to be referenced by other commands. The primary purpose of this command is to provide information to the UI without needing to parse the entire gcode file.</p>
 <p>Object definitions are named, to allow users to easily select an object to be excluded, and additional metadata may be provided to allow for graphical cancellation displays. Currently defined metadata includes a <code>CENTER</code> X,Y coordinate, and a <code>POLYGON</code> list of X,Y points representing a minimal outline of the object. This could be a simple bounding box, or a complicated hull for showing more detailed visualizations of the printed objects. Especially when gcode files include multiple parts with overlapping bounding regions, center points become hard to visually distinguish. <code>POLYGONS</code> must be a json-compatible array of point <code>[X,Y]</code> tuples without whitespace. Additional parameters will be saved as strings in the object definition and provided in status updates.</p>
 <p><code>EXCLUDE_OBJECT_DEFINE NAME=calibration_pyramid CENTER=50,50 POLYGON=[[40,40],[50,60],[60,40]]</code></p>
-<p>All available G-Code commands are documented in the <a href="G-Codes.html#excludeobject">G-Code
+<p>All available G-Code commands are documented in the <a href="G-Codes.html#exclude_object">G-Code
 Reference</a></p>
 <h2 id="status-information">Status Information<a class="headerlink" href="#status-information" title="Permanent link">&para;</a></h2>
 <p>The state of this module is provided to clients by the <a href="Status_Reference.html#exclude_object">exclude_object

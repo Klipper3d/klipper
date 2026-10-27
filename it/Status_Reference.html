@@ -2260,7 +2260,7 @@
 <li><code>speed_factor</code>: La"speed factor override" come impostato da un comando <code>M220</code>. Questo è un valore in virgola mobile tale che 1,0 significa nessun override e, ad esempio, 2,0 raddoppierebbe la velocità richiesta.</li>
 <li><code>extrude_factor</code>: L'"extrude factor override" come impostato da un comando <code>M221</code>. Questo è un valore in virgola mobile tale che 1,0 significa nessun override ad esempio 2,0 raddoppierebbe le estrusioni richieste.</li>
 <li><code>absolute_coordinates</code>: restituisce True se in modalità coordinate assolute <code>G90</code> o False se in modalità relativa <code>G91</code>.</li>
-<li><code>absolute_extrude</code>: restituisce True se in modalità di estrusione assoluta <code>M82</code> o False se in modalità relativa <code>M83</code>.</li>
+<li><code>absolute_extrude</code>: Returns True if absolute extrusions are permitted. An <code>M83</code> force relative extrusion mode command causes this value to return False. An <code>M82</code> command returns this value to True.</li>
 <li><code>axis_map</code>: Provides a mechanism for finding the coordinate component for a given G-Code id that is used in <code>G1</code> commands. See the <a href="#accessing-coordinates">Accessing Coordinates</a> section for details.</li>
 </ul>
 <h2 id="hall_filament_width_sensor">hall_filament_width_sensor<a class="headerlink" href="#hall_filament_width_sensor" title="Permanent link">&para;</a></h2>
@@ -2337,6 +2337,7 @@
 <li><code>mcu_version</code>: la versione del codice Klipper riportata dal microcontrollore.</li>
 <li><code>mcu_build_versions</code>: informazioni sugli strumenti di compilazione utilizzati per generare il codice del microcontrollore (come riportato dal microcontrollore).</li>
 <li><code>mcu_constants.&lt;constant_name&gt;</code>: Elenca le costanti di tempo riportate dal microcontrollore. Le costanti disponibili possono differire tra le architetture del microcontrollore e con ogni revisione del codice.</li>
+<li><code>mcu_kconfig</code>: The minimal build configuration (<code>savedefconfig</code> output) that the micro-controller firmware was compiled from, as reported by the micro-controller. <code>None</code> if the firmware predates this feature or does not provide it.</li>
 <li><code>last_stats.&lt;statistics_name&gt;</code>: informazioni statistiche sulla connessione del microcontrollore.</li>
 </ul>
 <h2 id="motion_report">motion_report<a class="headerlink" href="#motion_report" title="Permanent link">&para;</a></h2>
@@ -2428,7 +2429,7 @@
 </ul>
 <h2 id="sensori-di-temperatura">sensori di temperatura<a class="headerlink" href="#sensori-di-temperatura" title="Permanent link">&para;</a></h2>
 <p>Le seguenti informazioni sono disponibili in</p>
-<p><a href="Config_Reference.html#bmp280bme280bme680-temperature-sensor">bme280 config_section_name</a>, <a href="Config_Reference.html#htu21d-sensor">htu21d config_section_name</a>, <a href="Config_Reference.html#sht31-sensor">sht3x config_section_name</a>, <a href="Config_Reference.html#lm75-temperature-sensor">lm75 config_section_name</a>, <a href="Config_Reference.html#host-temperature-sensor">temperature_host config_section_name</a> and <a href="Config_Reference.html#combined-temperature-sensor">temperature_combined config_section_name</a> objects:</p>
+<p><a href="Config_Reference.html#bmp180bmp280bme280bmp388bme680-temperature-sensor">bme280 config_section_name</a>, <a href="Config_Reference.html#htu21d-sensor">htu21d config_section_name</a>, <a href="Config_Reference.html#sht3x-sensor">sht3x config_section_name</a>, <a href="Config_Reference.html#lm75-temperature-sensor">lm75 config_section_name</a>, <a href="Config_Reference.html#host-temperature-sensor">temperature_host config_section_name</a> and <a href="Config_Reference.html#combined-temperature-sensor">temperature_combined config_section_name</a> objects:</p>
 <ul>
 <li><code>temperature</code>: l'ultima temperatura letta dal sensore.</li>
 <li><code>humidity</code>, <code>pressure</code>, <code>gas</code>: The last read values from the sensor (only on bme280, htu21d, sht3x and lm75 sensors).</li>

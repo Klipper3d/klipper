@@ -2260,7 +2260,7 @@
 <li><code>speed_factor</code>: Az <code>M220</code> parancs által beállított "sebességtényező felülbírálása". Ez egy lebegőpontos érték, így 1.0 azt jelenti, hogy nincs felülbírálat, és például a 2.0 megduplázza a kért sebességet.</li>
 <li><code>extrude_factor</code>: Az <code>M221</code> parancs által beállított "extrude factor override". Ez egy lebegőpontos érték, így 1.0 azt jelenti, hogy nincs felülbírálat, és például a 2.0 megduplázza a kért extrudálásokat.</li>
 <li><code>absolute_coordinates</code>: True értéket ad, ha a <code>G90</code> abszolút koordináta módban van, vagy False értéket, ha a <code>G91</code> relatív módban van.</li>
-<li><code>absolute_extrude</code>: True értéket ad, ha az <code>M82</code> abszolút extrude módban van, vagy False értéket, ha az <code>M83</code> relatív módban van.</li>
+<li><code>absolute_extrude</code>: Returns True if absolute extrusions are permitted. An <code>M83</code> force relative extrusion mode command causes this value to return False. An <code>M82</code> command returns this value to True.</li>
 <li><code>axis_map</code>: Provides a mechanism for finding the coordinate component for a given G-Code id that is used in <code>G1</code> commands. See the <a href="#accessing-coordinates">Accessing Coordinates</a> section for details.</li>
 </ul>
 <h2 id="hall_filament_width_sensor">hall_filament_width_sensor<a class="headerlink" href="#hall_filament_width_sensor" title="Permanent link">&para;</a></h2>
@@ -2337,6 +2337,7 @@
 <li><code>mcu_version</code>: A mikrokontroller által jelentett Klipper kód verziója.</li>
 <li><code>mcu_build_versions</code>: A mikrokontroller kódjának generálásához használt építőeszközökre vonatkozó információk (a mikrokontroller által jelentett módon).</li>
 <li><code>mcu_constants.&lt;constant_name&gt;</code>: A mikrokontroller által jelentett fordítási idejű konstansok. A rendelkezésre álló konstansok mikrokontroller architektúránként és kódrevíziónként eltérőek lehetnek.</li>
+<li><code>mcu_kconfig</code>: The minimal build configuration (<code>savedefconfig</code> output) that the micro-controller firmware was compiled from, as reported by the micro-controller. <code>None</code> if the firmware predates this feature or does not provide it.</li>
 <li><code>last_stats.&lt;statistics_name&gt;</code>: Statisztikai információk a mikrokontroller kapcsolatról.</li>
 </ul>
 <h2 id="motion_report">motion_report<a class="headerlink" href="#motion_report" title="Permanent link">&para;</a></h2>
@@ -2428,7 +2429,7 @@
 </ul>
 <h2 id="homerseklet-erzekelok">hőmérséklet érzékelők<a class="headerlink" href="#homerseklet-erzekelok" title="Permanent link">&para;</a></h2>
 <p>A következő információk a következő dokumentumban találhatók</p>
-<p><a href="Config_Reference.html#bmp280bme280bme680-temperature-sensor">bme280 config_section_name</a>, <a href="Config_Reference.html#htu21d-sensor">htu21d config_section_name</a>, <a href="Config_Reference.html#sht31-sensor">sht3x config_section_name</a>, <a href="Config_Reference.html#lm75-temperature-sensor">lm75 config_section_name</a>, <a href="Config_Reference.html#host-temperature-sensor">temperature_host config_section_name</a> és <a href="Config_Reference.html#combined-temperature-sensor">temperature_combined config_section_name</a> tárgyak:</p>
+<p><a href="Config_Reference.html#bmp180bmp280bme280bmp388bme680-temperature-sensor">bme280 config_section_name</a>, <a href="Config_Reference.html#htu21d-sensor">htu21d config_section_name</a>, <a href="Config_Reference.html#sht3x-sensor">sht3x config_section_name</a>, <a href="Config_Reference.html#lm75-temperature-sensor">lm75 config_section_name</a>, <a href="Config_Reference.html#host-temperature-sensor">temperature_host config_section_name</a> and <a href="Config_Reference.html#combined-temperature-sensor">temperature_combined config_section_name</a> objects:</p>
 <ul>
 <li><code>temperature</code>: Az érzékelőtől utoljára kapott hőmérséklet.</li>
 <li><code>páratartalom</code>, <code>légnyomás</code>, <code>gáz</code>: Az érzékelőből utoljára leolvasott értékek (csak a bme280, htu21d, sht3x és lm75 érzékelők esetében).</li>

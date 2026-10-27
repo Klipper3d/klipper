@@ -1470,7 +1470,7 @@
 
 <h1 id="exclure-des-objets">Exclure des objets<a class="headerlink" href="#exclure-des-objets" title="Permanent link">&para;</a></h1>
 <p>The <code>[exclude_object]</code> module allows Klipper to exclude objects while a print is in progress. To enable this feature include an <a href="Config_Reference.html#exclude_object">exclude_object config
-section</a> (also see the <a href="G-Codes.html#exclude-object">command
+section</a> (also see the <a href="G-Codes.html#exclude_object">command
 reference</a> and <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> file for a Marlin/RepRapFirmware compatible M486 G-Code macro.)</p>
 <p>Contrairement à d'autres options de micrologiciel d'imprimante 3D, une imprimante exécutant Klipper utilise une suite de composants et les utilisateurs ont le choix de nombreuses options. Par conséquent, afin de fournir une expérience utilisateur cohérente, le module <code>[exclude_object]</code> établira un contrat ou une sorte d'API. Le contrat couvre le contenu du fichier gcode, la façon dont l'état interne du module est contrôlé, et la façon dont cet état est fourni aux clients.</p>
 <h2 id="apercu-du-flux-de-travail">Aperçu du flux de travail<a class="headerlink" href="#apercu-du-flux-de-travail" title="Permanent link">&para;</a></h2>
@@ -1491,7 +1491,7 @@ reference</a> and <a href="https://github.com/Klipper3d/klipper/blob/master/conf
 <p>La commande <code>EXCLUDE_OBJECT_DEFINE</code> est utilisée pour fournir un résumé de chaque objet du fichier gcode à imprimer. Elle fournit le résumé d'un objet dans le fichier. Les objets n'ont pas besoin d'être définis pour être référencés par d'autres commandes. Le but principal de cette commande est de fournir des informations à l'interface utilisateur sans avoir à analyser le fichier gcode en entier.</p>
 <p>Les définitions d'objets sont nommées, pour permettre aux utilisateurs de sélectionner facilement un objet à exclure, et des métadonnées supplémentaires peuvent être fournies pour permettre des affichages graphiques d'annulation. Les métadonnées actuellement définies comprennent une coordonnée X,Y <code>CENTER</code>, et une liste <code>POLYGON</code> de points X,Y représentant un contour minimal de l'objet. Il peut s'agir d'une simple boîte englobante ou d'une coque complexe permettant de visualiser les objets imprimés de manière plus détaillée. En particulier, lorsque les fichiers gcode comprennent plusieurs parties avec des régions limites qui se chevauchent, les points centraux deviennent difficiles à distinguer visuellement. <code>POLYGONS</code> doit être un tableau compatible json de points <code>[X,Y]</code>( tuples) sans espace. Les paramètres supplémentaires seront enregistrés sous forme de chaînes de caractères dans la définition de l'objet et fournis dans les mises à jour de l'état.</p>
 <p><code>EXCLUDE_OBJECT_DEFINE NAME=calibration_pyramid CENTER=50,50 POLYGON=[[40,40],[50,60],[60,40]]</code></p>
-<p>All available G-Code commands are documented in the <a href="G-Codes.html#excludeobject">G-Code
+<p>All available G-Code commands are documented in the <a href="G-Codes.html#exclude_object">G-Code
 Reference</a></p>
 <h2 id="informations-sur-le-statut">Informations sur le statut<a class="headerlink" href="#informations-sur-le-statut" title="Permanent link">&para;</a></h2>
 <p>The state of this module is provided to clients by the <a href="Status_Reference.html#exclude_object">exclude_object

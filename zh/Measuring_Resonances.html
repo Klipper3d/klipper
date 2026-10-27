@@ -2503,7 +2503,7 @@ To avoid too much smoothing with &#39;3hump_ei&#39;, suggested max_accel &lt;= 1
 Recommended shaper is 2hump_ei @ 45.2 Hz
 </code></pre></div>
 
-<p>请注意，报告的 <code>smoothing</code>（平滑）值是抽象的预测值。这些值可用于比较不同的配置：值越高，整形器造成的平滑度就越高。但是，这些平滑值并不表示任何实际的平滑度的量，因为实际的平滑取决于<a href="#selecting-max-accel"><code>max_accel</code></a>和<code>square_corner_velocity</code>参数。因此，如果希望了解所选配置造成的实际平滑效果，需要打印一些测试件。</p>
+<p>Note that the reported <code>smoothing</code> values are some abstract projected values. These values can be used to compare different configurations: the higher the value, the more smoothing a shaper will create. However, these smoothing scores do not represent any real measure of smoothing, because the actual smoothing depends on <a href="#selecting-max_accel"><code>max_accel</code></a> and <code>square_corner_velocity</code> parameters. Therefore, you should print some test prints to see how much smoothing exactly a chosen configuration creates.</p>
 <p>在上面的示例中，脚本给出了不错的整形器参数建议，但是如果想在 X 轴上减少平滑度，就需要尝试使用以下命令限制脚本挑选参数时的整形器平滑值极限：</p>
 <div class="highlight"><pre><span></span><code>~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png --max_smoothing=0.2
 </code></pre></div>

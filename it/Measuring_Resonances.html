@@ -2503,7 +2503,7 @@ To avoid too much smoothing with &#39;3hump_ei&#39;, suggested max_accel &lt;= 1
 Recommended shaper is 2hump_ei @ 45.2 Hz
 </code></pre></div>
 
-<p>Si noti che i valori di <code>smoothing</code> riportati sono alcuni valori proiettati. Questi valori possono essere utilizzati per confrontare diverse configurazioni: maggiore è il valore, maggiore sarà la levigatura creata da uno shaper. Tuttavia, questi punteggi di smoothing non rappresentano alcuna misura reale dello smoothing, perché lo smoothing effettivo dipende dai parametri <a href="#selecting-max-accel"><code>max_accel</code></a> e <code>square_corner_velocity</code>. Pertanto, è necessario eseguire alcune stampe di prova per vedere quanta smoothing crea esattamente una configurazione scelta.</p>
+<p>Note that the reported <code>smoothing</code> values are some abstract projected values. These values can be used to compare different configurations: the higher the value, the more smoothing a shaper will create. However, these smoothing scores do not represent any real measure of smoothing, because the actual smoothing depends on <a href="#selecting-max_accel"><code>max_accel</code></a> and <code>square_corner_velocity</code> parameters. Therefore, you should print some test prints to see how much smoothing exactly a chosen configuration creates.</p>
 <p>Nell'esempio sopra i parametri dello shaper suggeriti non sono male, ma cosa succede se si desidera ottenere meno smooting sull'asse X? Puoi provare a limitare lo smoothing massimo dello shaper usando il seguente comando:</p>
 <div class="highlight"><pre><span></span><code>~/klipper/scripts/calibrate_shaper.py /tmp/resonances_x_*.csv -o /tmp/shaper_calibrate_x.png --max_smoothing=0.2
 </code></pre></div>

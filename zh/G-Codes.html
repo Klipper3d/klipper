@@ -4930,8 +4930,11 @@
 <li>返回原点：<code>G28 [X] [Y] [Z]</code></li>
 <li>关闭步进电机：<code>M18</code>或<code>M84</code></li>
 <li>等待当前移动完成： <code>M400</code></li>
-<li>使用绝对/相对挤出距离：<code>M82</code>， <code>M83</code></li>
 <li>使用绝对/相对坐标：<code>G90</code>, <code>G91</code></li>
+<li>Force relative distances for extrusion: <code>M83</code>, <code>M82</code><ul>
+<li>Note: <code>M83</code> forces extrusions to use relative coordinates even if <code>G90</code> absolute mode is selected. <code>M82</code> disables that forced mode (it does not force the extruder to use absolute coordinates).</li>
+</ul>
+</li>
 <li>设置坐标：<code>G92 [X&lt;坐标&gt;] [Y&lt;坐标&gt;] [Z&lt;坐标&gt;] [E&lt;坐标&gt;]</code></li>
 <li>设置速度因子覆写百分比：<code>M220 S&lt;百分比&gt;</code></li>
 <li>设置挤压因子覆盖百分比：<code>M221 S&lt;percent&gt;</code></li>
@@ -4989,7 +4992,7 @@
 <p>The following commands are available when the <a href="Config_Reference.html#axis_twist_compensation">axis_twist_compensation config
 section</a> is enabled.</p>
 <h4 id="axis_twist_compensation_calibrate">AXIS_TWIST_COMPENSATION_CALIBRATE<a class="headerlink" href="#axis_twist_compensation_calibrate" title="Permanent link">&para;</a></h4>
-<p><code>AXIS_TWIST_COMPENSATION_CALIBRATE [AXIS=&lt;X|Y&gt;] [SAMPLE_COUNT=&lt;value&gt;]</code></p>
+<p><code>AXIS_TWIST_COMPENSATION_CALIBRATE [AXIS=&lt;X|Y&gt;] [SAMPLE_COUNT=&lt;value&gt;] [MANUAL_METHOD=manual]</code></p>
 <p>Calibrates axis twist compensation by specifying the target axis or enabling automatic calibration.</p>
 <ul>
 <li><strong>AXIS:</strong> Define the axis (<code>X</code> or <code>Y</code>) for which the twist compensation will be calibrated. If not specified, the axis defaults to <code>'X'</code>.</li>
@@ -5153,7 +5156,7 @@ section</a> is enabled.</p>
 <h4 id="set_gcode_offset">SET_GCODE_OFFSET<a class="headerlink" href="#set_gcode_offset" title="Permanent link">&para;</a></h4>
 <p><code>SET_GCODE_OFFSET [X=&lt;pos&gt;|X_ADJUST=&lt;adjust&gt;] [Y=&lt;pos&gt;|Y_ADJUST=&lt;adjust&gt;] [Z=&lt;pos&gt;|Z_ADJUST=&lt;adjust&gt;] [MOVE=1 [MOVE_SPEED=&lt;speed&gt;]]</code> 。设置一个位置偏移，以应用于未来的G代码命令。这通常用于实际改变Z床的偏移量或在切换挤出机时设置喷嘴的XY偏移量。例如，如果发送 "SET_GCODE_OFFSET Z=0.2"，那么未来的G代码移动将在其Z高度上增加0.2mm。如果使用X_ADJUST风格的参数，那么调整将被添加到任何现有的偏移上（例如，"SET_GCODE_OFFSET Z=-0.2"，然后是 "SET_GCODE_OFFSET Z_ADJUST=0.3"，将导致总的Z偏移为0.1）。如果指定了 "MOVE=1"，那么将发出一个工具头移动来应用给定的偏移量（否则偏移量将在指定给定轴的下一次绝对G-Code移动中生效）。如果指定了 "MOVE_SPEED"，那么刀头移动将以给定的速度（mm/s）执行；否则，打印头移动将使用最后指定的G-Code速度。</p>
 <h4 id="save_gcode_state">SAVE_GCODE_STATE<a class="headerlink" href="#save_gcode_state" title="Permanent link">&para;</a></h4>
-<p><code>SAVE_GCODE_STATE [NAME=&lt;state_name&gt;]</code>：保存当前的g-code坐标解析状态。保存和恢复g-code状态在脚本和宏中很有用。该命令保存当前g-code绝对坐标模式（G90/G91）绝对挤出模式（M82/M83）原点（G92）偏移量（SET_GCODE_OFFSET）速度覆盖（M220）挤出机覆盖（M221）移动速度。当前XYZ位置和相对挤出机 "E "位置。如果提供NAME，它可以将保存的状态命名为给定的字符串。如果没有提供NAME，则默认为 "default"</p>
+<p><code>SAVE_GCODE_STATE [NAME=&lt;state_name&gt;]</code>: Save the current g-code coordinate parsing state. Saving and restoring the g-code state is useful in scripts and macros. This command saves the current g-code absolute coordinate mode (G90/G91), force relative extrude mode (M83/M82), origin (G92), offset (SET_GCODE_OFFSET), speed override (M220), extruder override (M221), move speed, current XYZ position, and relative extruder "E" position. If NAME is provided it allows one to name the saved state to the given string. If NAME is not provided it defaults to "default".</p>
 <h4 id="restore_gcode_state">RESTORE_GCODE_STATE<a class="headerlink" href="#restore_gcode_state" title="Permanent link">&para;</a></h4>
 <p><code>RESTORE_GCODE_STATE [NAME=&lt;state_name&gt;] [MOVE=1 [MOVE_SPEED=&lt;speed&gt;]]</code>：恢复之前通过 SAVE_GCODE_STATE 保存的状态。如果指定“MOVE=1”，则将发出刀头移动以返回到先前的 XYZ 位置。如果指定了“MOVE_SPEED”，则刀头移动将以给定的速度（以mm/s为单位）执行；否则工具头移动将使用恢复的G-Code速度。</p>
 <h3 id="generic_cartesian">[generic_cartesian]<a class="headerlink" href="#generic_cartesian" title="Permanent link">&para;</a></h3>
@@ -5334,7 +5337,7 @@ section</a> is enabled.</p>
 </ul>
 <p>The <code>Z_OFFSET_APPLY_PROBE</code> command is also extended to support a <code>METHOD=tap</code> parameter. When no METHOD parameter is provided, the <code>Z_OFFSET_APPLY_PROBE</code> command alters the probe calibration to apply the current Z G-Code offset to future <code>scan</code>, <code>rapid_scan</code>, and default probes. If <code>METHOD=tap</code> is specified then the command instead applies the change to <code>tap_z_offset</code> so that future <code>tap</code> probes are updated to use the current Z G-Code offset.</p>
 <h4 id="probe_eddy_current_calibrate">PROBE_EDDY_CURRENT_CALIBRATE<a class="headerlink" href="#probe_eddy_current_calibrate" title="Permanent link">&para;</a></h4>
-<p><code>PROBE_EDDY_CURRENT_CALIBRATE CHIP=&lt;config_name&gt;</code>: This starts a tool that calibrates the sensor resonance frequencies to corresponding Z heights. The tool will take a couple of minutes to complete. After completion, use the SAVE_CONFIG command to store the results in the printer.cfg file.</p>
+<p><code>PROBE_EDDY_CURRENT_CALIBRATE CHIP=&lt;config_name&gt; [MANUAL_METHOD=manual]</code>: This starts a tool that calibrates the sensor resonance frequencies to corresponding Z heights. The tool will take a couple of minutes to complete. After completion, use the SAVE_CONFIG command to store the results in the printer.cfg file.</p>
 <h4 id="probe_eddy_current_tap_calibrate">PROBE_EDDY_CURRENT_TAP_CALIBRATE<a class="headerlink" href="#probe_eddy_current_tap_calibrate" title="Permanent link">&para;</a></h4>
 <p><code>PROBE_EDDY_CURRENT_TAP_CALIBRATE [TAP=guess|refine|verify]</code>: This starts a tool that can calibrate the probe's "tap_threshold" parameter. See the <a href="Eddy_Probe.html#tap-calibration">eddy probe documentation</a> for details.</p>
 <h4 id="ldc_calibrate_drive_current">LDC_CALIBRATE_DRIVE_CURRENT<a class="headerlink" href="#ldc_calibrate_drive_current" title="Permanent link">&para;</a></h4>
@@ -5428,7 +5431,7 @@ section</a> is enabled.</p>
 <h3 id="temperature_probe">[temperature_probe]<a class="headerlink" href="#temperature_probe" title="Permanent link">&para;</a></h3>
 <p>The following commands are available when a <a href="Config_Reference.html#temperature_probe">temperature_probe config section</a> is enabled.</p>
 <h4 id="temperature_probe_calibrate">TEMPERATURE_PROBE_CALIBRATE<a class="headerlink" href="#temperature_probe_calibrate" title="Permanent link">&para;</a></h4>
-<p><code>TEMPERATURE_PROBE_CALIBRATE [PROBE=&lt;probe name&gt;] [TARGET=&lt;value&gt;] [STEP=&lt;value&gt;] [METHOD=&lt;method&gt;]</code>: Initiates probe drift calibration for eddy current based probes. The <code>TARGET</code> is a target temperature for the last sample. When the temperature recorded during a sample exceeds the <code>TARGET</code> calibration will complete. The <code>STEP</code> parameter sets temperature delta (in C) between samples. After a sample has been taken, this delta is used to schedule a call to <code>TEMPERATURE_PROBE_NEXT</code>. The default <code>STEP</code> is 2. The <code>METHOD</code> only supports <code>tap</code> as an option, if specified, probing will be automated.</p>
+<p><code>TEMPERATURE_PROBE_CALIBRATE [PROBE=&lt;probe name&gt;] [TARGET=&lt;value&gt;] [STEP=&lt;value&gt;] [MANUAL_METHOD=&lt;method&gt;]</code>: Initiates probe drift calibration for eddy current based probes. The <code>TARGET</code> is a target temperature for the last sample. When the temperature recorded during a sample exceeds the <code>TARGET</code> calibration will complete. The <code>STEP</code> parameter sets temperature delta (in C) between samples. After a sample has been taken, this delta is used to schedule a call to <code>TEMPERATURE_PROBE_NEXT</code>. The default <code>STEP</code> is 2. The <code>METHOD</code> only supports <code>tap</code> as an option, if specified, probing will be automated.</p>
 <h4 id="temperature_probe_next">TEMPERATURE_PROBE_NEXT<a class="headerlink" href="#temperature_probe_next" title="Permanent link">&para;</a></h4>
 <p><code>TEMPERATURE_PROBE_NEXT</code>: After calibration has started this command is run to take the next sample. It is automatically scheduled to run when the delta specified by <code>STEP</code> has been reached, however its also possible to manually run this command to force a new sample. This command is only available during calibration.</p>
 <h4 id="temperature_probe_complete">TEMPERATURE_PROBE_COMPLETE:<a class="headerlink" href="#temperature_probe_complete" title="Permanent link">&para;</a></h4>

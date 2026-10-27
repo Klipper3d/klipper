@@ -2260,7 +2260,7 @@
 <li><code>speed_factor</code>：通过 <code>M220</code> 命令设置的"速度因子覆盖"。这是一个浮点值，1.0 意味着没有覆盖，例如，2.0 将请求的速度翻倍。</li>
 <li><code>extrude_factor</code>：由<code>M221</code>命令设置的"挤出倍率覆盖" 。这是一个浮点值，1.0意味着没有覆盖，例如，2.0将使要求的挤出量翻倍。</li>
 <li><code>absolute_coordinates</code>：如果在 <code>G90</code> 绝对坐标模式下，则返回 True；如果在 <code>G91</code> 相对模式下，则返回 False。</li>
-<li><code>absolute_extrude</code>：如果在<code>M82</code>绝对挤出模式，则返回True；如果在<code>M83</code>相对模式，则返回False。</li>
+<li><code>absolute_extrude</code>: Returns True if absolute extrusions are permitted. An <code>M83</code> force relative extrusion mode command causes this value to return False. An <code>M82</code> command returns this value to True.</li>
 <li><code>axis_map</code>: Provides a mechanism for finding the coordinate component for a given G-Code id that is used in <code>G1</code> commands. See the <a href="#accessing-coordinates">Accessing Coordinates</a> section for details.</li>
 </ul>
 <h2 id="hall_filament_width_sensor">hall_filament_width_sensor<a class="headerlink" href="#hall_filament_width_sensor" title="Permanent link">&para;</a></h2>
@@ -2337,6 +2337,7 @@
 <li><code>mcu_version</code>：由微控制器报告的 Klipper 代码版本。</li>
 <li><code>mcu_build_versions</code>：有关用于生成微控制器代码的构建工具的信息（由微控制器报告）。</li>
 <li><code>mcu_constants.&lt;常量名&gt;</code>：由微控制器报告编译时使用的常量。可用的常量在不同的微控制器架构和每个代码修订版中可能有所不同。</li>
+<li><code>mcu_kconfig</code>: The minimal build configuration (<code>savedefconfig</code> output) that the micro-controller firmware was compiled from, as reported by the micro-controller. <code>None</code> if the firmware predates this feature or does not provide it.</li>
 <li><code>last_stats.&lt;统计信息名&gt;</code>：关于微控制器连接的统计信息。</li>
 </ul>
 <h2 id="motion_report">motion_report<a class="headerlink" href="#motion_report" title="Permanent link">&para;</a></h2>
@@ -2428,7 +2429,7 @@
 </ul>
 <h2 id="_2">温度传感器<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <p>以下信息可在</p>
-<p><a href="Config_Reference.html#bmp280bme280bme680-temperature-sensor">bme280 config_section_name</a>, <a href="Config_Reference.html#htu21d-sensor">htu21d config_section_name</a>, <a href="Config_Reference.html#sht31-sensor">sht3x config_section_name</a>, <a href="Config_Reference.html#lm75-temperature-sensor">lm75 config_section_name</a>, <a href="Config_Reference.html#host-temperature-sensor">temperature_host config_section_name</a> and <a href="Config_Reference.html#combined-temperature-sensor">temperature_combined config_section_name</a> objects:</p>
+<p><a href="Config_Reference.html#bmp180bmp280bme280bmp388bme680-temperature-sensor">bme280 config_section_name</a>, <a href="Config_Reference.html#htu21d-sensor">htu21d config_section_name</a>, <a href="Config_Reference.html#sht3x-sensor">sht3x config_section_name</a>, <a href="Config_Reference.html#lm75-temperature-sensor">lm75 config_section_name</a>, <a href="Config_Reference.html#host-temperature-sensor">temperature_host config_section_name</a> and <a href="Config_Reference.html#combined-temperature-sensor">temperature_combined config_section_name</a> objects:</p>
 <ul>
 <li><code>temperature</code>：上一次从传感器读取的温度。</li>
 <li><code>humidity</code>, <code>pressure</code>, <code>gas</code>: The last read values from the sensor (only on bme280, htu21d, sht3x and lm75 sensors).</li>

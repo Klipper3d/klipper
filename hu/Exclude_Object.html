@@ -1470,7 +1470,7 @@
 
 <h1 id="objektumok-kizarasa">Objektumok kizárása<a class="headerlink" href="#objektumok-kizarasa" title="Permanent link">&para;</a></h1>
 <p>The <code>[exclude_object]</code> module allows Klipper to exclude objects while a print is in progress. To enable this feature include an <a href="Config_Reference.html#exclude_object">exclude_object config
-section</a> (also see the <a href="G-Codes.html#exclude-object">command
+section</a> (also see the <a href="G-Codes.html#exclude_object">command
 reference</a> and <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> file for a Marlin/RepRapFirmware compatible M486 G-Code macro.)</p>
 <p>Más 3D nyomtatók firmware opcióitól eltérően a Klippert futtató nyomtató komponenscsomagot használ, és a felhasználók számos lehetőség közül választhatnak. Ezért az egységes felhasználói élmény biztosítása érdekében az <code>[exclude_object]</code> modul egyfajta szerződést vagy API-t hoz létre. A szerződés tartalmazza a G-kód fájl tartalmát, a modul belső állapotának vezérlését és azt, hogy ez az állapot hogyan kerül a kliensek rendelkezésre bocsátásra.</p>
 <h2 id="munkafolyamat-attekintese">Munkafolyamat áttekintése<a class="headerlink" href="#munkafolyamat-attekintese" title="Permanent link">&para;</a></h2>
@@ -1491,7 +1491,7 @@ reference</a> and <a href="https://github.com/Klipper3d/klipper/blob/master/conf
 <p>Az <code>EXCLUDE_OBJECT_DEFINE</code> parancsot arra használjuk, hogy a G-kód fájlban lévő minden egyes objektumról összefoglalót adjunk a nyomtatáshoz. A fájlban lévő objektumok összefoglalóját adja meg. Az objektumokat nem kell definiálni ahhoz, hogy más parancsok hivatkozhassanak rájuk. Ennek a parancsnak az elsődleges célja, hogy információt szolgáltasson a felhasználói felületnek anélkül, hogy a teljes G-kód fájlt elemeznie kellene.</p>
 <p>Az objektumdefiníciókat elnevezik, hogy a felhasználók könnyen kiválaszthassák a kizárandó objektumot, és további metaadatokat is megadhatnak a grafikus törlésmegjelenítéshez. A jelenleg definiált metaadatok közé tartozik egy <code>CENTER</code> X,Y koordináta, valamint egy <code>POLYGON</code> X,Y pontok listája, amely az objektum minimális körvonalát ábrázolja. Ez lehet egy egyszerű határoló doboz, vagy egy bonyolult burkolat a nyomtatott objektumok részletesebb megjelenítéséhez. Különösen akkor, ha a G-kód fájlok több, egymást átfedő határoló régiókkal rendelkező alkatrészt tartalmaznak, a középpontok vizuálisan nehezen megkülönböztethetők. <code>POLYGONS</code> pontokból álló json-kompatibilis tömbnek kell lennie <code>[X,Y]</code> szóközök nélkül. A további paraméterek karakterláncokként kerülnek elmentésre az objektumdefinícióban, és állapotfrissítésekben lesznek megadva.</p>
 <p><code>EXCLUDE_OBJECT_DEFINE NAME=calibration_pyramid CENTER=50,50 POLYGON=[[40,40],[50,60],[60,40]]</code></p>
-<p>All available G-Code commands are documented in the <a href="G-Codes.html#excludeobject">G-Code
+<p>All available G-Code commands are documented in the <a href="G-Codes.html#exclude_object">G-Code
 Reference</a></p>
 <h2 id="allapotinformacio">Állapotinformáció<a class="headerlink" href="#allapotinformacio" title="Permanent link">&para;</a></h2>
 <p>The state of this module is provided to clients by the <a href="Status_Reference.html#exclude_object">exclude_object

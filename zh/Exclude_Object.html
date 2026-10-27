@@ -1470,7 +1470,7 @@
 
 <h1 id="_1">排除对象<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
 <p>The <code>[exclude_object]</code> module allows Klipper to exclude objects while a print is in progress. To enable this feature include an <a href="Config_Reference.html#exclude_object">exclude_object config
-section</a> (also see the <a href="G-Codes.html#exclude-object">command
+section</a> (also see the <a href="G-Codes.html#exclude_object">command
 reference</a> and <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> file for a Marlin/RepRapFirmware compatible M486 G-Code macro.)</p>
 <p>与其他3D打印机固件选项不同，运行 Klipper 的打印机提供了一套允许用户选择许多选项的组件。因此，为了提供一致的用户体验，<code>[exclude_object]</code>模块将建立一个标准或类似的API。标准涵盖了g代码文件的内容，模块的内部状态如何被控制，以及该状态如何被提供给用户。</p>
 <h2 id="_2">工作流程概述<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
@@ -1491,7 +1491,7 @@ reference</a> and <a href="https://github.com/Klipper3d/klipper/blob/master/conf
 <p><code>EXCLUDE_OBJECT_DEFINE</code> 命令用于提供gcode文件中每个要打印的对象的摘要。提供文件中一个对象的摘要。对象被其他命令引用时不需要被定义。这个命令的主要目的是向UI提供信息，而不需要解析整个gcode文件。</p>
 <p>对象定义会被命名，以方便用户选择要排除的对象，并且可以提供额外的元数据以允许图形化的显示取消。目前定义的元数据包括一个<code>CENTER</code>（中心）X,Y坐标，以及一个<code>POLYGON</code> X,Y点的列表代表对象的最小轮廓。这可以是一个简单的边界框，也可以是一个复杂的几何体，用于显示打印对象的更详细的可视化信息。特别是当G代码文件包括具有重叠边界区域的多个实体时，中心点在视觉上会变得难以区分。<code>POLYGONS</code> 必须是一个与json兼容的点数组<code>[X,Y]</code> 图元，没有空格。额外的参数将被保存为对象定义中的字符串，并在状态更新中提供。</p>
 <p><code>EXCLUDE_OBJECT_DEFINE NAME=calibration_pyramid CENTER=50,50 POLYGON=[[40,40],[50,60],[60,40]]</code></p>
-<p>All available G-Code commands are documented in the <a href="G-Codes.html#excludeobject">G-Code
+<p>All available G-Code commands are documented in the <a href="G-Codes.html#exclude_object">G-Code
 Reference</a></p>
 <h2 id="_4">状态信息<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <p>The state of this module is provided to clients by the <a href="Status_Reference.html#exclude_object">exclude_object

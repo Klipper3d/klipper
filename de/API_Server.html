@@ -2028,7 +2028,7 @@ gcode:
 }
 </code></pre></div>
 
-<p>Der Endpunkt <code>dump_mesh</code> nimmt einen optionalen Parameter <code>mesh_args</code> entgegen. Dieser Parameter muss ein Objekt sein, dessen Schlüssel und Werte den für <a href="#bed_mesh_calibrate">BED_MESH_CALIBRATE</a> verfügbaren Parametern entsprechen. Damit werden die Mesh-Konfiguration und die Messpunkte anhand der übergebenen Parameter aktualisiert, bevor das Ergebnis zurückgegeben wird. Es empfiehlt sich, Mesh-Parameter wegzulassen, sofern Sie nicht die Messpunkte und/oder den Verfahrweg vor der Ausführung von <code>BED_MESH_CALIBRATE</code> sichtbar machen möchten.</p>
+<p>The <code>dump_mesh</code> endpoint takes one optional parameter, <code>mesh_args</code>. This parameter must be an object, where the keys and values are parameters available to <a href="G-Codes.html#bed_mesh_calibrate">BED_MESH_CALIBRATE</a>. This will update the mesh configuration and probe points using the supplied parameters prior to returning the result. It is recommended to omit mesh parameters unless it is desired to visualize the probe points and/or travel path before performing <code>BED_MESH_CALIBRATE</code>.</p>
 
               
             </article>

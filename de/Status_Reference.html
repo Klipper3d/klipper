@@ -2260,7 +2260,7 @@
 <li><code>speed_factor</code>: Die durch einen <code>M220</code>-Befehl gesetzte "Geschwindigkeitsübersteuerung". Dies ist eine Gleitkommazahl, wobei 1.0 keine Übersteuerung bedeutet und beispielsweise 2.0 die angeforderte Geschwindigkeit verdoppeln würde.</li>
 <li><code>extrude_factor</code>: Die durch einen <code>M221</code>-Befehl gesetzte "Extrusionsübersteuerung". Dies ist eine Gleitkommazahl, wobei 1.0 keine Übersteuerung bedeutet und beispielsweise 2.0 die angeforderte Extrusion verdoppeln würde.</li>
 <li><code>absolute_coordinates</code>: Gibt True zurück, wenn der absolute Koordinatenmodus <code>G90</code> aktiv ist, oder False im relativen Modus <code>G91</code>.</li>
-<li><code>absolute_extrude</code>: Gibt True zurück, wenn der absolute Extrusionsmodus <code>M82</code> aktiv ist, oder False im relativen Modus <code>M83</code>.</li>
+<li><code>absolute_extrude</code>: Returns True if absolute extrusions are permitted. An <code>M83</code> force relative extrusion mode command causes this value to return False. An <code>M82</code> command returns this value to True.</li>
 <li><code>axis_map</code>: Provides a mechanism for finding the coordinate component for a given G-Code id that is used in <code>G1</code> commands. See the <a href="#accessing-coordinates">Accessing Coordinates</a> section for details.</li>
 </ul>
 <h2 id="hall_filament_width_sensor">hall_filament_width_sensor<a class="headerlink" href="#hall_filament_width_sensor" title="Permanent link">&para;</a></h2>
@@ -2337,6 +2337,7 @@
 <li><code>mcu_version</code>: Die vom Mikrocontroller gemeldete Version des Klipper-Codes.</li>
 <li><code>mcu_build_versions</code>: Informationen über die Build-Werkzeuge, mit denen der Mikrocontroller-Code erzeugt wurde (wie vom Mikrocontroller gemeldet).</li>
 <li><code>mcu_constants.&lt;constant_name&gt;</code>: Vom Mikrocontroller gemeldete Kompilierzeit-Konstanten. Die verfügbaren Konstanten können sich zwischen Mikrocontroller-Architekturen und mit jeder Code-Revision unterscheiden.</li>
+<li><code>mcu_kconfig</code>: The minimal build configuration (<code>savedefconfig</code> output) that the micro-controller firmware was compiled from, as reported by the micro-controller. <code>None</code> if the firmware predates this feature or does not provide it.</li>
 <li><code>last_stats.&lt;statistics_name&gt;</code>: Statistikinformationen über die Mikrocontroller Verbindung.</li>
 </ul>
 <h2 id="motion_report">motion_report<a class="headerlink" href="#motion_report" title="Permanent link">&para;</a></h2>
@@ -2428,7 +2429,7 @@
 </ul>
 <h2 id="temperatur-sensoren">Temperatur Sensoren<a class="headerlink" href="#temperatur-sensoren" title="Permanent link">&para;</a></h2>
 <p>Folgende Informationen sind verfügbar in</p>
-<p><a href="Config_Reference.html#bmp280bme280bme680-temperature-sensor">bme280 config_section_name</a>, <a href="Config_Reference.html#htu21d-sensor">htu21d config_section_name</a>, <a href="Config_Reference.html#sht31-sensor">sht3x config_section_name</a>, <a href="Config_Reference.html#lm75-temperature-sensor">lm75 config_section_name</a>, <a href="Config_Reference.html#host-temperature-sensor">temperature_host config_section_name</a> und <a href="Config_Reference.html#combined-temperature-sensor">temperature_combined config_section_name</a> Objekte:</p>
+<p><a href="Config_Reference.html#bmp180bmp280bme280bmp388bme680-temperature-sensor">bme280 config_section_name</a>, <a href="Config_Reference.html#htu21d-sensor">htu21d config_section_name</a>, <a href="Config_Reference.html#sht3x-sensor">sht3x config_section_name</a>, <a href="Config_Reference.html#lm75-temperature-sensor">lm75 config_section_name</a>, <a href="Config_Reference.html#host-temperature-sensor">temperature_host config_section_name</a> and <a href="Config_Reference.html#combined-temperature-sensor">temperature_combined config_section_name</a> objects:</p>
 <ul>
 <li><code>temperature</code>: Die letzte vom Sensor gelesene Temperatur.</li>
 <li><code>humidity</code>, <code>pressure</code>, <code>gas</code>: Die zuletzt vom Sensor gelesenen Werte (nur bei bme280-, htu21d-, sht3x- und lm75-Sensoren).</li>

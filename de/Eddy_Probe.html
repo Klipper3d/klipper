@@ -1407,6 +1407,26 @@
     Fehlerbeschreibung
   </a>
   
+    <nav class="md-nav" aria-label="Fehlerbeschreibung">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mogliche-homing-fehler-und-manahmen" class="md-nav__link">
+    Mögliche Homing-Fehler und Maßnahmen:
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#possible-tap-errors-and-actionables" class="md-nav__link">
+    Possible TAP errors and actionables:
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -1572,6 +1592,26 @@
   <a href="#fehlerbeschreibung" class="md-nav__link">
     Fehlerbeschreibung
   </a>
+  
+    <nav class="md-nav" aria-label="Fehlerbeschreibung">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mogliche-homing-fehler-und-manahmen" class="md-nav__link">
+    Mögliche Homing-Fehler und Maßnahmen:
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#possible-tap-errors-and-actionables" class="md-nav__link">
+    Possible TAP errors and actionables:
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1743,7 +1783,7 @@ z: 3.010 # noise 0.000700mm, MAD_Hz=9.000
 </ul>
 <p>Wie man erkennen kann, ist das oben beschriebene Kalibrierverfahren anspruchsvoller und zeitaufwendiger als die meisten anderen Verfahren. Es kann Übung und mehrere Anläufe erfordern, um eine optimale Kalibrierung zu erreichen.</p>
 <h2 id="fehlerbeschreibung">Fehlerbeschreibung<a class="headerlink" href="#fehlerbeschreibung" title="Permanent link">&para;</a></h2>
-<p>Mögliche Homing-Fehler und Maßnahmen:</p>
+<h3 id="mogliche-homing-fehler-und-manahmen">Mögliche Homing-Fehler und Maßnahmen:<a class="headerlink" href="#mogliche-homing-fehler-und-manahmen" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Sensorfehler<ul>
 <li>Für detaillierte Fehlerinformationen die Logs prüfen</li>
@@ -1785,6 +1825,33 @@ z: 3.010 # noise 0.000700mm, MAD_Hz=9.000
 <p>Bei manchen Sensoren lässt sich der Amplitudenwarnhinweis nicht vollständig vermeiden.</p>
 <p>Sie können versuchen, die <code>LDC_CALIBRATE_DRIVE_CURRENT</code>-Kalibrierung bei Betriebstemperatur zu wiederholen oder <code>reg_drive_current</code> um 1-2 gegenüber dem kalibrierten Wert zu erhöhen.</p>
 <p>Im Allgemeinen ist dies vergleichbar mit einer Motorkontrollleuchte. Es kann auf ein Problem hindeuten.</p>
+<h3 id="possible-tap-errors-and-actionables">Possible TAP errors and actionables:<a class="headerlink" href="#possible-tap-errors-and-actionables" title="Permanent link">&para;</a></h3>
+<ul>
+<li>insufficient lift (A vs B) - too small Z window received by the code<ul>
+<li>LIFT_SPEED/printer.max_z_velocity too low - must be at least 2.5 Recommended &gt;0.5 RPS. For motor cogging reasons.</li>
+<li>printer.max_z_accel too low - must be larger 35 mm/s^2. Recommended 300 mm/s^2.</li>
+<li>SAMPLE_RETRACT_DIST too low Recommended &gt;2 mm.</li>
+</ul>
+</li>
+<li>no contact found at z=Z (slope delta A vs B) - retraction analysis outputs not expected data. Often toolhead has stopped in mid-air because of the measurement noise.<ul>
+<li>Too high printer.max_z_accel - Z resonances, consider Z input shaper</li>
+<li>Mechanical vibrations - ex. toolhead fan</li>
+<li>Sensor noise (elevated chamber/bed temperature)</li>
+<li>Increase of tap_threshold normally allows to alleviate symptoms</li>
+</ul>
+</li>
+<li>invalid depress distance (Z vs A:B)<ul>
+<li>if Z &lt; A
+    - tap_threshold too low
+    - PROBE_SPEED too low
+    - printer.max_z_accel too low</li>
+<li>if Z &gt; B
+    - Large toolhead tilt (mechanical/installation issue)
+    - PROBE_SPEED too high
+    - tap_threshold too high</li>
+</ul>
+</li>
+</ul>
 
               
             </article>

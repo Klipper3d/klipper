@@ -1774,7 +1774,7 @@ baud: 250000
 <p>Klipper 微控制器的波特率與微控制器啟動載入程式的波特率無關。有關啟動載入程式的額外資訊請參閱<a href="Bootloaders.html">啟動載入程式文件</a>。</p>
 <h2 id="raspberry-pi-3-klipper">我可以在 Raspberry Pi 3 以外的其他裝置上執行 Klipper 嗎？<a class="headerlink" href="#raspberry-pi-3-klipper" title="Permanent link">&para;</a></h2>
 <p>The recommended hardware is a Raspberry Pi Zero2w, Raspberry Pi 3, Raspberry Pi 4 or Raspberry Pi 5. Klipper will also run on other SBC devices as well as x86 hardware, as described below.</p>
-<p>Klipper will run on a Raspberry Pi 1, 2 and on the Raspberry Pi Zero1, but these boards don't have enough processing power to run Klipper well. It is common for print stalls to occur on these slower machines when printing (The printer may move faster than Klipper can send movement commands.) It is not reccomended to run Klipper on these older machines.</p>
+<p>Klipper will run on a Raspberry Pi 1, 2 and on the Raspberry Pi Zero1, but these boards don't have enough processing power to run Klipper well. It is common for print stalls to occur on these slower machines when printing (The printer may move faster than Klipper can send movement commands.) It is not recommended to run Klipper on these older machines.</p>
 <p>要在Beaglebone上執行，請參閱<a href="Beaglebone.html">Beaglebone特別安裝說明</a>。</p>
 <p>Klipper 可以在其他計算機上執行。Klipper 主機軟體只需要在Linux（或類似）系統的計算機上執行 Python。然而，如果你想在其他計算機上執行它，你將需要一些 Linux 管理知識來安裝該計算機上系統的依賴包。參見 <a href="https://github.com/Klipper3d/klipper/blob/master/scripts/install-octopi.sh">install-octopi.sh</a> 指令碼，以進一步瞭解必要的 Linux 安裝方法。</p>
 <p>如果你想在低端處理器上執行 Klipper 主機軟體，請注意，你至少需要一臺具有 "雙精度浮點 "運算硬體的計算機。</p>
@@ -1797,7 +1797,7 @@ baud: 250000
 <p>程式碼這樣做是爲了減少意外將頭撞到床或墻壁的機會。 印表機歸位后，軟體會嘗試驗證每個移動是否在配置檔案中定義的 position_min/max 範圍內。 如果電機被禁用（通過 M84 或 M18 命令），那麼電機將需要在運動前再次歸位。</p>
 <p>如果您想在通過 OctoPrint 取消列印后移動列印頭，請考慮更改 OctoPrint 取消順序來為您執行此操作。 它是通過 Web 瀏覽器在 OctoPrint 中配置的：設定-&gt; GCODE 指令碼</p>
 <p>如果您想在列印完成後移動頭部，請考慮將所需的移動新增到切片機的「自定義 g 程式碼」部分。</p>
-<p>如果印表機歸位過程中需要一些額外的移動（或者根本上沒有歸位運動），那麼可以在配置檔案中定義safe_z_home或 homing_override分段。如果你需要為診斷或除錯目的移動一個步進，可以在配置檔案中新增一個 force_move 分段。參見<a href="Config_Reference.html#customized_homing">配置參考</a>以瞭解關於這些選項的詳情。</p>
+<p>If the printer requires some additional movement as part of the homing process itself (or fundamentally does not have a homing process) then consider using a safe_z_home or homing_override section in the config file. If you need to move a stepper for diagnostic or debugging purposes then consider adding a force_move section to the config file. See <a href="Config_Reference.html#customized-homing">config reference</a> for further details on these options.</p>
 <h2 id="z-position_endstop-05">為什麼 Z position_endstop 在預設配置中設定為 0.5？<a class="headerlink" href="#z-position_endstop-05" title="Permanent link">&para;</a></h2>
 <p>對於笛卡爾式印表機，Z position_endstop 定義了當限位觸發時噴嘴離床的距離。如果可能的話，建議使用 Z-max 限位使歸位時列印頭遠離床（因為這可以減少碰撞的發生）。如果必須朝向床歸位，那麼建議將限位固定在噴嘴距離床還有一小段距離時觸發。這樣，當歸位 Z 軸時，噴嘴會在接觸床之前停止。有關詳細資訊，請參閱 <a href="Bed_Level.html">列印床調平文件</a>。</p>
 <h2 id="marlin-xy-z">我從 Marlin 轉換了我的配置並且 X/Y 軸工作正常，但是在歸位 Z 軸時我只聽到刺耳的噪音且印表機不動<a class="headerlink" href="#marlin-xy-z" title="Permanent link">&para;</a></h2>

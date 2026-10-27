@@ -1470,7 +1470,7 @@
 
 <h1 id="objekte-ausschlieen">Objekte ausschließen<a class="headerlink" href="#objekte-ausschlieen" title="Permanent link">&para;</a></h1>
 <p>The <code>[exclude_object]</code> module allows Klipper to exclude objects while a print is in progress. To enable this feature include an <a href="Config_Reference.html#exclude_object">exclude_object config
-section</a> (also see the <a href="G-Codes.html#exclude-object">command
+section</a> (also see the <a href="G-Codes.html#exclude_object">command
 reference</a> and <a href="https://github.com/Klipper3d/klipper/blob/master/config/sample-macros.cfg">sample-macros.cfg</a> file for a Marlin/RepRapFirmware compatible M486 G-Code macro.)</p>
 <p>Im Gegensatz zu anderen 3D-Drucker-Firmware-Optionen verwendet ein Drucker, auf dem Klipper läuft, eine Reihe von Komponenten und die Benutzer haben eine Vielzahl an Optionen zur Auswahl. Um eine konsistente Benutzererfahrung zu bieten, wird das Modul <code>[exclude_object]</code> eine Art Vertrag oder API einrichten. Der Vertrag regelt den Inhalt der gcode-Datei, wie der interne Zustand des Moduls gesteuert wird und wie dieser Zustand den Clients zur Verfügung gestellt wird.</p>
 <h2 id="workflow-ubersicht">Workflow-Übersicht<a class="headerlink" href="#workflow-ubersicht" title="Permanent link">&para;</a></h2>
@@ -1491,7 +1491,7 @@ reference</a> and <a href="https://github.com/Klipper3d/klipper/blob/master/conf
 <p>Der Befehl <code>EXCLUDE_OBJECT_DEFINE</code> dient dazu, eine Zusammenfassung jedes zu druckenden Objekts in der G-Code-Datei bereitzustellen. Er liefert eine Zusammenfassung eines Objekts in der Datei. Objekte müssen nicht definiert werden, um von anderen Befehlen referenziert werden zu können. Der Hauptzweck dieses Befehls besteht darin, der Benutzeroberfläche Informationen bereitzustellen, ohne die gesamte G-Code-Datei parsen zu müssen.</p>
 <p>Objektdefinitionen sind benannt, damit Anwender leicht ein auszuschließendes Objekt auswählen können, und es können zusätzliche Metadaten bereitgestellt werden, um grafische Abbruchanzeigen zu ermöglichen. Aktuell definierte Metadaten umfassen eine <code>CENTER</code>-X,Y-Koordinate sowie eine <code>POLYGON</code>-Liste von X,Y-Punkten, die einen minimalen Umriss des Objekts darstellen. Dies kann eine einfache Bounding-Box sein oder eine komplexere Hülle für detailliertere Visualisierungen der gedruckten Objekte. Besonders wenn G-Code-Dateien mehrere Teile mit überlappenden Begrenzungsbereichen enthalten, werden Mittelpunkte visuell schwer unterscheidbar. <code>POLYGONS</code> muss ein JSON-kompatibles Array von Punkt-Tupeln <code>[X,Y]</code> ohne Leerzeichen sein. Zusätzliche Parameter werden als Strings in der Objektdefinition gespeichert und bei Statusaktualisierungen bereitgestellt.</p>
 <p><code>EXCLUDE_OBJECT_DEFINE NAME=calibration_pyramid CENTER=50,50 POLYGON=[[40,40],[50,60],[60,40]]</code></p>
-<p>All available G-Code commands are documented in the <a href="G-Codes.html#excludeobject">G-Code
+<p>All available G-Code commands are documented in the <a href="G-Codes.html#exclude_object">G-Code
 Reference</a></p>
 <h2 id="statusinformationen">Statusinformationen<a class="headerlink" href="#statusinformationen" title="Permanent link">&para;</a></h2>
 <p>The state of this module is provided to clients by the <a href="Status_Reference.html#exclude_object">exclude_object
