@@ -97,12 +97,12 @@ def call_flashcan(device, binfile):
             "   %s -m pip install pyserial\n\n" % (sys.executable,)
         )
         sys.exit(-1)
-    args = [sys.executable, "lib/canboot/flash_can.py", "-d",
+    args = [sys.executable, "lib/katapult/flashtool.py", "-d",
             device, "-f", binfile]
     sys.stderr.write(" ".join(args) + '\n\n')
     res = subprocess.call(args)
     if res != 0:
-        sys.stderr.write("Error running flash_can.py\n")
+        sys.stderr.write("Error running flashtool.py\n")
         sys.exit(-1)
 
 def flash_canboot(options, binfile):

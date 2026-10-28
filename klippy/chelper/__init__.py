@@ -69,7 +69,7 @@ defs_steppersync = """
     void steppersyncmgr_free(struct steppersyncmgr *ssm);
     struct steppersync *steppersyncmgr_alloc_steppersync(
         struct steppersyncmgr *ssm);
-    int32_t steppersyncmgr_gen_steps(struct steppersyncmgr *ssm
+    struct syncemitter *steppersyncmgr_gen_steps(struct steppersyncmgr *ssm
         , double flush_time, double gen_steps_time, double clear_history_time);
 """
 
@@ -204,7 +204,7 @@ defs_serialqueue = """
     void serialqueue_set_receive_window(struct serialqueue *sq
         , int receive_window);
     void serialqueue_set_clock_est(struct serialqueue *sq, double est_freq
-        , double conv_time, uint64_t conv_clock, uint64_t last_clock);
+        , double conv_time, uint64_t conv_clock);
     void serialqueue_get_stats(struct serialqueue *sq, char *buf, int len);
     int serialqueue_extract_old(struct serialqueue *sq, int sentq
         , struct pull_queue_message *q, int max);

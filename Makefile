@@ -81,7 +81,8 @@ $(OUT)%.o.ctr: $(OUT)%.o
 $(OUT)compile_time_request.o: $(patsubst %.c, $(OUT)src/%.o.ctr,$(src-y)) ./scripts/buildcommands.py
 	@echo "  Building $@"
 	$(Q)cat $(patsubst %.c, $(OUT)src/%.o.ctr,$(src-y)) | tr -s '\0' '\n' > $(OUT)compile_time_request.txt
-	$(Q)$(PYTHON) ./scripts/buildcommands.py -d $(OUT)klipper.dict -t "$(CC);$(AS);$(LD);$(OBJCOPY);$(OBJDUMP);$(STRIP)" $(OUT)compile_time_request.txt $(OUT)compile_time_request.c
+	$(Q)$(PYTHON) lib/kconfiglib/savedefconfig.py --kconfig src/Kconfig --out $(OUT)defconfig
+	$(Q)$(PYTHON) ./scripts/buildcommands.py -d $(OUT)klipper.dict -k $(OUT)defconfig -t "$(CC);$(AS);$(LD);$(OBJCOPY);$(OBJDUMP);$(STRIP)" $(OUT)compile_time_request.txt $(OUT)compile_time_request.c
 	$(Q)$(CC) $(CFLAGS) -c $(OUT)compile_time_request.c -o $@
 
 ################ Auto generation of "board/" include file link

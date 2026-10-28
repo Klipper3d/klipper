@@ -35,8 +35,8 @@ class HybridCoreXYKinematics:
             self.rails[3].setup_itersolve('corexy_stepper_alloc', b'+')
             self.dc_module = idex_modes.DualCarriages(
                     self.printer, [self.rails[0]], [self.rails[3]], axes=[0],
-                    safe_dist=dc_config.getfloat(
-                        'safe_distance', None, minval=0.))
+                    safe_dist=[dc_config.getfloat(
+                        'safe_distance', None, minval=0.)])
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
         # Setup boundary checks
@@ -66,9 +66,10 @@ class HybridCoreXYKinematics:
             rail.set_position(newpos)
         for axis_name in homing_axes:
             axis = "xyz".index(axis_name)
+            rail = None
             if self.dc_module and axis == 0:
                 rail = self.dc_module.get_primary_rail(axis)
-            else:
+            if rail is None:
                 rail = self.rails[axis]
             self.limits[axis] = rail.get_range()
     def clear_homing_state(self, clear_axes):

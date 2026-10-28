@@ -51,34 +51,34 @@ class QuadGantryLevel:
         self.z_status.reset()
         self.retry_helper.start(gcmd)
         self.probe_helper.start_probe(gcmd)
-    def probe_finalize(self, offsets, positions):
+    def probe_finalize(self, positions):
         # Mirror our perspective so the adjustments make sense
         # from the perspective of the gantry
-        z_positions = [self.horizontal_move_z - p[2] for p in positions]
+        z_positions = [self.horizontal_move_z - p.bed_z for p in positions]
         points_message = "Gantry-relative probe points:\n%s\n" % (
             " ".join(["%s: %.6f" % (z_id, z_positions[z_id])
                 for z_id in range(len(z_positions))]))
         self.gcode.respond_info(points_message)
         # Calculate slope along X axis between probe point 0 and 3
-        ppx0 = [positions[0][0] + offsets[0], z_positions[0]]
-        ppx3 = [positions[3][0] + offsets[0], z_positions[3]]
+        ppx0 = [positions[0].bed_x, z_positions[0]]
+        ppx3 = [positions[3].bed_x, z_positions[3]]
         slope_x_pp03 = self.linefit(ppx0, ppx3)
         # Calculate slope along X axis between probe point 1 and 2
-        ppx1 = [positions[1][0] + offsets[0], z_positions[1]]
-        ppx2 = [positions[2][0] + offsets[0], z_positions[2]]
+        ppx1 = [positions[1].bed_x, z_positions[1]]
+        ppx2 = [positions[2].bed_x, z_positions[2]]
         slope_x_pp12 = self.linefit(ppx1, ppx2)
         logging.info("quad_gantry_level f1: %s, f2: %s"
                      % (slope_x_pp03, slope_x_pp12))
         # Calculate gantry slope along Y axis between stepper 0 and 1
-        a1 = [positions[0][1] + offsets[1],
+        a1 = [positions[0].bed_y,
               self.plot(slope_x_pp03, self.gantry_corners[0][0])]
-        a2 = [positions[1][1] + offsets[1],
+        a2 = [positions[1].bed_y,
               self.plot(slope_x_pp12, self.gantry_corners[0][0])]
         slope_y_s01 = self.linefit(a1, a2)
         # Calculate gantry slope along Y axis between stepper 2 and 3
-        b1 = [positions[0][1] + offsets[1],
+        b1 = [positions[0].bed_y,
               self.plot(slope_x_pp03, self.gantry_corners[1][0])]
-        b2 = [positions[1][1] + offsets[1],
+        b2 = [positions[1].bed_y,
               self.plot(slope_x_pp12, self.gantry_corners[1][0])]
         slope_y_s23 = self.linefit(b1, b2)
         logging.info("quad_gantry_level af: %s, bf: %s"

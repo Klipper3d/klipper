@@ -26,7 +26,7 @@ class GCodeMove:
                                desc=self.cmd_GET_POSITION_help)
         self.Coord = gcode.Coord
         # G-Code coordinate manipulation
-        self.absolute_coord = self.absolute_extrude = True
+        self.absolute_coord = self.allow_absolute_extrude = True
         self.base_position = [0.0, 0.0, 0.0, 0.0]
         self.last_position = [0.0, 0.0, 0.0, 0.0]
         self.homing_position = [0.0, 0.0, 0.0, 0.0]
@@ -68,7 +68,7 @@ class GCodeMove:
         logging.info("gcode state: absolute_coord=%s absolute_extrude=%s"
                      " base_position=%s last_position=%s homing_position=%s"
                      " speed_factor=%s extrude_factor=%s speed=%s",
-                     self.absolute_coord, self.absolute_extrude,
+                     self.absolute_coord, self.allow_absolute_extrude,
                      self.base_position, self.last_position,
                      self.homing_position, self.speed_factor,
                      self.extrude_factor, self.speed)
@@ -94,7 +94,7 @@ class GCodeMove:
     def _get_gcode_position(self):
         p = [lp - bp for lp, bp in zip(self.last_position, self.base_position)]
         p[3] /= self.extrude_factor
-        return p[:4]
+        return p
     def _get_gcode_speed(self):
         return self.speed / self.speed_factor
     def _get_gcode_speed_override(self):
@@ -106,7 +106,7 @@ class GCodeMove:
             'speed': self._get_gcode_speed(),
             'extrude_factor': self.extrude_factor,
             'absolute_coordinates': self.absolute_coord,
-            'absolute_extrude': self.absolute_extrude,
+            'absolute_extrude': self.allow_absolute_extrude,
             'homing_origin': self.Coord(self.homing_position),
             'position': self.Coord(self.last_position),
             'gcode_position': self.Coord(move_position),
@@ -141,7 +141,7 @@ class GCodeMove:
                     absolute_coord = self.absolute_coord
                     if axis == 'E':
                         v *= self.extrude_factor
-                        if not self.absolute_extrude:
+                        if not self.allow_absolute_extrude:
                             absolute_coord = False
                     if not absolute_coord:
                         # value relative to position of last move
@@ -167,11 +167,11 @@ class GCodeMove:
         # Set units to millimeters
         pass
     def cmd_M82(self, gcmd):
-        # Use absolute distances for extrusion
-        self.absolute_extrude = True
+        # Don't force relative distances for extrusion
+        self.allow_absolute_extrude = True
     def cmd_M83(self, gcmd):
-        # Use relative distances for extrusion
-        self.absolute_extrude = False
+        # Force relative distances for extrusion
+        self.allow_absolute_extrude = False
     def cmd_G90(self, gcmd):
         # Use absolute coordinates
         self.absolute_coord = True
@@ -191,7 +191,7 @@ class GCodeMove:
     def cmd_M114(self, gcmd):
         # Get Current Position
         p = self._get_gcode_position()
-        gcmd.respond_raw("X:%.3f Y:%.3f Z:%.3f E:%.3f" % tuple(p))
+        gcmd.respond_raw("X:%.3f Y:%.3f Z:%.3f E:%.3f" % tuple(p[:4]))
     def cmd_M220(self, gcmd):
         # Set speed factor override percentage
         value = gcmd.get_float('S', 100., above=0.) / (60. * 100.)
@@ -229,7 +229,7 @@ class GCodeMove:
         state_name = gcmd.get('NAME', 'default')
         self.saved_states[state_name] = {
             'absolute_coord': self.absolute_coord,
-            'absolute_extrude': self.absolute_extrude,
+            'allow_absolute_extrude': self.allow_absolute_extrude,
             'base_position': list(self.base_position),
             'last_position': list(self.last_position),
             'homing_position': list(self.homing_position),
@@ -244,7 +244,7 @@ class GCodeMove:
             raise gcmd.error("Unknown g-code state: %s" % (state_name,))
         # Restore state
         self.absolute_coord = state['absolute_coord']
-        self.absolute_extrude = state['absolute_extrude']
+        self.allow_absolute_extrude = state['allow_absolute_extrude']
         self.base_position[:4] = state['base_position'][:4]
         self.homing_position = list(state['homing_position'])
         self.speed = state['speed']

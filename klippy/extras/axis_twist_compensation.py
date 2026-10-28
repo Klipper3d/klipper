@@ -13,6 +13,8 @@ DEFAULT_SPEED = 50.
 DEFAULT_HORIZONTAL_MOVE_Z = 5.
 
 
+# All positions stored as attributes of AxisTwistCompensation are bed
+# coordinates.
 class AxisTwistCompensation:
     def __init__(self, config):
         # get printer
@@ -51,20 +53,27 @@ class AxisTwistCompensation:
         self.printer.register_event_handler("probe:update_results",
                                             self._update_z_compensation_value)
 
-    def _update_z_compensation_value(self, pos):
-        if self.z_compensations:
-            pos[2] += self._get_interpolated_z_compensation(
-                pos[0], self.z_compensations,
-                self.compensation_start_x,
-                self.compensation_end_x
-                )
+    def _update_z_compensation_value(self, poslist):
+        for i in range(len(poslist)):
+            pos = poslist[i]
+            zo = 0.
+            if self.z_compensations:
+                zo += self._get_interpolated_z_compensation(
+                    pos.bed_x, self.z_compensations,
+                    self.compensation_start_x,
+                    self.compensation_end_x
+                    )
 
-        if self.zy_compensations:
-            pos[2] += self._get_interpolated_z_compensation(
-                pos[1], self.zy_compensations,
-                self.compensation_start_y,
-                self.compensation_end_y
-                )
+            if self.zy_compensations:
+                zo += self._get_interpolated_z_compensation(
+                    pos.bed_y, self.zy_compensations,
+                    self.compensation_start_y,
+                    self.compensation_end_y
+                    )
+
+            pos = manual_probe.ProbeResult(pos.bed_x, pos.bed_y, pos.bed_z + zo,
+                                           pos.test_x, pos.test_y, pos.test_z)
+            poslist[i] = pos
 
     def _get_interpolated_z_compensation(
             self, coord, z_compensations,
@@ -93,6 +102,9 @@ class AxisTwistCompensation:
         elif axis == 'Y':
             self.zy_compensations = []
 
+
+# All positions stored as attributes of Calibrater are bed
+# coordinates too.
 class Calibrater:
     def __init__(self, compensation, config):
         # setup self attributes
@@ -101,8 +113,7 @@ class Calibrater:
         self.gcode = self.printer.lookup_object('gcode')
         self.probe = None
         # probe settings are set to none, until they are available
-        self.lift_speed, self.probe_x_offset, self.probe_y_offset, _ = \
-            None, None, None, None
+        self.lift_speed = None
         self.printer.register_event_handler("klippy:connect",
                                             self._handle_connect)
         self.speed = compensation.speed
@@ -129,8 +140,6 @@ class Calibrater:
             raise self.printer.config_error(
                 "AXIS_TWIST_COMPENSATION requires [probe] to be defined")
         self.lift_speed = self.probe.get_probe_params()['lift_speed']
-        self.probe_x_offset, self.probe_y_offset, _ = \
-            self.probe.get_offsets()
 
     def _register_gcode_handlers(self):
         # register gcode handlers
@@ -148,6 +157,7 @@ class Calibrater:
 
     def cmd_AXIS_TWIST_COMPENSATION_CALIBRATE(self, gcmd):
         self.gcmd = gcmd
+        probe_x_offset, probe_y_offset, _ = self.probe.get_offsets(gcmd)
         sample_count = gcmd.get_int('SAMPLE_COUNT', DEFAULT_SAMPLE_COUNT)
         axis = gcmd.get('AXIS', 'X')
 
@@ -156,18 +166,18 @@ class Calibrater:
             raise self.gcmd.error(
                 "SAMPLE_COUNT to probe must be at least 2")
 
-        # calculate the points to put the probe at, returned as a list of tuples
-        nozzle_points = []
+        # calculate the points we want to measure, returned as a list of tuples
+        bed_points = []
 
         if axis == 'X':
 
             self.compensation.clear_compensations('X')
-
-            if not all([
-                self.x_start_point[0],
-                self.x_end_point[0],
-                self.x_start_point[1]
-                ]):
+            check_points = [
+                    self.x_start_point[0],
+                    self.x_end_point[0],
+                    self.x_start_point[1]
+                    ]
+            if any(p is None for p in check_points):
                 raise self.gcmd.error(
                     """AXIS_TWIST_COMPENSATION for X axis requires
                     calibrate_start_x, calibrate_end_x and calibrate_y
@@ -184,17 +194,18 @@ class Calibrater:
             for i in range(sample_count):
                 x = start_point[0] + i * interval_dist
                 y = start_point[1]
-                nozzle_points.append((x, y))
+                bed_points.append((x, y))
 
         elif axis == 'Y':
 
             self.compensation.clear_compensations('Y')
+            check_points = [
+                    self.y_start_point[0],
+                    self.y_end_point[0],
+                    self.y_start_point[1]
+                    ]
 
-            if not all([
-                self.y_start_point[0],
-                self.y_end_point[0],
-                self.y_start_point[1]
-                ]):
+            if any(p is None for p in check_points):
                 raise self.gcmd.error(
                     """AXIS_TWIST_COMPENSATION for Y axis requires
                     calibrate_start_y, calibrate_end_y and calibrate_x
@@ -211,15 +222,15 @@ class Calibrater:
             for i in range(sample_count):
                 x = start_point[0]
                 y = start_point[1] + i * interval_dist
-                nozzle_points.append((x, y))
+                bed_points.append((x, y))
 
         else:
             raise self.gcmd.error(
                 "AXIS_TWIST_COMPENSATION_CALIBRATE: "
                 "Invalid axis.")
 
-        probe_points = self._calculate_probe_points(
-            nozzle_points, self.probe_x_offset, self.probe_y_offset)
+        test_points = self._calculate_test_points(
+            bed_points, probe_x_offset, probe_y_offset)
 
         # verify no other manual probe is in progress
         manual_probe.verify_no_manual_probe(self.printer)
@@ -228,18 +239,18 @@ class Calibrater:
         self.current_point_index = 0
         self.results = []
         self.current_axis = axis
-        self._calibration(probe_points, nozzle_points, interval_dist)
+        self._calibration(test_points, bed_points, interval_dist)
 
-    def _calculate_probe_points(self, nozzle_points,
-        probe_x_offset, probe_y_offset):
-        # calculate the points to put the nozzle at
-        # returned as a list of tuples
-        probe_points = []
-        for point in nozzle_points:
+    def _calculate_test_points(self, bed_points,
+                               probe_x_offset, probe_y_offset):
+        # calculate the points to move to, so that the probe is aligned with the
+        # bed points, returned as a list of tuples
+        test_points = []
+        for point in bed_points:
             x = point[0] - probe_x_offset
             y = point[1] - probe_y_offset
-            probe_points.append((x, y))
-        return probe_points
+            test_points.append((x, y))
+        return test_points
 
     def _move_helper(self, target_coordinates, override_speed=None):
         # pad target coordinates
@@ -251,49 +262,49 @@ class Calibrater:
         speed = override_speed if override_speed is not None else speed
         toolhead.manual_move(target_coordinates, speed)
 
-    def _calibration(self, probe_points, nozzle_points, interval):
+    def _calibration(self, test_points, bed_points, interval):
         # begin the calibration process
         self.gcmd.respond_info("AXIS_TWIST_COMPENSATION_CALIBRATE: "
                                "Probing point %d of %d" % (
                                    self.current_point_index + 1,
-                                   len(probe_points)))
+                                   len(test_points)))
 
         # horizontal_move_z (to prevent probe trigger or hitting bed)
         self._move_helper((None, None, self.horizontal_move_z))
 
         # move to point to probe
-        self._move_helper((probe_points[self.current_point_index][0],
-                           probe_points[self.current_point_index][1], None))
+        self._move_helper((test_points[self.current_point_index][0],
+                           test_points[self.current_point_index][1], None))
 
         # probe the point
         pos = probe.run_single_probe(self.probe, self.gcmd)
-        self.current_measured_z = pos[2]
+        self.current_measured_z = pos.bed_z
 
         # horizontal_move_z (to prevent probe trigger or hitting bed)
         self._move_helper((None, None, self.horizontal_move_z))
 
-        # move the nozzle over the probe point
-        self._move_helper((nozzle_points[self.current_point_index]))
+        # move the nozzle over the position that was just probed
+        self._move_helper((bed_points[self.current_point_index]))
 
         # start the manual (nozzle) probe
         manual_probe.ManualProbeHelper(
             self.printer, self.gcmd,
             self._manual_probe_callback_factory(
-                probe_points, nozzle_points, interval))
+                test_points, bed_points, interval))
 
-    def _manual_probe_callback_factory(self, probe_points,
-        nozzle_points, interval):
+    def _manual_probe_callback_factory(self, test_points,
+        bed_points, interval):
         # returns a callback function for the manual probe
-        is_end = self.current_point_index == len(probe_points) - 1
+        is_end = self.current_point_index == len(test_points) - 1
 
-        def callback(kin_pos):
-            if kin_pos is None:
+        def callback(mpresult):
+            if mpresult is None:
                 # probe was cancelled
                 self.gcmd.respond_info(
                     "AXIS_TWIST_COMPENSATION_CALIBRATE: Probe cancelled, "
                     "calibration aborted")
                 return
-            z_offset = self.current_measured_z - kin_pos[2]
+            z_offset = self.current_measured_z - mpresult.bed_z
             self.results.append(z_offset)
             if is_end:
                 # end of calibration
@@ -301,7 +312,7 @@ class Calibrater:
             else:
                 # move to next point
                 self.current_point_index += 1
-                self._calibration(probe_points, nozzle_points, interval)
+                self._calibration(test_points, bed_points, interval)
         return callback
 
     def _finalize_calibration(self):

@@ -3,7 +3,7 @@
 The `[exclude_object]` module allows Klipper to exclude objects while a print is
 in progress. To enable this feature include an [exclude_object config
 section](Config_Reference.md#exclude_object) (also see the [command
-reference](G-Codes.md#exclude-object) and
+reference](G-Codes.md#exclude_object) and
 [sample-macros.cfg](../config/sample-macros.cfg) file for a
 Marlin/RepRapFirmware compatible M486 G-Code macro.)
 
@@ -69,7 +69,7 @@ saved as strings in the object definition and provided in status updates.
 POLYGON=[[40,40],[50,60],[60,40]]`
 
 All available G-Code commands are documented in the [G-Code
-Reference](./G-Codes.md#excludeobject)
+Reference](./G-Codes.md#exclude_object)
 
 ## Status Information
 The state of this module is provided to clients by the [exclude_object

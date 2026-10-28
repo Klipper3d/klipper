@@ -16,10 +16,9 @@ class MCU_queued_pwm:
         self._max_duration = 2.
         self._oid = mcu.create_oid()
         printer = mcu.get_printer()
-        sname = config.get_name().split()[-1]
         self._motion_queuing = printer.load_object(config, 'motion_queuing')
         self._syncemitter = self._motion_queuing.allocate_syncemitter(
-            mcu, sname, alloc_stepcompress=False)
+            mcu, config.get_name(), alloc_stepcompress=False)
         ffi_main, ffi_lib = chelper.get_ffi()
         self._syncemitter_queue_msg = ffi_lib.syncemitter_queue_msg
         mcu.register_config_callback(self._build_config)
@@ -117,18 +116,23 @@ class MCU_queued_pwm:
         wake_print_time = self._mcu.clock_to_print_time(wakeclock)
         self._motion_queuing.note_mcu_movequeue_activity(wake_print_time,
                                                          is_step_gen=False)
+    def _gen_intermediate_updates(self, clock):
+        if self._last_value == self._default_value:
+            return
+        while clock >= self._last_clock + self._duration_ticks:
+            self._send_update(self._last_clock + self._duration_ticks,
+                              self._last_value)
     def set_pwm(self, print_time, value):
         clock = self._mcu.print_time_to_clock(print_time)
         if self._invert:
             value = 1. - value
         v = int(max(0., min(1., value)) * self._pwm_max + 0.5)
+        if self._duration_ticks:
+            self._gen_intermediate_updates(clock - 1)
         self._send_update(clock, v)
     def _flush_notification(self, must_flush_time, max_step_gen_time):
         clock = self._mcu.print_time_to_clock(must_flush_time)
-        if self._last_value != self._default_value:
-            while clock >= self._last_clock + self._duration_ticks:
-                self._send_update(self._last_clock + self._duration_ticks,
-                                  self._last_value)
+        self._gen_intermediate_updates(clock)
 
 class PrinterOutputPin:
     def __init__(self, config):

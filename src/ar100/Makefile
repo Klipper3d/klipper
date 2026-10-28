@@ -1,7 +1,7 @@
 CROSS_PREFIX=or1k-elf-
 dirs-y += src/generic src/ar100 lib/ar100
 
-CFLAGS		+= -O3
+CFLAGS		+= -O2
 CFLAGS		+= -fno-builtin
 CFLAGS		+= -fno-pie
 CFLAGS		+= -ffreestanding
@@ -17,7 +17,7 @@ SFLAGS		+= -Ilib/ar100
 # Add source files
 src-y += ar100/main.c ar100/gpio.c ar100/serial.c
 src-y += ar100/util.c ar100/timer.c
-src-y += generic/crc16_ccitt.c generic/timer_irq.c
+src-y += generic/crc16_ccitt.c generic/timer_irq.c generic/serial_irq.c
 
 OBJS_klipper.elf += $(OUT)lib/ar100/start.o
 OBJS_klipper.elf += $(OUT)lib/ar100/runtime.o

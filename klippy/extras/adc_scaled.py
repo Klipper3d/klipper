@@ -19,15 +19,16 @@ class MCU_scaled_adc:
         self._callback = None
         self.setup_adc_sample = self._mcu_adc.setup_adc_sample
         self.get_mcu = self._mcu_adc.get_mcu
-    def _handle_callback(self, read_time, read_value):
+    def _handle_callback(self, samples):
         max_adc = self._main.last_vref[1]
         min_adc = self._main.last_vssa[1]
-        scaled_val = (read_value - min_adc) / (max_adc - min_adc)
-        self._last_state = (scaled_val, read_time)
-        self._callback(read_time, scaled_val)
-    def setup_adc_callback(self, report_time, callback):
+        adjsamples = [(t, (read_value - min_adc) / (max_adc - min_adc))
+                      for t, read_value in samples]
+        self._last_state = adjsamples[-1]
+        self._callback(adjsamples)
+    def setup_adc_callback(self, callback):
         self._callback = callback
-        self._mcu_adc.setup_adc_callback(report_time, self._handle_callback)
+        self._mcu_adc.setup_adc_callback(self._handle_callback)
     def get_last_value(self):
         return self._last_state
 
@@ -52,8 +53,8 @@ class PrinterADCScaled:
         pin_name = config.get(name + '_pin')
         ppins = self.printer.lookup_object('pins')
         mcu_adc = ppins.setup_pin('adc', pin_name)
-        mcu_adc.setup_adc_callback(REPORT_TIME, callback)
-        mcu_adc.setup_adc_sample(SAMPLE_TIME, SAMPLE_COUNT)
+        mcu_adc.setup_adc_callback(callback)
+        mcu_adc.setup_adc_sample(REPORT_TIME, SAMPLE_TIME, SAMPLE_COUNT)
         query_adc = config.get_printer().load_object(config, 'query_adc')
         query_adc.register_adc(self.name + ":" + name, mcu_adc)
         return mcu_adc
@@ -68,9 +69,11 @@ class PrinterADCScaled:
         adj_time = min(time_diff * self.inv_smooth_time, 1.)
         smoothed_value = last_value + value_diff * adj_time
         return (read_time, smoothed_value)
-    def vref_callback(self, read_time, read_value):
+    def vref_callback(self, samples):
+        read_time, read_value = samples[-1]
         self.last_vref = self.calc_smooth(read_time, read_value, self.last_vref)
-    def vssa_callback(self, read_time, read_value):
+    def vssa_callback(self, samples):
+        read_time, read_value = samples[-1]
         self.last_vssa = self.calc_smooth(read_time, read_value, self.last_vssa)
 
 def load_config_prefix(config):

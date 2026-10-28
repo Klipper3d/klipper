@@ -46,7 +46,10 @@ class QueueListener(logging.handlers.TimedRotatingFileHandler):
     def clear_rollover_info(self):
         self.rollover_info.clear()
     def doRollover(self):
+        before = self.rolloverAt
         logging.handlers.TimedRotatingFileHandler.doRollover(self)
+        if self.rolloverAt <= before:
+            return
         lines = [self.rollover_info[name]
                  for name in sorted(self.rollover_info)]
         lines.append(
@@ -59,6 +62,12 @@ MainQueueHandler = None
 
 def setup_bg_logging(filename, debuglevel):
     global MainQueueHandler
+    logging._srcfile = None             # filename, funcName, lineno, module
+    logging.logThreads = False          # thread, threadName
+    logging.logProcesses = False        # process
+    logging.logMultiprocessing = False  # processName
+    if hasattr(logging, "logAsyncioTasks"):
+        logging.logAsyncioTasks = False # taskName, python 3.12+
     ql = QueueListener(filename)
     MainQueueHandler = QueueHandler(ql.bg_queue)
     root = logging.getLogger()

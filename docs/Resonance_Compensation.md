@@ -480,18 +480,30 @@ with the exception of MZV, and one can find more in-depth overview in
 the articles describing the corresponding shapers.
 
 MZV stands for a Modified-ZV input shaper. The classic definition of ZV shaper
-assumes the duration Ts equal to 1/2 of the damped period of oscillations Td and
-has two pulses. However, ZV input shaper has a generalized form for an arbitrary
-duration in the range (0, Td] with three pulses (Specified-Duration ZV, see also
-SNA-ZV), with a negative middle pulse if Ts < Td and a positive one if Ts > Td.
-The MZV shaper was designed as an intermediate shaper between ZV and ZVD,
+assumes two pulses and the total duration `t` equal to 1/2 of the damped period
+of oscillations `Td`. However, it is possible to construct a generalized form
+of ZV input shaper with `n >= 3` pulses and an arbitrary total duration
+`t >= 0.5 * Td` (with the maximum of `t` depending on `n` value), see for
+instance SNA-ZV and MIS-ZV input shapers, which can be seen as special cases
+of a more generalized implementation of MZV input shaper in Klipper.
+The default MZV parameters in Klipper are `n=3`, `t=0.75` (of `Td`), and this
+shaper was designed to serve as an intermediate shaper between ZV and ZVD,
 offering better vibrations suppression than ZV when the determined (measured)
 shaper parameters deviate from the ones actually required by the printer,
-and smaller smoothing than ZVD. Effectively, it is a SD-ZV shaper with the
-specific duration Ts = 3/4 Td, exactly between ZV (Ts = 1/2 Td) and
-ZVD (Ts = Td), and it happens to work well for many real-life 3D printers.
+and smaller smoothing than ZVD. Effectively, its specific duration `t=0.75`,
+exactly between ZV (with `t=0.5` of `Td`) and ZVD (`t=1` of `Td`), and it
+happens to work well for many real-life 3D printers. However, experienced
+users can modify the default parameters of the MZV input shaper and try other
+variations that may work better for their specific printers (with these
+non-default variations specified as, e.g. `mzv(n=3,t=0.8)` or `mzv(n=5,t=1.1)`
+in the `[input_shaper]` section or as a parameter to `SET_INPUT_SHAPER` command,
+as well as in a parameter to `~/klipper/scripts/calibrate_shaper.py` script,
+e.g. as `--shapers='2hump_ei,3hump_ei,mzv(n=6,t=1.0)'`. These custom parameters
+of the shapers are supported by `~/klipper/scripts/graph_shaper.py` scripts via
+e.g. `--shaper='mzv(n=3,t=0.6666666666)'` parameter.
 
-The table below shows some (usually approximate) parameters of each shaper.
+The table below shows some (usually approximate) parameters of each shaper with
+their default parameters.
 
 | Input <br> shaper | Shaper <br> duration | Vibration reduction 20x <br> (5% vibration tolerance) | Vibration reduction 10x <br> (10% vibration tolerance) |
 |:--:|:--:|:--:|:--:|
@@ -508,11 +520,14 @@ configured more precisely and it will then reduce the resonances in a bit wider
 range of frequencies. However, the damping ratio is usually unknown and is hard
 to estimate without a special equipment, so Klipper uses 0.1 value by default,
 which is a good all-round value. The frequency ranges in the table cover a
-number of different possible damping ratios around that value (approx. from 0.05
-to 0.2).
+number of different possible damping ratios around that value (approx. from 0.075
+to 0.15).
 
 Also note that EI, 2HUMP_EI, and 3HUMP_EI are tuned to reduce vibrations to 5%,
 so the values for 10% vibration tolerance are provided only for the reference.
+However, a user can force a desired vibration tolerance for EI input shaper in
+a manner similar to MZV input shaper as, e.g. `ei(v_tol=0.02)` or
+`ei(v_tol=0.1)`, in which case the vibration reduction range will be different.
 
 **How to use this table:**
 

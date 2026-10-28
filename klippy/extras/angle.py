@@ -10,7 +10,7 @@ MIN_MSG_TIME = 0.100
 TCODE_ERROR = 0xff
 
 TRINAMIC_DRIVERS = ["tmc2130", "tmc2208", "tmc2209", "tmc2240", "tmc2660",
-    "tmc5160"]
+    "tmc5160", "tmc5262"]
 
 CALIBRATION_BITS = 6 # 64 entries
 ANGLE_BITS = 16 # angles range from 0..65535
@@ -595,7 +595,7 @@ class HelperMT6826S:
             gcmd.respond_info("AUTOCAL_FREQ = %i" % (val >> 4 & 0x7))
         elif reg == 0x113:
             val = self._read_reg(reg)
-            gcmd.respond_info("Status: %s" % (self.cal_status[val >> 6]))
+            gcmd.respond_info("Status: %s" % (self.status_map[val >> 6]))
         else:
             val = self._read_reg(reg)
             gcmd.respond_info("REG[0x%04x] = 0x%02x" % (reg, val))

@@ -32,6 +32,7 @@ class PrinterMotionQueuing:
         self.steppersyncmgr = ffi_main.gc(ffi_lib.steppersyncmgr_alloc(),
                                           ffi_lib.steppersyncmgr_free)
         self.syncemitters = []
+        self.syncemitter_to_name = {}
         self.steppersyncs = []
         self.steppersyncmgr_gen_steps = ffi_lib.steppersyncmgr_gen_steps
         # History expiration
@@ -80,10 +81,13 @@ class PrinterMotionQueuing:
         self.steppersyncs.append((mcu, ss))
         return ss
     def allocate_syncemitter(self, mcu, name, alloc_stepcompress=True):
-        name = name.encode("utf-8")[:15]
+        sname = name.split()[-1]
+        thread_name = sname.encode("utf-8")[:15]
         ss = self._lookup_steppersync(mcu)
         ffi_main, ffi_lib = chelper.get_ffi()
-        se = ffi_lib.steppersync_alloc_syncemitter(ss, name, alloc_stepcompress)
+        se = ffi_lib.steppersync_alloc_syncemitter(ss, thread_name,
+                                                   alloc_stepcompress)
+        self.syncemitter_to_name[se] = name
         self.syncemitters.append(se)
         return se
     def setup_mcu_movequeue(self, mcu, serialqueue, move_count):
@@ -153,7 +157,16 @@ class PrinterMotionQueuing:
         ret = self.steppersyncmgr_gen_steps(self.steppersyncmgr, flush_time,
                                             step_gen_time, clear_history_time)
         if ret:
-            raise self.mcu.error("Internal error in stepcompress")
+            msg = "Internal error in stepcompress"
+            queue_name = self.syncemitter_to_name.get(ret)
+            err_details = {
+                "queue_name": queue_name,
+                "flush_time": flush_time, "step_gen_time": step_gen_time,
+                "last_flush_time": self.last_flush_time,
+                "last_step_gen_time": self.last_step_gen_time,
+                "clear_history_time": clear_history_time }
+            self.printer.invoke_shutdown(msg, err_details)
+            raise self.mcu.error(msg)
         self.last_flush_time = flush_time
         self.last_step_gen_time = step_gen_time
         # Move processed trapq entries to history list, and expire old history

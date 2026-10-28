@@ -58,7 +58,7 @@
 
 struct command_encoder {
     uint16_t encoded_msgid;
-    uint8_t max_size, num_params;
+    uint8_t max_size, min_size, num_params;
     const uint8_t *param_types;
 };
 struct command_parser {
@@ -77,8 +77,9 @@ void *command_decode_ptr(uint32_t v);
 uint_fast16_t command_parse_msgid(uint8_t **pp);
 uint8_t *command_parsef(uint8_t *p, uint8_t *maxend
                         , const struct command_parser *cp, uint32_t *args);
-uint_fast8_t command_encode_and_frame(
-    uint8_t *buf, const struct command_encoder *ce, va_list args);
+uint_fast8_t command_encode_and_frame(uint8_t *buf, uint_fast8_t bus_size
+                                      , const struct command_encoder *ce
+                                      , va_list args);
 void command_sendf(const struct command_encoder *ce, ...);
 int_fast8_t command_find_block(uint8_t *buf, uint_fast8_t buf_len
                                , uint_fast8_t *pop_count);

@@ -86,15 +86,15 @@ spi_setup(uint32_t bus, uint8_t mode, uint32_t rate)
 
     struct spi_config res = {spi_bus[bus].spi, 0, 0};
 
-    uint8_t prescale;
+    uint32_t prescale;
     for (prescale = 2; prescale <= 254; prescale += 2) {
-        if (pclk < (prescale + 2) * 256 * rate)
+        if ((prescale + 2) * 256 * rate > pclk)
             break;
     }
 
-    uint8_t postdiv;
+    uint32_t postdiv;
     for (postdiv = 255; postdiv > 0; --postdiv) {
-        if ((pclk / (prescale * postdiv)) > rate)
+        if (prescale * postdiv * rate < pclk)
             break;
     }
 

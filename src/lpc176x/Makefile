@@ -4,8 +4,11 @@
 CROSS_PREFIX=arm-none-eabi-
 
 dirs-y += src/lpc176x src/generic lib/lpc176x/device
-
-CFLAGS += -mthumb -mcpu=cortex-m3 -Ilib/lpc176x/device -Ilib/cmsis-core
+dirs-$(CONFIG_CANSERIAL) += lib/fast-hash
+dirs-$(CONFIG_USBCANBUS) += lib/fast-hash
+CFLAGS-$(CONFIG_CANBUS) += -Ilib/fast-hash
+CFLAGS += $(CFLAGS-y) -mthumb -mcpu=cortex-m3
+CFLAGS += -Ilib/lpc176x/device -Ilib/cmsis-core
 
 CFLAGS_klipper.elf += -nostdlib -lgcc -lc_nano
 CFLAGS_klipper.elf += -T $(OUT)src/generic/armcm_link.ld
@@ -22,6 +25,11 @@ src-$(CONFIG_WANT_I2C) += lpc176x/i2c.c
 src-$(CONFIG_USBSERIAL) += lpc176x/usbserial.c lpc176x/chipid.c
 src-$(CONFIG_USBSERIAL) += generic/usb_cdc.c
 src-$(CONFIG_SERIAL) += lpc176x/serial.c generic/serial_irq.c
+canbus-src-y := lpc176x/can.c lpc176x/chipid.c generic/canserial.c
+canbus-src-y += ../lib/fast-hash/fasthash.c
+src-$(CONFIG_CANSERIAL) += $(canbus-src-y) generic/canbus.c
+src-$(CONFIG_USBCANBUS) += $(canbus-src-y) lpc176x/usbserial.c
+src-$(CONFIG_USBCANBUS) += generic/usb_canbus.c
 src-$(CONFIG_WANT_HARD_PWM) += lpc176x/hard_pwm.c
 
 # Build the additional bin output file

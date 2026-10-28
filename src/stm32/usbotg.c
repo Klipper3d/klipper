@@ -242,7 +242,8 @@ usb_send_bulk_in(void *data, uint_fast8_t len)
         usb_irq_enable();
         return len;
     }
-    if (ctl & USB_OTG_DIEPCTL_EPENA) {
+    int dbuf_busy = CONFIG_STM32_USB_DOUBLE_BUFFER_TX && TX_BUF.len;
+    if (ctl & USB_OTG_DIEPCTL_EPENA || dbuf_busy) {
         if (!CONFIG_STM32_USB_DOUBLE_BUFFER_TX || TX_BUF.len || !len) {
             // Wait for space to transmit
             OTGD->DAINTMSK |= 1 << USB_CDC_EP_BULK_IN;

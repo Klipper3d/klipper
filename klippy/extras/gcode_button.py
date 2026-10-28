@@ -40,7 +40,10 @@ class GCodeButton:
         if not state:
             template = self.release_template
         try:
-            self.gcode.run_script(template.render())
+            commands = template.render()
+            if not commands.strip():
+                return
+            self.gcode.run_script(commands)
         except:
             logging.exception("Script running error")
 

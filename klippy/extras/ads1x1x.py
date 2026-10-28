@@ -361,10 +361,10 @@ class ADS1X1X_pin:
                 self.invalid_count = 0
 
             # Publish result
-            measured_time = self._reactor.monotonic()
-            self._last_state = (target_value, measured_time)
-            self.callback(self.chip.mcu.estimated_print_time(measured_time),
-                        target_value)
+            systime = self._reactor.monotonic()
+            measured_time = self.chip.mcu.estimated_print_time(systime)
+            self._last_state = (measured_time, target_value)
+            self.callback([(measured_time, target_value)])
         else:
             self.invalid_count = self.invalid_count + 1
             self.check_invalid()
@@ -379,16 +379,17 @@ class ADS1X1X_pin:
     def get_mcu(self):
         return self.mcu
 
-    def setup_adc_callback(self, report_time, callback):
-        self.report_time = report_time
+    def setup_adc_callback(self, callback):
         self.callback = callback
-        self.chip.handle_report_time_update()
 
-    def setup_adc_sample(self, sample_time, sample_count,
-                         minval=0., maxval=1., range_check_count=0):
+    def setup_adc_sample(self, report_time, sample_time=0., sample_count=1,
+                         batch_num=1, minval=0., maxval=1.,
+                         range_check_count=0):
+        self.report_time = report_time
         self.minval = minval
         self.maxval = maxval
         self.range_check_count = range_check_count
+        self.chip.handle_report_time_update()
 
     def get_last_value(self):
         return self._last_state

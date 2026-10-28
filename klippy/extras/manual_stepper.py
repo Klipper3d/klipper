@@ -78,7 +78,8 @@ class ManualStepper:
         self.motion_queuing.note_mcu_movequeue_activity(self.next_cmd_time)
         if sync:
             self.sync_print_time()
-    def do_homing_move(self, movepos, speed, accel, triggered, check_trigger):
+    def do_homing_move(self, movepos, speed, accel,
+                       probe_pos, triggered, check_trigger):
         if not self.can_home:
             raise self.printer.command_error(
                 "No endstop for this manual stepper")
@@ -87,7 +88,8 @@ class ManualStepper:
         endstops = self.rail.get_endstops()
         phoming = self.printer.lookup_object('homing')
         phoming.manual_home(self, endstops, pos, speed,
-                            triggered, check_trigger)
+                            probe_pos, triggered, check_trigger)
+        self.sync_print_time()
     cmd_MANUAL_STEPPER_help = "Command a manually configured stepper"
     def cmd_MANUAL_STEPPER(self, gcmd):
         if gcmd.get('GCODE_AXIS', None) is not None:
@@ -102,14 +104,28 @@ class ManualStepper:
             self.do_set_position(setpos)
         speed = gcmd.get_float('SPEED', self.velocity, above=0.)
         accel = gcmd.get_float('ACCEL', self.accel, minval=0.)
-        homing_move = gcmd.get_int('STOP_ON_ENDSTOP', 0)
-        if homing_move:
+        homing_move = gcmd.get('STOP_ON_ENDSTOP', None)
+        if homing_move is not None:
+            old_map = {'-2': 'try_inverted_home', '-1': 'inverted_home',
+                       '1': 'home', '2': 'try_home'}.get(homing_move)
+            if old_map is not None:
+                pconfig = self.printer.lookup_object('configfile')
+                pconfig.deprecate_gcode("MANUAL_STEPPER", "STOP_ON_ENDSTOP",
+                                        homing_move)
+                homing_move = old_map
+            is_try = homing_move.startswith('try_')
+            homing_move = homing_move[is_try*4:]
+            is_inverted = homing_move.startswith('inverted_')
+            homing_move = homing_move[is_inverted*9:]
+            if homing_move not in ["probe", "home"]:
+                raise gcmd.error("Unknown STOP_ON_ENDSTOP request")
+            is_probe = (homing_move == "probe")
             movepos = gcmd.get_float('MOVE')
             if ((self.pos_min is not None and movepos < self.pos_min)
                 or (self.pos_max is not None and movepos > self.pos_max)):
                 raise gcmd.error("Move out of range")
             self.do_homing_move(movepos, speed, accel,
-                                homing_move > 0, abs(homing_move) == 1)
+                                is_probe, not is_inverted, not is_try)
         elif gcmd.get_float('MOVE', None) is not None:
             movepos = gcmd.get_float('MOVE')
             if ((self.pos_min is not None and movepos < self.pos_min)
@@ -207,8 +223,6 @@ class ManualStepper:
                                              drip_completion)
         # Clear trapq of any remaining parts of movement
         self.motion_queuing.wipe_trapq(self.trapq)
-        self.rail.set_position([self.commanded_pos, 0., 0.])
-        self.sync_print_time()
     def get_kinematics(self):
         return self
     def get_steppers(self):

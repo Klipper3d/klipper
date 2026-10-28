@@ -56,7 +56,7 @@ class SHT3X:
         self.reactor = self.printer.get_reactor()
         self.i2c = bus.MCU_I2C_from_config(
             config, default_addr=SHT3X_I2C_ADDR, default_speed=100000)
-        self._error = self.i2c.get_mcu().error
+        self._error = self.printer.command_error
         self.report_time = config.getint('sht3x_report_time', 1, minval=1)
         self.deviceId = config.get('sensor_type')
         self.temp = self.min_temp = self.max_temp = self.humidity = 0.
@@ -155,18 +155,11 @@ class SHT3X:
         self._callback(print_time, self.temp)
         return measured_time + self.report_time
 
-    def _split_bytes(self, data):
-        bytes = []
-        for i in range((data.bit_length() + 7) // 8):
-            bytes.append((data >> i*8) & 0xFF)
-        bytes.reverse()
-        return bytes
-
     def _crc8(self, data):
         #crc8 polynomial for 16bit value, CRC8 -> x^8 + x^5 + x^4 + 1
         SHT3X_CRC8_POLYNOMINAL= 0x31
         crc = 0xFF
-        data_bytes = self._split_bytes(data)
+        data_bytes = [data >> 8 & 0xFF, data & 0xFF]
         for byte in data_bytes:
             crc ^= byte
             for _ in range(8):

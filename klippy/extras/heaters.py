@@ -16,6 +16,7 @@ AMBIENT_TEMP = 25.
 PID_PARAM_BASE = 255.
 MAX_MAINTHREAD_TIME = 5.0
 QUELL_STALE_TIME = 7.0
+MIN_PWM_CHANGE_RATIO = 0.05
 
 class Heater:
     def __init__(self, config, sensor):
@@ -37,6 +38,7 @@ class Heater:
                          is not None)
         self.can_extrude = self.min_extrude_temp <= 0. or is_fileoutput
         self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
+        self.min_pwm_change = self.max_power * MIN_PWM_CHANGE_RATIO
         self.smooth_time = config.getfloat('smooth_time', 1., above=0.)
         self.inv_smooth_time = 1. / self.smooth_time
         self.verify_mainthread_time = -999.
@@ -71,7 +73,7 @@ class Heater:
         if self.target_temp <= 0. or read_time > self.verify_mainthread_time:
             value = 0.
         if ((read_time < self.next_pwm_time or not self.last_pwm_value)
-            and abs(value - self.last_pwm_value) < 0.05):
+            and abs(value - self.last_pwm_value) < self.min_pwm_change):
             # No significant change in value - can suppress update
             return
         pwm_time = read_time + self.pwm_delay
@@ -255,8 +257,6 @@ class PrinterHeaters:
         gcode.register_command("TURN_OFF_HEATERS", self.cmd_TURN_OFF_HEATERS,
                                desc=self.cmd_TURN_OFF_HEATERS_help)
         gcode.register_command("M105", self.cmd_M105, when_not_ready=True)
-        gcode.register_command("TEMPERATURE_WAIT", self.cmd_TEMPERATURE_WAIT,
-                               desc=self.cmd_TEMPERATURE_WAIT_help)
     def load_config(self, config):
         self.have_load_sensors = True
         # Load default temperature sensors
@@ -299,7 +299,12 @@ class PrinterHeaters:
                 "Unknown temperature sensor '%s'" % (sensor_type,))
         return self.sensor_factories[sensor_type](config)
     def register_sensor(self, config, psensor, gcode_id=None):
-        self.available_sensors.append(config.get_name())
+        sensor_name = config.get_name()
+        self.available_sensors.append(sensor_name)
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_mux_command('TEMPERATURE_WAIT', "SENSOR", sensor_name,
+                                   self.cmd_TEMPERATURE_WAIT,
+                                   desc=self.cmd_TEMPERATURE_WAIT_help)
         if gcode_id is None:
             gcode_id = config.get('gcode_id', None)
             if gcode_id is None:
@@ -361,8 +366,6 @@ class PrinterHeaters:
     cmd_TEMPERATURE_WAIT_help = "Wait for a temperature on a sensor"
     def cmd_TEMPERATURE_WAIT(self, gcmd):
         sensor_name = gcmd.get('SENSOR')
-        if sensor_name not in self.available_sensors:
-            raise gcmd.error("Unknown sensor '%s'" % (sensor_name,))
         min_temp = gcmd.get_float('MINIMUM', float('-inf'))
         max_temp = gcmd.get_float('MAXIMUM', float('inf'), above=min_temp)
         if min_temp == float('-inf') and max_temp == float('inf'):

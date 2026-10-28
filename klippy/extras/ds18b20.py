@@ -26,8 +26,9 @@ class DS18B20:
         )
         self._mcu = mcu.get_printer_mcu(self.printer, config.get('sensor_mcu'))
         self.oid = self._mcu.create_oid()
-        self._mcu.register_response(self._handle_ds18b20_response,
-            "ds18b20_result", self.oid)
+        self._mcu.register_serial_response(
+            self._handle_ds18b20_response,
+            "ds18b20_result oid=%c next_clock=%u value=%i fault=%u", self.oid)
         self._mcu.register_config_callback(self._build_config)
 
     def _build_config(self):

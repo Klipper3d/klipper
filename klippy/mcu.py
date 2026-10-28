@@ -1,9 +1,9 @@
 # Interface to Klipper micro-controller code
 #
-# Copyright (C) 2016-2025  Kevin O'Connor <kevin@koconnor.net>
+# Copyright (C) 2016-2026  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import sys, os, zlib, logging, math
+import sys, os, zlib, logging, math, struct
 import serialhdl, msgproto, pins, chelper, clocksync
 
 class error(Exception):
@@ -21,6 +21,20 @@ MAX_NOMINAL_DURATION = 3.0
 ######################################################################
 # Command transmit helper classes
 ######################################################################
+
+# Generate a dummy response to query commands when in debugging mode
+class DummyResponse:
+    def __init__(self, serial, name, oid=None):
+        params = {}
+        if oid is not None:
+            params['oid'] = oid
+        msgparser = serial.get_msgparser()
+        resp = msgparser.create_dummy_response(name, params)
+        resp['#sent_time'] = 0.
+        resp['#receive_time'] = 0.
+        self._response = resp
+    def get_response(self, cmds, cmd_queue, minclock=0, reqclock=0, retry=True):
+        return dict(self._response)
 
 # Class to retry sending of a query command until a given response is received
 class RetryAsyncCommand:
@@ -60,16 +74,18 @@ class RetryAsyncCommand:
 
 # Wrapper around query commands
 class CommandQueryWrapper:
-    def __init__(self, serial, msgformat, respformat, oid=None,
-                 cmd_queue=None, is_async=False, error=serialhdl.error):
-        self._serial = serial
+    def __init__(self, conn_helper, msgformat, respformat, oid=None,
+                 cmd_queue=None, is_async=False):
+        self._serial = serial = conn_helper.get_serial()
         self._cmd = serial.get_msgparser().lookup_command(msgformat)
         serial.get_msgparser().lookup_command(respformat)
         self._response = respformat.split()[0]
         self._oid = oid
-        self._error = error
+        self._error = conn_helper.get_mcu().get_printer().command_error
         self._xmit_helper = serialhdl.SerialRetryCommand
-        if is_async:
+        if conn_helper.get_mcu().is_fileoutput():
+            self._xmit_helper = DummyResponse
+        elif is_async:
             self._xmit_helper = RetryAsyncCommand
         if cmd_queue is None:
             cmd_queue = serial.get_default_command_queue()
@@ -92,15 +108,16 @@ class CommandQueryWrapper:
 
 # Wrapper around command sending
 class CommandWrapper:
-    def __init__(self, serial, msgformat, cmd_queue=None, debugoutput=False):
-        self._serial = serial
+    def __init__(self, conn_helper, msgformat, cmd_queue=None):
+        self._serial = serial = conn_helper.get_serial()
+        self._error = conn_helper.get_mcu().get_printer().command_error
         msgparser = serial.get_msgparser()
         self._cmd = msgparser.lookup_command(msgformat)
         if cmd_queue is None:
             cmd_queue = serial.get_default_command_queue()
         self._cmd_queue = cmd_queue
         self._msgtag = msgparser.lookup_msgid(msgformat) & 0xffffffff
-        if debugoutput:
+        if conn_helper.get_mcu().is_fileoutput():
             # Can't use send_wait_ack when in debugging mode
             self.send_wait_ack = self.send
     def send(self, data=(), minclock=0, reqclock=0):
@@ -108,9 +125,32 @@ class CommandWrapper:
         self._serial.raw_send(cmd, minclock, reqclock, self._cmd_queue)
     def send_wait_ack(self, data=(), minclock=0, reqclock=0):
         cmd = self._cmd.encode(data)
-        self._serial.raw_send_wait_ack(cmd, minclock, reqclock, self._cmd_queue)
+        try:
+            self._serial.raw_send_wait_ack(cmd, minclock, reqclock,
+                                           self._cmd_queue)
+        except serialhdl.error as e:
+            raise self._error(str(e))
     def get_command_tag(self):
         return self._msgtag
+
+# Wrapper for long-lived serial subscriptions (callbacks via background thread)
+class AsyncResponseWrapper:
+    def __init__(self, conn_helper, cfg_helper, callback, msgformat, oid=None):
+        self._serial = conn_helper.get_serial()
+        self._callback = callback
+        self._msgformat = msgformat
+        self._name = msgformat.split()[0]
+        self._oid = oid
+        if cfg_helper.is_config_finalized():
+            self._register()
+        else:
+            self._serial.register_response((lambda p: None), self._name, oid)
+            cfg_helper.register_post_init_callback(self._register)
+    def _register(self):
+        self._serial.get_msgparser().lookup_command(self._msgformat)
+        self._serial.register_response(self._callback, self._name, self._oid)
+    def unregister(self):
+        self._serial.register_response(None, self._name, self._oid)
 
 
 ######################################################################
@@ -130,6 +170,7 @@ class MCU_trsync:
         self._trdispatch_mcu = None
         self._oid = mcu.create_oid()
         self._cmd_queue = mcu.alloc_command_queue()
+        self._response_trsync = None
         self._trsync_start_cmd = self._trsync_set_timeout_cmd = None
         self._trsync_trigger_cmd = self._trsync_query_cmd = None
         self._stepper_stop_cmd = None
@@ -216,8 +257,10 @@ class MCU_trsync:
         ffi_main, ffi_lib = chelper.get_ffi()
         ffi_lib.trdispatch_mcu_setup(self._trdispatch_mcu, clock, expire_clock,
                                      expire_ticks, min_extend_ticks)
-        self._mcu.register_response(self._handle_trsync_state,
-                                    "trsync_state", self._oid)
+        self._response_trsync = self._mcu.register_serial_response(
+            self._handle_trsync_state,
+            "trsync_state oid=%c can_trigger=%c trigger_reason=%c clock=%u",
+            self._oid)
         self._trsync_start_cmd.send([self._oid, report_clock, report_ticks,
                                      self.REASON_COMMS_TIMEOUT], reqclock=clock)
         for s in self._steppers:
@@ -227,7 +270,8 @@ class MCU_trsync:
     def set_home_end_time(self, home_end_time):
         self._home_end_clock = self._mcu.print_time_to_clock(home_end_time)
     def stop(self):
-        self._mcu.register_response(None, "trsync_state", self._oid)
+        self._response_trsync.unregister()
+        self._response_trsync = None
         self._trigger_completion = None
         if self._mcu.is_fileoutput():
             return self.REASON_ENDSTOP_HIT
@@ -519,23 +563,26 @@ class MCU_adc:
         self._pin = pin_params['pin']
         self._min_sample = self._max_sample = 0.
         self._sample_time = self._report_time = 0.
-        self._sample_count = self._range_check_count = 0
+        self._sample_count = self._batch_num = self._range_check_count = 0
         self._report_clock = 0
         self._last_state = (0., 0.)
         self._oid = self._callback = None
         self._mcu.register_config_callback(self._build_config)
         self._inv_max_adc = 0.
+        self._unpack_from = struct.Struct('<H').unpack_from
     def get_mcu(self):
         return self._mcu
-    def setup_adc_sample(self, sample_time, sample_count,
-                         minval=0., maxval=1., range_check_count=0):
+    def setup_adc_sample(self, report_time, sample_time=0., sample_count=1,
+                         batch_num=1, minval=0., maxval=1.,
+                         range_check_count=0):
+        self._report_time = report_time
         self._sample_time = sample_time
         self._sample_count = sample_count
+        self._batch_num = max(1, min(48 // 2, batch_num))
         self._min_sample = minval
         self._max_sample = maxval
         self._range_check_count = range_check_count
-    def setup_adc_callback(self, report_time, callback):
-        self._report_time = report_time
+    def setup_adc_callback(self, callback):
         self._callback = callback
     def get_last_value(self):
         return self._last_state
@@ -543,33 +590,67 @@ class MCU_adc:
         if not self._sample_count:
             return
         self._oid = self._mcu.create_oid()
-        self._mcu.add_config_cmd("config_analog_in oid=%d pin=%s" % (
-            self._oid, self._pin))
+        self._mcu.add_config_cmd("config_analog_in oid=%d pin=%s"
+                                 % (self._oid, self._pin))
         clock = self._mcu.get_query_slot(self._oid)
         sample_ticks = self._mcu.seconds_to_clock(self._sample_time)
         mcu_adc_max = self._mcu.get_constant_float("ADC_MAX")
         max_adc = self._sample_count * mcu_adc_max
+        if max_adc >= (1<<16):
+            raise self._mcu.get_printer().config_error(
+                "ADC sample_count=%d too large for MCU" % (self._sample_count,))
         self._inv_max_adc = 1.0 / max_adc
         self._report_clock = self._mcu.seconds_to_clock(self._report_time)
         min_sample = max(0, min(0xffff, int(self._min_sample * max_adc)))
         max_sample = max(0, min(0xffff, int(
             math.ceil(self._max_sample * max_adc))))
+        # Setup periodic query and register response handler
+        oldcmd = (
+            "query_analog_in oid=%c clock=%u sample_ticks=%u sample_count=%c"
+            " rest_ticks=%u min_value=%hu max_value=%hu range_check_count=%c")
+        if (self._batch_num == 1
+            and self._mcu.try_lookup_command(oldcmd) is not None):
+            self._mcu.add_config_cmd(
+                "query_analog_in oid=%d clock=%d sample_ticks=%d"
+                " sample_count=%d rest_ticks=%d"
+                " min_value=%d max_value=%d range_check_count=%d" % (
+                    self._oid, clock, sample_ticks, self._sample_count,
+                    self._report_clock, min_sample, max_sample,
+                    self._range_check_count), is_init=True)
+            self._mcu.register_serial_response(
+                self._old_handle_analog_in_state,
+                "analog_in_state oid=%c next_clock=%u value=%hu", self._oid)
+            return
+        BYTES_PER_SAMPLE = 2
+        bytes_per_report = self._batch_num * BYTES_PER_SAMPLE
         self._mcu.add_config_cmd(
             "query_analog_in oid=%d clock=%d sample_ticks=%d sample_count=%d"
-            " rest_ticks=%d min_value=%d max_value=%d range_check_count=%d" % (
+            " rest_ticks=%d bytes_per_report=%d"
+            " min_value=%d max_value=%d range_check_count=%d" % (
                 self._oid, clock, sample_ticks, self._sample_count,
-                self._report_clock, min_sample, max_sample,
+                self._report_clock, bytes_per_report, min_sample, max_sample,
                 self._range_check_count), is_init=True)
-        self._mcu.register_response(self._handle_analog_in_state,
-                                    "analog_in_state", self._oid)
-    def _handle_analog_in_state(self, params):
+        self._mcu.register_serial_response(
+            self._handle_analog_in_state,
+            "analog_in_state oid=%c next_clock=%u values=%*s", self._oid)
+    def _old_handle_analog_in_state(self, params):
         last_value = params['value'] * self._inv_max_adc
         next_clock = self._mcu.clock32_to_clock64(params['next_clock'])
         last_read_clock = next_clock - self._report_clock
         last_read_time = self._mcu.clock_to_print_time(last_read_clock)
-        self._last_state = (last_value, last_read_time)
+        self._last_state = (last_read_time, last_value)
         if self._callback is not None:
-            self._callback(last_read_time, last_value)
+            self._callback([(last_read_time, last_value)])
+    def _handle_analog_in_state(self, params):
+        values = self._unpack_from(params['values'])
+        next_clock = self._mcu.clock32_to_clock64(params['next_clock'])
+        ctpt = self._mcu.clock_to_print_time
+        num = len(values)
+        samples = [(ctpt(next_clock - (num - i)*self._report_clock),
+                    values[i] * self._inv_max_adc) for i in range(num)]
+        self._last_state = samples[-1]
+        if self._callback is not None:
+            self._callback(samples)
 
 
 ######################################################################
@@ -760,7 +841,9 @@ class MCUConnectHelper:
             % (self._name, message_count, version, build_versions),
             "MCU '%s' config: %s" % (self._name, " ".join(
                 ["%s=%s" % (k, v)
-                 for k, v in msgparser.get_constants().items()]))]
+                 for k, v in msgparser.get_constants().items()])),
+            "MCU '%s' kconfig: %s" % (self._name, repr(msgparser.get_kconfig()))
+        ]
         return "\n".join(log_info)
     def _attach_file(self):
         # In a debugging mode.  Open debug output file and read data dictionary
@@ -801,9 +884,9 @@ class MCUConnectHelper:
         logging.info(self.log_info())
         # Setup shutdown handling
         self._emergency_stop_cmd = self._mcu.lookup_command("emergency_stop")
-        self._mcu.register_response(self._handle_shutdown, 'shutdown')
-        self._mcu.register_response(self._handle_shutdown, 'is_shutdown')
-        self._mcu.register_response(self._handle_starting, 'starting')
+        self._serial.register_response(self._handle_shutdown, 'shutdown')
+        self._serial.register_response(self._handle_shutdown, 'is_shutdown')
+        self._serial.register_response(self._handle_starting, 'starting')
     def _analyze_shutdown(self, msg, details):
         if self._mcu.is_fileoutput():
             return
@@ -827,6 +910,7 @@ class MCUConnectHelper:
                      self._name, eventtime)
         self._printer.invoke_shutdown("Lost communication with MCU '%s'" % (
             self._name,))
+        self._serial.abort_wait_acks()
     def is_shutdown(self):
         return self._is_shutdown
     def get_shutdown_msg(self):
@@ -870,7 +954,8 @@ class MCUStatsHelper:
         self._get_status_info['mcu_version'] = version
         self._get_status_info['mcu_build_versions'] = build_versions
         self._get_status_info['mcu_constants'] = msgparser.get_constants()
-        self._mcu.register_response(self._handle_mcu_stats, 'stats')
+        self._get_status_info['mcu_kconfig'] = msgparser.get_kconfig()
+        self._serial.register_response(self._handle_mcu_stats, 'stats')
     def _ready(self):
         if self._mcu.is_fileoutput():
             return
@@ -910,11 +995,14 @@ class MCUConfigHelper:
         self._reactor = printer.get_reactor()
         self._name = mcu.get_name()
         # Configuration tracking
+        self._config_finalized = False
         self._oid_count = 0
         self._config_callbacks = []
+        self._post_init_callbacks = []
         self._config_cmds = []
         self._restart_cmds = []
         self._init_cmds = []
+        self._config_crc = 0
         self._mcu_freq = 0.
         self._reserved_move_slots = 0
         # Register handlers
@@ -922,10 +1010,11 @@ class MCUConfigHelper:
         printer.register_event_handler("klippy:mcu_identify",
                                        self._mcu_identify)
         printer.register_event_handler("klippy:connect", self._connect)
-    def _send_config(self, prev_crc):
+    def _finalize_config(self):
         # Build config commands
         for cb in self._config_callbacks:
             cb()
+        self._config_finalized = True
         self._config_cmds.insert(0, "allocate_oids count=%d"
                                  % (self._oid_count,))
         # Resolve pin names
@@ -936,24 +1025,11 @@ class MCUConfigHelper:
                 cmdlist[i] = pin_resolver.update_command(cmd)
         # Calculate config CRC
         encoded_config = '\n'.join(self._config_cmds).encode()
-        config_crc = zlib.crc32(encoded_config) & 0xffffffff
-        self.add_config_cmd("finalize_config crc=%d" % (config_crc,))
-        if prev_crc is not None and config_crc != prev_crc:
-            restart_helper = self._conn_helper.get_restart_helper()
-            restart_helper.check_restart_on_crc_mismatch()
-            raise error("MCU '%s' CRC does not match config" % (self._name,))
-        # Transmit config messages (if needed)
+        self._config_crc = zlib.crc32(encoded_config) & 0xffffffff
+        self._config_cmds.append("finalize_config crc=%d" % (self._config_crc,))
+    def _send_cfg_init_commands(self, cmds):
         try:
-            if prev_crc is None:
-                logging.info("Sending MCU '%s' printer configuration...",
-                             self._name)
-                for c in self._config_cmds:
-                    self._serial.send(c)
-            else:
-                for c in self._restart_cmds:
-                    self._serial.send(c)
-            # Transmit init messages
-            for c in self._init_cmds:
+            for c in cmds:
                 self._serial.send(c)
         except msgproto.enumeration_error as e:
             enum_name, enum_value = e.get_enum_params()
@@ -978,22 +1054,36 @@ class MCUConfigHelper:
                 self._name,))
         return config_params
     def _connect(self):
+        # Finalize the config and check if a restart is needed
+        restart_helper = self._conn_helper.get_restart_helper()
         config_params = self._send_get_config()
         if not config_params['is_config']:
-            restart_helper = self._conn_helper.get_restart_helper()
+            # Not configured - sending full config will be required
             restart_helper.check_restart_on_send_config()
-            # Not configured - send config and issue get_config again
-            self._send_config(None)
-            config_params = self._send_get_config()
-            if not config_params['is_config'] and not self._mcu.is_fileoutput():
-                raise error("Unable to configure MCU '%s'" % (self._name,))
+            self._finalize_config()
+            cfg_init_cmds = self._config_cmds + self._init_cmds
+            logging.info("Sending MCU '%s' printer configuration...",
+                         self._name)
         else:
+            # Already configured - may need to only send init commands
             start_reason = self._printer.get_start_args().get("start_reason")
             if start_reason == 'firmware_restart':
                 raise error("Failed automated reset of MCU '%s'"
                             % (self._name,))
-            # Already configured - send init commands
-            self._send_config(config_params['crc'])
+            self._finalize_config()
+            if self._config_crc != config_params['crc']:
+                restart_helper.check_restart_on_crc_mismatch()
+                raise error("MCU '%s' CRC does not match config"
+                            % (self._name,))
+            cfg_init_cmds = self._restart_cmds + self._init_cmds
+        # Send config and init messages
+        self._send_cfg_init_commands(cfg_init_cmds)
+        config_params = self._send_get_config()
+        if not config_params['is_config'] and not self._mcu.is_fileoutput():
+            raise error("Unable to configure MCU '%s'" % (self._name,))
+        # Run post_init callbacks
+        for cb in self._post_init_callbacks:
+            cb()
         # Setup steppersync with the move_count returned by get_config
         move_count = config_params['move_count']
         if move_count < self._reserved_move_slots:
@@ -1021,25 +1111,37 @@ class MCUConfigHelper:
                         " to be able to resolve a maximum nominal duration"
                         " of %ds. Max possible duration: %ds"
                         % (self._name, MAX_NOMINAL_DURATION, max_possible))
+    def _verify_not_finalized(self):
+        if self._config_finalized:
+            raise error("Internal error! MCU already configured")
     # Config creation helpers
+    def is_config_finalized(self):
+        return self._config_finalized
     def setup_pin(self, pin_type, pin_params):
+        self._verify_not_finalized()
         pcs = {'endstop': MCU_endstop,
                'digital_out': MCU_digital_out, 'pwm': MCU_pwm, 'adc': MCU_adc}
         if pin_type not in pcs:
             raise pins.error("pin type %s not supported on mcu" % (pin_type,))
         return pcs[pin_type](self._mcu, pin_params)
     def create_oid(self):
+        self._verify_not_finalized()
         self._oid_count += 1
         return self._oid_count - 1
     def register_config_callback(self, cb):
+        self._verify_not_finalized()
         self._config_callbacks.append(cb)
     def add_config_cmd(self, cmd, is_init=False, on_restart=False):
+        self._verify_not_finalized()
         if is_init:
             self._init_cmds.append(cmd)
         elif on_restart:
             self._restart_cmds.append(cmd)
         else:
             self._config_cmds.append(cmd)
+    def register_post_init_callback(self, cb):
+        self._verify_not_finalized()
+        self._post_init_callbacks.append(cb)
     def get_query_slot(self, oid):
         slot = self.seconds_to_clock(oid * .01)
         t = int(self._mcu.estimated_print_time(self._reactor.monotonic()) + 1.5)
@@ -1096,22 +1198,27 @@ class MCU:
     def max_nominal_duration(self):
         return MAX_NOMINAL_DURATION
     def lookup_command(self, msgformat, cq=None):
-        return CommandWrapper(self._serial, msgformat, cq,
-                              debugoutput=self.is_fileoutput())
+        return CommandWrapper(self._conn_helper, msgformat, cq)
     def lookup_query_command(self, msgformat, respformat, oid=None,
                              cq=None, is_async=False):
-        return CommandQueryWrapper(self._serial, msgformat, respformat, oid,
-                                   cq, is_async, self._printer.command_error)
+        return CommandQueryWrapper(self._conn_helper, msgformat, respformat,
+                                   oid, cq, is_async)
     def try_lookup_command(self, msgformat):
         try:
             return self.lookup_command(msgformat)
         except self._serial.get_msgparser().error as e:
             return None
-    # SerialHdl wrappers
-    def register_response(self, cb, msg, oid=None):
-        self._serial.register_response(cb, msg, oid)
     def alloc_command_queue(self):
         return self._serial.alloc_command_queue()
+    def register_serial_response(self, cb, msg, oid=None):
+        return AsyncResponseWrapper(self._conn_helper, self._config_helper,
+                                    cb, msg, oid)
+    def check_valid_response(self, msgformat):
+        try:
+            self._serial.get_msgparser().lookup_command(msgformat)
+        except self._serial.get_msgparser().error as e:
+            return False
+        return True
     # MsgParser wrappers
     def get_enumerations(self):
         return self._serial.get_msgparser().get_enumerations()

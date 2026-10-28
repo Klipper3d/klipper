@@ -39,17 +39,24 @@ class ForceMove:
         self.stepper_kinematics = ffi_main.gc(
             ffi_lib.cartesian_stepper_alloc(b'x'), ffi_lib.free)
         # Register commands
-        gcode = self.printer.lookup_object('gcode')
-        gcode.register_command('STEPPER_BUZZ', self.cmd_STEPPER_BUZZ,
-                               desc=self.cmd_STEPPER_BUZZ_help)
-        if config.getboolean("enable_force_move", False):
-            gcode.register_command('FORCE_MOVE', self.cmd_FORCE_MOVE,
-                                   desc=self.cmd_FORCE_MOVE_help)
+        self._enable_force_move = config.getboolean("enable_force_move", False)
+        if self._enable_force_move:
+            gcode = self.printer.lookup_object('gcode')
             gcode.register_command('SET_KINEMATIC_POSITION',
                                    self.cmd_SET_KINEMATIC_POSITION,
                                    desc=self.cmd_SET_KINEMATIC_POSITION_help)
     def register_stepper(self, config, mcu_stepper):
-        self.steppers[mcu_stepper.get_name()] = mcu_stepper
+        name = mcu_stepper.get_name()
+        self.steppers[name] = mcu_stepper
+        # Reuse mux helper args checks
+        gcode = self.printer.lookup_object('gcode')
+        gcode.register_mux_command('STEPPER_BUZZ', "STEPPER", name,
+                                   self.cmd_STEPPER_BUZZ,
+                                   desc=self.cmd_STEPPER_BUZZ_help)
+        if self._enable_force_move:
+            gcode.register_mux_command('FORCE_MOVE', "STEPPER", name,
+                                        self.cmd_FORCE_MOVE,
+                                        desc=self.cmd_FORCE_MOVE_help)
     def lookup_stepper(self, name):
         if name not in self.steppers:
             raise self.printer.config_error("Unknown stepper %s" % (name,))
@@ -82,14 +89,9 @@ class ForceMove:
         stepper.set_trapq(prev_trapq)
         stepper.set_stepper_kinematics(prev_sk)
         self.motion_queuing.wipe_trapq(self.trapq)
-    def _lookup_stepper(self, gcmd):
-        name = gcmd.get('STEPPER')
-        if name not in self.steppers:
-            raise gcmd.error("Unknown stepper %s" % (name,))
-        return self.steppers[name]
     cmd_STEPPER_BUZZ_help = "Oscillate a given stepper to help id it"
     def cmd_STEPPER_BUZZ(self, gcmd):
-        stepper = self._lookup_stepper(gcmd)
+        stepper = self.lookup_stepper(gcmd.get('STEPPER'))
         logging.info("Stepper buzz %s", stepper.get_name())
         did_enable = self._force_enable(stepper)
         toolhead = self.printer.lookup_object('toolhead')
@@ -104,7 +106,7 @@ class ForceMove:
         self._restore_enable(stepper, did_enable)
     cmd_FORCE_MOVE_help = "Manually move a stepper; invalidates kinematics"
     def cmd_FORCE_MOVE(self, gcmd):
-        stepper = self._lookup_stepper(gcmd)
+        stepper = self.lookup_stepper(gcmd.get('STEPPER'))
         distance = gcmd.get_float('DISTANCE')
         speed = gcmd.get_float('VELOCITY', above=0.)
         accel = gcmd.get_float('ACCEL', 0., minval=0.)

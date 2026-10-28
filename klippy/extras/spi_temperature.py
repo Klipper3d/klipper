@@ -29,8 +29,9 @@ class SensorBase:
         self.mcu = mcu = self.spi.get_mcu()
         # Reader chip configuration
         self.oid = oid = mcu.create_oid()
-        mcu.register_response(self._handle_spi_response,
-                              "thermocouple_result", oid)
+        mcu.register_serial_response(
+            self._handle_spi_response,
+            "thermocouple_result oid=%c next_clock=%u value=%u fault=%c", oid)
         mcu.register_config_callback(self._build_config)
     def setup_minmax(self, min_temp, max_temp):
         adc_range = [self.calc_adc(min_temp), self.calc_adc(max_temp)]

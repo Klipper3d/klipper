@@ -35,7 +35,7 @@ static struct canbus_data {
 
     // Transfer buffers
     struct canbus_msg admin_queue[8];
-    uint8_t transmit_buf[96];
+    uint8_t transmit_buf[192];
     uint8_t receive_buf[192];
 } CanData;
 
@@ -86,9 +86,8 @@ console_sendf(const struct command_encoder *ce, va_list args)
     uint32_t tpos = CanData.transmit_pos, tmax = CanData.transmit_max;
     if (tpos >= tmax)
         CanData.transmit_pos = CanData.transmit_max = tpos = tmax = 0;
-    uint32_t max_size = ce->max_size;
-    if (tmax + max_size > sizeof(CanData.transmit_buf)) {
-        if (tmax + max_size - tpos > sizeof(CanData.transmit_buf))
+    if (tmax + ce->max_size > sizeof(CanData.transmit_buf)) {
+        if (tmax - tpos + ce->min_size > sizeof(CanData.transmit_buf))
             // Not enough space for message
             return;
         // Move buffer
@@ -99,8 +98,11 @@ console_sendf(const struct command_encoder *ce, va_list args)
     }
 
     // Generate message
-    uint32_t msglen = command_encode_and_frame(&CanData.transmit_buf[tmax]
-                                               , ce, args);
+    uint32_t msglen = command_encode_and_frame(
+        &CanData.transmit_buf[tmax], sizeof(CanData.transmit_buf) - tmax
+        , ce, args);
+    if (!msglen)
+        return;
 
     // Start message transmit
     CanData.transmit_max = tmax + msglen;

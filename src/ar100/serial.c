@@ -4,11 +4,15 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-
+#include "autoconf.h" // CONFIG_SERIAL_BAUD
 #include "serial.h"
 #include "util.h"
 #include "internal.h"
 #include "gpio.h"
+
+#if CONFIG_SERIAL_BAUD != 1500000
+ #error "Only a serial baud of 1500000 is supported"
+#endif
 
 void r_uart_init(void){
   // Setup Pins PL2, PL3 as UART IO
@@ -40,14 +44,10 @@ uint32_t r_uart_fifo_rcv(void){
   return read_reg(R_UART_RFL);
 }
 
-void r_uart_putc(char c){
-  while(!(read_reg(R_UART_LSR) & 1<<5))
-    ;
-  write_reg(R_UART_THR, c);
+uint32_t r_uart_fifo_cantx(void){
+  return read_reg(R_UART_USR) & 1<<1;
 }
 
-void r_uart_puts(char *s){
-  while(*s){
-    r_uart_putc(*s++);
-  }
+void r_uart_putc(char c){
+  write_reg(R_UART_THR, c);
 }

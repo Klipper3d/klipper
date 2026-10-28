@@ -233,8 +233,10 @@ The following information is available in the `gcode_move` object
   override and, for example, 2.0 would double requested extrusions.
 - `absolute_coordinates`: This returns True if in `G90` absolute
   coordinate mode or False if in `G91` relative mode.
-- `absolute_extrude`: This returns True if in `M82` absolute extrude
-  mode or False if in `M83` relative mode.
+- `absolute_extrude`: Returns True if absolute extrusions are
+  permitted. An `M83` force relative extrusion mode command causes
+  this value to return False. An `M82` command returns this value to
+  True.
 - `axis_map`: Provides a mechanism for finding the coordinate
   component for a given G-Code id that is used in `G1` commands. See
   the [Accessing Coordinates](#accessing-coordinates) section for
@@ -248,7 +250,9 @@ object:
 - all items from
   [filament_switch_sensor](Status_Reference.md#filament_switch_sensor)
 - `is_active`: Returns True if the sensor is currently active.
-- `Diameter`: The last reading from the sensor in mm.
+- `flow_compensation_enabled`: Returns True if flow compensation is enabled.
+- `Diameter`: Returns the last width reading in mm if the sensor is active or
+  the nominal filament diameter if it is not.
 - `Raw`: The last raw ADC reading from the sensor.
 
 ## heater
@@ -314,22 +318,29 @@ The following information is available for each `[led led_name]`,
 ## load_cell
 
 The following information is available for each `[load_cell name]`:
-- 'is_calibrated': True/False is the load cell calibrated
-- 'counts_per_gram': The number of raw sensor counts that equals 1 gram of force
-- 'reference_tare_counts': The reference number of raw sensor counts for 0 force
-- 'tare_counts': The current number of raw sensor counts for 0 force
-- 'force_g': The force in grams, averaged over the last polling period.
-- 'min_force_g': The minimum force in grams, over the last polling period.
-- 'max_force_g': The maximum force in grams, over the last polling period.
+- `is_calibrated`: True/False whether the load cell is calibrated.
+- `counts_per_gram`: The number of raw sensor counts that equals 1 gram of force.
+- `reference_tare_counts`: The reference number of raw sensor counts for 0 force.
+- `tare_counts`: The current number of raw sensor counts for 0 force.
+- `force_g`: The force in grams, averaged over the last polling period.
+- `min_force_g`: The minimum force in grams, over the last polling period.
+- `max_force_g`: The maximum force in grams, over the last polling period.
+- `errors`: The number of sensor errors detected since the last start
+  of measurements.
+- `overflows`: The number of data buffer overflows detected since the last
+  start of measurements.
+- `sample_rate`: The sensor's sample rate in samples per second.
 
 ## load_cell_probe
 
 The following information is available for `[load_cell_probe]`:
 - all items from [load_cell](Status_Reference.md#load_cell)
 - all items from [probe](Status_Reference.md#probe)
-- 'endstop_tare_counts': the load cell probe keeps a tare value independent of
-the load cell. This re-set at the start of each probe.
-- 'last_trigger_time': timestamp of the last homing trigger
+- `endstop_tare_counts`: The load cell probe keeps a tare value independent of
+  the load cell. This is re-set at the start of each probe.
+- `last_trigger_time`: Timestamp of the last homing trigger.
+- `last_z_result`: The Z position result of the last tap.
+- `is_last_tap_valid`: True if the last tap result is valid.
 
 ## manual_probe
 
@@ -355,6 +366,10 @@ The following information is available in
 - `mcu_constants.<constant_name>`: Compile time constants reported by
   the micro-controller. The available constants may differ between
   micro-controller architectures and with each code revision.
+- `mcu_kconfig`: The minimal build configuration (`savedefconfig` output)
+  that the micro-controller firmware was compiled from, as reported by the
+  micro-controller. `None` if the firmware predates this feature or does not
+  provide it.
 - `last_stats.<statistics_name>`: Statistics information on the
   micro-controller connection.
 
@@ -419,10 +434,18 @@ is defined):
   during the last QUERY_PROBE command. Note, if this is used in a
   macro, due to the order of template expansion, the QUERY_PROBE
   command must be run prior to the macro containing this reference.
-- `last_z_result`: Returns the Z result value of the last PROBE
-  command. Note, if this is used in a macro, due to the order of
-  template expansion, the PROBE (or similar) command must be run prior
-  to the macro containing this reference.
+- `last_probe_position`: The results of the last `PROBE` command. This
+  value is encoded as a [coordinate](#accessing-coordinates). The
+  probe hardware estimates that if one were to command the toolhead to
+  XY position `last_probe_position.x`,`last_probe_position.y` and
+  descend then the tip of the toolhead would first contact the bed at
+  a Z height of `last_probe_position.z`. These coordinates are
+  relative to the frame (that is, they use the coordinate system
+  specified in the config file).  Note, if this is used in a macro,
+  due to the order of template expansion, the `PROBE` command must be
+  run prior to the macro containing this reference.
+- `last_z_result`: This value is deprecated; it will be removed in the
+  near future.
 
 ## pwm_cycle_time
 
@@ -499,9 +522,9 @@ The following information is available in the `system_stats` object
 
 The following information is available in
 
-[bme280 config_section_name](Config_Reference.md#bmp280bme280bme680-temperature-sensor),
+[bme280 config_section_name](Config_Reference.md#bmp180bmp280bme280bmp388bme680-temperature-sensor),
 [htu21d config_section_name](Config_Reference.md#htu21d-sensor),
-[sht3x config_section_name](Config_Reference.md#sht31-sensor),
+[sht3x config_section_name](Config_Reference.md#sht3x-sensor),
 [lm75 config_section_name](Config_Reference.md#lm75-temperature-sensor),
 [temperature_host config_section_name](Config_Reference.md#host-temperature-sensor)
 and

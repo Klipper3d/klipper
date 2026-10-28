@@ -32,8 +32,8 @@ class CartKinematics:
             self.dc_module = idex_modes.DualCarriages(
                     self.printer, [self.rails[self.dual_carriage_axis]],
                     [self.rails[3]], axes=[self.dual_carriage_axis],
-                    safe_dist=dc_config.getfloat(
-                        'safe_distance', None, minval=0.))
+                    safe_dist=[dc_config.getfloat(
+                        'safe_distance', None, minval=0.)])
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
         # Setup boundary checks
@@ -48,10 +48,10 @@ class CartKinematics:
     def calc_position(self, stepper_positions):
         rails = self.rails
         if self.dc_module:
-            primary_rail = self.dc_module.get_primary_rail(
-                    self.dual_carriage_axis)
+            dc_rail = self.dc_module.get_primary_rail(self.dual_carriage_axis) \
+                    or self.rails[self.dual_carriage_axis]
             rails = (rails[:self.dual_carriage_axis] +
-                     [primary_rail] + rails[self.dual_carriage_axis+1:])
+                     [dc_rail] + rails[self.dual_carriage_axis+1:])
         return [stepper_positions[rail.get_name()] for rail in rails]
     def update_limits(self, i, range):
         l, h = self.limits[i]
@@ -64,9 +64,10 @@ class CartKinematics:
             rail.set_position(newpos)
         for axis_name in homing_axes:
             axis = "xyz".index(axis_name)
+            rail = None
             if self.dc_module and axis == self.dual_carriage_axis:
                 rail = self.dc_module.get_primary_rail(self.dual_carriage_axis)
-            else:
+            if rail is None:
                 rail = self.rails[axis]
             self.limits[axis] = rail.get_range()
     def clear_homing_state(self, clear_axes):

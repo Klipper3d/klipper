@@ -11,7 +11,7 @@
 #include "internal.h" // GPIO
 #include "sched.h" // sched_shutdown
 
-#define MAX_PWM (256 + 1)
+#define MAX_PWM (1<<15)
 DECL_CONSTANT("PWM_MAX", MAX_PWM);
 
 struct gpio_pwm_info {
@@ -49,8 +49,8 @@ static const struct gpio_pwm_info pwm_regs[] = {
   #endif
   #if CONFIG_MACH_STM32F072
     {TIM2, GPIO('A', 1), 2, GPIO_FUNCTION(2)},
-    {TIM2, GPIO('A', 2), 3, GPIO_FUNCTION(2)},
-    {TIM2, GPIO('A', 3), 4, GPIO_FUNCTION(2)},
+    {TIM15, GPIO('A', 2), 1, GPIO_FUNCTION(0)},
+    {TIM15, GPIO('A', 3), 2, GPIO_FUNCTION(0)},
     {TIM14, GPIO('A', 4), 1, GPIO_FUNCTION(4)},
     {TIM3, GPIO('A', 6), 1, GPIO_FUNCTION(1)},
     {TIM3, GPIO('A', 7), 2, GPIO_FUNCTION(1)},
@@ -99,6 +99,8 @@ static const struct gpio_pwm_info pwm_regs[] = {
     {TIM3, GPIO('A', 7),  2, GPIO_FUNCTION(1)},
     {TIM3, GPIO('B', 0),  3, GPIO_FUNCTION(1)},
     {TIM3, GPIO('B', 1),  4, GPIO_FUNCTION(1)},
+    {TIM3, GPIO('B', 4),  1, GPIO_FUNCTION(2)},
+    {TIM3, GPIO('B', 5),  2, GPIO_FUNCTION(2)},
     {TIM3, GPIO('C', 6),  1, GPIO_FUNCTION(2)},
     {TIM3, GPIO('C', 7),  2, GPIO_FUNCTION(2)},
     {TIM3, GPIO('C', 8),  3, GPIO_FUNCTION(2)},
@@ -232,6 +234,19 @@ static const struct gpio_pwm_info pwm_regs[] = {
     {TIM14, GPIO('F',  0), 1, GPIO_FUNCTION(2)},
     {TIM15, GPIO('F', 12), 1, GPIO_FUNCTION(0)},
     {TIM15, GPIO('F', 13), 2, GPIO_FUNCTION(0)},
+#elif CONFIG_MACH_STM32G4
+    {TIM3,  GPIO('B',  0), 3, GPIO_FUNCTION(2)},
+    {TIM3,  GPIO('B',  1), 4, GPIO_FUNCTION(2)},
+    {TIM3,  GPIO('B',  4), 1, GPIO_FUNCTION(2)},
+    {TIM3,  GPIO('B',  5), 2, GPIO_FUNCTION(2)},
+    {TIM4,  GPIO('B',  6), 1, GPIO_FUNCTION(2)},
+    {TIM4,  GPIO('B',  7), 2, GPIO_FUNCTION(2)},
+    {TIM4,  GPIO('B',  8), 3, GPIO_FUNCTION(2)},
+    {TIM4,  GPIO('B',  9), 4, GPIO_FUNCTION(2)},
+    {TIM2,  GPIO('B', 10), 3, GPIO_FUNCTION(1)},
+    {TIM2,  GPIO('B', 11), 4, GPIO_FUNCTION(1)},
+    {TIM15,  GPIO('B', 14), 1, GPIO_FUNCTION(1)},
+    {TIM15,  GPIO('B', 15), 2, GPIO_FUNCTION(1)},
 #elif CONFIG_MACH_STM32H7
     {TIM1, GPIO('A', 8),  1, GPIO_FUNCTION(1)},
     {TIM1, GPIO('E', 9),  1, GPIO_FUNCTION(1)},
@@ -299,9 +314,8 @@ static const struct gpio_pwm_info pwm_regs[] = {
 #endif
 };
 
-static struct gpio_pwm
-gpio_timer_setup(uint8_t pin, uint32_t cycle_time, uint32_t val,
-    int is_clock_out)
+struct gpio_pwm
+gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint32_t val)
 {
     // Find pin in pwm_regs table
     const struct gpio_pwm_info* p = pwm_regs;
@@ -311,51 +325,50 @@ gpio_timer_setup(uint8_t pin, uint32_t cycle_time, uint32_t val,
         if (p->pin == pin)
             break;
     }
+    gpio_peripheral(p->pin, p->function, 0);
 
     // Map cycle_time to pwm clock divisor
     uint32_t pclk = get_pclock_frequency((uint32_t)p->timer);
     uint32_t pclock_div = CONFIG_CLOCK_FREQ / pclk;
     if (pclock_div > 1)
         pclock_div /= 2; // Timers run at twice the normal pclock frequency
-    uint32_t max_pwm = MAX_PWM;
     uint32_t pcycle_time = cycle_time / pclock_div;
-    uint32_t prescaler = pcycle_time / (max_pwm - 1);
-    // CLK output
-    if (is_clock_out) {
-        prescaler = 1;
-        while (pcycle_time > UINT16_MAX) {
-            prescaler = prescaler * 2;
-            pcycle_time /= 2;
-        }
-        max_pwm = pcycle_time;
-    }
-    if (prescaler > UINT16_MAX) {
-        prescaler = UINT16_MAX;
-    } else if (prescaler > 0) {
-        prescaler -= 1;
-    }
 
-    gpio_peripheral(p->pin, p->function, 0);
+    // Convert requested cycle time (cycle_time/CLOCK_FREQ) to actual
+    // cycle time (hwpwm_ticks*prescaler*pclock_div/CLOCK_FREQ).
+    uint32_t hwpwm_ticks = pcycle_time, prescaler = 1, shift = 0;
+    while (hwpwm_ticks > UINT16_MAX) {
+        shift += 1;
+        hwpwm_ticks = (pcycle_time + (1 << (shift-1))) >> shift;
+        prescaler = 1 << shift;
+    }
+    if (prescaler > UINT16_MAX + 1) {
+        prescaler = UINT16_MAX + 1;
+        hwpwm_ticks = UINT16_MAX;
+    }
+    if (hwpwm_ticks < 2)
+        hwpwm_ticks = 2;
 
-    // Enable clock
+    // Enable requested pwm hardware block
     if (!is_enabled_pclock((uint32_t) p->timer)) {
         enable_pclock((uint32_t) p->timer);
     }
-
     if (p->timer->CR1 & TIM_CR1_CEN) {
-        if (p->timer->PSC != (uint16_t) prescaler) {
+        if (p->timer->PSC != (uint16_t) (prescaler - 1)) {
             shutdown("PWM already programmed at different speed");
         }
-        if (p->timer->ARR != (uint16_t) max_pwm - 1) {
+        if (p->timer->ARR != (uint16_t) (hwpwm_ticks - 1)) {
             shutdown("PWM already programmed with different pulse duration");
         }
     } else {
-        p->timer->PSC = (uint16_t) prescaler;
-        p->timer->ARR = max_pwm - 1;
+        p->timer->PSC = prescaler - 1;
+        p->timer->ARR = hwpwm_ticks - 1;
         p->timer->EGR |= TIM_EGR_UG;
     }
 
+    // Enable requested channel of hardware pwm block
     struct gpio_pwm channel;
+    channel.hwpwm_ticks = hwpwm_ticks;
     switch (p->channel) {
         case 1: {
             channel.reg = (void*) &p->timer->CCR1;
@@ -400,28 +413,19 @@ gpio_timer_setup(uint8_t pin, uint32_t cycle_time, uint32_t val,
         default:
             shutdown("Invalid PWM channel");
     }
+
     // Enable PWM output
     p->timer->CR1 |= TIM_CR1_CEN;
-#if CONFIG_MACH_STM32H7 || CONFIG_MACH_STM32G0
-    p->timer->BDTR |= TIM_BDTR_MOE;
-#endif
+
+    // Advanced timers need MOE enabled.  On standard timers this is a
+    // write to reserved memory, but that seems harmless in practice.
+    p->timer->BDTR = TIM_BDTR_MOE;
+
     return channel;
 }
 
-struct gpio_pwm
-gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint32_t val) {
-    return gpio_timer_setup(pin, cycle_time, val, 0);
-}
-
-void
-command_stm32_timer_output(uint32_t *args)
-{
-    gpio_timer_setup(args[0], args[1], args[2], 1);
-}
-DECL_COMMAND(command_stm32_timer_output,
-    "stm32_timer_output pin=%u cycle_ticks=%u on_ticks=%hu");
-
 void
 gpio_pwm_write(struct gpio_pwm g, uint32_t val) {
-    *(volatile uint32_t*) g.reg = val;
+    uint32_t r = DIV_ROUND_CLOSEST(val * g.hwpwm_ticks, MAX_PWM);
+    *(volatile uint32_t*) g.reg = r;
 }

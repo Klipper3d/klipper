@@ -6,6 +6,8 @@
 
 from . import hx71x
 from . import ads1220
+from . import cs1237
+from . import ads131m0x
 from .bulk_sensor import BatchWebhooksClient
 import collections, itertools
 # We want either Python 3's zip() or Python 2's izip() but NOT 2's zip():
@@ -285,12 +287,14 @@ class LoadCellSampleCollector:
         self._samples = []
         self._errors = 0
         self._overflows = 0
+        self._start_errors = 0
+        self._start_overflows = 0
 
     def _on_samples(self, msg):
         if not self.is_started:
             return False  # already stopped, ignore
-        self._errors += msg['errors']
-        self._overflows += msg['overflows']
+        self._errors = msg['errors']
+        self._overflows = msg['overflows']
         samples = msg['data']
         for sample in samples:
             time = sample[0]
@@ -309,10 +313,12 @@ class LoadCellSampleCollector:
         self.min_count = float("inf")  # In Python 3.5 math.inf is better
         samples = self._samples
         self._samples = []
-        errors = self._errors
+        errors = max(0, self._errors - self._start_errors)
         self._errors = 0
-        overflows = self._overflows
+        overflows = max(0, self._overflows - self._start_overflows)
         self._overflows = 0
+        if self._mcu.is_fileoutput():
+            samples = [(0., 0., 0.)]
         return samples, (errors, overflows) if errors or overflows else 0
 
     def _collect_until(self, timeout):
@@ -320,10 +326,14 @@ class LoadCellSampleCollector:
         while self.is_started:
             now = self._reactor.monotonic()
             if self._mcu.estimated_print_time(now) > timeout:
-                self._finish_collecting()
+                samples, err = self._finish_collecting()
+                errors, overflows = err if err else (0, 0)
                 raise self._printer.command_error(
-                    "LoadCellSampleCollector timed out! Errors: %i,"
-                    " Overflows: %i" % (self._errors, self._overflows))
+                    "LoadCellSampleCollector timed out! Collected %i samples,"
+                    " Errors: %i, Overflows: %i" % (len(samples), errors,
+                                                    overflows))
+            if self._mcu.is_fileoutput():
+                break
             self._reactor.pause(now + RETRY_DELAY)
         return self._finish_collecting()
 
@@ -333,6 +343,10 @@ class LoadCellSampleCollector:
             return
         self.min_time = min_time if min_time is not None else self.min_time
         self.is_started = True
+        sensor_status = self._load_cell.sensor.get_status(
+            self._reactor.monotonic())
+        self._start_errors = sensor_status['errors']
+        self._start_overflows = sensor_status['overflows']
         self._load_cell.add_client(self._on_samples)
 
     # stop collecting immediately and return results
@@ -365,7 +379,7 @@ class LoadCell:
         self.config_name = config.get_name()
         self.name = config.get_name().split()[-1]
         self.sensor = sensor   # must implement BulkSensorAdc
-        buffer_size = sensor.get_samples_per_second() // 2
+        buffer_size = int(sensor.get_samples_per_second() / 2)
         self._force_buffer = collections.deque(maxlen=buffer_size)
         self.reference_tare_counts = config.getint('reference_tare_counts',
                                                    default=None)
@@ -452,7 +466,7 @@ class LoadCell:
     # performs safety checks for saturation
     def avg_counts(self, num_samples=None):
         if num_samples is None:
-            num_samples = self.sensor.get_samples_per_second()
+            num_samples = int(self.sensor.get_samples_per_second())
         samples, errors = self.get_collector().collect_min(num_samples)
         if errors:
             raise self.printer.command_error(
@@ -512,6 +526,7 @@ class LoadCell:
                        'counts_per_gram': self.counts_per_gram,
                        'reference_tare_counts': self.reference_tare_counts,
                        'tare_counts': self.tare_counts})
+        status.update(self.sensor.get_status(eventtime))
         return status
 
 
@@ -520,6 +535,8 @@ def load_config(config):
     sensors = {}
     sensors.update(hx71x.HX71X_SENSOR_TYPES)
     sensors.update(ads1220.ADS1220_SENSOR_TYPE)
+    sensors.update(cs1237.CS1237_SENSOR_TYPE)
+    sensors.update(ads131m0x.ADS131M0X_SENSOR_TYPES)
     sensor_class = config.getchoice('sensor_type', sensors)
     return LoadCell(config, sensor_class(config))
 

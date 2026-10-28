@@ -72,3 +72,45 @@ g1 X-30 Y-25
 g1 X-30 Y25
 g1 X30 Y25
 g1 X30 Y-25
+
+; Moves near center - straight lines on axis
+g1 X30 Y0
+g1 X1 Y0
+g1 X30 Y0
+
+g1 X0 Y30
+g1 X0 Y1
+g1 X0 Y30
+
+g1 X-30 Y0
+g1 X-1 Y0
+g1 X-30 Y0
+
+g1 X0 Y-30
+g1 X0 Y-1
+g1 X0 Y-30
+
+; Moves near center
+g1 X30 Y1
+g1 X-30 Y1
+g1 X30 Y1
+
+g1 X30 Y-1
+g1 X-30 Y-1
+g1 X30 Y-1
+
+g1 X1 Y30
+g1 X1 Y-30
+g1 X1 Y30
+
+g1 X-1 Y30
+g1 X-1 Y-30
+g1 X-1 Y30
+
+g1 X30 Y5
+g1 X-30 Y-1
+g1 X30 Y5
+
+g1 X5 Y30
+g1 X-1 Y-30
+g1 X5 Y30

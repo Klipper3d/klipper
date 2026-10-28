@@ -90,6 +90,46 @@ choice
     config LPC_SERIAL_UART3_P429_P428
         bool "Serial (on UART3 P4.29/P4.28)" if LOW_LEVEL_OPTIONS
         select SERIAL
+    config LPC_MMENU_CANBUS_P0_0_P0_1
+        bool "CAN bus (CAN1 on P0.0/P0.1)"
+        select CANSERIAL
+    config LPC_MMENU_CANBUS_P0_21_P0_22
+        bool "CAN bus (CAN1 on P0.21/P0.22)" if LOW_LEVEL_OPTIONS
+        select CANSERIAL
+    config LPC_MMENU_CANBUS_P0_4_P0_5
+        bool "CAN bus (CAN2 on P0.4/P0.5)" if LOW_LEVEL_OPTIONS
+        select CANSERIAL
+    config LPC_MMENU_CANBUS_P2_7_P2_8
+        bool "CAN bus (CAN2 on P2.7/P2.8)" if LOW_LEVEL_OPTIONS
+        select CANSERIAL
+    config LPC_USBCANBUS
+        bool "USB to CAN bus bridge" if LOW_LEVEL_OPTIONS
+        select USBCANBUS
 endchoice
+
+choice
+    prompt "CAN bus interface" if USBCANBUS
+    config LPC_CMENU_CANBUS_P0_0_P0_1
+        bool "CAN bus (CAN1 on P0.0/P0.1)"
+    config LPC_CMENU_CANBUS_P0_21_P0_22
+        bool "CAN bus (CAN1 on P0.21/P0.22)"
+    config LPC_CMENU_CANBUS_P0_4_P0_5
+        bool "CAN bus (CAN2 on P0.4/P0.5)"
+    config LPC_CMENU_CANBUS_P2_7_P2_8
+        bool "CAN bus (CAN2 on P2.7/P2.8)"
+endchoice
+
+config LPC_CANBUS_P0_0_P0_1
+    bool
+    default y if LPC_MMENU_CANBUS_P0_0_P0_1 || LPC_CMENU_CANBUS_P0_0_P0_1
+config LPC_CANBUS_P0_21_P0_22
+    bool
+    default y if LPC_MMENU_CANBUS_P0_21_P0_22 || LPC_CMENU_CANBUS_P0_21_P0_22
+config LPC_CANBUS_P0_4_P0_5
+    bool
+    default y if LPC_MMENU_CANBUS_P0_4_P0_5 || LPC_CMENU_CANBUS_P0_4_P0_5
+config LPC_CANBUS_P2_7_P2_8
+    bool
+    default y if LPC_MMENU_CANBUS_P2_7_P2_8 || LPC_CMENU_CANBUS_P2_7_P2_8
 
 endif

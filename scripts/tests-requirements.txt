@@ -1,0 +1,7 @@
+# This file describes the Python virtualenv package requirements for
+# the Klipper regression test cases.  This is in addition to the
+# package requirements listed in the klippy-requirements.txt file.
+# Typically the packages listed here are installed via the command:
+#   pip install -r tests-requirements.txt
+scipy==1.2.3 ; python_version < '3.0'
+scipy==1.15.3 ; python_version >= '3.0'

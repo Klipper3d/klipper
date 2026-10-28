@@ -1,9 +1,10 @@
 # Definitions of the supported input shapers
 #
-# Copyright (C) 2020-2021  Dmitry Butyugin <dmbutyugin@google.com>
+# Copyright (C) 2020-2026  Dmitry Butyugin <dmbutyugin@google.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import collections, math
+import collections, copy, math, re
+import mathutil
 
 SHAPER_VIBRATION_REDUCTION=20.
 DEFAULT_DAMPING_RATIO = 0.1
@@ -11,6 +12,9 @@ DEFAULT_DAMPING_RATIO = 0.1
 InputShaperCfg = collections.namedtuple(
         'InputShaperCfg',
         ('name', 'init_func', 'min_freq', 'max_damping_ratio'))
+
+class ShaperError(Exception):
+    pass
 
 def get_none_shaper():
     return ([], [])
@@ -31,21 +35,55 @@ def get_zvd_shaper(shaper_freq, damping_ratio):
     T = [0., .5*t_d, t_d]
     return (A, T)
 
-def get_mzv_shaper(shaper_freq, damping_ratio):
-    df = math.sqrt(1. - damping_ratio**2)
-    K = math.exp(-.75 * damping_ratio * math.pi / df)
-    t_d = 1. / (shaper_freq * df)
-
-    a1 = 1. - 1. / math.sqrt(2.)
-    a2 = (math.sqrt(2.) - 1.) * K
-    a3 = a1 * K * K
-
-    A = [a1, a2, a3]
-    T = [0., .375*t_d, .75*t_d]
+def get_mzv_coeffs(n, t):
+    if n < 3:
+        raise ShaperError("Too small n=%d, must be at least 3" % n)
+    if n <= 2 * t + 1 + 1e-7:
+        raise ShaperError("Too large t=%.6f for n=%d, must be less than %.6f" %
+                          (t, n, 0.5 * (n - 1)))
+    # Projected shaper duration with n -> \infinity for computing shaper zeros
+    tau = t * (n - 2.) / (n - 2. * t - 1.)
+    T = [i * t / (n - 1.) for i in range(n)]
+    # Build a system of equations for A. The first equation is sum(A) = 1
+    M = [[1.] * n]
+    F = [1.]
+    # Ensure correct placement of shaper zeros. Note that the system is not
+    # over-contrained, as the extra equations are linearly-dependent.
+    for i in range(n-1):
+        W = [2. * math.pi * (1. + i / tau) * tj for tj in T]
+        M.append([math.cos(w) for w in W])
+        M.append([math.sin(w) for w in W])
+        F.append(0.)
+        F.append(0.)
+    M_inv = mathutil.pseudo_inverse(M)
+    if M_inv is None:
+        raise ShaperError("Ill-formed shaper with n=%d, t=%.6f" % (n, t))
+    A = mathutil.mat_mat_mul([F], mathutil.mat_transp(M_inv))[0]
+    if any(a < -0.00001 for a in A):
+        raise ShaperError("Negative-valued shaper with n=%d, t=%.6f" % (n, t))
     return (A, T)
 
-def get_ei_shaper(shaper_freq, damping_ratio):
-    v_tol = 1. / SHAPER_VIBRATION_REDUCTION # vibration tolerance
+def get_mzv_shaper(shaper_freq, damping_ratio, n=3, t=0.0, tau=0.0):
+    if not tau and not t:
+        t = 0.75
+    elif tau:
+        # Infer total shaper duration from a projected shaper duration with
+        # n -> \infinity
+        t = tau * (n - 1.) / (n + 2. * tau - 2.)
+    A, T = get_mzv_coeffs(n, t)
+    # Apply damping
+    df = math.sqrt(1. - damping_ratio**2)
+    K = math.exp(-2. * t * damping_ratio * math.pi / ((n - 1.) * df))
+    t_d = 1. / (shaper_freq * df)
+    Kp = K
+    for i in range(1, n):
+        T[i] *= t_d
+        A[i] *= Kp
+        Kp *= K
+    return (A, T)
+
+def get_ei_shaper(shaper_freq, damping_ratio,
+                  v_tol=1./SHAPER_VIBRATION_REDUCTION):
     df = math.sqrt(1. - damping_ratio**2)
     t_d = 1. / (shaper_freq * df)
     dr = damping_ratio
@@ -97,7 +135,7 @@ def get_3hump_ei_shaper(shaper_freq, damping_ratio):
          [0.99849,  0.29808, -2.36460, 23.3990],
          [1.49870,  0.10306, -2.01390, 17.0320],
          [1.99960, -0.28231,  0.61536, 5.40450]]
-    a = [[0.11275,  0.76632,  3.29160 -1.44380],
+    a = [[0.11275,  0.76632,  3.29160, -1.44380],
          [0.23698,  0.61164, -2.57850,  4.85220],
          [0.30008, -0.19062, -2.14560,  0.13744],
          [0.23775, -0.73297,  0.46885, -2.08650],
@@ -119,3 +157,41 @@ INPUT_SHAPERS = [
     InputShaperCfg(name='3hump_ei', init_func=get_3hump_ei_shaper,
                    min_freq=48., max_damping_ratio=0.2),
 ]
+
+def get_shaper_cfg(shaper_name):
+    m = re.match(r"(\w+)\s*\((.*)\)$", shaper_name)
+    if m:
+        shaper_name = m.group(1)
+    for s in INPUT_SHAPERS:
+        if shaper_name == s.name:
+            return s
+    return None
+
+def init_shaper(shaper_name, shaper_freq, damping_ratio, error=None):
+    try:
+        m = re.match(r"(\w+)\s*\((.*)\)$", shaper_name)
+        args_l = []
+        args_kv = {}
+        if m:
+            shaper_name = m.group(1)
+            args = m.group(2)
+            if args:
+                parsed_args = re.findall(r"(?:(\w+)\s*=\s*)?\s*([\d.]+)", args)
+                def parse_val(s):
+                    if '.' in s:
+                        return float(s)
+                    return int(s)
+                args_l = [parse_val(v) for k, v in parsed_args if not k]
+                args_kv = {k: parse_val(v) for k, v in parsed_args if k}
+                if args_l and args_kv:
+                    raise ShaperError("Mixing named and non-named shaper"
+                                      " parameters is not supported")
+        for s in INPUT_SHAPERS:
+            if shaper_name == s.name:
+                return s.init_func(shaper_freq, damping_ratio,
+                                   *args_l, **args_kv)
+    except ShaperError as e:
+        if error is None:
+            raise
+        raise error("Failed to initialize shaper: %s" % str(e))
+    return None

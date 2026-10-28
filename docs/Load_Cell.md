@@ -14,7 +14,7 @@ A calibrated force sensor is an important part of a load cell based probe.
 
 When you first connect a load cell its good practice to check for issues by
 running `LOAD_CELL_DIAGNOSTIC`. This tool collects 10 seconds of data from the
-load cell and resport statistics:
+load cell and reports statistics:
 
 ```
 $ LOAD_CELL_DIAGNOSTIC
@@ -176,7 +176,7 @@ endstop: too much force!`. There are a number of ways this can be triggered:
 
 The first risk this protects against is picking too large of a value for
 `drift_filter_cutoff_frequency`. This can cause the drift filter to filter out
-a probe event and continue the homing move. If this happens the
+a probe event and continue the homing move. If this happens, the
 `force_safety_limit` acts as a backup protection.
 
 The second problem is probing repeatedly in one place. Klipper does not retract
@@ -188,7 +188,7 @@ the `PROBE` command, load_cell_probe will tare the endstop at the current force.
 Multiple cycles of this will result in ever-increasing force on the toolhead.
 `force_safety_limit` stops this cycle from running out of control.
 
-Another way this run-away can happen is damage to a strain gauge. If the metal
+Another way this runaway can happen is damage to a strain gauge. If the metal
 part is permanently bent it will change the `reference_tare_counts` of the
 device. This puts the starting tare value much closer to the limit making it
 more likely to be violated. You want to be notified if this is happening
@@ -207,10 +207,38 @@ with an error `!! LoadCell Endstop timed out waiting on ADC data`.
 
 If this happens, the most likely cause is a fault from the ADC. Inadequate
 grounding of your printer can be the root cause. The frame, power supply
-case and pint bed should all be connected to ground. You may need to ground
+case and print bed should all be connected to ground. You may need to ground
 the frame in multiple places. Anodized aluminum extrusions do not conduct
 electricity well. You might need to sand the area where the grounding wire
 is attached to make good electrical contact.
+
+#### Interpolation
+To increase the precision of the probing result, the position of the first
+contact between nozzle and bed can be estimated by fitting a piecewise function
+to the measured data. The data will consist of two regions: while the nozzle is
+above the bed, the force will be constant (at the tare value). When the nozzle
+is in contact with the bed, the force will increase linearly with decreasing z
+position. A piecewise function is fitted to the data and the optimal z position
+of the split point is found by minimising the error squared. This enables a
+resolution finer than the distance between the sampling points and will also be
+less sensitive to noise.
+
+Due to both physical and technical reasons, the interpolation uses data
+collected during an additional ascending movement after the initial descending
+move. The first 300ms of data collected during the ascending move will
+be used for the fit (this minimises the influence of tare drifts). The
+collected data must contain enough samples for the fit: at least 3 samples each
+below and above the contact point are required.
+
+It is recommended to use a relatively high trigger force for the probe to have
+a strong enough signal. If you have too few samples below the contact point,
+try increasing the `trigger_force` or reducing the `lift_speed`. However, if
+the `lift_speed` is too small, there will be too few samples above the contact
+point due to the 300ms window.
+
+The distance of the ascending move can be configured through the
+`sample_retract_dist` parameter.
+
 
 ## Load Cell Probe Setup
 
@@ -238,61 +266,10 @@ carefully to look for issues.
 Load cell probes don't support the `QUERY_ENDSTOPS` or `QUERY_PROBE`
 commands. Use `LOAD_CELL_TEST_TAP` for testing functionality before probing.
 
-### Homing Macros
-
-Load cell probe is not an endstop and doesn't support `endstop:
-prove:z_virtual_endstop`. For the time being you'll need to configure your z
-axis with an MCU pin as its endstop. You won't actually be using the pin but
-for the time being you have to configure something.
-
-To home the axis with just the probe you need to set up a custom homing
-macro. This requires setting up
-[homing_override](Config_Reference.md#homing_override).
-
-Here is a simple macro that can accomplish this. Note that the
-`_HOME_Z_FROM_LAST_PROBE` macro has to be separate because of the way macros
-work. The sub-call is needed so that the `_HOME_Z_FROM_LAST_PROBE` macro can
-see the result of the probe in `printer.probe.last_z_result`.
-
-```gcode
-[gcode_macro _HOME_Z_FROM_LAST_PROBE]
-gcode:
-    {% set z_probed = printer.probe.last_z_result %}
-    {% set z_position = printer.toolhead.position[2] %}
-    {% set z_actual = z_position - z_probed %}
-    SET_KINEMATIC_POSITION Z={z_actual}
-
-[gcode_macro _HOME_Z]
-gcode:
-    SET_GCODE_OFFSET Z=0  # load cell probes dont need a Z offset
-    # position toolhead for homing Z, edit for your printers size
-    #G90  # absolute move
-    #G1 Y50 X50 F{5 * 60}  # move to X/Y position for homing
-
-    # soft home the z axis to its limit so it can be moved:
-    SET_KINEMATIC_POSITION Z={printer.toolhead.axis_maximum[2]}
-
-    # Fast approach and tap
-    PROBE PROBE_SPEED={5 * 60}  # override the speed for faster homing
-    _HOME_Z_FROM_LAST_PROBE
-
-    # lift z to 2mm
-    G91  # relative move
-    G1 Z2 F{5 * 60}
-
-    # probe at standard speed
-    PROBE
-    _HOME_Z_FROM_LAST_PROBE
-
-    # lift z to 10mm for clearance
-    G91  # relative move
-    G1 Z10 F{5 * 60}
-```
-
 ### Suggested Probing Temperature
 
 Currently, we suggest keeping the nozzle temperature below the level that causes
-the filament to ooze while homing and probing. 140C is a good starting
+the filament to ooze while homing and probing. 140°C is a good starting
 point. This temperature is also low enough not to scar PEI build surfaces.
 
 Fouling of the nozzle and the print bed due to oozing filament is the #1 source
@@ -306,7 +283,7 @@ location has become fouled by filament ooze. Modules like `quad_gantry_level`
 will repeatedly probe the same coordinates even if a probe previously failed
 there.
 
-Give the above it is strongly suggested not to probe at printing temperatures.
+Given the above it is strongly suggested not to probe at printing temperatures.
 
 ### Hot Nozzle Protection
 
@@ -341,7 +318,7 @@ temperatures from PLA to PC.
 
 The easiest way to do this is to measure at 2 different temperatures.
 Ideally these should be the upper and lower limits of the printing
-temperature range. E.g. 180C and 290C. You can perform a `PROBE_ACCURACY` at
+temperature range. E.g. 180°C and 290°C. You can perform a `PROBE_ACCURACY` at
 both temperatures and then calculate the difference of the `average z` at both.
 
 The adjustment value is the change in nozzle length divided by the change in
@@ -360,11 +337,12 @@ Set up z_thermal_adjust to reference the `extruder` as the source of temperature
 data. E.g.:
 
 ```
-[z_thermal_adjust nozzle]
+[z_thermal_adjust]
 temp_coeff=-0.00045455
 sensor_type: temperature_combined
 sensor_list: extruder
 combination_method: max
+maximum_deviation: 999
 min_temp: 0
 max_temp: 400
 max_z_adjustment: 0.1
@@ -381,12 +359,12 @@ of external forces that change while probing.
 ### Installing SciPy
 
 The filtering code uses the excellent [SciPy](https://scipy.org/) library to
-compute the filter coefficients based on the values your enter into the config.
+compute the filter coefficients based on the values you enter into the config.
 
-Pre-compiled SciPi builds are available for Python 3 on 32 bit Raspberry Pi
-systems. 32 bit + Python 3 is strongly recommended because it will streamline
-your installation experience. It does work with Python 2 but installation can
-take 30+ minutes and require installing additional tools.
+Pre-compiled SciPi builds are available for Python 3 on 32-bit and 64-bit
+Raspberry Pi systems. 32-bit/64-bit + Python 3 is strongly recommended because
+it will streamline your installation experience. It does work with Python 2 but
+installation can take 30+ minutes and requires installing additional tools.
 
 ```bash
 ~/klippy-env/bin/pip install scipy

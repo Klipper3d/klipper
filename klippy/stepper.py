@@ -45,8 +45,7 @@ class MCU_stepper:
         self._reset_cmd_tag = self._get_position_cmd = None
         self._active_callbacks = []
         motion_queuing = printer.load_object(config, 'motion_queuing')
-        sname = self._name.split()[-1]
-        self._syncemitter = motion_queuing.allocate_syncemitter(mcu, sname)
+        self._syncemitter = motion_queuing.allocate_syncemitter(mcu, self._name)
         ffi_main, ffi_lib = chelper.get_ffi()
         self._stepqueue = ffi_lib.syncemitter_get_stepcompress(
             self._syncemitter)
@@ -100,6 +99,9 @@ class MCU_stepper:
         elif sou:
             # MCU has optimized step/unstep - better to use that
             want_both_edges = False
+        if not ssbe:
+            configfile = self._mcu.get_printer().lookup_object("configfile")
+            configfile.deprecate_mcu_code(self._mcu, 'STEPPER_STEP_BOTH_EDGE')
         if want_both_edges:
             self._step_both_edge = True
             invert_step = -1
