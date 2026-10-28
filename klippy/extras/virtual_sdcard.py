@@ -113,7 +113,18 @@ class VirtualSD:
     def do_pause(self):
         if self.work_timer is not None:
             self.must_pause_work = True
-            while self.work_timer is not None and not self.cmd_from_sd:
+            # Wait until the work handler fully exits (work_timer cleared).
+            # Previously we returned immediately when cmd_from_sd was True,
+            # assuming the work handler would still observe must_pause_work
+            # and exit shortly.  That created a window where PAUSE set
+            # is_paused=True but the work handler was still running inside
+            # _wait_extruder_ready, blocking temperature waits, or the
+            # "retry unconsumed line" path - and a subsequent RESUME could
+            # race the work handler's teardown and hit "SD busy" or an
+            # inconsistent state.  Unconditionally wait for work_timer to
+            # become None so PAUSE always quiesces the SD print before
+            # reporting success.
+            while self.work_timer is not None:
                 self.reactor.pause(self.reactor.monotonic() + .001)
         else:
             # Defensive: if the work handler has already exited (e.g. due to

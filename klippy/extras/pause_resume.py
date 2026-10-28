@@ -41,7 +41,13 @@ class PauseResume:
             'is_paused': self.is_paused,
         }
     def _request_sd_interrupt(self):
-        if self.v_sd is not None and self.v_sd.is_active():
+        # Set the interrupt flag whenever a virtual_sdcard exists.
+        # Previously we gated this behind v_sd.is_active(), but the work
+        # handler can exit between the host pause request arriving and us
+        # grabbing the gcode lock - leaving must_pause_work cleared and a
+        # stale PAUSE state.  Always set the flag; do_pause/do_resume will
+        # decide what to do based on the actual work_timer state.
+        if self.v_sd is not None:
             self.sd_interrupt_pending = True
             self.v_sd.must_pause_work = True
     def _handle_cancel_request(self, web_request):
@@ -106,9 +112,18 @@ class PauseResume:
         if self._resume_in_progress:
             raise self.printer.command_error(
                 "Resume already in progress, skipping duplicate request")
-        if not self.is_paused:
+        # Any of these flags means we are in a paused state.  In theory
+        # is_paused is the single source of truth, but races between
+        # do_pause and work_handler teardown can leave sd_paused or
+        # pause_command_sent set while is_paused is still False (or vice
+        # versa).  Treat any of them as "paused" and repair consistency.
+        paused = self.is_paused or self.sd_paused or self.pause_command_sent
+        if not paused:
             raise self.printer.command_error(
                 "Print is not paused, resume aborted")
+        # Repair: if is_paused got out of sync, align it with the others
+        if not self.is_paused:
+            self.is_paused = True
         self._resume_in_progress = True
         try:
             velocity = gcmd.get_float('VELOCITY', self.recover_velocity)
