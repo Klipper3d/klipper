@@ -116,7 +116,7 @@ class BacklashCompensation:
             commanded_pos[0] -= offset_x
             commanded_pos[1] -= offset_y
             commanded_pos[2] -= offset_z
-            res['position'] = self.toolhead.Coord(*commanded_pos)
+            res['position'] = self.toolhead.Coord(commanded_pos)
         return res
 
     def _motion_report_status_interceptor(self, eventtime):
@@ -129,7 +129,7 @@ class BacklashCompensation:
             mutated_coord[0] -= offset_x
             mutated_coord[1] -= offset_y
             mutated_coord[2] -= offset_z
-            res['live_position'] = self.toolhead.Coord(*mutated_coord)
+            res['live_position'] = self.toolhead.Coord(mutated_coord)
         return res
 
 
