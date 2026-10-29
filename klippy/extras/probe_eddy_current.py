@@ -1046,7 +1046,8 @@ class PrinterEddyProbe:
                            self.param_helper, trig_analog)
         EddyTapCalibration(config, self.calibration, eddy_tap)
         self.eddy_tap_session = probe.SampleAveragingHelper(
-            config, self.param_helper, eddy_tap.start_probe_session)
+            config, self.param_helper, eddy_tap.start_probe_session,
+            nozzle_probe=True)
         # Probing via "scan" and "rapid_scan" requests
         self.eddy_scan = EddyScanningProbe(config, self.sensor_helper,
                                            self.calibration, self.probe_offsets)
