@@ -442,6 +442,179 @@ class EnderIntegration:
             for _ in range(count):
                 self.execute('G1 E%.9f F%.9f\nM400' % (mm / count, speed))
 
+    def tip_settings(self):
+        macro = self.printer.lookup_object(
+            'gcode_macro _BMCU_ENDER_TIP_SETTINGS', None
+        )
+        if macro is None:
+            return None
+        settings = dict(macro.get_status(self.reactor.monotonic()))
+        if not settings.get('enabled'):
+            return None
+        names = (
+            'temperature',
+            'separation_mm',
+            'separation_f',
+            'cooling_position_mm',
+            'cooling_length_mm',
+            'cooling_f',
+            'cooling_final_f',
+            'cooling_moves',
+            'pause_ms',
+        )
+        for name in names:
+            value = float(settings[name])
+            if not math.isfinite(value) or value < 0:
+                raise RuntimeError('Invalid tip-forming setting: %s.' % name)
+            settings[name] = value
+        if (
+            settings['separation_mm'] <= 0
+            or settings['separation_f'] <= 0
+            or settings['cooling_f'] <= 0
+            or settings['cooling_final_f'] <= 0
+            or settings['cooling_length_mm'] <= 0
+            or settings['cooling_position_mm'] < settings['separation_mm']
+            or settings['cooling_moves'] != int(settings['cooling_moves'])
+            or settings['cooling_moves'] < 1
+        ):
+            raise RuntimeError('Invalid tip-forming distances or speeds.')
+        extruder = self.printer.lookup_object('extruder')
+        if (
+            max(
+                settings['separation_f'],
+                settings['cooling_f'],
+                settings['cooling_final_f'],
+            )
+            > extruder.max_e_velocity * 60.0
+        ):
+            raise RuntimeError('Tip-forming speed exceeds the extruder limit.')
+        heater = extruder.get_heater()
+        if settings['temperature'] and not (
+            heater.min_extrude_temp
+            < settings['temperature']
+            < heater.get_temp_range()[1]
+        ):
+            raise RuntimeError('Tip-forming temperature is outside limits.')
+        if max(settings['separation_mm'], settings['cooling_length_mm']) > (
+            extruder.max_e_dist
+        ):
+            raise RuntimeError(
+                'Tip-forming moves exceed max_extrude_only_distance.'
+            )
+        return settings
+
+    def form_tip(self, device, destination, channel, session):
+        settings = self.tip_settings()
+        if settings is None:
+            return 0.0
+        extruder = self.printer.lookup_object('extruder')
+        previous = extruder.get_status(self.reactor.monotonic())
+        temperature = settings['temperature']
+        changed_temperature = False
+        changed_pressure = False
+        try:
+            if temperature:
+                self.execute(
+                    'SET_HEATER_TEMPERATURE HEATER=extruder TARGET=%.3f'
+                    % temperature
+                )
+                changed_temperature = True
+                deadline = self.reactor.monotonic() + 180.0
+                while True:
+                    if not self.sensor(destination):
+                        raise RuntimeError('Filament left before tip forming.')
+                    self.verify_session(device, session, channel)
+                    status = extruder.get_status(self.reactor.monotonic())
+                    if status['target'] != temperature:
+                        raise RuntimeError('Tip-forming target changed.')
+                    if (
+                        abs(status['temperature'] - temperature) <= 1.0
+                        and status['can_extrude']
+                    ):
+                        break
+                    if self.reactor.monotonic() >= deadline:
+                        raise RuntimeError(
+                            'Tip-forming temperature timed out.'
+                        )
+                    self.reactor.pause(self.reactor.monotonic() + 0.250)
+            self.execute('SET_PRESSURE_ADVANCE EXTRUDER=extruder ADVANCE=0')
+            changed_pressure = True
+            device.set_motion(channel, protocol.MOTION_ON_USE)
+            self.move_filament(
+                -settings['separation_mm'],
+                settings['separation_f'],
+                chunk=extruder.max_e_dist,
+            )
+            remaining = (
+                settings['cooling_position_mm']
+                + settings['cooling_length_mm']
+                - settings['separation_mm']
+            )
+            for fraction, factor in ((0.7, 1.0), (0.2, 0.5), (0.1, 0.3)):
+                self.verify_session(device, session, channel)
+                if not self.sensor(destination):
+                    raise RuntimeError(
+                        'Cooling position passed the entry sensor; '
+                        'reduce the tip-forming distances.'
+                    )
+                self.move_filament(
+                    -remaining * fraction,
+                    settings['cooling_f'] * factor,
+                    chunk=extruder.max_e_dist,
+                )
+            count = int(settings['cooling_moves'])
+            for index in range(count):
+                self.verify_session(device, session, channel)
+                if not self.sensor(destination):
+                    raise RuntimeError('Filament left during tip cooling.')
+                increment = (
+                    settings['cooling_final_f'] - settings['cooling_f']
+                ) / (2 * count - 1)
+                forward = settings['cooling_f'] + increment * 2 * index
+                self.execute(
+                    'G1 E%.9f F%.9f\nG1 E%.9f F%.9f\nM400'
+                    % (
+                        settings['cooling_length_mm'],
+                        forward,
+                        -settings['cooling_length_mm'],
+                        forward + increment,
+                    )
+                )
+            deadline = self.reactor.monotonic() + settings['pause_ms'] / 1000
+            while self.reactor.monotonic() < deadline:
+                if not self.sensor(destination):
+                    raise RuntimeError('Filament left during tip cooling.')
+                self.reactor.pause(
+                    min(deadline, self.reactor.monotonic() + 0.100)
+                )
+            self.verify_session(device, session, channel)
+            if not self.sensor(destination):
+                raise RuntimeError('Filament left during tip cooling.')
+            self.gcode.respond_info(
+                'Channel %d: tip-forming moves completed; '
+                'inspect the tip after unloading.' % (channel + 1)
+            )
+            return (
+                settings['cooling_position_mm'] + settings['cooling_length_mm']
+            )
+        finally:
+            if changed_pressure:
+                self.execute(
+                    'SET_PRESSURE_ADVANCE EXTRUDER=extruder ADVANCE=%.9f '
+                    'SMOOTH_TIME=%.9f'
+                    % (
+                        previous.get('pressure_advance', 0.0),
+                        previous.get('smooth_time', 0.040),
+                    )
+                )
+            if changed_temperature:
+                current = extruder.get_status(self.reactor.monotonic())
+                if current['target'] == temperature:
+                    self.execute(
+                        'SET_HEATER_TEMPERATURE HEATER=extruder TARGET=%.3f'
+                        % previous['target']
+                    )
+
     def wipe(self, device, destination, channel, session):
         device.set_motion(channel, protocol.MOTION_ON_USE)
         remaining = self.purge_distance
@@ -492,9 +665,8 @@ class EnderIntegration:
                     raise RuntimeError(
                         'The entry sensor cleared during loading.'
                     )
-                device.set_motion(channel, protocol.MOTION_BEFORE_ON_USE)
+                device.set_motion(channel, protocol.MOTION_ON_USE)
                 self.move_filament(min(10.0, remaining), self.advance_speed)
-                device.stop_all()
                 remaining -= min(10.0, remaining)
             self.wipe(device, destination, channel, session)
             completed = True
@@ -529,6 +701,7 @@ class EnderIntegration:
         try:
             device, destination, channel = self.context(gcmd, False)
             session = device.status['session_id']
+            device.stop_all()
             self.execute('SAVE_GCODE_STATE NAME=BMCU_ENDER_RETIRADA')
             saved = True
             self.position_head()
@@ -537,9 +710,11 @@ class EnderIntegration:
                 raise RuntimeError(
                     'The entry sensor was already clear before unloading.'
                 )
+            total = self.form_tip(device, destination, channel, session)
+            device.refresh()
             marker = float(device.status['meters'][channel])
+            device.set_motion(channel, protocol.MOTION_BEFORE_PULL_BACK)
             deadline = self.reactor.monotonic() + self.timeout
-            total = 0.0
             while self.sensor(destination):
                 if self.reactor.monotonic() >= deadline:
                     raise RuntimeError(

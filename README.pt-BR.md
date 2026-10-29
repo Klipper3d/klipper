@@ -61,6 +61,13 @@ antes da nova carga e purga. As temperaturas de pré-aquecimento ficam em
 `bmcu-controles-ajustes.cfg`, preservado nas próximas instalações. Os ajustes
 da sequência calibrada permanecem em `bmcu-multicor-ender.cfg`.
 
+O instalador também adiciona `bmcu-formacao-ponta.cfg`, preservado nas próximas
+instalações, com um perfil experimental de formação de ponta. A retirada passa
+a separar e resfriar a ponta antes de liberar o switch; após a captura, a BMCU
+acompanha o buffer. É necessário inspecionar as pontas e validar as recargas.
+Consulte o [perfil e teste de quatro cores](docs/Ender3_V3_SE_Tip_Forming.md),
+documentado em inglês. Os valores iniciais ainda exigem validação física.
+
 Na seção `[e3v3se_display]`, use `language: pt_BR` para a tela em português.
 O código-fonte e a documentação mantida pelo projeto ficam em inglês. Nomes
 antigos de comandos, opções de configuração e campos de backup em português

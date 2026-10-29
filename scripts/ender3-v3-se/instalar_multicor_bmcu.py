@@ -25,6 +25,9 @@ CONTROLS = (
 PANEL_SETTINGS = (
     ROOT / 'config/ender3-v3-se-validada/bmcu-controles-ajustes.cfg'
 ).read_bytes()
+TIP_SETTINGS = (
+    ROOT / 'config/ender3-v3-se-validada/bmcu-formacao-ponta.cfg'
+).read_bytes()
 
 
 def query_object(name):
@@ -265,7 +268,11 @@ def prepare(home):
         if not path.is_file():
             raise RuntimeError('File not found: ' + str(path))
     content = root.read_text()
-    for filename in ('bmcu-multicor-ender.cfg', 'bmcu-controles.cfg'):
+    for filename in (
+        'bmcu-multicor-ender.cfg',
+        'bmcu-controles.cfg',
+        'bmcu-formacao-ponta.cfg',
+    ):
         include_line = '[include %s]' % filename
         if not re.search(
             r'^\s*\[include\s+' + re.escape(filename) + r'\]\s*$',
@@ -284,6 +291,7 @@ def prepare(home):
                     + content[marker:]
                 )
     settings = configurations / 'bmcu-controles-ajustes.cfg'
+    tip_settings = configurations / 'bmcu-formacao-ponta.cfg'
     compile(MODULE, 'bmcu_integracao_ender.py', 'exec')
     return {
         root.resolve(): content.encode(),
@@ -296,6 +304,11 @@ def prepare(home):
         (configurations / 'bmcu-controles.cfg').resolve(): CONTROLS,
         settings.resolve(): (
             settings.read_bytes() if settings.is_file() else PANEL_SETTINGS
+        ),
+        tip_settings.resolve(): (
+            tip_settings.read_bytes()
+            if tip_settings.is_file()
+            else TIP_SETTINGS
         ),
         destination.resolve(): (
             destination.read_bytes()
