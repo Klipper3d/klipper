@@ -175,6 +175,20 @@ dos includes do switch, impressão e dos módulos/serviços BMCU, sem duplicar s
 `BMCU_CONFIGURAR_MULTICOR` é configuração manual: não deve rodar a cada boot nem
 no início de cada impressão, pois redefine materiais dos canais 2 e 4.
 
+## Seleção automática do Orca
+
+Com o mapa de impressão confirmado, a integração aceita os comandos automáticos
+`T0` a `T3` do Orca como ferramentas lógicas 1 a 4. O canal físico é resolvido
+pelo mapa da BMCU; não é fixado pelo adaptador. Os comandos explícitos `T0 B1`
+até `T3 B4` continuam funcionando. Sem mapa ativo, os comandos nativos mantêm
+seu significado, incluindo a entrada externa de `T0`.
+
+Essa correção dispensa pós-processamento no computador. Os G-codes de início,
+fim e troca permanecem em `profiles/orca/ender3-v3-se-bmcu/`. Para aplicá-la a
+uma instalação existente, atualize o checkout e execute novamente o instalador
+acima com os canais estacionados e o switch livre. Atualizar somente o Git não
+substitui o módulo opcional já instalado em `klippy/extras/`.
+
 ## Testes
 
 ```sh

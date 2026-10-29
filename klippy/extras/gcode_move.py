@@ -53,8 +53,8 @@ class GCodeMove:
                                        self.reset_last_position)
         printer.register_event_handler("extruder:activate_extruder",
                                        self._handle_activate_extruder)
-        printer.register_event_handler("homing:home_rails_end",
-                                       self._handle_home_rails_end)
+        printer.register_event_handler("homing:home_axes",
+                                       self._handle_homing_home_axes)
     def _handle_ready(self):
         self.is_printer_ready = True
         if self.move_transform is None:
@@ -76,7 +76,7 @@ class GCodeMove:
         self.reset_last_position()
         self.extrude_factor = 1.
         self.base_position[3] = self.last_position[3]
-    def _handle_home_rails_end(self, homing_state, rails):
+    def _handle_homing_home_axes(self, homing_state):
         self.reset_last_position()
         for axis in homing_state.get_axes():
             self.base_position[axis] = self.homing_position[axis]
