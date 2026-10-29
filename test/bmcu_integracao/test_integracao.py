@@ -175,12 +175,12 @@ class TestBench:
             _capturar_extrusora_primeiro=self.capture
         )
 
-    def lookup(self, name):
+    def lookup(self, name, default=None):
         return {
             'toolhead': self.toolhead,
             'extruder': self.extruder,
             'gcode_move': self.gcode_move,
-        }[name]
+        }.get(name, default)
 
     def pause(self, timeout):
         self.timeout = timeout
@@ -251,7 +251,7 @@ class TestBench:
                 assert abs(mm) <= self.extruder.max_e_dist + 1e-8
                 self.e += mm
                 self.timeout += abs(mm) / params['F'] * 60
-                self.reverse += max(0, -mm)
+                self.reverse = max(0, -self.e)
                 self.device.status['meters'][3] += mm / 1000
 
     def register(self, name, handler):
@@ -575,6 +575,16 @@ class IntegrationTests(unittest.TestCase):
                 installer.prepare(home)[settings], custom_settings.encode()
             )
             self.assertEqual(root.count('[include bmcu-controles.cfg]'), 1)
+            tip = config / 'bmcu-formacao-ponta.cfg'
+            custom_tip = tip.read_text().replace(
+                'variable_separation_f: 1200.0',
+                'variable_separation_f: 1500.0',
+            )
+            tip.write_text(custom_tip)
+            self.assertEqual(installer.prepare(home)[tip], custom_tip.encode())
+            self.assertEqual(
+                root.count('[include bmcu-formacao-ponta.cfg]'), 1
+            )
 
     def test_native_capture_starts_extruder_before_feeder(self):
         original = (BASE / 'manager_original.txt').read_text()

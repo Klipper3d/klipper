@@ -67,6 +67,12 @@ changes park the previous filament before loading/purging the next one. See
 [everyday controls](docs/Ender3_V3_SE_Configuracao_Validada.md#everyday-filament-controls)
 for the workflow and preserved preheat settings.
 
+The installer also adds a preserved, experimental
+[tip-forming profile and four-color reload test](docs/Ender3_V3_SE_Tip_Forming.md).
+It stages nozzle separation and cooling before the existing sensor/encoder
+unload, and uses buffer-follow assistance after capture. Inspect physical tips
+and verify repeated reloads before treating the starting profile as calibrated.
+
 Set `language: en` or `language: pt_BR` in `[e3v3se_display]` for the screen UI.
 Source code and maintained project documentation use English. Legacy Portuguese
 G-code command names, configuration keys and backup field names are retained
