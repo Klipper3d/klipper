@@ -258,9 +258,8 @@ class E3V3SEDisplay:
             result["bmcu_busy"] = bool(status.get("active_operations"))
             integration = self.printer.lookup_object(
                 "bmcu_integracao_ender", None)
-            if integration is not None:
-                result["bmcu_busy"] |= integration.get_status(eventtime)[
-                    "manual_busy"]
+            result["bmcu_busy"] |= getattr(
+                integration, "manual_operation", None) is not None
             version_ok = status.get("package_version") == "1.0.6"
             # Versioned read-only adapter: public device snapshots freeze
             # during prints/pauses in 1.0.6. Never refresh or send UART here.

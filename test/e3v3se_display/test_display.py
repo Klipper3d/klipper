@@ -425,6 +425,14 @@ class FilamentOperationTest(unittest.TestCase):
                                    'CHANNEL': str(channel + 1)}], calls)
                 self.assertFalse(h.display.is_operation_busy())
 
+    def test_prior_integration_still_reports_bmcu_available(self):
+        self.h.add_bmcu()
+        integration = types.SimpleNamespace()
+        self.h.printer.objects['bmcu_integracao_ender'] = integration
+        self.assertTrue(self.display._bmcu_status(0.)['bmcu_available'])
+        integration.manual_operation = 'LOAD'
+        self.assertTrue(self.display._bmcu_status(0.)['bmcu_busy'])
+
     def test_manual_unload_without_loaded_channel_reaches_noop_handler(self):
         self.h.add_bmcu()
         calls = []
