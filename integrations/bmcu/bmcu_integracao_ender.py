@@ -32,6 +32,7 @@ class EnderIntegration:
         self.z_lift = config.getfloat('alivio_z', 2.0, above=0.0)
         self.wipe_passes = config.getint('limpezas', 3, minval=1)
         self.temporary_pullbacks = {}
+        self.manual_operation = None
         self.original_wait_pullback = self.bmcu._wait_pullback_safe
         self.bmcu._wait_pullback_safe = self.wait_pullback
         self.gcode.register_command(
@@ -42,6 +43,9 @@ class EnderIntegration:
         )
         self.gcode.register_command(
             'BMCU_TROCAR_ENDER', self.protect(self.change_tool)
+        )
+        self.gcode.register_command(
+            'BMCU_ENDER_MANUAL', self.protect(self.manual_filament)
         )
         self.printer.register_event_handler('klippy:ready', self.ready)
 
@@ -187,12 +191,172 @@ class EnderIntegration:
             self.gcode.run_script_from_command(text)
 
     def sensor(self, destination):
+        if getattr(self, 'manual_operation', None) is not None:
+            self.check_manual_operation()
         status = destination.sensor_status('entry_sensor')
         if not status or status.get('filament_detected') not in (True, False):
             raise RuntimeError(
                 ('The entry sensor did not return a valid reading.')
             )
         return bool(status['filament_detected'])
+
+    def get_status(self, eventtime):
+        return {'manual_busy': self.manual_operation is not None}
+
+    def manual_context(self):
+        if self.printer.lookup_object('print_stats').get_status(
+            self.reactor.monotonic()
+        ).get('state') in ('printing', 'paused'):
+            raise RuntimeError(
+                'Finish or cancel the print before using channels.'
+            )
+        if self.bmcu.active_operations or self.bmcu.print_plan_open:
+            raise RuntimeError(
+                'A BMCU operation or print plan is in progress.'
+            )
+        if self.bmcu.print_map_active:
+            raise RuntimeError(
+                'Finish the BMCU print context before using channels.'
+            )
+        device = self.bmcu.devices_by_name.get(self.device)
+        destination = self.bmcu.endpoints.get(self.destination)
+        if (
+            device is None
+            or not device.ready
+            or destination is None
+            or getattr(device, 'last_error', '')
+        ):
+            raise RuntimeError('The BMCU is not ready.')
+        device.refresh()
+        if len(self.bmcu.devices) != 1:
+            raise RuntimeError('Manual controls require one BMCU.')
+        loaded = []
+        for channel in range(4):
+            route = self.bmcu._route_state(device, channel)
+            if route == protocol.ROUTE_UNCERTAIN:
+                raise RuntimeError(
+                    'Check the uncertain BMCU route before continuing.'
+                )
+            if route == protocol.ROUTE_LOADED:
+                loaded.append(channel)
+        if len(loaded) > 1:
+            raise RuntimeError('More than one BMCU channel is marked loaded.')
+        current = loaded[0] if loaded else None
+        detected = self.sensor(destination)
+        if detected != (current is not None):
+            raise RuntimeError(
+                'The entry sensor and loaded BMCU route disagree.'
+            )
+        return device, destination, current
+
+    def check_manual_operation(self):
+        if self.printer.is_shutdown():
+            raise RuntimeError('The printer is shut down.')
+        display = self.printer.lookup_object('e3v3se_display', None)
+        session = getattr(display, 'bmcu_session', None)
+        if session and session.get('cancelled'):
+            raise RuntimeError('Filament operation cancelled.')
+        if self.printer.lookup_object('print_stats').get_status(
+            self.reactor.monotonic()
+        ).get('state') in ('printing', 'paused'):
+            raise RuntimeError(
+                'A print started during the filament operation.'
+            )
+
+    def heat_manual_filament(self):
+        self.gcode.run_script_from_command(
+            'SET_HEATER_TEMPERATURE HEATER=extruder TARGET=230'
+        )
+        extruder = self.printer.lookup_object('extruder')
+        deadline = self.reactor.monotonic() + 300.0
+        while True:
+            self.check_manual_operation()
+            status = extruder.get_status(self.reactor.monotonic())
+            if status['target'] != 230.0:
+                raise RuntimeError('Nozzle target changed; operation aborted.')
+            if status['can_extrude'] and status['temperature'] >= 229.0:
+                return
+            if self.reactor.monotonic() >= deadline:
+                raise RuntimeError('Heating timed out.')
+            self.reactor.pause(self.reactor.monotonic() + 0.250)
+
+    def manual_filament(self, gcmd):
+        action = gcmd.get('ACTION').upper()
+        if action not in ('LOAD', 'UNLOAD'):
+            raise gcmd.error('Invalid filament action.')
+        channel = (
+            gcmd.get_int('CHANNEL', minval=1, maxval=4) - 1
+            if action == 'LOAD'
+            else None
+        )
+        if self.manual_operation is not None:
+            raise gcmd.error('Filament operation in progress.')
+        device, destination, current = self.manual_context()
+        if action == 'UNLOAD' and current is None:
+            gcmd.respond_info('No filament is loaded; nothing to unload.')
+            return
+        if action == 'LOAD':
+            if (
+                self.bmcu._endpoint_for_channel(device, channel)
+                is not destination
+            ):
+                raise gcmd.error('Channel assigned to another extruder.')
+            if not device.status['present'][channel]:
+                raise gcmd.error(
+                    'Insert filament into channel %d first.' % (channel + 1)
+                )
+            if current == channel:
+                gcmd.respond_info(
+                    'Channel %d is already loaded.' % (channel + 1)
+                )
+                return
+        self.manual_operation = action
+        saved = False
+        try:
+            self.heat_manual_filament()
+            self.manual_context()
+            self.execute('SAVE_GCODE_STATE NAME=BMCU_ENDER_MANUAL')
+            saved = True
+            head = self.printer.lookup_object('toolhead').get_status(
+                self.reactor.monotonic()
+            )
+            if not all(axis in head['homed_axes'] for axis in 'xyz'):
+                self.execute('G28')
+            self.check_manual_operation()
+            self.position_head()
+            self.gcode.run_script_from_command(
+                'SET_FILAMENT_SENSOR SENSOR=bmcu_entry ENABLE=1'
+            )
+            if current is not None:
+                self.gcode.run_script_from_command(
+                    'BMCU_UNLOAD DEVICE=%s CHANNEL=%d' % (device.name, current)
+                )
+                self.check_manual_operation()
+                _, _, remaining = self.manual_context()
+                if remaining is not None:
+                    raise RuntimeError('The previous filament did not unload.')
+            if action == 'LOAD':
+                self.gcode.run_script_from_command(
+                    'BMCU_LOAD DEVICE=%s CHANNEL=%d' % (device.name, channel)
+                )
+                self.check_manual_operation()
+                _, _, loaded = self.manual_context()
+                if loaded != channel:
+                    raise RuntimeError('The requested channel was not loaded.')
+        except Exception:
+            device.stop_all()
+            raise
+        finally:
+            try:
+                self.restore_pullbacks()
+            finally:
+                try:
+                    if saved:
+                        self.execute(
+                            'RESTORE_GCODE_STATE NAME=BMCU_ENDER_MANUAL'
+                        )
+                finally:
+                    self.manual_operation = None
 
     def context(self, gcmd, load):
         device = self.bmcu.devices_by_name.get(self.device)

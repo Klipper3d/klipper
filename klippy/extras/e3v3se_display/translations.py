@@ -21,11 +21,13 @@ PORTUGUESE = {
     'PLA preheat selected': 'Perfil PLA selecionado',
     'Preheat PETG': 'Aquecer PETG',
     'PETG preheat selected': 'Perfil PETG selecionado',
+    'Preheat TPU': 'Aquecer TPU',
+    'TPU preheat selected': 'Perfil TPU selecionado',
     'Cooldown': 'Esfriar',
     'Heaters and fan disabled': 'Aquecedores e ventoinha desligados',
     'Load filament': 'Carregar filamento',
     'Load macro started': 'Carga iniciada',
-    'Unload filament': 'Descarregar filamento',
+    'Unload filament': 'Retirar filamento',
     'Unload macro started': 'Descarga iniciada',
     'Disable motors': 'Desligar motores',
     'Motors disabled': 'Motores desligados',
@@ -198,6 +200,43 @@ PORTUGUESE = {
         'Impressão iniciada; operação abortada',
     'Extruder below minimum temperature':
         'Extrusor abaixo da temperatura mínima',
+    'Finish or cancel the print before using channels.':
+        'Conclua ou cancele a impressão antes de usar os canais.',
+    'A BMCU operation or print plan is in progress.':
+        'Há uma operação ou um plano de impressão BMCU em andamento.',
+    'Finish the BMCU print context before using channels.':
+        'Finalize o contexto de impressão BMCU antes de usar os canais.',
+    'The BMCU is not ready.': 'A BMCU não está pronta.',
+    'Manual controls require one BMCU.':
+        'Os controles manuais exigem uma BMCU.',
+    'Check the uncertain BMCU route before continuing.':
+        'Confira o caminho incerto da BMCU antes de continuar.',
+    'More than one BMCU channel is marked loaded.':
+        'Mais de um canal BMCU está marcado como carregado.',
+    'The entry sensor and loaded BMCU route disagree.':
+        'O switch e o canal carregado da BMCU não correspondem.',
+    'The printer is shut down.': 'A impressora está em parada de emergência.',
+    'Filament operation cancelled.': 'Operação de filamento cancelada.',
+    'A print started during the filament operation.':
+        'Uma impressão iniciou durante a operação de filamento.',
+    'Nozzle target changed; operation aborted.':
+        'O alvo do bico mudou; operação abortada.',
+    'Heating timed out.': 'O aquecimento excedeu o tempo limite.',
+    'Invalid filament action.': 'Ação de filamento inválida.',
+    'Filament operation in progress.': 'Operação de filamento em andamento.',
+    'No filament is loaded; nothing to unload.':
+        'Nenhum filamento carregado; não há o que retirar.',
+    'Channel assigned to another extruder.':
+        'Canal associado a outra extrusora.',
+    'Insert filament into channel %d first.':
+        'Insira filamento no canal %d primeiro.',
+    'Channel %d is already loaded.': 'O canal %d já está carregado.',
+    'The previous filament did not unload.':
+        'O filamento anterior não foi retirado.',
+    'The requested channel was not loaded.':
+        'O canal solicitado não foi carregado.',
+    'Finish the current operation before preheating.':
+        'Conclua a operação atual antes de pré-aquecer.',
 }
 
 

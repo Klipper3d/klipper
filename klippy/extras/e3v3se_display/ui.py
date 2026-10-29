@@ -197,6 +197,7 @@ class DisplayUI:
             items.append(MenuItem("Cancel print", self.confirm_cancel))
         else:
             items.append(MenuItem("Print", self.show_files))
+            items.append(MenuItem("Filament", self.show_filament_menu))
             items.append(MenuItem("Prepare", self.show_prepare_menu))
             items.append(MenuItem("Move", self.show_move_menu))
             items.append(MenuItem("Temperature", self.show_temperature_menu))
@@ -263,6 +264,8 @@ class DisplayUI:
                 self.owner.preheat_pla, "PLA preheat selected")),
             MenuItem("Preheat PETG", lambda: self._run_and_report(
                 self.owner.preheat_petg, "PETG preheat selected")),
+            MenuItem("Preheat TPU", lambda: self._run_and_report(
+                self.owner.preheat_tpu, "TPU preheat selected")),
             MenuItem("Cooldown", lambda: self._run_and_report(
                 self.owner.cooldown, "Heaters and fan disabled")),
             MenuItem("Load filament", self.request_load),
@@ -274,6 +277,23 @@ class DisplayUI:
             self._back_item(self.show_main_menu),
         ]
         self.show_menu("PREPARE", items, self.show_main_menu)
+
+    def show_filament_menu(self):
+        items = [
+            MenuItem("Preheat PLA", lambda: self._run_and_report(
+                self.owner.preheat_pla, "PLA preheat selected")),
+            MenuItem("Preheat PETG", lambda: self._run_and_report(
+                self.owner.preheat_petg, "PETG preheat selected")),
+            MenuItem("Preheat TPU", lambda: self._run_and_report(
+                self.owner.preheat_tpu, "TPU preheat selected")),
+            MenuItem("Load filament", self.request_load),
+            MenuItem("Unload filament", lambda: self._run_and_report(
+                self.owner.unload_filament, "Unload macro started")),
+            MenuItem("Cooldown", lambda: self._run_and_report(
+                self.owner.cooldown, "Heaters and fan disabled")),
+            self._back_item(self.show_main_menu),
+        ]
+        self.show_menu("FILAMENT", items, self.show_main_menu)
 
     def request_load(self):
         if self.owner.bmcu_available():
@@ -341,6 +361,8 @@ class DisplayUI:
                 self.owner.preheat_pla, "PLA preheat selected")),
             MenuItem("Preheat PETG", lambda: self._run_and_report(
                 self.owner.preheat_petg, "PETG preheat selected")),
+            MenuItem("Preheat TPU", lambda: self._run_and_report(
+                self.owner.preheat_tpu, "TPU preheat selected")),
             MenuItem("Cooldown", lambda: self._run_and_report(
                 self.owner.cooldown, "Heaters and fan disabled")),
             self._back_item(self.show_main_menu),
