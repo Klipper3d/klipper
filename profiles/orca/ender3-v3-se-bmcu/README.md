@@ -1,62 +1,45 @@
-# OrcaSlicer 2.4.2 — Ender 3 V3 SE com BMCU
+# OrcaSlicer 2.4.2 — Ender 3 V3 SE with BMCU
 
-Estes arquivos foram extraídos do projeto da plaquinha Falcon 9 em PETG preto
-no canal físico 2 e branco no 4. O proprietário confirmou que a impressão e a
-troca de cores funcionaram. Eles dependem da integração descrita em
-[Configuração validada](../../../docs/Ender3_V3_SE_Configuracao_Validada.md).
+Use these snippets with the [switch-based integration](../../../docs/Ender3_V3_SE_Configuracao_Validada.md).
+They are reusable examples, not a personal slicer export or a native importable
+preset bundle. Replace `YOUR_BMCU_UID` in `inicio.gcode` with the UID reported by
+your own BMCU. Never use another machine's UID.
 
-`projeto-validado.json` conserva as configurações globais extraídas do 3MF;
-`ajustes-validados.json` destaca os ajustes de comunicação, troca e filamento.
-São referências de configuração, não arquivos nativos de preset importáveis
-diretamente no Orca. Não incluem geometrias nem configurações por objeto do 3MF.
-Para recuperar todos os presets pessoais e suas heranças no computador, exporte
-também o pacote de configurações do próprio Orca. Esse pacote ainda está pendente.
-
-No perfil da impressora, use:
-
-| Campo | Arquivo/valor |
+| Printer setting | Value |
 | --- | --- |
-| G-code inicial | Conteúdo de `inicio.gcode` |
-| G-code final | Conteúdo de `fim.gcode` |
-| Troca de filamento | Conteúdo de `troca.gcode` |
-| Pausa | `PAUSE` |
+| Start G-code | Contents of `inicio.gcode` |
+| End G-code | Contents of `fim.gcode` |
+| Filament change G-code | Contents of `troca.gcode` |
+| Pause | `PAUSE` |
 | Firmware | Klipper |
-| Extrusoras físicas | Uma, com troca multimaterial |
-| Troca manual e torre de purga | Desativadas neste perfil testado |
-| Retração de troca, cooling tube e carga extra do fatiador | Zero; integração controla a troca |
-| Ramming e cooling moves | Desativados |
+| Physical extruders | One, with single-extruder multimaterial enabled |
+| Manual changes and prime tower | Disabled in the tested chute/wiper setup |
+| Tool-change retraction, cooling tube and extra loading | Zero; integration owns these phases |
+| Ramming and cooling moves | Disabled |
 
-Salve como um perfil de usuário para reutilizar em outras peças. Não mantenha
-o início antigo com outro `G28`, temperaturas fixas ou segunda linha de purga
-depois de `ENDER_INICIAR_MULTICOR`. Não use `M600` como troca multicolor.
+Save this as a user printer profile. Do not append another home, temperature
+sequence or prime line after `ENDER_INICIAR_MULTICOR`. Do not use `M600` for
+BMCU multi-color tool changes.
 
-| Slot no Orca | G-code | Canal físico BMCU | Índice da API BMCU |
+| Orca slot | Explicit command | Default physical channel | BMCU API index |
 | --- | --- | --- | --- |
 | 1 | `T0 B1` | 1 | 0 |
 | 2 | `T1 B2` | 2 | 1 |
 | 3 | `T2 B3` | 3 | 2 |
 | 4 | `T3 B4` | 4 | 3 |
 
-O parâmetro `B` seleciona explicitamente o adaptador desta integração. Mantenha
-`T{next_extruder} B{next_extruder+1}` no campo de troca de filamento.
+With a committed print map, the integration also accepts automatic `T0` through
+`T3` without `B` as logical tools 1 through 4. BMCU resolves their physical
+routes. Outside that context, native tools retain their original meaning;
+`T0` selects external feeding. An absent tool in an active map produces an
+error rather than selecting a different source. Re-selecting a loaded tool
+does not add another purge.
 
-O Orca 2.4.2 também pode acrescentar um `T0` automático quando a impressão usa
-somente o primeiro slot, sem passar pelo G-code personalizado de troca. Com
-`BMCU_PRINT_COMMIT` concluído e o mapa de impressão ativo, a integração interpreta
-`T0` a `T3` sem `B` como ferramentas lógicas 1 a 4 desse mapa. A BMCU continua
-resolvendo o canal físico, inclusive quando ele foi remapeado; um slot ausente
-do mapa produz erro antes de selecionar outra entrada. Repetir a ferramenta
-já carregada não solicita uma purga adicional.
+Keep `T{next_extruder} B{next_extruder+1}` in the custom change field. No
+computer-side post-processing script is required; remove
+`corrigir_canais_bmcu.ps1` from the process profile if previously configured.
 
-Sem mapa de impressão ativo, os comandos sem `B` mantêm o comportamento nativo:
-`T0` seleciona a entrada externa reservada. Para selecionar explicitamente essa
-entrada durante um mapa ativo, use `BMCU_TOOL_CHANGE TOOL=0`. Não é necessário
-instalar scripts de pós-processamento no PC nem no notebook. Remova o script
-`corrigir_canais_bmcu.ps1` do perfil de processo caso tenha sido configurado.
-
-O perfil testado usa PETG a 230 °C, mesa 80/75 °C, PA 0,04, fluxo 1,00 e limite
-volumétrico de 20 mm³/s. O limite não demonstra a capacidade máxima do hotend.
-Input shaping e testes adicionais de velocidade continuam pendentes.
-
-O G-code efetivamente impresso tinha SHA256
-`2fe7061adc4d512dc041cec0fc8b6b51bd35244f6dcf15266c5e03cd999c965f`.
+`example-settings.json` contains reference settings, not a complete preset or
+proven hotend limit. The tested PETG example used 230 °C, bed 80/75 °C, PA 0.04,
+flow 1.00 and a slicer volumetric limit of 20 mm³/s. Calibrate material and flow
+for your own hotend; input shaping and maximum-speed tuning are separate tasks.

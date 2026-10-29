@@ -1,7 +1,7 @@
 # Ender 3 V3 SE: BMCU 1.0.6 and stock display
 
-For the physically validated switch-based integration and restoration of the
-owner's machine, see [Configuração validada](Ender3_V3_SE_Configuracao_Validada.md).
+For switch-based integration, installation and private recovery tools, see
+[Switch-based integration](Ender3_V3_SE_Configuracao_Validada.md).
 The remainder of this page describes the original, uncommissioned v0.2.0 template.
 Do not run `BMCU_SETUP_ENDER` over the validated endpoint `extruder`.
 

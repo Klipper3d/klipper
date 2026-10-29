@@ -10,219 +10,215 @@ import subprocess
 from datetime import datetime
 from pathlib import Path, PurePosixPath
 
-import instalar_multicor_bmcu as instalador
+import instalar_multicor_bmcu as installer
 
-RAIZ = Path(__file__).resolve().parents[2]
-SNAPSHOT = RAIZ / 'machines/ender3-v3-se-zero3/2026-10-20'
-MARCADOR = '__GERAR_TOKEN_LOCAL__'
+ROOT = Path(__file__).resolve().parents[2]
+TOKEN_PLACEHOLDER = '__GERAR_TOKEN_LOCAL__'
 
 
-def verificar(snapshot):
-    registros = json.loads((snapshot / 'integridade.json').read_text())
-    presentes = {
+def verify(snapshot):
+    records = json.loads((snapshot / 'integridade.json').read_text())
+    present_files = {
         p.relative_to(snapshot).as_posix()
         for p in snapshot.rglob('*')
         if p.is_file()
     }
-    if presentes != set(registros) | {'integridade.json'}:
-        raise ValueError('Há arquivos ausentes ou extras no snapshot.')
-    for nome, esperado in registros.items():
-        relativo = PurePosixPath(nome)
-        if relativo.is_absolute() or '..' in relativo.parts:
-            raise ValueError('Caminho inválido no snapshot: ' + nome)
-        caminho = snapshot / nome
-        if not caminho.resolve().is_relative_to(snapshot.resolve()):
-            raise ValueError('Vínculo fora do snapshot: ' + nome)
-        if hashlib.sha256(caminho.read_bytes()).hexdigest() != esperado:
-            raise ValueError('Snapshot alterado: ' + nome)
+    if present_files != set(records) | {'integridade.json'}:
+        raise ValueError('The snapshot contains missing or extra files.')
+    for name, expected in records.items():
+        relative = PurePosixPath(name)
+        if relative.is_absolute() or '..' in relative.parts:
+            raise ValueError('Invalid snapshot path: ' + name)
+        path = snapshot / name
+        if not path.resolve().is_relative_to(snapshot.resolve()):
+            raise ValueError('Symlink outside the snapshot: ' + name)
+        if hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+            raise ValueError('Snapshot changed: ' + name)
     return json.loads((snapshot / 'metadados.json').read_text())
 
 
-def token_painel(configuracoes):
-    caminho = configuracoes / 'bmcu/bmcu_panel.cfg'
-    if caminho.is_file():
-        resultado = re.search(
-            r'(?m)^access_token\s*:\s*(\S+)\s*$', caminho.read_text()
+def panel_token(configurations):
+    path = configurations / 'bmcu/bmcu_panel.cfg'
+    if path.is_file():
+        result = re.search(
+            r'(?m)^access_token\s*:\s*(\S+)\s*$', path.read_text()
         )
-        if resultado and resultado[1] != MARCADOR:
-            if len(resultado[1]) >= 32:
-                return resultado[1]
+        if result and result[1] != TOKEN_PLACEHOLDER:
+            if len(result[1]) >= 32:
+                return result[1]
     return secrets.token_hex(32)
 
 
-def preparar(casa, snapshot=SNAPSHOT):
-    verificar(snapshot)
-    configuracoes = casa / 'printer_data/config'
-    extras = casa / 'klipper/klippy/extras'
-    runtime = configuracoes / 'bmcu/runtime'
-    versao = runtime / 'version'
-    if not versao.is_file() or 'package=1.0.6' not in versao.read_text():
-        raise RuntimeError('Instale BMCU-Klipper 1.0.6 antes de restaurar.')
-    contratos = extras / 'bmcu_core/endpoints.py'
-    gerenciador = extras / 'bmcu_core/manager.py'
-    if not contratos.is_file() or not gerenciador.is_file():
-        raise RuntimeError('Os módulos nativos da BMCU não foram encontrados.')
-    alteracoes = {}
-    token = token_painel(configuracoes)
-    for origem in sorted((snapshot / 'config').rglob('*')):
-        if not origem.is_file():
+def prepare(home, snapshot):
+    verify(snapshot)
+    configurations = home / 'printer_data/config'
+    extras = home / 'klipper/klippy/extras'
+    runtime = configurations / 'bmcu/runtime'
+    version = runtime / 'version'
+    if not version.is_file() or 'package=1.0.6' not in version.read_text():
+        raise RuntimeError('Install BMCU-Klipper 1.0.6 before restoring.')
+    contracts = extras / 'bmcu_core/endpoints.py'
+    manager = extras / 'bmcu_core/manager.py'
+    if not contracts.is_file() or not manager.is_file():
+        raise RuntimeError('Native BMCU modules were not found.')
+    changes = {}
+    token = panel_token(configurations)
+    for source_path in sorted((snapshot / 'config').rglob('*')):
+        if not source_path.is_file():
             continue
-        relativo = origem.relative_to(snapshot / 'config')
-        dados = origem.read_bytes()
-        if relativo.as_posix() == 'bmcu/bmcu_panel.cfg':
-            dados = dados.replace(MARCADOR.encode(), token.encode())
-        alteracoes[configuracoes / relativo] = dados
-    for origem in sorted((snapshot / 'ambiente-servicos').glob('*.env')):
-        destino = casa / 'printer_data/systemd' / origem.name
-        alteracoes[destino] = origem.read_bytes()
-    instalacao = runtime / 'INSTALLATION.json'
-    if instalacao.is_file():
-        dados_instalacao = json.loads(instalacao.read_text())
-        dados_instalacao['panel_token_sha256'] = hashlib.sha256(
+        relative = source_path.relative_to(snapshot / 'config')
+        data = source_path.read_bytes()
+        if relative.as_posix() == 'bmcu/bmcu_panel.cfg':
+            data = data.replace(TOKEN_PLACEHOLDER.encode(), token.encode())
+        changes[configurations / relative] = data
+    for source_path in sorted((snapshot / 'ambiente-servicos').glob('*.env')):
+        destination = home / 'printer_data/systemd' / source_path.name
+        changes[destination] = source_path.read_bytes()
+    installation = runtime / 'INSTALLATION.json'
+    if installation.is_file():
+        installation_data = json.loads(installation.read_text())
+        installation_data['panel_token_sha256'] = hashlib.sha256(
             token.encode()
         ).hexdigest()
-        alteracoes[instalacao] = (
-            json.dumps(dados_instalacao, indent=2) + '\n'
+        changes[installation] = (
+            json.dumps(installation_data, indent=2) + '\n'
         ).encode()
-    alteracoes[extras / 'bmcu_integracao_ender.py'] = (
-        RAIZ / 'integrations/bmcu/bmcu_integracao_ender.py'
+    changes[extras / 'bmcu_integracao_ender.py'] = (
+        ROOT / 'integrations/bmcu/bmcu_integracao_ender.py'
     ).read_bytes()
-    alteracoes[extras / 'bmcu_medicao.py'] = (
-        RAIZ / 'integrations/bmcu/bmcu_medicao.py'
+    changes[extras / 'bmcu_medicao.py'] = (
+        ROOT / 'integrations/bmcu/bmcu_medicao.py'
     ).read_bytes()
-    alteracoes[contratos.resolve()] = instalador.corrigir_contrato(
-        contratos.read_text()
+    changes[contracts.resolve()] = installer.patch_contract(
+        contracts.read_text()
     ).encode()
-    alteracoes[gerenciador.resolve()] = instalador.corrigir_pre_captura(
-        gerenciador.read_text()
+    changes[manager.resolve()] = installer.patch_pre_capture(
+        manager.read_text()
     ).encode()
-    if any(not p.resolve().is_relative_to(casa.resolve()) for p in alteracoes):
+    if any(not p.resolve().is_relative_to(home.resolve()) for p in changes):
         raise RuntimeError(
-            'Há arquivos de destino fora do diretório do usuário.'
+            'Some destination paths are outside the user home directory.'
         )
-    return alteracoes
+    return changes
 
 
-def conferir_aplicacao(casa, metadados):
+def check_application(home, metadata):
     git = [
         'git',
         '-c',
-        'safe.directory=' + str(casa / 'klipper'),
+        'safe.directory=' + str(home / 'klipper'),
         '-C',
-        str(casa / 'klipper'),
+        str(home / 'klipper'),
         'rev-parse',
         'HEAD',
     ]
-    atual = subprocess.check_output(git, text=True).strip()
-    if atual != metadados['klipper_commit']:
+    current = subprocess.check_output(git, text=True).strip()
+    if current != metadata['klipper_commit']:
         raise RuntimeError(
-            'Use o checkout Klipper indicado em metadados.json.'
+            'Use the Klipper checkout specified in metadados.json.'
         )
-    ativo = (
+    active = (
         subprocess.run(
             ['systemctl', 'is-active', '--quiet', 'klipper']
         ).returncode
         == 0
     )
-    if ativo:
-        estado = instalador.objeto('print_stats')
-        if estado['state'] in ('printing', 'paused'):
-            raise RuntimeError('Finalize a impressão antes de restaurar.')
-        bmcu = instalador.objeto('bmcu')
+    if active:
+        status = installer.query_object('print_stats')
+        if status['state'] in ('printing', 'paused'):
+            raise RuntimeError('Finish printing before restoring.')
+        bmcu = installer.query_object('bmcu')
         if bmcu['active_operations'] or bmcu['print_plan_open']:
-            raise RuntimeError('Aguarde o fim das operações da BMCU.')
-        for dispositivo in bmcu.get('devices', []):
+            raise RuntimeError('Wait for BMCU operations to finish.')
+        for device in bmcu.get('devices', []):
             if any(
                 c.get('motion') or c.get('motor_pwm')
-                for c in dispositivo.get('channels', [])
+                for c in device.get('channels', [])
             ):
-                raise RuntimeError('Pare a alimentação antes de restaurar.')
-    return ativo
+                raise RuntimeError('Stop filament feeding before restoring.')
+    return active
 
 
-def aplicar(casa, alteracoes, usuario):
-    backup = casa / (
+def apply(home, changes, user):
+    backup = home / (
         'backup-antes-restauracao-'
         + datetime.now().strftime('%Y%m%d-%H%M%S-%f')
     )
     backup.mkdir(mode=0o700)
     if os.geteuid() == 0:
-        os.chown(backup, usuario.pw_uid, usuario.pw_gid)
-    registros = []
-    for indice, caminho in enumerate(alteracoes):
-        existe = caminho.is_file()
-        copia = backup / str(indice)
-        if existe:
-            shutil.copy2(caminho, copia)
-            copia.chmod(0o600)
-        registros.append(
+        os.chown(backup, user.pw_uid, user.pw_gid)
+    records = []
+    for index, path in enumerate(changes):
+        exists = path.is_file()
+        copy_path = backup / str(index)
+        if exists:
+            shutil.copy2(path, copy_path)
+            copy_path.chmod(0o600)
+        records.append(
             {
-                'destino': str(caminho),
-                'copia': str(copia) if existe else None,
-                'vinculo': (
-                    os.readlink(caminho) if caminho.is_symlink() else None
-                ),
-                'modo': caminho.stat().st_mode & 0o777 if existe else None,
-                'uid': caminho.stat().st_uid if existe else None,
-                'gid': caminho.stat().st_gid if existe else None,
+                'destino': str(path),
+                'copia': str(copy_path) if exists else None,
+                'vinculo': (os.readlink(path) if path.is_symlink() else None),
+                'modo': path.stat().st_mode & 0o777 if exists else None,
+                'uid': path.stat().st_uid if exists else None,
+                'gid': path.stat().st_gid if exists else None,
             }
         )
-    manifesto = backup / 'arquivos.json'
-    manifesto.write_text(json.dumps(registros, indent=2))
-    manifesto.chmod(0o600)
-    instalador.servico('stop')
+    manifest = backup / 'arquivos.json'
+    manifest.write_text(json.dumps(records, indent=2))
+    manifest.chmod(0o600)
+    installer.service('stop')
     try:
-        for caminho, dados in alteracoes.items():
-            privado = (
-                caminho.name == 'bmcu_panel.cfg' or caminho.suffix == '.env'
-            )
-            modo = 0o600 if privado else 0o644
-            instalador.gravar(caminho, dados, usuario, modo)
+        for path, data in changes.items():
+            private = path.name == 'bmcu_panel.cfg' or path.suffix == '.env'
+            mode = 0o600 if private else 0o644
+            installer.write_file(path, data, user, mode)
     except Exception:
-        for item in registros:
-            caminho = Path(item['destino'])
+        for item in records:
+            path = Path(item['destino'])
             if item['vinculo'] is not None:
-                caminho.unlink(missing_ok=True)
-                caminho.symlink_to(item['vinculo'])
+                path.unlink(missing_ok=True)
+                path.symlink_to(item['vinculo'])
             elif item['copia'] is None:
-                caminho.unlink(missing_ok=True)
+                path.unlink(missing_ok=True)
             else:
-                instalador.gravar(
-                    caminho, Path(item['copia']).read_bytes(), usuario
+                installer.write_file(
+                    path, Path(item['copia']).read_bytes(), user
                 )
-        print('Falha: os arquivos anteriores foram restaurados.')
-        print('O serviço Klipper permanece parado.')
+        print('Failure: previous files were restored.')
+        print('Klipper remains stopped.')
         raise
-    print('Configuração restaurada. Backup anterior:', backup)
-    print('O serviço Klipper permanece parado para conferência.')
-    print('Confira o filamento físico antes de iniciar o Klipper.')
-    print('Para iniciar: sudo systemctl start klipper')
+    print('Configuration restored. Previous backup:', backup)
+    print('Klipper remains stopped for review.')
+    print('Inspect the physical filament path before starting Klipper.')
+    print('To start: sudo systemctl start klipper')
 
 
-def principal():
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--home', type=Path)
-    parser.add_argument('--snapshot', type=Path, default=SNAPSHOT)
-    parser.add_argument('--aplicar', action='store_true')
+    parser.add_argument('--snapshot', type=Path, required=True)
+    parser.add_argument(
+        '--apply', '--aplicar', dest='apply', action='store_true'
+    )
     args = parser.parse_args()
-    usuario = (
+    user = (
         pwd.getpwnam(os.environ['SUDO_USER'])
         if os.environ.get('SUDO_USER')
         else pwd.getpwuid(os.getuid())
     )
-    casa = args.home or Path(usuario.pw_dir)
-    metadados = verificar(args.snapshot)
-    alteracoes = preparar(casa, args.snapshot)
-    print('Configuração, ambiente e módulos preparados:', len(alteracoes))
-    print('Z-offset 1,940; malha 9×9; extrusora 7,589 mm/volta.')
-    if not args.aplicar:
-        print('Simulação: nenhum arquivo ou serviço foi alterado.')
+    home = args.home or Path(user.pw_dir)
+    metadata = verify(args.snapshot)
+    changes = prepare(home, args.snapshot)
+    print('Configuration, environment and modules prepared:', len(changes))
+    if not args.apply:
+        print('Dry run: no files or services were changed.')
         return
     if os.geteuid() != 0:
-        raise RuntimeError('Use sudo para aplicar a restauração.')
-    conferir_aplicacao(casa, metadados)
-    aplicar(casa, alteracoes, usuario)
+        raise RuntimeError('Use sudo to apply the restoration.')
+    check_application(home, metadata)
+    apply(home, changes, user)
 
 
 if __name__ == '__main__':
-    principal()
+    main()

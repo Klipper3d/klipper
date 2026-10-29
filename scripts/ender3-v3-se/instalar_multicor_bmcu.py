@@ -13,103 +13,89 @@ from datetime import datetime
 from pathlib import Path
 from urllib.request import urlopen
 
-RAIZ = Path(__file__).resolve().parents[2]
-MODULO = (RAIZ / 'integrations/bmcu/bmcu_integracao_ender.py').read_text()
-CONFIGURACAO = (
-    RAIZ / ('config/ender3-v3-se-validada/bmcu-multicor-' 'ender.cfg')
+ROOT = Path(__file__).resolve().parents[2]
+MODULE = (ROOT / 'integrations/bmcu/bmcu_integracao_ender.py').read_text()
+CONFIGURATION = (
+    ROOT / ('config/ender3-v3-se-validada/bmcu-multicor-' 'ender.cfg')
 ).read_text()
-MEDICAO = (RAIZ / 'integrations/bmcu/bmcu_medicao.py').read_text()
+MEASUREMENT = (ROOT / 'integrations/bmcu/bmcu_medicao.py').read_text()
 
 
-def objeto(nome):
+def query_object(name):
     from urllib.parse import quote
 
-    url = 'http://127.0.0.1:7125/printer/objects/query?' + quote(nome, safe='')
-    with urlopen(url, timeout=15) as resposta:
-        dados = json.load(resposta)
-    if 'error' in dados:
-        raise RuntimeError(str(dados['error']))
-    return dados['result']['status'][nome]
+    url = 'http://127.0.0.1:7125/printer/objects/query?' + quote(name, safe='')
+    with urlopen(url, timeout=15) as response:
+        data = json.load(response)
+    if 'error' in data:
+        raise RuntimeError(str(data['error']))
+    return data['result']['status'][name]
 
 
-def conferir_maquina():
-    estado = objeto('webhooks')
-    if estado['state'] != 'ready':
+def check_printer():
+    status = query_object('webhooks')
+    if status['state'] != 'ready':
         raise RuntimeError(
-            ('O Klipper precisa estar pronto antes da ' 'instalação: ')
-            + str(estado)
+            ('Klipper must be ready before installation: ') + str(status)
         )
-    if objeto('print_stats')['state'] in ('printing', 'paused'):
-        raise RuntimeError('Finalize a impressão antes de instalar.')
-    estado = objeto('bmcu')
-    if estado['package_version'] != '1.0.6':
-        raise RuntimeError(
-            ('Este instalador corresponde ao ' 'BMCU-Klipper ' '1.0.6.')
-        )
+    if query_object('print_stats')['state'] in ('printing', 'paused'):
+        raise RuntimeError('Finish printing before installing.')
+    status = query_object('bmcu')
+    if status['package_version'] != '1.0.6':
+        raise RuntimeError(('This installer supports BMCU-Klipper 1.0.6.'))
     if (
-        estado['active_operations']
-        or estado['print_plan_open']
-        or estado['print_map_active']
-        or estado['prestaged']
+        status['active_operations']
+        or status['print_plan_open']
+        or status['print_map_active']
+        or status['prestaged']
     ):
         raise RuntimeError(
-            (
-                'Finalize as operações e o plano de '
-                'impressão da BMCU antes de '
-                'instalar.'
-            )
+            ('Finish BMCU operations and the print plan before installing.')
         )
-    dispositivos = estado['devices']
-    if (
-        len(dispositivos) != 1
-        or dispositivos[0]['uid'] != 'CDAB42A1D0BEDF0B39E339E3'
-    ):
-        raise RuntimeError(
-            (
-                'A BMCU detectada não corresponde à '
-                'configuração desta '
-                'impressora.'
-            )
-        )
-    for dispositivo in dispositivos:
+    devices = status['devices']
+    if len(devices) != 1 or devices[0].get('name') != 'bmcu0':
+        raise RuntimeError('This setup requires one BMCU named bmcu0.')
+    for device in devices:
         if (
-            not dispositivo['ready']
-            or dispositivo['loaded_channels']
-            or dispositivo['uncertain_channels']
+            not device['ready']
+            or device['loaded_channels']
+            or device['uncertain_channels']
         ):
             raise RuntimeError(
-                ('Deixe todos os canais estacionados e a ' 'BMCU ' 'pronta.')
+                ('Park all channels and make sure the BMCU is ready.')
             )
-    if objeto('filament_switch_sensor bmcu_entry')['filament_detected']:
-        raise RuntimeError('O switch deve estar livre antes de instalar.')
+    if query_object('filament_switch_sensor bmcu_entry')['filament_detected']:
+        raise RuntimeError(
+            'The entry sensor must be clear before installation.'
+        )
 
 
-def transformar_metodo(texto, classe, metodo, transformar):
-    arvore = ast.parse(texto)
-    candidatos = [
+def transform_method(text, class_name, method, transform):
+    tree = ast.parse(text)
+    candidates = [
         n
-        for c in arvore.body
-        if isinstance(c, ast.ClassDef) and c.name == classe
+        for c in tree.body
+        if isinstance(c, ast.ClassDef) and c.name == class_name
         for n in c.body
-        if isinstance(n, ast.FunctionDef) and n.name == metodo
+        if isinstance(n, ast.FunctionDef) and n.name == method
     ]
-    if len(candidatos) != 1:
-        raise RuntimeError('Método incompatível: %s.%s' % (classe, metodo))
-    no = candidatos[0]
-    linhas = texto.splitlines(keepends=True)
-    trecho = ''.join(linhas[no.lineno - 1 : no.end_lineno])
-    novo = transformar(trecho)
-    linhas[no.lineno - 1 : no.end_lineno] = [novo]
-    resultado = ''.join(linhas)
-    compile(resultado, metodo, 'exec')
-    return resultado
+    if len(candidates) != 1:
+        raise RuntimeError('Incompatible method: %s.%s' % (class_name, method))
+    node = candidates[0]
+    lines = text.splitlines(keepends=True)
+    fragment = ''.join(lines[node.lineno - 1 : node.end_lineno])
+    updated = transform(fragment)
+    lines[node.lineno - 1 : node.end_lineno] = [updated]
+    result = ''.join(lines)
+    compile(result, method, 'exec')
+    return result
 
 
-def corrigir_sensor(texto):
-    def mudar(trecho):
-        metodo = ast.parse(textwrap.dedent(trecho)).body[0]
-        parametros = [argumento.arg for argumento in metodo.args.args]
-        esperados = [
+def patch_sensor(text):
+    def change(fragment):
+        method = ast.parse(textwrap.dedent(fragment)).body[0]
+        parameters = [argument.arg for argument in method.args.args]
+        expected_values = [
             'self',
             'dispositivo',
             'destino',
@@ -117,55 +103,73 @@ def corrigir_sensor(texto):
             'avanco',
             'velocidade',
         ]
-        nova_condicao = (
+        english_parameters = [
+            'self',
+            'device',
+            'destination',
+            'channel',
+            'advance',
+            'speed',
+        ]
+        new_condition = (
             "not sensor_gerenciado and not sensor.get('enabled', True)"
         )
-        esperado = ast.dump(ast.parse(nova_condicao, mode='eval').body)
-        if parametros == esperados + ['sensor_gerenciado'] and any(
-            ast.dump(no) == esperado for no in ast.walk(metodo)
-        ):
-            return trecho
-        assinatura = (
+        expected = ast.dump(ast.parse(new_condition, mode='eval').body)
+        if parameters in (
+            expected_values + ['sensor_gerenciado'],
+            english_parameters + ['sensor_gerenciado'],
+        ) and any(ast.dump(node) == expected for node in ast.walk(method)):
+            return fragment
+        signature = (
             r'def _capturar_extrusora_primeiro\(\s*self,'
             r'\s*dispositivo,\s*destino,\s*canal,\s*avanco,'
             r'\s*velocidade,?\s*\):'
         )
-        condicao = (
-            r"not\s+sensor\.get\(\s*['\"]enabled['\"],"
-            r"\s*True\s*\)"
-        )
+        condition = r"not\s+sensor\.get\(\s*['\"]enabled['\"]," r"\s*True\s*\)"
         if (
-            parametros != esperados
-            or len(re.findall(assinatura, trecho)) != 1
-            or len(re.findall(condicao, trecho)) != 1
+            parameters != expected_values
+            or len(re.findall(signature, fragment)) != 1
+            or len(re.findall(condition, fragment)) != 1
         ):
             raise RuntimeError(
                 (
-                    'A captura foi modificada; envie o '
-                    'bmcu_medicao.py atual antes de '
-                    'instalar.'
+                    (
+                        'The capture implementation changed; review '
+                        'bmcu_medicao.py before '
+                        'installation.'
+                    )
                 )
             )
-        nova_assinatura = (
+        new_signature = (
             'def _capturar_extrusora_primeiro(\n'
             '            self, dispositivo, destino, canal, avanco,\n'
             '            velocidade, sensor_gerenciado=False):'
         )
-        trecho = re.sub(assinatura, lambda _: nova_assinatura, trecho, count=1)
+        fragment = re.sub(
+            signature, lambda _: new_signature, fragment, count=1
+        )
         return re.sub(
-            condicao, lambda _: '(' + nova_condicao + ')', trecho, count=1
+            condition, lambda _: '(' + new_condition + ')', fragment, count=1
         )
 
-    return transformar_metodo(
-        texto, 'MedicaoChegada', '_capturar_extrusora_primeiro', mudar
+    classes = [
+        node.name
+        for node in ast.parse(text).body
+        if isinstance(node, ast.ClassDef)
+        and node.name in ('ArrivalMeasurement', 'MedicaoChegada')
+    ]
+    if len(classes) != 1:
+        raise RuntimeError('Incompatible arrival measurement module.')
+    return transform_method(
+        text, classes[0], '_capturar_extrusora_primeiro', change
     )
 
 
-def corrigir_contrato(texto):
-    arvore = ast.parse(texto)
+def patch_contract(text):
+    tree = ast.parse(text)
     classes = [
         c.name
-        for c in arvore.body
+        for c in tree.body
         if isinstance(c, ast.ClassDef)
         and any(
             isinstance(n, ast.FunctionDef)
@@ -174,42 +178,47 @@ def corrigir_contrato(texto):
         )
     ]
     if len(classes) != 1:
-        raise RuntimeError('Contrato de extrusora genérica incompatível.')
+        raise RuntimeError('Incompatible generic extruder contract.')
 
-    def mudar(trecho):
-        anterior = '        self._run(script, printer_priority=True)'
-        novo = (
-            "        prioridade = command not in ('BMCU_"
-            "PREPARAR_ENDER', 'BMCU_LIBERAR_ENDER')\n   "
-            '     self._run(script, printer_priority=pri'
-            'oridade)'
+    def change(fragment):
+        previous = '        self._run(script, printer_priority=True)'
+        updated = (
+            "        priority = command not in ('BMCU_PREPARAR_ENDER', "
+            "'BMCU_LIBERAR_ENDER')\n"
+            '        self._run(script, printer_priority=priority)'
         )
-        if novo in trecho:
-            return trecho
-        if trecho.count(anterior) != 1:
+        if updated in fragment:
+            return fragment
+        legacy = updated.replace('priority =', 'prioridade =').replace(
+            'printer_priority=priority)', 'printer_priority=prioridade)'
+        )
+        if legacy in fragment:
+            return fragment.replace(legacy, updated)
+        if fragment.count(previous) != 1:
             raise RuntimeError(
                 (
-                    'O contrato da BMCU mudou; envie '
-                    'endpoints.py antes de '
-                    'instalar.'
+                    (
+                        'The BMCU contract changed; review endpoints.py '
+                        'before installation.'
+                    )
                 )
             )
-        return trecho.replace(anterior, novo)
+        return fragment.replace(previous, updated)
 
-    return transformar_metodo(
-        texto, classes[0], '_run_generic_contract_macro', mudar
+    return transform_method(
+        text, classes[0], '_run_generic_contract_macro', change
     )
 
 
-def corrigir_pre_captura(texto):
-    def mudar(trecho):
-        anterior = (
+def patch_pre_capture(text):
+    def change(fragment):
+        previous = (
             '            else:\n                device.s'
             'et_motion(channel, protocol.MOTION_BEFORE_O'
             'N_USE)\n\n            if not generic_contra'
             "ct:\n                phase = 'BITE'"
         )
-        novo = (
+        updated = (
             '            elif (generic_contract and\n   '
             "               str(endpoint.get('toolhead_p"
             "repare_macro', '')).strip().upper() == 'BMC"
@@ -221,245 +230,218 @@ def corrigir_pre_captura(texto):
             'E_ON_USE)\n\n            if not generic_con'
             "tract:\n                phase = 'BITE'"
         )
-        if novo in trecho:
-            return trecho
-        if trecho.count(anterior) != 1:
+        if updated in fragment:
+            return fragment
+        if fragment.count(previous) != 1:
             raise RuntimeError(
                 (
-                    'A etapa nativa de captura mudou; envie '
-                    'manager.py antes de '
-                    'instalar.'
+                    (
+                        'The native capture phase changed; review manager.py '
+                        'before installation.'
+                    )
                 )
             )
-        return trecho.replace(anterior, novo)
+        return fragment.replace(previous, updated)
 
-    return transformar_metodo(texto, 'BMCUManager', 'load_channel', mudar)
+    return transform_method(text, 'BMCUManager', 'load_channel', change)
 
 
-def preparar(casa):
-    configuracoes = casa / 'printer_data/config'
-    extras = casa / 'klipper/klippy/extras'
-    raiz = configuracoes / 'printer.cfg'
+def prepare(home):
+    configurations = home / 'printer_data/config'
+    extras = home / 'klipper/klippy/extras'
+    root = configurations / 'printer.cfg'
     sensor = extras / 'bmcu_medicao.py'
-    contratos = extras / 'bmcu_core/endpoints.py'
-    gerenciador = extras / 'bmcu_core/manager.py'
-    modulo = extras / 'bmcu_integracao_ender.py'
-    destino = configuracoes / 'bmcu-multicor-ender.cfg'
-    for caminho in (raiz, contratos, gerenciador):
-        if not caminho.is_file():
-            raise RuntimeError('Arquivo não encontrado: ' + str(caminho))
-    conteudo = raiz.read_text()
-    incluir = '[include bmcu-multicor-ender.cfg]'
+    contracts = extras / 'bmcu_core/endpoints.py'
+    manager = extras / 'bmcu_core/manager.py'
+    module = extras / 'bmcu_integracao_ender.py'
+    destination = configurations / 'bmcu-multicor-ender.cfg'
+    for path in (root, contracts, manager):
+        if not path.is_file():
+            raise RuntimeError('File not found: ' + str(path))
+    content = root.read_text()
+    include_line = '[include bmcu-multicor-ender.cfg]'
     if not re.search(
         r'^\s*\[include\s+bmcu-multicor-ender\.cfg\]\s*$',
-        conteudo,
+        content,
         re.M | re.I,
     ):
-        marcador = conteudo.find('#*# <')
-        if marcador < 0:
-            conteudo = conteudo.rstrip('\n') + '\n\n' + incluir + '\n'
+        marker = content.find('#*# <')
+        if marker < 0:
+            content = content.rstrip('\n') + '\n\n' + include_line + '\n'
         else:
-            conteudo = (
-                conteudo[:marcador].rstrip('\n')
+            content = (
+                content[:marker].rstrip('\n')
                 + '\n\n'
-                + incluir
+                + include_line
                 + '\n\n'
-                + conteudo[marcador:]
+                + content[marker:]
             )
-    compile(MODULO, 'bmcu_integracao_ender.py', 'exec')
+    compile(MODULE, 'bmcu_integracao_ender.py', 'exec')
     return {
-        raiz.resolve(): conteudo.encode(),
-        sensor.resolve(): corrigir_sensor(
-            sensor.read_text() if sensor.is_file() else MEDICAO
+        root.resolve(): content.encode(),
+        sensor.resolve(): patch_sensor(
+            sensor.read_text() if sensor.is_file() else MEASUREMENT
         ).encode(),
-        contratos.resolve(): corrigir_contrato(contratos.read_text()).encode(),
-        gerenciador.resolve(): corrigir_pre_captura(
-            gerenciador.read_text()
-        ).encode(),
-        modulo.resolve(): MODULO.encode(),
-        destino.resolve(): CONFIGURACAO.encode(),
+        contracts.resolve(): patch_contract(contracts.read_text()).encode(),
+        manager.resolve(): patch_pre_capture(manager.read_text()).encode(),
+        module.resolve(): MODULE.encode(),
+        destination.resolve(): (
+            destination.read_bytes()
+            if destination.is_file()
+            else CONFIGURATION.encode()
+        ),
     }
 
 
-def gravar(caminho, dados, usuario, modo=0o644):
-    caminho.parent.mkdir(parents=True, exist_ok=True)
-    anterior = caminho.stat() if caminho.exists() else None
+def write_file(path, data, user, mode=0o644):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    previous = path.stat() if path.exists() else None
     with tempfile.NamedTemporaryFile(
-        dir=caminho.parent, delete=False
-    ) as temporario:
-        nome = temporario.name
-        temporario.write(dados)
-        temporario.flush()
-        os.fsync(temporario.fileno())
+        dir=path.parent, delete=False
+    ) as temporary:
+        name = temporary.name
+        temporary.write(data)
+        temporary.flush()
+        os.fsync(temporary.fileno())
     try:
-        os.chmod(nome, anterior.st_mode & 0o777 if anterior else modo)
+        os.chmod(name, previous.st_mode & 0o777 if previous else mode)
         if os.geteuid() == 0:
             os.chown(
-                nome,
-                anterior.st_uid if anterior else usuario.pw_uid,
-                anterior.st_gid if anterior else usuario.pw_gid,
+                name,
+                previous.st_uid if previous else user.pw_uid,
+                previous.st_gid if previous else user.pw_gid,
             )
-        os.replace(nome, caminho)
+        os.replace(name, path)
     finally:
-        if os.path.exists(nome):
-            os.unlink(nome)
+        if os.path.exists(name):
+            os.unlink(name)
 
 
-def servico(acao):
-    comando = ['systemctl', acao, 'klipper']
+def service(action):
+    command = ['systemctl', action, 'klipper']
     if os.geteuid() != 0:
-        comando.insert(0, 'sudo')
-    subprocess.run(comando, check=True)
+        command.insert(0, 'sudo')
+    subprocess.run(command, check=True)
 
 
-def aguardar():
-    prazo = time.monotonic() + 90
-    ultimo = None
-    while time.monotonic() < prazo:
+def wait_ready():
+    deadline = time.monotonic() + 90
+    last = None
+    while time.monotonic() < deadline:
         try:
-            estado = objeto('webhooks')
-            if estado['state'] == 'ready':
-                configuracao = objeto('configfile').get('config', {})
-                if 'bmcu_integracao_ender' in configuracao:
+            status = query_object('webhooks')
+            if status['state'] == 'ready':
+                configuration = query_object('configfile').get('config', {})
+                if 'bmcu_integracao_ender' in configuration:
                     return
-            ultimo = estado.get('state_message', estado['state'])
-            if estado['state'] in ('error', 'shutdown'):
-                raise RuntimeError(ultimo)
-        except (OSError, KeyError, ValueError) as erro:
-            ultimo = str(erro)
+            last = status.get('state_message', status['state'])
+            if status['state'] in ('error', 'shutdown'):
+                raise RuntimeError(last)
+        except (OSError, KeyError, ValueError) as error:
+            last = str(error)
         time.sleep(1)
-    raise RuntimeError('O Klipper não ficou pronto: %s' % ultimo)
+    raise RuntimeError('Klipper did not become ready: %s' % last)
 
 
-def principal():
-    nome = os.environ.get('SUDO_USER') if os.geteuid() == 0 else None
-    usuario = pwd.getpwnam(nome) if nome else pwd.getpwuid(os.getuid())
-    casa = Path(usuario.pw_dir)
-    conferir_maquina()
-    alteracoes = preparar(casa)
-    originais = {p: p.read_bytes() if p.exists() else None for p in alteracoes}
-    alteracoes = {p: d for p, d in alteracoes.items() if originais[p] != d}
-    if not alteracoes:
-        print(
-            (
-                'A integração já está instalada. No '
-                'Mainsail, execute '
-                'BMCU_CONFIGURAR_MULTICOR.'
-            )
-        )
+def main():
+    name = os.environ.get('SUDO_USER') if os.geteuid() == 0 else None
+    user = pwd.getpwnam(name) if name else pwd.getpwuid(os.getuid())
+    home = Path(user.pw_dir)
+    check_printer()
+    changes = prepare(home)
+    originals = {p: p.read_bytes() if p.exists() else None for p in changes}
+    changes = {p: d for p, d in changes.items() if originals[p] != d}
+    if not changes:
+        print(('The integration is already installed.'))
         return
-    backup = casa / (
+    backup = home / (
         'backup-multicor-' + datetime.now().strftime('%Y%m%d-%H%M%S-%f')
     )
     backup.mkdir(mode=0o700)
     if os.geteuid() == 0:
-        os.chown(backup, usuario.pw_uid, usuario.pw_gid)
+        os.chown(backup, user.pw_uid, user.pw_gid)
     with tarfile.open(backup / 'configuracoes.tar.gz', 'w:gz') as tar:
-        tar.add(casa / 'printer_data/config', arcname='config')
+        tar.add(home / 'printer_data/config', arcname='config')
     manifest = []
-    for indice, caminho in enumerate(alteracoes):
-        original = originais[caminho]
-        copia = backup / ('arquivo-%d' % indice)
-        metadados = caminho.stat() if caminho.exists() else None
+    for index, path in enumerate(changes):
+        original = originals[path]
+        copy_path = backup / ('arquivo-%d' % index)
+        metadata = path.stat() if path.exists() else None
         if original is not None:
-            shutil.copy2(caminho, copia)
+            shutil.copy2(path, copy_path)
         manifest.append(
             {
-                'destino': str(caminho),
-                'copia': str(copia) if original is not None else None,
-                'uid': metadados.st_uid if metadados else usuario.pw_uid,
-                'gid': metadados.st_gid if metadados else usuario.pw_gid,
-                'modo': metadados.st_mode & 0o777 if metadados else 0o644,
+                'destino': str(path),
+                'copia': str(copy_path) if original is not None else None,
+                'uid': metadata.st_uid if metadata else user.pw_uid,
+                'gid': metadata.st_gid if metadata else user.pw_gid,
+                'modo': metadata.st_mode & 0o777 if metadata else 0o644,
             }
         )
     (backup / 'arquivos.json').write_text(json.dumps(manifest, indent=2))
-    config_bmcu = objeto('configfile').get('config', {}).get('bmcu', {})
-    caminho_estado = config_bmcu.get(
-        'state_file', str(casa / 'printer_data/config/bmcu_state.json')
+    bmcu_config = query_object('configfile').get('config', {}).get('bmcu', {})
+    state_path = bmcu_config.get(
+        'state_file', str(home / 'printer_data/config/bmcu_state.json')
     )
-    if caminho_estado.startswith('~/'):
-        caminho_estado = str(casa / caminho_estado[2:])
-    caminho_estado = Path(caminho_estado)
-    if caminho_estado.is_file():
-        dados_estado = json.loads(caminho_estado.read_text())
-        endpoint = dados_estado.get('endpoints', {}).get('extruder')
+    if state_path.startswith('~/'):
+        state_path = str(home / state_path[2:])
+    state_path = Path(state_path)
+    if state_path.is_file():
+        state_data = json.loads(state_path.read_text())
+        endpoint = state_data.get('endpoints', {}).get('extruder')
         (backup / 'endpoint.json').write_text(
-            json.dumps({'arquivo': str(caminho_estado), 'endpoint': endpoint})
+            json.dumps({'arquivo': str(state_path), 'endpoint': endpoint})
         )
-    restaurador = (
-        'import json, os, subprocess\nfrom pathlib i'
-        'mport Path\nbase = Path(__file__).resolve()'
-        ".parent\nsubprocess.run(['systemctl', 'stop"
-        "', 'klipper'], check=True)\nfor item in jso"
-        "n.loads((base / 'arquivos.json').read_text("
-        ")):\n    destino = Path(item['destino'])\n "
-        "   if item['copia'] is None:\n        desti"
-        'no.unlink(missing_ok=True)\n    else:\n    '
-        "    destino.write_bytes(Path(item['copia'])"
-        '.read_bytes())\n        os.chmod(destino, i'
-        "tem['modo'])\n        os.chown(destino, ite"
-        "m['uid'], item['gid'])\nif (base / 'endpoin"
-        "t.json').is_file():\n    anterior = json.lo"
-        "ads((base / 'endpoint.json').read_text())\n"
-        "    estado = Path(anterior['arquivo'])\n   "
-        " if estado.is_file() and anterior['endpoint"
-        "'] is not None:\n        dados = json.loads"
-        '(estado.read_text())\n        atual = dados'
-        ".get('endpoints', {}).get('extruder', {})\n"
-        "        if atual.get('toolhead_prepare_macr"
-        "o') == 'BMCU_PREPARAR_ENDER':\n            "
-        "dados['endpoints']['extruder'] = anterior['"
-        "endpoint']\n            metadados = estado."
-        'stat()\n            temporario = estado.wit'
-        "h_name(estado.name + '.restauracao')\n     "
-        '       temporario.write_text(json.dumps(dad'
-        "os, separators=(',', ':'), allow_nan=False)"
-        ')\n            os.chmod(temporario, metadad'
-        'os.st_mode & 0o777)\n            os.chown(t'
-        'emporario, metadados.st_uid, metadados.st_g'
-        'id)\n            os.replace(temporario, est'
-        "ado)\nsubprocess.run(['systemctl', 'start',"
-        " 'klipper'], check=True)\nprint('Arquivos a"
-        "nteriores restaurados.')\n"
+    restorer = (
+        'import json, os, subprocess\nfrom pathlib import Path\nbase = '
+        "Path(__file__).resolve().parent\nsubprocess.run(['systemctl', "
+        "'stop', 'klipper'], check=True)\nfor item in json.loads((base / "
+        "'arquivos.json').read_text()):\n    destination = "
+        "Path(item['destino'])\n    if item['copia'] is None:\n        "
+        'destination.unlink(missing_ok=True)\n    else:\n        '
+        "destination.write_bytes(Path(item['copia']).read_bytes())\n        "
+        "os.chmod(destination, item['modo'])\n        os.chown(destination, "
+        "item['uid'], item['gid'])\nif (base / 'endpoint.json').is_file():\n  "
+        "  previous = json.loads((base / 'endpoint.json').read_text())\n    "
+        "status = Path(previous['arquivo'])\n    if status.is_file() and "
+        "previous['endpoint'] is not None:\n        data = "
+        'json.loads(status.read_text())\n        current = '
+        "data.get('endpoints', {}).get('extruder', {})\n        if "
+        "current.get('toolhead_prepare_macro') == 'BMCU_PREPARAR_ENDER':\n    "
+        "        data['endpoints']['extruder'] = previous['endpoint']\n       "
+        '     metadata = status.stat()\n            temporary = '
+        "status.with_name(status.name + '.restauracao')\n            "
+        "temporary.write_text(json.dumps(data, separators=(',', ':'), "
+        'allow_nan=False))\n            os.chmod(temporary, metadata.st_mode '
+        '& 0o777)\n            os.chown(temporary, metadata.st_uid, '
+        'metadata.st_gid)\n            os.replace(temporary, '
+        "status)\nsubprocess.run(['systemctl', 'start', 'klipper'], "
+        "check=True)\nprint('Previous files "
+        "restored.')\n"
     )
-    (backup / 'restaurar.py').write_text(restaurador)
+    (backup / 'restaurar.py').write_text(restorer)
     print('Backup:', backup)
-    servico('stop')
+    service('stop')
     try:
-        for caminho, dados in alteracoes.items():
-            gravar(caminho, dados, usuario)
-        servico('start')
-        aguardar()
+        for path, data in changes.items():
+            write_file(path, data, user)
+        service('start')
+        wait_ready()
     except Exception:
-        servico('stop')
-        for caminho in alteracoes:
-            if originais[caminho] is None:
-                caminho.unlink(missing_ok=True)
+        service('stop')
+        for path in changes:
+            if originals[path] is None:
+                path.unlink(missing_ok=True)
             else:
-                gravar(caminho, originais[caminho], usuario)
-        servico('start')
-        print(
-            (
-                'A instalação falhou e os arquivos '
-                'anteriores foram '
-                'restaurados.'
-            )
-        )
+                write_file(path, originals[path], user)
+        service('start')
+        print(('Installation failed; previous files were restored.'))
         raise
-    print('Integração instalada; Klipper pronto.')
-    print(('No console do Mainsail, execute: ' 'BMCU_CONFIGURAR_MULTICOR'))
-    print(
-        (
-            'PID, Z-offset, malha e calibração de '
-            'extrusão foram '
-            'preservados.'
-        )
-    )
-    print(
-        'Para restaurar os arquivos: sudo python3 '
-        + str(backup / 'restaurar.py')
-    )
+    print('Integration installed; Klipper is ready.')
+    print('For initial endpoint setup, review BMCU_CONFIGURAR_MULTICOR.')
+    print(('PID, Z offset, mesh and extrusion calibration were preserved.'))
+    print('To restore files: sudo python3 ' + str(backup / 'restaurar.py'))
 
 
 if __name__ == '__main__':
-    principal()
+    main()

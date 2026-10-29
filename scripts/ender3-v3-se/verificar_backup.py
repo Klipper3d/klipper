@@ -5,64 +5,60 @@ import tarfile
 from pathlib import Path, PurePosixPath
 
 
-def verificar(arquivo, destino=None):
-    with tarfile.open(arquivo, 'r:gz') as tar:
-        membros = tar.getmembers()
-        nomes = [m.name for m in membros]
-        if len(nomes) != len(set(nomes)):
-            raise ValueError('O arquivo contém nomes duplicados.')
-        for membro in membros:
-            caminho = PurePosixPath(membro.name)
+def verify(file_path, destination=None):
+    with tarfile.open(file_path, 'r:gz') as tar:
+        members = tar.getmembers()
+        names = [m.name for m in members]
+        if len(names) != len(set(names)):
+            raise ValueError('The archive contains duplicate names.')
+        for member in members:
+            path = PurePosixPath(member.name)
             if (
-                not membro.isfile()
-                or caminho.is_absolute()
-                or '..' in caminho.parts
-                or '\\' in membro.name
+                not member.isfile()
+                or path.is_absolute()
+                or '..' in path.parts
+                or '\\' in member.name
             ):
-                raise ValueError('Entrada inválida: ' + membro.name)
-        manifesto = json.load(tar.extractfile('manifesto.json'))
-        if manifesto['formato'] != 1 or set(nomes) != set(
-            manifesto['arquivos']
+                raise ValueError('Invalid entry: ' + member.name)
+        manifest = json.load(tar.extractfile('manifesto.json'))
+        if manifest['formato'] != 1 or set(names) != set(
+            manifest['arquivos']
         ) | {'manifesto.json'}:
-            raise ValueError('O manifesto não corresponde aos arquivos.')
-        for nome, metadados in manifesto['arquivos'].items():
-            dados = tar.extractfile(nome).read()
-            if (
-                len(dados) != metadados['bytes']
-                or hashlib.sha256(dados).hexdigest() != metadados['sha256']
-            ):
-                raise ValueError('Arquivo alterado ou incompleto: ' + nome)
-        if destino is not None:
-            destino.mkdir(mode=0o700, parents=True, exist_ok=False)
-            for membro in membros:
-                caminho = destino / membro.name
-                caminho.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-                caminho.write_bytes(tar.extractfile(membro).read())
-                caminho.chmod(0o600)
-    return manifesto
-
-
-def principal():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('arquivo', type=Path)
-    parser.add_argument('--extrair', type=Path)
-    args = parser.parse_args()
-    manifesto = verificar(args.arquivo, args.extrair)
-    print('Backup íntegro: %d arquivos.' % len(manifesto['arquivos']))
-    print('Origem:', manifesto['metadados']['home_original'])
-    print('Criado:', manifesto['metadados']['criado_utc'])
-    for aviso in manifesto['avisos']:
-        print('Pendente:', aviso)
-    if args.extrair:
-        print('Arquivos extraídos para revisão em:', args.extrair)
-        print(
-            (
-                'Nenhum serviço, firmware ou configuração '
-                'ativa foi '
-                'alterado.'
+            raise ValueError(
+                'The manifest does not match the archive contents.'
             )
-        )
+        for name, metadata in manifest['arquivos'].items():
+            data = tar.extractfile(name).read()
+            if (
+                len(data) != metadata['bytes']
+                or hashlib.sha256(data).hexdigest() != metadata['sha256']
+            ):
+                raise ValueError('File changed or incomplete: ' + name)
+        if destination is not None:
+            destination.mkdir(mode=0o700, parents=True, exist_ok=False)
+            for member in members:
+                path = destination / member.name
+                path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+                path.write_bytes(tar.extractfile(member).read())
+                path.chmod(0o600)
+    return manifest
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('archive', type=Path)
+    parser.add_argument('--extract', '--extrair', dest='extract', type=Path)
+    args = parser.parse_args()
+    manifest = verify(args.archive, args.extract)
+    print('Backup verified: %d files.' % len(manifest['arquivos']))
+    print('Source:', manifest['metadados']['home_original'])
+    print('Created:', manifest['metadados']['criado_utc'])
+    for warning in manifest['avisos']:
+        print('Pending:', warning)
+    if args.extract:
+        print('Files extracted for review to:', args.extract)
+        print(('No services, firmware or active configuration were changed.'))
 
 
 if __name__ == '__main__':
-    principal()
+    main()

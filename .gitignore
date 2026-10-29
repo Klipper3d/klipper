@@ -4,3 +4,10 @@ out
 .config
 .config.old
 klippy/.version
+
+/machines/
+/private-backups/
+/printer_data/
+backup-restauracao-*.tar.gz
+complemento-restauracao-*.tar.gz
+transport-processes.json
