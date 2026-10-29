@@ -9,214 +9,336 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-RAIZ = Path(__file__).resolve().parents[2]
-SCRIPTS = RAIZ / 'scripts/ender3-v3-se'
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPTS = ROOT / 'scripts/ender3-v3-se'
 sys.path.insert(0, str(SCRIPTS))
-sys.path.insert(0, str(RAIZ / 'klippy'))
+sys.path.insert(0, str(ROOT / 'klippy'))
 from configfile import ConfigFileReader
-import restaurar_snapshot as restaurador
-import capturar_configuracao as coletor
-import verificar_backup as verificador
+import restaurar_snapshot as restorer
+import capturar_configuracao as collector
+import verificar_backup as verifier
 
 
 class SnapshotTest(unittest.TestCase):
-    def bancada(self, pasta):
-        configuracoes = pasta / 'printer_data/config'
-        runtime = configuracoes / 'bmcu/runtime'
+    def test_restore_cli_accepts_apply_aliases(self):
+        for flag in ('--apply', '--aplicar'):
+            with self.subTest(
+                flag=flag
+            ), tempfile.TemporaryDirectory() as temp:
+                home = Path(temp)
+                self.bench(home)
+                arguments = [
+                    'restore_snapshot',
+                    '--home',
+                    str(home),
+                    '--snapshot',
+                    str(self.snapshot),
+                    flag,
+                ]
+                with patch.object(sys, 'argv', arguments), patch.object(
+                    restorer, 'check_application'
+                ), patch.object(restorer, 'apply') as apply, patch.object(
+                    restorer.os, 'geteuid', return_value=0
+                ):
+                    restorer.main()
+                    apply.assert_called_once()
+
+    def test_capture_cli_accepts_output_aliases(self):
+        for output_flag, services_flag in (
+            ('--output', '--services-only'),
+            ('--saida', '--complemento'),
+        ):
+            with self.subTest(
+                flag=output_flag
+            ), tempfile.TemporaryDirectory() as temp:
+                home = Path(temp)
+                output = home / 'private-backup.tar.gz'
+
+                def capture_environment(home, output):
+                    output.write_bytes(b'synthetic-archive')
+                    return []
+
+                arguments = [
+                    'capture_configuration',
+                    '--home',
+                    str(home),
+                    output_flag,
+                    str(output),
+                    services_flag,
+                ]
+                with patch.object(sys, 'argv', arguments), patch.object(
+                    collector,
+                    'capture_service_environment',
+                    side_effect=capture_environment,
+                ) as capture, patch.object(
+                    collector.os, 'geteuid', return_value=1000
+                ):
+                    collector.main()
+                    capture.assert_called_once_with(home, output)
+
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.snapshot = Path(temporary.name) / 'snapshot'
+        self.snapshot.mkdir()
+        rows = ''.join(
+            '#*# ' + ', '.join(['0.000'] * 9) + '\n' for _ in range(9)
+        )
+        files = {
+            'config/printer.cfg': '[include ender3-v3-se/motion.cfg]\n'
+            '#*# <---------------------- SAVE_CONFIG ---------------------->\n'
+            '#*# [bltouch]\n#*# z_offset = 1.234\n'
+            '#*# [bed_mesh default]\n#*# x_count = 9\n#*# y_count = 9\n'
+            '#*# points =\n' + rows,
+            ('config/ender3-v3-se/motion.cfg'): (
+                '[extruder]\nrotation_distance: ' '7.000\n'
+            ),
+            'config/bmcu/bmcu_panel.cfg': '[bmcu_panel]\naccess_token: '
+            + restorer.TOKEN_PLACEHOLDER
+            + '\n',
+            'config/bmcu_state.json': json.dumps(
+                {
+                    'devices': {
+                        'TEST_DEVICE': {
+                            'motion_config': {'load_speed_mms': 10}
+                        }
+                    },
+                    'print_session': {'active': False},
+                    'endpoints': {
+                        'extruder': {
+                            'toolhead_prepare_macro': 'BMCU_PREPARAR_ENDER'
+                        }
+                    },
+                }
+            ),
+            'metadados.json': json.dumps(
+                {
+                    'klipper_commit': '0' * 40,
+                    'calibracoes': {'z_offset': 1.234},
+                    'firmware_bin_capturado': {
+                        'gravado_na_placa': 'hash_nao_verificavel_por_status'
+                    },
+                }
+            ),
+            'versoes-mcus.json': json.dumps(
+                {
+                    'mcu': {
+                        'mcu_version': 'test-printer-version',
+                        'mcu_constants': {'E3V3SE_DISPLAY_BRIDGE': 1},
+                    },
+                    'mcu host': {'mcu_version': 'test-host-version'},
+                }
+            ),
+        }
+        for name in ('klipper', 'moonraker', 'crowsnest', 'sonar'):
+            files['ambiente-servicos/' + name + '.env'] = (
+                'TEST_SETTING=example\n'
+            )
+        for name, content in files.items():
+            path = self.snapshot / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(content)
+        hashes = {
+            name: hashlib.sha256(
+                (self.snapshot / name).read_bytes()
+            ).hexdigest()
+            for name in files
+        }
+        (self.snapshot / 'integridade.json').write_text(json.dumps(hashes))
+
+    def bench(self, directory):
+        configurations = directory / 'printer_data/config'
+        runtime = configurations / 'bmcu/runtime'
         runtime.mkdir(parents=True)
         (runtime / 'version').write_text('package=1.0.6\nfirmware=1.0.1\n')
         (runtime / 'INSTALLATION.json').write_text('{}')
-        extras = pasta / 'klipper/klippy/extras/bmcu_core'
+        extras = directory / 'klipper/klippy/extras/bmcu_core'
         extras.mkdir(parents=True)
         fixtures = Path(__file__).parent / 'fixtures'
-        for nome in ('endpoints', 'manager'):
-            (extras / (nome + '.py')).write_text(
-                (fixtures / (nome + '_original.txt')).read_text()
+        for name in ('endpoints', 'manager'):
+            (extras / (name + '.py')).write_text(
+                (fixtures / (name + '_original.txt')).read_text()
             )
-        return configuracoes
+        return configurations
 
-    def test_integridade_calibracoes_e_includes_reais(self):
-        snapshot = restaurador.SNAPSHOT
-        metadados = restaurador.verificar(snapshot)
-        self.assertEqual(metadados['calibracoes']['z_offset'], 1.940)
+    def test_synthetic_snapshot_integrity_calibration_and_includes(self):
+        snapshot = self.snapshot
+        metadata = restorer.verify(snapshot)
+        self.assertEqual(metadata['calibracoes']['z_offset'], 1.234)
         cfg = snapshot / 'config'
         printer = (cfg / 'printer.cfg').read_text()
-        self.assertIn('#*# z_offset = 1.940', printer)
+        self.assertIn('#*# z_offset = 1.234', printer)
         self.assertIn('#*# x_count = 9', printer)
         self.assertIn('#*# y_count = 9', printer)
-        linhas = printer.split('#*# points =\n', 1)[1].splitlines()[:9]
-        self.assertEqual(len(linhas), 9)
-        self.assertTrue(all(len(linha.split(',')) == 9 for linha in linhas))
-        for caminho in cfg.rglob('*.cfg'):
+        lines = printer.split('#*# points =\n', 1)[1].splitlines()[:9]
+        self.assertEqual(len(lines), 9)
+        self.assertTrue(all(len(line.split(',')) == 9 for line in lines))
+        for path in cfg.rglob('*.cfg'):
             for include in re.findall(
-                r'^\[include\s+([^\]]+)\]', caminho.read_text(), re.M
+                r'^\[include\s+([^\]]+)\]', path.read_text(), re.M
             ):
-                self.assertTrue((caminho.parent / include).is_file(), include)
+                self.assertTrue((path.parent / include).is_file(), include)
         motion = (cfg / 'ender3-v3-se/motion.cfg').read_text()
-        self.assertIn('rotation_distance: 7.589', motion)
-        estado = json.loads((cfg / 'bmcu_state.json').read_text())
-        dispositivo = next(iter(estado['devices'].values()))
-        self.assertEqual(dispositivo['motion_config']['load_speed_mms'], 10)
-        self.assertFalse(estado['print_session']['active'])
+        self.assertIn('rotation_distance: 7.000', motion)
+        status = json.loads((cfg / 'bmcu_state.json').read_text())
+        device = next(iter(status['devices'].values()))
+        self.assertEqual(device['motion_config']['load_speed_mms'], 10)
+        self.assertFalse(status['print_session']['active'])
         self.assertEqual(
-            estado['endpoints']['extruder']['toolhead_prepare_macro'],
+            status['endpoints']['extruder']['toolhead_prepare_macro'],
             'BMCU_PREPARAR_ENDER',
         )
 
-    def test_configuracao_macros_compila_com_sintaxe_klipper(self):
+    def test_snapshot_macros_use_klipper_syntax(self):
         from jinja2 import Environment
 
-        ambiente = Environment(
+        environment = Environment(
             block_start_string='{%',
             block_end_string='%}',
             variable_start_string='{',
             variable_end_string='}',
         )
-        for caminho in (restaurador.SNAPSHOT / 'config').rglob('*.cfg'):
+        for path in (self.snapshot / 'config').rglob('*.cfg'):
             cfg = ConfigFileReader().build_fileconfig(
-                caminho.read_text(), str(caminho)
+                path.read_text(), str(path)
             )
-            for secao in cfg.sections():
-                if cfg.has_option(secao, 'gcode'):
-                    ambiente.parse(cfg.get(secao, 'gcode'))
+            for section in cfg.sections():
+                if cfg.has_option(section, 'gcode'):
+                    environment.parse(cfg.get(section, 'gcode'))
 
-    def test_preparacao_preserva_save_config_e_token_existente(self):
+    def test_prepare_preserves_save_config_and_existing_token(self):
         with tempfile.TemporaryDirectory() as temp:
-            casa = Path(temp)
-            cfg = self.bancada(casa)
+            home = Path(temp)
+            cfg = self.bench(home)
             token = 'a' * 64
             (cfg / 'bmcu/bmcu_panel.cfg').write_text('access_token: ' + token)
-            plano = restaurador.preparar(casa)
+            plan = restorer.prepare(home, self.snapshot)
             self.assertEqual(
-                plano[cfg / 'printer.cfg'],
-                (restaurador.SNAPSHOT / 'config/printer.cfg').read_bytes(),
+                plan[cfg / 'printer.cfg'],
+                (self.snapshot / 'config/printer.cfg').read_bytes(),
             )
-            self.assertIn(token.encode(), plano[cfg / 'bmcu/bmcu_panel.cfg'])
+            self.assertIn(token.encode(), plan[cfg / 'bmcu/bmcu_panel.cfg'])
             self.assertFalse((cfg / 'printer.cfg').exists())
-            metadados = json.loads(
-                plano[cfg / 'bmcu/runtime/INSTALLATION.json']
-            )
+            metadata = json.loads(plan[cfg / 'bmcu/runtime/INSTALLATION.json'])
             self.assertEqual(
-                metadados['panel_token_sha256'],
+                metadata['panel_token_sha256'],
                 hashlib.sha256(token.encode()).hexdigest(),
             )
 
-    def test_gera_token_local_e_nao_publica_credencial_real(self):
+    def test_local_panel_token_is_generated(self):
         with tempfile.TemporaryDirectory() as temp:
-            casa = Path(temp)
-            cfg = self.bancada(casa)
-            plano = restaurador.preparar(casa)
-            texto = plano[cfg / 'bmcu/bmcu_panel.cfg'].decode()
-            self.assertNotIn(restaurador.MARCADOR, texto)
-            token = re.search(r'access_token:\s*(\w+)', texto)[1]
+            home = Path(temp)
+            cfg = self.bench(home)
+            plan = restorer.prepare(home, self.snapshot)
+            text = plan[cfg / 'bmcu/bmcu_panel.cfg'].decode()
+            self.assertNotIn(restorer.TOKEN_PLACEHOLDER, text)
+            token = re.search(r'access_token:\s*(\w+)', text)[1]
             self.assertEqual(len(token), 64)
-            self.assertNotEqual(token, restaurador.token_painel(cfg))
-            referencia = (
-                restaurador.SNAPSHOT / 'config/bmcu/bmcu_panel.cfg'
+            self.assertNotEqual(token, restorer.panel_token(cfg))
+            reference = (
+                self.snapshot / 'config/bmcu/bmcu_panel.cfg'
             ).read_text()
-            self.assertIn(restaurador.MARCADOR, referencia)
+            self.assertIn(restorer.TOKEN_PLACEHOLDER, reference)
 
-    def test_prepara_ambiente_dos_servicos_sem_alterar_destino(self):
+    def test_service_environment_prepare_does_not_modify_destination(self):
         with tempfile.TemporaryDirectory() as temp:
-            casa = Path(temp)
-            self.bancada(casa)
-            destino = casa / 'printer_data/systemd'
-            destino.mkdir()
-            anterior = destino / 'klipper.env'
-            anterior.write_text('configuracao anterior')
-            plano = restaurador.preparar(casa)
-            origem = restaurador.SNAPSHOT / 'ambiente-servicos'
-            self.assertEqual(len(list(origem.glob('*.env'))), 4)
-            for arquivo in origem.glob('*.env'):
+            home = Path(temp)
+            self.bench(home)
+            destination = home / 'printer_data/systemd'
+            destination.mkdir()
+            previous = destination / 'klipper.env'
+            previous.write_text('configuracao anterior')
+            plan = restorer.prepare(home, self.snapshot)
+            source_path = self.snapshot / 'ambiente-servicos'
+            self.assertEqual(len(list(source_path.glob('*.env'))), 4)
+            for file_path in source_path.glob('*.env'):
                 self.assertEqual(
-                    plano[destino / arquivo.name], arquivo.read_bytes()
+                    plan[destination / file_path.name], file_path.read_bytes()
                 )
-            self.assertEqual(anterior.read_text(), 'configuracao anterior')
-            self.assertEqual(list(destino.iterdir()), [anterior])
+            self.assertEqual(previous.read_text(), 'configuracao anterior')
+            self.assertEqual(list(destination.iterdir()), [previous])
 
-    def test_registra_versoes_reportadas_sem_confundir_com_binario(self):
-        metadados = restaurador.verificar(restaurador.SNAPSHOT)
-        arquivo = restaurador.SNAPSHOT / 'versoes-mcus.json'
-        versoes = json.loads(arquivo.read_text())
+    def test_reported_versions_do_not_claim_flash_identity(self):
+        metadata = restorer.verify(self.snapshot)
+        file_path = self.snapshot / 'versoes-mcus.json'
+        versions = json.loads(file_path.read_text())
         self.assertEqual(
-            versoes['mcu']['mcu_version'], 'v0.13.0-782-geb5fb15e3'
+            versions['mcu']['mcu_version'], 'test-printer-version'
         )
         self.assertEqual(
-            versoes['mcu host']['mcu_version'], 'v0.13.0-794-gceb442eb6'
+            versions['mcu host']['mcu_version'], 'test-host-version'
         )
         self.assertEqual(
-            versoes['mcu']['mcu_constants']['E3V3SE_DISPLAY_BRIDGE'], 1
+            versions['mcu']['mcu_constants']['E3V3SE_DISPLAY_BRIDGE'], 1
         )
         self.assertEqual(
-            metadados['firmware_bin_capturado']['gravado_na_placa'],
+            metadata['firmware_bin_capturado']['gravado_na_placa'],
             'hash_nao_verificavel_por_status',
         )
 
-    def test_rejeita_alteracao_ou_arquivo_adicional(self):
+    def test_snapshot_rejects_changes_and_extra_files(self):
         with tempfile.TemporaryDirectory() as temp:
             snapshot = Path(temp) / 'snapshot'
-            shutil.copytree(restaurador.SNAPSHOT, snapshot)
+            shutil.copytree(self.snapshot, snapshot)
             extra = snapshot / 'config/extra.cfg'
             extra.write_text('extra')
-            with self.assertRaisesRegex(ValueError, 'extras'):
-                restaurador.verificar(snapshot)
+            with self.assertRaisesRegex(ValueError, 'extra'):
+                restorer.verify(snapshot)
             extra.unlink()
-            with (snapshot / 'config/printer.cfg').open('a') as arquivo:
-                arquivo.write('alterado')
-            with self.assertRaisesRegex(ValueError, 'alterado'):
-                restaurador.verificar(snapshot)
+            with (snapshot / 'config/printer.cfg').open('a') as file_path:
+                file_path.write('changed')
+            with self.assertRaisesRegex(ValueError, 'changed'):
+                restorer.verify(snapshot)
 
-    def test_falha_na_aplicacao_restaura_arquivos_anteriores(self):
+    def test_failed_apply_restores_previous_files(self):
         with tempfile.TemporaryDirectory() as temp:
-            casa = Path(temp)
-            cfg = casa / 'printer.cfg'
+            home = Path(temp)
+            cfg = home / 'printer.cfg'
             cfg.write_text('calibracao anterior')
-            segundo = casa / 'state.json'
-            segundo.write_text('estado anterior')
-            usuario = types.SimpleNamespace(pw_uid=0, pw_gid=0)
-            gravar = restaurador.instalador.gravar
+            second = home / 'state.json'
+            second.write_text('estado anterior')
+            user = types.SimpleNamespace(pw_uid=0, pw_gid=0)
+            write_file = restorer.installer.write_file
 
-            def simular_falha(caminho, dados, usuario, modo=0o644):
-                if dados == b'novo':
+            def simulate_failure(path, data, user, mode=0o644):
+                if data == b'novo':
                     raise OSError('falha de disco')
-                return gravar(caminho, dados, usuario, modo)
+                return write_file(path, data, user, mode)
 
-            with patch.object(restaurador.instalador, 'servico'), patch.object(
-                restaurador.instalador, 'gravar', side_effect=simular_falha
+            with patch.object(restorer.installer, 'service'), patch.object(
+                restorer.installer, 'write_file', side_effect=simulate_failure
             ):
                 with self.assertRaisesRegex(OSError, 'falha de disco'):
-                    restaurador.aplicar(
-                        casa,
-                        {cfg: b'primeira escrita', segundo: b'novo'},
-                        usuario,
+                    restorer.apply(
+                        home,
+                        {cfg: b'primeira escrita', second: b'novo'},
+                        user,
                     )
             self.assertEqual(cfg.read_text(), 'calibracao anterior')
-            self.assertEqual(segundo.read_text(), 'estado anterior')
+            self.assertEqual(second.read_text(), 'estado anterior')
 
-    def test_complemento_captura_env_sem_consultar_ou_parar_impressora(self):
+    def test_service_capture_does_not_stop_printer(self):
         with tempfile.TemporaryDirectory() as temp:
-            casa = Path(temp)
-            env = casa / 'printer_data/systemd'
+            home = Path(temp)
+            env = home / 'printer_data/systemd'
             env.mkdir(parents=True)
-            conteudo = 'KLIPPER_ARGS="klippy.py printer.cfg"\n'
-            (env / 'klipper.env').write_text(conteudo)
-            saida = casa / 'complemento.tar.gz'
-            with patch.object(
-                coletor, 'conferir_ocioso'
-            ) as conferir, patch.object(
-                coletor,
-                'objeto',
+            content = 'KLIPPER_ARGS="klippy.py printer.cfg"\n'
+            (env / 'klipper.env').write_text(content)
+            output = home / 'complemento.tar.gz'
+            with patch.object(collector, 'check_idle') as check, patch.object(
+                collector,
+                'query_object',
                 return_value={
                     'mcu_version': 'versao-de-teste',
                 },
             ):
-                coletor.capturar_complemento(casa, saida)
-                conferir.assert_not_called()
-            destino = casa / 'revisao'
-            verificador.verificar(saida, destino)
+                collector.capture_service_environment(home, output)
+                check.assert_not_called()
+            destination = home / 'revisao'
+            verifier.verify(output, destination)
             self.assertEqual(
-                (destino / 'ambiente-servicos/klipper.env').read_text(),
-                conteudo,
+                (destination / 'ambiente-servicos/klipper.env').read_text(),
+                content,
             )
 
 

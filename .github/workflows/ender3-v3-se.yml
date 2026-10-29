@@ -27,6 +27,14 @@ jobs:
     - name: Test validated BMCU integration and backup
       run: ci_build/venv/bin/python -m unittest discover -s test/bmcu_integracao -p 'test_*.py'
 
+    - name: Prepare release build version
+      if: github.ref == 'refs/heads/master'
+      run: |
+        version="$(cat VERSION)"
+        if ! git show-ref --verify --quiet "refs/tags/v${version}"; then
+          git tag "v${version}" "$GITHUB_SHA"
+        fi
+
     - name: Build GD32F303 target
       run: |
         cp test/configs/e3v3se-gd32f303.config .config
@@ -75,34 +83,72 @@ jobs:
         name: ender3-v3-se-gd32f303-${{ github.sha }}
         path: ci_build/ender3-v3-se-artifact
 
-  publish-prerelease:
-    if: github.ref == 'refs/tags/v0.2.0'
+  publish-release:
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     needs: display-and-firmware
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    concurrency:
+      group: publish-release-${{ github.repository }}
+      cancel-in-progress: false
     permissions:
       actions: read
       contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
     - uses: actions/checkout@v5
 
-    - name: Download validated firmware
-      env:
-        GH_TOKEN: ${{ github.token }}
+    - name: Check release version
+      id: release
+      run: |
+        version="$(cat VERSION)"
+        [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+        if gh release view "v${version}" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+          echo 'publish=false' >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        test -f "docs/releases/v${version}.md"
+        echo "version=${version}" >> "$GITHUB_OUTPUT"
+        echo 'publish=true' >> "$GITHUB_OUTPUT"
+
+    - name: Require general Klipper tests for this commit
+      if: steps.release.outputs.publish == 'true'
+      run: |
+        run_id=''
+        for attempt in $(seq 1 30); do
+          run_id="$(gh run list --repo "$GITHUB_REPOSITORY" \
+            --workflow build-test.yaml --commit "$GITHUB_SHA" --event push \
+            --json databaseId --jq '.[0].databaseId // empty')"
+          if [ -n "$run_id" ]; then
+            break
+          fi
+          sleep 5
+        done
+        test -n "$run_id"
+        gh run watch "$run_id" --repo "$GITHUB_REPOSITORY" --exit-status --interval 15
+
+    - name: Download and verify release artifacts
+      if: steps.release.outputs.publish == 'true'
       run: |
         gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" \
           --name "ender3-v3-se-gd32f303-${GITHUB_SHA}" --dir release-artifacts
         cd release-artifacts
         sha256sum --check SHA256SUMS
         grep -Fx "commit=${GITHUB_SHA}" BUILD-METADATA.txt
+        python3 -c 'import json; version = json.load(open("klipper.dict"))["version"]; assert version.startswith("v${{ steps.release.outputs.version }}-0-g") and "dirty" not in version'
 
-    - name: Publish 0.2.0 pre-release
+    - name: Publish release and source tag
+      if: steps.release.outputs.publish == 'true'
       env:
-        GH_TOKEN: ${{ github.token }}
+        RELEASE_VERSION: ${{ steps.release.outputs.version }}
       run: |
-        gh release create v0.2.0 --repo "$GITHUB_REPOSITORY" \
-          --verify-tag --prerelease --latest=false \
-          --title "v0.2.0 - BMCU integration and multilingual stock display" \
-          --notes-file docs/releases/v0.2.0.md \
+        current="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/master" --jq '.object.sha')"
+        test "$current" = "$GITHUB_SHA"
+        gh release create "v${RELEASE_VERSION}" --repo "$GITHUB_REPOSITORY" \
+          --target "$GITHUB_SHA" --latest=true \
+          --title "v${RELEASE_VERSION} - Ender 3 V3 SE display and BMCU" \
+          --notes-file "docs/releases/v${RELEASE_VERSION}.md" \
           release-artifacts/klipper.bin release-artifacts/klipper.dict \
           release-artifacts/defconfig release-artifacts/BUILD-METADATA.txt \
           release-artifacts/SHA256SUMS

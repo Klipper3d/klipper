@@ -8,174 +8,194 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-RAIZ = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[2]
 
 
-def importar(nome):
-    arquivo = RAIZ / 'scripts/ender3-v3-se' / (nome + '.py')
-    spec = importlib.util.spec_from_file_location(nome, arquivo)
-    modulo = importlib.util.module_from_spec(spec)
-    sys.modules[nome] = modulo
-    spec.loader.exec_module(modulo)
-    return modulo
+def import_module(name):
+    file_path = ROOT / 'scripts/ender3-v3-se' / (name + '.py')
+    spec = importlib.util.spec_from_file_location(name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
-captura = importar('capturar_configuracao')
-verificador = importar('verificar_backup')
+capture = import_module('capturar_configuracao')
+verifier = import_module('verificar_backup')
 
 
 class BackupTest(unittest.TestCase):
-    def criar(self, pasta):
-        origem = pasta / 'config'
-        origem.mkdir()
-        (origem / 'printer.cfg').write_text(
+    def test_verifier_cli_accepts_english_and_legacy_flags(self):
+        for flag in ('--extract', '--extrair'):
+            with self.subTest(
+                flag=flag
+            ), tempfile.TemporaryDirectory() as temp:
+                directory = Path(temp)
+                archive = self.create(directory)
+                output = directory / 'extracted'
+                with patch.object(
+                    sys,
+                    'argv',
+                    ['verify_backup', str(archive), flag, str(output)],
+                ):
+                    verifier.main()
+                self.assertTrue((output / 'config/printer.cfg').is_file())
+
+    def create(self, directory):
+        source_path = directory / 'config'
+        source_path.mkdir()
+        (source_path / 'printer.cfg').write_text(
             '[bltouch]\n#*# z_offset = 1.887\n'
         )
-        (origem / '.moonraker.secrets').write_text('senha=privada\n')
-        (origem / 'bmcu_state.json').write_text('{"loaded_tool": 4}')
-        (origem / 'backup-antigo.tar.gz').write_bytes(b'backup antigo')
-        arquivo = pasta / 'backup.tar.gz'
-        coleta = captura.Captura(arquivo)
-        coleta.pasta(origem, 'config', ('.tar.gz',))
-        coleta.concluir(
+        (source_path / '.moonraker.secrets').write_text('senha=privada\n')
+        (source_path / 'bmcu_state.json').write_text('{"loaded_tool": 4}')
+        (source_path / 'backup-antigo.tar.gz').write_bytes(b'backup antigo')
+        file_path = directory / 'backup.tar.gz'
+        capture_job = capture.BackupCapture(file_path)
+        capture_job.directory(source_path, 'config', ('.tar.gz',))
+        capture_job.finish(
             {'home_original': '/home/pi', 'criado_utc': '2026-10-20'}
         )
-        coleta.tar.close()
-        return arquivo
+        capture_job.tar.close()
+        return file_path
 
-    def test_conserva_calibracao_estado_e_segredos_apenas_no_backup_privado(
+    def test_private_backup_preserves_calibration_state_and_secrets(
         self,
     ):
         with tempfile.TemporaryDirectory() as temp:
-            pasta = Path(temp)
-            arquivo = self.criar(pasta)
-            destino = pasta / 'revisao'
-            manifesto = verificador.verificar(arquivo, destino)
+            directory = Path(temp)
+            file_path = self.create(directory)
+            destination = directory / 'revisao'
+            manifest = verifier.verify(file_path, destination)
             self.assertEqual(
-                (destino / 'config/printer.cfg').read_bytes(),
-                (pasta / 'config/printer.cfg').read_bytes(),
+                (destination / 'config/printer.cfg').read_bytes(),
+                (directory / 'config/printer.cfg').read_bytes(),
             )
             self.assertEqual(
-                (destino / 'config/.moonraker.secrets').read_text(),
+                (destination / 'config/.moonraker.secrets').read_text(),
                 'senha=privada\n',
             )
             self.assertFalse(
-                (destino / 'config/backup-antigo.tar.gz').exists()
+                (destination / 'config/backup-antigo.tar.gz').exists()
             )
-            self.assertEqual(len(manifesto['arquivos']), 3)
+            self.assertEqual(len(manifest['arquivos']), 3)
             with self.assertRaises(FileExistsError):
-                verificador.verificar(arquivo, destino)
+                verifier.verify(file_path, destination)
 
-    def test_rejeita_corrupcao_antes_de_extrair(self):
+    def test_archive_rejects_corruption_before_extraction(self):
         with tempfile.TemporaryDirectory() as temp:
-            pasta = Path(temp)
-            arquivo = self.criar(pasta)
-            with tarfile.open(arquivo) as tar:
-                conteudo = {
+            directory = Path(temp)
+            file_path = self.create(directory)
+            with tarfile.open(file_path) as tar:
+                content = {
                     m.name: tar.extractfile(m).read() for m in tar.getmembers()
                 }
-            conteudo['config/printer.cfg'] += b'alterado'
-            with tarfile.open(arquivo, 'w:gz') as tar:
-                for nome, dados in conteudo.items():
-                    item = tarfile.TarInfo(nome)
-                    item.size = len(dados)
-                    tar.addfile(item, io.BytesIO(dados))
-            with self.assertRaisesRegex(ValueError, 'alterado'):
-                verificador.verificar(arquivo, pasta / 'revisao')
-            self.assertFalse((pasta / 'revisao').exists())
+            content['config/printer.cfg'] += b'changed'
+            with tarfile.open(file_path, 'w:gz') as tar:
+                for name, data in content.items():
+                    item = tarfile.TarInfo(name)
+                    item.size = len(data)
+                    tar.addfile(item, io.BytesIO(data))
+            with self.assertRaisesRegex(ValueError, 'changed'):
+                verifier.verify(file_path, directory / 'revisao')
+            self.assertFalse((directory / 'revisao').exists())
 
-    def test_rejeita_caminhos_externos_e_links(self):
+    def test_archive_rejects_external_paths_and_links(self):
         with tempfile.TemporaryDirectory() as temp:
-            arquivo = Path(temp) / 'malicioso.tar.gz'
-            for nome, tipo in [
+            file_path = Path(temp) / 'malicioso.tar.gz'
+            for name, kind in [
                 ('../fora', tarfile.REGTYPE),
                 ('/absoluto', tarfile.REGTYPE),
                 ('link', tarfile.SYMTYPE),
                 ('link', tarfile.LNKTYPE),
             ]:
-                with tarfile.open(arquivo, 'w:gz') as tar:
-                    item = tarfile.TarInfo(nome)
-                    item.type = tipo
+                with tarfile.open(file_path, 'w:gz') as tar:
+                    item = tarfile.TarInfo(name)
+                    item.type = kind
                     item.linkname = (
-                        '/etc/passwd' if tipo != tarfile.REGTYPE else ''
+                        '/etc/passwd' if kind != tarfile.REGTYPE else ''
                     )
                     tar.addfile(item, io.BytesIO(b''))
-                with self.assertRaisesRegex(ValueError, 'inválida'):
-                    verificador.verificar(arquivo)
+                with self.assertRaisesRegex(ValueError, 'Invalid entry'):
+                    verifier.verify(file_path)
 
-    def test_rejeita_arquivo_que_mudou_durante_a_captura(self):
+    def test_capture_rejects_changed_source_files(self):
         with tempfile.TemporaryDirectory() as temp:
-            pasta = Path(temp)
-            origem = pasta / 'printer.cfg'
-            origem.write_text('antes')
-            coleta = captura.Captura(pasta / 'backup.tar.gz')
+            directory = Path(temp)
+            source_path = directory / 'printer.cfg'
+            source_path.write_text('antes')
+            capture_job = capture.BackupCapture(directory / 'backup.tar.gz')
             try:
-                coleta.arquivo(origem, 'config/printer.cfg', obrigatorio=True)
-                origem.write_text('depois')
-                with self.assertRaisesRegex(RuntimeError, 'mudou'):
-                    coleta.concluir({})
+                capture_job.file_path(
+                    source_path, 'config/printer.cfg', required=True
+                )
+                source_path.write_text('depois')
+                with self.assertRaisesRegex(RuntimeError, 'changed'):
+                    capture_job.finish({})
             finally:
-                coleta.tar.close()
+                capture_job.tar.close()
 
-    def test_copia_modulos_bmcu_vinculados_e_registra_permissoes(self):
+    def test_linked_modules_and_permissions_are_captured(self):
         with tempfile.TemporaryDirectory() as temp:
-            pasta = Path(temp)
-            runtime = pasta / 'runtime/bmcu_core'
+            directory = Path(temp)
+            runtime = directory / 'runtime/bmcu_core'
             runtime.mkdir(parents=True)
             (runtime / 'manager.py').write_text('conteudo em uso')
             (runtime / 'manager.py').chmod(0o750)
-            extras = pasta / 'klippy/extras'
+            extras = directory / 'klippy/extras'
             extras.mkdir(parents=True)
             (extras / 'bmcu_core').symlink_to(
                 runtime, target_is_directory=True
             )
-            arquivo = pasta / 'backup.tar.gz'
-            coleta = captura.Captura(arquivo)
+            file_path = directory / 'backup.tar.gz'
+            capture_job = capture.BackupCapture(file_path)
             try:
-                coleta.pasta(
-                    pasta / 'klippy', 'klippy-instalado', seguir_vinculos=True
+                capture_job.directory(
+                    directory / 'klippy',
+                    'klippy-instalado',
+                    follow_symlinks=True,
                 )
-                coleta.concluir(
+                capture_job.finish(
                     {'home_original': '/home/pi', 'criado_utc': '2026-10-20'}
                 )
             finally:
-                coleta.tar.close()
-            manifesto = verificador.verificar(arquivo, pasta / 'revisao')
-            nome = 'klippy-instalado/extras/bmcu_core/manager.py'
+                capture_job.tar.close()
+            manifest = verifier.verify(file_path, directory / 'revisao')
+            name = 'klippy-instalado/extras/bmcu_core/manager.py'
             self.assertEqual(
-                (pasta / 'revisao' / nome).read_text(), 'conteudo em uso'
+                (directory / 'revisao' / name).read_text(), 'conteudo em uso'
             )
-            self.assertEqual(manifesto['arquivos'][nome]['modo'], 0o750)
+            self.assertEqual(manifest['arquivos'][name]['modo'], 0o750)
 
-    def test_nao_captura_durante_impressao_ou_movimento(self):
-        for estado, bmcu in [
+    def test_capture_rejects_printing_and_motion(self):
+        for status, bmcu in [
             ('printing', {}),
             ('paused', {}),
             ('standby', {'active_operations': {'bmcu0': {}}}),
             ('standby', {'devices': [{'channels': [{'motion': 3}]}]}),
         ]:
             with patch.object(
-                captura,
-                'objeto',
+                capture,
+                'query_object',
                 side_effect=lambda n: (
-                    {'state': estado} if n == 'print_stats' else bmcu
+                    {'state': status} if n == 'print_stats' else bmcu
                 ),
             ):
                 with self.assertRaises(RuntimeError):
-                    captura.conferir_ocioso()
+                    capture.check_idle()
 
-    def test_backup_nao_e_simulado_como_maquina_estacionada(self):
+    def test_backup_keeps_loaded_state(self):
         bmcu = {
             'devices': [{'channels': [{'motion': 0}], 'loaded_channels': [3]}]
         }
         with patch.object(
-            captura,
-            'objeto',
+            capture,
+            'query_object',
             side_effect=lambda n: (
                 {'state': 'standby'} if n == 'print_stats' else bmcu
             ),
         ):
-            self.assertEqual(captura.conferir_ocioso(), bmcu)
+            self.assertEqual(capture.check_idle(), bmcu)
 
 
 if __name__ == '__main__':

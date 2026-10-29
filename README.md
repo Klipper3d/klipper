@@ -1,143 +1,110 @@
-# Klipper for Ender 3 V3 SE with BMCU
+# Klipper for Ender 3 V3 SE + BMCU
 
-[![Ender 3 V3 SE CI](https://github.com/bernardokcosta/ender3-v3-se-klipper-bmcu/actions/workflows/ender3-v3-se.yml/badge.svg)](https://github.com/bernardokcosta/ender3-v3-se-klipper-bmcu/actions/workflows/ender3-v3-se.yml)
-[![Latest release](https://img.shields.io/github/v/release/bernardokcosta/ender3-v3-se-klipper-bmcu?include_prereleases)](https://github.com/bernardokcosta/ender3-v3-se-klipper-bmcu/releases)
-[![License: GPL v3](https://img.shields.io/badge/license-GPLv3-blue.svg)](COPYING)
+**English** | [Português brasileiro](README.pt-BR.md)
 
-This is an unofficial [Klipper](https://www.klipper3d.org/) fork for a
-physically verified Creality Ender 3 V3 SE with:
+[![Ender CI](https://github.com/bernardokcosta/ender3-v3-se-klipper-bmcu/actions/workflows/ender3-v3-se.yml/badge.svg)](https://github.com/bernardokcosta/ender3-v3-se-klipper-bmcu/actions/workflows/ender3-v3-se.yml)
+[![Release](https://img.shields.io/github/v/release/bernardokcosta/ender3-v3-se-klipper-bmcu)](https://github.com/bernardokcosta/ender3-v3-se-klipper-bmcu/releases)
+[![GPLv3](https://img.shields.io/badge/license-GPLv3-blue.svg)](COPYING)
 
-- Mainboard `CR4NS200320C14`
-- `GD32F303RET6` microcontroller
-- Stock TJC3224/DWIN 3.2 inch display
-- USB serial host connection and stock display cabling
+An unofficial Klipper fork for the **Creality Ender 3 V3 SE**, combining stock
+display support and optional four-channel BMCU filament transport. One physical
+extruder serves all four channels. BMCU-Klipper remains a separate dependency.
 
-The implementation is based on current upstream Klipper and keeps the machine
-support isolated in a small MCU bridge, a Klippy extra, modular configuration,
-tests, and documentation. It does not include the historical PRTouch/HX711
-auto-Z implementation; probing uses Klipper's upstream CR-Touch support.
+## Version 1.0.0
 
-## Configuração validada e recuperação da máquina
+- Stock TJC3224/DWIN 3.2-inch display, with English and Brazilian Portuguese UI.
+- BMCU 1.0.6 / firmware 1.0.1 integration using a generic single-extruder endpoint.
+- Switch-based arrival, extruder-first capture, purge, wiping and assisted unload.
+- OrcaSlicer 2.4.2 automatic `T0` handling through the committed print map.
+- Upstream Klipper merged through `0cee841e31d701595b3e509a0b502f6e320f52a8`.
+- Regression tests, a reproducible target build and matching release checksums.
 
-A integração validada nesta Ender, com Orange Pi Zero3 e PETG, está descrita em
-[Configuração validada e backup](docs/Ender3_V3_SE_Configuracao_Validada.md).
-Ela preserva captura de 20 mm, avanço de 80 mm, purga de 70 mm, retirada pelo
-switch e mais 55 mm confirmados pelo encoder, além do mapeamento do Orca 2.4.2.
-A troca entre os canais físicos 2 e 4 e uma impressão de duas cores foram
-confirmadas na máquina pelo proprietário.
+See [release notes](docs/releases/v1.0.0.md) for validation and limitations.
+The 1.0.0 version identifies this fork; it does not change the BMCU package or
+firmware versions. Calibration and physical commissioning remain necessary.
 
-O [snapshot real de 20/10/2026](machines/ender3-v3-se-zero3/README.md) preserva
-os includes ativos, PID, **Z-offset 1,940**, malha **9×9**, extrusora **7,589**,
-macros e estado persistente da BMCU. O token do painel foi retirado da cópia
-pública e é gerado localmente na restauração. Os quatro arquivos `.env` dos
-serviços e as versões reportadas pelas MCUs também estão preservados. A imagem
-inteira do SD e os presets pessoais do Orca não fazem parte deste snapshot público.
+## Hardware scope
 
-Não copie o modelo inicial abaixo sobre uma instalação calibrada. A ferramenta
-`scripts/ender3-v3-se/restaurar_snapshot.py` prepara a configuração capturada e
-aplica somente com `--aplicar`, depois de conferir as dependências. A recuperação
-completa em uma instalação nova ainda requer validação física.
+The supported MCU target is **GD32F303RET6**, on the verified CR4NS200320C14
+mainboard, using Klipper's STM32F103-compatible target, 28 KiB bootloader and
+USART1. Check the chip itself; the board marking alone is insufficient.
+**Do not flash this binary onto an STM32F401 board.**
 
-## Version 0.2.0 pre-release
+CR-Touch uses upstream Klipper support. Historical PRTouch/HX711 automatic
+Z-offset firmware is not included. BMCU and the purge mechanism are optional;
+installation-specific travel, probe offsets, GPIO mappings and filament
+sequences must be measured on the actual printer.
 
-- BMCU-Klipper **1.0.6**, with BMCU firmware **1.0.1**, using
-  `generic_single_extruder`: four channels feed one physical extruder.
-- Complete, calibratable load/purge and cutter-free tip-forming/unload sequences.
-- Shared display/macro heating sequence, cancellation, duplicate-click guards,
-  G-code state restoration, and pause/resume/cancel integration.
-- Stock display menus in **English (default)** and **Brazilian Portuguese**,
-  with current/target temperature, printer state and confirmed active channel.
-- 50 automated display and filament regression tests, including real Klipper
-  macro parsing and G-code state handling.
+## Install and upgrade
 
-This is a pre-release requiring physical commissioning. Filament load/unload
-starts **disabled** until distances and BMCU arrival are calibrated. Screen
-accents and tip formation have not been verified on the physical assembly.
-See the [0.2.0 release notes](docs/releases/v0.2.0.md).
+1. Read the [hardware and flashing guide](docs/Ender3_V3_SE.md).
+2. Back up your configuration and calibration before changing an existing setup.
+3. Use the host source and MCU firmware from the same release tag. Download
+   `klipper.bin`, `klipper.dict`, `defconfig`, `BUILD-METADATA.txt` and
+   `SHA256SUMS` from [Releases](https://github.com/bernardokcosta/ender3-v3-se-klipper-bmcu/releases).
+4. For a new setup, use
+   [`config/printer-creality-ender3-v3-se-gd32f303-2023.cfg`](config/printer-creality-ender3-v3-se-gd32f303-2023.cfg)
+   with the modular `config/ender3-v3-se/` directory. Do not overwrite a calibrated
+   `printer.cfg` with this template.
+5. For BMCU, install [BMCU-Klipper 1.0.6](https://github.com/jarczakpawel/BMCU-Klipper/tree/v1.0.6)
+   and its services first, then follow the [integration guide](docs/Ender3_V3_SE_Configuracao_Validada.md).
 
-## Safety and hardware scope
-
-This firmware is an early public release and has not completed physical
-acceptance testing on every board or display revision. A `C14` board marking
-does not identify the MCU by itself. Open the electronics enclosure and verify
-the actual chip before flashing.
-
-Do not use this build on an STM32F401 board. Before printing, verify heater
-outputs and their matching thermistors, endstops, motor directions, travel
-limits, CR-Touch, Z offset, and emergency power-off behavior. The software and
-its contributors provide no warranty; see the GPLv3 warranty terms in
-[`COPYING`](COPYING).
-
-## Downloads
-
-Download the newest CI-validated build from
-[GitHub Releases](https://github.com/bernardokcosta/ender3-v3-se-klipper-bmcu/releases).
-Pre-releases appear in this list; GitHub's `/releases/latest` may omit them.
-Each release provides:
-
-- `klipper.bin`: MCU firmware for the verified GD32F303 target
-- `klipper.dict`: matching MCU protocol dictionary
-- `defconfig`: normalized Kconfig used for the build
-- `BUILD-METADATA.txt`: source commit, upstream base, target, and build date
-- `SHA256SUMS`: checksums for the downloadable build files
-
-The Klippy host checkout and MCU firmware must come from the same release tag.
-Do not combine the release binary with a different branch or commit.
-
-To flash, place `klipper.bin` on a FAT32 microSD card and give it a short,
-previously unused filename ending in `.bin`, for example `kli0917.bin`. Read the
-complete [installation and commissioning guide](docs/Ender3_V3_SE.md) before
-powering or moving the printer.
-
-## Configuration
-
-The entry configuration is:
-
-[`config/printer-creality-ender3-v3-se-gd32f303-2023.cfg`](config/printer-creality-ender3-v3-se-gd32f303-2023.cfg)
-
-Copy it and the modular directory to the Mainsail configuration directory:
+For an already configured BMCU printer, run the integration installer from this
+checkout while the printer is idle, the channels are parked and the entry
+sensor is clear:
 
 ```sh
-cp config/printer-creality-ender3-v3-se-gd32f303-2023.cfg \
-  ~/printer_data/config/printer.cfg
-cp -r config/ender3-v3-se ~/printer_data/config/
+sudo python3 scripts/ender3-v3-se/install_multicolor.py
 ```
 
-Confirm the MCU path in `config/ender3-v3-se/board.cfg`. PID values, Z offset,
-bed mesh, pressure advance, and input shaping are intentionally not shipped as
-machine-independent values. Calibrate them on the physical printer.
+The installer backs up affected files, preserves existing calibration and
+integration settings, and rolls back if Klipper does not become ready.
+Updating Git alone does not replace optional modules installed in `klippy/extras/`.
 
-Install BMCU modules/services with the
-[official BMCU-Klipper installer](https://github.com/jarczakpawel/BMCU-Klipper/tree/v1.0.6).
-This repository provides endpoint callbacks and configuration; it does not
-install or replace BMCU's modules. Do not duplicate `[bmcu]`.
+Set `language: en` or `language: pt_BR` in `[e3v3se_display]` for the screen UI.
+Source code and maintained project documentation use English. Legacy Portuguese
+G-code command names, configuration keys and backup field names are retained
+for compatibility with installed printers.
 
-Before enabling filament transport, identify the Linux UART device and PC15
-GPIO chip/line, measure switch-to-gear and complete route distances, and tune
-tip formation. The integration deliberately leaves these machine-specific
-values unset. A switch far from the gears stops sensor-based BMCU feeding
-before the extruder can capture the tip; follow the
-[BMCU setup and calibration guide](docs/Ender3_V3_SE_BMCU.md) for arrival modes.
+## OrcaSlicer
 
-Select the screen language in `ender3-v3-se/display.cfg`:
+Use the [reusable start, end and tool-change snippets](profiles/orca/ender3-v3-se-bmcu/README.md).
+Replace `YOUR_BMCU_UID` with the UID reported by your own BMCU before slicing.
+With a committed BMCU print map, `T0` through `T3` select logical tools 1 through
+4; the map resolves physical channels. Without an active map, native commands
+retain their original meaning, including external feeding through `T0`.
+No computer-side post-processing script is required.
 
-```ini
-[e3v3se_display]
-language: en
+## Backups and privacy
+
+Machine snapshots, service environments, runtime state, device IDs and personal
+slicer exports are not public installation templates. Keep them in private
+storage. The backup tools are local utilities and never upload their results.
+Historical commits may still contain files removed from the current tree;
+removing a file does not erase Git history. Rotate any credential that has been
+published. Copyright and upstream attribution are intentionally preserved.
+
+## Development and validation
+
+```sh
+python3 -m unittest discover -s test/bmcu_integracao -p 'test_*.py'
+python3 -m unittest discover -s test/e3v3se_display -p 'test_*.py'
 ```
 
-Use `language: pt_BR` for Brazilian Portuguese and restart Klipper. Code,
-comments and documentation remain in English. Menu **Prepare > BMCU channels**
-provides channels 1-4 (command indices 0-3) and full unload. When BMCU is
-unavailable, navigation remains functional and channel actions are blocked.
+CI builds the GD32F303 firmware and validates the complete Klippy configuration.
+Backup and restoration tests use synthetic data. Hardware testing has confirmed
+filament capture, switch-controlled unloading, purge/wipe and a two-color PETG
+print on one assembly. Other board revisions, materials, purge geometries and
+four-color printing require their own physical acceptance tests.
 
 ## Documentation
 
-- [Installation, build, flashing, and commissioning](docs/Ender3_V3_SE.md)
-- [BMCU installation, wiring, language and physical calibration](docs/Ender3_V3_SE_BMCU.md)
-- [0.2.0 pre-release notes and validation scope](docs/releases/v0.2.0.md)
-- [Stock display architecture and diagnostics](docs/E3V3SE_Display.md)
-- [Fork comparison, issue audit, and port decisions](docs/E3V3SE_Port_Analysis.md)
+- [Installation, flashing and commissioning](docs/Ender3_V3_SE.md)
+- [Switch-based BMCU integration, upgrade and private backups](docs/Ender3_V3_SE_Configuracao_Validada.md)
+- [BMCU setup, wiring and calibration concepts](docs/Ender3_V3_SE_BMCU.md)
+- [OrcaSlicer configuration](profiles/orca/ender3-v3-se-bmcu/README.md)
+- [Display architecture](docs/E3V3SE_Display.md)
+- [Port analysis and provenance](docs/E3V3SE_Port_Analysis.md)
 - [Official Klipper documentation](https://www.klipper3d.org/)
 
 ## Credits and provenance
