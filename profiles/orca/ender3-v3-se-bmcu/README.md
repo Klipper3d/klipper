@@ -37,9 +37,22 @@ depois de `ENDER_INICIAR_MULTICOR`. Não use `M600` como troca multicolor.
 | 3 | `T2 B3` | 3 | 2 |
 | 4 | `T3 B4` | 4 | 3 |
 
-O parâmetro `B` seleciona o adaptador desta integração. Os comandos nativos
-sem `B` mantêm seu comportamento; `T0` nativo é a entrada externa reservada.
-Não substitua `T{next_extruder} B{next_extruder+1}` por um `T` sem o parâmetro.
+O parâmetro `B` seleciona explicitamente o adaptador desta integração. Mantenha
+`T{next_extruder} B{next_extruder+1}` no campo de troca de filamento.
+
+O Orca 2.4.2 também pode acrescentar um `T0` automático quando a impressão usa
+somente o primeiro slot, sem passar pelo G-code personalizado de troca. Com
+`BMCU_PRINT_COMMIT` concluído e o mapa de impressão ativo, a integração interpreta
+`T0` a `T3` sem `B` como ferramentas lógicas 1 a 4 desse mapa. A BMCU continua
+resolvendo o canal físico, inclusive quando ele foi remapeado; um slot ausente
+do mapa produz erro antes de selecionar outra entrada. Repetir a ferramenta
+já carregada não solicita uma purga adicional.
+
+Sem mapa de impressão ativo, os comandos sem `B` mantêm o comportamento nativo:
+`T0` seleciona a entrada externa reservada. Para selecionar explicitamente essa
+entrada durante um mapa ativo, use `BMCU_TOOL_CHANGE TOOL=0`. Não é necessário
+instalar scripts de pós-processamento no PC nem no notebook. Remova o script
+`corrigir_canais_bmcu.ps1` do perfil de processo caso tenha sido configurado.
 
 O perfil testado usa PETG a 230 °C, mesa 80/75 °C, PA 0,04, fluxo 1,00 e limite
 volumétrico de 20 mm³/s. O limite não demonstra a capacidade máxima do hotend.

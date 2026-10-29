@@ -115,6 +115,8 @@ class Bancada:
             devices_by_name={'bmcu0': self.device},
             endpoints={'extruder': self.endpoint},
             active_operations={'bmcu0': {'phase': 'TOOLHEAD_PREPARATION'}},
+            print_map_active=False,
+            print_tools={},
             _endpoint_for_channel=lambda *args: self.endpoint,
             printer_critical_section=self.critical,
             _send_device_runtime_config=self.politica,
@@ -325,6 +327,73 @@ class Ensaios(unittest.TestCase):
         self.assertEqual(len(antigos), 4)
         with self.assertRaisesRegex(RuntimeError, 'não correspondem'):
             b.obj.adaptar_tool(1, lambda g: None)(Gcmd(B='1'))
+
+    def test_tools_automaticos_do_orca_usam_o_mapa_confirmado(self):
+        for indice in range(4):
+            with self.subTest(indice=indice):
+                b = Bancada()
+                b.bmcu.print_map_active = True
+                b.bmcu.print_tools = {
+                    str(indice + 1): {'device': 'bmcu0', 'channel': indice}
+                }
+                antigos = []
+                adaptador = b.obj.adaptar_tool(
+                    indice, lambda g: antigos.append(g)
+                )
+                adaptador(Gcmd())
+                self.assertEqual(
+                    b.comandos,
+                    ['BMCU_TROCAR_ENDER TOOL=%d' % (indice + 1)],
+                )
+                self.assertFalse(antigos)
+
+    def test_tool_ausente_do_mapa_nao_seleciona_entrada_externa(self):
+        b = Bancada()
+        b.bmcu.print_map_active = True
+        b.bmcu.print_tools = {'4': {'device': 'bmcu0', 'channel': 3}}
+        antigos = []
+        with self.assertRaisesRegex(RuntimeError, 'mapa de impressão'):
+            b.obj.adaptar_tool(0, lambda g: antigos.append(g))(Gcmd())
+        self.assertFalse(b.comandos)
+        self.assertFalse(antigos)
+
+    def test_mapa_inativo_preserva_tools_nativos_mesmo_com_registros(self):
+        b = Bancada()
+        b.bmcu.print_tools = {'1': {'device': 'bmcu0', 'channel': 0}}
+        antigos = []
+        b.obj.adaptar_tool(0, lambda g: antigos.append(g))(Gcmd())
+        self.assertEqual(len(antigos), 1)
+        self.assertFalse(b.comandos)
+
+    def test_mapa_ativo_preserva_parametro_b_e_sua_validacao(self):
+        b = Bancada()
+        b.bmcu.print_map_active = True
+        b.obj.adaptar_tool(0, lambda g: self.fail('Tool nativo'))(Gcmd(B='1'))
+        self.assertEqual(b.comandos, ['BMCU_TROCAR_ENDER TOOL=1'])
+        with self.assertRaisesRegex(RuntimeError, 'não correspondem'):
+            b.obj.adaptar_tool(0, lambda g: None)(Gcmd(B='2'))
+        self.assertEqual(len(b.comandos), 1)
+
+    def test_t0_repetido_delega_ferramenta_logica_sem_purga_extra(self):
+        b = Bancada()
+        b.bmcu.print_map_active = True
+        b.bmcu.print_tools = {'1': {'device': 'bmcu0', 'channel': 3}}
+        b.bmcu.get_status = lambda t: {'loaded_tool': 1}
+        executar = b.gcode.run_script_from_command
+
+        def encaminhar(texto):
+            if texto == 'BMCU_TROCAR_ENDER TOOL=1':
+                return b.obj.trocar(Gcmd(TOOL='1'))
+            return executar(texto)
+
+        b.gcode.run_script_from_command = encaminhar
+        adaptador = b.obj.adaptar_tool(0, lambda g: self.fail('Tool nativo'))
+        adaptador(Gcmd(B='1'))
+        adaptador(Gcmd())
+        self.assertEqual(b.comandos.count('BMCU_TOOL_CHANGE TOOL=1'), 2)
+        self.assertNotIn('BMCU_TOOL_CHANGE TOOL=0', b.comandos)
+        self.assertFalse(b.atuadores)
+        self.assertEqual(b.e, 0)
 
     def test_troca_sem_homing_nao_inicia_alimentacao(self):
         b = Bancada()

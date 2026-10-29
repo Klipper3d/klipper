@@ -154,8 +154,16 @@ class IntegracaoEnder:
     def adaptar_tool(self, indice, anterior):
         def executar(gcmd):
             if 'B' not in gcmd.get_command_parameters():
-                return anterior(gcmd)
-            ferramenta = gcmd.get_int('B', minval=1, maxval=4)
+                if not self.bmcu.print_map_active:
+                    return anterior(gcmd)
+                ferramenta = indice + 1
+                if not self.bmcu.print_tools.get(str(ferramenta)):
+                    raise gcmd.error(
+                        'A ferramenta %d do Orca não consta no mapa de '
+                        'impressão BMCU confirmado.' % ferramenta
+                    )
+            else:
+                ferramenta = gcmd.get_int('B', minval=1, maxval=4)
             if ferramenta != indice + 1:
                 raise gcmd.error(
                     ('O índice do Orca e o canal BMCU não ' 'correspondem.')
