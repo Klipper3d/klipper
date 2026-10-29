@@ -87,6 +87,10 @@ Note that the `stealthchop_threshold` config option does not impact
 sensorless homing as Klipper automatically switches the TMC driver to
 an appropriate mode during sensorless homing operations.
 
+On a TMC5262, enabling StealthChop+ also requires `driver_COIL_INDUCT`
+to be configured with the motor coil inductance. See the TMC5262
+section of the [config reference](Config_Reference.md#tmc5262).
+
 ## TMC interpolate setting introduces small position deviation
 
 The TMC driver `interpolate` setting may reduce the audible noise of
