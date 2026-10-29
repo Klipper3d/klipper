@@ -351,6 +351,7 @@ class FilamentHarness:
         display.max_hotend_temp = 260.
         display.preheat_pla_temps = (200, 60)
         display.preheat_petg_temps = (230, 70)
+        display.preheat_tpu_temps = (230, 50)
         display.last_status = {"homed_axes": "xyz"}
         printer.objects["e3v3se_display"] = display
         for command in ("FILAMENT", "FILAMENT_CHECK", "FILAMENT_CANCEL"):
@@ -409,6 +410,50 @@ class FilamentOperationTest(unittest.TestCase):
     def setUp(self):
         self.h = FilamentHarness()
         self.display = self.h.display
+
+    def test_manual_bmcu_controls_use_calibrated_integration(self):
+        for channel in range(4):
+            with self.subTest(channel=channel):
+                h = FilamentHarness(calibrated=False)
+                h.add_bmcu()
+                calls = []
+                h.gcode.register_command('BMCU_ENDER_MANUAL', lambda cmd:
+                    calls.append(cmd.get_command_parameters()))
+                self.assertTrue(h.display.bmcu_load(channel)[0])
+                h.printer.reactor.callbacks.pop()(0.)
+                self.assertEqual([{'ACTION': 'LOAD',
+                                   'CHANNEL': str(channel + 1)}], calls)
+                self.assertFalse(h.display.is_operation_busy())
+
+    def test_manual_unload_without_loaded_channel_reaches_noop_handler(self):
+        self.h.add_bmcu()
+        calls = []
+        self.h.gcode.register_command('BMCU_ENDER_MANUAL', lambda cmd:
+            calls.append(cmd.get_command_parameters()))
+        self.assertTrue(self.display.bmcu_unload()[0])
+        self.h.printer.reactor.callbacks.pop()(0.)
+        self.assertEqual([{'ACTION': 'UNLOAD'}], calls)
+        self.assertEqual(0., self.h.extruder.target)
+
+    def test_preheat_buttons_share_the_dashboard_macros(self):
+        calls = []
+        for material in ('PLA', 'PETG', 'TPU'):
+            command = 'PRE_AQUECER_' + material
+            self.h.gcode.register_command(command, lambda cmd:
+                calls.append(cmd.get_command()))
+            preheat = getattr(self.display, 'preheat_' + material.lower())
+            self.assertTrue(preheat()[0])
+            self.assertEqual(material, self.display.material)
+        self.assertEqual(['PRE_AQUECER_PLA', 'PRE_AQUECER_PETG',
+                          'PRE_AQUECER_TPU'], calls)
+
+    def test_tpu_profile_is_available_without_bmcu_integration(self):
+        calls = []
+        self.display._execute = lambda text: (calls.append(text) or True, '')
+        self.assertTrue(self.display.preheat_tpu()[0])
+        self.assertIn('HEATER=extruder TARGET=230', calls[0])
+        self.assertIn('HEATER=heater_bed TARGET=50', calls[0])
+        self.assertEqual(230, self.display._filament_temperature())
 
     def test_cold_extrusion_waits_for_selected_material(self):
         self.display.material = "PETG"
@@ -789,6 +834,20 @@ class DisplayLanguageTest(unittest.TestCase):
     def text_frames(self, transport):
         return [frame[13:-4].decode("utf-8") for frame in transport.frames
                 if frame[1] == TJC3224.CMD_DRAW_TEXT]
+
+    def test_filament_shortcut_and_three_preheat_profiles(self):
+        for language in ('en', 'pt_BR'):
+            h, ui, transport = self.make_ui(language)
+            h.display.macros = []
+            ui.show_main_menu()
+            self.assertIn(translate('Filament', language),
+                          [item.label for item in ui.items])
+            ui.show_filament_menu()
+            labels = [item.label for item in ui.items]
+            for material in ('PLA', 'PETG', 'TPU'):
+                self.assertIn(translate('Preheat ' + material, language),
+                              labels)
+            self.assertIn(translate('Unload filament', language), labels)
 
     def test_default_language_and_configured_portuguese(self):
         path = os.path.join(

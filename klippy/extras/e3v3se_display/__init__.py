@@ -91,6 +91,11 @@ class E3V3SEDisplay:
                           maxval=int(self.max_hotend_temp)),
             config.getint("preheat_petg_bed", 70, minval=0,
                           maxval=int(self.max_bed_temp)))
+        self.preheat_tpu_temps = (
+            config.getint("preheat_tpu_nozzle", 230, minval=0,
+                          maxval=int(self.max_hotend_temp)),
+            config.getint("preheat_tpu_bed", 50, minval=0,
+                          maxval=int(self.max_bed_temp)))
 
         self.transport = DisplayTransport(config, self._handle_display_data)
         self.lcd = TJC3224(self.transport)
@@ -251,6 +256,11 @@ class E3V3SEDisplay:
         try:
             status = bmcu.get_status(eventtime)
             result["bmcu_busy"] = bool(status.get("active_operations"))
+            integration = self.printer.lookup_object(
+                "bmcu_integracao_ender", None)
+            if integration is not None:
+                result["bmcu_busy"] |= integration.get_status(eventtime)[
+                    "manual_busy"]
             version_ok = status.get("package_version") == "1.0.6"
             # Versioned read-only adapter: public device snapshots freeze
             # during prints/pauses in 1.0.6. Never refresh or send UART here.
@@ -298,6 +308,8 @@ class E3V3SEDisplay:
 
     def bmcu_unload(self):
         status = self._bmcu_status(self.reactor.monotonic())
+        if self.command_available("BMCU_ENDER_MANUAL"):
+            return self._start_bmcu("UNLOAD", status["bmcu_channel"])
         if status["bmcu_channel"] is None:
             return False, "No confirmed loaded BMCU channel"
         return self._start_bmcu("UNLOAD", status["bmcu_channel"])
@@ -312,14 +324,19 @@ class E3V3SEDisplay:
         if self.print_stats.get_status(
                 self.reactor.monotonic()).get("state") == "printing":
             return False, "Pause the print before using channels"
-        validated = self._execute(
-            "_ENDER_VALIDATE_BMCU\n_ENDER_VALIDATE_FILAMENT ACTION=LOAD\n"
-            "_ENDER_VALIDATE_FILAMENT ACTION=UNLOAD")
-        if not validated[0]:
-            return validated
-        session = {"action": action, "channel": channel, "cancelled": False}
+        manual = self.command_available("BMCU_ENDER_MANUAL")
+        if not manual:
+            validated = self._execute(
+                "_ENDER_VALIDATE_BMCU\n_ENDER_VALIDATE_FILAMENT ACTION=LOAD\n"
+                "_ENDER_VALIDATE_FILAMENT ACTION=UNLOAD")
+            if not validated[0]:
+                return validated
+        session = {"action": action, "channel": channel, "cancelled": False,
+                   "manual": manual}
         self.bmcu_session = session
-        self.operation_message = "BMCU: channel %d" % (channel + 1)
+        self.operation_message = ("BMCU: channel %d" % (channel + 1)
+                                  if channel is not None
+                                  else "Unloading filament")
         self.ui.show_operation()
         self.reactor.register_callback(
             lambda eventtime: self._run_bmcu(session))
@@ -330,8 +347,14 @@ class E3V3SEDisplay:
             return
         result = False, "Operation cancelled"
         if not session["cancelled"]:
-            result = self._execute("BMCU_%s DEVICE=bmcu0 CHANNEL=%d"
-                                   % (session["action"], session["channel"]))
+            if session.get("manual"):
+                script = "BMCU_ENDER_MANUAL ACTION=%s" % session["action"]
+                if session["action"] == "LOAD":
+                    script += " CHANNEL=%d" % (session["channel"] + 1)
+            else:
+                script = "BMCU_%s DEVICE=bmcu0 CHANNEL=%d" % (
+                    session["action"], session["channel"])
+            result = self._execute(script)
         if session["cancelled"]:
             stopped = self._execute("BMCU_STOP")
             result = (False, "Operation cancelled; check the BMCU route"
@@ -432,11 +455,21 @@ class E3V3SEDisplay:
 
     def preheat_pla(self):
         self.material = "PLA"
+        if self.command_available("PRE_AQUECER_PLA"):
+            return self._execute("PRE_AQUECER_PLA")
         return self._set_preheat(self.preheat_pla_temps)
 
     def preheat_petg(self):
         self.material = "PETG"
+        if self.command_available("PRE_AQUECER_PETG"):
+            return self._execute("PRE_AQUECER_PETG")
         return self._set_preheat(self.preheat_petg_temps)
+
+    def preheat_tpu(self):
+        self.material = "TPU"
+        if self.command_available("PRE_AQUECER_TPU"):
+            return self._execute("PRE_AQUECER_TPU")
+        return self._set_preheat(self.preheat_tpu_temps)
 
     def set_hotend(self, value):
         return self._execute(
@@ -511,11 +544,12 @@ class E3V3SEDisplay:
         target = requested if requested is not None else status["target"]
         if requested is None and not minimum <= target <= maximum:
             material = material or self.material
-            if material not in ("PLA", "PETG"):
+            if material not in ("PLA", "PETG", "TPU"):
                 raise self.printer.command_error(
                     "Set an appropriate target for material %s" % material)
-            values = (self.preheat_petg_temps if material == "PETG"
-                      else self.preheat_pla_temps)
+            values = {"PLA": self.preheat_pla_temps,
+                      "PETG": self.preheat_petg_temps,
+                      "TPU": self.preheat_tpu_temps}[material]
             target = values[0]
         if (math.isnan(target) or math.isinf(target)
                 or not minimum <= target <= maximum):

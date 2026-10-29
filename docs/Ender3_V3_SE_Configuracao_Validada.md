@@ -94,6 +94,46 @@ For initial endpoint setup, review the example macros before running
 `BMCU_CONFIGURAR_MULTICOR`. Setup does not overwrite channel material/color
 assignments. Do not run endpoint setup at every boot or print start.
 
+## Everyday filament controls
+
+The stock display has a **Filament** shortcut in its main menu: preheat PLA,
+PETG or TPU, load one of the four physical BMCU channels, unload the active
+channel, or cool down. With this integration installed, the channel menu uses
+the same commands as the Mainsail buttons:
+
+| Mainsail button | Action |
+| --- | --- |
+| `PRE_AQUECER_PLA` | Default nozzle/bed: 200/60 °C |
+| `PRE_AQUECER_PETG` | Default nozzle/bed: 230/80 °C |
+| `PRE_AQUECER_TPU` | Default nozzle/bed: 230/50 °C |
+| `RETIRAR_FILAMENTO` | Unload the confirmed active BMCU channel |
+| `CARREGAR_CANAL_1` through `CARREGAR_CANAL_4` | Load the physical channel |
+
+Change preheat values in `bmcu-controles-ajustes.cfg`; the installer preserves
+this file on subsequent updates. The shared `bmcu-controles.cfg` definitions
+are managed by the installer. Screen preheat actions use these macros when
+available; without them, the display's `preheat_*` configuration applies.
+Temperature examples must be checked against the actual filament.
+
+Manual load/unload always sets the nozzle target to 230 °C and waits until it
+is hot enough. It homes unreferenced axes and moves to the configured purge
+position before feeding. Loading another channel unloads the existing channel,
+verifies that the entry switch cleared and the route parked, then uses the
+calibrated capture, nozzle-feed, purge and wipe sequence. Selecting the already
+loaded channel does nothing. Unloading an empty route does not heat or move.
+An absent target filament, uncertain route or sensor/route disagreement stops
+the action before heating. Active prints, paused prints and open BMCU print
+contexts must be finished before using these manual controls.
+
+The 230 °C manual-change target is independent of the preheat profiles. The TPU
+preset does not establish that a particular flexible filament can travel through
+the BMCU; only load materials verified on the actual feeder and path.
+
+Update the host checkout and rerun `install_multicolor.py` to install these
+controls. Existing calibrated sequence values and the `SAVE_CONFIG` block are
+preserved. These controls change Python/configuration only: an existing v1.0.0
+mainboard/Linux MCU firmware does not need reflashing for this change.
+
 ## Orca selection
 
 Keep `T{next_extruder} B{next_extruder+1}` in the tool-change field. The explicit

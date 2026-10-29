@@ -54,6 +54,13 @@ O instalador faz backup, preserva os ajustes existentes e restaura os arquivos
 anteriores se o Klipper não ficar pronto. Atualizar apenas o Git não substitui
 os módulos opcionais já instalados em `klippy/extras/`.
 
+O atalho **Filamento** da tela e os botões do Mainsail compartilham os
+pré-aquecimentos PLA/PETG/TPU, a carga dos quatro canais físicos e a retirada
+automática a 230 °C. Ao carregar outro canal, o anterior é retirado e estacionado
+antes da nova carga e purga. As temperaturas de pré-aquecimento ficam em
+`bmcu-controles-ajustes.cfg`, preservado nas próximas instalações. Os ajustes
+da sequência calibrada permanecem em `bmcu-multicor-ender.cfg`.
+
 Na seção `[e3v3se_display]`, use `language: pt_BR` para a tela em português.
 O código-fonte e a documentação mantida pelo projeto ficam em inglês. Nomes
 antigos de comandos, opções de configuração e campos de backup em português

@@ -36,6 +36,9 @@ sys.modules[release.__name__] = release
 protocol = import_module(
     'integration_test.bmcu_core.protocol', BASE / 'protocolo_original.py'
 )
+protocol.ROUTE_EMPTY = 0
+protocol.ROUTE_LOADED = 1
+protocol.ROUTE_UNCERTAIN = 2
 module = import_module(
     'integration_test.bmcu_integracao_ender',
     ROOT / 'integrations/bmcu/bmcu_integracao_ender.py',
@@ -563,6 +566,15 @@ class IntegrationTests(unittest.TestCase):
             self.assertEqual(
                 installer.prepare(home)[sequence], custom.encode()
             )
+            settings = config / 'bmcu-controles-ajustes.cfg'
+            custom_settings = settings.read_text().replace(
+                'variable_tpu_nozzle: 230', 'variable_tpu_nozzle: 240'
+            )
+            settings.write_text(custom_settings)
+            self.assertEqual(
+                installer.prepare(home)[settings], custom_settings.encode()
+            )
+            self.assertEqual(root.count('[include bmcu-controles.cfg]'), 1)
 
     def test_native_capture_starts_extruder_before_feeder(self):
         original = (BASE / 'manager_original.txt').read_text()

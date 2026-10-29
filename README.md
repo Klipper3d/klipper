@@ -61,6 +61,12 @@ The installer backs up affected files, preserves existing calibration and
 integration settings, and rolls back if Klipper does not become ready.
 Updating Git alone does not replace optional modules installed in `klippy/extras/`.
 
+The **Filament** screen shortcut and Mainsail macros share PLA/PETG/TPU preheat,
+four physical-channel load buttons and automatic unloading at 230 °C. Channel
+changes park the previous filament before loading/purging the next one. See
+[everyday controls](docs/Ender3_V3_SE_Configuracao_Validada.md#everyday-filament-controls)
+for the workflow and preserved preheat settings.
+
 Set `language: en` or `language: pt_BR` in `[e3v3se_display]` for the screen UI.
 Source code and maintained project documentation use English. Legacy Portuguese
 G-code command names, configuration keys and backup field names are retained

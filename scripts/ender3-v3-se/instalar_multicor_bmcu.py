@@ -19,6 +19,12 @@ CONFIGURATION = (
     ROOT / ('config/ender3-v3-se-validada/bmcu-multicor-' 'ender.cfg')
 ).read_text()
 MEASUREMENT = (ROOT / 'integrations/bmcu/bmcu_medicao.py').read_text()
+CONTROLS = (
+    ROOT / 'config/ender3-v3-se-validada/bmcu-controles.cfg'
+).read_bytes()
+PANEL_SETTINGS = (
+    ROOT / 'config/ender3-v3-se-validada/bmcu-controles-ajustes.cfg'
+).read_bytes()
 
 
 def query_object(name):
@@ -259,23 +265,25 @@ def prepare(home):
         if not path.is_file():
             raise RuntimeError('File not found: ' + str(path))
     content = root.read_text()
-    include_line = '[include bmcu-multicor-ender.cfg]'
-    if not re.search(
-        r'^\s*\[include\s+bmcu-multicor-ender\.cfg\]\s*$',
-        content,
-        re.M | re.I,
-    ):
-        marker = content.find('#*# <')
-        if marker < 0:
-            content = content.rstrip('\n') + '\n\n' + include_line + '\n'
-        else:
-            content = (
-                content[:marker].rstrip('\n')
-                + '\n\n'
-                + include_line
-                + '\n\n'
-                + content[marker:]
-            )
+    for filename in ('bmcu-multicor-ender.cfg', 'bmcu-controles.cfg'):
+        include_line = '[include %s]' % filename
+        if not re.search(
+            r'^\s*\[include\s+' + re.escape(filename) + r'\]\s*$',
+            content,
+            re.M | re.I,
+        ):
+            marker = content.find('#*# <')
+            if marker < 0:
+                content = content.rstrip('\n') + '\n\n' + include_line + '\n'
+            else:
+                content = (
+                    content[:marker].rstrip('\n')
+                    + '\n\n'
+                    + include_line
+                    + '\n\n'
+                    + content[marker:]
+                )
+    settings = configurations / 'bmcu-controles-ajustes.cfg'
     compile(MODULE, 'bmcu_integracao_ender.py', 'exec')
     return {
         root.resolve(): content.encode(),
@@ -285,6 +293,10 @@ def prepare(home):
         contracts.resolve(): patch_contract(contracts.read_text()).encode(),
         manager.resolve(): patch_pre_capture(manager.read_text()).encode(),
         module.resolve(): MODULE.encode(),
+        (configurations / 'bmcu-controles.cfg').resolve(): CONTROLS,
+        settings.resolve(): (
+            settings.read_bytes() if settings.is_file() else PANEL_SETTINGS
+        ),
         destination.resolve(): (
             destination.read_bytes()
             if destination.is_file()
