@@ -81,7 +81,7 @@ class TipFormingTests(unittest.TestCase):
             observations.append((b.e, b.device.status['motion'][3]))
             pause(timeout)
             if timeout >= 0.2:
-                b.device.status['buffer_pct'][3] = 55
+                b.device.status['buffer_pct'][3] = 65
 
         b.reactor.pause = recover
         b.unload()

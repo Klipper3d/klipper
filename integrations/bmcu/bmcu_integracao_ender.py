@@ -23,10 +23,10 @@ class EnderIntegration:
         self.advance_speed = config.getfloat('avanco_f', 120.0, above=0.0)
         self.pullback_speed = config.getfloat('recuo_f', 300.0, above=0.0)
         self.unload_buffer_limit = config.getfloat(
-            'limite_buffer_recuo', 60.0, minval=0.0, maxval=100.0
+            'limite_buffer_recuo', 70.0, minval=0.0, maxval=100.0
         )
         self.unload_buffer_resume = config.getfloat(
-            'retomar_buffer_recuo', 55.0, minval=0.0, maxval=100.0
+            'retomar_buffer_recuo', 65.0, minval=0.0, maxval=100.0
         )
         if self.unload_buffer_resume >= self.unload_buffer_limit:
             raise config.error('Unload buffer resume must be below its limit.')

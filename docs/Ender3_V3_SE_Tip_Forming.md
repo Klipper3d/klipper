@@ -25,11 +25,15 @@ mode used during printing, instead of repeatedly entering pre-capture push mode.
 
 The final switch search now defaults to F300 (5 mm/s). During forming and the
 switch search, extruder motion waits between completed moves when buffer
-compression exceeds 60%, leaving feeder assistance active. It resumes at 55%
+compression exceeds 70%, leaving feeder assistance active. It resumes at 65%
 or below and aborts if the buffer does not recover within three seconds. These
 checks do not synchronize motor steps or measure force; a loose fitting or a
 restriction may still cause failure within one move. Inspect PTFE fittings,
 cut tube ends square and seat them fully before another test.
+
+The recovery threshold accounts for BMCU 1.0.1 buffer-follow control: its idle
+band can extend up to 65%, depending on load pressure. Waiting for 55% could
+incorrectly time out while the feeder is deliberately holding inside that band.
 
 The final search also aborts if the feeder encoder records less than 1 mm of
 net pullback over three seconds. A timeout or stalled encoder reports commanded
