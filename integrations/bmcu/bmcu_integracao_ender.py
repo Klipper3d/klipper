@@ -19,9 +19,23 @@ class EnderIntegration:
         self.capture = config.getfloat('captura_mm', 20.0, above=0.0)
         self.capture_speed = config.getfloat('captura_f', 180.0, above=0.0)
         self.advance = config.getfloat('avanco_bico_mm', 80.0, above=0.0)
-        self.purge_distance = config.getfloat('purga_mm', 70.0, above=0.0)
+        self.purge_distance = config.getfloat('purga_mm', 35.0, above=0.0)
         self.advance_speed = config.getfloat('avanco_f', 120.0, above=0.0)
-        self.pullback_speed = config.getfloat('recuo_f', 600.0, above=0.0)
+        self.pullback_speed = config.getfloat('recuo_f', 300.0, above=0.0)
+        self.unload_buffer_limit = config.getfloat(
+            'limite_buffer_recuo', 60.0, minval=0.0, maxval=100.0
+        )
+        self.unload_buffer_resume = config.getfloat(
+            'retomar_buffer_recuo', 55.0, minval=0.0, maxval=100.0
+        )
+        if self.unload_buffer_resume >= self.unload_buffer_limit:
+            raise config.error('Unload buffer resume must be below its limit.')
+        self.unload_buffer_timeout = config.getfloat(
+            'tempo_buffer_recuo', 3.0, above=0.0
+        )
+        self.unload_progress_timeout = config.getfloat(
+            'tempo_sem_recuo', 3.0, above=0.0
+        )
         self.pullback = config.getfloat(
             'recuo_apos_switch_mm', 55.0, above=0.0
         )
@@ -409,6 +423,23 @@ class EnderIntegration:
         if not device.status['present'][channel]:
             raise RuntimeError('The channel lost filament detection.')
 
+    def wait_unload_buffer(self, device, destination, channel, session):
+        self.verify_session(device, session, channel)
+        if device.status['buffer_pct'][channel] <= self.unload_buffer_limit:
+            return
+        self.gcode.respond_info(
+            'Channel %d: pausing extruder retraction while the feeder '
+            'relieves buffer compression.' % (channel + 1)
+        )
+        deadline = self.reactor.monotonic() + self.unload_buffer_timeout
+        while device.status['buffer_pct'][channel] > self.unload_buffer_resume:
+            if not self.sensor(destination):
+                return
+            if self.reactor.monotonic() >= deadline:
+                raise RuntimeError('The unload buffer did not recover.')
+            self.reactor.pause(self.reactor.monotonic() + 0.100)
+            self.verify_session(device, session, channel)
+
     def position_head(self):
         toolhead = self.printer.lookup_object('toolhead')
         status = toolhead.get_status(self.reactor.monotonic())
@@ -540,11 +571,15 @@ class EnderIntegration:
             self.execute('SET_PRESSURE_ADVANCE EXTRUDER=extruder ADVANCE=0')
             changed_pressure = True
             device.set_motion(channel, protocol.MOTION_ON_USE)
+            self.wait_unload_buffer(device, destination, channel, session)
+            if not self.sensor(destination):
+                raise RuntimeError('Filament left before tip forming.')
             self.move_filament(
                 -settings['separation_mm'],
                 settings['separation_f'],
                 chunk=extruder.max_e_dist,
             )
+            self.wait_unload_buffer(device, destination, channel, session)
             remaining = (
                 settings['cooling_position_mm']
                 + settings['cooling_length_mm']
@@ -562,6 +597,7 @@ class EnderIntegration:
                     settings['cooling_f'] * factor,
                     chunk=extruder.max_e_dist,
                 )
+                self.wait_unload_buffer(device, destination, channel, session)
             count = int(settings['cooling_moves'])
             for index in range(count):
                 self.verify_session(device, session, channel)
@@ -580,6 +616,7 @@ class EnderIntegration:
                         forward + increment,
                     )
                 )
+                self.wait_unload_buffer(device, destination, channel, session)
             deadline = self.reactor.monotonic() + settings['pause_ms'] / 1000
             while self.reactor.monotonic() < deadline:
                 if not self.sensor(destination):
@@ -697,6 +734,9 @@ class EnderIntegration:
 
     def release(self, gcmd):
         device = None
+        channel = None
+        search_start = None
+        total = 0.0
         saved = False
         try:
             device, destination, channel = self.context(gcmd, False)
@@ -713,6 +753,8 @@ class EnderIntegration:
             total = self.form_tip(device, destination, channel, session)
             device.refresh()
             marker = float(device.status['meters'][channel])
+            search_start = progress_marker = marker
+            progress_at = self.reactor.monotonic()
             device.set_motion(channel, protocol.MOTION_BEFORE_PULL_BACK)
             deadline = self.reactor.monotonic() + self.timeout
             while self.sensor(destination):
@@ -724,10 +766,25 @@ class EnderIntegration:
                             'timeout.'
                         )
                     )
+                self.wait_unload_buffer(device, destination, channel, session)
+                if not self.sensor(destination):
+                    break
                 self.move_filament(-2.0, self.pullback_speed, chunk=2.0)
                 total += 2.0
                 self.verify_session(device, session, channel)
                 current = float(device.status['meters'][channel])
+                if (progress_marker - current) * 1000.0 >= 1.0:
+                    progress_marker = current
+                    progress_at = self.reactor.monotonic()
+                elif (
+                    self.sensor(destination)
+                    and self.reactor.monotonic() - progress_at
+                    >= self.unload_progress_timeout
+                ):
+                    raise RuntimeError(
+                        'No encoder pullback progress while the entry '
+                        'sensor remains triggered.'
+                    )
                 if (marker - current) * 1000.0 >= 25.0 and self.sensor(
                     destination
                 ):
@@ -759,7 +816,28 @@ class EnderIntegration:
                 device, channel_retract_override=(channel, self.pullback)
             )
         except Exception as error:
-            raise gcmd.error('Unload interrupted: %s' % error) from error
+            evidence = ''
+            if device is not None and channel is not None:
+                status = device.status
+                evidence = ' Channel %d; buffer %s%%; PWM %s; motion %s.' % (
+                    channel + 1,
+                    status['buffer_pct'][channel],
+                    status['motor_pwm'][channel],
+                    status['motion'][channel],
+                )
+                if search_start is not None:
+                    evidence += (
+                        ' Commanded net retract %.1f mm; encoder pullback '
+                        'after forming %.2f mm.'
+                        % (
+                            total,
+                            (search_start - float(status['meters'][channel]))
+                            * 1000.0,
+                        )
+                    )
+            raise gcmd.error(
+                'Unload interrupted: %s%s' % (error, evidence)
+            ) from error
         finally:
             try:
                 if device is not None:

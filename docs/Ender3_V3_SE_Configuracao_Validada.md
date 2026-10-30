@@ -58,8 +58,8 @@ The host MCU endpoint is `/tmp/klipper_host_mcu`.
 | Arrival | Feed to entry sensor; maximum route 1500 mm |
 | Capture | 20 mm at F180; extruder starts before feeder assistance |
 | Feed to nozzle | Another 80 mm at F120 |
-| Purge | 70 mm at F120 |
-| Unload | Extruder at F600 until the entry sensor clears |
+| Purge | 35 mm at F120; reduced from the earlier 70 mm test |
+| Unload | Extruder at F300 until the entry sensor clears; buffer and encoder checks |
 | Parking | Another 55 mm through BMCU, verified by encoder |
 | Purge/wipe | X=-6 / X=-4, Y=123; 2 mm relative Z lift |
 | PETG | 230 °C nozzle; 80 °C first-layer bed, then 75 °C |

@@ -1,5 +1,7 @@
+import argparse
 import ast
 import json
+import math
 import os
 import pwd
 import re
@@ -255,7 +257,7 @@ def patch_pre_capture(text):
     return transform_method(text, 'BMCUManager', 'load_channel', change)
 
 
-def prepare(home):
+def prepare(home, purge_mm=None, pullback_speed=None):
     configurations = home / 'printer_data/config'
     extras = home / 'klipper/klippy/extras'
     root = configurations / 'printer.cfg'
@@ -292,6 +294,30 @@ def prepare(home):
                 )
     settings = configurations / 'bmcu-controles-ajustes.cfg'
     tip_settings = configurations / 'bmcu-formacao-ponta.cfg'
+    sequence = (
+        destination.read_text() if destination.is_file() else CONFIGURATION
+    )
+    for key, value in (('purga_mm', purge_mm), ('recuo_f', pullback_speed)):
+        if value is None:
+            continue
+        if not math.isfinite(value) or value <= 0:
+            raise ValueError('%s must be a finite positive number.' % key)
+        section = re.search(
+            r'(?ms)^\[bmcu_integracao_ender\][^\S\n]*\n.*?(?=^\[|\Z)',
+            sequence,
+        )
+        if section is None:
+            raise RuntimeError('The Ender integration section was not found.')
+        text = section.group()
+        pattern = r'(?m)^\s*' + key + r'\s*:[^\n]*$'
+        replacement = '%s: %g' % (key, value)
+        if re.search(pattern, text):
+            text = re.sub(pattern, replacement, text)
+        else:
+            text = text.rstrip() + '\n' + replacement + '\n\n'
+        sequence = (
+            sequence[: section.start()] + text + sequence[section.end() :]
+        )
     compile(MODULE, 'bmcu_integracao_ender.py', 'exec')
     return {
         root.resolve(): content.encode(),
@@ -310,11 +336,7 @@ def prepare(home):
             if tip_settings.is_file()
             else TIP_SETTINGS
         ),
-        destination.resolve(): (
-            destination.read_bytes()
-            if destination.is_file()
-            else CONFIGURATION.encode()
-        ),
+        destination.resolve(): sequence.encode(),
     }
 
 
@@ -369,11 +391,15 @@ def wait_ready():
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--purge-mm', type=float)
+    parser.add_argument('--pullback-speed', type=float)
+    args = parser.parse_args()
     name = os.environ.get('SUDO_USER') if os.geteuid() == 0 else None
     user = pwd.getpwnam(name) if name else pwd.getpwuid(os.getuid())
     home = Path(user.pw_dir)
     check_printer()
-    changes = prepare(home)
+    changes = prepare(home, args.purge_mm, args.pullback_speed)
     originals = {p: p.read_bytes() if p.exists() else None for p in changes}
     changes = {p: d for p, d in changes.items() if originals[p] != d}
     if not changes:

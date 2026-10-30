@@ -60,6 +60,63 @@ class TipBench(TestBench):
 
 
 class TipFormingTests(unittest.TestCase):
+    def test_compressed_buffer_aborts_without_further_extrusion(self):
+        b = TipBench()
+        b.device.status['buffer_pct'][3] = 80
+        with self.assertRaisesRegex(RuntimeError, 'buffer did not recover'):
+            b.unload()
+        self.assertEqual(b.e, 0)
+        self.assertLess(b.timeout, 4)
+        self.assertEqual([], b.policies)
+        self.assertEqual(b.device.status['motion'], [0, 0, 0, 0])
+        self.assertAlmostEqual(b.pressure, 0.04)
+
+    def test_buffer_recovery_keeps_feeder_active_and_resumes_unload(self):
+        b = TipBench()
+        b.device.status['buffer_pct'][3] = 80
+        pause = b.pause
+        observations = []
+
+        def recover(timeout):
+            observations.append((b.e, b.device.status['motion'][3]))
+            pause(timeout)
+            if timeout >= 0.2:
+                b.device.status['buffer_pct'][3] = 55
+
+        b.reactor.pause = recover
+        b.unload()
+        self.assertEqual(observations[0], (0, protocol.MOTION_ON_USE))
+        self.assertEqual(observations[1], (0, protocol.MOTION_ON_USE))
+        self.assertEqual([(3, 55.0)], b.policies)
+
+    def test_encoder_stall_stops_before_full_switch_timeout(self):
+        b = TipBench()
+        b.obj.pullback_speed = 300
+        execute = b.execute
+
+        def stall_after_forming(text):
+            position = b.device.status['meters'][3]
+            execute(text)
+            if text.startswith('G1 E-2.'):
+                b.device.status['meters'][3] = position
+
+        b.gcode.run_script_from_command = stall_after_forming
+        with self.assertRaisesRegex(
+            RuntimeError, 'No encoder pullback progress.*encoder pullback'
+        ):
+            b.unload()
+        self.assertLess(b.reverse, b.switch_distance)
+        self.assertLess(b.timeout, 25)
+        self.assertEqual([], b.policies)
+        self.assertEqual(b.device.status['motion'], [0, 0, 0, 0])
+
+    def test_half_purge_preserves_capture_and_nozzle_feed(self):
+        b = TipBench()
+        b.obj.purge_distance = 35
+        b.obj.load(Gcmd(ENDPOINT='extruder'))
+        self.assertEqual(b.e, 135)
+        self.assertEqual(b.position[0], -4)
+
     def test_cooling_keeps_filament_gripped_until_final_unload(self):
         b = TipBench()
         b.unload()

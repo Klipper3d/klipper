@@ -104,6 +104,8 @@ class TestBench:
                 'present': [False, True, False, True],
                 'session_id': 3,
                 'meters': [0, 0, 0, 0.170],
+                'buffer_pct': [50, 50, 50, 50],
+                'motor_pwm': [0, 0, 0, 0],
             },
             refresh=self.refresh,
             stop_all=self.stop,
@@ -162,6 +164,10 @@ class TestBench:
             pullback=55.0,
             advance_speed=120.0,
             pullback_speed=600.0,
+            unload_buffer_limit=60.0,
+            unload_buffer_resume=55.0,
+            unload_buffer_timeout=3.0,
+            unload_progress_timeout=3.0,
             timeout=60,
             purge_x=-6.0,
             wipe_x=-4.0,
@@ -560,12 +566,21 @@ class IntegrationTests(unittest.TestCase):
             self.assertEqual(installer.prepare(home), changes)
             sequence = config / 'bmcu-multicor-ender.cfg'
             custom = sequence.read_text().replace(
-                'purga_mm: 70', 'purga_mm: 91'
+                'purga_mm: 35', 'purga_mm: 91'
             )
             sequence.write_text(custom)
             self.assertEqual(
                 installer.prepare(home)[sequence], custom.encode()
             )
+            overridden = installer.prepare(home, 35, 300)[sequence].decode()
+            self.assertIn('purga_mm: 35', overridden)
+            self.assertIn('recuo_f: 300', overridden)
+            self.assertEqual(
+                overridden, custom.replace('purga_mm: 91', 'purga_mm: 35')
+            )
+            for invalid in (float('nan'), float('inf'), -1, 0):
+                with self.assertRaises(ValueError):
+                    installer.prepare(home, invalid)
             settings = config / 'bmcu-controles-ajustes.cfg'
             custom_settings = settings.read_text().replace(
                 'variable_tpu_nozzle: 230', 'variable_tpu_nozzle: 240'
