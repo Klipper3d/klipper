@@ -12,7 +12,9 @@ BATCH_UPDATES = 0.100
 
 LDC1612_ADDR = 0x2a
 
+MINIMUM_LDC1612_FREQ = 2000000
 DEFAULT_LDC1612_FREQ = 12000000
+MAXIMUM_LDC1612_FREQ = 40000000
 SETTLETIME = 0.005
 DRIVECUR = 15
 DEGLITCH = 0x05 # 10 Mhz
@@ -88,8 +90,23 @@ class LDC1612:
         self._sensor_errors = {}
         self.oid = oid = mcu.create_oid()
         self.query_ldc1612_cmd = None
+        # Clock frequency
         self.clock_freq = config.getint("frequency", DEFAULT_LDC1612_FREQ,
-                                        2000000, 40000000)
+                                        MINIMUM_LDC1612_FREQ,
+                                        MAXIMUM_LDC1612_FREQ)
+        pwm_clock_name = config.get('pwm_clock', None)
+        if pwm_clock_name is not None:
+            if not config.has_section(pwm_clock_name):
+                raise config.error("No such section [%s]" % pwm_clock_name)
+            pwm_config = config.getsection(' '.join(pwm_clock_name.split()))
+            self.clock_freq = pwm_config.getfloat('frequency', None,
+                                                  minval=MINIMUM_LDC1612_FREQ,
+                                                  maxval=MAXIMUM_LDC1612_FREQ,
+                                                  note_valid=False)
+            if self.clock_freq is None:
+                raise config.error(
+                    "pwm_clock '%s' must support and specify a 'frequency'"
+                    " parameter" % (pwm_clock_name,))
         # Determine sensor divider (want 4*max_hz < clock_ref)
         max_hz = config.getfloat("max_sensor_hz", 5000000., 3000000., 20000000.)
         self.sensor_div = int(math.ceil(4. * max_hz / self.clock_freq))
