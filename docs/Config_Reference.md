@@ -3232,6 +3232,35 @@ pin:
 #   will be scaled between zero and max_power (for example, if
 #   max_power is .9 and a fan speed of 80% is requested then the fan
 #   power will be set to 72%). The default is 1.0.
+#min_power: 0.0
+#   The power (expressed as a value from 0.0 to 1.0) the fan is given
+#   for the smallest non-zero speed request. Fan speed requests are
+#   scaled between min_power and max_power, so a request of zero still
+#   stops the fan while the smallest non-zero request produces a speed
+#   the fan can actually sustain. This is useful on fans that stall at
+#   low power: without it, every speed below that point is either
+#   ignored or turned into a stall. Set it to the lowest power that
+#   reliably keeps the fan spinning, which is what the FAN_CALIBRATE
+#   command reports as off_below. Note that off_below is applied to the
+#   requested speed before this scaling, so it still decides which
+#   requests turn the fan off entirely. The default is 0.0, which
+#   leaves the speed request unscaled.
+#linearize: False
+#   Interpret a speed request as a fraction of the fan's speed range
+#   rather than of its power range. A fan is not linear - on a typical
+#   part cooling fan half the power is closer to two thirds of the
+#   speed - so a request of 50% normally does not move half as much
+#   air. With this enabled the request is mapped through the measured
+#   rpm_curve, and 50% means half the rpm the fan reaches between
+#   min_power and max_power. Requires rpm_curve, which the
+#   FAN_CALIBRATE command measures and SAVE_CONFIG stores. The default
+#   is False.
+#rpm_curve:
+#   The measured relationship between duty cycle and fan speed, as one
+#   "duty_cycle, rpm" pair per line. This is written by the
+#   FAN_CALIBRATE command and is not normally edited by hand. Both
+#   columns must increase; a curve that dips means the tachometer is
+#   undercounting (see tachometer_poll_interval) and is rejected.
 #shutdown_speed: 0
 #   The desired fan speed (expressed as a value from 0.0 to 1.0) if
 #   the micro-controller software enters an error state. The default
@@ -3276,7 +3305,17 @@ pin:
 #   tachometer pin, in seconds. The default is 0.0015, which is fast
 #   enough for fans below 10000 RPM at 2 PPR. This must be smaller than
 #   30/(tachometer_ppr*rpm), with some margin, where rpm is the
-#   maximum speed (in RPM) of the fan.
+#   maximum speed (in RPM) of the fan. The counter registers at most
+#   one edge per polling period, so a value that is too large does not
+#   report an error - it silently reports a speed lower than the actual
+#   one. A margin of at least five is recommended.
+#tachometer_sample_time: 1.0
+#   When tachometer_pin is specified, this is the period (in seconds)
+#   over which the tachometer pulses are averaged. The reported speed
+#   is refreshed once per sample time and is an average over the
+#   preceding sample time, so it lags the actual fan speed. Lowering
+#   this reduces that lag at the cost of resolution at low speeds. The
+#   default is 1.0.
 #enable_pin:
 #   Optional pin to enable power to the fan. This can be useful for fans
 #   with dedicated PWM inputs. Some of these fans stay on even at 0% PWM
@@ -3296,6 +3335,9 @@ a shutdown_speed equal to max_power.
 [heater_fan heatbreak_cooling_fan]
 #pin:
 #max_power:
+#min_power:
+#linearize:
+#rpm_curve:
 #shutdown_speed:
 #cycle_time:
 #hardware_pwm:
@@ -3304,6 +3346,7 @@ a shutdown_speed equal to max_power.
 #tachometer_pin:
 #tachometer_ppr:
 #tachometer_poll_interval:
+#tachometer_sample_time:
 #enable_pin:
 #   See the "fan" section for a description of the above parameters.
 #heater: extruder
@@ -3333,6 +3376,9 @@ watched component.
 [controller_fan my_controller_fan]
 #pin:
 #max_power:
+#min_power:
+#linearize:
+#rpm_curve:
 #shutdown_speed:
 #cycle_time:
 #hardware_pwm:
@@ -3341,6 +3387,7 @@ watched component.
 #tachometer_pin:
 #tachometer_ppr:
 #tachometer_poll_interval:
+#tachometer_sample_time:
 #enable_pin:
 #   See the "fan" section for a description of the above parameters.
 #fan_speed: 1.0
@@ -3379,6 +3426,9 @@ information.
 [temperature_fan my_temp_fan]
 #pin:
 #max_power:
+#min_power:
+#linearize:
+#rpm_curve:
 #shutdown_speed:
 #cycle_time:
 #hardware_pwm:
@@ -3387,6 +3437,7 @@ information.
 #tachometer_pin:
 #tachometer_ppr:
 #tachometer_poll_interval:
+#tachometer_sample_time:
 #enable_pin:
 #   See the "fan" section for a description of the above parameters.
 #sensor_type:
@@ -3437,6 +3488,9 @@ with the SET_FAN_SPEED [gcode command](G-Codes.md#fan_generic).
 [fan_generic extruder_partfan]
 #pin:
 #max_power:
+#min_power:
+#linearize:
+#rpm_curve:
 #shutdown_speed:
 #cycle_time:
 #hardware_pwm:
@@ -3445,9 +3499,41 @@ with the SET_FAN_SPEED [gcode command](G-Codes.md#fan_generic).
 #tachometer_pin:
 #tachometer_ppr:
 #tachometer_poll_interval:
+#tachometer_sample_time:
 #enable_pin:
 #   See the "fan" section for a description of the above parameters.
 ```
+
+### [fan_calibrate]
+
+Support for calibrating the fan `off_below` and `kick_start_time`
+settings using the fan tachometer feedback. Enabling this section adds
+the FAN_CALIBRATE [gcode command](G-Codes.md#fan_calibrate). The fan
+being calibrated must have a `tachometer_pin` configured.
+
+```
+[fan_calibrate]
+#calibrate_step: 0.05
+#   The step size (as a value from 0.0 to 1.0) used when lowering the
+#   fan speed to find the minimum speed that keeps the fan spinning.
+#   This is also the lowest speed that is tested. Smaller values
+#   increase calibration time and precision. The default is 0.05.
+#calibrate_rpm_threshold: 0.05
+#   The fraction of the measured maximum fan speed below which the fan
+#   is considered stalled during calibration. The default is 0.05.
+#   Note that this is a fraction of the maximum speed, so on a fast fan
+#   it can amount to a speed the fan still reaches comfortably - a fan
+#   running at 10000 RPM is declared stalled below 500 RPM. Lower this
+#   (together with calibrate_step) if the calibration reports an
+#   off_below noticeably above the speed at which the fan actually
+#   stops.
+```
+
+The calibration waits for the tachometer reading to settle after every
+speed change, so it takes a minute or more. It temporarily ignores the
+`off_below` and `kick_start_time` currently in effect - otherwise a
+previously saved result would clamp away the low speeds and each run
+could only ever confirm the previous one.
 
 ## LEDs
 
