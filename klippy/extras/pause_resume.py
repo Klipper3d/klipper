@@ -15,6 +15,8 @@ class PauseResume:
         self.pause_command_sent = False
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
+        self.printer.register_event_handler("virtual_sdcard:reset_file",
+                                            self.handle_reset_file)
         self.gcode.register_command("PAUSE", self.cmd_PAUSE,
                                     desc=self.cmd_PAUSE_help)
         self.gcode.register_command("RESUME", self.cmd_RESUME,
@@ -32,6 +34,11 @@ class PauseResume:
                                    self._handle_resume_request)
     def handle_connect(self):
         self.v_sd = self.printer.lookup_object('virtual_sdcard', None)
+    def handle_reset_file(self):
+        # A freshly loaded (or reset) sdcard file can never legitimately
+        # start out paused; clear any pause state left over from a prior,
+        # unrelated print so PAUSE isn't silently ignored on this one.
+        self._reset_state()
     def _handle_cancel_request(self, web_request):
         self.gcode.run_script("CANCEL_PRINT")
     def _handle_pause_request(self, web_request):
@@ -44,6 +51,8 @@ class PauseResume:
         }
     def is_sd_active(self):
         return self.v_sd is not None and self.v_sd.is_active()
+    def _reset_state(self):
+        self.is_paused = self.sd_paused = self.pause_command_sent = False
     def send_pause_command(self):
         # This sends the appropriate pause command from an event.  Note
         # the difference between pause_command_sent and is_paused, the
@@ -79,15 +88,21 @@ class PauseResume:
             gcmd.respond_info("Print is not paused, resume aborted")
             return
         velocity = gcmd.get_float('VELOCITY', self.recover_velocity)
-        self.gcode.run_script_from_command(
-            "RESTORE_GCODE_STATE NAME=PAUSE_STATE MOVE=1 MOVE_SPEED=%.4f"
-            % (velocity))
+        try:
+            self.gcode.run_script_from_command(
+                "RESTORE_GCODE_STATE NAME=PAUSE_STATE MOVE=1 MOVE_SPEED=%.4f"
+                % (velocity))
+        except self.gcode.error as e:
+            raise gcmd.error(
+                "%s\nUnable to restore toolhead position, the print "
+                "remains paused. Run CLEAR_PAUSE to reset pause state if "
+                "the print is being abandoned." % (str(e),))
         self.send_resume_command()
         self.is_paused = False
     cmd_CLEAR_PAUSE_help = (
         "Clears the current paused state without resuming the print")
     def cmd_CLEAR_PAUSE(self, gcmd):
-        self.is_paused = self.pause_command_sent = False
+        self._reset_state()
     cmd_CANCEL_PRINT_help = ("Cancel the current print")
     def cmd_CANCEL_PRINT(self, gcmd):
         if self.is_sd_active() or self.sd_paused:
