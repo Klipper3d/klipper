@@ -20,6 +20,13 @@ OBJDUMP=$(CROSS_PREFIX)objdump
 STRIP=$(CROSS_PREFIX)strip
 CPP=cpp
 PYTHON=python3
+ifeq ($(shell uname -s),Darwin)
+	CLANG=clang
+	S=-S
+else
+	CLANG=cpp
+	S=
+endif
 
 # Source files
 src-y =
@@ -66,7 +73,7 @@ $(OUT)%.o: %.c $(OUT)autoconf.h
 
 $(OUT)%.ld: %.lds.S $(OUT)autoconf.h
 	@echo "  Preprocessing $@"
-	$(Q)$(CPP) -I$(OUT) -P -MD -MT $@ $< -o $@
+	$(Q)$(CLANG) -I$(OUT) -P -MD -MT $@ $(S) $< -o $@ ;\
 
 $(OUT)klipper.elf: $(OBJS_klipper.elf)
 	@echo "  Linking $@"
