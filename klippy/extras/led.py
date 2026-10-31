@@ -114,6 +114,7 @@ class PrinterPWMLED:
                                      maxval=max_duration)
         hardware_pwm = config.getboolean('hardware_pwm', False)
         self.pins = []
+        shutdown_values = []
         for i, name in enumerate(("red", "green", "blue", "white")):
             pin_name = config.get(name + '_pin', None)
             if pin_name is None:
@@ -122,6 +123,8 @@ class PrinterPWMLED:
             mcu_pin.setup_max_duration(0.)
             mcu_pin.setup_cycle_time(cycle_time, hardware_pwm)
             self.pins.append((i, mcu_pin))
+            # We append a None, so that it will be passed to setup_start_value
+            shutdown_values.append(config.get("shutdown_" + name.upper(), None))
         if not self.pins:
             raise config.error("No LED pin definitions found in '%s'"
                                % (config.get_name(),))
@@ -130,7 +133,7 @@ class PrinterPWMLED:
         self.led_helper = LEDHelper(config, self.update_leds, 1)
         self.prev_color = color = self.led_helper.get_status()['color_data'][0]
         for idx, mcu_pin in self.pins:
-            mcu_pin.setup_start_value(color[idx], 0.)
+            mcu_pin.setup_start_value(color[idx], shutdown_values[idx] or 0.)
     def update_leds(self, led_state, print_time):
         mcu = self.pins[0][1].get_mcu()
         min_sched_time = mcu.min_schedule_time()
