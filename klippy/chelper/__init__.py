@@ -151,8 +151,27 @@ defs_kin_rotary_delta = """
 """
 
 defs_kin_winch = """
-    struct stepper_kinematics *winch_stepper_alloc(double anchor_x
-        , double anchor_y, double anchor_z);
+    struct winch_flex *winch_flex_alloc(void);
+    void winch_flex_free(struct winch_flex *wf);
+    void winch_flex_configure(struct winch_flex *wf, int num_anchors,
+        const double *anchors, double buildup_factor, double mover_weight, double spring_constant,
+        const double *min_force,
+        const double *max_force, const double *guy_wires,
+        int flex_compensation_algorithm, int ignore_gravity, int ignore_pretension,
+        const int* mechanical_advantage);
+    void winch_flex_set_spool_params(struct winch_flex *wf, int index,
+        double rotation_distance, double steps_per_rotation);
+    void winch_flex_calc_arrays(struct winch_flex *wf, double x, double y,
+        double z, double *distances_out, double *flex_out);
+    void winch_flex_set_enabled(struct winch_flex *wf, int enabled);
+    double winch_flex_motor_to_line_pos(struct winch_flex *wf, int index,
+        double motor_pos);
+    int winch_forward_solve(struct winch_flex *wf, const double *motor_pos,
+        const double *initial_guess, double eta, double tol,
+        int halley_iters, int max_iters,
+        double *out_pos, double *out_cost, int *out_iters);
+    struct stepper_kinematics *winch_stepper_alloc(struct winch_flex *wf,
+        int index);
 """
 
 defs_kin_extruder = """
