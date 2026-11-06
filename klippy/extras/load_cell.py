@@ -111,9 +111,11 @@ class LoadCellCommandHelper:
         gcmd.respond_info("Collecting load cell data for 10 seconds...")
         collector = self.load_cell.get_collector()
         reactor = self.printer.get_reactor()
-        collector.start_collecting()
+        toolhead = self.printer.lookup_object('toolhead')
+        start_time = toolhead.get_last_move_time()
         reactor.pause(reactor.monotonic() + 10.)
-        samples, errors = collector.stop_collecting()
+        samples, errors = collector.collect_range(start_time, start_time + 10.0)
+        collector.finish()
         if errors:
             gcmd.respond_info("Sensor reported errors: %i errors,"
                               " %i overflows" % (errors[0], errors[1]))
@@ -273,103 +275,109 @@ class LoadCellGuidedCalibrationHelper:
 # Optionally blocks execution while collecting with reactor.pause()
 # can collect a minimum n samples or collect until a specific print_time
 # samples returned in [[time],[force],[counts]] arrays for easy processing
-RETRY_DELAY = 0.05  # 20Hz
+RETRY_DELAY = 0.10 # 10Hz
 class LoadCellSampleCollector:
     def __init__(self, printer, load_cell):
         self._printer = printer
-        self._load_cell = load_cell
         self._reactor = printer.get_reactor()
         self._mcu = load_cell.sensor.get_mcu()
-        self.min_time = 0.
-        self.max_time = float("inf")
-        self.min_count = float("inf")  # In Python 3.5 math.inf is better
-        self.is_started = False
         self._samples = []
-        self._errors = 0
-        self._overflows = 0
-        self._start_errors = 0
-        self._start_overflows = 0
+        self.min_time = 0.
+        self._need_stop = False
+        self.sps = load_cell.sensor.get_samples_per_second()
+        # error accounting (reported relative to the last pull)
+        status = load_cell.sensor.get_status(self._reactor.monotonic())
+        self._errors = self._base_errors = status['errors']
+        self._overflows = self._base_overflows = status['overflows']
+        load_cell.add_client(self._add_sensor_message)
 
-    def _on_samples(self, msg):
-        if not self.is_started:
-            return False  # already stopped, ignore
+    def _add_sensor_message(self, msg):
+        if self._need_stop:
+            del self._samples[:]
+            return False
         self._errors = msg['errors']
         self._overflows = msg['overflows']
-        samples = msg['data']
-        for sample in samples:
-            time = sample[0]
-            if self.min_time <= time <= self.max_time:
-                self._samples.append(sample)
-            if time > self.max_time:
-                self.is_started = False
-        if len(self._samples) >= self.min_count:
-            self.is_started = False
-        return self.is_started
+        if not msg['data']:
+            return True
+        last_sample = msg['data'][-1]
+        first_sample = msg['data'][0]
+        if first_sample[0] >= self.min_time:
+            self._samples.extend(msg['data'])
+        elif last_sample[0] < self.min_time:
+            self._base_errors = self._errors
+            self._base_overflows = self._overflows
+        else:
+            min_time = self.min_time
+            self._samples.extend(s for s in msg['data'] if s[0] >= min_time)
+        return True
 
-    def _finish_collecting(self):
-        self.is_started = False
-        self.min_time = 0.
-        self.max_time = float("inf")
-        self.min_count = float("inf")  # In Python 3.5 math.inf is better
-        samples = self._samples
-        self._samples = []
-        errors = max(0, self._errors - self._start_errors)
-        self._errors = 0
-        overflows = max(0, self._overflows - self._start_overflows)
-        self._overflows = 0
+    def finish(self):
+        self._need_stop = True
+
+    def discard_before(self, print_time):
+        self.min_time = max(self.min_time, print_time)
+        n = 0
+        while n < len(self._samples) and self._samples[n][0] < self.min_time:
+            n += 1
+        del self._samples[:n]
+
+    def _pull(self, end_time=None):
+        n = len(self._samples)
+        if end_time is not None:
+            n = 0
+            while n < len(self._samples) and self._samples[n][0] <= end_time:
+                n += 1
+        taken = self._samples[:n]
+        del self._samples[:n]
+        if end_time is not None:
+            self.min_time = max(self.min_time, end_time)
+        elif taken:
+            self.min_time = max(self.min_time, taken[-1][0])
+        return taken
+
+    def _result(self, samples):
+        errors = max(0, self._errors - self._base_errors)
+        overflows = max(0, self._overflows - self._base_overflows)
+        self._base_errors = self._errors
+        self._base_overflows = self._overflows
         if self._mcu.is_fileoutput():
             samples = [(0., 0., 0.)]
         return samples, (errors, overflows) if errors or overflows else 0
 
-    def _collect_until(self, timeout):
-        self.start_collecting()
-        while self.is_started:
+    def _wait(self, is_ready, deadline):
+        while not is_ready():
+            if self._mcu.is_fileoutput():
+                return
             now = self._reactor.monotonic()
-            if self._mcu.estimated_print_time(now) > timeout:
-                samples, err = self._finish_collecting()
+            if self._mcu.estimated_print_time(now) > deadline:
+                samples, err = self._result(self._pull())
                 errors, overflows = err if err else (0, 0)
+                self.finish()
                 raise self._printer.command_error(
                     "LoadCellSampleCollector timed out! Collected %i samples,"
                     " Errors: %i, Overflows: %i" % (len(samples), errors,
                                                     overflows))
-            if self._mcu.is_fileoutput():
-                break
             self._reactor.pause(now + RETRY_DELAY)
-        return self._finish_collecting()
 
-    # start collecting with no automatic end to collection
-    def start_collecting(self, min_time=None):
-        if self.is_started:
-            return
-        self.min_time = min_time if min_time is not None else self.min_time
-        self.is_started = True
-        sensor_status = self._load_cell.sensor.get_status(
-            self._reactor.monotonic())
-        self._start_errors = sensor_status['errors']
-        self._start_overflows = sensor_status['overflows']
-        self._load_cell.add_client(self._on_samples)
-
-    # stop collecting immediately and return results
-    def stop_collecting(self):
-        return self._finish_collecting()
-
-    # block execution until at least min_count samples are collected
-    # will return all samples collected, not just up to min_count
     def collect_min(self, min_count=1):
-        self.min_count = min_count
-        if len(self._samples) >= min_count:
-            return self._finish_collecting()
         print_time = self._mcu.estimated_print_time(self._reactor.monotonic())
         start_time = max(print_time, self.min_time)
-        sps = self._load_cell.sensor.get_samples_per_second()
-        return self._collect_until(start_time + 1. + (min_count / sps))
+        deadline = start_time + 1. + (min_count / self.sps)
+        def is_ready():
+            return len(self._samples) >= min_count
+        self._wait(is_ready, deadline)
+        return self._result(self._pull())
 
     # returns when a sample is collected with a timestamp after print_time
-    def collect_until(self, print_time=None):
-        self.max_time = print_time
-        if len(self._samples) and self._samples[-1][0] >= print_time:
-            return self._finish_collecting()
-        return self._collect_until(self.max_time + 1.)
+    def collect_until(self, end_time):
+        def is_ready():
+            return self._samples and self._samples[-1][0] >= end_time
+        self._wait(is_ready, end_time + 1.)
+        return self._result(self._pull(end_time))
+
+    def collect_range(self, start_time, end_time):
+        self.discard_before(start_time)
+        return self.collect_until(end_time)
 
 # Printer class that controls the load cell
 MIN_COUNTS_PER_GRAM = 1.
@@ -467,7 +475,9 @@ class LoadCell:
     def avg_counts(self, num_samples=None):
         if num_samples is None:
             num_samples = int(self.sensor.get_samples_per_second())
-        samples, errors = self.get_collector().collect_min(num_samples)
+        collector = self.get_collector()
+        samples, errors = collector.collect_min(num_samples)
+        collector.finish()
         if errors:
             raise self.printer.command_error(
                 "Sensor reported %i errors while sampling"
