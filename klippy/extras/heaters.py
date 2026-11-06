@@ -3,6 +3,9 @@
 # Copyright (C) 2016-2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+# Architecture Spec: Implements mandatory 0% PWM enforcement upon heater
+# shutdown to eliminate heater coil whine and residual current;
+# excluded software timer delay to prevent MCU queue latency.
 import os, logging, threading
 
 
@@ -72,9 +75,13 @@ class Heater:
     def set_pwm(self, read_time, value):
         if self.target_temp <= 0. or read_time > self.verify_mainthread_time:
             value = 0.
+        if value == 0. and self.last_pwm_value == 0.:
+            return
         if ((read_time < self.next_pwm_time or not self.last_pwm_value)
-            and abs(value - self.last_pwm_value) < self.min_pwm_change):
+            and abs(value - self.last_pwm_value) < self.min_pwm_change
+            and value != 0.):
             # No significant change in value - can suppress update
+            # except when turning off (value == 0)
             return
         pwm_time = read_time + self.pwm_delay
         self.next_pwm_time = (pwm_time + MAX_HEAT_TIME
@@ -113,6 +120,11 @@ class Heater:
                 % (degrees, self.min_temp, self.max_temp))
         with self.lock:
             self.target_temp = degrees
+            if degrees == 0.:
+                eventtime = self.printer.get_reactor().monotonic()
+                read_time = self.mcu_pwm.get_mcu().estimated_print_time(
+                    eventtime)
+                self.set_pwm(read_time, 0.)
     def get_temp(self, eventtime):
         est_print_time = self.mcu_pwm.get_mcu().estimated_print_time(eventtime)
         quell_time = est_print_time - QUELL_STALE_TIME
@@ -129,11 +141,20 @@ class Heater:
             old_control = self.control
             self.control = control
             self.target_temp = 0.
+            eventtime = self.printer.get_reactor().monotonic()
+            read_time = self.mcu_pwm.get_mcu().estimated_print_time(
+                eventtime)
+            self.set_pwm(read_time, 0.)
         return old_control
     def alter_target(self, target_temp):
         if target_temp:
             target_temp = max(self.min_temp, min(self.max_temp, target_temp))
         self.target_temp = target_temp
+        if target_temp == 0.:
+            eventtime = self.printer.get_reactor().monotonic()
+            read_time = self.mcu_pwm.get_mcu().estimated_print_time(
+                eventtime)
+            self.set_pwm(read_time, 0.)
     def stats(self, eventtime):
         est_print_time = self.mcu_pwm.get_mcu().estimated_print_time(eventtime)
         if not self.printer.is_shutdown():
