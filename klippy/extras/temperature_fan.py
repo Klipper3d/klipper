@@ -3,6 +3,7 @@
 # Copyright (C) 2016-2020  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import threading
 from . import fan
 
 KELVIN_TO_CELSIUS = -273.15
@@ -29,6 +30,7 @@ class TemperatureFan:
         self.min_speed_conf = config.getfloat(
             'min_speed', 0.3, minval=0., maxval=1.)
         self.min_speed = self.min_speed_conf
+        self.lock = threading.Lock()
         self.last_temp = 0.
         self.last_temp_time = 0.
         self.target_temp_conf = config.getfloat(
@@ -70,6 +72,13 @@ class TemperatureFan:
         return self.min_speed
     def get_max_speed(self):
         return self.max_speed
+    def stats(self, eventtime):
+        with self.lock:
+            target_temp = self.target_temp
+            last_temp = self.last_temp
+            last_speed_value = self.last_speed_value
+        return False, '%s: target=%.0f temp=%.1f pwm=%.3f' % (
+            self.name, target_temp, last_temp, last_speed_value)
     def get_status(self, eventtime):
         status = self.fan.get_status(eventtime)
         status["temperature"] = round(self.last_temp, 2)
