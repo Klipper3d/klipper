@@ -291,6 +291,13 @@ class ConfigAutoSave:
             if fileconfig.has_option(section, field):
                 is_dup_field = True
                 lines[lineno] = '#' + lines[lineno]
+                msg = ("SAVE_CONFIG section '%s' option '%s' is"
+                       " overridden by main config" % (section, field))
+                pconfig = self.printer.lookup_object('configfile', None)
+                if pconfig is not None:
+                    pconfig.runtime_warning(msg)
+                else:
+                    logging.warning(msg)
         return "\n".join(lines)
     def load_main_config(self):
         filename = self.printer.get_start_args()['config_file']
