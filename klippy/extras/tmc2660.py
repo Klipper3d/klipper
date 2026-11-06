@@ -233,6 +233,8 @@ class MCU_TMC2660_SPI:
         return None
     def get_mcu(self):
         return self.spi.get_mcu()
+    def get_oid(self):
+        return self.spi.get_oid()
 
 
 ######################################################################
