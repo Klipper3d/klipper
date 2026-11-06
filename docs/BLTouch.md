@@ -12,8 +12,8 @@ the BL-Touch documentation or your MCU documentation. Using the
 original wiring, the yellow wire from the triple is the `control_pin`
 and the white wire from the pair is the `sensor_pin`. You need to
 configure these pins according to your wiring. Most BL-Touch devices
-require a pullup on the sensor pin (prefix the pin name with "^"). For
-example:
+are configured to use an open drain output. They require a pullup resistor
+on the sensor pin (prefix the pin name with "^") to work reliably. For example:
 
 ```
 [bltouch]
