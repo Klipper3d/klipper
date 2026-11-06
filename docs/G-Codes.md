@@ -522,6 +522,25 @@ parsed as Python literals). If TEMPLATE is an empty string then this
 command will clear any previous template assigned to the pin (one can
 then use `SET_FAN_SPEED` commands to manage the values directly).
 
+### [fan_calibrate]
+
+The following command is available when a
+[fan_calibrate config section](Config_Reference.md#fan_calibrate) is
+enabled.
+
+#### FAN_CALIBRATE
+`FAN_CALIBRATE [FAN=<config_name>]`: Calibrates the `off_below` and
+`kick_start_time` settings of the given fan (the default fan if not
+specified) by measuring the tachometer feedback at various fan
+speeds. The fan ramps up to full speed to measure its maximum speed,
+then the speed is lowered step by step until the fan stalls to
+determine `off_below`. Finally the fan is stopped and restarted
+repeatedly with increasing kick durations to find the shortest kick
+after which the fan keeps spinning at that lowest speed, which gives
+`kick_start_time`. Use the SAVE_CONFIG command to save the results to
+the printer config file. The fan must have a `tachometer_pin`
+configured, and the calibration may take a minute or more to complete.
+
 ### [filament_switch_sensor]
 
 The following command is available when a
