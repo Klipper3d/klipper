@@ -45,7 +45,7 @@ $(OUT)stage2.o: lib/pico-sdk/$(MCU)/boot_stage2/$(STAGE2_FILE) $(OUT)autoconf.h
 # Binary output file rules when using stage2
 $(OUT)lib/elf2uf2/elf2uf2: lib/elf2uf2/main.cpp
 	@echo "  Building $@"
-	$(Q)g++ -g -O -Ilib/pico-sdk $< -o $@
+	$(Q)g++ -g -O -std=c++11 -Ilib/pico-sdk $< -o $@
 
 $(OUT)klipper.uf2: $(OUT)klipper.elf $(OUT)lib/elf2uf2/elf2uf2
 	@echo "  Creating uf2 file $@"
