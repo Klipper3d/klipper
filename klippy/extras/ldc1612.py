@@ -21,13 +21,18 @@ LDC1612_MANUF_ID = 0x5449
 LDC1612_DEV_ID = 0x3055
 
 REG_RCOUNT0 = 0x08
+REG_RCOUNT1 = 0x09
 REG_OFFSET0 = 0x0c
+REG_OFFSET1 = 0x0d
 REG_SETTLECOUNT0 = 0x10
+REG_SETTLECOUNT1 = 0x11
 REG_CLOCK_DIVIDERS0 = 0x14
+REG_CLOCK_DIVIDERS1 = 0x15
 REG_ERROR_CONFIG = 0x19
 REG_CONFIG = 0x1a
 REG_MUX_CONFIG = 0x1b
 REG_DRIVE_CURRENT0 = 0x1e
+REG_DRIVE_CURRENT1 = 0x1f
 REG_MANUFACTURER_ID = 0x7e
 REG_DEVICE_ID = 0x7f
 
@@ -90,6 +95,7 @@ class LDC1612:
         self.query_ldc1612_cmd = None
         self.clock_freq = config.getint("frequency", DEFAULT_LDC1612_FREQ,
                                         2000000, 40000000)
+        self.dummy_input = self.clock_freq > 35000000
         # Determine sensor divider (want 4*max_hz < clock_ref)
         max_hz = config.getfloat("max_sensor_hz", 5000000., 3000000., 20000000.)
         self.sensor_div = int(math.ceil(4. * max_hz / self.clock_freq))
@@ -206,15 +212,31 @@ class LDC1612:
                 "(e.g. faulty wiring) or a faulty ldc1612 chip."
                 % (manuf_id, dev_id, LDC1612_MANUF_ID, LDC1612_DEV_ID))
         # Setup chip in requested query rate
-        rcount0 = self.clock_freq / (16. * self.data_rate)
+        rcount0_corr = 0
+        settle0_corr = 0
+        settletime0 = SETTLETIME
+        data_rate = self.data_rate
+        if self.dummy_input:
+            rcount0_corr = 5
+            settle0_corr = 10
+            settletime0 = 0.0005
+            data_rate = 1 / (1 / self.data_rate - settletime0)
+        rcount0 = self.clock_freq / (16. * data_rate) - rcount0_corr
         self.set_reg(REG_RCOUNT0, int(rcount0 + 0.5))
+        self.set_reg(REG_RCOUNT1, rcount0_corr)
         self.set_reg(REG_OFFSET0, 0)
-        self.set_reg(REG_SETTLECOUNT0, int(SETTLETIME*self.clock_freq/16. + .5))
+        self.set_reg(REG_OFFSET1, 0)
+        settlecount0 = settletime0*self.clock_freq/16. - settle0_corr
+        self.set_reg(REG_SETTLECOUNT0, int(settlecount0 + 0.5))
+        self.set_reg(REG_SETTLECOUNT1, settle0_corr)
         self.set_reg(REG_CLOCK_DIVIDERS0, (self.sensor_div << 12) | 1)
+        self.set_reg(REG_CLOCK_DIVIDERS1, (2 << 12) | 1)
         self.set_reg(REG_ERROR_CONFIG, (0x1f << 11) | 1)
-        self.set_reg(REG_MUX_CONFIG, 0x0208 | DEGLITCH)
+        dummy_input = int(self.dummy_input) << 15
+        self.set_reg(REG_MUX_CONFIG, dummy_input | 0x0208 | DEGLITCH)
         self.set_reg(REG_CONFIG, 0x001 | (1<<12) | (1<<10) | (1<<9))
         self.set_reg(REG_DRIVE_CURRENT0, self.dccal.get_drive_current() << 11)
+        self.set_reg(REG_DRIVE_CURRENT1, 1 << 11)
         # Start bulk reading
         rest_ticks = self.mcu.seconds_to_clock(0.5 / self.data_rate)
         self.query_ldc1612_cmd.send([self.oid, rest_ticks])
