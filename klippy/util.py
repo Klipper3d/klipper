@@ -110,6 +110,20 @@ setup_python2_wrappers()
 
 
 ######################################################################
+# Python3 hacks
+######################################################################
+
+def setup_multiprocess_fork_method():
+    if sys.version_info.major < 3:
+        return
+    if sys.version_info.major >= 3 and sys.version_info.minor < 14:
+        return
+    import multiprocessing
+    multiprocessing.set_start_method("fork")
+setup_multiprocess_fork_method()
+
+
+######################################################################
 # General system and software information
 ######################################################################
 

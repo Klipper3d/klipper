@@ -115,11 +115,14 @@ class DumpTrapQ:
         if not count:
             return None, None
         move = data[0]
-        move_time = max(0., min(move.move_t, print_time - move.print_time))
+        rel_time = print_time - move.print_time
+        move_time = max(0., min(move.move_t, rel_time))
         dist = (move.start_v + .5 * move.accel * move_time) * move_time;
         pos = (move.start_x + move.x_r * dist, move.start_y + move.y_r * dist,
                move.start_z + move.z_r * dist)
-        velocity = move.start_v + move.accel * move_time
+        velocity = 0.
+        if rel_time >= 0. and rel_time <= move.move_t:
+            velocity = move.start_v + move.accel * move_time
         return pos, velocity
     def _process_batch(self, eventtime):
         qtime = self.last_batch_msg[0] + min(self.last_batch_msg[1], 0.100)

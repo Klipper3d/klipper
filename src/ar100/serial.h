@@ -45,6 +45,4 @@ void r_uart_init(void);
 void r_uart_putc(char c);
 char r_uart_getc(void);
 uint32_t r_uart_fifo_rcv(void);
-void uart_putc(char c);
-void uart_puts(char *s);
-void uart_puti(uint32_t u);
+uint32_t r_uart_fifo_cantx(void);

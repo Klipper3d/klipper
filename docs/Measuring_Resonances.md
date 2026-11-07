@@ -600,7 +600,7 @@ Note that the reported `smoothing` values are some abstract projected values.
 These values can be used to compare different configurations: the higher the
 value, the more smoothing a shaper will create. However, these smoothing scores
 do not represent any real measure of smoothing, because the actual smoothing
-depends on [`max_accel`](#selecting-max-accel) and `square_corner_velocity`
+depends on [`max_accel`](#selecting-max_accel) and `square_corner_velocity`
 parameters. Therefore, you should print some test prints to see how much
 smoothing exactly a chosen configuration creates.
 

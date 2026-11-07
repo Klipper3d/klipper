@@ -8,7 +8,26 @@ All dates in this document are approximate.
 
 ## Changes
 
-20260420: The handling of the `[probe_eddy_current]` `tap_threshold`
+20261018: An error in the `PID_CALIBRATE` calculations has been
+corrected. Previously, the code would recommend PID values that were
+twice their desired values (relative to the standard "Astrom-Hagglund
+method"). The new `PID_CALIBRATE` code corrects this error and it may
+produce PID values that result in fewer heating oscillations. If you
+are happy with your current heater performance then no changes are
+necessary. If you are experiencing persistent heating osculations then
+you may wish to rerun `PID_CALIBRATE` and apply the updated PID
+recommendations.
+
+20260915: Support for the `TEMPERATURE_PROBE_CALIBRATE` `METHOD=tap`
+parameter has been removed. Use
+`TEMPERATURE_PROBE_CALIBRATE MANUAL_METHOD=tap` instead.
+
+20260525: The internal implementation of "probe:z_virtual_endstop" has
+changed. Most users will not observe a change in behavior. Previously
+it was technically possible to mix "probe:z_virtual_endstop" with
+other types of Z endstops and this behavior is no longer valid.
+
+20260501: The handling of the `[probe_eddy_current]` `tap_threshold`
 config option and associated `TAP_THRESHOLD` G-Code parameter has
 changed. It will be necessary to recalibrate the value. A good
 starting point is to set `tap_threshold` to 50 times the previous

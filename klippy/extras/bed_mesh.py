@@ -612,8 +612,8 @@ class BedMeshCalibrate:
         need_cfg_update |= self.set_adaptive_mesh(gcmd)
         probe_method = gcmd.get("METHOD", "automatic")
 
+        self._verify_algorithm(gcmd.error)
         if need_cfg_update:
-            self._verify_algorithm(gcmd.error)
             self.probe_mgr.generate_points(
                 self.mesh_config, self.mesh_min, self.mesh_max,
                 self.radius, self.origin, probe_method
@@ -1471,7 +1471,7 @@ class ZMesh:
         t = (coord - cfunc(idx)) / mesh_dist
         return constrain(t, 0., 1.), idx
     def _sample_direct(self, z_matrix):
-        self.mesh_matrix = z_matrix
+        self.mesh_matrix = [y[:] for y in z_matrix]
     def _sample_lagrange(self, z_matrix):
         x_mult = self.x_mult
         y_mult = self.y_mult

@@ -883,7 +883,7 @@ inherits them from the specified `primary_carriage`, thus sharing
 the same range of motion with the primary carriage.
 
 For the references on how to configure IDEX setups, see the
-[dual carriage](#dual-carriage) section.
+[dual carriage](#dual_carriage) section.
 
 ### None Kinematics
 
@@ -1757,7 +1757,7 @@ Enables support to exclude or cancel individual objects during the printing
 process.
 
 See the [exclude objects guide](Exclude_Object.md) and
-[command reference](G-Codes.md#excludeobject)
+[command reference](G-Codes.md#exclude_object)
 for additional information. See the
 [sample-macros.cfg](../config/sample-macros.cfg) file for a
 Marlin/RepRapFirmware compatible M486 G-Code macro.
@@ -2555,7 +2555,7 @@ position_max:
 #homing_positive_dir:
 ...
 ```
-Refer to [generic cartesian](#generic-cartesian) section for more information
+Refer to [generic cartesian](#generic-cartesian-kinematics) section for more information
 on the regular `carriage` parameters.
 
 Then a user must define one or more stepper motors moving the dual carriage
@@ -4382,6 +4382,82 @@ run_current:
 #   sensorless homing.
 ```
 
+### [tmc5262]
+
+Configure a TMC5262 stepper motor driver via SPI. Define a section with a
+"tmc5262" prefix followed by the name of the corresponding stepper
+(for example, "[tmc5262 stepper_x]").
+
+This implementation supports SpreadCycle with a physical endstop.
+
+```
+[tmc5262 stepper_x]
+cs_pin:
+#   The pin connected to the driver's chip select input. This parameter
+#   must be provided.
+#spi_speed:
+#spi_bus:
+#spi_software_sclk_pin:
+#spi_software_mosi_pin:
+#spi_software_miso_pin:
+#   See the "common SPI settings" section.
+#chain_position:
+#chain_length:
+#   See the tmc5160 section for SPI daisy chain settings.
+#interpolate: True
+#   Enable interpolation to 256 microsteps. The default is True.
+run_current:
+#   Motor current in amps RMS. This parameter must be provided.
+#   Klipper selects the smallest hardware current range that fits this
+#   value. SET_TMC_CURRENT is limited to that range; configure a higher
+#   run_current and restart to select a larger range if needed.
+#hold_current:
+#   Current in amps RMS when the motor is not moving. The default is
+#   run_current. Setting a separate hold_current is not recommended;
+#   see TMC_Drivers.md.
+#rref: 12000
+#   Resistance in ohms of the reference resistor between REF and GND.
+#   Obtain this value from the driver board documentation or schematic.
+#   The default is 12000. The driver uses integrated current sensing,
+#   not an external sense resistor.
+#driver_MSLUT0: 2863314260
+#driver_MSLUT1: 1251300522
+#driver_MSLUT2: 608774441
+#driver_MSLUT3: 269500962
+#driver_MSLUT4: 4227858431
+#driver_MSLUT5: 3048961917
+#driver_MSLUT6: 1227445590
+#driver_MSLUT7: 4211234
+#driver_W0: 2
+#driver_W1: 1
+#driver_W2: 1
+#driver_W3: 1
+#driver_X1: 128
+#driver_X2: 255
+#driver_X3: 255
+#driver_START_SIN: 0
+#driver_START_SIN90: 247
+#driver_OFFSET_SIN90: 0
+#   See the tmc2240 section for Microstep Table settings.
+#driver_MULTISTEP_FILT: True
+#driver_IHOLDDELAY: 7
+#driver_IRUNDELAY: 4
+#driver_TPOWERDOWN: 10
+#driver_TBL: 2
+#driver_TOFF: 3
+#driver_HEND: 2
+#driver_HSTRT: 5
+#driver_FD3: 0
+#driver_DISFDCC: 0
+#driver_TPFD: 4
+#driver_CHM: 0
+#driver_SLOPE_CONTROL: 3
+#   Set the corresponding register field during driver configuration.
+#   See the TMC5262 datasheet for field definitions. The defaults are
+#   shown above.
+```
+
+
 ## Run-time stepper motor current configuration
 
 ### [ad5206]
@@ -4646,6 +4722,19 @@ d7_pin:
 #   Set the number of characters per line for an hd44780 type lcd.
 #   Possible values are 20 (default) and 16. The number of lines is
 #   fixed to 4.
+#hd44780_delay: 0.000040
+#   The minimum time (in seconds) to wait after sending a command
+#   or data byte to the hd44780 chip. Some displays (typically ones
+#   with a slower internal oscillator) need more time than the
+#   default and will show wrong or randomly changing characters.
+#   Only change this if that occurs. In that case, increase the value
+#   in steps of 0.000001 (1us) and check the display over a longer
+#   period (eg, a full print) at each step, as the errors may only
+#   appear sporadically. Once the display is reliable, add a small
+#   margin (a few microseconds) as the display timing can vary with
+#   temperature. Use the lowest reliable value, as the
+#   micro-controller waits for this delay between every byte sent to
+#   the display. The maximum is 0.000060. The default is 0.000040.
 ...
 ```
 
@@ -5169,6 +5258,31 @@ sensor_type:
 #   The default is 'normal'. Use 'inverted' if the sensor reports a
 #   decreasing force value when placed under load.
 ```
+
+#### CS1237
+
+The CS1237 sensor backend supports both `[load_cell]` and
+`[load_cell_probe]`.
+
+```
+[load_cell my_cs1237]
+sensor_type: cs1237
+sclk_pin:
+#   The pin connected to the CS1237 clock line. This parameter must be
+#   provided.
+dout_pin:
+#   The pin connected to the bidirectional CS1237 DOUT line. This parameter
+#   must be provided.
+#sample_rate: 640
+#   Valid values for sample_rate are 10, 40, 640, or 1280. The default is 640.
+#gain: 128
+#   Valid values for gain are 1, 2, 64, or 128. The default is 128.
+#reference_output: True
+#   Enable the CS1237 REFO reference output. The default is True.
+```
+
+Both pins must be on the same MCU. DOUT is bidirectional during
+configuration.
 
 #### HX711
 This is a 24 bit low sample rate chip using "bit-bang" communications. It is

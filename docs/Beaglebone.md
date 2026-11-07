@@ -205,7 +205,7 @@ you can't use them for stepper control.
 
 Complete the installation by configuring Klipper
 following the instructions in
-the main [Installation](Installation.md#configuring-octoprint-to-use-klipper) document.
+the main [Installation](Installation.md#configuring-klipper) document.
 
 ## Printing on the Beaglebone
 

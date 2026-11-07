@@ -333,11 +333,13 @@ class ProbeParameterHelper:
                 'samples_result': samples_result}
 
 # Helper to track multiple probe attempts in a single command
-class ProbeSessionHelper:
-    def __init__(self, config, param_helper, start_session_cb):
+class SampleAveragingHelper:
+    def __init__(self, config, param_helper, start_session_cb,
+                 nozzle_probe = False):
         self.printer = config.get_printer()
         self.param_helper = param_helper
         self.start_session_cb = start_session_cb
+        self.nozzle_probe = nozzle_probe
         # Session state
         self.hw_probe_session = None
         self.results = []
@@ -379,10 +381,11 @@ class ProbeSessionHelper:
             if "Timeout during endstop homing" in reason:
                 reason += HINT_TIMEOUT
             raise self.printer.command_error(reason)
-        # Allow axis_twist_compensation to update results
-        results = [epos]
-        self.printer.send_event("probe:update_results", results)
-        epos = results[0]
+        if not self.nozzle_probe:
+            # Allow axis_twist_compensation to update results
+            results = [epos]
+            self.printer.send_event("probe:update_results", results)
+            epos = results[0]
         # Report results
         gcode = self.printer.lookup_object('gcode')
         gcode.respond_info("probe: at %.3f,%.3f bed will contact at z=%.6f"

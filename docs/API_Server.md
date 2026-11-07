@@ -560,7 +560,7 @@ might return:
 
 The `dump_mesh` endpoint takes one optional parameter, `mesh_args`.
 This parameter must be an object, where the keys and values are
-parameters available to [BED_MESH_CALIBRATE](#bed_mesh_calibrate).
+parameters available to [BED_MESH_CALIBRATE](G-Codes.md#bed_mesh_calibrate).
 This will update the mesh configuration and probe points using the
 supplied parameters prior to returning the result.   It is recommended
 to omit mesh parameters unless it is desired to visualize the probe points

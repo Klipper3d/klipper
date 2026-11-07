@@ -110,6 +110,7 @@ class CommandQueryWrapper:
 class CommandWrapper:
     def __init__(self, conn_helper, msgformat, cmd_queue=None):
         self._serial = serial = conn_helper.get_serial()
+        self._error = conn_helper.get_mcu().get_printer().command_error
         msgparser = serial.get_msgparser()
         self._cmd = msgparser.lookup_command(msgformat)
         if cmd_queue is None:
@@ -124,7 +125,11 @@ class CommandWrapper:
         self._serial.raw_send(cmd, minclock, reqclock, self._cmd_queue)
     def send_wait_ack(self, data=(), minclock=0, reqclock=0):
         cmd = self._cmd.encode(data)
-        self._serial.raw_send_wait_ack(cmd, minclock, reqclock, self._cmd_queue)
+        try:
+            self._serial.raw_send_wait_ack(cmd, minclock, reqclock,
+                                           self._cmd_queue)
+        except serialhdl.error as e:
+            raise self._error(str(e))
     def get_command_tag(self):
         return self._msgtag
 
@@ -836,7 +841,9 @@ class MCUConnectHelper:
             % (self._name, message_count, version, build_versions),
             "MCU '%s' config: %s" % (self._name, " ".join(
                 ["%s=%s" % (k, v)
-                 for k, v in msgparser.get_constants().items()]))]
+                 for k, v in msgparser.get_constants().items()])),
+            "MCU '%s' kconfig: %s" % (self._name, repr(msgparser.get_kconfig()))
+        ]
         return "\n".join(log_info)
     def _attach_file(self):
         # In a debugging mode.  Open debug output file and read data dictionary
@@ -903,6 +910,7 @@ class MCUConnectHelper:
                      self._name, eventtime)
         self._printer.invoke_shutdown("Lost communication with MCU '%s'" % (
             self._name,))
+        self._serial.abort_wait_acks()
     def is_shutdown(self):
         return self._is_shutdown
     def get_shutdown_msg(self):
@@ -946,6 +954,7 @@ class MCUStatsHelper:
         self._get_status_info['mcu_version'] = version
         self._get_status_info['mcu_build_versions'] = build_versions
         self._get_status_info['mcu_constants'] = msgparser.get_constants()
+        self._get_status_info['mcu_kconfig'] = msgparser.get_kconfig()
         self._serial.register_response(self._handle_mcu_stats, 'stats')
     def _ready(self):
         if self._mcu.is_fileoutput():

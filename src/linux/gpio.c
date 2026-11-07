@@ -28,6 +28,13 @@ DECL_ENUMERATION_RANGE("pin", "gpiochip5/gpio0", GPIO(5, 0), MAX_GPIO_LINES);
 DECL_ENUMERATION_RANGE("pin", "gpiochip6/gpio0", GPIO(6, 0), MAX_GPIO_LINES);
 DECL_ENUMERATION_RANGE("pin", "gpiochip7/gpio0", GPIO(7, 0), MAX_GPIO_LINES);
 DECL_ENUMERATION_RANGE("pin", "gpiochip8/gpio0", GPIO(8, 0), MAX_GPIO_LINES);
+DECL_ENUMERATION_RANGE("pin", "gpiochip9/gpio0", GPIO(9, 0), MAX_GPIO_LINES);
+DECL_ENUMERATION_RANGE("pin", "gpiochip10/gpio0", GPIO(10, 0), MAX_GPIO_LINES);
+DECL_ENUMERATION_RANGE("pin", "gpiochip11/gpio0", GPIO(11, 0), MAX_GPIO_LINES);
+DECL_ENUMERATION_RANGE("pin", "gpiochip12/gpio0", GPIO(12, 0), MAX_GPIO_LINES);
+DECL_ENUMERATION_RANGE("pin", "gpiochip13/gpio0", GPIO(13, 0), MAX_GPIO_LINES);
+DECL_ENUMERATION_RANGE("pin", "gpiochip14/gpio0", GPIO(14, 0), MAX_GPIO_LINES);
+DECL_ENUMERATION_RANGE("pin", "gpiochip15/gpio0", GPIO(15, 0), MAX_GPIO_LINES);
 
 struct gpio_line {
     int chipid;
@@ -35,8 +42,10 @@ struct gpio_line {
     int fd;
     int state;
 };
-static struct gpio_line gpio_lines[9 * MAX_GPIO_LINES];
-static int gpio_chip_fd[9] = { -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+static struct gpio_line gpio_lines[16 * MAX_GPIO_LINES];
+static int gpio_chip_fd[16] = {
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+};
 
 static int
 get_chip_fd(uint8_t chipId)

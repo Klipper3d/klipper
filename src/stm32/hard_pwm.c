@@ -99,6 +99,8 @@ static const struct gpio_pwm_info pwm_regs[] = {
     {TIM3, GPIO('A', 7),  2, GPIO_FUNCTION(1)},
     {TIM3, GPIO('B', 0),  3, GPIO_FUNCTION(1)},
     {TIM3, GPIO('B', 1),  4, GPIO_FUNCTION(1)},
+    {TIM3, GPIO('B', 4),  1, GPIO_FUNCTION(2)},
+    {TIM3, GPIO('B', 5),  2, GPIO_FUNCTION(2)},
     {TIM3, GPIO('C', 6),  1, GPIO_FUNCTION(2)},
     {TIM3, GPIO('C', 7),  2, GPIO_FUNCTION(2)},
     {TIM3, GPIO('C', 8),  3, GPIO_FUNCTION(2)},

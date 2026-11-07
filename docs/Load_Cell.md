@@ -14,7 +14,7 @@ A calibrated force sensor is an important part of a load cell based probe.
 
 When you first connect a load cell its good practice to check for issues by
 running `LOAD_CELL_DIAGNOSTIC`. This tool collects 10 seconds of data from the
-load cell and resport statistics:
+load cell and reports statistics:
 
 ```
 $ LOAD_CELL_DIAGNOSTIC
@@ -176,7 +176,7 @@ endstop: too much force!`. There are a number of ways this can be triggered:
 
 The first risk this protects against is picking too large of a value for
 `drift_filter_cutoff_frequency`. This can cause the drift filter to filter out
-a probe event and continue the homing move. If this happens the
+a probe event and continue the homing move. If this happens, the
 `force_safety_limit` acts as a backup protection.
 
 The second problem is probing repeatedly in one place. Klipper does not retract
@@ -188,7 +188,7 @@ the `PROBE` command, load_cell_probe will tare the endstop at the current force.
 Multiple cycles of this will result in ever-increasing force on the toolhead.
 `force_safety_limit` stops this cycle from running out of control.
 
-Another way this run-away can happen is damage to a strain gauge. If the metal
+Another way this runaway can happen is damage to a strain gauge. If the metal
 part is permanently bent it will change the `reference_tare_counts` of the
 device. This puts the starting tare value much closer to the limit making it
 more likely to be violated. You want to be notified if this is happening
@@ -207,10 +207,38 @@ with an error `!! LoadCell Endstop timed out waiting on ADC data`.
 
 If this happens, the most likely cause is a fault from the ADC. Inadequate
 grounding of your printer can be the root cause. The frame, power supply
-case and pint bed should all be connected to ground. You may need to ground
+case and print bed should all be connected to ground. You may need to ground
 the frame in multiple places. Anodized aluminum extrusions do not conduct
 electricity well. You might need to sand the area where the grounding wire
 is attached to make good electrical contact.
+
+#### Interpolation
+To increase the precision of the probing result, the position of the first
+contact between nozzle and bed can be estimated by fitting a piecewise function
+to the measured data. The data will consist of two regions: while the nozzle is
+above the bed, the force will be constant (at the tare value). When the nozzle
+is in contact with the bed, the force will increase linearly with decreasing z
+position. A piecewise function is fitted to the data and the optimal z position
+of the split point is found by minimising the error squared. This enables a
+resolution finer than the distance between the sampling points and will also be
+less sensitive to noise.
+
+Due to both physical and technical reasons, the interpolation uses data
+collected during an additional ascending movement after the initial descending
+move. The first 300ms of data collected during the ascending move will
+be used for the fit (this minimises the influence of tare drifts). The
+collected data must contain enough samples for the fit: at least 3 samples each
+below and above the contact point are required.
+
+It is recommended to use a relatively high trigger force for the probe to have
+a strong enough signal. If you have too few samples below the contact point,
+try increasing the `trigger_force` or reducing the `lift_speed`. However, if
+the `lift_speed` is too small, there will be too few samples above the contact
+point due to the 300ms window.
+
+The distance of the ascending move can be configured through the
+`sample_retract_dist` parameter.
+
 
 ## Load Cell Probe Setup
 
@@ -292,7 +320,7 @@ gcode:
 ### Suggested Probing Temperature
 
 Currently, we suggest keeping the nozzle temperature below the level that causes
-the filament to ooze while homing and probing. 140C is a good starting
+the filament to ooze while homing and probing. 140°C is a good starting
 point. This temperature is also low enough not to scar PEI build surfaces.
 
 Fouling of the nozzle and the print bed due to oozing filament is the #1 source
@@ -306,7 +334,7 @@ location has become fouled by filament ooze. Modules like `quad_gantry_level`
 will repeatedly probe the same coordinates even if a probe previously failed
 there.
 
-Give the above it is strongly suggested not to probe at printing temperatures.
+Given the above it is strongly suggested not to probe at printing temperatures.
 
 ### Hot Nozzle Protection
 
@@ -341,7 +369,7 @@ temperatures from PLA to PC.
 
 The easiest way to do this is to measure at 2 different temperatures.
 Ideally these should be the upper and lower limits of the printing
-temperature range. E.g. 180C and 290C. You can perform a `PROBE_ACCURACY` at
+temperature range. E.g. 180°C and 290°C. You can perform a `PROBE_ACCURACY` at
 both temperatures and then calculate the difference of the `average z` at both.
 
 The adjustment value is the change in nozzle length divided by the change in
@@ -381,12 +409,12 @@ of external forces that change while probing.
 ### Installing SciPy
 
 The filtering code uses the excellent [SciPy](https://scipy.org/) library to
-compute the filter coefficients based on the values your enter into the config.
+compute the filter coefficients based on the values you enter into the config.
 
-Pre-compiled SciPi builds are available for Python 3 on 32 bit Raspberry Pi
-systems. 32 bit + Python 3 is strongly recommended because it will streamline
-your installation experience. It does work with Python 2 but installation can
-take 30+ minutes and require installing additional tools.
+Pre-compiled SciPi builds are available for Python 3 on 32-bit and 64-bit
+Raspberry Pi systems. 32-bit/64-bit + Python 3 is strongly recommended because
+it will streamline your installation experience. It does work with Python 2 but
+installation can take 30+ minutes and requires installing additional tools.
 
 ```bash
 ~/klippy-env/bin/pip install scipy
