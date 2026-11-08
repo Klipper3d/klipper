@@ -20,7 +20,7 @@ class DummyDriftCompensation:
         return 0.
     def note_z_calibration_start(self):
         pass
-    def note_z_calibration_finish(self):
+    def note_z_calibration_finish(self, profile_name):
         pass
     def adjust_freq(self, freq, temp=None):
         return freq
@@ -28,34 +28,57 @@ class DummyDriftCompensation:
         return freq
 
 # Storage for frequency to height calibration
+class EddyCalibrationProfile:
+    def __init__(self, config, name):
+        # Current calibration data
+        self.cal_freqs = tuple()
+        self.cal_zpos = tuple()
+        cal = config.get(name, None)
+        if cal is None:
+            return
+        cal = [list(map(float, d.strip().split(':', 1)))
+               for d in cal.split(',')]
+        cal = sorted([(c[1], c[0]) for c in cal])
+        self.cal_freqs = tuple([c[0] for c in cal])
+        self.cal_zpos = tuple([c[1] for c in cal])
+    def get_calibration(self):
+        return self.cal_freqs, self.cal_zpos
+
 class EddyCalibration:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.drift_comp = DummyDriftCompensation()
-        # Current calibration data
         self.cal_freqs = []
         self.cal_zpos = []
-        cal = config.get('calibrate', None)
-        if cal is not None:
-            cal = [list(map(float, d.strip().split(':', 1)))
-                   for d in cal.split(',')]
-            self._load_calibration(cal)
-    def _load_calibration(self, cal):
-        cal = sorted([(c[1], c[0]) for c in cal])
-        self.cal_freqs = [c[0] for c in cal]
-        self.cal_zpos = [c[1] for c in cal]
+        self.profile_name = config.get('profile_name', "default")
+        _profile_names = config.get_prefix_options("calibrate")
+        self.calibrations = {}
+        for full_name in _profile_names:
+            postfix = full_name.split("_")
+            name = "default"
+            if len(postfix) > 1:
+                name = "_".join(postfix[1:])
+            logging.info("Load probe_eddy_current profile: %s" % (name))
+            self.calibrations[name] = EddyCalibrationProfile(config, full_name)
+        if self.profile_name not in self.calibrations:
+            raise self.printer.config_error("Missing calibrate_%s profile" % (
+                self.profile_name))
+        calibration = self.calibrations[self.profile_name]
+        self.cal_freqs, self.cal_zpos = calibration.get_calibration()
     def get_printer(self):
         return self.printer
     def note_z_calibration_start(self):
         self.drift_comp.note_z_calibration_start()
-    def note_z_calibration_finish(self):
-        self.drift_comp.note_z_calibration_finish()
+    def note_z_calibration_finish(self, profile_name):
+        self.drift_comp.note_z_calibration_finish(profile_name)
     def register_drift_compensation(self, comp):
         self.drift_comp = comp
     def verify_calibrated(self):
         if len(self.cal_freqs) <= 2:
             raise self.printer.command_error(
                 "Must calibrate probe_eddy_current first")
+    def get_profile_name(self):
+        return self.profile_name
     def get_calibration(self):
         return list(self.cal_freqs), list(self.cal_zpos)
     def apply_calibration(self, samples):
@@ -107,6 +130,7 @@ class EddyCalibrationTool:
         self.sensor_helper = sensor_helper
         # Probe calibrate state
         self.probe_speed = 0.
+        self.profile_name = config.get('profile_name', "default")
         self._last_pos_sample = -999, (40000000, .0, .0)
         self._produce_moves = True
         self._probe_calibrate_z = .0
@@ -120,7 +144,7 @@ class EddyCalibrationTool:
         gcode.register_command('Z_OFFSET_APPLY_PROBE',
                                self.cmd_Z_OFFSET_APPLY_PROBE,
                                desc=self.cmd_Z_OFFSET_APPLY_PROBE_help)
-    def _save_calibration(self, z_freq_pairs):
+    def _save_calibration(self, z_freq_pairs, profile_name):
         gcode = self.printer.lookup_object("gcode")
         gcode.respond_info(
             "The SAVE_CONFIG command will update the printer config file\n"
@@ -134,7 +158,10 @@ class EddyCalibrationTool:
             cal_contents.append(',')
         cal_contents.pop()
         configfile = self.printer.lookup_object('configfile')
-        configfile.set(self.name, 'calibrate', ''.join(cal_contents))
+        option_name = "calibrate"
+        if profile_name != "default":
+            option_name += "_" + self.profile_name
+        configfile.set(self.name, option_name, ''.join(cal_contents))
     def _lookup_toolhead_pos(self, pos_time):
         toolhead = self.printer.lookup_object('toolhead')
         kin = toolhead.get_kinematics()
@@ -211,7 +238,7 @@ class EddyCalibrationTool:
                 break
         toolhead.dwell(1.0)
         toolhead.wait_moves()
-        self.calibration.note_z_calibration_finish()
+        self.calibration.note_z_calibration_finish(self.profile_name)
     def _median(self, values):
         values = sorted(values)
         n = len(values)
@@ -294,10 +321,11 @@ class EddyCalibrationTool:
            raise self.printer.command_error(
               "Failed calibration - No usable data")
         z_freq_pairs = [(pos, freq) for pos, freq, _, _ in filtered]
-        self._save_calibration(z_freq_pairs)
+        self._save_calibration(z_freq_pairs, self.profile_name)
     cmd_EDDY_CALIBRATE_help = "Calibrate eddy current probe"
     def cmd_EDDY_CALIBRATE(self, gcmd):
         self.probe_speed = gcmd.get_float("PROBE_SPEED", 5., above=0.)
+        self.profile_name = gcmd.get("PROFILE_NAME", "default").lower()
         # Start manual probe
         manual_probe.ManualProbeHelper(self.printer, gcmd,
                                        self.post_manual_probe)
@@ -329,7 +357,8 @@ class EddyCalibrationTool:
         cal_zpos = [z - offset for z in cal_zpos]
         z_freq_pairs = zip(cal_zpos, cal_freqs)
         z_freq_pairs = sorted(z_freq_pairs)
-        self._save_calibration(z_freq_pairs)
+        profile_name = self.calibration.get_profile_name()
+        self._save_calibration(z_freq_pairs, profile_name)
 
 # Tool for calibrating tap_threshold
 class EddyTapCalibration:
@@ -1096,6 +1125,8 @@ class PrinterEddyProbe:
         return self.eddy_descend_session.start_probe_session(gcmd)
     def register_drift_compensation(self, comp):
         self.calibration.register_drift_compensation(comp)
+    def get_profile_name(self):
+        return self.calibration.get_profile_name()
 
 def load_config_prefix(config):
     return PrinterEddyProbe(config)

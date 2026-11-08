@@ -128,7 +128,18 @@ class TemperatureProbe:
         full_probe_name = "probe_eddy_current %s" % (pname,)
         if config.has_section(full_probe_name):
             pprobe = self.printer.load_object(config, full_probe_name)
-            self.cal_helper = EddyDriftCompensation(config, self)
+            _profile_names = config.get_prefix_options("calibration_temp")
+            self.calibrations = {}
+            for full_name in _profile_names:
+                postfix = full_name.split("_")
+                name = "default"
+                if len(postfix) > 2:
+                    name = "_".join(postfix[2:])
+                logging.info("Load temperature_probe profile: %s" % (name))
+                ed_comp = EddyDriftCompensation(config, self, name)
+                self.calibrations[name] = ed_comp
+            profile_name = pprobe.get_profile_name()
+            self.cal_helper = self.calibrations[profile_name]
             pprobe.register_drift_compensation(self.cal_helper)
             logging.info(
                 "%s: registered drift compensation with probe [%s]"
@@ -478,11 +489,15 @@ class TemperatureProbe:
 DRIFT_SAMPLE_COUNT = 9
 
 class EddyDriftCompensation:
-    def __init__(self, config, sensor):
+    def __init__(self, config, sensor, profile_name="default"):
         self.printer = config.get_printer()
         self.temp_sensor = sensor
         self.name = config.get_name()
-        self.cal_temp = config.getfloat("calibration_temp", 0.)
+        self.profile_name = profile_name
+        self.postfix = ""
+        if self.profile_name != "default":
+            self.postfix = "_" + self.profile_name
+        self.cal_temp = config.getfloat("calibration_temp" + self.postfix, 0.)
         # Temperature samples store
         self._temp_samples = (.0, 1)
         self.drift_calibration = None
@@ -490,7 +505,8 @@ class EddyDriftCompensation:
         self.max_valid_temp = config.getfloat("max_validation_temp", 60.)
         self.dc_min_temp = config.getfloat("drift_calibration_min_temp", 0.)
         dc = config.getlists(
-            "drift_calibration", None, seps=(',', '\n'), parser=float
+            "drift_calibration" + self.postfix, None, seps=(',', '\n'),
+            parser=float
         )
         self.min_freq = 999999999999.
         if dc is not None:
@@ -553,12 +569,16 @@ class EddyDriftCompensation:
             self._temp_samples = (tsum, tcount)
         self.temp_sensor.setup_callback(callback)
 
-    def note_z_calibration_finish(self):
+    def note_z_calibration_finish(self, profile_name):
         self.temp_sensor.setup_callback(None)
         tsum, tcount = self._temp_samples
         cal_temp = tsum / tcount
+        postfix = ""
+        if profile_name != "default":
+            postfix = "_" + profile_name
         configfile = self.printer.lookup_object('configfile')
-        configfile.set(self.name, "calibration_temp", "%.6f " % (cal_temp))
+        configfile.set(self.name, "calibration_temp" + postfix, "%.6f " % (
+                       cal_temp))
         gcode = self.printer.lookup_object("gcode")
         gcode.respond_info(
             "%s: Z Calibration Temperature set to %.2f."
