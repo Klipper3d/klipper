@@ -7,6 +7,7 @@ import logging
 import mathutil
 from . import manual_probe
 from .probe_eddy_current import do_calibration_moves, lookup_toolhead_pos
+from .probe_eddy_current import discover_profiles, profile_option
 
 KELVIN_TO_CELSIUS = -273.15
 
@@ -129,7 +130,7 @@ class TemperatureProbe:
         full_probe_name = "probe_eddy_current %s" % (pname,)
         if config.has_section(full_probe_name):
             pprobe = self.printer.load_object(config, full_probe_name)
-            self.cal_helper = EddyDriftCompensation(config, self)
+            self.cal_helper = EddyDriftCompensation(config, self, pprobe)
             pprobe.register_drift_compensation(self.cal_helper)
             logging.info(
                 "%s: registered drift compensation with probe [%s]"
@@ -472,51 +473,51 @@ class TemperatureProbe:
 
 #####################################################################
 #
-#  Eddy Current Probe Drift Compensation Helper
+#  Eddy Current Probe Drift Compensation Profile
 #
 #####################################################################
 
-class EddyDriftCompensation:
-    def __init__(self, config, sensor):
+class EddyDriftCompensationProfile:
+    def __init__(self, config, sensor, profile_name):
         self.printer = config.get_printer()
         self.temp_sensor = sensor
         self.name = config.get_name()
-        self.cal_temp = config.getfloat("calibration_temp", 0.)
-        # Temperature samples store
-        self._temp_samples = (.0, 1)
-        self._gather = None
+        option = profile_option("calibration_temp", profile_name)
+        self.cal_temp = config.getfloat(option, 0.)
         self.drift_calibration = None
-        self.calibration_samples = None
         self.max_valid_temp = config.getfloat("max_validation_temp", 60.)
-        self.dc_min_temp = config.getfloat("drift_calibration_min_temp", 0.)
-        dc = config.getlists(
-            "drift_calibration", None, seps=(',', '\n'), parser=float
-        )
+        option = profile_option("drift_calibration_min_temp", profile_name)
+        self.dc_min_temp = config.getfloat(option, 0.)
+        option = profile_option("drift_calibration", profile_name)
+        dc = config.getlists(option, None, seps=(',', '\n'), parser=float)
+
         self.min_freq = 999999999999.
-        if dc is not None:
-            for coefs in dc:
-                if len(coefs) != 3:
-                    raise config.error(
-                        "Invalid polynomial in drift calibration"
-                    )
-            self.drift_calibration = [Polynomial2d(*coefs) for coefs in dc]
-            cal = self.drift_calibration
-            start_temp, end_temp = self.dc_min_temp, self.max_valid_temp
-            self._check_calibration(cal, start_temp, end_temp, config.error)
-            low_poly = self.drift_calibration[-1]
-            self.min_freq = min([low_poly(temp) for temp in range(121)])
-            cal_str = "\n".join([repr(p) for p in cal])
-            logging.info(
-                "%s: loaded temperature drift calibration. Min Temp: %.2f,"
-                " Min Freq: %.6f\n%s"
-                % (self.name, self.dc_min_temp, self.min_freq, cal_str)
-            )
-        else:
+        if dc is None:
             logging.info(
                 "%s: No drift calibration configured, disabling temperature "
                 "drift compensation"
                 % (self.name,)
             )
+            self.enabled = False
+            return
+        for coefs in dc:
+            if len(coefs) != 3:
+                raise config.error(
+                    "Invalid polynomial in drift calibration"
+                )
+        self.drift_calibration = [Polynomial2d(*coefs) for coefs in dc]
+        cal = self.drift_calibration
+        start_temp, end_temp = self.dc_min_temp, self.max_valid_temp
+        self._check_calibration(cal, start_temp, end_temp, config.error)
+        low_poly = self.drift_calibration[-1]
+        self.min_freq = min([low_poly(temp) for temp in range(121)])
+        cal_str = "\n".join([repr(p) for p in cal])
+        logging.info(
+            "%s: loaded temperature drift calibration. Min Temp: %.2f,"
+            " Min Freq: %.6f\n%s"
+            % (self.name, self.dc_min_temp, self.min_freq, cal_str)
+        )
+
         self.enabled = has_dc = self.drift_calibration is not None
         if self.cal_temp < 1e-6 and has_dc:
             self.enabled = False
@@ -529,121 +530,29 @@ class EddyDriftCompensation:
     def is_enabled(self):
         return self.enabled
 
+    def disable(self):
+        self.enabled = False
+
+    def enable(self):
+        if self.drift_calibration is None:
+            raise self.printer.command_error(
+                "No drift calibration configured, cannot enable "
+                "temperature drift compensation"
+            )
+        if self.cal_temp < 1e-6:
+            raise self.printer.command_error(
+                "Z Calibration temperature not configured, cannot enable "
+                "temperature drift compensation"
+            )
+        self.enabled = True
+
     def set_enabled(self, gcmd):
         enabled = gcmd.get_int("ENABLE")
         if enabled:
-            if self.drift_calibration is None:
-                raise gcmd.error(
-                    "No drift calibration configured, cannot enable "
-                    "temperature drift compensation"
-                )
-            if self.cal_temp < 1e-6:
-                raise gcmd.error(
-                    "Z Calibration temperature not configured, cannot enable "
-                    "temperature drift compensation"
-                )
-        self.enabled = enabled
+            self.enable()
+        else:
+            self.enabled = False
 
-    def note_z_calibration_start(self):
-        self._temp_samples = (self.get_temperature(), 1)
-        def callback(read_time, temp):
-            tsum, tcount = self._temp_samples
-            tsum += temp
-            tcount += 1
-            self._temp_samples = (tsum, tcount)
-        self.temp_sensor.setup_callback(callback)
-
-    def note_z_calibration_finish(self):
-        self.temp_sensor.setup_callback(None)
-        tsum, tcount = self._temp_samples
-        cal_temp = tsum / tcount
-        configfile = self.printer.lookup_object('configfile')
-        configfile.set(self.name, "calibration_temp", "%.6f " % (cal_temp))
-        gcode = self.printer.lookup_object("gcode")
-        gcode.respond_info(
-            "%s: Z Calibration Temperature set to %.2f."
-            % (self.name, cal_temp)
-        )
-
-    def collect_sample(self, mpresult, speeds):
-        toolhead = self.printer.lookup_object("toolhead")
-        cur_pos = toolhead.get_position()
-        lift_speed, probe_speed, _ = speeds
-        sect_name = "probe_eddy_current " + self.name.split(None, 1)[-1]
-        eddy = self.printer.lookup_object(sect_name)
-        # Move down to the first sample
-        cur_pos[2] = mpresult.bed_z + .05
-        toolhead.manual_move(cur_pos, lift_speed)
-        self._gather = eddy.get_gather_samples()
-        def record_sample(measures, print_time):
-            pos = lookup_toolhead_pos(toolhead, print_time)
-            cur_temp = self.get_temperature()
-            return pos[2] - mpresult.bed_z, cur_temp, measures
-        def collect_cb(start_query_time, end_query_time, print_time):
-            self._gather.add_probe_request(record_sample, start_query_time,
-                                           end_query_time, print_time)
-        do_calibration_moves(toolhead, probe_speed, collect_cb,
-                             lambda: False, samp_dist=0.5)
-        samples = self._gather.pull_probed()
-        self._gather.finish()
-        self._gather = None
-        if self.calibration_samples is None:
-            self.calibration_samples = [[] for _ in range(len(samples))]
-        for i, (z, temp, data) in enumerate(samples):
-            freqs = [d[1] for d in data]
-            zvals = [d[2] for d in data]
-            avg_freq = sum(freqs) / len(freqs)
-            avg_z = sum(zvals) / len(zvals)
-            logging.info(
-                "Probe Values at Temp %.2fC, Z %.4fmm: Avg Freq = %.6f, "
-                "Avg Measured Z = %.6f"
-                % (temp, z, avg_freq, avg_z)
-            )
-            self.calibration_samples[i].append((z, temp, avg_freq))
-        temps = [temp for _, temp, _ in samples]
-        sample_temp = sum(temps) / len(temps)
-        return sample_temp
-
-    def start_calibration(self):
-        self.enabled = False
-
-    def finish_calibration(self, success):
-        cal_samples = self.calibration_samples
-        self.calibration_samples = None
-        if self._gather is not None:
-            self._gather.finish()
-        if not success:
-            return
-        gcode = self.printer.lookup_object("gcode")
-        if len(cal_samples[0]) < 3:
-            raise gcode.error(
-                "calibration error, not enough samples"
-            )
-        _, min_temp, _ = cal_samples[0][0]
-        _, max_temp, _ = cal_samples[0][-1]
-        polynomials = []
-        for samples in cal_samples:
-            z = samples[0][0]
-            coords = [(temp, avg_freq) for _, temp, avg_freq in samples]
-            poly = Polynomial2d.fit(coords)
-            if poly is None:
-                raise gcode.error(
-                    "calibration error, unable to fit polynomial at Z=%.2f"
-                    % (z,))
-            polynomials.append(poly)
-            logging.info("Polynomial at Z=%.2f: %s" % (z, repr(poly)))
-        end_vld_temp = max(self.max_valid_temp, max_temp)
-        self._check_calibration(polynomials, min_temp, end_vld_temp)
-        coef_cfg = "\n" + "\n".join([str(p) for p in polynomials])
-        configfile = self.printer.lookup_object('configfile')
-        configfile.set(self.name, "drift_calibration", coef_cfg)
-        configfile.set(self.name, "drift_calibration_min_temp", min_temp)
-        gcode.respond_info(
-            "%s: generated %d 2D polynomials\n"
-            "The SAVE_CONFIG command will update the printer config "
-            "file and restart the printer."
-            % (self.name, len(polynomials))
-        )
 
     def _check_calibration(self, calibration, start_temp, end_temp, error=None):
         error = error or self.printer.command_error
@@ -696,6 +605,181 @@ class EddyDriftCompensation:
                 high_tgt_freq = dc[pos-1](dest_temp)
                 return (1 - t) * low_tgt_freq + t * high_tgt_freq
         # Frequency below minimum, no correction
+        return freq
+
+    def get_temperature(self):
+        return self.temp_sensor.get_temp()[0]
+
+
+#####################################################################
+#
+#  Eddy Current Probe Drift Compensation Helper
+#
+#####################################################################
+
+class EddyDriftCompensation:
+    def __init__(self, config, sensor, pprobe):
+        self.printer = config.get_printer()
+        self.temp_sensor = sensor
+        self.name = config.get_name()
+        _profile_names = config.get_prefix_options("calibration_temp")
+        self.profiles = {}
+        for name in discover_profiles(config, "calibration_temp"):
+            logging.info("Load temperature_probe profile: %s" % (name))
+            ed_comp = EddyDriftCompensationProfile(config, sensor, name)
+            self.profiles[name] = ed_comp
+        self.profile_name = pprobe.get_profile_name()
+        self.profile_helper = self.profiles.get(self.profile_name, None)
+        self.calibration_samples = None
+        self.max_valid_temp = config.getfloat("max_validation_temp", 60.)
+
+        # Temperature samples store
+        self._temp_samples = (.0, 1)
+        self._gather = None
+
+    def is_enabled(self):
+        if self.profile_helper is not None:
+            return self.profile_helper.is_enabled()
+        return False
+
+    def set_enabled(self, gcmd):
+        if self.profile_helper is not None:
+            self.profile_helper.set_enabled(gcmd)
+
+    def note_z_calibration_start(self):
+        self._temp_samples = (self.get_temperature(), 1)
+        def callback(read_time, temp):
+            tsum, tcount = self._temp_samples
+            tsum += temp
+            tcount += 1
+            self._temp_samples = (tsum, tcount)
+        self.temp_sensor.setup_callback(callback)
+
+    def note_z_calibration_finish(self, profile_name):
+        self.temp_sensor.setup_callback(None)
+        tsum, tcount = self._temp_samples
+        cal_temp = tsum / tcount
+        configfile = self.printer.lookup_object('configfile')
+        option = profile_option("calibration_temp", profile_name)
+        configfile.set(self.name, option, "%.6f " % (cal_temp))
+        gcode = self.printer.lookup_object("gcode")
+        gcode.respond_info(
+            "%s: Z Calibration Temperature set to %.2f."
+            % (self.name, cal_temp)
+        )
+
+    def load_profile(self, name):
+        self.profile_name = name
+        self.profile_helper = self.profiles.get(name, None)
+
+    def collect_sample(self, mpresult, speeds):
+        toolhead = self.printer.lookup_object("toolhead")
+        cur_pos = toolhead.get_position()
+        lift_speed, probe_speed, _ = speeds
+        sect_name = "probe_eddy_current " + self.name.split(None, 1)[-1]
+        eddy = self.printer.lookup_object(sect_name)
+        # Move down to the first sample
+        cur_pos[2] = mpresult.bed_z + .05
+        toolhead.manual_move(cur_pos, lift_speed)
+        self._gather = eddy.get_gather_samples()
+        def record_sample(measures, print_time):
+            pos = lookup_toolhead_pos(toolhead, print_time)
+            cur_temp = self.get_temperature()
+            return pos[2] - mpresult.bed_z, cur_temp, measures
+        def collect_cb(start_query_time, end_query_time, print_time):
+            self._gather.add_probe_request(record_sample, start_query_time,
+                                           end_query_time, print_time)
+        do_calibration_moves(toolhead, probe_speed, collect_cb,
+                             lambda: False, samp_dist=0.5)
+        samples = self._gather.pull_probed()
+        self._gather.finish()
+        self._gather = None
+        if self.calibration_samples is None:
+            self.calibration_samples = [[] for _ in range(len(samples))]
+        for i, (z, temp, data) in enumerate(samples):
+            freqs = [d[1] for d in data]
+            zvals = [d[2] for d in data]
+            avg_freq = sum(freqs) / len(freqs)
+            avg_z = sum(zvals) / len(zvals)
+            logging.info(
+                "Probe Values at Temp %.2fC, Z %.4fmm: Avg Freq = %.6f, "
+                "Avg Measured Z = %.6f"
+                % (temp, z, avg_freq, avg_z)
+            )
+            self.calibration_samples[i].append((z, temp, avg_freq))
+        temps = [temp for _, temp, _ in samples]
+        sample_temp = sum(temps) / len(temps)
+        return sample_temp
+
+    def start_calibration(self):
+        self.profile_helper = None
+
+    def finish_calibration(self, success):
+        cal_samples = self.calibration_samples
+        self.calibration_samples = None
+        self.profile_helper = self.profiles.get(self.profile_name)
+        if self._gather is not None:
+            self._gather.finish()
+        if not success:
+            return
+        gcode = self.printer.lookup_object("gcode")
+        if len(cal_samples[0]) < 3:
+            raise gcode.error(
+                "calibration error, not enough samples"
+            )
+        _, min_temp, _ = cal_samples[0][0]
+        _, max_temp, _ = cal_samples[0][-1]
+        polynomials = []
+        for samples in cal_samples:
+            z = samples[0][0]
+            coords = [(temp, avg_freq) for _, temp, avg_freq in samples]
+            poly = Polynomial2d.fit(coords)
+            if poly is None:
+                raise gcode.error(
+                    "calibration error, unable to fit polynomial at Z=%.2f"
+                    % (z,))
+            polynomials.append(poly)
+            logging.info("Polynomial at Z=%.2f: %s" % (z, repr(poly)))
+        end_vld_temp = max(self.max_valid_temp, max_temp)
+        self._check_calibration(polynomials, min_temp, end_vld_temp)
+        coef_cfg = "\n" + "\n".join([str(p) for p in polynomials])
+        configfile = self.printer.lookup_object('configfile')
+        option = profile_option("drift_calibration", self.profile_name)
+        configfile.set(self.name, option, coef_cfg)
+        option = profile_option("drift_calibration_min_temp", self.profile_name)
+        configfile.set(self.name, option, min_temp)
+        gcode.respond_info(
+            "%s: generated %d 2D polynomials\n"
+            "The SAVE_CONFIG command will update the printer config "
+            "file and restart the printer."
+            % (self.name, len(polynomials))
+        )
+
+    def _check_calibration(self, calibration, start_temp, end_temp, error=None):
+        error = error or self.printer.command_error
+        start = int(start_temp)
+        end = int(end_temp) + 1
+        for temp in range(start, end, 1):
+            last_freq = calibration[0](temp)
+            for i, poly in enumerate(calibration[1:]):
+                next_freq = poly(temp)
+                if next_freq >= last_freq:
+                    # invalid polynomial
+                    raise error(
+                        "%s: invalid calibration detected, curve at index "
+                        "%d overlaps previous curve at temp %dC."
+                        % (self.name, i + 1, temp)
+                    )
+                last_freq = next_freq
+
+    def adjust_freq(self, freq, origin_temp=None):
+        if self.profile_helper is not None:
+            return self.profile_helper.adjust_freq(freq, origin_temp)
+        return freq
+
+    def unadjust_freq(self, freq, dest_temp=None):
+        if self.profile_helper is not None:
+            return self.profile_helper.unadjust_freq(freq, dest_temp)
         return freq
 
     def get_temperature(self):
