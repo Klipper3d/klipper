@@ -737,18 +737,19 @@ class EddyDescend:
         self._z_min_position = probe.lookup_minimum_z(config)
         self._gather = None
         probe.HomingViaProbeHelper(config, self._descend_z)
-    def _prep_trigger_analog(self):
+    def _prep_trigger_analog(self, gcmd):
+        descend_z = gcmd.get_float("DESCEND_Z", self._descend_z, above=0.)
         sos_filter = self._trigger_analog.get_sos_filter()
         sos_filter.set_filter_design(None)
         sos_filter.set_offset_scale(0, 1.)
         self._trigger_analog.set_raw_range(0, MAX_VALID_RAW_VALUE)
-        trigger_freq = self._calibration.height_to_freq(self._descend_z)
+        trigger_freq = self._calibration.height_to_freq(descend_z)
         conv_freq = self._sensor_helper.convert_frequency_to_raw(trigger_freq)
         self._trigger_analog.set_trigger('gt', conv_freq)
     # Probe session interface
     def start_probe_session(self, gcmd):
         self._calibration.verify_calibrated()
-        self._prep_trigger_analog()
+        self._prep_trigger_analog(gcmd)
         self._gather = EddyGatherSamples(self._printer, self._sensor_helper)
         return self
     def run_probe(self, gcmd):
