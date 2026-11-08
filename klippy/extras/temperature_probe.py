@@ -544,9 +544,7 @@ class EddyDriftCompensation:
         configfile.set(self.name, "calibration_temp", "%.6f " % (cal_temp))
         gcode = self.printer.lookup_object("gcode")
         gcode.respond_info(
-            "%s: Z Calibration Temperature set to %.2f. "
-            "The SAVE_CONFIG command will update the printer config "
-            "file and restart the printer."
+            "%s: Z Calibration Temperature set to %.2f."
             % (self.name, cal_temp)
         )
 
