@@ -107,9 +107,10 @@ class EddyCalibrationTool:
         self.sensor_helper = sensor_helper
         # Probe calibrate state
         self.probe_speed = 0.
-        self._last_freq = 40000000
+        self._last_pos_sample = -999, (40000000, .0, .0)
         self._produce_moves = True
         self._probe_calibrate_z = .0
+        self._discard_after_z = 999.0
         # Register commands
         cname = self.name.split()[-1]
         gcode = self.printer.lookup_object('gcode')
@@ -151,16 +152,34 @@ class EddyCalibrationTool:
                 "Failed calibration - incomplete sensor data")
         freq_avg = float(sum(freqs)) / count
         mads = [abs(f - freq_avg) for f in freqs]
-        mad = self._median(mads)
+        mad_hz = self._median(mads)
         # Fix Z position offset
         z = kin_pos[2] - self._probe_calibrate_z
-        if freq_avg > self._last_freq:
+        last_triplet = self._last_pos_sample[1]
+        last_freq_avg = last_triplet[0]
+        if freq_avg > last_freq_avg:
             self._produce_moves = False
             gcode = self.printer.lookup_object("gcode")
             gcode.respond_info(
                 "Frequency stops decreasing at step %.3f" % (z))
-        self._last_freq = freq_avg
-        return z, (freq_avg, mad, count)
+        # Calculate if samples have a significant difference
+        last_mad = last_triplet[1]
+        diff_mad = math.sqrt(last_mad**2 + mad_hz**2)
+        freq_diff = last_freq_avg - freq_avg
+        if freq_diff < 2.5 * diff_mad:
+            self._produce_moves = False
+            self._discard_after_z = z
+            last_z = self._last_pos_sample[0]
+            gcode = self.printer.lookup_object("gcode")
+            gcode.respond_info(
+                "Frequency too noisy at step %.3f -> %.3f" % (
+                    last_z, z))
+            gcode.respond_info(
+                "Frequency diff: %.3f, MAD_Hz: %.3f -> MAD_Hz: %.3f" % (
+                    freq_diff, last_mad, mad_hz
+                ))
+        self._last_pos_sample = z, (freq_avg, mad_hz, count)
+        return self._last_pos_sample
     # PROBE_EDDY_CURRENT_CALIBRATE
     def do_calibration_moves(self, move_speed, gather):
         toolhead = self.printer.lookup_object('toolhead')
@@ -200,28 +219,21 @@ class EddyCalibrationTool:
             return (values[n//2 - 1] + values[n//2]) / 2.0
         return values[n // 2]
     def validate_calibration_data(self, positions):
-        last_freq = 40000000.
-        last_pos = last_mad = .0
+        if not positions:
+            return []
+        last_pos, (freq_avg, mad_hz, count) = positions.pop(0)
+        next_pos, (next_freq_avg, _, _) = positions[0]
+        last_freq = freq_avg
         gcode = self.printer.lookup_object("gcode")
-        filtered = []
-        mad_hz_total = .0
-        mad_mm_total = .0
-        samples_count = 0
-        for pos, (freq_avg, mad_hz, count) in sorted(positions.items()):
-            diff_mad = math.sqrt(last_mad**2 + mad_hz**2)
-            # Calculate if samples have a significant difference
+        mad_hz_total = mad_hz
+        delta_dist = next_pos - last_pos
+        freq_diff = freq_avg - next_freq_avg
+        mad_mm_total = mad_mm = mad_hz * delta_dist / freq_diff
+        samples_count = count
+        filtered = [(last_pos, freq_avg, mad_hz, mad_mm)]
+        for pos, (freq_avg, mad_hz, count) in positions:
             freq_diff = last_freq - freq_avg
             last_freq = freq_avg
-            if freq_diff < 2.5 * diff_mad:
-                gcode.respond_info(
-                    "Frequency too noisy at step %.3f -> %.3f" % (
-                        last_pos, pos))
-                gcode.respond_info(
-                    "Frequency diff: %.3f, MAD_Hz: %.3f -> MAD_Hz: %.3f" % (
-                        freq_diff, last_mad, mad_hz
-                    ))
-                break
-            last_mad = mad_hz
             delta_dist = pos - last_pos
             last_pos = pos
             # MAD is Median Absolute Deviation to Frequency avg ~ delta_hz_1
@@ -267,14 +279,16 @@ class EddyCalibrationTool:
         # Descend back to bed
         curpos[2] -= 5. - 0.050
         move(curpos, self.probe_speed)
-        self._last_freq = 40000000
-        positions = {}
+        self._last_pos_sample = -999, (40000000, .0, .0)
+        self._discard_after_z = 999.
+        positions = []
         with EddyGatherSamples(self.printer, self.sensor_helper) as gather:
             # Perform calibration movement and capture
             self.do_calibration_moves(self.probe_speed, gather)
             _positions = gather.pull_probed()
             for p, v in _positions:
-                positions[p] = v
+                if p < self._discard_after_z:
+                    positions.append((p, v))
         filtered = self.validate_calibration_data(positions)
         if len(filtered) <= 8:
            raise self.printer.command_error(
