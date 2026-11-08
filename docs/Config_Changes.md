@@ -14,8 +14,8 @@ twice their desired values (relative to the standard "Astrom-Hagglund
 method"). The new `PID_CALIBRATE` code corrects this error and it may
 produce PID values that result in fewer heating oscillations. If you
 are happy with your current heater performance then no changes are
-necessary. If you are experiencing persistent heating osculations then
-you may wish to rerun `PID_CALIBRATE` and apply the updated PID
+necessary. If you are experiencing persistent heating oscillations
+then you may wish to rerun `PID_CALIBRATE` and apply the updated PID
 recommendations.
 
 20260915: Support for the `TEMPERATURE_PROBE_CALIBRATE` `METHOD=tap`
