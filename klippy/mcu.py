@@ -642,12 +642,17 @@ class MCU_adc:
         if self._callback is not None:
             self._callback([(last_read_time, last_value)])
     def _handle_analog_in_state(self, params):
-        values = self._unpack_from(params['values'])
+        # Extract adc values and their sample time
         next_clock = self._mcu.clock32_to_clock64(params['next_clock'])
         ctpt = self._mcu.clock_to_print_time
-        num = len(values)
+        raw_values = params['values']
+        BYTES_PER_SAMPLE = 2
+        num = len(raw_values) // BYTES_PER_SAMPLE
         samples = [(ctpt(next_clock - (num - i)*self._report_clock),
-                    values[i] * self._inv_max_adc) for i in range(num)]
+                    (self._unpack_from(raw_values, i*BYTES_PER_SAMPLE)[0]
+                     * self._inv_max_adc))
+                   for i in range(num)]
+        # Report the data
         self._last_state = samples[-1]
         if self._callback is not None:
             self._callback(samples)
