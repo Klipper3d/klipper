@@ -569,7 +569,7 @@ class MCU_adc:
         self._oid = self._callback = None
         self._mcu.register_config_callback(self._build_config)
         self._inv_max_adc = 0.
-        self._unpack_from = struct.Struct('<H').unpack_from
+        self._unpack = None
     def get_mcu(self):
         return self._mcu
     def setup_adc_sample(self, report_time, sample_time=0., sample_count=1,
@@ -579,6 +579,7 @@ class MCU_adc:
         self._sample_time = sample_time
         self._sample_count = sample_count
         self._batch_num = max(1, min(48 // 2, batch_num))
+        self._unpack = struct.Struct('<%dH' % (self._batch_num,)).unpack
         self._min_sample = minval
         self._max_sample = maxval
         self._range_check_count = range_check_count
@@ -642,7 +643,7 @@ class MCU_adc:
         if self._callback is not None:
             self._callback([(last_read_time, last_value)])
     def _handle_analog_in_state(self, params):
-        values = self._unpack_from(params['values'])
+        values = self._unpack(params['values'])
         next_clock = self._mcu.clock32_to_clock64(params['next_clock'])
         ctpt = self._mcu.clock_to_print_time
         num = len(values)
