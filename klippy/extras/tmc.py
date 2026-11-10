@@ -234,6 +234,7 @@ class TMCStallguardDump:
         self.mcu_tmc = mcu_tmc
         self.mcu = self.mcu_tmc.get_mcu()
         self.fields = self.mcu_tmc.get_fields()
+        self.sgp_supp = "SGP_BEMF" in mcu_tmc.name_to_reg
         self.sg2_supp = False
         self.sg4_reg_name = None
         # It is possible to support TMC2660, just disable it for now
@@ -279,13 +280,18 @@ class TMCStallguardDump:
         cs_actual = -1
         recv_time = eventtime
         try:
-            if self.optimized_spi or self.sg4_reg_name == "SG4_RESULT":
-                #TMC2130/TMC5160/TMC2240
+            if (self.optimized_spi or self.sg4_reg_name == "SG4_RESULT"
+                or self.sgp_supp):
+                #TMC2130/TMC5160/TMC2240/TMC5262
                 status = self.mcu_tmc.get_register_raw("DRV_STATUS")
                 reg_val = status["data"]
                 cs_actual = self.fields.get_field("cs_actual", reg_val)
                 sg_result = self.fields.get_field("sg_result", reg_val)
                 is_stealth = self.fields.get_field("stealth", reg_val)
+                if is_stealth and self.sgp_supp:
+                    # TMC5262 SG_RESULT is signed in StealthChop+ only.
+                    if sg_result & 0x200:
+                        sg_result -= 0x400
                 recv_time = status["#receive_time"]
                 if is_stealth and self.sg4_reg_name == "SG4_RESULT":
                     sg4_ret = self.mcu_tmc.get_register_raw("SG4_RESULT")

@@ -497,8 +497,8 @@ class TMC5262:
 
         tmc.TMCWaveTableHelper(config, self.mcu_tmc)
         self.fields.set_config_field(config, "offset_sin90", 0)
-        self.fields.set_field("en_pwm_mode", 0)
-        self.fields.set_field("tpwmthrs", 0)
+        stealthchop = config.getfloat("stealthchop_threshold", 0., minval=0.)
+        tmc.TMCStealthchopHelper(config, self.mcu_tmc)
         self.fields.set_field("tcoolthrs", 0)
         self.fields.set_field("thigh", 0)
         self.fields.registers["DO_CONF"] = 0
@@ -526,11 +526,45 @@ class TMC5262:
         set_config_field(config, "iholddelay", 7)
         set_config_field(config, "irundelay", 4)
 
+        set_config_field(config, "pwm_freq", 0)
+        set_config_field(config, "freewheel", 0)
+        pwm_freq = self.fields.get_field("pwm_freq")
+        if pwm_freq > 8:
+            raise config.error("driver_PWM_FREQ must be in range 0..8")
+        set_config_field(config, "sd_on_meas_hi", 15 - pwm_freq // 3)
+        sd_hi = self.fields.get_field("sd_on_meas_hi")
+        set_config_field(config, "sd_on_meas_lo", max(0, sd_hi - 1))
+
         set_config_field(config, "tpowerdown", 10)
         set_config_field(config, "slope_control", 3)
 
-        # Write the chopper configuration last.
-        for register in ("CHOPCONF",):
+        # TMC5262 StealthChop+ PI regulators.
+        set_config_field(config, "cur_p", 64)
+        set_config_field(config, "cur_i", 10)
+        set_config_field(config, "angle_p", 50)
+        set_config_field(config, "angle_i", 20)
+        set_config_field(config, "cur_pi_limit", 0xfff)
+        set_config_field(config, "angle_pi_limit", 256)
+        set_config_field(config, "angle_lower_i_limit", 256)
+
+        # TMC5262 motor model used by StealthChop+ and StallGuard+.
+        set_config_field(config, "t_rcoil_meas", 4096)
+        set_config_field(config, "coil_induct", 0)
+        set_config_field(config, "rcoil_thermal_coupling",
+                         stealthchop > 0.)
+        set_config_field(config, "r_coil_user_a", 0)
+        set_config_field(config, "r_coil_user_b", 0)
+        rcoil_a = self.fields.get_field("r_coil_user_a")
+        rcoil_b = self.fields.get_field("r_coil_user_b")
+        self.fields.set_field("rcoil_manual", bool(rcoil_a or rcoil_b))
+        if stealthchop > 0.:
+            if not self.fields.get_field("coil_induct"):
+                raise config.error("tmc5262 %s: StealthChop+ requires "
+                                   "driver_COIL_INDUCT in microhenries"
+                                   % (self.name,))
+
+        # Write the motor model before mode selection and chopper enable.
+        for register in ("GCONF", "CHOPCONF"):
             value = self.fields.registers.pop(register)
             self.fields.registers[register] = value
 
