@@ -722,6 +722,7 @@ class MenuManager:
         self.send_event('init', self)
 
     def handle_ready(self):
+        self.display_list = self.printer.lookup_objects('display')
         # start timer
         reactor = self.printer.get_reactor()
         reactor.register_timer(self.timer_event, reactor.NOW)
@@ -1026,6 +1027,11 @@ class MenuManager:
             self.begin(eventtime)
 
     def key_event(self, key, eventtime):
+        for _, display in self.display_list:
+            if display.is_sleep:
+                display.sleep(0)
+            display.update_next_sleep_time(eventtime)
+
         if key == 'click':
             self._click_callback(eventtime, key)
         elif key == 'long_click':
