@@ -10,7 +10,7 @@ CFLAGS-$(CONFIG_CANBUS) += -Ilib/fast-hash
 CFLAGS += $(CFLAGS-y) -mthumb -mcpu=cortex-m3
 CFLAGS += -Ilib/lpc176x/device -Ilib/cmsis-core
 
-CFLAGS_klipper.elf += -nostdlib -lgcc -lc_nano
+CFLAGS_klipper.elf += -nostdlib -lgcc $(LIBC_LDFLAG)
 CFLAGS_klipper.elf += -T $(OUT)src/generic/armcm_link.ld
 $(OUT)klipper.elf: $(OUT)src/generic/armcm_link.ld
 
