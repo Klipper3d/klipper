@@ -295,8 +295,13 @@ context for the commit comments.
 It is important to have a "Signed-off-by" line on each commit - it
 certifies that you agree to the
 [developer certificate of origin](developer-certificate-of-origin). It
-must contain your real name (sorry, no pseudonyms or anonymous
-contributions) and contain a current email address.
+must contain a real name and a current email address. A real name does
+not need to be a legal name, birth name, or any name appearing on an
+official ID; it is the name by which people in the community can
+identify and reach you if a question about your contribution were ever
+to arise. Anonymous IDs or false names that misrepresent who you are
+are not acceptable. See the [CNCF DCO guidelines](https://github.com/cncf/foundation/blob/main/policies-guidance/dco-guidelines.md#dco-and-real-names)
+for further detail.
 
 ## Contributing to Klipper Translations
 
