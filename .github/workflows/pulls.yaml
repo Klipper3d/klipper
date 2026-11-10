@@ -1,0 +1,21 @@
+name: Check PR
+
+on:
+  pull_request_target:
+
+jobs:
+  check-sign-off:
+    name: Write comment if unsigned commits found
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: cloudforet-io/check-pr-action@v1
+        id: review
+      # fail the "check" if review is negative
+      - name: Notify Result
+        if: ${{ steps.review.outputs.signedoff == 'false' }}
+        run: |
+          echo "The DCO signoff is missing"
+          exit 1
