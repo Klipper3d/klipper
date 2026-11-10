@@ -22,6 +22,7 @@
 
 #define BYTES_PER_SAMPLE 6
 #define BYTES_PER_BLOCK 48
+#define BMI_FIFO_FULL_BYTES (1024 / BYTES_PER_SAMPLE * BYTES_PER_SAMPLE)
 
 struct bmi160 {
     struct timer timer;
@@ -104,8 +105,7 @@ bmi160_reschedule_timer(struct bmi160 *ax)
 static void
 update_fifo_status(struct bmi160 *ax, uint16_t fifo_bytes)
 {
-    // BMI160 FIFO can hold up to 1024 bytes
-    if (fifo_bytes > 1024)
+    if (fifo_bytes >= BMI_FIFO_FULL_BYTES)
         ax->sb.possible_overflows++;
     ax->fifo_bytes_pending = fifo_bytes;
 }
