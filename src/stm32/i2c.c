@@ -18,12 +18,17 @@ struct i2c_info {
     uint8_t scl_pin, sda_pin;
 };
 
+#if CONFIG_MACH_GD32E23X
+DECL_ENUMERATION("i2c_bus", "i2c0", 0);
+DECL_CONSTANT_STR("BUS_PINS_i2c0", "PB6,PB7");
+#else
 DECL_ENUMERATION("i2c_bus", "i2c1", 0);
 DECL_CONSTANT_STR("BUS_PINS_i2c1", "PB6,PB7");
 DECL_ENUMERATION("i2c_bus", "i2c1a", 1);
 DECL_CONSTANT_STR("BUS_PINS_i2c1a", "PB8,PB9");
 DECL_ENUMERATION("i2c_bus", "i2c2", 2);
 DECL_CONSTANT_STR("BUS_PINS_i2c2", "PB10,PB11");
+#endif
 #if CONFIG_MACH_STM32F2 || CONFIG_MACH_STM32F4
 DECL_ENUMERATION("i2c_bus", "i2c3", 3);
 DECL_CONSTANT_STR("BUS_PINS_i2c3", "PA8,PC9");
@@ -38,9 +43,13 @@ DECL_CONSTANT_STR("BUS_PINS_i2c2_PF1_PF0", "PF1,PF0");
 #endif
 
 static const struct i2c_info i2c_bus[] = {
+#if CONFIG_MACH_GD32E23X
+    { (I2C_TypeDef *)I2C0, GPIO('B', 6), GPIO('B', 7) },
+#else
     { I2C1, GPIO('B', 6), GPIO('B', 7) },
     { I2C1, GPIO('B', 8), GPIO('B', 9) },
     { I2C2, GPIO('B', 10), GPIO('B', 11) },
+#endif
 #if CONFIG_MACH_STM32F2 || CONFIG_MACH_STM32F4
     { I2C3, GPIO('A', 8), GPIO('C', 9) },
   #if CONFIG_MACH_STM32F2 || CONFIG_MACH_STM32F4x5
@@ -55,7 +64,7 @@ static const struct i2c_info i2c_bus[] = {
 static void
 i2c_busy_errata(uint8_t scl_pin, uint8_t sda_pin)
 {
-    if (! CONFIG_MACH_STM32F1)
+    if (!CONFIG_MACH_STM32F1 && !CONFIG_MACH_GD32E23X)
         return;
     gpio_peripheral(scl_pin, GPIO_OUTPUT | GPIO_OPEN_DRAIN, 1);
     gpio_peripheral(sda_pin, GPIO_OUTPUT | GPIO_OPEN_DRAIN, 1);
@@ -78,8 +87,10 @@ i2c_setup(uint32_t bus, uint32_t rate, uint8_t addr)
         // Enable i2c clock and gpio
         enable_pclock((uint32_t)i2c);
         i2c_busy_errata(ii->scl_pin, ii->sda_pin);
-        gpio_peripheral(ii->scl_pin, GPIO_FUNCTION(4) | GPIO_OPEN_DRAIN, 1);
-        gpio_peripheral(ii->sda_pin, GPIO_FUNCTION(4) | GPIO_OPEN_DRAIN, 1);
+        uint32_t function = CONFIG_MACH_GD32E23X ? 1 : 4;
+        uint32_t gpio_mode = GPIO_FUNCTION(function) | GPIO_OPEN_DRAIN;
+        gpio_peripheral(ii->scl_pin, gpio_mode, 1);
+        gpio_peripheral(ii->sda_pin, gpio_mode, 1);
         i2c->CR1 = I2C_CR1_SWRST;
         i2c->CR1 = 0;
 
