@@ -37,7 +37,7 @@ CFLAGS += -flto=auto -fwhole-program -fno-use-linker-plugin -ggdb3
 
 OBJS_klipper.elf = $(patsubst %.c, $(OUT)src/%.o,$(src-y))
 OBJS_klipper.elf += $(OUT)compile_time_request.o
-CFLAGS_klipper.elf = $(CFLAGS) -Wl,--gc-sections
+CFLAGS_klipper.elf = $(CFLAGS) -Wl,--gc-sections -Wl,-Map,"$(OUT)klipper.map"
 
 CPPFLAGS = -I$(OUT) -P -MD -MT $@
 
