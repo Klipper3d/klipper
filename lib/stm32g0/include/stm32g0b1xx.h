@@ -14,13 +14,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2018-2021 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Apache License, Version 2.0,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/Apache-2.0
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -72,7 +71,7 @@ typedef enum
 /******  Cortex-M0+ Processor Exceptions Numbers ***************************************************************/
   NonMaskableInt_IRQn         = -14,    /*!< 2 Non Maskable Interrupt                                          */
   HardFault_IRQn              = -13,    /*!< 3 Cortex-M Hard Fault Interrupt                                   */
-  SVC_IRQn                    = -5,     /*!< 11 Cortex-M SV Call Interrupt                                     */
+  SVCall_IRQn                 = -5,     /*!< 11 Cortex-M SV Call Interrupt                                     */
   PendSV_IRQn                 = -2,     /*!< 14 Cortex-M Pend SV Interrupt                                     */
   SysTick_IRQn                = -1,     /*!< 15 Cortex-M System Tick Interrupt                                 */
 /******  STM32G0xxxx specific Interrupt Numbers ****************************************************************/
@@ -134,10 +133,10 @@ typedef struct
   __IO uint32_t SMPR;         /*!< ADC sampling time register,                    Address offset: 0x14 */
        uint32_t RESERVED1;    /*!< Reserved,                                                      0x18 */
        uint32_t RESERVED2;    /*!< Reserved,                                                      0x1C */
-  __IO uint32_t TR1;          /*!< ADC analog watchdog 1 threshold register,      Address offset: 0x20 */
-  __IO uint32_t TR2;          /*!< ADC analog watchdog 2 threshold register,      Address offset: 0x24 */
+  __IO uint32_t AWD1TR;       /*!< ADC analog watchdog 1 threshold register,      Address offset: 0x20 */
+  __IO uint32_t AWD2TR;       /*!< ADC analog watchdog 2 threshold register,      Address offset: 0x24 */
   __IO uint32_t CHSELR;       /*!< ADC group regular sequencer register,          Address offset: 0x28 */
-  __IO uint32_t TR3;          /*!< ADC analog watchdog 3 threshold register,      Address offset: 0x2C */
+  __IO uint32_t AWD3TR;       /*!< ADC analog watchdog 3 threshold register,      Address offset: 0x2C */
        uint32_t RESERVED3[4]; /*!< Reserved,                                               0x30 - 0x3C */
   __IO uint32_t DR;           /*!< ADC group regular data register,               Address offset: 0x40 */
        uint32_t RESERVED4[23];/*!< Reserved,                                               0x44 - 0x9C */
@@ -151,6 +150,11 @@ typedef struct
 {
   __IO uint32_t CCR;          /*!< ADC common configuration register,             Address offset: ADC1 base address + 0x308 */
 } ADC_Common_TypeDef;
+
+/* Legacy registers naming */
+#define TR1     AWD1TR
+#define TR2     AWD2TR
+#define TR3     AWD3TR
 
 /**
   * @brief FD Controller Area Network
@@ -691,10 +695,6 @@ typedef struct
   __IO uint32_t TXBD;             /*!<Transmission buffer address*/
   __IO uint32_t RXBD;             /*!<Reception buffer address */
 } USB_DRD_PMABuffDescTypeDef;
-
-/**
-  * @}
-  */
 /**
   * @brief VREFBUF
   */
@@ -737,7 +737,6 @@ typedef struct
   __IO uint32_t RX_ORDEXT2;    /*!< UCPD Rx ordered set extension 2 register,  Address offset: 0x38 */
 
 } UCPD_TypeDef;
-
 /**
   * @}
   */
@@ -991,6 +990,15 @@ typedef struct
 /** @addtogroup Exported_constants
   * @{
   */
+
+  /** @addtogroup Hardware_Constant_Definition
+    * @{
+    */
+#define LSI_STARTUP_TIME 130U /*!< LSI Maximum startup time in us */
+
+  /**
+    * @}
+    */
 
   /** @addtogroup Peripheral_Registers_Bits_Definition
   * @{
@@ -1278,71 +1286,129 @@ typedef struct
 #define ADC_SMPR_SMPSEL18_Msk          (0x1UL << ADC_SMPR_SMPSEL18_Pos)        /*!< 0x04000000 */
 #define ADC_SMPR_SMPSEL18              ADC_SMPR_SMPSEL18_Msk                   /*!< ADC channel 18 sampling time selection */
 
-/********************  Bit definition for ADC_TR1 register  *******************/
-#define ADC_TR1_LT1_Pos                (0U)
-#define ADC_TR1_LT1_Msk                (0xFFFUL << ADC_TR1_LT1_Pos)            /*!< 0x00000FFF */
-#define ADC_TR1_LT1                    ADC_TR1_LT1_Msk                         /*!< ADC analog watchdog 1 threshold low */
-#define ADC_TR1_LT1_0                  (0x001UL << ADC_TR1_LT1_Pos)            /*!< 0x00000001 */
-#define ADC_TR1_LT1_1                  (0x002UL << ADC_TR1_LT1_Pos)            /*!< 0x00000002 */
-#define ADC_TR1_LT1_2                  (0x004UL << ADC_TR1_LT1_Pos)            /*!< 0x00000004 */
-#define ADC_TR1_LT1_3                  (0x008UL << ADC_TR1_LT1_Pos)            /*!< 0x00000008 */
-#define ADC_TR1_LT1_4                  (0x010UL << ADC_TR1_LT1_Pos)            /*!< 0x00000010 */
-#define ADC_TR1_LT1_5                  (0x020UL << ADC_TR1_LT1_Pos)            /*!< 0x00000020 */
-#define ADC_TR1_LT1_6                  (0x040UL << ADC_TR1_LT1_Pos)            /*!< 0x00000040 */
-#define ADC_TR1_LT1_7                  (0x080UL << ADC_TR1_LT1_Pos)            /*!< 0x00000080 */
-#define ADC_TR1_LT1_8                  (0x100UL << ADC_TR1_LT1_Pos)            /*!< 0x00000100 */
-#define ADC_TR1_LT1_9                  (0x200UL << ADC_TR1_LT1_Pos)            /*!< 0x00000200 */
-#define ADC_TR1_LT1_10                 (0x400UL << ADC_TR1_LT1_Pos)            /*!< 0x00000400 */
-#define ADC_TR1_LT1_11                 (0x800UL << ADC_TR1_LT1_Pos)            /*!< 0x00000800 */
+/********************  Bit definition for ADC_AWD1TR register  *******************/
+#define ADC_AWD1TR_LT1_Pos                (0U)
+#define ADC_AWD1TR_LT1_Msk             (0xFFFUL << ADC_AWD1TR_LT1_Pos)         /*!< 0x00000FFF */
+#define ADC_AWD1TR_LT1                 ADC_AWD1TR_LT1_Msk                      /*!< ADC analog watchdog 1 threshold low */
+#define ADC_AWD1TR_LT1_0               (0x001UL << ADC_AWD1TR_LT1_Pos)         /*!< 0x00000001 */
+#define ADC_AWD1TR_LT1_1               (0x002UL << ADC_AWD1TR_LT1_Pos)         /*!< 0x00000002 */
+#define ADC_AWD1TR_LT1_2               (0x004UL << ADC_AWD1TR_LT1_Pos)         /*!< 0x00000004 */
+#define ADC_AWD1TR_LT1_3               (0x008UL << ADC_AWD1TR_LT1_Pos)         /*!< 0x00000008 */
+#define ADC_AWD1TR_LT1_4               (0x010UL << ADC_AWD1TR_LT1_Pos)         /*!< 0x00000010 */
+#define ADC_AWD1TR_LT1_5               (0x020UL << ADC_AWD1TR_LT1_Pos)         /*!< 0x00000020 */
+#define ADC_AWD1TR_LT1_6               (0x040UL << ADC_AWD1TR_LT1_Pos)         /*!< 0x00000040 */
+#define ADC_AWD1TR_LT1_7               (0x080UL << ADC_AWD1TR_LT1_Pos)         /*!< 0x00000080 */
+#define ADC_AWD1TR_LT1_8               (0x100UL << ADC_AWD1TR_LT1_Pos)         /*!< 0x00000100 */
+#define ADC_AWD1TR_LT1_9               (0x200UL << ADC_AWD1TR_LT1_Pos)         /*!< 0x00000200 */
+#define ADC_AWD1TR_LT1_10              (0x400UL << ADC_AWD1TR_LT1_Pos)         /*!< 0x00000400 */
+#define ADC_AWD1TR_LT1_11              (0x800UL << ADC_AWD1TR_LT1_Pos)         /*!< 0x00000800 */
 
-#define ADC_TR1_HT1_Pos                (16U)
-#define ADC_TR1_HT1_Msk                (0xFFFUL << ADC_TR1_HT1_Pos)            /*!< 0x0FFF0000 */
-#define ADC_TR1_HT1                    ADC_TR1_HT1_Msk                         /*!< ADC Analog watchdog 1 threshold high */
-#define ADC_TR1_HT1_0                  (0x001UL << ADC_TR1_HT1_Pos)            /*!< 0x00010000 */
-#define ADC_TR1_HT1_1                  (0x002UL << ADC_TR1_HT1_Pos)            /*!< 0x00020000 */
-#define ADC_TR1_HT1_2                  (0x004UL << ADC_TR1_HT1_Pos)            /*!< 0x00040000 */
-#define ADC_TR1_HT1_3                  (0x008UL << ADC_TR1_HT1_Pos)            /*!< 0x00080000 */
-#define ADC_TR1_HT1_4                  (0x010UL << ADC_TR1_HT1_Pos)            /*!< 0x00100000 */
-#define ADC_TR1_HT1_5                  (0x020UL << ADC_TR1_HT1_Pos)            /*!< 0x00200000 */
-#define ADC_TR1_HT1_6                  (0x040UL << ADC_TR1_HT1_Pos)            /*!< 0x00400000 */
-#define ADC_TR1_HT1_7                  (0x080UL << ADC_TR1_HT1_Pos)            /*!< 0x00800000 */
-#define ADC_TR1_HT1_8                  (0x100UL << ADC_TR1_HT1_Pos)            /*!< 0x01000000 */
-#define ADC_TR1_HT1_9                  (0x200UL << ADC_TR1_HT1_Pos)            /*!< 0x02000000 */
-#define ADC_TR1_HT1_10                 (0x400UL << ADC_TR1_HT1_Pos)            /*!< 0x04000000 */
-#define ADC_TR1_HT1_11                 (0x800UL << ADC_TR1_HT1_Pos)            /*!< 0x08000000 */
+#define ADC_AWD1TR_HT1_Pos             (16U)
+#define ADC_AWD1TR_HT1_Msk             (0xFFFUL << ADC_AWD1TR_HT1_Pos)         /*!< 0x0FFF0000 */
+#define ADC_AWD1TR_HT1                 ADC_AWD1TR_HT1_Msk                      /*!< ADC Analog watchdog 1 threshold high */
+#define ADC_AWD1TR_HT1_0               (0x001UL << ADC_AWD1TR_HT1_Pos)         /*!< 0x00010000 */
+#define ADC_AWD1TR_HT1_1               (0x002UL << ADC_AWD1TR_HT1_Pos)         /*!< 0x00020000 */
+#define ADC_AWD1TR_HT1_2               (0x004UL << ADC_AWD1TR_HT1_Pos)         /*!< 0x00040000 */
+#define ADC_AWD1TR_HT1_3               (0x008UL << ADC_AWD1TR_HT1_Pos)         /*!< 0x00080000 */
+#define ADC_AWD1TR_HT1_4               (0x010UL << ADC_AWD1TR_HT1_Pos)         /*!< 0x00100000 */
+#define ADC_AWD1TR_HT1_5               (0x020UL << ADC_AWD1TR_HT1_Pos)         /*!< 0x00200000 */
+#define ADC_AWD1TR_HT1_6               (0x040UL << ADC_AWD1TR_HT1_Pos)         /*!< 0x00400000 */
+#define ADC_AWD1TR_HT1_7               (0x080UL << ADC_AWD1TR_HT1_Pos)         /*!< 0x00800000 */
+#define ADC_AWD1TR_HT1_8               (0x100UL << ADC_AWD1TR_HT1_Pos)         /*!< 0x01000000 */
+#define ADC_AWD1TR_HT1_9               (0x200UL << ADC_AWD1TR_HT1_Pos)         /*!< 0x02000000 */
+#define ADC_AWD1TR_HT1_10              (0x400UL << ADC_AWD1TR_HT1_Pos)         /*!< 0x04000000 */
+#define ADC_AWD1TR_HT1_11              (0x800UL << ADC_AWD1TR_HT1_Pos)         /*!< 0x08000000 */
 
-/********************  Bit definition for ADC_TR2 register  *******************/
-#define ADC_TR2_LT2_Pos                (0U)
-#define ADC_TR2_LT2_Msk                (0xFFFUL << ADC_TR2_LT2_Pos)            /*!< 0x00000FFF */
-#define ADC_TR2_LT2                    ADC_TR2_LT2_Msk                         /*!< ADC analog watchdog 2 threshold low */
-#define ADC_TR2_LT2_0                  (0x001UL << ADC_TR2_LT2_Pos)            /*!< 0x00000001 */
-#define ADC_TR2_LT2_1                  (0x002UL << ADC_TR2_LT2_Pos)            /*!< 0x00000002 */
-#define ADC_TR2_LT2_2                  (0x004UL << ADC_TR2_LT2_Pos)            /*!< 0x00000004 */
-#define ADC_TR2_LT2_3                  (0x008UL << ADC_TR2_LT2_Pos)            /*!< 0x00000008 */
-#define ADC_TR2_LT2_4                  (0x010UL << ADC_TR2_LT2_Pos)            /*!< 0x00000010 */
-#define ADC_TR2_LT2_5                  (0x020UL << ADC_TR2_LT2_Pos)            /*!< 0x00000020 */
-#define ADC_TR2_LT2_6                  (0x040UL << ADC_TR2_LT2_Pos)            /*!< 0x00000040 */
-#define ADC_TR2_LT2_7                  (0x080UL << ADC_TR2_LT2_Pos)            /*!< 0x00000080 */
-#define ADC_TR2_LT2_8                  (0x100UL << ADC_TR2_LT2_Pos)            /*!< 0x00000100 */
-#define ADC_TR2_LT2_9                  (0x200UL << ADC_TR2_LT2_Pos)            /*!< 0x00000200 */
-#define ADC_TR2_LT2_10                 (0x400UL << ADC_TR2_LT2_Pos)            /*!< 0x00000400 */
-#define ADC_TR2_LT2_11                 (0x800UL << ADC_TR2_LT2_Pos)            /*!< 0x00000800 */
+/* Legacy definitions */
+#define ADC_TR1_LT1             ADC_AWD1TR_LT1
+#define ADC_TR1_LT1_0           ADC_AWD1TR_LT1_0
+#define ADC_TR1_LT1_1           ADC_AWD1TR_LT1_1
+#define ADC_TR1_LT1_2           ADC_AWD1TR_LT1_2
+#define ADC_TR1_LT1_3           ADC_AWD1TR_LT1_3
+#define ADC_TR1_LT1_4           ADC_AWD1TR_LT1_4
+#define ADC_TR1_LT1_5           ADC_AWD1TR_LT1_5
+#define ADC_TR1_LT1_6           ADC_AWD1TR_LT1_6
+#define ADC_TR1_LT1_7           ADC_AWD1TR_LT1_7
+#define ADC_TR1_LT1_8           ADC_AWD1TR_LT1_8
+#define ADC_TR1_LT1_9           ADC_AWD1TR_LT1_9
+#define ADC_TR1_LT1_10          ADC_AWD1TR_LT1_10
+#define ADC_TR1_LT1_11          ADC_AWD1TR_LT1_11
 
-#define ADC_TR2_HT2_Pos                (16U)
-#define ADC_TR2_HT2_Msk                (0xFFFUL << ADC_TR2_HT2_Pos)            /*!< 0x0FFF0000 */
-#define ADC_TR2_HT2                    ADC_TR2_HT2_Msk                         /*!< ADC analog watchdog 2 threshold high */
-#define ADC_TR2_HT2_0                  (0x001UL << ADC_TR2_HT2_Pos)            /*!< 0x00010000 */
-#define ADC_TR2_HT2_1                  (0x002UL << ADC_TR2_HT2_Pos)            /*!< 0x00020000 */
-#define ADC_TR2_HT2_2                  (0x004UL << ADC_TR2_HT2_Pos)            /*!< 0x00040000 */
-#define ADC_TR2_HT2_3                  (0x008UL << ADC_TR2_HT2_Pos)            /*!< 0x00080000 */
-#define ADC_TR2_HT2_4                  (0x010UL << ADC_TR2_HT2_Pos)            /*!< 0x00100000 */
-#define ADC_TR2_HT2_5                  (0x020UL << ADC_TR2_HT2_Pos)            /*!< 0x00200000 */
-#define ADC_TR2_HT2_6                  (0x040UL << ADC_TR2_HT2_Pos)            /*!< 0x00400000 */
-#define ADC_TR2_HT2_7                  (0x080UL << ADC_TR2_HT2_Pos)            /*!< 0x00800000 */
-#define ADC_TR2_HT2_8                  (0x100UL << ADC_TR2_HT2_Pos)            /*!< 0x01000000 */
-#define ADC_TR2_HT2_9                  (0x200UL << ADC_TR2_HT2_Pos)            /*!< 0x02000000 */
-#define ADC_TR2_HT2_10                 (0x400UL << ADC_TR2_HT2_Pos)            /*!< 0x04000000 */
-#define ADC_TR2_HT2_11                 (0x800UL << ADC_TR2_HT2_Pos)            /*!< 0x08000000 */
+#define ADC_TR1_HT1             ADC_AWD1TR_HT1
+#define ADC_TR1_HT1_0           ADC_AWD1TR_HT1_0
+#define ADC_TR1_HT1_1           ADC_AWD1TR_HT1_1
+#define ADC_TR1_HT1_2           ADC_AWD1TR_HT1_2
+#define ADC_TR1_HT1_3           ADC_AWD1TR_HT1_3
+#define ADC_TR1_HT1_4           ADC_AWD1TR_HT1_4
+#define ADC_TR1_HT1_5           ADC_AWD1TR_HT1_5
+#define ADC_TR1_HT1_6           ADC_AWD1TR_HT1_6
+#define ADC_TR1_HT1_7           ADC_AWD1TR_HT1_7
+#define ADC_TR1_HT1_8           ADC_AWD1TR_HT1_8
+#define ADC_TR1_HT1_9           ADC_AWD1TR_HT1_9
+#define ADC_TR1_HT1_10          ADC_AWD1TR_HT1_10
+#define ADC_TR1_HT1_11          ADC_AWD1TR_HT1_11
+
+/********************  Bit definition for ADC_AWD2TR register  *******************/
+#define ADC_AWD2TR_LT2_Pos             (0U)
+#define ADC_AWD2TR_LT2_Msk             (0xFFFUL << ADC_AWD2TR_LT2_Pos)         /*!< 0x00000FFF */
+#define ADC_AWD2TR_LT2                 ADC_AWD2TR_LT2_Msk                      /*!< ADC analog watchdog 2 threshold low */
+#define ADC_AWD2TR_LT2_0               (0x001UL << ADC_AWD2TR_LT2_Pos)         /*!< 0x00000001 */
+#define ADC_AWD2TR_LT2_1               (0x002UL << ADC_AWD2TR_LT2_Pos)         /*!< 0x00000002 */
+#define ADC_AWD2TR_LT2_2               (0x004UL << ADC_AWD2TR_LT2_Pos)         /*!< 0x00000004 */
+#define ADC_AWD2TR_LT2_3               (0x008UL << ADC_AWD2TR_LT2_Pos)         /*!< 0x00000008 */
+#define ADC_AWD2TR_LT2_4               (0x010UL << ADC_AWD2TR_LT2_Pos)         /*!< 0x00000010 */
+#define ADC_AWD2TR_LT2_5               (0x020UL << ADC_AWD2TR_LT2_Pos)         /*!< 0x00000020 */
+#define ADC_AWD2TR_LT2_6               (0x040UL << ADC_AWD2TR_LT2_Pos)         /*!< 0x00000040 */
+#define ADC_AWD2TR_LT2_7               (0x080UL << ADC_AWD2TR_LT2_Pos)         /*!< 0x00000080 */
+#define ADC_AWD2TR_LT2_8               (0x100UL << ADC_AWD2TR_LT2_Pos)         /*!< 0x00000100 */
+#define ADC_AWD2TR_LT2_9               (0x200UL << ADC_AWD2TR_LT2_Pos)         /*!< 0x00000200 */
+#define ADC_AWD2TR_LT2_10              (0x400UL << ADC_AWD2TR_LT2_Pos)         /*!< 0x00000400 */
+#define ADC_AWD2TR_LT2_11              (0x800UL << ADC_AWD2TR_LT2_Pos)         /*!< 0x00000800 */
+
+#define ADC_AWD2TR_HT2_Pos             (16U)
+#define ADC_AWD2TR_HT2_Msk             (0xFFFUL << ADC_AWD2TR_HT2_Pos)         /*!< 0x0FFF0000 */
+#define ADC_AWD2TR_HT2                 ADC_AWD2TR_HT2_Msk                      /*!< ADC analog watchdog 2 threshold high */
+#define ADC_AWD2TR_HT2_0               (0x001UL << ADC_AWD2TR_HT2_Pos)         /*!< 0x00010000 */
+#define ADC_AWD2TR_HT2_1               (0x002UL << ADC_AWD2TR_HT2_Pos)         /*!< 0x00020000 */
+#define ADC_AWD2TR_HT2_2               (0x004UL << ADC_AWD2TR_HT2_Pos)         /*!< 0x00040000 */
+#define ADC_AWD2TR_HT2_3               (0x008UL << ADC_AWD2TR_HT2_Pos)         /*!< 0x00080000 */
+#define ADC_AWD2TR_HT2_4               (0x010UL << ADC_AWD2TR_HT2_Pos)         /*!< 0x00100000 */
+#define ADC_AWD2TR_HT2_5               (0x020UL << ADC_AWD2TR_HT2_Pos)         /*!< 0x00200000 */
+#define ADC_AWD2TR_HT2_6               (0x040UL << ADC_AWD2TR_HT2_Pos)         /*!< 0x00400000 */
+#define ADC_AWD2TR_HT2_7               (0x080UL << ADC_AWD2TR_HT2_Pos)         /*!< 0x00800000 */
+#define ADC_AWD2TR_HT2_8               (0x100UL << ADC_AWD2TR_HT2_Pos)         /*!< 0x01000000 */
+#define ADC_AWD2TR_HT2_9               (0x200UL << ADC_AWD2TR_HT2_Pos)         /*!< 0x02000000 */
+#define ADC_AWD2TR_HT2_10              (0x400UL << ADC_AWD2TR_HT2_Pos)         /*!< 0x04000000 */
+#define ADC_AWD2TR_HT2_11              (0x800UL << ADC_AWD2TR_HT2_Pos)         /*!< 0x08000000 */
+
+/* Legacy definitions */
+#define ADC_TR2_LT2             ADC_AWD2TR_LT2
+#define ADC_TR2_LT2_0           ADC_AWD2TR_LT2_0
+#define ADC_TR2_LT2_1           ADC_AWD2TR_LT2_1
+#define ADC_TR2_LT2_2           ADC_AWD2TR_LT2_2
+#define ADC_TR2_LT2_3           ADC_AWD2TR_LT2_3
+#define ADC_TR2_LT2_4           ADC_AWD2TR_LT2_4
+#define ADC_TR2_LT2_5           ADC_AWD2TR_LT2_5
+#define ADC_TR2_LT2_6           ADC_AWD2TR_LT2_6
+#define ADC_TR2_LT2_7           ADC_AWD2TR_LT2_7
+#define ADC_TR2_LT2_8           ADC_AWD2TR_LT2_8
+#define ADC_TR2_LT2_9           ADC_AWD2TR_LT2_9
+#define ADC_TR2_LT2_10          ADC_AWD2TR_LT2_10
+#define ADC_TR2_LT2_11          ADC_AWD2TR_LT2_11
+
+#define ADC_TR2_HT2             ADC_AWD2TR_HT2
+#define ADC_TR2_HT2_0           ADC_AWD2TR_HT2_0
+#define ADC_TR2_HT2_1           ADC_AWD2TR_HT2_1
+#define ADC_TR2_HT2_2           ADC_AWD2TR_HT2_2
+#define ADC_TR2_HT2_3           ADC_AWD2TR_HT2_3
+#define ADC_TR2_HT2_4           ADC_AWD2TR_HT2_4
+#define ADC_TR2_HT2_5           ADC_AWD2TR_HT2_5
+#define ADC_TR2_HT2_6           ADC_AWD2TR_HT2_6
+#define ADC_TR2_HT2_7           ADC_AWD2TR_HT2_7
+#define ADC_TR2_HT2_8           ADC_AWD2TR_HT2_8
+#define ADC_TR2_HT2_9           ADC_AWD2TR_HT2_9
+#define ADC_TR2_HT2_10          ADC_AWD2TR_HT2_10
+#define ADC_TR2_HT2_11          ADC_AWD2TR_HT2_11
 
 /********************  Bit definition for ADC_CHSELR register  ****************/
 #define ADC_CHSELR_CHSEL_Pos           (0U)
@@ -1474,38 +1540,67 @@ typedef struct
 #define ADC_CHSELR_SQ1_2               (0x4UL << ADC_CHSELR_SQ1_Pos)           /*!< 0x00000004 */
 #define ADC_CHSELR_SQ1_3               (0x8UL << ADC_CHSELR_SQ1_Pos)           /*!< 0x00000008 */
 
-/********************  Bit definition for ADC_TR3 register  *******************/
-#define ADC_TR3_LT3_Pos                (0U)
-#define ADC_TR3_LT3_Msk                (0xFFFUL << ADC_TR3_LT3_Pos)            /*!< 0x00000FFF */
-#define ADC_TR3_LT3                    ADC_TR3_LT3_Msk                         /*!< ADC analog watchdog 3 threshold low */
-#define ADC_TR3_LT3_0                  (0x001UL << ADC_TR3_LT3_Pos)            /*!< 0x00000001 */
-#define ADC_TR3_LT3_1                  (0x002UL << ADC_TR3_LT3_Pos)            /*!< 0x00000002 */
-#define ADC_TR3_LT3_2                  (0x004UL << ADC_TR3_LT3_Pos)            /*!< 0x00000004 */
-#define ADC_TR3_LT3_3                  (0x008UL << ADC_TR3_LT3_Pos)            /*!< 0x00000008 */
-#define ADC_TR3_LT3_4                  (0x010UL << ADC_TR3_LT3_Pos)            /*!< 0x00000010 */
-#define ADC_TR3_LT3_5                  (0x020UL << ADC_TR3_LT3_Pos)            /*!< 0x00000020 */
-#define ADC_TR3_LT3_6                  (0x040UL << ADC_TR3_LT3_Pos)            /*!< 0x00000040 */
-#define ADC_TR3_LT3_7                  (0x080UL << ADC_TR3_LT3_Pos)            /*!< 0x00000080 */
-#define ADC_TR3_LT3_8                  (0x100UL << ADC_TR3_LT3_Pos)            /*!< 0x00000100 */
-#define ADC_TR3_LT3_9                  (0x200UL << ADC_TR3_LT3_Pos)            /*!< 0x00000200 */
-#define ADC_TR3_LT3_10                 (0x400UL << ADC_TR3_LT3_Pos)            /*!< 0x00000400 */
-#define ADC_TR3_LT3_11                 (0x800UL << ADC_TR3_LT3_Pos)            /*!< 0x00000800 */
+/********************  Bit definition for ADC_AWD3TR register  *******************/
+#define ADC_AWD3TR_LT3_Pos             (0U)
+#define ADC_AWD3TR_LT3_Msk             (0xFFFUL << ADC_AWD3TR_LT3_Pos)         /*!< 0x00000FFF */
+#define ADC_AWD3TR_LT3                 ADC_AWD3TR_LT3_Msk                      /*!< ADC analog watchdog 3 threshold low */
+#define ADC_AWD3TR_LT3_0               (0x001UL << ADC_AWD3TR_LT3_Pos)         /*!< 0x00000001 */
+#define ADC_AWD3TR_LT3_1               (0x002UL << ADC_AWD3TR_LT3_Pos)         /*!< 0x00000002 */
+#define ADC_AWD3TR_LT3_2               (0x004UL << ADC_AWD3TR_LT3_Pos)         /*!< 0x00000004 */
+#define ADC_AWD3TR_LT3_3               (0x008UL << ADC_AWD3TR_LT3_Pos)         /*!< 0x00000008 */
+#define ADC_AWD3TR_LT3_4               (0x010UL << ADC_AWD3TR_LT3_Pos)         /*!< 0x00000010 */
+#define ADC_AWD3TR_LT3_5               (0x020UL << ADC_AWD3TR_LT3_Pos)         /*!< 0x00000020 */
+#define ADC_AWD3TR_LT3_6               (0x040UL << ADC_AWD3TR_LT3_Pos)         /*!< 0x00000040 */
+#define ADC_AWD3TR_LT3_7               (0x080UL << ADC_AWD3TR_LT3_Pos)         /*!< 0x00000080 */
+#define ADC_AWD3TR_LT3_8               (0x100UL << ADC_AWD3TR_LT3_Pos)         /*!< 0x00000100 */
+#define ADC_AWD3TR_LT3_9               (0x200UL << ADC_AWD3TR_LT3_Pos)         /*!< 0x00000200 */
+#define ADC_AWD3TR_LT3_10              (0x400UL << ADC_AWD3TR_LT3_Pos)         /*!< 0x00000400 */
+#define ADC_AWD3TR_LT3_11              (0x800UL << ADC_AWD3TR_LT3_Pos)         /*!< 0x00000800 */
 
-#define ADC_TR3_HT3_Pos                (16U)
-#define ADC_TR3_HT3_Msk                (0xFFFUL << ADC_TR3_HT3_Pos)            /*!< 0x0FFF0000 */
-#define ADC_TR3_HT3                    ADC_TR3_HT3_Msk                         /*!< ADC analog watchdog 3 threshold high */
-#define ADC_TR3_HT3_0                  (0x001UL << ADC_TR3_HT3_Pos)            /*!< 0x00010000 */
-#define ADC_TR3_HT3_1                  (0x002UL << ADC_TR3_HT3_Pos)            /*!< 0x00020000 */
-#define ADC_TR3_HT3_2                  (0x004UL << ADC_TR3_HT3_Pos)            /*!< 0x00040000 */
-#define ADC_TR3_HT3_3                  (0x008UL << ADC_TR3_HT3_Pos)            /*!< 0x00080000 */
-#define ADC_TR3_HT3_4                  (0x010UL << ADC_TR3_HT3_Pos)            /*!< 0x00100000 */
-#define ADC_TR3_HT3_5                  (0x020UL << ADC_TR3_HT3_Pos)            /*!< 0x00200000 */
-#define ADC_TR3_HT3_6                  (0x040UL << ADC_TR3_HT3_Pos)            /*!< 0x00400000 */
-#define ADC_TR3_HT3_7                  (0x080UL << ADC_TR3_HT3_Pos)            /*!< 0x00800000 */
-#define ADC_TR3_HT3_8                  (0x100UL << ADC_TR3_HT3_Pos)            /*!< 0x01000000 */
-#define ADC_TR3_HT3_9                  (0x200UL << ADC_TR3_HT3_Pos)            /*!< 0x02000000 */
-#define ADC_TR3_HT3_10                 (0x400UL << ADC_TR3_HT3_Pos)            /*!< 0x04000000 */
-#define ADC_TR3_HT3_11                 (0x800UL << ADC_TR3_HT3_Pos)            /*!< 0x08000000 */
+#define ADC_AWD3TR_HT3_Pos             (16U)
+#define ADC_AWD3TR_HT3_Msk             (0xFFFUL << ADC_AWD3TR_HT3_Pos)         /*!< 0x0FFF0000 */
+#define ADC_AWD3TR_HT3                 ADC_AWD3TR_HT3_Msk                      /*!< ADC analog watchdog 3 threshold high */
+#define ADC_AWD3TR_HT3_0               (0x001UL << ADC_AWD3TR_HT3_Pos)         /*!< 0x00010000 */
+#define ADC_AWD3TR_HT3_1               (0x002UL << ADC_AWD3TR_HT3_Pos)         /*!< 0x00020000 */
+#define ADC_AWD3TR_HT3_2               (0x004UL << ADC_AWD3TR_HT3_Pos)         /*!< 0x00040000 */
+#define ADC_AWD3TR_HT3_3               (0x008UL << ADC_AWD3TR_HT3_Pos)         /*!< 0x00080000 */
+#define ADC_AWD3TR_HT3_4               (0x010UL << ADC_AWD3TR_HT3_Pos)         /*!< 0x00100000 */
+#define ADC_AWD3TR_HT3_5               (0x020UL << ADC_AWD3TR_HT3_Pos)         /*!< 0x00200000 */
+#define ADC_AWD3TR_HT3_6               (0x040UL << ADC_AWD3TR_HT3_Pos)         /*!< 0x00400000 */
+#define ADC_AWD3TR_HT3_7               (0x080UL << ADC_AWD3TR_HT3_Pos)         /*!< 0x00800000 */
+#define ADC_AWD3TR_HT3_8               (0x100UL << ADC_AWD3TR_HT3_Pos)         /*!< 0x01000000 */
+#define ADC_AWD3TR_HT3_9               (0x200UL << ADC_AWD3TR_HT3_Pos)         /*!< 0x02000000 */
+#define ADC_AWD3TR_HT3_10              (0x400UL << ADC_AWD3TR_HT3_Pos)         /*!< 0x04000000 */
+#define ADC_AWD3TR_HT3_11              (0x800UL << ADC_AWD3TR_HT3_Pos)         /*!< 0x08000000 */
+
+/* Legacy definitions */
+#define ADC_TR3_LT3             ADC_AWD3TR_LT3
+#define ADC_TR3_LT3_0           ADC_AWD3TR_LT3_0
+#define ADC_TR3_LT3_1           ADC_AWD3TR_LT3_1
+#define ADC_TR3_LT3_2           ADC_AWD3TR_LT3_2
+#define ADC_TR3_LT3_3           ADC_AWD3TR_LT3_3
+#define ADC_TR3_LT3_4           ADC_AWD3TR_LT3_4
+#define ADC_TR3_LT3_5           ADC_AWD3TR_LT3_5
+#define ADC_TR3_LT3_6           ADC_AWD3TR_LT3_6
+#define ADC_TR3_LT3_7           ADC_AWD3TR_LT3_7
+#define ADC_TR3_LT3_8           ADC_AWD3TR_LT3_8
+#define ADC_TR3_LT3_9           ADC_AWD3TR_LT3_9
+#define ADC_TR3_LT3_10          ADC_AWD3TR_LT3_10
+#define ADC_TR3_LT3_11          ADC_AWD3TR_LT3_11
+
+#define ADC_TR3_HT3             ADC_AWD3TR_HT3
+#define ADC_TR3_HT3_0           ADC_AWD3TR_HT3_0
+#define ADC_TR3_HT3_1           ADC_AWD3TR_HT3_1
+#define ADC_TR3_HT3_2           ADC_AWD3TR_HT3_2
+#define ADC_TR3_HT3_3           ADC_AWD3TR_HT3_3
+#define ADC_TR3_HT3_4           ADC_AWD3TR_HT3_4
+#define ADC_TR3_HT3_5           ADC_AWD3TR_HT3_5
+#define ADC_TR3_HT3_6           ADC_AWD3TR_HT3_6
+#define ADC_TR3_HT3_7           ADC_AWD3TR_HT3_7
+#define ADC_TR3_HT3_8           ADC_AWD3TR_HT3_8
+#define ADC_TR3_HT3_9           ADC_AWD3TR_HT3_9
+#define ADC_TR3_HT3_10          ADC_AWD3TR_HT3_10
+#define ADC_TR3_HT3_11          ADC_AWD3TR_HT3_11
 
 /********************  Bit definition for ADC_DR register  ********************/
 #define ADC_DR_DATA_Pos                (0U)
@@ -2388,12 +2483,6 @@ typedef struct
 #define DMAMUX_CxCR_DMAREQ_ID_4                (0x10UL << DMAMUX_CxCR_DMAREQ_ID_Pos) /*!< 0x00000010 */
 #define DMAMUX_CxCR_DMAREQ_ID_5                (0x20UL << DMAMUX_CxCR_DMAREQ_ID_Pos) /*!< 0x00000020 */
 #define DMAMUX_CxCR_DMAREQ_ID_6                (0x40UL << DMAMUX_CxCR_DMAREQ_ID_Pos) /*!< 0x00000040 */
-#define DMAMUX_CxCR_DMAREQ_ID_7                (0x80UL << DMAMUX_CxCR_DMAREQ_ID_Pos) /*!< 0x00000080 */
-#define DMAMUX_CxCR_DMAREQ_ID_8                (0x100UL << DMAMUX_CxCR_DMAREQ_ID_Pos) /*!< 0x00000100 */
-#define DMAMUX_CxCR_DMAREQ_ID_9                (0x200UL << DMAMUX_CxCR_DMAREQ_ID_Pos) /*!< 0x00000200 */
-#define DMAMUX_CxCR_DMAREQ_ID_10               (0x400UL << DMAMUX_CxCR_DMAREQ_ID_Pos) /*!< 0x00000400 */
-#define DMAMUX_CxCR_DMAREQ_ID_11               (0x800UL << DMAMUX_CxCR_DMAREQ_ID_Pos) /*!< 0x00000800 */
-#define DMAMUX_CxCR_DMAREQ_ID_12               (0x1000UL << DMAMUX_CxCR_DMAREQ_ID_Pos)/*!< 0x00001000 */
 #define DMAMUX_CxCR_SOIE_Pos                   (8U)
 #define DMAMUX_CxCR_SOIE_Msk                   (0x1UL << DMAMUX_CxCR_SOIE_Pos)  /*!< 0x00000100 */
 #define DMAMUX_CxCR_SOIE                       DMAMUX_CxCR_SOIE_Msk             /*!< Synchro overrun interrupt enable     */
@@ -3908,7 +3997,7 @@ typedef struct
 #define FLASH_CR_MER1_Msk                      (0x1UL << FLASH_CR_MER1_Pos)       /*!< 0x00000004 */
 #define FLASH_CR_MER1                          FLASH_CR_MER1_Msk
 #define FLASH_CR_PNB_Pos                       (3U)
-#define FLASH_CR_PNB_Msk                       (0x7FUL << FLASH_CR_PNB_Pos)       /*!< 0x000003F8 */
+#define FLASH_CR_PNB_Msk                       (0x3FFUL << FLASH_CR_PNB_Pos)       /*!< 0x00001FF8 */
 #define FLASH_CR_PNB                           FLASH_CR_PNB_Msk
 #define FLASH_CR_BKER_Pos                      (13U)
 #define FLASH_CR_BKER_Msk                      (0x1UL << FLASH_CR_BKER_Pos)       /*!< 0x00002000 */
@@ -6056,6 +6145,12 @@ typedef struct
 #define RCC_CFGR_SWS_0                 (0x1UL << RCC_CFGR_SWS_Pos)             /*!< 0x00000008 */
 #define RCC_CFGR_SWS_1                 (0x2UL << RCC_CFGR_SWS_Pos)             /*!< 0x00000010 */
 #define RCC_CFGR_SWS_2                 (0x4UL << RCC_CFGR_SWS_Pos)             /*!< 0x00000020 */
+
+#define RCC_CFGR_SWS_HSISYS            (0x00000000UL)                          /*!< HSISYS used as system clock */
+#define RCC_CFGR_SWS_HSE               (0x00000008UL)                          /*!< HSE used as system clock */
+#define RCC_CFGR_SWS_PLLRCLK           (0x00000010UL)                          /*!< PLLRCLK used as system clock */
+#define RCC_CFGR_SWS_LSI               (0x00000018UL)                          /*!< LSI used as system clock */
+#define RCC_CFGR_SWS_LSE               (0x00000100UL)                          /*!< LSE used as system clock */
 
 /*!< HPRE configuration */
 #define RCC_CFGR_HPRE_Pos              (8U)
@@ -10558,7 +10653,8 @@ typedef struct
 /* EndPoint Register MASK (no toggle fields) */
 #define USB_CHEP_REG_MASK                          (USB_CHEP_ERRRX | USB_CHEP_ERRTX | USB_CHEP_LSEP | \
                                                     USB_CHEP_DEVADDR | USB_CHEP_VTRX | USB_CHEP_SETUP | \
-                                                    USB_CHEP_UTYPE | USB_CHEP_KIND | USB_CHEP_VTTX | USB_CHEP_ADDR) /* =8f8f */
+                                                    USB_CHEP_UTYPE | USB_CHEP_KIND | USB_CHEP_VTTX | USB_CHEP_ADDR |\
+                                                    USB_CHEP_NAK) /* 0x07FF8F8F */
 
 #define USB_CHEP_TX_DTOGMASK                       (USB_CHEP_TX_STTX | USB_CHEP_REG_MASK)
 #define USB_CHEP_RX_DTOGMASK                       (USB_CHEP_RX_STRX | USB_CHEP_REG_MASK)
@@ -11140,6 +11236,16 @@ typedef struct
 /*********************** USB OTG HCD Instances ********************************/
 #define IS_HCD_ALL_INSTANCE(INSTANCE) (((INSTANCE) == USB_DRD_FS))
 
+/******************************************************************************/
+/*  For a painless codes migration between the STM32G0xx device product       */
+/*  lines, the aliases defined below are put in place to overcome the         */
+/*  differences in the interrupt handlers and IRQn definitions.               */
+/*  No need to update developed interrupt code when moving across             */
+/*  product lines within the same STM32G0 Family                              */
+/******************************************************************************/
+/* Aliases for IRQn_Type */
+#define SVC_IRQn              SVCall_IRQn
+
 /**
   * @}
   */
@@ -11165,5 +11271,3 @@ typedef struct
   /**
   * @}
   */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

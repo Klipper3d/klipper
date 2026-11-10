@@ -7,18 +7,17 @@
   *          This file contains:
   *           - Data structures and the address mapping for all peripherals
   *           - Peripheral's registers declarations and bits definition
-  *           - Macros to access peripheral’s registers hardware
+  *           - Macros to access peripheral's registers hardware
   *
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -45,11 +44,11 @@
 /**
   * @brief Configuration of the Cortex-M4 Processor and Core Peripherals
    */
-#define __CM4_REV                 0x0001  /*!< Cortex-M4 revision r0p1                       */
-#define __MPU_PRESENT             1       /*!< STM32G4XX provides an MPU                     */
-#define __NVIC_PRIO_BITS          4       /*!< STM32G4XX uses 4 Bits for the Priority Levels */
-#define __Vendor_SysTickConfig    0       /*!< Set to 1 if different SysTick Config is used  */
-#define __FPU_PRESENT             1       /*!< FPU present                                   */
+#define __CM4_REV                 0x0001U  /*!< Cortex-M4 revision r0p1                       */
+#define __MPU_PRESENT             1U       /*!< STM32G4XX provides an MPU                     */
+#define __NVIC_PRIO_BITS          4U       /*!< STM32G4XX uses 4 Bits for the Priority Levels */
+#define __Vendor_SysTickConfig    0U       /*!< Set to 1 if different SysTick Config is used  */
+#define __FPU_PRESENT             1U       /*!< FPU present                                   */
 
 /**
   * @}
@@ -749,8 +748,7 @@ typedef struct
 
 typedef struct
 {
-  __IO uint32_t GCR;          /*!< SAI global configuration register,        Address offset: 0x00 */
-  uint32_t      RESERVED[16]; /*!< Reserved,                         Address offset: 0x04 to 0x40 */
+  uint32_t      RESERVED[17]; /*!< Reserved,                                 Address offset: 0x00 to 0x40 */
   __IO uint32_t PDMCR;        /*!< SAI PDM control register,                 Address offset: 0x44 */
   __IO uint32_t PDMDLY;       /*!< SAI PDM delay register,                   Address offset: 0x48 */
 } SAI_TypeDef;
@@ -960,6 +958,10 @@ typedef struct
   __IO uint32_t RX_ORDEXT2;    /*!< UCPD Rx ordered set extension 2 register,  Address offset: 0x38 */
 } UCPD_TypeDef;
 
+
+/**
+  * @}
+  */
 
 /** @addtogroup Peripheral_memory_map
   * @{
@@ -1269,6 +1271,15 @@ typedef struct
   * @{
   */
 
+  /** @addtogroup Hardware_Constant_Definition
+    * @{
+    */
+#define LSI_STARTUP_TIME 130U /*!< LSI Maximum startup time in us */
+
+  /**
+    * @}
+    */
+
 /** @addtogroup Peripheral_Registers_Bits_Definition
   * @{
   */
@@ -1284,7 +1295,7 @@ typedef struct
 /******************************************************************************/
 
 /*
- * @brief Specific device feature definitions (not present on all devices in the STM32G4 serie)
+ * @brief Specific device feature definitions (not present on all devices in the STM32G4 series)
  */
 #define ADC_MULTIMODE_SUPPORT                          /*!< ADC feature available only on specific devices: multimode available on devices with several ADC instances */
 
@@ -1430,7 +1441,7 @@ typedef struct
 #define ADC_CFGR_AUTDLY                ADC_CFGR_AUTDLY_Msk                     /*!< ADC low power auto wait */
 #define ADC_CFGR_ALIGN_Pos             (15U)
 #define ADC_CFGR_ALIGN_Msk             (0x1UL << ADC_CFGR_ALIGN_Pos)           /*!< 0x00008000 */
-#define ADC_CFGR_ALIGN                 ADC_CFGR_ALIGN_Msk                      /*!< ADC data alignement */
+#define ADC_CFGR_ALIGN                 ADC_CFGR_ALIGN_Msk                      /*!< ADC data alignment */
 #define ADC_CFGR_DISCEN_Pos            (16U)
 #define ADC_CFGR_DISCEN_Msk            (0x1UL << ADC_CFGR_DISCEN_Pos)          /*!< 0x00010000 */
 #define ADC_CFGR_DISCEN                ADC_CFGR_DISCEN_Msk                     /*!< ADC group regular sequencer discontinuous mode */
@@ -4209,7 +4220,7 @@ typedef struct
 /*****************  Bit definition for FDCAN_ENDN register  *******************/
 #define FDCAN_ENDN_ETV_Pos        (0U)
 #define FDCAN_ENDN_ETV_Msk        (0xFFFFFFFFUL << FDCAN_ENDN_ETV_Pos)         /*!< 0xFFFFFFFF */
-#define FDCAN_ENDN_ETV            FDCAN_ENDN_ETV_Msk                           /*!<Endiannes Test Value                    */
+#define FDCAN_ENDN_ETV            FDCAN_ENDN_ETV_Msk                           /*!<Endianness Test Value                    */
 
 /*****************  Bit definition for FDCAN_DBTP register  *******************/
 #define FDCAN_DBTP_DSJW_Pos       (0U)
@@ -6524,7 +6535,7 @@ typedef struct
 #define OPAMP_CSR_TRIMOFFSETN        OPAMP_CSR_TRIMOFFSETN_Msk                 /*!< Offset trimming value (NMOS) */
 #define OPAMP_CSR_OUTCAL_Pos         (30U)
 #define OPAMP_CSR_OUTCAL_Msk         (0x1UL << OPAMP_CSR_OUTCAL_Pos)           /*!< 0x40000000 */
-#define OPAMP_CSR_OUTCAL             OPAMP_CSR_OUTCAL_Msk                      /*!< OPAMP ouput status flag */
+#define OPAMP_CSR_OUTCAL             OPAMP_CSR_OUTCAL_Msk                      /*!< OPAMP output status flag */
 #define OPAMP_CSR_LOCK_Pos           (31U)
 #define OPAMP_CSR_LOCK_Msk           (0x1UL << OPAMP_CSR_LOCK_Pos)             /*!< 0x80000000 */
 #define OPAMP_CSR_LOCK               OPAMP_CSR_LOCK_Msk                        /*!< OPAMP control/status register lock */
@@ -7574,7 +7585,7 @@ typedef struct
 /*                                                                            */
 /******************************************************************************/
 /*
-* @brief Specific device feature definitions  (not present on all devices in the STM32G4 serie)
+* @brief Specific device feature definitions  (not present on all devices in the STM32G4 series)
 */
 
 #define RCC_HSI48_SUPPORT
@@ -9530,19 +9541,6 @@ typedef struct
 /*                          Serial Audio Interface                            */
 /*                                                                            */
 /******************************************************************************/
-/********************  Bit definition for SAI_GCR register  *******************/
-#define SAI_GCR_SYNCIN_Pos         (0U)
-#define SAI_GCR_SYNCIN_Msk         (0x3UL << SAI_GCR_SYNCIN_Pos)               /*!< 0x00000003 */
-#define SAI_GCR_SYNCIN             SAI_GCR_SYNCIN_Msk                          /*!<SYNCIN[1:0] bits (Synchronization Inputs)   */
-#define SAI_GCR_SYNCIN_0           (0x1UL << SAI_GCR_SYNCIN_Pos)               /*!< 0x00000001 */
-#define SAI_GCR_SYNCIN_1           (0x2UL << SAI_GCR_SYNCIN_Pos)               /*!< 0x00000002 */
-
-#define SAI_GCR_SYNCOUT_Pos        (4U)
-#define SAI_GCR_SYNCOUT_Msk        (0x3UL << SAI_GCR_SYNCOUT_Pos)              /*!< 0x00000030 */
-#define SAI_GCR_SYNCOUT            SAI_GCR_SYNCOUT_Msk                         /*!<SYNCOUT[1:0] bits (Synchronization Outputs) */
-#define SAI_GCR_SYNCOUT_0          (0x1UL << SAI_GCR_SYNCOUT_Pos)              /*!< 0x00000010 */
-#define SAI_GCR_SYNCOUT_1          (0x2UL << SAI_GCR_SYNCOUT_Pos)              /*!< 0x00000020 */
-
 /*******************  Bit definition for SAI_xCR1 register  *******************/
 #define SAI_xCR1_MODE_Pos          (0U)
 #define SAI_xCR1_MODE_Msk          (0x3UL << SAI_xCR1_MODE_Pos)                /*!< 0x00000003 */
@@ -9883,7 +9881,7 @@ typedef struct
 /*                                                                            */
 /******************************************************************************/
 /*
- * @brief Specific device feature definitions (not present on all devices in the STM32G4 serie)
+ * @brief Specific device feature definitions (not present on all devices in the STM32G4 series)
  */
 #define SPI_I2S_SUPPORT                       /*!< I2S support */
 
@@ -13682,8 +13680,12 @@ typedef struct
 /******************************************************************************/
 
 /* Aliases for __IRQn */
+#define TIM7_DAC_IRQn     TIM7_IRQn
+#define COMP4_5_6_IRQn    COMP4_IRQn
 
 /* Aliases for __IRQHandler */
+#define TIM7_DAC_IRQHandler     TIM7_IRQHandler
+#define COMP4_5_6_IRQHandler    COMP4_IRQHandler
 
 #ifdef __cplusplus
 }
@@ -13699,4 +13701,3 @@ typedef struct
   * @}
   */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
