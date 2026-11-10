@@ -104,7 +104,7 @@ class BMI160:
             # I2C already waits for completion by default
             self.bus.i2c_write([reg, val & 0xFF], minclock=minclock)
         # Small delay between register writes for stability
-        self.reactor.pause(0.002)
+        self.reactor.pause(self.reactor.monotonic() + 0.002)
         # Don't verify CMD register (0x7E) or registers below 0x40
         if reg >= 0x40 and reg != REG_CMD:
             stored_val = self.read_reg(reg)
@@ -133,7 +133,8 @@ class BMI160:
         # 1. Force SPI Mode (Dummy Read)
         if self.bus_type == 'spi':
             self.read_reg(0x7F)
-            self.reactor.pause(0.010) # 10ms for mode switch
+            # 10ms for mode switch
+            self.reactor.pause(self.reactor.monotonic() + 0.010)
 
         # 2. Verify ID
         dev_id = self.read_reg(REG_CHIPID)
@@ -148,7 +149,7 @@ class BMI160:
         # Send Normal Mode command
         self.set_reg(REG_CMD, CMD_ACC_PM_NORMAL)
         # CRITICAL: Wait 50ms for startup/PLL locking
-        self.reactor.pause(0.050)
+        self.reactor.pause(self.reactor.monotonic() + 0.050)
 
         # 4. Configure Registers (While Awake)
         self.set_reg(REG_ACC_CONF, SET_ACC_CONF_1600HZ)
@@ -158,7 +159,7 @@ class BMI160:
 
         # 5. Flush FIFO
         self.set_reg(REG_CMD, CMD_FIFO_FLUSH)
-        self.reactor.pause(0.010)
+        self.reactor.pause(self.reactor.monotonic() + 0.010)
 
         # 6. Start Bulk Reading
         # Start timer roughly immediately
