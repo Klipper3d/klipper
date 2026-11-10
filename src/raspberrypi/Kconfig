@@ -1,0 +1,20 @@
+# Kconfig settings for compiling and running the micro-controller code
+# in a Linux process on a Raspberry Pi using memory-mapped IO rather
+# than system calls.
+
+if MACH_RASPBERRYPI
+
+config RASPBERRYPI_SELECT
+    bool
+    default y
+    select HAVE_GPIO
+
+config BOARD_DIRECTORY
+    string
+    default "raspberrypi"
+
+config CLOCK_FREQ
+    int
+    default 54000000
+
+endif
