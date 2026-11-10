@@ -96,7 +96,7 @@ class HTU21D:
             config, default_addr=HTU21D_I2C_ADDR, default_speed=100000)
         self.hold_master_mode = config.getboolean('htu21d_hold_master',False)
         self.resolution = config.get('htu21d_resolution','TEMP12_HUM08')
-        self.report_time = config.getint('htu21d_report_time',30,minval=5)
+        self.report_time = config.getint('htu21d_report_time',30,minval=1)
         if self.resolution not in HTU21D_RESOLUTIONS:
             raise config.error("Invalid HTU21D Resolution. Valid are %s"
                 % '|'.join(HTU21D_RESOLUTIONS.keys()))
