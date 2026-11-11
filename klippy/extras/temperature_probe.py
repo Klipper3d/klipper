@@ -93,6 +93,7 @@ class TemperatureProbe:
         self.sensor = pheaters.setup_sensor(config)
         self.sensor.setup_minmax(self.min_temp, self.max_temp)
         self.sensor.setup_callback(self._temp_callback)
+        self.callback = lambda time, temp: None
         pheaters.register_sensor(config, self)
         self.last_temp_read_time = 0.
         self.last_measurement = (0., 99999999., 0.,)
@@ -149,10 +150,17 @@ class TemperatureProbe:
         measured_min = min(measured_min, smoothed_temp)
         measured_max = max(measured_max, smoothed_temp)
         self.last_measurement = (smoothed_temp, measured_min, measured_max)
+        self.callback(read_time, temp)
         if self.in_calibration and smoothed_temp >= self.next_auto_temp:
             self.printer.get_reactor().register_async_callback(
                 self._check_kick_next
             )
+
+    def setup_callback(self, cb = None):
+        if cb is None:
+            self.callback = lambda time, temp: None
+        else:
+            self.callback = cb
 
     def _check_kick_next(self, eventtime):
         smoothed_temp = self.last_measurement[0]
@@ -475,7 +483,8 @@ class EddyDriftCompensation:
         self.temp_sensor = sensor
         self.name = config.get_name()
         self.cal_temp = config.getfloat("calibration_temp", 0.)
-        self._z_cal_temp = .0
+        # Temperature samples store
+        self._temp_samples = (.0, 1)
         self.drift_calibration = None
         self.calibration_samples = None
         self.max_valid_temp = config.getfloat("max_validation_temp", 60.)
@@ -536,10 +545,18 @@ class EddyDriftCompensation:
         self.enabled = enabled
 
     def note_z_calibration_start(self):
-        self._z_cal_temp = self.get_temperature()
+        self._temp_samples = (self.get_temperature(), 1)
+        def callback(read_time, temp):
+            tsum, tcount = self._temp_samples
+            tsum += temp
+            tcount += 1
+            self._temp_samples = (tsum, tcount)
+        self.temp_sensor.setup_callback(callback)
 
     def note_z_calibration_finish(self):
-        cal_temp = (self._z_cal_temp + self.get_temperature()) / 2.0
+        self.temp_sensor.setup_callback(None)
+        tsum, tcount = self._temp_samples
+        cal_temp = tsum / tcount
         configfile = self.printer.lookup_object('configfile')
         configfile.set(self.name, "calibration_temp", "%.6f " % (cal_temp))
         gcode = self.printer.lookup_object("gcode")
