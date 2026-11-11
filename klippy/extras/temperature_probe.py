@@ -613,15 +613,16 @@ class EddyDriftCompensation:
             return True
         sect_name = "probe_eddy_current " + self.name.split(None, 1)[-1]
         self.printer.lookup_object(sect_name).add_client(_on_bulk_data_recd)
+        # Move up
+        cur_pos[2] = mpresult.bed_z + .05
+        toolhead.manual_move(cur_pos, lift_speed)
         for i in range(DRIFT_SAMPLE_COUNT):
             if i == 0:
                 # Move down to first sample location
-                cur_pos[2] = mpresult.bed_z + .05
+                cur_pos[2] += .04
             else:
                 # Sample each .5mm in z
-                cur_pos[2] += 1.
-                toolhead.manual_move(cur_pos, lift_speed)
-                cur_pos[2] -= .5
+                cur_pos[2] += .5
             toolhead.manual_move(cur_pos, probe_speed)
             start = toolhead.get_last_move_time() + .05
             end = start + .1

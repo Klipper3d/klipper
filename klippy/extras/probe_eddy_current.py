@@ -215,16 +215,15 @@ class EddyCalibrationTool:
         toolhead.dwell(1.)
         self.calibration.note_z_calibration_start()
         # Move to each 40um position
-        max_z = 4.0
+        z_range = 4.0
         samp_dist = 0.040
-        req_zpos = [i*samp_dist for i in range(int(max_z / samp_dist) + 1)]
+        req_zpos = [i*samp_dist for i in range(int(z_range / samp_dist) + 1)]
         start_pos = toolhead.get_position()
+        # Initial descend
+        start_pos[2] += samp_dist
         self._produce_moves = True
         for zpos in req_zpos:
             # Move to next position (always descending to reduce backlash)
-            hop_pos = list(start_pos)
-            hop_pos[2] += zpos + 0.500
-            move(hop_pos, move_speed)
             next_pos = list(start_pos)
             next_pos[2] += zpos
             move(next_pos, move_speed)
