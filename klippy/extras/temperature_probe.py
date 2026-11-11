@@ -475,6 +475,7 @@ class EddyDriftCompensation:
         self.temp_sensor = sensor
         self.name = config.get_name()
         self.cal_temp = config.getfloat("calibration_temp", 0.)
+        self._z_cal_temp = .0
         self.drift_calibration = None
         self.calibration_samples = None
         self.max_valid_temp = config.getfloat("max_validation_temp", 60.)
@@ -535,18 +536,18 @@ class EddyDriftCompensation:
         self.enabled = enabled
 
     def note_z_calibration_start(self):
-        self.cal_temp = self.get_temperature()
+        self._z_cal_temp = self.get_temperature()
 
     def note_z_calibration_finish(self):
-        self.cal_temp = (self.cal_temp + self.get_temperature()) / 2.0
+        cal_temp = (self._z_cal_temp + self.get_temperature()) / 2.0
         configfile = self.printer.lookup_object('configfile')
-        configfile.set(self.name, "calibration_temp", "%.6f " % (self.cal_temp))
+        configfile.set(self.name, "calibration_temp", "%.6f " % (cal_temp))
         gcode = self.printer.lookup_object("gcode")
         gcode.respond_info(
             "%s: Z Calibration Temperature set to %.2f. "
             "The SAVE_CONFIG command will update the printer config "
             "file and restart the printer."
-            % (self.name, self.cal_temp)
+            % (self.name, cal_temp)
         )
 
     def collect_sample(self, mpresult, speeds):
