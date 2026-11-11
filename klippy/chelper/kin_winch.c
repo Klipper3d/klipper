@@ -46,6 +46,7 @@ struct winch_flex {
     int ignore_pretension;
     double distances_origin[WINCH_MAX_ANCHORS];
     int mechanical_advantage[WINCH_MAX_ANCHORS];
+    int lines_per_axis[WINCH_MAX_ANCHORS];
     double spool_radius[WINCH_MAX_ANCHORS];
     double spool_radius_sq[WINCH_MAX_ANCHORS];
     double k0[WINCH_MAX_ANCHORS];
@@ -613,7 +614,7 @@ compute_flex(struct winch_flex *wf, double x, double y, double z,
         double ma = wf->mechanical_advantage[i];
         if (ma <= 0.)
             ma = 1.;
-        flex[i] = -forces[i] / (spring_k * ma);
+        flex[i] = -forces[i] / (spring_k * ma * wf->lines_per_axis[i]);
     }
 }
 
@@ -1035,7 +1036,8 @@ winch_flex_configure(struct winch_flex *wf,
                      int flex_compensation_algorithm,
                      int ignore_gravity,
                      int ignore_pretension,
-                     const int *mechanical_advantage)
+                     const int *mechanical_advantage,
+                     const int *lines_per_axis)
 {
     if (!wf)
         return;
@@ -1067,6 +1069,7 @@ winch_flex_configure(struct winch_flex *wf,
           wf->mechanical_advantage[i] = mechanical_advantage[i];
         else
           wf->mechanical_advantage[i] = 1;
+        wf->lines_per_axis[i] = lines_per_axis ? lines_per_axis[i] : 1;
         set_default_spool_params(wf, i);
     }
     for (int i = num_anchors; i < WINCH_MAX_ANCHORS; ++i) {
@@ -1075,6 +1078,7 @@ winch_flex_configure(struct winch_flex *wf,
         wf->max_force[i] = 120.0;
         wf->guy_wires[i] = 0.;
         wf->mechanical_advantage[i] = 1;
+        wf->lines_per_axis[i] = 1;
         set_default_spool_params(wf, i);
     }
     if (wf->flex_compensation_algorithm < WINCH_FORCE_ALGO_TIKHONOV

@@ -53,11 +53,15 @@ class WinchFlexHelper:
                 'winch_guy_wire_lengths', default_guy_wires, count=self.num))
             self.mechanical_advantage = list(config.getintlist(
                 'winch_mechanical_advantage', default_mechanical_advantage, count=self.num))
+            self.lines_per_axis = list(config.getintlist(
+                'winch_lines_per_axis', tuple(1 for _ in range(self.num)),
+                count=self.num))
         else:
             self.min_force = []
             self.max_force = []
             self.guy_wires = []
             self.mechanical_advantage = []
+            self.lines_per_axis = []
         algo_choices = list(self.ALGORITHMS.keys())
         self.flex_compensation_algorithm_name = config.getchoice(
             'flex_compensation_algorithm', algo_choices, default='qp')
@@ -75,7 +79,8 @@ class WinchFlexHelper:
             self.ptr, self.num, anchors_c, self.buildup_factor, self.mover_weight,
             self.spring_constant, min_c, max_c,
             guy_ptr, self.flex_compensation_algorithm,
-            self.ignore_gravity, self.ignore_pretension, self.mechanical_advantage)
+            self.ignore_gravity, self.ignore_pretension, self.mechanical_advantage,
+            self.lines_per_axis)
 
     def get_ptr(self):
         if self.ptr is not None:

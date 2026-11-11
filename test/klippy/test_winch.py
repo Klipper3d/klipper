@@ -62,7 +62,7 @@ class WinchFlexHelperTests(unittest.TestCase):
     def build_helper(self, anchors, mover_weight=2.0, spring=20000.0,
                      target=20.0, min_force=None, max_force=None,
                      guy_wires=None, buildup_factor=0.0,
-                     mechanical_advantage=None):
+                     mechanical_advantage=None, lines_per_axis=None):
         num = len(anchors)
         if min_force is None:
             min_force = [0.0] * num
@@ -82,6 +82,8 @@ class WinchFlexHelperTests(unittest.TestCase):
         }
         if guy_wires is not None:
             options['winch_guy_wire_lengths'] = list_str(guy_wires)
+        if lines_per_axis is not None:
+            options['winch_lines_per_axis'] = int_list_str(lines_per_axis)
         cfg['printer'] = options
         wrapper = configfile.ConfigWrapper(DummyPrinter(), cfg, {}, 'printer')
         return WinchFlexHelper(tuple(anchors), wrapper)
@@ -121,6 +123,21 @@ class WinchFlexHelperTests(unittest.TestCase):
             for d, f, l in zip(distances, flex, lengths):
                 self.assertAlmostEqual(f, 0.0, places=9)
                 self.assertAlmostEqual(l, d, places=9)
+
+    def test_parallel_lines_share_flex(self):
+        single = self.build_helper(FOUR_ANCHORS_DEFAULT, mechanical_advantage=[2, 2, 2, 4],
+                                   min_force=[10.0] * 4)
+        shared = self.build_helper(FOUR_ANCHORS_DEFAULT, mechanical_advantage=[2, 2, 2, 4],
+                                   min_force=[10.0] * 4,
+                                   lines_per_axis=[2, 2, 2, 3])
+        single.set_active(True)
+        shared.set_active(True)
+        for pos in ((0.0, 0.0, 0.0), (300.0, -200.0, 50.0)):
+            _, _, flex_single = self.spool_lengths(single, pos)
+            _, _, flex_shared = self.spool_lengths(shared, pos)
+            for f1, fn, n in zip(flex_single, flex_shared, (2, 2, 2, 3)):
+                self.assertNotAlmostEqual(f1, 0.0, places=3)
+                self.assertAlmostEqual(fn, f1 / n, places=9)
 
     def test_four_anchor_small_perturbation(self):
         helper = self.build_helper(FOUR_ANCHORS_DEFAULT)
