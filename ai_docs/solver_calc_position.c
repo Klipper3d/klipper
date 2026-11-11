@@ -188,7 +188,7 @@ solve_sample(const struct cfg_state *cfg, size_t num, int use_flex,
         wf, (int)num, anchors, cfg->spool_buildup, cfg->mover_weight,
         cfg->spring_k_per_unit_length, min_force, max_force, guy,
         WINCH_FORCE_ALGO_QP, cfg->ignore_gravity, cfg->ignore_pretension,
-        mech_adv);
+        mech_adv, NULL);
     winch_flex_set_enabled(wf, use_flex ? 1 : 0);
 
     double gear = gear_ratio(cfg);

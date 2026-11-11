@@ -756,6 +756,12 @@ winch_mechanical_advantage:
 #   back plus how many times forth.
 #   This factor is used by the flex compensation and buildup model.
 #   The default is 1 for each anchor (no gearing).
+winch_lines_per_axis:
+#   Optional number of parallel lines pulling the effector towards each
+#   anchor, for example 2 if two lines run side by side to keep the
+#   effector from rotating. The lines share the flex compensation force,
+#   so each one is stretched less. Only used by flex compensation.
+#   The default is 1 for each anchor.
 flex_compensation_algorithm:
 #   Solver used when computing how much force is required to counteract
 #   gravity and pretension. Choices are 'tikhonov' and 'qp'.
