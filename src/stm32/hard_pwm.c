@@ -184,6 +184,13 @@ static const struct gpio_pwm_info pwm_regs[] = {
     {TIM5, GPIO('A', 11), 4, GPIO_FUNCTION(1)},
     {TIM5, GPIO('E', 14), 4, GPIO_FUNCTION(1)},
 #elif CONFIG_MACH_STM32G0
+  // TIM2 PWM is available when the scheduler uses another timer.
+  #if CONFIG_MACH_STM32G0B1 && CONFIG_STM32G0B1_SCHED_TIM14
+    {TIM2, GPIO('A',  0), 1, GPIO_FUNCTION(2)},
+    {TIM2, GPIO('A',  1), 2, GPIO_FUNCTION(2)},
+    {TIM2, GPIO('A',  5), 1, GPIO_FUNCTION(2)},
+    {TIM2, GPIO('A', 15), 1, GPIO_FUNCTION(2)},
+  #endif
     {TIM15, GPIO('A',  2), 1, GPIO_FUNCTION(5)},
     {TIM15, GPIO('A',  3), 2, GPIO_FUNCTION(5)},
     {TIM14, GPIO('A',  4), 1, GPIO_FUNCTION(4)},
@@ -325,6 +332,12 @@ gpio_pwm_setup(uint8_t pin, uint32_t cycle_time, uint32_t val)
         if (p->pin == pin)
             break;
     }
+    // Do not let hardware PWM reconfigure the scheduler timer.
+#if CONFIG_MACH_STM32G0B1
+    if ((CONFIG_STM32G0B1_SCHED_TIM14 && p->timer == TIM14)
+        || (CONFIG_STM32G0B1_SCHED_TIM2 && p->timer == TIM2))
+        shutdown("PWM timer reserved for scheduler");
+#endif
     gpio_peripheral(p->pin, p->function, 0);
 
     // Map cycle_time to pwm clock divisor
