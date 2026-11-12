@@ -2355,6 +2355,9 @@ sensor_type: ldc1612
 #   that the settings here apply only to regular probe commands. These
 #   settings do not have an effect if using a probe "METHOD" of
 #   "scan", "rapid_scan", or "tap".
+#profile_name: default
+#   Pick the curve from calibrate_<name> upon load
+#   Default 'default' resolves to "calibrate"
 #tap_threshold:
 #   Descent stop threshold (in Hz/mm) for "tap" probing. Larger values
 #   reduce the chance of the toolhead incorrectly stopping early due

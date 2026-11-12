@@ -20,7 +20,7 @@ class DummyDriftCompensation:
         return 0.
     def note_z_calibration_start(self):
         pass
-    def note_z_calibration_finish(self):
+    def note_z_calibration_finish(self, profile_name):
         pass
     def adjust_freq(self, freq, temp=None):
         return freq
@@ -28,34 +28,57 @@ class DummyDriftCompensation:
         return freq
 
 # Storage for frequency to height calibration
+class EddyCalibrationProfile:
+    def __init__(self, config, name):
+        # Current calibration data
+        self.cal_freqs = tuple()
+        self.cal_zpos = tuple()
+        cal = config.get(name, None)
+        if cal is None:
+            return
+        cal = [list(map(float, d.strip().split(':', 1)))
+               for d in cal.split(',')]
+        cal = sorted([(c[1], c[0]) for c in cal])
+        self.cal_freqs = tuple([c[0] for c in cal])
+        self.cal_zpos = tuple([c[1] for c in cal])
+    def get_calibration(self):
+        return self.cal_freqs, self.cal_zpos
+
 class EddyCalibration:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.drift_comp = DummyDriftCompensation()
-        # Current calibration data
         self.cal_freqs = []
         self.cal_zpos = []
-        cal = config.get('calibrate', None)
-        if cal is not None:
-            cal = [list(map(float, d.strip().split(':', 1)))
-                   for d in cal.split(',')]
-            self._load_calibration(cal)
-    def _load_calibration(self, cal):
-        cal = sorted([(c[1], c[0]) for c in cal])
-        self.cal_freqs = [c[0] for c in cal]
-        self.cal_zpos = [c[1] for c in cal]
+        self.profile_name = config.get('profile_name', "default")
+        _profile_names = config.get_prefix_options("calibrate")
+        self.calibrations = {}
+        for full_name in _profile_names:
+            postfix = full_name.split("_")
+            name = "default"
+            if len(postfix) > 1:
+                name = "_".join(postfix[1:])
+            logging.info("Load probe_eddy_current profile: %s" % (name))
+            self.calibrations[name] = EddyCalibrationProfile(config, full_name)
+        if self.profile_name not in self.calibrations:
+            raise self.printer.config_error("Missing calibrate_%s profile" % (
+                self.profile_name))
+        calibration = self.calibrations[self.profile_name]
+        self.cal_freqs, self.cal_zpos = calibration.get_calibration()
     def get_printer(self):
         return self.printer
     def note_z_calibration_start(self):
         self.drift_comp.note_z_calibration_start()
-    def note_z_calibration_finish(self):
-        self.drift_comp.note_z_calibration_finish()
+    def note_z_calibration_finish(self, profile_name):
+        self.drift_comp.note_z_calibration_finish(profile_name)
     def register_drift_compensation(self, comp):
         self.drift_comp = comp
     def verify_calibrated(self):
         if len(self.cal_freqs) <= 2:
             raise self.printer.command_error(
                 "Must calibrate probe_eddy_current first")
+    def get_profile_name(self):
+        return self.profile_name
     def get_calibration(self):
         return list(self.cal_freqs), list(self.cal_zpos)
     def apply_calibration(self, samples):
@@ -100,12 +123,18 @@ class EddyCalibration:
 
 # Implement PROBE_EDDY_CURRENT_CALIBRATE (and similar)
 class EddyCalibrationTool:
-    def __init__(self, config, calibration):
+    def __init__(self, config, calibration, sensor_helper):
         self.printer = config.get_printer()
         self.name = config.get_name()
         self.calibration = calibration
+        self.sensor_helper = sensor_helper
         # Probe calibrate state
         self.probe_speed = 0.
+        self.profile_name = config.get('profile_name', "default")
+        self._last_pos_sample = -999, (40000000, .0, .0)
+        self._produce_moves = True
+        self._probe_calibrate_z = .0
+        self._discard_after_z = 999.0
         # Register commands
         cname = self.name.split()[-1]
         gcode = self.printer.lookup_object('gcode')
@@ -115,7 +144,7 @@ class EddyCalibrationTool:
         gcode.register_command('Z_OFFSET_APPLY_PROBE',
                                self.cmd_Z_OFFSET_APPLY_PROBE,
                                desc=self.cmd_Z_OFFSET_APPLY_PROBE_help)
-    def _save_calibration(self, z_freq_pairs):
+    def _save_calibration(self, z_freq_pairs, profile_name):
         gcode = self.printer.lookup_object("gcode")
         gcode.respond_info(
             "The SAVE_CONFIG command will update the printer config file\n"
@@ -129,34 +158,72 @@ class EddyCalibrationTool:
             cal_contents.append(',')
         cal_contents.pop()
         configfile = self.printer.lookup_object('configfile')
-        configfile.set(self.name, 'calibrate', ''.join(cal_contents))
-    # PROBE_EDDY_CURRENT_CALIBRATE
-    def do_calibration_moves(self, move_speed):
+        option_name = "calibrate"
+        if profile_name != "default":
+            option_name += "_" + self.profile_name
+        configfile.set(self.name, option_name, ''.join(cal_contents))
+    def _lookup_toolhead_pos(self, pos_time):
         toolhead = self.printer.lookup_object('toolhead')
         kin = toolhead.get_kinematics()
+        kin_spos = {s.get_name(): s.mcu_to_commanded_position(
+            s.get_past_mcu_position(pos_time))
+            for s in kin.get_steppers()}
+        return kin.calc_position(kin_spos)
+    def calc_freqs(self, measures, start_query_time):
+        kin_pos = self._lookup_toolhead_pos(start_query_time)
+        freqs = [f for _, f, _ in measures]
+        count = len(freqs)
+        if not count:
+            self._produce_moves = False
+            raise self.printer.command_error(
+                "Failed calibration - incomplete sensor data")
+        freq_avg = float(sum(freqs)) / count
+        mads = [abs(f - freq_avg) for f in freqs]
+        mad_hz = self._median(mads)
+        # Fix Z position offset
+        z = kin_pos[2] - self._probe_calibrate_z
+        last_triplet = self._last_pos_sample[1]
+        last_freq_avg = last_triplet[0]
+        if freq_avg > last_freq_avg:
+            self._produce_moves = False
+            gcode = self.printer.lookup_object("gcode")
+            gcode.respond_info(
+                "Frequency stops decreasing at step %.3f" % (z))
+        # Calculate if samples have a significant difference
+        last_mad = last_triplet[1]
+        diff_mad = math.sqrt(last_mad**2 + mad_hz**2)
+        freq_diff = last_freq_avg - freq_avg
+        if freq_diff < 2.5 * diff_mad:
+            self._produce_moves = False
+            self._discard_after_z = z
+            last_z = self._last_pos_sample[0]
+            gcode = self.printer.lookup_object("gcode")
+            gcode.respond_info(
+                "Frequency too noisy at step %.3f -> %.3f" % (
+                    last_z, z))
+            gcode.respond_info(
+                "Frequency diff: %.3f, MAD_Hz: %.3f -> MAD_Hz: %.3f" % (
+                    freq_diff, last_mad, mad_hz
+                ))
+        self._last_pos_sample = z, (freq_avg, mad_hz, count)
+        return self._last_pos_sample
+    # PROBE_EDDY_CURRENT_CALIBRATE
+    def do_calibration_moves(self, move_speed, gather):
+        toolhead = self.printer.lookup_object('toolhead')
         move = toolhead.manual_move
         # Start data collection
-        msgs = []
-        is_finished = False
-        def handle_batch(msg):
-            if is_finished:
-                return False
-            msgs.append(msg)
-            return True
-        self.printer.lookup_object(self.name).add_client(handle_batch)
         toolhead.dwell(1.)
         self.calibration.note_z_calibration_start()
         # Move to each 40um position
-        max_z = 4.0
+        z_range = 4.0
         samp_dist = 0.040
-        req_zpos = [i*samp_dist for i in range(int(max_z / samp_dist) + 1)]
+        req_zpos = [i*samp_dist for i in range(int(z_range / samp_dist) + 1)]
         start_pos = toolhead.get_position()
-        times = []
+        # Initial descend
+        start_pos[2] += samp_dist
+        self._produce_moves = True
         for zpos in req_zpos:
             # Move to next position (always descending to reduce backlash)
-            hop_pos = list(start_pos)
-            hop_pos[2] += zpos + 0.500
-            move(hop_pos, move_speed)
             next_pos = list(start_pos)
             next_pos[2] += zpos
             move(next_pos, move_speed)
@@ -164,73 +231,35 @@ class EddyCalibrationTool:
             start_query_time = toolhead.get_last_move_time() + 0.050
             end_query_time = start_query_time + 0.100
             toolhead.dwell(0.200)
-            # Find Z position based on actual commanded stepper position
-            toolhead.flush_step_generation()
-            kin_spos = {s.get_name(): s.get_commanded_position()
-                        for s in kin.get_steppers()}
-            kin_pos = kin.calc_position(kin_spos)
-            times.append((start_query_time, end_query_time, kin_pos[2]))
+            gather.add_probe_request(self.calc_freqs, start_query_time,
+                                     end_query_time, start_query_time)
+            if not self._produce_moves:
+                break
         toolhead.dwell(1.0)
         toolhead.wait_moves()
-        self.calibration.note_z_calibration_finish()
-        # Finish data collection
-        is_finished = True
-        # Correlate query responses
-        cal = {}
-        step = 0
-        for msg in msgs:
-            for query_time, freq, old_z in msg['data']:
-                # Add to step tracking
-                while step < len(times) and query_time > times[step][1]:
-                    step += 1
-                if step < len(times) and query_time >= times[step][0]:
-                    cal.setdefault(times[step][2], []).append(freq)
-        if len(cal) != len(times):
-            raise self.printer.command_error(
-                "Failed calibration - incomplete sensor data")
-        return cal
+        self.calibration.note_z_calibration_finish(self.profile_name)
     def _median(self, values):
         values = sorted(values)
         n = len(values)
         if n % 2 == 0:
             return (values[n//2 - 1] + values[n//2]) / 2.0
         return values[n // 2]
-    def calc_freqs(self, meas):
-        positions = {}
-        for pos, freqs in meas.items():
-            count = len(freqs)
-            freq_avg = float(sum(freqs)) / count
-            mads = [abs(f - freq_avg) for f in freqs]
-            mad = self._median(mads)
-            positions[pos] = (freq_avg, mad, count)
-        return positions
     def validate_calibration_data(self, positions):
-        last_freq = 40000000.
-        last_pos = last_mad = .0
+        if not positions:
+            return []
+        last_pos, (freq_avg, mad_hz, count) = positions.pop(0)
+        next_pos, (next_freq_avg, _, _) = positions[0]
+        last_freq = freq_avg
         gcode = self.printer.lookup_object("gcode")
-        filtered = []
-        mad_hz_total = .0
-        mad_mm_total = .0
-        samples_count = 0
-        for pos, (freq_avg, mad_hz, count) in sorted(positions.items()):
-            if freq_avg > last_freq:
-                gcode.respond_info(
-                    "Frequency stops decreasing at step %.3f" % (pos))
-                break
-            diff_mad = math.sqrt(last_mad**2 + mad_hz**2)
-            # Calculate if samples have a significant difference
+        mad_hz_total = mad_hz
+        delta_dist = next_pos - last_pos
+        freq_diff = freq_avg - next_freq_avg
+        mad_mm_total = mad_mm = mad_hz * delta_dist / freq_diff
+        samples_count = count
+        filtered = [(last_pos, freq_avg, mad_hz, mad_mm)]
+        for pos, (freq_avg, mad_hz, count) in positions:
             freq_diff = last_freq - freq_avg
             last_freq = freq_avg
-            if freq_diff < 2.5 * diff_mad:
-                gcode.respond_info(
-                    "Frequency too noisy at step %.3f -> %.3f" % (
-                        last_pos, pos))
-                gcode.respond_info(
-                    "Frequency diff: %.3f, MAD_Hz: %.3f -> MAD_Hz: %.3f" % (
-                        freq_diff, last_mad, mad_hz
-                    ))
-                break
-            last_mad = mad_hz
             delta_dist = pos - last_pos
             last_pos = pos
             # MAD is Median Absolute Deviation to Frequency avg ~ delta_hz_1
@@ -264,7 +293,7 @@ class EddyCalibrationTool:
         curpos = [mpresult.bed_x, mpresult.bed_y, mpresult.bed_z]
         move = self.printer.lookup_object('toolhead').manual_move
         # Move away from the bed
-        probe_calibrate_z = curpos[2]
+        self._probe_calibrate_z = curpos[2]
         curpos[2] += 5.
         move(curpos, self.probe_speed)
         # Move sensor over nozzle position
@@ -276,25 +305,26 @@ class EddyCalibrationTool:
         # Descend back to bed
         curpos[2] -= 5. - 0.050
         move(curpos, self.probe_speed)
-        # Perform calibration movement and capture
-        cal = self.do_calibration_moves(self.probe_speed)
-        # Calculate each sample position average and variance
-        _positions = self.calc_freqs(cal)
-        # Fix Z position offset
-        positions = {}
-        for k in _positions:
-            v = _positions[k]
-            k = k - probe_calibrate_z
-            positions[k] = v
+        self._last_pos_sample = -999, (40000000, .0, .0)
+        self._discard_after_z = 999.
+        positions = []
+        with EddyGatherSamples(self.printer, self.sensor_helper) as gather:
+            # Perform calibration movement and capture
+            self.do_calibration_moves(self.probe_speed, gather)
+            _positions = gather.pull_probed()
+            for p, v in _positions:
+                if p < self._discard_after_z:
+                    positions.append((p, v))
         filtered = self.validate_calibration_data(positions)
         if len(filtered) <= 8:
            raise self.printer.command_error(
               "Failed calibration - No usable data")
         z_freq_pairs = [(pos, freq) for pos, freq, _, _ in filtered]
-        self._save_calibration(z_freq_pairs)
+        self._save_calibration(z_freq_pairs, self.profile_name)
     cmd_EDDY_CALIBRATE_help = "Calibrate eddy current probe"
     def cmd_EDDY_CALIBRATE(self, gcmd):
         self.probe_speed = gcmd.get_float("PROBE_SPEED", 5., above=0.)
+        self.profile_name = gcmd.get("PROFILE_NAME", "default").lower()
         # Start manual probe
         manual_probe.ManualProbeHelper(self.printer, gcmd,
                                        self.post_manual_probe)
@@ -326,7 +356,8 @@ class EddyCalibrationTool:
         cal_zpos = [z - offset for z in cal_zpos]
         z_freq_pairs = zip(cal_zpos, cal_freqs)
         z_freq_pairs = sorted(z_freq_pairs)
-        self._save_calibration(z_freq_pairs)
+        profile_name = self.calibration.get_profile_name()
+        self._save_calibration(z_freq_pairs, profile_name)
 
 # Tool for calibrating tap_threshold
 class EddyTapCalibration:
@@ -466,6 +497,10 @@ class EddyGatherSamples:
         return True
     def finish(self):
         self._need_stop = True
+    def __enter__(self):
+        return self
+    def __exit__(self, type=None, exc_val=None, exc_tb=None):
+        self.finish()
     def _pull_measurements(self, start_time, end_time):
         # Extract measurements from sensor messages for given time range
         measures = []
@@ -730,18 +765,19 @@ class EddyDescend:
         self._z_min_position = probe.lookup_minimum_z(config)
         self._gather = None
         probe.HomingViaProbeHelper(config, self._descend_z)
-    def _prep_trigger_analog(self):
+    def _prep_trigger_analog(self, gcmd):
+        descend_z = gcmd.get_float("DESCEND_Z", self._descend_z, above=0.)
         sos_filter = self._trigger_analog.get_sos_filter()
         sos_filter.set_filter_design(None)
         sos_filter.set_offset_scale(0, 1.)
         self._trigger_analog.set_raw_range(0, MAX_VALID_RAW_VALUE)
-        trigger_freq = self._calibration.height_to_freq(self._descend_z)
+        trigger_freq = self._calibration.height_to_freq(descend_z)
         conv_freq = self._sensor_helper.convert_frequency_to_raw(trigger_freq)
         self._trigger_analog.set_trigger('gt', conv_freq)
     # Probe session interface
     def start_probe_session(self, gcmd):
         self._calibration.verify_calibrated()
-        self._prep_trigger_analog()
+        self._prep_trigger_analog(gcmd)
         self._gather = EddyGatherSamples(self._printer, self._sensor_helper)
         return self
     def run_probe(self, gcmd):
@@ -1025,11 +1061,12 @@ class PrinterEddyProbe:
     def __init__(self, config):
         self.printer = config.get_printer()
         self.calibration = EddyCalibration(config)
-        EddyCalibrationTool(config, self.calibration)
         # Sensor type
         sensors = { "ldc1612": ldc1612.LDC1612 }
         sensor_type = config.getchoice('sensor_type', {s: s for s in sensors})
         self.sensor_helper = sensors[sensor_type](config, self.calibration)
+        # Calibration tools
+        EddyCalibrationTool(config, self.calibration, self.sensor_helper)
         # Create trigger_analog interface
         trig_analog = trigger_analog.MCU_trigger_analog(self.sensor_helper)
         probe.LookupZSteppers(config, trig_analog.get_dispatch().add_stepper)
@@ -1087,6 +1124,8 @@ class PrinterEddyProbe:
         return self.eddy_descend_session.start_probe_session(gcmd)
     def register_drift_compensation(self, comp):
         self.calibration.register_drift_compensation(comp)
+    def get_profile_name(self):
+        return self.calibration.get_profile_name()
 
 def load_config_prefix(config):
     return PrinterEddyProbe(config)

@@ -1267,7 +1267,8 @@ applies the change to `tap_z_offset` so that future `tap` probes are
 updated to use the current Z G-Code offset.
 
 #### PROBE_EDDY_CURRENT_CALIBRATE
-`PROBE_EDDY_CURRENT_CALIBRATE CHIP=<config_name> [MANUAL_METHOD=manual]`:
+`PROBE_EDDY_CURRENT_CALIBRATE CHIP=<config_name> [MANUAL_METHOD=manual]
+[PROFILE_NAME=default]`:
 This starts a tool
 that calibrates the sensor resonance frequencies to corresponding Z
 heights. The tool will take a couple of minutes to complete. After
