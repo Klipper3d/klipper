@@ -19,20 +19,28 @@
  * Low level timer code
  ****************************************************************/
 
-// Use 32bit TIM2 timer if available (otherwise use 16bit TIM3 timer)
-#if defined(TIM2)
+// TIM2 is the default on STM32G0B1. TIM14 is an optional 16-bit
+// alternative that frees TIM2 for hardware PWM.
+#if CONFIG_STM32G0B1_SCHED_TIM14
+  #define TIMx TIM14
+  #define TIMx_IRQn TIM14_IRQn
+  #define HAVE_TIMER_32BIT 0
+#elif defined(TIM2)
   #define TIMx TIM2
   #define TIMx_IRQn TIM2_IRQn
   #define HAVE_TIMER_32BIT 1
 #elif defined(TIM3)
   #define TIMx TIM3
-  #define TIMx_IRQn TIM3_IRQn
   #define HAVE_TIMER_32BIT 0
 #endif
 
-// Some chips have slightly different register names
-#if CONFIG_MACH_STM32G0B0
-  #define TIM3_IRQn TIM3_TIM4_IRQn
+// Some STM32G0 parts combine TIM3 and TIM4 interrupt vectors.
+#if !HAVE_TIMER_32BIT && !CONFIG_STM32G0B1_SCHED_TIM14
+  #if CONFIG_MACH_STM32G0B0 || CONFIG_MACH_STM32G0B1
+    #define TIMx_IRQn TIM3_TIM4_IRQn
+  #else
+    #define TIMx_IRQn TIM3_IRQn
+  #endif
 #endif
 
 static inline uint32_t
