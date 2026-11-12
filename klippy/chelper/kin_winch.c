@@ -614,7 +614,8 @@ compute_flex(struct winch_flex *wf, double x, double y, double z,
         double ma = wf->mechanical_advantage[i];
         if (ma <= 0.)
             ma = 1.;
-        flex[i] = -forces[i] / (spring_k * ma * wf->lines_per_axis[i]);
+        // Convert per-line stretch to effector distance; steps/mm includes MA.
+        flex[i] = -forces[i] / (spring_k * ma * ma * wf->lines_per_axis[i]);
     }
 }
 
