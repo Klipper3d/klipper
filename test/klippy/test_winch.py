@@ -139,6 +139,28 @@ class WinchFlexHelperTests(unittest.TestCase):
                 self.assertNotAlmostEqual(f1, 0.0, places=3)
                 self.assertAlmostEqual(fn, f1 / n, places=9)
 
+    def test_flex_reels_the_elastic_stretch_of_each_line(self):
+        force = 20.0
+        spring = 20000.0
+        mechanical_advantage = (1, 2, 2, 4)
+        lines_per_axis = (1, 2, 2, 3)
+        guy_wires = (100.0, 200.0, 300.0, 400.0)
+        helper = self.build_helper(
+            FOUR_ANCHORS_DEFAULT, spring=spring,
+            min_force=[force] * 4, max_force=[force] * 4,
+            mechanical_advantage=mechanical_advantage,
+            lines_per_axis=lines_per_axis, guy_wires=guy_wires)
+        helper.set_active(True)
+        for pos in ((0.0, 0.0, 0.0), (300.0, -200.0, 50.0)):
+            distances, flex = helper.calc_arrays(pos)
+            for distance, offset, ma, n, guy in zip(
+                    distances, flex, mechanical_advantage,
+                    lines_per_axis, guy_wires):
+                reeled_line = -offset * ma
+                strain = reeled_line / (distance * ma + guy)
+                self.assertAlmostEqual(strain * spring, force / (ma * n),
+                                       places=9)
+
     def test_four_anchor_small_perturbation(self):
         helper = self.build_helper(FOUR_ANCHORS_DEFAULT)
         origin_lengths, _, _ = self.spool_lengths(helper, (0.0, 0.0, 0.0))
