@@ -114,13 +114,14 @@ static const struct gpio_pwm_info pwm_regs[] = {
     {TIM4, GPIO('B', 8),  3, GPIO_FUNCTION(2)},
     {TIM4, GPIO('B', 9),  4, GPIO_FUNCTION(2)}
 #elif CONFIG_MACH_STM32F4
-  #if CONFIG_MACH_STM32F401
+  #if CONFIG_MACH_STM32F401 || CONFIG_MACH_STM32F411
+    // TIM3 alternate pins (these chips have no TIM8/TIM13/TIM14)
     {TIM3,  GPIO('A',  6),  1, GPIO_FUNCTION(2)},
-    {TIM3,  GPIO('C',  6),  1, GPIO_FUNCTION(3)},
+    {TIM3,  GPIO('C',  6),  1, GPIO_FUNCTION(2)},
     {TIM3,  GPIO('A',  7),  2, GPIO_FUNCTION(2)},
-    {TIM3,  GPIO('C',  7),  2, GPIO_FUNCTION(3)},
-    {TIM3,  GPIO('C',  8),  3, GPIO_FUNCTION(3)},
-    {TIM3,  GPIO('C',  9),  4, GPIO_FUNCTION(3)},
+    {TIM3,  GPIO('C',  7),  2, GPIO_FUNCTION(2)},
+    {TIM3,  GPIO('C',  8),  3, GPIO_FUNCTION(2)},
+    {TIM3,  GPIO('C',  9),  4, GPIO_FUNCTION(2)},
   #endif
   #if CONFIG_MACH_STM32F446
     {TIM2,  GPIO('B',  2),  4, GPIO_FUNCTION(1)},
