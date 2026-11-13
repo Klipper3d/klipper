@@ -6,6 +6,7 @@
 import logging
 import mathutil
 from . import manual_probe
+from .probe_eddy_current import do_calibration_moves, lookup_toolhead_pos
 
 KELVIN_TO_CELSIUS = -273.15
 
@@ -475,8 +476,6 @@ class TemperatureProbe:
 #
 #####################################################################
 
-DRIFT_SAMPLE_COUNT = 9
-
 class EddyDriftCompensation:
     def __init__(self, config, sensor):
         self.printer = config.get_printer()
@@ -485,6 +484,7 @@ class EddyDriftCompensation:
         self.cal_temp = config.getfloat("calibration_temp", 0.)
         # Temperature samples store
         self._temp_samples = (.0, 1)
+        self._gather = None
         self.drift_calibration = None
         self.calibration_samples = None
         self.max_valid_temp = config.getfloat("max_validation_temp", 60.)
@@ -566,79 +566,52 @@ class EddyDriftCompensation:
         )
 
     def collect_sample(self, mpresult, speeds):
-        if self.calibration_samples is None:
-            self.calibration_samples = [[] for _ in range(DRIFT_SAMPLE_COUNT)]
-        move_times = []
-        temps = [0. for _ in range(DRIFT_SAMPLE_COUNT)]
-        probe_samples = [[] for _ in range(DRIFT_SAMPLE_COUNT)]
         toolhead = self.printer.lookup_object("toolhead")
         cur_pos = toolhead.get_position()
         lift_speed, probe_speed, _ = speeds
-
-        def _on_bulk_data_recd(msg):
-            if move_times:
-                idx, start_time, end_time = move_times[0]
-                cur_temp = self.get_temperature()
-                for sample in msg["data"]:
-                    ptime = sample[0]
-                    while ptime > end_time:
-                        move_times.pop(0)
-                        if not move_times:
-                            return idx < DRIFT_SAMPLE_COUNT - 1
-                        idx, start_time, end_time = move_times[0]
-                    if ptime < start_time:
-                        continue
-                    temps[idx] = cur_temp
-                    probe_samples[idx].append(sample)
-            return True
         sect_name = "probe_eddy_current " + self.name.split(None, 1)[-1]
-        self.printer.lookup_object(sect_name).add_client(_on_bulk_data_recd)
-        for i in range(DRIFT_SAMPLE_COUNT):
-            if i == 0:
-                # Move down to first sample location
-                cur_pos[2] = mpresult.bed_z + .05
-            else:
-                # Sample each .5mm in z
-                cur_pos[2] += 1.
-                toolhead.manual_move(cur_pos, lift_speed)
-                cur_pos[2] -= .5
-            toolhead.manual_move(cur_pos, probe_speed)
-            start = toolhead.get_last_move_time() + .05
-            end = start + .1
-            move_times.append((i, start, end))
-            toolhead.dwell(.2)
-        toolhead.wait_moves()
-        # Wait for sample collection to finish
-        reactor = self.printer.get_reactor()
-        mcu = self.printer.lookup_object('mcu')
-        evttime = reactor.monotonic()
-        while move_times:
-            if mcu.estimated_print_time(evttime) > move_times[-1][2] + 1.0:
-                raise self.printer.command_error(
-                    "%s: sensor outage during drift calibration" % (self.name,))
-            evttime = reactor.pause(evttime + .1)
-        sample_temp = sum(temps) / len(temps)
-        for i, data in enumerate(probe_samples):
+        eddy = self.printer.lookup_object(sect_name)
+        # Move down to the first sample
+        cur_pos[2] = mpresult.bed_z + .05
+        toolhead.manual_move(cur_pos, lift_speed)
+        self._gather = eddy.get_gather_samples()
+        def record_sample(measures, print_time):
+            pos = lookup_toolhead_pos(toolhead, print_time)
+            cur_temp = self.get_temperature()
+            return pos[2] - mpresult.bed_z, cur_temp, measures
+        def collect_cb(start_query_time, end_query_time, print_time):
+            self._gather.add_probe_request(record_sample, start_query_time,
+                                           end_query_time, print_time)
+        do_calibration_moves(toolhead, probe_speed, collect_cb,
+                             lambda: False, samp_dist=0.5)
+        samples = self._gather.pull_probed()
+        self._gather.finish()
+        self._gather = None
+        if self.calibration_samples is None:
+            self.calibration_samples = [[] for _ in range(len(samples))]
+        for i, (z, temp, data) in enumerate(samples):
             freqs = [d[1] for d in data]
             zvals = [d[2] for d in data]
             avg_freq = sum(freqs) / len(freqs)
             avg_z = sum(zvals) / len(zvals)
-            kin_z = i * .5 + .05 + mpresult.bed_z
             logging.info(
                 "Probe Values at Temp %.2fC, Z %.4fmm: Avg Freq = %.6f, "
                 "Avg Measured Z = %.6f"
-                % (sample_temp, kin_z, avg_freq, avg_z)
+                % (temp, z, avg_freq, avg_z)
             )
-            self.calibration_samples[i].append((sample_temp, avg_freq))
+            self.calibration_samples[i].append((z, temp, avg_freq))
+        temps = [temp for _, temp, _ in samples]
+        sample_temp = sum(temps) / len(temps)
         return sample_temp
 
     def start_calibration(self):
         self.enabled = False
-        self.calibration_samples = [[] for _ in range(DRIFT_SAMPLE_COUNT)]
 
     def finish_calibration(self, success):
         cal_samples = self.calibration_samples
         self.calibration_samples = None
+        if self._gather is not None:
+            self._gather.finish()
         if not success:
             return
         gcode = self.printer.lookup_object("gcode")
@@ -646,18 +619,19 @@ class EddyDriftCompensation:
             raise gcode.error(
                 "calibration error, not enough samples"
             )
-        min_temp, _ = cal_samples[0][0]
-        max_temp, _ = cal_samples[0][-1]
+        _, min_temp, _ = cal_samples[0][0]
+        _, max_temp, _ = cal_samples[0][-1]
         polynomials = []
-        for i, coords in enumerate(cal_samples):
-            height = .05 + i * .5
+        for samples in cal_samples:
+            z = samples[0][0]
+            coords = [(temp, avg_freq) for _, temp, avg_freq in samples]
             poly = Polynomial2d.fit(coords)
             if poly is None:
                 raise gcode.error(
                     "calibration error, unable to fit polynomial at Z=%.2f"
-                    % (height,))
+                    % (z,))
             polynomials.append(poly)
-            logging.info("Polynomial at Z=%.2f: %s" % (height, repr(poly)))
+            logging.info("Polynomial at Z=%.2f: %s" % (z, repr(poly)))
         end_vld_temp = max(self.max_valid_temp, max_temp)
         self._check_calibration(polynomials, min_temp, end_vld_temp)
         coef_cfg = "\n" + "\n".join([str(p) for p in polynomials])

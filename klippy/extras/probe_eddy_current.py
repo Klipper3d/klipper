@@ -1078,8 +1078,8 @@ class PrinterEddyProbe:
         pos = probe_session.pull_probed_results()[0]
         probe_session.end_probe_session()
         return pos
-    def add_client(self, cb):
-        self.sensor_helper.add_client(cb)
+    def get_gather_samples(self):
+        return EddyGatherSamples(self.printer, self.sensor_helper)
     def get_probe_params(self, gcmd=None):
         return self.param_helper.get_probe_params(gcmd)
     def get_offsets(self, gcmd=None):
