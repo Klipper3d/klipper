@@ -127,6 +127,7 @@ class TestesCortador(unittest.TestCase):
         cfg = parser['gcode_macro _BMCU_ENDER_CORTADOR_AJUSTES']
         self.assertEqual('0', cfg['variable_habilitado'])
         self.assertEqual('0', cfg['variable_calibrado'])
+        self.assertEqual('1', cfg['variable_soltar_servo_recolhido'])
         b.ajustes['habilitado'] = 0
         self.assertIsNone(b.obj.cortador.preparar())
 
@@ -226,7 +227,7 @@ class TestesCortador(unittest.TestCase):
             ('gcode', 'SET_SERVO SERVO=bmcu_cortador WIDTH=0'), b.eventos
         )
 
-    def test_recolhimento_manual_soltar_pwm_so_com_opcao_ativa(self):
+    def test_recolhimento_manual_soltar_pwm_por_padrao_com_opcao_de_manter(self):
         for ajuste in (None, 0, 1):
             with self.subTest(ajuste=ajuste):
                 b = BancadaCortador()
@@ -242,7 +243,7 @@ class TestesCortador(unittest.TestCase):
                 b.obj.cortador.servo_manual(Gcmd(ANGULO=0, CONFIRMAR=1))
                 self.assertTrue(b.obj.cortador.recolhido)
                 self.assertEqual(
-                    ajuste == 1,
+                    ajuste != 0,
                     ('gcode', 'SET_SERVO SERVO=bmcu_cortador WIDTH=0')
                     in b.eventos,
                 )
@@ -411,57 +412,6 @@ class TestesCortador(unittest.TestCase):
             b.obj.antecipar_carga(b.endpoint, 'prepare_load')
             self.assertFalse(any(e[0] == 'mover' for e in b.eventos))
 
-    def test_homing_aguarda_confirmacao_do_batente_apos_reinicio(self):
-        b = BancadaCortador()
-        b.referencias = ''
-        b.bmcu.active_operations = {}
-        homing = []
-        comando = b.obj.validar_homing_cortador(lambda g: homing.append(True))
-        with self.assertRaisesRegex(RuntimeError, 'Fechar batente'):
-            comando(Gcmd())
-        self.assertEqual([], homing)
-        b.bmcu.active_operations = {}
-        b.obj.cortador.servo_manual(Gcmd(ANGULO=0, CONFIRMAR=1))
-        comando(Gcmd())
-        self.assertEqual([True], homing)
-
-    def test_homing_recolhe_so_em_posicao_livre_ou_com_autorizacao(self):
-        for eixos, x, autoriza, permitido in (
-            ('x', 170, 0, True),
-            ('x', 210, 1, False),
-            ('', 170, 0, False),
-            ('', 170, 1, True),
-        ):
-            with self.subTest(eixos=eixos, x=x, autoriza=autoriza):
-                b = BancadaCortador()
-                b.bmcu.active_operations = {}
-                b.referencias = eixos
-                b.position[0] = x
-                b.ajustes.update(
-                    x_aproximacao=180.0, x_contato=190.0, x_corte=230.0,
-                    curso_maximo_mm=40.0, recolher_sem_referencia=autoriza,
-                    angulo_recolhido=180.0, angulo_acionado=20.0,
-                )
-                comando = b.obj.validar_homing_cortador(
-                    lambda g: b.eventos.append(('homing',))
-                )
-                if permitido:
-                    comando(Gcmd())
-                    self.assertEqual(('homing',), b.eventos[-1])
-                    self.assertEqual(
-                        [('gcode',
-                          'SET_SERVO SERVO=bmcu_cortador ANGLE=180.000000')],
-                        [evento for evento in b.eventos
-                         if evento[0] == 'gcode'],
-                    )
-                    self.assertTrue(b.obj.cortador.recolhido)
-                else:
-                    with self.assertRaises(RuntimeError):
-                        comando(Gcmd())
-                    self.assertFalse(any(
-                        evento[0] in ('gcode', 'homing') for evento in b.eventos
-                    ))
-
     def test_homing_nao_recolhe_automaticamente_apos_corte_interrompido(self):
         b = BancadaCortador()
         b.bmcu.active_operations = {}
@@ -487,6 +437,7 @@ class TestesCortador(unittest.TestCase):
             [
                 ('gcode', 'SET_SERVO SERVO=bmcu_cortador ANGLE=20.000000'),
                 ('gcode', 'SET_SERVO SERVO=bmcu_cortador ANGLE=180.000000'),
+                ('gcode', 'SET_SERVO SERVO=bmcu_cortador WIDTH=0'),
             ],
             [evento for evento in b.eventos if evento[0] != 'esperar'],
         )

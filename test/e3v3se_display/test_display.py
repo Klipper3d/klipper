@@ -857,7 +857,7 @@ class DisplayLanguageTest(unittest.TestCase):
                               labels)
             self.assertIn(translate('Unload filament', language), labels)
 
-    def test_batente_na_tela_exige_confirmacao_antes_do_servo_e_homing(self):
+    def test_batente_manual_exige_confirmacao_mas_homing_envia_so_g28(self):
         h, ui, _ = self.make_ui("pt_BR")
         ui.show_move_menu()
         self.assertNotIn("Fechar batente", [item.label for item in ui.items])
@@ -876,10 +876,8 @@ class DisplayLanguageTest(unittest.TestCase):
             self.assertEqual(
                 "CORTADOR_SERVO POSICAO=%s CONFIRMAR=1" % posicao, comandos[-1])
         ui.solicitar_homing()
-        self.assertEqual(2, len(comandos))
-        ui.items[0].callback()
-        self.assertEqual(
-            "CORTADOR_SERVO POSICAO=RECOLHIDO CONFIRMAR=1\nG28", comandos[-1])
+        self.assertEqual(3, len(comandos))
+        self.assertEqual("G28", comandos[-1])
 
     def test_default_language_and_configured_portuguese(self):
         path = os.path.join(

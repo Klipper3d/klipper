@@ -21,9 +21,8 @@ class CortadorEnder:
         perfil = self.perfil()
         if perfil is None or not perfil.get('habilitado') and not calibracao:
             return None
-        perfil.setdefault('soltar_servo_recolhido', 0)
+        perfil.setdefault('soltar_servo_recolhido', 1)
         perfil.setdefault('manter_y_corte', 0)
-        perfil.setdefault('recolher_sem_referencia', 0)
         perfil.setdefault('recuo_antes_corte_mm', 0.0)
         if perfil.get('x_contato') is None:
             perfil['x_contato'] = perfil.get('x_aproximacao')
@@ -32,7 +31,6 @@ class CortadorEnder:
             for chave in (
                 'habilitado', 'calibrado', 'posicionamento_paralelo',
                 'soltar_servo_recolhido', 'manter_y_corte',
-                'recolher_sem_referencia',
             )
         ):
             raise RuntimeError('As opcoes do cortador devem ser 0 ou 1.')
@@ -169,7 +167,7 @@ class CortadorEnder:
         sentido = math.copysign(1, perfil['x_corte'] - perfil['x_aproximacao'])
         return (x - perfil['x_aproximacao']) * sentido <= 0.05
 
-    def recolher_para_homing(self, perfil):
+    def validar_homing(self, perfil):
         if self.integracao.bmcu.active_operations or (
             self.integracao.manual_operation is not None
         ):
@@ -178,17 +176,20 @@ class CortadorEnder:
         cabecote.wait_moves()
         estado = cabecote.get_status(self.integracao.reactor.monotonic())
         self.validar_limites(perfil, estado)
-        if 'x' in estado['homed_axes']:
-            if not self.x_livre_para_recolher(
-                perfil, cabecote.get_position()[0]
-            ):
-                raise RuntimeError(
-                    'Afaste o cabecote do batente antes de G28.'
-                )
-        elif not perfil['recolher_sem_referencia']:
+        return cabecote, estado
+
+    def recolher_para_homing(self, perfil):
+        cabecote, estado = self.validar_homing(perfil)
+        if 'x' not in estado['homed_axes']:
             raise RuntimeError(
-                'Confira a folga e use Mover > Fechar batente na tela '
-                'ou CORTADOR_SERVO POSICAO=RECOLHIDO CONFIRMAR=1 antes de G28.'
+                'O eixo X deve terminar a referencia antes de recolher '
+                'o batente no G28.'
+            )
+        if not self.x_livre_para_recolher(
+            perfil, cabecote.get_position()[0]
+        ):
+            raise RuntimeError(
+                'Afaste o cabecote do batente antes de G28.'
             )
         self.posicionar_recolhido(perfil)
 
@@ -204,10 +205,11 @@ class CortadorEnder:
         self.recolhido = False
         self.incerto = True
         self.posicionar_servo(perfil, float(perfil['angulo_recolhido']))
-        if perfil.get('soltar_servo_recolhido') == 1:
+        if perfil.get('soltar_servo_recolhido', 1) == 1:
             self.integracao.execute(
                 'SET_SERVO SERVO=%s WIDTH=0' % perfil['servo']
             )
+            self.integracao.printer.lookup_object('toolhead').wait_moves()
         self.recolhido = True
         self.incerto = False
 

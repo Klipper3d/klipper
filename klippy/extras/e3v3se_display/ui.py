@@ -361,14 +361,6 @@ class DisplayUI:
             titulo, "Keep head clear of stop", executar, self.show_move_menu)
 
     def solicitar_homing(self):
-        if self.owner.homing_requer_batente():
-            self.show_confirmation(
-                "Close stop and home?", "Keep head clear of stop",
-                lambda: self._run_and_report(
-                    lambda: self.owner.home_all(recolher_batente=True),
-                    "Homing all axes"),
-                self.show_prepare_menu)
-            return
         self._run_and_report(self.owner.home_all, "Homing all axes")
 
     def _target_adjust(self, kind, title, value, step, maximum, callback, unit):

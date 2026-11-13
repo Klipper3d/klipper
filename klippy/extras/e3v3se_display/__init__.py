@@ -437,10 +437,6 @@ class E3V3SEDisplay:
             return None
         return cortador
 
-    def homing_requer_batente(self):
-        cortador = self.cortador_configurado()
-        return cortador is not None and not cortador.recolhido
-
     def mover_batente(self, recolher):
         if self.is_operation_busy():
             return False, "Complete or cancel the filament operation"
@@ -448,12 +444,7 @@ class E3V3SEDisplay:
         return self._execute(
             "CORTADOR_SERVO POSICAO=%s CONFIRMAR=1" % posicao)
 
-    def home_all(self, recolher_batente=False):
-        if recolher_batente:
-            if self.is_operation_busy():
-                return False, "Complete or cancel the filament operation"
-            return self._execute(
-                "CORTADOR_SERVO POSICAO=RECOLHIDO CONFIRMAR=1\nG28")
+    def home_all(self):
         return self._execute("G28")
 
     def disable_motors(self):

@@ -161,9 +161,36 @@ class EnderIntegration:
     def validar_homing_cortador(self, anterior):
         def executar(gcmd):
             perfil = self.cortador.preparar()
-            if perfil and not self.cortador.recolhido:
-                self.cortador.recolher_para_homing(perfil)
-            return anterior(gcmd)
+            if not perfil:
+                return anterior(gcmd)
+            self.cortador.validar_homing(perfil)
+            continuar = anterior
+            homing_seguro = self.printer.lookup_object('safe_z_home', None)
+            if homing_seguro is not None and anterior == homing_seguro.cmd_G28:
+                # The first segment performs safe_z_home's initial lift;
+                # continue its native axis/probe logic without lifting twice.
+                continuar = homing_seguro.home_axes
+            parametros = dict(gcmd.get_command_parameters())
+            todos = not any(eixo in parametros for eixo in 'XYZ')
+            comuns = {
+                chave: valor for chave, valor in parametros.items()
+                if chave not in ('X', 'Y', 'Z')
+            }
+            # Call the captured handler, not the registered wrapper: X must
+            # finish at its real endstop before any servo command is issued.
+            resultado = anterior(self.gcode.create_gcode_command(
+                'G28', 'G28', dict(comuns, X='0')
+            ))
+            self.cortador.recolher_para_homing(perfil)
+            restantes = {
+                eixo: parametros.get(eixo, '0') for eixo in 'YZ'
+                if todos or eixo in parametros
+            }
+            if restantes:
+                return continuar(self.gcode.create_gcode_command(
+                    'G28', 'G28', dict(comuns, **restantes)
+                ))
+            return resultado
 
         return executar
 
@@ -776,10 +803,6 @@ class EnderIntegration:
         if self.manual_operation is not None:
             raise gcmd.error('Filament operation in progress.')
         perfil_cortador = self.cortador.preparar()
-        if perfil_cortador and not self.cortador.recolhido:
-            raise gcmd.error(
-                'Recolha e confira o batente antes de iniciar a operacao.'
-            )
         device, destination, current = self.manual_context()
         if action == 'UNLOAD' and current is None:
             gcmd.respond_info('No filament is loaded; nothing to unload.')
@@ -799,6 +822,16 @@ class EnderIntegration:
                     'Channel %d is already loaded.' % (channel + 1)
                 )
                 return
+        if perfil_cortador:
+            head = self.printer.lookup_object('toolhead').get_status(
+                self.reactor.monotonic()
+            )
+            if not self.cortador.recolhido or not all(
+                axis in head['homed_axes'] for axis in 'xyz'
+            ):
+                # Use the same X-first preparation before claiming the
+                # filament operation, which intentionally blocks external G28.
+                self.execute('G28')
         self.manual_operation = action
         saved = False
         try:

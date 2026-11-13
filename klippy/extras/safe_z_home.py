@@ -49,6 +49,13 @@ class SafeZHoming:
                 toolhead.manual_move([None, None, self.z_hop],
                                      self.z_hop_speed)
 
+        self.home_axes(gcmd)
+
+    def home_axes(self, gcmd):
+        # Continue after the initial protective lift. Split homing callers
+        # must run cmd_G28 for their first segment, then use this for the rest
+        # to avoid a second cumulative lift when Z is still unreferenced.
+        toolhead = self.printer.lookup_object('toolhead')
         # Determine which axes we need to home
         need_x, need_y, need_z = [gcmd.get(axis, None) is not None
                                   for axis in "XYZ"]
