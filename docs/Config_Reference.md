@@ -820,6 +820,19 @@ anchor_y:
 anchor_z:
 #   The X, Y, and Z position of the cable winch in cartesian space.
 #   These parameters must be provided.
+attachment_x:
+attachment_y:
+attachment_z:
+#   Optional X, Y, and Z position (in mm) of the point where this
+#   winch's line attaches to the mover, measured from the mover's
+#   centre of mass. When set, flex compensation also balances the
+#   moments that the line forces apply to the mover, instead of
+#   treating the mover as a point. Set them on every winch stepper.
+#   Use this on machines where single lines attach to spread out points
+#   and together stop the mover from rotating, such as a mover held by
+#   eight lines from its eight corners. Leave them out when parallel
+#   line pairs (winch_lines_per_axis) keep the mover from rotating.
+#   The default is 0 for each, which treats the mover as a point.
 ```
 
 ### Generic Cartesian Kinematics

@@ -62,8 +62,11 @@ class WinchFlexHelperTests(unittest.TestCase):
     def build_helper(self, anchors, mover_weight=2.0, spring=20000.0,
                      target=20.0, min_force=None, max_force=None,
                      guy_wires=None, buildup_factor=0.0,
-                     mechanical_advantage=None, lines_per_axis=None):
+                     mechanical_advantage=None, lines_per_axis=None,
+                     attachments=None):
         num = len(anchors)
+        if attachments is None:
+            attachments = [(0.0, 0.0, 0.0)] * num
         if min_force is None:
             min_force = [0.0] * num
         if max_force is None:
@@ -86,7 +89,7 @@ class WinchFlexHelperTests(unittest.TestCase):
             options['winch_lines_per_axis'] = int_list_str(lines_per_axis)
         cfg['printer'] = options
         wrapper = configfile.ConfigWrapper(DummyPrinter(), cfg, {}, 'printer')
-        return WinchFlexHelper(tuple(anchors), wrapper)
+        return WinchFlexHelper(tuple(anchors), tuple(attachments), wrapper)
 
     def spool_lengths(self, helper, pos):
         distances, flex = helper.calc_arrays(pos)
@@ -160,6 +163,66 @@ class WinchFlexHelperTests(unittest.TestCase):
                 strain = reeled_line / (distance * ma + guy)
                 self.assertAlmostEqual(strain * spring, force / (ma * n),
                                        places=9)
+
+    def line_forces(self, helper, pos, spring, guy_wire):
+        distances, flex = helper.calc_arrays(pos)
+        return [-f * spring / (d + guy_wire)
+                for d, f in zip(distances, flex)], distances
+
+    def wrench_residual(self, anchors, attachments, pos, forces, distances,
+                        weight):
+        force = [0.0, 0.0, -weight]
+        moment = [0.0, 0.0, 0.0]
+        for anchor, arm, tension, dist in zip(anchors, attachments, forces,
+                                              distances):
+            pull = [tension * (anchor[i] - pos[i]) / dist for i in range(3)]
+            for i in range(3):
+                force[i] += pull[i]
+            moment[0] += arm[1] * pull[2] - arm[2] * pull[1]
+            moment[1] += arm[2] * pull[0] - arm[0] * pull[2]
+            moment[2] += arm[0] * pull[1] - arm[1] * pull[0]
+        return force, moment
+
+    def test_attachments_balance_moments_on_the_mover(self):
+        # Eight lines from the corners of a 400 mm cube
+        corners = [(x, y, z) for z in (200.0, -200.0)
+                   for x, y in ((200.0, -200.0), (200.0, 200.0),
+                                (-200.0, 200.0), (-200.0, -200.0))]
+        anchors = [(1284.9 * x / 200.0, 1284.9 * y / 200.0,
+                    1900.0 if z > 0.0 else -280.0) for x, y, z in corners]
+        mass, spring, guy_wire = 0.216, 20000.0, 117.2
+        weight = mass * 9.81
+        options = dict(mover_weight=mass, spring=spring,
+                       min_force=[3.0] * 8, max_force=[170.0] * 8,
+                       guy_wires=[guy_wire] * 8)
+        point = self.build_helper(anchors, **options)
+        rigid = self.build_helper(anchors, attachments=corners, **options)
+        for helper in (point, rigid):
+            helper.set_active(True)
+        previous = None
+        for step in range(61):
+            pos = (10.0 * step, 6.0 * step, 0.0)
+            forces, distances = self.line_forces(rigid, pos, spring, guy_wire)
+            force, moment = self.wrench_residual(
+                anchors, corners, pos, forces, distances, weight)
+            for value in force:
+                self.assertAlmostEqual(value, 0.0, delta=0.05)
+            for value in moment:
+                # N*mm
+                self.assertAlmostEqual(value, 0.0, delta=20.0)
+            for tension in forces:
+                self.assertGreaterEqual(tension, 3.0 - 1e-6)
+            if previous is not None:
+                for now, before in zip(forces, previous):
+                    self.assertLess(abs(now - before), 2.0)
+            previous = forces
+        # The point model leaves a moment for the lines to resolve by
+        # tilting the mover.
+        pos = (500.0, 300.0, 0.0)
+        forces, distances = self.line_forces(point, pos, spring, guy_wire)
+        _, moment = self.wrench_residual(
+            anchors, corners, pos, forces, distances, weight)
+        self.assertGreater(max(abs(value) for value in moment), 200.0)
 
     def test_four_anchor_small_perturbation(self):
         helper = self.build_helper(FOUR_ANCHORS_DEFAULT)
