@@ -11,8 +11,9 @@ class WinchFlexHelper:
     ALGORITHMS = {'tikhonov': 0, 'qp': 1}
     ALGO_NAMES = {v: k for k, v in ALGORITHMS.items()}
 
-    def __init__(self, anchors, config):
+    def __init__(self, anchors, attachments, config):
         self._anchors = tuple(anchors)
+        self._attachments = tuple(attachments)
         self.num = len(self._anchors)
         self.origin_distances = tuple(
             math.sqrt(anchor[0] * anchor[0]
@@ -72,11 +73,15 @@ class WinchFlexHelper:
     def _configure(self):
         anchors_flat = [float(coord) for anchor in self._anchors for coord in anchor]
         anchors_c = self.ffi_main.new("double[]", anchors_flat)
+        attachments_c = self.ffi_main.new("double[]", [
+            float(coord) for attachment in self._attachments
+            for coord in attachment])
         min_c = self.ffi_main.new("double[]", self.min_force)
         max_c = self.ffi_main.new("double[]", self.max_force)
         guy_ptr = self.ffi_main.new("double[]", self.guy_wires)
         self.ffi_lib.winch_flex_configure(
-            self.ptr, self.num, anchors_c, self.buildup_factor, self.mover_weight,
+            self.ptr, self.num, anchors_c, attachments_c,
+            self.buildup_factor, self.mover_weight,
             self.spring_constant, min_c, max_c,
             guy_ptr, self.flex_compensation_algorithm,
             self.ignore_gravity, self.ignore_pretension, self.mechanical_advantage,
@@ -147,6 +152,7 @@ class WinchKinematics:
         # Setup steppers at each anchor
         self.steppers = []
         self.anchors = []
+        self.attachments = []
         self.m569_driver_descriptors = []
         for i in range(26):
             name = 'stepper_' + chr(ord('a') + i)
@@ -162,7 +168,11 @@ class WinchKinematics:
             })
             a = tuple(stepper_config.getfloat('anchor_' + n) for n in 'xyz')
             self.anchors.append(a)
-        self.flex_helper = WinchFlexHelper(self.anchors, config)
+            self.attachments.append(tuple(
+                stepper_config.getfloat('attachment_' + n, 0.)
+                for n in 'xyz'))
+        self.flex_helper = WinchFlexHelper(
+            self.anchors, self.attachments, config)
         self.force_move = self.printer.lookup_object('force_move')
         self.stepper_enable = self.printer.lookup_object('stepper_enable')
         self.pretension_speed = config.getfloat(

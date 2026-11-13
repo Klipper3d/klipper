@@ -21,10 +21,16 @@
 #endif
 
 #define WINCH_MAX_ANCHORS 26
+// Three force rows, plus three moment rows when attachments are configured
+#define WINCH_MAX_ROWS 6
 #define EPSILON 1e-9
 #define G_ACCEL 9.81
 // LAMBDA is Tikhonov regularization weight in both the Tikhonov and the QP solver.
 #define LAMBDA 1e-3
+// Regularization of the force and moment equations. Balancing moments can
+// take tension changes that are large compared to the moment they correct,
+// so these equations are held much harder than LAMBDA would.
+#define LAMBDA_MOMENTS 1e-5
 
 enum winch_force_algorithm {
     WINCH_FORCE_ALGO_TIKHONOV = 0,
@@ -33,6 +39,10 @@ enum winch_force_algorithm {
 
 struct winch_flex {
     struct coord anchors[WINCH_MAX_ANCHORS];
+    // Line attachment points on the mover, relative to its centre of mass
+    struct coord attachments[WINCH_MAX_ANCHORS];
+    // 1 / (RMS attachment distance). Zero means no moment equations.
+    double inv_attachment_radius;
     int num_anchors;
     int enabled;
     int flex_compensation_algorithm;
@@ -129,80 +139,90 @@ build_direction_matrix(struct winch_flex *wf, const struct coord *pos,
     return valid >= 3;
 }
 
-static void
-solve_min_norm_T(const double *A, int N, const double Fext[3], double lambda,
-                 double *T)
+static inline int
+has_attachments(const struct winch_flex *wf)
 {
-    double S[3][3] = {
-        {lambda, 0., 0.},
-        {0., lambda, 0.},
-        {0., 0., lambda}
-    };
-    for (int j = 0; j < N; ++j) {
-        double ax = A[0 * N + j], ay = A[1 * N + j], az = A[2 * N + j];
-        S[0][0] += ax * ax;
-        S[0][1] += ax * ay;
-        S[0][2] += ax * az;
-        S[1][0] += ay * ax;
-        S[1][1] += ay * ay;
-        S[1][2] += ay * az;
-        S[2][0] += az * ax;
-        S[2][1] += az * ay;
-        S[2][2] += az * az;
-    }
-    double Sinv[3][3];
-    if (!invert3x3(S, Sinv)) {
-        S[0][0] += 1e-6;
-        S[1][1] += 1e-6;
-        S[2][2] += 1e-6;
-        invert3x3(S, Sinv);
-    }
+    return wf->inv_attachment_radius > 0.;
+}
 
-    double y0 = Sinv[0][0] * Fext[0] + Sinv[0][1] * Fext[1] + Sinv[0][2] * Fext[2];
-    double y1 = Sinv[1][0] * Fext[0] + Sinv[1][1] * Fext[1] + Sinv[1][2] * Fext[2];
-    double y2 = Sinv[2][0] * Fext[0] + Sinv[2][1] * Fext[1] + Sinv[2][2] * Fext[2];
-
+// Columns hold the force and the moment about the centre of mass that a unit
+// tension applies to the mover. Moments are divided by the RMS attachment
+// distance so that all six rows are forces of comparable size.
+static int
+build_wrench_matrix(struct winch_flex *wf, const struct coord *pos, double *A)
+{
+    int N = wf->num_anchors;
+    if (!build_direction_matrix(wf, pos, A))
+        return 0;
     for (int j = 0; j < N; ++j) {
-        double ax = A[0 * N + j], ay = A[1 * N + j], az = A[2 * N + j];
-        T[j] = ax * y0 + ay * y1 + az * y2;
+        double ux = A[0 * N + j], uy = A[1 * N + j], uz = A[2 * N + j];
+        double rx = wf->attachments[j].x * wf->inv_attachment_radius;
+        double ry = wf->attachments[j].y * wf->inv_attachment_radius;
+        double rz = wf->attachments[j].z * wf->inv_attachment_radius;
+        A[3 * N + j] = ry * uz - rz * uy;
+        A[4 * N + j] = rz * ux - rx * uz;
+        A[5 * N + j] = rx * uy - ry * ux;
+    }
+    return 1;
+}
+
+static int chol_decompose_spd(double *G, int k);
+static void chol_solve_spd(const double *L, int k, const double *b, double *x);
+
+// Cholesky factor of A_f A_f^T + lambda I (M x M), where A_f holds the
+// columns of A listed in cols
+static void
+factor_gram(const double *A, int M, int N, const int *cols, int k,
+            double lambda, double *S)
+{
+    for (int r = 0; r < M; ++r) {
+        for (int c = 0; c <= r; ++c) {
+            double acc = r == c ? lambda : 0.;
+            for (int p = 0; p < k; ++p)
+                acc += A[r * N + cols[p]] * A[c * N + cols[p]];
+            S[r * M + c] = acc;
+            S[c * M + r] = acc;
+        }
+    }
+    chol_decompose_spd(S, M);
+}
+
+static void
+solve_min_norm_T(const double *A, int M, int N, const double *Fext,
+                 double lambda, double *T)
+{
+    int cols[WINCH_MAX_ANCHORS] = { 0 };
+    for (int j = 0; j < N; ++j)
+        cols[j] = j;
+    double S[WINCH_MAX_ROWS * WINCH_MAX_ROWS];
+    factor_gram(A, M, N, cols, N, lambda, S);
+    double y[WINCH_MAX_ROWS];
+    chol_solve_spd(S, M, Fext, y);
+    for (int j = 0; j < N; ++j) {
+        double acc = 0.;
+        for (int r = 0; r < M; ++r)
+            acc += A[r * N + j] * y[r];
+        T[j] = acc;
     }
 }
 
 static void
-build_null_projector(const double *A, int N, double lambda, double *P)
+build_null_projector(const double *A, int M, int N, double lambda, double *P)
 {
-    double S[3][3] = {
-        {lambda, 0., 0.},
-        {0., lambda, 0.},
-        {0., 0., lambda}
-    };
-    for (int j = 0; j < N; ++j) {
-        double ax = A[0 * N + j], ay = A[1 * N + j], az = A[2 * N + j];
-        S[0][0] += ax * ax;
-        S[0][1] += ax * ay;
-        S[0][2] += ax * az;
-        S[1][0] += ay * ax;
-        S[1][1] += ay * ay;
-        S[1][2] += ay * az;
-        S[2][0] += az * ax;
-        S[2][1] += az * ay;
-        S[2][2] += az * az;
-    }
-    double Sinv[3][3];
-    if (!invert3x3(S, Sinv)) {
-        S[0][0] += 1e-6;
-        S[1][1] += 1e-6;
-        S[2][2] += 1e-6;
-        invert3x3(S, Sinv);
-    }
-    for (int r = 0; r < N; ++r) {
-        for (int c = 0; c < N; ++c) {
-            double ax = A[0 * N + c], ay = A[1 * N + c], az = A[2 * N + c];
-            double B0 = Sinv[0][0] * ax + Sinv[0][1] * ay + Sinv[0][2] * az;
-            double B1 = Sinv[1][0] * ax + Sinv[1][1] * ay + Sinv[1][2] * az;
-            double B2 = Sinv[2][0] * ax + Sinv[2][1] * ay + Sinv[2][2] * az;
-            double arx = A[0 * N + r], ary = A[1 * N + r], arz = A[2 * N + r];
-            double Mrc = arx * B0 + ary * B1 + arz * B2;
+    int cols[WINCH_MAX_ANCHORS] = { 0 };
+    for (int j = 0; j < N; ++j)
+        cols[j] = j;
+    double S[WINCH_MAX_ROWS * WINCH_MAX_ROWS];
+    factor_gram(A, M, N, cols, N, lambda, S);
+    for (int c = 0; c < N; ++c) {
+        double col[WINCH_MAX_ROWS], B[WINCH_MAX_ROWS];
+        for (int r = 0; r < M; ++r)
+            col[r] = A[r * N + c];
+        chol_solve_spd(S, M, col, B);
+        for (int r = 0; r < N; ++r) {
+            double Mrc = 0.;
+            for (int k = 0; k < M; ++k)
+                Mrc += A[k * N + r] * B[k];
             P[r * N + c] = (r == c ? 1.0 : 0.0) - Mrc;
         }
     }
@@ -224,11 +244,14 @@ static_forces_tikhonov(struct winch_flex *wf, const struct coord *pos,
                        double *forces)
 {
     int N = wf->num_anchors;
-    double A[3 * WINCH_MAX_ANCHORS];
-    if (!build_direction_matrix(wf, pos, A))
+    int M = has_attachments(wf) ? 6 : 3;
+    double lambda = has_attachments(wf) ? LAMBDA_MOMENTS : LAMBDA;
+    double A[WINCH_MAX_ROWS * WINCH_MAX_ANCHORS];
+    if (!(has_attachments(wf) ? build_wrench_matrix(wf, pos, A)
+          : build_direction_matrix(wf, pos, A)))
         return 0;
 
-    double Fext[3] = {0., 0., 0.};
+    double Fext[WINCH_MAX_ROWS] = {0., 0., 0., 0., 0., 0.};
     double T[WINCH_MAX_ANCHORS];
     memset(T, 0, sizeof(T));
     if (!wf->ignore_gravity) {
@@ -238,12 +261,12 @@ static_forces_tikhonov(struct winch_flex *wf, const struct coord *pos,
         // damping the least squares problem.
         // It gives Thikonov a ~milliforce
         // leeway to make nicer (no blow up) but less exact solutions
-        solve_min_norm_T(A, N, Fext, LAMBDA, T);
+        solve_min_norm_T(A, M, N, Fext, lambda, T);
     }
 
     if (!wf->ignore_pretension) {
         double P[WINCH_MAX_ANCHORS * WINCH_MAX_ANCHORS];
-        build_null_projector(A, N, LAMBDA, P);
+        build_null_projector(A, M, N, lambda, P);
         const double tol = 1e-3;
         // Magic step_damp number that makes gradient descent typically converge within tol fast
         // Anything within [0.1, 1.5] works
@@ -525,17 +548,119 @@ solve_box_ridge_ls(const double *A, int N, const double Fext[3], double lambda,
     return 1;
 }
 
+// Smallest tensions within [L, U] that balance the six force and moment
+// equations A T = F. Minimizes |A T - F|^2 + lambda |T|^2 for a small lambda
+// with an active-set method. Every solve is of the M x M system
+// A_f A_f^T + lambda I over the free tensions, which stays well conditioned
+// however small lambda is, and the bound multipliers T_i - a_i^T y are in
+// Newton, so tol is too.
+static void
+solve_box_min_norm(const double *A, int M, int N, const double *Fext,
+                   double lambda, const double *Lbounds,
+                   const double *Ubounds, int max_iters, double tol,
+                   double *t)
+{
+    int is_free[WINCH_MAX_ANCHORS];
+    int cols[WINCH_MAX_ANCHORS] = { 0 };
+    double S[WINCH_MAX_ROWS * WINCH_MAX_ROWS];
+    double r[WINCH_MAX_ROWS], y[WINCH_MAX_ROWS];
+
+    // Start from the unbounded solution, clamped into the bounds
+    for (int i = 0; i < N; ++i)
+        cols[i] = i;
+    factor_gram(A, M, N, cols, N, lambda, S);
+    chol_solve_spd(S, M, Fext, y);
+    for (int i = 0; i < N; ++i) {
+        t[i] = 0.;
+        for (int row = 0; row < M; ++row)
+            t[i] += A[row * N + i] * y[row];
+        is_free[i] = t[i] > Lbounds[i] && t[i] < Ubounds[i];
+        if (t[i] <= Lbounds[i])
+            t[i] = Lbounds[i];
+        else if (t[i] >= Ubounds[i])
+            t[i] = Ubounds[i];
+    }
+
+    int released = -1;
+    for (int it = 0; it < max_iters; ++it) {
+        int k = 0;
+        for (int i = 0; i < N; ++i)
+            if (is_free[i])
+                cols[k++] = i;
+        for (int row = 0; row < M; ++row) {
+            r[row] = Fext[row];
+            for (int i = 0; i < N; ++i)
+                if (!is_free[i])
+                    r[row] -= A[row * N + i] * t[i];
+        }
+        factor_gram(A, M, N, cols, k, lambda, S);
+        chol_solve_spd(S, M, r, y);
+
+        // Move the free tensions towards their optimum, stopping at the
+        // first bound that gets in the way
+        double alpha = 1.;
+        int blocking = -1;
+        double blocking_bound = 0.;
+        double step[WINCH_MAX_ANCHORS];
+        for (int p = 0; p < k; ++p) {
+            int i = cols[p];
+            double target = 0.;
+            for (int row = 0; row < M; ++row)
+                target += A[row * N + i] * y[row];
+            step[p] = target - t[i];
+            double bound = step[p] > 0. ? Ubounds[i] : Lbounds[i];
+            if (step[p] != 0. && (bound - t[i]) / step[p] < alpha) {
+                alpha = (bound - t[i]) / step[p];
+                blocking = i;
+                blocking_bound = bound;
+            }
+        }
+        if (alpha < 0.)
+            alpha = 0.;
+        for (int p = 0; p < k; ++p)
+            t[cols[p]] += alpha * step[p];
+        if (blocking >= 0) {
+            t[blocking] = blocking_bound;
+            is_free[blocking] = 0;
+            if (blocking == released)
+                break;
+            continue;
+        }
+
+        // The free tensions are optimal. Release the bound tension that
+        // most wants to move into its range, if any.
+        double worst = tol;
+        released = -1;
+        for (int i = 0; i < N; ++i) {
+            if (is_free[i] || Ubounds[i] <= Lbounds[i])
+                continue;
+            double mu = t[i];
+            for (int row = 0; row < M; ++row)
+                mu -= A[row * N + i] * y[row];
+            double want = t[i] <= Lbounds[i] ? -mu : mu;
+            if (want > worst) {
+                worst = want;
+                released = i;
+            }
+        }
+        if (released < 0)
+            break;
+        is_free[released] = 1;
+    }
+}
+
 static int
 static_forces_qp(struct winch_flex *wf, const struct coord *pos,
                  double *forces)
 {
     int N = wf->num_anchors;
 
-    double A[3 * WINCH_MAX_ANCHORS];
-    if (!build_direction_matrix(wf, pos, A))
+    double A[WINCH_MAX_ROWS * WINCH_MAX_ANCHORS];
+    if (!(has_attachments(wf) ? build_wrench_matrix(wf, pos, A)
+          : build_direction_matrix(wf, pos, A)))
         return 0;
 
-    double Fext[3] = {0., 0., 0.};
+    double Fext[WINCH_MAX_ROWS] = {0., 0., 0., 0., 0., 0.};
     if (!wf->ignore_gravity)
         Fext[2] = wf->mover_weight * G_ACCEL;
 
@@ -554,8 +679,11 @@ static_forces_qp(struct winch_flex *wf, const struct coord *pos,
     const int max_iters = 100;
     const double tol = 1e-3;
     double T[WINCH_MAX_ANCHORS];
-    if (!solve_box_ridge_ls(A, N, Fext, LAMBDA, Lbounds, Ubounds,
-                            max_iters, tol, T))
+    if (has_attachments(wf))
+        solve_box_min_norm(A, 6, N, Fext, LAMBDA_MOMENTS, Lbounds, Ubounds,
+                           max_iters, tol, T);
+    else if (!solve_box_ridge_ls(A, N, Fext, LAMBDA, Lbounds, Ubounds,
+                                 max_iters, tol, T))
         return 0;
 
     for (int i = 0; i < N; ++i)
@@ -1028,6 +1156,7 @@ void __visible
 winch_flex_configure(struct winch_flex *wf,
                      int num_anchors,
                      const double *anchors,
+                     const double *attachments,
                      double buildup_factor,
                      double mover_weight,
                      double spring_constant,
@@ -1058,6 +1187,9 @@ winch_flex_configure(struct winch_flex *wf,
         wf->anchors[i].x = anchors[i * 3];
         wf->anchors[i].y = anchors[i * 3 + 1];
         wf->anchors[i].z = anchors[i * 3 + 2];
+        wf->attachments[i].x = attachments[i * 3];
+        wf->attachments[i].y = attachments[i * 3 + 1];
+        wf->attachments[i].z = attachments[i * 3 + 2];
         wf->min_force[i] = min_force ? min_force[i] : 0.;
         wf->max_force[i] = max_force ? max_force[i] : 120.0;
 
@@ -1075,6 +1207,8 @@ winch_flex_configure(struct winch_flex *wf,
     }
     for (int i = num_anchors; i < WINCH_MAX_ANCHORS; ++i) {
         wf->anchors[i].x = wf->anchors[i].y = wf->anchors[i].z = 0.;
+        wf->attachments[i].x = wf->attachments[i].y = 0.;
+        wf->attachments[i].z = 0.;
         wf->min_force[i] = 0.;
         wf->max_force[i] = 120.0;
         wf->guy_wires[i] = 0.;
@@ -1086,6 +1220,13 @@ winch_flex_configure(struct winch_flex *wf,
         || wf->flex_compensation_algorithm > WINCH_FORCE_ALGO_QP) {
         wf->flex_compensation_algorithm = WINCH_FORCE_ALGO_QP;
     }
+    double radius_sq = 0.;
+    for (int i = 0; i < num_anchors; ++i)
+        radius_sq += wf->attachments[i].x * wf->attachments[i].x
+            + wf->attachments[i].y * wf->attachments[i].y
+            + wf->attachments[i].z * wf->attachments[i].z;
+    wf->inv_attachment_radius = radius_sq > EPSILON
+        ? sqrt(num_anchors / radius_sq) : 0.;
     recalc_origin(wf);
 }
 
