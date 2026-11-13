@@ -116,11 +116,11 @@ static const struct gpio_pwm_info pwm_regs[] = {
 #elif CONFIG_MACH_STM32F4
   #if CONFIG_MACH_STM32F401
     {TIM3,  GPIO('A',  6),  1, GPIO_FUNCTION(2)},
-    {TIM3,  GPIO('C',  6),  1, GPIO_FUNCTION(3)},
+    {TIM3,  GPIO('C',  6),  1, GPIO_FUNCTION(2)},
     {TIM3,  GPIO('A',  7),  2, GPIO_FUNCTION(2)},
-    {TIM3,  GPIO('C',  7),  2, GPIO_FUNCTION(3)},
-    {TIM3,  GPIO('C',  8),  3, GPIO_FUNCTION(3)},
-    {TIM3,  GPIO('C',  9),  4, GPIO_FUNCTION(3)},
+    {TIM3,  GPIO('C',  7),  2, GPIO_FUNCTION(2)},
+    {TIM3,  GPIO('C',  8),  3, GPIO_FUNCTION(2)},
+    {TIM3,  GPIO('C',  9),  4, GPIO_FUNCTION(2)},
   #endif
   #if CONFIG_MACH_STM32F446
     {TIM2,  GPIO('B',  2),  4, GPIO_FUNCTION(1)},
