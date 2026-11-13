@@ -298,7 +298,9 @@ class CutterHomingTests(unittest.TestCase):
                     b.sequence(),
                 )
 
-    def test_manual_loading_can_home_before_claiming_the_filament_operation(self):
+    def test_manual_loading_can_home_before_claiming_the_filament_operation(
+        self,
+    ):
         for retracted, axes in ((False, ''), (False, 'xyz'), (True, '')):
             with self.subTest(retracted=retracted, axes=axes):
                 b = HomingBench()
@@ -315,7 +317,9 @@ class CutterHomingTests(unittest.TestCase):
                     if text.startswith('BMCU_LOAD '):
                         self.assertTrue(b.obj.cortador.recolhido)
                         self.assertTrue(all(a in b.referencias for a in 'xyz'))
-                        b.device.status['route_state'][0] = protocol.ROUTE_LOADED
+                        b.device.status['route_state'][0] = (
+                            protocol.ROUTE_LOADED
+                        )
                         b.present = True
                     return execute(text)
 
@@ -362,7 +366,9 @@ class CutterHomingTests(unittest.TestCase):
                     ('mover', [None, None, 10.0], 10.0), first_move,
                 )
 
-    def test_already_referenced_z_retains_native_initial_and_final_clearance(self):
+    def test_already_referenced_z_retains_native_initial_and_final_clearance(
+        self,
+    ):
         b = PhysicalHomingBench()
         b.position[2] = b.physical_z = 5.0
         b.referencias = 'z'

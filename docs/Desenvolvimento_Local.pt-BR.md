@@ -33,6 +33,20 @@ Um ambiente já preparado pode usar outro caminho de virtualenv; substitua o
 prefixo dos comandos pelo caminho correspondente. Não instale nem reinicie
 serviços da impressora para rodar testes locais.
 
+O workflow **Build test** também executa o verificador de estilo do Klipper.
+`git diff --check` não substitui essa etapa: ele não detecta o limite de 80
+caracteres dos arquivos Python/C. Em um checkout limpo no sistema de arquivos
+Linux, com finais de linha LF, caminho sem espaços e sem arquivos privados,
+rode também:
+
+```sh
+bash scripts/check_whitespace.sh
+```
+
+Não publique nem remova seus arquivos privados para obter esse checkout; use
+uma cópia pública separada. O verificador percorre os diretórios diretamente,
+inclusive arquivos ignorados que estejam presentes neles.
+
 ## Compilação e limites
 
 Para compilar o firmware, também são necessários `gcc-arm-none-eabi` e

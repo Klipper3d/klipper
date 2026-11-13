@@ -227,7 +227,9 @@ class TestesCortador(unittest.TestCase):
             ('gcode', 'SET_SERVO SERVO=bmcu_cortador WIDTH=0'), b.eventos
         )
 
-    def test_recolhimento_manual_soltar_pwm_por_padrao_com_opcao_de_manter(self):
+    def test_recolhimento_manual_soltar_pwm_por_padrao_com_opcao_de_manter(
+        self,
+    ):
         for ajuste in (None, 0, 1):
             with self.subTest(ajuste=ajuste):
                 b = BancadaCortador()
