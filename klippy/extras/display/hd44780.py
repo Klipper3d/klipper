@@ -3,6 +3,7 @@
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
 # Copyright (C) 2018  Eric Callahan <arksine.code@gmail.com>
 # Copyright (C) 2021  Marc-Andre Denis <marcadenis@msn.com>
+# Copyright (C) 2026  Min Choi <3387910@naver.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
@@ -164,3 +165,26 @@ class hd44780_spi(DisplayBase):
                                   reqclock=BACKGROUND_PRIORITY_CLOCK)
                 self.spi.spi_send([val], minclock,
                                   reqclock=BACKGROUND_PRIORITY_CLOCK)
+
+class hd44780_i2c(DisplayBase):
+    def __init__(self, config):
+        self.i2c = bus.MCU_I2C_from_config(
+            config, default_addr=0x27, async_write_only=True)
+        self.backlight_mask = (1 << 3)
+        self.enable_mask = (1 << 2)
+        self.data_mask = (1 << 0)
+        self.command_mask = 0
+        DisplayBase.__init__(self, config, self.i2c.get_mcu())
+    def send(self, cmds, is_data=False, minclock=0):
+        mask = self.backlight_mask | (
+            self.data_mask if is_data else self.command_mask)
+        cmds = bytearray(cmds)
+        for pos in range(0, len(cmds), 6):
+            i2c_data = []
+            for b in cmds[pos:pos + 6]:
+                hi = (b & 0xf0) | mask
+                lo = ((b << 4) & 0xf0) | mask
+                i2c_data.extend([hi, hi | self.enable_mask, hi,
+                                 lo, lo | self.enable_mask, lo])
+            self.i2c.i2c_write_noack(i2c_data, minclock=minclock,
+                                     reqclock=BACKGROUND_PRIORITY_CLOCK)

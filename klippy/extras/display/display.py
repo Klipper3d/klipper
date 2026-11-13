@@ -18,6 +18,7 @@ LCD_chips = {
     'hd44780': hd44780.HD44780, 'uc1701': uc1701.UC1701,
     'ssd1306': uc1701.SSD1306, 'sh1106': uc1701.SH1106,
     'hd44780_spi': hd44780.hd44780_spi,
+    'hd44780_i2c': hd44780.hd44780_i2c,
     'aip31068_spi':aip31068_spi.aip31068_spi
 }
 
