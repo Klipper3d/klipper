@@ -1,0 +1,27 @@
+{
+    "Cancel": "Cancelar",
+    "Changed": "Os dados do canal mudaram. Feche este diálogo e abra novamente.",
+    "Channel": "Canal {channel}",
+    "Color": "Cor do filamento",
+    "Connected": "BMCU conectada",
+    "EditChannel": "Editar filamento do canal {channel}",
+    "EditHint": "Selecione um rolo para editar seu material e sua cor.",
+    "FourChannels": "4 canais físicos",
+    "Headline": "BMCU",
+    "Material": "Material",
+    "MaterialHint": "Por exemplo: PLA, PETG, TPU ou PETG-CF.",
+    "MetadataOnly": "Esta edição altera informações do filamento. Não carrega filamento, muda rotas ou configura temperaturas de impressão.",
+    "Offline": "BMCU indisponível — exige pacote 1.1.2 e firmware 1.0.4",
+    "ReadOnly": "A edição só fica disponível com a impressora e a BMCU prontas e paradas.",
+    "Refill": "Reponha o filamento no canal {channel} e confirme pelo botão Retomar normal. A carga e a limpeza terminam antes de voltar à impressão.",
+    "Save": "Salvar filamento",
+    "SaveFailed": "Não foi possível confirmar a gravação. Confira o console e os dados atuais do canal antes de tentar novamente.",
+    "States": {
+        "empty": "Vazio",
+        "loaded": "Carregado",
+        "offline": "Desconectado",
+        "parked": "Estacionado",
+        "uncertain": "Conferir caminho"
+    },
+    "Unspecified": "Não informado"
+}

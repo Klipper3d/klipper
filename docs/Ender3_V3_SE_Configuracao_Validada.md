@@ -2,8 +2,8 @@
 
 **English** | [Português brasileiro](pt-BR/Ender3_V3_SE_Configuracao_Validada.md)
 
-This guide covers the optional Ender 3 V3 SE integration for BMCU-Klipper 1.0.6
-with firmware 1.0.1. Four feeder channels share one physical extruder through an
+This guide covers the optional Ender 3 V3 SE integration for BMCU-Klipper 1.1.2
+with firmware 1.0.4. Four feeder channels share one physical extruder through an
 entry switch above its gears. A purge chute/wiper is used during tool changes.
 The external package owns transport, route state, print maps and services.
 
@@ -88,22 +88,76 @@ Do not assume that an entry-sensor transition proves that filament is already
 between the gears. The extruder-first capture stage bridges that gap. Keep the
 hotend at the appropriate material temperature for capture and unloading.
 
+## Nozzle wiping defaults
+
+Current source defaults, **not the v2.0.0 tag**, use six complete X round trips
+between -6 and -3, followed by the final crossing to -3. Y stays at 123 and Z
+stays at its already lifted position during wiping. This changes nozzle cleaning,
+not the blade stroke. The commissioning table above records the earlier tested
+assembly; the wider wipe still needs physical acceptance.
+
+The installer preserves an existing `bmcu-multicor-ender.cfg`, including its
+coordinates and pass count. Updating code alone does not replace an explicit
+older `wipe_x: -4` or `wipes: 3`. After checking clearances, edit these options
+in the **existing** `[bmcu_ender_integration]` section, not a duplicate section,
+and restart Klipper while idle to adopt the new pattern:
+
+```ini
+purge_x: -6
+wipe_x: -3
+purge_y: 123
+wipes: 6
+```
+
+Keep `purge_mm: 35`, material temperatures and calibrated extrusion rates.
+Wiping remains F600 with the existing one-second settling dwell. Thirteen
+3 mm crossings travel 39 mm instead of the earlier seven 2 mm crossings
+(14 mm). At F600, ideal constant-speed travel alone is 3.9 s instead of 1.4 s;
+these are estimates excluding acceleration, completion waits and controller
+checks, not measured cycle times. Do not claim the wider wipe is faster.
+
+Session, channel presence, entry-switch reading, extrusion-temperature readiness
+and active feeder assistance are checked through purge completion, after the
+dwell and after each completed crossing, including the final one. A failure
+stops the load instead of reporting success. During a manual operation these
+checks also honor display cancellation. A zero motor PWM at the buffer target
+is not the same as a stopped assistance mode. Nozzle feed and withdrawal enter
+assistance at phase boundaries rather than reissuing the same mode at each
+chunk; sensor/encoder checks and intentional withdrawal restarts remain.
+
+Before accepting the change on hardware:
+
+1. Finish or cancel printing, park channels, and confirm the cutter stop is
+   retracted. Verify the entire X=-6 to X=-3 path clears the assembly at Y=123
+   and the configured lifted Z, with no heating or extrusion for this check.
+2. After clearance is established, test a supervised heated load with the
+   calibrated material settings. Count six complete round trips plus the final
+   crossing; Y and Z must remain stationary during wiping.
+3. Confirm the purge falls into the chute rather than staying on the nozzle,
+   with adequate flow and no skipping or collision. Inspect color transitions
+   before reducing purge volume or increasing rates.
+4. Repeat across all four channels and record complete exchange times and
+   failed attempts under the same conditions. Software tests alone establish
+   neither purge detachment nor a net time/material saving.
+
 ## Install or update an existing integration
 
 Back up first. Keep the printer idle, all channels parked and the entry sensor
 clear. For a complete host/display rollback boundary, run the new installer
 from a separate clean checkout of the published v2 release. Do not update the
-active `~/klipper` checkout with `git pull` beforehand. After v2.0.0 is published:
+active `~/klipper` checkout with `git pull` beforehand. First complete the
+[separate package/firmware maintenance](releases/v2.0.1.md#upgrade-and-rollback);
+these commands require BMCU 1.1.2 / 1.0.4 already ready. After v2.0.1 is published:
 
 ```sh
-git clone --branch v2.0.0 --single-branch \
+git clone --branch v2.0.1 --single-branch \
   https://github.com/bernardokcosta/ender3-v3-se-klipper-bmcu.git \
   "$HOME/klipper-v2-source"
 sudo python3 "$HOME/klipper-v2-source/scripts/ender3-v3-se/install_multicolor.py" \
   --host-source "$HOME/klipper-v2-source"
 ```
 
-The installer verifies the installed 1.0.6 structure, patches the generic
+The installer verifies the installed 1.1.2 structure, patches the generic
 contract and pre-capture phases, installs optional modules and preserves
 `SAVE_CONFIG` and existing integration settings. It serializes installation
 and rollback with one lock, stops the relevant services, then re-reads state
@@ -119,7 +173,9 @@ host/target files, unsupported Git layouts, addon conflicts or changing staged
 files are rejected instead of discarding user work. Staging artifacts are kept
 for diagnosis, not deleted automatically.
 
-The changed transport daemon starts before Klipper. If startup fails, the
+The native process helper stops the transport after Klipper exits and starts
+the changed daemon before Klipper; no separate transport systemd unit is assumed.
+If startup fails, the
 previous host/display and affected configuration are restored. Only known
 callback renames are undone in the **current** BMCU state; stale routes and
 calibrations are not copied over current evidence. The restored host must
@@ -147,6 +203,10 @@ assignments. Do not run endpoint setup at every boot or print start.
 ## Everyday filament controls
 
 The stock display groups each operation in one place:
+
+The [native Mainsail card](Ender3_V3_SE_Mainsail.md) adds live channel display
+and guarded material/color editing. On runout, insert filament in the indicated
+channel and confirm with normal Resume; do not reset the BMCU or print map.
 
 - **Filament / BMCU:** load one of four physical channels, unload the active
   channel, or confirm **Reset BMCU** after manual filament removal. An uncertain

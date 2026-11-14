@@ -98,6 +98,7 @@ class V2PublicApiTests(unittest.TestCase):
                 'BMCU_CONFIRM_CLEAR_PATH', 'BMCU_ENDER_SERVO',
                 'BMCU_ENDER_TEST_CUTTER', 'BMCU_ENDER_RESET',
                 'BMCU_ENDER_MOVE_TO_PURGE',
+                'BMCU_ENDER_SET_FILAMENT',
             }, set(b.handlers),
         )
         self.assertIn('bmcu_measurement', loaded)

@@ -543,6 +543,7 @@ PORTUGUESE = {
     'BMCU ready': 'BMCU pronta',
     'BMCU: failure': 'BMCU: falha',
     'Channel %d': 'Canal %d',
+    'Refill channel %d': 'Repor canal %d',
     'Channel %d: load': 'Canal %d: carregar',
     'Unload active channel': 'Descarregar canal ativo',
     'BMCU channels': 'Canais BMCU',

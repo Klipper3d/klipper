@@ -27,6 +27,13 @@ jobs:
     - name: Test validated BMCU integration and backup
       run: ci_build/venv/bin/python -m unittest discover -s test/bmcu_integracao -p 'test_*.py'
 
+    - name: Verify pinned native BMCU 1.1.2 contracts
+      run: |
+        git clone --depth 1 --branch v1.1.2 \
+          https://github.com/jarczakpawel/BMCU-Klipper.git ci_build/bmcu-upstream
+        ci_build/venv/bin/python scripts/ender3-v3-se/check_bmcu_contracts.py \
+          --source ci_build/bmcu-upstream
+
     - name: Test documentation checker
       run: ci_build/venv/bin/python -m unittest discover -s test/public_docs -p 'test_*.py'
 
@@ -89,9 +96,40 @@ jobs:
         name: ender3-v3-se-gd32f303-${{ github.sha }}
         path: ci_build/ender3-v3-se-artifact
 
+  mainsail-panel:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+    - uses: actions/checkout@v5
+
+    - uses: actions/setup-node@v7
+      with:
+        node-version: '24.21.0'
+        package-manager-cache: false
+
+    - name: Build and test the pinned native Mainsail card
+      run: |
+        mkdir -p ci_build/mainsail-panel-artifact
+        git clone --depth 1 --branch v2.19.0 \
+          https://github.com/mainsail-crew/mainsail.git ci_build/mainsail-upstream
+        python3 scripts/ender3-v3-se/build_mainsail_panel.py \
+          --source ci_build/mainsail-upstream --output ci_build/mainsail-panel \
+          --artifact ci_build/mainsail-panel-artifact/mainsail-bmcu.zip
+        cp ci_build/mainsail-panel/dist/bmcu-build.json ci_build/mainsail-panel-artifact/
+        printf 'commit=%s\nnode=%s\n' "$GITHUB_SHA" "$(node --version)" \
+          > ci_build/mainsail-panel-artifact/MAINSAIL-BUILD-METADATA.txt
+        cd ci_build/mainsail-panel-artifact
+        sha256sum mainsail-bmcu.zip bmcu-build.json MAINSAIL-BUILD-METADATA.txt > PANEL-SHA256SUMS
+
+    - name: Upload Mainsail card
+      uses: actions/upload-artifact@v7
+      with:
+        name: mainsail-bmcu-${{ github.sha }}
+        path: ci_build/mainsail-panel-artifact
+
   publish-release:
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-    needs: display-and-firmware
+    needs: [display-and-firmware, mainsail-panel]
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     concurrency:
@@ -140,10 +178,22 @@ jobs:
       run: |
         gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" \
           --name "ender3-v3-se-gd32f303-${GITHUB_SHA}" --dir release-artifacts
+        gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+          --name "mainsail-bmcu-${GITHUB_SHA}" --dir release-artifacts
+        python3 -c '
+        import hashlib, pathlib, sys
+        sys.path.insert(0, "scripts/ender3-v3-se")
+        from install_mainsail_panel import validate_archive
+        archive = pathlib.Path("release-artifacts/mainsail-bmcu.zip")
+        validate_archive(archive, hashlib.sha256(archive.read_bytes()).hexdigest())
+        '
         cd release-artifacts
         sha256sum --check SHA256SUMS
+        sha256sum --check PANEL-SHA256SUMS
         grep -Fx "commit=${GITHUB_SHA}" BUILD-METADATA.txt
+        grep -Fx "commit=${GITHUB_SHA}" MAINSAIL-BUILD-METADATA.txt
         python3 -c 'import json; version = json.load(open("klipper.dict"))["version"]; assert version.startswith("v${{ steps.release.outputs.version }}-0-g") and "dirty" not in version'
+        cat PANEL-SHA256SUMS >> SHA256SUMS
 
     - name: Publish release and source tag
       if: steps.release.outputs.publish == 'true'
@@ -158,4 +208,6 @@ jobs:
           --notes-file "docs/releases/v${RELEASE_VERSION}.md" \
           release-artifacts/klipper.bin release-artifacts/klipper.dict \
           release-artifacts/defconfig release-artifacts/BUILD-METADATA.txt \
+          release-artifacts/mainsail-bmcu.zip release-artifacts/bmcu-build.json \
+          release-artifacts/MAINSAIL-BUILD-METADATA.txt \
           release-artifacts/SHA256SUMS

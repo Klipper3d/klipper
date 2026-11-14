@@ -79,11 +79,13 @@ Cancele qualquer impressão, recupere manualmente um atolamento e confirme todas
 as rotas vazias ou estacionadas antes. Faça backup da configuração. Em uma
 instalação existente, prepare a fonte publicada da v2 separadamente para que o
 instalador preserve o checkout anterior inteiro do host/display. **Não atualize
-primeiro o checkout ativo com `git pull`.** Depois que a v2.0.0 for publicada e
+primeiro o checkout ativo com `git pull`.** Conclua antes a
+[manutenção de pacote/firmware](releases/v2.0.1.md#upgrade-and-rollback).
+Depois que a v2.0.1 for publicada e
 após confirmar que o GPIO proposto está livre:
 
 ```sh
-git clone --branch v2.0.0 --single-branch \
+git clone --branch v2.0.1 --single-branch \
   https://github.com/bernardokcosta/ender3-v3-se-klipper-bmcu.git \
   "$HOME/klipper-v2-source"
 sudo python3 "$HOME/klipper-v2-source/scripts/ender3-v3-se/install_multicolor.py" \
@@ -231,6 +233,10 @@ Outros callbacks mantêm o comportamento nativo.
 
 <a id="faster-exchanges"></a>
 ## Trocas mais rápidas
+
+A limpeza do bico é separada do curso da lâmina. Consulte os
+[padrões de limpeza e checklist de aceitação](Ender3_V3_SE_Configuracao_Validada.md#nozzle-wiping-defaults)
+para o padrão de seis ciclos X=-6/-3 e a preservação dos ajustes existentes.
 
 Com o cortador calibrado e habilitado, a integração substitui os movimentos de
 separação/resfriamento pelo ciclo de corte mecânico. Mantém folga do switch,

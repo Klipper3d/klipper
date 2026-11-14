@@ -1,4 +1,4 @@
-# Ender 3 V3 SE: BMCU 1.0.6 and stock display
+# Ender 3 V3 SE: BMCU 1.1.2 and stock display
 
 **English** | [Português brasileiro](pt-BR/Ender3_V3_SE_BMCU.md)
 
@@ -9,10 +9,12 @@ Do not run `BMCU_SETUP_ENDER` over the validated endpoint `extruder`.
 
 This integration uses **one physical extruder** (`extruder`) and four channels
 routed to endpoint `main`, with driver `generic_single_extruder`.
-Use the official [v1.0.6 installer](https://github.com/jarczakpawel/BMCU-Klipper/tree/v1.0.6)
+Use the official [v1.1.2 installer](https://github.com/jarczakpawel/BMCU-Klipper/tree/v1.1.2)
 for BMCU modules, `[bmcu]`, transport and services. Do not copy its modules into
-this fork or add a second `[bmcu]` section. Matching firmware is **1.0.1**, per
-the [version file](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.0.6/version).
+this fork or add a second `[bmcu]` section. Matching firmware is **1.0.4**, per
+the [version file](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.1.2/version).
+Existing installations need [separate maintenance](releases/v2.0.1.md#upgrade-and-rollback),
+not a blind package update while old Ender modules remain enabled.
 The supplied file has 56,492 bytes and SHA-256:
 `b85a21a14e61754db021302e0d54e4c6f9a309d0276d4fb5842b45e3e9a27327`.
 This identifies the received file; verify the flashed version in BMCU status.
@@ -80,7 +82,7 @@ Measure switch-to-gears filament travel and record `sensor_to_gears_mm`;
 `-1` means unknown. This is **not converted into extruder movement**:
 the extruder cannot capture a tip that has not reached its gears.
 
-In [BMCU 1.0.6](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.0.6/klippy/extras/bmcu_core/manager.py),
+In [BMCU 1.1.2](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.1.2/klippy/extras/bmcu_core/manager.py),
 `ENTRY_SENSOR` detection stops BMCU feed immediately. `FINAL_SEARCH_MM` limits
 search, not additional feed after detection. `BMCU_ROUTE_FEED` requires a
 standalone operation, cannot run in the load callback, and leaves the route
@@ -135,7 +137,7 @@ loaded route. Logical `T1+` sources do not create physical extruders.
 
 Generic callbacks `BMCU_TOOLHEAD_PREPARE`/`BMCU_BEFORE_PULLBACK` use `WAIT=1`
 and return only after purge/release and `M400`, as required by the
-[Generic contract](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.0.6/printers/Generic/README.md).
+[Generic contract](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.1.2/printers/Generic/README.md).
 Without `WAIT=1`, manual macros heat asynchronously; do not use that mode for
 slicer tool changes or immediately before printing.
 
@@ -164,14 +166,14 @@ cover hooks added by manual endpoint setup. `CANCEL_PRINT` cancels local
 operations, requests `BMCU_STOP`, turns heaters/fan off and cancels virtual SD.
 Screen cancellation works during synchronous callback heating. External G-code
 is serialized by Klipper's mutex and may wait for that callback.
-In 1.0.6 `BMCU_STOP` stops motors but is not a complete host-flow cancellation
+In 1.1.2 `BMCU_STOP` stops motors but is not a complete host-flow cancellation
 API. Screen cancellation prevents the next extruder callback from moving and
 requests BMCU stop when the current transport phase returns.
 Wait for physical motion to stop and inspect the route before recovery;
 never confirm `LOADED`/`EMPTY` without inspection.
 
 The active channel comes from the runtime `loaded_tools` route map, not the
-last click or `now_channel`. Version 1.0.6 freezes public device snapshots
+last click or `now_channel`. Version 1.1.2 freezes public device snapshots
 during prints and pauses. A read-only adapter uses its in-memory connection
 and route fields without UART I/O; runtime errors and uncertain routes block
 actions. Missing/offline/version-mismatched BMCU does not prevent

@@ -251,6 +251,7 @@ class E3V3SEDisplay:
         result = {"bmcu_available": False, "bmcu_busy": False,
                   "bmcu_channel": None, "bmcu_label": "BMCU absent",
                   "bmcu_uncertain": True, "cutter_uncertain": False,
+                  "refill_pending": False, "refill_channel": -1,
                   "recovery_pending": False, "recovery_channel": -1,
                   "recovery_tool": -1, "recovery_error": ""}
         bmcu = self.printer.lookup_object("bmcu", None)
@@ -258,7 +259,8 @@ class E3V3SEDisplay:
             return result
         try:
             status = bmcu.get_status(eventtime)
-            result["bmcu_busy"] = bool(status.get("active_operations"))
+            result["bmcu_busy"] = bool(getattr(
+                bmcu, "active_operations", status.get("active_operations")))
             integration = self.printer.lookup_object(
                 "bmcu_ender_integration", None)
             if hasattr(integration, "get_status"):
@@ -269,23 +271,29 @@ class E3V3SEDisplay:
                     result[key] = recovery.get(key, result[key])
             result["bmcu_busy"] |= getattr(
                 integration, "manual_operation", None) is not None
-            version_ok = status.get("package_version") == "1.0.6"
+            version_ok = status.get("package_version") == "1.1.2"
             # Versioned read-only adapter: public device snapshots freeze
-            # during prints/pauses in 1.0.6. Never refresh or send UART here.
+            # during prints/pauses in 1.1.2. Never refresh or send UART here.
             device = (getattr(bmcu, "devices_by_name", {}).get("bmcu0")
                       if version_ok else None)
             available = (device is not None and device.connected
-                         and device.ready and device.runtime_configured
-                         and not device.suspended)
+                          and device.ready and device.runtime_configured
+                          and device.firmware_compatible is True
+                          and device.status_reconciled
+                          and not device.suspended)
             routes = device.status.get("route_state", []) if device else []
             uncertain = (len(routes) != 4 or 2 in routes
-                         or bool(status.get("last_error")))
+                          or any(route not in (0, 1, 2) for route in routes)
+                          or bool(getattr(bmcu, "last_error",
+                                          status.get("last_error"))))
+            tools = getattr(bmcu, "loaded_tools",
+                            status.get("loaded_tools", {}))
             loaded = [channel for channel in range(4)
-                      if "bmcu0:%d" % channel in status.get("loaded_tools", {})]
+                       if "bmcu0:%d" % channel in tools]
             uncertain = uncertain or len(loaded) > 1
             result["bmcu_available"] = bool(available)
             result["bmcu_label"] = "BMCU offline"
-            if status.get("package_version") != "1.0.6":
+            if status.get("package_version") != "1.1.2":
                 result["bmcu_label"] = "BMCU: version"
             elif available:
                 if uncertain:
@@ -297,6 +305,16 @@ class E3V3SEDisplay:
                     result["bmcu_label"] = "BMCU: conflict"
                 else:
                     result["bmcu_label"] = "BMCU ready"
+            pending = getattr(getattr(bmcu, "refill", None),
+                              "manual_pending", None)
+            if (isinstance(pending, dict) and pending.get("device") == "bmcu0"
+                    and pending.get("endpoint") == "extruder"
+                    and pending.get("channel") in range(4)):
+                result["refill_pending"] = True
+                result["refill_channel"] = pending["channel"]
+                if available:
+                    result["bmcu_label"] = "Refill channel %d" % (
+                        pending["channel"] + 1)
             result["bmcu_uncertain"] = bool(uncertain)
         except Exception:
             logging.exception("Unable to read BMCU display status")

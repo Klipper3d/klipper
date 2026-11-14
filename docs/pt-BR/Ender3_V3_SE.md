@@ -165,10 +165,10 @@ compilação e requisitos Python; diferenças são recusadas para revisão separ
 do firmware e do ambiente. Não grava firmware nem descarta alterações locais
 em arquivos rastreados.
 
-Depois que a v2.0.0 for publicada:
+Depois que a v2.0.1 for publicada:
 
 ```sh
-git clone --branch v2.0.0 --single-branch \
+git clone --branch v2.0.1 --single-branch \
   https://github.com/bernardokcosta/ender3-v3-se-klipper-bmcu.git \
   "$HOME/klipper-v2-source"
 sudo python3 "$HOME/klipper-v2-source/scripts/ender3-v3-se/install_multicolor.py" \
@@ -218,5 +218,5 @@ validação física.
 <a id="bmcu-and-display-languages"></a>
 ## BMCU e idiomas da tela
 
-Consulte a [integração BMCU 1.0.6](Ender3_V3_SE_BMCU.md) para UART1, switch PC15,
+Consulte a [integração BMCU 1.1.2](Ender3_V3_SE_BMCU.md) para UART1, switch PC15,
 sequências de filamento, seleção de idioma e testes físicos de aceitação da tela.

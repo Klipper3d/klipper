@@ -35,7 +35,8 @@ checks do not synchronize motor steps or measure force; a loose fitting or a
 restriction may still cause failure within one move. Inspect PTFE fittings,
 cut tube ends square and seat them fully before another test.
 
-The recovery threshold accounts for BMCU 1.0.1 buffer-follow control: its idle
+The recovery threshold was calibrated with BMCU 1.0.1 buffer-follow control.
+Preserve it during the 1.0.4 migration and verify it on hardware. Its idle
 band can extend up to 65%, depending on load pressure. Waiting for 55% could
 incorrectly time out while the feeder is deliberately holding inside that band.
 
@@ -65,7 +66,7 @@ forward stroke and trip the cumulative encoder allowance. An observed failure
 occurred at net -44 mm on the first positive stroke, with 2.63 mm mismatch,
 printing mode 3, buffer 53% and zero motor PWM at the reported snapshot.
 
-In BMCU-Klipper v1.0.6, the withdrawal controller is bidirectional: it supplies
+In BMCU-Klipper v1.1.2, the withdrawal controller is bidirectional: it supplies
 filament below its configured buffer target and retracts above it. Keeping
 `MOTION_BEFORE_PULL_BACK` throughout cooling avoids the printing-target refill.
 The 2 mm allowance is unchanged and still stops unexpected excess feeder motion
@@ -213,5 +214,5 @@ normal unload control after printing.
 - [3MS rapid tip-shaping experiment](https://github.com/3DCoded/3MS/issues/25):
   an alternative staged sequence; its historical timing claims are not a
   performance guarantee for this integration.
-- [BMCU generic endpoint contract](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.0.6/printers/Generic/README.md):
+- [BMCU generic endpoint contract](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.1.2/printers/Generic/README.md):
   tip formation and extruder release belong before long feeder pullback.

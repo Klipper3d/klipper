@@ -1,4 +1,4 @@
-# Ender 3 V3 SE: BMCU 1.0.6 e tela original
+# Ender 3 V3 SE: BMCU 1.1.2 e tela original
 
 [English](../Ender3_V3_SE_BMCU.md) | **Português brasileiro**
 
@@ -9,11 +9,13 @@ Não execute `BMCU_SETUP_ENDER` sobre o endpoint validado `extruder`.
 
 Esta integração usa **uma extrusora física** (`extruder`) e quatro canais
 direcionados ao endpoint `main`, com driver `generic_single_extruder`.
-Use o [instalador oficial v1.0.6](https://github.com/jarczakpawel/BMCU-Klipper/tree/v1.0.6)
+Use o [instalador oficial v1.1.2](https://github.com/jarczakpawel/BMCU-Klipper/tree/v1.1.2)
 para módulos BMCU, `[bmcu]`, transporte e serviços. Não copie seus módulos para
 este fork nem adicione outra seção `[bmcu]`. O firmware correspondente é
-**1.0.1**, conforme o
-[arquivo de versão](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.0.6/version).
+**1.0.4**, conforme o
+[arquivo de versão](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.1.2/version).
+Instalações existentes precisam de [manutenção separada](releases/v2.0.1.md#upgrade-and-rollback),
+não de atualizar o pacote às cegas mantendo módulos Ender antigos ativos.
 O arquivo fornecido tem 56.492 bytes e SHA-256:
 `b85a21a14e61754db021302e0d54e4c6f9a309d0276d4fb5842b45e3e9a27327`.
 Isso identifica o arquivo recebido; confira a versão gravada no status BMCU.
@@ -86,7 +88,7 @@ Meça o percurso do filamento do switch às engrenagens e registre
 movimento da extrusora**: ela não pode capturar uma ponta que não chegou às
 engrenagens.
 
-No [BMCU 1.0.6](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.0.6/klippy/extras/bmcu_core/manager.py),
+No [BMCU 1.1.2](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.1.2/klippy/extras/bmcu_core/manager.py),
 a detecção por `ENTRY_SENSOR` para a alimentação BMCU imediatamente.
 `FINAL_SEARCH_MM` limita a busca, não um avanço adicional após a detecção.
 `BMCU_ROUTE_FEED` exige operação isolada, não pode rodar no callback de carga
@@ -143,7 +145,7 @@ carregada confirmada. Origens lógicas `T1+` não criam extrusoras físicas.
 
 Callbacks genéricos `BMCU_TOOLHEAD_PREPARE`/`BMCU_BEFORE_PULLBACK` usam `WAIT=1`
 e retornam somente após purga/liberação e `M400`, conforme o
-[contrato genérico](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.0.6/printers/Generic/README.md).
+[contrato genérico](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.1.2/printers/Generic/README.md).
 Sem `WAIT=1`, macros manuais aquecem de forma assíncrona; não use esse modo nas
 trocas do fatiador nem imediatamente antes de imprimir.
 
@@ -173,14 +175,14 @@ cobrir hooks adicionados por configuração manual do endpoint. `CANCEL_PRINT`
 cancela operações locais, solicita `BMCU_STOP`, desliga aquecedores/ventoinha
 e cancela SD virtual. O cancelamento na tela funciona no aquecimento síncrono
 do callback. G-code externo é serializado pelo mutex do Klipper e pode esperar
-por esse callback. Na 1.0.6, `BMCU_STOP` para motores, mas não é API completa
+por esse callback. Na 1.1.2, `BMCU_STOP` para motores, mas não é API completa
 de cancelamento do fluxo do host. A tela impede o próximo callback da extrusora
 de mover e pede parada BMCU quando a fase atual do transporte retorna.
 Aguarde o movimento físico parar e inspecione a rota antes de recuperar;
 nunca confirme `LOADED`/`EMPTY` sem inspeção.
 
 O canal ativo vem do mapa `loaded_tools` em execução, não do último clique
-ou de `now_channel`. A 1.0.6 congela snapshots públicos do dispositivo durante
+ou de `now_channel`. A 1.1.2 congela snapshots públicos do dispositivo durante
 impressões e pausas. Um adaptador somente leitura usa conexão e rotas em memória
 sem I/O UART; erros de execução e rotas incertas bloqueiam ações. BMCU ausente,
 offline ou de versão divergente não impede navegar. Canais indisponíveis ficam

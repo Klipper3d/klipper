@@ -8,9 +8,9 @@ from .bmcu_english_api import english_command
 
 class ArrivalMeasurement:
     def __init__(self, config):
-        if PACKAGE_VERSION != '1.0.6':
+        if PACKAGE_VERSION != '1.1.2':
             raise config.error(
-                'Arrival measurement requires BMCU-Klipper 1.0.6.'
+                'Arrival measurement requires BMCU-Klipper 1.1.2.'
             )
         self.manager = config.get_printer().load_object(config, 'bmcu')
         self.capture = None

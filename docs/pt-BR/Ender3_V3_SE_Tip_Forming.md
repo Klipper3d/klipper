@@ -37,7 +37,8 @@ passos dos motores nem medem força; conexão frouxa ou restrição ainda pode
 causar falha em um movimento. Inspecione conexões PTFE, corte pontas dos tubos
 em esquadro e encaixe-as completamente antes de testar novamente.
 
-O limiar de recuperação considera o acompanhamento do buffer BMCU 1.0.1:
+O limiar de recuperação foi calibrado com o acompanhamento do buffer BMCU 1.0.1.
+Preserve-o na migração 1.0.4 e confira fisicamente:
 sua faixa de repouso pode chegar a 65%, conforme a pressão da carga.
 Esperar 55% poderia causar timeout indevido enquanto o alimentador mantém
 deliberadamente essa faixa.
@@ -70,7 +71,7 @@ a tolerância acumulada do encoder. Uma falha observada ocorreu em -44 mm
 líquidos no primeiro avanço, com divergência de 2,63 mm, modo de impressão 3,
 buffer 53% e PWM zero do motor no snapshot informado.
 
-No BMCU-Klipper v1.0.6, o controlador de retirada é bidirecional: fornece
+No BMCU-Klipper v1.1.2, o controlador de retirada é bidirecional: fornece
 filamento abaixo do alvo de buffer e retrai acima. Manter
 `MOTION_BEFORE_PULL_BACK` durante o resfriamento evita o reabastecimento pelo
 alvo de impressão. A tolerância de 2 mm fica inalterada e ainda interrompe
@@ -226,6 +227,6 @@ sua última ponta pelo controle normal de retirada depois de imprimir.
 - [Experimento de formação rápida 3MS](https://github.com/3DCoded/3MS/issues/25):
   sequência escalonada alternativa; tempos históricos não garantem desempenho
   nesta integração.
-- [Contrato de endpoint genérico BMCU](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.0.6/printers/Generic/README.md):
+- [Contrato de endpoint genérico BMCU](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.1.2/printers/Generic/README.md):
   formação da ponta e liberação da extrusora precedem a retirada longa do
   alimentador.

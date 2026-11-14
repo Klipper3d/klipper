@@ -1,0 +1,27 @@
+{
+    "Cancel": "Cancel",
+    "Changed": "Channel data changed. Close this dialog and open it again.",
+    "Channel": "Channel {channel}",
+    "Color": "Filament color",
+    "Connected": "BMCU connected",
+    "EditChannel": "Edit filament in channel {channel}",
+    "EditHint": "Select a spool to edit its material and color.",
+    "FourChannels": "4 physical channels",
+    "Headline": "BMCU",
+    "Material": "Material",
+    "MaterialHint": "For example: PLA, PETG, TPU or PETG-CF.",
+    "MetadataOnly": "This edits filament information. It does not load filament, change routes or set printing temperatures.",
+    "Offline": "BMCU unavailable — requires package 1.1.2 and firmware 1.0.4",
+    "ReadOnly": "Editing is available only with the printer and BMCU ready and idle.",
+    "Refill": "Replace filament in channel {channel}, then confirm with the normal Resume button. Loading and wiping finish before printing resumes.",
+    "Save": "Save filament",
+    "SaveFailed": "Could not confirm the save. Check the console and current channel data before trying again.",
+    "States": {
+        "empty": "Empty",
+        "loaded": "Loaded",
+        "offline": "Offline",
+        "parked": "Parked",
+        "uncertain": "Check path"
+    },
+    "Unspecified": "Not specified"
+}

@@ -50,6 +50,17 @@ present in those directories.
 
 ## Builds and limitations
 
+The [native Mainsail card guide](Ender3_V3_SE_Mainsail.md#rebuild-and-verify)
+covers the pinned web build and local-only browser simulator. Check the real
+BMCU 1.1.2 source contract separately; this starts/stops only a synthetic sleeping
+process and never opens a serial device:
+
+```sh
+git clone --depth 1 --branch v1.1.2 \
+  https://github.com/jarczakpawel/BMCU-Klipper.git /path/to/bmcu-upstream
+python3 scripts/ender3-v3-se/check_bmcu_contracts.py --source /path/to/bmcu-upstream
+```
+
 Firmware compilation also needs `gcc-arm-none-eabi` and
 `binutils-arm-none-eabi`. Follow the [build guide](Ender3_V3_SE.md).
 The Makefile requires a space-free path; if the Windows clone is inside a

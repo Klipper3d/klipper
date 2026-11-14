@@ -32,9 +32,9 @@ for name in ('integration_test', 'integration_test.bmcu_core'):
     package.__path__ = []
     sys.modules[name] = package
 release = types.ModuleType('integration_test.bmcu_core.release')
-release.PACKAGE_VERSION = '1.0.6'
-release.REQUIRED_FIRMWARE = (1, 0, 1)
-release.REQUIRED_FIRMWARE_TEXT = '1.0.1'
+release.PACKAGE_VERSION = '1.1.2'
+release.REQUIRED_FIRMWARE = (1, 0, 4)
+release.REQUIRED_FIRMWARE_TEXT = '1.0.4'
 sys.modules[release.__name__] = release
 protocol = import_module(
     'integration_test.bmcu_core.protocol', BASE / 'protocolo_original.py'
@@ -53,6 +53,10 @@ import_module(
 import_module(
     'integration_test.bmcu_cortador_ender',
     ROOT / 'integrations/bmcu/bmcu_cortador_ender.py',
+)
+import_module(
+    'integration_test.bmcu_ender_panel',
+    ROOT / 'integrations/bmcu/bmcu_ender_panel.py',
 )
 module = import_module(
     'integration_test.bmcu_ender_integration',
@@ -117,6 +121,11 @@ class TestBench:
         self.device = types.SimpleNamespace(
             name='bmcu0',
             ready=True,
+            firmware_compatible=True,
+            connected=True,
+            runtime_configured=True,
+            status_reconciled=True,
+            suspended=False,
             status={
                 'now_channel': 255,
                 'motion': [0, 0, 0, 0],
@@ -314,7 +323,7 @@ class IntegrationTests(unittest.TestCase):
             'print_stats': {'state': 'standby'},
             'filament_switch_sensor bmcu_entry': {'filament_detected': False},
             'bmcu': {
-                'package_version': '1.0.6',
+                'package_version': '1.1.2',
                 'active_operations': {},
                 'print_plan_open': False,
                 'print_map_active': False,
@@ -324,6 +333,7 @@ class IntegrationTests(unittest.TestCase):
                         'name': 'bmcu0',
                         'uid': 'SYNTHETIC_DEVICE',
                         'ready': True,
+                        'firmware_compatible': True,
                         'loaded_channels': [],
                         'uncertain_channels': [],
                     }
@@ -381,6 +391,77 @@ class IntegrationTests(unittest.TestCase):
         self.assertEqual(b.device.status['motion'][3], protocol.MOTION_ON_USE)
         self.assertEqual(b.position[0], -4)
         self.assertEqual(b.critical_depth, 0)
+
+    def test_nozzle_feed_does_not_resend_unchanged_assistance_per_chunk(self):
+        b = TestBench()
+        snapshots = []
+        refresh = b.device.refresh
+
+        def observed():
+            refresh()
+            snapshots.append(b.e)
+
+        b.device.refresh = observed
+        b.obj.load(Gcmd())
+        self.assertEqual(2, b.actuators.count(protocol.MOTION_ON_USE))
+        for position in range(20, 100, 10):
+            self.assertIn(position, snapshots)
+        self.assertAlmostEqual(170.0, b.e)
+        self.assertEqual(protocol.MOTION_ON_USE, b.device.status['motion'][3])
+
+    def test_lost_nozzle_feed_assistance_aborts_instead_of_restarting_it(self):
+        for failed_at in (30.0, 100.0):
+            with self.subTest(failed_at=failed_at):
+                b = TestBench()
+                execute = b.gcode.run_script_from_command
+
+                def interrupted(text):
+                    execute(text)
+                    if text.startswith('G1 E') and b.e >= failed_at:
+                        b.device.status['motion'][3] = protocol.MOTION_IDLE
+
+                b.gcode.run_script_from_command = interrupted
+                gcmd = Gcmd()
+                with self.assertRaisesRegex(RuntimeError, 'assistance stopped'):
+                    b.obj.load(gcmd)
+                self.assertAlmostEqual(failed_at, b.e)
+                self.assertEqual('parar', b.actuators[-1])
+                self.assertFalse(gcmd.messages)
+
+    def test_restart_during_nozzle_follow_ack_blocks_first_nozzle_feed(self):
+        b = TestBench()
+        motion = b.device.set_motion
+
+        def restarted(channel, mode):
+            motion(channel, mode)
+            if mode == protocol.MOTION_ON_USE:
+                b.device.status['session_id'] += 1
+
+        b.device.set_motion = restarted
+        with self.assertRaisesRegex(RuntimeError, 'restarted'):
+            b.obj.load(Gcmd())
+        self.assertAlmostEqual(20.0, b.e)
+        self.assertEqual('parar', b.actuators[-1])
+
+    def test_invalid_capture_completion_never_starts_nozzle_assistance(self):
+        for failure, message in (('session', 'restarted'),
+                                 ('sensor', 'entry sensor')):
+            with self.subTest(failure=failure):
+                b = TestBench()
+
+                def interrupted(*args, **kwargs):
+                    b.capture(*args, **kwargs)
+                    if failure == 'session':
+                        b.device.status['session_id'] += 1
+                    else:
+                        b.present = False
+
+                b.obj.measurement._capturar_extrusora_primeiro = interrupted
+                with self.assertRaisesRegex(RuntimeError, message):
+                    b.obj.load(Gcmd())
+                self.assertNotIn(protocol.MOTION_ON_USE, b.actuators)
+                self.assertAlmostEqual(20.0, b.e)
+                self.assertEqual('parar', b.actuators[-1])
 
     def test_unload_applies_override_only_after_sensor_clears(self):
         b = TestBench()
@@ -624,6 +705,10 @@ class IntegrationTests(unittest.TestCase):
             custom = sequence.read_text().replace(
                 'purge_mm: 35', 'purge_mm: 91'
             )
+            for key, value in (('wipe_x', '-2.5'), ('wipes', '5'),
+                               ('purge_x', '-5'), ('purge_y', '121')):
+                custom = re.sub(r'(?m)^' + key + r': [^\n]*$',
+                                key + ': ' + value, custom)
             sequence.write_text(custom)
             self.assertEqual(
                 installer.prepare(home)[sequence], custom.encode()

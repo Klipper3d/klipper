@@ -97,6 +97,16 @@ class V2InstallationTests(unittest.TestCase):
                 path.write_bytes(data)
             self.assertEqual(changes, self.prepare(home, state))
 
+    def test_native_bmcu_panel_module_is_never_replaced(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+            _, extras, state, _ = self.bench(home)
+            native = extras / 'bmcu_panel.py'
+            native.write_text('class BMCUPanel:\n    pass\n')
+            changes = self.prepare(home, state)
+            self.assertNotIn(native, changes)
+            self.assertIn(extras / 'bmcu_ender_panel.py', changes)
+
     def test_collision_fails_before_touching_active_files(self):
         with tempfile.TemporaryDirectory() as temporary:
             home = Path(temporary)
@@ -248,7 +258,7 @@ class V2InstallationTests(unittest.TestCase):
 
     def run_cli(
         self, home, state, fail_ready=False, before_failure=None,
-        on_service=None, host_source=None,
+        on_service=None, host_source=None, events=None,
     ):
         user = installer.pwd.struct_passwd((
             'pi', 'x', os.getuid(), os.getgid(), 'Test', str(home), '/bin/sh',
@@ -266,10 +276,19 @@ class V2InstallationTests(unittest.TestCase):
                 patch.object(installer.pwd, 'getpwuid', return_value=user), \
                 patch.object(installer.pwd, 'getpwnam', return_value=user), \
                 patch.object(installer, 'service') as service, \
-                patch.object(installer, 'transport_is_active',
-                             create=True, return_value=True), \
+                patch.object(installer.runtime_lifecycle,
+                             'RuntimeTransport') as runtime, \
                 patch.object(installer, 'wait_ready') as ready:
-            service.side_effect = on_service
+            def service_action(*args):
+                if events is not None:
+                    events.append(('service', *args))
+                if on_service:
+                    on_service(*args)
+            service.side_effect = service_action
+            for action in ('check_active', 'stop', 'start'):
+                if events is not None:
+                    getattr(runtime.return_value, action).side_effect = (
+                        lambda a=action: events.append(('transport', a)))
             if fail_ready:
                 def fail(required_section='bmcu_ender_integration'):
                     if host_source and ready.call_count > 1:
@@ -294,13 +313,16 @@ class V2InstallationTests(unittest.TestCase):
             current['devices']['TEST_DEVICE']['route_state'] = 'PARKED'
             current['endpoints']['extruder']['custom_value'] = 70.25
             state.write_text(json.dumps(current))
-            with patch.object(installer.subprocess, 'run') as service:
+            with patch.object(installer.subprocess, 'run') as service, \
+                    patch.object(installer.runtime_lifecycle,
+                                 'RuntimeTransport') as runtime:
                 exec(code, {'__file__': str(backup / 'restaurar.py')})
             self.assertEqual([
                 call(['systemctl', 'is-active', '--quiet', 'klipper']),
                 call(['systemctl', 'stop', 'klipper'], check=True),
-                call(['systemctl', 'stop', 'bmcu-transport'], check=True),
             ], service.call_args_list)
+            runtime.return_value.stop.assert_called_once_with()
+            runtime.return_value.start.assert_not_called()
             result = json.loads(state.read_text())
             self.assertEqual(current['devices'], result['devices'])
             self.assertEqual(
@@ -371,11 +393,16 @@ class V2InstallationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             home = Path(temporary)
             _, _, state, _ = self.bench(home)
-            calls = self.run_cli(home, state)
+            events = []
+            calls = self.run_cli(home, state, events=events)
             self.assertEqual([
-                call('stop'), call('stop', 'bmcu-transport'),
-                call('start', 'bmcu-transport'), call('start'),
+                call('stop'), call('start'),
             ], calls)
+            self.assertEqual([
+                ('transport', 'check_active'), ('service', 'stop'),
+                ('transport', 'stop'), ('transport', 'start'),
+                ('service', 'start'),
+            ], events)
 
     def test_included_language_is_preserved_and_moved_to_autosave_root(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -403,8 +430,7 @@ class V2InstallationTests(unittest.TestCase):
                     home, state, True,
                     on_service=lambda *args: calls.append(args),
                 )
-            self.assertEqual(('stop', 'bmcu-transport'), calls[-1])
-            self.assertEqual(('stop',), calls[-2])
+            self.assertEqual([('stop',), ('start',), ('stop',)], calls)
 
     def staged_source(self, home):
         active = home / 'klipper'
@@ -495,6 +521,8 @@ class V2InstallationTests(unittest.TestCase):
 
             with patch.object(installer.subprocess, 'run',
                               side_effect=services_only), \
+                    patch.object(installer.runtime_lifecycle,
+                                 'RuntimeTransport'), \
                     patch('urllib.request.urlopen', side_effect=response):
                 exec(code, {'__file__': str(backup / 'restaurar.py')})
             self.assertEqual('OLD_DISPLAY = True\n',

@@ -398,7 +398,7 @@ class FilamentHarness:
 
     def add_bmcu(self, ready=True, loaded=None, uncertain=None):
         self.bmcu = {
-            "package_version": "1.0.6", "active_operations": {},
+            "package_version": "1.1.2", "active_operations": {},
             "loaded_tools": {"bmcu0:%d" % i: i for i in loaded or []},
             "last_error": "",
             "devices": [{"name": "bmcu0", "connected": ready,
@@ -410,6 +410,7 @@ class FilamentHarness:
         self.bmcu_device = type("Device", (), {
             "connected": ready, "ready": ready,
             "runtime_configured": ready, "suspended": False,
+            "firmware_compatible": True, "status_reconciled": True,
             "status": {"route_state": [2 if i in (uncertain or []) else
                                        1 if i in (loaded or []) else 0
                                        for i in range(4)]}})()
@@ -786,6 +787,35 @@ class FilamentOperationTest(unittest.TestCase):
         self.assertTrue(self.display._bmcu_status(0.)["bmcu_uncertain"])
         self.assertIsNone(self.display._bmcu_status(0.)["bmcu_channel"])
         self.assertFalse(self.display.bmcu_load(0)[0])
+
+    def test_live_bmcu_state_overrides_frozen_public_snapshot(self):
+        self.h.add_bmcu(loaded=[0])
+        manager = self.h.printer.lookup_object("bmcu")
+        manager.loaded_tools = {"bmcu0:3": 3}
+        manager.active_operations = {"bmcu0": {"phase": "LOAD"}}
+        manager.last_error = None
+        self.h.bmcu_device.status["route_state"] = [0, 0, 0, 1]
+        status = self.display._bmcu_status(0.)
+        self.assertEqual(3, status["bmcu_channel"])
+        self.assertTrue(status["bmcu_busy"])
+
+    def test_incompatible_firmware_cannot_enable_display_actions(self):
+        self.h.add_bmcu(loaded=[0])
+        self.h.bmcu_device.firmware_compatible = False
+        self.assertFalse(self.display.bmcu_available())
+        self.assertFalse(self.display.bmcu_load(1)[0])
+
+    def test_manual_runout_channel_is_visible_without_a_new_load_path(self):
+        self.h.add_bmcu(loaded=[3])
+        manager = self.h.printer.lookup_object("bmcu")
+        pending = dict(device="bmcu0", channel=3, endpoint="extruder", tool=4)
+        manager.refill = types.SimpleNamespace(manual_pending=pending)
+        self.h.state = "paused"
+        status = self.display._bmcu_status(0.)
+        self.assertTrue(status.get("refill_pending"))
+        self.assertEqual(3, status["refill_channel"])
+        self.assertEqual("Refill channel 4", status["bmcu_label"])
+        self.assertIs(pending, manager.refill.manual_pending)
 
     def test_bmcu_repeated_click_and_cancel_before_transport(self):
         self.h.add_bmcu()
