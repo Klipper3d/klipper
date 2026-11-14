@@ -107,6 +107,94 @@ class V2InstallationTests(unittest.TestCase):
             self.assertNotIn(native, changes)
             self.assertIn(extras / 'bmcu_ender_panel.py', changes)
 
+    def test_monochrome_heating_is_migrated_in_active_nested_includes(self):
+        for legacy in (False, True):
+            with self.subTest(legacy=legacy), \
+                    tempfile.TemporaryDirectory() as temporary:
+                home = Path(temporary)
+                config, _, state, _ = self.bench(home)
+                name = ('ENDER_INICIAR_IMPRESSAO' if legacy
+                        else 'ENDER_START_PRINT')
+                parameter = 'TEMP_BICO' if legacy else 'NOZZLE_TEMP'
+                original = (
+                    '[gcode_macro %s]\ngcode:\n'
+                    '  {%% set bico = params.%s|float %%}\n'
+                    '  G1 X5 Y20 F6000\n  M109 S{bico}\n'
+                    '\n[gcode_macro KEEP_CUSTOM]\ngcode:\n  M117 custom\n'
+                ) % (name, parameter)
+                path = config / 'custom/print.cfg'
+                path.write_text(original)
+                changes = self.prepare(home, state)
+                expected = installer.corrigir_aquecimento_inicio(
+                    installer.migrate_config(original),
+                    'ENDER_START_PRINT', monocor=True,
+                ).encode()
+                self.assertEqual(expected, changes[path])
+                self.assertEqual(original, path.read_text())
+                for target, data in changes.items():
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    target.write_bytes(data)
+                self.assertEqual(changes, self.prepare(home, state))
+
+    def test_unknown_nested_monochrome_heating_fails_without_writes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+            config, _, state, _ = self.bench(home)
+            (config / 'custom/print.cfg').write_text(
+                '[gcode_macro ENDER_START_PRINT]\ngcode:\n'
+                '  G1 X5 Y20 F6000\n  M109 S{custom_temperature}\n'
+            )
+            before = {p: p.read_bytes() for p in home.rglob('*')
+                      if p.is_file()}
+            with self.assertRaisesRegex(RuntimeError, 'Manually review'):
+                self.prepare(home, state)
+            self.assertEqual(before, {p: p.read_bytes() for p in home.rglob('*')
+                                      if p.is_file()})
+
+    def test_monochrome_variable_override_keeps_the_included_gcode_body(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+            config, _, state, saved = self.bench(home)
+            root = config / 'printer.cfg'
+            root.write_text('[include impressao.cfg]\n'
+                            '[include custom/*.cfg]\n' + saved)
+            body = config / 'impressao.cfg'
+            original = ('[gcode_macro ENDER_START_PRINT]\ngcode:\n'
+                        '  G1 X5 Y20 F6000\n  M109 S{nozzle_temp}\n')
+            body.write_text(original)
+            override = config / 'custom/override.cfg'
+            variables = ('[gcode_macro ENDER_START_PRINT]\n'
+                         'variable_some_flag: 1\n')
+            override.write_text(variables)
+            reader = CONFIG_READER.ConfigFileReader()
+            merged = reader.build_fileconfig_with_includes(
+                root.read_text(), str(root))
+            self.assertIn('M109', merged.get(
+                'gcode_macro ENDER_START_PRINT', 'gcode'))
+            self.assertEqual('1', merged.get(
+                'gcode_macro ENDER_START_PRINT', 'variable_some_flag'))
+            changes = self.prepare(home, state)
+            self.assertEqual(variables.encode(), changes[override])
+            self.assertIn(b'BMCU_ENDER_MOVE_TO_PURGE', changes[body])
+            for target, data in changes.items():
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(data)
+            self.assertEqual(changes, self.prepare(home, state))
+
+    def test_inactive_nested_print_configuration_is_not_migrated(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+            config, _, state, _ = self.bench(home)
+            path = config / 'inactive/print.cfg'
+            path.parent.mkdir()
+            original = (
+                '[gcode_macro ENDER_INICIAR_IMPRESSAO]\ngcode:\n'
+                '  G1 X5 Y20 F6000\n  M109 S{bico}\n'
+            )
+            path.write_text(original)
+            self.assertNotIn(path, self.prepare(home, state))
+            self.assertEqual(original, path.read_text())
+
     def test_collision_fails_before_touching_active_files(self):
         with tempfile.TemporaryDirectory() as temporary:
             home = Path(temporary)

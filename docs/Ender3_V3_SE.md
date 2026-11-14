@@ -153,6 +153,20 @@ MCU sources, libraries, target configurations, the Makefile/build-command inputs
 and Python requirements; differences are refused for separate firmware and
 environment review. It does not flash firmware or discard tracked local work.
 
+The host checkout, printer MCU and optional Linux MCU are separate installations.
+A host version such as `v2.0.1` does not prove either MCU was updated: check
+`mcu_version` for both `mcu` and `mcu host` in Moonraker or the connection entries
+in `klippy.log`. Update the printer MCU through the SD-card procedure above and
+the Linux MCU through the [Linux process build/install procedure](RPi_microcontroller.md#building-the-micro-controller-code),
+using the intended release sources. Verify the running versions afterward; do
+not infer them from a downloaded `.bin`, a Git tag or a web-interface version.
+
+The integration installer also applies its monochrome start-heating correction
+to active configuration includes inside the configuration directory, including
+nested files. It reuses the same validated sequence and refuses unrecognized
+heating syntax before activation. Shared external includes still require manual
+review; inactive nested files are not migrated.
+
 After v2.0.1 is published:
 
 ```sh

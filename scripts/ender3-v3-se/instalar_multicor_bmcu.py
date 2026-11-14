@@ -426,6 +426,8 @@ def corrigir_aquecimento_inicio(texto, nome, monocor=False):
     if secao is None:
         return texto
     trecho = secao.group()
+    if not re.search(r'(?im)^[ \t]*gcode[ \t]*[:=]', trecho):
+        return texto
     comando = 'BMCU_ENDER_MOVE_TO_PURGE'
     if comando in trecho:
         return texto
@@ -709,6 +711,10 @@ def prepare(
             'ENDER_START_PRINT', monocor=True,
         ).encode()
     visited = migrate_active_configuration(configurations, changes)
+    for path in sorted(visited.intersection(changes)):
+        changes[path] = corrigir_aquecimento_inicio(
+            changes[path].decode(), 'ENDER_START_PRINT', monocor=True,
+        ).encode()
     migrate_display_language(root.resolve(), changes, visited, display_language)
     state_path = Path(
         state_path or configurations / 'bmcu_state.json'
