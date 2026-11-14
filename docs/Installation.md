@@ -1,5 +1,7 @@
 # Installation
 
+**English** | [Português brasileiro](pt-BR/Installation.md)
+
 These instructions assume the software will run on a Linux-based host
 running a Klipper-compatible front end. It is recommended that a
 SBC(Small Board Computer) such as a Raspberry Pi or Debian-based Linux

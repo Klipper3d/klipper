@@ -1,5 +1,7 @@
 # Multiple Micro-controller Homing and Probing
 
+**English** | [Português brasileiro](pt-BR/Multi_MCU_Homing.md)
+
 Klipper supports a mechanism for homing with an endstop attached to
 one micro-controller while its stepper motors are on a different
 micro-controller. This support is referred to as "multi-mcu

@@ -1,5 +1,7 @@
 # OctoPrint for Klipper
 
+**English** | [Português brasileiro](pt-BR/OctoPrint.md)
+
 Klipper has a few options for its front ends, Octoprint was the first
 and original front end for Klipper. This document will give
 a brief overview of installing with this option.

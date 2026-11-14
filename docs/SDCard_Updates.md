@@ -1,5 +1,7 @@
 # SDCard updates
 
+**English** | [Português brasileiro](pt-BR/SDCard_Updates.md)
+
 Many of today's popular controller boards ship with a bootloader capable of
 updating firmware via SD Card.  While this is convenient in many
 circumstances, these bootloaders typically provide no other way to update
@@ -223,7 +225,7 @@ make clean
 make menuconfig
 make
 ./scripts/flash-sdcard.sh /dev/ttyACM0 btt-octopus-f446-v1
-[[[manually power-cycle the printer board here when instructed]]]
+# Manually power-cycle the printer board here when instructed.
 ./scripts/flash-sdcard.sh -c /dev/ttyACM0 btt-octopus-f446-v1
 sudo service klipper start
 ```
@@ -242,7 +244,7 @@ make menuconfig
 make
 ./scripts/flash-sdcard.sh /dev/ttyACM0 btt-octopus-f446-v1
 sudo shutdown -h now
-[[[wait for the RPi to shutdown, then power-cycle and ssh again to the RPi when it restarts]]]
+# Wait for the RPi to shut down, power-cycle it, then reconnect via ssh after startup.
 sudo service klipper stop
 cd ~/klipper
 ./scripts/flash-sdcard.sh -c /dev/ttyACM0 btt-octopus-f446-v1

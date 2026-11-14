@@ -1,5 +1,7 @@
 # RPi microcontroller
 
+**English** | [Português brasileiro](pt-BR/RPi_microcontroller.md)
+
 This document describes the process of running Klipper on a RPi and
 use the same RPi as secondary mcu.
 

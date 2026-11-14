@@ -1,5 +1,7 @@
 # Ender 3 V3 SE: BMCU 1.0.6 and stock display
 
+**English** | [Português brasileiro](pt-BR/Ender3_V3_SE_BMCU.md)
+
 For switch-based integration, installation and private recovery tools, see
 [Switch-based integration](Ender3_V3_SE_Configuracao_Validada.md).
 The remainder of this page describes the original, uncommissioned v0.2.0 template.
@@ -44,17 +46,33 @@ Verify both states with `QUERY_FILAMENT_SENSOR SENSOR=bmcu_entry`.
 
 ## Display language
 
-English is the default. Set this in `display.cfg` for Brazilian Portuguese:
+English is the default. Select **Settings → Language → English / Português**
+on the screen to change it immediately. This stages the preference through
+Klipper's configuration API without restarting. **Settings → Save config**
+persists it and restarts Klipper after confirmation, only outside a print or
+busy operation. For a manual preference, put this in the top-level `printer.cfg`,
+not in an include that would conflict with `SAVE_CONFIG`:
 
 ```ini
 [e3v3se_display]
 language: pt_BR
 ```
 
-Use `language: en` for English; restart Klipper after changing it. Code,
-comments, macro descriptions and documentation remain English. Built-in screen
+Use `language: en` for English. Manual file edits require a Klipper restart;
+screen selection does not. Code, comments and macro descriptions use English;
+public documentation is paired EN/PT-BR. Built-in screen
 labels, states, operation messages and known errors are localized. Custom labels
 and unknown external diagnostics retain their configured/original text.
+
+The idle menu is **Print / Filament / Temperature / Move / Calibration /
+Settings**, with **Macros** only for custom shortcuts. **Temperature** owns
+preheat/cooldown; **Move** owns homing, jogging, motors and the optional cutter
+stop. **Filament / BMCU** owns channel load/unload. The validated integration
+also adds the guarded post-manual-removal **Reset BMCU** there. It invokes
+`BMCU_ENDER_RESET CONFIRM=1`, is not a factory reset and does not erase
+calibration. Active/paused prints and busy operations block it. A pending paused
+tool change uses **Recover filament** and
+`BMCU_CONFIRM_CLEAR_PATH CHANNEL=<1-4> CONFIRM=1`, never a global reset.
 
 ## Arrival strategy and the unmeasured distance
 
@@ -110,7 +128,7 @@ passage through PTFE/combiner. Confirm complete gear release before BMCU
 pullback, then set `calibrated: 1`. No physical calibration was performed here.
 
 `LOAD_FILAMENT`/`UNLOAD_FILAMENT` operate the extruder. For full BMCU transport,
-use **Prepare → BMCU channels**, or `BMCU_LOAD DEVICE=bmcu0 CHANNEL=0` /
+use **Filament**, or `BMCU_LOAD DEVICE=bmcu0 CHANNEL=0` /
 `BMCU_UNLOAD DEVICE=bmcu0 CHANNEL=0`. Screen channels 1–4 correspond to commands
 0–3. When BMCU is ready, screen load opens channels and unload uses the confirmed
 loaded route. Logical `T1+` sources do not create physical extruders.
@@ -161,6 +179,20 @@ navigation. Unavailable channels are disabled, uncertain routes block motion.
 Panel/slicer operations remain owned by BMCU; callbacks also require calibration.
 Without an endpoint sensor Generic refill pauses for manual replacement.
 Enable automatic refill only after physical validation.
+
+## Updating an existing installation
+
+For the switch-based v2 integration, follow the separate-source update and full
+host/display rollback instructions in the
+[installation guide](Ender3_V3_SE_Configuracao_Validada.md#install-or-update-an-existing-integration).
+Do not update active `~/klipper` with `git pull` before preserving it. The
+installer must run from a separate clean source with `--host-source` pointing
+there; changed MCU/build inputs or Python requirements require separate review.
+It does not flash firmware or install dependencies. Existing calibrated values
+are preserved. **Re-slice old jobs using the v2 profile**; no Portuguese command
+aliases or automatic conversion of stored G-code are provided. The original
+template documented above remains separate: do not replace its endpoint setup
+with the validated integration's commissioning command.
 
 ## Pending physical acceptance
 

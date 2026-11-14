@@ -1,3 +1,4 @@
+import ast
 import contextlib
 import os
 import struct
@@ -348,6 +349,7 @@ class FilamentHarness:
         display.heat_timeout = 300.
         display.material = "PLA"
         display.language = "en"
+        display.macros = []
         display.max_hotend_temp = 260.
         display.preheat_pla_temps = (200, 60)
         display.preheat_petg_temps = (230, 70)
@@ -428,7 +430,7 @@ class FilamentOperationTest(unittest.TestCase):
     def test_prior_integration_still_reports_bmcu_available(self):
         self.h.add_bmcu()
         integration = types.SimpleNamespace()
-        self.h.printer.objects['bmcu_integracao_ender'] = integration
+        self.h.printer.objects['bmcu_ender_integration'] = integration
         self.assertTrue(self.display._bmcu_status(0.)['bmcu_available'])
         integration.manual_operation = 'LOAD'
         self.assertTrue(self.display._bmcu_status(0.)['bmcu_busy'])
@@ -446,14 +448,13 @@ class FilamentOperationTest(unittest.TestCase):
     def test_preheat_buttons_share_the_dashboard_macros(self):
         calls = []
         for material in ('PLA', 'PETG', 'TPU'):
-            command = 'PRE_AQUECER_' + material
+            command = 'PREHEAT_' + material
             self.h.gcode.register_command(command, lambda cmd:
                 calls.append(cmd.get_command()))
             preheat = getattr(self.display, 'preheat_' + material.lower())
             self.assertTrue(preheat()[0])
             self.assertEqual(material, self.display.material)
-        self.assertEqual(['PRE_AQUECER_PLA', 'PRE_AQUECER_PETG',
-                          'PRE_AQUECER_TPU'], calls)
+        self.assertEqual(['PREHEAT_PLA', 'PREHEAT_PETG', 'PREHEAT_TPU'], calls)
 
     def test_tpu_profile_is_available_without_bmcu_integration(self):
         calls = []
@@ -843,19 +844,252 @@ class DisplayLanguageTest(unittest.TestCase):
         return [frame[13:-4].decode("utf-8") for frame in transport.frames
                 if frame[1] == TJC3224.CMD_DRAW_TEXT]
 
-    def test_filament_shortcut_and_three_preheat_profiles(self):
+    def test_menu_actions_have_one_owner_in_both_languages(self):
         for language in ('en', 'pt_BR'):
             h, ui, transport = self.make_ui(language)
             h.display.macros = []
             ui.show_main_menu()
             self.assertIn(translate('Filament', language),
                           [item.label for item in ui.items])
+            self.assertNotIn(translate('Prepare', language),
+                             [item.label for item in ui.items])
+            self.assertIn(translate('Settings', language),
+                          [item.label for item in ui.items])
             ui.show_filament_menu()
+            labels = [item.label for item in ui.items]
+            for material in ('PLA', 'PETG', 'TPU'):
+                self.assertNotIn(translate('Preheat ' + material, language),
+                                 labels)
+            self.assertIn(translate('Unload filament', language), labels)
+            self.assertNotIn(translate('Cooldown', language), labels)
+            ui.show_temperature_menu()
             labels = [item.label for item in ui.items]
             for material in ('PLA', 'PETG', 'TPU'):
                 self.assertIn(translate('Preheat ' + material, language),
                               labels)
-            self.assertIn(translate('Unload filament', language), labels)
+            self.assertIn(translate('Cooldown', language), labels)
+            ui.show_move_menu()
+            labels = [item.label for item in ui.items]
+            self.assertIn(translate('Home all', language), labels)
+            self.assertIn(translate('Disable motors', language), labels)
+            self.assertNotIn(translate('Load filament', language), labels)
+
+    def test_reset_requires_confirmation_and_is_not_offered_during_print(self):
+        for language in ('en', 'pt_BR'):
+            h, ui, _ = self.make_ui(language)
+            h.add_bmcu(uncertain=[0])
+            calls = []
+            h.gcode.register_command('BMCU_ENDER_RESET', lambda cmd:
+                calls.append(cmd.get_command_parameters()))
+            ui.show_filament_menu()
+            label = translate('Reset BMCU', language)
+            reset = next((item for item in ui.items if item.label == label),
+                         None)
+            self.assertIsNotNone(reset)
+            self.assertTrue(reset.enabled)
+            reset.callback()
+            self.assertEqual([], calls)
+            ui.items[1].callback()
+            self.assertEqual([], calls)
+            ui.show_filament_menu()
+            next(item for item in ui.items if item.label == label).callback()
+            ui.items[0].callback()
+            self.assertEqual([{'CONFIRM': '1'}], calls)
+            h.state = 'paused'
+            self.assertFalse(h.display.bmcu_reset()[0])
+            self.assertEqual(1, len(calls))
+            ui.show_filament_menu()
+            reset = next((item for item in ui.items if item.label == label),
+                         None)
+            self.assertTrue(reset is None or not reset.enabled)
+
+    def test_pending_recovery_uses_its_failed_channel_not_a_global_reset(self):
+        h, ui, _ = self.make_ui('en')
+        h.add_bmcu(uncertain=[2])
+        h.state = 'paused'
+        integration = {'recovery_pending': True, 'recovery_channel': 2,
+                       'recovery_tool': 1, 'recovery_error': 'arrival failed'}
+        h.printer.objects['bmcu_ender_integration'] = types.SimpleNamespace(
+            get_status=lambda time: integration)
+        calls = []
+        h.gcode.register_command('BMCU_CONFIRM_CLEAR_PATH', lambda cmd:
+            calls.append(cmd.get_command_parameters()))
+        ui.status = {'print_state': 'paused', 'paused': True}
+        ui.show_main_menu()
+        recovery = next((item for item in ui.items
+                         if item.label == 'Recover filament'), None)
+        self.assertIsNotNone(recovery)
+        recovery.callback()
+        self.assertNotIn('Reset BMCU', [item.label for item in ui.items])
+        confirmation = next(item for item in ui.items
+                            if item.label == 'Confirm clear path')
+        confirmation.callback()
+        self.assertEqual([], calls)
+        ui.items[0].callback()
+        self.assertEqual([{'CHANNEL': '3', 'CONFIRM': '1'}], calls)
+        self.assertFalse(h.display.bmcu_reset()[0])
+        integration['recovery_channel'] = -1
+        self.assertFalse(h.display.confirm_bmcu_path()[0])
+        self.assertEqual(1, len(calls))
+
+    def test_language_applies_now_and_stages_existing_config_save(self):
+        h, ui, _ = self.make_ui('en')
+        configfile = mock.Mock()
+        h.printer.objects['configfile'] = configfile
+        self.assertTrue(hasattr(ui, 'show_settings_menu'))
+        ui.show_settings_menu()
+        language = next(item for item in ui.items if item.label == 'Language')
+        language.callback()
+        next(item for item in ui.items if item.label == 'Português').callback()
+        self.assertEqual('pt_BR', h.display.language)
+        self.assertEqual('pt_BR', ui.language)
+        self.assertIn('Idioma', [item.label for item in ui.items])
+        configfile.set.assert_called_once_with(
+            'e3v3se_display', 'language', 'pt_BR')
+        self.assertEqual([], h.moves)
+        self.assertFalse(h.printer.shutdown)
+        self.assertFalse(h.display.set_language('invalid')[0])
+        self.assertEqual('pt_BR', h.display.language)
+
+    def test_default_display_macros_do_not_duplicate_builtin_controls(self):
+        path = os.path.join(ROOT, 'config/ender3-v3-se/display.cfg')
+        cfg = ConfigFileReader().build_fileconfig(
+            ConfigFileReader().read_config_file(path), path)
+        self.assertFalse(any(name.startswith('e3v3se_display macro ')
+                             for name in cfg.sections()))
+
+    def test_new_public_cutter_diagnostics_are_localized_including_floats(self):
+        self.assertEqual(
+            'O sensor de entrada ainda detecta filamento.',
+            translate('The entry sensor still detects filament.', 'pt_BR'))
+        self.assertEqual(
+            'Servo comandado a 12.5 graus; confira a posição física.',
+            translate('Servo commanded to 12.5 degrees; '
+                      'check its physical position.', 'pt_BR'))
+        for source in ('Reset BMCU', 'RECOVERY', 'Settings', 'Language',
+                       'Confirm clear path', 'Failure details'):
+            self.assertIn(source, translations.PORTUGUESE)
+
+    def test_recovery_translation_preserves_the_sensor_side(self):
+        source = ('Physically clear the shared path and park this filament '
+                  'behind the entry sensor before CONFIRM=1.')
+        self.assertEqual(
+            'Desobstrua fisicamente o caminho compartilhado e estacione este '
+            'filamento antes do sensor de entrada; só então use CONFIRM=1.',
+            translate(source, 'pt_BR'))
+        self.assertEqual('O canal deve estar EMPTY antes da medição.',
+                         translate('The channel must be EMPTY before '
+                                   'measurement.', 'pt_BR'))
+        self.assertEqual('A posição foi perdida; a recuperação está bloqueada.',
+                         translate('Position was lost; print recovery '
+                                   'is blocked.', 'pt_BR'))
+
+    def test_unload_error_localizes_nested_cause_and_numeric_evidence(self):
+        self.assertEqual(
+            'Retirada interrompida: A assistência de retirada do alimentador '
+            'parou. Canal 4; buffer 50%; PWM 0; movimento 0. '
+            'Total comandado líquido 12.50 mm.',
+            translate('Unload interrupted: Feeder withdrawal assistance '
+                      'stopped. Channel 4; buffer 50%; PWM 0; motion 0. '
+                      'Total commanded net 12.50 mm.', 'pt_BR'))
+
+    def test_catalogue_templates_keep_numeric_types_and_unknown_details(self):
+        token = r'%(?:\.[0-9]+)?[sdf]|%%'
+        for source, target in translations.PORTUGUESE.items():
+            kinds = translations.re.findall(token, source)
+            if not kinds:
+                continue
+            with self.subTest(source=source):
+                self.assertEqual(kinds, translations.re.findall(token, target))
+                values = tuple('EXTERNAL_DETAIL' if kind == '%s'
+                               else 4 if kind.endswith('d') else 12.5
+                               for kind in kinds if kind != '%%')
+                rendered = source % values
+                self.assertEqual(target % values,
+                                 translate(rendered, 'pt_BR'))
+                self.assertEqual(rendered, translate(rendered, 'en'))
+
+    def test_catalogue_has_no_silently_overwritten_duplicate_keys(self):
+        path = os.path.join(
+            ROOT, 'klippy/extras/e3v3se_display/translations.py')
+        with open(path, encoding='utf-8') as stream:
+            tree = ast.parse(stream.read())
+        catalogue = next(node.value for node in tree.body
+                         if isinstance(node, ast.Assign)
+                         and any(isinstance(target, ast.Name)
+                                 and target.id == 'PORTUGUESE'
+                                 for target in node.targets))
+        keys = [ast.literal_eval(key) for key in catalogue.keys]
+        self.assertEqual(len(keys), len(set(keys)))
+
+    def test_paused_cutter_recovery_can_only_retract_after_confirmation(self):
+        h, ui, _ = self.make_ui('en')
+        h.add_bmcu(uncertain=[0])
+        h.state = 'paused'
+        h.printer.objects['bmcu_ender_integration'] = types.SimpleNamespace(
+            get_status=lambda time: {'recovery_pending': True,
+                                    'recovery_channel': 0,
+                                    'cutter_uncertain': True})
+        h.display.cortador_configurado = lambda: object()
+        calls = []
+        h.gcode.register_command('CUTTER_SERVO', lambda cmd:
+            calls.append(cmd.get_command_parameters()))
+        ui.show_recovery_menu()
+        retract = next((item for item in ui.items
+                        if item.label == 'Close cutter stop'), None)
+        self.assertIsNotNone(retract)
+        self.assertNotIn('Open cutter stop', [item.label for item in ui.items])
+        retract.callback()
+        self.assertEqual([], calls)
+        ui.items[0].callback()
+        self.assertEqual([{'POSITION': 'RETRACTED', 'CONFIRM': '1'}], calls)
+        self.assertEqual('RECOVERY', ui.title)
+        self.assertNotIn('Home all', [item.label for item in ui.items])
+
+    def test_reset_and_save_recheck_busy_state_after_confirmation(self):
+        h, ui, _ = self.make_ui('en')
+        h.add_bmcu()
+        calls = []
+        h.gcode.register_command('BMCU_ENDER_RESET', lambda cmd:
+                                calls.append('RESET'))
+        h.gcode.register_command('SAVE_CONFIG', lambda cmd:
+                                calls.append('SAVE'))
+        for action in (ui.confirm_bmcu_reset, ui.confirm_save_config):
+            h.state = 'standby'
+            action()
+            h.state = 'printing'
+            ui.items[0].callback()
+            self.assertEqual([], calls)
+        h.state = 'standby'
+        h.display.bmcu_session = {'cancelled': False}
+        self.assertFalse(h.display.bmcu_reset()[0])
+        self.assertFalse(h.display.save_config()[0])
+        self.assertEqual([], calls)
+
+    def test_save_rechecks_bmcu_work_started_outside_the_screen(self):
+        for operation in ('native', 'manual'):
+            with self.subTest(operation=operation):
+                h, ui, _ = self.make_ui('en')
+                h.add_bmcu()
+                calls = []
+                h.gcode.register_command('SAVE_CONFIG', lambda cmd:
+                                        calls.append('SAVE'))
+                integration = types.SimpleNamespace(manual_operation=None)
+                h.printer.objects['bmcu_ender_integration'] = integration
+                ui.confirm_save_config()
+                if operation == 'native':
+                    h.bmcu['active_operations'] = {'extruder': 'LOAD'}
+                else:
+                    integration.manual_operation = 'LOAD'
+                self.assertFalse(h.display.is_operation_busy())
+                self.assertTrue(h.display._bmcu_status(0.)['bmcu_busy'])
+                ui.items[0].callback()
+                self.assertEqual([], calls)
+                h.bmcu['active_operations'] = {}
+                integration.manual_operation = None
+                ui.confirm_save_config()
+                ui.items[0].callback()
+                self.assertEqual(['SAVE'], calls)
 
     def test_batente_manual_exige_confirmacao_mas_homing_envia_so_g28(self):
         h, ui, _ = self.make_ui("pt_BR")
@@ -865,8 +1099,8 @@ class DisplayLanguageTest(unittest.TestCase):
             recolhido=False)
         comandos = []
         h.display._execute = lambda texto: (comandos.append(texto) or True, "")
-        for rotulo, posicao in (("Abrir batente", "ACIONADO"),
-                                ("Fechar batente", "RECOLHIDO")):
+        for rotulo, posicao in (("Abrir batente", "DEPLOYED"),
+                                ("Fechar batente", "RETRACTED")):
             ui.show_move_menu()
             menu = next(item for item in ui.items if item.label == rotulo)
             total = len(comandos)
@@ -874,7 +1108,7 @@ class DisplayLanguageTest(unittest.TestCase):
             self.assertEqual(total, len(comandos))
             ui.items[0].callback()
             self.assertEqual(
-                "CORTADOR_SERVO POSICAO=%s CONFIRMAR=1" % posicao, comandos[-1])
+                "CUTTER_SERVO POSITION=%s CONFIRM=1" % posicao, comandos[-1])
         ui.solicitar_homing()
         self.assertEqual(3, len(comandos))
         self.assertEqual("G28", comandos[-1])
@@ -905,11 +1139,11 @@ class DisplayLanguageTest(unittest.TestCase):
 
     def test_english_and_portuguese_menus_and_operation_text(self):
         for language, menu, heating in (
-                ("en", "PREPARE", "Heating nozzle"),
-                ("pt_BR", "PREPARAR", "Aquecendo bico")):
+                ("en", "MOVE", "Heating nozzle"),
+                ("pt_BR", "MOVER", "Aquecendo bico")):
             with self.subTest(language=language):
                 h, ui, transport = self.make_ui(language)
-                ui.show_prepare_menu()
+                ui.show_move_menu()
                 self.assertIn(menu, self.text_frames(transport))
                 self.assertTrue(h.display.move_axis("E", 5)[0])
                 self.assertIn(heating, self.text_frames(transport))
@@ -964,6 +1198,21 @@ class DisplayLanguageTest(unittest.TestCase):
 
 
 class ConfigLayoutTest(unittest.TestCase):
+    def test_language_can_be_saved_without_an_include_conflict(self):
+        config_path = os.path.join(
+            ROOT, 'config', 'printer-creality-ender3-v3-se-gd32f303-2023.cfg')
+        reader = ConfigFileReader()
+        data = reader.read_config_file(config_path)
+        autosave = reader.build_fileconfig(
+            '[e3v3se_display]\nlanguage: pt_BR\n', '*AUTOSAVE*')
+        helper = ConfigAutoSave.__new__(ConfigAutoSave)
+        helper.fileconfig = autosave
+        helper.printer = FakePrinter()
+        regular = helper._strip_duplicates(data, autosave)
+        cfg = reader.build_fileconfig_with_includes(regular, config_path)
+        helper._disallow_include_conflicts(cfg)
+        self.assertFalse(cfg.has_option('e3v3se_display', 'language'))
+
     def test_autosave_values_do_not_conflict_with_includes(self):
         config_path = os.path.join(
             ROOT, "config",

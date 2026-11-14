@@ -1,5 +1,7 @@
 # Configuration Changes
 
+**English** | [Português brasileiro](pt-BR/Config_Changes.md)
+
 This document covers recent software changes to the config file that
 are not backwards compatible. It is a good idea to review this
 document when upgrading the Klipper software.

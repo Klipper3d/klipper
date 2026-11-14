@@ -181,9 +181,13 @@ class DisplayUI:
         state = self.status.get("print_state", "standby")
         paused = self.status.get("paused", False) or state == "paused"
         printing = state in ("printing", "paused")
+        recovery = self.owner._bmcu_status(self.owner.reactor.monotonic())
         items = []
         if printing:
-            if paused:
+            if paused and recovery["recovery_pending"]:
+                items.append(MenuItem("Recover filament",
+                                      self.show_recovery_menu))
+            elif paused:
                 items.append(MenuItem(
                     "Resume print", lambda: self._run_and_report(
                         self.owner.resume_print, "Print resumed")))
@@ -192,18 +196,18 @@ class DisplayUI:
                     "Pause print", lambda: self._run_and_report(
                         self.owner.pause_print, "Print paused")))
             items.append(MenuItem("Tune", self.show_tune_menu))
-            if paused:
-                items.append(MenuItem("Filament", self.show_prepare_menu))
+            if paused and not recovery["recovery_pending"]:
+                items.append(MenuItem("Filament", self.show_filament_menu))
             items.append(MenuItem("Cancel print", self.confirm_cancel))
         else:
             items.append(MenuItem("Print", self.show_files))
             items.append(MenuItem("Filament", self.show_filament_menu))
-            items.append(MenuItem("Prepare", self.show_prepare_menu))
-            items.append(MenuItem("Move", self.show_move_menu))
             items.append(MenuItem("Temperature", self.show_temperature_menu))
+            items.append(MenuItem("Move", self.show_move_menu))
             items.append(MenuItem("Calibration", self.show_calibration_menu))
             if self.owner.has_macros():
                 items.append(MenuItem("Macros", self.show_macros_menu))
+        items.append(MenuItem("Settings", self.show_settings_menu))
         items.append(self._back_item(self.show_dashboard))
         self.show_menu("MAIN MENU", items, self.show_dashboard)
 
@@ -257,39 +261,22 @@ class DisplayUI:
         return ok
 
     def show_prepare_menu(self):
-        items = [
-            MenuItem("Home all", self.solicitar_homing),
-            MenuItem("Preheat PLA", lambda: self._run_and_report(
-                self.owner.preheat_pla, "PLA preheat selected")),
-            MenuItem("Preheat PETG", lambda: self._run_and_report(
-                self.owner.preheat_petg, "PETG preheat selected")),
-            MenuItem("Preheat TPU", lambda: self._run_and_report(
-                self.owner.preheat_tpu, "TPU preheat selected")),
-            MenuItem("Cooldown", lambda: self._run_and_report(
-                self.owner.cooldown, "Heaters and fan disabled")),
-            MenuItem("Load filament", self.request_load),
-            MenuItem("Unload filament", lambda: self._run_and_report(
-                self.owner.unload_filament, "Unload macro started")),
-            MenuItem("BMCU channels", self.show_bmcu_menu),
-            MenuItem("Disable motors", lambda: self._run_and_report(
-                self.owner.disable_motors, "Motors disabled")),
-            self._back_item(self.show_main_menu),
-        ]
-        self.show_menu("PREPARE", items, self.show_main_menu)
+        # Existing operation completion callbacks return here.
+        self.show_filament_menu()
 
     def show_filament_menu(self):
+        status = self.owner._bmcu_status(self.owner.reactor.monotonic())
+        if status["recovery_pending"]:
+            self.show_recovery_menu()
+            return
+        if status["bmcu_available"] or self.owner.printer.lookup_object(
+                "bmcu", None) is not None:
+            self.show_bmcu_menu()
+            return
         items = [
-            MenuItem("Preheat PLA", lambda: self._run_and_report(
-                self.owner.preheat_pla, "PLA preheat selected")),
-            MenuItem("Preheat PETG", lambda: self._run_and_report(
-                self.owner.preheat_petg, "PETG preheat selected")),
-            MenuItem("Preheat TPU", lambda: self._run_and_report(
-                self.owner.preheat_tpu, "TPU preheat selected")),
             MenuItem("Load filament", self.request_load),
             MenuItem("Unload filament", lambda: self._run_and_report(
                 self.owner.unload_filament, "Unload macro started")),
-            MenuItem("Cooldown", lambda: self._run_and_report(
-                self.owner.cooldown, "Heaters and fan disabled")),
             self._back_item(self.show_main_menu),
         ]
         self.show_menu("FILAMENT", items, self.show_main_menu)
@@ -301,18 +288,83 @@ class DisplayUI:
             self._run_and_report(self.owner.load_filament, "Load macro started")
 
     def show_bmcu_menu(self):
-        available = self.owner.bmcu_available()
+        status = self.owner._bmcu_status(self.owner.reactor.monotonic())
+        state = self.owner.print_stats.get_status(
+            self.owner.reactor.monotonic())["state"]
+        idle = state not in ("printing", "paused", "pause")
+        available = (status["bmcu_available"] and not status["bmcu_uncertain"]
+                     and idle and not status["bmcu_busy"]
+                     and not self.owner.is_operation_busy())
         items = [MenuItem("Channel %d: load" % (channel + 1),
                           lambda c=channel: self._run_and_report(
                               lambda: self.owner.bmcu_load(c)), available)
                  for channel in range(4)]
         items.append(MenuItem("Unload active channel", lambda:
                               self._run_and_report(self.owner.bmcu_unload),
-                              available))
+                               available))
+        reset_available = (status["bmcu_available"] and idle
+                           and not status["bmcu_busy"]
+                           and not self.owner.is_operation_busy()
+                           and self.owner.command_available("BMCU_ENDER_RESET"))
+        items.append(MenuItem("Reset BMCU", self.confirm_bmcu_reset,
+                              reset_available))
         if not available:
             items.append(MenuItem("BMCU unavailable", None, False))
-        items.append(self._back_item(self.show_prepare_menu))
-        self.show_menu("BMCU CHANNELS", items, self.show_prepare_menu)
+        items.append(self._back_item(self.show_main_menu))
+        self.show_menu("FILAMENT / BMCU", items, self.show_main_menu)
+
+    def confirm_bmcu_reset(self):
+        self.show_confirmation(
+            "RESET BMCU?", "Manually clear hotend/path",
+            lambda: self._run_and_report(self.owner.bmcu_reset,
+                                         "BMCU path state reconciled."),
+            self.show_filament_menu)
+
+    def show_recovery_menu(self):
+        status = self.owner._bmcu_status(self.owner.reactor.monotonic())
+        channel = status["recovery_channel"]
+        ready = (status["recovery_pending"] and channel in range(4)
+                 and status["bmcu_available"] and not status["bmcu_busy"]
+                 and not self.owner.is_operation_busy())
+        items = [
+            MenuItem("Channel %d" % (channel + 1), None, False)
+            if channel in range(4) else MenuItem(
+                "Channel unknown", None, False),
+            MenuItem("Failure details", lambda: self.show_message(
+                "RECOVERY", status["recovery_error"], self.show_recovery_menu)),
+            MenuItem("Confirm clear path", lambda: self.show_confirmation(
+                "CLEAR FILAMENT PATH?", "Park failed channel first",
+                lambda: self._run_and_report(self.owner.confirm_bmcu_path,
+                                             "Filament path confirmed."),
+                self.show_recovery_menu), ready),
+            MenuItem("Resume print", lambda: self._run_and_report(
+                self.owner.resume_print, "Print resumed")),
+            MenuItem("Cancel print", self.confirm_cancel),
+            self._back_item(self.show_main_menu),
+        ]
+        if (status["cutter_uncertain"]
+                and self.owner.cortador_configurado() is not None):
+            items.insert(2, MenuItem(
+                "Close cutter stop", lambda: self.confirmar_batente(
+                    True, self.show_recovery_menu),
+                not status["bmcu_busy"] and not self.owner.is_operation_busy()))
+        self.show_menu("RECOVERY", items, self.show_main_menu)
+
+    def show_settings_menu(self):
+        items = [MenuItem("Language", self.show_language_menu),
+                 MenuItem("Save config", self.confirm_save_config),
+                 self._back_item(self.show_main_menu)]
+        self.show_menu("SETTINGS", items, self.show_main_menu)
+
+    def show_language_menu(self):
+        def select(language):
+            if self._run_and_report(lambda: self.owner.set_language(language)):
+                self.show_settings_menu()
+        self.show_menu("LANGUAGE", [
+            MenuItem("English", lambda: select("en")),
+            MenuItem("Português", lambda: select("pt_BR")),
+            self._back_item(self.show_settings_menu),
+        ], self.show_settings_menu)
 
     def _axis_adjust(self, axis, step):
         status = self.status
@@ -333,6 +385,7 @@ class DisplayUI:
 
     def show_move_menu(self):
         items = [
+            MenuItem("Home all", self.solicitar_homing),
             MenuItem("Move X (1 mm)", lambda: self._axis_adjust("X", 1.0)),
             MenuItem("Move Y (1 mm)", lambda: self._axis_adjust("Y", 1.0)),
             MenuItem("Move Z (0.1 mm)", lambda: self._axis_adjust("Z", 0.1)),
@@ -345,20 +398,23 @@ class DisplayUI:
                 MenuItem("Close cutter stop", lambda: self.confirmar_batente(
                     True)),
             ])
+        items.append(MenuItem("Disable motors", lambda: self._run_and_report(
+            self.owner.disable_motors, "Motors disabled")))
         items.append(self._back_item(self.show_main_menu))
         self.show_menu("MOVE", items, self.show_main_menu)
 
-    def confirmar_batente(self, recolher):
+    def confirmar_batente(self, recolher, back_callback=None):
         titulo = "Close cutter stop" if recolher else "Open cutter stop"
+        back_callback = back_callback or self.show_move_menu
 
         def executar():
             if self._run_and_report(
                 lambda: self.owner.mover_batente(recolher)
             ):
-                self.show_move_menu()
+                back_callback()
 
         self.show_confirmation(
-            titulo, "Keep head clear of stop", executar, self.show_move_menu)
+            titulo, "Keep head clear of stop", executar, back_callback)
 
     def solicitar_homing(self):
         self._run_and_report(self.owner.home_all, "Homing all axes")
@@ -419,7 +475,6 @@ class DisplayUI:
             MenuItem("Screws tilt", lambda: self._run_and_report(
                 self.owner.screws_tilt, "Screw tilt calculation started"),
                 self.owner.command_available("SCREWS_TILT_CALCULATE")),
-            MenuItem("Save config", self.confirm_save_config),
             self._back_item(self.show_main_menu),
         ]
         self.show_menu("CALIBRATION", items, self.show_main_menu)
@@ -499,7 +554,7 @@ class DisplayUI:
         self.show_confirmation(
             "SAVE CONFIG?", "Klipper will restart",
             lambda: self._run_and_report(self.owner.save_config),
-            self.show_calibration_menu)
+            self.show_settings_menu)
 
     def show_confirmation(self, title, detail, confirm_callback, back_callback):
         items = [MenuItem("Confirm", confirm_callback),

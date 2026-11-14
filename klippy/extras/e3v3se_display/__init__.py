@@ -249,7 +249,10 @@ class E3V3SEDisplay:
 
     def _bmcu_status(self, eventtime):
         result = {"bmcu_available": False, "bmcu_busy": False,
-                  "bmcu_channel": None, "bmcu_label": "BMCU absent"}
+                  "bmcu_channel": None, "bmcu_label": "BMCU absent",
+                  "bmcu_uncertain": True, "cutter_uncertain": False,
+                  "recovery_pending": False, "recovery_channel": -1,
+                  "recovery_tool": -1, "recovery_error": ""}
         bmcu = self.printer.lookup_object("bmcu", None)
         if bmcu is None:
             return result
@@ -257,7 +260,13 @@ class E3V3SEDisplay:
             status = bmcu.get_status(eventtime)
             result["bmcu_busy"] = bool(status.get("active_operations"))
             integration = self.printer.lookup_object(
-                "bmcu_integracao_ender", None)
+                "bmcu_ender_integration", None)
+            if hasattr(integration, "get_status"):
+                recovery = integration.get_status(eventtime)
+                for key in ("recovery_pending", "recovery_channel",
+                            "recovery_tool", "recovery_error",
+                            "cutter_uncertain"):
+                    result[key] = recovery.get(key, result[key])
             result["bmcu_busy"] |= getattr(
                 integration, "manual_operation", None) is not None
             version_ok = status.get("package_version") == "1.0.6"
@@ -296,6 +305,30 @@ class E3V3SEDisplay:
 
     def bmcu_available(self):
         return self._bmcu_status(self.reactor.monotonic())["bmcu_available"]
+
+    def bmcu_reset(self):
+        status = self._bmcu_status(self.reactor.monotonic())
+        state = self.print_stats.get_status(self.reactor.monotonic())["state"]
+        if (self.is_operation_busy() or status["bmcu_busy"]
+                or state in ("printing", "paused", "pause")
+                or status["recovery_pending"]):
+            return False, "Finish or cancel the print before resetting BMCU."
+        if not status["bmcu_available"] or not self.command_available(
+                "BMCU_ENDER_RESET"):
+            return False, "BMCU unavailable or route needs verification"
+        return self._execute("BMCU_ENDER_RESET CONFIRM=1")
+
+    def confirm_bmcu_path(self):
+        status = self._bmcu_status(self.reactor.monotonic())
+        state = self.print_stats.get_status(self.reactor.monotonic())["state"]
+        channel = status["recovery_channel"]
+        if (self.is_operation_busy() or status["bmcu_busy"]
+                or state != "paused" or not status["recovery_pending"]
+                or channel not in range(4) or not status["bmcu_available"]
+                or not self.command_available("BMCU_CONFIRM_CLEAR_PATH")):
+            return False, "No eligible pending filament recovery."
+        return self._execute(
+            "BMCU_CONFIRM_CLEAR_PATH CHANNEL=%d CONFIRM=1" % (channel + 1))
 
     def is_operation_busy(self):
         return self.operation is not None or self.bmcu_session is not None
@@ -423,7 +456,7 @@ class E3V3SEDisplay:
         return command in commands
 
     def cortador_configurado(self):
-        integracao = self.printer.lookup_object("bmcu_integracao_ender", None)
+        integracao = self.printer.lookup_object("bmcu_ender_integration", None)
         cortador = getattr(integracao, "cortador", None)
         if cortador is None:
             return None
@@ -440,9 +473,9 @@ class E3V3SEDisplay:
     def mover_batente(self, recolher):
         if self.is_operation_busy():
             return False, "Complete or cancel the filament operation"
-        posicao = "RECOLHIDO" if recolher else "ACIONADO"
+        posicao = "RETRACTED" if recolher else "DEPLOYED"
         return self._execute(
-            "CORTADOR_SERVO POSICAO=%s CONFIRMAR=1" % posicao)
+            "CUTTER_SERVO POSITION=%s CONFIRM=1" % posicao)
 
     def home_all(self):
         return self._execute("G28")
@@ -463,7 +496,25 @@ class E3V3SEDisplay:
         return self._execute("CANCEL_PRINT")
 
     def save_config(self):
+        eventtime = self.reactor.monotonic()
+        if (self.is_operation_busy()
+                or self._bmcu_status(eventtime)["bmcu_busy"]):
+            return False, "Complete or cancel the filament operation"
+        state = self.print_stats.get_status(eventtime)["state"]
+        if state in ("printing", "paused", "pause"):
+            return False, (
+                "Finish or cancel the print before saving configuration.")
         return self._execute("SAVE_CONFIG")
+
+    def set_language(self, language):
+        if language not in ("en", "pt_BR"):
+            return False, "Choose English or Brazilian Portuguese."
+        configfile = self.printer.lookup_object("configfile", None)
+        if configfile is None:
+            return False, "Configuration storage is unavailable."
+        configfile.set("e3v3se_display", "language", language)
+        self.language = self.ui.language = language
+        return True, ""
 
     def cooldown(self):
         self.cancel_operation()
@@ -476,20 +527,20 @@ class E3V3SEDisplay:
 
     def preheat_pla(self):
         self.material = "PLA"
-        if self.command_available("PRE_AQUECER_PLA"):
-            return self._execute("PRE_AQUECER_PLA")
+        if self.command_available("PREHEAT_PLA"):
+            return self._execute("PREHEAT_PLA")
         return self._set_preheat(self.preheat_pla_temps)
 
     def preheat_petg(self):
         self.material = "PETG"
-        if self.command_available("PRE_AQUECER_PETG"):
-            return self._execute("PRE_AQUECER_PETG")
+        if self.command_available("PREHEAT_PETG"):
+            return self._execute("PREHEAT_PETG")
         return self._set_preheat(self.preheat_petg_temps)
 
     def preheat_tpu(self):
         self.material = "TPU"
-        if self.command_available("PRE_AQUECER_TPU"):
-            return self._execute("PRE_AQUECER_TPU")
+        if self.command_available("PREHEAT_TPU"):
+            return self._execute("PREHEAT_TPU")
         return self._set_preheat(self.preheat_tpu_temps)
 
     def set_hotend(self, value):

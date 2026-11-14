@@ -1,5 +1,7 @@
 # API server
 
+**English** | [Português brasileiro](pt-BR/API_Server.md)
+
 This document describes Klipper's Application Programmer Interface
 (API). This interface enables external applications to query and
 control the Klipper host software.
@@ -403,7 +405,7 @@ This data can be used to render:
 
 ### pause_resume/cancel
 
-This endpoint is similar to running the "PRINT_CANCEL" G-Code command.
+This endpoint is similar to running the "CANCEL_PRINT" G-Code command.
 For example:
 `{"id": 123, "method": "pause_resume/cancel"}`
 

@@ -65,7 +65,7 @@ class CutterSafetyTests(unittest.TestCase):
                 b.device.status['motor_pwm'][0] = 850
 
         b.toolhead.manual_move = started
-        with self.assertRaisesRegex(RuntimeError, 'BMCU.*par'):
+        with self.assertRaisesRegex(RuntimeError, 'BMCU.*stopped'):
             b.unload()
         self.assertTrue(b.obj.cortador.incerto)
         self.assertEqual('curso_da_lamina',
@@ -98,7 +98,7 @@ class CutterSafetyTests(unittest.TestCase):
     def test_retract_exceeding_buffer_allowance_fails_before_motion(self):
         b = BancadaCortador()
         b.ajustes['recuo_antes_corte_mm'] = 2.1
-        with self.assertRaisesRegex(RuntimeError, 'folga'):
+        with self.assertRaisesRegex(RuntimeError, 'allowance'):
             b.unload()
         self.assertEqual(0.0, b.e)
         self.assertFalse(any(e[0] == 'mover' for e in b.eventos))
@@ -152,7 +152,7 @@ class CutterSafetyTests(unittest.TestCase):
                         b.device.status[field][0] = value
 
                     b.device.refresh = moving
-                    with self.assertRaisesRegex(RuntimeError, 'BMCU.*par'):
+                    with self.assertRaisesRegex(RuntimeError, 'BMCU.*stopped'):
                         b.unload()
                     self.assertEqual(0.0, b.e)
                     self.assert_no_blade(b)
@@ -188,7 +188,7 @@ class CutterSafetyTests(unittest.TestCase):
         profile = b.obj.cortador.preparar()
         b.obj.cortador.cortar(profile, lambda: None)
         b.position[2] = 250
-        with self.assertRaisesRegex(RuntimeError, 'altura'):
+        with self.assertRaisesRegex(RuntimeError, 'Z clearance'):
             b.obj.cortador.cortar(profile, lambda: None)
         self.assertEqual('interrompido',
                          b.obj.cortador.ultimo_corte['resultado'])
@@ -197,7 +197,7 @@ class CutterSafetyTests(unittest.TestCase):
     def test_failed_initial_retraction_has_current_cut_diagnostic(self):
         b = BancadaCortador()
         b.position[0] = -5.0
-        with self.assertRaisesRegex(RuntimeError, 'Afaste'):
+        with self.assertRaisesRegex(RuntimeError, 'Move the head clear'):
             b.obj.cortador.cortar(b.obj.cortador.preparar(), lambda: None)
         self.assertEqual('recolhimento_inicial',
                          b.obj.cortador.ultimo_corte['etapa'])
@@ -273,7 +273,7 @@ class NativeUnloadTests(unittest.TestCase):
                 b.bmcu.active_operations['bmcu0']['phase'] = 'CUT_OR_FORM'
                 b.motion(3, protocol.MOTION_ON_USE)
                 b.endpoint.driver = 'generic_single_extruder'
-                b.endpoint.get = lambda *args: 'BMCU_LIBERAR_ENDER'
+                b.endpoint.get = lambda *args: 'BMCU_RELEASE_ENDER'
                 b.endpoint.prepare_toolhead_for_pullback = (
                     lambda *args, **kwargs: b.obj.release(Gcmd())
                 )
@@ -289,7 +289,7 @@ class NativeUnloadTests(unittest.TestCase):
     def test_other_native_callbacks_keep_existing_assistance(self):
         for driver, macro in (
             ('generic_single_extruder', 'OTHER_MACRO'),
-            ('other', 'BMCU_LIBERAR_ENDER'),
+            ('other', 'BMCU_RELEASE_ENDER'),
         ):
             with self.subTest(driver=driver):
                 b = BancadaCortador()
@@ -315,7 +315,7 @@ class NativeUnloadTests(unittest.TestCase):
         b = BancadaCortador()
         b.bmcu.active_operations['bmcu0']['phase'] = 'CUT_OR_FORM'
         b.endpoint.driver = 'generic_single_extruder'
-        b.endpoint.get = lambda *args: 'BMCU_LIBERAR_ENDER'
+        b.endpoint.get = lambda *args: 'BMCU_RELEASE_ENDER'
         b.endpoint.prepare_toolhead_for_pullback = (
             lambda *args, **kwargs: b.obj.release(Gcmd())
         )
@@ -367,11 +367,12 @@ class FiniteConfigurationTests(unittest.TestCase):
         self,
     ):
         keys = (
-            'captura_mm', 'captura_f', 'avanco_bico_mm', 'purga_mm',
-            'avanco_f', 'recuo_f', 'limite_buffer_recuo',
-            'retomar_buffer_recuo', 'tempo_buffer_recuo', 'tempo_sem_recuo',
-            'passo_recuo_mm', 'folga_recuo_mm', 'recuo_apos_switch_mm',
-            'tempo_switch', 'x_purga', 'x_limpeza', 'y_purga', 'alivio_z',
+            'capture_mm', 'capture_feedrate', 'nozzle_feed_mm', 'purge_mm',
+            'feed_feedrate', 'retract_feedrate', 'unload_buffer_limit',
+            'unload_buffer_resume', 'unload_buffer_timeout',
+            'unload_progress_timeout', 'unload_step_mm', 'unload_slack_mm',
+            'pullback_after_sensor_mm', 'sensor_timeout',
+            'purge_x', 'wipe_x', 'purge_y', 'z_lift',
         )
         for key in keys:
             for value in (math.nan, math.inf, -math.inf):
@@ -494,7 +495,7 @@ class PurgeMotionTests(unittest.TestCase):
             with self.subTest(attribute=attribute, value=value):
                 b = MotionBench()
                 setattr(b.obj, attribute, value)
-                with self.assertRaisesRegex(RuntimeError, 'limites'):
+                with self.assertRaisesRegex(RuntimeError, 'limits'):
                     b.obj.position_head()
                 self.assertEqual([], b.physical_moves)
                 self.assertFalse(any(e[0] == 'mover' for e in b.eventos))
@@ -502,7 +503,7 @@ class PurgeMotionTests(unittest.TestCase):
     def test_insufficient_z_clearance_blocks_xy_travel(self):
         b = MotionBench()
         b.position[2] = 249.0
-        with self.assertRaisesRegex(RuntimeError, 'limites'):
+        with self.assertRaisesRegex(RuntimeError, 'limits'):
             b.obj.position_head()
         self.assertEqual([], b.physical_moves)
 

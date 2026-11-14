@@ -7,6 +7,9 @@ import unittest
 from test_integracao import Gcmd, ROOT, protocol
 from test_manual_controls import ManualBench
 from test_tip_forming import TipBench
+from integration_test.bmcu_cutter_settings import (
+    private_settings, public_settings,
+)
 
 
 class BancadaCortador(TipBench):
@@ -14,13 +17,13 @@ class BancadaCortador(TipBench):
         super().__init__()
         parser = configparser.RawConfigParser()
         parser.read(ROOT / 'config/ender3-v3-se-validada/bmcu-cortador.cfg')
-        self.ajustes = {
+        self.ajustes = private_settings({
             chave.removeprefix('variable_'): ast.literal_eval(valor)
             for chave, valor in parser.items(
-                'gcode_macro _BMCU_ENDER_CORTADOR_AJUSTES'
+                'gcode_macro _BMCU_ENDER_CUTTER_SETTINGS'
             )
             if chave.startswith('variable_')
-        }
+        })
         self.ajustes.update(
             habilitado=1,
             calibrado=1,
@@ -61,8 +64,10 @@ class BancadaCortador(TipBench):
         )
 
     def lookup(self, nome, default=None):
-        if nome == 'gcode_macro _BMCU_ENDER_CORTADOR_AJUSTES':
-            return types.SimpleNamespace(get_status=lambda t: self.ajustes)
+        if nome == 'gcode_macro _BMCU_ENDER_CUTTER_SETTINGS':
+            return types.SimpleNamespace(
+                get_status=lambda t: public_settings(self.ajustes)
+            )
         if nome == 'servo bmcu_cortador':
             return types.SimpleNamespace(max_angle=180.0)
         if nome == 'print_stats':
@@ -124,10 +129,10 @@ class TestesCortador(unittest.TestCase):
         b = BancadaCortador()
         parser = configparser.RawConfigParser()
         parser.read(ROOT / 'config/ender3-v3-se-validada/bmcu-cortador.cfg')
-        cfg = parser['gcode_macro _BMCU_ENDER_CORTADOR_AJUSTES']
-        self.assertEqual('0', cfg['variable_habilitado'])
-        self.assertEqual('0', cfg['variable_calibrado'])
-        self.assertEqual('1', cfg['variable_soltar_servo_recolhido'])
+        cfg = parser['gcode_macro _BMCU_ENDER_CUTTER_SETTINGS']
+        self.assertEqual('0', cfg['variable_enabled'])
+        self.assertEqual('0', cfg['variable_calibrated'])
+        self.assertEqual('1', cfg['variable_release_retracted_servo'])
         b.ajustes['habilitado'] = 0
         self.assertIsNone(b.obj.cortador.preparar())
 
@@ -238,11 +243,11 @@ class TestesCortador(unittest.TestCase):
                     del b.ajustes['soltar_servo_recolhido']
                 else:
                     b.ajustes['soltar_servo_recolhido'] = ajuste
-                b.obj.cortador.servo_manual(Gcmd(ANGULO=90, CONFIRMAR=1))
+                b.obj.cortador.servo_manual(Gcmd(ANGLE=90, CONFIRM=1))
                 self.assertEqual(1, len([
                     evento for evento in b.eventos if evento[0] == 'gcode'
                 ]))
-                b.obj.cortador.servo_manual(Gcmd(ANGULO=0, CONFIRMAR=1))
+                b.obj.cortador.servo_manual(Gcmd(ANGLE=0, CONFIRM=1))
                 self.assertTrue(b.obj.cortador.recolhido)
                 self.assertEqual(
                     ajuste != 0,
@@ -253,7 +258,7 @@ class TestesCortador(unittest.TestCase):
     def test_cortador_nao_calibrado_nao_move_cabecote_ou_extrusora(self):
         b = BancadaCortador()
         b.ajustes['calibrado'] = 0
-        with self.assertRaisesRegex(RuntimeError, 'Calibre'):
+        with self.assertRaisesRegex(RuntimeError, 'Calibrate'):
             b.unload()
         self.assertFalse(any(e[0] == 'mover' for e in b.eventos))
         self.assertEqual(0, b.e)
@@ -337,7 +342,7 @@ class TestesCortador(unittest.TestCase):
                 b.unload()
             self.assertTrue(b.obj.cortador.incerto)
             self.assertEqual(0, b.e)
-            with self.assertRaisesRegex(RuntimeError, 'incerta'):
+            with self.assertRaisesRegex(RuntimeError, 'uncertain'):
                 b.obj.cortador.preparar()
 
     def test_sensor_liberado_durante_corte_interrompe_antes_da_retirada(self):
@@ -422,7 +427,7 @@ class TestesCortador(unittest.TestCase):
         comando = b.obj.validar_homing_cortador(
             lambda g: self.fail('Homing nao deve iniciar')
         )
-        with self.assertRaisesRegex(RuntimeError, 'incerta'):
+        with self.assertRaisesRegex(RuntimeError, 'uncertain'):
             comando(Gcmd())
         self.assertEqual([], b.eventos)
 
@@ -431,9 +436,9 @@ class TestesCortador(unittest.TestCase):
         b.bmcu.active_operations = {}
         b.referencias = ''
         b.ajustes.update(angulo_recolhido=180.0, angulo_acionado=20.0)
-        b.obj.cortador.servo_manual(Gcmd(POSICAO='ACIONADO', CONFIRMAR=1))
+        b.obj.cortador.servo_manual(Gcmd(POSITION='DEPLOYED', CONFIRM=1))
         self.assertFalse(b.obj.cortador.recolhido)
-        b.obj.cortador.servo_manual(Gcmd(POSICAO='RECOLHIDO', CONFIRMAR=1))
+        b.obj.cortador.servo_manual(Gcmd(POSITION='RETRACTED', CONFIRM=1))
         self.assertTrue(b.obj.cortador.recolhido)
         self.assertEqual(
             [
@@ -452,7 +457,7 @@ class TestesCortador(unittest.TestCase):
         b.obj.cortador.incerto = True
         b.obj.pending_tool_change = {'tool': 4}
         b.print_state = 'paused'
-        b.obj.cortador.servo_manual(Gcmd(ANGULO=0, CONFIRMAR=1))
+        b.obj.cortador.servo_manual(Gcmd(ANGLE=0, CONFIRM=1))
         self.assertFalse(b.obj.cortador.incerto)
         self.assertTrue(b.obj.cortador.recolhido)
         self.assertEqual({'tool': 4}, b.obj.pending_tool_change)
@@ -473,7 +478,7 @@ class TestesCortador(unittest.TestCase):
         b.temperature = b.target = 25
         b.ajustes.update(habilitado=0, calibrado=0)
         origem = list(b.position)
-        b.obj.cortador.testar(Gcmd(CONFIRMAR=1))
+        b.obj.cortador.testar(Gcmd(CONFIRM=1))
         self.assertEqual(origem, b.position)
         self.assertEqual(0, b.e)
         self.assertEqual(25, b.target)
@@ -492,8 +497,8 @@ class TestesCortador(unittest.TestCase):
             b = BancadaCortador()
             b.print_state = estado
             b.bmcu.active_operations = operacoes
-            with self.assertRaisesRegex(RuntimeError, 'Finalize'):
-                b.obj.cortador.servo_manual(Gcmd(ANGULO=0, CONFIRMAR=1))
+            with self.assertRaisesRegex(RuntimeError, 'Finish'):
+                b.obj.cortador.servo_manual(Gcmd(ANGLE=0, CONFIRM=1))
             self.assertEqual([], b.eventos)
 
     def test_retirada_nao_retorna_a_peca_antes_de_ir_para_purga(self):
@@ -540,7 +545,7 @@ class TestesReset(unittest.TestCase):
     ):
         b = BancadaReset()
         b.obj.pending_tool_change = {'tool': 4}
-        comando = Gcmd(CONFIRMAR=1)
+        comando = Gcmd(CONFIRM=1)
         b.obj.resetar_bmcu(comando)
         for canal, estado in enumerate(('PARKED', 'EMPTY', 'PARKED', 'EMPTY')):
             self.assertIn(
@@ -558,7 +563,7 @@ class TestesReset(unittest.TestCase):
                 for c in b.commands
             )
         )
-        self.assertIn('nenhum filamento foi movido', comando.messages[-1])
+        self.assertIn('no filament was moved', comando.messages[-1])
 
     def test_reset_bloqueia_sem_confirmacao_sensor_ocupado_e_operacoes_ativas(
         self,
@@ -579,7 +584,7 @@ class TestesReset(unittest.TestCase):
                 b.bmcu.active_operations = {'bmcu0': {}}
             with self.assertRaises(RuntimeError):
                 b.obj.resetar_bmcu(
-                    Gcmd(CONFIRMAR=0 if condicao == 'confirmacao' else 1)
+                    Gcmd(CONFIRM=0 if condicao == 'confirmacao' else 1)
                 )
             self.assertEqual([], b.commands)
 
@@ -591,6 +596,6 @@ class TestesReset(unittest.TestCase):
             else:
                 b.acionar_sensor = True
             with self.assertRaises(RuntimeError):
-                b.obj.resetar_bmcu(Gcmd(CONFIRMAR=1))
+                b.obj.resetar_bmcu(Gcmd(CONFIRM=1))
             self.assertTrue(b.bmcu.print_map_active)
             self.assertNotIn('BMCU_PRINT_END MODE=KEEP CLEAR=1', b.commands)

@@ -1,5 +1,7 @@
 # Contact
 
+**English** | [Português brasileiro](pt-BR/Contact.md)
+
 This document provides contact information for Klipper.
 
 ## Discourse Forum

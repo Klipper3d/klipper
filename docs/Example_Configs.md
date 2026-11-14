@@ -1,5 +1,7 @@
 # Example configurations
 
+**English** | [Português brasileiro](pt-BR/Example_Configs.md)
+
 This document contains guidelines for contributing an example Klipper
 configuration to the Klipper github repository (located in the
 [config directory](../config/)).

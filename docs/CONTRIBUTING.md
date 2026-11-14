@@ -1,5 +1,7 @@
 # Contributing to Klipper
 
+**English** | [Português brasileiro](pt-BR/CONTRIBUTING.md)
+
 Thank you for contributing to Klipper! This document describes the
 process for contributing changes to Klipper.
 

@@ -1,5 +1,7 @@
 # Code overview
 
+**English** | [Português brasileiro](pt-BR/Code_Overview.md)
+
 This document describes the overall code layout and major code flow of
 Klipper.
 

@@ -1,5 +1,7 @@
 # Debugging
 
+**English** | [Português brasileiro](pt-BR/Debugging.md)
+
 This document describes some of the Klipper debugging tools.
 
 ## Running the regression tests

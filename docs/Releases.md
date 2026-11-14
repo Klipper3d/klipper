@@ -1,5 +1,7 @@
 # Releases
 
+**English** | [Português brasileiro](pt-BR/Releases.md)
+
 History of Klipper releases. Please see
 [installation](Installation.md) for information on installing Klipper.
 

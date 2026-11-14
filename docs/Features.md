@@ -1,5 +1,7 @@
 # Features
 
+**English** | [Português brasileiro](pt-BR/Features.md)
+
 Klipper has several compelling features:
 
 * High precision stepper movement. Klipper utilizes an application

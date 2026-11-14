@@ -6,6 +6,8 @@ title: Welcome
 
 ![](img/klipper-logo.png){ .center-image }
 
+**English** | [Português brasileiro](pt-BR/index.md)
+
 The Klipper firmware controls 3d-Printers. It combines the power of a
 general purpose computer with one or more micro-controllers. See the
 [features document](Features.md) for more information on why you

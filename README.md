@@ -10,7 +10,13 @@ An unofficial Klipper fork for the **Creality Ender 3 V3 SE**, combining stock
 display support and optional four-channel BMCU filament transport. One physical
 extruder serves all four channels. BMCU-Klipper remains a separate dependency.
 
-## Version 1.0.0
+> **v2.0.0 breaking API change:** integration commands, parameters and enum values
+> are English only. Use published tagged artifacts, not an unvalidated branch.
+> Re-slice old jobs
+> with the [v2 Orca profile](profiles/orca/ender3-v3-se-bmcu/README.md); stored
+> v1 G-code is not automatically converted.
+
+## Version 2.0.0
 
 - Stock TJC3224/DWIN 3.2-inch display, with English and Brazilian Portuguese UI.
 - BMCU 1.0.6 / firmware 1.0.1 integration using a generic single-extruder endpoint.
@@ -18,9 +24,13 @@ extruder serves all four channels. BMCU-Klipper remains a separate dependency.
 - OrcaSlicer 2.4.2 automatic `T0` handling through the committed print map.
 - Upstream Klipper merged through `0cee841e31d701595b3e509a0b502f6e320f52a8`.
 - Regression tests, a reproducible target build and matching release checksums.
+- English-only integration API with guarded configuration/callback migration.
+- Complete prepared host/display rollback, retaining current route evidence.
+- Organized bilingual display menus and complete EN/PT-BR public documentation.
 
-See [release notes](docs/releases/v1.0.0.md) for validation and limitations.
-The 1.0.0 version identifies this fork; it does not change the BMCU package or
+See [release notes](docs/releases/v2.0.0.md) for validation and limitations, and
+[translation provenance and policy](docs/Translations.md) for language coverage.
+The 2.0.0 version identifies this fork; it does not change the BMCU package or
 firmware versions. Calibration and physical commissioning remain necessary.
 
 ## Hardware scope
@@ -49,20 +59,33 @@ sequences must be measured on the actual printer.
 5. For BMCU, install [BMCU-Klipper 1.0.6](https://github.com/jarczakpawel/BMCU-Klipper/tree/v1.0.6)
    and its services first, then follow the [integration guide](docs/Ender3_V3_SE_Configuracao_Validada.md).
 
-For an already configured BMCU printer, run the integration installer from this
-checkout while the printer is idle, the channels are parked and the entry
-sensor is clear:
+For an already configured BMCU printer, keep the printer idle, channels parked
+and entry sensor clear. Use a separate clean v2 source checkout to preserve the
+whole previous host/display before activation. **Do not `git pull` the active
+checkout first.** After v2.0.0 is published:
 
 ```sh
-sudo python3 scripts/ender3-v3-se/install_multicolor.py
+git clone --branch v2.0.0 --single-branch \
+  https://github.com/bernardokcosta/ender3-v3-se-klipper-bmcu.git \
+  "$HOME/klipper-v2-source"
+sudo python3 "$HOME/klipper-v2-source/scripts/ender3-v3-se/install_multicolor.py" \
+  --host-source "$HOME/klipper-v2-source"
 ```
 
-The installer backs up affected files, preserves existing calibration and
-integration settings, and rolls back if Klipper does not become ready.
-Updating Git alone does not replace optional modules installed in `klippy/extras/`.
+The staged installer preserves the old checkout, installed optional modules,
+calibration and integration settings. Startup failure restores the complete
+previous host/display and affected configuration, reversing known callback
+renames in **current** BMCU state without overwriting route evidence. The
+recovered host must become ready; otherwise services stay **stopped**. Both
+checkouts are retained for diagnosis. This path refuses changed MCU/build
+inputs or Python requirements and never flashes firmware or installs
+dependencies. The integration-only mode without `--host-source` cannot restore
+a checkout changed beforehand; failed updates in that mode remain stopped.
+Updating Git alone does not replace optional modules in `klippy/extras/`.
 
-The **Filament** screen shortcut and Mainsail macros share PLA/PETG/TPU preheat,
-four physical-channel load buttons and automatic unloading at 230 °C. Channel
+The display and Mainsail share the same operational backend. **Temperature**
+owns PLA/PETG/TPU preheat and cooldown; **Filament / BMCU** owns four
+physical-channel loads, automatic unloading at 230 °C and guarded reset. Channel
 changes park the previous filament before loading/purging the next one. See
 [everyday controls](docs/Ender3_V3_SE_Configuracao_Validada.md#everyday-filament-controls)
 for the workflow and preserved preheat settings.
@@ -78,16 +101,20 @@ host restarts and preserves virtual-SD prints when a filament change fails.
 See [filament operation and print recovery](docs/Ender3_V3_SE_Print_Recovery.md)
 for guarded path confirmation and resuming the pending change.
 
-Set `language: en` or `language: pt_BR` in `[e3v3se_display]` for the screen UI.
-Maintained documentation is available in English and Brazilian Portuguese.
-Portuguese G-code commands, configuration keys and integration identifiers are
-retained for compatibility with installed printers.
+Select **Settings → Language → English / Português** on the screen to apply
+the language immediately. **Settings → Save config** persists it and restarts
+Klipper after confirmation when idle. Manual `language: en` / `language: pt_BR`
+preferences belong in top-level `[e3v3se_display]`, not an included option.
+The screen language does not change the command API. On this v2 branch,
+integration commands, parameters and enum values are English only. The
+installer migrates known legacy configuration names and endpoint callbacks;
+it does not keep Portuguese aliases or rewrite previously sliced print jobs.
 
 The optional [filament cutter with an Orange Pi servo](docs/Ender3_V3_SE_Cutter.md)
 replaces thermal tip forming after physical calibration. Its separate feed,
 purge and withdrawal rates and guarded carriage/arrival overlap target shorter
 exchanges. It ships disabled and requires measured cutting coordinates and
-confirmed GPIO wiring. The guide also documents `RESET_BMCU CONFIRMAR=1` for
+confirmed GPIO wiring. The v2 command is `RESET_BMCU CONFIRM=1` for
 reconciling all four channels after manually clearing the hotend and shared path.
 
 ## OrcaSlicer
@@ -123,6 +150,9 @@ removing a file does not erase Git history. Rotate any credential that has been
 published. Copyright and upstream attribution are intentionally preserved.
 
 ## Development and validation
+
+See the [local development guide](docs/Development.md) for Linux/WSL setup and
+the complete whitespace/build checks without connecting to a printer.
 
 ```sh
 python3 -m unittest discover -s test/bmcu_integracao -p 'test_*.py'

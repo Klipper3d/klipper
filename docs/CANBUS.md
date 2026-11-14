@@ -1,5 +1,7 @@
 # CANBUS
 
+**English** | [Português brasileiro](pt-BR/CANBUS.md)
+
 This document describes Klipper's CAN bus support.
 
 ## Device Hardware

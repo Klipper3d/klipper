@@ -1,5 +1,7 @@
 # Load Cells
 
+**English** | [Português brasileiro](pt-BR/Load_Cell.md)
+
 This document describes Klipper's support for load cells. Basic load cell
 functionality can be used to read force data and to weigh things like filament.
 A calibrated force sensor is an important part of a load cell based probe.
@@ -250,7 +252,7 @@ A `[load_cell_probe]` is also a `[load_cell]` and G-code commands related to
 `[load_cell]` work with `[load_cell_probe]`. Before attempting to use a load
 cell probe, follow the directions for
 [calibrating the load cell](Load_Cell.md#calibrating-a-load-cell) with
-`CALIBRATE_LOAD_CELL` and checking its operation with `LOAD_CELL_DIAGNOSTIC`.
+`LOAD_CELL_CALIBRATE` and checking its operation with `LOAD_CELL_DIAGNOSTIC`.
 
 ### Verify Probe Operation With LOAD_CELL_TEST_TAP
 

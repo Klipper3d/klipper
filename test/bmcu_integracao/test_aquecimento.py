@@ -6,15 +6,15 @@ from jinja2 import Environment
 from test_integracao import Gcmd, ROOT, installer
 from test_manual_controls import ManualBench
 
-COMANDO = 'BMCU_ENDER_POSICIONAR_PURGA'
+COMANDO = 'BMCU_ENDER_MOVE_TO_PURGE'
 
 
 class AquecimentoTests(unittest.TestCase):
     def test_inicio_aguarda_temperatura_final_sobre_a_purga(self):
         pasta = ROOT / 'config/ender3-v3-se-validada'
         casos = (
-            ('impressao.cfg', 'ENDER_INICIAR_IMPRESSAO'),
-            ('bmcu-multicor-ender.cfg', 'ENDER_INICIAR_MULTICOR'),
+            ('impressao.cfg', 'ENDER_START_PRINT'),
+            ('bmcu-multicor-ender.cfg', 'ENDER_START_MULTICOLOR'),
         )
         ambiente = Environment(
             block_start_string='{%',
@@ -30,9 +30,9 @@ class AquecimentoTests(unittest.TestCase):
                     parser['gcode_macro ' + macro]['gcode']
                 ).render(
                     params={
-                        'TEMP_MESA': 80,
-                        'TEMP_BICO': 230,
-                        'FERRAMENTA': 3,
+                        'BED_TEMP': 80,
+                        'NOZZLE_TEMP': 230,
+                        'TOOL': 3,
                     },
                     printer={'bmcu': {'loaded_tools': {'bmcu0:2': 3}}},
                 )
@@ -59,7 +59,7 @@ class AquecimentoTests(unittest.TestCase):
                     else:
                         bancada.execute(linha)
                 self.assertTrue(aqueceu)
-                if macro == 'ENDER_INICIAR_IMPRESSAO':
+                if macro == 'ENDER_START_PRINT':
                     self.assertEqual([5.6, 20], bancada.position[:2])
 
     def test_posicionamento_frio_nao_libera_extrusao_nem_muda_alvo(self):
@@ -84,18 +84,18 @@ class AquecimentoTests(unittest.TestCase):
 
     def test_migracao_multicor_preserva_ajustes_e_outros_macros(self):
         antigo = installer.CONFIGURATION.replace('  ' + COMANDO + '\n', '')
-        antigo = antigo.replace('purga_mm: 35', 'purga_mm: 29')
+        antigo = antigo.replace('purge_mm: 35', 'purge_mm: 29')
         extra = '\n[gcode_macro PERSONALIZADO]\ngcode:\n  M117 Teste\n'
         atualizado = installer.corrigir_aquecimento_inicio(
-            antigo + extra, 'ENDER_INICIAR_MULTICOR'
+            antigo + extra, 'ENDER_START_MULTICOLOR'
         )
-        self.assertIn('purga_mm: 29', atualizado)
+        self.assertIn('purge_mm: 29', atualizado)
         self.assertTrue(atualizado.endswith(extra))
         self.assertIn('  ' + COMANDO + '\n  M109 S{nozzle_temp}', atualizado)
         self.assertEqual(
             atualizado,
             installer.corrigir_aquecimento_inicio(
-                atualizado, 'ENDER_INICIAR_MULTICOR'
+                atualizado, 'ENDER_START_MULTICOLOR'
             ),
         )
 
@@ -108,13 +108,13 @@ class AquecimentoTests(unittest.TestCase):
             '  G1 X5 Y20 F6000\n  M109 S{nozzle_temp}\n',
         )
         atualizado = installer.corrigir_aquecimento_inicio(
-            antigo, 'ENDER_INICIAR_IMPRESSAO', monocor=True
+            antigo, 'ENDER_START_PRINT', monocor=True
         )
         self.assertEqual(atual, atualizado)
         self.assertEqual(
             atualizado,
             installer.corrigir_aquecimento_inicio(
-                atualizado, 'ENDER_INICIAR_IMPRESSAO', monocor=True
+                atualizado, 'ENDER_START_PRINT', monocor=True
             ),
         )
 
@@ -160,7 +160,7 @@ class AquecimentoTests(unittest.TestCase):
         )
         self.assertEqual(
             atual, installer.corrigir_aquecimento_inicio(
-                antigo, 'ENDER_INICIAR_IMPRESSAO', monocor=True
+                antigo, 'ENDER_START_PRINT', monocor=True
             )
         )
 
@@ -174,7 +174,7 @@ class AquecimentoTests(unittest.TestCase):
                 antigo = antigo.replace('M109 S{nozzle_temp}', linha)
             else:
                 antigo = antigo.replace('G1 X5 Y20 F6000', linha)
-            with self.assertRaisesRegex(RuntimeError, 'Revise manualmente'):
+            with self.assertRaisesRegex(RuntimeError, 'Manually review'):
                 installer.corrigir_aquecimento_inicio(
                     antigo, 'ENDER_INICIAR_IMPRESSAO', monocor=True
                 )

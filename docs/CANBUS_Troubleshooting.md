@@ -1,5 +1,7 @@
 # CANBUS Troubleshooting
 
+**English** | [Português brasileiro](pt-BR/CANBUS_Troubleshooting.md)
+
 This document provides information on troubleshooting communication
 issues when using [Klipper with CAN bus](CANBUS.md).
 

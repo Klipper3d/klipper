@@ -1,5 +1,7 @@
 # Eddy Current Inductive probe
 
+**English** | [Português brasileiro](pt-BR/Eddy_Probe.md)
+
 This document describes the support for
 [eddy current](https://en.wikipedia.org/wiki/Eddy_current) inductive
 probes in Klipper.
@@ -100,7 +102,7 @@ hardware, one may use an automated tool utilizing the default probing
 method to verify the bed is parallel - for example:
 `QUAD_GANTRY_LEVEL RETRY_TOLERANCE=0.250`,
 `Z_TILT_ADJUST RETRY_TOLERANCE=0.250`, or
-`SCREWS_TILT_CALCULATION MAX_TOLERANCE=0.250`.
+`SCREWS_TILT_CALCULATE MAX_TOLERANCE=0.250`.
 
 A bed mesh can then be run with something similar to
 `BED_MESH_CALIBRATE METHOD=scan HORIZONTAL_MOVE_Z=1`.

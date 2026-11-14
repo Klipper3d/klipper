@@ -27,6 +27,12 @@ jobs:
     - name: Test validated BMCU integration and backup
       run: ci_build/venv/bin/python -m unittest discover -s test/bmcu_integracao -p 'test_*.py'
 
+    - name: Test documentation checker
+      run: ci_build/venv/bin/python -m unittest discover -s test/public_docs -p 'test_*.py'
+
+    - name: Check complete public documentation
+      run: ci_build/venv/bin/python scripts/check_public_docs.py
+
     - name: Prepare release build version
       if: github.ref == 'refs/heads/master'
       run: |
@@ -109,6 +115,7 @@ jobs:
           exit 0
         fi
         test -f "docs/releases/v${version}.md"
+        python3 scripts/check_public_docs.py
         echo "version=${version}" >> "$GITHUB_OUTPUT"
         echo 'publish=true' >> "$GITHUB_OUTPUT"
 

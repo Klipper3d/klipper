@@ -1,61 +1,7 @@
 # Desenvolvimento e testes locais
 
-Os testes não conectam à impressora: usam aquecedores, movimentos e BMCU
-simulados. Parte da suíte executa o dispatcher, macros, estado G-code e
-pausa/retomada reais do Klipper. Os testes do cortador incluem os quatro canais,
-recuo com alimentador parado, buffer, sensor, reinício, falhas por etapa,
-estacionamento e posicionamento com offsets e overrides de impressão.
+[English](Development.md) | **Português brasileiro**
 
-## Windows com WSL
-
-Use Ubuntu 22.04 no WSL para reproduzir o ambiente do CI. Os utilitários Linux
-usam `pwd`, permissões e links simbólicos; não substitua esses recursos por mocks
-apenas para obter um resultado verde no Python do Windows.
-
-Na raiz do clone, dentro do Ubuntu, prepare uma vez:
-
-```sh
-sudo apt-get update &&
-sudo apt-get install -y python3-venv python3-dev libffi-dev build-essential &&
-python3 -m venv "$HOME/.venvs/ender3-tests" &&
-"$HOME/.venvs/ender3-tests/bin/pip" install -r scripts/klippy-requirements.txt
-```
-
-Rode as duas suítes, ainda na raiz do clone:
-
-```sh
-"$HOME/.venvs/ender3-tests/bin/python" -B -m unittest discover -s test/bmcu_integracao -p 'test_*.py' &&
-"$HOME/.venvs/ender3-tests/bin/python" -B -m unittest discover -s test/e3v3se_display -p 'test_*.py' &&
-git diff --check
-```
-
-Um ambiente já preparado pode usar outro caminho de virtualenv; substitua o
-prefixo dos comandos pelo caminho correspondente. Não instale nem reinicie
-serviços da impressora para rodar testes locais.
-
-O workflow **Build test** também executa o verificador de estilo do Klipper.
-`git diff --check` não substitui essa etapa: ele não detecta o limite de 80
-caracteres dos arquivos Python/C. Em um checkout limpo no sistema de arquivos
-Linux, com finais de linha LF, caminho sem espaços e sem arquivos privados,
-rode também:
-
-```sh
-bash scripts/check_whitespace.sh
-```
-
-Não publique nem remova seus arquivos privados para obter esse checkout; use
-uma cópia pública separada. O verificador percorre os diretórios diretamente,
-inclusive arquivos ignorados que estejam presentes neles.
-
-## Compilação e limites
-
-Para compilar o firmware, também são necessários `gcc-arm-none-eabi` e
-`binutils-arm-none-eabi`. Siga o [guia de compilação](Ender3_V3_SE.md).
-O Makefile exige um caminho sem espaços; se o clone estiver em uma pasta com
-espaços no Windows, use uma cópia de trabalho no sistema de arquivos Linux.
-Não copie arquivos privados para artefatos públicos de teste ou compilação.
-
-O CI já descobre automaticamente os arquivos `test_*.py` das duas suítes.
-Testes, build e cobertura não comprovam corte físico, captura nas engrenagens
-nem fluxo pelo bico. A aceitação de hardware continua exigindo uma troca avulsa
-supervisionada antes de testes multicor repetidos.
+O guia completo foi movido para
+[Desenvolvimento e testes locais](pt-BR/Development.md).
+Os testes usam dados sintéticos; não é necessário conectar à impressora.

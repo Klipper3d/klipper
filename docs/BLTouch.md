@@ -1,5 +1,7 @@
 # BL-Touch
 
+**English** | [Português brasileiro](pt-BR/BLTouch.md)
+
 ## Connecting BL-Touch
 
 A **warning** before you start: Avoid touching the BL-Touch pin with

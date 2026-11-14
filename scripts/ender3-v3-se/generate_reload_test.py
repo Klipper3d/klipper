@@ -58,7 +58,7 @@ def generate(base, output):
             'filament_max_volumetric_speed': ['12'] * 4,
             'filament_start_gcode': [''] * 4,
             'filament_end_gcode': [''] * 4,
-            'machine_end_gcode': 'ENDER_FINALIZAR_MULTICOR',
+            'machine_end_gcode': 'ENDER_END_MULTICOLOR',
             'change_filament_gcode': 'T{next_extruder} B{next_extruder+1}',
             'machine_pause_gcode': 'PAUSE',
             'post_process': [],
@@ -84,10 +84,10 @@ def generate(base, output):
     start.extend(
         [
             'BMCU_PRINT_COMMIT',
-            'ENDER_INICIAR_MULTICOR '
-            'TEMP_MESA=[bed_temperature_initial_layer_single] '
-            'TEMP_BICO=[nozzle_temperature_initial_layer] '
-            'FERRAMENTA={initial_tool+1}',
+            'ENDER_START_MULTICOLOR '
+            'BED_TEMP=[bed_temperature_initial_layer_single] '
+            'NOZZLE_TEMP=[nozzle_temperature_initial_layer] '
+            'TOOL={initial_tool+1}',
             'T{initial_tool} B{initial_tool+1}',
         ]
     )
@@ -100,7 +100,7 @@ def generate(base, output):
     resources = element(model, 'resources')
     configuration = xml.Element('config')
     assembly = xml.SubElement(configuration, 'object', id='17')
-    metadata(assembly, 'name', 'Teste BMCU - 3 recargas por canal')
+    metadata(assembly, 'name', 'BMCU test - 3 reloads per channel')
     metadata(assembly, 'extruder', 1)
     triangles = (
         (0, 2, 1),
@@ -133,7 +133,7 @@ def generate(base, output):
             assembly, 'part', id=identifier, subtype='normal_part'
         )
         metadata(
-            part, 'name', 'Ciclo %d - canal %d' % (index // 4 + 1, channel)
+            part, 'name', 'Cycle %d - channel %d' % (index // 4 + 1, channel)
         )
         metadata(part, 'extruder', channel)
     combined = element(resources, 'object', id='17', type='model')
@@ -146,7 +146,7 @@ def generate(base, output):
     )
     plate = xml.SubElement(configuration, 'plate')
     metadata(plate, 'plater_id', 1)
-    metadata(plate, 'plater_name', 'BMCU - 16 cargas / 15 trocas')
+    metadata(plate, 'plater_name', 'BMCU - 16 loads / 15 changes')
     metadata(plate, 'locked', 'false')
     instance = xml.SubElement(plate, 'model_instance')
     metadata(instance, 'object_id', 17)

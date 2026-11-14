@@ -1,5 +1,7 @@
 # Ender 3 V3 SE Port Analysis
 
+**English** | [Português brasileiro](pt-BR/E3V3SE_Port_Analysis.md)
+
 This document records the basis for the implementation. It is not a claim that
 the historical forks should be merged wholesale.
 

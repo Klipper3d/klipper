@@ -1,5 +1,7 @@
 # Overview
 
+**English** | [Português brasileiro](pt-BR/Overview.md)
+
 Welcome to the Klipper documentation. If new to Klipper, start with
 the [features](Features.md) and [installation](Installation.md)
 documents.

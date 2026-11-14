@@ -11,6 +11,7 @@ from datetime import datetime
 from pathlib import Path, PurePosixPath
 
 import instalar_multicor_bmcu as installer
+from migrate_v2 import migrate_config, migrate_state
 
 ROOT = Path(__file__).resolve().parents[2]
 TOKEN_PLACEHOLDER = '__GERAR_TOKEN_LOCAL__'
@@ -68,6 +69,13 @@ def prepare(home, snapshot):
             continue
         relative = source_path.relative_to(snapshot / 'config')
         data = source_path.read_bytes()
+        if relative.suffix == '.cfg':
+            data = migrate_config(data.decode('utf-8')).encode('utf-8')
+        elif relative.as_posix() == 'bmcu_state.json':
+            state = json.loads(data)
+            migrated = migrate_state(state)
+            if state != migrated:
+                data = (json.dumps(migrated, indent=2) + '\n').encode('utf-8')
         if relative.as_posix() == 'bmcu/bmcu_panel.cfg':
             data = data.replace(TOKEN_PLACEHOLDER.encode(), token.encode())
         changes[configurations / relative] = data
@@ -83,14 +91,20 @@ def prepare(home, snapshot):
         changes[installation] = (
             json.dumps(installation_data, indent=2) + '\n'
         ).encode()
-    changes[extras / 'bmcu_integracao_ender.py'] = (
-        ROOT / 'integrations/bmcu/bmcu_integracao_ender.py'
+    changes[extras / 'bmcu_ender_integration.py'] = (
+        ROOT / 'integrations/bmcu/bmcu_ender_integration.py'
     ).read_bytes()
     changes[extras / 'bmcu_cortador_ender.py'] = (
         ROOT / 'integrations/bmcu/bmcu_cortador_ender.py'
     ).read_bytes()
-    changes[extras / 'bmcu_medicao.py'] = (
-        ROOT / 'integrations/bmcu/bmcu_medicao.py'
+    changes[extras / 'bmcu_cutter_settings.py'] = (
+        ROOT / 'integrations/bmcu/bmcu_cutter_settings.py'
+    ).read_bytes()
+    changes[extras / 'bmcu_english_api.py'] = (
+        ROOT / 'integrations/bmcu/bmcu_english_api.py'
+    ).read_bytes()
+    changes[extras / 'bmcu_measurement.py'] = (
+        ROOT / 'integrations/bmcu/bmcu_measurement.py'
     ).read_bytes()
     changes[contracts.resolve()] = installer.patch_contract(
         contracts.read_text()

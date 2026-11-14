@@ -1,5 +1,7 @@
 # Bootloader Entry
 
+**English** | [Português brasileiro](pt-BR/Bootloader_Entry.md)
+
 Klipper can be instructed to reboot into a [Bootloader](Bootloaders.md) in one
 of the following ways:
 
