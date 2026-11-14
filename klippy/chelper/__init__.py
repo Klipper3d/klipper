@@ -33,7 +33,8 @@ defs_stepcompress = """
     struct pull_history_steps {
         uint64_t first_clock, last_clock;
         int64_t start_position;
-        int step_count, interval, add;
+        uint64_t interval;
+        int step_count, add;
     };
 
     void stepcompress_fill(struct stepcompress *sc, uint32_t oid
