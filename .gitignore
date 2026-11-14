@@ -1,4 +1,5 @@
 out
+/ci_build/
 *.so
 *.pyc
 .config

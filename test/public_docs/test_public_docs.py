@@ -1,5 +1,6 @@
 import importlib.util
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
 
@@ -45,6 +46,26 @@ class PublicDocsTests(unittest.TestCase):
             (root / files[1]).unlink()
             self.assertTrue(any('missing pair' in item for item in
                                 checker.audit(root, files[:1])))
+
+    def test_ci_dependencies_are_not_publication_sources(self):
+        checker = self.checker()
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            subprocess.run(['git', 'init', '-q', str(root)], check=True)
+            self.write(root, '.gitignore', (ROOT / '.gitignore').read_text())
+            sources = self.pair(root)
+            generated = self.write(
+                root, 'ci_build/venv/lib/python3.10/site-packages/'
+                'aenum/README.md',
+                '# Dependency documentation, not project source\n',
+            )
+            inventory = subprocess.check_output([
+                'git', '-C', str(root), 'ls-files', '--cached', '--others',
+                '--exclude-standard', '-z',
+            ]).decode().split('\0')
+            self.assertNotIn(generated, inventory)
+            self.assertTrue(set(sources).issubset(inventory))
+            self.assertEqual([], checker.audit(root, inventory))
 
     def test_links_and_explicit_english_anchor_targets_are_checked(self):
         checker = self.checker()
