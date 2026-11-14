@@ -16,16 +16,10 @@ extruder serves all four channels. BMCU-Klipper remains a separate dependency.
 - Stock TJC3224/DWIN 3.2-inch display, with English and Brazilian Portuguese UI.
 - BMCU 1.0.6 / firmware 1.0.1 integration using a generic single-extruder endpoint.
 - Switch-based arrival, extruder-first capture, purge, wiping and assisted unload.
-- OrcaSlicer 2.4.2 automatic `T0` handling through the committed print map.
-- Upstream Klipper merged through `0cee841e31d701595b3e509a0b502f6e320f52a8`.
-- Regression tests, a reproducible target build and matching release checksums.
+- OrcaSlicer 2.4.2 profile for single-extruder multimaterial printing.
 - English-only integration commands, parameters and status fields.
-- Organized bilingual display menus and complete EN/PT-BR public documentation.
 
-See [release notes](docs/releases/v2.0.0.md) for changes and compatibility, and
-[translation provenance and policy](docs/Translations.md) for language coverage.
-Fork, BMCU package and BMCU firmware versions are independent. Calibration and
-physical commissioning remain necessary.
+See the [release notes](docs/releases/v2.0.0.md) for version changes.
 
 ## Hardware scope
 
@@ -59,7 +53,7 @@ For existing installations, follow the
 
 ## Operation
 
-The display and Mainsail share the same operational backend. See
+Control filament and temperature from the stock display or Mainsail. See
 [everyday filament controls](docs/Ender3_V3_SE_Configuracao_Validada.md#everyday-filament-controls)
 for channel loading, unloading, preheat and guarded reset, and
 [print recovery](docs/Ender3_V3_SE_Print_Recovery.md) for a failed filament change.
@@ -78,10 +72,7 @@ disabled and requires measured cutting coordinates and verified GPIO wiring.
 
 Use the [reusable start, end and tool-change snippets](profiles/orca/ender3-v3-se-bmcu/README.md).
 Replace `YOUR_BMCU_UID` with the UID reported by your own BMCU before slicing.
-With a committed BMCU print map, `T0` through `T3` select logical tools 1 through
-4; the map resolves physical channels. Without an active map, native commands
-retain their original meaning, including external feeding through `T0`.
-No computer-side post-processing script is required.
+The profile guide lists the required printer settings and channel mapping.
 
 ## Printable hardware
 
@@ -94,22 +85,10 @@ No computer-side post-processing script is required.
 | Filament spool holder for four spools | [MakerWorld](https://makerworld.com/pt/models/2671446-filament-spool-holder-for-4-spools#profileId-3406834) |
 | Optional filament cutter for Ender 3 V3 SE/KE | [Printables](https://www.printables.com/model/1243521-filament-cutter-for-ender-3-v3-seke) · [Integration and calibration](docs/Ender3_V3_SE_Cutter.md) |
 
-Download the model files from their respective pages. They are not duplicated
-in this repository; each model retains its own license and creator attribution.
-
-## Backups and privacy
-
-Machine snapshots, service environments, runtime state, device IDs and personal
-slicer exports are not public installation templates. Keep them in private
-storage. The backup tools are local utilities and never upload their results.
-Historical commits may still contain files removed from the current tree;
-removing a file does not erase Git history. Rotate any credential that has been
-published. Copyright and upstream attribution are intentionally preserved.
-
 ## Development and validation
 
-See the [local development guide](docs/Development.md) for Linux/WSL setup and
-the complete whitespace/build checks without connecting to a printer.
+See the [local development guide](docs/Development.md) for Linux/WSL setup,
+tests and build instructions.
 
 ```sh
 python3 -m unittest discover -s test/bmcu_integracao -p 'test_*.py'
@@ -118,11 +97,8 @@ python3 -m unittest discover -s test/public_docs -p 'test_*.py'
 python3 scripts/check_public_docs.py
 ```
 
-CI builds the GD32F303 firmware and validates the complete Klippy configuration.
-Backup and restoration tests use synthetic data. Hardware testing has confirmed
-filament capture, switch-controlled unloading, purge/wipe and a two-color PETG
-print on one assembly. Other board revisions, materials, purge geometries and
-four-color printing require their own physical acceptance tests.
+CI runs these tests, builds the GD32F303 firmware and validates the Klippy
+configuration.
 
 ## Documentation
 
@@ -135,10 +111,10 @@ four-color printing require their own physical acceptance tests.
 - [Port analysis and provenance](docs/E3V3SE_Port_Analysis.md)
 - [Official Klipper documentation](https://www.klipper3d.org/)
 
-## Credits and provenance
+<a id="credits-and-provenance"></a>
+## Credits
 
-This repository preserves Klipper's Git history and is distributed under the
-same GNU GPLv3 license. The Ender 3 V3 SE work was made possible by:
+This fork builds on the work of:
 
 - [Klipper](https://github.com/Klipper3d/klipper), created by Kevin O'Connor and
   maintained by the Klipper contributors, for the firmware, host architecture,
@@ -167,18 +143,10 @@ same GNU GPLv3 license. The Ender 3 V3 SE work was made possible by:
   [BMCU-Klipper](https://github.com/jarczakpawel/BMCU-Klipper) contributors for
   the external filament transport package and Generic endpoint contract.
 
-The detailed revision and commit provenance is recorded in
-[`docs/E3V3SE_Port_Analysis.md`](docs/E3V3SE_Port_Analysis.md).
+Further references: [port analysis](docs/E3V3SE_Port_Analysis.md) and
+[translation credits](docs/Translations.md).
 
 ## License
 
-Klipper and the software and configuration distributed by this modified fork
-are Free Software under the [GNU General Public License, version 3](COPYING).
-Source files retain their applicable copyright and license notices. The
-complete corresponding source for each binary release is the repository state
-at that release tag.
-
-No Creality display firmware, image pack, or other proprietary binary asset is
-redistributed here. Creality, Ender, DWIN, and TJC names may be trademarks of
-their respective owners. This project is not affiliated with or endorsed by
-Creality, DWIN, TJC, or the upstream Klipper project.
+Distributed under the [GNU General Public License, version 3](COPYING).
+Source files retain their applicable copyright and license notices.
