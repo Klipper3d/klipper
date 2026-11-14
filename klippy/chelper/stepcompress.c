@@ -57,7 +57,7 @@ struct stepcompress {
 
 // Parameters of a single queue_step command
 struct step_move {
-    uint32_t interval;
+    uint64_t interval;
     uint16_t count;
     int16_t add;
 };
@@ -67,7 +67,8 @@ struct history_steps {
     struct list_node node;
     uint64_t first_clock, last_clock;
     int64_t start_position;
-    int step_count, interval, add;
+    uint64_t interval;
+    int step_count, add;
 };
 
 
@@ -218,8 +219,8 @@ check_line(struct stepcompress *sc, struct step_move move)
         return 0;
     if (!move.count || (!move.interval && !move.add && move.count > 1)
         || move.interval >= 0x80000000) {
-        errorf("stepcompress o=%d i=%d c=%d a=%d: Invalid sequence"
-               , sc->oid, move.interval, move.count, move.add);
+        errorf("stepcompress o=%d i=%lld c=%d a=%d: Invalid sequence"
+               , sc->oid, (long long)move.interval, move.count, move.add);
         return ERROR_RET;
     }
     uint32_t interval = move.interval, p = 0;
@@ -229,14 +230,14 @@ check_line(struct stepcompress *sc, struct step_move move)
         p += interval;
         if (p < point.minp || p > point.maxp) {
             errorf("stepcompress o=%d i=%d c=%d a=%d: Point %d: %d not in %d:%d"
-                   , sc->oid, move.interval, move.count, move.add
+                   , sc->oid, (int32_t)move.interval, move.count, move.add
                    , i+1, p, point.minp, point.maxp);
             return ERROR_RET;
         }
         if (interval >= 0x80000000) {
             errorf("stepcompress o=%d i=%d c=%d a=%d:"
                    " Point %d: interval overflow %d"
-                   , sc->oid, move.interval, move.count, move.add
+                   , sc->oid, (int32_t)move.interval, move.count, move.add
                    , i+1, interval);
             return ERROR_RET;
         }
@@ -345,15 +346,17 @@ stepcompress_set_time(struct stepcompress *sc
 
 // Helper to create a queue_step command from a 'struct step_move'
 static void
-add_move(struct stepcompress *sc, uint64_t first_clock, struct step_move *move)
+add_move(struct stepcompress *sc, struct step_move *move)
 {
+    uint64_t first_clock = sc->last_step_clock + move->interval;
     int32_t addfactor = move->count*(move->count-1)/2;
-    uint32_t ticks = move->add*addfactor + move->interval*(move->count-1);
+    uint32_t interval32 = move->interval;
+    uint32_t ticks = move->add*addfactor + interval32*(move->count-1);
     uint64_t last_clock = first_clock + ticks;
 
     // Create and queue a queue_step command
     uint32_t msg[5] = {
-        sc->queue_step_msgtag, sc->oid, move->interval, move->count, move->add
+        sc->queue_step_msgtag, sc->oid, interval32, move->count, move->add
     };
     struct queue_message *qm = message_alloc_and_encode(msg, 5);
     qm->min_clock = qm->req_clock = sc->last_step_clock;
@@ -386,7 +389,7 @@ queue_flush(struct stepcompress *sc, uint64_t move_clock)
         if (ret)
             return ret;
 
-        add_move(sc, sc->last_step_clock + move.interval, &move);
+        add_move(sc, &move);
 
         if (sc->queue_pos + move.count >= sc->queue_next) {
             sc->queue_pos = sc->queue_next = sc->queue;
@@ -403,7 +406,7 @@ static int
 stepcompress_flush_far(struct stepcompress *sc, uint64_t abs_step_clock)
 {
     struct step_move move = { abs_step_clock - sc->last_step_clock, 1, 0 };
-    add_move(sc, abs_step_clock, &move);
+    add_move(sc, &move);
     calc_last_step_print_time(sc);
     return 0;
 }
