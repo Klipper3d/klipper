@@ -19,16 +19,11 @@ continua sendo uma dependência separada.
 - Integração BMCU 1.0.6 / firmware 1.0.1 por endpoint genérico de extrusora única.
 - Chegada por switch, captura iniciada pela extrusora, purga, limpeza e retirada
   assistida.
-- Tratamento automático do `T0` do OrcaSlicer 2.4.2 pelo mapa confirmado.
-- Klipper upstream integrado até `0cee841e31d701595b3e509a0b502f6e320f52a8`.
-- Testes de regressão, compilação reproduzível e checksums correspondentes.
+- Perfil OrcaSlicer 2.4.2 para impressão multimaterial com uma extrusora.
 - Comandos, parâmetros e campos de status da integração somente em inglês.
-- Menus bilíngues organizados na tela e documentação pública EN/PT-BR completa.
 
-Veja as [notas da release](docs/pt-BR/releases/v2.0.0.md) para alterações e
-limitações, e a [procedência e política de tradução](docs/pt-BR/Translations.md)
-para cobertura de idiomas. As versões do fork, do pacote BMCU e do firmware
-BMCU são independentes. Calibração e comissionamento físico continuam necessários.
+Veja as [notas da release](docs/pt-BR/releases/v2.0.0.md) para as alterações
+de cada versão.
 
 <a id="hardware-scope"></a>
 ## Escopo de hardware
@@ -67,7 +62,7 @@ Para instalações existentes, siga as
 <a id="operation"></a>
 ## Operação
 
-Tela e Mainsail compartilham o mesmo backend operacional. Veja os
+Controle filamento e temperatura pela tela original ou pelo Mainsail. Veja os
 [controles diários de filamento](docs/pt-BR/Ender3_V3_SE_Configuracao_Validada.md#everyday-filament-controls)
 para carga de canais, retirada, pré-aquecimento e reset protegido, e a
 [recuperação da impressão](docs/pt-BR/Ender3_V3_SE_Print_Recovery.md) para falhas
@@ -87,10 +82,8 @@ vem desabilitado e exige coordenadas de corte medidas e ligação GPIO verificad
 ## OrcaSlicer
 
 Use os [trechos de início, fim e troca](profiles/orca/ender3-v3-se-bmcu/README.pt-BR.md).
-Troque `YOUR_BMCU_UID` pelo UID da sua BMCU antes de fatiar. Com mapa BMCU
-confirmado, `T0` a `T3` selecionam ferramentas lógicas 1 a 4; o mapa resolve
-canais físicos. Sem mapa ativo, comandos nativos mantêm seu significado,
-incluindo alimentação externa por `T0`. Não exige pós-processamento no PC.
+Troque `YOUR_BMCU_UID` pelo UID da sua BMCU antes de fatiar. O guia do perfil
+lista os ajustes necessários da impressora e o mapeamento dos canais.
 
 <a id="printable-hardware"></a>
 ## Peças para impressão
@@ -104,24 +97,11 @@ incluindo alimentação externa por `T0`. Não exige pós-processamento no PC.
 | Suporte de filamento para quatro bobinas | [MakerWorld](https://makerworld.com/pt/models/2671446-filament-spool-holder-for-4-spools#profileId-3406834) |
 | Cortador opcional Ender 3 V3 SE/KE | [Printables](https://www.printables.com/model/1243521-filament-cutter-for-ender-3-v3-seke) · [Integração e calibração](docs/pt-BR/Ender3_V3_SE_Cutter.md) |
 
-Baixe modelos nas páginas dos autores. Não são duplicados aqui; cada modelo
-mantém sua licença e atribuição ao criador.
-
-<a id="backups-and-privacy"></a>
-## Backups e privacidade
-
-Snapshots de máquinas, ambientes de serviço, estado, IDs de dispositivo e
-exportações pessoais do fatiador não são modelos públicos. Guarde-os de forma
-privada. As ferramentas de backup são locais e nunca enviam resultados.
-Commits históricos podem conter arquivos removidos da árvore atual; remover
-um arquivo não apaga o histórico Git. Troque qualquer credencial publicada.
-Copyright e atribuição upstream são preservados intencionalmente.
-
 <a id="development-and-validation"></a>
 ## Desenvolvimento e validação
 
-Veja o [guia de desenvolvimento local](docs/pt-BR/Development.md) para Linux/WSL
-e verificações completas de estilo/compilação sem conexão à impressora.
+Veja o [guia de desenvolvimento local](docs/pt-BR/Development.md) para configurar
+o ambiente Linux/WSL, executar testes e compilar o projeto.
 
 ```sh
 python3 -m unittest discover -s test/bmcu_integracao -p 'test_*.py'
@@ -130,11 +110,8 @@ python3 -m unittest discover -s test/public_docs -p 'test_*.py'
 python3 scripts/check_public_docs.py
 ```
 
-O CI compila firmware GD32F303 e valida a configuração Klippy completa.
-Backups e restauração usam dados sintéticos. Testes físicos confirmaram
-captura, retirada por switch, purga/limpeza e impressão PETG em duas cores
-em uma montagem. Outras placas, materiais, geometrias de purga e impressão
-em quatro cores exigem testes físicos próprios.
+O CI executa esses testes, compila o firmware GD32F303 e valida a configuração
+do Klippy.
 
 <a id="documentation"></a>
 ## Documentação
@@ -149,10 +126,10 @@ em quatro cores exigem testes físicos próprios.
 - [Documentação oficial do Klipper](https://www.klipper3d.org/)
 
 <a id="credits-and-provenance"></a>
-## Créditos e proveniência
+<a id="credits"></a>
+## Créditos
 
-Este repositório preserva o histórico Git do Klipper e é distribuído sob a
-mesma GNU GPLv3. O trabalho para Ender 3 V3 SE foi possível graças a:
+Este fork se baseia no trabalho de:
 
 - [Klipper](https://github.com/Klipper3d/klipper), criado por Kevin O'Connor e
   mantido pelos contribuidores Klipper, pelo firmware, arquitetura host,
@@ -180,18 +157,11 @@ mesma GNU GPLv3. O trabalho para Ender 3 V3 SE foi possível graças a:
   [BMCU-Klipper](https://github.com/jarczakpawel/BMCU-Klipper), pelo transporte
   externo de filamento e contrato genérico de endpoint.
 
-Revisões e proveniência detalhadas dos commits estão em
-[`docs/E3V3SE_Port_Analysis.md`](docs/pt-BR/E3V3SE_Port_Analysis.md).
+Referências adicionais: [análise da adaptação](docs/pt-BR/E3V3SE_Port_Analysis.md)
+e [créditos das traduções](docs/pt-BR/Translations.md).
 
 <a id="license"></a>
 ## Licença
 
-Klipper, software e configurações distribuídos por este fork são Software Livre
-sob a [GNU General Public License, versão 3](COPYING). Fontes mantêm os avisos
-aplicáveis de copyright/licença. A fonte correspondente completa de cada release
-binária é o estado do repositório na respectiva tag.
-
-Não redistribuímos firmware de tela Creality, pacotes de imagens ou outros
-binários proprietários. Creality, Ender, DWIN e TJC podem ser marcas dos seus
-titulares. Este projeto não é afiliado nem endossado por Creality, DWIN, TJC
-ou pelo projeto Klipper upstream.
+Distribuído sob a [GNU General Public License, versão 3](COPYING).
+Os arquivos-fonte mantêm seus avisos aplicáveis de copyright e licença.
