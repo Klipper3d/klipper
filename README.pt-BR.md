@@ -11,14 +11,9 @@ suporte à tela original e transporte opcional de filamento BMCU de quatro
 canais. Uma extrusora física atende aos quatro canais. O BMCU-Klipper
 continua sendo uma dependência separada.
 
-> **Mudança incompatível de API na v2.0.0:** comandos, parâmetros e valores de enum
-> da integração são somente em inglês. Use artefatos publicados com tag, não uma
-> branch sem validação. Refatie
-> trabalhos antigos com o [perfil Orca v2](profiles/orca/ender3-v3-se-bmcu/README.pt-BR.md);
-> G-code v1 armazenado não é convertido automaticamente.
-
 <a id="version-200"></a>
-## Versão 2.0.0
+<a id="features"></a>
+## Recursos
 
 - Tela original TJC3224/DWIN de 3,2 polegadas, em inglês e português brasileiro.
 - Integração BMCU 1.0.6 / firmware 1.0.1 por endpoint genérico de extrusora única.
@@ -27,16 +22,13 @@ continua sendo uma dependência separada.
 - Tratamento automático do `T0` do OrcaSlicer 2.4.2 pelo mapa confirmado.
 - Klipper upstream integrado até `0cee841e31d701595b3e509a0b502f6e320f52a8`.
 - Testes de regressão, compilação reproduzível e checksums correspondentes.
-- API de integração somente em inglês com migração protegida de configurações
-  e callbacks.
-- Rollback integral preparado de host/tela, preservando as evidências atuais
-  das rotas.
+- Comandos, parâmetros e campos de status da integração somente em inglês.
 - Menus bilíngues organizados na tela e documentação pública EN/PT-BR completa.
 
-Veja as [notas da release](docs/pt-BR/releases/v2.0.0.md) para validação e
+Veja as [notas da release](docs/pt-BR/releases/v2.0.0.md) para alterações e
 limitações, e a [procedência e política de tradução](docs/pt-BR/Translations.md)
-para cobertura de idiomas. A 2.0.0 identifica este fork; não muda versões do pacote/firmware
-BMCU. Calibração e comissionamento físico continuam necessários.
+para cobertura de idiomas. As versões do fork, do pacote BMCU e do firmware
+BMCU são independentes. Calibração e comissionamento físico continuam necessários.
 
 <a id="hardware-scope"></a>
 ## Escopo de hardware
@@ -52,7 +44,8 @@ cursos, offsets da sonda, GPIOs e sequências de filamento particulares da
 instalação precisam ser medidos na impressora real.
 
 <a id="install-and-upgrade"></a>
-## Instalação e atualização
+<a id="installation"></a>
+## Instalação
 
 1. Leia o [guia de hardware e gravação](docs/pt-BR/Ender3_V3_SE.md).
 2. Faça backup da configuração/calibração antes de mudar uma instalação.
@@ -68,64 +61,27 @@ instalação precisam ser medidos na impressora real.
    e seus serviços, depois siga o
    [guia de integração](docs/pt-BR/Ender3_V3_SE_Configuracao_Validada.md).
 
-Em uma impressora BMCU já configurada, mantenha a impressora parada, canais
-estacionados e sensor livre. Use uma fonte v2 limpa em checkout separado para
-preservar todo o host/display anterior antes de ativar.
-**Não execute `git pull` no checkout ativo primeiro.** Após publicar a v2.0.0:
+Para instalações existentes, siga as
+[instruções de atualização da release](docs/pt-BR/releases/v2.0.0.md#upgrade-and-rollback).
 
-```sh
-git clone --branch v2.0.0 --single-branch \
-  https://github.com/bernardokcosta/ender3-v3-se-klipper-bmcu.git \
-  "$HOME/klipper-v2-source"
-sudo python3 "$HOME/klipper-v2-source/scripts/ender3-v3-se/install_multicolor.py" \
-  --host-source "$HOME/klipper-v2-source"
-```
+<a id="operation"></a>
+## Operação
 
-O instalador preparado preserva checkout antigo, módulos opcionais, calibração
-e ajustes da integração. Falha na partida restaura todo o host/display anterior
-e configurações afetadas, revertendo callbacks conhecidos no estado BMCU
-**atual**, sem substituir evidências das rotas. O host recuperado precisa ficar
-pronto; caso contrário, serviços ficam **parados**. Os dois checkouts são
-mantidos para diagnóstico. Esse fluxo recusa mudanças em entradas MCU/
-compilação ou requisitos Python e nunca grava firmware nem instala dependências.
-O modo só de integração sem `--host-source` não restaura um checkout alterado
-antes; falhas nesse modo deixam serviços parados. Atualizar somente Git não
-substitui módulos opcionais em `klippy/extras/`.
-
-Tela e Mainsail compartilham o backend operacional. **Temperatura** concentra
-pré-aquecimentos PLA/PETG/TPU e resfriamento; **Filamento / BMCU** concentra
-carga dos quatro canais, retirada automática a 230 °C e reset protegido.
-Trocas estacionam o filamento anterior antes da próxima carga/purga. Veja os
-[controles diários](docs/pt-BR/Ender3_V3_SE_Configuracao_Validada.md#everyday-filament-controls)
-para o fluxo e os ajustes preservados de pré-aquecimento.
-
-O instalador adiciona um
-[perfil experimental de formação da ponta e teste de recarga em quatro cores](docs/pt-BR/Ender3_V3_SE_Tip_Forming.md),
-preservado nas atualizações. Ele separa e resfria a ponta antes da retirada
-existente por sensor/encoder, usando assistência de acompanhamento do buffer
-após captura. Inspecione pontas e valide recargas antes de considerar o perfil
-calibrado.
-
-A integração também protege contra identificadores de resultados em cache após
-reinícios do host e preserva impressões SD virtual quando uma troca falha.
-Veja [operações e recuperação da impressão](docs/pt-BR/Ender3_V3_SE_Print_Recovery.md)
-para confirmação protegida do caminho e retomada da troca pendente.
+Tela e Mainsail compartilham o mesmo backend operacional. Veja os
+[controles diários de filamento](docs/pt-BR/Ender3_V3_SE_Configuracao_Validada.md#everyday-filament-controls)
+para carga de canais, retirada, pré-aquecimento e reset protegido, e a
+[recuperação da impressão](docs/pt-BR/Ender3_V3_SE_Print_Recovery.md) para falhas
+na troca de filamento.
 
 Escolha **Configurações → Idioma → English / Português** na tela para aplicar
 imediatamente. **Configurações → Salvar ajustes** persiste e reinicia o Klipper
-após confirmação quando parado. Preferências manuais `language: en` /
-`language: pt_BR` pertencem ao `[e3v3se_display]` principal, não em include.
-O idioma da tela não muda a API. Nesta branch v2, comandos, parâmetros e valores
-enumerados usam somente inglês. O instalador migra nomes legados conhecidos
-e callbacks dos endpoints; não mantém aliases portugueses nem reescreve
-trabalhos já fatiados.
+após confirmação quando parado. O idioma da tela não altera a API de comandos
+em inglês.
 
-O [cortador opcional com servo na Orange Pi](docs/pt-BR/Ender3_V3_SE_Cutter.md)
-substitui a formação térmica da ponta após calibração física. Taxas separadas
-de avanço, purga e retirada e sobreposição protegida entre movimento do carro
-e chegada buscam trocas menores. Vem desabilitado e exige coordenadas medidas
-e ligação GPIO confirmada. O comando v2 é `RESET_BMCU CONFIRM=1` para reconciliar
-os quatro canais após desobstruir manualmente hotend e caminho compartilhado.
+O [perfil de formação da ponta e teste de recarga em quatro cores](docs/pt-BR/Ender3_V3_SE_Tip_Forming.md)
+é experimental e exige calibração física. O
+[cortador opcional com servo na Orange Pi](docs/pt-BR/Ender3_V3_SE_Cutter.md)
+vem desabilitado e exige coordenadas de corte medidas e ligação GPIO verificada.
 
 <a id="orcaslicer"></a>
 ## OrcaSlicer
@@ -170,6 +126,8 @@ e verificações completas de estilo/compilação sem conexão à impressora.
 ```sh
 python3 -m unittest discover -s test/bmcu_integracao -p 'test_*.py'
 python3 -m unittest discover -s test/e3v3se_display -p 'test_*.py'
+python3 -m unittest discover -s test/public_docs -p 'test_*.py'
+python3 scripts/check_public_docs.py
 ```
 
 O CI compila firmware GD32F303 e valida a configuração Klippy completa.
@@ -182,7 +140,7 @@ em quatro cores exigem testes físicos próprios.
 ## Documentação
 
 - [Instalação, gravação e comissionamento](docs/pt-BR/Ender3_V3_SE.md)
-- [Integração por switch, atualização e backups privados](docs/pt-BR/Ender3_V3_SE_Configuracao_Validada.md)
+- [Integração BMCU por switch e calibração](docs/pt-BR/Ender3_V3_SE_Configuracao_Validada.md)
 - [BMCU: configuração, ligação e calibração](docs/pt-BR/Ender3_V3_SE_BMCU.md)
 - [Cortador opcional, servo e reset manual](docs/pt-BR/Ender3_V3_SE_Cutter.md)
 - [OrcaSlicer](profiles/orca/ender3-v3-se-bmcu/README.pt-BR.md)
