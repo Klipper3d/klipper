@@ -165,6 +165,20 @@ compilação e requisitos Python; diferenças são recusadas para revisão separ
 do firmware e do ambiente. Não grava firmware nem descarta alterações locais
 em arquivos rastreados.
 
+O checkout do host, a MCU da impressora e a MCU Linux opcional são instalações
+separadas. O host mostrar `v2.0.1` não comprova que as MCUs foram atualizadas:
+confira `mcu_version` de `mcu` e `mcu host` no Moonraker ou as entradas de conexão
+no `klippy.log`. Atualize a MCU da impressora pelo procedimento com cartão SD
+acima e a MCU Linux pelo [procedimento de compilação/instalação como processo Linux](RPi_microcontroller.md#building-the-micro-controller-code),
+usando as fontes da release pretendida. Depois confira as versões em execução;
+um `.bin` baixado, uma tag Git ou a versão da interface web não comprovam isso.
+
+O instalador da integração também aplica a correção térmica do início monocor
+aos includes ativos internos da configuração, inclusive arquivos aninhados.
+Reutiliza a mesma sequência validada e recusa sintaxe térmica não reconhecida
+antes da ativação. Includes compartilhados externos continuam exigindo revisão
+manual; arquivos aninhados inativos não são migrados.
+
 Depois que a v2.0.1 for publicada:
 
 ```sh
