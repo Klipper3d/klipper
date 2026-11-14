@@ -52,7 +52,10 @@ def plot_motion(amanager, graphs, log_prefix):
                     ax.set_ylabel(graph_units)
             pparams = {'label': label['label'], 'alpha': 0.8}
             pparams.update(plot_params)
+            ylim = (pparams.pop('ymin', None), pparams.pop('ymax', None))
             ax.plot(times, datasets[dataset], **pparams)
+            if ylim != (None, None):
+                ax.set_ylim(*ylim)
         if twin_ax is not None:
             li1, la1 = graph_ax.get_legend_handles_labels()
             li2, la2 = twin_ax.get_legend_handles_labels()
@@ -80,7 +83,7 @@ def parse_graph_description(desc):
         return (desc, {})
     dataset, params = desc.split('?', 1)
     params = {k: v for k, v in urlparse.parse_qsl(params)}
-    for fkey in ['alpha']:
+    for fkey in ['alpha', 'ymin', 'ymax']:
         if fkey in params:
             params[fkey] = float(params[fkey])
     return (dataset, params)
