@@ -1,5 +1,7 @@
 # Using PWM tools
 
+**English** | [Português brasileiro](pt-BR/Using_PWM_Tools.md)
+
 This document describes how to setup a PWM-controlled laser or spindle
 using `pwm_tool` and some macros.
 
@@ -35,27 +37,29 @@ For an example configuration, see [config/sample-pwm-tool.cfg](../config/sample-
 
 If you use Laserweb, a working configuration would be:
 
-    GCODE START:
-        M5            ; Disable Laser
-        G21           ; Set units to mm
-        G90           ; Absolute positioning
-        G0 Z0 F7000   ; Set Non-Cutting speed
+```gcode
+GCODE START:
+    M5            ; Disable Laser
+    G21           ; Set units to mm
+    G90           ; Absolute positioning
+    G0 Z0 F7000   ; Set Non-Cutting speed
 
-    GCODE END:
-        M5            ; Disable Laser
-        G91           ; relative
-        G0 Z+20 F4000 ;
-        G90           ; absolute
+GCODE END:
+    M5            ; Disable Laser
+    G91           ; relative
+    G0 Z+20 F4000 ;
+    G90           ; absolute
 
-    GCODE HOMING:
-        M5            ; Disable Laser
-        G28           ; Home all axis
+GCODE HOMING:
+    M5            ; Disable Laser
+    G28           ; Home all axis
 
-    TOOL ON:
-        M3 $INTENSITY
+TOOL ON:
+    M3 $INTENSITY
 
-    TOOL OFF:
-        M5            ; Disable Laser
+TOOL OFF:
+    M5            ; Disable Laser
 
-    LASER INTENSITY:
-        S
+LASER INTENSITY:
+    S
+```

@@ -10,7 +10,8 @@ An unofficial Klipper fork for the **Creality Ender 3 V3 SE**, combining stock
 display support and optional four-channel BMCU filament transport. One physical
 extruder serves all four channels. BMCU-Klipper remains a separate dependency.
 
-## Version 1.0.0
+<a id="version-200"></a>
+## Features
 
 - Stock TJC3224/DWIN 3.2-inch display, with English and Brazilian Portuguese UI.
 - BMCU 1.0.6 / firmware 1.0.1 integration using a generic single-extruder endpoint.
@@ -18,10 +19,13 @@ extruder serves all four channels. BMCU-Klipper remains a separate dependency.
 - OrcaSlicer 2.4.2 automatic `T0` handling through the committed print map.
 - Upstream Klipper merged through `0cee841e31d701595b3e509a0b502f6e320f52a8`.
 - Regression tests, a reproducible target build and matching release checksums.
+- English-only integration commands, parameters and status fields.
+- Organized bilingual display menus and complete EN/PT-BR public documentation.
 
-See [release notes](docs/releases/v1.0.0.md) for validation and limitations.
-The 1.0.0 version identifies this fork; it does not change the BMCU package or
-firmware versions. Calibration and physical commissioning remain necessary.
+See [release notes](docs/releases/v2.0.0.md) for changes and compatibility, and
+[translation provenance and policy](docs/Translations.md) for language coverage.
+Fork, BMCU package and BMCU firmware versions are independent. Calibration and
+physical commissioning remain necessary.
 
 ## Hardware scope
 
@@ -35,7 +39,8 @@ Z-offset firmware is not included. BMCU and the purge mechanism are optional;
 installation-specific travel, probe offsets, GPIO mappings and filament
 sequences must be measured on the actual printer.
 
-## Install and upgrade
+<a id="install-and-upgrade"></a>
+## Installation
 
 1. Read the [hardware and flashing guide](docs/Ender3_V3_SE.md).
 2. Back up your configuration and calibration before changing an existing setup.
@@ -49,46 +54,25 @@ sequences must be measured on the actual printer.
 5. For BMCU, install [BMCU-Klipper 1.0.6](https://github.com/jarczakpawel/BMCU-Klipper/tree/v1.0.6)
    and its services first, then follow the [integration guide](docs/Ender3_V3_SE_Configuracao_Validada.md).
 
-For an already configured BMCU printer, run the integration installer from this
-checkout while the printer is idle, the channels are parked and the entry
-sensor is clear:
+For existing installations, follow the
+[release upgrade instructions](docs/releases/v2.0.0.md#upgrade-and-rollback).
 
-```sh
-sudo python3 scripts/ender3-v3-se/install_multicolor.py
-```
+## Operation
 
-The installer backs up affected files, preserves existing calibration and
-integration settings, and rolls back if Klipper does not become ready.
-Updating Git alone does not replace optional modules installed in `klippy/extras/`.
+The display and Mainsail share the same operational backend. See
+[everyday filament controls](docs/Ender3_V3_SE_Configuracao_Validada.md#everyday-filament-controls)
+for channel loading, unloading, preheat and guarded reset, and
+[print recovery](docs/Ender3_V3_SE_Print_Recovery.md) for a failed filament change.
 
-The **Filament** screen shortcut and Mainsail macros share PLA/PETG/TPU preheat,
-four physical-channel load buttons and automatic unloading at 230 °C. Channel
-changes park the previous filament before loading/purging the next one. See
-[everyday controls](docs/Ender3_V3_SE_Configuracao_Validada.md#everyday-filament-controls)
-for the workflow and preserved preheat settings.
+Select **Settings → Language → English / Português** on the screen to apply
+the language immediately. **Settings → Save config** persists it and restarts
+Klipper after confirmation when idle. Display language does not change the
+English command API.
 
-The installer also adds a preserved, experimental
-[tip-forming profile and four-color reload test](docs/Ender3_V3_SE_Tip_Forming.md).
-It stages nozzle separation and cooling before the existing sensor/encoder
-unload, and uses buffer-follow assistance after capture. Inspect physical tips
-and verify repeated reloads before treating the starting profile as calibrated.
-
-The integration also guards against cached operation-result identifiers after
-host restarts and preserves virtual-SD prints when a filament change fails.
-See [filament operation and print recovery](docs/Ender3_V3_SE_Print_Recovery.md)
-for guarded path confirmation and resuming the pending change.
-
-Set `language: en` or `language: pt_BR` in `[e3v3se_display]` for the screen UI.
-Maintained documentation is available in English and Brazilian Portuguese.
-Portuguese G-code commands, configuration keys and integration identifiers are
-retained for compatibility with installed printers.
-
-The optional [filament cutter with an Orange Pi servo](docs/Ender3_V3_SE_Cutter.md)
-replaces thermal tip forming after physical calibration. Its separate feed,
-purge and withdrawal rates and guarded carriage/arrival overlap target shorter
-exchanges. It ships disabled and requires measured cutting coordinates and
-confirmed GPIO wiring. The guide also documents `RESET_BMCU CONFIRMAR=1` for
-reconciling all four channels after manually clearing the hotend and shared path.
+The [tip-forming profile and four-color reload test](docs/Ender3_V3_SE_Tip_Forming.md)
+are experimental and require physical calibration. The optional
+[filament cutter with an Orange Pi servo](docs/Ender3_V3_SE_Cutter.md) ships
+disabled and requires measured cutting coordinates and verified GPIO wiring.
 
 ## OrcaSlicer
 
@@ -124,9 +108,14 @@ published. Copyright and upstream attribution are intentionally preserved.
 
 ## Development and validation
 
+See the [local development guide](docs/Development.md) for Linux/WSL setup and
+the complete whitespace/build checks without connecting to a printer.
+
 ```sh
 python3 -m unittest discover -s test/bmcu_integracao -p 'test_*.py'
 python3 -m unittest discover -s test/e3v3se_display -p 'test_*.py'
+python3 -m unittest discover -s test/public_docs -p 'test_*.py'
+python3 scripts/check_public_docs.py
 ```
 
 CI builds the GD32F303 firmware and validates the complete Klippy configuration.
@@ -138,7 +127,7 @@ four-color printing require their own physical acceptance tests.
 ## Documentation
 
 - [Installation, flashing and commissioning](docs/Ender3_V3_SE.md)
-- [Switch-based BMCU integration, upgrade and private backups](docs/Ender3_V3_SE_Configuracao_Validada.md)
+- [Switch-based BMCU integration and calibration](docs/Ender3_V3_SE_Configuracao_Validada.md)
 - [BMCU setup, wiring and calibration concepts](docs/Ender3_V3_SE_BMCU.md)
 - [Optional cutter, Orange Pi servo and manual reset](docs/Ender3_V3_SE_Cutter.md)
 - [OrcaSlicer configuration](profiles/orca/ender3-v3-se-bmcu/README.md)

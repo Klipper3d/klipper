@@ -164,7 +164,7 @@ class CutterHomingTests(unittest.TestCase):
         b = HomingBench()
         b.reference_x = False
         b.ajustes['recolher_sem_referencia'] = 1
-        with self.assertRaisesRegex(RuntimeError, 'referenc'):
+        with self.assertRaisesRegex(RuntimeError, 'homing'):
             b.run()
         self.assertEqual([('home', 'X')], b.sequence())
 
@@ -177,14 +177,14 @@ class CutterHomingTests(unittest.TestCase):
                     b.bmcu.active_operations = {'bmcu0': {}}
                 else:
                     b.obj.manual_operation = 'TESTE_CORTADOR'
-                with self.assertRaisesRegex(RuntimeError, 'Aguarde'):
+                with self.assertRaisesRegex(RuntimeError, 'Wait'):
                     b.run()
                 self.assertEqual([], b.sequence())
 
     def test_uncertain_cut_requires_manual_recovery_before_any_motion(self):
         b = HomingBench()
         b.obj.cortador.incerto = True
-        with self.assertRaisesRegex(RuntimeError, 'incerta'):
+        with self.assertRaisesRegex(RuntimeError, 'uncertain'):
             b.run()
         self.assertEqual([], b.sequence())
 
@@ -207,7 +207,7 @@ class CutterHomingTests(unittest.TestCase):
             b.position[0] = 220
 
         b.command = b.obj.validar_homing_cortador(wrong_position)
-        with self.assertRaisesRegex(RuntimeError, 'Afaste'):
+        with self.assertRaisesRegex(RuntimeError, 'Move the head clear'):
             b.run()
         self.assertEqual([('home', 'X')], b.sequence())
 
@@ -251,7 +251,7 @@ class CutterHomingTests(unittest.TestCase):
         b = HomingBench()
         lookup = b.printer.lookup_object
         b.printer.lookup_object = lambda name, default=None: (
-            default if name == 'gcode_macro _BMCU_ENDER_CORTADOR_AJUSTES'
+            default if name == 'gcode_macro _BMCU_ENDER_CUTTER_SETTINGS'
             else lookup(name, default)
         )
         b.run(Z='0')

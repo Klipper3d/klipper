@@ -1,5 +1,7 @@
 # Creality Ender 3 V3 SE (GD32F303RET6)
 
+**English** | [Português brasileiro](pt-BR/Ender3_V3_SE.md)
+
 This profile is specifically for an Ender 3 V3 SE with:
 
 - Mainboard marked `CR4NS200320C14`
@@ -34,8 +36,10 @@ On MainsailOS for the Orange Pi Zero 3, install Klippy from this repository and
 checkout the same commit that will be used to build the MCU firmware. Keep the
 standard Moonraker and Mainsail installations; neither requires a fork.
 
-Copy the example configuration into the Mainsail configuration directory as a
-starting point:
+For a **new installation only**, copy the example configuration into the
+Mainsail configuration directory as a starting point. Do not overwrite an
+already calibrated `printer.cfg`; existing installations use the update flow
+below instead:
 
 ```sh
 cp config/printer-creality-ender3-v3-se-gd32f303-2023.cfg \
@@ -61,16 +65,16 @@ this project does not claim that the GD32F303 is natively supported by Klipper.
 
 The exact `make menuconfig` selections are:
 
-- Enable extra low-level configuration options: yes
-- Micro-controller architecture: STMicroelectronics STM32
-- Processor model: STM32F103
-- Only 10KiB of RAM: no
-- Disable SWD at startup: no
-- Bootloader offset: 28KiB bootloader
-- Clock reference: 8 MHz crystal
-- Communication interface: Serial on USART1 PA10/PA9
-- Baud rate: 250000
-- Creality Ender 3 V3 SE stock display bridge: yes
+- `Enable extra low-level configuration options: yes`
+- `Micro-controller architecture: STMicroelectronics STM32`
+- `Processor model: STM32F103`
+- `Only 10KiB of RAM: no`
+- `Disable SWD at startup: no`
+- `Bootloader offset: 28KiB bootloader`
+- `Clock reference: 8 MHz crystal`
+- `Communication interface: Serial on USART1 PA10/PA9`
+- `Baud rate: 250000`
+- `Creality Ender 3 V3 SE stock display bridge: yes`
 
 The checked-in build configuration is easier and less error-prone:
 
@@ -139,7 +143,33 @@ saving PID and probe calibration results.
 ## Updating
 
 Keep `origin` pointed at this fork and `upstream` pointed at
-`https://github.com/Klipper3d/klipper.git`. For every update:
+`https://github.com/Klipper3d/klipper.git`.
+
+For the host-only v2 integration update, use a separate clean source checkout.
+**Do not run `git pull` in the active checkout before taking the snapshot.**
+The updater preserves the complete previous `~/klipper` tree, including the
+display and Git metadata, before activating an independent clone. It compares
+MCU sources, libraries, target configurations, the Makefile/build-command inputs
+and Python requirements; differences are refused for separate firmware and
+environment review. It does not flash firmware or discard tracked local work.
+
+After v2.0.0 is published:
+
+```sh
+git clone --branch v2.0.0 --single-branch \
+  https://github.com/bernardokcosta/ender3-v3-se-klipper-bmcu.git \
+  "$HOME/klipper-v2-source"
+sudo python3 "$HOME/klipper-v2-source/scripts/ender3-v3-se/install_multicolor.py" \
+  --host-source "$HOME/klipper-v2-source"
+```
+
+If startup fails, the previous host/display and configuration are restored and
+checked before restarting normal use. Current route evidence is retained rather
+than replaced with an older runtime snapshot. If recovery cannot be validated,
+services remain stopped. Both checkout snapshots are retained for diagnosis.
+
+For future updates that change MCU/build inputs, review the host/MCU pair and
+continue to use matching source and firmware from the same release:
 
 1. Integrate the desired upstream commit into this repository.
 2. Run the display unit tests and Klipper test suite.

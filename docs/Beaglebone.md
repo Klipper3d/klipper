@@ -1,5 +1,7 @@
 # Beaglebone
 
+**English** | [Português brasileiro](pt-BR/Beaglebone.md)
+
 This document describes the process of running Klipper on a Beaglebone
 PRU.
 

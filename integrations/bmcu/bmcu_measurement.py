@@ -3,6 +3,7 @@ import math
 
 from .bmcu_core import protocol
 from .bmcu_core.release import PACKAGE_VERSION
+from .bmcu_english_api import english_command
 
 
 class ArrivalMeasurement:
@@ -15,21 +16,21 @@ class ArrivalMeasurement:
         self.capture = None
         self.capture_failed = False
         self.manager.gcode.register_command(
-            'BMCU_MEDIR_CHEGADA',
-            self.measure,
+            'BMCU_MEASURE_ARRIVAL',
+            english_command(self.measure),
             desc=(
                 'Feed to the entry sensor and measure the remaining '
                 'distance.'
             ),
         )
         self.manager.gcode.register_command(
-            'BMCU_TESTAR_EXTRUSAO',
-            self.test_extrusion,
+            'BMCU_TEST_EXTRUSION',
+            english_command(self.test_extrusion),
             desc=('Test extrusion with assisted filament feeding.'),
         )
         self.manager.gcode.register_command(
-            'BMCU_LIMITES_EXTRUSAO',
-            self.extrusion_limits,
+            'BMCU_EXTRUSION_LIMITS',
+            english_command(self.extrusion_limits),
             desc='Show configured extruder limits.',
         )
 
@@ -43,17 +44,17 @@ class ArrivalMeasurement:
 
     def _measure(self, gcmd):
         manager = self.manager
-        manager._require_standalone_operation('BMCU_MEDIR_CHEGADA', gcmd)
-        channel = gcmd.get_int('CANAL', minval=1, maxval=4) - 1
+        manager._require_standalone_operation('BMCU_MEASURE_ARRIVAL', gcmd)
+        channel = gcmd.get_int('CHANNEL', minval=1, maxval=4) - 1
         limit = manager._finite_gcmd_float(
-            gcmd, 'LIMITE', 1500.0, minval=10.0, maxval=1500.0
+            gcmd, 'LIMIT', 1500.0, minval=10.0, maxval=1500.0
         )
-        if not gcmd.get_int('CAMINHO_LIVRE', 0, minval=0, maxval=1):
+        if not gcmd.get_int('CLEAR_PATH', 0, minval=0, maxval=1):
             raise gcmd.error(
                 (
                     (
                         'Remove the previous filament from the extruder and '
-                        'confirm CAMINHO_LIVRE=1.'
+                        'confirm CLEAR_PATH=1.'
                     )
                 )
             )
@@ -187,15 +188,15 @@ class ArrivalMeasurement:
 
     def _test_extrusion(self, gcmd):
         manager = self.manager
-        manager._require_standalone_operation('BMCU_TESTAR_EXTRUSAO', gcmd)
-        channel = gcmd.get_int('CANAL', minval=1, maxval=4) - 1
+        manager._require_standalone_operation('BMCU_TEST_EXTRUSION', gcmd)
+        channel = gcmd.get_int('CHANNEL', minval=1, maxval=4) - 1
         advance = manager._finite_gcmd_float(gcmd, 'MM', 5.0, above=0.0)
         extruder_first = gcmd.get_int(
-            'EXTRUSORA_PRIMEIRO', 0, minval=0, maxval=1
+            'EXTRUDER_FIRST', 0, minval=0, maxval=1
         )
         speed = manager._finite_gcmd_float(
             gcmd,
-            'VELOCIDADE',
+            'SPEED',
             120.0 if extruder_first else 180.0,
             above=0.0,
         )
@@ -237,7 +238,7 @@ class ArrivalMeasurement:
             or sensor.get('filament_detected') is not True
         ):
             raise gcmd.error(
-                ('A ponta precisa estar acionando o switch ' 'de chegada.')
+                'The filament tip must be triggering the entry sensor.'
             )
         extruder = manager.printer.lookup_object(
             destination.get('extruder', 'extruder')
@@ -329,7 +330,7 @@ class ArrivalMeasurement:
         gcmd.respond_info(
             (
                 (
-                    'Configured limit: %.3f mm/s, VELOCIDADE=%.3f mm/min; '
+                    'Configured limit: %.3f mm/s, SPEED=%.3f mm/min; '
                     'maximum internal move: %.3f '
                     'mm.'
                 )
@@ -480,8 +481,8 @@ class AssistedUnload:
     def __init__(self, measurement):
         self.manager = measurement.manager
         self.manager.gcode.register_command(
-            'BMCU_RETIRAR_ATE_SWITCH',
-            self.execute,
+            'BMCU_UNLOAD_TO_SENSOR',
+            english_command(self.execute),
             desc=(
                 (
                     'Retract with assistance until the entry sensor clears, '
@@ -504,13 +505,13 @@ class AssistedUnload:
 
     def execute(self, gcmd):
         manager = self.manager
-        manager._require_standalone_operation('BMCU_RETIRAR_ATE_SWITCH', gcmd)
-        channel = gcmd.get_int('CANAL', 2, minval=1, maxval=4) - 1
+        manager._require_standalone_operation('BMCU_UNLOAD_TO_SENSOR', gcmd)
+        channel = gcmd.get_int('CHANNEL', 2, minval=1, maxval=4) - 1
         speed = manager._finite_gcmd_float(
-            gcmd, 'VELOCIDADE', 600.0, above=0.0
+            gcmd, 'SPEED', 600.0, above=0.0
         )
-        after = manager._finite_gcmd_float(gcmd, 'APOS', 55.0, above=0.0)
-        timeout = manager._finite_gcmd_float(gcmd, 'TEMPO', 60.0, above=0.0)
+        after = manager._finite_gcmd_float(gcmd, 'EXTRA', 55.0, above=0.0)
+        timeout = manager._finite_gcmd_float(gcmd, 'TIMEOUT', 60.0, above=0.0)
         if (
             manager._print_state() in ('printing', 'paused', 'pause')
             or manager.print_plan_open

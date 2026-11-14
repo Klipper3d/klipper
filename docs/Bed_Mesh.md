@@ -1,5 +1,7 @@
 # Bed Mesh
 
+**English** | [Português brasileiro](pt-BR/Bed_Mesh.md)
+
 The Bed Mesh module may be used to compensate for bed surface irregularities
 to achieve a better first layer across the entire bed.  It should be noted
 that software based correction will not achieve perfect results, it can only
@@ -260,6 +262,7 @@ fade_target: 0
   mesh is used, however it may be desirable to manually adjust the fade target
   if one wants to print on a specific portion of the bed.
 
+<a id="the-deprecated-relative_reference_index"></a>
 ### Configuring the zero reference position
 
 Many probes are susceptible to "drift", ie: inaccuracies in probing introduced

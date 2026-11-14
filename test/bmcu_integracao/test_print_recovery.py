@@ -73,7 +73,7 @@ class PrintBench(ManualBench):
         self.sd.gcode = self.gcode
         self.sd.print_stats = self.stats
         self.sd.current_file = io.StringIO(
-            'BMCU_TROCAR_ENDER TOOL=1\nG1 X101 E1 F600\n'
+            'BMCU_CHANGE_TOOL_ENDER TOOL=1\nG1 X101 E1 F600\n'
         )
         self.sd.file_size = len(self.sd.current_file.getvalue())
         self.sd.file_position = self.sd.next_file_position = 0
@@ -147,7 +147,7 @@ class PrintBench(ManualBench):
         self.position[:] = position
 
     def execute(self, text):
-        if text.startswith('BMCU_TROCAR_ENDER '):
+        if text.startswith('BMCU_CHANGE_TOOL_ENDER '):
             params = dict(re.findall(r'(\w+)=(\S+)', text))
             return self.obj.change_tool(RecoveryCommand(**params))
         if text.startswith('BMCU_TOOL_CHANGE '):
@@ -323,7 +323,7 @@ class PrintRecoveryTests(unittest.TestCase):
         b.device.status['route_state'][0] = protocol.ROUTE_UNCERTAIN
         b.bmcu._uncertain_routes.add('0')
         original = copy.deepcopy(b.bmcu.print_tools)
-        b.obj.confirm_recovery_path(RecoveryCommand(CANAL=1, CONFIRMAR=1))
+        b.obj.confirm_recovery_path(RecoveryCommand(CHANNEL=1, CONFIRM=1))
         self.assertEqual(original, b.bmcu.print_tools)
         self.assertFalse(b.bmcu._uncertain_routes)
         self.assertTrue(b.pause_control.is_paused)
@@ -346,8 +346,8 @@ class PrintRecoveryTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 b.obj.confirm_recovery_path(
                     RecoveryCommand(
-                        CANAL=1,
-                        CONFIRMAR=0 if condition == 'confirmation' else 1,
+                        CHANNEL=1,
+                        CONFIRM=0 if condition == 'confirmation' else 1,
                     )
                 )
             self.assertEqual(

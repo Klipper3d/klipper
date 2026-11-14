@@ -12,5 +12,5 @@ BMCU_PRINT_MAP TOOL=3 UID=YOUR_BMCU_UID CHANNEL=2 MATERIAL="{filament_type[2]}" 
 BMCU_PRINT_MAP TOOL=4 UID=YOUR_BMCU_UID CHANNEL=3 MATERIAL="{filament_type[3]}" COLOR="{filament_colour[3]}"
 {endif}
 BMCU_PRINT_COMMIT
-ENDER_INICIAR_MULTICOR TEMP_MESA=[bed_temperature_initial_layer_single] TEMP_BICO=[nozzle_temperature_initial_layer] FERRAMENTA={initial_tool+1}
+ENDER_START_MULTICOLOR BED_TEMP=[bed_temperature_initial_layer_single] NOZZLE_TEMP=[nozzle_temperature_initial_layer] TOOL={initial_tool+1}
 T{initial_tool} B{initial_tool+1}

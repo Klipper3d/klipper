@@ -1,5 +1,7 @@
 # Configuration checks
 
+**English** | [Português brasileiro](pt-BR/Config_checks.md)
+
 This document provides a list of steps to help confirm the pin
 settings in the Klipper printer.cfg file.  It is a good idea to run
 through these steps after following the steps in the

@@ -1,5 +1,7 @@
 import argparse
 import ast
+import glob
+import inspect
 import json
 import math
 import os
@@ -15,12 +17,20 @@ from datetime import datetime
 from pathlib import Path
 from urllib.request import urlopen
 
+from host_transaction import HostTransaction, update_lock
+from migrate_v2 import (
+    CALLBACK_FIELDS, CALLBACKS, HEADER, OPTION, canonical_option,
+    canonical_section,
+    migrate_callback_source, migrate_config, migrate_state,
+    restore_state_callbacks,
+)
+
 ROOT = Path(__file__).resolve().parents[2]
-MODULE = (ROOT / 'integrations/bmcu/bmcu_integracao_ender.py').read_text()
+MODULE = (ROOT / 'integrations/bmcu/bmcu_ender_integration.py').read_text()
 CONFIGURATION = (
     ROOT / ('config/ender3-v3-se-validada/bmcu-multicor-' 'ender.cfg')
 ).read_text()
-MEASUREMENT = (ROOT / 'integrations/bmcu/bmcu_medicao.py').read_text()
+MEASUREMENT = (ROOT / 'integrations/bmcu/bmcu_measurement.py').read_text()
 CONTROLS = (
     ROOT / 'config/ender3-v3-se-validada/bmcu-controles.cfg'
 ).read_bytes()
@@ -32,6 +42,10 @@ TIP_SETTINGS = (
 ).read_bytes()
 TRANSPORT_GUARD = (ROOT / 'integrations/bmcu/ender_transport.py').read_bytes()
 CORTADOR = (ROOT / 'integrations/bmcu/bmcu_cortador_ender.py').read_bytes()
+CUTTER_SCHEMA = (
+    ROOT / 'integrations/bmcu/bmcu_cutter_settings.py'
+).read_bytes()
+ENGLISH_API = (ROOT / 'integrations/bmcu/bmcu_english_api.py').read_bytes()
 AJUSTES_CORTADOR = (
     ROOT / 'config/ender3-v3-se-validada/bmcu-cortador.cfg'
 ).read_bytes()
@@ -151,7 +165,7 @@ def patch_sensor(text):
                 (
                     (
                         'The capture implementation changed; review '
-                        'bmcu_medicao.py before '
+                        'bmcu_measurement.py before '
                         'installation.'
                     )
                 )
@@ -182,6 +196,7 @@ def patch_sensor(text):
 
 
 def patch_contract(text):
+    text = migrate_callback_source(text)
     tree = ast.parse(text)
     classes = [
         c.name
@@ -199,8 +214,8 @@ def patch_contract(text):
     def change(fragment):
         previous = '        self._run(script, printer_priority=True)'
         updated = (
-            "        priority = command not in ('BMCU_PREPARAR_ENDER', "
-            "'BMCU_LIBERAR_ENDER')\n"
+            "        priority = command not in ('BMCU_PREPARE_ENDER', "
+            "'BMCU_RELEASE_ENDER')\n"
             '        self._run(script, printer_priority=priority)'
         )
         if updated in fragment:
@@ -227,6 +242,7 @@ def patch_contract(text):
 
 
 def patch_pre_capture(text):
+    text = migrate_callback_source(text)
     def change(fragment):
         previous = (
             '            else:\n                device.s'
@@ -238,7 +254,7 @@ def patch_pre_capture(text):
             '            elif (generic_contract and\n   '
             "               str(endpoint.get('toolhead_p"
             "repare_macro', '')).strip().upper() == 'BMC"
-            "U_PREPARAR_ENDER'):\n                device"
+            "U_PREPARE_ENDER'):\n                device"
             '.stop_all()\n                endpoint._ende'
             'r_load_context = (device.name, int(channel)'
             ')\n            else:\n                devic'
@@ -263,6 +279,7 @@ def patch_pre_capture(text):
 
 
 def patch_pre_unload(text):
+    text = migrate_callback_source(text)
     def change(fragment):
         previous = (
             '            device.set_motion(channel, '
@@ -274,7 +291,7 @@ def patch_pre_unload(text):
             "            ender_release = (endpoint.driver == "
             "'generic_single_extruder' and\n"
             "                str(endpoint.get('before_pullback_macro', ''))."
-            "strip().upper() == 'BMCU_LIBERAR_ENDER')\n"
+            "strip().upper() == 'BMCU_RELEASE_ENDER')\n"
             '            if not ender_release:\n'
             + textwrap.indent(previous, '    ')
             + '\n            else:\n'
@@ -328,15 +345,15 @@ def patch_transport(text):
 def preparar_servo_cortador(caminho, pino):
     if not re.fullmatch(r'host:gpiochip(?:[0-9]|1[0-5])/gpio[0-9]{1,3}', pino):
         raise ValueError(
-            'Use um GPIO explicito da MCU host: host:gpiochipN/gpioO.'
+            'Use an explicit host MCU GPIO: host:gpiochipN/gpioO.'
         )
     if caminho.is_file():
         conteudo = caminho.read_text()
         existente = re.search(r'(?m)^\s*pin\s*:\s*(\S+)\s*$', conteudo)
         if existente is None or existente.group(1) != pino:
             raise ValueError(
-                'O arquivo do servo ja existe com outro pino; '
-                'revise-o manualmente.'
+                'The servo file already exists with a different pin; '
+                'review it manually.'
             )
         return caminho.read_bytes()
     return (
@@ -359,18 +376,18 @@ def validar_pino_cortador(pino, configuracao, modelo=None):
         and pino.endswith('/gpio73')
     ):
         raise ValueError(
-            'PC9/pino 7 e usado pela interrupcao do PMIC na Zero 3. '
-            'Confira PC8/pino 15 e o GPIO correspondente antes de instalar.'
+            'PC9/physical pin 7 is used by the Zero 3 PMIC interrupt. '
+            'Check PC8/physical pin 15 and its GPIO mapping before installing.'
         )
     if 'mcu host' not in configuracao:
-        raise ValueError('Configure a MCU host antes de instalar o servo.')
+        raise ValueError('Configure the host MCU before installing the servo.')
     for secao, valores in configuracao.items():
         if secao == 'servo bmcu_cortador':
             continue
         for chave, valor in valores.items():
             if 'pin' in chave and str(valor).lstrip('^!~') == pino:
                 raise ValueError(
-                    'O pino do servo ja esta reservado em %s.' % secao
+                    'The servo pin is already reserved in %s.' % secao
                 )
 
 
@@ -384,21 +401,21 @@ def corrigir_aquecimento_inicio(texto, nome, monocor=False):
     if secao is None:
         return texto
     trecho = secao.group()
-    comando = 'BMCU_ENDER_POSICIONAR_PURGA'
+    comando = 'BMCU_ENDER_MOVE_TO_PURGE'
     if comando in trecho:
         return texto
     padrao = r'(?m)^( +)M109 +S\{(?:nozzle_temp|bico)\}[^\S\n]*\n'
     aquecimento = re.search(padrao, trecho)
     if aquecimento is None:
         raise RuntimeError(
-            'Revise manualmente o aquecimento do macro %s.' % nome
+            'Manually review the heating sequence in macro %s.' % nome
         )
     retorno = ''
     if monocor:
         retorno = aquecimento[1] + 'G1 X5 Y20 F6000\n'
         if trecho[: aquecimento.start()].count(retorno) != 1:
             raise RuntimeError(
-                'Revise manualmente a posicao inicial do macro %s.' % nome
+                'Manually review the initial position in macro %s.' % nome
             )
         trecho = trecho.replace(retorno, '', 1)
     trecho = re.sub(
@@ -410,16 +427,154 @@ def corrigir_aquecimento_inicio(texto, nome, monocor=False):
     return texto[: secao.start()] + trecho + texto[secao.end() :]
 
 
+def migrate_active_configuration(configurations, changes):
+    """Migrate the active include graph, leaving external shared files alone."""
+    base = configurations.resolve()
+    planned = {
+        path.resolve(): data for path, data in changes.items()
+        if path.resolve().is_relative_to(base)
+    }
+    visiting = set()
+    visited = set()
+    section_origins = {}
+    option_origins = {}
+
+    def visit(path):
+        path = path.resolve()
+        if path in visiting:
+            raise ValueError('Recursive configuration include: ' + str(path))
+        if path in visited:
+            return
+        visiting.add(path)
+        original = planned.get(path)
+        if original is None:
+            if not path.is_file():
+                raise ValueError('Missing configuration include: ' + str(path))
+            original = path.read_bytes()
+        text = original.decode('utf-8')
+        # Inspect original spellings too: planned files may already have been
+        # migrated. Preserve legitimate same-name overrides, but never merge an
+        # independent v2 definition into a renamed legacy section.
+        source = path.read_text() if path.is_file() else text
+        section = None
+        in_gcode = False
+        for line in source.splitlines(keepends=True):
+            header = HEADER.match(line)
+            if header is None:
+                if section is None or (in_gcode and line[:1].isspace()):
+                    continue
+                option = OPTION.match(line.rstrip('\r\n'))
+                if option is None:
+                    continue
+                raw = option[2].lower()
+                key = canonical_option(section, option[2]).lower()
+                identity = (section.lower(), key)
+                previous = option_origins.get(identity)
+                if previous and previous[0] != raw:
+                    raise ValueError(
+                        'Configuration option collision: %s in %s and %s'
+                        % (key, previous[1], path)
+                    )
+                option_origins[identity] = (raw, path)
+                in_gcode = raw == 'gcode'
+                continue
+            section = canonical_section(header[2])
+            in_gcode = False
+            if header[2].startswith('include '):
+                section = None
+                continue
+            raw = header[2].lower()
+            identity = section.lower()
+            previous = section_origins.get(identity)
+            if previous and previous[0] != raw:
+                raise ValueError(
+                    'Configuration section collision: %s in %s and %s'
+                    % (identity, previous[1], path)
+                )
+            section_origins[identity] = (raw, path)
+        migrated = migrate_config(text).encode('utf-8')
+        if path.is_relative_to(base):
+            changes[path] = migrated
+        elif migrated != original:
+            raise ValueError(
+                'An external include requires manual migration: ' + str(path)
+            )
+        for match in re.finditer(r'(?m)^\s*\[include\s+([^]\r\n]+)\]', text):
+            pattern = match[1].strip()
+            if pattern.startswith('~/'):
+                pattern = str(configurations.parent.parent / pattern[2:])
+            full_pattern = str(path.parent / pattern)
+            candidates = {
+                Path(name).resolve() for name in glob.glob(full_pattern)
+            }
+            candidates.update(
+                name for name in planned if name.match(full_pattern)
+            )
+            if not candidates and not glob.has_magic(pattern):
+                raise ValueError('Missing configuration include: ' + pattern)
+            for candidate in sorted(candidates):
+                visit(candidate)
+        visiting.remove(path)
+        visited.add(path)
+
+    visit(configurations / 'printer.cfg')
+    return visited
+
+
+def migrate_display_language(root, changes, visited, active_language=None):
+    """Move included preferences to the autosave-capable top-level config."""
+    preferences = []
+    for path in visited:
+        text = changes.get(path, path.read_bytes() if path.is_file() else b'')
+        section = None
+        for index, line in enumerate(text.decode().splitlines(keepends=True)):
+            header = HEADER.match(line)
+            if header:
+                section = header[2]
+                continue
+            option = OPTION.match(line.rstrip('\r\n'))
+            if (section == 'e3v3se_display' and option
+                    and option[2].lower() == 'language'):
+                value = re.split('[#;]', option[4], maxsplit=1)[0].strip()
+                preferences.append((path, index, value))
+    included = [item for item in preferences if item[0] != root]
+    if not included:
+        return
+    if any(path not in changes for path, _, _ in included):
+        raise ValueError(
+            'Move external display language into printer.cfg first.')
+    values = {value for _, _, value in preferences}
+    if active_language is None and len(values) != 1:
+        raise ValueError(
+            'Conflicting display language preferences need review.')
+    language = active_language or values.pop()
+    if language not in ('en', 'pt_BR'):
+        raise ValueError('Unsupported display language: ' + language)
+    for path in {item[0] for item in preferences}:
+        lines = changes[path].decode().splitlines(keepends=True)
+        for _, index, _ in (item for item in preferences if item[0] == path):
+            lines[index] = '# Moved to printer.cfg: ' + lines[index]
+        changes[path] = ''.join(lines).encode()
+    content = changes[root].decode()
+    marker = content.find('#*# <')
+    marker = len(content) if marker < 0 else marker
+    preference = '\n\n[e3v3se_display]\nlanguage: %s\n\n' % language
+    changes[root] = (
+        content[:marker].rstrip('\r\n') + preference + content[marker:]
+    ).encode()
+
+
 def prepare(
-    home, purge_mm=None, pullback_speed=None, pino_servo_cortador=None
+    home, purge_mm=None, pullback_speed=None, pino_servo_cortador=None,
+    state_path=None, display_language=None,
 ):
     configurations = home / 'printer_data/config'
     extras = home / 'klipper/klippy/extras'
     root = configurations / 'printer.cfg'
-    sensor = extras / 'bmcu_medicao.py'
+    sensor = extras / 'bmcu_measurement.py'
     contracts = extras / 'bmcu_core/endpoints.py'
     manager = extras / 'bmcu_core/manager.py'
-    module = extras / 'bmcu_integracao_ender.py'
+    module = extras / 'bmcu_ender_integration.py'
     daemon = configurations / 'bmcu/runtime/scripts/bmcu_transportd.py'
     destination = configurations / 'bmcu-multicor-ender.cfg'
     arquivo_servo = configurations / 'bmcu-cortador-servo.cfg'
@@ -431,7 +586,7 @@ def prepare(
     for path in (root, contracts, manager, daemon):
         if not path.is_file():
             raise RuntimeError('File not found: ' + str(path))
-    content = root.read_text()
+    content = migrate_config(root.read_text())
     includes = [
         'bmcu-multicor-ender.cfg',
         'bmcu-controles.cfg',
@@ -461,17 +616,19 @@ def prepare(
     settings = configurations / 'bmcu-controles-ajustes.cfg'
     tip_settings = configurations / 'bmcu-formacao-ponta.cfg'
     ajustes_cortador = configurations / 'bmcu-cortador.cfg'
-    sequence = (
+    sequence = migrate_config(
         destination.read_text() if destination.is_file() else CONFIGURATION
     )
-    sequence = corrigir_aquecimento_inicio(sequence, 'ENDER_INICIAR_MULTICOR')
-    for key, value in (('purga_mm', purge_mm), ('recuo_f', pullback_speed)):
+    sequence = corrigir_aquecimento_inicio(sequence, 'ENDER_START_MULTICOLOR')
+    for key, value in (
+        ('purge_mm', purge_mm), ('retract_feedrate', pullback_speed),
+    ):
         if value is None:
             continue
         if not math.isfinite(value) or value <= 0:
             raise ValueError('%s must be a finite positive number.' % key)
         section = re.search(
-            r'(?ms)^\[bmcu_integracao_ender\][^\S\n]*\n.*?(?=^\[|\Z)',
+            r'(?ms)^\[bmcu_ender_integration\][^\S\n]*\n.*?(?=^\[|\Z)',
             sequence,
         )
         if section is None:
@@ -486,19 +643,19 @@ def prepare(
         sequence = (
             sequence[: section.start()] + text + sequence[section.end() :]
         )
-    compile(MODULE, 'bmcu_integracao_ender.py', 'exec')
+    compile(MODULE, 'bmcu_ender_integration.py', 'exec')
     compile(CORTADOR, 'bmcu_cortador_ender.py', 'exec')
     changes = {
         root.resolve(): content.encode(),
-        sensor.resolve(): patch_sensor(
-            sensor.read_text() if sensor.is_file() else MEASUREMENT
-        ).encode(),
+        sensor.resolve(): patch_sensor(MEASUREMENT).encode(),
         contracts.resolve(): patch_contract(contracts.read_text()).encode(),
         manager.resolve(): patch_pre_unload(
             patch_pre_capture(manager.read_text())
         ).encode(),
         module.resolve(): MODULE.encode(),
         (extras / 'bmcu_cortador_ender.py').resolve(): CORTADOR,
+        (extras / 'bmcu_cutter_settings.py').resolve(): CUTTER_SCHEMA,
+        (extras / 'bmcu_english_api.py').resolve(): ENGLISH_API,
         (extras / 'bmcu_core/ender_transport.py').resolve(): TRANSPORT_GUARD,
         daemon.resolve(): patch_transport(daemon.read_text()).encode(),
         (configurations / 'bmcu-controles.cfg').resolve(): CONTROLS,
@@ -522,8 +679,23 @@ def prepare(
     impressao = configurations / 'impressao.cfg'
     if impressao.is_file():
         changes[impressao.resolve()] = corrigir_aquecimento_inicio(
-            impressao.read_text(), 'ENDER_INICIAR_IMPRESSAO', monocor=True
+            migrate_config(impressao.read_text()),
+            'ENDER_START_PRINT', monocor=True,
         ).encode()
+    visited = migrate_active_configuration(configurations, changes)
+    migrate_display_language(root.resolve(), changes, visited, display_language)
+    state_path = Path(
+        state_path or configurations / 'bmcu_state.json'
+    ).resolve()
+    if state_path.is_file():
+        original_state = state_path.read_bytes()
+        state = json.loads(original_state)
+        migrated_state = migrate_state(state)
+        changes[state_path] = (
+            original_state if state == migrated_state
+            else (json.dumps(migrated_state, indent=2, allow_nan=False) + '\n')
+            .encode('utf-8')
+        )
     return changes
 
 
@@ -551,22 +723,31 @@ def write_file(path, data, user, mode=0o644):
             os.unlink(name)
 
 
-def service(action):
-    command = ['systemctl', action, 'klipper']
+def service(action, unit='klipper'):
+    command = ['systemctl', action, unit]
     if os.geteuid() != 0:
         command.insert(0, 'sudo')
     subprocess.run(command, check=True)
 
 
-def wait_ready():
+def transport_is_active():
+    return subprocess.run(
+        ['systemctl', 'is-active', '--quiet', 'bmcu-transport'],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    ).returncode == 0
+
+
+def wait_ready(required_section='bmcu_ender_integration'):
     deadline = time.monotonic() + 90
     last = None
     while time.monotonic() < deadline:
         try:
             status = query_object('webhooks')
             if status['state'] == 'ready':
+                if required_section is None:
+                    return
                 configuration = query_object('configfile').get('config', {})
-                if 'bmcu_integracao_ender' in configuration:
+                if required_section in configuration:
                     return
             last = status.get('state_message', status['state'])
             if status['state'] in ('error', 'shutdown'):
@@ -577,29 +758,16 @@ def wait_ready():
     raise RuntimeError('Klipper did not become ready: %s' % last)
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--purge-mm', type=float)
-    parser.add_argument('--pullback-speed', type=float)
-    parser.add_argument('--cutter-servo-pin', dest='pino_servo_cortador')
-    args = parser.parse_args()
-    name = os.environ.get('SUDO_USER') if os.geteuid() == 0 else None
-    user = pwd.getpwnam(name) if name else pwd.getpwuid(os.getuid())
-    home = Path(user.pw_dir)
-    check_printer()
-    if args.pino_servo_cortador is not None:
-        validar_pino_cortador(
-            args.pino_servo_cortador,
-            query_object('configfile').get('config', {}),
-        )
-    changes = prepare(
-        home, args.purge_mm, args.pullback_speed, args.pino_servo_cortador
-    )
-    originals = {p: p.read_bytes() if p.exists() else None for p in changes}
-    changes = {p: d for p, d in changes.items() if originals[p] != d}
-    if not changes:
-        print(('The integration is already installed.'))
-        return
+RESTORE_HELPERS = '\n'.join(inspect.getsource(function) for function in (
+    restore_state_callbacks, write_file, query_object, check_printer,
+    wait_ready,
+))
+
+
+def create_backup(
+    home, changes, originals, user, state_path, host=None,
+    previous_section=None,
+):
     backup = home / (
         'backup-multicor-' + datetime.now().strftime('%Y%m%d-%H%M%S-%f')
     )
@@ -622,69 +790,253 @@ def main():
                 'uid': metadata.st_uid if metadata else user.pw_uid,
                 'gid': metadata.st_gid if metadata else user.pw_gid,
                 'modo': metadata.st_mode & 0o777 if metadata else 0o644,
+                'callback_state': path.resolve() == state_path,
             }
         )
     (backup / 'arquivos.json').write_text(json.dumps(manifest, indent=2))
-    bmcu_config = query_object('configfile').get('config', {}).get('bmcu', {})
+    if state_path.is_file():
+        state_data = json.loads(state_path.read_text())
+        endpoint = state_data.get('endpoints', {}).get('extruder')
+        (backup / 'endpoint.json').write_text(
+            json.dumps({
+                'arquivo': str(state_path), 'endpoint': endpoint,
+                'endpoints': state_data.get('endpoints', {}),
+            })
+        )
+    if host is not None:
+        record = dict(host.record(), previous_section=previous_section)
+        (backup / 'host.json').write_text(json.dumps(record, indent=2))
+    shutil.copy2(Path(__file__).with_name('host_transaction.py'),
+                 backup / 'host_transaction.py')
+    restorer = (
+        'import copy, importlib.util, json, os, subprocess, tempfile, time\n'
+        'from pathlib import Path\n'
+        'from urllib.request import urlopen\n'
+        + 'from types import SimpleNamespace\n'
+        + 'CALLBACK_FIELDS = ' + repr(CALLBACK_FIELDS) + '\n'
+        + 'CALLBACKS = ' + repr(CALLBACKS) + '\n'
+        + 'UPDATE_LOCK = ' + repr(str(
+            home / 'printer_data/ender3-v2-update.lock')) + '\n'
+        + 'UPDATE_OWNER = ' + repr((user.pw_uid, user.pw_gid)) + '\n'
+        + 'ROLLBACK_UNITS = ' + repr([
+            'klipper', *(['bmcu-transport'] if any(
+                path.name == 'bmcu_transportd.py' for path in changes
+            ) else []),
+        ]) + '\n'
+        + RESTORE_HELPERS + '\n'
+    )
+    body = textwrap.dedent('''\
+            base = Path(__file__).resolve().parent
+            if subprocess.run(['systemctl', 'is-active', '--quiet',
+                               'klipper']).returncode == 0:
+                check_printer()
+            for unit in ROLLBACK_UNITS:
+                subprocess.run(['systemctl', 'stop', unit], check=True)
+            host_path = base / 'host.json'
+            host = (json.loads(host_path.read_text())
+                    if host_path.is_file() else None)
+            if host:
+                helper.restore_checkout(host)
+            for item in json.loads((base / 'arquivos.json').read_text()):
+                if item.get('callback_state'):
+                    continue
+                destination = Path(item['destino'])
+                if host and destination.is_relative_to(Path(host['active'])):
+                    continue
+                if item['copia'] is None:
+                    destination.unlink(missing_ok=True)
+                else:
+                    user = SimpleNamespace(
+                        pw_uid=item['uid'], pw_gid=item['gid'])
+                    write_file(destination, Path(item['copia']).read_bytes(),
+                               user, item['modo'])
+                    os.chmod(destination, item['modo'])
+                    os.chown(destination, item['uid'], item['gid'])
+            if (base / 'endpoint.json').is_file():
+                previous = json.loads((base / 'endpoint.json').read_text())
+                status = Path(previous['arquivo'])
+                if status.is_file():
+                    data = json.loads(status.read_text())
+                    restored = restore_state_callbacks(data, {
+                        'endpoints': previous['endpoints'],
+                    })
+                    if restored != data:
+                        encoded = json.dumps(restored, allow_nan=False).encode()
+                        metadata = status.stat()
+                        user = SimpleNamespace(pw_uid=metadata.st_uid,
+                                               pw_gid=metadata.st_gid)
+                        write_file(status, encoded, user)
+            if host:
+                try:
+                    for unit in reversed(ROLLBACK_UNITS):
+                        subprocess.run(['systemctl', 'start', unit], check=True)
+                    wait_ready(required_section=host['previous_section'])
+                except Exception:
+                    for unit in ROLLBACK_UNITS:
+                        subprocess.run(['systemctl', 'stop', unit], check=True)
+                    raise
+                print('Previous host, display and files restored; '
+                      'Klipper is ready.')
+            else:
+                print('Previous files restored. Services remain stopped.')
+                print('The host checkout was not preserved '
+                      'by this installation.')
+                print('Restore a matching host/display '
+                      'before starting services.')
+            ''')
+    restorer += textwrap.dedent('''\
+        base = Path(__file__).resolve().parent
+        spec = importlib.util.spec_from_file_location(
+            'saved_host_transaction', base / 'host_transaction.py')
+        helper = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(helper)
+        with helper.update_lock(Path(UPDATE_LOCK), UPDATE_OWNER):
+        ''') + textwrap.indent(body, '    ')
+    compile(restorer, '<generated rollback>', 'exec')
+    (backup / 'restaurar.py').write_text(restorer)
+    return backup
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--purge-mm', type=float)
+    parser.add_argument('--pullback-speed', type=float)
+    parser.add_argument('--cutter-servo-pin', dest='pino_servo_cortador')
+    parser.add_argument('--host-source', type=Path)
+    args = parser.parse_args()
+    name = os.environ.get('SUDO_USER') if os.geteuid() == 0 else None
+    user = pwd.getpwnam(name) if name else pwd.getpwuid(os.getuid())
+    home = Path(user.pw_dir)
+    with update_lock(home / 'printer_data/ender3-v2-update.lock',
+                     (user.pw_uid, user.pw_gid)):
+        return install(args, user)
+
+
+def install(args, user):
+    home = Path(user.pw_dir)
+    check_printer()
+    if args.pino_servo_cortador is not None:
+        validar_pino_cortador(
+            args.pino_servo_cortador,
+            query_object('configfile').get('config', {}),
+        )
+    active_config = query_object('configfile').get('config', {})
+    bmcu_config = active_config.get('bmcu', {})
+    display_language = active_config.get('e3v3se_display', {}).get('language')
+    previous_section = next((name for name in (
+        'bmcu_ender_integration', 'bmcu_integracao_ender',
+    ) if name in active_config), None)
     state_path = bmcu_config.get(
         'state_file', str(home / 'printer_data/config/bmcu_state.json')
     )
     if state_path.startswith('~/'):
         state_path = str(home / state_path[2:])
     state_path = Path(state_path)
-    if state_path.is_file():
-        state_data = json.loads(state_path.read_text())
-        endpoint = state_data.get('endpoints', {}).get('extruder')
-        (backup / 'endpoint.json').write_text(
-            json.dumps({'arquivo': str(state_path), 'endpoint': endpoint})
+    if not state_path.is_absolute():
+        raise ValueError('Use an absolute BMCU state_file path for migration.')
+    state_path = state_path.resolve()
+
+    def preparation():
+        changes = prepare(
+            home, args.purge_mm, args.pullback_speed, args.pino_servo_cortador,
+            state_path=state_path, display_language=display_language,
         )
-    restorer = (
-        'import json, os, subprocess\nfrom pathlib import Path\nbase = '
-        "Path(__file__).resolve().parent\nsubprocess.run(['systemctl', "
-        "'stop', 'klipper'], check=True)\nfor item in json.loads((base / "
-        "'arquivos.json').read_text()):\n    destination = "
-        "Path(item['destino'])\n    if item['copia'] is None:\n        "
-        'destination.unlink(missing_ok=True)\n    else:\n        '
-        "destination.write_bytes(Path(item['copia']).read_bytes())\n        "
-        "os.chmod(destination, item['modo'])\n        os.chown(destination, "
-        "item['uid'], item['gid'])\nif (base / 'endpoint.json').is_file():\n  "
-        "  previous = json.loads((base / 'endpoint.json').read_text())\n    "
-        "status = Path(previous['arquivo'])\n    if status.is_file() and "
-        "previous['endpoint'] is not None:\n        data = "
-        'json.loads(status.read_text())\n        current = '
-        "data.get('endpoints', {}).get('extruder', {})\n        if "
-        "current.get('toolhead_prepare_macro') == 'BMCU_PREPARAR_ENDER':\n    "
-        "        data['endpoints']['extruder'] = previous['endpoint']\n       "
-        '     metadata = status.stat()\n            temporary = '
-        "status.with_name(status.name + '.restauracao')\n            "
-        "temporary.write_text(json.dumps(data, separators=(',', ':'), "
-        'allow_nan=False))\n            os.chmod(temporary, metadata.st_mode '
-        '& 0o777)\n            os.chown(temporary, metadata.st_uid, '
-        'metadata.st_gid)\n            os.replace(temporary, '
-        "status)\nsubprocess.run(['systemctl', 'start', 'klipper'], "
-        "check=True)\nprint('Previous files "
-        "restored.')\n"
+        originals = {p: p.read_bytes() if p.exists() else None for p in changes}
+        changed = {p: d for p, d in changes.items() if originals[p] != d}
+        return changed, originals
+
+    changes, _ = preparation()
+    host = None
+    if args.host_source is not None:
+        if args.host_source.resolve() != ROOT.resolve():
+            raise ValueError('Run the installer from the selected host source.')
+        work = home / ('backup-host-update-'
+                       + datetime.now().strftime('%Y%m%d-%H%M%S-%f'))
+        host = HostTransaction(args.host_source, home / 'klipper', work)
+        try:
+            host.prepare()
+        except Exception:
+            print('Any staged files were retained for review under:', work)
+            raise
+    if not changes and host is None:
+        print('The integration is already installed.')
+        return
+    transport_changed = any(
+        path.name == 'bmcu_transportd.py' for path in changes
     )
-    (backup / 'restaurar.py').write_text(restorer)
-    print('Backup:', backup)
+    if transport_changed and not transport_is_active():
+        raise RuntimeError(
+            'The bmcu-transport service must be active before this upgrade. '
+            'Review custom service installations manually.'
+        )
+    check_printer()
     service('stop')
+    # The live process may save state while stopping. Take the authoritative
+    # snapshot only after it has exited, before activating any migrated file.
     try:
+        if transport_changed:
+            service('stop', 'bmcu-transport')
+        changes, originals = preparation()
+        backup = create_backup(
+            home, changes, originals, user, state_path, host, previous_section,
+        )
+    except Exception:
+        print('No migrated files activated; '
+              'services remain stopped for review.')
+        raise
+    print('Backup:', backup)
+    try:
+        if host is not None:
+            host.activate()
         for path, data in changes.items():
             write_file(path, data, user)
+        if transport_changed:
+            service('start', 'bmcu-transport')
         service('start')
         wait_ready()
     except Exception:
         service('stop')
+        if transport_changed:
+            service('stop', 'bmcu-transport')
+        if host is not None:
+            host.rollback()
         for path in changes:
+            if host is not None and path.is_relative_to(home / 'klipper'):
+                continue
             if originals[path] is None:
                 path.unlink(missing_ok=True)
+            elif path == state_path:
+                current = json.loads(path.read_bytes())
+                previous = json.loads(originals[path])
+                restored = restore_state_callbacks(current, previous)
+                data = (
+                    originals[path] if restored == previous
+                    else json.dumps(restored, allow_nan=False).encode()
+                )
+                write_file(path, data, user)
             else:
                 write_file(path, originals[path], user)
-        service('start')
-        print(('Installation failed; previous files were restored.'))
+        if host is not None:
+            try:
+                if transport_changed:
+                    service('start', 'bmcu-transport')
+                service('start')
+                wait_ready(required_section=previous_section)
+            except Exception:
+                service('stop')
+                if transport_changed:
+                    service('stop', 'bmcu-transport')
+                print('Previous host/files restored; services remain stopped.')
+                raise
+            print('Upgrade failed; previous host/display restored and ready.')
+        else:
+            print('Installation failed; integration files were restored.')
+            print('Services remain stopped. '
+                  'The host checkout was not preserved.')
+            print('Restore a matching host/display before starting services.')
         raise
     print('Integration installed; Klipper is ready.')
-    print('For initial endpoint setup, review BMCU_CONFIGURAR_MULTICOR.')
+    print('For initial endpoint setup, review BMCU_SETUP_MULTICOLOR.')
     print(('PID, Z offset, mesh and extrusion calibration were preserved.'))
     print('To restore files: sudo python3 ' + str(backup / 'restaurar.py'))
 

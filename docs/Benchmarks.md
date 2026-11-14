@@ -1,5 +1,7 @@
 # Benchmarks
 
+**English** | [Português brasileiro](pt-BR/Benchmarks.md)
+
 This document describes Klipper benchmarks.
 
 ## Micro-controller Benchmarks

@@ -1,5 +1,7 @@
 # Ender 3 V3 SE Stock Display Architecture
 
+**English** | [Português brasileiro](pt-BR/E3V3SE_Display.md)
+
 ## Data path
 
 ```text
@@ -143,6 +145,61 @@ progress, filename, and `M117`/`SET_DISPLAY_TEXT` messages. The menu provides:
 Movement is refused when the selected axis is not homed. Extrusion is refused
 when Klipper reports `can_extrude=false`. No nozzle cleaning, PRTouch, or
 automatic Z-offset procedure is run by the display.
+
+## Menus and language
+
+The idle main menu is **Print / Filament / Temperature / Move / Calibration /
+Settings**, plus **Macros** only when custom display macros exist.
+
+- **Print:** recursive virtual-SD browser and confirmed file start.
+- **Filament:** ordinary single-extruder load/unload without BMCU; otherwise
+  **Filament / BMCU** with four physical channel loads and active-channel unload.
+- **Temperature:** nozzle/bed targets, fan, PLA/PETG/TPU preheat and cooldown.
+- **Move:** home, bounded X/Y/Z/E movement, motors and optional cutter stop.
+- **Calibration:** CR-Touch, bed mesh and screw tilt when configured. Manual
+  probing uses the existing `TESTZ`, `ACCEPT` and `ABORT` commands.
+- **Settings:** language and a separate confirmed configuration save.
+
+**Settings → Language → English / Português** applies the selection immediately
+and stages it through `configfile.set`; it does not restart Klipper.
+**Settings → Save config** runs `SAVE_CONFIG` after confirmation to persist it
+and restart. Saving is refused during printing, pause or a busy operation.
+The values are `en` and `pt_BR`. Included language preferences are moved to
+top-level `printer.cfg` by the installer to avoid native autosave conflicts.
+Commands and parameters remain English in both screen languages. Custom labels
+and unknown external diagnostics retain their original text.
+
+## BMCU reset and paused recovery
+
+The validated integration's **Reset BMCU** requires confirmation that the hotend
+and shared filament path have been manually cleared, then invokes
+`BMCU_ENDER_RESET CONFIRM=1`. It reconciles route state, not factory settings;
+it does not move filament, erase calibration or recover a paused print.
+Printing, pause, pending recovery and busy operations block the action.
+Loading uncertain routes is disabled, but the guarded reset remains available
+outside a print. The backend revalidates conditions when confirmation executes.
+
+During printing, pause/tune/cancel remain contextual. A paused failed tool
+change offers **Recover filament**, showing the failed physical channel and
+failure details. **Confirm clear path** confirms the operator's physical
+inspection and calls `BMCU_CONFIRM_CLEAR_PATH CHANNEL=<1-4> CONFIRM=1` for that
+channel. Resume/cancel reuse existing print recovery, never a separate print
+state or global reset. See the [recovery guide](Ender3_V3_SE_Print_Recovery.md).
+
+When an installed calibrated cutter is uncertain, recovery offers only
+**Close cutter stop**. After the head-clearance confirmation it sends
+`CUTTER_SERVO POSITION=RETRACTED CONFIRM=1` and returns to recovery, without
+homing, jogging or deploying the stop. Idle **Move** offers both stop positions
+with that same confirmation and backend. It only commands the servo; the
+integration retains its existing interlocks and X-first homing sequence.
+
+## Custom shortcuts
+
+The template no longer duplicates load/unload in default display-macro sections.
+The G-code macros behind those operations remain available. Custom
+`[e3v3se_display macro <name>]` entries with `label` and `gcode` remain supported;
+duplicate names cause a configuration error. The installer removes only the
+exact redundant defaults, preserving customized labels and scripts.
 
 ## Diagnostics
 

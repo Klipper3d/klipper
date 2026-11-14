@@ -1,5 +1,7 @@
 # Axis Twist Compensation
 
+**English** | [Português brasileiro](pt-BR/Axis_Twist_Compensation.md)
+
 This document describes the `[axis_twist_compensation]` module.
 
 Some printers may have a small twist in their X rail which can skew the results
@@ -64,6 +66,7 @@ This will guide you through the same measuring process as for the X-axis.
 > **Tip:** Bed temperature and nozzle temperature and size do not seem to have
 > an influence to the calibration process.
 
+<a id="fine-tuning"></a>
 ## [axis_twist_compensation] setup and commands
 
 Configuration options for `[axis_twist_compensation]` can be found in the

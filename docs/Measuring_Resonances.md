@@ -1,5 +1,7 @@
 # Measuring Resonances
 
+**English** | [Português brasileiro](pt-BR/Measuring_Resonances.md)
+
 Klipper has built-in support for the ADXL345, MPU-9250, LIS2DW and LIS3DH compatible
 accelerometers which can be used to measure resonance frequencies of the printer
 for different axes, and auto-tune [input shapers](Resonance_Compensation.md) to

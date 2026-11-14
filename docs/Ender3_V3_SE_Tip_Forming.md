@@ -1,5 +1,7 @@
 # Filament tip forming and repeated-load test
 
+**English** | [Português brasileiro](pt-BR/Ender3_V3_SE_Tip_Forming.md)
+
 The integration installer now adds `bmcu-formacao-ponta.cfg`. This editable
 file is preserved on subsequent installations. It contains an **experimental
 starting profile**, not a physically validated calibration for every hotend.
@@ -76,12 +78,12 @@ backward cooling strokes. Before each retraction increment, the integration
 compares cumulative commanded extrusion with signed feeder encoder travel.
 With the default 2 mm allowance, it does not command another retraction that
 would exceed that difference. The extruder waits while withdrawal assistance
-remains active; failure to catch up within `tempo_sem_recuo` aborts and stops
+remains active; failure to catch up within `unload_progress_timeout` aborts and stops
 the feeder without confirming parking. An unexpected assistance-mode change
 also aborts the operation.
 
-The defaults `passo_recuo_mm: 1` and `folga_recuo_mm: 2` can be configured in
-`[bmcu_integracao_ender]`. Existing configurations use these defaults without
+The defaults `unload_step_mm: 1` and `unload_slack_mm: 2` can be configured in
+`[bmcu_ender_integration]`. Existing configurations use these defaults without
 overwriting custom distances or tip settings. The capture, nozzle feed, 35 mm
 purge, 55 mm parking, cooling distances, requested speeds and temperatures are
 unchanged. Actual forming time can increase because each increment waits for
@@ -109,7 +111,7 @@ and communication needs separate validation of the bounded motion queue.
 
 After encoder-confirmed parking, the console reports elapsed positioning,
 tip-forming, sensor-release, feeder-parking and total sequence times. The same
-values are exposed as `bmcu_integracao_ender.unload_timing`, with a result of
+values are exposed as `bmcu_ender_integration.unload_timing`, with a result of
 `awaiting_parking`, `complete`, `failed` or `parking_failed`. The total begins
 inside the extruder-release hook; it excludes earlier manual preheating and
 native load/unload preparation. Parking time includes the final encoder check.
@@ -117,15 +119,25 @@ These measurements identify the next bottleneck without changing temperature,
 cooling cycles or filament travel based on an unmeasured total button time.
 
 The buffer limit, recovery threshold and timeouts are editable in
-`[bmcu_integracao_ender]` as `limite_buffer_recuo`, `retomar_buffer_recuo`,
-`tempo_buffer_recuo` and `tempo_sem_recuo`. Existing custom sequence settings
-remain preserved. To explicitly apply the shorter purge and slower final search
-through the installer's backup and rollback workflow, use:
+`[bmcu_ender_integration]` as `unload_buffer_limit`, `unload_buffer_resume`,
+`unload_buffer_timeout` and `unload_progress_timeout`. Existing custom sequence settings
+remain preserved. Follow the
+[staged installation flow](Ender3_V3_SE_Configuracao_Validada.md#install-or-update-an-existing-integration)
+to preserve the complete previous host/display. Do not update the active
+checkout with `git pull` first. After preparing that clean source, only if you
+explicitly want the shorter purge and slower final search, use:
 
 ```sh
-sudo python3 scripts/ender3-v3-se/install_multicolor.py \
+sudo python3 "$HOME/klipper-v2-source/scripts/ender3-v3-se/install_multicolor.py" \
+  --host-source "$HOME/klipper-v2-source" \
   --purge-mm 35 --pullback-speed 300
 ```
+
+Omit both override flags to preserve their current calibrated values. The
+host-only updater refuses changed MCU/build inputs or Python requirements; it
+does not flash firmware or install dependencies. Commands and parameters use
+English in both display languages. Re-slice old jobs with the v2 Orca profile;
+stored G-code is not silently converted.
 
 Install only while idle, with physically parked channels and an empty shared
 path. Do not clear an uncertain route by assertion while filament remains in
@@ -147,7 +159,7 @@ automatic cold-pull routine.
 
 ## Calibration
 
-Use `RETIRAR_FILAMENTO` to test the complete unload from a known loaded route.
+Use `UNLOAD_ACTIVE_CHANNEL` to test the complete unload from a known loaded route.
 Do not confirm a route as parked until its physical shared path is clear.
 
 Change one variable at a time without restarting:

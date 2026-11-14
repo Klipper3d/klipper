@@ -1,5 +1,7 @@
 # Bootloaders
 
+**English** | [Português brasileiro](pt-BR/Bootloaders.md)
+
 This document provides information on common bootloaders found on
 micro-controllers that Klipper supports.
 

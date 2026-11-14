@@ -1,15 +1,26 @@
 # OrcaSlicer 2.4.2 — Ender 3 V3 SE with BMCU
 
+**English** | [Português brasileiro](README.pt-BR.md)
+
+## v2 profile: re-slice existing jobs
+
+This branch prepares v2.0.0; it is not a published or hardware-validated v2
+release. Its commands are English only. **Re-slice old jobs using this profile**
+after completing the installation migration. Previously sliced jobs containing
+Portuguese commands are incompatible. There are no Portuguese command aliases
+and no automatic conversion of stored print jobs. Do not mix snippets from v1
+and v2 or start a queued v1 job after upgrading.
+
 Use these snippets with the [switch-based integration](../../../docs/Ender3_V3_SE_Configuracao_Validada.md).
 They are reusable examples, not a personal slicer export or a native importable
-preset bundle. Replace `YOUR_BMCU_UID` in `inicio.gcode` with the UID reported by
+preset bundle. Replace `YOUR_BMCU_UID` in `start.gcode` with the UID reported by
 your own BMCU. Never use another machine's UID.
 
 | Printer setting | Value |
 | --- | --- |
-| Start G-code | Contents of `inicio.gcode` |
-| End G-code | Contents of `fim.gcode` |
-| Filament change G-code | Contents of `troca.gcode` |
+| Start G-code | Contents of `start.gcode` |
+| End G-code | Contents of `end.gcode` |
+| Filament change G-code | Contents of `change.gcode` |
 | Pause | `PAUSE` |
 | Firmware | Klipper |
 | Physical extruders | One, with single-extruder multimaterial enabled |
@@ -18,8 +29,12 @@ your own BMCU. Never use another machine's UID.
 | Ramming and cooling moves | Disabled |
 
 Save this as a user printer profile. Do not append another home, temperature
-sequence or prime line after `ENDER_INICIAR_MULTICOR`. Do not use `M600` for
+sequence or prime line after `ENDER_START_MULTICOLOR`. Do not use `M600` for
 BMCU multi-color tool changes.
+
+The start macro uses `BED_TEMP`, `NOZZLE_TEMP` and `TOOL`; the end macro is
+`ENDER_END_MULTICOLOR`. Keep these names and their values in English in both
+documentation languages and both display languages.
 
 | Orca slot | Explicit command | Default physical channel | BMCU API index |
 | --- | --- | --- | --- |
@@ -43,3 +58,11 @@ computer-side post-processing script is required; remove
 proven hotend limit. The tested PETG example used 230 °C, bed 80/75 °C, PA 0.04,
 flow 1.00 and a slicer volumetric limit of 20 mm³/s. Calibrate material and flow
 for your own hotend; input shaping and maximum-speed tuning are separate tasks.
+
+## Four-channel reload project
+
+[`bmcu_four_channel_reload_test.3mf`](bmcu_four_channel_reload_test.3mf) contains
+four cycles of two layers per channel: 16 loads, 15 changes and three reloads
+per channel. Open it as a project, review every setting, replace the placeholder
+UID and slice it with the v2 profile. It does not contain ready-to-print G-code
+and is not evidence of successful four-color physical testing.

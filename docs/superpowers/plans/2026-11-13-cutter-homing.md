@@ -1,5 +1,7 @@
 # X-first Cutter Homing Implementation Plan
 
+**English** | [Português brasileiro](../../pt-BR/superpowers/plans/2026-11-13-cutter-homing.md)
+
 > **For agentic workers:** Execute this plan task-by-task in the main session;
 > delegate only the mandatory external final review. Steps use checkboxes.
 

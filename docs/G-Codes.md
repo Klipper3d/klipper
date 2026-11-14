@@ -1,5 +1,7 @@
 # G-Codes
 
+**English** | [Português brasileiro](pt-BR/G-Codes.md)
+
 This document describes the commands that Klipper supports. These are
 commands that one may enter into the OctoPrint terminal tab.
 

@@ -213,7 +213,7 @@ class ManualControlsTests(unittest.TestCase):
             'gcode_macro _ENDER_PANEL_SETTINGS': settings,
             'print_stats': {'state': 'standby'},
             'bmcu': {'active_operations': {}},
-            'bmcu_integracao_ender': {'manual_busy': False},
+            'bmcu_ender_integration': {'manual_busy': False},
         }
 
         def fail(message):

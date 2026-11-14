@@ -1,5 +1,7 @@
 # TMC drivers
 
+**English** | [Português brasileiro](pt-BR/TMC_Drivers.md)
+
 This document provides information on using Trinamic stepper motor
 drivers in SPI/UART mode on Klipper.
 
@@ -432,7 +434,7 @@ gcode:
 
 ## Querying and diagnosing driver settings
 
-The `[DUMP_TMC command](G-Codes.md#dump_tmc) is a useful tool when
+The [DUMP_TMC command](G-Codes.md#dump_tmc) is a useful tool when
 configuring and diagnosing the drivers. It will report all fields
 configured by Klipper as well as all fields that can be queried from
 the driver.

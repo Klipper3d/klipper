@@ -43,13 +43,22 @@ protocol.ROUTE_EMPTY = 0
 protocol.ROUTE_LOADED = 1
 protocol.ROUTE_UNCERTAIN = 2
 import_module(
+    'integration_test.bmcu_english_api',
+    ROOT / 'integrations/bmcu/bmcu_english_api.py',
+)
+import_module(
+    'integration_test.bmcu_cutter_settings',
+    ROOT / 'integrations/bmcu/bmcu_cutter_settings.py',
+)
+import_module(
     'integration_test.bmcu_cortador_ender',
     ROOT / 'integrations/bmcu/bmcu_cortador_ender.py',
 )
 module = import_module(
-    'integration_test.bmcu_integracao_ender',
-    ROOT / 'integrations/bmcu/bmcu_integracao_ender.py',
+    'integration_test.bmcu_ender_integration',
+    ROOT / 'integrations/bmcu/bmcu_ender_integration.py',
 )
+sys.path.insert(0, str(ROOT / 'scripts/ender3-v3-se'))
 installer = import_module(
     'instalador', ROOT / 'scripts/ender3-v3-se/instalar_multicor_bmcu.py'
 )
@@ -328,8 +337,8 @@ class IntegrationTests(unittest.TestCase):
 
     def test_measurement_module_keeps_existing_commands(self):
         measurement_module = import_module(
-            'integration_test.bmcu_medicao',
-            ROOT / 'integrations/bmcu/bmcu_medicao.py',
+            'integration_test.bmcu_measurement',
+            ROOT / 'integrations/bmcu/bmcu_measurement.py',
         )
         commands = {}
         gcode = types.SimpleNamespace(
@@ -346,10 +355,10 @@ class IntegrationTests(unittest.TestCase):
         self.assertEqual(
             set(commands),
             {
-                'BMCU_MEDIR_CHEGADA',
-                'BMCU_TESTAR_EXTRUSAO',
-                'BMCU_LIMITES_EXTRUSAO',
-                'BMCU_RETIRAR_ATE_SWITCH',
+                'BMCU_MEASURE_ARRIVAL',
+                'BMCU_TEST_EXTRUSION',
+                'BMCU_EXTRUSION_LIMITS',
+                'BMCU_UNLOAD_TO_SENSOR',
             },
         )
         self.assertIsInstance(
@@ -358,7 +367,7 @@ class IntegrationTests(unittest.TestCase):
 
     def test_public_templates_do_not_bind_a_personal_device(self):
         start = (
-            ROOT / 'profiles/orca/ender3-v3-se-bmcu/inicio.gcode'
+            ROOT / 'profiles/orca/ender3-v3-se-bmcu/start.gcode'
         ).read_text()
         self.assertIn('UID=YOUR_BMCU_UID', start)
         self.assertNotRegex(start, r'UID=[A-Fa-f0-9]{16,}')
@@ -432,7 +441,7 @@ class IntegrationTests(unittest.TestCase):
             )
             adapter(Gcmd(B=str(index + 1)))
             self.assertEqual(
-                b.commands[-1], 'BMCU_TROCAR_ENDER TOOL=%d' % (index + 1)
+                b.commands[-1], 'BMCU_CHANGE_TOOL_ENDER TOOL=%d' % (index + 1)
             )
             adapter(Gcmd())
         self.assertEqual(len(previous_calls), 4)
@@ -454,7 +463,7 @@ class IntegrationTests(unittest.TestCase):
                 adapter(Gcmd())
                 self.assertEqual(
                     b.commands,
-                    ['BMCU_TROCAR_ENDER TOOL=%d' % (index + 1)],
+                    ['BMCU_CHANGE_TOOL_ENDER TOOL=%d' % (index + 1)],
                 )
                 self.assertFalse(previous_calls)
 
@@ -480,7 +489,7 @@ class IntegrationTests(unittest.TestCase):
         b = TestBench()
         b.bmcu.print_map_active = True
         b.obj.adapt_tool(0, lambda g: self.fail('Tool nativo'))(Gcmd(B='1'))
-        self.assertEqual(b.commands, ['BMCU_TROCAR_ENDER TOOL=1'])
+        self.assertEqual(b.commands, ['BMCU_CHANGE_TOOL_ENDER TOOL=1'])
         with self.assertRaisesRegex(RuntimeError, 'do not match'):
             b.obj.adapt_tool(0, lambda g: None)(Gcmd(B='2'))
         self.assertEqual(len(b.commands), 1)
@@ -493,7 +502,7 @@ class IntegrationTests(unittest.TestCase):
         execute = b.gcode.run_script_from_command
 
         def dispatch(text):
-            if text == 'BMCU_TROCAR_ENDER TOOL=1':
+            if text == 'BMCU_CHANGE_TOOL_ENDER TOOL=1':
                 return b.obj.change_tool(Gcmd(TOOL='1'))
             return execute(text)
 
@@ -580,8 +589,9 @@ class IntegrationTests(unittest.TestCase):
             (config / 'printer.cfg').write_text(
                 '[include mainsail.cfg]\n' + saved
             )
-            (extras / 'bmcu_medicao.py').write_text(
-                (ROOT / 'integrations/bmcu/bmcu_medicao.py').read_text()
+            (config / 'mainsail.cfg').write_text('')
+            (extras / 'bmcu_measurement.py').write_text(
+                (ROOT / 'integrations/bmcu/bmcu_measurement.py').read_text()
             )
             (extras / 'bmcu_core/endpoints.py').write_text(
                 (BASE / 'endpoints_original.txt').read_text()
@@ -596,7 +606,7 @@ class IntegrationTests(unittest.TestCase):
             inicio_antigo = (
                 (ROOT / 'config/ender3-v3-se-validada/impressao.cfg')
                 .read_text()
-                .replace('  BMCU_ENDER_POSICIONAR_PURGA\n', '')
+                .replace('  BMCU_ENDER_MOVE_TO_PURGE\n', '')
                 .replace(
                     '  M109 S{nozzle_temp}\n  G1 X5 Y20 F6000\n',
                     '  G1 X5 Y20 F6000\n  M109 S{nozzle_temp}\n',
@@ -604,7 +614,7 @@ class IntegrationTests(unittest.TestCase):
             )
             impressao.write_text(inicio_antigo)
             changes = installer.prepare(home)
-            self.assertIn(b'BMCU_ENDER_POSICIONAR_PURGA', changes[impressao])
+            self.assertIn(b'BMCU_ENDER_MOVE_TO_PURGE', changes[impressao])
             root = changes[(config / 'printer.cfg').resolve()].decode()
             self.assertEqual(root[root.index('#*# <') :], saved)
             for p, data in changes.items():
@@ -612,17 +622,17 @@ class IntegrationTests(unittest.TestCase):
             self.assertEqual(installer.prepare(home), changes)
             sequence = config / 'bmcu-multicor-ender.cfg'
             custom = sequence.read_text().replace(
-                'purga_mm: 35', 'purga_mm: 91'
+                'purge_mm: 35', 'purge_mm: 91'
             )
             sequence.write_text(custom)
             self.assertEqual(
                 installer.prepare(home)[sequence], custom.encode()
             )
             overridden = installer.prepare(home, 35, 300)[sequence].decode()
-            self.assertIn('purga_mm: 35', overridden)
-            self.assertIn('recuo_f: 300', overridden)
+            self.assertIn('purge_mm: 35', overridden)
+            self.assertIn('retract_feedrate: 300', overridden)
             self.assertEqual(
-                overridden, custom.replace('purga_mm: 91', 'purga_mm: 35')
+                overridden, custom.replace('purge_mm: 91', 'purge_mm: 35')
             )
             for invalid in (float('nan'), float('inf'), -1, 0):
                 with self.assertRaises(ValueError):
@@ -648,7 +658,7 @@ class IntegrationTests(unittest.TestCase):
             )
             cutter = config / 'bmcu-cortador.cfg'
             custom_cutter = cutter.read_bytes().replace(
-                b'variable_corte_f: 300.0', b'variable_corte_f: 240.0'
+                b'variable_cut_feedrate: 300.0', b'variable_cut_feedrate: 240.0'
             )
             cutter.write_bytes(custom_cutter)
             self.assertEqual(installer.prepare(home)[cutter], custom_cutter)
@@ -693,7 +703,7 @@ class IntegrationTests(unittest.TestCase):
                 'switch_pin': '^!host:gpiochip1/gpio73'
             },
         }
-        with self.assertRaisesRegex(ValueError, 'reservado'):
+        with self.assertRaisesRegex(ValueError, 'reserved'):
             installer.validar_pino_cortador('host:gpiochip1/gpio73', config)
         installer.validar_pino_cortador('host:gpiochip1/gpio74', config)
 
@@ -720,10 +730,10 @@ class IntegrationTests(unittest.TestCase):
             n
             for n in ast.walk(root)
             if isinstance(n, ast.If)
-            and 'BMCU_PREPARAR_ENDER' in ast.dump(n.test)
+            and 'BMCU_PREPARE_ENDER' in ast.dump(n.test)
         )
         for macro, expected in [
-            ('BMCU_PREPARAR_ENDER', 'parar'),
+            ('BMCU_PREPARE_ENDER', 'parar'),
             ('OUTRO_CALLBACK', 'avancar'),
         ]:
             actions = []
@@ -774,8 +784,8 @@ class IntegrationTests(unittest.TestCase):
         )
         priorities = []
         for command, expected in [
-            ('BMCU_PREPARAR_ENDER', False),
-            ('BMCU_LIBERAR_ENDER', False),
+            ('BMCU_PREPARE_ENDER', False),
+            ('BMCU_RELEASE_ENDER', False),
             ('OUTRO_CALLBACK', True),
         ]:
             destination = types.SimpleNamespace(
@@ -805,7 +815,7 @@ class IntegrationTests(unittest.TestCase):
             raise RuntimeError(text)
 
         context = dict(
-            params={'TEMP_MESA': '80', 'TEMP_BICO': '230', 'FERRAMENTA': '2'},
+            params={'BED_TEMP': '80', 'NOZZLE_TEMP': '230', 'TOOL': '2'},
             printer={
                 'bmcu': {
                     'active_operations': {},
@@ -829,11 +839,11 @@ class IntegrationTests(unittest.TestCase):
             result = env.from_string(parser[section]['gcode']).render(
                 **context
             )
-            if section == 'gcode_macro ENDER_INICIAR_MULTICOR':
+            if section == 'gcode_macro ENDER_START_MULTICOLOR':
                 self.assertIn('M140 S80.0', result)
                 self.assertIn('M109 S230.0', result)
                 self.assertNotIn('G1 E', result)
-            if section == 'gcode_macro BMCU_CONFIGURAR_MULTICOR':
+            if section == 'gcode_macro BMCU_SETUP_MULTICOLOR':
                 self.assertIn('CONTACT_TIMEOUT=180', result)
                 self.assertNotIn('UNLOAD_RETRACT_MM', result)
         context['printer']['filament_switch_sensor bmcu_entry'][
@@ -841,7 +851,7 @@ class IntegrationTests(unittest.TestCase):
         ] = True
         with self.assertRaisesRegex(RuntimeError, 'entry sensor'):
             env.from_string(
-                parser['gcode_macro BMCU_CONFIGURAR_MULTICOR']['gcode']
+                parser['gcode_macro BMCU_SETUP_MULTICOLOR']['gcode']
             ).render(**context)
 
 

@@ -1,5 +1,7 @@
 # Packaging Klipper
 
+**English** | [Português brasileiro](pt-BR/Packaging.md)
+
 Klipper is somewhat of a packaging anomaly among python programs, as it doesn't
 use setuptools to build and install. Some notes regarding how best to package it
 are as follows:

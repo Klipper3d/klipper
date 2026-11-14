@@ -11,8 +11,9 @@ class ReloadProjectTests(unittest.TestCase):
     def test_project_has_four_cycles_of_two_layers_per_channel(self):
         path = ROOT / (
             'profiles/orca/ender3-v3-se-bmcu/'
-            'teste_4_canais_3_recargas_PETG.3mf'
+            'bmcu_four_channel_reload_test.3mf'
         )
+        self.assertTrue(path.is_file())
         with zipfile.ZipFile(path) as archive:
             settings = json.loads(
                 archive.read('Metadata/project_settings.config')
@@ -51,6 +52,12 @@ class ReloadProjectTests(unittest.TestCase):
             )
         self.assertEqual(settings['post_process'], [])
         self.assertEqual(settings['print_host'], '')
+        self.assertEqual(settings['machine_end_gcode'], 'ENDER_END_MULTICOLOR')
+        self.assertIn(
+            'ENDER_START_MULTICOLOR BED_TEMP=', settings['machine_start_gcode'],
+        )
+        self.assertIn(' NOZZLE_TEMP=', settings['machine_start_gcode'])
+        self.assertIn(' TOOL={initial_tool+1}', settings['machine_start_gcode'])
 
 
 if __name__ == '__main__':

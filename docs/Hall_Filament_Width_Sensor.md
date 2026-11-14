@@ -1,5 +1,7 @@
 # Hall filament width sensor
 
+**English** | [Português brasileiro](pt-BR/Hall_Filament_Width_Sensor.md)
+
 This document describes Filament Width Sensor host module. Hardware used for
 developing this host module is based on two Hall linear sensors (ss49e for
 example). Sensors in the body are located on opposite sides. Principle of operation:

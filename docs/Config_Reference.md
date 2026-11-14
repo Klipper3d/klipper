@@ -1,5 +1,7 @@
 # Configuration reference
 
+**English** | [Português brasileiro](pt-BR/Config_Reference.md)
+
 This document is a reference for options available in the Klipper
 config file.
 

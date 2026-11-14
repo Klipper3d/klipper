@@ -5,6 +5,7 @@ import math
 from .bmcu_core import protocol
 from .bmcu_core.release import PACKAGE_VERSION
 from .bmcu_cortador_ender import CortadorEnder
+from .bmcu_english_api import public_diagnostics, require_english_parameters
 
 
 class EnderIntegration:
@@ -13,11 +14,11 @@ class EnderIntegration:
             raise config.error('This integration requires BMCU-Klipper 1.0.6.')
         self.printer = config.get_printer()
         self.bmcu = self.printer.load_object(config, 'bmcu')
-        self.measurement = self.printer.load_object(config, 'bmcu_medicao')
+        self.measurement = self.printer.load_object(config, 'bmcu_measurement')
         self.gcode = self.printer.lookup_object('gcode')
         self.reactor = self.printer.get_reactor()
-        self.device = config.get('dispositivo', 'bmcu0')
-        self.destination = config.get('destino', 'extruder')
+        self.device = config.get('device', 'bmcu0')
+        self.destination = config.get('destination', 'extruder')
 
         def finite_float(name, default, **limits):
             value = config.getfloat(name, default, **limits)
@@ -25,37 +26,37 @@ class EnderIntegration:
                 raise config.error('%s must be a finite number.' % name)
             return value
 
-        self.capture = finite_float('captura_mm', 20.0, above=0.0)
-        self.capture_speed = finite_float('captura_f', 180.0, above=0.0)
-        self.advance = finite_float('avanco_bico_mm', 80.0, above=0.0)
-        self.purge_distance = finite_float('purga_mm', 35.0, above=0.0)
-        self.advance_speed = finite_float('avanco_f', 120.0, above=0.0)
-        self.pullback_speed = finite_float('recuo_f', 300.0, above=0.0)
+        self.capture = finite_float('capture_mm', 20.0, above=0.0)
+        self.capture_speed = finite_float('capture_feedrate', 180.0, above=0.0)
+        self.advance = finite_float('nozzle_feed_mm', 80.0, above=0.0)
+        self.purge_distance = finite_float('purge_mm', 35.0, above=0.0)
+        self.advance_speed = finite_float('feed_feedrate', 120.0, above=0.0)
+        self.pullback_speed = finite_float('retract_feedrate', 300.0, above=0.0)
         self.unload_buffer_limit = finite_float(
-            'limite_buffer_recuo', 70.0, minval=0.0, maxval=100.0
+            'unload_buffer_limit', 70.0, minval=0.0, maxval=100.0
         )
         self.unload_buffer_resume = finite_float(
-            'retomar_buffer_recuo', 65.0, minval=0.0, maxval=100.0
+            'unload_buffer_resume', 65.0, minval=0.0, maxval=100.0
         )
         if self.unload_buffer_resume >= self.unload_buffer_limit:
             raise config.error('Unload buffer resume must be below its limit.')
         self.unload_buffer_timeout = finite_float(
-            'tempo_buffer_recuo', 3.0, above=0.0
+            'unload_buffer_timeout', 3.0, above=0.0
         )
         self.unload_progress_timeout = finite_float(
-            'tempo_sem_recuo', 3.0, above=0.0
+            'unload_progress_timeout', 3.0, above=0.0
         )
-        self.unload_step = finite_float('passo_recuo_mm', 1.0, above=0.0)
-        self.unload_slack = finite_float('folga_recuo_mm', 2.0, above=0.0)
+        self.unload_step = finite_float('unload_step_mm', 1.0, above=0.0)
+        self.unload_slack = finite_float('unload_slack_mm', 2.0, above=0.0)
         self.pullback = finite_float(
-            'recuo_apos_switch_mm', 55.0, above=0.0
+            'pullback_after_sensor_mm', 55.0, above=0.0
         )
-        self.timeout = finite_float('tempo_switch', 60.0, above=0.0)
-        self.purge_x = finite_float('x_purga', -6.0)
-        self.wipe_x = finite_float('x_limpeza', -4.0)
-        self.purge_y = finite_float('y_purga', 123.0)
-        self.z_lift = finite_float('alivio_z', 2.0, above=0.0)
-        self.wipe_passes = config.getint('limpezas', 3, minval=1)
+        self.timeout = finite_float('sensor_timeout', 60.0, above=0.0)
+        self.purge_x = finite_float('purge_x', -6.0)
+        self.wipe_x = finite_float('wipe_x', -4.0)
+        self.purge_y = finite_float('purge_y', 123.0)
+        self.z_lift = finite_float('z_lift', 2.0, above=0.0)
+        self.wipe_passes = config.getint('wipes', 3, minval=1)
         self.temporary_pullbacks = {}
         self.manual_operation = None
         self.pending_tool_change = None
@@ -71,32 +72,32 @@ class EnderIntegration:
         self.original_wait_pullback = self.bmcu._wait_pullback_safe
         self.bmcu._wait_pullback_safe = self.wait_pullback
         self.gcode.register_command(
-            'BMCU_ENDER_CARREGAR', self.protect(self.load)
+            'BMCU_ENDER_LOAD', self.protect(self.load)
         )
         self.gcode.register_command(
-            'BMCU_ENDER_LIBERAR', self.protect(self.release)
+            'BMCU_ENDER_UNLOAD', self.protect(self.release)
         )
         self.gcode.register_command(
-            'BMCU_TROCAR_ENDER', self.protect(self.change_tool)
+            'BMCU_CHANGE_TOOL_ENDER', self.protect(self.change_tool)
         )
         self.gcode.register_command(
             'BMCU_ENDER_MANUAL', self.protect(self.manual_filament)
         )
         self.gcode.register_command(
-            'BMCU_CONFIRMAR_CAMINHO_LIVRE',
+            'BMCU_CONFIRM_CLEAR_PATH',
             self.protect(self.confirm_recovery_path),
         )
         self.gcode.register_command(
             'BMCU_ENDER_SERVO', self.protect(self.cortador.servo_manual)
         )
         self.gcode.register_command(
-            'BMCU_ENDER_TESTAR_CORTADOR', self.protect(self.cortador.testar)
+            'BMCU_ENDER_TEST_CUTTER', self.protect(self.cortador.testar)
         )
         self.gcode.register_command(
-            'BMCU_ENDER_RESETAR', self.protect(self.resetar_bmcu)
+            'BMCU_ENDER_RESET', self.protect(self.resetar_bmcu)
         )
         self.gcode.register_command(
-            'BMCU_ENDER_POSICIONAR_PURGA',
+            'BMCU_ENDER_MOVE_TO_PURGE',
             self.protect(self.posicionar_para_aquecimento),
         )
         self.printer.register_event_handler('klippy:ready', self.ready)
@@ -152,6 +153,7 @@ class EnderIntegration:
     def protect(self, function):
         def execute(gcmd):
             try:
+                require_english_parameters(gcmd)
                 return function(gcmd)
             except Exception as error:
                 raise gcmd.error(str(error)) from error
@@ -330,7 +332,7 @@ class EnderIntegration:
                     ('The Orca index and BMCU channel do not match.')
                 )
             return self.gcode.run_script_from_command(
-                'BMCU_TROCAR_ENDER TOOL=%d' % tool
+                'BMCU_CHANGE_TOOL_ENDER TOOL=%d' % tool
             )
 
         return execute
@@ -355,17 +357,20 @@ class EnderIntegration:
             'manual_busy': self.manual_operation is not None,
             'recovery_pending': pending is not None,
             'recovery_tool': pending['tool'] if pending else -1,
+            'recovery_channel': (
+                pending.get('failed_channel') if pending else -1),
             'recovery_error': pending['error'] if pending else '',
-            'unload_timing': dict(getattr(self, 'last_unload_timing', {})),
-            'cortador_incerto': getattr(self.cortador, 'incerto', False),
-            'ultimo_corte': dict(self.cortador.ultimo_corte),
+            'unload_timing': public_diagnostics(
+                getattr(self, 'last_unload_timing', {})),
+            'cutter_uncertain': getattr(self.cortador, 'incerto', False),
+            'last_cut': public_diagnostics(self.cortador.ultimo_corte),
         }
 
     def resetar_bmcu(self, gcmd):
-        if gcmd.get_int('CONFIRMAR', 0, minval=0, maxval=1) != 1:
+        if gcmd.get_int('CONFIRM', 0, minval=0, maxval=1) != 1:
             raise gcmd.error(
-                'Retire manualmente o filamento do hotend e do caminho '
-                'compartilhado; depois use RESET_BMCU CONFIRMAR=1.'
+                'Manually remove filament from the hotend and shared path; '
+                'then use RESET_BMCU CONFIRM=1.'
             )
         estado = (
             self.printer.lookup_object('print_stats')
@@ -373,23 +378,23 @@ class EnderIntegration:
             .get('state')
         )
         if estado in ('printing', 'paused', 'pause'):
-            raise gcmd.error('Cancele a impressao antes de resetar a BMCU.')
+            raise gcmd.error('Cancel the print before resetting BMCU.')
         if self.bmcu.active_operations or self.manual_operation is not None:
-            raise gcmd.error('Aguarde o fim das operacoes antes do reset.')
+            raise gcmd.error('Wait for operations to finish before resetting.')
         if len(self.bmcu.devices) != 1:
-            raise gcmd.error('Este reset exige uma unica BMCU.')
+            raise gcmd.error('This reset requires exactly one BMCU.')
         dispositivo = self.bmcu.devices_by_name.get(self.device)
         destino = self.bmcu.endpoints.get(self.destination)
         if dispositivo is None or not dispositivo.ready or destino is None:
-            raise gcmd.error('A BMCU ou o destino nao esta pronto.')
+            raise gcmd.error('The BMCU or endpoint is not ready.')
         if self.sensor(destino):
-            raise gcmd.error('O sensor de entrada ainda detecta filamento.')
+            raise gcmd.error('The entry sensor still detects filament.')
         for canal in range(4):
             if (
                 self.bmcu._endpoint_for_channel(dispositivo, canal)
                 is not destino
             ):
-                raise gcmd.error('Ha um canal associado a outro destino.')
+                raise gcmd.error('A channel is assigned to another endpoint.')
         self.gcode.run_script_from_command('BMCU_STOP')
         self.restore_pullbacks()
         dispositivo.refresh()
@@ -400,17 +405,18 @@ class EnderIntegration:
             if dispositivo.status['session_id'] != sessao or self.sensor(
                 destino
             ):
-                raise gcmd.error('O estado fisico mudou; reset interrompido.')
+                raise gcmd.error('Physical state changed; reset interrupted.')
             if any(dispositivo.status['motor_pwm']) or any(
                 int(movimento) != protocol.MOTION_IDLE
                 for movimento in dispositivo.status['motion']
             ):
-                raise gcmd.error('A BMCU ainda esta em movimento.')
+                raise gcmd.error('The BMCU is still moving.')
             presentes = dispositivo.status.get('present')
             if not isinstance(presentes, (list, tuple)) or len(presentes) != 4:
-                raise gcmd.error('Leitura dos quatro sensores indisponivel.')
+                raise gcmd.error(
+                    'The four channel sensor readings are missing.')
             if any(valor not in (False, True, 0, 1) for valor in presentes):
-                raise gcmd.error('Leitura invalida dos sensores da BMCU.')
+                raise gcmd.error('Invalid BMCU channel sensor readings.')
             confirmado = 'PARKED' if presentes[canal] else 'EMPTY'
             self.gcode.run_script_from_command(
                 'BMCU_ROUTE_CONFIRM DEVICE=%s CHANNEL=%d STATE=%s'
@@ -428,15 +434,15 @@ class EnderIntegration:
             )
         ):
             raise gcmd.error(
-                'Nao foi possivel confirmar todos os caminhos livres.'
+                'Could not confirm that all filament paths are clear.'
             )
         self.gcode.run_script_from_command('BMCU_PRINT_END MODE=KEEP CLEAR=1')
         if self.bmcu.print_map_active or self.bmcu.print_plan_open:
-            raise gcmd.error('A sessao antiga ainda exige recuperacao.')
+            raise gcmd.error('The previous print session still needs recovery.')
         self.pending_tool_change = None
         self.posicionamento_pendente = None
         gcmd.respond_info(
-            'Hotend confirmado descarregado; nenhum filamento foi movido. '
+            'Hotend confirmed unloaded; no filament was moved. '
             + ', '.join(resultados)
         )
 
@@ -610,11 +616,11 @@ class EnderIntegration:
             )
 
     def confirm_recovery_path(self, gcmd):
-        channel = gcmd.get_int('CANAL', minval=1, maxval=4) - 1
-        if gcmd.get_int('CONFIRMAR', 0, minval=0, maxval=1) != 1:
+        channel = gcmd.get_int('CHANNEL', minval=1, maxval=4) - 1
+        if gcmd.get_int('CONFIRM', 0, minval=0, maxval=1) != 1:
             raise gcmd.error(
                 'Physically clear the shared path and park this filament '
-                'behind the entry sensor before CONFIRMAR=1.'
+                'behind the entry sensor before CONFIRM=1.'
             )
         device = self.validate_print_recovery(check_routes=False)
         if self.pending_tool_change.get('failed_channel') != channel:
@@ -677,7 +683,7 @@ class EnderIntegration:
             try:
                 self.heat_manual_filament()
                 self.gcode.run_script_from_command(
-                    'BMCU_TROCAR_ENDER TOOL=%d PURGAR_SE_CARREGADO=1'
+                    'BMCU_CHANGE_TOOL_ENDER TOOL=%d PURGE_IF_LOADED=1'
                     % pending['tool']
                 )
                 device, channel, destination = self.bmcu._resolve_tool(
@@ -1040,16 +1046,16 @@ class EnderIntegration:
     ):
         self.verify_session(device, session, channel)
         if any(device.status['motion']) or any(device.status['motor_pwm']):
-            raise RuntimeError('A BMCU nao esta parada para o corte.')
+            raise RuntimeError('The BMCU is not stopped for cutting.')
         if not self.sensor(destination):
-            raise RuntimeError('O filamento saiu do sensor antes de cortar.')
+            raise RuntimeError('The entry sensor lost filament before cutting.')
 
     def recuar_com_alimentador_parado(
         self, device, destination, channel, session, tracking, distancia
     ):
         if not 0 <= distancia <= self.unload_slack:
             raise RuntimeError(
-                'O recuo antes do corte excede a folga configurada do buffer.'
+                'Pre-cut retraction exceeds the configured buffer allowance.'
             )
         extruder = self.printer.lookup_object('extruder')
         limite = min(
@@ -1063,7 +1069,8 @@ class EnderIntegration:
                 device, destination, channel, session
             )
             if device.status['buffer_pct'][channel] >= self.unload_buffer_limit:
-                raise RuntimeError('O buffer comprimiu no recuo pre-corte.')
+                raise RuntimeError(
+                    'The buffer compressed during pre-cut retract.')
 
         restante = distancia
         verificar()
@@ -1172,10 +1179,10 @@ class EnderIntegration:
 
     def posicionar_para_aquecimento(self, gcmd):
         if self.bmcu.active_operations or self.manual_operation is not None:
-            raise gcmd.error('Aguarde o fim da operacao da BMCU.')
+            raise gcmd.error('Wait for the BMCU operation to finish.')
         perfil = self.cortador.preparar()
         if perfil and not self.cortador.recolhido:
-            raise gcmd.error('Recolha e confira o batente antes de posicionar.')
+            raise gcmd.error('Retract and check the stop before positioning.')
         self.position_head(exigir_aquecimento=False)
 
     def posicao_purga(self, cabecote, estado):
@@ -1187,7 +1194,8 @@ class EnderIntegration:
         if not all(minimo[i] <= alvo[i] <= maximo[i] for i in range(3)) or not (
             minimo[0] <= self.wipe_x <= maximo[0]
         ):
-            raise RuntimeError('Posicao de purga/limpeza fora dos limites.')
+            raise RuntimeError(
+                'Purge/wipe position is outside the travel limits.')
         return alvo
 
     def position_head(self, exigir_aquecimento=True):
@@ -1203,18 +1211,18 @@ class EnderIntegration:
                     for i in range(3)
                 ):
                     raise RuntimeError(
-                        'O posicionamento paralelo foi interrompido.'
+                        'Parallel positioning was interrupted.'
                     )
                 status = toolhead.get_status(self.reactor.monotonic())
                 if not all(eixo in status['homed_axes'] for eixo in 'xyz'):
-                    raise RuntimeError('A referencia dos eixos foi perdida.')
+                    raise RuntimeError('Axis homing reference was lost.')
                 if (
                     not self.printer.lookup_object('extruder')
                     .get_status(self.reactor.monotonic())
                     .get('can_extrude')
                 ):
                     raise RuntimeError(
-                        'A extrusora esfriou durante a chegada.'
+                        'The extruder cooled during arrival.'
                     )
                 return
             finally:
@@ -1542,7 +1550,7 @@ class EnderIntegration:
                 'extruder'
             ).get_status(self.reactor.monotonic()).get('can_extrude'):
                 raise RuntimeError(
-                    'Aqueca o bico antes de cortar e retirar o filamento.'
+                    'Heat the nozzle before cutting and unloading filament.'
                 )
             self.execute('SAVE_GCODE_STATE NAME=BMCU_ENDER_RETIRADA')
             saved = True
@@ -1666,7 +1674,7 @@ class EnderIntegration:
             self.reactor.pause(self.reactor.monotonic() + 0.050)
             self.verify_session(device, session, channel)
             if self.sensor(destination):
-                raise RuntimeError('O sensor de entrada voltou a detectar.')
+                raise RuntimeError('The entry sensor detected filament again.')
             gcmd.respond_info(
                 (
                     (
@@ -1747,7 +1755,7 @@ class EnderIntegration:
                 'A tool change is pending; use RESUME to recover it.'
             )
         tool = gcmd.get_int('TOOL', minval=1, maxval=4)
-        purge = gcmd.get_int('PURGAR_SE_CARREGADO', 0, minval=0, maxval=1)
+        purge = gcmd.get_int('PURGE_IF_LOADED', 0, minval=0, maxval=1)
         head = self.printer.lookup_object('toolhead').get_status(
             self.reactor.monotonic()
         )

@@ -1,5 +1,7 @@
 # Frequently Asked Questions
 
+**English** | [Português brasileiro](pt-BR/FAQ.md)
+
 ## How can I donate to the project?
 
 Thank you for your support. See the [Sponsors page](Sponsors.md) for

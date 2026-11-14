@@ -1,5 +1,7 @@
 # Exclude Objects
 
+**English** | [Português brasileiro](pt-BR/Exclude_Object.md)
+
 The `[exclude_object]` module allows Klipper to exclude objects while a print is
 in progress. To enable this feature include an [exclude_object config
 section](Config_Reference.md#exclude_object) (also see the [command

@@ -1,5 +1,7 @@
 # X-first cutter homing
 
+**English** | [Português brasileiro](../../pt-BR/superpowers/specs/2026-11-13-cutter-homing.md)
+
 ## Approved behavior
 
 The operator confirmed that the entire X homing path is clear with the cutter

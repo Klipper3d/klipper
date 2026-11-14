@@ -1,5 +1,7 @@
 # Endstop phase
 
+**English** | [Português brasileiro](pt-BR/Endstop_Phase.md)
+
 This document describes Klipper's stepper phase adjusted endstop
 system. This functionality can improve the accuracy of traditional
 endstop switches. It is most useful when using a Trinamic stepper

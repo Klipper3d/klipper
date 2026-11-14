@@ -1,6 +1,8 @@
 import math
 import re
 
+from .bmcu_cutter_settings import LEGACY_TO_PUBLIC, private_settings
+
 
 class CortadorEnder:
     def __init__(self, integracao):
@@ -11,11 +13,13 @@ class CortadorEnder:
 
     def perfil(self):
         macro = self.integracao.printer.lookup_object(
-            'gcode_macro _BMCU_ENDER_CORTADOR_AJUSTES', None
+            'gcode_macro _BMCU_ENDER_CUTTER_SETTINGS', None
         )
         if macro is None:
             return None
-        return dict(macro.get_status(self.integracao.reactor.monotonic()))
+        return private_settings(dict(
+            macro.get_status(self.integracao.reactor.monotonic())
+        ))
 
     def preparar(self, calibracao=False):
         perfil = self.perfil()
@@ -33,15 +37,15 @@ class CortadorEnder:
                 'soltar_servo_recolhido', 'manter_y_corte',
             )
         ):
-            raise RuntimeError('As opcoes do cortador devem ser 0 ou 1.')
+            raise RuntimeError('Cutter flags must be 0 or 1.')
         if not calibracao and not perfil.get('calibrado'):
             raise RuntimeError(
-                'Calibre o cortador antes de habilitar as trocas.'
+                'Calibrate the cutter before enabling tool changes.'
             )
         if self.incerto:
             raise RuntimeError(
-                'Cortador em posicao incerta; afaste o cabecote e confirme '
-                'o recolhimento pelo comando CORTADOR_SERVO.'
+                'Cutter position is uncertain; move the head clear and '
+                'confirm retraction with CUTTER_SERVO.'
             )
         for chave in (
             'angulo_recolhido',
@@ -64,10 +68,11 @@ class CortadorEnder:
                 valor = float(perfil[chave])
             except (KeyError, TypeError, ValueError) as erro:
                 raise RuntimeError(
-                    'Ajuste do cortador invalido: %s.' % chave
+                    'Invalid cutter setting: %s.' % LEGACY_TO_PUBLIC[chave]
                 ) from erro
             if not math.isfinite(valor):
-                raise RuntimeError('Ajuste do cortador invalido: %s.' % chave)
+                raise RuntimeError(
+                    'Invalid cutter setting: %s.' % LEGACY_TO_PUBLIC[chave])
             perfil[chave] = valor
         for chave in (
             'alivio_z',
@@ -81,13 +86,14 @@ class CortadorEnder:
         ):
             if perfil[chave] <= 0:
                 raise RuntimeError(
-                    'Ajuste do cortador deve ser positivo: %s.' % chave
+                    'Cutter setting must be positive: %s.'
+                    % LEGACY_TO_PUBLIC[chave]
                 )
         if not 0 <= perfil['recuo_antes_corte_mm'] <= 5.0:
-            raise RuntimeError('Configure o recuo antes do corte de 0 a 5 mm.')
+            raise RuntimeError('Set pre-cut retraction between 0 and 5 mm.')
         if perfil['recuo_antes_corte_mm'] > self.integracao.unload_slack:
             raise RuntimeError(
-                'O recuo antes do corte excede a folga configurada do buffer.'
+                'Pre-cut retraction exceeds the configured buffer allowance.'
             )
         sentido = math.copysign(
             1, perfil['x_corte'] - perfil['x_aproximacao']
@@ -95,17 +101,17 @@ class CortadorEnder:
         folga = (perfil['x_contato'] - perfil['x_aproximacao']) * sentido
         curso = (perfil['x_corte'] - perfil['x_contato']) * sentido
         if folga < 0:
-            raise RuntimeError('Contato anterior ao ponto de aproximacao.')
+            raise RuntimeError('Contact is before the approach position.')
         if not 0 < curso <= perfil['curso_maximo_mm']:
-            raise RuntimeError('Configure um curso de corte dentro do limite.')
+            raise RuntimeError('Set the cutting stroke within its limit.')
         servo = self.servo(perfil)
         for chave in ('angulo_recolhido', 'angulo_acionado'):
             if not 0 <= perfil[chave] <= servo.max_angle:
                 raise RuntimeError(
-                    'Angulo do cortador fora dos limites do servo.'
+                    'Cutter angle is outside the servo limits.'
                 )
         if perfil['angulo_recolhido'] == perfil['angulo_acionado']:
-            raise RuntimeError('Os angulos do batente devem ser diferentes.')
+            raise RuntimeError('The cutter stop angles must be different.')
         extrusora = self.integracao.printer.lookup_object('extruder')
         if (
             max(
@@ -119,18 +125,18 @@ class CortadorEnder:
             > extrusora.max_e_velocity * 60
         ):
             raise RuntimeError(
-                'Velocidade do perfil excede o limite da extrusora.'
+                'Profile feedrate exceeds the extruder limit.'
             )
         return perfil
 
     def servo(self, perfil):
         nome = str(perfil.get('servo', ''))
         if not re.fullmatch(r'[A-Za-z0-9_]+', nome):
-            raise RuntimeError('Nome do servo do cortador invalido.')
+            raise RuntimeError('Invalid cutter servo name.')
         servo = self.integracao.printer.lookup_object('servo ' + nome, None)
         if servo is None:
             raise RuntimeError(
-                'Instale o servo com --cutter-servo-pin antes de testar.'
+                'Install the servo with --cutter-servo-pin before testing.'
             )
         return servo
 
@@ -139,14 +145,15 @@ class CortadorEnder:
         estado = cabecote.get_status(self.integracao.reactor.monotonic())
         if not all(eixo in estado['homed_axes'] for eixo in 'xyz'):
             raise RuntimeError(
-                'Execute G28 antes de testar ou acionar o cortador.'
+                'Run G28 before testing or operating the cutter.'
             )
         self.validar_limites(perfil, estado)
         minimo, maximo = estado['axis_minimum'], estado['axis_maximum']
         posicao = list(cabecote.get_position())
         altura = max(posicao[2] + perfil['alivio_z'], perfil['z_minimo'])
         if not minimo[2] <= altura <= maximo[2]:
-            raise RuntimeError('Nao ha altura livre para acionar o cortador.')
+            raise RuntimeError(
+                'Insufficient Z clearance to operate the cutter.')
         return cabecote, posicao, altura
 
     def validar_limites(self, perfil, estado):
@@ -160,7 +167,7 @@ class CortadorEnder:
                 for chave in chaves
             ):
                 raise RuntimeError(
-                    'Posicao de corte fora dos limites da impressora.'
+                    'Cutting position is outside the printer travel limits.'
                 )
 
     def x_livre_para_recolher(self, perfil, x):
@@ -171,7 +178,7 @@ class CortadorEnder:
         if self.integracao.bmcu.active_operations or (
             self.integracao.manual_operation is not None
         ):
-            raise RuntimeError('Aguarde a operacao da BMCU antes de G28.')
+            raise RuntimeError('Wait for the BMCU operation before G28.')
         cabecote = self.integracao.printer.lookup_object('toolhead')
         cabecote.wait_moves()
         estado = cabecote.get_status(self.integracao.reactor.monotonic())
@@ -182,14 +189,13 @@ class CortadorEnder:
         cabecote, estado = self.validar_homing(perfil)
         if 'x' not in estado['homed_axes']:
             raise RuntimeError(
-                'O eixo X deve terminar a referencia antes de recolher '
-                'o batente no G28.'
+                'X must finish homing before retracting the stop during G28.'
             )
         if not self.x_livre_para_recolher(
             perfil, cabecote.get_position()[0]
         ):
             raise RuntimeError(
-                'Afaste o cabecote do batente antes de G28.'
+                'Move the head clear of the stop before G28.'
             )
         self.posicionar_recolhido(perfil)
 
@@ -219,7 +225,7 @@ class CortadorEnder:
         cabecote, posicao, altura = self.validar_movimento(perfil)
         if not self.x_livre_para_recolher(perfil, posicao[0]):
             raise RuntimeError(
-                'Afaste o cabecote do batente antes de recolher o servo.'
+                'Move the head clear of the stop before retracting the servo.'
             )
         self.posicionar_recolhido(perfil)
 
@@ -289,8 +295,8 @@ class CortadorEnder:
             raise
 
     def servo_manual(self, gcmd):
-        if gcmd.get_int('CONFIRMAR', 0, minval=0, maxval=1) != 1:
-            raise gcmd.error('Confira a folga do batente e use CONFIRMAR=1.')
+        if gcmd.get_int('CONFIRM', 0, minval=0, maxval=1) != 1:
+            raise gcmd.error('Check stop clearance and use CONFIRM=1.')
         estado = (
             self.integracao.printer.lookup_object('print_stats')
             .get_status(self.integracao.reactor.monotonic())
@@ -309,31 +315,35 @@ class CortadorEnder:
                 or self.integracao.manual_operation is not None
             )
         ):
-            raise gcmd.error('Finalize a operacao antes de testar o servo.')
+            raise gcmd.error('Finish the operation before testing the servo.')
         perfil = self.perfil()
         if perfil is None:
-            raise gcmd.error('Instale bmcu-cortador.cfg antes de testar.')
+            raise gcmd.error('Install bmcu-cortador.cfg before testing.')
         servo = self.servo(perfil)
-        posicao = gcmd.get('POSICAO', '').upper()
+        posicao = gcmd.get('POSITION', '').upper()
         if posicao:
-            if posicao not in ('RECOLHIDO', 'ACIONADO'):
-                raise gcmd.error('Use POSICAO=RECOLHIDO ou POSICAO=ACIONADO.')
-            if 'ANGULO' in gcmd.get_command_parameters():
-                raise gcmd.error('Use apenas POSICAO ou ANGULO.')
-            angulo = float(perfil['angulo_' + posicao.lower()])
+            if posicao not in ('RETRACTED', 'DEPLOYED'):
+                raise gcmd.error('Use POSITION=RETRACTED or POSITION=DEPLOYED.')
+            if 'ANGLE' in gcmd.get_command_parameters():
+                raise gcmd.error('Use only POSITION or ANGLE.')
+            chave = (
+                'angulo_recolhido' if posicao == 'RETRACTED'
+                else 'angulo_acionado'
+            )
+            angulo = float(perfil[chave])
         else:
-            angulo = float(gcmd.get('ANGULO'))
+            angulo = float(gcmd.get('ANGLE'))
         if not math.isfinite(angulo) or not 0 <= angulo <= servo.max_angle:
-            raise gcmd.error('Angulo fora dos limites do servo.')
+            raise gcmd.error('Angle is outside the servo limits.')
         espera = float(perfil.get('espera_servo_ms', 500))
         if not math.isfinite(espera) or espera <= 0:
-            raise gcmd.error('Espera do servo invalida.')
+            raise gcmd.error('Invalid servo wait time.')
         perfil['espera_servo_ms'] = espera
         recolher = math.isclose(
             angulo, float(perfil['angulo_recolhido']), abs_tol=0.01
         )
         if recuperacao and estado in ('paused', 'pause') and not recolher:
-            raise gcmd.error('Recolha o batente para recuperar a troca.')
+            raise gcmd.error('Retract the stop to recover the tool change.')
         if recolher:
             self.posicionar_recolhido(perfil)
         else:
@@ -343,18 +353,19 @@ class CortadorEnder:
             self.posicionar_servo(perfil, angulo)
             self.incerto = incerto
         gcmd.respond_info(
-            'Servo comandado a %.1f graus; confira a posicao fisica.' % angulo
+            'Servo commanded to %.1f degrees; check its physical position.'
+            % angulo
         )
 
     def testar(self, gcmd):
-        if gcmd.get_int('CONFIRMAR', 0, minval=0, maxval=1) != 1:
-            raise gcmd.error('Confira o percurso livre e use CONFIRMAR=1.')
+        if gcmd.get_int('CONFIRM', 0, minval=0, maxval=1) != 1:
+            raise gcmd.error('Check the clear path and use CONFIRM=1.')
         dispositivo, destino, carregado = self.integracao.manual_context()
         if carregado is not None:
-            raise gcmd.error('Retire o filamento antes do teste mecanico.')
+            raise gcmd.error('Remove filament before the mechanical test.')
         perfil = self.preparar(calibracao=True)
         if perfil is None:
-            raise gcmd.error('Instale o perfil do cortador antes de testar.')
+            raise gcmd.error('Install the cutter profile before testing.')
         sessao = dispositivo.status['session_id']
 
         def verificar():
@@ -364,7 +375,8 @@ class CortadorEnder:
                 'session_id'
             ] != sessao or self.integracao.sensor(destino):
                 raise RuntimeError(
-                    'A BMCU reiniciou ou o caminho deixou de estar livre.'
+                    'The BMCU restarted or the filament path '
+                    'is no longer clear.'
                 )
 
         self.integracao.manual_operation = 'TESTE_CORTADOR'
@@ -383,6 +395,6 @@ class CortadorEnder:
         finally:
             self.integracao.manual_operation = None
         gcmd.respond_info(
-            'Teste concluido; confira o corte e o recolhimento '
-            'antes de calibrado=1.'
+            'Test completed; inspect cutting and retraction '
+            'before setting calibrated=1.'
         )
