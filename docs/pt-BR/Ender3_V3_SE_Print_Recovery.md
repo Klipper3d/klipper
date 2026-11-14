@@ -2,9 +2,10 @@
 
 [English](../Ender3_V3_SE_Print_Recovery.md) | **Português brasileiro**
 
-A instalação opcional da integração suporta BMCU-Klipper 1.0.6 e firmware
-1.0.1 do controlador. Esta correção altera somente código Python do host;
-não exige gravar novamente a MCU da impressora nem a BMCU.
+A integração opcional exige BMCU-Klipper 1.1.2 e firmware 1.0.4.
+A manutenção de pacote/firmware antigo é separada; veja os
+[limites da atualização 2.0.1](releases/v2.0.1.md#upgrade-and-rollback).
+O instalador Ender altera apenas arquivos do host, sem gravar MCUs.
 
 <a id="cached-operation-results-after-a-host-restart"></a>
 ## Resultados de operações em cache após reiniciar o host
@@ -28,6 +29,23 @@ Isso se aplica às operações nativas de alimentação, retração, teste de en
 carga automática e calibração automática. O controle normal de acompanhamento
 do buffer durante a impressão permanece inalterado. A guarda não repete
 cegamente uma carga ou retirada física.
+
+A BMCU 1.1.2 aleatoriza o contador inicial no protocolo. A verificação explícita
+do histórico permanece: aleatoriedade não comprova que um candidato está livre.
+
+<a id="manual-replacement-after-runout"></a>
+## Reposição manual após fim de filamento
+
+Com reposição automática desabilitada, a BMCU nativa registra a reposição
+pendente no mesmo canal e pausa a impressão. Tela original e
+[cartão Mainsail](Ender3_V3_SE_Mainsail.md) mostram o canal físico a repor.
+Insira a reposição e use **Retomar** normal ou `RESUME`; não limpe o mapa,
+resete rotas ou faça carga manual separada nessa pausa. O wrapper nativo
+verifica identidade, endpoint, pausa, rotas reconciliadas, presença da reposição
+e contexto da ponta destacada antes de carregar. O callback Ender conclui
+captura, avanço ao bico, purga e limpeza antes de a pausa/retomada nativa voltar
+à peça. Falha mantém solicitação pendente e arquivo pausado. A chegada física
+e a extrusão ainda precisam de teste supervisionado.
 
 <a id="failed-tool-changes-during-printing"></a>
 ## Falhas de troca de ferramenta durante a impressão
@@ -123,10 +141,11 @@ do controlador ou após falta de energia.
 Termine ou cancele qualquer impressão, estacione fisicamente os canais e confira
 se o sensor de entrada está livre. Use uma fonte separada e limpa para que
 o atualizador preserve o checkout anterior inteiro do host/display; não execute
-`git pull` na árvore ativa antes. Depois que a v2.0.0 for publicada:
+`git pull` na árvore ativa antes. Conclua a manutenção separada de pacote/firmware.
+Depois que a v2.0.1 for publicada:
 
 ```sh
-git clone --branch v2.0.0 --single-branch \
+git clone --branch v2.0.1 --single-branch \
   https://github.com/bernardokcosta/ender3-v3-se-klipper-bmcu.git \
   "$HOME/klipper-v2-source"
 sudo python3 "$HOME/klipper-v2-source/scripts/ender3-v3-se/install_multicolor.py" \
@@ -154,5 +173,5 @@ Esses testes não substituem a verificação física.
 
 Referências nativas de protocolo e transporte:
 
-- [Daemon de transporte BMCU v1.0.6](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.0.6/scripts/bmcu_transportd.py)
-- [Protocolo BMCU e resultados retidos de operações](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.0.6/firmware/src/bmcu_protocol.cpp)
+- [Daemon de transporte BMCU v1.1.2](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.1.2/scripts/bmcu_transportd.py)
+- [Protocolo BMCU e resultados retidos de operações](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.1.2/firmware/src/bmcu_protocol.cpp)

@@ -153,10 +153,10 @@ MCU sources, libraries, target configurations, the Makefile/build-command inputs
 and Python requirements; differences are refused for separate firmware and
 environment review. It does not flash firmware or discard tracked local work.
 
-After v2.0.0 is published:
+After v2.0.1 is published:
 
 ```sh
-git clone --branch v2.0.0 --single-branch \
+git clone --branch v2.0.1 --single-branch \
   https://github.com/bernardokcosta/ender3-v3-se-klipper-bmcu.git \
   "$HOME/klipper-v2-source"
 sudo python3 "$HOME/klipper-v2-source/scripts/ender3-v3-se/install_multicolor.py" \
@@ -202,5 +202,5 @@ values, and file navigation. They do not replace physical validation.
 
 ## BMCU and display languages
 
-See [BMCU 1.0.6 integration](Ender3_V3_SE_BMCU.md) for UART1, the PC15 switch,
+See [BMCU 1.1.2 integration](Ender3_V3_SE_BMCU.md) for UART1, the PC15 switch,
 filament sequences, language selection and physical display acceptance tests.

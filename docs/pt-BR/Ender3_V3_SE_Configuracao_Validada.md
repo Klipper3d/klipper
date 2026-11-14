@@ -2,8 +2,8 @@
 
 [English](../Ender3_V3_SE_Configuracao_Validada.md) | **Português brasileiro**
 
-Este guia cobre a integração opcional da Ender 3 V3 SE para BMCU-Klipper 1.0.6
-com firmware 1.0.1. Quatro canais alimentadores compartilham uma única
+Este guia cobre a integração opcional da Ender 3 V3 SE para BMCU-Klipper 1.1.2
+com firmware 1.0.4. Quatro canais alimentadores compartilham uma única
 extrusora física por meio de um switch de entrada acima das engrenagens.
 Uma calha de purga com limpador é usada nas trocas de ferramenta. O pacote
 externo controla transporte, estado das rotas, mapas de impressão e serviços.
@@ -96,6 +96,61 @@ Não suponha que uma transição do sensor de entrada prove que o filamento já
 está entre as engrenagens. A captura iniciada pela extrusora cobre essa lacuna.
 Mantenha o hotend na temperatura apropriada do material para captura e retirada.
 
+<a id="nozzle-wiping-defaults"></a>
+## Padrões de limpeza do bico
+
+Os padrões da fonte atual, **não da tag v2.0.0**, usam seis idas e voltas
+completas em X entre -6 e -3, seguidas da passagem final até -3. Y fica em 123
+e Z permanece na posição já elevada durante a limpeza. Isso altera a limpeza
+do bico, não o curso da lâmina. A tabela de comissionamento acima registra o
+conjunto testado anteriormente; a limpeza ampliada ainda exige aceitação física.
+
+O instalador preserva um `bmcu-multicor-ender.cfg` existente, inclusive
+coordenadas e quantidade de ciclos. Atualizar somente o código não substitui
+valores antigos explícitos de `wipe_x: -4` ou `wipes: 3`. Após conferir as
+folgas, edite estas opções na seção `[bmcu_ender_integration]` **existente**,
+sem duplicá-la, e reinicie o Klipper parado para adotar o novo padrão:
+
+```ini
+purge_x: -6
+wipe_x: -3
+purge_y: 123
+wipes: 6
+```
+
+Mantenha `purge_mm: 35`, temperaturas do material e taxas de extrusão calibradas.
+A limpeza continua em F600 com a pausa existente de um segundo para acomodação.
+Treze travessias de 3 mm percorrem 39 mm, em vez das sete travessias anteriores
+de 2 mm (14 mm). A F600, somente o percurso ideal em velocidade constante leva
+3,9 s em vez de 1,4 s; são estimativas sem aceleração, esperas de conclusão e
+verificações do controlador, não medições do ciclo. Não apresente a limpeza
+ampliada como mais rápida.
+
+Sessão, presença no canal, leitura do switch de entrada, temperatura mínima de
+extrusão e assistência ativa do alimentador são verificados até a conclusão da
+purga, após a pausa e depois de cada travessia concluída, inclusive a final.
+Uma falha interrompe a carga em vez de relatar sucesso. Durante uma operação
+manual, essas verificações também respeitam o cancelamento pela tela. PWM zero
+do motor no alvo do buffer não significa modo de assistência parado. Avanço ao
+bico e retirada entram em assistência nas fronteiras de fase, sem reenviar o
+mesmo modo a cada trecho; verificações de sensor/encoder e reinícios intencionais
+da retirada permanecem.
+
+Antes de aceitar a mudança no equipamento:
+
+1. Termine ou cancele a impressão, estacione os canais e confirme o batente do
+   cortador recolhido. Verifique se todo o trajeto X=-6 a X=-3 fica livre em
+   Y=123 e no Z elevado configurado, sem aquecer ou extrudar nessa conferência.
+2. Após confirmar a folga, teste uma carga aquecida supervisionada com os ajustes
+   calibrados do material. Conte seis idas e voltas completas e a passagem
+   final; Y e Z precisam permanecer parados durante a limpeza.
+3. Confirme que a purga cai na calha em vez de ficar presa no bico, com fluxo
+   adequado e sem patinação ou colisão. Inspecione as transições de cor antes
+   de reduzir o volume de purga ou aumentar taxas.
+4. Repita nos quatro canais e registre o tempo completo das trocas e as falhas
+   nas mesmas condições. Testes de software sozinhos não comprovam desprendimento
+   da purga nem economia total de tempo ou material.
+
 <a id="install-or-update-an-existing-integration"></a>
 ## Instalar ou atualizar uma integração existente
 
@@ -103,17 +158,19 @@ Faça backup primeiro. Mantenha a impressora parada, todos os canais estacionado
 e o sensor de entrada livre. Para preservar um ponto de rollback completo do
 host/display, execute o novo instalador de um checkout limpo e separado da
 release v2 publicada. Não atualize o checkout ativo `~/klipper` com `git pull`
-antes disso. Depois que a v2.0.0 for publicada:
+antes disso. Conclua primeiro a
+[manutenção separada de pacote/firmware](releases/v2.0.1.md#upgrade-and-rollback);
+os comandos exigem BMCU 1.1.2 / 1.0.4 já pronta. Depois que a v2.0.1 for publicada:
 
 ```sh
-git clone --branch v2.0.0 --single-branch \
+git clone --branch v2.0.1 --single-branch \
   https://github.com/bernardokcosta/ender3-v3-se-klipper-bmcu.git \
   "$HOME/klipper-v2-source"
 sudo python3 "$HOME/klipper-v2-source/scripts/ender3-v3-se/install_multicolor.py" \
   --host-source "$HOME/klipper-v2-source"
 ```
 
-O instalador verifica a estrutura 1.0.6 instalada, ajusta o contrato genérico
+O instalador verifica a estrutura 1.1.2 instalada, ajusta o contrato genérico
 e as fases de pré-captura, instala módulos opcionais e preserva `SAVE_CONFIG`
 e os ajustes existentes da integração. Um único bloqueio serializa instalação
 e rollback. Os serviços relevantes são parados, e o estado é relido antes do
@@ -130,7 +187,9 @@ sem suporte, conflitos de módulos opcionais ou mudanças nos arquivos preparado
 são rejeitados em vez de descartar o trabalho do usuário. Os arquivos preparados
 são mantidos para diagnóstico, não apagados automaticamente.
 
-O daemon de transporte alterado inicia antes do Klipper. Se a inicialização
+O helper nativo de processos para o transporte após o Klipper sair e inicia
+o daemon alterado antes do Klipper; não se presume serviço systemd separado.
+Se a inicialização
 falhar, o host/display anterior e as configurações afetadas são restaurados.
 Somente renomeações conhecidas de callbacks são desfeitas no estado BMCU
 **atual**; rotas antigas e calibrações não substituem as evidências atuais.
@@ -161,6 +220,10 @@ inicialização ou início de impressão.
 ## Controles diários de filamento
 
 A tela original agrupa cada operação em um só lugar:
+
+O [cartão nativo Mainsail](Ender3_V3_SE_Mainsail.md) acrescenta visualização
+atual e edição protegida de material/cor. No fim do filamento, insira a reposição
+no canal indicado e confirme por Retomar normal; não resete a BMCU nem o mapa.
 
 - **Filamento / BMCU:** carregar um dos quatro canais físicos, retirar o canal
   ativo ou confirmar **Reset BMCU** após a remoção manual do filamento.

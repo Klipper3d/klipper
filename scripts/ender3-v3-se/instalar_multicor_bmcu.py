@@ -18,6 +18,7 @@ from pathlib import Path
 from urllib.request import urlopen
 
 from host_transaction import HostTransaction, update_lock
+import bmcu_runtime_lifecycle as runtime_lifecycle
 from migrate_v2 import (
     CALLBACK_FIELDS, CALLBACKS, HEADER, OPTION, canonical_option,
     canonical_section,
@@ -46,6 +47,7 @@ CUTTER_SCHEMA = (
     ROOT / 'integrations/bmcu/bmcu_cutter_settings.py'
 ).read_bytes()
 ENGLISH_API = (ROOT / 'integrations/bmcu/bmcu_english_api.py').read_bytes()
+PANEL_STATUS = (ROOT / 'integrations/bmcu/bmcu_ender_panel.py').read_bytes()
 AJUSTES_CORTADOR = (
     ROOT / 'config/ender3-v3-se-validada/bmcu-cortador.cfg'
 ).read_bytes()
@@ -71,8 +73,8 @@ def check_printer():
     if query_object('print_stats')['state'] in ('printing', 'paused'):
         raise RuntimeError('Finish printing before installing.')
     status = query_object('bmcu')
-    if status['package_version'] != '1.0.6':
-        raise RuntimeError(('This installer supports BMCU-Klipper 1.0.6.'))
+    if status['package_version'] != '1.1.2':
+        raise RuntimeError(('This installer supports BMCU-Klipper 1.1.2.'))
     if (
         status['active_operations']
         or status['print_plan_open']
@@ -86,6 +88,9 @@ def check_printer():
     if len(devices) != 1 or devices[0].get('name') != 'bmcu0':
         raise RuntimeError('This setup requires one BMCU named bmcu0.')
     for device in devices:
+        if device.get('firmware_compatible') is not True:
+            raise RuntimeError(
+                'Update BMCU firmware to 1.0.4 before installing.')
         if (
             not device['ready']
             or device['loaded_channels']
@@ -262,6 +267,26 @@ def patch_pre_capture(text):
             'E_ON_USE)\n\n            if not generic_con'
             "tract:\n                phase = 'BITE'"
         )
+        previous_112 = (
+            '                else:\n'
+            '                    device.set_motion(channel, '
+            'protocol.MOTION_BEFORE_ON_USE)\n\n'
+            '            if not generic_contract:\n'
+            "                phase = 'BITE'"
+        )
+        updated_112 = (
+            '                elif (generic_contract and\n'
+            "                      str(endpoint.get('toolhead_prepare_macro', "
+            "'')).strip().upper() == 'BMCU_PREPARE_ENDER'):\n"
+            '                    device.stop_all()\n'
+            '                    endpoint._ender_load_context = '
+            '(device.name, int(channel))\n'
+            + previous_112
+        )
+        if updated_112 in fragment:
+            return fragment
+        if fragment.count(previous_112) == 1:
+            return fragment.replace(previous_112, updated_112)
         if updated in fragment:
             return fragment
         if fragment.count(previous) != 1:
@@ -656,6 +681,7 @@ def prepare(
         (extras / 'bmcu_cortador_ender.py').resolve(): CORTADOR,
         (extras / 'bmcu_cutter_settings.py').resolve(): CUTTER_SCHEMA,
         (extras / 'bmcu_english_api.py').resolve(): ENGLISH_API,
+        (extras / 'bmcu_ender_panel.py').resolve(): PANEL_STATUS,
         (extras / 'bmcu_core/ender_transport.py').resolve(): TRANSPORT_GUARD,
         daemon.resolve(): patch_transport(daemon.read_text()).encode(),
         (configurations / 'bmcu-controles.cfg').resolve(): CONTROLS,
@@ -730,13 +756,6 @@ def service(action, unit='klipper'):
     subprocess.run(command, check=True)
 
 
-def transport_is_active():
-    return subprocess.run(
-        ['systemctl', 'is-active', '--quiet', 'bmcu-transport'],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-    ).returncode == 0
-
-
 def wait_ready(required_section='bmcu_ender_integration'):
     deadline = time.monotonic() + 90
     last = None
@@ -808,8 +827,11 @@ def create_backup(
         (backup / 'host.json').write_text(json.dumps(record, indent=2))
     shutil.copy2(Path(__file__).with_name('host_transaction.py'),
                  backup / 'host_transaction.py')
+    shutil.copy2(Path(__file__).with_name('bmcu_runtime_lifecycle.py'),
+                 backup / 'bmcu_runtime_lifecycle.py')
     restorer = (
         'import copy, importlib.util, json, os, subprocess, tempfile, time\n'
+        'import bmcu_runtime_lifecycle as runtime_lifecycle\n'
         'from pathlib import Path\n'
         'from urllib.request import urlopen\n'
         + 'from types import SimpleNamespace\n'
@@ -818,11 +840,7 @@ def create_backup(
         + 'UPDATE_LOCK = ' + repr(str(
             home / 'printer_data/ender3-v2-update.lock')) + '\n'
         + 'UPDATE_OWNER = ' + repr((user.pw_uid, user.pw_gid)) + '\n'
-        + 'ROLLBACK_UNITS = ' + repr([
-            'klipper', *(['bmcu-transport'] if any(
-                path.name == 'bmcu_transportd.py' for path in changes
-            ) else []),
-        ]) + '\n'
+        + 'HOME = ' + repr(str(home)) + '\n'
         + RESTORE_HELPERS + '\n'
     )
     body = textwrap.dedent('''\
@@ -830,8 +848,9 @@ def create_backup(
             if subprocess.run(['systemctl', 'is-active', '--quiet',
                                'klipper']).returncode == 0:
                 check_printer()
-            for unit in ROLLBACK_UNITS:
-                subprocess.run(['systemctl', 'stop', unit], check=True)
+            transport = runtime_lifecycle.RuntimeTransport(Path(HOME))
+            subprocess.run(['systemctl', 'stop', 'klipper'], check=True)
+            transport.stop()
             host_path = base / 'host.json'
             host = (json.loads(host_path.read_text())
                     if host_path.is_file() else None)
@@ -868,12 +887,13 @@ def create_backup(
                         write_file(status, encoded, user)
             if host:
                 try:
-                    for unit in reversed(ROLLBACK_UNITS):
-                        subprocess.run(['systemctl', 'start', unit], check=True)
+                    transport.start()
+                    subprocess.run(['systemctl', 'start', 'klipper'],
+                                   check=True)
                     wait_ready(required_section=host['previous_section'])
                 except Exception:
-                    for unit in ROLLBACK_UNITS:
-                        subprocess.run(['systemctl', 'stop', unit], check=True)
+                    subprocess.run(['systemctl', 'stop', 'klipper'], check=True)
+                    transport.stop()
                     raise
                 print('Previous host, display and files restored; '
                       'Klipper is ready.')
@@ -961,21 +981,14 @@ def install(args, user):
     if not changes and host is None:
         print('The integration is already installed.')
         return
-    transport_changed = any(
-        path.name == 'bmcu_transportd.py' for path in changes
-    )
-    if transport_changed and not transport_is_active():
-        raise RuntimeError(
-            'The bmcu-transport service must be active before this upgrade. '
-            'Review custom service installations manually.'
-        )
+    transport = runtime_lifecycle.RuntimeTransport(home)
+    transport.check_active()
     check_printer()
     service('stop')
     # The live process may save state while stopping. Take the authoritative
     # snapshot only after it has exited, before activating any migrated file.
     try:
-        if transport_changed:
-            service('stop', 'bmcu-transport')
+        transport.stop()
         changes, originals = preparation()
         backup = create_backup(
             home, changes, originals, user, state_path, host, previous_section,
@@ -990,14 +1003,12 @@ def install(args, user):
             host.activate()
         for path, data in changes.items():
             write_file(path, data, user)
-        if transport_changed:
-            service('start', 'bmcu-transport')
+        transport.start()
         service('start')
         wait_ready()
     except Exception:
         service('stop')
-        if transport_changed:
-            service('stop', 'bmcu-transport')
+        transport.stop()
         if host is not None:
             host.rollback()
         for path in changes:
@@ -1018,14 +1029,12 @@ def install(args, user):
                 write_file(path, originals[path], user)
         if host is not None:
             try:
-                if transport_changed:
-                    service('start', 'bmcu-transport')
+                transport.start()
                 service('start')
                 wait_ready(required_section=previous_section)
             except Exception:
                 service('stop')
-                if transport_changed:
-                    service('stop', 'bmcu-transport')
+                transport.stop()
                 print('Previous host/files restored; services remain stopped.')
                 raise
             print('Upgrade failed; previous host/display restored and ready.')

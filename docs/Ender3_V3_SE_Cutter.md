@@ -35,10 +35,10 @@ If installation failed on PC9, retain the restored configuration. Power the syst
 
 ## Installation and calibration
 
-Cancel any print, manually recover a jam, and confirm all routes empty or parked first. Back up the configuration. For an existing installation, stage the published v2 source separately so the installer can preserve the entire previous host/display checkout. **Do not update the active checkout with `git pull` first.** After v2.0.0 is published, and after confirming the proposed GPIO is free:
+Cancel any print, manually recover a jam, and confirm all routes empty or parked first. Back up the configuration. For an existing installation, stage the published v2 source separately so the installer can preserve the entire previous host/display checkout. **Do not update the active checkout with `git pull` first.** Complete [package/firmware maintenance](releases/v2.0.1.md#upgrade-and-rollback) first. After v2.0.1 is published, and after confirming the proposed GPIO is free:
 
 ```sh
-git clone --branch v2.0.0 --single-branch \
+git clone --branch v2.0.1 --single-branch \
   https://github.com/bernardokcosta/ender3-v3-se-klipper-bmcu.git \
   "$HOME/klipper-v2-source"
 sudo python3 "$HOME/klipper-v2-source/scripts/ender3-v3-se/install_multicolor.py" \
@@ -81,6 +81,10 @@ If filament catches at the heatsink entrance, check for the model author’s `Cu
 The installer also prevents the native manager from starting withdrawal assistance for 200 ms before `BMCU_RELEASE_ENDER`. It passes the channel and session explicitly because stopping the motors can clear `now_channel`. Assistance starts only during withdrawal after the blade stroke and stop retraction. Run the complete installer rather than copying only the optional modules: the native-manager adjustment belongs to the same update. Other callbacks retain native behavior.
 
 ## Faster exchanges
+
+Nozzle wiping is separate from the blade stroke. See the
+[wipe defaults and acceptance checklist](Ender3_V3_SE_Configuracao_Validada.md#nozzle-wiping-defaults)
+for the six-cycle X=-6/-3 pattern and preservation of existing settings.
 
 With a calibrated, enabled cutter, the integration replaces separation/cooling moves with the mechanical cutting cycle. It retains switch clearance, encoder feedback, compression limits and the confirmed 55 mm parking withdrawal; it does not allow a new filament into an occupied or uncertain route.
 

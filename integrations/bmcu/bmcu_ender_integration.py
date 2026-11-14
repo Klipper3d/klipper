@@ -3,15 +3,18 @@ import logging
 import math
 
 from .bmcu_core import protocol
-from .bmcu_core.release import PACKAGE_VERSION
+from .bmcu_core.release import PACKAGE_VERSION, REQUIRED_FIRMWARE
 from .bmcu_cortador_ender import CortadorEnder
 from .bmcu_english_api import public_diagnostics, require_english_parameters
+from . import bmcu_ender_panel
 
 
 class EnderIntegration:
     def __init__(self, config):
-        if PACKAGE_VERSION != '1.0.6':
-            raise config.error('This integration requires BMCU-Klipper 1.0.6.')
+        if PACKAGE_VERSION != '1.1.2':
+            raise config.error('This integration requires BMCU-Klipper 1.1.2.')
+        if REQUIRED_FIRMWARE != (1, 0, 4):
+            raise config.error('This integration requires BMCU firmware 1.0.4.')
         self.printer = config.get_printer()
         self.bmcu = self.printer.load_object(config, 'bmcu')
         self.measurement = self.printer.load_object(config, 'bmcu_measurement')
@@ -53,10 +56,10 @@ class EnderIntegration:
         )
         self.timeout = finite_float('sensor_timeout', 60.0, above=0.0)
         self.purge_x = finite_float('purge_x', -6.0)
-        self.wipe_x = finite_float('wipe_x', -4.0)
+        self.wipe_x = finite_float('wipe_x', -3.0)
         self.purge_y = finite_float('purge_y', 123.0)
         self.z_lift = finite_float('z_lift', 2.0, above=0.0)
-        self.wipe_passes = config.getint('wipes', 3, minval=1)
+        self.wipe_passes = config.getint('wipes', 6, minval=1)
         self.temporary_pullbacks = {}
         self.manual_operation = None
         self.pending_tool_change = None
@@ -99,6 +102,9 @@ class EnderIntegration:
         self.gcode.register_command(
             'BMCU_ENDER_MOVE_TO_PURGE',
             self.protect(self.posicionar_para_aquecimento),
+        )
+        self.gcode.register_command(
+            'BMCU_ENDER_SET_FILAMENT', self.protect(self.set_panel_filament)
         )
         self.printer.register_event_handler('klippy:ready', self.ready)
         for event in ('stepper_enable:motor_off', 'homing:home_rails_begin'):
@@ -364,7 +370,11 @@ class EnderIntegration:
                 getattr(self, 'last_unload_timing', {})),
             'cutter_uncertain': getattr(self.cortador, 'incerto', False),
             'last_cut': public_diagnostics(self.cortador.ultimo_corte),
+            'panel': bmcu_ender_panel.panel_status(self),
         }
+
+    def set_panel_filament(self, gcmd):
+        return bmcu_ender_panel.set_panel_filament(self, gcmd)
 
     def resetar_bmcu(self, gcmd):
         if gcmd.get_int('CONFIRM', 0, minval=0, maxval=1) != 1:
@@ -891,6 +901,8 @@ class EnderIntegration:
         device = self.bmcu.devices_by_name.get(self.device)
         if device is None or not device.ready:
             raise RuntimeError('The BMCU is not ready.')
+        if getattr(device, 'firmware_compatible', False) is not True:
+            raise RuntimeError('This integration requires BMCU firmware 1.0.4.')
         operation = self.bmcu.active_operations.get(device.name)
         if not operation:
             raise RuntimeError(
@@ -1107,7 +1119,6 @@ class EnderIntegration:
         allow_clear=False,
     ):
         mode = protocol.MOTION_BEFORE_PULL_BACK
-        device.set_motion(channel, mode)
         extruder = self.printer.lookup_object('extruder')
         limit = min(
             self.unload_step, self.unload_slack / 2, extruder.max_e_dist
@@ -1174,6 +1185,8 @@ class EnderIntegration:
                 raise RuntimeError(
                     'Filament left the entry sensor during tip forming.'
                 )
+            if device.status['motion'][channel] != mode:
+                raise RuntimeError('Feeder withdrawal assistance stopped.')
             self.unload_encoder_gap(device, channel, tracking)
         return completed
 
@@ -1347,6 +1360,7 @@ class EnderIntegration:
             changed_pressure = True
             if not self.sensor(destination):
                 raise RuntimeError('Filament left before tip forming.')
+            device.set_motion(channel, protocol.MOTION_BEFORE_PULL_BACK)
             self.move_unload_filament(
                 device,
                 destination,
@@ -1444,21 +1458,40 @@ class EnderIntegration:
         velocidade = (
             perfil['velocidade_purga_f'] if perfil else self.advance_speed
         )
-        device.set_motion(channel, protocol.MOTION_ON_USE)
-        remaining = self.purge_distance
-        while remaining > 0.000001:
+        extruder = self.printer.lookup_object('extruder')
+
+        def verify():
             self.verify_session(device, session, channel)
             if not self.sensor(destination):
                 raise RuntimeError('The entry sensor cleared during purging.')
+            if not extruder.get_status(self.reactor.monotonic()).get(
+                'can_extrude'
+            ):
+                raise RuntimeError('The extruder cooled during purge/wiping.')
+            if device.status['motion'][channel] != protocol.MOTION_ON_USE:
+                raise RuntimeError(
+                    'Feeder assistance stopped during purge/wiping.'
+                )
+
+        verify()
+        device.set_motion(channel, protocol.MOTION_ON_USE)
+        remaining = self.purge_distance
+        while remaining > 0.000001:
+            verify()
             step = min(10.0, remaining)
             self.move_filament(step, velocidade)
             remaining -= step
+        verify()
         self.execute('G4 P1000')
+        verify()
         cabecote = self.printer.lookup_object('toolhead')
         for _ in range(self.wipe_passes):
             self.cortador.mover(cabecote, [self.wipe_x, None, None], 600)
+            verify()
             self.cortador.mover(cabecote, [self.purge_x, None, None], 600)
+            verify()
         self.cortador.mover(cabecote, [self.wipe_x, None, None], 600)
+        verify()
 
     def load(self, gcmd):
         device = None
@@ -1489,13 +1522,24 @@ class EnderIntegration:
                 sensor_gerenciado=True,
             )
             remaining = self.advance
-            while remaining > 0.000001:
+            self.verify_session(device, session, channel)
+            if not self.sensor(destination):
+                raise RuntimeError(
+                    'The entry sensor cleared during loading.'
+                )
+            device.set_motion(channel, protocol.MOTION_ON_USE)
+            while True:
                 self.verify_session(device, session, channel)
                 if not self.sensor(destination):
                     raise RuntimeError(
                         'The entry sensor cleared during loading.'
                     )
-                device.set_motion(channel, protocol.MOTION_ON_USE)
+                if device.status['motion'][channel] != protocol.MOTION_ON_USE:
+                    raise RuntimeError(
+                        'Feeder assistance stopped during loading.'
+                    )
+                if remaining <= 0.000001:
+                    break
                 self.move_filament(
                     min(10.0, remaining),
                     (

@@ -53,6 +53,17 @@ inclusive arquivos ignorados que estejam presentes neles.
 <a id="builds-and-limitations"></a>
 ## Compilação e limites
 
+O [guia do cartão Mainsail nativo](Ender3_V3_SE_Mainsail.md#rebuild-and-verify)
+explica o build web fixado e o simulador somente local. Confira separadamente
+o contrato da fonte BMCU 1.1.2 real; isso inicia/para apenas um processo
+inofensivo aguardando, sem abrir dispositivo serial:
+
+```sh
+git clone --depth 1 --branch v1.1.2 \
+  https://github.com/jarczakpawel/BMCU-Klipper.git /path/to/bmcu-upstream
+python3 scripts/ender3-v3-se/check_bmcu_contracts.py --source /path/to/bmcu-upstream
+```
+
 Para compilar o firmware, também são necessários `gcc-arm-none-eabi` e
 `binutils-arm-none-eabi`. Siga o [guia de compilação](Ender3_V3_SE.md).
 O Makefile exige um caminho sem espaços; se o clone estiver em uma pasta com

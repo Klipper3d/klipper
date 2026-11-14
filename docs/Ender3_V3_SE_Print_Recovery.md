@@ -2,9 +2,10 @@
 
 **English** | [Português brasileiro](pt-BR/Ender3_V3_SE_Print_Recovery.md)
 
-The optional integration installer supports BMCU-Klipper 1.0.6 and its 1.0.1
-controller firmware. This update changes host Python code only. It does not
-require flashing the printer MCU or the BMCU.
+The optional integration requires BMCU-Klipper 1.1.2 and firmware 1.0.4.
+Package/firmware maintenance from older versions is separate; see the
+[2.0.1 upgrade boundary](releases/v2.0.1.md#upgrade-and-rollback).
+The Ender installer changes host files only and does not flash either MCU.
 
 ## Cached operation results after a host restart
 
@@ -24,6 +25,22 @@ session changes, cancellation and expired verification stop the request.
 This applies to native feed, retract, encoder-test, autoload and automatic
 calibration operations. Normal printing buffer-follow control is unchanged.
 The guard does not retry a physical load or withdrawal blindly.
+
+BMCU 1.1.2 randomizes the initial wire counter. The explicit history check is
+still retained: randomization alone does not prove a candidate is unused.
+
+## Manual replacement after runout
+
+With automatic refill disabled, native BMCU marks the same-channel replacement
+pending and pauses the print. The stock display and
+[Mainsail card](Ender3_V3_SE_Mainsail.md) show the physical channel to refill.
+Insert the replacement and use normal **Resume** or `RESUME`; do not clear the
+print map, reset routes or issue a separate manual load during this pause.
+The native wrapper verifies device identity, endpoint, paused state, reconciled
+routes, replacement presence and the detached-tail context before loading.
+The Ender callback completes capture, nozzle feed, purge and wiping before
+native pause/resume returns to the part. Failure retains the pending request
+and paused file. Physical arrival and extrusion still need supervised testing.
 
 ## Failed tool changes during printing
 
@@ -106,10 +123,10 @@ this is not recovery across a controller restart or power loss.
 Finish or cancel any print, physically park channels and verify the entry sensor
 is clear. Use a separate clean source so the updater can preserve the complete
 previous host/display checkout; do not `git pull` the active tree first.
-After v2.0.0 is published:
+Complete the separate package/firmware maintenance first. After v2.0.1 is published:
 
 ```sh
-git clone --branch v2.0.0 --single-branch \
+git clone --branch v2.0.1 --single-branch \
   https://github.com/bernardokcosta/ender3-v3-se-klipper-bmcu.git \
   "$HOME/klipper-v2-source"
 sudo python3 "$HOME/klipper-v2-source/scripts/ender3-v3-se/install_multicolor.py" \
@@ -135,5 +152,5 @@ controller history. These tests do not replace physical verification.
 
 Native protocol and transport references:
 
-- [BMCU transport daemon v1.0.6](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.0.6/scripts/bmcu_transportd.py)
-- [BMCU protocol and retained operation results](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.0.6/firmware/src/bmcu_protocol.cpp)
+- [BMCU transport daemon v1.1.2](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.1.2/scripts/bmcu_transportd.py)
+- [BMCU protocol and retained operation results](https://github.com/jarczakpawel/BMCU-Klipper/blob/v1.1.2/firmware/src/bmcu_protocol.cpp)

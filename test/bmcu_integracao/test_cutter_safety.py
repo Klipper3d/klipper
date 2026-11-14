@@ -1,3 +1,4 @@
+import configparser
 import math
 import re
 import types
@@ -5,12 +6,46 @@ import unittest
 
 from test_cortador import BancadaCortador
 from test_integracao import (
-    Gcmd, NATIVE_MANAGER, TestBench, installer, module, protocol,
+    Gcmd, NATIVE_MANAGER, ROOT, TestBench, installer, module, protocol,
 )
 from test_print_recovery import RecoveryCommand, gcode_move
 
 
 class CutterSafetyTests(unittest.TestCase):
+    def test_withdrawal_does_not_resend_assistance_at_every_search_chunk(self):
+        for cutter, requests, increments in ((0, 3, 146), (1, 4, 66)):
+            with self.subTest(cutter=cutter):
+                b = BancadaCortador()
+                b.ajustes['habilitado'] = cutter
+                b.unload()
+                self.assertEqual(requests, b.actuators.count(
+                    protocol.MOTION_BEFORE_PULL_BACK
+                ))
+                self.assertEqual(increments, len(b.moves))
+                self.assertAlmostEqual(-66.0, b.e)
+                self.assertEqual([(3, 55.0)], b.policies)
+                self.assertFalse(b.obj.sensor(b.endpoint))
+
+    def test_stopped_withdrawal_assistance_is_not_restarted_by_next_chunk(self):
+        for stopped_at in (2.0, 26.0, 52.0):
+            with self.subTest(stopped_at=stopped_at):
+                b = BancadaCortador()
+                execute = b.gcode.run_script_from_command
+
+                def interrupted(text):
+                    execute(text)
+                    if text.startswith('G1 E') and b.e == -stopped_at:
+                        b.device.status['motion'][3] = protocol.MOTION_IDLE
+
+                b.gcode.run_script_from_command = interrupted
+                with self.assertRaisesRegex(RuntimeError, 'assistance stopped'):
+                    b.unload()
+                self.assertAlmostEqual(-stopped_at, b.e)
+                self.assertFalse(b.policies)
+                self.assertFalse(b.obj.temporary_pullbacks)
+                self.assertEqual('parar', b.actuators[-1])
+                self.assertEqual('failed', b.obj.last_unload_timing['result'])
+
     def test_unload_sequence_is_valid_for_every_physical_channel(self):
         for channel in range(4):
             for cutter in (0, 1):
@@ -362,6 +397,54 @@ class NativeUnloadTests(unittest.TestCase):
             installer.patch_pre_unload(source)
 
 
+def configured_integration(bench=None, **settings):
+    b = bench or TestBench()
+    lookup = b.printer.lookup_object
+    b.printer.lookup_object = lambda name, *args: (
+        b.gcode if name == 'gcode' else lookup(name, *args)
+    )
+    b.printer.get_reactor = lambda: b.reactor
+    b.bmcu._wait_pullback_safe = lambda *args: None
+    b.printer.load_object = lambda config, name: (
+        b.bmcu if name == 'bmcu' else b.obj.measurement
+    )
+    b.printer.register_event_handler = lambda *args: None
+    config = types.SimpleNamespace(
+        error=RuntimeError,
+        get_printer=lambda: b.printer,
+        get=lambda name, default: settings.get(name, default),
+        getint=lambda name, default, **limits: settings.get(name, default),
+        getfloat=lambda name, default, **limits: settings.get(name, default),
+    )
+    b.obj = module.EnderIntegration(config)
+    return b
+
+
+class WipeDefaultsTests(unittest.TestCase):
+    def test_constructor_defaults_use_six_wider_round_trips(self):
+        obj = configured_integration().obj
+        self.assertEqual((-6.0, -3.0, 123.0, 6, 35.0), (
+            obj.purge_x, obj.wipe_x, obj.purge_y, obj.wipe_passes,
+            obj.purge_distance,
+        ))
+
+    def test_template_defaults_match_constructor(self):
+        parser = configparser.RawConfigParser()
+        parser.read(
+            ROOT / 'config/ender3-v3-se-validada/bmcu-multicor-ender.cfg'
+        )
+        cfg = parser['bmcu_ender_integration']
+        self.assertEqual((-6.0, -3.0, 123.0, 6, 35.0), (
+            cfg.getfloat('purge_x'), cfg.getfloat('wipe_x'),
+            cfg.getfloat('purge_y'), cfg.getint('wipes'),
+            cfg.getfloat('purge_mm'),
+        ))
+
+    def test_explicit_wipe_calibration_is_not_replaced_by_defaults(self):
+        obj = configured_integration(wipe_x=-2.5, wipes=2).obj
+        self.assertEqual((-2.5, 2), (obj.wipe_x, obj.wipe_passes))
+
+
 class FiniteConfigurationTests(unittest.TestCase):
     def test_nonfinite_distances_speeds_positions_and_timeouts_are_rejected(
         self,
@@ -378,23 +461,8 @@ class FiniteConfigurationTests(unittest.TestCase):
             for value in (math.nan, math.inf, -math.inf):
                 with self.subTest(key=key, value=value):
                     b = TestBench()
-                    b.printer.get_reactor = lambda: b.reactor
-                    b.bmcu._wait_pullback_safe = lambda *args: None
-                    b.printer.load_object = lambda config, name: (
-                        b.bmcu if name == 'bmcu' else b.obj.measurement
-                    )
-                    b.printer.register_event_handler = lambda *args: None
-                    config = types.SimpleNamespace(
-                        error=RuntimeError,
-                        get_printer=lambda: b.printer,
-                        get=lambda name, default: default,
-                        getint=lambda name, default, **limits: default,
-                        getfloat=lambda name, default, **limits: (
-                            value if name == key else default
-                        ),
-                    )
                     with self.assertRaisesRegex(RuntimeError, 'finite'):
-                        module.EnderIntegration(config)
+                        configured_integration(b, **{key: value})
                     self.assertFalse(b.commands)
                     self.assertFalse(b.actuators)
 
@@ -456,6 +524,29 @@ class MotionBench(BancadaCortador):
 
 
 class PurgeMotionTests(unittest.TestCase):
+    def test_default_wipe_has_thirteen_crossings_and_preserves_state(self):
+        defaults = configured_integration().obj
+        for override in (50, 200):
+            with self.subTest(override=override):
+                b = MotionBench()
+                b.obj.wipe_x = defaults.wipe_x
+                b.obj.wipe_passes = defaults.wipe_passes
+                b.obj.purge_distance = defaults.purge_distance
+                b.execute('SET_GCODE_OFFSET X=3 Y=-3 Z=1')
+                b.execute('G92 E12\nM220 S%d\nM221 S95' % override)
+                b.obj.load(Gcmd())
+                wiping = [(pos, speed) for pos, speed in b.physical_moves
+                          if speed == 10.0]
+                self.assertEqual([-3.0, -6.0] * 6 + [-3.0],
+                                 [pos[0] for pos, _ in wiping])
+                self.assertTrue(all(pos[1:3] == [123.0, 7.0]
+                                    for pos, _ in wiping))
+                self.assertAlmostEqual(override / 6000,
+                                       b.gmove.speed_factor)
+                self.assertAlmostEqual(0.95, b.gmove.extrude_factor)
+                self.assertEqual([3.0, -3.0, 1.0],
+                                 b.gmove.homing_position[:3])
+
     def test_purge_uses_machine_coordinates_not_gcode_offsets(self):
         for offset in (-3.0, 3.0):
             with self.subTest(offset=offset):
@@ -473,6 +564,7 @@ class PurgeMotionTests(unittest.TestCase):
         b.obj.purge_distance = 1.0
         b.execute('SET_GCODE_OFFSET X=3 Y=-3 Z=1')
         b.obj.position_head()
+        b.motion(3, protocol.MOTION_ON_USE)
         b.obj.wipe(b.device, b.endpoint, 3, 3)
         self.assertEqual([-4.0, 123.0, 7.0], b.position[:3])
 
@@ -516,6 +608,112 @@ class PurgeMotionTests(unittest.TestCase):
         self.assertFalse(any(e[0] == 'mover' for e in b.eventos))
         b.obj.position_head(exigir_aquecimento=False)
         self.assertEqual([-6.0, 123.0, 7.0], b.position[:3])
+
+
+class PurgeSafetyTests(unittest.TestCase):
+    failures = {
+        'session': 'restarted',
+        'channel': 'lost filament',
+        'sensor': 'entry sensor',
+        'temperature': 'cooled',
+        'assistance': 'assistance stopped',
+    }
+
+    def fail_state(self, b, failure):
+        if failure == 'session':
+            b.device.status['session_id'] += 1
+        elif failure == 'channel':
+            b.device.status['present'][3] = False
+        elif failure == 'sensor':
+            b.present = False
+        elif failure == 'assistance':
+            b.device.status['motion'][3] = protocol.MOTION_IDLE
+        else:
+            b.extruder.get_status = lambda t: {'can_extrude': False}
+
+    def assert_failed_load(self, b, message):
+        gcmd = Gcmd()
+        with self.assertRaisesRegex(RuntimeError, message):
+            b.obj.load(gcmd)
+        self.assertFalse(gcmd.messages)
+        self.assertEqual('parar', b.actuators[-1])
+        self.assertEqual(0, b.critical_depth)
+        self.assertEqual('RESTORE_GCODE_STATE NAME=BMCU_ENDER_CARGA',
+                         b.commands[-1])
+
+    def test_last_purge_segment_failure_blocks_dwell_wiping_and_success(self):
+        for failure, message in self.failures.items():
+            with self.subTest(failure=failure):
+                b = TestBench()
+                b.obj.purge_distance = 35
+                execute = b.gcode.run_script_from_command
+
+                def interrupted(text):
+                    execute(text)
+                    if text.startswith('G1 E') and b.e >= 135.0:
+                        self.fail_state(b, failure)
+
+                b.gcode.run_script_from_command = interrupted
+                self.assert_failed_load(b, message)
+                self.assertAlmostEqual(135.0, b.e)
+                self.assertNotIn('G4 P1000', b.commands)
+                self.assertEqual(3, len(b.head_moves))
+
+    def test_dwell_failure_blocks_first_wipe_and_success(self):
+        for failure, message in self.failures.items():
+            with self.subTest(failure=failure):
+                b = TestBench()
+                execute = b.gcode.run_script_from_command
+
+                def interrupted(text):
+                    execute(text)
+                    if text == 'G4 P1000':
+                        self.fail_state(b, failure)
+
+                b.gcode.run_script_from_command = interrupted
+                self.assert_failed_load(b, message)
+                self.assertEqual(3, len(b.head_moves))
+
+    def test_each_wipe_boundary_including_final_crossing_blocks_success(self):
+        for crossing in range(1, 14):
+            for failure, message in self.failures.items():
+                with self.subTest(crossing=crossing, failure=failure):
+                    b = TestBench()
+                    b.obj.wipe_passes = 6
+                    b.obj.wipe_x = -3.0
+                    move = b.toolhead.manual_move
+                    completed = []
+
+                    def interrupted(coords, speed):
+                        move(coords, speed)
+                        if speed == 10.0:
+                            completed.append(list(coords))
+                            if len(completed) == crossing:
+                                self.fail_state(b, failure)
+
+                    b.toolhead.manual_move = interrupted
+                    self.assert_failed_load(b, message)
+                    self.assertEqual(crossing, len(completed))
+
+    def test_manual_cancellation_during_dwell_blocks_wiping(self):
+        b = BancadaCortador()
+        b.obj.manual_operation = 'LOAD'
+        display = types.SimpleNamespace(bmcu_session={'cancelled': False})
+        lookup = b.printer.lookup_object
+        b.printer.lookup_object = lambda name, *args: (
+            display if name == 'e3v3se_display' else lookup(name, *args)
+        )
+        execute = b.gcode.run_script_from_command
+
+        def cancelled(text):
+            execute(text)
+            if text == 'G4 P1000':
+                display.bmcu_session['cancelled'] = True
+
+        b.gcode.run_script_from_command = cancelled
+        self.assert_failed_load(b, 'cancelled')
+        self.assertFalse(any(e[0] == 'mover' and e[2] == 10.0
+                             for e in b.eventos))
 
 
 if __name__ == '__main__':

@@ -1,0 +1,107 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Pawel Jarczak and BMCU-Klipper contributors.
+# Verbatim methods from v1.1.2 / a1215523c51551cf11cf4c4aca39aa56b6565ea8.
+# klippy/extras/bmcu_core/refill.py and manager.py; unrelated methods omitted.
+class AutoRefillController:
+    def _manual_pending_context(self):
+        pending = self.manual_pending
+        if not isinstance(pending, dict):
+            return None
+        device = self.manager.devices_by_name.get(str(pending.get('device', '') or ''))
+        if device is None:
+            raise RefillError('manual refill BMCU device is unavailable')
+        expected_uid = str(pending.get('device_uid', '') or '').upper()
+        if expected_uid and self.manager._device_uid(device) != expected_uid:
+            raise RefillError('manual refill BMCU identity changed')
+        channel = int(pending.get('channel', -1))
+        if channel < 0 or channel > 3:
+            raise RefillError('manual refill Channel is invalid')
+        endpoint = self.manager._endpoint_for_channel(device, channel)
+        if endpoint is None or endpoint.name != str(pending.get('endpoint', '') or ''):
+            raise RefillError('manual refill endpoint assignment changed')
+        if endpoint.driver not in ('generic_single_extruder', 'snapmaker_u1'):
+            raise RefillError('manual refill endpoint type is unsupported')
+        return pending, device, channel, int(pending.get('tool', -1)), endpoint
+
+    def resume_manual_refill(self, gcmd=None):
+        context = self._manual_pending_context()
+        if context is None:
+            return False
+        pending, device, channel, tool, endpoint = context
+        if self.manager._print_state() not in ('paused', 'pause'):
+            raise RefillError('printer must remain paused during manual refill')
+        if not device.ready or not device.status_reconciled:
+            raise RefillError('BMCU is not ready for manual refill')
+        device.refresh()
+        present = device.status.get('present', [False] * 4)
+        if channel >= len(present) or not bool(present[channel]):
+            raise RefillError(
+                'insert replacement filament into %s Channel %d, then press Resume again' %
+                (device.name, channel + 1))
+        if endpoint.driver == 'snapmaker_u1':
+            detached = self.manager._u1_tail_detached_matches(
+                endpoint, device, channel)
+            if detached and not self.manager._u1_tail_sensor_boundary_cleared(
+                    endpoint, device, channel):
+                raise RefillError(
+                    'old filament has not cleared the Snapmaker head sensor yet')
+        else:
+            detached = self.manager._generic_tail_detached_matches(
+                endpoint, device, channel)
+        if not detached:
+            raise RefillError('manual refill detached-tail state is unavailable')
+
+        self.last = {
+            'source_device_name': device.name,
+            'source_channel': channel,
+            'source_tool': tool,
+            'endpoint': endpoint.name,
+            'phase': 'MANUAL_REFILL_LOAD',
+            'result': 'loading',
+        }
+        try:
+            temperature_profile = (
+                self.manager._u1_active_temperature_profile()
+                if endpoint.driver == 'snapmaker_u1' else None)
+            self.manager.load_channel(
+                device, channel, gcmd=None, tool=tool,
+                prime_handshake=False,
+                temperature_profile=temperature_profile)
+        except Exception as exc:
+            self.last.update({'result': 'failed', 'error': str(exc)})
+            raise
+
+        self.manual_pending = None
+        sync_cache = getattr(self.manager, '_sync_status_cache_runtime', None)
+        if callable(sync_cache):
+            sync_cache()
+        self.last = {
+            'source_device_name': device.name,
+            'source_channel': channel,
+            'source_tool': tool,
+            'endpoint': endpoint.name,
+            'phase': 'MANUAL_REFILL_COMPLETE',
+            'result': 'ok',
+        }
+        return True
+
+class BMCUManager:
+    def _cmd_manual_refill_resume_wrapper(self, gcmd):
+        original = self._manual_refill_resume_original
+        if original is None:
+            raise gcmd.error('printer RESUME handler is unavailable')
+        pending = getattr(self.refill, 'manual_pending', None)
+        if not isinstance(pending, dict):
+            return original(gcmd)
+        try:
+            self.refill.resume_manual_refill(gcmd=gcmd)
+        except Exception as exc:
+            self._record_error(
+                'MANUAL_REFILL_LOAD_FAILED',
+                device=str(pending.get('device', '') or ''),
+                channel=int(pending.get('channel', -1)),
+                endpoint=str(pending.get('endpoint', '') or ''),
+                phase='MANUAL_REFILL_LOAD', details=str(exc))
+            raise gcmd.error(
+                'BMCU manual refill is not ready: %s' % str(exc))
+        return original(gcmd)

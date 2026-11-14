@@ -16,13 +16,14 @@ continua sendo uma dependência separada.
 ## Recursos
 
 - Tela original TJC3224/DWIN de 3,2 polegadas, em inglês e português brasileiro.
-- Integração BMCU 1.0.6 / firmware 1.0.1 por endpoint genérico de extrusora única.
+- Integração BMCU 1.1.2 / firmware 1.0.4 por endpoint genérico de extrusora única.
+- Cartão nativo de quatro rolos no Mainsail 2.19.0 e reposição confirmada no mesmo canal.
 - Chegada por switch, captura iniciada pela extrusora, purga, limpeza e retirada
   assistida.
 - Perfil OrcaSlicer 2.4.2 para impressão multimaterial com uma extrusora.
 - Comandos, parâmetros e campos de status da integração somente em inglês.
 
-Veja as [notas da release](docs/pt-BR/releases/v2.0.0.md) para as alterações
+Veja as [notas da release](docs/pt-BR/releases/v2.0.1.md) para as alterações
 de cada versão.
 
 <a id="hardware-scope"></a>
@@ -51,13 +52,13 @@ instalação precisam ser medidos na impressora real.
    [`config/printer-creality-ender3-v3-se-gd32f303-2023.cfg`](config/printer-creality-ender3-v3-se-gd32f303-2023.cfg)
    com os módulos de `config/ender3-v3-se/`. Não substitua um `printer.cfg`
    calibrado pelo modelo.
-5. Para BMCU, instale primeiro
-   [BMCU-Klipper 1.0.6](https://github.com/jarczakpawel/BMCU-Klipper/tree/v1.0.6)
-   e seus serviços, depois siga o
+5. Para BMCU, prepare separadamente
+   [BMCU-Klipper 1.1.2](https://github.com/jarczakpawel/BMCU-Klipper/tree/v1.1.2)
+   e firmware 1.0.4, depois siga o
    [guia de integração](docs/pt-BR/Ender3_V3_SE_Configuracao_Validada.md).
 
 Para instalações existentes, siga as
-[instruções de atualização da release](docs/pt-BR/releases/v2.0.0.md#upgrade-and-rollback).
+[instruções de atualização da release](docs/pt-BR/releases/v2.0.1.md#upgrade-and-rollback).
 
 <a id="operation"></a>
 ## Operação
@@ -119,6 +120,7 @@ do Klippy.
 - [Instalação, gravação e comissionamento](docs/pt-BR/Ender3_V3_SE.md)
 - [Integração BMCU por switch e calibração](docs/pt-BR/Ender3_V3_SE_Configuracao_Validada.md)
 - [BMCU: configuração, ligação e calibração](docs/pt-BR/Ender3_V3_SE_BMCU.md)
+- [Cartão nativo Mainsail, instalação e rollback](docs/pt-BR/Ender3_V3_SE_Mainsail.md)
 - [Cortador opcional, servo e reset manual](docs/pt-BR/Ender3_V3_SE_Cutter.md)
 - [OrcaSlicer](profiles/orca/ender3-v3-se-bmcu/README.pt-BR.md)
 - [Arquitetura da tela](docs/pt-BR/E3V3SE_Display.md)
@@ -156,6 +158,8 @@ Este fork se baseia no trabalho de:
 - [Pawel Jarczak / jarczakpawel](https://github.com/jarczakpawel) e contribuidores
   [BMCU-Klipper](https://github.com/jarczakpawel/BMCU-Klipper), pelo transporte
   externo de filamento e contrato genérico de endpoint.
+- Contribuidores [Mainsail](https://github.com/mainsail-crew/mainsail), pelo
+  dashboard, componentes e interface web reutilizados pela sobreposição BMCU.
 
 Referências adicionais: [análise da adaptação](docs/pt-BR/E3V3SE_Port_Analysis.md)
 e [créditos das traduções](docs/pt-BR/Translations.md).
