@@ -35,6 +35,20 @@ class FakeTransport:
         return True
 
 
+class SourceCompatibilityTest(unittest.TestCase):
+    def test_non_ascii_display_sources_declare_utf8_for_python2(self):
+        directory = os.path.join(ROOT, "klippy", "extras", "e3v3se_display")
+        for name in os.listdir(directory):
+            if not name.endswith(".py"):
+                continue
+            with self.subTest(name=name):
+                with open(os.path.join(directory, name), "rb") as source:
+                    data = source.read()
+                if any(value > 127 for value in data):
+                    self.assertRegex(b"\n".join(data.splitlines()[:2]),
+                                     br"coding[:=]\s*utf-?8")
+
+
 class TJC3224Test(unittest.TestCase):
     def test_instances_never_share_frame_state(self):
         lengths = []

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Text based UI for the Ender 3 V3 SE stock display
 #
 # Copyright (C) 2026 Bernardo Costa
