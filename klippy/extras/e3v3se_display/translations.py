@@ -13,6 +13,16 @@ from .tjc3224 import _as_text
 
 
 PORTUGUESE = {
+    'Nozzle temperature must be a finite number.':
+        'A temperatura do bico deve ser um número finito.',
+    'Nozzle temperature is outside the heater limits.':
+        'A temperatura do bico está fora dos limites do aquecedor.',
+    'Run G28 before preheating above the parking threshold.':
+        'Execute G28 antes de pré-aquecer acima do limite de estacionamento.',
+    'Print state changed during preheat positioning.':
+        'O estado da impressão mudou durante o posicionamento para pré-aquecer.',
+    'Preheat positioning did not reach the purge position.':
+        'O posicionamento para pré-aquecer não alcançou a posição de purga.',
     'There is no pending print recovery.':
         'Não há recuperação de impressão pendente.',
     'The paused print changed; recovery is blocked.':

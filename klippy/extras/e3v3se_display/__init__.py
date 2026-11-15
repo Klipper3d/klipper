@@ -648,7 +648,7 @@ class E3V3SEDisplay:
         return target
 
     def _begin_operation(self, action, temperature=None, delta=0., wait=False,
-                         material=None):
+                         material=None, from_command=False):
         self._install_resume_guard(self.reactor.monotonic())
         if self.operation is not None:
             return False, "Filament operation in progress"
@@ -674,16 +674,59 @@ class E3V3SEDisplay:
             heater = self.extruder.get_heater()
             old_target = self.extruder.get_status(
                 self.reactor.monotonic())["target"]
-            self.printer.lookup_object("heaters").set_temperature(
-                heater, target)
         except self.printer.command_error as exc:
             return False, str(exc)
-        self.operation = {
+        # Claim the operation before parking yields to the reactor. Cancellation
+        # and another button press must not race an untracked heater request.
+        operation = self.operation = {
             "action": action, "target": target, "old_target": old_target,
             "deadline": self.reactor.monotonic() + self.heat_timeout,
-            "delta": delta, "cancelled": False, "moving": False,
+            "delta": delta, "cancelled": False, "moving": True,
             "allow_printing": wait, "wait": wait,
         }
+
+        def check_preparation():
+            if self.operation is not operation or operation["cancelled"]:
+                raise self.printer.command_error("Operation cancelled")
+            if self.printer.is_shutdown():
+                raise self.printer.command_error("Operation cancelled")
+            if self.extruder.get_status(
+                    self.reactor.monotonic())["target"] != old_target:
+                raise self.printer.command_error(
+                    "Nozzle target changed; operation aborted")
+            if self.print_stats.get_status(
+                    self.reactor.monotonic()).get("state") != stats.get("state"):
+                raise self.printer.command_error(
+                    "Print state changed during preheat positioning.")
+
+        def prepare_and_heat():
+            check_preparation()
+            integration = self.printer.lookup_object(
+                "bmcu_ender_integration", None)
+            prepare_preheat = getattr(integration, "prepare_preheat", None)
+            if prepare_preheat is not None:
+                prepare_preheat(target, check=check_preparation)
+            check_preparation()
+            self.printer.lookup_object("heaters").set_temperature(
+                heater, target)
+
+        try:
+            if wait or from_command:
+                # Both synchronous and asynchronous G-code entry points
+                # already own this mutex; only direct UI actions acquire it.
+                prepare_and_heat()
+            else:
+                # Keep parking and target application indivisible to G-code
+                # clients, including every yielded movement-completion wait.
+                with self.gcode.get_mutex():
+                    prepare_and_heat()
+        except (self.printer.command_error, RuntimeError) as exc:
+            if self.operation is operation:
+                self.operation = None
+            return False, str(exc)
+        finally:
+            operation["moving"] = False
+        operation["deadline"] = self.reactor.monotonic() + self.heat_timeout
         self.operation_message = "Heating nozzle"
         self.operation_result = (True, "")
         self._show_operation()
@@ -873,7 +916,8 @@ class E3V3SEDisplay:
         if material is not None:
             material = material.upper()
         ok, message = self._begin_operation(
-            action, temperature, wait=bool(wait), material=material)
+            action, temperature, wait=bool(wait), material=material,
+            from_command=True)
         if not ok:
             raise gcmd.error(message)
 

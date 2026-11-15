@@ -69,6 +69,12 @@ a documentação pública tem pares EN/PT-BR. Rótulos nativos, estados, mensage
 de operação e erros conhecidos são traduzidos. Rótulos personalizados e
 diagnósticos externos desconhecidos mantêm o texto configurado/original.
 
+A fonte do LCD original não renderiza acentos latinos de forma confiável.
+Somente o texto enviado à tela é apresentado sem esses acentos (por exemplo,
+`Configuração` vira `Configuracao`). Traduções, caminhos, arquivos selecionados
+e comandos conservam o conteúdo original; o Mainsail não muda. Não é necessário
+substituir firmware ou fonte da tela.
+
 O menu parado é **Imprimir / Filamento / Temperatura / Mover / Calibrar /
 Configurações**, com **Atalhos** apenas para atalhos personalizados.
 **Temperatura** concentra pré-aquecimento/resfriamento; **Mover** concentra
@@ -211,6 +217,6 @@ configuração de endpoint pelo comando de comissionamento da integração valid
 
 Teste canais 1–4, captura/purga, formação da ponta sem cortador, pausa/retomada,
 cancelamento no aquecimento/movimento, timeout/desconexão e recuperação de rota
-incerta. Confira os dois idiomas, acentos portugueses, todas as linhas, rolagem
+incerta. Confira os dois idiomas, português renderizado sem acentos, todas as linhas, rolagem
 de nomes longos e legibilidade do estado/canal em 240×320. Os testes verificam
 limites UTF-8 e do protocolo, não os glifos da fonte interna da tela.
