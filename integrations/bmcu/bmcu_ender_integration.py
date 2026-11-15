@@ -1263,7 +1263,9 @@ class EnderIntegration:
         extruder = self.printer.lookup_object('extruder')
         heater = extruder.get_heater()
         if not heater.min_temp <= target <= heater.max_temp:
-            raise RuntimeError('Nozzle temperature is outside the heater limits.')
+            raise RuntimeError(
+                'Nozzle temperature is outside the heater limits.'
+            )
         profile = self.cortador.preparar()
         if profile and not self.cortador.recolhido:
             raise RuntimeError('Retract and check the stop before positioning.')
@@ -1275,8 +1277,13 @@ class EnderIntegration:
             if check is not None:
                 check()
             if stats.get_status(self.reactor.monotonic()).get('state') != state:
-                raise RuntimeError('Print state changed during preheat positioning.')
-            if extruder.get_status(self.reactor.monotonic())['target'] != previous_target:
+                raise RuntimeError(
+                    'Print state changed during preheat positioning.'
+                )
+            if (
+                extruder.get_status(self.reactor.monotonic())['target'] !=
+                previous_target
+            ):
                 raise RuntimeError('Nozzle target changed; operation aborted')
             if self.printer.is_shutdown():
                 raise RuntimeError('The printer is shut down.')
@@ -1286,7 +1293,9 @@ class EnderIntegration:
         verify()
         status = toolhead.get_status(self.reactor.monotonic())
         if not all(axis in status['homed_axes'] for axis in 'xyz'):
-            raise RuntimeError('Run G28 before preheating above the parking threshold.')
+            raise RuntimeError(
+                'Run G28 before preheating above the parking threshold.'
+            )
         position = toolhead.get_position()
         if all(math.isclose(position[i], value, abs_tol=0.01)
                for i, value in enumerate((self.purge_x, self.purge_y))):
@@ -1295,7 +1304,9 @@ class EnderIntegration:
         verify()
         if not all(math.isclose(toolhead.get_position()[i], expected[i],
                                 abs_tol=0.01) for i in range(3)):
-            raise RuntimeError('Preheat positioning did not reach the purge position.')
+            raise RuntimeError(
+                'Preheat positioning did not reach the purge position.'
+            )
 
     def posicionar_para_aquecimento(self, gcmd):
         if self.bmcu.active_operations or self.manual_operation is not None:

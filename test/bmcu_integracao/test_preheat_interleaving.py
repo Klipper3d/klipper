@@ -6,7 +6,8 @@ from test_preheat_guard import HeatingBench
 
 
 DISPLAY = import_module(
-    'preheat_interleaving_display', ROOT / 'test/e3v3se_display/test_display.py',
+    'preheat_interleaving_display',
+    ROOT / 'test/e3v3se_display/test_display.py',
 )
 
 
@@ -155,7 +156,9 @@ class PreheatInterleavingTests(unittest.TestCase):
                 b.cancelled = True
                 b.h.display.cancel_operation()
         b.on_wait = cancel
-        with self.assertRaisesRegex(RuntimeError, 'Filament operation cancelled'):
+        with self.assertRaisesRegex(
+            RuntimeError, 'Filament operation cancelled',
+        ):
             b.integration.heat_manual_filament()
         self.assertEqual(1, len(b.moves))
         self.assertFalse(b.moves_after_cancel)

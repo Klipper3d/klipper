@@ -695,7 +695,8 @@ class E3V3SEDisplay:
                 raise self.printer.command_error(
                     "Nozzle target changed; operation aborted")
             if self.print_stats.get_status(
-                    self.reactor.monotonic()).get("state") != stats.get("state"):
+                    self.reactor.monotonic()).get("state") != stats.get(
+                        "state"):
                 raise self.printer.command_error(
                     "Print state changed during preheat positioning.")
 

@@ -29,14 +29,18 @@ class HeatingBench(ManualBench):
 
     def guarded(self, name, **params):
         applied = []
-        previous = lambda command: applied.append(list(self.position)) or 'native'
+        previous = lambda command: (
+            applied.append(list(self.position)) or 'native'
+        )
         handler = self.obj.guard_hotend_temperature(name, previous)
         result = handler(TemperatureCommand(**params))
         return result, applied
 
 
 class PreheatGuardTests(unittest.TestCase):
-    def test_manual_load_parks_before_setting_230_including_initial_homing(self):
+    def test_manual_load_parks_before_setting_230_including_initial_homing(
+        self,
+    ):
         for homed in ('xyz', ''):
             with self.subTest(homed=homed):
                 b = HeatingBench()
@@ -66,7 +70,9 @@ class PreheatGuardTests(unittest.TestCase):
                      'SET_HEATER_TEMPERATURE'):
             b.handlers[name] = lambda command: 'native'
         b.obj.ready()
-        self.assertEqual('native', b.handlers['M104'](TemperatureCommand(S=230)))
+        self.assertEqual(
+            'native', b.handlers['M104'](TemperatureCommand(S=230)),
+        )
         self.assertEqual([-6.0, 123.0], b.position[:2])
 
     def test_low_targets_cooldown_bed_and_other_tools_never_park(self):

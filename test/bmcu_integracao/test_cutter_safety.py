@@ -6,7 +6,8 @@ import unittest
 
 from test_cortador import BancadaCortador
 from test_integracao import (
-    Gcmd, NATIVE_MANAGER, ROOT, TestBench, import_module, installer, module, protocol,
+    Gcmd, NATIVE_MANAGER, ROOT, TestBench, import_module, installer, module,
+    protocol,
 )
 from test_print_recovery import RecoveryCommand, gcode_move
 
@@ -472,7 +473,9 @@ class FiniteConfigurationTests(unittest.TestCase):
                 with self.subTest(key=key, value=value):
                     b = configured_integration()
                     parser = configparser.RawConfigParser()
-                    parser.read_dict({'bmcu_ender_integration': {key: str(value)}})
+                    parser.read_dict({
+                        'bmcu_ender_integration': {key: str(value)},
+                    })
                     config = ConfigWrapper(
                         b.printer, parser, {}, 'bmcu_ender_integration',
                     )

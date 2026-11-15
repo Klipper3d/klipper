@@ -20,7 +20,8 @@ PORTUGUESE = {
     'Run G28 before preheating above the parking threshold.':
         'Execute G28 antes de pré-aquecer acima do limite de estacionamento.',
     'Print state changed during preheat positioning.':
-        'O estado da impressão mudou durante o posicionamento para pré-aquecer.',
+        'O estado da impressão mudou durante o posicionamento '
+        'para pré-aquecer.',
     'Preheat positioning did not reach the purge position.':
         'O posicionamento para pré-aquecer não alcançou a posição de purga.',
     'There is no pending print recovery.':

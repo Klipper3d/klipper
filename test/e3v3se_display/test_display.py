@@ -85,7 +85,8 @@ class TJC3224Test(unittest.TestCase):
                          safe_text_bytes(text))
         self.assertEqual(b"Configuracao", safe_text_bytes(
             u"Configurac\u0327a\u0303o".encode("utf-8")))
-        self.assertEqual(u"Configura\u00e7\u00e3o: a\u00e7\u00e3o, pr\u00e9-aquecer", text)
+        self.assertEqual(
+            u"Configura\u00e7\u00e3o: a\u00e7\u00e3o, pr\u00e9-aquecer", text)
 
     def test_accent_normalization_precedes_wire_byte_limit(self):
         self.assertEqual(b"acao", safe_text_bytes(u"a\u00e7\u00e3o", 4))
@@ -451,7 +452,8 @@ class FilamentOperationTest(unittest.TestCase):
     def test_cancel_during_preheat_positioning_never_enables_heater(self):
         h = FilamentHarness()
         h.printer.objects['bmcu_ender_integration'] = types.SimpleNamespace(
-            prepare_preheat=lambda target, **kwargs: h.display.cancel_operation(),
+            prepare_preheat=lambda target, **kwargs: (
+                h.display.cancel_operation()),
         )
         result = h.display._begin_operation('EXTRUDE', delta=1)
         self.assertFalse(result[0])
@@ -461,7 +463,8 @@ class FilamentOperationTest(unittest.TestCase):
     def test_other_target_during_positioning_is_not_overwritten(self):
         h = FilamentHarness()
         h.printer.objects['bmcu_ender_integration'] = types.SimpleNamespace(
-            prepare_preheat=lambda target, **kwargs: setattr(h.extruder, 'target', 215),
+            prepare_preheat=lambda target, **kwargs: (
+                setattr(h.extruder, 'target', 215)),
         )
         result = h.display._begin_operation('EXTRUDE', delta=1)
         self.assertFalse(result[0])
