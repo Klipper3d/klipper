@@ -6,6 +6,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 
 import struct
+import unicodedata
 
 
 try:
@@ -46,7 +47,18 @@ def utf8_scroll(value, max_bytes, offset):
 
 
 def safe_text_bytes(value, max_bytes=MAX_TEXT_BYTES):
-    text = _as_text(value)
+    # The stock font cannot reliably draw accented Latin glyphs. Normalize
+    # only the wire label, leaving filenames, translations and commands intact.
+    chars = []
+    latin_base = False
+    for char in unicodedata.normalize("NFD", _as_text(value)):
+        combining = unicodedata.combining(char)
+        if combining and latin_base:
+            continue
+        chars.append(char)
+        if not combining:
+            latin_base = (u"a" <= char <= u"z" or u"A" <= char <= u"Z")
+    text = unicodedata.normalize("NFC", u"".join(chars))
     text = u"".join(ch if ord(ch) >= 32 else u" " for ch in text)
     encoded = utf8_truncate(text, max_bytes).encode("utf-8")
     return encoded.replace(FRAME_TAIL, b"?")

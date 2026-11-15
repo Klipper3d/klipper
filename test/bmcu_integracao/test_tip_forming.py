@@ -29,7 +29,8 @@ class TipBench(TestBench):
         self.extruder.max_e_dist = 50.0
         self.extruder.max_e_velocity = 60.0
         self.extruder.get_heater = lambda: types.SimpleNamespace(
-            min_extrude_temp=170.0, get_temp_range=lambda: (0.0, 300.0)
+            min_extrude_temp=170.0, min_temp=0.0, max_temp=300.0,
+            get_temp_range=lambda: (0.0, 300.0)
         )
         self.extruder.get_status = lambda t: {
             'can_extrude': self.temperature >= 170,

@@ -229,10 +229,16 @@ class CortadorEnder:
             )
         self.posicionar_recolhido(perfil)
 
-    def mover(self, cabecote, coordenadas, velocidade):
+    def mover(self, cabecote, coordenadas, velocidade, verificar=None):
         with self.integracao.bmcu.printer_critical_section('cortador_ender'):
+            # Entering the native critical section can itself yield while
+            # control-plane requests drain. Recheck before queueing motion.
+            if verificar is not None:
+                verificar()
             cabecote.manual_move(coordenadas, velocidade / 60)
             cabecote.wait_moves()
+            if verificar is not None:
+                verificar()
 
     def cortar(self, perfil, verificar, retornar=True, antes_do_corte=None):
         inicio = self.integracao.reactor.monotonic()

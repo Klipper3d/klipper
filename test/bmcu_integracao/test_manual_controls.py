@@ -36,6 +36,8 @@ class ManualBench(TestBench):
             'target': self.target,
             'can_extrude': self.temperature >= 170.0,
         }
+        heater = types.SimpleNamespace(min_temp=0.0, max_temp=300.0)
+        self.extruder.get_heater = lambda: heater
         self.toolhead.get_status = lambda t: {
             'homed_axes': self.homed_axes,
             'axis_minimum': [-8, 0, 0],
@@ -62,6 +64,7 @@ class ManualBench(TestBench):
             self.target = float(text.split('TARGET=')[1])
         if text == 'G28':
             self.homed_axes = 'xyz'
+            self.obj.cortador.recolhido = True
         if text.startswith('BMCU_UNLOAD') and not self.fail_unload:
             self.device.status['route_state'] = [protocol.ROUTE_EMPTY] * 4
             self.present = False

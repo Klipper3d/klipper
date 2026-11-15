@@ -57,6 +57,13 @@ class EnderIntegration:
         self.timeout = finite_float('sensor_timeout', 60.0, above=0.0)
         self.purge_x = finite_float('purge_x', -6.0)
         self.wipe_x = finite_float('wipe_x', -3.0)
+        self.wipe_speed = finite_float('wipe_feedrate', 600.0, above=0.0)
+        self.purge_travel_speed = finite_float(
+            'purge_travel_feedrate', 1200.0, above=0.0
+        )
+        self.preheat_park_threshold = finite_float(
+            'preheat_park_threshold', 150.0, minval=0.0
+        )
         self.purge_y = finite_float('purge_y', 123.0)
         self.z_lift = finite_float('z_lift', 2.0, above=0.0)
         self.wipe_passes = config.getint('wipes', 6, minval=1)
@@ -113,6 +120,15 @@ class EnderIntegration:
             )
 
     def ready(self):
+        for name in ('M104', 'M109', 'SET_HEATER_TEMPERATURE'):
+            previous = self.gcode.register_command(name, None)
+            if previous is None:
+                raise self.printer.config_error(
+                    'Command %s was not found.' % name
+                )
+            self.gcode.register_command(
+                name, self.guard_hotend_temperature(name, previous)
+            )
         homing_anterior = self.gcode.register_command('G28', None)
         if homing_anterior is None:
             raise self.printer.config_error('Command G28 was not found.')
@@ -500,8 +516,12 @@ class EnderIntegration:
         self.cortador.recolher(perfil)
         with self.bmcu.printer_critical_section('posicionamento_carga'):
             cabecote.manual_move([None, None, alvo[2]], 5)
-            cabecote.manual_move([self.purge_x, None, None], 20)
-            cabecote.manual_move([None, self.purge_y, None], 20)
+            cabecote.manual_move(
+                [self.purge_x, None, None], self.purge_travel_speed / 60
+            )
+            cabecote.manual_move(
+                [None, self.purge_y, None], self.purge_travel_speed / 60
+            )
             cabecote.get_last_move_time()
         self.posicionamento_pendente = alvo
         return resultado
@@ -791,6 +811,20 @@ class EnderIntegration:
             )
 
     def heat_manual_filament(self):
+        self.check_manual_operation()
+
+        def check_parking():
+            # Normal manual cancellation is cached and safe inside motion's
+            # critical section. Recovery validation can refresh UART, so keep
+            # its existing full checks before and after parking instead.
+            if not getattr(self, 'recovering_tool_change', False):
+                self.check_manual_operation()
+
+        self.prepare_preheat(
+            230.0, allow_paused=getattr(self, 'recovering_tool_change', False),
+            check=check_parking,
+        )
+        self.check_manual_operation()
         self.gcode.run_script_from_command(
             'SET_HEATER_TEMPERATURE HEATER=extruder TARGET=230'
         )
@@ -838,16 +872,15 @@ class EnderIntegration:
                     'Channel %d is already loaded.' % (channel + 1)
                 )
                 return
-        if perfil_cortador:
-            head = self.printer.lookup_object('toolhead').get_status(
-                self.reactor.monotonic()
-            )
-            if not self.cortador.recolhido or not all(
-                axis in head['homed_axes'] for axis in 'xyz'
-            ):
-                # Use the same X-first preparation before claiming the
-                # filament operation, which intentionally blocks external G28.
-                self.execute('G28')
+        head = self.printer.lookup_object('toolhead').get_status(
+            self.reactor.monotonic()
+        )
+        if not all(axis in head['homed_axes'] for axis in 'xyz') or (
+            perfil_cortador and not self.cortador.recolhido
+        ):
+            # Home before heating or claiming the filament operation, which
+            # intentionally blocks external G28. Keep the same X-first guard.
+            self.execute('G28')
         self.manual_operation = action
         saved = False
         try:
@@ -1190,6 +1223,91 @@ class EnderIntegration:
             self.unload_encoder_gap(device, channel, tracking)
         return completed
 
+    def guard_hotend_temperature(self, name, previous):
+        def execute(gcmd):
+            if name == 'SET_HEATER_TEMPERATURE':
+                if gcmd.get('HEATER', None) != 'extruder':
+                    return previous(gcmd)
+                target = gcmd.get_float('TARGET', 0.0, minval=0.0)
+            else:
+                if 'T' in gcmd.get_command_parameters():
+                    if gcmd.get_int('T', minval=0) != 0:
+                        return previous(gcmd)
+                elif (
+                    self.printer.lookup_object('toolhead').get_extruder() is not
+                    self.printer.lookup_object('extruder')
+                ):
+                    return previous(gcmd)
+                target = gcmd.get_float('S', 0.0, minval=0.0)
+            try:
+                self.prepare_preheat(target)
+            except RuntimeError as error:
+                raise gcmd.error(str(error)) from error
+            return previous(gcmd)
+        return execute
+
+    def prepare_preheat(self, target, allow_paused=False, check=None):
+        if not math.isfinite(target):
+            raise RuntimeError('Nozzle temperature must be a finite number.')
+        if target <= self.preheat_park_threshold:
+            return
+        stats = self.printer.lookup_object('print_stats')
+        state = stats.get_status(self.reactor.monotonic()).get('state')
+        if state == 'printing' or (
+            state in ('paused', 'pause') and not allow_paused
+        ):
+            # Slicer/tuning temperature changes must never move a live print.
+            return
+        if self.printer.is_shutdown():
+            raise RuntimeError('The printer is shut down.')
+        extruder = self.printer.lookup_object('extruder')
+        heater = extruder.get_heater()
+        if not heater.min_temp <= target <= heater.max_temp:
+            raise RuntimeError(
+                'Nozzle temperature is outside the heater limits.'
+            )
+        profile = self.cortador.preparar()
+        if profile and not self.cortador.recolhido:
+            raise RuntimeError('Retract and check the stop before positioning.')
+        previous_target = extruder.get_status(
+            self.reactor.monotonic()
+        )['target']
+
+        def verify():
+            if check is not None:
+                check()
+            if stats.get_status(self.reactor.monotonic()).get('state') != state:
+                raise RuntimeError(
+                    'Print state changed during preheat positioning.'
+                )
+            if (
+                extruder.get_status(self.reactor.monotonic())['target'] !=
+                previous_target
+            ):
+                raise RuntimeError('Nozzle target changed; operation aborted')
+            if self.printer.is_shutdown():
+                raise RuntimeError('The printer is shut down.')
+
+        toolhead = self.printer.lookup_object('toolhead')
+        toolhead.wait_moves()
+        verify()
+        status = toolhead.get_status(self.reactor.monotonic())
+        if not all(axis in status['homed_axes'] for axis in 'xyz'):
+            raise RuntimeError(
+                'Run G28 before preheating above the parking threshold.'
+            )
+        position = toolhead.get_position()
+        if all(math.isclose(position[i], value, abs_tol=0.01)
+               for i, value in enumerate((self.purge_x, self.purge_y))):
+            return
+        expected = self.position_head(exigir_aquecimento=False, check=verify)
+        verify()
+        if not all(math.isclose(toolhead.get_position()[i], expected[i],
+                                abs_tol=0.01) for i in range(3)):
+            raise RuntimeError(
+                'Preheat positioning did not reach the purge position.'
+            )
+
     def posicionar_para_aquecimento(self, gcmd):
         if self.bmcu.active_operations or self.manual_operation is not None:
             raise gcmd.error('Wait for the BMCU operation to finish.')
@@ -1211,12 +1329,16 @@ class EnderIntegration:
                 'Purge/wipe position is outside the travel limits.')
         return alvo
 
-    def position_head(self, exigir_aquecimento=True):
+    def position_head(self, exigir_aquecimento=True, check=None):
+        if check is not None:
+            check()
         toolhead = self.printer.lookup_object('toolhead')
         pendente = getattr(self, 'posicionamento_pendente', None)
         if pendente is not None:
             try:
                 toolhead.wait_moves()
+                if check is not None:
+                    check()
                 if not all(
                     math.isclose(
                         toolhead.get_position()[i], pendente[i], abs_tol=0.01
@@ -1237,7 +1359,7 @@ class EnderIntegration:
                     raise RuntimeError(
                         'The extruder cooled during arrival.'
                     )
-                return
+                return list(pendente)
             finally:
                 self.posicionamento_pendente = None
         extruder = self.printer.lookup_object('extruder')
@@ -1245,11 +1367,22 @@ class EnderIntegration:
         if exigir_aquecimento and not status.get('can_extrude'):
             raise RuntimeError('Heat the nozzle before changing filament.')
         toolhead.wait_moves()
+        if check is not None:
+            check()
         estado = toolhead.get_status(self.reactor.monotonic())
         alvo = self.posicao_purga(toolhead, estado)
-        self.cortador.mover(toolhead, [None, None, alvo[2]], 300)
-        self.cortador.mover(toolhead, [self.purge_x, None, None], 1200)
-        self.cortador.mover(toolhead, [None, self.purge_y, None], 1200)
+        self.cortador.mover(
+            toolhead, [None, None, alvo[2]], 300, verificar=check
+        )
+        self.cortador.mover(
+            toolhead, [self.purge_x, None, None], self.purge_travel_speed,
+            verificar=check,
+        )
+        self.cortador.mover(
+            toolhead, [None, self.purge_y, None], self.purge_travel_speed,
+            verificar=check,
+        )
+        return alvo
 
     def move_filament(self, mm, speed, chunk=10.0):
         extruder = self.printer.lookup_object('extruder')
@@ -1486,11 +1619,17 @@ class EnderIntegration:
         verify()
         cabecote = self.printer.lookup_object('toolhead')
         for _ in range(self.wipe_passes):
-            self.cortador.mover(cabecote, [self.wipe_x, None, None], 600)
+            self.cortador.mover(
+                cabecote, [self.wipe_x, None, None], self.wipe_speed
+            )
             verify()
-            self.cortador.mover(cabecote, [self.purge_x, None, None], 600)
+            self.cortador.mover(
+                cabecote, [self.purge_x, None, None], self.wipe_speed
+            )
             verify()
-        self.cortador.mover(cabecote, [self.wipe_x, None, None], 600)
+        self.cortador.mover(
+            cabecote, [self.wipe_x, None, None], self.wipe_speed
+        )
         verify()
 
     def load(self, gcmd):

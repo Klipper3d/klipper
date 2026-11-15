@@ -66,6 +66,12 @@ public documentation is paired EN/PT-BR. Built-in screen
 labels, states, operation messages and known errors are localized. Custom labels
 and unknown external diagnostics retain their configured/original text.
 
+The stock LCD font does not reliably render accented Latin characters. Only
+the text sent to the display is rendered without those accents (for example,
+`Configuração` becomes `Configuracao`). Translations, file paths, selected files
+and commands retain their original content; Mainsail is unchanged. No display
+firmware or font replacement is required.
+
 The idle menu is **Print / Filament / Temperature / Move / Calibration /
 Settings**, with **Macros** only for custom shortcuts. **Temperature** owns
 preheat/cooldown; **Move** owns homing, jogging, motors and the optional cutter
@@ -200,6 +206,6 @@ with the validated integration's commissioning command.
 
 Test channels 1–4, capture/purge, cutter-free tip forming, pause/resume,
 heating/motion cancellation, timeout/disconnection and uncertain-route recovery.
-Check both screen languages, Portuguese accents, all rows, long filename
+Check both screen languages, unaccented Portuguese rendering, all rows, long filename
 scrolling and state/channel readability at 240×320. Tests verify UTF-8 boundaries
 and protocol limits, not the display's internal font glyphs.

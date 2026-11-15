@@ -119,12 +119,20 @@ wipes: 6
 ```
 
 Mantenha `purge_mm: 35`, temperaturas do material e taxas de extrusão calibradas.
-A limpeza continua em F600 com a pausa existente de um segundo para acomodação.
+Por padrão, a limpeza continua em F600 com a pausa existente de um segundo para acomodação.
 Treze travessias de 3 mm percorrem 39 mm, em vez das sete travessias anteriores
 de 2 mm (14 mm). A F600, somente o percurso ideal em velocidade constante leva
 3,9 s em vez de 1,4 s; são estimativas sem aceleração, esperas de conclusão e
 verificações do controlador, não medições do ciclo. Não apresente a limpeza
 ampliada como mais rápida.
+
+`wipe_feedrate` controla somente a limpeza XY; `purge_travel_feedrate` controla
+o deslocamento XY até a calha nos caminhos sequencial e paralelo. Ambos usam
+mm/min, com padrões de compatibilidade 600 (10 mm/s) e 1200 (20 mm/s).
+Configure-os na mesma seção da integração após conferir a folga do conjunto.
+Eles não alteram taxas de Z, lâmina ou extrusão, limites de aceleração nem o
+override de impressão. Um curso curto com inversão pode não atingir a taxa
+pedida; aumentá-la não é motivo para elevar os limites da máquina.
 
 Sessão, presença no canal, leitura do switch de entrada, temperatura mínima de
 extrusão e assistência ativa do alimentador são verificados até a conclusão da
@@ -261,15 +269,33 @@ esse arquivo em atualizações posteriores. As definições compartilhadas de
 usa essas macros quando disponíveis; sem elas, vale a configuração `preheat_*`
 da tela. Confira as temperaturas de exemplo para o filamento real.
 
-Carga/retirada manual sempre define o alvo do bico para 230 °C e aguarda a
-temperatura suficiente. Referencia eixos ainda sem referência e move para a
-posição de purga configurada antes de alimentar. Carregar outro canal retira
+Carga/retirada manual primeiro referencia os eixos necessários e move para a
+posição de purga configurada; só depois define o alvo do bico para 230 °C e
+aguarda a temperatura suficiente. Carregar outro canal retira
 o existente, verifica que o switch de entrada liberou e a rota estacionou,
 depois usa a sequência calibrada de captura, avanço ao bico, purga e limpeza.
 Selecionar o canal já carregado não faz nada. Retirar de uma rota vazia não
 aquece nem move. Filamento-alvo ausente, rota incerta ou divergência sensor/rota
 interrompem a ação antes do aquecimento. Impressões ativas/pausadas e contextos
 de impressão BMCU abertos precisam ser encerrados antes desses controles.
+
+Com esta integração carregada, os comandos do bico parado `M104`, `M109` e
+`SET_HEATER_TEMPERATURE HEATER=extruder` estacionam sobre a calha **antes** de
+aplicar alvo acima de `preheat_park_threshold` (padrão 150 °C). O aquecimento
+para filamento da tela usa a mesma preparação. Esses comandos avulsos não fazem
+homing automático: falta de referência, cortador inseguro ou falha de
+posicionamento bloqueia o novo alvo. Repetir o aquecimento na calha não acumula
+elevações de Z. Alvos da mesa/outro hotend, resfriamento e alvos até o limite
+não estacionam. Alterações de temperatura durante impressão ou pausa não movem
+o cabeçote; as sequências de início e recuperação protegida continuam
+responsáveis pelo posicionamento seguro. Calibração PID e API nativa de controle
+dos aquecedores não são sobrescritas.
+Instale host/tela e integração juntos pelo instalador de atualização preparada;
+atualizar somente o host não adiciona essa proteção aos módulos opcionais antigos.
+Estacionamento pela tela e aplicação do alvo compartilham o mutex de G-code.
+Cancelar mantém a operação ocupada até a saída da preparação e impede novos
+movimentos na fila; movimentos já enfileirados podem concluir. Estado, alvo e
+posição de chegada são conferidos novamente antes de aquecer.
 
 O alvo de 230 °C da troca manual é independente dos perfis de pré-aquecimento.
 O perfil TPU não comprova que um filamento flexível específico possa atravessar

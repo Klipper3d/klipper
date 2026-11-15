@@ -6,9 +6,14 @@ import unittest
 
 from test_cortador import BancadaCortador
 from test_integracao import (
-    Gcmd, NATIVE_MANAGER, ROOT, TestBench, installer, module, protocol,
+    Gcmd, NATIVE_MANAGER, ROOT, TestBench, import_module, installer, module,
+    protocol,
 )
 from test_print_recovery import RecoveryCommand, gcode_move
+
+ConfigWrapper = import_module(
+    'xy_rate_configfile', ROOT / 'klippy/configfile.py',
+).ConfigWrapper
 
 
 class CutterSafetyTests(unittest.TestCase):
@@ -444,8 +449,39 @@ class WipeDefaultsTests(unittest.TestCase):
         obj = configured_integration(wipe_x=-2.5, wipes=2).obj
         self.assertEqual((-2.5, 2), (obj.wipe_x, obj.wipe_passes))
 
+    def test_xy_feedrates_are_independent_and_keep_compatible_defaults(self):
+        obj = configured_integration().obj
+        self.assertEqual((600.0, 1200.0), (
+            obj.wipe_speed, obj.purge_travel_speed,
+        ))
+        obj = configured_integration(
+            wipe_feedrate=13500.0, purge_travel_feedrate=9000.0,
+        ).obj
+        self.assertEqual((13500.0, 9000.0), (
+            obj.wipe_speed, obj.purge_travel_speed,
+        ))
+
 
 class FiniteConfigurationTests(unittest.TestCase):
+    def test_new_options_reject_nonpositive_rates_and_negative_threshold(self):
+        for key, values in (
+            ('wipe_feedrate', (0, -1)),
+            ('purge_travel_feedrate', (0, -1)),
+            ('preheat_park_threshold', (-1,)),
+        ):
+            for value in values:
+                with self.subTest(key=key, value=value):
+                    b = configured_integration()
+                    parser = configparser.RawConfigParser()
+                    parser.read_dict({
+                        'bmcu_ender_integration': {key: str(value)},
+                    })
+                    config = ConfigWrapper(
+                        b.printer, parser, {}, 'bmcu_ender_integration',
+                    )
+                    with self.assertRaises(configparser.Error):
+                        module.EnderIntegration(config)
+
     def test_nonfinite_distances_speeds_positions_and_timeouts_are_rejected(
         self,
     ):
@@ -456,6 +492,8 @@ class FiniteConfigurationTests(unittest.TestCase):
             'unload_progress_timeout', 'unload_step_mm', 'unload_slack_mm',
             'pullback_after_sensor_mm', 'sensor_timeout',
             'purge_x', 'wipe_x', 'purge_y', 'z_lift',
+            'wipe_feedrate', 'purge_travel_feedrate',
+            'preheat_park_threshold',
         )
         for key in keys:
             for value in (math.nan, math.inf, -math.inf):
@@ -524,6 +562,39 @@ class MotionBench(BancadaCortador):
 
 
 class PurgeMotionTests(unittest.TestCase):
+    def test_fast_wipe_keeps_all_crossings_checks_and_print_override(self):
+        for factor in (50, 200):
+            with self.subTest(factor=factor):
+                b = MotionBench()
+                b.obj.wipe_x = -1.0
+                b.obj.wipe_passes = 6
+                b.obj.wipe_speed = 13500.0
+                b.execute('M220 S%d' % factor)
+                b.obj.load(Gcmd())
+                wiping = [(pos, speed) for pos, speed in b.physical_moves
+                          if speed == 225.0]
+                self.assertEqual([-1.0, -6.0] * 6 + [-1.0],
+                                 [pos[0] for pos, _ in wiping])
+                self.assertAlmostEqual(factor / 6000,
+                                       b.gmove.speed_factor)
+                self.assertEqual(180.0, b.obj.capture_speed)
+
+    def test_custom_purge_travel_does_not_accelerate_z(self):
+        b = MotionBench()
+        b.obj.purge_travel_speed = 13500.0
+        b.obj.position_head()
+        self.assertEqual([5.0, 225.0, 225.0],
+                         [speed for _, speed in b.physical_moves])
+
+    def test_parallel_positioning_uses_same_custom_xy_speed(self):
+        b = BancadaCortador()
+        b.obj.purge_travel_speed = 13500.0
+        b.present = False
+        b.obj.antecipar_carga(b.endpoint, 'prepare_load')
+        self.assertEqual([5.0, 225.0, 225.0],
+                         [event[2] for event in b.eventos
+                          if event[0] == 'mover'])
+
     def test_default_wipe_has_thirteen_crossings_and_preserves_state(self):
         defaults = configured_integration().obj
         for override in (50, 200):

@@ -110,11 +110,19 @@ wipes: 6
 ```
 
 Keep `purge_mm: 35`, material temperatures and calibrated extrusion rates.
-Wiping remains F600 with the existing one-second settling dwell. Thirteen
+By default, wiping remains F600 with the existing one-second settling dwell. Thirteen
 3 mm crossings travel 39 mm instead of the earlier seven 2 mm crossings
 (14 mm). At F600, ideal constant-speed travel alone is 3.9 s instead of 1.4 s;
 these are estimates excluding acceleration, completion waits and controller
 checks, not measured cycle times. Do not claim the wider wipe is faster.
+
+`wipe_feedrate` controls only XY wiping; `purge_travel_feedrate` controls XY
+travel to the chute in both sequential and parallel positioning. Both use
+mm/min, with compatibility defaults of 600 (10 mm/s) and 1200 (20 mm/s).
+Configure them in the same integration section after checking the assembly's
+clearance. They do not change Z, blade or extrusion rates, acceleration limits,
+or the print speed override. A short reversing stroke may never reach its
+requested feedrate; increasing it is not a reason to raise machine limits.
 
 Session, channel presence, entry-switch reading, extrusion-temperature readiness
 and active feeder assistance are checked through purge completion, after the
@@ -240,15 +248,32 @@ are managed by the installer. Screen preheat actions use these macros when
 available; without them, the display's `preheat_*` configuration applies.
 Temperature examples must be checked against the actual filament.
 
-Manual load/unload always sets the nozzle target to 230 °C and waits until it
-is hot enough. It homes unreferenced axes and moves to the configured purge
-position before feeding. Loading another channel unloads the existing channel,
+Manual load/unload first homes unreferenced axes and moves to the configured
+purge position, then sets the nozzle target to 230 °C and waits until it is hot
+enough. Loading another channel unloads the existing channel,
 verifies that the entry switch cleared and the route parked, then uses the
 calibrated capture, nozzle-feed, purge and wipe sequence. Selecting the already
 loaded channel does nothing. Unloading an empty route does not heat or move.
 An absent target filament, uncertain route or sensor/route disagreement stops
 the action before heating. Active prints, paused prints and open BMCU print
 contexts must be finished before using these manual controls.
+
+With this integration loaded, idle hotend commands `M104`, `M109` and
+`SET_HEATER_TEMPERATURE HEATER=extruder` park over the chute **before** applying
+a target above `preheat_park_threshold` (default 150 °C). Screen filament heating
+uses the same preparation. These standalone commands do not home automatically:
+missing references, an unsafe cutter or failed positioning blocks the new target.
+Repeated heating at the chute does not keep raising Z. Bed/other-hotend targets,
+cooldown and targets at or below the threshold do not park. Temperature changes
+during printing or a pause do not move the head; the existing print-start and
+guarded recovery sequences remain responsible for safe positioning. PID
+calibration and the native heater-control API are not overridden.
+Install the host/display and integration together with the staged installer;
+updating only the host does not add this protection to older optional modules.
+Screen parking and target application share the G-code mutex. Cancellation keeps
+the operation busy until preparation exits and prevents queueing further motion;
+already queued movement may finish. State, target and arrival position are checked
+again before heating.
 
 The 230 °C manual-change target is independent of the preheat profiles. The TPU
 preset does not establish that a particular flexible filament can travel through

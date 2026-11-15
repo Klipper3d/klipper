@@ -79,6 +79,31 @@ class TJC3224Test(unittest.TestCase):
         encoded = safe_text_bytes(u"name\u00cc3\u00c3<.gcode", 100)
         self.assertNotIn(FRAME_TAIL, encoded)
 
+    def test_portuguese_accents_are_removed_only_from_wire_text(self):
+        text = u"Configura\u00e7\u00e3o: a\u00e7\u00e3o, pr\u00e9-aquecer"
+        self.assertEqual(b"Configuracao: acao, pre-aquecer",
+                         safe_text_bytes(text))
+        self.assertEqual(b"Configuracao", safe_text_bytes(
+            u"Configurac\u0327a\u0303o".encode("utf-8")))
+        self.assertEqual(
+            u"Configura\u00e7\u00e3o: a\u00e7\u00e3o, pr\u00e9-aquecer", text)
+
+    def test_accent_normalization_precedes_wire_byte_limit(self):
+        self.assertEqual(b"acao", safe_text_bytes(u"a\u00e7\u00e3o", 4))
+        self.assertEqual(u"\u6253\u5370\u6587\u4ef6".encode("utf-8"),
+                         safe_text_bytes(u"\u6253\u5370\u6587\u4ef6"))
+
+    def test_lcd_label_does_not_rename_selected_accented_file(self):
+        filename = u"models/pe\u00e7a-1.gcode"
+        browser = FileBrowser()
+        entries = browser.update([(filename, 123)])
+        browser.enter(entries[0])
+        entry = browser.update([(filename, 123)])[0]
+        display = TJC3224(FakeTransport())
+        frame = display.text(0, 0, entry.name)
+        self.assertIn(b"peca-1.gcode", frame)
+        self.assertEqual(filename, browser.enter(entry))
+
 
 class TransportTest(unittest.TestCase):
     def test_large_utf8_frame_is_chunked_and_reassembled(self):
@@ -424,6 +449,59 @@ class FilamentHarness:
 
 
 class FilamentOperationTest(unittest.TestCase):
+    def test_cancel_during_preheat_positioning_never_enables_heater(self):
+        h = FilamentHarness()
+        h.printer.objects['bmcu_ender_integration'] = types.SimpleNamespace(
+            prepare_preheat=lambda target, **kwargs: (
+                h.display.cancel_operation()),
+        )
+        result = h.display._begin_operation('EXTRUDE', delta=1)
+        self.assertFalse(result[0])
+        self.assertEqual(0, h.extruder.target)
+        self.assertIsNone(h.display.operation)
+
+    def test_other_target_during_positioning_is_not_overwritten(self):
+        h = FilamentHarness()
+        h.printer.objects['bmcu_ender_integration'] = types.SimpleNamespace(
+            prepare_preheat=lambda target, **kwargs: (
+                setattr(h.extruder, 'target', 215)),
+        )
+        result = h.display._begin_operation('EXTRUDE', delta=1)
+        self.assertFalse(result[0])
+        self.assertEqual(215, h.extruder.target)
+        self.assertIsNone(h.display.operation)
+
+    def test_legacy_integration_without_helper_keeps_native_display_api(self):
+        h = FilamentHarness()
+        h.printer.objects['bmcu_ender_integration'] = types.SimpleNamespace()
+        self.assertTrue(h.display._begin_operation('EXTRUDE', delta=1)[0])
+        self.assertEqual(200, h.extruder.target)
+
+    def test_direct_display_heating_uses_existing_preheat_preparation(self):
+        h = FilamentHarness()
+        targets = []
+        def prepare(target, **kwargs):
+            self.assertEqual(0, h.extruder.target)
+            targets.append(target)
+        h.printer.objects['bmcu_ender_integration'] = types.SimpleNamespace(
+            prepare_preheat=prepare,
+        )
+        self.assertTrue(h.display._begin_operation('EXTRUDE', delta=1)[0])
+        self.assertEqual([200], targets)
+        self.assertEqual(200, h.extruder.target)
+
+    def test_direct_display_parking_failure_leaves_heater_off(self):
+        h = FilamentHarness()
+        def fail(target, **kwargs):
+            raise CommandError('Home before preheating')
+        h.printer.objects['bmcu_ender_integration'] = types.SimpleNamespace(
+            prepare_preheat=fail,
+        )
+        result = h.display._begin_operation('EXTRUDE', delta=1)
+        self.assertFalse(result[0])
+        self.assertEqual(0, h.extruder.target)
+        self.assertIsNone(h.display.operation)
+
     def setUp(self):
         self.h = FilamentHarness()
         self.display = self.h.display
@@ -556,10 +634,14 @@ class FilamentOperationTest(unittest.TestCase):
         self.display.load_filament()
         self.h.heat()
         old = self.display.operation
+        native_mutex = self.h.gcode.get_mutex
         @contextlib.contextmanager
         def replaced_mutex():
             self.display._finish_operation(False, "Operation cancelled", old)
-            self.assertTrue(self.display.move_axis("E", 5)[0])
+            # The replacement has its own preparation transaction. Model its
+            # normal mutex, not another injection of this stale waiter.
+            with mock.patch.object(self.h.gcode, "get_mutex", native_mutex):
+                self.assertTrue(self.display.move_axis("E", 5)[0])
             yield
         with mock.patch.object(self.h.gcode, "get_mutex", replaced_mutex):
             self.assertEqual(1.25, self.h.tick())
