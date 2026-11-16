@@ -99,10 +99,12 @@ i2c_wait(I2C_TypeDef *i2c, uint32_t set, uint32_t clear, uint32_t timeout)
 {
     for (;;) {
         uint32_t sr1 = i2c->SR1;
+        if (sr1 & I2C_SR1_AF) {
+            i2c->SR1 = ~I2C_SR1_AF;
+            return I2C_BUS_NACK;
+        }
         if ((sr1 & set) == set && (sr1 & clear) == 0)
             return I2C_BUS_SUCCESS;
-        if (sr1 & I2C_SR1_AF)
-            return I2C_BUS_NACK;
         if (!timer_is_before(timer_read_time(), timeout))
             return I2C_BUS_TIMEOUT;
     }
@@ -113,11 +115,13 @@ i2c_start(I2C_TypeDef *i2c, uint8_t addr, uint8_t xfer_len,
           uint32_t timeout)
 {
     i2c->CR1 = I2C_CR1_START | I2C_CR1_PE;
-    i2c_wait(i2c, I2C_SR1_SB, 0, timeout);
+    int ret = i2c_wait(i2c, I2C_SR1_SB, 0, timeout);
+    if (ret != I2C_BUS_SUCCESS)
+        return ret;
     i2c->DR = addr;
     if (addr & 0x01)
         i2c->CR1 |= I2C_CR1_ACK;
-    int ret = i2c_wait(i2c, I2C_SR1_ADDR, 0, timeout);
+    ret = i2c_wait(i2c, I2C_SR1_ADDR, 0, timeout);
     irqstatus_t flag = irq_save();
     uint32_t sr2 = i2c->SR2;
     if (addr & 0x01 && xfer_len == 1)
