@@ -8,9 +8,7 @@
 #include <math.h>   // sqrt, fabs, fmax, fmin
 #include <stddef.h> // offsetof
 #include <stdlib.h> // malloc
-#include <stdio.h> // malloc
 #include <string.h> // memset
-#include <float.h> // DBL_MAX
 #include "compiler.h" // __visible
 #include "pyhelper.h" // errorf
 #include "itersolve.h" // struct stepper_kinematics
@@ -362,193 +360,7 @@ chol_solve_spd(const double *L, int k, const double *b, double *x)
     }
 }
 
-static double
-projected_gradient_norm(const double *H, const double *t, const double *f,
-                        const double *Lbounds, const double *Ubounds,
-                        int N)
-{
-    double s2 = 0.;
-    for (int i = 0; i < N; ++i) {
-        double gi = 0.;
-        for (int j = 0; j < N; ++j)
-            gi += H[i * N + j] * t[j];
-        gi -= f[i];
-        double li = Lbounds ? Lbounds[i] : 0.;
-        double ui = Ubounds ? Ubounds[i] : DBL_MAX;
-        if (ui < li)
-            ui = li;
-        int atL = t[i] <= li + 1e-12;
-        int atU = t[i] >= ui - 1e-12;
-        double pgi = gi;
-        if (atL && gi > 0.)
-            pgi = 0.;
-        if (atU && gi < 0.)
-            pgi = 0.;
-        s2 += pgi * pgi;
-    }
-    return sqrt(s2);
-}
-
-
-// -------- Bound-constrained ridge LS: H = A^T A + lambda I, f = A^T F --------
-// minimize 0.5 T^T H T - f^T T, s.t. L <= T <= U
-static int
-solve_box_ridge_ls(const double *A, int N, const double Fext[3], double lambda,
-                   const double *Lbounds, const double *Ubounds,
-                   int max_iters, double tol, double *T_out)
-{
-    double H[WINCH_MAX_ANCHORS * WINCH_MAX_ANCHORS];
-    double f[WINCH_MAX_ANCHORS] = { 0.0 };
-    for (int i = 0; i < N; ++i) {
-        double aix = A[0 * N + i];
-        double aiy = A[1 * N + i];
-        double aiz = A[2 * N + i];
-        f[i] = aix * Fext[0] + aiy * Fext[1] + aiz * Fext[2];
-        for (int j = 0; j <= i; ++j) {
-            double ajx = A[0 * N + j];
-            double ajy = A[1 * N + j];
-            double ajz = A[2 * N + j];
-            double dot = aix * ajx + aiy * ajy + aiz * ajz;
-            double v = dot + (i == j ? lambda : 0.);
-            H[i * N + j] = v;
-            H[j * N + i] = v;
-        }
-    }
-
-    double Lfact[WINCH_MAX_ANCHORS * WINCH_MAX_ANCHORS];
-    memcpy(Lfact, H, sizeof(double) * N * N);
-    if (!chol_decompose_spd(Lfact, N))
-        return 0;
-    double t[WINCH_MAX_ANCHORS];
-    chol_solve_spd(Lfact, N, f, t);
-    for (int i = 0; i < N; ++i) {
-        double li = Lbounds ? Lbounds[i] : 0.;
-        double ui = Ubounds ? Ubounds[i] : DBL_MAX;
-        if (ui < li)
-            ui = li;
-        if (t[i] < li)
-            t[i] = li;
-        if (t[i] > ui)
-            t[i] = ui;
-    }
-
-    double g[WINCH_MAX_ANCHORS];
-    int free_idx[WINCH_MAX_ANCHORS];
-
-    for (int it = 0; it < max_iters; ++it) {
-        for (int i = 0; i < N; ++i) {
-            double gi = 0.;
-            for (int j = 0; j < N; ++j)
-                gi += H[i * N + j] * t[j];
-            g[i] = gi - f[i];
-        }
-
-        int k = 0;
-        for (int i = 0; i < N; ++i) {
-            double li = Lbounds ? Lbounds[i] : 0.;
-            double ui = Ubounds ? Ubounds[i] : DBL_MAX;
-            if (ui < li)
-                ui = li;
-            int atL = t[i] <= li + 1e-12;
-            int atU = t[i] >= ui - 1e-12;
-            int violateL = atL && (g[i] < -tol);
-            int violateU = atU && (g[i] > tol);
-            if ((!atL && !atU) || violateL || violateU)
-                free_idx[k++] = i;
-        }
-
-        double pgn = projected_gradient_norm(H, t, f, Lbounds, Ubounds, N);
-        if (pgn <= tol)
-            break;
-
-        if (!k) {
-            int best_idx = -1;
-            double best = 0.;
-            for (int i = 0; i < N; ++i) {
-                double li = Lbounds ? Lbounds[i] : 0.;
-                double ui = Ubounds ? Ubounds[i] : DBL_MAX;
-                if (ui < li)
-                    ui = li;
-                int atL = t[i] <= li + 1e-12;
-                int atU = t[i] >= ui - 1e-12;
-                double viol = 0.;
-                if (atL)
-                    viol = fmax(0., -g[i]);
-                else if (atU)
-                    viol = fmax(0., g[i]);
-                if (viol > best) {
-                    best = viol;
-                    best_idx = i;
-                }
-            }
-            if (best_idx < 0)
-                break;
-            free_idx[k++] = best_idx;
-        }
-
-        int ksize = k;
-        double Hff[WINCH_MAX_ANCHORS * WINCH_MAX_ANCHORS];
-        double gf[WINCH_MAX_ANCHORS];
-        double pf[WINCH_MAX_ANCHORS];
-        for (int p = 0; p < ksize; ++p) {
-            int ip = free_idx[p];
-            gf[p] = g[ip];
-            for (int q = 0; q < ksize; ++q) {
-                int iq = free_idx[q];
-                Hff[p * ksize + q] = H[ip * N + iq];
-            }
-        }
-        if (!chol_decompose_spd(Hff, ksize))
-            return 0;
-        for (int i = 0; i < ksize; ++i)
-            gf[i] = -gf[i];
-        chol_solve_spd(Hff, ksize, gf, pf);
-
-        double alpha = 1.0;
-        for (int idx = 0; idx < ksize; ++idx) {
-            int i = free_idx[idx];
-            double pi = pf[idx];
-            if (fabs(pi) < 1e-16)
-                continue;
-            double li = Lbounds ? Lbounds[i] : 0.;
-            double ui = Ubounds ? Ubounds[i] : DBL_MAX;
-            if (ui < li)
-                ui = li;
-            if (pi > 0.) {
-                double amax = (ui - t[i]) / pi;
-                if (amax < alpha)
-                    alpha = amax > 0. ? amax : 0.;
-            } else if (pi < 0.) {
-                double amax = (li - t[i]) / pi;
-                if (amax < alpha)
-                    alpha = amax > 0. ? amax : 0.;
-            }
-        }
-        if (alpha < 0.)
-            alpha = 0.;
-
-        for (int idx = 0; idx < ksize; ++idx) {
-            int i = free_idx[idx];
-            t[i] += alpha * pf[idx];
-        }
-        for (int i = 0; i < N; ++i) {
-            double li = Lbounds ? Lbounds[i] : 0.;
-            double ui = Ubounds ? Ubounds[i] : DBL_MAX;
-            if (ui < li)
-                ui = li;
-            if (t[i] < li)
-                t[i] = li;
-            if (t[i] > ui)
-                t[i] = ui;
-        }
-    }
-
-    for (int i = 0; i < N; ++i)
-        T_out[i] = t[i];
-    return 1;
-}
-
-// Smallest tensions within [L, U] that balance the six force and moment
+// Smallest tensions within [L, U] that balance the force and optional moment
 // equations A T = F. Minimizes |A T - F|^2 + lambda |T|^2 for a small lambda
 // with an active-set method. Every solve is of the M x M system
 // A_f A_f^T + lambda I over the free tensions, which stays well conditioned
@@ -679,12 +491,9 @@ static_forces_qp(struct winch_flex *wf, const struct coord *pos,
     const int max_iters = 100;
     const double tol = 1e-3;
     double T[WINCH_MAX_ANCHORS];
-    if (has_attachments(wf))
-        solve_box_min_norm(A, 6, N, Fext, LAMBDA_MOMENTS, Lbounds, Ubounds,
-                           max_iters, tol, T);
-    else if (!solve_box_ridge_ls(A, N, Fext, LAMBDA, Lbounds, Ubounds,
-                                 max_iters, tol, T))
-        return 0;
+    solve_box_min_norm(A, has_attachments(wf) ? 6 : 3, N, Fext,
+                       has_attachments(wf) ? LAMBDA_MOMENTS : LAMBDA,
+                       Lbounds, Ubounds, max_iters, tol, T);
 
     for (int i = 0; i < N; ++i)
         forces[i] = T[i];
