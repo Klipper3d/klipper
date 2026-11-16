@@ -107,6 +107,27 @@ class V2InstallationTests(unittest.TestCase):
             self.assertNotIn(native, changes)
             self.assertIn(extras / 'bmcu_ender_panel.py', changes)
 
+    def test_prepare_updates_old_callbacks_with_paired_toolchange_locks(self):
+        for installed in (False, True):
+            with self.subTest(installed=installed), \
+                    tempfile.TemporaryDirectory() as temporary:
+                home = Path(temporary)
+                _, extras, state, _ = self.bench(home)
+                manager = extras / 'bmcu_core/manager.py'
+                if installed:
+                    manager.write_text(installer.patch_pre_unload(
+                        installer.patch_pre_capture(NATIVE_MANAGER)))
+                before = manager.read_bytes()
+                changes = self.prepare(home, state)
+                self.assertEqual(before, manager.read_bytes())
+                result = changes[manager].decode()
+                expected = installer.patch_pre_unload(
+                    installer.patch_toolchange_lock(
+                        installer.patch_pre_capture(NATIVE_MANAGER)))
+                self.assertEqual(expected, result)
+                self.assertEqual(
+                    result, installer.patch_toolchange_lock(result))
+
     def test_monochrome_heating_is_migrated_in_active_nested_includes(self):
         for legacy in (False, True):
             with self.subTest(legacy=legacy), \

@@ -131,7 +131,9 @@ class BMCUManager:
         multi_device_switch = (
             source_device is not None and source_device.name != device.name)
         if multi_device_switch:
-            self._lock_refill(source_device, device, endpoint, 'TOOL_SWITCH %s' % operation_label)
+            self._lock_refill(
+                source_device, device, endpoint, 'TOOL_SWITCH %s' % operation_label,
+                source_channel=source_channel, replacement_channel=channel)
         else:
             self._lock(device, endpoint, 'LOAD %s' % operation_label, channel=channel)
         phase = 'PRECHECK'
@@ -151,7 +153,7 @@ class BMCUManager:
         u1_hold_was_active = bool(
             endpoint.driver == 'snapmaker_u1' and
             self._u1_ownership_record(endpoint.name).get('persistent_hold'))
-        self._set_phase(device, phase)
+        self._set_phase(device, phase, channel=channel)
         load_completed = False
         load_temperature_finalized = False
         try:
@@ -188,7 +190,7 @@ class BMCUManager:
                 phase = 'UNLOAD_SOURCE'
                 failure_device = source_device
                 failure_channel = source_channel
-                self._set_phase(source_device, phase)
+                self._set_phase(source_device, phase, channel=source_channel)
                 target_motion_started = True
                 if self._ungripped_tail(
                         source_device, source_channel, endpoint):

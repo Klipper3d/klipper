@@ -166,7 +166,8 @@ sudo python3 "$HOME/klipper-v2-source/scripts/ender3-v3-se/install_multicolor.py
 ```
 
 The installer verifies the installed 1.1.2 structure, patches the generic
-contract and pre-capture phases, installs optional modules and preserves
+contract, pre-capture phases and Ender source/target locking, installs optional
+modules and preserves
 `SAVE_CONFIG` and existing integration settings. It serializes installation
 and rollback with one lock, stops the relevant services, then re-reads state
 before taking the authoritative backup. The previous complete host checkout,
@@ -195,6 +196,21 @@ Running `install_multicolor.py` without `--host-source` still updates only the
 integration. It cannot reconstruct a host checkout changed beforehand and
 therefore leaves services stopped after a failed update. Git updates alone
 do not replace installed optional modules.
+
+For automatic swaps between two channels on the same BMCU, the updated installer
+reuses the native paired-route lock for both source and target. Otherwise native
+channel-filtered phase updates can leave the operation at `PRECHECK`, causing
+`The native unloading phase does not match.` before any cutting. The
+`CUT_OR_FORM` guard remains required; do not bypass it or change cutter calibration
+to work around this error. Empty-path loads, standalone unloading and unrelated
+callbacks keep their existing locking behavior.
+
+This correction requires a reviewed source commit containing the lock fix; the
+original v2.0.1 tag does not include later fixes. Stage that source separately and
+use `install_multicolor.py --host-source` through the maintenance flow above,
+only after printing ends and the idle/parked/sensor-clear requirements are met.
+Software regressions cover every distinct channel pair; supervised physical
+acceptance is still required after installation.
 
 The installer also updates the supported print-start heating sequence in
 `bmcu-multicor-ender.cfg` and an existing `impressao.cfg`. After homing and

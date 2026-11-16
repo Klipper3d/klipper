@@ -303,6 +303,63 @@ def patch_pre_capture(text):
     return transform_method(text, 'BMCUManager', 'load_channel', change)
 
 
+def patch_toolchange_lock(text):
+    """Keep native channel-filtered phases valid for same-device Ender swaps."""
+    def change(fragment):
+        previous_lock = (
+            '        multi_device_switch = (\n'
+            '            source_device is not None and '
+            'source_device.name != device.name)\n'
+            '        if multi_device_switch:\n'
+            '            self._lock_refill(\n'
+            "                source_device, device, endpoint, 'TOOL_SWITCH %s' "
+            '% operation_label,\n'
+            '                source_channel=source_channel, '
+            'replacement_channel=channel)\n'
+            '        else:\n'
+            "            self._lock(device, endpoint, 'LOAD %s' "
+            '% operation_label, channel=channel)'
+        )
+        updated_lock = previous_lock.replace(
+            '        if multi_device_switch:\n',
+            '        ender_channel_switch = (\n'
+            '            source_device is not None and\n'
+            '            source_device.name == device.name and\n'
+            '            source_channel != channel and\n'
+            "            endpoint.driver == 'generic_single_extruder' and\n"
+            "            str(endpoint.get('before_pullback_macro', ''))."
+            "strip().upper() == 'BMCU_RELEASE_ENDER')\n"
+            '        if multi_device_switch or ender_channel_switch:\n',
+        )
+        previous_unlock = (
+            '            if multi_device_switch:\n'
+            '                self._unlock_refill('
+            'source_device, device, endpoint)\n'
+            '            else:\n'
+            '                self._unlock(device, endpoint)'
+        )
+        updated_unlock = previous_unlock.replace(
+            'if multi_device_switch:',
+            'if multi_device_switch or ender_channel_switch:',
+        )
+        if (fragment.count(updated_lock) == 1
+                and fragment.count(updated_unlock) == 1
+                and previous_lock not in fragment
+                and previous_unlock not in fragment):
+            return fragment
+        if (fragment.count(previous_lock) != 1
+                or fragment.count(previous_unlock) != 1
+                or updated_lock in fragment or updated_unlock in fragment):
+            raise RuntimeError(
+                'The native tool-change lock changed; review manager.py '
+                'before installation.'
+            )
+        return fragment.replace(previous_lock, updated_lock, 1).replace(
+            previous_unlock, updated_unlock, 1)
+
+    return transform_method(text, 'BMCUManager', 'load_channel', change)
+
+
 def patch_pre_unload(text):
     text = migrate_callback_source(text)
     def change(fragment):
@@ -677,7 +734,7 @@ def prepare(
         sensor.resolve(): patch_sensor(MEASUREMENT).encode(),
         contracts.resolve(): patch_contract(contracts.read_text()).encode(),
         manager.resolve(): patch_pre_unload(
-            patch_pre_capture(manager.read_text())
+            patch_toolchange_lock(patch_pre_capture(manager.read_text()))
         ).encode(),
         module.resolve(): MODULE.encode(),
         (extras / 'bmcu_cortador_ender.py').resolve(): CORTADOR,

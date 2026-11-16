@@ -33,6 +33,48 @@ def check_refill_contract(refill, manager):
             raise ValueError('BMCU native refill method changed: %s.%s' % key)
 
 
+def toolchange_boundaries(source):
+    method = next(node for cls in ast.parse(source).body
+                  if isinstance(cls, ast.ClassDef)
+                  and cls.name == 'BMCUManager'
+                  for node in cls.body if isinstance(node, ast.FunctionDef)
+                  and node.name == 'load_channel')
+
+    def assigns(node, name):
+        return (isinstance(node, ast.Assign) and len(node.targets) == 1
+                and isinstance(node.targets[0], ast.Name)
+                and node.targets[0].id == name)
+
+    start = next(i for i, node in enumerate(method.body)
+                 if assigns(node, 'multi_device_switch'))
+    stop = next(i for i in range(start + 1, len(method.body))
+                if assigns(method.body[i], 'phase'))
+    unlock = next(node for node in ast.walk(method)
+                  if isinstance(node, ast.If) and node.body
+                  and isinstance(node.body[0], ast.Expr)
+                  and isinstance(node.body[0].value, ast.Call)
+                  and isinstance(node.body[0].value.func, ast.Attribute)
+                  and node.body[0].value.func.attr == '_unlock_refill')
+    return method.body[start:stop], unlock
+
+
+def check_toolchange_contract(manager):
+    fixture_dir = ROOT / 'test/bmcu_integracao/fixtures'
+    fixture = (fixture_dir / 'operation_lock_112_original.txt').read_text()
+    native = methods(manager)
+    for key, expected in methods(fixture).items():
+        if native.get(key) != expected:
+            raise ValueError(
+                'BMCU native lock/phase method changed: %s.%s' % key)
+    fixture = (fixture_dir / 'manager_original.txt').read_text()
+    expected_lock, expected_unlock = toolchange_boundaries(fixture)
+    lock, unlock = toolchange_boundaries(manager)
+    if ([ast.dump(node) for node in lock] !=
+            [ast.dump(node) for node in expected_lock]
+            or ast.dump(unlock) != ast.dump(expected_unlock)):
+        raise ValueError('BMCU native tool-change lock boundary changed')
+
+
 def check_process_stop(source):
     # Only a sleeping synthetic process is started. No serial library is
     # imported and the native bootstrap START command is never executed.
@@ -104,9 +146,11 @@ def check_sources(source):
     core = source / 'klippy/extras/bmcu_core'
     manager = (core / 'manager.py').read_text()
     check_refill_contract((core / 'refill.py').read_text(), manager)
+    check_toolchange_contract(manager)
     cases = (
         (manager, lambda text: installer.patch_pre_unload(
-            installer.patch_pre_capture(text))),
+            installer.patch_toolchange_lock(
+                installer.patch_pre_capture(text)))),
         ((core / 'endpoints.py').read_text(), installer.patch_contract),
         ((source / 'scripts/bmcu_transportd.py').read_text(),
          installer.patch_transport),
@@ -124,7 +168,8 @@ def main():
     parser.add_argument('--source', type=Path, required=True)
     args = parser.parse_args()
     check_sources(args.source)
-    print('Pinned BMCU 1.1.2: refill, patches and process stop verified. '
+    print('Pinned BMCU 1.1.2: refill, tool-change locks, patches and process '
+          'stop verified. '
           'No printer or serial device was accessed.')
 
 

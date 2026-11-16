@@ -179,7 +179,8 @@ sudo python3 "$HOME/klipper-v2-source/scripts/ender3-v3-se/install_multicolor.py
 ```
 
 O instalador verifica a estrutura 1.1.2 instalada, ajusta o contrato genérico
-e as fases de pré-captura, instala módulos opcionais e preserva `SAVE_CONFIG`
+e as fases de pré-captura e a trava de origem/destino da Ender, instala módulos
+opcionais e preserva `SAVE_CONFIG`
 e os ajustes existentes da integração. Um único bloqueio serializa instalação
 e rollback. Os serviços relevantes são parados, e o estado é relido antes do
 backup de referência. O checkout anterior inteiro do host, incluindo código da
@@ -210,6 +211,22 @@ Executar `install_multicolor.py` sem `--host-source` ainda atualiza somente
 a integração. Esse modo não consegue reconstruir um checkout do host alterado
 antes e, por isso, deixa os serviços parados após falhar. Atualizações apenas
 pelo Git não substituem os módulos opcionais instalados.
+
+Nas trocas automáticas entre dois canais da mesma BMCU, o instalador atualizado
+reutiliza a trava nativa de duas rotas para origem e destino. Sem isso, as
+atualizações de fase filtradas por canal podem deixar a operação em `PRECHECK`,
+gerando `The native unloading phase does not match.` antes de qualquer corte.
+A proteção `CUT_OR_FORM` continua obrigatória; não a remova nem altere a
+calibração do cortador para contornar esse erro. Cargas com trajeto vazio,
+retiradas isoladas e callbacks não relacionados mantêm as travas existentes.
+
+Essa correção exige um commit de código revisado que contenha o ajuste da trava;
+a tag v2.0.1 original não inclui correções posteriores. Prepare essa fonte
+separadamente e use `install_multicolor.py --host-source` pelo fluxo de manutenção
+acima, somente após o fim da impressão e com os requisitos de impressora parada,
+canais estacionados e sensor livre atendidos. Os testes de software cobrem todos
+os pares de canais distintos; a aceitação física supervisionada continua
+necessária depois da instalação.
 
 O instalador também atualiza a sequência suportada de aquecimento no início da
 impressão em `bmcu-multicor-ender.cfg` e em um `impressao.cfg` existente. Após

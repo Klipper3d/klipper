@@ -1,0 +1,195 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# BMCU-Klipper v1.1.2 / a1215523: native methods, checked against upstream.
+class BMCUManager:
+    def _lock(self, device, endpoint, operation, channel=None):
+        if self._maintenance_prepared():
+            raise BMCUError('BMCU maintenance is prepared; new motion is blocked')
+        if self._u1_background_channel_conflict(device, channel):
+            raise BMCUError('%s Channel %s is busy with background filament motion' %
+                            (device.name, '?' if channel is None else int(channel) + 1))
+        active = self.active_operations.get(device.name)
+        if active is not None:
+            raise BMCUError('%s is busy: %s' % (device.name, active))
+        if endpoint.name in self.endpoint_locks:
+            raise BMCUError('endpoint %s is busy' % endpoint.name)
+        path_group = endpoint.shared_path_group()
+        if path_group in self.path_locks:
+            raise BMCUError('shared path %s is busy' % path_group)
+        record = {'name': operation, 'device': device.name, 'endpoint': endpoint.name,
+                  'shared_path_group': path_group}
+        if channel is not None:
+            record['channel'] = int(channel)
+        self.active_operations[device.name] = record
+        self.endpoint_locks.add(endpoint.name)
+        self.path_locks.add(path_group)
+
+    def _unlock(self, device, endpoint):
+        self._release_u1_foreground_async_slot(device)
+        operation = self.active_operations.get(device.name, {})
+        self.endpoint_locks.discard(endpoint.name)
+        self.path_locks.discard(operation.get('shared_path_group', endpoint.shared_path_group()))
+        self.active_operations.pop(device.name, None)
+
+    def _lock_refill(self, source_device, replacement_device, endpoint, operation,
+                     replacement_endpoint=None, source_channel=None,
+                     replacement_channel=None):
+        if self._maintenance_prepared():
+            raise BMCUError('BMCU maintenance is prepared; new refill motion is blocked')
+        devices = []
+        device_channels = {}
+        for device, channel in ((source_device, source_channel),
+                                (replacement_device, replacement_channel)):
+            if device is None:
+                continue
+            if device.name not in [item.name for item in devices]:
+                devices.append(device)
+            channels = device_channels.setdefault(device.name, set())
+            if channel is not None:
+                channels.add(int(channel))
+        endpoints = []
+        for item in (endpoint, replacement_endpoint):
+            if item is not None and item.name not in [value.name for value in endpoints]:
+                endpoints.append(item)
+        for device in devices:
+            channels = device_channels.get(device.name, set())
+            if channels:
+                for channel in channels:
+                    if self._u1_background_channel_conflict(device, channel):
+                        raise BMCUError(
+                            '%s Channel %d has background filament motion' %
+                            (device.name, channel + 1))
+            elif self._u1_background_channel_conflict(device):
+                raise BMCUError('%s has background filament motion' % device.name)
+            if device.name in self.active_operations:
+                raise BMCUError('%s is busy' % device.name)
+        path_groups = []
+        for item in endpoints:
+            if item.name in self.endpoint_locks:
+                raise BMCUError('endpoint %s is busy' % item.name)
+            group = item.shared_path_group()
+            if group in self.path_locks:
+                raise BMCUError('shared path %s is busy' % group)
+            if group not in path_groups:
+                path_groups.append(group)
+        for item in endpoints:
+            self.endpoint_locks.add(item.name)
+        for group in path_groups:
+            self.path_locks.add(group)
+        endpoint_names = [item.name for item in endpoints]
+        for device in devices:
+            record = {
+                'name': operation, 'device': device.name,
+                'endpoint': endpoint_names[0] if endpoint_names else '',
+                'endpoints': list(endpoint_names),
+                'shared_path_group': path_groups[0] if path_groups else '',
+                'shared_path_groups': list(path_groups), 'refill': True,
+            }
+            channels = sorted(device_channels.get(device.name, set()))
+            if len(channels) == 1:
+                record['channel'] = channels[0]
+            elif channels:
+                record['channels'] = channels
+            self.active_operations[device.name] = record
+
+    def _unlock_refill(self, source_device, replacement_device, endpoint,
+                       replacement_endpoint=None):
+        devices = []
+        for device in (source_device, replacement_device):
+            if device is not None and device.name not in [item.name for item in devices]:
+                devices.append(device)
+        endpoint_names = []
+        path_groups = []
+        for item in (endpoint, replacement_endpoint):
+            if item is None:
+                continue
+            if item.name not in endpoint_names:
+                endpoint_names.append(item.name)
+            group = item.shared_path_group()
+            if group not in path_groups:
+                path_groups.append(group)
+        for device in devices:
+            operation = self.active_operations.pop(device.name, {})
+            self._release_u1_foreground_async_slot(device)
+            for name in operation.get('endpoints', []):
+                if name not in endpoint_names:
+                    endpoint_names.append(name)
+            for group in operation.get('shared_path_groups', []):
+                if group not in path_groups:
+                    path_groups.append(group)
+        for name in endpoint_names:
+            self.endpoint_locks.discard(name)
+        for group in path_groups:
+            self.path_locks.discard(group)
+
+    def _set_phase(self, device, phase, channel=None):
+        operation = self.active_operations.get(device.name)
+        if operation is not None and channel is not None:
+            try:
+                wanted_channel = int(channel)
+            except (TypeError, ValueError, OverflowError):
+                wanted_channel = -1
+            operation_channels = set()
+            if operation.get('channel') is not None:
+                try:
+                    operation_channels.add(int(operation.get('channel')))
+                except (TypeError, ValueError, OverflowError):
+                    pass
+            for value in operation.get('channels', []):
+                try:
+                    operation_channels.add(int(value))
+                except (TypeError, ValueError, OverflowError):
+                    pass
+            if operation_channels and wanted_channel not in operation_channels:
+                operation = None
+        if operation is not None:
+            previous = str(operation.get('phase', '') or '')
+            now = self.reactor.monotonic()
+            previous_started = operation.get('_debug_phase_started_at')
+            previous_elapsed_ms = None
+            if previous_started is not None:
+                try:
+                    previous_elapsed_ms = max(
+                        0.0, (float(now) - float(previous_started)) * 1000.0)
+                except (TypeError, ValueError, OverflowError):
+                    previous_elapsed_ms = None
+            operation['phase'] = str(phase)
+            operation['_debug_phase_started_at'] = float(now)
+            self._publish_active_operations()
+            if self.debug_enabled and previous != str(phase):
+                perf = {}
+                try:
+                    perf = device.performance_status() or {}
+                except Exception:
+                    perf = {}
+                cached_status = []
+                status = getattr(device, 'status', {}) or {}
+                for raw_channel in operation.get('channels', []):
+                    try:
+                        channel = int(raw_channel)
+                        cached_status.append({
+                            'ch': channel + 1,
+                            'buffer': status.get('buffer_pct', [])[channel],
+                            'meters': status.get('meters', [])[channel],
+                            'pwm': status.get('motor_pwm', [])[channel],
+                            'motion': status.get('motion', [])[channel],
+                            'present': status.get('present', [])[channel],
+                        })
+                    except (TypeError, ValueError, IndexError, KeyError):
+                        continue
+                self._debug_log(
+                    '%s phase %s -> %s prev_elapsed_ms=%s endpoints=%s '
+                    'channels=%s transport_pending=%s tx_bytes=%s '
+                    'last_rx_age_ms=%s quiesced=%s paused=%s cached=%s',
+                    device.name, previous or 'NONE', str(phase),
+                    ('-' if previous_elapsed_ms is None else
+                     '%.3f' % previous_elapsed_ms),
+                    ','.join(str(v) for v in operation.get('endpoints', [])) or '-',
+                    ','.join(str(v) for v in operation.get('channels', [])) or '-',
+                    perf.get('pending_requests', '-'),
+                    perf.get('tx_queue_bytes', '-'),
+                    ('-' if perf.get('last_rx_age_s') is None else
+                     '%.3f' % (float(perf.get('last_rx_age_s', 0.0)) * 1000.0)),
+                    perf.get('reactor_quiesced', '-'),
+                    perf.get('transport_paused', '-'),
+                    json.dumps(cached_status, sort_keys=True,
+                               separators=(',', ':')))
