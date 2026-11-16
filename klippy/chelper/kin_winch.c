@@ -297,12 +297,11 @@ static_forces_tikhonov(struct winch_flex *wf, const struct coord *pos,
                 T[i] -= step_damp * d[i];
         }
 
-        // Hard cap on Tmax and 0 if we don't ignore pretension
-        // Allow negative forces if the user asked for it
-        for (int i=0;i<N;++i){
-            if (wf->min_force[i] >= 0. && T[i] < 0.) T[i] = 0.;
-            if (T[i] > wf->max_force[i]) T[i] = wf->max_force[i];
-        }
+    }
+    // Ignoring pretension still respects physical tension limits.
+    for (int i = 0; i < N; ++i) {
+        if (wf->min_force[i] >= 0. && T[i] < 0.) T[i] = 0.;
+        if (T[i] > wf->max_force[i]) T[i] = wf->max_force[i];
     }
 
     for (int i = 0; i < N; ++i) {
@@ -434,8 +433,6 @@ solve_box_min_norm(const double *A, int M, int N, const double *Fext,
         if (blocking >= 0) {
             t[blocking] = blocking_bound;
             is_free[blocking] = 0;
-            if (blocking == released)
-                break;
             continue;
         }
 
