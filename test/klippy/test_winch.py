@@ -109,6 +109,41 @@ class WinchFlexHelperTests(unittest.TestCase):
         term = motor_steps / k0 + radius
         return ((term * term) - (radius * radius)) / k2
 
+    def test_hp5_force_balance_and_flex_forward_round_trip(self):
+        anchors = [(0., -1900., -280.), (1900., 0., -280.),
+                   (0., 1900., -280.), (-1900., 0., -280.), (0., 0., 1900.)]
+        strands = [2, 2, 2, 2, 4]
+        for ma in ([1]*5, [2, 2, 2, 2, 4]):
+            guy = [429.1]*4 + [352.3]
+            helper = self.build_helper(anchors, mover_weight=.081,
+                mechanical_advantage=ma, lines_per_axis=strands, guy_wires=guy,
+                min_force=[3. if ma[0] == 1 else 10.]*5)
+            helper.set_active(True)
+            steppers = [ffi.gc(lib.winch_stepper_alloc(helper.ptr, i), lib.free) for i in range(5)]
+            for pos in ((0., 0., 0.), (300., -200., 50.), (-400., 350., 400.)):
+                distances, flex = helper.calc_arrays(pos)
+                forces = [-f * 20000. * u*u*n / (d*u+y)
+                          for f, d, u, n, y in zip(flex, distances, ma, strands, guy)]
+                residual, _ = self.wrench_residual(anchors, [(0.,0.,0.)]*5,
+                    pos, forces, distances, .081*9.81)
+                # This firmware minimizes ridge-regularized force error rather
+                # than enforcing exact equilibrium. Check its KKT conditions.
+                minimum = 3. if ma[0] == 1 else 10.
+                for anchor, distance, force in zip(anchors, distances, forces):
+                    gradient = sum((anchor[j]-pos[j])/distance * residual[j] for j in range(3)) + 1e-3*force
+                    if force > minimum + 1e-5:
+                        self.assertLess(abs(gradient), .003)
+                    else:
+                        self.assertGreaterEqual(gradient, -.003)
+                self.assertTrue(all(force > 0 for force in forces))
+                motor = ffi.new('double[]', [lib.itersolve_calc_position_from_coord(stp, *pos) for stp in steppers])
+                out, cost, iters = ffi.new('double[3]'), ffi.new('double[1]'), ffi.new('int[1]')
+                ok = lib.winch_forward_solve(helper.ptr, motor, ffi.new('double[3]', [0.,0.,0.]),
+                    .001, .001, 3, 30, out, cost, iters)
+                self.assertTrue(ok)
+                for actual, wanted in zip(out, pos):
+                    self.assertAlmostEqual(actual, wanted, delta=.01)
+
     def test_disabled_flex_matches_geometry(self):
         helper = self.build_helper(FOUR_ANCHORS_DEFAULT,
                                    mover_weight=0.0,
