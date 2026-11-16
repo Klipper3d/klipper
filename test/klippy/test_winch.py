@@ -63,7 +63,7 @@ class WinchFlexHelperTests(unittest.TestCase):
                      target=20.0, min_force=None, max_force=None,
                      guy_wires=None, buildup_factor=0.0,
                      mechanical_advantage=None, lines_per_axis=None,
-                     attachments=None):
+                     attachments=None, algorithm='qp', ignore_pretension=False):
         num = len(anchors)
         if attachments is None:
             attachments = [(0.0, 0.0, 0.0)] * num
@@ -82,6 +82,8 @@ class WinchFlexHelperTests(unittest.TestCase):
             'winch_max_force': list_str(max_force),
             'winch_buildup_factor': f"{buildup_factor}",
             'winch_mechanical_advantage': int_list_str(mechanical_advantage),
+            'flex_compensation_algorithm': algorithm,
+            'ignore_pretension': str(ignore_pretension),
         }
         if guy_wires is not None:
             options['winch_guy_wire_lengths'] = list_str(guy_wires)
@@ -90,6 +92,17 @@ class WinchFlexHelperTests(unittest.TestCase):
         cfg['printer'] = options
         wrapper = configfile.ConfigWrapper(DummyPrinter(), cfg, {}, 'printer')
         return WinchFlexHelper(tuple(anchors), tuple(attachments), wrapper)
+
+    def test_tikhonov_without_pretension_still_obeys_physical_force_limits(self):
+        anchors = [(0., -1900., -280.), (1900., 0., -280.),
+                   (0., 1900., -280.), (-1900., 0., -280.), (0., 0., 1900.)]
+        for mass in (.081, 10.):
+            helper = self.build_helper(anchors, mover_weight=mass, min_force=[3.]*5,
+                max_force=[5.]*5, algorithm='tikhonov', ignore_pretension=True)
+            helper.set_active(True)
+            distances, flex = helper.calc_arrays((1800., 300., 1800.))
+            forces = [-f*20000./d for f,d in zip(flex, distances)]
+            self.assertTrue(all(-1e-9 <= force <= 5.+1e-9 for force in forces), forces)
 
     def spool_lengths(self, helper, pos):
         distances, flex = helper.calc_arrays(pos)
