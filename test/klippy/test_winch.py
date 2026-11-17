@@ -104,6 +104,17 @@ class WinchFlexHelperTests(unittest.TestCase):
             forces = [-f*20000./d for f,d in zip(flex, distances)]
             self.assertTrue(all(-1e-9 <= force <= 5.+1e-9 for force in forces), forces)
 
+    def test_tikhonov_minimum_is_a_soft_target(self):
+        anchors = [(0., -1900., -280.), (1900., 0., -280.),
+                   (0., 1900., -280.), (-1900., 0., -280.), (0., 0., 1900.)]
+        helper = self.build_helper(anchors, mover_weight=.081, min_force=[3.]*5,
+            max_force=[170.]*5, algorithm='tikhonov')
+        helper.set_active(True)
+        distances, flex = helper.calc_arrays((0., 0., 0.))
+        forces = [-f*20000./d for f,d in zip(flex, distances)]
+        self.assertGreater(max(3.-f for f in forces), .2)
+        self.assertLess(max(3.-f for f in forces), .3)
+
     def spool_lengths(self, helper, pos):
         distances, flex = helper.calc_arrays(pos)
         lengths = [d + f for d, f in zip(distances, flex)]
@@ -154,6 +165,22 @@ class WinchFlexHelperTests(unittest.TestCase):
                 ok = lib.winch_forward_solve(helper.ptr, motor, ffi.new('double[3]', [0.,0.,0.]),
                     .001, .001, 3, 30, out, cost, iters)
                 self.assertTrue(ok)
+                for actual, wanted in zip(out, pos):
+                    self.assertAlmostEqual(actual, wanted, delta=.01)
+
+    def test_forward_rejects_nearly_planar_mirror_ambiguity(self):
+        for height, expected in ((1900., True), (.01, False), (0., False)):
+            anchors = [(0.,-1900.,0.), (1900.,0.,0.), (0.,1900.,0.),
+                       (-1900.,0.,0.), (0.,0.,height)]
+            helper = self.build_helper(anchors, buildup_factor=0.)
+            steppers = [ffi.gc(lib.winch_stepper_alloc(helper.ptr, i), lib.free) for i in range(5)]
+            pos = (10., 20., 100.)
+            motor = ffi.new('double[]', [lib.itersolve_calc_position_from_coord(stp, *pos) for stp in steppers])
+            out, cost, iters = ffi.new('double[3]'), ffi.new('double[1]'), ffi.new('int[1]')
+            ok = lib.winch_forward_solve(helper.ptr, motor, ffi.new('double[3]', [0.,0.,0.]),
+                .001, .001, 3, 30, out, cost, iters)
+            self.assertEqual(bool(ok), expected)
+            if expected:
                 for actual, wanted in zip(out, pos):
                     self.assertAlmostEqual(actual, wanted, delta=.01)
 
