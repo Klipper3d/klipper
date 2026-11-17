@@ -14,7 +14,7 @@ if KLIPPY_ROOT not in sys.path:
 
 import configfile  # noqa: E402
 import chelper      # noqa: E402
-from kinematics.winch import WinchFlexHelper  # noqa: E402
+from kinematics.winch import WinchFlexHelper, WinchKinematics  # noqa: E402
 
 
 ffi, lib = chelper.get_ffi()
@@ -63,7 +63,7 @@ class WinchFlexHelperTests(unittest.TestCase):
                      target=20.0, min_force=None, max_force=None,
                      guy_wires=None, buildup_factor=0.0,
                      mechanical_advantage=None, lines_per_axis=None,
-                     attachments=None, algorithm='qp', ignore_pretension=False):
+                     attachments=None, algorithm='qp', ignore_pretension=False, anchor_mode='none'):
         num = len(anchors)
         if attachments is None:
             attachments = [(0.0, 0.0, 0.0)] * num
@@ -75,6 +75,7 @@ class WinchFlexHelperTests(unittest.TestCase):
             mechanical_advantage = [1] * num
         cfg = configparser.ConfigParser()
         options = {
+            'winch_anchor_mode': anchor_mode,
             'winch_mover_weight': f"{mover_weight}",
             'winch_spring_constant': f"{spring}",
             'winch_target_force': f"{target}",
@@ -168,8 +169,8 @@ class WinchFlexHelperTests(unittest.TestCase):
                 for actual, wanted in zip(out, pos):
                     self.assertAlmostEqual(actual, wanted, delta=.01)
 
-    def test_forward_rejects_nearly_planar_mirror_ambiguity(self):
-        for height, expected in ((1900., True), (.01, False), (0., False)):
+    def test_forward_uses_gravity_and_near_planar_range_information(self):
+        for height in (1900., .01, 0.):
             anchors = [(0.,-1900.,0.), (1900.,0.,0.), (0.,1900.,0.),
                        (-1900.,0.,0.), (0.,0.,height)]
             helper = self.build_helper(anchors, buildup_factor=0.)
@@ -179,10 +180,49 @@ class WinchFlexHelperTests(unittest.TestCase):
             out, cost, iters = ffi.new('double[3]'), ffi.new('double[1]'), ffi.new('int[1]')
             ok = lib.winch_forward_solve(helper.ptr, motor, ffi.new('double[3]', [0.,0.,0.]),
                 .001, .001, 3, 30, out, cost, iters)
-            self.assertEqual(bool(ok), expected)
-            if expected:
-                for actual, wanted in zip(out, pos):
-                    self.assertAlmostEqual(actual, wanted, delta=.01)
+            self.assertTrue(ok)
+            wanted_pos = pos if height else (10.,20.,-100.)
+            for actual, wanted in zip(out, wanted_pos):
+                self.assertAlmostEqual(actual, wanted, delta=.01)
+
+    def test_cube_corner_mode_and_move_checks(self):
+        anchors = [(1000.,-1000.,1900.),(1000.,1000.,1900.),(-1000.,1000.,1900.),(-1000.,-1000.,1900.),
+                   (1000.,-1000.,-280.),(1000.,1000.,-280.),(-1000.,1000.,-280.),(-1000.,-1000.,-280.)]
+        with self.assertRaises(configfile.error):
+            self.build_helper(anchors[:4], anchor_mode='cube_corner')
+        helper = self.build_helper(anchors, anchor_mode='cube_corner')
+        kin = WinchKinematics.__new__(WinchKinematics)
+        kin.flex_helper = helper
+        class Move:
+            def __init__(self, position): self.end_pos = position
+            def move_error(self, message): return ValueError(message)
+        for position in ((0.,0.,0.), (1000.,1000.,1900.), (0.,0.,-1500.)):
+            kin.check_move(Move(position))
+        for position in ((1001.,0.,0.), (0.,0.,2000.), (0.,1100.,-1500.)):
+            with self.assertRaises(ValueError): kin.check_move(Move(position))
+        helper.set_anchor_mode(0)
+        kin.check_move(Move((10000.,10000.,10000.)))
+        class Toolhead:
+            def wait_moves(self): pass
+        class Command:
+            def get_int(self, key, default=None, **kwargs): return 3 if key=='A' else default
+            def respond_info(self, message): self.response=message
+        kin.toolhead=Toolhead()
+        command=Command()
+        kin.cmd_M666(command)
+        self.assertEqual(helper.anchor_mode, 3)
+        self.assertIn('cube_corner', command.response)
+        with self.assertRaises(ValueError): helper.set_anchor_mode(4)
+
+    def test_last_top_lower_prism_and_all_top_no_height_limit(self):
+        helper = self.build_helper(FOUR_ANCHORS_DEFAULT, anchor_mode='last_on_top')
+        self.assertTrue(helper.is_reachable((0.,0.,-1000.)))
+        self.assertFalse(helper.is_reachable((0.,0.,3000.)))
+        anchors = [(1000.,-1000.,1900.),(1000.,1000.,1900.),(-1000.,1000.,1900.),(-1000.,-1000.,1900.)]
+        helper = self.build_helper(anchors, anchor_mode='all_on_top')
+        self.assertTrue(helper.is_reachable((0.,0.,3000.)))
+        for pos in ((1100.,0.,0.),(-1100.,0.,0.),(0.,1100.,0.),(0.,-1100.,0.)):
+            self.assertFalse(helper.is_reachable(pos))
 
     def test_disabled_flex_matches_geometry(self):
         helper = self.build_helper(FOUR_ANCHORS_DEFAULT,

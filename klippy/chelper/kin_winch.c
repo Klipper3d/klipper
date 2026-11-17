@@ -5,6 +5,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
+#include "forward_workspace.h"
 #include <math.h>   // sqrt, fabs, fmax, fmin
 #include <stddef.h> // offsetof
 #include <stdlib.h> // malloc
@@ -43,6 +44,7 @@ struct winch_flex {
     double inv_attachment_radius;
     int num_anchors;
     int enabled;
+    int anchor_mode;
     int flex_compensation_algorithm;
     double buildup_factor;
     double mover_weight;
@@ -722,49 +724,6 @@ solve_normal_system(double JTJ[3][3], const double rhs[3], double delta[3])
     return 1;
 }
 
-// Subtract squared ranges to obtain a rigid seed without a mirror branch.
-// Double intermediates avoid cancellation in the squared millimetre ranges.
-// Reject nearly planar layouts: their ranges cannot reliably identify a side.
-static int range_seed(const double anchors[][3], const double *origins,
-                      const double *lines, size_t count, double seed[3]) {
-    double system[3][4] = {};
-    const double d0 = origins[0] + lines[0];
-    for (size_t i = 1; i < count; ++i) {
-        double row[3], rhs = (d0 - (origins[i] + lines[i]))
-            * (d0 + origins[i] + lines[i]);
-        for (size_t j = 0; j < 3; ++j) {
-            row[j] = 2.0 * (anchors[i][j] - anchors[0][j]);
-            rhs += (anchors[i][j] - anchors[0][j])
-                 * (anchors[i][j] + anchors[0][j]);
-        }
-        for (size_t r = 0; r < 3; ++r) {
-            for (size_t c = 0; c < 3; ++c) system[r][c] += row[r] * row[c];
-            system[r][3] += row[r] * rhs;
-        }
-    }
-    double scale = fmax(system[0][0], fmax(system[1][1], system[2][2]));
-    for (size_t j = 0; j < 3; ++j) {
-        size_t pivot = j;
-        for (size_t r = j + 1; r < 3; ++r)
-            if (fabs(system[r][j]) > fabs(system[pivot][j])) pivot = r;
-        if (fabs(system[pivot][j]) <= scale * 1e-8) return 0;
-        for (size_t c = 0; c < 4; ++c) {
-            double tmp = system[j][c]; system[j][c] = system[pivot][c]; system[pivot][c] = tmp;
-        }
-        double divisor = system[j][j];
-        for (size_t c = j; c < 4; ++c) system[j][c] /= divisor;
-        for (size_t r = 0; r < 3; ++r) if (r != j) {
-            double factor = system[r][j];
-            for (size_t c = j; c < 4; ++c) system[r][c] -= factor * system[j][c];
-        }
-    }
-    for (size_t j = 0; j < 3; ++j) {
-        if (!isfinite(system[j][3])) return 0;
-        seed[j] = system[j][3];
-    }
-    return 1;
-}
-
 static int
 solve_hybrid_halley(struct winch_flex *wf, const double *line_pos, int N,
                     struct coord *pos, double eta, double tol,
@@ -779,22 +738,26 @@ solve_hybrid_halley(struct winch_flex *wf, const double *line_pos, int N,
     double hess[WINCH_MAX_ANCHORS * 9];
     int hi_limit = halley_iters < max_iters ? halley_iters : max_iters;
 
-    if (N >= 4) {
-        double anchors[WINCH_MAX_ANCHORS][3], candidate[3];
-        for (int i = 0; i < N; ++i) {
-            anchors[i][0] = wf->anchors[i].x;
-            anchors[i][1] = wf->anchors[i].y;
-            anchors[i][2] = wf->anchors[i].z;
-        }
-        if (!range_seed(anchors, wf->distances_origin, line_pos, N, candidate)) {
-            if (cost_out) *cost_out = INFINITY;
-            if (iters_out) *iters_out = 0;
-            return 0;
-        }
-        struct coord trial = {candidate[0], candidate[1], candidate[2]};
-        double candidate_cost = residuals_and_derivatives(wf, line_pos, N, &trial, residuals, jac, NULL);
-        double initial_cost = residuals_and_derivatives(wf, line_pos, N, pos, residuals, jac, NULL);
-        if (candidate_cost < initial_cost) *pos = trial;
+    double anchors[WINCH_MAX_ANCHORS][3], ranges[WINCH_MAX_ANCHORS];
+    for (int i=0;i<N;++i) {
+        anchors[i][0]=wf->anchors[i].x; anchors[i][1]=wf->anchors[i].y; anchors[i][2]=wf->anchors[i].z;
+        ranges[i]=wf->distances_origin[i]+line_pos[i];
+    }
+    double candidates[3][3], normal[3]; int planar=0;
+    int candidate_count=hp_range_candidates(anchors,ranges,N,candidates,normal,&planar);
+    double initial[3]={pos->x,pos->y,pos->z};
+    cost=hp_forward_allowed(anchors,N,wf->anchor_mode,normal,planar,initial)
+        ? residuals_and_derivatives(wf,line_pos,N,pos,residuals,jac,NULL) : INFINITY;
+    for (int i=0;i<candidate_count;++i) {
+        if (!hp_forward_allowed(anchors,N,wf->anchor_mode,normal,planar,candidates[i])) continue;
+        struct coord trial={candidates[i][0],candidates[i][1],candidates[i][2]};
+        double trial_cost=residuals_and_derivatives(wf,line_pos,N,&trial,residuals,jac,NULL);
+        if (trial_cost<cost) { cost=trial_cost;*pos=trial; }
+    }
+    if (!candidate_count || !isfinite(cost)) {
+        if (cost_out) *cost_out=INFINITY;
+        if (iters_out) *iters_out=0;
+        return 0;
     }
 
     for (int iter = 0; iter < hi_limit; ++iter) {
@@ -837,6 +800,9 @@ solve_hybrid_halley(struct winch_flex *wf, const double *line_pos, int N,
         pos->x += delta[0];
         pos->y += delta[1];
         pos->z += delta[2];
+        double position[3]={pos->x,pos->y,pos->z};
+        hp_reflect_above(anchors[0],normal,planar,position);
+        pos->x=position[0];pos->y=position[1];pos->z=position[2];
         iter_count = iter + 1;
         if (vec_norm3(delta) < tol) {
             converged = 1;
@@ -859,6 +825,9 @@ solve_hybrid_halley(struct winch_flex *wf, const double *line_pos, int N,
         pos->x += delta[0];
         pos->y += delta[1];
         pos->z += delta[2];
+        double position[3]={pos->x,pos->y,pos->z};
+        hp_reflect_above(anchors[0],normal,planar,position);
+        pos->x=position[0];pos->y=position[1];pos->z=position[2];
         iter_count = iter + 1;
         if (vec_norm3(delta) < tol) {
             converged = 1;
@@ -874,6 +843,8 @@ solve_hybrid_halley(struct winch_flex *wf, const double *line_pos, int N,
         *iters_out = iter_count;
     if (cost_out)
         *cost_out = cost;
+    double final_position[3]={pos->x,pos->y,pos->z};
+    if (!hp_forward_allowed(anchors,N,wf->anchor_mode,normal,planar,final_position)) converged=0;
     return converged;
 }
 
@@ -1105,6 +1076,25 @@ winch_flex_calc_arrays(struct winch_flex *wf, double x, double y, double z,
     if (!wf || wf->num_anchors <= 0)
         return;
     compute_flex(wf, x, y, z, distances_out, flex_out);
+}
+
+int __visible
+winch_flex_set_anchor_mode(struct winch_flex *wf, int mode)
+{
+    if (!wf || mode<0 || mode>3 || (mode==HP_ANCHORS_CUBE_CORNER && wf->num_anchors!=8)) return 0;
+    wf->anchor_mode=mode;
+    return 1;
+}
+
+int __visible
+winch_flex_is_reachable(struct winch_flex *wf, double x, double y, double z)
+{
+    if (!wf) return 0;
+    double anchors[WINCH_MAX_ANCHORS][3], position[3]={x,y,z};
+    for (int i=0;i<wf->num_anchors;++i) {
+        anchors[i][0]=wf->anchors[i].x; anchors[i][1]=wf->anchors[i].y; anchors[i][2]=wf->anchors[i].z;
+    }
+    return hp_reachable(anchors,wf->num_anchors,wf->anchor_mode,position);
 }
 
 void __visible
