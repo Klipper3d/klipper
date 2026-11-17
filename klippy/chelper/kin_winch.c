@@ -262,6 +262,7 @@ static_forces_tikhonov(struct winch_flex *wf, const struct coord *pos,
         solve_min_norm_T(A, M, N, Fext, lambda, T);
     }
 
+    // Tmin is a soft target in Tikhonov; only zero and Tmax are hard limits.
     if (!wf->ignore_pretension) {
         double P[WINCH_MAX_ANCHORS * WINCH_MAX_ANCHORS];
         build_null_projector(A, M, N, lambda, P);
@@ -721,6 +722,49 @@ solve_normal_system(double JTJ[3][3], const double rhs[3], double delta[3])
     return 1;
 }
 
+// Subtract squared ranges to obtain a rigid seed without a mirror branch.
+// Double intermediates avoid cancellation in the squared millimetre ranges.
+// Reject nearly planar layouts: their ranges cannot reliably identify a side.
+static int range_seed(const double anchors[][3], const double *origins,
+                      const double *lines, size_t count, double seed[3]) {
+    double system[3][4] = {};
+    const double d0 = origins[0] + lines[0];
+    for (size_t i = 1; i < count; ++i) {
+        double row[3], rhs = (d0 - (origins[i] + lines[i]))
+            * (d0 + origins[i] + lines[i]);
+        for (size_t j = 0; j < 3; ++j) {
+            row[j] = 2.0 * (anchors[i][j] - anchors[0][j]);
+            rhs += (anchors[i][j] - anchors[0][j])
+                 * (anchors[i][j] + anchors[0][j]);
+        }
+        for (size_t r = 0; r < 3; ++r) {
+            for (size_t c = 0; c < 3; ++c) system[r][c] += row[r] * row[c];
+            system[r][3] += row[r] * rhs;
+        }
+    }
+    double scale = fmax(system[0][0], fmax(system[1][1], system[2][2]));
+    for (size_t j = 0; j < 3; ++j) {
+        size_t pivot = j;
+        for (size_t r = j + 1; r < 3; ++r)
+            if (fabs(system[r][j]) > fabs(system[pivot][j])) pivot = r;
+        if (fabs(system[pivot][j]) <= scale * 1e-8) return 0;
+        for (size_t c = 0; c < 4; ++c) {
+            double tmp = system[j][c]; system[j][c] = system[pivot][c]; system[pivot][c] = tmp;
+        }
+        double divisor = system[j][j];
+        for (size_t c = j; c < 4; ++c) system[j][c] /= divisor;
+        for (size_t r = 0; r < 3; ++r) if (r != j) {
+            double factor = system[r][j];
+            for (size_t c = j; c < 4; ++c) system[r][c] -= factor * system[j][c];
+        }
+    }
+    for (size_t j = 0; j < 3; ++j) {
+        if (!isfinite(system[j][3])) return 0;
+        seed[j] = system[j][3];
+    }
+    return 1;
+}
+
 static int
 solve_hybrid_halley(struct winch_flex *wf, const double *line_pos, int N,
                     struct coord *pos, double eta, double tol,
@@ -734,6 +778,24 @@ solve_hybrid_halley(struct winch_flex *wf, const double *line_pos, int N,
     double jac[WINCH_MAX_ANCHORS * 3];
     double hess[WINCH_MAX_ANCHORS * 9];
     int hi_limit = halley_iters < max_iters ? halley_iters : max_iters;
+
+    if (N >= 4) {
+        double anchors[WINCH_MAX_ANCHORS][3], candidate[3];
+        for (int i = 0; i < N; ++i) {
+            anchors[i][0] = wf->anchors[i].x;
+            anchors[i][1] = wf->anchors[i].y;
+            anchors[i][2] = wf->anchors[i].z;
+        }
+        if (!range_seed(anchors, wf->distances_origin, line_pos, N, candidate)) {
+            if (cost_out) *cost_out = INFINITY;
+            if (iters_out) *iters_out = 0;
+            return 0;
+        }
+        struct coord trial = {candidate[0], candidate[1], candidate[2]};
+        double candidate_cost = residuals_and_derivatives(wf, line_pos, N, &trial, residuals, jac, NULL);
+        double initial_cost = residuals_and_derivatives(wf, line_pos, N, pos, residuals, jac, NULL);
+        if (candidate_cost < initial_cost) *pos = trial;
+    }
 
     for (int iter = 0; iter < hi_limit; ++iter) {
         cost = residuals_and_derivatives(wf, line_pos, N, pos,
