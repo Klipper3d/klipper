@@ -8,6 +8,8 @@ import stepper, mathutil, chelper
 
 
 class WinchFlexHelper:
+    ANCHOR_MODES = {'none': 0, 'last_on_top': 1, 'all_on_top': 2, 'cube_corner': 3}
+    ANCHOR_MODE_NAMES = {v: k for k, v in ANCHOR_MODES.items()}
     ALGORITHMS = {'tikhonov': 0, 'qp': 1}
     ALGO_NAMES = {v: k for k, v in ALGORITHMS.items()}
 
@@ -38,6 +40,9 @@ class WinchFlexHelper:
         self.set_active(self.enabled)
 
     def _read_config(self, config):
+        self.anchor_mode = config.getchoice('winch_anchor_mode', self.ANCHOR_MODES, default='none')
+        if self.anchor_mode == 3 and self.num != 8:
+            raise config.error("CubeCorner anchor mode requires exactly 8 anchors")
         self.buildup_factor = config.getfloat('winch_buildup_factor', 0., minval=0.)
         self.mover_weight = config.getfloat('winch_mover_weight', 0., minval=0.)
         self.spring_constant = config.getfloat('winch_spring_constant', 0., minval=0.)
@@ -86,6 +91,17 @@ class WinchFlexHelper:
             guy_ptr, self.flex_compensation_algorithm,
             self.ignore_gravity, self.ignore_pretension, self.mechanical_advantage,
             self.lines_per_axis)
+        self.set_anchor_mode(self.anchor_mode)
+
+    def set_anchor_mode(self, mode):
+        if mode not in self.ANCHOR_MODE_NAMES or (mode == 3 and self.num != 8):
+            raise ValueError("Anchor mode must be 0..3; CubeCorner requires exactly 8 anchors")
+        if not self.ffi_lib.winch_flex_set_anchor_mode(self.ptr, mode):
+            raise ValueError("Unable to configure winch anchor mode")
+        self.anchor_mode = mode
+
+    def is_reachable(self, position):
+        return bool(self.ffi_lib.winch_flex_is_reachable(self.ptr, *position[:3]))
 
     def get_ptr(self):
         if self.ptr is not None:
@@ -193,7 +209,7 @@ class WinchKinematics:
             self.flex_helper.set_spool_params(idx, rdist, steps_per_rot)
             s.setup_itersolve('winch_stepper_alloc', flex_ptr, idx)
             s.set_trapq(toolhead.get_trapq())
-        # Setup boundary checks
+        # Anchor extents for status; workspace checks use the configured mode.
         acoords = list(zip(*self.anchors))
         self.axes_min = toolhead.Coord(*[min(a) for a in acoords], e=0.)
         self.axes_max = toolhead.Coord(*[max(a) for a in acoords], e=0.)
@@ -243,8 +259,8 @@ class WinchKinematics:
         homing_state.set_axes([0, 1, 2])
         homing_state.set_homed_position([0., 0., 0.])
     def check_move(self, move):
-        # XXX - boundary checks and speed limits not implemented
-        pass
+        if not self.flex_helper.is_reachable(move.end_pos):
+            raise move.move_error("Move outside configured winch workspace")
     def get_status(self, eventtime):
         # XXX - homed_checks and rail limits not implemented
         return {
@@ -279,13 +295,19 @@ class WinchKinematics:
         return [(stp.get_name(), delta) for stp, delta in moves]
 
     def cmd_M666(self, gcmd):
+        mode = gcmd.get_int('A', None, minval=0, maxval=3)
+        if mode is not None:
+            if mode == 3 and self.flex_helper.num != 8:
+                raise gcmd.error("CubeCorner anchor mode requires exactly 8 anchors")
+            self.toolhead.wait_moves()
+            self.flex_helper.set_anchor_mode(mode)
         param = gcmd.get_int('F', None)
         if param is None:
             state = "enabled" if self.flex_helper.is_active() else "disabled"
             algo = self.flex_helper.get_algorithm_name()
             gcmd.respond_info(
-                "Winch flex compensation is %s (algo=%s)"
-                % (state, algo))
+                "Winch flex compensation is %s (algo=%s, anchor_mode=%s)"
+                % (state, algo, self.flex_helper.ANCHOR_MODE_NAMES[self.flex_helper.anchor_mode]))
             return
         requested = bool(param)
         current_state = self.flex_helper.is_active()

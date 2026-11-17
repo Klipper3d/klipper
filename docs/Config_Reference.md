@@ -708,6 +708,16 @@ and the machine will use non-flex-compensating kinematics equations.
 ```
 [printer]
 kinematics: winch
+winch_anchor_mode: none
+#   Workspace policy: none, last_on_top, all_on_top, or cube_corner.
+#   last_on_top: cyclic low anchors followed by the high anchor; includes
+#   the lower prism. all_on_top: cyclic perimeter prism, no height limit.
+#   cube_corner: exactly eight anchors, upper four followed by corresponding
+#   lower four in cyclic order; enclosed volume plus lower-face projection down.
+#   Moves outside the workspace are rejected. Boundaries are included.
+#   Runtime M666 A0/A1/A2/A3 selects the same modes as RepRapFirmware.
+#   Planar forward kinematics selects the solution below the anchor plane
+#   using negative-Z gravity, even when the workspace mode is none.
 # These are all flex compensation related configs.
 winch_mover_weight:
 #   The mover weight in kilograms. The default is 0.
