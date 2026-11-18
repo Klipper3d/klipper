@@ -3,6 +3,53 @@
 History of Klipper releases. Please see
 [installation](Installation.md) for information on installing Klipper.
 
+## Klipper 0.14.0
+
+Available on 20261120. Major changes in this release:
+* The internal kinematic processing and step generation code has been
+  enhanced. This includes:
+  * Improved responsiveness in the motion planner. It now tries to
+    stay 1 second ahead of the printer hardware (reduced from 2
+    seconds previously).
+  * It is now possible for standard `G1` commands to move more than 4
+    axes simultaneously. Extra axes may be defined at run-time by
+    mapping manual_stepper objects to g-code ids.
+  * A new general_cartesian kinematics module supports a wide range of
+    printer hardware via user provided motion formulas.
+  * The internal step generation code has been enhanced to better
+    utilize multiple host CPU cores. This includes utilizing a thread
+    per stepper motor, improved fine grain locking, exported OS
+    visible thread names, and background threads for file reading.
+  * Improved responsiveness during manual_stepper homing operations
+    (it no longer waits for the full movement time before processing
+    future moves).
+* The internal bed probing code has been enhanced. Notable features
+  include:
+  * New support for nozzle/bed "tap" probing with both "eddy current"
+    sensors and "load cell" sensors.
+  * Homing of a Z axis with a bed probe will now internally utilize
+    the probing code (instead of the "endstop" code).
+* Several micro-controller improvements:
+  * The stm32h7 chips have been optimized. The stm32h723 chip now runs
+    at 520Mhz and the stm32h750 runs at 480Mhz. Their internal GPIO
+    manipulation code has been optimized to obtain higher output
+    rates. The stepper code has also been optimized to allow for "step
+    on both edges" at higher speeds.
+  * The lpc176x micro-controllers now support CANbus.
+  * Micro-controllers with small flash sizes now support more code
+    size options during "make menuconfig".
+  * Improved hardware PWM accuracy on stm32 and rp2xxx
+    micro-controllers.
+  * An i2c error detected by the micro-controller will no longer
+    directly cause a "shutdown" event. These errors are now forwarded
+    to the host code for improved error handling.
+  * New support for rp2350b and lgt8f328p micro-controllers.
+* New modules:
+  * New load cell ADC sensors: ads131m0x, cs1237
+  * New accelerometers: bmi160
+  * Other modules: tmc5262, static_pwm_clock
+* Several bug fixes and code cleanups.
+
 ## Klipper 0.13.0
 
 Available on 20250411. Major changes in this release:
