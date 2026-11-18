@@ -99,7 +99,8 @@ Klipper supports many standard 3d printer features:
 
 * Support for cartesian, delta, corexy, corexz, hybrid-corexy,
   hybrid-corexz, deltesian, rotary delta, polar, and cable winch style
-  printers.
+  printers. Custom kinematics may also be defined using the "generic
+  cartesian" system.
 
 * Automatic bed leveling support. Klipper can be configured for basic
   bed tilt detection or full mesh bed leveling. The bed mesh can be
@@ -109,6 +110,10 @@ Klipper supports many standard 3d printer features:
   including BL-Touch probes and servo activated probes. Probes may be
   calibrated for axis twist compensation. If using an "eddy current
   probe" then one can utilize fast bed mesh scanning,
+
+* Support for "tap" bed probing via eddy current sensors or load cell
+  sensors. Supported load cell sensors include ads1220, ads131m0x,
+  cs1237, and hx71x.
 
 * Automatic delta calibration support. The calibration tool can
   perform basic height calibration as well as an enhanced X and Y
@@ -120,9 +125,9 @@ Klipper supports many standard 3d printer features:
 
 * Support for common temperature sensors (eg, common thermistors,
   AD595, AD597, AD849x, PT100, PT1000, MAX6675, MAX31855, MAX31856,
-  MAX31865, BME280, HTU21D, DS18B20, AHT1X, AHT2X, AHT3X, SHT3x, and LM75). Custom
-  thermistors and custom analog temperature sensors can also be
-  configured. One can monitor the internal micro-controller
+  MAX31865, BME280, HTU21D, DS18B20, AHT1X, AHT2X, AHT3X, SHT3x, and
+  LM75). Custom thermistors and custom analog temperature sensors can
+  also be configured. One can monitor the internal micro-controller
   temperature sensor and the internal temperature sensor of a
   Raspberry Pi.
 
@@ -134,9 +139,10 @@ Klipper supports many standard 3d printer features:
   assign a "math formula" to a fan for automatic fan speed updating.
 
 * Support for run-time configuration of TMC2130, TMC2208/TMC2224,
-  TMC2209, TMC2240, TMC2660, TMC5160, and TMC5262 stepper motor drivers. There
-  is also support for current control of traditional stepper drivers
-  via AD5206, DAC084S085, MCP4451, MCP4728, MCP4018, and PWM pins.
+  TMC2209, TMC2240, TMC2660, TMC5160, and TMC5262 stepper motor
+  drivers. There is also support for current control of traditional
+  stepper drivers via AD5206, DAC084S085, MCP4451, MCP4728, MCP4018,
+  and PWM pins.
 
 * Support for common LCD displays attached directly to the printer. A
   default menu is also available. The contents of the display and menu
@@ -157,7 +163,8 @@ Klipper supports many standard 3d printer features:
   filament width sensors.
 
 * Support for measuring and recording acceleration using adxl345,
-  mpu9250, mpu6050, lis2dw12, lis3dh, and icm20948 accelerometers.
+  bmi160, icm20948, lis2dw12, lis3dh, mpu6050, and mpu9250
+  accelerometers.
 
 * Support for limiting the top speed of short "zigzag" moves to reduce
   printer vibration and noise. See the [kinematics](Kinematics.md)
