@@ -18,10 +18,13 @@ ConfigWrapper = import_module(
 
 class CutterSafetyTests(unittest.TestCase):
     def test_withdrawal_does_not_resend_assistance_at_every_search_chunk(self):
-        for cutter, requests, increments in ((0, 3, 146), (1, 4, 66)):
-            with self.subTest(cutter=cutter):
+        for cutter, pushback, requests, increments in (
+            (0, 10.0, 3, 146), (1, 0.0, 4, 66), (1, 10.0, 4, 86),
+        ):
+            with self.subTest(cutter=cutter, pushback=pushback):
                 b = BancadaCortador()
                 b.ajustes['habilitado'] = cutter
+                b.ajustes['pushback_mm'] = pushback
                 b.unload()
                 self.assertEqual(requests, b.actuators.count(
                     protocol.MOTION_BEFORE_PULL_BACK
@@ -85,15 +88,28 @@ class CutterSafetyTests(unittest.TestCase):
         self.assertIn('sincronismo_pos_corte', timing)
 
     def test_post_cut_encoder_reference_does_not_include_pre_cut_retract(self):
-        b = BancadaCortador()
-        b.ajustes['recuo_antes_corte_mm'] = 2.0
-        b.unload()
-        before = b.obj.last_unload_timing['sincronismo_pos_corte'][
-            'antes_assistencia'
-        ]
-        self.assertEqual(0.0, before['recuo_encoder_mm'])
-        self.assertEqual(0.0, before['recuo_extrusora_comandado_mm'])
-        self.assertEqual(protocol.MOTION_IDLE, before['movimento'])
+        for pushback in (0.0, 10.0):
+            with self.subTest(pushback=pushback):
+                b = BancadaCortador()
+                b.ajustes.update(
+                    recuo_antes_corte_mm=2.0, pushback_mm=pushback,
+                )
+                b.unload()
+                timing = b.obj.last_unload_timing
+                key = 'before_withdrawal' if pushback else 'antes_assistencia'
+                before = timing['sincronismo_pos_corte'][key]
+                self.assertEqual(0.0, before['recuo_encoder_mm'])
+                self.assertEqual(0.0,
+                                 before['recuo_extrusora_comandado_mm'])
+                self.assertEqual(
+                    protocol.MOTION_BEFORE_PULL_BACK if pushback
+                    else protocol.MOTION_IDLE,
+                    before['movimento'],
+                )
+                if pushback:
+                    start = timing['pushback_sync']['antes_assistencia']
+                    self.assertEqual(0.0, start['recuo_encoder_mm'])
+                    self.assertEqual(protocol.MOTION_IDLE, start['movimento'])
 
     def test_feeder_starting_during_blade_stroke_aborts_before_withdrawal(self):
         b = BancadaCortador()

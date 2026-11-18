@@ -28,6 +28,28 @@ class CortadorEnder:
         perfil.setdefault('soltar_servo_recolhido', 1)
         perfil.setdefault('manter_y_corte', 0)
         perfil.setdefault('recuo_antes_corte_mm', 0.0)
+        # Retained calibrated profiles must opt into the new physical stroke.
+        perfil.setdefault('pushback_mm', 0.0)
+        perfil.setdefault('pushback_feedrate', 120.0)
+        for chave in ('pushback_mm', 'pushback_feedrate'):
+            try:
+                perfil[chave] = float(perfil[chave])
+            except (TypeError, ValueError) as erro:
+                raise RuntimeError(
+                    'Invalid cutter setting: %s.' % chave
+                ) from erro
+            if not math.isfinite(perfil[chave]):
+                raise RuntimeError('Invalid cutter setting: %s.' % chave)
+        if not 0 <= perfil['pushback_mm'] <= 10.0:
+            raise RuntimeError('Set pushback_mm between 0 and 10 mm.')
+        if not 0 < perfil['pushback_feedrate'] <= 600.0:
+            raise RuntimeError('Set pushback_feedrate above 0, up to 600.')
+        if perfil['pushback_mm'] and not (
+            50.0 < self.integracao.unload_buffer_limit < 100.0
+        ):
+            raise RuntimeError(
+                'Cutter pushback needs unload_buffer_limit above 50, below 100.'
+            )
         if perfil.get('x_contato') is None:
             perfil['x_contato'] = perfil.get('x_aproximacao')
         if any(
@@ -113,6 +135,10 @@ class CortadorEnder:
         if perfil['angulo_recolhido'] == perfil['angulo_acionado']:
             raise RuntimeError('The cutter stop angles must be different.')
         extrusora = self.integracao.printer.lookup_object('extruder')
+        if perfil['pushback_mm'] and extrusora.max_e_dist <= 0:
+            raise RuntimeError(
+                'Cutter pushback needs a positive extrusion limit.'
+            )
         if (
             max(
                 perfil[chave]
@@ -120,7 +146,7 @@ class CortadorEnder:
                     'velocidade_recuo_f',
                     'velocidade_avanco_f',
                     'velocidade_purga_f',
-                )
+                ) + (('pushback_feedrate',) if perfil['pushback_mm'] else ())
             )
             > extrusora.max_e_velocity * 60
         ):

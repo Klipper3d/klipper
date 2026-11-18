@@ -1086,6 +1086,91 @@ class EnderIntegration:
             'movimento': status['motion'][channel],
         }
 
+    def wait_pushback_encoder(
+        self, device, destination, channel, session, tracking, step,
+        refresh=True,
+    ):
+        deadline = self.reactor.monotonic() + self.unload_progress_timeout
+        while True:
+            self.verify_session(device, session, channel, refresh=refresh)
+            if not self.sensor(destination):
+                return
+            if device.status['motion'][channel] != (
+                protocol.MOTION_BEFORE_PULL_BACK
+            ):
+                raise RuntimeError('Cutter pushback assistance stopped.')
+            if any(
+                device.status[field][other]
+                for field in ('motion', 'motor_pwm')
+                for other in range(4) if other != channel
+            ):
+                raise RuntimeError('Another feeder moved during pushback.')
+            if not self.printer.lookup_object('extruder').get_status(
+                self.reactor.monotonic()
+            ).get('can_extrude'):
+                raise RuntimeError('The extruder cooled during pushback.')
+            gap, _ = self.unload_encoder_gap(device, channel, tracking)
+            if gap < -self.unload_slack - 0.05:
+                raise RuntimeError(
+                    'Cutter pushback feeder/extruder mismatch exceeded '
+                    'the allowance; encoder gap %.2f mm.' % gap
+                )
+            pct = float(device.status['buffer_pct'][channel])
+            if not math.isfinite(pct) or not 0 <= pct <= 100:
+                raise RuntimeError('Invalid pushback buffer position.')
+            if (
+                abs(gap - step) <= self.unload_slack + 0.000001
+                and 100.0 - self.unload_buffer_limit <= pct
+                <= self.unload_buffer_limit
+            ):
+                return
+            if self.reactor.monotonic() >= deadline:
+                raise RuntimeError(
+                    'Cutter pushback feeder did not follow the extruder; '
+                    'encoder gap %.2f mm, buffer %.1f%%.' % (gap, pct)
+                )
+            self.reactor.pause(self.reactor.monotonic() + 0.100)
+            refresh = True
+
+    def pushback_filament(
+        self, device, destination, channel, session, tracking, perfil, timing,
+    ):
+        distance = perfil['pushback_mm']
+        progress = timing['pushback'] = {
+            'requested_mm': distance, 'advance_mm': 0.0, 'return_mm': 0.0,
+            'stage': 'advance', 'result': 'in_progress',
+        }
+        tracking['diagnostico'] = timing['pushback_sync'] = {
+            'inicio_s': self.reactor.monotonic(), 'tempo_movimentos_s': 0.0,
+        }
+        try:
+            self.verificar_alimentador_parado(
+                device, destination, channel, session
+            )
+            self.registrar_sincronismo(
+                device, channel, tracking, 'antes_assistencia'
+            )
+            # Firmware 1.0.4 follows both directions at the withdrawal buffer
+            # target. Do not refill to the normal printing pressure target.
+            device.set_motion(channel, protocol.MOTION_BEFORE_PULL_BACK)
+            for stage, mm in (('advance', distance), ('return', -distance)):
+                progress['stage'] = stage
+                start = tracking['commanded']
+                try:
+                    self.move_unload_filament(
+                        device, destination, channel, session, tracking,
+                        mm, perfil['pushback_feedrate'], follow_both=True,
+                    )
+                finally:
+                    progress[stage + '_mm'] = abs(
+                        tracking['commanded'] - start
+                    )
+            progress['stage'] = 'complete'
+            progress['result'] = 'commands_completed'
+        except Exception:
+            progress['result'] = 'failed'
+            raise
+
     def verificar_alimentador_parado(
         self, device, destination, channel, session
     ):
@@ -1150,24 +1235,31 @@ class EnderIntegration:
         mm,
         speed,
         allow_clear=False,
+        follow_both=False,
     ):
         mode = protocol.MOTION_BEFORE_PULL_BACK
         extruder = self.printer.lookup_object('extruder')
         limit = min(
             self.unload_step, self.unload_slack / 2, extruder.max_e_dist
         )
+        if limit <= 0:
+            raise RuntimeError('The extrusion limit is set to zero.')
         remaining = abs(mm)
         completed = 0.0
         while remaining > 0.000001:
-            self.wait_unload_buffer(
-                device,
-                destination,
-                channel,
-                session,
-                refresh=(completed == 0.0),
-            )
             step = min(limit, remaining)
-            if mm < 0:
+            signed = -step if mm < 0 else step
+            if follow_both:
+                self.wait_pushback_encoder(
+                    device, destination, channel, session, tracking, signed,
+                    refresh=(completed == 0.0),
+                )
+            else:
+                self.wait_unload_buffer(
+                    device, destination, channel, session,
+                    refresh=(completed == 0.0),
+                )
+            if mm < 0 and not follow_both:
                 self.wait_unload_encoder(
                     device,
                     destination,
@@ -1188,7 +1280,6 @@ class EnderIntegration:
                 raise RuntimeError(
                     'Feeder assistance changed during withdrawal.'
                 )
-            signed = -step if mm < 0 else step
             diagnostico = tracking.get('diagnostico')
             if diagnostico is not None:
                 self.registrar_sincronismo(
@@ -1207,7 +1298,14 @@ class EnderIntegration:
             completed += signed
             remaining -= step
             try:
-                self.wait_unload_buffer(device, destination, channel, session)
+                if follow_both:
+                    self.wait_pushback_encoder(
+                        device, destination, channel, session, tracking, 0.0,
+                    )
+                else:
+                    self.wait_unload_buffer(
+                        device, destination, channel, session
+                    )
             finally:
                 self.registrar_sincronismo(
                     device, channel, tracking, 'depois_passo'
@@ -1722,6 +1820,7 @@ class EnderIntegration:
         total = 0.0
         tracking = None
         saved = False
+        pushback_active = False
         started = self.reactor.monotonic()
         timing = {'result': 'in_progress'}
         try:
@@ -1785,6 +1884,17 @@ class EnderIntegration:
                 )
                 timing['cut_seconds'] = self.reactor.monotonic() - tip_started
                 self.position_head()
+                if perfil['pushback_mm']:
+                    self.verify_session(device, session, channel)
+                    tracking = {
+                        'start': float(device.status['meters'][channel]),
+                        'commanded': 0.0,
+                    }
+                    pushback_active = True
+                    self.pushback_filament(
+                        device, destination, channel, session, tracking,
+                        perfil, timing,
+                    )
             else:
                 total = self.form_tip(
                     device, destination, channel, session, tracking
@@ -1794,17 +1904,22 @@ class EnderIntegration:
             device.refresh()
             marker = float(device.status['meters'][channel])
             if perfil:
-                tracking = {'start': marker, 'commanded': 0.0}
+                if not pushback_active:
+                    tracking = {'start': marker, 'commanded': 0.0}
                 tracking['diagnostico'] = timing['sincronismo_pos_corte'] = {
                     'inicio_s': release_started,
                     'tempo_movimentos_s': 0.0,
                 }
                 self.registrar_sincronismo(
-                    device, channel, tracking, 'antes_assistencia'
+                    device, channel, tracking,
+                    'before_withdrawal' if pushback_active
+                    else 'antes_assistencia',
                 )
-            search_start = progress_marker = marker
+            search_start = tracking['start'] if pushback_active else marker
+            progress_marker = marker
             progress_at = self.reactor.monotonic()
-            device.set_motion(channel, protocol.MOTION_BEFORE_PULL_BACK)
+            if not pushback_active:
+                device.set_motion(channel, protocol.MOTION_BEFORE_PULL_BACK)
             deadline = self.reactor.monotonic() + self.timeout
             while self.sensor(destination):
                 if self.reactor.monotonic() >= deadline:
@@ -1828,6 +1943,7 @@ class EnderIntegration:
                         else self.pullback_speed
                     ),
                     allow_clear=True,
+                    follow_both=pushback_active,
                 )
                 total += abs(moved)
                 self.verify_session(device, session, channel, refresh=False)

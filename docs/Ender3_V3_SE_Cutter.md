@@ -78,7 +78,52 @@ Set `variable_keep_cut_y: 1` only if the entire cutting path is clear at every b
 
 If filament catches at the heatsink entrance, check for the model author’s `Cutter_Base with guide v1`. Verify alignment and ensure the total retract cannot bring softened material to the blade. Any slicer retract still in effect adds to the integration's retract; there is no automatic compensation. The pre-cut retract uses the integration's `retract_feedrate`; purge distances and blade positions stay the same.
 
-The installer also prevents the native manager from starting withdrawal assistance for 200 ms before `BMCU_RELEASE_ENDER`. It passes the channel and session explicitly because stopping the motors can clear `now_channel`. Assistance starts only during withdrawal after the blade stroke and stop retraction. Run the complete installer rather than copying only the optional modules: the native-manager adjustment belongs to the same update. Other callbacks retain native behavior.
+The installer also prevents the native manager from starting withdrawal assistance for 200 ms before `BMCU_RELEASE_ENDER`. It passes the channel and session explicitly because stopping the motors can clear `now_channel`. Assistance starts only after the blade stroke and stop retraction, for pushback if enabled and then withdrawal. Run the complete installer rather than copying only the optional modules: the native-manager adjustment belongs to the same update. Other callbacks retain native behavior.
+
+### Pushback after cutting
+
+New profiles include the following settings in
+`[gcode_macro _BMCU_ENDER_CUTTER_SETTINGS]`:
+
+```ini
+variable_pushback_mm: 10.0
+variable_pushback_feedrate: 120.0
+```
+
+After completing the cutter commands and positioning over the purge chute,
+every cutter unload advances 10 mm and returns 10 mm at 120 mm/min (2 mm/s),
+then continues normal withdrawal. This is a starting stroke proposed for the
+stock SE hotend, not a measured internal dimension or proven clog fix.
+It does not change pre-cut retraction, heater targets, motor current, capture,
+purge or parking distances. The dry mechanical test never runs pushback.
+
+**Retained profiles are not silently changed:** without `pushback_mm`, the
+stroke remains disabled. To adopt it, add the two lines above to the existing
+profile and restart Klipper. Zero disables the stroke; the distance is limited
+to 10 mm, and its rate must be positive and no greater than 600 mm/min or the
+extruder's configured maximum.
+
+The existing firmware 1.0.4 `MOTION_BEFORE_PULL_BACK` pressure controller follows
+both advance and return at the withdrawal buffer target. The integration does
+not switch to the normal printing refill target or change native buffer targets.
+Each increment is bounded by `unload_step_mm`, half `unload_slack_mm` and the
+extruder limit (normally 1 mm). Symmetric encoder checks prevent the next
+increment from exceeding the existing mismatch allowance. The encoder origin
+is retained through advance, return and final withdrawal; reversing does not
+erase a discrepancy.
+
+With pushback active, the extruder also waits for the buffer to be between
+`100 - unload_buffer_limit` and `unload_buffer_limit` (30–70% by default).
+This requires a limit strictly between 50 and 100. A feeder that fails to catch
+up, excessive mismatch, invalid telemetry, sensor/session loss, stopped
+assistance or cooling interrupts unloading and stops the BMCU. There is no
+automatic retry, compensating stroke or successful parking claim.
+
+`unload_timing.pushback` records the requested stroke, completed commanded
+advance/return, stage and result; `pushback_sync` records buffer/encoder
+snapshots. These upstream sensors cannot verify movement of the cut fragment
+below the gears or measure hotend force. A cleared jam and supervised physical
+exchange are still required before repeated printing.
 
 ## Faster exchanges
 

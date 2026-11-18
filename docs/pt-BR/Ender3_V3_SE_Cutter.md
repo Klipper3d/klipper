@@ -226,10 +226,56 @@ de purga e posições da lâmina permanecem iguais.
 O instalador também impede que o gerenciador nativo inicie a assistência de
 retirada por 200 ms antes de `BMCU_RELEASE_ENDER`. Ele passa canal e sessão
 explicitamente porque parar os motores pode limpar `now_channel`. A assistência
-inicia somente durante a retirada após o curso da lâmina e o recolhimento do
-batente. Execute o instalador completo em vez de copiar apenas os módulos
+inicia somente após o curso da lâmina e o recolhimento do batente, no pushback
+quando habilitado e depois na retirada. Execute o instalador completo em vez
+de copiar apenas os módulos
 opcionais: o ajuste do gerenciador nativo pertence à mesma atualização.
 Outros callbacks mantêm o comportamento nativo.
+
+### Pushback após o corte
+
+Perfis novos incluem estes ajustes em
+`[gcode_macro _BMCU_ENDER_CUTTER_SETTINGS]`:
+
+```ini
+variable_pushback_mm: 10.0
+variable_pushback_feedrate: 120.0
+```
+
+Após concluir os comandos do cortador e posicionar sobre a calha de purga,
+toda retirada com cortador avança 10 mm e retorna 10 mm a 120 mm/min (2 mm/s),
+depois continua a retirada normal. É um curso inicial proposto para o hotend
+original da SE, não uma medida interna nem uma correção de entupimento comprovada.
+Não altera recuo pré-corte, temperatura, corrente dos motores nem distâncias
+de captura, purga ou estacionamento. O teste mecânico a seco não faz pushback.
+
+**Perfis preservados não mudam silenciosamente:** sem `pushback_mm`, o curso
+fica desabilitado. Para adotá-lo, adicione as duas linhas acima ao perfil
+existente e reinicie o Klipper. Zero desabilita; a distância é limitada a 10 mm.
+A taxa precisa ser positiva e não pode superar 600 mm/min nem o máximo
+configurado da extrusora.
+
+O controlador de pressão `MOTION_BEFORE_PULL_BACK` do firmware 1.0.4 acompanha
+avanço e retorno no alvo de buffer de retirada. A integração não muda para o
+alvo de reposição de impressão nem altera os alvos nativos. Cada incremento
+respeita `unload_step_mm`, metade de `unload_slack_mm` e o limite da extrusora
+(normalmente 1 mm). O encoder é conferido nas duas direções antes de permitir
+um passo que excederia a tolerância existente. A referência é mantida no
+avanço, retorno e retirada final; inverter não apaga uma diferença acumulada.
+
+Com pushback ativo, a extrusora também aguarda o buffer entre
+`100 - unload_buffer_limit` e `unload_buffer_limit` (30–70% por padrão).
+Isso exige um limite maior que 50 e menor que 100. Alimentador que não acompanha,
+diferença excessiva, telemetria inválida, perda de sensor/sessão, assistência
+parada ou resfriamento interrompem a retirada e param a BMCU. Não há repetição
+automática, movimento compensatório nem confirmação de estacionamento.
+
+`unload_timing.pushback` registra curso solicitado, avanço/retorno comandados
+concluídos, etapa e resultado; `pushback_sync` guarda buffer e encoder.
+Esses sensores a montante não comprovam o movimento do fragmento abaixo das
+engrenagens nem medem força no hotend. Ainda é necessário desobstruir um
+entupimento existente e realizar uma troca física supervisionada antes de
+voltar a impressões repetidas.
 
 <a id="faster-exchanges"></a>
 ## Trocas mais rápidas
