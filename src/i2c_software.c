@@ -8,7 +8,6 @@
 #include <string.h> // memcpy
 #include "autoconf.h" // CONFIG_CLOCK_FREQ
 #include "board/gpio.h" // gpio_out_setup
-#include "board/internal.h" // gpio_peripheral
 #include "board/misc.h" // timer_read_time
 #include "basecmd.h" // oid_alloc
 #include "command.h" // DECL_COMMAND
