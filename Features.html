@@ -1539,7 +1539,8 @@
 <ul>
 <li>Support for cartesian, delta, corexy, corexz, hybrid-corexy,
   hybrid-corexz, deltesian, rotary delta, polar, and cable winch style
-  printers.</li>
+  printers. Custom kinematics may also be defined using the "generic
+  cartesian" system.</li>
 </ul>
 <ul>
 <li>Automatic bed leveling support. Klipper can be configured for basic
@@ -1550,6 +1551,11 @@
   including BL-Touch probes and servo activated probes. Probes may be
   calibrated for axis twist compensation. If using an "eddy current
   probe" then one can utilize fast bed mesh scanning,</li>
+</ul>
+<ul>
+<li>Support for "tap" bed probing via eddy current sensors or load cell
+  sensors. Supported load cell sensors include ads1220, ads131m0x,
+  cs1237, and hx71x.</li>
 </ul>
 <ul>
 <li>Automatic delta calibration support. The calibration tool can
@@ -1564,9 +1570,9 @@
 <ul>
 <li>Support for common temperature sensors (eg, common thermistors,
   AD595, AD597, AD849x, PT100, PT1000, MAX6675, MAX31855, MAX31856,
-  MAX31865, BME280, HTU21D, DS18B20, AHT1X, AHT2X, AHT3X, SHT3x, and LM75). Custom
-  thermistors and custom analog temperature sensors can also be
-  configured. One can monitor the internal micro-controller
+  MAX31865, BME280, HTU21D, DS18B20, AHT1X, AHT2X, AHT3X, SHT3x, and
+  LM75). Custom thermistors and custom analog temperature sensors can
+  also be configured. One can monitor the internal micro-controller
   temperature sensor and the internal temperature sensor of a
   Raspberry Pi.</li>
 </ul>
@@ -1581,9 +1587,10 @@
 </ul>
 <ul>
 <li>Support for run-time configuration of TMC2130, TMC2208/TMC2224,
-  TMC2209, TMC2240, TMC2660, TMC5160, and TMC5262 stepper motor drivers. There
-  is also support for current control of traditional stepper drivers
-  via AD5206, DAC084S085, MCP4451, MCP4728, MCP4018, and PWM pins.</li>
+  TMC2209, TMC2240, TMC2660, TMC5160, and TMC5262 stepper motor
+  drivers. There is also support for current control of traditional
+  stepper drivers via AD5206, DAC084S085, MCP4451, MCP4728, MCP4018,
+  and PWM pins.</li>
 </ul>
 <ul>
 <li>Support for common LCD displays attached directly to the printer. A
@@ -1609,7 +1616,8 @@
 </ul>
 <ul>
 <li>Support for measuring and recording acceleration using adxl345,
-  mpu9250, mpu6050, lis2dw12, lis3dh, and icm20948 accelerometers.</li>
+  bmi160, icm20948, lis2dw12, lis3dh, mpu6050, and mpu9250
+  accelerometers.</li>
 </ul>
 <ul>
 <li>Support for limiting the top speed of short "zigzag" moves to reduce
