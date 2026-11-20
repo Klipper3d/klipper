@@ -411,10 +411,12 @@ class Palette2:
                     "update to at least 9.0.9")
         else:
             self.files = [
-                file for (
-                    file,
-                    size) in self.virtual_sdcard.get_file_list(
-                    check_subdirs=True) if ".mcf.gcode" in file]
+                file
+                for (file, size, time) in self.virtual_sdcard.get_file_list(
+                    check_subdirs=True
+                )
+                if ".mcf.gcode" in file
+            ]
             for file in self.files:
                 self.write_queue.put("%s D%s" % (COMMAND_FILENAME, file))
             self.write_queue.put(COMMAND_FILENAMES_DONE)
