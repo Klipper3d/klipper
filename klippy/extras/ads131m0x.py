@@ -106,6 +106,8 @@ class ADS131M0X:
         # Clock frequency
         pwm_clock_name = config.get('pwm_clock', None)
         if pwm_clock_name is not None:
+            if not config.has_section(pwm_clock_name):
+                raise config.error("No such section [%s]" % pwm_clock_name)
             pwm_config = config.getsection(' '.join(pwm_clock_name.split()))
             self.clock_freq = pwm_config.getfloat('frequency', None,
                                                   note_valid=False,
