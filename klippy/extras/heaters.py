@@ -373,13 +373,23 @@ class PrinterHeaters:
                 "Error on 'TEMPERATURE_WAIT': missing MINIMUM or MAXIMUM.")
         if self.printer.get_start_args().get('debugoutput') is not None:
             return
-        if sensor_name in self.heaters:
+        is_heater = sensor_name in self.heaters
+        if is_heater:
             sensor = self.heaters[sensor_name]
         else:
             sensor = self.printer.lookup_object(sensor_name)
         toolhead = self.printer.lookup_object("toolhead")
         reactor = self.printer.get_reactor()
         eventtime = reactor.monotonic()
+        temp, target = sensor.get_temp(eventtime)
+        if is_heater:
+            prefix = "Infinite wait (%s):" % (sensor_name)
+            if temp < min_temp and target < min_temp:
+                raise gcmd.error("%s MINIMUM=%.1f >> TARGET=%.1f" % (
+                                     prefix, min_temp, target))
+            if temp > max_temp and target > max_temp:
+                raise gcmd.error("%s MAXIMUM=%.1f << TARGET=%.1f" % (
+                                     prefix, max_temp, target))
         while not self.printer.is_shutdown():
             temp, target = sensor.get_temp(eventtime)
             if temp >= min_temp and temp <= max_temp:
