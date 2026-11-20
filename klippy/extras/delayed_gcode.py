@@ -31,7 +31,12 @@ class DelayedGcode:
     def _gcode_timer_event(self, eventtime):
         self.inside_timer = True
         try:
-            self.gcode.run_script(self.timer_gcode.render())
+            try:
+                script = self.timer_gcode.render()
+            except self.gcode.error as e:
+                self.gcode._respond_error(str(e))
+            else:
+                self.gcode.run_script(script)
         except Exception:
             logging.exception("Script running error")
         nextwake = self.reactor.NEVER
