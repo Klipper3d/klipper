@@ -2,13 +2,16 @@
 #
 # Copyright (C) 2018  Kevin O'Connor <kevin@koconnor.net>
 # Copyright (C) 2018  Eric Callahan <arksine.code@gmail.com>
+# Copyright (C) 2021  Marc-Andre Denis <marcadenis@msn.com>
+# Copyright (C) 2026  Min Choi <3387910@naver.com>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging
+from .. import bus
 
 BACKGROUND_PRIORITY_CLOCK = 0x7fffffff00000000
-LINE_LENGTH_DEFAULT=20
-LINE_LENGTH_OPTIONS=[16, 20]
+LINE_LENGTH_DEFAULT = 20
+LINE_LENGTH_OPTIONS = [16, 20]
 
 TextGlyphs = { 'right_arrow': b'\x7e' }
 
@@ -17,29 +20,14 @@ HD44780_DELAY = .000040
 # configurable value within a small, safe range.
 HD44780_DELAY_MAX = .000060
 
-class HD44780:
-    def __init__(self, config):
+class DisplayBase:
+    def __init__(self, config, mcu):
         self.printer = config.get_printer()
-        # pin config
-        ppins = self.printer.lookup_object('pins')
-        pins = [ppins.lookup_pin(config.get(name + '_pin'))
-                for name in ['rs', 'e', 'd4', 'd5', 'd6', 'd7']]
+        self.mcu = mcu
         self.hd44780_protocol_init = config.getboolean('hd44780_protocol_init',
                                                        True)
         self.line_length = config.getchoice('line_length', LINE_LENGTH_OPTIONS,
                                             LINE_LENGTH_DEFAULT)
-        self.hd44780_delay = config.getfloat('hd44780_delay', HD44780_DELAY,
-                                             above=0., maxval=HD44780_DELAY_MAX)
-        mcu = None
-        for pin_params in pins:
-            if mcu is not None and pin_params['chip'] != mcu:
-                raise ppins.error("hd44780 all pins must be on same mcu")
-            mcu = pin_params['chip']
-        self.pins = [pin_params['pin'] for pin_params in pins]
-        self.mcu = mcu
-        self.oid = self.mcu.create_oid()
-        self.mcu.register_config_callback(self.build_config)
-        self.send_data_cmd = self.send_cmds_cmd = None
         self.icons = {}
         # framebuffers
         self.text_framebuffers = [bytearray(b' '*2*self.line_length),
@@ -53,24 +41,6 @@ class HD44780:
              0xc0),
             # Glyph framebuffer
             (self.glyph_framebuffer, bytearray(b'~'*64), 0x40) ]
-    def build_config(self):
-        self.mcu.add_config_cmd(
-            "config_hd44780 oid=%d rs_pin=%s e_pin=%s"
-            " d4_pin=%s d5_pin=%s d6_pin=%s d7_pin=%s delay_ticks=%d" % (
-                self.oid, self.pins[0], self.pins[1],
-                self.pins[2], self.pins[3], self.pins[4], self.pins[5],
-                self.mcu.seconds_to_clock(self.hd44780_delay)))
-        cmd_queue = self.mcu.alloc_command_queue()
-        self.send_cmds_cmd = self.mcu.lookup_command(
-            "hd44780_send_cmds oid=%c cmds=%*s", cq=cmd_queue)
-        self.send_data_cmd = self.mcu.lookup_command(
-            "hd44780_send_data oid=%c data=%*s", cq=cmd_queue)
-    def send(self, cmds, is_data=False):
-        cmd_type = self.send_cmds_cmd
-        if is_data:
-            cmd_type = self.send_data_cmd
-        cmd_type.send([self.oid, cmds], reqclock=BACKGROUND_PRIORITY_CLOCK)
-        #logging.debug("hd44780 %d %s", is_data, repr(cmds))
     def flush(self):
         # Find all differences in the framebuffers and send them to the chip
         for new_data, old_data, fb_id in self.all_framebuffers:
@@ -104,7 +74,7 @@ class HD44780:
         init.append([0x06, 0x0c])
         for i, cmds in enumerate(init):
             minclock = self.mcu.print_time_to_clock(print_time + i * .100)
-            self.send_cmds_cmd.send([self.oid, cmds], minclock=minclock)
+            self.send(cmds, minclock=minclock)
         self.flush()
     def write_text(self, x, y, data):
         if x + len(data) > self.line_length:
@@ -137,3 +107,84 @@ class HD44780:
         self.text_framebuffers[1][:] = spaces
     def get_dimensions(self):
         return (self.line_length, 4)
+
+class HD44780(DisplayBase):
+    def __init__(self, config):
+        # pin config
+        ppins = config.get_printer().lookup_object('pins')
+        pins = [ppins.lookup_pin(config.get(name + '_pin'))
+                for name in ['rs', 'e', 'd4', 'd5', 'd6', 'd7']]
+        self.hd44780_delay = config.getfloat('hd44780_delay', HD44780_DELAY,
+                                             above=0., maxval=HD44780_DELAY_MAX)
+        mcu = None
+        for pin_params in pins:
+            if mcu is not None and pin_params['chip'] != mcu:
+                raise ppins.error("hd44780 all pins must be on same mcu")
+            mcu = pin_params['chip']
+        self.pins = [pin_params['pin'] for pin_params in pins]
+        self.oid = mcu.create_oid()
+        mcu.register_config_callback(self.build_config)
+        self.send_data_cmd = self.send_cmds_cmd = None
+        DisplayBase.__init__(self, config, mcu)
+    def build_config(self):
+        self.mcu.add_config_cmd(
+            "config_hd44780 oid=%d rs_pin=%s e_pin=%s"
+            " d4_pin=%s d5_pin=%s d6_pin=%s d7_pin=%s delay_ticks=%d" % (
+                self.oid, self.pins[0], self.pins[1],
+                self.pins[2], self.pins[3], self.pins[4], self.pins[5],
+                self.mcu.seconds_to_clock(self.hd44780_delay)))
+        cmd_queue = self.mcu.alloc_command_queue()
+        self.send_cmds_cmd = self.mcu.lookup_command(
+            "hd44780_send_cmds oid=%c cmds=%*s", cq=cmd_queue)
+        self.send_data_cmd = self.mcu.lookup_command(
+            "hd44780_send_data oid=%c data=%*s", cq=cmd_queue)
+    def send(self, cmds, is_data=False, minclock=0):
+        cmd_type = self.send_cmds_cmd
+        if is_data:
+            cmd_type = self.send_data_cmd
+        cmd_type.send([self.oid, cmds], minclock=minclock,
+                      reqclock=BACKGROUND_PRIORITY_CLOCK)
+        #logging.debug("hd44780 %d %s", is_data, repr(cmds))
+
+class hd44780_spi(DisplayBase):
+    def __init__(self, config):
+        self.spi = bus.MCU_SPI_from_config(
+            config, 0x00, pin_option="latch_pin")
+        self.data_mask = (1 << 1)
+        self.command_mask = 0
+        self.enable_mask = (1 << 3)
+        DisplayBase.__init__(self, config, self.spi.get_mcu())
+    def send(self, cmds, is_data=False, minclock=0):
+        mask = self.data_mask if is_data else self.command_mask
+        for data in bytearray(cmds):
+            for shift in (0, 4):
+                val = ((data << shift) & 0xf0) | mask
+                self.spi.spi_send([val], minclock,
+                                  reqclock=BACKGROUND_PRIORITY_CLOCK)
+                self.spi.spi_send([val | self.enable_mask], minclock,
+                                  reqclock=BACKGROUND_PRIORITY_CLOCK)
+                self.spi.spi_send([val], minclock,
+                                  reqclock=BACKGROUND_PRIORITY_CLOCK)
+
+class hd44780_i2c(DisplayBase):
+    def __init__(self, config):
+        self.i2c = bus.MCU_I2C_from_config(
+            config, default_addr=0x27, async_write_only=True)
+        self.backlight_mask = (1 << 3)
+        self.enable_mask = (1 << 2)
+        self.data_mask = (1 << 0)
+        self.command_mask = 0
+        DisplayBase.__init__(self, config, self.i2c.get_mcu())
+    def send(self, cmds, is_data=False, minclock=0):
+        mask = self.backlight_mask | (
+            self.data_mask if is_data else self.command_mask)
+        cmds = bytearray(cmds)
+        for pos in range(0, len(cmds), 6):
+            i2c_data = []
+            for b in cmds[pos:pos + 6]:
+                hi = (b & 0xf0) | mask
+                lo = ((b << 4) & 0xf0) | mask
+                i2c_data.extend([hi, hi | self.enable_mask, hi,
+                                 lo, lo | self.enable_mask, lo])
+            self.i2c.i2c_write_noack(i2c_data, minclock=minclock,
+                                     reqclock=BACKGROUND_PRIORITY_CLOCK)
