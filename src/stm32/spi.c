@@ -15,7 +15,12 @@ struct spi_info {
     uint8_t miso_pin, mosi_pin, sck_pin, miso_af, mosi_af, sck_af;
 };
 
-#if CONFIG_MACH_STM32F0
+#if CONFIG_MACH_GD32E23X
+  DECL_ENUMERATION("spi_bus", "spi0", 0);
+  DECL_CONSTANT_STR("BUS_PINS_spi0", "PA6,PA7,PA5");
+  DECL_ENUMERATION("spi_bus", "spi1", 1);
+  DECL_CONSTANT_STR("BUS_PINS_spi1", "PB14,PB15,PB13");
+#elif CONFIG_MACH_STM32F0
   DECL_ENUMERATION("spi_bus", "spi2_PB14_PB15_PB13", 0);
   DECL_CONSTANT_STR("BUS_PINS_spi2_PB14_PB15_PB13", "PB14,PB15,PB13");
   DECL_ENUMERATION("spi_bus", "spi1_PA6_PA7_PA5", 1);
@@ -228,7 +233,11 @@ struct spi_info {
     GPIO_FUNCTION(mosi), GPIO_FUNCTION(sck)
 
 static const struct spi_info spi_bus[] = {
-#if CONFIG_MACH_STM32F0
+#if CONFIG_MACH_GD32E23X
+  { (SPI_TypeDef *)SPI0, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), 0, 0, 0 },
+  { (SPI_TypeDef *)SPI1, GPIO('B', 14), GPIO('B', 15),
+    GPIO('B', 13), 0, 0, 0 },
+#elif CONFIG_MACH_STM32F0
   { SPI2, GPIO('B', 14), GPIO('B', 15), GPIO('B', 13), SPI_FUNCTION(0, 0, 0) },
   { SPI1, GPIO('A', 6), GPIO('A', 7), GPIO('A', 5), SPI_FUNCTION(0, 0, 0) },
   { SPI1, GPIO('B', 4), GPIO('B', 5), GPIO('B', 3), SPI_FUNCTION(0, 0, 0) },
