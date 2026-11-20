@@ -378,6 +378,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#klipper-0140" class="md-nav__link">
+    Klipper 0.14.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#klipper-0130" class="md-nav__link">
     Klipper 0.13.0
   </a>
@@ -1479,6 +1486,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#klipper-0140" class="md-nav__link">
+    Klipper 0.14.0
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#klipper-0130" class="md-nav__link">
     Klipper 0.13.0
   </a>
@@ -1595,6 +1609,61 @@
 <h1 id="releases">Releases<a class="headerlink" href="#releases" title="Permanent link">&para;</a></h1>
 <p>History of Klipper releases. Please see
 <a href="Installation.html">installation</a> for information on installing Klipper.</p>
+<h2 id="klipper-0140">Klipper 0.14.0<a class="headerlink" href="#klipper-0140" title="Permanent link">&para;</a></h2>
+<p>Available on 20261120. Major changes in this release:</p>
+<ul>
+<li>The internal kinematic processing and step generation code has been
+  enhanced. This includes:<ul>
+<li>Improved responsiveness in the motion planner. It now tries to
+  stay 1 second ahead of the printer hardware (reduced from 2
+  seconds previously).</li>
+<li>It is now possible for standard <code>G1</code> commands to move more than 4
+  axes simultaneously. Extra axes may be defined at run-time by
+  mapping manual_stepper objects to g-code ids.</li>
+<li>A new general_cartesian kinematics module supports a wide range of
+  printer hardware via user provided motion formulas.</li>
+<li>The internal step generation code has been enhanced to better
+  utilize multiple host CPU cores. This includes utilizing a thread
+  per stepper motor, improved fine grain locking, exported OS
+  visible thread names, and background threads for file reading.</li>
+<li>Improved responsiveness during manual_stepper homing operations
+  (it no longer waits for the full movement time before processing
+  future moves).</li>
+</ul>
+</li>
+<li>The internal bed probing code has been enhanced. Notable features
+  include:<ul>
+<li>New support for nozzle/bed "tap" probing with both "eddy current"
+  sensors and "load cell" sensors.</li>
+<li>Homing of a Z axis with a bed probe will now internally utilize
+  the probing code (instead of the "endstop" code).</li>
+</ul>
+</li>
+<li>Several micro-controller improvements:<ul>
+<li>The stm32h7 chips have been optimized. The stm32h723 chip now runs
+  at 520Mhz and the stm32h750 runs at 480Mhz. Their internal GPIO
+  manipulation code has been optimized to obtain higher output
+  rates. The stepper code has also been optimized to allow for "step
+  on both edges" at higher speeds.</li>
+<li>The lpc176x micro-controllers now support CANbus.</li>
+<li>Micro-controllers with small flash sizes now support more code
+  size options during "make menuconfig".</li>
+<li>Improved hardware PWM accuracy on stm32 and rp2xxx
+  micro-controllers.</li>
+<li>An i2c error detected by the micro-controller will no longer
+  directly cause a "shutdown" event. These errors are now forwarded
+  to the host code for improved error handling.</li>
+<li>New support for rp2350b and lgt8f328p micro-controllers.</li>
+</ul>
+</li>
+<li>New modules:<ul>
+<li>New load cell ADC sensors: ads131m0x, cs1237</li>
+<li>New accelerometers: bmi160</li>
+<li>Other modules: tmc5262, static_pwm_clock</li>
+</ul>
+</li>
+<li>Several bug fixes and code cleanups.</li>
+</ul>
 <h2 id="klipper-0130">Klipper 0.13.0<a class="headerlink" href="#klipper-0130" title="Permanent link">&para;</a></h2>
 <p>Available on 20250411. Major changes in this release:</p>
 <ul>
