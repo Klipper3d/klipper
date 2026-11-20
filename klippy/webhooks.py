@@ -487,44 +487,67 @@ class QueryStatusHelper:
     def _do_query(self, eventtime):
         last_query = self.last_query
         query = self.last_query = {}
-        msglist = self.pending_queries
+        pq_list = self.pending_queries
         self.pending_queries = []
-        msglist.extend(self.clients.values())
-        # Generate get_status() info for each client
+        # Determine full list of printer objects to query
+        cl_list = list(self.clients.values())
+        need_objs = {}
+        for subscription, completion in pq_list:
+            need_objs.update(subscription)
+        for subscription, cconn, template in cl_list:
+            need_objs.update(subscription)
+        # Query get_status() info for each requested printer object
+        obj_changes = {}
         reactor = self.printer.get_reactor()
         with reactor.assert_no_pause():
-            for cconn, subscription, send_func, template in msglist:
-                is_query = cconn is None
-                if not is_query and cconn.is_closed():
-                    del self.clients[cconn]
-                    continue
-                # Query each requested printer object
-                cquery = {}
-                for obj_name, req_items in subscription.items():
-                    res = query.get(obj_name, None)
-                    if res is None:
-                        po = self.printer.lookup_object(obj_name, None)
-                        if po is None or not hasattr(po, 'get_status'):
-                            res = query[obj_name] = {}
-                        else:
-                            res = query[obj_name] = po.get_status(eventtime)
-                    if req_items is None:
-                        req_items = list(res.keys())
-                        if req_items:
-                            subscription[obj_name] = req_items
-                    lres = last_query.get(obj_name, {})
-                    cres = {}
-                    for ri in req_items:
-                        rd = res.get(ri, None)
-                        if is_query or rd != lres.get(ri):
-                            cres[ri] = rd
-                    if cres or is_query:
-                        cquery[obj_name] = cres
-                # Send data
-                if cquery or is_query:
-                    tmp = dict(template)
-                    tmp['params'] = {'eventtime': eventtime, 'status': cquery}
-                    send_func(tmp)
+            for obj_name in need_objs.keys():
+                po = self.printer.lookup_object(obj_name, None)
+                if po is None or not hasattr(po, 'get_status'):
+                    query[obj_name] = res = {}
+                else:
+                    query[obj_name] = res = po.get_status(eventtime)
+                # Determine changes since last query
+                lres = last_query.get(obj_name, {})
+                if res != lres:
+                    obj_changes[obj_name] = changes = res.copy()
+                    for old_field, old_value in lres.items():
+                        if old_field not in res:
+                            changes[old_field] = None
+                        elif old_value == res[old_field]:
+                            del changes[old_field]
+        # Generate query responses
+        for subscription, completion in pq_list:
+            # Build objs and fields requested by this client
+            cquery = {}
+            for obj_name, req_items in subscription.items():
+                res = query[obj_name]
+                if req_items is not None:
+                    res = { ri: res.get(ri, None) for ri in req_items }
+                cquery[obj_name] = res
+            # Send data
+            completion.complete({'eventtime': eventtime, 'status': cquery})
+        # Send updates on subscriptions
+        for subscription, cconn, template in cl_list:
+            if cconn.is_closed():
+                del self.clients[cconn]
+                continue
+            # Determine objs and fields to send to this client
+            cquery = {}
+            for obj_name, changes in obj_changes.items():
+                req_items = subscription.get(obj_name, [])
+                if req_items is not None:
+                    if not req_items:
+                        continue
+                    changes = { f: v for f, v in changes.items()
+                                if f in req_items }
+                    if not changes:
+                        continue
+                cquery[obj_name] = changes
+            # Send data
+            if cquery:
+                tmp = dict(template)
+                tmp['params'] = {'eventtime': eventtime, 'status': cquery}
+                cconn.send(tmp)
         if not query:
             # Unregister timer if there are no longer any subscriptions
             reactor.unregister_timer(self.query_timer)
@@ -548,16 +571,16 @@ class QueryStatusHelper:
             del self.clients[cconn]
         reactor = self.printer.get_reactor()
         complete = reactor.completion()
-        self.pending_queries.append((None, objects, complete.complete, {}))
+        self.pending_queries.append((objects, complete))
         # Start timer if needed
         if self.query_timer is None:
             qt = reactor.register_timer(self._do_query, reactor.NOW)
             self.query_timer = qt
         # Wait for data to be queried
         msg = complete.wait()
-        web_request.send(msg['params'])
+        web_request.send(msg)
         if is_subscribe:
-            self.clients[cconn] = (cconn, objects, cconn.send, template)
+            self.clients[cconn] = (objects, cconn, template)
     def _handle_subscribe(self, web_request):
         self._handle_query(web_request, is_subscribe=True)
 
