@@ -323,6 +323,11 @@ usb_read_ep0_setup(void *data, uint_fast8_t max_len)
         OTG->GRSTCTL = USB_OTG_GRSTCTL_TXFFLSH;
         while (OTG->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH)
             ;
+    } else if (CONFIG_STM32F4_GD32_USB) {
+        // GD32F4 may clear EPENA with a packet still in the tx fifo
+        OTG->GRSTCTL = USB_OTG_GRSTCTL_TXFFLSH;
+        while (OTG->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH)
+            ;
     }
     enable_rx_endpoint(0);
     EPOUT(0)->DOEPINT = USB_OTG_DOEPINT_STUP;
@@ -435,7 +440,11 @@ OTG_FS_IRQHandler(void)
     }
     if (sts & USB_OTG_GINTSTS_IEPINT) {
         // Can transmit data - disable irq and notify endpoint
-        uint32_t daint = OTGD->DAINT, msk = OTGD->DAINTMSK, pend = daint & msk;
+        uint32_t daint = OTGD->DAINT, msk = OTGD->DAINTMSK;
+        if (CONFIG_STM32F4_GD32_USB)
+            // Leave the OUT endpoint bits (16-31) to the OEPINT code
+            daint &= 0xffff;
+        uint32_t pend = daint & msk;
         OTGD->DAINTMSK = msk & ~daint;
         if (pend & (1 << 0))
             usb_notify_ep0();
@@ -449,6 +458,18 @@ OTG_FS_IRQHandler(void)
             }
         }
     }
+#if CONFIG_STM32F4_GD32_USB
+    if (sts & USB_OTG_GINTSTS_OEPINT) {
+        uint32_t daint = OTGD->DAINT;
+        if (daint & (1 << (16 + USB_CDC_EP_BULK_OUT))) {
+            EPOUT(USB_CDC_EP_BULK_OUT)->DOEPINT = USB_OTG_DOEPINT_XFRC;
+            // Transfer complete - rearm the endpoint.  The data stays in
+            // the rx fifo until the task reads it.
+            enable_rx_endpoint(USB_CDC_EP_BULK_OUT);
+            usb_notify_bulk_out();
+        }
+    }
+#endif
 }
 
 // Initialize the usb controller
@@ -473,6 +494,11 @@ usb_init(void)
     OTGD->DCFG |= (3 << USB_OTG_DCFG_DSPD_Pos);
 #if CONFIG_MACH_STM32F446 || CONFIG_MACH_STM32H7 || CONFIG_MACH_STM32F7
     OTG->GOTGCTL = USB_OTG_GOTGCTL_BVALOEN | USB_OTG_GOTGCTL_BVALOVAL;
+#elif CONFIG_STM32F4_GD32_USB
+    // GD32F4 needs the VBUS comparators enabled even with VBUS sensing
+    // disabled (the GigaDevice usb_core_init() enables them as well)
+    OTG->GCCFG |= (USB_OTG_GCCFG_NOVBUSSENS
+                   | USB_OTG_GCCFG_VBUSASEN | USB_OTG_GCCFG_VBUSBSEN);
 #else
     OTG->GCCFG |= USB_OTG_GCCFG_NOVBUSSENS;
 #endif
@@ -495,7 +521,14 @@ usb_init(void)
 
     // Enable interrupts
     OTGD->DIEPMSK = USB_OTG_DIEPMSK_XFRCM;
+#if CONFIG_STM32F4_GD32_USB
+    OTGD->DOEPMSK = USB_OTG_DOEPMSK_XFRCM;
+    OTGD->DAINTMSK = 1 << (16 + USB_CDC_EP_BULK_OUT);
+    OTG->GINTMSK = (USB_OTG_GINTMSK_RXFLVLM | USB_OTG_GINTMSK_IEPINT
+                    | USB_OTG_GINTMSK_OEPINT);
+#else
     OTG->GINTMSK = USB_OTG_GINTMSK_RXFLVLM | USB_OTG_GINTMSK_IEPINT;
+#endif
     OTG->GAHBCFG = USB_OTG_GAHBCFG_GINT;
     armcm_enable_irq(OTG_FS_IRQHandler, OTG_IRQn, 1);
 
