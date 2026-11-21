@@ -25,5 +25,8 @@ G1 Z5 X0 Y0
 PROBE
 QUERY_PROBE
 
+# Run probe accuracy test
+PROBE_ACCURACY SAMPLES=3
+
 # Move again
 G1 Z9
