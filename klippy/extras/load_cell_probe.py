@@ -373,7 +373,12 @@ class LoadCellProbingMove:
         # start collector after tare samples are consumed
         collector = self._start_collector()
         # do homing move
-        epos = phoming.probing_move(self._mcu_trigger_analog, pos, speed)
+        try:
+            epos = phoming.probing_move(self._mcu_trigger_analog, pos, speed)
+        except:
+            # a collector left running keeps every sample forever
+            collector.stop_collecting()
+            raise
         return epos, collector
 
     # Wait for the MCU to trigger with no movement
@@ -409,10 +414,8 @@ class TappingMove:
             "load_cell_probe", name, header)
         self._best_fit = LCBestFit(self._printer)
 
-    def run_tap(self, gcmd):
-        # do the descending move
-        epos, collector = self._load_cell_probing_move.probing_move(gcmd)
-        # collect samples from the tap
+    # collect samples from the tap
+    def _collect_tap(self, gcmd, epos, collector):
         toolhead = self._printer.lookup_object('toolhead')
         # Homing workaround
         phoming = self._printer.lookup_object('homing')
@@ -439,7 +442,18 @@ class TappingMove:
         move_end = toolhead.get_last_move_time()
         results = collector.collect_until(move_end)
         samples = check_sensor_errors(results, self._printer)
+        return samples, ascent_start_time
 
+    def run_tap(self, gcmd):
+        # do the descending move
+        epos, collector = self._load_cell_probing_move.probing_move(gcmd)
+        try:
+            samples, ascent_start_time = self._collect_tap(gcmd, epos,
+                                                           collector)
+        except:
+            collector.stop_collecting()
+            raise
+        toolhead = self._printer.lookup_object('toolhead')
         # Perform fit on the ascent data
         corrected_z = self._analyze_ascent(gcmd, samples, ascent_start_time,
                                             toolhead, epos[2])
