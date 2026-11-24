@@ -14,7 +14,6 @@ typedef double (*sk_calc_callback)(struct stepper_kinematics *sk, struct move *m
 typedef void (*sk_post_callback)(struct stepper_kinematics *sk);
 struct stepper_kinematics {
     double step_dist, commanded_pos;
-    struct stepcompress *sc;
 
     double last_flush_time, last_move_time;
     struct trapq *tq;
@@ -25,6 +24,7 @@ struct stepper_kinematics {
     sk_post_callback post_cb;
 };
 
+struct stepcompress;
 int32_t itersolve_generate_steps(struct stepper_kinematics *sk
                                  , struct stepcompress *sc, double flush_time);
 double itersolve_check_active(struct stepper_kinematics *sk, double flush_time);
