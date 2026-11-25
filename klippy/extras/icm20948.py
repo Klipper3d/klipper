@@ -166,6 +166,7 @@ class ICM20948:
     def _process_batch(self, eventtime):
         samples = self.ffreader.pull_samples()
         self._convert_samples(samples)
+        samples = tuple(samples)
         if not samples:
             return {}
         return {'data': samples, 'errors': self.last_error_count,
