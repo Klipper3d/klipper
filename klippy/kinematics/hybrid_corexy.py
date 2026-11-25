@@ -17,9 +17,9 @@ class HybridCoreXYKinematics:
                        stepper.LookupMultiRail(config.getsection('stepper_z'))]
         self.rails[1].get_endstops()[0][0].add_stepper(
             self.rails[0].get_steppers()[0])
-        self.rails[0].setup_itersolve('corexy_stepper_alloc', b'-')
-        self.rails[1].setup_itersolve('cartesian_stepper_alloc', b'y')
-        self.rails[2].setup_itersolve('cartesian_stepper_alloc', b'z')
+        self.rails[0].setup_itersolve('cartesian_stepper_alloc', 1., -1., 0.)
+        self.rails[1].setup_itersolve('cartesian_stepper_alloc', 0., 1., 0.)
+        self.rails[2].setup_itersolve('cartesian_stepper_alloc', 0., 0., 1.)
         ranges = [r.get_range() for r in self.rails]
         self.axes_min = toolhead.Coord([r[0] for r in ranges])
         self.axes_max = toolhead.Coord([r[1] for r in ranges])
@@ -32,7 +32,7 @@ class HybridCoreXYKinematics:
             self.rails.append(stepper.LookupRail(dc_config))
             self.rails[1].get_endstops()[0][0].add_stepper(
                 self.rails[3].get_steppers()[0])
-            self.rails[3].setup_itersolve('corexy_stepper_alloc', b'+')
+            self.rails[3].setup_itersolve('cartesian_stepper_alloc', 1., 1., 0.)
             self.dc_module = idex_modes.DualCarriages(
                     self.printer, [self.rails[0]], [self.rails[3]], axes=[0],
                     safe_dist=[dc_config.getfloat(

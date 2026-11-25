@@ -19,9 +19,9 @@ SSE_FLAGS = "-mfpmath=sse -msse2"
 SOURCE_FILES = [
     'pyhelper.c', 'serialqueue.c', 'stepcompress.c', 'steppersync.c',
     'itersolve.c', 'trapq.c', 'pollreactor.c', 'msgblock.c', 'trdispatch.c',
-    'kin_cartesian.c', 'kin_corexy.c', 'kin_corexz.c', 'kin_delta.c',
-    'kin_deltesian.c', 'kin_polar.c', 'kin_rotary_delta.c', 'kin_winch.c',
-    'kin_extruder.c', 'kin_shaper.c', 'kin_idex.c', 'kin_generic.c'
+    'kin_cartesian.c', 'kin_delta.c', 'kin_deltesian.c', 'kin_polar.c',
+    'kin_rotary_delta.c', 'kin_winch.c',
+    'kin_extruder.c', 'kin_shaper.c', 'kin_idex.c',
 ]
 DEST_LIB = "c_helper.so"
 OTHER_FILES = [
@@ -113,21 +113,10 @@ defs_trapq = """
 """
 
 defs_kin_cartesian = """
-    struct stepper_kinematics *cartesian_stepper_alloc(char axis);
-"""
-defs_kin_generic_cartesian = """
-    struct stepper_kinematics *generic_cartesian_stepper_alloc(double a_x
+    struct stepper_kinematics *cartesian_stepper_alloc(double a_x
         , double a_y, double a_z);
-    void generic_cartesian_stepper_set_coeffs(struct stepper_kinematics *sk
+    void cartesian_stepper_set_coeffs(struct stepper_kinematics *sk
         , double a_x, double a_y, double a_z);
-"""
-
-defs_kin_corexy = """
-    struct stepper_kinematics *corexy_stepper_alloc(char type);
-"""
-
-defs_kin_corexz = """
-    struct stepper_kinematics *corexz_stepper_alloc(char type);
 """
 
 defs_kin_delta = """
@@ -236,10 +225,9 @@ defs_std = """
 defs_all = [
     defs_pyhelper, defs_serialqueue, defs_std, defs_stepcompress,
     defs_steppersync, defs_itersolve, defs_trapq, defs_trdispatch,
-    defs_kin_cartesian, defs_kin_corexy, defs_kin_corexz, defs_kin_delta,
+    defs_kin_cartesian, defs_kin_delta,
     defs_kin_deltesian, defs_kin_polar, defs_kin_rotary_delta, defs_kin_winch,
     defs_kin_extruder, defs_kin_shaper, defs_kin_idex,
-    defs_kin_generic_cartesian,
 ]
 
 # Update filenames to an absolute path
