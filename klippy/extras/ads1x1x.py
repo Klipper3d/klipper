@@ -324,15 +324,23 @@ class ADS1X1X_pin:
         self.pcfg = pcfg
         self._last_state = (0., 0.)
         self.invalid_count = 0
+        self._sample_timer = None
 
         self.chip._printer.register_event_handler("klippy:connect", \
                                                   self._handle_connect)
+        self.chip._printer.register_event_handler("klippy:shutdown", \
+                                                  self._handle_shutdown)
 
     def _handle_connect(self):
         self._reactor = self.chip._printer.get_reactor()
         self._sample_timer = \
             self._reactor.register_timer(self._process_sample, \
                                          self._reactor.NOW)
+
+    def _handle_shutdown(self):
+        if self._sample_timer is not None:
+            self._reactor.unregister_timer(self._sample_timer)
+            self._sample_timer = None
 
     def _process_sample(self, eventtime):
         sample = self.chip.sample(self)
