@@ -2320,6 +2320,10 @@ sensor_type: ldc1612
 #frequency:
 #   The external crystal frequency (in Hz) of the LDC1612 chip.
 #   The default is 12000000.
+#pwm_clock:
+#   Reference to a [static_pwm_clock] section that generates the clock signal
+#   for the CLKIN pin. The frequency of this clock is used as fCLKIN.
+#   Either frequency or pwm_clock must be provided.
 #intb_pin:
 #   MCU gpio pin connected to the ldc1612 sensor's INTB pin (if
 #   available). The default is to not use the INTB pin.
