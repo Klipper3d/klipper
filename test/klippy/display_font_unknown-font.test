@@ -1,0 +1,8 @@
+#Test of a valid display_font but an unknown font reference in the display
+DICTIONARY atmega2560.dict
+CONFIG display_font_unknown-font.cfg
+SHOULD_FAIL
+
+STATUS
+HELP
+RESTART
