@@ -11,10 +11,19 @@ class Fan:
         self.last_fan_value = self.last_req_value = 0.
         # Read config
         self.max_power = config.getfloat('max_power', 1., above=0., maxval=1.)
+        self.min_power = config.getfloat('min_power', 0., minval=0.,
+                                         maxval=self.max_power)
         self.kick_start_time = config.getfloat('kick_start_time', 0.1,
                                                minval=0.)
         self.off_below = config.getfloat('off_below', default=0.,
                                          minval=0., maxval=1.)
+        self.rpm_curve = self._load_rpm_curve(config)
+        self.linearize = config.getboolean('linearize', False)
+        if self.linearize and not self.rpm_curve:
+            raise config.error(
+                "Option 'linearize' in section '%s' requires a calibrated"
+                " rpm_curve - run FAN_CALIBRATE first"
+                % (config.get_name(),))
         cycle_time = config.getfloat('cycle_time', 0.010, above=0.)
         hardware_pwm = config.getboolean('hardware_pwm', False)
         shutdown_speed = config.getfloat(
@@ -44,12 +53,58 @@ class Fan:
         self.printer.register_event_handler("gcode:request_restart",
                                             self._handle_request_restart)
 
+    def _load_rpm_curve(self, config):
+        # Calibrated duty cycle to rpm curve, one "duty, rpm" pair per line
+        self.rpm_curve_inv = ()
+        curve = config.getlists('rpm_curve', None, seps=(',', '\n'),
+                                parser=float, count=2)
+        if not curve:
+            return ()
+        pts = sorted(curve)
+        if len(pts) < 2:
+            raise config.error("Option 'rpm_curve' in section '%s' needs at"
+                               " least two points" % (config.get_name(),))
+        for (d0, r0), (d1, r1) in zip(pts, pts[1:]):
+            if d1 <= d0 or r1 <= r0:
+                raise config.error(
+                    "Option 'rpm_curve' in section '%s' must increase in both"
+                    " duty cycle and rpm (%.3f,%.0f then %.3f,%.0f). A curve"
+                    " that dips is a sign the tachometer is undercounting -"
+                    " reduce tachometer_poll_interval and calibrate again."
+                    % (config.get_name(), d0, r0, d1, r1))
+        self.rpm_curve_inv = tuple((r, d) for d, r in pts)
+        return tuple(pts)
+    def _lookup(self, value, table):
+        # Linear interpolation over a table of increasing (x, y) pairs
+        if value <= table[0][0]:
+            return table[0][1]
+        if value >= table[-1][0]:
+            return table[-1][1]
+        for i, (x, y) in enumerate(table[1:], 1):
+            if value <= x:
+                px, py = table[i - 1]
+                return py + (y - py) * (value - px) / (x - px)
+        return table[-1][1]
+    def _duty_to_rpm(self, duty):
+        return self._lookup(duty, self.rpm_curve)
+    def _rpm_to_duty(self, rpm):
+        return self._lookup(rpm, self.rpm_curve_inv)
     def get_mcu(self):
         return self.mcu_fan.get_mcu()
     def _apply_speed(self, print_time, value):
+        req_value = value
         if value < self.off_below:
-            value = 0.
-        value = max(0., min(self.max_power, value * self.max_power))
+            req_value = value = 0.
+        if value and self.linearize:
+            # Scale the request onto the speed range the fan actually
+            # reaches, then convert that speed back to a duty cycle
+            lo = self._duty_to_rpm(self.min_power)
+            hi = self._duty_to_rpm(self.max_power)
+            value = self._rpm_to_duty(lo + value * (hi - lo))
+        elif value:
+            # Scale the request onto the range the fan actually runs in
+            value = self.min_power + value * (self.max_power - self.min_power)
+        value = max(0., min(self.max_power, value))
         if value == self.last_fan_value:
             return "discard", 0.
         if self.enable_pin:
@@ -60,16 +115,28 @@ class Fan:
         if (value and self.kick_start_time
             and (not self.last_fan_value or value - self.last_fan_value > .5)):
             # Run fan at full speed for specified kick_start_time
-            self.last_req_value = value
+            self.last_req_value = req_value
             self.last_fan_value = self.max_power
             self.mcu_fan.set_pwm(print_time, self.max_power)
             return "repeat", print_time + self.kick_start_time
-        self.last_fan_value = self.last_req_value = value
+        self.last_req_value = req_value
+        self.last_fan_value = value
         self.mcu_fan.set_pwm(print_time, value)
     def set_speed(self, value, print_time=None):
         self.gcrq.send_async_request(value, print_time)
     def set_speed_from_command(self, value):
         self.gcrq.queue_gcode_request(value)
+    def set_speed_params(self, off_below, kick_start_time, min_power,
+                         linearize):
+        # Allow calibration tools to temporarily neutralize the settings
+        # that shape a speed request; returns the previous settings
+        prev = (self.off_below, self.kick_start_time, self.min_power,
+                self.linearize)
+        self.off_below = off_below
+        self.kick_start_time = kick_start_time
+        self.min_power = min_power
+        self.linearize = linearize
+        return prev
     def _handle_request_restart(self, print_time):
         self.set_speed(0., print_time)
 
@@ -84,15 +151,21 @@ class FanTachometer:
     def __init__(self, config):
         printer = config.get_printer()
         self._freq_counter = None
+        self.sample_time = None
 
         pin = config.get('tachometer_pin', None)
         if pin is not None:
             self.ppr = config.getint('tachometer_ppr', 2, minval=1)
             poll_time = config.getfloat('tachometer_poll_interval',
                                         0.0015, above=0.)
-            sample_time = 1.
+            self.sample_time = config.getfloat('tachometer_sample_time', 1.,
+                                               above=0.)
             self._freq_counter = pulse_counter.FrequencyCounter(
-                printer, pin, sample_time, poll_time)
+                printer, pin, self.sample_time, poll_time)
+
+    def get_sample_time(self):
+        # Returns None if no tachometer is configured
+        return self.sample_time
 
     def get_status(self, eventtime):
         if self._freq_counter is not None:
