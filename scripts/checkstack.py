@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # Script that tries to find how much stack space each function in an
 # object is using.
 #
