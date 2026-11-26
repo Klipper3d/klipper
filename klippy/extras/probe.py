@@ -80,7 +80,9 @@ class ProbeCommandHelper:
         print_time = toolhead.get_last_move_time()
         res = self.query_endstop(print_time)
         self.last_state = res
-        gcmd.respond_info("probe: %s" % (["open", "TRIGGERED"][not not res],))
+        if gcmd.get_int('NO_OUTPUT', 0):
+            gcmd.respond_info(
+                "probe: %s" % (["open", "TRIGGERED"][not not res],))
     cmd_PROBE_help = "Probe Z-height at current XY position"
     def cmd_PROBE(self, gcmd):
         pos = run_single_probe(self.probe, gcmd)
