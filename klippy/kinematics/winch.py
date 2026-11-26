@@ -3,6 +3,7 @@
 # Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
+import math
 import stepper, mathutil, chelper
 
 
@@ -41,8 +42,24 @@ class WinchFlexHelper:
         if self.anchor_mode == 3 and self.num != 8:
             raise config.error("CubeCorner anchor mode requires exactly 8 anchors")
         self.buildup_factor = config.getfloat('winch_buildup_factor', 0., minval=0.)
+        self.spool_flattening = config.getfloat(
+            'winch_spool_flattening', 0., minval=0.)
+        self.strained_spool_storage = config.getboolean(
+            'winch_strained_spool_storage', False)
+        if not math.isfinite(self.spool_flattening):
+            raise config.error("winch_spool_flattening must be finite")
+        if self.buildup_factor and (self.spool_flattening
+                                    or self.strained_spool_storage):
+            raise config.error(
+                "winch_buildup_factor cannot be combined with"
+                " winch_spool_flattening or winch_strained_spool_storage")
         self.mover_weight = config.getfloat('winch_mover_weight', 0., minval=0.)
         self.spring_constant = config.getfloat('winch_spring_constant', 0., minval=0.)
+        if (self.spool_flattening or self.strained_spool_storage) \
+                and not self.spring_constant > 0.:
+            raise config.error(
+                "Spool flattening and strained storage need flex compensation"
+                " with a positive winch_spring_constant")
         if self.num:
             default_min = tuple(0. for _ in range(self.num))
             default_max = tuple(120. for _ in range(self.num))
@@ -92,7 +109,8 @@ class WinchFlexHelper:
             self.spring_constant, min_c, max_c,
             guy_ptr, self.flex_compensation_algorithm,
             self.ignore_gravity, self.ignore_pretension, self.mechanical_advantage,
-            self.lines_per_axis)
+            self.lines_per_axis, self.spool_flattening,
+            self.strained_spool_storage)
         self.ffi_lib.winch_flex_set_swivels(
             self.ptr, self.ffi_main.new("double[]", list(self._pulley_radii)),
             self.ffi_main.new("double[]", [

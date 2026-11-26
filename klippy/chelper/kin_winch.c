@@ -48,6 +48,10 @@ struct winch_flex {
     int anchor_mode;
     int flex_compensation_algorithm;
     double buildup_factor;
+    // Rope on a drum of radius R sinks by spool_flattening * T / R under
+    // tension T (mm^2/N); strained storage keeps its winding strain.
+    double spool_flattening;
+    int strained_spool_storage;
     double mover_weight;
     double spring_constant;
     double min_force[WINCH_MAX_ANCHORS];
@@ -588,6 +592,17 @@ compute_flex(struct winch_flex *wf, double x, double y, double z,
         // Convert per-line stretch to effector distance; steps/mm includes MA.
         flex[i] = -forces[i] / (spring_k * ma * ma * wf->lines_per_axis[i])
             + wf->home_flex[i];
+        // The drum stores rope at the strain and flattened radius it was
+        // wound with, so a motor-side millimetre carries less rest length.
+        // Assume the rope was wound at the current tension.
+        double tension = forces[i] / (ma * wf->lines_per_axis[i]);
+        double strain = wf->strained_spool_storage && wf->spring_constant > 0.
+            ? tension / wf->spring_constant : 0.;
+        double sink = wf->spool_radius_sq[i] > 0.
+            ? fmin(wf->spool_flattening * tension / wf->spool_radius_sq[i], .5)
+            : 0.;
+        flex[i] += (distances[i] - wf->distances_origin[i] + flex[i])
+            * (strain + sink) / (1. - sink);
     }
 }
 
@@ -1072,7 +1087,9 @@ winch_flex_configure(struct winch_flex *wf,
                      int ignore_gravity,
                      int ignore_pretension,
                      const int *mechanical_advantage,
-                     const int *lines_per_axis)
+                     const int *lines_per_axis,
+                     double spool_flattening,
+                     int strained_spool_storage)
 {
     if (!wf)
         return;
@@ -1082,6 +1099,8 @@ winch_flex_configure(struct winch_flex *wf,
         num_anchors = WINCH_MAX_ANCHORS;
     wf->num_anchors = num_anchors;
     wf->buildup_factor = buildup_factor;
+    wf->spool_flattening = spool_flattening;
+    wf->strained_spool_storage = strained_spool_storage;
     wf->mover_weight = mover_weight;
     wf->spring_constant = spring_constant;
     wf->flex_compensation_algorithm = flex_compensation_algorithm;

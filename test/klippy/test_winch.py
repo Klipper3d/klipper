@@ -63,7 +63,8 @@ class WinchFlexHelperTests(unittest.TestCase):
                      target=20.0, min_force=None, max_force=None,
                      guy_wires=None, buildup_factor=0.0,
                      mechanical_advantage=None, lines_per_axis=None,
-                     attachments=None, algorithm='qp', ignore_pretension=False, anchor_mode='none'):
+                     attachments=None, algorithm='qp', ignore_pretension=False, anchor_mode='none',
+                     spool_flattening=0.0, strained_spool_storage=False):
         num = len(anchors)
         if attachments is None:
             attachments = [(0.0, 0.0, 0.0)] * num
@@ -85,6 +86,8 @@ class WinchFlexHelperTests(unittest.TestCase):
             'winch_mechanical_advantage': int_list_str(mechanical_advantage),
             'flex_compensation_algorithm': algorithm,
             'ignore_pretension': str(ignore_pretension),
+            'winch_spool_flattening': f"{spool_flattening}",
+            'winch_strained_spool_storage': str(strained_spool_storage),
         }
         if guy_wires is not None:
             options['winch_guy_wire_lengths'] = list_str(guy_wires)
@@ -278,6 +281,42 @@ class WinchFlexHelperTests(unittest.TestCase):
                 strain = reeled_line / (distance * ma + guy)
                 self.assertAlmostEqual(strain * spring, force / (ma * n),
                                        places=9)
+
+    def test_spool_storage_pays_out_strained_flattened_line(self):
+        force, spring, radius = 20.0, 20000.0, 30.0
+        ma, n, guy = (2, 2, 2, 4), (2, 2, 2, 3), (528.3, 528.3, 528.3, 398.9)
+        kwargs = dict(spring=spring, min_force=[force] * 4, max_force=[force] * 4,
+                      mechanical_advantage=ma, lines_per_axis=n, guy_wires=guy)
+        plain = self.build_helper(FOUR_ANCHORS_DEFAULT, **kwargs)
+        stored = self.build_helper(FOUR_ANCHORS_DEFAULT, spool_flattening=.015,
+                                   strained_spool_storage=True, **kwargs)
+        for helper in (plain, stored):
+            helper.set_active(True)
+            for i, u in enumerate(ma):
+                helper.set_spool_params(i, 2. * math.pi * radius / u, 3200.)
+        for pos in ((0.0, 0.0, 0.0), (300.0, -200.0, 50.0), (-500., 400., 600.)):
+            distances, flex = plain.calc_arrays(pos)
+            _, stored_flex = stored.calc_arrays(pos)
+            for i, (d, f, g) in enumerate(zip(stored_flex, flex, FOUR_ANCHORS_DEFAULT)):
+                tension = force / (ma[i] * n[i])
+                sink = .015 * tension / radius ** 2
+                payout = (1. + tension / spring) / (1. - sink)
+                line = distances[i] - math.sqrt(sum(c * c for c in g)) + f
+                self.assertAlmostEqual(line + d - f, line * payout, places=9)
+        steppers = [ffi.gc(lib.winch_stepper_alloc(stored.ptr, i), lib.free) for i in range(4)]
+        for pos in ((300.0, -200.0, 50.0), (-500., 400., 600.)):
+            motor = ffi.new('double[]', [lib.itersolve_calc_position_from_coord(stp, *pos) for stp in steppers])
+            out, cost, iters = ffi.new('double[3]'), ffi.new('double[1]'), ffi.new('int[1]')
+            self.assertTrue(lib.winch_forward_solve(stored.ptr, motor, ffi.new('double[3]', [0., 0., 0.]),
+                .001, .001, 3, 30, out, cost, iters))
+            for actual, wanted in zip(out, pos):
+                self.assertAlmostEqual(actual, wanted, delta=.01)
+        for options in (dict(buildup_factor=.007, spool_flattening=.015),
+                        dict(buildup_factor=.007, strained_spool_storage=True),
+                        dict(spool_flattening=float('nan')),
+                        dict(spring=0., strained_spool_storage=True)):
+            with self.assertRaises(configfile.error):
+                self.build_helper(FOUR_ANCHORS_DEFAULT, **options)
 
     def line_forces(self, helper, pos, spring, guy_wire):
         distances, flex = helper.calc_arrays(pos)

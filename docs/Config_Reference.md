@@ -727,8 +727,9 @@ winch_anchor_mode: none
 winch_mover_weight:
 #   The mover weight in kilograms. The default is 0.
 winch_spring_constant:
-#   Approximate spring constant of the line in Newton per meter.
-#   A rough approximation for Garda 1.1 mm line (unit N/m) is 20000.0 N/m.
+#   Approximate axial stiffness EA of the line in Newton. A line of
+#   length L then has spring constant winch_spring_constant/L.
+#   A rough approximation for Garda 1.1 mm line is 20000.0 N.
 #   The default is 0.
 winch_min_force:
 #   Minimum permitted force per anchor in Newton. Provide one value
@@ -769,6 +770,20 @@ winch_buildup_factor:
 #   of line wound onto the spool. Set this to 0 to use the constant
 #   radius spool model.
 #   The default is 0.
+winch_spool_flattening:
+#   Optional radial compliance of line on a constant radius spool, in
+#   mm^2/N. Line wound at tension T onto a spool of radius R sinks
+#   T*winch_spool_flattening/R mm into the layers below, so each spool
+#   turn stores less line. 0.015 fits braided Dyneema on a 30-50 mm
+#   spool. Only used by flex compensation, and cannot be combined
+#   with winch_buildup_factor. The default is 0.
+winch_strained_spool_storage:
+#   Optional. Set to true if line keeps the stretch it was wound with
+#   on the spool (T/winch_spring_constant). Both this and
+#   winch_spool_flattening assume that the line on the spool was wound
+#   at the tension it is paid out with. Only used by flex
+#   compensation, and cannot be combined with winch_buildup_factor.
+#   The default is false.
 winch_mechanical_advantage:
 #   Optional mechanical advantage for each anchor.
 #   If the winch force is geared by winding the line back and forth to the

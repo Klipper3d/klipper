@@ -159,7 +159,8 @@ defs_kin_winch = """
         const double *min_force,
         const double *max_force, const double *guy_wires,
         int flex_compensation_algorithm, int ignore_gravity, int ignore_pretension,
-        const int* mechanical_advantage, const int* lines_per_axis);
+        const int* mechanical_advantage, const int* lines_per_axis,
+        double spool_flattening, int strained_spool_storage);
     void winch_flex_set_swivels(struct winch_flex *wf, const double *radii,
         const double *axes, const double *home_tension);
     void winch_flex_set_spool_params(struct winch_flex *wf, int index,

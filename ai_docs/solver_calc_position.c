@@ -184,11 +184,12 @@ solve_sample(const struct cfg_state *cfg, size_t num, int use_flex,
         if (mech_adv[i] <= 0)
             mech_adv[i] = 1;
     }
+    double attachments[3 * WINCH_MAX_ANCHORS] = { 0. };
     winch_flex_configure(
-        wf, (int)num, anchors, cfg->spool_buildup, cfg->mover_weight,
+        wf, (int)num, anchors, attachments, cfg->spool_buildup, cfg->mover_weight,
         cfg->spring_k_per_unit_length, min_force, max_force, guy,
         WINCH_FORCE_ALGO_QP, cfg->ignore_gravity, cfg->ignore_pretension,
-        mech_adv, NULL);
+        mech_adv, NULL, 0., 0);
     winch_flex_set_enabled(wf, use_flex ? 1 : 0);
 
     double gear = gear_ratio(cfg);
