@@ -83,13 +83,25 @@ can_init(void)
     // Setup canbus
     can2040_setup(&cbus, 0);
     can2040_callback_config(&cbus, can2040_cb);
+    canhw_start(CONFIG_CANBUS_FREQUENCY);
+}
+DECL_INIT(can_init);
 
+void
+canhw_start(uint32_t canbus_frequency)
+{
     // Enable irqs
     armcm_enable_irq(PIOx_IRQHandler, PIO0_IRQ_0_IRQn, 1);
 
     // Start canbus
     uint32_t pclk = get_pclock_frequency(RESETS_RESET_PIO0_RESET);
-    can2040_start(&cbus, pclk, CONFIG_CANBUS_FREQUENCY
+    can2040_start(&cbus, pclk, canbus_frequency
                   , CONFIG_RPXXXX_CANBUS_GPIO_RX, CONFIG_RPXXXX_CANBUS_GPIO_TX);
 }
-DECL_INIT(can_init);
+
+void
+canhw_stop(void)
+{
+    can2040_stop(&cbus);
+    NVIC_DisableIRQ(PIO0_IRQ_0_IRQn);
+}

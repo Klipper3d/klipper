@@ -28,6 +28,8 @@ enum {
 };
 
 // callbacks provided by board specific code
+void canhw_start(uint32_t frequency);
+void canhw_stop(void);
 int canhw_send(struct canbus_msg *msg);
 void canhw_set_filter(uint32_t id);
 void canhw_get_status(struct canbus_status *status);
