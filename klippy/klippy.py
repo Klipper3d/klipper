@@ -268,7 +268,8 @@ def main():
                     default='/tmp/printer',
                     help="input tty name (default is /tmp/printer)")
     opts.add_option("-a", "--api-server", dest="apiserver",
-                    help="api server unix domain socket filename")
+                    help="api server url (unix:///path/to/file "
+                         "or tcp://ip[:port])")
     opts.add_option("-l", "--logfile", dest="logfile",
                     help="write log to file instead of stderr")
     opts.add_option("-v", action="store_true", dest="verbose",
