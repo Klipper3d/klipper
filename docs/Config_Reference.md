@@ -758,6 +758,11 @@ winch_guy_wire_lengths:
 #   All line that's not on the spool or suspended between anchor point
 #   and mover point is defined to be "guy wire".
 #   The default is 0 for each anchor.
+winch_home_tension:
+#   Optional tension, in Newtons, in the lines towards each anchor when
+#   the motor positions were zeroed at the origin. Flex compensation then
+#   only adds the stretch beyond it, instead of tensioning the lines
+#   from slack. The default is 0 for each anchor.
 winch_buildup_factor:
 #   Optional spool buildup factor for the whole machine.
 #   This is the change in spool radius, in millimeters, per millimeter
@@ -848,6 +853,18 @@ attachment_z:
 #   eight lines from its eight corners. Leave them out when parallel
 #   line pairs (winch_lines_per_axis) keep the mover from rotating.
 #   The default is 0 for each, which treats the mover as a point.
+#pulley_radius: 0
+#   Optional radius (in mm) of a swivel pulley at this anchor. The line
+#   arrives at the pulley along swivel_axis, wraps the wheel and leaves
+#   from a tangent point that moves as the mover moves, while the pulley
+#   fork turns about the axis. anchor_x/y/z are then the point where the
+#   line enters the pulley. The default is 0, a fixed point anchor.
+#swivel_axis_x:
+#swivel_axis_y:
+#swivel_axis_z:
+#   Direction the line travels as it enters the swivel pulley, which is
+#   also the axis the fork turns about. Required when pulley_radius is
+#   set; it need not be a unit vector.
 ```
 
 ### Generic Cartesian Kinematics

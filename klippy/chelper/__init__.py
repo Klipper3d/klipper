@@ -26,7 +26,7 @@ SOURCE_FILES = [
 DEST_LIB = "c_helper.so"
 OTHER_FILES = [
     'list.h', 'serialqueue.h', 'stepcompress.h', 'steppersync.h',
-    'itersolve.h', 'pyhelper.h', 'trapq.h', 'pollreactor.h', 'msgblock.h', 'forward_workspace.h'
+    'itersolve.h', 'pyhelper.h', 'trapq.h', 'pollreactor.h', 'msgblock.h', 'forward_workspace.h', 'swivel_pulley.h'
 ]
 
 defs_stepcompress = """
@@ -160,6 +160,8 @@ defs_kin_winch = """
         const double *max_force, const double *guy_wires,
         int flex_compensation_algorithm, int ignore_gravity, int ignore_pretension,
         const int* mechanical_advantage, const int* lines_per_axis);
+    void winch_flex_set_swivels(struct winch_flex *wf, const double *radii,
+        const double *axes, const double *home_tension);
     void winch_flex_set_spool_params(struct winch_flex *wf, int index,
         double rotation_distance, double steps_per_rotation);
     void winch_flex_calc_arrays(struct winch_flex *wf, double x, double y,

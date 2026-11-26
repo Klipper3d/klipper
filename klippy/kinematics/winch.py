@@ -3,7 +3,6 @@
 # Copyright (C) 2018-2021  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import math
 import stepper, mathutil, chelper
 
 
@@ -13,16 +12,14 @@ class WinchFlexHelper:
     ALGORITHMS = {'tikhonov': 0, 'qp': 1}
     ALGO_NAMES = {v: k for k, v in ALGORITHMS.items()}
 
-    def __init__(self, anchors, attachments, config):
+    def __init__(self, anchors, attachments, config, pulley_radii=None,
+                 swivel_axes=None):
         self._anchors = tuple(anchors)
         self._attachments = tuple(attachments)
         self.num = len(self._anchors)
-        self.origin_distances = tuple(
-            math.sqrt(anchor[0] * anchor[0]
-                      + anchor[1] * anchor[1]
-                      + anchor[2] * anchor[2])
-            for anchor in self._anchors
-        )
+        self._pulley_radii = tuple(pulley_radii or (0.,) * self.num)
+        self._swivel_axes = tuple(swivel_axes or ((0., 0., 0.),) * self.num)
+        self.origin_distances = ()
         self.ptr = None
         self.enabled = False
         self.flex_compensation_algorithm_name = 'qp'
@@ -62,12 +59,17 @@ class WinchFlexHelper:
             self.lines_per_axis = list(config.getintlist(
                 'winch_lines_per_axis', tuple(1 for _ in range(self.num)),
                 count=self.num))
+            # Direction-total tension when the motors were zeroed at the origin
+            self.home_tension = list(config.getfloatlist(
+                'winch_home_tension', tuple(0. for _ in range(self.num)),
+                count=self.num))
         else:
             self.min_force = []
             self.max_force = []
             self.guy_wires = []
             self.mechanical_advantage = []
             self.lines_per_axis = []
+            self.home_tension = []
         algo_choices = list(self.ALGORITHMS.keys())
         self.flex_compensation_algorithm_name = config.getchoice(
             'flex_compensation_algorithm', algo_choices, default='qp')
@@ -91,6 +93,12 @@ class WinchFlexHelper:
             guy_ptr, self.flex_compensation_algorithm,
             self.ignore_gravity, self.ignore_pretension, self.mechanical_advantage,
             self.lines_per_axis)
+        self.ffi_lib.winch_flex_set_swivels(
+            self.ptr, self.ffi_main.new("double[]", list(self._pulley_radii)),
+            self.ffi_main.new("double[]", [
+                float(c) for axis in self._swivel_axes for c in axis]),
+            self.ffi_main.new("double[]", self.home_tension))
+        self.origin_distances = tuple(self.calc_arrays((0., 0., 0.))[0])
         self.set_anchor_mode(self.anchor_mode)
 
     def set_anchor_mode(self, mode):
@@ -170,6 +178,7 @@ class WinchKinematics:
         self.anchors = []
         self.attachments = []
         self.m569_driver_descriptors = []
+        pulley_radii, swivel_axes = [], []
         for i in range(26):
             name = 'stepper_' + chr(ord('a') + i)
             if i >= 3 and not config.has_section(name):
@@ -187,8 +196,17 @@ class WinchKinematics:
             self.attachments.append(tuple(
                 stepper_config.getfloat('attachment_' + n, 0.)
                 for n in 'xyz'))
+            # A swivel pulley anchor is where the line enters the pulley
+            radius = stepper_config.getfloat('pulley_radius', 0., minval=0.)
+            axis = tuple(stepper_config.getfloat('swivel_axis_' + n, 0.)
+                         for n in 'xyz')
+            if radius > 0. and not any(axis):
+                raise stepper_config.error(
+                    "Swivel pulley needs a nonzero swivel_axis")
+            pulley_radii.append(radius)
+            swivel_axes.append(axis)
         self.flex_helper = WinchFlexHelper(
-            self.anchors, self.attachments, config)
+            self.anchors, self.attachments, config, pulley_radii, swivel_axes)
         self.force_move = self.printer.lookup_object('force_move')
         self.stepper_enable = self.printer.lookup_object('stepper_enable')
         self.pretension_speed = config.getfloat(

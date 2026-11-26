@@ -6,6 +6,7 @@
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
 #include "forward_workspace.h"
+#include "swivel_pulley.h"
 #include <math.h>   // sqrt, fabs, fmax, fmin
 #include <stddef.h> // offsetof
 #include <stdlib.h> // malloc
@@ -64,13 +65,20 @@ struct winch_flex {
     double steps_per_mm[WINCH_MAX_ANCHORS];
     double inv_steps_per_mm[WINCH_MAX_ANCHORS];
     int use_constant_spool_model[WINCH_MAX_ANCHORS];
+    // Swivel pulley at each anchor: wheel radius (0 is a pinhole) and the unit
+    // direction the line travels as it enters. Anchors are then the entry points.
+    double pulley_radius[WINCH_MAX_ANCHORS];
+    struct coord swivel_axis[WINCH_MAX_ANCHORS];
+    // Direction-total tension in each line when the motors were zeroed at the origin
+    double home_tension[WINCH_MAX_ANCHORS];
+    // Stretch present at the origin because of home_tension
+    double home_flex[WINCH_MAX_ANCHORS];
 };
 
 struct winch_stepper {
     struct stepper_kinematics sk;
     struct winch_flex *wf;
     int index;
-    struct coord anchor;
 };
 
 static inline double
@@ -113,6 +121,28 @@ invert3x3(const double M[3][3], double Minv[3][3])
     return 1;
 }
 
+// Line length from the anchor (a swivel pulley's entry point) to pos, and
+// where the line leaves the anchor towards it
+static double
+line_length(const struct winch_flex *wf, int i, const struct coord *pos,
+            struct coord *exit)
+{
+    const struct coord *a = &wf->anchors[i];
+    if (!(wf->pulley_radius[i] > 0.)) {
+        *exit = *a;
+        return hypot3(a->x - pos->x, a->y - pos->y, a->z - pos->z);
+    }
+    double entry[3] = {a->x, a->y, a->z};
+    double axis[3] = {wf->swivel_axis[i].x, wf->swivel_axis[i].y,
+                      wf->swivel_axis[i].z};
+    double p[3] = {pos->x, pos->y, pos->z}, out[3];
+    double length = hp_swivel_length(entry, axis, wf->pulley_radius[i], p, out);
+    exit->x = out[0];
+    exit->y = out[1];
+    exit->z = out[2];
+    return length;
+}
+
 static int
 build_direction_matrix(struct winch_flex *wf, const struct coord *pos,
                        double *A)
@@ -120,9 +150,11 @@ build_direction_matrix(struct winch_flex *wf, const struct coord *pos,
     int N = wf->num_anchors;
     int valid = 0;
     for (int j = 0; j < N; ++j) {
-        double dx = wf->anchors[j].x - pos->x;
-        double dy = wf->anchors[j].y - pos->y;
-        double dz = wf->anchors[j].z - pos->z;
+        struct coord exit;
+        line_length(wf, j, pos, &exit);
+        double dx = exit.x - pos->x;
+        double dy = exit.y - pos->y;
+        double dz = exit.z - pos->z;
         double norm = hypot3(dx, dy, dz);
         if (norm < EPSILON) {
             A[0 * N + j] = 0.;
@@ -529,11 +561,8 @@ compute_flex(struct winch_flex *wf, double x, double y, double z,
     pos.y = y;
     pos.z = z;
     for (int i = 0; i < num; ++i) {
-        double dx = wf->anchors[i].x - x;
-        double dy = wf->anchors[i].y - y;
-        double dz = wf->anchors[i].z - z;
-        double dist = hypot3(dx, dy, dz);
-        distances[i] = dist;
+        struct coord exit;
+        distances[i] = line_length(wf, i, &pos, &exit);
     }
     if (!wf->enabled) {
         for (int i = 0; i < num; ++i)
@@ -552,7 +581,8 @@ compute_flex(struct winch_flex *wf, double x, double y, double z,
         if (ma <= 0.)
             ma = 1.;
         // Convert per-line stretch to effector distance; steps/mm includes MA.
-        flex[i] = -forces[i] / (spring_k * ma * ma * wf->lines_per_axis[i]);
+        flex[i] = -forces[i] / (spring_k * ma * ma * wf->lines_per_axis[i])
+            + wf->home_flex[i];
     }
 }
 
@@ -638,9 +668,12 @@ residuals_and_derivatives(struct winch_flex *wf, const double *line_pos, int N,
 
     double cost = 0.;
     for (int i = 0; i < N; ++i) {
-        double dx = pos->x - wf->anchors[i].x;
-        double dy = pos->y - wf->anchors[i].y;
-        double dz = pos->z - wf->anchors[i].z;
+        // Lengths grow along the free span, from where the line leaves its anchor
+        struct coord exit;
+        double length = line_length(wf, i, pos, &exit);
+        double dx = pos->x - exit.x;
+        double dy = pos->y - exit.y;
+        double dz = pos->z - exit.z;
         double dist = hypot3(dx, dy, dz);
         if (dist < EPSILON)
             dist = EPSILON;
@@ -648,7 +681,7 @@ residuals_and_derivatives(struct winch_flex *wf, const double *line_pos, int N,
         double inv_len3 = inv_len * inv_len * inv_len;
 
         double flex = base_flex[i];
-        double found_line_pos = dist - wf->distances_origin[i] + flex;
+        double found_line_pos = length - wf->distances_origin[i] + flex;
         double res = found_line_pos - line_pos[i];
         if (residuals)
             residuals[i] = res;
@@ -741,7 +774,8 @@ solve_hybrid_halley(struct winch_flex *wf, const double *line_pos, int N,
     double anchors[WINCH_MAX_ANCHORS][3], ranges[WINCH_MAX_ANCHORS];
     for (int i=0;i<N;++i) {
         anchors[i][0]=wf->anchors[i].x; anchors[i][1]=wf->anchors[i].y; anchors[i][2]=wf->anchors[i].z;
-        ranges[i]=wf->distances_origin[i]+line_pos[i];
+        // Seed swivel pulleys as pinholes at their entry points
+        ranges[i]=hypot3(anchors[i][0],anchors[i][1],anchors[i][2])+line_pos[i];
     }
     double candidates[3][3], normal[3]; int planar=0;
     int candidate_count=hp_range_candidates(anchors,ranges,N,candidates,normal,&planar);
@@ -891,13 +925,10 @@ winch_forward_solve(struct winch_flex *wf, const double *motor_pos,
 static double
 calc_position_common(struct winch_stepper *ws, struct move *m, double move_time)
 {
-    struct coord pos = move_get_coord(m, move_time);
-    double dx = ws->anchor.x - pos.x;
-    double dy = ws->anchor.y - pos.y;
-    double dz = ws->anchor.z - pos.z;
-    double dist = hypot3(dx, dy, dz);
+    struct coord pos = move_get_coord(m, move_time), exit;
     struct winch_flex *wf = ws->wf;
-    double line_pos = dist - wf->distances_origin[ws->index];
+    double line_pos = line_length(wf, ws->index, &pos, &exit)
+        - wf->distances_origin[ws->index];
     if (wf && ws->index < wf->num_anchors && wf->enabled) {
         double distances[WINCH_MAX_ANCHORS];
         double flex[WINCH_MAX_ANCHORS];
@@ -940,12 +971,33 @@ recalc_origin(struct winch_flex *wf)
     if (num <= 0)
         return;
 
+    struct coord origin = {0., 0., 0.}, exit;
     for (int i = 0; i < num; ++i) {
-        double dx = wf->anchors[i].x;
-        double dy = wf->anchors[i].y;
-        double dz = wf->anchors[i].z;
-        wf->distances_origin[i] = hypot3(dx, dy, dz);
+        wf->distances_origin[i] = line_length(wf, i, &origin, &exit);
+        double ma = wf->mechanical_advantage[i] > 0 ? wf->mechanical_advantage[i] : 1.;
+        double spring_length = wf->distances_origin[i] * ma + wf->guy_wires[i];
+        double spring_k = wf->spring_constant / (spring_length > EPSILON ? spring_length : EPSILON);
+        wf->home_flex[i] = spring_k > 0.
+            ? wf->home_tension[i] / (spring_k * ma * ma * wf->lines_per_axis[i]) : 0.;
     }
+}
+
+void __visible
+winch_flex_set_swivels(struct winch_flex *wf, const double *radii,
+                       const double *axes, const double *home_tension)
+{
+    if (!wf)
+        return;
+    for (int i = 0; i < wf->num_anchors; ++i) {
+        double ax = axes[i * 3], ay = axes[i * 3 + 1], az = axes[i * 3 + 2];
+        double n = hypot3(ax, ay, az);
+        wf->pulley_radius[i] = radii[i];
+        wf->swivel_axis[i].x = n > 0. ? ax / n : 0.;
+        wf->swivel_axis[i].y = n > 0. ? ay / n : 0.;
+        wf->swivel_axis[i].z = n > 0. ? az / n : 0.;
+        wf->home_tension[i] = home_tension[i];
+    }
+    recalc_origin(wf);
 }
 
 static void
@@ -1123,8 +1175,6 @@ winch_stepper_alloc(struct winch_flex *wf, int index)
     memset(ws, 0, sizeof(*ws));
     ws->wf = wf;
     ws->index = index;
-    if (wf && index >= 0 && index < wf->num_anchors)
-        ws->anchor = wf->anchors[index];
     ws->sk.calc_position_cb = winch_stepper_calc_position;
     ws->sk.active_flags = AF_X | AF_Y | AF_Z;
     return &ws->sk;
