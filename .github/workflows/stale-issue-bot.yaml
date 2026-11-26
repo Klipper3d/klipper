@@ -11,16 +11,14 @@ jobs:
     steps:
     - uses: actions/stale@v8
       with:
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        stale-issue-message: |
+        stale-pr-message: |
           Hello,
 
           It looks like there hasn't been any recent updates on this
-          Klipper github issue.  If you created this issue and no
-          longer consider it open, then please login to github and
-          close the issue.  Otherwise, if there is no further activity
-          on this thread then it will be automatically closed in a few
-          days.
+          github ticket.  We prefer to only list tickets as "open" if
+          they are actively being worked on.  Feel free to provide an
+          update on this ticket.  Otherwise the ticket will be
+          automatically closed in a few days.
 
           Best regards,
 
@@ -29,10 +27,10 @@ jobs:
           PS: I'm just an automated script, not a human being.
 
         exempt-issue-labels: 'enhancement,bug'
-        days-before-stale: 35
+        days-before-stale: 60
         days-before-close: 7
-        days-before-pr-stale: -1
-        days-before-pr-close: -1
+        days-before-issue-stale: -1
+        days-before-issue-close: -1
   # Close tickets marked with "not on github" label
   close_not_on_github:
     if: github.repository == 'Klipper3d/klipper'
@@ -330,7 +328,7 @@ jobs:
             }
   # Lock closed issues after 6 months of inactivity and PRs after 1 year.
   lock:
-    name: Lock Closed Issues
+    name: Lock Closed Tickets
     if: github.repository == 'Klipper3d/klipper'
     runs-on: ubuntu-latest
     steps:
