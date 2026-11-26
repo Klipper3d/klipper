@@ -16,7 +16,7 @@ src-$(CONFIG_WANT_SPI) += avr/spi.c
 src-$(CONFIG_WANT_I2C) += avr/i2c.c
 src-$(CONFIG_WANT_HARD_PWM) += avr/hard_pwm.c
 src-$(CONFIG_AVR_WATCHDOG) += avr/watchdog.c
-src-$(CONFIG_USBSERIAL) += avr/usbserial.c generic/usb_cdc.c
+src-$(CONFIG_USBSERIAL) += avr/usbserial.c generic/usb_cdc.c avr/bootloader.c
 src-$(CONFIG_SERIAL) += avr/serial.c generic/serial_irq.c
 
 # Suppress broken "misspelled signal handler" warnings on gcc 4.8.1
