@@ -5807,8 +5807,8 @@ Most Klipper micro-controller implementations only support an
 micro-controller supports a 400000 speed (*fast mode*, 400kbit/s), but it must be
 [set in the operating system](RPi_microcontroller.md#optional-enabling-i2c)
 and the `i2c_speed` parameter is otherwise ignored. The Klipper
-"RP2040" micro-controller and ATmega AVR family and some STM32
-(F0, G0, G4, L4, F7, H7) support a rate of 400000 via the `i2c_speed` parameter.
+"RP2040" micro-controller, ATmega AVR family, and STM32 family support a
+rate of 400000 via the `i2c_speed` parameter.
 All other Klipper micro-controllers use a
 100000 rate and ignore the `i2c_speed` parameter.
 
@@ -5834,5 +5834,5 @@ All other Klipper micro-controllers use a
 #   The I2C speed (in Hz) to use when communicating with the device.
 #   The Klipper implementation on most micro-controllers is hard-coded
 #   to 100000 and changing this value has no effect. The default is
-#   100000. Linux, RP2040 and ATmega support 400000.
+#   100000. Linux, RP2040, ATmega, and STM32 support 400000.
 ```
