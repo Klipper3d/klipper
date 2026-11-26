@@ -3085,7 +3085,8 @@ sensor_type:
 #    'TEMP11_HUM11' -> 11bit for Temp and 11bit for humidity
 #   Default is: "TEMP11_HUM11"
 #htu21d_report_time:
-#   Interval in seconds between readings. Default is 30
+#   Interval in seconds between readings. Default is 30. The minimum
+#   is 1.
 ```
 
 ### SHT3X sensor
