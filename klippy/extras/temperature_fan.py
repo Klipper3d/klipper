@@ -38,6 +38,7 @@ class TemperatureFan:
         algos = {'watermark': ControlBangBang, 'pid': ControlPID}
         algo = config.getchoice('control', algos)
         self.control = algo(self, config)
+        self.invert_control = config.getboolean('invert_control', False)
         self.next_speed_time = 0.
         self.last_speed_value = 0.
         gcode = self.printer.lookup_object('gcode')
@@ -70,6 +71,8 @@ class TemperatureFan:
         return self.min_speed
     def get_max_speed(self):
         return self.max_speed
+    def get_invert_control(self):
+        return self.invert_control
     def get_status(self, eventtime):
         status = self.fan.get_status(eventtime)
         status["temperature"] = round(self.last_temp, 2)
@@ -127,7 +130,7 @@ class ControlBangBang:
         elif (not self.heating
               and temp <= target_temp-self.max_delta):
             self.heating = True
-        if self.heating:
+        if self.heating != self.temperature_fan.get_invert_control():
             self.temperature_fan.set_tf_speed(read_time, 0.)
         else:
             self.temperature_fan.set_tf_speed(
@@ -170,6 +173,9 @@ class ControlPID:
         temp_integ = max(0., min(self.temp_integ_max, temp_integ))
         # Calculate output
         co = self.Kp*temp_err + self.Ki*temp_integ - self.Kd*temp_deriv
+        # Handle inverted control
+        if self.temperature_fan.get_invert_control():
+            co = self.temperature_fan.get_max_speed() - co
         bounded_co = max(0., min(self.temperature_fan.get_max_speed(), co))
         self.temperature_fan.set_tf_speed(
             read_time, max(self.temperature_fan.get_min_speed(),
