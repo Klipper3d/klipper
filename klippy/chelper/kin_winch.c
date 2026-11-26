@@ -686,7 +686,9 @@ residuals_and_derivatives(struct winch_flex *wf, const double *line_pos, int N,
         double inv_len3 = inv_len * inv_len * inv_len;
 
         double flex = base_flex[i];
-        double found_line_pos = length - wf->distances_origin[i] + flex;
+        // Pinholes keep the clamped distance, as before swivel pulleys
+        double found_line_pos = (wf->pulley_radius[i] > 0. ? length : dist)
+            - wf->distances_origin[i] + flex;
         double res = found_line_pos - line_pos[i];
         if (residuals)
             residuals[i] = res;
