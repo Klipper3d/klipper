@@ -314,7 +314,8 @@ class WinchFlexHelperTests(unittest.TestCase):
         for options in (dict(buildup_factor=.007, spool_flattening=.015),
                         dict(buildup_factor=.007, strained_spool_storage=True),
                         dict(spool_flattening=float('nan')),
-                        dict(spring=0., strained_spool_storage=True)):
+                        dict(spring=0., strained_spool_storage=True),
+                        dict(spring=float('inf'), spool_flattening=.015)):
             with self.assertRaises(configfile.error):
                 self.build_helper(FOUR_ANCHORS_DEFAULT, **options)
 

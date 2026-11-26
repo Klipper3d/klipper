@@ -56,10 +56,10 @@ class WinchFlexHelper:
         self.mover_weight = config.getfloat('winch_mover_weight', 0., minval=0.)
         self.spring_constant = config.getfloat('winch_spring_constant', 0., minval=0.)
         if (self.spool_flattening or self.strained_spool_storage) \
-                and not self.spring_constant > 0.:
+                and not 0. < self.spring_constant < math.inf:
             raise config.error(
                 "Spool flattening and strained storage need flex compensation"
-                " with a positive winch_spring_constant")
+                " with a positive, finite winch_spring_constant")
         if self.num:
             default_min = tuple(0. for _ in range(self.num))
             default_max = tuple(120. for _ in range(self.num))

@@ -700,6 +700,27 @@ background_thread(void *data)
     list_init(&dummy);
     receive_append_wake(&sq->receiver, &dummy);
 
+    if (sq->serial_fd_type == SQT_DEBUGFILE) {
+        // A file has no clock to wait for: write every queued message,
+        // advancing through the send schedule instead of sleeping.
+        double eventtime = get_monotonic();
+        for (;;) {
+            pthread_mutex_lock(&sq->lock);
+            int queued = sq->ready_bytes;
+            pthread_mutex_unlock(&sq->lock);
+            pthread_mutex_lock(&sq->transmit_requests.lock);
+            queued |= sq->transmit_requests.upcoming_bytes;
+            pthread_mutex_unlock(&sq->transmit_requests.lock);
+            if (!queued)
+                break;
+            double waketime = command_event(sq, eventtime);
+            if (waketime == PR_NEVER)
+                break;
+            if (waketime > eventtime)
+                eventtime = waketime;
+        }
+    }
+
     return NULL;
 }
 
