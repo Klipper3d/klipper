@@ -573,6 +573,11 @@ compute_flex(struct winch_flex *wf, double x, double y, double z,
     memset(forces, 0, sizeof(forces));
     compute_static_forces(wf, &pos, forces, wf->flex_compensation_algorithm);
     for (int i = 0; i < num; ++i) {
+        // Without a spring constant there is no stretch to compensate
+        if (!(wf->spring_constant > 0.)) {
+            flex[i] = 0.;
+            continue;
+        }
         double spring_length = distances[i]*wf->mechanical_advantage[i] + wf->guy_wires[i];
         if (spring_length < EPSILON)
             spring_length = EPSILON;
@@ -701,15 +706,22 @@ residuals_and_derivatives(struct winch_flex *wf, const double *line_pos, int N,
 
         if (hess) {
             double *hrow = hess + i * 9;
-            hrow[0] = inv_len - dx * dx * inv_len3;
-            hrow[1] = -dx * dy * inv_len3;
-            hrow[2] = -dx * dz * inv_len3;
-            hrow[3] = -dy * dx * inv_len3;
-            hrow[4] = inv_len - dy * dy * inv_len3;
-            hrow[5] = -dy * dz * inv_len3;
-            hrow[6] = -dz * dx * inv_len3;
-            hrow[7] = -dz * dy * inv_len3;
-            hrow[8] = inv_len - dz * dz * inv_len3;
+            double d[3] = {dx, dy, dz}, n[3] = {0., 0., 0.}, turn = 0.;
+            // The exit turns with a swivel pulley's fork (see hp_swivel_turn)
+            if (wf->pulley_radius[i] > 0.) {
+                const struct coord *a = &wf->anchors[i];
+                double entry[3] = {a->x, a->y, a->z};
+                double axis[3] = {wf->swivel_axis[i].x, wf->swivel_axis[i].y,
+                                  wf->swivel_axis[i].z};
+                double p[3] = {pos->x, pos->y, pos->z};
+                double e[3] = {exit.x, exit.y, exit.z};
+                turn = hp_swivel_turn(entry, axis, wf->pulley_radius[i], p, e, n)
+                    * inv_len;
+            }
+            for (int r = 0; r < 3; ++r)
+                for (int c = 0; c < 3; ++c)
+                    hrow[r * 3 + c] = (r == c ? inv_len : 0.)
+                        - d[r] * d[c] * inv_len3 - turn * n[r] * n[c];
         }
 
         cost += 0.5 * res * res;
