@@ -92,10 +92,24 @@ src-$(CONFIG_HAVE_GPIO_SDIO) += stm32/sdio.c
 
 # Binary output file rules
 target-y += $(OUT)klipper.bin
+target-y += $(OUT)klipper.srec
 
 $(OUT)klipper.bin: $(OUT)klipper.elf
 	@echo "  Creating bin file $@"
 	$(Q)$(OBJCOPY) -O binary $< $@
+
+$(OUT)klipper.srec: $(OUT)klipper.bin
+	@echo "  Creating srec file $@"
+	$(Q)$(OBJCOPY) -I binary -O srec --change-addresses "$(CONFIG_FLASH_APPLICATION_ADDRESS)" $< $@
+
+# Print OpenBLT BOOT_FLASH_VECTOR_TABLE_CS_OFFSET
+print-openblt-vector-table-cs-offset:
+	@addr=`$(OBJDUMP) -s -j .text $(OUT)klipper.elf | grep ee11aa55 | awk '{print $$1}'`; \
+	if [ -z "$$addr" ]; then \
+		echo "Pattern not found"; \
+		exit 1; \
+	fi; \
+	printf "BOOT_FLASH_VECTOR_TABLE_CS_OFFSET: 0x%X\n" $$((0x$$addr - $(CONFIG_FLASH_APPLICATION_ADDRESS)))
 
 # Flash rules
 lib/hidflash/hid-flash:
