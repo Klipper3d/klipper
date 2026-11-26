@@ -25,7 +25,10 @@ mode") or that run the
 [candlelight firmware](https://github.com/candle-usb/candleLight_fw).
 
 It is also necessary to configure the host operating system to use the
-adapter. This is typically done by creating a new file named
+adapter.
+
+If you are using a Debian Bullseye based system using ifupdown, this
+is typically done by creating a new file named
 `/etc/network/interfaces.d/can0` with the following contents:
 ```
 allow-hotplug can0
@@ -33,6 +36,28 @@ iface can0 can static
     bitrate 1000000
     up ip link set $IFACE txqueuelen 128
 ```
+
+In newer Debian Bookworm installations it is necessary to use systemd-networkd,
+two files need to be created, one to define the interface and another to
+set the txqueuelen, these are:
+`/etc/systemd/network/80-can0.network` with the contents:
+```
+[Match]
+Name=can*
+
+[CAN]
+BitRate=1M
+```
+and `/etc/systemd/network/80-can0.link` with the contents:
+```
+[Match]
+OriginalName=can0
+
+[Link]
+TransmitQueueLength=128
+```
+then enable the service with `sudo systemctl enable systemd-networkd --now`
+
 
 ## Terminating Resistors
 
