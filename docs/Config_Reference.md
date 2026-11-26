@@ -4624,8 +4624,8 @@ Support for a display attached to the micro-controller.
 [display]
 lcd_type:
 #   The type of LCD chip in use. This may be "hd44780", "hd44780_spi",
-#   "aip31068_spi", "st7920", "emulated_st7920", "uc1701", "ssd1306", or
-#   "sh1106".
+#   "hd44780_i2c", "aip31068_spi", "st7920", "emulated_st7920", "uc1701",
+#   "ssd1306", or "sh1106".
 #   See the display sections below for information on each type and
 #   additional parameters they provide. This parameter must be
 #   provided.
@@ -4761,6 +4761,35 @@ spi_software_miso_pin:
 #   printer mainboard as the shift register does not have a MISO pin,
 #   but the software spi implementation requires this pin to be
 #   configured.
+#hd44780_protocol_init: True
+#   Perform 8-bit/4-bit protocol initialization on an hd44780 display.
+#   This is necessary on real hd44780 devices. However, one may need
+#   to disable this on some "clone" devices. The default is True.
+#line_length:
+#   Set the number of characters per line for an hd44780 type lcd.
+#   Possible values are 20 (default) and 16. The number of lines is
+#   fixed to 4.
+...
+```
+
+#### hd44780_i2c display
+
+Information on configuring an hd44780_i2c display - a 20x04 or 16x04
+display controlled via a PCF8574 I2C backpack expander.
+
+```
+[display]
+lcd_type: hd44780_i2c
+#   Set to "hd44780_i2c" for hd44780_i2c displays.
+#i2c_address:
+#i2c_mcu:
+#i2c_bus:
+#i2c_software_scl_pin:
+#i2c_software_sda_pin:
+#i2c_speed:
+#   Optional parameters available for displays connected via an i2c
+#   bus. See the "common I2C settings" section for a description of
+#   the above parameters. The default i2c_address is 39 (0x27).
 #hd44780_protocol_init: True
 #   Perform 8-bit/4-bit protocol initialization on an hd44780 display.
 #   This is necessary on real hd44780 devices. However, one may need
