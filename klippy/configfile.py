@@ -335,6 +335,22 @@ class ConfigAutoSave:
             del pending[section]
             self.status_save_pending = pending
             self.save_config_pending = True
+    def remove_option(self, section, option):
+        if (self.fileconfig.has_section(section) and
+                self.fileconfig.has_option(section, option)):
+            self.fileconfig.remove_option(section, option)
+        pending = dict(self.status_save_pending)
+        sect_pending = pending.get(section)
+        if sect_pending is not None:
+            sect_dict = dict(sect_pending) if sect_pending else {}
+            if option in sect_dict:
+                del sect_dict[option]
+            if sect_dict:
+                pending[section] = sect_dict
+            else:
+                pending.pop(section, None)
+            self.status_save_pending = pending
+        self.save_config_pending = True
     def _disallow_include_conflicts(self, regular_fileconfig):
         for section in self.fileconfig.sections():
             for option in self.fileconfig.options(section):
@@ -558,3 +574,5 @@ class PrinterConfig:
         self.autosave.set(section, option, value)
     def remove_section(self, section):
         self.autosave.remove_section(section)
+    def remove_option(self, section, option):
+        self.autosave.remove_option(section, option)
