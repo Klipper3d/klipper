@@ -62,7 +62,9 @@ class Heater:
         self.mcu_pwm.setup_max_duration(MAX_HEAT_TIME)
         # Load additional modules
         self.printer.load_object(config, "verify_heater %s" % (short_name,))
-        self.printer.load_object(config, "pid_calibrate")
+        # Register PID_CALIBRATE before gcode macros rename commands at connect
+        pid_calibrate = self.printer.load_object(config, "pid_calibrate")
+        pid_calibrate.register_heater(short_name)
         gcode = self.printer.lookup_object("gcode")
         gcode.register_mux_command("SET_HEATER_TEMPERATURE", "HEATER",
                                    short_name, self.cmd_SET_HEATER_TEMPERATURE,
