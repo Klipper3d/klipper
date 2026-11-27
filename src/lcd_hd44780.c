@@ -32,9 +32,12 @@ nsecs_to_ticks(uint32_t ns)
 static void
 ndelay(uint32_t ticks)
 {
-    if (CONFIG_MACH_AVR)
-        // Slower MCUs don't require a delay
+    if (CONFIG_MACH_AVR) {
+        // Avoid slow timer calculations; just ensure a minimum E pulse
+        asm("nop\n    nop\n    nop\n    nop\n    nop\n"
+            "    nop\n    nop\n    nop\n    nop\n    nop");
         return;
+    }
     uint32_t end = timer_read_time() + ticks;
     while (timer_is_before(timer_read_time(), end))
         irq_poll();
@@ -45,7 +48,6 @@ static __always_inline void
 hd44780_xmit_bits(uint8_t toggle, struct gpio_out e, struct gpio_out d4
                   , struct gpio_out d5, struct gpio_out d6, struct gpio_out d7)
 {
-    gpio_out_toggle(e);
     if (toggle & 0x10)
         gpio_out_toggle(d4);
     if (toggle & 0x20)
@@ -54,6 +56,7 @@ hd44780_xmit_bits(uint8_t toggle, struct gpio_out e, struct gpio_out d4
         gpio_out_toggle(d6);
     if (toggle & 0x80)
         gpio_out_toggle(d7);
+    gpio_out_toggle(e);
     ndelay(nsecs_to_ticks(230));
     gpio_out_toggle(e);
 }
