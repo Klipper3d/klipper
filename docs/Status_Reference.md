@@ -446,6 +446,15 @@ is defined):
   run prior to the macro containing this reference.
 - `last_z_result`: This value is deprecated; it will be removed in the
   near future.
+- `last_accuracy`: The results of the last successful
+  `PROBE_ACCURACY` command (empty if the command has not been run).
+  Note, if this is used in a macro, due to the order of template
+  expansion, the `PROBE_ACCURACY` command must be run prior to the
+  macro containing this reference. A dictionary containing the
+  following keys:
+  - `position`: The toolhead position at the start of the test. This
+    value is encoded as a [coordinate](#accessing-coordinates).
+  - `samples`: A list with the Z result of each probe sample.
 
 ## pwm_cycle_time
 

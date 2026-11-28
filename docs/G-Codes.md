@@ -1206,7 +1206,9 @@ setting in the [probe config section](Config_Reference.md#probe).
 [SAMPLE_RETRACT_DIST=<mm>]`: Calculate the maximum, minimum, average,
 median, and standard deviation of multiple probe samples. By default,
 10 SAMPLES are taken. Otherwise the optional parameters default to
-their equivalent setting in the probe config section.
+their equivalent setting in the probe config section. The results are
+also available in the `last_accuracy` field of the
+[probe status](Status_Reference.md#probe).
 
 #### PROBE_CALIBRATE
 `PROBE_CALIBRATE [SPEED=<speed>] [<probe_parameter>=<value>]`: Run a

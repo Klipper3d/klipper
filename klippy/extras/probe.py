@@ -59,6 +59,7 @@ class ProbeCommandHelper:
             gcode.register_command('PROBE_CALIBRATE', self.cmd_PROBE_CALIBRATE,
                                    desc=self.cmd_PROBE_CALIBRATE_help)
         # Other commands
+        self.last_accuracy = {}
         gcode.register_command('PROBE_ACCURACY', self.cmd_PROBE_ACCURACY,
                                desc=self.cmd_PROBE_ACCURACY_help)
         if can_set_z_offset:
@@ -71,7 +72,8 @@ class ProbeCommandHelper:
         return {'name': self.name,
                 'last_query': self.last_state,
                 'last_probe_position': self.last_probe_position,
-                'last_z_result': self.last_z_result}
+                'last_z_result': self.last_z_result,
+                'last_accuracy': self.last_accuracy}
     cmd_QUERY_PROBE_help = "Return the status of the z-probe"
     def cmd_QUERY_PROBE(self, gcmd):
         if self.query_endstop is None:
@@ -162,6 +164,10 @@ class ProbeCommandHelper:
         for i in range(len(positions)):
             deviation_sum += pow(positions[i].bed_z - avg_value, 2.)
         sigma = (deviation_sum / len(positions)) ** 0.5
+        self.last_accuracy = {
+            'position': gcode.Coord(start_pos[:3]),
+            'samples': [p.bed_z for p in positions],
+        }
         # Show information
         gcmd.respond_info(
             "probe accuracy results: maximum %.6f, minimum %.6f, range %.6f, "
