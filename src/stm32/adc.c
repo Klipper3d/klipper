@@ -28,7 +28,7 @@ static const uint8_t adc_pins[] = {
     ADC_TEMPERATURE_PIN,
 #elif CONFIG_MACH_STM32F2 || CONFIG_MACH_STM32F4x5
     ADC_TEMPERATURE_PIN, 0x00, 0x00,
-#elif CONFIG_MACH_STM32F401 || CONFIG_MACH_STM32F446
+#elif CONFIG_MACH_STM32F401 || CONFIG_MACH_STM32F411 || CONFIG_MACH_STM32F446
     0x00, 0x00, ADC_TEMPERATURE_PIN,
 #endif
 
@@ -50,6 +50,7 @@ static const uint8_t adc_pins[] = {
 // ADC timing:
 // stm32f103: ADC clock=4.5Mhz, Tconv=12.5, Tsamp=41.5, total=12.000us
 // stm32f407: ADC clock=21Mhz, Tconv=12, Tsamp=84, total=4.571us
+// stm32f411: ADC clock=24Mhz, Tconv=12, Tsamp=84, total=4.000us
 // stm32f446: ADC clock=22.5Mhz, Tconv=12, Tsamp=84, total=4.267us
 
 // Perform calibration on stm32f103
@@ -108,7 +109,7 @@ gpio_adc_setup(uint32_t pin)
     }
 
     if (pin == ADC_TEMPERATURE_PIN) {
-#if CONFIG_MACH_STM32F401
+#if CONFIG_MACH_STM32F401 || CONFIG_MACH_STM32F411
         ADC1_COMMON->CCR = ADC_CCR_TSVREFE;
 #elif !CONFIG_MACH_STM32F1
         ADC123_COMMON->CCR = ADC_CCR_TSVREFE;
