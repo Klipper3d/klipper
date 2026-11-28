@@ -113,6 +113,20 @@ choice
         select MACH_STM32F1
 endchoice
 
+# Optional STM32G0B1 scheduler timer. Preserve the existing TIM2 default.
+choice
+    prompt "Scheduler timer" if LOW_LEVEL_OPTIONS && MACH_STM32G0B1
+    depends on MACH_STM32G0B1
+    default STM32G0B1_SCHED_TIM2
+
+    config STM32G0B1_SCHED_TIM2
+        bool "TIM2 (32-bit, existing default)"
+
+    config STM32G0B1_SCHED_TIM14
+        bool "TIM14 (16-bit, dedicated IRQ)"
+
+endchoice
+
 config MACH_STM32F103x6
     depends on LOW_LEVEL_OPTIONS && MACH_STM32F103
     bool "Only 10KiB of RAM (for rare stm32f103x6 variant)"
