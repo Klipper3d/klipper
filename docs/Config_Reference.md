@@ -4392,7 +4392,8 @@ Configure a TMC5262 stepper motor driver via SPI. Define a section with a
 "tmc5262" prefix followed by the name of the corresponding stepper
 (for example, "[tmc5262 stepper_x]").
 
-This implementation supports SpreadCycle with a physical endstop.
+SpreadCycle is the default. StealthChop+ requires the motor coil inductance
+to be configured.
 
 ```
 [tmc5262 stepper_x]
@@ -4459,6 +4460,39 @@ run_current:
 #   Set the corresponding register field during driver configuration.
 #   See the TMC5262 datasheet for field definitions. The defaults are
 #   shown above.
+#stealthchop_threshold: 0
+#   Velocity in mm/s below which StealthChop+ is used. The default
+#   disables StealthChop+. A nonzero threshold requires driver_COIL_INDUCT.
+#driver_PWM_FREQ: 0
+#   PWM frequency selection, from 0 to 8. See datasheet Table 8.
+#driver_FREEWHEEL: 0
+#driver_SD_ON_MEAS_HI:
+#driver_SD_ON_MEAS_LO:
+#   Integrated current sense sampling thresholds. HI defaults to
+#   15 - floor(PWM_FREQ / 3). LO defaults to HI - 1, or 0 when HI is 0.
+#   An explicit HI override is used when deriving the LO default.
+#driver_CUR_P: 64
+#driver_CUR_I: 10
+#driver_ANGLE_P: 50
+#driver_ANGLE_I: 20
+#driver_CUR_PI_LIMIT: 4095
+#driver_ANGLE_PI_LIMIT: 256
+#driver_ANGLE_LOWER_I_LIMIT: 256
+#   StealthChop+ current and angle PI regulator settings. See the
+#   StealthChop+ chapter of the TMC5262 datasheet for tuning guidance.
+#driver_COIL_INDUCT: 0
+#   Motor phase inductance in microhenries, from the motor datasheet.
+#   Required when StealthChop+ is enabled.
+#driver_T_RCOIL_MEAS: 4096
+#driver_RCOIL_THERMAL_COUPLING:
+#   Coil resistance measurement settings. THERMAL_COUPLING defaults
+#   to True when StealthChop+ is enabled, otherwise False.
+#driver_R_COIL_USER_A: 0
+#driver_R_COIL_USER_B: 0
+#   Manual coil resistance values. Setting either value nonzero
+#   selects manual resistance; leaving both zero selects automatic
+#   measurement. These are raw 12-bit values, not ohms. See R_COIL in
+#   the datasheet for scaling according to the selected current range.
 ```
 
 
