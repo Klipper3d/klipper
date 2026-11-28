@@ -463,14 +463,21 @@ class BedMeshCalibrate:
         margin = gcmd.get_float('ADAPTIVE_MARGIN', self.adaptive_margin)
 
         # List all exclude_object points by axis and iterate over
-        # all polygon points, and pick the min and max or each axis
+        # all polygon points, and pick the min and max or each axis.
+        # Slicer polygons are in toolhead coordinates while mesh
+        # bounds are probe coordinates, so shift points by the probe
+        # XY offset.
         list_of_xs = []
         list_of_ys = []
         gcmd.respond_info("Found %s objects" % (len(objects)))
+        probe_x_offset = probe_y_offset = 0.
+        probe = self.printer.lookup_object('probe', None)
+        if probe is not None:
+            probe_x_offset, probe_y_offset = probe.get_offsets()[:2]
         for obj in objects:
-            for point in obj["polygon"]:
-                list_of_xs.append(point[0])
-                list_of_ys.append(point[1])
+            for x, y in obj["polygon"]:
+                list_of_xs.append(x + probe_x_offset)
+                list_of_ys.append(y + probe_y_offset)
 
         # Define bounds of adaptive mesh area
         mesh_min = [min(list_of_xs), min(list_of_ys)]
