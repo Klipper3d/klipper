@@ -37,7 +37,7 @@ class DeltesianKinematics:
             'deltesian_stepper_alloc', arm2[0], -arm_x[0])
         self.rails[1].setup_itersolve(
             'deltesian_stepper_alloc', arm2[1], arm_x[1])
-        self.rails[2].setup_itersolve('cartesian_stepper_alloc', b'y')
+        self.rails[2].setup_itersolve('cartesian_stepper_alloc', 0., 1., 0.)
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
         self.limits = [(1.0, -1.0)] * 3

@@ -30,7 +30,7 @@ class ManualStepper:
         self.motion_queuing = self.printer.load_object(config, 'motion_queuing')
         self.trapq = self.motion_queuing.allocate_trapq()
         self.trapq_append = self.motion_queuing.lookup_trapq_append()
-        self.rail.setup_itersolve('cartesian_stepper_alloc', b'x')
+        self.rail.setup_itersolve('cartesian_stepper_alloc', 1., 0., 0.)
         self.rail.set_trapq(self.trapq)
         # Registered with toolhead as an axtra axis
         self.axis_gcode_id = None

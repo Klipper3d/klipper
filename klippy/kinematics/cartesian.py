@@ -15,8 +15,9 @@ class CartKinematics:
         self.dual_carriage_rails = []
         self.rails = [stepper.LookupMultiRail(config.getsection('stepper_' + n))
                       for n in 'xyz']
-        for rail, axis in zip(self.rails, 'xyz'):
-            rail.setup_itersolve('cartesian_stepper_alloc', axis.encode())
+        self.rails[0].setup_itersolve('cartesian_stepper_alloc', 1., 0., 0.)
+        self.rails[1].setup_itersolve('cartesian_stepper_alloc', 0., 1., 0.)
+        self.rails[2].setup_itersolve('cartesian_stepper_alloc', 0., 0., 1.)
         ranges = [r.get_range() for r in self.rails]
         self.axes_min = toolhead.Coord([r[0] for r in ranges])
         self.axes_max = toolhead.Coord([r[1] for r in ranges])
@@ -27,8 +28,10 @@ class CartKinematics:
             self.dual_carriage_axis = {'x': 0, 'y': 1}[dc_axis]
             # setup second dual carriage rail
             self.rails.append(stepper.LookupMultiRail(dc_config))
-            self.rails[3].setup_itersolve('cartesian_stepper_alloc',
-                                          dc_axis.encode())
+            amult = [1., 0., 0.]
+            if dc_axis == 'y':
+                amult = [0., 1., 0.]
+            self.rails[3].setup_itersolve('cartesian_stepper_alloc', *amult)
             self.dc_module = idex_modes.DualCarriages(
                     self.printer, [self.rails[self.dual_carriage_axis]],
                     [self.rails[3]], axes=[self.dual_carriage_axis],

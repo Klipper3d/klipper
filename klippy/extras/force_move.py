@@ -37,7 +37,7 @@ class ForceMove:
         self.trapq_append = self.motion_queuing.lookup_trapq_append()
         ffi_main, ffi_lib = chelper.get_ffi()
         self.stepper_kinematics = ffi_main.gc(
-            ffi_lib.cartesian_stepper_alloc(b'x'), ffi_lib.free)
+            ffi_lib.cartesian_stepper_alloc(1., 0., 0.), ffi_lib.free)
         # Register commands
         self._enable_force_move = config.getboolean("enable_force_move", False)
         if self._enable_force_move:
