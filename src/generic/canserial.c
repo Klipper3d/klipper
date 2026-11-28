@@ -342,7 +342,7 @@ DECL_COMMAND_FLAGS(command_get_canbus_status, HF_IN_SHUTDOWN
 void
 command_get_canbus_id(uint32_t *args)
 {
-    sendf("canbus_id canbus_uuid=%.*s canbus_nodeid=%u"
+    sendf("canbus_id canbus_uuid=%*s canbus_nodeid=%u"
           , sizeof(CanData.uuid), CanData.uuid, can_get_nodeid());
 }
 DECL_COMMAND_FLAGS(command_get_canbus_id, HF_IN_SHUTDOWN, "get_canbus_id");
