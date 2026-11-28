@@ -349,6 +349,9 @@ the area of the bed used by the objects being printed. When used, the method wil
 automatically adjust the mesh parameters based on the area occupied by the defined
 print objects.
 
+- `BED_MESH_CALIBRATE ADAPTIVE=1` \
+  To use adaptive bed meshing, you will have to add `ADAPTIVE=1` to the start g-code of your printer.
+
 The adapted mesh area will be computed from the area defined by the boundaries of all
 the defined print objects so it covers every object, including any margins defined in
 the configuration. After the area is computed, the number of probe points will be
