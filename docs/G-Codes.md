@@ -811,6 +811,20 @@ and RAW sensor value for calibration points.
 #### DISABLE_FILAMENT_WIDTH_LOG
 `DISABLE_FILAMENT_WIDTH_LOG`: Turn off diameter logging.
 
+### [heater_power_budget]
+
+The following command is available when a
+[heater_power_budget config section](Config_Reference.md#heater_power_budget)
+is enabled.
+
+#### QUERY_HEATER_POWER_BUDGET
+
+`QUERY_HEATER_POWER_BUDGET`: Reports the current heater power budget state,
+including the configured total budget, priority distribution, requested,
+allowed, and actual estimated power for the extruder and heated bed, whether
+either heater is currently limited, and whether the reported combined
+commanded power exceeds the configured budget.
+
 ### [heaters]
 
 The heaters module is automatically loaded if a heater is defined in

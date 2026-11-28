@@ -270,6 +270,46 @@ The following information is available for heater objects such as
 - `can_extrude`: If extruder can extrude (defined by `min_extrude_temp`),
   available only for [extruder](Config_Reference.md#extruder)
 
+## heater_power_budget
+
+The following information is available in the
+[heater_power_budget](Config_Reference.md#heater_power_budget) object:
+
+- `max_total_power`: The configured maximum combined commanded average
+  heater power in watts.
+- `extruder_priority`, `bed_priority`: The normalized priority weights
+  for the extruder and heated bed. Each value is between 0.0 and 1.0
+  and the two values sum to 1.0.
+- `extruder_share_power`, `bed_share_power`: The base power shares in
+  watts calculated from `max_total_power` and the configured priority
+  weights. These are priority shares used during contention; unused
+  capacity may be borrowed by the other heater.
+- `extruder_requested_pwm`, `bed_requested_pwm`: The latest PWM output
+  requested by each heater control, expressed as a value between 0.0
+  and 1.0.
+- `extruder_requested_power`, `bed_requested_power`: The estimated
+  requested heater power in watts, calculated from the requested PWM
+  value and the configured nominal heater power.
+- `extruder_allowed_pwm`, `bed_allowed_pwm`: The maximum PWM output
+  currently available to each heater after applying the shared power
+  budget and the heater's configured `max_power`.
+- `extruder_allowed_power`, `bed_allowed_power`: The estimated heater
+  power in watts corresponding to the currently allowed PWM output.
+- `extruder_actual_pwm`, `bed_actual_pwm`: The last commanded PWM
+  output for each heater, expressed as a value between 0.0 and 1.0.
+- `extruder_actual_power`, `bed_actual_power`: The estimated power in
+  watts corresponding to the last commanded PWM output of each heater.
+- `total_power`: The combined estimated power in watts corresponding
+  to the last commanded PWM outputs of the managed heaters.
+- `extruder_limited`, `bed_limited`: Returns True if the corresponding
+  active heater is currently being limited by the shared power budget.
+- `budget_exceeded`: Returns True if the combined estimated commanded
+  heater power is above `max_total_power`.
+
+The reported power values are estimates based on the configured nominal
+heater powers and PWM duty. They are not measurements of actual electrical
+power.
+
 ## heaters
 
 The following information is available in the `heaters` object (this
