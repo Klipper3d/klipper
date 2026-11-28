@@ -358,6 +358,10 @@ class GCodeDispatch:
             self.printer.send_event("gcode:request_restart", print_time)
             toolhead.dwell(0.500)
             toolhead.wait_moves()
+            # Batch output cannot wait for the background flush timer, which
+            # may not have run yet. Generate every remaining step first.
+            if not toolhead.can_pause:
+                toolhead.flush_step_generation()
         self.printer.request_exit(result)
     cmd_RESTART_help = "Reload config file and restart host software"
     def cmd_RESTART(self, gcmd):

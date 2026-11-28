@@ -3,13 +3,28 @@
 # Copyright (C) 2025  Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging
+import logging, os
 import chelper
 
 BGFLUSH_LOW_TIME = 0.200
 BGFLUSH_HIGH_TIME = 0.400
-BGFLUSH_SG_LOW_TIME = 0.450
-BGFLUSH_SG_HIGH_TIME = 0.700
+
+def _get_env_float(name, default):
+    value = os.environ.get(name)
+    if value in (None, ""):
+        return default
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        logging.warning("Ignoring invalid %s=%r", name, value)
+        return default
+    if parsed <= 0.:
+        logging.warning("Ignoring non-positive %s=%r", name, value)
+        return default
+    return parsed
+
+BGFLUSH_SG_LOW_TIME = _get_env_float("KLIPPY_MOTION_QUEUE_SG_LOW_TIME", 0.450)
+BGFLUSH_SG_HIGH_TIME = _get_env_float("KLIPPY_MOTION_QUEUE_SG_HIGH_TIME", 0.700)
 BGFLUSH_EXTRA_TIME = 0.250
 
 MOVE_HISTORY_EXPIRE = 30.
